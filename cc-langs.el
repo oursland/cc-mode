@@ -140,6 +140,7 @@ appended."
 	    (setq mode (cdr mode))))
 	(setq args (cdr (cdr args))))
       res))
+  (put 'c-lang-defconst 'lisp-indent-function 1)
 
   (defmacro c-lang-var (var &optional mode)
     ;; Get the mode specific value of the variable VAR in mode MODE.
@@ -171,9 +172,8 @@ appended."
     `(progn
        (defvar ,var nil)
        (make-variable-buffer-local ',var)))
+  (put 'c-lang-defvar 'lisp-indent-function 1)
   )
-(put 'c-lang-defconst 'lisp-indent-function 1)
-(put 'c-lang-defvar 'lisp-indent-function 1)
 
 ;; Regexp describing a `symbol' in all languages, not excluding
 ;; keywords.  We cannot use just `word' syntax class since `_' cannot
@@ -245,10 +245,10 @@ appended."
   pike '("class"))
 
 ;; Regexp matching the start of a class.
-(c-lang-defconst c-class-key all
-  (c-make-keywords-re t (c-lang-var c-class-kwds)))
-(c-lang-defconst c-class-key objc	; ObjC needs some tuning of the regexp.
-  (concat "@" (c-lang-var c-class-key)))
+(c-lang-defconst c-class-key
+  all (c-make-keywords-re t (c-lang-var c-class-kwds)))
+(c-lang-defconst c-class-key		; ObjC needs some tuning of the regexp.
+   objc (concat "@" (c-lang-var c-class-key)))
 (c-lang-defvar c-class-key (c-lang-var c-class-key))
 
 ;; Keywords introducing blocks besides classes that contain another
@@ -260,15 +260,31 @@ appended."
 
 ;; Regexp matching the start of blocks besides classes that contain
 ;; another declaration level.
-(c-lang-defconst c-other-decl-block-key all
-  (c-make-keywords-re t (c-lang-var c-other-decl-block-kwds)))
+(c-lang-defconst c-other-decl-block-key
+  all (c-make-keywords-re t (c-lang-var c-other-decl-block-kwds)))
 (c-lang-defvar c-other-decl-block-key (c-lang-var c-other-decl-block-key))
 
-;; Keywords introducing other declarations.
+;; Keywords introducing declarations that can contain a block which
+;; might be followed by variable declarations, e.g. like "foo" in
+;; "class Foo { ... } foo;".  So if there is a block in a declaration
+;; like that, it ends with the following ';' and not right away.
+(c-lang-defconst c-block-decls-with-vars
+  c '("struct" "union" "enum" "typedef")
+  c++ '("class" "struct" "union" "enum" "typedef"))
+
+;; Regexp matching the `c-block-decls-with-vars' keywords, or nil in
+;; languages without such constructs.
+(c-lang-defconst c-opt-block-decls-with-vars-key
+  all (and (c-lang-var c-block-decls-with-vars)
+	   (c-make-keywords-re t (c-lang-var c-block-decls-with-vars))))
+(c-lang-defvar c-opt-block-decls-with-vars-key
+  (c-lang-var c-opt-block-decls-with-vars-key))
+
+;; Keywords introducing declarations that has not been accounted for
+;; by any of the above.
 (c-lang-defconst c-other-decl-kwds
-  c '("enum" "typedef")
   ;; FIXME: Shouldn't "template" be moved to c-specifier-kwds for C++?
-  c++ '("enum" "typedef" "template")
+  c++ '("template")
   java '("import" "package")
   pike '("import" "inherit"))
 
@@ -289,8 +305,8 @@ appended."
 
 ;; Regexp matching the start of any statement followed directly by a
 ;; substatement (doesn't match a bare block, however).
-(c-lang-defconst c-block-stmt-1-key all
-  (c-make-keywords-re t (c-lang-var c-block-stmt-1-kwds)))
+(c-lang-defconst c-block-stmt-1-key
+  all (c-make-keywords-re t (c-lang-var c-block-stmt-1-kwds)))
 (c-lang-defvar c-block-stmt-1-key (c-lang-var c-block-stmt-1-key))
 
 ;; Statement keywords followed by a paren sexp and then by a substatement.
@@ -302,19 +318,19 @@ appended."
 
 ;; Regexp matching the start of any statement followed by a paren sexp
 ;; and then by a substatement.
-(c-lang-defconst c-block-stmt-2-key all
-  (c-make-keywords-re t (c-lang-var c-block-stmt-2-kwds)))
+(c-lang-defconst c-block-stmt-2-key
+  all (c-make-keywords-re t (c-lang-var c-block-stmt-2-kwds)))
 (c-lang-defvar c-block-stmt-2-key (c-lang-var c-block-stmt-2-key))
 
 ;; Regexp matching the start of any statement that has a substatement
 ;; (except a bare block).  Nil in languages that doesn't have such
 ;; constructs.
-(c-lang-defconst c-opt-block-stmt-key all
-  (if (or (c-lang-var c-block-stmt-1-kwds)
-	  (c-lang-var c-block-stmt-2-kwds))
-      (c-make-keywords-re t
-	(c-lang-var c-block-stmt-1-kwds)
-	(c-lang-var c-block-stmt-2-kwds))))
+(c-lang-defconst c-opt-block-stmt-key
+  all (if (or (c-lang-var c-block-stmt-1-kwds)
+	      (c-lang-var c-block-stmt-2-kwds))
+	  (c-make-keywords-re t
+	    (c-lang-var c-block-stmt-1-kwds)
+	    (c-lang-var c-block-stmt-2-kwds))))
 (c-lang-defvar c-opt-block-stmt-key (c-lang-var c-opt-block-stmt-key))
 
 ;; Statement keywords followed by an expression or nothing.
@@ -328,8 +344,8 @@ appended."
 (c-lang-defconst c-label-kwds (c c++ objc java pike) '("case" "default"))
 
 ;; Regexp matching any keyword that introduces a label.
-(c-lang-defconst c-label-kwds-regexp all
-  (c-make-keywords-re t (c-lang-var c-label-kwds)))
+(c-lang-defconst c-label-kwds-regexp
+  all (c-make-keywords-re t (c-lang-var c-label-kwds)))
 (c-lang-defvar c-label-kwds-regexp (c-lang-var c-label-kwds-regexp))
 
 ;; Keywords that can occur anywhere in expressions.
@@ -345,8 +361,8 @@ appended."
 
 ;; Regexp matching the start of lambda constructs, or nil in languages
 ;; that doesn't have such things.
-(c-lang-defconst c-opt-lambda-key pike
-  (c-make-keywords-re t (c-lang-var c-lambda-kwds)))
+(c-lang-defconst c-opt-lambda-key
+  pike (c-make-keywords-re t (c-lang-var c-lambda-kwds)))
 (c-lang-defvar c-opt-lambda-key (c-lang-var c-opt-lambda-key))
 
 ;; Keywords that start constructs followed by statement blocks which
@@ -356,8 +372,8 @@ appended."
 
 ;; Regexp matching the start of in-expression statements, or nil in
 ;; languages that doesn't have such things.
-(c-lang-defconst c-opt-inexpr-block-key pike
-  (c-make-keywords-re t (c-lang-var c-inexpr-block-kwds)))
+(c-lang-defconst c-opt-inexpr-block-key
+  pike (c-make-keywords-re t (c-lang-var c-inexpr-block-kwds)))
 (c-lang-defvar c-opt-inexpr-block-key (c-lang-var c-opt-inexpr-block-key))
 
 ;; Keywords that start classes in expressions.
@@ -367,84 +383,85 @@ appended."
 
 ;; Regexp matching the start of a class in an expression, or nil in
 ;; languages that doesn't have such things.
-(c-lang-defconst c-opt-inexpr-class-key (java pike)
-  (c-make-keywords-re t (c-lang-var c-inexpr-class-kwds)))
+(c-lang-defconst c-opt-inexpr-class-key
+  (java pike) (c-make-keywords-re t (c-lang-var c-inexpr-class-kwds)))
 (c-lang-defvar c-opt-inexpr-class-key (c-lang-var c-opt-inexpr-class-key))
 
 ;; Regexp matching the start of any class, both at top level and in
 ;; expressions.
-(c-lang-defconst c-any-class-key all
-  (c-make-keywords-re t
-    (c-lang-var c-class-kwds)
-    (c-lang-var c-inexpr-class-kwds)))
-(c-lang-defconst c-any-class-key objc	; ObjC needs some tuning of the regexp.
-  (concat "@" (c-lang-var c-any-class-key)))
+(c-lang-defconst c-any-class-key
+  all (c-make-keywords-re t
+	(c-lang-var c-class-kwds)
+	(c-lang-var c-inexpr-class-kwds)))
+(c-lang-defconst c-any-class-key	; ObjC needs some tuning of the regexp.
+  objc (concat "@" (c-lang-var c-any-class-key)))
 (c-lang-defvar c-any-class-key (c-lang-var c-any-class-key))
 
 ;; Regexp matching the start of any declaration-level block that
 ;; contain another declaration level, i.e. that isn't a function
 ;; block.
-(c-lang-defconst c-decl-block-key all
-  (c-make-keywords-re t
-    (c-lang-var c-class-kwds)
-    (c-lang-var c-other-decl-block-kwds)
-    (c-lang-var c-inexpr-class-kwds)))
-(c-lang-defconst c-decl-block-key objc	; ObjC needs some tuning of the regexp.
-  (concat "@" (c-lang-var c-decl-block-key)))
+(c-lang-defconst c-decl-block-key
+  all (c-make-keywords-re t
+	(c-lang-var c-class-kwds)
+	(c-lang-var c-other-decl-block-kwds)
+	(c-lang-var c-inexpr-class-kwds)))
+(c-lang-defconst c-decl-block-key	; ObjC needs some tuning of the regexp.
+  objc (concat "@" (c-lang-var c-decl-block-key)))
 (c-lang-defvar c-decl-block-key (c-lang-var c-decl-block-key))
 
 ;; Keywords that can introduce bitfields.
-(c-lang-defconst c-bitfield-kwds (c c++)
-  '("char" "int" "long" "signed" "unsigned"))
+(c-lang-defconst c-bitfield-kwds
+  (c c++) '("char" "int" "long" "signed" "unsigned"))
 
 ;; Regexp matching the start of a bitfield (not uniquely), or nil in
 ;; languages without bitfield support.
-(c-lang-defconst c-opt-bitfield-key (c c++)
-  (c-make-keywords-re t (c-lang-var c-bitfield-kwds)))
+(c-lang-defconst c-opt-bitfield-key
+  (c c++) (c-make-keywords-re t (c-lang-var c-bitfield-kwds)))
 (c-lang-defvar c-opt-bitfield-key (c-lang-var c-opt-bitfield-key))
 
 ;; All keywords as a list.
-(c-lang-defconst c-keywords all
-  (delete-duplicates (append (c-lang-var c-primitive-type-kwds)
-			     (c-lang-var c-specifier-kwds)
-			     (c-lang-var c-class-kwds)
-			     (c-lang-var c-other-decl-block-kwds)
-			     (c-lang-var c-other-decl-kwds)
-			     (c-lang-var c-decl-spec-kwds)
-			     (c-lang-var c-protection-kwds)
-			     (c-lang-var c-block-stmt-1-kwds)
-			     (c-lang-var c-block-stmt-2-kwds)
-			     (c-lang-var c-simple-stmt-kwds)
-			     (c-lang-var c-label-kwds)
-			     (c-lang-var c-expr-kwds)
-			     (c-lang-var c-lambda-kwds)
-			     (c-lang-var c-inexpr-block-kwds)
-			     (c-lang-var c-inexpr-class-kwds)
-			     (c-lang-var c-bitfield-kwds)
-			     nil)
-		     :test 'string-equal))
+(c-lang-defconst c-keywords
+  all (delete-duplicates (append (c-lang-var c-primitive-type-kwds)
+				 (c-lang-var c-specifier-kwds)
+				 (c-lang-var c-class-kwds)
+				 (c-lang-var c-other-decl-block-kwds)
+				 (c-lang-var c-block-decls-with-vars)
+				 (c-lang-var c-other-decl-kwds)
+				 (c-lang-var c-decl-spec-kwds)
+				 (c-lang-var c-protection-kwds)
+				 (c-lang-var c-block-stmt-1-kwds)
+				 (c-lang-var c-block-stmt-2-kwds)
+				 (c-lang-var c-simple-stmt-kwds)
+				 (c-lang-var c-label-kwds)
+				 (c-lang-var c-expr-kwds)
+				 (c-lang-var c-lambda-kwds)
+				 (c-lang-var c-inexpr-block-kwds)
+				 (c-lang-var c-inexpr-class-kwds)
+				 (c-lang-var c-bitfield-kwds)
+				 nil)
+			 :test 'string-equal))
 (c-lang-defvar c-keywords (c-lang-var c-keywords))
 
 ;; All keywords as an adorned regexp.
-(c-lang-defconst c-keywords-regexp all
-  (c-make-keywords-re t (c-lang-var c-keywords)))
+(c-lang-defconst c-keywords-regexp
+  all (c-make-keywords-re t (c-lang-var c-keywords)))
 (c-lang-defvar c-keywords-regexp (c-lang-var c-keywords-regexp))
 
 ;; Regexp matching an access protection label in a class, or nil in
 ;; languages that doesn't have such things.
-(c-lang-defconst c-opt-access-key c++
-  (concat "\\("
-	  (c-make-keywords-re nil (c-lang-var c-protection-kwds))
-	  "\\)[ \t\n\r]*:"))
-(c-lang-defconst c-opt-access-key objc
-  (concat "@" (c-make-keywords-re t (c-lang-var c-protection-kwds))))
+(c-lang-defconst c-opt-access-key
+  c++ (concat "\\("
+	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
+	      "\\)[ \t\n\r]*:"))
+(c-lang-defconst c-opt-access-key
+  objc (concat "@" (c-make-keywords-re t (c-lang-var c-protection-kwds))))
 (c-lang-defvar c-opt-access-key (c-lang-var c-opt-access-key))
 
 ;; Regexp matching a normal label, i.e. not a label that's recognized
 ;; with a keyword, like switch labels.  It's only used at the
 ;; beginning of a statement.
-(c-lang-defconst c-label-key all
-  (concat (c-lang-var c-symbol-key) "[ \t\n\r]*:\\([^:]\\|$\\)"))
+(c-lang-defconst c-label-key
+  all (concat (c-lang-var c-symbol-key) "[ \t\n\r]*:\\([^:]\\|$\\)"))
 (c-lang-defvar c-label-key (c-lang-var c-label-key))
 
 ;; Regexp matching the beginning of a declaration specifier in the
@@ -462,10 +479,10 @@ appended."
 
 ;; Regexp describing friend declarations classes, or nil in languages
 ;; that doesn't have such things.
-(c-lang-defconst c-opt-friend-key c++
+(c-lang-defconst c-opt-friend-key
   ;; FIXME: Ought to use c-specifier-kwds or similar, and the template
   ;; skipping isn't done properly.
-  "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+")
+  c++ "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+")
 (c-lang-defvar c-opt-friend-key (c-lang-var c-opt-friend-key))
 
 ;; Special regexp to match the start of methods.
@@ -517,6 +534,29 @@ appended."
   c "*/"
   (c++ objc java idl pike) "")
 (c-lang-defvar comment-end (c-lang-var comment-end))
+
+;; Regexp that matches when there is no syntactically significant text
+;; before eol.  Macros are regarded as syntactically significant text
+;; here.
+(c-lang-defvar c-syntactic-eol
+  (concat (concat
+	   ;; Match horizontal whitespace and block comments that
+	   ;; doesn't contain newlines.
+	   "\\(\\s \\|"
+	   (concat "/\\*"
+		   "\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
+		   "\\*/")
+	   "\\)*")
+	  (concat
+	   ;; Match eol (possibly inside a block comment), or the
+	   ;; beginning of a line comment.  Note: This has to be
+	   ;; modified for awk where line comments start with '#'.
+	   "\\("
+	   (concat "\\("
+		   "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
+		   "\\)?"
+		   "$")
+	   "\\|//\\)")))
 
 ;; Regexp to append to paragraph-start.
 (c-lang-defconst paragraph-start
