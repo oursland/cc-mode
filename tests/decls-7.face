@@ -5,7 +5,7 @@
 
 (0 typ) (3 reg) (4 var) (7 reg) (16 var) (17 reg) (21 str) (22 reg)
 (0 typ) (3 reg) (6 var) (9 reg)
-(4 var) (8 reg)
+(4 var) (8 reg) (11 con) (15 reg)
 (0 typ) (3 reg) (4 var) (7 reg)
 (0 typ) (3 reg) (5 var) (8 reg)
 
