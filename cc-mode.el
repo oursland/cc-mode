@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-30 20:26:09 $
-;; Version:         $Revision: 2.20 $
+;; Last Modified:   $Date: 1992-04-30 22:21:51 $
+;; Version:         $Revision: 2.21 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-30 20:26:09 $|$Revision: 2.20 $|
+;; |$Date: 1992-04-30 22:21:51 $|$Revision: 2.21 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -140,7 +140,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.20 $
+  "Major mode for editing C++ code.  $Revision: 2.21 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -708,7 +708,7 @@ Returns nil if line starts inside a string, t if in a comment."
     (beginning-of-line)
     (let ((indent-point (point))
 	  (case-fold-search nil)
-	  state
+	  state do-indentation
 	  containing-sexp)
       (if parse-start
 	  (goto-char parse-start)
@@ -837,7 +837,7 @@ Returns nil if line starts inside a string, t if in a comment."
 			;; the following statements *do* indent even
 			;; for single statements (are there others?)
 			(if (looking-at
-			     "\\(do\\|else\\|for\\|if\\|while\\)[^a-zA-Z0-9_]")
+			     "\\(do\\|else\\|for\\|if\\|while\\)\\b")
 			    c-continued-statement-offset
 			  0))
                       ;; j.peck  [8/13/91]
@@ -848,57 +848,70 @@ Returns nil if line starts inside a string, t if in a comment."
 					  (skip-chars-forward " \t")
 					  (eq (following-char) ?{))
 			  c-continued-brace-offset 0)))
-	       ;; This line starts a new statement.
-	       ;; Position following last unclosed open.
-	       (goto-char containing-sexp)
-	       ;; Is line first statement after an open-brace?
-	       (or
-		 ;; If no, find that first statement and indent like it.
-		 (save-excursion
-		   (forward-char 1)
-		   (while (progn (skip-chars-forward " \t\n")
-				 (looking-at
-				  (concat
-				   "#\\|/\\*\\|//"
-				   "\\|case[ \t]"
-				   "\\|[a-zA-Z0-9_$]*:[^:]"
-				   "\\|friend[ \t]class[ \t]")))
-		     ;; Skip over comments and labels following openbrace.
-		     (cond ((= (following-char) ?\#)
-			    (forward-line 1))
-			   ((looking-at "/\\*")
-			    (search-forward "*/" nil 'move))
-			   ((looking-at "//\\|friend[ \t]class[ \t]")
-			    (forward-line 1))
-			   (t
-			    (re-search-forward ":[^:]" nil 'move))))
-		      ;; The first following code counts
-		      ;; if it is before the line we want to indent.
-		      (and (< (point) indent-point)
-			   (current-column)))
-		 ;; If no previous statement,
-		 ;; indent it relative to line brace is on.
-		 ;; For open brace in column zero, don't let statement
-		 ;; start there too.  If c-indent-offset is zero,
-		 ;; use c-brace-offset + c-continued-statement-offset instead.
-		 ;; For open-braces not the first thing in a line,
-		 ;; add in c-brace-imaginary-offset.
-		 (+ (if (and (bolp) (zerop c-indent-level))
-			(+ c-brace-offset c-continued-statement-offset)
-		      c-indent-level)
-		    ;; Move back over whitespace before the openbrace.
-		    ;; If openbrace is not first nonwhite thing on the line,
-		    ;; add the c-brace-imaginary-offset.
-		    (progn (skip-chars-backward " \t")
-			   (if (bolp) 0 c-brace-imaginary-offset))
-		    ;; If the openbrace is preceded by a parenthesized exp,
-		    ;; move to the beginning of that;
-		    ;; possibly a different line
-		    (progn
-		      (if (eq (preceding-char) ?\))
-			  (forward-sexp -1))
-		      ;; Get initial indentation of the line we are on.
-		      (current-indentation))))))))))
+	       ;; This line may start a new statement, or it could
+	       ;; represent the while closure of a do/while construct
+	       (if (save-excursion
+		     (and
+		      (progn
+			(goto-char indent-point)
+			(skip-chars-forward " \t")
+			(looking-at "while\\b"))
+		      (progn
+			(c++-backward-to-start-of-do containing-sexp)
+			(looking-at "do\\b"))
+		      (setq do-indentation (current-column))))
+		   do-indentation
+		 ;; else, this is the start of a new statement
+		 ;; Position following last unclosed open.
+		 (goto-char containing-sexp)
+		 ;; Is line first statement after an open-brace?
+		 (or
+		  ;; If no, find that first statement and indent like it.
+		  (save-excursion
+		    (forward-char 1)
+		    (while (progn (skip-chars-forward " \t\n")
+				  (looking-at
+				   (concat
+				    "#\\|/\\*\\|//"
+				    "\\|case[ \t]"
+				    "\\|[a-zA-Z0-9_$]*:[^:]"
+				    "\\|friend[ \t]class[ \t]")))
+		      ;; Skip over comments and labels following openbrace.
+		      (cond ((= (following-char) ?\#)
+			     (forward-line 1))
+			    ((looking-at "/\\*")
+			     (search-forward "*/" nil 'move))
+			    ((looking-at "//\\|friend[ \t]class[ \t]")
+			     (forward-line 1))
+			    (t
+			     (re-search-forward ":[^:]" nil 'move))))
+		    ;; The first following code counts
+		    ;; if it is before the line we want to indent.
+		    (and (< (point) indent-point)
+			 (current-column)))
+		  ;; If no previous statement,
+		  ;; indent it relative to line brace is on.
+		  ;; For open brace in column zero, don't let statement
+		  ;; start there too.  If c-indent-offset is zero,
+		  ;; use c-brace-offset + c-continued-statement-offset instead.
+		  ;; For open-braces not the first thing in a line,
+		  ;; add in c-brace-imaginary-offset.
+		  (+ (if (and (bolp) (zerop c-indent-level))
+			 (+ c-brace-offset c-continued-statement-offset)
+		       c-indent-level)
+		     ;; Move back over whitespace before the openbrace.
+		     ;; If openbrace is not first nonwhite thing on the line,
+		     ;; add the c-brace-imaginary-offset.
+		     (progn (skip-chars-backward " \t")
+			    (if (bolp) 0 c-brace-imaginary-offset))
+		     ;; If the openbrace is preceded by a parenthesized exp,
+		     ;; move to the beginning of that;
+		     ;; possibly a different line
+		     (progn
+		       (if (eq (preceding-char) ?\))
+			   (forward-sexp -1))
+		       ;; Get initial indentation of the line we are on.
+		       (current-indentation)))))))))))
 
 (defun c++-backward-to-noncomment (lim)
   "Skip backwards to first preceding non-comment character."
@@ -923,6 +936,28 @@ Returns nil if line starts inside a string, t if in a comment."
 		 (setq stop (<= (point) lim))
 	       (setq stop t)
 	       (goto-char opoint)))))))
+
+(defun c++-backward-to-start-of-do (&optional limit)
+  "Move to the start of the last ``unbalanced'' do."
+  (or limit (setq limit (save-excursion (beginning-of-defun) (point))))
+  (let ((do-level 1)
+	(case-fold-search nil))
+    (while (not (zerop do-level))
+      ;; we protect this call because trying to execute this when the
+      ;; while is not associated with a do will throw an error
+      (condition-case err
+	  (progn
+	    (backward-sexp 1)
+	    (cond ((looking-at "while\\b")
+		   (setq do-level (1+ do-level)))
+		  ((looking-at "do\\b")
+		   (setq do-level (1- do-level)))
+		  ((< (point) limit)
+		   (setq do-level 0)
+		   (goto-char limit))))
+	(error
+	 (goto-char limit)
+	 (setq do-level 0))))))
 
 (defun indent-c++-exp ()
   "Indent each line of the C++ grouping following point."
@@ -1329,7 +1364,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.20 $"
+(defconst c++-version "$Revision: 2.21 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
