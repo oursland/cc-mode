@@ -1,15 +1,22 @@
 CC Mode NEWS -- user visible changes.  -*- outline -*-
 
+* Changes in 5.30
+
+FIXME
+
+** New language variable system for derived modes.
+
+FIXME
+
 * Changes in 5.29
 
-FIXME: Update cc-mode.texi with this.
+Note: This was an unfinished interim release that was never publicly
+announced.
 
 ** Changes in analysis of nested syntactic constructs.
-The syntactic analysis engine has improved handling of cases where
+The syntactic analysis engine has better handling of cases where
 several syntactic constructs appear nested on the same line.  They are
 now handled as if each construct started on a line of its own.
-
-FIXME: Insert example here.
 
 This means that CC Mode now indents some cases differently, and
 although it's more consistent there might be cases where the old way
@@ -17,12 +24,22 @@ gave results that's more to one's liking.  So if you find a situation
 where you think that the indentation has become worse, please report
 it to bug-cc-mode@gnu.org.
 
+*** New syntactic symbol substatement-label.
+This symbol is used when a label is inserted between a statement and
+its substatement.  E.g:
+
+    if (x)
+      x_is_true:
+        do_stuff();
+
 ** Better handling of multiline macros.
 
 *** Syntactic indentation inside macros.
-Controlled by the new variable c-syntactic-indentation-in-macros.
-Note about how this requires macros to be written in a certain way to
-work well.
+The contents of multiline #define's are now analyzed and indented
+syntactically just like other code.  This can be disabled by the new
+variable c-syntactic-indentation-in-macros.  A new syntactic symbol
+cpp-define-intro has been added to control the initial indentation
+inside #define's.
 
 *** New lineup function c-lineup-cpp-define.
 Now used by default to line up macro continuation lines.  The behavior
@@ -34,15 +51,17 @@ empty lines within the macro better.
 
 *** Automatically inserted newlines continues the macro if used within one.
 This applies to the newlines inserted by the auto-newline mode, and to
-c-context-line-break.
+c-context-line-break and c-context-open-line.
 
 *** Better alignment of line continuation backslashes.
 c-backslash-region tries to adapt to surrounding backslashes.  New
-variable c-backslash-max-column.
+variable c-backslash-max-column which put a limit on how far out
+backslashes can be moved.
 
 *** Automatic alignment of line continuation backslashes.
 Controlled by the new variable c-auto-align-backslashes.  Affects
-c-context-line-break and newlines inserted in auto-newline mode.
+c-context-line-break, c-context-open-line and newlines inserted in
+auto-newline mode.
 
 *** Line indentation works better inside macros.
 Regardless whether syntactic indentation and syntactic indentation
@@ -50,6 +69,62 @@ inside macros are enabled or not, line indentation now ignores the
 line continuation backslashes.  This is most noticeable when syntactic
 indentation is turned off and there are empty lines (save for the
 backslash) in the macro.
+
+** indent-for-comment is more customizable.
+The behavior of M-; (indent-for-comment) is now configurable through
+the variable c-indent-comment-alist.  The indentation behavior based
+on the preceding code on the line, e.g. to get two spaces after #else
+and #endif but indentation to comment-column in most other cases
+(something which was hardcoded earlier).
+
+** New function c-context-open-line.
+It's the open-line equivalent of c-context-line-break.
+
+** New lineup functions
+
+*** c-lineup-cascaded-calls
+Lines up series of calls separated by "->" or ".".
+
+*** c-lineup-knr-region-comment
+Gives (what most people think is) better indentation of comments in
+the "K&R region" between the function header and its body.
+
+*** c-lineup-gcc-asm-reg
+Provides better indentation inside asm blocks.  Contributed by Kevin
+Ryde.
+
+*** c-lineup-argcont
+Lines up continued function arguments after the preceding comma.
+Contributed by Kevin Ryde.
+
+** Better caching of the syntactic context.
+CC Mode caches the positions of the opening parentheses (of any kind)
+of the lists surrounding the point.  Those positions are used in many
+places as anchor points for various searches.  The cache is now
+improved so that it can be reused to a large extent when the point is
+moved.  The less it moves, the less needs to be recalculated.
+
+The effect is that CC Mode should be fast most of the time even when
+opening parens are hung (i.e. aren't in column zero).  It's typically
+only the first time after the point is moved far down in a complex
+file that it'll take noticeable time to find out the syntactic
+context.
+
+** Statements are recognized in a more robust way.
+Statements are recognized most of the time even if they occur in an
+"invalid" context, e.g. in a function argument.  In practice that can
+happen anyway when macros are involved.
+
+** Improved the way c-indent-exp chooses the block to indent.
+It now indents the block for the closest sexp following the point
+whose closing paren ends on a different line.  This means that the
+point doesn't have to be immediately before the block to indent.
+Also, only the block and the closing line is indented; the current
+line is left untouched.
+
+** Added toggle for syntactic indentation.
+The function c-toggle-syntactic-indentation can be used to toggle
+syntactic indentation.
 
 * Changes in 5.28
 
