@@ -804,30 +804,32 @@ casts and declarations are fontified.  Used on level 2 and higher."
 ;; Macro used inside `c-font-lock-declarations'.  It ought to be a
 ;; defsubst or perhaps even a defun, but it contains lots of free
 ;; variables that refer to things inside `c-font-lock-declarations'.
-(defmacro c-fl-shift-type-backward ()
+(defmacro c-fl-shift-type-backward (&optional short)
   ;; `c-font-lock-declarations' can consume an arbitrary length list
   ;; of types when parsing a declaration, which means that it
   ;; sometimes consumes the identifier in the declaration as a type.
   ;; This is used to "backtrack" and make the last type be treated
   ;; as an identifier instead.
-  '(setq identifier-type at-type
-	 identifier-start type-start
-	 identifier-end type-end
-	 at-type (if (eq prev-at-type 'prefix)
-		     t
-		   prev-at-type)
-	 type-start (if prev-at-type
-			prev-type-start
-		      start-pos)
-	 type-end (if prev-at-type
-		      prev-type-end
-		    start-pos)
-	 start type-end
-	 prev-at-type nil
-	 got-parens nil
-	 got-identifier t
-	 got-suffix t
-	 paren-depth 0))
+  `(progn
+     ,(unless short
+	;; These identifiers are bound only in the inner let.
+	'(setq identifier-type at-type
+	       identifier-start type-start
+	       identifier-end type-end))
+     (if (setq at-type (if (eq prev-at-type 'prefix)
+			   t
+			 prev-at-type))
+	 (setq type-start prev-type-start
+	       type-end prev-type-end)
+       (setq type-start start-pos
+	     type-end start-pos))
+     ,(unless short
+	;; These identifiers are bound only in the inner let.
+	(setq start type-end
+	      got-parens nil
+	      got-identifier t
+	      got-suffix t
+	      paren-depth 0))))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
@@ -870,6 +872,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; Whether we've found a declaration or a cast.  We might know this
 	  ;; before we've found the type in it.
 	  at-decl-or-cast
+	  ;; Set when we need to back up to parse this as a declaration but
+	  ;; not as a cast.
+	  backup-if-not-cast
 	  ;; Set if we've found a "typedef" specifier.  The identifiers in the
 	  ;; declaration are then fontified as types.
 	  at-typedef
@@ -982,6 +987,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	   (setq at-type nil
 		 at-decl-or-cast nil
+		 backup-if-not-cast nil
 		 at-typedef nil
 		 maybe-typeless nil
 		 c-record-type-identifiers t
@@ -1273,10 +1279,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				(and got-suffix
 				     (not got-prefix)
 				     (not got-parens)))
-			;; Got two types after each other, so the latter is
-			;; probably the identifier.  Back up to the previous
-			;; type.
-			(c-fl-shift-type-backward)
+			;; Got two types after each other, so if this isn't a
+			;; cast then the latter probably is the identifier and
+			;; we should back up to the previous type.
+			(setq backup-if-not-cast t)
 			(throw 'at-decl-or-cast t))
 
 		    (when (eq at-type t)
@@ -1544,6 +1550,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    (at-decl-or-cast
 	     ;; We're at a declaration.  Highlight the type and the following
 	     ;; declarators.
+
+	     (when backup-if-not-cast
+	       (c-fl-shift-type-backward t))
 
 	     (when (and (eq arglist-type 'decl) (looking-at ","))
 	       ;; Make sure to propagate the `c-type-arg-start' property to
