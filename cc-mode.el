@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.212 $
-;; Last Modified:   $Date: 1994-01-27 15:43:40 $
+;; Version:         $Revision: 3.213 $
+;; Last Modified:   $Date: 1994-01-27 15:50:48 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-27 15:43:40 $|$Revision: 3.212 $|
+;; |$Date: 1994-01-27 15:50:48 $|$Revision: 3.213 $|
 
 ;;; Code:
 
@@ -159,11 +159,7 @@ reported and the semantic symbol is ignored.")
 Do not change this constant!  See the variable `c-offsets-alist' for
 more information.")
 
-;; we set this later on because, 1. it must be a copy of
-;; c-offsets-alist-default, 2. copy-sequence is broken under FSF Emacs
-;; 18 and 19 for cons cells, and c-copy-sequence isn't defined yet.
-;; See end of file
-(defvar c-offsets-alist nil
+(defvar c-offsets-alist (copy-alist c-offsets-alist-default)
   "*Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
 
@@ -720,7 +716,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.212 $
+cc-mode Revision: $Revision: 3.213 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -751,7 +747,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.212 $
+cc-mode Revision: $Revision: 3.213 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1362,17 +1358,6 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 	(error "%s is not a valid syntactic symbol." symbol))))
   (c-keep-region-active))
 
-(defun c-copy-sequence (sequence)
-  ;; copies SEQUENCE, but works when the sequence is a cons cell
-  ;; we can't just use (mapcar 'copy-sequence c-offsets-alist-default)
-  ;; because it won't copy cons cells in FSF Emacs 19 or 18.
-  (mapcar
-   (if (memq 'Lucid c-emacs-features) 'copy-sequence
-     (function
-      (lambda (conscell)
-	(cons (car conscell) (cdr conscell)))))
-   sequence))
-
 (defun c-set-style (style &optional global)
   "Set cc-mode variables to use one of several different indentation styles.
 The arguments are a string representing the desired style and a flag
@@ -1398,7 +1383,7 @@ flag comes from the prefix argument.  The styles are chosen from the
 	  (if (not (eq var 'c-offsets-alist))
 	      (set var val)
 	    ;; reset c-offsets-alist to the default value first
-	    (setq c-offsets-alist (c-copy-sequence c-offsets-alist-default))
+	    (setq c-offsets-alist (copy-alist c-offsets-alist-default))
 	    ;; now set the langelems that are different
 	    (mapcar
 	     (function
@@ -3243,7 +3228,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.212 $"
+(defconst c-version "$Revision: 3.213 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3385,10 +3370,6 @@ region."
 	 (lambda (elt)
 	   (make-obsolete-variable (car elt) (cdr elt))))
 	vars)))
-
-;; wish we could do this earlier
-(or c-offsets-alist
-    (setq c-offsets-alist (c-copy-sequence c-offsets-alist-default)))
 
 (provide 'cc-mode)
 ;;; cc-mode.el ends here
