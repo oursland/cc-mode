@@ -326,7 +326,7 @@
 				     ,(concat "\\(-?[0-9]+\\)\\|\\("
 					      (c-lang-var c-symbol-key)
 					      "\\)")
-				     limit 'move)
+				     limit t)
 			       (if (match-beginning 1)
 				   (put-text-property (match-beginning 1)
 						      (match-end 1)
@@ -341,11 +341,25 @@
 	;; Fontify leading identifiers in fully qualified names like
 	;; "foo::bar" in languages that supports such things.
 	,@(when (c-lang-var c-identifier-concat-key)
-	    `((,(concat "\\<"
-			(c-lang-var c-symbol-key)
-			"[ \t\n\r]*"
-			(c-lang-var c-identifier-concat-key))
-	       1 font-lock-reference-face)))
+	    `((,(byte-compile
+		 ;; Must use a function here since we match longer
+		 ;; than we want to move before doing a new search.
+		 ;; This is not necessary for XEmacs >= 20 since it
+		 ;; restarts the search from the end of the first
+		 ;; highlighted submatch (something that causes
+		 ;; problems in other places).
+		 `(lambda (limit)
+		    (when (re-search-forward
+			   ,(concat "\\(\\<"
+				    (c-lang-var c-symbol-key)
+				    "[ \t\n\r]*"
+				    (c-lang-var c-identifier-concat-key)
+				    "\\)"
+				    "[ \t\n\r]*"
+				    (c-lang-var c-symbol-start))
+			  limit t)
+		      (goto-char (match-end 1)))))
+	       2 font-lock-reference-face)))
 	))
 
 (defun c-font-lock-declarators (limit list)
