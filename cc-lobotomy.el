@@ -115,8 +115,9 @@ Possible values to put on this list:
 
 ;; This is a faster version of c-in-literal.  It trades speed for one
 ;; approximation, namely that within other literals, the `#' character
-;; cannot be the first non-whitespace on a line.
-(defun cc-in-literal-lobotomized (&optional lim)
+;; cannot be the first non-whitespace on a line.  This only happens if
+;; detect-cpp is non-nil, which isn't very often.
+(defun cc-in-literal-lobotomized (&optional lim detect-cpp)
   ;; first check the cache
   (if (and (vectorp c-in-literal-cache)
 	   (= (point) (aref c-in-literal-cache 0)))
@@ -127,7 +128,7 @@ Possible values to put on this list:
     (let* (state
 	   (char-at-boi (char-after (c-point 'boi)))
 	   (rtn (cond
-		 ((and char-at-boi (= char-at-boi ?#))
+		 ((and detect-cpp char-at-boi (= char-at-boi ?#))
 		  'pound)
 		 ((nth 3 (setq state (save-excursion
 				       (parse-partial-sexp
