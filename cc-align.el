@@ -159,6 +159,10 @@
 		    (goto-char (cdr langelem))
 		    (back-to-indentation))))
 	    (- (current-column) cs-curcol))
+	;; special handling of Javadoc comments
+	(if (and (eq major-mode 'java-mode)
+		 (string-equal (match-string 0) "/**"))
+	    (setq stars (1+ stars)))
 	(if (zerop stars)
 	    (skip-chars-forward " \t"))
 	(- (current-column) stars cs-curcol))
