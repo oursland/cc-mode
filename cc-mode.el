@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.90 $
-;; Last Modified:   $Date: 1993-11-23 22:06:42 $
+;; Version:         $Revision: 3.91 $
+;; Last Modified:   $Date: 1993-11-23 22:37:59 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-23 22:06:42 $|$Revision: 3.90 $|
+;; |$Date: 1993-11-23 22:37:59 $|$Revision: 3.91 $|
 
 ;;; Code:
 
@@ -492,7 +492,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.90 $
+  "Major mode for editing C++ code.  $Revision: 3.91 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -522,7 +522,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.90 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.91 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -764,6 +764,20 @@ Optional argument has the following meanings when supplied:
        ;; doesn't hurt for v19
        (,@ nil)
        )))
+
+(defmacro cc-safe-uplist (arg)
+  ;; call up-list with ARG, but do not generate an error.  If the
+  ;; up-list fails, return nil, otherwise return t
+  (` (condition-case nil
+	 (progn (up-list (, arg)) t)
+       (error nil))))
+
+(defmacro cc-safe-downlist (arg)
+  ;; call down-list with ARG, but do not generate an error.  If the
+  ;; down-list fails, return nil, otherwise return t
+  (` (condition-case nil
+	 (progn (down-list (, arg)) t)
+       (error nil))))
 
 (defmacro cc-auto-newline ()
   ;; if auto-newline feature is turned on, insert a newline character
@@ -1533,14 +1547,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
     state))
 
 (defmacro cc-back-block ()
-  ;; move up one block, returning t if successful, otherwise returning
-  ;; nil
-  (` (or (condition-case nil
-	     (progn (up-list -1) t)
-	   (error nil))
-	 (condition-case nil
-	     (progn (down-list -1) t)
-	   (error nil))
+  ;; move up one block, returning t if successful, else returning nil
+  (` (or (cc-safe-uplist -1)
+	 (cc-safe-downlist -1)
 	 )))
 
 (defun cc-beginning-of-inheritance-list (&optional lim)
@@ -2101,12 +2110,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	 ;; the class
 	 ((= char-after-ip ?})
 	  (goto-char containing-sexp)
-	  (if (= containing-sexp lim)
-	      (cc-add-semantics 'defun-close (cc-point 'boi))
+	  (if (and (cc-safe-uplist -1)
+		   (>= (point) lim))
+	      ;; we are not closing a top-level construct
+	      (progn
+		(goto-char containing-sexp)
+		(cc-add-semantics 'block-close (cc-point 'boi)))
+	    ;; we are closing a top-level construct
 	    (if inclass-p
 		(cc-add-semantics 'inline-close (cc-point 'boi))
-	      (cc-add-semantics 'block-close (cc-point 'boi))
-	      )))
+	      (cc-add-semantics 'defun-close (cc-point 'boi)))
+	    ))
 	 ;; CASE 13: statement catchall
 	 (t
 	  ;; we know its a statement, but we need to find out if it is
@@ -2404,7 +2418,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.90 $"
+(defconst cc-version "$Revision: 3.91 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
