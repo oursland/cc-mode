@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.88 $
-;; Last Modified:   $Date: 1993-11-23 19:11:52 $
+;; Version:         $Revision: 3.89 $
+;; Last Modified:   $Date: 1993-11-23 19:16:42 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-23 19:11:52 $|$Revision: 3.88 $|
+;; |$Date: 1993-11-23 19:16:42 $|$Revision: 3.89 $|
 
 ;;; Code:
 
@@ -492,7 +492,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.88 $
+  "Major mode for editing C++ code.  $Revision: 3.89 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -522,7 +522,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.88 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.89 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1644,66 +1644,71 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
   ;; if a classkey was found, return a cons cell containing the point
   ;; of the class's opening brace in the car, and the class's
   ;; declaration start in the cdr, otherwise return nil.
-  (condition-case nil
-      (save-excursion
-	(let (search-start donep foundp)
-	  (and search-end
-	       (goto-char search-end))
-	  (while (not donep)
-	    ;; go backwards to the most enclosing C block
-	    (while (not search-end)
-	      (if (not (cc-back-block))
-		  (setq search-end (goto-char (cc-point 'bod)))
-		(if (memq (following-char) '(?} ?{))
-		    (setq search-end (point))
-		  (forward-char 1)
-		  (backward-sexp 1)
-		  )))
-	    ;; go backwards from here to the next most enclosing block
-	    (while (not search-start)
-	      (if (not (cc-back-block))
-		  (setq search-start (goto-char (cc-point 'bod)))
-		(if (memq (following-char) '(?} ?{))
-		    (setq search-start (point))
-		  (forward-char 1)
-		  (backward-sexp 1)
-		  )))
-	    (cond
-	     ;; CASE 1: search-end is a close brace. we cannot find the
-	     ;; enclosing brace
-	     ((= (char-after search-end) ?})
-	      (setq donep t))
-	     ;; CASE 2: we have exhausted all our possible searches
-	     ((= search-start search-end)
-	      (setq donep t))
-	     ;; CASE 3: now look for class key, but make sure its not in a
-	     ;; literal
-	     (t
-	      (while (and (re-search-forward cc-class-key search-end t)
-			  (cc-in-literal)))
-	      (if (and (/= (point) search-end)
-		       (/= (point) search-start)
-		       (not (cc-in-literal)))
-		  (setq donep t
-			foundp t)
-		;; if the char under search-start is a close brace,
-		;; then we just traversed a top-level defun, so
-		;; there's no way we'll find an enclosing class-key
-		;; and we need look no further.
-		(if (= (char-after search-start) ?})
-		    (setq donep t)
-		  ;; not found in this region. reset search extent and
-		  ;; try again
-		  (setq search-end search-start
-			search-start nil)
-		  (goto-char search-end))
-		))
-	     ))
-	  ;; we've search as much as we can.  if we've found a classkey,
-	  ;; then search-end should be at the class's opening brace
-	  (and foundp (cons search-end (cc-point 'boi)))
-	  ))
-    (error nil)))
+  (and (eq major-mode 'cc-c++-mode)
+       (condition-case nil
+	   (save-excursion
+	     (let (search-start donep foundp)
+	       (and search-end
+		    (goto-char search-end))
+	       (while (not donep)
+		 ;; go backwards to the most enclosing C block
+		 (while (not search-end)
+		   (if (not (cc-back-block))
+		       (setq search-end (goto-char (cc-point 'bod)))
+		     (if (memq (following-char) '(?} ?{))
+			 (setq search-end (point))
+		       (forward-char 1)
+		       (backward-sexp 1)
+		       )))
+		 ;; go backwards from here to the next most enclosing
+		 ;; block
+		 (while (not search-start)
+		   (if (not (cc-back-block))
+		       (setq search-start (goto-char (cc-point 'bod)))
+		     (if (memq (following-char) '(?} ?{))
+			 (setq search-start (point))
+		       (forward-char 1)
+		       (backward-sexp 1)
+		       )))
+		 (cond
+		  ;; CASE 1: search-end is a close brace. we cannot
+		  ;; find the enclosing brace
+		  ((= (char-after search-end) ?})
+		   (setq donep t))
+		  ;; CASE 2: we have exhausted all our possible
+		  ;; searches
+		  ((= search-start search-end)
+		   (setq donep t))
+		  ;; CASE 3: now look for class key, but make sure its
+		  ;; not in a literal
+		  (t
+		   (while (and (re-search-forward cc-class-key search-end t)
+			       (cc-in-literal)))
+		   (if (and (/= (point) search-end)
+			    (/= (point) search-start)
+			    (not (cc-in-literal)))
+		       (setq donep t
+			     foundp t)
+		     ;; if the char under search-start is a close
+		     ;; brace, then we just traversed a top-level
+		     ;; defun, so there's no way we'll find an
+		     ;; enclosing class-key and we need look no
+		     ;; further.
+		     (if (= (char-after search-start) ?})
+			 (setq donep t)
+		       ;; not found in this region. reset search
+		       ;; extent and try again
+		       (setq search-end search-start
+			     search-start nil)
+		       (goto-char search-end))
+		     ))
+		  ))
+	       ;; we've search as much as we can.  if we've found a
+	       ;; classkey, then search-end should be at the class's
+	       ;; opening brace
+	       (and foundp (cons search-end (cc-point 'boi)))
+	       ))
+	 (error nil))))
 
 ;; defuns to look backwards for things
 (defun cc-backward-to-start-of-do (&optional lim)
@@ -2399,7 +2404,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.88 $"
+(defconst cc-version "$Revision: 3.89 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
