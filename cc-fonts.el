@@ -178,8 +178,6 @@
 (defun c-make-inverse-face (oldface newface)
   ;; Emacs and XEmacs have completely different face manipulation
   ;; routines. :P
-  ;;
-  ;; This function does not do any hidden buffer changes
   (copy-face oldface newface)
   (cond ((fboundp 'face-inverse-video-p)
 	 ;; Emacs.  This only looks at the inverse flag in the current
@@ -204,6 +202,8 @@
     ;; additional font-lock property, or else the font-lock package
     ;; won't recognize it as fontified and might override it
     ;; incorrectly.
+    ;;
+    ;; This function does a hidden buffer change.
     (if (fboundp 'font-lock-set-face)
 	;; Note: This function has no docstring in XEmacs so it might be
 	;; considered internal.
@@ -212,6 +212,8 @@
 
   (defmacro c-remove-font-lock-face (from to)
     ;; This is the inverse of `c-put-font-lock-face'.
+    ;;
+    ;; This function does a hidden buffer change.
     (if (fboundp 'font-lock-remove-face)
 	`(font-lock-remove-face ,from ,to)
       `(remove-text-properties ,from ,to '(face nil))))
@@ -220,6 +222,8 @@
     ;; Put `font-lock-string-face' on a string.  The surrounding
     ;; quotes are included in Emacs but not in XEmacs.  The passed
     ;; region should include them.
+    ;;
+    ;; This function does a hidden buffer change.
     (if (featurep 'xemacs)
 	`(c-put-font-lock-face (1+ ,from) (1- ,to) 'font-lock-string-face)
       `(c-put-font-lock-face ,from ,to 'font-lock-string-face)))
@@ -228,6 +232,8 @@
     ;; Like `let', but additionally activates `c-record-type-identifiers'
     ;; and `c-record-ref-identifiers', and fontifies the recorded ranges
     ;; accordingly on exit.
+    ;;
+    ;; This function does hidden buffer changes.
     `(let ((c-record-type-identifiers t)
 	   c-record-ref-identifiers
 	   ,@varlist)
@@ -241,6 +247,8 @@
     ;; string literal skip to the end of it or to LIMIT, whichever
     ;; comes first, and return t.  Otherwise return nil.  The match
     ;; data is not clobbered.
+    ;;
+    ;; This function might do hidden buffer changes.
     (when (c-got-face-at (point) c-literal-faces)
       (while (progn
 	       (goto-char (next-single-property-change
@@ -272,8 +280,8 @@
     ;; the anchored matcher forms.
     ;;
     ;; This function does not do any hidden buffer changes, but the
-    ;; generated functions will.  They are however used in places
-    ;; covered by the font-lock context.
+    ;; generated functions will.  (They are however used in places
+    ;; covered by the font-lock context.)
 
     ;; Note: Replace `byte-compile' with `eval' to debug the generated
     ;; lambda easier.
@@ -321,6 +329,8 @@
 (defun c-fontify-recorded-types-and-refs ()
   ;; Convert the ranges recorded on `c-record-type-identifiers' and
   ;; `c-record-ref-identifiers' to fontification.
+  ;;
+  ;; This function does hidden buffer changes.
   (let (elem)
     (while (consp c-record-type-identifiers)
       (setq elem (car c-record-type-identifiers)
@@ -476,6 +486,8 @@ stuff.  Used on level 1 and higher."
   ;; Assuming the point is after the opening character of a string,
   ;; fontify that char with `font-lock-warning-face' if the string
   ;; decidedly isn't terminated properly.
+  ;;
+  ;; This function does hidden buffer changes.
   (let ((start (1- (point))))
     (save-excursion
       (and (eq (elt (parse-partial-sexp start (c-point 'eol)) 8) start)
@@ -600,6 +612,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 (defun c-font-lock-complex-decl-prepare (limit)
   ;; Called before any of the matchers in `c-complex-decl-matchers'.
   ;; Nil is always returned.
+  ;;
+  ;; This function does hidden buffer changes.
 
   ;;(message "c-font-lock-complex-decl-prepare %s %s" (point) limit)
 
@@ -638,6 +652,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; arglists from the point to LIMIT.  Note that
   ;; `c-font-lock-declarations' already has handled many of them.  Nil
   ;; is always returned.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let (;; The font-lock package in Emacs is known to clobber
 	;; `parse-sexp-lookup-properties' (when it exists).
@@ -714,6 +730,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; "bar" in "int foo = 17, bar;").  Stop at LIMIT.  If TYPES is
   ;; non-nil, fontify all identifiers as types.  Nil is always
   ;; returned.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-fontify-types-and-refs
@@ -841,8 +859,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; Assumes that strings and comments have been fontified already.  Nil is
   ;; always returned.
   ;;
-  ;; This function can make hidden buffer changes, but the font-lock
-  ;; context covers that.
+  ;; This function might do hidden buffer changes.
 
   ;;(message "c-font-lock-declarations search from %s to %s" (point) limit)
 
@@ -1257,8 +1274,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   ;; taken care of directly by the gargantuan
   ;; `c-font-lock-declarations' on higher levels.
   ;;
-  ;; This function can make hidden buffer changes, but the font-lock
-  ;; context covers that.
+  ;; This function might do hidden buffer changes.
 
   (let (continue-pos id-start
 	;; The font-lock package in Emacs is known to clobber
@@ -1434,8 +1450,6 @@ higher."
   ;; to override, but we should otoh avoid clobbering a user setting.
   ;; This heuristic for that isn't perfect, but I can't think of any
   ;; better. /mast
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (when (and (boundp def-var)
 	     (memq (symbol-value def-var)
 		   (cons nil
@@ -1492,6 +1506,8 @@ need for `c-font-lock-extra-types'.")
   ;;
   ;; As usual, C++ takes the prize in coming up with a hard to parse
   ;; syntax. :P
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (unless (c-skip-comments-and-strings limit)
     (save-excursion
@@ -1642,6 +1658,8 @@ need for `c++-font-lock-extra-types'.")
   ;; "@protocol" declaration, fontify all the types in the directive.
   ;; Return t if the directive was fully recognized.  Point will then
   ;; be at the end of it.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (c-fontify-types-and-refs
       (start-char
@@ -1682,6 +1700,8 @@ need for `c++-font-lock-extra-types'.")
   ;; method declaration, fontify it.  This must be done before normal
   ;; casts, declarations and labels are fontified since they will get
   ;; false matches in these things.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (c-fontify-types-and-refs
       ((first t)
@@ -1730,6 +1750,8 @@ need for `c++-font-lock-extra-types'.")
 (defun c-font-lock-objc-methods (limit)
   ;; Fontify method declarations in Objective-C.  Nil is always
   ;; returned.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let (;; The font-lock package in Emacs is known to clobber
 	;; `parse-sexp-lookup-properties' (when it exists).
@@ -1905,6 +1927,8 @@ need for `pike-font-lock-extra-types'.")
   ;; Note that faces added through KEYWORDS should never replace the
   ;; existing `c-doc-face-name' face since the existence of that face
   ;; is used as a flag in other code to skip comments.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let (comment-beg region-beg)
     (if (eq (get-text-property (point) 'face)
@@ -1986,6 +2010,8 @@ need for `pike-font-lock-extra-types'.")
   ;; between the point and LIMIT that only is fontified with
   ;; `c-doc-face-name'.  If a match is found then submatch 0 surrounds
   ;; the first char and t is returned, otherwise nil is returned.
+  ;;
+  ;; This function might do hidden buffer changes.
   (let (start)
     (while (if (re-search-forward regexp limit t)
 	       (not (eq (get-text-property
@@ -2036,6 +2062,8 @@ need for `pike-font-lock-extra-types'.")
 (defun autodoc-font-lock-line-markup (limit)
   ;; Fontify all line oriented keywords between the point and LIMIT.
   ;; Nil is always returned.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((line-re (concat "^\\(\\(/\\*!\\|\\s *\\("
 			 c-current-comment-prefix
@@ -2124,6 +2152,8 @@ need for `pike-font-lock-extra-types'.")
 (defun autodoc-font-lock-keywords ()
   ;; Note that we depend on that `c-current-comment-prefix' has got
   ;; its proper value here.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   ;; The `c-type' text property with `c-decl-end' is used to mark the
   ;; end of the `autodoc-decl-keywords' occurrences to fontify the

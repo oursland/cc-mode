@@ -58,6 +58,11 @@
 ;; interesting positions.  The complete list for the syntactic element
 ;; (beginning with the symbol itself) is available in
 ;; `c-syntactic-element'.
+;;
+;; Lineup functions must not change the content of the buffer unless
+;; it's completely reversed again.  They are however allowed to do
+;; hidden buffer changes, i.e. set text properties for caching
+;; purposes etc.  Buffer undo recording is disabled while they run.
 
 (defun c-lineup-topmost-intro-cont (langelem)
   "Line up declaration continuation lines zero or one indentation step.

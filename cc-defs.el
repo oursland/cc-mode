@@ -190,9 +190,7 @@ one of the following symbols:
 `eopl' -- end of previous line
 
 If the referenced position doesn't exist, the closest accessible point
-to it is returned.  This function does not modify point or mark.
-
-This function does not do any hidden buffer changes."
+to it is returned.  This function does not modify the point or the mark."
 
   (if (eq (car-safe position) 'quote)
       (let ((position (eval position)))
@@ -315,8 +313,6 @@ This function does not do any hidden buffer changes."
 
 (defmacro c-safe (&rest body)
   ;; safely execute BODY, return nil if an error occurred
-  ;;
-  ;; This function does not do any hidden buffer changes.
   `(condition-case nil
        (progn ,@body)
      (error nil)))
@@ -392,9 +388,7 @@ fails for any reason.
 This is like `forward-sexp' except that it isn't interactive and does
 not do any user friendly adjustments of the point and that it isn't
 susceptible to user configurations such as disabling of signals in
-certain situations.
-
-This function does not do any hidden buffer changes."
+certain situations."
   (or count (setq count 1))
   `(goto-char (scan-sexps (point) ,count)))
 
@@ -408,9 +402,7 @@ This function does not do any hidden buffer changes."
 for unbalanced parens.
 
 A limit for the search may be given.  FROM is assumed to be on the
-right side of it.
-
-This function does not do any hidden buffer changes."
+right side of it."
   (let ((res (if (featurep 'xemacs)
 		 `(scan-lists ,from ,count ,depth nil t)
 	       `(c-safe (scan-lists ,from ,count ,depth)))))
@@ -435,9 +427,7 @@ This function does not do any hidden buffer changes."
 or nil if no such position exists.  The point is used if POS is left out.
 
 A limit for the search may be given.  The start position is assumed to
-be before it.
-
-This function does not do any hidden buffer changes."
+be before it."
   `(c-safe-scan-lists ,(or pos `(point)) 1 1 ,limit))
 
 (defmacro c-up-list-backward (&optional pos limit)
@@ -445,9 +435,7 @@ This function does not do any hidden buffer changes."
 or nil if no such position exists.  The point is used if POS is left out.
 
 A limit for the search may be given.  The start position is assumed to
-be after it.
-
-This function does not do any hidden buffer changes."
+be after it."
   `(c-safe-scan-lists ,(or pos `(point)) -1 1 ,limit))
 
 (defmacro c-down-list-forward (&optional pos limit)
@@ -455,9 +443,7 @@ This function does not do any hidden buffer changes."
 or nil if no such position exists.  The point is used if POS is left out.
 
 A limit for the search may be given.  The start position is assumed to
-be before it.
-
-This function does not do any hidden buffer changes."
+be before it."
   `(c-safe-scan-lists ,(or pos `(point)) 1 -1 ,limit))
 
 (defmacro c-down-list-backward (&optional pos limit)
@@ -465,9 +451,7 @@ This function does not do any hidden buffer changes."
 or nil if no such position exists.  The point is used if POS is left out.
 
 A limit for the search may be given.  The start position is assumed to
-be after it.
-
-This function does not do any hidden buffer changes."
+be after it."
   `(c-safe-scan-lists ,(or pos `(point)) -1 -1 ,limit))
 
 (defmacro c-go-up-list-forward (&optional pos limit)
@@ -476,9 +460,7 @@ or containing the point if POS is left out.  Return t if such a
 position exists, otherwise nil is returned and the point isn't moved.
 
 A limit for the search may be given.  The start position is assumed to
-be before it.
-
-This function does not do any hidden buffer changes."
+be before it."
   (let ((res `(c-safe (goto-char (scan-lists ,(or pos `(point)) 1 1)) t)))
     (if limit
 	`(save-restriction
@@ -492,9 +474,7 @@ or containing the point if POS is left out.  Return t if such a
 position exists, otherwise nil is returned and the point isn't moved.
 
 A limit for the search may be given.  The start position is assumed to
-be after it.
-
-This function does not do any hidden buffer changes."
+be after it."
   (let ((res `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 1)) t)))
     (if limit
 	`(save-restriction
@@ -508,9 +488,7 @@ or before the point if POS is left out.  Return t if such a position
 exists, otherwise nil is returned and the point isn't moved.
 
 A limit for the search may be given.  The start position is assumed to
-be before it.
-
-This function does not do any hidden buffer changes."
+be before it."
   (let ((res `(c-safe (goto-char (scan-lists ,(or pos `(point)) 1 -1)) t)))
     (if limit
 	`(save-restriction
@@ -524,9 +502,7 @@ or before the point if POS is left out.  Return t if such a position
 exists, otherwise nil is returned and the point isn't moved.
 
 A limit for the search may be given.  The start position is assumed to
-be after it.
-
-This function does not do any hidden buffer changes."
+be after it."
   (let ((res `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 -1)) t)))
     (if limit
 	`(save-restriction
@@ -547,8 +523,6 @@ This function does not do any hidden buffer changes."
   ;; This is really a bit too large to be a macro but that isn't a
   ;; problem as long as it only is used in one place in
   ;; `c-parse-state'.
-  ;;
-  ;; This function does not do any hidden buffer changes.
 
   `(progn
      (if (and ,(cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
@@ -591,16 +565,12 @@ This function does not do any hidden buffer changes."
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   `(progn
      (message ,format ,@args)
      (ding)))
 
 (defmacro c-update-modeline ()
   ;; set the c-auto-hungry-string for the correct designation on the modeline
-  ;;
-  ;; This function does not do any hidden buffer changes.
   `(progn
      (setq c-auto-hungry-string
 	   (if c-auto-newline
@@ -611,8 +581,6 @@ This function does not do any hidden buffer changes."
 (defmacro c-with-syntax-table (table &rest code)
   ;; Temporarily switches to the specified syntax table in a failsafe
   ;; way to execute code.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   `(let ((c-with-syntax-table-orig-table (syntax-table)))
      (unwind-protect
 	 (progn
@@ -624,9 +592,7 @@ This function does not do any hidden buffer changes."
 (defmacro c-skip-ws-forward (&optional limit)
   "Skip over any whitespace following point.
 This function skips over horizontal and vertical whitespace and line
-continuations.
-
-This function does not do any hidden buffer changes."
+continuations."
   (if limit
       `(let ((limit (or ,limit (point-max))))
 	 (while (progn
@@ -647,9 +613,7 @@ This function does not do any hidden buffer changes."
 (defmacro c-skip-ws-backward (&optional limit)
   "Skip over any whitespace preceding point.
 This function skips over horizontal and vertical whitespace and line
-continuations.
-
-This function does not do any hidden buffer changes."
+continuations."
   (if limit
       `(let ((limit (or ,limit (point-min))))
 	 (while (progn
@@ -667,9 +631,7 @@ This function does not do any hidden buffer changes."
 
 (defmacro c-major-mode-is (mode)
   "Return non-nil if the current CC Mode major mode is MODE.
-MODE is either a mode symbol or a list of mode symbols.
-
-This function does not do any hidden buffer changes."
+MODE is either a mode symbol or a list of mode symbols."
   (if (eq (car-safe mode) 'quote)
       (let ((mode (eval mode)))
 	(if (listp mode)
@@ -737,6 +699,8 @@ This function does not do any hidden buffer changes."
   ;;
   ;; If there's a `text-property-default-nonsticky' variable (Emacs
   ;; 21) then it's assumed that the property is present on it.
+  ;;
+  ;; This macro does a hidden buffer change.
   (setq property (eval property))
   (if (or c-use-extents
 	  (not (cc-bytecomp-boundp 'text-property-default-nonsticky)))
@@ -779,6 +743,8 @@ This function does not do any hidden buffer changes."
   ;; Remove the given property on the character at POS if it's been put
   ;; there by `c-put-char-property'.  PROPERTY is assumed to be
   ;; constant.
+  ;;
+  ;; This macro does a hidden buffer change.
   (setq property (eval property))
   (cond (c-use-extents
 	 ;; XEmacs.
@@ -803,6 +769,8 @@ This function does not do any hidden buffer changes."
   ;; lists of the `rear-nonsticky' properties in the region, if such
   ;; are used.  Thus it should not be used for common properties like
   ;; `syntax-table'.
+  ;;
+  ;; This macro does hidden buffer changes.
   (setq property (eval property))
   (if c-use-extents
       ;; XEmacs.
@@ -866,6 +834,8 @@ This function does not do any hidden buffer changes."
 (defsubst c-mark-<-as-paren (pos)
   ;; Mark the "<" character at POS as an sexp list opener using the
   ;; syntax-table property.
+  ;;
+  ;; This function does a hidden buffer change.
   (c-put-char-property pos 'syntax-table c-<-as-paren-syntax))
 
 (defconst c->-as-paren-syntax '(5 . ?<))
@@ -873,13 +843,13 @@ This function does not do any hidden buffer changes."
 (defsubst c-mark->-as-paren (pos)
   ;; Mark the ">" character at POS as an sexp list closer using the
   ;; syntax-table property.
+  ;;
+  ;; This function does a hidden buffer change.
   (c-put-char-property pos 'syntax-table c->-as-paren-syntax))
 
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
   ;; in LIST.  Uses assq.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (let (match)
     (while (and list
 		(not (setq match (assq (car list) alist))))
@@ -889,8 +859,6 @@ This function does not do any hidden buffer changes."
 (defsubst c-lookup-lists (list alist1 alist2)
   ;; first, find the first entry from LIST that is present in ALIST1,
   ;; then find the entry in ALIST2 for that entry.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (assq (car (c-intersect-lists list alist1)) alist2))
 
 (defsubst c-langelem-sym (langelem)
@@ -898,9 +866,7 @@ This function does not do any hidden buffer changes."
 
 LANGELEM is a syntactic element, i.e. either a cons cell on the
 \"old\" form given as the first argument to lineup functions or a list
-on the \"new\" form as used in `c-syntactic-element'.
-
-This function does not do any hidden buffer changes."
+on the \"new\" form as used in `c-syntactic-element'."
   (car langelem))
 
 (defsubst c-langelem-pos (langelem)
@@ -908,9 +874,7 @@ This function does not do any hidden buffer changes."
 
 LANGELEM is a syntactic element, i.e. either a cons cell on the
 \"old\" form given as the first argument to lineup functions or a list
-on the \"new\" form as used in `c-syntactic-element'.
-
-This function does not do any hidden buffer changes."
+on the \"new\" form as used in `c-syntactic-element'."
   (if (consp (cdr langelem))
       (car-safe (cdr langelem))
     (cdr langelem)))
@@ -921,9 +885,7 @@ Leave point at that position unless PRESERVE-POINT is non-nil.
 
 LANGELEM is a syntactic element, i.e. either a cons cell on the
 \"old\" form given as the first argument to lineup functions or a list
-on the \"new\" form as used in `c-syntactic-element'.
-
-This function does not do any hidden buffer changes."
+on the \"new\" form as used in `c-syntactic-element'."
   (let ((pos (c-langelem-pos langelem))
 	(here (point)))
     (if pos
@@ -940,24 +902,18 @@ This function does not do any hidden buffer changes."
 LANGELEM is a syntactic element, typically on the \"new\" form as used
 in `c-syntactic-element'.  It may be on the \"old\" form that is used
 as the first argument to lineup functions, but then the returned value
-always will be nil.
-
-This function does not do any hidden buffer changes."
+always will be nil."
   (car-safe (cdr-safe (cdr-safe langelem))))
 
 (defsubst c-keep-region-active ()
   ;; Do whatever is necessary to keep the region active in XEmacs.
   ;; This is not needed for Emacs.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (and (boundp 'zmacs-region-stays)
        (setq zmacs-region-stays t)))
 
 (defsubst c-region-is-active-p ()
   ;; Return t when the region is active.  The determination of region
   ;; activeness is different in both Emacs and XEmacs.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (cond
    ;; XEmacs
    ((and (fboundp 'region-active-p)
@@ -979,9 +935,7 @@ This function does not do any hidden buffer changes."
 
 (defsubst c-mode-symbol (suffix)
   "Prefix the current mode prefix (e.g. \"c-\") to SUFFIX and return
-the corresponding symbol.
-
-This function does not do any hidden buffer changes."
+the corresponding symbol."
   (or c-buffer-is-cc-mode
       (error "Not inside a CC Mode based mode"))
   (let ((mode-prefix (get c-buffer-is-cc-mode 'c-mode-prefix)))
@@ -992,16 +946,12 @@ This function does not do any hidden buffer changes."
 
 (defsubst c-mode-var (suffix)
   "Prefix the current mode prefix (e.g. \"c-\") to SUFFIX and return
-the value of the variable with that name.
-
-This function does not do any hidden buffer changes."
+the value of the variable with that name."
   (symbol-value (c-mode-symbol suffix)))
 
 (defsubst c-got-face-at (pos faces)
   "Return non-nil if position POS in the current buffer has any of the
-faces in the list FACES.
-
-This function does not do any hidden buffer changes."
+faces in the list FACES."
   (let ((pos-faces (get-text-property pos 'face)))
     (if (consp pos-faces)
 	(progn
@@ -1017,8 +967,6 @@ This function does not do any hidden buffer changes."
   ;; face objects (while it's only their names that are used just
   ;; about anywhere else) without providing a predicate that tests
   ;; face names.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (memq facename (face-list)))
 
 (defun c-concat-separated (list separator)
@@ -1235,9 +1183,7 @@ To work well with repeated loads and interactive reevaluation, only
 one `c-lang-defconst' for each NAME is permitted per file.  If there
 already is one it will be completely replaced; the value in the
 earlier definition will not affect `c-lang-const' on the same
-constant.  A file is identified by its base name.
-
-This macro does not do any hidden buffer changes."
+constant.  A file is identified by its base name."
 
   (let* ((sym (intern (symbol-name name) c-lang-constants))
 	 ;; Make `c-lang-const' expand to a straightforward call to
@@ -1327,8 +1273,7 @@ This macro does not do any hidden buffer changes."
      (&define name [&optional stringp] [&rest sexp def-form])))
 
 (defun c-define-lang-constant (name bindings &optional pre-files)
-  ;; Used by `c-lang-defconst'.  This function does not do any hidden
-  ;; buffer changes.
+  ;; Used by `c-lang-defconst'.
 
   (let* ((sym (intern (symbol-name name) c-lang-constants))
 	 (source (get sym 'source))
@@ -1380,9 +1325,7 @@ LANG is the name of the language, i.e. the mode name without the
 \"-mode\" suffix.  If used inside `c-lang-defconst' or
 `c-lang-defvar', LANG may be left out to refer to the current
 language.  NAME and LANG are not evaluated so they should not be
-quoted.
-
-This macro does not do any hidden buffer changes."
+quoted."
 
   (or (symbolp name)
       (error "Not a symbol: %s" name))
@@ -1452,8 +1395,7 @@ This macro does not do any hidden buffer changes."
 (defvar c-lang-constants-under-evaluation nil)
 
 (defun c-get-lang-constant (name &optional source-files mode)
-  ;; Used by `c-lang-const'.  This function does not do any hidden
-  ;; buffer changes.
+  ;; Used by `c-lang-const'.
 
   (or mode
       (setq mode c-buffer-is-cc-mode)

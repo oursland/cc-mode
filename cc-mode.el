@@ -150,7 +150,6 @@ directly supported by CC Mode.  This can be used instead of the
 `c-init-language-vars' macro if the language you want to use is one of
 those, rather than a derived language defined through the language
 variable system (see \"cc-langs.el\")."
-  ;; This function does not do any hidden buffer changes.
   (cond ((eq mode 'c-mode)    (c-init-language-vars c-mode))
 	((eq mode 'c++-mode)  (c-init-language-vars c++-mode))
 	((eq mode 'objc-mode) (c-init-language-vars objc-mode))
@@ -168,8 +167,6 @@ initialization to run CC Mode for the C language is done.  Otherwise
 only some basic setup is done, and a call to `c-init-language-vars' or
 `c-init-language-vars-for' is necessary too (which gives more
 control).  See \"cc-mode.el\" for more info."
-  ;;
-  ;; This function does not do any hidden buffer changes.
 
   (setq c-buffer-is-cc-mode t)
 
@@ -353,8 +350,6 @@ preferably use the `c-mode-menu' language constant directly."
   ;; font-lock callbacks since we might get calls to functions using
   ;; these caches from inside them, and we must thus be sure that this
   ;; has already been executed.
-  ;;
-  ;; This function does not do any hidden buffer changes.
 
   (c-save-buffer-state ()
     ;; When `combine-after-change-calls' is used we might get calls
@@ -391,8 +386,6 @@ same format as `c-default-style'.
 Note that `c-init-language-vars' must be called before this function.
 This function cannot do that since `c-init-language-vars' is a macro
 that requires a literal mode spec at compile time."
-  ;;
-  ;; This function does not do any hidden buffer changes.
 
   (setq c-buffer-is-cc-mode mode)
 
@@ -554,9 +547,7 @@ Mode to operate correctly.
 
 MODE is the symbol for the mode to initialize, like 'c-mode.  See
 `c-basic-common-init' for details.  It's only optional to be
-compatible with old code; callers should always specify it.
-
-This function does not do any hidden buffer changes."
+compatible with old code; callers should always specify it."
 
   (unless mode
     ;; Called from an old third party package.  The fallback is to
@@ -586,8 +577,6 @@ setting found in `c-file-style', then it applies any offset settings
 it finds in `c-file-offsets'.
 
 Note that the style variables are always made local to the buffer."
-  ;;
-  ;; This function does not do any hidden buffer changes.
 
   ;; apply file styles and offsets
   (when c-buffer-is-cc-mode

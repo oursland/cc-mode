@@ -144,6 +144,8 @@
   ;;
   ;; DO-LIM sets a limit on how far back we search for the "do" of a possible
   ;; do-while.
+  ;;
+  ;; This function might do hidden buffer changes.
   (and
    (eq (char-before) ?\))
    (save-excursion
@@ -158,6 +160,8 @@
 
 (defun c-awk-after-function-decl-param-list ()
   ;; Are we just after the ) in "function foo (bar)" ?
+  ;;
+  ;; This function might do hidden buffer changes.
   (and (eq (char-before) ?\))
        (save-excursion
          (let ((par-pos (c-safe (scan-lists (point) -1 0))))
@@ -172,6 +176,8 @@
 (defun c-awk-after-continue-token ()
 ;; Are we just after a token which can be continued onto the next line without
 ;; a backslash?
+;;
+;; This function might do hidden buffer changes.
   (save-excursion
     (c-backward-token-1)              ; FIXME 2002/10/27.  What if this fails?
     (if (and (looking-at "[&|]") (not (bobp)))
@@ -181,6 +187,8 @@
 (defun c-awk-after-rbrace-or-statement-semicolon ()
   ;; Are we just after a } or a ; which closes a statement?
   ;; Be careful about ;s in for loop control bits.  They don't count!
+  ;;
+  ;; This function might do hidden buffer changes.
   (or (eq (char-before) ?\})
       (and
        (eq (char-before) ?\;)
@@ -207,6 +215,8 @@
   ;;  POINT MUST BE AT THE START OF A LINE when calling this function.  This
   ;;  is to ensure that the various backward-comment functions will work
   ;;  properly.
+  ;;
+  ;; This function might do hidden buffer changes.
   (let ((nl-prop nil)
         bol-pos bsws-pos) ; starting pos for a backward-syntactic-ws call.
     (while ;; We are at a BOL here.  Go back one line each iteration.
@@ -249,6 +259,8 @@
   ;; line.  Return nil if we hit BOB.
   ;; 
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     (save-match-data
       (beginning-of-line)
@@ -294,6 +306,8 @@
   ;; Get the c-awk-NL-prop text-property from the previous line, calculating
   ;; it if necessary.  Return nil iff we're already at BOB.
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (if (bobp)
       nil
     (or (c-get-char-property (c-point 'eopl) 'c-awk-NL-prop)
@@ -306,6 +320,8 @@
   ;; function returns the property value an EOL would have got.)
   ;; 
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     (let ((extra-nl nil))
       (end-of-line)                ; Necessary for the following test to work.
@@ -318,23 +334,31 @@
 (defun c-awk-prev-line-incomplete-p (&optional do-lim)
   ;; Is there an incomplete statement at the end of the previous line?
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (memq (c-awk-get-NL-prop-prev-line do-lim) '(?\\ ?\{)))
 
 (defun c-awk-cur-line-incomplete-p (&optional do-lim)
   ;; Is there an incomplete statement at the end of the current line?
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (memq (c-awk-get-NL-prop-cur-line do-lim) '(?\\ ?\{)))
 
 (defun c-awk-completed-stmt-ws-ends-prev-line-p (&optional do-lim)
   ;; Is there a termination of a statement as the last thing (apart from an
   ;; optional comment) on the previous line?
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (memq (c-awk-get-NL-prop-prev-line do-lim) '(?\} ?\$)))
 
 (defun c-awk-completed-stmt-ws-ends-line-p (&optional pos do-lim)
   ;; Same as previous function, but for the line containing position POS (or
   ;; the current line if POS is omitted).
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     (if pos (goto-char pos))
     (memq (c-awk-get-NL-prop-cur-line do-lim) '(?\} ?\$))))
@@ -343,12 +367,16 @@
   ;; Is there a termination of a statement by EOL on the previous line?  (Any
   ;; comment present doesn't change this.)
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (eq (c-awk-get-NL-prop-prev-line do-lim) ?\$))
 
 (defun c-awk-virtual-semicolon-ends-line-p (&optional do-lim)
   ;; Is there a termination of a statement by EOL on the current line?  (Any
   ;; comment present doesn't change this.)
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  ;;
+  ;; This function might do hidden buffer changes.
   (eq (c-awk-get-NL-prop-cur-line do-lim) ?\$))
 
 (defun c-awk-after-logical-semicolon (&optional do-lim)
@@ -356,6 +384,8 @@
 ;; either an explicit statement termination (by '}' or ';') or a "virtual
 ;; semicolon".
 ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+;;
+;; This function might do hidden buffer changes.
   (and (bolp)
        (memq (c-awk-get-NL-prop-prev-line do-lim) '(?\$ ?\}))))
 
@@ -367,6 +397,8 @@
 ;; However if point starts inside a comment or preprocessor directive, the
 ;; content of it is not treated as whitespace.  LIM (optional) sets a limit on
 ;; the backward movement.
+;;
+;; This function might do hidden buffer changes.
   (let ((lim (or lim (point-min)))
         after-real-br)
     (c-backward-syntactic-ws (max lim (c-point 'bol)))
@@ -389,6 +421,8 @@
   ;; c-awk-NL-prop text property from beg to the end of the buffer (The END
   ;; parameter is ignored).  This ensures that the indentation engine will
   ;; never use stale values for this property.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-restriction
     (widen)
     (c-clear-char-properties beg (point-max) 'c-awk-NL-prop)))
@@ -447,6 +481,8 @@
 ;; This is guaranteed to be "safe" for syntactic analysis, i.e. outwith any
 ;; comment, string or regexp.  IT MAY WELL BE that this function should not be
 ;; executed on a narrowed buffer.
+;;
+;; This function might do hidden buffer changes.
   (if pos (goto-char pos))
   (forward-line 0)
   (while (and (> (point) (point-min))
@@ -462,6 +498,8 @@
 ;; This is guaranteed to be "safe" for syntactic analysis, i.e. outwith any
 ;; comment, string or regexp.  IT MAY WELL BE that this function should not be
 ;; executed on a narrowed buffer.
+;;
+;; This function might do hidden buffer changes.
   (if pos (goto-char pos))
   (end-of-line)
   (while (and (< (point) (point-max))
@@ -607,6 +645,8 @@
 ;;
 ;; If the closing delimiter is missing (i.e., there is an EOL there) set the
 ;; STRING-FENCE property on the opening " or / and closing EOL.
+;;
+;; This function does hidden buffer changes.
   (if (eq (char-after beg) ?_) (setq beg (1+ beg)))
 
   ;; First put the properties on the delimiters.
@@ -632,6 +672,8 @@
   ;;
   ;; The result is nil if a / immediately after the string would be a regexp
   ;; opener, t if it would be a division sign.
+  ;;
+  ;; This function does hidden buffer changes.
   (search-forward-regexp c-awk-string-without-end-here-re nil t) ; a (possibly unterminated) string
   (c-awk-set-string-regexp-syntax-table-properties
    (match-beginning 0) (match-end 0))
@@ -655,6 +697,8 @@
   ;; point is.
   ;;
   ;; The result is what ANCHOR-STATE-/DIV (see above) is where point is left.
+  ;;
+  ;; This function might do hidden buffer changes.
   (let ((/point (point)))
     (goto-char anchor)
     ;; Analyse the line to find out what the / is.
@@ -700,6 +744,8 @@
 ;;   given the property "punctuation".  This will later allow other routines
 ;;   to use the regexp "\\S\"*" to skip over the string innards.
 ;; (iv) Inside a comment, all syntax-table properties are cleared.
+;;
+;; This function does hidden buffer changes.
   (let (anchor
 	(anchor-state-/div nil)) ; t means a following / would be a div sign.
     (c-awk-beginning-of-logical-line) ; ACM 2002/7/21.  This is probably redundant.
@@ -736,6 +782,8 @@
 ;; This function is called exclusively from the before-change-functions hook.
 ;; It does two things: Finds the end of the (logical) line on which END lies,
 ;; and clears c-awk-NL-prop text properties from this point onwards.
+;;
+;; This function might do hidden buffer changes.
   (save-restriction
     (save-excursion
       (setq c-awk-old-EOLL (c-awk-end-of-logical-line end))
@@ -747,6 +795,8 @@
   ;; This is the end of the logical line on which the change happened, either
   ;; as it was before the change, or as it is now, which ever is later.
   ;; N.B. point is left undefined.
+  ;;
+  ;; This function might do hidden buffer changes.
   (max (+ (- c-awk-old-EOLL old-len) (- end beg))
        (c-awk-end-of-logical-line end)))
 
@@ -756,6 +806,8 @@
 ;; changed region.  However, if font-lock is enabled, this function does
 ;; nothing, since an enabled font-lock after-change function will always do
 ;; this.
+;;
+;; This function might do hidden buffer changes.
   (unless (and (boundp 'font-lock-mode) font-lock-mode)
     (save-restriction
       (save-excursion
@@ -860,7 +912,10 @@ By a \"defun\" is meant either a pattern-action pair or a function.  The start
 of a defun is recognised as code starting at column zero which is neither a
 closing brace nor a comment nor a continuation of the previous line.  Unlike
 in some other modes, having an opening brace at column 0 is neither necessary
-nor helpful."
+nor helpful.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
   (interactive "p")
   (save-match-data
     (c-save-buffer-state                ; ensures the buffer is writable.
@@ -891,6 +946,8 @@ nor helpful."
   ;; comment.  Typically, we stop at the { which denotes the corresponding AWK
   ;; action/function body.  Otherwise we stop at the EOL (or ;) marking the
   ;; absence of an explicit action.
+  ;;
+  ;; This function might do hidden buffer changes.
   (while
       (progn
         (search-forward-regexp c-awk-harmless-pattern-characters*)
@@ -908,6 +965,8 @@ nor helpful."
 
 (defun c-awk-end-of-defun1 ()
   ;; point is at the start of a "defun".  Move to its end.  Return end position.
+  ;;
+  ;; This function might do hidden buffer changes.
   (c-awk-forward-awk-pattern)
   (cond
    ((looking-at "{") (goto-char (scan-sexps (point) 1)))
@@ -919,6 +978,8 @@ nor helpful."
 (defun c-awk-beginning-of-defun-p ()
   ;; Are we already at the beginning of a defun?  (i.e. at code in column 0
   ;; which isn't a }, and isn't a continuation line of any sort.
+  ;;
+  ;; This function might do hidden buffer changes.
   (and (looking-at "^[^#} \t\n\r]")
        (not (c-awk-prev-line-incomplete-p))))
 
@@ -928,7 +989,10 @@ Negative argument -N means move back to Nth preceding end of defun.
 
 An end of a defun occurs right after the closing brace that matches the
 opening brace at its start, or immediately after the AWK pattern when there is
-no explicit action; see function `c-awk-beginning-of-defun'."
+no explicit action; see function `c-awk-beginning-of-defun'.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
   (interactive "p")
   (or arg (setq arg 1))
   (save-match-data

@@ -144,9 +144,7 @@ is evaluated and bound to VAR when the result from the macro
 
 `c-lang-const' is typically used in VAL to get the right value for the
 language being initialized, and such calls will be macro expanded to
-the evaluated constant value at compile time.
-
-This macro does not do any hidden buffer changes."
+the evaluated constant value at compile time."
 
   (when (and (not doc)
 	     (eq (car-safe val) 'c-lang-const)
@@ -2498,9 +2496,7 @@ for the given mode.
 This function should be evaluated at compile time, so that the
 function it returns is byte compiled with all the evaluated results
 from the language constants.  Use the `c-init-language-vars' macro to
-accomplish that conveniently.
-
-This function does not do any hidden buffer changes."
+accomplish that conveniently."
 
   (if (and (not load-in-progress)
 	   (boundp 'byte-compile-dest-file)
@@ -2577,9 +2573,7 @@ This function does not do any hidden buffer changes."
   "Initialize all the language dependent variables for the given mode.
 This macro is expanded at compile time to a form tailored for the mode
 in question, so MODE must be a constant.  Therefore MODE is not
-evaluated and should not be quoted.
-
-This macro does not do any hidden buffer changes."
+evaluated and should not be quoted."
   `(funcall ,(c-make-init-lang-vars-fun mode)))
 
 

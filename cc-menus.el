@@ -240,7 +240,6 @@ Example:
 - perform: (SEL)aSelector withObject: object1 withObject: object2; /* METHOD */
 =>
 -perform:withObject:withObject:withObject: /* selector */"
-  ;; This function does not do any hidden buffer changes.
   (let ((return "")			; String to be returned
 	(p 0)				; Current scanning position in METHOD  
 	(pmax (length method))		; 
@@ -281,7 +280,6 @@ Example:
 
 (defun cc-imenu-objc-remove-white-space  (str)
   "Remove all spaces and tabs from STR."
-  ;; This function does not do any hidden buffer changes.
   (let ((return "")
 	(p 0)
 	(max (length str)) 
@@ -296,7 +294,6 @@ Example:
 
 (defun cc-imenu-objc-function ()
   "imenu supports for objc-mode."
-  ;; This function does not do any hidden buffer changes.
   (let (methodlist
 	clist
 	;;
@@ -415,7 +412,6 @@ Example:
 
 (defun cc-imenu-init (mode-generic-expression
 		      &optional mode-create-index-function)
-  ;; This function does not do any hidden buffer changes.
   (setq imenu-generic-expression mode-generic-expression
 	imenu-case-fold-search nil)
   (when mode-create-index-function

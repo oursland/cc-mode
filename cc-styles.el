@@ -245,8 +245,6 @@ the existing style.")
 ;; Functions that manipulate styles
 (defun c-set-style-1 (conscell dont-override)
   ;; Set the style for one variable
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (let ((attr (car conscell))
 	(val  (cdr conscell)))
     (cond
@@ -290,8 +288,6 @@ the existing style.")
 
 (defun c-get-style-variables (style basestyles)
   ;; Return all variables in a style by resolving inheritances.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (if (not style)
       (copy-alist c-fallback-style)
     (let ((vars (cdr (or (assoc (downcase style) c-style-alist)
@@ -393,8 +389,6 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 (defun c-read-offset (langelem)
   ;; read new offset value for LANGELEM from minibuffer. return a
   ;; legal value only
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (let* ((oldoff  (cdr-safe (or (assq langelem c-offsets-alist)
 				(assq langelem (get 'c-offsets-alist
 						    'c-stylevar-fallback)))))
@@ -471,8 +465,6 @@ and exists only for compatibility reasons."
   "Fix things up for paragraph recognition and filling inside comments by
 incorporating the value of `c-comment-prefix-regexp' in the relevant
 variables."
-  ;;
-  ;; This function does not do any hidden buffer changes.
 
   (interactive)
 
@@ -528,8 +520,6 @@ CC Mode by making sure the proper entries are present on
 `c-mode-common-hook' or similar."
   ;; This function is intended to be used explicitly by the end user
   ;; only.
-  ;;
-  ;; This function does not do any hidden buffer changes.
 
   ;; The default configuration already handles C++ comments, but we
   ;; need to add handling of C block comments.  A new filladapt token
@@ -559,8 +549,6 @@ CC Mode by making sure the proper entries are present on
   ;; crucial because future c-set-style calls will always reset the
   ;; variables first to the `cc-mode' style before instituting the new
   ;; style.  Only do this once!
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (unless (get 'c-initialize-builtin-style 'is-run)
     (put 'c-initialize-builtin-style 'is-run t)
     ;;(c-initialize-cc-mode)
@@ -592,8 +580,6 @@ permanently buffer local in any buffer that change their values.
 The buffer localness of the style variables are normally controlled
 with the variable `c-style-variables-are-local-p', so there's seldom
 any reason to call this function directly."
-  ;;
-  ;; This function does not do any hidden buffer changes.
 
   ;; style variables
   (let ((func (if this-buf-only-p

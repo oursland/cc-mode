@@ -44,21 +44,29 @@
 ;;
 ;; Various functions in CC Mode use text properties for caching and
 ;; syntactic markup purposes, and those of them that might modify such
-;; properties are said to do "hidden buffer changes".  They should be
-;; used within `c-save-buffer-state' or a similar function that saves
-;; and restores buffer modifiedness etc.
+;; properties but still don't modify the buffer in a visible way are
+;; said to do "hidden buffer changes".  They should be used within
+;; `c-save-buffer-state' or a similar function that saves and restores
+;; buffer modifiedness, disables buffer change hooks, etc.
 ;;
-;; Interactive functions are assumed to not do hidden buffer changes
-;; (this isn't applicable in the specific parts of them that do real
-;; changes, though).
+;; Interactive functions are assumed to not do hidden buffer changes,
+;; except in the specific parts of them that do real changes.
 ;;
-;; All other functions are assumed to do hidden buffer changes and
-;; must thus be wrapped inside `c-save-buffer-state' if they're used
-;; from any function that does not do hidden buffer changes.
+;; Lineup functions are assumed to do hidden buffer changes.  They
+;; must not do real changes, though.
 ;;
-;; Every function, except the interactive ones, that doesn't do hidden
-;; buffer changes have that explicitly stated in their docstring or
-;; comment.
+;; All other functions that do hidden buffer changes have that noted
+;; in their doc string or comment.
+;;
+;; The intention with this system is to avoid wrapping every leaf
+;; function that do hidden buffer changes inside
+;; `c-save-buffer-state'.  It should be used as near the top of the
+;; interactive functions as possible.
+;;
+;; Functions called during font locking are allowed to do hidden
+;; buffer changes since the font-lock package run them in a context
+;; similar to `c-save-buffer-state' (in fact, that function is heavily
+;; inspired by `save-buffer-state' in the font-lock package).
 
 ;; Use of text properties
 ;;
@@ -200,19 +208,19 @@
 (defvar c-macro-start 'unknown)
 
 (defsubst c-query-and-set-macro-start ()
-  ;; This function does not do any hidden buffer changes.
   (if (symbolp c-macro-start)
       (setq c-macro-start (save-excursion
-			    (and (c-beginning-of-macro)
-				 (point))))
+			    (c-save-buffer-state ()
+			      (and (c-beginning-of-macro)
+				   (point)))))
     c-macro-start))
 
 (defsubst c-query-macro-start ()
-  ;; This function does not do any hidden buffer changes.
   (if (symbolp c-macro-start)
       (save-excursion
-	(and (c-beginning-of-macro)
-	     (point)))
+	(c-save-buffer-state ()
+	  (and (c-beginning-of-macro)
+	       (point))))
     c-macro-start))
 
 (defun c-beginning-of-macro (&optional lim)
@@ -220,7 +228,8 @@
 Leave point at the beginning of the directive and return t if in one,
 otherwise return nil and leave point unchanged.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
   (when c-opt-cpp-prefix
     (let ((here (point)))
       (save-restriction
@@ -241,7 +250,8 @@ More accurately, move the point to the end of the closest following
 line that doesn't end with a line continuation backslash - no check is
 done that the point is inside a cpp directive to begin with.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
   (while (progn
 	   (end-of-line)
 	   (when (and (eq (char-before) ?\\)
@@ -254,6 +264,8 @@ This function does not do any hidden buffer changes."
   ;; directive, it's moved forward to the start of the definition body
   ;; if it's a "#define".  Non-nil is returned in this case, in all
   ;; other cases nil is returned and point isn't moved.
+  ;;
+  ;; This function might do hidden buffer changes.
   (when (and (looking-at
 	      (concat "#[ \t]*"
 		      "define[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
@@ -269,6 +281,8 @@ This function does not do any hidden buffer changes."
   ;; whitespace is removed or, where necessary, replaced with a single
   ;; space.  If PAREN-LEVEL is given then all parens in the region are
   ;; collapsed to "()", "[]" etc.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (save-excursion
     (save-restriction
@@ -313,9 +327,8 @@ This function does not do any hidden buffer changes."
 
 (defun c-shift-line-indentation (shift-amt)
   ;; Shift the indentation of the current line with the specified
-  ;; amount (positive inwards).
-  ;;
-  ;; This function does not do any hidden buffer changes.
+  ;; amount (positive inwards).  The buffer is modified only if
+  ;; SHIFT-AMT isn't equal to zero.
   (let ((pos (- (point-max) (point)))
 	(c-macro-start c-macro-start)
 	tmp-char-inserted)
@@ -378,7 +391,6 @@ This function does not do any hidden buffer changes."
 (make-variable-buffer-local 'c-parsing-error)
 
 (defun c-echo-parsing-error (&optional quiet)
-  ;; This function does not do any hidden buffer changes.
   (when (and c-report-syntactic-errors c-parsing-error (not quiet))
     (c-benign-error "%s" c-parsing-error))
   c-parsing-error)
@@ -516,7 +528,10 @@ position if that is less ('same is returned in this case).
 NOERROR turns off error logging to `c-parsing-error'.
 
 Normally only ';' is considered to delimit statements, but if
-COMMA-DELIM is non-nil then ',' is treated likewise."
+COMMA-DELIM is non-nil then ',' is treated likewise.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   ;; The bulk of this function is a pushdown automaton that looks at statement
   ;; boundaries and the tokens (such as "while") in c-opt-block-stmt-key.  Its
@@ -996,7 +1011,10 @@ a string or comment.
 
 The variable `c-maybe-labelp' is set to the position of the first `:' that
 might start a label (i.e. not part of `::' and not preceded by `?').  If a
-single `?' is found, then `c-maybe-labelp' is cleared."
+single `?' is found, then `c-maybe-labelp' is cleared.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
   (let ((skip-chars c-stmt-delim-chars)
 	lit-range)
     (save-excursion
@@ -1041,16 +1059,18 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 ;; escapes in string literals correctly.)
 
 (defun c-forward-single-comment ()
-  "Move forward past whitespace at point and the following comment, if any.
-Return t if a comment was found, nil otherwise.  In either case, the point is
-moved past the leading whitespace.  Line continuations, i.e. backslashes
-followed by line breaks, are treated as whitespace.  In AWK Mode, an end of
-line which terminates a statement \(a \"virtual semicolon\") is NOT regarded
-as whitespace.  The line breaks that end line comments are considered to be
-the comment enders, so the point will be put on the beginning of the next line
-if it moved past a line comment.
+  "Move forward past whitespace and the closest following comment, if any.
+Return t if a comment was found, nil otherwise.  In either case, the
+point is moved past the following whitespace.  Line continuations,
+i.e. backslashes followed by line breaks, are treated as whitespace.
+In AWK Mode, an end of line which terminates a statement \(a \"virtual
+semicolon\") is NOT regarded as whitespace.  The line breaks that end
+line comments are considered to be the comment enders, so the point
+will be put on the beginning of the next line if it moved past a line
+comment."
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (let ((start (point)))
     (if (c-major-mode-is 'awk-mode)
@@ -1087,7 +1107,8 @@ This function does not do any hidden buffer changes."
 Line continuations, i.e. a backslashes followed by line breaks, are
 treated as whitespace.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (while (or
 	  ;; If forward-comment in at least XEmacs 21 is given a large
@@ -1103,17 +1124,17 @@ This function does not do any hidden buffer changes."
 	    t))))
 
 (defun c-backward-single-comment ()
-  "Move backward past whitespace and the immediately preceding comment, if any.
+  "Move backward past whitespace and the closest preceding comment, if any.
+Return t if a comment was found, nil otherwise.  In either case, the
+point is moved past the preceding whitespace.  Line continuations,
+i.e. backslashes followed by line breaks, are treated as whitespace.
+In AWK Mode, an end of line which terminates a statement \(a \"virtual
+semicolon\") is NOT regarded as whitespace.  The line breaks that end
+line comments are considered to be the comment enders, so the point
+cannot be at the end of the same line to move over a line comment.
 
-Return t if a comment was found, nil otherwise.  In either case, point is
-moved past the trailing whitespace.  Line continuations, i.e. backslashes
-followed by line breaks, are treated as whitespace.  In AWK Mode, an end of
-line which terminates a statement \(a \"virtual semicolon\") is NOT regarded
-as whitespace.  The line breaks that end line comments are considered to be
-the comment enders, so the point must be at the beginning of the next line to
-move back over a line comment.
-
-This function DOES DO some hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (let ((start (point))
 	(awk-$-pos nil))	      ; position after AWK "virtual semicolon"
@@ -1182,7 +1203,8 @@ treated as whitespace.  The line breaks that end line comments are
 considered to be the comment enders, so the point cannot be at the end
 of the same line to move over a line comment.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (let ((start (point)))
     (while (and
@@ -1281,7 +1303,7 @@ This function does not do any hidden buffer changes."
 ;   ;; properties in the buffer.
 ;   (interactive)
 ;   (save-excursion
-;     (let (in-face)
+;     (c-save-buffer-state (in-face)
 ;       (goto-char (point-min))
 ;       (setq in-face (if (get-text-property (point) 'c-is-sws)
 ; 			(point)))
@@ -1312,30 +1334,35 @@ This function does not do any hidden buffer changes."
   )
 
 (defmacro c-put-is-sws (beg end)
+  ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (put-text-property beg end 'c-is-sws t)
      ,@(when (facep 'c-debug-is-sws-face)
 	 `((c-debug-add-face beg end 'c-debug-is-sws-face)))))
 
 (defmacro c-put-in-sws (beg end)
+  ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (put-text-property beg end 'c-in-sws t)
      ,@(when (facep 'c-debug-is-sws-face)
 	 `((c-debug-add-face beg end 'c-debug-in-sws-face)))))
 
 (defmacro c-remove-is-sws (beg end)
+  ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (remove-text-properties beg end '(c-is-sws nil))
      ,@(when (facep 'c-debug-is-sws-face)
 	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)))))
 
 (defmacro c-remove-in-sws (beg end)
+  ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (remove-text-properties beg end '(c-in-sws nil))
      ,@(when (facep 'c-debug-is-sws-face)
 	 `((c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
 (defmacro c-remove-is-and-in-sws (beg end)
+  ;; This macro does a hidden buffer change.
   `(let ((beg ,beg) (end ,end))
      (remove-text-properties beg end '(c-is-sws nil c-in-sws nil))
      ,@(when (facep 'c-debug-is-sws-face)
@@ -1347,6 +1374,8 @@ This function does not do any hidden buffer changes."
   ;; `c-forward-sws' or `c-backward-sws' are used outside
   ;; `c-save-buffer-state' or similar then this will remove the cache
   ;; properties right after they're added.
+  ;;
+  ;; This function does hidden buffer changes.
 
   (save-excursion
     ;; Adjust the end to remove the properties in any following simple
@@ -1383,6 +1412,8 @@ This function does not do any hidden buffer changes."
 
 (defun c-forward-sws ()
   ;; Used by `c-forward-syntactic-ws' to implement the unbounded search.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let (;; `rung-pos' is set to a position as early as possible in the
 	;; unmarked part of the simple ws region.
@@ -1575,6 +1606,8 @@ This function does not do any hidden buffer changes."
 
 (defun c-backward-sws ()
   ;; Used by `c-backward-syntactic-ws' to implement the unbounded search.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let (;; `rung-pos' is set to a position as late as possible in the unmarked
 	;; part of the simple ws region.
@@ -1835,8 +1868,6 @@ This function does not do any hidden buffer changes."
   ;; it never changes a paren pair element into an open paren element.
   ;; Doing that would mean that the new open paren wouldn't have the
   ;; required preceding paren pair element.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (while (and (or c-state-cache
 		  (when (< pos c-state-cache-good-pos)
 		    (setq c-state-cache-good-pos 1)
@@ -1895,7 +1926,7 @@ This function does not do any hidden buffer changes."
   ;;     #define X {
   ;;     }
   ;;
-  ;; This function does not do any hidden buffer changes.
+  ;; This function might do hidden buffer changes.
 
   (save-restriction
     (let* ((here (point))
@@ -2151,8 +2182,6 @@ This function does not do any hidden buffer changes."
 (defun c-whack-state-before (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies
   ;; before BUFPOS.  Not destructive on PAREN-STATE.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (let* ((newstate (list nil))
 	 (ptr newstate)
 	 car)
@@ -2168,8 +2197,6 @@ This function does not do any hidden buffer changes."
 (defun c-whack-state-after (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies at or
   ;; after BUFPOS.  Not destructive on PAREN-STATE.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (catch 'done
     (while paren-state
       (let ((car (car paren-state)))
@@ -2201,8 +2228,6 @@ This function does not do any hidden buffer changes."
 (defun c-most-enclosing-brace (paren-state &optional bufpos)
   ;; Return the bufpos of the innermost enclosing open paren before
   ;; bufpos that hasn't been narrowed out, or nil if none was found.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (let (enclosingp)
     (or bufpos (setq bufpos 134217727))
     (while paren-state
@@ -2219,8 +2244,6 @@ This function does not do any hidden buffer changes."
 (defun c-least-enclosing-brace (paren-state &optional bufpos)
   ;; Return the bufpos of the outermost enclosing open paren before
   ;; bufpos that hasn't been narrowed out, or nil if none was found.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (let (pos elem)
     (or bufpos (setq bufpos 134217727))
     (while paren-state
@@ -2243,8 +2266,6 @@ This function does not do any hidden buffer changes."
   ;; thus either the first position after a close brace, or the first
   ;; position after an enclosing paren, or at the enclosing paren in
   ;; case BUFPOS is immediately after it.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (when bufpos
     (let (elem)
       (catch 'done
@@ -2309,7 +2330,8 @@ identifier is detected, the returned value is its starting position.
 If an identifier ends at the point and another begins at it \(can only
 happen in Pike) then the point for the preceding one is returned.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (save-excursion
     (if (zerop (skip-syntax-backward "w_"))
@@ -2333,6 +2355,8 @@ This function does not do any hidden buffer changes."
   ;; If the point is at the end of a symbol then skip backward to the
   ;; beginning of it.  Don't move otherwise.  Return non-nil if point
   ;; moved.
+  ;;
+  ;; This function might do hidden buffer changes.
   (or (< (skip-syntax-backward "w_") 0)
       (and (c-major-mode-is 'pike-mode)
 	   ;; Handle the `<operator> syntax in Pike.
@@ -2350,6 +2374,8 @@ This function does not do any hidden buffer changes."
   ;; in the middle of one.  BACK-LIMIT may be used to bound the
   ;; backward search; if given it's assumed to be at the boundary
   ;; between two tokens.
+  ;;
+  ;; This function might do hidden buffer changes.
   (if (looking-at "\\w\\|\\s_")
       (skip-syntax-backward "w_" back-limit)
     (let ((start (point)))
@@ -2371,6 +2397,8 @@ This function does not do any hidden buffer changes."
   ;; middle of one.  BACK-LIMIT may be used to bound the backward
   ;; search; if given it's assumed to be at the boundary between two
   ;; tokens.  Return non-nil if the point is moved, nil otherwise.
+  ;;
+  ;; This function might do hidden buffer changes.
   (let ((start (point)))
     (cond ((< (skip-syntax-backward "w_" (1- start)) 0)
 	   (skip-syntax-forward "w_"))
@@ -2416,7 +2444,10 @@ BALANCED is true, a move over a balanced paren counts as one.  Note
 that if COUNT is 0 and no appropriate token beginning is found, 1 will
 be returned.  Thus, a return value of 0 guarantees that point is at
 the requested position and a return value less \(without signs) than
-COUNT guarantees that point is at the beginning of some token."
+COUNT guarantees that point is at the beginning of some token.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (or count (setq count 1))
   (if (< count 0)
@@ -2598,7 +2629,10 @@ subexpression should match the end of nonwhite syntactic whitespace,
 i.e. the end of comments or cpp directives.  This since the function
 skips over such things before resuming the search.  It's also not safe
 to assume that the \"look behind\" subexpression never can match
-syntactic whitespace."
+syntactic whitespace.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (or bound (setq bound (point-max)))
   (if paren-level (setq paren-level -1))
@@ -2750,7 +2784,10 @@ sexps, and the search will also not go outside the current paren sexp.
 However, if LIMIT or the buffer limit is reached inside a nested paren
 then the point will be left at the limit.
 
-Non-nil is returned if the point moved, nil otherwise."
+Non-nil is returned if the point moved, nil otherwise.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (let ((start (point))
 	state
@@ -2906,7 +2943,9 @@ or nil, `c-beginning-of-defun' is used.
 The last point calculated is cached if the cache is enabled, i.e. if
 `c-in-literal-cache' is bound to a two element vector.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
+
   (if (and (vectorp c-in-literal-cache)
 	   (= (point) (aref c-in-literal-cache 0)))
       (aref c-in-literal-cache 1)
@@ -2952,6 +2991,7 @@ This function does not do any hidden buffer changes."
 ;; (Alan Mackenzie, 2003/4/30).
 
 (defun c-fast-in-literal (&optional lim detect-cpp)
+  ;; This function might do hidden buffer changes.
   (let ((context (buffer-syntactic-context)))
     (cond
      ((eq context 'string) 'string)
@@ -2979,7 +3019,8 @@ non-nil, the case when point is inside a starting delimiter won't be
 recognized.  This only has effect for comments, which have starting
 delimiters with more than one character.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
 
   (save-excursion
     (let* ((pos (point))
@@ -3053,7 +3094,9 @@ comments (i.e. all comments that starts in the same column with no
 empty lines or non-whitespace characters between them).  Otherwise the
 argument is returned.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
+
   (save-excursion
     (condition-case nil
 	(if (and (consp range) (progn
@@ -3087,7 +3130,9 @@ returns nil or the type of literal that the range surrounds.  It's
 much faster than using `c-in-literal' and is intended to be used when
 you need both the type of a literal and its limits.
 
-This function does not do any hidden buffer changes."
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
+
   (if (consp range)
       (save-excursion
 	(goto-char (car range))
@@ -3139,14 +3184,14 @@ This function does not do any hidden buffer changes."
 
 (defmacro c-debug-put-decl-spot-faces (match-pos decl-pos)
   (when (facep 'c-debug-decl-spot-face)
-    `(let ((match-pos ,match-pos) (decl-pos ,decl-pos))
+    `(c-save-buffer-state ((match-pos ,match-pos) (decl-pos ,decl-pos))
        (c-debug-add-face (max match-pos (point-min)) decl-pos
 			 'c-debug-decl-sws-face)
        (c-debug-add-face decl-pos (min (1+ decl-pos) (point-max))
 			 'c-debug-decl-spot-face))))
 (defmacro c-debug-remove-decl-spot-faces (beg end)
   (when (facep 'c-debug-decl-spot-face)
-    `(progn
+    `(c-save-buffer-state ()
        (c-debug-remove-face ,beg ,end 'c-debug-decl-spot-face)
        (c-debug-remove-face ,beg ,end 'c-debug-decl-sws-face))))
 
@@ -3155,6 +3200,8 @@ This function does not do any hidden buffer changes."
   ;; but it contains lots of free variables that refer to things
   ;; inside `c-find-decl-spots'.  The point is left at `cfd-match-pos'
   ;; if there is a match, otherwise at `cfd-limit'.
+  ;;
+  ;; This macro might do hidden buffer changes.
 
   '(progn
      ;; Find the next property match position if we haven't got one already.
@@ -3237,6 +3284,8 @@ This function does not do any hidden buffer changes."
   ;;
   ;; All variables in this function begin with `cfd-' to avoid name
   ;; collision with the (dynamically bound) variables used in CFD-FUN.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((cfd-start-pos (point))
 	(cfd-buffer-end (point-max))
@@ -3592,8 +3641,6 @@ This function does not do any hidden buffer changes."
 
 (defsubst c-clear-found-types ()
   ;; Clears `c-found-types'.
-  ;;
-  ;; This function does not do any hidden buffer changes.
   (setq c-found-types (make-vector 53 0)))
 
 (defun c-add-type (from to)
@@ -3605,6 +3652,8 @@ This function does not do any hidden buffer changes."
   ;; doesn't cover cases like when characters are removed from a type
   ;; or added in the middle.  We'd need the position of point when the
   ;; font locking is invoked to solve this well.
+  ;;
+  ;; This function might do hidden buffer changes.
   (let ((type (c-syntactic-content from to c-recognize-<>-arglists)))
     (unless (intern-soft type c-found-types)
       (unintern (substring type 0 -1) c-found-types)
@@ -3613,6 +3662,8 @@ This function does not do any hidden buffer changes."
 (defsubst c-check-type (from to)
   ;; Return non-nil if the given region contains a type in
   ;; `c-found-types'.
+  ;;
+  ;; This function might do hidden buffer changes.
   (intern-soft (c-syntactic-content from to c-recognize-<>-arglists)
 	       c-found-types))
 
@@ -3634,6 +3685,8 @@ This function does not do any hidden buffer changes."
   ;; c-recognize-<>-arglists' is set.  It ensures that no "<" or ">"
   ;; chars with paren syntax become part of another operator like "<<"
   ;; or ">=".
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (save-excursion
     (goto-char beg)
@@ -3768,6 +3821,8 @@ This function does not do any hidden buffer changes."
   ;; over.  The point is clobbered if nil is returned.  If range
   ;; recording is enabled, the identifier is recorded on as a type
   ;; if TYPE is 'type or as a reference if TYPE is 'ref.
+  ;;
+  ;; This macro might do hidden buffer changes.
   `(let (res)
      (while (if (setq res ,(if (eq type 'type)
 			       `(c-forward-type)
@@ -3785,6 +3840,8 @@ This function does not do any hidden buffer changes."
   ;; Used internally in `c-forward-keyword-clause' to move forward
   ;; over a comma separated list of types or names using
   ;; `c-forward-keyword-prefixed-id'.
+  ;;
+  ;; This macro might do hidden buffer changes.
   `(while (and (progn
 		 (setq safe-pos (point))
 		 (eq (char-after) ?,))
@@ -3803,6 +3860,8 @@ This function does not do any hidden buffer changes."
   ;; `c-ref-list-kwds', `c-colon-type-list-kwds',
   ;; `c-paren-nontype-kwds', `c-paren-type-kwds', `c-<>-type-kwds',
   ;; and `c-<>-arglist-kwds'.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos pos
 	;; The call to `c-forward-<>-arglist' below is made after
@@ -3897,6 +3956,8 @@ This function does not do any hidden buffer changes."
   ;; This function records identifier ranges on
   ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
   ;; `c-record-type-identifiers' is non-nil.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((start (point))
 	;; If `c-record-type-identifiers' is set then activate
@@ -3919,6 +3980,8 @@ This function does not do any hidden buffer changes."
 
 (defun c-forward-<>-arglist-recur (all-types)
   ;; Recursive part of `c-forward-<>-arglist'.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((start (point)) res pos tmp
 	;; Cover this so that any recorded found type ranges are
@@ -4120,6 +4183,8 @@ This function does not do any hidden buffer changes."
   ;; This function records identifier ranges on
   ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
   ;; `c-record-type-identifiers' is non-nil.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((pos (point)) (start (point)) res id-start id-end
 	;; Turn off `c-promote-possible-types' here since we might
@@ -4282,6 +4347,8 @@ This function does not do any hidden buffer changes."
   ;; This function records identifier ranges on
   ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
   ;; `c-record-type-identifiers' is non-nil.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((start (point)) pos res name-res id-start id-end id-range)
 
@@ -4554,6 +4621,8 @@ This function does not do any hidden buffer changes."
   ;; This function records identifier ranges on
   ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
   ;; `c-record-type-identifiers' is non-nil.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let (;; `start-pos' is used below to point to the start of the
 	;; first type, i.e. after any leading specifiers.  It might
@@ -5211,6 +5280,8 @@ This function does not do any hidden buffer changes."
   ;; This function records the ranges of the label symbols on
   ;; `c-record-ref-identifiers' if `c-record-type-identifiers' (!) is
   ;; non-nil.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((start (point)))
     (cond
@@ -5360,6 +5431,8 @@ This function does not do any hidden buffer changes."
   ;; Go to the first non-whitespace after the colon that starts a
   ;; multiple inheritance introduction.  Optional LIM is the farthest
   ;; back we should search.
+  ;;
+  ;; This function might do hidden buffer changes.
   (c-with-syntax-table c++-template-syntax-table
     (c-backward-token-2 0 t lim)
     (while (and (or (looking-at c-symbol-start)
@@ -5369,6 +5442,8 @@ This function does not do any hidden buffer changes."
 (defun c-in-method-def-p ()
   ;; Return nil if we aren't in a method definition, otherwise the
   ;; position of the initial [+-].
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     (beginning-of-line)
     (and c-opt-method-key
@@ -5385,6 +5460,8 @@ This function does not do any hidden buffer changes."
   ;; Only one level of enclosing parentheses is considered, so for
   ;; instance `nil' is returned when in a function call within an asm
   ;; operand.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (and c-opt-asm-stmt-key
        (save-excursion
@@ -5405,7 +5482,10 @@ top-level not enclosed within a class definition, t is returned.
 Otherwise, a 2-vector is returned where the zeroth element is the
 buffer position of the start of the class declaration, and the first
 element is the buffer position of the enclosing class's opening
-brace."
+brace.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
   (let ((paren-state (c-parse-state)))
     (or (not (c-most-enclosing-brace paren-state))
 	(c-search-uplist-for-classkey paren-state))))
@@ -5419,6 +5499,8 @@ brace."
   ;;
   ;; Note: This test is easily fooled.  It only works reasonably well
   ;; in the situations where `c-guess-basic-syntax' uses it.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     (if (c-major-mode-is 'awk-mode)
         (c-awk-backward-syntactic-ws lim)
@@ -5487,6 +5569,8 @@ brace."
   ;;
   ;; Note: A declaration level context is assumed; the test can return
   ;; false positives for statements.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (save-excursion
     (save-restriction
@@ -5546,6 +5630,8 @@ brace."
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
   ;; statements in parentheses. No error checking is performed.
+  ;;
+  ;; This function might do hidden buffer changes.
   (c-forward-sexp (cond
 		   ;; else if()
 		   ((looking-at (concat "\\<else"
@@ -5563,6 +5649,8 @@ brace."
 (defun c-after-conditional (&optional lim)
   ;; If looking at the token after a conditional then return the
   ;; position of its start, otherwise return nil.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     (and (zerop (c-backward-token-2 1 t lim))
 	 (or (looking-at c-block-stmt-1-key)
@@ -5577,6 +5665,8 @@ brace."
   ;; need to be adjusted further by c-add-stmt-syntax, but the
   ;; position at return is suitable as start position for that
   ;; function.
+  ;;
+  ;; This function might do hidden buffer changes.
   (unless (= (point) (c-point 'boi))
     (let ((start (c-after-conditional lim)))
       (if start
@@ -5586,6 +5676,8 @@ brace."
   ;; Assuming point is at a brace that opens the block of a top level
   ;; declaration of some kind, move to the proper anchor point for
   ;; that block.
+  ;;
+  ;; This function might do hidden buffer changes.
   (unless (= (point) (c-point 'boi))
     (c-beginning-of-statement-1 lim)))
 
@@ -5596,6 +5688,8 @@ brace."
   ;; semicolon.  I.e. search forward for the closest following
   ;; (syntactically relevant) '{', '=' or ';' token.  Point is left
   ;; _after_ the first found token, or at point-max if none is found.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let ((base (point)))
     (if (c-major-mode-is 'c++-mode)
@@ -5638,6 +5732,8 @@ brace."
   ;; NB: Cases where the declaration continues after the block, as in
   ;; "struct foo { ... } bar;", are currently recognized as two
   ;; declarations, e.g. "struct foo { ... }" and "bar;" in this case.
+  ;;
+  ;; This function might do hidden buffer changes.
   (catch 'return
     (let* ((start (point))
 	   (last-stmt-start (point))
@@ -5718,6 +5814,8 @@ brace."
   ;; point is moved as far as possible within the current sexp and nil
   ;; is returned.  This function doesn't handle macros; use
   ;; `c-end-of-macro' instead in those cases.
+  ;;
+  ;; This function might do hidden buffer changes.
   (let ((start (point))
 	(decl-syntax-table (if (c-major-mode-is 'c++-mode)
 			       c++-template-syntax-table
@@ -5775,6 +5873,8 @@ brace."
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Go to the beginning of a member init list (i.e. just after the ":")
   ;; if inside one.  Returns t in that case, nil otherwise.
+  ;;
+  ;; This function might do hidden buffer changes.
   (or limit
       (setq limit (point-min)))
   (skip-chars-forward " \t")
@@ -5830,6 +5930,8 @@ brace."
   ;; search for the containing class, returning a 2 element vector if
   ;; found. aref 0 contains the bufpos of the boi of the class key
   ;; line, and aref 1 contains the bufpos of the open brace.
+  ;;
+  ;; This function might do hidden buffer changes.
   (if (null paren-state)
       ;; no paren-state means we cannot be inside a class
       nil
@@ -5945,6 +6047,8 @@ brace."
   ;; N.B.: This algorithm can potentially get confused by cpp macros
   ;; places in inconvenient locations.  Its a trade-off we make for
   ;; speed.
+  ;;
+  ;; This function might do hidden buffer changes.
   (or
    ;; This will pick up brace list declarations.
    (c-safe
@@ -6077,6 +6181,8 @@ brace."
   ;; matching closer, but assumes it's correct if no balanced paren is
   ;; found (i.e. the case `({ ... } ... )' is detected as _not_ being
   ;; a special brace list).
+  ;;
+  ;; This function might do hidden buffer changes.
   (if c-special-brace-lists
       (condition-case ()
 	  (save-excursion
@@ -6120,6 +6226,8 @@ brace."
 (defun c-looking-at-bos (&optional lim)
   ;; Return non-nil if between two statements or declarations, assuming
   ;; point is not inside a literal or comment.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     (c-backward-syntactic-ws lim)
     (or (bobp)
@@ -6141,6 +6249,8 @@ brace."
   ;; used to decide whether we're inside an expression or not.  If
   ;; both LIM and CONTAINING-SEXP is used, LIM needs to be farther
   ;; back.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     (let ((res 'maybe) passed-bracket
 	  (closest-lim (or containing-sexp lim (point-min)))
@@ -6214,6 +6324,8 @@ brace."
   ;; Returns non-nil if we're looking at the end of an in-expression
   ;; block, otherwise the same as `c-looking-at-inexpr-block'.
   ;; PAREN-STATE is the paren state relevant at the current position.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-excursion
     ;; We currently only recognize a block.
     (let ((here (point))
@@ -6233,6 +6345,8 @@ brace."
 (defun c-narrow-out-enclosing-class (paren-state lim)
   ;; Narrow the buffer so that the enclosing class is hidden.  Uses
   ;; and returns the value from c-search-uplist-for-classkey.
+  ;;
+  ;; This function might do hidden buffer changes.
   (setq paren-state (c-whack-state-after (point) paren-state))
   (let (inclass-p)
     (and paren-state
@@ -6302,6 +6416,8 @@ brace."
   ;;
   ;; Note: It's not a problem if PAREN-STATE "overshoots"
   ;; CONTAINING-SEXP, i.e. contains info about parens further down.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (if (= (point) (c-point 'boi))
       ;; This is by far the most common case, so let's give it special
@@ -6473,6 +6589,8 @@ brace."
   ;; The inclass and class-close syntactic symbols are added in
   ;; several places and some work is needed to fix everything.
   ;; Therefore it's collected here.
+  ;;
+  ;; This function might do hidden buffer changes.
   (save-restriction
     (widen)
     (let (inexpr anchor containing-sexp)
@@ -6499,6 +6617,8 @@ brace."
   ;; This function contains the decision tree reached through both
   ;; cases 18 and 10.  It's a continued statement or top level
   ;; construct of some kind.
+  ;;
+  ;; This function might do hidden buffer changes.
 
   (let (special-brace-list)
     (goto-char indent-point)
@@ -6623,8 +6743,7 @@ brace."
      )))
 
 (defun c-guess-basic-syntax ()
-  "Return the syntactic context of the current line.
-This function does not do any hidden buffer changes."
+  "Return the syntactic context of the current line."
   (save-excursion
     (save-restriction
       (beginning-of-line)
@@ -7996,6 +8115,8 @@ This function does not do any hidden buffer changes."
 (defun c-evaluate-offset (offset langelem symbol)
   ;; offset can be a number, a function, a variable, a list, or one of
   ;; the symbols + or -
+  ;;
+  ;; This function might do hidden buffer changes.
   (cond
    ((eq offset '+)         c-basic-offset)
    ((eq offset '-)         (- c-basic-offset))
@@ -8029,6 +8150,8 @@ This function does not do any hidden buffer changes."
   ;; given then the first is the relpos (or nil).  The symbol is
   ;; matched against `c-offsets-alist' and the offset calculated from
   ;; that is returned.
+  ;;
+  ;; This function might do hidden buffer changes.
   (let* ((symbol (c-langelem-sym langelem))
 	 (match  (assq symbol c-offsets-alist))
 	 (offset (cdr-safe match)))
@@ -8049,6 +8172,8 @@ This function does not do any hidden buffer changes."
   ;; someone is calling it directly.  It takes an old style syntactic
   ;; element on the form (SYMBOL . RELPOS) and converts it to the new
   ;; list form.
+  ;;
+  ;; This function might do hidden buffer changes.
   (if (c-langelem-pos langelem)
       (c-calc-offset (list (c-langelem-sym langelem)
 			   (c-langelem-pos langelem)))
@@ -8063,6 +8188,8 @@ This function does not do any hidden buffer changes."
   ;; that has more sane positions.  Since we always use the first
   ;; found relpos, we rely on that these other symbols always precede
   ;; topmost-intro in the LANGELEMS list.
+  ;;
+  ;; This function might do hidden buffer changes.
   (let ((indent 0) anchor)
 
     (while langelems
