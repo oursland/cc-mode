@@ -179,7 +179,7 @@
     (dmk . ,c-doc-markup-face-name)
     (lbl . ,c-label-face-name)
     (cpp . ,c-preprocessor-face-name)
-    (err . ,c-invalid-face-name)
+    (err . font-lock-warning-face)
     (nbs . c-nonbreakable-space-face)))
 
 (if cc-test-extend-faces
@@ -211,9 +211,6 @@
 
 (defconst cc-test-emacs-features
   (let ((features c-emacs-features))
-    (unless (memq 'syntax-properties features)
-      (setq features (cons 'no-syntax-properties
-			   features)))
     (setq features (cons (if (string-match "XEmacs" emacs-version)
 			     ;; (featurep 'xemacs) doesn't work here
 			     ;; for some reason.
