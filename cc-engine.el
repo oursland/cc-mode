@@ -3281,7 +3281,7 @@ identifier is detected, the returned value is its starting position."
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
-		(and (c-safe (progn (c-backward-sexp 2) t))
+		(and (c-safe (c-backward-sexp 2) t)
 		     (looking-at c-other-decl-block-key)
 		     (setq keyword (match-string 1)
 			   placeholder (point))
@@ -3414,7 +3414,7 @@ identifier is detected, the returned value is its starting position."
 			 ;; watch out for scope operator
 			 (save-excursion
 			   (and (eq char-after-ip ?:)
-				(c-safe (progn (forward-char 1) t))
+				(c-safe (forward-char 1) t)
 				(not (eq (char-after) ?:))
 				)))
 		     (save-excursion
@@ -3602,7 +3602,7 @@ identifier is detected, the returned value is its starting position."
 		   (save-restriction
 		     (widen)
 		     (forward-char 1)
-		     (and (c-safe (progn (c-backward-sexp 1) t))
+		     (and (c-safe (c-backward-sexp 1) t)
 			  (= (point) (aref inclass-p 1))
 			  ))))
 	    (c-add-class-syntax 'class-close inclass-p paren-state))
@@ -3654,7 +3654,7 @@ identifier is detected, the returned value is its starting position."
 			  c-opt-access-key
 			  (not (bobp))
 			  (save-excursion
-			    (c-safe (progn (c-backward-sexp 1) t))
+			    (c-safe (c-backward-sexp 1) t)
 			    (looking-at c-opt-access-key)))
 		(c-backward-sexp 1)
 		(c-backward-syntactic-ws lim))
@@ -3773,7 +3773,7 @@ identifier is detected, the returned value is its starting position."
 	   ;; these things as statements
 	   ((progn
 	      (goto-char containing-sexp)
-	      (and (c-safe (progn (c-forward-sexp -1) t))
+	      (and (c-safe (c-forward-sexp -1) t)
 		   (looking-at "\\<for\\>[^_]")))
 	    (goto-char (1+ containing-sexp))
 	    (c-forward-syntactic-ws indent-point)
@@ -3883,8 +3883,7 @@ identifier is detected, the returned value is its starting position."
 			  (eq (1+ (point)) (cdr (car special-brace-list)))))))
 	      ;; Normal brace list check.
 	      (and (eq char-after-ip ?})
-		   (c-safe (progn (goto-char (c-up-list-backward (point)))
-				  t))
+		   (c-safe (goto-char (c-up-list-backward (point))) t)
 		   (= (point) containing-sexp)))
 	    (if (eq (point) (c-point 'boi))
 		(c-add-syntax 'brace-list-close (point))
