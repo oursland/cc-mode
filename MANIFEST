@@ -1,9 +1,9 @@
 You should have received the following files in the distribution tar
-file for cc-mode 3.304:
+file for cc-mode 3.349:
 
     MANIFEST: This file
 
-    cc-mode.el: Version 3.304 of the mode
+    cc-mode.el: Version 3.349 of the mode
 
     cc-mode-18.el: Emacs 18 compatibility file
 
@@ -14,3 +14,5 @@ file for cc-mode 3.304:
 
     ChangeLog: Extremely verbose history of changes.
 
+    lemacs.patch: fix to obscure C++ comment bug for Lucid Emacs 19
+    only.  See comments in file re: FSF Emacs 19.
