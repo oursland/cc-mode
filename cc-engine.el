@@ -731,6 +731,7 @@
 		    ;; go back 2 bods, but ignore any bogus positions
 		    ;; returned by beginning-of-defun (i.e. open paren
 		    ;; in column zero)
+		    (goto-char here)
 		    (let ((cnt 2))
 		      (while (not (or (bobp) (zerop cnt)))
 			(c-beginning-of-defun-1)
@@ -890,7 +891,7 @@
 	    ;; its possible that the open brace is before bufpos, but
 	    ;; the close brace is after.  In that case, convert this
 	    ;; to a non-cons element.
-	    (if (<= bufpos (cdr car))
+	    (if (< bufpos (cdr car))
 		(progn
 		  (setcdr ptr (list (car car)))
 		  (setq ptr (cdr ptr)))
