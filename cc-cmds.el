@@ -1,6 +1,6 @@
 ;;; cc-cmds.el --- user level commands for CC Mode 
 
-;; Copyright (C) 1985,87,92,93,94,95,96,97 Free Software Foundation, Inc.
+;; Copyright (C) 1985,87,92,93,94,95,96,97,98 Free Software Foundation, Inc.
 
 ;; Authors:    1992-1997 Barry A. Warsaw
 ;;             1987 Dave Detlefs and Stewart Clamen

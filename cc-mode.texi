@@ -31,7 +31,7 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ifinfo
-Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
+Copyright @copyright{} 1995,96,97,98 Free Software Foundation, Inc.
 @end ifinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -60,7 +60,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1995 Free Software Foundation, Inc.
+Copyright @copyright{} 1995,96,97,98 Free Software Foundation, Inc.
 @end titlepage
 
 
