@@ -60,6 +60,63 @@
 ;; buffer changes have that explicitly stated in their docstring or
 ;; comment.
 
+;; Use of text properties
+;;
+;; CC Mode uses several text properties internally to mark up various
+;; positions, e.g. to improve speed and to eliminate glitches in
+;; interactive refontification.
+;;
+;; 'syntax-table
+;;   Used to modify the syntax of some characters.  Currently used to
+;;   mark the "<" and ">" of angle bracket parens with paren syntax.
+;;
+;;   This property is used on single characters and is therefore
+;;   always treated as front and rear nonsticky (or start and end open
+;;   in XEmacs vocabulary).  It's therefore installed on
+;;   `text-property-default-nonsticky' if that variable exists (Emacs
+;;   >= 21).
+;;
+;; 'c-is-sws and 'c-in-sws
+;;   Used by `c-forward-syntactic-ws' and `c-backward-syntactic-ws' to
+;;   speed them up.  See the comment blurb before `c-put-is-sws'
+;;   below for further details.
+;;
+;; 'c-type
+;;   This property is used on single characters to mark positions with
+;;   special syntactic relevance of various sorts.  It's primary use
+;;   is to avoid glitches when multiline constructs are refontified
+;;   interactively (on font lock decoration level 3).  It's cleared in
+;;   a region before it's fontified and is then put on relevant chars
+;;   in that region as they are encountered during the fontification.
+;;   The value specifies the kind of position:
+;;
+;;     'c-decl-arg-start
+;;  	 Put on the last char of the token preceding each declaration
+;;  	 inside a declaration style arglist (typically in a function
+;;  	 prototype).
+;;
+;;     'c-decl-end
+;;  	 Put on the last char of the token preceding a declaration.
+;;  	 This is used in cases where declaration boundaries can't be
+;;  	 recognized simply by looking for a token like ";" or "}".
+;;  	 `c-type-decl-end-used' must be set if this is used (see also
+;;  	 `c-find-decl-spots').
+;;
+;;     'c-<>-arg-sep
+;;  	 Put on the commas that separate arguments in angle bracket
+;;  	 arglists like C++ template arglists.
+;;
+;;     'c-decl-id-start and 'c-decl-type-start
+;;  	 Put on the last char of the token preceding each declarator
+;;  	 in the declarator list of a declaration.  They are also used
+;;  	 between the identifiers cases like enum declarations.
+;;  	 'c-decl-type-start is used when the declarators are types,
+;;  	 'c-decl-id-start otherwise.
+;;
+;; 'c-awk-NL-prop
+;;   Used in AWK mode to mark the various kinds of newlines.  See
+;;   cc-awk.el.
+
 ;;; Code:
 
 (eval-when-compile
