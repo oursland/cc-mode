@@ -1,8 +1,10 @@
-;;; cc-mode-19.el --- compatibility library for Emacs and XEmacs 19
+;;; cc-fixes.el --- compatibility library for Emacs and XEmacs
+;; [Renamed from cc-mode-19.el by ACM, 2003/6/14].
 
 ;; Copyright (C) 1985,1987,1992-2001 Free Software Foundation, Inc.
 
-;; Authors:    2000- Martin Stjernholm
+;; Authors:    2003- Alan Mackenzie
+;;             2000- Martin Stjernholm
 ;;	       1998-1999 Barry A. Warsaw and Martin Stjernholm
 ;;             1997 Barry A. Warsaw
 ;; Maintainer: bug-cc-mode@gnu.org
@@ -10,7 +12,7 @@
 ;; Version:    See cc-mode.el
 ;; Keywords:   c languages oop
 
-;; This file is not part of GNU Emacs.
+;; This file is part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,7 +31,9 @@
 
 ;;; Commentary:
 
-;; This file is necessary in order to run CC Mode 5 under (X)Emacs 19.
+;; This file supplies (X)Emacs functions which didn't exist in (X)Emacs 19,
+;; and also corrects bugs found in some core functions in later (X)Emacs
+;; versions.
 
 ;;; Code:
 
@@ -208,5 +212,5 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
                (font-lock-compile-keywords font-lock-keywords))))
      ))
 
-(cc-provide 'cc-mode-19)
-;;; cc-mode-19.el ends here
+(cc-provide 'cc-fixes)
+;;; cc-fixes.el ends here

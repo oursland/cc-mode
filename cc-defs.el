@@ -64,7 +64,7 @@
 (cc-bytecomp-defun regexp-opt-depth)	; (X)Emacs 20+
 
 
-;; cc-mode-19.el contains compatibility macros that should be used if
+;; cc-fixes.el contains compatibility macros that should be used if
 ;; needed.
 (eval-and-compile
   (if (or (not (fboundp 'functionp))
@@ -79,19 +79,19 @@
 	  (not (fboundp 'regexp-opt))
 	  (not (cc-bytecomp-fboundp 'regexp-opt-depth))
 	  (/= (regexp-opt-depth "\\(\\(\\)\\)") 2))
-      (cc-load "cc-mode-19")
+      (cc-load "cc-fixes")
     (defalias 'c-regexp-opt 'regexp-opt)
     (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
 
 (eval-after-load "font-lock"
-  '(if (and (not (featurep 'cc-mode-19)) ; only load the file once.
+  '(if (and (not (featurep 'cc-fixes)) ; only load the file once.
             (let (font-lock-keywords)
               (font-lock-compile-keywords '("\\<\\>"))
 	      font-lock-keywords))     ; did the previous call foul this up?
        ;; Buglet: This only works if the CC Mode directory is in the
        ;; load path.  No need to bother; it'd only affect odd people
        ;; such as the developers.. ;)
-       (load "cc-mode-19")))
+       (load "cc-fixes")))
 
 (require 'cl)
 
