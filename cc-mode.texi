@@ -22,7 +22,11 @@
 @comment Texinfo manual for CC Mode
 @comment Generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
-@comment 
+@comment
+@comment Authors:
+@comment Barry A. Warsaw
+@comment Martin Stjernholm
+@comment
 @comment Maintained by Martin Stjernholm <bug-cc-mode@gnu.org>
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -66,8 +70,7 @@ Texts.  A copy of the license is included in the section entitled
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
-@center Current maintainer:
-@center Martin Stjernholm
+@center Barry A. Warsaw, Martin Stjernholm
 
 @page
 @vskip 0pt plus 1filll
@@ -3718,7 +3721,7 @@ For every function below there is a ``works with'' list that indicates
 which syntactic symbols the function is intended to be used with.
 
 @macro workswith
-@emph{Works with:}
+@emph{Works with:@ }
 @end macro
 @ifinfo
 @unmacro workswith
@@ -4169,9 +4172,9 @@ In the first case the indentation is kept unchanged, in the second
 @findex c-lineup-dont-change
 @findex lineup-dont-change (c-)
 @item c-lineup-dont-change
-This lineup function returns the indentation of the current line.  Think
-of it as an identity function for lineups; it is used for
-@code{cpp-macro-cont} lines.
+This lineup function makes the line stay at whatever indentation it
+already has; think of it as an identity function for lineups.  It is
+used for @code{cpp-macro-cont} lines.
 
 @workswith Any syntactic symbol.
 
@@ -4579,8 +4582,9 @@ the Free Software Foundation; either version 2 of the License, or
 (at your option) any later version.
 
 You should have received a copy of the GNU General Public License along
-with @ccmode{}; if not, write to the Free Software Foundation, Inc., 59
-Temple Place, Suite 330, Boston, MA 02111-1307 USA.
+with @ccmode{}; see the file @file{COPYING}.  If not, write to the Free
+Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+02111-1307 USA.
 
 This manual is distributed under the terms of the GNU Free Documentation
 License, which follows.
@@ -4952,7 +4956,6 @@ number of this License, you may choose any version ever published (not
 as a draft) by the Free Software Foundation.
 @end enumerate
 
-@page
 @appendixsubsec ADDENDUM: How to use this License for your documents
 
 To use this License in a document you have written, include a copy of
