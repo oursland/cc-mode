@@ -47,6 +47,7 @@
 (cc-bytecomp-defun get-char-table)	; XEmacs 20+
 (cc-bytecomp-defun char-table-range)	; Emacs 19+
 (cc-bytecomp-defun char-table-p)	; Emacs 19+, XEmacs 20+
+(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
 
 ;; Pull in custom if it exists and is recent enough (the one in Emacs
 ;; 19.34 isn't).
@@ -1410,44 +1411,66 @@ just t if it's not known.")
 ;; Figure out what features this Emacs has
 ;;;###autoload
 (defconst c-emacs-features
-  (let ((infodock-p (boundp 'infodock-version))
-	(comments
-	 ;; XEmacs 19 and beyond use 8-bit modify-syntax-entry flags.
-	 ;; Emacs 19 uses a 1-bit flag.  We will have to set up our
-	 ;; syntax tables differently to handle this.
-	 (let ((table (copy-syntax-table))
-	       entry)
-	   (modify-syntax-entry ?a ". 12345678" table)
-	   (cond
-	    ;; XEmacs 19, and beyond Emacs 19.34
-	    ((arrayp table)
-	     (setq entry (aref table ?a))
-	     ;; In Emacs, table entries are cons cells
-	     (if (consp entry) (setq entry (car entry))))
-	    ;; XEmacs 20
-	    ((fboundp 'get-char-table) (setq entry (get-char-table ?a table)))
-	    ;; before and including Emacs 19.34
-	    ((and (fboundp 'char-table-p)
-		  (char-table-p table))
-	     (setq entry (car (char-table-range table [?a]))))
-	    ;; incompatible
-	    (t (error "CC Mode is incompatible with this version of Emacs")))
-	   (if (= (logand (lsh entry -16) 255) 255)
-	       '8-bit
-	     '1-bit))))
-    (if infodock-p
-	(list comments 'infodock)
-      (list comments)))
-  "A list of features extant in the Emacs you are using.
+  (let (list)
+
+    (if (boundp 'infodock-version)
+	;; I've no idea what this actually is, but it's legacy. /mast
+	(setq list (cons 'infodock list)))
+
+    (let ((buf (generate-new-buffer "test"))
+	  (parse-sexp-lookup-properties t))
+      (save-excursion
+	(set-buffer buf)
+	(modify-syntax-entry ?< ".")
+	(modify-syntax-entry ?> ".")
+	(insert "<()>")
+	(c-mark-template-open 1)
+	(c-mark-template-close 4)
+	(goto-char 1)
+	(c-forward-sexp)
+	(if (= (point) 5)
+	    (setq list (cons 'syntax-properties list)))
+	(set-buffer-modified-p nil))
+      (kill-buffer buf))
+
+    ;; XEmacs 19 and beyond use 8-bit modify-syntax-entry flags.
+    ;; Emacs 19 uses a 1-bit flag.  We will have to set up our
+    ;; syntax tables differently to handle this.
+    (let ((table (copy-syntax-table))
+	  entry)
+      (modify-syntax-entry ?a ". 12345678" table)
+      (cond
+       ;; XEmacs 19, and beyond Emacs 19.34
+       ((arrayp table)
+	(setq entry (aref table ?a))
+	;; In Emacs, table entries are cons cells
+	(if (consp entry) (setq entry (car entry))))
+       ;; XEmacs 20
+       ((fboundp 'get-char-table) (setq entry (get-char-table ?a table)))
+       ;; before and including Emacs 19.34
+       ((and (fboundp 'char-table-p)
+	     (char-table-p table))
+	(setq entry (car (char-table-range table [?a]))))
+       ;; incompatible
+       (t (error "CC Mode is incompatible with this version of Emacs")))
+      (setq list (cons (if (= (logand (lsh entry -16) 255) 255)
+			   '8-bit
+			 '1-bit)
+		       list)))
+
+    list)
+  "A list of certain features in the (X)Emacs you are using.
 There are many flavors of Emacs out there, each with different
-features supporting those needed by CC Mode.  Here's the current
-supported list, along with the values for this variable:
+features supporting those needed by CC Mode.  The following values
+might be present:
 
- XEmacs 19, 20, 21:          (8-bit)
- Emacs 19, 20:               (1-bit)
+'8-bit              8 bit syntax entry flags (XEmacs style).
+'1-bit              1 bit syntax entry flags (Emacs style).
+'syntax-properties  It works to override the syntax for specific characters
+		    in the buffer with the 'syntax-table property.
+'infodock           This is Infodock (based on XEmacs).
 
-Infodock (based on XEmacs) has an additional symbol on this list:
-`infodock'.")
+'8-bit and '1-bit are mutually exclusive.")
 
 
 (cc-provide 'cc-vars)
