@@ -1066,7 +1066,7 @@ contain another declaration level that should be considered a class."
 
 (c-lang-defconst c-brace-list-kwds
   "Keywords introducing declarations where the following block (if
-any) is a brace list (containing identifier declarations)."
+any) is a brace list."
   t nil
   (c c++ objc pike) '("enum"))
 
@@ -1138,7 +1138,7 @@ also be used for the special case when the list can contain only one
 element.)  Assumed to be mutually exclusive with `c-ref-list-kwds'."
   t    nil
   objc '("@class" "@interface" "@implementation" "@protocol")
-  java (append '("import")
+  java (append '("import" "new")
 	       (c-lang-const c-decl-spec-kwds))
   pike '("inherit"))
 
@@ -1182,6 +1182,12 @@ type identifiers separated by arbitrary tokens."
   c++  '("throw")
   objc '("@defs")
   pike '("array" "function" "int" "mapping" "multiset" "object" "program"))
+
+(c-lang-defconst c-brace-id-list-kwds
+  "Keywords that may be followed by a brace block containing a comma
+separated list of identifier definitions, i.e. like the list of
+identifiers that follows the type in a normal declaration."
+  t (c-lang-const c-brace-list-kwds))
 
 (c-lang-defconst c-<>-arglist-kwds
   "Keywords that can be followed by a C++ style template arglist; see
