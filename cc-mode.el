@@ -7,7 +7,7 @@
 ;;             1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    a long, long, time ago. adapted from the original c-mode.el
-;; Version:    5.08
+;; Version:    5.09
 ;; Keywords:   c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -368,7 +368,7 @@ Key bindings:
 
 
 ;; defuns for submitting bug reports
-(defconst c-version "5.08"
+(defconst c-version "5.09"
   "CC Mode version number.")
 
 (defconst c-mode-help-address
