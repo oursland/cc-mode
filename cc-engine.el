@@ -2208,8 +2208,7 @@ Keywords are recognized and not considered identifiers."
       (beginning-of-line)
       (let* ((indent-point (point))
 	     (case-fold-search nil)
-	     (fullstate (c-parse-state))
- 	     (state fullstate)
+	     (state (c-parse-state))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache step-type
 	     tmpsymbol keyword injava-inher special-brace-list
@@ -2221,8 +2220,8 @@ Keywords are recognized and not considered identifiers."
 	     ;; this local variable and leave a bogus value in the
 	     ;; global one.
 	     (c-state-cache (if inclass-p
-				(c-whack-state-before (point-min) fullstate)
-			      fullstate))
+				(c-whack-state-before (point-min) state)
+			      state))
 	     inenclosing-p macro-start in-macro-expr
 	     ;; There's always at most one syntactic element which got
 	     ;; a relpos.  It's stored in syntactic-relpos.
@@ -2259,7 +2258,8 @@ Keywords are recognized and not considered identifiers."
 	  ;; containing class.
 	  (if (and containing-sexp
 		   (< containing-sexp (point-min)))
-	      (setq containing-sexp nil))
+	      (setq containing-sexp nil
+		    state nil))
 	  ;; If we're in a parenthesis list then ',' delimits the
 	  ;; "statements" rather than being an operator (with the
 	  ;; exception of the "for" clause).  This difference is
@@ -2271,9 +2271,8 @@ Keywords are recognized and not considered identifiers."
 
 	;; set the limit on the farthest back we need to search
 	(setq lim (or containing-sexp
-		      (if (consp (car fullstate))
-			  (cdr (car fullstate))
-			nil)
+		      (and (consp (car-safe state))
+			   (cdr (car state)))
 		      (point-min)))
 
 	;; cache char before and after indent point, and move point to
@@ -2361,7 +2360,7 @@ Keywords are recognized and not considered identifiers."
 		 (not (eq char-before-ip ?\;))
 		 (not (memq char-after-ip '(?\) ?\] ?,)))
 		 (or (not (eq char-before-ip ?}))
-		     (c-looking-at-inexpr-block-backward fullstate))
+		     (c-looking-at-inexpr-block-backward c-state-cache))
 		 (> (point)
 		    (progn
 		      ;; Ought to cache the result from the
@@ -2443,7 +2442,7 @@ Keywords are recognized and not considered identifiers."
 	  (goto-char (cdr placeholder))
 	  (back-to-indentation)
 	  (c-add-stmt-syntax tmpsymbol t
-			     (c-most-enclosing-brace fullstate (point))
+			     (c-most-enclosing-brace c-state-cache (point))
 			     (c-whack-state-after (point) state))
 	  (unless (eq (point) (cdr placeholder))
 	    (c-add-syntax (car placeholder))))
@@ -2882,7 +2881,7 @@ Keywords are recognized and not considered identifiers."
 	   ;; and 17E.
 	   ((and (eq char-after-ip ?{)
 		 (progn
-		   (setq placeholder (c-inside-bracelist-p (point) fullstate))
+		   (setq placeholder (c-inside-bracelist-p (point) c-state-cache))
 		   (if placeholder
 		       (setq tmpsymbol '(brace-list-open . inexpr-class))
 		     (setq tmpsymbol '(block-open . inexpr-statement)
@@ -3028,7 +3027,7 @@ Keywords are recognized and not considered identifiers."
 		   (= (point) containing-sexp)))
 	    (if (eq (point) (c-point 'boi))
 		(c-add-syntax 'brace-list-close (point))
-	      (setq lim (c-most-enclosing-brace fullstate (point)))
+	      (setq lim (c-most-enclosing-brace c-state-cache (point)))
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-stmt-syntax 'brace-list-close t lim
 				 (c-whack-state-after (point) state) t)))
@@ -3053,7 +3052,7 @@ Keywords are recognized and not considered identifiers."
 		(goto-char containing-sexp))
 	      (if (eq (point) (c-point 'boi))
 		  (c-add-syntax 'brace-list-intro (point))
-		(setq lim (c-most-enclosing-brace fullstate (point)))
+		(setq lim (c-most-enclosing-brace c-state-cache (point)))
 		(c-beginning-of-statement-1 lim)
 		(c-add-stmt-syntax 'brace-list-intro t lim
 				   (c-whack-state-after (point) state) t)))
@@ -3072,7 +3071,7 @@ Keywords are recognized and not considered identifiers."
 	 ;; CASE 10: A continued statement or top level construct.
 	 ((and (not (memq char-before-ip '(?\; ?:)))
 	       (or (not (eq char-before-ip ?}))
-		   (c-looking-at-inexpr-block-backward fullstate))
+		   (c-looking-at-inexpr-block-backward c-state-cache))
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
@@ -3088,13 +3087,13 @@ Keywords are recognized and not considered identifiers."
 	 ;; CASE 14: A case or default label
 	 ((looking-at c-label-kwds-regexp)
 	  (goto-char containing-sexp)
-	  (setq lim (c-most-enclosing-brace fullstate containing-sexp))
+	  (setq lim (c-most-enclosing-brace c-state-cache containing-sexp))
 	  (c-backward-to-block-anchor lim)
 	  (c-add-stmt-syntax 'case-label t lim state))
 	 ;; CASE 15: any other label
 	 ((looking-at c-label-key)
 	  (goto-char containing-sexp)
-	  (setq lim (c-most-enclosing-brace fullstate containing-sexp))
+	  (setq lim (c-most-enclosing-brace c-state-cache containing-sexp))
 	  (save-excursion
 	    (setq tmpsymbol
 		  (if (and (eq (c-beginning-of-statement-1 lim) 'up)
@@ -3260,7 +3259,7 @@ Keywords are recognized and not considered identifiers."
 	      (goto-char (cdr placeholder))
 	      (back-to-indentation)
 	      (c-add-stmt-syntax tmpsymbol t
-				 (c-most-enclosing-brace fullstate (point))
+				 (c-most-enclosing-brace c-state-cache (point))
 				 (c-whack-state-after (point) state))
 	      (if (/= (point) (cdr placeholder))
 		  (c-add-syntax (car placeholder))))
