@@ -79,6 +79,12 @@
 (require 'font-lock)
 (require 'cc-defs)
 
+;; Silence the compiler.
+(defvar font-lock-fontify-buffer-function)
+(defvar deactivate-mark)
+(defvar inhibit-point-motion-hooks)
+(defvar font-lock-global-modes)
+
 ;; Make sure all used faces are unique before loading cc-fonts.  We
 ;; might be screwed if it's already loaded - the check for ambiguous
 ;; faces below will complain in that case.
@@ -150,13 +156,12 @@
     (nbs . c-nonbreakable-space-face)))
 
 ;; Check that we don't have duplicates.
-(let ((alist cc-test-face-alist) elem face facename)
+(let ((alist cc-test-face-alist) elem facename)
   (while alist
     (setq elem (car alist)
 	  alist (cdr alist))
     (unless (eq (car elem) 'reg)
-      (when (and (setq facename (get (setq face (cdr elem))
-				     'cc-test-face-name))
+      (when (and (setq facename (get (cdr elem) 'cc-test-face-name))
 		 (not (eq facename (car elem))))
 	(error (concat "Ambiguous face %s - can be both %s and %s"
 		       " (cc-fonts loaded too early?)")
@@ -395,7 +400,7 @@ to be set as a file local variable.")
 				   (c-backward-sexp)
 				   (setq pos (point)
 					 preceding-entry (read facebuf))
-				   (>= (car entry) col)))
+				   (>= (car preceding-entry) col)))
 		       (goto-char pos)
 		       (setq preceding-entry nil))
 		     (delete-region (point) (c-point 'eol))
@@ -555,6 +560,11 @@ to be set as a file local variable.")
 	     expectedindent
 	     c-echo-syntactic-information-p
 	     font-lock-verbose)
+
+	;; This shouldn't happen if CC Mode is byte compiled properly.
+	(when (and (featurep 'cc-langs) (not (get 'cc-langs 'load-warning)))
+	  (put 'cc-langs 'load-warning t)
+	  (cc-test-log "Warning: cc-langs is loaded"))
 
 	(switch-to-buffer testbuf)
 	(setq ignore-errs (intersection cc-test-emacs-features
@@ -974,7 +984,8 @@ It records the syntactic analysis of each line in the test file."
     (find-file resfile)
     (goto-char (point-min))
     (while (re-search-forward "\\<[0-9]+\\>" nil t)
-      (let ((pos (string-to-number (match-string-no-properties 0))))
+      (let ((pos (string-to-number (buffer-substring-no-properties
+				    (match-beginning 0) (match-end 0)))))
 	(when (>= pos save-point)
 	  (delete-region (match-beginning 0) (match-end 0))
 	  (insert-and-inherit (format "%d" (+ pos offset)))
