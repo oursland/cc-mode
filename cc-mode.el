@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.189 $
-;; Last Modified:   $Date: 1995-03-31 01:30:00 $
+;; Version:         $Revision: 4.190 $
+;; Last Modified:   $Date: 1995-04-10 22:00:28 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-31 01:30:00 $|$Revision: 4.189 $|
+;; |$Date: 1995-04-10 22:00:28 $|$Revision: 4.190 $|
 
 ;;; Code:
 
@@ -1508,6 +1508,7 @@ the brace is inserted inside a literal."
 	    blink-paren-hook		; emacs18
 	    (insertion-point (point))
 	    delete-temp-newline
+	    (preserve-p (= 32 (char-syntax (preceding-char))))
 	    ;; shut this up too
 	    (c-echo-syntactic-information-p nil)
 	    (syntax (progn
@@ -1568,7 +1569,11 @@ the brace is inserted inside a literal."
 		  (setq syntax (c-guess-basic-syntax))))
 	  ;; must remove the newline we just stuck in (if we really did it)
 	  (and delete-temp-newline
-	       (save-excursion (delete-indentation)))
+	       (save-excursion
+		 ;; if there is whitespace before point, then preserve
+		 ;; at least one space.
+		 (delete-indentation)
+		 (and preserve-p (just-one-space))))
 	  ;; since we're hanging the brace, we need to recalculate
 	  ;; syntax.  Update the state to accurately reflect the
 	  ;; beginning of the line.  We punt if we cross any open or
@@ -4516,7 +4521,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.189 $"
+(defconst c-version "$Revision: 4.190 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
