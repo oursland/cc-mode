@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.129 $
-;; Last Modified:   $Date: 1993-12-21 14:37:01 $
+;; Version:         $Revision: 3.130 $
+;; Last Modified:   $Date: 1993-12-21 17:09:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-21 14:37:01 $|$Revision: 3.129 $|
+;; |$Date: 1993-12-21 17:09:45 $|$Revision: 3.130 $|
 
 ;;; Code:
 
@@ -137,14 +137,23 @@ reported and the semantic symbol is ignored.")
     (inclass               . +)
     (cpp-macro             . -1000)
     )
-  "*Association list of semantic symbols and indentation offsets.
+  "*Association list of language element symbols and indentation offsets.
 Each element in this list is a cons cell of the form:
 
-    (SEMSYM . OFFSET)
+    (LANGELEM . OFFSET)
 
-Where SEMSYM is a semantic symbol and OFFSET is the additional offset
-applied to a line containing the semantic symbol.  Here is the current
-list of valid semantic symbols:
+Where LANGELEM is a language element symbol and OFFSET is the
+additional offset applied to the line being indented.  OFFSET can be
+an integer, a function, or the symbol `+' or `-', designating
+positive or negative values of `c-basic-offset'.
+
+If OFFSET is a function, it will be called with a single argument
+containing a cons cell with a langelem symbol in the car, and the
+relative indentation position in the cdr.  Also, the global variable
+`c-semantics' will contain the entire list of language elements for
+the line being indented.  The function should return an integer.
+
+Here is the current list of valid semantic symbols:
 
  string                 -- inside multi-line string
  c                      -- inside a multi-line C style block comment
@@ -575,6 +584,8 @@ Emacs.")
   "Internal state of hungry delete key feature.")
 (defvar c-auto-newline nil
   "Internal state of auto newline feature.")
+(defvar c-semantics nil
+  "Variable containing semantics list during indentation.")
 
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
@@ -625,7 +636,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.129 $
+CC-MODE REVISION: $Revision: 3.130 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -658,7 +669,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.129 $
+CC-MODE REVISION: $Revision: 3.130 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2591,12 +2602,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; information for the current line. Returns the amount of
   ;; indentation change
   (let* ((lim (or lim (c-point 'bod)))
-	 (semantics (or semantics (c-guess-basic-semantics lim)))
+	 (c-semantics (or semantics (c-guess-basic-semantics lim)))
 	 (pos (- (point-max) (point)))
-	 (indent (apply '+ (mapcar 'c-get-offset semantics)))
+	 (indent (apply '+ (mapcar 'c-get-offset c-semantics)))
 	 (shift-amt  (- (current-indentation) indent)))
     (and c-echo-semantic-information-p
-	 (message "semantics: %s, indent= %d" semantics indent))
+	 (message "semantics: %s, indent= %d" c-semantics indent))
     (if (zerop shift-amt)
 	nil
       (delete-region (c-point 'bol) (c-point 'boi))
@@ -2686,7 +2697,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-adaptive-block-open (langelem)
   ;; when substatement is on semantics list, return negative
   ;; c-basic-offset, otherwise return zero
-  (if (assq 'substatement semantics)
+  (if (assq 'substatement c-semantics)
       (- c-basic-offset)
     0))
 
@@ -2791,7 +2802,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.129 $"
+(defconst c-version "$Revision: 3.130 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
