@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.280 $
-;; Last Modified:   $Date: 1994-03-11 03:37:02 $
+;; Version:         $Revision: 3.281 $
+;; Last Modified:   $Date: 1994-03-11 04:13:13 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-11 03:37:02 $|$Revision: 3.280 $|
+;; |$Date: 1994-03-11 04:13:13 $|$Revision: 3.281 $|
 
 ;;; Code:
 
@@ -751,7 +751,7 @@ behavior that users are familiar with.")
   (concat
    "\\(\\(extern\\|typedef\\)\\s +\\)?"
    "\\(template\\s *<[^>]*>\\s *\\)?"
-   "[^<][ \t]*class\\|struct\\|union")
+   "\\([^<a-zA-Z0-9_]\\|\\`\\)[ \t]*class\\|struct\\|union")
   "Regexp describing a class declaration, including templates.")
 (defconst c-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.280 $
+cc-mode Revision: $Revision: 3.281 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.280 $
+cc-mode Revision: $Revision: 3.281 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2410,6 +2410,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (progn
 		 (goto-char (1+ (car inclass-p)))
 		 (skip-chars-forward " \t\n" indent-point)
+		 ;; if point is now left of the class opening brace,
+		 ;; we're hosed, so try a different tact
+		 (if (<= (c-point 'bol) (car inclass-p))
+		     (progn
+		       (goto-char (1+ (car inclass-p)))
+		       (c-forward-syntactic-ws indent-point)))
 		 (c-point 'bol))
 	       (progn
 		 (goto-char indent-point)
@@ -3267,7 +3273,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.280 $"
+(defconst c-version "$Revision: 3.281 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
