@@ -383,6 +383,7 @@ it finds in `c-file-offsets'."
   ;; add bindings which are only useful for C
   )
 
+;;;###autoload
 (defvar c-mode-syntax-table nil
   "Syntax table used in c-mode buffers.")
 (if c-mode-syntax-table
