@@ -2223,12 +2223,13 @@ should not be changed directly; use @code{c-add-style} instead.
 
 @cindex file local variables
 
-The Emacs manual describes how you can customize certain variables on
-a per-file basis by including a @dfn{file local variable} block at the
-end of the file.  So far, you've only seen a functional interface to
-@ccmode{} customization, which can't be used there.  @ccmode{}
-provides two variables allow customization of the indentation style on
-a per-file basis:
+The Emacs manual describes how you can customize certain variables on a
+per-file basis by including a @dfn{file local variable} block at the end
+of the file (@pxref{File Variables,, Local Variables in Files, emacs,
+The Emacs Editor}).  So far, you've only seen a functional interface to
+@ccmode{} customization, which can't be used there.  @ccmode{} provides
+two variables which allow customization of the indentation style on a
+per-file basis:
 
 @defvar c-file-style
 @vindex file-style (c-)
