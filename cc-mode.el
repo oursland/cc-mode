@@ -145,6 +145,7 @@ is necessary too (which gives more control).  See \"cc-mode.el\" for
 more info."
   ;;
   ;; This function does not do any hidden buffer changes.
+
   (setq c-buffer-is-cc-mode t)
 
   (let ((initprop 'cc-mode-is-initialized)
