@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.357 $
-;; Last Modified:   $Date: 1993-07-02 18:02:05 $
+;; Version:         $Revision: 2.358 $
+;; Last Modified:   $Date: 1993-07-02 21:52:02 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-07-02 18:02:05 $|$Revision: 2.357 $|
+;; |$Date: 1993-07-02 21:52:02 $|$Revision: 2.358 $|
 
 ;;; Code:
 
@@ -481,7 +481,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.357 $
+  "Major mode for editing C++ code.  $Revision: 2.358 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -713,7 +713,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.357 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.358 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -925,10 +925,10 @@ If `c++-hungry-delete-key' is nil, just call `backward-delete-char-untabify'."
 		       ;; c++-beginning-of-defun will not be able to
 		       ;; correctly find the bod when
 		       ;; c++-match-headers-strongly is nil.
-		       (progn (c++-indent-line)
+		       (progn (c++-indent-line bod)
 			      (save-excursion
 				(forward-line -1)
-				(c++-indent-line))))
+				(c++-indent-line bod))))
 		   t)))
 	(progn
 	  (if (and (memq last-command-char c++-untame-characters)
@@ -939,7 +939,7 @@ If `c++-hungry-delete-key' is nil, just call `backward-delete-char-untabify'."
 	  ;; really might not.
 	  (and (= last-command-char ?{)
 	       (bolp)
-	       (c++-indent-line))
+	       (c++-indent-line bod))
 	  (insert last-command-char)
 	  ;; try to clean up empty defun braces if conditions apply
 	  (let ((here (point-marker)))
@@ -974,7 +974,7 @@ If `c++-hungry-delete-key' is nil, just call `backward-delete-char-untabify'."
 		  (set-marker here nil))
 	      (goto-char here)
 	      (set-marker here nil)))
-	  (c++-indent-line)
+	  (c++-indent-line bod)
 	  (if (c++-auto-newline)
 	      (progn
 		;; c++-auto-newline may have done an auto-fill
@@ -2025,12 +2025,13 @@ BOD is the beginning of the C++ definition."
       ;; to work around this.  It is probably better to just use
       ;; c++-match-header-strongly, but there are performance questions
       (if (null state)
-	  (let* ((c++-match-header-strongly t)
-		 (bod (c++-point 'bod)))
-	    (goto-char bod)
-	    (setq state (c++-parse-state indent-point)
-		  containing-sexp (nth 1 state)
-		  parse-start (point))))
+	  (error "null state!"))
+;;	  (let* ((c++-match-header-strongly t)
+;;		 (bod (c++-point 'bod)))
+;;	    (goto-char bod)
+;;	    (setq state (c++-parse-state indent-point)
+;;		  containing-sexp (nth 1 state)
+;;		  parse-start (point))))
       (setq literal (c++-in-literal bod))
       ;; cache char before indent point
       (save-excursion
@@ -2782,7 +2783,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.357 $"
+(defconst c++-version "$Revision: 2.358 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
