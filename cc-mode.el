@@ -140,7 +140,7 @@ Key bindings:
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C-class-key
 	c-baseclass-key nil
-	c-comment-start-regexp c-C-comment-start-regexp
+	c-comment-start-regexp c-C++-comment-start-regexp
 	imenu-generic-expression cc-imenu-c-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook)
