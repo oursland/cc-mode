@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-09 22:45:24 $
-;; Version:         $Revision: 2.105 $
+;; Last Modified:   $Date: 1992-06-10 19:10:31 $
+;; Version:         $Revision: 2.106 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-09 22:45:24 $|$Revision: 2.105 $|
+;; |$Date: 1992-06-10 19:10:31 $|$Revision: 2.106 $|
 
 
 ;; ======================================================================
@@ -212,7 +212,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.105 $
+  "Major mode for editing C++ code.  $Revision: 2.106 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1293,15 +1293,18 @@ BOD is the beginning of the C++ definition."
 				(forward-line 1)
 				(skip-chars-forward " \t")
 				(= (following-char) ?:)))
-			  (- c++-member-init-indent
-			     (if (progn (beginning-of-line)
-					(skip-chars-forward " \t")
-					(looking-at
-					 (concat
-					  "\\<\\(public\\|protected\\|private"
-					  "\\)\\>:")))
-				 inclass-shift
-			       0))
+			  ;; check to see if we're looking at a member
+			  ;; init, or access specifier
+			  (if (progn
+				(beginning-of-line)
+				(skip-chars-forward " \t")
+				(looking-at
+				 "\\<\\(public\\|protected\\|private\\)\\>:"))
+			      ;; access specifier so add zero to inclass-shift
+			      0
+			    ;; member init, so add offset, but
+			    ;; subtract inclass-shift
+			    (- c++-member-init-indent inclass-shift))
 			(if (or (= (preceding-char) ?})
 				(= (preceding-char) ?\)))
 			    0
@@ -1813,7 +1816,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.105 $"
+(defconst c++-version "$Revision: 2.106 $"
   "c++-mode version number.")
 
 (defun c++-version ()
