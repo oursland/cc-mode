@@ -1546,10 +1546,9 @@ balanced expression is found."
 	  (if (not start)
 	     (unless shutup-p
 	       (error "Cannot find start of balanced expression to indent"))
-	    (setq start (save-restriction
-			  (goto-char start)
-			  (forward-line)
-			  (point)))
+	    (goto-char start)
+	    (forward-line)
+	    (setq start (point))
 	    (if (not end)
 		(unless shutup-p
 		  (error "Cannot find end of balanced expression to indent"))
