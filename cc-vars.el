@@ -1393,11 +1393,14 @@ by doing \\[" mode2 "].
 Despite the name, this variable is not only used for font locking but
 also elsewhere in CC Mode to tell types from other identifiers.")))
 
-;; I do not appreciate the very Emacs-specific luggage on this
-;; default value, but otoh it can hardly get in the way for other
-;; users, and removing it would cause unnecessary grief for the old
-;; timers that are used to have Lisp_Object there. /mast
-(defcustom c-font-lock-extra-types '("FILE" "\\sw+_t" "Lisp_Object")
+(defcustom c-font-lock-extra-types
+  '("FILE" "\\sw+_t"
+    "bool" "complex" "imaginary"	; Defined in C99.
+    ;; I do not appreciate the following very Emacs-specific luggage
+    ;; in the default value, but otoh it can hardly get in the way for
+    ;; other users, and removing it would cause unnecessary grief for
+    ;; the old timers that are used to it. /mast
+    "Lisp_Object")
   (c-make-font-lock-extra-types-blurb "C" "c-mode"
 "For example, a value of (\"FILE\" \"\\\\sw+_t\") means the word FILE
 and words ending in _t are treated as type names.")
@@ -1586,6 +1589,10 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
     (when (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
       (setq list (cons 'pps-extended-state list)))
 
+    ;; See if POSIX char classes work.
+    (when (string-match "[[:alpha:]]" "a")
+      (setq list (cons 'posix-char-classes list)))
+
     list)
   "A list of certain features in the (X)Emacs you are using.
 There are many flavors of Emacs out there, each with different
@@ -1603,6 +1610,7 @@ might be present:
 'pps-extended-state `parse-partial-sexp' returns a list with at least 10
 		    elements, i.e. it contains the position of the
 		    start of the last comment or string.
+'posix-char-classes The regexp engine understands POSIX character classes.
 'infodock           This is Infodock (based on XEmacs).
 
 '8-bit and '1-bit are mutually exclusive.")

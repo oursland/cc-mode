@@ -80,6 +80,7 @@
 (require 'cc-defs)
 
 (defconst cc-test-verbose nil)
+(defconst cc-test-dump-backtraces nil)
 
 ;; Silence the compiler.
 (defvar font-lock-fontify-buffer-function)
@@ -91,8 +92,8 @@
 ;; might be screwed if it's already loaded - the check for ambiguous
 ;; faces below will complain in that case.
 (unless (c-face-name-p 'font-lock-doc-face)
-  (if (c-face-name-p 'font-lock-string-face)
-      (copy-face 'font-lock-string-face 'font-lock-doc-face)
+  (if (c-face-name-p 'font-lock-comment-face)
+      (copy-face 'font-lock-comment-face 'font-lock-doc-face)
     (make-face 'font-lock-doc-face)))
 (unless (c-face-name-p 'font-lock-preprocessor-face)
   (cond ((c-face-name-p 'font-lock-builtin-face)
@@ -114,6 +115,12 @@
     (copy-face 'font-lock-constant-face 'font-lock-label-face))
   (defvar font-lock-label-face nil)
   (setq font-lock-label-face 'font-lock-label-face))
+(unless (c-face-name-p 'font-lock-doc-markup-face)
+  (if (c-face-name-p 'font-lock-reference-face)
+      (copy-face 'font-lock-reference-face 'font-lock-doc-markup-face)
+    (copy-face 'font-lock-constant-face 'font-lock-doc-markup-face))
+  (defvar font-lock-doc-markup-face nil)
+  (setq font-lock-doc-markup-face 'font-lock-doc-markup-face))
 
 ;; In Emacs face names are resolved as variables which can point to
 ;; another face.  Make sure we don't have such indirections when we
@@ -131,7 +138,6 @@
 	  font-lock-type-face
 	  font-lock-reference-face
 	  font-lock-doc-string-face
-	  font-lock-reference-face
 	  font-lock-constant-face
 	  font-lock-preprocessor-face
 	  font-lock-builtin-face
@@ -150,11 +156,12 @@
     (var . font-lock-variable-name-face)
     (con . font-lock-constant-face)
     (typ . font-lock-type-face)
-    (ref . font-lock-reference-face)
-    (doc . ,c-doc-face)
-    (lbl . ,c-label-face)
-    (cpp . ,c-preprocessor-face)
-    (err . ,c-invalid-face)
+    (ref . ,c-reference-face-name)
+    (doc . ,c-doc-face-name)
+    (dmk . ,c-doc-markup-face-name)
+    (lbl . ,c-label-face-name)
+    (cpp . ,c-preprocessor-face-name)
+    (err . ,c-invalid-face-name)
     (nbs . c-nonbreakable-space-face)))
 
 ;; Check that we don't have duplicates.
@@ -359,22 +366,29 @@ to be set as a file local variable.")
 
 (defun cc-test-record-faces (testbuf facebuf check-unknown-faces)
   (set-buffer testbuf)
-  (let (face prev-face (pos (point)) facename lines col preceding-entry
+  (let (faces prev-faces (pos (point)) facenames lines col preceding-entry
 	(emacs-strings (not (featurep 'xemacs)))
 	in-string)
 
     (while (progn
-	     (unless (eq (setq face (get-text-property pos 'face)) prev-face)
-	       (setq prev-face face)
+	     (unless (eq (setq faces (get-text-property pos 'face)) prev-faces)
+	       (setq prev-faces faces)
 
-	       ;; Translate the face to the short names used in the
-	       ;; .face files and check that we expect it.
-	       (unless (setq facename (if face
-					  (get face 'cc-test-face-name)
-					'reg))
-		 (if check-unknown-faces
-		     (error "Unknown face %s" face)
-		   (setq facename face)))
+	       (setq facenames
+		     (mapcar
+		      (lambda (face)
+			;; Translate each face to the short names used
+			;; in the .face files and check that we expect
+			;; it.
+			(let ((name (get face 'cc-test-face-name)))
+			  (if name
+			      name
+			    (if check-unknown-faces
+				(error "Unknown face %s" face)
+			      face))))
+		      (if (listp faces) faces (list faces))))
+	       (unless facenames
+		 (setq facenames '(reg)))
 
 	       (catch 'record-face
 		 ;; XEmacs does not highlight the quotes surrounding
@@ -382,13 +396,16 @@ to be set as a file local variable.")
 		 ;; .face files follow the XEmacs variety since the
 		 ;; Emacs behavior can be more easily converted for
 		 ;; empty strings than the other way around.
+		 ;;
+		 ;; NB: The case when there are several overlaid faces
+		 ;; isn't handled but that shouldn't happen in strings.
 		 (when emacs-strings
 		   (if in-string
 		       (progn
 			 (backward-char)
 			 (unless (looking-at c-string-limit-regexp)
 			   (forward-char)))
-		     (when (and (eq facename 'str)
+		     (when (and (equal facenames '(str))
 				(looking-at c-string-limit-regexp))
 		       (when (looking-at cc-test-empty-string-regexp)
 			 ;; Ignore empty strings altogether.
@@ -397,7 +414,7 @@ to be set as a file local variable.")
 				  (looking-at cc-test-empty-string-regexp)))
 			 (throw 'record-face nil))
 		       (forward-char)))
-		   (setq in-string (eq facename 'str)))
+		   (setq in-string (equal facenames '(str))))
 
 		 (when (prog1 (and col (>= col (current-column)))
 			 (setq col (current-column))
@@ -426,12 +443,12 @@ to be set as a file local variable.")
 		 ;; Don't add a new entry if the preceding one has the
 		 ;; same face.
 		 (when (and preceding-entry
-			    (eq (car (cdr preceding-entry)) facename))
+			    (equal (cdr preceding-entry) facenames))
 		   (set-buffer testbuf)
 		   (throw 'record-face nil))
 
 		 (insert (format "%s" (setq preceding-entry
-					    (list col facename))))
+					    (cons col facenames))))
 		 (set-buffer testbuf)))
 
 	     (setq pos (next-single-property-change (point) 'face))
@@ -773,16 +790,16 @@ to be set as a file local variable.")
 			   ((not result)
 			    (regression-msg
 			     "Expected %s face at column %d"
-			     (cadr expected) (car expected)))
+			     (cdr expected) (car expected)))
 			   ((not expected)
 			    (regression-msg
 			     "Got unexpected %s face at column %d"
-			     (cadr result) (car result)))
+			     (cdr result) (car result)))
 			   ((eq (car result) (car expected))
 			    (if (and (featurep 'xemacs)
 				     (<= emacs-major-version 20)
-				     (eq (cadr result) 'doc)
-				     (eq (cadr expected) 'str))
+				     (equal (cdr result) '(doc))
+				     (equal (cdr expected) '(str)))
 				;; `font-lock-fontify-syntactically-region'
 				;; in XEmacs <= 20 contains Lisp
 				;; specific crud that affects all modes:
@@ -791,19 +808,19 @@ to be set as a file local variable.")
 				nil
 			      (regression-msg
 			       "Expected %s face at column %d, got %s face"
-			       (cadr expected) (car expected)
-			       (cadr result))))
-			   ((eq (cadr result) (cadr expected))
+			       (cdr expected) (car expected)
+			       (cdr result))))
+			   ((equal (cdr result) (cdr expected))
 			    (regression-msg
 			     "Expected %s face at column %d, got it at %d"
-			     (cadr expected) (car expected)
+			     (cdr expected) (car expected)
 			     (car result)))
 			   (t
 			    (regression-msg
 			     (concat "Expected %s face at column %d, "
 				     "got %s face at %d")
-			     (cadr expected) (car expected)
-			     (cadr result) (car result)))))
+			     (cdr expected) (car expected)
+			     (cdr result) (car result)))))
 
 			(set-buffer res-faces-buf)
 			(forward-line 1)
@@ -869,10 +886,28 @@ to be set as a file local variable.")
 	    (kill-test-buffers))
 	  (not error-found-p))))))
 
+(defvar cc-test-last-backtrace nil)
+
+(defvar signal-hook-function)		; Doesn't exist in XEmacs.
+
+(defun cc-test-signal (err data)
+  (let ((standard-output (generate-new-buffer " *backtrace*"))
+	(signal-hook-function nil))
+    (backtrace)
+    (save-current-buffer
+      (set-buffer standard-output)
+      (setq cc-test-last-backtrace (buffer-string)))
+    (kill-buffer standard-output)
+    (signal err data)))
+
 (defun do-all-tests (&optional resetp)
   (interactive "P")
   (let ((old-c-echo-parsing-error (symbol-function 'c-echo-parsing-error))
-	broken-files cc-test-comp-buf cc-test-comp-win)
+	broken-files cc-test-comp-buf cc-test-comp-win
+	(signal-hook-function (if cc-test-dump-backtraces
+				  'cc-test-signal
+				(if (boundp 'signal-hook-function)
+				    (symbol-value 'signal-hook-function)))))
     (unwind-protect
 	(progn
 	  (unless noninteractive
@@ -900,6 +935,9 @@ to be set as a file local variable.")
 		      (error
 		       (cc-test-log "%s: Eval error: %s"
 				    test (error-message-string err))
+		       (when cc-test-last-backtrace
+			 (cc-test-log "%s" cc-test-last-backtrace)
+			 (setq cc-test-last-backtrace nil))
 		       (setq broken-files (cons test broken-files)))
 		      ))
 		  (directory-files

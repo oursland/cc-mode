@@ -319,31 +319,40 @@ so that all identifiers are recognized as words.")
   "Regexp that matches the start of a symbol, i.e. any identifier or
 keyword.  It's unspecified how far it matches.  Does not contain a \\|
 operator at the top level."
-  ;; This definition isn't correct for the first character in the
-  ;; languages that accept the full range of Unicode word constituents
-  ;; in identifiers (e.g. Java and Pike).  For that we'd need to make a
-  ;; regexp that matches all characters in the word constituent class
-  ;; except 0-9, and the regexp engine currently can't do that.
-  t    "[_a-zA-Z]"
-  pike "[_a-zA-Z`]")
+  t    (concat "[" c-alpha "_]")
+  pike (concat "[" c-alpha "_`]"))
 (c-lang-defvar c-symbol-start (c-lang-const c-symbol-start))
+
+(c-lang-defconst c-symbol-chars
+  "Set of characters that can be part of a symbol.
+This is on the form that fits inside [ ] in a regexp."
+  ;; Pike note: With the backquote identifiers this would include most
+  ;; operator chars too, but they are handled with other means instead.
+  t (concat c-alnum "_"))
 
 (c-lang-defconst c-symbol-key
   "Regexp matching identifiers and keywords.  Assumed to match if
 `c-symbol-start' matches on the same position."
-  ;; We cannot use just `word' syntax class since `_' cannot be in
-  ;; word class.  Putting underscore in word class breaks forward word
-  ;; movement behavior that users are familiar with.  Besides, it runs
-  ;; counter to Emacs convention.
-  t    "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
-  pike (concat (c-lang-const c-symbol-key) "\\|"
-	       (c-make-keywords-re nil
-		 (c-lang-const c-overloadable-operators))))
+  t    (concat (c-lang-const c-symbol-start)
+	       "[" (c-lang-const c-symbol-chars) "]*")
+  pike (concat
+	;; Use the value from C here since the operator backquote is
+	;; covered by the other alternative.
+	(c-lang-const c-symbol-key c)
+	"\\|"
+	(c-make-keywords-re nil
+	  (c-lang-const c-overloadable-operators))))
 (c-lang-defvar c-symbol-key (c-lang-const c-symbol-key))
 
 (c-lang-defconst c-symbol-key-depth
   ;; Number of regexp grouping parens in `c-symbol-key'.
   t (c-regexp-opt-depth (c-lang-const c-symbol-key)))
+
+(c-lang-defconst c-nonsymbol-chars
+  "This is the set of chars that can't be part of a symbol, i.e. the
+negation of `c-symbol-chars'."
+  t (concat "^" (c-lang-const c-symbol-chars)))
+(c-lang-defvar c-nonsymbol-chars (c-lang-const c-nonsymbol-chars))
 
 (c-lang-defconst c-nonsymbol-key
   "Regexp that matches any character that can't be part of a symbol.
@@ -351,7 +360,7 @@ It's usually appended to other regexps to avoid matching a prefix.
 It's assumed to not contain any submatchers."
   ;; The same thing regarding Unicode identifiers applies here as to
   ;; `c-symbol-key'.
-  t "[^_a-zA-Z0-9$]")
+  t (concat "[" (c-lang-const c-nonsymbol-chars) "]"))
 
 (c-lang-defconst c-opt-identifier-concat-key
   "Regexp matching the operators that join symbols to fully qualified
@@ -504,11 +513,23 @@ that at least one does when the regexp has matched."
 
 (c-lang-defconst c-opt-cpp-prefix
   "Regexp matching the prefix of a cpp directive in the languages that
-normally use that macro preprocessor.  Tested at bol.  Assumed to not
-contain any submatches or \\| operators."
+normally use that macro preprocessor.  Tested at bol or at boi.
+Assumed to not contain any submatches or \\| operators."
   t "\\s *#\\s *"
   (java awk) nil)
 (c-lang-defvar c-opt-cpp-prefix (c-lang-const c-opt-cpp-prefix))
+
+(c-lang-defconst c-opt-cpp-start
+  "Regexp matching the prefix of a cpp directive including the directive
+name, or nil in languages without preprocessor support.  The first
+submatch surrounds the directive name."
+  t    (if (c-lang-const c-opt-cpp-prefix)
+	   (concat (c-lang-const c-opt-cpp-prefix)
+		   "\\([" c-alnum "]+\\)"))
+  ;; Pike, being a scripting language, recognizes hash-bangs too.
+  pike (concat (c-lang-const c-opt-cpp-prefix)
+	       "\\([" c-alnum "]+\\|!\\)"))
+(c-lang-defvar c-opt-cpp-start (c-lang-const c-opt-cpp-start))
 
 (c-lang-defconst c-cpp-defined-fns
   ;; Name of functions in cpp expressions that take an identifier as
@@ -810,6 +831,15 @@ operators."
   awk  "#")
 (c-lang-defvar c-comment-start-regexp (c-lang-const c-comment-start-regexp))
 
+(c-lang-defconst c-literal-start-regexp
+  ;; Regexp to match the start of comments and string literals.
+  t (concat (c-lang-const c-comment-start-regexp)
+	    "\\|"
+	    (if (memq 'gen-string-delim c-emacs-features)
+		"\"|"
+	      "\"")))
+(c-lang-defvar c-literal-start-regexp (c-lang-const c-literal-start-regexp))
+
 (c-lang-defconst c-doc-comment-start-regexp
   "Regexp to match the start of documentation comments."
   t    "\\<\\>"
@@ -954,7 +984,7 @@ The only uncertain case is '#' when there are cpp directives."
   "Regexp to append to `paragraph-start'."
   t    "$"
   java "\\(@[a-zA-Z]+\\>\\|$\\)"	; For Javadoc.
-  pike "\\(@[a-zA-Z]+\\>\\([^{]\\|$\\)\\|$\\)") ; For Pike refdoc.
+  pike "\\(@[a-zA-Z_-]+\\>\\([^{]\\|$\\)\\|$\\)") ; For Pike refdoc.
 (c-lang-defvar c-paragraph-start (c-lang-const c-paragraph-start))
 
 (c-lang-defconst c-paragraph-separate
@@ -962,22 +992,6 @@ The only uncertain case is '#' when there are cpp directives."
   t    "$"
   pike (c-lang-const c-paragraph-start))
 (c-lang-defvar c-paragraph-separate (c-lang-const c-paragraph-separate))
-
-(c-lang-defconst c-in-comment-lc-prefix
-  ;; Prefix added to `c-current-comment-prefix' to set
-  ;; `c-opt-in-comment-lc', or nil if it should be nil.
-  t    nil
-  pike "@[\n\r]\\s *")
-
-(c-lang-defvar c-opt-in-comment-lc
-  ;; Regexp to match in-comment line continuations, or nil in
-  ;; languages where that isn't applicable.  It's assumed that it only
-  ;; might match from and including the last character on a line.
-  ;; Built from `*-in-comment-lc-prefix' and the current value of
-  ;; `c-current-comment-prefix'.
-  (if (c-lang-const c-in-comment-lc-prefix)
-      (concat (c-lang-const c-in-comment-lc-prefix)
-	      c-current-comment-prefix)))
 
 
 ;;; Keyword lists.
@@ -1000,13 +1014,16 @@ Do not try to modify this list for end user customizations; the
 the appropriate place for that."
   t    '("char" "double" "float" "int" "long" "short" "signed"
 	 "unsigned" "void")
-  c    (append '("complex" "imaginary")	; Conditionally defined in C99.
-	       (c-lang-const c-primitive-type-kwds))
-  c++  (append '("bool" "wchar_t")
-	       (c-lang-const c-primitive-type-kwds))
+  c    (append
+	'("_Bool" "_Complex" "_Imaginary") ; Conditionally defined in C99.
+	(c-lang-const c-primitive-type-kwds))
+  c++  (append
+	'("bool" "wchar_t")
+	(c-lang-const c-primitive-type-kwds))
   ;; Objective-C extends C, but probably not the new stuff in C99.
-  objc (append '("id" "Class" "SEL" "IMP" "BOOL")
-	       (c-lang-const c-primitive-type-kwds))
+  objc (append
+	'("id" "Class" "SEL" "IMP" "BOOL")
+	(c-lang-const c-primitive-type-kwds))
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
   idl  '("Object" "ValueBase" "any" "boolean" "char" "double" "fixed" "float"
 	 "long" "octet" "sequence" "short" "string" "void" "wchar" "wstring"
@@ -1176,12 +1193,11 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 	 "executor" "facet" "manages" "segment")
   pike '("constant"))
 
-(c-lang-defconst c-other-decl-kwds
-  "Keywords that can start or prefix declarations, besides those on
-`c-class-decl-kwds', `c-brace-list-decl-kwds',`c-other-block-decl-kwds',
-`c-typedef-decl-kwds' and `c-typeless-decl-kwds'.  Things like
-argument declarations inside function headers are also considered
-declarations in this sense.
+(c-lang-defconst c-modifier-kwds
+  "Keywords that can prefix normal declarations of identifiers
+\(and typically acts as flags).  Things like argument declarations
+inside function headers are also considered declarations in this
+sense.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
@@ -1189,9 +1205,9 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
   t    nil
   (c c++) '("auto" "extern" "inline" "register" "static")
   c++  (append '("explicit" "friend" "mutable" "template" "using" "virtual")
-	       (c-lang-const c-other-decl-kwds))
-  objc '("auto" "bycopy" "byref" "extern" "in" "inout" "oneway" "out" "static"
-	 "@class" "@end" "@defs")
+	       (c-lang-const c-modifier-kwds))
+  objc '("auto" "bycopy" "byref" "extern" "in" "inout" "oneway" "out" "static")
+  ;; FIXME: Some of those below ought to be on `c-other-decl-kwds' instead.
   idl  '("abstract" "attribute" "const" "consumes" "custom" "emits" "import"
 	 "in" "inout" "local" "multiple" "oneway" "out" "private" "provides"
 	 "public" "publishes" "readonly" "typeid" "typeprefix" "uses"
@@ -1200,11 +1216,24 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 	 ;; In CORBA CIDL:
 	 "bindsTo" "delegatesTo" "implements" "proxy" "storedOn")
   ;; Note: "const" is not used in Java, but it's still a reserved keyword.
-  java '("abstract" "const" "final" "import" "native" "package" "private"
-	 "protected" "public" "static" "strictfp" "synchronized" "transient"
-	 "volatile")
-  pike '("final" "import" "inherit" "inline" "local" "nomask" "optional"
-	 "private" "protected" "public" "static" "variant"))
+  java '("abstract" "const" "final" "native" "private" "protected" "public"
+	 "static" "strictfp" "synchronized" "transient" "volatile")
+  pike '("final" "inline" "local" "nomask" "optional" "private" "protected"
+	 "public" "static" "variant"))
+
+(c-lang-defconst c-other-decl-kwds
+  "Keywords that can start or prefix any declaration level constructs,
+besides those on `c-class-decl-kwds', `c-brace-list-decl-kwds',
+`c-other-block-decl-kwds', `c-typedef-decl-kwds',
+`c-typeless-decl-kwds' and `c-modifier-kwds'.
+
+If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled."
+  t    nil
+  objc '("@class" "@end" "@defs")
+  java '("import" "package")
+  pike '("import" "inherit"))
 
 (c-lang-defconst c-specifier-key
   ;; Adorned regexp matching keywords that can start a declaration but
@@ -1215,6 +1244,7 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 			      (c-lang-const c-other-block-decl-kwds)
 			      (c-lang-const c-typedef-decl-kwds)
 			      (c-lang-const c-typeless-decl-kwds)
+			      (c-lang-const c-modifier-kwds)
 			      (c-lang-const c-other-decl-kwds))
 		      (append (c-lang-const c-primitive-type-kwds)
 			      (c-lang-const c-type-prefix-kwds)
@@ -1285,7 +1315,7 @@ Assumed to be mutually exclusive with `c-ref-list-kwds'.  There's no
 reason to put keywords on this list if they are on `c-type-prefix-kwds'.
 There's also no reason to add keywords that prefixes a normal
 declaration consisting of a type followed by a declarator (list), so
-the keywords on `c-other-decl-kwds' should normally not be listed here
+the keywords on `c-modifier-kwds' should normally not be listed here
 too.
 
 Note: Use `c-typeless-decl-kwds' for keywords followed by a function
@@ -1491,9 +1521,8 @@ nevertheless contains a list separated with ';' and not ','."
 (c-lang-defconst c-constant-kwds
   "Keywords for constants."
   t       nil
-  (c c++) '("NULL") ;; Not a keyword, but practically works as one.
-  c++     (append '("false" "true")
-		  (c-lang-const c-constant-kwds))
+  (c c++) '("NULL" ;; Not a keyword, but practically works as one.
+	    "false" "true")		; Defined in C99.
   objc    '("nil" "Nil")
   idl     '("TRUE" "FALSE")
   pike    '("UNDEFINED")) ;; Not a keyword, but practically works as one.
@@ -1589,7 +1618,11 @@ Note that Java specific rules are currently applied to tell this from
   t (c-make-keywords-re t
       (append (c-lang-const c-class-decl-kwds)
 	      (c-lang-const c-other-block-decl-kwds)
-	      (c-lang-const c-inexpr-class-kwds))))
+	      (c-lang-const c-inexpr-class-kwds)
+	      (and (c-major-mode-is 'pike-mode)
+		   ;; In Pike modifiers might be followed by a block
+		   ;; to apply to several declarations.
+		   (c-lang-const c-modifier-kwds)))))
 (c-lang-defvar c-decl-block-key (c-lang-const c-decl-block-key))
 
 (c-lang-defconst c-bitfield-kwds
@@ -1728,6 +1761,7 @@ Note that Java specific rules are currently applied to tell this from
 			      (c-lang-const c-other-block-decl-kwds)
 			      (c-lang-const c-typedef-decl-kwds)
 			      (c-lang-const c-typeless-decl-kwds)
+			      (c-lang-const c-modifier-kwds)
 			      (c-lang-const c-other-decl-kwds))
 		      :test 'string-equal)))
 (c-lang-defvar c-not-decl-init-keywords

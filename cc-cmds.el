@@ -507,7 +507,8 @@ This function does various newline cleanups based on the value of
 	      (if (eq last-command-char ?{)
 		  (setq c-state-cache (cons (point) c-state-cache)))
 	      (self-insert-command (prefix-numeric-value arg))
-	      (c-save-buffer-state ((c-syntactic-indentation-in-macros t))
+	      (c-save-buffer-state ((c-syntactic-indentation-in-macros t)
+				    (c-auto-newline-analysis t))
 		;; Turn on syntactic macro analysis to help with auto
 		;; newlines only.
 		(setq syntax (c-guess-basic-syntax)))
@@ -566,7 +567,8 @@ This function does various newline cleanups based on the value of
 		    ;; the current line.
 		    (if (/= (point) here)
 			(c-save-buffer-state
-			    ((c-syntactic-indentation-in-macros t))
+			    ((c-syntactic-indentation-in-macros t)
+			     (c-auto-newline-analysis t))
 			  ;; Turn on syntactic macro analysis to help
 			  ;; with auto newlines only.
 			  (setq syntax (c-guess-basic-syntax))))))))
@@ -586,7 +588,8 @@ This function does various newline cleanups based on the value of
 	(if (not (memq 'before newlines))
 	    ;; since we're hanging the brace, we need to recalculate
 	    ;; syntax.
-	    (c-save-buffer-state ((c-syntactic-indentation-in-macros t))
+	    (c-save-buffer-state ((c-syntactic-indentation-in-macros t)
+				  (c-auto-newline-analysis t))
 	      ;; Turn on syntactic macro analysis to help with auto
 	      ;; newlines only.
 	      (setq syntax (c-guess-basic-syntax))))
@@ -840,6 +843,7 @@ value of `c-cleanup-list'."
 	  (indent-according-to-mode))
       (c-save-buffer-state
 	    ((c-syntactic-indentation-in-macros t)
+	     (c-auto-newline-analysis t)
 	     ;; Turn on syntactic macro analysis to help with auto newlines
 	     ;; only.
 	     (syntax (c-guess-basic-syntax))
@@ -1030,14 +1034,20 @@ keyword on the line, the keyword is not inserted inside a literal, and
 ;; originally contributed by Terry_Glanfield.Southern@rxuk.xerox.com
 (defun c-forward-into-nomenclature (&optional arg)
   "Move forward to end of a nomenclature section or word.
-With arg, to it arg times."
+With arg, do it arg times."
   (interactive "p")
   (let ((case-fold-search nil))
     (if (> arg 0)
-	(re-search-forward "\\W*\\([A-Z]*[a-z0-9]*\\)" (point-max) t arg)
+	(re-search-forward
+	 (cc-eval-when-compile
+	   (concat "\\W*\\([" c-upper "]*[" c-lower c-digit "]*\\)"))
+	 (point-max) t arg)
       (while (and (< arg 0)
 		  (re-search-backward
-		   "\\(\\(\\W\\|[a-z0-9]\\)[A-Z]+\\|\\W\\w+\\)"
+		   (cc-eval-when-compile
+		     (concat
+		      "\\(\\(\\W\\|[" c-lower c-digit "]\\)[" c-upper "]+"
+		      "\\|\\W\\w+\\)"))
 		   (point-min) 0))
 	(forward-char 1)
 	(setq arg (1+ arg)))))
@@ -3458,7 +3468,7 @@ C++-style line comment doesn't count as inside it."
 		 (c-query-and-set-macro-start)
 		 (<= (save-excursion
 		       (goto-char c-macro-start)
-		       (if (looking-at "#[ \t]*[a-zA-Z0-9!]+")
+		       (if (looking-at c-opt-cpp-start)
 			   (goto-char (match-end 0)))
 		       (point))
 		    (point))))

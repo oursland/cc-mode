@@ -41,6 +41,8 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
+(cc-require 'cc-defs)
+
 ;; The things referenced in imenu, which we don't require.
 (cc-bytecomp-defvar imenu-case-fold-search)
 (cc-bytecomp-defvar imenu-generic-expression)
@@ -72,10 +74,10 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
     (nil
      ,(concat
        "^\\<.*"
-       "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
+       "[^" c-alnum "_:<>~]"                  ; match any non-identifier char
                                               ; (note: this can be `\n')
        "\\("
-          "\\([a-zA-Z0-9_:<>~]*::\\)?"        ; match an operator
+	  "\\([" c-alnum "_:<>~]*::\\)?"      ; match an operator
           "operator\\>[ \t]*"
           "\\(()\\|[^(]*\\)"                  ; special case for `()' operator
        "\\)"
@@ -94,7 +96,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
     (nil
      ,(concat
        "^"
-       "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
+       "\\([" c-alpha "_][" c-alnum "_:<>~]*\\)" ; match function name
        "[ \t]*("			      ; see above, BUT
        "[ \t]*\\([^ \t(*][^)]*\\)?)"          ; the arg list must not start
        "[ \t]*[^ \t;(]"                       ; with an asterisk or parentheses
@@ -104,8 +106,8 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
      ,(concat
        "^\\<"                                 ; line MUST start with word char
        "[^()]*"                               ; no parentheses before
-       "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
-       "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
+       "[^" c-alnum "_:<>~]"                  ; match any non-identifier char
+       "\\([" c-alpha "_][" c-alnum "_:<>~]*\\)" ; match function name
        "\\([ \t\n]\\|\\\\\n\\)*("	      ; see above, BUT the arg list
        "\\([ \t\n]\\|\\\\\n\\)*\\([^ \t\n(*][^)]*\\)?)" ; must not start
        "\\([ \t\n]\\|\\\\\n\\)*[^ \t\n;(]"    ; with an asterisk or parentheses
@@ -118,8 +120,8 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
             `((nil
                  ,(concat
                    "^\\<.*"                   ; line MUST start with word char
-                   "[^a-zA-Z0-9_]"            ; match any non-identifier char
-                   "\\([a-zA-Z_][a-zA-Z0-9_]*\\)"       ; match function name
+		   "[^" c-alnum "_]"          ; match any non-identifier char
+		   "\\([" c-alpha "_][" c-alnum "_]*\\)" ; match function name
                    "[ \t]*"                   ; whitespace before macro name
                    cc-imenu-c-prototype-macro-regexp
                    "[ \t]*("                  ; ws followed by first paren.
@@ -132,7 +134,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
          "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a `template <...>'
          "\\(class\\|struct\\)[ \t]+"
          "\\("                                ; the string we want to get
-         "[a-zA-Z0-9_]+"                      ; class name
+	 "[" c-alnum "_]+"                    ; class name
          "\\(<[^>]+>\\)?"                     ; possibly explicitly specialized
          "\\)"
          "\\([ \t\n]\\|\\\\\n\\)*[:{]"
@@ -146,19 +148,19 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 (defvar cc-imenu-java-generic-expression
   `((nil
      ,(concat
-       "[A-Za-z_][\]\[.A-Za-z0-9_]+[ \t\n\r]+" ; type spec
-       "\\([A-Za-z_][A-Za-z0-9_]+\\)"	; method name
+       "[" c-alpha "_][\]\[." c-alnum "_]+[ \t\n\r]+" ; type spec
+       "\\([" c-alpha "_][" c-alnum "_]+\\)" ; method name
        "[ \t\n\r]*"
        ;; An argument list that is either empty or contains at least
        ;; two identifiers with only space between them.  This avoids
        ;; matching e.g. "else if (foo)".
        (concat "([ \t\n\r]*"
-	       "\\([\]\[.,A-Za-z0-9_]+"
+	       "\\([\]\[.," c-alnum "_]+"
 	       "[ \t\n\r]+"
-	       "[\]\[.,A-Za-z0-9_]"
-	       "[\]\[.,A-Za-z0-9_ \t\n\r]*"
+	       "[\]\[.," c-alnum "_]"
+	       "[\]\[.," c-alnum "_ \t\n\r]*"
 	       "\\)?)")
-       "[.,A-Za-z0-9_ \t\n\r]*"
+       "[.," c-alnum "_ \t\n\r]*"
        "{"
        ) 1))
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
@@ -215,20 +217,20 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
    ;; Pick a token by (match-string 8 or 9)
    ;;
    "\\|\\("					     
-   "^[-+][:a-zA-Z0-9()*_<>\n\t ]*[;{]"        ; Methods
+   "^[-+][:" c-alnum "()*_<>\n\t ]*[;{]"        ; Methods
    "\\|" 
-   "^@interface[\t ]+[a-zA-Z0-9_]+[\t ]*:"  
+   "^@interface[\t ]+[" c-alnum "_]+[\t ]*:"
    "\\|" 
-   "^@interface[\t ]+[a-zA-Z0-9_]+[\t ]*([a-zA-Z0-9_]+)"
+   "^@interface[\t ]+[" c-alnum "_]+[\t ]*([" c-alnum "_]+)"
    "\\|" 
    ;; For NSObject, NSProxy and Object... They don't have super class.
-   "^@interface[\t ]+[a-zA-Z0-9_]+[\t ]*.*$"
+   "^@interface[\t ]+[" c-alnum "_]+[\t ]*.*$"
    "\\|" 
-   "^@implementation[\t ]+[a-zA-Z0-9_]+[\t ]*([a-zA-Z0-9_]+)"
+   "^@implementation[\t ]+[" c-alnum "_]+[\t ]*([" c-alnum "_]+)"
    "\\|" 
-   "^@implementation[\t ]+[a-zA-Z0-9_]+"
+   "^@implementation[\t ]+[" c-alnum "_]+"
    "\\|" 
-   "^@protocol[\t ]+[a-zA-Z0-9_]+" "\\)")
+   "^@protocol[\t ]+[" c-alnum "_]+" "\\)")
   "Imenu generic expression for ObjC mode.  See `imenu-generic-expression'.")
 
 

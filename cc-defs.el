@@ -77,7 +77,6 @@
 (cc-bytecomp-defvar mark-active)	; Emacs
 (cc-bytecomp-defvar deactivate-mark)	; Emacs
 (cc-bytecomp-defvar inhibit-point-motion-hooks) ; Emacs
-(cc-bytecomp-defun scan-lists)		; 5 args in XEmacs, 3 in Emacs
 (cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
 (cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
 (cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
@@ -398,6 +397,14 @@ This function does not do any hidden buffer changes."
   (or count (setq count 1))
   `(c-forward-sexp ,(if (numberp count) (- count) `(- ,count))))
 
+(defmacro c-safe-scan-lists (from count depth)
+  "Like `scan-lists' but returns nil instead of signalling errors.
+
+This function does not do any hidden buffer changes."
+  (if (featurep 'xemacs)
+      `(scan-lists ,from ,count ,depth nil t)
+    `(c-safe (scan-lists ,from ,count ,depth))))
+
 
 ;; Wrappers for common scan-lists cases, mainly because it's almost
 ;; impossible to get a feel for how that function works.
@@ -407,28 +414,28 @@ This function does not do any hidden buffer changes."
 or nil if no such position exists.  The point is used if POS is left out.
 
 This function does not do any hidden buffer changes."
-  `(c-safe (scan-lists ,(or pos `(point)) 1 1)))
+  `(c-safe-scan-lists ,(or pos `(point)) 1 1))
 
 (defmacro c-up-list-backward (&optional pos)
   "Return the position of the start of the list sexp containing POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
 This function does not do any hidden buffer changes."
-  `(c-safe (scan-lists ,(or pos `(point)) -1 1)))
+  `(c-safe-scan-lists ,(or pos `(point)) -1 1))
 
 (defmacro c-down-list-forward (&optional pos)
   "Return the first position inside the first list sexp after POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
 This function does not do any hidden buffer changes."
-  `(c-safe (scan-lists ,(or pos `(point)) 1 -1)))
+  `(c-safe-scan-lists ,(or pos `(point)) 1 -1))
 
 (defmacro c-down-list-backward (&optional pos)
   "Return the last position inside the last list sexp before POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
 This function does not do any hidden buffer changes."
-  `(c-safe (scan-lists ,(or pos `(point)) -1 -1)))
+  `(c-safe-scan-lists ,(or pos `(point)) -1 -1))
 
 (defmacro c-go-up-list-forward (&optional pos)
   "Move the point to the first position after the list sexp containing POS,
@@ -463,6 +470,59 @@ This function does not do any hidden buffer changes."
   `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 -1)) t))
 
 
+(defmacro c-beginning-of-defun-1 ()
+  ;; Wrapper around beginning-of-defun.
+  ;;
+  ;; NOTE: This function should contain the only explicit use of
+  ;; beginning-of-defun in CC Mode.  Eventually something better than
+  ;; b-o-d will be available and this should be the only place the
+  ;; code needs to change.  Everything else should use
+  ;; (c-beginning-of-defun-1)
+  ;;
+  ;; This is really a bit too large to be a macro but that isn't a
+  ;; problem as long as it only is used in one place in
+  ;; `c-parse-state'.
+  ;;
+  ;; This function does not do any hidden buffer changes.
+
+  `(progn
+     (if (and ,(cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
+	      c-enable-xemacs-performance-kludge-p)
+	 ,(when (cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
+	    ;; XEmacs only.  This can improve the performance of
+	    ;; c-parse-state to between 3 and 60 times faster when
+	    ;; braces are hung.  It can also degrade performance by
+	    ;; about as much when braces are not hung.
+	    '(let (pos)
+	       (while (not pos)
+		 (save-restriction
+		   (widen)
+		   (setq pos (c-safe-scan-lists
+			      (point) -1 (buffer-syntactic-context-depth))))
+		 (cond
+		  ((bobp) (setq pos (point-min)))
+		  ((not pos)
+		   (let ((distance (skip-chars-backward "^{")))
+		     ;; unbalanced parenthesis, while illegal C code,
+		     ;; shouldn't cause an infloop!  See unbal.c
+		     (when (zerop distance)
+		       ;; Punt!
+		       (beginning-of-defun)
+		       (setq pos (point)))))
+		  ((= pos 0))
+		  ((not (eq (char-after pos) ?{))
+		   (goto-char pos)
+		   (setq pos nil))
+		  ))
+	       (goto-char pos)))
+       ;; Emacs, which doesn't have buffer-syntactic-context-depth
+       (beginning-of-defun))
+     ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
+     ;; open brace.
+     (and defun-prompt-regexp
+	  (looking-at defun-prompt-regexp)
+	  (goto-char (match-end 0)))))
+
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
@@ -735,56 +795,6 @@ This function does not do any hidden buffer changes."
 ;; when the files are compiled in a certain order within the same
 ;; session.
 
-(defmacro c-beginning-of-defun-1 ()
-  ;; Wrapper around beginning-of-defun.
-  ;;
-  ;; NOTE: This function should contain the only explicit use of
-  ;; beginning-of-defun in CC Mode.  Eventually something better than
-  ;; b-o-d will be available and this should be the only place the
-  ;; code needs to change.  Everything else should use
-  ;; (c-beginning-of-defun-1)
-  ;;
-  ;; This function does not do any hidden buffer changes.
-
-  `(progn
-     (if (and ,(cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
-	      c-enable-xemacs-performance-kludge-p)
-	 ,(when (cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
-	    ;; XEmacs only.  This can improve the performance of
-	    ;; c-parse-state to between 3 and 60 times faster when
-	    ;; braces are hung.  It can also degrade performance by
-	    ;; about as much when braces are not hung.
-	    '(let (pos)
-	       (while (not pos)
-		 (save-restriction
-		   (widen)
-		   (setq pos (scan-lists (point) -1
-					 (buffer-syntactic-context-depth)
-					 nil t)))
-		 (cond
-		  ((bobp) (setq pos (point-min)))
-		  ((not pos)
-		   (let ((distance (skip-chars-backward "^{")))
-		     ;; unbalanced parenthesis, while illegal C code,
-		     ;; shouldn't cause an infloop!  See unbal.c
-		     (when (zerop distance)
-		       ;; Punt!
-		       (beginning-of-defun)
-		       (setq pos (point)))))
-		  ((= pos 0))
-		  ((not (eq (char-after pos) ?{))
-		   (goto-char pos)
-		   (setq pos nil))
-		  ))
-	       (goto-char pos)))
-       ;; Emacs, which doesn't have buffer-syntactic-context-depth
-       (beginning-of-defun))
-     ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
-     ;; open brace.
-     (and defun-prompt-regexp
-	  (looking-at defun-prompt-regexp)
-	  (goto-char (match-end 0)))))
-
 (defsubst c-end-of-defun-1 ()
   ;; Replacement for end-of-defun that use c-beginning-of-defun-1.
   (let ((start (point)))
@@ -900,6 +910,20 @@ the value of the variable with that name.
 This function does not do any hidden buffer changes."
   (symbol-value (c-mode-symbol suffix)))
 
+(defsubst c-got-face-at (pos faces)
+  "Return non-nil if position POS in the current buffer has any of the
+faces in the list FACES.
+
+This function does not do any hidden buffer changes."
+  (let ((pos-faces (get-text-property pos 'face)))
+    (if (consp pos-faces)
+	(progn
+	  (while (and pos-faces
+		      (not (memq (car pos-faces) faces)))
+	    (setq pos-faces (cdr pos-faces)))
+	  pos-faces)
+      (memq pos-faces faces))))
+
 (defsubst c-face-name-p (facename)
   ;; Return t if FACENAME is the name of a face.  This method is
   ;; necessary since facep in XEmacs only returns t for the actual
@@ -910,13 +934,17 @@ This function does not do any hidden buffer changes."
   ;; This function does not do any hidden buffer changes.
   (memq facename (face-list)))
 
-(defun c-make-keywords-re (adorn list)
+(defun c-make-keywords-re (adorn list &optional mode)
   "Make a regexp that matches all the strings the list.
 Duplicates in the list are removed.  The regexp may contain zero or
-more submatch expressions.  If ADORN is non-nil there will be at least
-one submatch which matches the whole keyword, and the regexp will also
-not match a prefix of any identifier.  Adorned regexps cannot be
-appended."
+more submatch expressions.
+
+If ADORN is non-nil there will be at least one submatch and the first
+matches the whole keyword, and the regexp will also not match a prefix
+of any identifier.  Adorned regexps cannot be appended.  The language
+variable `c-nonsymbol-key' is used to make the adornment.  The
+optional MODE specifies the language to get it in.  The default is the
+current language (taken from `c-buffer-is-cc-mode')."
   (setq list (delete-duplicates list :test 'string-equal))
   (if list
       (let ((re (c-regexp-opt list)))
@@ -926,7 +954,7 @@ appended."
 	(if adorn
 	    (concat "\\(" re "\\)"
 		    "\\("
-		    (c-get-lang-constant 'c-nonsymbol-key)
+		    (c-get-lang-constant 'c-nonsymbol-key nil mode)
 		    "\\|$\\)")
 	  re))
     ;; Produce a regexp that matches nothing.
@@ -934,6 +962,24 @@ appended."
 	"\\(\\<\\>\\)"
       "\\<\\>")))
 (put 'c-make-keywords-re 'lisp-indent-function 1)
+
+
+;;; Some helper constants.
+
+;; If the regexp engine supports POSIX char classes (e.g. Emacs 21)
+;; then we can use them to handle extended charsets correctly.
+(if (string-match "[[:alpha:]]" "a")	; Can't use c-emacs-features here.
+    (progn
+      (defconst c-alpha "[:alpha:]")
+      (defconst c-alnum "[:alnum:]")
+      (defconst c-digit "[:digit:]")
+      (defconst c-upper "[:upper:]")
+      (defconst c-lower "[:lower:]"))
+  (defconst c-alpha "a-zA-Z")
+  (defconst c-alnum "a-zA-Z0-9")
+  (defconst c-digit "0-9")
+  (defconst c-upper "A-Z")
+  (defconst c-lower "a-z"))
 
 
 ;;; System for handling language dependent constants.

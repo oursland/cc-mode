@@ -118,6 +118,11 @@
 ;; Dynamically bound cache for `c-in-literal'.
 (defvar c-in-literal-cache t)
 
+;; Must be set in buffers where the `c-type' text property might be used
+;; with the value `c-decl-end'.
+(defvar c-type-decl-end-used nil)
+(make-variable-buffer-local 'c-type-decl-end-used)
+
 
 ;;; Basic utility functions.
 
@@ -183,6 +188,13 @@
     (c-benign-error "%s" c-parsing-error))
   c-parsing-error)
 
+;; Faces given to comments and string literals.  This is used in some
+;; situations to speed up recognition; it isn't mandatory that font
+;; locking is in use.  This variable is extended with the face in
+;; `c-doc-face-name' when fontification is activated in cc-fonts.el.
+(defconst c-literal-faces
+  '(font-lock-comment-face font-lock-string-face))
+
 
 ;; Some debug tools to visualize various special positions.  This
 ;; debug code isn't as portable as the rest of CC Mode.
@@ -196,7 +208,7 @@
 (cc-bytecomp-defun make-overlay)
 
 (defun c-debug-add-face (beg end face)
-  (let ((overlays (overlays-in beg end)) overlay)
+  (c-save-buffer-state ((overlays (overlays-in beg end)) overlay)
     (while overlays
       (setq overlay (car overlays)
 	    overlays (cdr overlays))
@@ -207,8 +219,8 @@
     (overlay-put (make-overlay beg end) 'face face)))
 
 (defun c-debug-remove-face (beg end face)
-  (let ((overlays (overlays-in beg end)) overlay
-	(ol-beg beg) (ol-end end))
+  (c-save-buffer-state ((overlays (overlays-in beg end)) overlay
+			(ol-beg beg) (ol-end end))
     (while overlays
       (setq overlay (car overlays)
 	    overlays (cdr overlays))
@@ -474,12 +486,12 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
                ;; It always is (ACM, 2002/6/23)
 	       ((save-excursion
 		  (and macro-start
-		       (looking-at "[ \t]*[a-zA-Z0-9!]")
 		       (progn (skip-chars-backward " \t")
 			      (eq (char-before) ?#))
 		       (progn (setq saved (1- (point)))
 			      (beginning-of-line)
 			      (not (eq (char-before (1- (point))) ?\\)))
+		       (looking-at c-opt-cpp-start)
 		       (progn (skip-chars-forward " \t")
 			      (eq (point) saved))))
 		(goto-char saved)
@@ -952,20 +964,19 @@ Leave point at the beginning of the directive and return t if in one,
 otherwise return nil and leave point unchanged.
 
 This function does not do any hidden buffer changes."
-  (if (not (c-mode-is-new-awk-p)) ; ACM 2001/10/19.  Not sure if this is needed, 2002/3/29.
-                                        ; Yes it is!  2002/6/23.
-      (let ((here (point)))
-	(save-restriction
-	  (if lim (narrow-to-region lim (point-max)))
-	  (beginning-of-line)
-	  (while (eq (char-before (1- (point))) ?\\)
-	    (forward-line -1))
-	  (back-to-indentation)
-	  (if (and (<= (point) here)
-		   (looking-at "#[ \t]*[a-zA-Z0-9!]"))
-	      t
-	    (goto-char here)
-	    nil)))))
+  (when c-opt-cpp-prefix
+    (let ((here (point)))
+      (save-restriction
+	(if lim (narrow-to-region lim (point-max)))
+	(beginning-of-line)
+	(while (eq (char-before (1- (point))) ?\\)
+	  (forward-line -1))
+	(back-to-indentation)
+	(if (and (<= (point) here)
+		 (looking-at c-opt-cpp-start))
+	    t
+	  (goto-char here)
+	  nil)))))
 
 (defun c-end-of-macro ()
   "Go to the end of a preprocessor directive.
@@ -1062,6 +1073,37 @@ This function does not do any hidden buffer changes."
 ;   '((t (:underline t)))
 ;   "Debug face to mark the `c-in-sws' property.")
 
+; (defun c-debug-put-sws-faces ()
+;   ;; Put the sws debug faces on all the `c-is-sws' and `c-in-sws'
+;   ;; properties in the buffer.
+;   (interactive)
+;   (save-excursion
+;     (let (in-face)
+;       (goto-char (point-min))
+;       (setq in-face (if (get-text-property (point) 'c-is-sws)
+; 			(point)))
+;       (while (progn
+; 	       (goto-char (next-single-property-change
+; 			   (point) 'c-is-sws nil (point-max)))
+; 	       (if in-face
+; 		   (progn
+; 		     (c-debug-add-face in-face (point) 'c-debug-is-sws-face)
+; 		     (setq in-face nil))
+; 		 (setq in-face (point)))
+; 	       (not (eobp))))
+;       (goto-char (point-min))
+;       (setq in-face (if (get-text-property (point) 'c-in-sws)
+; 			(point)))
+;       (while (progn
+; 	       (goto-char (next-single-property-change
+; 			   (point) 'c-in-sws nil (point-max)))
+; 	       (if in-face
+; 		   (progn
+; 		     (c-debug-add-face in-face (point) 'c-debug-in-sws-face)
+; 		     (setq in-face nil))
+; 		 (setq in-face (point)))
+; 	       (not (eobp)))))))
+
 (defmacro c-debug-sws-msg (&rest args)
   ;;`(message ,@args)
   )
@@ -1077,13 +1119,6 @@ This function does not do any hidden buffer changes."
      (put-text-property beg end 'c-in-sws t)
      ,@(when (facep 'c-debug-is-sws-face)
 	 `((c-debug-add-face beg end 'c-debug-in-sws-face)))))
-
-(defmacro c-put-is-and-in-sws (beg end)
-  `(let ((beg ,beg) (end ,end))
-     (add-text-properties beg end '(c-is-sws t c-in-sws t))
-     ,@(when (facep 'c-debug-is-sws-face)
-	 `((c-debug-add-face beg end 'c-debug-is-sws-face)
-	   (c-debug-add-face beg end 'c-debug-in-sws-face)))))
 
 (defmacro c-remove-is-sws (beg end)
   `(let ((beg ,beg) (end ,end))
@@ -1104,14 +1139,6 @@ This function does not do any hidden buffer changes."
 	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)
 	   (c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
-(defvar c-sws-separation nil)
-;; This variable is used to signal that a changed region wasn't
-;; continuously marked with `c-in-sws' before the change.
-
-(defsubst c-invalidate-sws-region-before (beg end)
-  ;; Called from `before-change-functions'.
-  (setq c-sws-separation (text-property-any beg end 'c-in-sws nil)))
-
 (defsubst c-invalidate-sws-region-after (beg end)
   ;; Called from `after-change-functions'.  Note that if
   ;; `c-forward-sws' or `c-backward-sws' are used outside
@@ -1131,13 +1158,22 @@ This function does not do any hidden buffer changes."
     (when (and (eolp) (not (eobp)))
       (setq end (1+ (point)))))
 
-  (when (and c-sws-separation
-	     (= beg end)
+  (when (and (= beg end)
 	     (get-text-property beg 'c-in-sws)
 	     (not (bobp))
 	     (get-text-property (1- beg) 'c-in-sws))
-    ;; Avoid that two separate `c-in-sws' ranges are merged to one.
-    (setq end (1+ end)))
+    ;; Ensure that an `c-in-sws' range gets broken.  Note that it isn't
+    ;; safe to keep a range that was continuous before the change.  E.g:
+    ;;
+    ;;    #define foo
+    ;;         \
+    ;;    bar
+    ;;
+    ;; There can be a "ladder" between "#" and "b".  Now, if the newline
+    ;; after "foo" is removed then "bar" will become part of the cpp
+    ;; directive instead of a syntactically relevant token.  In that
+    ;; case there's no longer syntactic ws from "#" to "b".
+    (setq beg (1- beg)))
 
   (c-debug-sws-msg "c-invalidate-sws-region-after [%s..%s]" beg end)
   (c-remove-is-and-in-sws beg end))
@@ -1210,9 +1246,14 @@ This function does not do any hidden buffer changes."
 	      ;; use the cache again.
 	      (c-debug-sws-msg
 	       "c-forward-sws extending rung with [%s..%s] (max %s)"
-	       (1+ rung-pos) (min (1+ (point)) (point-max)) (point-max))
+	       (1+ rung-pos) (1+ (point)) (point-max))
+	      (unless (get-text-property (point) 'c-is-sws)
+		;; Remove any `c-in-sws' property from the last char of
+		;; the rung before we mark it with `c-is-sws', so that we
+		;; won't connect with the remains of a broken "ladder".
+		(c-remove-in-sws (point) (1+ (point))))
 	      (c-put-is-sws (1+ rung-pos)
-			    (min (1+ (point)) (point-max)))
+			    (1+ (point)))
 	      (c-put-in-sws rung-pos
 			    (setq rung-pos (point)
 				  last-put-in-sws-pos rung-pos)))
@@ -1228,7 +1269,7 @@ This function does not do any hidden buffer changes."
 
 	     ((save-excursion
 		(and c-opt-cpp-prefix
-		     (looking-at "#[ \t]*[a-zA-Z0-9!]")
+		     (looking-at c-opt-cpp-start)
 		     (progn (skip-chars-backward " \t")
 			    (bolp))
 		     (or (bobp)
@@ -1241,13 +1282,6 @@ This function does not do any hidden buffer changes."
 		(end-of-line))
 	      (forward-line 1)
 	      (setq safe-start t)
-	      ;; Don't cache at eob in case the buffer is narrowed.
-	      (not (eobp)))
-
-	     ((and c-opt-in-comment-lc
-		   (looking-at c-opt-in-comment-lc))
-	      ;; Skip an in-comment line continuation.
-	      (goto-char (match-end 0))
 	      ;; Don't cache at eob in case the buffer is narrowed.
 	      (not (eobp)))))
 
@@ -1291,6 +1325,11 @@ This function does not do any hidden buffer changes."
 	      (c-put-in-sws rung-pos
 			    (setq rung-pos (point)
 				  last-put-in-sws-pos rung-pos))
+	      (unless (get-text-property (1- rung-end-pos) 'c-is-sws)
+		;; Remove any `c-in-sws' property from the last char of
+		;; the rung before we mark it with `c-is-sws', so that we
+		;; won't connect with the remains of a broken "ladder".
+		(c-remove-in-sws (1- rung-end-pos) rung-end-pos))
 	      (c-put-is-sws next-rung-pos
 			    rung-end-pos))
 
@@ -1407,8 +1446,15 @@ This function does not do any hidden buffer changes."
 	      (c-debug-sws-msg
 	       "c-backward-sws extending rung with [%s..%s] (min %s)"
 	       rung-is-marked rung-pos (point-min))
-	      (c-put-is-and-in-sws rung-is-marked
-				   rung-pos)
+	      (unless (get-text-property (1- rung-pos) 'c-is-sws)
+		;; Remove any `c-in-sws' property from the last char of
+		;; the rung before we mark it with `c-is-sws', so that we
+		;; won't connect with the remains of a broken "ladder".
+		(c-remove-in-sws (1- rung-pos) rung-pos))
+	      (c-put-is-sws rung-is-marked
+			    rung-pos)
+	      (c-put-in-sws rung-is-marked
+			    (1- rung-pos))
 	      (setq rung-pos rung-is-marked
 		    last-put-in-sws-pos rung-pos))
 
@@ -1417,22 +1463,25 @@ This function does not do any hidden buffer changes."
 
 	    (cond
 	     ((and c-opt-cpp-prefix
+		   (/= cmt-skip-pos simple-ws-beg)
 		   (c-beginning-of-macro))
 	      ;; Inside a cpp directive.  See if it should be skipped over.
 	      (let ((cpp-beg (point)))
-		(if (or (progn (goto-char simple-ws-beg)
-			       (beginning-of-line)
-			       (<= (point) cpp-beg))
-			(and (not (bobp))
-			     (progn (backward-char)
-				    (eq (char-before) ?\\))))
 
+		;; Move back over all line continuations in the region skipped
+		;; over by `c-backward-comments'.  If we go past it then we
+		;; started inside the cpp directive.
+		(goto-char simple-ws-beg)
+		(beginning-of-line)
+		(while (and (> (point) cmt-skip-pos)
+			    (progn (backward-char)
+				   (eq (char-before) ?\\)))
+		  (beginning-of-line))
+
+		(if (< (point) cmt-skip-pos)
 		    ;; Don't move past the cpp directive if we began inside
-		    ;; it.  We detect the inside of it by checking that it
-		    ;; doesn't start on the same line we begun searching from,
-		    ;; and that the line before that one doesn't end with "\".
-		    ;; That means that the position at the end of the last
-		    ;; line of the macro is also considered to be within it.
+		    ;; it.  Note that the position at the end of the last line
+		    ;; of the macro is also considered to be within it.
 		    (progn (goto-char cmt-skip-pos)
 			   nil)
 
@@ -1465,17 +1514,6 @@ This function does not do any hidden buffer changes."
 	      ;; narrowed out, and we can't risk marking the simple ws
 	      ;; at the end of it.
 	      (goto-char next-rung-pos)
-	      t)
-
-	     ((and c-opt-in-comment-lc
-		   (save-excursion
-		     (and (c-safe (beginning-of-line)
-				  (backward-char 2)
-				  t)
-			  (looking-at c-opt-in-comment-lc)
-			  (= (match-end 0) cmt-skip-pos))))
-	      ;; Skip an in-comment line continuation.
-	      (goto-char (match-beginning 0))
 	      t)))
 
 	;; We've searched over a piece of non-white syntactic ws.  See if this
@@ -1507,9 +1545,15 @@ This function does not do any hidden buffer changes."
 	      ;; anyway.
 	      (c-remove-is-sws (1+ next-rung-pos) simple-ws-beg)
 	      (unless (and rung-is-marked (= simple-ws-beg rung-pos))
-		(c-put-is-sws simple-ws-beg
-			      (min (1+ rung-pos) (point-max)))
-		(setq rung-is-marked t))
+		(let ((rung-end-pos (min (1+ rung-pos) (point-max))))
+		  (unless (get-text-property (1- rung-end-pos) 'c-is-sws)
+		    ;; Remove any `c-in-sws' property from the last char of
+		    ;; the rung before we mark it with `c-is-sws', so that we
+		    ;; won't connect with the remains of a broken "ladder".
+		    (c-remove-in-sws (1- rung-end-pos) rung-end-pos))
+		  (c-put-is-sws simple-ws-beg
+				rung-end-pos)
+		  (setq rung-is-marked t)))
 	      (c-put-in-sws (setq simple-ws-beg (point)
 				  last-put-in-sws-pos simple-ws-beg)
 			    rung-pos)
@@ -1609,7 +1653,7 @@ This function does not do any hidden buffer changes."
     (let* ((here (point))
 	   (c-macro-start (c-query-macro-start))
 	   (in-macro-start (or c-macro-start (point)))
-	   old-state last-pos pairs pos)
+	   old-state last-pos pairs pos save-pos)
       (c-invalidate-state-cache (point))
 
       ;; If the minimum position has changed due to narrowing then we
@@ -1718,7 +1762,8 @@ This function does not do any hidden buffer changes."
 
       (while pos
 	;; Find the balanced brace pairs.
-	(setq pairs nil)
+	(setq save-pos pos
+	      pairs nil)
 	(while (and (setq last-pos (c-down-list-forward pos))
 		    (setq pos (c-up-list-forward last-pos)))
 	  (if (eq (char-before last-pos) ?{)
@@ -1769,7 +1814,13 @@ This function does not do any hidden buffer changes."
 	      (progn
 		(setq pos (c-up-list-backward pos)
 		      c-state-cache nil)
-		(unless pos
+		(when (or (not pos)
+			  ;; Emacs (up to at least 21.2) can get confused by
+			  ;; open parens in column zero inside comments: The
+			  ;; sexp functions can then misbehave and bring us
+			  ;; back to the same point again.  Check this so that
+			  ;; we don't get an infinite loop.
+			  (>= pos save-pos))
 		  (setq pos last-pos
 			c-parsing-error
 			(format "Unbalanced close paren at line %d"
@@ -1897,12 +1948,12 @@ This function does not do any hidden buffer changes."
 	(while paren-state
 	  (setq elem (car paren-state))
 	  (if (consp elem)
-	      (cond ((<= (cdr elem) bufpos)
+	      (cond ((< (cdr elem) bufpos)
 		     (throw 'done (cdr elem)))
-		    ((<= (car elem) bufpos)
+		    ((< (car elem) bufpos)
 		     ;; See below.
 		     (throw 'done (min (1+ (car elem)) bufpos))))
-	    (if (<= elem bufpos)
+	    (if (< elem bufpos)
 		;; elem is the position at and not after the opening paren, so
 		;; we can go forward one more step unless it's equal to
 		;; bufpos.  This is useful in some cases avoid an extra paren
@@ -1914,9 +1965,23 @@ This function does not do any hidden buffer changes."
   ;; This is used for `font-lock-beginning-of-syntax-function'.  It
   ;; goes to the closest previous point that is known to be outside
   ;; any string literal or comment, using `c-state-cache'.
-  (goto-char (or (c-safe-position (point)
-				  (or c-state-cache (c-parse-state)))
-		 (point-min))))
+  (goto-char
+   (let ((paren-state (or c-state-cache (c-parse-state))) elem)
+     (catch 'done
+       ;; Note: Similar code in `c-safe-position'.  The difference is
+       ;; that we accept a safe position at the point and don't bother
+       ;; to go forward past open parens.
+       (while paren-state
+	 (setq elem (car paren-state))
+	 (if (consp elem)
+	     (cond ((<= (cdr elem) (point))
+		    (throw 'done (cdr elem)))
+		   ((<= (car elem) (point))
+		    (throw 'done (car elem))))
+	   (if (<= elem (point))
+	       (throw 'done elem)))
+	 (setq paren-state (cdr paren-state)))
+       (point-min)))))
 
 
 ;; Tools for scanning identifiers and other tokens.
@@ -2389,10 +2454,11 @@ This function does not do any hidden buffer changes."
 				   (> (car safe-pos-list) (point)))
 			 (setq safe-pos-list (cdr safe-pos-list)))
 		       (unless (setq safe-pos (car-safe safe-pos-list))
-			 (setq safe-pos (or (c-safe-position
-					     (point) (or c-state-cache
-							 (c-parse-state)))
-					    (point-min))
+			 (setq safe-pos (max (or (c-safe-position
+						  (point) (or c-state-cache
+							      (c-parse-state)))
+						 0)
+					     (point-min))
 			       safe-pos-list (list safe-pos)))
 
 		       (while (progn
@@ -2723,21 +2789,21 @@ This function does not do any hidden buffer changes."
 
 ;; Variables used in `c-find-decl-spots' to cache the search done for
 ;; the first declaration in the last call.  When that function starts,
-;; it needs to back up over syntactic whitespace to find the last
-;; previous place where `c-decl-prefix-re' matches before the region
-;; being searched.  That can sometimes cause moves back and forth over
-;; a quite large region of comments and macros, which would be
-;; repeated for each changed character when we're called during
-;; fontification, since font-lock refontifies the current line for
-;; each change.  Thus it's worthwhile to cache the first match.
+;; it needs to back up over syntactic whitespace to look at the last
+;; token before the region being searched.  That can sometimes cause
+;; moves back and forth over a quite large region of comments and
+;; macros, which would be repeated for each changed character when
+;; we're called during fontification, since font-lock refontifies the
+;; current line for each change.  Thus it's worthwhile to cache the
+;; first match.
 ;;
 ;; `c-find-decl-syntactic-pos' is a syntactically relevant position in
 ;; the syntactic whitespace less or equal to some start position.
 ;; There's no cached value if it's nil.
 ;;
-;; `c-find-decl-match-pos' is the match position if `c-decl-prefix-re'
-;; matched before the syntactic whitespace at
-;; `c-find-decl-syntactic-pos', or nil if there's no such match.
+;; `c-find-decl-match-pos' is the match position if
+;; `c-find-decl-prefix-search' matched before the syntactic whitespace
+;; at `c-find-decl-syntactic-pos', or nil if there's no such match.
 (defvar c-find-decl-syntactic-pos nil)
 (make-variable-buffer-local 'c-find-decl-syntactic-pos)
 (defvar c-find-decl-match-pos nil)
@@ -2770,36 +2836,68 @@ This function does not do any hidden buffer changes."
        (c-debug-remove-face ,beg ,end 'c-debug-decl-sws-face))))
 
 (defmacro c-find-decl-prefix-search ()
-  ;; Macro used inside `c-find-decl-spots'.  It ought to be a defsubst
-  ;; or perhaps even a defun, but it contains lots of free variables
-  ;; that refer to things inside `c-find-decl-spots'.  Note that point
-  ;; can be past `cfd-limit' on return.
-  '(while (and
-	   (setq cfd-match
-		 (re-search-forward c-decl-prefix-re cfd-limit 'move))
-	   (if (memq (get-text-property (1- (setq cfd-match-pos
-						  (match-end 1)))
-					'face)
-		     '(font-lock-comment-face font-lock-string-face))
-	       t
-	     ;; Skip forward past comments only, to set the position
-	     ;; to continue at, so we don't skip macros.
-	     (goto-char (match-end 1))
-	     (c-forward-comments)
-	     (setq cfd-continue-pos (point))
-	     nil))
-     ;; Search again if the match is within a comment or a string
-     ;; literal.
-     (goto-char (next-single-property-change
-		 cfd-match-pos 'face nil cfd-limit))))
+  ;; Macro used inside `c-find-decl-spots'.  It ought to be a defun,
+  ;; but it contains lots of free variables that refer to things
+  ;; inside `c-find-decl-spots'.  The point is left at `cfd-match-pos'
+  ;; if there is a match, otherwise at `cfd-limit'.
+
+  '(progn
+     ;; Find the next property match position if we haven't got one already.
+     (unless cfd-prop-match
+       (save-excursion
+	 (while (progn
+		  (goto-char (next-single-property-change
+			      (point) 'c-type nil cfd-limit))
+		  (and (< (point) cfd-limit)
+		       (not (eq (c-get-char-property (1- (point)) 'c-type)
+				'c-decl-end)))))
+	 (setq cfd-prop-match (point))))
+
+     ;; Find the next `c-decl-prefix-re' match if we haven't got one already.
+     (unless cfd-re-match
+       (while (and (setq cfd-re-match
+			 (re-search-forward c-decl-prefix-re cfd-limit 'move))
+		   (c-got-face-at (1- (setq cfd-re-match (match-end 1)))
+				  c-literal-faces))
+	 ;; Search again if the match is within a comment or a string literal.
+	 (while (progn
+		  (goto-char (next-single-property-change
+			      cfd-re-match 'face nil cfd-limit))
+		  (and (< (point) cfd-limit)
+		       (c-got-face-at (point) c-literal-faces)))
+	   (setq cfd-re-match (point))))
+       (unless cfd-re-match
+	 (setq cfd-re-match cfd-limit)))
+
+     ;; Choose whichever match is closer to the start.
+     (if (< cfd-re-match cfd-prop-match)
+	 (setq cfd-match-pos cfd-re-match
+	       cfd-re-match nil)
+       (setq cfd-match-pos cfd-prop-match
+	     cfd-prop-match nil))
+
+     (goto-char cfd-match-pos)
+
+     (when (< cfd-match-pos cfd-limit)
+       ;; Skip forward past comments only so we don't skip macros.
+       (c-forward-comments)
+       ;; Set the position to continue at.  We can avoid going over
+       ;; the comments skipped above a second time, but it's possible
+       ;; that the comment skipping has taken us past `cfd-prop-match'
+       ;; since the property might be used inside comments.
+       (setq cfd-continue-pos (if cfd-prop-match
+				  (min cfd-prop-match (point))
+				(point))))))
 
 (defun c-find-decl-spots (cfd-limit cfd-decl-re cfd-face-checklist cfd-fun)
   ;; Call CFD-FUN for each possible spot for a declaration from the
   ;; point to CFD-LIMIT.  A spot for a declaration is the first token
   ;; in the buffer and each token after the ones matched by
-  ;; `c-decl-prefix-re'.  Only a spot that match CFD-DECL-RE and whose
-  ;; face is in the CFD-FACE-CHECKLIST list causes CFD-FUN to be
-  ;; called.  The face check is disabled if CFD-FACE-CHECKLIST is nil.
+  ;; `c-decl-prefix-re' and after the occurrences of the `c-type'
+  ;; property with the value `c-decl-end' (if `c-type-decl-end-used'
+  ;; is set).  Only a spot that match CFD-DECL-RE and whose face is in
+  ;; the CFD-FACE-CHECKLIST list causes CFD-FUN to be called.  The
+  ;; face check is disabled if CFD-FACE-CHECKLIST is nil.
   ;;
   ;; If the match is inside a macro then the buffer is narrowed to the
   ;; end of it, so that CFD-FUN can investigate the following tokens
@@ -2824,17 +2922,24 @@ This function does not do any hidden buffer changes."
   ;; collision with the (dynamically bound) variables used in CFD-FUN.
 
   (let ((cfd-buffer-end (point-max))
-	;; The result of the last search for `c-decl-prefix-re'.
-	cfd-match
-	;; The position of the end of the last token matched by the
-	;; last `c-decl-prefix-re' match.  0 for the implicit match at
-	;; bob.
-	cfd-match-pos
+	;; The last regexp match found by `c-find-decl-prefix-search'.
+	cfd-re-match
+	;; The last `c-decl-end' found by `c-find-decl-prefix-search'.
+	;; If searching for the property isn't needed then we disable
+	;; it by faking a first match at the limit.
+	(cfd-prop-match (unless c-type-decl-end-used cfd-limit))
+	;; The position of the last match found by
+	;; `c-find-decl-prefix-search'.  For regexp matches it's the
+	;; end of the matched token, for property matches it's the end
+	;; of the property.  0 for the implicit match at bob.
+	;; `cfd-limit' if there's no match.
+	(cfd-match-pos cfd-limit)
 	;; The position to continue searching at.
 	cfd-continue-pos
 	;; The position of the last "real" token we've stopped at.
 	;; This can be greater than `cfd-continue-pos' when we get
-	;; hits inside macros.
+	;; hits inside macros or at `c-decl-end' positions inside
+	;; comments.
 	(cfd-token-pos 0)
 	;; The end position of the last entered macro.
 	(cfd-macro-end 0))
@@ -2843,26 +2948,40 @@ This function does not do any hidden buffer changes."
     ;; before the point, and do the first `c-decl-prefix-re' search
     ;; unless we're at bob.
 
-    (let ((start-pos (point))
-	  (prop (get-text-property (point) 'face))
-	  syntactic-pos)
-
+    (let ((start-pos (point)) syntactic-pos)
       ;; Must back up a bit since we look for the end of the previous
       ;; statement or declaration, which is earlier than the first
       ;; returned match.
-      (when (memq prop '(font-lock-comment-face font-lock-string-face))
+
+      (when (c-got-face-at (point) c-literal-faces)
 	;; But first we need to move to a syntactically relevant
-	;; position.  Can't use backward movement on the face property
-	;; since the font-lock package might not have fontified the
-	;; comment or string all the way to the start.
-	(goto-char (next-single-property-change (point) 'face nil (point-max)))
-	(when (eq prop 'font-lock-comment-face)
-	  ;; Back up over the comment to compare to
-	  ;; `c-find-decl-syntactic-pos'.  There's no use in doing
-	  ;; something similar for string literals since even if
-	  ;; `c-decl-prefix-re' matches directly before it, it
-	  ;; couldn't be the start of a declaration.
-	  (c-backward-single-comment)))
+	;; position.  Use the faces to back up to the start of the
+	;; comment or string literal.
+	(when (and (not (bobp))
+		   (c-got-face-at (1- (point)) c-literal-faces))
+	  (while (progn
+		   (goto-char (previous-single-property-change
+			       (point) 'face nil (point-min)))
+		   (and (> (point) (point-min))
+			(c-got-face-at (point) c-literal-faces)))))
+
+	;; XEmacs doesn't fontify the quotes surrounding string
+	;; literals.
+	(and (featurep 'xemacs)
+	     (eq (get-text-property (point) 'face)
+		 'font-lock-string-face)
+	     (not (bobp))
+	     (progn (backward-char)
+		    (not (looking-at c-string-limit-regexp)))
+	     (forward-char))
+
+	;; The font lock package might not have fontified the start of
+	;; the literal at all so check that we have arrived at
+	;; something that looks like a start or else resort to
+	;; `c-literal-limits'.
+	(unless (looking-at c-literal-start-regexp)
+	  (let ((range (c-literal-limits)))
+	    (if range (goto-char (car range))))))
 
       ;; Must back out of any macro so that we don't miss any
       ;; declaration that could follow after it, unless the limit is
@@ -2887,30 +3006,39 @@ This function does not do any hidden buffer changes."
       ;; values.  If we hit `c-find-decl-syntactic-pos' and
       ;; `c-find-decl-match-pos' is nil then we know there's no decl
       ;; prefix in the whitespace before `c-find-decl-syntactic-pos'
-      ;; and so we can continue the search from this point. If we
+      ;; and so we can continue the search from this point.  If we
       ;; didn't hit `c-find-decl-syntactic-pos' then we're now in the
       ;; right spot to begin searching anyway.
       (if (and (eq (point) c-find-decl-syntactic-pos)
 	       c-find-decl-match-pos)
-	  (setq cfd-match t
-		cfd-match-pos c-find-decl-match-pos
-		cfd-continue-pos syntactic-pos)
+
+	  (progn
+	    ;; The match is always outside macros and comments so we
+	    ;; start at the next token.  The loop below will later go
+	    ;; back using `cfd-continue-pos' to fix declarations inside
+	    ;; the syntactic ws.
+	    (goto-char syntactic-pos)
+	    (c-forward-syntactic-ws)
+	    (setq cfd-match-pos c-find-decl-match-pos
+		  cfd-continue-pos syntactic-pos)
+	    (if (< cfd-continue-pos (point))
+		(setq cfd-token-pos (point))))
+
 	(setq c-find-decl-syntactic-pos syntactic-pos)
 
-	(if (bobp)
-	    ;; Always consider bob a match to get the first
-	    ;; declaration in the file.  Do this separately instead of
-	    ;; letting `c-decl-prefix-re' match bob, so that it always
-	    ;; can consume at least one character to ensure that we
-	    ;; won't get stuck in an infinite loop.
-	    (progn (c-forward-comments)
-		   (setq cfd-match t
-			 cfd-match-pos 0
-			 cfd-continue-pos (point)))
-	  (backward-char)
-	  (c-beginning-of-current-token)
-	  (when (< (point) cfd-limit)
-	    (c-find-decl-prefix-search)))
+	(when (if (bobp)
+		  ;; Always consider bob a match to get the first declaration
+		  ;; in the file.  Do this separately instead of letting
+		  ;; `c-decl-prefix-re' match bob, so that it always can
+		  ;; consume at least one character to ensure that we won't
+		  ;; get stuck in an infinite loop.
+		  (setq cfd-re-match 0)
+		(backward-char)
+		(c-beginning-of-current-token)
+		(< (point) cfd-limit))
+	  ;; Do an initial search now.  In the bob case above it's only done
+	  ;; to search for the `c-type' property.
+	  (c-find-decl-prefix-search))
 
 	;; Advance `cfd-continue-pos' if we got a hit before the start
 	;; position.  The earliest position that could affect after
@@ -2924,26 +3052,25 @@ This function does not do any hidden buffer changes."
 	    (c-beginning-of-current-token))
 	  (setq cfd-continue-pos (max cfd-continue-pos (point))))
 
-	;; If we got a match it's always outside macros so advance to
-	;; the next token and set `cfd-token-pos'.  The loop below
-	;; will later go back using `cfd-continue-pos' to fix macros
-	;; inside the syntactic ws.
-	(when (and cfd-match (< (point) syntactic-pos))
+	;; If we got a match it's always outside macros and comments so
+	;; advance to the next token and set `cfd-token-pos'.  The loop
+	;; below will later go back using `cfd-continue-pos' to fix
+	;; declarations inside the syntactic ws.
+	(when (and (< cfd-match-pos cfd-limit) (< (point) syntactic-pos))
 	  (goto-char syntactic-pos)
 	  (c-forward-syntactic-ws)
 	  (and cfd-continue-pos
 	       (< cfd-continue-pos (point))
 	       (setq cfd-token-pos (point))))
 
-	(setq c-find-decl-match-pos (and cfd-match-pos
-					 (< cfd-match-pos start-pos)
+	(setq c-find-decl-match-pos (and (< cfd-match-pos start-pos)
 					 cfd-match-pos))))
 
     ;; Now loop.  We already got the first match.
 
     (while (progn
 	     (while (and
-		     cfd-match
+		     (< cfd-match-pos cfd-limit)
 
 		     (or
 		      ;; Kludge to filter out matches on the "<" that
@@ -2963,22 +3090,22 @@ This function does not do any hidden buffer changes."
 
 		      (progn
 			;; If `cfd-continue-pos' is less than `cfd-token-pos'
-			;; we're still searching macros in the syntactic
-			;; whitespace, so we need only to skip comments and
-			;; not macros, since they can't be nested.
+			;; we're still searching for declarations embedded in
+			;; the syntactic whitespace.  In that case we need
+			;; only to skip comments and not macros, since they
+			;; can't be nested, and that's already been done in
+			;; `c-find-decl-prefix-search'.
 			(when (> cfd-continue-pos cfd-token-pos)
 			  (c-forward-syntactic-ws)
 			  (setq cfd-token-pos (point)))
 
 			;; Continue if the following token fails the
 			;; CFD-DECL-RE and CFD-FACE-CHECKLIST checks.
-			(when (or
-			       (eobp)
-			       (not (looking-at cfd-decl-re))
-			       (and
-				cfd-face-checklist
-				(not (memq (get-text-property (point) 'face)
-					   cfd-face-checklist))))
+			(when (or (>= (point) cfd-limit)
+				  (not (looking-at cfd-decl-re))
+				  (and cfd-face-checklist
+				       (not (c-got-face-at
+					     (point) cfd-face-checklist))))
 			  (goto-char cfd-continue-pos)
 			  t)))
 
@@ -3020,7 +3147,8 @@ This function does not do any hidden buffer changes."
 	  (narrow-to-region (point-min) cfd-buffer-end)))
 
       (goto-char cfd-continue-pos)
-      (when (< cfd-continue-pos cfd-limit)
+      (if (= cfd-continue-pos cfd-limit)
+	  (setq cfd-match-pos cfd-limit)
 	(c-find-decl-prefix-search)))))
 
 
@@ -3433,8 +3561,11 @@ This function does not do any hidden buffer changes."
 			(forward-char)
 			t)
 
+		      ;; Note: This regexp exploits the match order in
+		      ;; \| so that "<>" is matched by "<" rather than
+		      ;; "[^>:-]>".
 		      (c-syntactic-re-search-forward
-		       "\\([^>]>\\)\\|[<;{},]" nil 'move t t 1)
+		       "[<;{},]\\|\\([^>:-]>\\)" nil 'move t t 1)
 
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
@@ -3928,7 +4059,8 @@ This function does not do any hidden buffer changes."
 			(point)))))
     (c-with-syntax-table c++-template-syntax-table
       (c-backward-token-2 0 t lim)
-      (while (and (looking-at "[_a-zA-Z<,]")
+      (while (and (or (looking-at c-symbol-start)
+		      (looking-at "[<,]"))
 		  (zerop (c-backward-token-2 1 t lim))))
       (skip-chars-forward "^:"))))
 
@@ -4320,39 +4452,55 @@ brace."
 
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
-  ;; ':') if inside one. Returns t in that case, nil otherwise.
+  ;; ':') if inside one.  Returns t in that case, nil otherwise.
   (or limit
       (setq limit (point-min)))
   (skip-chars-forward " \t")
+
   (if (eq (char-after) ?,)
       (forward-char 1)
     (c-backward-syntactic-ws limit))
-  (while (and (< limit (point))
-	      (eq (char-before) ?,))
-    ;; this will catch member inits with multiple
-    ;; line arglists
-    (forward-char -1)
-    (c-backward-syntactic-ws limit)
-    (if (eq (char-before) ?\))
-	(c-backward-sexp 1))
-    (c-backward-syntactic-ws limit)
-    ;; Skip over any template arg to the class.
-    (if (eq (char-before) ?>)
-	(c-with-syntax-table c++-template-syntax-table
-	  (c-backward-sexp 1)))
-    (c-backward-sexp 1)
-    (c-backward-syntactic-ws limit)
-    ;; Skip backwards over a fully::qualified::name.
-    (while (and (eq (char-before) ?:)
-		(save-excursion
-		  (forward-char -1)
-		  (eq (char-before) ?:)))
-      (backward-char 2)
-      (c-backward-sexp 1))
-    ;; now continue checking
-    (c-backward-syntactic-ws limit))
-  (and (< limit (point))
-       (eq (char-before) ?:)))
+
+  (condition-case err
+      (progn
+	(while (and (< limit (point))
+		    (eq (char-before) ?,))
+
+	  ;; this will catch member inits with multiple
+	  ;; line arglists
+	  (forward-char -1)
+	  (c-backward-syntactic-ws limit)
+	  (if (eq (char-before) ?\))
+	      (c-backward-sexp 1))
+	  (c-backward-syntactic-ws limit)
+
+	  ;; Skip over any template arg to the class.  This way with a
+	  ;; syntax table is bogus but it'll have to do for now.
+	  (if (and (eq (char-before) ?>)
+		   (c-major-mode-is 'c++-mode))
+	      (c-with-syntax-table c++-template-syntax-table
+		(c-backward-sexp 1)))
+	  (c-backward-sexp 1)
+	  (c-backward-syntactic-ws limit)
+
+	  ;; Skip backwards over a fully::qualified::name.
+	  (while (and (eq (char-before) ?:)
+		      (save-excursion
+			(forward-char -1)
+			(eq (char-before) ?:)))
+	    (backward-char 2)
+	    (c-backward-sexp 1))
+
+	  ;; now continue checking
+	  (c-backward-syntactic-ws limit))
+
+	(and (< limit (point))
+	     (eq (char-before) ?:)))
+
+    (scan-error
+     ;; An unbalanced paren was found that caused one of the sexp
+     ;; routines above to fail.
+     nil)))
 
 (defun c-search-uplist-for-classkey (paren-state)
   ;; search for the containing class, returning a 2 element vector if
@@ -4783,6 +4931,10 @@ brace."
 ;; implements the main decision tree for determining the syntactic
 ;; analysis of the current line of code.
 
+;; Dynamically bound to t when `c-guess-basic-syntax' is called during
+;; auto newline analysis.
+(defvar c-auto-newline-analysis nil)
+
 (defsubst c-add-syntax (symbol &rest args)
   ;; A simple function to prepend a new syntax element to
   ;; `c-syntactic-context'.  Using `setq' on it is unsafe since it
@@ -5043,12 +5195,19 @@ brace."
 	      (c-syntactic-re-search-forward "=\\([^=]\\|$\\)"
 					     indent-point t t t)))
 	;; The most semantically accurate symbol here is
-	;; brace-list-open, but we report it simply as a statement-cont.
-	;; The reason is that one normally adjusts brace-list-open for
-	;; brace lists as top-level constructs, and brace lists inside
-	;; statements is a completely different context.
+	;; brace-list-open, but we normally report it simply as a
+	;; statement-cont.  The reason is that one normally adjusts
+	;; brace-list-open for brace lists as top-level constructs,
+	;; and brace lists inside statements is a completely different
+	;; context.  C.f. case 5A.3.
 	(c-beginning-of-statement-1 containing-sexp)
-	(c-add-stmt-syntax 'statement-cont nil nil nil
+	(c-add-stmt-syntax (if c-auto-newline-analysis
+			       ;; Turn off the dwim above when we're
+			       ;; analyzing the nature of the brace
+			       ;; for the auto newline feature.
+			       'brace-list-open
+			     'statement-cont)
+			   nil nil nil
 			   containing-sexp paren-state))
 
        ;; CASE B.3: The body of a function declared inside a normal
@@ -5450,7 +5609,8 @@ brace."
 				       (not (memq (char-after) '(?\; ?\()))))
 			   (not (memq (char-after) '(?\; ?\()))
 			   ))))
-	      (if (and (c-major-mode-is 'java-mode)
+	      (if (and (not c-auto-newline-analysis)
+		       (c-major-mode-is 'java-mode)
 		       (eq tmpsymbol 'topmost-intro-cont))
 		  ;; We're in Java and have found that the open brace
 		  ;; belongs to a "new Foo[]" initialization list,
@@ -5459,7 +5619,7 @@ brace."
 		  ;; therefore treat it as any topmost continuation
 		  ;; even though the semantically correct symbol still
 		  ;; is brace-list-open, on the same grounds as in
-		  ;; case 10B.2.
+		  ;; case B.2.
 		  (progn
 		    (c-beginning-of-statement-1 lim)
 		    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
