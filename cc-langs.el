@@ -47,6 +47,110 @@
 (require 'cl)
 
 
+;; Syntax tables.
+
+(eval-and-compile
+  ;; Evaluate during compilation since the syntax tables are used to
+  ;; build the `c-lang-defconst' constants below.
+
+  (defun c-populate-syntax-table (table)
+    ;; Populate the syntax in TABLE.
+    ;;
+    ;; This function does not do any hidden buffer changes.
+    (modify-syntax-entry ?_  "_"     table)
+    (modify-syntax-entry ?\\ "\\"    table)
+    (modify-syntax-entry ?+  "."     table)
+    (modify-syntax-entry ?-  "."     table)
+    (modify-syntax-entry ?=  "."     table)
+    (modify-syntax-entry ?%  "."     table)
+    (modify-syntax-entry ?<  "."     table)
+    (modify-syntax-entry ?>  "."     table)
+    (modify-syntax-entry ?&  "."     table)
+    (modify-syntax-entry ?|  "."     table)
+    (modify-syntax-entry ?\' "\""    table)
+    (modify-syntax-entry ?\240 "."   table)
+    ;; Set up block and line oriented comments.  The new C standard
+    ;; mandates both comment styles even in C, so since all languages
+    ;; now require dual comments, we make this the default.
+    (cond
+     ;; XEmacs 19 & 20
+     ((memq '8-bit c-emacs-features)
+      (modify-syntax-entry ?/  ". 1456" table)
+      (modify-syntax-entry ?*  ". 23"   table))
+     ;; Emacs 19 & 20
+     ((memq '1-bit c-emacs-features)
+      (modify-syntax-entry ?/  ". 124b" table)
+      (modify-syntax-entry ?*  ". 23"   table))
+     ;; incompatible
+     (t (error "CC Mode is incompatible with this version of Emacs"))
+     )
+    (modify-syntax-entry ?\n "> b"  table)
+    ;; Give CR the same syntax as newline, for selective-display
+    (modify-syntax-entry ?\^m "> b" table))
+
+;;;###autoload
+  (defvar c-mode-syntax-table nil
+    "Syntax table used in c-mode buffers.")
+  (if c-mode-syntax-table
+      ()
+    (setq c-mode-syntax-table (make-syntax-table))
+    (c-populate-syntax-table c-mode-syntax-table))
+
+;;;###autoload
+  (defvar c++-mode-syntax-table nil
+    "Syntax table used in c++-mode buffers.")
+  (if c++-mode-syntax-table
+      ()
+    (setq c++-mode-syntax-table (make-syntax-table))
+    (c-populate-syntax-table c++-mode-syntax-table))
+
+  (defvar c++-template-syntax-table nil
+    "A variant of `c++-mode-syntax-table' that defines `<' and `>' as
+parenthesis characters.  Used temporarily when template argument lists
+are parsed.")
+  (if c++-template-syntax-table
+      ()
+    (setq c++-template-syntax-table
+	  (copy-syntax-table c++-mode-syntax-table))
+    (modify-syntax-entry ?< "(>" c++-template-syntax-table)
+    (modify-syntax-entry ?> ")<" c++-template-syntax-table))
+
+;;;###autoload
+  (defvar objc-mode-syntax-table nil
+    "Syntax table used in objc-mode buffers.")
+  (if objc-mode-syntax-table
+      ()
+    (setq objc-mode-syntax-table (make-syntax-table))
+    (c-populate-syntax-table objc-mode-syntax-table)
+    ;; add extra Objective-C only syntax
+    (modify-syntax-entry ?@ "_" objc-mode-syntax-table))
+
+;;;###autoload
+  (defvar java-mode-syntax-table nil
+    "Syntax table used in java-mode buffers.")
+  (if java-mode-syntax-table
+      ()
+    (setq java-mode-syntax-table (make-syntax-table))
+    (c-populate-syntax-table java-mode-syntax-table))
+
+;;;###autoload
+  (defvar idl-mode-syntax-table nil
+    "Syntax table used in idl-mode buffers.")
+  (if idl-mode-syntax-table
+      nil
+    (setq idl-mode-syntax-table (make-syntax-table))
+    (c-populate-syntax-table idl-mode-syntax-table))
+
+;;;###autoload
+  (defvar pike-mode-syntax-table nil
+    "Syntax table used in pike-mode buffers.")
+  (if pike-mode-syntax-table
+      ()
+    (setq pike-mode-syntax-table (make-syntax-table))
+    (c-populate-syntax-table pike-mode-syntax-table)
+    (modify-syntax-entry ?@ "." pike-mode-syntax-table)))
+
+
 ;; Helpers for building of constants that are parameterized on a
 ;; per-language basis.
 
@@ -160,15 +264,17 @@
       (fset 'c-regexp-opt-depth (symbol-function 'regexp-opt-depth))
     ;; Emacs 19.34 doesn't have the regexp-opt package.
     (defun c-regexp-opt-depth (regexp)
-      ;; This is the definition of `regexp-opt-depth' in Emacs 20.
+      ;; This is the definition of `regexp-opt-depth' in Emacs 21 with
+      ;; the exception that "shy" grouping parens aren't detected.
       (save-match-data
 	;; Hack to signal an error if REGEXP does not have balanced
 	;; parentheses.
 	(string-match regexp "")
-	;; Count the number of open parentheses in REGEXP.
 	(let ((count 0) start)
-	  (while (string-match "\\\\(" regexp start)
-	    (setq count (1+ count) start (match-end 0)))
+	  (while (string-match "\\(\\`\\|[^\\]\\)\\\\\\(\\\\\\\\\\)*("
+			       regexp start)
+	    (setq count (1+ count)
+		  start (- (match-end 0) 1)))
 	  count))))
 
   (defun c-make-keywords-re (adorn &rest lists)
@@ -196,6 +302,16 @@ appended."
 
 
 ;; Constants and variables that are language dependent.
+
+;; Allow access to the appropriate syntax table above through
+;; `c-lang-var'.
+(c-lang-defconst c-syntax-table
+  c    c-mode-syntax-table
+  c++  c++-mode-syntax-table
+  objc objc-mode-syntax-table
+  java java-mode-syntax-table
+  idl  idl-mode-syntax-table
+  pike pike-mode-syntax-table)
 
 ;; Regexp that matches any character that can't be part of a symbol.
 ;; It's usually appended to other regexps to avoid matching a prefix.
@@ -376,6 +492,213 @@ appended."
     (modify-syntax-entry ?$ "w" table)
     table))
 
+;; Regexp matching the prefix of a cpp directive in the languages that
+;; normally uses that macro preprocessor.
+(c-lang-defconst c-opt-cpp-prefix
+  (c c++) "^\\s *#\\s *"
+  ;; The preprocessor in Pike recognizes cpp directives anywhere,
+  ;; not just at boi.
+  pike "#\\s *")
+
+;; Name of functions in cpp expressions that take an identifier as the
+;; argument.
+(c-lang-defconst c-cpp-defined-fns
+  (c c++) '("defined")
+  pike '("defined" "efun" "constant"))
+
+;; List describing all operators, along with their precedence and
+;; associativity.  The order in the list corresponds to the precedence
+;; of the operators: The operators in each element is a group with the
+;; same precedence, and the group has higher precedence than the
+;; groups in all following elements.  The car of each element
+;; describes the type of of the operator group, and the cdr is a list
+;; of the operator tokens in it.  The operator group types are:
+;;
+;; 'prefix	Unary prefix operators.
+;; 'postfix	Unary postfix operators.
+;; 'left-assoc	Binary left associative operators (i.e. a+b+c means (a+b)+c).
+;; 'right-assoc	Binary right associative operators (i.e. a=b=c means a=(b=c)).
+;; 'right-assoc-sequence
+;;		Right associative operator that constitutes of a
+;;		sequence of tokens that separate expressions.  All the
+;;		tokens in the group are in this case taken as
+;;		describing the sequence in one such operator, and the
+;;		order between them is therefore significant.
+;;
+;; Operators containing a character with paren syntax are taken to
+;; match with a corresponding open/close paren somewhere else.  A
+;; postfix operator with close paren syntax is taken to end a postfix
+;; expression started somewhere earlier, rather than start a new one
+;; at point.  Vice versa for prefix operators with open paren syntax.
+;;
+;; Note that operators like "." and "->" which in language references
+;; often are described as postfix operators are considered binary
+;; here, since CC Mode treats every identifier as an expression.
+(c-lang-defconst c-operators
+  all `(;; Preprocessor.
+	,@(when (c-lang-var c-opt-cpp-prefix)
+	    `((prefix "#"
+		      ,@(when (c-major-mode-is '(c-mode c++-mode))
+			  '("%:" "??=")))
+	      (left-assoc "##"
+			  ,@(when (c-major-mode-is '(c-mode c++-mode))
+			      '("%:%:" "??=??=")))))
+
+	;; Primary.  Info duplicated in `c-opt-identifier-concat-key'
+	;; and `c-identifier-key'.
+	,@(cond ((c-major-mode-is 'c++-mode)
+		 `((postfix-if-paren "<" ">") ; Templates.
+		   (prefix "~" "??-" "compl")
+		   (right-assoc "::")
+		   (prefix "::")))
+		((c-major-mode-is 'pike-mode)
+		 `((left-assoc "::")
+		   (prefix "::" "global" "predef")))
+		((c-major-mode-is 'java-mode)
+		 `(;; Not necessary since it's also in the postfix group below.
+		   ;;(left-assoc ".")
+		   (prefix "super"))))
+
+	;; Postfix.
+	,@(when (c-major-mode-is 'c++-mode)
+	    ;; The following need special treatment.
+	    `((prefix "dynamic_cast" "static_cast"
+		      "reinterpret_cast" "const_cast" "typeid")))
+	(left-assoc "."
+		    ,@(unless (c-major-mode-is 'java-mode)
+			'("->")))
+	(postfix "++" "--" "[" "]" "(" ")"
+		 ,@(when (c-major-mode-is '(c-mode c++-mode))
+		     '("<:" ":>" "??(" "??)")))
+
+	;; Unary.
+	(prefix "++" "--" "+" "-" "!" "~"
+		    ,@(when (c-major-mode-is 'c++-mode) '("not" "compl"))
+		    ,@(when (c-major-mode-is '(c-mode c++-mode))
+		    '("*" "&" "sizeof" "??-"))
+		;; The following need special treatment.
+		,@(cond ((c-major-mode-is 'c++-mode)
+			 '("new" "delete"))
+			((c-major-mode-is 'java-mode)
+			 '("new"))
+			((c-major-mode-is 'pike-mode)
+			 '("class" "lambda" "catch" "throw" "gauge")))
+		"(" ")")		; Cast.
+
+	;; Member selection.
+	,@(when (c-major-mode-is 'c++-mode)
+	    `((left-assoc ".*" "->*")))
+
+	;; Multiplicative.
+	(left-assoc "*" "/" "%")
+
+	;; Additive.
+	(left-assoc "+" "-")
+
+	;; Shift.
+	(left-assoc "<<" ">>"
+		    ,@(when (c-major-mode-is 'java-mode)
+			'(">>>")))
+
+	;; Relational.
+	(left-assoc "<" ">" "<=" ">="
+		    ,@(when (c-major-mode-is 'java-mode)
+			'("instanceof")))
+
+	;; Equality.
+	(left-assoc "==" "!="
+		    ,@(when (c-major-mode-is 'c++-mode) '("not_eq")))
+
+	;; Bitwise and.
+	(left-assoc "&"
+		    ,@(when (c-major-mode-is 'c++-mode) '("bitand")))
+
+	;; Bitwise exclusive or.
+	(left-assoc "^"
+		    ,@(when (c-major-mode-is '(c-mode c++-mode))
+			'("??'"))
+		    ,@(when (c-major-mode-is 'c++-mode) '("xor")))
+
+	;; Bitwise or.
+	(left-assoc "|"
+		    ,@(when (c-major-mode-is '(c-mode c++-mode))
+			'("??!"))
+		    ,@(when (c-major-mode-is 'c++-mode) '("bitor")))
+
+	;; Logical and.
+	(left-assoc "&&"
+		    ,@(when (c-major-mode-is 'c++-mode) '("and")))
+
+	;; Logical or.
+	(left-assoc "||"
+		    ,@(when (c-major-mode-is 'c++-mode) '("or")))
+
+	;; Conditional.
+	(right-assoc-sequence "?" ":")
+
+	;; Assignment.
+	(right-assoc "=" "*=" "/=" "%=" "+=" "-=" ">>=" "<<=" "&=" "^=" "|="
+		     ,@(when (c-major-mode-is 'java-mode)
+			 '(">>>="))
+		     ,@(when (c-major-mode-is 'c++-mode)
+			 '("and_eq" "or_eq" "xor_eq")))
+
+	;; Exception.
+	,@(when (c-major-mode-is 'c++-mode)
+	    '((prefix "throw")))
+
+	;; Sequence.
+	(left-assoc ",")))
+
+;; List of the tokens made up of characters in the punctuation or
+;; parenthesis syntax classes that are used outside expressions.
+(c-lang-defconst c-other-op-syntax-tokens
+  all '("{" "}" "(" ")" "[" "]" ";" ":" "," "=")
+  (c c++ pike) (append '("#" "##"	; Used by cpp.
+			 "::" "...")
+		       (c-lang-var c-other-op-syntax-tokens))
+  (c c++) (append '("<%" "%>" "<:" ":>" "%:" "%:%:" "*")
+		  (c-lang-var c-other-op-syntax-tokens))
+  c++ (append '("&") (c-lang-var c-other-op-syntax-tokens))
+  objc (append '("+" "-") (c-lang-var c-other-op-syntax-tokens))
+  pike (append '("..") (c-lang-var c-other-op-syntax-tokens)
+	       c-pike-operator-symbols))
+
+;; List of all operator tokens that are made up only of characters in
+;; the punctuation or parenthesis syntax classes.
+(c-lang-defconst c-operator-tokens
+  all (delete-duplicates
+       (c-with-syntax-table (c-lang-var c-syntax-table)
+	 (mapcan (lambda (elem)
+		   (mapcan (lambda (op)
+			     (and (string-match
+				   "\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'" op)
+				  (list op)))
+			   (cdr elem)))
+		 (c-lang-var c-operators)))
+       :test 'string-equal))
+
+;; Regexp matching any sequence of two characters inside a symbol, and
+;; also all the tokens in the punctuation or parenthesis syntax
+;; classes that are longer than one char.
+(c-lang-defconst c-multichar-op-sym-token-regexp
+  all (concat "\\(\\w\\|\\s_\\)\\(\\w\\|\\s_\\)\\|"
+	      (c-make-keywords-re nil
+		(delete-duplicates
+		 (mapcan (lambda (op)
+			   (and (> (length op) 1) (list op)))
+			 (append (c-lang-var c-operator-tokens)
+				 (c-lang-var c-other-op-syntax-tokens)))
+		 :test 'string-equal))))
+(c-lang-defvar c-multichar-op-sym-token-regexp
+  (c-lang-var c-multichar-op-sym-token-regexp))
+
+;; Regexp matching all operator tokens (greedily).  Note that
+;; non-expression tokens like ';', '{' and '}' aren't matched.
+(c-lang-defconst c-op-token-regexp
+  all (c-make-keywords-re nil (c-lang-var c-operator-tokens)))
+(c-lang-defvar c-op-token-regexp (c-lang-var c-op-token-regexp))
+
 (defvar c-stmt-delim-chars "^;{}?:")
 ;; The characters that should be considered to bound statements.  To
 ;; optimize `c-crosses-statement-barrier-p' somewhat, it's assumed to
@@ -384,43 +707,6 @@ appended."
 
 (defvar c-stmt-delim-chars-with-comma "^;,{}?:")
 ;; Variant of `c-stmt-delim-chars' that additionally contains ','.
-
-;; List of all tokens that are longer than one character and that are
-;; made up of characters in the punctuation or parenthesis syntax
-;; classes.
-(c-lang-defconst c-multichar-tokens
-  all '("++" "--" "<<" ">>" "<=" ">=" "==" "!=" "&&" "||"
-	"*=" "/=" "%=" "+=" "-=" "<<=" ">>=" "&=" "^=" "|=")
-  ;; Note that the operators beginning with '<' and '>' are also
-  ;; hardcoded in `c-forward-c++-template-arglist'.
-  (c c++ pike) (append '("##"	; Used by cpp.
-			 "->" "::" "...")
-		       (c-lang-var c-multichar-tokens))
-  (c c++) (append '("<:" ":>" "<%" "%>" "%:" "%:%:")
-		  (c-lang-var c-multichar-tokens))
-  c++  (append '(".*" "->*")
-	       (c-lang-var c-multichar-tokens))
-  java (append '(">>>" ">>>=")
-	       (c-lang-var c-multichar-tokens))
-  pike (append (c-lang-var c-multichar-tokens)
-	       '("..")
-	       c-pike-operator-symbols))
-
-;; Regexp matching all multichar operator tokens and also any sequence
-;; of two characters inside a symbol.
-(c-lang-defconst c-multichar-op-sym-token-regexp
-  all (concat "\\(\\w\\|\\s_\\)\\(\\w\\|\\s_\\)\\|"
-	      (c-make-keywords-re nil (c-lang-var c-multichar-tokens))))
-(c-lang-defvar c-multichar-op-sym-token-regexp
-  (c-lang-var c-multichar-op-sym-token-regexp))
-
-;; Regexp matching all operator tokens (greedily).  Note that
-;; statement/declaration separating characters like ';', '{' and '}'
-;; aren't matched.
-(c-lang-defconst c-op-token-regexp
-  all (concat (c-make-keywords-re nil (c-lang-var c-multichar-tokens))
-	      "\\|[\]\[():+-*/%^&|~!=<>,]"))
-(c-lang-defvar c-op-token-regexp (c-lang-var c-op-token-regexp))
 
 ;; HELPME: Many of the following keyword lists are more or less bogus
 ;; for some languages (notably ObjC and IDL).  The effects of the
@@ -713,18 +999,28 @@ appended."
 (c-lang-defconst c-constant-kwds
   (c c++) '("NULL") ;; Not a keyword, but practically works as one.
   c++ (append '("false" "true")
-	      (c-lang-var c-constant-kwds)))
+	      (c-lang-var c-constant-kwds))
+  pike '("UNDEFINED")) ;; Not a keyword, but practically works as one.
 
 ;; Keywords that can occur anywhere in expressions.
 (c-lang-defconst c-expr-kwds
-  (c objc) '("sizeof")
-  c++ '("delete" "new" "operator" "sizeof" "this" "throw"
-	"const_cast" "dynamic_cast" "reinterpret_cast" "static_cast" "typeid"
-	"and" "and_eq" "bitand" "bitor" "compl" "not"
-	"not_eq" "or" "or_eq" "xor" "xor_eq")
-  java '("instanceof" "new" "super" "this")
-  pike '(;; "this" isn't really a keyword, but it works as one in practice.
-	 "catch" "class" "gauge" "global" "lambda" "predef" "this" "throw"))
+  ;; Start out with all keyword operators in `c-operators'.
+  all (delete-duplicates
+       (c-with-syntax-table (c-lang-var c-syntax-table)
+	 (mapcan (lambda (elem)
+		   (mapcan (lambda (op)
+			     (and (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
+				  (list op)))
+			   (cdr elem)))
+		 (c-lang-var c-operators)))
+       :test 'string-equal)
+  c++ (append '("operator" "this")
+	      (c-lang-var c-expr-kwds))
+  java (append '("this")
+	       (c-lang-var c-expr-kwds))
+  pike (append
+	'("this") ;; Not really a keyword, but practically works as one.
+	(c-lang-var c-expr-kwds)))
 
 ;; Keywords that start lambda constructs, i.e. function definitions in
 ;; expressions.
@@ -986,20 +1282,6 @@ appended."
 	      "")
 	    "\\)\\>")))
 
-;; Regexp matching the prefix of a cpp directive in the languages that
-;; normally uses that macro preprocessor.
-(c-lang-defconst c-opt-cpp-prefix
-  (c c++) "^\\s *#\\s *"
-  ;; The preprocessor in Pike recognizes cpp directives anywhere,
-  ;; not just at boi.
-  pike "#\\s *")
-
-;; Name of functions in cpp expressions that take an identifier as the
-;; argument.
-(c-lang-defconst c-cpp-defined-fns
-  (c c++) '("defined")
-  pike '("defined" "efun" "constant"))
-
 ;; List of open- and close-chars that makes up a pike-style brace
 ;; list, i.e. for a `([ ])' list there should be a cons (?\[ . ?\]) in
 ;; this list.
@@ -1184,106 +1466,6 @@ appended."
 ;; matches such a construct.  Other tools are necessary.
 (defconst c-Java-defun-prompt-regexp
   "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f\v]*\\)+\\)?\\s-*")
-
-
-;; Syntax tables.
-
-(defun c-populate-syntax-table (table)
-  ;; Populate the syntax in TABLE.
-  ;;
-  ;; This function does not do any hidden buffer changes.
-  (modify-syntax-entry ?_  "_"     table)
-  (modify-syntax-entry ?\\ "\\"    table)
-  (modify-syntax-entry ?+  "."     table)
-  (modify-syntax-entry ?-  "."     table)
-  (modify-syntax-entry ?=  "."     table)
-  (modify-syntax-entry ?%  "."     table)
-  (modify-syntax-entry ?<  "."     table)
-  (modify-syntax-entry ?>  "."     table)
-  (modify-syntax-entry ?&  "."     table)
-  (modify-syntax-entry ?|  "."     table)
-  (modify-syntax-entry ?\' "\""    table)
-  (modify-syntax-entry ?\240 "."   table)
-  ;; Set up block and line oriented comments.  The new C standard
-  ;; mandates both comment styles even in C, so since all languages
-  ;; now require dual comments, we make this the default.
-  (cond
-   ;; XEmacs 19 & 20
-   ((memq '8-bit c-emacs-features)
-    (modify-syntax-entry ?/  ". 1456" table)
-    (modify-syntax-entry ?*  ". 23"   table))
-   ;; Emacs 19 & 20
-   ((memq '1-bit c-emacs-features)
-    (modify-syntax-entry ?/  ". 124b" table)
-    (modify-syntax-entry ?*  ". 23"   table))
-   ;; incompatible
-   (t (error "CC Mode is incompatible with this version of Emacs"))
-   )
-  (modify-syntax-entry ?\n "> b"  table)
-  ;; Give CR the same syntax as newline, for selective-display
-  (modify-syntax-entry ?\^m "> b" table))
-
-;;;###autoload
-(defvar c-mode-syntax-table nil
-  "Syntax table used in c-mode buffers.")
-(if c-mode-syntax-table
-    ()
-  (setq c-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table c-mode-syntax-table))
-
-;;;###autoload
-(defvar c++-mode-syntax-table nil
-  "Syntax table used in c++-mode buffers.")
-(if c++-mode-syntax-table
-    ()
-  (setq c++-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table c++-mode-syntax-table))
-
-(defvar c++-template-syntax-table nil
-  "A variant of `c++-mode-syntax-table' that defines `<' and `>' as
-parenthesis characters.  Used temporarily when template argument lists
-are parsed.")
-(if c++-template-syntax-table
-    ()
-  (setq c++-template-syntax-table
-	(copy-syntax-table c++-mode-syntax-table))
-  (modify-syntax-entry ?< "(>" c++-template-syntax-table)
-  (modify-syntax-entry ?> ")<" c++-template-syntax-table))
-
-;;;###autoload
-(defvar objc-mode-syntax-table nil
-  "Syntax table used in objc-mode buffers.")
-(if objc-mode-syntax-table
-    ()
-  (setq objc-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table objc-mode-syntax-table)
-  ;; add extra Objective-C only syntax
-  (modify-syntax-entry ?@ "_" objc-mode-syntax-table))
-
-;;;###autoload
-(defvar java-mode-syntax-table nil
-  "Syntax table used in java-mode buffers.")
-(if java-mode-syntax-table
-    ()
-  (setq java-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table java-mode-syntax-table))
-
-;;;###autoload
-(defvar idl-mode-syntax-table nil
-  "Syntax table used in idl-mode buffers.")
-(if idl-mode-syntax-table
-    nil
-  (setq idl-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table idl-mode-syntax-table))
-
-;;;###autoload
-(defvar pike-mode-syntax-table nil
-  "Syntax table used in pike-mode buffers.")
-(if pike-mode-syntax-table
-    ()
-  (setq pike-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table pike-mode-syntax-table)
-  (modify-syntax-entry ?@ "." pike-mode-syntax-table))
 
 
 ;; internal state variables
