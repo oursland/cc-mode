@@ -753,8 +753,7 @@ tools (e.g. Javadoc).")
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
-  ;; Assumes that strings, comments and nontype keywords have been
-  ;; fontified already.
+  ;; Assumes that strings and comments have been fontified already.
   ;;
   ;; This function can make hidden buffer changes, but the font-lock
   ;; context covers that.
@@ -900,14 +899,25 @@ tools (e.g. Javadoc).")
 	    (backward-char)
 	    (c-fl-decl-prefix-search))
 
-	  ;; Search until we get within the fontification range.  First go
-	  ;; forward over syntactic whitespace to get test the first hit
-	  ;; outside macros.  Later searches might go back to check hits
-	  ;; inside macros.
-	  (c-forward-syntactic-ws)
-	  (while (and match (< (point) start-pos))
-	    (goto-char continue-pos)
-	    (c-fl-decl-prefix-search))
+	  ;; Advance `continue-pos' if we got a hit before the start
+	  ;; position.  The earliest position that could affect after
+	  ;; the start position is the char before the preceding
+	  ;; comments.
+	  (when (< continue-pos start-pos)
+	    (goto-char syntactic-pos)
+	    (c-backward-comments)
+	    (or (bobp) (backward-char))
+	    (setq continue-pos (max continue-pos (point))))
+
+	  ;; If we got a match it's always outside macros so advance
+	  ;; to the next token and set `token-pos'.  The loop below
+	  ;; will later go back using `continue-pos' to fix macros
+	  ;; inside the syntactic ws.
+	  (when match
+	    (goto-char syntactic-pos)
+	    (c-forward-syntactic-ws)
+	    (setq token-pos (point)))
+
 	  (setq c-fl-decl-match-pos (and match-pos
 					 (< match-pos start-pos)
 					 match-pos))))
