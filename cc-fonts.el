@@ -981,19 +981,9 @@ tools (e.g. Javadoc).")
 	  (while (let ((start (point))
 		       (res (c-forward-type)))
 
-		   (cond ((eq res t)
-			  ;; Found a known type, so stop searching.
-			  (setq at-type t
-				type-start start
-				type-end (point))
-			  nil)
-
-			 (res
-			  ;; Found a possible type or a prefix of a known
-			  ;; type.  Record this, but continue so that we'll
-			  ;; jump over all specifiers and type identifiers.
-			  ;; The reason to do this for a known type prefix is
-			  ;; to make things like "unsigned INT16" work.
+		   (cond (res
+			  ;; Found a known or possible type or a prefix of a
+			  ;; known type.
 			  (when at-type
 			    ;; Got two identifiers with nothing but whitespace
 			    ;; between them.  That can only happen in
@@ -1004,7 +994,12 @@ tools (e.g. Javadoc).")
 				prev-type-end type-end
 				at-type res
 				type-start start
-				type-end (point)))
+				type-end (point))
+			  ;; If the type isn't known we continue so that we'll
+			  ;; jump over all specifiers and type identifiers.
+			  ;; The reason to do this for a known type prefix is
+			  ;; to make things like "unsigned INT16" work.
+			  (not (eq res t)))
 
 			 ((looking-at c-specifier-key)
 			  ;; Found a known specifier keyword.  Can occur in
@@ -1026,8 +1021,10 @@ tools (e.g. Javadoc).")
 	  ;; Check for and step over a type decl expression after the thing
 	  ;; that is or might be a type.  We can skip this if we know we're in
 	  ;; a declaration and don't have several possible positions for the
-	  ;; type.
-	  (if (and at-decl-or-cast (or (eq at-type t) (not prev-at-type)))
+	  ;; type.  Normally a known type ensures that, but in a typedef the
+	  ;; known type could be in the identifier position, e.g. if it's
+	  ;; matched by `*-font-lock-extra-types'.
+	  (if (and at-decl-or-cast (eq at-type t) (not at-typedef))
 	      (progn
 		;; Go to the end of the first type decl expression.  We know
 		;; there's an identifier after the type.  If there's any
@@ -1136,7 +1133,7 @@ tools (e.g. Javadoc).")
 			    ;; That's often not a problem, however.)
 			    (throw 'at-decl-or-cast t)))
 
-		      (when (or (eq at-type t)
+		      (when (or (and (eq at-type t) (not prev-at-type))
 				(and got-prefix got-suffix)
 				(and got-parens got-prefix)
 				(and got-parens got-suffix))
@@ -1386,15 +1383,19 @@ tools (e.g. Javadoc).")
 		 `(lambda (limit)
 		    (let ((c-promote-possible-types t)
 			  (c-fontify-types-and-refs t))
-		      (while (re-search-forward
-			      ,(concat "\\<\\("
-				       (c-make-keywords-re nil
-					 (c-lang-var c-type-prefix-kwds))
-				       "\\)\\>")
-			      limit t)
-			(unless (c-skip-comments-and-strings limit)
-			  (c-forward-syntactic-ws)
-			  (c-forward-type)))))))))
+		      (save-restriction
+			;; Narrow to avoid going past the limit in
+			;; `c-forward-type'.
+			(narrow-to-region (point) limit)
+			(while (re-search-forward
+				,(concat "\\<\\("
+					 (c-make-keywords-re nil
+					   (c-lang-var c-type-prefix-kwds))
+					 "\\)\\>")
+				nil t)
+			  (unless (c-skip-comments-and-strings limit)
+			    (c-forward-syntactic-ws)
+			    (c-forward-type))))))))))
 
 	;; Fontify symbols after closing braces as declaration
 	;; identifiers under the assumption that they are part of
