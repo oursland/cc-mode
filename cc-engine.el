@@ -1799,14 +1799,15 @@
 	   ;; in-expression block or brace list.
 	   ((eq char-after-ip ?{)
 	    (goto-char indent-point)
-	    (setq tmpsymbol
-		  (if (c-inside-bracelist-p (c-point 'boi)
-					    (cons containing-sexp state))
-		      'brace-list-open
-		    'block-open))
+	    (setq placeholder (c-point 'boi))
 	    (goto-char containing-sexp)
-	    (c-add-syntax tmpsymbol (c-point 'boi))
-	    (c-add-syntax 'inexpr-statement))
+	    (if (c-inside-bracelist-p placeholder
+				      (cons containing-sexp state))
+		(progn
+		  (c-add-syntax 'brace-list-open (c-point 'boi))
+		  (c-add-syntax 'inexpr-class))
+	      (c-add-syntax 'block-open (c-point 'boi))
+	      (c-add-syntax 'inexpr-statement)))
 	   ;; CASE 7C: we are looking at the first argument in an empty
 	   ;; argument list. Use arglist-close if we're actually
 	   ;; looking at a close paren or bracket.
