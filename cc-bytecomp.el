@@ -285,6 +285,37 @@ Don't use within `eval-when-compile'."
 	 (cc-bytecomp-put ',symbol 'byte-compile
 			  'cc-bytecomp-ignore-obsolete))))
 
+(defmacro cc-bytecomp-boundp (symbol)
+  "Return non-nil if the given symbol is bound as a variable outside
+the compilation.  This is the same as using `boundp' but additionally
+exclude any variables that have been bound during compilation with
+`cc-bytecomp-defvar'.  Use only in places that are evaluated at
+compile time."
+  (if (cc-bytecomp-is-compiling)
+      `(if (boundp 'cc-bytecomp-unbound-variables)
+	   (if (boundp ,symbol)
+	       (not (memq ,symbol cc-bytecomp-unbound-variables))
+	     nil)
+	 (error "`cc-bytecomp-boundp' not evaluated during compilation."))
+    ;; Used if running uncompiled.
+    `(boundp ,symbol)))
+
+(defmacro cc-bytecomp-fboundp (symbol)
+  "Return non-nil if the given symbol is bound as a function outside
+the compilation.  This is the same as using `fboundp' but additionally
+exclude any functions that have been bound during compilation with
+`cc-bytecomp-defun'.  Use only in places that are evaluated at compile
+time."
+  (if (cc-bytecomp-is-compiling)
+      `(if (boundp 'cc-bytecomp-original-functions)
+	   (if (fboundp ,symbol)
+	       (let ((elem (assq ,symbol cc-bytecomp-original-functions)))
+		 (not (eq (elt elem 2) 'unbound)))
+	     nil)
+	 (error "`cc-bytecomp-fboundp' not evaluated during compilation."))
+    ;; Used if running uncompiled.
+    `(fboundp ,symbol)))
+
 ;; Override ourselves with a version loaded from source if we're
 ;; compiling, like cc-require does for all the other files.
 (if (and (cc-bytecomp-is-compiling)
