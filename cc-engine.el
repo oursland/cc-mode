@@ -597,11 +597,16 @@
 				 (looking-at "//")))
 	    (let ((col (current-column))
 		  (beg (point))
+		  (bopl (c-point 'bopl))
 		  (end (cdr range)))
+	      ;; Got to take care in the backward direction to handle
+	      ;; comments which are preceded by code.
 	      (while (and (c-forward-comment -1)
+			  (>= (point) bopl)
 			  (looking-at "//")
 			  (= col (current-column)))
-		(setq beg (point)))
+		(setq beg (point)
+		      bopl (c-point 'bopl)))
 	      (goto-char end)
 	      (while (and (progn (skip-chars-forward " \t")
 				 (looking-at "//"))
