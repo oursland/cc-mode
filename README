@@ -1,30 +1,20 @@
-README for cc-mode Version 4.241
+README for cc-mode Version 4.282
 Barry A. Warsaw <cc-mode-help@merlin.cnri.reston.va.us>
-$Date: 1995-08-29 16:03:59 $
+$Date: 1996-02-21 23:14:42 $
 
-IMPORTANT NOTE: The meat of this document is now encapsulated in the
-cc-mode.texi texinfo file.  You should install this into your Emacs
-info tree and read the manual on-line.  See your Emacs documentation
-for details.
+NOTE: All XEmacs distributions since 19.11, and Emacs distributions
+since 19.30 come with cc-mode.  As of this writing, XEmacs 19.14 and
+Emacs 19.31 are both in beta testing, to be released soon.  Both come
+pre-configured to use this version of cc-mode so you should not need
+to do anything special.
+
+If you are using an older XEmacs or Emacs, consider upgrading.
+
+The rest of this file contains a node from the cc-mode texinfo online
+manual.
 
 The MANIFEST file contains a description of all the files you should
 have gotten with this distribution.
-
-As of this writing, XEmacs 19.11 and 19.12 come with cc-mode
-pre-loaded.  XEmacs 19.13 will come with the latest version (4.241) of
-cc-mode pre-loaded.  Emacs 19.29 comes with an older version of
-cc-mode (4.222), but it does not come pre-loaded.
-
-To see what you have in your Emacs already, visit a C file and type
-the following:
-
-    M-x c-version RET
-
-If you get an error, then you don't have cc-mode loaded at all in your
-Emacs.  The texinfo file excerpt below explains how to get cc-mode
-loaded into your Emacs.  If you get a version number lower than 4.241
-(and yes, 4.85 *is* lower! :-), then you just need to load cc-mode
-from your .emacs file.  See the texinfo manual for details.
 
 -------------------- snip snip --------------------
 File: cc-mode.info,  Node: Getting Connected,  Next: New Indentation Engine,  Prev: Introduction,  Up: Top
