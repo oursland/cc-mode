@@ -2,15 +2,22 @@
 
 """Bump version number and tag for next release.
 
-Usage: %(program)s [-b] [-t] [-p] [-d] [-a] [-E] [-h]
+Usage: %(program)s [-b] [-t|-T] [-p] [-d] [-a] [-E] [-i] [-h]
 
 Where:
 
     --bump
     -b      - bump to the next minor rev number
 
+    --incr
+    -i      - increment the release version number
+
     --tag
     -t      - tag all releaseable files with new version number
+
+    --TAG
+    -T      - first untag the current version number then, retag
+              all releaseable files with new version number
 
     --package
     -p      - create the distribution packages
@@ -72,6 +79,7 @@ FATRELEASE_FILES = [
     ('cc-guess.el',    version_cre, version_format),
     ('cc-lobotomy.el', version_cre, version_format),
     ('cc-mode-19.el',  version_cre, version_format),
+    ('cc-make.el',     version_cre, version_format),
     ('ANNOUNCEMENT',
      regex.compile('CC Mode Version \(5.[0-9]+\)'),
      'CC Mode Version %s\n'),
@@ -87,7 +95,7 @@ FATRELEASE_FILES = [
 FILES = ALL_FILES + FATRELEASE_FILES
     
 
-def tag_release():
+def bump_release():
     bump = []
     for f, cre, format in FILES:
 	if not cre or not format:
@@ -134,6 +142,12 @@ def tag_release():
 	os.system('ci -f -m"#Bumping to release revision %s" %s' %
 		  (RELEASE, f))
 	os.system('co -kv -u ' + f)
+
+
+def tag_release(untag_first):
+    for f, cre, format in FILES:
+	if untag_first:
+	    os.system('rcs -n%s %s' % (RELEASE_NAME, f))
 	os.system('rcs -n%s: %s' % (RELEASE_NAME, f))
 
 
@@ -149,7 +163,7 @@ def get_release():
     print 'This RELEASE_NAME:', RELEASE_NAME
 
 
-def new_release():
+def incr_release():
     [major_rev, minor_rev] = string.split(RELEASE, '.')
     fp = open('VERSION', 'w')
     next_rev = string.atoi(minor_rev) + 1
@@ -228,8 +242,9 @@ def make_docs():
 def main():
     try:
 	opts, args = getopt.getopt(
-	    sys.argv[1:], 'abtpdhE',
-	    ['all', 'bump', 'tag', 'package', 'docs', 'help', 'EMACS'])
+	    sys.argv[1:], 'abtpdhEi',
+	    ['all', 'bump', 'tag', 'package', 'docs', 'help',
+	     'incr', 'EMACS'])
     except getopt.error, msg:
 	print msg
 	usage(1)
@@ -239,37 +254,47 @@ def main():
 
     bump = None
     tag = None
+    untag_first = None
     package = None
     docs = None
     fat = 1
     help = None
+    incr = None
 
     for opt, arg in opts:
-	if opt in ('-a', '--all'):
+	if opt in ('-h', '--help'):
+	    help = 1
+	elif opt in ('-a', '--all'):
 	    bump = 1
 	    tag = 1
 	    package = 1
 	    docs = 1
+	    incr = 1
 	elif opt in ('-b', '--bump'):
 	    bump = 1
-	elif opt in ('-t', '--tag'):
+	elif opt in ('-t', '--tag', '-T', '--TAG'):
 	    tag = 1
+	    if opt[0] == 'T':
+		untag_first = 1
 	elif opt in ('-p', '--package'):
 	    package = 1
 	elif opt in ('-d', '--docs'):
 	    docs = 1
 	elif opt in ('-E', '--EMACS'):
 	    fat = None
-	elif opt in ('-h', '--help'):
-	    help = 1
+	elif opt in ('-i', '--incr'):
+	    incr = 1
 
     if help:
 	usage(0)
 
     os.umask(002)
     get_release()
+    if incr:
+	incr_release()
+
     if bump:
-	new_release()
+	bump_release()
 
     if tag:
 	tag_release()
