@@ -1,6 +1,17 @@
-Wed Oct  7 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
+Thu Oct 08 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
 
 	* Release 5.24
+
+Thu Oct 08 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-brace): Added inexpr-class-open and
+	inexpr-class-close handling.
+
+	* cc-vars.el (c-hanging-braces-alist): Added inexpr-class-open and
+	inexpr-class-close and changed the default setting for those two.
+
+	* cc-mode.texi Added inexpr-class-open and inexpr-class-close to
+	the Hanging Braces doc.
 
 Wed Oct 07 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
@@ -141,12 +152,11 @@ Sun Jun 07 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	* cc-engine.el (c-beginning-of-statement-1, c-guess-basic-syntax):
  	Fixed indentation of try-catch-finally blocks nested inside
  	if-statements. New case 13 in c-guess-basic-syntax; cases 13-16
- 	renamed for this. New syntactic symbols catch-clause and
- 	finally-clause.
+ 	renamed for this. New syntactic symbol catch-clause.
 
-	* cc-styles.el New syntactic symbols catch-clause and
- 	finally-clause.  Changed the default to not alter the indentation
- 	of multiline strings in any way.
+	* cc-styles.el New syntactic symbol catch-clause.  Changed the
+ 	default to not alter the indentation of multiline strings in any
+ 	way.
 
 Sat Jun 06 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
