@@ -1775,18 +1775,18 @@ command to conveniently insert and align the necessary backslashes."
 	(save-excursion
 	  ;; prefix-line is the bol of a line on which we should try
 	  ;; to find the prefix.
-	  (let (fb-string fb-endpos	; Contains any fallback prefix found.
-		(test-line
-		 (lambda ()
-		   (when (and (looking-at prefix-regexp)
-			      (< (match-end 0) (1- (cdr lit-limits))))
-		     (unless fb-string
-		       (setq fb-string (buffer-substring-no-properties
-					(match-beginning 0) (match-end 0))
-			     fb-endpos (match-end 0)))
-		     (unless (eq (match-end 0) (c-point 'eol))
-		       (throw 'found t))
-		     t))))
+	  (let* (fb-string fb-endpos	; Contains any fallback prefix found.
+		 (test-line
+		  (lambda ()
+		    (when (and (looking-at prefix-regexp)
+			       (< (match-end 0) (1- (cdr lit-limits))))
+		      (unless fb-string
+			(setq fb-string (buffer-substring-no-properties
+					 (match-beginning 0) (match-end 0))
+			      fb-endpos (match-end 0)))
+		      (unless (eq (match-end 0) (c-point 'eol))
+			(throw 'found t))
+		      t))))
 	    (if (catch 'found
 		  ;; Search for a line which has text after the prefix
 		  ;; so that we get the proper amount of whitespace
@@ -1888,8 +1888,7 @@ If point is in any other situation, i.e. in normal code, do nothing.
 
 Optional prefix ARG means justify paragraph as well."
   (interactive "*P")
-  (let (lit-limits
-	lit-type
+  (let (lit-limits lit-type fill
 	;; beg and end limits the region to be filled.  end is a marker.
 	beg end
 	;; tmp-pre and tmp-post marks strings that are temporarily
@@ -1905,8 +1904,7 @@ Optional prefix ARG means justify paragraph as well."
     (insert ?x) (delete-char -1)
     (save-excursion
       (save-restriction
-	;; Widen to catch comment limits correctly.  E.g. filladapt
-	;; uses narrowing when calling fill-paragraph-function.
+	;; Widen to catch comment limits correctly.
 	(widen)
 	(setq lit-limits (c-collect-line-comments (c-literal-limits nil t))
 	      lit-type (c-literal-type lit-limits)))
@@ -1995,49 +1993,64 @@ Optional prefix ARG means justify paragraph as well."
 	      ;; Temporarily insert the fill prefix after the comment
 	      ;; starter so that the first line looks like any other
 	      ;; comment line in the narrowed region.
-	      (let ((fill (c-guess-fill-prefix lit-limits lit-type))
-		    col)
-		(unless (string-match (concat "\\`[ \t]*\\("
-					      c-comment-prefix-regexp
-					      "\\)[ \t]*\\'")
-				      (car fill))
-		  ;; Oops, the prefix doesn't match the comment prefix
-		  ;; regexp.  This could produce very confusing
-		  ;; results with adaptive fill packages together with
-		  ;; the insert prefix magic below, since the prefix
-		  ;; often doesn't appear at all.  So let's warn about
-		  ;; it.
-		  (message "\
+	      (setq fill (c-guess-fill-prefix lit-limits lit-type))
+	      (unless (string-match (concat "\\`[ \t]*\\("
+					    c-comment-prefix-regexp
+					    "\\)[ \t]*\\'")
+				    (car fill))
+		;; Oops, the prefix doesn't match the comment prefix
+		;; regexp.  This could produce very confusing
+		;; results with adaptive fill packages together with
+		;; the insert prefix magic below, since the prefix
+		;; often doesn't appear at all.  So let's warn about
+		;; it.
+		(message "\
 Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
-			   (car fill)))
-		;; Find the right spot on the line, break it, insert
-		;; the fill prefix and make sure we're back in the
-		;; same column by temporarily prefixing the first word
-		;; with a number of 'x'.
-		(save-excursion
-		  (goto-char (car lit-limits))
-		  (if (looking-at comment-start-skip)
-		      (goto-char (match-end 0))
-		    (forward-char 2)
-		    (skip-chars-forward " \t"))
-		  (while (< (current-column) (cdr fill)) (forward-char 1))
-		  (setq col (current-column))
-		  (setq beg (1+ (point))
-			tmp-pre (list (point)))
-		  (unwind-protect
-		      (progn
-			(insert ?\n (car fill))
-			(insert (make-string (- col (current-column)) ?x)))
-		    (setcdr tmp-pre (point))))))
+			 (car fill)))
+	      ;; Find the right spot on the line, break it, insert
+	      ;; the fill prefix and make sure we're back in the
+	      ;; same column by temporarily prefixing the first word
+	      ;; with a number of 'x'.
+	      (save-excursion
+		(goto-char (car lit-limits))
+		(if (looking-at comment-start-skip)
+		    (goto-char (match-end 0))
+		  (forward-char 2)
+		  (skip-chars-forward " \t"))
+		(while (< (current-column) (cdr fill)) (forward-char 1))
+		(setq col (current-column))
+		(setq beg (1+ (point))
+		      tmp-pre (list (point)))
+		(unwind-protect
+		    (progn
+		      (insert ?\n (car fill))
+		      (insert (make-string (- col (current-column)) ?x)))
+		  (setcdr tmp-pre (point)))))
 	    (when beg
-	      ;; Preparations finally done!  Now we can call the real
-	      ;; fill function.
-	      (save-restriction
-		(narrow-to-region beg end)
-		(let ((fill-paragraph-function
-		       ;; Avoid infinite recursion.
-		       (if (not (eq fill-paragraph-function 'c-fill-paragraph))
-			   fill-paragraph-function)))
+	      (let ((fill-paragraph-function
+		     ;; Avoid infinite recursion.
+		     (if (not (eq fill-paragraph-function 'c-fill-paragraph))
+			 fill-paragraph-function))
+		    (fill-prefix
+		     (or fill-prefix
+			 (when (and adaptive-fill-mode
+				    (eq lit-type 'c++)
+				    (not (string-match
+					  "\\`[ \t]*//"
+					  (or (fill-context-prefix beg end)
+					      ""))))
+			   ;; If adaptive-fill-mode is in use (the
+			   ;; default), and its function to determine
+			   ;; the fill prefix doesn't produce the
+			   ;; required comment starter for line
+			   ;; comments, then force it by setting
+			   ;; fill-prefix.
+			   (car (or fill (c-guess-fill-prefix
+					  lit-limits lit-type)))))))
+		;; Preparations finally done!  Now we can call the
+		;; real fill function.
+		(save-restriction
+		  (narrow-to-region beg end)
 		  (fill-paragraph arg)))))
 	(when (consp tmp-pre)
 	  (delete-region (car tmp-pre) (cdr tmp-pre)))
@@ -2086,24 +2099,30 @@ If a fill prefix is specified, it overrides all the above."
 	   (delete-region (progn (skip-chars-backward " \t") (point))
 			  (progn (skip-chars-forward " \t") (point)))
 	   (if soft (insert-and-inherit ?\n) (newline 1))))
-	lit-limits lit-type col)
+	;; Already know the literal type and limits when called from
+	;; c-line-break-reindent.
+	(c-lit-limits (if (boundp 'c-lit-limits) c-lit-limits))
+	(c-lit-type (if (boundp 'c-lit-type) c-lit-type))
+	 col)
     (cond (fill-prefix
 	   ;; A fill-prefix overrides anything.
 	   (funcall do-line-break)
 	   (insert-and-inherit fill-prefix))
 	  ((progn
-	     (setq lit-limits (c-literal-limits nil nil t)
-		   lit-type (c-literal-type lit-limits))
-	     (eq lit-type 'string))
+	     (unless c-lit-limits
+	       (setq c-lit-limits (c-literal-limits nil nil t)))
+	     (unless c-lit-type
+	       (setq c-lit-type (c-literal-type c-lit-limits)))
+	     (eq c-lit-type 'string))
 	   ;; Inside a string.  Just break the line.
 	   (funcall do-line-break))
-	  ((memq lit-type '(c c++))
+	  ((memq c-lit-type '(c c++))
 	   (if comment-multi-line
 	       ;; Inside a comment that should be continued.
 	       (let ((fill (c-guess-fill-prefix
-			    (setq lit-limits
-				  (c-collect-line-comments lit-limits))
-			    lit-type))
+			    (setq c-lit-limits
+				  (c-collect-line-comments c-lit-limits))
+			    c-lit-type))
 		     (pos (point)))
 		 (if (save-excursion
 		       (back-to-indentation)
@@ -2114,9 +2133,9 @@ If a fill prefix is specified, it overrides all the above."
 		       (while (and (< (current-column) (cdr fill))
 				   (not (eolp)))
 			 (forward-char 1))
-		       (if (> (point) (if (eq lit-type 'c)
-					  (- (cdr lit-limits) 2)
-					(cdr lit-limits)))
+		       (if (> (point) (if (eq c-lit-type 'c)
+					  (- (cdr c-lit-limits) 2)
+					(cdr c-lit-limits)))
 			   (progn
 			     ;; The skip takes us out of the comment;
 			     ;; insert the fill prefix at bol instead
@@ -2134,7 +2153,7 @@ If a fill prefix is specified, it overrides all the above."
 	     ;; Inside a comment that should be broken.
 	     (let ((comment-start comment-start)
 		   (comment-end comment-end))
-	       (if (eq lit-type 'c)
+	       (if (eq c-lit-type 'c)
 		   (unless (string-match "[ \t]*/\\*" comment-start)
 		     (setq comment-start "/* " comment-end " */"))
 		 (unless (string-match "[ \t]*//" comment-start)
@@ -2183,11 +2202,13 @@ appropriate comment prefix (see the `c-comment-prefix-regexp' and
 `c-block-comment-prefix' variables for details).  The end of a
 C++-style line comment doesn't count as inside the comment, though."
   (interactive "*")
-  (let* ((lit-limits (c-collect-line-comments (c-literal-limits)))
-	 (lit-type (c-literal-type lit-limits)))
-    (if (or (eq lit-type 'c)
-	    (and (eq lit-type 'c++)
-		 (< (point) (1- (cdr lit-limits)))))
+  (let* ((c-lit-limits (c-literal-limits nil nil t))
+	 (c-lit-type (c-literal-type c-lit-limits)))
+    (if (or (eq c-lit-type 'c)
+	    (and (eq c-lit-type 'c++)
+		 (< (point)
+		    (1- (cdr (setq c-lit-limits
+				   (c-collect-line-comments c-lit-limits)))))))
 	(let ((comment-multi-line t)
 	      (fill-prefix nil))
 	  (c-indent-new-comment-line))
