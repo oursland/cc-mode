@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.210 $
-;; Last Modified:   $Date: 1992-11-13 18:34:34 $
+;; Version:         $Revision: 2.211 $
+;; Last Modified:   $Date: 1992-11-13 19:49:16 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-13 18:34:34 $|$Revision: 2.210 $|
+;; |$Date: 1992-11-13 19:49:16 $|$Revision: 2.211 $|
 
 ;;; Code:
 
@@ -132,6 +132,16 @@
 ;; ======================================================================
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+;; Note that there is a patch available to fix the syntax bug in both
+;; emacs 18.59 and Lemacs 19.2. When fixed, emacs will allows 2
+;; orthogonal comment styles in a single mode.  In this case, some
+;; lispy ugliness can be ignored.  Also no characters need be tamed.
+
+(defvar c++-emacs-is-fixed-p
+  (= 8 (length (parse-partial-sexp (point) (point))))
+  "True if you've patched your emacs to handle 2 orthogonal comment
+styles in a single mode.")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -331,7 +341,7 @@ When non-nil (the default), indentation is calculated relative to the
 first statement in the block.  When nil, the indentation is calculated
 without regard to how the first statement is indented.")
 
-(defvar c++-untame-characters '(?\')
+(defvar c++-untame-characters (and c++-emacs-is-fixed-p '(?\'))
   "*Utilize a backslashing workaround of an emacs syntax parsing bug.
 If non-nil, this variable should contain a list of characters which
 will be prepended by a backslash in comment regions.  By default, the
@@ -349,7 +359,11 @@ things such as some indenting and blinking of parenthesis.
 Note further that only the default set of characters will be escaped
 automatically as they are typed. But, executing c++-tame-comments
 (\\[c++-tame-comments]) will escape all characters which are members
-of this set, and which are found in comments throughout the file.")
+of this set, and which are found in comments throughout the file.
+
+Finally, c++-mode can tell if you're running a patched emacs. If so,
+taming characters isn't necessary and this variable is automatically
+set to nil.")
 
 (defvar c++-default-macroize-column 78
   "*Column to insert backslashes.")
@@ -386,7 +400,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.210 $
+  "Major mode for editing C++ code.  $Revision: 2.211 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -594,7 +608,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.210 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.211 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1387,13 +1401,8 @@ used."
 	) ; end-while
       state)))
 
-;;; Note that when a fixed (ie one that allows 2 orthogonal comment
-;;; styles in a single mode) emacs is being used, defer to
-;;; c++-in-literal-quick
-(let ((pps (parse-partial-sexp (point) (point))))
-  (if (= 8 (length pps))
-      ;; using a fixed emacs
-      (fset 'c++-in-literal 'c++-in-literal-quick)))
+(if c++-emacs-is-fixed-p
+    (fset 'c++-in-literal 'c++-in-literal-quick))
 
 (defun c++-in-parens-p (&optional lim)
   "Return t if inside a paren expression.
@@ -2263,7 +2272,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.210 $"
+(defconst c++-version "$Revision: 2.211 $"
   "c++-mode version number.")
 
 (defun c++-version ()
