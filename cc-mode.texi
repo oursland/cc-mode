@@ -1043,26 +1043,63 @@ extremely useful.  In fact, you might find yourself wanting
 hungry-delete in @strong{all} your editing modes!
 
 @kindex DEL
-In a nutshell, when hungry-delete mode is enabled, hitting the @kbd{DEL}
-character will consume all preceding whitespace, including newlines and
-tabs.  This can really cut down on the number of @kbd{DEL}'s you have to
-type if, for example you made a mistake on the preceding line.
+@kindex Backspace
+In a nutshell, when hungry-delete mode is enabled, hitting the
+@kbd{Backspace} key@footnote{I say ``hit the @kbd{Backspace} key'' but
+what I really mean is ``when Emacs receives the @code{BackSpace} keysym
+event''.  The difference usually isn't significant to most users, but
+advanced users will realize that under window systems such as X, any
+physical key (keycap) on the keyboard can be configured to generate any
+keysym.  Also, the use of Emacs on TTYs will affect which keycap
+generates which keysym.  From a pedantic point of view, here we are only
+concerned with the keysym event that Emacs receives.} will consume all
+preceding whitespace, including newlines and tabs.  This can really cut
+down on the number of @kbd{Backspace}'s you have to type if, for example
+you made a mistake on the preceding line.
+
+@findex c-electric-backspace
+@findex electric-backspace (c-)
+@vindex c-backspace-function
+@vindex backspace-function (c-)
 
 @findex c-electric-delete
 @findex electric-delete (c-)
 @vindex c-delete-function
 @vindex delete-function (c-)
 @cindex literal
-By default, @ccmode{} actually runs the command
-@code{c-electric-delete} when you hit @kbd{DEL}.  When this command is
-used to delete a single character (i.e. when it is called interactively
-with no numeric argument), it really runs the function contained in the
-variable @code{c-delete-function}.  This function is called with a
-single argument, which is the number of characters to delete.
-@code{c-delete-function} is also called when the @kbd{DEL} key is typed
-inside a literal (see @ref{Auto-newline insertion}.  Inside a literal,
-@code{c-electric-delete} is not electric, which is typical of all the
-so-called electric commands.
+
+@findex backward-delete-char-untabify
+
+By default, when you hit the @kbd{Backspace} key
+@ccmode{} runs the command @code{c-electric-backspace}, which deletes
+text in the backwards direction.  When deleting a single character, or
+when @kbd{Backspace} is hit in a literal
+(see @ref{Auto-newline insertion}), 
+or when hungry-delete mode is disabled, the function
+contained in the @code{c-backspace-function} variable is called with one
+argument (the number of characters to delete).  This variable is set to
+@code{backward-delete-char-untabify} by default.
+
+@vindex delete-key-deletes-forward
+@findex delete-char
+
+Similarly, hitting the @kbd{DEL} key runs the command
+@code{c-electric-delete}.  Some versions of Emacs@footnote{As of this
+writing, 20-Jun-1997, only XEmacs 20 supports this.} support separation
+of the @kbd{Backspace} and @kbd{DEL} keys, so that @kbd{DEL} will delete
+in the forward direction when @code{delete-key-deletes-forward} is
+non-@code{nil}.  If your Emacs supports this, and
+@code{delete-key-deletes-forward} is non-@code{nil}, and hungry-delete
+mode is enabled, then @kbd{DEL} will consume all whitespace following
+point.  When deleting a single character, or when @kbd{DEL} is hit in a
+literal, or when hungry-delete mode is disabled, the function contained
+in the @code{c-delete-function} variable is called with one argument
+(the number of characters to delete).  This variable is set to
+@code{delete-char} by default.
+
+However, if @code{delete-key-deletes-forward} is @code{nil}, or your
+Emacs does not support separation of @kbd{Backspace} and @kbd{DEL}, then 
+@code{c-electric-delete} simply calls @code{c-electric-backspace}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
