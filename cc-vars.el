@@ -36,8 +36,9 @@
 (defcustom c-strict-syntax-p nil
   "*If non-nil, all syntactic symbols must be found in `c-offsets-alist'.
 If the syntactic symbol for a particular line does not match a symbol
-in the offsets alist, an error is generated, otherwise no error is
-reported and the syntactic symbol is ignored."
+in the offsets alist, or if no non-nil offset value can be determined
+for a symbol, an error is generated, otherwise no error is reported
+and the syntactic symbol is ignored."
   :type 'boolean
   :group 'c)
 
