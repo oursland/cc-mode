@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.131 $
-;; Last Modified:   $Date: 1994-12-21 00:28:24 $
+;; Version:         $Revision: 4.132 $
+;; Last Modified:   $Date: 1994-12-28 16:02:34 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -32,14 +32,15 @@
 
 ;; This package provides modes in GNU Emacs for editing C, C++, and
 ;; Objective-C code. It is intended to be a replacement for c-mode.el
-;; (a.k.a. BOCM -- Boring Old C-Mode), and c++-mode.el, both of which
-;; are ancestors of this file.  A number of important improvements
-;; have been made, briefly: complete K&R C, ANSI C, `ARM' C++, and
-;; Objective-C support with consistent indentation across all modes,
-;; more intuitive indentation controlling variables, compatibility
-;; across all known Emacsen, nice new features, and tons of bug fixes.
-;; This package is called "cc-mode" to distinguish it from its
-;; ancestors, but there really is no top-level cc-mode.
+;; (a.k.a. BOCM -- Boring Old C-Mode), and c++-mode.el (a.k.a
+;; cplus-md.el and cplus-md1.el), both of which are ancestors of this
+;; file.  A number of important improvements have been made, briefly:
+;; complete K&R C, ANSI C, `ARM' C++, and Objective-C support with
+;; consistent indentation across all modes, more intuitive indentation
+;; controlling variables, compatibility across all known Emacsen, nice
+;; new features, and tons of bug fixes.  This package is called
+;; "cc-mode" to distinguish it from its ancestors, but there really is
+;; no top-level cc-mode.
 
 ;; Details on how to use cc-mode will eventually be contained in an
 ;; accompanying texinfo manual.  Volunteers to help finish this manual
@@ -102,7 +103,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-21 00:28:24 $|$Revision: 4.131 $|
+;; |$Date: 1994-12-28 16:02:34 $|$Revision: 4.132 $|
 
 ;;; Code:
 
@@ -577,7 +578,7 @@ as designated in the variable `c-file-style'.")
 ;; Shut the byte-compiler up. Requires Emacs 19 or JWZ's improved
 ;; byte-compiler. Otherwise, comment this line out and ignore
 ;; any warnings.
-;(byte-compiler-options (warnings nil))
+(byte-compiler-options (warnings nil))
 
 ;; figure out what features this Emacs has
 (defconst c-emacs-features
@@ -4358,7 +4359,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.131 $"
+(defconst c-version "$Revision: 4.132 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4370,9 +4371,8 @@ it trailing backslashes are removed."
   (c-keep-region-active))
 
 ;; get reporter-submit-bug-report when byte-compiling
-(and (fboundp 'eval-when-compile)
-     (eval-when-compile
-      (require 'reporter)))
+(eval-when-compile
+  (require 'reporter))
 
 (defun c-submit-bug-report ()
   "Submit via mail a bug report on cc-mode."
