@@ -19,7 +19,7 @@ given in detail, as well as some <a
 href="installation.php">installation notes</a> and Emacs/XEmacs <a
 href="compat.php">compatibility details</a>.
 
-<p>You can <a href="cc-mode.html">browse the documentation
+<p>You can <a href="cc-mode.html#Top">browse the documentation
 on-line</a>.  There are also some (recently) archived <a
 href="lists.php">mailing lists</a> which you can browse and join.
 

@@ -30,12 +30,12 @@ visible changes in CC Mode 5.
   runs <code>c-delete-function</code>), and the <code>BackSpace</code>
   keysym to <code>c-electric-backspace</code> (which runs
   <code>c-backspace-function</code>).  See the <a
-  href="cc-mode-html/Hungry-deletion-of-whitespace.html"> CC Mode
+  href="cc-mode.html#Hungry-deletion%20of%20Whitespace"> CC Mode
   manual</a> for details.
 
   <p><li>The single <code>cc-mode.el</code> file was simply too
   unwieldy so I have split the file up.  See the <a
-  href="ftp://cc-mode.sourceforge.net/pub/cc-mode/src/MANIFEST"><code>MANIFEST</code></a>
+  href="ftp://cc-mode.sourceforge.net/pub/cc-mode/cc-mode/MANIFEST"><code>MANIFEST</code></a>
   file for details.
 
   <p><li>Also, all user variables have been converted to Per
