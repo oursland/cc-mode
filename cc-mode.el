@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.288 $
-;; Last Modified:   $Date: 1993-03-01 14:49:02 $
+;; Version:         $Revision: 2.289 $
+;; Last Modified:   $Date: 1993-03-01 23:32:40 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-03-01 14:49:02 $|$Revision: 2.288 $|
+;; |$Date: 1993-03-01 23:32:40 $|$Revision: 2.289 $|
 
 ;;; Code:
 
@@ -225,7 +225,6 @@ styles in a single mode.")
   (if c++-emacs-is-really-fixed-p
       ;; these entries will only work with the latest patches to lemacs
       (progn
-	(modify-syntax-entry ?# "< b"     c++-mode-syntax-table)
 	(modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
 	(modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
 	(modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
@@ -254,7 +253,6 @@ styles in a single mode.")
   (if c++-emacs-is-really-fixed-p
       ;; these entries will only work with the latest patches to lemacs
       (progn
-	(modify-syntax-entry ?# "< b"   c++-c-mode-syntax-table)
 	(modify-syntax-entry ?\n "> b"  c++-c-mode-syntax-table)
 	(modify-syntax-entry ?/  ". 14" c++-c-mode-syntax-table)
 	(modify-syntax-entry ?*  ". 23" c++-c-mode-syntax-table)
@@ -448,7 +446,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.288 $
+  "Major mode for editing C++ code.  $Revision: 2.289 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +667,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.288 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.289 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2185,13 +2183,22 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 	      (setq stop t))))))))
 
 (defun c++-fast-backward-syntactic-ws (&optional lim)
-  ;; we can throw away lim since its not really necessary
-  (let ((parse-sexp-ignore-comments t))
-    ;; if you're not running a patched lemacs, the new byte compiler
-    ;; will complain about this function. ignore the complaint
-    (backward-syntactic-ws)
-    (if (not (bobp))
-	(forward-char 1))))
+  (save-restriction
+    (let ((parse-sexp-ignore-comments t)
+	  donep boi
+	  (lim (or lim (point-min))))
+      (narrow-to-region lim (point))
+      (while (not donep)
+	;; if you're not running a patched lemacs, the new byte
+	;; compiler will complain about this function. ignore that
+	(backward-syntactic-ws)
+	(if (not (bobp))
+	    (forward-char 1))
+	(if (= (char-after (setq boi (c++-point 'boi))) ?#)
+	    (progn (goto-char boi)
+		   (setq donep (<= (point) lim)))
+	  (setq donep t))
+	))))
 
 (if c++-emacs-is-really-fixed-p
     (fset 'c++-backward-syntactic-ws
@@ -2504,7 +2511,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.288 $"
+(defconst c++-version "$Revision: 2.289 $"
   "c++-mode version number.")
 
 (defun c++-version ()
