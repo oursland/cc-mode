@@ -57,8 +57,8 @@ Checklist for doing a release:
 	cc-mode.tar.gz -> cc-mode-5.XX.tar.gz
 	cc-mode -> cc-mode-5.XX
 
-    - Update the web page, using distilled changes from the
-      ANNOUNCEMENT file.
+    - Update the web pages. Don't forget to put a fresh issue of
+      cc-mode.html in the top level directory.
 
     - Send ANNOUNCEMENT file to cc-mode-announce@lists.sourceforge.net
 
