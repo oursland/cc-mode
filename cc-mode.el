@@ -15,6 +15,7 @@
 ;;   changed c-auto-newline to c++-auto-newline
 ;;   fixed auto-newline for member init list, new var:
 ;;         c++-auto-newline-member-init-p should handle hanging :'s
+;;   added c++-hungry-delete-key-p
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -142,6 +143,8 @@ list.  Nil indicates to just after the paren.")
   "*If t, override c++-auto-newline for left braces.")
 (defvar c++-auto-newline-member-init-p nil
   "*Put a newline after member initialization colon.")
+(defvar c++-hungry-delete-key-p t
+  "*Use hungry delete key which consumes all trailing whitespace.")
 
 
 (defun c++-mode ()
@@ -233,7 +236,9 @@ no args,if that value is non-nil."
   (set (make-local-variable 'parse-sexp-ignore-comments) nil)
   (run-hooks 'c++-mode-hook)
   (if c++-electric-colon
-      (define-key c++-mode-map ":" 'electric-c++-colon)))
+      (define-key c++-mode-map ":" 'electric-c++-colon))
+  (if c++-hungry-delete-key
+      (define-key c++-mode-map "\177" 'c++-hungry-delete-key)))
 
 ;; This is used by indent-for-comment
 ;; to decide how much to indent a comment in C++ code
@@ -254,6 +259,18 @@ no args,if that value is non-nil."
 	       (goto-char (match-beginning 0))
 	       (current-column))
 	   comment-column))))))		; otherwise indent at comment column.
+
+(defun c++-hungry-delete-key (arg)
+  "Consume all preceding whitespace unless ARG is supplied.
+In this case, it just calls backward-delete-char-untabify."
+  (interactive "P")
+  (if arg
+      (backward-delete-char-untabify arg)
+    (let ((here (point)))
+      (skip-chars-backward "[ \t\n]")
+      (if (/= (point) here)
+	  (delete-region (point) here)
+	(backward-delete-char-untabify 1)))))
 
 (defun electric-c++-brace (arg)
   "Insert character and correct line's indentation."
