@@ -404,6 +404,9 @@ Key bindings:
 		   'c-label-minimum-indentation
 		   'defun-prompt-regexp
 		   'tab-width
+		   ;; A brain-damaged XEmacs only variable that, if
+		   ;; set to nil can cause all kinds of chaos.
+		   'signal-error-on-buffer-boundary
 		   )))
 	(if (not (boundp 'defun-prompt-regexp))
 	    (delq 'defun-prompt-regexp vars)
