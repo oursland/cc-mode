@@ -581,6 +581,7 @@ involve auto-newline inserted newlines:
 
 (defcustom-c-stylevar c-hanging-braces-alist '((brace-list-open)
 					       (brace-entry-open)
+					       (statement-cont)
 					       (substatement-open after)
 					       (block-close . c-snug-do-while)
 					       (extern-lang-open after)
@@ -599,14 +600,14 @@ before and after the brace.
 
 SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
 class-close, inline-open, inline-close, block-open, block-close,
-substatement-open, statement-case-open, extern-lang-open,
-extern-lang-close, brace-list-open, brace-list-close,
-brace-list-intro, brace-entry-open, namespace-open, namespace-close,
-inexpr-class-open, or inexpr-class-close.  See `c-offsets-alist' for
-details, except for inexpr-class-open and inexpr-class-close, which
-doesn't have any corresponding symbols there.  Those two symbols are
-used for the opening and closing braces, respectively, of anonymous
-inner classes in Java.
+statement-cont, substatement-open, statement-case-open,
+extern-lang-open, extern-lang-close, brace-list-open,
+brace-list-close, brace-list-intro, brace-entry-open, namespace-open,
+namespace-close, inexpr-class-open, or inexpr-class-close.  See
+`c-offsets-alist' for details, except for inexpr-class-open and
+inexpr-class-close, which doesn't have any corresponding symbols
+there.  Those two symbols are used for the opening and closing braces,
+respectively, of anonymous inner classes in Java.
 
 ACTION can be either a function symbol or a list containing any
 combination of the symbols `before' or `after'.  If the list is empty,
@@ -638,7 +639,7 @@ syntactic context for the brace line."
 	      class-open class-close
 	      inline-open inline-close
 	      block-open block-close
-	      substatement-open statement-case-open
+	      statement-cont substatement-open statement-case-open
 	      extern-lang-open extern-lang-close
 	      brace-list-open brace-list-close
 	      brace-list-intro brace-entry-open
