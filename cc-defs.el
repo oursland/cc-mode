@@ -419,8 +419,12 @@ This function does not do any hidden buffer changes."
 
 (defmacro c-clear-char-syntax (pos)
   ;; Remove the syntax-table property at POS if there is any.
-  (if (fboundp 'make-extent)
-      ;; XEmacs.
+  (if (and (fboundp 'make-extent)
+	   (fboundp 'delete-extent)
+	   (fboundp 'set-extent-properties))
+      ;; XEmacs.  Check all the extent functions we'll use since some
+      ;; packages might do compatibility aliases for some of them in
+      ;; Emacs.
       `(let ((ext (extent-at ,pos nil 'syntax-table)))
 	 (if ext (delete-extent ext)))
     ;; Emacs.
@@ -441,8 +445,12 @@ This function does not do any hidden buffer changes."
 (defmacro c-put-char-syntax (pos syntax)
   ;; Put a syntax-table property at POS and make it front and rear
   ;; nonsticky (or start and end open in XEmacs vocabulary).
-  (cond ((fboundp 'make-extent)
-	 ;; XEmacs.
+  (cond ((and (fboundp 'make-extent)
+	      (fboundp 'delete-extent)
+	      (fboundp 'set-extent-properties))
+	 ;; XEmacs.  Check all the extent functions we'll use since
+	 ;; some packages might do compatibility aliases for some of
+	 ;; them in Emacs.
 	 `(let ((pos ,pos))
 	    (set-extent-properties (make-extent pos (1+ pos))
 				   (list 'syntax-table ,syntax
