@@ -1,11 +1,44 @@
 CC Mode NEWS -- user visible changes.  -*- outline -*-
 
+* Changes in 5.31
+
+This version contains few new visible features, but significant
+internal improvements.
+
+** Emacs 19.34 and XEmacs xxxx are no longer supported.
+The minimum versions required are Emacs 20.1 or XEmacs 20.xxxx
+
+** The CC Mode manual has been extensively revised
+The information about using CC Mode has been separated from the larger
+and more difficult chapters about configuration.
+
+** AWK support
+AWK Mode is now better integrated into CC Mode as a whole.  In detail:
+
+*** The manual
+The separate section in the manual outlining restrictions applying to
+AWK has been removed.
+
+*** Comment and line-breaking commands now work for AWK
+
+*** M-a and M-e (c-beginning/end-of-statement) now work for AWK.
+
+*** "awk" style, Auto-newline insertion, special AWK initialization hook.
+A new style, "awk" has been introduced, and this is now the default
+style for AWK code.  With its introduction, Auto-newline insertion can
+be used freely for AWK code, and there is no longer a need for the
+special initialization function in the AWK Mode hook.
+
+*** The standard Line-up functions haven't been adapted for AWK.
+Some of these may work serendipitously.  There shouldn't be any
+problems writing custom indentation functions for AWK mode.
+
+*** AWK Font Locking hasn't been fully integrated into CC Mode.
+There is just a single level of font locking in AWK mode.
+
 * Changes in 5.30
 
-There is a lot of change in this version, so it's considered
-experimental.  It is however fairly well tested already since the
-developers have an extensive test suite to ensure correct syntactic
-analysis and font locking.
+There is a lot of change in this version, so it's considered experimental.  It is however fairly well tested already since the developers have an extensive test suite to ensure correct syntactic analysis and font locking.
 
 ** Font lock support.
 CC Mode now provides font lock support for all its languages.  This
