@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-18 15:27:46 $
-;; Version:         $Revision: 2.54 $
+;; Last Modified:   $Date: 1992-05-18 21:10:55 $
+;; Version:         $Revision: 2.55 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-18 15:27:46 $|$Revision: 2.54 $|
+;; |$Date: 1992-05-18 21:10:55 $|$Revision: 2.55 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -187,7 +187,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.54 $
+  "Major mode for editing C++ code.  $Revision: 2.55 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -914,7 +914,10 @@ Returns nil if line starts inside a string, t if in a comment."
 		   0   ; Unless it starts a function body
 		 (c++-backward-to-noncomment (or parse-start (point-min)))
 		 (if (not (bobp)) (forward-char -1))
-		 (if (= (preceding-char) ?\))
+		 (if (or (= (preceding-char) ?\))
+			 (save-excursion
+			   (forward-word -1)
+			   (looking-at "const")))
 		     (progn		; first arg decl or member init
 		       (goto-char indent-point)
 		       (skip-chars-forward " \t")
@@ -1563,7 +1566,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.54 $"
+(defconst c++-version "$Revision: 2.55 $"
   "c++-mode version number.")
 
 (defun c++-version ()
