@@ -131,12 +131,12 @@ other packages for that.
 * Introduction::                
 * Getting Connected::           
 * Commands::                    
-* Config Strategies::           
-* Indentation Engine::          
-* Custom Auto-newlines::        
-* Custom Filling and Breaking::  
-* Macro Handling::              
 * Font Locking::                
+* Config Strategies::           
+* Custom Filling and Breaking::  
+* Custom Auto-newlines::        
+* Indentation Engine::          
+* Macro Handling::              
 * Advanced Customizations::     
 * AWK Mode::                    
 * Odds and Ends::               
@@ -164,8 +164,14 @@ Commands
 
 Minor Modes
 
-* Auto-newlines::           
+* Auto-newlines::               
 * Hungry WS Deletion::          
+
+Font Locking
+
+* Font Locking Preliminaries::  
+* Faces::                       
+* Doc Comments::                
 
 Configuration Strategies
 
@@ -179,6 +185,13 @@ Styles
 * Choosing a Style::            
 * Adding Styles::               
 * File Styles::                 
+
+Customizing Auto-newlines
+
+* Hanging Braces::              
+* Hanging Colons::              
+* Hanging Semicolons and Commas::  
+* Clean-ups::                   
 
 Indentation Engine
 
@@ -194,19 +207,6 @@ Customizing Indentation
 * Line-Up Functions::           
 * Custom Line-Up::              
 * Other Indentation::           
-
-Customizing Auto-newlines
-
-* Hanging Braces::              
-* Hanging Colons::              
-* Hanging Semicolons and Commas::  
-* Clean-ups::                   
-
-Font Locking
-
-* Font Locking Preliminaries::  
-* Faces::                       
-* Doc Comments::                
 
 Advanced Customizations
 
@@ -318,7 +318,7 @@ where @samp{XX} is the minor release number.
 @end deffn
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Commands, Config Strategies, Getting Connected, Top
+@node    Commands, Font Locking, Getting Connected, Top
 @comment node-name, next, previous, up
 @chapter Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -958,7 +958,7 @@ modes and a negative value will turn them off.
 @end table
 
 @menu
-* Auto-newlines::           
+* Auto-newlines::               
 * Hungry WS Deletion::          
 @end menu
 
@@ -1183,7 +1183,299 @@ operator without performing the electric behavior of colon insertion.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Config Strategies, Indentation Engine, Commands, Top
+@node    Font Locking, Config Strategies, Commands, Top
+@comment node-name, next, previous, up
+@chapter Font Locking
+@cindex font locking
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@strong{Note:} The font locking in AWK mode is currently not integrated
+with the rest of @ccmode{}, so this section does not apply there.
+@xref{AWK Mode Font Locking}, instead.
+
+@cindex Font Lock mode
+
+@ccmode{} provides font locking for its supported languages by supplying
+patterns for use with Font Lock mode.  This means that you get distinct
+faces on the various syntactic parts such as comments, strings, keywords
+and types, which is very helpful in telling them apart at a glance and
+discovering syntactic errors.  @xref{Font Lock,,, emacs, The Emacs
+Editor}, for ways to enable font locking in @ccmode{} buffers.
+
+@menu
+* Font Locking Preliminaries::  
+* Faces::                       
+* Doc Comments::                
+@end menu
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Font Locking Preliminaries, Faces, Font Locking, Font Locking
+@comment node-name, next, previous, up
+@section Font Locking Preliminaries
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+The font locking for most of the @ccmode{} languages were provided
+directly by the Font Lock package prior to version 5.30 of @ccmode{}.
+In the transition to @ccmode{} the patterns have been reworked
+completely and are applied uniformly across all the languages except AWK
+mode, just like the indentation rules (although each language still has
+some pecularities of its own, of course).  Since the languages
+previously had completely separate font locking patterns, this means
+that it's a bit different in most languages now.
+
+The main goal for the font locking in @ccmode{} is accuracy, to provide
+a dependable aid in recognizing the various constructs.  Some, like
+strings and comments, are easy to recognize while others like
+declarations and types can be very tricky.  @ccmode{} can go to great
+lengths to recognize declarations and casts correctly, especially when
+the types aren't recognized by standard patterns.  This is a fairly
+demanding analysis which can be slow on older hardware, and it can
+therefore be disabled by choosing a lower decoration level with the
+variable @code{font-lock-maximum-decoration}.
+
+@vindex font-lock-maximum-decoration
+
+The decoration levels are used as follows:
+
+@enumerate
+@comment 1
+@item
+Minimal font locking: Fontify only comments, strings and preprocessor
+directives (in the languages that use cpp).
+
+@comment 2
+@item
+Fast normal font locking: In addition to level 1, fontify keywords,
+simple types and declarations that are easy to recognize.  The variables
+@code{*-font-lock-extra-types} (where @samp{*} is the name of the
+language) are used to recognize types (see below).  Documentation
+comments like Javadoc are fontified according to
+@code{c-doc-comment-style} (@pxref{Doc Comments}).
+
+Use this if you think the font locking is too slow.  It's the closest
+corresponding level to level 3 in the old font lock patterns.
+
+@comment 3
+@item
+Accurate normal font locking: Like level 2 but uses a different approach
+that can recognize types and declarations much more accurately.  The
+@code{*-font-lock-extra-types} variables are still used, but user
+defined types are recognized correctly anyway in most cases.  Therefore
+those variables should be fairly restrictive and not contain patterns
+that are uncertain.
+
+@cindex Lazy Lock mode
+@cindex Just-in-time Lock mode
+
+This level is designed for fairly modern hardware and a font lock
+support mode like Lazy Lock or Just-in-time Lock mode that only
+fontifies the parts that are actually shown.
+@end enumerate
+
+@cindex user defined types
+@cindex types, user defined
+
+Since user defined types are hard to recognize you can provide
+additional regexps to match those you use:
+
+@defopt c-font-lock-extra-types
+@defoptx c++-font-lock-extra-types
+@defoptx objc-font-lock-extra-types
+@defoptx java-font-lock-extra-types
+@defoptx idl-font-lock-extra-types
+@defoptx pike-font-lock-extra-types
+For each language there's a variable @code{*-font-lock-extra-types},
+where @samp{*} stands for the language in question.  It contains a list
+of regexps that matches identifiers that should be recognized as types,
+e.g. @samp{\\sw+_t} to recognize all identifiers ending with @samp{_t}
+as is customary in C code.  Each regexp should not match more than a
+single identifier.
+
+The default values contain regexps for many types in standard runtime
+libraries that are otherwise difficult to recognize, and patterns for
+standard type naming conventions like the @samp{_t} suffix in C and C++.
+Java, Objective-C and Pike have as a convention to start class names
+with capitals, so there are patterns for that in those languages.
+
+Despite the names of these variables, they are not only used for
+fontification but in other places as well where @ccmode{} needs to
+recognize types.
+@end defopt
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Faces, Doc Comments, Font Locking Preliminaries, Font Locking
+@comment node-name, next, previous, up
+@section Faces
+@cindex faces
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@ccmode{} attempts to use the standard faces for programming languages
+in accordance with their intended purposes as far as possible.  No extra
+faces are currently provided, with the exception of a replacement face
+@code{c-invalid-face} for emacsen that don't provide
+@code{font-lock-warning-face}.
+
+@itemize @bullet
+@item
+@vindex font-lock-comment-face
+Normal comments are fontified in @code{font-lock-comment-face}.
+
+@item
+@vindex font-lock-doc-face
+@vindex font-lock-doc-string-face
+@vindex font-lock-comment-face
+Comments that are recognized as documentation (@pxref{Doc Comments})
+get @code{font-lock-doc-face} (Emacs) or
+@code{font-lock-doc-string-face} (XEmacs) if those faces exist.  If
+they don't then @code{font-lock-comment-face} is used.
+
+@item
+@vindex font-lock-string-face
+String and character literals are fontified in
+@code{font-lock-string-face}.
+
+@item
+@vindex font-lock-keyword-face
+Keywords are fontified with @code{font-lock-keyword-face}.
+
+@item
+@vindex font-lock-function-name-face
+@code{font-lock-function-name-face} is used for function names in
+declarations and definitions, and classes in those contexts.  It's also
+used for preprocessor defines with arguments.
+
+@item
+@vindex font-lock-variable-name-face
+Variables in declarations and definitions, and other identifiers in such
+variable contexts, get @code{font-lock-variable-name-face}.  It's also
+used for preprocessor defines without arguments.
+
+@item
+@vindex font-lock-constant-face
+@vindex font-lock-reference-face
+Builtin constants are fontified in @code{font-lock-constant-face} if it
+exists, @code{font-lock-reference-face} otherwise.  As opposed to the
+preceding two faces, this is used on the names in expressions, and it's
+not used in declarations, even if there happen to be a @samp{const} in
+them somewhere.
+
+@item
+@vindex font-lock-type-face
+@code{font-lock-type-face} is put on types (both predefined and user
+defined) and classes in type contexts.
+
+@item
+@vindex font-lock-constant-face
+@vindex font-lock-reference-face
+Label identifiers get @code{font-lock-constant-face} if it exists,
+@code{font-lock-reference-face} otherwise.
+
+@item
+Name qualifiers and identifiers for scope constructs are fontified like
+labels.
+
+@item
+Special markup inside documentation comments are also fontified like
+labels.
+
+@item
+@vindex font-lock-preprocessor-face
+@vindex font-lock-builtin-face
+@vindex font-lock-reference-face
+Preprocessor directives get @code{font-lock-preprocessor-face} if it
+exists (i.e. XEmacs).  In Emacs they get @code{font-lock-builtin-face}
+or @code{font-lock-reference-face}, for lack of a closer equivalent.
+
+@item
+@vindex font-lock-warning-face
+@vindex c-invalid-face
+@vindex invalid-face (c-)
+Some kinds of syntactic errors are fontified with
+@code{font-lock-warning-face} in Emacs.  In older XEmacs versions
+there's no corresponding standard face, so there a special
+@code{c-invalid-face} is used, which is defined to stand out sharply by
+default.
+
+Note that it's not used for @samp{#error} or @samp{#warning} directives,
+since those aren't syntactic errors in themselves.
+@end itemize
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Doc Comments,  , Faces, Font Locking
+@comment node-name, next, previous, up
+@section Documentation Comments
+@cindex documentation comments
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+There are various tools to supply documentation in the source as
+specially structured comments, e.g. the standard Javadoc tool in Java.
+@ccmode{} provides an extensible mechanism to fontify such comments and
+the special markup inside them.
+
+@defopt c-doc-comment-style
+@vindex doc-comment-style (c-)
+This is a style variable that specifies which documentation comment
+style to recognize, e.g. @code{javadoc} for Javadoc comments.
+
+The value may also be a list of styles, in which case all of them are
+recognized simultaneously (presumably with markup cues that don't
+conflict).
+
+The value may also be an association list to specify different comment
+styles for different languages.  The symbol for the major mode is then
+looked up in the alist, and the value of that element is interpreted as
+above if found.  If it isn't found then the symbol `other' is looked up
+and its value is used instead.
+
+Note that @ccmode{} uses this variable to set other variables that
+handle fontification etc.  That's done at mode initialization or when
+you switch to a style which sets this variable.  Thus, if you change it
+in some other way, e.g. interactively in a CC Mode buffer, you will need
+to do @kbd{M-x java-mode} (or whatever mode you're currently using) to
+reinitialize.
+
+@findex c-setup-doc-comment-style
+@findex setup-doc-comment-style (c-)
+Note also that when @ccmode{} starts up, the other variables are
+modified before the mode hooks are run.  If you change this variable in
+a mode hook, you have to call @code{c-setup-doc-comment-style}
+afterwards to redo that work.
+@end defopt
+
+@ccmode{} currently provides handing of the following doc comment
+styles:
+
+@table @code
+@item javadoc
+@cindex Javadoc markup
+Javadoc comments, the standard tool in Java.
+
+@item autodoc
+@cindex Pike autodoc markup
+For Pike autodoc markup, the standard in Pike.
+@end table
+
+The above is by no means complete.  If you'd like to see support for
+other doc comment styles, please let us know (@pxref{Mailing Lists and
+Bug Reports}).
+
+You can also write your own doc comment fontification support to use
+with @code{c-doc-comment-style}: Supply a variable or function
+@code{*-font-lock-keywords} where @samp{*} is the name you want to use
+in @code{c-doc-comment-style}.  If it's a variable, it's prepended to
+@code{font-lock-keywords}.  If it's a function, it's called at mode
+initialization and the result is prepended.  For an example, see
+@code{javadoc-font-lock-keywords} in @file{cc-fonts.el}.
+
+If you add support for another doc comment style, please consider
+contributing it --- send a note to @email{bug-cc-mode@@gnu.org}.
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Config Strategies, Custom Filling and Breaking, Font Locking, Top
 @comment  node-name,  next,  previous,  up
 @chapter Configuration Strategies
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1737,7 +2029,702 @@ on one of CC Mode's component modes.
 Etc.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Engine, Custom Auto-newlines, Config Strategies, Top
+@node    Custom Filling and Breaking, Custom Auto-newlines, Config Strategies, Top
+@comment node-name, next, previous, up
+@chapter Customizing Filling and Line Breaking
+@ignore
+@cindex text filling
+@cindex line breaking
+@cindex comment handling
+@end ignore
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@c This bit's been taken above.
+@ignore
+Since there's a lot of normal text in comments and string literals,
+@ccmode{} provides features to edit these like in text mode.  The goal
+is to do it as seamlessly as possible, i.e. you can use auto fill mode,
+sentence and paragraph movement, paragraph filling, adaptive filling etc
+wherever there's a piece of normal text without having to think much
+about it.  @ccmode{} should keep the indentation, fix the comment line
+decorations, and so on, for you.
+@end ignore
+@c End bit
+@c FIXME!!!  ACM 2004/8/20.  The following is perhaps redundant.
+Since there's a lot of normal text in comments and string literals,
+@ccmode{} provides features to edit these like in text mode.  It does
+this by hooking in on the different line breaking functions and tuning
+relevant variables as necessary.
+
+@vindex c-comment-prefix-regexp
+@vindex comment-prefix-regexp (c-)
+@cindex comment line prefix
+@vindex comment-start
+@vindex comment-end
+@vindex comment-start-skip
+@vindex paragraph-start
+@vindex paragraph-separate
+@vindex paragraph-ignore-fill-prefix
+@vindex adaptive-fill-mode
+@vindex adaptive-fill-regexp
+@vindex adaptive-fill-first-line-regexp
+To make Emacs recognize comments and treat text in them as normal
+paragraphs, @ccmode{} makes several standard
+variables@footnote{@code{comment-start}, @code{comment-end},
+@code{comment-start-skip}, @code{paragraph-start},
+@code{paragraph-separate}, @code{paragraph-ignore-fill-prefix},
+@code{adaptive-fill-mode}, @code{adaptive-fill-regexp}, and
+@code{adaptive-fill-first-line-regexp}.} buffer local and modifies them
+according to the language syntax and the comment line prefix.
+
+@defopt c-comment-prefix-regexp
+@vindex comment-prefix-regexp (c-)
+This style variable contains the regexp used to recognize the
+@dfn{comment line prefix}, which is the line decoration that starts
+every line in a comment.  When a comment line gets divided by
+@kbd{M-j} or the like, @ccmode{} inserts the comment line prefix from
+a neighbouring line at the start of the new line.  The default value
+of c-comment-prefix-regexp is @samp{//+\\|\\**}, which matches C++
+style line comments like
+
+@example
+// blah blah
+@end example
+
+@noindent
+with two or more slashes in front of them, and the second and
+subsequent lines of C style block comments like
+
+@example
+@group
+/*
+ * blah blah
+ */
+@end group
+@end example
+
+@noindent
+with zero or more stars at the beginning of every line.  If you change
+this variable, please make sure it still matches the comment starter
+(i.e. @code{//}) of line comments @emph{and} the line prefix inside
+block comments.
+
+@findex c-setup-paragraph-variables
+@findex setup-paragraph-variables (c-)
+Also note that since @ccmode{} uses the value of
+@code{c-comment-prefix-regexp} to set up several other variables at mode
+initialization, there won't be any effect if you just change it inside a
+@ccmode{} buffer.  You need to call the command
+@code{c-setup-paragraph-variables} too, to update those other variables with
+the new value.  That's also the case if you modify this variable in a
+mode hook, since @ccmode{} sets up all variables before calling them.
+@end defopt
+
+@c Move this bit up
+@ignore
+@findex auto-fill-mode
+@cindex Auto Fill mode
+@cindex paragraph filling
+Line breaks are by default handled (almost) the same regardless whether
+they are made by auto fill mode (@pxref{Auto Fill,,, emacs, The Emacs
+Editor}), paragraph filling (e.g. with @kbd{M-q}), or explicitly with
+@kbd{M-j} or similar methods.  In string literals, the new line gets the
+same indentation as the previous nonempty line (may be changed with the
+@code{string} syntactic symbol).
+@end ignore
+@c End of bit
+In comments, @ccmode{} uses @code{c-comment-prefix-regexp} to adapt
+the line prefix from the other lines in the comment.
+
+@vindex adaptive-fill-mode
+@cindex Adaptive Fill mode
+@ccmode{} uses adaptive fill mode (@pxref{Adaptive Fill,,, emacs, The
+Emacs Editor}) to make Emacs correctly keep the line prefix when filling
+paragraphs.  That also makes Emacs preserve the text indentation
+@emph{inside} the comment line prefix.  E.g. in the following comment,
+both paragraphs will be filled with the left margins of the texts kept
+intact:
+
+@example
+@group
+/* Make a balanced b-tree of the nodes in the incoming
+ * stream.  But, to quote the famous words of Donald E.
+ * Knuth,
+ *
+ *     Beware of bugs in the above code; I have only
+ *     proved it correct, not tried it.
+ */
+@end group
+@end example
+
+@findex c-setup-filladapt
+@findex setup-filladapt (c-)
+@findex filladapt-mode
+@vindex filladapt-mode
+@cindex Filladapt mode
+It's also possible to use other adaptive filling packages, notably Kyle
+E. Jones' Filladapt package@footnote{It's available from
+@uref{http://www.wonderworks.com/}.  As of version 2.12, it does however
+lack a feature that makes it work suboptimally when
+@code{c-comment-prefix-regexp} matches the empty string (which it does
+by default).  A patch for that is available from
+@uref{http://cc-mode.sourceforge.net/,, the CC Mode web site}.},
+which handles things like bulleted lists nicely.  There's a convenience
+function @code{c-setup-filladapt} that tunes the relevant variables in
+Filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
+something like this in your @file{.emacs}:
+
+@example
+(defun my-c-mode-common-hook ()
+  (c-setup-filladapt)
+  (filladapt-mode 1))
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+@end example
+
+@defopt c-block-comment-prefix
+@vindex block-comment-prefix (c-)
+@vindex c-comment-continuation-stars
+@vindex comment-continuation-stars (c-)
+Normally the comment line prefix inserted for a new line inside a
+comment is deduced from other lines in it.  However there's one
+situation when there's no hint about what the prefix should look like,
+namely when a block comment is broken for the first time.  This style
+variable@footnote{In versions before 5.26, this variable was called
+@code{c-comment-continuation-stars}.  As a compatibility measure,
+@ccmode{} still uses the value on that variable if it's set.} is used
+then as the comment prefix.  It defaults to @samp{*
+}@footnote{Actually, this default setting of
+@code{c-block-comment-prefix} typically gets overriden by the default
+style @code{gnu}, which sets it to blank.  You can see the line
+splitting effect described here by setting a different style,
+e.g. @code{k&r} @xref{Choosing a Style}}, which makes a comment
+
+@example
+/* Got O(n^2) here, which is a Bad Thing. */
+@end example
+
+@noindent
+break into
+
+@example
+@group
+/* Got O(n^2) here,
+ * which is a Bad Thing. */
+@end group
+@end example
+
+Note that it won't work to adjust the indentation by putting leading
+spaces in @code{c-block-comment-prefix}, since @ccmode{} still uses the
+normal indentation engine to indent the line.  Thus, the right way to
+fix the indentation is by customizing the @code{c} syntactic symbol.  It
+defaults to @code{c-lineup-C-comments}, which handles the indentation of
+most common comment styles, see @ref{Line-Up Functions}.
+@end defopt
+
+@defopt c-ignore-auto-fill
+@vindex ignore-auto-fill (c-)
+When auto fill mode is enabled, @ccmode{} can selectively ignore it
+depending on the context the line break would occur in, e.g. to never
+break a line automatically inside a string literal.  This variable
+takes a list of symbols for the different contexts where auto-filling
+never should occur:
+
+@table @code
+@item string
+Inside a string or character literal.
+@item c
+Inside a C style block comment.
+@item c++
+Inside a C++ style line comment.
+@item cpp
+Inside a preprocessor directive.
+@item code
+Anywhere else, i.e. in normal code.
+@end table
+
+By default, @code{c-ignore-auto-fill} is set to @code{'(string cpp
+code)}, which means that when auto-fill mode is activated,
+auto-filling only occurs in comments.  In literals, it's often
+desirable to have explicit control over newlines.  In preprocessor
+directives, the necessary @samp{\} escape character before the newline
+is not automatically inserted, so an automatic line break would
+produce invalid code.  In normal code, line breaks are normally
+dictated by some logical structure in the code rather than the last
+whitespace character, so automatic line breaks there will produce poor
+results in the current implementation.
+@end defopt
+
+@c Move this whole chunk up (down to the bottom of the node).
+@ignore
+The commands that do the actual work follow.
+
+@table @asis
+@item @kbd{M-q} (@code{c-fill-paragraph})
+@kindex M-q
+@findex c-fill-paragraph
+@findex fill-paragraph (c-)
+@cindex Javadoc markup
+@cindex Pike autodoc markup
+This is the replacement for @code{fill-paragraph} in @ccmode{}
+buffers. It's used to fill multiline string literals and both block and
+line style comments.  In Java buffers, the Javadoc markup words are
+recognized as paragraph starters.  The line oriented Pike autodoc markup
+words are recognized in the same way in Pike mode.
+
+The function keeps the comment starters and enders of block comments as
+they were before the filling.  This means that a comment ender on the
+same line as the paragraph being filled will be filled with the
+paragraph, and one on a line by itself will stay as it is.  The comment
+starter is handled similarly@footnote{This means that the variables
+@code{c-hanging-comment-starter-p} and @code{c-hanging-comment-ender-p},
+which controlled this behavior in earlier versions of @ccmode{}, are now
+obsolete.}.
+
+@item @kbd{M-j} (@code{c-indent-new-comment-line})
+@kindex M-j
+@findex c-indent-new-comment-line
+@findex indent-new-comment-line (c-)
+This is the replacement for @code{indent-new-comment-line}.  It breaks
+the line at point and indents the new line like the current one.
+@end ignore
+
+@vindex comment-multi-line
+If inside a comment and @code{comment-multi-line} is non-@code{nil}, the
+indentation and line prefix are preserved.  If inside a comment and
+@code{comment-multi-line} is @code{nil}, a new comment of the same type
+is started on the next line and indented as appropriate for comments.
+
+Note that @ccmode{} sets @code{comment-multi-line} to @code{t} at
+startup.  The reason is that @kbd{M-j} could otherwise produce sequences
+of single line block comments for texts that should logically be treated
+as one comment, and the rest of the paragraph handling code
+(e.g. @kbd{M-q} and @kbd{M-a}) can't cope with that, which would lead to
+inconsistent behavior.
+
+@ignore
+@item @kbd{M-x c-context-line-break}
+@findex c-context-line-break
+@findex context-line-break (c-)
+This is a function that works like @code{indent-new-comment-line} in
+comments and @code{newline-and-indent} elsewhere, thus combining those
+two in a way that uses each one in the context it's best suited for.
+I.e. in comments the comment line prefix and indentation is kept for
+the new line, and in normal code it's indented according to context by
+the indentation engine.
+
+In macros it acts like @code{newline-and-indent} but additionally
+inserts and optionally aligns the line ending backslash so that the
+macro remains unbroken.  @xref{Macro Handling}, for details about the
+backslash alignment.
+
+It's not bound to a key by default, but it's intended to be used on the
+@kbd{RET} key.  If you like the behavior of @code{newline-and-indent} on
+@kbd{RET}, you should consider switching to this function.
+
+@item @kbd{M-x c-context-open-line}
+@findex c-context-open-line
+@findex context-open-line (c-)
+This is to @kbd{C-o} (@kbd{M-x open-line}) as
+@code{c-context-line-break} is to @kbd{RET}.  I.e. it works just like
+@code{c-context-line-break} but leaves the point before the inserted
+line break.
+@end table
+@end ignore
+@c End of whole chunk.
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Custom Auto-newlines, Indentation Engine, Custom Filling and Breaking, Top
+@comment node-name, next, previous, up
+@chapter Customizing Auto-newlines
+@cindex auto-newline
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@cindex electric characters
+Auto-newline minor mode works by enabling certain @dfn{electric
+characters}.  Special characters such as the left and right braces,
+colons, semicolons, etc., have been made electric to perform some
+magic formatting in addition to inserting the typed character.  As a
+general rule, electric characters are only electric when the following
+conditions apply:
+
+@itemize @bullet
+@item
+Auto-newline minor mode is enabled, as evidenced by a @samp{C/a} or
+@samp{C/ah} indicator on the modeline.
+
+@item
+@cindex literal
+@cindex syntactic whitespace
+The character was not typed inside of a literal @footnote{A
+@dfn{literal} is defined as any comment, string, or preprocessor macro
+definition.  These constructs are also known as @dfn{syntactic
+whitespace} since they are usually ignored when scanning C code.}.
+
+@item
+No numeric argument was supplied to the command (i.e. it was typed as
+normal, with no @kbd{C-u} prefix).
+@end itemize
+
+@menu
+* Hanging Braces::              
+* Hanging Colons::              
+* Hanging Semicolons and Commas::  
+* Clean-ups::                   
+@end menu
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Hanging Braces, Hanging Colons, Custom Auto-newlines, Custom Auto-newlines
+@comment node-name, next, previous, up
+@section Hanging Braces
+@cindex hanging braces
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@findex c-electric-brace
+@findex electric-brace (c-)
+@kindex @{
+@kindex @}
+
+When you type either an open or close brace (i.e. @kbd{@{} or @kbd{@}}),
+the electric command @code{c-electric-brace} gets run.  This command has
+two electric formatting behaviors.  First, it will perform some
+reindentation of the line the brace was typed on, and second, it will
+add various newlines before and/or after the typed brace.
+Reindentation occurs automatically whenever the electric behavior is
+enabled.  If the brace ends up on a line other than the one it was typed
+on, then that line is also reindented.
+
+The default in auto-newline mode is to insert newlines both before and
+after a brace, but that can be controlled by the
+@code{c-hanging-braces-alist} style variable.
+
+@defopt c-hanging-braces-alist
+@vindex hanging-braces-alist (c-)
+
+This variable contains a mapping between syntactic symbols related to
+braces, and a list of places to insert a newline.  The syntactic symbols
+that are useful for this list are @code{brace-list-intro},
+@code{statement-cont}, @code{inexpr-class-open},
+@code{inexpr-class-close}, and all the @code{*-open} and @code{*-close}
+symbols.  @xref{Syntactic Symbols}, for a more detailed description of
+these syntactic symbols, except for @code{inexpr-class-open} and
+@code{inexpr-class-close}, which aren't actual syntactic symbols.
+
+The braces of anonymous inner classes in Java are given the special
+symbols @code{inexpr-class-open} and @code{inexpr-class-close}, so that
+they can be distinguished from the braces of normal classes@footnote{The
+braces of anonymous classes produce a combination of
+@code{inexpr-class}, and @code{class-open} or @code{class-close} in
+normal indentation analysis.}.
+
+Note that the aggregate constructs in Pike mode, @samp{(@{}, @samp{@})},
+@samp{([}, @samp{])}, and @samp{(<}, @samp{>)}, do not count as brace
+lists in this regard, even though they do for normal indentation
+purposes.  It's currently not possible to set automatic newlines on
+these constructs.
+
+The value associated with each syntactic symbol in this association
+list is called an @var{action}, which can be either a function or a
+list.  @xref{Custom Braces and Colons}, for a more detailed discussion
+of using a function as a brace hanging @var{action}.
+
+When the @var{action} is a list, it can contain any combination of the
+symbols @code{before} and @code{after}, directing @ccmode{} where to
+put newlines in relationship to the brace being inserted.  Thus, if the
+list contains only the symbol @code{after}, then the brace is said to
+@dfn{hang} on the right side of the line, as in:
+
+@example
+// here, open braces always `hang'
+void spam( int i ) @{
+    if( i == 7 ) @{
+        dosomething(i);
+    @}
+@}
+@end example
+
+When the list contains both @code{after} and @code{before}, the braces
+will appear on a line by themselves, as shown by the close braces in the
+above example.  The list can also be empty, in which case no newlines
+are added either before or after the brace.
+
+If a syntactic symbol is missing entirely from
+@code{c-hanging-braces-alist}, it's treated in the same way as an
+@var{action} with a list containing @code{before} and @code{after}, so
+that braces by default end up on their own line.
+
+For example, the default value of @code{c-hanging-braces-alist} is:
+
+@example
+((brace-list-open)
+ (brace-entry-open)
+ (statement-cont)
+ (substatement-open after)
+ (block-close . c-snug-do-while)
+ (extern-lang-open after)
+ (inexpr-class-open after)
+ (inexpr-class-close before))
+@end example
+
+@noindent which says that @code{brace-list-open},
+@code{brace-entry-open} and @code{statement-cont}@footnote{Brace lists
+inside statements, such as initializers for static array variables
+inside functions in C, are recognized as @code{statement-cont}.  All
+normal substatement blocks are recognized with other symbols.} braces
+should both hang on the right side and allow subsequent text to follow
+on the same line as the brace.  Also, @code{substatement-open},
+@code{extern-lang-open}, and @code{inexpr-class-open} braces should hang
+on the right side, but subsequent text should follow on the next line.
+The opposite holds for @code{inexpr-class-close} braces; they won't
+hang, but the following text continues on the same line.  Here, in the
+@code{block-close} entry, you also see an example of using a function as
+an @var{action}.  In all other cases, braces are put on a line by
+themselves.
+@end defopt
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Hanging Colons, Hanging Semicolons and Commas, Hanging Braces, Custom Auto-newlines
+@comment node-name, next, previous, up
+@section Hanging Colons
+@cindex hanging colons
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Using a mechanism similar to brace hanging (@pxref{Hanging Braces}),
+colons can also be made to hang using the style variable
+@code{c-hanging-colons-alist}.
+
+@defopt c-hanging-colons-alist
+@vindex hanging-colons-alist (c-)
+
+The syntactic symbols appropriate for this association list are:
+@code{case-label}, @code{label}, @code{access-label},
+@code{member-init-intro}, and @code{inher-intro}.  Note however that
+for @code{c-hanging-colons-alist}, @var{action}s as functions are not
+supported. See also @ref{Custom Braces and Colons} for details.
+
+In C++, double-colons are used as a scope operator but because these
+colons always appear right next to each other, newlines before and after
+them are controlled by a different mechanism, called @dfn{clean-ups} in
+@ccmode{}.  @xref{Clean-ups}, for details.
+@end defopt
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Hanging Semicolons and Commas, Clean-ups, Hanging Colons, Custom Auto-newlines
+@comment node-name, next, previous, up
+@section Hanging Semicolons and Commas
+@cindex hanging semicolons
+@cindex hanging commas
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+Semicolons and commas are also electric in @ccmode{}, but since these
+characters do not correspond directly to syntactic symbols, a
+different mechanism is used to determine whether newlines should be
+automatically inserted after these characters.  @xref{Custom Semis and
+Commas}, for details.
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Clean-ups,  , Hanging Semicolons and Commas, Custom Auto-newlines
+@comment node-name, next, previous, up
+@section Clean-ups
+@cindex clean-ups
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@dfn{Clean-ups} are mechanisms complementary to colon and brace hanging.
+On the surface, it would seem that clean-ups overlap the functionality
+provided by the @code{c-hanging-*-alist} variables.  Clean-ups are
+however used to adjust code ``after-the-fact,'' i.e. to adjust the
+whitespace in constructs after they are typed.
+
+Most of the clean-ups are only applicable to counteract automatically
+inserted newlines, and will therefore only have any effect if the
+auto-newline minor mode is turned on.  Others will work all the time.
+
+@defopt c-cleanup-list
+@vindex cleanup-list (c-)
+@cindex literal
+
+You can configure @ccmode{}'s clean-ups by setting the style variable
+@code{c-cleanup-list}, which is a list of clean-up symbols.  By
+default, @ccmode{} cleans up only the @code{scope-operator} construct,
+which is necessary for proper C++ support.  Note that clean-ups are
+only performed when the construct does not occur within a literal
+(@pxref{Auto-newlines}), and when there is nothing but whitespace
+appearing between the individual components of the construct.
+@end defopt
+
+These are the clean-ups that are only active in the auto-newline minor
+mode:
+
+@c TBD: Would like to use some sort of @deffoo here; @table indents a
+@c bit too much in dvi output.
+@table @code
+@item brace-else-brace
+Clean up @samp{@} else @{} constructs by placing the entire construct on
+a single line.  Clean-up occurs when the open brace after the
+@samp{else} is typed.  So for example, this:
+
+@example
+@group
+void spam(int i)
+@{
+    if( i==7 ) @{
+        dosomething();
+    @}
+    else
+    @{
+@end group
+@end example
+
+@noindent
+appears like this after the last open brace is typed:
+
+@example
+@group
+void spam(int i)
+@{
+    if( i==7 ) @{
+        dosomething();
+    @} else @{
+@end group
+@end example
+
+@item brace-elseif-brace
+Similar to the @code{brace-else-brace} clean-up, but this cleans up
+@samp{@} else if (...) @{} constructs.  For example:
+
+@example
+@group
+void spam(int i)
+@{
+    if( i==7 ) @{
+        dosomething();
+    @}
+    else if( i==3 )
+    @{
+@end group
+@end example
+
+@noindent
+appears like this after the last open parenthesis is typed:
+
+@example
+@group
+void spam(int i)
+@{
+    if( i==7 ) @{
+        dosomething();
+    @} else if( i==3 )
+    @{
+@end group
+@end example
+
+@noindent
+and like this after the last open brace is typed:
+
+@example
+@group
+void spam(int i)
+@{
+    if( i==7 ) @{
+        dosomething();
+    @} else if( i==3 ) @{
+@end group
+@end example
+
+@item brace-catch-brace
+Analogous to @code{brace-elseif-brace}, but cleans up @samp{@} catch
+(...) @{} in C++ and Java mode.
+
+@item empty-defun-braces
+Clean up braces following a top-level function or class definition that
+contains no body.  Clean up occurs when the closing brace is typed.
+Thus the following:
+
+@example
+@group
+class Spam
+@{
+@}
+@end group
+@end example
+
+@noindent
+is transformed into this when the close brace is typed:
+
+@example
+@group
+class Spam
+@{@}
+@end group
+@end example
+
+@item defun-close-semi
+Clean up the terminating semicolon on top-level function or class
+definitions when they follow a close brace.  Clean up occurs when the
+semicolon is typed.  So for example, the following:
+
+@example
+@group
+class Spam
+@{
+@}
+;
+@end group
+@end example
+
+@noindent
+is transformed into this when the semicolon is typed:
+
+@example
+@group
+class Spam
+@{
+@};
+@end group
+@end example
+
+@item list-close-comma
+Clean up commas following braces in array and aggregate initializers.
+Clean up occurs when the comma is typed.
+
+@item scope-operator
+Clean up double colons which may designate a C++ scope operator split
+across multiple lines@footnote{Certain C++ constructs introduce
+ambiguous situations, so @code{scope-operator} clean-ups may not always
+be correct.  This usually only occurs when scoped identifiers appear in
+switch label tags.}.  Clean up occurs when the second colon is typed.
+You will always want @code{scope-operator} in the @code{c-cleanup-list}
+when you are editing C++ code.
+@end table
+
+The following clean-ups are always active when they occur on
+@code{c-cleanup-list}, and are thus not affected by the auto-newline
+minor mode:
+
+@table @code
+@item space-before-funcall
+Insert a space between the function name and the opening parenthesis
+of a function call.  This produces function calls in the style
+mandated by the GNU coding standards, e.g. @samp{signal@tie{}(SIGINT,
+SIG_IGN)} and @samp{abort@tie{}()}.  Clean up occurs when the opening
+parenthesis is typed.
+
+@item compact-empty-funcall
+Clean up any space between the function name and the opening parenthesis
+of a function call that has no arguments.  This is typically used
+together with @code{space-before-funcall} if you prefer the GNU function
+call style for functions with arguments but think it looks ugly when
+it's only an empty parenthesis pair.  I.e. you will get @samp{signal
+(SIGINT, SIG_IGN)}, but @samp{abort()}.  Clean up occurs when the
+closing parenthesis is typed.
+@end table
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Indentation Engine, Macro Handling, Custom Auto-newlines, Top
 @comment node-name, next, previous, up
 @chapter Indentation Engine
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4292,702 +5279,7 @@ current setting for the buffer local value of
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Auto-newlines, Custom Filling and Breaking, Indentation Engine, Top
-@comment node-name, next, previous, up
-@chapter Customizing Auto-newlines
-@cindex auto-newline
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@cindex electric characters
-Auto-newline minor mode works by enabling certain @dfn{electric
-characters}.  Special characters such as the left and right braces,
-colons, semicolons, etc., have been made electric to perform some
-magic formatting in addition to inserting the typed character.  As a
-general rule, electric characters are only electric when the following
-conditions apply:
-
-@itemize @bullet
-@item
-Auto-newline minor mode is enabled, as evidenced by a @samp{C/a} or
-@samp{C/ah} indicator on the modeline.
-
-@item
-@cindex literal
-@cindex syntactic whitespace
-The character was not typed inside of a literal @footnote{A
-@dfn{literal} is defined as any comment, string, or preprocessor macro
-definition.  These constructs are also known as @dfn{syntactic
-whitespace} since they are usually ignored when scanning C code.}.
-
-@item
-No numeric argument was supplied to the command (i.e. it was typed as
-normal, with no @kbd{C-u} prefix).
-@end itemize
-
-@menu
-* Hanging Braces::              
-* Hanging Colons::              
-* Hanging Semicolons and Commas::  
-* Clean-ups::                   
-@end menu
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hanging Braces, Hanging Colons, Custom Auto-newlines, Custom Auto-newlines
-@comment node-name, next, previous, up
-@section Hanging Braces
-@cindex hanging braces
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@findex c-electric-brace
-@findex electric-brace (c-)
-@kindex @{
-@kindex @}
-
-When you type either an open or close brace (i.e. @kbd{@{} or @kbd{@}}),
-the electric command @code{c-electric-brace} gets run.  This command has
-two electric formatting behaviors.  First, it will perform some
-reindentation of the line the brace was typed on, and second, it will
-add various newlines before and/or after the typed brace.
-Reindentation occurs automatically whenever the electric behavior is
-enabled.  If the brace ends up on a line other than the one it was typed
-on, then that line is also reindented.
-
-The default in auto-newline mode is to insert newlines both before and
-after a brace, but that can be controlled by the
-@code{c-hanging-braces-alist} style variable.
-
-@defopt c-hanging-braces-alist
-@vindex hanging-braces-alist (c-)
-
-This variable contains a mapping between syntactic symbols related to
-braces, and a list of places to insert a newline.  The syntactic symbols
-that are useful for this list are @code{brace-list-intro},
-@code{statement-cont}, @code{inexpr-class-open},
-@code{inexpr-class-close}, and all the @code{*-open} and @code{*-close}
-symbols.  @xref{Syntactic Symbols}, for a more detailed description of
-these syntactic symbols, except for @code{inexpr-class-open} and
-@code{inexpr-class-close}, which aren't actual syntactic symbols.
-
-The braces of anonymous inner classes in Java are given the special
-symbols @code{inexpr-class-open} and @code{inexpr-class-close}, so that
-they can be distinguished from the braces of normal classes@footnote{The
-braces of anonymous classes produce a combination of
-@code{inexpr-class}, and @code{class-open} or @code{class-close} in
-normal indentation analysis.}.
-
-Note that the aggregate constructs in Pike mode, @samp{(@{}, @samp{@})},
-@samp{([}, @samp{])}, and @samp{(<}, @samp{>)}, do not count as brace
-lists in this regard, even though they do for normal indentation
-purposes.  It's currently not possible to set automatic newlines on
-these constructs.
-
-The value associated with each syntactic symbol in this association
-list is called an @var{action}, which can be either a function or a
-list.  @xref{Custom Braces and Colons}, for a more detailed discussion
-of using a function as a brace hanging @var{action}.
-
-When the @var{action} is a list, it can contain any combination of the
-symbols @code{before} and @code{after}, directing @ccmode{} where to
-put newlines in relationship to the brace being inserted.  Thus, if the
-list contains only the symbol @code{after}, then the brace is said to
-@dfn{hang} on the right side of the line, as in:
-
-@example
-// here, open braces always `hang'
-void spam( int i ) @{
-    if( i == 7 ) @{
-        dosomething(i);
-    @}
-@}
-@end example
-
-When the list contains both @code{after} and @code{before}, the braces
-will appear on a line by themselves, as shown by the close braces in the
-above example.  The list can also be empty, in which case no newlines
-are added either before or after the brace.
-
-If a syntactic symbol is missing entirely from
-@code{c-hanging-braces-alist}, it's treated in the same way as an
-@var{action} with a list containing @code{before} and @code{after}, so
-that braces by default end up on their own line.
-
-For example, the default value of @code{c-hanging-braces-alist} is:
-
-@example
-((brace-list-open)
- (brace-entry-open)
- (statement-cont)
- (substatement-open after)
- (block-close . c-snug-do-while)
- (extern-lang-open after)
- (inexpr-class-open after)
- (inexpr-class-close before))
-@end example
-
-@noindent which says that @code{brace-list-open},
-@code{brace-entry-open} and @code{statement-cont}@footnote{Brace lists
-inside statements, such as initializers for static array variables
-inside functions in C, are recognized as @code{statement-cont}.  All
-normal substatement blocks are recognized with other symbols.} braces
-should both hang on the right side and allow subsequent text to follow
-on the same line as the brace.  Also, @code{substatement-open},
-@code{extern-lang-open}, and @code{inexpr-class-open} braces should hang
-on the right side, but subsequent text should follow on the next line.
-The opposite holds for @code{inexpr-class-close} braces; they won't
-hang, but the following text continues on the same line.  Here, in the
-@code{block-close} entry, you also see an example of using a function as
-an @var{action}.  In all other cases, braces are put on a line by
-themselves.
-@end defopt
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hanging Colons, Hanging Semicolons and Commas, Hanging Braces, Custom Auto-newlines
-@comment node-name, next, previous, up
-@section Hanging Colons
-@cindex hanging colons
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Using a mechanism similar to brace hanging (@pxref{Hanging Braces}),
-colons can also be made to hang using the style variable
-@code{c-hanging-colons-alist}.
-
-@defopt c-hanging-colons-alist
-@vindex hanging-colons-alist (c-)
-
-The syntactic symbols appropriate for this association list are:
-@code{case-label}, @code{label}, @code{access-label},
-@code{member-init-intro}, and @code{inher-intro}.  Note however that
-for @code{c-hanging-colons-alist}, @var{action}s as functions are not
-supported. See also @ref{Custom Braces and Colons} for details.
-
-In C++, double-colons are used as a scope operator but because these
-colons always appear right next to each other, newlines before and after
-them are controlled by a different mechanism, called @dfn{clean-ups} in
-@ccmode{}.  @xref{Clean-ups}, for details.
-@end defopt
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hanging Semicolons and Commas, Clean-ups, Hanging Colons, Custom Auto-newlines
-@comment node-name, next, previous, up
-@section Hanging Semicolons and Commas
-@cindex hanging semicolons
-@cindex hanging commas
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Semicolons and commas are also electric in @ccmode{}, but since these
-characters do not correspond directly to syntactic symbols, a
-different mechanism is used to determine whether newlines should be
-automatically inserted after these characters.  @xref{Custom Semis and
-Commas}, for details.
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Clean-ups,  , Hanging Semicolons and Commas, Custom Auto-newlines
-@comment node-name, next, previous, up
-@section Clean-ups
-@cindex clean-ups
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@dfn{Clean-ups} are mechanisms complementary to colon and brace hanging.
-On the surface, it would seem that clean-ups overlap the functionality
-provided by the @code{c-hanging-*-alist} variables.  Clean-ups are
-however used to adjust code ``after-the-fact,'' i.e. to adjust the
-whitespace in constructs after they are typed.
-
-Most of the clean-ups are only applicable to counteract automatically
-inserted newlines, and will therefore only have any effect if the
-auto-newline minor mode is turned on.  Others will work all the time.
-
-@defopt c-cleanup-list
-@vindex cleanup-list (c-)
-@cindex literal
-
-You can configure @ccmode{}'s clean-ups by setting the style variable
-@code{c-cleanup-list}, which is a list of clean-up symbols.  By
-default, @ccmode{} cleans up only the @code{scope-operator} construct,
-which is necessary for proper C++ support.  Note that clean-ups are
-only performed when the construct does not occur within a literal
-(@pxref{Auto-newlines}), and when there is nothing but whitespace
-appearing between the individual components of the construct.
-@end defopt
-
-These are the clean-ups that are only active in the auto-newline minor
-mode:
-
-@c TBD: Would like to use some sort of @deffoo here; @table indents a
-@c bit too much in dvi output.
-@table @code
-@item brace-else-brace
-Clean up @samp{@} else @{} constructs by placing the entire construct on
-a single line.  Clean-up occurs when the open brace after the
-@samp{else} is typed.  So for example, this:
-
-@example
-@group
-void spam(int i)
-@{
-    if( i==7 ) @{
-        dosomething();
-    @}
-    else
-    @{
-@end group
-@end example
-
-@noindent
-appears like this after the last open brace is typed:
-
-@example
-@group
-void spam(int i)
-@{
-    if( i==7 ) @{
-        dosomething();
-    @} else @{
-@end group
-@end example
-
-@item brace-elseif-brace
-Similar to the @code{brace-else-brace} clean-up, but this cleans up
-@samp{@} else if (...) @{} constructs.  For example:
-
-@example
-@group
-void spam(int i)
-@{
-    if( i==7 ) @{
-        dosomething();
-    @}
-    else if( i==3 )
-    @{
-@end group
-@end example
-
-@noindent
-appears like this after the last open parenthesis is typed:
-
-@example
-@group
-void spam(int i)
-@{
-    if( i==7 ) @{
-        dosomething();
-    @} else if( i==3 )
-    @{
-@end group
-@end example
-
-@noindent
-and like this after the last open brace is typed:
-
-@example
-@group
-void spam(int i)
-@{
-    if( i==7 ) @{
-        dosomething();
-    @} else if( i==3 ) @{
-@end group
-@end example
-
-@item brace-catch-brace
-Analogous to @code{brace-elseif-brace}, but cleans up @samp{@} catch
-(...) @{} in C++ and Java mode.
-
-@item empty-defun-braces
-Clean up braces following a top-level function or class definition that
-contains no body.  Clean up occurs when the closing brace is typed.
-Thus the following:
-
-@example
-@group
-class Spam
-@{
-@}
-@end group
-@end example
-
-@noindent
-is transformed into this when the close brace is typed:
-
-@example
-@group
-class Spam
-@{@}
-@end group
-@end example
-
-@item defun-close-semi
-Clean up the terminating semicolon on top-level function or class
-definitions when they follow a close brace.  Clean up occurs when the
-semicolon is typed.  So for example, the following:
-
-@example
-@group
-class Spam
-@{
-@}
-;
-@end group
-@end example
-
-@noindent
-is transformed into this when the semicolon is typed:
-
-@example
-@group
-class Spam
-@{
-@};
-@end group
-@end example
-
-@item list-close-comma
-Clean up commas following braces in array and aggregate initializers.
-Clean up occurs when the comma is typed.
-
-@item scope-operator
-Clean up double colons which may designate a C++ scope operator split
-across multiple lines@footnote{Certain C++ constructs introduce
-ambiguous situations, so @code{scope-operator} clean-ups may not always
-be correct.  This usually only occurs when scoped identifiers appear in
-switch label tags.}.  Clean up occurs when the second colon is typed.
-You will always want @code{scope-operator} in the @code{c-cleanup-list}
-when you are editing C++ code.
-@end table
-
-The following clean-ups are always active when they occur on
-@code{c-cleanup-list}, and are thus not affected by the auto-newline
-minor mode:
-
-@table @code
-@item space-before-funcall
-Insert a space between the function name and the opening parenthesis
-of a function call.  This produces function calls in the style
-mandated by the GNU coding standards, e.g. @samp{signal@tie{}(SIGINT,
-SIG_IGN)} and @samp{abort@tie{}()}.  Clean up occurs when the opening
-parenthesis is typed.
-
-@item compact-empty-funcall
-Clean up any space between the function name and the opening parenthesis
-of a function call that has no arguments.  This is typically used
-together with @code{space-before-funcall} if you prefer the GNU function
-call style for functions with arguments but think it looks ugly when
-it's only an empty parenthesis pair.  I.e. you will get @samp{signal
-(SIGINT, SIG_IGN)}, but @samp{abort()}.  Clean up occurs when the
-closing parenthesis is typed.
-@end table
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Filling and Breaking, Macro Handling, Custom Auto-newlines, Top
-@comment node-name, next, previous, up
-@chapter Customizing Filling and Line Breaking
-@ignore
-@cindex text filling
-@cindex line breaking
-@cindex comment handling
-@end ignore
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@c This bit's been taken above.
-@ignore
-Since there's a lot of normal text in comments and string literals,
-@ccmode{} provides features to edit these like in text mode.  The goal
-is to do it as seamlessly as possible, i.e. you can use auto fill mode,
-sentence and paragraph movement, paragraph filling, adaptive filling etc
-wherever there's a piece of normal text without having to think much
-about it.  @ccmode{} should keep the indentation, fix the comment line
-decorations, and so on, for you.
-@end ignore
-@c End bit
-@c FIXME!!!  ACM 2004/8/20.  The following is perhaps redundant.
-Since there's a lot of normal text in comments and string literals,
-@ccmode{} provides features to edit these like in text mode.  It does
-this by hooking in on the different line breaking functions and tuning
-relevant variables as necessary.
-
-@vindex c-comment-prefix-regexp
-@vindex comment-prefix-regexp (c-)
-@cindex comment line prefix
-@vindex comment-start
-@vindex comment-end
-@vindex comment-start-skip
-@vindex paragraph-start
-@vindex paragraph-separate
-@vindex paragraph-ignore-fill-prefix
-@vindex adaptive-fill-mode
-@vindex adaptive-fill-regexp
-@vindex adaptive-fill-first-line-regexp
-To make Emacs recognize comments and treat text in them as normal
-paragraphs, @ccmode{} makes several standard
-variables@footnote{@code{comment-start}, @code{comment-end},
-@code{comment-start-skip}, @code{paragraph-start},
-@code{paragraph-separate}, @code{paragraph-ignore-fill-prefix},
-@code{adaptive-fill-mode}, @code{adaptive-fill-regexp}, and
-@code{adaptive-fill-first-line-regexp}.} buffer local and modifies them
-according to the language syntax and the comment line prefix.
-
-@defopt c-comment-prefix-regexp
-@vindex comment-prefix-regexp (c-)
-This style variable contains the regexp used to recognize the
-@dfn{comment line prefix}, which is the line decoration that starts
-every line in a comment.  When a comment line gets divided by
-@kbd{M-j} or the like, @ccmode{} inserts the comment line prefix from
-a neighbouring line at the start of the new line.  The default value
-of c-comment-prefix-regexp is @samp{//+\\|\\**}, which matches C++
-style line comments like
-
-@example
-// blah blah
-@end example
-
-@noindent
-with two or more slashes in front of them, and the second and
-subsequent lines of C style block comments like
-
-@example
-@group
-/*
- * blah blah
- */
-@end group
-@end example
-
-@noindent
-with zero or more stars at the beginning of every line.  If you change
-this variable, please make sure it still matches the comment starter
-(i.e. @code{//}) of line comments @emph{and} the line prefix inside
-block comments.
-
-@findex c-setup-paragraph-variables
-@findex setup-paragraph-variables (c-)
-Also note that since @ccmode{} uses the value of
-@code{c-comment-prefix-regexp} to set up several other variables at mode
-initialization, there won't be any effect if you just change it inside a
-@ccmode{} buffer.  You need to call the command
-@code{c-setup-paragraph-variables} too, to update those other variables with
-the new value.  That's also the case if you modify this variable in a
-mode hook, since @ccmode{} sets up all variables before calling them.
-@end defopt
-
-@c Move this bit up
-@ignore
-@findex auto-fill-mode
-@cindex Auto Fill mode
-@cindex paragraph filling
-Line breaks are by default handled (almost) the same regardless whether
-they are made by auto fill mode (@pxref{Auto Fill,,, emacs, The Emacs
-Editor}), paragraph filling (e.g. with @kbd{M-q}), or explicitly with
-@kbd{M-j} or similar methods.  In string literals, the new line gets the
-same indentation as the previous nonempty line (may be changed with the
-@code{string} syntactic symbol).
-@end ignore
-@c End of bit
-In comments, @ccmode{} uses @code{c-comment-prefix-regexp} to adapt
-the line prefix from the other lines in the comment.
-
-@vindex adaptive-fill-mode
-@cindex Adaptive Fill mode
-@ccmode{} uses adaptive fill mode (@pxref{Adaptive Fill,,, emacs, The
-Emacs Editor}) to make Emacs correctly keep the line prefix when filling
-paragraphs.  That also makes Emacs preserve the text indentation
-@emph{inside} the comment line prefix.  E.g. in the following comment,
-both paragraphs will be filled with the left margins of the texts kept
-intact:
-
-@example
-@group
-/* Make a balanced b-tree of the nodes in the incoming
- * stream.  But, to quote the famous words of Donald E.
- * Knuth,
- *
- *     Beware of bugs in the above code; I have only
- *     proved it correct, not tried it.
- */
-@end group
-@end example
-
-@findex c-setup-filladapt
-@findex setup-filladapt (c-)
-@findex filladapt-mode
-@vindex filladapt-mode
-@cindex Filladapt mode
-It's also possible to use other adaptive filling packages, notably Kyle
-E. Jones' Filladapt package@footnote{It's available from
-@uref{http://www.wonderworks.com/}.  As of version 2.12, it does however
-lack a feature that makes it work suboptimally when
-@code{c-comment-prefix-regexp} matches the empty string (which it does
-by default).  A patch for that is available from
-@uref{http://cc-mode.sourceforge.net/,, the CC Mode web site}.},
-which handles things like bulleted lists nicely.  There's a convenience
-function @code{c-setup-filladapt} that tunes the relevant variables in
-Filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
-something like this in your @file{.emacs}:
-
-@example
-(defun my-c-mode-common-hook ()
-  (c-setup-filladapt)
-  (filladapt-mode 1))
-(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-@end example
-
-@defopt c-block-comment-prefix
-@vindex block-comment-prefix (c-)
-@vindex c-comment-continuation-stars
-@vindex comment-continuation-stars (c-)
-Normally the comment line prefix inserted for a new line inside a
-comment is deduced from other lines in it.  However there's one
-situation when there's no hint about what the prefix should look like,
-namely when a block comment is broken for the first time.  This style
-variable@footnote{In versions before 5.26, this variable was called
-@code{c-comment-continuation-stars}.  As a compatibility measure,
-@ccmode{} still uses the value on that variable if it's set.} is used
-then as the comment prefix.  It defaults to @samp{*
-}@footnote{Actually, this default setting of
-@code{c-block-comment-prefix} typically gets overriden by the default
-style @code{gnu}, which sets it to blank.  You can see the line
-splitting effect described here by setting a different style,
-e.g. @code{k&r} @xref{Choosing a Style}}, which makes a comment
-
-@example
-/* Got O(n^2) here, which is a Bad Thing. */
-@end example
-
-@noindent
-break into
-
-@example
-@group
-/* Got O(n^2) here,
- * which is a Bad Thing. */
-@end group
-@end example
-
-Note that it won't work to adjust the indentation by putting leading
-spaces in @code{c-block-comment-prefix}, since @ccmode{} still uses the
-normal indentation engine to indent the line.  Thus, the right way to
-fix the indentation is by customizing the @code{c} syntactic symbol.  It
-defaults to @code{c-lineup-C-comments}, which handles the indentation of
-most common comment styles, see @ref{Line-Up Functions}.
-@end defopt
-
-@defopt c-ignore-auto-fill
-@vindex ignore-auto-fill (c-)
-When auto fill mode is enabled, @ccmode{} can selectively ignore it
-depending on the context the line break would occur in, e.g. to never
-break a line automatically inside a string literal.  This variable
-takes a list of symbols for the different contexts where auto-filling
-never should occur:
-
-@table @code
-@item string
-Inside a string or character literal.
-@item c
-Inside a C style block comment.
-@item c++
-Inside a C++ style line comment.
-@item cpp
-Inside a preprocessor directive.
-@item code
-Anywhere else, i.e. in normal code.
-@end table
-
-By default, @code{c-ignore-auto-fill} is set to @code{'(string cpp
-code)}, which means that when auto-fill mode is activated,
-auto-filling only occurs in comments.  In literals, it's often
-desirable to have explicit control over newlines.  In preprocessor
-directives, the necessary @samp{\} escape character before the newline
-is not automatically inserted, so an automatic line break would
-produce invalid code.  In normal code, line breaks are normally
-dictated by some logical structure in the code rather than the last
-whitespace character, so automatic line breaks there will produce poor
-results in the current implementation.
-@end defopt
-
-@c Move this whole chunk up (down to the bottom of the node).
-@ignore
-The commands that do the actual work follow.
-
-@table @asis
-@item @kbd{M-q} (@code{c-fill-paragraph})
-@kindex M-q
-@findex c-fill-paragraph
-@findex fill-paragraph (c-)
-@cindex Javadoc markup
-@cindex Pike autodoc markup
-This is the replacement for @code{fill-paragraph} in @ccmode{}
-buffers. It's used to fill multiline string literals and both block and
-line style comments.  In Java buffers, the Javadoc markup words are
-recognized as paragraph starters.  The line oriented Pike autodoc markup
-words are recognized in the same way in Pike mode.
-
-The function keeps the comment starters and enders of block comments as
-they were before the filling.  This means that a comment ender on the
-same line as the paragraph being filled will be filled with the
-paragraph, and one on a line by itself will stay as it is.  The comment
-starter is handled similarly@footnote{This means that the variables
-@code{c-hanging-comment-starter-p} and @code{c-hanging-comment-ender-p},
-which controlled this behavior in earlier versions of @ccmode{}, are now
-obsolete.}.
-
-@item @kbd{M-j} (@code{c-indent-new-comment-line})
-@kindex M-j
-@findex c-indent-new-comment-line
-@findex indent-new-comment-line (c-)
-This is the replacement for @code{indent-new-comment-line}.  It breaks
-the line at point and indents the new line like the current one.
-@end ignore
-
-@vindex comment-multi-line
-If inside a comment and @code{comment-multi-line} is non-@code{nil}, the
-indentation and line prefix are preserved.  If inside a comment and
-@code{comment-multi-line} is @code{nil}, a new comment of the same type
-is started on the next line and indented as appropriate for comments.
-
-Note that @ccmode{} sets @code{comment-multi-line} to @code{t} at
-startup.  The reason is that @kbd{M-j} could otherwise produce sequences
-of single line block comments for texts that should logically be treated
-as one comment, and the rest of the paragraph handling code
-(e.g. @kbd{M-q} and @kbd{M-a}) can't cope with that, which would lead to
-inconsistent behavior.
-
-@ignore
-@item @kbd{M-x c-context-line-break}
-@findex c-context-line-break
-@findex context-line-break (c-)
-This is a function that works like @code{indent-new-comment-line} in
-comments and @code{newline-and-indent} elsewhere, thus combining those
-two in a way that uses each one in the context it's best suited for.
-I.e. in comments the comment line prefix and indentation is kept for
-the new line, and in normal code it's indented according to context by
-the indentation engine.
-
-In macros it acts like @code{newline-and-indent} but additionally
-inserts and optionally aligns the line ending backslash so that the
-macro remains unbroken.  @xref{Macro Handling}, for details about the
-backslash alignment.
-
-It's not bound to a key by default, but it's intended to be used on the
-@kbd{RET} key.  If you like the behavior of @code{newline-and-indent} on
-@kbd{RET}, you should consider switching to this function.
-
-@item @kbd{M-x c-context-open-line}
-@findex c-context-open-line
-@findex context-open-line (c-)
-This is to @kbd{C-o} (@kbd{M-x open-line}) as
-@code{c-context-line-break} is to @kbd{RET}.  I.e. it works just like
-@code{c-context-line-break} but leaves the point before the inserted
-line break.
-@end table
-@end ignore
-@c End of whole chunk.
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Macro Handling, Font Locking, Custom Filling and Breaking, Top
+@node    Macro Handling, Advanced Customizations, Indentation Engine, Top
 @comment node-name, next, previous, up
 @chapter Macro Handling
 @cindex macros
@@ -5073,299 +5365,7 @@ with the trailing backslashes.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Font Locking, Advanced Customizations, Macro Handling, Top
-@comment node-name, next, previous, up
-@chapter Font Locking
-@cindex font locking
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@strong{Note:} The font locking in AWK mode is currently not integrated
-with the rest of @ccmode{}, so this section does not apply there.
-@xref{AWK Mode Font Locking}, instead.
-
-@cindex Font Lock mode
-
-@ccmode{} provides font locking for its supported languages by supplying
-patterns for use with Font Lock mode.  This means that you get distinct
-faces on the various syntactic parts such as comments, strings, keywords
-and types, which is very helpful in telling them apart at a glance and
-discovering syntactic errors.  @xref{Font Lock,,, emacs, The Emacs
-Editor}, for ways to enable font locking in @ccmode{} buffers.
-
-@menu
-* Font Locking Preliminaries::  
-* Faces::                       
-* Doc Comments::                
-@end menu
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Font Locking Preliminaries, Faces, Font Locking, Font Locking
-@comment node-name, next, previous, up
-@section Font Locking Preliminaries
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-The font locking for most of the @ccmode{} languages were provided
-directly by the Font Lock package prior to version 5.30 of @ccmode{}.
-In the transition to @ccmode{} the patterns have been reworked
-completely and are applied uniformly across all the languages except AWK
-mode, just like the indentation rules (although each language still has
-some pecularities of its own, of course).  Since the languages
-previously had completely separate font locking patterns, this means
-that it's a bit different in most languages now.
-
-The main goal for the font locking in @ccmode{} is accuracy, to provide
-a dependable aid in recognizing the various constructs.  Some, like
-strings and comments, are easy to recognize while others like
-declarations and types can be very tricky.  @ccmode{} can go to great
-lengths to recognize declarations and casts correctly, especially when
-the types aren't recognized by standard patterns.  This is a fairly
-demanding analysis which can be slow on older hardware, and it can
-therefore be disabled by choosing a lower decoration level with the
-variable @code{font-lock-maximum-decoration}.
-
-@vindex font-lock-maximum-decoration
-
-The decoration levels are used as follows:
-
-@enumerate
-@comment 1
-@item
-Minimal font locking: Fontify only comments, strings and preprocessor
-directives (in the languages that use cpp).
-
-@comment 2
-@item
-Fast normal font locking: In addition to level 1, fontify keywords,
-simple types and declarations that are easy to recognize.  The variables
-@code{*-font-lock-extra-types} (where @samp{*} is the name of the
-language) are used to recognize types (see below).  Documentation
-comments like Javadoc are fontified according to
-@code{c-doc-comment-style} (@pxref{Doc Comments}).
-
-Use this if you think the font locking is too slow.  It's the closest
-corresponding level to level 3 in the old font lock patterns.
-
-@comment 3
-@item
-Accurate normal font locking: Like level 2 but uses a different approach
-that can recognize types and declarations much more accurately.  The
-@code{*-font-lock-extra-types} variables are still used, but user
-defined types are recognized correctly anyway in most cases.  Therefore
-those variables should be fairly restrictive and not contain patterns
-that are uncertain.
-
-@cindex Lazy Lock mode
-@cindex Just-in-time Lock mode
-
-This level is designed for fairly modern hardware and a font lock
-support mode like Lazy Lock or Just-in-time Lock mode that only
-fontifies the parts that are actually shown.
-@end enumerate
-
-@cindex user defined types
-@cindex types, user defined
-
-Since user defined types are hard to recognize you can provide
-additional regexps to match those you use:
-
-@defopt c-font-lock-extra-types
-@defoptx c++-font-lock-extra-types
-@defoptx objc-font-lock-extra-types
-@defoptx java-font-lock-extra-types
-@defoptx idl-font-lock-extra-types
-@defoptx pike-font-lock-extra-types
-For each language there's a variable @code{*-font-lock-extra-types},
-where @samp{*} stands for the language in question.  It contains a list
-of regexps that matches identifiers that should be recognized as types,
-e.g. @samp{\\sw+_t} to recognize all identifiers ending with @samp{_t}
-as is customary in C code.  Each regexp should not match more than a
-single identifier.
-
-The default values contain regexps for many types in standard runtime
-libraries that are otherwise difficult to recognize, and patterns for
-standard type naming conventions like the @samp{_t} suffix in C and C++.
-Java, Objective-C and Pike have as a convention to start class names
-with capitals, so there are patterns for that in those languages.
-
-Despite the names of these variables, they are not only used for
-fontification but in other places as well where @ccmode{} needs to
-recognize types.
-@end defopt
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Faces, Doc Comments, Font Locking Preliminaries, Font Locking
-@comment node-name, next, previous, up
-@section Faces
-@cindex faces
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@ccmode{} attempts to use the standard faces for programming languages
-in accordance with their intended purposes as far as possible.  No extra
-faces are currently provided, with the exception of a replacement face
-@code{c-invalid-face} for emacsen that don't provide
-@code{font-lock-warning-face}.
-
-@itemize @bullet
-@item
-@vindex font-lock-comment-face
-Normal comments are fontified in @code{font-lock-comment-face}.
-
-@item
-@vindex font-lock-doc-face
-@vindex font-lock-doc-string-face
-@vindex font-lock-comment-face
-Comments that are recognized as documentation (@pxref{Doc Comments})
-get @code{font-lock-doc-face} (Emacs) or
-@code{font-lock-doc-string-face} (XEmacs) if those faces exist.  If
-they don't then @code{font-lock-comment-face} is used.
-
-@item
-@vindex font-lock-string-face
-String and character literals are fontified in
-@code{font-lock-string-face}.
-
-@item
-@vindex font-lock-keyword-face
-Keywords are fontified with @code{font-lock-keyword-face}.
-
-@item
-@vindex font-lock-function-name-face
-@code{font-lock-function-name-face} is used for function names in
-declarations and definitions, and classes in those contexts.  It's also
-used for preprocessor defines with arguments.
-
-@item
-@vindex font-lock-variable-name-face
-Variables in declarations and definitions, and other identifiers in such
-variable contexts, get @code{font-lock-variable-name-face}.  It's also
-used for preprocessor defines without arguments.
-
-@item
-@vindex font-lock-constant-face
-@vindex font-lock-reference-face
-Builtin constants are fontified in @code{font-lock-constant-face} if it
-exists, @code{font-lock-reference-face} otherwise.  As opposed to the
-preceding two faces, this is used on the names in expressions, and it's
-not used in declarations, even if there happen to be a @samp{const} in
-them somewhere.
-
-@item
-@vindex font-lock-type-face
-@code{font-lock-type-face} is put on types (both predefined and user
-defined) and classes in type contexts.
-
-@item
-@vindex font-lock-constant-face
-@vindex font-lock-reference-face
-Label identifiers get @code{font-lock-constant-face} if it exists,
-@code{font-lock-reference-face} otherwise.
-
-@item
-Name qualifiers and identifiers for scope constructs are fontified like
-labels.
-
-@item
-Special markup inside documentation comments are also fontified like
-labels.
-
-@item
-@vindex font-lock-preprocessor-face
-@vindex font-lock-builtin-face
-@vindex font-lock-reference-face
-Preprocessor directives get @code{font-lock-preprocessor-face} if it
-exists (i.e. XEmacs).  In Emacs they get @code{font-lock-builtin-face}
-or @code{font-lock-reference-face}, for lack of a closer equivalent.
-
-@item
-@vindex font-lock-warning-face
-@vindex c-invalid-face
-@vindex invalid-face (c-)
-Some kinds of syntactic errors are fontified with
-@code{font-lock-warning-face} in Emacs.  In older XEmacs versions
-there's no corresponding standard face, so there a special
-@code{c-invalid-face} is used, which is defined to stand out sharply by
-default.
-
-Note that it's not used for @samp{#error} or @samp{#warning} directives,
-since those aren't syntactic errors in themselves.
-@end itemize
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Doc Comments,  , Faces, Font Locking
-@comment node-name, next, previous, up
-@section Documentation Comments
-@cindex documentation comments
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-There are various tools to supply documentation in the source as
-specially structured comments, e.g. the standard Javadoc tool in Java.
-@ccmode{} provides an extensible mechanism to fontify such comments and
-the special markup inside them.
-
-@defopt c-doc-comment-style
-@vindex doc-comment-style (c-)
-This is a style variable that specifies which documentation comment
-style to recognize, e.g. @code{javadoc} for Javadoc comments.
-
-The value may also be a list of styles, in which case all of them are
-recognized simultaneously (presumably with markup cues that don't
-conflict).
-
-The value may also be an association list to specify different comment
-styles for different languages.  The symbol for the major mode is then
-looked up in the alist, and the value of that element is interpreted as
-above if found.  If it isn't found then the symbol `other' is looked up
-and its value is used instead.
-
-Note that @ccmode{} uses this variable to set other variables that
-handle fontification etc.  That's done at mode initialization or when
-you switch to a style which sets this variable.  Thus, if you change it
-in some other way, e.g. interactively in a CC Mode buffer, you will need
-to do @kbd{M-x java-mode} (or whatever mode you're currently using) to
-reinitialize.
-
-@findex c-setup-doc-comment-style
-@findex setup-doc-comment-style (c-)
-Note also that when @ccmode{} starts up, the other variables are
-modified before the mode hooks are run.  If you change this variable in
-a mode hook, you have to call @code{c-setup-doc-comment-style}
-afterwards to redo that work.
-@end defopt
-
-@ccmode{} currently provides handing of the following doc comment
-styles:
-
-@table @code
-@item javadoc
-@cindex Javadoc markup
-Javadoc comments, the standard tool in Java.
-
-@item autodoc
-@cindex Pike autodoc markup
-For Pike autodoc markup, the standard in Pike.
-@end table
-
-The above is by no means complete.  If you'd like to see support for
-other doc comment styles, please let us know (@pxref{Mailing Lists and
-Bug Reports}).
-
-You can also write your own doc comment fontification support to use
-with @code{c-doc-comment-style}: Supply a variable or function
-@code{*-font-lock-keywords} where @samp{*} is the name you want to use
-in @code{c-doc-comment-style}.  If it's a variable, it's prepended to
-@code{font-lock-keywords}.  If it's a function, it's called at mode
-initialization and the result is prepended.  For an example, see
-@code{javadoc-font-lock-keywords} in @file{cc-fonts.el}.
-
-If you add support for another doc comment style, please consider
-contributing it --- send a note to @email{bug-cc-mode@@gnu.org}.
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Advanced Customizations, AWK Mode, Font Locking, Top
+@node    Advanced Customizations, AWK Mode, Macro Handling, Top
 @comment node-name, next, previous, up
 @chapter Advanced Customizations
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
