@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.52 $
-;; Last Modified:   $Date: 1994-08-17 23:05:01 $
+;; Version:         $Revision: 4.53 $
+;; Last Modified:   $Date: 1994-08-22 22:28:03 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-17 23:05:01 $|$Revision: 4.52 $|
+;; |$Date: 1994-08-22 22:28:03 $|$Revision: 4.53 $|
 
 ;;; Code:
 
@@ -371,6 +371,11 @@ element that it defines is looked up in this list, and if found, the
 NL-LIST is used to determine where newlines are inserted.  If the
 language element for the colon is not found in this list, the default
 behavior is to not insert any newlines.")
+
+(defvar c-hanging-comment-ender-p t
+  "*If nil, `c-fill-paragraph' leaves C block comment enders on their own line.
+Default value is t, which inhibits leaving block comment ending string
+`*/' on a line by itself.  This is BOCM's sole behavior.")
 
 (defvar c-backslash-column 48
   "*Column to insert backslashes when macroizing a region.")
@@ -940,7 +945,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.52 $
+cc-mode Revision: $Revision: 4.53 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -979,7 +984,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.52 $
+cc-mode Revision: $Revision: 4.53 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1016,7 +1021,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.52 $
+cc-mode Revision: $Revision: 4.53 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1901,12 +1906,13 @@ preserving the comment indentation or line-starting decorations."
 		    (delete-region (point) (+ (point) chars-to-delete)))
 		;; Find the comment ender (should be on last line of
 		;; buffer, given the narrowing) and don't leave it on
-		;; its own line.
+		;; its own line, unless that's the style that's desired.
 		(goto-char (point-max))
 		(forward-line -1)
 		(search-forward "*/" nil 'move)
 		(beginning-of-line)
-		(if (looking-at "[ \t]*\\*/")
+		(if (and c-hanging-comment-ender-p
+			 (looking-at "[ \t]*\\*/"))
 		    (delete-indentation)))))
 	;; Outside of comments: do ordinary filling.
 	(fill-paragraph arg)))))
@@ -3936,7 +3942,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.52 $"
+(defconst c-version "$Revision: 4.53 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
