@@ -5,8 +5,8 @@
 ;; Author:        1995 Barry A. Warsaw
 ;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
 ;; Created:       March 1995, split from cc-mode.el
-;; Version:       $Revision: 1.6 $
-;; Last Modified: $Date: 1995-06-11 20:38:12 $
+;; Version:       $Revision: 1.7 $
+;; Last Modified: $Date: 1995-06-11 20:42:38 $
 ;; Keywords: c languages oop
 
 ;; This file is not part of GNU Emacs.
@@ -48,7 +48,8 @@
 ;; This will redefine certain cc-mode functions and affect all cc-mode
 ;; buffers globally.
 ;;
-;; This file is completely unsupported!
+;; This file is completely unsupported!  I have no idea whether this
+;; will work with such things as cc-mode-18.el.
 
 
 ;;; Code:
