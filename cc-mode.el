@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.10 $
-;; Last Modified:   $Date: 1993-09-24 22:05:21 $
+;; Version:         $Revision: 3.11 $
+;; Last Modified:   $Date: 1993-09-27 15:36:22 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-24 22:05:21 $|$Revision: 3.10 $|
+;; |$Date: 1993-09-27 15:36:22 $|$Revision: 3.11 $|
 
 ;;; Code:
 
@@ -138,6 +138,15 @@
 ;; ======================================================================
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
+(defvar c-brace-offset 0
+  "*Extra indentation for braces, compared with other text in same context.
+Can be an integer or a list.  If an integer, this value is used for
+all open braces.  If a list of the form (OTHERS . TOPLEVEL), OTHERS is
+an integer describing the offset given to all but top-level (e.g.
+function) open braces, while TOPLEVEL is an integer describing the
+offset given only to braces which open a top-level construct,
+including in-class, inline methods.")
 
 (defconst c++-emacs-features
   (let ((mse-spec 'no-dual-comments)
@@ -470,7 +479,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.10 $
+  "Major mode for editing C++ code.  $Revision: 3.11 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -505,7 +514,8 @@ from their c-mode cousins.
     An open brace following other text is treated as if it were
     this far to the right of the start of its line.
  c-brace-offset
-    Extra indentation for line if it starts with an open brace.
+    Extra indentation for line if it starts with an open brace. Can be
+    a list or integer.
  c-continued-brace-offset
     Extra indentation given to a brace that starts a substatement.
     This is in addition to `c-continued-statement-offset'.
@@ -538,7 +548,8 @@ from their c-mode cousins.
     help improve performance at the expense of some accuracy.  Patched
     Emacses are both fast and accurate.
  c++-block-close-brace-offset
-    Extra indentation give to braces which close a block.
+    Extra indentation give to braces which close a block. Can be a
+    list or an integer.
  c++-cleanup-list
     A list of construct \"clean ups\" which c++-mode will perform when
     auto-newline feature is on.  Current legal values are:
@@ -702,7 +713,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.10 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.11 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1385,10 +1396,15 @@ of the expression are preserved."
 	     ;; looking at an open brace
 	     ((= (following-char) ?{)
 	      (setq this-indent
-		    (+ this-indent c-brace-offset
-		       (if (c++-at-top-level-p t (car contain-stack))
-			   c-continued-brace-offset
-			 c-indent-level))))
+		    (+ this-indent
+		       ;; c-brace-offset now can handle separate
+		       ;; indentations for top level constructs
+		       (if (listp c-brace-offset)
+			   (if (c++-at-top-level-p t (car contain-stack))
+			       (cdr c-brace-offset)
+			     (car c-brace-offset))
+			 c-brace-offset)
+		       c-indent-level)))
 	     ;; check for continued statements
 	     ((save-excursion
 		(c++-backward-syntactic-ws (car contain-stack))
@@ -1829,14 +1845,20 @@ point of the beginning of the C++ definition."
 	 (indent (c++-calculate-indent nil bod))
 	 beg shift-amt
 	 close-paren top-close-paren
+	 open-paren top-open-paren
 	 (case-fold-search nil)
 	 (pos (- (point-max) (point))))
-    ;; calculate block close paren offset
+    ;; calculate block open and close paren offsets
     (if (listp c++-block-close-brace-offset)
 	(setq close-paren (car c++-block-close-brace-offset)
 	      top-close-paren (cdr c++-block-close-brace-offset))
       (setq close-paren c++-block-close-brace-offset
 	    top-close-paren c++-block-close-brace-offset))
+    (if (listp c-brace-offset)
+	(setq open-paren (car c-brace-offset)
+	      top-open-paren (cdr c-brace-offset))
+      (setq open-paren c-brace-offset
+	    top-open-paren c-brace-offset))
     ;; now start cleanup
     (beginning-of-line)
     (setq beg (point))
@@ -1898,7 +1920,14 @@ point of the beginning of the C++ definition."
 			    top-close-paren
 			  close-paren))))
        ((= (following-char) ?{)
-	(setq indent (+ indent c-brace-offset))))))
+	(setq indent
+	      (+ indent
+		 ;; c-brace-offset can now take a list or an integer
+		 (if (listp c-brace-offset)
+		     (if (c++-at-top-level-p nil bod)
+			 top-open-paren
+		       open-paren)))))
+       )))				; end-cond
     (skip-chars-forward " \t")
     (setq shift-amt (- indent (current-column)))
     (if (zerop shift-amt)
@@ -1985,7 +2014,14 @@ BOD is the beginning of the C++ definition."
 	  state do-indentation literal in-meminit-p
 	  containing-sexp streamop-pos char-before-ip
 	  (inclass-shift 0) inclass-depth inclass-unshift
-	  (bod (or bod (c++-point 'bod))))
+	  (bod (or bod (c++-point 'bod)))
+	  (open-paren (if (listp c-brace-offset)
+			  (car c-brace-offset)
+			c-brace-offset))
+	  (top-open-paren (if (listp c-brace-offset)
+			      (cdr c-brace-offset)
+			    c-brace-offset))
+	  )				;end-let
       (if parse-start
 	  (goto-char parse-start)
 	(goto-char bod))
@@ -2033,21 +2069,22 @@ BOD is the beginning of the C++ definition."
 	   (goto-char indent-point)
 	   (skip-chars-forward " \t")
 	   (cond
-	    ;;
+	    ;; CASE 1: are we at the top-level wrt enclosing class defn?
 	    ((or (= (following-char) ?{)
-		 (progn
-		   (c++-backward-syntactic-ws parse-start)
-		   (bobp)))
-	     c-continued-brace-offset)
-	    ;; first arg decl or member init
+		 (progn (c++-backward-syntactic-ws parse-start)
+			(bobp)))
+	     top-open-paren)
+	    ;; CASE 2: first arg decl or member init
 	    ((c++-in-function-p)
 	     (goto-char indent-point)
 	     (skip-chars-forward " \t")
 	     (if (= (following-char) ?:)
 		 c++-member-init-indent
 	       c-argdecl-indent))
-	    ;;
+	    ;; CASE 3: 1st line after hanging mem init colon or access
+	    ;; specifier
 	    ((progn
+	       ;; skip past optional semicolons
 	       (if (= (preceding-char) ?\;)
 		   (progn
 		     (backward-char 1)
@@ -2102,6 +2139,7 @@ BOD is the beginning of the C++ definition."
 	       (+ c++-member-init-indent
 		  (if (looking-at ":[ \t]*$")
 		      (or c++-continued-member-init-offset 0) 0))))
+	    ;; CASE 4: friend declaration?
 	    ((or (= (preceding-char) ?})
 		 (= (preceding-char) ?\))
 		 (save-excursion
@@ -2113,8 +2151,8 @@ BOD is the beginning of the C++ definition."
 	     (- (current-indentation)
 		;; remove some nested inclass indentation
 		inclass-unshift))
-	    ;; cont arg decls or member inits.  we might be inside a
-	    ;; K&R C arg decl
+	    ;; CASE 5: cont arg decls or member inits, or we might be
+	    ;; inside a K&R C arg decl
 	    ((save-excursion
 	       (while (and (< bod (point))
 			   (memq (preceding-char) '(?\, ?\;)))
@@ -2129,13 +2167,14 @@ BOD is the beginning of the C++ definition."
 		  (if (= (preceding-char) ?,)
 		      c-continued-statement-offset
 		    0))))
+	    ;; CASE 6: whitespace before comment?
 	    ((progn
 	       (beginning-of-line)
 	       (skip-chars-forward " \t")
 	       (or (memq (c++-in-literal bod) '(c c++))
 		   (looking-at "/[/*]")))
 	     0)
-	    ;; are we looking at the first member init?
+	    ;; CASE 7: are we looking at the first member init?
 	    ((and (= (following-char) ?:)
 		  (save-excursion
 		    (c++-backward-syntactic-ws bod)
@@ -2148,8 +2187,8 @@ BOD is the beginning of the C++ definition."
 		 (skip-chars-forward " \t")
 		 (- (current-column)
 		    inclass-shift))))
-	    ;; else first check to see if its a multiple inheritance
-	    ;; continuation line, but not a K&R C arg decl
+	    ;; CASE 8: else first check to see if its a multiple
+	    ;; inheritance continuation line, but not a K&R C arg decl
 	    ((and (not (eq major-mode 'c++-c-mode))
 		  (looking-at c++-inher-key))
 	     (if (= char-before-ip ?,)
@@ -2157,24 +2196,25 @@ BOD is the beginning of the C++ definition."
 			(current-column))
 	       ;; nope, its probably a nested class
 	       0))
-	    ;; we might be looking at the opening brace of a class
-	    ;; defun
+	    ;; CASE 9: we might be looking at the opening brace of a
+	    ;; class defun
 	    ((= (following-char) ?\{)
 	     ;; indentation of opening brace may not be zero
 	     (- (current-indentation)
 		;; remove some nested inclass indentation
 		inclass-unshift))
+	    ;; CASE 10: blank line, indent next line to zero
 	    ((eolp)
-	     ;; looking at a blank line, indent next line to zero
 	     0)
-	    ;; at beginning of buffer, if nothing else, indent to zero
+	    ;; CASE 11: at beginning of buffer, if nothing else,
+	    ;; indent to zero
 	    ((save-excursion
 	       (goto-char indent-point)
 	       (beginning-of-line)
 	       (bobp))
 	     0)
-	    ;; this could be a compound statement, but make sure its
-	    ;; not a member init list
+	    ;; CASE 12: this could be a compound statement, but make
+	    ;; sure its not a member init list
 	    ((save-excursion
 	       (goto-char indent-point)
 	       (c++-backward-syntactic-ws bod)
@@ -2187,6 +2227,9 @@ BOD is the beginning of the C++ definition."
 		      (forward-line 1)
 		      (not (setq in-meminit-p (looking-at "[ \t]*:"))))))
 	     c-continued-statement-offset)
+	    ;; CASE 13: default case, we could be in a member init
+	    ;; call, or the first line of a member init list, or a
+	    ;; compound state.
 	    (t
 	     (if (c++-in-parens-p)
 		 ;; we are perhaps inside a member init call
@@ -2324,7 +2367,7 @@ BOD is the beginning of the C++ definition."
 	       ;; open-braces not the first thing in a line, add
 	       ;; in c-brace-imaginary-offset.
 	       (+ (if (and (bolp) (zerop c-indent-level))
-		      (+ c-brace-offset c-continued-statement-offset)
+		      (+ open-paren c-continued-statement-offset)
 		    c-indent-level)
 		  ;; Move back over whitespace before the openbrace.
 		  ;; If openbrace is not first nonwhite thing on the line,
@@ -2602,7 +2645,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.10 $"
+(defconst c++-version "$Revision: 3.11 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
