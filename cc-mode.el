@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-21 15:35:11 $
-;; Version:         $Revision: 2.166 $
+;; Last Modified:   $Date: 1992-07-21 21:59:27 $
+;; Version:         $Revision: 2.167 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-21 15:35:11 $|$Revision: 2.166 $|
+;; |$Date: 1992-07-21 21:59:27 $|$Revision: 2.167 $|
 
 
 ;; ======================================================================
@@ -215,6 +215,15 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 0
   "*Indentation offset for line which contains only C or C++ style comments.")
+(defvar c++-C-block-comments-indent-p t
+  "*4 styles of C block comments are supported. If this variable is non-nil,
+then styles 1-3 are supported. If this variable is nil, style 4 is supported.
+style 1:       style 2:       style 3:       style 4:
+/*             /*             /*             /*
+   blah         * blah        ** blah        blah
+   blah         * blah        ** blah        blah
+   */           */            */             */
+")
 (defvar c++-cleanup-list nil
   "*List of various C++ constructs to \"clean up\".
 These cleanups only take place when auto-newline minor mode is on.
@@ -317,7 +326,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.166 $
+  "Major mode for editing C++ code.  $Revision: 2.167 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -518,7 +527,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.166 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.167 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1325,7 +1334,7 @@ point of the beginning of the C++ definition."
     (cond ((eq indent nil)
 	   (setq indent (current-indentation)))
 	  ((eq indent t)
-	   (setq indent (calculate-c-indent-within-comment)))
+	   (setq indent (c++-calculate-c-indent-within-comment)))
 	  ((looking-at "[ \t]*#")
 	   (setq indent 0))
 	  ((save-excursion
@@ -1434,7 +1443,7 @@ BOD is the beginning of the C++ definition."
 	     ;; in a string.
 	     nil)
 	    ((memq literal '(c c++))
-	     ;; in a C comment.
+	     ;; in a C or C++ style comment.
 	     t)
 	    ;; is this a comment-only line in the first column or
 	    ;; comment-column?  if so we don't change the indentation,
@@ -1734,6 +1743,28 @@ BOD is the beginning of the C++ definition."
 			     (forward-sexp -1))
 			 ;; Get initial indentation of the line we are on.
 			 (current-indentation))))))))))))
+
+(defun c++-calculate-c-indent-within-comment ()
+  "Return the indentation amount for line, assuming that
+the current line is to be regarded as part of a block comment."
+  (let (end stars indent)
+    (save-excursion
+      (beginning-of-line)
+      (skip-chars-forward " \t")
+      (setq stars (if (looking-at "\\*\\*?")
+		      (- (match-end 0) (match-beginning 0))
+		    0))
+      (skip-chars-backward " \t\n")
+      (setq end (point))
+      (beginning-of-line)
+      (skip-chars-forward " \t")
+      (if (re-search-forward "/\\*[ \t]*" end t)
+	  (goto-char (+ (match-beginning 0)
+			(cond (c++-C-block-comments-indent-p 0)
+			      ((= stars 1) 1)
+			      ((= stars 2) 0)
+			      (t (- (match-end 0) (match-beginning 0)))))))
+      (current-column))))
 
 
 ;; ======================================================================
@@ -2056,7 +2087,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.166 $"
+(defconst c++-version "$Revision: 2.167 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2079,6 +2110,7 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-empty-arglist-indent
 		       'c++-always-arglist-indent-p
 		       'c++-comment-only-line-offset
+		       'c++-C-block-comments-indent-p
 		       'c++-cleanup-list
 		       'c++-hanging-braces
 		       'c++-hanging-member-init-colon
