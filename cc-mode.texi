@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.17 $
+@comment manual version: $Revision: 2.18 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-04-21 21:16:43 $
+@comment Last modification: $Date: 1995-04-21 21:21:29 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -455,10 +455,10 @@ would see:
 This indicates that the @samp{int} line is the first statement in a top
 level function block, and is indented relative to buffer position 29,
 which is the brace just after the function header.
-@group
 
 Here's another example:
 @example 
+@group
 
 Example 2:
 
@@ -471,9 +471,10 @@ Example 2:
   7:     return( val );
   8: @}
 
-@end example
 @end group
+@end example
 
+@noindent
 Hitting @kbd{C-c C-s} on line 4 gives us:
 @example
 
