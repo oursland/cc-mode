@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.153 $
-;; Last Modified:   $Date: 1993-12-28 14:20:55 $
+;; Version:         $Revision: 3.154 $
+;; Last Modified:   $Date: 1993-12-28 14:29:41 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-28 14:20:55 $|$Revision: 3.153 $|
+;; |$Date: 1993-12-28 14:29:41 $|$Revision: 3.154 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.153 $
+CC-MODE REVISION: $Revision: 3.154 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.153 $
+CC-MODE REVISION: $Revision: 3.154 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2516,7 +2516,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement nil containing-sexp)
-		    (setq placeholder (point)))))
+		    (setq placeholder (point))))
+	       (/= placeholder containing-sexp))
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
@@ -2562,7 +2563,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ;; beginning of statement or substatement
 	   (t
 	    (c-beginning-of-statement nil
-	     (progn
+	     (save-excursion
 	       (goto-char placeholder)
 	       (and (looking-at c-conditional-key)
 		    (c-safe (progn (forward-sexp 2) t))
@@ -2923,7 +2924,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.153 $"
+(defconst c-version "$Revision: 3.154 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
