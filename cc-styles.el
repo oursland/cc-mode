@@ -666,9 +666,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 			  c-offsets-alist
 			  )))
 	  (c-add-style "cc-mode" '("user"))
-	  ;; the default style is now GNU.  This can be overridden in
-	  ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
-	  (c-set-style c-default-style)))
+	  ))
     (if c-style-variables-are-local-p
 	(c-make-styles-buffer-local))))
 
