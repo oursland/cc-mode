@@ -1575,7 +1575,7 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 			 '1-bit)
 		       list)))
 
-    (let ((buf (generate-new-buffer "test"))
+    (let ((buf (generate-new-buffer " test"))
 	  parse-sexp-lookup-properties
 	  parse-sexp-ignore-comments
 	  lookup-syntax-properties)
