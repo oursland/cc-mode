@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-08 16:32:27 $
-;; Version:         $Revision: 2.94 $
+;; Last Modified:   $Date: 1992-06-08 21:26:17 $
+;; Version:         $Revision: 2.95 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-08 16:32:27 $|$Revision: 2.94 $|
+;; |$Date: 1992-06-08 21:26:17 $|$Revision: 2.95 $|
 
 
 ;; ======================================================================
@@ -213,7 +213,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.94 $
+  "Major mode for editing C++ code.  $Revision: 2.95 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -563,7 +563,7 @@ backward-delete-char-untabify."
 		   (if (and open-brace-p
 			    (or (eq c++-hanging-braces t)
 				(and c++-hanging-braces
-				     (not (c++-at-top-level-p)))))
+				     (not (c++-at-top-level-p t)))))
 		       (setq c++-auto-newline nil))
 		   (c++-auto-newline)
 		   ;; this may have auto-filled so we need to indent
@@ -686,9 +686,10 @@ for member initialization list."
 	       (c++-backward-to-noncomment bod)
 	       (= (preceding-char) ?\?))
 	(setq c++-auto-newline nil))
-       ;; check for being at top level. if not, process as normal
+       ;; check for being at top level or top with respect to the
+       ;; class. if not, process as normal
        ((progn (goto-char insertion-point)
-	       (not (c++-at-top-level-p))))
+	       (not (c++-at-top-level-p t))))
        ;; if at top level, check to see if we are introducing a member
        ;; init list. if not, continue
        ((progn (c++-backward-to-noncomment bod)
@@ -1014,10 +1015,11 @@ characters to escape are defined in the variable c++-untame-characters."
 ;; ======================================================================
 ;; defuns for parsing syntactic elements
 ;; ======================================================================
-(defun c++-at-top-level-p ()
+(defun c++-at-top-level-p (&optional wrt)
   "Return t if point is not inside a containing C++ expression, nil
-if it is embedded in an expression."
-  ;; hack to work around emacs comment bug
+if it is embedded in an expression.  If optional WRT is supplied
+non-nil, returns t if point at the top level with respect to the
+containing class definition (useful for inline functions)."
   (save-excursion
     (let ((indent-point (point))
 	  (case-fold-search nil)
@@ -1027,7 +1029,16 @@ if it is embedded in an expression."
 	(setq parse-start (point))
 	(setq state (parse-partial-sexp (point) indent-point 0))
 	(setq containing-sexp (car (cdr state))))
-      (null containing-sexp))))
+      (or (null containing-sexp)
+	  (and wrt
+	       ;; check to see if we're at the top level with respect
+	       ;; to the containing class definition
+	       (= (car state) 1)
+	       (let ((here (point)))
+		 (goto-char containing-sexp)
+		 (goto-char (scan-lists (point) -1 -1))
+		 (re-search-forward "\\<\\(class\\|struct\\)\\>" here 'move)
+		 ))))))
 
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
@@ -1187,6 +1198,7 @@ BOD is the beginning of the C++ definition."
 	  (case-fold-search nil)
 	  state do-indentation
 	  containing-sexp
+	  (inclass-shift 0)
 	  (bod (or bod (c++-point-bod))))
       (if parse-start
 	  (goto-char parse-start)
@@ -1215,7 +1227,7 @@ BOD is the beginning of the C++ definition."
 			 (or (zerop (current-column))
 			     (= (current-column) comment-column))))
 	     (current-column))
-	    ((null containing-sexp)
+	    ((c++-at-top-level-p t)
 	     ;; Line is at top level.  May be comment-only line, data
 	     ;; or function definition, or may be function argument
 	     ;; declaration or member initialization.  Indent like the
@@ -1234,68 +1246,93 @@ BOD is the beginning of the C++ definition."
 	     ;; case this is the second line of member inits.  It is
 	     ;; assumed that arg decls and member inits are not mixed.
 	     ;;
-	     (goto-char indent-point)
-	     (skip-chars-forward " \t")
-	     (if (looking-at "/[/*]")
-		 ;; comment only line, but must not be in the first
-		 ;; column since cond case above would have caught it
-		 0
-	       (if (= (following-char) ?{)
-		   0   ; Unless it starts a function body
-		 (c++-backward-to-noncomment (or parse-start (point-min)))
-		 (if (not (bobp))
-		     (progn (forward-char -1)
+	     (+
+	      ;; add an offset if we are inside a class defun body,
+	      ;; i.e. we are at the top level, but only wrt a
+	      ;; containing class
+	      (setq inclass-shift
+		    (if (null containing-sexp) 0 c-indent-level))
+	      (progn
+		(goto-char indent-point)
+		(skip-chars-forward " \t")
+		(if (looking-at "/[/*]")
+		    ;; comment only line, but must not be in the first
+		    ;; column since cond case above would have caught it
+		    0
+		  (if (= (following-char) ?{)
+		      0
+		    (c++-backward-to-noncomment (or parse-start (point-min)))
+		    (if (not (bobp))
+			(progn (forward-char -1)
+			       (skip-chars-backward " \t")))
+		    (if (or (= (preceding-char) ?\))
+			    (and (= (preceding-char) ?t)
+				 (save-excursion
+				   (forward-word -1)
+				   (looking-at "\\<const\\>"))))
+			(progn		; first arg decl or member init
+			  (goto-char indent-point)
+			  (skip-chars-forward " \t")
+			  (if (= (following-char) ?:)
+			      c++-member-init-indent
+			    c-argdecl-indent))
+		      (if (= (preceding-char) ?\;)
+			  (progn
+			    (backward-char 1)
 			    (skip-chars-backward " \t")))
-		 (if (or (= (preceding-char) ?\))
-			 (and (= (preceding-char) ?t)
+		      ;; may be first line after a hanging member init colon
+		      (if (or (= (preceding-char) ?:)
 			      (save-excursion
-				(forward-word -1)
-				(looking-at "\\<const\\>"))))
-		     (progn		; first arg decl or member init
-		       (goto-char indent-point)
-		       (skip-chars-forward " \t")
-		       (if (= (following-char) ?:)
-			   c++-member-init-indent
-			 c-argdecl-indent))
-		   (if (= (preceding-char) ?\;)
-		       (progn
-			 (backward-char 1)
-			 (skip-chars-backward " \t")))
-		   ;; may be first line after a hanging member init colon
-		   (if (= (preceding-char) ?:)
-		       c++-member-init-indent
-		     (if (or (= (preceding-char) ?})
-			     (= (preceding-char) ?\)))
-			 0
-		       (beginning-of-line) ; cont arg decls or member inits
-		       (skip-chars-forward " \t")
-		       (if (or (c++-in-comment-p bod)
-			       (looking-at "/[/*]"))
-			   0
-			 (if (= (following-char) ?:)
-			     (if c++-continued-member-init-offset
-				 (+ (current-indentation)
-				    c++-continued-member-init-offset)
-			       (progn
-				 (forward-char 1)
-				 (skip-chars-forward " \t")
-				 (current-column)))
-			   ;; else first check to see if its a
-			   ;; multiple inheritance continuation line
-			   (if (looking-at
-				"\\(class\\|struct\\)[ \t]+\\w+[ \t]*:[ \t]*")
-			       (if (progn (goto-char indent-point)
-					  (skip-chars-backward " \t\n")
-					  (= (preceding-char) ?,))
-				   (progn (goto-char (match-end 0))
-					  (current-column))
-				 0)
-			     (if (eolp)
-				 ;; looking at a blank line, indent
-				 ;; next line to zero
-				 0
-			       (current-indentation)))))))
-		   ))))
+				(forward-line 1)
+				(skip-chars-forward " \t")
+				(= (following-char) ?:)))
+			  (- c++-member-init-indent
+			     (if (progn (beginning-of-line)
+					(skip-chars-forward " \t")
+					(looking-at
+					 (concat
+					  "\\<\\(public\\|protected\\|private"
+					  "\\)\\>:")))
+				 inclass-shift
+			       0))
+			(if (or (= (preceding-char) ?})
+				(= (preceding-char) ?\)))
+			    0
+			  (beginning-of-line) ; cont arg decls or member inits
+			  (skip-chars-forward " \t")
+			  (if (or (c++-in-comment-p bod)
+				  (looking-at "/[/*]"))
+			      0
+			    (if (= (following-char) ?:)
+				(if c++-continued-member-init-offset
+				    (+ (current-indentation)
+				       c++-continued-member-init-offset)
+				  (progn
+				    (forward-char 1)
+				    (skip-chars-forward " \t")
+				    (- (current-column) inclass-shift)))
+			      ;; else first check to see if its a
+			      ;; multiple inheritance continuation line
+			      (if (looking-at
+				   (concat "\\(class\\|struct\\)"
+					   "[ \t]+\\w+[ \t]*:[ \t]*"))
+				  (if (progn (goto-char indent-point)
+					     (skip-chars-backward " \t\n")
+					     (= (preceding-char) ?,))
+				      (progn (goto-char (match-end 0))
+					     (current-column))
+				    0)
+				;; we might be looking at the opening
+				;; brace of a class defun
+				(if (= (following-char) ?\{)
+				    (- c-indent-level inclass-shift)
+				  (if (eolp)
+				      ;; looking at a blank line, indent
+				      ;; next line to zero
+				      0
+				    (- (current-indentation) inclass-shift)
+				    )))))))
+		      ))))))
 	    ((/= (char-after containing-sexp) ?{)
 	     ;; line is expression, not statement:
 	     ;; indent to just after the surrounding open -- unless
@@ -1768,7 +1805,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.94 $"
+(defconst c++-version "$Revision: 2.95 $"
   "c++-mode version number.")
 
 (defun c++-version ()
