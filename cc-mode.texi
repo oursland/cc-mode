@@ -2104,6 +2104,14 @@ open parenthesis followed by a newline.
 parentheses that close argument lists will line up under the parenthesis
 that opened the argument list.
 
+@findex c-lineup-close-paren
+@findex lineup-close-paren (c-)
+@item
+@code{c-lineup-close-paren} --- lines up the closing parenthesis under
+its corresponding open parenthesis if that one is followed by code.
+Otherwise, if the open parenthesis ends its line, no indentation is
+added.  Works with any @code{@dots{}-close} symbol.
+
 @findex c-lineup-streamop
 @findex lineup-streamop (c-)
 @item
@@ -2114,6 +2122,13 @@ that opened the argument list.
 @findex lineup-multi-inher (c-)
 @item
 @code{c-lineup-multi-inher} --- lines up multiple inheritance lines.
+
+@findex c-indent-one-line-block
+@findex indent-one-line-block (c-)
+@item
+@code{c-indent-one-line-block} --- adds @code{c-basic-offset} to the
+indentation if the line is a one line block, otherwise 0.  Intended to
+be used with any opening brace symbol, e.g. @code{substatement-open}.
 
 @findex c-lineup-C-comments
 @findex lineup-C-comments (c-)

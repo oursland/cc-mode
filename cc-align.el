@@ -88,7 +88,7 @@
       (- ce-curcol langelem-col -1))))
 
 (defun c-lineup-arglist-close-under-paren (langelem)
-  ;; lineup an arglist-intro line to just after the open paren
+  ;; lineup an arglist-close line under the corresponding open paren
   (save-excursion
     (let ((langelem-col (c-langelem-col langelem t))
 	  (ce-curcol (save-excursion
@@ -96,6 +96,35 @@
 		       (backward-up-list 1)
 		       (current-column))))
       (- ce-curcol langelem-col))))
+
+(defun c-lineup-close-paren (langelem)
+  ;; Indents the closing paren under its corresponding open paren if
+  ;; the open paren is followed by code.  If the open paren ends its
+  ;; line, no indentation is added.  E.g:
+  ;;
+  ;; main (int,                main (
+  ;;       char **               int, char **
+  ;;      )            <->     )              <- c-lineup-close-paren
+  ;;
+  ;; Works with any type of paren.
+  (save-excursion
+    (condition-case nil
+	(let (opencol spec)
+	  (beginning-of-line)
+	  (backward-up-list 1)
+	  (setq spec (if (fboundp 'c-looking-at-special-brace-list)
+			 (c-looking-at-special-brace-list)))
+	  (if spec (goto-char (car spec)))
+	  (setq opencol (current-column))
+	  (forward-char 1)
+	  (if spec (progn
+		     (c-forward-syntactic-ws)
+		     (forward-char 1)))
+	  (c-forward-syntactic-ws (c-point 'eol))
+	  (if (eolp)
+	      0
+	    (- opencol (c-langelem-col langelem t))))
+      (error 0))))
 
 (defun c-lineup-streamop (langelem)
   ;; lineup stream operators
@@ -152,6 +181,27 @@
 	      (setq extra c-basic-offset))))
        (t (goto-char iopl)))
       (+ (- (current-column) langelem-col) extra))))
+
+(defun c-indent-one-line-block (langelem)
+  ;; Adds c-basic-offset to the indentation if the line is a one line
+  ;; block, otherwise 0.  E.g:
+  ;;
+  ;; if (n)                     if (n)
+  ;;   {m+=n; n=0;}     <->     {            <- c-indent-one-line-block
+  ;;                              m+=n; n=0;
+  ;;                            }
+  (save-excursion
+    (let ((eol (progn (end-of-line) (point))))
+      (beginning-of-line)
+      (skip-chars-forward " \t")
+      (if (and (eq (following-char) ?{)
+	       (condition-case nil
+		   (progn (forward-sexp) t)
+		 (error nil))
+	       (<= (point) eol)
+	       (eq (preceding-char) ?}))
+	  c-basic-offset
+	0))))
 
 (defun c-lineup-C-comments (langelem)
   ;; line up C block comment continuation lines
