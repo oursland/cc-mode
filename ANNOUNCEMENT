@@ -59,15 +59,20 @@ Changes since 5.21
 
 - Improvements to M-C-h (c-mark-function).
 
-- Parenthesis are now electric (via c-electric-paren) for
-  auto-reindenting lines when parens are typed.
+- Parentheses are now electric (via the new command c-electric-paren)
+  for auto-reindenting lines when parens are typed.
 
 - In "gnu" style, inline-open offset is now set to zero.
 
 - Uniform handling of the inclass syntactic symbol.  The indentation
   associated with it is now always relative to the class opening
-  brace.  This means that the indentation behavior have changed in
-  some circumstances, but only if you've put anything besides 0 on the
+  brace.  This means that the indentation behavior has changed in some
+  circumstances, but only if you've put anything besides 0 on the
   class-open syntactic symbol (none of the default styles do that).
+
+- c-enable-xemacs-performance-kludge-p is set to nil by default, since 
+  for Emacs-friendly styles (i.e. where the top-level opening brace
+  starts in column zero) setting this variable to t can degrade
+  performance significantly.
 
 - The usual bug fixes.
