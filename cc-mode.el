@@ -86,8 +86,6 @@
 ;;; Code:
 
 
-(require 'cc-langs)
-
 
 ;; Figure out what features this Emacs has
 (defconst c-emacs-features
@@ -194,11 +192,15 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   ;; make sure all necessary components of CC Mode are loaded in.
   (require 'cc-vars)
   (require 'cc-engine)
+  (require 'cc-langs)
   (require 'cc-menus)
   (require 'cc-align)
   (require 'cc-styles)
   (require 'cc-cmds))
   
+
+(defvar c-mode-map ()
+  "Keymap used in c-mode buffers.")
 
 ;;;###autoload
 (defun c-mode ()
@@ -238,6 +240,9 @@ Key bindings:
   (c-update-modeline))
 
 
+(defvar c++-mode-map ()
+  "Keymap used in c++-mode buffers.")
+
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
@@ -279,6 +284,9 @@ Key bindings:
   (c-update-modeline))
 
 
+(defvar objc-mode-map ()
+  "Keymap used in objc-mode buffers.")
+
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
@@ -320,6 +328,9 @@ Key bindings:
   (c-update-modeline))
 
 
+(defvar java-mode-map ()
+  "Keymap used in java-mode buffers.")
+
 ;;;###autoload
 (defun java-mode ()
   "Major mode for editing Java code.
