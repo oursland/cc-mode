@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.37 $
+@comment manual version: $Revision: 2.38 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-03 22:16:08 $
+@comment Last modification: $Date: 1996-05-24 15:34:19 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.37 $)
+@center (manual revision: $Revision: 2.38 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1818,6 +1818,14 @@ argument on the previous line.
 @code{c-lineup-arglist-intro-after-paren} -- similar to
 @code{c-lineup-arglist}, but works for argument lists that begin with an
 open parenthesis followed by a newline.
+
+@item
+@findex c-lineup-arglist-close-under-paren
+@findex lineup-arglist-close-under-paren (c-)
+@code{c-lineup-arglist-close-under-paren} -- set your
+@code{arglist-close} syntactic symbol to this line-up function so that
+parentheses that close argument lists will line up under the parenthesis
+that opened the argument list.
 
 @item
 @findex c-lineup-streamop
