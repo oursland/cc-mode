@@ -219,6 +219,7 @@ def pkg_release(fat):
 	    # package this up separately
 	    continue
 	os.system('cp %s %s' % (f, dir))
+	os.chmod(f, 0644)
     os.system('tar cvf - %s | gzip -c > %s.tar.gz' % (dir, dir))
     os.system('cp ChangeLog ' + dir)
     os.system('cd %s ; gzip -c ChangeLog > ../ChangeLog.gz' % dir)
