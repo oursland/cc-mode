@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.112 $
-;; Last Modified:   $Date: 1993-12-08 19:52:06 $
+;; Version:         $Revision: 3.113 $
+;; Last Modified:   $Date: 1993-12-08 22:43:02 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-08 19:52:06 $|$Revision: 3.112 $|
+;; |$Date: 1993-12-08 22:43:02 $|$Revision: 3.113 $|
 
 ;;; Code:
 
@@ -614,7 +614,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.112 $
+CC-MODE REVISION: $Revision: 3.113 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -647,7 +647,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.112 $
+CC-MODE REVISION: $Revision: 3.113 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1264,7 +1264,7 @@ With a negative ARG, go down ARG block levels."
   "Go down ARG enclosing block levels.
 With a negative ARG, go up ARG block levels."
   (interactive "p")
-  (c-beginning-of-block arg)
+  (c-up-block arg)
   (if (< 0 arg)
       (c-safe (forward-sexp 1))
     (c-safe (backward-sexp 1)))
@@ -2732,7 +2732,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.112 $"
+(defconst c-version "$Revision: 3.113 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
