@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-20 14:47:01 $
-;; Version:         $Revision: 2.163 $
+;; Last Modified:   $Date: 1992-07-20 20:22:58 $
+;; Version:         $Revision: 2.164 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-20 14:47:01 $|$Revision: 2.163 $|
+;; |$Date: 1992-07-20 20:22:58 $|$Revision: 2.164 $|
 
 
 ;; ======================================================================
@@ -196,6 +196,11 @@ the same value.")
 (defvar c++-block-close-brace-offset 0
   "*Extra indentation given to close braces which close a block. This
 does not affect braces which close a top-level construct (e.g. function).")
+(defvar c++-paren-as-block-close-p nil
+  "*Treat a parenthesis which is the first non-whitespace on a line as
+a paren which closes a block.  When non-nil, c-indent-level is
+subtracted, and c++-block-close-brace-offset is added to the line's
+offset.")
 (defvar c++-continued-member-init-offset nil
   "*Extra indent for continuation lines of member inits; NIL means to align
 with previous initializations rather than with the colon on the first line.")
@@ -312,7 +317,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.163 $
+  "Major mode for editing C++ code.  $Revision: 2.164 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -513,7 +518,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.163 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.164 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1357,7 +1362,8 @@ point of the beginning of the C++ definition."
 				 (current-column))))
 		 ((looking-at "friend\[ \t]")
 		  (setq indent (+ indent c++-friend-offset)))
-		 ((= (following-char) ?\))
+		 ((and (= (following-char) ?\))
+		       c++-paren-as-block-close-p)
 		  (setq indent (+ (- indent c-indent-level)
 				  (save-excursion
 				    (forward-char 1)
@@ -2047,7 +2053,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.163 $"
+(defconst c++-version "$Revision: 2.164 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2085,6 +2091,8 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-relative-offset-p
 		       'c++-electric-pound-behavior
 		       'c++-delete-function
+		       'c++-paren-as-block-close-p
+		       'c++-block-close-brace-offset
 		       'c-indent-level
 		       'c-continued-statement-offset
 		       'c-continued-brace-offset
