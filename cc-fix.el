@@ -98,11 +98,10 @@
 	(if (not pos)
 	    (setq pos (point))))))
 
-(cc-eval-when-compile
-  (or (fboundp 'char-before)
-      ;; Emacs 19.34 doesn't have a char-before function.
-      (defsubst char-before (&optional pos)
-	(char-after (1- (or pos (point)))))))
+(or (fboundp 'char-before)
+    ;; Emacs 19.34 doesn't have a char-before function.
+    (defsubst char-before (&optional pos)
+      (char-after (1- (or pos (point))))))
 
 ;; Emacs 19.34 doesn't have a functionp function.  Here's its Emacs
 ;; 20 definition.
@@ -115,21 +114,19 @@
 
 ;; Emacs 19.34 doesn't have a when macro.  Here's its Emacs 20
 ;; definition.
-(cc-eval-when-compile
-  (or (fboundp 'when)
-      (defmacro when (cond &rest body)
-	"(when COND BODY...): if COND yields non-nil, "
-	"do BODY, else return nil."
-	(list 'if cond (cons 'progn body)))))
+(or (fboundp 'when)
+    (defmacro when (cond &rest body)
+      "(when COND BODY...): if COND yields non-nil, "
+      "do BODY, else return nil."
+      (list 'if cond (cons 'progn body))))
 
 ;; Emacs 19.34 doesn't have an unless macro.  Here's its Emacs 20
 ;; definition.
-(cc-eval-when-compile
-  (or (fboundp 'unless)
-      (defmacro unless (cond &rest body)
-	"(unless COND BODY...): if COND yields nil, "
-	"do BODY, else return nil."
-	(cons 'if (cons cond (cons nil body))))))
+(or (fboundp 'unless)
+    (defmacro unless (cond &rest body)
+      "(unless COND BODY...): if COND yields nil, "
+      "do BODY, else return nil."
+      (cons 'if (cons cond (cons nil body)))))
 
 
 (cc-provide 'cc-mode-19)

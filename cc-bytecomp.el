@@ -35,6 +35,8 @@
 ;; There's really nothing CC Mode specific here; this functionality
 ;; ought to be provided by the byte compilers or some accompanying
 ;; library.
+;;
+;; This file is not used at all after CC Mode has been byte compiled.
 
 
 ;;; Code:
@@ -45,60 +47,6 @@
 (defvar cc-bytecomp-load-depth 0)
 (defvar cc-bytecomp-loaded-files nil)
 (defvar cc-bytecomp-environment-set nil)
-(defvar cc-bytecomp-inside-eval-when-compile nil)
-
-(put 'cc-eval-when-compile 'lisp-indent-hook 0)
-(defmacro cc-eval-when-compile (&rest body)
-  "Like `progn', but evaluates the body at compile time.
-The result of the body appears to the compiler as a quoted constant.
-
-This variant works around bugs in `eval-when-compile' in various
-\(X)Emacs versions.  See cc-bytecomp.el for details."
-
-  (if cc-bytecomp-inside-eval-when-compile
-      ;; XEmacs 21.4.6 has a bug in `eval-when-compile' in that it
-      ;; evaluates its body at macro expansion time if it's nested
-      ;; inside another `eval-when-compile'.  So we use a dynamically
-      ;; bound variable to avoid nesting them.
-      `(progn ,@body)
-
-    `(eval-when-compile
-       ;; In all (X)Emacsen so far, `eval-when-compile' byte compiles
-       ;; its contents before evaluating it.  That can cause forms to
-       ;; be compiled in situations they aren't intended to be
-       ;; compiled.
-       ;;
-       ;; Example: It's not possible to defsubst a primitive, e.g. the
-       ;; following will produce an error (in any emacs flavor), since
-       ;; `nthcdr' is a primitive function that's handled specially by
-       ;; the byte compiler and thus can't be redefined:
-       ;;
-       ;;     (defsubst nthcdr (val) val)
-       ;;
-       ;; `defsubst', like `defmacro', needs to be evaluated at
-       ;; compile time, so this will produce an error during byte
-       ;; compilation.
-       ;;
-       ;; CC Mode occasionally needs to do things like this for
-       ;; cross-emacs compatibility.  It therefore uses the following
-       ;; to conditionally do a `defsubst':
-       ;;
-       ;;     (eval-when-compile
-       ;;       (if (not (fboundp 'foo))
-       ;;           (defsubst foo ...)))
-       ;;
-       ;; But `eval-when-compile' byte compiles its contents and
-       ;; _then_ evaluates it (in all current emacs versions, up to
-       ;; and including Emacs 20.6 and XEmacs 21.1 as of this
-       ;; writing).  So this will still produce an error, since the
-       ;; byte compiler will get to the defsubst anyway.  That's
-       ;; arguably a bug because the point with `eval-when-compile' is
-       ;; that it should evaluate rather than compile its contents.
-       ;;
-       ;; We get around it by expanding the body to a quoted constant
-       ;; that we eval.
-       (eval '(let ((cc-bytecomp-inside-eval-when-compile t))
-		,@body)))))
 
 (defun cc-bytecomp-setup-environment ()
   ;; Eval'ed during compilation to setup variables, functions etc
@@ -200,14 +148,14 @@ within `eval-when-compile'.
 Having cyclic cc-require's will result in infinite recursion.  That's
 somewhat intentional."
   `(progn
-     (cc-eval-when-compile (cc-bytecomp-load (symbol-name ,cc-part)))
+     (eval-when-compile (cc-bytecomp-load (symbol-name ,cc-part)))
      (require ,cc-part)))
 
 (defmacro cc-provide (feature)
   "A replacement for the `provide' form that restores the environment
 after the compilation.  Don't use within `eval-when-compile'."
   `(progn
-     (cc-eval-when-compile (cc-bytecomp-restore-environment))
+     (eval-when-compile (cc-bytecomp-restore-environment))
      (provide ,feature)))
 
 (defmacro cc-load (cc-part)
@@ -230,7 +178,7 @@ somewhat intentional."
 (defmacro cc-bytecomp-defvar (var)
   "Binds the symbol as a variable during compilation of the file,
 to silence the byte compiler.  Don't use within `eval-when-compile'."
-  `(cc-eval-when-compile
+  `(eval-when-compile
      (if (boundp ',var)
 	 nil
        (if (not (memq ',var cc-bytecomp-unbound-variables))
@@ -246,7 +194,7 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 (defmacro cc-bytecomp-defun (fun)
   "Bind the symbol as a function during compilation of the file,
 to silence the byte compiler.  Don't use within `eval-when-compile'."
-  `(cc-eval-when-compile
+  `(eval-when-compile
      (if (not (assq ',fun cc-bytecomp-original-functions))
 	 (setq cc-bytecomp-original-functions
 	       (cons (list ',fun
@@ -279,7 +227,7 @@ file.  Don't use outside `eval-when-compile'."
 (defmacro cc-bytecomp-put (symbol propname value)
   "Set a property on a symbol during compilation (and evaluation) of
 the file.  Don't use outside `eval-when-compile'."
-  `(cc-eval-when-compile
+  `(eval-when-compile
      (if (not (assoc (cons ,symbol ,propname) cc-bytecomp-original-properties))
 	 (setq cc-bytecomp-original-properties
 	       (cons (cons (cons ,symbol ,propname)
@@ -290,7 +238,7 @@ the file.  Don't use outside `eval-when-compile'."
 (defmacro cc-bytecomp-obsolete-var (symbol)
   "Suppress warnings about that the given symbol is an obsolete variable.
 Don't use within `eval-when-compile'."
-  `(cc-eval-when-compile
+  `(eval-when-compile
      (if (get ',symbol 'byte-obsolete-variable)
 	 (cc-bytecomp-put ',symbol 'byte-obsolete-variable nil))))
 
@@ -303,7 +251,7 @@ Don't use within `eval-when-compile'."
 (defmacro cc-bytecomp-obsolete-fun (symbol)
   "Suppress warnings about that the given symbol is an obsolete function.
 Don't use within `eval-when-compile'."
-  `(cc-eval-when-compile
+  `(eval-when-compile
      (if (eq (get ',symbol 'byte-compile) 'byte-compile-obsolete)
 	 (cc-bytecomp-put ',symbol 'byte-compile
 			  'cc-bytecomp-ignore-obsolete))))

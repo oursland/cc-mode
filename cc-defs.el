@@ -31,6 +31,9 @@
 
 ;;; Commentary:
 
+;; This file contains macros, defsubsts, and various other things that
+;; must be loaded early both during compilation and at runtime.
+
 ;;; Code:
 
 (eval-when-compile
@@ -41,6 +44,66 @@
 	   load-path)))
     (require 'cc-bytecomp)))
 
+
+(eval-and-compile
+  ;; The following is used below during compilation.
+
+  (defvar c-inside-eval-when-compile nil)
+
+  (defmacro cc-eval-when-compile (&rest body)
+    "Like `progn', but evaluates the body at compile time.
+The result of the body appears to the compiler as a quoted constant.
+
+This variant works around bugs in `eval-when-compile' in various
+\(X)Emacs versions.  See cc-defs.el for details."
+
+    (if c-inside-eval-when-compile
+	;; XEmacs 21.4.6 has a bug in `eval-when-compile' in that it
+	;; evaluates its body at macro expansion time if it's nested
+	;; inside another `eval-when-compile'.  So we use a dynamically
+	;; bound variable to avoid nesting them.
+	`(progn ,@body)
+
+      `(eval-when-compile
+	 ;; In all (X)Emacsen so far, `eval-when-compile' byte compiles
+	 ;; its contents before evaluating it.  That can cause forms to
+	 ;; be compiled in situations they aren't intended to be
+	 ;; compiled.
+	 ;;
+	 ;; Example: It's not possible to defsubst a primitive, e.g. the
+	 ;; following will produce an error (in any emacs flavor), since
+	 ;; `nthcdr' is a primitive function that's handled specially by
+	 ;; the byte compiler and thus can't be redefined:
+	 ;;
+	 ;;     (defsubst nthcdr (val) val)
+	 ;;
+	 ;; `defsubst', like `defmacro', needs to be evaluated at
+	 ;; compile time, so this will produce an error during byte
+	 ;; compilation.
+	 ;;
+	 ;; CC Mode occasionally needs to do things like this for
+	 ;; cross-emacs compatibility.  It therefore uses the following
+	 ;; to conditionally do a `defsubst':
+	 ;;
+	 ;;     (eval-when-compile
+	 ;;       (if (not (fboundp 'foo))
+	 ;;           (defsubst foo ...)))
+	 ;;
+	 ;; But `eval-when-compile' byte compiles its contents and
+	 ;; _then_ evaluates it (in all current emacs versions, up to
+	 ;; and including Emacs 20.6 and XEmacs 21.1 as of this
+	 ;; writing).  So this will still produce an error, since the
+	 ;; byte compiler will get to the defsubst anyway.  That's
+	 ;; arguably a bug because the point with `eval-when-compile' is
+	 ;; that it should evaluate rather than compile its contents.
+	 ;;
+	 ;; We get around it by expanding the body to a quoted constant
+	 ;; that we eval.
+	 (eval '(let ((c-inside-eval-when-compile t)) ,@body)))))
+
+  (put 'cc-eval-when-compile 'lisp-indent-hook 0))
+
+
 ;; cc-mode-19.el contains compatibility macros that should be used if
 ;; needed.
 (eval-and-compile
