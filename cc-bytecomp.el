@@ -34,9 +34,39 @@
 ;;
 ;; There's really nothing CC Mode specific here; this functionality
 ;; ought to be provided by the byte compilers or some accompanying
-;; library.
+;; library.  To use it from some package "foo.el", begin by putting
+;; the following blurb at the top of the file:
 ;;
-;; This file is not used at all after CC Mode has been byte compiled.
+;;   (eval-when-compile
+;;     (let ((load-path
+;;   	      (if (and (boundp 'byte-compile-dest-file)
+;;   		       (stringp byte-compile-dest-file))
+;;   		  (cons (file-name-directory byte-compile-dest-file) load-path)
+;;   		load-path)))
+;;   	 (load "cc-bytecomp" nil t)))
+;;
+;; This will ensure that the cc-bytecomp.el in the same directory as
+;; foo.el is loaded during byte compilation of it.  At the end of
+;; foo.el there should normally be a "(provide 'foo)".  Replace it
+;; with "(cc-provide 'foo)"; that is necessary to restore the
+;; environment after the byte compilation.  If you don't have a
+;; `provide' at the end, you have to add the following as the very
+;; last form in the file:
+;;
+;;   (eval-when-compile (cc-bytecomp-restore-environment))
+;;
+;; Now everything is set to use the various function and macros in
+;; this package.  If your package is split into several files, you
+;; should use `cc-require', `cc-require-when-compile' or `cc-load' to
+;; load them; they ensure that the files in the same directory always
+;; are loaded.
+;;
+;; To suppress byte compiler warnings, use the macros
+;; `cc-bytecomp-defun', `cc-bytecomp-defvar' and
+;; `cc-bytecomp-obsolete-var'.
+;;
+;; This file is not used at all after the package has been byte
+;; compiled.  It is however necessary when running uncompiled.
 
 
 ;;; Code:
@@ -206,7 +236,10 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 
 (defmacro cc-bytecomp-defun (fun)
   "Bind the symbol as a function during compilation of the file,
-to silence the byte compiler.  Don't use within `eval-when-compile'."
+to silence the byte compiler.  If the symbol is already bound as a
+macro it won't be covered since macros are expanded during byte
+compilation and therefore need their real definitions.  Don't use
+within `eval-when-compile'."
   `(eval-when-compile
      (if (not (assq ',fun cc-bytecomp-original-functions))
 	 (setq cc-bytecomp-original-functions
@@ -218,7 +251,8 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 		     cc-bytecomp-original-functions)))
      (if (and (cc-bytecomp-is-compiling)
 	      (not load-in-progress)
-	      (not (fboundp ',fun)))
+	      (not (and (fboundp ',fun)
+			(eq (car-safe (symbol-function ',fun)) 'macro))))
 	 (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
 				     (symbol-name ',fun)))))))
 
