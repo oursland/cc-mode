@@ -282,21 +282,26 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (defconst c-C-class-key (c-paren-re c-C-class-kwds))
 (defconst c-C++-class-key (c-paren-re c-C++-class-kwds))
 (defconst c-IDL-class-key (c-paren-re c-IDL-class-kwds))
-(defconst c-ObjC-class-key
-  (concat
-   "@\\(" c-ObjC-class-kwds "\\)\\s +"
-   c-ObjC-symbol-key			;name of the class
-   "\\(\\s *:\\s *" c-ObjC-symbol-key "\\)?" ;maybe followed by the superclass
-   "\\(\\s *<[^>]+>\\)?"		;and maybe the adopted protocols list
-   ))
-(defconst c-Java-class-key
-  (concat
-   "\\(" c-protection-key "\\s +\\)?"
-   "\\(" c-Java-class-kwds "\\)\\s +"
-   c-Java-symbol-key			      ;name of the class
-   "\\(\\s *extends\\s *" c-Java-symbol-key "\\)?" ;maybe followed by superclass
-   ;;"\\(\\s *implements *[^{]+{\\)?"	      ;maybe the adopted protocols list
-   ))
+(defconst c-ObjC-class-key (concat "@" (c-paren-re c-ObjC-class-kwds)))
+(defconst c-Java-class-key (c-paren-re c-Java-class-kwds))
+;; The regexps below seems to be overcomplex; the class keywords ought
+;; to be enough to avoid false matches (although I'm not certain in
+;; the case of ObjC).
+; (defconst c-ObjC-class-key
+;   (concat
+;    "@\\(" c-ObjC-class-kwds "\\)\\s +"
+;    c-ObjC-symbol-key			;name of the class
+;    "\\(\\s *:\\s *" c-ObjC-symbol-key "\\)?" ;maybe followed by the superclass
+;    "\\(\\s *<[^>]+>\\)?"		;and maybe the adopted protocols list
+;    ))
+; (defconst c-Java-class-key
+;   (concat
+;    "\\(" c-protection-key "\\s +\\)?"
+;    "\\(" c-Java-class-kwds "\\)\\s +"
+;    c-Java-symbol-key			      ;name of the class
+;    "\\(\\s *extends\\s *" c-Java-symbol-key "\\)?" ;maybe followed by superclass
+;    ;;"\\(\\s *implements *[^{]+{\\)?"	      ;maybe the adopted protocols list
+;    ))
 (defconst c-Pike-class-key (c-paren-re c-Pike-class-kwds))
 
 (defvar c-class-key c-C-class-key)
