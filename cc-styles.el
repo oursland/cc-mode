@@ -351,7 +351,7 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
     (namespace-close       . 0)
     (innamespace           . +)
     (template-args-cont    . +)
-    (inlambda              . c-lineup-inexpr-stat)
+    (inlambda              . c-lineup-inexpr-block)
     (lambda-intro-cont     . +)
     (inexpr-statement      . 0)
     )

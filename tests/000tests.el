@@ -143,7 +143,7 @@
 	(namespace-close       . 0)
 	(innamespace           . +)
 	(template-args-cont    . +)
-	(inlambda              . c-lineup-inexpr-stat)
+	(inlambda              . c-lineup-inexpr-block)
 	(lambda-intro-cont     . +)
 	(inexpr-statement      . 0)
 	))

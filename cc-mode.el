@@ -372,7 +372,7 @@ Key bindings:
 	c-recognize-knr-p nil
  	c-access-key c-Pike-access-key
 	c-lambda-key c-Pike-lambda-key
-	c-statarg-key c-Pike-statarg-key
+	c-inexpr-block-key c-Pike-inexpr-block-key
 	c-special-brace-lists c-Pike-special-brace-lists
 	;imenu-generic-expression cc-imenu-java-generic-expression ;FIXME
 	;imenu-case-fold-search nil ;FIXME
