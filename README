@@ -1,28 +1,28 @@
-README for cc-mode Version 4.222
-Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-$Date: 1995-06-11 21:33:51 $
+README for cc-mode Version 4.241
+Barry A. Warsaw <cc-mode-help@merlin.cnri.reston.va.us>
+$Date: 1995-08-29 16:03:59 $
 
-Note, you can browse this file either as a flat, multiple page file,
-or as an Emacs outline.  As a flat file, just use "C-x ]" to move
-forward one page, or "C-x [" to move backward one page.  To read this
-as an outline, hit "M-x outline-mode RET".  outline-mode is described
-in your Emacs documentation.
-
-IMPORTANT NOTE: The meat of this document is now encapsulated in a
-texinfo file.
+IMPORTANT NOTE: The meat of this document is now encapsulated in the
+cc-mode.texi texinfo file.  You should install this into your Emacs
+info tree and read the manual on-line.  See your Emacs documentation
+for details.
 
 The MANIFEST file contains a description of all the files you should
-have gotten with your distribution.
+have gotten with this distribution.
 
-Note that some Emacsen come with cc-mode already loaded, possibly with
-an older version of cc-mode.  To see what you have in your Emacs
-already, visit a C file and type the following:
+As of this writing, XEmacs 19.11 and 19.12 come with cc-mode
+pre-loaded.  XEmacs 19.13 will come with the latest version (4.241) of
+cc-mode pre-loaded.  Emacs 19.29 comes with an older version of
+cc-mode (4.222), but it does not come pre-loaded.
+
+To see what you have in your Emacs already, visit a C file and type
+the following:
 
     M-x c-version RET
 
 If you get an error, then you don't have cc-mode loaded at all in your
 Emacs.  The texinfo file excerpt below explains how to get cc-mode
-loaded into your Emacs.  If you get a version number lower than 4.222
+loaded into your Emacs.  If you get a version number lower than 4.241
 (and yes, 4.85 *is* lower! :-), then you just need to load cc-mode
 from your .emacs file.  See the texinfo manual for details.
 
@@ -48,10 +48,10 @@ recommended that you upgrade to Emacs 19.  If you use `cc-mode' under
 Emacs 18, you're on your own.  With `cc-mode' version 5, Emacs 18
 support will be dropped altogether.
 
-   Note that Emacs 19.29 and XEmacs 19.12 already come with the latest
-`cc-mode' version 4 preconfigured for your use.  You should be able to
-safely skip the rest of the setup information in this chapter.  XEmacs
-19.11 ships with `cc-mode' version 4.85, so those users will want to
+   Note that XEmacs 19.13 already comes with the latest `cc-mode'
+version 4 preconfigured for your use.  You should be able to safely skip
+the rest of the setup information in this chapter.  XEmacs 19.11 and
+19.12 ships older versions of `cc-mode', so those users will want to
 continue reading to learn how to upgrade to the latest `cc-mode'
 version 4 (see *See Getting the latest cc-mode release::).
 
@@ -83,20 +83,19 @@ really can ignore all byte-compiler warnings!*
 
      M-x byte-compile-file RET ~/mylisp/cc-mode.el RET
 
-   If you are running Emacs 19.29, XEmacs 19.11 or 19.12, you can
-simply add the following to your `.emacs' file in order to upgrade to
-the latest version of `cc-mode':
+   If you are running XEmacs 19.11 or 19.12, you can simply add the
+following to your `.emacs' file in order to upgrade to the latest
+version of `cc-mode':
 
      (load "cc-mode")
 
    Users of FSF's Emacs 19, Emacs 18, or of the older Lucid Emacs will
-probably be running an Emacs that has BOCM `c-mode.el' pre-dumped.  You
-will not want to use this, or any older releases of `c++-mode.el' if
-you use `cc-mode.el'.  If your Emacs is dumped with either of these
+probably be running an Emacs that has BOCM `c-mode.el' and possible
+`c++-mode.el' pre-dumped.  If your Emacs is dumped with either of these
 files you first need to make Emacs "forget" about those older modes.
 
-   If you can do a `C-h v c-mode-map RET' you probably need to add these
-lines at the top of your `.emacs' file:
+   If you can do a `C-h v c-mode-map RET' without getting an error, you
+need to add these lines at the top of your `.emacs' file:
 
      (fmakunbound 'c-mode)
      (makunbound  'c-mode-map)
@@ -145,6 +144,9 @@ be using `cc-mode'.  You can check this easily by hitting `M-x
 c-version RET' in the `c-mode', `c++-mode', or `objc-mode' buffer.  You
 should see this message in the echo area:
 
-     Using `cc-mode' version 4.XXX
+     Using `cc-mode' version 4.241.
 
-where XXX will be some minor revision number.
+* Menu:
+
+* Syntactic Analysis::
+* Indentation Calculation::
