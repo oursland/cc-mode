@@ -106,9 +106,9 @@ def read_revision(fp):
 
 def get_log_entries(dow, mon, day, time, year):
     if time is None:
-	cvscmd = 'cvs log -d">%s-%s-%s"' % (day, mon, year)
+	cvscmd = 'cvs log -l -d">%s-%s-%s"' % (day, mon, year)
     else:
-	cvscmd = 'cvs log -d">%s-%s-%s %s"' % (day, mon, year, time)
+	cvscmd = 'cvs log -l -d">%s-%s-%s %s"' % (day, mon, year, time)
     fp = os.popen(cvscmd, 'r')
 
     changes = {}
