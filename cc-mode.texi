@@ -170,16 +170,20 @@ Advanced Customizations
 
 @cindex BOCM
 
-Welcome to @ccmode{}.  This is a GNU Emacs mode for editing files
-containing C, C++, Objective-C, Java, CORBA IDL, and Pike code.  This
-incarnation of the mode is descendant from @file{c-mode.el} (also called
-"Boring Old C Mode" or BOCM @t{:-)}, and @file{c++-mode.el} version 2,
-which Barry has been maintaining since 1992.  @ccmode{} represents a
-significant milestone in the mode's life.  It has been fully merged back
-with Emacs 19's @file{c-mode.el}. Also a new, more intuitive and
-flexible mechanism for controlling indentation has been developed.  Late
-in 1997, Martin joined the @ccmode{} Maintainers Team, and
-implemented the Pike support.
+Welcome to @ccmode{}, a GNU Emacs mode for editing files containing C,
+C++, Objective-C, Java, CORBA IDL, and Pike code.  This incarnation of
+the mode is descendant from @file{c-mode.el} (also called "Boring Old C
+Mode" or BOCM @t{:-)}, and @file{c++-mode.el} version 2, which Barry has
+been maintaining since 1992.  @ccmode{} represents a significant
+milestone in the mode's life.  It has been fully merged back with Emacs
+19's @file{c-mode.el}. Also a new, more intuitive and flexible mechanism
+for controlling indentation has been developed.  Late in 1997, Martin
+joined the @ccmode{} Maintainers Team, and implemented the Pike support.
+
+This manual describes @ccmode{}
+@comment The following line must appear on its own, so that the automated
+version 5.23.
+@comment Release.py script can update the version number automatically
 
 @ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
 @footnote{@cite{The Annotated C++ Reference Manual}, by Ellis and
