@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-17 22:03:16 $
-;; Version:         $Revision: 2.112 $
+;; Last Modified:   $Date: 1992-06-17 22:29:12 $
+;; Version:         $Revision: 2.113 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-17 22:03:16 $|$Revision: 2.112 $|
+;; |$Date: 1992-06-17 22:29:12 $|$Revision: 2.113 $|
 
 
 ;; ======================================================================
@@ -208,12 +208,20 @@ automatically escaped when typed in, but entering
 
 (defvar c++-default-macroize-column 78
   "*Column to insert backslashes.")
+
+(defvar c++-special-indent-hook nil
+  "*Hook for user defined special indentation adjustments.
+This hook gets called after each line to allow the user to do whatever
+special indentation adjustments are desired.  If you have non-standard
+indentation, you will likely need to have c++-relative-offset-p set to
+nil.")
+
 
 ;; ======================================================================
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.112 $
+  "Major mode for editing C++ code.  $Revision: 2.113 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1208,6 +1216,10 @@ point of the beginning of the C++ definition."
       ;; position after the indentation.  Else stay at same point in text.
       (if (> (- (point-max) pos) (point))
 	  (goto-char (- (point-max) pos))))
+    ;; save-excursion is necessary because things break if the hook
+    ;; changes point or mark
+    (save-excursion
+      (run-hooks 'c++-special-indent-hook))
     shift-amt))
 
 (defun c++-calculate-indent (&optional parse-start bod)
@@ -1847,7 +1859,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.112 $"
+(defconst c++-version "$Revision: 2.113 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -1892,6 +1904,12 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'tab-width
 		       )))
     (set-buffer buffer)
+    (if c++-special-indent-hook
+	(insert "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+		"c++-special-indent-hook is set to '"
+		(symbol-name c++-special-indent-hook)
+		".\nPerhaps this is your problem?\n"
+		"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n"))
     (insert (emacs-version) "\n")
     (insert "c++-mode.el " c++-version
 	    "\n\ncurrent state:\n==============\n(setq\n")
@@ -1905,7 +1923,8 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		  (prin1-to-string val)
 		  "\n"))))
      varlist)
-    (insert "     )\n")))
+    (insert "     )\n")
+    ))
 
 (defun c++-submit-bug-report ()
   "Submit via mail a bug report using the mailer in c++-mailer."
