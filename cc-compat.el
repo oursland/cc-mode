@@ -1,29 +1,29 @@
 ;;; cc-compat.el --- cc-mode compatibility with c-mode.el confusion
 
-;; Author: 1994 Barry A. Warsaw, Century Computing, Inc. <bwarsaw@cen.com>
-;; Maintainer:    bwarsaw@cen.com
-;; Created:       August 1994
-;; Version:       $Revision: 1.3 $
-;; Last Modified: $Date: 1995-05-04 17:48:55 $
-;; Keywords: C++ C Objective-C cc-mode
+;; Copyright (C) 1985-1995 Free Software Foundation, Inc.
 
-;; Copyright (C) 1994 Barry A. Warsaw
+;; Author:        1994-1995 Barry A. Warsaw
+;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
+;; Created:       August 1994, split from cc-mode.el
+;; Version:       $Revision: 1.4 $
+;; Last Modified: $Date: 1995-06-11 20:09:54 $
+;; Keywords: c languages oop
 
-;; This file is not part of GNU Emacs.
+;; This file is part of GNU Emacs.
 
-;; This program is free software; you can redistribute it and/or modify
+;; GNU Emacs is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2 of the License, or
-;; (at your option) any later version.
-;; 
-;; This program is distributed in the hope that it will be useful,
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;; 
+
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;;; Commentary:
 ;;
@@ -38,9 +38,9 @@
 ;; (c-set-style "BOCM")
 
 ;; LCD Archive Entry:
-;; cc-compat|Barry A. Warsaw|bwarsaw@cen.com
+;; cc-compat.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |cc-mode compatibility with c-mode.el confusion
-;; |$Date: 1995-05-04 17:48:55 $|$Revision: 1.3 $|
+;; |$Date: 1995-06-11 20:09:54 $|$Revision: 1.4 $|
 
 ;;; Code:
 

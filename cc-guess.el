@@ -2,12 +2,12 @@
 
 ;; Copyright (C) 1994-1995 Free Software Foundation, Inc.
 
-;; Author: 1994 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-;; Maintainer:    cc-mode-help@anthem.nlm.nih.gov
+;; Author:        1994-1995 Barry A. Warsaw
+;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
 ;; Created:       August 1994
-;; Version:       $Revision: 1.2 $
-;; Last Modified: $Date: 1995-02-28 22:53:42 $
-;; Keywords: C++ C Objective-C cc-mode
+;; Version:       $Revision: 1.3 $
+;; Last Modified: $Date: 1995-06-11 20:14:44 $
+;; Keywords: c languages oop
 
 ;; This file is not part of GNU Emacs.
 
@@ -28,14 +28,20 @@
 ;;; Commentary:
 ;;
 ;; This file contains routines that help guess the cc-mode style in a
-;; particular region of C, C++, or Objective-C code.  This file is
-;; completely unsupported.  Guessing styles is lossy.  Feel free to
-;; improve upon this stuff if you want.
+;; particular region of C, C++, or Objective-C code.  It is provided
+;; for example and experimentation only.  It is not supported in
+;; anyway.  Some folks have asked for a style guesser and the best way
+;; to show my thoughts on the subject is with this sample code.  Feel
+;; free to improve upon it in anyway you'd like.  Please send me the
+;; results.  Note that style guessing is lossy!
+;;
+;; The way this is intended to be run is for you to mark a region of
+;; code to guess the style of, then run the command, cc-guess-region.
 
 ;; LCD Archive Entry:
 ;; cc-guess|Barry A. Warsaw|bwarsaw@cen.com
 ;; |guess cc-mode indentation variable values
-;; |$Date: 1995-02-28 22:53:42 $|$Revision: 1.2 $|
+;; |$Date: 1995-06-11 20:14:44 $|$Revision: 1.3 $|
 
 ;;; Code:
 
