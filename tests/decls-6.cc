@@ -33,6 +33,13 @@ Type (*var);
 Type var[3 * peq];
 Type (var);
 
+unsigned foo bar;
+long long x;
+long double y;
+int x y;			// Invalid
+int int y;			// Invalid
+
+// This should be last to check a certain case.
 #define low_assign_multiset_index(TO, NODE) do {			\
     struct svalue *_ms_index_to2_ = (TO);				\
   } while (0)
