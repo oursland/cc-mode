@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-05 21:25:39 $
-;; Version:         $Revision: 2.181 $
+;; Last Modified:   $Date: 1992-08-06 19:47:36 $
+;; Version:         $Revision: 2.182 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-05 21:25:39 $|$Revision: 2.181 $|
+;; |$Date: 1992-08-06 19:47:36 $|$Revision: 2.182 $|
 
 
 ;; ======================================================================
@@ -331,7 +331,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.181 $
+  "Major mode for editing C++ code.  $Revision: 2.182 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -532,7 +532,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.181 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.182 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -802,15 +802,14 @@ you want to add a comment to the end of a line."
 (defun c++-electric-star (arg)
   "Works with c++-electric-slash to auto indent C style comment lines."
   (interactive "P")
-  (cond ((= (preceding-char) ?/)
-	 (let ((c++-auto-newline nil))
-	   (c++-electric-terminator arg)))
-	((and (memq (c++-in-literal) '(c))
-	      (= (point) (c++-point 'boi)))
-	 (self-insert-command (prefix-numeric-value arg))
-	 (c++-indent-line))
-	(t
-	 (self-insert-command (prefix-numeric-value arg)))))
+  (if (= (preceding-char) ?/)
+      (let ((c++-auto-newline nil))
+	(c++-electric-terminator arg))
+    (self-insert-command (prefix-numeric-value arg))
+    (if (and (memq (c++-in-literal) '(c))
+	     (or (= (point) (c++-point 'boi))
+		 (= (preceding-char) ?*)))
+	(c++-indent-line))))
 
 (defun c++-electric-semi (arg)
   "Insert character and correct line's indentation."
@@ -2117,7 +2116,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.181 $"
+(defconst c++-version "$Revision: 2.182 $"
   "c++-mode version number.")
 
 (defun c++-version ()
