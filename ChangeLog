@@ -1,6 +1,6 @@
 Fri Jun 20 19:55:55 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
-	* Public Release 5.10
+	* Public Release 5.11
 
 	* cc-mode.texi:
 	Describe changes to support separation of Backspace and Delete in
