@@ -1064,8 +1064,8 @@
 	       ;; We're in an in-expression block of some kind.  Do
 	       ;; not check nesting.
 	       (setq containing-sexp nil)
-	     ;; see if the open brace is preceded by a = in this
-	     ;; statement, but watch out for operator=
+	     ;; see if the open brace is preceded by = or [...] in
+	     ;; this statement, but watch out for operator=
 	     (setq lim (if (consp (car brace-state))
 			   (cdr (car brace-state))
 			 (car brace-state))
@@ -1087,7 +1087,10 @@
 			       ;; Check for `<opchar>= (Pike)
 			       ((eq (char-after) ?`) nil)
 			       ((looking-at "\\s.") 'maybe)
-			       (t t)))))))
+			       (t t)))))
+		     ((eq (char-after) ?\[)
+		      (setq braceassignp t))
+		     ))
 	     (if (memq braceassignp '(nil dontknow))
 		 (if (eq (char-after) ?\;)
 		     ;; Brace lists can't contain a semicolon, so we're done.
@@ -1793,10 +1796,16 @@
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-close (c-point 'boi)))
 	   ;; CASE 7B: Looking at the opening brace of an
-	   ;; in-expression block.
+	   ;; in-expression block or brace list.
 	   ((eq char-after-ip ?{)
+	    (goto-char indent-point)
+	    (setq tmpsymbol
+		  (if (c-inside-bracelist-p (c-point 'boi)
+					    (cons containing-sexp state))
+		      'brace-list-open
+		    'block-open))
 	    (goto-char containing-sexp)
-	    (c-add-syntax 'block-open (c-point 'boi))
+	    (c-add-syntax tmpsymbol (c-point 'boi))
 	    (c-add-syntax 'inexpr-statement))
 	   ;; CASE 7C: we are looking at the first argument in an empty
 	   ;; argument list. Use arglist-close if we're actually
