@@ -67,7 +67,8 @@
 (defun c-toggle-auto-state (&optional arg)
   "Toggle auto-newline feature.
 Optional numeric ARG, if supplied, turns on auto-newline when
-positive, turns it off when negative, and just toggles it when zero.
+positive, turns it off when negative, and just toggles it when zero or
+left out.
 
 When the auto-newline feature is enabled (as evidenced by the `/a' or
 `/ah' on the modeline after the mode name) newlines are automatically
@@ -81,7 +82,8 @@ and colon."
 (defun c-toggle-hungry-state (&optional arg)
   "Toggle hungry-delete-key feature.
 Optional numeric ARG, if supplied, turns on hungry-delete when
-positive, turns it off when negative, and just toggles it when zero.
+positive, turns it off when negative, and just toggles it when zero or
+left out.
 
 When the hungry-delete-key feature is enabled (as evidenced by the
 `/h' or `/ah' on the modeline after the mode name) the delete key
@@ -95,7 +97,7 @@ gobbles all preceding whitespace in one fell swoop."
   "Toggle auto-newline and hungry-delete-key features.
 Optional numeric ARG, if supplied, turns on auto-newline and
 hungry-delete when positive, turns them off when negative, and just
-toggles them when zero.
+toggles them when zero or left out.
 
 See `c-toggle-auto-state' and `c-toggle-hungry-state' for details."
   (interactive "P")
