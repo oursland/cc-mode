@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.183 $
-;; Last Modified:   $Date: 1995-03-22 16:45:53 $
+;; Version:         $Revision: 4.184 $
+;; Last Modified:   $Date: 1995-03-27 23:18:30 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-22 16:45:53 $|$Revision: 4.183 $|
+;; |$Date: 1995-03-27 23:18:30 $|$Revision: 4.184 $|
 
 ;;; Code:
 
@@ -400,16 +400,13 @@ This hook gets called after a line is indented by the mode.")
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
 
-(defvar c-recognize-knr-p t
+(defvar c-recognize-knr-p nil
   "*If non-nil, `c-mode' and `objc-mode' will recognize K&R constructs.
 This variable is needed because of ambiguities in C syntax that make
 fast recognition of K&R constructs problematic, and slow.  If you are
 coding with ANSI prototypes, set this variable to nil to speed up
 recognition of certain constructs.  By setting this variable to nil, I
-have seen an increase of 20 times under some circumstance.
-
-This variable is nil by default in `c++-mode', and t by default in
-`c-mode' and `objc-mode'.  This variable is buffer-local.")
+have seen an increase of 20 times under some circumstance.")
 
 (defvar c-progress-interval 5
   "*Interval used to update progress status during long re-indentation.
@@ -1026,9 +1023,7 @@ Key bindings:
   (set-syntax-table c++-mode-syntax-table)
   (setq major-mode 'c++-mode
 	mode-name "C++"
-	local-abbrev-table c++-mode-abbrev-table
-	;; should be set before c-common-init call
-	c-recognize-knr-p nil)
+	local-abbrev-table c++-mode-abbrev-table)
   (use-local-map c++-mode-map)
   (c-common-init)
   (setq comment-start "// "
@@ -1067,9 +1062,7 @@ Key bindings:
   (set-syntax-table c-mode-syntax-table)
   (setq major-mode 'c-mode
 	mode-name "C"
-	local-abbrev-table c-mode-abbrev-table
-	;; should be set before c-common-init call
-	c-recognize-knr-p t)
+	local-abbrev-table c-mode-abbrev-table)
   (use-local-map c-mode-map)
   (c-common-init)
   (setq comment-start "/* "
@@ -1109,9 +1102,7 @@ Key bindings:
   (set-syntax-table objc-mode-syntax-table)
   (setq major-mode 'objc-mode
 	mode-name "ObjC"
-	local-abbrev-table objc-mode-abbrev-table
-	;; should be set before c-common-init call
-	c-recognize-knr-p t)
+	local-abbrev-table objc-mode-abbrev-table)
   (use-local-map objc-mode-map)
   (c-common-init)
   (setq comment-start "// "
@@ -4513,7 +4504,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.183 $"
+(defconst c-version "$Revision: 4.184 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
