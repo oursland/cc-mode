@@ -737,15 +737,6 @@ be after it."
      (message ,format ,@args)
      (ding)))
 
-(defmacro c-update-modeline ()
-  ;; set the c-auto-hungry-string for the correct designation on the modeline
-  `(progn
-     (setq c-auto-hungry-string
-	   (if c-auto-newline
-	       (if c-hungry-delete-key "/ah" "/a")
-	     (if c-hungry-delete-key "/h" nil)))
-     (force-mode-line-update)))
-
 (defmacro c-with-syntax-table (table &rest code)
   ;; Temporarily switches to the specified syntax table in a failsafe
   ;; way to execute code.
@@ -1168,7 +1159,7 @@ when it's needed.  The default is the current language taken from
 	    ;; This is kludgy but it works: Search for a string that
 	    ;; doesn't occur in any word in LIST.  Append it to all
 	    ;; the alternatives where we want to add \>.  Run through
-	    ;; `regexp-opt' and the replace it with \>.
+	    ;; `regexp-opt' and then replace it with \>.
 	    (let ((unique "") pos)
 	      (while (let (found)
 		       (setq unique (concat unique "@")

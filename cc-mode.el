@@ -494,10 +494,10 @@ that requires a literal mode spec at compile time."
   (make-local-variable 'comment-indent-function)
   (setq comment-indent-function 'c-comment-indent)
 
-  ;; put auto-hungry designators onto minor-mode-alist, but only once
-  (or (assq 'c-auto-hungry-string minor-mode-alist)
+  ;; Put submode indicators onto minor-mode-alist, but only once.
+  (or (assq 'c-submode-indicators minor-mode-alist)
       (setq minor-mode-alist
-	    (cons '(c-auto-hungry-string c-auto-hungry-string)
+	    (cons '(c-submode-indicators c-submode-indicators)
 		  minor-mode-alist)))
 
   ;; Install the functions that ensure that various internal caches

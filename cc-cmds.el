@@ -234,6 +234,21 @@ With universal argument, inserts the analysis as a comment on that line."
 	(forward-line)))))
 
 
+(defun c-update-modeline ()
+  (let ((fmt (format "/%s%s%s"
+		     (if c-auto-newline "a" "")
+		     (if c-hungry-delete-key "h" "")
+		     (if (and
+			  ;; cc-subword might not be loaded.
+			  (boundp 'c-subword-move-mode)
+			  (symbol-value 'c-subword-move-mode))
+			 "w"
+		       ""))))
+    (setq c-submode-indicators
+	  (if (> (length fmt) 1)
+	      fmt))
+    (force-mode-line-update)))
+
 (defun c-toggle-syntactic-indentation (&optional arg)
   "Toggle syntactic indentation.
 Optional numeric ARG, if supplied, turns on syntactic indentation when
@@ -263,10 +278,9 @@ Optional numeric ARG, if supplied, turns on auto-newline when
 positive, turns it off when negative, and just toggles it when zero or
 left out.
 
-When the auto-newline feature is enabled (as evidenced by the \"/a\"
-or \"/ah\" on the modeline after the mode name) newlines are
-automatically inserted after special characters such as brace, comma,
-semi-colon, and colon."
+When the auto-newline feature is enabled (indicated by \"/a\" on the
+modeline after the mode name) newlines are automatically inserted
+after special characters such as brace, comma, semi-colon, and colon."
   (interactive "P")
   (setq c-auto-newline (c-calculate-state arg c-auto-newline))
   (c-update-modeline)
@@ -278,9 +292,9 @@ Optional numeric ARG, if supplied, turns on hungry-delete when
 positive, turns it off when negative, and just toggles it when zero or
 left out.
 
-When the hungry-delete-key feature is enabled (as evidenced by the
-\"/h\" or \"/ah\" on the modeline after the mode name) the delete key
-gobbles all preceding whitespace in one fell swoop."
+When the hungry-delete-key feature is enabled (indicated by \"/h\" on
+the modeline after the mode name) the delete key gobbles all preceding
+whitespace in one fell swoop."
   (interactive "P")
   (setq c-hungry-delete-key (c-calculate-state arg c-hungry-delete-key))
   (c-update-modeline)
@@ -304,11 +318,11 @@ See `c-toggle-auto-state' and `c-toggle-hungry-state' for details."
 
 (defun c-electric-backspace (arg)
   "Delete the preceding character or whitespace.
-If `c-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
-\"/ah\" string on the mode line, then all preceding whitespace is
-consumed.  If however a prefix argument is supplied, or
-`c-hungry-delete-key' is nil, or point is inside a literal then the
-function in the variable `c-backspace-function' is called."
+If `c-hungry-delete-key' is non-nil (indicated by \"/h\" on the mode
+line) then all preceding whitespace is consumed.  If however a prefix
+argument is supplied, or `c-hungry-delete-key' is nil, or point is
+inside a literal then the function in the variable
+`c-backspace-function' is called."
   (interactive "*P")
   (if (c-save-buffer-state ()
 	(or (not c-hungry-delete-key)
@@ -330,11 +344,11 @@ See also \\[c-hungry-delete-forward]."
 
 (defun c-electric-delete-forward (arg)
   "Delete the following character or whitespace.
-If `c-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
-\"/ah\" string on the mode line, then all following whitespace is
-consumed.  If however a prefix argument is supplied, or
-`c-hungry-delete-key' is nil, or point is inside a literal then the
-function in the variable `c-delete-function' is called."
+If `c-hungry-delete-key' is non-nil (indicated by \"/h\" on the mode
+line) then all following whitespace is consumed.  If however a prefix
+argument is supplied, or `c-hungry-delete-key' is nil, or point is
+inside a literal then the function in the variable `c-delete-function'
+is called."
   (interactive "*P")
   (if (c-save-buffer-state ()
 	(or (not c-hungry-delete-key)
@@ -407,9 +421,9 @@ point is inside a literal or a macro, nothing special happens."
 (defun c-electric-brace (arg)
   "Insert a brace.
 
-If the auto-newline feature is turned on, as evidenced by the \"/a\"
-or \"/ah\" string on the mode line, newlines are inserted before and
-after braces based on the value of `c-hanging-braces-alist'.
+If the auto-newline feature is turned on (indicated by \"/a\" on the
+mode line) newlines are inserted before and after braces based on the
+value of `c-hanging-braces-alist'.
 
 Also, the line is reindented unless a numeric ARG is supplied, the
 brace is inserted inside a literal, or `c-syntactic-indentation' is
@@ -736,10 +750,10 @@ If a numeric ARG is supplied, point is inside a literal, or
 
 (defun c-electric-semi&comma (arg)
   "Insert a comma or semicolon.
-When the auto-newline feature is turned on, as evidenced by the \"/a\"
-or \"/ah\" string on the mode line, a newline might be inserted.  See
-the variable `c-hanging-semi&comma-criteria' for how newline insertion
-is determined.
+When the auto-newline feature is turned on (indicated by \"/a\" on the
+mode line) a newline might be inserted.  See the variable
+`c-hanging-semi&comma-criteria' for how newline insertion is
+determined.
 
 When a semicolon is inserted, the line is reindented unless a numeric
 arg is supplied, point is inside a literal, or
@@ -806,9 +820,9 @@ following brace lists and semicolons following defuns."
 (defun c-electric-colon (arg)
   "Insert a colon.
 
-If the auto-newline feature is turned on, as evidenced by the \"/a\"
-or \"/ah\" string on the mode line, newlines are inserted before and
-after colons based on the value of `c-hanging-colons-alist'.
+If the auto-newline feature is turned on (indicated by \"/a\" on the
+mode line) newlines are inserted before and after colons based on the
+value of `c-hanging-colons-alist'.
 
 Also, the line is reindented unless a numeric ARG is supplied, the
 colon is inserted inside a literal, or `c-syntactic-indentation' is
@@ -1140,36 +1154,19 @@ keyword on the line, the keyword is not inserted inside a literal, and
 	(delete-char -2)))))
 
 
-;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
-;; originally contributed by Terry_Glanfield.Southern@rxuk.xerox.com
 (defun c-forward-into-nomenclature (&optional arg)
-  "Move forward to end of a nomenclature section or word.
-With arg, do it arg times."
+  "Compatibility alias for `c-forward-subword'."
   (interactive "p")
-  (let ((case-fold-search nil))
-    (if (> arg 0)
-	(re-search-forward
-	 (cc-eval-when-compile
-	   (concat "\\W*\\([" c-upper "]*[" c-lower c-digit "]*\\)"))
-	 (point-max) t arg)
-      (while (and (< arg 0)
-		  (re-search-backward
-		   (cc-eval-when-compile
-		     (concat
-		      "\\(\\(\\W\\|[" c-lower c-digit "]\\)[" c-upper "]+"
-		      "\\|\\W\\w+\\)"))
-		   (point-min) 0))
-	(forward-char 1)
-	(setq arg (1+ arg)))))
-  (c-keep-region-active))
+  (require 'cc-subword)
+  (c-forward-subword arg))
+(make-obsolete 'c-forward-into-nomenclature 'c-forward-subword)
 
 (defun c-backward-into-nomenclature (&optional arg)
-  "Move backward to beginning of a nomenclature section or word.
-With optional ARG, move that many times.  If ARG is negative, move
-forward."
+  "Compatibility alias for `c-backward-subword'."
   (interactive "p")
-  (c-forward-into-nomenclature (- arg))
-  (c-keep-region-active))
+  (require 'cc-subword)
+  (c-backward-subword arg))
+(make-obsolete 'c-backward-into-nomenclature 'c-backward-subword)
 
 (defun c-scope-operator ()
   "Insert a double colon scope operator at point.
