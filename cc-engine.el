@@ -3899,9 +3899,7 @@ This function does not do any hidden buffer changes."
 		    (setq res t))
 		   ((c-with-syntax-table c-identifier-syntax-table
 		      (looking-at c-known-type-key))
-		    (setq id-end (match-end 1)
-			  id-range c-last-identifier-range
-			  res 'known)))
+		    (setq res 'known)))
 	     (or (not id-end)
 		 (>= (save-excursion
 		       (save-match-data
@@ -3913,6 +3911,8 @@ This function does not do any hidden buffer changes."
       ;; Looking at a primitive or known type identifier.  We've
       ;; checked for a name first so that we don't go here if the
       ;; known type match only is a prefix of another name.
+
+      (setq id-end (match-end 1))
 
       (when (and c-record-type-identifiers
 		 (or c-promote-possible-types (eq res t)))
