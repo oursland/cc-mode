@@ -69,12 +69,6 @@
 
 ;;; Macros.
 
-;;; Helpers for building regexps.
-(defmacro c-paren-re (re)
-  `(concat "\\(" ,re "\\)"))
-(defmacro c-identifier-re (re)
-  `(concat "\\<\\(" ,re "\\)\\>[^_]"))
-
 (defmacro c-point (position &optional point)
   ;; Returns the value of certain commonly referenced POSITIONs
   ;; relative to POINT.  The current point is used if POINT isn't
@@ -330,8 +324,6 @@ continuations."
 ;; Make edebug understand the macros.
 (eval-after-load "edebug"
   '(progn
-     (def-edebug-spec c-paren-re t)
-     (def-edebug-spec c-identifier-re t)
      (def-edebug-spec c-point t)
      (def-edebug-spec c-safe t)
      (def-edebug-spec c-forward-sexp t)
