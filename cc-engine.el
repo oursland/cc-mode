@@ -688,7 +688,7 @@ This function does not do any hidden buffer changes."
       ;; backed up over any above, since forward-comment won't move
       ;; backward over a line comment if point is at the end of the
       ;; same line.
-      (re-search-forward "\\`\\s *[\n\r]" start t)
+      (re-search-forward "\\=\\s *[\n\r]" start t)
 
       (if (if (forward-comment -1)
 	      (if (eolp)
