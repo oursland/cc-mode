@@ -1,0 +1,13 @@
+You should have received the following files in the distribution tar
+file for cc-mode 3.304:
+
+    MANIFEST: This file
+
+    README: manual on how to use cc-mode to edit C and C++
+    files. Eventually this will be replaced by a texinfo manual.
+
+    ChangeLog: Extremely verbose history of changes.
+
+    cc-mode.el: Version 3.304 of the mode
+
+    cc-mode-18.el: Emacs 18 compatibility file
