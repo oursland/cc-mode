@@ -64,4 +64,10 @@ Changes since 5.21
 
 - In "gnu" style, inline-open offset is now set to zero.
 
+- Uniform handling of the inclass syntactic symbol.  The indentation
+  associated with it is now always relative to the class opening
+  brace.  This means that the indentation behavior have changed in
+  some circumstances, but only if you've put anything besides 0 on the
+  class-open syntactic symbol (none of the default styles do that).
+
 - The usual bug fixes.
