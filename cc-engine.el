@@ -6888,6 +6888,10 @@ This function does not do any hidden buffer changes."
    ((vectorp offset)       offset)
    ((null offset)          nil)
    ((listp offset)
+    (if (eq (car offset) 'quote)
+	(error
+"Setting in c-offsets-alist element \"(%s . '%s)\" was mistakenly quoted"
+         symbol (cadr offset)))
     (let (done)
       (while (and (not done) offset)
 	(setq done (c-evaluate-offset (car offset) langelem symbol)
