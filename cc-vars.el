@@ -45,7 +45,7 @@ reported and the syntactic symbol is ignored."
   :type 'integer
   :group 'c)
 
-;; "Tab Always Indent" goes away when widget is expanded.
+;; TBD: "Tab Always Indent" goes away when widget is expanded.
 (defcustom c-tab-always-indent t
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil,
@@ -71,7 +71,6 @@ by the `c-comment-only-line-offset' variable."
 	  (const :tag "inserts TAB in literals, otherwise indent" other))
   :group 'c)
 
-;; TBD: this one doesn't enforce that it be a function
 (defcustom c-insert-tab-function 'insert-tab
   "*Function used when inserting a tab for \\[TAB].
 Only used when `c-tab-always-indent' indicates a `real' tab character
@@ -79,9 +78,6 @@ should be inserted.  Value must be a function taking no arguments."
   :type 'function
   :group 'c)
 
-;; TBD: this one doesn't handle the cons choice well.  Also, when
-;; showing first choice, button-2 on tag switches to cons-cell choice,
-;; which shows invalid.  Next button-2 brings up menu.
 (defcustom c-comment-only-line-offset 0
   "*Extra offset for line which contains only the start of a comment.
 Can contain an integer or a cons cell of the form:
@@ -148,10 +144,6 @@ mode name.  Valid symbols are:
 	  (const :tag "Put C++ style `::' on one line" scope-operator))
   :group 'c)
 
-;; TBD: even when there are two choices, middle button should pop up
-;; menu instead of toggling between two states.  Also when changing to
-;; function, they all default to c-snug-do-while, which isn't correct.
-;; Also, function prompt doesn't give function completion.
 (defcustom c-hanging-braces-alist '((brace-list-open)
 				    (substatement-open after)
 				    (block-close . c-snug-do-while)
