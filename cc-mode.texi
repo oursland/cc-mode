@@ -3476,19 +3476,19 @@ for every line you indent, so you're probably screwed either way!
 @vindex enable-xemacs-performance-kludge-p (c-)
 Another alternative for XEmacs users, is to set the variable
 @code{c-enable-xemacs-performance-kludge-p} to non-@code{nil}.  This
-tells @ccmode{} to use XEmacs-specific built-in functions which,
-in some circumstances, can
-locate the top-most opening brace much quicker than
-@code{beginning-of-defun}.  Preliminary testing
-has shown that for styles where these braces are hung (e.g. most
-JDK-derived Java styles), this hack can improve performance of the core
-syntax parsing routines from 3 to 60 times.  However, for styles which
-@emph{do} conform to Emacs' recommended style by putting top-level
-braces in column zero, this hack may slightly degrade performance a few
-percentage points.  Observed degradation has been minor, but this
-feature should still be considered experimental.  Note that this
-variable has no effect in Emacs since the necessary built-in functions
-don't exist (in Emacs 20.2 or 20.3 as of this writing 23-Apr-1998).
+tells @ccmode{} to use XEmacs-specific built-in functions which, in some
+circumstances, can locate the top-most opening brace much quicker than
+@code{beginning-of-defun}.  Preliminary testing has shown that for
+styles where these braces are hung (e.g. most JDK-derived Java styles),
+this hack can improve performance of the core syntax parsing routines
+from 3 to 60 times.  However, for styles which @emph{do} conform to
+Emacs' recommended style of putting top-level braces in column zero,
+this hack can degrade performance by about as much.  Thus this variable
+is set to @code{nil} by default, since the Emacs-friendly styles
+should be more common (and
+encouraged!).  Note that this variable has no effect in Emacs since the
+necessary built-in functions don't exist (in Emacs 20.2 or 20.3 as of
+this writing 27-Apr-1998).
 
 You will probably notice pathological behavior from @ccmode{} when
 working in files containing large amounts of C preprocessor macros.
