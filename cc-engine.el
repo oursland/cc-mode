@@ -2578,6 +2578,9 @@ This function does not do any hidden buffer changes."
     'c-fast-in-literal                  ; Xemacs
     'c-slow-in-literal))                ; GNU Emacs
 
+;; The defalias above isn't enough to shut up the byte compiler.
+(cc-bytecomp-defun c-in-literal)
+
 (defun c-literal-limits (&optional lim near not-in-delimiter)
   "Return a cons of the beginning and end positions of the comment or
 string surrounding point (including both delimiters), or nil if point
@@ -4484,7 +4487,7 @@ brace."
       (forward-char 1)
     (c-backward-syntactic-ws limit))
 
-  (condition-case err
+  (condition-case nil
       (progn
 	(while (and (< limit (point))
 		    (eq (char-before) ?,))
