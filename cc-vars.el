@@ -1358,13 +1358,6 @@ all style variables are per default set in a special non-override
 state.  Set this variable only if your configuration has stopped
 working due to this change.")
 
-
-;;; Font lock settings.
-
-(defgroup c-fonts nil
-  "Highlighting settings for Font Lock mode."
-  :group 'c)
-
 (define-widget 'c-extra-types-widget 'radio
   ;; Widget for a list of regexps for the extra types.
   :args '((const :tag "none" nil)
@@ -1393,6 +1386,12 @@ by doing \\[" mode2 "].
 Despite the name, this variable is not only used for font locking but
 also elsewhere in CC Mode to tell types from other identifiers.")))
 
+;; Note: Most of the variables below are also defined in font-lock.el
+;; in older versions in Emacs, so depending on the load order we might
+;; not install the values below.  There's no kludge to cope with this
+;; (as opposed to the *-font-lock-keywords-* variables) since the old
+;; values works fairly well anyway.
+
 (defcustom c-font-lock-extra-types
   '("FILE" "\\sw+_t"
     "bool" "complex" "imaginary"	; Defined in C99.
@@ -1405,7 +1404,7 @@ also elsewhere in CC Mode to tell types from other identifiers.")))
 "For example, a value of (\"FILE\" \"\\\\sw+_t\") means the word FILE
 and words ending in _t are treated as type names.")
   :type 'c-extra-types-widget
-  :group 'c-fonts)
+  :group 'c)
 
 (defcustom c++-font-lock-extra-types
   '("\\sw+_t"
@@ -1424,33 +1423,41 @@ and words ending in _t are treated as type names.")
 "For example, a value of (\"string\") means the word string is treated
 as a type name.")
   :type 'c-extra-types-widget
-  :group 'c-fonts)
+  :group 'c)
 
-(defcustom objc-font-lock-extra-types '("[A-Z]\\sw*")
-  (c-make-font-lock-extra-types-blurb "ObjC" "objc-mode"
-"For example, a value of (\"[A-Z]\\\\sw*\") means capitalized words
-are treated as type names.")
+(defcustom objc-font-lock-extra-types
+  (list (concat "[" c-upper "]\\sw*[" c-lower "]\\sw*"))
+  (c-make-font-lock-extra-types-blurb "ObjC" "objc-mode" (concat
+"For example, a value of (\"[" c-upper "]\\\\sw*[" c-lower "]\\\\sw*\") means
+capitalized words are treated as type names (the requirement for a
+lower case char is to avoid recognizing all-caps macro and constant
+names)."))
   :type 'c-extra-types-widget
-  :group 'c-fonts)
+  :group 'c)
 
 (defcustom java-font-lock-extra-types
-  '("[A-Z\300-\326\330-\337]\\sw*[a-z]\\sw*")
-  (c-make-font-lock-extra-types-blurb "Java" "java-mode"
-"For example, a value of (\"[A-Z\\300-\\326\\330-\\337]\\\\sw*[a-z]\\\\sw*\")
-means capitalized words (and words conforming to the Java id spec) are
-treated as type names.")
+  (list (concat "[" c-upper "]\\sw*[" c-lower "]\\sw*"))
+  (c-make-font-lock-extra-types-blurb "Java" "java-mode" (concat
+"For example, a value of (\"[" c-upper "]\\\\sw*[" c-lower "]\\\\sw*\") means
+capitalized words are treated as type names (the requirement for a
+lower case char is to avoid recognizing all-caps constant names)."))
   :type 'c-extra-types-widget
-  :group 'c-fonts)
+  :group 'c)
 
 (defcustom idl-font-lock-extra-types nil
   (c-make-font-lock-extra-types-blurb "IDL" "idl-mode" "")
   :type 'c-extra-types-widget
-  :group 'c-fonts)
+  :group 'c)
 
-(defcustom pike-font-lock-extra-types nil
-  (c-make-font-lock-extra-types-blurb "Pike" "pike-mode" "")
+(defcustom pike-font-lock-extra-types
+  (list (concat "[" c-upper "]\\sw*[" c-lower "]\\sw*"))
+  (c-make-font-lock-extra-types-blurb "Pike" "pike-mode" (concat
+"For example, a value of (\"[" c-upper "]\\\\sw*[" c-lower "]\\\\sw*\") means
+capitalized words are treated as type names (the requirement for a
+lower case char is to avoid recognizing all-caps macro and constant
+names)."))
   :type 'c-extra-types-widget
-  :group 'c-fonts)
+  :group 'c)
 
 ;; (defvar awk-font-lock-extra-types nil)  ;; FIXME!!! Remove this completely (ACM 2002/11/18)
 ;; This variable is a required place-holder for awk-mode to work.  It has no

@@ -450,13 +450,12 @@ This does not load the font-lock package.  Use after
 
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults
-	`(,(mapcan
-	    (lambda (keywords-name)
-	      (let ((sym (c-mode-symbol keywords-name)))
-		(if (or (boundp sym) (fboundp sym))
-		    (list sym))))
-	    '("font-lock-keywords" "font-lock-keywords-1"
-	      "font-lock-keywords-2" "font-lock-keywords-3"))
+	`(,(if (c-major-mode-is 'awk-mode)
+	       ;; awk-mode currently has only one font lock level.
+	       'awk-font-lock-keywords
+	     (mapcar 'c-mode-symbol
+		     '("font-lock-keywords" "font-lock-keywords-1"
+		       "font-lock-keywords-2" "font-lock-keywords-3")))
 	  nil nil
 	  ,c-identifier-syntax-modifications
 	  c-beginning-of-syntax

@@ -1,6 +1,6 @@
 (0 key) (5 reg) (6 typ) (9 reg) (10 key) (16 reg) (18 ref) (19 reg) (21 typ) (27 reg)
 
-(4 key) (8 reg) (9 lbl) (10 reg) (12 key) (16 reg) (17 lbl) (18 reg)
+(4 key) (8 reg) (12 key) (16 reg)
 (8 typ) (11 reg) (12 var) (15 reg)
 (4 key) (11 reg)
 (8 typ) (13 reg) (14 var) (17 reg)

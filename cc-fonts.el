@@ -506,7 +506,7 @@ stuff.  Used on level 1 and higher."
 		 (concat noncontinued-line-end
 			 "\\("
 			 (c-lang-const c-opt-cpp-prefix)
-			 "[a-z]+"
+			 "[" (c-lang-const c-symbol-chars) "]+"
 			 "\\)")
 		 `(,(1+ ncle-depth) c-preprocessor-face-name t)))
 	      )))
@@ -673,6 +673,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; The interesting properties are anyway those put on the closest
   ;; token before the region.
   (c-clear-char-properties (point) limit 'c-type)
+
+  ;; Update `c-state-cache' to the beginning of the region.  This will
+  ;; make `c-beginning-of-syntax' go faster when it's used later on,
+  ;; and it's near the point most of the time.
+  (c-parse-state)
 
   nil)
 
@@ -1927,12 +1932,7 @@ higher."
       ;; Fontify labels in languages that supports them.
       ,@(when (c-lang-const c-label-key)
 
-	  `(;; Fontify goto targets and case labels.  This
-	    ;; deliberately fontifies only a single identifier or a
-	    ;; signed integer as a label; all other forms are
-	    ;; considered to be expressions and thus fontified as
-	    ;; such (i.e. not at all).
-
+	  `(;; Fontify labels after goto etc.
 	    ;; (Got three different interpretation levels here,
 	    ;; which makes it a bit complicated: 1) The backquote
 	    ;; stuff is expanded when compiled or loaded, 2) the
@@ -1943,53 +1943,15 @@ higher."
 	    (eval
 	     . ,(let* ((c-before-label-re
 			(c-make-keywords-re nil
-			  (c-lang-const c-before-label-kwds)))
-		       (identifier-offset
-			(+ (c-regexp-opt-depth c-before-label-re)
-			   3))
-		       (integer-offset
-			(+ identifier-offset
-			   (c-regexp-opt-depth (c-lang-const c-identifier-key))
-			   1)))
-
+			  (c-lang-const c-before-label-kwds))))
 		  `(list
-		    ,(concat
-		      "\\<\\("
-		      c-before-label-re
-		      "\\)\\>"
-		      "\\s *"
-		      "\\("
-		      ;; Match a (simple) qualified identifier, i.e. we don't
-		      ;; bother with `c-forward-name'.  We highlight the last
-		      ;; symbol in it as a label.
-		      "\\(" (c-lang-const ; identifier-offset
-			     c-identifier-key) "\\)"
-		      "\\|"
-		      ;; Match an integer.
-		      "\\(-?[0-9]+\\)"	; integer-offset
-		      (if (c-major-mode-is 'pike-mode)
-			  ;; Pike allows integer ranges.
-			  (concat
-			   "\\s *\\(\\.\\.\\s *\\(-?[0-9]+\\)?\\)?"
-			   "\\|\\.\\.\\s *\\(-?[0-9]+\\)")
-			"")
-		      "\\)"
-		      "\\s *[:;]")
-
-		    ,@(mapcar
-		       (lambda (submatch)
-			 `(list ,(+ identifier-offset submatch)
-				c-label-face-name nil t))
-		       (c-lang-const c-identifier-last-sym-match))
-
-		    (list ,integer-offset c-label-face-name nil t)
-
-		    ,@(when (c-major-mode-is 'pike-mode)
-			`((list ,(+ integer-offset 2)
-				c-label-face-name nil t)
-			  (list ,(+ integer-offset 3)
-				c-label-face-name nil t)))
-		    )))
+		    ,(concat "\\<\\(" c-before-label-re "\\)\\>"
+			     "\\s *"
+			     "\\("	; identifier-offset
+			     (c-lang-const c-symbol-key)
+			     "\\)")
+		    (list ,(+ (c-regexp-opt-depth c-before-label-re) 2)
+			  c-label-face-name nil t))))
 
 	    ;; Fontify normal labels.
 	    c-font-lock-labels))
@@ -2538,10 +2500,12 @@ need for `pike-font-lock-extra-types'.")
   ;; returned.
   ;;
   ;; After the fontification of a matching comment, fontification
-  ;; according to KEYWORDS is applied to it.  It's a list like
+  ;; according to KEYWORDS is applied inside it.  It's a list like
   ;; `font-lock-keywords' except that anchored matches and eval
   ;; clauses aren't supported and that some abbreviated forms can't be
-  ;; used.
+  ;; used.  The buffer is narrowed to the comment while KEYWORDS is
+  ;; applied; leading comment starters are included but trailing
+  ;; comment enders for block comment are not.
   ;;
   ;; Note that faces added through KEYWORDS should never replace the
   ;; existing `c-doc-face-name' face since the existence of that face
@@ -2594,6 +2558,12 @@ need for `pike-font-lock-extra-types'.")
 	(save-restriction
 	  ;; Narrow to the doc comment.  Among other things, this
 	  ;; helps by making "^" match at the start of the comment.
+	  ;; Do not include a trailing block comment ender, though.
+	  (and (> region-end (1+ region-beg))
+	       (progn (goto-char region-end)
+		      (backward-char 2)
+		      (looking-at "\\*/"))
+	       (setq region-end (point)))
 	  (narrow-to-region region-beg region-end)
 
 	  (while keylist
