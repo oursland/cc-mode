@@ -183,39 +183,37 @@ NOERROR turns off error logging to `c-parsing-error'."
 	tok ptok pptok			; Pos of last three sexps or bounds.
 	c-in-literal-cache c-maybe-labelp saved)
 
-    (c-with-syntax-table c-no-escape-syntax-table
-      ;; Switch syntax table to avoid stopping at line continuations.
-      (save-restriction
-	(if lim (narrow-to-region lim (point-max)))
+    (save-restriction
+      (if lim (narrow-to-region lim (point-max)))
 
-	;; Try to skip over unary operator characters, to register
-	;; that we've moved.
-	(while (progn
-		 (setq pos (point))
-		 (c-backward-syntactic-ws)
-		 (/= (skip-chars-backward "-+!*&~@`#") 0)))
+      ;; Try to skip over unary operator characters, to register
+      ;; that we've moved.
+      (while (progn
+	       (setq pos (point))
+	       (c-backward-syntactic-ws)
+	       (/= (skip-chars-backward "-+!*&~@`#") 0)))
 
-	;; First check for bare semicolon.  Later on we ignore the
-	;; boundaries for statements that doesn't contain any sexp.
-	;; The only thing that is affected is that the error checking
-	;; is a little less strict, and we really don't bother.
-	(if (and (eq (char-before) ?\;)
-		 (progn (forward-char -1)
-			(setq saved (point))
-			(c-backward-syntactic-ws)
-			(or (memq (char-before) '(?\; ?: nil))
-			    (eq (char-syntax (char-before)) ?\())))
-	    (setq ret 'previous
-		  pos saved)
+      ;; First check for bare semicolon.  Later on we ignore the
+      ;; boundaries for statements that doesn't contain any sexp.
+      ;; The only thing that is affected is that the error checking
+      ;; is a little less strict, and we really don't bother.
+      (if (and (eq (char-before) ?\;)
+	       (progn (forward-char -1)
+		      (setq saved (point))
+		      (c-backward-syntactic-ws)
+		      (or (memq (char-before) '(?\; ?: nil))
+			  (eq (char-syntax (char-before)) ?\())))
+	  (setq ret 'previous
+		pos saved)
 
-	  ;; Begin at start and not pos to detect macros if we stand
-	  ;; directly after the #.
-	  (goto-char start)
-	  (if (looking-at "\\<\\|\\W")
-	      ;; Record this as the first token if not starting inside it.
-	      (setq tok start))
+	;; Begin at start and not pos to detect macros if we stand
+	;; directly after the #.
+	(goto-char start)
+	(if (looking-at "\\<\\|\\W")
+	    ;; Record this as the first token if not starting inside it.
+	    (setq tok start))
 
-	  (while
+	(while
 	    (catch 'loop ;; Throw nil to break, non-nil to continue.
 	      (cond
 	       ;; Check for macro start.
@@ -376,40 +374,40 @@ NOERROR turns off error logging to `c-parsing-error'."
 		    tok (point)
 		    pos tok)))		; Not nil.
 
-	  ;; If the stack isn't empty there might be errors to report.
-	  (while stack
-	    (if (and (vectorp saved-pos) (eq (length saved-pos) 3))
-		(c-bos-report-error))
-	    (setq saved-pos (cdr (car stack))
-		  stack (cdr stack)))
+	;; If the stack isn't empty there might be errors to report.
+	(while stack
+	  (if (and (vectorp saved-pos) (eq (length saved-pos) 3))
+	      (c-bos-report-error))
+	  (setq saved-pos (cdr (car stack))
+		stack (cdr stack)))
 
-	  (when (and (eq ret 'same)
-		     (not (memq sym '(boundary ignore nil))))
-	    ;; Need to investigate closer whether we've crossed
-	    ;; between a substatement and its containing statement.
-	    (if (setq saved (if (looking-at c-block-stmt-1-kwds)
-				ptok
-			      pptok))
-		(cond ((> start saved) (setq pos saved))
-		      ((= start saved) (setq ret 'up)))))
+	(when (and (eq ret 'same)
+		   (not (memq sym '(boundary ignore nil))))
+	  ;; Need to investigate closer whether we've crossed
+	  ;; between a substatement and its containing statement.
+	  (if (setq saved (if (looking-at c-block-stmt-1-kwds)
+			      ptok
+			    pptok))
+	      (cond ((> start saved) (setq pos saved))
+		    ((= start saved) (setq ret 'up)))))
 
-	  (when (and c-maybe-labelp (not ignore-labels) after-labels-pos)
-	    ;; We're in a label.  Maybe we should step to the statement
-	    ;; after it.
-	    (if (< after-labels-pos start)
-		(setq pos after-labels-pos)
-	      (setq ret 'label)
-	      (if (< last-label-pos start)
-		  (setq pos last-label-pos)))))
+	(when (and c-maybe-labelp (not ignore-labels) after-labels-pos)
+	  ;; We're in a label.  Maybe we should step to the statement
+	  ;; after it.
+	  (if (< after-labels-pos start)
+	      (setq pos after-labels-pos)
+	    (setq ret 'label)
+	    (if (< last-label-pos start)
+		(setq pos last-label-pos)))))
 
-	;; Skip over the unary operators that can start the statement.
-	(goto-char pos)
-	(while (progn
-		 (c-backward-syntactic-ws)
-		 (/= (skip-chars-backward "-+!*&~@`#") 0))
-	  (setq pos (point)))
-	(goto-char pos)
-	ret))))
+      ;; Skip over the unary operators that can start the statement.
+      (goto-char pos)
+      (while (progn
+	       (c-backward-syntactic-ws)
+	       (/= (skip-chars-backward "-+!*&~@`#") 0))
+	(setq pos (point)))
+      (goto-char pos)
+      ret)))
 
 (defun c-end-of-statement-1 ()
   (condition-case nil
@@ -1285,20 +1283,19 @@ isn't moved."
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
   ;; statements in parentheses. No error checking is performed.
-  (c-with-syntax-table c-no-escape-syntax-table
-    (c-forward-sexp (cond
-		     ;; else if()
-		     ((looking-at (concat "\\<else"
-					  "\\([ \t\n]\\|\\\\\n\\)+"
-					  "if\\>\\([^_]\\|$\\)"))
-		      3)
-		     ;; do, else, try, finally
-		     ((looking-at (concat "\\<\\("
-					  "do\\|else\\|try\\|finally"
-					  "\\)\\>\\([^_]\\|$\\)"))
-		      1)
-		     ;; for, if, while, switch, catch, synchronized, foreach
-		     (t 2)))))
+  (c-forward-sexp (cond
+		   ;; else if()
+		   ((looking-at (concat "\\<else"
+					"\\([ \t\n]\\|\\\\\n\\)+"
+					"if\\>\\([^_]\\|$\\)"))
+		    3)
+		   ;; do, else, try, finally
+		   ((looking-at (concat "\\<\\("
+					"do\\|else\\|try\\|finally"
+					"\\)\\>\\([^_]\\|$\\)"))
+		    1)
+		   ;; for, if, while, switch, catch, synchronized, foreach
+		   (t 2))))
 
 (defun c-after-conditional (&optional lim)
   ;; If looking at the token after a conditional then return the
@@ -1330,16 +1327,15 @@ isn't moved."
     ;; What we have below is actually an extremely stripped variant of
     ;; c-beginning-of-statement-1.
     (let ((pos (point)))
-      (c-with-syntax-table c-no-escape-syntax-table
-	;; Switch syntax table to avoid stopping at line continuations.
-	(save-restriction
-	  (if lim (narrow-to-region lim (point-max)))
-	  (while (and (progn
-			(c-backward-syntactic-ws)
-			(c-safe (goto-char (scan-sexps (point) -1)) t))
-		      (not (c-crosses-statement-barrier-p (point) pos)))
-	    (setq pos (point)))
-	  (goto-char pos))))))
+      ;; Switch syntax table to avoid stopping at line continuations.
+      (save-restriction
+	(if lim (narrow-to-region lim (point-max)))
+	(while (and (progn
+		      (c-backward-syntactic-ws)
+		      (c-safe (goto-char (scan-sexps (point) -1)) t))
+		    (not (c-crosses-statement-barrier-p (point) pos)))
+	  (setq pos (point)))
+	(goto-char pos)))))
 
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
@@ -2293,13 +2289,16 @@ isn't moved."
 			(looking-at "catch\\>[^_]"))
 		       ((c-major-mode-is 'java-mode)
 			(looking-at "\\(catch\\|finally\\)\\>[^_]")))
-		 (c-with-syntax-table c-no-escape-syntax-table
-		   (and (c-safe (c-backward-sexp) t)
-			(eq (char-after) ?{)
-			(c-safe (c-backward-sexp) t)
-			(if (eq (char-after) ?\()
-			    (c-safe (c-backward-sexp) t)
-			  t)))
+		 (and (c-safe (c-backward-syntactic-ws)
+			      (c-backward-sexp)
+			      t)
+		      (eq (char-after) ?{)
+		      (c-safe (c-backward-syntactic-ws)
+			      (c-backward-sexp)
+			      t)
+		      (if (eq (char-after) ?\()
+			  (c-safe (c-backward-sexp) t)
+			t))
 		 (looking-at "\\(try\\|catch\\)\\>[^_]")
 		 (setq placeholder (point))))
 	  (goto-char placeholder)
