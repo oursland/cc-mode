@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.340 $
-;; Last Modified:   $Date: 1996-12-24 19:19:09 $
+;; Version:         $Revision: 4.341 $
+;; Last Modified:   $Date: 1997-01-02 20:20:21 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -618,7 +618,7 @@ re-dump Emacs.")
     ["Backward Statement"     c-beginning-of-statement t]
     ["Forward Statement"      c-end-of-statement t]
     )
-  "XEmacs 19 menu for C/C++/ObjC/Java modes.")
+  "Basic XEmacs 19 menu for C/C++/ObjC/Java modes.")
 
 ;; Sadly we need this for a macro in Emacs 19.
 (eval-when-compile
@@ -1502,12 +1502,11 @@ For use with the variable `java-mode-hook'."
 	    (progn
 	      (set-buffer-menubar (copy-sequence current-menubar))
 	      (if (fboundp 'add-submenu)
-		  (add-submenu nil mode-name c-mode-menu)
+		  (add-submenu nil (c-mode-menu))
 		(add-menu nil mode-name c-mode-menu)
 		)))))
   (if (boundp 'mode-popup-menu)
-      (setq mode-popup-menu
-	    (cons (concat mode-name " Mode Commands") c-mode-menu)))
+      (setq mode-popup-menu (c-mode-menu)))
   ;; put auto-hungry designators onto minor-mode-alist, but only once
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
@@ -5037,7 +5036,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.340 $"
+(defconst c-version "$Revision: 4.341 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5111,10 +5110,13 @@ command to conveniently insert and align the necessary backslashes."
 
 
 ;; menus for XEmacs 19
+(defun c-mode-menu ()
+  (cons (concat mode-name " Mode Commands") c-mode-menu))
+
 (defun c-popup-menu (e)
   "Pops up the C/C++/ObjC menu."
   (interactive "@e")
-  (popup-menu (cons (concat mode-name " Mode Commands") c-mode-menu))
+  (popup-menu (c-mode-menu))
   (c-keep-region-active))
     
 
