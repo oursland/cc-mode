@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.367 $
-;; Last Modified:   $Date: 1997-02-13 16:51:08 $
+;; Version:         $Revision: 4.368 $
+;; Last Modified:   $Date: 1997-02-13 17:28:31 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -489,12 +489,11 @@ useful for Emacs 19.")
      (c-hanging-braces-alist     . ((substatement-open before after)))
      (c-offsets-alist . ((topmost-intro        . 0)
                          (topmost-intro-cont   . 0)
-                         (substatement         . 3)
+                         (substatement         . +)
 			 (substatement-open    . 0)
-			 (statement-case-intro . 0)
                          (case-label           . +)
-                         (access-label         . -3)
-                         (inclass              . 6)
+                         (access-label         . -)
+                         (inclass              . ++)
                          (inline-open          . 0)
                          ))
      )
@@ -5119,7 +5118,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.367 $"
+(defconst c-version "$Revision: 4.368 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
