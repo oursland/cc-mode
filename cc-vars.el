@@ -353,6 +353,11 @@ The list of variables to buffer localize are:
   :type 'hook
   :group 'c)
 
+(defcustom idl-mode-hook nil
+  "*Hook called by `idl-mode'."
+  :type 'hook
+  :group 'c)
+
 (defcustom c-mode-common-hook nil
   "*Hook called by all CC Mode modes for common initializations."
   :type '(hook :format "%{CC Mode Common Hook%}:\n%v")
