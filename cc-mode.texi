@@ -1,6 +1,5 @@
 \input texinfo
 
-@comment FIXME: Document c-indent-comment-alist.
 @comment FIXME: Tune docs for the statement anchor fixes, if necessary.
 @comment FIXME: Document c-report-syntactic-errors.
 @comment FIXME: Document macro indentation and movement.
@@ -495,7 +494,7 @@ our first example again:
 @end group
 @end example
 
-Let's say point is on line 3 and we hit the @kbd{TAB} key to re-indent
+Let's say point is on line 3 and we hit the @kbd{TAB} key to reindent
 the line.  Remember that the syntactic component list for that
 line is:
 @example
@@ -687,11 +686,11 @@ normal, with no @kbd{C-u} prefix).
 When you type either an open or close brace (i.e. @kbd{@{} or @kbd{@}}),
 the electric command @code{c-electric-brace} gets run.  This command has
 two electric formatting behaviors.  First, it will perform some
-re-indentation of the line the brace was typed on, and second, it will
+reindentation of the line the brace was typed on, and second, it will
 add various newlines before and/or after the typed brace.
-Re-indentation occurs automatically whenever the electric behavior is
+Reindentation occurs automatically whenever the electric behavior is
 enabled.  If the brace ends up on a line other than the one it was typed
-on, then that line is also re-indented.
+on, then that line is also reindented.
 
 @cindex class-open syntactic symbol
 @cindex class-close syntactic symbol
@@ -914,7 +913,7 @@ defined by @code{c-offsets-alist}.
 @kindex >
 Less-than and greater-than signs (@code{c-electric-lt-gt}) are electric,
 but only in C++ mode.  Hitting the second of two @kbd{<} or @kbd{>} keys
-re-indents the line if it is a C++ style stream operator.
+reindents the line if it is a C++ style stream operator.
 
 @item
 @findex c-electric-paren
@@ -1343,7 +1342,8 @@ lines in the comment.
 Emacs Editor}) to make Emacs correctly keep the line prefix when filling
 paragraphs.  That also makes Emacs preserve the text indentation
 @emph{inside} the comment line prefix.  E.g. in the following comment,
-both paragraphs will be filled with the left margins kept intact:
+both paragraphs will be filled with the left margins of the texts kept
+intact:
 @example
 @group
 
@@ -1369,7 +1369,7 @@ E. Jones' Filladapt package@footnote{It's available from
 lack a feature that makes it work suboptimally when
 @code{c-comment-prefix-regexp} matches the empty string (which it does
 by default).  A patch for that is available from
-@uref{http://cc-mode.sourceforge.net/,, the CC Mode site}.},
+@uref{http://cc-mode.sourceforge.net/,, the CC Mode web site}.},
 which handles things like bulleted lists nicely.  There's a convenience
 function @code{c-setup-filladapt} that tunes the relevant variables in
 Filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
@@ -1489,6 +1489,13 @@ indentation and line prefix are preserved.  If inside a comment and
 @code{comment-multi-line} is @code{nil}, a new comment of the same type
 is started on the next line and indented as appropriate for comments.
 
+Note that @ccmode{} sets @code{comment-multi-line} to @code{t} at
+startup.  The reason is that @kbd{M-j} otherwise can produce sequences
+of single line block comments for texts that logically are to be treated
+as one comment, and the rest of the paragraph handling code
+(e.g. @kbd{M-q} and @kbd{M-a}) can't cope with that, which would lead to
+inconsistent behavior.
+
 @findex c-context-line-break
 @findex context-line-break (c-)
 @item @kbd{M-x c-context-line-break}
@@ -1503,7 +1510,13 @@ It's not bound to a key by default, but it's intended to be used on the
 @kbd{RET} key.  If you like the behavior of @code{newline-and-indent} on
 @kbd{RET}, you might consider switching to this function.
 
-@comment FIXME: Add doc for c-context-open-line
+@findex c-context-open-line
+@findex context-open-line (c-)
+@item @kbd{M-x c-context-open-line}
+This is to @kbd{C-o} (@kbd{M-x open-line}) as
+@code{c-context-line-break} is to @kbd{RET}.  I.e. it works just like
+@code{c-context-line-break} but leaves the point before the inserted
+line break.
 
 @end table
 
@@ -1531,21 +1544,21 @@ that bit.
 @cindex indentation commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-The following list of commands re-indent C constructs.  Note that when
+The following list of commands reindent C constructs.  Note that when
 you change your coding style, either interactively or through some other 
-means, your file does @emph{not} automatically get re-indented.  You
+means, your file does @emph{not} automatically get reindented.  You
 will need to execute one of the following commands to see the effects of 
 your changes.
 
 @cindex GNU indent program
 Also, variables like @code{c-hanging-*} and @code{c-cleanup-list}
 only affect how on-the-fly code is formatted.  Changing the
-``hanginess'' of a brace and then re-indenting, will not move the brace
+``hanginess'' of a brace and then reindenting, will not move the brace
 to a different line.  For this, you're better off getting an external
-program like GNU @code{indent}, which will re-arrange brace location,
+program like GNU @code{indent}, which will rearrange brace location,
 among other things.
 
-Re-indenting large sections of code can take a long time.  When
+Reindenting large sections of code can take a long time.  When
 @ccmode{} reindents a region of code, it is essentially equivalent to
 hitting @kbd{TAB} on every line of the region.
 
@@ -1577,8 +1590,8 @@ want to indent.
 @item @kbd{C-c C-q} (@code{c-indent-defun})
 Indents the entire top-level function or class definition encompassing
 point.  It leaves point unchanged.  This function can't be used to
-re-indent a nested brace construct, such as a nested class or function,
-or a Java method.  The top-level construct being re-indented must be
+reindent a nested brace construct, such as a nested class or function,
+or a Java method.  The top-level construct being reindented must be
 complete, i.e. it must have both a beginning brace and an ending brace.
 
 @kindex C-M-\
@@ -1587,6 +1600,42 @@ complete, i.e. it must have both a beginning brace and an ending brace.
 Indents an arbitrary region of code.  This is a standard Emacs command,
 tailored for C code in a @ccmode{} buffer.  Note that of course, point
 and mark must delineate the region you want to indent.
+
+@kindex M-;
+@findex indent-for-comment
+@item @kbd{M-;} (@code{indent-for-comment})
+Insert a comment last on the current line, if none is there already.
+Then reindent the comment according to the variables
+@code{c-indent-comment-alist}, @code{c-indent-comments-syntactically-p}
+and @code{comment-column}.  Then position the point after the comment
+starter.  This is a standard Emacs command, but @ccmode{} enhances it a
+bit with two variables:
+
+@vindex c-indent-comment-alist
+@vindex indent-comment-alist (c-)
+@vindex comment-column
+The variable @code{c-indent-comment-alist} allows you to control which
+column @kbd{M-;} indents the comment to, depending on the preceding code
+and the indentation of a similar comment on the preceding line, if there
+is any.  It is an association list that maps different types of lines to
+actions describing how they should be handled.  If a certain line type
+isn't present on the list then the line is indented to the column
+specified by @code{comment-column}.  See the documentation string for
+@code{c-indent-comment-alist} for a full description of the available
+line types and actions (use @kbd{C-h v c-indent-comment-alist}).
+
+@vindex c-indent-comments-syntactically-p
+@vindex indent-comments-syntactically-p (c-)
+Normally -- when @code{c-indent-comments-syntactically-p} is @code{nil}
+-- @kbd{M-;} will indent comment-only lines according to
+@code{c-indent-comment-alist}, just as it does with lines where other
+code precede the comments.  However, if you want it to act just like
+@kbd{TAB} for comment-only lines you can get that by setting
+@code{c-indent-comments-syntactically-p} to non-@code{nil}.
+
+If @code{c-indent-comments-syntactically-p} is non-@code{nil} then
+@code{c-indent-comment-alist} won't be consulted at all for comment-only
+lines.
 
 @kindex C-M-h
 @findex c-mark-function
@@ -1608,14 +1657,14 @@ These variables are also useful when indenting code:
 @kindex TAB
 @cindex literal
 @item c-tab-always-indent
-This variable controls how @kbd{TAB} @code{c-indent-command} operates.
-When this variable is @code{t}, @kbd{TAB} always just indents the
-current line.  When it is @code{nil}, the line is indented only if point
-is at the left margin, or on or before the first non-whitespace
-character on the line, otherwise some whitespace is inserted.  If this
-variable is the symbol @code{other}, then some whitespace is inserted
-only within strings and comments (literals), an inside preprocessor
-directives, but the line is always reindented.
+This variable controls how @kbd{TAB} (@code{c-indent-command}) operates.
+When it is @code{t}, @kbd{TAB} always indents the current line.  When it
+is @code{nil}, the line is indented only if point is at the left margin,
+or on or before the first non-whitespace character on the line,
+otherwise some whitespace is inserted.  If this variable is the symbol
+@code{other}, then some whitespace is inserted only within strings and
+comments (literals), an inside preprocessor directives, but the line is
+always reindented.
 
 @vindex c-insert-tab-function
 @vindex insert-tab-function (c-)
@@ -1847,7 +1896,7 @@ The style variable @code{c-offsets-alist} contains the mappings between
 syntactic symbols and the offsets to apply for those symbols.  It's set
 at mode initialization from a @emph{style} you may specify.  Styles are
 groupings of syntactic symbol offsets and other style variable values.
-Most likely, you'll find that one of the pre-defined styles will suit
+Most likely, you'll find that one of the predefined styles will suit
 your needs.  @xref{Styles}, for an explanation of how to set up named
 styles.
 
@@ -2081,7 +2130,7 @@ needed to do.  Since the other affected lines are indented relative to
 line 4, they are automatically indented the way you'd expect.  For more
 complicated examples, this may not always work.  The general approach to
 take is to always start adjusting offsets for lines higher up in the
-file, then re-indent and see if any following lines need further
+file, then reindent and see if any following lines need further
 adjustments.
 
 
@@ -2446,7 +2495,7 @@ type the following in a @ccmode{} buffer:
 @kbd{C-c .} runs the command @code{c-set-style}.  Note that all style
 names are case insensitive, even the ones you define.
 
-Setting a style in this way does @emph{not} automatically re-indent your
+Setting a style in this way does @emph{not} automatically reindent your
 file.  For commands that you can use to view the effect of your changes,
 see @ref{Commands}.
 
@@ -2629,7 +2678,7 @@ since stream operators are only relevant for C++.}:
 
 @end example
 
-Now the function looks like this after re-indenting (using @kbd{C-c
+Now the function looks like this after reindenting (using @kbd{C-c
 C-q}):
 @example
 @group
@@ -2857,27 +2906,6 @@ you should set the value for
 will be appended to @code{c-special-indent-hook} using @code{add-hook}.
 That way, the current setting for the buffer local value of
 @code{c-special-indent-hook} won't be overridden.
-
-@kindex M-;
-@findex indent-for-comment
-@vindex c-indent-comments-syntactically-p
-@vindex indent-comments-syntactically-p (c-)
-@vindex comment-column
-Normally, the standard Emacs command @kbd{M-;}
-(@code{indent-for-comment}) will indent comment only lines to
-@code{comment-column}.  Some users however, prefer that @kbd{M-;} act
-just like @kbd{TAB} for purposes of indenting comment-only lines;
-i.e. they want the comments to always indent as they would for normal
-code, regardless of whether @kbd{TAB} or @kbd{M-;} were used.  This
-behavior is controlled by the variable
-@code{c-indent-comments-syntactically-p}.  When @code{nil} (the
-default), @kbd{M-;} indents comment-only lines to @code{comment-column}, 
-otherwise, they are indented just as they would be if @kbd{TAB} were
-typed.
-
-Note that this has no effect for comment lines that are inserted with
-@kbd{M-;} at the end of regular code lines.  These comments will always
-start at @code{comment-column}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4702,23 +4730,23 @@ to correct have been fixed in other, better ways.
 @kindex C-j
 @quotation
 
-@strong{Q.} @emph{How do I re-indent the whole file?}
+@strong{Q.} @emph{How do I reindent the whole file?}
 
 @strong{A.} Visit the file and hit @kbd{C-x h} to mark the whole
 buffer. Then hit @kbd{C-M-\}.
 
 @sp 1
-@strong{Q.} @emph{How do I re-indent the entire function?
+@strong{Q.} @emph{How do I reindent the entire function?
 @kbd{C-M-x} doesn't work.}
 
 @strong{A.} @kbd{C-M-x} is reserved for future Emacs use.
-To re-indent the entire function hit @kbd{C-c C-q}.
+To reindent the entire function hit @kbd{C-c C-q}.
 
 @sp 1
-@strong{Q.} @emph{How do I re-indent the current block?}
+@strong{Q.} @emph{How do I reindent the current block?}
 
 @strong{A.} First move to the brace which opens the block with
-@kbd{C-M-u}, then re-indent that expression with
+@kbd{C-M-u}, then reindent that expression with
 @kbd{C-M-q}.
 
 @sp 1
