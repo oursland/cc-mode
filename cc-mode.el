@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.176 $
-;; Last Modified:   $Date: 1994-01-11 18:34:43 $
+;; Version:         $Revision: 3.177 $
+;; Last Modified:   $Date: 1994-01-11 19:43:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1993, 1994 Barry A. Warsaw
@@ -83,7 +83,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-11 18:34:43 $|$Revision: 3.176 $|
+;; |$Date: 1994-01-11 19:43:45 $|$Revision: 3.177 $|
 
 ;;; Code:
 
@@ -452,13 +452,8 @@ supported list, along with the values for this variable:
 
  Vanilla GNU 18/Epoch 4:   (no-dual-comments v18)
  GNU 18/Epoch 4 (patch2):  (8-bit v19 FSF)
- Lemacs 19.8 and beyond:   (8-bit v19 Lucid)
- FSFmacs 19:               (1-bit v19 FSF)
-
-Note that older, pre-19.8 Lemacsen, version 1 patches for
-GNU18/Epoch4, and FSFmacs19 8-bit patches are no longer supported.  If
-cc-mode generates an error when loaded, you should upgrade your
-Emacs.")
+ Lucid Emacs 19:           (8-bit v19 Lucid)
+ FSF Emacs 19:             (1-bit v19 FSF).")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in c++-mode buffers.")
@@ -653,7 +648,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.176 $
+CC-MODE REVISION: $Revision: 3.177 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -687,7 +682,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.176 $
+CC-MODE REVISION: $Revision: 3.177 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1975,7 +1970,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	'pound)
        (t nil)))))
 
-;; This is for all 1-bit emacsen (FSFmacs 19)
+;; This is for all 1-bit emacsen (FSF Emacs 19)
 (defun c-1bit-il (&optional lim)
   ;; Determine if point is in a C++ literal
   (save-excursion
@@ -2975,7 +2970,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.176 $"
+(defconst c-version "$Revision: 3.177 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
