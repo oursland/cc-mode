@@ -186,16 +186,22 @@ tools (e.g. Javadoc).")
   ;; Emacs and XEmacs have completely different face manipulation
   ;; routines. :P
   (copy-face oldface newface)
-  (if (fboundp 'face-inverse-video-p)
-      ;; Emacs way.  This only looks at the inverse flag in the
-      ;; current frame.  Other display configurations might be
-      ;; different, but it can only show if the same Emacs has frames
-      ;; on e.g. a color and a monochrome display simultaneously.
-      (unless (face-inverse-video-p oldface)
-	(invert-face newface))
-    ;; XEmacs way.  Same pitfall here.
-    (unless (face-property-instance oldface 'reverse)
-      (invert-face newface))))
+  (cond ((fboundp 'face-inverse-video-p)
+	 ;; Emacs 20 and later.  This only looks at the inverse flag
+	 ;; in the current frame.  Other display configurations might
+	 ;; be different, but it can only show if the same Emacs has
+	 ;; frames on e.g. a color and a monochrome display
+	 ;; simultaneously.
+	 (unless (face-inverse-video-p oldface)
+	   (invert-face newface)))
+	((fboundp 'face-property-instance)
+	 ;; XEmacs.  Same pitfall here.
+	 (unless (face-property-instance oldface 'reverse)
+	   (invert-face newface)))
+	(t
+	 ;; Emacs 19 has no inverse flag at all.  Just inverse the
+	 ;; face and hope it wasn't inversed already.
+	 (invert-face newface))))
 
 (defun c-font-lock-syntactic-face-function (state)
   (save-excursion
