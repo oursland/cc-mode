@@ -82,6 +82,10 @@
 (defvar cc-bytecomp-loaded-files nil)
 (defvar cc-bytecomp-environment-set nil)
 
+(defmacro cc-bytecomp-debug-msg (&rest args)
+  ;;`(message ,@args)
+  )
+
 (defun cc-bytecomp-setup-environment ()
   ;; Eval'ed during compilation to setup variables, functions etc
   ;; declared with `cc-bytecomp-defvar' et al.
@@ -99,25 +103,38 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	      (progn
 		(eval `(defvar ,(car p)))
 		(set (car p) (intern (concat "cc-bytecomp-ignore-var:"
-					     (symbol-name (car p)))))))
+					     (symbol-name (car p)))))
+		(cc-bytecomp-debug-msg
+		 "cc-bytecomp-setup-environment: Covered variable %s"
+		 (car p))))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-functions)
 	(while p
 	  (let ((fun (car (car p)))
 		(temp-macro (car (cdr (car p)))))
 	    (if temp-macro
-		(eval `(defmacro ,fun ,@temp-macro))
+		(progn
+		  (eval `(defmacro ,fun ,@temp-macro))
+		  (cc-bytecomp-debug-msg
+		   "cc-bytecomp-setup-environment: Bound macro %s" fun))
 	      (fset fun (intern (concat "cc-bytecomp-ignore-fun:"
-					(symbol-name fun))))))
+					(symbol-name fun))))
+	      (cc-bytecomp-debug-msg
+	       "cc-bytecomp-setup-environment: Covered function %s" fun)))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-properties)
 	(while p
 	  (let ((sym (car (car (car p))))
 		(prop (cdr (car (car p))))
 		(tempdef (car (cdr (car p)))))
-	    (put sym prop tempdef))
+	    (put sym prop tempdef)
+	    (cc-bytecomp-debug-msg
+	     "cc-bytecomp-setup-environment: Bound property %s for %s to %s"
+	     prop sym tempdef))
 	  (setq p (cdr p)))
-	(setq cc-bytecomp-environment-set t))))
+	(setq cc-bytecomp-environment-set t)
+	(cc-bytecomp-debug-msg
+	 "cc-bytecomp-setup-environment: Done"))))
 
 (defun cc-bytecomp-restore-environment ()
   ;; Eval'ed during compilation to restore variables, functions etc
@@ -127,23 +144,42 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	(setq p cc-bytecomp-unbound-variables)
 	(while p
 	  (let ((var (car p)))
-	    (if (and (boundp var)
-		     (eq (intern (concat "cc-bytecomp-ignore-var:"
-					 (symbol-name var)))
-			 var))
-		(makunbound var)))
+	    (if (boundp var)
+		(if (eq (intern (concat "cc-bytecomp-ignore-var:"
+					(symbol-name var)))
+			(symbol-value var))
+		    (progn
+		      (makunbound var)
+		      (cc-bytecomp-debug-msg
+		       "cc-bytecomp-restore-environment: Unbound variable %s"
+		       var))
+		  (cc-bytecomp-debug-msg
+		   "cc-bytecomp-restore-environment: Not restoring variable %s"
+		   var))))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-functions)
 	(while p
 	  (let ((fun (car (car p)))
+		(temp-macro (car (cdr (car p))))
 		(def (car (cdr (cdr (car p))))))
-	    (if (and (fboundp fun)
-		     (eq (intern (concat "cc-bytecomp-ignore-fun:"
-					 (symbol-name fun)))
-			 (symbol-function fun)))
-		(if (eq def 'unbound)
-		    (fmakunbound fun)
-		  (fset fun def))))
+	    (if (fboundp fun)
+		(if (eq (or temp-macro
+			    (intern (concat "cc-bytecomp-ignore-fun:"
+					    (symbol-name fun))))
+			   (symbol-function fun))
+		    (if (eq def 'unbound)
+			(progn
+			  (fmakunbound fun)
+			  (cc-bytecomp-debug-msg
+			   "cc-bytecomp-restore-environment: Unbound function %s"
+			   fun))
+		      (fset fun def)
+		      (cc-bytecomp-debug-msg
+		       "cc-bytecomp-restore-environment: Restored function %s"
+		       fun))
+		  (cc-bytecomp-debug-msg
+		   "cc-bytecomp-restore-environment: Not restoring function %s"
+		   fun))))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-properties)
 	(while p
@@ -152,9 +188,18 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 		(tempdef (car (cdr (car p))))
 		(origdef (cdr (cdr (car p)))))
 	    (if (eq (get sym prop) tempdef)
-		(put sym prop origdef)))
+		(progn
+		  (put sym prop origdef)
+		  (cc-bytecomp-debug-msg
+		   "cc-bytecomp-restore-environment: Restored property %s for %s to %s"
+		   prop sym origdef))
+	      (cc-bytecomp-debug-msg
+	       "cc-bytecomp-restore-environment: Not restoring property %s for %s"
+	       prop sym)))
 	  (setq p (cdr p)))
-	(setq cc-bytecomp-environment-set nil))))
+	(setq cc-bytecomp-environment-set nil)
+	(cc-bytecomp-debug-msg
+	 "cc-bytecomp-restore-environment: Done"))))
 
 (eval
  ;; This eval is to avoid byte compilation of the function below.
@@ -180,7 +225,11 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 		()
 	      (setq cc-bytecomp-loaded-files
 		    (cons cc-file cc-bytecomp-loaded-files))
-	      (load cc-file nil t t)))
+	      (cc-bytecomp-debug-msg
+	       "cc-bytecomp-load: Loading %S" cc-file)
+	      (load cc-file nil t t)
+	      (cc-bytecomp-debug-msg
+	       "cc-bytecomp-load: Loaded %S" cc-file)))
 	  (cc-bytecomp-setup-environment)
 	  t))))
 
@@ -236,16 +285,22 @@ use within `eval-when-compile'."
 to silence the byte compiler.  Don't use within `eval-when-compile'."
   `(eval-when-compile
      (if (boundp ',var)
-	 nil
+	 (cc-bytecomp-debug-msg
+	  "cc-bytecomp-defvar: %s bound already" ',var)
        (if (not (memq ',var cc-bytecomp-unbound-variables))
-	   (setq cc-bytecomp-unbound-variables
-		 (cons ',var cc-bytecomp-unbound-variables)))
+	   (progn
+	     (cc-bytecomp-debug-msg
+	      "cc-bytecomp-defvar: Saving %s (as unbound)" ',var)
+	     (setq cc-bytecomp-unbound-variables
+		   (cons ',var cc-bytecomp-unbound-variables))))
        (if (and (cc-bytecomp-is-compiling)
 		(not load-in-progress))
 	   (progn
 	     (defvar ,var)
 	     (set ',var (intern (concat "cc-bytecomp-ignore-var:"
-					(symbol-name ',var)))))))))
+					(symbol-name ',var))))
+	     (cc-bytecomp-debug-msg
+	      "cc-bytecomp-defvar: Covered variable %s" ',var))))))
 
 (defmacro cc-bytecomp-defun (fun)
   "Bind the symbol as a function during compilation of the file,
@@ -258,41 +313,64 @@ existing functions since the byte compiler might need the definition
 at compile time, e.g. for macros and inline functions."
   `(eval-when-compile
      (if (fboundp ',fun)
-	 nil
+	 (cc-bytecomp-debug-msg
+	  "cc-bytecomp-defun: %s bound already" ',fun)
        (if (not (assq ',fun cc-bytecomp-original-functions))
-	   (setq cc-bytecomp-original-functions
-		 (cons (list ',fun nil 'unbound)
-		       cc-bytecomp-original-functions)))
+	   (progn
+	     (cc-bytecomp-debug-msg
+	      "cc-bytecomp-defun: Saving %s (as unbound)" ',fun)
+	     (setq cc-bytecomp-original-functions
+		   (cons (list ',fun nil 'unbound)
+			 cc-bytecomp-original-functions))))
        (if (and (cc-bytecomp-is-compiling)
 		(not load-in-progress))
-	   (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
-				       (symbol-name ',fun))))))))
+	   (progn
+	     (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
+					 (symbol-name ',fun))))
+	     (cc-bytecomp-debug-msg
+	      "cc-bytecomp-defun: Covered function %s" ',fun))))))
 
 (put 'cc-bytecomp-defmacro 'lisp-indent-function 'defun)
 (defmacro cc-bytecomp-defmacro (fun &rest temp-macro)
   "Bind the symbol as a macro during compilation (and evaluation) of the
 file.  Don't use outside `eval-when-compile'."
-  `(progn
-     (if (not (assq ',fun cc-bytecomp-original-functions))
-	 (setq cc-bytecomp-original-functions
-	       (cons (list ',fun
-			   ',temp-macro
-			   (if (fboundp ',fun)
-			       (symbol-function ',fun)
-			     'unbound))
-		     cc-bytecomp-original-functions)))
-     (defmacro ,fun ,@temp-macro)))
+  `(let ((orig-fun (assq ',fun cc-bytecomp-original-functions)))
+     (if (not orig-fun)
+	 (setq orig-fun
+	       (list ',fun
+		     nil
+		     (if (fboundp ',fun)
+			 (progn
+			   (cc-bytecomp-debug-msg
+			    "cc-bytecomp-defmacro: Saving %s" ',fun)
+			   (symbol-function ',fun))
+		       (cc-bytecomp-debug-msg
+			"cc-bytecomp-defmacro: Saving %s as unbound" ',fun)
+		       'unbound))
+	       cc-bytecomp-original-functions
+	       (cons orig-fun cc-bytecomp-original-functions)))
+     (defmacro ,fun ,@temp-macro)
+     (cc-bytecomp-debug-msg
+      "cc-bytecomp-defmacro: Bound macro %s" ',fun)
+     (setcar (cdr orig-fun) (symbol-function ',fun))))
 
 (defmacro cc-bytecomp-put (symbol propname value)
   "Set a property on a symbol during compilation (and evaluation) of
 the file.  Don't use outside `eval-when-compile'."
   `(eval-when-compile
      (if (not (assoc (cons ,symbol ,propname) cc-bytecomp-original-properties))
-	 (setq cc-bytecomp-original-properties
-	       (cons (cons (cons ,symbol ,propname)
-			   (cons ,value (get ,symbol ,propname)))
-		     cc-bytecomp-original-properties)))
-     (put ,symbol ,propname ,value)))
+	 (progn
+	   (cc-bytecomp-debug-msg
+	    "cc-bytecomp-put: Saving property %s for %s with value %s"
+	    ,propname ,symbol (get ,symbol ,propname))
+	   (setq cc-bytecomp-original-properties
+		 (cons (cons (cons ,symbol ,propname)
+			     (cons ,value (get ,symbol ,propname)))
+		       cc-bytecomp-original-properties))))
+     (put ,symbol ,propname ,value)
+     (cc-bytecomp-debug-msg
+      "cc-bytecomp-put: Bound property %s for %s to %s"
+      ,propname ,symbol ,value)))
 
 (defmacro cc-bytecomp-obsolete-var (symbol)
   "Suppress warnings that the given symbol is an obsolete variable.
