@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.312 $
-;; Last Modified:   $Date: 1996-08-19 22:16:16 $
+;; Version:         $Revision: 4.313 $
+;; Last Modified:   $Date: 1996-08-19 22:24:41 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4885,13 +4885,17 @@ indentation amount."
     (while syntax
       (setq langelem (car (car syntax))
 	    syntax (cdr syntax))
-      (if (memq langelem non-top-levels)
-	  (save-excursion
-	    (setq syntax nil)
-	    (back-to-indentation)
-	    (if (zerop (current-column))
-		(insert (make-string c-label-minimum-indentation 32))))
-	))))
+      ;; don't adjust comment-only lines
+      (cond ((eq langelem 'comment-intro)
+	     (setq syntax nil))
+	    ((memq langelem non-top-levels)
+	     (save-excursion
+	       (setq syntax nil)
+	       (back-to-indentation)
+	       (if (zerop (current-column))
+		   (insert (make-string c-label-minimum-indentation 32)))
+	       ))
+	    ))))
 
 
 ;;; This page handles insertion and removal of backslashes for C macros.
@@ -4964,7 +4968,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.312 $"
+(defconst c-version "$Revision: 4.313 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
