@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.110 $
-;; Last Modified:   $Date: 1994-12-08 19:06:16 $
+;; Version:         $Revision: 4.111 $
+;; Last Modified:   $Date: 1994-12-09 17:03:19 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-08 19:06:16 $|$Revision: 4.110 $|
+;; |$Date: 1994-12-09 17:03:19 $|$Revision: 4.111 $|
 
 ;;; Code:
 
@@ -2136,6 +2136,7 @@ search."
   ;; move to the start of the current statement, or the previous
   ;; statement if already at the beginning of one.
   (let ((firstp t)
+	(substmt-p t)
 	donep c-in-literal-cache maybe-labelp
 	(last-begin (point)))
     (while (not donep)
@@ -2173,41 +2174,47 @@ search."
 	 ;; CASE 3: are we looking at a conditional keyword?
 	 ((or (looking-at c-conditional-key)
 	      (and (= (following-char) ?\()
+		   (save-excursion
+		     (forward-sexp 1)
+		     (c-forward-syntactic-ws)
+		     (/= (following-char) ?\;))
 		   (let ((here (point))
 			 (foundp (progn
 				   (c-backward-syntactic-ws lim)
 				   (forward-word -1)
 				   (and (not (c-in-literal lim))
 					(looking-at c-conditional-key)))))
+		     ;; did we find a conditional?
 		     (if (not foundp)
 			 (goto-char here))
 		     foundp)))
 	  ;; are we in the middle of an else-if clause?
-	  (if (save-excursion
-		(c-safe (forward-sexp -1))
-		(looking-at "\\<else\\>[ \t]+\\<if\\>"))
-	      (forward-sexp -1))
+	  (if (and (not substmt-p)
+		   (save-excursion
+		     (c-safe (forward-sexp -1))
+		     (looking-at "\\<else\\>[ \t\n]+\\<if\\>")))
+	      (progn
+		(forward-sexp -1)
+		(c-backward-to-start-of-if lim)))
+	  ;; are we sitting at an else clause, that we are not a
+	  ;; substatement of?
+	  (if (and (not substmt-p)
+		   (looking-at "\\<else\\>[^_]"))
+	      (c-backward-to-start-of-if lim))
+	  ;; are we sitting at the while of a do-while?
+	  (if (and (looking-at "\\<while\\>[^_]")
+		   (c-backward-to-start-of-do lim))
+	      (setq substmt-p nil))
 	  (setq last-begin (point)
-		donep t))
+		donep substmt-p))
 	 ;; CASE 4: is this the first time we're checking?
 	 (firstp (setq firstp nil
+		       substmt-p (not (c-crosses-statement-barrier-p
+				       (point) last-begin))
 		       last-begin (point)))
 	 ;; CASE 5: have we crossed a statement barrier?
-	 ((let ((lim (point))
-		crossedp)
-	    (save-excursion
-	      (while (and (not crossedp)
-			  (< (point) last-begin))
-		(skip-chars-forward "^;{}:" last-begin)
-		(if (not (c-in-literal lim))
-		    (if (memq (following-char) '(?\; ?{ ?}))
-			(setq crossedp t
-			      donep t)
-		      (if (= (following-char) ?:)
-			  (setq maybe-labelp t))
-		      (forward-char 1))
-		  (forward-char 1))))
-	    crossedp))
+	 ((c-crosses-statement-barrier-p (point) last-begin)
+	  (setq donep t))
 	 ;; CASE 6: ignore labels
 	 ((and maybe-labelp
 	       (or (and c-access-key (looking-at c-access-key))
@@ -2254,6 +2261,29 @@ search."
        (let ((end (point)))
 	 (goto-char beg)
 	 (search-forward ";" end 'move))))))
+
+(defun c-crosses-statement-barrier-p (from to)
+  ;; Does buffer positions FROM to TO cross a C statement boundary?
+  (let ((here (point))
+	(lim from)
+	crossedp)
+    (condition-case ()
+	(progn
+	  (goto-char from)
+	  (while (and (not crossedp)
+		      (< (point) to))
+	    (skip-chars-forward "^;{}:" to)
+	    (if (not (c-in-literal lim))
+		(if (memq (following-char) '(?\; ?{ ?}))
+		    (setq crossedp t)
+		  (if (= (following-char) ?:)
+		      (setq maybe-labelp t))
+		  (forward-char 1))
+	      (forward-char 1))
+	    (setq lim (point))))
+      (error (setq crossedp nil)))
+    (goto-char here)
+    crossedp))
 
 
 ;;(defun c-beginning-of-defun (count)
@@ -2871,10 +2901,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 ;; defuns to look backwards for things
 (defun c-backward-to-start-of-do (&optional lim)
   ;; Move to the start of the last "unbalanced" do expression.
-  ;; Optional LIM is the farthest back to search.
+  ;; Optional LIM is the farthest back to search.  If none is found,
+  ;; nil is returned and point is left unchanged, otherwise t is returned.
   (let ((do-level 1)
 	(case-fold-search nil)
-	(lim (or lim (c-point 'bod))))
+	(lim (or lim (c-point 'bod)))
+	(here (point))
+	foundp)
     (while (not (zerop do-level))
       ;; we protect this call because trying to execute this when the
       ;; while is not associated with a do will throw an error
@@ -2886,13 +2919,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ((looking-at "while\\b[^_]")
 	      (setq do-level (1+ do-level)))
 	     ((looking-at "do\\b[^_]")
-	      (setq do-level (1- do-level)))
+	      (if (zerop (setq do-level (1- do-level)))
+		  (setq foundp t)))
 	     ((< (point) lim)
 	      (setq do-level 0)
 	      (goto-char lim))))
 	(error
 	 (goto-char lim)
-	 (setq do-level 0))))))
+	 (setq do-level 0))))
+    (if (not foundp)
+	(goto-char here))
+    foundp))
 
 (defun c-backward-to-start-of-if (&optional lim)
   ;; Move to the start of the last "unbalanced" if and return t.  If
@@ -3166,7 +3203,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     (in-method-intro-p (and (eq major-mode 'objc-mode)
 				     (looking-at c-ObjC-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
-	     syntax placeholder c-in-literal-cache
+	     syntax placeholder c-in-literal-cache inswitch-p
 	     ;; narrow out any enclosing class
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
 	     )
@@ -3708,88 +3745,86 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char containing-sexp)
 	  (forward-char 1)
 	  (c-forward-syntactic-ws indent-point)
-	  ;; we want to ignore labels when skipping forward
-	  (let ((ignore-re (concat c-switch-label-key "\\|" c-label-key))
-		inswitch-p)
-	    (while (looking-at ignore-re)
-	      (if (looking-at c-switch-label-key)
-		  (progn
-		    (setq inswitch-p t)
-		    ;; we also want to skip over the body of the
-		    ;; case/switch statement if that doesn't put us at
-		    ;; after the indent-point
-		    (while (c-skip-case-statement-forward fullstate
-			    indent-point))))
-	      (forward-line 1)
-	      (c-forward-syntactic-ws indent-point))
-	    (cond
-	     ;; CASE 15A: we saw a case/default statement so we must be
-	     ;; in a switch statement.  find out if we are at the
-	     ;; statement just after a case or default label
-	     ((and inswitch-p
-		   (save-excursion
-		     (goto-char indent-point)
-		     (c-backward-syntactic-ws containing-sexp)
-		     (back-to-indentation)
-		     (setq placeholder (point))
-		     (looking-at c-switch-label-key)))
+	  ;; we want to ignore non-case labels when skipping forward
+	  (while (and (looking-at c-label-key)
+		      (goto-char (match-end 0)))
+	    (c-forward-syntactic-ws indent-point))
+	  ;; now skip forward past any case/default clauses we might find.
+	  (while (or (c-skip-case-statement-forward fullstate indent-point)
+		     (and (looking-at c-switch-label-key)
+			  (not inswitch-p)))
+	    (setq inswitch-p t))
+	  (cond
+	   ;; CASE 15A: we are inside a case/default clause inside a
+	   ;; switch statement.  find out if we are at the statement
+	   ;; just after the case/default label.
+	   ((and inswitch-p
+		 (progn
+		   (goto-char indent-point)
+		   (c-backward-syntactic-ws containing-sexp)
+		   (back-to-indentation)
+		   (setq placeholder (point))
+		   (looking-at c-switch-label-key)))
+	    (goto-char indent-point)
+	    (skip-chars-forward " \t")
+	    (if (= (following-char) ?{)
+		(c-add-syntax 'statement-case-open placeholder)
+	      (c-add-syntax 'statement-case-intro placeholder)))
+	   ;; CASE 15B: continued statement
+	   ((= char-before-ip ?,)
+	    (c-add-syntax 'statement-cont (c-point 'boi)))
+	   ;; CASE 15C: a question/colon construct?  But make sure
+	   ;; what came before was not a label, and what comes after
+	   ;; is not a globally scoped function call!
+	   ((or (and (memq char-before-ip '(?: ??))
+		     (save-excursion
+		       (goto-char indent-point)
+		       (c-backward-syntactic-ws lim)
+		       (back-to-indentation)
+		       (not (looking-at c-label-key))))
+		(and (memq char-after-ip '(?: ??))
+		     (save-excursion
+		       (goto-char indent-point)
+		       (skip-chars-forward " \t")
+		       ;; watch out for scope operator
+		       (not (looking-at "::")))))
+	    (c-add-syntax 'statement-cont (c-point 'boi)))
+	   ;; CASE 15D: any old statement
+	   ((< (point) indent-point)
+	    (let ((safe-pos (point)))
 	      (goto-char indent-point)
-	      (skip-chars-forward " \t")
-	      (if (= (following-char) ?{)
-		  (c-add-syntax 'statement-case-open placeholder)
-		(c-add-syntax 'statement-case-intro placeholder)))
-	     ;; CASE 15B: continued statement
-	     ((= char-before-ip ?,)
-	      (c-add-syntax 'statement-cont (c-point 'boi)))
-	     ;; CASE 15C: a question/colon construct?  But make sure
-	     ;; what came before was not a label, and what comes after
-	     ;; is not a globally scoped function call!
-	     ((or (and (memq char-before-ip '(?: ??))
-		       (save-excursion
-			 (goto-char indent-point)
-			 (c-backward-syntactic-ws lim)
-			 (back-to-indentation)
-			 (not (looking-at c-label-key))))
-		  (and (memq char-after-ip '(?: ??))
-		       (save-excursion
-			 (goto-char indent-point)
-			 (skip-chars-forward " \t")
-			 ;; watch out for scope operator
-			 (not (looking-at "::")))))
-	      (c-add-syntax 'statement-cont (c-point 'boi)))
-	     ;; CASE 15D: any old statement
-	     ((< (point) indent-point)
+	      (c-beginning-of-statement 1 lim)
 	      (c-add-syntax 'statement (c-point 'boi))
 	      (if (= char-after-ip ?{)
-		  (c-add-syntax 'block-open)))
-	     ;; CASE 15E: first statement in an inline, or first
-	     ;; statement in a top-level defun. we can tell this is it
-	     ;; if there are no enclosing braces that haven't been
-	     ;; narrowed out by a class (i.e. don't use bod here!)
-	     ((save-excursion
-		(save-restriction
-		  (widen)
-		  (goto-char containing-sexp)
-		  (c-narrow-out-enclosing-class state containing-sexp)
-		  (not (c-most-enclosing-brace state))))
-	      (goto-char containing-sexp)
-	      ;; if not at boi, then defun-opening braces are hung on
-	      ;; right side, so we need a different relpos
+		  (c-add-syntax 'block-open))))
+	   ;; CASE 15E: first statement in an inline, or first
+	   ;; statement in a top-level defun. we can tell this is it
+	   ;; if there are no enclosing braces that haven't been
+	   ;; narrowed out by a class (i.e. don't use bod here!)
+	   ((save-excursion
+	      (save-restriction
+		(widen)
+		(goto-char containing-sexp)
+		(c-narrow-out-enclosing-class state containing-sexp)
+		(not (c-most-enclosing-brace state))))
+	    (goto-char containing-sexp)
+	    ;; if not at boi, then defun-opening braces are hung on
+	    ;; right side, so we need a different relpos
+	    (if (/= (point) (c-point 'boi))
+		(progn
+		  (c-backward-syntactic-ws)
+		  (c-safe (forward-sexp (if (= (preceding-char) ?\))
+					    -1 -2)))
+		  ))
+	    (c-add-syntax 'defun-block-intro (c-point 'boi)))
+	   ;; CASE 15F: first statement in a block
+	   (t (goto-char containing-sexp)
 	      (if (/= (point) (c-point 'boi))
-		  (progn
-		    (c-backward-syntactic-ws)
-		    (c-safe (forward-sexp (if (= (preceding-char) ?\))
-					      -1 -2)))
-		    ))
-	      (c-add-syntax 'defun-block-intro (c-point 'boi)))
-	     ;; CASE 15F: first statement in a block
-	     (t (goto-char containing-sexp)
-		(if (/= (point) (c-point 'boi))
-		    (c-beginning-of-statement))
-		(c-add-syntax 'statement-block-intro (c-point 'boi))
-		(if (= char-after-ip ?{)
-		    (c-add-syntax 'block-open)))
-	     )))
+		  (c-beginning-of-statement))
+	      (c-add-syntax 'statement-block-intro (c-point 'boi))
+	      (if (= char-after-ip ?{)
+		  (c-add-syntax 'block-open)))
+	   ))
 	 )
 
 	;; now we need to look at any modifiers
@@ -4232,7 +4267,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.110 $"
+(defconst c-version "$Revision: 4.111 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
