@@ -2107,12 +2107,12 @@ syntactic errors are reported, even if `c-report-syntactic-errors' is
 non-nil."
   (save-excursion
     (goto-char end)
-    (skip-chars-backward " \t\n\r")
+    (skip-chars-backward " \t\n\r\f\v")
     (setq end (point))
     (goto-char start)
     ;; Advance to first nonblank line.
     (beginning-of-line)
-    (skip-chars-forward " \t\n\r")
+    (skip-chars-forward " \t\n\r\f\v")
     (setq start (point))
     (beginning-of-line)
     (setq c-parsing-error

@@ -353,17 +353,17 @@ continuations.
 
 This function does not do any hidden buffer changes."
   (if limit
-      `(let ((-limit- (or ,limit (point-max))))
+      `(let ((limit (or ,limit (point-max))))
 	 (while (progn
 		  ;; skip-syntax-* doesn't count \n as whitespace..
-		  (skip-chars-forward " \t\n\r\f" -limit-)
+		  (skip-chars-forward " \t\n\r\f\v" limit)
 		  (when (and (eq (char-after) ?\\)
-			     (< (point) -limit-))
+			     (< (point) limit))
 		    (forward-char)
 		    (or (eolp)
 			(progn (backward-char) nil))))))
     '(while (progn
-	      (skip-chars-forward " \t\n\r\f")
+	      (skip-chars-forward " \t\n\r\f\v")
 	      (when (eq (char-after) ?\\)
 		(forward-char)
 		(or (eolp)
@@ -376,16 +376,16 @@ continuations.
 
 This function does not do any hidden buffer changes."
   (if limit
-      `(let ((-limit- (or ,limit (point-min))))
+      `(let ((limit (or ,limit (point-min))))
 	 (while (progn
 		  ;; skip-syntax-* doesn't count \n as whitespace..
-		  (skip-chars-backward " \t\n\r\f" -limit-)
+		  (skip-chars-backward " \t\n\r\f\v" limit)
 		  (and (eolp)
 		       (eq (char-before) ?\\)
-		       (> (point) -limit-)))
+		       (> (point) limit)))
 	   (backward-char)))
     '(while (progn
-	      (skip-chars-backward " \t\n\r\f")
+	      (skip-chars-backward " \t\n\r\f\v")
 	      (and (eolp)
 		   (eq (char-before) ?\\)))
        (backward-char))))

@@ -262,7 +262,7 @@ appended."
 		""))
   c++ (concat (c-lang-var c-identifier-start)
 	      "\\|"
-	      "~[ \t\n\r]*" (c-lang-var c-symbol-start)))
+	      "~[ \t\n\r\f\v]*" (c-lang-var c-symbol-start)))
 (c-lang-defvar c-identifier-start (c-lang-var c-identifier-start))
 
 ;; Regexp matching a fully qualified identifier, like "A::B::c" in
@@ -275,44 +275,44 @@ appended."
   ;; symbol.  This regexp is more complex than strictly necessary to
   ;; ensure that it can be matched with a minimum of backtracking.
   c++  (concat
-	"\\(" (c-lang-var c-opt-identifier-concat-key) "[ \t\n\r]*\\)?"
+	"\\(" (c-lang-var c-opt-identifier-concat-key) "[ \t\n\r\f\v]*\\)?"
 	(concat
 	 "\\("
 	 ;; The submatch below is depth of `c-opt-identifier-concat-key' + 3.
 	 "\\(" (c-lang-var c-symbol-key) "\\)"
 	 (concat "\\("
-		 "[ \t\n\r]*"
+		 "[ \t\n\r\f\v]*"
 		 (c-lang-var c-opt-identifier-concat-key)
-		 "[ \t\n\r]*"
+		 "[ \t\n\r\f\v]*"
 		 ;; The submatch below is: `c-symbol-key-depth' +
 		 ;; 2 * depth of `c-opt-identifier-concat-key' + 5.
 		 "\\(" (c-lang-var c-symbol-key) "\\)"
 		 "\\)*")
 	 (concat "\\("
-		 "[ \t\n\r]*"
+		 "[ \t\n\r\f\v]*"
 		 (c-lang-var c-opt-identifier-concat-key)
-		 "[ \t\n\r]*"
+		 "[ \t\n\r\f\v]*"
 		 "~"
-		 "[ \t\n\r]*"
+		 "[ \t\n\r\f\v]*"
 		 ;; The submatch below is: 2 * `c-symbol-key-depth' +
 		 ;; 3 * depth of `c-opt-identifier-concat-key' + 7.
 		 "\\(" (c-lang-var c-symbol-key) "\\)"
 		 "\\)?")
 	 "\\|"
-	 "~[ \t\n\r]*"
+	 "~[ \t\n\r\f\v]*"
 	 ;; The submatch below is: 3 * `c-symbol-key-depth' +
 	 ;; 3 * depth of `c-opt-identifier-concat-key' + 8.
 	 "\\(" (c-lang-var c-symbol-key) "\\)"
 	 "\\)"))
   ;; Pike allows a leading qualifier operator.
   pike (concat
-	"\\(" (c-lang-var c-opt-identifier-concat-key) "[ \t\n\r]*\\)?"
+	"\\(" (c-lang-var c-opt-identifier-concat-key) "[ \t\n\r\f\v]*\\)?"
 	;; The submatch below is depth of `c-opt-identifier-concat-key' + 2.
 	"\\(" (c-lang-var c-symbol-key) "\\)"
 	(concat "\\("
-		"[ \t\n\r]*"
+		"[ \t\n\r\f\v]*"
 		(c-lang-var c-opt-identifier-concat-key)
-		"[ \t\n\r]*"
+		"[ \t\n\r\f\v]*"
 		;; The submatch below is: `c-symbol-key-depth' +
 		;; 2 * depth of `c-opt-identifier-concat-key' + 4.
 		"\\(" (c-lang-var c-symbol-key) "\\)"
@@ -320,9 +320,9 @@ appended."
   ;; Java does not allow a leading qualifier operator.
   java (concat "\\(" (c-lang-var c-symbol-key) "\\)" ; 1
 	       (concat "\\("
-		       "[ \t\n\r]*"
+		       "[ \t\n\r\f\v]*"
 		       (c-lang-var c-opt-identifier-concat-key)
-		       "[ \t\n\r]*"
+		       "[ \t\n\r\f\v]*"
 		       ;; The submatch below is `c-symbol-key-depth' +
 		       ;; depth of `c-opt-identifier-concat-key' + 3.
 		       "\\(" (c-lang-var c-symbol-key) "\\)"
@@ -554,7 +554,7 @@ appended."
 (c-lang-defconst c-opt-access-key
   c++ (concat "\\("
 	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
-	      "\\)[ \t\n\r]*:"))
+	      "\\)[ \t\n\r\f\v]*:"))
 (c-lang-defconst c-opt-access-key
   objc (concat "@" (c-make-keywords-re t (c-lang-var c-protection-kwds))))
 (c-lang-defvar c-opt-access-key (c-lang-var c-opt-access-key))
@@ -854,7 +854,7 @@ appended."
 (c-lang-defconst c-label-key
   all "\\<\\>"
   (c c++ java pike) (concat "\\(" (c-lang-var c-symbol-key) "\\)"
-			    "[ \t\n\r]*:\\([^:]\\|$\\)"))
+			    "[ \t\n\r\f\v]*:\\([^:]\\|$\\)"))
 (c-lang-defvar c-label-key (c-lang-var c-label-key))
 
 ;; Regexp matching the beginning of a declaration specifier in the
@@ -863,9 +863,9 @@ appended."
 ;; TODO: This is currently not used uniformly; c++-mode and java-mode
 ;; each have their own ways of using it.
 (c-lang-defconst c-opt-decl-spec-key
-  c++ (concat ":?[ \t\n\r]*\\(virtual[ \t\n\r]+\\)?\\("
+  c++ (concat ":?[ \t\n\r\f\v]*\\(virtual[ \t\n\r\f\v]+\\)?\\("
 	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
-	      "\\)[ \t\n\r]+"
+	      "\\)[ \t\n\r\f\v]+"
 	      "\\(" (c-lang-var c-symbol-key) "\\)")
   java (c-make-keywords-re t (c-lang-var c-decl-spec-kwds)))
 (c-lang-defvar c-opt-decl-spec-key (c-lang-var c-opt-decl-spec-key))
@@ -970,7 +970,7 @@ appended."
 ;; submatch is taken as the end of the operator.
 (c-lang-defconst c-opt-type-suffix-key
   (c c++ pike) "\\(\\.\\.\\.\\)"
-  java "\\(\\[[ \t\n\r]*\\]\\)")
+  java "\\(\\[[ \t\n\r\f\v]*\\]\\)")
 (c-lang-defvar c-opt-type-suffix-key (c-lang-var c-opt-type-suffix-key))
 
 ;; Regexp matching the known type identifiers.  This is initialized
@@ -1071,9 +1071,9 @@ appended."
 ;; doesn't regard cpp directives as syntactic whitespace.  Does not
 ;; contain a \| operator at the top level.
 (c-lang-defconst c-syntactic-ws
-  all (concat "[ \t\n\r]*\\("
+  all (concat "[ \t\n\r\f\v]*\\("
 	      "\\(" (c-lang-var c-nonwhite-syntactic-ws) "\\)"
-	      "[ \t\n\r]*\\)*"))
+	      "[ \t\n\r\f\v]*\\)*"))
 
 ;; Number of regexp grouping parens in `c-syntactic-ws'.
 (c-lang-defconst c-syntactic-ws-depth
@@ -1084,7 +1084,7 @@ appended."
 ;; this doesn't regard cpp directives as syntactic whitespace.  Does
 ;; not contain a \| operator at the top level.
 (c-lang-defconst c-nonempty-syntactic-ws
-  all (concat "\\([ \t\n\r]\\|"
+  all (concat "\\([ \t\n\r\f\v]\\|"
 	      (c-lang-var c-nonwhite-syntactic-ws)
 	      "\\)+"))
 
@@ -1183,7 +1183,7 @@ appended."
 ;; since it's practically impossible to write a regexp that reliably
 ;; matches such a construct.  Other tools are necessary.
 (defconst c-Java-defun-prompt-regexp
-  "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f]*\\)+\\)?\\s-*")
+  "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f\v]*\\)+\\)?\\s-*")
 
 
 ;; Syntax tables.

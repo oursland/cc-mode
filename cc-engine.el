@@ -619,7 +619,7 @@ line if it moved past a line comment.
 This function does not do any hidden buffer changes."
 
   (let ((start (point)))
-    (when (looking-at "\\([ \t\n\r\f]\\|\\\\[\n\r]\\)+")
+    (when (looking-at "\\([ \t\n\r\f\v]\\|\\\\[\n\r]\\)+")
       (goto-char (match-end 0)))
 
     (when (forward-comment 1)
@@ -673,7 +673,7 @@ This function does not do any hidden buffer changes."
     ;; ending with a comment when moving backwards.  This corrects for
     ;; that, and at the same time handles line continuations.
     (while (progn
-	     (skip-chars-backward " \t\n\r\f")
+	     (skip-chars-backward " \t\n\r\f\v")
 	     (and (looking-at "[\n\r]")
 		  (eq (char-before) ?\\)
 		  (< (point) start)))
@@ -861,7 +861,7 @@ This function does not do any hidden buffer changes."
       ;; how CC Mode uses `c-backward-syntactic-ws'.
       (if (and (>= start c-last-large-sws-end)
 	       (< start (+ c-last-large-sws-end 20))
-	       (progn (skip-chars-backward " \t\n\r" c-last-large-sws-end)
+	       (progn (skip-chars-backward " \t\n\r\f\v" c-last-large-sws-end)
 		      (= (point) c-last-large-sws-end)))
 
 	  ;; Even if we get a cache hit we continue the search below since

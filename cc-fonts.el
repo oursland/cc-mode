@@ -466,9 +466,9 @@ tools (e.g. Javadoc).")
 		    (while (re-search-forward
 			    ,(concat "\\(\\<" ; 1
 				     "\\(" (c-lang-var c-symbol-key) "\\)" ; 2
-				     "[ \t\n\r]*"
+				     "[ \t\n\r\f\v]*"
 				     (c-lang-var c-opt-identifier-concat-key)
-				     "[ \t\n\r]*"
+				     "[ \t\n\r\f\v]*"
 				     "\\)"
 				     (c-lang-var c-symbol-start))
 			    limit t)
@@ -1366,7 +1366,7 @@ tools (e.g. Javadoc).")
 			       (c-lang-var c-type-prefix-kwds))))
 	      `((,(c-make-simple-font-lock-decl-function
 		   (concat "\\<\\(" prefix-re "\\)"
-			   "[ \t\n\r]+"
+			   "[ \t\n\r\f\v]+"
 			   "\\(" (c-lang-var c-symbol-key) "\\)")
 		   (+ (c-regexp-opt-depth prefix-re) 2)
 		   '(progn (goto-char (match-end 2))
