@@ -1392,8 +1392,12 @@ namely when a block comment is broken for the first time.  This style
 variable@footnote{In versions before 5.26, this variable was called
 @code{c-comment-continuation-stars}.  As a compatibility measure,
 @ccmode{} still uses the value on that variable if it's set.} is used
-then as the comment prefix.  It defaults to @samp{* }, which makes a
-comment
+then as the comment prefix.  It defaults to @samp{*
+}@footnote{Actually, this default setting of
+@code{c-block-comment-prefix} typically gets overriden by the default
+style @code{gnu}, which sets it to blank.  You can see the line
+splitting effect described here by setting a different style,
+e.g. @code{k&r} @xref{Choosing a Style}}, which makes a comment
 
 @example
 /* Got O(n^2) here, which is a Bad Thing. */
@@ -3398,7 +3402,7 @@ Lines continuing the header of a lambda function, i.e. between the
 @code{lambda} keyword and the function body.  Only used in Pike mode.
 @item inexpr-statement
 A statement block inside an expression.  The gcc C and C++ extension for
-this is recognized.  It's also used for the special functions that takes
+this is recognized.  It's also used for the special functions that take
 a statement block as an argument in Pike.
 @item inexpr-class
 A class definition inside an expression.  This is used for anonymous
@@ -4332,6 +4336,8 @@ one.
 @workswith @code{topmost-intro-cont}, @code{statement-cont},
 @code{arglist-cont}, @code{arglist-cont-nonempty}.
 
+@end defun
+
 @comment ------------------------------------------------------------
 
 @defun c-lineup-C-comments
@@ -4714,7 +4720,7 @@ expressions.
 Like @code{c-lineup-assignments} but indent with @code{c-basic-offset}
 if no assignment operator was found on the first line.  I.e. this
 function is the same as specifying a list @code{(c-lineup-assignments
-+)@}.  It's provided for compatibility with old configurations.
++)}.  It's provided for compatibility with old configurations.
 
 @workswith @code{topmost-intro-cont}, @code{statement-cont},
 @code{arglist-cont}, @code{arglist-cont-nonempty}.
