@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.337 $
-;; Last Modified:   $Date: 1993-06-15 13:46:34 $
+;; Version:         $Revision: 2.338 $
+;; Last Modified:   $Date: 1993-06-15 14:00:47 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-15 13:46:34 $|$Revision: 2.337 $|
+;; |$Date: 1993-06-15 14:00:47 $|$Revision: 2.338 $|
 
 ;;; Code:
 
@@ -480,7 +480,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.337 $
+  "Major mode for editing C++ code.  $Revision: 2.338 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -698,7 +698,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.337 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.338 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -2015,9 +2015,8 @@ BOD is the beginning of the C++ definition."
        ;;
        ((setq inclass-depth (c++-at-top-level-p t bod))
 	(+
-	 ;; add an offset if we are inside a class defun body,
-	 ;; i.e. we are at the top level, but only wrt a
-	 ;; containing class
+	 ;; add an offset if we are inside a class defun body, i.e. we
+	 ;; are at the top level, but only wrt a containing class
 	 (let ((shift/level (+ c-indent-level c-brace-imaginary-offset)))
 	   (setq inclass-shift (* shift/level inclass-depth)
 		 inclass-unshift (* shift/level (max 0 (1- inclass-depth))))
@@ -2040,50 +2039,51 @@ BOD is the beginning of the C++ definition."
 		 c++-member-init-indent
 	       c-argdecl-indent))
 	    ;;
-	    ((= (preceding-char) ?\;)
-	     (backward-char 1)
-	     (skip-chars-backward " \t"))
-	    ;; may be first line after a hanging member init colon.
-	    ;; check to be sure its not a scope operator meaning we
-	    ;; are inside a member def
-	    ((or (= (preceding-char) ?:)
-		 (save-excursion
-		   (forward-line 1)
-		   (skip-chars-forward " \t")
-		   (or (eobp) (forward-char 1))
-		   (and (= (preceding-char) ?:)
-			(/= (following-char) ?:)))
-		 (save-excursion
-		   (and (= (preceding-char) ?,)
-			(let ((bol (c++-point 'bol)))
-			  (skip-chars-backward "^:" bol)
-			  (= (preceding-char) ?:))
-			(not (c++-in-parens-p))
-			(progn
-			  (forward-char -1)
-			  (skip-chars-backward " \t")
-			  (not (bolp)))
-			;; make sure its not a multiple inheritance
-			;; continuation line
-			(progn
-			  (beginning-of-line)
-			  (not (looking-at c++-inher-key)))
-			)))
-	     ;; check to see if we're looking at a member
-	     ;; init, or access specifier
+	    ((progn
+	       (if (= (preceding-char) ?\;)
+		   (progn
+		     (backward-char 1)
+		     (skip-chars-backward " \t")))
+	       ;; may be first line after a hanging member init colon.
+	       ;; check to be sure its not a scope operator meaning we
+	       ;; are inside a member def
+	       (or (= (preceding-char) ?:)
+		   (save-excursion
+		     (forward-line 1)
+		     (skip-chars-forward " \t")
+		     (or (eobp) (forward-char 1))
+		     (and (= (preceding-char) ?:)
+			  (/= (following-char) ?:)))
+		   (save-excursion
+		     (and (= (preceding-char) ?,)
+			  (let ((bol (c++-point 'bol)))
+			    (skip-chars-backward "^:" bol)
+			    (= (preceding-char) ?:))
+			  (not (c++-in-parens-p))
+			  (progn
+			    (forward-char -1)
+			    (skip-chars-backward " \t")
+			    (not (bolp)))
+			  ;; make sure its not a multiple inheritance
+			  ;; continuation line
+			  (progn
+			    (beginning-of-line)
+			    (not (looking-at c++-inher-key)))
+			  ))))
+	     ;; check to see if we're looking at a member init, or
+	     ;; access specifier
 	     (if (progn
 		   (beginning-of-line)
 		   (skip-chars-forward " \t")
 		   (looking-at c++-access-key))
-		 ;; access specifier. class defun opening brace
-		 ;; may not be in col zero
+		 ;; access specifier. class defun opening brace may
+		 ;; not be in col zero
 		 (progn (goto-char (or containing-sexp bod))
 			(- (current-indentation)
 			   ;; remove some nested inclass indentation
 			   inclass-unshift))
-	       ;; member init, so add offset. add additional
-	       ;; offset if looking at line with just a member
-	       ;; init colon
+	       ;; member init, so add offset. add additional offset if
+	       ;; looking at line with just a member init colon
 	       (+ c++-member-init-indent
 		  (if (looking-at ":[ \t]*$")
 		      (or c++-continued-member-init-offset 0) 0))))
@@ -2092,14 +2092,14 @@ BOD is the beginning of the C++ definition."
 		 (save-excursion
 		   (beginning-of-line)
 		   (looking-at "[ \t]*\\<friend\\>")))
-	     ;; indentation of class defun opening brace may not
-	     ;; be zero
+	     ;; indentation of class defun opening brace may not be
+	     ;; zero
 	     (goto-char (or containing-sexp bod))
 	     (- (current-indentation)
 		;; remove some nested inclass indentation
 		inclass-unshift))
-	    ;; cont arg decls or member inits.  we might be
-	    ;; inside a K&R C arg decl
+	    ;; cont arg decls or member inits.  we might be inside a
+	    ;; K&R C arg decl
 	    ((save-excursion
 	       (while (and (< bod (point))
 			   (memq (preceding-char) '(?\, ?\;)))
@@ -2129,9 +2129,8 @@ BOD is the beginning of the C++ definition."
 		 (skip-chars-forward " \t")
 		 (- (current-column)
 		    inclass-shift))))
-	    ;; else first check to see if its a
-	    ;; multiple inheritance continuation line,
-	    ;; but not a K&R C arg decl
+	    ;; else first check to see if its a multiple inheritance
+	    ;; continuation line, but not a K&R C arg decl
 	    ((and (not (eq major-mode 'c++-c-mode))
 		  (looking-at c++-inher-key))
 	     (if (= char-before-ip ?,)
@@ -2139,20 +2138,17 @@ BOD is the beginning of the C++ definition."
 			(current-column))
 	       ;; nope, its probably a nested class
 	       0))
-	    ;; we might be looking at the opening
-	    ;; brace of a class defun
+	    ;; we might be looking at the opening brace of a class
+	    ;; defun
 	    ((= (following-char) ?\{)
-	     ;; indentation of opening brace may not
-	     ;; be zero
+	     ;; indentation of opening brace may not be zero
 	     (- (current-indentation)
 		;; remove some nested inclass indentation
 		inclass-unshift))
 	    ((eolp)
-	     ;; looking at a blank line, indent next
-	     ;; line to zero
+	     ;; looking at a blank line, indent next line to zero
 	     0)
-	    ;; at beginning of buffer, if nothing
-	    ;; else, indent to zero
+	    ;; at beginning of buffer, if nothing else, indent to zero
 	    ((save-excursion
 	       (goto-char indent-point)
 	       (beginning-of-line)
@@ -2166,15 +2162,13 @@ BOD is the beginning of the C++ definition."
 	     c-indent-level)
 	    (t
 	     (if (c++-in-parens-p)
-		 ;; we are perhaps inside a member
-		 ;; init call
+		 ;; we are perhaps inside a member init call
 		 (while (and (c++-in-parens-p)
 			     (< bod (point)))
 		   (forward-line -1)
 		   (skip-chars-forward " \t")))
-	     ;; check to be sure that we're
-	     ;; not on the first line of the
-	     ;; member init list
+	     ;; check to be sure that we're not on the first line of
+	     ;; the member init list
 	     (if (= (following-char) ?:)
 		 (progn
 		   (forward-char 1)
@@ -2189,9 +2183,8 @@ BOD is the beginning of the C++ definition."
 		 (setq ipnt (point))
 		 (c++-backward-syntactic-ws bod))
 	       (goto-char ipnt))
-	     ;; subtract inclass-shift since
-	     ;; its already incorporated by
-	     ;; default in current-column
+	     ;; subtract inclass-shift since its already incorporated
+	     ;; by default in current-column
 	     (- (current-column) inclass-shift)
 	     )))))
        ;; CASE 4: line is expression, not statement. indent to just
@@ -2718,7 +2711,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.337 $"
+(defconst c++-version "$Revision: 2.338 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
