@@ -8,7 +8,7 @@
      && defined (def))
 #endif
 #define x(y) defined (foo)			\
-	&& defined (bar)
+    && defined (bar)
 #define x(y) (defined (foo)			\
 	      && defined (bar)			\
 	)
