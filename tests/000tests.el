@@ -562,9 +562,14 @@ to be set as a file local variable.")
 	     font-lock-verbose)
 
 	;; This shouldn't happen if CC Mode is byte compiled properly.
-	(when (and (featurep 'cc-langs) (not (get 'cc-langs 'load-warning)))
+	(when (and (featurep 'cc-langs)
+		   (not (get 'cc-langs 'load-warning)))
 	  (put 'cc-langs 'load-warning t)
 	  (cc-test-log "Warning: cc-langs is loaded"))
+	(when (and (featurep 'cc-bytecomp)
+		   (not (get 'cc-bytecomp 'load-warning)))
+	  (put 'cc-bytecomp 'load-warning t)
+	  (cc-test-log "Warning: cc-bytecomp is loaded"))
 
 	(switch-to-buffer testbuf)
 	(setq ignore-errs (intersection cc-test-emacs-features
