@@ -883,18 +883,17 @@ appended."
 (c-lang-defvar c-opt-method-key (c-lang-var c-opt-method-key))
 
 ;; Regexp matching something that might precede a declaration or a
-;; cast, e.g. the last token of a preceding statement or declaration.
-;; It should not match bob, though.  We match a sequence of characters
-;; to skip over things like "};" more quickly.
+;; cast, such as the last token of a preceding statement or
+;; declaration.  It should not match bob, though.  It can't require a
+;; match longer than one character.  It must not match any following
+;; whitespace.  We match a sequence of characters to skip over things
+;; like "};" more quickly.
 (c-lang-defconst c-decl-prefix-re
   (java idl objc) "[\{\}\(;,]+"
   ;; We additionally match ")" in C for K&R region declarations, and
   ;; in C and C++ for when a cpp macro definition begins with a
   ;; declaration.
-  c    "[\{\}\(\);,]+"
-  ;; In C++ we match the open paren syntax to get template arglists
-  ;; when they have been recognized.
-  c++  "\\(\\s\(\\|[\}\);,]\\)+"
+  (c c++) "[\{\}\(\);,]+"
   ;; Pike is like C but we also match "[" for multiple value
   ;; assignments and type casts.
   pike "[\{\}\(\)\[;,]+")

@@ -909,12 +909,6 @@ tools (e.g. Javadoc).")
 			  ;; second time, so there's nothing to do.
 			  (= continue-pos token-pos))
 
-			(and (c-major-mode-is 'c++-mode)
-			     ;; `c-decl-prefix-re' matches the open paren
-			     ;; syntax in C++ mode, but we're really not
-			     ;; interested in '['.
-			     (eq (car-safe arglist-match) ?\[))
-
 			(let (prop)
 			  ;; If `continue-pos' is less than `token-pos' we're
 			  ;; still searching macros in the syntactic
