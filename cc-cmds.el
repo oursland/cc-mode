@@ -447,7 +447,7 @@ This function does various newline cleanups based on the value of
 	)))
     ;; blink the paren
     (and (eq last-command-char ?\})
-	 (not executing-macro)
+	 (not executing-kbd-macro)
 	 old-blink-paren
 	 (save-excursion
 	   (c-backward-syntactic-ws safepos)
@@ -756,7 +756,7 @@ is nil."
 			  (setq beg (point))
 			  (c-on-identifier))))
 		 (delete-region beg end))))
-	(and (not executing-macro)
+	(and (not executing-kbd-macro)
 	     old-blink-paren
 	     (funcall old-blink-paren))))))
 
