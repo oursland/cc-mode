@@ -6,11 +6,11 @@ INTRODUCTION
 
     Please read the cc-mode.texi manual for details on using CC Mode.
 
-    As of this writing (17-Jan-1998), CC Mode version 5 currently
-    works out of the box with XEmacs 19.15, 19.16, all XEmacs 20
-    versions, and Emacs 20.2.  CC Mode will be distributed with the
-    next version of Emacs and XEmacs.  See the "COMPATIBILITY" section
-    below for details.
+    As of this writing (03-Feb-1998), CC Mode version 5 currently
+    works out of the box with XEmacs 19.15, 19.16, XEmacs 20.3, and
+    Emacs 20.2.  CC Mode will be distributed with the next version of
+    Emacs and XEmacs.  See the "COMPATIBILITY" section below for
+    details.
 
 MORE INFORMATION
 
@@ -66,17 +66,19 @@ COMPATIBILITY
         % cd /path/to/cc-mode
         % xemacs -batch -no-site-file -q -l cc-make.el cc-*.el
 
+    You'll get a lot of warnings, BUT YOU CAN SAFELY IGNORE THEM.
+
     To test, visit a C file and then type:
 
         M-x c-version RET
         ==> Using CC Mode version 5.XX
 
-    where XX is the current minor release number (see above).
+    where XX is the current minor release number.
 
     I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
     earlier. You might try following the directions for Emacs 19.34
-    below (although you will not need the cc-mode-19.el file). I do
-    not plan to actively support any earlier XEmacs version.
+    below (although you will not need the cc-mode-19.el file).  There
+    is no plan to actively support any earlier XEmacs versions.
 
 
     2. Emacs 20
@@ -93,7 +95,9 @@ COMPATIBILITY
 
     - You must first download Per Abraham's Custom library from this
       location: <http://www.dina.kvl.dk/~abraham/custom/>.  Follow the 
-      installation instructions in that package.
+      installation instructions in that package.  There may be
+      compatibility issues with the new Custom library.  See the CC
+      Mode details page for more information.
 
     - You must arrange for Custom to be loaded both when you byte
       compile CC Mode, and when you run Emacs.  To do this during the
@@ -102,8 +106,7 @@ COMPATIBILITY
 
     - Now byte compile the CC Mode source as described in the XEmacs
       section above (substituting `emacs' for `xemacs' in the byte
-      compilation step, of course!).  You'll get a lot of warnings,
-      BUT YOU CAN SAFELY IGNORE THEM.
+      compilation step, of course!).
 
     - You must edit your .emacs file so that the path to the Custom
       library is prepended to your load-path.  Here's some sample
@@ -112,8 +115,8 @@ COMPATIBILITY
       (setq load-path (cons "/path/to/custom" load-path))
 
     I have no idea whether CC Mode 5 will work with Emacs versions
-    before 19.34.  I do not plan to actively support any earlier Emacs 
-    versions.
+    before 19.34.  There are no plans to actively support any earlier
+    Emacs versions.
 
 
     4. delbackspace.el and awk-mode
