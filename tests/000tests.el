@@ -272,17 +272,14 @@
 	       (style "TESTSTYLE")
 	       error-found-p
 	       expectedindent
-	       c-echo-syntactic-information-p
-	       c-state-cache)
+	       c-echo-syntactic-information-p)
 	  (set-buffer testbuf)
 	  (goto-char (point-min))
 	  ;; Collect the analysis of all lines.
 	  (while (not (eobp))
 	    (let ((syntax
 		   (condition-case err
-		       (progn
-			 (setq c-state-cache (c-parse-state))
-			 (c-guess-basic-syntax))
+		       (c-guess-basic-syntax)
 		     (error
 		      (unless error-found-p
 			(setq error-found-p t)
