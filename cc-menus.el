@@ -41,11 +41,6 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
-;; Try to pull in imenu if it exists.
-(condition-case nil
-    (require 'imenu)
-  (error nil))
-
 ;; The things referenced in imenu, which we don't require.
 (cc-bytecomp-defvar imenu-case-fold-search)
 (cc-bytecomp-defvar imenu-generic-expression)

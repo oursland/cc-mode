@@ -127,6 +127,13 @@
 (cc-bytecomp-defun c-font-lock-objc-method)
 (cc-bytecomp-defun c-font-lock-invalid-string)
 
+;; Emacs 19 doesn't have `defface'.  This "replacement" leaves a lot
+;; to be wished for but at least it avoids any errors.
+(cc-eval-when-compile
+  (or (fboundp 'defface)
+      (cc-bytecomp-defmacro defface (face spec doc &rest args)
+	`(make-face ',face))))
+
 
 ;; Note that font-lock in XEmacs doesn't expand face names as
 ;; variables, so we have to use the (eval . FORM) in the font lock
@@ -1376,13 +1383,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (c-forward-syntactic-ws)
 		  (looking-at "\\s\)"))
 
-		;; There should be a symbol, an expression open paren
-		;; or another cast start after it.
+		;; There should be a symbol, a literal, an expression
+		;; open paren or another cast start after it.
 		(progn
 		  (forward-char)
 		  (c-forward-syntactic-ws)
 		  (setq cast-end (point))
-		  (or (and (looking-at c-identifier-start)
+		  (or (and (looking-at "\\w\\|\\s_\\|[\"']")
 			   (not (looking-at c-keywords-regexp)))
 		      (looking-at "\(")
 		      (memq (char-after) c-cast-parens)))
