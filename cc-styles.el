@@ -528,7 +528,7 @@ Here is the current list of valid syntactic element symbols:
 	     (goto-char relpos)
 	     (current-column))
 	 0)
-       (c-evaluate-offset offset))
+       (c-evaluate-offset offset langelem symbol))
     ))
 
 
