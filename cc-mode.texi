@@ -2947,7 +2947,7 @@ The brace that opens a substatement block.
 @item substatement-label
 The first line after a conditional or loop construct if it's a label.
 @item case-label
-A @code{case} or @code{default} label.
+A label in a @code{switch} block.
 @item access-label
 C++ access control label.
 @item label
