@@ -9,7 +9,7 @@ download the entire source distribution, including the manual in
 texinfo format as an approximately <a
 href="http://download.sourceforge.net/cc-mode/cc-mode-5.28.tar.gz">160KB
 gzip'd tarball</a>.  You can also download the <a
-href="ftp://cc-mode.sourceforge.net/pub/cc-mode/cc-mode/">individual
+href="ftp://cc-mode.sourceforge.net/pub/cc-mode/src/">individual
 files</a> of the current release.
 
 <p>The documentation is also available in several forms.  You can
