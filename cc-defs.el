@@ -92,6 +92,11 @@ Infodock (based on XEmacs) has an additional symbol on this list:
      ((eq position 'bol)  (beginning-of-line))
      ((eq position 'eol)  (end-of-line))
      ((eq position 'bod)
+      ;; NOTE: This should be the only explicit use of
+      ;; beginning-of-defun in CC Mode.  Eventually something better
+      ;; than b-o-d will be available and this should be the only
+      ;; place the code needs to change.  Everything else should use
+      ;; (goto-char (c-point 'bod))
       (beginning-of-defun)
       ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at
       ;; the open brace.

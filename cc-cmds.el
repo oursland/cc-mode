@@ -630,7 +630,7 @@ defun."
 	(cond
 	 (bod (goto-char bod))
 	 (prevbod (goto-char prevbod))
-	 (t (beginning-of-defun))))
+	 (t (goto-char (c-point 'bod)))))
       (setq arg (1- arg))))
   (c-keep-region-active))
 
@@ -1190,9 +1190,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (let ((here (point-marker))
 	(c-echo-syntactic-information-p nil)
 	(brace (c-least-enclosing-brace (c-parse-state))))
-    (if brace
-	(goto-char brace)
-      (beginning-of-defun))
+    (goto-char (or brace (c-point 'bod)))
     ;; if we're sitting at b-o-b, it might be because there was no
     ;; least enclosing brace and we were sitting on the defun's open
     ;; brace.

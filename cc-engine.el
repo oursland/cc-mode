@@ -416,7 +416,7 @@
 		  ;; in column zero)
 		  (let ((cnt 2))
 		    (while (not (or at-bob (zerop cnt)))
-		      (beginning-of-defun)
+		      (goto-char (c-point 'bod))
 		      (if (eq (char-after) ?\{)
 			  (setq cnt (1- cnt)))
 		      (if (bobp)
