@@ -31,7 +31,11 @@ all: bytecomp
 force:
 
 bytecomp:
-	$(EMACS) -batch -q -no-site-file -f batch-byte-compile *.el
+	$(EMACS) -batch -q -no-site-file -f batch-byte-compile cc-*.el
+
+derived-mode-ex.elc: force
+	test -f derived-mode-ex.el || ln -s admin/derived-mode-ex.el .
+	EMACSLOADPATH=".${EMACSLOADPATH:+:}${EMACSLOADPATH}" $(EMACS) -batch -q -no-site-file -f batch-byte-compile derived-mode-ex.el
 
 release: docs dists
 

@@ -4,6 +4,9 @@
 @comment FIXME: Document c-report-syntactic-errors.
 @comment FIXME: Document macro indentation and movement.
 @comment FIXME: Look over the performance issues chapter.
+@comment FIXME: Document c-require-final-newline.
+
+@comment FIXME: Font locking, c-doc-comment-style.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment %**start of header (This is for running Texinfo on a region)
@@ -961,7 +964,7 @@ continuation of the preceding @code{if}.
 @cindex Abbrev mode
 @ccmode{} uses Abbrev mode (@pxref{Abbrevs,,, emacs, The Emacs Editor})
 to accomplish this. It's therefore turned on by default in all language
-modes except IDL mode, since IDL doesn't have any statements.
+modes except IDL mode, since CORBA IDL doesn't have any statements.
 
 @end itemize
 
@@ -3930,8 +3933,8 @@ expressions for the operands.
 @item c-lineup-arglist
 Line up the current argument line under the first argument.
 
-As a special case, if a brace block is opened at the same line as the
-open parenthesis of the argument list, the indentation is
+As a special case, if an argument on the same line as the open
+parenthesis starts with a brace block opener, the indentation is
 @code{c-basic-offset} only.  This is intended as a "DWIM" measure in
 cases like macros that contains statement blocks, e.g:
 @example

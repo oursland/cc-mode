@@ -929,8 +929,10 @@ appended."
 		    (c-get-lang-constant 'c-nonsymbol-key)
 		    "\\|$\\)")
 	  re))
-    "\\<\\>"				; Matches nothing.
-    ))
+    ;; Produce a regexp that matches nothing.
+    (if adorn
+	"\\(\\<\\>\\)"
+      "\\<\\>")))
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 
 

@@ -79,6 +79,8 @@
 (require 'font-lock)
 (require 'cc-defs)
 
+(defconst cc-test-verbose nil)
+
 ;; Silence the compiler.
 (defvar font-lock-fontify-buffer-function)
 (defvar deactivate-mark)
@@ -219,11 +221,15 @@ to be set as a file local variable.")
 	    ;; for batch mode, so we let it lie.
 	    (fset 'noninteractive (lambda () nil)))
 	  (font-lock-mode 1)
-	  (let (;; Avoid getting some lazy fontification package that
-		;; might decide that nothing should be done.
-		(font-lock-fontify-buffer-function
-		 'font-lock-default-fontify-buffer))
-	    (font-lock-fontify-buffer)))
+	  (unless (or (get-text-property (point-min) 'face)
+		      (next-single-property-change (point-min) 'face))
+	    ;; Some emacsen have already fontified the buffer above,
+	    ;; but others need some more coercion..
+	    (let (;; Avoid getting some lazy fontification package that
+		  ;; might decide that nothing should be done.
+		  (font-lock-fontify-buffer-function
+		   'font-lock-default-fontify-buffer))
+	      (font-lock-fontify-buffer))))
       (when (and noninteractive orig-font-lock-make-faces)
 	(fset 'font-lock-make-faces orig-font-lock-make-faces))
       (when orig-noninteractive-function
@@ -447,13 +453,22 @@ to be set as a file local variable.")
 (defvar cc-test-comp-buf nil)
 (defvar cc-test-comp-win nil)
 
-(defconst cc-test-clear-line-string (concat "\r" (make-string 40 ?\ ) "\r"))
+(defconst cc-test-clear-line-string
+  (if cc-test-verbose "" (concat "\r" (make-string 40 ?\ ) "\r")))
 
 (defun cc-test-message (msg &rest args)
   (if noninteractive
       (send-string-to-terminal (concat cc-test-clear-line-string
 				       (apply 'format msg args) "\n"))
     (apply 'message msg args)))
+
+(defun cc-test-tmp-message (msg &rest args)
+  (if cc-test-verbose
+      (apply 'cc-test-message msg args)
+    (if noninteractive
+	(send-string-to-terminal (concat cc-test-clear-line-string
+					 (apply 'format msg args) "  "))
+      (apply 'message msg args))))
 
 (defun cc-test-log (msg &rest args)
   (if cc-test-comp-buf
@@ -589,22 +604,14 @@ to be set as a file local variable.")
 
 	  ;; Collect the face changes.
 	  (when check-faces
-	    (if noninteractive
-		(send-string-to-terminal
-		 (format "%sTesting %s (fonts)  "
-			 cc-test-clear-line-string filename))
-	      (message "Testing %s (fonts)" filename))
+	    (cc-test-tmp-message "Testing %s (fonts)" filename)
 
 	    (cc-test-force-font-lock-buffer)
 	    (goto-char (point-min))
 	    (cc-test-record-faces testbuf res-faces-buf nil))
 
 	  (when check-syntax
-	    (if noninteractive
-		(send-string-to-terminal
-		 (format "%sTesting %s (syntax)  "
-			 cc-test-clear-line-string filename))
-	      (message "Testing %s (syntax)" filename))
+	    (cc-test-tmp-message "Testing %s (syntax)" filename)
 
 	    ;; Collect the syntactic analysis of all lines.
 	    (goto-char (point-min))
@@ -650,11 +657,7 @@ to be set as a file local variable.")
 			  (error-message-string err)))
 		     (signal (car err) (cdr err))))))))
 
-	  (if noninteractive
-	      (send-string-to-terminal
-	       (format "%sTesting %s  "
-		       cc-test-clear-line-string filename))
-	    (message "Testing %s" filename))
+	  (cc-test-tmp-message "Testing %s" filename)
 
 	  (unless error-found-p
 	    ;; Compare and report.
@@ -862,6 +865,8 @@ to be set as a file local variable.")
 
 	  (set-buffer save-buf)
 	  (goto-char save-point)
+	  (when (and (not error-found-p) (interactive-p))
+	    (kill-test-buffers))
 	  (not error-found-p))))))
 
 (defun do-all-tests (&optional resetp)

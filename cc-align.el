@@ -99,8 +99,8 @@ Works with: topmost-intro-cont."
 (defun c-lineup-arglist (langelem)
   "Line up the current argument line under the first argument.
 
-As a special case, if a brace block is opened at the same line as the
-open parenthesis of the argument list, the indentation is
+As a special case, if an argument on the same line as the open
+parenthesis starts with a brace block opener, the indentation is
 `c-basic-offset' only.  This is intended as a \"DWIM\" measure in
 cases like macros that contains statement blocks, e.g:
 
@@ -116,18 +116,21 @@ indent such cases this way.
 
 Works with: arglist-cont-nonempty, arglist-close."
   (save-excursion
-    (goto-char (elt c-syntactic-element 2))
-    (let ((savepos (1+ (point)))
+    (goto-char (1+ (elt c-syntactic-element 2)))
+    (let ((savepos (point))
 	  (eol (c-point 'eol)))
 
-      ;; Find out if there is an unclosed open brace paren on the same
-      ;; line.  Note similar code in `c-lineup-close-paren' and
+      ;; Find out if an argument on the same line starts with an
+      ;; unclosed open brace paren.  Note similar code in
+      ;; `c-lineup-close-paren' and
       ;; `c-lineup-arglist-close-under-paren'.
-      (goto-char (elt (parse-partial-sexp (point) eol) 1))
-      (if (and (= (char-after) ?{)
-	       (not (c-looking-at-special-brace-list))
-	       (progn (forward-char)
-		      (looking-at c-syntactic-eol)))
+      (if (and (c-syntactic-re-search-forward "{" eol t t)
+	       (looking-at c-syntactic-eol)
+	       (progn (backward-char)
+		      (not (c-looking-at-special-brace-list)))
+	       (progn (c-backward-syntactic-ws)
+		      (or (= (point) savepos)
+			  (eq (char-before) ?,))))
 	  c-basic-offset
 
 	;; Normal case.  Indent to the token after the arglist open paren.
@@ -234,20 +237,23 @@ arglist-close, arglist-cont and arglist-cont-nonempty."
 	(goto-char (elt c-syntactic-element 2))
       (beginning-of-line)
       (c-go-up-list-backward))
+    (forward-char 1)
 
     (let ((savepos (point)))
-      ;; Find out if there is an unclosed open brace paren on the same
-      ;; line.  Note similar code in `c-lineup-arglist' and
-      ;; `c-lineup-close-paren'.
-      (goto-char (elt (parse-partial-sexp savepos (c-point 'eol)) 1))
-      (if (and (= (char-after) ?{)
-	       (not (c-looking-at-special-brace-list))
-	       (progn (forward-char)
-		      (looking-at c-syntactic-eol)))
+      ;; Find out if an argument on the same line starts with an
+      ;; unclosed open brace paren.  Note similar code in
+      ;; `c-lineup-arglist' and `c-lineup-close-paren'.
+      (if (and (c-syntactic-re-search-forward "{" (c-point 'eol) t t)
+	       (looking-at c-syntactic-eol)
+	       (progn (backward-char)
+		      (not (c-looking-at-special-brace-list)))
+	       (progn (c-backward-syntactic-ws)
+		      (or (= (point) savepos)
+			  (eq (char-before) ?,))))
 	  c-basic-offset
 
 	;; Normal case.  Indent to the arglist open paren.
-	(goto-char savepos)
+	(goto-char (1- savepos))
 	(vector (current-column))))))
 
 (defun c-lineup-arglist-operators (langelem)
@@ -297,7 +303,7 @@ brace-list-close, arglist-close, extern-lang-close, namespace-close."
     (beginning-of-line)
     (c-go-up-list-backward)
 
-    (let ((spec (c-looking-at-special-brace-list)) savepos)
+    (let ((spec (c-looking-at-special-brace-list)) savepos argstart)
       (if spec (goto-char (car (car spec))))
       (setq savepos (point))
       (forward-char 1)
@@ -309,14 +315,18 @@ brace-list-close, arglist-close, extern-lang-close, namespace-close."
 	  ;; The arglist is "empty".
 	  0
 
-	;; Find out if there is an unclosed open brace paren on the
-	;; same line.  Note similar code in `c-lineup-arglist' and
+	;; Find out if an argument on the same line starts with an
+	;; unclosed open brace paren.  Note similar code in
+	;; `c-lineup-arglist' and
 	;; `c-lineup-arglist-close-under-paren'.
-	(goto-char (elt (parse-partial-sexp savepos (c-point 'eol)) 1))
-	(if (and (= (char-after) ?{)
-		 (not (c-looking-at-special-brace-list))
-		 (progn (forward-char)
-			(looking-at c-syntactic-eol)))
+	(setq argstart (point))
+	(if (and (c-syntactic-re-search-forward "{" (c-point 'eol) t t)
+		 (looking-at c-syntactic-eol)
+		 (progn (backward-char)
+			(not (c-looking-at-special-brace-list)))
+		 (progn (c-backward-syntactic-ws)
+			(or (= (point) argstart)
+			    (eq (char-before) ?,))))
 	    c-basic-offset
 
 	  ;; Normal case.  Indent to the arglist open paren.

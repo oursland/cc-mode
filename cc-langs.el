@@ -125,8 +125,6 @@
 (cc-require 'cc-defs)
 (cc-require 'cc-vars)
 
-(require 'cl)
-
 
 ;;; Setup for the `c-lang-defvar' system.
 
@@ -603,7 +601,9 @@ since CC Mode treats every identifier as an expression."
 		       '("new"))
 		      ((c-major-mode-is 'pike-mode)
 		       '("class" "lambda" "catch" "throw" "gauge")))
-	      "(" ")")			; Cast.
+	      "(" ")"			; Cast.
+	      ,@(when (c-major-mode-is 'pike-mode)
+		  '("[" "]")))		; Type cast.
 
       ;; Member selection.
       ,@(when (c-major-mode-is 'c++-mode)
@@ -1269,6 +1269,12 @@ declarations."
 	 ;; In CORBA PSDL:
 	 "as" "const" "implements" "of" "ref"))
 
+(c-lang-defconst c-nonsymbol-sexp-kwds
+  "Keywords that may be followed by a nonsymbol sexp before whatever
+construct it's part of continues."
+  t    nil
+  (c c++ objc) '("extern"))
+
 (c-lang-defconst c-type-list-kwds
   "Keywords that may be followed by a comma separated list of type
 identifiers, where each optionally can be prefixed by keywords.  (Can
@@ -1367,12 +1373,6 @@ assumed to be set if this isn't nil."
   c++  '("template")
   idl  '("fixed" "string" "wstring"))
 
-(c-lang-defconst c-brace-id-list-kwds
-  "Keywords that may be followed by a brace block containing a comma
-separated list of identifier definitions, i.e. like the list of
-identifiers that follows the type in a normal declaration."
-  t (c-lang-const c-brace-list-decl-kwds))
-
 (c-lang-defconst c-<>-sexp-kwds
   ;; All keywords that can be followed by an angle bracket sexp.
   t (delete-duplicates (append (c-lang-const c-<>-type-kwds)
@@ -1385,6 +1385,12 @@ identifiers that follows the type in a normal declaration."
   t (if (c-lang-const c-recognize-<>-arglists)
 	(c-make-keywords-re t (c-lang-const c-<>-sexp-kwds))))
 (c-lang-defvar c-opt-<>-sexp-key (c-lang-const c-opt-<>-sexp-key))
+
+(c-lang-defconst c-brace-id-list-kwds
+  "Keywords that may be followed by a brace block containing a comma
+separated list of identifier definitions, i.e. like the list of
+identifiers that follows the type in a normal declaration."
+  t (c-lang-const c-brace-list-decl-kwds))
 
 (c-lang-defconst c-block-stmt-1-kwds
   "Statement keywords followed directly by a substatement."
@@ -1435,6 +1441,11 @@ identifiers that follows the type in a normal declaration."
   awk  '(;; Not sure about "delete", "exit", "getline", etc. ; ACM 2002/5/30
 	 "break" "continue" "return" "delete" "exit" "getline" "next"
 	 "nextfile" "print" "printf"))
+
+(c-lang-defconst c-simple-stmt-key
+  ;; Adorned regexp matching `c-simple-stmt-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-simple-stmt-kwds)))
+(c-lang-defvar c-simple-stmt-key (c-lang-const c-simple-stmt-key))
 
 (c-lang-defconst c-paren-stmt-kwds
   "Statement keywords followed by a parenthesis expression that
@@ -1487,23 +1498,25 @@ nevertheless contains a list separated with ';' and not ','."
   idl     '("TRUE" "FALSE")
   pike    '("UNDEFINED")) ;; Not a keyword, but practically works as one.
 
+(c-lang-defconst c-primary-expr-kwds
+  "Keywords besides constants and operators that start primary expressions."
+  t    nil
+  c++  '("operator" "this")
+  objc '("super" "self")
+  java '("this")
+  pike '("this")) ;; Not really a keyword, but practically works as one.
+
 (c-lang-defconst c-expr-kwds
-  "Keywords that can occur anywhere in expressions."
-  ;; Start out with all keyword operators in `c-operators'.
-  t    (c-with-syntax-table (c-lang-const c-mode-syntax-table)
-	 (mapcan (lambda (op)
-		   (and (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
-			(list op)))
-		 (c-lang-const c-operator-list)))
-  c++  (append '("operator" "this")
-	       (c-lang-const c-expr-kwds))
-  objc (append '("super" "self")
-	       (c-lang-const c-expr-kwds))
-  java (append '("this")
-	       (c-lang-const c-expr-kwds))
-  pike (append
-	'("this") ;; Not really a keyword, but practically works as one.
-	(c-lang-const c-expr-kwds)))
+  ;; Keywords that can occur anywhere in expressions.  Built from
+  ;; `c-primary-expr-kwds' and all keyword operators in `c-operators'.
+  t (delete-duplicates
+     (append (c-lang-const c-primary-expr-kwds)
+	     (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+	       (mapcan (lambda (op)
+			 (and (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
+			      (list op)))
+		       (c-lang-const c-operator-list))))
+     :test 'string-equal))
 
 (c-lang-defconst c-lambda-kwds
   "Keywords that start lambda constructs, i.e. function definitions in
@@ -1720,6 +1733,88 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defvar c-not-decl-init-keywords
   (c-lang-const c-not-decl-init-keywords))
 
+(c-lang-defconst c-primary-expr-regexp
+  ;; Regexp matching the start of any primary expression, i.e. any
+  ;; literal, symbol, prefix operator, and '('.  It doesn't need to
+  ;; exclude keywords; they are excluded afterwards unless the second
+  ;; submatch matches. If the first but not the second submatch
+  ;; matches then it is an ambiguous primary expression; it could also
+  ;; be a match of e.g. an infix operator. (The case with ambiguous
+  ;; keyword operators isn't handled.)
+
+  t (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+      (let* ((prefix-ops
+	      (mapcan (lambda (op)
+			;; Filter out the special case prefix
+			;; operators that are close parens.
+			(unless (string-match "\\s\)" op)
+			  (list op)))
+		      (mapcan
+		       (lambda (opclass)
+			 (when (eq (car opclass) 'prefix)
+			   (append (cdr opclass) nil)))
+		       (c-lang-const c-operators))))
+
+	     (nonkeyword-prefix-ops
+	      (mapcan (lambda (op)
+			(unless (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
+			  (list op)))
+		      prefix-ops))
+
+	     (in-or-postfix-ops
+	      (mapcan (lambda (opclass)
+			(when (memq (car opclass)
+				    '(postfix
+				      left-assoc
+				      right-assoc
+				      right-assoc-sequence))
+			  (append (cdr opclass) nil)))
+		      (c-lang-const c-operators)))
+
+	     (unambiguous-prefix-ops (set-difference nonkeyword-prefix-ops
+						     in-or-postfix-ops
+						     :test 'string-equal))
+	     (ambiguous-prefix-ops (intersection nonkeyword-prefix-ops
+						 in-or-postfix-ops
+						 :test 'string-equal)))
+
+	(concat
+	 "\\("
+	 ;; Take out all symbol class operators from `prefix-ops' and make the
+	 ;; first submatch from them together with `c-primary-expr-kwds'.
+	 (c-make-keywords-re t
+	   (append (c-lang-const c-primary-expr-kwds)
+		   (set-difference prefix-ops nonkeyword-prefix-ops
+				   :test 'string-equal)))
+
+	 "\\|"
+	 ;; Match all ambiguous operators.
+	 (c-make-keywords-re nil
+	   (intersection nonkeyword-prefix-ops in-or-postfix-ops
+			 :test 'string-equal))
+	 "\\)"
+
+	 "\\|"
+	 ;; Now match all other symbols.
+	 (c-lang-const c-symbol-start)
+
+	 "\\|"
+	 ;; Handle the chars that can start integer and floating point
+	 ;; constants, and the nonambiguous operators from
+	 ;; `prefix-ops'.
+	 (c-make-keywords-re nil
+	   (append '("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" ".")
+		   (set-difference nonkeyword-prefix-ops in-or-postfix-ops
+				   :test 'string-equal)))
+
+	 "\\|"
+	 ;; Match string and character literals.
+	 "\\s\""
+	 (if (memq 'gen-string-delim c-emacs-features)
+	     "\\|\\s|"
+	   "")))))
+(c-lang-defvar c-primary-expr-regexp (c-lang-const c-primary-expr-regexp))
+
 
 ;;; Additional constants for parser-level constructs.
 
@@ -1762,14 +1857,17 @@ is in effect or not."
   'dont-doc)
 
 (c-lang-defconst c-cast-parens
-  "List containing the paren characters that can open a cast, or nil in
-languages without casts.  Identifier syntax is in effect when this is
-matched \(see `c-identifier-syntax-table')."
-  t    nil
-  (c c++ objc java) '(?\()
-  pike '(?\( ?\[))
-(c-lang-defvar c-cast-parens (c-lang-const c-cast-parens)
-  'dont-doc)
+  ;; List containing the paren characters that can open a cast, or nil in
+  ;; languages without casts.
+  t (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+      (mapcan (lambda (opclass)
+		(when (eq (car opclass) 'prefix)
+		  (mapcan (lambda (op)
+			    (when (string-match "\\`\\s\(\\'" op)
+			      (list (elt op 0))))
+			  (cdr opclass))))
+	      (c-lang-const c-operators))))
+(c-lang-defvar c-cast-parens (c-lang-const c-cast-parens))
 
 (c-lang-defconst c-type-decl-prefix-key
   "Regexp matching the operators that might precede the identifier in a
@@ -1950,6 +2048,19 @@ expression is considered to be a type."
 	(consp (c-lang-const c-<>-arglist-kwds))))
 (c-lang-defvar c-recognize-<>-arglists (c-lang-const c-recognize-<>-arglists))
 
+(c-lang-defconst c-recognize-paren-inits
+  "Non-nil means that parenthesis style initializers exist,
+i.e. constructs like
+
+Foo bar (gnu);
+
+in addition to the more classic
+
+Foo bar = gnu;"
+  t nil
+  c++ t)
+(c-lang-defvar c-recognize-paren-inits (c-lang-const c-recognize-paren-inits))
+
 (c-lang-defconst c-opt-<>-arglist-start
   ;; Regexp matching the start of angle bracket arglists in languages
   ;; where `c-recognize-<>-arglists' is set.  Does not exclude
@@ -1963,6 +2074,17 @@ expression is considered to be a type."
 		(c-lang-const c-syntactic-ws)
 		"<")))
 (c-lang-defvar c-opt-<>-arglist-start (c-lang-const c-opt-<>-arglist-start))
+
+(c-lang-defconst c-opt-<>-arglist-start-in-paren
+  ;; Regexp that in addition to `c-opt-<>-arglist-start' matches close
+  ;; parens.  The first submatch is assumed to surround
+  ;; `c-opt-<>-arglist-start'.
+  t (if (c-lang-const c-opt-<>-arglist-start)
+	(concat "\\("
+		(c-lang-const c-opt-<>-arglist-start)
+		"\\)\\|\\s\)")))
+(c-lang-defvar c-opt-<>-arglist-start-in-paren
+  (c-lang-const c-opt-<>-arglist-start-in-paren))
 
 (c-lang-defconst c-label-key
   "Regexp matching a normal label, i.e. a label that doesn't begin with

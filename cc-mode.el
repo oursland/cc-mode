@@ -1,5 +1,4 @@
-;;; cc-mode.el --- major mode for editing C, C++, Objective-C, Java, Pike and
-;;; AWK code
+;;; cc-mode.el --- major mode for editing C and similar languages
 
 ;; Copyright (C) 1985,1987,1992-2001 Free Software Foundation, Inc.
 
@@ -236,14 +235,22 @@
   (substitute-key-definition 'indent-for-tab-command
 			     'c-indent-command
 			     c-mode-base-map global-map)
-  ;; It doesn't suffice to put c-fill-paragraph on
-  ;; fill-paragraph-function due to the way it works.
+
+  ;; It doesn't suffice to put `c-fill-paragraph' on
+  ;; `fill-paragraph-function' since `c-fill-paragraph' must be called
+  ;; before any fill prefix adaption is done.  E.g. `filladapt-mode'
+  ;; replaces `fill-paragraph' and does the adaption before calling
+  ;; `fill-paragraph-function', and we have to mask comments etc
+  ;; before that.  Also, `c-fill-paragraph' chains on to
+  ;; `fill-paragraph' and the value on `fill-parapgraph-function' to
+  ;; do the actual filling work.
   (substitute-key-definition 'fill-paragraph 'c-fill-paragraph
 			     c-mode-base-map global-map)
   ;; In XEmacs the default fill function is called
   ;; fill-paragraph-or-region.
   (substitute-key-definition 'fill-paragraph-or-region 'c-fill-paragraph
 			     c-mode-base-map global-map)
+
   ;; Bind the electric deletion functions to C-d and DEL.  Emacs 21
   ;; automatically maps the [delete] and [backspace] keys to these two
   ;; depending on window system and user preferences.  (In earlier
@@ -362,6 +369,12 @@ that requires a literal mode spec at compile time."
 	normal-auto-fill-function 'c-do-auto-fill
 	comment-multi-line t)
 
+  ;; Install `c-fill-paragraph' on `fill-paragraph-function' so that a
+  ;; direct call to `fill-paragraph' behaves better.  This still
+  ;; doesn't work with filladapt but it's better than nothing.
+  (make-local-variable 'fill-paragraph-function)
+  (setq fill-paragraph-function 'c-fill-paragraph)
+
   ;; (X)Emacs 20 and later.
   (when (boundp 'comment-line-break-function)
     (make-local-variable 'comment-line-break-function)
@@ -445,18 +458,11 @@ that requires a literal mode spec at compile time."
 This does not load the font-lock package.  Use after
 `c-basic-common-init'."
 
-  ;; This is not the recommended way to initialize font-lock in
-  ;; XEmacs, but it works.
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults
-	`(,(mapcan
-	    (lambda (keywords-name)
-	      (let ((sym (c-mode-symbol keywords-name)))
-		(if (boundp sym)
-		    (list sym))))
-	    '("font-lock-keywords" "font-lock-keywords-1"
-	      "font-lock-keywords-2" "font-lock-keywords-3"
-	      "font-lock-keywords-4"))
+	`(,(mapcar 'c-mode-symbol
+		   '("font-lock-keywords" "font-lock-keywords-1"
+		     "font-lock-keywords-2" "font-lock-keywords-3"))
 	  nil nil
 	  ,c-identifier-syntax-modifications
 	  c-beginning-of-syntax
@@ -465,6 +471,14 @@ This does not load the font-lock package.  Use after
 
   (make-local-hook 'font-lock-mode-hook)
   (add-hook 'font-lock-mode-hook 'c-after-font-lock-init nil t))
+
+(defun c-setup-doc-comment-style ()
+  "Initialize the variables that depend on the value of `c-doc-comment-style'."
+  (when (and (featurep 'font-lock)
+	     (symbol-value 'font-lock-mode))
+    ;; Force font lock mode to reinitialize itself.
+    (font-lock-mode 0)
+    (font-lock-mode 1)))
 
 (defun c-common-init (&optional mode)
   "Common initialization for all CC Mode modes.
@@ -489,13 +503,15 @@ This function does not do any hidden buffer changes."
     ;; Only initialize font locking if we aren't called from an old package.
     (c-font-lock-init))
 
-  (make-local-variable 'require-final-newline)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
+  (setq outline-regexp "[^#\n\^M]"
+	outline-level 'c-outline-level)
 
-  (setq require-final-newline t
-	outline-regexp "[^#\n\^M]"
-	outline-level 'c-outline-level))
+  (let ((rfn (assq mode c-require-final-newline)))
+    (when rfn
+      (make-local-variable 'require-final-newline)
+      (setq require-final-newline (cdr rfn)))))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables in CC Mode.

@@ -1,17 +1,24 @@
 int main() {
+    t1 id;
+
     t1 (id) = 1;
-    t2 (*id) = NULL;
-    t3 (id)[n] = {1};
-    t4 (*id)[n] = NULL;
-
+    t1 (*id) = NULL;
+    t1 (id)[n] = {1};
+    t1 (*id)[n] = NULL;
     t1 (id) (1);
-    v1 (id) (1);
 
-    t2 (*id) (NULL);
+    // These might be function or macro calls.
+    f1 (id) = 1;
+    f2 (*id) = NULL;
+    f3 (id)[n] = {1};
+    f4 (*id)[n] = NULL;
+    f5 (id) (1);
+
+    t1 (*id) (NULL);
     v2 (*id) (NULL);
     v9  *id  (NULL);
 
-    t2 (*id) (t7*x);		// The last paren could also be an initializer.
+    t1 (*id) (t7*x);		// The last paren could also be an initializer.
     v10(*id) (v12*x);
     v11 *id  (v13*x);
 

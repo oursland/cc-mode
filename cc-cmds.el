@@ -2520,6 +2520,7 @@ command to conveniently insert and align the necessary backslashes."
   ;; comment.  Return a cons of the prefix string and the column where
   ;; it ends.  If fill-prefix is set, it'll override.  Note that this
   ;; function also uses the value of point in some heuristics.
+
   (let* ((here (point))
 	 (prefix-regexp (concat "[ \t]*\\("
 				c-current-comment-prefix
@@ -2528,6 +2529,7 @@ command to conveniently insert and align the necessary backslashes."
 				   prefix-regexp
 				 comment-start-skip))
 	 prefix-line comment-prefix res comment-text-end)
+
     (cond
      (fill-prefix
       (setq res (cons fill-prefix
@@ -2540,23 +2542,27 @@ command to conveniently insert and align the necessary backslashes."
 			      (insert-and-inherit "\n" fill-prefix)
 			      (current-column))
 			  (delete-region start (point)))))))
+
      ((eq lit-type 'c++)
       (save-excursion
 	;; Set fallback for comment-prefix if none is found.
 	(setq comment-prefix "// "
 	      comment-text-end (cdr lit-limits))
+
 	(beginning-of-line)
 	(if (> (point) (car lit-limits))
 	    ;; The current line is not the comment starter, so the
 	    ;; comment has more than one line, and it can therefore be
 	    ;; used to find the comment fill prefix.
 	    (setq prefix-line (point))
+
 	  (goto-char (car lit-limits))
 	  (if (and (= (forward-line 1) 0)
 		   (< (point) (cdr lit-limits)))
 	      ;; The line after the comment starter is inside the
 	      ;; comment, so we can use it.
 	      (setq prefix-line (point))
+
 	    ;; The comment is only one line.  Take the comment prefix
 	    ;; from it and keep the indentation.
 	    (goto-char (car lit-limits))
@@ -2564,6 +2570,7 @@ command to conveniently insert and align the necessary backslashes."
 		(goto-char (match-end 0))
 	      (forward-char 2)
 	      (skip-chars-forward " \t"))
+
 	    (let (str col)
 	      (if (eq (c-point 'boi) (car lit-limits))
 		  ;; There is only whitespace before the comment
@@ -2571,6 +2578,7 @@ command to conveniently insert and align the necessary backslashes."
 		  (setq str (buffer-substring-no-properties
 			     (c-point 'bol) (point))
 			col (current-column))
+
 		;; There is code before the comment starter, so we
 		;; have to temporarily insert and indent a new line to
 		;; get the right space/tab mix in the indentation.
@@ -2587,6 +2595,7 @@ command to conveniently insert and align the necessary backslashes."
 				   (c-point 'bol) (point))
 			      col (current-column)))
 		    (delete-region (car lit-limits) tmp))))
+
 	      (setq res
 		    (if (or (string-match "\\s \\'" str) (not (eolp)))
 			(cons str col)
@@ -2594,11 +2603,13 @@ command to conveniently insert and align the necessary backslashes."
 		      ;; after it.  Default to a single space.
 		      (cons (concat str " ") (1+ col))))
 	      )))))
+
      (t
       (setq comment-text-end
 	    (save-excursion
 	      (goto-char (- (cdr lit-limits) 2))
 	      (if (looking-at "\\*/") (point) (cdr lit-limits))))
+
       (save-excursion
 	(beginning-of-line)
 	(if (and (> (point) (car lit-limits))
@@ -2609,72 +2620,124 @@ command to conveniently insert and align the necessary backslashes."
 	    ;; to be used for the comment fill prefix.
 	    (setq prefix-line (point))
 	  (goto-char (car lit-limits))
-	  (if (or (/= (forward-line 1) 0)
-		  (>= (point) (cdr lit-limits))
-		  (and (looking-at "[ \t]*\\*/")
-		       (eq (cdr lit-limits) (match-end 0)))
-		  (and (looking-at prefix-regexp)
-		       (<= (1- (cdr lit-limits)) (match-end 0)))
-		  (and (< here (point))
-		       (or (not (match-beginning 0))
-			   (looking-at "[ \t]*\\\\?$"))))
-	      ;; The comment is either one line or the next line
-	      ;; contains just the comment ender.  Also, if point is
-	      ;; on the comment opener line and the following line is
-	      ;; empty or doesn't match c-current-comment-prefix we
-	      ;; assume that this is in fact a not yet closed one line
-	      ;; comment, so we shouldn't look for the comment prefix
-	      ;; on the next line.  In these cases we have no
-	      ;; information about a suitable comment prefix, so we
-	      ;; resort to c-block-comment-prefix.
-	      (setq comment-prefix (or c-block-comment-prefix "")
-		    res (let (tmp-pre tmp-post)
-			  ;; The comment doesn't give any information
-			  ;; about the indentation column.  We'll have to
-			  ;; temporarily insert a new comment line and
-			  ;; indent it to find the correct column.
-			  (unwind-protect
-			      (progn
-				(goto-char (car lit-limits))
-				(if (looking-at comment-start-regexp)
-				    (goto-char (min (match-end 0)
-						    comment-text-end))
-				  (forward-char 2)
-				  (skip-chars-forward " \t"))
-				(when (eq (char-syntax (char-before)) ?\ )
-				  ;; If there's ws on the current
-				  ;; line, we'll use it instead of
-				  ;; what's ending comment-prefix.
-				  (setq comment-prefix
-					(concat (substring comment-prefix
-							   0 (string-match
-							      "\\s *\\'"
-							      comment-prefix))
-						(buffer-substring-no-properties
-						 (save-excursion
-						   (skip-chars-backward " \t")
-						   (point))
-						 (point)))))
-				(setq tmp-pre (point-marker))
-				;; We insert an extra non-whitespace
-				;; character before the line break and
-				;; after comment-prefix in case it's
-				;; "" or ends with whitespace.
-				(insert-and-inherit "x\n" comment-prefix "x")
-				(setq tmp-post (point-marker))
-				(indent-according-to-mode)
-				(goto-char (1- tmp-post))
-				(cons (buffer-substring-no-properties
-					 (c-point 'bol) (point))
-				      (current-column)))
-			    (when tmp-post
-			      (delete-region tmp-pre tmp-post)
-			      (set-marker tmp-pre nil)
-			      (set-marker tmp-post nil)))))
-	    ;; Otherwise the line after the comment starter is good
-	    ;; enough to find the prefix in.
-	    (setq prefix-line (point)))))))
-    (or res
+
+	  (cond ((or (/= (forward-line 1) 0)
+		     (>= (point) (cdr lit-limits))
+		     (and (looking-at "[ \t]*\\*/")
+			  (eq (cdr lit-limits) (match-end 0)))
+		     (and (looking-at prefix-regexp)
+			  (<= (1- (cdr lit-limits)) (match-end 0))))
+		 ;; The comment is either one line or the next line contains
+		 ;; just the comment ender.  In this case we have no
+		 ;; information about a suitable comment prefix, so we resort
+		 ;; to c-block-comment-prefix.
+		 (setq comment-prefix (or c-block-comment-prefix "")))
+
+		((< here (point))
+		 ;; The point was on the comment opener line, so we might want
+		 ;; to treat this as a not yet closed comment.
+
+		 (if (and (match-beginning 1)
+			  (/= (match-beginning 1) (match-end 1)))
+		     ;; Above `prefix-regexp' matched a nonempty prefix on the
+		     ;; second line, so let's use it.  Normally it should do
+		     ;; to set `prefix-line' and let the code below pick up
+		     ;; the whole prefix, but if there's no text after the
+		     ;; match then it will probably fall back to no prefix at
+		     ;; all if the comment isn't closed yet, so in that case
+		     ;; it's better to force use of the prefix matched now.
+		     (if (= (match-end 0) (c-point 'eol))
+			 (setq comment-prefix (match-string 1))
+		       (setq prefix-line (point)))
+
+		   ;; There's no nonempty prefix on the line after the
+		   ;; comment opener.  If the line is empty, or if the
+		   ;; text on has less or equal indentation than the
+		   ;; comment starter we assume it's an unclosed
+		   ;; comment starter, i.e. that
+		   ;; `c-block-comment-prefix' should be used.
+		   ;; Otherwise we assume it's a closed comment where
+		   ;; the prefix really is the empty string.
+		   ;; E.g. this is an unclosed comment:
+		   ;;
+		   ;;     /*
+		   ;;     foo
+		   ;;
+		   ;; But this is not:
+		   ;;
+		   ;;     /*
+		   ;;       foo
+		   ;;     */
+		   ;;
+		   ;; (Looking for the presence of the comment closer
+		   ;; rarely works since it's probably the closer of
+		   ;; some comment further down when the comment
+		   ;; really is unclosed.)
+		   (if (<= (save-excursion (back-to-indentation)
+					   (current-column))
+			   (save-excursion (goto-char (car lit-limits))
+					   (current-column)))
+		       (setq comment-prefix (or c-block-comment-prefix ""))
+		     (setq prefix-line (point)))))
+
+		(t
+		 ;; Otherwise the line after the comment starter is good
+		 ;; enough to find the prefix in.
+		 (setq prefix-line (point))))
+
+	  (when comment-prefix
+	    ;; Haven't got the comment prefix on any real line that we
+	    ;; can take it from, so we have to temporarily insert
+	    ;; `comment-prefix' on a line and indent it to find the
+	    ;; correct column and the correct mix of tabs and spaces.
+	    (setq res
+		  (let (tmp-pre tmp-post)
+		    (unwind-protect
+			(progn
+
+			  (goto-char (car lit-limits))
+			  (if (looking-at comment-start-regexp)
+			      (goto-char (min (match-end 0)
+					      comment-text-end))
+			    (forward-char 2)
+			    (skip-chars-forward " \t"))
+
+			  (when (eq (char-syntax (char-before)) ?\ )
+			    ;; If there's ws on the current line, we'll use it
+			    ;; instead of what's ending comment-prefix.
+			    (setq comment-prefix
+				  (concat (substring comment-prefix
+						     0 (string-match
+							"\\s *\\'"
+							comment-prefix))
+					  (buffer-substring-no-properties
+					   (save-excursion
+					     (skip-chars-backward " \t")
+					     (point))
+					   (point)))))
+
+			  (setq tmp-pre (point-marker))
+
+			  ;; We insert an extra non-whitespace character
+			  ;; before the line break and after comment-prefix in
+			  ;; case it's "" or ends with whitespace.
+			  (insert-and-inherit "x\n" comment-prefix "x")
+			  (setq tmp-post (point-marker))
+
+			  (indent-according-to-mode)
+
+			  (goto-char (1- tmp-post))
+			  (cons (buffer-substring-no-properties
+				 (c-point 'bol) (point))
+				(current-column)))
+
+		      (when tmp-post
+			(delete-region tmp-pre tmp-post)
+			(set-marker tmp-pre nil)
+			(set-marker tmp-post nil))))))))))
+
+    (or res				; Found a good prefix above.
+
 	(save-excursion
 	  ;; prefix-line is the bol of a line on which we should try
 	  ;; to find the prefix.
@@ -2697,11 +2760,13 @@ command to conveniently insert and align the necessary backslashes."
 					 (match-beginning 0) (match-end 0))
 			      fb-endpos (match-end 0)))
 		      t))))
+
 	    (or (catch 'found
 		  ;; Search for a line which has text after the prefix
 		  ;; so that we get the proper amount of whitespace
 		  ;; after it.  We start with the current line, then
 		  ;; search backwards, then forwards.
+
 		  (goto-char prefix-line)
 		  (when (and (funcall test-line)
 			     (or (/= (match-end 1) (match-end 0))
@@ -2714,6 +2779,7 @@ command to conveniently insert and align the necessary backslashes."
 		    (throw 'found (cons fb-string
 					(progn (goto-char fb-endpos)
 					       (current-column)))))
+
 		  (if (eq lit-type 'c++)
 		      ;; For line comments we can search up to and
 		      ;; including the first line.
@@ -2725,12 +2791,15 @@ command to conveniently insert and align the necessary backslashes."
 		    (while (and (zerop (forward-line -1))
 				(> (point) (car lit-limits)))
 		      (funcall test-line)))
+
 		  (goto-char prefix-line)
 		  (while (and (zerop (forward-line 1))
 			      (< (point) (cdr lit-limits)))
 		    (funcall test-line))
+
 		  (goto-char prefix-line)
 		  nil)
+
 		(when fb-string
 		  ;; A good line wasn't found, but at least we have a
 		  ;; fallback that matches the comment prefix regexp.
@@ -2741,6 +2810,7 @@ command to conveniently insert and align the necessary backslashes."
 			 ;; There are ws or text after the prefix, so
 			 ;; let's use it.
 			 (cons fb-string (current-column)))
+
 			((progn
 			   ;; Check if there's any whitespace padding
 			   ;; on the comment start line that we can
@@ -2752,6 +2822,7 @@ command to conveniently insert and align the necessary backslashes."
 			     (skip-chars-forward " \t"))
 			   (or (not (eolp))
 			       (eq (char-syntax (char-before)) ?\ )))
+
 			 (setq fb-string (buffer-substring-no-properties
 					  (save-excursion
 					    (skip-chars-backward " \t")
@@ -2759,6 +2830,7 @@ command to conveniently insert and align the necessary backslashes."
 					  (point)))
 			 (goto-char fb-endpos)
 			 (skip-chars-backward " \t")
+
 			 (let ((tmp (point)))
 			   ;; Got to mess in the buffer once again to
 			   ;; ensure the column gets correct.  :P
@@ -2770,12 +2842,14 @@ command to conveniently insert and align the necessary backslashes."
 					(point))
 				       (current-column)))
 			     (delete-region tmp (point)))))
+
 			(t
 			 ;; Last resort: Just add a single space after
 			 ;; the prefix.
 			 (cons (concat fb-string " ")
 			       (progn (goto-char fb-endpos)
 				      (1+ (current-column)))))))
+
 		;; The line doesn't match the comment prefix regexp.
 		(if comment-prefix
 		    ;; We have a fallback for line comments that we must use.
@@ -2784,6 +2858,7 @@ command to conveniently insert and align the necessary backslashes."
 				  comment-prefix)
 			  (progn (back-to-indentation)
 				 (+ (current-column) (length comment-prefix))))
+
 		  ;; Assume we are dealing with a "free text" block
 		  ;; comment where the lines doesn't have any comment
 		  ;; prefix at all and we should just fill it as
