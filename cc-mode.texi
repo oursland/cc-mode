@@ -846,20 +846,28 @@ Semi-colons and Commas}, for details.
 @subsection Other Electric Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+A few other keys also provide electric behavior, often only to reindent
+the line.  Common to all of them is that they only reindent if used in
+normal code (as opposed to in a string literal or comment), and
+@code{c-syntactic-indentation} isn't @code{nil}.  They are:
+
+@itemize @bullet
+
+@item
 @kindex #
 @findex c-electric-pound
 @vindex c-electric-pound-behavior
 @findex electric-pound (c-)
 @vindex electric-pound-behavior (c-)
-A few other keys also provide electric behavior.  For example
-@kbd{#} (@code{c-electric-pound}) is electric when typed as
-the first non-whitespace character on a line.  In this case, the
-variable @code{c-electric-pound-behavior} is consulted for the electric
-behavior.  This variable takes a list value, although the only element
-currently defined is @code{alignleft}, which tells this command to force
-the @samp{#} character into column zero.  This is useful for entering
-C preprocessor macro definitions.
+@kbd{#} (@code{c-electric-pound}) is electric when typed as the first
+non-whitespace character on a line.  In this case, the variable
+@code{c-electric-pound-behavior} is consulted for the electric behavior.
+This variable takes a list value, although the only element currently
+defined is @code{alignleft}, which tells this command to force the
+@samp{#} character into column zero.  This is useful for entering C
+preprocessor macro definitions.
 
+@item
 @findex c-electric-star
 @findex c-electric-slash
 @findex electric-star (c-)
@@ -890,22 +898,55 @@ Likewise, if a slash is inserted as the second slash in a C++ style line
 comment (also only on a comment-only line), then the line is indented as
 defined by @code{c-offsets-alist}.
 
+@item
 @findex c-electric-lt-gt
 @findex electric-lt-gt (c-)
 @kindex <
 @kindex >
-Less-than and greater-than signs (@code{c-electric-lt-gt}) are also
-electric, but only in C++ mode.  Hitting the second of two @kbd{<} or
-@kbd{>} keys re-indents the line if it is a C++ style stream operator.
+Less-than and greater-than signs (@code{c-electric-lt-gt}) are electric,
+but only in C++ mode.  Hitting the second of two @kbd{<} or @kbd{>} keys
+re-indents the line if it is a C++ style stream operator.
 
+@item
 @findex c-electric-paren
 @findex electric-paren (c-)
 @kindex (
 @kindex )
-The normal parenthesis characters @samp{(} and @samp{)} also reindent
-the current line if they are used in normal code.  This is useful for
-getting the closing parenthesis of an argument list aligned
-automatically.
+The normal parenthesis characters @samp{(} and @samp{)} reindent the
+current line.  This is useful for getting the closing parenthesis of an
+argument list aligned automatically.
+
+@item
+@findex c-electric-continued-statement
+@findex electric-continued-statement (c-)
+Certain keywords, depending on language, are electric to cause
+reindentation when they are preceded only by whitespace on the line.
+The keywords are those that continue an earlier statement instead of
+starting a new one: @code{else}, @code{while}, @code{catch} (only in C++
+and Java) and @code{finally} (only in Java).
+
+An example:
+@example
+@group
+
+for (i = 0; i < 17; i++)
+  if (a[i])
+    res += a[i]->offset;
+else
+
+@end group
+@end example
+Here, the @code{else} should be indented like the preceding @code{if},
+since it continues that statement. @ccmode{} will automatically reindent
+it after the @code{else} has been typed in full, since it's not until
+then it's possible to decide whether it's a new statement or a
+continuation of the preceding @code{if}.
+
+@ccmode{} uses Abbrev mode (@pxref{Abbrevs,,, emacs, The Emacs Editor})
+to achieve this. It's therefore turned on by default in all language
+modes except IDL mode, since IDL doesn't have any statements.
+
+@end itemize
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
