@@ -377,7 +377,12 @@
 		    (setq error-found-p t))))
 	      (forward-line 1)
 	      (setq expectedindent (cdr expectedindent)
-		    linenum (1+ linenum)))))
+		    linenum (1+ linenum)))
+	    (set-buffer expectedbuf)
+	    (unless (eobp)
+	      (setq error-found-p t)
+	      (cc-test-log "%s:%d: Expected end of .res file"
+			   filename linenum))))
 	(unless (or error-found-p (not collect-tests))
 	  (setq cc-test-finished-tests
 		(cons filename cc-test-finished-tests)))
@@ -395,8 +400,9 @@
 	  (error "Indentation regression found in file %s" filename))
 	(set-buffer save-buf)
 	(goto-char save-point)
-	(not error-found-p)
-	))))
+	(not error-found-p))
+      (unless noninteractive
+	(message nil)))))
 
 (defun do-all-tests (&optional resetp)
   (interactive "P")
