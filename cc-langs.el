@@ -123,12 +123,11 @@
 
 
 ;; comment starter definitions for various languages.  language specific
-(defconst c-C-comment-start-regexp "/[*]")
 (defconst c-C++-comment-start-regexp "/[/*]")
 ;; We need to match all 3 Java style comments
 ;; 1) Traditional C block; 2) javadoc /** ...; 3) C++ style
 (defconst c-Java-comment-start-regexp "/\\(/\\|[*][*]?\\)")
-(defvar c-comment-start-regexp c-C-comment-start-regexp)
+(defvar c-comment-start-regexp c-C++-comment-start-regexp)
 (make-variable-buffer-local 'c-comment-start-regexp)
 
 
@@ -297,28 +296,26 @@ it finds in `c-file-offsets'."
   (modify-syntax-entry ?>  "."     table)
   (modify-syntax-entry ?&  "."     table)
   (modify-syntax-entry ?|  "."     table)
-  (modify-syntax-entry ?\' "\""    table))
-
-(defun c-setup-dual-comments (table)
-  ;; Set up TABLE to handle block and line style comments
+  (modify-syntax-entry ?\' "\""    table)
+  ;; Set up block and line oriented comments.  The new C standard
+  ;; mandates both comment styles even in C, so since all languages
+  ;; now require dual comments, we make this the default.
   (cond
    ;; XEmacs 19 & 20
    ((memq '8-bit c-emacs-features)
     (modify-syntax-entry ?/  ". 1456" table)
-    (modify-syntax-entry ?*  ". 23"   table)
-    (modify-syntax-entry ?\n "> b"    table)
-    ;; Give CR the same syntax as newline, for selective-display
-    (modify-syntax-entry ?\^m "> b"    table))
-   ;; Emacs 19
+    (modify-syntax-entry ?*  ". 23"   table))
+   ;; Emacs 19 & 20
    ((memq '1-bit c-emacs-features)
     (modify-syntax-entry ?/  ". 124b" table)
-    (modify-syntax-entry ?*  ". 23"   table)
-    (modify-syntax-entry ?\n "> b"    table)
-    ;; Give CR the same syntax as newline, for selective-display
-    (modify-syntax-entry ?\^m "> b"   table))
+    (modify-syntax-entry ?*  ". 23"   table))
    ;; incompatible
    (t (error "CC Mode is incompatible with this version of Emacs"))
-   ))
+   )
+  (modify-syntax-entry ?\n "> b"  table)
+  ;; Give CR the same syntax as newline, for selective-display
+  (modify-syntax-entry ?\^m "> b" table))
+
 
 (defvar c-mode-base-map ()
   "Keymap shared by all CC Mode related modes.")
@@ -436,19 +433,7 @@ it finds in `c-file-offsets'."
 (if c-mode-syntax-table
     ()
   (setq c-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table c-mode-syntax-table)
-  ;; add extra comment syntax
-  (modify-syntax-entry ?/  ". 14"  c-mode-syntax-table)
-  (modify-syntax-entry ?*  ". 23"  c-mode-syntax-table))
-
-(defun c-enable-//-in-c-mode ()
-  "Enables // as a comment delimiter in `c-mode'.
-ANSI C currently does *not* allow this, although many C compilers
-support optional C++ style comments.  To use, call this function from
-your `.emacs' file before you visit any C files.  The changes are
-global and affect all future `c-mode' buffers."
-  (c-setup-dual-comments c-mode-syntax-table)
-  (setq-default c-C-comment-start-regexp c-C++-comment-start-regexp))
+  (c-populate-syntax-table c-mode-syntax-table))
 
 (easy-menu-define c-c-menu c-mode-map "C Mode Commands"
 		  (c-mode-menu "C"))
@@ -477,8 +462,6 @@ global and affect all future `c-mode' buffers."
     ()
   (setq c++-mode-syntax-table (make-syntax-table))
   (c-populate-syntax-table c++-mode-syntax-table)
-  ;; add extra comment syntax
-  (c-setup-dual-comments c++-mode-syntax-table)
   ;; TBD: does it make sense for colon to be symbol class in C++?
   ;; I'm not so sure, since c-label-key is busted on lines like:
   ;; Foo::bar( i );
@@ -512,11 +495,8 @@ global and affect all future `c-mode' buffers."
     ()
   (setq objc-mode-syntax-table (make-syntax-table))
   (c-populate-syntax-table objc-mode-syntax-table)
-  ;; add extra comment syntax
-  (c-setup-dual-comments objc-mode-syntax-table)
-  ;; everyone gets these
-  (modify-syntax-entry ?@ "_" objc-mode-syntax-table)
-  )
+  ;; add extra Objective-C only syntax
+  (modify-syntax-entry ?@ "_" objc-mode-syntax-table))
 
 (easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
 		  (c-mode-menu "ObjC"))
@@ -541,12 +521,7 @@ global and affect all future `c-mode' buffers."
 (if java-mode-syntax-table
     ()
   (setq java-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table java-mode-syntax-table)
-  ;; add extra comment syntax
-  (c-setup-dual-comments java-mode-syntax-table)
-  ;; everyone gets these
-  (modify-syntax-entry ?@ "_" java-mode-syntax-table)
-  )
+  (c-populate-syntax-table java-mode-syntax-table))
 
 (easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
 		  (c-mode-menu "Java"))
@@ -571,10 +546,7 @@ global and affect all future `c-mode' buffers."
 (if idl-mode-syntax-table
     nil
   (setq idl-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table idl-mode-syntax-table)
-  ;; add extra comment syntax
-  (c-setup-dual-comments idl-mode-syntax-table)
-  )
+  (c-populate-syntax-table idl-mode-syntax-table))
 
 (easy-menu-define c-idl-menu idl-mode-map "IDL Mode Commands"
 		  (c-mode-menu "IDL"))
