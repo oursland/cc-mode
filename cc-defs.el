@@ -1383,18 +1383,12 @@ quoted."
   (let ((sym (intern (symbol-name name) c-lang-constants))
 	mode source-files args)
 
-    (if lang
-	(progn
-	  (setq mode (intern (concat (symbol-name lang) "-mode")))
-	  (unless (get mode 'c-mode-prefix)
-	    (error
-	     "Unknown language %S since it got no `c-mode-prefix' property"
-	     (symbol-name lang))))
-      (if c-buffer-is-cc-mode
-	  (setq lang c-buffer-is-cc-mode)
-	(or c-langs-are-parametric
-	    (error
-	     "`c-lang-const' requires a literal language in this context"))))
+    (when lang
+      (setq mode (intern (concat (symbol-name lang) "-mode")))
+      (unless (get mode 'c-mode-prefix)
+	(error
+	 "Unknown language %S since it got no `c-mode-prefix' property"
+	 (symbol-name lang))))
 
     (if (eq c-lang-const-expansion 'immediate)
 	;; No need to find out the source file(s) when we evaluate
@@ -1416,7 +1410,7 @@ quoted."
 					(list (car elem))))
 				    (get sym 'source)))))
 
-      ;; Spend some effort to make a compact call to
+      ;; Make some effort to do a compact call to
       ;; `c-get-lang-constant' since it will be compiled in.
       (setq args (and mode `(',mode)))
       (if (or source-files args)
@@ -1424,12 +1418,15 @@ quoted."
 			   args)))
 
       (if (or (eq c-lang-const-expansion 'call)
+	      (and (not c-lang-const-expansion)
+		   (not mode))
 	      load-in-progress
 	      (not (boundp 'byte-compile-dest-file))
 	      (not (stringp byte-compile-dest-file)))
 	  ;; Either a straight call is requested in the context, or
-	  ;; we're not being byte compiled so the compile time stuff
-	  ;; below is unnecessary.
+	  ;; we're in an "uncontrolled" context and got no language,
+	  ;; or we're not being byte compiled so the compile time
+	  ;; stuff below is unnecessary.
 	  `(c-get-lang-constant ',name ,@args)
 
 	;; Being compiled.  If the loading and compiling version is
