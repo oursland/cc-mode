@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.31 $
+@comment manual version: $Revision: 2.32 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-09-14 18:57:15 $
+@comment Last modification: $Date: 1995-09-14 18:58:42 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.31 $)
+@center (manual revision: $Revision: 2.32 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -948,7 +948,7 @@ defined by @code{c-offsets-alist}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @dfn{Clean-ups} are a mechanism complementary to colon and brace
-hanging.  On the surface, it would see that clean-ups overlap the
+hanging.  On the surface, it would seem that clean-ups overlap the
 functionality provided by the @code{c-hanging-*-alist} variables, and
 similarly, clean-ups are only enabled when auto-newline minor mode is
 enabled.  Clean-ups are used however to adjust code ``after-the-fact'',
