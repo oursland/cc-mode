@@ -1978,7 +1978,9 @@ Optional prefix ARG means justify paragraph as well."
 		  ;; The region to be filled includes the comment ender.
 		  (goto-char (cdr lit-limits))
 		  (beginning-of-line)
-		  (if (and (looking-at "[ \t]*\\*/")
+		  (if (and (looking-at (concat "[ \t]*\\("
+					       c-comment-prefix-regexp
+					       "\\)\\*/"))
 			   (eq (cdr lit-limits) (match-end 0)))
 		      ;; Leave the comment ender on its own line.
 		      (set-marker end (point))
@@ -1986,24 +1988,29 @@ Optional prefix ARG means justify paragraph as well."
 		    ;; cruft between it and the last word with a 'x'
 		    ;; and include it in the fill.  We'll change it
 		    ;; back to a space afterwards.
-		    (if (and (looking-at (concat "[ \t]*\\("
-						 c-comment-prefix-regexp
-						 "\\)[ \t]*\\*/"))
-			     (eq (cdr lit-limits) (match-end 0)))
-			;; The comment ender is prefixed by nothing
-			;; but a comment line prefix.  Remove it along
-			;; with surrounding ws.
-			nil
-		      (goto-char (- (cdr lit-limits) 2)))
-		    (skip-chars-backward " \t\r\n")
-		    (when (/= (point) (- (cdr lit-limits) 2))
-		      (insert ?x)	; Insert first to keep marks right.
-		      (delete-region (point) (- (cdr lit-limits) 1))
-		      (setq hang-ender-stuck t))
-		    (forward-char 2)
-		    (setq tmp-post (point-marker))
-		    (insert ?\n)
-		    (set-marker end (point))))
+		    (let ((ender-start (progn
+					 (goto-char (cdr lit-limits))
+					 (skip-syntax-backward "^w ")
+					 (point))))
+		      (goto-char (cdr lit-limits))
+		      (setq tmp-post (point-marker))
+		      (insert ?\n)
+		      (set-marker end (point))
+		      (forward-line -1)
+		      (if (and (looking-at (concat "[ \t]*\\("
+						   c-comment-prefix-regexp
+						   "\\)[ \t]*"))
+			       (eq ender-start (match-end 0)))
+			  ;; The comment ender is prefixed by nothing
+			  ;; but a comment line prefix.  Remove it
+			  ;; along with surrounding ws.
+			  nil
+			(goto-char ender-start))
+		      (skip-chars-backward " \t\r\n")
+		      (when (/= (point) ender-start)
+			(insert ?x)	; Insert first to keep marks right.
+			(delete-region (point) (1+ ender-start))
+			(setq hang-ender-stuck t)))))
 		(when (<= beg (car lit-limits))
 		  ;; The region to be filled includes the comment starter.
 		  (goto-char (car lit-limits))
@@ -2098,7 +2105,8 @@ Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
 	    (goto-char tmp-post)
 	    (delete-char 1)
 	    (when hang-ender-stuck
-	      (forward-char -3)
+	      (skip-syntax-backward "^w ")
+	      (forward-char -1)
 	      (insert ?\ )
 	      (delete-char 1))
 	    (set-marker tmp-post nil)))))
