@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.354 $
-;; Last Modified:   $Date: 1997-02-02 18:11:17 $
+;; Version:         $Revision: 4.355 $
+;; Last Modified:   $Date: 1997-02-03 16:12:46 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1415,7 +1415,8 @@ Key bindings:
  	c-baseclass-key nil
 	c-recognize-knr-p nil
  	c-access-key c-Java-access-key
-	defun-prompt-regexp c-Java-defun-prompt-regexp)
+	;defun-prompt-regexp c-Java-defun-prompt-regexp
+	)
   (c-set-style "java")
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook))
@@ -5056,7 +5057,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.354 $"
+(defconst c-version "$Revision: 4.355 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
