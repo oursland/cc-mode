@@ -550,8 +550,7 @@
 			     (= paren-depth 0))
 		    ;; We're looking at nothing but a [] argument, and
 		    ;; that's typically not a declaration.
-		    (throw 'continue t))
-		  (setq maybe-fun-call nil))
+		    (throw 'continue t)))
 
 		;; Skip over type decl suffix operators.
 		(while (and (looking-at c-type-decl-suffix-key)
@@ -575,12 +574,11 @@
 
 		(when maybe-fun-call
 		  ;; maybe-fun-call is cleared if we've found a type
-		  ;; decl operator that isn't a parenthesis and when
-		  ;; there is an identifier.  So we get here if we've
-		  ;; passed at least one parenthesis (due to the check
-		  ;; above) with an identifier in it, but nothing else.
-		  ;; That's more likely to be a function call than a
-		  ;; declaration.
+		  ;; decl operator that isn't a parenthesis.  So we
+		  ;; get here if we've passed at least one parenthesis
+		  ;; (due to the check above) with an identifier or
+		  ;; nothing in it.  That's more likely to be a
+		  ;; function call than a declaration.
 		  (throw 'continue t))
 
 		(when (= (point) start)
