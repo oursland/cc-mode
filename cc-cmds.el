@@ -203,6 +203,7 @@ the brace is inserted inside a literal."
 		substatement-open statement-case-open
 		extern-lang-open extern-lang-close
 		namespace-open namespace-close
+		inexpr-class-open inexpr-class-close
 		))
 	    ;; we want to inhibit blinking the paren since this will
 	    ;; be most disruptive. we'll blink it ourselves later on
@@ -227,7 +228,19 @@ the brace is inserted inside a literal."
 		      (c-guess-basic-syntax)))
 	    (newlines (and
 		       c-auto-newline
-		       (or (c-lookup-lists syms syntax c-hanging-braces-alist)
+		       (or (c-lookup-lists
+			    syms
+			    ;; Substitute inexpr-class and class-open
+			    ;; or class-close with inexpr-class-open
+			    ;; or inexpr-class-close.
+			    (if (assq 'inexpr-class syntax)
+				(cond ((assq 'class-open syntax)
+				       '((inexpr-class-open)))
+				      ((assq 'class-close syntax)
+				       '((inexpr-class-close)))
+				      (t syntax))
+			      syntax)
+			    c-hanging-braces-alist)
 			   '(ignore before after)))))
 	;; Do not try to insert newlines around a special (Pike-style)
 	;; brace list.
@@ -253,29 +266,26 @@ the brace is inserted inside a literal."
 	    ;; we leave the newline we've put in there before,
 	    ;; but we need to re-indent the line above
 	    (let ((pos (- (point-max) (point)))
-		  (here (point))
-		  (c-state-cache c-state-cache))
+		  (here (point)))
 	      (forward-line -1)
-	      ;; we may need to update the cache. this should still be
-	      ;; faster than recalculating the state in many cases
-	      (save-excursion
-		(save-restriction
-		  (narrow-to-region here (point))
-		  (if (and (c-safe (progn (backward-up-list -1) t))
-			   (memq (char-before) '(?\) ?}))
-			   (progn (widen)
-				  (c-safe (progn (c-forward-sexp -1) t))))
-		      (setq c-state-cache
-			    (c-hack-state (point) 'open c-state-cache))
-		    (if (and (car c-state-cache)
-			     (not (consp (car c-state-cache)))
-			     (<= (point) (car c-state-cache)))
-			(setq c-state-cache (cdr c-state-cache))
-		      ))))
-	      (let ((here (point))
-		    (shift (c-indent-line)))
-		(setq c-state-cache (c-adjust-state (c-point 'bol) here
-						    (- shift) c-state-cache)))
+	      (let ((c-state-cache (c-whack-state (point) c-state-cache)))
+		;; we may need to update the cache. this should
+		;; still be faster than recalculating the state
+		;; in many cases
+		(save-excursion
+		  (save-restriction
+		    (narrow-to-region here (point))
+		    (if (and (c-safe (progn (backward-up-list -1) t))
+			     (memq (char-before) '(?\) ?}))
+			     (progn (widen)
+				    (c-safe (progn (c-forward-sexp -1)
+						   t))))
+			(setq c-state-cache
+			      (c-hack-state (point) 'open c-state-cache)))))
+		(c-indent-line))
+	      (setq c-state-cache (c-adjust-state (c-point 'bol) here
+						  (- (point) (c-point 'bol))
+						  c-state-cache))
 	      (goto-char (- (point-max) pos))
 	      ;; if the buffer has changed due to the indentation, we
 	      ;; need to recalculate syntax for the current line, but
@@ -310,10 +320,11 @@ the brace is inserted inside a literal."
 	;; now adjust the line's indentation. don't update the state
 	;; cache since c-guess-basic-syntax isn't called when the
 	;; syntax is passed to c-indent-line
-	(let ((here (point))
-	      (shift (c-indent-line syntax)))
+	(let* ((here (point)))
+	  (c-indent-line syntax)
 	  (setq c-state-cache (c-adjust-state (c-point 'bol) here
-					      (- shift) c-state-cache)))
+					      (- (c-point 'boi) (c-point 'bol))
+					      c-state-cache)))
 	;; Do all appropriate clean ups
 	(let ((here (point))
 	      (pos (- (point-max) (point)))
