@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.115 $
-;; Last Modified:   $Date: 1994-12-12 20:34:55 $
+;; Version:         $Revision: 4.116 $
+;; Last Modified:   $Date: 1994-12-13 23:33:35 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-12 20:34:55 $|$Revision: 4.115 $|
+;; |$Date: 1994-12-13 23:33:35 $|$Revision: 4.116 $|
 
 ;;; Code:
 
@@ -1454,8 +1454,9 @@ Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the brace, or
 the brace is inserted inside a literal."
   (interactive "P")
-  (let* ((bod (c-point 'bod))
-	 (literal (c-in-literal bod)))
+  (let* ((c-state-cache (c-parse-state))
+	 (safepos (c-safe-position c-state-cache))
+	 (literal (c-in-literal safepos)))
     ;; if we're in a literal, or we're not at the end of the line, or
     ;; a numeric arg is provided, then just insert the character
     (if (or literal arg
@@ -1482,6 +1483,7 @@ the brace is inserted inside a literal."
 			   (progn (newline)
 				  (setq delete-temp-newline t)))
 		       (self-insert-command (prefix-numeric-value arg))
+		       ;; state cache doesn't change
 		       (c-guess-basic-syntax))
 	      newlines (and
 			c-auto-newline
@@ -1509,19 +1511,23 @@ the brace is inserted inside a literal."
 	    (let ((pos (- (point-max) (point)))
 		  (here (point)))
 	      (forward-line -1)
+	      ;; we don't need to update the state cache.
 	      (c-indent-line)
 	      (goto-char (- (point-max) pos))
 	      ;; if the buffer has changed due to the indentation, we
-	      ;; need to recalculate syntax for the current line
+	      ;; need to recalculate syntax for the current line, but
+	      ;; we won't need to update the state cache.
 	      (if (/= (point) here)
 		  (setq syntax (c-guess-basic-syntax))))
 	  ;; must remove the newline we just stuck in (if we really did it)
 	  (and delete-temp-newline
 	       (delete-region (- (point) 2) (1- (point))))
 	  ;; since we're hanging the brace, we need to recalculate
-	  ;; syntax
+	  ;; syntax, but we don't need to update the state cache.
 	  (setq syntax (c-guess-basic-syntax)))
-	;; now adjust the line's indentation
+	;; now adjust the line's indentation. don't update the state
+	;; cache since c-guess-basic-syntax isn't called when the
+	;; syntax is passed to c-indent-line
 	(c-indent-line syntax)
 	;; Do all appropriate clean ups
 	(let ((here (point))
@@ -1560,12 +1566,16 @@ the brace is inserted inside a literal."
 	(if (memq 'after (cdr-safe newlines))
 	    (progn
 	      (newline)
-	      (c-indent-line)))
+	      ;; update on c-state-cache
+	      (let* ((bufpos (- (point) 2))
+		     (which (if (= (char-after bufpos) ?{) 'open 'close))
+		     (c-state-cache (c-hack-state bufpos which c-state-cache)))
+		(c-indent-line))))
 	;; blink the paren
 	(and (= last-command-char ?\})
 	     old-blink-paren
 	     (save-excursion
-	       (c-backward-syntactic-ws bod)
+	       (c-backward-syntactic-ws safepos)
 	       (if (boundp 'blink-paren-function)
 		   (funcall old-blink-paren)
 		 (run-hooks old-blink-paren))))
@@ -2753,70 +2763,94 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-parse-state ()
   ;; Finds and records all open parens between some important point
   ;; earlier in the file and point.
-  (let* (at-bob placeholder
-	 (pos (save-excursion
-		;; go back 2 bods, but ignore any bogus positions
-		;; returned by beginning-of-defun (i.e. open paren in
-		;; column zero)
-		(let ((cnt 2))
-		  (while (not (or at-bob (zerop cnt)))
-		    (beginning-of-defun)
-		    (if (= (following-char) ?\{)
-			(setq cnt (1- cnt)))
-		    (if (bobp)
-			(setq at-bob t))))
-		(point)))
-	 (here (save-excursion
-		 ;;(skip-chars-forward " \t}")
-		 (point)))
-	 (last-bod pos) (last-pos pos) state sexp-end)
-    ;; cache last bod position
-    (while (catch 'backup-bod
-	     (setq state nil)
-	     (while (and pos (< pos here))
-	       (setq last-pos pos)
-	       (if (and (setq pos (c-safe (scan-lists pos 1 -1)))
-			(<= pos here))
-		   (progn
-		     (setq sexp-end (c-safe (scan-sexps (1- pos) 1)))
-		     (if (and sexp-end
-			      (<= sexp-end here))
-			 ;; we want to record both the start and end
-			 ;; of this sexp, but we only want to record
-			 ;; the last-most of any of them before here
-			 (progn
-			   (if (= (char-after (1- pos)) ?\{)
-			       (setq state (cons (cons (1- pos) sexp-end)
-						 (if (consp (car state))
-						     (cdr state)
-						   state))))
-			   (setq pos sexp-end))
-		       ;; we're contained in this sexp so put pos on
-		       ;; front of list
-		       (setq state (cons (1- pos) state))))
-		 ;; something bad happened. check to see if we crossed
-		 ;; an unbalanced close brace. if so, we didn't really
-		 ;; find the right `important bufpos' so lets back up
-		 ;; and try again
-		 (if (and (not pos) (not at-bob)
-			  (setq placeholder (c-safe (scan-lists last-pos 1 1)))
-			  ;;(char-after (1- placeholder))
-			  (<= placeholder here)
-			  (= (char-after (1- placeholder)) ?\}))
-		     (while t
-		       (setq last-bod (c-safe (scan-lists last-bod -1 1)))
-		       (if (not last-bod)
-			   (error "unbalanced close brace found at position %d"
-				  (1- placeholder))
-			 (setq at-bob (= last-bod (point-min))
-			       pos last-bod)
-			 (if (= (char-after last-bod) ?\{)
-			     (throw 'backup-bod t)))
-		       ))		;end-if
-		 ))			;end-while
-	     nil))
-    state))
+  ;;
+  ;; if there's a state cache, return it
+  (if (boundp 'c-state-cache) c-state-cache
+    (let* (at-bob
+	   (pos (save-excursion
+		  ;; go back 2 bods, but ignore any bogus positions
+		  ;; returned by beginning-of-defun (i.e. open paren
+		  ;; in column zero)
+		  (let ((cnt 2))
+		    (while (not (or at-bob (zerop cnt)))
+		      (beginning-of-defun)
+		      (if (= (following-char) ?\{)
+			  (setq cnt (1- cnt)))
+		      (if (bobp)
+			  (setq at-bob t))))
+		  (point)))
+	   (here (save-excursion
+		   ;;(skip-chars-forward " \t}")
+		   (point)))
+	   (last-bod pos) (last-pos pos)
+	   placeholder state sexp-end)
+      ;; cache last bod position
+      (while (catch 'backup-bod
+	       (setq state nil)
+	       (while (and pos (< pos here))
+		 (setq last-pos pos)
+		 (if (and (setq pos (c-safe (scan-lists pos 1 -1)))
+			  (<= pos here))
+		     (progn
+		       (setq sexp-end (c-safe (scan-sexps (1- pos) 1)))
+		       (if (and sexp-end
+				(<= sexp-end here))
+			   ;; we want to record both the start and end
+			   ;; of this sexp, but we only want to record
+			   ;; the last-most of any of them before here
+			   (progn
+			     (if (= (char-after (1- pos)) ?\{)
+				 (setq state (cons (cons (1- pos) sexp-end)
+						   (if (consp (car state))
+						       (cdr state)
+						     state))))
+			     (setq pos sexp-end))
+			 ;; we're contained in this sexp so put pos on
+			 ;; front of list
+			 (setq state (cons (1- pos) state))))
+		   ;; something bad happened. check to see if we
+		   ;; crossed an unbalanced close brace. if so, we
+		   ;; didn't really find the right `important bufpos'
+		   ;; so lets back up and try again
+		   (if (and (not pos) (not at-bob)
+			    (setq placeholder
+				  (c-safe (scan-lists last-pos 1 1)))
+			    ;;(char-after (1- placeholder))
+			    (<= placeholder here)
+			    (= (char-after (1- placeholder)) ?\}))
+		       (while t
+			 (setq last-bod (c-safe (scan-lists last-bod -1 1)))
+			 (if (not last-bod)
+			     (error "unbalanced close brace at position %d"
+				    (1- placeholder))
+			   (setq at-bob (= last-bod (point-min))
+				 pos last-bod)
+			   (if (= (char-after last-bod) ?\{)
+			       (throw 'backup-bod t)))
+			 ))		;end-if
+		   ))			;end-while
+	       nil))
+      state)))
 
+(defun c-hack-state (bufpos which state)
+  ;; Using BUFPOS buffer position, and WHICH (must be 'open or
+  ;; 'close), hack the c-parse-state STATE and return the results.
+  (if (eq which 'open)
+      (cons bufpos state)
+    (if (not (eq which 'close))
+	(error "c-hack-state, bad argument: %s" which))
+    ;; 'close brace
+    (let ((car (car state))
+	  (cdr (cdr state)))
+      (if (consp car)
+	  (setq car (car cdr)
+		cdr (cdr cdr)))
+      (if (or (null cdr) (consp car))
+	  state				;on error, don't change
+	(cons (cons car bufpos) cdr)
+	))))
+
+
 (defun c-beginning-of-inheritance-list (&optional lim)
   ;; Go to the first non-whitespace after the colon that starts a
   ;; multiple inheritance introduction.  Optional LIM is the farthest
@@ -3138,8 +3172,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (setq containing-sexp (car brace-state)
 		     brace-state (cdr brace-state))
 	     ;; we've hit the beginning of the aggregate list
-	     (c-beginning-of-statement
-	      nil (c-most-enclosing-brace brace-state))
+	     (c-beginning-of-statement-1 (c-most-enclosing-brace brace-state))
 	     (setq bufpos (point)))
 	   ))
        bufpos))
@@ -3172,6 +3205,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; hasn't been narrowed out by any enclosing class, or nil if none
   ;; was found.
   (c-most-enclosing-brace (nreverse state)))
+
+(defun c-safe-position (state)
+  ;; return the closest known safe position
+  (if (consp (car state))
+      (cdr (car state))
+    (car state)))
 
 (defun c-narrow-out-enclosing-class (state lim)
   ;; narrow the buffer so that the enclosing class is hidden
@@ -3292,7 +3331,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-syntax 'class-open placeholder))
 	     ;; CASE 5A.2: brace list open
 	     ((save-excursion
-		(c-beginning-of-statement nil lim)
+		(c-beginning-of-statement-1 lim)
 		;; c-b-o-s could have left us at point-min
 		(and (bobp)
 		     (c-forward-syntactic-ws indent-point))
@@ -3408,7 +3447,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-syntax 'arglist-cont (point)))
 	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
-	      (c-beginning-of-statement nil lim)
+	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'statement-cont (c-point 'boi)))
 	     ))
 	   ;; CASE 5E: we are looking at a access specifier
@@ -3458,7 +3497,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 				       )))))
 		   )
 		 (save-excursion
-		   (c-beginning-of-statement)
+		   (c-beginning-of-statement-1)
 		   (not (looking-at "typedef[ \t\n]+"))))
 	    (goto-char placeholder)
 	    (c-add-syntax 'knr-argdecl (c-point 'boi)))
@@ -3487,13 +3526,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ;; CASE 5I: we are at a method definition continuation line
 	   ((and (eq major-mode 'objc-mode)
 		 (progn
-		   (c-beginning-of-statement 1 lim)
+		   (c-beginning-of-statement-1 lim)
 		   (beginning-of-line)
 		   (looking-at c-ObjC-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
 	   ;; CASE 5J: we are at a topmost continuation line
 	   (t
-	    (c-beginning-of-statement 1 lim)
+	    (c-beginning-of-statement-1 lim)
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 	   ))				; end CASE 5
 	 ;; CASE 6: line is an expression, not a statement.  Most
@@ -3521,7 +3560,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (looking-at "\\<for\\>")))
 	    (goto-char (1+ containing-sexp))
 	    (c-forward-syntactic-ws indent-point)
-	    (c-beginning-of-statement 1 containing-sexp)
+	    (c-beginning-of-statement-1 containing-sexp)
 	    (if (= char-before-ip ?\;)
 		(c-add-syntax 'statement (point))
 	      (c-add-syntax 'statement-cont (point))
@@ -3547,14 +3586,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (skip-chars-forward " \t")
 		   (not (eolp)))
 		 (save-excursion
-		   (c-beginning-of-statement)
+		   (c-beginning-of-statement-1 lim)
 		   (skip-chars-backward " \t([")
 		   (<= (point) containing-sexp)))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-cont-nonempty (c-point 'boi)))
 	   ;; CASE 6F: we are looking at just a normal arglist
 	   ;; continuation line
-	   (t (c-beginning-of-statement 1 containing-sexp)
+	   (t (c-beginning-of-statement-1 containing-sexp)
 	      (forward-char 1)
 	      (c-forward-syntactic-ws indent-point)
 	      (c-add-syntax 'arglist-cont (c-point 'boi)))
@@ -3612,7 +3651,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 ((and (not (memq char-before-ip '(?\; ?} ?:)))
 	       (> (point)
 		  (save-excursion
-		    (c-beginning-of-statement 1 containing-sexp)
+		    (c-beginning-of-statement-1 containing-sexp)
 		    (setq placeholder (point))))
 	       (/= placeholder containing-sexp))
 	  (goto-char indent-point)
@@ -3684,7 +3723,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ;; CASE 9D: continued statement. find the accurate
 	     ;; beginning of statement or substatement
 	     (t
-	      (c-beginning-of-statement nil after-cond-placeholder)
+	      (c-beginning-of-statement-1 after-cond-placeholder)
 	      (c-add-syntax 'statement-cont (point)))
 	     )))
 	 ;; CASE 10: an else clause?
@@ -3720,7 +3759,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (let ((relpos (save-excursion
 			  (goto-char containing-sexp)
 			  (if (/= (point) (c-point 'boi))
-			      (c-beginning-of-statement))
+			      (c-beginning-of-statement-1 lim))
 			  (c-point 'boi))))
 	    (cond
 	     ;; CASE 14A: does this close an inline?
@@ -3798,7 +3837,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ((< (point) indent-point)
 	    (let ((safe-pos (point)))
 	      (goto-char indent-point)
-	      (c-beginning-of-statement 1 lim)
+	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'statement (c-point 'boi))
 	      (if (= char-after-ip ?{)
 		  (c-add-syntax 'block-open))))
@@ -3825,7 +3864,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ;; CASE 15F: first statement in a block
 	   (t (goto-char containing-sexp)
 	      (if (/= (point) (c-point 'boi))
-		  (c-beginning-of-statement))
+		  (c-beginning-of-statement-1 lim))
 	      (c-add-syntax 'statement-block-intro (c-point 'boi))
 	      (if (= char-after-ip ?{)
 		  (c-add-syntax 'block-open)))
@@ -4272,7 +4311,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.115 $"
+(defconst c-version "$Revision: 4.116 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
