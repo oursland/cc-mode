@@ -64,7 +64,7 @@
 (cc-bytecomp-defun regexp-opt-depth)	; (X)Emacs 20+
 
 
-;; cc-fixes.el contains compatibility macros that should be used if
+;; cc-fix.el contains compatibility macros that should be used if
 ;; needed.
 (eval-and-compile
   (if (or (not (fboundp 'functionp))
@@ -79,7 +79,7 @@
 	  (not (fboundp 'regexp-opt))
 	  (not (cc-bytecomp-fboundp 'regexp-opt-depth))
 	  (/= (regexp-opt-depth "\\(\\(\\)\\)") 2))
-      (cc-load "cc-fixes")
+      (cc-load "cc-fix")
     (defalias 'c-regexp-opt 'regexp-opt)
     (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
 
