@@ -146,7 +146,8 @@
     (doc . ,c-doc-face)
     (lbl . ,c-label-face)
     (cpp . ,c-preprocessor-face)
-    (err . ,c-invalid-face)))
+    (err . ,c-invalid-face)
+    (nbs . c-nonbreakable-space-face)))
 
 ;; Check that we don't have duplicates.
 (let ((alist cc-test-face-alist) elem face facename)
@@ -162,7 +163,29 @@
 	       (cdr elem) facename (car elem)))
       (put (cdr elem) 'cc-test-face-name (car elem)))))
 
-(defvar cc-test-font-lock-init-failed nil)
+(defconst cc-test-emacs-features
+  (let ((features c-emacs-features))
+    (unless (memq 'syntax-properties features)
+      (setq features (cons 'no-syntax-properties
+			   features)))
+    (setq features (cons (if (string-match "XEmacs" emacs-version)
+			     ;; (featurep 'xemacs) doesn't work here
+			     ;; for some reason.
+			     'xemacs
+			   'emacs)
+			 features)
+	  features (cons (intern (concat (symbol-name (car features))
+					 (format "-%s" emacs-major-version)))
+			 features)
+	  features (cons (intern (concat (symbol-name (car features))
+					 (format "-%s" emacs-minor-version)))
+			 features))
+    features))
+
+(defvar cc-test-skip nil
+  "If this is a list that contains any symbol also present on
+`cc-test-emacs-features' then any test errors are ignored.  Intended
+to be set as a file local variable.")
 
 (defun cc-test-force-font-lock-buffer ()
   ;; Try to forcibly font lock the current buffer, even in batch mode.
@@ -413,6 +436,8 @@
 (defvar cc-test-comp-buf nil)
 (defvar cc-test-comp-win nil)
 
+(defconst cc-test-clear-line-string (concat (make-string 60 ?\ ) "\r"))
+
 (defun cc-test-message (msg &rest args)
   (if noninteractive
       (send-string-to-terminal (concat (apply 'format msg args) "\n"))
@@ -437,6 +462,7 @@
 
     ;; Setup the test file buffer.
     (set-buffer testbuf)
+    (kill-all-local-variables)
     (buffer-disable-undo testbuf)
     (erase-buffer)
     (insert-file-contents filename)
@@ -521,24 +547,41 @@
 	     (check-faces exp-faces-buf)
 	     (pop-up-windows t)
 	     (linenum 1)
+	     ignore-errs
+	     test-error-found
 	     error-found-p
 	     expectedindent
 	     c-echo-syntactic-information-p
 	     font-lock-verbose)
+
+	(set-buffer testbuf)
+	(setq ignore-errs (intersection cc-test-emacs-features
+					cc-test-skip))
 
 	(if (and (not check-syntax) (not check-faces))
 	    (progn
 	      (cc-test-log "Skipping %s - no .res or .face file" filename)
 	      t)
 
-	  (if noninteractive
-	      (send-string-to-terminal
-	       (format "Testing %s                           \r" filename))
-	    (message "Testing %s" filename))
+	  ;; Collect the face changes.
+	  (when check-faces
+	    (if noninteractive
+		(send-string-to-terminal
+		 (format "Testing %s (fonts)%s"
+			 filename cc-test-clear-line-string))
+	      (message "Testing %s (fonts)" filename))
 
-	  (set-buffer testbuf)
+	    (cc-test-force-font-lock-buffer)
+	    (goto-char (point-min))
+	    (cc-test-record-faces testbuf res-faces-buf nil))
 
 	  (when check-syntax
+	    (if noninteractive
+		(send-string-to-terminal
+		 (format "Testing %s (syntax)%s"
+			 filename cc-test-clear-line-string))
+	      (message "Testing %s (syntax)" filename))
+
 	    ;; Collect the syntactic analysis of all lines.
 	    (goto-char (point-min))
 	    (while (not (eobp))
@@ -585,11 +628,11 @@
 		     (switch-to-buffer testbuf)
 		     (signal (car err) (cdr err))))))))
 
-	  ;; Collect the face changes.
-	  (when check-faces
-	    (cc-test-force-font-lock-buffer)
-	    (goto-char (point-min))
-	    (cc-test-record-faces testbuf res-faces-buf nil))
+	  (if noninteractive
+	      (send-string-to-terminal
+	       (format "Testing %s%s"
+		       filename cc-test-clear-line-string))
+	    (message "Testing %s" filename))
 
 	  (unless error-found-p
 	    ;; Compare and report.
@@ -611,19 +654,21 @@
 		(let* (result expected regression-comment indent-err)
 
 		  (flet ((regression-msg (msg &rest args)
-			  (setq msg (apply 'format msg args))
-			  (cc-test-log "%s:%d: %s" filename linenum msg)
-			  (set-buffer testbuf)
-			  (unless regression-comment
-			    (setq regression-comment t)
-			    (indent-for-comment)
-			    (when (re-search-forward
-				   "\\*/" (c-point 'eol) 'move)
-			      (goto-char (match-beginning 0)))
-			    (delete-horizontal-space)
-			    (insert " !!! "))
-			  (insert msg ". ")
-			  (setq error-found-p t)))
+			  (unless ignore-errs
+			    (setq msg (apply 'format msg args))
+			    (cc-test-log "%s:%d: %s" filename linenum msg)
+			    (set-buffer testbuf)
+			    (unless regression-comment
+			      (setq regression-comment t)
+			      (indent-for-comment)
+			      (when (re-search-forward
+				     "\\*/" (c-point 'eol) 'move)
+				(goto-char (match-beginning 0)))
+			      (delete-horizontal-space)
+			      (insert " !!! "))
+			    (insert msg ". ")
+			    (setq error-found-p t))
+			  (setq test-error-found t)))
 
 		    (when check-syntax
 		      (set-buffer exp-syntax-buf)
@@ -750,7 +795,15 @@
 		(unless (eobp)
 		  (setq error-found-p t)
 		  (cc-test-log "%s:%d: Expected end of .face file"
-			       filename linenum)))))
+			       filename linenum)))
+
+	      (when ignore-errs
+		(setq test-error-found (not test-error-found))
+		(when test-error-found
+		  (cc-test-log
+		   "%s:%d: Expected differences in syntax or fontification"
+		   filename linenum)))
+	      (if test-error-found (setq error-found-p t))))
 
 	  (unless (or error-found-p (not collect-tests))
 	    (setq cc-test-finished-tests
@@ -775,7 +828,7 @@
 	      (set-buffer-modified-p nil))
 
 	    (switch-to-buffer testbuf)
-	    (error "Indentation regression found in file %s" filename))
+	    (error "Regression found in file %s" filename))
 
 	  (unless noninteractive
 	    (message nil))
@@ -822,7 +875,7 @@
 		   "\\.\\(c\\|cc\\|java\\|pike\\|idl\\|m\\)\\'")))
       (fset 'c-echo-parsing-error old-c-echo-parsing-error))
     (if noninteractive
-	(send-string-to-terminal "                              \r"))
+	(send-string-to-terminal cc-test-clear-line-string))
     (kill-test-buffers)
     (when broken-files
       (cc-test-message "Broken file(s): %s"
@@ -839,10 +892,10 @@
   "Creates a .face file from the test file in the current buffer.
 It records the faces put into the buffer by font-lock in the test file."
 
-  ;; Note: fast-lock cache files could perhaps be used for this, but
-  ;; it's better to have a file format that we control.  It's also
-  ;; more edit and cvs friendly, and it avoids some noise that we
-  ;; don't want to record, e.g. fontification of whitespace.
+  ;; Note: fast-lock cache files can't be used for this since we need
+  ;; to take special precautions to make the results comparable
+  ;; between different (X)Emacsen.  This format is also more edit and
+  ;; cvs friendly.
 
   (interactive)
 
