@@ -1,7 +1,7 @@
 void main(struct test *one)
 {
     for (init; test;
-               cont)
+         cont)
         ;
     for (init;
          test;
@@ -9,8 +9,8 @@ void main(struct test *one)
         ;
     for (
         init;
-         test;
-         cont
+        test;
+        cont
         )
         ;
 }

@@ -1,14 +1,14 @@
 public class Foo
 {
-  public void one(Foo f) 
+    public void one(Foo f) 
     {
-      synchronized (this)
-        {
-          do_it();
-        }
+	synchronized (this)
+	    {
+		do_it();
+	    }
     }
-  public synchronized void two(Foo f)
+    public synchronized void two(Foo f)
     {
-      do_it();
+	do_it();
     }
 }

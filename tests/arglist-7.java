@@ -1,8 +1,8 @@
 public class spam
 {
-  public buggy()
+    public buggy()
     {
-      spew(
-	   -1, -1 );
+	spew(
+	     -1, -1 );
     }
 }
