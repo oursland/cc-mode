@@ -64,9 +64,8 @@
 ;; gnu.emacs.bug) as well as bug-cc-mode@gnu.org, which directly
 ;; contacts the CC Mode maintainers.  Questions can sent to
 ;; help-gnu-emacs@gnu.org (mirrored as gnu.emacs.help) and/or
-;; bug-cc-mode@gnu.org.  Please use bug-cc-mode@gnu.org instead.
-;; Please do not send bugs or questions to our personal accounts; we
-;; reserve the right to ignore such email!
+;; bug-cc-mode@gnu.org.  Please do not send bugs or questions to our
+;; personal accounts; we reserve the right to ignore such email!
 
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
@@ -407,7 +406,9 @@ Note that the style variables are always made local to the buffer."
 
 (defvar c-mode-abbrev-table nil
   "Abbreviation table used in c-mode buffers.")
-(define-abbrev-table 'c-mode-abbrev-table ())
+(define-abbrev-table 'c-mode-abbrev-table
+  '(("else" "else" c-electric-continued-statement 0)
+    ("while" "while" c-electric-continued-statement 0)))
 
 (defvar c-mode-map ()
   "Keymap used in c-mode buffers.")
@@ -443,7 +444,8 @@ Key bindings:
   (set-syntax-table c-mode-syntax-table)
   (setq major-mode 'c-mode
 	mode-name "C"
-	local-abbrev-table c-mode-abbrev-table)
+	local-abbrev-table c-mode-abbrev-table
+	abbrev-mode t)
   (use-local-map c-mode-map)
   (c-common-init)
   (setq comment-start "/* "
@@ -465,7 +467,10 @@ Key bindings:
 
 (defvar c++-mode-abbrev-table nil
   "Abbreviation table used in c++-mode buffers.")
-(define-abbrev-table 'c++-mode-abbrev-table ())
+(define-abbrev-table 'c++-mode-abbrev-table
+  '(("else" "else" c-electric-continued-statement 0)
+    ("while" "while" c-electric-continued-statement 0)
+    ("catch" "catch" c-electric-continued-statement 0)))
 
 (defvar c++-mode-map ()
   "Keymap used in c++-mode buffers.")
@@ -504,7 +509,8 @@ Key bindings:
   (set-syntax-table c++-mode-syntax-table)
   (setq major-mode 'c++-mode
 	mode-name "C++"
-	local-abbrev-table c++-mode-abbrev-table)
+	local-abbrev-table c++-mode-abbrev-table
+	abbrev-mode t)
   (use-local-map c++-mode-map)
   (c-common-init)
   (setq comment-start "// "
@@ -528,7 +534,9 @@ Key bindings:
 
 (defvar objc-mode-abbrev-table nil
   "Abbreviation table used in objc-mode buffers.")
-(define-abbrev-table 'objc-mode-abbrev-table ())
+(define-abbrev-table 'objc-mode-abbrev-table
+  '(("else" "else" c-electric-continued-statement 0)
+    ("while" "while" c-electric-continued-statement 0)))
 
 (defvar objc-mode-map ()
   "Keymap used in objc-mode buffers.")
@@ -564,7 +572,8 @@ Key bindings:
   (set-syntax-table objc-mode-syntax-table)
   (setq major-mode 'objc-mode
 	mode-name "ObjC"
-	local-abbrev-table objc-mode-abbrev-table)
+	local-abbrev-table objc-mode-abbrev-table
+	abbrev-mode t)
   (use-local-map objc-mode-map)
   (c-common-init)
   (setq comment-start "// "
@@ -587,7 +596,11 @@ Key bindings:
 
 (defvar java-mode-abbrev-table nil
   "Abbreviation table used in java-mode buffers.")
-(define-abbrev-table 'java-mode-abbrev-table ())
+(define-abbrev-table 'java-mode-abbrev-table
+  '(("else" "else" c-electric-continued-statement 0)
+    ("while" "while" c-electric-continued-statement 0)
+    ("catch" "catch" c-electric-continued-statement 0)
+    ("finally" "finally" c-electric-continued-statement 0)))
 
 (defvar java-mode-map ()
   "Keymap used in java-mode buffers.")
@@ -626,6 +639,7 @@ Key bindings:
   (setq major-mode 'java-mode
  	mode-name "Java"
  	local-abbrev-table java-mode-abbrev-table
+	abbrev-mode t
 	c-append-paragraph-start c-Java-javadoc-paragraph-start)
   (use-local-map java-mode-map)
   (c-common-init)
@@ -711,7 +725,9 @@ Key bindings:
 
 (defvar pike-mode-abbrev-table nil
   "Abbreviation table used in pike-mode buffers.")
-(define-abbrev-table 'pike-mode-abbrev-table ())
+(define-abbrev-table 'pike-mode-abbrev-table
+  '(("else" "else" c-electric-continued-statement 0)
+    ("while" "while" c-electric-continued-statement 0)))
 
 (defvar pike-mode-map ()
   "Keymap used in pike-mode buffers.")
@@ -748,6 +764,7 @@ Key bindings:
   (setq major-mode 'pike-mode
  	mode-name "Pike"
  	local-abbrev-table pike-mode-abbrev-table
+	abbrev-mode t
 	c-append-paragraph-start c-Pike-pikedoc-paragraph-start
 	c-append-paragraph-separate c-Pike-pikedoc-paragraph-separate)
   (use-local-map pike-mode-map)
