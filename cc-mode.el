@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-28 19:28:29 $
-;; Version:         $Revision: 2.173 $
+;; Last Modified:   $Date: 1992-08-05 18:22:46 $
+;; Version:         $Revision: 2.173.2.1 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-28 19:28:29 $|$Revision: 2.173 $|
+;; |$Date: 1992-08-05 18:22:46 $|$Revision: 2.173.2.1 $|
 
 
 ;; ======================================================================
@@ -321,13 +321,17 @@ Only currently supported behavior is '(alignleft).")
 (make-variable-buffer-local 'c++-auto-newline)
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
+(defconst c++-class-key "\\<\\(class\\|struct\\|union\\)\\>"
+  "Keywords that introduce a class declaration in C++.")
+(defconst c++-access-key "\\<\\(public\\|protected\\|private\\)\\>:"
+  "Keywords that change access permission.")
 
 
 ;; ======================================================================
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.173 $
+  "Major mode for editing C++ code.  $Revision: 2.173.2.1 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -528,7 +532,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.173 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.173.2.1 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1100,7 +1104,7 @@ of the expression are preserved."
 		(setcar indent-stack
 			(setq this-indent val))))
 	    ;; Adjust line indentation according to its contents
- 	    (if (looking-at "\\(public\\|private\\|protected\\):")
+ 	    (if (looking-at c++-access-key)
  		(setq this-indent (+ this-indent c++-access-specifier-offset))
 	      (if (or (looking-at "case[ \t]")
 		      (and (looking-at "[A-Za-z]")
@@ -1223,7 +1227,7 @@ enclosing class, or the depth of class nesting at point."
 	  state containing-sexp paren-depth
 	  (bod (c++-point 'bod))
 	  foundp)
-      (c++-beginning-of-defun)
+      (goto-char bod)
       (setq state (c++-parse-state indent-point)
 	    containing-sexp (nth 1 state)
 	    paren-depth (nth 0 state))
@@ -1238,11 +1242,11 @@ enclosing class, or the depth of class nesting at point."
 	;; calculate depth wrt containing (possibly nested) classes
 	(goto-char containing-sexp)
 	(while (and (setq foundp (re-search-backward
-				  "}\\|\\<\\(class\\|struct\\)\\>"
+				  (concat "[};]\\|" c++-class-key)
 				  (point-min) t))
 		    (or (c++-in-literal)
 			(c++-in-parens-p))))
-	(if (= (following-char) ?})
+	(if (memq (following-char) '(?} ?\;))
 	    nil
 	  (setq state (c++-parse-state containing-sexp))
 	  (and foundp
@@ -1357,7 +1361,7 @@ point of the beginning of the C++ definition."
 	  (t
 	   (skip-chars-forward " \t")
 	   (if (listp indent) (setq indent (car indent)))
-	   (cond ((looking-at "\\(public\\|private\\|protected\\):")
+	   (cond ((looking-at c++-access-key)
 		  (setq indent (+ indent c++-access-specifier-offset)))
 		 ((looking-at "default:")
 		  (setq indent (+ indent c-label-offset)))
@@ -1521,8 +1525,7 @@ BOD is the beginning of the C++ definition."
 			  (if (progn
 				(beginning-of-line)
 				(skip-chars-forward " \t")
-				(looking-at
-				 "\\<\\(public\\|protected\\|private\\)\\>:"))
+				(looking-at c++-access-key))
 			      ;; access specifier so add zero to inclass-shift
 			      0
 			    ;; member init, so add offset, but
@@ -1551,8 +1554,7 @@ BOD is the beginning of the C++ definition."
 			      ;; else first check to see if its a
 			      ;; multiple inheritance continuation line
 			      (if (looking-at
-				   (concat "\\(class\\|struct\\)"
-					   "[ \t]+"
+				   (concat c++-class-key "[ \t]+"
 					   "\\(\\w+[ \t]*:[ \t]*\\)?"))
 				  (if (progn (goto-char indent-point)
 					     (c++-backward-over-syntactic-ws)
@@ -1720,7 +1722,8 @@ BOD is the beginning of the C++ definition."
 					   "\\|\\(case\\|default\\)[ \t]"
 					   "\\|[a-zA-Z0-9_$]*:[^:]"
 					   "\\|friend[ \t]"
-					   "\\(class\\|struct\\)[ \t]")))
+					   c++-class-key
+					   "[ \t]")))
 			     ;; Skip over comments and labels
 			     ;; following openbrace.
 			     (cond
@@ -1729,7 +1732,8 @@ BOD is the beginning of the C++ definition."
 			      ((looking-at "/\\*")
 			       (search-forward "*/" nil 'move))
 			      ((looking-at
-				"//\\|friend[ \t]\\(class\\|struct\\)[ \t]")
+				(concat "//\\|friend[ \t]" c++-class-key
+					"[ \t]"))
 			       (forward-line 1))
 			      ((looking-at "\\(case\\|default\\)\\b")
 			       (forward-line 1))
@@ -1972,7 +1976,8 @@ the leading \"// \" from each line, if any."
   "*If NIL, use c++-defun-header-weak to identify beginning of definitions,
 if nonNIL, use c++-defun-header-strong")
 
-(defvar c++-defun-header-strong-struct-equivs "\\(class\\|struct\\|enum\\)"
+(defvar c++-defun-header-strong-struct-equivs
+  "\\(class\\|struct\\|union\\|enum\\)"
   "Regexp to match names of structure declaration blocks in C++")
 
 (defconst c++-defun-header-strong
@@ -2036,7 +2041,8 @@ function definition.")
 ;; strong scheme shown above) are welcomed.
 
 (defconst c++-defun-header-weak "^{\\|^[_a-zA-Z].*{"
-  "Weakly-defined regexp to match beginning of structure or function definition.")
+  "Weakly-defined regexp to match beginning of structure or function
+definition.")
 
 
 (defun c++-beginning-of-defun (&optional arg)
@@ -2111,7 +2117,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.173 $"
+(defconst c++-version "$Revision: 2.173.2.1 $"
   "c++-mode version number.")
 
 (defun c++-version ()
