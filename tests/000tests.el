@@ -1,4 +1,5 @@
 (require 'cc-mode)
+(c-load-all)
 
 (defconst test-dir "~/src/elisp/cc-mode/tests/")
 
@@ -130,8 +131,10 @@
     "inher-2.cc"
     "inher-3.cc"
     "interface-1.m"
+    "ivar.java"
     "member-1.cc"
     "member-2.cc"
+    "methods-1.java"
     "nested-1.cc"
     "nested-2.c"
     "statement-1.cc"
