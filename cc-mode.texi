@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.45 $
+@comment manual version: $Revision: 2.46 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-31 19:33:03 $
+@comment Last modification: $Date: 1996-06-03 15:32:40 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.45 $)
+@center (manual revision: $Revision: 2.46 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -2075,9 +2075,113 @@ That way, the current setting for the buffer local value of
 
 @vindex c-offsets-alist
 @vindex offsets-alist (c-)
-The complete list of recognized syntactic symbols is described in the
-@code{c-offsets-alist} variable.  This chapter will provide some
-examples to help clarify these symbols.
+The complete list of recognized syntactic symbols as described in the
+@code{c-offsets-alist} variable is:
+
+@itemize @bullet
+@item
+string
+@item
+c
+@item
+defun-open
+@item
+defun-close
+@item
+defun-block-intro
+@item
+class-open
+@item
+class-close
+@item
+inline-open
+@item
+inline-close
+@item
+ansi-funcdecl-cont
+@item
+knr-argdecl-intro
+@item
+knr-argdecl
+@item
+topmost-intro
+@item
+topmost-intro-cont
+@item
+member-init-intro
+@item
+member-init-cont
+@item
+inher-intro
+@item
+inher-cont
+@item
+block-open
+@item
+block-close
+@item
+brace-list-open
+@item
+brace-list-close
+@item
+brace-list-intro
+@item
+brace-list-entry
+@item
+statement
+@item
+statement-cont
+@item
+statement-block-intro
+@item
+statement-case-intro
+@item
+statement-case-open
+@item
+substatement
+@item
+substatement-open
+@item
+case-label
+@item
+access-label
+@item
+label
+@item
+do-while-closure
+@item
+else-clause
+@item
+comment-intro
+@item
+arglist-intro
+@item
+arglist-cont
+@item
+arglist-cont-nonempty
+@item
+arglist-close
+@item
+stream-op
+@item
+inclass
+@item
+cpp-macro
+@item
+friend
+@item
+objc-method-intro
+@item
+objc-method-args-cont
+@item
+objc-method-call-cont
+@item
+extern-lang-open
+@item
+extern-lang-close
+@item
+inextern-lang
+@end itemize
 
 @cindex -open syntactic symbols
 @cindex -close syntactic symbols
@@ -2398,9 +2502,13 @@ symbols.  In this example:
 
 @cindex extern-lang-open syntactic symbol
 @cindex extern-lang-close syntactic symbol
+@cindex inextern-lang syntactic symbol
+@cindex inclass syntactic symbol
 @noindent
 line 2 is given the @code{extern-lang-open} syntax while line 5 is given
-the @code{extern-lang-close} syntax.
+the @code{extern-lang-close} syntax.  The analysis for line 3 yields:
+@code{((inextern-lang) (topmost-intro . 14))}, where
+@code{inextern-lang} is a modifier similar in purpose to @code{inclass}.
 
 A number of syntactic symbols are associated with parenthesis lists,
 a.k.a argument lists, as found in function declarations and function
