@@ -20,9 +20,9 @@ mixed foo = (<a,
 >);
 a = {
     a, b,
-    {a, {a,
-	 b
-    }},
+    {a, b, {a,
+	    b
+	}},
     foo ({
 	     a; // Ok, it's not valid Pike; just checking.. ;)
 	     b;
@@ -32,4 +32,4 @@ a = {
 	       (<
 		   a, b, c
 	       >)
-	 ])}
+    ])}
