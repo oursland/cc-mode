@@ -509,10 +509,9 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       ;; that we've moved.
       (while (progn
 	       (setq pos (point))
-	       (c-backward-syntactic-ws) ; might go back an awk-mode virtual semicolon, here.
-                                        ; How about using c-awk-NL-prop for AWK Mode, here.
-                                        ; Something like c-awk-backward-syntactic-ws.
-                                        ; 2002/6/22.  Doesn't matter!  Leave it as it is.
+               (if (c-mode-is-new-awk-p)
+                   (c-awk-backward-syntactic-ws)
+                 (c-backward-syntactic-ws))
 	       (/= (skip-chars-backward "-+!*&~@`#") 0))) ; ACM, 2002/5/31;
 							  ; Make a variable in
 							  ; cc-langs.el, maybe
@@ -820,7 +819,9 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       ;; Skip over the unary operators that can start the statement.
       (goto-char pos)
       (while (progn
-	       (c-backward-syntactic-ws)
+	       (if (c-mode-is-new-awk-p)
+                   (c-awk-backward-syntactic-ws)
+                 (c-backward-syntactic-ws))
 	       (/= (skip-chars-backward "-+!*&~@`#") 0)) ; Hopefully the # won't hurt awk.
 	(setq pos (point)))
       (goto-char pos)
