@@ -141,7 +141,11 @@ See `c-offsets-alist'."
 If the syntactic symbol for a particular line does not match a symbol
 in the offsets alist, or if no non-nil offset value can be determined
 for a symbol, an error is generated, otherwise no error is reported
-and the syntactic symbol is ignored."
+and the syntactic symbol is ignored.
+
+This variable is considered obsolete; it doesn't work well with lineup
+functions that return nil to support the feature of using lists on
+syntactic symbols in `c-offsets-alist'.  Please keep it set to nil."
   :type 'boolean
   :group 'c)
 
