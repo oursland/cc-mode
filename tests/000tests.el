@@ -454,7 +454,6 @@
       (if error-found-p
 	  (progn
 	    (pop-to-buffer testbuf)
-	    (message "Indentation regression found in file: %s!" filename)
 	    (error "Indentation regression found in file: %s!" filename))))
     (setq finished-tests (cons filename finished-tests))
 ;    (message "Testing %s... done." filename)
