@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-28 00:20:47 $
-;; Version:         $Revision: 2.6 $
+;; Last Modified:   $Date: 1992-04-28 19:59:12 $
+;; Version:         $Revision: 2.7 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-28 00:20:47 $|$Revision: 2.6 $|
+;; |$Date: 1992-04-28 19:59:12 $|$Revision: 2.7 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -89,10 +89,13 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 4
   "*Indentation offset for line which contains only C or C++ style comments.")
-(defvar c++-hanging-braces-p t
-  "*If non-nil and auto-newline is on, no newlines are inserted before
-left braces. Newlines are always inserted after left braces when
-auto-newline is on.")
+(defvar c++-hanging-braces t
+  "*Controls the insertion of newlines before open (left) braces.
+This variable only has effect when auto-newline is on.  If nil, open
+braces do not hang (i.e. a newline is inserted before all open
+braces).  If t, all open braces hang -- no newline is inserted before
+open braces.  If not nil or t, newlines are only inserted before
+top-level open braces; all other braces hang.")
 (defvar c++-hanging-member-init-colon t
   "*If non-nil, don't put a newline after member initialization colon.")
 (defvar c++-mode-line-format
@@ -135,7 +138,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.6 $
+  "Major mode for editing C++ code.  $Revision: 2.7 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -192,10 +195,10 @@ c++-<thing> are unique for this mode.
     left paren. If nil, it lines up with the left paren.
  c++-comment-only-line-offset
     Extra indentation for a line containing only a C or C++ style comment.
- c++-hanging-braces-p
-    If non-nil and auto-newline is on, no newlines are inserted
-    before left braces. Newlines are always inserted *after* left
-    braces when auto-newline is on.
+ c++-hanging-braces
+    Controls open brace hanging behavior when using auto-newline. Nil
+    says no braces hang, t says all open braces hang. Not nil or t
+    means top-level open braces don't hang, all others do.
  c++-hanging-member-init-colon
     If non-nil and auto-newline is on, newlines are not inserted after
     member initialization colons.
@@ -402,10 +405,16 @@ If c++-hungry-delete-key is nil, just call backward-delete-char-untabify."
 	     (or (save-excursion
 		   (skip-chars-backward " \t")
 		   (bolp))
-		 (let ((c++-auto-newline c++-auto-newline))
-		   (if (and c++-hanging-braces-p
-			    (= last-command-char ?{))
+		 (let ((c++-auto-newline c++-auto-newline)
+		       (open-brace-p (= last-command-char ?{)))
+		   (if (and open-brace-p
+			    (or (eq c++-hanging-braces t)
+				(and c++-hanging-braces
+				     (not (c++-at-top-level-p)))))
 		       (setq c++-auto-newline nil))
+		   ;; (if (and c++-hanging-braces
+		   ;; (= last-command-char ?{))
+		   ;; (setq c++-auto-newline nil))
 		   (c++-auto-newline)
 		   ;; this may have auto-filled so we need to indent
 		   ;; the previous line
@@ -618,6 +627,19 @@ Return the amount the indentation changed by."
 	  (goto-char (- (point-max) pos))))
     shift-amt))
 
+(defun c++-at-top-level-p ()
+  "Return t if point is not inside a containing C++ expression, nil
+if it is embedded in an expression."
+  (save-excursion
+    (let ((indent-point (point))
+	  (case-fold-search nil)
+	  state containing-sexp)
+      (beginning-of-defun)
+      (while (< (point) indent-point)
+	(setq parse-start (point))
+	(setq state (parse-partial-sexp (point) indent-point 0))
+	(setq containing-sexp (car (cdr state))))
+      (null containing-sexp))))
 
 (defun c++-in-comment-p ()
   "Return t if in a C or C++ style comment as defined by mode's syntax."
@@ -1256,7 +1278,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.6 $"
+(defconst c++-version "$Revision: 2.7 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
@@ -1280,7 +1302,7 @@ Send bug reports to c++-mode-help@anthem.nlm.nih.gov"
 		       'c++-friend-offset
 		       'c++-empty-arglist-indent
 		       'c++-comment-only-line-offset
-		       'c++-hanging-braces-p
+		       'c++-hanging-braces
 		       'c++-hanging-member-init-colon
 		       'c++-mode-line-format
 		       'c++-auto-hungry-initial-state
