@@ -590,7 +590,9 @@
   (let ((if-level 1)
 	(here (c-point 'bol))
 	(case-fold-search nil)
-	(lim (or lim (c-point 'bod)))
+	(lim (or (and (>= (point) lim)
+		      lim)
+		 (c-point 'bod)))
 	(at-if (looking-at "if\\b[^_]")))
     (catch 'orphan-if
       (while (and (not (bobp))
