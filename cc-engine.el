@@ -938,8 +938,9 @@ See `c-forward-token-1' for details."
 	      (if (bobp) (goto-char last)))))
       count)))
 
-(defun c-syntactic-re-search-forward (regexp &optional bound noerror count
-				      paren-level not-inside-token)
+(defun c-syntactic-re-search-forward (regexp &optional bound noerror
+				      paren-level not-inside-token
+				      lookbehind-submatch)
   "Like `re-search-forward', but only report matches that are found
 in syntactically significant text.  I.e. matches in comments, macros
 or string literals are ignored.  The start point is assumed to be
@@ -955,75 +956,93 @@ ignored.  Things like multicharacter operators and special symbols
 \(e.g. \"`()\" in Pike) are handled but currently not floating point
 constants.
 
-If there is at least one submatch in the regexp and the first one
-matches, the end position of that submatch is used to check for
-syntactic significance, otherwise the start position of the whole
-match is used."
+If LOOKBEHIND-SUBMATCH is non-nil, it's taken as a number of a
+subexpression in REGEXP.  The end of that submatch is used as the
+position to check for syntactic significance.  If LOOKBEHIND-SUBMATCH
+isn't used or if that subexpression didn't match then the start
+position of the whole match is used instead.  The \"look behind\"
+subexpression is never tested before the starting position, so it
+might be a good idea to include \\=\\= as a match alternative in it.
+
+Optimization note: Matches might be missed if the \"look behind\"
+subexpression should match the end of nonwhite syntactic whitespace,
+i.e. the end of comments or cpp directives.  This since the function
+skips over such things before resuming the search.  It's also not safe
+to assume that the \"look behind\" subexpression never can match
+syntactic whitespace."
 
   (or bound (setq bound (point-max)))
-  (or count (setq count 1))
   (if paren-level (setq paren-level -1))
 
   (let ((start (point))
 	(pos (point))
 	(last-token-end-pos (point-min))
-	match-pos syntactic-match-pos state)
+	match-pos found state check-pos check-state tmp)
 
     (condition-case err
-	(while (and (> count 0)
-		    (progn
-		      ;; Kludge: XEmacs (up to and including 21.4 at
-		      ;; least) has a bug where it doesn't clear the
-		      ;; submatches from earlier searches, so when we
-		      ;; do (match-end 1) below we could get some old
-		      ;; result if REGEXP doesn't contain a submatch.
-		      (set-match-data nil)
-		      (re-search-forward regexp bound noerror)))
+	(while
+	    (and
+	     (re-search-forward regexp bound noerror)
 
-	  (setq match-pos (point)
-		syntactic-match-pos (or (match-end 1) (match-beginning 0))
-		state (parse-partial-sexp pos syntactic-match-pos
-					  paren-level nil state)
-		pos syntactic-match-pos)
+	     (progn
+	       (setq match-pos (point)
+		     state (parse-partial-sexp
+			    pos (match-beginning 0) paren-level nil state)
+		     pos (match-beginning 0))
+	       (if (setq check-pos (and lookbehind-submatch
+					(match-end lookbehind-submatch)))
+		   (setq check-state (parse-partial-sexp
+				      pos check-pos paren-level nil state))
+		 (setq check-pos pos
+		       check-state state))
 
-	  (cond ((elt state 3)
-		 ;; Match inside a string.  Skip to the end of it
-		 ;; before continuing.
-		 (let ((ender (make-string 1 (elt state 3))))
-		   (while (if (search-forward ender bound noerror)
-			      (progn
-				(setq state (parse-partial-sexp pos (point)
-								nil nil state)
-				      pos (point))
-				(elt state 3))
-			    (setq count -1)
-			    nil))))
+	       ;; If we got a look behind subexpression and get an
+	       ;; insignificant match in something that isn't
+	       ;; syntactic whitespace (i.e. strings or in nested
+	       ;; parentheses), then we can never skip more than a
+	       ;; single character from the match position before
+	       ;; continuing the search.  That since the look behind
+	       ;; subexpression might match the end of the
+	       ;; insignificant region.
 
-		((elt state 7)
+	       (cond
+		((setq tmp (elt check-state 3))
+		 ;; Match inside a string.
+		 (if (or lookbehind-submatch
+			 (not (integerp tmp)))
+		     (goto-char (min (1+ pos) bound))
+		   ;; Skip to the end of the string before continuing.
+		   (let ((ender (make-string 1 tmp)) (continue t))
+		     (while (if (search-forward ender bound noerror)
+				(progn
+				  (setq state (parse-partial-sexp
+					       pos (point) nil nil state)
+					pos (point))
+				  (elt state 3))
+			      (setq continue nil)))
+		     continue)))
+
+		((elt check-state 7)
 		 ;; Match inside a line comment.  Skip to eol.  Use
-		 ;; `re-search-forward' instead of
-		 ;; `skip-chars-forward' to get the right bound
-		 ;; behavior.
-		 (or (re-search-forward "[\n\r]" bound noerror)
-		     (setq count -1)))
+		 ;; `re-search-forward' instead of `skip-chars-forward' to get
+		 ;; the right bound behavior.
+		 (re-search-forward "[\n\r]" bound noerror))
 
-		((elt state 4)
+		((elt check-state 4)
 		 ;; Match inside a block comment.  Skip to the '*/'.
-		 (or (search-forward "*/" bound noerror)
-		     (setq count -1)))
+		 (search-forward "*/" bound noerror))
 
-		((and (not (elt state 5))
-		      (eq (char-before syntactic-match-pos) ?/)
-		      (memq (char-after syntactic-match-pos) '(?/ ?*)))
-		 ;; Match in the middle of the opener of a block or
-		 ;; line comment.
-		 (or (if (= (char-after syntactic-match-pos) ?/)
-			 (re-search-forward "[\n\r]" bound noerror)
-		       (search-forward "*/" bound noerror))
-		     (setq count -1)))
+		((and (not (elt check-state 5))
+		      (eq (char-before check-pos) ?/)
+		      (memq (char-after check-pos) '(?/ ?*)))
+		 ;; Match in the middle of the opener of a block or line
+		 ;; comment.
+		 (if (= (char-after check-pos) ?/)
+		     (re-search-forward "[\n\r]" bound noerror)
+		   (search-forward "*/" bound noerror)))
 
 		((and not-inside-token
-		      (> syntactic-match-pos last-token-end-pos)
+		      (> check-pos last-token-end-pos)
 		      (save-match-data
 			(let (tmp-pos)
 			  (save-excursion
@@ -1036,49 +1055,54 @@ match is used."
 				     (setq tmp-pos nil))
 			      (goto-char tmp-pos)))
 			  (and tmp-pos
-			       (> tmp-pos syntactic-match-pos)
+			       (> tmp-pos check-pos)
 			       (progn (goto-char tmp-pos)
 				      (skip-syntax-forward "w_")
 				      (setq last-token-end-pos (point))
 				      t)))))
 		 ;; Match inside a token.
-		 (when (> (point) bound)
-		   (if noerror
-		       (setq count -1)
-		     (signal 'search-failed "end of token"))))
+		 (cond (lookbehind-submatch
+			(goto-char (min (1+ pos) bound))
+			t)
+		       ((<= (point) bound) t)
+		       (noerror nil)
+		       (t (signal 'search-failed "end of token"))))
 
 		((save-excursion
 		   (save-match-data
 		     (c-beginning-of-macro start)))
 		 ;; Match inside a macro.  Skip to the end of it.
 		 (c-end-of-macro)
-		 (when (> (point) bound)
-		   (if noerror
-		       (setq count -1)
-		     (signal 'search-failed "end of macro"))))
+		 (cond ((<= (point) bound) t)
+		       (noerror nil)
+		       (t (signal 'search-failed "end of macro"))))
 
-		((and paren-level (/= (car state) 0))
-		 (if (> (car state) 0)
-		     ;; Match inside a nested paren sexp.  Skip out of it.
-		     (setq state (parse-partial-sexp pos bound 0 nil state)
-			   pos (point))
+		((and paren-level
+		      (/= (setq tmp (car check-state)) 0))
+		 (if (> tmp 0)
+		     ;; Match inside a nested paren sexp.
+		     (if lookbehind-submatch
+			 (goto-char (min (1+ pos) bound))
+		       ;; Skip out of the paren quickly.
+		       (setq state (parse-partial-sexp pos bound 0 nil state)
+			     pos (point)))
 		   ;; Have exited the current paren sexp.  The
-		   ;; parse-partial-sexp above has left us just after
-		   ;; the closing paren in this case.  Just make
-		   ;; re-search-forward above fail in the appropriate
-		   ;; way; we'll adjust the leave off point below if
-		   ;; necessary.
+		   ;; `parse-partial-sexp' above has left us just after the
+		   ;; closing paren in this case.  Just make
+		   ;; `re-search-forward' above fail in the appropriate way;
+		   ;; we'll adjust the leave off point below if necessary.
 		   (setq bound (point))))
 
 		(t
 		 ;; A real match.
-		 (setq count (1- count)))))
+		 (setq found t)
+		 nil)))))
 
       (error
        (goto-char start)
        (signal (car err) (cdr err))))
 
-    (if (= count 0)
+    (if found
 	(progn
 	  (goto-char match-pos)
 	  match-pos)
@@ -1879,14 +1903,14 @@ brace."
   (if (c-major-mode-is 'c++-mode)
       ;; In C++ we need to take special care to handle those pesky
       ;; template brackets.
-      (while (and (c-syntactic-re-search-forward "[;{=<]" nil 'move 1 t t)
+      (while (and (c-syntactic-re-search-forward "[;{=<]" nil 'move t)
 		  (when (eq (char-before) ?<)
 		    (c-with-syntax-table c++-template-syntax-table
 		      (if (c-safe (goto-char (c-up-list-forward (point))))
 			  t
 			(goto-char (point-max))
 			nil)))))
-    (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t t)))
+    (c-syntactic-re-search-forward "[;{=]" nil 'move t t)))
 
 (defun c-beginning-of-decl-1 (&optional lim)
   ;; Go to the beginning of the current declaration, or the beginning
@@ -1975,13 +1999,12 @@ brace."
 					c++-template-syntax-table
 				      (syntax-table))
 		 (save-excursion
-		   (and (c-syntactic-re-search-forward "[;={]" start t 1 t t)
+		   (and (c-syntactic-re-search-forward "[;={]" start t t t)
 			(eq (char-before) ?=)
-			(c-syntactic-re-search-forward "[;{]" start t 1 t)
+			(c-syntactic-re-search-forward "[;{]" start t t)
 			(eq (char-before) ?{)
 			(c-safe (goto-char (c-up-list-forward (point))) t)
-			(not (c-syntactic-re-search-forward
-			      ";" start t 1 t))))))
+			(not (c-syntactic-re-search-forward ";" start t t))))))
 	  (cons 'same nil)
 	(cons move nil)))))
 
@@ -2008,7 +2031,7 @@ brace."
 	;; detected using the same criteria as in
 	;; `c-beginning-of-decl-1'.  Move to the following block
 	;; start.
-	(c-syntactic-re-search-forward "{" nil 'move 1 t))
+	(c-syntactic-re-search-forward "{" nil 'move t))
 
       (when (eq (char-before) ?{)
 	;; Encountered a block in the declaration.  Jump over it.
@@ -2028,13 +2051,13 @@ brace."
 			     (concat "[;=\(\[{]\\|\\("
 				     c-opt-block-decls-with-vars-key
 				     "\\)")
-			     lim t 1 t t)
+			     lim t t t)
 			    (match-beginning 1)
 			    (not (eq (char-before) ?_))
 			    ;; Check that the first following paren is
 			    ;; the block.
 			    (c-syntactic-re-search-forward "[;=\(\[{]"
-							   lim t 1 t t)
+							   lim t t t)
 			    (eq (char-before) ?{)))))))
 	    ;; The declaration doesn't have any of the
 	    ;; `c-opt-block-decls-with-vars' keywords in the
@@ -2045,7 +2068,7 @@ brace."
 	(while (progn
 		 (if (eq (char-before) ?\;)
 		     (throw 'return t))
-		 (c-syntactic-re-search-forward ";" nil 'move 1 t))))
+		 (c-syntactic-re-search-forward ";" nil 'move t))))
       nil)))
 
 (defun c-remove-ws (string)
@@ -3030,7 +3053,8 @@ in Pike) then the point for the preceding one is returned."
        ((or (consp special-brace-list)
 	    (save-excursion
 	      (goto-char beg-of-same-or-containing-stmt)
-	      (c-syntactic-re-search-forward "=" indent-point t 1 t t)))
+	      (c-syntactic-re-search-forward "=\\([^=]\\|$\\)"
+					     indent-point t t t)))
 	;; The most semantically accurate symbol here is
 	;; brace-list-open, but we report it simply as a statement-cont.
 	;; The reason is that one normally adjusts brace-list-open for
@@ -3060,13 +3084,13 @@ in Pike) then the point for the preceding one is returned."
        ))
 
      ;; CASE C: iostream insertion or extraction operator
-     ((and (looking-at "<<\\|>>")
+     ((and (looking-at "\\(<<\\|>>\\)\\([^=]\\|$\\)")
 	   (save-excursion
 	     (goto-char beg-of-same-or-containing-stmt)
 	     ;; If there is no preceding streamop in the statement
 	     ;; then indent this line as a normal statement-cont.
 	     (when (c-syntactic-re-search-forward
-		    "<<\\|>>" indent-point 'move 1 t t)
+		    "\\(<<\\|>>\\)\\([^=]\\|$\\)" indent-point 'move t t)
 	       (c-add-syntax 'stream-op (c-point 'boi))
 	       t))))
 
