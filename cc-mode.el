@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.377 $
-;; Last Modified:   $Date: 1997-02-28 18:12:02 $
+;; Version:         $Revision: 4.378 $
+;; Last Modified:   $Date: 1997-03-08 00:36:55 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1276,7 +1276,7 @@ The expansion is entirely correct because it uses the C preprocessor."
   "Regexp describing access labels for Java.")
 (defconst c-Java-class-key
   (concat
-   "\\(" c-protection-key "\\)?\\s +"
+   "\\(" c-protection-key "\\s +\\)?"
    "\\(interface\\|class\\)\\s +"
    c-symbol-key				;name of the class
    "\\(\\s *extends\\s *" c-symbol-key "\\)?" ;maybe followed by superclass 
@@ -5188,7 +5188,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.377 $"
+(defconst c-version "$Revision: 4.378 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
