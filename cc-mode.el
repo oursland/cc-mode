@@ -4,6 +4,9 @@
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
+;; Mar, 1992 (Barry Warsaw, bwarsaw@cen.com)
+;;   added feature to indent comment lines different from code lines
+;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
 ;;   I think I've finally fixed C-style comments.
@@ -120,6 +123,8 @@ with previous initializations rather than with the colon on the first line.")
 (defvar c++-empty-arglist-indent nil
   "*Indicates how far to indent an line following an empty argument
 list.  Nil indicates to just after the paren.")
+(defvar c++-comment-only-line-offset 4
+  "*Indentation offset for line which contains only comments.")
 
 
 (defun c++-mode ()
@@ -173,6 +178,8 @@ Variables controlling indentation style:
  c++-continued-member-init-offset
     Extra indentation for continuation lines of member initializations; NIL
     means to align with previous initializations rather than with the colon.
+ c++-comment-only-line-offset
+    Extra indentation for a line containing only a comment.
 
 Settings for K&R, BSD, and Stroustrup indentation styles are
   c-indent-level                5    8    4
@@ -362,6 +369,10 @@ Return the amount the indentation changed by."
 	   (setq indent (calculate-c-indent-within-comment)))
 	  ((looking-at "[ \t]*#")
 	   (setq indent 0))
+	  ((save-excursion
+	     (back-to-indentation)
+	     (looking-at "//\\|/\\*"))
+	   (setq indent (+ indent c++-comment-only-line-offset)))
 	  (t
 	   (skip-chars-forward " \t")
 	   (if (listp indent) (setq indent (car indent)))
