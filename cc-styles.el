@@ -623,7 +623,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
       (c-make-styles-buffer-local)))
 
 
-(defun c-make-styles-buffer-local ()
+(defun c-make-styles-buffer-local (&optional this-buf-only-p)
   "Make all CC Mode style variables buffer local.
 If you edit primarily one style of C (or C++, Objective-C, Java) code,
 you probably want style variables to be global.  This is the default.
@@ -638,22 +638,34 @@ This function makes all the CC Mode style variables buffer local.
 Call it after CC Mode is loaded into your Emacs environment.
 Conversely, set the variable `c-style-variables-are-local-p' to t in
 your .emacs file, before CC Mode is loaded, and this function will be
-automatically called when CC Mode is loaded."
+automatically called when CC Mode is loaded.
+
+Optional argument, when non-nil, means use `make-local-variable'
+instead of `make-variable-buffer-local'."
   ;; style variables
-  (make-variable-buffer-local 'c-offsets-alist)
-  (make-variable-buffer-local 'c-basic-offset)
-  (make-variable-buffer-local 'c-file-style)
-  (make-variable-buffer-local 'c-file-offsets)
-  (make-variable-buffer-local 'c-comment-only-line-offset)
-  (make-variable-buffer-local 'c-cleanup-list)
-  (make-variable-buffer-local 'c-hanging-braces-alist)
-  (make-variable-buffer-local 'c-hanging-colons-alist)
-  (make-variable-buffer-local 'c-hanging-comment-starter-p)
-  (make-variable-buffer-local 'c-hanging-comment-ender-p)
-  (make-variable-buffer-local 'c-backslash-column)
-  (make-variable-buffer-local 'c-label-minimum-indentation)
-  (make-variable-buffer-local 'c-special-indent-hook)
-  (make-variable-buffer-local 'c-indentation-style))
+  (let ((func (if this-buf-only-p
+		  'make-local-variable
+		'make-variable-buffer-local))
+	(varsyms '(c-offsets-alist
+		   c-basic-offset
+		   c-file-style
+		   c-file-offsets
+		   c-comment-only-line-offset
+		   c-cleanup-list
+		   c-hanging-braces-alist
+		   c-hanging-colons-alist
+		   c-hanging-comment-starter-p
+		   c-hanging-comment-ender-p
+		   c-backslash-column
+		   c-label-minimum-indentation
+		   c-indentation-style)))
+    (mapcar func varsyms)
+    ;; Hooks must be handled specially
+    (if this-buf-only-p
+	(make-local-hook 'c-special-indent-hook)
+      (make-variable-buffer-local 'c-special-indent-hook))
+    ))
+
 
 
 (provide 'cc-styles)
