@@ -768,6 +768,14 @@ comment."
       (insert " " leader)
       (c-indent-line))))
 
+;; advice for indent-new-comment-line for older Emacsen
+(if (not (boundp 'comment-line-break-function))
+    (defadvice indent-new-comment-line (around c-line-break-advice activate)
+      (if (not (memq major-mode '(c-mode c++-mode objc-mode
+					 java-mode idl-mode)))
+	  ad-do-it
+	(c-comment-line-break-function (ad-get-arg 0)))))
+
 ;; used by outline-minor-mode
 (defun c-outline-level ()
   (save-excursion
