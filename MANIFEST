@@ -7,9 +7,7 @@ You should have received the following files in this distribution:
 
     README: Quick intro into how to get CC Mode up and running.
 
-    Makefile: for byte-compiling the source code
-
-    cc-align.el, cc-cmds.el, cc-engine.el, cc-langs.el,
+    cc-align.el, cc-cmds.el, cc-defs.el, cc-engine.el, cc-langs.el,
     cc-menus.el, cc-mode.el, cc-styles.el, cc-vars.el: The source code
 
     cc-compat.el: Helps ease the transition from c-mode.el to cc-mode
@@ -29,3 +27,10 @@ You should have received the following files in this distribution:
 
     ANNOUNCEMENT: Release announcement as it appeared on various
     forums.
+
+Note that of the above files, the following are distributed with the
+Emacs 20 and XEmacs 20:
+
+    cc-align.el, cc-cmds.el, cc-compat.el, cc-defs.el, cc-engine.el,
+    cc-langs.el, cc-menus.el, cc-mode.el, cc-styles.el, cc-vars.el,
+    cc-mode.texi
