@@ -641,7 +641,11 @@ comment."
 			(skip-chars-backward " \t\n")
 			(goto-char (- (point) 2))
 			(looking-at "\\*/")))))
-	(forward-sentence (- count))
+	;; move forward by sentence, but not past the end of the comment
+	(let ((eoc (save-excursion (forward-comment 1) (point))))
+	  (forward-sentence (- count))
+	  (if (< eoc (point))
+	      (goto-char eoc)))
       (while (> count 0)
 	(c-beginning-of-statement-1 lim)
 	(setq count (1- count)))
