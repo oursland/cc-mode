@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.248 $
-;; Last Modified:   $Date: 1992-12-29 01:10:46 $
+;; Version:         $Revision: 2.249 $
+;; Last Modified:   $Date: 1992-12-29 01:22:19 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-29 01:10:46 $|$Revision: 2.248 $|
+;; |$Date: 1992-12-29 01:22:19 $|$Revision: 2.249 $|
 
 ;;; Code:
 
@@ -415,7 +415,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.248 $
+  "Major mode for editing C++ code.  $Revision: 2.249 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -623,7 +623,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.248 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.249 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1531,15 +1531,6 @@ point of the beginning of the C++ definition."
 					(c++-at-top-level-p nil bod))
 				      (- c++-block-close-brace-offset)
 				    c++-block-close-brace-offset))))
-		 ;; I think the following code is broken, but does the
-		 ;; above solution break anything else?
-;;				  (save-excursion
-;;				    (forward-char 1)
-;;				    (cond ((c++-at-top-level-p nil bod)
-;;					   (- c++-block-close-brace-offset))
-;;					  ((c++-at-top-level-p t bod)
-;;					   c-indent-level)
-;;					  (t c++-block-close-brace-offset))))))
 		 ((= (following-char) ?})
 		  (setq indent (+ (- indent c-indent-level)
 				  (if (save-excursion
@@ -2331,7 +2322,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.248 $"
+(defconst c++-version "$Revision: 2.249 $"
   "c++-mode version number.")
 
 (defun c++-version ()
