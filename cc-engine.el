@@ -2901,14 +2901,12 @@ brace."
 			  (goto-char tmp))
 
 		      ;; It was a template.  If we should fontify then
-		      ;; we fontify the identifier before the template
-		      ;; as a type or reference depending on whether
-		      ;; the template is last in a qualified identifier.
+		      ;; fontify the identifier before the template as
+		      ;; a reference if a scope operator follows.
 		      (when c-fontify-types-and-refs
 			(c-forward-syntactic-ws)
-			(if (looking-at "::")
-			    (c-put-reference-face id-start id-end)
-			  (c-put-type-face id-start id-end)))))
+			(when (looking-at "::")
+			  (c-put-reference-face id-start id-end)))))
 		  t)
 
 		 (t
@@ -3218,8 +3216,8 @@ brace."
 	    (setq pos (point))
 	    (c-forward-syntactic-ws)
 	    (if (and (looking-at c-opt-type-concat-key)
-		     (let ((c-promote-possible-types (or c-promote-possible-types
-							 (eq res t))))
+		     (let ((c-promote-possible-types
+			    (or c-promote-possible-types (eq res t))))
 		       (goto-char (match-end 1))
 		       (c-forward-syntactic-ws)
 		       (setq res2 (c-forward-type))))
