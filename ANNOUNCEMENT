@@ -1,8 +1,8 @@
-Release announcement for cc-mode 4.322
+Release announcement for cc-mode 4.353
 Barry A. Warsaw <cc-mode-help@python.org>
-$Date: 1996-10-08 19:30:51 $
+$Date: 1997-01-27 23:56:30 $
 
-This message announces the availability of cc-mode version 4.322.
+This message announces the availability of cc-mode version 4.353.
 cc-mode is a GNU Emacs mode for editing C (ANSI and K&R), C++,
 Objective-C, and Java code.  A list of user visible changes is
 available from <http://www.python.org/ftp/emacs/cc-details.html>.
@@ -18,8 +18,9 @@ cc-mode, so users of these Emacsen should upgrade their cc-mode.
 If you want to become a beta tester send subscribe requests to
 cc-mode-victims-request@python.org.  If you just want announcements of
 new versions, send subscribe requests to
-cc-mode-announce-request@python.org.  These mailing lists are
-maintained by the Majordomo automated mailing list software.
+cc-mode-announce-request@python.org.  You do not need to subscribe to
+both of these lists!  These mailing lists are maintained by the
+Majordomo automated mailing list software.
 
 Getting cc-mode.el
 ===================

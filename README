@@ -1,14 +1,8 @@
-README for cc-mode Version 4.322
+README for cc-mode
 Barry A. Warsaw <cc-mode-help@python.org>
-$Date: 1996-10-04 23:12:47 $
 
-NOTE: All XEmacs distributions since 19.11, and Emacs distributions
-since 19.30 come with cc-mode.  As of this writing, XEmacs 19.14 and
-Emacs 19.34 have both been recently released and come pre-configured
-to use an older version of cc-mode so you should upgrade to this
-version of cc-mode.  The texinfo manual describes how to do this.
-
-If you are using an older XEmacs or Emacs, consider upgrading.
+Please see to comments at the top of the cc-mode.el file, or read the
+cc-mode.texinfo manual, for details on using cc-mode.
 
 The MANIFEST file contains a description of all the files you should
 have gotten with this distribution.
