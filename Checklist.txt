@@ -50,6 +50,7 @@ Checklist for doing a release
       o  Copy the manual files to the manual subdir.
       o  Unpack the standalone tarball into the web root dir and name
 	 the subdir "src".
+      o  Additionally, copy ChangeLog into the "src" subdir.
       o  Unpack cc-mode.html.tar.gz into the web root dir and name the
 	 subdir "html-manual".
       o  Update the web files with cvs update.
