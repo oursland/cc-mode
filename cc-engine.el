@@ -2842,7 +2842,8 @@ isn't moved."
 			   (eq (char-after (1+ placeholder)) ?\"))))
 	    (c-add-syntax 'cpp-macro)
 	  (when (and c-syntactic-analysis-in-macro
-		     (eq macro-start (c-point 'iopl)))
+		     macro-start
+		     (eq macro-start syntactic-relpos))
 	    (c-add-syntax 'cpp-macro-cont)))
 	;; return the syntax
 	syntax))))
