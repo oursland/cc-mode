@@ -570,12 +570,15 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
   ;; variables first to the `cc-mode' style before instituting the new
   ;; style.  Only do this once!
   (or (assoc "cc-mode" c-style-alist)
-      (let (copy-tree)
-	(setq copy-tree (lambda (tree)
-			  (if (consp tree)
-			      (cons (funcall copy-tree (car tree))
-				    (funcall copy-tree (cdr tree)))
-			    tree)))
+      (let (copyfunc)
+	;; use built-in copy-tree if its there.
+	(if (fboundp 'copy-tree)
+	    (setq copyfunc (symbol-function 'copy-tree))
+	  (setq copyfunc (lambda (tree)
+			    (if (consp tree)
+				(cons (funcall copyfunc (car tree))
+				      (funcall copyfunc (cdr tree)))
+			      tree))))
 	(c-add-style "cc-mode"
 		     (mapcar
 		      (function
@@ -583,7 +586,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 			 (let ((val (symbol-value var)))
 			   (cons var (if (atom val)
 					 val
-				       (funcall copy-tree val)
+				       (funcall copyfunc val)
 				       ))
 			   )))
 		      '(c-backslash-column
