@@ -4424,7 +4424,7 @@ brace."
       (forward-char 1)
     (c-backward-syntactic-ws limit))
 
-  (condition-case err
+  (condition-case nil
       (progn
 	(while (and (< limit (point))
 		    (eq (char-before) ?,))
