@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.85 $
-;; Last Modified:   $Date: 1994-09-08 14:27:45 $
+;; Version:         $Revision: 4.86 $
+;; Last Modified:   $Date: 1994-09-28 22:52:22 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -101,7 +101,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-09-08 14:27:45 $|$Revision: 4.85 $|
+;; |$Date: 1994-09-28 22:52:22 $|$Revision: 4.86 $|
 
 ;;; Code:
 
@@ -969,7 +969,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.85 $
+cc-mode Revision: $Revision: 4.86 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1008,7 +1008,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.85 $
+cc-mode Revision: $Revision: 4.86 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1045,7 +1045,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.85 $
+cc-mode Revision: $Revision: 4.86 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2854,21 +2854,30 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
      (if (looking-at "\\<\\(do\\|else\\)\\>")
 	 1 2))))
 
-(defun c-skip-case-statement-forward (&optional lim)
+(defun c-skip-case-statement-forward (state &optional lim)
   ;; skip forward over case/default bodies, with optional maximal
   ;; limit. if no next case body is found, nil is returned and point
   ;; is not moved
   (let ((lim (or lim (point-max)))
 	(here (point))
-	donep foundp)
+	donep foundp bufpos
+	(balanced (car state)))
+    ;; search until we've passed the limit, or we've found our match
     (while (and (< (point) lim)
 		(not donep))
+      ;; see if we can find a case statement, not in a literal
       (if (and (re-search-forward c-switch-label-key lim 'move)
-	       (save-match-data
-		 (not (c-in-literal)))
-	       (/= (match-beginning 0) here))
-	  (progn
-	    (goto-char (match-beginning 0))
+	       (progn (setq bufpos (match-beginning 0)) t)
+	       (not (c-in-literal))
+	       (/= bufpos here))
+	  ;; if we crossed into a balanced sexp, we know the case is
+	  ;; not part of our switch statement, so just bound over the
+	  ;; sexp and keep looking.
+	  (if (and (consp balanced)
+		   (> bufpos (car balanced))
+		   (< bufpos (cdr balanced)))
+	      (goto-char (cdr balanced))
+	    (goto-char bufpos)
 	    (setq donep t
 		  foundp t))))
     (if (not foundp)
@@ -3058,7 +3067,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (beginning-of-line)
       (let* ((indent-point (point))
 	     (case-fold-search nil)
-	     (state (c-parse-state))
+	     (fullstate (c-parse-state))
+	     (state fullstate)
 	     (in-method-intro-p (and (eq major-mode 'objc-mode)
 				     (looking-at c-ObjC-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
@@ -3604,7 +3614,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		    ;; we also want to skip over the body of the
 		    ;; case/switch statement if that doesn't put us at
 		    ;; after the indent-point
-		    (while (c-skip-case-statement-forward indent-point))))
+		    (while (c-skip-case-statement-forward fullstate
+			    indent-point))))
 	      (forward-line 1)
 	      (c-forward-syntactic-ws indent-point))
 	    (cond
@@ -4116,7 +4127,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.85 $"
+(defconst c-version "$Revision: 4.86 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
