@@ -418,7 +418,7 @@ Key bindings:
 ;; happen by default, but previous versions of CC Mode 5 did not
 ;; initialize by default.  I'm really not sure what is the right thing
 ;; to do.
-(unless c-initialize-on-load
+(when c-initialize-on-load
   (c-initialize-cc-mode))
 
 
