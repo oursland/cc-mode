@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-22 18:09:04 $
-;; Version:         $Revision: 2.70 $
+;; Last Modified:   $Date: 1992-05-26 21:52:45 $
+;; Version:         $Revision: 2.71 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-22 18:09:04 $|$Revision: 2.70 $|
+;; |$Date: 1992-05-26 21:52:45 $|$Revision: 2.71 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -191,7 +191,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.70 $
+  "Major mode for editing C++ code.  $Revision: 2.71 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -859,17 +859,25 @@ if it is embedded in an expression."
 		    (re-search-backward "/[/*]" nil 'move))
 		  (point))))
       (or
-       ;; in a c++ style comment?
-       (nth 4 (parse-partial-sexp bod here 0))
+       ;; in a c++ style comment?  turn off C style comment syntax and
+       ;; turn on only C++ style comment syntax
+       (let ((stab (copy-syntax-table c++-mode-syntax-table))
+	     (in-comment-p
+	      (progn (modify-syntax-entry ?/  ". 12" c++-mode-syntax-table)
+		     (modify-syntax-entry ?\* "."    c++-mode-syntax-table)
+		     (goto-char here)
+		     (nth 4 (parse-partial-sexp bod here 0)))))
+	 (setq c++-mode-syntax-table (set-syntax-table stab))
+	 in-comment-p)
        ;; special case for checking c style comment
-       (let ((in-c-comment-p
+       (let ((stab (copy-syntax-table c++-mode-syntax-table))
+	     (in-comment-p
 	      (progn (modify-syntax-entry ?\n " "    c++-mode-syntax-table)
 		     (modify-syntax-entry ?/  ". 14" c++-mode-syntax-table)
 		     (goto-char here)
 		     (nth 4 (parse-partial-sexp bod here 0)))))
-	 (modify-syntax-entry ?\n ">"    c++-mode-syntax-table)
-	 (modify-syntax-entry ?/  ". 12" c++-mode-syntax-table)
-	 in-c-comment-p)))))
+	 (setq c++-mode-syntax-table (set-syntax-table stab))
+	 in-comment-p)))))
 
 (defun c++-in-open-string-p ()
   "Return non-nil if in an open string as defined by mode's syntax."
@@ -1651,7 +1659,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.70 $"
+(defconst c++-version "$Revision: 2.71 $"
   "c++-mode version number.")
 
 (defun c++-version ()
