@@ -1302,10 +1302,10 @@ ask for help in the standard (X)Emacs forums.
 @cindex font locking
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{Note:} The font locking in AWK mode is currently not integrated
-with the rest of @ccmode{}.  Only the last section of this chapter,
-@ref{AWK Mode Font Locking}, applies to AWK.  The other sections apply
-to the other languages.
+@strong{Please note:} The font locking in AWK mode is currently not
+integrated with the rest of @ccmode{}.  Only the last section of this
+chapter, @ref{AWK Mode Font Locking}, applies to AWK.  The other
+sections apply to the other languages.
 
 @cindex Font Lock mode
 
@@ -2349,7 +2349,7 @@ then as the comment prefix.  It defaults to @samp{*
 @code{c-block-comment-prefix} typically gets overriden by the default
 style @code{gnu}, which sets it to blank.  You can see the line
 splitting effect described here by setting a different style,
-e.g. @code{k&r} @xref{Choosing a Style}}, which makes a comment
+e.g. @code{k&r} @xref{Choosing a Style}.}, which makes a comment
 
 @example
 /* Got O(n^2) here, which is a Bad Thing. */
