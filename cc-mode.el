@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.132 $
-;; Last Modified:   $Date: 1993-12-21 18:27:26 $
+;; Version:         $Revision: 3.133 $
+;; Last Modified:   $Date: 1993-12-21 18:57:31 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-21 18:27:26 $|$Revision: 3.132 $|
+;; |$Date: 1993-12-21 18:57:31 $|$Revision: 3.133 $|
 
 ;;; Code:
 
@@ -119,6 +119,9 @@ reported and the semantic symbol is ignored.")
     (block-open            . 0)
     (block-close           . 0)
     (brace-list-open       . 0)
+    (brace-list-close      . 0)
+    (brace-list-intro      . +)
+    (brace-list-entry      . 0)
     (statement             . 0)
     (statement-cont        . +)
     (statement-block-intro . +)
@@ -637,7 +640,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.132 $
+CC-MODE REVISION: $Revision: 3.133 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -670,7 +673,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.132 $
+CC-MODE REVISION: $Revision: 3.133 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2412,7 +2415,38 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (c-beginning-of-inheritance-list lim)
 	    (c-add-semantics 'inher-cont (point))
 	    )))
-	 ;; CASE 7: A continued statement
+	 ;; CASE 7: we are inside a brace-list
+	 ((save-excursion
+	    (or (progn (goto-char (1- containing-sexp))
+		       (c-beginning-of-statement)
+		       (setq placeholder (point))
+		       (looking-at "\\<enum\\>"))
+		(progn (goto-char (1- containing-sexp))
+		       (c-backward-syntactic-ws lim)
+		       (= (preceding-char) ?=))
+		))
+	  (cond
+	   ;; CASE 7A: we're looking at the first line in a brace-list
+	   ((save-excursion
+	      (goto-char indent-point)
+	      (c-backward-syntactic-ws containing-sexp)
+	      (= (point) (1+ containing-sexp)))
+	    (c-add-semantics 'brace-list-intro placeholder))
+	   ;; CASE 7B: brace-list-close brace
+	   ((and (= char-after-ip ?})
+		 (c-safe (progn (forward-char 1)
+				(backward-sexp 1)
+				t))
+		 (= (point) containing-sexp))
+	    (c-beginning-of-statement)
+	    (c-add-semantics 'brace-list-close (c-point 'boi)))
+	   ;; CASE 7C: this is just a later brace-list-entry
+	   (t
+	    (goto-char (1+ containing-sexp))
+	    (c-forward-syntactic-ws indent-point)
+	    (c-add-semantics 'brace-list-entry (point)))
+	   ))
+	 ;; CASE 8: A continued statement
 	 ((and (not (memq char-before-ip '(?\; ?})))
 	       (> (point)
 		  (save-excursion
@@ -2421,7 +2455,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
-	   ;; CASE 7C: substatement
+	   ;; CASE 8C: substatement
 	   ((save-excursion
 	      (goto-char placeholder)
 	      (and (looking-at c-conditional-key)
@@ -2431,10 +2465,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (c-add-semantics 'substatement placeholder)
 	    (if (= char-after-ip ?{)
 		(c-add-semantics 'block-open)))
-	   ;; CASE 7A: open braces for class or brace-lists
+	   ;; CASE 8A: open braces for class or brace-lists
 	   ((= char-after-ip ?{)
 	    (cond
-	     ;; CASE 7A.1: class-open
+	     ;; CASE 8A.1: class-open
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
@@ -2444,20 +2478,20 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (setq placeholder (cdr decl)))
 		  ))
 	      (c-add-semantics 'class-open placeholder))
-	     ;; CASE 7A.2: brace-list-open
+	     ;; CASE 8A.2: brace-list-open
 	     ((or (save-excursion
 		    (goto-char placeholder)
 		    (looking-at "\\<enum\\>"))
 		  (= char-before-ip ?=))
 	      (c-add-semantics 'brace-list-open placeholder))
 	     ))
-	   ;; CASE 7B: iostream insertion or extraction operator
+	   ;; CASE 8B: iostream insertion or extraction operator
 	   ((looking-at "<<\\|>>")
 	    (goto-char placeholder)
 	    (while (and (re-search-forward "<<\\|>>" indent-point 'move)
 			(c-in-literal)))
 	    (c-add-semantics 'stream-op (c-point 'boi)))
-	   ;; CASE 7D: continued statement. find the accurate
+	   ;; CASE 8D: continued statement. find the accurate
 	   ;; beginning of statement or substatement
 	   (t
 	    (c-beginning-of-statement
@@ -2469,12 +2503,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (point)))
 	    (c-add-semantics 'statement-cont (point)))
 	   ))
-	 ;; CASE 8: an else clause?
+	 ;; CASE 9: an else clause?
 	 ((looking-at "\\<else\\>")
 	  (c-backward-to-start-of-if containing-sexp)
 	  (c-add-semantics 'else-clause (c-point 'boi)))
-	 ;; CASE 9: Statement. But what kind?  Lets see if its a while
-	 ;; closure of a do/while construct
+	 ;; CASE 10: Statement. But what kind?  Lets see if its a
+	 ;; while closure of a do/while construct
 	 ((progn
 	    (goto-char indent-point)
 	    (skip-chars-forward " \t")
@@ -2485,18 +2519,18 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (looking-at "do\\b"))
 		 ))
 	  (c-add-semantics 'do-while-closure placeholder))
-	 ;; CASE 10: A case or default label
+	 ;; CASE 11: A case or default label
 	 ((looking-at c-switch-label-key)
 	  (goto-char containing-sexp)
 	  ;; for a case label, we set relpos the first non-whitespace
 	  ;; char on the line containing the switch opening brace. this
 	  ;; should handle hanging switch opening braces correctly.
 	  (c-add-semantics 'case-label (c-point 'boi)))
-	 ;; CASE 11: any other label
+	 ;; CASE 12: any other label
 	 ((looking-at c-label-key)
 	  (goto-char containing-sexp)
 	  (c-add-semantics 'label (c-point 'boi)))
-	 ;; CASE 12: block close brace, possibly closing the defun or
+	 ;; CASE 13: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((= char-after-ip ?})
 	  (let ((relpos (save-excursion
@@ -2513,7 +2547,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (c-add-semantics 'defun-close relpos))
 	      (c-add-semantics 'block-close relpos)
 	      )))
-	 ;; CASE 13: statement catchall
+	 ;; CASE 14: statement catchall
 	 (t
 	  ;; we know its a statement, but we need to find out if it is
 	  ;; the first statement in a block
@@ -2529,7 +2563,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (forward-line 1)
 	      (c-forward-syntactic-ws indent-point))
 	    (cond
-	     ;; CASE 13.A: we saw a case/default statement so we must be
+	     ;; CASE 14.A: we saw a case/default statement so we must be
 	     ;; in a switch statement.  find out if we are at the
 	     ;; statement just after a case or default label
 	     ((and inswitch-p
@@ -2540,10 +2574,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		     (setq placeholder (point))
 		     (looking-at c-switch-label-key)))
 	      (c-add-semantics 'statement-case-intro placeholder))
-	     ;; CASE 13.B: continued statement
+	     ;; CASE 14.B: continued statement
 	     ((= char-before-ip ?,)
 	      (c-add-semantics 'statement-cont (c-point 'boi)))
-	     ;; CASE 13.C: a question/colon construct?  But make sure
+	     ;; CASE 14.C: a question/colon construct?  But make sure
 	     ;; what came before was not a label, and what comes after
 	     ;; is not a globally scoped function call!
 	     ((or (and (memq char-before-ip '(?: ??))
@@ -2555,12 +2589,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (and (memq char-after-ip '(?: ??))
 		       (not (looking-at "[ \t]*::"))))
 	      (c-add-semantics 'statement-cont (c-point 'boi)))
-	     ;; CASE 13.D: any old statement
+	     ;; CASE 14.D: any old statement
 	     ((< (point) indent-point)
 	      (c-add-semantics 'statement (c-point 'boi))
 	      (if (= char-after-ip ?{)
 		  (c-add-semantics 'block-open)))
-	     ;; CASE 13.E: first statement in a block
+	     ;; CASE 14.E: first statement in a block
 	     (t (goto-char containing-sexp)
 		(if (/= (point) (c-point 'boi))
 		    (c-beginning-of-statement))
@@ -2822,7 +2856,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.132 $"
+(defconst c-version "$Revision: 3.133 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
