@@ -98,7 +98,8 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	  (if (not (boundp (car p)))
 	      (progn
 		(eval `(defvar ,(car p)))
-		(set (car p) 'cc-bytecomp-ignore)))
+		(set (car p) (intern (concat "cc-bytecomp-ignore-var:"
+					     (symbol-name (car p)))))))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-functions)
 	(while p
@@ -106,7 +107,8 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 		(temp-macro (car (cdr (car p)))))
 	    (if temp-macro
 		(eval `(defmacro ,fun ,@temp-macro))
-	      (fset fun 'cc-bytecomp-ignore)))
+	      (fset fun (intern (concat "cc-bytecomp-ignore-fun:"
+					(symbol-name fun))))))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-properties)
 	(while p
@@ -126,7 +128,9 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	(while p
 	  (let ((var (car p)))
 	    (if (and (boundp var)
-		     (eq var 'cc-bytecomp-ignore))
+		     (eq (intern (concat "cc-bytecomp-ignore-var:"
+					 (symbol-name var)))
+			 var))
 		(makunbound var)))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-functions)
@@ -134,7 +138,9 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	  (let ((fun (car (car p)))
 		(def (car (cdr (cdr (car p))))))
 	    (if (and (fboundp fun)
-		     (eq (symbol-function fun) 'cc-bytecomp-ignore))
+		     (eq (intern (concat "cc-bytecomp-ignore-fun:"
+					 (symbol-name fun)))
+			 (symbol-function fun)))
 		(if (eq def 'unbound)
 		    (fmakunbound fun)
 		  (fset fun def))))
@@ -219,7 +225,8 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 		(= cc-bytecomp-load-depth 0))
 	   (progn
 	     (defvar ,var)
-	     (set ',var 'cc-bytecomp-ignore))))))
+	     (set ',var (intern (concat "cc-bytecomp-ignore-var:"
+					(symbol-name ',var)))))))))
 
 (defmacro cc-bytecomp-defun (fun)
   "Bind the symbol as a function during compilation of the file,
@@ -236,7 +243,8 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
      (if (and (cc-bytecomp-is-compiling)
 	      (= cc-bytecomp-load-depth 0)
 	      (not (fboundp ',fun)))
-	 (fset ',fun 'cc-bytecomp-ignore))))
+	 (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
+				     (symbol-name ',fun)))))))
 
 (put 'cc-bytecomp-defmacro 'lisp-indent-function 'defun)
 (defmacro cc-bytecomp-defmacro (fun &rest temp-macro)
