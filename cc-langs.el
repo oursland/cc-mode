@@ -247,8 +247,8 @@ appended."
 ;; Regexp matching the start of a class.
 (c-lang-defconst c-class-key
   all (c-make-keywords-re t (c-lang-var c-class-kwds)))
-(c-lang-defconst c-class-key		; ObjC needs some tuning of the regexp.
-   objc (concat "@" (c-lang-var c-class-key)))
+(c-lang-defconst c-class-key           ; ObjC needs some tuning of the regexp.
+  objc (concat "@" (c-lang-var c-class-key)))
 (c-lang-defvar c-class-key (c-lang-var c-class-key))
 
 ;; Keywords introducing blocks besides classes that contain another
@@ -299,7 +299,7 @@ appended."
 
 ;; Statement keywords followed directly by a substatement.
 (c-lang-defconst c-block-stmt-1-kwds
-  (c pike) '("do" "else")
+  (c pike awk) '("do" "else")
   (c++ objc) '("do" "else" "asm" "try")
   java '("do" "else" "finally" "try"))
 
@@ -314,7 +314,9 @@ appended."
   c '("for" "if" "switch" "while")
   (c++ objc) '("for" "if" "switch" "while" "catch")
   java '("for" "if" "switch" "while" "catch" "synchronized")
-  pike '("for" "if" "switch" "while" "foreach"))
+  pike '("for" "if" "switch" "while" "foreach")
+  awk '("for" "if" "while"))
+
 
 ;; Regexp matching the start of any statement followed by a paren sexp
 ;; and then by a substatement.
@@ -338,14 +340,17 @@ appended."
   (c c++ objc) '("break" "continue" "goto" "return")
   ;; Note: `goto' is not valid in Java, but the keyword is still reserved.
   java '("break" "continue" "goto" "return" "throw")
-  pike '("break" "continue" "return"))
+  pike '("break" "continue" "return")
+  awk '("break" "continue" "return" "delete" "exit" "getline" "next" "nextfile"
+        "print" "printf")) ; Not sure about "delete", "exit", "getline", etc. ; ACM 2002/5/30
 
 ;; Keywords introducing labels in blocks.
 (c-lang-defconst c-label-kwds (c c++ objc java pike) '("case" "default"))
 
 ;; Regexp matching any keyword that introduces a label.
 (c-lang-defconst c-label-kwds-regexp
-  all (c-make-keywords-re t (c-lang-var c-label-kwds)))
+  (c c++ objc java idl pike) (c-make-keywords-re t (c-lang-var c-label-kwds))
+  awk "$^")                       ; Will never match anything.  ACM, 2002/5/30
 (c-lang-defvar c-label-kwds-regexp (c-lang-var c-label-kwds-regexp))
 
 ;; Keywords that can occur anywhere in expressions.
@@ -360,7 +365,7 @@ appended."
 (c-lang-defconst c-lambda-kwds pike '("lambda"))
 
 ;; Regexp matching the start of lambda constructs, or nil in languages
-;; that doesn't have such things.
+;; that don't have such things.
 (c-lang-defconst c-opt-lambda-key
   pike (c-make-keywords-re t (c-lang-var c-lambda-kwds)))
 (c-lang-defvar c-opt-lambda-key (c-lang-var c-opt-lambda-key))
@@ -391,9 +396,9 @@ appended."
 ;; expressions.
 (c-lang-defconst c-any-class-key
   all (c-make-keywords-re t
-	(c-lang-var c-class-kwds)
-	(c-lang-var c-inexpr-class-kwds)))
-(c-lang-defconst c-any-class-key	; ObjC needs some tuning of the regexp.
+        (c-lang-var c-class-kwds)
+        (c-lang-var c-inexpr-class-kwds)))
+(c-lang-defconst c-any-class-key       ; ObjC needs some tuning of the regexp.
   objc (concat "@" (c-lang-var c-any-class-key)))
 (c-lang-defvar c-any-class-key (c-lang-var c-any-class-key))
 
@@ -402,10 +407,10 @@ appended."
 ;; block.
 (c-lang-defconst c-decl-block-key
   all (c-make-keywords-re t
-	(c-lang-var c-class-kwds)
-	(c-lang-var c-other-decl-block-kwds)
-	(c-lang-var c-inexpr-class-kwds)))
-(c-lang-defconst c-decl-block-key	; ObjC needs some tuning of the regexp.
+        (c-lang-var c-class-kwds)
+        (c-lang-var c-other-decl-block-kwds)
+        (c-lang-var c-inexpr-class-kwds)))
+(c-lang-defconst c-decl-block-key      ; ObjC needs some tuning of the regexp.
   objc (concat "@" (c-lang-var c-decl-block-key)))
 (c-lang-defvar c-decl-block-key (c-lang-var c-decl-block-key))
 
@@ -422,24 +427,24 @@ appended."
 ;; All keywords as a list.
 (c-lang-defconst c-keywords
   all (delete-duplicates (append (c-lang-var c-primitive-type-kwds)
-				 (c-lang-var c-specifier-kwds)
-				 (c-lang-var c-class-kwds)
-				 (c-lang-var c-other-decl-block-kwds)
-				 (c-lang-var c-block-decls-with-vars)
-				 (c-lang-var c-other-decl-kwds)
-				 (c-lang-var c-decl-spec-kwds)
-				 (c-lang-var c-protection-kwds)
-				 (c-lang-var c-block-stmt-1-kwds)
-				 (c-lang-var c-block-stmt-2-kwds)
-				 (c-lang-var c-simple-stmt-kwds)
-				 (c-lang-var c-label-kwds)
-				 (c-lang-var c-expr-kwds)
-				 (c-lang-var c-lambda-kwds)
-				 (c-lang-var c-inexpr-block-kwds)
-				 (c-lang-var c-inexpr-class-kwds)
-				 (c-lang-var c-bitfield-kwds)
-				 nil)
-			 :test 'string-equal))
+                                 (c-lang-var c-specifier-kwds)
+                                 (c-lang-var c-class-kwds)
+                                 (c-lang-var c-other-decl-block-kwds)
+                                 (c-lang-var c-block-decls-with-vars)
+                                 (c-lang-var c-other-decl-kwds)
+                                 (c-lang-var c-decl-spec-kwds)
+                                 (c-lang-var c-protection-kwds)
+                                 (c-lang-var c-block-stmt-1-kwds)
+                                 (c-lang-var c-block-stmt-2-kwds)
+                                 (c-lang-var c-simple-stmt-kwds)
+                                 (c-lang-var c-label-kwds)
+                                 (c-lang-var c-expr-kwds)
+                                 (c-lang-var c-lambda-kwds)
+                                 (c-lang-var c-inexpr-block-kwds)
+                                 (c-lang-var c-inexpr-class-kwds)
+                                 (c-lang-var c-bitfield-kwds)
+                                 nil)
+                         :test 'string-equal))
 (c-lang-defvar c-keywords (c-lang-var c-keywords))
 
 ;; All keywords as an adorned regexp.
@@ -451,8 +456,8 @@ appended."
 ;; languages that doesn't have such things.
 (c-lang-defconst c-opt-access-key
   c++ (concat "\\("
-	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
-	      "\\)[ \t\n\r]*:"))
+              (c-make-keywords-re nil (c-lang-var c-protection-kwds))
+              "\\)[ \t\n\r]*:"))
 (c-lang-defconst c-opt-access-key
   objc (concat "@" (c-make-keywords-re t (c-lang-var c-protection-kwds))))
 (c-lang-defvar c-opt-access-key (c-lang-var c-opt-access-key))
@@ -461,7 +466,9 @@ appended."
 ;; with a keyword, like switch labels.  It's only used at the
 ;; beginning of a statement.
 (c-lang-defconst c-label-key
-  all (concat (c-lang-var c-symbol-key) "[ \t\n\r]*:\\([^:]\\|$\\)"))
+  (c c++ objc java idl pike)
+  (concat (c-lang-var c-symbol-key) "[ \t\n\r]*:\\([^:]\\|$\\)")
+  awk "$^")                       ; Will never match anything.  ACM, 2002/5/30
 (c-lang-defvar c-label-key (c-lang-var c-label-key))
 
 ;; Regexp matching the beginning of a declaration specifier in the
@@ -471,14 +478,14 @@ appended."
 ;; java-mode each have their own ways of using it.
 (c-lang-defconst c-opt-decl-spec-key
   c++ (concat ":?[ \t\n\r]*\\(virtual[ \t\n\r]+\\)?\\("
-	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
-	      "\\)[ \t\n\r]+"
-	      (c-lang-var c-symbol-key))
+              (c-make-keywords-re nil (c-lang-var c-protection-kwds))
+              "\\)[ \t\n\r]+"
+              (c-lang-var c-symbol-key))
   java (c-make-keywords-re t (c-lang-var c-decl-spec-kwds)))
 (c-lang-defvar c-opt-decl-spec-key (c-lang-var c-opt-decl-spec-key))
 
 ;; Regexp describing friend declarations classes, or nil in languages
-;; that doesn't have such things.
+;; that don't have such things.
 (c-lang-defconst c-opt-friend-key
   ;; FIXME: Ought to use c-specifier-kwds or similar, and the template
   ;; skipping isn't done properly.
@@ -488,11 +495,11 @@ appended."
 ;; Special regexp to match the start of methods.
 (c-lang-defconst c-opt-method-key
   objc (concat
-	"^\\s *[+-]\\s *"
-	"\\(([^)]*)\\)?"		; return type
-	;; \\s- in objc syntax table does not include \n
-	;; since it is considered the end of //-comments.
-	"[ \t\n]*" (c-lang-var c-symbol-key)))
+        "^\\s *[+-]\\s *"
+        "\\(([^)]*)\\)?"		; return type
+        ;; \\s- in objc syntax table does not include \n
+        ;; since it is considered the end of //-comments.
+        "[ \t\n]*" (c-lang-var c-symbol-key)))
 (c-lang-defvar c-opt-method-key (c-lang-var c-opt-method-key))
 
 ;; Name of functions in cpp expressions that take an identifier as the
@@ -505,8 +512,8 @@ appended."
 ;; list, i.e. for a `([ ])' list there should be a cons (?\[ . ?\]) in
 ;; this list.
 (c-lang-defconst c-special-brace-lists pike '((?{ . ?})
-					      (?\[ . ?\])
-					      (?< . ?>)))
+                                              (?\[ . ?\])
+                                              (?< . ?>)))
 (c-lang-defvar c-special-brace-lists (c-lang-var c-special-brace-lists))
 
 ;; Non-nil means K&R style argument declarations are valid.
@@ -525,7 +532,7 @@ appended."
   awk "#")                              ; ACM, 2002/4/20
 (c-lang-defvar c-comment-start-regexp (c-lang-var c-comment-start-regexp))
 
-;; Strings that starts and ends comments inserted with M-; etc.
+;; Strings that start and end comments inserted with M-; etc.
 ;; comment-start and comment-end are initialized from these.
 (c-lang-defconst comment-start
   c "/* "
@@ -542,23 +549,23 @@ appended."
 ;; here.
 (c-lang-defvar c-syntactic-eol
   (concat (concat
-	   ;; Match horizontal whitespace and block comments that
-	   ;; doesn't contain newlines.
-	   "\\(\\s \\|"
-	   (concat "/\\*"
-		   "\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
-		   "\\*/")
-	   "\\)*")
-	  (concat
-	   ;; Match eol (possibly inside a block comment), or the
-	   ;; beginning of a line comment.  Note: This has to be
-	   ;; modified for awk where line comments start with '#'.
-	   "\\("
-	   (concat "\\("
-		   "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
-		   "\\)?"
-		   "$")
-	   "\\|//\\)")))
+           ;; Match horizontal whitespace and block comments that
+           ;; doesn't contain newlines.
+           "\\(\\s \\|"
+           (concat "/\\*"
+                   "\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
+                   "\\*/")
+           "\\)*")
+          (concat
+           ;; Match eol (possibly inside a block comment), or the
+           ;; beginning of a line comment.  Note: This has to be
+           ;; modified for awk where line comments start with '#'.
+           "\\("
+           (concat "\\("
+                   "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
+                   "\\)?"
+                   "$")
+           "\\|//\\)")))
 
 ;; Regexp to append to paragraph-start.
 (c-lang-defconst paragraph-start
@@ -583,22 +590,22 @@ appended."
 (c-lang-defvar c-opt-in-comment-lc
   (if (c-lang-var c-in-comment-lc-prefix)
       (concat (c-lang-var c-in-comment-lc-prefix)
-	      c-current-comment-prefix)))
+              c-current-comment-prefix)))
 
 (defconst c-init-lang-defvars
   ;; Make a lambda of the collected `c-lang-defvar' initializations.
   (cc-eval-when-compile
     (if (cc-bytecomp-is-compiling)
-	(byte-compile-lambda `(lambda () ,c-lang-defvar-init-form))
+        (byte-compile-lambda `(lambda () ,c-lang-defvar-init-form))
       `(lambda () ,c-lang-defvar-init-form))))
 
 (defun c-init-language-vars ()
   ;; Initialize all `c-lang-defvar' variables according to
   ;; `c-buffer-is-cc-mode'.
   (if (not (memq c-buffer-is-cc-mode
-		 '(c-mode c++-mode objc-mode java-mode idl-mode pike-mode awk-mode))) ; awk-mode, 2002/4/21 ACM
+                 '(c-mode c++-mode objc-mode java-mode idl-mode pike-mode awk-mode))) ; awk-mode, 2002/4/21 ACM
       (error "Cannot initialize language variables for unknown mode %s"
-	     c-buffer-is-cc-mode))
+             c-buffer-is-cc-mode))
   (funcall c-init-lang-defvars))
 
 ;; Regexp trying to describe the beginning of a Java top-level
@@ -666,7 +673,7 @@ are parsed.")
 (if c++-template-syntax-table
     ()
   (setq c++-template-syntax-table
-	(copy-syntax-table c++-mode-syntax-table))
+        (copy-syntax-table c++-mode-syntax-table))
   (modify-syntax-entry ?< "(>" c++-template-syntax-table)
   (modify-syntax-entry ?> ")<" c++-template-syntax-table))
 
