@@ -489,6 +489,7 @@ to be set as a file local variable.")
 	(java-mode))
        ((string-match "\\.pike$" filename) (pike-mode))
        ((string-match "\\.idl$" filename) (idl-mode))
+       ((string-match "\\.awk$" filename) (awk-mode))
        (t (c-mode))))
     (hack-local-variables)
 
@@ -898,7 +899,7 @@ to be set as a file local variable.")
 		      ))
 		  (directory-files
 		   cc-test-dir nil
-		   "\\.\\(c\\|cc\\|java\\|pike\\|idl\\|m\\)\\'")))
+		   "\\.\\(c\\|cc\\|java\\|pike\\|idl\\|m\\|awk\\)\\'")))
       (fset 'c-echo-parsing-error old-c-echo-parsing-error))
     (if noninteractive
 	(send-string-to-terminal cc-test-clear-line-string))
