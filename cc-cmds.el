@@ -2062,7 +2062,7 @@ Optional prefix ARG means justify paragraph as well."
   (let (lit-limits lit-type fill
 	;; beg and end limits the region to be filled.  end is a marker.
 	beg end
-	;; tmp-pre and tmp-post marks strings that are temporarily
+	;; tmp-pre and tmp-post mark strings that are temporarily
 	;; inserted at the start and end of the region.  tmp-pre is a
 	;; cons of the positions of the prepended string.  tmp-post is
 	;; a marker pointing to the single character of the appended
