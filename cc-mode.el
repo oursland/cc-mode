@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.49 $
-;; Last Modified:   $Date: 1994-08-11 20:40:06 $
+;; Version:         $Revision: 4.50 $
+;; Last Modified:   $Date: 1994-08-16 20:05:49 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-11 20:40:06 $|$Revision: 4.49 $|
+;; |$Date: 1994-08-16 20:05:49 $|$Revision: 4.50 $|
 
 ;;; Code:
 
@@ -388,8 +388,7 @@ Only currently supported behavior is `alignleft'.")
 This variable is needed because of ambiguities in C syntax that make
 fast recognition of K&R constructs problematic, and slow.  If you are
 coding with ANSI prototypes, set this variable to nil to speed up
-recognition of certain constructs.  Make sure you do this in your
-language-mode specific hook, not in `c-mode-common-hook'.
+recognition of certain constructs.
 
 This variable is nil by default in `c++-mode', and t by default in
 `c-mode' and `objc-mode'.  This variable is buffer-local.")
@@ -921,7 +920,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.49 $
+cc-mode Revision: $Revision: 4.50 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -944,20 +943,21 @@ Key bindings:
   (set-syntax-table c++-mode-syntax-table)
   (setq major-mode 'c++-mode
 	mode-name "C++"
-	local-abbrev-table c++-mode-abbrev-table)
+	local-abbrev-table c++-mode-abbrev-table
+	;; should be set before c-common-init call
+	c-recognize-knr-p nil)
   (use-local-map c++-mode-map)
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
 	c-conditional-key c-C++-conditional-key
-	c-comment-start-regexp "//\\|/\\*"
-	c-recognize-knr-p nil)
+	c-comment-start-regexp "//\\|/\\*")
   (run-hooks 'c++-mode-hook))
 
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.49 $
+cc-mode Revision: $Revision: 4.50 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -979,20 +979,21 @@ Key bindings:
   (set-syntax-table c-mode-syntax-table)
   (setq major-mode 'c-mode
 	mode-name "C"
-	local-abbrev-table c-mode-abbrev-table)
+	local-abbrev-table c-mode-abbrev-table
+	;; should be set before c-common-init call
+	c-recognize-knr-p t)
   (use-local-map c-mode-map)
   (c-common-init)
   (setq comment-start "/* "
 	comment-end   " */"
 	c-conditional-key c-C-conditional-key
-	c-comment-start-regexp "/\\*"
-	c-recognize-knr-p t)
+	c-comment-start-regexp "/\\*")
   (run-hooks 'c-mode-hook))
 
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.49 $
+cc-mode Revision: $Revision: 4.50 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1015,14 +1016,15 @@ Key bindings:
   (set-syntax-table objc-mode-syntax-table)
   (setq major-mode 'objc-mode
 	mode-name "ObjC"
-	local-abbrev-table objc-mode-abbrev-table)
+	local-abbrev-table objc-mode-abbrev-table
+	;; should be set before c-common-init call
+	c-recognize-knr-p t)
   (use-local-map objc-mode-map)
   (c-common-init)
   (setq comment-start "// "
 	comment-end   ""
 	c-conditional-key c-C-conditional-key
-	c-comment-start-regexp "//\\|/\\*"
-	c-recognize-knr-p t)
+	c-comment-start-regexp "//\\|/\\*")
   (run-hooks 'objc-mode-hook))
 
 (defun c-common-init ()
@@ -3886,7 +3888,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.49 $"
+(defconst c-version "$Revision: 4.50 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
