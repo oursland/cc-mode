@@ -1834,7 +1834,8 @@ set."
   ;; submatch is the one that matches the type.  Note that this regexp
   ;; assumes that symbol constituents like '_' and '$' have word
   ;; syntax.
-  (let ((extra-types (c-mode-var "font-lock-extra-types")))
+  (let ((extra-types (unless (c-major-mode-is 'awk-mode)
+                       (c-mode-var "font-lock-extra-types"))))
     (concat "\\<\\("
 	    (c-make-keywords-re nil (c-lang-const c-primitive-type-kwds))
 	    (if (consp extra-types)
