@@ -22,8 +22,8 @@ public class Test {
 			dispose();
 		    }
 	    else try {_value = _format.parse (getText()).doubleValue();}
-	    catch (Exception e) {showError (e);}
-	    finally {dispose();}
+		catch (Exception e) {showError (e);}
+		finally {dispose();}
 	super.processEvent (event);
     }
 }

@@ -1,10 +1,10 @@
 int foo() {
     while (b) if (y)
-	while (t)
-	    p;
+		  while (t)
+		      p;
     while (b) foo: if (y)
-	while (t)
-	    p;
+		  while (t)
+		      p;
     while (b)
       foo: if (y)
 	    while (t)
