@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.5 $
-;; Last Modified:   $Date: 1994-06-09 14:08:57 $
+;; Version:         $Revision: 4.6 $
+;; Last Modified:   $Date: 1994-06-09 14:15:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-09 14:08:57 $|$Revision: 4.5 $|
+;; |$Date: 1994-06-09 14:15:00 $|$Revision: 4.6 $|
 
 ;;; Code:
 
@@ -895,7 +895,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.5 $
+cc-mode Revision: $Revision: 4.6 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -928,7 +928,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.5 $
+cc-mode Revision: $Revision: 4.6 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -961,7 +961,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode $Revision: 4.5 $
+cc-mode $Revision: 4.6 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2880,17 +2880,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 ((eq literal 'pound)
 	  (c-beginning-of-macro lim)
 	  (c-add-syntax 'cpp-macro (c-point 'boi)))
-	 ;; CASE 3.5: in an objective-c method intro
+	 ;; CASE 4: in an objective-c method intro
 	 (in-method-intro-p
 	  (c-add-syntax 'objc-method-intro (c-point 'boi)))
-	 ;; CASE 4: Line is at top level.
+	 ;; CASE 5: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
-	   ;; CASE 4A: we are looking at a defun, class, or
+	   ;; CASE 5A: we are looking at a defun, class, or
 	   ;; inline-inclass method opening brace
 	   ((= char-after-ip ?{)
 	    (cond
-	     ;; CASE 4A.1: we are looking at a class opening brace
+	     ;; CASE 5A.1: we are looking at a class opening brace
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
@@ -2899,7 +2899,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (setq placeholder (aref decl 0)))
 		  ))
 	      (c-add-syntax 'class-open placeholder))
-	     ;; CASE 4A.2: brace list open
+	     ;; CASE 5A.2: brace list open
 	     ((save-excursion
 		(c-beginning-of-statement nil lim)
 		;; c-b-o-s could have left us at point-min
@@ -2912,18 +2912,18 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (skip-chars-forward "^;" indent-point)
 		       (/= (following-char) ?\;))))
 	      (c-add-syntax 'brace-list-open placeholder))
-	     ;; CASE 4A.3: inline defun open
+	     ;; CASE 5A.3: inline defun open
 	     (inclass-p
 	      (c-add-syntax 'inline-open (aref inclass-p 0)))
-	     ;; CASE 4A.4: ordinary defun open
+	     ;; CASE 5A.4: ordinary defun open
 	     (t
 	      (goto-char placeholder)
 	      (c-add-syntax 'defun-open (c-point 'bol))
 	      )))
-	   ;; CASE 4B: first K&R arg decl or member init
+	   ;; CASE 5B: first K&R arg decl or member init
 	   ((c-just-after-func-arglist-p)
 	    (cond
-	     ;; CASE 4B.1: a member init
+	     ;; CASE 5B.1: a member init
 	     ((or (= char-before-ip ?:)
 		  (= char-after-ip ?:))
 	      ;; this line should be indented relative to the beginning
@@ -2943,38 +2943,38 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      ;; we don't need to add any class offset since this
 	      ;; should be relative to the ctor's indentation
 	      )
-	     ;; CASE 4B.2: nether region after a C++ func decl
+	     ;; CASE 5B.2: nether region after a C++ func decl
 	     ((eq major-mode 'c++-mode)
 	      (c-add-syntax 'c++-funcdecl-cont (c-point 'boi))
 	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	     ;; CASE 4B.3: K&R arg decl intro
+	     ;; CASE 5B.3: K&R arg decl intro
 	     (t
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
 	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
 	     ))
-	   ;; CASE 4C: inheritance line. could be first inheritance
+	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
 	   ((looking-at c-baseclass-key)
 	    (cond
-	     ;; CASE 4C.1: non-hanging colon on an inher intro
+	     ;; CASE 5C.1: non-hanging colon on an inher intro
 	     ((= char-after-ip ?:)
 	      (c-backward-syntactic-ws lim)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
 	      ;; don't add inclass symbol since relative point already
 	      ;; contains any class offset
 	      )
-	     ;; CASE 4C.2: hanging colon on an inher intro
+	     ;; CASE 5C.2: hanging colon on an inher intro
 	     ((= char-before-ip ?:)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
 	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	     ;; CASE 4C.3: a continued inheritance line
+	     ;; CASE 5C.3: a continued inheritance line
 	     (t
 	      (c-beginning-of-inheritance-list lim)
 	      (c-add-syntax 'inher-cont (point))
 	      ;; don't add inclass symbol since relative point already
 	      ;; contains any class offset
 	      )))
-	   ;; CASE 4D: this could be a top-level compound statement or a
+	   ;; CASE 5D: this could be a top-level compound statement or a
 	   ;; member init list continuation
 	   ((= char-before-ip ?,)
 	    (goto-char indent-point)
@@ -2991,7 +2991,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (beginning-of-line)
 	      (c-backward-syntactic-ws lim))
 	    (cond
-	     ;; CASE 4D.1: hanging member init colon
+	     ;; CASE 5D.1: hanging member init colon
 	     ((= (preceding-char) ?:)
 	      (goto-char indent-point)
 	      (c-backward-syntactic-ws lim)
@@ -3000,32 +3000,32 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      ;; we do not need to add class offset since relative
 	      ;; point is the member init above us
 	      )
-	     ;; CASE 4D.2: non-hanging member init colon
+	     ;; CASE 5D.2: non-hanging member init colon
 	     ((progn
 		(c-forward-syntactic-ws indent-point)
 		(= (following-char) ?:))
 	      (skip-chars-forward " \t:")
 	      (c-add-syntax 'member-init-cont (point)))
-	     ;; CASE 4D.3: perhaps a multiple inheritance line?
+	     ;; CASE 5D.3: perhaps a multiple inheritance line?
 	     ((looking-at c-inher-key)
 	      (c-add-syntax 'inher-cont-1 (c-point 'boi)))
-	     ;; CASE 4D.4: perhaps a template list continuation?
+	     ;; CASE 5D.4: perhaps a template list continuation?
 	     ((save-excursion
 		(skip-chars-backward "^<" lim)
 		(= (preceding-char) ?<))
 	      ;; we can probably indent it just like and arglist-cont
 	      (c-add-syntax 'arglist-cont (point)))
-	     ;; CASE 4D.5: perhaps a top-level statement-cont
+	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
 	      (c-beginning-of-statement nil lim)
 	      (c-add-syntax 'statement-cont (c-point 'boi)))
 	     ))
-	   ;; CASE 4E: we are looking at a access specifier
+	   ;; CASE 5E: we are looking at a access specifier
 	   ((and inclass-p
 		 (looking-at c-access-key))
 	    (c-add-syntax 'access-label (c-point 'bonl))
 	    (c-add-syntax 'inclass (aref inclass-p 0)))
-	   ;; CASE 4F: we are looking at the brace which closes the
+	   ;; CASE 5F: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
 	   ((and inclass-p
 		 (= char-after-ip ?})
@@ -3043,7 +3043,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (widen)
 	      (goto-char (aref inclass-p 0))
 	      (c-add-syntax 'class-close (c-point 'boi))))
-	   ;; CASE 4G: we could be looking at subsequent knr-argdecls
+	   ;; CASE 5G: we could be looking at subsequent knr-argdecls
 	   ((and (memq major-mode '(c-mode objc-mode))
 		 (save-excursion
 		   (c-backward-syntactic-ws lim)
@@ -3065,7 +3065,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (not (looking-at "typedef[ \t\n]+"))))
 	    (goto-char placeholder)
 	    (c-add-syntax 'knr-argdecl (c-point 'boi)))
-	   ;; CASE 4H: we are at the topmost level, make sure we skip
+	   ;; CASE 5H: we are at the topmost level, make sure we skip
 	   ;; back past any access specifiers
 	   ((progn
 	      (c-backward-syntactic-ws lim)
@@ -3080,35 +3080,35 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (memq (preceding-char) '(?\; ?\}))))
 	    (c-add-syntax 'topmost-intro (c-point 'bol))
 	    (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	   ;; CASE 4I: we are at a method definition continuation line
+	   ;; CASE 5I: we are at a method definition continuation line
 	   ((and (eq major-mode 'objc-mode)
 		 (progn
 		   (c-beginning-of-statement 1 lim)
 		   (beginning-of-line)
 		   (looking-at c-objc-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
-	   ;; CASE 4J: we are at a topmost continuation line
+	   ;; CASE 5J: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement 1 lim)
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
-	   ))				; end CASE 4
-	 ;; CASE 5: line is an expression, not a statement.  Most
+	   ))				; end CASE 5
+	 ;; CASE 6: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
 	 ;; call argument list
 	 ((/= (char-after containing-sexp) ?{)
 	  (c-backward-syntactic-ws containing-sexp)
 	  (cond
-	   ;; CASE 5A: we are looking at the first argument in an empty
+	   ;; CASE 6A: we are looking at the first argument in an empty
 	   ;; argument list
 	   ((memq char-before-ip '(?\( ?\[))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-intro (c-point 'boi)))
-	   ;; CASE 5B: we are looking at the arglist closing paren
+	   ;; CASE 6B: we are looking at the arglist closing paren
 	   ((and (/= char-before-ip ?,)
 		 (memq char-after-ip '(?\) ?\])))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-close (c-point 'boi)))
-	   ;; CASE 5C: we are inside a conditional test clause. treat
+	   ;; CASE 6C: we are inside a conditional test clause. treat
 	   ;; these things as statements
 	   ((save-excursion
 	     (goto-char containing-sexp)
@@ -3119,7 +3119,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(c-add-syntax 'statement (point))
 	      (c-add-syntax 'statement-cont (point))
 	      ))
-	   ;; CASE 5D: we are looking at an arglist continuation line,
+	   ;; CASE 6D: we are looking at an arglist continuation line,
 	   ;; but the preceding argument is on the same line as the
 	   ;; opening paren.  This case includes multi-line
 	   ;; mathematical paren groupings, but we could be on a
@@ -3134,7 +3134,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (<= (point) containing-sexp)))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-cont-nonempty (c-point 'boi)))
-	   ;; CASE 5E: maybe a continued method call
+	   ;; CASE 6E: maybe a continued method call
 	   ((and (eq major-mode 'objc-mode)
 		 (save-excursion
 		   (goto-char (1- containing-sexp))
@@ -3142,12 +3142,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (if (not (looking-at c-symbol-key))
 		       (c-add-syntax 'objc-method-call-cont containing-sexp))
 		   )))
-	   ;; CASE 5F: we are looking at just a normal arglist
+	   ;; CASE 6F: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (c-beginning-of-statement 1 containing-sexp)
 	      (c-add-syntax 'arglist-cont (c-point 'boi)))
 	   ))
-	 ;; CASE 6: func-local multi-inheritance line
+	 ;; CASE 7: func-local multi-inheritance line
 	 ((save-excursion
 	    (goto-char indent-point)
 	    (skip-chars-forward " \t")
@@ -3155,29 +3155,29 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
-	   ;; CASE 6A: non-hanging colon on an inher intro
+	   ;; CASE 7A: non-hanging colon on an inher intro
 	   ((= char-after-ip ?:)
 	    (c-backward-syntactic-ws lim)
 	    (c-add-syntax 'inher-intro (c-point 'boi)))
-	   ;; CASE 6B: hanging colon on an inher intro
+	   ;; CASE 7B: hanging colon on an inher intro
 	   ((= char-before-ip ?:)
 	    (c-add-syntax 'inher-intro (c-point 'boi)))
-	   ;; CASE 6C: a continued inheritance line
+	   ;; CASE 7C: a continued inheritance line
 	   (t
 	    (c-beginning-of-inheritance-list lim)
 	    (c-add-syntax 'inher-cont (point))
 	    )))
-	 ;; CASE 7: we are inside a brace-list
+	 ;; CASE 8: we are inside a brace-list
 	 ((setq placeholder (c-inside-bracelist-p containing-sexp))
 	  (cond
-	   ;; CASE 7A: brace-list-close brace
+	   ;; CASE 8A: brace-list-close brace
 	   ((and (= char-after-ip ?})
 		 (c-safe (progn (forward-char 1)
 				(backward-sexp 1)
 				t))
 		 (= (point) containing-sexp))
 	    (c-add-syntax 'brace-list-close (c-point 'boi)))
-	   ;; CASE 7B: we're looking at the first line in a brace-list
+	   ;; CASE 8B: we're looking at the first line in a brace-list
 	   ((save-excursion
 	      (goto-char indent-point)
 	      (c-backward-syntactic-ws containing-sexp)
@@ -3186,14 +3186,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (c-add-syntax 'brace-list-intro (c-point 'boi))
 	    (if (= char-after-ip ?{)
 		(c-add-syntax 'block-open)))
-	   ;; CASE 7C: this is just a later brace-list-entry
+	   ;; CASE 8C: this is just a later brace-list-entry
 	   (t (goto-char (1+ containing-sexp))
 	      (c-forward-syntactic-ws indent-point)
 	      (c-add-syntax 'brace-list-entry (point))
 	      (if (= char-after-ip ?{)
 		  (c-add-syntax 'block-open)))
 	   ))
-	 ;; CASE 8: A continued statement
+	 ;; CASE 9: A continued statement
 	 ((and (not (memq char-before-ip '(?\; ?} ?:)))
 	       (> (point)
 		  (save-excursion
@@ -3203,7 +3203,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
-	   ;; CASE 8A: substatement
+	   ;; CASE 9A: substatement
 	   ((save-excursion
 	      (goto-char placeholder)
 	      (and (looking-at c-conditional-key)
@@ -3214,10 +3214,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (if (= char-after-ip ?{)
 		(c-add-syntax 'substatement-open (c-point 'boi))
 	      (c-add-syntax 'substatement (c-point 'boi))))
-	   ;; CASE 8B: open braces for class or brace-lists
+	   ;; CASE 9B: open braces for class or brace-lists
 	   ((= char-after-ip ?{)
 	    (cond
-	     ;; CASE 8B.1: class-open
+	     ;; CASE 9B.1: class-open
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
@@ -3226,13 +3226,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (setq placeholder (aref decl 0)))
 		  ))
 	      (c-add-syntax 'class-open placeholder))
-	     ;; CASE 8B.2: brace-list-open
+	     ;; CASE 9B.2: brace-list-open
 	     ((or (save-excursion
 		    (goto-char placeholder)
 		    (looking-at "\\<enum\\>"))
 		  (= char-before-ip ?=))
 	      (c-add-syntax 'brace-list-open placeholder))
-	     ;; CASE 8B.3: catch-all for unknown construct.
+	     ;; CASE 9B.3: catch-all for unknown construct.
 	     (t
 	      ;; Even though this isn't right, it's the best I'm going
 	      ;; to do for now. Exceptions probably fall through to
@@ -3242,7 +3242,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-syntax 'statement-cont placeholder)
 	      (c-add-syntax 'block-open))
 	     ))
-	   ;; CASE 8C: iostream insertion or extraction operator
+	   ;; CASE 9C: iostream insertion or extraction operator
 	   ((looking-at "<<\\|>>")
 	    (goto-char placeholder)
 	    (if (looking-at c-conditional-key)
@@ -3256,7 +3256,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(c-add-syntax 'stream-op (c-point 'boi))
 	      (c-backward-syntactic-ws lim)
 	      (c-add-syntax 'statement-cont (c-point 'boi))))
-	   ;; CASE 8D: continued statement. find the accurate
+	   ;; CASE 9D: continued statement. find the accurate
 	   ;; beginning of statement or substatement
 	   (t
 	    (c-beginning-of-statement nil
@@ -3268,11 +3268,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (point)))
 	    (c-add-syntax 'statement-cont (point)))
 	   ))
-	 ;; CASE 9: an else clause?
+	 ;; CASE 10: an else clause?
 	 ((looking-at "\\<else\\>")
 	  (c-backward-to-start-of-if containing-sexp)
 	  (c-add-syntax 'else-clause (c-point 'boi)))
-	 ;; CASE 10: Statement. But what kind?  Lets see if its a
+	 ;; CASE 11: Statement. But what kind?  Lets see if its a
 	 ;; while closure of a do/while construct
 	 ((progn
 	    (goto-char indent-point)
@@ -3284,18 +3284,18 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (looking-at "do\\b[^_]"))
 		 ))
 	  (c-add-syntax 'do-while-closure placeholder))
-	 ;; CASE 11: A case or default label
+	 ;; CASE 12: A case or default label
 	 ((looking-at c-switch-label-key)
 	  (goto-char containing-sexp)
 	  ;; for a case label, we set relpos the first non-whitespace
 	  ;; char on the line containing the switch opening brace. this
 	  ;; should handle hanging switch opening braces correctly.
 	  (c-add-syntax 'case-label (c-point 'boi)))
-	 ;; CASE 12: any other label
+	 ;; CASE 13: any other label
 	 ((looking-at c-label-key)
 	  (goto-char containing-sexp)
 	  (c-add-syntax 'label (c-point 'boi)))
-	 ;; CASE 13: block close brace, possibly closing the defun or
+	 ;; CASE 14: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((= char-after-ip ?})
 	  (let ((relpos (save-excursion
@@ -3304,17 +3304,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			      (c-beginning-of-statement))
 			  (c-point 'boi))))
 	    (cond
-	     ;; CASE 13.A: does this close an inline?
+	     ;; CASE 14A: does this close an inline?
 	     ((progn
 		(goto-char containing-sexp)
 		(c-search-uplist-for-classkey state))
 	      (c-add-syntax 'inline-close relpos))
-	     ;; CASE 13.B: if there an enclosing brace that hasn't
+	     ;; CASE 14B: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close
 	     ((c-enclosing-brace state)
 	      (c-add-syntax 'block-close relpos))
-	     ;; CASE 13.C: find out whether we're closing a top-level
+	     ;; CASE 14C: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
 	      (save-restriction
@@ -3324,7 +3324,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		      (c-add-syntax 'class-close (aref decl 0))
 		    (c-add-syntax 'defun-close relpos)))))
 	     )))
-	 ;; CASE 14: statement catchall
+	 ;; CASE 15: statement catchall
 	 (t
 	  ;; we know its a statement, but we need to find out if it is
 	  ;; the first statement in a block
@@ -3340,7 +3340,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (forward-line 1)
 	      (c-forward-syntactic-ws indent-point))
 	    (cond
-	     ;; CASE 14.A: we saw a case/default statement so we must be
+	     ;; CASE 15A: we saw a case/default statement so we must be
 	     ;; in a switch statement.  find out if we are at the
 	     ;; statement just after a case or default label
 	     ((and inswitch-p
@@ -3351,10 +3351,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		     (setq placeholder (point))
 		     (looking-at c-switch-label-key)))
 	      (c-add-syntax 'statement-case-intro placeholder))
-	     ;; CASE 14.B: continued statement
+	     ;; CASE 15B: continued statement
 	     ((= char-before-ip ?,)
 	      (c-add-syntax 'statement-cont (c-point 'boi)))
-	     ;; CASE 14.C: a question/colon construct?  But make sure
+	     ;; CASE 15C: a question/colon construct?  But make sure
 	     ;; what came before was not a label, and what comes after
 	     ;; is not a globally scoped function call!
 	     ((or (and (memq char-before-ip '(?: ??))
@@ -3370,12 +3370,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			 ;; watch out for scope operator
 			 (not (looking-at "::")))))
 	      (c-add-syntax 'statement-cont (c-point 'boi)))
-	     ;; CASE 14.D: any old statement
+	     ;; CASE 15D: any old statement
 	     ((< (point) indent-point)
 	      (c-add-syntax 'statement (c-point 'boi))
 	      (if (= char-after-ip ?{)
 		  (c-add-syntax 'block-open)))
-	     ;; CASE 14.E: first statement in an inline, or first
+	     ;; CASE 15E: first statement in an inline, or first
 	     ;; statement in a top-level defun. we can tell this is it
 	     ;; if there are no enclosing braces that haven't been
 	     ;; narrowed out by a class (i.e. don't use bod here!)
@@ -3395,7 +3395,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 					      -1 -2)))
 		    ))
 	      (c-add-syntax 'defun-block-intro (c-point 'boi)))
-	     ;; CASE 14.F: first statement in a block
+	     ;; CASE 15F: first statement in a block
 	     (t (goto-char containing-sexp)
 		(if (/= (point) (c-point 'boi))
 		    (c-beginning-of-statement))
@@ -3799,7 +3799,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.5 $"
+(defconst c-version "$Revision: 4.6 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
