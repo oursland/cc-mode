@@ -188,13 +188,13 @@
 	  (goto-char end))
 	(re-search-backward "[;{}]")
 	(forward-char 1))
-    (error 
+    (error
      (let ((beg (point)))
-       (backward-up-list -1)
+       (c-safe (backward-up-list -1))
        (let ((end (point)))
 	 (goto-char beg)
-	 (search-forward ";" end 'move))))))
-
+	 (search-forward ";" end 'move)))
+     )))
 
 
 (defun c-crosses-statement-barrier-p (from to)
