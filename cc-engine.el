@@ -6235,7 +6235,15 @@ This function does not do any hidden buffer changes."
 	   ;; CASE 5I: ObjC method definition.
 	   ((and c-opt-method-key
 		 (looking-at c-opt-method-key))
-	    (c-beginning-of-statement-1 lim)
+	    (c-beginning-of-statement-1 nil t)
+	    (if (= (point) indent-point)
+		;; Handle the case when it's the first (non-comment)
+		;; thing in the buffer.  Can't look for a 'same return
+		;; value from cbos1 since ObjC directives currently
+		;; aren't recognized fully, so that we get 'same
+		;; instead of 'previous if it moved over a preceding
+		;; directive.
+		(goto-char (point-min)))
 	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
            ;; CASE 5P: AWK pattern or function or continuation
            ;; thereof.
@@ -6314,11 +6322,13 @@ This function does not do any hidden buffer changes."
 	   ;; CASE 5K: we are at an ObjC method definition
 	   ;; continuation line.
 	   ((and c-opt-method-key
-		 (progn
+		 (save-excursion
+		   (goto-char indent-point)
 		   (c-beginning-of-statement-1 lim)
 		   (beginning-of-line)
-		   (looking-at c-opt-method-key)))
-	    (c-add-syntax 'objc-method-args-cont (point)))
+		   (when (looking-at c-opt-method-key)
+		     (setq placeholder (point)))))
+	    (c-add-syntax 'objc-method-args-cont placeholder))
 	   ;; CASE 5L: we are at the first argument of a template
 	   ;; arglist that begins on the previous line.
 	   ((eq (char-before) ?<)
