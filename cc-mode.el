@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.207 $
-;; Last Modified:   $Date: 1995-05-08 19:52:58 $
+;; Version:         $Revision: 4.208 $
+;; Last Modified:   $Date: 1995-05-08 23:11:35 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-08 19:52:58 $|$Revision: 4.207 $|
+;; |$Date: 1995-05-08 23:11:35 $|$Revision: 4.208 $|
 
 ;;; Code:
 
@@ -1982,8 +1982,10 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 STYLENAME is a string representing the desired style from the list of
 styles described in the variable `c-style-alist'.  See that variable
 for details of setting up styles."
-  (interactive (list (completing-read "Indentation style? "
-                                      c-style-alist nil t)))
+  (interactive (list (let ((completion-ignore-case t)
+			   (prompt (format "Which %s indentation style? "
+					   mode-name)))
+		       (completing-read prompt c-style-alist nil t))))
   (let ((vars (cdr (assoc stylename c-style-alist)))
 	(default (cdr (assoc "CC-MODE" c-style-alist))))
     (or vars (error "Invalid indentation style `%s'" stylename))
@@ -4577,7 +4579,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.207 $"
+(defconst c-version "$Revision: 4.208 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
