@@ -1377,7 +1377,7 @@ Despite the name, this variable is not only used for font locking but
 also elsewhere in CC Mode to tell types from other identifiers."))
 
 ;; Note: Most of the variables below are also defined in font-lock.el
-;; in older versions in Emacs, so depending on the load order we might
+;; in older versions of Emacs, so depending on the load order we might
 ;; not install the values below.  There's no kludge to cope with this
 ;; (as opposed to the *-font-lock-keywords-* variables) since the old
 ;; values work fairly well anyway.
@@ -1620,8 +1620,11 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
       (kill-buffer buf))
 
     ;; See if `parse-partial-sexp' returns the eighth element.
-    (when (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
-      (setq list (cons 'pps-extended-state list)))
+    (if (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
+	(setq list (cons 'pps-extended-state list))
+      (error (concat
+	      "CC Mode is incompatible with this version of Emacs - "
+	      "`parse-partial-sexp' has to return at least 10 elements.")))
 
     ;; See if POSIX char classes work.
     (when (string-match "[[:alpha:]]" "a")
@@ -1644,8 +1647,9 @@ might be present:
 'gen-string-delim   Generic string delimiters work
 		    (i.e. the syntax class `|').
 'pps-extended-state `parse-partial-sexp' returns a list with at least 10
-		    elements, i.e. it contains the position of the
-		    start of the last comment or string.
+		    elements, i.e. it contains the position of the start of
+		    the last comment or string. It's always set - CC Mode no
+		    longer works in emacsen without this feature.
 'posix-char-classes The regexp engine understands POSIX character classes.
 'col-0-paren        It's possible to turn off the ad-hoc rule that a paren
 		    in column zero is the start of a defun.
