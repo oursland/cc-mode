@@ -1244,6 +1244,12 @@ declarations."
 	 ;; In CORBA PSDL:
 	 "as" "const" "implements" "of" "ref"))
 
+(c-lang-defconst c-nonsymbol-sexp-kwds
+  "Keywords that may be followed by a nonsymbol sexp before whatever
+construct it's part of continues."
+  t    nil
+  (c c++ objc) '("extern"))
+
 (c-lang-defconst c-type-list-kwds
   "Keywords that may be followed by a comma separated list of type
 identifiers, where each optionally can be prefixed by keywords.  (Can
@@ -1342,12 +1348,6 @@ assumed to be set if this isn't nil."
   c++  '("template")
   idl  '("fixed" "string" "wstring"))
 
-(c-lang-defconst c-brace-id-list-kwds
-  "Keywords that may be followed by a brace block containing a comma
-separated list of identifier definitions, i.e. like the list of
-identifiers that follows the type in a normal declaration."
-  t (c-lang-const c-brace-list-decl-kwds))
-
 (c-lang-defconst c-<>-sexp-kwds
   ;; All keywords that can be followed by an angle bracket sexp.
   t (delete-duplicates (append (c-lang-const c-<>-type-kwds)
@@ -1360,6 +1360,12 @@ identifiers that follows the type in a normal declaration."
   t (if (c-lang-const c-recognize-<>-arglists)
 	(c-make-keywords-re t (c-lang-const c-<>-sexp-kwds))))
 (c-lang-defvar c-opt-<>-sexp-key (c-lang-const c-opt-<>-sexp-key))
+
+(c-lang-defconst c-brace-id-list-kwds
+  "Keywords that may be followed by a brace block containing a comma
+separated list of identifier definitions, i.e. like the list of
+identifiers that follows the type in a normal declaration."
+  t (c-lang-const c-brace-list-decl-kwds))
 
 (c-lang-defconst c-block-stmt-1-kwds
   "Statement keywords followed directly by a substatement."

@@ -3397,6 +3397,12 @@ brace."
 				   (or c-record-type-identifiers
 				       c-disallow-comma-in-<>-arglists)))
 	(c-forward-syntactic-ws)
+	(setq safe-pos (point)))
+
+       ((and (c-keyword-member kwd-sym 'c-nonsymbol-sexp-kwds)
+	     (not (looking-at c-symbol-start)))
+	(c-forward-sexp)
+	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
 
       (when (and (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
