@@ -2164,18 +2164,15 @@ Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
 			 fill-paragraph-function))
 		    (fill-prefix
 		     (or fill-prefix
-			 (when (and adaptive-fill-mode
-				    (eq lit-type 'c++)
+			 (when (and (eq lit-type 'c++)
 				    (not (string-match
 					  "\\`[ \t]*//"
 					  (or (fill-context-prefix beg end)
 					      ""))))
-			   ;; If adaptive-fill-mode is in use (the
-			   ;; default), and its function to determine
-			   ;; the fill prefix doesn't produce the
-			   ;; required comment starter for line
-			   ;; comments, then force it by setting
-			   ;; fill-prefix.
+			   ;; Kludge: If the function that adapts the
+			   ;; fill prefix doesn't produce the required
+			   ;; comment starter for line comments, then
+			   ;; force it by setting fill-prefix.
 			   (car (or fill (c-guess-fill-prefix
 					  lit-limits lit-type)))))))
 		;; Preparations finally done!  Now we can call the
