@@ -957,9 +957,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			    (eq arglist-match ?<))
 			;; Inside an angle bracket arglist.
 			(setq arglist-type '<>))
-		       (type
-			;; Got a cached hit in some other type of arglist.
-			(setq arglist-type 'other))
 		       ((if inside-macro
 			    (< match-pos max-type-decl-end-before-token)
 			  (< match-pos max-type-decl-end))
@@ -1335,16 +1332,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      ;; We could do a better job if we knew the point when
 		      ;; the fontification was invoked.
 		      (throw 'at-decl-or-cast t))))
-
-		(when (and c-recognize-paren-inits
-			   got-identifier
-			   prev-at-type
-			   got-parens
-			   (not got-prefix)
-			   (not got-suffix)
-			   (not (eq at-type t)))
-		  (c-put-char-property type-end 'c-type 'c-init-arg-start)
-		  (c-fl-shift-type-backward))
 
 		(when at-decl-or-cast
 		  ;; By now we've located the type in the declaration that we
