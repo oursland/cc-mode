@@ -490,9 +490,9 @@ single `?' is found, then `c-maybe-labelp' is cleared."
     c-macro-start))
 
 (defun c-beginning-of-macro (&optional lim)
-  ;; Go to the beginning of a cpp macro definition.  Leaves point at
-  ;; the beginning of the macro and returns t if in a cpp macro
-  ;; definition, otherwise returns nil and leaves point unchanged.
+  "Go to the beginning of a cpp macro definition.
+Leaves point at the beginning of the macro and returns t if in a cpp
+macro definition, otherwise returns nil and leaves point unchanged."
   (let ((here (point)))
     (save-restriction
       (if lim (narrow-to-region lim (point-max)))
@@ -505,6 +505,17 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 	  t
 	(goto-char here)
 	nil))))
+
+(defun c-end-of-macro ()
+  "Go to the end of a cpp macro definition.
+More accurately, move point at the end of the next line that doesn't
+end with a line continuation backslash."
+  (while (progn
+	   (end-of-line)
+	   (when (and (eq (char-before) ?\\)
+		      (not (eobp)))
+	     (forward-char)
+	     t))))
 
 ;; Skipping of "syntactic whitespace", defined as lexical whitespace,
 ;; C and C++ style comments, and preprocessor directives.  Search no
@@ -1769,8 +1780,8 @@ isn't moved."
 
 
 (defun c-most-enclosing-brace (state &optional bufpos)
-  ;; Return the bufpos of the innermost enclosing brace before bufpos,
-  ;; or nil if none was found.
+  ;; Return the bufpos of the innermost enclosing brace before bufpos
+  ;; that hasn't been narrowed out, or nil if none was found.
   (let (enclosingp)
     (or bufpos (setq bufpos 134217727))
     (while state
@@ -1786,9 +1797,17 @@ isn't moved."
 
 (defun c-least-enclosing-brace (state &optional bufpos)
   ;; Return the bufpos of the outermost enclosing brace before bufpos
-  ;; that hasn't been narrowed out by any enclosing class, or nil if
-  ;; none was found.  Note: Destructive on the passed list.
-  (c-most-enclosing-brace (nreverse state) bufpos))
+  ;; that hasn't been narrowed out, or nil if none was found.
+  (let (pos elem)
+    (or bufpos (setq bufpos 134217727))
+    (while state
+      (setq elem (car state)
+	    state (cdr state))
+      (unless (or (consp elem)
+		  (>= elem bufpos))
+	(if (>= elem (point-min))
+	    (setq pos elem))))
+    pos))
 
 (defun c-safe-position (bufpos state)
   ;; Return the closest known safe position higher up than bufpos, or
