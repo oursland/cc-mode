@@ -3899,7 +3899,9 @@ This function does not do any hidden buffer changes."
 		    (setq res t))
 		   ((c-with-syntax-table c-identifier-syntax-table
 		      (looking-at c-known-type-key))
-		    (setq res 'known)))
+		    (setq id-end (match-end 1)
+			  id-range c-last-identifier-range
+			  res 'known)))
 	     (or (not id-end)
 		 (>= (save-excursion
 		       (save-match-data
