@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.296 $
-;; Last Modified:   $Date: 1996-05-30 15:07:02 $
+;; Version:         $Revision: 4.297 $
+;; Last Modified:   $Date: 1996-05-30 19:40:12 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -425,14 +425,6 @@ This hook gets called after a line is indented by the mode.")
 (defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
-
-(defvar c-recognize-knr-p nil		; Emacs version uses t
-  "*If non-nil, `c-mode' and `objc-mode' will recognize K&R constructs.
-This variable is needed because of ambiguities in C syntax that make
-fast recognition of K&R constructs problematic, and slow.  If you are
-coding with ANSI prototypes, set this variable to nil to speed up
-recognition of certain constructs.  By setting this variable to nil, I
-have seen an increase of 20 times under some circumstance.")
 
 (defvar c-progress-interval 5
   "*Interval used to update progress status during long re-indentation.
@@ -1093,6 +1085,9 @@ behavior that users are familiar with.")
    c-protection-key "[ \t]+\\)" c-symbol-key)
   "Regexp describing C++ base classes in a derived class definition.")
 
+(defvar c-recognize-knr-p t
+  "Non-nil means K&R style argument declarations are valid.")
+
 ;; minor mode variables
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
@@ -1284,6 +1279,7 @@ Key bindings:
 	c-class-key c-C++-class-key
 	c-access-key c-C++-access-key
 	c-double-slash-is-comments-p t
+	c-recognize-knr-p nil
 	imenu-generic-expression cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook))
@@ -1362,6 +1358,7 @@ Key bindings:
 	c-method-key c-Java-method-key
 	c-double-slash-is-comments-p t
  	c-baseclass-key nil
+	c-recognize-knr-p nil
  	c-access-key c-Java-access-key)
   (c-set-style "Java")
   (run-hooks 'c-mode-common-hook)
@@ -4007,26 +4004,35 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-syntax 'class-close (c-point 'boi))))
 	   ;; CASE 5G: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
-		 (save-excursion
-		   (c-backward-syntactic-ws lim)
-		   (while (memq (preceding-char) '(?\; ?,))
-		     (beginning-of-line)
-		     (setq placeholder (point))
-		     (c-backward-syntactic-ws lim))
-		   (and (= (preceding-char) ?\))
-			(or (not c-method-key)
-			    (progn
-			      (forward-sexp -1)
-			      (forward-char -1)
-			      (c-backward-syntactic-ws)
-			      (not (or (= (preceding-char) ?-)
-				       (= (preceding-char) ?+)
-				       ;; or a class category
-				       (progn
-					 (forward-sexp -2)
-					 (looking-at c-class-key))
-				       )))))
-		   )
+		 ;; here we essentially use the hack that is used in
+		 ;; Emacs' c-mode.el to limit how far back we should
+		 ;; look.  The assumption is made that argdecls are
+		 ;; indented at least one space and that function
+		 ;; headers are not indented.
+		 (let ((limit (save-excursion
+				(re-search-backward "^[^ \^L\t\n#]" nil 'move)
+				(point))))
+		   (save-excursion
+		     (c-backward-syntactic-ws limit)
+		     (while (and (memq (preceding-char) '(?\; ?,))
+				 (> (point) limit))
+		       (beginning-of-line)
+		       (setq placeholder (point))
+		       (c-backward-syntactic-ws limit))
+		     (and (= (preceding-char) ?\))
+			  (or (not c-method-key)
+			      (progn
+				(forward-sexp -1)
+				(forward-char -1)
+				(c-backward-syntactic-ws)
+				(not (or (= (preceding-char) ?-)
+					 (= (preceding-char) ?+)
+					 ;; or a class category
+					 (progn
+					   (forward-sexp -2)
+					   (looking-at c-class-key))
+					 )))))
+		     ))
 		 (save-excursion
 		   (c-beginning-of-statement-1)
 		   (not (looking-at "typedef[ \t\n]+"))))
@@ -4845,7 +4851,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.296 $"
+(defconst c-version "$Revision: 4.297 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -4970,7 +4976,6 @@ definition and conveniently use this command."
 			     c-hanging-colons-alist
 			     c-hanging-comment-ender-p
 			     c-offsets-alist
-			     c-recognize-knr-p
 			     c-strict-syntax-p
 			     c-tab-always-indent
 			     c-inhibit-startup-warnings-p
