@@ -318,23 +318,31 @@ so that all identifiers are recognized as words.")
   "Regexp that matches the start of a symbol, i.e. any identifier or
 keyword.  It's unspecified how far it matches.  Does not contain a \\|
 operator at the top level."
-  ;; This definition isn't correct for the first character in the
-  ;; languages that accept the full range of Unicode word constituents
-  ;; in identifiers (e.g. Java and Pike).  For that we'd need to make a
-  ;; regexp that matches all characters in the word constituent class
-  ;; except 0-9, and the regexp engine currently can't do that.
-  t    "[_a-zA-Z]"
-  pike "[_a-zA-Z`]")
+  ;; If POSIX char classes are supported (e.g. Emacs 21) then we can
+  ;; do this right, otherwise this definition isn't correct for the
+  ;; first character in the languages that accept the full range of
+  ;; Unicode word constituents in identifiers (e.g. Java and Pike).
+  ;; For that we'd need to make a regexp that matches all characters
+  ;; in the word constituent class except 0-9.
+  t    (if (memq 'posix-char-classes c-emacs-features)
+	   "[[:alpha:]_]"
+	 "[a-zA-Z_]")
+  pike (if (memq 'posix-char-classes c-emacs-features)
+	   "[[:alpha:]_`]"
+	 "[a-zA-Z_`]"))
 (c-lang-defvar c-symbol-start (c-lang-const c-symbol-start))
 
 (c-lang-defconst c-symbol-key
   "Regexp matching identifiers and keywords.  Assumed to match if
 `c-symbol-start' matches on the same position."
-  ;; We cannot use just `word' syntax class since `_' cannot be in
-  ;; word class.  Putting underscore in word class breaks forward word
-  ;; movement behavior that users are familiar with.  Besides, it runs
-  ;; counter to Emacs convention.
-  t    "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
+  t    (if (memq 'posix-char-classes c-emacs-features)
+	   "[[:alpha:]_][[:alnum:]_]*"
+	 ;; We cannot use just `word' syntax class since `_' cannot be
+	 ;; in word class.  Putting underscore in word class breaks
+	 ;; forward word movement behavior that users are familiar
+	 ;; with.  Besides, it runs counter to Emacs convention.  Note
+	 ;; however that `_' got word syntax in font lock code.
+	 "[a-zA-Z_]\\(\\w\\|_\\)*")
   pike (concat (c-lang-const c-symbol-key) "\\|"
 	       (c-make-keywords-re nil
 		 (c-lang-const c-overloadable-operators))))
@@ -350,7 +358,9 @@ It's usually appended to other regexps to avoid matching a prefix.
 It's assumed to not contain any submatchers."
   ;; The same thing regarding Unicode identifiers applies here as to
   ;; `c-symbol-key'.
-  t "[^_a-zA-Z0-9$]")
+  t (if (memq 'posix-char-classes c-emacs-features)
+	"[^[:alnum:]_$]"
+      "[^a-zA-Z0-9_$]"))
 
 (c-lang-defconst c-opt-identifier-concat-key
   "Regexp matching the operators that join symbols to fully qualified
@@ -840,7 +850,7 @@ operators."
 
 (c-lang-defvar c-syntactic-ws-start "[ \n\t\r\v\f#]\\|/[/*]\\|\\\\[\n\r]")
 ;; Regexp matching any sequence that can start syntactic whitespace.
-;; The only uncertain case is '#' when there are cpp directives."
+;; The only uncertain case is '#' when there are cpp directives.
 
 (c-lang-defvar c-syntactic-ws-end "[ \n\t\r\v\f/]")
 ;; Regexp matching any single character that might end syntactic
