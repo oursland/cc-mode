@@ -1,8 +1,7 @@
 EMACS=emacs
 VERSION=`sed -ne 's/^(defconst c-version "\(.*\)"/\1/p' < cc-defs.el`
 
-COREFILES=\
- NEWS \
+ELISPFILES=\
  cc-align.el \
  cc-awk.el \
  cc-bytecomp.el \
@@ -15,8 +14,12 @@ COREFILES=\
  cc-menus.el \
  cc-mode.el \
  cc-styles.el \
- cc-vars.el \
- cc-mode.texi
+ cc-vars.el
+
+COREFILES=\
+ NEWS \
+ cc-mode.texi \
+ $(ELISPFILES)
 
 EXTRAFILES=\
  MANIFEST \
@@ -26,12 +29,16 @@ EXTRAFILES=\
  cc-lobotomy.el \
  cc-fix.el
 
+.SUFFIXES: .el .elc
+
+.el.elc:
+	$(EMACS) -batch -q -no-site-file -f batch-byte-compile $<
+
 all: bytecomp
 
 force:
 
-bytecomp:
-	$(EMACS) -batch -q -no-site-file -f batch-byte-compile cc-*.el
+bytecomp: $(subst .el,.elc,$(ELISPFILES))
 
 derived-mode-ex.elc: force
 	test -f derived-mode-ex.el || ln -s admin/derived-mode-ex.el .
