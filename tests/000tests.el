@@ -207,6 +207,7 @@
     "bracelist-9.c"
     "bracelist-10.java"
     "bracelist-11.cc"
+    "bracelist-12.cc"
     "class-1.cc"
     "class-2.cc"
     "class-3.cc"
