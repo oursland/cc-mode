@@ -352,7 +352,7 @@ This is on the form that fits inside [ ] in a regexp."
 
 (c-lang-defconst c-symbol-key-depth
   ;; Number of regexp grouping parens in `c-symbol-key'.
-  t (c-regexp-opt-depth (c-lang-const c-symbol-key)))
+  t (regexp-opt-depth (c-lang-const c-symbol-key)))
 
 (c-lang-defconst c-nonsymbol-chars
   "This is the set of chars that can't be part of a symbol, i.e. the
@@ -487,29 +487,29 @@ numbers, of which the first that has a match is taken.  It's assumed
 that at least one does when the regexp has matched."
   t    '(0)
   c++  (list (+ (* 3 (c-lang-const c-symbol-key-depth))
-		(* 3 (c-regexp-opt-depth
+		(* 3 (regexp-opt-depth
 		      (c-lang-const c-opt-identifier-concat-key)))
 		8)
 	     (+ (* 2 (c-lang-const c-symbol-key-depth))
-		(* 3 (c-regexp-opt-depth
+		(* 3 (regexp-opt-depth
 		      (c-lang-const c-opt-identifier-concat-key)))
 		7)
 	     (+ (c-lang-const c-symbol-key-depth)
-		(* 2 (c-regexp-opt-depth
+		(* 2 (regexp-opt-depth
 		      (c-lang-const c-opt-identifier-concat-key)))
 		5)
-	     (+ (c-regexp-opt-depth
+	     (+ (regexp-opt-depth
 		 (c-lang-const c-opt-identifier-concat-key))
 		3))
   (idl pike) (list (+ (c-lang-const c-symbol-key-depth)
-		      (* 2 (c-regexp-opt-depth
+		      (* 2 (regexp-opt-depth
 			    (c-lang-const c-opt-identifier-concat-key)))
 		      4)
-		   (+ (c-regexp-opt-depth
+		   (+ (regexp-opt-depth
 		       (c-lang-const c-opt-identifier-concat-key))
 		      2))
   java (list (+ (c-lang-const c-symbol-key-depth)
-		(c-regexp-opt-depth
+		(regexp-opt-depth
 		 (c-lang-const c-opt-identifier-concat-key))
 		4)
 	     1))
@@ -929,7 +929,7 @@ The only uncertain case is '#' when there are cpp directives."
 
 (c-lang-defconst c-syntactic-ws-depth
   ;; Number of regexp grouping parens in `c-syntactic-ws'.
-  t (c-regexp-opt-depth (c-lang-const c-syntactic-ws)))
+  t (regexp-opt-depth (c-lang-const c-syntactic-ws)))
 
 (c-lang-defconst c-nonempty-syntactic-ws
   ;; Regexp matching syntactic whitespace, which is at least one
@@ -942,7 +942,7 @@ The only uncertain case is '#' when there are cpp directives."
 
 (c-lang-defconst c-nonempty-syntactic-ws-depth
   ;; Number of regexp grouping parens in `c-nonempty-syntactic-ws'.
-  t (c-regexp-opt-depth (c-lang-const c-nonempty-syntactic-ws)))
+  t (regexp-opt-depth (c-lang-const c-nonempty-syntactic-ws)))
 
 (c-lang-defconst c-single-line-syntactic-ws
   ;; Regexp matching syntactic whitespace without any line breaks.  As
@@ -956,7 +956,7 @@ The only uncertain case is '#' when there are cpp directives."
 
 (c-lang-defconst c-single-line-syntactic-ws-depth
   ;; Number of regexp grouping parens in `c-single-line-syntactic-ws'.
-  t (c-regexp-opt-depth (c-lang-const c-single-line-syntactic-ws)))
+  t (regexp-opt-depth (c-lang-const c-single-line-syntactic-ws)))
 
 (c-lang-defvar c-syntactic-eol
   ;; Regexp that matches when there is no syntactically significant
@@ -1946,7 +1946,7 @@ match \"(\" if parentheses are valid in type declarations.  The end of
 the first submatch is taken as the end of the operator.  Identifier
 syntax is in effect when this is matched (see `c-identifier-syntax-table')."
   t (if (c-lang-const c-type-modifier-kwds)
-	(concat (c-regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>")
+	(concat (regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>")
       ;; Default to a regexp that never matches.
       "\\<\\>")
   (c objc) (concat "\\("
@@ -1985,7 +1985,7 @@ is in effect when this is matched (see `c-identifier-syntax-table')."
   ;; function argument list parenthesis.
   t    (if (c-lang-const c-type-modifier-kwds)
 	   (concat "\\(\(\\|"
-		   (c-regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>"
+		   (regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>"
 		   "\\)")
 	 "\\(\(\\)")
   (c c++ objc) (concat
@@ -1995,7 +1995,7 @@ is in effect when this is matched (see `c-identifier-syntax-table')."
 		;; "throw" in `c-type-modifier-kwds' is followed by a
 		;; parenthesis list, but no extra measures are
 		;; necessary to handle that.
-		(c-regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>"
+		(regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>"
 		"\\)")
   (java idl) "\\([\[\(]\\)")
 (c-lang-defvar c-type-decl-suffix-key (c-lang-const c-type-decl-suffix-key)

@@ -378,7 +378,7 @@ stuff.  Used on level 1 and higher."
 
   t `(,@(when (c-lang-const c-opt-cpp-prefix)
 	  (let* ((noncontinued-line-end "\\(\\=\\|\\(\\=\\|[^\\]\\)[\n\r]\\)")
-		 (ncle-depth (c-regexp-opt-depth noncontinued-line-end))
+		 (ncle-depth (regexp-opt-depth noncontinued-line-end))
 		 (sws-depth (c-lang-const c-syntactic-ws-depth)))
 	    `(;; The stuff after #error and #warning is a message, so
 	      ;; fontify it as a string.
@@ -470,7 +470,7 @@ stuff.  Used on level 1 and higher."
 		     `((let ((limit (match-end 0)))
 			 (while (re-search-forward
 				 ,(concat "\\<\\("
-					  (c-regexp-opt
+					  (regexp-opt
 					   (c-lang-const c-cpp-defined-fns)
 					   nil)
 					  "\\)\\>"
@@ -618,7 +618,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	    ;; The @interface/@implementation/@protocol directives.
 	    (,(concat "\\<"
-		      (c-regexp-opt
+		      (regexp-opt
 		       '("@interface" "@implementation" "@protocol")
 		       t)
 		      "\\>")
@@ -1739,7 +1739,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		 (concat "\\<\\(" prefix-re "\\)"
 			 "[ \t\n\r\f\v]+"
 			 "\\(" (c-lang-const c-symbol-key) "\\)")
-		 `(,(+ (c-regexp-opt-depth prefix-re) 2)
+		 `(,(+ (regexp-opt-depth prefix-re) 2)
 		   'font-lock-type-face t)
 		 '((c-font-lock-declarators limit t nil)
 		   (save-match-data
@@ -1751,7 +1751,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ,@(when (c-lang-const c-typeless-decl-kwds)
 	  `((,(c-make-font-lock-search-function
 	       (concat "\\<\\("
-		       (c-regexp-opt (c-lang-const c-typeless-decl-kwds))
+		       (regexp-opt (c-lang-const c-typeless-decl-kwds))
 		       "\\)\\>")
 	       '((c-font-lock-declarators limit t nil)
 		 (save-match-data
@@ -1987,7 +1987,7 @@ higher."
 			     "\\("	; identifier-offset
 			     (c-lang-const c-symbol-key)
 			     "\\)")
-		    (list ,(+ (c-regexp-opt-depth c-before-label-re) 2)
+		    (list ,(+ (regexp-opt-depth c-before-label-re) 2)
 			  c-label-face-name nil t))))
 
 	    ;; Fontify normal labels.
@@ -2791,7 +2791,7 @@ need for `pike-font-lock-extra-types'.")
 	  ;; Variable names.
 	  (cons
 	   (concat "\\<"
-		   (c-regexp-opt
+		   (regexp-opt
 		    '("ARGC" "ARGIND" "ARGV" "BINMODE" "CONVFMT" "ENVIRON"
 		      "ERRNO" "FIELDWIDTHS" "FILENAME" "FNR" "FS" "IGNORECASE"
 		      "LINT" "NF" "NR" "OFMT" "OFS" "ORS" "PROCINFO" "RLENGTH"
@@ -2800,7 +2800,7 @@ need for `pike-font-lock-extra-types'.")
 
 	  ;; Special file names.  (acm, 2002/7/22)
 	  ;; The following regexp was created by first evaluating this in GNU Emacs 21.1:
-	  ;; (c-regexp-opt '("/dev/stdin" "/dev/stdout" "/dev/stderr" "/dev/fd/n" "/dev/pid"
+	  ;; (regexp-opt '("/dev/stdin" "/dev/stdout" "/dev/stderr" "/dev/fd/n" "/dev/pid"
 	  ;;                 "/dev/ppid" "/dev/pgrpid" "/dev/user") 'words)
 	  ;; , removing the "?:" from each "\\(?:" (for backward compatibility with older Emacsen)
 	  ;; , replacing the "n" in "dev/fd/n" with "[0-9]+"
@@ -2814,7 +2814,7 @@ std\\(err\\|in\\|out\\)\\|user\\)\\)\\>\
 	    (1 font-lock-variable-name-face t)
 	    (8 font-lock-variable-name-face t t))
 	  ;; Do the same (almost) with
-	  ;; (c-regexp-opt '("/inet/tcp/lport/rhost/rport" "/inet/udp/lport/rhost/rport"
+	  ;; (regexp-opt '("/inet/tcp/lport/rhost/rport" "/inet/udp/lport/rhost/rport"
 	  ;;                 "/inet/raw/lport/rhost/rport") 'words)
 	  ;; This cannot be combined with the above pattern, because the match number
 	  ;; for the (optional) closing \" would then exceed 9.
@@ -2825,7 +2825,7 @@ std\\(err\\|in\\|out\\)\\|user\\)\\)\\>\
 
 	  ;; Keywords.
 	  (concat "\\<"
-		  (c-regexp-opt
+		  (regexp-opt
 		   '("BEGIN" "END" "break" "continue" "delete" "do" "else"
 		     "exit" "for" "getline" "if" "in" "next" "nextfile"
 		     "return" "while")
@@ -2835,7 +2835,7 @@ std\\(err\\|in\\|out\\)\\|user\\)\\)\\>\
 	  `(eval . (list
 		    ,(concat
 		      "\\<"
-		      (c-regexp-opt
+		      (regexp-opt
 		       '("adump" "and" "asort" "atan2" "bindtextdomain" "close"
 			 "compl" "cos" "dcgettext" "exp" "extension" "fflush"
 			 "gensub" "gsub" "index" "int" "length" "log" "lshift"
@@ -2848,7 +2848,7 @@ std\\(err\\|in\\|out\\)\\|user\\)\\)\\>\
 
 	  ;; gawk debugging keywords.  (acm, 2002/7/21)
 	  ;; (Removed, 2003/6/6.  These functions are now fontified as built-ins)
-;;	(list (concat "\\<" (c-regexp-opt '("adump" "stopme") t) "\\>")
+;;	(list (concat "\\<" (regexp-opt '("adump" "stopme") t) "\\>")
 ;;	   0 'font-lock-warning-face)
 
 	  ;; User defined functions with an apparent spurious space before the
