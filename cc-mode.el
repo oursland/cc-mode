@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.339 $
-;; Last Modified:   $Date: 1996-12-24 18:55:10 $
+;; Version:         $Revision: 4.340 $
+;; Last Modified:   $Date: 1996-12-24 19:19:09 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1501,7 +1501,10 @@ For use with the variable `java-mode-hook'."
 	(if (not changed-p)
 	    (progn
 	      (set-buffer-menubar (copy-sequence current-menubar))
-	      (add-menu nil mode-name c-mode-menu)))))
+	      (if (fboundp 'add-submenu)
+		  (add-submenu nil mode-name c-mode-menu)
+		(add-menu nil mode-name c-mode-menu)
+		)))))
   (if (boundp 'mode-popup-menu)
       (setq mode-popup-menu
 	    (cons (concat mode-name " Mode Commands") c-mode-menu)))
@@ -1724,7 +1727,9 @@ global and affect all future `c-mode' buffers."
 	  (if c-hungry-delete-key "/h" nil)))
   ;; updates the modeline for all Emacsen
   (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
-      (force-mode-line-update)
+      (if (boundp 'redraw-modeline)
+	  (redraw-modeline)
+	(force-mode-line-update))
     (set-buffer-modified-p (buffer-modified-p))))
 
 (defun c-calculate-state (arg prevstate)
@@ -5032,7 +5037,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.339 $"
+(defconst c-version "$Revision: 4.340 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5221,8 +5226,7 @@ command to conveniently insert and align the necessary backslashes."
 	      (cons 'c++-access-specifier-offset 'c-offsets-alist)
 	      (cons 'c++-empty-arglist-indent 'c-offsets-alist)
 	      (cons 'c++-comment-only-line-offset 'c-comment-only-line-offset)
-	      (cons 'c++-C-block-comments-indent-p)
-	      (cons 'c-block-comments-indent-p)
+	      (cons 'c++-C-block-comments-indent-p na)
 	      (cons 'c++-cleanup-list 'c-cleanup-list)
 	      (cons 'c++-hanging-braces 'c-hanging-braces-alist)
 	      (cons 'c++-hanging-member-init-colon 'c-hanging-colons-alist)
@@ -5248,6 +5252,7 @@ command to conveniently insert and align the necessary backslashes."
 	      (cons 'c-continued-brace-offset 'c-offsets-alist)
 	      (cons 'c-default-macroize-column 'c-backslash-column)
 	      (cons 'c++-default-macroize-column 'c-backslash-column)
+	      (cons 'c-block-comments-indent-p na)
 	      )))
        (mapcar
 	(function
