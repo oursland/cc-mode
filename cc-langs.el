@@ -137,9 +137,9 @@
 	c-lang-variable-inits-tail c-lang-variable-inits))
 
 (defmacro c-lang-defvar (var val &optional doc)
-  "Declares the buffer local variable VAR to get the value VAL at mode
-initialization, at which point VAL is evaluated.  More accurately, VAL
-is evaluated and bound to VAR when the result from the macro
+  "Declares the buffer local variable VAR to get the value VAL.  VAL is
+evaluated and assigned at mode initialization.  More precisely, VAL is
+evaluated and bound to VAR when the result from the macro
 `c-init-language-vars' is evaluated.
 
 `c-lang-const' is typically used in VAL to get the right value for the
@@ -520,7 +520,9 @@ matches."
 (c-lang-defconst c-identifier-key
   "Regexp matching a fully qualified identifier, like \"A::B::c\" in
 C++.  It does not recognize the full range of syntactic whitespace
-between the tokens; `c-forward-name' has to be used for that."
+between the tokens; `c-forward-name' has to be used for that.  It
+should also not match identifiers containing parenthesis groupings,
+e.g. identifiers with template arguments such as \"A<X,Y>\" in C++."
   ;; This regexp is more complex than strictly necessary to ensure
   ;; that it can be matched with a minimum of backtracking.
   t (concat (if (c-lang-const c-opt-identifier-prefix-key)
