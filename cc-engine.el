@@ -1249,6 +1249,8 @@
 	      (if inclass-p
 		  (progn
 		    (goto-char (aref inclass-p 1))
+		    (or (= (point) (c-point 'boi))
+			(goto-char (aref inclass-p 0)))
 		    (if inextern-p
 			(c-add-syntax 'inextern-lang)
 		      (c-add-syntax 'inclass (c-point 'boi)))))
