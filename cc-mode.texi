@@ -2359,6 +2359,14 @@ better support this style.}.
 @code{c-lineup-math} --- lines up math @code{statement-cont} lines under
 the previous line after the equals sign.
 
+@findex c-lineup-template-args
+@findex lineup-template-args (c-)
+@item
+
+@code{c-lineup-template-args} --- lines up the arguments of a template
+argument list under each other, but only in the case where the first
+argument is on the same line as the opening @code{<}.
+
 @findex c-lineup-ObjC-method-call
 @findex lineup-ObjC-method-call (c-)
 @item
