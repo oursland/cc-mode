@@ -261,7 +261,8 @@ tools (e.g. Javadoc).")
       (goto-char (next-single-property-change (point) 'face nil limit))
       t))
 
-  (defun c-make-simple-font-lock-decl-function (regexp type-submatch pre post)
+  (defun c-make-simple-font-lock-decl-function (regexp type-submatch
+						pre post list types)
     ;; This function makes a byte compiled function that searches for
     ;; REGEXP and fontifies each match outside font locked comments
     ;; and string literals as a declaration.  It works much like an
@@ -274,7 +275,8 @@ tools (e.g. Javadoc).")
     ;; TYPE-SUBMATCH is the submatch in REGEXP that surrounds the
     ;; type.  It can be nil if there's no type to fontify.  PRE is run
     ;; before calling `c-font-lock-declarators' and POST is run
-    ;; afterwards.
+    ;; afterwards.  LIST and TYPES are passed on as the corresponding
+    ;; arguments to `c-font-lock-declarators'.
     ;;
     ;; This function does not do any hidden buffer changes, but the
     ;; generated functions will.  They are however used in places
@@ -298,7 +300,7 @@ tools (e.g. Javadoc).")
 					  'font-lock-type-face)))
 	      ,pre
 	      (save-match-data
-		(c-font-lock-declarators limit t nil))
+		(c-font-lock-declarators limit ,list ,types))
 	      ,post)))
 	nil))))
 
@@ -605,20 +607,52 @@ other easily recognizable things.  Used on level 2 and higher."
 		    (c-lang-const c-identifier-last-sym-match))))
 	    ))
 
+      ;; Fontify the type after "new".
+      ,@(when (c-lang-const c-inexpr-class-kwds)
+	  (let* ((re (c-make-keywords-re nil
+		       (c-lang-const c-inexpr-class-kwds)))
+		 (identifier-offset (+ (c-regexp-opt-depth re)
+				       (c-lang-const c-syntactic-ws-depth)
+				       2)))
+	    `((,(concat
+		 "\\<\\(" re "\\)\\>"
+		 (c-lang-const c-syntactic-ws)
+		 "\\("			; identifier-offset
+		 (c-lang-const c-identifier-key)
+		 "\\)")
+	       ,@(mapcar
+		  (lambda (submatch)
+		    `(,(+ identifier-offset submatch)
+		      font-lock-type-face nil t))
+		  (c-lang-const c-identifier-last-sym-match))))))
+
       ;; Fontify the identifiers inside enum lists.  (The enum type
       ;; name is handled by `c-simple-decl-matchers' or
       ;; `c-complex-decl-matchers' below.
-      ,@(when (c-major-mode-is '(c-mode c++-mode pike-mode))
+      ,@(when (c-lang-const c-brace-list-kwds)
 	  `((,(c-make-simple-font-lock-decl-function
-	       (concat "\\<enum\\>"
-		       ;; Disallow various common punctuation chars
-		       ;; that can't come before the '{' of the enum
-		       ;; list, to avoid searching too far.
-		       "[^\]\[{}();,/#=]*"
-		       "{")
+	       (concat
+		"\\<\\("
+		(c-make-keywords-re nil (c-lang-const c-brace-list-kwds))
+		"\\)\\>"
+		;; Disallow various common punctuation chars that can't come
+		;; before the '{' of the enum list, to avoid searching too far.
+		"[^\]\[{}();,/#=]*"
+		"{")
 	       nil
 	       '(goto-char (match-end 0))
-	       '(goto-char (match-end 0))))))
+	       '(goto-char (match-end 0))
+	       t nil))))
+
+      ;; Fontify the list of exceptions after Java style "throws" etc.
+      ,@(when (c-lang-const c-decl-spec-kwds)
+	  `((,(c-make-simple-font-lock-decl-function
+	       (concat "\\<\\("
+		       (c-make-keywords-re nil (c-lang-const c-decl-spec-kwds))
+		       "\\)\\>")
+	       nil
+	       nil nil
+	       t t))))
       ))
 
 (defun c-font-lock-declarators (limit list types)
@@ -634,6 +668,8 @@ other easily recognizable things.  Used on level 2 and higher."
   (let ((pos (point)) id-start id-end
 	paren-depth
 	id-face got-init
+	;; Turn on fontification on `c-forward-name' and `c-forward-type'.
+	(c-fontify-types-and-refs t)
 	;; The font-lock package in Emacs is known to clobber this.
 	(parse-sexp-lookup-properties t))
 
@@ -1485,7 +1521,8 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		      '(save-match-data
 			 (goto-char (match-end 1))
 			 (c-forward-syntactic-ws))
-		      '(goto-char (match-end 1)))))
+		      '(goto-char (match-end 1))
+		      t nil)))
 
       ;; Fontify types preceded by `c-type-prefix-kwds' and the
       ;; identifiers in the declarations they might start.
@@ -1500,7 +1537,8 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		 '(save-match-data
 		    (goto-char (match-end 2))
 		    (c-forward-syntactic-ws))
-		 '(goto-char (match-end 2)))))))
+		 '(goto-char (match-end 2))
+		 t nil)))))
       ))
 
 (c-lang-defconst c-complex-decl-matchers
@@ -1567,7 +1605,8 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 	       `(goto-char
 		 (match-beginning
 		  ,(1+ (c-lang-const c-single-line-syntactic-ws-depth))))
-	       nil))))
+	       nil
+	       t nil))))
 
       ;; Fontify all declarations and casts.
       c-font-lock-declarations
