@@ -952,11 +952,17 @@ Works with: defun-close, defun-block-intro, block-close,
 brace-list-close, brace-list-intro, statement-block-intro and all in*
 symbols, e.g. inclass and inextern-lang."
   (save-excursion
-    (goto-char (cdr langelem))
-    (back-to-indentation)
-    (if (eq (char-syntax (char-after)) ?\()
-	0
-      c-basic-offset)))
+    (+ (progn
+	 (back-to-indentation)
+	 (if (eq (char-syntax (char-after)) ?\()
+	     c-basic-offset
+	   0))
+       (progn
+	 (goto-char (cdr langelem))
+	 (back-to-indentation)
+	 (if (eq (char-syntax (char-after)) ?\()
+	     0
+	   c-basic-offset)))))
 
 (defun c-lineup-cpp-define (langelem)
   "Line up macro continuation lines according to the indentation of
