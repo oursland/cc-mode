@@ -16,7 +16,7 @@
 ;;   fixed auto-newline for member init list, new var:
 ;;         c++-auto-newline-member-init-p should handle hanging :'s
 ;;   added c++-hungry-delete-key-p
-;;   added c++-toggle-auto-newline function
+;;   added c++-toggle-auto-newline function -- bound to C-cC-t
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -114,7 +114,7 @@
   (define-key c++-mode-map "/" 'electric-c++-slash)
   (define-key c++-mode-map "*" 'electric-c++-star)
   (define-key c++-mode-map ":" 'electric-c++-colon)
-  (define-key c++-mode-map "\C-t" 'c++-toggle-auto-newline)
+  (define-key c++-mode-map "\C-c\C-t" 'c++-toggle-auto-newline)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -274,9 +274,9 @@ if zero."
   (setq c++-auto-newline
 	(cond ((not arg) (not c++-auto-newline))
 	      ((not (zerop (prefix-numeric-value arg))))))
-  (let ((auto (if c++-auto-newline " auto" nil))
+  (let ((auto (if c++-auto-newline "/a" nil))
 	(hungry (if (and c++-hungry-delete-key-p c++-auto-newline)
-		    " hungry" nil)))
+		    "h" nil)))
     (setq mode-name (concat "C++" auto hungry))
     ;; force mode line update
     (set-buffer-modified-p (buffer-modified-p))
