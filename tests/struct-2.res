@@ -1,3 +1,3 @@
-((topmost-intro . 1))
-((inher-cont . 1))
-((class-open . 1))
+((topmost-intro 1))
+((inher-cont 1))
+((class-open 1))
