@@ -673,6 +673,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; token before the region.
   (c-clear-char-properties (point) limit 'c-type)
 
+  ;; Update `c-state-cache' to the beginning of the region.  This will
+  ;; make `c-beginning-of-syntax' go faster when it's used later on,
+  ;; and it's near the point most of the time.
+  (c-parse-state)
+
   nil)
 
 (defun c-font-lock-<>-arglists (limit)
