@@ -1,4 +1,115 @@
-Mon Jan 27 18:55:02 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+Wed Feb 19 23:29:00 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Beta Release 4.372.
+
+Thu Feb 20 04:07:11 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-Java-special-key, c-guess-basic-syntax,
+ 	c-lineup-java-inher): Recognize Java "extends", "implements", and
+ 	"throws" clauses and map them into 'inher-intro, 'inher-cont, and
+ 	'func-decl-cont syntactic symbols.  Do the indentation as
+ 	of Java inheritance lines better.
+
+Tue Feb 18 03:31:57 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi: Change documentation to reflect syntactic symbol
+ 	change from 'ansi-funcdecl-cont to 'func-decl-cont.
+
+	* cc-mode.el (c-offsets-alist): Changed the syntactic symbol
+ 	'ansi-funcdecl-cont to 'func-decl-cont.  This symbol is useful in
+ 	Java throws declarations.
+
+	(c-lineup-java-inher): New function for lining up "implements"
+	continuations (i.e. inheritance in Java).
+
+	(c-style-alist): In "java" style, set 'inher-cont to
+	c-lineup-java-inher.
+
+	(c-Java-class-key): Optional c-protection-key can appear before the
+	"class" keyword.
+
+Thu Feb 13 21:39:38 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-beginning-of-statement-1): First, check for bare
+ 	semi-colon, which is a legal statement but not caught by the more
+ 	intense loop later on.
+
+	* cc-mode.el (c-style-alist): Fixes to "ellemtel" style given by
+ 	Colin Rafferty <craffert@spspme.ml.com>.
+
+	* cc-mode.el (c-beginning-of-statement): Don't use
+ 	forward-sentence when looking at a C block comment start.
+  	c-beginning-of-statement-1 will do the right thing.
+
+Sun Feb  9 07:28:42 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-guess-basic-syntax): CASE 5C: watch for scope operators
+
+	* cc-mode.el (c-lineup-C-comments): Watch out for no leading stars.
+
+Thu Feb  6 19:07:09 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi: Document that c-set-style is bound to `C-c .'
+
+	* cc-mode.el (c-set-style): Add initial contents (the value of
+	c-indentation-style), and history on the style name.
+
+	(c-mode-map): Bind c-set-style on `C-c .'
+
+	* cc-mode.el (c-read-offset, c-read-offset-history): Use
+ 	completing-read, with REQUIRE-MATCH nil, so that offsets can be
+ 	completed when they are function names.  Also implement read
+ 	history.
+
+	* cc-mode.el (c-guess-basic-syntax): CASE 15D: fix infinite loop
+ 	problem in while... clause looking for statement starting at boi,
+ 	when using run-in statement styles.
+
+	* cc-mode.el (cc-imenu-java-generic-expression): New variable for
+	integration of java-mode with imenu.
+
+	(java-mode): Use cc-imenu-java-generic-expression.
+
+	* cc-mode.texi: Describe the use of c-hanging-comment-starter-p and
+	c-hanging-comment-ender-p, as well as the fill-paragraph command.  In
+	the known bugs section, do not recommend using filladapt.
+
+Wed Feb  5 23:50:52 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-hanging-comment-starter-p): New variable,
+ 	analogous to c-hanging-comment-ender-p.
+
+	(c-fill-paragraph): Use c-hanging-comment-starter-p.
+
+Mon Feb  3 16:36:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi: Added a note about c-Java-defun-prompt-regexp in
+ 	the section on performance.
+
+	* cc-mode.el (java-mode): Do not set defun-prompt-regexp to
+ 	c-Java-defun-prompt-regexp.  In the following example, putting
+ 	point on he brace that opens main() and hitting M-C-a will send
+ 	both Emacs 19.34 and XEmacs 19.15 into tight CPU loops.
+
+	-------------------- snip snip --------------------
+	import java.io.*;
+	import java.lang.*;
+
+	class foo
+	{
+	public static void main(String[] args) throws java.io.IOException, java.io.FileNotFoundException
+	    {
+	        FileInputStream bs = new FileInputStream("j.dat");
+	        System.out.println(bs.readLine());
+	    }
+	}
+
+Sun Feb  2 18:11:17 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-guess-basic-syntax):
+	CASE 2: relpos for 'c and 'c++ is now boi.
+
+Mon Jan 27 18:55:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Public Release 4.353
 
@@ -303,11 +414,11 @@ Mon Apr  1 16:12:27 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Public Release 4.282
 
-Tue Feb  6 22:35:36 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Tue Feb  6 22:35:36 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-common-init): typo
 
-Mon Feb  5 15:54:08 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Mon Feb  5 15:54:08 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c++-mode-map, objc-mode-map, java-mode-map):
 	In XEmacs, use set-keymap-parents if it is fboundp.
@@ -315,7 +426,7 @@ Mon Feb  5 15:54:08 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	* cc-mode.el (c-delete-backslash):
 	Sync with old-c-mode.el.  Given by Ben Wing <wing@666.com>.
 
-Mon Jan 22 23:25:21 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Mon Jan 22 23:25:21 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el: Added back autoload cookies.
 
@@ -326,29 +437,29 @@ Mon Jan 22 23:25:21 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	(c-fill-paragraph): Use the paragraph filling regexp suite as
 	determined in c-emacs-features.
 
-Fri Jan 19 18:57:01 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Fri Jan 19 18:57:01 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el:
 	imenu is required in Emacs 19, but doesn't exist in XEmacs
 
 	* cc-mode.el (c-site-default-style): New variable.
 
-Thu Jan 18 23:51:17 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Thu Jan 18 23:51:17 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el:
 	(java-mode, java-syntax-table, java-mode-map, java-mode-abbrev-table):
 	New in support of Java.
 
-Tue Jan 16 00:09:41 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Tue Jan 16 00:09:41 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-common-init): Make comment-multi-line a local variable.
 
-Mon Jan 15 23:56:06 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Mon Jan 15 23:56:06 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-set-style):
 	Conditional up-casing of stylename for backwards compatibility.
 
-Fri Jan 12 02:07:54 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Fri Jan 12 02:07:54 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-backward-to-start-of-do):
 	Eliminate infinite loop in perverse cases.
@@ -358,7 +469,7 @@ Fri Jan 12 02:07:54 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	* cc-mode.el (c-style-alist, c-set-style, c-add-style):
 	All style names are case insensitive, but default to lowercase.
 
-Sat Jan  6 01:08:45 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Sat Jan  6 01:08:45 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (cc-imenu-c++-generic-expression):
 	New variable.  Integrated w/ FSF changes.
@@ -396,7 +507,7 @@ Sat Jan  6 01:08:45 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 
 	(c-offsets-alist): ansi-funcdecl-cont => +
 
-Fri Jan  5 23:14:12 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Fri Jan  5 23:14:12 1996  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-beginning-of-statement-1):
 	Restore old CASE 3 logic -- checking for at a c-conditional-key.
@@ -405,7 +516,7 @@ Fri Jan  5 23:14:12 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	return types. CASE 15D: check for landing on a brace that opens a
 	nested function.
 
-Wed Nov 22 14:55:12 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Wed Nov 22 14:55:12 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	*  (c-beginning-of-statement-1): CASE 3, can't just return t at
            end of let clause since this will break arglist-cont-nonempty
@@ -428,7 +539,7 @@ Wed Nov 22 14:55:12 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	       }
 	   }
 
-Fri Nov 17 22:01:36 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Fri Nov 17 22:01:36 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-offset, c-beginning-of-statement-1):
 	Do not check for c-conditional-key when skipping backwards over
@@ -445,7 +556,7 @@ Fri Nov 17 22:01:36 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	CASE 5H, inclass relpos should be relative to boi of the open
 	brace, not the beginning of the class keyword.
 
-Thu Nov 16 00:20:59 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Thu Nov 16 00:20:59 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-syntax):
 	CASE 5D.5, watch out for c-access-key set to nil, as in this case
@@ -458,21 +569,21 @@ Thu Nov 16 00:20:59 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	        reserved:1,
 	        };
 
-Wed Nov 15 23:38:05 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Wed Nov 15 23:38:05 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-beginning-of-statement, c-end-of-statement):
 	Watch out for c-end-of-statement being called interactively.
 
-Mon Aug 28 20:39:43 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Mon Aug 28 20:39:43 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-guess.el (cc-guess-region):
 	wrap relpos calculation in a save-excursion.
 
-Mon Aug 28 16:57:26 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Mon Aug 28 16:57:26 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* Version 4.241 released.
 
-Mon Aug 21 23:41:21 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Mon Aug 21 23:41:21 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-backslashify-current-line): Obsolete.
 
@@ -485,24 +596,24 @@ Mon Aug 21 23:41:21 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	* cc-mode.el (c-indent-defun): Watch out for point being on the
 	first top-level open brace in the buffer.
 
-Tue Aug  1 22:14:32 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Tue Aug  1 22:14:32 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-copy-tree, c-mapcar-defun): Define functions only
 	available in XEmacs 19.12, or Emacs 19 + lucid.el.
 
-Tue Jul 25 22:27:37 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Tue Jul 25 22:27:37 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-lineup-ObjC-method-call): New implementation
 	better handles 1. indentation of arguments to keyword parameters,
 	2. multiline method calls.
 
-Fri Jul 21 22:08:04 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Fri Jul 21 22:08:04 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.texi (Customizing Indentation): Added a better
 	explanation of the difference between setq and setq-default
 	w.r.t. setting cc-mode indentation variables.
 
-Thu Jul 20 20:19:33 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Thu Jul 20 20:19:33 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-brace): Fixed preservation of
 	no-whitespace before brace.
@@ -514,12 +625,12 @@ Thu Jul 20 20:19:33 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	* cc-mode.el (c-electric-colon): In call to c-lookup-lists, fixed
 	incorrect quoting of symbols in the quoted list.
 
-Mon Jul 10 15:44:55 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Mon Jul 10 15:44:55 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-search-uplist-for-classkey): Watch out for
 	embedded c-class-key keywords.
 
-Mon Jul  3 18:05:33 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Mon Jul  3 18:05:33 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-common-init): Make a deep copy of c-offsets-alist
 	so that changing the buffer-local value in one buffer doesn't
@@ -528,52 +639,52 @@ Mon Jul  3 18:05:33 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 	* cc-mode.el (c-snug-do-while): forward-sexp call could fail;
 	wrap it in a c-safe.
 
-Fri Jun 30 21:42:23 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Fri Jun 30 21:42:23 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c++-mode, objc-mode): comment-multi-line must be nil
 	if // is the default comment style.
 
-Sun Jun 11 18:05:20 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+Sun Jun 11 18:05:20 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode-18.el (c-emacs18-bsws): Installed while loop patch given
 	by "David P. Baker" <dpb@isr.harvard.edu> to fix infinite loops
 	when lim is reached while still inside whitespace.
 
-Sun Jun 11 16:58:39 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Sun Jun 11 16:58:39 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Version 4.222 Released.
 
-Sun Jun 11 18:05:20 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Sun Jun 11 18:05:20 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode-18.el (c-emacs18-bsws):
 	installed while loop patch given by "David P. Baker"
 	<dpb@isr.harvard.edu> to fix infinite loops when lim is reached while
 	still inside whitespace.
 
-Thu Jun  1 16:51:16 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Thu Jun  1 16:51:16 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-hack-state): watch out for null state with 'open brace.
 
-Tue May 30 23:11:57 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Tue May 30 23:11:57 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-outline-level): new function.
 
 	(c-common-init): compatibility with outline-minor-mode.  Given by Per
 	Abrahamsen <abraham@iesd.auc.dk>
 
-Fri May 19 00:15:06 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Fri May 19 00:15:06 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-colon):
 	when adding a newline for a non- `before' -hanging
 	colon, watch out for when they already start on their own line.
 
-Thu May 18 23:49:51 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Thu May 18 23:49:51 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (paragraph-start, paragraph-separate): backed out of the
 	4.191 -> 4.192 change due to breakage in c-fill-paragraph
 	and dabbrev-expand.
 
-Wed May 17 22:51:46 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Wed May 17 22:51:46 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-syntax):
 	CASE 5C: more robust in searching for c-baseclass-key when not
@@ -591,7 +702,7 @@ Wed May 17 22:51:46 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
 	CASE 5D.4: watch out for <> characters in literals.  CASE 5D.5:
 	skip forward over any literals encountered after point.
 
-Mon May  8 23:11:35 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Mon May  8 23:11:35 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-set-style):
 	Ignore case in completion.  Use appropriate mode name in prompt
@@ -602,31 +713,31 @@ Mon May  8 23:11:35 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
 	of prohibiting `#' characters as first non-whitespace char on a
 	line inside another literal (i.e. string or block comment).
 
-Wed May  3 22:52:32 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Wed May  3 22:52:32 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-read-offset): change to have an interface consistent w/
 	switch-to-buffer
 
-Mon May  1 20:31:13 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Mon May  1 20:31:13 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-style-alist):
 	fixed the 'label offset for GNU, K&R, BSD, Stroustrup, and
 	Whitesmith.
 
-Sat Apr 29 00:46:53 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Sat Apr 29 00:46:53 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-mode-map):
 	C-c C-v unbound since it conflicts with OOBR, which has a more
 	useful binding.
 
-Mon Apr 17 16:48:06 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Mon Apr 17 16:48:06 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-lineup-ObjC-method-call): Installed Lele Gaifax
 	<lele@nautilus.eclipse.it> patch as suggested by
 	mccallum@cs.rochester.edu for Objective-C method call indentation
 	styles.
 
-Wed Apr 12 21:02:46 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Wed Apr 12 21:02:46 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (paragraph-start, paragraph-separate):
 	Installed the FSF's patch as explained below:
@@ -647,13 +758,13 @@ Wed Apr 12 21:02:46 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
 	c-hanging-semi&comma-criteria to determine if a newline should be
 	added after a semicolon or comma, instead of hardcoding this logic in.
 
-Mon Apr 10 22:00:28 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Mon Apr 10 22:00:28 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-brace):
 	When hanging a close brace, add just-one-space if there was
 	already whitespace before point.
 
-Fri Mar 31 01:15:07 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Fri Mar 31 01:15:07 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-offsets-alist, c-read-offset, c-set-offset,
 	c-get-offset): added two new offset shortcuts, '* and '/ which
@@ -662,12 +773,12 @@ Fri Mar 31 01:15:07 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
 	* cc-mode.el (c-beginning-of-statement-1):
 	added a new CASE 4 to catch labels just above the current line.
 
-Thu Mar 30 19:00:02 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Thu Mar 30 19:00:02 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-protection-key, c-symbol-key): had to move these before
 	c-baseclass-key which uses them.
 
-Wed Mar 29 23:11:57 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Wed Mar 29 23:11:57 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el:
 	(c-baseclass-key, c-mode, c++-mode, objc-mode, c-guess-basic-syntax):
@@ -675,11 +786,11 @@ Wed Mar 29 23:11:57 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
 	buffer local and it saves one looking-at call in the
 	c-guess-basic-syntax tight loop.
 
-Mon Mar 27 23:18:30 1995  Barry A. Warsaw  <bwarsaw@anthem (Barry A. Warsaw)>
+Mon Mar 27 23:18:30 1995  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-recognize-knr-p): default value is nil for all modes.
 
-Wed Mar 22 16:45:53 1995  Barry Warsaw  <bwarsaw@anthem>
+Wed Mar 22 16:45:53 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el:
 	CC-MODE style has to make a deeper copy of non-atomic lists
@@ -700,7 +811,7 @@ Wed Mar 22 16:45:53 1995  Barry Warsaw  <bwarsaw@anthem>
 	wrap a backward-sexp call in a c-safe to avoid bogus error
 	conditions.
 
-Mon Mar 20 23:58:32 1995  Barry Warsaw  <bwarsaw@anthem>
+Mon Mar 20 23:58:32 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el:
 	Only add the "CC-MODE" style and set the "GNU" style on the first load
@@ -719,7 +830,7 @@ Mon Mar 20 23:58:32 1995  Barry Warsaw  <bwarsaw@anthem>
 	comment-column==nil to control M-; acting like TAB.  The latter
 	behavior was too broken to work correctly.
 
-Mon Mar 13 22:09:46 1995  Barry Warsaw  <bwarsaw@anthem>
+Mon Mar 13 22:09:46 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-mode): setq comment-multi-line to t.
 
@@ -732,7 +843,7 @@ Mon Mar 13 22:09:46 1995  Barry Warsaw  <bwarsaw@anthem>
 	the problem of setq-default at the .emacs top level not doing the
 	expected thing.
 
-Thu Mar  9 21:31:28 1995  Barry Warsaw  <bwarsaw@anthem>
+Thu Mar  9 21:31:28 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-syntax): CASE 5J: Watch out for
 	c-beginning-of-statement-1 leaving us at bob with a following comment.
@@ -773,7 +884,7 @@ Thu Mar  9 21:31:28 1995  Barry Warsaw  <bwarsaw@anthem>
 	desired; 2. Reset the style to "Default" before instituting the new
 	style.  This means all styles derive from the "Default" style.
 
-Sat Mar  4 00:41:01 1995  Barry Warsaw  <bwarsaw@anthem>
+Sat Mar  4 00:41:01 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-comment-only-line-offset):
 	Fixed the docstring to follow current semantics of the variable.
@@ -793,7 +904,7 @@ Sat Mar  4 00:41:01 1995  Barry Warsaw  <bwarsaw@anthem>
 	non-cc-mode-ized modes that rely on BOCM behavior still work
 	(e.g. awk-mode).
 
-Wed Mar  1 21:30:56 1995  Barry Warsaw  <bwarsaw@anthem>
+Wed Mar  1 21:30:56 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-add-style): New command.
 
@@ -805,7 +916,7 @@ Wed Mar  1 21:30:56 1995  Barry Warsaw  <bwarsaw@anthem>
 	added pending-delete and delete-selection properties for proper
 	co-operation with pending-del and delsel modes.
 
-Thu Feb 16 01:38:27 1995  Barry Warsaw  <bwarsaw@anthem>
+Thu Feb 16 01:38:27 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-hack-state):
 	it is legal for cdr to be nil when 'close brace is
@@ -816,7 +927,7 @@ Thu Feb 16 01:38:27 1995  Barry Warsaw  <bwarsaw@anthem>
 	colon after access specifiers.  Also, some people might use macros for
 	PRIVATE and PROTECTED, and these also don't have trailing colons.
 
-Wed Feb 15 15:38:37 1995  Barry Warsaw  <bwarsaw@anthem>
+Wed Feb 15 15:38:37 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-brace):
 	when ACTION is a function, the second argument is
@@ -826,45 +937,45 @@ Wed Feb 15 15:38:37 1995  Barry Warsaw  <bwarsaw@anthem>
 
 	(c-hanging-braces-alist): update docstring to new callout semantics.
 
-Tue Feb 14 19:54:50 1995  Barry Warsaw  <bwarsaw@anthem>
+Tue Feb 14 19:54:50 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-beginning-of-statement-1):
 	when looking for an else-if clause,
 	watch out for #else gotchas.
 
-Mon Feb 13 23:14:51 1995  Barry Warsaw  <bwarsaw@anthem>
+Mon Feb 13 23:14:51 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-syntax):
 	CASE 5D.3: syntactic symbol should be
 	'inher-cont instead of 'inher-cont-1.
 
-Wed Feb  8 22:52:15 1995  Barry Warsaw  <bwarsaw@anthem>
+Wed Feb  8 22:52:15 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-brace):
 	In punt section, nil out the syntax cache too,
 	since its out-of-date.
 
-Tue Feb  7 17:38:42 1995  Barry Warsaw  <bwarsaw@anthem>
+Tue Feb  7 17:38:42 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-brace):
 	When hanging the brace, figure out when to punt
 	and recalculate the entire state.
 
-Mon Feb  6 17:07:45 1995  Barry Warsaw  <bwarsaw@anthem>
+Mon Feb  6 17:07:45 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-whack-state): New function.
 
 	(c-electric-brace): use c-whack-state to adjust state when inserting
 	hanging closing braces.
 
-Thu Feb  2 16:49:21 1995  Barry Warsaw  <bwarsaw@anthem>
+Thu Feb  2 16:49:21 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-adjust-state): New function
 
 	(c-electric-brace): make sure state is adjusted when preceding lines
 	are re-indented via c-indent-line.
 
-Mon Jan 30 16:49:10 1995  Barry Warsaw  <bwarsaw@anthem>
+Mon Jan 30 16:49:10 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-safe-position):
 	takes a buffer position and a state list since it
@@ -877,7 +988,7 @@ Mon Jan 30 16:49:10 1995  Barry Warsaw  <bwarsaw@anthem>
 	c-b-o-s-1, lim must be higher in buffer than containing-sexp, so call
 	c-safe-position to find this position.
 
-Wed Jan 18 15:47:11 1995  Barry Warsaw  <bwarsaw@anthem>
+Wed Jan 18 15:47:11 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-brace):
 	When c-auto-newline is nil, no newlines or
@@ -887,7 +998,7 @@ Wed Jan 18 15:47:11 1995  Barry Warsaw  <bwarsaw@anthem>
 	CASE 9D: after-cond-placeholder can be nil,
 	tripping up (max ...).
 
-Tue Jan 17 14:52:02 1995  Barry Warsaw  <bwarsaw@anthem>
+Tue Jan 17 14:52:02 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-syntax): CASE 15D: safepos should be
 	c-most-enclosing-brace of fullstate.  This could potentially be
@@ -898,7 +1009,7 @@ Tue Jan 17 14:52:02 1995  Barry Warsaw  <bwarsaw@anthem>
 	case, use (c-safe-position state) as the most enclosing known safe
 	buffer position.
 
-Mon Jan 16 23:55:43 1995  Barry Warsaw  <bwarsaw@anthem>
+Mon Jan 16 23:55:43 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-syntax): CASE 9D: Kludged fix for
 	c-beginning-of-statement-1 possibly leaving us at a buffer position
@@ -910,7 +1021,7 @@ Mon Jan 16 23:55:43 1995  Barry Warsaw  <bwarsaw@anthem>
 	characters, point is inside a literal.  Point in a literal, is not
 	considered safe.
 
-Wed Jan  4 23:57:11 1995  Barry Warsaw  <bwarsaw@anthem>
+Wed Jan  4 23:57:11 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-snug-do-while):
 	Watch out for non-hanging open brace on `do'.
@@ -925,13 +1036,13 @@ Wed Jan  4 23:57:11 1995  Barry Warsaw  <bwarsaw@anthem>
 	'supersede properties for proper "delete-erases-current-selection"
 	behavior.
 
-Wed Dec 28 16:05:02 1994  Barry Warsaw  <bwarsaw@anthem>
+Wed Dec 28 16:05:02 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-indent-exp):
 	Don't try to call c-progress-fini if c-progress-init
 	was never called (i.e. due to error having been signaled).
 
-Wed Dec 21 00:28:24 1994  Barry Warsaw  <bwarsaw@anthem>
+Wed Dec 21 00:28:24 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-brace):
 	If the temporary newline must be deleted (because
@@ -946,7 +1057,7 @@ Wed Dec 21 00:28:24 1994  Barry Warsaw  <bwarsaw@anthem>
 	'block-close be 'c-snug-do-while by default.  There is no more need
 	for the 'snug-do-while cleanup.
 
-Tue Dec 20 23:51:52 1994  Barry Warsaw  <bwarsaw@anthem>
+Tue Dec 20 23:51:52 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-electric-brace):
 	In updating the cache during the 'before section,
@@ -956,7 +1067,7 @@ Tue Dec 20 23:51:52 1994  Barry Warsaw  <bwarsaw@anthem>
 	c-hanging-braces-alist.  Also, fix state cache during re-indentation
 	of preceding line when 'before newline is added.
 
-Mon Dec 19 23:30:47 1994  Barry Warsaw  <bwarsaw@anthem>
+Mon Dec 19 23:30:47 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-intersect-lists, c-lookup-lists): New functions.
 
@@ -981,20 +1092,20 @@ Mon Dec 19 23:30:47 1994  Barry Warsaw  <bwarsaw@anthem>
 	c-beginning-of-statement-1, c-guess-basic-syntax):
 	Jumbo Lele Gaifax Objective-C patch.
 
-Fri Dec 16 15:41:05 1994  Barry Warsaw  <bwarsaw@anthem>
+Fri Dec 16 15:41:05 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-syntax):
 	CASE 10: watch out for false else clauses
 	(e.g. else_thing).
 
-Wed Dec 14 23:11:59 1994  Barry Warsaw  <bwarsaw@anthem>
+Wed Dec 14 23:11:59 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-postprocess-file-styles):
 	Renamed from c-find-file-hook.  Hang this
 	off of hack-local-variables-hooks, which won't be supported until
 	future Emacs 19's.
 
-Tue Dec 13 23:58:48 1994  Barry Warsaw  <bwarsaw@anthem>
+Tue Dec 13 23:58:48 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-beginning-of-statement-1): Watch out for lim!
 
@@ -1009,7 +1120,7 @@ Tue Dec 13 23:58:48 1994  Barry Warsaw  <bwarsaw@anthem>
 	particular line doesn't have to be completely recalculated 4 times for
 	every brace insertion.
 
-Mon Dec 12 20:20:49 1994  Barry Warsaw  <bwarsaw@anthem>
+Mon Dec 12 20:20:49 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-inside-bracelist-p):
 	Fixed aggregate logic w.r.t. failures in
@@ -1019,7 +1130,7 @@ Mon Dec 12 20:20:49 1994  Barry Warsaw  <bwarsaw@anthem>
 	Order of magnitude improvement in performance
 	by eliminating often costly calls to c-backward-syntactic-ws.
 
-Fri Dec  9 23:39:31 1994  Barry Warsaw  <bwarsaw@anthem>
+Fri Dec  9 23:39:31 1994  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-inside-bracelist-p):
 	Special case speed up for when most enclosing
