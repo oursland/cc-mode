@@ -330,47 +330,73 @@ contexts are:
 
 (defcustom-c-stylevar c-cleanup-list '(scope-operator)
   "*List of various C/C++/ObjC constructs to \"clean up\".
-These clean ups only take place when the auto-newline feature is
-turned on, as evidenced by the `/a' or `/ah' appearing next to the
-mode name.  Valid symbols are:
+The following clean ups only take place when the auto-newline feature
+is turned on, as evidenced by the `/a' or `/ah' appearing next to the
+mode name:
 
- brace-else-brace    -- cleans up `} else {' constructs by placing entire
-                        construct on a single line.  This clean up
-                        only takes place when there is nothing but
+ brace-else-brace    -- Clean up \"} else {\" constructs by placing
+                        entire construct on a single line.  This clean
+                        up only takes place when there is nothing but
                         white space between the braces and the `else'.
                         Clean up occurs when the open brace after the
                         `else' is typed.
- brace-elseif-brace  -- similar to brace-else-brace, but cleans up
-                        `} else if (...) {' constructs.  Clean up occurs
-                        after the open parenthesis and the open brace.
- brace-catch-brace   -- similar to brace-elseif-brace, but cleans up
-                        `} catch (...) {' constructs.
- empty-defun-braces  -- cleans up empty defun braces by placing the
+ brace-elseif-brace  -- Similar to brace-else-brace, but clean up
+                        \"} else if (...) {\" constructs.  Clean up
+                        occurs after the open parenthesis and the open
+                        brace.
+ brace-catch-brace   -- Similar to brace-elseif-brace, but clean up
+                        \"} catch (...) {\" constructs.
+ empty-defun-braces  -- Clean up empty defun braces by placing the
                         braces on the same line.  Clean up occurs when
 			the defun closing brace is typed.
- defun-close-semi    -- cleans up the terminating semi-colon on defuns
+ defun-close-semi    -- Clean up the terminating semi-colon on defuns
 			by placing the semi-colon on the same line as
 			the closing brace.  Clean up occurs when the
 			semi-colon is typed.
- list-close-comma    -- cleans up commas following braces in array
+ list-close-comma    -- Clean up commas following braces in array
                         and aggregate initializers.  Clean up occurs
 			when the comma is typed.
- scope-operator      -- cleans up double colons which may designate
+ scope-operator      -- Clean up double colons which may designate
 			a C++ scope operator split across multiple
-			lines. Note that certain C++ constructs can
+			lines.  Note that certain C++ constructs can
 			generate ambiguous situations.  This clean up
 			only takes place when there is nothing but
-			whitespace between colons. Clean up occurs
-			when the second colon is typed."
+			whitespace between colons.  Clean up occurs
+			when the second colon is typed.
+
+The following clean ups always take place when they are on this list,
+regardless of the auto-newline feature, since they typically don't
+involve auto-newline inserted newlines:
+
+ space-before-funcall -- Insert exactly one space before the opening
+                        parenthesis of a function call.  Clean up
+                        occurs when the opening parenthesis is typed.
+ compact-empty-funcall -- Clean up any space before the opening
+                        parenthesis of a function call if and only if
+                        it's empty.  This is typically useful together
+                        with `space-before-funcall' to get the style
+                        \"foo (bar)\" and \"foo()\".  Clean up occurs
+                        when the closing parenthesis is typed."
   :type '(set
 	  :extra-offset 8
-	  (const :tag "Put `} else {' on one line" brace-else-brace)
-	  (const :tag "Put `} else if (...) {' on one line" brace-elseif-brace)
-	  (const :tag "Put `} catch (...) {' on one line" brace-catch-brace)
-	  (const :tag "Put empty defun braces on one line" empty-defun-braces)
-	  (const :tag "Put `};' ending defuns on one line" defun-close-semi)
-	  (const :tag "Put `},' in aggregates on one line" list-close-comma)
-	  (const :tag "Put C++ style `::' on one line" scope-operator))
+	  (const :tag "Put \"} else {\" on one line"
+		 brace-else-brace)
+	  (const :tag "Put \"} else if (...) {\" on one line"
+		 brace-elseif-brace)
+	  (const :tag "Put \"} catch (...) {\" on one line"
+		 brace-catch-brace)
+	  (const :tag "Put empty defun braces on one line"
+		 empty-defun-braces)
+	  (const :tag "Put \"};\" ending defuns on one line"
+		 defun-close-semi)
+	  (const :tag "Put \"},\" in aggregates on one line"
+		 list-close-comma)
+	  (const :tag "Put C++ style \"::\" on one line"
+		 scope-operator)
+	  (const :tag "Put a space before funcall parens, e.g. \"foo (bar)\""
+		 space-before-funcall)
+	  (const :tag "Remove space before empty funcalls, e.g. \"foo()\""
+		 compact-empty-funcall))
   :group 'c)
 
 (defcustom-c-stylevar c-hanging-braces-alist '((brace-list-open)

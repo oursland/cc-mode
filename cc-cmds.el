@@ -700,6 +700,28 @@ parenthesis, the parenthesis is inserted inside a literal, or
 		  (insert "} catch (")))
 	    (goto-char (- (point-max) pos))
 	    ))
+	(let (beg (end (1- (point))))
+	  (cond ((and (memq 'space-before-funcall c-cleanup-list)
+		      (eq last-command-char ?\()
+		      (save-excursion
+			(backward-char)
+			(skip-chars-backward " \t")
+			(setq beg (point))
+			(c-on-identifier)))
+		 (save-excursion
+		   (delete-region beg end)
+		   (goto-char beg)
+		   (insert " ")))
+		((and (memq 'compact-empty-funcall c-cleanup-list)
+		      (eq last-command-char ?\))
+		      (save-excursion
+			(c-safe (backward-char 2))
+			(when (looking-at "()")
+			  (setq end (point))
+			  (skip-chars-backward " \t")
+			  (setq beg (point))
+			  (c-on-identifier))))
+		 (delete-region beg end))))
 	(if old-blink-paren
 	    (funcall old-blink-paren))))))
 
