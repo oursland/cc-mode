@@ -1762,7 +1762,7 @@ Note that Java specific rules are currently applied to tell this from
 	    alist (cdr alist))
       (setplist (intern kwd obarray)
 		;; Emacs has an odd bug that causes `mapcan' to fail
-		;; with unintelligible errors.  (XEmacs >= 20 works.)
+		;; with unintelligible errors.  (XEmacs works.)
 		;;(mapcan (lambda (lang-const)
 		;;	      (list lang-const t))
 		;;	    lang-const-list)

@@ -53,9 +53,9 @@
 (cc-bytecomp-defvar mark-active)	; Emacs
 (cc-bytecomp-defvar deactivate-mark)	; Emacs
 (cc-bytecomp-defvar inhibit-point-motion-hooks) ; Emacs
-(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
+(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs
 (cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
-(cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
+(cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs
 (cc-bytecomp-defun string-to-syntax)	; Emacs 21
 
 
@@ -816,18 +816,14 @@ This function does not do any hidden buffer changes."
 
 (defsubst c-mark-<-as-paren (pos)
   ;; Mark the "<" character at POS as an sexp list opener using the
-  ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
-  ;; doesn't support syntax properties, so this function might not
-  ;; have any effect.
+  ;; syntax-table property.
   (c-put-char-property pos 'syntax-table c-<-as-paren-syntax))
 
 (defconst c->-as-paren-syntax '(5 . ?<))
 
 (defsubst c-mark->-as-paren (pos)
   ;; Mark the ">" character at POS as an sexp list closer using the
-  ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
-  ;; doesn't support syntax properties, so this function might not
-  ;; have any effect.
+  ;; syntax-table property.
   (c-put-char-property pos 'syntax-table c->-as-paren-syntax))
 
 (defsubst c-intersect-lists (list alist)

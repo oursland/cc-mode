@@ -91,9 +91,8 @@
 (cc-require 'cc-align)
 (cc-require 'cc-menus)
 
-;; SILENCE the compiler.
-(cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
-(cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs 20+
+;; Silence the compiler.
+(cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs
 (cc-bytecomp-defun set-keymap-parents)	; XEmacs
 
 ;; We set these variables during mode init, yet we don't require
@@ -189,7 +188,7 @@ more info."
 (defun c-define-abbrev-table (name defs)
   ;; Compatibility wrapper for `define-abbrev' which passes a non-nil
   ;; sixth argument for SYSTEM-FLAG in emacsen that support it
-  ;; (currently only Emacs 21.2).
+  ;; (currently only Emacs >= 21.2).
   (let ((table (or (symbol-value name)
 		   (progn (define-abbrev-table name nil)
 			  (symbol-value name)))))
@@ -266,9 +265,9 @@ more info."
   (define-key c-mode-base-map "\C-d" 'c-electric-delete-forward)
   (define-key c-mode-base-map "\177" 'c-electric-backspace)
   (when (boundp 'delete-key-deletes-forward)
-    ;; In XEmacs 20 and later we fix the forward and backward deletion
-    ;; behavior by binding the keysyms for the [delete] and
-    ;; [backspace] keys directly, and use `delete-forward-p' or
+    ;; In XEmacs we fix the forward and backward deletion behavior by
+    ;; binding the keysyms for the [delete] and [backspace] keys
+    ;; directly, and use `delete-forward-p' or
     ;; `delete-key-deletes-forward' to decide what [delete] should do.
     (define-key c-mode-base-map [delete]    'c-electric-delete)
     (define-key c-mode-base-map [backspace] 'c-electric-backspace))
@@ -364,6 +363,7 @@ that requires a literal mode spec at compile time."
   (make-local-variable 'comment-end)
   (make-local-variable 'comment-start-skip)
   (make-local-variable 'comment-multi-line)
+  (make-local-variable 'comment-line-break-function)
   (make-local-variable 'paragraph-start)
   (make-local-variable 'paragraph-separate)
   (make-local-variable 'paragraph-ignore-fill-prefix)
@@ -375,7 +375,8 @@ that requires a literal mode spec at compile time."
 	indent-line-function 'c-indent-line
 	indent-region-function 'c-indent-region
 	normal-auto-fill-function 'c-do-auto-fill
-	comment-multi-line t)
+	comment-multi-line t
+	comment-line-break-function 'c-indent-new-comment-line)
 
   ;; Install `c-fill-paragraph' on `fill-paragraph-function' so that a
   ;; direct call to `fill-paragraph' behaves better.  This still
@@ -383,18 +384,12 @@ that requires a literal mode spec at compile time."
   (make-local-variable 'fill-paragraph-function)
   (setq fill-paragraph-function 'c-fill-paragraph)
 
-  ;; (X)Emacs 20 and later.
-  (when (boundp 'comment-line-break-function)
-    (make-local-variable 'comment-line-break-function)
-    (setq comment-line-break-function
-	  'c-indent-new-comment-line))
-
-  ;; Emacs 20 and later.
+  ;; Emacs.
   (when (boundp 'parse-sexp-lookup-properties)
     (make-local-variable 'parse-sexp-lookup-properties)
     (setq parse-sexp-lookup-properties t))
 
-  ;; Same as above for XEmacs 21 (although currently undocumented).
+  ;; Same as above for XEmacs.
   (when (boundp 'lookup-syntax-properties)
     (make-local-variable 'lookup-syntax-properties)
     (setq lookup-syntax-properties t))

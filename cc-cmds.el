@@ -45,9 +45,8 @@
 (cc-require 'cc-engine)
 
 ;; Silence the compiler.
-(cc-bytecomp-defvar delete-key-deletes-forward) ; XEmacs 20+
-(cc-bytecomp-defun delete-forward-p)	; XEmacs 21+
-(cc-bytecomp-obsolete-fun insert-and-inherit) ; Marked obsolete in XEmacs 19
+(cc-bytecomp-defvar delete-key-deletes-forward) ; XEmacs
+(cc-bytecomp-defun delete-forward-p)	; XEmacs
 (cc-bytecomp-defvar filladapt-mode)	; c-fill-paragraph contains a kludge
 					; which looks at this.
 
@@ -394,22 +393,18 @@ See also \\[c-hungry-backspace]."
 This function either deletes forward as `c-electric-delete-forward' or
 backward as `c-electric-backspace', depending on the configuration:
 
-If the function `delete-forward-p' is defined (XEmacs 21) and returns
-non-nil, it deletes forward.  Else, if the variable
-`delete-key-deletes-forward' is defined (XEmacs 20) and is set to
-non-nil, it deletes forward.  Otherwise it deletes backward.
+If the function `delete-forward-p' is defined and returns non-nil, it
+deletes forward.  Otherwise it deletes backward.
 
-Note: This is the way in XEmacs 20 and later to choose the correct
-action for the [delete] key, whichever key that means.  In other
-flavors this function isn't used, instead it's left to the user to
-bind [delete] to either \\[c-electric-delete-forward] or \\[c-electric-backspace] as appropriate
-\(the keymap `function-key-map' is useful for that).  Emacs 21 handles
-that automatically, though."
+Note: This is the way in XEmacs to choose the correct action for the
+\[delete] key, whichever key that means.  In other flavors this
+function isn't used, instead it's left to the user to bind \[delete]
+to either \\[c-electric-delete-forward] or \\[c-electric-backspace] as
+appropriate \(the keymap `function-key-map' is useful for that).
+Emacs 21 handles that automatically, though."
   (interactive "*P")
-  (if (or (and (fboundp 'delete-forward-p) ;XEmacs 21
-	       (delete-forward-p))
-	  (and (boundp 'delete-key-deletes-forward) ;XEmacs 20
-	       delete-key-deletes-forward))
+  (if (and (fboundp 'delete-forward-p)
+	   (delete-forward-p))
       (c-electric-delete-forward arg)
     (c-electric-backspace arg)))
 

@@ -955,7 +955,7 @@ This function does not do any hidden buffer changes."
       (backward-char))
 
     (if (bobp)
-	;; Some emacsen (e.g. Emacs 19.34) return t when moving
+	;; Some emacsen (e.g. XEmacs 21.4) return t when moving
 	;; backwards at bob.
 	nil
 
@@ -990,7 +990,7 @@ This function does not do any hidden buffer changes."
 
   (let ((start (point)))
     (while (and
-	    ;; `forward-comment' in some emacsen (e.g. Emacs 19.34)
+	    ;; `forward-comment' in some emacsen (e.g. XEmacs 21.4)
 	    ;; return t when moving backwards at bob.
 	    (not (bobp))
 

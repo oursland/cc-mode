@@ -43,33 +43,11 @@
 (cc-require 'cc-defs)
 
 ;; Silence the compiler.
-(cc-bytecomp-defun get-char-table)	; XEmacs 20+
-(cc-bytecomp-defun char-table-range)	; Emacs 19+
-(cc-bytecomp-defun char-table-p)	; Emacs 19+, XEmacs 20+
+(cc-bytecomp-defun get-char-table)	; XEmacs
 
-;; Pull in custom if it exists and is recent enough (the one in Emacs
-;; 19.34 isn't).
-(eval
- (cc-eval-when-compile
-   (condition-case nil
-       (progn
-	 (require 'custom)
-	 (or (fboundp 'defcustom) (error ""))
-	 (require 'widget)
-	 '(progn			; Compile in the require's.
-	    (require 'custom)
-	    (require 'widget)))
-     (error
-      (message "Warning: Compiling without Customize support \
-since a (good enough) custom library wasn't found")
-      (cc-bytecomp-defmacro define-widget (name class doc &rest args))
-      (cc-bytecomp-defmacro defgroup (symbol members doc &rest args))
-      (cc-bytecomp-defmacro defcustom (symbol value doc &rest args)
-	`(defvar ,symbol ,value ,doc))
-      (cc-bytecomp-defmacro custom-declare-variable (symbol value doc
-						     &rest args)
-	`(defvar ,(eval symbol) ,(eval value) ,doc))
-      nil))))
+(cc-eval-when-compile
+  (require 'custom)
+  (require 'widget))
 
 (cc-eval-when-compile
   ;; Need the function form of `backquote', which isn't standardized
@@ -1375,11 +1353,8 @@ working due to this change.")
   :args '((const :tag "none" nil)
 	  (repeat :tag "types" regexp)))
 
-(eval-and-compile
-  ;; XEmacs 19 evaluates this at compile time below, while most other
-  ;; versions delays the evaluation until the package is loaded.
-  (defun c-make-font-lock-extra-types-blurb (mode1 mode2 example)
-    (concat "\
+(defun c-make-font-lock-extra-types-blurb (mode1 mode2 example)
+  (concat "\
 *List of extra types (aside from the type keywords) to recognize in "
 mode1 " mode.
 Each list item should be a regexp matching a single identifier.
@@ -1396,7 +1371,7 @@ initialized.  If you change it later you have to reinitialize CC Mode
 by doing \\[" mode2 "].
 
 Despite the name, this variable is not only used for font locking but
-also elsewhere in CC Mode to tell types from other identifiers.")))
+also elsewhere in CC Mode to tell types from other identifiers."))
 
 ;; Note: Most of the variables below are also defined in font-lock.el
 ;; in older versions in Emacs, so depending on the load order we might
@@ -1550,24 +1525,21 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 	;; I've no idea what this actually is, but it's legacy. /mast
 	(setq list (cons 'infodock list)))
 
-    ;; XEmacs 19 and beyond use 8-bit modify-syntax-entry flags.
-    ;; Emacs 19 uses a 1-bit flag.  We will have to set up our
+    ;; XEmacs uses 8-bit modify-syntax-entry flags.
+    ;; Emacs uses a 1-bit flag.  We will have to set up our
     ;; syntax tables differently to handle this.
     (let ((table (copy-syntax-table))
 	  entry)
       (modify-syntax-entry ?a ". 12345678" table)
       (cond
-       ;; XEmacs 19, and beyond Emacs 19.34
+       ;; Emacs
        ((arrayp table)
 	(setq entry (aref table ?a))
 	;; In Emacs, table entries are cons cells
 	(if (consp entry) (setq entry (car entry))))
-       ;; XEmacs 20
-       ((fboundp 'get-char-table) (setq entry (get-char-table ?a table)))
-       ;; before and including Emacs 19.34
-       ((and (fboundp 'char-table-p)
-	     (char-table-p table))
-	(setq entry (car (char-table-range table [?a]))))
+       ;; XEmacs
+       ((fboundp 'get-char-table)
+	(setq entry (get-char-table ?a table)))
        ;; incompatible
        (t (error "CC Mode is incompatible with this version of Emacs")))
       (setq list (cons (if (= (logand (lsh entry -16) 255) 255)

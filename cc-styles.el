@@ -342,19 +342,9 @@ when used elsewhere."
    (list (let ((completion-ignore-case t)
 	       (prompt (format "Which %s indentation style? "
 			       mode-name)))
-	   (condition-case nil
-	       ;; The default argument is preferred over
-	       ;; initial-contents, but it only exists in Emacs >= 20
-	       ;; and XEmacs >= 21.
-	       (completing-read prompt c-style-alist nil t nil
-				'c-set-style-history
-				c-indentation-style)
-	     (wrong-number-of-arguments
-	      ;; If the call above failed, we fall back to the old way
-	      ;; of specifying the default value.
-	      (completing-read prompt c-style-alist nil t
-			       (cons c-indentation-style 0)
-			       'c-set-style-history))))))
+	   (completing-read prompt c-style-alist nil t nil
+			    'c-set-style-history
+			    c-indentation-style))))
   (c-initialize-builtin-style)
   (let ((vars (c-get-style-variables stylename nil)))
     (unless dont-override
@@ -509,7 +499,7 @@ variables."
 			      "\\)")
 		    "")))
     (when (boundp 'adaptive-fill-first-line-regexp)
-      ;; XEmacs (20.x) adaptive fill mode doesn't have this.
+      ;; XEmacs adaptive fill mode doesn't have this.
       (make-local-variable 'adaptive-fill-first-line-regexp)
       (setq adaptive-fill-first-line-regexp
 	    (concat "\\`" comment-line-prefix

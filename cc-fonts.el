@@ -30,8 +30,8 @@
 
 ;; Some comments on the use of faces:
 ;;
-;; o  `c-label-face-name' is either `font-lock-constant-face' (in Emacs
-;;    20 and later), or `font-lock-reference-face'.
+;; o  `c-label-face-name' is either `font-lock-constant-face' (in
+;;    Emacs), or `font-lock-reference-face'.
 ;;
 ;; o  `c-constant-face-name', `c-reference-face-name' and
 ;;    `c-doc-markup-face-name' are essentially set up like
@@ -46,10 +46,6 @@
 ;;    `font-lock-comment-face' in older Emacs (that since source
 ;;    documentation are actually comments in these languages, as opposed
 ;;    to elisp).
-;;
-;; o  `c-invalid-face-name' is `font-lock-warning-face' in Emacs.  In
-;;    older XEmacs there's no corresponding standard face, so there
-;;    it's mapped to a special `c-invalid-face'.
 ;;
 ;; TBD: We should probably provide real faces for the above uses and
 ;; instead initialize them from the standard faces.
@@ -107,13 +103,6 @@
 (cc-bytecomp-defun c-font-lock-objc-method)
 (cc-bytecomp-defun c-font-lock-invalid-string)
 
-;; Emacs 19 doesn't have `defface'.  This "replacement" leaves a lot
-;; to be wished for but at least it avoids any errors.
-(cc-eval-when-compile
-  (or (fboundp 'defface)
-      (cc-bytecomp-defmacro defface (face spec doc &rest args)
-	`(make-face ',face))))
-
 
 ;; Note that font-lock in XEmacs doesn't expand face names as
 ;; variables, so we have to use the (eval . FORM) in the font lock
@@ -124,8 +113,8 @@
 	 ;; XEmacs has a font-lock-preprocessor-face.
 	 'font-lock-preprocessor-face)
 	((c-face-name-p 'font-lock-builtin-face)
-	 ;; In Emacs 20 and later font-lock-builtin-face has
-	 ;; traditionally been used for preprocessor directives.
+	 ;; In Emacs font-lock-builtin-face has traditionally been
+	 ;; used for preprocessor directives.
 	 'font-lock-builtin-face)
 	(t
 	 'font-lock-reference-face)))
@@ -150,17 +139,16 @@
 (defconst c-constant-face-name
   (if (and (c-face-name-p 'font-lock-constant-face)
 	   (eq font-lock-constant-face 'font-lock-constant-face))
-      ;; This doesn't exist in XEmacs <= 20 and some earlier versions
-      ;; of XEmacs 21.
+      ;; This doesn't exist in some earlier versions of XEmacs 21.
       'font-lock-constant-face
     c-label-face-name))
 
 (defconst c-reference-face-name
   (if (and (c-face-name-p 'font-lock-reference-face)
 	   (eq font-lock-reference-face 'font-lock-reference-face))
-      ;; This is considered obsolete in Emacs 20 and later, but it
-      ;; still maps well to this use.  (Another reason to do this is
-      ;; to get unique faces for the test suite.)
+      ;; This is considered obsolete in Emacs, but it still maps well
+      ;; to this use.  (Another reason to do this is to get unique
+      ;; faces for the test suite.)
       'font-lock-reference-face
     c-label-face-name))
 
@@ -184,22 +172,6 @@
 	 'font-lock-doc-markup-face
     c-label-face-name))
 
-(defconst c-invalid-face-name
-  (if (c-face-name-p 'font-lock-warning-face)
-      ;; Emacs >= 20 and XEmacs >= 21 has a font-lock-warning-face.
-      'font-lock-warning-face
-    ;; Otherwise we provide a face.
-    'c-invalid-face))
-
-(unless (c-face-name-p c-invalid-face-name)
-  (defconst c-invalid-face 'c-invalid-face) ; Necessary in Emacs 19.
-  (defface c-invalid-face
-    '((((class color) (background light)) (:foreground "red"))
-      (((class color)) (:foreground "hotpink"))
-      (t (:inverse-video t)))
-    "Face used to highlight invalid syntax."
-    :group 'c-fonts))
-
 (cc-bytecomp-defun face-inverse-video-p) ; Only in Emacs.
 (cc-bytecomp-defun face-property-instance) ; Only in XEmacs.
 
@@ -210,21 +182,16 @@
   ;; This function does not do any hidden buffer changes
   (copy-face oldface newface)
   (cond ((fboundp 'face-inverse-video-p)
-	 ;; Emacs 20 and later.  This only looks at the inverse flag
-	 ;; in the current frame.  Other display configurations might
-	 ;; be different, but it can only show if the same Emacs has
-	 ;; frames on e.g. a color and a monochrome display
-	 ;; simultaneously.
+	 ;; Emacs.  This only looks at the inverse flag in the current
+	 ;; frame.  Other display configurations might be different,
+	 ;; but it can only show if the same Emacs has frames on
+	 ;; e.g. a color and a monochrome display simultaneously.
 	 (unless (face-inverse-video-p oldface)
 	   (invert-face newface)))
 	((fboundp 'face-property-instance)
 	 ;; XEmacs.  Same pitfall here.
 	 (unless (face-property-instance oldface 'reverse)
-	   (invert-face newface)))
-	(t
-	 ;; Emacs 19 has no inverse flag at all.  Just inverse the
-	 ;; face and hope it wasn't inversed already.
-	 (invert-face newface))))
+	   (invert-face newface)))))
 
 (eval-and-compile
   ;; We need the following functions during compilation since they're
@@ -495,19 +462,19 @@ stuff.  Used on level 1 and higher."
 	  `((eval . (list "\\`#![^\n\r]*"
 			  0 c-preprocessor-face-name))))
 
-      ;; Make hard spaces visible through an inverted `c-invalid-face-name'.
+      ;; Make hard spaces visible through an inverted `font-lock-warning-face'.
       (eval . (list
 	       "\240"
 	       0 (progn
 		   (unless (c-face-name-p 'c-nonbreakable-space-face)
-		     (c-make-inverse-face c-invalid-face-name
+		     (c-make-inverse-face 'font-lock-warning-face
 					  'c-nonbreakable-space-face))
 		   ''c-nonbreakable-space-face)))
       ))
 
 (defun c-font-lock-invalid-string ()
   ;; Assuming the point is after the opening character of a string,
-  ;; fontify that char with `c-invalid-face-name' if the string
+  ;; fontify that char with `font-lock-warning-face' if the string
   ;; decidedly isn't terminated properly.  Assumes the string already
   ;; is syntactically fontified.
   (let ((end (1+ (c-point 'eol))))
@@ -527,7 +494,7 @@ stuff.  Used on level 1 and higher."
 	     ;; aren't allowed.
 	     (not (eq (char-before (1- (point))) ?#))
 	   t)
-	 (c-put-font-lock-face (1- (point)) (point) c-invalid-face-name))))
+	 (c-put-font-lock-face (1- (point)) (point) 'font-lock-warning-face))))
 
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
@@ -574,12 +541,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ;; "foo::bar" in languages that supports such things.
       ,@(when (c-lang-const c-opt-identifier-concat-key)
 	  `((,(byte-compile
-	       ;; Must use a function here since we match longer
-	       ;; than we want to move before doing a new search.
-	       ;; This is not necessary for XEmacs >= 20 since it
-	       ;; restarts the search from the end of the first
-	       ;; highlighted submatch (something that causes
-	       ;; problems in other places).
+	       ;; Must use a function here since we match longer than
+	       ;; we want to move before doing a new search.  This is
+	       ;; not necessary for XEmacs since it restarts the
+	       ;; search from the end of the first highlighted
+	       ;; submatch (something that causes problems in other
+	       ;; places).
 	       `(lambda (limit)
 		  (while (re-search-forward
 			  ,(concat "\\(\\<" ; 1
@@ -2654,7 +2621,7 @@ need for `pike-font-lock-extra-types'.")
     ;; allowed in non-markup use.
     (,(lambda (limit)
 	(c-find-invalid-doc-markup "[<>&]\\|{@" limit))
-     0 ,c-invalid-face-name prepend nil)))
+     0 'font-lock-warning-face prepend nil)))
 
 (defconst javadoc-font-lock-keywords
   `((,(lambda (limit)
@@ -2757,7 +2724,7 @@ need for `pike-font-lock-extra-types'.")
     ;; Fontify remaining markup characters as invalid.
     (,(lambda (limit)
 	(c-find-invalid-doc-markup "@" limit))
-     0 ,c-invalid-face-name prepend nil)
+     0 'font-lock-warning-face prepend nil)
     ))
 
 (defun autodoc-font-lock-keywords ()
