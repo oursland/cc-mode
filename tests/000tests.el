@@ -166,6 +166,7 @@
     "top-2.cc"
     "top-3.cc"
     "typedef-1.c"
+    "unbal.c"
     ))
 
 (defvar finished-tests nil)
