@@ -2614,12 +2614,6 @@ This function does not do any hidden buffer changes."
 ;; fontified as references, other references aren't handled.
 (defvar c-fontify-types-and-refs nil)
 
-;; These are defined in cc-fonts.el, which we don't want to require
-;; here.  However, they're only called when `c-fontify-types-and-refs'
-;; is set, and that only happens from functions defined there.
-(cc-bytecomp-defun c-put-type-face)
-(cc-bytecomp-defun c-put-reference-face)
-
 (defun c-forward-c++-template-arglist ()
   ;; The point is assumed to be at a '<'.  Try to treat it as a C++
   ;; template arglist and move forward to the the corresponding '>'.
