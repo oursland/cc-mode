@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.321 $
-;; Last Modified:   $Date: 1994-05-05 17:33:57 $
+;; Version:         $Revision: 3.322 $
+;; Last Modified:   $Date: 1994-05-05 17:49:02 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-05 17:33:57 $|$Revision: 3.321 $|
+;; |$Date: 1994-05-05 17:49:02 $|$Revision: 3.322 $|
 
 ;;; Code:
 
@@ -793,7 +793,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.321 $
+cc-mode Revision: $Revision: 3.322 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -824,7 +824,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.321 $
+cc-mode Revision: $Revision: 3.322 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -872,7 +872,7 @@ Key bindings:
 	paragraph-ignore-fill-prefix t
 	require-final-newline t
 	parse-sexp-ignore-comments t
-	indent-line-function 'c-indent-via-language-element
+	indent-line-function 'c-indent-line
 	indent-region-function 'c-indent-region
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *")
@@ -1188,7 +1188,7 @@ the brace is inserted inside a literal."
 	  ;; but we need to re-indent the line above
 	  (let ((pos (- (point-max) (point))))
 	    (forward-line -1)
-	    (c-indent-via-language-element)
+	    (c-indent-line)
 	    (goto-char (- (point-max) pos)))
 	;; must remove the newline we just stuck in (if we really did it)
 	(and delete-temp-newline
@@ -1197,7 +1197,7 @@ the brace is inserted inside a literal."
 	;; semantics
 	(setq semantics (c-guess-basic-semantics)))
       ;; now adjust the line's indentation
-      (c-indent-via-language-element semantics)
+      (c-indent-line semantics)
       ;; Do all appropriate clean ups
       (let ((here (point))
 	    (pos (- (point-max) (point)))
@@ -1235,7 +1235,7 @@ the brace is inserted inside a literal."
       (if (memq 'after (cdr-safe newlines))
 	  (progn
 	    (newline)
-	    (c-indent-via-language-element)))
+	    (c-indent-line)))
       ;; blink the paren
       (and (= last-command-char ?\})
 	   old-blink-paren
@@ -1262,7 +1262,7 @@ is inhibited."
 	(c-echo-semantic-information-p nil))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
-	(c-indent-via-language-element))))
+	(c-indent-line))))
 
 (defun c-electric-star (arg)
   "Insert a star character.
@@ -1281,7 +1281,7 @@ is inhibited."
 	(c-echo-semantic-information-p nil))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
-	(c-indent-via-language-element))))
+	(c-indent-line))))
 
 (defun c-electric-semi&comma (arg)
   "Insert a comma or semicolon.
@@ -1324,7 +1324,7 @@ non-whitespace characters on the line following the semicolon."
 	      (delete-region (point) here))
 	  (goto-char (- (point-max) pos)))
 	;; re-indent line
-	(c-indent-via-language-element)
+	(c-indent-line)
 	;; newline only after semicolon, but only if that semicolon is
 	;; not inside a parenthesis list (e.g. a for loop statement)
 	(and (= last-command-char ?\;)
@@ -1334,7 +1334,7 @@ non-whitespace characters on the line following the semicolon."
 		   (/= (following-char) ?\())
 	       (error t))
 	     (progn (newline) t)
-	     (c-indent-via-language-element))
+	     (c-indent-line))
 	))))
 
 (defun c-electric-colon (arg)
@@ -1400,19 +1400,19 @@ value of `c-cleanup-list'."
 		    (delete-char -1))
 		  )))
       ;; indent the current line
-      (c-indent-via-language-element semantics)
+      (c-indent-line semantics)
       ;; does a newline go before the colon?
       (if (memq 'before newlines)
 	  (let ((pos (- (point-max) (point))))
 	    (forward-char -1)
 	    (newline)
-	    (c-indent-via-language-element)
+	    (c-indent-line)
 	    (goto-char (- (point-max) pos))))
       ;; does a newline go after the colon?
       (if (memq 'after (cdr-safe newlines))
 	  (progn
 	    (newline)
-	    (c-indent-via-language-element)))
+	    (c-indent-line)))
       )))
 
 (defun c-read-offset (langelem)
@@ -1966,7 +1966,7 @@ of the expression are preserved."
     (if whole-exp
 	;; If arg, always indent this line as C
 	;; and shift remaining lines of expression the same amount.
-	(let ((shift-amt (c-indent-via-language-element))
+	(let ((shift-amt (c-indent-line))
 	      beg end)
 	  (save-excursion
 	    (if (eq c-tab-always-indent t)
@@ -1989,16 +1989,16 @@ of the expression are preserved."
 	      (skip-chars-backward " \t")
 	      (not (bolp)))
 	    (insert-tab)
-	  (c-indent-via-language-element)))
+	  (c-indent-line)))
        ;; CASE 2: just indent the line
        ((eq c-tab-always-indent t)
-	(c-indent-via-language-element))
+	(c-indent-line))
        ;; CASE 3: if in a literal, insert a tab, but always indent the
        ;; line
        (t
 	(if (c-in-literal bod)
 	    (insert-tab))
-	(c-indent-via-language-element)
+	(c-indent-line)
 	)))))
 
 (defun c-indent-exp (&optional shutup-p)
@@ -2039,7 +2039,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (beginning-of-line)
 	  (while (< (point) end)
 	    (if (not (looking-at "[ \t]*$"))
-		(c-indent-via-language-element))
+		(c-indent-line))
 	    (forward-line 1)))
       ;; make sure marker is deleted
       (and end
@@ -2091,7 +2091,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (skip-chars-forward " \t\n")
 	  (beginning-of-line)
 	  ;; indent the current line
-	  (c-indent-via-language-element)
+	  (c-indent-line)
 	  (if (save-excursion
 		(beginning-of-line)
 		(looking-at "[ \t]*#"))
@@ -2130,7 +2130,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		      (goto-char sexpend)))
 	      (error
 	       (goto-char sexpbeg)
-	       (c-indent-via-language-element)))
+	       (c-indent-line)))
 	    ;; Move to following line and try again.
 	    (and sexpend
 		 (markerp sexpend)
@@ -3155,7 +3155,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 0)
        offset)))
 
-(defun c-indent-via-language-element (&optional semantics)
+(defun c-indent-line (&optional semantics)
   ;; indent the curent line as C/C++ code. Optional SEMANTICS is the
   ;; semantic information for the current line. Returns the amount of
   ;; indentation change
@@ -3454,7 +3454,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.321 $"
+(defconst c-version "$Revision: 3.322 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
