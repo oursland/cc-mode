@@ -49,6 +49,7 @@
 ;; The things referenced in imenu, which we don't require.
 (cc-bytecomp-defvar imenu-case-fold-search)
 (cc-bytecomp-defvar imenu-generic-expression)
+(cc-bytecomp-defvar imenu-create-index-function)
 (cc-bytecomp-defun imenu-progress-message)
 
 
