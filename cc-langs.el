@@ -1700,42 +1700,76 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defconst c-primary-expr-regexp
   ;; Regexp matching the start of any primary expression, i.e. any
   ;; literal, symbol, prefix operator, and '('.  It doesn't need to
-  ;; exclude keywords; they are excluded afterwards unless the first
-  ;; submatch matches.
-  t (let ((prefix-ops (mapcan (lambda (opclass)
-				(when (eq (car opclass) 'prefix)
-				  (append (cdr opclass) nil)))
-			      (c-lang-const c-operators))))
-      (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+  ;; exclude keywords; they are excluded afterwards unless the second
+  ;; submatch matches. If the first but not the second submatch
+  ;; matches then it isn't an unambiguous primary expression; it could
+  ;; also be a match of e.g. an infix operator. (The case with
+  ;; ambiguous keyword operators isn't handled.)
+
+  t (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+      (let* ((prefix-ops
+	      (mapcan (lambda (op)
+			;; Filter out the special case prefix
+			;; operators that are close parens.
+			(unless (string-match "\\s\)" op)
+			  (list op)))
+		      (mapcan
+		       (lambda (opclass)
+			 (when (eq (car opclass) 'prefix)
+			   (append (cdr opclass) nil)))
+		       (c-lang-const c-operators))))
+
+	     (nonkeyword-prefix-ops
+	      (mapcan (lambda (op)
+			(unless (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
+			  (list op)))
+		      prefix-ops))
+
+	     (infix-ops
+	      (mapcan (lambda (opclass)
+			(when (memq (car opclass)
+				    '(left-assoc
+				      right-assoc
+				      right-assoc-sequence))
+			  (append (cdr opclass) nil)))
+		      (c-lang-const c-operators)))
+
+	     (unambiguous-prefix-ops (set-difference nonkeyword-prefix-ops
+						     infix-ops
+						     :test 'string-equal))
+	     (ambiguous-prefix-ops (intersection nonkeyword-prefix-ops
+						 infix-ops
+						 :test 'string-equal)))
+
 	(concat
+	 "\\("
 	 ;; Take out all symbol class operators from `prefix-ops' and make the
 	 ;; first submatch from them together with `c-primary-expr-kwds'.
 	 (c-make-keywords-re t
 	   (append (c-lang-const c-primary-expr-kwds)
-		   (mapcan
-		    (lambda (op)
-		      (if (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
-			  (list op)))
-		    prefix-ops)))
+		   (set-difference prefix-ops nonkeyword-prefix-ops
+				   :test 'string-equal)))
+
+	 "\\|"
+	 ;; Match all ambiguous operators.
+	 (c-make-keywords-re nil
+	   (intersection nonkeyword-prefix-ops infix-ops
+			 :test 'string-equal))
+	 "\\)"
+
 	 "\\|"
 	 ;; Now match all other symbols.
 	 (c-lang-const c-symbol-start)
+
 	 "\\|"
-	 ;; Handle '(', the chars that can start integer and floating point
-	 ;; constants, and the remaining operators from `prefix-ops' but
-	 ;; exclude close parens which are special cases for prefix operators
-	 ;; such as casts.
+	 ;; Handle '(', the chars that can start integer and floating
+	 ;; point constants, and the nonambiguous operators from
+	 ;; `prefix-ops'.
 	 (c-make-keywords-re nil
 	   (append '("(" "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" ".")
-		   (mapcan
-		    (lambda (op)
-		      ;; This filters out the special case prefix operators
-		      ;; that are close parens.
-		      (if (and
-			   (not (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op))
-			   (not (string-match "\\s\)" op)))
-			  (list op)))
-		    prefix-ops)))
+		   (set-difference nonkeyword-prefix-ops infix-ops
+				   :test 'string-equal)))
+
 	 "\\|"
 	 ;; Match string and character literals.
 	 "\\s\""

@@ -1490,13 +1490,30 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (looking-at "\\s\)"))
 
 		;; There should be a primary expression after it.
-		(progn
+		(let (pos)
 		  (forward-char)
 		  (c-forward-syntactic-ws)
 		  (setq cast-end (point))
 		  (and (looking-at c-primary-expr-regexp)
-		       (or (match-beginning 1)
-			   (not (looking-at c-keywords-regexp)))))
+		       (progn
+			 (setq pos (match-end 0))
+			 (or
+			  ;; Check if the expression begins with a prefix
+			  ;; keyword.
+			  (match-beginning 2)
+			  (if (match-beginning 1)
+			      ;; Expression begins with an ambiguous operator.
+			      ;; Treat it as a cast if we've recognized the
+			      ;; type somewhere else.
+			      (memq at-type '(t known found))
+			    ;; Unless it's a keyword, it's the beginning of a
+			    ;; primary expression.
+			    (not (looking-at c-keywords-regexp)))))
+		       ;; If `c-primary-expr-regexp' matched a nonsymbol
+		       ;; token, check that it matched a whole one so that we
+		       ;; don't e.g. confuse the operator '-' with '->'.
+		       (or (not (looking-at c-nonsymbol-token-regexp))
+			   (= (match-end 0) pos))))
 
 		;; There should either be a cast before it or something that
 		;; isn't an identifier or close paren.
