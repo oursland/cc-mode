@@ -1108,7 +1108,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				 (not got-prefix-before-parens)
 				 (not (eq at-type t))
 				 (or prev-at-type
-				     (not arglist-type))
+				     maybe-typeless
+				     (when c-recognize-typeless-decls
+				       (not arglist-type)))
 				 (setq pos (c-up-list-forward (point)))
 				 (eq (char-before pos) ?\)))
 			(c-fl-shift-type-backward)
@@ -1198,28 +1200,33 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			  (throw 'at-decl-or-cast t)
 			(throw 'at-decl-or-cast nil))))
 
-		  (if (and got-parens
-			   (not got-prefix)
-			   (not arglist-type)
-			   (not (eq at-type t))
-			   (or prev-at-type
-			       (not got-suffix)
-			       (not (looking-at
-				     c-after-suffixed-type-maybe-decl-key))))
+		  (if (and
+		       got-parens
+		       (not got-prefix)
+		       (not arglist-type)
+		       (not (eq at-type t))
+		       (or
+			prev-at-type
+			maybe-typeless
+			(when c-recognize-typeless-decls
+			  (or (not got-suffix)
+			      (not (looking-at
+				    c-after-suffixed-type-maybe-decl-key))))))
 		      ;; Got an empty paren pair and a preceding type that
 		      ;; probably really is the identifier.  Shift the type
 		      ;; backwards to make the last one the identifier.  This
 		      ;; is analogous to the "backtracking" done inside the
 		      ;; `c-type-decl-suffix-key' loop above.
 		      ;;
-		      ;; Exception: Do not shift backward if there's no
-		      ;; preceding type and we're not looking at either
-		      ;; `c-after-suffixed-type-decl-key' or "[;,]".  If
-		      ;; there's no preceding type then the shift would mean
-		      ;; that the declaration is typeless.  But if the regexp
-		      ;; doesn't match then we will simply fall through in the
-		      ;; tests below and not recognize it at all, so it's
-		      ;; better to try it as an abstract declarator instead.
+		      ;; Exception: In addition to the conditions in that
+		      ;; "backtracking" code, do not shift backward if we're
+		      ;; not looking at either `c-after-suffixed-type-decl-key'
+		      ;; or "[;,]".  Since there's no preceding type, the
+		      ;; shift would mean that the declaration is typeless.
+		      ;; But if the regexp doesn't match then we will simply
+		      ;; fall through in the tests below and not recognize it
+		      ;; at all, so it's better to try it as an abstract
+		      ;; declarator instead.
 		      (c-fl-shift-type-backward)
 
 		    ;; Still no identifier.
