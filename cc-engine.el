@@ -226,7 +226,7 @@
 	    (skip-chars-forward "^;{}:" to)
 	    (if (not (c-in-literal lim))
 		(progn
-		  (if (memq (following-char) '(?\; ?{ ?}))
+		  (if (memq (char-after (point)) '(?\; ?{ ?}))
 		      (setq crossedp t)
 		    (if (= (following-char) ?:)
 			(setq maybe-labelp t))
@@ -921,9 +921,9 @@
 	;; the most likely position to perform the majority of tests
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
-	(setq char-after-ip (following-char))
+	(setq char-after-ip (char-after (point)))
 	(c-backward-syntactic-ws lim)
-	(setq char-before-ip (preceding-char))
+	(setq char-before-ip (char-after (1- (point))))
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
 
@@ -1003,7 +1003,7 @@
 			 (= char-before-ip ?=))
 		     (save-excursion
 		       (skip-chars-forward "^;(" indent-point)
-		       (not (memq (following-char) '(?\; ?\()))
+		       (not (memq (char-after (point)) '(?\; ?\()))
 		       )))
 	      (c-add-syntax 'brace-list-open placeholder))
 	     ;; CASE 5A.4: inline defun open
@@ -1264,7 +1264,7 @@
 		(backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
-		  (memq (preceding-char) '(?\; ?\}))))
+		  (memq (char-after (1- (point))) '(?\; ?\}))))
 	    ;; real beginning-of-line could be narrowed out due to
 	    ;; enclosure in a class block
 	    (save-restriction
@@ -1420,7 +1420,7 @@
 		       (progn
 			 (c-safe (c-skip-conditional))
 			 (c-forward-syntactic-ws)
-			 (if (memq (following-char) '(?\;))
+			 (if (= (following-char) ?\;)
 			     (progn
 			       (forward-char 1)
 			       (c-forward-syntactic-ws)))
