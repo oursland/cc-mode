@@ -133,11 +133,11 @@ classes etc - there are other packages for that.
 * Minor Modes::
 * Text Filling and Line Breaking::
 * Macro Handling::
+* Font Locking::
 * Commands::
 * Customizing Indentation::
 * Syntactic Symbols::
 * Indentation Functions::
-* Font Locking::
 * Performance Issues::
 * Limitations and Known Bugs::
 * Frequently Asked Questions::
@@ -165,6 +165,12 @@ Minor Modes
 
 * Auto-newline Insertion::
 * Hungry-deletion of Whitespace::
+
+Font Locking
+
+* Font Locking Preliminaries::
+* Faces::
+* Documentation Comments::
 
 Auto-newline Insertion
 
@@ -1541,7 +1547,7 @@ line break.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Macro Handling, Commands, Text Filling and Line Breaking, Top
+@node    Macro Handling, Font Locking, Text Filling and Line Breaking, Top
 @comment node-name, next, previous, up
 @chapter Macro Handling
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1568,7 +1574,291 @@ lines ``stick out'' instead.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Commands, Customizing Indentation, Macro Handling, Top
+@node    Font Locking, Commands, Macro Handling, Top
+@comment node-name, next, previous, up
+@chapter Font Locking
+@cindex font locking
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@cindex Font Lock mode
+
+@ccmode{} provides font locking for its supported languages by supplying
+patterns for use with Font Lock mode.  This means that you get distinct
+faces on the various syntactic parts such as comments, strings, keywords
+and types, which gives a big help in telling them apart at a glance and
+discovering syntactic errors.  @xref{Font Lock,,, emacs, The Emacs
+Editor}, for ways to enable font locking in @ccmode{} buffers.
+
+@menu
+* Font Locking Preliminaries::
+* Faces::
+* Documentation Comments::
+@end menu
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Font Locking Preliminaries, Faces, , Font Locking
+@comment node-name, next, previous, up
+@subsection Font Locking Preliminaries
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+The font locking for most of the @ccmode{} languages were provided
+directly by the Font Lock package prior to version 5.30 of @ccmode{}.
+In the transition to @ccmode{} the patterns have been reworked
+completely and are applied uniformly across all the languages, just like
+the indentation rules (although each language still has some
+pecularities of its own, of course).  Since the languages previously had
+completely separate font locking patterns, this means that it's a bit
+different in most languages now.
+
+The main goal for the font locking in @ccmode{} is accurancy, to provide
+a dependable aid in recognizing the various constructs.  Some, like
+strings and comments, are easy to recognize while others like
+declarations and types can be very tricky.  @ccmode{} can go to great
+lengths to recognize declarations and casts correctly, especially when
+the types aren't recognized by standard patterns.  This is a fairly
+demanding analysis which can be slow on older hardware, and it can
+therefore be disabled by choosing a lower decoration level with the
+variable @code{font-lock-maximum-decoration}.
+
+@vindex font-lock-maximum-decoration
+
+The decoration levels are used as follows:
+
+@enumerate
+@comment 1
+@item
+Minimal font locking: Fontify only comments, strings and preprocessor
+directives (in the languages that use cpp).
+
+@comment 2
+@item
+Fast normal font locking: In addition to level 1, fontify keywords,
+simple types and declarations that are easy to recognize.  The variables
+@code{*-font-lock-extra-types} (where @samp{*} is the name of the
+language) are used to recognize types (see below).  Documentation
+comments like Javadoc are fontified according to
+@code{c-doc-comment-style} (@pxref{Documentation Comments}).
+
+Use this if you think the font locking is too slow.  It's the closest
+corresponding level to level 3 in the old font lock patterns.
+
+@comment 3
+@item
+Accurate normal font locking: Like level 2 but uses a different approach
+that can recognize types and declarations much more accurately.  The
+@code{*-font-lock-extra-types} variables are still used, but user
+defined types are recognized correctly anyway in most cases.  Therefore
+those variables should be fairly restrictive and not contain patterns
+that are uncertain.
+
+@cindex Lazy Lock mode
+@cindex Just-in-time Lock mode
+
+This level is designed for fairly modern hardware and a font lock
+support mode like Lazy Lock or Just-in-time Lock mode that only
+fontifies the parts that are actually shown.
+@end enumerate
+
+@cindex user defined types
+@cindex types, user defined
+
+Since user defined types are hard to recognize you can provide
+additional regexps to match those you use:
+
+@defopt c-font-lock-extra-types
+@defoptx c++-font-lock-extra-types
+@defoptx objc-font-lock-extra-types
+@defoptx java-font-lock-extra-types
+@defoptx idl-font-lock-extra-types
+@defoptx pike-font-lock-extra-types
+For each language there's a variable @code{*-font-lock-extra-types},
+where @samp{*} stands for the language in question.  It contains a list
+of regexps that matches identifiers that should be recognized as types,
+e.g. @samp{\\sw+_t} to recognize all identifiers ending with @samp{_t}
+as is customary in C code.  Each regexp should not match more than a
+single identifier.
+
+The default values contain regexps for many types in standard runtime
+libraries that are otherwise difficult to recognize, and patterns for
+standard type naming conventions like the @samp{_t} suffix in C and C++.
+Java, Objective-C and Pike have as a convention to start class names
+with capitals, so there are patterns for that in those languages.
+
+Despite the names of these variables, they are not only used for
+fontification but in other places as well where @ccmode{} needs to
+recognize types.
+@end defopt
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Faces, Documentation Comments, Font Locking Preliminaries, Font Locking
+@comment node-name, next, previous, up
+@subsection Faces
+@cindex faces
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@ccmode{} attempts to use the standard faces for programming languages
+as close as possible to their intentions.  No extra faces are currently
+provided, with the exception of a replacement face @code{c-invalid-face}
+for emacsen that doesn't provide @code{font-lock-warning-face}.
+
+@itemize @bullet
+@item
+@vindex font-lock-comment-face
+Normal comments are fontified in @code{font-lock-comment-face}.
+
+@item
+@vindex font-lock-doc-face
+@vindex font-lock-doc-string-face
+@vindex font-lock-comment-face
+Comments that are recognized as documentation (@pxref{Documentation
+Comments}) get @code{font-lock-doc-face} (Emacs) or
+@code{font-lock-doc-string-face} (XEmacs) if those faces exist.  If they
+don't then @code{font-lock-comment-face} is used.
+
+@item
+@vindex font-lock-string-face
+String and character literals are fontified in
+@code{font-lock-string-face}.
+
+@item
+@vindex font-lock-keyword-face
+Keywords are fontified with @code{font-lock-keyword-face}.
+
+@item
+@vindex font-lock-function-name-face
+@code{font-lock-function-name-face} is used for function names in
+declarations and definitions, and classes in those contexts.  It's also
+used for preprocessor defines with arguments.
+
+@item
+@vindex font-lock-variable-name-face
+Variables in declarations and definitions, and other identifiers in such
+variable contexts, gets @code{font-lock-variable-name-face}.  It's also
+used for preprocessor defines without arguments.
+
+@item
+@vindex font-lock-constant-face
+Builtin constants are fontified in @code{font-lock-constant-face}.  As
+opposed to the preceding two faces, this one is used on the names in
+expressions, and it's not used in declarations, even if there happen to
+be a @samp{const} in them somewhere.
+
+@item
+@vindex font-lock-type-face
+@code{font-lock-type-face} is put on types (both predefined and user
+defined) and classes in type contexts.
+
+@item
+@vindex font-lock-constant-face
+@vindex font-lock-reference-face
+Label identifiers get @code{font-lock-constant-face} in Emacs 20 and
+later, @code{font-lock-reference-face} otherwise.
+
+@item
+Name qualifiers and identifiers for scope constructs are fontified in
+the same way.
+
+@item
+Special markup inside documentation comments are also fontified like
+labels.
+
+@item
+@vindex font-lock-preprocessor-face
+@vindex font-lock-builtin-face
+@vindex font-lock-reference-face
+Preprocessor directives get @code{font-lock-preprocessor-face} if it
+exists (i.e. XEmacs).  In Emacs they get @code{font-lock-builtin-face}
+or @code{font-lock-reference-face}, in lack of a closer equivalent.
+
+@item
+@vindex font-lock-warning-face
+@vindex c-invalid-face
+@vindex invalid-face (c-)
+Some kinds of syntactic errors are fontified with
+@code{font-lock-warning-face} in Emacs.  In XEmacs there's no
+corresponding standard face, so there a special @code{c-invalid-face} is
+used, which is defined to stand out sharply by default.
+
+Note that it's not used for @samp{#error} or @samp{#warning} directives,
+since those aren't syntactic errors in themselves.
+@end itemize
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Documentation Comments, , Faces, Font Locking
+@comment node-name, next, previous, up
+@subsection Documentation Comments
+@cindex documentation comments
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+There are various tools to supply documentation in the source as
+specially structured comments, e.g. the standard Javadoc tool in Java.
+@ccmode{} provides an extensible mechanism to fontify such comments and
+the special markup inside them.
+
+@defopt c-doc-comment-style
+@vindex doc-comment-style (c-)
+This is a style variable that specifies which documentation comment
+style to recognize, e.g. @code{javadoc} for Javadoc comments.
+
+The value may also be a list of styles, in which case all of them are
+recognized simultaneously (presumably with markup cues that don't
+conflict).
+
+The value may also be an association list to specify different comment
+styles for different languages.  The symbol for the major mode is then
+looked up in the alist, and the value of that element is interpreted as
+above if found.  If it isn't found then the symbol `other' is looked up
+and its value is used instead.
+
+Note that @ccmode{} uses this variable to set other variables that
+handle fontification etc.  That's done at mode initialization or when
+you switch to a style which sets this variable.  Thus, if you change it
+in some other way, e.g. interactively in a CC Mode buffer, you will need
+to do @kbd{M-x java-mode} (or whatever mode you're currently using) to
+reinitialize.
+
+@findex c-setup-doc-comment-style
+@findex setup-doc-comment-style (c-)
+Note also that when @ccmode{} starts up, the other variables are
+modified before the mode hooks are run.  If you change this variable in
+a mode hook, you have to call @code{c-setup-doc-comment-style}
+afterwards to redo that work.
+@end defopt
+
+@ccmode{} currently provides handing of the following doc comment
+styles:
+
+@table @code
+@item javadoc
+@cindex Javadoc markup
+Javadoc comments, the standard tool in Java.
+
+@item autodoc
+@cindex Pike autodoc markup
+For Pike autodoc markup, the standard in Pike.
+@end table
+
+The above is by no means complete.  If you'd like to see support for
+other doc comment styles, please let us know (@pxref{Mailing Lists and
+Submitting Bug Reports}).
+
+You can also write your own doc comment fontification support and use on
+@code{c-doc-comment-style}: Supply a variable or function
+@samp{*-font-lock-keywords} where @samp{*} is the name you want to use
+on @code{c-doc-comment-style}.  If it's a variable, it's prepended to
+@code{font-lock-keywords} at mode initialization.  If it's a function,
+it's called and the result is prepended.  For an example, see
+@code{javadoc-font-lock-keywords} in @file{cc-fonts.el}.
+
+If you add support for another doc comment style, please consider
+contributing it; send a message to @email{bug-cc-mode@@gnu.org}.
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Commands, Customizing Indentation, Font Locking, Top
 @comment node-name, next, previous, up
 @chapter Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3716,7 +4006,7 @@ syntax.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Functions, Font Locking, Syntactic Symbols, Top
+@node    Indentation Functions, Performance Issues, Syntactic Symbols, Top
 @comment node-name, next, previous, up
 @chapter Indentation Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4497,119 +4787,7 @@ In the first case the indentation is kept unchanged, in the second
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Font Locking, Performance Issues, Indentation Functions, Top
-@comment node-name, next, previous, up
-@chapter Font Locking
-@cindex font locking
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@cindex Font Lock mode
-
-@ccmode{} provides font locking for its supported languages by supplying
-patterns for use with Font Lock mode.  This means that you get distinct
-faces on the various syntactic parts such as comments, strings, keywords
-and types, which gives a big help in telling them apart at a glance and
-discovering syntactic errors.  @xref{Font Lock,,, emacs, The Emacs
-Editor}, for ways to enable font locking in @ccmode{} buffers.
-
-The font locking for most of the @ccmode{} languages were provided
-directly by the Font Lock package prior to version 5.30 of @ccmode{}.
-In the transition to @ccmode{} the patterns have been reworked
-completely and are applied uniformly across all the languages, just like
-the indentation rules (although each language still has some
-pecularities of its own, of course).  Since the languages previously had
-completely separate font locking patterns, this means that it's a bit
-different in most languages now.
-
-@cindex faces
-@vindex c-invalid-face
-@vindex invalid-face (c-)
-
-The standard faces for programming languages are used accordingly.
-@ccmode{} does not currently provide any extra faces, with the exception
-of a replacement face @code{c-invalid-face} for emacsen that doesn't
-provide @code{font-lock-warning-face}.
-
-The main goal for the font locking in @ccmode{} is accurancy, to provide
-a dependable aid in recognizing the various constructs.  Some, like
-strings and comments, are easy to recognize while others like
-declarations and types can be very tricky.  @ccmode{} can go to great
-lengths to recognize declarations and casts correctly, especially when
-the types aren't recognized by standard patterns.  This is a fairly
-demanding analysis which can be slow on older hardware, and it can
-therefore be disabled by choosing a lower decoration level with the
-variable @code{font-lock-maximum-decoration}.
-
-@vindex font-lock-maximum-decoration
-
-All modes utilize the decoration levels as follows:
-
-@enumerate
-@comment 1
-@item
-Minimal font locking: Fontify only comments, strings and cpp directives
-(in the languages that uses cpp).
-
-@comment 2
-@item
-Fast normal font locking: In addition to level 1, fontify keywords,
-simple types and declarations that are easy to recognize.  The variables
-@code{*-font-lock-extra-types} (where @samp{*} is the name of the
-language) are used to recognize types (see below).  Documentation
-comments like Javadoc are fontified according to
-@code{c-doc-comment-style}.
-
-Use this if you think the font locking is too slow.  It's the closest
-corresponding level to level 3 in the old font lock patterns.
-
-@comment 3
-@item
-Accurate normal font locking: Like level 2 but uses a different approach
-that can recognize types and declarations much more accurately.  The
-@code{*-font-lock-extra-types} variables are still used, but other types
-are recognized correctly anyway in most cases.  Therefore those
-variables should be fairly restrictive and not contain patterns that are
-uncertain.
-
-@cindex Lazy Lock mode
-@cindex Just-in-time Lock mode
-
-This level is designed for fairly modern hardware and a font lock
-support mode like Lazy Lock or Just-in-time Lock mode that only
-fontifies the parts that are actually shown.
-@end enumerate
-
-@defopt c-font-lock-extra-types
-@defoptx c++-font-lock-extra-types
-@defoptx objc-font-lock-extra-types
-@defoptx java-font-lock-extra-types
-@defoptx idl-font-lock-extra-types
-@defoptx pike-font-lock-extra-types
-For each language there's a variable @code{*-font-lock-extra-types},
-where @samp{*} stands for the language in question, e.g. @samp{c},
-@samp{objc}, etc.  It contains a list of regexps that matches
-identifiers that should be recognized as types, e.g. @samp{\\sw+_t} to
-recognize all identifiers ending with @samp{_t} as is customary in C
-code.  Each regexp should not match more than a single identifier.
-
-The default values contain regexps for many types in standard runtime
-libraries that are otherwise difficult to recognize, and patterns for
-standard type naming conventions like the @samp{_t} suffix in C and C++
-and that classes always begin with capital letters in Java, Objective-C
-and Pike.
-@end defopt
-
-@cindex Javadoc markup
-@cindex Pike autodoc markup
-
-@defopt c-doc-comment-style
-@vindex doc-comment-style (c-)
-FIXME
-@end defopt
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Performance Issues, Limitations and Known Bugs, Font Locking, Top
+@node    Performance Issues, Limitations and Known Bugs, Indentation Functions, Top
 @comment node-name, next, previous, up
 @chapter Performance Issues
 @cindex performance
