@@ -566,6 +566,8 @@
 	  (progn
 	    (backward-sexp 1)
 	    (cond
+	     ;; break infloop for illegal C code
+	     ((bobp) (setq do-level 0))
 	     ((memq (c-in-literal lim) '(c c++)))
 	     ((looking-at "while\\b[^_]")
 	      (setq do-level (1+ do-level)))
