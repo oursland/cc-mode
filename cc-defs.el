@@ -43,6 +43,9 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
+(cc-external-require 'cl)
+(cc-external-require 'regexp-opt)
+
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
 (cc-bytecomp-defvar c-emacs-features)	; In cc-vars.el
@@ -82,9 +85,6 @@
 	       (font-lock-compile-keywords '("\\<\\>"))
 	       font-lock-keywords)))
       (cc-load "cc-fix")))
-
-(cc-external-require 'cl)
-(cc-external-require 'regexp-opt)
 
 
 ;;; Variables also used at compile time.
