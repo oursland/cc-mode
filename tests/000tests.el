@@ -247,6 +247,7 @@
     "interface-1.m"
     "ivar.java"
     "label-1.c"
+    "label-2.c"
     "lambda-1.pike"
     "macro-1.c"
     "member-1.cc"
