@@ -124,7 +124,7 @@ appended."
       (while args
 	(let ((mode (car args)))
 	  (cond ((eq mode 'all)
-		 (setq mode '(c c++ objc java idl pike)))
+		 (setq mode '(c c++ objc java idl pike awk)))
 		((symbolp mode)
 		 (setq mode (list mode))))
 	  (while mode
@@ -187,7 +187,7 @@ appended."
 ;; regexp that matches all characters in the word constituent class
 ;; except 0-9, and the regexp engine currently can't do that.
 (c-lang-defconst c-symbol-key
-  (c c++ objc java idl) "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
+  (c c++ objc java idl awk) "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
   pike (concat "\\(" (c-lang-var c-symbol-key c) "\\|"
 	       (c-make-keywords-re nil
 		 '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~"
@@ -521,18 +521,20 @@ appended."
   (c c++ objc idl pike) "/[/*]"
   ;; We need to match all 3 Java style comments
   ;; 1) Traditional C block; 2) javadoc /** ...; 3) C++ style
-  java "/\\(/\\|[*][*]?\\)")
+  java "/\\(/\\|[*][*]?\\)"
+  awk "#")                              ; ACM, 2002/4/20
 (c-lang-defvar c-comment-start-regexp (c-lang-var c-comment-start-regexp))
 
 ;; Strings that starts and ends comments inserted with M-; etc.
 ;; comment-start and comment-end are initialized from these.
 (c-lang-defconst comment-start
   c "/* "
-  (c++ objc java idl pike) "// ")
+  (c++ objc java idl pike) "// "
+  awk "# ")                             ; ACM 2002/4/20
 (c-lang-defvar comment-start (c-lang-var comment-start))
 (c-lang-defconst comment-end
   c "*/"
-  (c++ objc java idl pike) "")
+  (c++ objc java idl pike awk) "")      ; awk, ACM 2002/4/20
 (c-lang-defvar comment-end (c-lang-var comment-end))
 
 ;; Regexp that matches when there is no syntactically significant text
@@ -560,13 +562,13 @@ appended."
 
 ;; Regexp to append to paragraph-start.
 (c-lang-defconst paragraph-start
-  (c c++ objc idl) "$"
+  (c c++ objc idl awk) "$"              ; awk, ACM 2002/4/21
   java "\\(@[a-zA-Z]+\\>\\|$\\)"	; For Javadoc.
   pike "\\(@[a-zA-Z]+\\>\\([^{]\\|$\\)\\|$\\)") ; For Pike refdoc.
 
 ;; Regexp to append to paragraph-separate.
 (c-lang-defconst paragraph-separate
-  (c c++ objc java idl) "$"
+  (c c++ objc java idl awk) "$"         ; awk, ACM 2002/4/21
   pike (c-lang-var paragraph-start))
 
 ;; Prefix added to `c-current-comment-prefix' to set
@@ -594,7 +596,7 @@ appended."
   ;; Initialize all `c-lang-defvar' variables according to
   ;; `c-buffer-is-cc-mode'.
   (if (not (memq c-buffer-is-cc-mode
-		 '(c-mode c++-mode objc-mode java-mode idl-mode pike-mode)))
+		 '(c-mode c++-mode objc-mode java-mode idl-mode pike-mode awk-mode))) ; awk-mode, 2002/4/21 ACM
       (error "Cannot initialize language variables for unknown mode %s"
 	     c-buffer-is-cc-mode))
   (funcall c-init-lang-defvars))
