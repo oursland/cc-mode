@@ -503,63 +503,19 @@
       (prog1 (c-awk-get-NL-prop-prev-line do-lim)
         (if extra-nl (delete-backward-char 1))))))
 
-(defun c-awk-prev-line-incomplete-p (&optional do-lim)
+(defsubst c-awk-prev-line-incomplete-p (&optional do-lim)
   ;; Is there an incomplete statement at the end of the previous line?
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   ;;
   ;; This function might do hidden buffer changes.
   (memq (c-awk-get-NL-prop-prev-line do-lim) '(?\\ ?\{)))
 
-(defun c-awk-cur-line-incomplete-p (&optional do-lim)
+(defsubst c-awk-cur-line-incomplete-p (&optional do-lim)
   ;; Is there an incomplete statement at the end of the current line?
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   ;;
   ;; This function might do hidden buffer changes.
   (memq (c-awk-get-NL-prop-cur-line do-lim) '(?\\ ?\{)))
-
-(defun c-awk-completed-stmt-ws-ends-prev-line-p (&optional do-lim)
-  ;; Is there a termination of a statement as the last thing (apart from an
-  ;; optional comment) on the previous line?
-  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
-  ;;
-  ;; This function might do hidden buffer changes.
-  (memq (c-awk-get-NL-prop-prev-line do-lim) '(?\} ?\$)))
-
-(defun c-awk-completed-stmt-ws-ends-line-p (&optional pos do-lim)
-  ;; Same as previous function, but for the line containing position POS (or
-  ;; the current line if POS is omitted).
-  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
-  ;;
-  ;; This function might do hidden buffer changes.
-  (save-excursion
-    (if pos (goto-char pos))
-    (memq (c-awk-get-NL-prop-cur-line do-lim) '(?\} ?\$))))
-
-(defun c-awk-virtual-semicolon-ends-prev-line-p (&optional do-lim)
-  ;; Is there a termination of a statement by EOL on the previous line?  (Any
-  ;; comment present doesn't change this.)
-  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
-  ;;
-  ;; This function might do hidden buffer changes.
-  (eq (c-awk-get-NL-prop-prev-line do-lim) ?\$))
-
-(defun c-awk-virtual-semicolon-ends-line-p (&optional do-lim)
-  ;; Is there a termination of a statement by EOL on the current line?  (Any
-  ;; comment present doesn't change this.)
-  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
-  ;;
-  ;; This function might do hidden buffer changes.
-  (eq (c-awk-get-NL-prop-cur-line do-lim) ?\$))
-
-(defun c-awk-after-logical-semicolon (&optional do-lim)
-;; Are we at BOL, the preceding EOL being a "logical semicolon"?  This is
-;; either an explicit statement termination (by '}' or ';') or a "virtual
-;; semicolon".
-;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
-;;
-;; This function might do hidden buffer changes.
-  (and (bolp)
-       (memq (c-awk-get-NL-prop-prev-line do-lim) '(?\$ ?\}))))
 
 ;;;; NOTES ON "VIRTUAL SEMICOLONS"
 ;;;;
@@ -590,33 +546,6 @@
   ;; defeat the (admittedly kludgey) purpose of this function, which is to
   ;; prevent an infinite recursion in c-beginning-of-statement-1 when point
   ;; starts at a `while' token.
-  (not (c-get-char-property (c-point 'eol) 'c-awk-NL-prop)))
-
-(defun c-awk-backward-syntactic-ws (&optional lim) 
-;; Skip backwards over awk-syntactic whitespace.  This is whitespace
-;; characters, comments, and NEWLINES WHICH AREN'T "VIRTUAL SEMICOLONS".  For
-;; this function, a newline isn't a "virtual semicolon" if that line ends with
-;; a real semicolon (or closing brace).
-;; However if point starts inside a comment or preprocessor directive, the
-;; content of it is not treated as whitespace.  LIM (optional) sets a limit on
-;; the backward movement.
-;;
-;; This function might do hidden buffer changes.
-  (let ((lim (or lim (point-min)))
-        after-real-br)
-    (c-backward-syntactic-ws (max lim (c-point 'bol)))
-    (while                    ; go back one WS line each time round this loop.
-        (and (bolp)
-             (> (point) lim)
-             (/= (c-awk-get-NL-prop-prev-line) ?\$)
-             (/= (point)
-                 ;; The following function requires point at BONL [not EOL] to
-                 ;; recognise a preceding comment,.
-                 (progn (c-backward-syntactic-ws (max lim (c-point 'bopl)))
-                        (point)))))))
-
-(defun c-awk-NL-prop-not-set ()
-  ;; Is the NL-prop on the current line either nil or unset?
   (not (c-get-char-property (c-point 'eol) 'c-awk-NL-prop)))
 
 (defun c-awk-clear-NL-props (beg end)
@@ -925,42 +854,6 @@
 
 
 ;; ACM 2002/9/29.  Movement functions, e.g. for C-M-a and C-M-e
-
-(defun c-awk-skip-semantic-ws-forward (&optional limit)
-  "Skip over any \(semanticallly insignificant) whitespace following point.
-This function skips over horizontal and vertical whitespace and line
-continuations EXCEPT line ends which terminate AWK statements.
-
-This function does hidden buffer changes (by setting text properties)."
-  (c-save-buffer-state ((limit (or limit (point-max))))
-    (while			 ; Goes forward one blank line each iteration.
-	(progn
-	  (search-forward-regexp "\\=[ \t]*" nil t)
-	  (and
-	   (or (eolp) (looking-at "\\\\$"))
-	   (not (eq (c-awk-get-NL-prop-cur-line) ?\$))
-	   (eq (forward-line) 0))))))
-
-(defun c-awk-skip-semantic-ws-backward (&optional limit)
-  "Skip over any \(semanticallly insignificant) whitespace following point.
-This function skips over horizontal and vertical whitespace and line
-continuations EXCEPT line ends which terminate AWK statements.
-
-This function does hidden buffer changes (by setting text properties)."
-  (c-save-buffer-state ((limit (or limit (point-min))))
-    (while			; Goes backward one blank line each iteration.
-	(progn
-	  (if (and (eq (char-before) ?\\)
-		   (eolp)
-		   (eq (c-awk-get-NL-prop-cur-line) ?\\))
-	      (backward-char))
-	  (skip-chars-backward " \t" limit)
-	  (and (> (point) limit)
-	       (bolp)
-	       (not (eq (c-awk-get-NL-prop-prev-line) ?\$))))
-      (backward-char))
-    (if (< (point) limit)
-	(goto-char limit))))
 
 ;; The following three regexps differ from those earlier on in cc-awk.el in
 ;; that they assume the syntax-table properties have been set.  They are thus

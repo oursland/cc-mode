@@ -142,20 +142,6 @@
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
 
-;; Some functions/constants in cc-awk.el that are called/referenced here.
-;; (Can't use cc-require due to cyclicity.)
-(cc-bytecomp-defun c-awk-unstick-NL-prop)
-(cc-bytecomp-defun c-awk-clear-NL-props)
-(cc-bytecomp-defvar awk-mode-syntax-table)
-(cc-bytecomp-defun c-awk-backward-syntactic-ws)
-(cc-bytecomp-defun c-awk-after-logical-semicolon)
-(cc-bytecomp-defun c-awk-NL-prop-not-set)
-(cc-bytecomp-defun c-awk-completed-stmt-ws-ends-line-p)
-(cc-bytecomp-defun c-awk-completed-stmt-ws-ends-prev-line-p)
-(cc-bytecomp-defun c-awk-virtual-semicolon-ends-line-p)
-(cc-bytecomp-defun c-awk-prev-line-incomplete-p)
-(cc-bytecomp-defun c-awk-after-change)
-
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
 
@@ -1058,52 +1044,6 @@ comment at the start of cc-engine.el for more info."
 ;; changing the syntax for backslash doesn't work since we must treat
 ;; escapes in string literals correctly.)
 
-
-;;;; Restored to the previous (unawked) version, 2004/3/19.
-;; (defun c-forward-single-comment ()
-;;   "Move forward past whitespace and the closest following comment, if any.
-;; Return t if a comment was found, nil otherwise.  In either case, the
-;; point is moved past any whitespace following the point.  Line
-;; continuations, i.e. backslashes followed by line breaks, are treated
-;; as whitespace.  In AWK Mode, an end of line which terminates a
-;; statement \(a \"virtual semicolon\") is NOT regarded as whitespace.
-;; The line breaks that end line comments are considered to be the
-;; comment enders, so the point will be put on the beginning of the next
-;; line if it moved past a line comment.
-
-;; Note that this function might do hidden buffer changes.  See the
-;; comment at the start of cc-engine.el for more info."
-
-;;   (let ((start (point)))
-;;     (if (c-major-mode-is 'awk-mode)
-;; 	(while	      ; Moves forward one blank line each time round the loop.
-;; 	    (progn
-;; 	      (skip-chars-forward " \t")
-;; 	      ;; Experimentation shows that \f and \v are illegal in gawk
-;; 	      ;; scripts (outside of strings (? and comments?)).
-;; 	      (and (or (eolp)
-;; 		       (looking-at "\\\\$"))
-;; 		   (not (c-awk-virtual-semicolon-ends-line-p))))
-;; 	  (forward-line))
-;;       (when (looking-at "\\([ \t\n\r\f\v]\\|\\\\[\n\r]\\)+")
-;; 	(goto-char (match-end 0))))
-
-;;     (when (and (not (eolp)) ; Otherwise, in AWK mode, forward-comment would
-;; 			    ; skip a virtual semicolon.
-;; 	       (forward-comment 1))
-;;       (if (eobp)
-;; 	  ;; Some emacsen (e.g. XEmacs 21) return t when moving
-;; 	  ;; forwards at eob.
-;; 	  nil
-
-;; 	;; Emacs includes the ending newline in a b-style (c++)
-;; 	;; comment, but XEmacs doesn't.  We depend on the Emacs
-;; 	;; behavior (which also is symmetric).
-;; 	(if (and (eolp) (elt (parse-partial-sexp start (point)) 7))
-;; 	    (condition-case nil (forward-char 1)))
-
-;; 	t))))
-
 (defun c-forward-single-comment ()
   "Move forward past whitespace and the closest following comment, if any.
 Return t if a comment was found, nil otherwise.  In either case, the
@@ -1153,82 +1093,6 @@ comment at the start of cc-engine.el for more info."
 	  (when (looking-at "\\\\[\n\r]")
 	    (forward-char 2)
 	    t))))
-
-;;;; Restored to the previous version, 2004/3/19
-
-;; (defun c-backward-single-comment ()
-;;   "Move backward past whitespace and the closest preceding comment, if any.
-;; Return t if a comment was found, nil otherwise.  In either case, the
-;; point is moved past any whitespace preceding the point.  Line
-;; continuations, i.e. backslashes followed by line breaks, are treated
-;; as whitespace.  In AWK Mode, an end of line which terminates a
-;; statement \(a \"virtual semicolon\") is NOT regarded as whitespace.
-;; The line breaks that end line comments are considered to be the
-;; comment enders, so the point cannot be at the end of the same line to
-;; move over a line comment.
-
-;; Note that this function might do hidden buffer changes.  See the
-;; comment at the start of cc-engine.el for more info."
-
-;;   (let ((start (point))
-;; 	(awk-$-pos nil))	      ; position after AWK "virtual semicolon"
-;;     ;; When we got newline terminated comments, forward-comment in all
-;;     ;; supported emacsen so far will stop at eol of each line not
-;;     ;; ending with a comment when moving backwards.  This corrects for
-;;     ;; that, and at the same time handles line continuations.
-;;     (if (c-major-mode-is 'awk-mode)
-;; 	;; Move back over blank lines, stopping after going over a virtual
-;; 	;; semicolon.
-;; 	(progn
-;; 	  (skip-chars-backward " \t")
-;; 	  (while     ; Moves backward one blank line each time round the loop.
-;; 	      (and (bolp)
-;; 		   (not (bobp))
-;; 		   (progn (when (c-awk-virtual-semicolon-ends-prev-line-p)
-;; 			    (setq awk-$-pos (point)))
-;; 			  (backward-char) ; to end of previous line.
-;; 			  (if (eq (char-before) ?\\)
-;; 			      (backward-char))
-;; 			  (skip-chars-backward " \t")
-;; 			  (not awk-$-pos)))))
-
-;;       (while (progn
-;; 	       (skip-chars-backward " \t\n\r\f\v")
-;; 	       (and (looking-at "[\n\r]")
-;; 		    (eq (char-before) ?\\)
-;; 		    (< (point) start)))
-;; 	(backward-char)))
-
-;;     (if (bobp)
-;; 	;; Some emacsen (e.g. XEmacs 21.4) return t when moving
-;; 	;; backwards at bob.
-;; 	nil
-
-;;       ;; Leave point after the closest following newline if we've
-;;       ;; backed up over any above, since forward-comment won't move
-;;       ;; backward over a line comment if point is at the end of the
-;;       ;; same line.
-;;       (re-search-forward "\\=\\s *[\n\r]" start t)
-;; ;     (re-search-forward "\\=\\s *\\\\?[\n\r]" start t)
-;; ; Ask MS about this.  (forward-comment -1) fails when the previous line is a
-;; ; line comment ending in \.
-
-;;       (if (if (forward-comment -1)
-;; 	      (if (eolp)
-;; 		  ;; If forward-comment above succeeded and we're at eol
-;; 		  ;; then the newline we moved over above didn't end a
-;; 		  ;; line comment, so we give it another go.
-;; 		  (forward-comment -1)
-;; 		t))
-
-;; 	  ;; Emacs <= 20 and XEmacs move back over the closer of a
-;; 	  ;; block comment that lacks an opener.
-;; 	  (if (looking-at "\\*/")
-;; 	      (progn (forward-char 2) nil)
-;; 	    t)
-;; 	(when awk-$-pos
-;; 	  (goto-char awk-$-pos)
-;; 	  nil)))))
 
 (defun c-backward-single-comment ()
   "Move backward past whitespace and the closest preceding comment, if any.

@@ -49,7 +49,6 @@
 (cc-bytecomp-defun delete-forward-p)	; XEmacs
 (cc-bytecomp-defvar filladapt-mode)	; c-fill-paragraph contains a kludge
 					; which looks at this.
-(cc-bytecomp-defun c-awk-at-statement-end-p)
 
 
 (defvar c-fix-backslashes t)
@@ -1733,7 +1732,8 @@ function does not require the declaration to contain a brace block."
 	    (narrow-to-region (point-min) (point))
 	    (if (c-backward-single-comment)
 		(cons (point) (progn (c-forward-single-comment) (point)))
-	      (c-skip-ws-backward) ;;;; REMOVE THIS, SURELY?  2004/3/28
+	      ;;(c-skip-ws-backward) ;;;; REMOVE THIS, SURELY?  2004/3/28
+	                             ;;;; Removed, 2004/4/3
 	      (setq pos (point))
 	      (when
 		  (or
@@ -1901,11 +1901,13 @@ function does not require the declaration to contain a brace block."
   ;; ALLOW-EARLY-STOP is non-nil if it is permissible to return without moving
   ;; forward at all, should we encounter a `{'.  This is an ugly kludge, but
   ;; seems unavoidable.  Depending on the context this function is called
-  ;; from, we _sometimes_ need to stop there.
+  ;; from, we _sometimes_ need to stop there.  Currently (2004/4/3),
+  ;; ALLOW-EARLY-STOP is applied only to open braces, not to virtual
+  ;; semicolons, or anything else.
   ;;
   ;; Return a cons (A.B), where
-  ;;   A is NIL if we moved forward to an EOS, T otherwise (we didn't move, or
-  ;;     we hit a literal).  FIXME!!! This isn't accurate (2004/4/3)
+  ;;   A is NIL if we moved forward to an EOS, or stay at one (when
+  ;;     ALLOW-EARLY-STOP is set), T otherwise (we hit a literal).
   ;;   B is 'MACRO-BOUNDARY if we are about to cross the boundary out of or
   ;;     into a macro, otherwise 'LITERAL if we've hit a literal, otherwise NIL
   ;;
@@ -1989,9 +1991,6 @@ function does not require the declaration to contain a brace block."
 
 	 ;; Stop if we encounter a preprocessor line.
 	 ((and (not macro-end)
-	       ;; (not (c-major-mode-is 'awk-mode)) ;;;; 2004/3/19.  Can this
-					;;;; happen?  Isn't an AWK comment
-					;;;; dealt with by a previous clause?
 	       (eq (char-after) ?#)
 	       (= (point) (c-point 'boi)))
 	  (goto-char last)
