@@ -87,50 +87,50 @@ Patch releases
        the original release version can be found.
 
     -  On the branch there are tags for so-called "patch releases",
-       e.g.  "Patch_5_30_1", "Patch_5_30_2", etc.
+       e.g. "Patch_5_30_1", "Patch_5_30_2", etc.
 
-    -  A patch release is intended to be as lightweight as
-       possible. Every time a fixed version should be spread to Emacs,
-       XEmacs or the standalone dist, a patch release should be made
-       for that version.  The reason is to make the version numbers in
-       bug reports accurate.
+    -  A patch release is intended to be as lightweight as possible.
+       Every time a fixed version should be spread to Emacs, XEmacs or
+       the standalone dist, a patch release should be made for that
+       version.  The reason is to make the version numbers in bug
+       reports accurate.
 
     -  A patch release is made as follows:
 
        1.  Update the ChangeLog file with any changes that aren't
-	   there already. (I use "make rcs2log", paste in the output
+	   there already.  (I use "make rcs2log", paste in the output
 	   at the top of ChangeLog, and then edit it as necessary.)
        2.  Add an entry "* Patch release 5.30.NN" to the top of the
-	   ChangeLog. NN is the patch count that's last in the version
-	   string in cc-defs.el.
-       3.  Commit it. (Also make sure everything else that should go
+	   ChangeLog.  NN is the patch count that's last in the
+	   version string in cc-defs.el.
+       3.  Commit it.  (Also make sure everything else that should go
            in is committed.)
        4.  Do "cvs tag Patch_5_30_NN".
        5.  Use the file tree in this state to send it whereever it
            should go.
        6.  Increase the patch count in the version string in
-           cc-defs.el and commit it. That's the only place where the
+           cc-defs.el and commit it.  That's the only place where the
            patch count is present; it's enough to make it show in bug
            reports and when people do M-x c-version.
 
        (Release.py automates some of this for a real release, but it's
-       not yet adapted it for patch releases.)
+       not yet adapted for patch releases.)
 
     -  Since patch releases are so lightweight, they can be made
-       fairly easily and without discussion. The only demand is that
-       the ChangeLog is updated (since it's necessary when merging the
-       version into Emacs). Spreading and announcing a patch release
-       is optional; one can e.g. make one only to give to the XEmacs
-       people, or only to upload it to the web site.
+       fairly easily and without discussion.  The only requirement is
+       that the ChangeLog is updated (since it's necessary when
+       merging the version into Emacs).  Spreading and announcing a
+       patch release is optional; one can e.g. make one only to give
+       to the XEmacs people, or only to upload to the web site.
 
     -  Every fix and improvement _must_ be committed to the
-       development branch, i.e. the main trunk. The only exception is
+       development branch, i.e. the main trunk.  The only exception is
        if it only concerns code that isn't applicable there anymore.
 
     -  Bug fixes which are small or fairly safe should be committed to
-       the patch branch so that they can be spread more quickly. Minor
-       improvements are also ok to commit there if they are
-       safe. However, if an improvement would be large enough to
+       the patch branch so that they can be spread more quickly.
+       Minor improvements are also ok if they don't affect the
+       stability.  However, if an improvement would be large enough to
        warrant an entry in the NEWS file, it's probably too big to
        slip into the patch branch.
 
@@ -139,7 +139,7 @@ Patch releases
 
 	 > cvs diff -u | patch -d ../cc-other -p0
 
-       "cc-other" is a tree where the other branch is checked out. (A
+       "cc-other" is a tree where the other branch is checked out.  (A
        tip is to always have two trees checked out, one for each
        branch.)
 
@@ -147,7 +147,7 @@ Patch releases
        conveniently with the same cvs command and the same message.
 
     -  When there's enough reason for it, the latest patch release is
-       made available from the web site. At that point it can be
+       made available from the web site.  At that point it can be
        announced on cc-mode-help@gnu.org, or maybe even on all the
        places like a "real" release.
 
