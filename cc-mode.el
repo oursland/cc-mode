@@ -85,26 +85,32 @@
 
 ;;; Code:
 
-
-(defvar c-buffer-is-cc-mode nil
-  "Non-nil for all buffers with a `major-mode' derived from CC Mode.
-Otherwise, this variable is nil. I.e. this variable is non-nil for
-`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode',
-`pike-mode', and any other non-CC Mode mode that calls
-`c-initialize-cc-mode' (e.g. `awk-mode').")
-(make-variable-buffer-local 'c-buffer-is-cc-mode)
-(put 'c-buffer-is-cc-mode 'permanent-local t)
+(eval-when-compile
+  (let ((load-path
+	 ;; Try to make sure the source directory is at the front of
+	 ;; load-path when we load cc-defs.
+	 (if (boundp 'byte-compile-current-file)
+	     ;; byte-compile-current-file is set by the byte compiler
+	     ;; to the full path to this file.
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    ;; Load our version of cc-defs unconditionally, since an older
+    ;; version might very well be dumped in or already loaded.  This
+    ;; way we ensure that the code get compiled with the correct
+    ;; macros and defsubst.  The same problem affects the subpackages
+    ;; that's require'd below, but that doesn't harm the compiler; it
+    ;; can only cause some bogus warnings.
+    (load "cc-defs" nil t)))
 
-(eval-and-compile
-  (require 'cc-defs))
+(require 'cc-defs) ; Not meaningless; this passes on require's from cc-defs.
 (require 'cc-menus)
 (require 'cc-vars)
-(require 'cc-engine)
-(require 'cc-langs)
-(require 'cc-align)
 (require 'cc-styles)
+(require 'cc-langs)
+(require 'cc-engine)
+(require 'cc-align)
 (require 'cc-cmds)
-
 
 
 ;; Other modes and packages which depend on CC Mode should do the
@@ -164,9 +170,8 @@ Key bindings:
 	c-baseclass-key nil
 	c-comment-start-regexp c-C++-comment-start-regexp
 	c-bitfield-key c-C-bitfield-key
-	imenu-generic-expression cc-imenu-c-generic-expression
-	imenu-case-fold-search nil
 	)
+  (cc-imenu-init cc-imenu-c-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook)
   (c-update-modeline))
@@ -207,9 +212,8 @@ Key bindings:
 	c-access-key c-C++-access-key
 	c-recognize-knr-p nil
 	c-bitfield-key c-C-bitfield-key
-	imenu-generic-expression cc-imenu-c++-generic-expression
-	imenu-case-fold-search nil
 	)
+  (cc-imenu-init cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook)
   (c-update-modeline))
@@ -249,9 +253,8 @@ Key bindings:
 	c-baseclass-key nil
 	c-access-key c-ObjC-access-key
 	c-method-key c-ObjC-method-key
-	imenu-create-index-function 'cc-imenu-objc-function
-	imenu-case-fold-search nil
 	)
+  (cc-imenu-init cc-imenu-objc-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook)
   (c-update-modeline))
@@ -296,9 +299,8 @@ Key bindings:
  	c-access-key c-Java-access-key
 	c-inexpr-class-key c-Java-inexpr-class-key
 	;defun-prompt-regexp c-Java-defun-prompt-regexp
-	imenu-generic-expression cc-imenu-java-generic-expression
-	imenu-case-fold-search nil
 	)
+  (cc-imenu-init cc-imenu-java-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook)
   (c-update-modeline))
@@ -338,9 +340,8 @@ Key bindings:
 	c-extra-toplevel-key c-IDL-extra-toplevel-key
 	c-access-key c-C++-access-key
 	c-recognize-knr-p nil
-;;	imenu-generic-expression cc-imenu-c++-generic-expression
-;;	imenu-case-fold-search nil
 	)
+  ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;FIXME
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'idl-mode-hook)
   (c-update-modeline))
@@ -383,9 +384,8 @@ Key bindings:
 	c-lambda-key c-Pike-lambda-key
 	c-inexpr-block-key c-Pike-inexpr-block-key
 	c-special-brace-lists c-Pike-special-brace-lists
-	;imenu-generic-expression cc-imenu-java-generic-expression ;FIXME
-	;imenu-case-fold-search nil ;FIXME
 	)
+  ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;FIXME
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'pike-mode-hook)
   (c-update-modeline))
