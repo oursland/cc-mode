@@ -217,18 +217,18 @@ the existing style.")
 
 (defun c-set-style-2 (style basestyles)
   ;; Recursively set the base style.  If no base style is given, the
-  ;; default base style is "cc-mode" and the recursion stops.  Be sure
-  ;; to detect loops.
+  ;; default base style is "user" (a.k.a. "cc-mode") and the recursion
+  ;; stops.  Be sure to detect loops.
   (let ((vars (cdr (or (assoc (downcase style) c-style-alist)
 		       (assoc (upcase style) c-style-alist)
 		       (assoc style c-style-alist)
 		       (error "Undefined style: %s" style)))))
-    (if (not (string-equal style "cc-mode"))
+    (if (not (member style '("user" "cc-mode")))
 	(let ((base (if (stringp (car vars))
 			(prog1
 			    (downcase (car vars))
 			  (setq vars (cdr vars)))
-		      "cc-mode")))
+		      "user")))
 	  (if (memq base basestyles)
 	      (error "Style loop detected: %s in %s" base basestyles))
 	  (c-set-style-2 base (cons base basestyles))))
@@ -570,6 +570,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
   ;; variables first to the `cc-mode' style before instituting the new
   ;; style.  Only do this once!
   (or (assoc "cc-mode" c-style-alist)
+      (assoc "user" c-style-alist)
       (let (copyfunc)
 	;; use built-in copy-tree if its there.
 	(if (and (fboundp 'copy-tree)
@@ -580,7 +581,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 				(cons (funcall copyfunc (car tree))
 				      (funcall copyfunc (cdr tree)))
 			      tree))))
-	(c-add-style "cc-mode"
+	(c-add-style "user"
 		     (mapcar
 		      (function
 		       (lambda (var)
@@ -601,9 +602,10 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 			c-hanging-comment-ender-p
 			c-offsets-alist
 			)))
+	(c-add-style "cc-mode" "user")
 	;; the default style is now GNU.  This can be overridden in
 	;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
-	(c-set-style c-site-default-style)))
+	(c-set-style c-default-style)))
   (if c-style-variables-are-local-p
       (c-make-styles-buffer-local)))
 
