@@ -300,7 +300,7 @@ re-dump Emacs."
   :type 'string
   :group 'c)
 
-(defcustom c-style-variables-are-local-p t
+(defcustom c-style-variables-are-local-p nil
   "*Whether style variables should be buffer local by default.
 If non-nil, then all indentation style related variables will be made
 buffer local by default.  If nil, they will remain global.  Variables
