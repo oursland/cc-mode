@@ -1446,10 +1446,10 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 			 (cc-eval-when-compile
 			   (boundp 'parse-sexp-lookup-properties))))
 		    (save-restriction
-		      (goto-char (match-end 1))
 		      (narrow-to-region (point-min) limit)
 		      (c-font-lock-objc-method)))
-		  nil))))))
+		  nil))
+	      (goto-char (match-end 1))))))
 
       ;; Fontify all type names and the identifiers in the
       ;; declarations they might start.  Use eval here since
