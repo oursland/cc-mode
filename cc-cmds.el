@@ -779,7 +779,7 @@ comment."
 				       "\\)[ \t]+"))
 		   (string-equal (match-string 1) "//"))
 	      ;; line style
-	      (setq leader "// "))
+	      (setq leader (match-string 0)))
 	  (goto-char here)
 	  (delete-region (progn (skip-chars-backward " \t") (point))
 			 (progn (skip-chars-forward " \t") (point)))
