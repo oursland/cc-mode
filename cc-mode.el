@@ -324,41 +324,7 @@
 				     c-indentation-style
 				     (not (string-equal c-indentation-style
 							style)))))))
-  ;; Fix things up for paragraph recognition and filling inside
-  ;; comments by using c-current-comment-prefix in the relevant
-  ;; places.  We use adaptive filling for this to make it possible to
-  ;; use filladapt or some other fancy package.
-  (setq c-current-comment-prefix
-	(if (listp c-comment-prefix-regexp)
-	    (cdr-safe (or (assoc major-mode c-comment-prefix-regexp)
-			  (assoc 'other c-comment-prefix-regexp)))
-	  c-comment-prefix-regexp))
-  (let ((comment-line-prefix
-	 (concat "[ \t]*\\(" c-current-comment-prefix "\\)[ \t]*")))
-    (setq paragraph-start (concat comment-line-prefix
-				  c-append-paragraph-start
-				  "\\|"
-				  page-delimiter)
-	  paragraph-separate (concat comment-line-prefix
-				     c-append-paragraph-separate
-				     "\\|"
-				     page-delimiter)
-	  paragraph-ignore-fill-prefix t
-	  adaptive-fill-mode t
-	  adaptive-fill-regexp
-	  (concat comment-line-prefix
-		  (if adaptive-fill-regexp
-		      (concat "\\(" adaptive-fill-regexp "\\)")
-		    "")))
-    (when (boundp 'adaptive-fill-first-line-regexp)
-      ;; XEmacs (20.x) adaptive fill mode doesn't have this.
-      (make-local-variable 'adaptive-fill-first-line-regexp)
-      (setq adaptive-fill-first-line-regexp
-	    (concat "\\`" comment-line-prefix
-		    ;; Maybe we should incorporate the old value here,
-		    ;; but then we have to do all sorts of kludges to
-		    ;; deal with the \` and \' it probably contains.
-		    "\\'"))))
+  (c-setup-paragraph-variables)
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))

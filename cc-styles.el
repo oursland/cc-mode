@@ -257,11 +257,14 @@ the existing style.")
 	    (mapcar add-func (if dont-override (reverse val) val))
 	  (funcall add-func val))))
      ;; all other variables
-     (t (if (or (not dont-override)
-		(not (memq attr c-style-variables))
-		(eq (symbol-value attr) 'set-from-style))
-	    (set attr val))))
-    ))
+     (t (when (or (not dont-override)
+		  (not (memq attr c-style-variables))
+		  (eq (symbol-value attr) 'set-from-style))
+	  (set attr val)
+	  ;; Must update a number of other variables if
+	  ;; c-comment-prefix-regexp is set.
+	  (if (eq attr 'c-comment-prefix-regexp)
+	      (c-setup-paragraph-variables)))))))
 
 (defun c-get-style-variables (style basestyles)
   ;; Return all variables in a style by resolving inheritances.
@@ -441,6 +444,42 @@ and exists only for compatibility reasons."
 
 
 
+(defun c-setup-paragraph-variables ()
+  "Fix things up for paragraph recognition and filling inside comments by
+incorporating the value of `c-comment-prefix-regexp' in the relevant
+variables."
+  (setq c-current-comment-prefix
+	(if (listp c-comment-prefix-regexp)
+	    (cdr-safe (or (assoc major-mode c-comment-prefix-regexp)
+			  (assoc 'other c-comment-prefix-regexp)))
+	  c-comment-prefix-regexp))
+  (let ((comment-line-prefix
+	 (concat "[ \t]*\\(" c-current-comment-prefix "\\)[ \t]*")))
+    (setq paragraph-start (concat comment-line-prefix
+				  c-append-paragraph-start
+				  "\\|"
+				  page-delimiter)
+	  paragraph-separate (concat comment-line-prefix
+				     c-append-paragraph-separate
+				     "\\|"
+				     page-delimiter)
+	  paragraph-ignore-fill-prefix t
+	  adaptive-fill-mode t
+	  adaptive-fill-regexp
+	  (concat comment-line-prefix
+		  (if adaptive-fill-regexp
+		      (concat "\\(" adaptive-fill-regexp "\\)")
+		    "")))
+    (when (boundp 'adaptive-fill-first-line-regexp)
+      ;; XEmacs (20.x) adaptive fill mode doesn't have this.
+      (make-local-variable 'adaptive-fill-first-line-regexp)
+      (setq adaptive-fill-first-line-regexp
+	    (concat "\\`" comment-line-prefix
+		    ;; Maybe we should incorporate the old value here,
+		    ;; but then we have to do all sorts of kludges to
+		    ;; deal with the \` and \' it probably contains.
+		    "\\'")))))
+
 (defun c-initialize-builtin-style ()
   ;; Dynamically append the default value of most variables. This is
   ;; crucial because future c-set-style calls will always reset the
