@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.220 $
-;; Last Modified:   $Date: 1995-05-31 23:46:27 $
+;; Version:         $Revision: 4.221 $
+;; Last Modified:   $Date: 1995-06-01 00:05:31 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-31 23:46:27 $|$Revision: 4.220 $|
+;; |$Date: 1995-06-01 00:05:31 $|$Revision: 4.221 $|
 
 ;;; Code:
 
@@ -2235,24 +2235,6 @@ No indentation or other \"electric\" behavior is performed."
   (interactive)
   (insert "::"))
 
-;; TBD: These are from XEmacs (formerly Lucid) 19.9's version of c-mode.el
-;;(defun c-insert-brackets ()
-;;  (interactive)
-;;  (insert ?[)
-;;  (save-excursion
-;;    (insert ?])))
-
-;;(defun c-insert-braces ()
-;;  (interactive)
-;;  (setq last-command-char ?{)
-;;  (electric-c-brace 1)
-;;  (newline)
-;;  (c-indent-line)
-;;  (save-excursion
-;;    (newline)
-;;    (insert ?})
-;;    (c-indent-line)))
-
 
 (defun c-beginning-of-statement (&optional count lim)
   "Go to the beginning of the innermost C statement.
@@ -2470,37 +2452,6 @@ search."
     (goto-char here)
     crossedp))
 
-
-;;(defun c-beginning-of-defun (count)
-;;  "Move the the COUNTth `real' beginning-of-defun.
-;;This is defined as the first declaration line of the most enclosing
-;;top level construct; i.e. class/struct, function, enum, etc.  With
-;;negative COUNT, go forward."
-;;  (interactive "p")
-;;  )
-;;
-;;(defun c-beginning-of-defun-1 ()
-;;  ;; move to the real beginning of defun. `Real' being defined as the
-;;  ;; first C/C++ declaration line of the most enclosing top level construct.
-;;  (let* ((state (c-parse-state))
-;;	 (search-start (car state)))
-;;    ;; if the last thing is a cons then start searching from the end
-;;    ;; of the previous balanced sexp
-;;    (goto-char (or (car-safe search-start)
-;;		   (and (numberp search-start)
-;;			search-start)
-;;		   (point)))
-;;    (c-beginning-of-statement)
-;;    (if (bobp)
-;;	(c-forward-syntactic-ws))
-;;    ))
-;;
-;;(defun c-end-of-defun-1 ()
-;;  ;; move to the end of the defun.
-;;  (let* ((state (c-parse-state))
-;;	 (search-start (car state))
-;;	 )))
-;;
 
 (defun c-up-conditional (count)
   "Move back to the containing preprocessor conditional, leaving mark behind.
@@ -4530,84 +4481,10 @@ it trailing backslashes are removed."
 		  (c-backslashify-current-line (null arg))))
       )))
 
-;;(defun comment-region (beg end &optional arg)
-;;  "Comment or uncomment each line in the region.
-;;With just C-u prefix arg, uncomment each line in region.
-;;Numeric prefix arg ARG means use ARG comment characters.
-;;If ARG is negative, delete that many comment characters instead.
-;;Comments are terminated on each line, even for syntax in which newline does
-;;not end the comment.  Blank lines do not get comments."
-;;  ;; if someone wants it to only put a comment-start at the beginning and
-;;  ;; comment-end at the end then typing it, C-x C-x, closing it, C-x C-x
-;;  ;; is easy enough.  No option is made here for other than commenting
-;;  ;; every line.
-;;  (interactive "r\nP")
-;;  (or comment-start (error "No comment syntax is defined"))
-;;  (if (> beg end) (let (mid) (setq mid beg beg end end mid)))
-;;  (save-excursion
-;;    (save-restriction
-;;      (let ((cs comment-start) (ce comment-end)
-;;	    numarg)
-;;        (if (consp arg) (setq numarg t)
-;;	  (setq numarg (prefix-numeric-value arg))
-;;	  ;; For positive arg > 1, replicate the comment delims now,
-;;	  ;; then insert the replicated strings just once.
-;;	  (while (> numarg 1)
-;;	    (setq cs (concat cs comment-start)
-;;		  ce (concat ce comment-end))
-;;	    (setq numarg (1- numarg))))
-;;	;; Loop over all lines from BEG to END.
-;;        (narrow-to-region beg end)
-;;        (goto-char beg)
-;;        (while (not (eobp))
-;;          (if (or (eq numarg t) (< numarg 0))
-;;	      (progn
-;;		;; Delete comment start from beginning of line.
-;;		(if (eq numarg t)
-;;		    (while (looking-at (regexp-quote cs))
-;;		      (delete-char (length cs)))
-;;		  (let ((count numarg))
-;;		    (while (and (> 1 (setq count (1+ count)))
-;;				(looking-at (regexp-quote cs)))
-;;		      (delete-char (length cs)))))
-;;		;; Delete comment end from end of line.
-;;                (if (string= "" ce)
-;;		    nil
-;;		  (if (eq numarg t)
-;;		      (progn
-;;			(end-of-line)
-;;			;; This is questionable if comment-end ends in
-;;			;; whitespace.  That is pretty brain-damaged,
-;;			;; though.
-;;			(skip-chars-backward " \t")
-;;			(if (and (>= (- (point) (point-min)) (length ce))
-;;				 (save-excursion
-;;				   (backward-char (length ce))
-;;				   (looking-at (regexp-quote ce))))
-;;			    (delete-char (- (length ce)))))
-;;		    (setq count numarg)
-;;		    (while (> 1 (setq count (1+ count)))
-;;		      (end-of-line)
-;;		      ;; this is questionable if comment-end ends in whitespace
-;;		      ;; that is pretty brain-damaged though
-;;		      (skip-chars-backward " \t")
-;;		      (save-excursion
-;;			(backward-char (length ce))
-;;			(if (looking-at (regexp-quote ce))
-;;			    (delete-char (length ce)))))))
-;;		(forward-line 1))
-;;	    ;; Insert at beginning and at end.
-;;            (if (looking-at "[ \t]*$") ()
-;;              (insert cs)
-;;              (if (string= "" ce) ()
-;;                (end-of-line)
-;;                (insert ce)))
-;;            (search-forward "\n" nil 'move)))))))
-
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.220 $"
+(defconst c-version "$Revision: 4.221 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
