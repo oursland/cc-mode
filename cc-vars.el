@@ -45,6 +45,7 @@ reported and the syntactic symbol is ignored."
   :type 'integer
   :group 'c)
 
+;; "Tab Always Indent" goes away when widget is expanded.
 (defcustom c-tab-always-indent t
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil,
@@ -61,9 +62,13 @@ When inserting a tab, actually the function stored in the variable
 
 Note: indentation of lines containing only comments is also controlled
 by the `c-comment-only-line-offset' variable."
-  :type '(choice (const :tag "Always indent, never TAB" t)
-		 (const :tag "Indent in left margin, otherwise TAB" nil)
-		 (const :tag "TAB in literals, otherwise indent" other))
+  :type '(radio
+	  :extra-offset 8
+;;	  :tag "The TAB key:"
+	  :format "The TAB key\n%v"
+	  (const :tag "always indents, never inserts TAB" t)
+	  (const :tag "indents in left margin, otherwise inserts TAB" nil)
+	  (const :tag "inserts TAB in literals, otherwise indent" other))
   :group 'c)
 
 ;; TBD: this one doesn't enforce that it be a function
@@ -90,6 +95,7 @@ Just an integer as value is equivalent to (<val> . -1000)."
   :type '(choice (integer :tag "Non-anchored offset")
 		 (cons :tag "Non-anchored & anchored offset"
 		       :value (0 . 0)
+		       :extra-offset 8
 		       (integer :tag "Non-anchored offset")
 		       (integer :tag "Anchored offset")))
   :group 'c)
@@ -133,11 +139,13 @@ mode name.  Valid symbols are:
 			only takes place when there is nothing but
 			whitespace between colons. Clean up occurs
 			when the second colon is typed."
-  :type '(set (const brace-else-brace)
-	      (const brace-elseif-brace)
-	      (const empty-defun-braces)
-	      (const list-close-comma)
-	      (const scope-operator))
+  :type '(set
+	  :extra-offset 8
+	  (const :tag "Put `} else {' on one line" brace-else-brace)
+	  (const :tag "Put `} else if {' on one line" brace-elseif-brace)
+	  (const :tag "Put empty defun braces on one line" empty-defun-braces)
+	  (const :tag "Put `},' in aggregates on one line" list-close-comma)
+	  (const :tag "Put C++ style `::' on one line" scope-operator))
   :group 'c)
 
 ;; TBD: even when there are two choices, middle button should pop up
@@ -177,17 +185,22 @@ described in the preceding paragraph.  Note that during the call to
 the function, the variable `c-syntactic-context' is set to the entire
 syntactic context for the brace line."
   :type '(repeat
-	  (cons
-	   (choice (const defun-open) (const defun-close) (const class-open)
-		   (const class-close) (const inline-open) (const inline-close)
-		   (const block-open) (const block-close)
-		   (const substatement-open) (const statement-case-open)
-		   (const extern-lang-open) (const extern-lang-close)
-		   (const brace-list-open) (const brace-list-close)
-		   (const brace-list-intro) (const brace-list-entry))
-	   (choice (set (const before) (const after))
-		   function)
-	   ))
+	  (cons :format "%v"
+		(choice :tag "Syntax"
+			(const defun-open) (const defun-close)
+			(const class-open) (const class-close)
+			(const inline-open) (const inline-close)
+			(const block-open) (const block-close)
+			(const substatement-open) (const statement-case-open)
+			(const extern-lang-open) (const extern-lang-close)
+			(const brace-list-open) (const brace-list-close)
+			(const brace-list-intro) (const brace-list-entry))
+		(choice :tag "Action"
+			(set :format "%v"
+			     :extra-offset 8
+			     (const before) (const after))
+			(function :format "%v" :value c-)
+			)))
   :group 'c)
 
 (defcustom c-hanging-colons-alist nil
@@ -202,9 +215,14 @@ See the variable `c-hanging-braces-alist' for the semantics of this
 variable.  Note however that making ACTION a function symbol is
 currently not supported for this variable."
   :type '(repeat
-	  (cons (choice (const case-label) (const label) (const access-label)
+	  (cons :format "%v"
+		(choice :tag "Syntax"
+			(const case-label) (const label) (const access-label)
 			(const member-init-intro) (const inher-intro))
-		(set (const before) (const after))))
+		(set :tag "Action"
+		     :format "%t: %v"
+		     :extra-offset 8
+		     (const before) (const after))))
   :group 'c)
 
 (defcustom c-hanging-semi&comma-criteria '(c-semi&comma-inside-parenlist)
@@ -260,7 +278,7 @@ This hook gets called after a line is indented by the mode."
 (defcustom c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'."
-  :type '(set (const alignleft))
+  :type '(set :extra-offset 8 (const alignleft))
   :group 'c)
 
 (defcustom c-label-minimum-indentation 1
@@ -316,6 +334,7 @@ The list of variables to buffer localize are:
   :type 'boolean
   :group 'c)
 
+;; TBD: I only see "Mode Hook" in widget button
 (defcustom c-mode-hook nil
   "*Hook called by `c-mode'."
   :type 'hook
@@ -336,9 +355,10 @@ The list of variables to buffer localize are:
   :type 'hook
   :group 'c)
 
+;; TBD: I only see "Mode Common Hook" in widget button
 (defcustom c-mode-common-hook nil
   "*Hook called by all CC Mode modes for common initializations."
-  :type 'hook
+  :type '(hook :format "CC Mode Common Hook: %v")
   :group 'c)
 
 
