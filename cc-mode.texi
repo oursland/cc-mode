@@ -1,3 +1,4 @@
+\def\ccmode{{CC M\sc{ode}}}
 \input texinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5,7 +6,7 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @setfilename  cc-mode.info
-@settitle     CC-MODE Version 4 Documentation
+@settitle     CC MODE Version 4 Documentation
 @footnotestyle end
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -17,12 +18,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.64 $
+@comment manual version: $Revision: 2.65 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1997-02-18 03:31:57 $
+@comment Last modification: $Date: 1997-02-27 17:01:30 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -48,10 +49,10 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @comment The title is printed in a large font.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@center @titlefont{CC-MODE Version 4}
+@center @titlefont{CC Mode Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.64 $)
+@center (manual revision: $Revision: 2.65 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -89,7 +90,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 * Syntactic Symbols::
 * Performance Issues::
 * Frequently Asked Questions::
-* Getting the latest cc-mode release::
+* Getting the latest CC Mode release::
 * Sample .emacs File::
 * Limitations and Known Bugs::  
 * Mailing Lists and Submitting Bug Reports::  
@@ -108,21 +109,21 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @cindex   Introduction
 
 @cindex BOCM
-Welcome to @code{cc-mode}, version 4.  This is a GNU Emacs mode for
+Welcome to @ccmode{}, version 4.  This is a GNU Emacs mode for
 editing files containing C, C++, Objective-C, and Java code.
 This incarnation of the mode is descendant from @file{c-mode.el} (also
 called "Boring Old C Mode" or BOCM @code{:-)}, and @file{c++-mode.el}
-version 2, which I have been maintaining since 1992.  @code{cc-mode}
+version 2, which I have been maintaining since 1992.  @ccmode{}
 represents a significant milestone in the mode's life.  It has been
 fully merged back with Emacs 19's @file{c-mode.el}. Also a new, more
 intuitive and flexible mechanism for controlling indentation has been
 developed.
 
-@code{cc-mode} version 4 supports the editing of K&R and ANSI C,
+@ccmode{} version 4 supports the editing of K&R and ANSI C,
 @dfn{ARM} @footnote{i.e. ``The Annotated C++ Reference Manual'', by
 Ellis and Stroustrup.} C++, Objective-C, and Java files.  In this way,
 you can easily set up consistent coding styles for use in editing all C,
-C++, Objective-C, and Java programs. @code{cc-mode} does @emph{not}
+C++, Objective-C, and Java programs. @ccmode{} does @emph{not}
 handle font-locking (a.k.a. syntax coloring, keyword highlighting) or
 anything of that nature, for any of the 4 modes.  Those are handled by
 other Emacs packages.
@@ -131,7 +132,7 @@ This manual will describe the following:
 
 @itemize @bullet
 @item
-How to get started using @code{cc-mode}.
+How to get started using @ccmode{}.
 
 @item
 How the new indentation engine works.
@@ -141,36 +142,36 @@ How to customize the new indentation engine.
 
 @end itemize
 
-Note that the name of this file is @file{cc-mode.el}, and I'll often
-refer to the package as @code{cc-mode}, but there really is no top level
-@code{cc-mode} entry point.  I call it @code{cc-mode} simply to
-differentiate it from @file{c-mode.el}.  All of the variables, commands,
-and functions in @code{cc-mode} are prefixed with
-@code{c-@var{<thing>}}, and @code{c-mode}, @code{c++-mode},
-@code{objc-mode}, and @code{java-mode} entry points are provided.  This
-file is intended to be a replacement for @file{c-mode.el} and
-@file{c++-mode.el}.
+Note that the name of this package is ``@ccmode{}'', which should always
+be display in printed material as @ccmode{}.  When typing the name of
+this mode on-line, you should use @code{CC Mode}.  The main file for
+@ccmode{} is @file{cc-mode.el}, but other files are included in the
+@ccmode{} distribution.  There is no top level @code{cc-mode} entry
+point.  All of the variables, commands, and functions in @ccmode{} are
+prefixed with @code{c-@var{<thing>}}, and @code{c-mode},
+@code{c++-mode}, @code{objc-mode}, and @code{java-mode} entry points are
+provided.  This file is intended to be a replacement for
+@file{c-mode.el} and @file{c++-mode.el}.
 
 @findex c-version
 The major version number was incremented to 4 with the addition of
 @code{objc-mode}. To find the minor revision number of this release, use
 @kbd{M-x c-version RET}.
 
-As of this writing (20-Aug-1996), both Emacs 19.33 and XEmacs 19.14 are
-distributed with @code{cc-mode}, however neither have the very latest
-version.  In all likelihood, Emacs 19.34 and XEmacs 19.15 will contain
-the latest version of @code{cc-mode}.  You may therefore, want to
-upgrade your copy of @code{cc-mode}.  See @ref{Getting the latest
-cc-mode release}.
+As of this writing (27-Feb-1997), both Emacs 19.34 and XEmacs 19.14 are
+distributed with @ccmode{}, however neither have the very latest
+version.  In all likelihood, Emacs 19.35 and XEmacs 19.15 will contain
+the latest version of @ccmode{}.  You may therefore, want to upgrade
+your copy of @ccmode{}.  See @ref{Getting the latest CC Mode release}.
 
 @cindex @file{cc-compat.el} file
 This distribution also contains a file called @file{cc-compat.el} which
-should ease your transition from BOCM to @code{cc-mode}.  It currently
+should ease your transition from BOCM to @ccmode{}.  It currently
 comes unguaranteed and unsupported, but this may change for future
 versions.  If you have a BOCM configuration you are really happy with,
-and want to postpone learning how to configure @code{cc-mode}, take a
+and want to postpone learning how to configure @ccmode{}, take a
 look at that file.  It maps BOCM configuration variables to
-@code{cc-mode}'s new indentation model.
+@ccmode{}'s new indentation model.
 
 A special word of thanks goes to Krishna Padmasola for his work in
 converting the original @file{README} file to texinfo format.
@@ -190,7 +191,7 @@ XEmacs, maintained by @code{xemacs.org} and the Emacs 19 maintained by
 the Free Software Foundation.  Emacs 19 users will want to use Emacs
 version 19.21 or better, XEmacs users will want 19.6 or better.  Earlier
 versions of these Emacsen have deficiencies and/or bugs which will
-adversely affect the performance and usability of @code{cc-mode}.  You
+adversely affect the performance and usability of @ccmode{}.  You
 are better off just getting the latest version of Emacs or XEmacs.
 
 @cindex @file{cc-mode-18.el} file
@@ -198,15 +199,15 @@ are better off just getting the latest version of Emacs or XEmacs.
 @file{cc-mode-18.el} compatibility file, but only moderately well.  A
 word of warning though, @emph{Emacs 18 lacks some fundamental
 functionality and ultimately, using Emacs 18 is a losing
-battle}.  Hence @code{cc-mode} under Emacs 18 is no longer supported and
+battle}.  Hence @ccmode{} under Emacs 18 is no longer supported and
 it is highly recommended that you upgrade to Emacs 19.  If you use
-@code{cc-mode} under Emacs 18, you're on your own.  With @code{cc-mode}
+@ccmode{} under Emacs 18, you're on your own.  With @ccmode{}
 version 5, Emacs 18 support will be dropped altogether.
 
 Note that as of XEmacs 19.13 and Emacs 19.30, your Emacs already comes
-with @code{cc-mode} version 4 preconfigured for your use.  You should be
+with @ccmode{} version 4 preconfigured for your use.  You should be
 able to safely skip the rest of the setup information in this chapter,
-unless you want to install the latest version of @code{cc-mode} into one
+unless you want to install the latest version of @ccmode{} into one
 of these Emacsen.
 
 @cindex @file{.emacs} file
@@ -253,9 +254,9 @@ M-x byte-compile-file RET ~/mylisp/cc-mode.el RET
 @end example
 
 If you are running a version of Emacs or XEmacs that comes with
-@code{cc-mode} by default, you can simply add the following to your
+@ccmode{} by default, you can simply add the following to your
 @file{.emacs} file in order to upgrade to the latest version of
-@code{cc-mode}:
+@ccmode{}:
 @example
 
 (load "cc-mode")
@@ -283,7 +284,7 @@ need to add these lines at the top of your @file{.emacs} file:
 @end example
 
 After those lines you will want to add the following autoloads to your
-@file{.emacs} file so that @code{cc-mode} gets loaded at the right time:
+@file{.emacs} file so that @ccmode{} gets loaded at the right time:
 @example
 @group
 
@@ -295,7 +296,7 @@ After those lines you will want to add the following autoloads to your
 @end group
 @end example
 
-Alternatively, if you want to make sure @code{cc-mode} is loaded when
+Alternatively, if you want to make sure @ccmode{} is loaded when
 Emacs starts up, you could use this line instead of the autoloads
 above:
 @example
@@ -335,12 +336,12 @@ You may already have some or all of these settings on your
 That's all you need --- I know, I know, it sounds like a lot @code{:-)},
 but after you've done all this, you should only need to quit and restart
 Emacs.  The next time you visit a C, C++, Objective-C, or Java file you
-should be using @code{cc-mode}.  You can check this easily by hitting
+should be using @ccmode{}.  You can check this easily by hitting
 @kbd{M-x c-version RET} in the @code{c-mode}, @code{c++-mode}, or
 @code{objc-mode} buffer.  You should see this message in the echo area:
 @example
 
-Using @code{cc-mode} version 4.@var{xxx}
+Using CC Mode version 4.@var{xxx}
 
 Where @var{xxx} is the latest release minor number.
 
@@ -354,16 +355,16 @@ Where @var{xxx} is the latest release minor number.
 @cindex   New Indentation Engine
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@code{cc-mode} has a new indentation engine, providing a simplified, yet
+@ccmode{} has a new indentation engine, providing a simplified, yet
 flexible and general mechanism for customizing indentation. It breaks
 indentation calculation into two steps. First, for the line of code being
-indented, @code{cc-mode} analyzes what kind of language construct it's
+indented, @ccmode{} analyzes what kind of language construct it's
 looking at, then it applies user defined offsets to the current line
 based on this analysis.
 
 This section will briefly cover how indentation is calculated in
-@code{cc-mode}. It is important to understand the indentation model
-being used so that you will know how to customize @code{cc-mode} for
+@ccmode{}. It is important to understand the indentation model
+being used so that you will know how to customize @ccmode{} for
 your personal coding style.
 
 @menu
@@ -386,7 +387,7 @@ your personal coding style.
 @cindex syntactic component
 @cindex syntactic component list
 @cindex relative buffer position
-The first thing @code{cc-mode} does when indenting a line of code, is to
+The first thing @ccmode{} does when indenting a line of code, is to
 analyze the line, determining the @dfn{syntactic component list} of the
 construct on that line.  A @dfn{syntactic component} consists of a pair
 of information (in lisp parlance, a @emph{cons cell}), where the first
@@ -537,7 +538,7 @@ variable, which is an association list of syntactic symbols and the
 offsets to apply for those symbols.  These offsets are added to a
 running total.
 
-Second, if the component has a relative buffer position, @code{cc-mode}
+Second, if the component has a relative buffer position, @ccmode{}
 adds the column number of that position to the running total.  By adding
 up the offsets and columns for every syntactic component on the list,
 the final total indentation for the current line is computed.
@@ -568,13 +569,13 @@ line is:
 @end example
 
 @noindent
-@code{cc-mode} looks up @code{defun-block-intro} in the
+@ccmode{} looks up @code{defun-block-intro} in the
 @code{c-offsets-alist} variable.  Let's say it finds the value @samp{4};
 it adds this to the running total (initialized to zero), yielding a
 running total indentation of 4 spaces.
 
-Next @code{cc-mode} goes to buffer position 29 and asks for the current
-column.  This brace is in column zero, so @code{cc-mode}
+Next @ccmode{} goes to buffer position 29 and asks for the current
+column.  This brace is in column zero, so @ccmode{}
 adds @samp{0} to the running total.  Since there is only one syntactic
 component on the list for this line, indentation calculation is
 complete, and the total indentation for the line
@@ -605,9 +606,9 @@ component list.  Remember that the list for this line is:
 
 @end example
 
-Here, @code{cc-mode} first looks up the @code{substatement-open} symbol
+Here, @ccmode{} first looks up the @code{substatement-open} symbol
 in @code{c-offsets-alist}. Let's say it finds the value @samp{4}.  This
-yields a running total of 4.  @code{cc-mode} then goes to
+yields a running total of 4.  @ccmode{} then goes to
 buffer position 46, which is the @samp{i} in @code{if} on line 3.  This
 character is in the fourth column on that line so adding this to the
 running total yields an indentation for the line of 8 spaces.
@@ -622,7 +623,7 @@ being used.
 @vindex c-echo-syntactic-information-p
 @vindex echo-syntactic-information-p (c-)
 @cindex TAB
-To help you configure @code{cc-mode}, you can set the variable
+To help you configure @ccmode{}, you can set the variable
 @code{c-echo-syntactic-information-p} to non-@code{nil} so that the
 syntactic component list and calculated offset will always be echoed in
 the minibuffer when you hit @kbd{TAB}.
@@ -636,16 +637,16 @@ the minibuffer when you hit @kbd{TAB}.
 @cindex   Minor Modes
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@code{cc-mode} contains two minor-mode-like features that you should
+@ccmode{} contains two minor-mode-like features that you should
 find useful while you enter new C code.  The first is called
 @dfn{auto-newline} mode, and the second is called @dfn{hungry-delete}
 mode.  These minor modes can be toggled on and off independently, and
-@code{cc-mode} can be configured so that it starts up with any
+@ccmode{} can be configured so that it starts up with any
 combination of these minor modes.  By default, both of these minor modes
 are turned off.
 
 The state of the minor modes is always reflected in the minor mode list
-on the modeline of the @code{cc-mode} buffer.  When auto-newline mode is
+on the modeline of the @ccmode{} buffer.  When auto-newline mode is
 enabled, you will see @samp{C/a} on the mode line @footnote{Remember
 that the @samp{C} could be replaced with @samp{C++}, @samp{ObjC}, or
 @samp{Java}.}.  When hungry delete mode is enabled you would see
@@ -660,7 +661,7 @@ that the @samp{C} could be replaced with @samp{C++}, @samp{ObjC}, or
 @findex toggle-hungry-state (c-)
 @findex toggle-auto-state (c-)
 @findex toggle-auto-hungry-state (c-)
-@code{cc-mode} provides keybindings which allow you to toggle the minor
+@ccmode{} provides keybindings which allow you to toggle the minor
 modes on the fly while editing code.  To toggle just the auto-newline
 state, hit @kbd{C-c C-a} (@code{c-toggle-auto-state}).  When you do
 this, you should see the @samp{a} indicator either appear or disappear
@@ -717,7 +718,7 @@ Auto-newline minor mode is enabled, as evidenced by a @samp{C/a} or
 @cindex syntactic whitespace
 @item
 The character was not typed inside of a literal @footnote{A
-@dfn{literal} is defined in @code{cc-mode} as any comment,
+@dfn{literal} is defined in @ccmode{} as any comment,
 string, or cpp macro definition.  These constructs are also known as
 @dfn{syntactic whitespace} since they are usually ignored when scanning
 C code.}.
@@ -805,7 +806,7 @@ is called an @var{ACTION} which can be either a function or a list.
 using a function as a brace hanging @var{ACTION}.
 
 When the @var{ACTION} is a list, it can contain any combination of the
-symbols @code{before} and @code{after}, directing @code{cc-mode} where to
+symbols @code{before} and @code{after}, directing @ccmode{} where to
 put newlines in relationship to the brace being inserted.  Thus, if the
 list contains only the symbol @code{after}, then the brace is said to
 @dfn{hang} on the right side of the line, as in:
@@ -872,7 +873,7 @@ Hanging} for details.
 In C++, double-colons are used as a scope operator but because these
 colons always appear right next to each other, newlines before and after
 them are controlled by a different mechanism, called @dfn{clean-ups} in
-@code{cc-mode}.  @xref{Clean-ups} for details.
+@ccmode{}.  @xref{Clean-ups} for details.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -883,7 +884,7 @@ them are controlled by a different mechanism, called @dfn{clean-ups} in
 @cindex   Hanging Semi-colons and commas
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Semicolons and commas are also electric in @code{cc-mode}, but since
+Semicolons and commas are also electric in @ccmode{}, but since
 these characters do not correspond directly to syntactic symbols, a
 different mechanism is used to determine whether newlines should be
 automatically inserted after these characters.  @xref{Customizing
@@ -971,9 +972,9 @@ i.e. to eliminate some whitespace that isn't inserted by electric
 commands, or whitespace that contains intervening constructs.
 
 @cindex literal
-You can configure @code{cc-mode}'s clean-ups by setting the variable
+You can configure @ccmode{}'s clean-ups by setting the variable
 @code{c-cleanup-list}, which is a list of clean-up symbols.  By default,
-@code{cc-mode} cleans up only the @code{scope-operator} construct, which
+@ccmode{} cleans up only the @code{scope-operator} construct, which
 is necessary for proper C++ support.  Note that clean-ups are only
 performed when the construct does not occur within a literal (see
 @ref{Auto-newline insertion}), and when there is nothing but whitespace
@@ -981,7 +982,7 @@ appearing between the individual components of the construct.
 
 @vindex c-cleanup-list
 @vindex cleanup-list (c-)
-There are currently only five specific constructs that @code{cc-mode}
+There are currently only five specific constructs that @ccmode{}
 can clean up, as indicated by these symbols:
 
 @itemize @bullet
@@ -1140,7 +1141,7 @@ type if, for example you made a mistake on the preceding line.
 @vindex c-delete-function
 @vindex delete-function (c-)
 @cindex literal
-By default, @code{cc-mode} actually runs the command
+By default, @ccmode{} actually runs the command
 @code{c-electric-delete} when you hit @kbd{DEL}.  When this command is
 used to delete a single character (i.e. when it is called interactively
 with no numeric argument), it really runs the function contained in the
@@ -1194,12 +1195,12 @@ buffer will not adjust placement of braces already in the file.
 @vindex progress-interval (c-)
 Third, re-indenting large portions of code is currently rather
 inefficient.  Improvements have been made since previous releases of
-@code{cc-mode}, and much more radical improvements are planned, but for
+@ccmode{}, and much more radical improvements are planned, but for
 now you need to be aware of this @footnote{In particular, I have had
-people complain about the speed that @code{cc-mode} re-indents
+people complain about the speed that @ccmode{} re-indents
 @code{lex(1)} output.  Lex, yacc, and other code generators usually
 output some pretty perversely formatted code.  @emph{Don't} try to
-indent this stuff with @code{cc-mode}!}.  Some provision has been made
+indent this stuff with @ccmode{}!}.  Some provision has been made
 to at least inform you as to the progress of the re-indentation.  The
 variable @code{c-progress-interval} controls how often a progress
 message is displayed.  Set this variable to @code{nil} to inhibit
@@ -1257,7 +1258,7 @@ same position within the buffer.
 @findex indent-region
 To indent any arbitrary region of code, use @kbd{M-C-\}
 (@code{indent-region}).   This is a standard Emacs command, specially
-tailored for C code in a @code{cc-mode} buffer.  Note that of course,
+tailored for C code in a @ccmode{} buffer.  Note that of course,
 point and mark must delineate the region you
 want to indent.
 
@@ -1276,7 +1277,7 @@ function or class definition as the current region.
 @cindex   Other Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@code{cc-mode} contains other useful command for moving around in C
+@ccmode{} contains other useful command for moving around in C
 code.
 
 @table @code
@@ -1456,7 +1457,7 @@ you can probably achieve your style just by changing
 @code{c-basic-offset} like so (in your @file{.emacs} file)@footnote{The
 reason you need to use @code{setq-default} instead of @code{setq} is
 that @code{c-basic-offset} is a buffer local variable, as are most of
-the @code{cc-mode} configuration variables.  If you were to put this
+the @ccmode{} configuration variables.  If you were to put this
 code in, e.g. your @code{c-mode-common-hook} function, you could use
 @code{setq}.}:
 @example
@@ -1579,7 +1580,7 @@ change, providing a reasonable default.  In this case, the default is
 @code{substatement-open}, which is just the syntactic symbol we want to
 change!
 
-After you hit return, @code{cc-mode} will then prompt you for the new
+After you hit return, @ccmode{} will then prompt you for the new
 offset value, with the old value as the default.  The default in this
 case is @samp{+}, but we want no extra indentation so enter
 @samp{0} and @kbd{RET}.  This will associate the offset 0 with the
@@ -1630,7 +1631,7 @@ adjustments.
 @vindex java-mode-hook
 @cindex hooks
 To make this change permanent, you need to add some lisp code to your
-@file{.emacs} file.  @code{cc-mode} provides several hooks that you can
+@file{.emacs} file.  @ccmode{} provides several hooks that you can
 use to customize the mode according to your coding style.  Each language
 mode has its own hook, adhering to standard to Emacs major mode
 conventions.  There is also one general hook:
@@ -1700,7 +1701,7 @@ and consistent styles.  For example, their organization might impose a
 people who work on GNU software will have to use the GNU coding style on
 C code.  Some shops are more lenient, allowing some variety of coding
 styles, and as programmers come and go, there could be a number of
-styles in use.  For this reason, @code{cc-mode} makes it convenient for
+styles in use.  For this reason, @ccmode{} makes it convenient for
 you to set up logical groupings of customizations called @dfn{styles},
 associate a single name for any particular style, and pretty easily
 start editing new or existing code using these styles.  This section
@@ -1721,7 +1722,7 @@ describes how to set up styles and how to edit your C code using styles.
 @cindex   Built-in Styles
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-If you're lucky, one of @code{cc-mode}'s built-in styles might be just
+If you're lucky, one of @ccmode{}'s built-in styles might be just
 what you're looking for.  Some of the most common C and C++ styles are
 already built-in.  These include:
 
@@ -1778,7 +1779,7 @@ automatically installed when you enter @code{java-mode}.
 @findex set-style (c-)
 @kindex C-c .
 If you'd like to experiment with these built-in styles you can simply
-type the following in a @code{cc-mode} buffer:
+type the following in a @ccmode{} buffer:
 @example
 @group
 
@@ -1844,7 +1845,7 @@ as a string.
 If none of the built-in styles is appropriate, you'll probably want to
 add a new @dfn{style definition}.  Styles are kept in the
 @code{c-style-alist} variable, but you should never modify this variable
-directly.  Instead, @code{cc-mode} provides the function
+directly.  Instead, @ccmode{} provides the function
 @code{c-add-style} that you can use to easily add new styles or change
 existing styles.  This function takes two arguments, a @var{stylename}
 string, and an association list @var{description} of style
@@ -1870,8 +1871,8 @@ style can be added and automatically set.  @xref{Sample .emacs File}.
 The Emacs manual describes how you can customize certain variables on a
 per-file basis by including a @dfn{Local Variable} block at the end of
 the file.  So far, you've only seen a functional interface to
-@code{cc-mode}, which is highly inconvenient for use in a Local Variable
-block.  @code{cc-mode} provides two variables that make it easier for
+@ccmode{}, which is highly inconvenient for use in a Local Variable
+block.  @ccmode{} provides two variables that make it easier for
 you to customize your style on a per-file basis.
 
 @vindex c-file-style
@@ -1880,7 +1881,7 @@ you to customize your style on a per-file basis.
 @vindex file-offsets (c-)
 
 The variable @code{c-file-style} can be set to a style name string.
-When the file is visited, @code{cc-mode} will automatically set the
+When the file is visited, @ccmode{} will automatically set the
 file's style to this style using @code{c-set-style}.
 
 @vindex c-offsets-alist
@@ -1889,7 +1890,7 @@ file's style to this style using @code{c-set-style}.
 @findex set-offset (c-)
 Another variable, @code{c-file-offsets}, takes an association list
 similar to what is allowed in @code{c-offsets-alist}.  When the file is
-visited, @code{cc-mode} will automatically institute these offets using
+visited, @ccmode{} will automatically institute these offets using
 @code{c-set-offset}.
 
 Note that file style settings (i.e. @code{c-file-style}) are applied
@@ -1910,13 +1911,13 @@ via the standard Emacs hook variable @code{hack-local-variables-hook}.}.
 @vindex style-alist (c-)
 @vindex c-basic-offset
 @vindex basic-offset (c-)
-For most users, @code{cc-mode} will support their coding styles with
+For most users, @ccmode{} will support their coding styles with
 very little need for more advanced customizations.  Usually, one of the
 standard styles defined in @code{c-style-alist} will do the trick.  At
 most, perhaps one of the syntactic symbol offsets will need to be
 tweaked slightly, or maybe @code{c-basic-offset} will need to be
 changed.  However, some styles require a more flexible framework for
-customization, and one of the real strengths of @code{cc-mode} is that
+customization, and one of the real strengths of @ccmode{} is that
 the syntactic analysis model provides just such a framework. This allows
 you to implement special indentation calculations for situations not
 handled by the mode directly.
@@ -1933,7 +1934,7 @@ you will have to make the variables buffer local.  The variable
 When @code{c-style-variables-are-local-p} is non-nil, then the style
 variables will have a different settable value for each buffer,
 otherwise all buffers will share the same values.  This variable only
-takes effect when @code{cc-mode} is loaded into your Emacs session.  By
+takes effect when @ccmode{} is loaded into your Emacs session.  By
 default (for backwards compatibility reasons), its value is @code{t}.
 Note that once the variables are made buffer local, they will retain
 this property for the remainder of the current Emacs session.
@@ -1954,9 +1955,9 @@ this property for the remainder of the current Emacs session.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @cindex custom indentation functions
-One of the most common ways to customize @code{cc-mode} is by writing
+One of the most common ways to customize @ccmode{} is by writing
 @dfn{custom indentation functions} and associating them with specific
-syntactic symbols (see @ref{Syntactic Symbols}).  @code{cc-mode} itself
+syntactic symbols (see @ref{Syntactic Symbols}).  @ccmode{} itself
 uses custom indentation functions to provide more sophisticated
 indentation, for example when lining up C++ stream operator blocks:
 @example
@@ -1977,7 +1978,7 @@ In this example, lines 4 through 6 are assigned the @code{stream-op}
 syntactic symbol.  Here, @code{stream-op} has an offset of @code{+}, and
 with a @code{c-basic-offset} of 2, you can see that lines 4 through 6
 are simply indented two spaces to the right of line 3.  But perhaps we'd
-like @code{cc-mode} to be a little more intelligent so that it lines up
+like @ccmode{} to be a little more intelligent so that it lines up
 all the @samp{<<} symbols in lines 3 through 6.  To do this, we have
 to write a custom indentation function which finds the column of first
 stream operator on the first line of the statement.  Here is the lisp
@@ -2004,7 +2005,7 @@ function returns an integer offset value that will be added to the
 running total indentation for the line.  Note that what actually gets
 returned is the difference between the column that the first stream
 operator is on, and the column of the buffer relative position passed in
-the function's argument.  Remember that @code{cc-mode} automatically
+the function's argument.  Remember that @ccmode{} automatically
 adds in the column of the component's relative buffer position and we
 don't want that value added into the final total twice.
 
@@ -2043,7 +2044,7 @@ C-q}):
 @vindex offsets-alist (c-)
 Custom indentation functions can be as simple or as complex as you like,
 and any syntactic symbol that appears in @code{c-offsets-alist} can have
-a custom indentation function associated with it.  @code{cc-mode} comes
+a custom indentation function associated with it.  @ccmode{} comes
 with several standard custom indentation functions, not all of which are
 used by the default styles.
 
@@ -2139,7 +2140,7 @@ line with the colon on the previous line.
 @vindex c-hanging-braces-alist
 @vindex hanging-braces-alist (c-)
 Syntactic symbols aren't the only place where you can customize
-@code{cc-mode} with the lisp equivalent of callback functions.  Brace
+@ccmode{} with the lisp equivalent of callback functions.  Brace
 ``hanginess'' can also be determined by custom functions associated with
 syntactic symbols on the @code{c-hanging-braces-alist} variable.
 Remember that @var{ACTION}'s are typically a list containing some
@@ -2156,7 +2157,7 @@ list containing some combination of @code{before} and @code{after}.  The
 function can also return @code{nil}.  This return value has the normal
 brace hanging semantics.
 
-As an example, @code{cc-mode} itself uses this feature to dynamically
+As an example, @ccmode{} itself uses this feature to dynamically
 determine the hanginess of braces which close ``do-while''
 constructs:
 @example
@@ -2176,7 +2177,7 @@ void do_list( int count, char** atleast_one_string )
 
 @findex c-snug-do-while
 @findex snug-do-while (c-)
-@code{cc-mode} assigns the @code{block-close} syntactic symbol to the
+@ccmode{} assigns the @code{block-close} syntactic symbol to the
 brace that closes the @code{do} construct, and normally we'd like the
 line that follows a @code{block-close} brace to begin on a separate
 line.  However, with ``do-while'' constructs, we want the
@@ -2300,9 +2301,9 @@ is 1.
 
 @vindex c-special-indent-hook
 @vindex special-indent-hook (c-)
-One other customization variable is available in @code{cc-mode}:
+One other customization variable is available in @ccmode{}:
 @code{c-special-indent-hook}.  This is a standard hook variable that is
-called after every line is indented by @code{cc-mode}.  You can use it
+called after every line is indented by @ccmode{}.  You can use it
 to do any special indentation or line adjustments your style dictates,
 such as adding extra indentation to constructors or destructor
 declarations in a class definition, etc.  Note however, that you should
@@ -2846,7 +2847,7 @@ parenthesis.  Contrast this against lines 6 and 13 which are assigned
 their argument lists is the last character on that line @footnote{The
 need for this somewhat confusing arrangement is that the typical
 indentation desired for these lines is calculated differently.
-This should be simplified in version 5 of @code{cc-mode}, along with the
+This should be simplified in version 5 of @ccmode{}, along with the
 added distinction between argument lists in function declarations, and
 argument lists in function calls.}.
 
@@ -2990,19 +2991,19 @@ syntax.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 C and it's derivative languages are highly complex creatures.  Often,
-ambiguous code situations arise that require @code{cc-mode} to scan
+ambiguous code situations arise that require @ccmode{} to scan
 large portions of the buffer to determine syntactic context.  Such
 pathological code@footnote{such as the output of @code{lex(1)}!}
-can cause @code{cc-mode} to perform fairly badly.
+can cause @ccmode{} to perform fairly badly.
 This section identifies some of the coding styles to watch out for, and
 suggests some workarounds that you can use to improve performance.
 
-Because @code{cc-mode} has to scan the buffer backwards from the current
+Because @ccmode{} has to scan the buffer backwards from the current
 insertion point, and because C's syntax is fairly difficult to parse in
-the backwards direction, @code{cc-mode} often tries to find the nearest
+the backwards direction, @ccmode{} often tries to find the nearest
 position higher up in the buffer from which to begin a forward scan.
 The farther this position is from the current insertion point, the
-slower the mode gets.  Some coding styles can even force @code{cc-mode}
+slower the mode gets.  Some coding styles can even force @ccmode{}
 to scan from the beginning of the buffer!
 
 @findex beginning-of-defun
@@ -3010,12 +3011,12 @@ to scan from the beginning of the buffer!
 One of the simplest things you can do to reduce scan time, is make sure
 any brace that opens a top-level block construct always appears in the
 leftmost column.  This is actually an Emacs constraint, as embodied in
-the @code{beginning-of-defun} function which @code{cc-mode} uses
+the @code{beginning-of-defun} function which @ccmode{} uses
 heavily.  If you insist on hanging top-level open braces on the right
 side of the line, then you should set the variable
 @code{defun-prompt-regexp} to something reasonable @footnote{Note that
 this variable is only defined in Emacs 19.}, however that ``something
-reasonable'' is difficult to define, so @code{cc-mode} doesn't do it
+reasonable'' is difficult to define, so @ccmode{} doesn't do it
 for you.
 
 @vindex c-Java-defun-prompt-regexp
@@ -3023,7 +3024,7 @@ for you.
 A special note about @code{defun-prompt-regexp} in Java mode: while much
 of the early sample Java code seems to encourage a style where the brace
 that opens a class is hung on the right side of the line, this is not a
-good style to pursue in Emacs.  @code{cc-mode} comes with a variable
+good style to pursue in Emacs.  @ccmode{} comes with a variable
 @code{c-Java-defun-prompt-regexp} which tries to define a regular
 expression usable for this style, but there are problems with it.  In
 some cases it can cause @code{beginning-of-defun} to hang@footnote{This
@@ -3031,38 +3032,38 @@ has been observed in Emacs 19.34 and XEmacs 19.15.}.  For this reason,
 it is not used by default, but if you feel adventurous, you can set
 @code{defun-prompt-regexp} to it in your mode hook.
 
-You will probably notice pathological behavior from @code{cc-mode} when
+You will probably notice pathological behavior from @ccmode{} when
 working in files containing large amounts of cpp macros.  This is
-because @code{cc-mode} cannot quickly skip backwards over these lines.
+because @ccmode{} cannot quickly skip backwards over these lines.
 
 @vindex c-recognize-knr-p
 @vindex recognize-knr-p (c-)
-Previous versions of @code{cc-mode} had potential performance problems
+Previous versions of @ccmode{} had potential performance problems
 when recognizing ``K&R'' style function argument declarations.  This was
 because there are ambiguities in the C syntax when K&R style argument
 lists are used@footnote{It is hard to distinguish them from top-level
-declarations.}.  @code{cc-mode} has adopted BOCM's convention for
+declarations.}.  @ccmode{} has adopted BOCM's convention for
 limiting the search: it assumes that argdecls are indented at least one
 space, and that the function headers are not indented at all.  With
-current versions of @code{cc-mode}, user customization of
+current versions of @ccmode{}, user customization of
 @code{c-recognize-knr-p} is deprecated.
 
 @cindex @file{cc-lobotomy.el} file
 @vindex cc-lobotomy-pith-list
 You might want to investigate some of the
 speed-ups contained in the file @file{cc-lobotomy.el}, which
-is part of the canonical @code{cc-mode} distribution.  As mentioned
-previous, @code{cc-mode} always trades accuracy for speed, however it is
+is part of the canonical @ccmode{} distribution.  As mentioned
+previous, @ccmode{} always trades accuracy for speed, however it is
 recognized that sometimes you need speed and can sacrifice some accuracy
 in indentation.  The file @file{cc-lobotomy.el} contains hacks that
-will ``dumb down'' @code{cc-mode} in some specific ways, making that
+will ``dumb down'' @ccmode{} in some specific ways, making that
 trade-off of speed for accuracy.  I won't go into details of its use
 here; you should read the comments at the top of the file, and look at
 the variable @code{cc-lobotomy-pith-list} for details.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Frequently Asked Questions, Getting the latest cc-mode release, Performance Issues, Top
+@node  Frequently Asked Questions, Getting the latest CC Mode release, Performance Issues, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Frequently Asked Questions
@@ -3123,9 +3124,9 @@ default behavior, don't lobby me, lobby RMS!
 in my @file{.emacs} file but I get an error saying that
 @code{c-set-offset}'s function definition is void.}
 
-@strong{A.} This means that @code{cc-mode} wasn't loaded into your
+@strong{A.} This means that @ccmode{} wasn't loaded into your
 Emacs session by the time the @code{c-set-offset} call was reached,
-mostly likely because @code{cc-mode} is being autoloaded.  Instead
+mostly likely because @ccmode{} is being autoloaded.  Instead
 of putting the @code{c-set-offset} line in your top-level
 @file{.emacs} file, put it in your @code{c-mode-common-hook}, or
 simply add the following to the top of your @file{.emacs} file:
@@ -3143,7 +3144,7 @@ details.
 constructs appear in different colors, or in bold face, etc.?}
 
 @strong{A.} ``Syntax Colorization'' is an Emacs 19 feature, controlled
-by @code{font-lock-mode}.  It is not part of @code{cc-mode}.
+by @code{font-lock-mode}.  It is not part of @ccmode{}.
 
 @sp 1
 @strong{Q.} @emph{I @code{setq} @code{c-basic-offset} to 4 in my
@@ -3160,14 +3161,14 @@ likely @code{c-mode-common-hook}.  Alternatively you can use
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Getting the latest cc-mode release, Sample .emacs File, Frequently Asked Questions, Top
+@node  Getting the latest CC Mode release, Sample .emacs File, Frequently Asked Questions, Top
 @comment  node-name,              next,                    previous,up
 
-@chapter  Getting the latest @code{cc-mode} release
-@cindex   Getting the latest @code{cc-mode} release
+@chapter  Getting the latest CC Mode release
+@cindex   Getting the latest CC Mode release
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@code{cc-mode} is now distributed with both Emacs 19 and XEmacs 19, so
+@ccmode{} is now distributed with both Emacs 19 and XEmacs 19, so
 you would typically just use the version that comes with your Emacs.
 These may be slightly out of date due to release schedule skew, so you
 should always check the canonical site for the latest version.
@@ -3192,7 +3193,7 @@ the individual files, including PostScript documentation.
 
 If you do not have anonymous ftp access, you can get the distribution
 through an anonymous ftp-to-mail gateway, such as the one run by DEC at
-@code{ftpmail@@decwrl.dec.com}.  To get @code{cc-mode} via email, send
+@code{ftpmail@@decwrl.dec.com}.  To get @ccmode{} via email, send
 the following message in the body of your mail to that address:
 @example
 
@@ -3211,7 +3212,7 @@ in no way connected to this service, so I make no claims or guarantees
 about its availability!
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Sample .emacs File, Limitations and Known Bugs, Getting the latest cc-mode release, Top
+@node  Sample .emacs File, Limitations and Known Bugs, Getting the latest CC Mode release, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Sample @file{.emacs} file
@@ -3288,7 +3289,7 @@ Use with Emacs 18 can be slow and annoying.  You should seriously
 consider upgrading to Emacs 19.
 
 @item
-Add-on fill packages may not work as well as @code{cc-mode}'s built-in
+Add-on fill packages may not work as well as @ccmode{}'s built-in
 filling routines.  I no longer recommend you use @code{filladapt} to
 fill comments.
 
@@ -3349,7 +3350,7 @@ be mailed to @code{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on
 @ifinfo
 
 @end ifinfo
-Since all @code{cc-mode} commands are prepended with the string
+Since all @ccmode{} commands are prepended with the string
 @samp{c-}, each appears under its @code{c-@var{<thing>}} name and its
 @code{@var{<thing>} (c-)} name.
 @iftex
@@ -3376,7 +3377,7 @@ Since all @code{cc-mode} commands are prepended with the string
 @ifinfo
 
 @end ifinfo
-Since all @code{cc-mode} variables are prepended with the string
+Since all @ccmode{} variables are prepended with the string
 @samp{c-}, each appears under its @code{c-@var{<thing>}} name and its
 @code{@var{<thing>} (c-)} name.
 @iftex
