@@ -168,7 +168,7 @@ Key bindings:
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C-class-key
 	c-baseclass-key nil
-	c-comment-start-regexp c-C++-comment-start-regexp
+	c-comment-start-regexp c-C-comment-start-regexp
 	c-bitfield-key c-C-bitfield-key
 	)
   (cc-imenu-init cc-imenu-c-generic-expression)
@@ -247,8 +247,8 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end   ""
-	c-conditional-key c-C-conditional-key
-	c-comment-start-regexp c-C++-comment-start-regexp
+	c-conditional-key c-ObjC-conditional-key
+	c-comment-start-regexp c-ObjC-comment-start-regexp
  	c-class-key c-ObjC-class-key
 	c-baseclass-key nil
 	c-access-key c-ObjC-access-key
@@ -338,11 +338,13 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
-	c-conditional-key c-C++-conditional-key
-	c-comment-start-regexp c-C++-comment-start-regexp
+	c-conditional-key c-IDL-conditional-key
+	c-comment-start-regexp c-IDL-comment-start-regexp
 	c-class-key c-IDL-class-key
+	c-method-key nil
+	c-baseclass-key nil
 	c-extra-toplevel-key c-IDL-extra-toplevel-key
-	c-access-key c-C++-access-key
+	c-access-key c-IDL-access-key
 	c-recognize-knr-p nil
 	)
   ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;FIXME
@@ -380,6 +382,7 @@ Key bindings:
   (setq comment-start "// "
  	comment-end   ""
  	c-conditional-key c-Pike-conditional-key
+	c-comment-start-regexp c-Pike-comment-start-regexp
   	c-class-key c-Pike-class-key
 	c-method-key nil
  	c-baseclass-key nil
