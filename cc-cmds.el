@@ -194,8 +194,7 @@ the brace is inserted inside a literal."
 	      '(class-open class-close defun-open defun-close
 		inline-open inline-close
 		brace-list-open brace-list-close
-		brace-list-intro brace-list-entry
-		brace-entry-open
+		brace-list-intro brace-entry-open
 		block-open block-close
 		substatement-open statement-case-open
 		extern-lang-open extern-lang-close
