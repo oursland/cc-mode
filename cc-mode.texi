@@ -2887,7 +2887,7 @@ The dotted pairs (@var{variable} . @var{value}) each consist of a
 variable and the value it is to be set to when the style is later
 activated.@footnote{In certain circumstances, this value can get
 overridden by another value.}  The variable can be either a @ccmode{}
-style-variable or an arbitrary emacs variable.  In the latter case, it
+style variable or an arbitrary Emacs variable.  In the latter case, it
 is @emph{not} made buffer local by the @ccmode{} style system.
 @end defvr
 
