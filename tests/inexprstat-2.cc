@@ -15,6 +15,21 @@ int a_gcc_extension (void)
 	     ) )	// be better.
 	a1 = 17;
     return ({ int y = foo (); int z; y;
-    y; // Yep, bogus..
+	    y;
 	});
+}
+int more() {
+    int a1 = 3 +
+	(
+	{
+	    z;
+	}
+	    );
+    int a2 = 3 +
+	({
+	    z;
+	});
+    return (3 + ({ int y = foo (); int z; y;
+	    y;
+	}));
 }
