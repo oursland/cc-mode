@@ -700,8 +700,8 @@
 
 (defun c-awk-end-of-change-region (beg end old-len)
   ;; Find the end of the region which needs to be font-locked after a change.
-  ;; This is either the end of the logical line on which the change happened,
-  ;; either as it was before the change, or as it is now, which ever is later.
+  ;; This is the end of the logical line on which the change happened, either
+  ;; as it was before the change, or as it is now, which ever is later.
   ;; N.B. point is left undefined.
   (max (+ (- c-awk-old-EOLL old-len) (- end beg))
        (c-awk-end-of-logical-line end)))
