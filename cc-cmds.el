@@ -1622,7 +1622,9 @@ command to conveniently insert and align the necessary backslashes."
   ;; it ends.  If fill-prefix is set, it'll override.  Note that this
   ;; function also uses the value of point in some heuristics.
   (let ((here (point))
-	(prefix-regexp (concat "[ \t]*\\(" c-comment-prefix-regexp "\\)"))
+	(prefix-regexp (concat "[ \t]*\\("
+			       c-comment-prefix-regexp
+			       "\\)[ \t]*"))
 	prefix-line comment-prefix res)
     (cond
      (fill-prefix
@@ -1642,7 +1644,7 @@ command to conveniently insert and align the necessary backslashes."
      ((eq lit-type 'c++)
       (save-excursion
 	;; Set fallback for comment-prefix if none is found.
-	(setq comment-prefix "//")
+	(setq comment-prefix "// ")
 	(beginning-of-line)
 	(if (> (point) (car lit-limits))
 	    ;; The current line is not the comment starter, so the
@@ -1658,9 +1660,10 @@ command to conveniently insert and align the necessary backslashes."
 	    ;; The comment is only one line.  Take the comment prefix
 	    ;; from it and keep the indentation.
 	    (goto-char (car lit-limits))
-	    (if (looking-at c-comment-prefix-regexp)
+	    (if (looking-at prefix-regexp)
 		(goto-char (match-end 0))
-	      (forward-char 2))
+	      (forward-char 2)
+	      (skip-chars-forward " \t"))
 	    (setq res
 		  (if (eq (c-point 'boi) (car lit-limits))
 		      ;; There is only whitespace before the comment
@@ -1706,7 +1709,7 @@ command to conveniently insert and align the necessary backslashes."
 		  (and (looking-at "[ \t]*\\*/")
 		       (eq (cdr lit-limits) (match-end 0)))
 		  (and (looking-at prefix-regexp)
-		       (<= (cdr lit-limits) (match-end 0)))
+		       (<= (1- (cdr lit-limits)) (match-end 0)))
 		  (and (< here (point))
 		       (or (not (match-beginning 0))
 			   (looking-at "[ \t]*$"))))
@@ -1717,8 +1720,8 @@ command to conveniently insert and align the necessary backslashes."
 	      ;; assume that this is in fact a not yet closed one line
 	      ;; comment, so we shouldn't look for the comment prefix
 	      ;; on the next line.  In these cases we have no
-	      ;; information about a suitable comment prefix, so use
-	      ;; c-block-comment-prefix.
+	      ;; information about a suitable comment prefix, so we
+	      ;; resort to c-block-comment-prefix.
 	      (setq comment-prefix (or c-block-comment-prefix "")
 		    res (let ((buffer-modified (buffer-modified-p))
 			      (buffer-undo-list t)
@@ -1734,6 +1737,20 @@ command to conveniently insert and align the necessary backslashes."
 				    (goto-char (match-end 0))
 				  (forward-char 2)
 				  (skip-chars-forward " \t"))
+				(when (eq (char-syntax (char-before)) ?\ )
+				  ;; If there's ws on the current
+				  ;; line, we'll use it instead of
+				  ;; what's ending comment-prefix.
+				  (setq comment-prefix
+					(concat (substring comment-prefix
+							   0 (string-match
+							      "\\s *\\'"
+							      comment-prefix))
+						(buffer-substring-no-properties
+						 (save-excursion
+						   (skip-chars-backward " \t")
+						   (point))
+						 (point)))))
 				(setq tmp-pre (point-marker))
 				;; We insert an extra non-whitespace
 				;; character before the line break and
@@ -1756,57 +1773,99 @@ command to conveniently insert and align the necessary backslashes."
 	    (setq prefix-line (point)))))))
     (or res
 	(save-excursion
-	  (goto-char prefix-line)
-	  (if (looking-at prefix-regexp)
-	      (cons (buffer-substring-no-properties prefix-line (match-end 0))
-		    (progn (goto-char (match-end 0)) (current-column)))
-	    ;; The line doesn't match the comment prefix regexp.
-	    (if comment-prefix
-		;; We have a fallback for line comments that we must use.
-		(cons (concat (buffer-substring-no-properties
-			       prefix-line (c-point 'boi))
-			      comment-prefix)
-		      (progn (back-to-indentation)
-			     (+ (current-column) (length comment-prefix))))
-	      ;; Assume we are dealing with a "free text" block
-	      ;; comment where the lines doesn't have any comment
-	      ;; prefix at all and we should just fill it as normal
-	      ;; text.
-	      '("" . 0)))))
+	  ;; prefix-line is the bol of a line on which we should try
+	  ;; to find the prefix.
+	  (let (fb-string fb-endpos	; Contains any fallback prefix found.
+		(test-line
+		 (lambda ()
+		   (when (and (looking-at prefix-regexp)
+			      (< (match-end 0) (1- (cdr lit-limits))))
+		     (unless fb-string
+		       (setq fb-string (buffer-substring-no-properties
+					(match-beginning 0) (match-end 0))
+			     fb-endpos (match-end 0)))
+		     (unless (eq (match-end 0) (c-point 'eol))
+		       (throw 'found t))
+		     t))))
+	    (if (catch 'found
+		  ;; Search for a line which has text after the prefix
+		  ;; so that we get the proper amount of whitespace
+		  ;; after it.  We start with the current line, then
+		  ;; search backwards, then forwards.
+		  (goto-char prefix-line)
+		  (when (and (funcall test-line)
+			     (/= (match-end 1) (match-end 0)))
+		    ;; If the current line doesn't have text but do
+		    ;; have whitespace after the prefix, we'll use it.
+		    (throw 'found t))
+		  (while (and (zerop (forward-line -1))
+			      (> (point) (car lit-limits)))
+		    (funcall test-line))
+		  (goto-char prefix-line)
+		  (while (and (zerop (forward-line 1))
+			      (< (point) (cdr lit-limits)))
+		    (funcall test-line))
+		  nil)
+		;; A good line with text after the prefix was found.
+		(cons (buffer-substring-no-properties (point) (match-end 0))
+		      (progn (goto-char (match-end 0)) (current-column)))
+	      (if fb-string
+		  ;; A good line wasn't found, but at least we have a
+		  ;; fallback that matches the comment prefix regexp.
+		  (cond ((string-match "\\s \\'" fb-string)
+			 ;; There are ws after the prefix, so let's use it.
+			 (cons fb-string
+			       (progn (goto-char fb-endpos) (current-column))))
+			((progn
+			   ;; Check if there's any whitespace padding
+			   ;; on the comment start line that we can
+			   ;; use after the prefix.
+			   (goto-char (car lit-limits))
+			   (if (looking-at comment-start-skip)
+			       (goto-char (match-end 0))
+			     (forward-char 2)
+			     (skip-chars-forward " \t"))
+			   (eq (char-syntax (char-before)) ?\ ))
+			 (setq fb-string (buffer-substring-no-properties
+					  (save-excursion
+					    (skip-chars-backward " \t")
+					    (point))
+					  (point)))
+			 (goto-char fb-endpos)
+			 (skip-chars-backward " \t")
+			 (let ((buffer-modified (buffer-modified-p))
+			       (buffer-undo-list t)
+			       (tmp (point)))
+			   ;; Got to mess in the buffer once again to
+			   ;; ensure the column gets correct.  :P
+			   (unwind-protect
+			       (progn
+				 (insert fb-string)
+				 (cons (buffer-substring-no-properties
+					(c-point 'bol)
+					(point))
+				       (current-column)))
+			     (delete-region tmp (point)))))
+			(t
+			 ;; Last resort: Just add a single space after
+			 ;; the prefix.
+			 (cons (concat fb-string " ")
+			       (progn (goto-char fb-endpos)
+				      (1+ (current-column))))))
+		;; The line doesn't match the comment prefix regexp.
+		(if comment-prefix
+		    ;; We have a fallback for line comments that we must use.
+		    (cons (concat (buffer-substring-no-properties
+				   prefix-line (c-point 'boi))
+				  comment-prefix)
+			  (progn (back-to-indentation)
+				 (+ (current-column) (length comment-prefix))))
+		  ;; Assume we are dealing with a "free text" block
+		  ;; comment where the lines doesn't have any comment
+		  ;; prefix at all and we should just fill it as
+		  ;; normal text.
+		  '("" . 0)))))))
     ))
-
-(defun c-guess-fill-prefix-indent (lit-limits lit-type)
-  ;; Like c-guess-fill-prefix, but extends the prefix to include all
-  ;; indentation to the right of the comment prefix.
-  (let ((here (c-point 'bol))
-	(prefix (c-guess-fill-prefix lit-limits lit-type))
-	(prefix-regexp
-	 (concat "[ \t]*\\(" c-comment-prefix-regexp "\\)[ \t]*"))
-	(line-test (lambda ()
-		     (and (equal (buffer-substring-no-properties
-				  (point) (+ (point) (length (car prefix))))
-				 (car prefix))
-			  (looking-at prefix-regexp)
-			  (not (eq (match-end 0) (c-point 'eol)))))))
-    (save-excursion
-      (if (catch 'done
-	    (goto-char here)
-	    (if (funcall line-test)
-		(throw 'done t))
-	    (while (and (zerop (forward-line -1))
-			(> (point) (car lit-limits)))
-	      (if (funcall line-test)
-		  (throw 'done t)))
-	    (goto-char here)
-	    (while (and (zerop (forward-line 1))
-			(< (point) (cdr lit-limits)))
-	      (if (funcall line-test)
-		  (throw 'done t)))
-	    nil)
-	  (cons (buffer-substring-no-properties
-		 (point) (match-end 0))
-		(progn (goto-char (match-end 0)) (current-column)))
-	prefix))))
 
 (defun c-fill-paragraph (&optional arg)
   "Like \\[fill-paragraph] but handles C and C++ style comments.
@@ -1938,11 +1997,10 @@ Optional prefix ARG means justify paragraph as well."
 	      ;; comment line in the narrowed region.
 	      (let ((fill (c-guess-fill-prefix lit-limits lit-type))
 		    col)
-		(unless
-		    (and (string-match
-			  (concat "[ \t]*\\(" c-comment-prefix-regexp "\\)")
-			  (car fill))
-			 (eq (match-end 0) (length (car fill))))
+		(unless (string-match (concat "\\`[ \t]*\\("
+					      c-comment-prefix-regexp
+					      "\\)[ \t]*\\'")
+				      (car fill))
 		  ;; Oops, the prefix doesn't match the comment prefix
 		  ;; regexp.  This could produce very confusing
 		  ;; results with adaptive fill packages together with
@@ -2029,86 +2087,80 @@ If a fill prefix is specified, it overrides all the above."
 			  (progn (skip-chars-forward " \t") (point)))
 	   (if soft (insert-and-inherit ?\n) (newline 1))))
 	lit-limits lit-type col)
-    (when (cond
-	   (fill-prefix
-	    ;; A fill-prefix overrides anything.
-	    t)
-	   ((progn
-	      (setq lit-limits (c-literal-limits nil nil t)
-		    lit-type (c-literal-type lit-limits))
-	      (eq lit-type 'string))
-	    ;; Inside a string.  Just break the line.
-	    (funcall do-line-break)
-	    nil)
-	   ((memq lit-type '(c c++))
-	    (if comment-multi-line
-		;; Inside a comment that should be continued.
-		t
-	      ;; Inside a comment that should be broken.
-	      (let ((comment-start comment-start)
-		    (comment-end comment-end))
-		(if (eq lit-type 'c)
-		    (unless (string-match "[ \t]*/\\*" comment-start)
-		      (setq comment-start "/* " comment-end " */"))
-		  (unless (string-match "[ \t]*//" comment-start)
-		    (setq comment-start "// " comment-end "")))
-		(setq col (save-excursion
-			    (back-to-indentation)
-			    (current-column)))
-		(funcall do-line-break)
-		(when (and comment-end (not (equal comment-end "")))
-		  (forward-char -1)
-		  (insert-and-inherit comment-end)
-		  (forward-char 1))
-		;; c-comment-indent may look at the current
-		;; indentation, so let's start out with the same
-		;; indentation as the previous one.
-		(indent-to col)
-		(insert-and-inherit comment-start)
-		(indent-for-comment))
-	      nil))
-	   (t
-	    ;; Somewhere else in the code.
-	    (setq col (save-excursion
-			(back-to-indentation)
-			(current-column)))
-	    (funcall do-line-break)
-	    (indent-to col)
-	    (c-indent-line)
-	    nil))
-      ;; Common case for fill-prefix and comment-multi-line.
-      (let ((fill (c-guess-fill-prefix-indent
-		   (or fill-prefix
-		       ;; Not used when fill-prefix is set anyway.
-		       (setq lit-limits (c-collect-line-comments lit-limits)))
-		   lit-type))
-	    (pos (point)))
-	(if (save-excursion
-	      (back-to-indentation)
-	      (looking-at c-comment-prefix-regexp))
-	    (progn
-	      ;; Skip forward past the fill prefix in case we're
-	      ;; standing in it.
-	      (while (and (< (current-column) (cdr fill))
-			  (not (eolp)))
-		(forward-char 1))
-	      (if (> (point) (if (eq lit-type 'c)
-				 (- (cdr lit-limits) 2)
-			       (cdr lit-limits)))
-		(progn
-		  ;; The skip takes us out of the comment; insert the
-		  ;; fill prefix at bol instead and keep the position.
-		  (setq pos (copy-marker pos t))
-		  (beginning-of-line)
-		  (insert-and-inherit (car fill))
-		  (if soft (insert-and-inherit ?\n) (newline 1))
-		  (goto-char pos)
-		  (set-marker pos nil))
-		(funcall do-line-break)
-		(insert-and-inherit (car fill))))
-	  (funcall do-line-break)
-	  (insert-and-inherit (car fill))))
-      )))
+    (cond (fill-prefix
+	   ;; A fill-prefix overrides anything.
+	   (funcall do-line-break)
+	   (insert-and-inherit fill-prefix))
+	  ((progn
+	     (setq lit-limits (c-literal-limits nil nil t)
+		   lit-type (c-literal-type lit-limits))
+	     (eq lit-type 'string))
+	   ;; Inside a string.  Just break the line.
+	   (funcall do-line-break))
+	  ((memq lit-type '(c c++))
+	   (if comment-multi-line
+	       ;; Inside a comment that should be continued.
+	       (let ((fill (c-guess-fill-prefix
+			    (setq lit-limits
+				  (c-collect-line-comments lit-limits))
+			    lit-type))
+		     (pos (point)))
+		 (if (save-excursion
+		       (back-to-indentation)
+		       (looking-at c-comment-prefix-regexp))
+		     (progn
+		       ;; Skip forward past the fill prefix in case
+		       ;; we're standing in it.
+		       (while (and (< (current-column) (cdr fill))
+				   (not (eolp)))
+			 (forward-char 1))
+		       (if (> (point) (if (eq lit-type 'c)
+					  (- (cdr lit-limits) 2)
+					(cdr lit-limits)))
+			   (progn
+			     ;; The skip takes us out of the comment;
+			     ;; insert the fill prefix at bol instead
+			     ;; and keep the position.
+			     (setq pos (copy-marker pos t))
+			     (beginning-of-line)
+			     (insert-and-inherit (car fill))
+			     (if soft (insert-and-inherit ?\n) (newline 1))
+			     (goto-char pos)
+			     (set-marker pos nil))
+			 (funcall do-line-break)
+			 (insert-and-inherit (car fill))))
+		   (funcall do-line-break)
+		   (insert-and-inherit (car fill))))
+	     ;; Inside a comment that should be broken.
+	     (let ((comment-start comment-start)
+		   (comment-end comment-end))
+	       (if (eq lit-type 'c)
+		   (unless (string-match "[ \t]*/\\*" comment-start)
+		     (setq comment-start "/* " comment-end " */"))
+		 (unless (string-match "[ \t]*//" comment-start)
+		   (setq comment-start "// " comment-end "")))
+	       (setq col (save-excursion
+			   (back-to-indentation)
+			   (current-column)))
+	       (funcall do-line-break)
+	       (when (and comment-end (not (equal comment-end "")))
+		 (forward-char -1)
+		 (insert-and-inherit comment-end)
+		 (forward-char 1))
+	       ;; c-comment-indent may look at the current
+	       ;; indentation, so let's start out with the same
+	       ;; indentation as the previous one.
+	       (indent-to col)
+	       (insert-and-inherit comment-start)
+	       (indent-for-comment))))
+	  (t
+	   ;; Somewhere else in the code.
+	   (setq col (save-excursion
+		       (back-to-indentation)
+		       (current-column)))
+	   (funcall do-line-break)
+	   (indent-to col)
+	   (c-indent-line)))))
 
 (defalias 'c-comment-line-break-function 'c-indent-new-comment-line)
 (make-obsolete 'c-comment-line-break-function 'c-indent-new-comment-line)
@@ -2126,25 +2178,28 @@ If a fill prefix is specified, it overrides all the above."
 
 (defun c-line-break-reindent ()
   "Insert a newline, then indent both lines according to the major
-mode.  However, when point is inside a C-style block comment, continue
-the comment with the appropriate comment prefix (see the
-`c-comment-prefix-regexp' and `c-block-comment-prefix' variables for
-details)."
+mode.  However, when point is inside a comment, continue it with the
+appropriate comment prefix (see the `c-comment-prefix-regexp' and
+`c-block-comment-prefix' variables for details).  The end of a
+C++-style line comment doesn't count as inside the comment, though."
   (interactive "*")
-  (if (eq (c-in-literal) 'c)
-      (let ((comment-multi-line t)
-	    (fill-prefix nil))
-	(c-indent-new-comment-line))
-    (delete-region (point) (progn (skip-chars-backward " \t") (point)))
-    (newline)
-    (forward-line -1)
-    (c-indent-line)
-    ;; c-indent-line may look at the current indentation, so
-    ;; let's start out with the same indentation as the previous
-    ;; line.
-    (back-to-indentation)
-    (indent-to (prog1 (current-column) (forward-line 1)))
-    (c-indent-line)))
+  (let* ((lit-limits (c-collect-line-comments (c-literal-limits)))
+	 (lit-type (c-literal-type lit-limits)))
+    (if (or (eq lit-type 'c)
+	    (and (eq lit-type 'c++)
+		 (< (point) (1- (cdr lit-limits)))))
+	(let ((comment-multi-line t)
+	      (fill-prefix nil))
+	  (c-indent-new-comment-line))
+      (delete-region (point) (progn (skip-chars-backward " \t") (point)))
+      (newline)
+      (forward-line -1)
+      (c-indent-line)
+      ;; c-indent-line may look at the current indentation, so let's
+      ;; start out with the same indentation as the previous line.
+      (back-to-indentation)
+      (indent-to (prog1 (current-column) (forward-line 1)))
+      (c-indent-line))))
 
 
 (provide 'cc-cmds)
