@@ -1200,7 +1200,7 @@ isn't moved."
 	      (concat "#[ \t]*\\("
 		      "define[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
 		      "\\|"
-		      "\\(if\\|elif\\|ifdef\\)[ \t]"
+		      "\\(if\\|elif\\|ifdef\\|undef\\)[ \t]"
 		      "\\)\\([ \t]\\|\\\\\n\\)*"))
 	     (not (= (match-end 0) (c-point 'eol))))
     (goto-char (match-end 0))))
