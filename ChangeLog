@@ -1,3 +1,41 @@
+Fri Mar  7 19:05:38 1997  Barry A. Warsaw  <bwarsaw@anthem.cnri.reston.va.us>
+
+	* Public Release 4.377.
+
+Fri Feb 28 18:12:02 1997  Barry A. Warsaw  <bwarsaw@anthem.cnri.reston.va.us>
+
+	* cc-mode.el (c-functionp, c-copy-tree):
+	Better compatibility checks between XEmacs
+	and Emacs.
+
+	(c-mapcar-defun): Obsolete.
+
+Mon Feb 24 22:49:43 1997  Barry A. Warsaw  <bwarsaw@anthem.cnri.reston.va.us>
+
+	* cc-mode.el (c-guess-basic-syntax):
+	CASE 5B.1: watch out for throw() clauses which
+	could follow a member init list in a constructor.
+
+Thu Feb 20 19:32:20 1997  Barry A. Warsaw  <bwarsaw@anthem.cnri.reston.va.us>
+
+	* cc-mode.el (c-submit-bug-report):
+	Display c-indentation-style, but not in the
+	setq.
+
+	* cc-mode.el (c-Java-special-key):
+	New variable recognizes Java "implements",
+	"extends", and "throws" keywords.
+
+	(c-guess-basic-syntax): CASE 5C: recognize Java constructs
+	"implements", "extends", and "throws"; CASE 5C.3: differentiate
+	between "throws" == func-decl-cont, and "implements" or "extends" ==
+	inher-intro or inher-cont; CASE 5D.3: removed; CASE 5D.4 => 5D.3;
+	CASE 5D.5 => CASE 5D.4; CASE 5D.6 => CASE 5D.5; CASE 5K: don't need to
+	look for Java keywords.
+
+	(c-lineup-java-inher): Better indentation calculation for Java
+	inheritance constructs.
+
 Wed Feb 19 23:29:00 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Beta Release 4.372.
