@@ -1,0 +1,36 @@
+Title: Changes with CC Mode 5.18
+Author: cc-mode-help@python.org
+Other-links:
+    <h3>Versions</h3>
+    <li><a href="changes.html">Changes for 5.21</a>
+    <li><a href="changes-520.html">Changes for 5.20</a>
+    <li><a href="changes-519.html">Changes for 5.19</a>
+    <li><a href="changes-518.html">Changes for 5.18</a>
+    <li><a href="changes-517.html">Changes for 5.17</a>
+    <li><a href="changes-516.html">Changes for 5.16</a>
+    <li><a href="changes-515.html">Changes for 5.15</a>
+    <li><a href="changes-514.html">Changes for 5.14</a>
+    <li><a href="changes-v4.html">Changes b/w v4 and v5</a>
+    
+
+<h1>Changes with CC Mode 5.18</h1>
+
+Here is a list of user visible changes for CC Mode 5.18.
+See also the list of
+<a href="changes-517.html">user visible changes for version 5.17</a>.
+
+<ul><li><code>M-a</code> and <code>M-e</code> should now properly move 
+	into comments when point is before or after a comment, and
+	move by sentences when inside a comment.
+
+    <p><li><code>c-electric-slash</code> should be bound in all modes
+	now.  Also, <code>c-expand-macro</code> is not bound in Java
+	or IDL modes.
+
+    <p><li>Imenu enhancements: Objective-C support donated by Masatake 
+	(jet) YAMATO; a fix to Java support given by Ake Stenhoff; and 
+	improvements to C++ support given by Jan Dubois.
+
+    <p><li>Bug fixes.
+</ul>
+

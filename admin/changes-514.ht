@@ -1,0 +1,39 @@
+Title: Changes with CC Mode 5.14
+Author: cc-mode-help@python.org
+Other-links:
+    <h3>Versions</h3>
+    <li><a href="changes.html">Changes for 5.21</a>
+    <li><a href="changes-520.html">Changes for 5.20</a>
+    <li><a href="changes-519.html">Changes for 5.19</a>
+    <li><a href="changes-518.html">Changes for 5.18</a>
+    <li><a href="changes-517.html">Changes for 5.17</a>
+    <li><a href="changes-516.html">Changes for 5.16</a>
+    <li><a href="changes-515.html">Changes for 5.15</a>
+    <li><a href="changes-514.html">Changes for 5.14</a>
+    <li><a href="changes-v4.html">Changes b/w v4 and v5</a>
+    
+
+<h1>Changes with CC Mode 5.14</h1>
+
+Here are a list of user visible changes with version 5.14.
+See also the list of
+<a href="changes-v4.html">user visible changes between version 4 and
+version 5</a>.
+
+<ul><li>Support for CORBA's IDL language.  There is now a new mode
+        called <code>idl-mode</code>, with all the expected hooks,
+        abbreviation tables, etc.  Font-lock is not supported by
+        CC Mode, but until font-lock support for IDL gets integrated into
+        X/Emacs,
+        <a href="idl-font-lock.el">
+        here is a file defining some IDL font-lock-keywords</a>
+
+    <p><li>In "java" style, <code>c-hanging-comment-starter-p</code> is
+	set to nil by default to preserve Javadoc comments.
+
+    <p><li>A new hook variable: <code>c-initialization-hook</code>.  This 
+	is called only once an X/Emacs session, when the CC Mode
+	package is initialized.
+
+    <p><li>The usual assortment of bug fixes.
+</ul>
