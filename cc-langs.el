@@ -271,10 +271,10 @@ it finds in `c-file-offsets'."
     (cond
      ;; XEmacs 19 & 20
      ((fboundp 'set-keymap-parents)
-      (set-keymap-parents map c-mode-map))
+      (set-keymap-parents map c-mode-base-map))
      ;; Emacs 19
      ((fboundp 'set-keymap-parent)
-      (set-keymap-parent map c-mode-map))
+      (set-keymap-parent map c-mode-base-map))
      ;; incompatible
      (t (error "CC Mode is incompatible with this version of Emacs")))
     map))
@@ -315,8 +315,58 @@ it finds in `c-file-offsets'."
    (t (error "CC Mode is incompatible with this version of Emacs"))
    ))
 
+(defvar c-mode-base-map ()
+  "Keymap shared by all CC Mode related modes.")
+
+(if c-mode-base-map
+    nil
+  ;; TBD: should we even worry about naming this keymap. My vote: no,
+  ;; because Emacs and XEmacs do it differently.
+  (setq c-mode-base-map (make-sparse-keymap))
+  ;; put standard keybindings into MAP
+  ;; the following mappings correspond more or less directly to BOCM
+  (define-key c-mode-base-map "{"         'c-electric-brace)
+  (define-key c-mode-base-map "}"         'c-electric-brace)
+  (define-key c-mode-base-map ";"         'c-electric-semi&comma)
+  (define-key c-mode-base-map "#"         'c-electric-pound)
+  (define-key c-mode-base-map ":"         'c-electric-colon)
+  ;; Lucid Emacs 19.9 defined these two, the second of which was
+  ;; commented out...
+  ;; (define-key c-mode-base-map "\e{" 'c-insert-braces)
+  ;; Commented out electric square brackets because nobody likes them.
+  ;; (define-key c-mode-base-map "[" 'c-insert-brackets)
+  (define-key c-mode-base-map "\C-c\C-m"  'c-mark-function)
+  (define-key c-mode-base-map "\e\C-q"    'c-indent-exp)
+  (define-key c-mode-base-map "\ea"       'c-beginning-of-statement)
+  (define-key c-mode-base-map "\ee"       'c-end-of-statement)
+  (define-key c-mode-base-map "\C-c\C-n"  'c-forward-conditional)
+  (define-key c-mode-base-map "\C-c\C-p"  'c-backward-conditional)
+  (define-key c-mode-base-map "\C-c\C-u"  'c-up-conditional)
+  (define-key c-mode-base-map "\t"        'c-indent-command)
+  (define-key c-mode-base-map "\177"      'c-electric-delete)
+  ;; these are new keybindings, with no counterpart to BOCM
+  (define-key c-mode-base-map ","         'c-electric-semi&comma)
+  (define-key c-mode-base-map "*"         'c-electric-star)
+  (define-key c-mode-base-map "\C-c\C-q"  'c-indent-defun)
+  (define-key c-mode-base-map "\C-c\C-\\" 'c-backslash-region)
+  ;; TBD: where if anywhere, to put c-backward|forward-into-nomenclature
+  (define-key c-mode-base-map "\C-c\C-a"  'c-toggle-auto-state)
+  (define-key c-mode-base-map "\C-c\C-b"  'c-submit-bug-report)
+  (define-key c-mode-base-map "\C-c\C-c"  'comment-region)
+  (define-key c-mode-base-map "\C-c\C-d"  'c-toggle-hungry-state)
+  (define-key c-mode-base-map "\C-c\C-e"  'c-macro-expand)
+  (define-key c-mode-base-map "\C-c\C-o"  'c-set-offset)
+  (define-key c-mode-base-map "\C-c\C-s"  'c-show-syntactic-information)
+  (define-key c-mode-base-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
+  (define-key c-mode-base-map "\C-c."     'c-set-style)
+  ;; conflicts with OOBR
+  ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
+  )
+
+
 
 ;; Support for C
+
 (defvar c-mode-abbrev-table nil
   "Abbrev table in use in c-mode buffers.")
 (define-abbrev-table 'c-mode-abbrev-table ())
@@ -325,47 +375,8 @@ it finds in `c-file-offsets'."
   "Keymap used in c-mode buffers.")
 (if c-mode-map
     nil
-  ;; TBD: should we even worry about naming this keymap. My vote: no,
-  ;; because Emacs and XEmacs do it differently.
-  (setq c-mode-map (make-sparse-keymap))
-  ;; put standard keybindings into MAP
-  ;; the following mappings correspond more or less directly to BOCM
-  (define-key c-mode-map "{"         'c-electric-brace)
-  (define-key c-mode-map "}"         'c-electric-brace)
-  (define-key c-mode-map ";"         'c-electric-semi&comma)
-  (define-key c-mode-map "#"         'c-electric-pound)
-  (define-key c-mode-map ":"         'c-electric-colon)
-  ;; Lucid Emacs 19.9 defined these two, the second of which was
-  ;; commented out...
-  ;; (define-key c-mode-map "\e{" 'c-insert-braces)
-  ;; Commented out electric square brackets because nobody likes them.
-  ;; (define-key c-mode-map "[" 'c-insert-brackets)
-  (define-key c-mode-map "\C-c\C-m"  'c-mark-function)
-  (define-key c-mode-map "\e\C-q"    'c-indent-exp)
-  (define-key c-mode-map "\ea"       'c-beginning-of-statement)
-  (define-key c-mode-map "\ee"       'c-end-of-statement)
-  (define-key c-mode-map "\C-c\C-n"  'c-forward-conditional)
-  (define-key c-mode-map "\C-c\C-p"  'c-backward-conditional)
-  (define-key c-mode-map "\C-c\C-u"  'c-up-conditional)
-  (define-key c-mode-map "\t"        'c-indent-command)
-  (define-key c-mode-map "\177"      'c-electric-delete)
-  ;; these are new keybindings, with no counterpart to BOCM
-  (define-key c-mode-map ","         'c-electric-semi&comma)
-  (define-key c-mode-map "*"         'c-electric-star)
-  (define-key c-mode-map "\C-c\C-q"  'c-indent-defun)
-  (define-key c-mode-map "\C-c\C-\\" 'c-backslash-region)
-  ;; TBD: where if anywhere, to put c-backward|forward-into-nomenclature
-  (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
-  (define-key c-mode-map "\C-c\C-b"  'c-submit-bug-report)
-  (define-key c-mode-map "\C-c\C-c"  'comment-region)
-  (define-key c-mode-map "\C-c\C-d"  'c-toggle-hungry-state)
-  (define-key c-mode-map "\C-c\C-e"  'c-macro-expand)
-  (define-key c-mode-map "\C-c\C-o"  'c-set-offset)
-  (define-key c-mode-map "\C-c\C-s"  'c-show-syntactic-information)
-  (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
-  (define-key c-mode-map "\C-c."     'c-set-style)
-  ;; conflicts with OOBR
-  ;;(define-key c-mode-map "\C-c\C-v"  'c-version)
+  (setq c-mode-map (c-make-inherited-keymap))
+  ;; add bindings which are only useful for C
   )
 
 (defvar c-mode-syntax-table nil
@@ -378,8 +389,6 @@ it finds in `c-file-offsets'."
   (modify-syntax-entry ?/  ". 14"  c-mode-syntax-table)
   (modify-syntax-entry ?*  ". 23"  c-mode-syntax-table))
 
-
-
 (defun c-enable-//-in-c-mode ()
   "Enables // as a comment delimiter in `c-mode'.
 ANSI C currently does *not* allow this, although many C compilers
@@ -388,7 +397,6 @@ your `.emacs' file before you visit any C files.  The changes are
 global and affect all future `c-mode' buffers."
   (c-setup-dual-comments c-mode-syntax-table)
   (setq-default c-C-comment-start-regexp c-C++-comment-start-regexp))
-
 
 
 
@@ -429,7 +437,6 @@ global and affect all future `c-mode' buffers."
 
 
 ;; Support for Objective-C
-
 
 (defvar objc-mode-abbrev-table nil
   "Abbrev table in use in objc-mode buffers.")
