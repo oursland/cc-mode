@@ -8,13 +8,16 @@ Author: cc-mode-help@python.org
     You need to make sure that this new version of
     CC Mode is on your <code>load-path</code>,
     <em>before</em> any version that is distributed with your X/Emacs.
-    You can use this test:
+    Note that the CC Mode distribution unpacks into its own
+    subdirectory.
+    You can use this test to see which version of CC Mode your X/Emacs 
+    finds first:
 
     <blockquote><pre>
 M-x locate-library RET cc-mode RET
     </pre></blockquote>
 
-    Make sure this finds the one you expect it to find.   If not, you
+    Make sure this finds the one you expect.   If not, you
     can add this to your <code>.emacs</code> file:
 
     <blockquote><pre>

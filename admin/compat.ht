@@ -2,7 +2,7 @@ Title: Compatibility Notes
 Author: cc-mode@python.org
 Other-links:
     <h3>Emacsen</h3>
-    <li><a href="compat_xemacs.html">X/Emacs 20</a>
+    <li><a href="compat_xemacs.html">XEmacs, Emacs 20</a>
     <li><a href="compat_emacs19.html">Emacs 19</a>
     <li><a href="compat_emacs18.html">Emacs 18</a>
     <li><a href="compat_delbs_awk.html">Other Elisp</a>
@@ -14,7 +14,7 @@ Other-links:
     especially will want to read the compatibility note for their
     version.
 
-    <ul><li><a href="compat_xemacs.html">XEmacs 20 and Emacs 20</a>
+    <ul><li><a href="compat_xemacs.html">XEmacs and Emacs 20</a>
 	<li><a href="compat_emacs19.html">Emacs 19</a>, specifically
 	    Emacs 19.34.
 	<li><a href="compat_emacs18.html">Emacs 18</a>

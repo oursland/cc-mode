@@ -1,11 +1,11 @@
-Title: Compatibility Notes
-Author: python-mode@python.org
+Title: Emacs 18 Compatibility
+Author: cc-mode@python.org
 Other-links:
     <h3>Emacsen</h3>
-    <li><a href="compat_xemacs.html">XEmacs and Emacs 20</a>
+    <li><a href="compat_xemacs.html">X/Emacs 20</a>
     <li><a href="compat_emacs19.html">Emacs 19</a>
-    <li><a href="compat_ntemacs.html">NTEmacs 19</a>
     <li><a href="compat_emacs18.html">Emacs 18</a>
+    <li><a href="compat_delbs_awk.html">Other Elisp</a>
 
 <h2>Emacs 18 Compatibility</h2>
 

@@ -1,16 +1,16 @@
 Title: CC Mode
 Author: cc-mode-help@python.org
 Other-links:
-    <h3>CORBA IDL font-lockers</h3>
-    <LI><a href="idl-font-lock.el">Scott Hassan's</a> original.
-    <LI><a href="idl-font-lock-2.el">Brian Ewins'</a> alternative.
+    <h3>IDL font-lockers</h3>
+    <LI><a href="idl-font-lock.el">Scott Hassan</a>
+    <LI><a href="idl-font-lock-2.el">Brian Ewins</a>
      <LI><a href="http://www.cs.utah.edu/~eeide/emacs/idl-font-lock.el.gz">
-	 Eric Eide's</a> third alternative.
+	 Eric Eide</a> (gzip'd)
 
-<h1>Contributed Stuff</a>
+<h1>Contributed Stuff</h1>
 
-Three people have contributed font-lock definitions for CORBA IDL
-code.  This is useful to IDL writers since CC Mode does not contain
+Three people have contributed Emacs font-lock definitions for CORBA IDL
+code.  These are useful to IDL writers since CC Mode does not contain
 any font-lock definitions (for IDL, or any other supported language),
 and X/Emacs itself also doesn't contain IDL font-lock definitions by
 default.
@@ -22,5 +22,5 @@ you'll just get them automatically.
 <ul><LI><a href="idl-font-lock.el">Scott Hassan's</a> original.
      <LI><a href="idl-font-lock-2.el">Brian Ewins'</a> alternative.
      <LI><a href="http://www.cs.utah.edu/~eeide/emacs/idl-font-lock.el.gz">
-	 A link to Eric Eide's</a> third alternative.
+	 A link to Eric Eide's</a> third alternative (gzip'd)
 </ul>
