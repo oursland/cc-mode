@@ -377,8 +377,8 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 	     (current-column))
 	 0)
        (cond ((numberp offset) offset)
-	     ((symbolp offset) (symbol-value offset)
-	     (t 0))))
+	     ((symbolp offset) (symbol-value offset))
+	     (t 0)))
     ))
 
 
