@@ -442,7 +442,8 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 (defun c-crosses-statement-barrier-p (from to)
   "Return non-nil if buffer positions FROM to TO cross one or more
 statement or declaration boundaries.  The returned value is actually
-the position of the earliest boundary char.
+the position of the earliest boundary char.  FROM must not be within
+a string or comment.
 
 The variable `c-maybe-labelp' is set to the position of the first `:' that
 might start a label (i.e. not part of `::' and not preceded by `?').  If a
@@ -455,8 +456,12 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 	(while (progn (skip-chars-forward skip-chars to)
 		      (< (point) to))
 	  (if (setq lit-range (c-literal-limits from))
-	      (goto-char (setq from (cdr lit-range)))
-	    (cond ((eq (char-after) ?:)
+	      (progn (goto-char (setq from (cdr lit-range)))
+       ; Don't goto next line after awk comment, since this comment could be a
+       ; logical semi-colon.  OK, it's a nasty kludge.  :-(  ACM 2002/3/29.
+                     (if (and (c-major-mode-is 'awk-mode) (eq (preceding-char) ?\n))
+                         (goto-char (setq from (1- from)))))
+            (cond ((eq (char-after) ?:)
 		   (forward-char)
 		   (if (and (eq (char-after) ?:)
 			    (< (point) to))
@@ -467,9 +472,13 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 		   ;; A question mark.  Can't be a label, so stop
 		   ;; looking for more : and ?.
 		   (setq c-maybe-labelp nil
-			 skip-chars (substring c-stmt-delim-chars 0 -2)))
-		  (t (throw 'done (point))))))
-	nil))))
+                         skip-chars (substring c-stmt-delim-chars 0 -2)))
+                  ((and (eq (char-after) ?\n) ; Can only happen in awk-mode
+                        (save-excursion (forward-char)
+                                        (not (c-awk-complete-stmt-on-prev-line-p))))
+                   (forward-char))
+                  (t (throw 'done (point))))))
+        nil))))
 
 
 ;; This is a dynamically bound cache used together with
@@ -495,18 +504,19 @@ single `?' is found, then `c-maybe-labelp' is cleared."
   "Go to the beginning of a cpp macro definition.
 Leave point at the beginning of the macro and return t if in a cpp
 macro definition, otherwise return nil and leave point unchanged."
-  (let ((here (point)))
-    (save-restriction
-      (if lim (narrow-to-region lim (point-max)))
-      (beginning-of-line)
-      (while (eq (char-before (1- (point))) ?\\)
-	(forward-line -1))
-      (back-to-indentation)
-      (if (and (<= (point) here)
-	       (looking-at "#[ \t]*[a-zA-Z0-9!]"))
-	  t
-	(goto-char here)
-	nil))))
+  (if (not (c-major-mode-is 'awk-mode)) ; ACM 2001/10/19.  Not sure if this is needed, 2002/3/29.
+      (let ((here (point)))
+        (save-restriction
+          (if lim (narrow-to-region lim (point-max)))
+          (beginning-of-line)
+          (while (eq (char-before (1- (point))) ?\\)
+            (forward-line -1))
+          (back-to-indentation)
+          (if (and (<= (point) here)
+                   (looking-at "#[ \t]*[a-zA-Z0-9!]"))
+              t
+            (goto-char here)
+            nil)))))
 
 (defun c-end-of-macro ()
   "Go to the end of a cpp macro definition.
@@ -956,7 +966,7 @@ more than one character."
 	     ;; Search forward for a literal.
 	     (skip-chars-forward " \t")
 	     (cond
-	      ((eq (char-syntax (or (char-after) ?\ )) ?\") ; String.
+              ((looking-at "\\s\"\\|\\s|") ; String or "generic string" quote.
 	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 				 (point-max))))
 	      ((looking-at "/[/*]")	; Line or block comment.
@@ -1075,8 +1085,11 @@ you need both the type of a literal and its limits."
   (if (consp range)
       (save-excursion
 	(goto-char (car range))
-	(cond ((eq (char-syntax (or (char-after) ?\ )) ?\") 'string)
-	      ((looking-at "//") 'c++)
+        (cond ((looking-at "\\s\"\\s|") 'string)
+	      ((and (looking-at "\\s<") ; comment starter
+                    (or (looking-at "//") ; c++ line comment
+                        (looking-at "#"))) ; awk comment.
+               'c++)
 	      (t 'c)))			; Assuming the range is valid.
     range))
 
@@ -2620,7 +2633,9 @@ Keywords are recognized and not considered identifiers."
 	 ;; CASE 18: A substatement we can recognize by keyword.
 	 ((save-excursion
 	    (and c-opt-block-stmt-key
-		 (not (eq char-before-ip ?\;))
+		 (if (c-major-mode-is 'awk-mode)
+                     (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
+                   (not (eq char-before-ip ?\;)))
 		 (not (memq char-after-ip '(?\) ?\] ?,)))
 		 (or (not (eq char-before-ip ?}))
 		     (c-looking-at-inexpr-block-backward c-state-cache))
@@ -3240,12 +3255,13 @@ Keywords are recognized and not considered identifiers."
 	    (c-add-syntax 'inher-cont (point))
 	    )))
 	 ;; CASE 9: we are inside a brace-list
-	 ((setq special-brace-list
-		(or (and c-special-brace-lists
-			 (save-excursion
-			   (goto-char containing-sexp)
-			   (c-looking-at-special-brace-list)))
-		    (c-inside-bracelist-p containing-sexp paren-state)))
+	 ((and (not (c-major-mode-is 'awk-mode))  ; Maybe this isn't needed (ACM, 2002/3/29)
+               (setq special-brace-list
+                     (or (and c-special-brace-lists
+                              (save-excursion
+                                (goto-char containing-sexp)
+                                (c-looking-at-special-brace-list)))
+                         (c-inside-bracelist-p containing-sexp paren-state))))
 	  (cond
 	   ;; CASE 9A: In the middle of a special brace list opener.
 	   ((and (consp special-brace-list)
@@ -3330,9 +3346,11 @@ Keywords are recognized and not considered identifiers."
 		  ))
 	     ))))
 	 ;; CASE 10: A continued statement or top level construct.
-	 ((and (not (memq char-before-ip '(?\; ?:)))
-	       (or (not (eq char-before-ip ?}))
-		   (c-looking-at-inexpr-block-backward c-state-cache))
+	 ((and (if (eq major-mode 'awk-mode)
+                   (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
+                 (and (not (memq char-before-ip '(?\; ?:)))
+                      (or (not (eq char-before-ip ?}))
+                          (c-looking-at-inexpr-block-backward c-state-cache)))) ; might this work for awk, too? ACM 2002/3/29
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
