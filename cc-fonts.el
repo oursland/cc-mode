@@ -603,7 +603,7 @@ tools (e.g. Javadoc).")
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-forward-syntactic-ws limit)
   (let ((pos (point)) id-start id-end id-face got-init
-	;; The font-lock package might clobber this.
+	;; The font-lock package in Emacs is known to clobber this.
 	(parse-sexp-lookup-properties t))
 
     (while (and
@@ -803,7 +803,7 @@ tools (e.g. Javadoc).")
 	  (macro-end -1)
 	  ;; Turn on fontification on `c-forward-name' and `c-forward-type'.
 	  (c-fontify-types-and-refs t)
-	  ;; The font-lock package might clobber this.
+	  ;; The font-lock package in Emacs is known to clobber this.
 	  (parse-sexp-lookup-properties t))
 
       ;; Narrow to the limit to deliberately fail to fontify
@@ -894,7 +894,8 @@ tools (e.g. Javadoc).")
 	  (while (and match (< (point) start-pos))
 	    (goto-char continue-pos)
 	    (c-fl-decl-prefix-search))
-	  (setq c-fl-decl-match-pos (and (< match-pos start-pos)
+	  (setq c-fl-decl-match-pos (and match-pos
+					 (< match-pos start-pos)
 					 match-pos))))
 
       (while (progn
