@@ -374,8 +374,10 @@
 
 (defun c-lineup-inexpr-stat (langelem)
   ;; This function lines up the arguments to lambdas and functions
-  ;; that take a statement as argument. Adds indentation to the column
-  ;; of the beginning of the lambda or function name.
+  ;; that take a statement as argument by adding indentation to the
+  ;; column of the beginning of the lambda or function name.  It also
+  ;; lines up statements inside expressions to the column of the
+  ;; opening brace.
   (save-excursion
     (beginning-of-line)
     (if (or (c-safe
@@ -389,7 +391,7 @@
 				 (forward-sexp -1)
 				 (looking-at c-lambda-key)))))))
 	    (c-safe
-	     ;; Test one and two sexps back from the surrounding sexp.
+	     ;; Test zero, one and two sexps back from the surrounding sexp.
 	     (backward-up-list 1)
 	     (cond
 	      ((save-excursion
@@ -398,13 +400,17 @@
 	       (beginning-of-line)
 	       (skip-chars-forward " \t"))
 	      ((eq (char-after) ?{)
-	       (forward-sexp -1)
-	       (or (and c-statarg-key (looking-at c-statarg-key))
-		   (and c-lambda-key
-			(memq (char-after) '(?\( ?\[))
-			(progn
-			  (forward-sexp -1)
-			  (looking-at c-lambda-key))))))))
+	       (if (c-safe (progn (forward-sexp -1) t))
+		   (or (and c-statarg-key (looking-at c-statarg-key))
+		       (and c-lambda-key
+			    (memq (char-after) '(?\( ?\[))
+			    (progn
+			      (forward-sexp -1)
+			      (looking-at c-lambda-key))))
+		 ;; Check for an immediately preceding `(', in which
+		 ;; case we have a statement inside an expression.
+		 (c-backward-syntactic-ws)
+		 (eq (char-before) ?\())))))
 	(- (current-column)
 	   (save-excursion
 	     (back-to-indentation)
