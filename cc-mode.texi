@@ -57,6 +57,10 @@
 @comment Define an index for syntactic symbols.
 @defindex ss
 
+@comment Combine key, syntactic symbol and concept indices into one.
+@syncodeindex ss cp
+@syncodeindex ky cp
+
 @macro copyrightblurb
 Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03 Free Software Foundation, Inc.
 @end macro
@@ -144,11 +148,9 @@ classes etc - there are other packages for that.
 
  --- Indices ---
 
-* Concept Index::
 * Command and Function Index::
 * Variable Index::
-* Key Index::
-* Syntactic Symbol Index::
+* Concept Index::
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -231,25 +233,12 @@ This manual describes @ccmode{}
 version 5.30.
 @comment Release.py script can update the version number automatically
 
-@ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
-@footnote{@cite{The Annotated C++ Reference Manual}, by Ellis and
-Stroustrup.} C++, Objective-C, Java, CORBA's Interface Definition
-Language, and Pike@footnote{A C-like scripting language with its roots
-in the LPC language used in some MUD engines.  See
-@uref{http://pike.ida.liu.se/}.} files.  In this way, you can easily set
-up consistent font locking and coding styles for use in editing all of
-these languages.
-
-This manual will describe the following:
-
-@itemize @bullet
-@item
-How to get started using @ccmode{}.
-@item
-How the indentation engine works.
-@item
-How to customize the indentation engine.
-@end itemize
+@ccmode{} supports the editing of K&R and ANSI C, C++, Objective-C,
+Java, CORBA's Interface Definition Language, and Pike@footnote{A C-like
+scripting language with its roots in the LPC language used in some MUD
+engines.  See @uref{http://pike.ida.liu.se/}.} files.  In this way, you
+can easily set up consistent font locking and coding styles for use in
+editing all of these languages.
 
 @findex c-mode
 @findex c++-mode
@@ -263,15 +252,15 @@ functions in @ccmode{} are prefixed with @code{c-@var{thing}}, and
 @code{c-mode}, @code{c++-mode}, @code{objc-mode}, @code{java-mode},
 @code{idl-mode}, and @code{pike-mode} entry points are provided.
 
-@cindex @file{cc-compat.el} file
-This distribution also contains a file
-called @file{cc-compat.el} which should ease your transition from BOCM
-to @ccmode{}.  If you have a BOCM configuration you are really happy
-with, and want to postpone learning how to configure @ccmode{}, take a
-look at that file.  It maps BOCM configuration variables to @ccmode{}'s
-indentation model.  It is not actively supported so for the long run,
-you should learn how to customize @ccmode{} to support your coding
-style.
+@c @cindex @file{cc-compat.el} file
+@c This distribution also contains a file
+@c called @file{cc-compat.el} which should ease your transition from BOCM
+@c to @ccmode{}.  If you have a BOCM configuration you are really happy
+@c with, and want to postpone learning how to configure @ccmode{}, take a
+@c look at that file.  It maps BOCM configuration variables to @ccmode{}'s
+@c indentation model.  It is not actively supported so for the long run,
+@c you should learn how to customize @ccmode{} to support your coding
+@c style.
 
 A special word of thanks goes to Krishna Padmasola for his work in
 converting the original @file{README} file to Texinfo format.  I'd also
@@ -1409,13 +1398,12 @@ break into
 @end group
 @end example
 
-Note that trying to adjust the indentation by putting leading spaces in
-the @code{c-block-comment-prefix} string won't work, since @ccmode{}
-still uses the normal indentation engine to indent the line.  Thus, the
-right way to fix the indentation is by setting the @code{c} syntactic
-symbol.  It defaults to @code{c-lineup-C-comments}, which handles the
-indentation of most common comment styles, see @ref{Indentation
-Functions}.
+Note that it won't work to adjust the indentation by putting leading
+spaces in @code{c-block-comment-prefix}, since @ccmode{} still uses the
+normal indentation engine to indent the line.  Thus, the right way to
+fix the indentation is by customizing the @code{c} syntactic symbol.  It
+defaults to @code{c-lineup-C-comments}, which handles the indentation of
+most common comment styles, see @ref{Indentation Functions}.
 @end defopt
 
 @defopt c-ignore-auto-fill
@@ -5243,7 +5231,7 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Sample .emacs File, Concept Index, Mailing Lists and Submitting Bug Reports, Top
+@node    Sample .emacs File, Command and Function Index, Mailing Lists and Submitting Bug Reports, Top
 @comment node-name, next, previous, up
 @appendix Sample .emacs file
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5271,8 +5259,7 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
                                    (case-label        . 4)
                                    (block-open        . 0)
                                    (knr-argdecl-intro . -)))
-    (c-echo-syntactic-information-p . t)
-    )
+    (c-echo-syntactic-information-p . t))
   "My C Programming Style")
 
 ;; offset customizations not in my-c-style
@@ -5291,24 +5278,14 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
   ;; keybindings for all supported languages.  We can put these in
   ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
   ;; java-mode-map, idl-mode-map, and pike-mode-map inherit from it.
-  (define-key c-mode-base-map "\C-m" 'c-context-line-break)
-  )
+  (define-key c-mode-base-map "\C-m" 'c-context-line-break))
 
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 @end example
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Concept Index, Command and Function Index, Sample .emacs File, Top
-@comment node-name, next, previous, up
-@unnumbered Concept Index
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@printindex cp
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Command and Function Index, Variable Index, Concept Index, Top
+@node    Command and Function Index, Variable Index, Sample .emacs File, Top
 @comment node-name, next, previous, up
 @unnumbered Command and Function Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5323,7 +5300,7 @@ Since most @ccmode{} commands are prepended with the string
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Variable Index, Key Index, Command and Function Index, Top
+@node    Variable Index, Concept Index, Command and Function Index, Top
 @comment node-name, next, previous, up
 @unnumbered Variable Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5338,22 +5315,12 @@ Since most @ccmode{} variables are prepended with the string
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Key Index, Syntactic Symbol Index, Variable Index, Top
+@node    Concept Index, , Variable Index, Top
 @comment node-name, next, previous, up
-@unnumbered Key Index
+@unnumbered Concept Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@printindex ky
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Syntactic Symbol Index, , Key Index, Top
-@comment node-name, next, previous, up
-@unnumbered Syntactic Symbol Index
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-This index lists the syntactic symbols used on @code{c-offsets-alist}.
-@printindex ss
+@printindex cp
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
