@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.6 $
-;; Last Modified:   $Date: 1993-08-10 16:44:26 $
+;; Version:         $Revision: 3.7 $
+;; Last Modified:   $Date: 1993-09-24 21:20:54 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-08-10 16:44:26 $|$Revision: 3.6 $|
+;; |$Date: 1993-09-24 21:20:54 $|$Revision: 3.7 $|
 
 ;;; Code:
 
@@ -470,7 +470,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.6 $
+  "Major mode for editing C++ code.  $Revision: 3.7 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -702,7 +702,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.6 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.7 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1481,15 +1481,9 @@ Emacs.  Untamed characters to escape are defined in the variable
 
 ;; ======================================================================
 ;; compatibility between emacsen
-;; ======================================================================
 
-;; This is the best we can do in vanilla GNU 18 emacsen. Note that the
-;; following problems exist:
-;; 1. We only look back to LIM, and that could place us inside a
-;;    literal if we are scanning backwards over lots of comments
-;; 2. This can potentially get slower the larger LIM is
-;; If anybody has a better solution, I'll all ears
-(defun c++-backward-syntactic-ws (&optional lim)
+;; This is the best we can do in vanilla GNU 18 Emacsen.
+(defun c++-emacs18-bsws (&optional lim)
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives.  Search no farther back than
@@ -1543,9 +1537,10 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
 	      (setq stop t))))))))
 
 ;; This defun works well for Lemacs 19.4-7, which implemented a first
-;; shot at doing this via a C built-in backward-syntactic-ws.  This
-;; has been obsoleted in future Lemacsen and in FSF19
-(defun c++-fast-backward-syntactic-ws-1 (&optional lim)
+;; shot at doing this via a C built-in backward-syntactic-ws.  This is
+;; only a temporary hack which is not needed in Lemacs 19.8 and
+;; beyond, and FSFmacs 19.15 and beyond
+(defun c++-lemacs-pre19-8-bsws (&optional lim)
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives.  Search no farther back than
@@ -1583,9 +1578,11 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
 	      (modify-syntax-entry ?#  "." c++-c-mode-syntax-table))))
       )))
 
-;; This is the way it should be done for all post 19.7 Lemacsen and
-;; for all FSF19 implementations
-(defun c++-fast-backward-syntactic-ws-2 (&optional lim)
+;; this is an accurate rendition of backwards whitespace skipping that
+;; should work in all Emacs 19's. it does not treat # as a comment for
+;; skipping purposes so it could be slower, but it is more accurate,
+;; as /* ... # ... */ doesn't choke it.
+(defun c++-emacs19-accurate-bsws (&optional lim)
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives.  Search no farther back than
@@ -1594,27 +1591,19 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
     (let* ((lim (or lim (c++-point 'bod)))
 	   (here lim))
       (if (< lim (point))
-	  (unwind-protect
-	      (progn
-		(narrow-to-region lim (point))
-		;; cpp statements are comments for our purposes here
-		(if (eq major-mode 'c++-mode)
-		    (modify-syntax-entry ?# "< b" c++-mode-syntax-table)
-		  (modify-syntax-entry ?\n "> b" c++-c-mode-syntax-table)
-		  (modify-syntax-entry ?#  "< b" c++-c-mode-syntax-table))
-		(while (/= here (point))
-		  (setq here (point))
-		  (forward-comment -1)))
-	    ;; cpp statements are not comments everywhere else
-	    (if (eq major-mode 'c++-mode)
-		(modify-syntax-entry ?# "." c++-mode-syntax-table)
-	      (modify-syntax-entry ?\n " " c++-c-mode-syntax-table)
-	      (modify-syntax-entry ?#  "." c++-c-mode-syntax-table))))
+	  (progn
+	    (narrow-to-region lim (point))
+	    (while (/= here (point))
+	      (setq here (point))
+	      (forward-comment -1)
+	      (if (eq (c++-in-literal lim) 'pound)
+		  (beginning-of-line))
+	      )))
       )))
 
 ;; This is the slow and ugly way, but its the best we can do in
 ;; vanilla GNU18 emacsen
-(defun c++-in-literal (&optional lim)
+(defun c++-emacs18-il (&optional lim)
   "Determine if point is in a C++ \"literal\".
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
@@ -1671,8 +1660,8 @@ used."
 	) ; end-while
       state)))
 
-;; This is for all 8-bit emacsen (Lucid 19, patched GNU18)
-(defun c++-in-literal-8-bit (&optional lim)
+;; This is for all Emacsen supporting 8-bit syntax (Lucid 19, patched GNU18)
+(defun c++-8bit-il (&optional lim)
   "Determine if point is in a C++ \"literal\".
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
@@ -1694,8 +1683,8 @@ used."
 	'pound)
        (t nil)))))
 
-;; This is for all 1-bit emacsen (FSF19)
-(defun c++-in-literal-1-bit (&optional lim)
+;; This is for all 1-bit emacsen (FSFmacs 19)
+(defun c++-1bit-il (&optional lim)
   "Determine if point is in a C++ \"literal\".
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
@@ -1717,18 +1706,22 @@ used."
 	'pound)
        (t nil)))))
 
-(cond
- ((memq 'old-v19 c++-emacs-features)
-  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-1))
- ((memq 'v19 c++-emacs-features)
-  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-2))
- )
-(cond
- ((memq '8-bit c++-emacs-features)
-  (fset 'c++-in-literal 'c++-in-literal-8-bit))
- ((memq '1-bit c++-emacs-features)
-  (fset 'c++-in-literal 'c++-in-literal-1-bit))
- )
+;; set the compatibility for all the different Emacsen. wish we didn't
+;; have to do this!
+(fset 'c++-backward-syntactic-ws
+      (cond
+       ((memq 'v18 c++-emacs-features)     'c++-emacs18-bsws)
+       ((memq 'old-v19 c++-emacs-features) 'c++-lemacs-pre19-8-bsws)
+       ((memq 'v19 c++-emacs-features)     'c++-emacs19-accurate-bsws)
+       (t (error "Bad c++-emacs-features: %s"))
+       ))
+(fset 'c++-in-literal
+      (cond
+       ((memq 'no-dual-comments c++-emacs-features) 'c++-emacs18-il)
+       ((memq '8-bit c++-emacs-features)            'c++-8bit-il)
+       ((memq '1-bit c++-emacs-features)            'c++-1bit-il)
+       (t (error "Bad c++-emacs-features: %s"))
+       ))
 
 
 ;; ======================================================================
@@ -2620,7 +2613,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.6 $"
+(defconst c++-version "$Revision: 3.7 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
