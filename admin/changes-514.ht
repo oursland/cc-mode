@@ -1,19 +1,8 @@
 Title: Changes with CC Mode 5.14
 Author: cc-mode-help@python.org
-Other-links:
-    <h3>Versions</h3>
-    <li><a href="changes.html">Changes for 5.21</a>
-    <li><a href="changes-520.html">Changes for 5.20</a>
-    <li><a href="changes-519.html">Changes for 5.19</a>
-    <li><a href="changes-518.html">Changes for 5.18</a>
-    <li><a href="changes-517.html">Changes for 5.17</a>
-    <li><a href="changes-516.html">Changes for 5.16</a>
-    <li><a href="changes-515.html">Changes for 5.15</a>
-    <li><a href="changes-514.html">Changes for 5.14</a>
-    <li><a href="changes-v4.html">Changes b/w v4 and v5</a>
-    
+Links: links.h changelinks.h
 
-<h1>Changes with CC Mode 5.14</h1>
+<h2>Changes with CC Mode 5.14</h2>
 
 Here are a list of user visible changes with version 5.14.
 See also the list of
