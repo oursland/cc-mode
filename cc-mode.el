@@ -13,6 +13,8 @@
 ;;   made calculate-c++-indent work for while( foo ) style
 ;;   added c++-hanging-braces-p for no auto-newline on left braces
 ;;   changed c-auto-newline to c++-auto-newline
+;;   fixed auto-newline for member init list, new var:
+;;         c++-auto-newline-member-init-p should handle hanging :'s
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -138,6 +140,8 @@ list.  Nil indicates to just after the paren.")
   "*Indentation offset for line which contains only comments.")
 (defvar c++-hanging-braces-p t
   "*If t, override c++-auto-newline for left braces.")
+(defvar c++-auto-newline-member-init-p nil
+  "*Put a newline after member initialization colon.")
 
 
 (defun c++-mode ()
@@ -321,16 +325,21 @@ you want to add a comment to the end of a line."
   (electric-c++-terminator arg))
 
 (defun electric-c++-colon (arg)
-  "Electrify colon.  De-auto-newline double colons."
+  "Electrify colon.  De-auto-newline double colons. No auto-new-lines
+for member initialization list."
   (interactive "P")
   (let ((c++-auto-newline c++-auto-newline)
 	(insertion-point (point)))
     (save-excursion
       (skip-chars-backward " \t\n")
-      (if (= (preceding-char) ?:)
+      (if (= (preceding-char) ?:)	;check for double colon
 	  (progn
 	    (delete-region insertion-point (point))
-	    (setq c++-auto-newline nil))))
+	    (setq c++-auto-newline nil)))
+      (if (and (not c++-auto-newline-member-init-p)
+	       (progn (c++-backward-to-noncomment (point-min))
+		      (= (preceding-char) ?\))))
+	  (setq c++-auto-newline nil)))
     (electric-c++-terminator arg)))
 
 (defun electric-c++-terminator (arg)
