@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.43 $
+@comment manual version: $Revision: 2.44 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-31 19:22:25 $
+@comment Last modification: $Date: 1996-05-31 19:28:58 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.43 $)
+@center (manual revision: $Revision: 2.44 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -2182,7 +2182,9 @@ Line 17 is interesting in that it's syntactic analysis list contains
 three elements:
 
 @example
+
 @code{((friend) (inclass . 58) (topmost-intro . 380))}
+
 @end example
 
 The @code{friend} syntactic symbol is a modifier that typically does not
@@ -2749,16 +2751,26 @@ by @code{font-lock-mode}.  It is not part of @code{cc-mode}.
 
 @code{cc-mode} is now distributed with both Emacs 19 and XEmacs 19, so
 you would typically just use the version that comes with your Emacs.
-Users of older versions of Emacs can get the latest release from this
-URL:
+These may be slightly out of date due to release schedule skew, so you
+should always check the canonical site for the latest version.
 
 @example
+@group
 
-    @code{ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz}
+    World Wide Web:
 
+        @code{http://www.python.org/ftp/emacs/}
+
+    Anonymous FTP:
+
+        @code{ftp://ftp.python.org/pub/emacs/}
+
+@end group
 @end example
 
-Note that this is a ``gzipped'' tar file.
+There are many files under these directories; you can pick up the entire
+distribution (named @code{cc-mode.tar.gz}; a gzip'd tar file), or any of
+the individual files, including PostScript documentation.
 
 If you do not have anonymous ftp access, you can get the distribution
 through an anonymous ftp-to-mail gateway, such as the one run by DEC at
@@ -2776,7 +2788,9 @@ get cc-mode.tar.gz
 @end example
 @noindent
 or just send the message "help" for more information on ftpmail.
-Response times will vary with the number of requests in the queue.
+Response times will vary with the number of requests in the queue.  I am
+in no way connected to this service, so I make no claims or guarantees
+about its availability!
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Sample .emacs File, Requirements, Getting the latest cc-mode release, Top
