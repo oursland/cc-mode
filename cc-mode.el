@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.298 $
-;; Last Modified:   $Date: 1996-05-30 22:05:45 $
+;; Version:         $Revision: 4.299 $
+;; Last Modified:   $Date: 1996-05-31 14:48:02 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -425,7 +425,7 @@ This hook gets called after a line is indented by the mode.")
 (defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
-(defvar c-gnu-minimum-indentation 1
+(defvar c-label-minimum-indentation 1
   "*Minimum indentation for labels and case tags in `gnu' style.")
 
 (defvar c-progress-interval 5
@@ -4791,7 +4791,7 @@ ACTION associated with `block-close' syntax."
 
 (defun c-gnu-impose-minimum ()
   "Imposes a minimum indentation for labels and case tags.
-The variable `c-gnu-minimum-indentation' specifies the minimum
+The variable `c-label-minimum-indentation' specifies the minimum
 indentation amount."
   (let ((non-top-levels '(defun-block-intro statement statement-cont
 			   statement-block-intro statement-case-intro
@@ -4808,7 +4808,7 @@ indentation amount."
 	    (setq syntax nil)
 	    (back-to-indentation)
 	    (if (zerop (current-column))
-		(insert (make-string c-gnu-minimum-indentation 32))))
+		(insert (make-string c-label-minimum-indentation 32))))
 	))))
 
 
@@ -4882,7 +4882,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.298 $"
+(defconst c-version "$Revision: 4.299 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -4932,7 +4932,7 @@ definition and conveniently use this command."
 		   'c-hanging-comment-ender-p
 		   'c-tab-always-indent
 		   'c-recognize-knr-p
-		   'c-gnu-minimum-indentation
+		   'c-label-minimum-indentation
 		   'defun-prompt-regexp
 		   'tab-width
 		   )))
@@ -5028,7 +5028,7 @@ definition and conveniently use this command."
 (make-variable-buffer-local 'c-hanging-colons-alist)
 (make-variable-buffer-local 'c-hanging-comment-ender-p)
 (make-variable-buffer-local 'c-backslash-column)
-(make-variable-buffer-local 'c-gnu-minimum-indentation)
+(make-variable-buffer-local 'c-label-minimum-indentation)
 (make-variable-buffer-local 'c-special-indent-hook)
 
 
