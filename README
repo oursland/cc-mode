@@ -1,8 +1,8 @@
-README for cc-mode
+README for CC Mode
 Barry A. Warsaw <cc-mode-help@python.org>
 
 Please see to comments at the top of the cc-mode.el file, or read the
-cc-mode.texinfo manual, for details on using cc-mode.
+cc-mode.texi manual, for details on using CC Mode.
 
 Preformatted versions of the manual in DVI, PostScript, and Info, are
 all available at <http://www.python.org/ftp/emacs/>.
