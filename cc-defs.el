@@ -716,23 +716,23 @@ This function does not do any hidden buffer changes."
     (if (< (point) start)
 	(goto-char (point-max)))))
 
-(defconst c-template-open-syntax '(4 . ?>))
+(defconst c-paren-open-syntax '(4 . ?>))
 
-(defsubst c-mark-template-open (pos)
-  ;; Mark the '<' at POS as a C++ template opener using the
+(defsubst c-mark-paren-open (pos)
+  ;; Mark the character at POS as an sexp list opener using the
   ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
   ;; doesn't support syntax properties, so this function might not
   ;; have any effect.
-  (c-put-char-syntax pos c-template-open-syntax))
+  (c-put-char-syntax pos c-paren-open-syntax))
 
-(defconst c-template-close-syntax '(5 . ?<))
+(defconst c-paren-close-syntax '(5 . ?<))
 
-(defsubst c-mark-template-close (pos)
-  ;; Mark the '>' at POS as a C++ template closer using the
+(defsubst c-mark-paren-close (pos)
+  ;; Mark the character at POS as an sexp list closer using the
   ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
   ;; doesn't support syntax properties, so this function might not
   ;; have any effect.
-  (c-put-char-syntax pos c-template-close-syntax))
+  (c-put-char-syntax pos c-paren-close-syntax))
 
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found

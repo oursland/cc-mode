@@ -401,8 +401,8 @@ stuff.  Used on level 1 and higher."
 			   (end-pos (1- (match-end ,(+ ncle-depth 2)))))
 		       (if (eq (char-after end-pos) ?>)
 			   (progn
-			     (c-mark-template-open beg-pos)
-			     (c-mark-template-close end-pos))
+			     (c-mark-paren-open beg-pos)
+			     (c-mark-paren-close end-pos))
 			 (c-clear-char-syntax beg-pos)))
 		     nil))))
 
@@ -2044,8 +2044,8 @@ need for `c++-font-lock-extra-types'.")
       ;; paren syntax.
       (if (eq (char-after) ?>)
 	  (progn
-	    (c-mark-template-open start)
-	    (c-mark-template-close (point))
+	    (c-mark-paren-open start)
+	    (c-mark-paren-close (point))
 	    (forward-char)
 	    t)
 	(c-clear-char-syntax start)
