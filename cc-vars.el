@@ -211,6 +211,18 @@ syntactic symbols in `c-offsets-alist'.  Please keep it set to nil."
   :type 'boolean
   :group 'c)
 
+(defcustom c-report-syntactic-errors nil
+  "*If non-nil, certain syntactic errors are reported with a ding
+and a message, for example when an \"else\" is indented for which
+there's no corresponding \"if\".
+
+Note however that CC Mode doesn't make any special effort to check for
+syntactic errors; that's the job of the compiler.  The reason it can
+report cases like the one above is that it can't find the correct
+anchoring position to indent the line in that case."
+  :type 'boolean
+  :group 'c)
+
 (defcustom-c-stylevar c-basic-offset 4
   "*Amount of basic offset used by + and - symbols in `c-offsets-alist'.
 Also used as the indentation step when `c-syntactic-indentation' is

@@ -90,11 +90,12 @@
   "Indent the current line according to the syntactic context,
 if `c-syntactic-indentation' is non-nil.  Optional SYNTAX is the
 syntactic information for the current line.  Be silent about syntactic
-errors if the optional argument QUIET is non-nil.  Normally the
-position of point is used to decide where the old indentation is on a
-lines that is otherwise empty (ignoring any line continuation
-backslash), but that's not done if IGNORE-POINT-POS is non-nil.
-Returns the amount of indentation change (in columns)."
+errors if the optional argument QUIET is non-nil, even if
+`c-report-syntactic-errors' is non-nil.  Normally the position of
+point is used to decide where the old indentation is on a lines that
+is otherwise empty (ignoring any line continuation backslash), but
+that's not done if IGNORE-POINT-POS is non-nil.  Returns the amount of
+indentation change (in columns)."
   (let ((line-cont-backslash (save-excursion
 			       (end-of-line)
 			       (eq (char-before) ?\\)))
@@ -164,6 +165,8 @@ This function fixes line continuation backslashes if inside a macro,
 and takes care to set the indentation before calling
 `indent-according-to-mode', so that lineup functions like
 `c-lineup-dont-change' works better."
+  ;; FIXME: Backslashes before eol in comments and literals aren't
+  ;; kept intact.
   (let ((c-macro-start (c-query-macro-start))
 	;; Avoid calling c-backslash-region from c-indent-line if it's
 	;; called during the newline call, which can happen due to
@@ -1855,8 +1858,9 @@ of realigning any line continuation backslashes, unless
 
 (defun c-indent-region (start end &optional quiet)
   "Indent syntactically every line whose first char is between START
-and END inclusive.  Be silent about syntactic errors if the optional
-argument QUIET is non-nil."
+and END inclusive.  If the optional argument QUIET is non-nil then no
+syntactic errors are reported, even if `c-report-syntactic-errors' is
+non-nil."
   (save-excursion
     (goto-char end)
     (skip-chars-backward " \t\n\r")

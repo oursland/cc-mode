@@ -3326,7 +3326,7 @@ isn't moved."
 
 
 (defun c-echo-parsing-error (&optional quiet)
-  (when (and c-parsing-error (not quiet))
+  (when (and c-report-syntactic-errors c-parsing-error (not quiet))
     (c-benign-error "%s" c-parsing-error))
   c-parsing-error)
 
