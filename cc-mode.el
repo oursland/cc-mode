@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.239 $
-;; Last Modified:   $Date: 1992-12-11 16:26:05 $
+;; Version:         $Revision: 2.240 $
+;; Last Modified:   $Date: 1992-12-16 21:50:15 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-11 16:26:05 $|$Revision: 2.239 $|
+;; |$Date: 1992-12-16 21:50:15 $|$Revision: 2.240 $|
 
 ;;; Code:
 
@@ -384,7 +384,8 @@ Only currently supported behavior is '(alignleft).")
   "*Limit in characters for looking back while skipping syntactic ws.
 If you typically write really big methods, and start noticing
 incorrect indentations, try cranking this value up.  The larger this
-value is, though, the slower parts of c++-mode can become.")
+value is, though, the slower parts of c++-mode can become. Setting
+this variable to nil defeats backscan limits.")
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
@@ -407,7 +408,7 @@ value is, though, the slower parts of c++-mode can become.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.239 $
+  "Major mode for editing C++ code.  $Revision: 2.240 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -615,7 +616,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.239 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.240 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1973,7 +1974,8 @@ comments, and preprocessor directives. Search no farther back than
 optional LIM.  If LIM is ommitted, point-min is used."
   (let ((lim (or lim (point-min)))
 	literal stop skip)
-    (if (> (- (point) lim) c++-backscan-limit)
+    (if (and c++-backscan-limit
+	     (> (- (point) lim) c++-backscan-limit))
 	(setq lim (- (point) c++-backscan-limit)))
     (while (not stop)
       (skip-chars-backward " \t\n\r\f" lim)
@@ -2301,7 +2303,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.239 $"
+(defconst c++-version "$Revision: 2.240 $"
   "c++-mode version number.")
 
 (defun c++-version ()
