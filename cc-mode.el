@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.199 $
-;; Last Modified:   $Date: 1994-01-24 22:30:28 $
+;; Version:         $Revision: 3.200 $
+;; Last Modified:   $Date: 1994-01-24 22:50:11 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-24 22:30:28 $|$Revision: 3.199 $|
+;; |$Date: 1994-01-24 22:50:11 $|$Revision: 3.200 $|
 
 ;;; Code:
 
@@ -679,11 +679,14 @@ supported list, along with the values for this variable:
   "Internal state of hungry delete key feature.")
 (defvar c-auto-newline nil
   "Internal state of auto newline feature.")
+(defvar c-auto-hungry-string nil
+  "Internal auto-newline/hungry-delete designation string for mode line.")
 (defvar c-semantics nil
   "Variable containing semantics list during indentation.")
 
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
+(make-variable-buffer-local 'c-auto-hungry-string)
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
@@ -736,7 +739,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.199 $
+cc-mode Revision: $Revision: 3.200 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -767,7 +770,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.199 $
+cc-mode Revision: $Revision: 3.200 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -833,18 +836,11 @@ Key bindings:
 	   (progn
 	     (set-buffer-menubar default-menubar)
 	     (add-menu nil "C/C++" c-mode-menu))))
-  ;; put auto-hungry designators into mode-line-format, but do it
-  ;; only once
-  (and (listp mode-line-format)
-       (memq major-mode '(c++-mode c-mode))
-       (not (get 'mode-line-format 'c-hacked-mode-line))
-       (let ((name (memq 'mode-name mode-line-format))
-	     (hack '((c-hungry-delete-key
-		      (c-auto-newline "/ah" "/h")
-		      (c-auto-newline "/a")))))
-	 (setcdr name (append hack (cdr name)))
-	 (put 'mode-line-format 'c-hacked-mode-line t)
-	 ))
+  ;; put auto-hungry designators onto minor-mode-alist, but only once
+  (or (assq 'c-auto-hungry-string minor-mode-alist)
+      (setq minor-mode-alist
+	    (cons '(c-auto-hungry-string c-auto-hungry-string)
+		  minor-mode-alist)))
   (run-hooks 'c-mode-common-hook))
 
 
@@ -973,6 +969,11 @@ Key bindings:
       )))
 
 (defun c-update-modeline ()
+  ;; set the c-auto-hungry-string for the correct designation on the modeline
+  (setq c-auto-hungry-string
+	(if c-auto-newline
+	    (if c-hungry-delete "/ah" "/a")
+	  (if c-hungry-delete "/h" nil)))
   ;; updates the modeline for all Emacsen
   (if (memq 'v19 c-emacs-features)
       (force-mode-line-update)
@@ -3034,7 +3035,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.199 $"
+(defconst c-version "$Revision: 3.200 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
