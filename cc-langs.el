@@ -199,6 +199,14 @@ appended."
    pike "[_a-zA-Z`]")
 (c-lang-defvar c-symbol-start (c-lang-var c-symbol-start))
 
+(eval-when-compile
+  ;; The operator identifiers in Pike.
+  (defconst c-pike-operator-symbols
+    '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~"
+      "`==" "`<" "`>" "`!" "`[]" "`[]=" "`->" "`->=" "`()" "``+"
+      "``-" "``&" "``|" "``^" "``<<" "``>>" "``*" "``/" "``%"
+      "`+=")))
+
 ;; Regexp describing a `symbol' in all languages, not excluding
 ;; keywords.  The first submatch surrounds the whole symbol.
 ;;
@@ -207,13 +215,10 @@ appended."
 ;; movement behavior that users are familiar with.  Besides, it runs
 ;; counter to Emacs convention.
 (c-lang-defconst c-symbol-key
-  (c c++ objc java idl)  "\\([_a-zA-Z]\\(\\w\\|\\s_\\)*\\)"
-  pike (concat "\\(" (c-lang-var c-symbol-key c) "\\|"
-	       (c-make-keywords-re nil
-		 '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~"
-		   "`==" "`<" "`>" "`!" "`[]" "`[]=" "`->" "`->=" "`()" "``+"
-		   "``-" "``&" "``|" "``^" "``<<" "``>>" "``*" "``/" "``%"
-		   "`+="))
+  all "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
+  (c c++ objc java idl) (concat "\\(" (c-lang-var c-symbol-key) "\\)")
+  pike (concat "\\(" (c-lang-var c-symbol-key) "\\|"
+	       (c-make-keywords-re nil c-pike-operator-symbols)
 	       "\\)"))
 (c-lang-defvar c-symbol-key (c-lang-var c-symbol-key))
 
@@ -234,7 +239,7 @@ appended."
 ;; (We cheat a bit here and don't recognize the full range of
 ;; syntactic whitespace between the tokens.)
 (c-lang-defconst c-qualified-identifier-key
-  all  (c-lang-var c-symbol-key)	; Default to `c-symbol-key'.
+  all (c-lang-var c-symbol-key)		; Default to `c-symbol-key'.
   ;; These languages allow a leading qualifier operator.
   (c++ pike) (concat
 	      "\\("
@@ -277,6 +282,26 @@ appended."
 
 (defvar c-stmt-delim-chars-with-comma "^;,{}?:")
 ;; Variant of `c-stmt-delim-chars' that additionally contains ','.
+
+;; List of all tokens that are longer than one character and that are
+;; made up of characters in the punctuation or parenthesis syntax
+;; classes.
+(c-lang-defconst c-multichar-tokens
+    all '("->" "++" "--" "<<" ">>" "<=" ">=" "==" "!=" "&&" "||"
+	  "*=" "/=" "%=" "+=" "-=" "<<=" ">>=" "&=" "^=" "|=" "::")
+    (c c++ pike) (append (c-lang-var c-multichar-tokens)
+			 '("##")) ;; Used by cpp.
+    c++ (append (c-lang-var c-multichar-tokens)
+		'(".*" "->*"))
+    pike (append (c-lang-var c-multichar-tokens) c-pike-operator-symbols))
+
+;; Regexp matching all operator tokens and also any sequence of two
+;; characters inside a symbol.
+(c-lang-defconst c-multichar-op-sym-token-regexp
+  all (concat "\\(\\w\\|\\s_\\)\\(\\w\\|\\s_\\)\\|"
+	      (c-make-keywords-re nil (c-lang-var c-multichar-tokens))))
+(c-lang-defvar c-multichar-op-sym-token-regexp
+  (c-lang-var c-multichar-op-sym-token-regexp))
 
 ;; Regexp matching a piece of syntactic whitespace that isn't a
 ;; sequence of simple whitespace characters.  As opposed to
@@ -786,13 +811,15 @@ appended."
 ;; otherwise the end of the first submatch is taken as the end of the
 ;; operator.
 (c-lang-defconst c-type-decl-suffix-key
-  all  "\\<\\>" ;; Default to a regexp that never matches.
+  ;; Default to a regexp that matches only a function argument list
+  ;; parenthesis.
+  all  "\\(\(\\)"
   c    "\\([\)\[\(]\\)"
   c++  (concat "\\("
 	       "[\)\[\(]"
 	       "\\|const\\>\\|volatile\\>"
 	       "\\)")
-  java "\\(\\[\\)")
+  java "\\([\[\(]\\)")
 (c-lang-defvar c-type-decl-suffix-key (c-lang-var c-type-decl-suffix-key))
 
 ;; Regexp matching operators that concatenate types, e.g. the "|" in
