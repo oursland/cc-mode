@@ -9,12 +9,16 @@
 
 (4 typ) (6 reg) (9 fun) (11 reg)
 
-(4 typ) (6 reg) (9 fun) (11 reg)
 
 
-
-(4 typ) (6 reg) (9 fun) (11 reg) (32 cmt)
+(4 typ) (6 reg) (9 fun) (11 reg) (14 typ) (16 reg) (17 var) (18 reg) (32 cmt)
 (0 reg)
+
+
+
+
+
+
 
 (4 typ) (6 reg) (32 cmt)
 (0 reg) (4 typ) (6 reg) (32 cmt)

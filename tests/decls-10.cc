@@ -9,11 +9,15 @@ int main() {
 
     t2 (*id) (NULL);
     v2 (*id) (NULL);
-    t5  *id  (NULL);
+    v9  *id  (NULL);
+
+    t2 (*id) (t7*x);		// The last paren could also be an initializer.
+    v10(*id) (v12*x);
+    v11 *id  (v13*x);
 
     t3 (*id) (NULL) + 1;
     v3 (*id) (NULL) + 1;
-    t6  *id  (NULL) + 1;	// Invalid syntax.
+    v10 *id  (NULL) + 1;
 
     v4 ();
     t5 (*);			// Not valid in a block.
