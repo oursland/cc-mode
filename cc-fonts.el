@@ -478,7 +478,7 @@ stuff.  Used on level 1 and higher."
   ;; decidedly isn't terminated properly.
   (let ((start (1- (point))))
     (save-excursion
-      (and (nth 3 (parse-partial-sexp start (c-point 'eol)))
+      (and (eq (elt (parse-partial-sexp start (c-point 'eol)) 8) start)
 	   (if (c-major-mode-is '(c-mode c++-mode objc-mode pike-mode))
 	       ;; There's no \ before the newline.
 	       (not (eq (char-before (point)) ?\\))
