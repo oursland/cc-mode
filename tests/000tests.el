@@ -1,5 +1,5 @@
 (require 'cc-mode)
-(c-load-all)
+(c-initialize-cc-mode)
 
 (defconst test-dir "~/src/elisp/cc-mode/tests/")
 
