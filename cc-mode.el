@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.277 $
-;; Last Modified:   $Date: 1996-01-22 23:25:21 $
+;; Version:         $Revision: 4.278 $
+;; Last Modified:   $Date: 1996-01-23 00:00:12 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1194,9 +1194,6 @@ Key bindings:
   (setq major-mode 'c-mode
 	mode-name "C"
 	local-abbrev-table c-mode-abbrev-table)
-  ;; Install language specific feature properties
-  ;;
-  ;; Complete common initialization
   (use-local-map c-mode-map)
   (c-common-init)
   (setq comment-start "/* "
@@ -1234,7 +1231,6 @@ Key bindings:
   (setq major-mode 'c++-mode
 	mode-name "C++"
 	local-abbrev-table c++-mode-abbrev-table)
-  ;; Complete common initialization
   (use-local-map c++-mode-map)
   (c-common-init)
   (setq comment-start "// "
@@ -1273,7 +1269,6 @@ Key bindings:
   (setq major-mode 'objc-mode
 	mode-name "ObjC"
 	local-abbrev-table objc-mode-abbrev-table)
-  ;; Complete common initialization
   (use-local-map objc-mode-map)
   (c-common-init)
   (setq comment-start "// "
@@ -1313,7 +1308,6 @@ Key bindings:
   (setq major-mode 'java-mode
  	mode-name "Java"
  	local-abbrev-table java-mode-abbrev-table)
-  ;; Complete common initialization
   (use-local-map java-mode-map)
   (c-common-init)
   (setq comment-start "// "
@@ -4787,7 +4781,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.277 $"
+(defconst c-version "$Revision: 4.278 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
