@@ -2177,9 +2177,11 @@ command to conveniently insert and align the necessary backslashes."
 		 (setq col (current-column))
 		 ;; Avoid unnecessary changes of the buffer.
 		 (cond ((< col column)
-			(delete-region (point)
-				       (progn (skip-chars-backward " \t")
-					      (point)))
+			(delete-region
+			 (point)
+			 (progn (skip-chars-backward
+				 " \t" (if (>= (point) point-pos) point-pos))
+				(point)))
 			(indent-to column))
 		       ((and (= col column)
 			     (memq (char-before) '(?\  ?\t))))
