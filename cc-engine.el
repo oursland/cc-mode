@@ -28,10 +28,16 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-
 (eval-when-compile
-  (require 'cc-defs))
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+(require 'cc-langs)
 
+
 ;; KLUDGE ALERT: c-maybe-labelp is used to pass information between
 ;; c-crosses-statement-barrier-p and c-beginning-of-statement-1.  A
 ;; better way should be implemented, but this will at least shut up
@@ -266,21 +272,6 @@
       )
     (if lim (goto-char (min (point) lim)))))
 
-(defsubst c-beginning-of-macro (&optional lim)
-  ;; Go to the beginning of a cpp macro definition.  Leaves point at
-  ;; the beginning of the macro and returns t if in a cpp macro
-  ;; definition, otherwise returns nil and leaves point unchanged.
-  ;; `lim' is currently ignored, but the interface requires it.
-  (let ((here (point)))
-    (beginning-of-line)
-    (while (eq (char-before (1- (point))) ?\\)
-      (forward-line -1))
-    (back-to-indentation)
-    (if (eq (char-after) ?#)
-	t
-      (goto-char here)
-      nil)))
-
 (defun c-backward-syntactic-ws (&optional lim)
   ;; Backward skip over syntactic whitespace for Emacs 19.
   (let* ((here (point-min))
@@ -420,14 +411,16 @@
 ;; I don't think we even need the cache, which makes our lives more
 ;; complicated anyway.  In this case, lim is ignored.
 (defun c-fast-in-literal (&optional lim)
-  (let ((context (buffer-syntactic-context)))
-    (cond
-     ((eq context 'string) 'string)
-     ((eq context 'comment) 'c++)
-     ((eq context 'block-comment) 'c)
-     ((save-excursion (c-beginning-of-macro lim)) 'pound))))
+  (c-if-fboundp buffer-syntactic-context
+      (let ((context (buffer-syntactic-context)))
+	(cond
+	 ((eq context 'string) 'string)
+	 ((eq context 'comment) 'c++)
+	 ((eq context 'block-comment) 'c)
+	 ((save-excursion (c-beginning-of-macro lim)) 'pound)))
+    (error "This function requires XEmacs")))
 
-(if (fboundp 'buffer-syntactic-context)
+(c-if-fboundp buffer-syntactic-context
     (defalias 'c-in-literal 'c-fast-in-literal))
 
 (defun c-literal-limits (&optional lim near)
@@ -1328,19 +1321,6 @@ brace."
 	    (c-point 'eol))))
     ;; return the class vector
     inclass-p))
-
-(defsubst c-add-class-syntax (symbol classkey)
-  ;; The inclass and class-close syntactic symbols are added in
-  ;; several places and some work is needed to fix everything.
-  ;; Therefore it's collected here.
-  (save-restriction
-    (widen)
-    (goto-char (aref classkey 1))
-    (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
-	(c-add-syntax symbol (point))
-      (c-add-syntax symbol (aref classkey 0))
-      (if (and c-inexpr-class-key (c-looking-at-inexpr-block))
-	  (c-add-syntax 'inexpr-class)))))
 
 
 ;; This function implements the main decision tree for determining the
