@@ -29,9 +29,11 @@ Type (*foo) (Type *,
 
 Type2 var;
 Type var;
-Type (*var);
+Type (*var);			// Currently treated as function call.
+Type (*var)[3];
 Type var[3 * peq];
-Type (var);
+Type (var);			// Currently treated as function call.
+Type (var)();
 ::Type var;
 
 unsigned foo bar;
