@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.251 $
-;; Last Modified:   $Date: 1993-01-07 22:22:53 $
+;; Version:         $Revision: 2.252 $
+;; Last Modified:   $Date: 1993-01-09 00:17:55 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-07 22:22:53 $|$Revision: 2.251 $|
+;; |$Date: 1993-01-09 00:17:55 $|$Revision: 2.252 $|
 
 ;;; Code:
 
@@ -210,8 +210,6 @@ styles in a single mode.")
     ()
   (setq c++-mode-syntax-table (make-syntax-table))
   (modify-syntax-entry ?\\ "\\"    c++-mode-syntax-table)
-  (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
-  (modify-syntax-entry ?*  ". 23b" c++-mode-syntax-table)
   (modify-syntax-entry ?+  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?-  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?=  "."     c++-mode-syntax-table)
@@ -221,17 +219,26 @@ styles in a single mode.")
   (modify-syntax-entry ?&  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?|  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-mode-syntax-table)
-  (modify-syntax-entry ?\n ">"     c++-mode-syntax-table)
+  ;; comment syntax
   (if c++-emacs-is-really-fixed-p
-      (modify-syntax-entry ?# "<"  c++-mode-syntax-table))
-  )
+      ;; these entries will only work with the latest patches to lemacs
+      (progn
+	;;(modify-syntax-entry ?# "< b"     c++-mode-syntax-table)
+	(modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
+	(modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
+	(modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
+	)
+    ;; though its not optimal, these will work for older, broken
+    ;; emacses. some strange behavior may be encountered. PATCH YOUR EMACS!
+    (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"  c++-mode-syntax-table)
+    (modify-syntax-entry ?\n ">"     c++-mode-syntax-table)
+    ))
 
 (if c++-c-mode-syntax-table
     ()
   (setq c++-c-mode-syntax-table (make-syntax-table))
   (modify-syntax-entry ?\\ "\\"    c++-c-mode-syntax-table)
-  (modify-syntax-entry ?/  ". 14"  c++-c-mode-syntax-table)
-  (modify-syntax-entry ?*  ". 23"  c++-c-mode-syntax-table)
   (modify-syntax-entry ?+  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?-  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?=  "."     c++-c-mode-syntax-table)
@@ -241,9 +248,20 @@ styles in a single mode.")
   (modify-syntax-entry ?&  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?|  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-c-mode-syntax-table)
+  ;; comment syntax
   (if c++-emacs-is-really-fixed-p
-      (modify-syntax-entry ?# "<"  c++-mode-syntax-table))
-  )
+      ;; these entries will only work with the latest patches to lemacs
+      (progn
+	;;(modify-syntax-entry ?# "< b"     c++-mode-syntax-table)
+	;;(modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
+	(modify-syntax-entry ?/  ". 14" c++-mode-syntax-table)
+	(modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
+	)
+    ;; though its not optimal, these will work for older, broken
+    ;; emacses. some strange behavior may be encountered. PATCH YOUR EMACS!
+    (modify-syntax-entry ?/  ". 14"  c++-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"  c++-mode-syntax-table)
+    ))
 
 (defvar c++-tab-always-indent
   (if (boundp 'c-tab-always-indent) c-tab-always-indent t)
@@ -428,7 +446,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.251 $
+  "Major mode for editing C++ code.  $Revision: 2.252 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -636,7 +654,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.251 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.252 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2356,7 +2374,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.251 $"
+(defconst c++-version "$Revision: 2.252 $"
   "c++-mode version number.")
 
 (defun c++-version ()
