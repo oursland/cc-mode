@@ -343,7 +343,11 @@ it finds in `c-file-offsets'."
   (define-key c-mode-base-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-base-map "\C-c\C-u"  'c-up-conditional)
   (define-key c-mode-base-map "\t"        'c-indent-command)
-  (define-key c-mode-base-map "\177"      'c-electric-delete)
+  ;; In XEmacs 19 and Emacs 19, this binds both the BackSpace and
+  ;; Delete keysyms to c-electric-backspace.  In XEmacs 20 it binds
+  ;; only BackSpace, so we now bind them individually
+  (define-key c-mode-base-map [delete]    'c-electric-delete)
+  (define-key c-mode-base-map [backspace] 'c-electric-backspace)
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-base-map ","         'c-electric-semi&comma)
   (define-key c-mode-base-map "*"         'c-electric-star)
