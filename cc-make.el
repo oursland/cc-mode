@@ -15,14 +15,15 @@
 (setq load-path (cons "./" load-path))
 (if path-to-the-custom-library
     (setq load-path (cons path-to-the-custom-library load-path)))
-;; Always get the compile time definitions
-(require 'cc-defs)
 (if (and (condition-case nil
 	     (require 'custom)
 	   (error nil))
 	 ;; Stock Emacs 19.34 doesn't have this
 	 (fboundp 'defcustom))
     (progn
+      ;; Always get the compile time definitions
+      (require 'cc-defs)
+      (require 'cc-menus)
       (if (or (not (fboundp 'functionp))
 	      (not (fboundp 'char-before))
 	      (not (c-safe (char-after) t))
