@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.147 $
-;; Last Modified:   $Date: 1993-12-27 19:00:59 $
+;; Version:         $Revision: 3.148 $
+;; Last Modified:   $Date: 1993-12-27 20:36:59 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-27 19:00:59 $|$Revision: 3.147 $|
+;; |$Date: 1993-12-27 20:36:59 $|$Revision: 3.148 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.147 $
+CC-MODE REVISION: $Revision: 3.148 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.147 $
+CC-MODE REVISION: $Revision: 3.148 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -758,6 +758,7 @@ Key bindings:
 	 (put 'mode-line-format 'c-hacked-mode-line t)
 	 ))
   (and (listp minor-mode-alist)
+       (not (assq 'c-style-name minor-mode-alist))
        (setq minor-mode-alist
 	     (append minor-mode-alist '((c-style-name c-style-name)))
 	     ))
@@ -1346,7 +1347,7 @@ GNU, K&R, BSD and Whitesmith."
     (or vars
 	(error "Invalid C indentation style `%s'" style))
     ;; set the c-style-name variable
-    (setq c-style-name style)
+    (setq c-style-name (concat " " style))
     ;; set all the variables
     (mapcar
      (function
@@ -2937,7 +2938,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.147 $"
+(defconst c-version "$Revision: 3.148 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
