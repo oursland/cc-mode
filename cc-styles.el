@@ -43,6 +43,7 @@
 			 (arglist-close . c-lineup-arglist)
 			 ))
      (c-special-indent-hook . c-gnu-impose-minimum)
+     (c-comment-continuation-stars . nil)
      )
     ("k&r"
      (c-basic-offset . 5)
