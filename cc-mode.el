@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.195 $
-;; Last Modified:   $Date: 1992-08-28 22:07:39 $
+;; Version:         $Revision: 2.196 $
+;; Last Modified:   $Date: 1992-09-01 21:02:17 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -125,7 +125,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-28 22:07:39 $|$Revision: 2.195 $|
+;; |$Date: 1992-09-01 21:02:17 $|$Revision: 2.196 $|
 
 ;;; Code:
 
@@ -377,7 +377,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.195 $
+  "Major mode for editing C++ code.  $Revision: 2.196 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -584,7 +584,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.195 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.196 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -961,7 +961,8 @@ for member initialization list."
 			       (looking-at ":")))
 			(progn
 			  (c++-beginning-of-defun)
-			  (let ((pps (parse-partial-sexp (point) end)))
+			  (let* ((parse-sexp-ignore-comments t)
+				 (pps (parse-partial-sexp (point) end)))
 			    (or (nth 3 pps) (nth 4 pps) (nth 5 pps))))))))
 	(progn
 	  (insert last-command-char)
@@ -1076,7 +1077,8 @@ of the expression are preserved."
 	  ;;nil nil state))
 	  (let ((start (point))
 		(line-end (progn (end-of-line) (point)))
-		(end (progn (forward-char) (point))))
+		(end (progn (forward-char) (point)))
+		(parse-sexp-ignore-comments))
 	    (setq state (parse-partial-sexp start end nil nil state))
 	    (goto-char line-end))
 	  (setq next-depth (car state))
@@ -1312,6 +1314,29 @@ the \"real\" top level.  Optional BOD is the beginning of defun."
 	       paren-depth))
 	)))))
 
+(defun c++-in-literal-quick (&optional lim)
+  "Determine if point is in a C++ `literal'.
+Return 'c if in a C-style comment, 'c++ if in a C++ style comment,
+'string if in a string literal, 'pound if on a preprocessor line, or
+nil if not in a comment at all.  Optional LIM is used as the backward
+limit of the search.  If omitted, or nil, c++-beginning-of-defun is
+used."
+  (save-excursion
+    (let* ((backlim (or lim (c++-point 'bod)))
+	   (here (point))
+	   (parse-sexp-ignore-comments t) ; may not be necessary
+	   (state (parse-partial-sexp backlim (point))))
+      (cond ((nth 4 state)
+	     ;; comment. c or c++? elt 7 wil be t for c comment
+	     (if (nth 7 state) 'c 'c++))
+	    ((nth 3 state) 'string)
+	    ((progn			; in a preproc line?
+	       (goto-char here)
+	       (beginning-of-line)
+	       (looking-at "[ \t]*#"))
+	     'pound)
+	    (t nil)))))
+
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
 Return 'c if in a C-style comment, 'c++ if in a C++ style comment,
@@ -1368,6 +1393,14 @@ used."
 	       (t nil)))
 	) ; end-while
       state)))
+
+;;; Note that when a fixed (ie one that allows 2 orthogonal comment
+;;; styles in a single mode) emacs is being used, defer to
+;;; c++-in-literal-quick
+(let ((pps (parse-partial-sexp (point) (point))))
+  (if (= 8 (length pps))
+      ;; using a fixed emacs
+      (fset 'c++-in-literal 'c++-in-literal-quick)))
 
 (defun c++-in-parens-p (&optional lim)
   "Return t if inside a paren expression.
@@ -1877,13 +1910,13 @@ optional LIM.  If LIM is ommitted, point-min is used."
 	     (if (search-backward "/*" lim 'move)
 		 (goto-char (match-beginning 0))
 	       (setq stop t)))
+	    ((and (eq literal 'pound)
+		  (> (c++-point 'bol) lim))
+	     (beginning-of-line))
 	    ((and (= (preceding-char) ?/)
 		  (progn (forward-char -1)
 			 (= (preceding-char) ?*)))
 	     (forward-char -1))
-	    ((and (eq literal 'pound)
-		  (> (c++-point 'bol) lim))
-	     (beginning-of-line))
 	    (t (setq stop t))
 	    ))))
 
@@ -2174,7 +2207,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.195 $"
+(defconst c++-version "$Revision: 2.196 $"
   "c++-mode version number.")
 
 (defun c++-version ()
