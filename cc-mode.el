@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.290 $
-;; Last Modified:   $Date: 1993-03-02 14:17:34 $
+;; Version:         $Revision: 2.291 $
+;; Last Modified:   $Date: 1993-03-02 15:53:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-03-02 14:17:34 $|$Revision: 2.290 $|
+;; |$Date: 1993-03-02 15:53:27 $|$Revision: 2.291 $|
 
 ;;; Code:
 
@@ -446,7 +446,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.290 $
+  "Major mode for editing C++ code.  $Revision: 2.291 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -667,7 +667,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.290 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.291 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1194,7 +1194,14 @@ of the expression are preserved."
 	  ;;(progn (end-of-line) (point))
 	  ;;nil nil state))
 	  (let ((start (point))
-		(line-end (progn (end-of-line) (point)))
+		(line-end
+		 (progn (end-of-line)
+			(while (eq (c++-in-literal) 'c)
+			  (forward-line 1)
+			  (end-of-line))
+			(skip-chars-backward " \t\n")
+			(end-of-line)
+			(point)))
 		(end (progn (if (not (eobp)) (forward-char)) (point))))
 	    (setq state (parse-partial-sexp start end nil nil state))
 	    (goto-char line-end))
@@ -1336,8 +1343,9 @@ of the expression are preserved."
 	    (or (looking-at comment-start-skip)
 		(if (re-search-forward
 		     comment-start-skip
-		     (save-excursion (end-of-line) (point)) t)
-		    (progn (indent-for-comment) (beginning-of-line))))
+		     (c++-point 'eol) t)
+		    (progn (indent-for-comment)
+			   (beginning-of-line))))
 	    ))))))
 
 (defun c++-insert-header ()
@@ -2187,7 +2195,7 @@ comments, and preprocessor directives. Search no farther back than
 optional LIM.  If LIM is ommitted, beginning-of-defun is used."
   (save-restriction
     (let ((parse-sexp-ignore-comments t)
-	  donep boi
+	  donep boi char
 	  (lim (or lim (c++-point 'bod))))
       (narrow-to-region lim (point))
       (modify-syntax-entry ?# "< b" c++-mode-syntax-table)
@@ -2195,9 +2203,11 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 	;; if you're not running a patched lemacs, the new byte
 	;; compiler will complain about this function. ignore that
 	(backward-syntactic-ws)
-	(if (not (bobp))
+	(if (not (looking-at "#\\|/\\*\\|//"))
 	    (forward-char 1))
-	(if (= (char-after (setq boi (c++-point 'boi))) ?#)
+	(setq boi (c++-point 'boi)
+	      char (char-after boi))
+	(if (and char (= char ?#))
 	    (progn (goto-char boi)
 		   (setq donep (<= (point) lim)))
 	  (setq donep t))
@@ -2515,7 +2525,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.290 $"
+(defconst c++-version "$Revision: 2.291 $"
   "c++-mode version number.")
 
 (defun c++-version ()
