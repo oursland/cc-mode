@@ -3484,8 +3484,11 @@ This function does not do any hidden buffer changes."
 			(forward-char)
 			t)
 
+		      ;; Note: This regexp exploits the match order in
+		      ;; \| so that "<>" is matched by "<" rather than
+		      ;; "[^>:-]>".
 		      (c-syntactic-re-search-forward
-		       "\\([^>:-]>\\)\\|[<;{},]" nil 'move t t 1)
+		       "[<;{},]\\|\\([^>:-]>\\)" nil 'move t t 1)
 
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
