@@ -742,8 +742,8 @@ tools (e.g. Javadoc).")
 					    'face)
 			 '(font-lock-comment-face font-lock-string-face))
 		   t
-		 ;; Skip forward past only comments to set the position
-		 ;; to continue at, so we don't skip macros.
+		 ;; Skip forward past comments only, to set the position to
+		 ;; continue at, so we don't skip macros.
 		 (c-forward-comments)
 		 (setq continue-pos (point))
 		 nil))
@@ -1010,17 +1010,29 @@ tools (e.g. Javadoc).")
 		   (cond (res
 			  ;; Found a known or possible type or a prefix of a
 			  ;; known type.
+
 			  (when at-type
 			    ;; Got two identifiers with nothing but whitespace
 			    ;; between them.  That can only happen in
 			    ;; declarations.
-			    (setq at-decl-or-cast t))
+			    (setq at-decl-or-cast t)
+
+			    (when (eq at-type 'found)
+			      ;; If the previous identifier is a found type we
+			      ;; font lock it as one; it might be some sort of
+			      ;; alias for a prefix like "unsigned".
+			      (save-excursion
+				(goto-char type-start)
+				(let ((c-promote-possible-types t))
+				  (c-forward-type)))))
+
 			  (setq prev-at-type at-type
 				prev-type-start type-start
 				prev-type-end type-end
 				at-type res
 				type-start start
 				type-end (point))
+
 			  ;; If the type isn't known we continue so that we'll
 			  ;; jump over all specifiers and type identifiers.
 			  ;; The reason to do this for a known type prefix is
