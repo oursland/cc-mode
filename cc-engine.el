@@ -281,7 +281,7 @@
 ;; tokens left to move (positive or negative).  If BALANCED is true, a
 ;; move over a balanced paren counts as one.
 
-(defun c-forw-token (&optional count balanced lim)
+(defun c-forward-token-1 (&optional count balanced lim)
   (let* ((jump-syntax (if balanced
 			  '(?w ?_ ?\" ?\\ ?/ ?$ ?' ?\( ?\))
 			'(?w ?_ ?\" ?\\ ?/ ?$ ?'))))
@@ -298,7 +298,7 @@
        (and lim (> (point) lim) (goto-char lim))))
     count))
 
-(defun c-back-token (&optional count balanced lim)
+(defun c-backward-token-1 (&optional count balanced lim)
   (let* ((jump-syntax (if balanced
 			  '(?w ?_ ?\" ?\\ ?/ ?$ ?' ?\( ?\))
 			'(?w ?_ ?\" ?\\ ?/ ?$ ?')))
@@ -925,7 +925,7 @@
 	   ;; see if the open brace is preceded by a = in this statement
 	   (goto-char containing-sexp)
 	   (setq okp t)
-	   (while (and (setq okp (= (c-back-token 1 t) 0))
+	   (while (and (setq okp (= (c-backward-token-1 1 t) 0))
 		       (not (memq (char-after) '(?= ?{ ?\;)))))
 	   (if (not (and okp (eq (char-after) ?=)))
 	       ;; lets see if we're nested. find the most nested
@@ -1161,7 +1161,7 @@
 			 (save-excursion
 			   (goto-char indent-point)
 			   (while (and (> (point) placeholder)
-				       (= (c-back-token 1 t) 0)
+				       (= (c-backward-token-1 1 t) 0)
 				       (/= (char-after) ?=)))
 			   (eq (char-after) ?=)))
 		     (save-excursion
@@ -1625,7 +1625,7 @@
 		    (save-excursion
 		      (goto-char indent-point)
 		      (while (and (> (point) placeholder)
-				  (= (c-back-token 1 t) 0)
+				  (= (c-backward-token-1 1 t) 0)
 				  (/= (char-after) ?=)))
 		      (eq (char-after) ?=)))
 		(c-add-syntax 'brace-list-open placeholder))
