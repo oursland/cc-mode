@@ -70,9 +70,6 @@ since a (good enough) custom library wasn't found")
       (cc-bytecomp-defmacro custom-declare-variable (symbol value doc
 						     &rest args)
 	`(defvar ,(eval symbol) ,(eval value) ,doc))
-      (cc-bytecomp-defmacro defface (face spec doc &rest args)
-	;; FIXME: Should try to look at spec.
-	`(make-face ',face))
       nil))))
 
 (cc-eval-when-compile
