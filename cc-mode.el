@@ -237,7 +237,7 @@ no args,if that value is non-nil."
   (run-hooks 'c++-mode-hook)
   (if c++-electric-colon
       (define-key c++-mode-map ":" 'electric-c++-colon))
-  (if c++-hungry-delete-key
+  (if c++-hungry-delete-key-p
       (define-key c++-mode-map "\177" 'c++-hungry-delete-key)))
 
 ;; This is used by indent-for-comment
