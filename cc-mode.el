@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.42 $
-;; Last Modified:   $Date: 1993-11-11 21:24:06 $
+;; Version:         $Revision: 3.43 $
+;; Last Modified:   $Date: 1993-11-16 04:59:46 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-11 21:24:06 $|$Revision: 3.42 $|
+;; |$Date: 1993-11-16 04:59:46 $|$Revision: 3.43 $|
 
 ;;; Code:
 
@@ -166,33 +166,45 @@ Current valid values are:
  `defun-close-semi'   -- cleans up the terminating semi-colon on class
                          definitions and functions by placing the semi
                          on the same line as the closing brace.
- `list-close-comma    -- cleans up commas following braces in array
+ `list-close-comma'   -- cleans up commas following braces in array
                          and aggregate initializers.")
 
-(defvar cc-hanging-braces-list nil
-  "*Controls the insertion of newlines before open (left) braces.
-This variable only has effect when auto-newline is on, as evidenced by
-the `/a' or `/ah' appearing next to the mode name.  It contains a list
-of semantic symbols for open braces which hang on the right edge of
-the previous line.  Valid values for this list are:
+(defvar cc-hanging-braces-alist nil
+  "*Controls the insertion of newlines before and after open braces.
+This variable contains an association list with elements of the
+following form: (LANGSYM . (NL-LIST)).  LANGSYSM is one of these
+semantic symbols:
 
-  'defun-open   -- opens any top level function
-  'class-open   -- opens any class definition
-  'inline-open  -- opens any inline, in-class member function
-  'block-open   -- opens any statement block
+  `defun-open'   -- opens any top level function
+  `class-open'   -- opens any class definition
+  `inline-open'  -- opens any inline, in-class member function
+  `block-open'   -- opens any statement block.
 
-If nil, open braces do not hang (i.e. a newline is inserted before all
-open braces).  If t, all open braces hang -- no newline is inserted
-before open braces.  If not nil or t, newlines are only inserted
-before top-level open braces; all other braces hang.")
+NL-LIST can contain any combination of the symbols `before' or
+`after'. It also be nil.  When an open brace is inserted, the language
+element that it defines is looked up in this list, and if found, the
+NL-LIST is used to determine where newlines are inserted.  If the
+language element for this brace is not found in this list, the default
+behavior is to insert a newline both before and after the brace.")
 
-(defvar cc-hanging-member-init-colon 'before
-  "*Controls the insertion of newlines before and after member-init colons.
-Valid values are:
-  t        -- no newlines inserted before or after colon
-  nil      -- newlines inserted before and after colon
-  `after'  -- newlines inserted only after colon
-  `before` -- newlines inserted only before colon")
+(defvar cc-hanging-colons-alist nil
+  "*Controls the insertion of newlines before and after certain colons.
+This variable contains an association list with elements of the
+following form: (LANGSYM . (NL-LIST)).  LANGSYSM is one of these
+semantic symbols:
+
+  `member-init-intro'  -- introduces a member init list
+  `inher-intro'        -- introduces an inheritance list
+  `case-label'         -- colon at the end of a case/default label
+  `label'              -- colon at the end of an ordinary label
+  `access-key'         -- colon at the end of an access protection label
+
+NL-LIST can contain any combination of the symbols `before' or
+`after'. It also be nil.  When an open brace is inserted, the language
+element that it defines is looked up in this list, and if found, the
+NL-LIST is used to determine where newlines are inserted.  If the
+language element for this brace is not found in this list, the default
+behavior is to insert a newline both before and after the brace.")
 
 (defvar cc-auto-hungry-initial-state 'none
   "*Initial state of auto/hungry features when buffer is first visited.
@@ -415,7 +427,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.42 $
+  "Major mode for editing C++ code.  $Revision: 3.43 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -430,7 +442,7 @@ value is non-nil.
 Key bindings:
 \\{cc-mode-map}"
   (interactive)
-  (cc-common-init)
+  (kill-all-local-variables)
   (set-syntax-table cc-c++-mode-syntax-table)
   (setq major-mode 'cc-c++-mode
 	mode-name "C++"
@@ -438,13 +450,14 @@ Key bindings:
   ;; now set their values
   (setq comment-start "// "
 	comment-end "")
+  (cc-common-init)
   (run-hooks 'cc-c++-mode-hook)
   (cc-set-auto-hungry-state
    (memq cc-auto-hungry-initial-state '(auto-only   auto-hungry t))
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
-(defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.42 $
+(defun cc-c-mode ()
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.43 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -459,13 +472,14 @@ value is non-nil.
 Key bindings:
 \\{cc-mode-map}"
   (interactive)
-  (cc-common-init)
+  (kill-all-local-variables)
   (set-syntax-table cc-c-mode-syntax-table)
   (setq major-mode 'cc-c-mode
 	mode-name "C"
 	local-abbrev-table c-mode-abbrev-table)
   (setq comment-start "/* "
 	comment-end   " */")
+  (cc-common-init)
   (run-hooks 'cc-c-mode-hook)
   (cc-set-auto-hungry-state
    (memq cc-auto-hungry-initial-state '(auto-only   auto-hungry t))
@@ -473,7 +487,6 @@ Key bindings:
 
 (defun cc-common-init ()
   ;; Common initializations for cc-c++-mode and cc-c-mode.
-  (kill-all-local-variables)
   (use-local-map cc-mode-map)
   ;; make local variables
   (make-local-variable 'paragraph-start)
@@ -504,13 +517,17 @@ Key bindings:
   (if (boundp 'comment-indent-function)
       (setq comment-indent-function 'cc-comment-indent)
     (setq comment-indent-hook 'cc-comment-indent))
-  ;; hack auto-hungry designators into mode-line-format
+  ;; hack auto-hungry designators into mode-line-format, but do it
+  ;; only once
   (and (listp mode-line-format)
+       (memq major-mode '(cc-c++-mode cc-c-mode))
+       (not (get 'mode-line-format 'cc-hacked-mode-line))
        (let ((name (memq 'mode-name mode-line-format))
-	     (hack '(cc-hungry-delete-key
-		     (cc-auto-newline "/ah" "/h")
-		     (cc-auto-newline "/a"))))
+	     (hack '((cc-hungry-delete-key
+		      (cc-auto-newline "/ah" "/h")
+		      (cc-auto-newline "/a")))))
 	 (setcdr name (append hack (cdr name)))
+	 (put 'mode-line-format 'cc-hacked-mode-line t)
 	 )))
 
 
@@ -562,7 +579,9 @@ Key bindings:
   ;; update the mode line accordingly
   (setq cc-auto-newline auto-p
 	cc-hungry-delete-key hungry-p)
-  ;; hack to get mode line updated
+  ;; hack to get mode line updated. Emacs19 should use
+  ;; force-mode-line-update, but that isn't portable to Emacs18 and
+  ;; this at least works for both
   (set-buffer-modified-p (buffer-modified-p)))
 
 (defun cc-toggle-auto-state (arg)
@@ -625,7 +644,7 @@ Optional argument has the following meanings when supplied:
   (cc-keep-region-active))
 
 
-;; electric character insertion commands
+;; COMMANDS
 (defmacro cc-auto-newline ()
   ;; if auto-newline feature is turned on, insert a newline character
   ;; and return t, otherwise return nil.
@@ -652,172 +671,220 @@ then the function in the variable `cc-delete-function' is called."
 	(funcall cc-delete-function 1)
 	))))
 
-(defun c++-electric-pound (arg)
-  "Electric pound command."
-  (interactive "p")
-  (if (memq (c++-in-literal) '(c c++ string pound))
+(defun cc-electric-pound (arg)
+  "Electric pound (`#') insertion.
+Inserts a `#' character specially depending on the variable
+`cc-electric-pound-behavior'.  If a numeric ARG is supplied, or if
+point is inside a literal, nothing special happens."
+  (interactive "P")
+  (if (or (cc-in-literal)
+	  arg
+	  (not (memq 'alignleft cc-electric-pound-behavior)))
+      ;; do nothing special
       (self-insert-command arg)
-    (let ((here (point-marker))
-	  (bobp (bobp))
-	  (bolp (bolp)))
-      (if (memq 'alignleft c++-electric-pound-behavior)
-	  (progn (beginning-of-line)
-		 (delete-horizontal-space)))
-      (if bobp
-	  (insert (make-string arg last-command-char))
-	(insert-before-markers (make-string arg last-command-char)))
-      (if (not bolp)
-	  (goto-char here))
-      (set-marker here nil))))
+    ;; place the pound character at the left edge
+    (let ((pos (- (point-max) (point))))
+      (beginning-of-line)
+      (delete-horizontal-space)
+      (insert-char last-command-char 1)
+      (goto-char (- (point-max) pos))
+      )))
 
-(defun c++-electric-brace (arg)
-  "Insert character and correct line's indentation."
+(defmacro cc-insert-and-tame (arg)
+  ;; insert last-command-char in the buffer and possibly tame it
+  (` (progn
+       (and (memq 'v18 cc-emacs-features)
+	  (memq literal '(c c++))
+	  (memq last-command-char cc-untame-characters)
+	  (insert "\\"))
+       (self-insert-command (prefix-numeric-value arg))
+       )))
+
+(defun cc-electric-brace (arg)
+  "Electric brace insertion.
+Inserts a brace and possibly some newlines based on the value of
+`cc-hanging-braces-alist'.  It may also correct the line's
+indentation. If a numeric ARG is supplied, or if point is inside a
+literal, nothing special happens."
   (interactive "P")
-  (let (insertpos
-	(last-command-char last-command-char)
-	(bod (c++-point 'bod)))
-    (if (and (not arg)
-	     (save-excursion
-	       (skip-chars-forward " \t")
-	       (eolp))
-	     (or (save-excursion
-		   (skip-chars-backward " \t")
-		   (bolp))
-		 (let ((c++-auto-newline c++-auto-newline)
-		       (open-brace-p (= last-command-char ?{)))
-		   (if (and open-brace-p
-			    (or (eq c++-hanging-braces t)
-				(and c++-hanging-braces
-				     (not (c++-at-top-level-p t bod)))))
-		       (setq c++-auto-newline nil))
-		   (if (c++-auto-newline)
-		       ;; this may have auto-filled so we need to
-		       ;; indent the previous line. we also need to
-		       ;; indent the currently line, or
-		       ;; beginning-of-defun will not be able to
-		       ;; correctly find the bod.
-		       (progn (c++-indent-line bod)
-			      (save-excursion
-				(forward-line -1)
-				(c++-indent-line bod))))
-		   t)))
-	(progn
-	  (if (and (memq last-command-char c++-untame-characters)
-		   (memq (c++-in-literal bod) '(c c++)))
-	      (insert "\\"))
-	  ;; we need to work around a bogus feature of Emacs where an
-	  ;; open brace at bolp means a beginning-of-defun.  but it
-	  ;; really might not.
-	  (and (= last-command-char ?{)
-	       (bolp)
-	       (c++-indent-line bod))
-	  (insert last-command-char)
-	  ;; try to clean up empty defun braces if conditions apply
-	  (let ((here (point-marker)))
-	    (and (memq 'empty-defun-braces c++-cleanup-list)
-		 (c++-at-top-level-p t bod)
-		 c++-auto-newline
+  (let* ((bod (cc-point 'bod))
+	 (literal (cc-in-literal bod))
+	 semantics newlines)
+    (if (or literal
+	    arg
+	    (not (looking-at "[ \t]*$"))
+	    (not cc-auto-newline))
+	(cc-insert-and-tame arg)
+      (setq semantics (progn
+			(newline)
+			(self-insert-command (prefix-numeric-value arg))
+			(cc-guess-basic-semantics bod))
+	    newlines (or (assq (car (or (assq 'defun-open semantics)
+					(assq 'class-open semantics)
+					(assq 'inline-open semantics)
+					(assq 'block-open semantics)))
+			       cc-hanging-braces-alist)
+			 (if (= last-command-char ?{)
+			     '(ignore before after)
+			   '(ignore after))))
+      ;; does a newline go before the open brace?
+      (if (memq 'before newlines)
+	  ;; we leave the newline we've put in there before,
+	  ;; but we need to re-indent the line above
+	  (let ((pos (- (point-max) (point))))
+	    (forward-line -1)
+	    (cc-indent-via-language-element bod)
+	    (goto-char (- (point-max) pos)))
+	;; must remove the newline we just stuck in
+	(delete-region (- (point) 2) (1- (point)))
+	;; since we're hanging the brace, we need to recalculate
+	;; semantics
+	(setq semantics (cc-guess-basic-semantics bod)))
+      ;; now adjust the line's indentation
+      (cc-indent-via-language-element bod semantics)
+      ;; does a newline go after the brace?
+      (if (memq 'after (cdr-safe newlines))
+	  (progn
+	    (newline)
+	    (cc-indent-via-language-element)))
+      (let ((here (point))
+	    (pos (- (point-max) (point))))
+	;; clean up empty defun braces
+	(if (and (memq 'empty-defun-braces cc-cleanup-list)
 		 (= last-command-char ?\})
-		 (progn (forward-char -1)
-			(skip-chars-backward " \t\n")
-			(= (preceding-char) ?\{))
-		 (not (memq (c++-in-literal) '(c c++ string)))
-		 (delete-region (point) (1- here)))
-	    (goto-char here)
-	    (set-marker here nil))
-	  (let ((here (point-marker))
-		mbeg mend)
-	    (if (and (memq 'brace-else-brace c++-cleanup-list)
-		     (= last-command-char ?\{)
-		     (let ((status
-			    (re-search-backward "}[ \t\n]*else[ \t\n]*{"
-						nil t)))
-		       (setq mbeg (match-beginning 0)
-			     mend (match-end 0))
-		       status)
-		     (= mend here)
-		     (not (memq (c++-in-literal bod) '(c c++ string))))
-		(progn
-		  ;; we should clean up brace-else-brace syntax
-		  (delete-region mbeg mend)
-		  (insert-before-markers "} else {")
-		  (goto-char here)
-		  (set-marker here nil))
-	      (goto-char here)
-	      (set-marker here nil)))
-	  (c++-indent-line bod)
-	  (if (c++-auto-newline)
-	      (progn
-		;; c++-auto-newline may have done an auto-fill
-		(save-excursion
-		  (let ((here (point-marker)))
-		    (goto-char (- (point) 2))
-		    (c++-indent-line bod)
-		    (setq insertpos (- (goto-char here) 2))
-		    (set-marker here nil)))
-		(c++-indent-line bod)))
-	  (save-excursion
-	    (if insertpos (goto-char (1+ insertpos)))
-	    (delete-char -1))))
-    (if insertpos
-	(save-excursion
-	  (goto-char insertpos)
-	  (self-insert-command (prefix-numeric-value arg)))
-      (self-insert-command (prefix-numeric-value arg)))))
+		 (or (assq 'defun-close semantics)
+		     (assq 'class-close semantics)
+		     (assq 'inline-close semantics))
+		 (progn
+		   (forward-char -1)
+		   (skip-chars-backward " \t\n")
+		   (= (preceding-char) ?\{))
+		 ;; make sure matching open brace isn't in a comment
+		 (not (cc-in-literal)))
+	    (delete-region (point) (1- here)))
+	;; clean up brace-else-brace
+	(if (and (memq 'brace-else-brace cc-cleanup-list)
+		 (= last-command-char ?\{)
+		 (re-search-backward "}[ \t\n]*else[ \t\n]*{" nil t)
+		 (progn
+		   (setq mbeg (match-beginning 0)
+			 mend (match-end 0))
+		   (= mend here))
+		 (not (cc-in-literal)))
+	    (delete-region mbeg mend))
+	(goto-char (- (point-max) pos))
+	))))
 
-(defun c++-electric-slash (arg)
-  "Insert slash, and if slash is second of a double-slash comment
-introducing construct, indent line as comment.  This only indents if
-we're on a comment-only line, otherwise use `indent-for-comment' (\\[indent-for-comment])."
+(defun cc-electric-slash (arg)
+  "Insert slash, possibly indenting line as a comment.
+If slash is second of a double-slash comment introducing construct,
+and we are on a comment-only-line, indent line as comment.  If numeric
+ARG is supplied, indentation is inhibited."
   (interactive "P")
-  (let ((here (point)) char)
+  (let ((indentp (and (not arg)
+		      (= (preceding-char) ?/)
+		      (= last-command-char ?/)
+		      (not (cc-in-literal)))))
     (self-insert-command (prefix-numeric-value arg))
-    (and (setq char (char-after (1- here)))
-	 (= char ?/)
-	 (save-excursion
-	   (goto-char here)
-	   (c++-indent-line)))))
+    (if indentp
+	(cc-indent-line))))
 
-(defun c++-electric-star (arg)
-  "Works with `c++-electric-slash' to auto indent C style comment lines."
+(defun cc-electric-star (arg)
+  "Insert a start, possibly indenting line as a C block comment.
+If numeric ARG is supplied, indentation is inhibited."
   (interactive "P")
-  (let ((here (point)) char)
+  (let ((indentp (and (not arg)
+		      (or (and (memq (cc-in-literal) '(c))
+			       (save-excursion
+				 (skip-chars-backward "* \t")
+				 (bolp)))
+			  (= (preceding-char) ?/)))))
     (self-insert-command (prefix-numeric-value arg))
-    (if (and (setq char (char-after (1- here)))
-	     (memq (c++-in-literal) '(c))
-	     (memq char '(?/ ?* ?\t 32 ?\n))
-	     (save-excursion
-	       (skip-chars-backward "* \t")
-	       (if (= (preceding-char) ?/)
-		   (progn
-		     (forward-char -1)
-		     (skip-chars-backward " \t")))
-	       (bolp)))
-	(save-excursion
-	  (goto-char here)
-	  (c++-indent-line)))))
+    (if indentp
+	(cc-indent-line))))
 
-(defun c++-electric-semi&comma (arg)
-  "Insert character and correct line's indentation."
+(defun cc-electric-semi&comma (arg)
+  "Insert a comma or semicolon, possibly re-indenting line.
+If numeric ARG is supplied, indentation is inhibited."
   (interactive "P")
-  (if (c++-in-literal)
+  (let* ((bod (cc-point 'bod))
+	 (literal (cc-in-literal bod))
+	 (here (point)))
+    (if (or literal
+	    arg
+	    (not (looking-at "[ \t]*$"))
+	    (not cc-auto-newline))
+	(cc-insert-and-tame arg)
+      ;; do some special stuff with the character
       (self-insert-command (prefix-numeric-value arg))
-    (let ((here (point-marker))
-	  (lcc last-command-char))
-      (if (and (or (and (= lcc ?,)
-			(memq 'list-close-comma c++-cleanup-list))
-		   (and (= lcc ?\;)
-			(memq 'defun-close-semi c++-cleanup-list)))
-	       c++-auto-newline
-	       (progn
-		 (skip-chars-backward " \t\n")
-		 (= (preceding-char) ?})))
-	  (delete-region here (point)))
-      (goto-char here)
-      (set-marker here nil)
-      (if (= lcc ?,)
-	  (self-insert-command (prefix-numeric-value arg))
-	(c++-electric-terminator arg)))))
+      (let ((pos (- (point-max) (point))))
+	;; possibly do some cleanups
+	(if (and (or (and
+		      (= last-command-char ?,)
+		      (memq 'list-close-comma cc-cleanup-list))
+		     (and
+		      (= last-command-char ?\;)
+		      (memq 'defun-close-semi cc-cleanup-list)))
+		 (progn
+		   (forward-char -1)
+		   (skip-chars-backward " \t\n")
+		   (= (preceding-char) ?}))
+		 ;; make sure matching open brace isn't in a comment
+		 (not (cc-in-literal)))
+	    (delete-region (point) here))
+	(goto-char (- (point-max) pos)))
+      ;; re-indent line
+      (cc-indent-via-language-element bod)
+      (newline)
+      )))
+
+;; <<TBD>>
+
+(defun cc-electric-colon (arg)
+  "Insert a colon, possible reindenting a line.
+Will also cleanup double colon scope operators."
+  (interactive "P")
+  (let* ((bod (cc-point 'bod))
+	 (literal (cc-in-literal bod))
+	 semantics newlines)
+    (if (or literal
+	    arg
+	    (not (looking-at "[ \t]*$"))
+	    (not cc-auto-newline))
+	(cc-insert-and-tame arg)
+      ;; lets do some special stuff with the colon character
+      (setq semantics (progn
+			(newline)
+			(self-insert-command (prefix-numeric-value arg))
+			(cc-guess-basic-semantics bod))
+	    newlines (or (assq (car (or (assq 'member-init-intro semantics)
+					(assq 'inher-intro semantics)
+					(assq 'case-label semantics)
+					(assq 'label semantics)
+					(assq 'access-key semantics)))
+			       cc-hanging-colons-alist)
+			 '(ignore after)))
+      ;; does a newline go before the colon?
+      (if (memq 'before newlines)
+	  ;; we leave the newline we've put in there before, but we
+	  ;; need to re-indent the line above
+	  (let ((pos (- (point-max) (point))))
+	    (forward-line -1)
+	    (cc-indent-via-language-element bod)
+	    (goto-char (- (point-max) pos)))
+	;; must remove the newline we just stuck in
+	(delete-region (- (point) 2) (1- (point)))
+	;; since we're hanging the colon, we need to recalculate
+	;; semantics
+	(setq semantics (cc-guess-basic-semantics bod)))
+      ;; now adjust the line's indentation
+      (cc-indent-via-language-element bod semantics)
+      ;; does a newline go after the colon?
+      (if (memq 'after (cdr-safe newlines))
+	  (progn
+	    (newline)
+	    (cc-indent-via-language-element)))
+      )))
 
 (defun c++-electric-colon (arg)
   "Electrify colon.
@@ -882,59 +949,6 @@ initialization list."
 	 ))				; end-cond, end-save-excursion
       (goto-char insertion-point)
       (c++-electric-terminator arg))))
-
-(defun c++-electric-terminator (arg)
-  "Insert character and correct line's indentation."
-  (interactive "P")
-  (let (insertpos (end (point)))
-    (if (and (not arg)
-	     (save-excursion
-	       (skip-chars-forward " \t")
-	       (eolp))
-	     (not (save-excursion
-		    (beginning-of-line)
-		    (skip-chars-forward " \t")
-		    (or (= (following-char) ?#)
-			;; Colon is special only after a label, or
-			;; case, or another colon.
-			;; So quickly rule out most other uses of colon
-			;; and do no indentation for them.
-			(and (eq last-command-char ?:)
-			     (not (looking-at "case[ \t]"))
-			     (save-excursion
-			       (forward-word 1)
-			       (skip-chars-forward " \t")
-			       (< (point) end))
-			     ;; Do re-indent double colons
-			     (save-excursion
-			       (end-of-line 1)
-			       (looking-at ":")))
-			(progn
-			  (beginning-of-defun)
-			  (let* ((parse-sexp-ignore-comments t)
-				 (pps (parse-partial-sexp (point) end)))
-			    (or (nth 3 pps) (nth 4 pps) (nth 5 pps))))))))
-	(progn
-	  (insert last-command-char)
-	  (c++-indent-line)
-	  (and c++-auto-newline
-	       (not (c++-in-parens-p))
-	       (progn
-		 ;; the new marker object, used to be just an integer
-		 (setq insertpos (make-marker))
-		 ;; changed setq to set-marker
-		 (set-marker insertpos (1- (point)))
-		 ;; do this before the newline, since in auto fill can break
-		 (newline)
-		 (c++-indent-line)))
-	  (save-excursion
-	    (if insertpos (goto-char (1+ insertpos)))
-	    (delete-char -1))))
-    (if insertpos
-	(save-excursion
-	  (goto-char insertpos)
-	  (self-insert-command (prefix-numeric-value arg)))
-      (self-insert-command (prefix-numeric-value arg)))))
 
 
 ;; Workarounds for GNU Emacs 18 scanning deficiencies
@@ -1745,12 +1759,7 @@ of the expression are preserved."
 (defmacro cc-add-semantics (symbol &optional relpos)
   ;; a simple macro to append the semantics in symbol to the semantics
   ;; list.  try to increase performance by using this macro
-  (` (setq semantics
-	   (append semantics
-		   (list (, (if relpos
-				(` (cons (, symbol) (, relpos)))
-			      symbol)))
-		   ))))
+  (` (setq semantics (cons (cons (, symbol) (, relpos)) semantics))))
 
 (defun cc-guess-basic-semantics (&optional lim)
   ;; guess the semantic description of the current line of C++ code.
@@ -2100,12 +2109,13 @@ of the expression are preserved."
 
 ;; indent via semantic language elements
 (defun cc-get-offset (langelem)
-  ;; Get offset from LANGELEM, which could be a symbol, or a cons cell
-  ;; of the form: (SYMBOL . RELPOS).  The symbol is matched against
+  ;; Get offset from LANGELEM which is a cons cell of the form:
+  ;; (SYMBOL . RELPOS).  The symbol is matched against
   ;; cc-offsets-alist and the offset found there is either returned,
-  ;; or added to the indentation at RELPOS.
-  (let* ((symbol (or (car-safe langelem) langelem))
-	 (relpos (cdr-safe langelem))
+  ;; or added to the indentation at RELPOS.  If RELPOS is nil, then
+  ;; the offset is simply returned.
+  (let* ((symbol (car langelem))
+	 (relpos (cdr langelem))
 	 (match  (assq symbol cc-offsets-alist))
 	 (offset (cdr-safe match)))
     ;; offset can be a number, a function, a variable, or one of the
@@ -2132,12 +2142,13 @@ of the expression are preserved."
 	 0)
        offset)))
 
-(defun cc-indent-via-language-element (&optional lim)
+(defun cc-indent-via-language-element (&optional lim semantics)
   ;; indent the curent line as C/C++ code. Optional LIM is the
-  ;; farthest point back to search. returns the amount of indentation
-  ;; change
+  ;; farthest point back to search. Optional SEMANTICS is the semantic
+  ;; information for the current line. Returns the amount of
+  ;; indentation change
   (let* ((lim (or lim (cc-point 'bod)))
-	 (semantics (cc-guess-basic-semantics lim))
+	 (semantics (or semantics (cc-guess-basic-semantics lim)))
 	 (pos (- (point-max) (point)))
 	 (indent (apply '+ (mapcar 'cc-get-offset semantics)))
 	 (shift-amt  (- (current-indentation) indent)))
@@ -2245,7 +2256,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.42 $"
+(defconst cc-version "$Revision: 3.43 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
