@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.137 $
-;; Last Modified:   $Date: 1993-12-22 18:35:21 $
+;; Version:         $Revision: 3.138 $
+;; Last Modified:   $Date: 1993-12-22 19:12:24 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-22 18:35:21 $|$Revision: 3.137 $|
+;; |$Date: 1993-12-22 19:12:24 $|$Revision: 3.138 $|
 
 ;;; Code:
 
@@ -493,6 +493,7 @@ Emacs.")
   (define-key c-mode-map "*"         'c-electric-star)
   (define-key c-mode-map "\e\C-x"    'c-indent-defun)
   (define-key c-mode-map "\C-c\C-\\" 'c-macroize-region)
+  ;; TBD: where if anywhere, to put c-backward|forward-into-nomenclature
   (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
   (define-key c-mode-map "\C-c\C-b"  'c-submit-bug-report)
   (define-key c-mode-map "\C-c\C-c"  'c-comment-region)
@@ -640,7 +641,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.137 $
+CC-MODE REVISION: $Revision: 3.138 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -673,7 +674,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.137 $
+CC-MODE REVISION: $Revision: 3.138 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1350,6 +1351,31 @@ GNU, K&R, BSD and Whitesmith."
 	     val))
 	  )))
      vars)))
+
+;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
+;; originally contributed by Terry_Glanfield.Southern@rxuk.xerox.com
+(defun c-forward-into-nomenclature (&optional arg)
+  "Move forward to end of a nomenclature section or word.
+With arg, to it arg times."
+  (interactive "p")
+  (let ((case-fold-search nil))
+    (if (> arg 0)
+	(re-search-forward "\\W*\\([A-Z]*[a-z0-9]*\\)" (point-max) t arg)
+      (while (and (< arg 0)
+		  (re-search-backward
+		   "\\(\\(\\W\\|[a-z0-9]\\)[A-Z]+\\|\\W\\w+\\)"
+		   (point-min) 0))
+	(forward-char 1)
+	(setq arg (1+ arg)))))
+  (c-keep-region-active))
+
+(defun c-backward-into-nomenclature (&optional arg)
+  "Move backward to beginning of a nomenclature section or word.
+With optional ARG, move that many times.  If ARG is negative, move
+forward."
+  (interactive "p")
+  (c-forward-into-nomenclature (- (or arg 1)))
+  (c-keep-region-active))
 
 
 ;; TBD: clean these up.  why do we need two beginning-of-statements???
@@ -2892,7 +2918,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.137 $"
+(defconst c-version "$Revision: 3.138 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
