@@ -158,8 +158,10 @@ This variant works around bugs in `eval-when-compile' in various
 	 ;; arguably a bug because the point with `eval-when-compile' is
 	 ;; that it should evaluate rather than compile its contents.
 	 ;;
-	 ;; We get around it by expanding the body to a quoted constant
-	 ;; that we eval.
+	 ;; We get around it by expanding the body to a quoted
+	 ;; constant that we eval.  That otoh introduce a problem in
+	 ;; that a returned lambda expression doesn't get byte
+	 ;; compiled (even if `function' is used).
 	 (eval '(let ((c-inside-eval-when-compile t)) ,@body)))))
 
   (put 'cc-eval-when-compile 'lisp-indent-hook 0))
@@ -565,92 +567,115 @@ This function does not do any hidden buffer changes."
 	 `lookup-syntax-properties)
 	(t nil)))
 
+
+;; Macros/functions to handle so-called "char properties", which are
+;; properties set on a single character and that never spreads to any
+;; other characters.
+
+(cc-eval-when-compile
+  ;; Constant used at compile time to decide whether or not to use
+  ;; XEmacs extents.  Check all the extent functions we'll use since
+  ;; some packages might add compatibility aliases for some of them in
+  ;; Emacs.
+  (defconst c-use-extents (and (cc-bytecomp-fboundp 'extent-at)
+			       (cc-bytecomp-fboundp 'set-extent-property)
+			       (cc-bytecomp-fboundp 'set-extent-properties)
+			       (cc-bytecomp-fboundp 'make-extent)
+			       (cc-bytecomp-fboundp 'extent-property)
+			       (cc-bytecomp-fboundp 'delete-extent)
+			       (cc-bytecomp-fboundp 'map-extents))))
+
+;; `c-put-char-property' is complex enough in XEmacs and Emacs < 21 to
+;; make it a function.
+(defalias 'c-put-char-property-fun
+  (cc-eval-when-compile
+    (cond (c-use-extents
+	   ;; XEmacs.
+	   (byte-compile
+	    (lambda (pos property value)
+	      (let ((ext (extent-at pos nil property)))
+		(if ext
+		    (set-extent-property ext property value)
+		  (set-extent-properties (make-extent pos (1+ pos))
+					 (cons property
+					       (cons value
+						     '(start-open t
+						       end-open t)))))))))
+
+	  ((not (cc-bytecomp-boundp 'text-property-default-nonsticky))
+	   ;; In Emacs < 21 we have to mess with the `rear-nonsticky' property.
+	   (byte-compile
+	    (lambda (pos property value)
+	      (put-text-property pos (1+ pos) property value)
+	      (let ((prop (get-text-property pos 'rear-nonsticky)))
+		(or (memq property prop)
+		    (put-text-property pos (1+ pos)
+				       'rear-nonsticky
+				       (cons property prop))))))))))
+(cc-bytecomp-defun c-put-char-property-fun) ; Make it known below.
+
 (defmacro c-put-char-property (pos property value)
   ;; Put the given property with the given value on the character at
-  ;; POS and make it front and rear nonsticky (or start and end open
-  ;; in XEmacs vocabulary).
+  ;; POS and make it front and rear nonsticky, or start and end open
+  ;; in XEmacs vocabulary.  If the character already has the given
+  ;; property then the value is replaced.  PROPERTY is assumed to be
+  ;; constant.
   ;;
   ;; If there's a `text-property-default-nonsticky' variable (Emacs
   ;; 21) then it's assumed that the property is present on it.
-  ;; PROPERTY is assumed to be constant.
-  (setq property (eval property))
-  (cond ((and (fboundp 'set-extent-properties)
-	      (fboundp 'make-extent)
-	      (fboundp 'extent-at)
-	      (fboundp 'extent-property)
-	      (fboundp 'delete-extent)
-	      (fboundp 'map-extents))
-	 ;; XEmacs.  Check all the extent functions we'll use since some
-	 ;; packages might do compatibility aliases for some of them in Emacs.
-	 `(let ((pos ,pos))
-	    (set-extent-properties (make-extent pos (1+ pos))
-				   (list ',property ,value
-					 'start-open t
-					 'end-open t))))
-	((cc-bytecomp-boundp 'text-property-default-nonsticky)
-	 ;; In Emacs 21 we got the rear-nonsticky property covered
-	 ;; by `text-property-default-nonsticky'.
-	 `(let ((pos ,pos))
-	    (put-text-property pos (1+ pos)
-			       ',property ,value)))
-	(t
-	 ;; In Emacs 20 we have to mess with the rear-nonsticky property.
-	 `(let* ((pos ,pos)
-		 (prop (get-text-property pos 'rear-nonsticky)))
-	    (put-text-property pos (1+ pos)
-			       ',property ,value)
-	    (or (memq ',property prop)
-		(put-text-property pos (1+ pos)
-				   'rear-nonsticky
-				   (cons ',property prop)))))))
+  (if (or c-use-extents
+	  (not (cc-bytecomp-boundp 'text-property-default-nonsticky)))
+      ;; XEmacs and Emacs < 21.
+      `(c-put-char-property-fun ,pos ,property ,value)
+    ;; In Emacs 21 we got the `rear-nonsticky' property covered
+    ;; by `text-property-default-nonsticky'.
+    `(let ((-pos- ,pos))
+       (put-text-property -pos- (1+ -pos-) ,property ,value))))
 
 (defmacro c-get-char-property (pos property)
   ;; Get the value of the given property on the character at POS if
   ;; it's been put there by `c-put-char-property'.  PROPERTY is
   ;; assumed to be constant.
-  (setq property (eval property))
-  (if (and (fboundp 'set-extent-properties)
-	   (fboundp 'make-extent)
-	   (fboundp 'extent-at)
-	   (fboundp 'extent-property)
-	   (fboundp 'delete-extent)
-	   (fboundp 'map-extents))
-      ;; XEmacs.  Check all the extent functions we'll use since some
-      ;; packages might do compatibility aliases for some of them in Emacs.
-      `(let ((ext (extent-at ,pos nil ',property)))
-	 (if ext (extent-property ext ',property)))
+  (if c-use-extents
+      ;; XEmacs.
+      `(let ((ext (extent-at ,pos nil ,property)))
+	 (if ext (extent-property ext ,property)))
     ;; Emacs.
-    `(get-text-property ,pos ',property)))
+    `(get-text-property ,pos ,property)))
+
+;; `c-clear-char-property' is complex enough in Emacs < 21 to make it
+;; a function, since we have to mess with the `rear-nonsticky' property.
+(defalias 'c-clear-char-property-fun
+  (cc-eval-when-compile
+    (unless (or c-use-extents
+		(cc-bytecomp-boundp 'text-property-default-nonsticky))
+      (byte-compile
+       (lambda (pos property)
+	 (when (get-text-property pos property)
+	   (remove-text-properties pos (1+ pos) (list property nil))
+	   (put-text-property pos (1+ pos)
+			      'rear-nonsticky
+			      (delq property (get-text-property
+					      pos 'rear-nonsticky)))))))))
+(cc-bytecomp-defun c-clear-char-property-fun) ; Make it known below.
 
 (defmacro c-clear-char-property (pos property)
-  ;; Remove the given property on the character at POS if it's been
-  ;; put there by `c-put-char-property'.  PROPERTY is assumed to be
+  ;; Remove the given property on the character at POS if it's been put
+  ;; there by `c-put-char-property'.  PROPERTY is assumed to be
   ;; constant.
-  (setq property (eval property))
-  (if (and (fboundp 'set-extent-properties)
-	   (fboundp 'make-extent)
-	   (fboundp 'extent-at)
-	   (fboundp 'extent-property)
-	   (fboundp 'delete-extent)
-	   (fboundp 'map-extents))
-      ;; XEmacs.  Check all the extent functions we'll use since some
-      ;; packages might do compatibility aliases for some of them in Emacs.
-      `(let ((ext (extent-at ,pos nil ',property)))
-	 (if ext (delete-extent ext)))
-    ;; Emacs.
-    `(let ((pos ,pos))
-       ,(if (cc-bytecomp-boundp 'text-property-default-nonsticky)
-	    ;; In Emacs 21 we got the rear-nonsticky property covered
-	    ;; by `text-property-default-nonsticky'.
-	    `(remove-text-properties pos (1+ pos) '(,property nil))
-	  ;; In Emacs 20 we have to mess with the rear-nonsticky property.
-	  `(when (get-text-property pos ',property)
-	     (remove-text-properties pos (1+ pos) '(,property nil))
-	     (put-text-property pos (1+ pos)
-				'rear-nonsticky
-				(delq ',property
-				      (get-text-property
-				       pos 'rear-nonsticky))))))))
+  (cond (c-use-extents
+	 ;; XEmacs.
+	 `(let ((ext (extent-at ,pos nil ,property)))
+	    (if ext (delete-extent ext))))
+	((cc-bytecomp-boundp 'text-property-default-nonsticky)
+	 ;; In Emacs 21 we got the `rear-nonsticky' property covered
+	 ;; by `text-property-default-nonsticky'.
+	 `(let ((pos ,pos))
+	    (remove-text-properties pos (1+ pos)
+				    '(,(eval property) nil))))
+	(t
+	 ;; Emacs < 21.
+	 `(c-clear-char-property-fun ,pos ,property))))
 
 (defmacro c-clear-char-properties (from to property)
   ;; Remove all the occurences of the given property in the given
@@ -661,18 +686,11 @@ This function does not do any hidden buffer changes."
   ;; lists of the `rear-nonsticky' properties in the region, if such
   ;; are used.  Thus it should not be used for common properties like
   ;; `syntax-table'.
-  (setq property (eval property))
-  (if (and (fboundp 'set-extent-properties)
-	   (fboundp 'make-extent)
-	   (fboundp 'extent-at)
-	   (fboundp 'extent-property)
-	   (fboundp 'delete-extent)
-	   (fboundp 'map-extents))
-      ;; XEmacs.  Check all the extent functions we'll use since some
-      ;; packages might do compatibility aliases for some of them in Emacs.
-      `(map-extents 'delete-extent nil ,from ,to nil nil ',property)
+  (if c-use-extents
+      ;; XEmacs.
+      `(map-extents 'delete-extent nil ,from ,to nil nil ,property)
     ;; Emacs.
-    `(remove-text-properties ,from ,to '(,property nil))))
+    `(remove-text-properties ,from ,to '(,(eval property) nil))))
 
 
 ;; Make edebug understand the macros.
@@ -696,9 +714,7 @@ This function does not do any hidden buffer changes."
      (def-edebug-spec c-skip-ws-forward t)
      (def-edebug-spec c-skip-ws-backward t)
      (def-edebug-spec c-major-mode-is t)
-     (def-edebug-spec c-put-char-property t)
      (def-edebug-spec c-get-char-property t)
-     (def-edebug-spec c-clear-char-property t)
      (def-edebug-spec c-clear-char-properties t)
      (def-edebug-spec cc-eval-when-compile t)))
 
