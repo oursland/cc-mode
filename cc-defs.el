@@ -142,9 +142,7 @@
   `(goto-char (or (scan-sexps (point) ,arg)
 		  ,(if (numberp arg)
 		       (if (> arg 0) `(point-max) `(point-min))
-		     `(if (> arg 0) (point-max) (point-min)))))
-  ;;(if (< arg 0) (backward-prefix-chars))
-  )
+		     `(if (> ,arg 0) (point-max) (point-min))))))
 
 (defmacro c-backward-sexp (&optional arg)
   ;; See c-forward-sexp and reverse directions
