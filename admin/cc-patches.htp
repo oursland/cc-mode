@@ -1,0 +1,21 @@
+Title: CC Mode Patches
+Author: bwarsaw@python.org
+
+The <a href="index.html">main distribution</a> is CC Mode version
+4.379, but there have been a number of patches developed since then.
+These are being distributed in Unix diff(1) patch form instead of
+updating the tarball -- mostly because that makes life easier for me!
+If you have a version older than 4.379, you should first download the
+tarball, then apply the appropriate patch set described below.
+
+<p>
+<a href="http://www.xemacs.org/">XEmacs 19.15</a> was released with CC
+Mode version 4.388.  <a href="patches/cc-patch-1.txt">Here</a>
+is a patch to get
+you from 4.388 to the latest version.  This is primarily a bug fix
+patch, with an emphasis on improved Java support.
+
+<p>
+If you grabbed the 4.379 tarball, <a href="patches/cc-patch-2.txt">here
+</a> is a patch to get you to version 4.388.  The improves the Java
+support.
