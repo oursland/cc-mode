@@ -95,6 +95,14 @@ int foo()
     x =
 	a :: b;
     stop;
+    if (a)
+	b;
+    else
+	if (c)
+	    d;
+	else
+	    if (e) f;
+	    else g;
 }
 #define foo					\
     p						\
