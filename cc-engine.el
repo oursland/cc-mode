@@ -4392,8 +4392,8 @@ comment at the start of cc-engine.el for more info."
 (defun c-backward-<>-arglist (all-types &optional limit)
   ;; The point is assumed to be directly after a ">".  Try to treat it
   ;; as the close paren of an angle bracket arglist and move back to
-  ;; the corresponding "<".  If successful, the point is left after
-  ;; the ">" and t is returned, otherwise the point isn't moved and
+  ;; the corresponding "<".  If successful, the point is left at
+  ;; the "<" and t is returned, otherwise the point isn't moved and
   ;; nil is returned.  ALL-TYPES is passed on to
   ;; `c-forward-<>-arglist'.
   ;;
@@ -7669,18 +7669,27 @@ comment at the start of cc-engine.el for more info."
 	   ;; CASE 5D: this could be a top-level initialization, a
 	   ;; member init list continuation, or a template argument
 	   ;; list continuation.
-	   ((c-with-syntax-table (if (c-major-mode-is 'c++-mode)
-				     c++-template-syntax-table
-				   (syntax-table))
-	      (save-excursion
-		;; Note: We use the fact that lim always is after any
-		;; preceding brace sexp.
-		(c-syntactic-skip-backward "^;,=" lim t)
-		(or (memq (char-before) '(?, ?=))
-		    (and (c-major-mode-is 'c++-mode)
-			 (progn
-			   (c-backward-syntactic-ws)
-			   (eq (char-before) ?<))))))
+	   ((save-excursion
+	      ;; Note: We use the fact that lim always is after any
+	      ;; preceding brace sexp.
+	      (if c-recognize-<>-arglists
+		  (while (and (progn
+			       (c-syntactic-skip-backward "^;,=<>" lim t)
+			       (> (point) lim))
+			      (cond ((eq (char-before) ?>)
+				     (or (c-backward-<>-arglist nil lim)
+					 (backward-char))
+				     t)
+				    ((eq (char-before) ?<)
+				     (backward-char)
+				     (if (save-excursion
+					   (c-forward-<>-arglist nil))
+					 (progn (forward-char)
+						nil)
+				       t))
+				    (t nil))))
+		(c-syntactic-skip-backward "^;,=" lim t))
+	      (memq (char-before) '(?, ?= ?<)))
 	    (cond
 
 	     ;; CASE 5D.3: perhaps a template list continuation?
