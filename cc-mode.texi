@@ -3790,7 +3790,7 @@ If you want to get announcements of new CC Mode releases, send the word
 be posted to the Usenet newsgroups @code{gnu.emacs.sources},
 @code{comp.emacs}, @code{comp.emacs.xemacs}, and possibly some of the
 language oriented newsgroups.  Note that the
-@email{cc-mode-victims@@python.org} mailing list was recently
+@code{cc-mode-victims@@python.org} mailing list was recently
 decommissioned.
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
