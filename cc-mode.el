@@ -52,13 +52,6 @@
 ;; CC Mode's immediate ancestors were, c++-mode.el, cplus-md.el, and
 ;; cplus-md1.el..
 
-;; NOTE: This mode does not perform font-locking (a.k.a syntactic
-;; coloring, keyword highlighting, etc.) for any of the supported
-;; modes.  Typically this is done by a package called font-lock.el
-;; which we do *not* maintain.  You should contact the Emacs or XEmacs
-;; maintainers for questions about coloring or highlighting in any
-;; language mode.
-
 ;; To submit bug reports, type "C-c C-b".  These will be sent to
 ;; bug-gnu-emacs@gnu.org (mirrored as the Usenet newsgroup
 ;; gnu.emacs.bug) as well as bug-cc-mode@gnu.org, which directly
@@ -108,6 +101,12 @@
 ;; Menu support for both XEmacs and Emacs.  If you don't have easymenu
 ;; with your version of Emacs, you are incompatible!
 (require 'easymenu)
+
+;; Uncomment this to use CC Modes own font locking instead of the one
+;; in font-lock.el.  This will be the default as soon as all the
+;; settings in font-lock.el has been ported to CC Mode.
+; (eval-after-load "font-lock"
+;   '(require 'cc-fonts))
 
 
 ;; Other modes and packages which depend on CC Mode should do the
@@ -388,10 +387,30 @@ same format as `c-default-style'."
   (make-local-variable 'require-final-newline)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
+  (make-local-variable 'font-lock-defaults)
 
   (setq require-final-newline t
 	outline-regexp "[^#\n\^M]"
-	outline-level 'c-outline-level))
+	outline-level 'c-outline-level)
+
+  (let ((mode-prefix (and (string-match "^[^-]*-" (symbol-name mode))
+			  (match-string 0 (symbol-name mode)))))
+    (setq font-lock-defaults
+	  `(,(mapcan
+	      (lambda (keywords-name)
+		(let ((sym (intern (concat mode-prefix keywords-name))))
+		  (if (boundp sym)
+		      (list sym))))
+	      '("font-lock-keywords" "font-lock-keywords-1"
+		"font-lock-keywords-2" "font-lock-keywords-3"
+		"font-lock-keywords-4"))
+	    nil nil ((?_ . "w") (?$ . "w")) c-beginning-of-syntax
+	    (font-lock-syntactic-face-function
+	     ;; This variable doesn't exist in older (X)Emacsen but
+	     ;; it's harmless to set it anyway.
+	     . c-font-lock-syntactic-face-function)
+	    (font-lock-mark-block-function
+	     . c-mark-function)))))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables.

@@ -198,7 +198,9 @@ appended."
 (c-lang-defvar c-symbol-key (c-lang-var c-symbol-key))
 
 ;; Number of regexp grouping parens in c-symbol-key.
-(c-lang-defvar c-symbol-key-depth (c-regexp-opt-depth c-symbol-key))
+(c-lang-defconst c-symbol-key-depth
+  all (c-regexp-opt-depth (c-lang-var c-symbol-key)))
+(c-lang-defvar c-symbol-key-depth (c-lang-var c-symbol-key-depth))
 
 (defvar c-stmt-delim-chars "^;{}?:")
 ;; The characters that should be considered to bound statements.  To
@@ -218,11 +220,25 @@ appended."
 
 ;; Primitive type keywords.
 (c-lang-defconst c-primitive-type-kwds
-  (c c++ objc idl) '("char" "double" "float" "int" "long" "short"
-		     "signed" "unsigned" "void")
+  (c c++ idl) '("char" "double" "float" "int" "long" "short" "signed"
+		"unsigned" "void"
+		;; "complex" is not a builtin type afaik, but it was
+		;; treated like one by font-lock.el when CC Mode took
+		;; over the settings.
+		"complex")
+  c (append (c-lang-var c-primitive-type-kwds)
+	    ;; From font-lock.el: Henrik Enberg <henrik@enberg.org>
+	    ;; says these are new.
+	    '("_Complex" "_Imaginary" "_Bool"))
+  objc '("char" "double" "float" "id" "int" "long" "short" "signed" "unsigned"
+	 "void")
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
-  pike '("constant" "float" "int" "mapping" "multiset" "object" "program"
-	 "string" "void"))
+  pike '("float" "int" "mapping" "multiset" "object" "program" "string"
+	 "void"))
+
+;; Regexp matching the primitive type keywords.
+(c-lang-defvar c-primitive-type-key
+  (c-make-keywords-re t (c-lang-var c-primitive-type-kwds)))
 
 ;; Declaration specifier keywords.
 (c-lang-defconst c-specifier-kwds
@@ -286,7 +302,7 @@ appended."
   ;; FIXME: Shouldn't "template" be moved to c-specifier-kwds for C++?
   c++ '("template")
   java '("import" "package")
-  pike '("import" "inherit"))
+  pike '("constant" "import" "inherit"))
 
 ;; Keywords introducing extra declaration specifiers in the region
 ;; between the header and the body (i.e. the "K&R-region") in
@@ -507,6 +523,14 @@ appended."
 	"[ \t\n]*" (c-lang-var c-symbol-key)))
 (c-lang-defvar c-opt-method-key (c-lang-var c-opt-method-key))
 
+;; Regexp matching the prefix of a cpp directive.
+(c-lang-defconst c-cpp-prefix
+  all "\\<\\>"				; Default to no preprocessor support.
+  (c c++) "^\\s *#\\s *"
+  ;; The preprocessor in Pike recognizes cpp directives anywhere,
+  ;; not just at boi.
+  pike "#\\s *")
+
 ;; Name of functions in cpp expressions that take an identifier as the
 ;; argument.
 (c-lang-defconst c-cpp-defined-fns
@@ -530,11 +554,20 @@ appended."
 ;; FIXME: Ought to use c-comment-prefix-regexp with some modifications
 ;; instead of this.
 (c-lang-defconst c-comment-start-regexp
-  (c c++ objc idl pike) "/[/*]"
-  ;; We need to match all 3 Java style comments
-  ;; 1) Traditional C block; 2) javadoc /** ...; 3) C++ style
-  java "/\\(/\\|[*][*]?\\)")
+  ;; Might seem like overkill to make this a language dependent
+  ;; constant, but awk-mode is on its way..
+  all "/[/*]")
 (c-lang-defvar c-comment-start-regexp (c-lang-var c-comment-start-regexp))
+
+;; Regexp to match the start of documentation comments.
+(c-lang-defconst c-doc-comment-start-regexp
+  all "\\<\\>"
+  ;; From font-lock.el: `doxygen' uses /*! while others use /**.
+  (c c++ objc) "/\\*[*!]"
+  java "/\\*\\*"
+  pike "/[/*]!")
+(c-lang-defvar c-doc-comment-start-regexp
+  (c-lang-var c-doc-comment-start-regexp))
 
 ;; Strings that starts and ends comments inserted with M-; etc.
 ;; comment-start and comment-end are initialized from these.

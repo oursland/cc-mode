@@ -64,11 +64,15 @@
       (message "Warning: Compiling without Customize support \
 since a (good enough) custom library wasn't found")
       (cc-bytecomp-defmacro define-widget (name class doc &rest args))
+      (cc-bytecomp-defmacro defgroup (symbol members doc &rest args))
       (cc-bytecomp-defmacro defcustom (symbol value doc &rest args)
 	`(defvar ,symbol ,value ,doc))
       (cc-bytecomp-defmacro custom-declare-variable (symbol value doc
 						     &rest args)
 	`(defvar ,(eval symbol) ,(eval value) ,doc))
+      (cc-bytecomp-defmacro defface (face spec doc &rest args)
+	;; FIXME: Should try to look at spec.
+	`(make-face ',face))
       nil))))
 
 (cc-eval-when-compile
@@ -1213,6 +1217,119 @@ all style variables are per default set in a special non-override
 state.  Set this variable only if your configuration has stopped
 working due to this change.")
 
+
+;;; Font lock settings.
+
+(defgroup c-fonts nil
+  "Highlighting settings for Font Lock mode."
+  :group 'c)
+
+(defface c-doc-face
+  '((t))
+  "Face used to highlight documentation comments,
+i.e. comments that are used by documentation extraction tools like Javadoc.
+It's overlaid over `font-lock-comment-face'."
+  :group 'c-fonts)
+
+(defface c-doc-marker-face
+  '((t (:bold t)))
+  "Face used to highlight the characters that mark documentation comments.
+It's overlaid over `c-doc-face'."
+  :group 'c-fonts)
+
+(defface c-doc-markup-face
+  '((t (:bold nil)))
+  "Face used to highlight special markup inside documentation comments.
+It's overlaid over `font-lock-reference-face'."
+  :group 'c-fonts)
+
+(define-widget 'c-extra-types-widget 'radio
+  ;; Widget for a list of regexps for the extra types.
+  :args '((const :tag "none" nil)
+	  (repeat :tag "types" regexp)))
+
+;; The following provide a means to fontify types not defined by the
+;; language.  Those types might be the user's own or they might be
+;; generally accepted and used.  Generally accepted types are used to
+;; provide default variable values.
+
+;; I do not appreciate the very Emacs-specific luggage on this default
+;; value, but otoh it can hardly get in the way for other users, and
+;; removing it would cause unnecessary grief for the old timers that
+;; are used to have Lisp_Object there. /mast
+(defcustom c-font-lock-extra-types '("FILE" "\\sw+_t" "Lisp_Object")
+  "*List of extra types to fontify in C mode.
+Each list item should be a regexp not containing word-delimiters.  For
+example, a value of (\"FILE\" \"\\\\sw+_t\") means the word FILE and
+words ending in _t are treated as type names.
+
+This variable is used when the decoration level is 2 and higher \(see
+`font-lock-maximum-decoration').
+
+The value is used by `c-font-lock-setup' when Font Lock mode is turned
+on.  If it's changed later on it's necessary to do \\[c-font-lock-setup]
+for the changes to take effect."
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
+
+(defcustom c++-font-lock-extra-types
+  '("\\sw+_t"
+    "\\([iof]\\|str\\)+stream\\(buf\\)?" "ios"
+    "string" "rope"
+    "list" "slist"
+    "deque" "vector" "bit_vector"
+    "set" "multiset"
+    "map" "multimap"
+    "hash\\(_\\(m\\(ap\\|ulti\\(map\\|set\\)\\)\\|set\\)\\)?"
+    "stack" "queue" "priority_queue"
+    "type_info"
+    "iterator" "const_iterator" "reverse_iterator" "const_reverse_iterator"
+    "reference" "const_reference")
+  "*List of extra types to fontify in C++ mode.
+Each list item should be a regexp not containing word-delimiters.  For
+example, a value of (\"string\") means the word string is treated as a
+type name.
+
+This variable is used when the decoration level is 2 and higher \(see
+`font-lock-maximum-decoration').
+
+The value is used by `c++-font-lock-setup' when Font Lock mode is turned
+on.  If it's changed later on it's necessary to do \\[c++-font-lock-setup]
+for the changes to take effect."
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
+
+(defcustom objc-font-lock-extra-types '("Class" "BOOL" "IMP" "SEL")
+  "*List of extra types to fontify in ObjC mode.
+Each list item should be a regexp not containing word-delimiters.  For
+example, a value of (\"Class\" \"BOOL\" \"IMP\" \"SEL\") means the
+words Class, BOOL, IMP and SEL are treated as type names.
+
+This variable is used when the decoration level is 2 and higher \(see
+`font-lock-maximum-decoration').
+
+The value is used by `objc-font-lock-setup' when Font Lock mode is turned
+on.  If it's changed later on it's necessary to do \\[objc-font-lock-setup]
+for the changes to take effect."
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
+
+(defcustom java-font-lock-extra-types
+  '("[A-Z\300-\326\330-\337]\\sw*[a-z]\\sw*")
+  "*List of extra types to fontify in Java mode.
+Each list item should be a regexp not containing word-delimiters.  For
+example, a value of (\"[A-Z\300-\326\330-\337]\\\\sw*[a-z]\\\\sw*\")
+means capitalised words (and words conforming to the Java id spec) are
+treated as type names.
+
+This variable is used when the decoration level is 2 and higher \(see
+`font-lock-maximum-decoration').
+
+The value is used by `java-font-lock-setup' when Font Lock mode is turned
+on.  If it's changed later on it's necessary to do \\[java-font-lock-setup]
+for the changes to take effect."
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
 
 
 ;; Non-customizable variables, still part of the interface to CC Mode
