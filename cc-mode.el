@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-09 18:37:58 $
-;; Version:         $Revision: 2.101 $
+;; Last Modified:   $Date: 1992-06-09 19:02:39 $
+;; Version:         $Revision: 2.102 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-09 18:37:58 $|$Revision: 2.101 $|
+;; |$Date: 1992-06-09 19:02:39 $|$Revision: 2.102 $|
 
 
 ;; ======================================================================
@@ -212,7 +212,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.101 $
+  "Major mode for editing C++ code.  $Revision: 2.102 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1024,7 +1024,8 @@ containing class definition (useful for inline functions)."
   (save-excursion
     (let ((indent-point (point))
 	  (case-fold-search nil)
-	  state containing-sexp parse-start)
+	  state containing-sexp parse-start
+	  (here (point)))
       (c++-beginning-of-defun)
       (while (< (point) indent-point)
 	(setq parse-start (point))
@@ -1035,16 +1036,14 @@ containing class definition (useful for inline functions)."
 	       ;; check to see if we're at the top level with respect
 	       ;; to the containing class definition
 	       (= (car state) 1)
-	       (let ((here (point)))
-		 (goto-char containing-sexp)
-		 (if (c++-at-top-level-p nil)
-		     nil
-		   (goto-char
-		    (condition-case scanlist-err
-			(scan-lists (point) -1 -1)
-		      (error (point-min))))
-		   (re-search-forward "\\<\\(class\\|struct\\)\\>" here 'move)
-		   )))))))
+	       (progn (goto-char containing-sexp)
+		      (= (following-char) ?\{))
+	       (progn
+		 (goto-char (condition-case scanlist-err
+				(scan-lists (point) -1 -1)
+			      (error (point-min))))
+		 (re-search-forward "\\<\\(class\\|struct\\)\\>" here 'move)
+		 ))))))
 
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
@@ -1813,7 +1812,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.101 $"
+(defconst c++-version "$Revision: 2.102 $"
   "c++-mode version number.")
 
 (defun c++-version ()
