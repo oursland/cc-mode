@@ -23,8 +23,10 @@ a = {
     {a, {a,
 	 b
     }},
-    foo ({a,
-	  b},
+    foo ({
+	a; // Ok, it's not valid Pike; just checking.. ;)
+	b;
+    },
 	 c), ([a,
 	       b,
 	       (<
