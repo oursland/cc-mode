@@ -99,7 +99,9 @@
   (define-key c++-mode-map "\C-c\C-u" 'c++-uncomment-region)
   (define-key c++-mode-map "\e\C-a" 'c++-beginning-of-defun)
   (define-key c++-mode-map "\e\C-e" 'c++-end-of-defun)
-  (define-key c++-mode-map "\e\C-x" 'c++-indent-defun))
+  (define-key c++-mode-map "\e\C-x" 'c++-indent-defun)
+  (define-key c++-mode-map "/" 'electric-c++-slash)
+  )
 
 (defvar c++-mode-syntax-table nil
   "Syntax table in use in C++-mode buffers.")
@@ -264,6 +266,17 @@ no args,if that value is non-nil."
 	  (self-insert-command (prefix-numeric-value arg)))
       (self-insert-command (prefix-numeric-value arg)))))
 
+(defun electric-c++-slash (arg)
+  "Slash as first non-whitespace character on line indents as comment.
+If we're inside a C style comment, or a string, does not do indentation."
+  (interactive "P")
+  (let ((electrify-p (save-excursion
+		       (back-to-indentation)
+		       (looking-at "[ \t]*$"))))
+    (if electrify-p
+	(electric-c++-terminator arg)
+      (self-insert-command (prefix-numeric-value arg)))))
+
 (defun electric-c++-semi (arg)
   "Insert character and correct line's indentation."
   (interactive "P")
@@ -371,7 +384,7 @@ Return the amount the indentation changed by."
 	   (setq indent 0))
 	  ((save-excursion
 	     (back-to-indentation)
-	     (looking-at "//\\|/\\*"))
+	     (looking-at "/"))
 	   (setq indent (+ indent c++-comment-only-line-offset)))
 	  (t
 	   (skip-chars-forward " \t")
