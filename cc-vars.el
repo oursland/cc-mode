@@ -114,7 +114,8 @@ Useful as last item in a `choice' widget."
     c-indent-comments-syntactically-p c-block-comment-prefix
     c-comment-prefix-regexp c-cleanup-list c-hanging-braces-alist
     c-hanging-colons-alist c-hanging-semi&comma-criteria c-backslash-column
-    c-special-indent-hook c-label-minimum-indentation c-offsets-alist)
+    c-backslash-max-column c-special-indent-hook c-label-minimum-indentation
+    c-offsets-alist)
   "List of the style variables.")
 
 (defvar c-fallback-style nil)
@@ -244,6 +245,23 @@ one, and the \\[c-indent-command] command adjusts the indentation in
 steps specified by `c-basic-offset'.  The indentation style has no
 effect in this mode, nor any of the indentation associated variables,
 e.g. `c-special-indent-hook'."
+  :type 'boolean
+  :group 'c)
+
+(defcustom c-syntactic-indentation-in-macros t
+  "*Enable syntactic analysis inside macros.
+If this is nil, all lines inside macro definitions are analyzed as
+`cpp-macro-cont'.  Otherwise they are analyzed syntactically according
+to the preceding lines, just like normal code, and `cpp-macro-cont' is
+only used for the first line.
+
+Having this enabled simplifies editing of large multiline macros, but
+it requires them to be written in a certain way: The default context
+inside the macro is the same as the top level, so if it contains
+\"bare\" statements they might be indented wrongly, although there are
+some special cases to recognize statements even here.  The problem is
+usually countered easily by surrounding the statements by a block \(or
+even better by using the \"do { ... } while (0)\" trick)."
   :type 'boolean
   :group 'c)
 
@@ -643,8 +661,31 @@ then no newline is inserted."
   :group 'c)
 
 (defcustom-c-stylevar c-backslash-column 48
-  "*Column to insert backslashes when macroizing a region."
+  "*Minimum alignment column for line continuation backslashes.
+This is used by the functions that automatically insert or align the
+line continuation backslashes in multiline macros.  If any line in the
+macro exceeds this column then the next tab stop from that line is
+used as alignment column instead."
   :type 'integer
+  :group 'c)
+
+(defcustom-c-stylevar c-backslash-max-column 72
+  "*Maximum alignment column for line continuation backslashes.
+This is used by the functions that automatically insert or align the
+line continuation backslashes in multiline macros.  If any line in the
+macro exceeds this column then the backslashes for the other lines
+will be aligned at this column."
+  :type 'integer
+  :group 'c)
+
+(defcustom c-auto-align-backslashes t
+  "*Align automatically inserted line continuation backslashes.
+When line continuation backslashes are inserted automatically for line
+breaks in multiline macros, e.g. by \\[c-context-line-break], they are
+aligned with the other backslashes in the same macro if this flag is
+set.  Otherwise the inserted backslashes are preceded by a single
+space."
+  :type 'boolean
   :group 'c)
 
 (defcustom c-special-indent-hook nil
@@ -1004,8 +1045,7 @@ Here is the current list of valid syntactic element symbols:
  inclass                -- The construct is nested inside a class definition.
                            Used together with e.g. `topmost-intro'.
  cpp-macro              -- The start of a C preprocessor macro definition.
- cpp-macro-cont         -- Subsequent lines in a multi-line C preprocessor
-                           macro definition.
+ cpp-macro-cont         -- Inside a multi-line C preprocessor macro definition.
  friend                 -- A C++ friend declaration.
  objc-method-intro      -- The first line of an Objective-C method definition.
  objc-method-args-cont  -- Lines continuing an Objective-C method definition.
@@ -1117,9 +1157,11 @@ Java coding styles) this can improve performance between 3 and 60
 times for core indentation functions (e.g. `c-parse-state').  For
 styles that conform to the Emacs recommendation of putting these
 braces in column zero, this can degrade performance about as much.
-This variable only has effect in XEmacs.")
+This variable only has effect in XEmacs."
+  :type 'boolean
+  :group 'c)
 
-(defcustom c-old-style-variable-behavior nil
+(defvar c-old-style-variable-behavior nil
   "*Enables the old style variable behavior when non-nil.
 
 Normally the values of the style variables will override the style
@@ -1134,16 +1176,6 @@ produce the same results for most old CC Mode configurations, since
 all style variables are per default set in a special non-override
 state.  Set this variable only if your configuration has stopped
 working due to this change.")
-
-(defvar c-syntactic-analysis-in-macro nil
-  "*Enable syntactic analysis inside macros.
-Normally all lines inside macro definitions are analyzed as
-`cpp-macro-cont'.  If this is defined, they are instead analyzed as if
-not part of a macro, and then `cpp-macro-cont' is added without an
-anchor point to the analysis.  That mode of operation is currently
-considered experimental and can misbehave.  Therefore it's only turned
-on when this variable is set.  When it's more well tested this
-variable will probably go away.")
 
 
 
