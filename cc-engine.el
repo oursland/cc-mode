@@ -6330,7 +6330,7 @@ This function does not do any hidden buffer changes."
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
 	    (if (and (c-safe (backward-up-list 1) t)
-		     (> (point) placeholder))
+		     (>= (point) placeholder))
 		(progn
 		  (forward-char)
 		  (skip-chars-forward " \t"))
@@ -6412,7 +6412,7 @@ This function does not do any hidden buffer changes."
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
 	    (if (and (c-safe (backward-up-list 1) t)
-		     (> (point) placeholder))
+		     (>= (point) placeholder))
 		(progn
 		  (forward-char)
 		  (skip-chars-forward " \t"))
