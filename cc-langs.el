@@ -28,11 +28,35 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+(eval-when-compile
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+(require 'cc-styles)
+
+;; Pull in some other packages.
+(eval-when-compile
+  (condition-case nil
+      ;; Not required and only needed during compilation to shut up
+      ;; the compiler.
+      (require 'outline)
+    (error nil)))
+(require 'easymenu)
 
 
-(eval-when-compile
-  (require 'cc-defs))
+(defvar c-buffer-is-cc-mode nil
+  "Non-nil for all buffers with a `major-mode' derived from CC Mode.
+Otherwise, this variable is nil. I.e. this variable is non-nil for
+`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode',
+`pike-mode', and any other non-CC Mode mode that calls
+`c-initialize-cc-mode' (e.g. `awk-mode').")
+(make-variable-buffer-local 'c-buffer-is-cc-mode)
+(put 'c-buffer-is-cc-mode 'permanent-local t)
 
+
 ;; Regular expressions and other values which must be parameterized on
 ;; a per-language basis.
 
@@ -249,10 +273,12 @@
   (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
   ;; X/Emacs 20 only
-  (and (boundp 'comment-line-break-function)
-       (make-local-variable 'comment-line-break-function))
+  (c-if-boundp comment-line-break-function
+      (progn
+	(make-local-variable 'comment-line-break-function)
+	(setq comment-line-break-function 'c-comment-line-break-function)))
   ;; Emacs 19.30 and beyond only, AFAIK
-  (if (boundp 'fill-paragraph-function)
+  (c-if-boundp fill-paragraph-function
       (progn
 	(make-local-variable 'fill-paragraph-function)
 	(setq fill-paragraph-function 'c-fill-paragraph)))
@@ -269,7 +295,6 @@
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *"
 	comment-multi-line nil
-	comment-line-break-function 'c-comment-line-break-function
 	adaptive-fill-regexp nil
 	adaptive-fill-mode nil)
   ;; we have to do something special for c-offsets-alist so that the
@@ -329,15 +354,14 @@ Note that the style variables are always made local to the buffer."
 ;; Common routines
 (defun c-make-inherited-keymap ()
   (let ((map (make-sparse-keymap)))
-    (cond
-     ;; XEmacs 19 & 20
-     ((fboundp 'set-keymap-parents)
-      (set-keymap-parents map c-mode-base-map))
-     ;; Emacs 19
-     ((fboundp 'set-keymap-parent)
-      (set-keymap-parent map c-mode-base-map))
-     ;; incompatible
-     (t (error "CC Mode is incompatible with this version of Emacs")))
+    (c-if-fboundp set-keymap-parents
+	;; XEmacs 19 & 20
+	(set-keymap-parents map c-mode-base-map)
+      (c-if-fboundp set-keymap-parent
+	  ;; Emacs 19
+	  (set-keymap-parent map c-mode-base-map)
+	;; incompatible
+	(error "CC Mode is incompatible with this version of Emacs")))
     map))
 
 (defun c-populate-syntax-table (table)
@@ -404,19 +428,20 @@ Note that the style variables are always made local to the buffer."
   ;; Caution!  Enter here at your own risk.  We are trying to support
   ;; several behaviors and it gets disgusting. :-(
   ;;
-  ;; In XEmacs 19, Emacs 19, and Emacs 20, we use this to bind
-  ;; backwards deletion behavior to DEL, which both Delete and
-  ;; Backspace get translated to.  There's no way to separate this
-  ;; behavior in a clean way, so deal with it!  Besides, it's been
-  ;; this way since the dawn of BOCM.
-  (if (not (boundp 'delete-key-deletes-forward))
-      (define-key c-mode-base-map "\177" 'c-electric-backspace)
-    ;; However, XEmacs 20 actually achieved enlightenment.  It is
-    ;; possible to sanely define both backward and forward deletion
-    ;; behavior under X separately (TTYs are forever beyond hope, but
-    ;; who cares?  XEmacs 20 does the right thing with these too).
-    (define-key c-mode-base-map [delete]    'c-electric-delete)
-    (define-key c-mode-base-map [backspace] 'c-electric-backspace))
+  (c-if-boundp delete-key-deletes-forward
+      (progn
+	;; In XEmacs 20 it is possible to sanely define both backward
+	;; and forward deletion behavior under X separately (TTYs are
+	;; forever beyond hope, but who cares?  XEmacs 20 does the
+	;; right thing with these too).
+	(define-key c-mode-base-map [delete]    'c-electric-delete)
+	(define-key c-mode-base-map [backspace] 'c-electric-backspace))
+    ;; In XEmacs 19, Emacs 19, and Emacs 20, we use this to bind
+    ;; backwards deletion behavior to DEL, which both Delete and
+    ;; Backspace get translated to.  There's no way to separate this
+    ;; behavior in a clean way, so deal with it!  Besides, it's been
+    ;; this way since the dawn of BOCM.
+    (define-key c-mode-base-map "\177" 'c-electric-backspace))
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-base-map ","         'c-electric-semi&comma)
   (define-key c-mode-base-map "*"         'c-electric-star)
