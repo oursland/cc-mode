@@ -628,13 +628,16 @@ want to set `c-style-variables-are-local-p'."
        (comment-intro         . c-lineup-comment)
        ;; Relpos: None.
        (arglist-intro         . +)
-       ;; Relpos: Boi at the open paren.
+       ;; Relpos: Boi at the open paren, or at the first non-ws after
+       ;; the open paren of the surrounding sexp, whichever is later.
        (arglist-cont          . 0)
        ;; Relpos: At the first token after the open paren.
        (arglist-cont-nonempty . c-lineup-arglist)
-       ;; Relpos: Boi at the open paren.
+       ;; Relpos: Boi at the open paren, or at the first non-ws after
+       ;; the open paren of the surrounding sexp, whichever is later.
        (arglist-close         . +)
-       ;; Relpos: Boi at the open paren.
+       ;; Relpos: Boi at the open paren, or at the first non-ws after
+       ;; the open paren of the surrounding sexp, whichever is later.
        (stream-op             . c-lineup-streamop)
        ;; Relpos: Boi at the first stream op in the statement.
        (inclass               . +)
