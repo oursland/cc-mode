@@ -106,7 +106,7 @@ Possible values to put on this list:
 	  (fset 'c-inside-bracelist-p 'cc-inside-bracelist-p-lobotomized)
 	  (setq pithedp t)))
     (if pithedp
-	(fset 'c-submit-bug-report 'cc-submit-bug-report-lobotomized))
+	(add-hook 'c-prepare-bug-report-hooks 'cc-lobo-bug-report-blurb))
     ))
 
 
@@ -145,65 +145,12 @@ Possible values to put on this list:
 
 (defun cc-inside-bracelist-p-lobotomized (dummy1 dummy2) nil)
 
-(defun cc-submit-bug-report-lobotomized ()
-  "Submit via mail a bug report on cc-mode."
-  (interactive)
-  ;; load in reporter
-  (let ((reporter-prompt-for-summary-p t)
-	(reporter-dont-compact-list '(c-offsets-alist)))
-    (and
-     (y-or-n-p "Do you want to submit a report on cc-mode? ")
-     (require 'reporter)
-     (reporter-submit-bug-report
-      c-mode-help-address
-      (concat "cc-mode " c-version " ("
-	      (cond ((eq major-mode 'c++-mode)  "C++")
-		    ((eq major-mode 'c-mode)    "C")
-		    ((eq major-mode 'objc-mode) "ObjC"))
-	      ")")
-      (let ((vars (list
-		   ;; report only the vars that affect indentation
-		   'c-basic-offset
-		   'c-offsets-alist
-		   'c-block-comments-indent-p
-		   'c-cleanup-list
-		   'c-comment-only-line-offset
-		   'c-backslash-column
-		   'c-delete-function
-		   'c-electric-pound-behavior
-		   'c-hanging-braces-alist
-		   'c-hanging-colons-alist
-		   'c-hanging-comment-ender-p
-		   'c-tab-always-indent
-		   'c-recognize-knr-p
-		   'defun-prompt-regexp
-		   'tab-width
-		   )))
-	(if (not (boundp 'defun-prompt-regexp))
-	    (delq 'defun-prompt-regexp vars)
-	  vars))
-      (function
-       (lambda ()
-	 (insert
-	  (if c-special-indent-hook
-	      (concat "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-		      "c-special-indent-hook is set to '"
-		      (format "%s" c-special-indent-hook)
-		      ".\nPerhaps this is your problem?\n"
-		      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
-	    "\n")
-	  (format "c-emacs-features: %s\n" c-emacs-features)
-	  )))
-      (function
-       (lambda ()
-	 (insert
-	  "You are using cc-lobotomy.el.  You realize that by doing\n"
-	  "so you have already made the decision to trade off accuracy\n"
-	  "for speed?  Don't set your hopes too high that your problem\n"
-	  "will be fixed.\n\n"
-	  )))
-      "Dear Barry,"
-      ))))
+(defun cc-lobo-bug-report-blurb ()
+  (insert
+   "\nYou are using cc-lobotomy.el.  You realize that by doing\n"
+   "so you have already made the decision to trade off accuracy\n"
+   "for speed?  Don't set your hopes too high that your problem\n"
+   "will be fixed.\n\n"))
 
 (provide 'cc-lobotomy)
 ;;; cc-lobotomy.el ends here
