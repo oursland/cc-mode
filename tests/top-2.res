@@ -10,7 +10,7 @@
 ((inclass . 66) (access-label . 75))
 ((inclass . 66) (topmost-intro . 68))
 ((inclass . 66) (topmost-intro . 76))
-((statement-cont . 80))
+((statement-cont . 96))
 ((class-close . 51))
 ((topmost-intro . 114))
 ((topmost-intro . 114))

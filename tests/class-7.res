@@ -4,5 +4,5 @@
 ((inclass . 13) (topmost-intro . 15))
 ((statement-cont . 28))
 ((inclass . 13) (topmost-intro . 44))
-((statement-cont . 28))
+((statement-cont . 68))
 ((class-close . 1))
