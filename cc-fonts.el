@@ -200,12 +200,6 @@
     "Face used to highlight invalid syntax."
     :group 'c-fonts))
 
-;; To make hard spaces visible an inverted version of
-;; `c-invalid-face-name' is used.  Since font-lock in Emacs expands
-;; all face names in `font-lock-keywords' as variables we need to have
-;; a variable for it that resolves to its own name.
-(defconst c-nonbreakable-space-face 'c-nonbreakable-space-face)
-
 (cc-bytecomp-defun face-inverse-video-p) ; Only in Emacs.
 (cc-bytecomp-defun face-property-instance) ; Only in XEmacs.
 
@@ -508,7 +502,7 @@ stuff.  Used on level 1 and higher."
 		   (unless (c-face-name-p 'c-nonbreakable-space-face)
 		     (c-make-inverse-face c-invalid-face-name
 					  'c-nonbreakable-space-face))
-		   'c-nonbreakable-space-face)))
+		   ''c-nonbreakable-space-face)))
       ))
 
 (defun c-font-lock-invalid-string ()
