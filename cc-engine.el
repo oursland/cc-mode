@@ -186,9 +186,12 @@
 	    ;; are we sitting at the while of a do-while?
 	    (if (and (looking-at "\\<while\\>[^_]")
 		     (c-backward-to-start-of-do lim))
-		(setq substmt-p nil))
-	    (setq last-begin (point)
-		  donep substmt-p))
+		(progn
+		  (setq last-begin (point))
+		  (c-backward-syntactic-ws lim)
+		  (setq donep (eq (char-before) ?\;)))
+	      (setq last-begin (point)
+		    donep substmt-p)))
 	   ;; CASE 5: are we looking at a label?  (But we handle
 	   ;; switch labels later.)
 	   ((and (looking-at c-label-key)
