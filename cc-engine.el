@@ -439,13 +439,13 @@ NOERROR turns off error logging to `c-parsing-error'."
 
 (defun c-crosses-statement-barrier-p (from to)
   "Return non-nil if buffer positions FROM to TO cross one or more
-statement or declaration boundaries.  The returned value is really the
-position of the earliest boundary char.
+statement or declaration boundaries.  The returned value is actually
+the position of the earliest boundary char.
 
 The variable `c-maybe-labelp' is set to the position of the first `:' that
 might start a label (i.e. not part of `::' and not preceded by `?').  If a
 single `?' is found, then `c-maybe-labelp' is cleared."
-  (let ((skip-chars "^;{}?:")
+  (let ((skip-chars c-stmt-delim-chars)
 	lit-range)
     (save-excursion
       (catch 'done
@@ -465,7 +465,7 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 		   ;; A question mark.  Can't be a label, so stop
 		   ;; looking for more : and ?.
 		   (setq c-maybe-labelp nil
-			 skip-chars "^;{}"))
+			 skip-chars (substring c-stmt-delim-chars 0 -2)))
 		  (t (throw 'done (point))))))
 	nil))))
 
@@ -2191,7 +2191,8 @@ isn't moved."
 	     inenclosing-p macro-start
 	     ;; There's always at most one syntactic element which got
 	     ;; a relpos.  It's stored in syntactic-relpos.
-	     syntactic-relpos)
+	     syntactic-relpos
+	     (c-stmt-delim-chars c-stmt-delim-chars))
 	;; check for meta top-level enclosing constructs, possible
 	;; extern language definitions, possibly (in C++) namespace
 	;; definitions.
@@ -2223,7 +2224,15 @@ isn't moved."
 	  ;; containing class.
 	  (if (and containing-sexp
 		   (< containing-sexp (point-min)))
-	      (setq containing-sexp nil)))
+	      (setq containing-sexp nil))
+	  ;; If we're in a parenthesis list then ',' delimits the
+	  ;; "statements" rather than being an operator (with the
+	  ;; exception of the "for" clause).  This difference is
+	  ;; typically only noticeable when statements are used in
+	  ;; macro arglists.
+	  (when (and containing-sexp
+		     (eq (char-after containing-sexp) ?\())
+	    (setq c-stmt-delim-chars c-stmt-delim-chars-with-comma)))
 
 	;; set the limit on the farthest back we need to search
 	(setq lim (or containing-sexp
@@ -2235,12 +2244,11 @@ isn't moved."
 	;; cache char before and after indent point, and move point to
 	;; the most likely position to perform the majority of tests
 	(goto-char indent-point)
-	(skip-chars-forward " \t")
-	(setq char-after-ip (char-after))
 	(c-backward-syntactic-ws lim)
 	(setq char-before-ip (char-before))
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
+	(setq char-after-ip (char-after))
 
 	;; are we in a literal?
 	(setq literal (c-in-literal lim))
@@ -2300,6 +2308,7 @@ isn't moved."
 	 ((save-excursion
 	    (and c-conditional-key
 		 (not (eq char-before-ip ?\;))
+		 (not (memq char-after-ip '(?\) ?\] ?,)))
 		 (or (not (eq char-before-ip ?}))
 		     (c-looking-at-inexpr-block-backward fullstate))
 		 (> (point)
