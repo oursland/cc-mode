@@ -812,7 +812,7 @@ can always override the use of `c-default-style' by making calls to
        (func-decl-cont        . +)
        ;; Relpos: Boi at the func decl start.
        (knr-argdecl-intro     . +)
-       ;; Relpos: Boi at the current line.
+       ;; Relpos: Boi at the topmost intro line.
        (knr-argdecl           . 0)
        ;; Relpos: Boi at the argdecl intro line.
        (topmost-intro         . 0)
@@ -876,7 +876,7 @@ can always override the use of `c-default-style' by making calls to
        (case-label            . 0)
        ;; Relpos: At the start of the switch block(*).
        (access-label          . -)
-       ;; Relpos: None (always used in combination with inclass).
+       ;; Relpos: Same as inclass.
        (label                 . 2)
        ;; Relpos: At the start of the containing block(*).
        (do-while-closure      . 0)
