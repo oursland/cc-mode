@@ -31,13 +31,16 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
-(require 'cc-engine)
+    (require 'cc-bytecomp)))
+
+(cc-require 'cc-defs)
+(cc-require 'cc-vars)
+(cc-require 'cc-langs)
+(cc-require 'cc-engine)
 
 
 ;; Standard indentation line-ups
@@ -718,5 +721,5 @@ For other semicolon contexts, no determination is made."
       nil)))
 
 
-(provide 'cc-align)
+(cc-provide 'cc-align)
 ;;; cc-align.el ends here

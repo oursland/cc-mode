@@ -29,24 +29,39 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;; Get all the necessary compile time definitions.
-(require 'custom)
-(require 'derived)			;only necessary in Emacs 20
+(eval-when-compile
+  (let ((load-path
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
+	   load-path)))
+    (require 'cc-bytecomp)))
 
 ;; cc-mode-19.el contains compatibility macros that should be compiled
 ;; in if needed.
 (if (or (not (fboundp 'functionp))
 	(not (condition-case nil
-		 (progn (char-before) t)
+		 (progn (eval '(char-before)) t)
 	       (error nil)))
 	(not (condition-case nil
-		 (progn (char-after) t)
+		 (progn (eval '(char-after)) t)
 	       (error nil)))
 	(not (fboundp 'when))
 	(not (fboundp 'unless)))
-    (require 'cc-mode-19))
+  (cc-require 'cc-mode-19))
+
+;; Silence the compiler.
+(cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
+(cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
+(cc-bytecomp-defun region-active-p)	; XEmacs
+(cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
+(cc-bytecomp-defvar zmacs-regions)	; XEmacs
+(cc-bytecomp-defvar mark-active)	; Emacs
+(require 'derived)			; Only necessary in Emacs
 
 
+;;; Macros.
+
 (defmacro c-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
   ;; POSITION can be one of the following symbols:
@@ -100,12 +115,76 @@
 	    (t (error "unknown buffer position requested: %s" position)))))
      (point)))
 
-
 (defmacro c-safe (&rest body)
   ;; safely execute BODY, return nil if an error occurred
   `(condition-case nil
        (progn ,@body)
      (error nil)))
+
+(defmacro c-forward-sexp (&optional arg)
+  ;; like forward-sexp except
+  ;;   1. this is much stripped down from the XEmacs version
+  ;;   2. this cannot be used as a command, so we're insulated from
+  ;;      XEmacs' losing efforts to make forward-sexp more user
+  ;;      friendly
+  ;;   3. Preserves the semantics most of CC Mode is based on
+  (or arg (setq arg 1))
+  `(goto-char (or (scan-sexps (point) ,arg)
+		  ,(if (numberp arg)
+		       (if (> arg 0) `(point-max) `(point-min))
+		     `(if (> ,arg 0) (point-max) (point-min))))))
+
+(defmacro c-backward-sexp (&optional arg)
+  ;; See c-forward-sexp and reverse directions
+  (or arg (setq arg 1))
+  `(c-forward-sexp ,(if (numberp arg) (- arg) `(- ,arg))))
+
+(defmacro c-add-syntax (symbol &optional relpos)
+  ;; a simple macro to append the syntax in symbol to the syntax list.
+  ;; try to increase performance by using this macro
+  `(setq syntax (cons (cons ,symbol ,relpos) syntax)))
+
+(defmacro c-add-class-syntax (symbol classkey)
+  ;; The inclass and class-close syntactic symbols are added in
+  ;; several places and some work is needed to fix everything.
+  ;; Therefore it's collected here.
+  `(save-restriction
+     (widen)
+     (let ((symbol ,symbol)
+	   (classkey ,classkey))
+       (goto-char (aref classkey 1))
+       (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
+	   (c-add-syntax symbol (point))
+	 (c-add-syntax symbol (aref classkey 0))
+	 (if (and c-inexpr-class-key (c-looking-at-inexpr-block))
+	     (c-add-syntax 'inexpr-class))))))
+
+(defmacro c-update-modeline ()
+  ;; set the c-auto-hungry-string for the correct designation on the modeline
+  `(progn
+     (setq c-auto-hungry-string
+	   (if c-auto-newline
+	       (if c-hungry-delete-key "/ah" "/a")
+	     (if c-hungry-delete-key "/h" nil)))
+     (force-mode-line-update)))
+
+(defmacro c-with-syntax-table (table &rest code)
+  ;; Temporarily switches to the specified syntax table in a failsafe
+  ;; way to execute code.
+  `(let ((c-with-syntax-table-orig-table (syntax-table)))
+     (unwind-protect
+	 (progn
+	   (set-syntax-table ,table)
+	   ,@code)
+       (set-syntax-table c-with-syntax-table-orig-table))))
+(put 'c-with-syntax-table 'lisp-indent-function 1)
+
+;;; Inline functions.
+
+;; Note: All these after the macros, to be on safe side in avoiding
+;; bugs where macros are defined too late.  These bugs often only show
+;; when the files are compiled in a certain order within the same
+;; session.
 
 (defsubst c-beginning-of-defun-1 ()
   ;; Wrapper around beginning-of-defun.
@@ -165,40 +244,6 @@
     (if (< (point) start)
 	(goto-char (point-max)))))
 
-(defmacro c-forward-sexp (&optional arg)
-  ;; like forward-sexp except
-  ;;   1. this is much stripped down from the XEmacs version
-  ;;   2. this cannot be used as a command, so we're insulated from
-  ;;      XEmacs' losing efforts to make forward-sexp more user
-  ;;      friendly
-  ;;   3. Preserves the semantics most of CC Mode is based on
-  (or arg (setq arg 1))
-  `(goto-char (or (scan-sexps (point) ,arg)
-		  ,(if (numberp arg)
-		       (if (> arg 0) `(point-max) `(point-min))
-		     `(if (> ,arg 0) (point-max) (point-min))))))
-
-(defmacro c-backward-sexp (&optional arg)
-  ;; See c-forward-sexp and reverse directions
-  (or arg (setq arg 1))
-  `(c-forward-sexp ,(if (numberp arg) (- arg) `(- ,arg))))
-
-(defsubst c-beginning-of-macro (&optional lim)
-  ;; Go to the beginning of a cpp macro definition.  Leaves point at
-  ;; the beginning of the macro and returns t if in a cpp macro
-  ;; definition, otherwise returns nil and leaves point unchanged.
-  ;; `lim' is currently ignored, but the interface requires it.
-  (let ((here (point)))
-    (beginning-of-line)
-    (while (eq (char-before (1- (point))) ?\\)
-      (forward-line -1))
-    (back-to-indentation)
-    (if (and (<= (point) here)
-	     (eq (char-after) ?#))
-	t
-      (goto-char here)
-      nil)))
-
 (defsubst c-forward-comment (count)
   ;; Insulation from various idiosyncrasies in implementations of
   ;; `forward-comment'.  Note: Some emacsen considers incorrectly that
@@ -229,26 +274,6 @@
 	(if (forward-comment count)
 	    (if (eolp) (forward-comment -1) t))))))
 
-(defmacro c-add-syntax (symbol &optional relpos)
-  ;; a simple macro to append the syntax in symbol to the syntax list.
-  ;; try to increase performance by using this macro
-  `(setq syntax (cons (cons ,symbol ,relpos) syntax)))
-
-(defmacro c-add-class-syntax (symbol classkey)
-  ;; The inclass and class-close syntactic symbols are added in
-  ;; several places and some work is needed to fix everything.
-  ;; Therefore it's collected here.
-  `(save-restriction
-     (widen)
-     (let ((symbol ,symbol)
-	   (classkey ,classkey))
-       (goto-char (aref classkey 1))
-       (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
-	   (c-add-syntax symbol (point))
-	 (c-add-syntax symbol (aref classkey 0))
-	 (if (and c-inexpr-class-key (c-looking-at-inexpr-block))
-	     (c-add-syntax 'inexpr-class))))))
-
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
   ;; in LIST.  Uses assq.
@@ -275,19 +300,9 @@
 	  ))
     0))
 
-(defmacro c-update-modeline ()
-  ;; set the c-auto-hungry-string for the correct designation on the modeline
-  `(progn
-     (setq c-auto-hungry-string
-	   (if c-auto-newline
-	       (if c-hungry-delete-key "/ah" "/a")
-	     (if c-hungry-delete-key "/h" nil)))
-     (force-mode-line-update)))
-
 (defsubst c-keep-region-active ()
   ;; Do whatever is necessary to keep the region active in XEmacs.
-  ;; Ignore byte-compiler warnings you might see.  This is not needed
-  ;; for Emacs.
+  ;; This is not needed for Emacs.
   (and (boundp 'zmacs-region-stays)
        (setq zmacs-region-stays t)))
 
@@ -308,17 +323,6 @@
 (defsubst c-major-mode-is (mode)
   (eq (derived-mode-class major-mode) mode))
 
-(defmacro c-with-syntax-table (table &rest code)
-  ;; Temporarily switches to the specified syntax table in a failsafe
-  ;; way to execute code.
-  `(let ((c-with-syntax-table-orig-table (syntax-table)))
-     (unwind-protect
-	 (progn
-	   (set-syntax-table ,table)
-	   ,@code)
-       (set-syntax-table c-with-syntax-table-orig-table))))
-(put 'c-with-syntax-table 'lisp-indent-function 1)
-
 
-(provide 'cc-defs)
+(cc-provide 'cc-defs)
 ;;; cc-defs.el ends here

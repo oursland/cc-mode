@@ -86,40 +86,27 @@
 
 (eval-when-compile
   (let ((load-path
-	 ;; Try to make sure the source directory is at the front of
-	 ;; load-path when we load cc-defs.
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     ;; byte-compile-current-file is set by the byte compiler
-	     ;; to the full path to this file.
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    ;; Load our version of cc-defs unconditionally, since an older
-    ;; version might very well be dumped in or already loaded.  This
-    ;; way we ensure that the code is compiled with the correct macros
-    ;; and defsubsts.  The same problem affects the subpackages that's
-    ;; require'd below, but that doesn't harm the compiler; it can
-    ;; only cause some bogus warnings.
-    (load "cc-defs" nil t)))
+    (require 'cc-bytecomp)))
 
-(require 'cc-defs) ; Not meaningless; this passes on require's from cc-defs.
-(require 'cc-menus)
-(require 'cc-vars)
-(require 'cc-styles)
-(require 'cc-langs)
-(require 'cc-engine)
-(require 'cc-align)
-(require 'cc-cmds)
+(cc-require 'cc-defs)
+(cc-require 'cc-menus)
+(cc-require 'cc-vars)
+(cc-require 'cc-langs)
+(cc-require 'cc-styles)
+(cc-require 'cc-engine)
+(cc-require 'cc-cmds)
+(cc-require 'cc-align)
 
-;; Pull in some other packages.
-(eval-when-compile
-  (condition-case nil
-      ;; Not required and only needed during compilation to shut up
-      ;; the compiler.
-      (require 'outline)
-    (error nil)))
-;; menu support for both XEmacs and Emacs.  If you don't have easymenu
+;; Silence the compiler.
+(cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
+(cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs 20+
+(cc-bytecomp-defun set-keymap-parents)	; XEmacs
+
+;; Menu support for both XEmacs and Emacs.  If you don't have easymenu
 ;; with your version of Emacs, you are incompatible!
 (require 'easymenu)
 
@@ -276,6 +263,9 @@
 	    (c-fn-region-is-active-p)]
 	   )))
     (cons modestr m)))
+
+;; We don't require the outline package, but we configure it a bit anyway.
+(cc-bytecomp-defvar outline-level)
 
 (defun c-common-init ()
   ;; Common initializations for all modes.
@@ -771,6 +761,12 @@ Key bindings:
   (c-update-modeline))
 
 
+;; Helper for setting up Filladapt mode.  It's not used by CC Mode itself.
+
+(cc-bytecomp-defvar filladapt-token-table)
+(cc-bytecomp-defvar filladapt-token-match-table)
+(cc-bytecomp-defvar filladapt-token-conversion-table)
+
 (defun c-setup-filladapt ()
   "Convenience function to configure Kyle E. Jones' Filladapt mode for
 CC Mode by making sure the proper entries are present on
@@ -817,16 +813,18 @@ CC Mode by making sure the proper entries are present on
 
 (defvar c-prepare-bug-report-hooks nil)
 
+;; Dynamic variables used by reporter.
+(defvar reporter-prompt-for-summary-p)
+(defvar reporter-dont-compact-list)
+
 (defun c-submit-bug-report ()
   "Submit via mail a bug report on CC Mode."
   (interactive)
   (require 'reporter)
-  (require 'cc-vars)
   ;; load in reporter
   (let ((reporter-prompt-for-summary-p t)
 	(reporter-dont-compact-list '(c-offsets-alist))
 	(style c-indentation-style)
-	(hook c-special-indent-hook)
 	(c-features c-emacs-features))
     (and
      (if (y-or-n-p "Do you want to submit a report on CC Mode? ")
@@ -882,5 +880,5 @@ CC Mode by making sure the proper entries are present on
 	  )))))))
 
 
-(provide 'cc-mode)
+(cc-provide 'cc-mode)
 ;;; cc-mode.el ends here

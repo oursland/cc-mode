@@ -31,14 +31,39 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
-(require 'custom)
+    (require 'cc-bytecomp)))
 
+(cc-require 'cc-defs)
+
+;; Silence the compiler.
+(cc-bytecomp-defun get-char-table)	; XEmacs 20+
+(cc-bytecomp-defun char-table-range)	; Emacs 19+
+(cc-bytecomp-defun char-table-p)	; Emacs 19+, XEmacs 20+
+
+;; Pull in custom if it exists and is recent enough (the one in Emacs
+;; 19.34 isn't).
+(eval
+ (eval-when-compile
+   (condition-case nil
+       (progn
+	 (require 'custom)
+	 (or (fboundp 'defcustom) (error ""))
+	 ;; Seems like XEmacs bails out on this for some odd reason.
+	 (require 'wid-edit)
+	 '(progn			; Compile in the require's.
+	    (require 'custom)
+	    (require 'wid-edit)))
+     (error
+      (message "Warning: Compiling without Customize support \
+since a (good enough) custom library wasn't found")
+      (cc-bytecomp-defmacro define-widget (name class doc &rest args))
+      (cc-bytecomp-defmacro defcustom (symbol value doc &rest args)
+	`(defvar ,symbol ,value ,doc))
+      nil))))
 
 
 ;;; Helpers
@@ -84,11 +109,8 @@ Useful as last item in a `choice' widget."
 
 (defmacro defcustom-c-stylevar (name val doc &rest args)
   "Defines a style variable."
-  (setq val (if (eq (car-safe val) 'quote)
-		(nth 1 val)
-	      (eval val)))
   `(progn
-     (put ',name 'c-stylevar-fallback ',val)
+     (put ',name 'c-stylevar-fallback ,val)
      (defcustom ,name 'set-from-style
        ,(concat doc "
 
@@ -240,6 +262,15 @@ comment-only lines."
   :type 'boolean
   :group 'c)
 
+(make-obsolete-variable 'c-comment-continuation-stars
+			'c-block-comment-prefix)
+
+;; Although c-comment-continuation-stars is obsolete, we look at it in
+;; some places in CC Mode anyway, so make the compiler ignore it
+;; during our compilation.
+(cc-bytecomp-obsolete-var c-comment-continuation-stars)
+(cc-bytecomp-defvar c-comment-continuation-stars)
+
 (defcustom-c-stylevar c-block-comment-prefix
   (if (boundp 'c-comment-continuation-stars)
       c-comment-continuation-stars
@@ -258,9 +289,6 @@ adapted from the comment.  This variable is not used for C++ line
 style comments."
   :type 'string
   :group 'c)
-
-(make-obsolete-variable 'c-comment-continuation-stars
-			'c-block-comment-prefix)
 
 (defcustom-c-stylevar c-comment-prefix-regexp "//+\\|\\**"
   "*Regexp to match the line prefix inside comments.
@@ -967,7 +995,6 @@ as designated in the variable `c-file-style'.")
 (defvar c-indentation-style nil
   "Name of the currently installed style.")
 
-
 
 ;; Figure out what features this Emacs has
 ;;;###autoload
@@ -1011,7 +1038,6 @@ supported list, along with the values for this variable:
 Infodock (based on XEmacs) has an additional symbol on this list:
 `infodock'.")
 
-
 
-(provide 'cc-vars)
+(cc-provide 'cc-vars)
 ;;; cc-vars.el ends here

@@ -31,13 +31,14 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
-(require 'cc-styles)
+    (require 'cc-bytecomp)))
+
+(cc-require 'cc-defs)
+(cc-require 'cc-vars)
 
 
 (defvar c-buffer-is-cc-mode nil
@@ -362,5 +363,5 @@ are parsed.")
 (make-variable-buffer-local 'c-recognize-knr-p)
 
 
-(provide 'cc-langs)
+(cc-provide 'cc-langs)
 ;;; cc-langs.el ends here

@@ -31,13 +31,22 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
-(require 'cc-langs)
+    (require 'cc-bytecomp)))
+
+(cc-require 'cc-defs)
+(cc-require 'cc-vars)
+(cc-require 'cc-langs)
+
+;; Silence the compiler.
+(cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
+
+;; Declare variables used dynamically.
+(defvar c-in-literal-cache)
+(defvar c-state-cache)
 
 
 ;; KLUDGE ALERT: c-maybe-labelp is used to pass information between
@@ -258,6 +267,22 @@
     crossedp))
 
 
+(defun c-beginning-of-macro (&optional lim)
+  ;; Go to the beginning of a cpp macro definition.  Leaves point at
+  ;; the beginning of the macro and returns t if in a cpp macro
+  ;; definition, otherwise returns nil and leaves point unchanged.
+  ;; `lim' is currently ignored, but the interface requires it.
+  (let ((here (point)))
+    (beginning-of-line)
+    (while (eq (char-before (1- (point))) ?\\)
+      (forward-line -1))
+    (back-to-indentation)
+    (if (and (<= (point) here)
+	     (eq (char-after) ?#))
+	t
+      (goto-char here)
+      nil)))
+
 ;; Skipping of "syntactic whitespace", defined as lexical whitespace,
 ;; C and C++ style comments, and preprocessor directives.  Search no
 ;; farther back or forward than optional LIM.  If LIM is omitted,
@@ -2151,7 +2176,7 @@ brace."
 	      (c-add-syntax 'brace-list-intro (c-point 'boi))
 	      )				; end CASE 9C
 	     ;; CASE 9D: this is just a later brace-list-entry or
-	     ;; brace-entry-open 
+	     ;; brace-entry-open
 	     (t (if (or (eq char-after-ip ?{)
 			(and c-special-brace-lists
 			     (save-excursion
@@ -2680,5 +2705,5 @@ With universal argument, inserts the analysis as a comment on that line."
 	(forward-line)))))
 
 
-(provide 'cc-engine)
+(cc-provide 'cc-engine)
 ;;; cc-engine.el ends here

@@ -55,13 +55,18 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
-(require 'cc-mode)
+    (require 'cc-bytecomp)))
+
+(cc-require 'cc-defs)
+(cc-require 'cc-engine)
+(cc-require 'cc-cmds)
+
+;; Declare variables used dynamically.
+(defvar c-in-literal-cache)
 
 
 (defvar cc-lobotomy-pith-list ()
@@ -152,5 +157,6 @@ Possible values to put on this list:
    "for speed?  Don't set your hopes too high that your problem\n"
    "will be fixed.\n\n"))
 
-(provide 'cc-lobotomy)
+
+(cc-provide 'cc-lobotomy)
 ;;; cc-lobotomy.el ends here

@@ -31,24 +31,21 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
+    (require 'cc-bytecomp)))
 
-;; Dummy definitions to shut up the compiler in case imenu doesn't exist.
-(defvar imenu-generic-expression)
-(defvar imenu-case-fold-search)
-(or (fboundp 'imenu-progress-message)
-    (defun imenu-progress-message (&rest args) nil))
+;; Try to pull in imenu if it exists.
+(condition-case nil
+    (require 'imenu)
+  (error nil))
 
-;; Try to pull in imenu.
-(eval-and-compile
-  (condition-case nil
-      (require 'imenu)
-    (error nil)))
+;; The things referenced in imenu, which we doesn't require.
+(cc-bytecomp-defvar imenu-case-fold-search)
+(cc-bytecomp-defvar imenu-generic-expression)
+(cc-bytecomp-defun imenu-progress-message)
 
 
 ;; imenu integration
@@ -413,5 +410,5 @@ Example:
 	imenu-case-fold-search nil))
 
 
-(provide 'cc-menus)
+(cc-provide 'cc-menus)
 ;;; cc-menus.el ends here

@@ -31,13 +31,27 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
-(require 'cc-engine)
+    (require 'cc-bytecomp)))
+
+(cc-require 'cc-defs)
+(cc-require 'cc-vars)
+(cc-require 'cc-langs)
+(cc-require 'cc-engine)
+
+;; Define variables used dynamically.
+(defvar c-auto-fill-prefix)
+(defvar c-lit-type)
+(defvar c-lit-limits)
+(defvar c-state-cache)
+
+;; Silence the compiler.
+(cc-bytecomp-defvar delete-key-deletes-forward) ; XEmacs 20+
+(cc-bytecomp-defun delete-forward-p)	; XEmacs 21+
+(cc-bytecomp-obsolete-fun insert-and-inherit) ; Marked obsolete in XEmacs 19
 
 
 (defun c-calculate-state (arg prevstate)
@@ -1582,10 +1596,10 @@ syntactically."
 		      (c-backward-syntactic-ws)
 		      (skip-chars-backward ";")
 		      (point))
-		    (cdar state)))
+		    (cdr (car state))))
 	    (progn
 	      (setq eod (point))
-	      (goto-char (caar state))
+	      (goto-char (car (car state)))
 	      (c-beginning-of-statement-1))
 	  (if (= ?{ (save-excursion
 		      (c-end-of-statement-1)
@@ -2003,7 +2017,8 @@ command to conveniently insert and align the necessary backslashes."
 					(c-point 'bol)
 					(point))
 				       (current-column)))
-			     (delete-region tmp (point)))))
+			     (delete-region tmp (point))
+			     (set-buffer-modified-p buffer-modified))))
 			(t
 			 ;; Last resort: Just add a single space after
 			 ;; the prefix.
@@ -2396,13 +2411,14 @@ If a fill prefix is specified, it overrides all the above."
 
 ;; advice for indent-new-comment-line for older Emacsen
 (unless (boundp 'comment-line-break-function)
+  (defvar c-inside-line-break-advice nil)
   (defadvice indent-new-comment-line (around c-line-break-advice
 					     activate preactivate)
     "Call `c-indent-new-comment-line' if in CC Mode."
-    (if (or (boundp 'c-inside-line-break-advice)
+    (if (or c-inside-line-break-advice
 	    (not c-buffer-is-cc-mode))
 	ad-do-it
-      (let (c-inside-line-break-advice)
+      (let ((c-inside-line-break-advice t))
 	(c-indent-new-comment-line (ad-get-arg 0))))))
 
 (defun c-context-line-break ()
@@ -2440,5 +2456,5 @@ C++-style line comment doesn't count as inside the comment, though."
       (c-indent-line))))
 
 
-(provide 'cc-cmds)
+(cc-provide 'cc-cmds)
 ;;; cc-cmds.el ends here

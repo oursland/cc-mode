@@ -34,32 +34,46 @@
 
 ;;; Code:
 
-(provide 'cc-mode-19) ; Before loading cc-defs to avoid a file load loop.
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
+    (require 'cc-bytecomp)))
+
+;; Silence the compiler (in case this file is compiled by other
+;; Emacsen even though it isn't used by them).
+(cc-bytecomp-obsolete-fun byte-code-function-p)
 
 (require 'advice)
 
 
 ;; Emacs 19.34 requires the POS argument to char-after.  Emacs 20
 ;; makes it optional, as it has long been in XEmacs.
-(or (condition-case nil
-	(progn (char-after) t)
-      (error nil))
-    (progn
-      (ad-define-subr-args 'char-after '(pos))
-      (defadvice char-after (before c-char-after-advice
-				    (&optional pos)
-				    activate)
-	"POS is optional and defaults to the position of point."
-	(if (not pos)
-	    (setq pos (point))))))
+(condition-case nil
+    (eval '(char-after))		; `eval' avoids argcount warnings
+  (error
+   (ad-define-subr-args 'char-after '(pos))
+   (defadvice char-after (before c-char-after-advice
+				 (&optional pos)
+				 activate)
+     "POS is optional and defaults to the position of point."
+     (if (not pos)
+	 (setq pos (point))))
+   (eval-when-compile
+     (message "foo")
+     (if (cc-bytecomp-is-compiling)
+	 (progn
+	   (message "bar")
+	   ;; Since char-after is handled specially by the byte
+	   ;; compiler, we need some black magic to make the compiler
+	   ;; warnings go away.
+	   (defun byte-compile-char-after (form)
+	     (if (= (length form) 1)
+		 (byte-compile-one-arg (append form '((point))))
+	       (byte-compile-one-arg form)))
+	   (byte-defop-compiler char-after))))))
 
 (if (fboundp 'char-before)
     ;; (or (condition-case nil
@@ -84,14 +98,14 @@
 	"POS is optional and defaults to the position of point."
 	(if (not pos)
 	    (setq pos (point)))))
-  ;; Emacs 19.34 doesn't have a char-before function.  Here's it's
+  ;; Emacs 19.34 doesn't have a char-before function.  Here's its
   ;; Emacs 20 definition.
   (defsubst char-before (&optional pos)
     (if (not pos)
 	(setq pos (point)))
     (char-after (1- pos))))
 
-;; Emacs 19.34 doesn't have a functionp function.  Here's it's Emacs
+;; Emacs 19.34 doesn't have a functionp function.  Here's its Emacs
 ;; 20 definition.
 (or (fboundp 'functionp)
     (defun functionp (object)
@@ -100,14 +114,14 @@
 	  (eq (car-safe object) 'lambda)
 	  (and (symbolp object) (fboundp object)))))
 
-;; Emacs 19.34 doesn't have a when macro.  Here's it's Emacs 20
+;; Emacs 19.34 doesn't have a when macro.  Here's its Emacs 20
 ;; definition.
 (or (fboundp 'when)
     (defmacro when (cond &rest body)
       "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
       (list 'if cond (cons 'progn body))))
 
-;; Emacs 19.34 doesn't have an unless macro.  Here's it's Emacs 20
+;; Emacs 19.34 doesn't have an unless macro.  Here's its Emacs 20
 ;; definition.
 (or (fboundp 'unless)
     (defmacro unless (cond &rest body)
@@ -115,4 +129,5 @@
       (cons 'if (cons cond (cons nil body)))))
 
 
+(cc-provide 'cc-mode-19)
 ;;; cc-mode-19.el ends here

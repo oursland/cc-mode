@@ -31,14 +31,14 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
-(require 'cc-vars)
+    (require 'cc-bytecomp)))
 
+(cc-require 'cc-defs)
+(cc-require 'cc-vars)
 
 
 ;; Warning: don't eval-defun this constant or you'll break style inheritance.
@@ -430,7 +430,7 @@ and exists only for compatibility reasons."
   ;; style.  Only do this once!
   (unless (get 'c-initialize-builtin-style 'is-run)
     (put 'c-initialize-builtin-style 'is-run t)
-    (c-initialize-cc-mode)
+    ;;(c-initialize-cc-mode)
     (or (assoc "cc-mode" c-style-alist)
 	(assoc "user" c-style-alist)
 	(progn
@@ -495,5 +495,5 @@ instead of `make-variable-buffer-local'."
 
 
 
-(provide 'cc-styles)
+(cc-provide 'cc-styles)
 ;;; cc-styles.el ends here

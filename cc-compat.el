@@ -43,14 +43,16 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (and (boundp 'byte-compile-current-file)
-		  (stringp byte-compile-current-file))
-	     (cons (file-name-directory byte-compile-current-file)
-		   load-path)
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (load "cc-defs" nil t)))
-(require 'cc-styles)
-(require 'cc-engine)
+    (require 'cc-bytecomp)))
+
+(cc-require 'cc-defs)
+(cc-require 'cc-vars)
+(cc-require 'cc-styles)
+(cc-require 'cc-engine)
 
 
 ;; In case c-mode.el isn't loaded
@@ -154,5 +156,5 @@ This is in addition to c-continued-statement-offset.")
   (+ c-continued-statement-offset c-continued-brace-offset))
 
 
-(provide 'cc-compat)
+(cc-provide 'cc-compat)
 ;;; cc-compat.el ends here
