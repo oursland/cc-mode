@@ -285,6 +285,7 @@
     "stream-2.cc"
     "struct-1.c"
     "struct-2.cc"
+    "struct-3.cc"
     "switch-1.cc"
     "switch-2.cc"
     "switch-3.cc"
