@@ -462,6 +462,7 @@ CC Mode by making sure the proper entries are present on
 		    ((eq major-mode 'c-mode)    "C")
 		    ((eq major-mode 'objc-mode) "ObjC")
 		    ((eq major-mode 'java-mode) "Java")
+		    ((eq major-mode 'idl-mode) "IDL")
 		    ((eq major-mode 'pike-mode) "Pike")
 		    )
 	      ")")
