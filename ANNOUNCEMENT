@@ -1,7 +1,7 @@
 Release Announcement
 CC Mode Version 5.20
 Barry A. Warsaw and Martin Stjernholm
-<cc-mode-help@python.org>
+<mailto:cc-mode-help@python.org>
 
 This message announces the availablity of a new version of CC Mode, a
 GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, Java
