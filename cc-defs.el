@@ -129,7 +129,7 @@
 	 (progn (,@ body))
        (error nil))))
 
-(defmacro c-forward-sexp (&optional arg)
+(defsubst c-forward-sexp (&optional arg)
   ;; like forward-sexp except
   ;;   1. this is much stripped down from the XEmacs version
   ;;   2. this cannot be used as a command, so we're insulated from
@@ -140,7 +140,7 @@
   (goto-char (or (scan-sexps (point) arg) (buffer-end arg)))
   (if (< arg 0) (backward-prefix-chars)))
 
-(defmacro c-backward-sexp (&optional arg)
+(defsubst c-backward-sexp (&optional arg)
   ;; See c-forward-sexp and reverse directions
   (or arg (setq arg 1))
   (c-forward-sexp (- arg)))
