@@ -2123,12 +2123,25 @@ is in effect or not."
   ;; submatch is the one that matches the type.  Note that this regexp
   ;; assumes that symbol constituents like '_' and '$' have word
   ;; syntax.
-  (let ((extra-types (when (boundp (c-mode-symbol "font-lock-extra-types"))
-                       (c-mode-var "font-lock-extra-types"))))
+  (let* ((extra-types
+	  (when (boundp (c-mode-symbol "font-lock-extra-types"))
+	    (c-mode-var "font-lock-extra-types")))
+	 (regexp-strings
+	  (mapcan (lambda (re)
+		    (when (string-match "[][.*+?^$\\]" re)
+		      (list re)))
+		  extra-types))
+	 (plain-strings
+	  (mapcan (lambda (re)
+		    (unless (string-match "[][.*+?^$\\]" re)
+		      (list re)))
+		  extra-types)))
     (concat "\\<\\("
-	    (c-make-keywords-re nil (c-lang-const c-primitive-type-kwds))
-	    (if (consp extra-types)
-		(concat "\\|" (mapconcat 'identity extra-types "\\|"))
+	    (c-make-keywords-re nil
+	      (append (c-lang-const c-primitive-type-kwds)
+		      plain-strings))
+	    (if (consp regexp-strings)
+		(concat "\\|" (mapconcat 'identity regexp-strings "\\|"))
 	      "")
 	    "\\)\\>")))
 
