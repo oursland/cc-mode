@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.207 $
-;; Last Modified:   $Date: 1994-01-26 17:36:27 $
+;; Version:         $Revision: 3.208 $
+;; Last Modified:   $Date: 1994-01-26 18:03:04 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-26 17:36:27 $|$Revision: 3.207 $|
+;; |$Date: 1994-01-26 18:03:04 $|$Revision: 3.208 $|
 
 ;;; Code:
 
@@ -109,7 +109,8 @@ reported and the semantic symbol is ignored.")
   "*If non-nil, semantic info is echoed when the line is indented.")
 (defvar c-basic-offset 4
   "*Amount of basic offset used by + and - symbols in `c-offsets-alist'.")
-(defvar c-offsets-alist
+
+(defconst c-offsets-alist-default
   '((string                . -1000)
     (c                     . c-lineup-C-comments)
     (defun-open            . 0)
@@ -154,6 +155,11 @@ reported and the semantic symbol is ignored.")
     (inclass               . +)
     (cpp-macro             . -1000)
     )
+  "Default settings for offsets of syntactic elements.
+Do not change this constant!  See the variable `c-offsets-alist' for
+more information.")
+
+(defvar c-offsets-alist (mapcar 'copy-sequence c-offsets-alist-default)
   "*Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
 
@@ -710,7 +716,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.207 $
+cc-mode Revision: $Revision: 3.208 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -741,7 +747,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.207 $
+cc-mode Revision: $Revision: 3.208 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1357,9 +1363,10 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 (defun c-set-style (style &optional global)
   "Set cc-mode variables to use one of several different indentation styles.
 The arguments are a string representing the desired style and a flag
-which, if non-nil, means to set the style globally.  Interactively,
-the flag comes from the prefix argument.  The styles are chosen from
-the `c-style-alist' variable."
+which, if non-nil, means to set the style globally, instead of the
+default, which is to set buffer-local variables.  Interactively, the
+flag comes from the prefix argument.  The styles are chosen from the
+`c-style-alist' variable."
   (interactive (list (completing-read "Use which C indentation style? "
                                       c-style-alist nil t)
 		     current-prefix-arg))
@@ -1377,6 +1384,10 @@ the `c-style-alist' variable."
 	  ;; special case for c-offsets-alist
 	  (if (not (eq var 'c-offsets-alist))
 	      (set var val)
+	    ;; reset c-offsets-alist to the default value first
+	    (setq c-offsets-alist
+		  (mapcar 'copy-sequence c-offsets-alist-default))
+	    ;; now set the langelems that are different
 	    (mapcar
 	     (function
 	      (lambda (langentry)
@@ -3203,7 +3214,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.207 $"
+(defconst c-version "$Revision: 3.208 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
