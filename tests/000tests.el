@@ -283,11 +283,12 @@
 		   (condition-case err
 		       (c-guess-basic-syntax)
 		     (error
-		      (setq error-found-p t)
-		      (cc-test-log "%s:%d: c-guess-basic-syntax error: %s"
-				   filename
-				   (1+ (count-lines (point-min) (point)))
-				   (error-message-string err))
+		      (unless error-found-p
+			(setq error-found-p t)
+			(cc-test-log "%s:%d: c-guess-basic-syntax error: %s"
+				     filename
+				     (1+ (count-lines (point-min) (point)))
+				     (error-message-string err)))
 		      ""))
 		   ))
 	      (set-buffer resultsbuf)
@@ -306,65 +307,59 @@
 	      (condition-case err
 		  (c-indent-line)
 		(error
-		 (setq error-found-p t)
-		 (let ((linenum (1+ (count-lines (point-min) (point)))))
-		   (set-buffer resultsbuf)
-		   (save-excursion
-		     (goto-line linenum)
-		     (unless (looking-at "^$")
-		       ;; Don't report lines caused that caused an error above.
-		       (cc-test-log "%s:%d: c-indent-line error: %s"
-				    filename linenum
-				    (error-message-string err))))
-		   (set-buffer testbuf)
-		   )))))
-	  ;; Compare and report.
-	  (set-buffer resultsbuf)
-	  (goto-char (point-min))
-	  (set-buffer expectedbuf)
-	  (goto-char (point-min))
-	  (set-buffer testbuf)
-	  (goto-char (point-min))
-	  (while (not (eobp))
-	    (let* ((currentindent (progn
-				    (back-to-indentation)
-				    (current-column)))
-		   (results (prog2
-				(set-buffer resultsbuf)
-				(buffer-substring (c-point 'bol)
-						  (c-point 'eol))
-			      (forward-line 1)))
-		   (expected (prog2
-				 (set-buffer expectedbuf)
-				 (buffer-substring (c-point 'bol)
-						   (c-point 'eol))
-			       (forward-line 1)))
-		   regression-comment)
-	      (set-buffer testbuf)
-	      (unless (or (= (length results) 0)
-			  (string= results expected))
-		(let ((msg (format "Expected analysis %s, got %s"
-				   expected results)))
-		  (cc-test-log "%s:%d: %s" filename linenum msg)
-		  (indent-for-comment)
-		  (unless (eolp) (end-of-line) (insert "  "))
-		  (insert "!!! " msg ".")
-		  (setq error-found-p t
-			regression-comment t)))
-	      (unless (= (car expectedindent) currentindent)
-		(let ((msg (format "Expected indentation %d, got %d"
-				   (car expectedindent) currentindent)))
-		  (cc-test-log "%s:%d: %s" filename linenum msg)
-		  (if regression-comment
-		      (insert "  ")
+		 (unless error-found-p
+		   (setq error-found-p t)
+		   (cc-test-log "%s:%d: c-indent-line error: %s"
+				filename linenum
+				(error-message-string err)))))))
+	  (unless error-found-p
+	    ;; Compare and report.
+	    (set-buffer resultsbuf)
+	    (goto-char (point-min))
+	    (set-buffer expectedbuf)
+	    (goto-char (point-min))
+	    (set-buffer testbuf)
+	    (goto-char (point-min))
+	    (while (not (eobp))
+	      (let* ((currentindent (progn
+				      (back-to-indentation)
+				      (current-column)))
+		     (results (prog2
+				  (set-buffer resultsbuf)
+				  (buffer-substring (c-point 'bol)
+						    (c-point 'eol))
+				(forward-line 1)))
+		     (expected (prog2
+				   (set-buffer expectedbuf)
+				   (buffer-substring (c-point 'bol)
+						     (c-point 'eol))
+				 (forward-line 1)))
+		     regression-comment)
+		(set-buffer testbuf)
+		(unless (or (= (length results) 0)
+			    (string= results expected))
+		  (let ((msg (format "Expected analysis %s, got %s"
+				     expected results)))
+		    (cc-test-log "%s:%d: %s" filename linenum msg)
 		    (indent-for-comment)
 		    (unless (eolp) (end-of-line) (insert "  "))
-		    (insert "!!! "))
-		  (insert msg ".")
-		  (setq error-found-p t))))
-	    (forward-line 1)
-	    (setq expectedindent (cdr expectedindent)
-		  linenum (1+ linenum)))
+		    (insert "!!! " msg ".")
+		    (setq error-found-p t
+			  regression-comment t)))
+		(unless (= (car expectedindent) currentindent)
+		  (let ((msg (format "Expected indentation %d, got %d"
+				     (car expectedindent) currentindent)))
+		    (cc-test-log "%s:%d: %s" filename linenum msg)
+		    (if regression-comment
+			(insert "  ")
+		      (indent-for-comment)
+		      (unless (eolp) (end-of-line) (insert "  "))
+		      (insert "!!! "))
+		    (insert msg ".")
+		    (setq error-found-p t))))
+	      (forward-line 1)
+	      (setq expectedindent (cdr expectedindent)
+		    linenum (1+ linenum))))
 	  (unless error-found-p
 	    (setq cc-test-finished-tests
 		  (cons filename cc-test-finished-tests)))
@@ -406,7 +401,7 @@
 	  (when (consp resetp)
 	    (setq cc-test-finished-tests nil))
 	  (cc-test-log "Using CC Mode version %s" c-version)
-	  (fset 'c-echo-parsing-error (lambda ()))
+	  (fset 'c-echo-parsing-error (lambda (&optional quiet)))
 	  (mapcar (lambda (test)
 		    (condition-case err
 			(unless (do-one-test test t)
