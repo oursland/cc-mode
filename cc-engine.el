@@ -945,15 +945,12 @@
 		   ((and c-method-key
 			 (re-search-forward c-method-key search-end t))
 		    (setq foundp nil))
-		   ;; Check if this is an anonymous inner class.  We
-		   ;; should be exactly 3 sexps before the open brace
-		   ;; then.
+		   ;; Check if this is an anonymous inner class.
 		   ((and c-inexpr-class-key
 			 (looking-at c-inexpr-class-key))
-		    (if (and (= (c-forward-token-1 2 t) 0)
-			     (eq (char-after) ?\()
-			     (eq (if (= (c-forward-token-1 1 t) 0) (point))
-				 search-end))
+		    (while (and (= (c-forward-token-1 1 t) 0)
+				(looking-at "(\\|\\w\\|\\s_\\|\\.")))
+		    (if (eq (point) search-end)
 			;; We're done.  Just trap this case in the cond.
 			nil
 		      ;; False alarm; all conditions aren't satisfied.
@@ -1071,6 +1068,7 @@
 	  (save-excursion
 	    (let ((beg (point))
 		  end type)
+	      (c-forward-syntactic-ws)
 	      (if (eq (char-after) ?\()
 		  (progn
 		    (forward-char 1)
@@ -1113,15 +1111,17 @@
   ;; backward search.
   (save-excursion
     (or lim (setq lim (point-min)))
-    (c-backward-syntactic-ws)
-    (if (and (> (point) lim) (eq (char-before) ?\())
+    (if (and (eq (char-after) ?{)
+	     (progn (c-backward-syntactic-ws) (> (point) lim))
+	     (eq (char-before) ?\()
+	     (not (and c-special-brace-lists
+		       (c-looking-at-special-brace-list))))
 	(cons 'inexpr-statement (point))
-      (let ((count 3) res)
+      (let (res)
 	(while (and (not res)
-		    (> count 0)
 		    (= (c-backward-token-1 1 t lim) 0)
 		    (>= (point) lim)
-		    (looking-at "(\\|\\w\\|\\s_"))
+		    (looking-at "(\\|\\w\\|\\s_\\|\\."))
 	  (setq res
 		(cond ((and c-inexpr-class-key
 			    (looking-at c-inexpr-class-key))
@@ -1131,8 +1131,7 @@
 		       (cons 'inexpr-statement (point)))
 		      ((and c-lambda-key
 			    (looking-at c-lambda-key))
-		       (cons 'inlambda (point))))
-		count (1- count)))
+		       (cons 'inlambda (point))))))
 	res))))
 
 (defun c-looking-at-inexpr-block-backward (&optional lim)
@@ -1695,37 +1694,26 @@
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 	   ))				; end CASE 5
 	 ;; CASE 6: In-expression statement.
-	 ((save-excursion
-	    (if (c-safe (c-forward-sexp -1)
-			(setq placeholder (point))
-			t)
-		(cond
-		 ;; CASE 6A: Immediately after the lambda keyword.
-		 ((and c-lambda-key
-		       (looking-at c-lambda-key))
-		  (c-add-syntax 'lambda-intro-cont (c-point 'boi))
-		  (c-add-syntax 'inlambda)) ; returns non-nil
-		 ;; CASE 6B: At the beginning of some other construct
-		 ;; followed by a statement.
-		 ((and c-inexpr-block-key
-		       (looking-at c-inexpr-block-key))
-		  (c-add-syntax 'block-open (c-point 'boi))
-		  (c-add-syntax 'inexpr-statement))
-		 ;; CASE 6C: At the beginning of a lambda function
-		 ;; body.
-		 ((and (c-safe (progn (c-forward-sexp -1) t))
-		       c-lambda-key
-		       (looking-at c-lambda-key))
-		  (c-add-syntax 'inline-open (c-point 'boi))
-		  (c-add-syntax 'inlambda))
-		 ;; CASE 6D: At the beginning of an anonymous class.
-		 ((and (c-safe (progn (c-forward-sexp -1) t))
-		       (eq char-after-ip ?{)
-		       (eq (char-after placeholder) ?\()
-		       c-inexpr-class-key
-		       (looking-at c-inexpr-class-key))
-		  (c-add-syntax 'class-open (c-point 'boi))
-		  (c-add-syntax 'inexpr-class))))))
+	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
+	       (setq placeholder (c-looking-at-inexpr-block)))
+	  (setq tmpsymbol (assq (car placeholder)
+				'((inexpr-class . class-open)
+				  (inexpr-statement . block-open))))
+	  (if tmpsymbol
+	      ;; It's a statement block or an anonymous class.
+	      (setq tmpsymbol (cdr tmpsymbol))
+	    ;; It's a Pike lambda.  Check whether we are between the
+	    ;; lambda keyword and the argument list or at the defun
+	    ;; opener.
+	    (setq tmpsymbol
+		  (if (save-excursion
+			(and (c-safe (c-forward-sexp -1) t)
+			     (looking-at c-lambda-key)))
+		      'lambda-intro-cont
+		    'inline-open)))
+	  (goto-char (cdr placeholder))
+	  (c-add-syntax tmpsymbol (c-point 'boi))
+	  (c-add-syntax (car placeholder)))
 	 ;; CASE 7: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
 	 ;; call argument list
