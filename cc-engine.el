@@ -2395,6 +2395,17 @@ With universal argument, inserts the analysis as a comment on that line."
       ))
   (c-keep-region-active))
 
+(defun c-syntactic-information-on-region (from to)
+  "Inserts a comment with the syntactic analysis on every line in the region."
+  (interactive "*r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region from to)
+      (goto-char (point-min))
+      (while (not (eobp))
+	(c-show-syntactic-information '(0))
+	(forward-line)))))
+
 
 (provide 'cc-engine)
 ;;; cc-engine.el ends here
