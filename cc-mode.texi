@@ -2903,7 +2903,9 @@ Subsequent lines in a K&R C argument declaration.
 @item topmost-intro
 The first line in a ``topmost'' definition.
 @item topmost-intro-cont
-Topmost definition continuation lines.
+Topmost definition continuation lines.  This is only used in the parts
+that aren't covered by other symbols such as @code{func-decl-cont} and
+@code{knr-argdecl}.
 @item member-init-intro
 First line in a member initialization list.
 @item member-init-cont
@@ -3096,7 +3098,7 @@ symbols:
   15:         gString.tune( 'G' );
   16:     @}
   17:     friend class Luthier;
-  18: @}
+  18: @};
 
 @end group
 @end example
@@ -3190,7 +3192,7 @@ class Bass
 @{
 public:
     Bass();
-@}
+@};
 
 inline
 Bass::Bass()
