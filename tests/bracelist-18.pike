@@ -5,6 +5,6 @@ int main (int argc, array(string) argv)
 						     x
 						 }));
     options = (mapping) Getopt.find_all_options (argv, ({
-	x			// Not consistent, but probably inveterated.
-    }));
+						     x
+						 }));
 }

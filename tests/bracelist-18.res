@@ -5,6 +5,6 @@
 ((brace-list-intro . 105))
 ((brace-list-close . 105))
 ((statement . 47))
-((brace-list-intro . 137))
-((brace-list-close . 137))
+((brace-list-intro . 182))
+((brace-list-close . 182))
 ((defun-close . 41))
