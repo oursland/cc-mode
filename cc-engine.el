@@ -2059,8 +2059,8 @@ brace."
   (goto-char from)
   (while (and (< (point) to)
 	      (re-search-forward c-qualified-identifier-key to 'move))
-    (let ((type (buffer-substring-no-properties (match-beginning 1)
-						(match-end 1))))
+    (let ((type (buffer-substring-no-properties (match-beginning 0)
+						(match-end 0))))
       (unless (looking-at c-type-prefix-key)
 	;; This adds types on `c-known-type-key' too.  There's no real
 	;; harm in doing so, and it's simpler than checking.
@@ -2111,9 +2111,9 @@ brace."
 		(goto-char (match-end 1))
 		(c-forward-syntactic-ws)
 		(if (looking-at c-symbol-key)
-		    (progn (goto-char (match-end 1))
+		    (progn (goto-char (match-end 0))
 			   (c-add-type (buffer-substring-no-properties
-					(match-beginning 1) (match-end 1)))
+					(match-beginning 0) (match-end 0)))
 			   t)
 		  (goto-char start)
 		  nil))
@@ -2147,8 +2147,8 @@ brace."
 				  'font-lock-keyword-face))
 		       (save-match-data
 			 (not (looking-at c-nontype-keywords-regexp)))))
-		(goto-char (match-end 1))
-		(if (c-check-type (match-string 1))
+		(goto-char (match-end 0))
+		(if (c-check-type (match-string 0))
 		    ;; It's an identifier that has been used as a type
 		    ;; somewhere else.
 		    'found
