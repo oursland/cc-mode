@@ -4364,7 +4364,7 @@ brace."
 		     (if (or (looking-at c-known-type-key)
 			     (looking-at c-keywords-regexp))
 			 (throw 'knr-ok nil))
-		     (c-forward-token-1)
+		     (c-forward-token-2)
 		     (if (eq (char-after) ?,)
 			 (forward-char)
 		       (throw 'knr-ok (and (eq (char-after) ?\))
