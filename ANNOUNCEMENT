@@ -60,6 +60,11 @@ Response times will vary with the number of requests in the queue.
 Note that I am in no way connected with the DEC ftpmail'er so you are
 own your own with this route.
 
+Changes since 5.20
+==================
+
+- This is a bug fix release only.
+
 Changes since 5.19
 ==================
 
