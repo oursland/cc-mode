@@ -54,7 +54,7 @@ three ways:
 
   <p><li>Make sure <code>c-comment-prefix-regexp</code> can't match
   the empty string (by default it does).  This is probably not a good
-  idea since many block comment styles uses nothing but whitespace
+  idea since many block comment styles use nothing but whitespace
   before the text.
 
   <p><li>Set up the Filladapt variables yourself instead of using
