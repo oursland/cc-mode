@@ -17,6 +17,9 @@
 ;;         c++-auto-newline-member-init-p should handle hanging :'s
 ;;   added c++-hungry-delete-key-p
 ;;   added c++-toggle-auto-newline function -- bound to C-cC-t
+;;   made c++-auto-newline and c++-hungry-delete-key-p buffer local
+;;         variables. also change slightly hungry key mechanism
+;;   removed c++-electric-colon variable
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -114,6 +117,7 @@
   (define-key c++-mode-map "/" 'electric-c++-slash)
   (define-key c++-mode-map "*" 'electric-c++-star)
   (define-key c++-mode-map ":" 'electric-c++-colon)
+  (define-key c++-mode-map "\177" 'electric-c++-delete)
   (define-key c++-mode-map "\C-c\C-t" 'c++-toggle-auto-newline)
   )
 
@@ -152,6 +156,9 @@ correctly.")
   "*Put a newline after member initialization colon.")
 (defvar c++-hungry-delete-key-p t
   "*Use hungry delete key which consumes all trailing whitespace.")
+
+(make-variable-buffer-local 'c++-auto-newline)
+(make-variable-buffer-local 'c++-hungry-delete-key-p)
 
 
 (defun c++-mode ()
@@ -192,9 +199,6 @@ Variables controlling indentation style:
  c-label-offset
     Extra indentation for line that is a label, or case or ``default:'', or
     ``public:'' or ``private:'', or ``protected:''.
- c++-electric-colon
-    If non-nil at invocation of c++-mode (t is the default) colon electricly
-    indents.
  c++-empty-arglist-indent
     If non-nil, a function declaration or invocation which ends a line with a
     left paren is indented this many extra spaces, instead of flush with the
@@ -242,8 +246,6 @@ no args,if that value is non-nil."
   (set (make-local-variable 'require-final-newline) t)
   (set (make-local-variable 'parse-sexp-ignore-comments) nil)
   (run-hooks 'c++-mode-hook)
-  (if c++-electric-colon
-      (define-key c++-mode-map ":" 'electric-c++-colon))
   (c++-toggle-auto-newline (if c++-auto-newline 1 0)))
 
 ;; This is used by indent-for-comment
@@ -267,29 +269,32 @@ no args,if that value is non-nil."
 	   comment-column))))))		; otherwise indent at comment column.
 
 (defun c++-toggle-auto-newline (arg)
-  "Toggle c++-auto-newline variable and c++-hungry-delete-key.
+  "Toggle c++-auto-newline variable and c++-hungry-delete-key-p.
 Numeric argument, if supplied sets the variable if non-zero, unsets it
 if zero."
   (interactive "P")
-  (setq c++-auto-newline
-	(cond ((not arg) (not c++-auto-newline))
-	      ((not (zerop (prefix-numeric-value arg))))))
+  (if (not arg)
+      (setq c++-auto-newline (not c++-auto-newline)
+	    c++-hungry-delete-key-p (not c++-hungry-delete-key-p))
+    (setq c++-auto-newline
+	  (setq c++-hungry-delete-key-p
+		(not (zerop (prefix-numeric-value arg))))))
   (let ((auto (if c++-auto-newline "/a" nil))
-	(hungry (if (and c++-hungry-delete-key-p c++-auto-newline)
-		    "h" nil)))
+	(hungry (if c++-hungry-delete-key-p "h" nil)))
     (setq mode-name (concat "C++" auto hungry))
     ;; force mode line update
-    (set-buffer-modified-p (buffer-modified-p))
-    (if hungry
-	(define-key c++-mode-map "\177" 'c++-hungry-delete-key)
-      (define-key c++-mode-map "\177" 'backward-delete-char-untabify))))
+    (set-buffer-modified-p (buffer-modified-p))))
 
-(defun c++-hungry-delete-key (arg)
-  "Consume all preceding whitespace unless ARG is supplied.
-In this case, it just calls backward-delete-char-untabify."
+(defun electric-c++-delete (arg)
+  "If c++-hungry-delete-key-p is non-nil, consumes all preceding
+whitespace unless ARG is supplied, in which case it just calls
+backward-delete-char-untabify passing along ARG.
+
+If c++-hungry-delete-key-p is nil, just call
+backward-delete-char-untabify."
   (interactive "P")
-  (if arg
-      (backward-delete-char-untabify arg)
+  (if (or (not c++-hungry-delete-key-p) arg)
+      (backward-delete-char-untabify (prefix-numeric-value arg))
     (let ((here (point)))
       (skip-chars-backward "[ \t\n]")
       (if (/= (point) here)
