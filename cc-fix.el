@@ -5,7 +5,6 @@
 ;; Authors:    1997 Barry A. Warsaw
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    03-Jul-1997
-;; Version:    5.18
 ;; Keywords:   c languages oop
 
 ;; This file is not part of GNU Emacs.
