@@ -27,47 +27,10 @@
 
 ;;; Commentary:
 
-;; The use of standard faces:
-;;
-;; font-lock-comment-face	Comments.
-;; font-lock-string-face	String and character literals.
-;; font-lock-keyword-face	Keywords.
-;; font-lock-function-name-face	Function names in declarations and definitions,
-;;				and classes in those contexts.  Also used for
-;;				preprocessor defines with arguments.
-;; font-lock-variable-name-face	Variables in declarations and definitions, and
-;;				other identifiers in such variable contexts.
-;;				Also used for preprocessor defines without
-;;				arguments.
-;; font-lock-constant-face	Builtin constants.  As opposed to the preceding
-;;				two faces, this one is used on the names in
-;;				expressions, and it's not used in
-;;				declarations, even if there happen to be a
-;;				"const" in them somewhere.
-;; font-lock-type-face		Types (both pre- and user defined) and classes
-;;				in type contexts.
-;; font-lock-builtin-face	Not used directly.
-;;
-;; Face aliases, mapped to different faces depending on (X)Emacs flavor:
-;;
-;; c-label-face-name		Label identifiers.
-;; c-reference-face-name	Name qualifiers and identifiers for
-;;				scope constructs like namespaces and modules
-;;				that are not types at the same time.
-;; c-preprocessor-face-name	Preprocessor directives.
-;; c-doc-face-name		Documentation comments (like Javadoc).
-;; c-doc-markup-face-name	Markup inside documentation comments.  The face
-;;				is prepended to the one in `c-doc-face-name'.
-;; c-invalid-face-name		Invalid syntax.  Note that CC Mode normally
-;;				doesn't try to fontify syntax errors.  Instead
-;;				it's as picky as possible about only
-;;				fontifying syntactically correct structures so
-;;				that incorrect ones simply aren't fontified.
-;;
 ;; Some comments on the use of faces:
 ;;
 ;; o  `c-label-face-name' is either `font-lock-constant-face' (in Emacs
-;;    20 and later), or `font-lock-reference-face' otherwise.
+;;    20 and later), or `font-lock-reference-face'.
 ;;
 ;; o  `c-reference-face-name' is set up like `c-label-face-name'.
 ;;
@@ -84,13 +47,11 @@
 ;; o  `c-doc-markup-face-name' is set up like `c-label-face-name'.
 ;;
 ;; o  `c-invalid-face-name' is `font-lock-warning-face' in Emacs.  In
-;;    XEmacs there's no corresponding standard face, so there it's
-;;    mapped to a face that stands out sharply.
+;;    older XEmacs there's no corresponding standard face, so there
+;;    it's mapped to a special `c-invalid-face'.
 ;;
-;;    This face is not used for the #error directive, since that's not
-;;    a syntactic error in itself.  A parallel can be drawn to other
-;;    error raising facilities, such as throw, which don't use this
-;;    face either.
+;; TBD: We should probably provide real faces for the above uses and
+;; instead initialize them from the standard faces.
 
 ;;; Code:
 
@@ -213,7 +174,7 @@
 
 (defconst c-invalid-face-name
   (if (c-face-name-p 'font-lock-warning-face)
-      ;; Emacs 20 and later has a font-lock-warning-face.
+      ;; Emacs >= 20 and XEmacs >= 21 has a font-lock-warning-face.
       'font-lock-warning-face
     ;; Otherwise we provide a face.
     'c-invalid-face))
@@ -1988,9 +1949,6 @@ higher."
 	    (c-lang-const c-complex-decl-matchers)
 	    (c-lang-const c-basic-matchers-after)))
 
-(c-lang-defconst c-matchers-4
-  t (c-lang-const c-matchers-3))
-
 (defun c-compose-keywords-list (base-list)
   ;; Incorporate the font lock keyword lists according to
   ;; `c-doc-comment-style' on the given keyword list and return it.
@@ -2060,19 +2018,19 @@ higher."
 (c-override-default-keywords 'c-font-lock-keywords)
 
 (defconst c-font-lock-keywords-1 (c-lang-const c-matchers-1 c)
-  "Minimal highlighting for C mode.
+  "Minimal font locking for C mode.
 Fontifies only preprocessor directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst c-font-lock-keywords-2 (c-lang-const c-matchers-2 c)
-  "Fast normal highlighting for C mode.
+  "Fast normal font locking for C mode.
 In addition to `c-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, the
 user defined types on `c-font-lock-extra-types', and the doc comment
 styles specified by `c-doc-comment-style'.")
 
 (defconst c-font-lock-keywords-3 (c-lang-const c-matchers-3 c)
-  "Accurate normal highlighting for C mode.
+  "Accurate normal font locking for C mode.
 Like `c-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c-font-lock-extra-types'.")
@@ -2212,19 +2170,19 @@ need for `c-font-lock-extra-types'.")
 (c-override-default-keywords 'c++-font-lock-keywords)
 
 (defconst c++-font-lock-keywords-1 (c-lang-const c-matchers-1 c++)
-  "Minimal highlighting for C++ mode.
+  "Minimal font locking for C++ mode.
 Fontifies only preprocessor directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst c++-font-lock-keywords-2 (c-lang-const c-matchers-2 c++)
-  "Fast normal highlighting for C++ mode.
+  "Fast normal font locking for C++ mode.
 In addition to `c++-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, the
 user defined types on `c++-font-lock-extra-types', and the doc comment
 styles specified by `c-doc-comment-style'.")
 
 (defconst c++-font-lock-keywords-3 (c-lang-const c-matchers-3 c++)
-  "Accurate normal highlighting for C++ mode.
+  "Accurate normal font locking for C++ mode.
 Like `c++-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c++-font-lock-extra-types'.")
@@ -2353,19 +2311,19 @@ need for `c++-font-lock-extra-types'.")
 (c-override-default-keywords 'objc-font-lock-keywords)
 
 (defconst objc-font-lock-keywords-1 (c-lang-const c-matchers-1 objc)
-  "Minimal highlighting for Objective-C mode.
+  "Minimal font locking for Objective-C mode.
 Fontifies only compiler directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst objc-font-lock-keywords-2 (c-lang-const c-matchers-2 objc)
-  "Fast normal highlighting for Objective-C mode.
+  "Fast normal font locking for Objective-C mode.
 In addition to `objc-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, the
 user defined types on `objc-font-lock-extra-types', and the doc
 comment styles specified by `c-doc-comment-style'.")
 
 (defconst objc-font-lock-keywords-3 (c-lang-const c-matchers-3 objc)
-  "Accurate normal highlighting for Objective-C mode.
+  "Accurate normal font locking for Objective-C mode.
 Like `objc-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `objc-font-lock-extra-types'.")
@@ -2396,19 +2354,19 @@ need for `objc-font-lock-extra-types'.")
 (c-override-default-keywords 'java-font-lock-keywords)
 
 (defconst java-font-lock-keywords-1 (c-lang-const c-matchers-1 java)
-  "Minimal highlighting for Java mode.
+  "Minimal font locking for Java mode.
 Fontifies nothing except the syntactic fontification of strings and
 comments.")
 
 (defconst java-font-lock-keywords-2 (c-lang-const c-matchers-2 java)
-  "Fast normal highlighting for Java mode.
+  "Fast normal font locking for Java mode.
 In addition to `java-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, the
 user defined types on `java-font-lock-extra-types', and the doc
 comment styles specified by `c-doc-comment-style'.")
 
 (defconst java-font-lock-keywords-3 (c-lang-const c-matchers-3 java)
-  "Accurate normal highlighting for Java mode.
+  "Accurate normal font locking for Java mode.
 Like `java-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `java-font-lock-extra-types'.")
@@ -2429,19 +2387,19 @@ need for `java-font-lock-extra-types'.")
 (c-override-default-keywords 'idl-font-lock-keywords)
 
 (defconst idl-font-lock-keywords-1 (c-lang-const c-matchers-1 idl)
-  "Minimal highlighting for CORBA IDL mode.
+  "Minimal font locking for CORBA IDL mode.
 Fontifies nothing except the syntactic fontification of strings and
 comments.")
 
 (defconst idl-font-lock-keywords-2 (c-lang-const c-matchers-2 idl)
-  "Fast normal highlighting for CORBA IDL mode.
+  "Fast normal font locking for CORBA IDL mode.
 In addition to `idl-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, the
 user defined types on `idl-font-lock-extra-types', and the doc comment
 styles specified by `c-doc-comment-style'.")
 
 (defconst idl-font-lock-keywords-3 (c-lang-const c-matchers-3 idl)
-  "Accurate normal highlighting for CORBA IDL mode.
+  "Accurate normal font locking for CORBA IDL mode.
 Like `idl-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `idl-font-lock-extra-types'.")
@@ -2462,19 +2420,19 @@ need for `idl-font-lock-extra-types'.")
 (c-override-default-keywords 'pike-font-lock-keywords)
 
 (defconst pike-font-lock-keywords-1 (c-lang-const c-matchers-1 pike)
-  "Minimal highlighting for Pike mode.
+  "Minimal font locking for Pike mode.
 Fontifies only preprocessor directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst pike-font-lock-keywords-2 (c-lang-const c-matchers-2 pike)
-  "Fast normal highlighting for Pike mode.
+  "Fast normal font locking for Pike mode.
 In addition to `pike-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, the
 user defined types on `pike-font-lock-extra-types', and the doc
 comment styles specified by `c-doc-comment-style'.")
 
 (defconst pike-font-lock-keywords-3 (c-lang-const c-matchers-3 pike)
-  "Accurate normal highlighting for Pike mode.
+  "Accurate normal font locking for Pike mode.
 Like `pike-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `pike-font-lock-extra-types'.")
