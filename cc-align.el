@@ -915,7 +915,7 @@ Works with: arglist-cont, arglist-cont-nonempty."
        ;; Don't do anything if the innermost open paren isn't our one.
        ;; This can occur for arglist-cont-nonempty with nested arglist
        ;; starts on the same line.
-       (or (not (eq (car langelem) 'arglist-cont-nonempty))
+       (or (not (eq (car elem) 'arglist-cont-nonempty))
 	   (= (elt c-syntactic-element 2)
 	      (c-most-enclosing-brace (c-parse-state))))
 
