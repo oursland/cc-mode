@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.18 $
-;; Last Modified:   $Date: 1994-06-23 17:54:49 $
+;; Version:         $Revision: 4.19 $
+;; Last Modified:   $Date: 1994-06-27 14:33:30 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-23 17:54:49 $|$Revision: 4.18 $|
+;; |$Date: 1994-06-27 14:33:30 $|$Revision: 4.19 $|
 
 ;;; Code:
 
@@ -895,7 +895,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.18 $
+cc-mode Revision: $Revision: 4.19 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -928,7 +928,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.18 $
+cc-mode Revision: $Revision: 4.19 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -961,7 +961,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.18 $
+cc-mode Revision: $Revision: 4.19 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1418,17 +1418,21 @@ construct, and we are on a comment-only-line, indent line as comment.
 If numeric ARG is supplied or point is inside a literal, indentation
 is inhibited."
   (interactive "P")
-  (let ((indentp (and (not arg)
-		      (or (and (memq (c-in-literal) '(c))
-			       (save-excursion
-				 (skip-chars-backward "* \t")
-				 (bolp)))
-			  (= (preceding-char) ?/))))
-	;; shut this up
-	(c-echo-syntactic-information-p nil))
-    (self-insert-command (prefix-numeric-value arg))
-    (if indentp
-	(c-indent-line))))
+  (self-insert-command (prefix-numeric-value arg))
+  ;; if we are in a literal, or if arg is given do not re-indent the
+  ;; current line, unless this star introduces a comment-only line.
+  (if (and (not arg)
+	   (memq (c-in-literal) '(c))
+	   (= (preceding-char) ?*)
+	   (= (char-after (- (point) 2)) ?/)
+	   (save-excursion
+	     (forward-char -2)
+	     (skip-chars-backward " \t")
+	     (bolp)))
+      ;; shut this up
+      (let (c-echo-syntactic-information-p)
+	(c-indent-line))
+    ))
 
 (defun c-electric-semi&comma (arg)
   "Insert a comma or semicolon.
@@ -3809,7 +3813,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.18 $"
+(defconst c-version "$Revision: 4.19 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
