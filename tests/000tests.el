@@ -197,6 +197,7 @@
     "bracelist-4.cc"
     "bracelist-5.cc"
     "bracelist-6.pike"
+    "bracelist-7.cc"
     "class-1.cc"
     "class-2.cc"
     "class-3.cc"
