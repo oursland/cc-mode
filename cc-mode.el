@@ -86,6 +86,8 @@
 ;;; Code:
 
 
+(require 'cc-langs)
+
 
 ;; Figure out what features this Emacs has
 (defconst c-emacs-features
@@ -192,7 +194,6 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   ;; make sure all necessary components of CC Mode are loaded in.
   (require 'cc-vars)
   (require 'cc-engine)
-  (require 'cc-langs)
   (require 'cc-menus)
   (require 'cc-align)
   (require 'cc-styles)
