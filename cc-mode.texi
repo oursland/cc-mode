@@ -2021,12 +2021,13 @@ this manual does not cover how that works.
 
 Variables set like this at the top level in @file{.emacs} take effect in
 all @ccmode{} buffers, regardless of language.  The indentation style
-related variables that you don't set get their value from the style
-system (@pxref{Styles}), and they therefore depend on the setting of
-@code{c-default-style}.  Note that if you use Customize, this means that
-the greyed-out default values presented there might not be the ones you
-actually get, since the actual values depend on the style, which may
-very well be different for different languages.
+related variables, e.g. @code{c-basic-offset}, that you don't set this
+way get their value from the style system (@pxref{Styles}), and they
+therefore depend on the setting of @code{c-default-style}.  Note that if
+you use Customize, this means that the greyed-out default values
+presented there might not be the ones you actually get, since the actual
+values depend on the style, which may very well be different for
+different languages.
 
 If you want to make more advanced configurations, e.g. language-specific
 customization, global variable settings isn't enough.  For that you can
