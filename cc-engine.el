@@ -4821,7 +4821,13 @@ comment at the start of cc-engine.el for more info."
      ,(unless short
 	;; These identifiers are bound only in the inner let.
 	'(setq identifier-type at-type
-	       identifier-start type-start))
+	       identifier-start type-start
+	       got-parens nil
+	       got-identifier t
+	       got-suffix t
+	       got-suffix-after-parens id-start
+	       paren-depth 0))
+
      (if (setq at-type (if (eq backup-at-type 'prefix)
 			   t
 			 backup-at-type))
@@ -4839,13 +4845,8 @@ comment at the start of cc-engine.el for more info."
 	 (setq maybe-typeless backup-maybe-typeless))
 
      ,(unless short
-	;; These identifiers are bound only in the inner let.
-	'(setq start id-start
-	       got-parens nil
-	       got-identifier t
-	       got-suffix t
-	       got-suffix-after-parens t
-	       paren-depth 0))))
+	;; This identifier is bound only in the inner let.
+	'(setq start id-start))))
 
 (defun c-forward-decl-or-cast-1 (preceding-token-end context last-cast-end)
   ;; Move forward over a declaration or a cast if at the start of one.
@@ -5132,9 +5133,12 @@ comment at the start of cc-engine.el for more info."
 	  ;; True if there's a non-close-paren match of
 	  ;; `c-type-decl-suffix-key'.
 	  got-suffix
-	  ;; True if there's a prefix or suffix match outside the
-	  ;; outermost paren pair that surrounds the declarator.
+	  ;; True if there's a prefix match outside the outermost
+	  ;; paren pair that surrounds the declarator.
 	  got-prefix-before-parens
+y	  ;; True if there's a suffix match outside the outermost
+	  ;; paren pair that surrounds the declarator.  The value is
+	  ;; the position of the first suffix match.
 	  got-suffix-after-parens
 	  ;; True if we've parsed the type decl to a token that is
 	  ;; known to end declarations in this context.
@@ -5149,6 +5153,7 @@ comment at the start of cc-engine.el for more info."
 	  ;; `c-restricted-<>-arglists' will be correct inside the
 	  ;; arglist paren that gets entered.
 	  c-parse-and-markup-<>-arglists)
+
       (goto-char id-start)
 
       ;; Skip over type decl prefix operators.  (Note similar code in
@@ -5169,6 +5174,7 @@ comment at the start of cc-engine.el for more info."
 			  ;; so stop.
 			  nil))
 		    t))
+
 	(if (eq (char-after) ?\()
 	    (progn
 	      (setq paren-depth (1+ paren-depth))
@@ -5178,6 +5184,7 @@ comment at the start of cc-engine.el for more info."
 	  (setq got-prefix t)
 	  (goto-char (match-end 1)))
 	(c-forward-syntactic-ws))
+
       (setq got-parens (> paren-depth 0))
 
       ;; Skip over an identifier.
@@ -5187,6 +5194,7 @@ comment at the start of cc-engine.el for more info."
 
       ;; Skip over type decl suffix operators.
       (while (if (looking-at c-type-decl-suffix-key)
+
 		 (if (eq (char-after) ?\))
 		     (when (> paren-depth 0)
 		       (setq paren-depth (1- paren-depth))
@@ -5196,9 +5204,11 @@ comment at the start of cc-engine.el for more info."
 			     (c-safe (c-forward-sexp 1) t)
 			   (goto-char (match-end 1))
 			   t)
-		     (unless got-suffix-after-parens
-		       (setq got-suffix-after-parens (= paren-depth 0)))
+		     (when (and (not got-suffix-after-parens)
+				(= paren-depth 0))
+		       (setq got-suffix-after-parens (match-beginning 0)))
 		     (setq got-suffix t)))
+
 	       ;; No suffix matched.  We might have matched the
 	       ;; identifier as a type and the open paren of a
 	       ;; function arglist as a type decl prefix.  In that
@@ -5224,6 +5234,7 @@ comment at the start of cc-engine.el for more info."
 		 (c-fdoc-shift-type-backward)
 		 (goto-char pos)
 		 t))
+
 	(c-forward-syntactic-ws))
 
       (when (and (or maybe-typeless backup-maybe-typeless)
@@ -5383,7 +5394,17 @@ comment at the start of cc-engine.el for more info."
 	      ;; easily occur temporarily while writing an expression so we
 	      ;; avoid that case anyway.  We could do a better job if we knew
 	      ;; the point when the fontification was invoked.
-	      (throw 'at-decl-or-cast t))))
+	      (throw 'at-decl-or-cast t))
+
+	    (when (and at-type
+		       (not got-prefix)
+		       (not got-parens)
+		       got-suffix-after-parens
+		       (eq (char-after got-suffix-after-parens) ?\())
+	      ;; Got a type, no declarator but a paren suffix. I.e. it's a
+	      ;; normal function call afterall (or perhaps a C++ style object
+	      ;; instantiation expression).
+	      (throw 'at-decl-or-cast nil))))
 
 	(when at-decl-or-cast
 	  ;; By now we've located the type in the declaration that we know
