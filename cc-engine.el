@@ -188,7 +188,8 @@ NOERROR turns off error logging to `c-parsing-error'."
       (save-restriction
 	(if lim (narrow-to-region lim (point-max)))
 
-	;; Try to skip over operator characters.
+	;; Try to skip over unary operator characters, to register
+	;; that we've moved.
 	(while (progn
 		 (setq pos (point))
 		 (c-backward-syntactic-ws)
@@ -401,7 +402,7 @@ NOERROR turns off error logging to `c-parsing-error'."
 	      (if (< last-label-pos start)
 		  (setq pos last-label-pos)))))
 
-	;; Skip over the non-sexp operators that can start the statement.
+	;; Skip over the unary operators that can start the statement.
 	(goto-char pos)
 	(while (progn
 		 (c-backward-syntactic-ws)
@@ -1542,16 +1543,16 @@ isn't moved."
 	     (setq containing-sexp (car brace-state)
 		   brace-state (cdr brace-state))
 	   (goto-char containing-sexp)
-	   (if (c-looking-at-inexpr-block)
+	   (setq lim (if (consp (car brace-state))
+			 (cdr (car brace-state))
+		       (car brace-state)))
+	   (if (c-looking-at-inexpr-block lim)
 	       ;; We're in an in-expression block of some kind.  Do
 	       ;; not check nesting.
 	       (setq containing-sexp nil)
 	     ;; see if the open brace is preceded by = or [...] in
 	     ;; this statement, but watch out for operator=
-	     (setq lim (if (consp (car brace-state))
-			   (cdr (car brace-state))
-			 (car brace-state))
-		   braceassignp 'dontknow)
+	     (setq braceassignp 'dontknow)
 	     (c-backward-token-1 1 t lim)
 	     ;; Checks to do only on the first sexp before the brace.
 	     (when (and (c-major-mode-is 'java-mode)
@@ -1708,8 +1709,8 @@ isn't moved."
       ;; we can't disambiguate.
       (if (and block-follows
 	       use-enclosing
-	       (progn (c-backward-syntactic-ws) (> (point) lim))
-	       (eq (char-before) ?\())
+	       (progn (c-backward-syntactic-ws lim)
+		      (eq (char-before) ?\()))
 	  (if (and c-special-brace-lists
 		   (c-looking-at-special-brace-list))
 	      nil
@@ -1792,9 +1793,8 @@ isn't moved."
 
 
 (defun c-most-enclosing-brace (state &optional bufpos)
-  ;; Return the bufpos of the innermost enclosing brace before bufpos
-  ;; that hasn't been narrowed out by any enclosing class, or nil if
-  ;; none was found.
+  ;; Return the bufpos of the innermost enclosing brace before bufpos,
+  ;; or nil if none was found.
   (let (enclosingp)
     (or bufpos (setq bufpos 134217727))
     (while state
@@ -2128,7 +2128,7 @@ isn't moved."
 					 lim)))
 	 ;; CASE 4: In-expression statement.
 	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
-	       (setq placeholder (c-looking-at-inexpr-block nil t)))
+	       (setq placeholder (c-looking-at-inexpr-block containing-sexp t)))
 	  (setq tmpsymbol (assq (car placeholder)
 				'((inexpr-class . class-open)
 				  (inexpr-statement . block-open))))
@@ -2833,7 +2833,8 @@ isn't moved."
 	     ;; block?
 	     ((save-excursion
 		(goto-char containing-sexp)
-		(setq placeholder (c-looking-at-inexpr-block)))
+		(setq placeholder (c-looking-at-inexpr-block
+				   (c-most-enclosing-brace fullstate containing-sexp))))
 	      (setq tmpsymbol (if (eq (car placeholder) 'inlambda)
 				  'inline-close
 				'block-close))
@@ -2930,7 +2931,9 @@ isn't moved."
 	   ((progn
 	      ;; The following tests are all based on containing-sexp.
 	      (goto-char containing-sexp)
-	      (and (setq placeholder (c-looking-at-inexpr-block))
+	      (and (setq placeholder (c-looking-at-inexpr-block
+				      (c-most-enclosing-brace fullstate
+							      containing-sexp)))
 		   (not (c-after-conditional))))
 	    (back-to-indentation)
 	    (let ((block-intro (if (eq (car placeholder) 'inlambda)
@@ -2978,7 +2981,7 @@ isn't moved."
 	   (t
 	    (if (/= (point) (c-point 'boi))
 		(c-beginning-of-statement-1
-		 (if (= (point) lim)
+		 (if (<= (point) lim)
 		     (c-safe-position (point) state) lim)))
 	    (c-add-syntax 'statement-block-intro (c-point 'boi))
 	    (if (eq char-after-ip ?{)
