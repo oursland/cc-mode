@@ -16,7 +16,7 @@ version 4 and version 5</a>.
   <p>There is now a new mode called <code>idl-mode</code>, with all
   the expected hooks, abbreviation tables, etc.  Font-lock is not
   supported by CC Mode, but until font-lock support for IDL gets
-  integrated into X/Emacs, <a href="idl-font-lock.el"> here is a file
+  integrated into (X)Emacs, <a href="idl-font-lock.el"> here is a file
   defining some IDL font-lock-keywords</a>
 
   <p><li>In "java" style, <code>c-hanging-comment-starter-p</code> is
@@ -24,7 +24,7 @@ version 4 and version 5</a>.
 
   <p><li>A new hook variable: <code>c-initialization-hook</code>.
 
-  <p>This is called only once an X/Emacs session, when the CC Mode
+  <p>This is called only once an (X)Emacs session, when the CC Mode
   package is initialized.
 
   <p><li>The usual assortment of bug fixes.

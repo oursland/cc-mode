@@ -8,9 +8,9 @@
 
 <p>You need to make sure that this new version of CC Mode is on your
 <code>load-path</code>, <em>before</em> any version that is
-distributed with your X/Emacs.  Note that the CC Mode distribution
+distributed with your (X)Emacs.  Note that the CC Mode distribution
 unpacks into its own subdirectory.  You can use this test to see which
-version of CC Mode your X/Emacs finds first:
+version of CC Mode your (X)Emacs finds first:
 
 <pre>
 M-x locate-library RET cc-mode RET</pre>
@@ -30,7 +30,7 @@ variable.
 <p>It is <em>highly</em> recommended that you byte-compile CC Mode,
 for both performance and compatibility reasons.  Running CC Mode
 un-bytecompiled is not supported and <strong>may not work</strong> at
-all depending on the flavor of X/Emacs you are using.  You can byte
+all depending on the flavor of (X)Emacs you are using.  You can byte
 compile CC Mode by doing the following from your shell:
 
 <pre>
@@ -43,7 +43,7 @@ will produce a lot of warnings for XEmacs 19.  They can safely be
 ignored.
 
 <p>Be sure to see the list of <a href="compat.php">compatibility
-issues</a>, for special notes about X/Emacs versions and package
+issues</a>, for special notes about (X)Emacs versions and package
 interactions.  To test that you have things set up correctly, visit a
 C file and then type:<br>
 

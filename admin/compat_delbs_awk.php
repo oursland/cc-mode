@@ -27,7 +27,7 @@ can't completely vouch for them.
   20.3, and in fact is no longer distributed with XEmacs, so if you've
   upgraded you should just remove the delbackspace stuff anyway.
 
-  <p><li>If you use <code>awk-mode</code> in older X/Emacsen, you
+  <p><li>If you use <code>awk-mode</code> in older (X)Emacsen, you
   might need to make a change to the source code for
   <code>awk-mode.el</code> to look like:
 
