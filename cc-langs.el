@@ -1702,9 +1702,9 @@ Note that Java specific rules are currently applied to tell this from
   ;; literal, symbol, prefix operator, and '('.  It doesn't need to
   ;; exclude keywords; they are excluded afterwards unless the second
   ;; submatch matches. If the first but not the second submatch
-  ;; matches then it isn't an unambiguous primary expression; it could
-  ;; also be a match of e.g. an infix operator. (The case with
-  ;; ambiguous keyword operators isn't handled.)
+  ;; matches then it is an ambiguous primary expression; it could also
+  ;; be a match of e.g. an infix operator. (The case with ambiguous
+  ;; keyword operators isn't handled.)
 
   t (c-with-syntax-table (c-lang-const c-mode-syntax-table)
       (let* ((prefix-ops
@@ -1725,20 +1725,21 @@ Note that Java specific rules are currently applied to tell this from
 			  (list op)))
 		      prefix-ops))
 
-	     (infix-ops
+	     (in-or-postfix-ops
 	      (mapcan (lambda (opclass)
 			(when (memq (car opclass)
-				    '(left-assoc
+				    '(postfix
+				      left-assoc
 				      right-assoc
 				      right-assoc-sequence))
 			  (append (cdr opclass) nil)))
 		      (c-lang-const c-operators)))
 
 	     (unambiguous-prefix-ops (set-difference nonkeyword-prefix-ops
-						     infix-ops
+						     in-or-postfix-ops
 						     :test 'string-equal))
 	     (ambiguous-prefix-ops (intersection nonkeyword-prefix-ops
-						 infix-ops
+						 in-or-postfix-ops
 						 :test 'string-equal)))
 
 	(concat
@@ -1753,7 +1754,7 @@ Note that Java specific rules are currently applied to tell this from
 	 "\\|"
 	 ;; Match all ambiguous operators.
 	 (c-make-keywords-re nil
-	   (intersection nonkeyword-prefix-ops infix-ops
+	   (intersection nonkeyword-prefix-ops in-or-postfix-ops
 			 :test 'string-equal))
 	 "\\)"
 
@@ -1762,12 +1763,12 @@ Note that Java specific rules are currently applied to tell this from
 	 (c-lang-const c-symbol-start)
 
 	 "\\|"
-	 ;; Handle '(', the chars that can start integer and floating
-	 ;; point constants, and the nonambiguous operators from
+	 ;; Handle the chars that can start integer and floating point
+	 ;; constants, and the nonambiguous operators from
 	 ;; `prefix-ops'.
 	 (c-make-keywords-re nil
-	   (append '("(" "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" ".")
-		   (set-difference nonkeyword-prefix-ops infix-ops
+	   (append '("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" ".")
+		   (set-difference nonkeyword-prefix-ops in-or-postfix-ops
 				   :test 'string-equal)))
 
 	 "\\|"
