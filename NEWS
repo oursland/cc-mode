@@ -4,7 +4,7 @@ CC Mode NEWS -- user visible changes.  -*- outline -*-
 
 ** The hardcoded switch to "java" style in Java mode is gone.
 CC Mode used to automatically set the style to "java" when Java mode
-is entered.  This has now been removed since it causes too much
+is entered.  This has now been removed since it caused too much
 confusion.
 
 However, to keep backward compatibility to a certain extent, the
