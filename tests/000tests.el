@@ -101,11 +101,27 @@
   (defvar font-lock-constant-face nil)
   (setq font-lock-constant-face 'font-lock-constant-face))
 
-;; Define this to operate correctly with earlier versions of
-;; font-lock.  The reason is that they can contain a bug that's
-;; triggered when font-lock-mode is turned off by
-;; `cc-test-force-font-lock-buffer' before being turned on.
-(defvar font-lock-syntactic-face-function nil)
+;; In Emacs face names are resolved as variables which can point to
+;; another face.  Make sure we don't have such indirections when we
+;; create or check against .face files.
+(mapcar (lambda (face)
+	  (when (and (boundp face)
+		     (not (eq (symbol-value face) face)))
+	    (copy-face (symbol-value face) face)
+	    (set face face)))
+	'(font-lock-comment-face
+	  font-lock-string-face
+	  font-lock-keyword-face
+	  font-lock-function-name-face
+	  font-lock-variable-name-face
+	  font-lock-type-face
+	  font-lock-reference-face
+	  font-lock-doc-string-face
+	  font-lock-reference-face
+	  font-lock-constant-face
+	  font-lock-preprocessor-face
+	  font-lock-builtin-face
+	  font-lock-warning-face))
 
 (require 'cc-mode)
 
@@ -125,27 +141,18 @@
     (cpp . ,c-preprocessor-face)
     (err . ,c-invalid-face)))
 
+;; Check that we don't have duplicates.
 (let ((alist cc-test-face-alist) elem face facename)
   (while alist
     (setq elem (car alist)
 	  alist (cdr alist))
     (unless (eq (car elem) 'reg)
-      ;; Check that we don't have a duplicate.
       (when (and (setq facename (get (setq face (cdr elem))
 				     'cc-test-face-name))
 		 (not (eq facename (car elem))))
 	(error (concat "Ambiguous face %s - can be both %s and %s"
 		       " (cc-fonts loaded too early?)")
 	       (cdr elem) facename (car elem)))
-
-      ;; In Emacs face names are resolved as variables which can point
-      ;; to another face.  Make sure we don't have such indirections
-      ;; when we create or check against .face files.
-      (when (and (boundp face)
-		 (not (eq (symbol-value face) face)))
-	(copy-face (symbol-value face) face)
-	(set face face))
-
       (put (cdr elem) 'cc-test-face-name (car elem)))))
 
 (defvar cc-test-font-lock-init-failed nil)
@@ -519,7 +526,7 @@
 
 	  (if noninteractive
 	      (send-string-to-terminal
-	       (format "Testing %s        \r" filename))
+	       (format "Testing %s                           \r" filename))
 	    (message "Testing %s" filename))
 
 	  (set-buffer testbuf)
