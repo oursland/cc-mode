@@ -60,6 +60,9 @@
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@comment Define an index for syntactic symbols.
+@defindex ss
+
 @macro copyrightblurb
 Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03 Free Software Foundation, Inc.
 @end macro
@@ -147,8 +150,9 @@ packages for that.
 
 * Concept Index::
 * Command and Function Index::
-* Key Index::
 * Variable Index::
+* Key Index::
+* Syntactic Symbol Index::
 
  --- The Detailed Node Listing ---
 
@@ -203,7 +207,7 @@ Advanced Customizations
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Introduction, Getting Connected, Top, Top
 @comment node-name, next, previous, up
-@chapter    Introduction
+@chapter Introduction
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @cindex BOCM
@@ -280,7 +284,7 @@ early beta stages of @ccmode{}'s development.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Getting Connected, Indentation Engine, Introduction, Top
 @comment node-name, next, previous, up
-@chapter    Getting Connected
+@chapter Getting Connected
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 If you got this version of @ccmode{} with Emacs or XEmacs, it should
@@ -317,8 +321,7 @@ where @samp{XX} is the minor release number.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Indentation Engine, Minor Modes, Getting Connected, Top
 @comment node-name, next, previous, up
-@chapter    Indentation Engine
-@cindex indentation engine
+@chapter Indentation Engine
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} has an indentation engine that provides a flexible and general
@@ -342,12 +345,12 @@ your personal coding style.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Syntactic Analysis, Indentation Calculation, , Indentation Engine
 @comment node-name, next, previous, up
-@section    Syntactic Analysis
+@section Syntactic Analysis
 @cindex syntactic analysis
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @cindex relative buffer position
-@cindex syntactic symbol
+@cindex syntactic symbols
 @cindex syntactic component
 @cindex syntactic component list
 The first thing @ccmode{} does when indenting a line of code, is to
@@ -469,8 +472,8 @@ components.  Also notice that the first component,
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Indentation Calculation, , Syntactic Analysis, Indentation Engine
 @comment node-name, next, previous, up
-@section    Indentation Calculation
-@cindex indentation calculation
+@section Indentation Calculation
+@cindex indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Indentation for a line is calculated using the syntactic
@@ -568,7 +571,7 @@ the minibuffer when you hit @kbd{TAB}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Minor Modes, Text Filling and Line Breaking, Indentation Engine, Top
 @comment node-name, next, previous, up
-@chapter    Minor Modes
+@chapter Minor Modes
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} contains two minor-mode-like features that you should
@@ -621,8 +624,6 @@ to your @file{.emacs} file:
           (lambda () (c-toggle-auto-hungry-state 1)))
 @end example
 
-@cindex electric characters
-
 @menu
 * Auto-newline Insertion::
 * Hungry-deletion of Whitespace::
@@ -632,17 +633,17 @@ to your @file{.emacs} file:
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Auto-newline Insertion, Hungry-deletion of Whitespace, , Minor Modes
 @comment node-name, next, previous, up
-@section    Auto-newline Insertion
-@cindex auto-newline insertion
+@section Auto-newline Insertion
+@cindex auto-newline
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@cindex electric commands
+@cindex electric characters
 Auto-newline minor mode works by enabling certain @dfn{electric
-commands}.  Electric commands are typically bound to special characters
-such as the left and right braces, colons, semicolons, etc., which when
-typed, perform some magic formatting in addition to inserting the typed
-character.  As a general rule, electric commands are only electric when
-the following conditions apply:
+characters}.  Special characters such as the left and right braces,
+colons, semicolons, etc., have been made electric to perform some
+magic formatting in addition to inserting the typed character.  As a
+general rule, electric characters are only electric when the following
+conditions apply:
 
 @itemize @bullet
 @item
@@ -699,27 +700,27 @@ after a brace, but that can be controlled by the
 @defopt c-hanging-braces-alist
 @vindex hanging-braces-alist (c-)
 
-@cindex class-open syntactic symbol
-@cindex class-close syntactic symbol
-@cindex defun-open syntactic symbol
-@cindex defun-close syntactic symbol
-@cindex inline-open syntactic symbol
-@cindex inline-close syntactic symbol
-@cindex brace-list-open syntactic symbol
-@cindex brace-list-close syntactic symbol
-@cindex brace-list-intro syntactic symbol
-@cindex brace-entry-open syntactic symbol
-@cindex block-open syntactic symbol
-@cindex block-close syntactic symbol
-@cindex statement-cont syntactic symbol
-@cindex substatement-open syntactic symbol
-@cindex statement-case-open syntactic symbol
-@cindex extern-lang-open syntactic symbol
-@cindex extern-lang-close syntactic symbol
-@cindex namespace-open syntactic symbol
-@cindex namespace-close syntactic symbol
-@cindex inexpr-class-open symbol
-@cindex inexpr-class-close symbol
+@ssindex class-open
+@ssindex class-close
+@ssindex defun-open
+@ssindex defun-close
+@ssindex inline-open
+@ssindex inline-close
+@ssindex brace-list-open
+@ssindex brace-list-close
+@ssindex brace-list-intro
+@ssindex brace-entry-open
+@ssindex block-open
+@ssindex block-close
+@ssindex statement-cont
+@ssindex substatement-open
+@ssindex statement-case-open
+@ssindex extern-lang-open
+@ssindex extern-lang-close
+@ssindex namespace-open
+@ssindex namespace-close
+@ssindex inexpr-class-open
+@ssindex inexpr-class-close
 
 This variable contains a mapping between syntactic symbols related to
 braces, and a list of places to insert a newline.  The syntactic symbols
@@ -1170,8 +1171,8 @@ closing parenthesis is typed.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Hungry-deletion of Whitespace, , Auto-newline Insertion, Minor Modes
 @comment node-name, next, previous, up
-@section    Hungry-deletion of Whitespace
-@cindex hungry-deletion of whitespace
+@section Hungry-deletion of Whitespace
+@cindex hungry-deletion
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Hungry deletion of whitespace, or as it more commonly called,
@@ -1277,7 +1278,10 @@ whether hungry-delete mode is enabled or not).
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Text Filling and Line Breaking, Macro Handling, Minor Modes, Top
 @comment node-name, next, previous, up
-@chapter    Text Filling and Line Breaking
+@chapter Text Filling and Line Breaking
+@cindex text filling
+@cindex line breaking
+@cindex comment handling
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Since there's a lot of normal text in comments and string literals,
@@ -1348,7 +1352,7 @@ change it inside a @ccmode{} buffer.
 
 @findex auto-fill-mode
 @cindex Auto Fill mode
-@cindex paragraph fill
+@cindex paragraph filling
 Line breaks are by default handled (almost) the same regardless whether
 they are made by auto fill mode (@pxref{Auto Fill,,, emacs, The Emacs
 Editor}), paragraph filling (e.g. with @kbd{M-q}), or explicitly with
@@ -1576,7 +1580,7 @@ lines ``stick out'' instead.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Commands, Customizing Indentation, Macro Handling, Top
 @comment node-name, next, previous, up
-@chapter    Commands
+@chapter Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @menu
@@ -1592,8 +1596,7 @@ that bit.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Indentation Commands, Movement Commands, , Commands
 @comment node-name, next, previous,up
-@section    Indentation Commands
-@cindex indentation commands
+@section Indentation Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The following list of commands reindent C constructs.  Note that when
@@ -1745,8 +1748,8 @@ interval in seconds that progress messages are displayed.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Movement Commands, Other Commands, Indentation Commands, Commands
 @comment node-name, next, previous, up
-@section    Movement Commands
-@cindex movement commands
+@section Movement Commands
+@cindex movement
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} contains some useful command for moving around in C
@@ -1893,7 +1896,7 @@ word.  With prefix argument @var{n}, move @var{n} times.  If
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Commands, , Movement Commands, Commands
 @comment node-name, next, previous, up
-@section    Other Commands
+@section Other Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} contains a few other useful commands:
@@ -1928,8 +1931,9 @@ the region ends at the start of a line, it always deletes the backslash
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Customizing Indentation, Syntactic Symbols, Commands, Top
 @comment node-name, next, previous, up
-@chapter    Customizing Indentation
-@cindex customizing indentation
+@chapter Customizing Indentation
+@cindex customization, indentation
+@cindex indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The context sensitive indentation is mainly controlled by the variable
@@ -2081,7 +2085,8 @@ your @file{.emacs} file so that your changes are more permanent.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Interactive Customization, Permanent Customization, , Customizing Indentation
 @comment node-name, next, previous, up
-@section    Interactive Customization
+@section Interactive Customization
+@cindex customization, interactive
 @cindex interactive customization
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2187,7 +2192,8 @@ for that syntactic element.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Permanent Customization, Hooks, Interactive Customization, Customizing Indentation
 @comment node-name, next, previous, up
-@section    Permanent Customization
+@section Permanent Customization
+@cindex customization, permanent
 @cindex permanent customization
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2245,8 +2251,8 @@ typically set it in your @file{.emacs} file and then restart Emacs.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Hooks, Styles, Permanent Customization, Customizing Indentation
 @comment node-name, next, previous, up
-@section    Hooks
-@cindex hooks
+@section Hooks
+@cindex mode hooks
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} provides several hooks that you can use to customize the mode
@@ -2300,7 +2306,7 @@ file.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Styles, Advanced Customizations, Hooks, Customizing Indentation
 @comment node-name, next, previous, up
-@section    Styles
+@section Styles
 @cindex styles
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -2390,7 +2396,7 @@ The style variables are:
 @node    Built-in Styles, Choosing a Style, , Styles
 @comment node-name, next, previous, up
 @subsection Built-in Styles
-@cindex built-in styles
+@cindex styles, built-in
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 If you're lucky, one of @ccmode{}'s built-in styles might be just
@@ -2532,7 +2538,6 @@ string.
 @node    Adding Styles, File Styles, Choosing a Style, Styles
 @comment node-name, next, previous, up
 @subsection Adding Styles
-@cindex adding styles
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 If none of the built-in styles is appropriate, you'll probably want to
@@ -2568,7 +2573,7 @@ should not be changed directly; use @code{c-add-style} instead.
 @node    File Styles, , Adding Styles, Styles
 @comment node-name, next, previous, up
 @subsection File Styles
-@cindex file styles
+@cindex styles, file local
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @cindex file local variables
@@ -2603,7 +2608,7 @@ style variable values are made local to that buffer.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Advanced Customizations, , Styles, Customizing Indentation
 @comment node-name, next, previous, up
-@section    Advanced Customizations
+@section Advanced Customizations
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 For most users, @ccmode{} will support their coding styles with very
@@ -2628,7 +2633,7 @@ handled by the mode directly.
 @node    Custom Indentation Functions, Custom Brace and Colon Hanging, , Advanced Customizations
 @comment node-name, next, previous, up
 @subsection Custom Indentation Functions
-@cindex custom indentation functions
+@cindex customization, indentation functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The most flexible way to customize @ccmode{} is by writing custom
@@ -2680,7 +2685,6 @@ it doesn't want to make any decision.  If the function is used in a list
 expression (@pxref{Customizing Indentation}), that will cause @ccmode{}
 to go on and check the next entry in the list.
 
-@cindex stream-op syntactic symbol
 Now, to associate the function @code{c-lineup-streamop} with the
 @code{stream-op} syntactic symbol, we can add something like the
 following to our @code{c++-mode-hook}@footnote{It probably makes more
@@ -2736,7 +2740,7 @@ combination of the symbols @code{before} and @code{after}
 function which gets called when a brace matching that syntactic symbol
 is entered.
 
-@cindex customizing brace hanging
+@cindex customization, brace hanging
 These @var{action} functions are called with two arguments: the
 syntactic symbol for the brace, and the buffer position at which the
 brace was inserted.  The @var{action} function is expected to return a
@@ -2796,7 +2800,7 @@ During the call to the indentation or brace hanging @var{action}
 function, this variable is bound to the full syntactic analysis list.
 @end defvar
 
-@cindex customizing colon hanging
+@cindex customization, colon hanging
 @vindex c-hanging-colons-alist
 @vindex hanging-colons-alist (c-)
 Note that for symmetry, colon hanginess should be customizable by
@@ -2809,7 +2813,8 @@ been found for this feature, it isn't currently implemented!
 @node    Customizing Semicolons and Commas, Other Special Indentations, Custom Brace and Colon Hanging, Advanced Customizations
 @comment node-name, next, previous, up
 @subsection Customizing Semicolons and Commas
-@cindex customizing semicolons and commas
+@cindex customization, semicolon newlines
+@cindex customization, comma newlines
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 You can also customize the insertion of newlines after semicolons and
@@ -2912,10 +2917,10 @@ current setting for the buffer local value of
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Syntactic Symbols, Indentation Functions, Customizing Indentation, Top
 @comment node-name, next, previous, up
-@chapter    Syntactic Symbols
-@cindex syntactic symbols
+@chapter Syntactic Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@cindex syntactic symbols, brief list
 @vindex c-offsets-alist
 @vindex offsets-alist (c-)
 Here is a complete list of the recognized syntactic symbols as described
@@ -3070,15 +3075,15 @@ classes in Java.  It's also used for anonymous array initializers in
 Java.
 @end table
 
-@cindex -open syntactic symbols
-@cindex -close syntactic symbols
+@ssindex -open symbols
+@ssindex -close symbols
 Most syntactic symbol names follow a general naming convention.  When a
 line begins with an open or close brace, the syntactic symbol will
 contain the suffix @code{-open} or @code{-close} respectively.
 
-@cindex -intro syntactic symbols
-@cindex -cont syntactic symbols
-@cindex -block-intro syntactic symbols
+@ssindex -intro symbols
+@ssindex -cont symbols
+@ssindex -block-intro symbols
 Usually, a distinction is made between the first line that introduces a
 construct and lines that continue a construct, and the syntactic symbols
 that represent these lines will contain the suffix @code{-intro} or
@@ -3101,11 +3106,11 @@ you can check the syntax of any line by using @kbd{C-c C-s}.
  9: @}
 @end example
 
-@cindex topmost-intro syntactic symbol
-@cindex topmost-intro-cont syntactic symbol
-@cindex defun-open syntactic symbol
-@cindex defun-close syntactic symbol
-@cindex defun-block-intro syntactic symbol
+@ssindex topmost-intro
+@ssindex topmost-intro-cont
+@ssindex defun-open
+@ssindex defun-close
+@ssindex defun-block-intro
 Line 1 shows a @code{topmost-intro} since it is the first line that
 introduces a top-level construct.  Line 2 is a continuation of the
 top-level construct introduction so it has the syntax
@@ -3117,8 +3122,8 @@ function definition.  Line 4 is a @code{defun-block-intro}, i.e. it is
 the first line of a brace-block, enclosed in a
 top-level function definition.
 
-@cindex statement syntactic symbol
-@cindex statement-cont syntactic symbol
+@ssindex statement
+@ssindex statement-cont
 Lines 5, 6, and 7 are all given @code{statement} syntax since there
 isn't much special about them.  Note however that line 8 is given
 @code{statement-cont} syntax since it continues the statement begun
@@ -3148,8 +3153,8 @@ symbols:
 18: @};
 @end example
 
-@cindex class-open syntactic symbol
-@cindex class-close syntactic symbol
+@ssindex class-open
+@ssindex class-close
 As in the previous example, line 1 has the @code{topmost-intro} syntax.
 Here however, the brace that opens a C++ class definition on line 4 is
 assigned the @code{class-open} syntax.  Note that in C++, classes,
@@ -3162,14 +3167,14 @@ languages are syntactically equivalent to classes.  Note however that
 the keyword @code{class} is meaningless in C and Objective-C.}.
 Similarly, line 18 is assigned @code{class-close} syntax.
 
-@cindex inher-intro syntactic symbol
-@cindex inher-cont syntactic symbol
+@ssindex inher-intro
+@ssindex inher-cont
 Line 2 introduces the inheritance list for the class so it is assigned
 the @code{inher-intro} syntax, and line 3, which continues the
 inheritance list is given @code{inher-cont} syntax.
 
-@cindex access-label syntactic symbol
-@cindex inclass syntactic symbol
+@ssindex access-label
+@ssindex inclass
 Hitting @kbd{C-c C-s} on line 5 shows the following analysis:
 
 @example
@@ -3189,8 +3194,8 @@ syntax:
 ((inclass . 58) (topmost-intro . 60))
 @end example
 
-@cindex member-init-intro syntactic symbol
-@cindex member-init-cont syntactic symbol
+@ssindex member-init-intro
+@ssindex member-init-cont
 Line 7 introduces a C++ member initialization list and as such is given
 @code{member-init-intro} syntax.  Note that in this case it is
 @emph{not} assigned @code{inclass} since this is not considered a
@@ -3199,8 +3204,8 @@ top-level construct.  Lines 8 through 10 are all assigned
 list started on line 7.
 
 @cindex in-class inline methods
-@cindex inline-open syntactic symbol
-@cindex inline-close syntactic symbol
+@ssindex inline-open
+@ssindex inline-close
 Line 11's analysis is a bit more complicated:
 
 @example
@@ -3240,7 +3245,7 @@ before the method name, as in:
 20: @}
 @end example
 
-@cindex friend syntactic symbol
+@ssindex friend
 Returning to the previous example, line 16 is given @code{inline-close}
 syntax, while line 12 is given @code{defun-block-open} syntax, and lines
 13 through 15 are all given @code{statement} syntax.  Line 17 is
@@ -3289,9 +3294,9 @@ is assigned to various conditional constructs:
 
 Only the lines that illustrate new syntactic symbols will be discussed.
 
-@cindex substatement-open syntactic symbol
-@cindex substatement-block-intro syntactic symbol
-@cindex block-close syntactic symbol
+@ssindex substatement-open
+@ssindex substatement-block-intro
+@ssindex block-close
 Line 4 has a brace which opens a conditional's substatement block.  It
 is thus assigned @code{substatement-open} syntax, and since line 5 is
 the first line in the substatement block, it is assigned
@@ -3300,8 +3305,8 @@ similar syntax.  Line 8 contains the brace that closes the inner
 substatement block.  It is given the syntax @code{block-close},
 as are lines 11 and 14.
 
-@cindex else-clause syntactic symbol
-@cindex catch-clause syntactic symbol
+@ssindex else-clause
+@ssindex catch-clause
 Line 9 is a little different --- since it contains the keyword
 @code{else} matching the @code{if} statement introduced on line 5, it is
 given the @code{else-clause} syntax.  The @code{try}-@code{catch}
@@ -3309,7 +3314,7 @@ constructs in C++ and Java are treated this way too, with the only
 difference that the @code{catch}, and in Java also @code{finally}, is
 marked with @code{catch-clause}.
 
-@cindex substatement syntactic symbol
+@ssindex substatement
 Line 10 is also slightly different.  Because @code{else} is considered a
 conditional introducing keyword @footnote{The list of conditional
 keywords are (in C, C++, Objective-C, Java, and Pike): @code{for},
@@ -3319,7 +3324,7 @@ and Java have two additional conditional keywords: @code{try} and
 keywords.}, and because the following substatement is not a brace block,
 line 10 is assigned the @code{substatement} syntax.
 
-@cindex do-while-closure syntactic symbol
+@ssindex do-while-closure
 One other difference is seen on line 15.  The @code{while} construct
 that closes a @code{do} conditional is given the special syntax
 @code{do-while-closure} if it appears on a line by itself.  Note that if
@@ -3348,9 +3353,9 @@ example:
 14: @}
 @end example
 
-@cindex case-label syntactic symbol
-@cindex statement-case-intro syntactic symbol
-@cindex statement-case-open syntactic symbol
+@ssindex case-label
+@ssindex statement-case-intro
+@ssindex statement-case-open
 Here, lines 4, 7, and 10 are all assigned @code{case-label} syntax,
 while lines 5 and 8 are assigned @code{statement-case-intro}.  Line 11
 is treated slightly differently since it contains a brace that opens a
@@ -3373,10 +3378,10 @@ brace lists too.  An example:
  6: @};
 @end example
 
-@cindex brace-list-open syntactic symbol
-@cindex brace-list-intro syntactic symbol
-@cindex brace-list-close syntactic symbol
-@cindex brace-list-entry syntactic symbol
+@ssindex brace-list-open
+@ssindex brace-list-intro
+@ssindex brace-list-close
+@ssindex brace-list-entry
 Following convention, line 2 in this example is assigned
 @code{brace-list-open} syntax, and line 3 is assigned
 @code{brace-list-intro} syntax.  Likewise, line 6 is assigned
@@ -3384,7 +3389,7 @@ Following convention, line 2 in this example is assigned
 @code{brace-list-entry} syntax, as would all subsequent lines in this
 initializer list.
 
-@cindex brace-entry-open syntactic symbol
+@ssindex brace-entry-open
 Your static initializer might be initializing nested structures, for
 example:
 
@@ -3421,10 +3426,10 @@ symbols.  In this example:
  5: @}
 @end example
 
-@cindex extern-lang-open syntactic symbol
-@cindex extern-lang-close syntactic symbol
-@cindex inextern-lang syntactic symbol
-@cindex inclass syntactic symbol
+@ssindex extern-lang-open
+@ssindex extern-lang-close
+@ssindex inextern-lang
+@ssindex inclass
 @noindent
 line 2 is given the @code{extern-lang-open} syntax, while line 5 is given
 the @code{extern-lang-close} syntax.  The analysis for line 3 yields:
@@ -3441,9 +3446,9 @@ symbols.  In this example:
  4: @}
 @end example
 
-@cindex namespace-open syntactic symbol
-@cindex namespace-close syntactic symbol
-@cindex innamespace syntactic symbol
+@ssindex namespace-open
+@ssindex namespace-close
+@ssindex innamespace
 @noindent
 line 2 is given the @code{namespace-open} syntax, while line 4 is given
 the @code{namespace-close} syntax.  The analysis for line 3 yields:
@@ -3475,15 +3480,15 @@ calls.  This example illustrates these:
 18: @}
 @end example
 
-@cindex arglist-intro syntactic symbol
-@cindex arglist-close syntactic symbol
+@ssindex arglist-intro
+@ssindex arglist-close
 Lines 5 and 12 are assigned @code{arglist-intro} syntax since they are
 the first line following the open parenthesis, and lines 7 and 14 are
 assigned @code{arglist-close} syntax since they contain the parenthesis
 that closes the argument list.
 
-@cindex arglist-cont-nonempty syntactic symbol
-@cindex arglist-cont syntactic symbol
+@ssindex arglist-cont-nonempty
+@ssindex arglist-cont
 Lines that continue argument lists can be assigned one of two syntactic
 symbols.  For example, Lines 2 and 17
 are assigned @code{arglist-cont-nonempty} syntax.  What this means
@@ -3526,16 +3531,16 @@ The lines to note in this example include:
 
 @itemize @bullet
 @item
-@cindex func-decl-cont syntactic symbol
+@ssindex func-decl-cont
 Line 2 is assigned the @code{func-decl-cont} syntax.
 
 @item
-@cindex comment-intro syntactic symbol
+@ssindex comment-intro
 Line 4 is assigned both @code{defun-block-intro} @emph{and}
 @code{comment-intro} syntax.
 
 @item
-@cindex c syntactic symbol
+@ssindex c
 Line 5 is assigned @code{c} syntax.
 
 @item
@@ -3548,21 +3553,21 @@ comment on lines 4 and 5 do not cause line 6 to be assigned
 code.
 
 @item
-@cindex string syntactic symbol
+@ssindex string
 Line 8 is assigned @code{string} syntax.
 
 @comment FIXME: Document substatement-label.
 
 @item
-@cindex label syntactic symbol
+@ssindex label
 Line 10 is assigned @code{label} syntax.
 
 @item
-@cindex block-open syntactic symbol
+@ssindex block-open
 Line 11 is assigned @code{block-open} syntax.
 
 @item
-@cindex cpp-macro syntactic symbol
+@ssindex cpp-macro
 Lines 12 and 14 are assigned @code{cpp-macro} syntax in addition to the
 normal syntactic symbols (@code{statement-block-intro} and
 @code{statement}, respectively).  Normally @code{cpp-macro} is
@@ -3572,7 +3577,7 @@ changed if you want preprocessor directives to be indented like the rest
 of the code.
 
 @item
-@cindex stream-op syntactic symbol
+@ssindex stream-op
 Line 17 is assigned @code{stream-op} syntax.
 @end itemize
 
@@ -3580,7 +3585,7 @@ Line 17 is assigned @code{stream-op} syntax.
 
 @cindex multi-line macros
 @cindex syntactic whitespace
-@cindex cpp-macro-cont syntactic symbol
+@ssindex cpp-macro-cont
 Multi-line C preprocessor macros are now (somewhat) supported.  At least
 @ccmode{} now recognizes the fact that it is inside a multi-line macro,
 and it properly skips such macros as syntactic whitespace.  In this
@@ -3615,9 +3620,9 @@ illustrating these:
  7: @}
 @end example
 
-@cindex objc-method-intro syntactic symbol
-@cindex objc-method-args-cont syntactic symbol
-@cindex objc-method-call-cont syntactic symbol
+@ssindex objc-method-intro
+@ssindex objc-method-args-cont
+@ssindex objc-method-call-cont
 Here, line 1 is assigned @code{objc-method-intro} syntax, and line 2 is
 assigned @code{objc-method-args-cont} syntax.  Lines 5 and 6 are both
 assigned @code{objc-method-call-cont} syntax.
@@ -3635,7 +3640,7 @@ this:
  7: @}
 @end example
 
-@cindex inexpr-class syntactic symbol
+@ssindex inexpr-class
 The brace following the @code{new} operator opens the anonymous class.
 Lines 3 and 6 are assigned the @code{inexpr-class} syntax, besides the
 @code{inclass} symbol used in normal classes.  Thus, the class will be
@@ -3653,7 +3658,7 @@ expression.  One is in C code using the gcc extension for this, e.g:
  5:     @});
 @end example
 
-@cindex inexpr-statement syntactic symbol
+@ssindex inexpr-statement
 Lines 2 and 5 get the @code{inexpr-statement} syntax, besides the
 symbols they'd get in a normal block.  Therefore, the indentation put on
 @code{inexpr-statement} is added to the normal statement block
@@ -3677,8 +3682,8 @@ statements, as illustrated here:
 12: @}
 @end example
 
-@cindex inlambda syntactic symbol
-@cindex lambda-intro-cont syntactic symbol
+@ssindex inlambda
+@ssindex lambda-intro-cont
 Lines 4 through 8 contain a lambda function, which @ccmode{} recognizes
 by the @code{lambda} keyword.  If the function argument list is put
 on a line of its own, as in line 5, it gets the @code{lambda-intro-cont}
@@ -3691,15 +3696,15 @@ opening brace, which stands on its own line in this example.  If the
 opening brace was hanging on the previous line, then the closing brace
 would get the @code{inlambda} syntax too to be indented correctly.}.
 
-@cindex inexpr-statement syntactic symbol
+@ssindex inexpr-statement
 On line 9, @code{catch} is a special function taking a statement block
 as its argument.  The block is handled as an in-expression statement
 with the @code{inexpr-statement} syntax, just like the gcc extended C
 example above.  The other similar special function, @code{gauge}, is
 handled like this too.
 
-@cindex knr-argdecl-intro syntactic symbol
-@cindex knr-argdecl syntactic symbol
+@ssindex knr-argdecl-intro
+@ssindex knr-argdecl
 Two other syntactic symbols can appear in old style, non-prototyped C
 code @footnote{a.k.a. K&R C, or Kernighan & Ritchie C}:
 
@@ -3722,15 +3727,15 @@ syntax.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Indentation Functions, Performance Issues, Syntactic Symbols, Top
 @comment node-name, next, previous, up
-@chapter    Indentation Functions
-@cindex indentation functions
-@cindex line-up functions
+@chapter Indentation Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Often there are cases when a simple offset setting on a syntactic symbol
-isn't enough to get the desired indentation.  Therefore, it's also
-possible to use a @dfn{indentation function} (a.k.a. line-up function)
-for a syntactic symbol.
+@cindex indentation function
+@cindex line-up function
+Often there are cases when a simple offset setting on a syntactic
+symbol isn't enough to get the desired indentation.  Therefore, it's
+also possible to use a @dfn{indentation function} (a.k.a. @dfn{line-up
+function}) for a syntactic symbol.
 
 @ccmode{} comes with many predefined indentation functions for common
 situations.  If none of these does what you want, you can write your
@@ -4503,8 +4508,8 @@ In the first case the indentation is kept unchanged, in the second
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Performance Issues, Limitations and Known Bugs, Indentation Functions, Top
 @comment node-name, next, previous, up
-@chapter    Performance Issues
-@cindex performance issues
+@chapter Performance Issues
+@cindex performance
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 C and its derivative languages are highly complex creatures.  Often,
@@ -4603,7 +4608,7 @@ at the variable @code{cc-lobotomy-pith-list} for details.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Limitations and Known Bugs, Frequently Asked Questions, Performance Issues, Top
 @comment node-name, next, previous, up
-@chapter    Limitations and Known Bugs
+@chapter Limitations and Known Bugs
 @cindex limitations
 @cindex bugs
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4644,8 +4649,6 @@ not a problem there.
 @node    Frequently Asked Questions, Getting the Latest CC Mode Release, Limitations and Known Bugs, Top
 @comment node-name, next, previous, up
 @appendix Frequently Asked Questions
-@cindex frequently asked questions
-@cindex FAQ
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @itemize @bullet
@@ -4748,8 +4751,6 @@ compatibility, etc. are all available on the web site:
 @node    Mailing Lists and Submitting Bug Reports, Sample .emacs File, Getting the Latest CC Mode Release, Top
 @comment node-name, next, previous, up
 @appendix Mailing Lists and Submitting Bug Reports
-@cindex mailing lists
-@cindex reporting bugs
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @kindex C-c C-b
@@ -4852,7 +4853,7 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Command and Function Index, Key Index, Concept Index, Top
+@node    Command and Function Index, Variable Index, Concept Index, Top
 @comment node-name, next, previous, up
 @unnumbered Command and Function Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4867,16 +4868,7 @@ Since most @ccmode{} commands are prepended with the string
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Key Index, Variable Index, Command and Function Index, Top
-@comment node-name, next, previous, up
-@unnumbered Key Index
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@printindex ky
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Variable Index, , Key Index, Top
+@node    Variable Index, Key Index, Command and Function Index, Top
 @comment node-name, next, previous, up
 @unnumbered Variable Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4888,6 +4880,30 @@ Since most @ccmode{} variables are prepended with the string
 @sp 2
 @end iftex
 @printindex vr
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Key Index, Syntactic Symbol Index, Variable Index, Top
+@comment node-name, next, previous, up
+@unnumbered Key Index
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@printindex ky
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Syntactic Symbol Index, , Key Index, Top
+@comment node-name, next, previous, up
+@unnumbered Syntactic Symbol Index
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+This index lists the syntactic symbols used on @code{c-offsets-alist}.
+@printindex ss
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@comment Epilogue.
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @iftex
 @page
