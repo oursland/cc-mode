@@ -1562,60 +1562,64 @@ Optional prefix ARG means justify paragraph as well."
 		     t)))
 	  ;; Inside a comment: fill one comment paragraph.
 	  (let ((fill-prefix
-		 ;; The prefix for each line of this paragraph
-		 ;; is the appropriate part of the start of this line,
-		 ;; up to the column at which text should be indented.
-		 (save-excursion
-		   (beginning-of-line)
-		   (if (looking-at ".*/\\*.*\\*/")
-		       (progn (re-search-forward comment-start-skip)
-			      (make-string (current-column) ?\ ))
-		     (if first-line
-			 (forward-line 1)
-		       (if (and (looking-at "[ \t]*\\*/")
-				(not (save-excursion
-				       (forward-line -1)
-				       (looking-at ".*/\\*"))))
-			   (forward-line -1)))
+		 (or
+		  ;; Keep user set fill prefix if any.
+		  fill-prefix
+		  ;; The prefix for each line of this paragraph
+		  ;; is the appropriate part of the start of this line,
+		  ;; up to the column at which text should be indented.
+		  (save-excursion
+		    (beginning-of-line)
+		    (if (looking-at ".*/\\*.*\\*/")
+			(progn (re-search-forward comment-start-skip)
+			       (make-string (current-column) ?\ ))
+		      (if first-line
+			  (forward-line 1)
+			(if (and (looking-at "[ \t]*\\*/")
+				 (not (save-excursion
+					(forward-line -1)
+					(looking-at ".*/\\*"))))
+			    (forward-line -1)))
 
-		     (let ((line-width (progn (end-of-line) (current-column))))
-		       (beginning-of-line)
-		       (prog1
-			   (buffer-substring
-			    (point)
+		      (let ((line-width (progn (end-of-line)
+					       (current-column))))
+			(beginning-of-line)
+			(prog1
+			    (buffer-substring
+			     (point)
 
-			    ;; How shall we decide where the end of the
-			    ;; fill-prefix is?
-			    (progn
-			      (skip-chars-forward " \t*" (c-point 'eol))
-			      ;; kludge alert, watch out for */, in
-			      ;; which case fill-prefix should *not*
-			      ;; be "*"!
-			      (if (and (eq (char-after) ?/)
-				       (eq (char-before) ?*))
-				  (forward-char -1))
-			      (point)))
+			     ;; How shall we decide where the end of the
+			     ;; fill-prefix is?
+			     (progn
+			       (skip-chars-forward " \t*" (c-point 'eol))
+			       ;; kludge alert, watch out for */, in
+			       ;; which case fill-prefix should *not*
+			       ;; be "*"!
+			       (if (and (eq (char-after) ?/)
+					(eq (char-before) ?*))
+				   (forward-char -1))
+			       (point)))
 
-			 ;; If the comment is only one line followed
-			 ;; by a blank line, calling move-to-column
-			 ;; above may have added some spaces and tabs
-			 ;; to the end of the line; the fill-paragraph
-			 ;; function will then delete it and the
-			 ;; newline following it, so we'll lose a
-			 ;; blank line when we shouldn't.  So delete
-			 ;; anything move-to-column added to the end
-			 ;; of the line.  We record the line width
-			 ;; instead of the position of the old line
-			 ;; end because move-to-column might break a
-			 ;; tab into spaces, and the new characters
-			 ;; introduced there shouldn't be deleted.
+			  ;; If the comment is only one line followed
+			  ;; by a blank line, calling move-to-column
+			  ;; above may have added some spaces and tabs
+			  ;; to the end of the line; the fill-paragraph
+			  ;; function will then delete it and the
+			  ;; newline following it, so we'll lose a
+			  ;; blank line when we shouldn't.  So delete
+			  ;; anything move-to-column added to the end
+			  ;; of the line.  We record the line width
+			  ;; instead of the position of the old line
+			  ;; end because move-to-column might break a
+			  ;; tab into spaces, and the new characters
+			  ;; introduced there shouldn't be deleted.
 
-			 ;; If you can see a better way to do this,
-			 ;; please make the change.  This seems very
-			 ;; messy to me.
-			 (delete-region (progn (move-to-column line-width)
-					       (point))
-					(progn (end-of-line) (point))))))))
+			  ;; If you can see a better way to do this,
+			  ;; please make the change.  This seems very
+			  ;; messy to me.
+			  (delete-region (progn (move-to-column line-width)
+						(point))
+					 (progn (end-of-line) (point)))))))))
 
 		;; Lines containing just a comment start or just an end
 		;; should not be filled into paragraphs they are next
@@ -1709,8 +1713,7 @@ Optional prefix ARG means justify paragraph as well."
 		   (goto-char (car limits))
 		   (end-of-line)
 		   (< (point) (cdr limits))))
-	    (let (fill-prefix
-		  fill-paragraph-function)
+	    (let (fill-paragraph-function)
 	      (save-restriction
 		(narrow-to-region (save-excursion
 				    (goto-char (1+ (car limits)))
