@@ -261,6 +261,10 @@ the existing style.")
 		       (assoc (upcase style) c-style-alist)
 		       (assoc style c-style-alist)
 		       (error "Undefined style: %s" style)))))
+    (when dont-override
+      (mapcar (lambda (conscell)
+		(c-set-style-1 conscell dont-override))
+	      vars))
     (if (not (string-equal style "user"))
 	(let ((base (if (stringp (car vars))
 			(prog1
@@ -270,9 +274,10 @@ the existing style.")
 	  (if (memq base basestyles)
 	      (error "Style loop detected: %s in %s" base basestyles))
 	  (c-set-style-2 base (cons base basestyles) dont-override)))
-    (mapcar (lambda (conscell)
-	      (c-set-style-1 conscell dont-override))
-	    vars)))
+    (unless dont-override
+      (mapcar (lambda (conscell)
+		(c-set-style-1 conscell dont-override))
+	      vars))))
     
 (defvar c-set-style-history nil)
 
