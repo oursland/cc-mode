@@ -844,7 +844,22 @@ This function does not do any hidden buffer changes."
   ;; `c-forward-sws' or `c-backward-sws' are used outside
   ;; `c-save-buffer-state' or similar then this will remove the cache
   ;; properties right after they're added.
-  (remove-text-properties beg end '(c-in-sws nil c-is-sws nil)))
+  (remove-text-properties
+   beg
+   (save-excursion
+     ;; Remove the properties in any following simple ws up to and
+     ;; including the next line break, if there is any after the
+     ;; changed region.  This is necessary e.g. when a rung marked
+     ;; empty line is converted to a line comment by inserting "//"
+     ;; before the line break.  In that case the line break would keep
+     ;; the rung mark which could make a later `c-backward-sws' move
+     ;; into the line comment instead of over it.
+     (goto-char end)
+     (skip-chars-forward " \t\f\v")
+     (if (and (eolp) (not (eobp)))
+	 (1+ (point))
+       end))
+   '(c-in-sws nil c-is-sws nil)))
 
 (defmacro c-debug-sws-msg (&rest args)
   ;;`(message ,@args)
@@ -1053,7 +1068,7 @@ This function does not do any hidden buffer changes."
 	  ;; there might be later unmarked parts in the simple ws region.
 	  ;; It's not worth the effort to fix that; the last part of the
 	  ;; simple ws is also typically edited often, so it could be wasted.
-	  (setq rung-pos rung-is-marked)
+	  (goto-char (setq rung-pos rung-is-marked))
 	(goto-char simple-ws-beg))
 
       (while
