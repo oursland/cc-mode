@@ -2,7 +2,7 @@ Title: CC Mode
 Author: cc-mode-help@python.org
 Other-links:
     <h3>Related Links</h3>
-    <li><a href="cc-mode.tar.gz">cc-mode.tar.gz [~116KB]</a>
+    <li><a href="cc-mode.tar.gz">cc-mode.tar.gz [~138KB]</a>
     <li><a href="cc-mode/">Individual files</a>
     <li><a href="cc-mode-manual/">Pre-formatted docs</a>
 
@@ -10,7 +10,7 @@ Other-links:
 
 The current release is available in several forms.  You can download
 the entire source distribution, including the manual in texinfo format 
-as an approximately <a href="cc-mode.tar.gz">116KB gzip'd
+as an approximately <a href="cc-mode.tar.gz">138KB gzip'd
 tarball</a>.  You can also download the <a href="cc-mode/">individual
 files</a> of the current release.
 
@@ -20,3 +20,8 @@ documentation</a> or grab one of the several
 <a href="cc-mode-manual/">pre-formatted</a> documents generated from
 the texinfo source, including PostScript, Emacs Info, and HTML
 versions</a>.
+
+<p>The current version supports using Filladapt mode to fill text in
+comments and string literals.  There are however still some <a
+href="filladapt.html">issues</a> with this that you should be aware of
+if you want to set them up to work together.
