@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.109 $
-;; Last Modified:   $Date: 1994-12-08 19:03:47 $
+;; Version:         $Revision: 4.110 $
+;; Last Modified:   $Date: 1994-12-08 19:06:16 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-08 19:03:47 $|$Revision: 4.109 $|
+;; |$Date: 1994-12-08 19:06:16 $|$Revision: 4.110 $|
 
 ;;; Code:
 
@@ -1208,7 +1208,7 @@ it finds in `c-file-offsets'."
 	     )))
 	c-file-offsets)))
 
-;; now add the hook to file-file-hook, if both it and add-hook are
+;; now add the hook to find-file-hooks, if both it and add-hook are
 ;; defined.  This won't work for Emacs 18, but then you shouldn't be
 ;; using Emacs 18 anymore anyway.
 (and (fboundp 'add-hook)
@@ -4232,7 +4232,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.109 $"
+(defconst c-version "$Revision: 4.110 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
