@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-07 22:03:41 $
-;; Version:         $Revision: 2.135 $
+;; Last Modified:   $Date: 1992-07-08 19:40:14 $
+;; Version:         $Revision: 2.136 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-07 22:03:41 $|$Revision: 2.135 $|
+;; |$Date: 1992-07-08 19:40:14 $|$Revision: 2.136 $|
 
 
 ;; ======================================================================
@@ -246,7 +246,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.135 $
+  "Major mode for editing C++ code.  $Revision: 2.136 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1311,9 +1311,9 @@ BOD is the beginning of the C++ definition."
       (if parse-start
 	  (goto-char parse-start)
 	(goto-char bod))
-      (setq state (c++-parse-state indent-point)
-	    containing-sexp (nth 1 state)
-	    parse-start (point))
+      (setq parse-start (point)
+	    state (c++-parse-state indent-point)
+	    containing-sexp (nth 1 state))
       ;; it is possible that c++-defun-header-weak could not find the
       ;; beginning of the C++ definition. The following code attempts
       ;; to work around this.  It is probably better to just use
@@ -1951,7 +1951,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.135 $"
+(defconst c++-version "$Revision: 2.136 $"
   "c++-mode version number.")
 
 (defun c++-version ()
