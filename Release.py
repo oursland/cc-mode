@@ -50,7 +50,6 @@ extra_format = '(defconst c-version "%s"\n'
 
 FILES = [
     ('cc-align.el',    version_cre, version_format),
-    ('cc-auto.el',     version_cre, version_format),
     ('cc-cmds.el',     version_cre, version_format),
     ('cc-compat.el',   version_cre, version_format),
     ('cc-engine.el',   version_cre, version_format),

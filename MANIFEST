@@ -9,7 +9,7 @@ You should have received the following files in this distribution:
 
     Makefile: for byte-compiling the source code
 
-    cc-align.el, cc-auto.el, cc-cmds.el, cc-engine.el, cc-langs.el,
+    cc-align.el, cc-cmds.el, cc-engine.el, cc-langs.el,
     cc-menus.el, cc-mode.el, cc-styles.el, cc-vars.el: The source code
 
     cc-compat.el: Helps ease the transition from c-mode.el to cc-mode
