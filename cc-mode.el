@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.45 $
-;; Last Modified:   $Date: 1994-08-03 17:37:30 $
+;; Version:         $Revision: 4.46 $
+;; Last Modified:   $Date: 1994-08-03 17:45:24 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-03 17:37:30 $|$Revision: 4.45 $|
+;; |$Date: 1994-08-03 17:45:24 $|$Revision: 4.46 $|
 
 ;;; Code:
 
@@ -908,7 +908,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.45 $
+cc-mode Revision: $Revision: 4.46 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -943,7 +943,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.45 $
+cc-mode Revision: $Revision: 4.46 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -977,7 +977,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.45 $
+cc-mode Revision: $Revision: 4.46 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2699,7 +2699,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       ;; no brace-state means we cannot be inside a class
       nil
     (let ((carcache (car brace-state))
-	  search-start search-end placeholder)
+	  search-start search-end)
       (if (consp carcache)
 	  ;; a cons cell in the first element means that there is some
 	  ;; balanced sexp before the current bufpos. this we can
@@ -2735,13 +2735,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	(save-excursion
 	  (save-restriction
 	    (goto-char search-start)
-	    (let (foundp class match-end)
+	    (let (foundp class)
 	      (while (and (not foundp)
 			  (progn
 			    (c-forward-syntactic-ws)
 			    (re-search-forward c-class-key search-end t)))
-		(setq class (match-beginning 0)
-		      match-end (match-end 0))
+		(setq class (match-beginning 0))
 		(if (c-in-literal search-start)
 		    nil			; its in a comment or string, ignore
 		  (goto-char class)
@@ -3860,7 +3859,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.45 $"
+(defconst c-version "$Revision: 4.46 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
