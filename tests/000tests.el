@@ -1,4 +1,59 @@
+;; Regression test suite harness
+
+;; You can run the regression test either within your current X/Emacs
+;; session, or via batch mode.  I usually run the latter first, to
+;; make sure my changes haven't messed anything up.  If this passes,
+;; everything is fine.  If it fails, I run the test in the current
+;; session until I fix the breakage.
+
+;; To run in the current session, make sure you have all the latests
+;; definitions of any function you've changed.  Then load this file
+;; and type:
+;;
+;;    M-x do-all-tests RET
+;;
+;; This regression tests all the files listed in the variable
+;; list-of-tests.  Note that this form of testing takes over X/Emacs
+;; until the test completes, and the tests can take a while!
+
+;; To run in batch mode, make sure all the changed .el files are byte
+;; compiled and make sure they will be found first on your load-path,
+;; then at the shell prompt do this:
+;;
+;;    % cd .../cc-mode/tests
+;;    % xemacs -batch -l 000tests.el -f do-all-tests
+;;
+;; Obviously replacing `xemacs' with `emacs' if necessary.
+
+;; The tests stop if any regression is found.  With in-session
+;; testing, you can restart the tests from where it left off by just
+;; doing a M-x do-all-tests again.  Batch testing starts over from the
+;; beginning.
+
+;; Whenever I add a new syntactic symbol, or add a new case to the big
+;; c-guess-basic-syntax cond, or find and fix a new breakage, I create
+;; a new regression test by:
+;;
+;; 1) creating a small, but complete test case in a file with the
+;;    proper extension.  This file must have a unique name within the
+;;    tests directory (sans the extension).
+;; 2) add the file to the variable list-of-tests
+;; 3) Create a `results' (.res) file with the base name of the file,
+;;    appended with .res.  Split the current window so that you have
+;;    two buffers visible, the new test file buffer on top, and the
+;;    .res file on bottom.  Put point at the top of the new test file
+;;    and type `M-x resfile'.  This will populate the .res file, now
+;;    save them both, and check both into CVS.
+
+;; Some times the tests will fail without an actual regression being
+;; introduced.  This might happen if, e.g. the default Java style
+;; changes.  In this case, you can modify the corresponding .res file
+;; instead of fixing the regression, but be VERY careful when doing
+;; this.  Make sure you know this is what you want to do!
+
 (require 'cc-mode)
+
+;; This is bogus and should eventually go away
 (c-initialize-cc-mode)
 
 (defconst TESTSTYLE
