@@ -121,6 +121,7 @@
      (c-offsets-alist  . ((substatement-open . 0)
 			  (inextern-lang . 0)
 			  (arglist-intro . +)
+			  (knr-argdecl-intro . +)
 			  ))
      (c-hanging-braces-alist . ((brace-list-open)
 				(brace-list-intro)
