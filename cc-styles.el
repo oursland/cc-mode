@@ -33,6 +33,7 @@
   (require 'cc-defs))
 
 
+;; Warning: don't eval-defun this constant or you'll break style inheritance.
 (defconst c-style-alist
   '(("gnu"
      (c-basic-offset . 2)
@@ -45,6 +46,7 @@
 			 (statement-cont . +)
 			 (arglist-intro . c-lineup-arglist-intro-after-paren)
 			 (arglist-close . c-lineup-arglist)
+			 (inline-open . 0)
 			 ))
      (c-special-indent-hook . c-gnu-impose-minimum)
      (c-comment-continuation-stars . "")
