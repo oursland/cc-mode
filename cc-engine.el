@@ -117,6 +117,50 @@
     (> arg 0)))
 
 
+;;; Basic utility functions.
+
+(defun c-syntactic-content (from to)
+  ;; Return the given region as a string where all syntactic
+  ;; whitespace is removed or, where necessary, replaced with a single
+  ;; space.
+  (save-excursion
+    (goto-char from)
+    (let* ((parts (list nil)) (tail parts) pos)
+      (while (re-search-forward c-syntactic-ws-start to t)
+	(goto-char (setq pos (match-beginning 0)))
+	(c-forward-syntactic-ws to)
+	(if (= (point) pos)
+	    (forward-char)
+	  (if (and (> pos from)
+		   (< (point) to)
+		   (looking-at "\\w\\|\\s_")
+		   (save-excursion
+		     (goto-char (1- pos))
+		     (looking-at "\\w\\|\\s_")))
+	      (progn
+		(setcdr tail (list (buffer-substring-no-properties from pos)
+				   " "))
+		(setq tail (cddr tail)))
+	    (setcdr tail (list (buffer-substring-no-properties from pos)))
+	    (setq tail (cdr tail)))
+	  (setq from (point))))
+      (setcdr tail (list (buffer-substring-no-properties from to)))
+      (apply 'concat (cdr parts)))))
+
+(defsubst c-keyword-sym (keyword)
+  ;; Return non-nil if the string KEYWORD is a known keyword.  More
+  ;; precisely, the value is the symbol for the keyword in
+  ;; `c-keywords-obarray'.
+  (intern-soft keyword c-keywords-obarray))
+
+(defsubst c-keyword-member (keyword-sym lang-constant)
+  ;; Return non-nil if the symbol KEYWORD-SYM, as returned by
+  ;; `c-keyword-sym', is a member of LANG-CONSTANT, which is the name
+  ;; of a language constant that ends with "-kwds".  If KEYWORD-SYM is
+  ;; nil then the result is nil.
+  (get keyword-sym lang-constant))
+
+
 (defvar c-in-literal-cache t)
 (defvar c-parsing-error nil)
 
@@ -171,12 +215,12 @@ the previous one if already at the beginning of one.  Only
 statements/declarations on the same level are considered, i.e. don't
 move into or out of sexps (not even normal expression parentheses).
 
-Stop at statement continuation tokens like \"else\", \"catch\", \"finally\"
-and the \"while\" in \"do ... while\" if the start point is within the
-continuation.  If starting at such a token, move to the corresponding
-statement start.  If at the beginning of a statement, move to the closest
-containing statement if there is any.  This might also stop at a continuation
-clause.
+Stop at statement continuation tokens like \"else\", \"catch\",
+\"finally\" and the \"while\" in \"do ... while\" if the start point
+is within the continuation.  If starting at such a token, move to the
+corresponding statement start.  If at the beginning of a statement,
+move to the closest containing statement if there is any.  This might
+also stop at a continuation clause.
 
 Labels are treated as separate statements if IGNORE-LABELS is non-nil.
 The function is not overly intelligent in telling labels from other
@@ -222,7 +266,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
   ;; the PDA.  Stop at the beginning of a statement when the stack (holding
   ;; nested statement info) is empty and the position has been moved.
   ;;
-  ;; The following variables constitue the PDA:
+  ;; The following variables constitute the PDA:
   ;;
   ;; sym:    This is either the "while"-like token (e.g. 'for) we've just
   ;;         scanned back over, 'boundary if we've just gone back over a
@@ -2935,35 +2979,6 @@ brace."
       (c-find-decl-prefix-search))))
 
 
-(defun c-syntactic-content (from to)
-  ;; Return the given region as a string where all syntactic
-  ;; whitespace is removed or, where necessary, replaced with a single
-  ;; space.
-  (save-excursion
-    (goto-char from)
-    (let* ((parts (list nil)) (tail parts) pos)
-      (while (re-search-forward c-syntactic-ws-start to t)
-	(goto-char (setq pos (match-beginning 0)))
-	(c-forward-syntactic-ws to)
-	(if (= (point) pos)
-	    (forward-char)
-	  (if (and (> pos from)
-		   (< (point) to)
-		   (looking-at "\\w\\|\\s_")
-		   (save-excursion
-		     (goto-char (1- pos))
-		     (looking-at "\\w\\|\\s_")))
-	      (progn
-		(setcdr tail (list (buffer-substring-no-properties from pos)
-				   " "))
-		(setq tail (cddr tail)))
-	    (setcdr tail (list (buffer-substring-no-properties from pos)))
-	    (setq tail (cdr tail)))
-	  (setq from (point))))
-      (setcdr tail (list (buffer-substring-no-properties from to)))
-      (apply 'concat (cdr parts)))))
-
-
 ;; Buffer local variable that contains an obarray with the types we've
 ;; found.  If a declaration is recognized somewhere we record the
 ;; fully qualified identifier in it to recognize it as a type
@@ -3067,6 +3082,76 @@ brace."
 (defmacro c-record-found-type (from to)
   `(setq c-record-found-types (cons (cons ,from ,to)
 				    c-record-found-types)))
+
+(defun c-forward-keyword-clause ()
+  ;; The point is assumed to be at the start of a token that is
+  ;; matched by the first submatch in the current match data.  If the
+  ;; token is a keyword, move over it and any following clauses
+  ;; associated with it, stopping at the next following token.  t is
+  ;; returned in that case, otherwise the point stays and nil is
+  ;; returned.  The kind of clauses that are recognized are those
+  ;; specified by `c-type-list-kwds', `c-colon-type-list-kwds',
+  ;; `c-paren-type-kwds' and `c-<>-arglist-kwds'.
+
+  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos)
+    (when kwd-sym
+      (goto-char (match-end 1))
+      (c-forward-syntactic-ws)
+      (setq safe-pos (point))
+
+      (cond
+       ((cond ((and (c-keyword-member kwd-sym 'c-type-list-kwds)
+		    (memq (c-forward-type) '(t found prefix)))
+	       ;; There's a type directly after a keyword in
+	       ;; `c-type-list-kwds'.
+	       t)
+	      ((and (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
+		    (looking-at c-colon-type-list-re)
+		    (progn
+		      (goto-char (match-end 0))
+		      (c-forward-syntactic-ws)
+		      (memq (c-forward-type) '(t found prefix))))
+	       ;; There's a type after the `c-colon-type-list-re'
+	       ;; match after a keyword in `c-colon-type-list-kwds'.
+	       t))
+
+	;; Move over a comma separated list of types, where each may
+	;; be prefixed by keywords.  Try to move over a type first to
+	;; not trip up on types that begin with a keyword.
+	(while (and (progn
+		      (c-forward-syntactic-ws)
+		      (setq safe-pos (point))
+		      (eq (char-after) ?,))
+		    (progn
+		      (forward-char)
+		      (c-forward-syntactic-ws)
+		      (or (memq (c-forward-type) '(t found prefix))
+			  (and (looking-at c-keywords-regexp)
+			       (c-forward-keyword-clause)))))))
+
+       ((and (c-keyword-member kwd-sym 'c-paren-type-kwds)
+	     (eq (char-after) ?\())
+	;; There's an open paren after a keyword in `c-paren-type-kwds'.
+
+	(when c-record-type-identifiers
+	  ;; Use `c-forward-type' on every identifier we can find
+	  ;; inside the paren, to record the types.
+	  (forward-char)
+	  (while (c-syntactic-re-search-forward
+		  c-symbol-start nil 'move t)
+	    (goto-char (match-beginning 0))
+	    (c-forward-type)))
+
+	(when (c-go-up-list-forward)
+	  (setq safe-pos (point))))
+
+       ((and (c-keyword-member kwd-sym 'c-<>-arglist-kwds)
+	     (eq (char-after) ?<)
+	     (c-forward-<>-arglist))
+	(setq safe-pos (point))))
+
+      (goto-char safe-pos)
+      t)))
 
 (defun c-forward-<>-arglist ()
   ;; The point is assumed to be at a '<'.  Try to treat it as the open
@@ -3455,10 +3540,10 @@ brace."
   ;; If the point is at the beginning of a type spec, move to the end
   ;; of it.  Return t if it is a known type, nil if it isn't (the
   ;; point isn't moved), 'prefix if it is a known prefix of a type
-  ;; (according to `c-type-prefix-kwds'), 'found if it's a type that
-  ;; matches one in `c-found-types', or 'maybe if it's an identfier
-  ;; that might be a type.  The point is assumed to be at the
-  ;; beginning of a token.
+  ;; (according to `c-primitive-type-prefix-kwds'), 'found if it's a
+  ;; type that matches one in `c-found-types', or 'maybe if it's an
+  ;; identfier that might be a type.  The point is assumed to be at
+  ;; the beginning of a token.
   ;;
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
@@ -3474,24 +3559,6 @@ brace."
 	(setq res 'prefix)))
 
     (cond
-     ((and c-opt-complex-type-key
-	   (looking-at c-opt-complex-type-key)
-	   (save-excursion
-	     (goto-char (match-end 1))
-	     (c-forward-syntactic-ws)
-	     (and (eq (char-after) ?\()
-		  (c-safe (c-forward-sexp 1) t)
-		  (setq pos (point)))))
-      ;; It's a complex type where the type name is followed by a
-      ;; parenthesis expression containing a type spec.
-      (if c-record-type-identifiers
-	  ;; Record all the symbols within the complex type.
-	  (while (c-syntactic-re-search-forward c-symbol-key pos 'move)
-	    (c-record-type-id (match-beginning 0) (match-end 0))
-	    (goto-char (match-end 0)))
-	(goto-char pos))
-      (setq res t))
-
      ((looking-at c-type-prefix-key)
       ;; Looking at a keyword that prefixes a type identifier,
       ;; e.g. "class".
@@ -3523,34 +3590,37 @@ brace."
 	(and (c-with-syntax-table c-identifier-syntax-table
 	       (looking-at c-known-type-key))
 	     (or (not id-end) (>= (match-end 1) id-end))))
-      ;; Looking at a known type identifier.  We check for a name
+      ;; Looking at a known type identifier.  We've checked for a name
       ;; first so that we don't go here if the known type match only
       ;; is a prefix of another name.
+
       (when c-record-type-identifiers
 	(c-record-type-id (match-beginning 1) (match-end 1)))
+
       (if (and c-opt-type-component-key
 	       (save-match-data
 		 (looking-at c-opt-type-component-key)))
 	  ;; There might be more keywords for the type.
 	  (let (pos)
-	    (goto-char (match-end 1))
+	    (c-forward-keyword-clause)
 	    (while (progn
 		     (setq pos (point))
-		     (c-forward-syntactic-ws)
 		     (looking-at c-opt-type-component-key))
 	      (when c-record-type-identifiers
 		(c-record-type-id (match-beginning 1) (match-end 1)))
-	      (goto-char (match-end 1)))
+	      (c-forward-keyword-clause))
 	    (if (looking-at c-primitive-type-key)
 		(progn
 		  (when c-record-type-identifiers
 		    (c-record-type-id (match-beginning 1) (match-end 1)))
-		  (goto-char (match-end 1))
+		  (c-forward-keyword-clause)
 		  (setq res t))
 	      (goto-char pos)
 	      (setq res 'prefix)))
-	(goto-char (match-end 1))
-	(setq res t)))
+	(unless (save-match-data (c-forward-keyword-clause))
+	  (goto-char (match-end 1)))
+	(setq res t))
+      (c-backward-syntactic-ws))
 
      (res2
       (cond ((eq res2 t)
