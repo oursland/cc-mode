@@ -617,11 +617,17 @@ comment."
     (if (and sentence-flag
 	     (or (nth 3 state)
 		 (nth 4 state)
-		 (looking-at (concat "[ \t]*" comment-start-skip))
-		 (save-excursion
-		   (skip-chars-backward " \t")
-		   (goto-char (- (point) 2))
-		   (looking-at "\\*/"))))
+		 ;; skipping forward into a comment?
+		 (and (> 0 count)
+		      (save-excursion
+			(skip-chars-forward " \t\n")
+			(or (eobp)
+			    (looking-at comment-start-skip))))
+		 (and (< 0 count)
+		      (save-excursion
+			(skip-chars-backward " \t\n")
+			(goto-char (- (point) 2))
+			(looking-at "\\*/")))))
 	(forward-sentence (- count))
       (while (> count 0)
 	(c-beginning-of-statement-1 lim)
