@@ -1872,7 +1872,9 @@ brace."
 	      (save-excursion
 		(while (and (= (c-backward-token-1 1 t lim) 0)
 			    (not (looking-at "[;{<,]"))))
-		(eq (char-after) ?,)))
+		(or (eq (char-after) ?,)
+		    (and (= (c-backward-token-1 1 nil lim) 0)
+			 (eq (char-after) ?<)))))
 	    (goto-char indent-point)
 	    (c-beginning-of-member-init-list lim)
 	    (cond
