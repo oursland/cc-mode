@@ -1076,12 +1076,13 @@ defun."
 	(c-save-buffer-state nil (c-forward-syntactic-ws))
 	t)
 
-    (catch 'exit
-      (while (> arg 0)
-	;; Note: Partial code duplication in `c-end-of-defun' and
-	;; `c-declaration-limits'.
+    (c-save-buffer-state (paren-state lim pos)
+      (catch 'exit
+	(while (> arg 0)
+	  ;; Note: Partial code duplication in `c-end-of-defun' and
+	  ;; `c-declaration-limits'.
 
-	(c-save-buffer-state ((paren-state (c-parse-state)) lim pos)
+	  (setq paren-state (c-parse-state))
 	  (unless (c-safe
 		    (goto-char (c-least-enclosing-brace paren-state))
 		    ;; If we moved to the outermost enclosing paren
@@ -1170,12 +1171,13 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 	(c-save-buffer-state nil (c-backward-syntactic-ws))
 	t)
 
-    (catch 'exit
-      (while (> arg 0)
-	;; Note: Partial code duplication in `c-beginning-of-defun'
-	;; and `c-declaration-limits'.
+    (c-save-buffer-state (paren-state lim pos)
+      (catch 'exit
+	(while (> arg 0)
+	  ;; Note: Partial code duplication in `c-beginning-of-defun'
+	  ;; and `c-declaration-limits'.
 
-	(c-save-buffer-state ((paren-state (c-parse-state)) lim pos)
+	  (setq paren-state (c-parse-state))
 	  (unless (c-safe
 		    (goto-char (c-least-enclosing-brace paren-state))
 		    ;; If we moved to the outermost enclosing paren
