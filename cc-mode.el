@@ -449,17 +449,27 @@ This does not load the font-lock package.  Use after
   (make-local-hook 'font-lock-mode-hook)
   (add-hook 'font-lock-mode-hook 'c-after-font-lock-init))
 
-(defun c-common-init (mode)
+(defun c-common-init (&optional mode)
   "Common initialization for all CC Mode modes.
 In addition to the work done by `c-basic-common-init' and
 `c-font-lock-init', this function sets up various other things as
 customary in CC Mode modes but which aren't strictly necessary for CC
 Mode to operate correctly.
-  
+
+MODE is the symbol for the mode to initialize, like 'c-mode.  See
+`c-basic-common-init' for details.  It's only optional to be
+compatible with old code; callers should always specify it.
+
 This function does not do any hidden buffer changes."
 
+  (unless mode
+    ;; Called from an old third party package.  The fallback is to initialize for C.
+    (c-init-c-language-vars))
+
   (c-basic-common-init mode c-default-style)
-  (c-font-lock-init)
+  (when mode
+    ;; Only initialize font locking if we aren't called from an old package.
+    (c-font-lock-init))
 
   (make-local-variable 'require-final-newline)
   (make-local-variable 'outline-regexp)
@@ -535,6 +545,9 @@ Note that the style variables are always made local to the buffer."
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.lex\\'" . c-mode) t)
 
+(defun c-init-c-language-vars ()
+  (c-init-language-vars c-mode))
+
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
@@ -559,7 +572,7 @@ Key bindings:
 	local-abbrev-table c-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map c-mode-map)
-  (c-init-language-vars c-mode)
+  (c-init-c-language-vars)
   (c-common-init 'c-mode)
   (easy-menu-add c-c-menu)
   (cc-imenu-init cc-imenu-c-generic-expression)
