@@ -99,7 +99,7 @@
 	   (modify-syntax-entry ?a ". 12345678" table)
 	   (cond
 	    ;; XEmacs 19
-	    ((vectorp table) (setq entry (aref table ?a)))
+	    ((arrayp table) (setq entry (aref table ?a)))
 	    ;; XEmacs 20
 	    ((fboundp 'get-char-table) (setq entry (get-char-table ?a table)))
 	    ;; Emacs 19
