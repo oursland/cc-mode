@@ -1,6 +1,6 @@
-README for cc-mode.el 4.85
+README for cc-mode Version 4
 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-$Date: 1994-12-02 23:50:04 $
+$Date: 1995-01-11 17:30:07 $
 
 Note, you can browse this file either as a flat, multiple page file,
 or as an Emacs outline.  As a flat file, just use "C-x ]" to move
