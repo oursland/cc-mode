@@ -1,5 +1,5 @@
 ((topmost-intro . 1))
-((inher-intro . 18))
+((inher-intro . 1))
 ((inher-cont . 11))
 ((class-open . 1))
 ((inclass . 41) (access-label . 50))

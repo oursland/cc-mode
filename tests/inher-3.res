@@ -1,3 +1,3 @@
 ((topmost-intro . 1))
 ((inher-intro . 1))
-((inher-intro . 19))
+((inher-intro . 1))
