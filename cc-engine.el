@@ -1514,8 +1514,8 @@ This function does not do any hidden buffer changes."
       (skip-syntax-backward "w_" back-limit)
     (let ((start (point)))
       (when (< (skip-syntax-backward ".()" back-limit) 0)
-	(looking-at c-nonsymbol-token-regexp)
-	(while (let ((pos (or (match-end 0)
+	(while (let ((pos (or (and (looking-at c-nonsymbol-token-regexp)
+				   (match-end 0))
 			      ;; `c-nonsymbol-token-regexp' should always match
 			      ;; since we've skipped backward over punctuator
 			      ;; or paren syntax, but consume one char in case
@@ -1524,8 +1524,7 @@ This function does not do any hidden buffer changes."
 			      (1+ (point)))))
 		 (if (<= pos start)
 		     (goto-char pos))
-		 (< pos start))
-	  (looking-at c-nonsymbol-token-regexp))))))
+		 (< pos start)))))))
 
 (defsubst c-end-of-current-token (&optional back-limit)
   ;; Move to the end of the current token.  Do not move if not in the
