@@ -16,7 +16,7 @@ improve the responsiveness to bugs.
 <p>The current release is available in several forms.  You can
 download the entire source distribution, including the manual in
 texinfo format as an approximately <a
-href="http://download.sourceforge.net/cc-mode/cc-mode-5.30.tar.gz">300KB
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.30.3.tar.gz">300KB
 gzip'd tarball</a>.  You can browse the <a href="src/">individual
 files</a> too.
 
