@@ -1796,7 +1796,7 @@ command to conveniently insert and align the necessary backslashes."
 	 (comment-start-regexp (if (eq lit-type 'c++)
 				   prefix-regexp
 				 comment-start-skip))
-	 prefix-line comment-prefix res)
+	 prefix-line comment-prefix res comment-text-end)
     (cond
      (fill-prefix
       (setq res (cons fill-prefix
@@ -1815,7 +1815,8 @@ command to conveniently insert and align the necessary backslashes."
      ((eq lit-type 'c++)
       (save-excursion
 	;; Set fallback for comment-prefix if none is found.
-	(setq comment-prefix "// ")
+	(setq comment-prefix "// "
+	      comment-text-end (cdr lit-limits))
 	(beginning-of-line)
 	(if (> (point) (car lit-limits))
 	    ;; The current line is not the comment starter, so the
@@ -1866,6 +1867,7 @@ command to conveniently insert and align the necessary backslashes."
 		  )))))
      (t
       (save-excursion
+	(setq comment-text-end (- (cdr lit-limits) 2))
 	(beginning-of-line)
 	(if (and (> (point) (car lit-limits))
 		 (not (and (looking-at "[ \t]*\\*/")
@@ -1950,7 +1952,7 @@ command to conveniently insert and align the necessary backslashes."
 		 (test-line
 		  (lambda ()
 		    (when (and (looking-at prefix-regexp)
-			       (< (match-end 0) (1- (cdr lit-limits))))
+			       (< (match-end 0) comment-text-end))
 		      (unless fb-string
 			(setq fb-string (buffer-substring-no-properties
 					 (match-beginning 0) (match-end 0))
