@@ -498,7 +498,6 @@ This function does various newline cleanups based on the value of
 	(when (save-excursion
 		(skip-chars-backward " \t")
 		(not (bolp)))
-	  (setq delete-temp-newline (point))
 	  (c-newline-and-indent)
 	  ;; Set markers around the newline and indention inserted
 	  ;; above.  We insert the start marker here and not before
@@ -510,7 +509,9 @@ This function does various newline cleanups based on the value of
 	  ;; this case.  So the marker that we put after "else" would
 	  ;; end up before it.
 	  (setq delete-temp-newline
-		(cons (copy-marker delete-temp-newline t)
+		(cons (save-excursion
+			(c-backward-syntactic-ws)
+			(copy-marker (point) t))
 		      (point-marker))))
 	(unwind-protect
 	    (progn
