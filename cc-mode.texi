@@ -2299,10 +2299,11 @@ More detailed descriptions follow below.
 @item
 @code{inline-close} --- brace that closes an in-class inline method
 @item
-@code{func-decl-cont} --- the nether region between a function
-declaration's argument list and the defun opening brace.  In C++ and
-Java, this can include the @code{throws} clauses of a method
-declaration.
+@code{func-decl-cont} --- The region between a function definition's
+argument list and the function opening brace (excluding K&R argument
+declarations).  In C, you cannot put anything but whitespace and comments
+between them; in C++ and Java, @code{throws} declarations and other
+things can appear in this context.
 @item
 @code{knr-argdecl-intro} --- first line of a K&R C argument declaration
 @item
