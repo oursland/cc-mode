@@ -3,14 +3,15 @@ Barry A. Warsaw <cc-mode-help@python.org>
 
 Please read the cc-mode.texi manual for details on using CC Mode.
 
-As of this writing (13-May-1997), CC Mode version 5 currently works
+As of this writing (23-May-1997), CC Mode version 5 currently works
 out of the box only with XEmacs 19.15 and XEmacs 20.0.  Emacs 19.34 is
 missing some stuff that CC Mode requires, and while Emacs 19.35 has
 not yet been release, it is expected to work with CC Mode.  Check the
-CC Mode web pages <http://www.python.org/ftp/emacs/> for details.
+CC Mode web pages <http://www.python.org/~bwarsaw/betas/index.html>
+for details.
 
 Preformatted versions of the manual in DVI, PostScript, and Info, are
-all available at <http://www.python.org/ftp/emacs/>.
+all available at <http://www.python.org/~bwarsaw/betas/index.html>.
 
 To build the manual yourself, you will need the latest Texinfo release
 (currently Texinfo 3.9).  Specifically, you must make sure that your
