@@ -3020,7 +3020,7 @@ at the variable @code{cc-lobotomy-pith-list} for details.
 @kindex ESC C-q
 @kindex ESC C-u
 @kindex RET
-@kindex LFD
+@kindex C-j
 @findex newline-and-indent
 @quotation
 
@@ -3048,7 +3048,7 @@ To re-indent the entire function hit @kbd{C-c C-q}.
 where the new text should go after inserting the newline?}
 
 @strong{A.} Emacs' convention is that @key{RET} just adds a newline,
-and that @key{LFD} adds a newline and indents it.  You can make
+and that @key{C-j} adds a newline and indents it.  You can make
 @key{RET} do this too by adding this to your
 @code{c-mode-common-hook} (see the sample @file{.emacs} file
 @ref{Sample .emacs File}):
