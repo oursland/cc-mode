@@ -231,6 +231,8 @@ For use with the variable `java-mode-hook'."
 	outline-level 'c-outline-level
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *"
+	comment-multi-line nil
+	comment-line-break-function 'c-comment-line-break-function
 	adaptive-fill-regexp nil)
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
