@@ -1285,32 +1285,37 @@ argument, move backward.
 @item M-a (c-beginning-of-statement)
 Move point to the beginning of the innermost C statement.  If point is
 already at the beginning of a statement, it moves to the beginning of
-the preceding statement.  With prefix argument @var{n}, move back
-@var{n} @minus{} 1 statements.
+the closest preceding statement, even if that means moving into a block
+(you can use @kbd{M-C-b} to move over a balanced block).  With prefix
+argument @var{n}, move back @var{n} @minus{} 1 statements.
 
-If point is within a string or comment, or at the end of a comment, this
-command moves by sentences instead of statements.
+If point is within a comment, or next to a comment, this command moves
+by sentences instead of statements.
 
 When called from a program, this function takes three optional
-arguments: the numeric prefix argument, a buffer position limit (don't
-move back before that place), and a flag to indicate whether movement
-should be by statements (if @code{t}) or sentence (if non-@code{nil}).
+arguments: the numeric prefix argument, a buffer position limit (used as
+a starting point for syntactic parsing and as a limit for backward
+movement), and a flag to indicate whether movement should be by
+statements (if @code{nil}) or sentence (if non-@code{nil}).
 
 @kindex ESC e
 @findex c-end-of-statement
 @findex end-of-statement (c-)
 @item M-e (c-end-of-statement)
 Move point to the end of the innermost C statement.  If point is at the
-end of a statement, move to the end of the next statement.  With prefix
-argument @var{n}, move forward @var{n} @minus{} 1 statements.
+end of a statement, move to the end of the next statement, even if it's
+inside a nested block (use @kbd{M-C-f} to move to the other side of the
+block).  With prefix argument @var{n}, move forward @var{n} @minus{} 1
+statements.
 
-If point is within a string or comment, or at the end of a comment, this
-command moves by sentences instead of statements.
+If point is within a comment, or next to a comment, this command moves
+by sentences instead of statements.
 
 When called from a program, this function takes three optional
-arguments: the numeric prefix argument, a buffer position limit (don't
-move back before that place), and a flag to indicate whether movement
-should be by statements (if @code{t}) or sentence (if non-@code{nil}).
+arguments: the numeric prefix argument, a buffer position limit (used as
+a starting point for syntactic parsing and as a limit for backward
+movement), and a flag to indicate whether movement should be by
+statements (if @code{nil}) or sentence (if non-@code{nil}).
 
 @findex c-forward-into-nomenclature
 @findex forward-into-nomenclature (c-)
