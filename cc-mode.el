@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.319 $
-;; Last Modified:   $Date: 1996-09-30 23:07:39 $
+;; Version:         $Revision: 4.320 $
+;; Last Modified:   $Date: 1996-10-04 15:58:53 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2379,6 +2379,7 @@ VALUE.  This function also sets the current style to STYLE using
       (setq c-style-alist (cons (cons style descrip) c-style-alist))))
   (and set-p (c-set-style style)))
 
+
 (defun c-fill-paragraph (&optional arg)
   "Like \\[fill-paragraph] but handles C and C++ style comments.
 If any of the current line is a comment or within a comment,
@@ -5002,7 +5003,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.319 $"
+(defconst c-version "$Revision: 4.320 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5138,15 +5139,11 @@ definition and conveniently use this command."
 			     c-block-comments-indent-p
 			     c-cleanup-list
 			     c-comment-only-line-offset
-			     c-echo-syntactic-information-p
 			     c-electric-pound-behavior
 			     c-hanging-braces-alist
 			     c-hanging-colons-alist
 			     c-hanging-comment-ender-p
 			     c-offsets-alist
-			     c-strict-syntax-p
-			     c-tab-always-indent
-			     c-inhibit-startup-warnings-p
 			     )))
       ;; the default style is now GNU.  This can be overridden in
       ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
