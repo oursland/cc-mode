@@ -1939,7 +1939,8 @@ Keywords are recognized and not considered identifiers."
 (defun c-add-stmt-syntax (syntax-symbol
 			  stop-at-boi-only
 			  containing-sexp
-			  state)
+			  state
+			  &optional at-block-start)
   ;; Do the generic processing to anchor the given syntax symbol on
   ;; the preceding statement: Skip over any labels and containing
   ;; statements on the same line, and then search backward until we
@@ -1953,6 +1954,11 @@ Keywords are recognized and not considered identifiers."
   ;;
   ;; If STOP-AT-BOI-ONLY is nil, we might stop in the middle of the
   ;; line if another statement precedes the current one on this line.
+  ;;
+  ;; If AT-BLOCK-START is non-nil, point is taken to be at the
+  ;; beginning of a block or brace list, which then might be nested
+  ;; inside an expression.  If AT-BLOCK-START is nil, this is found
+  ;; out by checking whether the character at point is "{" or not.
   (if (= (point) (c-point 'boi))
       ;; This is by far the most common case, so let's give it special
       ;; treatment.
@@ -1962,8 +1968,8 @@ Keywords are recognized and not considered identifiers."
 	   (syms (list syntax-symbol))
 	   (syms-tail syms)
 	   (boi (c-point 'boi))
-	   step-type step-tmp at-comment add-inexpr-stmt
-	   (prev-paren (char-after)))
+	   (prev-paren (if at-block-start ?{ (char-after)))
+	   step-type step-tmp at-comment add-inexpr-stmt)
 
       ;; Begin by skipping any labels and containing statements that
       ;; are on the same line.
@@ -3009,11 +3015,15 @@ Keywords are recognized and not considered identifiers."
 			  (eq (1+ (point)) (cdr (car special-brace-list)))))))
 	      ;; Normal brace list check.
 	      (and (eq char-after-ip ?})
-		   (c-safe (progn (forward-char 1)
-				  (c-backward-sexp 1)
+		   (c-safe (progn (goto-char (c-up-list-backward (point)))
 				  t))
 		   (= (point) containing-sexp)))
-	    (c-add-syntax 'brace-list-close (c-point 'boi)))
+	    (if (eq (point) (c-point 'boi))
+		(c-add-syntax 'brace-list-close (point))
+	      (setq lim (c-most-enclosing-brace fullstate (point)))
+	      (c-beginning-of-statement-1 lim)
+	      (c-add-stmt-syntax 'brace-list-close t lim
+				 (c-whack-state-after (point) state) t)))
 	   (t
 	    ;; Prepare for the rest of the cases below by going to the
 	    ;; token following the opening brace
@@ -3030,9 +3040,15 @@ Keywords are recognized and not considered identifiers."
 	    (cond
 	     ;; CASE 9C: we're looking at the first line in a brace-list
 	     ((= (point) indent-point)
-	      (goto-char containing-sexp)
-	      (c-add-syntax 'brace-list-intro (c-point 'boi))
-	      )
+	      (if (consp special-brace-list)
+		  (goto-char (car (car special-brace-list)))
+		(goto-char containing-sexp))
+	      (if (eq (point) (c-point 'boi))
+		  (c-add-syntax 'brace-list-intro (point))
+		(setq lim (c-most-enclosing-brace fullstate (point)))
+		(c-beginning-of-statement-1 lim)
+		(c-add-stmt-syntax 'brace-list-intro t lim
+				   (c-whack-state-after (point) state) t)))
 	     ;; CASE 9D: this is just a later brace-list-entry or
 	     ;; brace-entry-open
 	     (t (if (or (eq char-after-ip ?{)
