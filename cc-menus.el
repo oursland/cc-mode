@@ -150,8 +150,8 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 (defvar cc-imenu-java-generic-expression
   `((nil
      ,(concat
-       "[A-Za-z][\]\[.A-Za-z0-9_]+[ \t\n]+" ; type spec
-       "\\([A-Za-z][A-Za-z0-9_]+\\)"	; method name
+       "[A-Za-z_][\]\[.A-Za-z0-9_]+[ \t\n\r]+" ; type spec
+       "\\([A-Za-z_][A-Za-z0-9_]+\\)"	; method name
        "[ \t\n\r]*"
        ;; An argument list that is either empty or contains at least
        ;; two identifiers with only space between them.  This avoids
@@ -160,7 +160,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 	       "\\([\]\[.,A-Za-z0-9_]+"
 	       "[ \t\n\r]+"
 	       "[\]\[.,A-Za-z0-9_]"
-	       "[^\)]*"
+	       "[\]\[.,A-Za-z0-9_ \t\n\r]*"
 	       "\\)?)")
        "[.,A-Za-z0-9_ \t\n\r]*"
        "{"
