@@ -1,3 +1,44 @@
+Fri Nov 17 22:01:36 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+
+	* cc-mode.el (c-guess-basic-offset, c-beginning-of-statement-1):
+	Do not check for c-conditional-key when skipping backwards over
+	statements that look sort of like conditionals.  This makes
+	statements following nested functions indent correctly.  CASE 9B.3
+	(unknown catchall) now gets triggered by the brace that opens a
+	nested function.  These will get indented moderately correctly,
+	but they are not assigned the correct syntax.  I'm not sure
+	exactly what they *should* be assigned.  Also, this changes the
+	relpos for top-level defun-open braces, but that will be very hard
+	to fix, and it may break backward compatibility.
+
+	* cc-mode.el (c-guess-basic-offset):
+	CASE 5H, inclass relpos should be relative to
+	boi of the open brace, not the beginning of the class keyword.
+
+Thu Nov 16 00:20:59 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+
+	* cc-mode.el (c-guess-basic-syntax):
+	CASE 5D.5, watch out for c-access-key set to
+	nil, as in this case (in c-mode):
+
+	typedef struct {
+	    unsigned count:24,
+	        age:6,
+	        dirty:1,
+	        reserved:1,
+	        };
+
+Wed Nov 15 23:38:05 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+
+	* cc-mode.el (c-beginning-of-statement, c-end-of-statement):
+	Watch out for
+	c-end-of-statement being called interactively.
+
+Mon Aug 28 20:39:43 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+
+	* cc-guess.el (cc-guess-region):
+	wrap relpos calculation in a save-excursion.
+
 Mon Aug 28 16:57:26 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 
 	* Version 4.241 released.
