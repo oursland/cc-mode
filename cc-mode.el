@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.369 $
-;; Last Modified:   $Date: 1997-02-13 21:39:38 $
+;; Version:         $Revision: 4.370 $
+;; Last Modified:   $Date: 1997-02-14 15:32:32 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2748,7 +2748,7 @@ comment."
 			    (setq saved (point))
 			    t))
 	     (progn (c-backward-syntactic-ws lim)
-		    (memq (preceding-char) '(?\; ?{ ?})))
+		    (memq (preceding-char) '(?\; ?{ ?} ?:)))
 	     )
 	(setq last-begin saved)
       (goto-char last-begin)
@@ -5129,7 +5129,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.369 $"
+(defconst c-version "$Revision: 4.370 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
