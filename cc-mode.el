@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.351 $
-;; Last Modified:   $Date: 1994-05-31 21:53:14 $
+;; Version:         $Revision: 3.352 $
+;; Last Modified:   $Date: 1994-05-31 22:21:35 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-31 21:53:14 $|$Revision: 3.351 $|
+;; |$Date: 1994-05-31 22:21:35 $|$Revision: 3.352 $|
 
 ;;; Code:
 
@@ -834,7 +834,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.351 $
+cc-mode Revision: $Revision: 3.352 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -867,7 +867,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.351 $
+cc-mode Revision: $Revision: 3.352 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2958,12 +2958,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (cond
 	   ;; CASE 5A: we are looking at the first argument in an empty
 	   ;; argument list
-	   ((= char-before-ip ?\()
+	   ((memq char-before-ip '(?\( ?\[))
 	    (goto-char containing-sexp)
 	    (c-add-semantics 'arglist-intro (c-point 'boi)))
 	   ;; CASE 5B: we are looking at the arglist closing paren
 	   ((and (/= char-before-ip ?,)
-		 (= char-after-ip ?\)))
+		 (memq char-after-ip '(?\) ?\])))
 	    (goto-char containing-sexp)
 	    (c-add-semantics 'arglist-close (c-point 'boi)))
 	   ;; CASE 5C: we are inside a conditional test clause. treat
@@ -2988,7 +2988,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (not (eolp)))
 		 (save-excursion
 		   (c-beginning-of-statement)
-		   (skip-chars-backward " \t(")
+		   (skip-chars-backward " \t([")
 		   (<= (point) containing-sexp)))
 	    (goto-char containing-sexp)
 	    (c-add-semantics 'arglist-cont-nonempty (c-point 'boi)))
@@ -3608,7 +3608,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.351 $"
+(defconst c-version "$Revision: 3.352 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
