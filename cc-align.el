@@ -405,6 +405,29 @@ Works with: comment-intro."
 	    -1000))			;jam it against the left side
        ))))
 
+(defun c-lineup-knr-region-comment (langelem)
+  "Line up a comment in the \"K&R region\" with the declaration.
+That is the region between the function or class header and the
+beginning of the block.  E.g:
+
+int main()
+/* This is the main function. */  <- c-lineup-knr-region-comment
+{
+  return 0;
+}
+
+Return nil if called in any other situation, to be useful in list
+expressions.
+
+Works with: comment-intro."
+  (when (or (assq 'topmost-intro-cont c-syntactic-context)
+	    (assq 'func-decl-cont c-syntactic-context)
+	    (assq 'knr-argdecl-intro c-syntactic-context)
+	    (assq 'lambda-intro-cont c-syntactic-context))
+    (save-excursion
+      (c-beginning-of-statement-1)
+      (vector (current-column)))))
+
 (defun c-lineup-runin-statements (langelem)
   "Line up statements when the first statement is on the same line as
 the block opening brace.  E.g:
@@ -740,7 +763,7 @@ similarly \"z\" under \"y\".
 
 This is done only in an \"asm\" or \"__asm__\" block, and only to those
 lines mentioned.  Anywhere else `nil' is returned.  The usual arrangement is
-to have this routine as an extra feature at the start of arglist lineups, eg.
+to have this routine as an extra feature at the start of arglist lineups, e.g.
 
     (c-lineup-gcc-asm-reg c-lineup-arglist)
 
