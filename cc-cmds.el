@@ -644,9 +644,8 @@ will not be re-indented."
 (defun c-electric-paren (arg)
   "Insert a parenthesis.
 
-If the auto-newline feature is turned on, as evidenced by the \"/a\"
-or \"/ah\" string on the mode line, some newline cleanups are done if
-appropriate; see the variable `c-cleanup-list'.
+Some newline cleanups are done if appropriate; see the variable
+`c-cleanup-list'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the
@@ -656,7 +655,6 @@ parenthesis, the parenthesis is inserted inside a literal, or
   (let (;; shut this up
 	(c-echo-syntactic-information-p nil))
     (if (or arg
-	    (not (looking-at "[ \t]*$"))
 	    (c-in-literal (c-point 'bod)))
 	(self-insert-command (prefix-numeric-value arg))
       ;; do some special stuff with the character
@@ -666,40 +664,41 @@ parenthesis, the parenthesis is inserted inside a literal, or
 	     (old-blink-paren blink-paren-function)
 	     blink-paren-function)
 	(self-insert-command (prefix-numeric-value arg))
-	(if c-syntactic-indentation
-	    (c-indent-line))
-	(when c-auto-newline
-	  ;; Do all appropriate clean ups
-	  (let ((here (point))
-		(pos (- (point-max) (point)))
-		mbeg mend)
-	    ;; clean up brace-elseif-brace
-	    (if (and (memq 'brace-elseif-brace c-cleanup-list)
-		     (eq last-command-char ?\()
-		     (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*("
-					 nil t)
-		     (save-excursion
-		       (setq mbeg (match-beginning 0)
-			     mend (match-end 0))
-		       (= mend here))
-		     (not (c-in-literal)))
-		(progn
-		  (delete-region mbeg mend)
-		  (insert "} else if (")))
-	    ;; clean up brace-catch-brace
-	    (if (and (memq 'brace-catch-brace c-cleanup-list)
-		     (eq last-command-char ?\()
-		     (re-search-backward "}[ \t\n]*catch[ \t\n]*(" nil t)
-		     (save-excursion
-		       (setq mbeg (match-beginning 0)
-			     mend (match-end 0))
-		       (= mend here))
-		     (not (c-in-literal)))
-		(progn
-		  (delete-region mbeg mend)
-		  (insert "} catch (")))
-	    (goto-char (- (point-max) pos))
-	    ))
+	(when (looking-at "[ \t]*$")
+	  (if c-syntactic-indentation
+	      (c-indent-line))
+	  (when c-auto-newline
+	    ;; Do all appropriate clean ups
+	    (let ((here (point))
+		  (pos (- (point-max) (point)))
+		  mbeg mend)
+	      ;; clean up brace-elseif-brace
+	      (if (and (memq 'brace-elseif-brace c-cleanup-list)
+		       (eq last-command-char ?\()
+		       (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*("
+					   nil t)
+		       (save-excursion
+			 (setq mbeg (match-beginning 0)
+			       mend (match-end 0))
+			 (= mend here))
+		       (not (c-in-literal)))
+		  (progn
+		    (delete-region mbeg mend)
+		    (insert "} else if (")))
+	      ;; clean up brace-catch-brace
+	      (if (and (memq 'brace-catch-brace c-cleanup-list)
+		       (eq last-command-char ?\()
+		       (re-search-backward "}[ \t\n]*catch[ \t\n]*(" nil t)
+		       (save-excursion
+			 (setq mbeg (match-beginning 0)
+			       mend (match-end 0))
+			 (= mend here))
+		       (not (c-in-literal)))
+		  (progn
+		    (delete-region mbeg mend)
+		    (insert "} catch (")))
+	      (goto-char (- (point-max) pos))
+	      )))
 	(let (beg (end (1- (point))))
 	  (cond ((and (memq 'space-before-funcall c-cleanup-list)
 		      (eq last-command-char ?\()
