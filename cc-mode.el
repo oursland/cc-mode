@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-10 16:50:46 $
-;; Version:         $Revision: 2.145 $
+;; Last Modified:   $Date: 1992-07-10 17:10:19 $
+;; Version:         $Revision: 2.146 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-10 16:50:46 $|$Revision: 2.145 $|
+;; |$Date: 1992-07-10 17:10:19 $|$Revision: 2.146 $|
 
 
 ;; ======================================================================
@@ -251,7 +251,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.145 $
+  "Major mode for editing C++ code.  $Revision: 2.146 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1443,9 +1443,16 @@ BOD is the beginning of the C++ definition."
 				      ;; looking at a blank line, indent
 				      ;; next line to zero
 				      0
-				    (- (current-indentation)
-				       c++-class-member-indent)
-				    )))))))
+				    ;; are we looking at a member init
+				    ;; continuation line?
+				    (if (save-excursion
+					  (end-of-line)
+					  (c++-backward-over-syntactic-ws)
+					  (= (preceding-char) ?,))
+					(current-indentation)
+				      (- (current-indentation)
+					 c++-class-member-indent)
+				      ))))))))
 		      ))))))
 	    ((/= (char-after containing-sexp) ?{)
 	     ;; line is expression, not statement:
@@ -1942,7 +1949,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.145 $"
+(defconst c++-version "$Revision: 2.146 $"
   "c++-mode version number.")
 
 (defun c++-version ()
