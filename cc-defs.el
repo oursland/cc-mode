@@ -77,7 +77,6 @@
 (cc-bytecomp-defvar mark-active)	; Emacs
 (cc-bytecomp-defvar deactivate-mark)	; Emacs
 (cc-bytecomp-defvar inhibit-point-motion-hooks) ; Emacs
-(cc-bytecomp-defun scan-lists)		; 5 args in XEmacs, 3 in Emacs
 (cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
 (cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
 (cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
@@ -398,6 +397,14 @@ This function does not do any hidden buffer changes."
   (or count (setq count 1))
   `(c-forward-sexp ,(if (numberp count) (- count) `(- ,count))))
 
+(defmacro c-safe-scan-lists (from count depth)
+  "Like `scan-lists' but returns nil instead of signalling errors.
+
+This function does not do any hidden buffer changes."
+  (if (featurep 'xemacs)
+      `(scan-lists ,from ,count ,depth nil t)
+    `(c-safe (scan-lists ,from ,count ,depth))))
+
 
 ;; Wrappers for common scan-lists cases, mainly because it's almost
 ;; impossible to get a feel for how that function works.
@@ -407,28 +414,28 @@ This function does not do any hidden buffer changes."
 or nil if no such position exists.  The point is used if POS is left out.
 
 This function does not do any hidden buffer changes."
-  `(c-safe (scan-lists ,(or pos `(point)) 1 1)))
+  `(c-safe-scan-lists ,(or pos `(point)) 1 1))
 
 (defmacro c-up-list-backward (&optional pos)
   "Return the position of the start of the list sexp containing POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
 This function does not do any hidden buffer changes."
-  `(c-safe (scan-lists ,(or pos `(point)) -1 1)))
+  `(c-safe-scan-lists ,(or pos `(point)) -1 1))
 
 (defmacro c-down-list-forward (&optional pos)
   "Return the first position inside the first list sexp after POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
 This function does not do any hidden buffer changes."
-  `(c-safe (scan-lists ,(or pos `(point)) 1 -1)))
+  `(c-safe-scan-lists ,(or pos `(point)) 1 -1))
 
 (defmacro c-down-list-backward (&optional pos)
   "Return the last position inside the last list sexp before POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
 This function does not do any hidden buffer changes."
-  `(c-safe (scan-lists ,(or pos `(point)) -1 -1)))
+  `(c-safe-scan-lists ,(or pos `(point)) -1 -1))
 
 (defmacro c-go-up-list-forward (&optional pos)
   "Move the point to the first position after the list sexp containing POS,
@@ -463,6 +470,59 @@ This function does not do any hidden buffer changes."
   `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 -1)) t))
 
 
+(defmacro c-beginning-of-defun-1 ()
+  ;; Wrapper around beginning-of-defun.
+  ;;
+  ;; NOTE: This function should contain the only explicit use of
+  ;; beginning-of-defun in CC Mode.  Eventually something better than
+  ;; b-o-d will be available and this should be the only place the
+  ;; code needs to change.  Everything else should use
+  ;; (c-beginning-of-defun-1)
+  ;;
+  ;; This is really a bit too large to be a macro but that isn't a
+  ;; problem as long as it only is used in one place in
+  ;; `c-parse-state'.
+  ;;
+  ;; This function does not do any hidden buffer changes.
+
+  `(progn
+     (if (and ,(cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
+	      c-enable-xemacs-performance-kludge-p)
+	 ,(when (cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
+	    ;; XEmacs only.  This can improve the performance of
+	    ;; c-parse-state to between 3 and 60 times faster when
+	    ;; braces are hung.  It can also degrade performance by
+	    ;; about as much when braces are not hung.
+	    '(let (pos)
+	       (while (not pos)
+		 (save-restriction
+		   (widen)
+		   (setq pos (c-safe-scan-lists
+			      (point) -1 (buffer-syntactic-context-depth))))
+		 (cond
+		  ((bobp) (setq pos (point-min)))
+		  ((not pos)
+		   (let ((distance (skip-chars-backward "^{")))
+		     ;; unbalanced parenthesis, while illegal C code,
+		     ;; shouldn't cause an infloop!  See unbal.c
+		     (when (zerop distance)
+		       ;; Punt!
+		       (beginning-of-defun)
+		       (setq pos (point)))))
+		  ((= pos 0))
+		  ((not (eq (char-after pos) ?{))
+		   (goto-char pos)
+		   (setq pos nil))
+		  ))
+	       (goto-char pos)))
+       ;; Emacs, which doesn't have buffer-syntactic-context-depth
+       (beginning-of-defun))
+     ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
+     ;; open brace.
+     (and defun-prompt-regexp
+	  (looking-at defun-prompt-regexp)
+	  (goto-char (match-end 0)))))
+
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
@@ -734,56 +794,6 @@ This function does not do any hidden buffer changes."
 ;; bugs where macros are defined too late.  These bugs often only show
 ;; when the files are compiled in a certain order within the same
 ;; session.
-
-(defmacro c-beginning-of-defun-1 ()
-  ;; Wrapper around beginning-of-defun.
-  ;;
-  ;; NOTE: This function should contain the only explicit use of
-  ;; beginning-of-defun in CC Mode.  Eventually something better than
-  ;; b-o-d will be available and this should be the only place the
-  ;; code needs to change.  Everything else should use
-  ;; (c-beginning-of-defun-1)
-  ;;
-  ;; This function does not do any hidden buffer changes.
-
-  `(progn
-     (if (and ,(cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
-	      c-enable-xemacs-performance-kludge-p)
-	 ,(when (cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
-	    ;; XEmacs only.  This can improve the performance of
-	    ;; c-parse-state to between 3 and 60 times faster when
-	    ;; braces are hung.  It can also degrade performance by
-	    ;; about as much when braces are not hung.
-	    '(let (pos)
-	       (while (not pos)
-		 (save-restriction
-		   (widen)
-		   (setq pos (scan-lists (point) -1
-					 (buffer-syntactic-context-depth)
-					 nil t)))
-		 (cond
-		  ((bobp) (setq pos (point-min)))
-		  ((not pos)
-		   (let ((distance (skip-chars-backward "^{")))
-		     ;; unbalanced parenthesis, while illegal C code,
-		     ;; shouldn't cause an infloop!  See unbal.c
-		     (when (zerop distance)
-		       ;; Punt!
-		       (beginning-of-defun)
-		       (setq pos (point)))))
-		  ((= pos 0))
-		  ((not (eq (char-after pos) ?{))
-		   (goto-char pos)
-		   (setq pos nil))
-		  ))
-	       (goto-char pos)))
-       ;; Emacs, which doesn't have buffer-syntactic-context-depth
-       (beginning-of-defun))
-     ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
-     ;; open brace.
-     (and defun-prompt-regexp
-	  (looking-at defun-prompt-regexp)
-	  (goto-char (match-end 0)))))
 
 (defsubst c-end-of-defun-1 ()
   ;; Replacement for end-of-defun that use c-beginning-of-defun-1.
