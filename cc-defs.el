@@ -294,6 +294,7 @@
   (cond
    ;; XEmacs
    ((and (fboundp 'region-active-p)
+	 (boundp 'zmacs-regions)
 	 zmacs-regions)
     (region-active-p))
    ;; Emacs
