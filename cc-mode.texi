@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.48 $
+@comment manual version: $Revision: 2.49 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-06-03 17:27:08 $
+@comment Last modification: $Date: 1996-07-05 23:30:14 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.48 $)
+@center (manual revision: $Revision: 2.49 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -123,7 +123,10 @@ developed.
 @dfn{ARM} @footnote{i.e. ``The Annotated C++ Reference Manual'', by
 Ellis and Stroustrup.} C++, Objective-C, and Java files.  In this way,
 you can easily set up consistent coding styles for use in editing all C,
-C++, Objective-C, and Java programs.
+C++, Objective-C, and Java programs. @code{cc-mode} does @emph{not}
+handle font-locking (a.k.a. syntax coloring, keyword highlighting) or
+anything of that nature, for any of the 4 modes.  Those are handled by
+other Emacs packages.
 
 This manual will describe the following:
 
@@ -154,17 +157,20 @@ The major version number was incremented to 4 with the addition of
 @kbd{M-x c-version RET}.  Work has already begun on @code{cc-mode}
 version 5, in which Emacs 18 will not be supported.
 
-As of this writing (19-Jan-1996), both Emacs 19.30 and XEmacs 19.13 are
-distributed with @code{cc-mode}.  Emacs 19.31 and XEmacs 19.14 will both
-contain the latest version of cc-mode when it is released.  If you are
-running older versions of these Emacsen, you may want to upgrade your
-copy of @code{cc-mode}.  See @ref{Getting the latest cc-mode release}.
+As of this writing (3-Jun-1996), both Emacs 19.31 and XEmacs 19.13 are
+distributed with @code{cc-mode}.  Emacs 19.31 does, and XEmacs 19.14
+will contain the latest version of cc-mode.  If you are running older
+versions of these Emacsen, you may want to upgrade your copy of
+@code{cc-mode}.  See @ref{Getting the latest cc-mode release}.
 
 @cindex @file{cc-compat.el} file
-This distribution also contains a file called @file{cc-compat.el}
-which should ease your transition from BOCM to @code{cc-mode}.  It
-currently comes unguaranteed and unsupported, but this may change for
-future versions.
+This distribution also contains a file called @file{cc-compat.el} which
+should ease your transition from BOCM to @code{cc-mode}.  It currently
+comes unguaranteed and unsupported, but this may change for future
+versions.  If you have a BOCM configuration you are really happy with,
+and want to postpone learning how to configure @code{cc-mode}, take a
+look at that file.  It maps BOCM configuration variables to
+@code{cc-mode}'s new indentation model.
 
 A special word of thanks goes to Krishna Padmasola for his work in
 converting the original @file{README} file to texinfo format.
@@ -1170,19 +1176,24 @@ Indentation Engine} for details.
 @kindex TAB
 @cindex literal
 @vindex indent-tabs-mode
+@vindex c-insert-tab-function
+@vindex insert-tab-function (c-)
+@findex tab-to-tab-stop
 To indent a single line of code, use @kbd{TAB}
 (@code{c-indent-command}).  The behavior of this command is controlled
 by the variable @code{c-tab-always-indent}.  When this variable is
 @code{t}, @kbd{TAB} always just indents the current line.  When
 @code{nil}, the line is indented only if point is at the left margin, or
 on or before the first non-whitespace character on the line, otherwise a
-real tab character is inserted.  If this variable's value is something
-other that @code{t} or @code{nil} (e.g. @code{'other}), then a
-@emph{real} tab character@footnote{Note that the value of the
-@code{indent-tabs-mode} variable will control whether an actual tab
-character is inserted, or the equivalent number of spaces.} is inserted
-only when point is inside a literal (see @ref{Auto-newline insertion}),
-otherwise the line is indented.
+real tab character@footnote{Actually, the function stored in the
+variable @code{c-insert-tab-function} is called.  You could for example,
+set this to @code{tab-to-tab-stop} if you preferred} is inserted.  If
+this variable's value is something other that @code{t} or @code{nil}
+(e.g. @code{'other}), then a @emph{real} tab character@footnote{Note
+that the value of the @code{indent-tabs-mode} variable will control
+whether an actual tab character is inserted, or the equivalent number of
+spaces.} is inserted only when point is inside a literal (see
+@ref{Auto-newline insertion}), otherwise the line is indented.
 
 @kindex M-C-q
 @findex c-indent-exp
