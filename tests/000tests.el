@@ -477,8 +477,6 @@ to be set as a file local variable.")
 	(setq moved-lines (count-lines (c-point 'bol last-pos)
 				       (c-point 'bol)))
 
-	(delete-region (match-beginning 0) (match-end 0))
-
 	(save-excursion
 	  (set-buffer testbuf)
 	  (if (> moved-lines 0)
@@ -486,18 +484,20 @@ to be set as a file local variable.")
 	  (setq anchor-pos
 		(save-excursion
 		  (forward-line (- anchor-rel-line))
-		  (let (last-col)
-		    (while (and (< (setq last-col (current-column))
+		  (let (col)
+		    (while (and (< (setq col (current-column))
 				   anchor-col)
 				(not (eolp)))
 		      (forward-char))
-		    (if (/= last-col anchor-col)
-			(error "Line %d doesn't contain any position at column %d"
-			       (1+ (count-lines (point-min) (c-point 'bol)))
-			       anchor-col))
-		    (point)))))
+		    ;; Don't convert the relative offset if we can't
+		    ;; find the right column.
+		    (and (eq col anchor-col)
+			 (point))))))
 
-	(insert (format "%d" anchor-pos))
+	(when anchor-pos
+	  (delete-region (match-beginning 0) (match-end 0))
+	  (insert (format "%d" anchor-pos)))
+
 	(setq last-pos (point))))))
 
 (defun cc-test-record-faces (testbuf facebuf check-unknown-faces)
