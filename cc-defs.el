@@ -472,8 +472,8 @@ This function does not do any hidden buffer changes."
 
 (defmacro c-go-up-list-forward (&optional pos limit)
   "Move the point to the first position after the list sexp containing POS,
-or the point if POS is left out.  Return t if such a position exists,
-otherwise nil is returned and the point isn't moved.
+or containing the point if POS is left out.  Return t if such a
+position exists, otherwise nil is returned and the point isn't moved.
 
 A limit for the search may be given.  The start position is assumed to
 be before it.
@@ -488,8 +488,8 @@ This function does not do any hidden buffer changes."
 
 (defmacro c-go-up-list-backward (&optional pos limit)
   "Move the point to the position of the start of the list sexp containing POS,
-or the point if POS is left out.  Return t if such a position exists,
-otherwise nil is returned and the point isn't moved.
+or containing the point if POS is left out.  Return t if such a
+position exists, otherwise nil is returned and the point isn't moved.
 
 A limit for the search may be given.  The start position is assumed to
 be after it.
@@ -504,8 +504,8 @@ This function does not do any hidden buffer changes."
 
 (defmacro c-go-down-list-forward (&optional pos limit)
   "Move the point to the first position inside the first list sexp after POS,
-or the point if POS is left out.  Return t if such a position exists,
-otherwise nil is returned and the point isn't moved.
+or before the point if POS is left out.  Return t if such a position
+exists, otherwise nil is returned and the point isn't moved.
 
 A limit for the search may be given.  The start position is assumed to
 be before it.
@@ -520,8 +520,8 @@ This function does not do any hidden buffer changes."
 
 (defmacro c-go-down-list-backward (&optional pos limit)
   "Move the point to the last position inside the last list sexp before POS,
-or the point if POS is left out.  Return t if such a position exists,
-otherwise nil is returned and the point isn't moved.
+or before the point if POS is left out.  Return t if such a position
+exists, otherwise nil is returned and the point isn't moved.
 
 A limit for the search may be given.  The start position is assumed to
 be after it.
