@@ -338,7 +338,7 @@ it finds in `c-file-offsets'."
   ;; (define-key c-mode-base-map "\e{" 'c-insert-braces)
   ;; Commented out electric square brackets because nobody likes them.
   ;; (define-key c-mode-base-map "[" 'c-insert-brackets)
-  (define-key c-mode-base-map "\C-c\C-m"  'c-mark-function)
+  (define-key c-mode-base-map "\e\C-h"    'c-mark-function)
   (define-key c-mode-base-map "\e\C-q"    'c-indent-exp)
   (define-key c-mode-base-map "\ea"       'c-beginning-of-statement)
   (define-key c-mode-base-map "\ee"       'c-end-of-statement)
