@@ -1386,11 +1386,8 @@
 		   (save-restriction
 		     (widen)
 		     (forward-char 1)
-		     (and
-		      (condition-case nil
-			  (progn (backward-sexp 1) t)
-			(error nil))
-		      (= (point) (aref inclass-p 1))
+		     (and (c-safe (progn (backward-sexp 1) t))
+			  (= (point) (aref inclass-p 1))
 		      ))))
 	    (save-restriction
 	      (widen)
