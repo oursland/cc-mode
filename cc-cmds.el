@@ -1957,6 +1957,7 @@ command to conveniently insert and align the necessary backslashes."
 		  (while (and (zerop (forward-line 1))
 			      (< (point) (cdr lit-limits)))
 		    (funcall test-line))
+		  (goto-char prefix-line)
 		  nil)
 		;; A good line with text after the prefix was found.
 		(cons (buffer-substring-no-properties (point) (match-end 0))
