@@ -2,7 +2,7 @@
 
 """Bump version number and tag for next release.
 
-Usage: %(program)s [-b] [-t] [-p] [-d] [-a] [-h]
+Usage: %(program)s [-b] [-t] [-p] [-d] [-a] [-E] [-h]
 
 Where:
 
@@ -20,6 +20,9 @@ Where:
 
     --all
     -a      - do all of the above
+
+    --EMACS
+    -E      - package up for standard XEmacs/Emacs release
 
     --help
     -h      - this help message
@@ -48,18 +51,26 @@ version_format = ';; Version:    %s\n'
 extra_cre = regex.compile('(defconst c-version "\(5.[0-9]+\)"')
 extra_format = '(defconst c-version "%s"\n'
 
-FILES = [
+ALL_FILES = [
     ('cc-align.el',    version_cre, version_format),
     ('cc-cmds.el',     version_cre, version_format),
     ('cc-compat.el',   version_cre, version_format),
+    ('cc-defs.el',     version_cre, version_format),
     ('cc-engine.el',   version_cre, version_format),
-    ('cc-guess.el',    version_cre, version_format),
     ('cc-langs.el',    version_cre, version_format),
-    ('cc-lobotomy.el', version_cre, version_format),
     ('cc-menus.el',    version_cre, version_format),
     ('cc-mode.el',     version_cre, version_format),
     ('cc-styles.el',   version_cre, version_format),
     ('cc-vars.el',     version_cre, version_format),
+    ('cc-mode.texi',
+     regex.compile('@center @titlefont{CC Mode \(5.[0-9]+\)}'),
+     '@center @titlefont{CC Mode %s}\n'),
+    ('ChangeLog', None, None),
+    ]
+
+FATRELEASE_FILES = [
+    ('cc-guess.el',    version_cre, version_format),
+    ('cc-lobotomy.el', version_cre, version_format),
     ('cc-mode-19.el',  version_cre, version_format),
     ('ANNOUNCEMENT',
      regex.compile('CC Mode Version \(5.[0-9]+\)'),
@@ -71,11 +82,10 @@ FILES = [
      regex.compile('README for CC Mode \(5.[0-9]+\)'),
      'README for CC Mode %s\n'),
     ('Makefile', None, None),
-    ('ChangeLog', None, None),
-    ('cc-mode.texi',
-     regex.compile('@center @titlefont{CC Mode \(5.[0-9]+\)}'),
-     '@center @titlefont{CC Mode %s}\n'),
     ]
+
+FILES = ALL_FILES + FATRELEASE_FILES
+    
 
 def tag_release():
     bump = []
@@ -151,11 +161,16 @@ def new_release():
     fp.close()
 
 
-def pkg_release():
+def pkg_release(fat):
 #    dir = 'cc-mode-' + RELEASE
     dir = 'cc-mode'
     os.mkdir(dir)
-    for f, cre, format in FILES:
+    #
+    if fat:
+	files = FILES
+    else:
+	files = ALL_FILES
+    for f, cre, format in files:
 	if f == 'ChangeLog':
 	    # package this up separately
 	    continue
@@ -163,7 +178,7 @@ def pkg_release():
     os.system('tar cvf - %s | gzip -c > %s.tar.gz' % (dir, dir))
     os.system('cp ChangeLog ' + dir)
     os.system('cd %s ; gzip -c ChangeLog > ../ChangeLog.gz' % dir)
-    for f, cre, format in FILES:
+    for f, cre, format in files:
 	os.unlink(os.path.join(dir, f))
     os.rmdir(dir)
     
@@ -213,8 +228,8 @@ def make_docs():
 def main():
     try:
 	opts, args = getopt.getopt(
-	    sys.argv[1:], 'abtpdh',
-	    ['all', 'bump', 'tag', 'package', 'docs', 'help'])
+	    sys.argv[1:], 'abtpdhE',
+	    ['all', 'bump', 'tag', 'package', 'docs', 'help', 'EMACS'])
     except getopt.error, msg:
 	print msg
 	usage(1)
@@ -226,6 +241,7 @@ def main():
     tag = None
     package = None
     docs = None
+    fat = 1
     help = None
 
     for opt, arg in opts:
@@ -242,6 +258,8 @@ def main():
 	    package = 1
 	elif opt in ('-d', '--docs'):
 	    docs = 1
+	elif opt in ('-E', '--EMACS'):
+	    fat = None
 	elif opt in ('-h', '--help'):
 	    help = 1
 
@@ -257,7 +275,7 @@ def main():
 	tag_release()
 
     if package:
-	pkg_release()
+	pkg_release(fat)
 
     if docs:
 	make_docs()
