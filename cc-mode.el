@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-21 15:20:09 $
-;; Version:         $Revision: 2.165 $
+;; Last Modified:   $Date: 1992-07-21 15:35:11 $
+;; Version:         $Revision: 2.166 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-21 15:20:09 $|$Revision: 2.165 $|
+;; |$Date: 1992-07-21 15:35:11 $|$Revision: 2.166 $|
 
 
 ;; ======================================================================
@@ -317,7 +317,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.165 $
+  "Major mode for editing C++ code.  $Revision: 2.166 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -518,7 +518,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.165 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.166 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1088,13 +1088,13 @@ of the expression are preserved."
 			(setq this-indent val))))
 	    ;; Adjust line indentation according to its contents
  	    (if (looking-at "\\(public\\|private\\|protected\\):")
- 		(setq this-indent (- this-indent c-indent-level)))
- 	    (if (or (looking-at "case[ \t]")
- 		    (and (looking-at "[A-Za-z]")
- 			 (save-excursion
- 			   (forward-sexp 1)
- 			   (looking-at ":[^:]"))))
- 		(setq this-indent (max 0 (+ this-indent c-label-offset))))
+ 		(setq this-indent (+ this-indent c++-access-specifier-offset))
+	      (if (or (looking-at "case[ \t]")
+		      (and (looking-at "[A-Za-z]")
+			   (save-excursion
+			     (forward-sexp 1)
+			     (looking-at ":[^:]"))))
+		  (setq this-indent (max 0 (+ this-indent c-label-offset)))))
 	    ;; looking at a comment only line?
 	    (if (looking-at "//\\|/\\*")
 		(setq this-indent (+ this-indent
@@ -2056,7 +2056,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.165 $"
+(defconst c++-version "$Revision: 2.166 $"
   "c++-mode version number.")
 
 (defun c++-version ()
