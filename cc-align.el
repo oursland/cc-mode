@@ -121,7 +121,7 @@ Works with: arglist-cont-nonempty, arglist-close."
     ;; like "({".
     (when c-special-brace-lists
       (let ((special-list (c-looking-at-special-brace-list)))
-	(when special-list
+	(when (and special-list (< (car (car special-list)) (point)))
 	  (goto-char (+ (car (car special-list)) 2)))))
 
     (let ((savepos (point))
