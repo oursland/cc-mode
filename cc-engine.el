@@ -939,7 +939,7 @@ See `c-forward-token-1' for details."
       count)))
 
 (defun c-syntactic-re-search-forward (regexp &optional bound noerror count
-					     paren-level not-inside-token)
+				      paren-level not-inside-token)
   "Like `re-search-forward', but only report matches that are found
 in syntactically significant text.  I.e. matches in comments, macros
 or string literals are ignored.  The start point is assumed to be
@@ -971,7 +971,14 @@ match is used."
 
     (condition-case err
 	(while (and (> count 0)
-		    (re-search-forward regexp bound noerror))
+		    (progn
+		      ;; Kludge: XEmacs (up to and including 21.4 at
+		      ;; least) has a bug where it doesn't clear the
+		      ;; submatches from earlier searches, so when we
+		      ;; do (match-end 1) below we could get some old
+		      ;; result if REGEXP doesn't contain a submatch.
+		      (set-match-data nil)
+		      (re-search-forward regexp bound noerror)))
 
 	  (setq match-pos (point)
 		syntactic-match-pos (or (match-end 1) (match-beginning 0))
