@@ -1,4 +1,4 @@
-\input texinfo   @c -*- texinfo -*-
+\input texinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment %**start of header (This is for running Texinfo on a region)
@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.59 $
+@comment manual version: $Revision: 2.60 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1997-01-06 23:03:21 $
+@comment Last modification: $Date: 1997-01-21 21:52:42 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.59 $)
+@center (manual revision: $Revision: 2.60 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1018,6 +1018,37 @@ void spam(int i)
 @end example
 
 @item
+@code{brace-elseif-brace} --- similar to the @code{brace-else-brace}
+clean-up, but cleans up @samp{@} else if (...)@{} constructs.  For
+example:
+@example
+@group
+
+void spam(int i)
+@{
+    if( i==7 )
+    @{
+        dosomething();
+    @}
+    else if( i==3 ) @{
+
+@end group
+@end example
+@noindent
+appears like this after the open brace is typed:
+@example
+@group
+
+void spam(int i)
+@{
+    if( i==7 ) @{
+        dosomething();
+    @} else if( i==3 ) @{
+
+@end group
+@end example
+
+@item
 @code{empty-defun-braces} --- cleans up braces following a top-level
 function or class definition that contains no body.  Clean up occurs
 when the closing brace is typed.  Thus the following:
@@ -1860,6 +1891,23 @@ customization, and one of the real strengths of @code{cc-mode} is that
 the syntactic analysis model provides just such a framework. This allows
 you to implement special indentation calculations for situations not
 handled by the mode directly.
+
+@vindex c-style-variables-are-local-p
+@vindex style-variables-are-local-p
+Note that the style controlling variables can either have global values,
+or can be buffer local (e.g. different in every buffer).  If all the C
+files you edit tend to have the same style, you might want to keep the
+variables global.  If you tend to edit files with many different styles,
+you will have to make the variables buffer local.  The variable
+@code{c-style-variables-are-local-p} controls this.
+
+When @code{c-style-variables-are-local-p} is non-nil, then the style
+variables will have a different settable value for each buffer,
+otherwise all buffers will share the same values.  This variable only
+takes effect when @code{cc-mode} is loaded into your Emacs session.  By
+default (for backwards compatibility reasons), its value is @code{t}.
+Note that once the variables are made buffer local, they will retain
+this property for the remainder of the current Emacs session.
 
 @menu
 * Custom Indentation Functions::
