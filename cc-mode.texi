@@ -4965,8 +4965,10 @@ AWK mode will be used instead:
 @end example
 
 You can check which AWK mode you are running by displaying the mode
-documentation string with @kbd{C-h m} from an AWK buffer.  The older
-mode's doc string contains "This is much like C mode except ....".
+documentation string with @kbd{C-h m} from an AWK buffer.  The newer
+mode's doc string contains @code{To submit a problem report, enter
+`C-c C-b'} near the top of the doc string where the older mode has
+@code{This is much like C mode except ....}.
 
 Since this newer AWK mode makes essential use of a relatively new
 Emacs Lisp feature@footnote{Specifically, the @code{syntax-table} text
@@ -4987,7 +4989,7 @@ The @ccmode{} indentation engine fully supports AWK mode.
 
 AWK mode handles code formatted in the conventional AWK fashion:
 @samp{@{}s which start actions, user-defined functions, or compound
-statements are place on the same line as the associated construct; the
+statements are placed on the same line as the associated construct; the
 matching @samp{@}}s are normally placed under the start of the
 respective pattern, function definition, or structured statement.
 @c Add in a bit about the @samp{@}} being on the same line when the
@@ -5097,8 +5099,9 @@ AWK mode:
 @table @asis
 @item @code{font-lock-variable-name-face}
 This face was intended for variable declarations.  Since variables are
-not declared in AWK, this face is used instead for AWK system variables
-(such as @code{NF}).
+not declared in AWK, this face is used instead for AWK system
+variables (such as @code{NF}) and ``Special File Names'' (such as
+@code{"/dev/stderr"}).
 
 @item @code{font-lock-builtin-face} (Emacs)/@code{font-lock-preprocessor-face} (XEmacs)
 This face is normally used for preprocessor directives in @ccmode{}.
