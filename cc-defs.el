@@ -68,26 +68,6 @@
 
 (require 'cl)
 
-;; `add-to-list' is used with three arguments in autoload directives,
-;; which works in the latest (X)Emacsen.  Have to make an advice to
-;; fix it at package load time in older versions, though.
-(condition-case nil
-    ;; `eval' avoids argcount warnings.
-    (eval '(let (foo) (add-to-list 'foo 17 t)))
-  (error
-   (require 'advice)
-   (defadvice add-to-list (around append-argument
-			   (list-var element &optional append)
-			   activate preactivate)
-     "If the optional argument APPEND is non-nil, ELEMENT is added at the end."
-     (if append
-	 (setq ad-return-value
-	       (if (member element (symbol-value list-var))
-		   (symbol-value list-var)
-		 (set list-var (append (symbol-value list-var)
-				       (list element)))))
-       ad-do-it))))
-
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
 (cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs

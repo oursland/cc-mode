@@ -521,16 +521,18 @@ Note that the style variables are always made local to the buffer."
 (easy-menu-define c-c-menu c-mode-map "C Mode Commands"
 		  (cons "C" (c-lang-const c-mode-menu c)))
 
-;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.[ch]\\'" . c-mode) t)
+;; In XEmacs >= 21.5 modes should add their own entries to
+;; `auto-mode-alist'.  The comment form of autoload is used to avoid
+;; doing this on load.  That since `add-to-list' prepends the value
+;; which could cause it to clobber user settings.  Later emacsen have
+;; an append option, but it's not safe to use.
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.[ch]\\'" . c-mode))
+
 ;; NB: The following two associate yacc and lex files to C Mode, which
 ;; is not really suitable for those formats.  Anyway, afaik there's
 ;; currently no better mode for them, and besides this is legacy.
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.y\\'" . c-mode) t)
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.lex\\'" . c-mode) t)
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.y\\(acc\\)?\\'" . c-mode))
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.lex\\'" . c-mode))
 
 (defun c-init-c-language-vars ()
   (c-init-language-vars c-mode))
@@ -598,14 +600,9 @@ Key bindings:
 (easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
 		  (cons "C++" (c-lang-const c-mode-menu c++)))
 
-;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . c++-mode) t)
-;;;###autoload
-(add-to-list 'auto-mode-alist
-	     '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode) t)
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . c++-mode) t)
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . c++-mode))
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode))
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . c++-mode))
 
 ;;;###autoload
 (defun c++-mode ()
@@ -667,9 +664,7 @@ Key bindings:
 (easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
 		  (cons "ObjC" (c-lang-const c-mode-menu objc)))
 
-;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode) t)
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode))
 
 ;;;###autoload
 (defun objc-mode ()
@@ -740,9 +735,7 @@ Key bindings:
 (easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
 		  (cons "Java" (c-lang-const c-mode-menu java)))
 
-;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.java\\'" . java-mode) t)
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.java\\'" . java-mode))
 
 ;;;###autoload
 (defun java-mode ()
@@ -802,9 +795,7 @@ Key bindings:
 (easy-menu-define c-idl-menu idl-mode-map "IDL Mode Commands"
 		  (cons "IDL" (c-lang-const c-mode-menu idl)))
 
-;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
-;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.idl\\'" . idl-mode) t)
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.idl\\'" . idl-mode))
 
 ;;;###autoload
 (defun idl-mode ()
@@ -865,13 +856,8 @@ Key bindings:
 (easy-menu-define c-pike-menu pike-mode-map "Pike Mode Commands"
 		  (cons "Pike" (c-lang-const c-mode-menu pike)))
 
-;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
-;;;###autoload
-(add-to-list 'auto-mode-alist
-	     '("\\.\\(pike\\|pmod\\(.in\\)?\\)\\'" . pike-mode) t)
-;;;###autoload
-(add-to-list 'interpreter-mode-alist
-	     '(("pike" . pike-mode)) t)
+;;;###autoload (add-to-list 'auto-mode-alist '("\\.\\(pike\\|pmod\\(.in\\)?\\)\\'" . pike-mode))
+;;;###autoload (add-to-list 'interpreter-mode-alist '(("pike" . pike-mode)))
 
 ;;;###autoload
 (defun pike-mode ()
