@@ -532,71 +532,160 @@ want to set `c-style-variables-are-local-p'."
 
 (put 'c-offsets-alist 'c-stylevar-fallback
      '((string                . c-lineup-dont-change)
+       ;; Relpos: Beg of previous line.
        (c                     . c-lineup-C-comments)
+       ;; Relpos: Beg of the comment.
        (defun-open            . 0)
+       ;; Relpos: Boi at the func decl start when inside classes, bol
+       ;; at the func decl start when at top level.
        (defun-close           . 0)
+       ;; Relpos: Boi at the func decl start.
        (defun-block-intro     . +)
+       ;; Relpos: Boi at the block open.
        (class-open            . 0)
+       ;; Relpos: Boi at the class decl start.
        (class-close           . 0)
+       ;; Relpos: Boi at the class decl start.
        (inline-open           . +)
+       ;; Relpos: None for functions (inclass got the relpos then),
+       ;; boi at the lambda start for lambdas.
        (inline-close          . 0)
+       ;; Relpos: For functions: Boi at the func decl start.  For
+       ;; lambdas: At the block open if it's at boi, at the boi of the
+       ;; lambda start otherwise.
        (func-decl-cont        . +)
+       ;; Relpos: Boi at the func decl start.
        (knr-argdecl-intro     . +)
+       ;; Relpos: Boi at the current line.
        (knr-argdecl           . 0)
+       ;; Relpos: Boi at the argdecl intro line.
        (topmost-intro         . 0)
+       ;; Relpos: Bol at the last line of previous construct.
        (topmost-intro-cont    . 0)
+       ;; Relpos: Boi at the topmost intro line.
        (member-init-intro     . +)
+       ;; Relpos: Boi at the func decl arglist open.
        (member-init-cont      . 0)
+       ;; Relpos: Beg of the first member init.
        (inher-intro           . +)
+       ;; Relpos: Java: Boi at the class decl start.  Otherwise: Boi
+       ;; of current line (a bug?), unless it begins with an inher
+       ;; start colon, in which case boi of previous line is used.
        (inher-cont            . c-lineup-multi-inher)
+       ;; Relpos: Java: At the implements/extends keyword start.
+       ;; Otherwise: At the inher start colon, or boi at the class
+       ;; decl start if the first inherit clause hangs and it's not a
+       ;; func-local inherit clause (when does that occur?).
        (block-open            . 0)
+       ;; Relpos: Inexpr statement: Boi at the the preceding
+       ;; paren.  Otherwise: None.
        (block-close           . 0)
+       ;; Relpos: At the open brace if it's at boi.  Otherwise boi at
+       ;; the start of the statement the open brace hangs on, or boi
+       ;; at the preceding paren for inexpr statements.
        (brace-list-open       . 0)
+       ;; Relpos: Boi at the brace list decl start, but a starting
+       ;; "typedef" token is ignored.
        (brace-list-close      . 0)
+       ;; Relpos: Boi at the brace list open.
        (brace-list-intro      . +)
+       ;; Relpos: Boi at the brace list open.
        (brace-list-entry      . 0)
+       ;; Relpos: At the first non-ws char after the open paren if the
+       ;; first token is on the same line, otherwise boi at that
+       ;; token.
        (brace-entry-open      . 0)
+       ;; Relpos: Same as brace-list-entry.
        (statement             . 0)
-       ;; some people might prefer
-       ;;(statement             . c-lineup-runin-statements)
+       ;; Relpos: After a ';' in the condition clause of a for
+       ;; statement: At the first token after the starting paren.
+       ;; Otherwise: Boi at the start of the closest non-hanging
+       ;; previous statement, but after any switch label.
        (statement-cont        . +)
-       ;; some people might prefer
-       ;;(statement-cont        . c-lineup-math)
+       ;; Relpos: After the first token in the condition clause of a
+       ;; for statement: At the first token after the starting paren.
+       ;; On the first line in a continued expression that starts with
+       ;; a stream op and there's no stream op on the previous line:
+       ;; Boi of previous line.  Otherwise: Boi at the beginning of
+       ;; the statement, but after any type of label.
        (statement-block-intro . +)
+       ;; Relpos: At the block start if it's at boi, otherwise boi at
+       ;; the start of the statement the open brace hangs on, or boi
+       ;; at the preceding paren for inexpr statements.
        (statement-case-intro  . +)
+       ;; Relpos: At the label keyword (always at boi).
        (statement-case-open   . 0)
+       ;; Relpos: At the label keyword (always at boi).
        (substatement          . +)
+       ;; Relpos: Boi at the containing statement or else clause.
        (substatement-open     . +)
+       ;; Relpos: Boi at the containing statement or else clause.
        (case-label            . 0)
+       ;; Relpos: At the switch block start if it's at boi, otherwise
+       ;; boi at the start of the switch condition clause.
        (access-label          . -)
+       ;; Relpos: Eol (a bug?).
        (label                 . 2)
+       ;; Relpos: At the start of the containing block if it's at boi,
+       ;; otherwise boi at the start of the sexp before the block.
        (do-while-closure      . 0)
+       ;; Relpos: Boi at the corresponding while keyword.
        (else-clause           . 0)
+       ;; Relpos: Boi at the corresponding if keyword.
        (catch-clause          . 0)
+       ;; Relpos: Boi at the previous try or catch keyword in the try
+       ;; statement.
        (comment-intro         . c-lineup-comment)
+       ;; Relpos: None.
        (arglist-intro         . +)
+       ;; Relpos: Boi at the open paren.
        (arglist-cont          . 0)
+       ;; Relpos: At the first token after the open paren.
        (arglist-cont-nonempty . c-lineup-arglist)
+       ;; Relpos: Boi at the open paren.
        (arglist-close         . +)
+       ;; Relpos: Boi at the open paren.
        (stream-op             . c-lineup-streamop)
+       ;; Relpos: Boi at the first stream op in the statement.
        (inclass               . +)
+       ;; Relpos: At the class open brace if it's at boi, otherwise
+       ;; boi at the class decl start.
        (cpp-macro             . -1000)
+       ;; Relpos: Boi.
        (cpp-macro-cont        . c-lineup-dont-change)
+       ;; Relpos: At the macro start (always at boi).
        (friend                . 0)
+       ;; Relpos: None.
        (objc-method-intro     . -1000)
+       ;; Relpos: Boi.
        (objc-method-args-cont . c-lineup-ObjC-method-args)
+       ;; Relpos: At the method start (always at boi).
        (objc-method-call-cont . c-lineup-ObjC-method-call)
+       ;; Relpos: At the open bracket.
        (extern-lang-open      . 0)
+       ;; Relpos: Boi at the extern keyword.
        (extern-lang-close     . 0)
+       ;; Relpos: Boi at the corresponding extern keyword.
        (inextern-lang         . +)
+       ;; Relpos: At the extern block open brace if it's at boi,
+       ;; otherwise boi at the extern keyword.
        (namespace-open        . 0)
+       ;; Relpos: Boi at the namespace keyword.
        (namespace-close       . 0)
+       ;; Relpos: Boi at the corresponding namespace keyword.
        (innamespace           . +)
+       ;; Relpos: At the namespace block open brace if it's at boi,
+       ;; otherwise boi at the namespace keyword.
        (template-args-cont    . (c-lineup-template-args +))
+       ;; Relpos: Boi at the decl start.
        (inlambda              . c-lineup-inexpr-block)
+       ;; Relpos: None.
        (lambda-intro-cont     . +)
+       ;; Relpos: Boi at the lambda start.
        (inexpr-statement      . 0)
+       ;; Relpos: None.
        (inexpr-class          . +)
+       ;; Relpos: None.
        ))
 (defcustom c-offsets-alist nil
   "Association list of syntactic element symbols and indentation offsets.
