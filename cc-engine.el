@@ -845,58 +845,89 @@ comment at the start of cc-engine.el for more info."
 		;; c-(backward|forward)-sws.
 		(c-backward-syntactic-ws)
 
-		(let ((before-sws-pos (point)))
-		  (unless (c-safe (c-backward-sexp) t)
-		    ;; Give up if we hit an unbalanced block.  Since the stack
-		    ;; won't be empty the code below will report a suitable
-		    ;; error.
-		    (throw 'loop nil))
+		(let ((before-sws-pos (point))
+		      ;; Set as long as we have to continue jumping by sexps.
+		      ;; It's the position to use as end in the next round.
+		      sexp-loop-continue-pos
+		      ;; The end position of the area to search for statement
+		      ;; barriers in this round.
+		      (sexp-loop-end-pos pos))
 
-		  ;; Check if the sexp movement crossed a statement or
-		  ;; declaration boundary.  But first modify the point so that
-		  ;; `c-crosses-statement-barrier-p' only looks at the
-		  ;; non-sexp chars following the sexp.
-		  (save-excursion
-		    (when (setq
-			   boundary-pos
-			   (cond
-			    ((if macro-start
-				 nil
-			       (save-excursion
-				 (c-beginning-of-macro)))
-			     ;; If the sexp movement took us into a macro then
-			     ;; there were only some non-sexp chars after it.
-			     ;; Skip out of the macro to analyze them but not
-			     ;; the non-sexp chars that might be inside the
-			     ;; macro.
-			     (c-end-of-macro)
-			     (c-crosses-statement-barrier-p (point) pos))
+		  (while
+		      (progn
+			(unless (c-safe (c-backward-sexp) t)
+			  ;; Give up if we hit an unbalanced block.  Since the
+			  ;; stack won't be empty the code below will report a
+			  ;; suitable error.
+			  (throw 'loop nil))
 
-			    ((and
-			      (eq (char-after) ?{)
-			      (not (c-looking-at-inexpr-block lim nil)))
-			     ;; Passed a block sexp.  That's a boundary
-			     ;; alright.
-			     (point))
+			;; Check if the sexp movement crossed a statement or
+			;; declaration boundary.  But first modify the point
+			;; so that `c-crosses-statement-barrier-p' only looks
+			;; at the non-sexp chars following the sexp.
+			(save-excursion
+			  (when (setq
+				 boundary-pos
+				 (cond
+				  ((if macro-start
+				       nil
+				     (save-excursion
+				       (when (c-beginning-of-macro)
+					 ;; Set continuation position in case
+					 ;; `c-crosses-statement-barrier-p'
+					 ;; doesn't detect anything below.
+					 (setq sexp-loop-continue-pos (point)))))
+				   ;; If the sexp movement took us into a
+				   ;; macro then there were only some non-sexp
+				   ;; chars after it.  Skip out of the macro
+				   ;; to analyze them but not the non-sexp
+				   ;; chars that might be inside the macro.
+				   (c-end-of-macro)
+				   (c-crosses-statement-barrier-p
+				    (point) sexp-loop-end-pos))
 
-			    ((looking-at "\\s\(")
-			     ;; Passed some other paren.  Only analyze the
-			     ;; non-sexp chars after it.
-			     (goto-char (1+ (c-down-list-backward
-					     before-sws-pos)))
-			     (c-crosses-statement-barrier-p (point) pos))
+				  ((and
+				    (eq (char-after) ?{)
+				    (not (c-looking-at-inexpr-block lim nil)))
+				   ;; Passed a block sexp.  That's a boundary
+				   ;; alright.
+				   (point))
 
-			    (t
-			     ;; Passed a symbol sexp.  It doesn't matter that
-			     ;; it's included in the analyzed region.
-			     (c-crosses-statement-barrier-p (point) pos))))
+				  ((looking-at "\\s\(")
+				   ;; Passed some other paren.  Only analyze
+				   ;; the non-sexp chars after it.
+				   (goto-char (1+ (c-down-list-backward
+						   before-sws-pos)))
+				   ;; We're at a valid token start position
+				   ;; (outside the `save-excursion') if
+				   ;; `c-crosses-statement-barrier-p' failed.
+				   (c-crosses-statement-barrier-p
+				    (point) sexp-loop-end-pos))
 
-		      (setq pptok ptok
-			    ptok tok
-			    tok boundary-pos
-			    sym 'boundary)
-		      ;; Like a C "continue".  Analyze the next sexp.
-		      (throw 'loop t)))))
+				  (t
+				   ;; Passed a symbol sexp or line
+				   ;; continuation.  It doesn't matter that
+				   ;; it's included in the analyzed region.
+				   (if (c-crosses-statement-barrier-p
+					(point) sexp-loop-end-pos)
+				       t
+				     ;; If it was a line continuation then we
+				     ;; have to continue looping.
+				     (if (looking-at "\\\\$")
+					 (setq sexp-loop-continue-pos (point)))
+				     nil))))
+
+			    (setq pptok ptok
+				  ptok tok
+				  tok boundary-pos
+				  sym 'boundary)
+			    ;; Like a C "continue".  Analyze the next sexp.
+			    (throw 'loop t)))
+
+			sexp-loop-continue-pos)
+		    (goto-char sexp-loop-continue-pos)
+		    (setq sexp-loop-end-pos sexp-loop-continue-pos
+			  sexp-loop-continue-pos nil))))
 
 	      ;; ObjC method def?
 	      (when (and c-opt-method-key
