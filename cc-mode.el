@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.122 $
-;; Last Modified:   $Date: 1994-12-19 17:23:00 $
+;; Version:         $Revision: 4.123 $
+;; Last Modified:   $Date: 1994-12-19 18:06:20 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-19 17:23:00 $|$Revision: 4.122 $|
+;; |$Date: 1994-12-19 18:06:20 $|$Revision: 4.123 $|
 
 ;;; Code:
 
@@ -334,6 +334,12 @@ Valid symbols are:
  list-close-comma    -- cleans up commas following braces in array
                         and aggregate initializers.  Clean up occurs
 			when the comma is typed.
+ snug-do-while       -- cleans up the `while' line of a do-while
+                        clause by placing it on the same line as the
+			closing brace.  This clean up only takes place
+			when there is nothing but whitespace between
+			the brace and the `while'. Clean up occurs
+			when the semi-colon is typed.
  scope-operator      -- cleans up double colons which may designate
 			a C++ scope operator split across multiple
 			lines. Note that certain C++ constructs can
@@ -1663,6 +1669,25 @@ non-whitespace characters on the line following the semicolon."
 	  (goto-char (- (point-max) pos)))
 	;; re-indent line
 	(c-indent-line)
+	;; clean up do-whiles
+	;; TBD: make this efficient w.r.t. a backscan limit
+	(let (whilepos bracepos)
+	  (if (and (memq 'snug-do-while c-cleanup-list)
+		   (= last-command-char ?\;)
+		   (c-safe (save-excursion
+			     (forward-sexp -2)
+			     (setq whilepos (point))
+			     (and (looking-at "\\<while\\>[^_]")
+				  (c-backward-to-start-of-do))))
+		   (save-excursion
+		     (goto-char whilepos)
+		     (skip-chars-backward " \t\n")
+		     (setq bracepos (point))
+		     (= (preceding-char) ?})))
+	      (save-excursion
+		(delete-region bracepos whilepos)
+		(goto-char bracepos)
+		(insert-char 32 1))))
 	;; newline only after semicolon, but only if that semicolon is
 	;; not inside a parenthesis list (e.g. a for loop statement)
 	(and (= last-command-char ?\;)
@@ -4320,7 +4345,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.122 $"
+(defconst c-version "$Revision: 4.123 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
