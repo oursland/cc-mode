@@ -2719,6 +2719,20 @@ brace."
 	     0)))
     ))
 
+(defun c-get-syntactic-indentation (langelems)
+  ;; Apply c-get-offset to a list of langelem cells to get the total
+  ;; syntactic indentation.  Special treatment is needed for vectors
+  ;; containing absolute columns.
+  (let ((indent 0))
+    (catch 'done
+      (while langelems
+	(let ((res (c-get-offset (car langelems))))
+	  (if (vectorp res)
+	      (throw 'done (elt res 0))
+	    (setq indent (+ indent res)
+		  langelems (cdr langelems)))))
+      indent)))
+
 (defun c-indent-line (&optional syntax quiet)
   ;; Indent the current line according to the syntactic context, if
   ;; c-syntactic-indentation is non-nil.  Optional SYNTAX is the
@@ -2732,17 +2746,7 @@ brace."
 			 (c-syntactic-context (or syntax
 						  c-syntactic-context
 						  (c-guess-basic-syntax)))
-			 (langelemptr c-syntactic-context)
-			 (indent 0))
-		    (setq indent
-			  (catch 'done
-			    (while langelemptr
-			      (let ((res (c-get-offset (car langelemptr))))
-				(if (vectorp res)
-				    (throw 'done (elt res 0))
-				  (setq indent (+ indent res)
-					langelemptr (cdr langelemptr)))))
-			    indent))
+			 (indent (c-get-syntactic-indentation c-syntactic-context)))
 		    (and (not (c-echo-parsing-error quiet))
 			 c-echo-syntactic-information-p
 			 (message "syntax: %s, indent: %d"
