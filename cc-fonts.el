@@ -1405,22 +1405,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 		    ;; Still no identifier.
 
-		    (when (or (and got-prefix got-suffix)
-			      (and got-parens got-prefix)
-			      (and got-parens got-suffix))
-		      ;; Require at least two of `got-prefix', `got-parens',
-		      ;; and `got-suffix' to recognize it as an abstract
-		      ;; declarator: `got-parens' only is not enough since
-		      ;; it's probably an empty function call.  `got-suffix'
-		      ;; only is not enough since it can build an ordinary
-		      ;; expression together with the preceding identifier
-		      ;; which we've taken as a type.
-		      ;;
-		      ;; However, we could actually accept on `got-prefix'
-		      ;; only, but that can easily occur temporarily while
-		      ;; writing an expression so we avoid that case anyway.
-		      ;; We could do a better job if we knew the point when
-		      ;; the fontification was invoked.
+		    (when (and got-prefix (or got-parens got-suffix))
+		      ;; Require `got-prefix' together with either
+		      ;; `got-parens' or `got-suffix' to recognize it as an
+		      ;; abstract declarator: `got-parens' only is probably an
+		      ;; empty function call.  `got-suffix' only can build an
+		      ;; ordinary expression together with the preceding
+		      ;; identifier which we've taken as a type.  We could
+		      ;; actually accept on `got-prefix' only, but that can
+		      ;; easily occur temporarily while writing an expression
+		      ;; so we avoid that case anyway.  We could do a better
+		      ;; job if we knew the point when the fontification was
+		      ;; invoked.
 		      (throw 'at-decl-or-cast t))))
 
 		(when at-decl-or-cast
@@ -1508,7 +1504,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				 (not got-suffix))
 			;; Got something like "foo * bar;".  Since we're not
 			;; inside an arglist it would be a meaningless
-			;; expression since the result isn't used.  We
+			;; expression because the result isn't used.  We
 			;; therefore choose to recognize it as a declaration.
 			;; Do not allow a suffix since it could then be a
 			;; function call.
@@ -1529,8 +1525,14 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 		  (when (and arglist-type
 			     (or got-prefix
-				 (and got-parens got-suffix)))
-		    ;; Got a type followed by an abstract declarator.
+				 (and (eq arglist-type 'decl)
+				      (not c-recognize-paren-inits)
+				      (or got-parens got-suffix))))
+		    ;; Got a type followed by an abstract declarator.  If
+		    ;; `got-prefix' is set it's something like "a *" without
+		    ;; anything after it.  If `got-parens' or `got-suffix' is
+		    ;; set it's "a()", "a[]", "a()[]", or similar, which we
+		    ;; accept only if the context rules out expressions.
 		    (throw 'at-decl-or-cast t)))
 
 		;; If we had a complete symbol table here (which rules out
