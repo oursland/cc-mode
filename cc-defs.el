@@ -224,9 +224,9 @@
 	    (if (bobp)
 		;; Some emacsen return t when moving backwards at bob.
 		nil
-	      (re-search-forward "[\n\r]" here t))
-	    (if (forward-comment count)
-		(if (eolp) (forward-comment -1) t))))
+	      (re-search-forward "[\n\r]" here t)
+	      (if (forward-comment count)
+		  (if (eolp) (forward-comment -1) t)))))
       (modify-syntax-entry ?\\ "\\"))))
 
 (defmacro c-add-syntax (symbol &optional relpos)
