@@ -947,22 +947,6 @@ operators."
   pike (c-lang-const c-paragraph-start))
 (c-lang-defvar c-paragraph-separate (c-lang-const c-paragraph-separate))
 
-(c-lang-defconst c-in-comment-lc-prefix
-  ;; Prefix added to `c-current-comment-prefix' to set
-  ;; `c-opt-in-comment-lc', or nil if it should be nil.
-  t    nil
-  pike "@[\n\r]\\s *")
-
-(c-lang-defvar c-opt-in-comment-lc
-  ;; Regexp to match in-comment line continuations, or nil in
-  ;; languages where that isn't applicable.  It's assumed that it only
-  ;; might match from and including the last character on a line.
-  ;; Built from `*-in-comment-lc-prefix' and the current value of
-  ;; `c-current-comment-prefix'.
-  (if (c-lang-const c-in-comment-lc-prefix)
-      (concat (c-lang-const c-in-comment-lc-prefix)
-	      c-current-comment-prefix)))
-
 
 ;;; Keyword lists.
 

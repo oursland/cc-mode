@@ -1243,13 +1243,6 @@ This function does not do any hidden buffer changes."
 	      (forward-line 1)
 	      (setq safe-start t)
 	      ;; Don't cache at eob in case the buffer is narrowed.
-	      (not (eobp)))
-
-	     ((and c-opt-in-comment-lc
-		   (looking-at c-opt-in-comment-lc))
-	      ;; Skip an in-comment line continuation.
-	      (goto-char (match-end 0))
-	      ;; Don't cache at eob in case the buffer is narrowed.
 	      (not (eobp)))))
 
 	;; We've searched over a piece of non-white syntactic ws.  See if this
@@ -1481,17 +1474,6 @@ This function does not do any hidden buffer changes."
 	      ;; narrowed out, and we can't risk marking the simple ws
 	      ;; at the end of it.
 	      (goto-char next-rung-pos)
-	      t)
-
-	     ((and c-opt-in-comment-lc
-		   (save-excursion
-		     (and (c-safe (beginning-of-line)
-				  (backward-char 2)
-				  t)
-			  (looking-at c-opt-in-comment-lc)
-			  (= (match-end 0) cmt-skip-pos))))
-	      ;; Skip an in-comment line continuation.
-	      (goto-char (match-beginning 0))
 	      t)))
 
 	;; We've searched over a piece of non-white syntactic ws.  See if this
