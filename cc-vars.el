@@ -349,6 +349,12 @@ The list of variables to buffer localize are:
   :type '(hook :format "%{CC Mode Common Hook%}:\n%v")
   :group 'c)
 
+
+
+;; Non-customizable variables, still part of the interface to CC Mode
+(defvar c-indentation-style c-site-default-style
+  "Name of style installed in the current buffer.")
+
 
 (provide 'cc-vars)
 ;;; cc-vars.el ends here

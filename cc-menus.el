@@ -1,4 +1,4 @@
-;;; cc-imenu.el --- imenu support for CC Mode
+;;; cc-imenu.el --- menu and imenu support for CC Mode
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 
@@ -98,5 +98,16 @@
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
 
 
-(provide 'cc-imenu)
-;;; cc-imenu.el ends here
+;; menus for XEmacs
+(defun c-mode-menu ()
+  (cons mode-name c-mode-menu))
+
+(defun c-popup-menu (e)
+  "Pops up the C/C++/ObjC menu."
+  (interactive "@e")
+  (popup-menu (c-mode-menu))
+  (c-keep-region-active))
+    
+
+(provide 'cc-menus)
+;;; cc-menus.el ends here

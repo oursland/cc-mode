@@ -28,14 +28,8 @@
 
 
 
-;; Useful helpers
+;; Utilities
 
-(defsubst c-keep-region-active ()
-  ;; Do whatever is necessary to keep the region active in
-  ;; XEmacs. ignore byte-compiler warnings you might see.  This is not
-  ;; needed for Emacs.
-  (and (boundp 'zmacs-region-stays)
-       (setq zmacs-region-stays t)))
 
 (defsubst c-update-modeline ()
   ;; set the c-auto-hungry-string for the correct designation on the modeline
@@ -56,7 +50,6 @@
 
 
 ;; Auto-newline and hungry-delete
-
 (defun c-toggle-auto-state (arg)
   "Toggle auto-newline feature.
 Optional numeric ARG, if supplied turns on auto-newline when positive,
@@ -531,6 +524,95 @@ supplied, or point is inside a literal."
 
 
 
+;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
+;; originally contributed by Terry_Glanfield.Southern@rxuk.xerox.com
+(defun c-forward-into-nomenclature (&optional arg)
+  "Move forward to end of a nomenclature section or word.
+With arg, to it arg times."
+  (interactive "p")
+  (let ((case-fold-search nil))
+    (if (> arg 0)
+	(re-search-forward "\\W*\\([A-Z]*[a-z0-9]*\\)" (point-max) t arg)
+      (while (and (< arg 0)
+		  (re-search-backward
+		   "\\(\\(\\W\\|[a-z0-9]\\)[A-Z]+\\|\\W\\w+\\)"
+		   (point-min) 0))
+	(forward-char 1)
+	(setq arg (1+ arg)))))
+  (c-keep-region-active))
+
+(defun c-backward-into-nomenclature (&optional arg)
+  "Move backward to beginning of a nomenclature section or word.
+With optional ARG, move that many times.  If ARG is negative, move
+forward."
+  (interactive "p")
+  (c-forward-into-nomenclature (- arg))
+  (c-keep-region-active))
+
+(defun c-scope-operator ()
+  "Insert a double colon scope operator at point.
+No indentation or other \"electric\" behavior is performed."
+  (interactive)
+  (insert "::"))
+
+
+(defun c-beginning-of-statement (&optional count lim sentence-flag)
+  "Go to the beginning of the innermost C statement.
+With prefix arg, go back N - 1 statements.  If already at the
+beginning of a statement then go to the beginning of the preceding
+one.  If within a string or comment, or next to a comment (only
+whitespace between), move by sentences instead of statements.
+
+When called from a program, this function takes 3 optional args: the
+repetition count, a buffer position limit which is the farthest back
+to search, and a flag saying whether to do sentence motion when in a
+comment."
+  (interactive (list (prefix-numeric-value current-prefix-arg)
+		     nil t))
+  (let ((here (point))
+	(count (or count 1))
+	(lim (or lim (c-point 'bod)))
+	state)
+    (save-excursion
+      (goto-char lim)
+      (setq state (parse-partial-sexp (point) here nil nil)))
+    (if (and sentence-flag
+	     (or (nth 3 state)
+		 (nth 4 state)
+;		 (looking-at (concat "[ \t]*" comment-start-skip))
+		 (save-excursion
+		   (skip-chars-backward " \t")
+		   (goto-char (- (point) 2))
+		   (looking-at "\\*/"))))
+	(forward-sentence (- count))
+      (while (> count 0)
+	(c-beginning-of-statement-1 lim)
+	(setq count (1- count)))
+      (while (< count 0)
+	(c-end-of-statement-1)
+	(setq count (1+ count))))
+    ;; its possible we've been left up-buf of lim
+    (goto-char (max (point) lim))
+    )
+  (c-keep-region-active))
+
+(defun c-end-of-statement (&optional count lim sentence-flag)
+  "Go to the end of the innermost C statement.
+
+With prefix arg, go forward N - 1 statements.  Move forward to end of
+the next statement if already at end.  If within a string or comment,
+move by sentences instead of statements.
+
+When called from a program, this function takes 3 optional args: the
+repetition count, a buffer position limit which is the farthest back
+to search, and a flag saying whether to do sentence motion when in a
+comment."
+  (interactive (list (prefix-numeric-value current-prefix-arg)
+		     nil t))
+  (c-beginning-of-statement (- (or count 1)) lim sentence-flag)
+  (c-keep-region-active))
+
+
 ;; set up electric character functions to work with pending-del,
 ;; (a.k.a. delsel) mode.  All symbols get the t value except
 ;; c-electric-delete which gets 'supersede.
@@ -548,6 +630,537 @@ supplied, or point is inside a literal."
    c-electric-colon))
 (put 'c-electric-delete 'delete-selection 'supersede) ; delsel
 (put 'c-electric-delete 'pending-delete   'supersede) ; pending-del
+
+
+;; This is used by indent-for-comment to decide how much to indent a
+;; comment in C code based on its context.
+(defun c-comment-indent ()
+  (if (looking-at (concat "^\\(" c-comment-start-regexp "\\)"))
+      0				;Existing comment at bol stays there.
+    (let ((opoint (point))
+	  placeholder)
+      (save-excursion
+	(beginning-of-line)
+	(cond
+	 ;; CASE 1: A comment following a solitary close-brace should
+	 ;; have only one space.
+	 ((looking-at (concat "[ \t]*}[ \t]*\\($\\|"
+			      c-comment-start-regexp
+			      "\\)"))
+	  (search-forward "}")
+	  (1+ (current-column)))
+	 ;; CASE 2: 2 spaces after #endif
+	 ((or (looking-at "^#[ \t]*endif[ \t]*")
+	      (looking-at "^#[ \t]*else[ \t]*"))
+	  7)
+	 ;; CASE 3: when comment-column is nil, calculate the offset
+	 ;; according to c-offsets-alist.  E.g. identical to hitting
+	 ;; TAB.
+	 ((and c-indent-comments-syntactically-p
+	       (save-excursion
+		 (skip-chars-forward " \t")
+		 (or (looking-at comment-start)
+		     (eolp))))
+	  (let ((syntax (c-guess-basic-syntax)))
+	    ;; BOGOSITY ALERT: if we're looking at the eol, its
+	    ;; because indent-for-comment hasn't put the comment-start
+	    ;; in the buffer yet.  this will screw up the syntactic
+	    ;; analysis so we kludge in the necessary info.  Another
+	    ;; kludge is that if we're at the bol, then we really want
+	    ;; to ignore any anchoring as specified by
+	    ;; c-comment-only-line-offset since it doesn't apply here.
+	    (if (save-excursion
+		  (beginning-of-line)
+		  (skip-chars-forward " \t")
+		  (eolp))
+		(c-add-syntax 'comment-intro))
+	    (let ((c-comment-only-line-offset
+		   (if (consp c-comment-only-line-offset)
+		       c-comment-only-line-offset
+		     (cons c-comment-only-line-offset
+			   c-comment-only-line-offset))))
+	      (apply '+ (mapcar 'c-get-offset syntax)))))
+	 ;; CASE 4: use comment-column if previous line is a
+	 ;; comment-only line indented to the left of comment-column
+	 ((save-excursion
+	    (beginning-of-line)
+	    (and (not (bobp))
+		 (forward-line -1))
+	    (skip-chars-forward " \t")
+	    (prog1
+		(looking-at c-comment-start-regexp)
+	      (setq placeholder (point))))
+	  (goto-char placeholder)
+	  (if (< (current-column) comment-column)
+	      comment-column
+	    (current-column)))
+	 ;; CASE 5: If comment-column is 0, and nothing but space
+	 ;; before the comment, align it at 0 rather than 1.
+	 ((progn
+	    (goto-char opoint)
+	    (skip-chars-backward " \t")
+	    (and (= comment-column 0) (bolp)))
+	  0)
+	 ;; CASE 6: indent at comment column except leave at least one
+	 ;; space.
+	 (t (max (1+ (current-column))
+		 comment-column))
+	 )))))
+
+;; used by outline-minor-mode
+(defun c-outline-level ()
+  (save-excursion
+    (skip-chars-forward "\t ")
+    (current-column)))
+
+
+(defun c-up-conditional (count)
+  "Move back to the containing preprocessor conditional, leaving mark behind.
+A prefix argument acts as a repeat count.  With a negative argument,
+move forward to the end of the containing preprocessor conditional.
+When going backwards, `#elif' is treated like `#else' followed by
+`#if'.  When going forwards, `#elif' is ignored."
+  (interactive "p")
+  (c-forward-conditional (- count) t)
+  (c-keep-region-active))
+
+(defun c-backward-conditional (count &optional up-flag)
+  "Move back across a preprocessor conditional, leaving mark behind.
+A prefix argument acts as a repeat count.  With a negative argument,
+move forward across a preprocessor conditional."
+  (interactive "p")
+  (c-forward-conditional (- count) up-flag)
+  (c-keep-region-active))
+
+(defun c-forward-conditional (count &optional up-flag)
+  "Move forward across a preprocessor conditional, leaving mark behind.
+A prefix argument acts as a repeat count.  With a negative argument,
+move backward across a preprocessor conditional."
+  (interactive "p")
+  (let* ((forward (> count 0))
+	 (increment (if forward -1 1))
+	 (search-function (if forward 're-search-forward 're-search-backward))
+	 (new))
+    (save-excursion
+      (while (/= count 0)
+	(let ((depth (if up-flag 0 -1)) found)
+	  (save-excursion
+	    ;; Find the "next" significant line in the proper direction.
+	    (while (and (not found)
+			;; Rather than searching for a # sign that
+			;; comes at the beginning of a line aside from
+			;; whitespace, search first for a string
+			;; starting with # sign.  Then verify what
+			;; precedes it.  This is faster on account of
+			;; the fastmap feature of the regexp matcher.
+			(funcall search-function
+				 "#[ \t]*\\(if\\|elif\\|endif\\)"
+				 nil t))
+	      (beginning-of-line)
+	      ;; Now verify it is really a preproc line.
+	      (if (looking-at "^[ \t]*#[ \t]*\\(if\\|elif\\|endif\\)")
+		  (let ((prev depth))
+		    ;; Update depth according to what we found.
+		    (beginning-of-line)
+		    (cond ((looking-at "[ \t]*#[ \t]*endif")
+			   (setq depth (+ depth increment)))
+			  ((looking-at "[ \t]*#[ \t]*elif")
+			   (if (and forward (= depth 0))
+			       (setq found (point))))
+			  (t (setq depth (- depth increment))))
+		    ;; If we are trying to move across, and we find an
+		    ;; end before we find a beginning, get an error.
+		    (if (and (< prev 0) (< depth prev))
+			(error (if forward
+				   "No following conditional at this level"
+				 "No previous conditional at this level")))
+		    ;; When searching forward, start from next line so
+		    ;; that we don't find the same line again.
+		    (if forward (forward-line 1))
+		    ;; If this line exits a level of conditional, exit
+		    ;; inner loop.
+		    (if (< depth 0)
+			(setq found (point))))
+		;; else
+		(if forward (forward-line 1))
+		)))
+	  (or found
+	      (error "No containing preprocessor conditional"))
+	  (goto-char (setq new found)))
+	(setq count (+ count increment))))
+    (push-mark)
+    (goto-char new))
+  (c-keep-region-active))
+
+
+;; commands to indent lines, regions, defuns, and expressions
+(defun c-indent-command (&optional whole-exp)
+  "Indent current line as C code, and/or insert some whitespace.
+
+If `c-tab-always-indent' is t, always just indent the current line.
+If nil, indent the current line only if point is at the left margin or
+in the line's indentation; otherwise insert some whitespace[*].  If
+other than nil or t, then some whitespace[*] is inserted only within
+literals (comments and strings) and inside preprocessor directives,
+but the line is always reindented.
+
+A numeric argument, regardless of its value, means indent rigidly all
+the lines of the expression starting after point so that this line
+becomes properly indented.  The relative indentation among the lines
+of the expression are preserved.
+
+  [*] The amount and kind of whitespace inserted is controlled by the
+  variable `c-insert-tab-function', which is called to do the actual
+  insertion of whitespace.  Normally the function in this variable
+  just inserts a tab character, or the equivalent number of spaces,
+  depending on the variable `indent-tabs-mode'."
+
+  (interactive "P")
+  (let ((bod (c-point 'bod)))
+    (if whole-exp
+	;; If arg, always indent this line as C
+	;; and shift remaining lines of expression the same amount.
+	(let ((shift-amt (c-indent-line))
+	      beg end)
+	  (save-excursion
+	    (if (eq c-tab-always-indent t)
+		(beginning-of-line))
+	    (setq beg (point))
+	    (forward-sexp 1)
+	    (setq end (point))
+	    (goto-char beg)
+	    (forward-line 1)
+	    (setq beg (point)))
+	  (if (> end beg)
+	      (indent-code-rigidly beg end (- shift-amt) "#")))
+      ;; No arg supplied, use c-tab-always-indent to determine
+      ;; behavior
+      (cond
+       ;; CASE 1: indent when at column zero or in lines indentation,
+       ;; otherwise insert a tab
+       ((not c-tab-always-indent)
+	(if (save-excursion
+	      (skip-chars-backward " \t")
+	      (not (bolp)))
+	    (funcall c-insert-tab-function)
+	  (c-indent-line)))
+       ;; CASE 2: just indent the line
+       ((eq c-tab-always-indent t)
+	(c-indent-line))
+       ;; CASE 3: if in a literal, insert a tab, but always indent the
+       ;; line
+       (t
+	(if (c-in-literal bod)
+	    (funcall c-insert-tab-function))
+	(c-indent-line)
+	)))))
+
+(defun c-indent-exp (&optional shutup-p)
+  "Indent each line in balanced expression following point.
+Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
+  (interactive "P")
+  (let ((here (point))
+	end progress-p)
+    (unwind-protect
+	(let ((c-echo-syntactic-information-p nil) ;keep quiet for speed
+	      (start (progn
+		       ;; try to be smarter about finding the range of
+		       ;; lines to indent. skip all following
+		       ;; whitespace. failing that, try to find any
+		       ;; opening brace on the current line
+		       (skip-chars-forward " \t\n")
+		       (if (memq (following-char) '(?\( ?\[ ?\{))
+			   (point)
+			 (let ((state (parse-partial-sexp (point)
+							  (c-point 'eol))))
+			   (and (nth 1 state)
+				(goto-char (nth 1 state))
+				(memq (following-char) '(?\( ?\[ ?\{))
+				(point)))))))
+	  ;; find balanced expression end
+	  (setq end (and (c-safe (progn (forward-sexp 1) t))
+			 (point-marker)))
+	  ;; sanity check
+	  (and (not start)
+	       (not shutup-p)
+	       (error "Cannot find start of balanced expression to indent."))
+	  (and (not end)
+	       (not shutup-p)
+	       (error "Cannot find end of balanced expression to indent."))
+	  (c-progress-init start end 'c-indent-exp)
+	  (setq progress-p t)
+	  (goto-char start)
+	  (beginning-of-line)
+	  (while (< (point) end)
+	    (if (not (looking-at "[ \t]*$"))
+		(c-indent-line))
+	    (c-progress-update)
+	    (forward-line 1)))
+      ;; make sure marker is deleted
+      (and end
+	   (set-marker end nil))
+      (and progress-p
+	   (c-progress-fini 'c-indent-exp))
+      (goto-char here))))
+
+(defun c-indent-defun ()
+  "Re-indents the current top-level function def, struct or class declaration."
+  (interactive)
+  (let ((here (point-marker))
+	(c-echo-syntactic-information-p nil)
+	(brace (c-least-enclosing-brace (c-parse-state))))
+    (if brace
+	(goto-char brace)
+      (beginning-of-defun))
+    ;; if we're sitting at b-o-b, it might be because there was no
+    ;; least enclosing brace and we were sitting on the defun's open
+    ;; brace.
+    (if (and (bobp) (not (= (following-char) ?\{)))
+	(goto-char here))
+    ;; if defun-prompt-regexp is non-nil, b-o-d might not leave us at
+    ;; the open brace. I consider this an Emacs bug.
+    (and (boundp 'defun-prompt-regexp)
+	 defun-prompt-regexp
+	 (looking-at defun-prompt-regexp)
+	 (goto-char (match-end 0)))
+    ;; catch all errors in c-indent-exp so we can 1. give more
+    ;; meaningful error message, and 2. restore point
+    (unwind-protect
+	(c-indent-exp)
+      (goto-char here)
+      (set-marker here nil))))
+
+(defun c-indent-region (start end)
+  ;; Indent every line whose first char is between START and END inclusive.
+  (save-excursion
+    (goto-char start)
+    ;; Advance to first nonblank line.
+    (skip-chars-forward " \t\n")
+    (beginning-of-line)
+    (let (endmark)
+      (unwind-protect
+	  (let ((c-tab-always-indent t)
+		;; shut up any echo msgs on indiv lines
+		(c-echo-syntactic-information-p nil)
+		fence)
+	    (c-progress-init start end 'c-indent-region)
+	    (setq endmark (copy-marker end))
+	    (while (and (bolp)
+			(not (eobp))
+			(< (point) endmark))
+	      ;; update progress
+	      (c-progress-update)
+	      ;; Indent one line as with TAB.
+	      (let (nextline sexpend sexpbeg)
+		;; skip blank lines
+		(skip-chars-forward " \t\n")
+		(beginning-of-line)
+		;; indent the current line
+		(c-indent-line)
+		(setq fence (point))
+		(if (save-excursion
+		      (beginning-of-line)
+		      (looking-at "[ \t]*#"))
+		    (forward-line 1)
+		  (save-excursion
+		    ;; Find beginning of following line.
+		    (setq nextline (c-point 'bonl))
+		    ;; Find first beginning-of-sexp for sexp extending past
+		    ;; this line.
+		    (beginning-of-line)
+		    (while (< (point) nextline)
+		      (condition-case nil
+			  (progn
+			    (forward-sexp 1)
+			    (setq sexpend (point)))
+			(error (setq sexpend nil)
+			       (goto-char nextline)))
+		      (c-forward-syntactic-ws))
+		    (if sexpend
+			(progn 
+			  ;; make sure the sexp we found really starts on the
+			  ;; current line and extends past it
+			  (goto-char sexpend)
+			  (setq sexpend (point-marker))
+			  (c-safe (backward-sexp 1))
+			  (setq sexpbeg (point))))
+		    (if (and sexpbeg (< sexpbeg fence))
+			(setq sexpbeg fence)))
+		  ;; check to see if the next line starts a
+		  ;; comment-only line
+		  (save-excursion
+		    (forward-line 1)
+		    (skip-chars-forward " \t")
+		    (if (looking-at c-comment-start-regexp)
+			(setq sexpbeg (c-point 'bol))))
+		  ;; If that sexp ends within the region, indent it all at
+		  ;; once, fast.
+		  (condition-case nil
+		      (if (and sexpend
+			       (> sexpend nextline)
+			       (<= sexpend endmark))
+			  (progn
+			    (goto-char sexpbeg)
+			    (c-indent-exp 'shutup)
+			    (c-progress-update)
+			    (goto-char sexpend)))
+		    (error
+		     (goto-char sexpbeg)
+		     (c-indent-line)))
+		  ;; Move to following line and try again.
+		  (and sexpend
+		       (markerp sexpend)
+		       (set-marker sexpend nil))
+		  (forward-line 1)
+		  (setq fence (point))))))
+	(set-marker endmark nil)
+	(c-progress-fini 'c-indent-region)
+	))))
+
+(defun c-mark-function ()
+  "Put mark at end of a C, C++, or Objective-C defun, point at beginning."
+  (interactive)
+  (let ((here (point))
+	;; there should be a c-point position for 'eod
+	(eod  (save-excursion (end-of-defun) (point)))
+	(state (c-parse-state))
+	brace)
+    (while state
+      (setq brace (car state))
+      (if (consp brace)
+	  (goto-char (cdr brace))
+	(goto-char brace))
+      (setq state (cdr state)))
+    (if (= (following-char) ?{)
+	(progn
+	  (forward-line -1)
+	  (while (not (or (bobp)
+			  (looking-at "[ \t]*$")))
+	    (forward-line -1)))
+      (forward-line 1)
+      (skip-chars-forward " \t\n"))
+    (push-mark here)
+    (push-mark eod nil t)))
+
+
+;; for progress reporting
+(defvar c-progress-info nil)
+
+(defun c-progress-init (start end context)
+  ;; start the progress update messages.  if this emacs doesn't have a
+  ;; built-in timer, just be dumb about it
+  (if (not (fboundp 'current-time))
+      (message "indenting region... (this may take a while)")
+    ;; if progress has already been initialized, do nothing. otherwise
+    ;; initialize the counter with a vector of:
+    ;; [start end lastsec context]
+    (if c-progress-info
+	()
+      (setq c-progress-info (vector start
+				    (save-excursion
+				      (goto-char end)
+				      (point-marker))
+				    (nth 1 (current-time))
+				    context))
+      (message "indenting region..."))))
+
+(defun c-progress-update ()
+  ;; update progress
+  (if (not (and c-progress-info c-progress-interval))
+      nil
+    (let ((now (nth 1 (current-time)))
+	  (start (aref c-progress-info 0))
+	  (end (aref c-progress-info 1))
+	  (lastsecs (aref c-progress-info 2)))
+      ;; should we update?  currently, update happens every 2 seconds,
+      ;; what's the right value?
+      (if (< c-progress-interval (- now lastsecs))
+	  (progn
+	    (message "indenting region... (%d%% complete)"
+		     (/ (* 100 (- (point) start)) (- end start)))
+	    (aset c-progress-info 2 now)))
+      )))
+
+(defun c-progress-fini (context)
+  ;; finished
+  (if (or (eq context (aref c-progress-info 3))
+	  (eq context t))
+      (progn
+	(set-marker (aref c-progress-info 1) nil)
+	(setq c-progress-info nil)
+	(message "indenting region...done"))))
+
+
+
+;;; This page handles insertion and removal of backslashes for C macros.
+
+(defun c-backslash-region (from to delete-flag)
+  "Insert, align, or delete end-of-line backslashes on the lines in the region.
+With no argument, inserts backslashes and aligns existing backslashes.
+With an argument, deletes the backslashes.
+
+This function does not modify blank lines at the start of the region.
+If the region ends at the start of a line, it always deletes the
+backslash (if any) at the end of the previous line.
+ 
+You can put the region around an entire macro definition and use this
+command to conveniently insert and align the necessary backslashes."
+  (interactive "r\nP")
+  (save-excursion
+    (goto-char from)
+    (let ((column c-backslash-column)
+          (endmark (make-marker)))
+      (move-marker endmark to)
+      ;; Compute the smallest column number past the ends of all the lines.
+      (if (not delete-flag)
+          (while (< (point) to)
+            (end-of-line)
+            (if (= (preceding-char) ?\\)
+                (progn (forward-char -1)
+                       (skip-chars-backward " \t")))
+            (setq column (max column (1+ (current-column))))
+            (forward-line 1)))
+      ;; Adjust upward to a tab column, if that doesn't push past the margin.
+      (if (> (% column tab-width) 0)
+          (let ((adjusted (* (/ (+ column tab-width -1) tab-width) tab-width)))
+            (if (< adjusted (window-width))
+                (setq column adjusted))))
+      ;; Don't modify blank lines at start of region.
+      (goto-char from)
+      (while (and (< (point) endmark) (eolp))
+        (forward-line 1))
+      ;; Add or remove backslashes on all the lines.
+      (while (< (point) endmark)
+	(if (and (not delete-flag)
+ 		 ;; Un-backslashify the last line
+ 		 ;; if the region ends right at the start of the next line.
+ 		 (save-excursion
+ 		   (forward-line 1)
+ 		   (< (point) endmark)))
+            (c-append-backslash column)
+          (c-delete-backslash))
+        (forward-line 1))
+      (move-marker endmark nil)))
+  (c-keep-region-active))
+
+(defun c-append-backslash (column)
+  (end-of-line)
+  ;; Note that "\\\\" is needed to get one backslash.
+  (if (= (preceding-char) ?\\)
+      (progn (forward-char -1)
+             (delete-horizontal-space)
+             (indent-to column))
+    (indent-to column)
+    (insert "\\")))
+
+(defun c-delete-backslash ()
+  (end-of-line)
+  (or (bolp)
+      (progn
+ 	(forward-char -1)
+ 	(if (looking-at "\\\\")
+ 	    (delete-region (1+ (point))
+ 			   (progn (skip-chars-backward " \t") (point)))))))
 
 
 (provide 'cc-cmds)
