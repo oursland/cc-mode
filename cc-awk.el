@@ -30,7 +30,7 @@
 ;; It is organised thusly:
 ;;   1. The awk-mode-syntax table.
 ;;   2. Indentation calculation stuff ("c-awk-NL-prop text-property").
-;;   3. Syntax-table property/font-locking stuff, including the
+;;   3. Syntax-table property/font-locking stuff, but not including the
 ;;      font-lock-keywords setting.
 ;;   4. The awk-mode before/after-change-functions.
 ;;   5. awk-mode specific versions of commands like beginning-of-defun.
@@ -88,11 +88,13 @@
 ;;
 ;; To avoid continually repeating this expensive analysis, we "cache" its
 ;; result in a text-property, c-awk-NL-prop, whose value for a line is set on
-;; the _entire_ line, including the terminating EOL (if any).  This property
-;; should be thought of as only really valid immediately after a buffer
-;; change, not a permanently set property.  (By contrast, the syntax-table
-;; text properties (set by an after-change function) must be constantly
-;; updated for the mode to work).
+;; the EOL (if any) which terminates that line.  Should the property be
+;; required for the very last line (which has no EOL), it is calculated as
+;; required and not stored.  The c-awk-NL-prop property should be thought of
+;; as only really valid immediately after a buffer change, not a permanently
+;; set property.  (By contrast, the syntax-table text properties (set by an
+;; after-change function) must be constantly updated for the mode to work
+;; properly).
 ;;
 ;; The valid values for c-awk-NL-prop are:
 ;;
@@ -108,7 +110,7 @@
 ;;     essential to the syntax of the program.  (i.e. if it had been a
 ;;     frivolous \, it would have been ignored and the line been given one of
 ;;     the other property values.)
-;; ';' There is a completed statement as the last non-ws thing on the line -
+;; ';' A statement is completed as the last thing (aside from ws) on the line -
 ;;     i.e. there is (at least part of) a statement on this line, and the last
 ;;     statement on the line is complete, OR (2002/10/25) the line is
 ;;     content-free but terminates a statement from the preceding (continued)
@@ -177,7 +179,7 @@
                        (looking-at "for\\>")))))))))
 
 (defun c-awk-back-to-contentful-text-or-NL-prop ()
-  ;;  Move back to just after the first found of either (i) a line which has
+  ;;  Move back to just after the first found of either (i) an EOL which has
   ;;  the c-awk-NL-prop text-property set; or (ii) non-ws text; or (iii) BOB.
   ;;  We return either the value of c-awk-NL-prop (in case (i)) or nil.
   ;;  Calling function can best distinguish cases (ii) and (iii) with (bolp).
@@ -196,7 +198,7 @@
     (while ;; We are at a BOL here.  Go back one line each iteration.
         (and
          (not (bobp))
-         (not (setq nl-prop (get-text-property (1- (point)) 'c-awk-NL-prop)))
+         (not (setq nl-prop (c-get-char-property (1- (point)) 'c-awk-NL-prop)))
          (progn (setq bol-pos (c-point 'bopl))
                 (setq bsws-pos (point))
                 ;; N.B. the following function will not go back past an EOL if
@@ -223,8 +225,8 @@
 
 (defun c-awk-calculate-NL-prop-prev-line (&optional do-lim)
   ;; Calculate and set the value of the c-awk-NL-prop on the immediately
-  ;; preceding line.  This may also involve doing the same for several
-  ;; preceding lines.
+  ;; preceding EOL.  This may also involve doing the same for several
+  ;; preceding EOLs.
   ;; 
   ;; NOTE that if the property was already set, we return it without
   ;; recalculation.  (This is by accident rather than design.)
@@ -255,8 +257,8 @@
                        (not (c-awk-after-rbrace-or-statement-semicolon)))
                   ?\\)
                  (t ?\;)))            ; A statement was completed on this line
-          (put-text-property
-           (c-point 'bol) (1+ (c-point 'eol)) 'c-awk-NL-prop nl-prop)
+          (end-of-line)
+          (c-put-char-property (point) 'c-awk-NL-prop nl-prop)
           (forward-line))
 
         ;; We are now at a (possibly empty) sequence of content-free lines.
@@ -269,7 +271,7 @@
            ;; ?\# (empty line) and ?\{ (open stmt) don't change.
            )
           (forward-line)
-          (put-text-property (c-point 'bopl) (point) 'c-awk-NL-prop nl-prop)) 
+          (c-put-char-property (1- (point)) 'c-awk-NL-prop nl-prop))
         nl-prop))))
 
 (defun c-awk-get-NL-prop-prev-line (&optional do-lim)
@@ -278,7 +280,7 @@
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (if (bobp)
       nil
-    (or (get-text-property (c-point 'eopl) 'c-awk-NL-prop)
+    (or (c-get-char-property (c-point 'eopl) 'c-awk-NL-prop)
         (c-awk-calculate-NL-prop-prev-line do-lim))))
 
 (defun c-awk-get-NL-prop-cur-line (&optional do-lim)
@@ -343,7 +345,7 @@
 
 (defun c-awk-NL-prop-not-set ()
   ;; Is the NL-prop on the current line either nil or unset?
-  (not (get-text-property (c-point 'eol) 'c-awk-NL-prop)))
+  (not (c-get-char-property (c-point 'eol) 'c-awk-NL-prop)))
 
 (defun c-awk-clear-NL-props (beg end)
   ;; This function is run from before-change-hooks.  It clears the
@@ -352,28 +354,18 @@
   ;; never use stale values for this property.
   (save-restriction
     (widen)
-    (put-text-property beg (point-max) 'c-awk-NL-prop nil)))
+    (c-clear-char-properties beg (point-max) 'c-awk-NL-prop)))
 
-(defun c-awk-unstick-NL-prop ()
-  ;; Ensure that the text property c-awk-NL-prop is "non-sticky".  Without
-  ;; this, a new newline inserted after an old newline (e.g. by C-j) would
-  ;; inherit any c-awk-NL-prop from the old newline.  This would be a Bad
-  ;; Thing.
-  (if (and (boundp 'text-property-default-nonsticky) ; doesn't exist in Xemacs
-           (not (assoc 'c-awk-NL-prop text-property-default-nonsticky)))
-      (setq text-property-default-nonsticky
-            (cons '(c-awk-NL-prop . t) text-property-default-nonsticky))))
-  
 ;; The following is purely a diagnostic command, to be commented out of the
 ;; final release.  ACM, 2002/6/1
 (defun NL-props ()
   (interactive)
   (let (pl-prop cl-prop)
     (message "Prev-line: %s  Cur-line: %s"
-             (if (setq pl-prop (get-text-property (c-point 'eopl) 'c-awk-NL-prop))
+             (if (setq pl-prop (c-get-char-property (c-point 'eopl) 'c-awk-NL-prop))
                  (char-to-string pl-prop)
                "nil")
-             (if (setq cl-prop (get-text-property (c-point 'eol) 'c-awk-NL-prop))
+             (if (setq cl-prop (c-get-char-property (c-point 'eol) 'c-awk-NL-prop))
                  (char-to-string cl-prop)
                "nil"))))
 ;(define-key awk-mode-map [?\C-c ?\r] 'NL-props) ; commented out, 2002/8/31
