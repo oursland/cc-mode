@@ -869,6 +869,9 @@ Key bindings:
 ;;;###autoload
 (add-to-list 'auto-mode-alist
 	     '("\\.\\(pike\\|pmod\\(.in\\)?\\)\\'" . pike-mode) t)
+;;;###autoload
+(add-to-list 'interpreter-mode-alist
+	     '(("pike" . pike-mode)) t)
 
 ;;;###autoload
 (defun pike-mode ()
