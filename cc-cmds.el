@@ -1024,67 +1024,270 @@ No indentation or other \"electric\" behavior is performed."
 
 (defun c-beginning-of-defun (&optional arg)
   "Move backward to the beginning of a defun.
-With argument, do it that many times.  Negative arg -N
-means move forward to Nth following beginning of defun.
-Returns t unless search stops due to beginning or end of buffer.
+Every top level declaration that contains a brace paren block is
+considered to be a defun.
+
+With a positive argument, move backward that many defuns.  A negative
+argument -N means move forward to the Nth following beginning.  Return
+t unless search stops due to beginning or end of buffer.
 
 Unlike the built-in `beginning-of-defun' this tries to be smarter
 about finding the char with open-parenthesis syntax that starts the
 defun."
+
   (interactive "p")
-  (unless arg (setq arg 1))
+  (or arg (setq arg 1))
+
   (if (< arg 0)
-      (c-end-of-defun (- arg))
-    (while (> arg 0)
-      (let ((paren-state (reverse (c-parse-state)))
-	    prevbod bod)
-	(while (and paren-state (not bod))
-	  (setq bod (car paren-state)
-		paren-state (cdr paren-state))
-	  (if (consp bod)
-	      (setq prevbod (car bod)
-		    bod nil)))
-	(cond
-	 (bod (goto-char bod))
-	 (prevbod (goto-char prevbod))
-	 (t (goto-char (point-min))
-	    (setq arg 0)))
-	(setq arg (1- arg))))
+      (when (c-end-of-defun (- arg))
+	(c-forward-syntactic-ws)
+	t)
+
+    (catch 'exit
+      (while (> arg 0)
+	;; Note: Some code duplication in `c-end-of-defun' and
+	;; `c-mark-function'.
+
+	(let ((paren-state (c-parse-state)) lim pos)
+	  (unless (c-safe
+		    (goto-char (c-least-enclosing-brace paren-state))
+		    ;; If we moved to the outermost enclosing paren
+		    ;; then we can use c-safe-position to set the
+		    ;; limit.  Can't do that otherwise since the
+		    ;; earlier paren pair on paren-state might very
+		    ;; well be part of the declaration we should go
+		    ;; to.
+		    (setq lim (c-safe-position (point) paren-state))
+		    t)
+	    ;; At top level.  Make sure we aren't inside a literal.
+	    (setq pos (c-literal-limits
+		       (c-safe-position (point) paren-state)))
+	    (if pos (goto-char (car pos))))
+
+	  (while (let ((start (point)))
+		   (c-beginning-of-decl-1 lim)
+		   (if (= (point) start)
+		       ;; Didn't move.  Might be due to bob or unbalanced
+		       ;; parens.  Try to continue if it's the latter.
+		       (unless (c-safe (goto-char
+					(c-down-list-backward (point))))
+			 ;; Didn't work, so it's bob then.
+			 (goto-char (point-min))
+			 (throw 'exit nil)))
+
+		   (save-excursion
+		     ;; Check if the declaration contains a brace
+		     ;; block.  If not, we try another one.
+		     (setq pos (point))
+		     (not (and (c-syntactic-re-search-forward
+				"[;{]" nil t 1 t)
+			       (or (eq (char-before) ?{)
+				   (and c-recognize-knr-p
+					;; Might have stopped on the
+					;; ';' in a K&R argdecl.  In
+					;; that case the declaration
+					;; should contain a block.
+					(c-in-knr-argdecl pos)))))))
+	    (setq lim nil))
+
+	  ;; Check if `c-beginning-of-decl-1' put us after the block
+	  ;; in a declaration that doesn't end there.  We're searching
+	  ;; back and forth over the block here, which can be
+	  ;; expensive.
+	  (setq pos (point))
+	  (if (and c-opt-block-decls-with-vars-key
+		   (progn
+		     (c-backward-syntactic-ws)
+		     (eq (char-before) ?}))
+		   (eq (car (c-beginning-of-decl-1))
+		       'previous)
+		   (save-excursion
+		     (c-end-of-decl-1)
+		     (> (point) pos)))
+	      nil
+	    (goto-char pos))
+
+	  (setq arg (1- arg)))))
     (c-keep-region-active)
     (= arg 0)))
 
 (defun c-end-of-defun (&optional arg)
-  "Move forward to next end of defun.  With argument, do it that many times.
-Negative argument -N means move back to Nth preceding end of defun.
-Returns t unless search stops due to beginning or end of buffer.
+  "Move forward to the end of a top level declaration.
+With argument, do it that many times.  Negative argument -N means move
+back to Nth preceding end.  Returns t unless search stops due to
+beginning or end of buffer.
 
 An end of a defun occurs right after the close-parenthesis that matches
 the open-parenthesis that starts a defun; see `beginning-of-defun'."
+
   (interactive "p")
-  (if (not arg)
-      (setq arg 1))
+  (or arg (setq arg 1))
+
   (if (< arg 0)
-      (c-beginning-of-defun (- arg))
-    (while (> arg 0)
-      (let ((pos (point))
-	    eol)
-	(while (and (c-safe (down-list 1) t)
-		    (not (eq (char-before) ?{)))
-	  ;; skip down into the next defun-block
-	  (forward-char -1)
-	  (c-forward-sexp))
-	(c-beginning-of-defun 1)
-	(setq eol (c-point 'eol))
-	(c-forward-sexp)
-	(if (< eol (point))
-	    ;; Don't move to next line for one line defuns.
-	    (forward-line 1))
-	(when (<= (point) pos)
-	  (goto-char (point-max))
-	  (setq arg 0))
-	(setq arg (1- arg))))
+      (when (c-beginning-of-defun (- arg))
+	(c-backward-syntactic-ws)
+	t)
+
+    (catch 'exit
+      (while (> arg 0)
+	;; Note: Some code duplication in `c-beginning-of-defun' and
+	;; `c-mark-function'.
+
+	(let ((paren-state (c-parse-state)) lim pos)
+	  (unless (c-safe
+		    (goto-char (c-least-enclosing-brace paren-state))
+		    ;; If we moved to the outermost enclosing paren
+		    ;; then we can use c-safe-position to set the
+		    ;; limit.  Can't do that otherwise since the
+		    ;; earlier paren pair on paren-state might very
+		    ;; well be part of the declaration we should go
+		    ;; to.
+		    (setq lim (c-safe-position (point) paren-state))
+		    t)
+	    ;; At top level.  Make sure we aren't inside a literal.
+	    (setq pos (car-safe (c-literal-limits
+				 (c-safe-position (point) paren-state))))
+	    (if pos (goto-char pos)))
+
+	  ;; Have to move to the start first so that `c-end-of-decl-1'
+	  ;; has the correct start position.
+	  (setq pos (point))
+	  (when (memq (car (c-beginning-of-decl-1 lim))
+		      '(previous macro))
+	    ;; We moved back over the previous defun or a macro.  Move
+	    ;; to the next token; it's the start of the next
+	    ;; declaration.
+	    (goto-char pos)
+	    (c-forward-token-1 0))
+
+	  (while (let ((start (point)))
+		   (c-end-of-decl-1)
+		   (if (= (point) start)
+		       ;; Didn't move.  Might be due to eob or unbalanced
+		       ;; parens.  Try to continue if it's the latter.
+		       (if (c-safe (goto-char (c-up-list-forward (point))))
+			   t
+			 ;; Didn't work, so it's eob then.
+			 (goto-char (point-max))
+			 (throw 'exit nil))
+
+		     (save-excursion
+		       ;; Check if the declaration contains a brace
+		       ;; block.  If not, we try another one.
+		       (setq pos (point))
+		       (goto-char start)
+		       (not (c-syntactic-re-search-forward "{" pos t 1 t))))))
+
+	  (setq pos (point))
+	  ;; Try to be line oriented; find the next newline that
+	  ;; isn't inside a comment, but if we hit the next
+	  ;; declaration then we use the current point instead.
+	  (while (and (not (bolp))
+		      (not (looking-at "\\s *$"))
+		      (c-forward-comment 1)))
+	  (cond ((bolp))
+		((looking-at "\\s *$")
+		 (forward-line 1))
+		(t
+		 (goto-char pos)))
+
+	  (setq arg (1- arg)))))
     (c-keep-region-active)
     (= arg 0)))
+
+(defun c-mark-function ()
+  "Put mark at end of the current top-level declaration or macro, point at beginning.
+If point is between two declarations then the following one is chosen.
+
+As opposed to \\[c-beginning-of-defun] and \\[c-end-of-defun], this
+function does not require the declaration to contain a brace block."
+
+  (interactive)
+
+  ;; Note: Some code duplication in `c-beginning-of-defun' and
+  ;; `c-end-of-defun'.
+  (catch 'exit
+    (let ((paren-state (c-parse-state)) lim pos end-pos end-res)
+      (unless (c-safe
+		(goto-char (c-least-enclosing-brace paren-state))
+		;; If we moved to the outermost enclosing paren then we
+		;; can use c-safe-position to set the limit.  Can't do
+		;; that otherwise since the earlier paren pair on
+		;; paren-state might very well be part of the
+		;; declaration we should go to.
+		(setq lim (c-safe-position (point) paren-state))
+		t)
+	;; At top level.  Make sure we aren't inside a literal.
+	(setq pos (c-literal-limits
+		   (c-safe-position (point) paren-state)))
+	(if pos (goto-char (car pos)))
+
+	(when (c-beginning-of-macro)
+	  (push-mark (save-excursion
+		       (c-end-of-macro)
+		       (forward-line 1)
+		       (point))
+		     nil t)
+	  (throw 'exit nil)))
+
+      ;; We try to be line oriented, unless there are several
+      ;; declarations on the same line.
+      (if (looking-at c-syntactic-eol)
+	  (c-backward-token-1 0 nil (c-point 'bol)))
+
+      (setq pos (point))
+      (when (or (eq (car (c-beginning-of-decl-1 lim)) 'previous)
+		(= pos (point)))
+	;; We moved back over the previous defun.  Skip to the next
+	;; one.  Not using c-forward-syntactic-ws here since we should
+	;; not skip a macro.
+	(goto-char pos)
+	(while (c-forward-comment 10))
+
+	(when (c-beginning-of-macro)
+	  (push-mark (save-excursion
+		       (c-end-of-macro)
+		       (forward-line 1)
+		       (point))
+		     nil t)
+	  (throw 'exit nil)))
+
+      ;; Check if `c-beginning-of-decl-1' put us after the block in a
+      ;; declaration that doesn't end there.  We're searching back and
+      ;; forth over the block here, which can be expensive.
+      (setq pos (point))
+      (if (and c-opt-block-decls-with-vars-key
+	       (progn
+		 (c-backward-syntactic-ws)
+		 (eq (char-before) ?}))
+	       (eq (car (c-beginning-of-decl-1))
+		   'previous)
+	       (save-excursion
+		 (setq end-res (c-end-of-decl-1))
+		 (and (> (point) pos)
+		      (setq end-pos (point)))))
+	  nil
+	(goto-char pos))
+
+      (save-excursion
+	(if (if end-pos
+		(progn (goto-char end-pos) end-res)
+	      (c-end-of-decl-1))
+	    (progn
+	      (setq pos (point))
+	      ;; Try to be line oriented; find the next newline that
+	      ;; isn't inside a comment, but if we hit the next
+	      ;; declaration then we use the current point instead.
+	      (while (and (not (bolp))
+			  (not (looking-at "\\s *$"))
+			  (c-forward-comment 1)))
+	      (cond ((bolp)
+		     (setq pos (point)))
+		    ((looking-at "\\s *$")
+		     (forward-line 1)
+		     (setq pos (point)))))
+	  (error "Cannot find end of declaration")))
+      (push-mark pos nil t))))
 
 
 (defun c-beginning-of-statement (&optional count lim sentence-flag)
@@ -1924,61 +2127,6 @@ non-nil."
 		  (c-progress-fini 'c-indent-region))
 		(c-echo-parsing-error quiet))
 	      c-parsing-error))))
-
-(defun c-mark-function ()
-  "Put mark at end of current top-level defun, point at beginning."
-  (interactive)
-  (let ((here (point))
-	(eod (c-point 'eod))
-	(paren-state (c-parse-state)))
-    ;; Are we sitting at the top level, someplace between either the
-    ;; beginning of buffer, or the nearest preceding defun?  If so,
-    ;; try first to figure out whether we're sitting on the
-    ;; introduction to a top-level defun, in which case we want to
-    ;; mark the entire defun we're sitting on.
-    ;;
-    ;; If we're sitting on anything else at the top-level, we want to
-    ;; just mark the statement that we're on
-    (if (or (and (consp (car paren-state))
-		 (= (length paren-state) 1))
-	    (null paren-state))
-	;; Are we in the whitespace after the nearest preceding defun?
-	(if (and paren-state
-		 (looking-at "[ \t]*$")
-		 (= (save-excursion
-		      (c-backward-syntactic-ws)
-		      (skip-chars-backward ";")
-		      (point))
-		    (cdr (car paren-state))))
-	    (progn
-	      (setq eod (point))
-	      (goto-char (car (car paren-state)))
-	      (c-beginning-of-statement-1))
-	  (if (= ?{ (save-excursion
-		      (c-end-of-statement-1)
-		      (char-before)))
-	      ;; We must be in a defuns's introduction
-	      (progn
-		(c-end-of-statement-1)
-		(skip-chars-backward "{")
-		(c-beginning-of-statement-1)
-		(c-forward-syntactic-ws))
-	    ;; Just mark the statement
-	    (c-end-of-statement-1)
-	    (forward-line 1)
-	    (setq eod (point))
-	    (c-beginning-of-statement-1)))
-      ;; We are inside some enclosing brace structure, so we first
-      ;; need to find our way to the least enclosing brace.  Then, in
-      ;; both cases, we to mark the region from the beginning of the
-      ;; current statement, until the end of the next following defun
-      (while (and paren-state)
-	(or (consp (car paren-state))
-	    (goto-char (car paren-state)))
-	(setq paren-state (cdr paren-state)))
-      (c-beginning-of-statement-1))
-    (push-mark here)
-    (push-mark eod nil t)))
 
 (defun c-fn-region-is-active-p ()
   ;; Function version of the macro for use in places that aren't
