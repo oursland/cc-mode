@@ -138,27 +138,26 @@ This variant works around bugs in `eval-when-compile' in various
 ;;; Macros.
 
 (defmacro c-point (position &optional point)
-  ;; Returns the value of certain commonly referenced POSITIONs
-  ;; relative to POINT.  The current point is used if POINT isn't
-  ;; specified.  POSITION can be one of the following symbols:
-  ;; 
-  ;; bol  -- beginning of line
-  ;; eol  -- end of line
-  ;; bod  -- beginning of defun
-  ;; eod  -- end of defun
-  ;; boi  -- beginning of indentation
-  ;; ionl -- indentation of next line
-  ;; iopl -- indentation of previous line
-  ;; bonl -- beginning of next line
-  ;; eonl -- end of next line
-  ;; bopl -- beginning of previous line
-  ;; eopl -- end of previous line
-  ;; 
-  ;; If the referenced position doesn't exist, the closest accessible
-  ;; point to it is returned.  This function does not modify point or
-  ;; mark.
-  ;;
-  ;; This function does not do any hidden buffer changes.
+  "Return the value of certain commonly referenced POSITIONs relative to POINT.
+The current point is used if POINT isn't specified.  POSITION can be
+one of the following symbols:
+
+`bol'  -- beginning of line
+`eol'  -- end of line
+`bod'  -- beginning of defun
+`eod'  -- end of defun
+`boi'  -- beginning of indentation
+`ionl' -- indentation of next line
+`iopl' -- indentation of previous line
+`bonl' -- beginning of next line
+`eonl' -- end of next line
+`bopl' -- beginning of previous line
+`eopl' -- end of previous line
+
+If the referenced position doesn't exist, the closest accessible point
+to it is returned.  This function does not modify point or mark.
+
+This function does not do any hidden buffer changes."
 
   (if (eq (car-safe position) 'quote)
       (let ((position (eval position)))
@@ -344,25 +343,27 @@ comment at the start of cc-engine.el for more info."
 	 (c-backward-sws))
     '(c-backward-sws)))
 
-(defmacro c-forward-sexp (&optional arg)
-  ;; like forward-sexp except
-  ;;   1. this is much stripped down from the XEmacs version
-  ;;   2. this cannot be used as a command, so we're insulated from
-  ;;      XEmacs' losing efforts to make forward-sexp more user
-  ;;      friendly
-  ;;   3. Preserves the semantics most of CC Mode is based on
-  ;;
-  ;; This function does not do any hidden buffer changes.
-  (or arg (setq arg 1))
-  `(goto-char (or (scan-sexps (point) ,arg)
-		  ,(if (numberp arg)
-		       (if (> arg 0) `(point-max) `(point-min))
-		     `(if (> ,arg 0) (point-max) (point-min))))))
+(defmacro c-forward-sexp (&optional count)
+  "Move forward across COUNT balanced expressions.
+A negative COUNT means move backward.  Signal an error if the move
+fails for any reason.
 
-(defmacro c-backward-sexp (&optional arg)
-  ;; See c-forward-sexp and reverse directions
-  (or arg (setq arg 1))
-  `(c-forward-sexp ,(if (numberp arg) (- arg) `(- ,arg))))
+This is like `forward-sexp' except that it isn't interactive and does
+not do any user friendly adjustments of the point and that it isn't
+susceptible to user configurations such as disabling of signals in
+certain situations.
+
+This function does not do any hidden buffer changes."
+  (or count (setq count 1))
+  `(goto-char (or (scan-sexps (point) ,count)
+		  ,(if (numberp count)
+		       (if (> count 0) `(point-max) `(point-min))
+		     `(if (> ,count 0) (point-max) (point-min))))))
+
+(defmacro c-backward-sexp (&optional count)
+  "See `c-forward-sexp' and reverse directions."
+  (or count (setq count 1))
+  `(c-forward-sexp ,(if (numberp count) (- count) `(- ,count))))
 
 ;; Wrappers for common scan-lists cases, mainly because it's almost
 ;; impossible to get a feel for how that function works.
@@ -455,10 +456,10 @@ This function does not do any hidden buffer changes."
        (backward-char))))
 
 (defmacro c-major-mode-is (mode)
-  ;; Return non-nil if the current CC Mode major mode is MODE.  MODE
-  ;; is either a mode symbol or a list of mode symbols.
-  ;;
-  ;; This function does not do any hidden buffer changes.
+  "Return non-nil if the current CC Mode major mode is MODE.
+MODE is either a mode symbol or a list of mode symbols.
+
+This function does not do any hidden buffer changes."
   (if (eq (car-safe mode) 'quote)
       (let ((mode (eval mode)))
 	(if (listp mode)
@@ -537,29 +538,35 @@ This function does not do any hidden buffer changes."
 				   'rear-nonsticky
 				   (cons 'syntax-table prop)))))))
 
+
+;; Some fontification stuff.  It's necessary to put it here and not in
+;; cc-fonts where it belongs, since it's also used in some functions
+;; in cc-engine, and we don't want to require cc-fonts there.
+;;
+;; These things will be called in cc-engine only when
+;; `c-fontify-types-and-refs' is set, and that will only happen when
+;; called from cc-fonts.  Thus it's safe even though the code in
+;; cc-engine might get references to the font-lock package, which it
+;; doesn't require at run time.
+
 (cc-eval-when-compile
   ;; Used at compile time to get the right definition in
-  ;; `c-put-font-lock-face'.  Not required anywhere except in
-  ;; cc-fonts.el at runtime.
+  ;; `c-put-font-lock-face'.
   (require 'font-lock))
 
-(eval-and-compile
-  ;; Expand this during compilation; it's too expensive to make it a
-  ;; runtime check.  It's also defined at runtime since it's used in
-  ;; `c-make-simple-font-lock-decl-function'.
+(defmacro c-put-font-lock-face (from to face)
+  ;; Put a face on a region (overriding any existing face) in the way
+  ;; font-lock would do it.  In XEmacs that means putting an
+  ;; additional font-lock property, or else the font-lock package
+  ;; won't recognize it as fontified and might override it
+  ;; incorrectly.
+  (if (fboundp 'font-lock-set-face)
+      ;; Note: This function has no docstring in XEmacs so it might be
+      ;; considered internal.
+      `(font-lock-set-face ,from ,to ,face)
+    `(put-text-property ,from ,to 'face ,face)))
 
-  (defmacro c-put-font-lock-face (from to face)
-    ;; Put a face on a region (overriding any existing face) in the way
-    ;; font-lock would do it.  In XEmacs that means putting an
-    ;; additional font-lock property, or else the font-lock package
-    ;; won't recognize it as fontified and might override it
-    ;; incorrectly.
-    (if (fboundp 'font-lock-set-face)
-	;; Note: This function has no docstring in XEmacs so it might be
-	;; considered internal.
-	`(font-lock-set-face ,from ,to ,face)
-      `(put-text-property ,from ,to 'face ,face))))
-
+
 ;; Make edebug understand the macros.
 (eval-after-load "edebug"
   '(progn
@@ -580,10 +587,14 @@ This function does not do any hidden buffer changes."
      (def-edebug-spec c-with-syntax-table t)
      (def-edebug-spec c-skip-ws-forward t)
      (def-edebug-spec c-skip-ws-backward t)
-     (def-edebug-spec c-major-mode-is t)))
+     (def-edebug-spec c-major-mode-is t)
+     (def-edebug-spec c-clear-char-syntax t)
+     (def-edebug-spec c-put-char-syntax t)
+     (def-edebug-spec cc-eval-when-compile t)
+     (def-edebug-spec c-put-font-lock-face t)))
 
 
-;;; Inline functions.
+;;; Functions.
 
 ;; Note: All these after the macros, to be on safe side in avoiding
 ;; bugs where macros are defined too late.  These bugs often only show
@@ -688,10 +699,10 @@ This function does not do any hidden buffer changes."
   (assq (car (c-intersect-lists list alist1)) alist2))
 
 (defsubst c-langelem-col (langelem &optional preserve-point)
-  ;; convenience routine to return the column of langelem's relpos.
-  ;; Leaves point at the relpos unless preserve-point is non-nil.
-  ;;
-  ;; This function does not do any hidden buffer changes.
+  "Convenience routine to return the column of LANGELEM's relpos.
+Leaves point at the relpos unless PRESERVE-POINT is non-nil.
+
+This function does not do any hidden buffer changes."
   (if (cdr langelem)
       (let ((here (point)))
 	(goto-char (cdr langelem))
@@ -733,17 +744,23 @@ This function does not do any hidden buffer changes."
 (put 'pike-mode 'c-mode-prefix "pike-")
 
 (defsubst c-mode-symbol (suffix)
-  ;; Prefix the current mode prefix (e.g. "c-") to SUFFIX and return
-  ;; the corresponding symbol.
-  ;;
-  ;; This function does not do any hidden buffer changes.
-   (intern (concat (get c-buffer-is-cc-mode 'c-mode-prefix) suffix)))
+  "Prefix the current mode prefix (e.g. \"c-\") to SUFFIX and return
+the corresponding symbol.
+
+This function does not do any hidden buffer changes."
+  (or c-buffer-is-cc-mode
+      (error "Not inside a CC Mode based mode"))
+  (let ((mode-prefix (get c-buffer-is-cc-mode 'c-mode-prefix)))
+    (or mode-prefix
+	(error "%S has no mode prefix known to `c-mode-symbol'"
+	       c-buffer-is-cc-mode))
+    (intern (concat mode-prefix suffix))))
 
 (defsubst c-mode-var (suffix)
-  ;; Prefix the current mode prefix (e.g. "c-") to SUFFIX and return
-  ;; the value of the variable with that name.
-  ;;
-  ;; This function does not do any hidden buffer changes.
+  "Prefix the current mode prefix (e.g. \"c-\") to SUFFIX and return
+the value of the variable with that name.
+
+This function does not do any hidden buffer changes."
   (symbol-value (c-mode-symbol suffix)))
 
 (defsubst c-face-name-p (facename)
