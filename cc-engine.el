@@ -2282,9 +2282,10 @@ in Pike) then the point for the preceding one is returned."
   (let ((start (point)) res pos tmp)
 
     ;; If the '<' has paren open syntax then we've marked it as a
-    ;; template arglist before, so try to skip an sexp and see that
-    ;; the close paren matches.
-    (if (and (looking-at "\\s\(")
+    ;; template arglist before, so unless there's fontification work
+    ;; to do try to skip an sexp and see that the close paren matches.
+    (if (and (not c-fontify-types-and-refs)
+	     (looking-at "\\s\(")
 	     (if (and (not (looking-at "<[<=]"))
 		      (c-safe (c-forward-sexp) t)
 		      (= (skip-chars-backward ">") -1)
