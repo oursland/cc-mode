@@ -766,12 +766,20 @@ Key bindings:
 		    )
 	      ")")
       (let ((vars (append
-		   ;; report only the vars that affect indentation
 		   c-style-variables
-		   '(c-delete-function
+		   '(c-tab-always-indent
+		     c-syntactic-indentation
+		     c-syntactic-indentation-in-macros
+		     c-comment-only-line-offset
+		     c-ignore-auto-fill
+		     c-auto-align-backslashes
+		     c-backspace-function
+		     c-delete-function
 		     c-electric-pound-behavior
-		     c-indent-comments-syntactically-p
-		     c-tab-always-indent
+		     c-special-indent-hook
+		     c-default-style
+		     c-enable-xemacs-performance-kludge-p
+		     c-old-style-variable-behavior
 		     defun-prompt-regexp
 		     tab-width
 		     comment-column
@@ -780,11 +788,13 @@ Key bindings:
 		     ;; set to nil can cause all kinds of chaos.
 		     signal-error-on-buffer-boundary
 		     ;; Variables that affect line breaking and comments.
+		     auto-fill-mode
 		     auto-fill-function
 		     filladapt-mode
 		     comment-multi-line
 		     comment-start-skip
 		     fill-prefix
+		     fill-column
 		     paragraph-start
 		     adaptive-fill-mode
 		     adaptive-fill-regexp)
