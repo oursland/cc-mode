@@ -328,6 +328,14 @@ done internally by CC Mode, there's hardly ever a reason to use it."
 			       'c-set-style-history))))))
   (c-initialize-builtin-style)
   (let ((vars (c-get-style-variables stylename nil)))
+    (unless dont-override
+      ;; Since we always add to c-special-indent-hook we must reset it
+      ;; first, or else the hooks from the preceding style will
+      ;; remain.  This is not necessary for c-offsets-alist, since
+      ;; c-get-style-variables contains every valid offset type in the
+      ;; fallback entry.
+      (setq c-special-indent-hook
+	    (default-value 'c-special-indent-hook)))
     (mapcar (lambda (elem)
 	      (c-set-style-1 elem dont-override))
 	    ;; Need to go through the variables backwards when we
