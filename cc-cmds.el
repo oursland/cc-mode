@@ -1736,10 +1736,6 @@ sentence motion in or near comments and multiline strings."
 	       ;; Recurse to handle value as a new spec.
 	       (c-calc-comment-indent (cdr entry)))))))
 
-;; To avoid warning about assignment without reference wrt
-;; c-add-syntax below.
-(cc-bytecomp-defvar syntactic-relpos)
-
 (defun c-comment-indent ()
   "Used by `indent-for-comment' to create and indent comments.
 See `c-indent-comment-alist' for a description."
@@ -1771,8 +1767,7 @@ See `c-indent-comment-alist' for a description."
 		   'other))))
       (if (and (memq line-type '(anchored-comment empty-line))
 	       c-indent-comments-syntactically-p)
-	  (let ((syntax (c-guess-basic-syntax))
-		syntactic-relpos)
+	  (let ((syntax (c-guess-basic-syntax)))
 	    ;; BOGOSITY ALERT: if we're looking at the eol, its
 	    ;; because indent-for-comment hasn't put the comment-start
 	    ;; in the buffer yet.  this will screw up the syntactic

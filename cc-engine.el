@@ -2338,7 +2338,6 @@ Keywords are recognized and not considered identifiers."
 ;; separate functions, which are all collected below.  Use dynamic
 ;; binding to propagate back the syntax results from them.
 (defvar syntax)
-(defvar syntactic-relpos)
 
 (defun c-add-stmt-syntax (syntax-symbol
 			  stop-at-boi-only
@@ -3788,6 +3787,17 @@ Keywords are recognized and not considered identifiers."
 	(when (and c-opt-friend-key
 		   (looking-at c-opt-friend-key))
 	  (c-add-syntax 'friend))
+
+	;; Set syntactic-relpos.
+	(let ((p syntax))
+	  (while (and p
+		      (if (integerp (cdr (car p)))
+			  (progn
+			    (setq syntactic-relpos (cdr (car p)))
+			    nil)
+			t))
+	    (setq p (cdr p))))
+
 	;; Start of or a continuation of a preprocessor directive?
 	(if (and macro-start
 		 (eq macro-start (c-point 'boi))

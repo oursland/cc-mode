@@ -185,7 +185,6 @@
   ;; a simple macro to append the syntax in symbol to the syntax list.
   ;; try to increase performance by using this macro
   `(let ((relpos-tmp ,relpos))
-     (if relpos-tmp (setq syntactic-relpos relpos-tmp))
      (setq syntax (cons (cons ,symbol relpos-tmp) syntax))))
 
 (defmacro c-benign-error (format &rest args)
