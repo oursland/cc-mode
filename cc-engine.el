@@ -2242,7 +2242,7 @@ comment at the start of cc-engine.el for more info."
 
 (defun c-most-enclosing-brace (paren-state &optional bufpos)
   ;; Return the bufpos of the innermost enclosing open paren before
-  ;; bufpos that hasn't been narrowed out, or nil if none was found.
+  ;; bufpos, or nil if none was found.
   (let (enclosingp)
     (or bufpos (setq bufpos 134217727))
     (while paren-state
@@ -2251,23 +2251,18 @@ comment at the start of cc-engine.el for more info."
       (if (or (consp enclosingp)
 	      (>= enclosingp bufpos))
 	  (setq enclosingp nil)
-	(if (< enclosingp (point-min))
-	    (setq enclosingp nil))
 	(setq paren-state nil)))
     enclosingp))
 
-(defun c-least-enclosing-brace (paren-state &optional bufpos)
-  ;; Return the bufpos of the outermost enclosing open paren before
-  ;; bufpos that hasn't been narrowed out, or nil if none was found.
+(defun c-least-enclosing-brace (paren-state)
+  ;; Return the bufpos of the outermost enclosing open paren, or nil
+  ;; if none was found.
   (let (pos elem)
-    (or bufpos (setq bufpos 134217727))
     (while paren-state
       (setq elem (car paren-state)
 	    paren-state (cdr paren-state))
-      (unless (or (consp elem)
-		  (>= elem bufpos))
-	(if (>= elem (point-min))
-	    (setq pos elem))))
+      (if (integerp elem)
+	  (setq pos elem)))
     pos))
 
 (defun c-safe-position (bufpos paren-state)
@@ -6636,33 +6631,6 @@ comment at the start of cc-engine.el for more info."
 						    paren-state)
 				   containing-sexp)))))
 
-(defun c-narrow-out-enclosing-class (paren-state lim)
-  ;; Narrow the buffer so that the enclosing class is hidden.  Uses
-  ;; and returns the value from c-search-uplist-for-classkey.
-  ;;
-  ;; This function might do hidden buffer changes.
-  (setq paren-state (c-whack-state-after (point) paren-state))
-  (let (inclass-p)
-    (and paren-state
-	 (setq inclass-p (c-search-uplist-for-classkey paren-state))
-	 (narrow-to-region
-	  (progn
-	    (goto-char (1+ (aref inclass-p 1)))
-	    (c-skip-ws-forward lim)
-	    ;; if point is now left of the class opening brace, we're
-	    ;; hosed, so try a different tact
-	    (if (<= (point) (aref inclass-p 1))
-		(progn
-		  (goto-char (1+ (aref inclass-p 1)))
-		  (c-forward-syntactic-ws lim)))
-	    (point))
-	  ;; end point is the end of the current line
-	  (progn
-	    (goto-char lim)
-	    (c-point 'eol))))
-    ;; return the class vector
-    inclass-p))
-
 
 ;; `c-guess-basic-syntax' and the functions that precedes it below
 ;; implements the main decision tree for determining the syntactic
@@ -6885,23 +6853,21 @@ comment at the start of cc-engine.el for more info."
   ;; Therefore it's collected here.
   ;;
   ;; This function might do hidden buffer changes.
-  (save-restriction
-    (widen)
-    (let (inexpr anchor containing-sexp)
-      (goto-char (aref classkey 1))
-      (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
-	  (c-add-syntax symbol (setq anchor (point)))
-	(c-add-syntax symbol (setq anchor (aref classkey 0)))
-	(if (and c-opt-inexpr-class-key
-		 (setq containing-sexp (c-most-enclosing-brace paren-state
-							       (point))
-		       inexpr (cdr (c-looking-at-inexpr-block
-				    (c-safe-position containing-sexp
-						     paren-state)
-				    containing-sexp)))
-		 (/= inexpr (c-point 'boi inexpr)))
-	    (c-add-syntax 'inexpr-class)))
-      anchor)))
+  (let (inexpr anchor containing-sexp)
+    (goto-char (aref classkey 1))
+    (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
+	(c-add-syntax symbol (setq anchor (point)))
+      (c-add-syntax symbol (setq anchor (aref classkey 0)))
+      (if (and c-opt-inexpr-class-key
+	       (setq containing-sexp (c-most-enclosing-brace paren-state
+							     (point))
+		     inexpr (cdr (c-looking-at-inexpr-block
+				  (c-safe-position containing-sexp
+						   paren-state)
+				  containing-sexp)))
+	       (/= inexpr (c-point 'boi inexpr)))
+	  (c-add-syntax 'inexpr-class)))
+    anchor))
 
 (defun c-guess-continued-construct (indent-point
 				    char-after-ip
@@ -7039,7 +7005,6 @@ comment at the start of cc-engine.el for more info."
 (defun c-guess-basic-syntax ()
   "Return the syntactic context of the current line."
   (save-excursion
-    (save-restriction
       (beginning-of-line)
       (c-save-buffer-state
 	  ((indent-point (point))
@@ -7048,59 +7013,39 @@ comment at the start of cc-engine.el for more info."
 	   literal containing-sexp char-before-ip char-after-ip lim
 	   c-syntactic-context placeholder c-in-literal-cache step-type
 	   tmpsymbol keyword injava-inher special-brace-list
-	   ;; narrow out any enclosing class or extern "C" block
-	   (inclass-p (c-narrow-out-enclosing-class paren-state
-						    indent-point))
-	   ;; `c-state-cache' is shadowed here so that we don't
-	   ;; throw it away due to the narrowing that might be done
-	   ;; by the function above.  That means we must not do any
-	   ;; changes during the execution of this function, since
-	   ;; `c-invalidate-state-cache' then would change this local
-	   ;; variable and leave a bogus value in the global one.
-	   (c-state-cache (if inclass-p
-			      (c-whack-state-before (point-min) paren-state)
-			    paren-state))
-	   (c-state-cache-start (point-min))
-	   (c-state-cache-good-pos c-state-cache-good-pos)
+	   (inclass-p (c-search-uplist-for-classkey paren-state))
 	   inenclosing-p macro-start in-macro-expr
 	   ;; There's always at most one syntactic element which got
 	   ;; a relpos.  It's stored in syntactic-relpos.
 	   syntactic-relpos
 	   (c-stmt-delim-chars c-stmt-delim-chars))
+
 	;; Check for meta top-level enclosing constructs such as
 	;; extern language definitions.
 	(save-excursion
-	  (save-restriction
-	    (widen)
-	    (when (and inclass-p
-		       (progn
-			 (goto-char (aref inclass-p 0))
-			 (looking-at c-other-decl-block-key)))
-	      (setq inenclosing-p (match-string 1))
-	      (if (string-equal inenclosing-p "extern")
-		  ;; Compatibility with legacy choice of name for the
-		  ;; extern-lang syntactic symbols.
-		  (setq inenclosing-p "extern-lang")))))
+	  (when (and inclass-p
+		     (progn
+		       (goto-char (aref inclass-p 0))
+		       (looking-at c-other-decl-block-key)))
+	    (setq inenclosing-p (match-string 1))
+	    (if (string-equal inenclosing-p "extern")
+		;; Compatibility with legacy choice of name for the
+		;; extern-lang syntactic symbols.
+		(setq inenclosing-p "extern-lang"))))
 
 	;; Init some position variables:
 	;;
 	;; containing-sexp is the open paren of the closest
-	;; surrounding sexp or nil if there is none that hasn't been
-	;; narrowed out.
+	;; surrounding sexp or nil if there is none.
 	;;
 	;; lim is the position after the closest preceding brace sexp
 	;; (nested sexps are ignored), or the position after
 	;; containing-sexp if there is none, or (point-min) if
 	;; containing-sexp is nil.
 	;;
-	;; c-state-cache is the state from c-parse-state at
-	;; indent-point, without any parens outside the region
-	;; narrowed by c-narrow-out-enclosing-class.
-	;;
 	;; paren-state is the state from c-parse-state outside
 	;; containing-sexp, or at indent-point if containing-sexp is
-	;; nil.  paren-state is not limited to the narrowed region, as
-	;; opposed to c-state-cache.
+	;; nil.
 	(if c-state-cache
 	    (progn
 	      (setq containing-sexp (car paren-state)
@@ -7314,7 +7259,14 @@ comment at the start of cc-engine.el for more info."
 	    (back-to-indentation)
 	    (and (not (looking-at c-syntactic-ws-start))
 		 (c-forward-label)))
-	  (cond (containing-sexp
+	  (cond (inclass-p
+		 (setq placeholder (c-add-class-syntax 'inclass inclass-p
+						       paren-state))
+		 ;; Append access-label with the same anchor point as
+		 ;; inclass gets.
+		 (c-append-syntax 'access-label placeholder))
+
+		(containing-sexp
 		 (goto-char containing-sexp)
 		 (setq lim (c-most-enclosing-brace c-state-cache
 						   containing-sexp))
@@ -7329,13 +7281,6 @@ comment at the start of cc-engine.el for more info."
 			   'label)))
 		 (c-backward-to-block-anchor lim)
 		 (c-add-stmt-syntax tmpsymbol nil t lim paren-state))
-
-		(inclass-p
-		 (setq placeholder (c-add-class-syntax 'inclass inclass-p
-						       paren-state))
-		 ;; Append access-label with the same anchor point as
-		 ;; inclass gets.
-		 (c-append-syntax 'access-label placeholder))
 
 		(t
 		 ;; A label on the top level.  Treat it as a class
@@ -7371,8 +7316,8 @@ comment at the start of cc-engine.el for more info."
 	  (unless (eq (point) (cdr placeholder))
 	    (c-add-syntax (car placeholder))))
 
-	 ;; CASE 5: Line is at top level.
-	 ((null containing-sexp)
+	 ;; CASE 5: Line is inside a declaration level block or at top level.
+	 ((or inclass-p (null containing-sexp))
 	  (cond
 
 	   ;; CASE 5A: we are looking at a defun, brace list, class,
@@ -7713,12 +7658,10 @@ comment at the start of cc-engine.el for more info."
 	   ((and inclass-p
 		 (eq char-after-ip ?})
 		 (save-excursion
-		   (save-restriction
-		     (widen)
-		     (forward-char 1)
-		     (and (c-safe (c-backward-sexp 1) t)
-			  (= (point) (aref inclass-p 1))
-			  ))))
+		   (forward-char 1)
+		   (and (c-safe (c-backward-sexp 1) t)
+			(= (point) (aref inclass-p 1))
+			)))
 	    (c-add-class-syntax 'class-close inclass-p paren-state))
 
 	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
@@ -7763,9 +7706,9 @@ comment at the start of cc-engine.el for more info."
 	      (and (eq (char-before) ?})
 		   (save-excursion
 		     (let ((start (point)))
-		       (if paren-state
+		       (if c-state-cache
 			   ;; Speed up the backward search a bit.
-			   (goto-char (car (car paren-state))))
+			   (goto-char (caar c-state-cache)))
 		       (c-beginning-of-decl-1 containing-sexp)
 		       (setq placeholder (point))
 		       (if (= start (point))
@@ -7782,7 +7725,7 @@ comment at the start of cc-engine.el for more info."
 	   ((save-excursion
 	      (prog1 (or (if (c-major-mode-is 'awk-mode)
 			     (not (c-awk-prev-line-incomplete-p))
-			   (memq char-before-ip '(?\; ?} nil)))
+			   (memq char-before-ip '(?\; ?{ ?} nil)))
 			 (when (and (eq char-before-ip ?:)
 				    (eq (c-beginning-of-statement-1 lim)
 					'label))
@@ -7793,32 +7736,27 @@ comment at the start of cc-engine.el for more info."
 				(c-beginning-of-statement-1 lim)
 				(eq (char-after) ?@))))
 		(setq placeholder (point))))
-	    ;; real beginning-of-line could be narrowed out due to
-	    ;; enclosure in a class block
-	    (save-restriction
-	      (widen)
-	      ;; For historic reasons we anchor at bol of the last
-	      ;; line of the previous declaration.  That's clearly
-	      ;; highly bogus and useless, and it makes our lives hard
-	      ;; to remain compatible.  :P
-	      (goto-char placeholder)
-	      (c-add-syntax 'topmost-intro (c-point 'bol))
-	      (if inclass-p
-		  (progn
-		    (goto-char (aref inclass-p 1))
-		    (or (= (point) (c-point 'boi))
-			(goto-char (aref inclass-p 0)))
-		    (if inenclosing-p
-			(c-add-syntax (intern (concat "in" inenclosing-p))
-				      (c-point 'boi))
-		      (c-add-class-syntax 'inclass inclass-p paren-state))
-		    ))
-	      (when (and c-syntactic-indentation-in-macros
-			 macro-start
-			 (/= macro-start (c-point 'boi indent-point)))
-		(c-add-syntax 'cpp-define-intro)
-		(setq macro-start nil))
-	      ))
+	    ;; For historic reasons we anchor at bol of the last
+	    ;; line of the previous declaration.  That's clearly
+	    ;; highly bogus and useless, and it makes our lives hard
+	    ;; to remain compatible.  :P
+	    (goto-char placeholder)
+	    (c-add-syntax 'topmost-intro (c-point 'bol))
+	    (if inclass-p
+		(progn
+		  (goto-char (aref inclass-p 1))
+		  (or (= (point) (c-point 'boi))
+		      (goto-char (aref inclass-p 0)))
+		  (if inenclosing-p
+		      (c-add-syntax (intern (concat "in" inenclosing-p))
+				    (c-point 'boi))
+		    (c-add-class-syntax 'inclass inclass-p paren-state))
+		  ))
+	    (when (and c-syntactic-indentation-in-macros
+		       macro-start
+		       (/= macro-start (c-point 'boi indent-point)))
+	      (c-add-syntax 'cpp-define-intro)
+	      (setq macro-start nil)))
 
 	   ;; CASE 5K: we are at an ObjC method definition
 	   ;; continuation line.
@@ -8177,7 +8115,7 @@ comment at the start of cc-engine.el for more info."
 	     ((and (not inenclosing-p) lim)
 	      ;; If the block is preceded by a case/switch label on
 	      ;; the same line, we anchor at the first preceding label
-	      ;; at boi.  The default handling in c-add-stmt-syntax is
+	      ;; at boi.  The default handling in c-add-stmt-syntax
 	      ;; really fixes it better, but we do like this to keep
 	      ;; the indentation compatible with version 5.28 and
 	      ;; earlier.
@@ -8194,15 +8132,13 @@ comment at the start of cc-engine.el for more info."
 	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
-	      (save-restriction
-		(narrow-to-region (point-min) indent-point)
-		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
-		  (if decl
-		      (c-add-class-syntax 'class-close decl paren-state)
-		    (goto-char containing-sexp)
-		    (c-backward-to-decl-anchor lim)
-		    (back-to-indentation)
-		    (c-add-syntax 'defun-close (point)))))
+	      (let ((decl (c-search-uplist-for-classkey (c-parse-state))))
+		(if decl
+		    (c-add-class-syntax 'class-close decl paren-state)
+		  (goto-char containing-sexp)
+		  (c-backward-to-decl-anchor lim)
+		  (back-to-indentation)
+		  (c-add-syntax 'defun-close (point))))
 	      )))
 
 	 ;; CASE 17: Statement or defun catchall.
@@ -8283,15 +8219,10 @@ comment at the start of cc-engine.el for more info."
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 
-	   ;; CASE 17F: first statement in an inline, or first
-	   ;; statement in a top-level defun. we can tell this is it
-	   ;; if there are no enclosing braces that haven't been
-	   ;; narrowed out by a class (i.e. don't use bod here).
-	   ((save-excursion
-	      (save-restriction
-		(widen)
-		(c-narrow-out-enclosing-class paren-state containing-sexp)
-		(not (c-most-enclosing-brace paren-state))))
+	   ;; CASE 17F: First statement in a defun at top level or in
+	   ;; a declaration level block.
+	   ((or (not (setq placeholder (c-most-enclosing-brace paren-state)))
+		(c-search-uplist-for-classkey paren-state))
 	    (c-backward-to-decl-anchor lim)
 	    (back-to-indentation)
 	    (c-add-syntax 'defun-block-intro (point)))
@@ -8401,7 +8332,7 @@ comment at the start of cc-engine.el for more info."
 		(c-add-syntax 'cpp-define-intro)))))
 
 	;; return the syntax
-	c-syntactic-context))))
+	c-syntactic-context)))
 
 
 ;; Indentation calculation.
