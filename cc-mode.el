@@ -824,8 +824,8 @@ CC Mode by making sure the proper entries are present on
 ;; bug reporting
 
 (defconst c-mode-help-address
-  "bug-gnu-emacs@gnu.org, bug-cc-mode@gnu.org"
-  "Addresses for CC Mode bug reports.")
+  "bug-cc-mode@gnu.org"
+  "Address(es) for CC Mode bug reports.")
 
 (defun c-version ()
   "Echo the current version of CC Mode in the minibuffer."
