@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.55 $
-;; Last Modified:   $Date: 1993-11-17 17:36:08 $
+;; Version:         $Revision: 3.56 $
+;; Last Modified:   $Date: 1993-11-17 20:10:03 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-17 17:36:08 $|$Revision: 3.55 $|
+;; |$Date: 1993-11-17 20:10:03 $|$Revision: 3.56 $|
 
 ;;; Code:
 
@@ -431,7 +431,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.55 $
+  "Major mode for editing C++ code.  $Revision: 3.56 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -462,7 +462,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.55 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.56 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1527,21 +1527,22 @@ of the expression are preserved."
   ;; 
   ;; This function does not modify point or mark.
   (` (let ((here (point)))
-       (, (cond
-	   ((eq position 'bol)  (` (beginning-of-line)))
-	   ((eq position 'eol)  (` (end-of-line)))
-	   ((eq position 'bod)  (` (beginning-of-defun)))
-	   ((eq position 'boi)  (` (back-to-indentation)))
-	   ((eq position 'bonl) (` (forward-line 1)))
-	   ((eq position 'bopl) (` (forward-line -1)))
-	   ((eq position 'iopl)
-	    (` (forward-line -1)
-	       (back-to-indentation)))
-	   ((eq position 'ionl)
-	    (` (forward-line 1)
-	       (back-to-indentation)))
-	   (t (error "unknown buffer position requested: %s" position))
-	   ))
+       (, (let ((position (eval position)))
+	    (cond
+	     ((eq position 'bol)  (` (beginning-of-line)))
+	     ((eq position 'eol)  (` (end-of-line)))
+	     ((eq position 'bod)  (` (beginning-of-defun)))
+	     ((eq position 'boi)  (` (back-to-indentation)))
+	     ((eq position 'bonl) (` (forward-line 1)))
+	     ((eq position 'bopl) (` (forward-line -1)))
+	     ((eq position 'iopl)
+	      (` (forward-line -1)
+		 (back-to-indentation)))
+	     ((eq position 'ionl)
+	      (` (forward-line 1)
+		 (back-to-indentation)))
+	     (t (error "unknown buffer position requested: %s" position))
+	     )))
        (prog1
 	   (point)
 	 (goto-char here))
@@ -2321,7 +2322,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.55 $"
+(defconst cc-version "$Revision: 3.56 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
