@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.169 $
-;; Last Modified:   $Date: 1995-03-09 17:27:47 $
+;; Version:         $Revision: 4.170 $
+;; Last Modified:   $Date: 1995-03-09 17:49:51 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-09 17:27:47 $|$Revision: 4.169 $|
+;; |$Date: 1995-03-09 17:49:51 $|$Revision: 4.170 $|
 
 ;;; Code:
 
@@ -3567,8 +3567,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (beginning-of-line)
 	      (c-backward-syntactic-ws lim))
 	    (cond
-	     ;; CASE 5D.1: hanging member init colon
-	     ((= (preceding-char) ?:)
+	     ;; CASE 5D.1: hanging member init colon, but watch out
+	     ;; for bogus matches on access specifiers inside classes.
+	     ((and (= (preceding-char) ?:)
+		   (save-excursion
+		     (forward-word -1)
+		     (not (looking-at c-access-key))))
 	      (goto-char indent-point)
 	      (c-backward-syntactic-ws lim)
 	      (c-safe (backward-sexp 1))
@@ -3594,6 +3598,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
 	      (c-beginning-of-statement-1 lim)
+	      ;; skip over any access-specifiers
+	      (if inclass-p
+		  (while (looking-at c-access-key)
+		    (forward-line 1)))
 	      (c-add-syntax 'statement-cont (c-point 'boi)))
 	     ))
 	   ;; CASE 5E: we are looking at a access specifier
@@ -4481,7 +4489,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.169 $"
+(defconst c-version "$Revision: 4.170 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
