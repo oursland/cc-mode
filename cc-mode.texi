@@ -817,7 +817,7 @@ zero, hanging them can introduce performance problems.
 Using a mechanism similar to brace hanging (@pxref{Hanging Braces}),
 colons can also be made to hang using the style variable
 @code{c-hanging-colons-alist}.  The syntactic symbols appropriate for
-this assocation list are: @code{case-label}, @code{label},
+this association list are: @code{case-label}, @code{label},
 @code{access-label}, @code{member-init-intro}, and @code{inher-intro}.
 Note however that for @code{c-hanging-colons-alist}, @var{ACTION}s as
 functions are not supported. See also @ref{Custom Brace and Colon
