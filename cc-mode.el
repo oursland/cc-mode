@@ -446,8 +446,6 @@ Key bindings:
   (run-hooks 'c-mode-hook)
   (c-update-modeline))
 
-(put 'c-mode 'c-modevar-prefix "c-C-")
-
 
 ;; Support for C++
 
@@ -504,8 +502,6 @@ Key bindings:
   (run-hooks 'c++-mode-hook)
   (c-update-modeline))
 
-(put 'c++-mode 'c-modevar-prefix "c-C++-")
-
 
 ;; Support for Objective-C
 
@@ -557,8 +553,6 @@ Key bindings:
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook)
   (c-update-modeline))
-
-(put 'objc-mode 'c-modevar-prefix "c-ObjC-")
 
 
 ;; Support for Java
@@ -616,8 +610,6 @@ Key bindings:
   (run-hooks 'java-mode-hook)
   (c-update-modeline))
 
-(put 'java-mode 'c-modevar-prefix "c-Java-")
-
 
 ;; Support for CORBA's IDL language
 
@@ -666,8 +658,6 @@ Key bindings:
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'idl-mode-hook)
   (c-update-modeline))
-
-(put 'idl-mode 'c-modevar-prefix "c-IDL-")
 
 
 ;; Support for Pike
@@ -720,8 +710,6 @@ Key bindings:
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'pike-mode-hook)
   (c-update-modeline))
-
-(put 'pike-mode 'c-modevar-prefix "c-Pike-")
 
 
 ;; bug reporting
