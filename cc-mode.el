@@ -442,6 +442,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "/* "
 	comment-end   " */"
+	c-keywords (c-identifier-re c-C-keywords)
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C-class-key
 	c-baseclass-key nil
@@ -502,6 +503,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
+	c-keywords (c-identifier-re c-C++-keywords)
 	c-conditional-key c-C++-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
 	c-class-key c-C++-class-key
@@ -561,6 +563,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end   ""
+	c-keywords (c-identifier-re c-ObjC-keywords)
 	c-conditional-key c-ObjC-conditional-key
 	c-comment-start-regexp c-ObjC-comment-start-regexp
  	c-class-key c-ObjC-class-key
@@ -622,13 +625,13 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
  	comment-end   ""
+	c-keywords (c-identifier-re c-Java-keywords)
  	c-conditional-key c-Java-conditional-key
  	c-comment-start-regexp c-Java-comment-start-regexp
   	c-class-key c-Java-class-key
 	c-method-key nil
  	c-baseclass-key nil
 	c-recognize-knr-p nil
- 	c-access-key c-Java-access-key
 	c-inexpr-class-key c-Java-inexpr-class-key
 	;defun-prompt-regexp c-Java-defun-prompt-regexp
 	)
@@ -683,13 +686,13 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
+	c-keywords (c-identifier-re c-IDL-keywords)
 	c-conditional-key c-IDL-conditional-key
 	c-comment-start-regexp c-IDL-comment-start-regexp
 	c-class-key c-IDL-class-key
 	c-method-key nil
 	c-baseclass-key nil
 	c-extra-toplevel-key c-IDL-extra-toplevel-key
-	c-access-key c-IDL-access-key
 	c-recognize-knr-p nil
 	)
   ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;FIXME
@@ -743,13 +746,13 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
  	comment-end   ""
+	c-keywords (c-identifier-re c-Pike-keywords)
  	c-conditional-key c-Pike-conditional-key
 	c-comment-start-regexp c-Pike-comment-start-regexp
   	c-class-key c-Pike-class-key
 	c-method-key nil
  	c-baseclass-key nil
 	c-recognize-knr-p nil
- 	c-access-key c-Pike-access-key
 	c-lambda-key c-Pike-lambda-key
 	c-inexpr-block-key c-Pike-inexpr-block-key
 	c-inexpr-class-key c-Pike-inexpr-class-key
