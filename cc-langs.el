@@ -53,6 +53,8 @@
 ;; keywords introducing class definitions.  language specific
 (defconst c-C-class-key "\\(struct\\|union\\)")
 (defconst c-C++-class-key "\\(class\\|struct\\|union\\)")
+(defconst c-C-extra-toplevel-key "\\(extern\\)[^_]")
+(defconst c-C++-extra-toplevel-key "\\(extern\\|namespace\\)[^_]")
 
 (defconst c-ObjC-class-key
   (concat
@@ -73,6 +75,9 @@
 
 (defvar c-class-key c-C-class-key)
 (make-variable-buffer-local 'c-class-key)
+
+(defvar c-extra-toplevel-key c-C-extra-toplevel-key)
+(make-variable-buffer-local 'c-extra-toplevel-key)
 
 
 ;; regexp describing access protection clauses.  language specific
