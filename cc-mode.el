@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.271 $
-;; Last Modified:   $Date: 1996-01-19 18:51:50 $
+;; Version:         $Revision: 4.272 $
+;; Last Modified:   $Date: 1996-01-19 18:57:01 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -591,6 +591,13 @@ re-dump Emacs.")
     ["Forward Statement"      c-end-of-statement t]
     )
   "XEmacs 19 menu for C/C++/ObjC modes.")
+
+;; Sadly we need this for a macro in Emacs 19.
+(eval-when-compile
+  ;; Imenu isn't used in XEmacs, so just ignore load errors.
+  (condition-case ()
+      (require 'imenu)
+    (error nil)))
 
 (defvar cc-imenu-c++-generic-expression
   (` 
@@ -4787,7 +4794,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.271 $"
+(defconst c-version "$Revision: 4.272 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
