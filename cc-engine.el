@@ -281,7 +281,7 @@
       (forward-line -1))
     (back-to-indentation)
     (if (and (<= (point) here)
-	     (looking-at "#[ \t]*[a-zA-Z0-9]"))
+	     (looking-at "#[ \t]*[a-zA-Z0-9!]"))
 	t
       (goto-char here)
       nil)))
@@ -302,7 +302,7 @@
       (if (looking-at "\\$")
 	  (forward-char)
 	;; skip preprocessor directives
-	(when (and (looking-at "#[a-zA-Z0-9]")
+	(when (and (looking-at "#[a-zA-Z0-9!]")
 		   (= (c-point 'boi) (point)))
 	  (while (and (eq (char-before (c-point 'eol)) ?\\)
 		      (= (forward-line 1) 0)))
