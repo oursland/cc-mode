@@ -138,6 +138,7 @@
     "methods-1.java"
     "nested-1.cc"
     "nested-2.c"
+    "nometh.m"
     "statement-1.cc"
     "statement-2.cc"
     "statement-3.cc"
