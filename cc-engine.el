@@ -2459,8 +2459,8 @@ This function does not do any hidden buffer changes."
 	;; Encountered a block in the declaration.  Jump over it.
 	(condition-case nil
 	    (goto-char (c-up-list-forward (point)))
-	  (goto-char (point-max))
-	  (throw 'return nil))
+	  (error (goto-char (point-max))
+		 (throw 'return nil)))
 	(if (or (not c-opt-block-decls-with-vars-key)
 		(save-excursion
 		  (c-with-syntax-table decl-syntax-table
