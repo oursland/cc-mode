@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-28 19:28:29 $
-;; Version:         $Revision: 2.173 $
+;; Last Modified:   $Date: 1992-08-04 20:59:29 $
+;; Version:         $Revision: 2.174 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-28 19:28:29 $|$Revision: 2.173 $|
+;; |$Date: 1992-08-04 20:59:29 $|$Revision: 2.174 $|
 
 
 ;; ======================================================================
@@ -177,12 +177,11 @@
 (defvar c++-tab-always-indent
   (if (boundp 'c-tab-always-indent) c-tab-always-indent t)
   "*Controls the operation of the TAB key.
-t means always just reindent the current line.  nil means indent the
-current line only if point is at the left margin or in the line's
-indentation; otherwise insert a tab.  If not-nil-or-t, then the line
-is first reindented, then if the indentation hasn't changed, a tab is
-inserted. This last mode is useful if you like to add tabs after the #
-of preprocessor commands.")
+If t (the default), always just indent the current line.  If nil,
+indent the current line only if point is at the left margin or in the
+line's indentation; otherwise insert a tab.  If not-nil-or-t, then tab
+is inserted only within literals (comments and strings) and inside
+preprocessor directives, but line is always reindented.")
 (defvar c++-always-arglist-indent-p nil
   "*Control indentation of continued arglists.
 When non-nil, arglists continued on subsequent lines will always
@@ -327,7 +326,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.173 $
+  "Major mode for editing C++ code.  $Revision: 2.174 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -528,7 +527,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.173 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.174 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2111,7 +2110,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.173 $"
+(defconst c++-version "$Revision: 2.174 $"
   "c++-mode version number.")
 
 (defun c++-version ()
