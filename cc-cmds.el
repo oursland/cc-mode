@@ -1455,10 +1455,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   "When the region is active, indent it.  Otherwise indent the current line."
   ;; Emacs has a variable called mark-active, XEmacs uses region-active-p
   (interactive)
-  (if (or (and (fboundp 'region-active-p)
-	       (region-active-p))
-	  (and (boundp 'mark-active)
-	       mark-active))
+  (if (c-region-is-active-p)
       (c-indent-region (region-beginning) (region-end))
     (c-indent-command)))
 
