@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-18 21:10:55 $
-;; Version:         $Revision: 2.55 $
+;; Last Modified:   $Date: 1992-05-18 21:55:14 $
+;; Version:         $Revision: 2.56 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-18 21:10:55 $|$Revision: 2.55 $|
+;; |$Date: 1992-05-18 21:55:14 $|$Revision: 2.56 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -187,7 +187,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.55 $
+  "Major mode for editing C++ code.  $Revision: 2.56 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1014,10 +1014,16 @@ Returns nil if line starts inside a string, t if in a comment."
 		      ;; j.peck hack replaced this line:
 		      ;; \(+ c-continued-statement-offset (current-column)
 		      ;; Add continued-brace-offset? [weikart]
-		      (if (save-excursion (goto-char indent-point)
-					  (skip-chars-forward " \t")
-					  (eq (following-char) ?{))
-			  c-continued-brace-offset 0)))
+		      (save-excursion
+			(goto-char indent-point)
+			(skip-chars-forward " \t")
+			(cond ((= (following-char) ?\{)
+			       c-continued-brace-offset)
+			      ((and (= (following-char) ?\})
+				    (progn (forward-char 1)
+					   (c++-at-top-level-p)))
+			       (- c-continued-statement-offset))
+			      (t 0)))))
 	       ;; This line may start a new statement, or it could
 	       ;; represent the while closure of a do/while construct
 	       (if (save-excursion
@@ -1566,7 +1572,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.55 $"
+(defconst c++-version "$Revision: 2.56 $"
   "c++-mode version number.")
 
 (defun c++-version ()
