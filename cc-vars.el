@@ -84,7 +84,7 @@ since a (good enough) custom library wasn't found")
 
 ;;; Helpers
 
-;; This widget will show up in newer versions of the Custom library
+;; This widget exists in newer versions of the Custom library
 (or (get 'other 'widget-type)
     (define-widget 'other 'sexp
       "Matches everything, but doesn't let the user edit the value.
@@ -121,6 +121,44 @@ Useful as last item in a `choice' widget."
   :value nil
   :tag "Optional integer"
   :match (lambda (widget value) (or (integerp value) (null value))))
+
+(define-widget 'c-symbol-list 'sexp
+  "A single symbol or a list of symbols."
+  :tag "Symbols separated by spaces"
+  :validate 'widget-field-validate
+  :match
+  (lambda (widget value)
+    (or (symbolp value)
+	(catch 'ok
+	  (while (listp value)
+	    (unless (symbolp (car value))
+	      (throw 'ok nil))
+	    (setq value (cdr value)))
+	  (null value))))
+  :value-to-internal
+  (lambda (widget value)
+    (cond ((null value)
+	   "")
+	  ((symbolp value)
+	   (symbol-name value))
+	  ((consp value)
+	   (mapconcat (lambda (symbol)
+			(symbol-name symbol))
+		      value
+		      " "))
+	  (t
+	   value)))
+  :value-to-external
+  (lambda (widget value)
+    (if (stringp value)
+	(let (list end)
+	  (while (string-match "\\S +" value end)
+	    (setq list (cons (intern (match-string 0 value)) list)
+		  end (match-end 0)))
+	  (if (and list (not (cdr list)))
+	      (car list)
+	    (nreverse list)))
+      value)))
 
 (defvar c-style-variables
   '(c-basic-offset c-comment-only-line-offset c-indent-comment-alist
@@ -287,7 +325,7 @@ it might complicate editing if CC Mode doesn't recognize the context
 of the macro content.  The default context inside the macro is the
 same as the top level, so if it contains \"bare\" statements they
 might be indented wrongly, although there are special cases that
-handles this in most cases.  If this problem occurs, it's usually
+handle this in most cases.  If this problem occurs, it's usually
 countered easily by surrounding the statements by a block \(or even
 better with the \"do { ... } while \(0)\" trick)."
   :type 'boolean
@@ -453,7 +491,7 @@ which is sometimes inserted by CC Mode inside block comments.  It
 should not match any surrounding whitespace.
 
 Note that CC Mode uses this variable to set many other variables that
-handles the paragraph filling.  That's done at mode initialization or
+handle the paragraph filling.  That's done at mode initialization or
 when you switch to a style which sets this variable.  Thus, if you
 change it in some other way, e.g. interactively in a CC Mode buffer,
 you will need to do \\[c-mode] (or whatever mode you're currently
@@ -483,6 +521,73 @@ to redo it."
 		  (const :format "Pike  " pike-mode) (regexp :format "%v")))
 	   (cons :format "    %v"
 		 (const :format "Other " other) (regexp :format "%v"))))
+  :group 'c)
+
+(defcustom-c-stylevar c-doc-comment-style
+  '((java-mode . javadoc)
+    (pike-mode . autodoc))
+  "*Specifies documentation comment style(s) to recognize.
+This is primarily used to fontify doc comments and the markup within
+them, e.g. Javadoc comments.
+
+The value can be any of the following symbols for various known doc
+comment styles:
+
+ javadoc -- Javadoc style for \"/** ... */\" comments (default in Java mode).
+ autodoc -- Pike autodoc style for \"//! ...\" comments (default in Pike mode).
+
+The value may also be a list of doc comment styles, in which case all
+of them are recognized simultaneously (presumably with markup cues
+that don't conflict).
+
+The value may also be an association list to specify different doc
+comment styles for different languages.  The symbol for the major mode
+is then looked up in the alist, and the value of that element is
+interpreted as above if found.  If it isn't found then the symbol
+`other' is looked up and its value is used instead.
+
+Note that CC Mode uses this variable to set other variables that
+handle fontification etc.  That's done at mode initialization or when
+you switch to a style which sets this variable.  Thus, if you change
+it in some other way, e.g. interactively in a CC Mode buffer, you will
+need to do \\[java-mode] (or whatever mode you're currently using) to
+reinitialize.
+
+Note also that when CC Mode starts up, the other variables are
+modified before the mode hooks are run.  If you change this variable
+in a mode hook, you can call `c-setup-doc-comment-style' afterwards to
+redo it."
+  ;; Symbols other than those documented above may be used on this
+  ;; variable.  If a variable exists that has that name with
+  ;; "-font-lock-keywords" appended, it's value is prepended to the
+  ;; font lock keywords list.
+  :type '(radio
+	  (c-symbol-list :tag "Doc style(s) in all modes")
+	  (list
+	   :tag "Mode-specific doc styles"
+	   (set
+	    :inline t :format "%v"
+	    (cons :format "%v"
+		  (const :format "C     " c-mode)
+		  (c-symbol-list :format "%v"))
+	    (cons :format "%v"
+		  (const :format "C++   " c++-mode)
+		  (c-symbol-list :format "%v"))
+	    (cons :format "%v"
+		  (const :format "ObjC  " objc-mode)
+		  (c-symbol-list :format "%v"))
+	    (cons :format "%v"
+		  (const :format "Java  " java-mode)
+		  (c-symbol-list :format "%v"))
+	    (cons :format "%v"
+		  (const :format "IDL   " idl-mode)
+		  (c-symbol-list :format "%v"))
+	    (cons :format "%v"
+		  (const :format "Pike  " pike-mode)
+		  (c-symbol-list :format "%v"))
+	    (cons :format "%v"
+		  (const :format "Other " other)
+		  (c-symbol-list :format "%v")))))
   :group 'c)
 
 (defcustom c-ignore-auto-fill '(string cpp code)
