@@ -49,6 +49,7 @@
 @comment Authors:
 @comment Barry A. Warsaw
 @comment Martin Stjernholm
+@comment Alan Mackenzie
 @comment
 @comment Maintained by Martin Stjernholm <bug-cc-mode@gnu.org>
 @comment 
@@ -149,7 +150,7 @@ Commands
 * Indentation Commands::        
 * Movement Commands::           
 * Filling and Line Breaking Commands::  
-* Other Electric Commands::     
+* Electric Keys and Keywords::  
 * Other Commands::              
 
 Configuration Strategies
@@ -316,7 +317,7 @@ where @samp{XX} is the minor release number.
 * Indentation Commands::        
 * Movement Commands::           
 * Filling and Line Breaking Commands::  
-* Other Electric Commands::     
+* Electric Keys and Keywords::  
 * Other Commands::              
 @end menu
 
@@ -640,7 +641,7 @@ word.  With prefix argument @var{n}, move @var{n} times.  If
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Filling and Line Breaking Commands, Other Electric Commands, Movement Commands, Commands
+@node    Filling and Line Breaking Commands, Electric Keys and Keywords, Movement Commands, Commands
 @comment  node-name,  next,  previous,  up
 @section Filling and Line Breaking Commands
 @cindex text filling
@@ -652,8 +653,8 @@ Since there's a lot of normal text in comments and string literals,
 @ccmode{} provides features to edit these like in text mode.  The goal
 is to do it as seamlessly as possible, i.e. you can use auto fill
 mode, sentence and paragraph movement, paragraph filling, adaptive
-filling etc.  wherever there's a piece of normal text without having
-to think much about it.  @ccmode{} keeps the indentation, fixes the
+filling etc. wherever there's a piece of normal text without having to
+think much about it.  @ccmode{} keeps the indentation, fixes the
 comment line decorations, and so on, for you.
 
 @findex auto-fill-mode
@@ -727,15 +728,21 @@ line break.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Other Electric Commands, Other Commands, Filling and Line Breaking Commands, Commands
+@node    Electric Keys and Keywords, Other Commands, Filling and Line Breaking Commands, Commands
 @comment node-name, next, previous, up
-@section Other Electric Commands
+@section Electric Keys and Keywords
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-A few other keys also provide electric behavior, often only to reindent
-the line.  Common to all of them is that they only reindent if used in
-normal code (as opposed to in a string literal or comment), and
-@code{c-syntactic-indentation} isn't @code{nil}.  They are:
+Several punctuation keys provide @dfn{electric} behavior - as well as
+inserting themselves they perform some other action, such as
+reindenting the line.  A few keywords, such as @code{else}, also
+trigger electric action.  Common to all of them is that they only
+reindent if used in normal code (as opposed to in a string literal or
+comment), and @code{c-syntactic-indentation} isn't @code{nil}.  These
+keys and keywords are:
+@c ACM, 2004/8/24:  c-electric-pound doesn't check c-s-i: this is more
+@c like a bug in the code than a bug in this document.  It'll get
+@c fixed in the code sometime.
 
 @table @kbd
 @item #
@@ -755,6 +762,8 @@ zero.  This is useful for entering preprocessor macro definitions.
 Pound is not electric in AWK buffers, where @samp{#} starts a comment,
 and is bound to @code{self-insert-command} like any typical printable
 character.
+@c ACM, 2004/8/24:  Change this (and the code) to do AWK comment
+@c reindentation.
 
 @item *
 @kindex *
@@ -810,16 +819,36 @@ electric, but only in C++ mode.  Hitting the second of two @kbd{<} or
 The normal parenthesis characters @samp{(} and @samp{)} reindent the
 current line.  This is useful for getting the closing parenthesis of an
 argument list aligned automatically.
+
+@item @{
+@itemx @}
+Typing a brace reindents the current line.  Additionally, one or more
+newlines might be inserted if auto-newline minor mode is enabled.
+@xref{Hanging Braces}.
+
+@item :
+Typing a colon reindents the current line.  Additionally, one or more
+newlines might be inserted if auto-newline minor mode is enabled.
+@xref{Hanging Colons}.  If you want to type a double colon (the C++
+scope operator) whilst avoiding spurious reindentation or newlines,
+see @ref{Other Commands}.
+
+@item ;
+@itemx ,
+Typing a semicolon or comma reindents the current line.  Additionally,
+a newline might be inserted if auto-newline minor mode is enabled.
+@xref{Customizing Semicolons and Commas}.
+
 @end table
 
 @deffn Command c-electric-continued-statement
 @findex electric-continued-statement (c-)
 
-Certain keywords, depending on language, are electric to cause
-reindentation when they are preceded only by whitespace on the line.
-The keywords are those that continue an earlier statement instead of
-starting a new one: @code{else}, @code{while}, @code{catch} (only in C++
-and Java) and @code{finally} (only in Java).
+Certain keywords are electric, causing reindentation when they are
+preceded only by whitespace on the line.  The keywords are those that
+continue an earlier statement instead of starting a new one:
+@code{else}, @code{while}, @code{catch} (only in C++ and Java) and
+@code{finally} (only in Java).
 
 An example:
 
@@ -833,9 +862,9 @@ else
 @end example
 
 Here, the @code{else} should be indented like the preceding @code{if},
-since it continues that statement. @ccmode{} will automatically reindent
-it after the @code{else} has been typed in full, since it's not until
-then it's possible to decide whether it's a new statement or a
+since it continues that statement. @ccmode{} will automatically
+reindent it after the @code{else} has been typed in full, since only
+then is it possible to decide whether it's a new statement or a
 continuation of the preceding @code{if}.
 
 @vindex abbrev-mode
@@ -848,7 +877,7 @@ modes except IDL mode, since CORBA IDL doesn't have any statements.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Other Commands,  , Other Electric Commands, Commands
+@node    Other Commands,  , Electric Keys and Keywords, Commands
 @comment node-name, next, previous, up
 @section Other Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -871,64 +900,45 @@ operator without performing the electric behavior of colon insertion.
 @chapter Configuration Strategies
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@ccmode{} is configured by setting Lisp variables and possibly writing
+Lisp functions, which you will usually do by adding code to your
+@file{.emacs} file.  There are several ways you can write this code,
+depending on the precise effect you want:
 
-@c What follows came directly from the node ``Permanent
-@c Customization''.  2004/8/10.
-@c To make your changes permanent, you need to add some lisp code to your
-@c @file{.emacs} file.  @ccmode{} supports many different ways to be
-@c configured, from the straightforward way by setting variables globally
-@c in @file{.emacs} or in the Customization interface, to the complex and
-@c precisely controlled way by using styles and hook functions.
-
-@ccmode{} is customised mostly by setting variables.  Usually you will
-do this by adding code to your @file{.emacs} file.  Most simply, you
-can write @code{setq} and similar commands at the top level of the
-file.  Note that you must write these commands @emph{before} @ccmode{}
+@table @asis
+@item Top-level commands
+Most simply, you can write @code{setq} and similar commands at the top
+level of the file.  These commands need to run @emph{before} @ccmode{}
 is first initialized@footnote{The first initialization of @ccmode{}
-makes these variables buffer local.  Their default values become the
-global values the variables had just before the initialization.}  - In
-particular, they must be placed before any call to @code{desktop-read}
-(@pxref{Saving Emacs Sessions,,, Emacs}).  For example, you might set
-c-basic-offset thus:
-
-@c The simplest way of customizing @ccmode{} permanently is to set the
-@c variables in your @file{.emacs} with @code{setq} and similar commands.
-@c So to make a permanent setting of @code{substatement-open} to 0, add
-@c this to the @file{.emacs} file:
+makes many important variables buffer local.  If you set them later,
+the changes will affect only the buffer which is the current buffer at
+the time of the changes.} - In particular, they must be placed before
+any call to @code{desktop-read} (@pxref{Saving Emacs Sessions,,,
+Emacs}).  For example, you might set c-basic-offset thus:
 
 @example
 (setq c-basic-offset 4)
 @end example
 
-@c @example
-@c @group
-@c (setq c-offsets-alist
-@c       '((substatement-open . 0)))
-@c @end group
-@c @end example
-
-@c When @ccmode{} initializes a buffer, it will fill out
-@c @code{c-offsets-alist} with the remaining syntactic symbols according to
-@c the style system.
-
 You can also use the more user friendly Customization interface, but
 this manual does not cover how that works.
 
 For basic use of Emacs, this way of configuring is adequate.  However,
-the settings are then identical in all @ccmode{} buffers and it can be
+the settings are then the same in all @ccmode{} buffers and it can be
 clumsy to communicate them between programmers.  For more flexibility,
 you'll want to use one (or both) of @ccmode{}'s more sophisticated
-facilities, hooks and styles:
+facilities, hooks and styles.
 
-@table @dfn
 @item Hooks
-When you write customizations inside a @ccmode{} language hook
-(@pxref{Hooks,,, elisp}), they are particular to the current buffer,
-since they are by now buffer local (@pxref{Buffer-Local Variables,,,
-elisp}).  Typically you use this flexibility to vary the customization
-settings between language modes.  For example, if you wanted different
-values of @code{c-basic-offset} in C Mode and Java Mode buffers, you
-could do it like this:
+A @dfn{hook} is a place to put Lisp functions that you write in order
+to be executed at specific places within the innards of Emacs.
+@xref{Hooks,,,elisp}.  @ccmode{} supplies an initialization hook for
+each language it supports and one ``common'' hook.  Any hook functions
+you supply are executed as the last part of a buffer's initialisation.
+Typically you use this flexibility to vary the customization settings
+between language modes.  For example, if you wanted different values
+of @code{c-basic-offset} in C Mode and Java Mode buffers, you could do
+it like this:
 
 @example
 @group
@@ -948,18 +958,18 @@ See @ref{Hooks} for fuller details on the use of @ccmode{} hooks.
 A @ccmode{} @dfn{style} is a coherent collection of customizations
 with a name.  @ccmode{} is delivered with several existing styles.
 Additionally, you can create your own styles, possibly based on these
-existing styles.  If you worked in a programming group with it's own
-coding standards, you might well have this in your @file{.emacs} file:
+existing styles.  If you worked in a programming group called the
+``free group'' which had it's own coding standards, you might well
+have this in your @file{.emacs} file:
 
 @example
 (setq c-default-style "free-group-style")
 @end example
 
-See @ref{Styles} for fuller details on the creation and use of @ccmode{}
-styles.
+See @ref{Styles} for how to create @ccmode{} styles and fuller details
+on their use.
 
-@end table
-
+@item Hooks with Styles
 For ultimate flexibility, you can use hooks and styles together.  For
 example, if your group were developing a product which required a
 Linux driver, you'd probably want to use the ``linux'' style for the
@@ -977,7 +987,7 @@ could achieve this with code like this in your @file{.emacs}:
 (add-hook 'c-mode-hook 'my-c-mode-hook)
 @end group
 @end example
-
+@end table
 
 @c Variables set like this at the top level in @file{.emacs} take effect in
 @c all @ccmode{} buffers, regardless of language.  The indentation style
@@ -1011,12 +1021,12 @@ could achieve this with code like this in your @file{.emacs}:
 @c Fill in this section:
 @c writing directly into .emacs vs. hooks; and
 @c writing customizations directly vs. using styles. ##################
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @menu
 * Hooks::                       
 * Styles::                      
 @end menu
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Hooks, Styles, Configuration Strategies, Configuration Strategies
 @comment node-name, next, previous, up
 @section Hooks
@@ -4589,16 +4599,19 @@ according to the language syntax and the comment line prefix.
 @vindex comment-prefix-regexp (c-)
 This style variable contains the regexp used to recognize the
 @dfn{comment line prefix}, which is the line decoration that starts
-every line in a comment.  The default is @samp{//+\\|\\**}, which
-matches C++ style line comments like
+every line in a comment.  When a comment line gets divided by
+@kbd{M-j} or the like, @ccmode{} inserts the comment line prefix from
+a neighbouring line at the start of the new line.  The default value
+of c-comment-prefix-regexp is @samp{//+\\|\\**}, which matches C++
+style line comments like
 
 @example
 // blah blah
 @end example
 
 @noindent
-with two or more slashes in front of them, and C style block comments
-like
+with two or more slashes in front of them, and the second and
+subsequent lines of C style block comments like
 
 @example
 @group
@@ -4748,15 +4761,15 @@ Anywhere else, i.e. in normal code.
 @end table
 
 By default, @code{c-ignore-auto-fill} is set to @code{'(string cpp
-code)}, which means that auto-filling only occurs in comments when
-auto-fill mode is activated.  In literals, it's often desirable to have
-explicit control over newlines.  In preprocessor directives, the
-necessary @samp{\} escape character before the newline is not
-automatically inserted, so an automatic line break would produce invalid
-code.  In normal code, line breaks are normally dictated by some logical
-structure in the code rather than the last whitespace character, so
-automatic line breaks there will produce poor results in the current
-implementation.
+code)}, which means that when auto-fill mode is activated,
+auto-filling only occurs in comments.  In literals, it's often
+desirable to have explicit control over newlines.  In preprocessor
+directives, the necessary @samp{\} escape character before the newline
+is not automatically inserted, so an automatic line break would
+produce invalid code.  In normal code, line breaks are normally
+dictated by some logical structure in the code rather than the last
+whitespace character, so automatic line breaks there will produce poor
+results in the current implementation.
 @end defopt
 
 @c Move this whole chunk up (down to the bottom of the node).
