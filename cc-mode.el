@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.209 $
-;; Last Modified:   $Date: 1994-01-26 18:32:50 $
+;; Version:         $Revision: 3.210 $
+;; Last Modified:   $Date: 1994-01-26 22:38:20 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-26 18:32:50 $|$Revision: 3.209 $|
+;; |$Date: 1994-01-26 22:38:20 $|$Revision: 3.210 $|
 
 ;;; Code:
 
@@ -146,7 +146,7 @@ reported and the semantic symbol is ignored.")
     (label                 . 2)
     (do-while-closure      . 0)
     (else-clause           . 0)
-    (comment-intro         . c-indent-for-comment)
+    (comment-intro         . c-lineup-comment)
     (arglist-intro         . +)
     (arglist-cont          . 0)
     (arglist-cont-nonempty . c-lineup-arglist)
@@ -716,7 +716,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.209 $
+cc-mode Revision: $Revision: 3.210 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -747,7 +747,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.209 $
+cc-mode Revision: $Revision: 3.210 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2963,11 +2963,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       ;; now we need to look at any langelem modifiers
       (goto-char indent-point)
       (skip-chars-forward " \t")
-      (cond
-       ;; CASE M1: look for a comment only line
-       ((looking-at "\\(//\\|/\\*\\)")
-	(c-add-semantics 'comment-intro))
-       )
+      (if (looking-at "\\(//\\|/\\*\\)")
+	  ;; we are looking at a comment. if the comment is at or to
+	  ;; the right of comment-column, then all we want on the
+	  ;; semantics list is comment-intro, otherwise, the
+	  ;; indentation of the comment is relative to where a normal
+	  ;; statement would indent
+	  (if (< (current-column) comment-column)
+	      (c-add-semantics 'comment-intro)
+	    ;; reset semantics kludge
+	    (setq semantics nil)
+	    (c-add-semantics 'comment-intro)))
       ;; return the semantics
       semantics)))
 
@@ -3120,19 +3126,23 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (- c-basic-offset)
     0))
 
-(defun c-indent-for-comment (langelem)
+(defun c-lineup-comment (langelem)
   ;; support old behavior for comment indentation. we look at
   ;; c-comment-only-line-offset to decide how to indent comment
   ;; only-lines
   (save-excursion
     (back-to-indentation)
-    (if (not (bolp))
-	(or (car-safe c-comment-only-line-offset)
-	    c-comment-only-line-offset)
-      (or (cdr-safe c-comment-only-line-offset)
-	  (car-safe c-comment-only-line-offset)
-	  -1000				;jam it against the left side
-	  ))))
+    ;; at or to the right of comment-column
+    (if (>= (current-column) comment-column)
+	(c-comment-indent)
+      ;; otherwise, indent as specified by c-comment-only-line-offset
+      (if (not (bolp))
+	  (or (car-safe c-comment-only-line-offset)
+	      c-comment-only-line-offset)
+	(or (cdr-safe c-comment-only-line-offset)
+	    (car-safe c-comment-only-line-offset)
+	    -1000			;jam it against the left side
+	    )))))
 
 
 ;; commands for "macroizations" -- making C++ parameterized types via
@@ -3221,7 +3231,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.209 $"
+(defconst c-version "$Revision: 3.210 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
