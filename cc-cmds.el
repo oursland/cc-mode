@@ -1163,32 +1163,78 @@ comment."
   "Move back to the containing preprocessor conditional, leaving mark behind.
 A prefix argument acts as a repeat count.  With a negative argument,
 move forward to the end of the containing preprocessor conditional.
-When going backwards, `#elif' is treated like `#else' followed by
-`#if'.  When going forwards, `#elif' is ignored."
+
+`#elif' is treated like `#else' followed by `#if', so the function
+stops at them when going backward, but not when going forward."
   (interactive "p")
-  (c-forward-conditional (- count) t)
+  (c-forward-conditional (- count) -1)
+  (c-keep-region-active))
+  
+(defun c-up-conditional-with-else (count)
+  "Move back to the containing preprocessor conditional, including `#else'.
+Just like `c-up-conditional', except it also stops at `#else'
+directives."
+  (interactive "p")
+  (c-forward-conditional (- count) -1 t)
   (c-keep-region-active))
 
-(defun c-backward-conditional (count &optional up-flag)
+(defun c-down-conditional (count)
+  "Move forward into the next preprocessor conditional, leaving mark behind.
+A prefix argument acts as a repeat count.  With a negative argument,
+move backward into the previous preprocessor conditional.
+
+`#elif' is treated like `#else' followed by `#if', so the function
+stops at them when going forward, but not when going backward."
+  (interactive "p")
+  (c-forward-conditional count 1)
+  (c-keep-region-active))
+
+(defun c-down-conditional-with-else (count)
+  "Move forward into the next preprocessor conditional, including `#else'.
+Just like `c-down-conditional', except it also stops at `#else'
+directives."
+  (interactive "p")
+  (c-forward-conditional count 1 t)
+  (c-keep-region-active))
+
+(defun c-backward-conditional (count &optional target-depth with-else)
   "Move back across a preprocessor conditional, leaving mark behind.
 A prefix argument acts as a repeat count.  With a negative argument,
 move forward across a preprocessor conditional."
   (interactive "p")
-  (c-forward-conditional (- count) up-flag)
+  (c-forward-conditional (- count) target-depth with-else)
   (c-keep-region-active))
 
-(defun c-forward-conditional (count &optional up-flag)
+(defun c-forward-conditional (count &optional target-depth with-else)
   "Move forward across a preprocessor conditional, leaving mark behind.
 A prefix argument acts as a repeat count.  With a negative argument,
-move backward across a preprocessor conditional."
+move backward across a preprocessor conditional.
+
+`#elif' is treated like `#else' followed by `#if', except that the
+nesting level isn't changed when tracking subconditionals.
+
+The optional argument TARGET-DEPTH specifies the wanted nesting depth
+after each scan.  I.e. if TARGET-DEPTH is -1, the function will move
+out of the enclosing conditional.  A non-integer non-nil TARGET-DEPTH
+counts as -1.
+
+If the optional argument WITH-ELSE is non-nil, `#else' directives are
+treated as conditional clause limits.  Normally they are ignored."
   (interactive "p")
   (let* ((forward (> count 0))
 	 (increment (if forward -1 1))
 	 (search-function (if forward 're-search-forward 're-search-backward))
 	 (new))
+    (unless (integerp target-depth)
+      (setq target-depth (if target-depth -1 0)))
     (save-excursion
       (while (/= count 0)
-	(let ((depth (if up-flag 0 -1)) found)
+	(let ((depth 0)
+	      ;; subdepth is the depth in "uninteresting" subtrees,
+	      ;; i.e. those that takes us farther from the target
+	      ;; depth instead of closer.
+	      (subdepth 0)
+	      found)
 	  (save-excursion
 	    ;; Find the "next" significant line in the proper direction.
 	    (while (and (not found)
@@ -1199,36 +1245,50 @@ move backward across a preprocessor conditional."
 			;; precedes it.  This is faster on account of
 			;; the fastmap feature of the regexp matcher.
 			(funcall search-function
-				 "#[ \t]*\\(if\\|elif\\|endif\\)"
+				 "#[ \t]*\\(if\\|elif\\|endif\\|else\\)"
 				 nil t))
 	      (beginning-of-line)
 	      ;; Now verify it is really a preproc line.
-	      (if (looking-at "^[ \t]*#[ \t]*\\(if\\|elif\\|endif\\)")
-		  (let ((prev depth))
-		    ;; Update depth according to what we found.
-		    (beginning-of-line)
-		    (cond ((looking-at "[ \t]*#[ \t]*endif")
-			   (setq depth (+ depth increment)))
-			  ((looking-at "[ \t]*#[ \t]*elif")
-			   (if (and forward (= depth 0))
-			       (setq found (point))))
-			  (t (setq depth (- depth increment))))
-		    ;; If we are trying to move across, and we find an
-		    ;; end before we find a beginning, get an error.
-		    (if (and (< prev 0) (< depth prev))
-			(error (if forward
-				   "No following conditional at this level"
-				 "No previous conditional at this level")))
+	      (if (looking-at "^[ \t]*#[ \t]*\\(if\\|elif\\|endif\\|else\\)")
+		  (let (dchange (directive (match-string 1)))
+		    (cond ((string= directive "if")
+			   (setq dchange (- increment)))
+			  ((string= directive "endif")
+			   (setq dchange increment))
+			  ((= subdepth 0)
+			   ;; When we're not in an "uninteresting"
+			   ;; subtree, we might want to act on "elif"
+			   ;; and "else" too.
+			   (if (cond (with-else
+				      ;; Always move toward the target depth.
+				      (setq dchange
+					    (if (> target-depth 0) 1 -1)))
+				     ((string= directive "elif")
+				      (setq dchange (- increment))))
+			       ;; Ignore the change if it'd take us
+			       ;; into an "uninteresting" subtree.
+			       (if (eq (> dchange 0) (<= target-depth 0))
+				   (setq dchange nil)))))
+		    (when dchange
+		      (when (or (/= subdepth 0)
+				(eq (> dchange 0) (<= target-depth 0)))
+			(setq subdepth (+ subdepth dchange)))
+		      (setq depth (+ depth dchange))
+		      ;; If we are trying to move across, and we find an
+		      ;; end before we find a beginning, get an error.
+		      (if (and (< depth target-depth) (< dchange 0))
+			  (error (if forward
+				     "No following conditional at this level"
+				   "No previous conditional at this level"))))
 		    ;; When searching forward, start from next line so
 		    ;; that we don't find the same line again.
 		    (if forward (forward-line 1))
-		    ;; If this line exits a level of conditional, exit
-		    ;; inner loop.
-		    (if (< depth 0)
+		    ;; We found something if we've arrived at the
+		    ;; target depth.
+		    (if (and dchange (= depth target-depth))
 			(setq found (point))))
 		;; else
-		(if forward (forward-line 1))
-		)))
+		(if forward (forward-line 1)))))
 	  (or found
 	      (error "No containing preprocessor conditional"))
 	  (goto-char (setq new found)))
