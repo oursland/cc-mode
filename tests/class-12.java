@@ -19,7 +19,7 @@ class Foo
 		public void foo()
 		{}
 	    }
-	  );
+	    );
     button.setActionListener(
 			     new java.awt.event.ActionAdaptor()
 			     {
