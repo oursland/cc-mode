@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.37 $
-;; Last Modified:   $Date: 1993-10-29 22:42:35 $
+;; Version:         $Revision: 3.38 $
+;; Last Modified:   $Date: 1993-10-31 19:14:59 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-10-29 22:42:35 $|$Revision: 3.37 $|
+;; |$Date: 1993-10-31 19:14:59 $|$Revision: 3.38 $|
 
 ;;; Code:
 
@@ -537,7 +537,7 @@ this variable to nil defeats backscan limits.")
   )
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.37 $
+  "Major mode for editing C++ code.  $Revision: 3.38 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -732,7 +732,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.37 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.38 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'.  Only real
 difference is that this sets up the buffer for editing C code, and it
@@ -1773,6 +1773,36 @@ defaults to `point-max'."
       (setq state (parse-partial-sexp (point) limit 0)))
     state))
 
+(defun c++-search-uplist-for-classkey ()
+  ;; find a classkey in the enclosing block before point. if found,
+  ;; leave point at classkey and return t, otherwise return nil
+  (let ((bosexp (c++-point 'boe))
+	(eosexp (c++-point 'eoe))
+	donep foundp)
+    (while (not donep)
+      (goto-char eosexp)
+      (if (and (re-search-backward c++-class-key bosexp t)
+	       (not (c++-in-literal)))
+	  (setq donep t
+		foundp t)
+	(setq eosexp bosexp
+	      bosexp (c++-point 'boe))
+	(if (= eosexp bosexp)
+	    (setq donep t))
+	))
+      foundp))
+
+(defun c++-narrow-out-enclosing-class ()
+  ;; narrow out the enclosing class from the class opening brace to
+  ;; point. assumes there is an enclosing class
+  (let ((end (point))
+	(start (progn
+		 (if (not (c++-search-uplist-for-classkey))
+		     (error "No enclosing class!"))
+		 (down-list 1)
+		 (1+ (point)))))
+    (narrow-to-region start end)))
+
 (defun c++-at-top-level-p (wrt &optional bod)
   "Return t if point is not inside a containing C++ expression, nil
 if it is embedded in an expression.  When WRT is non-nil, returns nil
@@ -2566,6 +2596,8 @@ POSITION can be one of the following symbols:
   `eol' -- end of line
   `bod' -- beginning of defun
   `boi' -- back to indentation
+  `boe' -- beginning enclosing block
+  `eoe' -- end of enclosing block (before point)
 This function does not modify point or mark."
   (let ((here (point)) bufpos)
     (cond
@@ -2573,6 +2605,21 @@ This function does not modify point or mark."
      ((eq position 'eol) (end-of-line))
      ((eq position 'bod) (beginning-of-defun))
      ((eq position 'boi) (back-to-indentation))
+     ((eq position 'boe) (condition-case nil
+			     (up-list -2)
+			   (error
+			    (goto-char here)
+			    (if (condition-case nil
+				    (up-list -1)
+				  (error t))
+				(beginning-of-defun)
+			      (condition-case nil
+				  (down-list -1)
+				(error (beginning-of-defun))
+				)))))
+     ((eq position 'eoe) (condition-case nil
+			     (up-list -1)
+			   (error (goto-char here))))
      )
     (setq bufpos (point))
     (goto-char here)
@@ -2673,7 +2720,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.37 $"
+(defconst c++-version "$Revision: 3.38 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
