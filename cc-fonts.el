@@ -59,7 +59,7 @@
 ;;				doesn't try to fontify syntax errors.  Instead
 ;;				it's as picky as possible about only
 ;;				fontifying syntactically correct structures so
-;;				that incorrect ones simply isn't fontified.
+;;				that incorrect ones simply aren't fontified.
 ;;
 ;; Special faces:
 ;;
@@ -286,19 +286,22 @@ tools (e.g. Javadoc).")
     ;; lambda easier.
     (byte-compile
      `(lambda (limit)
-	(while (re-search-forward ,regexp limit t)
-	  (unless (save-excursion
-		    (goto-char (match-beginning 0))
-		    (c-skip-comments-and-strings limit))
-	    ,(when type-submatch
-	       `(save-match-data
-		  (c-put-font-lock-face (match-beginning ,type-submatch)
-					(match-end ,type-submatch)
-					'font-lock-type-face)))
-	    ,pre
-	    (save-match-data
-	      (c-font-lock-declarators limit t nil))
-	    ,post))
+	(let (-match-end-pos-)
+	  (while (re-search-forward ,regexp limit t)
+	    (setq -match-end-pos- (point))
+	    (unless (progn
+		      (goto-char (match-beginning 0))
+		      (c-skip-comments-and-strings limit))
+	      (goto-char -match-end-pos-)
+	      ,(when type-submatch
+		 `(save-match-data
+		    (c-put-font-lock-face (match-beginning ,type-submatch)
+					  (match-end ,type-submatch)
+					  'font-lock-type-face)))
+	      ,pre
+	      (save-match-data
+		(c-font-lock-declarators limit t nil))
+	      ,post)))
 	nil))))
 
 (c-lang-defconst c-cpp-matchers
@@ -490,13 +493,13 @@ tools (e.g. Javadoc).")
 				     "\\)"
 				     (c-lang-var c-symbol-start))
 			    limit t)
-		      (unless (or (save-excursion
-				    (goto-char (match-beginning 0))
-				    (c-skip-comments-and-strings limit))
-				  (get-text-property (match-beginning 2)
-						     'face))
-			(c-put-font-lock-face (match-beginning 2) (match-end 2)
-					      font-lock-reference-face)
+		      (unless (progn
+				(goto-char (match-beginning 0))
+				(c-skip-comments-and-strings limit))
+			(or (get-text-property (match-beginning 2) 'face)
+			    (c-put-font-lock-face (match-beginning 2)
+						  (match-end 2)
+						  font-lock-reference-face))
 			(goto-char (match-end 1)))))))))
 
 	;; Fontify labels in languages that supports them.
