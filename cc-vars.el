@@ -116,7 +116,7 @@ Useful as last item in a `choice' widget."
 This is a style variable.  Apart from the valid values described
 above, it can be set to the symbol `set-from-style'.  In that case, it
 takes its value from the style system (see `c-default-style' and
-`c-styles-alist') when a CC Mode buffer is initialized.  Otherwise,
+`c-style-alist') when a CC Mode buffer is initialized.  Otherwise,
 the value set here overrides the style system (there is a variable
 `c-old-style-variable-behavior' that changes this, though).")
        ,@(plist-put
@@ -836,7 +836,7 @@ syntactic element is ignored.
 
 `c-offsets-alist' is a style variable.  This means that the offsets on
 this variable are normally taken from the style system in CC Mode
-\(see `c-default-style' and `c-styles-alist').  However, any offsets
+\(see `c-default-style' and `c-style-alist').  However, any offsets
 put explicitly on this list will override the style system when a CC
 Mode buffer is initialized \(there is a variable
 `c-old-style-variable-behavior' that changes this, though).
@@ -1020,7 +1020,7 @@ This variable only has effect in XEmacs.")
 
 Normally the values of the style variables will override the style
 settings specified by the variables `c-default-style' and
-`c-styles-alist'.  However, in CC Mode 5.25 and earlier, it was the
+`c-style-alist'.  However, in CC Mode 5.25 and earlier, it was the
 other way around, meaning that changes made to the style variables
 from e.g. Customize would not take effect unless special precautions
 were taken.  That was confusing, especially for novice users.
