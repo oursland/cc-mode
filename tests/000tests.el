@@ -270,7 +270,7 @@
     (setq finished-tests (cons filename finished-tests))
     (message "Testing %s... done." filename)))
 
-(defun do-all-tests (resetp)
+(defun do-all-tests (&optional resetp)
   (interactive "P")
   (if (consp resetp)
       (setq finished-tests nil))
