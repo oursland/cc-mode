@@ -321,97 +321,88 @@
 (defun c-literal-limits (&optional lim)
   ;; Returns a cons of the beginning and end positions of the comment
   ;; or string surrounding point (including both delimiters), or nil
-  ;; if point isn't in one.  If point is in one of several C++ style
-  ;; comments with nothing but whitespace between them, the limits for
-  ;; the whole lot are returned.  This is the Emacs 19 version.
+  ;; if point isn't in one.  This is the Emacs 19 version.
   (save-excursion
     (let* ((lim (or lim (c-point 'bod)))
-	   (state (parse-partial-sexp lim (point)))
-	   (res	(cond ((nth 3 state)
-		       ;; String.  Search backward for the start.
-		       (while (nth 3 state)
-			 (search-backward (make-string 1 (nth 3 state)))
-			 (setq state (parse-partial-sexp lim (point))))
-		       (cons (point) (or (c-safe (forward-sexp 1) (point))
-					 (point-max))))
-		      ((nth 7 state)
-		       ;; C++ comment.  Search from bol for the
-		       ;; comment starter.
-		       (beginning-of-line)
-		       (setq state (parse-partial-sexp lim (point))
-			     lim (point))
-		       (while (not (nth 7 state))
-			 (search-forward "//")	; Should never fail.
-			 (setq state (parse-partial-sexp
-				      lim (point) nil nil state)
-			       lim (point)))
-		       (backward-char 2)
-		       (cons (point) (progn (forward-comment 1) (point))))
-		      ((nth 4 state)
-		       ;; C comment.  Search backward for the comment starter.
-		       (while (nth 4 state)
-			 (search-backward "/*")	; Should never fail.
-			 (setq state (parse-partial-sexp lim (point))))
-		       (cons (point) (progn (forward-comment 1) (point))))
-		      ((c-safe
-			(nth 4 (parse-partial-sexp ; Can't use prev state due
-				lim (1+ (point))))) ; to bug in Emacs 19.34.
-		       ;; We're standing in a comment starter.
-		       (backward-char 2)
-		       (cons (point) (progn (forward-comment 1) (point))))
-		      )))
-      ;; We may have more C++ comments to lump together.
-      (if (and (consp res) (progn
-			     (goto-char (car res))
-			     (looking-at "//")))
-	  (let ((beg (point)))
-	    (while (and (forward-comment -1)
-			(looking-at "//"))
-	      (setq beg (point)))
-	    (cons beg (progn
-			(goto-char (cdr res))
-			(while (looking-at "[ \t\n]*//")
-			  (forward-comment 1))
-			(point))))
-	res))))
+	   (state (parse-partial-sexp lim (point))))
+      (cond ((nth 3 state)
+	     ;; String.  Search backward for the start.
+	     (while (nth 3 state)
+	       (search-backward (make-string 1 (nth 3 state)))
+	       (setq state (parse-partial-sexp lim (point))))
+	     (cons (point) (or (c-safe (forward-sexp 1) (point))
+			       (point-max))))
+	    ((nth 7 state)
+	     ;; C++ comment.  Search from bol for the comment starter.
+	     (beginning-of-line)
+	     (setq state (parse-partial-sexp lim (point))
+		   lim (point))
+	     (while (not (nth 7 state))
+	       (search-forward "//")	; Should never fail.
+	       (setq state (parse-partial-sexp
+			    lim (point) nil nil state)
+		     lim (point)))
+	     (backward-char 2)
+	     (cons (point) (progn (forward-comment 1) (point))))
+	    ((nth 4 state)
+	     ;; C comment.  Search backward for the comment starter.
+	     (while (nth 4 state)
+	       (search-backward "/*")	; Should never fail.
+	       (setq state (parse-partial-sexp lim (point))))
+	     (cons (point) (progn (forward-comment 1) (point))))
+	    ((c-safe (nth 4 (parse-partial-sexp ; Can't use prev state due
+			     lim (1+ (point))))) ; to bug in Emacs 19.34.
+	     ;; We're standing in a comment starter.
+	     (backward-char 2)
+	     (cons (point) (progn (forward-comment 1) (point))))
+	    ))))
 
 (defun c-literal-limits-fast (&optional lim)
   ;; Returns a cons of the beginning and end positions of the comment
   ;; or string surrounding point (including both delimiters), or nil
-  ;; if point isn't in one.  If point is in one of several C++ style
-  ;; comments with nothing but whitespace between them, the limits for
-  ;; the whole lot are returned.  This is for emacsen whose
-  ;; parse-partial-sexp returns the pos of the comment start.
+  ;; if point isn't in one.  This is for emacsen whose
+  ;; `parse-partial-sexp' returns the pos of the comment start.
   (save-excursion
-    (let ((state (parse-partial-sexp lim (point)))
-	  (res (cond ((nth 3 state)	; String.
-		      (goto-char (nth 8 state))
-		      (cons (point) (or (c-safe (forward-sexp 1) (point))
-					(point-max))))
-		     ((nth 4 state)	; Comment.
-		      (goto-char (nth 8 state))
-		      (cons (point) (progn (forward-comment 1) (point))))
-		     ((c-safe
-		       (nth 4 (parse-partial-sexp ; Works?
-			       (point) (1+ (point)) nil nil state)))
-		      ;; We're standing in a comment starter.
-		      (backward-char 2)
-		      (cons (point) (progn (forward-comment 1) (point))))
-		     )))
-      ;; We may have more C++ comments to lump together.
-      (if (and (consp res) (progn
-			     (goto-char (car res))
-			     (looking-at "//")))
-	  (let ((beg (point)))
-	    (while (and (forward-comment -1)
-			(looking-at "//"))
-	      (setq beg (point)))
-	    (cons beg (progn
-			(goto-char (cdr res))
-			(while (looking-at "[ \t\n]*//")
-			  (forward-comment 1))
-			(point))))
-	res))))
+    (let ((state (parse-partial-sexp lim (point))))
+      (cond ((nth 3 state)		; String.
+	     (goto-char (nth 8 state))
+	     (cons (point) (or (c-safe (forward-sexp 1) (point))
+			       (point-max))))
+	    ((nth 4 state)		; Comment.
+	     (goto-char (nth 8 state))
+	     (cons (point) (progn (forward-comment 1) (point))))
+	    ((c-safe
+	      (nth 4 (parse-partial-sexp ; Works?
+		      (point) (1+ (point)) nil nil state)))
+	     ;; We're in a comment starter.
+	     (backward-char 2)
+	     (cons (point) (progn (forward-comment 1) (point))))
+	    ))))
+
+(defun c-collect-line-comments (range)
+  ;; If the argument is a cons of two buffer positions (such as
+  ;; returned by c-literal-limits), and that range contains a C++
+  ;; style line comment, then an extended range is returned that
+  ;; contains all adjacent line comments (i.e. all comments with no
+  ;; empty lines or non-whitespace characters between them).
+  ;; Otherwise the argument is returned.
+  (save-excursion
+    (condition-case nil
+	(if (and (consp range) (progn
+				 (goto-char (car range))
+				 (looking-at "//")))
+	    (let ((beg (point)))
+	      (while (and (not (bobp))
+			  (forward-comment -1)
+			  (looking-at "//"))
+		(setq beg (point)))
+	      (cons beg (progn
+			  (goto-char (cdr range))
+			  (while (looking-at "[ \t]*//")
+			    (forward-comment 1))
+			  (point))))
+	  range)
+      (error range))))
 
 
 
