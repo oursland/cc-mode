@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-28 19:59:12 $
-;; Version:         $Revision: 2.7 $
+;; Last Modified:   $Date: 1992-04-28 20:04:52 $
+;; Version:         $Revision: 2.8 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-28 19:59:12 $|$Revision: 2.7 $|
+;; |$Date: 1992-04-28 20:04:52 $|$Revision: 2.8 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -138,7 +138,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.7 $
+  "Major mode for editing C++ code.  $Revision: 2.8 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -633,7 +633,7 @@ if it is embedded in an expression."
   (save-excursion
     (let ((indent-point (point))
 	  (case-fold-search nil)
-	  state containing-sexp)
+	  state containing-sexp parse-start)
       (beginning-of-defun)
       (while (< (point) indent-point)
 	(setq parse-start (point))
@@ -1278,7 +1278,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.7 $"
+(defconst c++-version "$Revision: 2.8 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
