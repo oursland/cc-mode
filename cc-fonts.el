@@ -124,6 +124,7 @@
 (cc-bytecomp-defun c-fontify-recorded-types-and-refs)
 (cc-bytecomp-defun c-font-lock-identifier-list)
 (cc-bytecomp-defun c-font-lock-declarators)
+(cc-bytecomp-defun c-font-lock-objc-prot-ref-list)
 
 
 ;; Note that font-lock in XEmacs doesn't expand face names as
@@ -389,7 +390,19 @@ stuff.  Used on level 1 and higher."
 	      (,(concat noncontinued-line-end
 			(c-lang-const c-opt-cpp-prefix)
 			"\\(import\\|include\\)\\>\\s *\\(<[^>\n\r]*>?\\)")
-	       ,(+ ncle-depth 2) font-lock-string-face)
+	       (,(+ ncle-depth 2) font-lock-string-face)
+
+	       ;; Use an anchored matcher to put paren syntax on the brackets.
+	       (,(byte-compile
+		  `(lambda (limit)
+		     (let ((beg-pos (match-beginning ,(+ ncle-depth 2)))
+			   (end-pos (1- (match-end ,(+ ncle-depth 2)))))
+		       (if (eq (char-after end-pos) ?>)
+			   (progn
+			     (c-mark-template-open beg-pos)
+			     (c-mark-template-close end-pos))
+			 (c-clear-char-syntax beg-pos)))
+		     nil))))
 
 	      ;; #define.
 	      (,(concat
@@ -461,58 +474,13 @@ stuff.  Used on level 1 and higher."
 		   'c-nonbreakable-space-face)))
       ))
 
-(defun c-font-lock-labels (limit)
-  ;; Fontify all the declarations from the point to LIMIT.  Assumes
-  ;; that strings and comments have been fontified already.  This
-  ;; function does both the search and the fontification itself to
-  ;; avoid differences between the (X)Emacs flavors in where they
-  ;; continue the search after a match.
-  ;;
-  ;; This function can make hidden buffer changes, but the font-lock
-  ;; context covers that.
-
-  (while (re-search-forward ":[^:]" limit t)
-
-    (if (get-text-property (match-beginning 0) 'face)
-	;; Ignore hits inside highlighted stuff.
-	(goto-char (next-single-property-change (point) 'face nil limit))
-
-      (save-excursion
-	(let (id-start)
-	  (goto-char (match-beginning 0))
-	  (c-backward-syntactic-ws)
-	  (and (setq id-start (c-on-identifier))
-
-	       (progn
-		 (goto-char id-start)
-		 (c-backward-syntactic-ws)
-		 (or
-		  ;; Check for a char that precedes a statement.
-		  (memq (char-before) '(?\} ?\{ ?\) ?\;))
-		  ;; Check for a preceding label.  We exploit the font
-		  ;; locking made earlier by this function.
-		  (and (eq (char-before) ?:)
-		       (progn
-			 (backward-char)
-			 (c-backward-syntactic-ws)
-			 (not (bobp)))
-		       (eq (get-text-property (1- (point)) 'face)
-			   c-label-face))
-		  ;; Check for a keyword that precedes a statement.
-		  (c-after-conditional)))
-
-	       (progn
-		 ;; Got a label.
-		 (goto-char id-start)
-		 (looking-at c-symbol-key)
-		 (c-put-font-lock-face (match-beginning 0) (match-end 0)
-				       c-label-face))))))))
-
 (defun c-font-lock-identifier-list (limit face)
-  ;; Fontify a comma separated list of identifiers with FACE.  Any
-  ;; highlighted keywords in front of each identifier are skipped over.
-  ;; The list is taken to end when an identifier isn't followed by a
-  ;; comma.
+  ;; Fontify a comma separated list of identifiers with FACE in the
+  ;; region from the point to LIMIT.  Any highlighted keywords in
+  ;; front of each identifier are skipped over.  The list is taken to
+  ;; end when an identifier isn't followed by a comma.  The point is
+  ;; at the token following the last fontified identifier on return.
+  ;; Nil is always returned.
 
   (save-restriction
     (narrow-to-region (point-min) limit)
@@ -557,7 +525,8 @@ stuff.  Used on level 1 and higher."
 			  'font-lock-keyword-face)
 		  (goto-char (next-single-property-change
 			      (point) 'face nil limit))
-		  t)))))))
+		  t))))))
+  nil)
 
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
@@ -621,75 +590,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 						font-lock-reference-face))
 		      (goto-char (match-end 1)))))))))
 
-      ;; Fontify labels in languages that supports them.
-      ,@(when (c-lang-const c-label-key)
-
-	  `(;; Fontify goto targets and case labels.  This
-	    ;; deliberately fontifies only a single identifier or a
-	    ;; signed integer as a label; all other forms are
-	    ;; considered to be expressions and thus fontified as
-	    ;; such (i.e. not at all).
-
-	    ;; (Got three different interpretation levels here,
-	    ;; which makes it a bit complicated: 1) The backquote
-	    ;; stuff is expanded when compiled or loaded, 2) the
-	    ;; eval form is evaluated at font-lock setup (to
-	    ;; substitute c-label-face correctly), and 3) the
-	    ;; resulting structure is interpreted during
-	    ;; fontification.)
-	    (eval
-	     . ,(let* ((c-before-label-re
-			(c-make-keywords-re nil
-			  (c-lang-const c-before-label-kwds)))
-		       (identifier-offset
-			(+ (c-regexp-opt-depth c-before-label-re)
-			   3))
-		       (integer-offset
-			(+ identifier-offset
-			   (c-regexp-opt-depth (c-lang-const c-identifier-key))
-			   1)))
-
-		  `(list
-		    ,(concat
-		      "\\<\\("
-		      c-before-label-re
-		      "\\)\\>"
-		      "\\s *"
-		      "\\("
-		      ;; Match a (simple) qualified identifier,
-		      ;; i.e. we don't bother with `c-forward-name'.
-		      ;; We highlight the last symbol in it as a
-		      ;; label.
-		      "\\(" (c-lang-const ; identifier-offset
-			     c-identifier-key) "\\)"
-		      "\\|"
-		      ;; Match an integer.
-		      "\\(-?[0-9]+\\)"	; integer-offset
-		      (if (c-major-mode-is 'pike-mode)
-			  ;; Pike allows integer ranges.
-			  (concat
-			   "\\s *\\(\\.\\.\\s *\\(-?[0-9]+\\)?\\)?"
-			   "\\|\\.\\.\\s *\\(-?[0-9]+\\)")
-			"")
-		      "\\)"
-		      "\\s *[:;]")
-
-		    ,@(mapcar
-		       (lambda (submatch)
-			 `(list ,(+ identifier-offset submatch)
-				c-label-face nil t))
-		       (c-lang-const c-identifier-last-sym-match))
-
-		    (list ,integer-offset c-label-face nil t)
-
-		    ,@(when (c-major-mode-is 'pike-mode)
-			`((list ,(+ integer-offset 2) c-label-face nil t)
-			  (list ,(+ integer-offset 3) c-label-face nil t)))
-		    )))
-
-	    ;; Fontify normal labels.
-	    c-font-lock-labels))
-
       ,@(when (c-major-mode-is 'pike-mode)
 	  `(;; Constant declarations in Pike lacks a type, so special
 	    ;; treatment is necessary before the normal declaration
@@ -726,39 +626,35 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			font-lock-type-face nil t))
 		    (c-lang-const c-identifier-last-sym-match))))
 	    ))
+
+      ,@(when (c-major-mode-is 'objc-mode)
+	  `(;; Fontify class names in the beginning of message expressions.
+	    ,(c-make-font-lock-search-function
+	      "\\["
+	      '((c-fontify-types-and-refs ()
+		  (c-forward-syntactic-ws limit)
+		  (c-forward-type)
+		  (if (> (point) limit) (goto-char limit)))))
+
+	    ;; Fontify protocol reference lists after types.
+	    ,(c-make-font-lock-search-function
+	      'c-known-type-key
+	      '((save-restriction
+		  (narrow-to-region (point-min) limit)
+		  (c-forward-syntactic-ws)
+		  (when (eq (char-after) ?<)
+		    (c-font-lock-objc-prot-ref-list)))))
+
+	    ;; Fontify the class name in "@defs(Foo)".
+	    ,(c-make-font-lock-search-function
+	      (concat "\\<@defs\\>"
+		      (c-lang-const c-syntactic-ws)
+		      "(")
+	      '((c-fontify-types-and-refs ((c-promote-possible-types t))
+		  (c-forward-syntactic-ws limit)
+		  (c-forward-type)
+		  (if (> (point) limit) (goto-char limit)))))))
       ))
-
-(defun c-font-lock-c++-templates (limit)
-  ;; Fontify types and references in names containing template
-  ;; arglists in C++.  This will also fontify cases like normal
-  ;; function calls on the form "foo (a < b, c > d)", but
-  ;; `c-font-lock-declarations' will undo that later.
-
-  (c-fontify-types-and-refs (id-start id-end pos)
-    (while (and (< (point) limit)
-		(re-search-forward (cc-eval-when-compile
-				     (concat "\\("
-					     (c-lang-const c-symbol-key c++)
-					     "\\)"
-					     (c-lang-const c-syntactic-ws c++)
-					     "<"))
-				   limit t))
-      (setq id-start (match-beginning 1)
-	    id-end (match-end 1)
-	    pos (point))
-
-      (goto-char (match-beginning 0))
-      (unless (c-skip-comments-and-strings limit)
-
-	(goto-char (1- pos))
-	(when (c-forward-c++-template-arglist)
-	  (unless (get-text-property id-start 'face)
-	    (c-forward-syntactic-ws)
-	    (if (looking-at "::")
-		(c-put-font-lock-face id-start id-end
-				      font-lock-reference-face)
-	      (c-put-font-lock-face id-start id-end
-				    'font-lock-type-face))))))))
 
 (defun c-font-lock-declarators (limit list types)
   ;; Assuming the point is in the syntactic whitespace before the
@@ -766,7 +662,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; non-nil, fontify also all following declarators in a comma
   ;; separated list (e.g.  "foo" and "bar" in "int foo = 17, bar;").
   ;; Stop at LIMIT.  If TYPES is non-nil, fontify all identifiers as
-  ;; types.
+  ;; types.  Nil is always returned.
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-forward-syntactic-ws limit)
@@ -870,7 +766,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(when (and (< (point) limit) (looking-at ","))
 	  (forward-char)
 	  (c-forward-syntactic-ws limit)
-	  (setq pos (point)))))))
+	  (setq pos (point))))))
+  nil)
 
 (defconst c-font-lock-maybe-decl-faces
   ;; List of faces that might be put at the start of a type when
@@ -913,6 +810,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
   ;; Assumes that strings and comments have been fontified already.
+  ;; Nil is always returned.
   ;;
   ;; This function can make hidden buffer changes, but the font-lock
   ;; context covers that.
@@ -1530,10 +1428,456 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
       nil)))
 
+(c-lang-defconst c-simple-decl-matchers
+  "Simple font lock matchers for types and declarations.  These are used
+on level 2 only and so aren't combined with `c-complex-decl-matchers'."
+
+  t `(;; Fontify the special declarations in Objective-C.
+      ,@(when (c-major-mode-is 'objc-mode)
+	  `(;; The @interface/@implementation/@protocol directives.
+	    (,(concat "\\<"
+		      (c-regexp-opt
+		       '("@interface" "@implementation" "@protocol")
+		       t)
+		      "\\>")
+	     (,(byte-compile
+		(lambda (limit)
+		  (save-restriction
+		    (narrow-to-region (point-min) limit)
+		    (c-font-lock-objc-iip-decl))
+		  nil))))
+
+	    ;; Methods.
+	    (,(c-lang-const c-opt-method-key)
+	     (,(byte-compile
+		(lambda (limit)
+		  (save-restriction
+		    (goto-char (match-end 1))
+		    (narrow-to-region (point-min) limit)
+		    (c-font-lock-objc-method))
+		  nil))))))
+
+      ;; Fontify all type names and the identifiers in the
+      ;; declarations they might start.  Use eval here since
+      ;; `c-known-type-key' gets its value from
+      ;; `*-font-lock-extra-types' on mode init.
+      (eval . (list ,(c-make-font-lock-search-function
+		      'c-known-type-key
+		      '(1 'font-lock-type-face t)
+		      '((c-font-lock-declarators limit t nil)
+			(save-match-data
+			  (goto-char (match-end 1))
+			  (c-forward-syntactic-ws))
+			(goto-char (match-end 1))))))
+
+      ;; Fontify types preceded by `c-type-prefix-kwds' and the
+      ;; identifiers in the declarations they might start.
+      ,@(when (c-lang-const c-type-prefix-kwds)
+	  (let ((prefix-re (c-make-keywords-re nil
+			     (c-lang-const c-type-prefix-kwds))))
+	    `((,(c-make-font-lock-search-function
+		 (concat "\\<\\(" prefix-re "\\)"
+			 "[ \t\n\r\f\v]+"
+			 "\\(" (c-lang-const c-symbol-key) "\\)")
+		 `(,(+ (c-regexp-opt-depth prefix-re) 2)
+		   'font-lock-type-face t)
+		 '((c-font-lock-declarators limit t nil)
+		   (save-match-data
+		     (goto-char (match-end 2))
+		     (c-forward-syntactic-ws))
+		   (goto-char (match-end 2))))))))
+      ))
+
+(c-lang-defconst c-complex-decl-matchers
+  "Complex font lock matchers for types and declarations.  Used on level
+3 and higher."
+
+  t `(;; Fontify templates in C++.
+      ,@(when (c-major-mode-is 'c++-mode)
+	  `(c-font-lock-c++-templates))
+
+      ;; Fontify the special declarations in Objective-C.
+      ,@(when (c-major-mode-is 'objc-mode)
+	  `(c-font-lock-objc-decls))
+
+      ;; Fontify all declarations and casts.
+      c-font-lock-declarations
+
+      ;; The first two rules here mostly find occurences that
+      ;; `c-font-lock-declarations' has found already, but not
+      ;; declarations containing blocks in the type (see note below).
+      ;; It's also useful to fontify these everywhere to show e.g. when
+      ;; a type keyword is accidentally used as an identifier.
+
+      ;; Fontify basic types.
+      ,(let ((re (c-make-keywords-re nil (c-lang-const c-type-kwds))))
+	 (if (c-major-mode-is 'pike-mode)
+	     ;; No symbol is a keyword after "->" in Pike.
+	     `(,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
+			"\\<\\(" re "\\)\\>")
+	       3 font-lock-type-face)
+	   `(,(concat "\\<\\(" re "\\)\\>")
+	     1 'font-lock-type-face)))
+
+      ;; Fontify types preceded by `c-type-prefix-kwds'.
+      ,@(when (c-lang-const c-type-prefix-kwds)
+	  `((,(byte-compile
+	       `(lambda (limit)
+		  (c-fontify-types-and-refs ((c-promote-possible-types t))
+		    (save-restriction
+		      ;; Narrow to avoid going past the limit in
+		      ;; `c-forward-type'.
+		      (narrow-to-region (point) limit)
+		      (while (re-search-forward
+			      ,(concat "\\<\\("
+				       (c-make-keywords-re nil
+					 (c-lang-const c-type-prefix-kwds))
+				       "\\)\\>")
+			      limit t)
+			(unless (c-skip-comments-and-strings limit)
+			  (c-forward-syntactic-ws)
+			  ,(if (c-major-mode-is 'c++-mode)
+			       `(when (and (c-forward-type)
+					   (progn (c-forward-syntactic-ws)
+						  (eq (char-after) ?=)))
+				  ;; In C++ we additionally check for a "class
+				  ;; X = Y" construct which is used in
+				  ;; templates, to fontify Y as a type.
+				  (forward-char)
+				  (c-forward-syntactic-ws)
+				  (c-forward-type))
+			     `(c-forward-type))
+			  )))))))))
+
+      ;; Fontify symbols after closing braces as declaration
+      ;; identifiers under the assumption that they are part of
+      ;; declarations like "class Foo { ... } foo;".  It's too
+      ;; expensive to check this accurately by skipping past the
+      ;; brace block, so we use the heuristic that it's such a
+      ;; declaration if the first identifier is on the same line as
+      ;; the closing brace.  `c-font-lock-declarations' will later
+      ;; override it if it turns out to be an new declaration, but
+      ;; it will be wrong if it's an expression (see the test
+      ;; decls-8.cc).
+      ,@(when (c-lang-const c-opt-block-decls-with-vars-key)
+	  `((,(c-make-font-lock-search-function
+	       (concat "}"
+		       (c-lang-const c-single-line-syntactic-ws)
+		       "\\("		; 1 + c-single-line-syntactic-ws-depth
+		       (c-lang-const c-type-decl-prefix-key)
+		       "\\|"
+		       (c-lang-const c-symbol-key)
+		       "\\)")
+	       `((c-font-lock-declarators limit t nil)
+		 (goto-char
+		  (match-beginning
+		   ,(1+ (c-lang-const c-single-line-syntactic-ws-depth)))))))))
+
+      ;; Fontify the type in C++ "new" expressions.
+      ,@(when (c-major-mode-is 'c++-mode)
+	  `(("\\<new\\>"
+	     (c-font-lock-c++-new))))
+      ))
+
+(defun c-font-lock-labels (limit)
+  ;; Fontify all the declarations from the point to LIMIT.  Assumes
+  ;; that strings and comments have been fontified already.  Nil is
+  ;; always returned.
+  ;;
+  ;; This function can make hidden buffer changes, but the font-lock
+  ;; context covers that.
+
+  (while (re-search-forward ":[^:]" limit t)
+    (let ((continue-pos (point)) id-start)
+      (goto-char (match-beginning 0))
+      (unless (c-skip-comments-and-strings limit)
+
+	(c-backward-syntactic-ws)
+	(and (setq id-start (c-on-identifier))
+
+	     (not (get-text-property id-start 'face))
+
+	     (progn
+	       (goto-char id-start)
+	       (c-backward-syntactic-ws)
+	       (or
+		;; Check for a char that precedes a statement.
+		(memq (char-before) '(?\} ?\{ ?\) ?\;))
+		;; Check for a preceding label.  We exploit the font
+		;; locking made earlier by this function.
+		(and (eq (char-before) ?:)
+		     (progn
+		       (backward-char)
+		       (c-backward-syntactic-ws)
+		       (not (bobp)))
+		     (eq (get-text-property (1- (point)) 'face)
+			 c-label-face))
+		;; Check for a keyword that precedes a statement.
+		(c-after-conditional)))
+
+	     (progn
+	       ;; Got a label.
+	       (goto-char id-start)
+	       (looking-at c-symbol-key)
+	       (c-put-font-lock-face (match-beginning 0) (match-end 0)
+				     c-label-face)))
+
+	(goto-char continue-pos))))
+  nil)
+
+(c-lang-defconst c-basic-matchers-after
+  "Font lock matchers for various things that should be fontified after
+generic casts and declarations are fontified.  Used on level 2 and
+higher."
+
+  t `(;; Fontify the type after "new" in Java.
+      ,@(when (c-lang-const c-inexpr-class-kwds)
+	  (let* ((re (c-make-keywords-re nil
+		       (c-lang-const c-inexpr-class-kwds)))
+		 (identifier-offset (+ (c-regexp-opt-depth re)
+				       (c-lang-const c-syntactic-ws-depth)
+				       2)))
+	    `((,(concat
+		 "\\<\\(" re "\\)\\>"
+		 (c-lang-const c-syntactic-ws)
+		 "\\("			; identifier-offset
+		 (c-lang-const c-identifier-key)
+		 "\\)")
+	       ,@(mapcar
+		  (lambda (submatch)
+		    `(,(+ identifier-offset submatch)
+		      font-lock-type-face nil t))
+		  (c-lang-const c-identifier-last-sym-match))))))
+
+      ;; Fontify the identifiers inside enum lists.  (The enum type
+      ;; name is handled by `c-simple-decl-matchers' or
+      ;; `c-complex-decl-matchers' below.
+      ,@(when (c-lang-const c-brace-list-kwds)
+	  `((,(c-make-font-lock-search-function
+	       (concat
+		"\\<\\("
+		(c-make-keywords-re nil (c-lang-const c-brace-list-kwds))
+		"\\)\\>"
+		;; Disallow various common punctuation chars that can't come
+		;; before the '{' of the enum list, to avoid searching too far.
+		"[^\]\[{}();,/#=]*"
+		"{")
+	       '((c-font-lock-declarators limit t nil)
+		 (goto-char (match-end 0))
+		 (goto-char (match-end 0)))))))
+
+      ;; Fontify labels in languages that supports them.
+      ,@(when (c-lang-const c-label-key)
+
+	  `(;; Fontify goto targets and case labels.  This
+	    ;; deliberately fontifies only a single identifier or a
+	    ;; signed integer as a label; all other forms are
+	    ;; considered to be expressions and thus fontified as
+	    ;; such (i.e. not at all).
+
+	    ;; (Got three different interpretation levels here,
+	    ;; which makes it a bit complicated: 1) The backquote
+	    ;; stuff is expanded when compiled or loaded, 2) the
+	    ;; eval form is evaluated at font-lock setup (to
+	    ;; substitute c-label-face correctly), and 3) the
+	    ;; resulting structure is interpreted during
+	    ;; fontification.)
+	    (eval
+	     . ,(let* ((c-before-label-re
+			(c-make-keywords-re nil
+			  (c-lang-const c-before-label-kwds)))
+		       (identifier-offset
+			(+ (c-regexp-opt-depth c-before-label-re)
+			   3))
+		       (integer-offset
+			(+ identifier-offset
+			   (c-regexp-opt-depth (c-lang-const c-identifier-key))
+			   1)))
+
+		  `(list
+		    ,(concat
+		      "\\<\\("
+		      c-before-label-re
+		      "\\)\\>"
+		      "\\s *"
+		      "\\("
+		      ;; Match a (simple) qualified identifier,
+		      ;; i.e. we don't bother with `c-forward-name'.
+		      ;; We highlight the last symbol in it as a
+		      ;; label.
+		      "\\(" (c-lang-const ; identifier-offset
+			     c-identifier-key) "\\)"
+		      "\\|"
+		      ;; Match an integer.
+		      "\\(-?[0-9]+\\)"	; integer-offset
+		      (if (c-major-mode-is 'pike-mode)
+			  ;; Pike allows integer ranges.
+			  (concat
+			   "\\s *\\(\\.\\.\\s *\\(-?[0-9]+\\)?\\)?"
+			   "\\|\\.\\.\\s *\\(-?[0-9]+\\)")
+			"")
+		      "\\)"
+		      "\\s *[:;]")
+
+		    ,@(mapcar
+		       (lambda (submatch)
+			 `(list ,(+ identifier-offset submatch)
+				c-label-face nil t))
+		       (c-lang-const c-identifier-last-sym-match))
+
+		    (list ,integer-offset c-label-face nil t)
+
+		    ,@(when (c-major-mode-is 'pike-mode)
+			`((list ,(+ integer-offset 2) c-label-face nil t)
+			  (list ,(+ integer-offset 3) c-label-face nil t)))
+		    )))
+
+	    ;; Fontify normal labels.
+	    c-font-lock-labels))
+
+      ;; Fontify the list of exceptions after Java style "throws" etc.
+      ,@(when (c-lang-const c-decl-spec-kwds)
+	  `((,(c-make-font-lock-search-function
+	       (concat
+		"\\<\\("
+		(c-make-keywords-re nil (c-lang-const c-decl-spec-kwds))
+		"\\)\\>")
+	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
+
+      ,@(when (c-major-mode-is 'c++-mode)
+	  `(;; Fontify class inherit lists in C++.
+	    (,(c-make-font-lock-search-function
+	       (concat
+		"\\<\\("
+		(c-make-keywords-re nil (c-lang-const c-class-kwds))
+		"\\)\\>"
+		;; Disallow various common punctuation chars that can't come
+		;; before the ':' that starts the inherit list, to avoid
+		;; searching too far.
+		"[^\]\[{}();,/#=:]*"
+		":")
+	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))
+
+	    ;; Fontify throw specifications.
+	    (,(c-make-font-lock-search-function
+	       (concat "\\<throw\\>"
+		       (c-lang-const c-syntactic-ws)
+		       "(")
+	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
+      ))
+
+(c-lang-defconst c-matchers-1
+  t (c-lang-const c-cpp-matchers))
+
+(c-lang-defconst c-matchers-2
+  t (append (c-lang-const c-matchers-1)
+	    (c-lang-const c-basic-matchers-before)
+	    (c-lang-const c-simple-decl-matchers)
+	    (c-lang-const c-basic-matchers-after)))
+
+(c-lang-defconst c-matchers-3
+  t (append (c-lang-const c-matchers-1)
+	    (c-lang-const c-basic-matchers-before)
+	    (c-lang-const c-complex-decl-matchers)
+	    (c-lang-const c-basic-matchers-after)))
+
+(c-lang-defconst c-matchers-4
+  t (c-lang-const c-matchers-3))
+
+(defun c-override-default-keywords (def-var new-def)
+  ;; This is used to override the value on a `*-font-lock-keywords'
+  ;; variable only if it's nil or has the same value as one of the
+  ;; `*-font-lock-keywords-*' variables.  Older font-lock packages
+  ;; define a default value for `*-font-lock-keywords' which we want
+  ;; to override, but we should otoh avoid clobbering a user setting.
+  ;; This heuristic for that isn't perfect, but I can't think of any
+  ;; better. /mast
+  ;;
+  ;; This function does not do any hidden buffer changes.
+  (when (and (boundp def-var)
+	     (memq (symbol-value def-var)
+		   (cons nil
+			 (mapcar
+			  (lambda (suffix)
+			    (let ((sym (intern (concat (symbol-name def-var)
+						       suffix))))
+			      (and (boundp sym) (symbol-value sym))))
+			  '("-1" "-2" "-3" "-4")))))
+    (set def-var new-def)))
+
+
+;;; C.
+
+(defconst c-font-lock-keywords-1 (c-lang-const c-matchers-1 c)
+  "Minimal highlighting for C mode.
+Fontifies only preprocessor directives (in addition to the syntactic
+fontification of strings and comments).")
+
+(defconst c-font-lock-keywords-2 (c-lang-const c-matchers-2 c)
+  "Fast normal highlighting for C mode.
+In addition to `c-font-lock-keywords-1', this adds fontification of
+keywords, simple types, declarations that are easy to recognize, and
+the user defined types on `c-font-lock-extra-types'.")
+
+(defconst c-font-lock-keywords-3 (c-lang-const c-matchers-3 c)
+  "Accurate normal highlighting for C mode.
+Like `c-font-lock-keywords-2' but detects declarations in a more
+accurate way that works in most cases for arbitrary types without the
+need for `c-font-lock-extra-types'.")
+
+(c-override-default-keywords 'c-font-lock-keywords
+			     c-font-lock-keywords-3)
+
+(defvar c-font-lock-keywords c-font-lock-keywords-3
+  "Default expressions to highlight in C mode.")
+
+
+;;; C++.
+
+(defun c-font-lock-c++-templates (limit)
+  ;; Fontify types and references in names containing template
+  ;; arglists in C++ from the point to LIMIT.  This will also fontify
+  ;; cases like normal function calls on the form "foo (a < b, c >
+  ;; d)", but `c-font-lock-declarations' will undo that later.  Nil is
+  ;; always returned.
+
+  (let (id-start id-end pos)
+    (while (and (< (point) limit)
+		(re-search-forward
+		 (cc-eval-when-compile
+		   (concat "\\("
+			   (c-lang-const c-symbol-key c++)
+			   "\\)"
+			   (c-lang-const c-syntactic-ws c++)
+			   "<"))
+		 limit t))
+
+      (setq id-start (match-beginning 1)
+	    id-end (match-end 1)
+	    pos (point))
+
+      (goto-char (match-beginning 0))
+      (unless (c-skip-comments-and-strings limit)
+
+	(goto-char (1- pos))
+	(c-fontify-types-and-refs ()
+	  (when (c-forward-c++-template-arglist)
+	    (unless (get-text-property id-start 'face)
+	      (c-forward-syntactic-ws)
+	      (if (looking-at "::")
+		  (c-put-font-lock-face id-start id-end
+					font-lock-reference-face)
+		(c-put-font-lock-face id-start id-end
+				      'font-lock-type-face))))))))
+  nil)
+
 (defun c-font-lock-c++-new (limit)
-  ;; Assuming point is after a "new" keyword, fontify the type in the
-  ;; allocation expression.  As usual, C++ takes the prize in coming
-  ;; up with a hard to parse syntax. :P
+  ;; Assuming point is after a "new" word, check that it isn't inside
+  ;; a string or comment, and if so fontify the type in the allocation
+  ;; expression.  Nil is always returned.
+  ;;
+  ;; As usual, C++ takes the prize in coming up with a hard to parse
+  ;; syntax. :P
 
   (unless (c-skip-comments-and-strings limit)
     (save-excursion
@@ -1640,268 +1984,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	  ;; Fontify the type that now is recorded in
 	  ;; `c-record-type-identifiers', if any.
-	  (c-fontify-recorded-types-and-refs))))))
-
-(c-lang-defconst c-simple-decl-matchers
-  "Simple font lock matchers for types and declarations.  These are used
-on level 2 only and so aren't combined with `c-complex-decl-matchers'."
-
-  t `(;; Fontify all type names and the identifiers in the
-      ;; declarations they might start.  Use eval here since
-      ;; `c-known-type-key' gets its value from
-      ;; `*-font-lock-extra-types' on mode init.
-      (eval . (list ,(c-make-font-lock-search-function
-		      'c-known-type-key
-		      '(1 'font-lock-type-face t)
-		      '((c-font-lock-declarators limit t nil)
-			(save-match-data
-			  (goto-char (match-end 1))
-			  (c-forward-syntactic-ws))
-			(goto-char (match-end 1))))))
-
-      ;; Fontify types preceded by `c-type-prefix-kwds' and the
-      ;; identifiers in the declarations they might start.
-      ,@(when (c-lang-const c-type-prefix-kwds)
-	  (let ((prefix-re (c-make-keywords-re nil
-			     (c-lang-const c-type-prefix-kwds))))
-	    `((,(c-make-font-lock-search-function
-		 (concat "\\<\\(" prefix-re "\\)"
-			 "[ \t\n\r\f\v]+"
-			 "\\(" (c-lang-const c-symbol-key) "\\)")
-		 `(,(+ (c-regexp-opt-depth prefix-re) 2)
-		   'font-lock-type-face t)
-		 '((c-font-lock-declarators limit t nil)
-		   (save-match-data
-		     (goto-char (match-end 2))
-		     (c-forward-syntactic-ws))
-		   (goto-char (match-end 2))))))))
-      ))
-
-(c-lang-defconst c-complex-decl-matchers
-  "Complex font lock matchers for types and declarations.  Used on level
-3 and higher."
-
-  t `(;; Fontify templates in C++.
-      ,@(when (c-major-mode-is 'c++-mode)
-	  `(c-font-lock-c++-templates))
-
-      ;; Fontify all declarations and casts.
-      c-font-lock-declarations
-
-      ;; The first two rules here mostly find occurences that
-      ;; `c-font-lock-declarations' has found already, but not
-      ;; declarations containing blocks in the type (see note below).
-      ;; It's also useful to fontify these everywhere to show e.g. when
-      ;; a type keyword is accidentally used as an identifier.
-
-      ;; Fontify basic types.
-      ,(let ((re (c-make-keywords-re nil (c-lang-const c-type-kwds))))
-	 (if (c-major-mode-is 'pike-mode)
-	     ;; No symbol is a keyword after "->" in Pike.
-	     `(,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
-			"\\<\\(" re "\\)\\>")
-	       3 font-lock-type-face)
-	   `(,(concat "\\<\\(" re "\\)\\>")
-	     1 'font-lock-type-face)))
-
-      ;; Fontify types preceded by `c-type-prefix-kwds'.
-      ,@(when (c-lang-const c-type-prefix-kwds)
-	  `((,(byte-compile
-	       `(lambda (limit)
-		  (c-fontify-types-and-refs ((c-promote-possible-types t))
-		    (save-restriction
-		      ;; Narrow to avoid going past the limit in
-		      ;; `c-forward-type'.
-		      (narrow-to-region (point) limit)
-		      (while (re-search-forward
-			      ,(concat "\\<\\("
-				       (c-make-keywords-re nil
-					 (c-lang-const c-type-prefix-kwds))
-				       "\\)\\>")
-			      limit t)
-			(unless (c-skip-comments-and-strings limit)
-			  (c-forward-syntactic-ws)
-			  ,(if (c-major-mode-is 'c++-mode)
-			       `(when (and (c-forward-type)
-					   (progn (c-forward-syntactic-ws)
-						  (eq (char-after) ?=)))
-				  ;; In C++ we additionally check for a "class
-				  ;; X = Y" construct which is used in
-				  ;; templates, to fontify Y as a type.
-				  (forward-char)
-				  (c-forward-syntactic-ws)
-				  (c-forward-type))
-			     `(c-forward-type))
-			  )))))))))
-
-      ;; Fontify symbols after closing braces as declaration
-      ;; identifiers under the assumption that they are part of
-      ;; declarations like "class Foo { ... } foo;".  It's too
-      ;; expensive to check this accurately by skipping past the
-      ;; brace block, so we use the heuristic that it's such a
-      ;; declaration if the first identifier is on the same line as
-      ;; the closing brace.  `c-font-lock-declarations' will later
-      ;; override it if it turns out to be an new declaration, but
-      ;; it will be wrong if it's an expression (see the test
-      ;; decls-8.cc).
-      ,@(when (c-lang-const c-opt-block-decls-with-vars-key)
-	  `((,(c-make-font-lock-search-function
-	       (concat "}"
-		       (c-lang-const c-single-line-syntactic-ws)
-		       "\\("		; 1 + c-single-line-syntactic-ws-depth
-		       (c-lang-const c-type-decl-prefix-key)
-		       "\\|"
-		       (c-lang-const c-symbol-key)
-		       "\\)")
-	       `((c-font-lock-declarators limit t nil)
-		 (goto-char
-		  (match-beginning
-		   ,(1+ (c-lang-const c-single-line-syntactic-ws-depth)))))))))
-
-      ;; Fontify the type in C++ "new" expressions.
-      ,@(when (c-major-mode-is 'c++-mode)
-	  `(("\\<new\\>"
-	     (c-font-lock-c++-new))))
-      ))
-
-(c-lang-defconst c-basic-matchers-after
-  "Font lock matchers for various things that should be fontified after
-generic casts and declarations are fontified.  Used on level 2 and
-higher."
-
-  t `(;; Fontify the type after "new" in Java.
-      ,@(when (c-lang-const c-inexpr-class-kwds)
-	  (let* ((re (c-make-keywords-re nil
-		       (c-lang-const c-inexpr-class-kwds)))
-		 (identifier-offset (+ (c-regexp-opt-depth re)
-				       (c-lang-const c-syntactic-ws-depth)
-				       2)))
-	    `((,(concat
-		 "\\<\\(" re "\\)\\>"
-		 (c-lang-const c-syntactic-ws)
-		 "\\("			; identifier-offset
-		 (c-lang-const c-identifier-key)
-		 "\\)")
-	       ,@(mapcar
-		  (lambda (submatch)
-		    `(,(+ identifier-offset submatch)
-		      font-lock-type-face nil t))
-		  (c-lang-const c-identifier-last-sym-match))))))
-
-      ;; Fontify the identifiers inside enum lists.  (The enum type
-      ;; name is handled by `c-simple-decl-matchers' or
-      ;; `c-complex-decl-matchers' below.
-      ,@(when (c-lang-const c-brace-list-kwds)
-	  `((,(c-make-font-lock-search-function
-	       (concat
-		"\\<\\("
-		(c-make-keywords-re nil (c-lang-const c-brace-list-kwds))
-		"\\)\\>"
-		;; Disallow various common punctuation chars that can't come
-		;; before the '{' of the enum list, to avoid searching too far.
-		"[^\]\[{}();,/#=]*"
-		"{")
-	       '((c-font-lock-declarators limit t nil)
-		 (goto-char (match-end 0))
-		 (goto-char (match-end 0)))))))
-
-      ;; Fontify the list of exceptions after Java style "throws" etc.
-      ,@(when (c-lang-const c-decl-spec-kwds)
-	  `((,(c-make-font-lock-search-function
-	       (concat
-		"\\<\\("
-		(c-make-keywords-re nil (c-lang-const c-decl-spec-kwds))
-		"\\)\\>")
-	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
-
-      ,@(when (c-major-mode-is 'c++-mode)
-	  `(;; Fontify class inherit lists in C++.
-	    (,(c-make-font-lock-search-function
-	       (concat
-		"\\<\\("
-		(c-make-keywords-re nil (c-lang-const c-class-kwds))
-		"\\)\\>"
-		;; Disallow various common punctuation chars that can't come
-		;; before the ':' that starts the inherit list, to avoid
-		;; searching too far.
-		"[^\]\[{}();,/#=:]*"
-		":")
-	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))
-
-	    ;; Fontify throw specifications.
-	    (,(c-make-font-lock-search-function
-	       (concat "\\<throw\\>"
-		       (c-lang-const c-syntactic-ws)
-		       "(")
-	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
-      ))
-
-(c-lang-defconst c-matchers-1
-  t (c-lang-const c-cpp-matchers))
-
-(c-lang-defconst c-matchers-2
-  t (append (c-lang-const c-matchers-1)
-	    (c-lang-const c-basic-matchers-before)
-	    (c-lang-const c-simple-decl-matchers)
-	    (c-lang-const c-basic-matchers-after)))
-
-(c-lang-defconst c-matchers-3
-  t (append (c-lang-const c-matchers-1)
-	    (c-lang-const c-basic-matchers-before)
-	    (c-lang-const c-complex-decl-matchers)
-	    (c-lang-const c-basic-matchers-after)))
-
-(c-lang-defconst c-matchers-4
-  t (c-lang-const c-matchers-3))
-
-
-(defun c-override-default-keywords (def-var new-def)
-  ;; This is used to override the value on a `*-font-lock-keywords'
-  ;; variable only if it's nil or has the same value as one of the
-  ;; `*-font-lock-keywords-*' variables.  Older font-lock packages
-  ;; define a default value for `*-font-lock-keywords' which we want
-  ;; to override, but we should otoh avoid clobbering a user setting.
-  ;; This heuristic for that isn't perfect, but I can't think of any
-  ;; better. /mast
-  ;;
-  ;; This function does not do any hidden buffer changes.
-  (when (and (boundp def-var)
-	     (memq (symbol-value def-var)
-		   (cons nil
-			 (mapcar
-			  (lambda (suffix)
-			    (let ((sym (intern (concat (symbol-name def-var)
-						       suffix))))
-			      (and (boundp sym) (symbol-value sym))))
-			  '("-1" "-2" "-3" "-4")))))
-    (set def-var new-def)))
-
-;;; C.
-
-(defconst c-font-lock-keywords-1 (c-lang-const c-matchers-1 c)
-  "Minimal highlighting for C mode.
-Fontifies only preprocessor directives (in addition to the syntactic
-fontification of strings and comments).")
-
-(defconst c-font-lock-keywords-2 (c-lang-const c-matchers-2 c)
-  "Fast normal highlighting for C mode.
-In addition to `c-font-lock-keywords-1', this adds fontification of
-keywords, simple types, declarations that are easy to recognize, and
-the user defined types on `c-font-lock-extra-types'.")
-
-(defconst c-font-lock-keywords-3 (c-lang-const c-matchers-3 c)
-  "Accurate normal highlighting for C mode.
-Like `c-font-lock-keywords-2' but detects declarations in a more
-accurate way that works in most cases for arbitrary types without the
-need for `c-font-lock-extra-types'.")
-
-(c-override-default-keywords 'c-font-lock-keywords
-			     c-font-lock-keywords-3)
-
-(defvar c-font-lock-keywords c-font-lock-keywords-3
-  "Default expressions to highlight in C mode.")
-
-;;; C++.
+	  (c-fontify-recorded-types-and-refs)))))
+  nil)
 
 (defconst c++-font-lock-keywords-1 (c-lang-const c-matchers-1 c++)
   "Minimal highlighting for C++ mode.
@@ -1926,21 +2010,173 @@ need for `c++-font-lock-extra-types'.")
 (defvar c++-font-lock-keywords c++-font-lock-keywords-3
   "Default expressions to highlight in C++ mode.")
 
+
 ;;; Objective-C.
 
+(defun c-font-lock-objc-prot-ref-list ()
+  ;; Assuming point is at the "<" that starts a protocol reference
+  ;; list, fontify all the protocols in it as types.  Additionally the
+  ;; surrounding brackets are given paren syntax for better code
+  ;; navigation.  If the list is syntactically correct then t is
+  ;; returned and the point is left after the closing ">".
+
+  (let ((start (point)))
+    (unless (eobp)
+      (forward-char)
+      (c-font-lock-identifier-list (point-max) 'font-lock-type-face)
+      (c-forward-syntactic-ws)
+      ;; Mark the brackets of the protocol reference list with
+      ;; paren syntax.
+      (if (eq (char-after) ?>)
+	  (progn
+	    (c-mark-template-open start)
+	    (c-mark-template-close (point))
+	    (forward-char)
+	    t)
+	(c-clear-char-syntax start)
+	nil))))
+
+(defun c-font-lock-objc-iip-decl ()
+  ;; Assuming the point is after an "@interface", "@implementation",
+  ;; "@protocol" declaration, fontify all the types in the directive.
+  ;; Return t if the directive was fully recognized.  Point will then
+  ;; be at the end of it.
+
+  (c-fontify-types-and-refs (start-char (c-promote-possible-types t))
+    (catch 'break
+
+      ;; Handle the name of the class itself.
+      (c-forward-syntactic-ws)
+      (unless (c-forward-type) (throw 'break nil))
+
+      ;; Look for ": superclass-name" or "( category-name )".
+      (c-forward-syntactic-ws)
+      (when (looking-at "[:\(]")
+	(setq start-char (char-after))
+	(forward-char)
+	(c-forward-syntactic-ws)
+	(unless (c-forward-type) (throw 'break nil))
+	(c-forward-syntactic-ws)
+	(when (eq start-char ?\()
+	  (unless (eq (char-after) ?\)) (throw 'break nil))
+	  (forward-char)
+	  (c-forward-syntactic-ws)))
+
+      ;; Look for a protocol reference list.
+      (if (eq (char-after) ?<)
+	  (c-font-lock-objc-prot-ref-list)
+	t))))
+
+(defun c-font-lock-objc-method ()
+  ;; Assuming the point is after the + or - that starts an Objective-C
+  ;; method declaration, fontify it.  This must be done before normal
+  ;; casts, declarations and labels are fontified since they will get
+  ;; false matches in these things.
+
+  (c-fontify-types-and-refs
+      ((first t)
+       (pos (match-end 1))
+       (c-promote-possible-types t))
+
+    (while (and
+	    (progn
+	      (c-forward-syntactic-ws)
+
+	      ;; An optional method type.
+	      (if (eq (char-after) ?\()
+		  (progn
+		    (forward-char)
+		    (c-forward-syntactic-ws)
+		    (c-forward-type)
+		    (prog1 (c-go-up-list-forward)
+		      (c-forward-syntactic-ws)))
+		t))
+
+	    ;; The name.  The first time it's the first part of
+	    ;; the function name, the rest of the time it's an
+	    ;; argument name.
+	    (looking-at c-symbol-key)
+	    (progn
+	      (goto-char (match-end 0))
+	      (c-put-font-lock-face (match-beginning 0)
+				    (point)
+				    (if first
+					'font-lock-function-name-face
+				      'font-lock-variable-name-face))
+	      (c-forward-syntactic-ws)
+
+	      ;; Another optional part of the function name.
+	      (when (looking-at c-symbol-key)
+		(goto-char (match-end 0))
+		(c-put-font-lock-face (match-beginning 0)
+				      (point)
+				      'font-lock-function-name-face)
+		(c-forward-syntactic-ws))
+
+	      ;; There's another argument if a colon follows.
+	      (eq (char-after) ?:)))
+      (forward-char)
+      (setq first nil))))
+
+(defun c-font-lock-objc-decls (limit)
+  ;; Fontify the special declaration-level directives and method
+  ;; declarations in Objective-C.  Nil is always returned.
+  ;;
+  ;; Both types are done in the same pass since we cannot detect the
+  ;; end of the directives with `c-decl-prefix-re'.  We thus need to
+  ;; continue directly with the next declaration when the end of a
+  ;; directive is found.  For this reason all directives are searched
+  ;; for here, even those that don't need special handling.
+
+  (save-restriction
+    (narrow-to-region (point-min) limit)
+
+    (c-find-decl-spots
+     "[-+@]"
+     '(nil font-lock-keyword-face)
+
+     (lambda (match-pos inside-macro)
+       ;; Fontify a sequence of compiler directives.
+       (while (eq (char-after) ?@)
+	 (unless (cond
+		  ;; Handle an @interface/@implementation/@protocol directive.
+		  ((looking-at c-class-key)
+		   (goto-char (match-end 1))
+		   (c-font-lock-objc-iip-decl))
+		  ;; Handle a @class directive.
+		  ((looking-at "@class\\>")
+		   (goto-char (match-end 0))
+		   (c-font-lock-identifier-list (point-max)
+						'font-lock-type-face)
+		   (when (eq (char-after) ?\;)
+		     (forward-char)
+		     t))
+		  ;; Otherwise we assume it's a protection directive.
+		  (t (skip-syntax-forward "w_")))
+	   ;; Failed to parse the directive.  Try to recover by
+	   ;; skipping to eol.
+	   (when (re-search-forward c-syntactic-eol (c-point 'eol) 'move)
+	     (goto-char (match-beginning 0))))
+	 (c-forward-syntactic-ws))
+
+       (when (looking-at "[-+]")
+	 (forward-char)
+	 (c-font-lock-objc-method)))))
+  nil)
+
 (defconst objc-font-lock-keywords-1 (c-lang-const c-matchers-1 objc)
-  "Minimal highlighting for ObjC mode.
+  "Minimal highlighting for Objective-C mode.
 Fontifies only compiler directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst objc-font-lock-keywords-2 (c-lang-const c-matchers-2 objc)
-  "Fast normal highlighting for ObjC mode.
+  "Fast normal highlighting for Objective-C mode.
 In addition to `objc-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, and
 the user defined types on `objc-font-lock-extra-types'.")
 
 (defconst objc-font-lock-keywords-3 (c-lang-const c-matchers-3 objc)
-  "Accurate normal highlighting for ObjC mode.
+  "Accurate normal highlighting for Objective-C mode.
 Like `objc-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `objc-font-lock-extra-types'.")
@@ -1949,8 +2185,18 @@ need for `objc-font-lock-extra-types'.")
 			     objc-font-lock-keywords-3)
 
 (defvar objc-font-lock-keywords objc-font-lock-keywords-3
-  "Default expressions to highlight in ObjC mode.")
+  "Default expressions to highlight in Objective-C mode.")
 
+;; Kludge to override the default value that
+;; `objc-font-lock-extra-types' might have gotten from the font-lock
+;; package.  The value replaced here isn't relevant now anyway since
+;; those types are builtin and therefore listed directly in
+;; `c-primitive-type-kwds'.
+(when (equal (sort (append objc-font-lock-extra-types nil) 'string-lessp)
+	     '("BOOL" "Class" "IMP" "SEL"))
+  (setq objc-font-lock-extra-types '("[A-Z]\\sw*")))
+
+
 ;;; Java.
 
 (defconst java-font-lock-keywords-1 (c-lang-const c-matchers-1 java)
@@ -1976,6 +2222,7 @@ need for `java-font-lock-extra-types'.")
 (defvar java-font-lock-keywords java-font-lock-keywords-3
   "Default expressions to highlight in Java mode.")
 
+
 ;;; IDL.
 
 (defconst idl-font-lock-keywords-1 (c-lang-const c-matchers-1 idl)
@@ -2001,6 +2248,7 @@ need for `idl-font-lock-extra-types'.")
 (defvar idl-font-lock-keywords idl-font-lock-keywords-3
   "Default expressions to highlight in IDL mode.")
 
+
 ;;; Pike.
 
 (defconst pike-font-lock-keywords-1 (c-lang-const c-matchers-1 pike)
