@@ -92,8 +92,8 @@
 ;; might be screwed if it's already loaded - the check for ambiguous
 ;; faces below will complain in that case.
 (unless (c-face-name-p 'font-lock-doc-face)
-  (if (c-face-name-p 'font-lock-string-face)
-      (copy-face 'font-lock-string-face 'font-lock-doc-face)
+  (if (c-face-name-p 'font-lock-comment-face)
+      (copy-face 'font-lock-comment-face 'font-lock-doc-face)
     (make-face 'font-lock-doc-face)))
 (unless (c-face-name-p 'font-lock-preprocessor-face)
   (cond ((c-face-name-p 'font-lock-builtin-face)
@@ -115,6 +115,12 @@
     (copy-face 'font-lock-constant-face 'font-lock-label-face))
   (defvar font-lock-label-face nil)
   (setq font-lock-label-face 'font-lock-label-face))
+(unless (c-face-name-p 'font-lock-doc-markup-face)
+  (if (c-face-name-p 'font-lock-reference-face)
+      (copy-face 'font-lock-reference-face 'font-lock-doc-markup-face)
+    (copy-face 'font-lock-constant-face 'font-lock-doc-markup-face))
+  (defvar font-lock-doc-markup-face nil)
+  (setq font-lock-doc-markup-face 'font-lock-doc-markup-face))
 
 ;; In Emacs face names are resolved as variables which can point to
 ;; another face.  Make sure we don't have such indirections when we
@@ -132,7 +138,6 @@
 	  font-lock-type-face
 	  font-lock-reference-face
 	  font-lock-doc-string-face
-	  font-lock-reference-face
 	  font-lock-constant-face
 	  font-lock-preprocessor-face
 	  font-lock-builtin-face
@@ -151,8 +156,9 @@
     (var . font-lock-variable-name-face)
     (con . font-lock-constant-face)
     (typ . font-lock-type-face)
-    (ref . font-lock-reference-face)
+    (ref . ,c-reference-face-name)
     (doc . ,c-doc-face-name)
+    (dmk . ,c-doc-markup-face-name)
     (lbl . ,c-label-face-name)
     (cpp . ,c-preprocessor-face-name)
     (err . ,c-invalid-face-name)
