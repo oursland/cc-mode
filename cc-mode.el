@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.2 $
-;; Last Modified:   $Date: 1994-06-06 15:16:42 $
+;; Version:         $Revision: 4.3 $
+;; Last Modified:   $Date: 1994-06-06 19:47:19 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-06 15:16:42 $|$Revision: 4.2 $|
+;; |$Date: 1994-06-06 19:47:19 $|$Revision: 4.3 $|
 
 ;;; Code:
 
@@ -423,14 +423,15 @@ Only currently supported behavior is `alignleft'.")
      (c-basic-offset . 3)
      (c-comment-only-line-offset . 0)
      (c-hanging-braces-alist     . ((substatement-open before after)))
-     (c-offsets-alist . ((topmost-intro      . 0)
-                         (topmost-intro-cont . 0)
-                         (substatement       . 3)
-			 (substatement-open  . 0)
-                         (case-label         . +)
-                         (access-label       . -3)
-                         (inclass            . 6)
-                         (inline-open        . 0)
+     (c-offsets-alist . ((topmost-intro        . 0)
+                         (topmost-intro-cont   . 0)
+                         (substatement         . 3)
+			 (substatement-open    . 0)
+			 (statement-case-intro . 0)
+                         (case-label           . +)
+                         (access-label         . -3)
+                         (inclass              . 6)
+                         (inline-open          . 0)
                          ))
      ))
   "Styles of Indentation.
@@ -834,7 +835,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.2 $
+cc-mode Revision: $Revision: 4.3 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -867,7 +868,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.2 $
+cc-mode Revision: $Revision: 4.3 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3616,7 +3617,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.2 $"
+(defconst c-version "$Revision: 4.3 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
