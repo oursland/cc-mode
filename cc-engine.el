@@ -363,11 +363,8 @@ corresponding statement start.  If at the beginning of a statement,
 move to the closest containing statement if there is any.  This might
 also stop at a continuation clause.
 
-Labels are treated as separate statements if IGNORE-LABELS is non-nil.
-The function is not overly intelligent in telling labels from other
-uses of colons; if used outside a statement context it might trip up
-on e.g. inherit colons, so IGNORE-LABELS should be used then.  There
-should be no such mistakes in a statement context, however.
+Labels are treated as part of the following statements if IGNORE-LABELS
+is non-nil.
 
 Macros are ignored unless point is within one, in which case the
 content of the macro is treated as normal code.  Aside from any normal
@@ -776,20 +773,34 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			sym 'boundary)
 		  (throw 'loop t))) ; like a C "continue".  Analyze the next sexp.
 
-	      (when (and (numberp c-maybe-labelp) (not ignore-labels))
-		;; c-crosses-statement-barrier-p has found a colon, so
-		;; we might be in a label now.
-		(if (not after-labels-pos)
-		    (setq after-labels-pos (or tok start)))
-		(setq last-label-pos (or tok start)
-		      c-maybe-labelp t))
-
 	      ;; ObjC method def?
 	      (when (and c-opt-method-key
 			 (setq saved (c-in-method-def-p)))
 		(setq pos saved
 		      ignore-labels t)	; Avoid the label check on exit.
 		(throw 'loop nil))
+
+	      ;; Handle labels.
+	      (cond ((eq ignore-labels t)
+		     ;; Labels should be ignored - nothing to do.
+		     )
+
+		    ((and c-maybe-labelp
+			  (looking-at c-nonlabel-token-key))
+		     ;; We're in a potential label, should check it
+		     ;; carefully, and found something that can't be in
+		     ;; a label.
+		     (setq after-labels-pos nil
+			   last-label-pos nil
+			   c-maybe-labelp nil))
+
+		    ((numberp c-maybe-labelp)
+		     ;; c-crosses-statement-barrier-p has found a colon,
+		     ;; so we might be in a label now.
+		     (if (not after-labels-pos)
+			 (setq after-labels-pos (or tok start)))
+		     (setq last-label-pos (or tok start)
+			   c-maybe-labelp t)))
 
               ;; We've moved back by a sexp, so update the token positions. 
 	      (setq sym nil
@@ -4504,7 +4515,7 @@ brace."
   (catch 'return
     (let* ((start (point))
 	   (last-stmt-start (point))
-	   (move (c-beginning-of-statement-1 lim t t)))
+	   (move (c-beginning-of-statement-1 lim nil t)))
 
       ;; `c-beginning-of-statement-1' stops at a block start, but we
       ;; want to continue if the block doesn't begin a top level
@@ -4521,7 +4532,7 @@ brace."
 		;; Check that we don't move from the first thing in a
 		;; macro to its header.
 		(not (eq (setq tentative-move
-			       (c-beginning-of-statement-1 lim t t))
+			       (c-beginning-of-statement-1 lim nil t))
 			 'macro)))
 	  (setq last-stmt-start beg
 		beg (point)
@@ -4542,24 +4553,13 @@ brace."
 		   (< knr-argdecl-start start)
 		   (progn
 		     (goto-char knr-argdecl-start)
-		     (not (eq (c-beginning-of-statement-1 lim t t) 'macro))))
+		     (not (eq (c-beginning-of-statement-1 lim nil t) 'macro))))
 	      (throw 'return
 		     (cons (if (eq (char-after fallback-pos) ?{)
 			       'previous
 			     'same)
 			   knr-argdecl-start))
 	    (goto-char fallback-pos))))
-
-      (when c-opt-access-key
-	;; Might have ended up before a protection label.  This should
-	;; perhaps be checked before `c-recognize-knr-p' to be really
-	;; accurate, but we know that no language has both.
-	(while (looking-at c-opt-access-key)
-	  (goto-char (match-end 0))
-	  (c-forward-syntactic-ws)
-	  (when (>= (point) start)
-	    (goto-char start)
-	    (throw 'return (cons 'same nil)))))
 
       ;; `c-beginning-of-statement-1' counts each brace block as a
       ;; separate statement, so the result will be 'previous if we've

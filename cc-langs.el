@@ -2222,6 +2222,23 @@ statement."
 (c-lang-defvar c-opt-postfix-decl-spec-key
   (c-lang-const c-opt-postfix-decl-spec-key))
 
+(c-lang-defconst c-nonlabel-token-key
+  "Regexp matching things that can't occur in labels,
+neither in a statement nor in a declaration context.  The regexp is
+tested at the beginning of every sexp in a suspected label,
+i.e. before \":\".  Aside from this, it's also checked that the colon
+isn't part of a ? : operator."
+  ;; Bitfields use colons.
+  t (c-make-keywords-re t (c-lang-const c-bitfield-kwds))
+  ;; These languages use colons to start class inherit lists.
+  (c++ objc idl) (c-make-keywords-re t
+		   (append (c-lang-const c-class-decl-kwds)
+			   (c-lang-const c-bitfield-kwds)))
+  ;; Also check for open parens in C++, to catch member init lists in
+  ;; constructors.
+  c++ (concat "\\s\(\\|" (c-lang-const c-nonlabel-token-key)))
+(c-lang-defvar c-nonlabel-token-key (c-lang-const c-nonlabel-token-key))
+
 (c-lang-defconst c-opt-friend-key
   ;; Regexp describing friend declarations classes, or nil in
   ;; languages that don't have such things.
