@@ -240,10 +240,27 @@
 	(setq here (point))
 	(forward-comment hugenum)
 	;; skip preprocessor directives
-	(if (and (eq (char-after) ?#)
-		 (= (c-point 'boi) (point)))
-	    (end-of-line)
-	  )))))
+	(when (and (eq (char-after) ?#)
+		   (= (c-point 'boi) (point)))
+	  (while (eq (char-before (c-point 'eol)) ?\\)
+	    (forward-line 1))
+	  (end-of-line))
+	))))
+
+(defsubst c-beginning-of-macro (&optional lim)
+  ;; Go to the beginning of a cpp macro definition.  Leaves point at
+  ;; the beginning of the macro and returns t if in a cpp macro
+  ;; definition, otherwise returns nil and leaves point unchanged.
+  ;; `lim' is currently ignored, but the interface requires it.
+  (let ((here (point)))
+    (beginning-of-line)
+    (while (eq (char-before (1- (point))) ?\\)
+      (forward-line -1))
+    (back-to-indentation)
+    (if (eq (char-after) ?#)
+	t
+      (goto-char here)
+      nil)))
 
 (defun c-backward-syntactic-ws (&optional lim)
   ;; Backward skip over syntactic whitespace for Emacs 19.
@@ -251,16 +268,14 @@
     (let* ((lim (or lim (c-point 'bod)))
 	   (here lim)
 	   (hugenum (- (point-max))))
-      (if (< lim (point))
-	  (progn
-	    (narrow-to-region lim (point))
-	    (while (/= here (point))
-	      (setq here (point))
-	      (forward-comment hugenum)
-	      (if (eq (c-in-literal lim) 'pound)
-		  (beginning-of-line))
-	      )))
-      )))
+      (when (< lim (point))
+	(narrow-to-region lim (point))
+	(while (/= here (point))
+	  (setq here (point))
+	  (forward-comment hugenum)
+	  (c-beginning-of-macro))
+	))
+    ))
 
 
 ;; Return `c' if in a C-style comment, `c++' if in a C++ style
@@ -283,11 +298,7 @@
 		   (cond
 		    ((nth 3 state) 'string)
 		    ((nth 4 state) (if (nth 7 state) 'c++ 'c))
-		    ((progn
-		       (goto-char here)
-		       (beginning-of-line)
-		       (looking-at "[ \t]*#"))
-		     'pound)
+		    ((c-beginning-of-macro lim) 'pound)
 		    (t nil))))))
       ;; cache this result if the cache is enabled
       (and (boundp 'c-in-literal-cache)
@@ -298,23 +309,12 @@
 ;; I don't think we even need the cache, which makes our lives more
 ;; complicated anyway.  In this case, lim is ignored.
 (defun c-fast-in-literal (&optional lim)
-  (let* ((context (buffer-syntactic-context))
-	 (literal context))
+  (let ((context (buffer-syntactic-context)))
     (cond
-     ((eq context 'string))
-     ((eq context 'comment) (setq literal 'c++))
-     ((eq context 'block-comment) (setq literal 'c))
-     ((eq (char-after (c-point 'boi)) ?#) (setq literal 'pound))
-     ((let ((c (char-after (- (c-point 'bol) 2)))
-	    (here (point)))
-	(while (and c (eq c ?\\))
-	  (next-line -1)
-	  (setq c (char-after (- (point) 2))))
-	(prog1
-	    (eq (char-after (c-point 'bol)) ?#)
-	  (goto-char here)))
-      (setq literal 'pound)))
-    literal))
+     ((eq context 'string) 'string)
+     ((eq context 'comment) 'c++)
+     ((eq context 'block-comment) 'c)
+     ((save-excursion (c-beginning-of-macro lim)) 'pound))))
 
 (if (fboundp 'buffer-syntactic-context)
     (defalias 'c-in-literal 'c-fast-in-literal))
@@ -497,11 +497,6 @@
       (c-backward-syntactic-ws lim))
     (goto-char placeholder)
     (skip-chars-forward "^:" (c-point 'eol))))
-
-(defun c-beginning-of-macro (&optional lim)
-  ;; Go to the beginning of the macro. Right now we don't support
-  ;; multi-line macros too well
-  (back-to-indentation))
 
 (defun c-in-method-def-p ()
   ;; Return nil if we aren't in a method definition, otherwise the
@@ -953,10 +948,14 @@
 	  (while (and (zerop (forward-line -1))
 		      (looking-at "^[ \t]*$")))
 	  (c-add-syntax literal (c-point 'boi)))
-	 ;; CASE 3: in a cpp preprocessor
+	 ;; CASE 3: in a cpp preprocessor macro
 	 ((eq literal 'pound)
-	  (c-beginning-of-macro lim)
-	  (c-add-syntax 'cpp-macro (c-point 'boi)))
+	  (let* ((boi (c-point 'boi))
+		 (macrostart (progn (c-beginning-of-macro lim) (point)))
+		 (symbol (if (= boi macrostart)
+			     'cpp-macro
+			   'cpp-macro-cont)))
+	    (c-add-syntax symbol macrostart)))
 	 ;; CASE 4: in an objective-c method intro
 	 (in-method-intro-p
 	  (c-add-syntax 'objc-method-intro (c-point 'boi)))
