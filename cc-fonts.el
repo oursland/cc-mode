@@ -923,7 +923,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	   ;; vary more between the languages.  Look for ":" for the sake of
 	   ;; C++-style protection labels.
 	   (setq arglist-match (char-before match-pos))
-	   (when (memq arglist-match '(?{ ?} ?\; ?:))
+	   (when (memq arglist-match '(?{ ?} ?\; ?\) ?:))
 	     (setq arglist-match nil))
 
 	   (setq at-type nil
