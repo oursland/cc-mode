@@ -822,7 +822,30 @@ other easily recognizable things.  Used on level 2 and higher."
        ;; Search again if the match is within a comment or a string
        ;; literal.
        (goto-char (next-single-property-change
-		   match-pos 'face nil (point-max))))))
+		   match-pos 'face nil (point-max)))))
+
+  (defmacro c-fl-shift-type-backward ()
+    ;; `c-font-lock-declarations' can consume an arbitrary length list of
+    ;; types when parsing a declaration, which means that it sometimes
+    ;; consumes the identifier in the declaration as a type.  This is used to
+    ;; "backtrack" and make the last type be treated as an identifier instead.
+    '(setq identifier-type at-type
+	   identifier-start type-start
+	   identifier-end type-end
+	   at-type (if (eq prev-at-type 'prefix)
+		       t
+		     prev-at-type)
+	   type-start (if prev-at-type
+			  prev-type-start
+			start-pos)
+	   type-end (if prev-at-type
+			prev-type-end
+		      start-pos)
+	   prev-at-type nil
+	   got-parens nil
+	   got-identifier t
+	   got-suffix t
+	   paren-depth 0)))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
@@ -1264,25 +1287,9 @@ other easily recognizable things.  Used on level 2 and higher."
 					    (not arglist-match))
 					(setq pos (c-up-list-forward (point)))
 					(eq (char-before pos) ?\)))
-				 (setq identifier-type at-type
-				       identifier-start type-start
-				       identifier-end type-end
-				       at-type (if (eq prev-at-type 'prefix)
-						   t
-						 prev-at-type)
-				       type-start (if prev-at-type
-						      prev-type-start
-						    start-pos)
-				       type-end (if prev-at-type
-						    prev-type-end
-						  start-pos)
-				       prev-at-type nil
-				       got-parens nil
-				       got-identifier t
-				       got-suffix t
-				       paren-depth 0)
-				 (goto-char pos)
-				 t))
+			       (c-fl-shift-type-backward)
+			       (goto-char pos)
+			       t))
 		      (c-forward-syntactic-ws))
 
 		    ;; Now we've collected info about various characteristics
@@ -1352,28 +1359,25 @@ other easily recognizable things.  Used on level 2 and higher."
 			;; backwards to make the last one the identifier.
 			;; This is analogous to the "backtracking" done inside
 			;; the `c-type-decl-suffix-key' loop above.
-			(setq identifier-type at-type
-			      identifier-start type-start
-			      identifier-end type-end
-			      at-type (if (eq prev-at-type 'prefix)
-					  t
-					prev-at-type)
-			      type-start (if prev-at-type
-					     prev-type-start
-					   start-pos)
-			      type-end (if prev-at-type
-					   prev-type-end
-					 start-pos)
-			      prev-at-type nil
-			      got-parens nil
-			      got-identifier t
-			      got-suffix t
-			      paren-depth 0)))
+			(c-fl-shift-type-backward)))
 
 		    (when (and got-identifier
-			       got-suffix
 			       (not arglist-match)
-			       (looking-at c-after-suffixed-type-decl-key))
+			       (looking-at c-after-suffixed-type-decl-key)
+			       (if (and got-parens
+					(not got-prefix)
+					(not got-suffix)
+					(not (eq at-type t)))
+				   ;; Shift the type backward in the case that
+				   ;; there's a single identifier inside
+				   ;; parens.  That can only occur in K&R
+				   ;; style function declarations so it's more
+				   ;; likely that it really is a function
+				   ;; call.  Therefore we only do this after
+				   ;; `c-after-suffixed-type-decl-key' has
+				   ;; matched.
+				   (progn (c-fl-shift-type-backward) t)
+				 got-suffix))
 		      ;; A declaration according to
 		      ;; `c-after-suffixed-type-decl-key'.
 		      (throw 'at-decl-or-cast t))
@@ -1464,10 +1468,9 @@ other easily recognizable things.  Used on level 2 and higher."
 	  (if (save-excursion
 		(and
 		 c-opt-cast-close-paren-key
-		 arglist-match
 
 		 ;; Should be the first type/identifier in a paren.
-		 (memq (car arglist-match) '(?\( ?\[))
+		 (memq (car-safe arglist-match) '(?\( ?\[))
 
 		 ;; The closing paren should match
 		 ;; `c-opt-cast-close-paren-key'.
