@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.165 $
-;; Last Modified:   $Date: 1994-01-03 23:01:58 $
+;; Version:         $Revision: 3.166 $
+;; Last Modified:   $Date: 1994-01-06 18:52:51 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-03 23:01:58 $|$Revision: 3.165 $|
+;; |$Date: 1994-01-06 18:52:51 $|$Revision: 3.166 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.165 $
+CC-MODE REVISION: $Revision: 3.166 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.165 $
+CC-MODE REVISION: $Revision: 3.166 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1474,8 +1474,16 @@ search."
 	    (if (not (looking-at c-label-key))
 		(setq last-begin (point)
 		      first nil)))
-	  (if (not (looking-at c-conditional-key))
-	      (goto-char last-begin)))
+	  (cond
+	   ;; CASE 1: we're in the middle of an else-if clause
+	   ((save-excursion
+	      (c-safe (forward-sexp -1))
+	      (looking-at "\\<else\\>[ \t]+\\<if\\>"))
+	    (forward-sexp -1))
+	   ;; CASE 2: we're looking at any other conditional clause
+	   ((looking-at c-conditional-key))
+	   ;; CASE 3: anything else
+	   (t (goto-char last-begin))))
       ;; error for condition-case
       (error (if first
 		 (backward-up-list 1)
@@ -2550,9 +2558,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (goto-char placeholder)
 	      (and (looking-at c-conditional-key)
 		   (c-safe (progn (forward-sexp
-				   ;; do and else aren't followed by parens
-				   (if (looking-at "\\<\\(do\\|else\\)\\>")
-				       1 2))
+				   ;; else if()
+				   (if (looking-at "\\<else\\>[ \t]+\\<if\\>")
+				       3
+				     ;; do and else aren't followed by parens
+				     (if (looking-at "\\<\\(do\\|else\\)\\>")
+					 1 2)))
 				  t))
 		   (progn (c-forward-syntactic-ws)
 			  (>= (point) indent-point))))
@@ -2953,7 +2964,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.165 $"
+(defconst c-version "$Revision: 3.166 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
