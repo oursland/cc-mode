@@ -552,6 +552,17 @@ Note that the style variables are always made local to the buffer."
   ;;(modify-syntax-entry ?: "_" c++-mode-syntax-table)
   )
 
+(defvar c++-template-syntax-table nil
+  "A variant of `c++-mode-syntax-table' that defines `<' and `>' as
+parenthesis characters.  Used temporarily when template argument lists
+are parsed.")
+(if c++-template-syntax-table
+    ()
+  (setq c++-template-syntax-table
+	(copy-syntax-table c++-mode-syntax-table))
+  (modify-syntax-entry ?< "(>" c++-template-syntax-table)
+  (modify-syntax-entry ?> ")<" c++-template-syntax-table))
+
 (easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
 		  (c-mode-menu "C++"))
 
