@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.243 $
-;; Last Modified:   $Date: 1995-11-16 00:20:59 $
+;; Version:         $Revision: 4.244 $
+;; Last Modified:   $Date: 1995-11-16 00:22:25 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-11-16 00:20:59 $|$Revision: 4.243 $|
+;; |$Date: 1995-11-16 00:22:25 $|$Revision: 4.244 $|
 
 ;;; Code:
 
@@ -2047,7 +2047,9 @@ VALUE.  This function also sets the current style to STYLE using
   "Like \\[fill-paragraph] but handles C and C++ style comments.
 If any of the current line is a comment or within a comment,
 fill the comment or the paragraph of it that point is in,
-preserving the comment indentation or line-starting decorations."
+preserving the comment indentation or line-starting decorations.
+
+Optional prefix ARG means justify paragraph as well."
   (interactive "P")
   (let* (comment-start-place
 	 (first-line
@@ -4544,7 +4546,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.243 $"
+(defconst c-version "$Revision: 4.244 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
