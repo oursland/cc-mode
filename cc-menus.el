@@ -417,8 +417,9 @@ Example:
 		      &optional mode-create-index-function)
   ;; This function does not do any hidden buffer changes.
   (setq imenu-generic-expression mode-generic-expression
-	imenu-create-index-function mode-create-index-function
-	imenu-case-fold-search nil))
+	imenu-case-fold-search nil)
+  (when mode-create-index-function
+    (setq imenu-create-index-function mode-create-index-function)))
 
 
 (cc-provide 'cc-menus)
