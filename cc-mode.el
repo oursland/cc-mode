@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.87 $
-;; Last Modified:   $Date: 1993-11-23 18:31:33 $
+;; Version:         $Revision: 3.88 $
+;; Last Modified:   $Date: 1993-11-23 19:11:52 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-23 18:31:33 $|$Revision: 3.87 $|
+;; |$Date: 1993-11-23 19:11:52 $|$Revision: 3.88 $|
 
 ;;; Code:
 
@@ -492,7 +492,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.87 $
+  "Major mode for editing C++ code.  $Revision: 3.88 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -522,7 +522,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.87 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.88 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -803,7 +803,7 @@ point is inside a literal, nothing special happens."
 	  arg
 	  (not (memq 'alignleft cc-electric-pound-behavior)))
       ;; do nothing special
-      (self-insert-command arg)
+      (self-insert-command (prefix-numeric-value arg))
     ;; place the pound character at the left edge
     (let ((pos (- (point-max) (point))))
       (beginning-of-line)
@@ -2399,7 +2399,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.87 $"
+(defconst cc-version "$Revision: 3.88 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
