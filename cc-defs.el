@@ -546,18 +546,39 @@ continuations."
   ;; face names.
   (memq facename (face-list)))
 
-(defsubst c-fontify-type (from to)
+(eval-when-compile
+  ;; Used at compile time to get the right definition in
+  ;; `c-put-font-lock-face'.  Not required anywhere except in
+  ;; cc-fonts.el at runtime.
+  (require 'font-lock))
+
+(eval-and-compile
+  ;; Expand this during compilation; it's too expensive to make it a
+  ;; runtime check.  It's also defined at runtime since it's used in
+  ;; `c-make-simple-font-lock-decl-function'.
+
+  (defmacro c-put-font-lock-face (from to face)
+    ;; Put a face on a region (overriding any existing face) in the way
+    ;; font-lock would do it.  In XEmacs that means putting an
+    ;; additional font-lock property, or else the font-lock package
+    ;; won't recognize it as fontified and might override it
+    ;; incorrectly.
+    (if (fboundp 'font-lock-set-face)
+	;; Note: This function has no docstring in XEmacs so it might be
+	;; considered internal.
+	`(font-lock-set-face ,from ,to ,face)
+      `(put-text-property ,from ,to 'face ,face))))
+
+(defsubst c-put-type-face (from to)
   ;; Put the face `font-lock-type-face' on the given region.  Does not
   ;; clobber match-data.
-  (put-text-property from to 'face 'font-lock-type-face))
+  (c-put-font-lock-face from to 'font-lock-type-face))
 
-(cc-bytecomp-defvar font-lock-reference-face)
-
-(defsubst c-fontify-reference (from to)
+(defsubst c-put-reference-face (from to)
   ;; Put the face `font-lock-reference-face' on the given region.
   ;; Does not clobber match-data.  Note that the face is a variable
   ;; that is dereferenced, since it's an alias in Emacs.
-  (put-text-property from to 'face font-lock-reference-face))
+  (c-put-font-lock-face from to font-lock-reference-face))
 
 
 (cc-provide 'cc-defs)

@@ -2267,6 +2267,12 @@ in Pike) then the point for the preceding one is returned."
 ;; fontified as references, other references aren't handled.
 (defvar c-fontify-types-and-refs nil)
 
+;; These are defined in cc-fonts.el, which we don't want to require
+;; here.  However, they're only called when `c-fontify-types-and-refs'
+;; is set, and that only happens from functions defined there.
+(cc-bytecomp-defun c-put-type-face)
+(cc-bytecomp-defun c-put-reference-face)
+
 (defun c-forward-c++-template-arglist ()
   ;; The point is assumed to be at a '<'.  Try to treat it as a C++
   ;; template arglist and move forward to the the corresponding '>'.
@@ -2403,8 +2409,8 @@ in Pike) then the point for the preceding one is returned."
 		      (when c-fontify-types-and-refs
 			(c-forward-syntactic-ws)
 			(if (looking-at "::")
-			    (c-fontify-reference id-start id-end)
-			  (c-fontify-type id-start id-end)))))
+			    (c-put-reference-face id-start id-end)
+			  (c-put-type-face id-start id-end)))))
 		  t)
 
 		 (t
@@ -2537,7 +2543,7 @@ in Pike) then the point for the preceding one is returned."
 		 (if (looking-at "::")
 		     (progn
 		       (when c-fontify-types-and-refs
-			 (c-fontify-reference id-start id-end))
+			 (c-put-reference-face id-start id-end))
 		       (forward-char 2)
 		       (c-forward-syntactic-ws)
 		       t)
@@ -2545,7 +2551,7 @@ in Pike) then the point for the preceding one is returned."
 		   ;; want to add types containing template
 		   ;; references.
 		   (when c-fontify-types-and-refs
-		     (c-fontify-type id-start id-end))
+		     (c-put-type-face id-start id-end))
 		   (setq res 'template)
 		   nil)))
 	      )))))
@@ -2591,7 +2597,7 @@ in Pike) then the point for the preceding one is returned."
 	  ;; Fontify all the symbols within the complex type.
 	  (goto-char pos)
 	  (while (c-syntactic-re-search-forward c-symbol-key end 'move)
-	    (c-fontify-type (match-beginning 0) (match-end 0))
+	    (c-put-type-face (match-beginning 0) (match-end 0))
 	    (goto-char (match-end 0)))))
       (setq res t))
 
@@ -2608,10 +2614,10 @@ in Pike) then the point for the preceding one is returned."
 	      ;; prefix, so we add it to `c-found-types'.
 	      (c-add-type pos (point))
 	      (when c-fontify-types-and-refs
-		(c-fontify-type (save-excursion
-				  (c-simple-skip-symbol-backward)
-				  (point))
-				(point))))
+		(c-put-type-face (save-excursion
+				   (c-simple-skip-symbol-backward)
+				   (point))
+				 (point))))
 	    (setq res t))
 	;; Invalid syntax.
 	(goto-char start)
@@ -2621,7 +2627,7 @@ in Pike) then the point for the preceding one is returned."
 	(looking-at c-known-type-key))
       ;; Looking at a known type identifier.
       (when c-fontify-types-and-refs
-	(c-fontify-type (match-beginning 1) (match-end 1)))
+	(c-put-type-face (match-beginning 1) (match-end 1)))
       (if (and c-opt-type-component-key
 	       (save-match-data
 		 (looking-at c-opt-type-component-key)))
@@ -2633,12 +2639,12 @@ in Pike) then the point for the preceding one is returned."
 		     (c-forward-syntactic-ws)
 		     (looking-at c-opt-type-component-key))
 	      (when c-fontify-types-and-refs
-		(c-fontify-type (match-beginning 1) (match-end 1)))
+		(c-put-type-face (match-beginning 1) (match-end 1)))
 	      (goto-char (match-end 1)))
 	    (if (looking-at c-primitive-type-key)
 		(progn
 		  (when c-fontify-types-and-refs
-		    (c-fontify-type (match-beginning 1) (match-end 1)))
+		    (c-put-type-face (match-beginning 1) (match-end 1)))
 		  (goto-char (match-end 1))
 		  (setq res t))
 	      (goto-char pos)
@@ -2655,10 +2661,10 @@ in Pike) then the point for the preceding one is returned."
 		 (progn
 		   (c-add-type pos (point))
 		   (when c-fontify-types-and-refs
-		     (c-fontify-type (save-excursion
-				       (c-simple-skip-symbol-backward)
-				       (point))
-				     (point)))
+		     (c-put-type-face (save-excursion
+					(c-simple-skip-symbol-backward)
+					(point))
+				      (point)))
 		   'found)
 	       (setq id-start pos
 		     id-end (point)
@@ -2719,11 +2725,11 @@ in Pike) then the point for the preceding one is returned."
 		      ((eq res2 t)
 		       (c-add-type id-start id-end)
 		       (when c-fontify-types-and-refs
-			 (c-fontify-type (save-excursion
-					   (goto-char id-end)
-					   (c-simple-skip-symbol-backward)
-					   (point))
-					 id-end))
+			 (c-put-type-face (save-excursion
+					    (goto-char id-end)
+					    (c-simple-skip-symbol-backward)
+					    (point))
+					  id-end))
 		       t)
 		      ((eq res 'found) 'found)
 		      ((eq res2 'found) 'found)

@@ -245,6 +245,9 @@ tools (e.g. Javadoc).")
 (eval-and-compile
   ;; We need the following function during compilation since it's
   ;; called when the `c-lang-defconst' initializers are evaluated.
+  ;; They're also used at runtime, e.g. when the type search function
+  ;; in `c-simple-decl-matchers' is compiled from
+  ;; `*-font-lock-extra-types' at mode start.
 
   (defsubst c-skip-comments-and-strings (limit)
     ;; If the point is within a region fontified as a comment or
@@ -281,8 +284,9 @@ tools (e.g. Javadoc).")
 		    (c-skip-comments-and-strings limit))
 	    ,(when type-submatch
 	       `(save-match-data
-		  (c-fontify-type (match-beginning ,type-submatch)
-				  (match-end ,type-submatch))))
+		  (c-put-font-lock-face (match-beginning ,type-submatch)
+					(match-end ,type-submatch)
+					'font-lock-type-face)))
 	    ,pre
 	    (save-match-data
 	      (c-font-lock-declarators limit t nil))
@@ -359,8 +363,8 @@ tools (e.g. Javadoc).")
 			  (c-end-of-macro)
 			  (if (> (point) limit) (goto-char limit))
 			  t))
-		      (put-text-property (match-beginning 0) (match-end 0)
-					 'face c-preprocessor-face)))
+		      (c-put-font-lock-face (match-beginning 0) (match-end 0)
+					    c-preprocessor-face)))
 		nil)))
 	  ))
 
@@ -419,8 +423,8 @@ tools (e.g. Javadoc).")
 		 ;; Got a label.
 		 (goto-char id-start)
 		 (looking-at c-symbol-key)
-		 (put-text-property (match-beginning 0) (match-end 0)
-				    'face c-label-face))))))))
+		 (c-put-font-lock-face (match-beginning 0) (match-end 0)
+				       c-label-face))))))))
 
 (c-lang-defconst c-basic-matchers
   ;; Font lock matchers for basic keywords, labels, references and
@@ -462,8 +466,8 @@ tools (e.g. Javadoc).")
 				    (c-skip-comments-and-strings limit))
 				  (get-text-property (match-beginning 2)
 						     'face))
-			(put-text-property (match-beginning 2) (match-end 2)
-					   'face font-lock-reference-face)
+			(c-put-font-lock-face (match-beginning 2) (match-end 2)
+					      font-lock-reference-face)
 			(goto-char (match-end 1)))))))))
 
 	;; Fontify labels in languages that supports them.
@@ -660,7 +664,7 @@ tools (e.g. Javadoc).")
 	(goto-char id-end)
 	(when (and (c-simple-skip-symbol-backward)
 		   (not (get-text-property (point) 'face)))
-	  (put-text-property (point) id-end 'face id-face)))
+	  (c-put-font-lock-face (point) id-end id-face)))
 
       (goto-char pos)
       (setq pos nil)
