@@ -6,8 +6,9 @@ Barry A. Warsaw and Martin Stjernholm
 This message announces the availablity of a new version of CC Mode, a
 GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, Java,
 CORBA's IDL, and Pike code.  A list of user visible changes is
-summarized below.  This, and more information about CC Mode, including
-links to download the source, are available on the CC Mode Web page:
+detailed in the NEWS file and in the URL listed below.  More
+information, including links to download the source, are available on
+the CC Mode Web page:
 
     <http://www.python.org/emacs/cc-mode/>
 
@@ -24,44 +25,6 @@ Send email correspondence to
 Note that the old address, cc-mode-help@python.org is still active,
 but it's use is discouraged.
 
-Changes since 5.21
-==================
+For a list of changes please see
 
-- Note: there was no net release of 5.22!  This version went only to
-  the XEmacs developers and was primarily a bug fix release.
-
-- Support for the Pike language added, along with new Pike specific
-  syntactic symbols: inlambda, lambda-intro-cont
-
-- Support for Java anonymous classes via new syntactic symbol
-  inexpr-class.  New syntactic symbol inexpr-statement for Pike
-  support and gcc-style statements inside expressions.  New lineup
-  function c-lineup-inexpr-stat.
-
-- New syntactic symbol brace-entry-open which is used in brace lists
-  (i.e. static initializers) when a list entry starts with an open
-  brace.  These used to be recognized as brace-list-entry's.
-  c-electric-brace also recognizes brace-entry-open braces
-  (brace-list-entry's can no longer be electrified).
-
-- New command c-indent-line-or-region, not bound by default.
-
-- Improvements to M-C-h (c-mark-function).
-
-- Parentheses are now electric (via the new command c-electric-paren)
-  for auto-reindenting lines when parens are typed.
-
-- In "gnu" style, inline-open offset is now set to zero.
-
-- Uniform handling of the inclass syntactic symbol.  The indentation
-  associated with it is now always relative to the class opening
-  brace.  This means that the indentation behavior has changed in some
-  circumstances, but only if you've put anything besides 0 on the
-  class-open syntactic symbol (none of the default styles do that).
-
-- c-enable-xemacs-performance-kludge-p is set to nil by default, since 
-  for Emacs-friendly styles (i.e. where the top-level opening brace
-  starts in column zero) setting this variable to t can degrade
-  performance significantly.
-
-- The usual bug fixes.
+    <http://www.python.org/emacs/cc-mode/changes-524.html>
