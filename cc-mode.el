@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.123 $
-;; Last Modified:   $Date: 1993-12-20 14:32:13 $
+;; Version:         $Revision: 3.124 $
+;; Last Modified:   $Date: 1993-12-20 14:51:26 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-20 14:32:13 $|$Revision: 3.123 $|
+;; |$Date: 1993-12-20 14:51:26 $|$Revision: 3.124 $|
 
 ;;; Code:
 
@@ -587,11 +587,6 @@ The expansion is entirely correct because it uses the C preprocessor."
 
 
 ;; constant regular expressions for looking at various constructs
-(defconst c-symbol-key "\\(\\w\\|_\\)+"
-  "Regexp describing a C/C++ symbol.
-We cannot use just `w' syntax class since `_' cannot be in word class.
-Putting underscore in word class breaks forward word movement behavior
-that users are familiar with.")
 (defconst c-class-key
   (concat
    "\\(\\(extern\\|typedef\\)\\s +\\)?"
@@ -601,24 +596,25 @@ that users are familiar with.")
 (defconst c-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
 	  c-class-key
-	  "[ \t]+"
-	  c-symbol-key
-	  "\\([ \t]*:[ \t]*\\)?\\s *[^;]")
+	  "[ \t]+\\s_\\([ \t]*:[ \t]*\\)?\\s *[^;]")
   "Regexp describing a class inheritance declaration.")
+(defconst c-protection-key
+  "\\<\\(public\\|protected\\|private\\)\\>"
+  "Regexp describing protection keywords.")
 (defconst c-baseclass-key
   (concat
-   ":?[ \t]*\\(virtual[ \t]+\\)?"
-   "\\(\\(public\\|private\\|protected\\)[ \t]+\\)"
-   c-symbol-key)
+   ":?[ \t]*\\(virtual[ \t]+\\)?\\("
+   c-protection-key
+   "[ \t]+\\)\\s_")
   "Regexp describing base classes in a derived class definition.")
-(defconst c-case-statement-key
-  (concat "\\(case[ \t]+\\(\\w\\|[_']\\)+[ \t]*\\)"
-	  "\\|\\(default[ \t]*\\):")
+(defconst c-switch-label-key
+  "\\(\\(case[ \t]+\\(\\s_\\|[']\\)+\\)\\|default\\)[ \t]*:"
   "Regexp describing a switch's case or default label")
-(defconst c-access-key "\\<\\(public\\|protected\\|private\\)\\>:"
+(defconst c-access-key
+  (concat c-protection-key ":")
   "Regexp describing access specification keywords.")
 (defconst c-label-key
-  (concat c-symbol-key ":\\([^:]\\|$\\)")
+  "\\s_:\\([^:]\\|$\\)"
   "Regexp describing any label.")
 (defconst c-conditional-key
   "\\<\\(for\\|if\\|do\\|else\\|while\\)\\>"
@@ -627,7 +623,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.123 $
+CC-MODE REVISION: $Revision: 3.124 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -660,7 +656,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.123 $
+CC-MODE REVISION: $Revision: 3.124 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2440,7 +2436,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		 ))
 	  (c-add-semantics 'do-while-closure placeholder))
 	 ;; CASE 10: A case or default label
-	 ((looking-at c-case-statement-key)
+	 ((looking-at c-switch-label-key)
 	  (goto-char containing-sexp)
 	  ;; for a case label, we set relpos the first non-whitespace
 	  ;; char on the line containing the switch opening brace. this
@@ -2475,10 +2471,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (forward-char 1)
 	  (c-forward-syntactic-ws indent-point)
 	  ;; we want to ignore labels when skipping forward
-	  (let ((ignore-re (concat c-case-statement-key "\\|" c-label-key))
+	  (let ((ignore-re (concat c-switch-label-key "\\|" c-label-key))
 		inswitch-p)
 	    (while (looking-at ignore-re)
-	      (if (looking-at c-case-statement-key)
+	      (if (looking-at c-switch-label-key)
 		  (setq inswitch-p t))
 	      (forward-line 1)
 	      (c-forward-syntactic-ws indent-point))
@@ -2492,7 +2488,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		     (c-backward-syntactic-ws containing-sexp)
 		     (back-to-indentation)
 		     (setq placeholder (point))
-		     (looking-at c-case-statement-key)))
+		     (looking-at c-switch-label-key)))
 	      (c-add-semantics 'statement-case-intro placeholder))
 	     ;; CASE 13.B: continued statement
 	     ((= char-before-ip ?,)
@@ -2774,7 +2770,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.123 $"
+(defconst c-version "$Revision: 3.124 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
