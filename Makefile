@@ -1,5 +1,5 @@
 EMACS=emacs
-VERSION=5.29
+VERSION=5.30
 
 COREFILES=\
  NEWS \
@@ -9,6 +9,7 @@ COREFILES=\
  cc-compat.el \
  cc-defs.el \
  cc-engine.el \
+ cc-fonts.el \
  cc-langs.el \
  cc-menus.el \
  cc-mode.el \
@@ -39,7 +40,13 @@ distdir:
 
 docs: distdir info html dvi ps
 	tar cf - cc-mode.info* | gzip -c > dist/cc-mode.info.tar.gz
-	gzip -c cc-mode.html > dist/cc-mode.html.gz
+	cd html && \
+	$(RM) -r cc-mode-$(VERSION) && \
+	mkdir cc-mode-$(VERSION) && \
+	chmod 755 cc-mode-$(VERSION) && \
+	cp *.html cc-mode-$(VERSION) && \
+	chmod 644 cc-mode-$(VERSION)/* && \
+	tar cf - cc-mode-$(VERSION) | gzip -c > ../dist/cc-mode.html.tar.gz
 	gzip -c cc-mode.dvi > dist/cc-mode.dvi.gz
 	gzip -c cc-mode.ps > dist/cc-mode.ps.gz
 	gzip -c cc-mode.rev.ps > dist/cc-mode.rev.ps.gz
@@ -48,7 +55,7 @@ info:
 	makeinfo cc-mode.texi
 
 html:
-	makeinfo --html cc-mode.texi
+	makeinfo --html -o html cc-mode.texi
 
 dvi:
 	test -d texi || mkdir texi
@@ -92,11 +99,12 @@ test:
 clean:
 	$(RM) *.elc
 	$(RM) ChangeLog.gz
-	for d in cc-mode-* "texi"; do \
+	for d in cc-mode-* "texi" html/cc-mode-*; do \
 	  if test -d $$d; then $(RM) -r $$d; else :; fi; \
 	done
 
 spotless: clean
 	$(RM) cc-mode.info*
-	$(RM) cc-mode.html cc-mode.dvi cc-mode*.ps
+	$(RM) -r html
+	$(RM) cc-mode.dvi cc-mode*.ps
 	$(RM) -r dist

@@ -89,6 +89,7 @@ def read_revision(fp):
     # now collect change log entry
     logmsg = ''
     endof_file = 0
+    nonempty_line = 0
     while 1:
 	line = fp.readline()
 	if not line or \
@@ -98,6 +99,11 @@ def read_revision(fp):
 	# look for `comment'
 	if line[0] == '#':
 	    continue
+	if not nonempty_line:
+	    if line[:-1] == '':
+		continue
+	    else:
+		nonempty_line = 1
 	logmsg = logmsg + line[:-1] + ' '
     if line[:28] == '============================':
 	endof_file = 1
@@ -176,13 +182,16 @@ def main():
     dates.sort(datecmp)
     for date in dates:
 	timetuple = time.localtime(time.mktime(tuple(date) + zeros))
-	timestr = time.strftime('%a %b %d %Y', timetuple)
+	timestr = time.strftime('%Y-%m-%d', timetuple)
 
 	changes_byuser = changes[date]
 	for name in changes_byuser.keys():
 	    longname = usernames.get(name, None)
 	    if not longname:
-		longname = pwd.getpwnam(name)[4]
+		try:
+		    longname = pwd.getpwnam(name)[4]
+		except KeyError:
+		    longname = name
 		usernames[name] = longname
 	    print '\n%s  %s  <bug-cc-mode@gnu.org>' % (timestr, longname)
 	    for filename, logmsg in changes_byuser[name]:
