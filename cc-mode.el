@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.294 $
-;; Last Modified:   $Date: 1996-05-29 20:54:29 $
+;; Version:         $Revision: 4.295 $
+;; Last Modified:   $Date: 1996-05-30 14:42:07 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -3850,7 +3850,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-syntax 'brace-list-open placeholder))
 	     ;; CASE 5A.3: inline defun open
 	     (inclass-p
-	      (c-add-syntax 'inline-open (aref inclass-p 0)))
+	      (c-add-syntax 'inline-open)
+	      (c-add-syntax 'inclass (aref inclass-p 0)))
 	     ;; CASE 5A.4: ordinary defun open
 	     (t
 	      (goto-char placeholder)
@@ -4844,7 +4845,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.294 $"
+(defconst c-version "$Revision: 4.295 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
