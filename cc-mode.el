@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.254 $
-;; Last Modified:   $Date: 1996-01-06 00:06:49 $
+;; Version:         $Revision: 4.255 $
+;; Last Modified:   $Date: 1996-01-06 00:26:37 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-06 00:06:49 $|$Revision: 4.254 $|
+;; |$Date: 1996-01-06 00:26:37 $|$Revision: 4.255 $|
 
 ;;; Code:
 
@@ -4555,7 +4555,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.254 $"
+(defconst c-version "$Revision: 4.255 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
@@ -4681,10 +4681,10 @@ definition and conveniently use this command."
 			     c-strict-syntax-p
 			     c-tab-always-indent
 			     c-inhibit-startup-warnings-p
-			     ))))
-    ;; the default style is now GNU.  This can be overridden in
-    ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
-    (c-set-style "GNU"))
+			     )))
+      ;; the default style is now GNU.  This can be overridden in
+      ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
+      (c-set-style "GNU")))
 
 ;; style variables
 (make-variable-buffer-local 'c-offsets-alist)
