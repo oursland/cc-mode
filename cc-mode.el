@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.229 $
-;; Last Modified:   $Date: 1994-02-02 00:00:40 $
+;; Version:         $Revision: 3.230 $
+;; Last Modified:   $Date: 1994-02-08 20:51:32 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-02 00:00:40 $|$Revision: 3.229 $|
+;; |$Date: 1994-02-08 20:51:32 $|$Revision: 3.230 $|
 
 ;;; Code:
 
@@ -340,18 +340,6 @@ NL-LIST is used to determine where newlines are inserted.  If the
 language element for the colon is not found in this list, the default
 behavior is to not insert any newlines.")
 
-(defvar c-untame-characters '(?\')
-  "*Utilize a backslashing workaround of an Emacs18 syntax deficiency.
-If non-nil, this variable should contain a list of characters which
-are prepended by a backslash in comment regions.  By default, the list
-contains only the most troublesome character, the single quote.  To be
-completely safe, set this variable to:
-
-    '(?\( ?\) ?\' ?\{ ?\} ?\[ ?\])
-
-This variable has no effect under Emacs 19. For details on why this is
-necessary in GNU Emacs 18, please refer to the cc-mode texinfo manual.")
-
 (defvar c-backslash-column 48
   "*Column to insert backslashes when macroizing a region.")
 (defvar c-special-indent-hook nil
@@ -362,10 +350,6 @@ This hook gets called after a line is indented by the mode.")
 (defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
-(defvar c-backscan-limit 2000
-  "*Character limit for looking back while skipping syntactic whitespace.
-This variable has no effect under Emacs 19.  For details on why this
-is necessary under GNU Emacs 18, please refer to the texinfo manual.")
 
 (defvar c-style-alist
   '(("GNU"
@@ -548,15 +532,6 @@ supported list, along with the values for this variable:
   (define-key c-mode-map "\C-c\C-s"  'c-show-semantic-information)
   (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
   (define-key c-mode-map "\C-c\C-v"  'c-version)
-  ;; old Emacsen need to tame certain characters
-  (if (memq 'v18 c-emacs-features)
-      (progn
-	(define-key c-mode-map "\C-c'" 'c-tame-comments)
-	(define-key c-mode-map "'"     'c-tame-insert)
-	(define-key c-mode-map "["     'c-tame-insert)
-	(define-key c-mode-map "]"     'c-tame-insert)
-	(define-key c-mode-map "("     'c-tame-insert)
-	(define-key c-mode-map ")"     'c-tame-insert)))
   ;; FSF Emacs 19 defines menus in the mode map
   (if (memq 'FSF c-emacs-features)
       (progn
@@ -643,13 +618,6 @@ supported list, along with the values for this variable:
     (modify-syntax-entry ?/  ". 124b" table)
     (modify-syntax-entry ?*  ". 23"   table)
     (modify-syntax-entry ?\n "> b"    table))
-   (t
-    ;; Vanilla GNU18 doesn't support mult-style comments.  We'll do
-    ;; the best we can, but some strange behavior may be encountered.
-    ;; PATCH or UPGRADE!
-    (modify-syntax-entry ?/  ". 124" table)
-    (modify-syntax-entry ?*  ". 23"  table)
-    (modify-syntax-entry ?\n ">"     table))
    ))
 
 (defvar c-mode-syntax-table nil
@@ -730,7 +698,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.229 $
+cc-mode Revision: $Revision: 3.230 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -761,7 +729,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.229 $
+cc-mode Revision: $Revision: 3.230 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -807,7 +775,7 @@ Key bindings:
 	paragraph-separate paragraph-start
 	paragraph-ignore-fill-prefix t
 	require-final-newline t
-	parse-sexp-ignore-comments (not (memq 'v18 c-emacs-features))
+	parse-sexp-ignore-comments t
 	indent-line-function 'c-indent-via-language-element
 	indent-region-function 'c-indent-region
 	comment-column 32
@@ -892,15 +860,9 @@ Key bindings:
 	 ((,@ body))
        (error nil))))
 
-(defmacro c-insert-and-tame (arg)
-  ;; insert last-command-char in the buffer and possibly tame it
-  (` (progn
-       (and (memq 'v18 c-emacs-features)
-	  (memq literal '(c c++))
-	  (memq last-command-char c-untame-characters)
-	  (insert "\\"))
-       (self-insert-command (prefix-numeric-value arg))
-       )))
+(defun c-insert-special-chars (arg)
+  ;; simply call self-insert-command in Emacs 19
+  (self-insert-command (prefix-numeric-value arg)))
 
 
 ;; This is used by indent-for-comment to decide how much to indent a
@@ -1085,7 +1047,7 @@ the brace is inserted inside a literal."
     (if (or literal
 	    arg
 	    (not (looking-at "[ \t]*$")))
-	(c-insert-and-tame arg)
+	(c-insert-special-chars arg)
       (setq semantics (progn
 			(newline)
 			(self-insert-command (prefix-numeric-value arg))
@@ -1219,7 +1181,7 @@ non-whitespace characters on the line following the semicolon."
     (if (or literal
 	    arg
 	    (not (looking-at "[ \t]*$")))
-	(c-insert-and-tame arg)
+	(c-insert-special-chars arg)
       ;; do some special stuff with the character
       (self-insert-command (prefix-numeric-value arg))
       ;; do all cleanups, reindentations, and newline insertions, but
@@ -1277,7 +1239,7 @@ value of `c-cleanup-list'."
     (if (or literal
 	    arg
 	    (not (looking-at "[ \t]*$")))
-	(c-insert-and-tame arg)
+	(c-insert-special-chars arg)
       ;; lets do some special stuff with the colon character
       (setq semantics (progn
 			(self-insert-command (prefix-numeric-value arg))
@@ -1821,44 +1783,6 @@ move backward across a preprocessor conditional."
   (c-keep-region-active))
 
 
-;; Workarounds for GNU Emacs 18 scanning deficiencies
-(defun c-tame-insert (arg)
-  "Safely inserts certain troublesome characters in comment regions.
-This function is only necessary in GNU Emacs 18.  For details, refer
-to the accompanying texinfo manual.
-
-See also the variable `c-untame-characters'."
-  (interactive "P")
-  (let ((literal (c-in-literal)))
-    (c-insert-and-tame arg)))
-
-(defun c-tame-comments ()
-  "Backslashifies all untamed in comment regions found in the buffer.
-This function is only necessary in GNU Emacs 18. For details, refer to
-the accompanying texinfo manual.
-
-See also the variable `c-untame-characters'."
-  (interactive)
-  ;; make the list into a valid charset, escaping where necessary
-  (let ((charset (concat "^" (mapconcat
-			      (function
-			       (lambda (char)
-				 (if (memq char '(?\\ ?^ ?-))
-				     (concat "\\" (char-to-string char))
-				   (char-to-string char))))
-			      c-untame-characters ""))))
-    (save-excursion
-      (beginning-of-buffer)
-      (while (not (eobp))
-	(skip-chars-forward charset)
-	(if (and (not (zerop (following-char)))
-		 (memq (c-in-literal) '(c c++))
-		 (/= (preceding-char) ?\\ ))
-	    (insert-char  ?\\ 1))
-	(if (not (eobp))
-	    (forward-char 1))))))
-
-
 ;; commands to indent lines, regions, defuns, and expressions
 (defun c-indent-command (&optional whole-exp)
   "Indent current line as C++ code, or in some cases insert a tab character.
@@ -2019,99 +1943,19 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (interactive)
   (push-mark (point))
   (end-of-defun)
-  ;; emacs 18/19 compatibility -- blech!
-  (if (memq 'v18 c-emacs-features)
-      (funcall 'push-mark)
-    (funcall 'push-mark (point) nil t))
+  (push-mark (point) nil t)
   (beginning-of-defun)
   (backward-paragraph))
 
 
-;; Skipping of "syntactic whitespace" for all known Emacsen.
-;; Syntactic whitespace is defined as lexical whitespace, C and C++
-;; style comments, and preprocessor directives.  Search no farther
-;; back or forward than optional LIM.  If LIM is omitted,
-;; `beginning-of-defun' is used for backward skipping, point-max is
-;; used for forward skipping.
-;;
-;; Emacs 19 has nice built-in functions to do this, but Emacs 18 does
-;; not.  Also note that only Emacs19 implementation currently has
-;; support for multi-line macros, and this feature is imposes the
-;; restriction that backslashes at the end of a line can only occur on
-;; multi-line macro lines.
+;; Skipping of "syntactic whitespace" for Emacs 19.  Syntactic
+;; whitespace is defined as lexical whitespace, C and C++ style
+;; comments, and preprocessor directives.  Search no farther back or
+;; forward than optional LIM.  If LIM is omitted, `beginning-of-defun'
+;; is used for backward skipping, point-max is used for forward
+;; skipping.  Note that Emacs 18 support has been moved to cc-mode-18.el.
 
-;; This is the best we can do in vanilla GNU 18 Emacsen.
-(defun c-emacs18-fsws (&optional lim)
-  ;; Forward skip syntactic whitespace for Emacs 18.
-  (let ((lim (or lim (point-max)))
-	stop)
-    (while (not stop)
-      (skip-chars-forward " \t\n\r\f" lim)
-      (cond
-       ;; c++ comment
-       ((looking-at "//") (end-of-line))
-       ;; c comment
-       ((looking-at "/\\*") (re-search-forward "*/" lim 'noerror))
-       ;; preprocessor directive
-       ((and (= (c-point 'boi) (point))
-	     (= (following-char) ?#))
-	(end-of-line))
-       ;; none of the above
-       (t (setq stop t))
-       ))))
-
-(defun c-emacs18-bsws (&optional lim)
-  ;; Backward skip syntactic whitespace for Emacs 18."
-  (let ((lim (or lim (c-point 'bod)))
-	literal stop)
-    (if (and c-backscan-limit
-	     (> (- (point) lim) c-backscan-limit))
-	(setq lim (- (point) c-backscan-limit)))
-    (while (not stop)
-      (skip-chars-backward " \t\n\r\f" lim)
-      ;; c++ comment
-      (if (eq (setq literal (c-in-literal lim)) 'c++)
-	  (progn
-	    (skip-chars-backward "^/" lim)
-	    (skip-chars-backward "/" lim)
-	    (while (not (or (and (= (following-char) ?/)
-				 (= (char-after (1+ (point))) ?/))
-			    (<= (point) lim)))
-	      (skip-chars-backward "^/" lim)
-	      (skip-chars-backward "/" lim)))
-	;; c comment
-	(if (eq literal 'c)
-	    (progn
-	      (skip-chars-backward "^*" lim)
-	      (skip-chars-backward "*" lim)
-	      (while (not (or (and (= (following-char) ?*)
-				   (= (preceding-char) ?/))
-			      (<= (point) lim)))
-		(skip-chars-backward "^*" lim)
-		(skip-chars-backward "*" lim))
-	      (or (bobp) (forward-char -1)))
-	  ;; preprocessor directive
-	  (if (eq literal 'pound)
-	      (progn
-		(beginning-of-line)
-		(setq stop (<= (point) lim)))
-	    ;; just outside of c block
-	    (if (and (= (preceding-char) ?/)
-		     (= (char-after (- (point) 2)) ?*))
-		(progn
-		  (skip-chars-backward "^*" lim)
-		  (skip-chars-backward "*" lim)
-		  (while (not (or (and (= (following-char) ?*)
-				       (= (preceding-char) ?/))
-				  (<= (point) lim)))
-		    (skip-chars-backward "^*" lim)
-		    (skip-chars-backward "*" lim))
-		  (or (bobp) (forward-char -1)))
-	      ;; none of the above
-	      (setq stop t))))))))
-
-
-(defun c-emacs19-accurate-fsws (&optional lim)
+(defun c-forward-syntactic-ws (&optional lim)
   ;; Forward skip of syntactic whitespace for Emacs 19.
   (save-restriction
     (let* ((lim (or lim (point-max)))
@@ -2126,7 +1970,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (end-of-line)
 	  )))))
 
-(defun c-emacs19-accurate-bsws (&optional lim)
+(defun c-backward-syntactic-ws (&optional lim)
   ;; Backward skip over syntactic whitespace for Emacs 19.
   (save-restriction
     (let* ((lim (or lim (c-point 'bod)))
@@ -2148,60 +1992,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 ;; preprocessor line, or nil if not in a comment at all.  Optional LIM
 ;; is used as the backward limit of the search.  If omitted, or nil,
 ;; `beginning-of-defun' is used."
-(defun c-emacs18-il (&optional lim)
-  ;; Determine if point is in a C/C++ literal
-  (save-excursion
-    (let* ((here (point))
-	   (state nil)
-	   (match nil)
-	   (lim  (or lim (c-point 'bod))))
-      (goto-char lim )
-      (while (< (point) here)
-	(setq match
-	      (and (re-search-forward "\\(/[/*]\\)\\|[\"']\\|\\(^[ \t]*#\\)"
-				      here 'move)
-		   (buffer-substring (match-beginning 0) (match-end 0))))
-	(setq state
-	      (cond
-	       ;; no match
-	       ((null match) nil)
-	       ;; looking at the opening of a C++ style comment
-	       ((string= "//" match)
-		(if (<= here (progn (end-of-line) (point))) 'c++))
-	       ;; looking at the opening of a C block comment
-	       ((string= "/*" match)
-		(if (not (re-search-forward "*/" here 'move)) 'c))
-	       ;; looking at the opening of a double quote string
-	       ((string= "\"" match)
-		(if (not (save-restriction
-			   ;; this seems to be necessary since the
-			   ;; re-search-forward will not work without it
-			   (narrow-to-region (point) here)
-			   (re-search-forward
-			    ;; this regexp matches a double quote
-			    ;; which is preceded by an even number
-			    ;; of backslashes, including zero
-			    "\\([^\\]\\|^\\)\\(\\\\\\\\\\)*\"" here 'move)))
-		    'string))
-	       ;; looking at the opening of a single quote string
-	       ((string= "'" match)
-		(if (not (save-restriction
-			   ;; see comments from above
-			   (narrow-to-region (point) here)
-			   (re-search-forward
-			    ;; this matches a single quote which is
-			    ;; preceded by zero or two backslashes.
-			    "\\([^\\]\\|^\\)\\(\\\\\\\\\\)?'"
-			    here 'move)))
-		    'string))
-	       ((string-match "[ \t]*#" match)
-		(if (<= here (progn (end-of-line) (point))) 'pound))
-	       (t nil)))
-	) ; end-while
-      state)))
 
 ;; This is for all Emacsen supporting 8-bit syntax (Lucid 19, patched GNU18)
-(defun c-8bit-il (&optional lim)
+(defun c-in-literal (&optional lim)
   ;; Determine if point is in a C++ literal
   (save-excursion
     (let* ((lim (or lim (c-point 'bod)))
@@ -2234,32 +2027,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	'pound)
        (t nil)))))
 
-;; set the compatibility for all the different Emacsen. wish we didn't
-;; have to do this!  Note that pre-19.8 lemacsen are no longer
-;; supported.
-(fset 'c-forward-syntactic-ws
-      (cond
-       ((memq 'v18 c-emacs-features)     'c-emacs18-fsws)
-       ((memq 'old-v19 c-emacs-features)
-	(error "Old Lemacsen are no longer supported. Upgrade!"))
-       ((memq 'v19 c-emacs-features)     'c-emacs19-accurate-fsws)
-       (t (error "Bad c-emacs-features: %s" c-emacs-features))
-       ))
-(fset 'c-backward-syntactic-ws
-      (cond
-       ((memq 'v18 c-emacs-features)     'c-emacs18-bsws)
-       ((memq 'old-v19 c-emacs-features)
-	(error "Old Lemacsen are no longer supported. Upgrade!"))
-       ((memq 'v19 c-emacs-features)     'c-emacs19-accurate-bsws)
-       (t (error "Bad c-emacs-features: %s" c-emacs-features))
-       ))
-(fset 'c-in-literal
-      (cond
-       ((memq 'no-dual-comments c-emacs-features) 'c-emacs18-il)
-       ((memq '8-bit c-emacs-features)            'c-8bit-il)
-       ((memq '1-bit c-emacs-features)            'c-1bit-il)
-       (t (error "Bad c-emacs-features: %s" c-emacs-features))
-       ))
+;; FSF 19 does this differently than Lucid 19
+(if (memq '1-bit c-emacs-features)
+    (fset 'c-in-literal 'c-1bit-il))
+
 
 
 ;; utilities for moving and querying around semantic elements
@@ -3303,7 +3074,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.229 $"
+(defconst c-version "$Revision: 3.230 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3328,7 +3099,6 @@ it trailing backslashes are removed."
     (list
      ;; report only the vars that affect indentation
      'c-emacs-features
-     'c-backscan-limit
      'c-basic-offset
      'c-offsets-alist
      'c-block-comments-indent-p
@@ -3340,7 +3110,6 @@ it trailing backslashes are removed."
      'c-hanging-braces-alist
      'c-hanging-colons-alist
      'c-tab-always-indent
-     'c-untame-characters
      'tab-width
      )
     (function
@@ -3402,11 +3171,9 @@ it trailing backslashes are removed."
 		    "Use `c-auto-newline' and `c-hungry-delete-key' instead.")
 	      (cons 'c++-auto-hungry-toggle na)
 	      (cons 'c++-relative-offset-p na)
-	      (cons 'c++-untame-characters 'c-untame-characters)
 	      (cons 'c++-special-indent-hook 'c-special-indent-hook)
 	      (cons 'c++-delete-function 'c-delete-function)
 	      (cons 'c++-electric-pound-behavior 'c-electric-pound-behavior)
-	      (cons 'c++-backscan-limit 'c-backscan-limit)
 	      (cons 'c++-hungry-delete-key 'c-hungry-delete-key)
 	      (cons 'c++-auto-newline 'c-auto-newline)
 	      (cons 'c++-match-header-strongly na)
