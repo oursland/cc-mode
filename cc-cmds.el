@@ -691,19 +691,20 @@ is nil."
 		       (not (c-in-literal)))
 		  (progn
 		    (delete-region mbeg mend)
-		    (insert "} else if (")))
-	      ;; clean up brace-catch-brace
-	      (if (and (memq 'brace-catch-brace c-cleanup-list)
-		       (eq last-command-char ?\()
-		       (re-search-backward "}[ \t\n]*catch[ \t\n]*(" nil t)
-		       (save-excursion
-			 (setq mbeg (match-beginning 0)
-			       mend (match-end 0))
-			 (= mend here))
-		       (not (c-in-literal)))
-		  (progn
-		    (delete-region mbeg mend)
-		    (insert "} catch (")))
+		    (insert "} else if ("))
+		;; clean up brace-catch-brace
+		(goto-char here)
+		(if (and (memq 'brace-catch-brace c-cleanup-list)
+			 (eq last-command-char ?\()
+			 (re-search-backward "}[ \t\n]*catch[ \t\n]*(" nil t)
+			 (save-excursion
+			   (setq mbeg (match-beginning 0)
+				 mend (match-end 0))
+			   (= mend here))
+			 (not (c-in-literal)))
+		    (progn
+		      (delete-region mbeg mend)
+		      (insert "} catch ("))))
 	      (goto-char (- (point-max) pos))
 	      )))
 	(let (beg (end (1- (point))))
