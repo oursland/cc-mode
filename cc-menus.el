@@ -27,6 +27,12 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+;; Pull in Imenu when compiling, if it exists
+(eval-when-compile
+  (condition-case nil
+      (require 'imenu)
+    (error nil)))
+
 
 ;; imenu integration
 (defvar cc-imenu-c-prototype-macro-regexp nil
