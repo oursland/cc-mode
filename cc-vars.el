@@ -828,7 +828,7 @@ can always override the use of `c-default-style' by making calls to
        (knr-argdecl-intro     . +)
        ;; Relpos: Boi at the topmost intro line.
        (knr-argdecl           . 0)
-       ;; Relpos: Boi at the argdecl intro line.
+       ;; Relpos: At the beginning of the first K&R argdecl.
        (topmost-intro         . 0)
        ;; Relpos: Bol at the last line of previous construct.
        (topmost-intro-cont    . 0)
