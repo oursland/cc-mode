@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.222 $
-;; Last Modified:   $Date: 1992-12-01 03:15:46 $
+;; Version:         $Revision: 2.223 $
+;; Last Modified:   $Date: 1992-12-01 05:35:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -129,7 +129,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-01 03:15:46 $|$Revision: 2.222 $|
+;; |$Date: 1992-12-01 05:35:27 $|$Revision: 2.223 $|
 
 ;;; Code:
 
@@ -407,7 +407,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.222 $
+  "Major mode for editing C++ code.  $Revision: 2.223 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -615,7 +615,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.222 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.223 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1630,7 +1630,7 @@ BOD is the beginning of the C++ definition."
 			      (looking-at c++-access-key))
 			    ;; access specifier. class defun opening brace
 			    ;; may not be in col zero
-			    (progn (goto-char containing-sexp)
+			    (progn (goto-char (or containing-sexp bod))
 				   (current-indentation))
 			  ;; member init, so add offset, but
 			  ;; subtract inclass-shift
@@ -1644,7 +1644,7 @@ BOD is the beginning of the C++ definition."
 				(looking-at "[ \t]*\\<friend\\>")))
 			  ;; indentation of class defun opening brace
 			  ;; may not be zero
-			  (progn (goto-char containing-sexp)
+			  (progn (goto-char (or containing-sexp bod))
 				 (current-indentation))
 			;; cont arg decls or member inits
 			(beginning-of-line)
@@ -2274,7 +2274,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.222 $"
+(defconst c++-version "$Revision: 2.223 $"
   "c++-mode version number.")
 
 (defun c++-version ()
