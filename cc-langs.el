@@ -295,9 +295,9 @@ so that all identifiers are recognized as words.")
 ;;; Lexer-level syntax (identifiers, tokens etc).
 
 (c-lang-defconst c-symbol-start
-  "Regexp that matches the start of a symbol.
-I.e. any identifier, not excluding keywords.  It's unspecified how far
-it matches.  Does not contain a \\| operator at the top level."
+  "Regexp that matches the start of a symbol, i.e. any identifier or
+keyword.  It's unspecified how far it matches.  Does not contain a \\|
+operator at the top level."
   ;; This definition isn't correct for the first character in the
   ;; languages that accept the full range of Unicode word constituents
   ;; in identifiers (e.g. Java and Pike).  For that we'd need to make a
@@ -308,7 +308,7 @@ it matches.  Does not contain a \\| operator at the top level."
 (c-lang-defvar c-symbol-start (c-lang-const c-symbol-start))
 
 (c-lang-defconst c-symbol-key
-  "Regexp matching an identifier, not excluding keywords."
+  "Regexp matching identifiers and keywords."
   ;; We cannot use just `word' syntax class since `_' cannot be in
   ;; word class.  Putting underscore in word class breaks forward word
   ;; movement behavior that users are familiar with.  Besides, it runs
@@ -457,7 +457,7 @@ that at least one does when the regexp has matched."
 
 (c-lang-defconst c-opt-cpp-prefix
   "Regexp matching the prefix of a cpp directive in the languages that
-normally uses that macro preprocessor.  Tested at bol.  Assumed to not
+normally use that macro preprocessor.  Tested at bol.  Assumed to not
 contain any submatches."
   t nil
   (c c++ objc pike) "\\s *#\\s *")
@@ -500,7 +500,7 @@ Note that operators like \".\" and \"->\" which in language references
 often are described as postfix operators are considered binary here,
 since CC Mode treats every identifier as an expression."
 
-  ;; There's currently no code in CC Mode that exploits all the info
+  ;; There's currently no code in CC Mode that exploit all the info
   ;; in this variable; precedence, associativity etc are present as a
   ;; preparation for future work.
 
@@ -632,6 +632,7 @@ since CC Mode treats every identifier as an expression."
 (c-lang-defconst c-overloadable-operators
   "List of the operators that are overloadable, in their \"identifier form\"."
   t    nil
+  ;; The preceding "operator" keyword is treated separately in C++.
   c++  '("new" "delete" ;; Can be followed by "[]" but we ignore that.
 	 "+" "-" "*" "/" "%"
 	 "^" "??'" "xor" "&" "bitand" "|" "??!" "bitor" "~" "??-" "compl"
@@ -877,10 +878,14 @@ operators."
 	      c-current-comment-prefix)))
 
 
-;;; Keywords.
+;;; Keyword lists.
+
+;; Note: All and only all language constants containing keyword lists
+;; should end with "-kwds"; they're automatically collected into the
+;; `c-kwds-lang-consts' list below and used to build `c-keywords' etc.
 
 (c-lang-defconst c-primitive-type-kwds
-  "Primitive type keywords, excluding those on `c-complex-type-kwds'."
+  "Primitive type keywords."
   t    '("char" "double" "float" "int" "long" "short" "signed"
 	 "unsigned" "void")
   c    (append '("complex" "imaginary")	; Conditionally defined in C99.
@@ -893,7 +898,8 @@ operators."
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
   pike '(;; this_program isn't really a keyword, but it's practically
 	 ;; used as a builtin type.
-	 "float" "mixed" "string" "this_program" "void"))
+	 "array" "float" "function" "int" "mapping" "mixed" "multiset"
+	 "object" "program" "string" "this_program" "void"))
 
 (c-lang-defconst c-primitive-type-key
   ;; An adorned regexp that matches `c-primitive-type-kwds'.
@@ -905,29 +911,6 @@ operators."
 this is assumed to be a subset of `c-primitive-type-kwds'."
   t nil
   (c c++) '("long" "short" "signed" "unsigned"))
-
-(c-lang-defconst c-complex-type-kwds
-  "Keywords that can precede a parenthesis that contains a complex
-type, e.g. \"mapping(int:string)\" in Pike."
-  t    nil
-  pike '("array" "function" "int" "mapping" "multiset" "object" "program"))
-
-(c-lang-defconst c-opt-complex-type-key
-  ;; An adorned regexp that matches `c-complex-type-kwds', or nil in
-  ;; languages without such things.
-  t (and (c-lang-const c-complex-type-kwds)
-	 (c-make-keywords-re t (c-lang-const c-complex-type-kwds))))
-(c-lang-defvar c-opt-complex-type-key (c-lang-const c-opt-complex-type-key))
-
-(c-lang-defconst c-type-kwds
-  ;; All keywords that are primitive types, i.e. the union of
-  ;; `c-primitive-type-kwds' and `c-complex-type-kwds'.
-  t (if (c-lang-const c-complex-type-kwds)
-	;; Don't need `delete-duplicates' since these two are
-	;; defined to be exclusive.
-	(append (c-lang-const c-primitive-type-kwds)
-		(c-lang-const c-complex-type-kwds))
-      (c-lang-const c-primitive-type-kwds)))
 
 (c-lang-defconst c-type-prefix-kwds
   "Keywords where the following name - if any - is a type name, and
@@ -998,21 +981,32 @@ type."
   t (c-make-keywords-re t (c-lang-const c-specifier-kwds)))
 (c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
 
-(c-lang-defconst c-typedef-specifier-kwds
-  "Declaration specifier keywords that causes the declaration to
-declare the identifiers in it as types.  Assumed to be a subset of
-`c-specifier-kwds'."
+(c-lang-defconst c-typedef-decl-kwds
+  "Keywords introducing declarations where the identifiers are defined
+to be types.  Assumed to be a subset of `c-specifier-kwds'."
   t nil
   (c c++ objc pike) '("typedef"))
 
-(c-lang-defconst c-typedef-specifier-key
-  ;; `c-typedef-specifier-kwds' as an adorned regexp.
-  t (c-make-keywords-re t (c-lang-const c-typedef-specifier-kwds)))
-(c-lang-defvar c-typedef-specifier-key (c-lang-const c-typedef-specifier-key))
+(c-lang-defconst c-typedef-decl-key
+  ;; `c-typedef-decl-kwds' as an adorned regexp.
+  t (c-make-keywords-re t (c-lang-const c-typedef-decl-kwds)))
+(c-lang-defvar c-typedef-decl-key (c-lang-const c-typedef-decl-key))
+
+(c-lang-defconst c-typeless-decl-kwds
+  "Keywords introducing declarations where the identifier (declarator)
+list follows directly after the keyword, without any type.  Assumed to
+be a subset of `c-specifier-kwds'."
+  t    nil
+  pike '("constant"))
+
+(c-lang-defconst c-typeless-decl-key
+  ;; `c-typeless-decl-kwds' as an adorned regexp.
+  t (c-make-keywords-re t (c-lang-const c-typeless-decl-kwds)))
+(c-lang-defvar c-typeless-decl-key (c-lang-const c-typeless-decl-key))
 
 (c-lang-defconst c-protection-kwds
   "Protection label keywords in classes."
-  t nil
+  t    nil
   c++  '("private" "protected" "public")
   objc '("@private" "@protected" "@public"))
 
@@ -1027,7 +1021,8 @@ declare the identifiers in it as types.  Assumed to be a subset of
 (c-lang-defvar c-opt-access-key (c-lang-const c-opt-access-key))
 
 (c-lang-defconst c-class-kwds
-  "Class/struct declaration keywords."
+  "Keywords introducing declarations where the following block (if any)
+contain another declaration level that should be considered a class."
   t    nil
   c    '("struct" "union")
   c++  '("class" "struct" "union")
@@ -1043,8 +1038,8 @@ declare the identifiers in it as types.  Assumed to be a subset of
 (c-lang-defvar c-class-key (c-lang-const c-class-key))
 
 (c-lang-defconst c-brace-list-kwds
-  "Keywords introducing declarations where the following block is a
-brace list (containing identifier declarations)."
+  "Keywords introducing declarations where the following block (if
+any) is a brace list (containing identifier declarations)."
   t nil
   (c c++ objc pike) '("enum"))
 
@@ -1055,8 +1050,8 @@ brace list (containing identifier declarations)."
 (c-lang-defvar c-brace-list-key (c-lang-const c-brace-list-key))
 
 (c-lang-defconst c-other-decl-block-kwds
-  "Keywords introducing blocks that contain another declaration level,
-besides classes."
+  "Keywords where the following block (if any) contain another
+declaration level that should not be considered a class."
   t   nil
   c   '("extern")
   c++ '("namespace" "extern")
@@ -1075,7 +1070,7 @@ might be followed by variable declarations, e.g. like \"foo\" in
 like that, it ends with the following ';' and not right away.
 
 These keywords are assumed to be a subset of the union of
-`c-class-kwds', `c-typedef-specifier-kwds' and
+`c-class-kwds', `c-typedef-decl-kwds', `c-typeless-decl-kwds' and
 `c-other-decl-block-kwds'."
   t        nil
   (c objc) '("struct" "union" "enum" "typedef")
@@ -1093,9 +1088,9 @@ These keywords are assumed to be a subset of the union of
   "Keywords introducing declarations that has not been accounted for by
 any other keyword list that can be applied at the beginning of a
 declaration.  They are: `c-primitive-type-kwds',
-`c-complex-type-kwds', `c-type-prefix-kwds', `c-type-modifier-kwds',
-`c-specifier-kwds', `c-typedef-specifier-kwds', `c-protection-kwds',
-`c-class-kwds', `c-other-decl-block-kwds'."
+`c-primitive-type-prefix-kwds', `c-type-modifier-kwds',
+`c-specifier-kwds', `c-typedef-decl-kwds', `c-typeless-decl-kwds',
+`c-protection-kwds', `c-class-kwds', `c-other-decl-block-kwds'."
   t    nil
   c++  '("using")
   objc '("@class" "@end" "@defs")
@@ -1105,10 +1100,47 @@ declaration.  They are: `c-primitive-type-kwds',
 (c-lang-defconst c-decl-spec-kwds
   "Keywords introducing extra declaration specifiers in the region
 between the header and the body \(i.e. the \"K&R-region\") in
-declarations.  These are all followed by comma separated lists of type
-names."
+declarations."
   t    nil
   java '("extends" "implements" "throws"))
+
+(c-lang-defconst c-type-list-kwds
+  "Keywords that may be followed by a comma separated list of type
+identifiers, where each optionally can be prefixed by keywords.  (Can
+also be used for the special case when the list can contain only one
+element.)"
+  t    (c-lang-const c-decl-spec-kwds)
+  pike '("inherit"))
+
+(c-lang-defconst c-colon-type-list-kwds
+  "Keywords that may be followed (not necessarily directly) by a colon
+and then a comma separated list of type identifiers, where each
+optionally can be prefixed by keywords.  (Can also be used for the
+special case when the list can contain only one element.)"
+  t    nil
+  c++  '("class" "struct"))
+
+(c-lang-defconst c-colon-type-list-re
+  "Regexp matched after the keywords in `c-colon-type-list-kwds' to skip
+forward to the colon.  The end of the match is assumed to be directly
+after the colon, so the regexp should end with \":\" although that
+isn't necessary.  Must be a regexp if `c-colon-type-list-kwds' isn't
+nil."
+  t (if (c-lang-const c-colon-type-list-kwds)
+	;; Disallow various common punctuation chars that can't come
+	;; before the ":" that starts the inherit list after "class"
+	;; or "struct" in C++.  (Also used as default for other
+	;; languages.)
+	"[^\]\[{}();,/#=:]*:"))
+(c-lang-defvar c-colon-type-list-re (c-lang-const c-colon-type-list-re))
+
+(c-lang-defconst c-paren-type-kwds
+  "Keywords that may be followed by a parenthesis expression containing
+type identifiers separated by arbitrary tokens."
+  t    nil
+  c++  '("throw")
+  objc '("@defs")
+  pike '("array" "function" "int" "mapping" "multiset" "object" "program"))
 
 (c-lang-defconst c-<>-arglist-kwds
   "Keywords that can be followed by a C++ style template arglist; see
@@ -1319,47 +1351,101 @@ Note that Java specific rules are currently applied to tell this from
   (c c++) (c-make-keywords-re t (c-lang-const c-bitfield-kwds)))
 (c-lang-defvar c-opt-bitfield-key (c-lang-const c-opt-bitfield-key))
 
+
+;;; Constants built from keywords.
+
+;; Note: No `*-kwds' language constants may be defined below this point.
+
+(cc-eval-when-compile
+  (defconst c-kwds-lang-consts
+    ;; List of all the language constants that contain keyword lists.
+    ;; It only exists at compile time and should only be used inside
+    ;; `c-defconst-eval-immediately'.
+    (let (list)
+      (mapatoms (lambda (sym)
+		  (when (and (boundp sym)
+			     (string-match "-kwds\\'" (symbol-name sym)))
+		    ;; Make the list of globally interned symbols
+		    ;; instead of ones interned in `c-lang-constants'.
+		    (setq list (cons (intern (symbol-name sym)) list))))
+		c-lang-constants)
+      list)))
+
 (c-lang-defconst c-keywords
   ;; All keywords as a list.
-  t (delete-duplicates (append (c-lang-const c-type-kwds)
-			       (c-lang-const c-type-modifier-kwds)
-			       (c-lang-const c-specifier-kwds)
-			       (c-lang-const c-protection-kwds)
-			       (c-lang-const c-class-kwds)
-			       (c-lang-const c-brace-list-kwds)
-			       (c-lang-const c-other-decl-block-kwds)
-			       (c-lang-const c-block-decls-with-vars)
-			       (c-lang-const c-type-prefix-kwds)
-			       (c-lang-const c-other-decl-kwds)
-			       (c-lang-const c-decl-spec-kwds)
-			       (c-lang-const c-<>-arglist-kwds)
-			       (c-lang-const c-block-stmt-1-kwds)
-			       (c-lang-const c-block-stmt-2-kwds)
-			       (c-lang-const c-simple-stmt-kwds)
-			       (c-lang-const c-paren-stmt-kwds)
-			       (c-lang-const c-asm-stmt-kwds)
-			       (c-lang-const c-label-kwds)
-			       (c-lang-const c-constant-kwds)
-			       (c-lang-const c-expr-kwds)
-			       (c-lang-const c-lambda-kwds)
-			       (c-lang-const c-inexpr-block-kwds)
-			       (c-lang-const c-inexpr-class-kwds)
-			       (c-lang-const c-inexpr-brace-list-kwds)
-			       (c-lang-const c-bitfield-kwds)
-			       nil)
-		       :test 'string-equal))
+  t (delete-duplicates
+     (c-lang-defconst-eval-immediately
+      `(append ,@(mapcar (lambda (kwds-lang-const)
+			   `(c-lang-const ,kwds-lang-const))
+			 c-kwds-lang-consts)
+	       nil))
+     :test 'string-equal))
 
 (c-lang-defconst c-keywords-regexp
   ;; All keywords as an adorned regexp.
   t (c-make-keywords-re t (c-lang-const c-keywords)))
 (c-lang-defvar c-keywords-regexp (c-lang-const c-keywords-regexp))
 
+(c-lang-defconst c-keyword-member-alist
+  ;; An alist with all the keywords in the cars.  The cdr for each
+  ;; keyword is a list of the symbols for the `*-kwds' lists that
+  ;; contains it.
+  t (let ((kwd-list-alist
+	   (c-lang-defconst-eval-immediately
+	    `(list ,@(mapcar (lambda (kwds-lang-const)
+			       `(cons ',kwds-lang-const
+				      (c-lang-const ,kwds-lang-const)))
+			     c-kwds-lang-consts))))
+	  lang-const kwd-list kwd
+	  result-alist elem)
+      (while kwd-list-alist
+	(setq lang-const (caar kwd-list-alist)
+	      kwd-list (cdar kwd-list-alist)
+	      kwd-list-alist (cdr kwd-list-alist))
+	(while kwd-list
+	  (setq kwd (car kwd-list)
+		kwd-list (cdr kwd-list))
+	  (unless (setq elem (assoc kwd result-alist))
+	    (setq result-alist (cons (setq elem (list kwd)) result-alist)))
+	  (unless (memq lang-const (cdr elem))
+	    (setcdr elem (cons lang-const (cdr elem))))))
+      result-alist))
+
+(c-lang-defvar c-keywords-obarray
+  ;; An obarray containing all keywords as symbols.  The property list
+  ;; of each symbol has a non-nil entry for the specific `*-kwds'
+  ;; lists it's a member of.
+  ;;
+  ;; E.g. to see whether the string str contains a keyword on
+  ;; `c-class-kwds', one can do like this:
+  ;;     (get (intern-soft str c-keyword-obarray) 'c-class-kwds)
+  ;; Which preferably is written using the associated functions in
+  ;; cc-engine:
+  ;;     (c-keyword-member (c-keyword-sym str) 'c-class-kwds)
+
+  ;; The obarray is not stored directly as a language constant since
+  ;; the printed representation for obarrays used in .elc files isn't
+  ;; complete.
+
+  (let* ((alist (c-lang-const c-keyword-member-alist))
+	 kwd lang-const-list
+	 (obarray (make-vector (* (length alist) 2) 0)))
+    (while alist
+      (setq kwd (caar alist)
+	    lang-const-list (cdar alist)
+	    alist (cdr alist))
+      (setplist (intern kwd obarray)
+		(mapcan (lambda (lang-const)
+			  (list lang-const t))
+			lang-const-list)))
+    obarray))
+
 (c-lang-defconst c-regular-keywords-regexp
   ;; Adorned regexp matching all keywords that aren't types or
   ;; constants.
   t (c-make-keywords-re t
       (set-difference (c-lang-const c-keywords)
-		      (append (c-lang-const c-type-kwds)
+		      (append (c-lang-const c-primitive-type-kwds)
 			      (c-lang-const c-constant-kwds))
 		      :test 'string-equal)))
 (c-lang-defvar c-regular-keywords-regexp
@@ -1370,7 +1456,7 @@ Note that Java specific rules are currently applied to tell this from
   ;; start of a declaration.
   t (c-make-keywords-re t
       (set-difference (c-lang-const c-keywords)
-		      (append (c-lang-const c-type-kwds)
+		      (append (c-lang-const c-primitive-type-kwds)
 			      (c-lang-const c-type-prefix-kwds)
 			      (c-lang-const c-type-modifier-kwds)
 			      (c-lang-const c-specifier-kwds)
@@ -1381,51 +1467,6 @@ Note that Java specific rules are currently applied to tell this from
 		      :test 'string-equal)))
 (c-lang-defvar c-not-decl-init-keywords
   (c-lang-const c-not-decl-init-keywords))
-
-(c-lang-defconst c-label-key
-  "Regexp matching a normal label, i.e. a label that doesn't begin with
-a keyword like switch labels.  It's only used at the beginning of a
-statement."
-  t "\\<\\>"
-  (c c++ objc java pike) (concat "\\(" (c-lang-const c-symbol-key) "\\)"
-				 "[ \t\n\r\f\v]*:\\([^:]\\|$\\)"))
-(c-lang-defvar c-label-key (c-lang-const c-label-key)
-  'dont-doc)
-
-(c-lang-defconst c-opt-decl-spec-key
-  ;; Regexp matching the beginning of a declaration specifier in the
-  ;; region between the header and the body of a declaration.
-  ;;
-  ;; TODO: This is currently not used uniformly; c++-mode and
-  ;; java-mode each have their own ways of using it.
-  t nil
-  c++ (concat ":?[ \t\n\r\f\v]*\\(virtual[ \t\n\r\f\v]+\\)?\\("
-	      (c-make-keywords-re nil (c-lang-const c-protection-kwds))
-	      "\\)[ \t\n\r\f\v]+"
-	      "\\(" (c-lang-const c-symbol-key) "\\)")
-  java (c-make-keywords-re t (c-lang-const c-decl-spec-kwds)))
-(c-lang-defvar c-opt-decl-spec-key (c-lang-const c-opt-decl-spec-key))
-
-(c-lang-defconst c-opt-friend-key
-  ;; Regexp describing friend declarations classes, or nil in
-  ;; languages that doesn't have such things.
-  ;;
-  ;; TODO: Ought to use `c-specifier-kwds' or similar, and the
-  ;; template skipping isn't done properly.
-  t nil
-  c++ "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+")
-(c-lang-defvar c-opt-friend-key (c-lang-const c-opt-friend-key))
-
-(c-lang-defconst c-opt-method-key
-  ;; Special regexp to match the start of Objective-C methods.  The
-  ;; first submatch is assumed to end after the + or - key.
-  t nil
-  objc (concat
-	;; TODO: Ought to use a better method than anchoring on bol.
-	"^[ \t]*\\([+-]\\)[ \t\n\r\f\v]*"
-	"\\(([^)]*)[ \t\n\r\f\v]*\\)?"	; return type
-	"\\(" (c-lang-const c-symbol-key) "\\)"))
-(c-lang-defvar c-opt-method-key (c-lang-const c-opt-method-key))
 
 
 ;;; Additional constants for parser-level constructs.
@@ -1452,7 +1493,7 @@ first submatch.  It must not include any following whitespace."
   ;; Also match a single ":" for protection labels.  We cheat a little
   ;; and require a symbol immediately before to avoid false matches
   ;; when starting directly on a single ":", which can be the start of
-  ;; a base class member initializer list.
+  ;; the base class initializer list in a constructor.
   c++ "\\([\}\);,]+\\|\\s\(\\|\\(\\w\\|\\s_\\):\\)\\([^:]\\|\\'\\)"
   ;; Additionally match the protection directives in Objective-C.
   ;; Note that this doesn't cope with the longer directives, which we
@@ -1546,12 +1587,11 @@ function header in a function declaration or definition."
 		"\\|"
 		(c-make-keywords-re t (c-lang-const c-decl-spec-kwds)))
       (c-lang-const c-after-suffixed-type-decl-key))
-  ;; Also match the colon that starts a base class member initializer
-  ;; list in C++.  That can be confused with a function call before
-  ;; the colon in a ? : operator, but we count on that
-  ;; `c-decl-prefix-re' won't match before such a thing (as a
-  ;; declaration-level construct; matches inside arglist contexts are
-  ;; already excluded).
+  ;; Also match the colon that starts a base class initializer list in
+  ;; C++.  That can be confused with a function call before the colon
+  ;; in a ? : operator, but we count on that `c-decl-prefix-re' won't
+  ;; match before such a thing (as a declaration-level construct;
+  ;; matches inside arglist contexts are already excluded).
   c++ "[{:]")
 (c-lang-defvar c-after-suffixed-type-decl-key
   (c-lang-const c-after-suffixed-type-decl-key)
@@ -1585,7 +1625,7 @@ set."
   ;; syntax.
   (let ((extra-types (c-mode-var "font-lock-extra-types")))
     (concat "\\<\\("
-	    (c-make-keywords-re nil (c-lang-const c-type-kwds))
+	    (c-make-keywords-re nil (c-lang-const c-primitive-type-kwds))
 	    (if (consp extra-types)
 		(concat "\\|" (mapconcat 'identity extra-types "\\|"))
 	      "")
@@ -1626,6 +1666,51 @@ type."
 		(c-lang-const c-syntactic-ws)
 		"<")))
 (c-lang-defvar c-opt-<>-arglist-start (c-lang-const c-opt-<>-arglist-start))
+
+(c-lang-defconst c-label-key
+  "Regexp matching a normal label, i.e. a label that doesn't begin with
+a keyword like switch labels.  It's only used at the beginning of a
+statement."
+  t "\\<\\>"
+  (c c++ objc java pike) (concat "\\(" (c-lang-const c-symbol-key) "\\)"
+				 "[ \t\n\r\f\v]*:\\([^:]\\|$\\)"))
+(c-lang-defvar c-label-key (c-lang-const c-label-key)
+  'dont-doc)
+
+(c-lang-defconst c-opt-decl-spec-key
+  ;; Regexp matching the beginning of a declaration specifier in the
+  ;; region between the header and the body of a declaration.
+  ;;
+  ;; TODO: This is currently not used uniformly; c++-mode and
+  ;; java-mode each have their own ways of using it.
+  t nil
+  c++ (concat ":?[ \t\n\r\f\v]*\\(virtual[ \t\n\r\f\v]+\\)?\\("
+	      (c-make-keywords-re nil (c-lang-const c-protection-kwds))
+	      "\\)[ \t\n\r\f\v]+"
+	      "\\(" (c-lang-const c-symbol-key) "\\)")
+  java (c-make-keywords-re t (c-lang-const c-decl-spec-kwds)))
+(c-lang-defvar c-opt-decl-spec-key (c-lang-const c-opt-decl-spec-key))
+
+(c-lang-defconst c-opt-friend-key
+  ;; Regexp describing friend declarations classes, or nil in
+  ;; languages that doesn't have such things.
+  ;;
+  ;; TODO: Ought to use `c-specifier-kwds' or similar, and the
+  ;; template skipping isn't done properly.
+  t nil
+  c++ "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+")
+(c-lang-defvar c-opt-friend-key (c-lang-const c-opt-friend-key))
+
+(c-lang-defconst c-opt-method-key
+  ;; Special regexp to match the start of Objective-C methods.  The
+  ;; first submatch is assumed to end after the + or - key.
+  t nil
+  objc (concat
+	;; TODO: Ought to use a better method than anchoring on bol.
+	"^[ \t]*\\([+-]\\)[ \t\n\r\f\v]*"
+	"\\(([^)]*)[ \t\n\r\f\v]*\\)?"	; return type
+	"\\(" (c-lang-const c-symbol-key) "\\)"))
+(c-lang-defvar c-opt-method-key (c-lang-const c-opt-method-key))
 
 
 ;;; Wrap up the `c-lang-defvar' system.
