@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.247 $
-;; Last Modified:   $Date: 1992-12-29 00:57:38 $
+;; Version:         $Revision: 2.248 $
+;; Last Modified:   $Date: 1992-12-29 01:10:46 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,9 +124,16 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-29 00:57:38 $|$Revision: 2.247 $|
+;; |$Date: 1992-12-29 01:10:46 $|$Revision: 2.248 $|
 
 ;;; Code:
+
+;; some people may not have c-mode loaded in by default. c++-mode.el
+;; unfortunately still depends on distrib c-mode. c-mode doesn't
+;; provide itself so this hack is best known way to ensure its loaded
+;; in
+(or (boundp 'c-indent-level)
+    (load "c-mode" nil t))
 
 
 ;; ======================================================================
@@ -408,7 +415,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.247 $
+  "Major mode for editing C++ code.  $Revision: 2.248 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -616,7 +623,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.247 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.248 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2324,7 +2331,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.247 $"
+(defconst c++-version "$Revision: 2.248 $"
   "c++-mode version number.")
 
 (defun c++-version ()
