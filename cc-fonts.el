@@ -529,17 +529,41 @@ tools (e.g. Javadoc).")
 	      c-font-lock-labels))
 
 	,@(when (c-major-mode-is 'pike-mode)
-	    ;; Constant declarations in Pike lacks a type, so special
-	    ;; treatment is necessary before the normal declaration
-	    ;; fontification is done.
-	    `((,(concat "\\<constant"
-			(c-lang-var c-nonempty-syntactic-ws)
+	    `(;; Constant declarations in Pike lacks a type, so special
+	      ;; treatment is necessary before the normal declaration
+	      ;; fontification is done.
+	      (,(concat "\\<constant\\>"
+			(c-lang-var c-syntactic-ws)
 			"\\(" (c-lang-var c-symbol-key) "\\)"
-			(c-lang-var c-nonempty-syntactic-ws)
+			(c-lang-var c-syntactic-ws)
 			"=")
-	       ,(+ (c-lang-var c-nonempty-syntactic-ws-depth)
+	       ,(+ (c-lang-var c-syntactic-ws-depth)
 		   1)
-	       font-lock-variable-name-face)))
+	       font-lock-variable-name-face)
+
+	      ;; Handle the identifier after "inherit" as a type.
+	      ,(let ((identifier-offset
+		      (1+ (c-lang-var c-syntactic-ws-depth))))
+		 `(,(byte-compile
+		     `(lambda (limit)
+			(when (re-search-forward
+			       ,(concat "\\<inherit\\>"
+					(c-lang-var c-syntactic-ws)
+					"\\(" ; identifier-offset
+					(c-lang-var c-identifier-key)
+					"\\)")
+			       limit t)
+			  ;; Register the type.
+			  (save-match-data
+			    (c-add-type (match-beginning ,identifier-offset)
+					(match-end ,identifier-offset)))
+			  t)))
+		   ,@(mapcar
+		      (lambda (submatch)
+			`(,(+ identifier-offset submatch)
+			  font-lock-type-face nil t))
+		      (c-lang-var c-identifier-last-sym-match))))
+	      ))
 
 	;; Fontify the identifiers inside enum lists.  (The enum type
 	;; name is handled by `c-simple-decl-matchers' or
