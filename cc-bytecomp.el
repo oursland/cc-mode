@@ -39,7 +39,7 @@
 (defvar cc-bytecomp-environment-set nil)
 
 (put 'cc-eval-when-compile 'lisp-indent-hook 0)
-(defmacro cc-eval-when-compile (body)
+(defmacro cc-eval-when-compile (&rest body)
   "Like `progn', but evaluates the body at compile time.
 The result of the body appears to the compiler as a quoted constant.
 
