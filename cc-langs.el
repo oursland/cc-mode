@@ -145,7 +145,8 @@
 	(setcdr c-lang-variable-inits-tail (list (list var val doc)))
 	(setq c-lang-variable-inits-tail (cdr c-lang-variable-inits-tail))))
 
-    var)
+    ;; Return the symbol, like the other def* forms.
+    `',var)
 
   (put 'c-lang-defvar 'lisp-indent-function 'defun)
   (eval-after-load "edebug"
@@ -1500,8 +1501,7 @@ This function does not do any hidden buffer changes."
 			 (mapcan
 			  (lambda (init)
 			    `(,(car init) ,(cl-macroexpand-all (elt init 1))))
-			  (cc-eval-when-compile
-			    (cdr c-lang-variable-inits)))))
+			  (cdr c-lang-variable-inits))))
 
 	     (unless (get ',mode 'c-has-warned-lang-consts)
 	       (message ,(concat "%s compiled with CC Mode %s "
