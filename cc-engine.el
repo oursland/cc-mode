@@ -191,6 +191,75 @@
 (defvar c-in-literal-cache t)
 
 
+;; Basic handling of preprocessor directives.
+
+;; This is a dynamically bound cache used together with
+;; `c-query-macro-start' and `c-query-and-set-macro-start'.  It only
+;; works as long as point doesn't cross a macro boundary.
+(defvar c-macro-start 'unknown)
+
+(defsubst c-query-and-set-macro-start ()
+  ;; This function does not do any hidden buffer changes.
+  (if (symbolp c-macro-start)
+      (setq c-macro-start (save-excursion
+			    (and (c-beginning-of-macro)
+				 (point))))
+    c-macro-start))
+
+(defsubst c-query-macro-start ()
+  ;; This function does not do any hidden buffer changes.
+  (if (symbolp c-macro-start)
+      (save-excursion
+	(and (c-beginning-of-macro)
+	     (point)))
+    c-macro-start))
+
+(defun c-beginning-of-macro (&optional lim)
+  "Go to the beginning of a preprocessor directive.
+Leave point at the beginning of the directive and return t if in one,
+otherwise return nil and leave point unchanged.
+
+This function does not do any hidden buffer changes."
+  (when c-opt-cpp-prefix
+    (let ((here (point)))
+      (save-restriction
+	(if lim (narrow-to-region lim (point-max)))
+	(beginning-of-line)
+	(while (eq (char-before (1- (point))) ?\\)
+	  (forward-line -1))
+	(back-to-indentation)
+	(if (and (<= (point) here)
+		 (looking-at c-opt-cpp-start))
+	    t
+	  (goto-char here)
+	  nil)))))
+
+(defun c-end-of-macro ()
+  "Go to the end of a preprocessor directive.
+More accurately, move point to the end of the closest following line
+that doesn't end with a line continuation backslash.
+
+This function does not do any hidden buffer changes."
+  (while (progn
+	   (end-of-line)
+	   (when (and (eq (char-before) ?\\)
+		      (not (eobp)))
+	     (forward-char)
+	     t))))
+
+(defun c-forward-to-cpp-define-body ()
+  ;; Assuming point is at the "#" that introduces a preprocessor
+  ;; directive, it's moved forward to the start of the definition body
+  ;; if it's a "#define".  Non-nil is returned in this case, in all
+  ;; other cases nil is returned and point isn't moved.
+  (when (and (looking-at
+	      (concat "#[ \t]*"
+		      "define[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
+		      "\\([ \t]\\|\\\\\n\\)*"))
+	     (not (= (match-end 0) (c-point 'eol))))
+    (goto-char (match-end 0))))
+
+
 ;;; Basic utility functions.
 
 (defun c-syntactic-content (from to paren-level)
@@ -239,6 +308,44 @@
 
 	(setcdr tail (list (buffer-substring-no-properties from to)))
 	(apply 'concat (cdr parts))))))
+
+(defun c-shift-line-indentation (shift-amt)
+  ;; Shift the indentation of the current line with the specified
+  ;; amount (positive inwards).
+  ;;
+  ;; This function does not do any hidden buffer changes.
+  (let ((pos (- (point-max) (point)))
+	(c-macro-start c-macro-start)
+	tmp-char-inserted)
+    (if (zerop shift-amt)
+	nil
+      ;; If we're on an empty line inside a macro, we take the point
+      ;; to be at the current indentation and shift it to the
+      ;; appropriate column. This way we don't treat the extra
+      ;; whitespace out to the line continuation as indentation.
+      (when (and (c-query-and-set-macro-start)
+		 (looking-at "[ \t]*\\\\$")
+		 (save-excursion
+		   (skip-chars-backward " \t")
+		   (bolp)))
+	(insert ?x)
+	(backward-char)
+	(setq tmp-char-inserted t))
+      (unwind-protect
+	  (let ((col (current-indentation)))
+	    (delete-region (c-point 'bol) (c-point 'boi))
+	    (beginning-of-line)
+	    (indent-to (+ col shift-amt)))
+	(when tmp-char-inserted
+	  (delete-char 1))))
+    ;; If initial point was within line's indentation and we're not on
+    ;; a line with a line continuation in a macro, position after the
+    ;; indentation.  Else stay at same point in text.
+    (if (and (< (point) (c-point 'boi))
+	     (not tmp-char-inserted))
+	(back-to-indentation)
+      (if (> (- (point-max) pos) (point))
+	  (goto-char (- (point-max) pos))))))
 
 (defsubst c-keyword-sym (keyword)
   ;; Return non-nil if the string KEYWORD is a known keyword.  More
@@ -1047,75 +1154,6 @@ This function does not do any hidden buffer changes."
 			 (< (point) start))
 		(backward-char)
 		t))))))
-
-
-;; Basic handling of preprocessor directives.
-
-;; This is a dynamically bound cache used together with
-;; `c-query-macro-start' and `c-query-and-set-macro-start'.  It only
-;; works as long as point doesn't cross a macro boundary.
-(defvar c-macro-start 'unknown)
-
-(defsubst c-query-and-set-macro-start ()
-  ;; This function does not do any hidden buffer changes.
-  (if (symbolp c-macro-start)
-      (setq c-macro-start (save-excursion
-			    (and (c-beginning-of-macro)
-				 (point))))
-    c-macro-start))
-
-(defsubst c-query-macro-start ()
-  ;; This function does not do any hidden buffer changes.
-  (if (symbolp c-macro-start)
-      (save-excursion
-	(and (c-beginning-of-macro)
-	     (point)))
-    c-macro-start))
-
-(defun c-beginning-of-macro (&optional lim)
-  "Go to the beginning of a preprocessor directive.
-Leave point at the beginning of the directive and return t if in one,
-otherwise return nil and leave point unchanged.
-
-This function does not do any hidden buffer changes."
-  (when c-opt-cpp-prefix
-    (let ((here (point)))
-      (save-restriction
-	(if lim (narrow-to-region lim (point-max)))
-	(beginning-of-line)
-	(while (eq (char-before (1- (point))) ?\\)
-	  (forward-line -1))
-	(back-to-indentation)
-	(if (and (<= (point) here)
-		 (looking-at c-opt-cpp-start))
-	    t
-	  (goto-char here)
-	  nil)))))
-
-(defun c-end-of-macro ()
-  "Go to the end of a preprocessor directive.
-More accurately, move point to the end of the closest following line
-that doesn't end with a line continuation backslash.
-
-This function does not do any hidden buffer changes."
-  (while (progn
-	   (end-of-line)
-	   (when (and (eq (char-before) ?\\)
-		      (not (eobp)))
-	     (forward-char)
-	     t))))
-
-(defun c-forward-to-cpp-define-body ()
-  ;; Assuming point is at the "#" that introduces a preprocessor
-  ;; directive, it's moved forward to the start of the definition body
-  ;; if it's a "#define".  Non-nil is returned in this case, in all
-  ;; other cases nil is returned and point isn't moved.
-  (when (and (looking-at
-	      (concat "#[ \t]*"
-		      "define[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
-		      "\\([ \t]\\|\\\\\n\\)*"))
-	     (not (= (match-end 0) (c-point 'eol))))
-    (goto-char (match-end 0))))
 
 
 ;; Tools for skipping over syntactic whitespace.
