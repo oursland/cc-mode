@@ -249,7 +249,7 @@
 (defun c-get-primitive-types ()
   ;; Returns the union of `c-primitive-type-kwds',
   ;; `c-complex-type-kwds' and the appropriate *-font-lock-extra-types
-  ;; variable.  The second submatch is the one that matches the type.
+  ;; variable.  The first submatch is the one that matches the type.
   (let* ((extra-types (cond ((c-major-mode-is 'c-mode)
 			     c-font-lock-extra-types)
 			    ((c-major-mode-is 'c++-mode)
@@ -263,14 +263,12 @@
 			    ((c-major-mode-is 'pike-mode)
 			     pike-font-lock-extra-types)))
 	 (re (concat
-	      "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
-	      "\\("
+	      "\\<\\("
 	      (c-make-keywords-re nil (c-lang-var c-type-kwds))
 	      (if (consp extra-types)
 		  (concat "\\|" (mapconcat 'identity extra-types "\\|"))
 		"")
-	      "\\)"
-	      "\\(" (c-lang-var c-nonsymbol-key) "\\|$\\)")))
+	      "\\)\\>")))
     (setq c-primitive-types-depth (c-regexp-opt-depth re))
     re))
 
@@ -315,16 +313,16 @@
   ;; various other easily recognizable things.
 
   all `(;; Fontify all keywords except the primitive types.
-	(,(concat "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
-		  (c-lang-var c-nontype-keywords-regexp))
-	 2 font-lock-keyword-face)
+	(,(concat "\\<" (c-lang-var c-nontype-keywords-regexp))
+	 1 font-lock-keyword-face)
 
 	;; Fontify labels in languages that supports them.
 	,@(when (c-lang-var c-label-key)
 	    `(;; Fontify goto targets and case labels.
-	      (,(concat "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
-			(c-make-keywords-re t
-			  (c-lang-var c-before-label-kwds)))
+	      (,(concat "\\<\\("
+			(c-make-keywords-re nil
+			  (c-lang-var c-before-label-kwds))
+			"\\)\\>")
 	       (,(concat "\\(-[0-9]+\\)\\|" (c-lang-var c-symbol-key))
 		;; Return limit of search.
 		(save-excursion (skip-chars-forward "^:\n") (point))
@@ -649,10 +647,10 @@
 	;; declarations they might start.
 	(eval . (list (c-make-simple-font-lock-decl-function
 		       (c-get-primitive-types)
-		       2
-		       '(progn (goto-char (match-end 2))
+		       1
+		       '(progn (goto-char (match-end 1))
 			       (c-forward-syntactic-ws))
-		       '(goto-char (match-end 2)))))
+		       '(goto-char (match-end 1)))))
 
 	;; Fontify types preceded by `c-type-prefix-kwds' and the
 	;; identifiers in the declarations they might start.
@@ -660,14 +658,13 @@
 	    (let ((prefix-re (c-make-keywords-re nil
 			       (c-lang-var c-type-prefix-kwds))))
 	      `((,(c-make-simple-font-lock-decl-function
-		   (concat "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
-			   "\\(" prefix-re "\\)"
+		   (concat "\\<\\(" prefix-re "\\)"
 			   "[ \t\n\r]+"
 			   (c-lang-var c-symbol-key))
-		   (+ (c-regexp-opt-depth prefix-re) 3)
-		   '(progn (goto-char (match-end 3))
+		   (+ (c-regexp-opt-depth prefix-re) 2)
+		   '(progn (goto-char (match-end 2))
 			   (c-forward-syntactic-ws))
-		   '(goto-char (match-end 3)))))))
+		   '(goto-char (match-end 2)))))))
 	))
 
 (c-lang-defconst c-complex-decl-matchers
@@ -679,19 +676,19 @@
 	;; type keyword is inadvertently used as a variable name.
 
 	;; Fontify basic types.
-	(,(concat "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
-		  (c-make-keywords-re t (c-lang-var c-type-kwds)))
-	 2 'font-lock-type-face)
+	(,(concat "\\<\\("
+		  (c-make-keywords-re nil (c-lang-var c-type-kwds))
+		  "\\)\\>")
+	 1 'font-lock-type-face)
 
 	;; Fontify types preceded by `c-type-prefix-kwds'.
 	,@(when (c-lang-var c-type-prefix-kwds)
 	    (let ((prefix-re (c-make-keywords-re nil
 			       (c-lang-var c-type-prefix-kwds))))
-	      `((,(concat "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
-			  "\\(" prefix-re "\\)"
+	      `((,(concat "\\<\\(" prefix-re "\\)"
 			  "[ \t\n\r]+"
 			  (c-lang-var c-symbol-key))
-		 ,(+ (c-regexp-opt-depth prefix-re) 3) 'font-lock-type-face))))
+		 ,(+ (c-regexp-opt-depth prefix-re) 2) 'font-lock-type-face))))
 
 	;; Fontify symbols after closing braces as declaration
 	;; identifiers under the assumption that they are part of
