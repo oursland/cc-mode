@@ -310,7 +310,7 @@ This function does various newline cleanups based on the value of
 			(setq c-state-cache
 			      (c-hack-state (point) 'open c-state-cache)))))
 		(if c-syntactic-indentation
-		    (c-indent-line)))
+		    (indent-according-to-mode)))
 	      (setq c-state-cache (c-adjust-state (c-point 'bol) here
 						  (- (point) (c-point 'bol))
 						  c-state-cache))
@@ -345,11 +345,12 @@ This function does various newline cleanups based on the value of
 		(setq c-state-cache (c-parse-state)
 		      syntax nil))))
 	  )
-	;; now adjust the line's indentation. don't update the state
-	;; cache since c-guess-basic-syntax isn't called when the
-	;; syntax is passed to c-indent-line
-	(let* ((here (point)))
-	  (c-indent-line syntax)
+	;; Now adjust the line's indentation.  Don't update the state
+	;; cache since c-guess-basic-syntax isn't called when
+	;; c-syntactic-context is set.
+	(let* ((here (point))
+	       (c-syntactic-context syntax))
+	  (indent-according-to-mode)
 	  (setq c-state-cache (c-adjust-state (c-point 'bol) here
 					      (- (c-point 'boi) (c-point 'bol))
 					      c-state-cache)))
@@ -410,7 +411,7 @@ This function does various newline cleanups based on the value of
 	      (let* ((bufpos (- (point) 2))
 		     (which (if (eq (char-after bufpos) ?{) 'open 'close))
 		     (c-state-cache (c-hack-state bufpos which c-state-cache)))
-		(c-indent-line))))
+		(indent-according-to-mode))))
 	;; blink the paren
 	(and (eq last-command-char ?\})
 	     old-blink-paren
@@ -446,7 +447,7 @@ If a numeric ARG is supplied, point is inside a literal, or
 	 (c-echo-syntactic-information-p nil))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
-	(c-indent-line))))
+	(indent-according-to-mode))))
 
 (defun c-electric-star (arg)
   "Insert a star character.
@@ -469,9 +470,8 @@ If a numeric ARG is supplied, point is inside a literal, or
 		 (forward-char -1))
 	     (skip-chars-backward " \t")
 	     (bolp)))
-      ;; shut this up
-      (let (c-echo-syntactic-information-p)
-	(c-indent-line))
+      (let (c-echo-syntactic-information-p) ; shut this up
+	(indent-according-to-mode))
     ))
 
 (defun c-electric-semi&comma (arg)
@@ -504,7 +504,7 @@ following brace lists and semicolons following defuns."
       ;; turned on
       (if (not c-auto-newline)
 	  (if c-syntactic-indentation
-	      (c-indent-line))
+	      (indent-according-to-mode))
 	;; clean ups
 	(let ((pos (- (point-max) (point))))
 	  (if (and (or (and
@@ -523,7 +523,7 @@ following brace lists and semicolons following defuns."
 	  (goto-char (- (point-max) pos)))
 	;; re-indent line
 	(if c-syntactic-indentation
-	    (c-indent-line))
+	    (indent-according-to-mode))
 	;; check to see if a newline should be added
 	(let ((criteria c-hanging-semi&comma-criteria)
 	      answer add-newline-p)
@@ -538,7 +538,7 @@ following brace lists and semicolons following defuns."
 	      ))
 	  (if add-newline-p
 	      (progn (newline)
-		     (c-indent-line)))
+		     (indent-according-to-mode)))
 	  )))))
 
 (defun c-electric-colon (arg)
@@ -601,7 +601,8 @@ value of `c-cleanup-list'."
 				     c-hanging-colons-alist))))
       ;; indent the current line if it's done syntactically.
       (if c-syntactic-indentation
-	  (c-indent-line syntax))
+	  (let ((c-syntactic-context syntax))
+	    (indent-according-to-mode)))
       ;; does a newline go before the colon?  Watch out for already
       ;; non-hung colons.  However, we don't unhang them because that
       ;; would be a cleanup (and anti-social).
@@ -613,14 +614,14 @@ value of `c-cleanup-list'."
 	  (let ((pos (- (point-max) (point))))
 	    (forward-char -1)
 	    (newline)
-	    (c-indent-line)
+	    (indent-according-to-mode)
 	    (goto-char (- (point-max) pos))))
       ;; does a newline go after the colon?
       (if (and (memq 'after (cdr-safe newlines))
 	       (not is-scope-op))
 	  (progn
 	    (newline)
-	    (c-indent-line)))
+	    (indent-according-to-mode)))
       )))
 
 (defun c-electric-lt-gt (arg)
@@ -639,7 +640,7 @@ will not be re-indented."
 	(c-echo-syntactic-information-p nil))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
-	(c-indent-line))))
+	(indent-according-to-mode))))
 
 (defun c-electric-paren (arg)
   "Insert a parenthesis.
@@ -666,7 +667,7 @@ parenthesis, the parenthesis is inserted inside a literal, or
 	(self-insert-command (prefix-numeric-value arg))
 	(when (looking-at "[ \t]*$")
 	  (if c-syntactic-indentation
-	      (c-indent-line))
+	      (indent-according-to-mode))
 	  (when c-auto-newline
 	    ;; Do all appropriate clean ups
 	    (let ((here (point))
@@ -1381,7 +1382,7 @@ relative indentation among the lines of the expression is preserved.
   (let ((bod (c-point 'bod))
 	(indent-function
 	 (if c-syntactic-indentation
-	     (symbol-function 'c-indent-line)
+	     (symbol-function 'indent-according-to-mode)
 	   (lambda ()
 	     (let ((steps (cond ((not current-prefix-arg) 1)
 				((equal current-prefix-arg '(4)) -1)
@@ -1392,8 +1393,15 @@ relative indentation among the lines of the expression is preserved.
 	;; If c-syntactic-indentation and got arg, always indent this
 	;; line as C and shift remaining lines of expression the same
 	;; amount.
-	(let ((shift-amt (c-indent-line))
+	(let ((shift-amt (save-excursion
+			   (back-to-indentation)
+			   (current-column)))
 	      beg end)
+	  (c-indent-line)
+	  (setq shift-amt (- (save-excursion
+			       (back-to-indentation)
+			       (current-column))
+			     shift-amt))
 	  (save-excursion
 	    (if (eq c-tab-always-indent t)
 		(beginning-of-line))
@@ -1404,7 +1412,7 @@ relative indentation among the lines of the expression is preserved.
 	    (forward-line 1)
 	    (setq beg (point)))
 	  (if (> end beg)
-	      (indent-code-rigidly beg end (- shift-amt) "#")))
+	      (indent-code-rigidly beg end shift-amt "#")))
       ;; Else use c-tab-always-indent to determine behavior.
       (cond
        ;; CASE 1: indent when at column zero or in lines indentation,
@@ -1465,7 +1473,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (beginning-of-line)
 	  (while (< (point) end)
 	    (if (not (looking-at "[ \t]*$"))
-		(c-indent-line))
+		(indent-according-to-mode))
 	    (c-progress-update)
 	    (forward-line 1)))
       ;; make sure marker is deleted
@@ -1528,7 +1536,7 @@ syntactically."
 		(skip-chars-forward " \t\n")
 		(beginning-of-line)
 		;; indent the current line
-		(c-indent-line)
+		(indent-according-to-mode)
 		(setq fence (point))
 		(if (save-excursion
 		      (beginning-of-line)
@@ -1581,7 +1589,7 @@ syntactically."
 			    (goto-char sexpend)))
 		    (error
 		     (goto-char sexpbeg)
-		     (c-indent-line)))
+		     (indent-according-to-mode)))
 		  ;; Move to following line and try again.
 		  (and sexpend
 		       (markerp sexpend)
@@ -1659,7 +1667,7 @@ syntactically."
   (interactive)
   (if (c-region-is-active-p)
       (c-indent-region (region-beginning) (region-end))
-    (c-indent-command)))
+    (indent-according-to-mode)))
 
 
 ;; for progress reporting
@@ -1952,7 +1960,7 @@ command to conveniently insert and align the necessary backslashes."
 				;; "" or ends with whitespace.
 				(insert "x\n" comment-prefix ?x)
 				(setq tmp-post (point-marker))
-				(c-indent-line)
+				(indent-according-to-mode)
 				(goto-char (1- tmp-post))
 				(cons (buffer-substring-no-properties
 					 (c-point 'bol) (point))
@@ -2476,7 +2484,7 @@ C++-style line comment doesn't count as inside the comment, though."
 				      (= (forward-line -1) 0))))
 		   (current-column))))
 	(indent-to col))
-      (c-indent-line))))
+      (indent-according-to-mode))))
 
 
 (cc-provide 'cc-cmds)
