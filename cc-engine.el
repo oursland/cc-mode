@@ -159,7 +159,7 @@ Normally only ';' is considered to delimit statements, but if
 COMMA-DELIM is non-nil then ',' is treated likewise."
 
   ;; The bulk of this function is a pushdown automaton that looks at
-  ;; statement boundaries and the tokens in c-conditional-key.
+  ;; statement boundaries and the tokens in c-opt-block-stmt-key.
   ;;
   ;; Note: The position of a boundary is the following token.
   ;;
@@ -438,32 +438,6 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	(setq pos (point)))
       (goto-char pos)
       ret)))
-
-(defun c-end-of-statement-1 ()
-  (condition-case nil
-      (let (beg end found)
-	(while (and (not (eobp))
-		    (progn
-		      (setq beg (point))
-		      (c-forward-sexp 1)
-		      (setq end (point))
-		      (goto-char beg)
-		      (setq found nil)
-		      (while (and (not found)
-				  (re-search-forward "[;{}]" end t))
-			(if (not (c-in-literal beg))
-			    (setq found t)))
-		      (not found)))
-	  (goto-char end))
-	(re-search-backward "[;{}]")
-	(forward-char 1))
-    (error
-     (let ((beg (point)))
-       (c-safe (backward-up-list -1))
-       (let ((end (point)))
-	 (goto-char beg)
-	 (search-forward ";" end 'move)))
-     )))
 
 (defun c-crosses-statement-barrier-p (from to)
   "Return non-nil if buffer positions FROM to TO cross one or more
@@ -812,14 +786,19 @@ See `c-forward-token-1' for details."
 	      (if (bobp) (goto-char last)))))
       count)))
 
-(defun c-syntactic-re-search-forward (regexp &optional bound noerror count)
+(defun c-syntactic-re-search-forward (regexp &optional bound noerror count
+					     paren-level)
   ;; Like `re-search-forward', but only report matches that are found
   ;; in syntactically significant text.  I.e. matches that begins in
   ;; comments, macros or string literals are ignored.  The start point
   ;; is assumed to be outside any comment, macro or string literal, or
   ;; else the content of that region is taken as syntactically
-  ;; significant text.
+  ;; significant text.  If PAREN-LEVEL is non-nil, an additional
+  ;; restriction is added to ignore matches in nested paren sexps, and
+  ;; the search will also not go outside the current paren sexp.
+  (or bound (setq bound (point-max)))
   (or count (setq count 1))
+  (if paren-level (setq paren-level -1))
   (let ((start (point))
 	(pos (point))
 	match-pos state)
@@ -828,8 +807,8 @@ See `c-forward-token-1' for details."
 		    (re-search-forward regexp bound noerror))
 	  (setq match-pos (point)
 		state (parse-partial-sexp pos (match-beginning 0)
-					  nil nil state)
-		pos (match-beginning 0))
+					  paren-level nil state)
+		pos (point))
 	  (cond ((nth 3 state)
 		 ;; Match inside a string.  Skip to the end of it
 		 ;; before continuing.
@@ -851,6 +830,18 @@ See `c-forward-token-1' for details."
 		((save-excursion (c-beginning-of-macro start))
 		 ;; Match inside a macro.  Skip to the end of it.
 		 (c-end-of-macro))
+		((and paren-level (/= (car state) 0))
+		 (if (> (car state) 0)
+		     ;; Match inside a nested paren sexp.  Skip out of it.
+		     (setq state (parse-partial-sexp pos bound 0 nil state)
+			   pos (point))
+		   ;; Have exited the current paren sexp.  The
+		   ;; parse-partial-sexp above has left us just after
+		   ;; the closing paren in this case.  Just make
+		   ;; re-search-forward above fail in the appropriate
+		   ;; way; we'll adjust the leave off point below if
+		   ;; necessary.
+		   (setq bound (point))))
 		(t
 		 ;; A real match.
 		 (setq count (1- count)))))
@@ -861,9 +852,14 @@ See `c-forward-token-1' for details."
 	(progn
 	  (goto-char match-pos)
 	  match-pos)
-      (goto-char (if (eq noerror t)
-		     start
-		   (or bound (point-max))))
+      ;; Search failed.  Set point as appropriate.
+      (cond ((eq noerror t)
+	     (goto-char start))
+	    (paren-level
+	     (if (eq (car (parse-partial-sexp pos bound -1 nil state)) -1)
+		 (backward-char)))
+	    (t
+	     (goto-char bound)))
       nil)))
 
 
@@ -1445,6 +1441,33 @@ brace."
 			  )))))
       )))
 
+(defun c-in-knr-argdecl (&optional lim)
+  ;; Return the position of the first argument declaration if point is
+  ;; inside a K&R style argument declaration list, nil otherwise.
+  ;; `c-recognize-knr-p' is not checked.  If LIM is non-nil, it's a
+  ;; position that bounds the backward search for the argument list.
+  ;;
+  ;; Note: A declaration level context is assumed; the test can return
+  ;; false positives for statements and #define headers.  This test is
+  ;; even more easily fooled than `c-just-after-func-arglist-p'.
+  (save-excursion
+    (save-restriction
+      ;; Go back to the closest preceding normal parenthesis sexp.  We
+      ;; take that as the argument list in the function header.  Then
+      ;; check that it's followed by some symbol before the next ';'
+      ;; or '{'.  If it does, it's the header of the K&R argdecl we're
+      ;; in.
+      (if lim (narrow-to-region lim (point)))
+      (let (paren-end)
+	(and (c-safe (setq paren-end (c-down-list-backward (point))))
+	     (eq (char-after paren-end) ?\))
+	     (progn
+	       (goto-char (1+ paren-end))
+	       (c-forward-syntactic-ws)
+	       (looking-at "\\w\\|\\s_"))
+	     (c-safe (c-up-list-backward paren-end))
+	     (point))))))
+
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
   ;; statements in parentheses. No error checking is performed.
@@ -1502,50 +1525,102 @@ brace."
 	  (setq pos (point)))
 	(goto-char pos)))))
 
-(defun c-beginning-of-declaration (&optional lim)
-  ;; Go to the beginning of the current declaration.  Point is assumed
-  ;; to not be inside a code block.  Point won't be moved out of the
-  ;; surrounding paren.  Return point, unless we've jumped over K&R
-  ;; style argument declarations in which case the position of the
-  ;; first such argument declaration is returned instead.  If LIM is
-  ;; non-nil, it's a position that bounds the backward search.
-  (let ((start (point)))
-    (c-beginning-of-statement-1 lim)
-    (when (and (eq (char-after) ?{)
-	       (save-excursion
-		 (c-backward-syntactic-ws lim)
-		 (not (memq (char-before) '(?\; ?})))))
-      ;; c-beginning-of-statement-1 stops at a block start, but we
-      ;; want to continue if the block doesn't begin a top level
-      ;; construct, i.e. if it isn't preceded by ';' or '}'.
+(defun c-beginning-of-decl-1 (&optional lim)
+  ;; Go to the beginning of the current declaration, or the beginning
+  ;; of the previous one if already at the start of it.  Point won't
+  ;; be moved out of any surrounding paren.  Return a cons cell on the
+  ;; form (MOVE . KNR-POS).  MOVE is like the return value from
+  ;; `c-beginning-of-statement-1'.  If point skipped over some K&R
+  ;; style argument declarations (and they are to be recognized) then
+  ;; KNR-POS is set to the start of the first such argument
+  ;; declaration, otherwise KNR-POS is nil.  If LIM is non-nil, it's a
+  ;; position that bounds the backward search.
+  ;;
+  ;; NB: Cases where the declaration continues after the block, as in
+  ;; "struct foo { ... } bar;", are currently recognized as two
+  ;; declarations, e.g. "struct foo { ... }" and "bar;" in this case.
+  (let* ((start (point))
+	 (move (c-beginning-of-statement-1 lim t t)))
+
+    (when (eq (char-after) ?{)
       (setq start (point))
-      (c-beginning-of-statement-1 lim))
+      (when (save-excursion
+	      (c-backward-syntactic-ws lim)
+	      (not (memq (char-before) '(?\; ?}))))
+	;; `c-beginning-of-statement-1' stops at a block start, but we
+	;; want to continue if the block doesn't begin a top level
+	;; construct, i.e. if it isn't preceded by ';' or '}'.
+	(setq move (c-beginning-of-statement-1 lim t t))))
+
     (if c-recognize-knr-p
-	;; It's K&R argdecls that makes this difficult.
-	(let ((fallback-pos (point)) paren-start paren-end)
-	  ;; Go back to the closest preceding normal parenthesis sexp.
-	  ;; We take that as the argument list in the function header.
-	  ;; Then check that it's followed by some symbol before the
-	  ;; next ';' or '{'.  If it does, it's the header of the K&R
-	  ;; argdecl we're in.
-	  (save-restriction
-	    (if lim (narrow-to-region lim (point-max)))
-	    (if (and (c-safe (setq paren-end (c-down-list-backward start)))
-		     (eq (char-after paren-end) ?\))
-		     (progn
-		       (goto-char (1+ paren-end))
-		       (c-forward-syntactic-ws start)
-		       (< (point) start))
-		     (memq (char-syntax (or (char-after) ?x)) '(?w ?_))
-		     (c-safe (setq paren-start (c-up-list-backward paren-end)))
-		     (or (not lim) (>= paren-start lim))
-		     (progn
-		       (setq paren-end (point))
-		       (not (eq (c-beginning-of-statement-1) 'macro))))
-		paren-end
-	      (goto-char fallback-pos)
-	      (point))))
-      (point))))
+	;; Handle K&R argdecls.
+	(let ((fallback-pos (point)) knr-argdecl-start)
+	  (goto-char start)
+	  (if (and (setq knr-argdecl-start (c-in-knr-argdecl lim))
+		   (< knr-argdecl-start start)
+		   (progn
+		     (goto-char knr-argdecl-start)
+		     (not (eq (c-beginning-of-statement-1 lim t t) 'macro))))
+	      (cons (if (eq (char-after fallback-pos) ?{)
+			'previous
+		      'same)
+		    knr-argdecl-start)
+	    (goto-char fallback-pos)
+	    (cons move nil)))
+      (cons move nil))))
+
+(defun c-end-of-decl-1 ()
+  ;; Assuming point is at the start of a declaration (as detected by
+  ;; e.g. `c-beginning-of-decl-1'), go to the end of it.  Unlike
+  ;; `c-beginning-of-decl-1', this function handles the case when a
+  ;; block is followed by identifiers in e.g. struct declarations in C
+  ;; or C++.  If a proper end was found then t is returned, otherwise
+  ;; point is moved as far as possible within the current sexp and nil
+  ;; is returned.  This function doesn't handle macros; use
+  ;; `c-end-of-macro' instead in those cases.
+  (let ((start (point)))
+    (catch 'return
+
+      ;; Search forward to the closest ';', '=' or '{'.  We look for
+      ;; '=' since any block after it is part of a variable
+      ;; initialization and not the declaration itself.
+      (c-syntactic-re-search-forward "[;={]" nil 'move 1 t)
+
+      (when (and c-recognize-knr-p
+		 (eq (char-before) ?\;)
+		 (c-in-knr-argdecl start))
+	;; Stopped at the ';' in a K&R argdecl section which is
+	;; detected using the same criteria as in
+	;; `c-beginning-of-decl-1'.  Move to the following block
+	;; start.
+	(c-syntactic-re-search-forward "{" nil 'move 1 t))
+
+      (when (eq (char-before) ?{)
+	;; Encountered a block in the declaration.  Jump over it.
+	(condition-case nil
+	    (goto-char (c-up-list-forward (point)))
+	  (goto-char (point-max))
+	  (throw 'return nil))
+	(if (or (not c-opt-block-decls-with-vars-key)
+		(save-excursion
+		  (let ((lim (point)))
+		    (goto-char start)
+		    (not (and (c-syntactic-re-search-forward
+			       (concat "[;=\(\[{]\\|\\(\\=\\|[^_]\\)\\<\\("
+				       c-opt-block-decls-with-vars-key
+				       "\\)")
+			       lim t)
+			      (match-beginning 2))))))
+	    ;; The declaration doesn't have any of the
+	    ;; `c-opt-block-decls-with-vars' keywords in the
+	    ;; beginning, so it ends here at the end of the block.
+	    (throw 'return t)))
+
+      (while (progn
+	       (if (eq (char-before) ?\;)
+		   (throw 'return t))
+	       (c-syntactic-re-search-forward ";" nil 'move 1 t)))
+      nil)))
 
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
@@ -2936,8 +3011,8 @@ Keywords are recognized and not considered identifiers."
 	   ((and c-recognize-knr-p
 		 (not (eq char-before-ip ?}))
 		 (save-excursion
-		   (setq placeholder (c-beginning-of-declaration lim))
-		   (and (/= placeholder (point))
+		   (setq placeholder (cdr (c-beginning-of-decl-1 lim)))
+		   (and placeholder
 			;; Do an extra check to avoid tripping up on
 			;; statements that occur in invalid contexts
 			;; (e.g. in macro bodies where we don't really
