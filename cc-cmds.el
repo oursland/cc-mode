@@ -172,11 +172,17 @@ that automatically, though."
   "Electric pound (`#') insertion.
 Inserts a `#' character specially depending on the variable
 `c-electric-pound-behavior'.  If a numeric ARG is supplied, or if
-point is inside a literal, nothing special happens."
+point is inside a literal or a macro, nothing special happens."
   (interactive "*P")
   (if (or arg
 	  (not (memq 'alignleft c-electric-pound-behavior))
-	  (save-excursion (skip-chars-backward " \t") (not (bolp)))
+	  (save-excursion
+	    (skip-chars-backward " \t")
+	    (not (bolp)))
+	  (save-excursion
+	    (and (= (forward-line -1) 0)
+		 (progn (end-of-line)
+			(eq (char-before) ?\\))))
 	  (c-in-literal))
       ;; do nothing special
       (self-insert-command (prefix-numeric-value arg))
