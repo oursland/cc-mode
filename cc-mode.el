@@ -7,9 +7,9 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.192 $
-;; Last Modified:   $Date: 1995-04-12 21:02:46 $
-;; Keywords: C++ C Objective-C
+;; Version:         $Revision: 4.193 $
+;; Last Modified:   $Date: 1995-04-17 16:39:45 $
+;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
 ;; This file is part of GNU Emacs.
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-12 21:02:46 $|$Revision: 4.192 $|
+;; |$Date: 1995-04-17 16:39:45 $|$Revision: 4.193 $|
 
 ;;; Code:
 
@@ -4556,7 +4556,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.192 $"
+(defconst c-version "$Revision: 4.193 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
