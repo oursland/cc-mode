@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.106 $
-;; Last Modified:   $Date: 1994-11-29 23:57:35 $
+;; Version:         $Revision: 4.107 $
+;; Last Modified:   $Date: 1994-11-30 20:28:46 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-11-29 23:57:35 $|$Revision: 4.106 $|
+;; |$Date: 1994-11-30 20:28:46 $|$Revision: 4.107 $|
 
 ;;; Code:
 
@@ -1408,119 +1408,121 @@ are non-whitespace characters present on the line after the brace, or
 the brace is inserted inside a literal."
   (interactive "P")
   (let* ((bod (c-point 'bod))
-	 (literal (c-in-literal bod))
-	 ;; we want to inhibit blinking the paren since this will be
-	 ;; most disruptive. we'll blink it ourselves later on
-	 (old-blink-paren (if (boundp 'blink-paren-function)
-			      blink-paren-function
-			    blink-paren-hook))
-	 blink-paren-function		; emacs19
-	 blink-paren-hook		; emacs18
-	 syntax newlines
-	 delete-temp-newline
-	 ;; shut this up
-	 (c-echo-syntactic-information-p nil))
-    (if (or literal
-	    arg
+	 (literal (c-in-literal bod)))
+    ;; if we're in a literal, or we're not at the end of the line, or
+    ;; a numeric arg is provided, then just insert the character
+    (if (or literal arg
 	    (not (looking-at "[ \t]*$")))
-	(c-insert-special-chars arg)
-      (setq syntax (progn
-		     ;; only insert a newline if there is
-		     ;; non-whitespace behind us
-		     (if (save-excursion
-			   (skip-chars-backward " \t")
-			   (not (bolp)))
-			 (progn (newline)
-				(setq delete-temp-newline t)))
-		     (self-insert-command (prefix-numeric-value arg))
-		     (c-guess-basic-syntax))
-	    newlines (and
-		      c-auto-newline
-		      (or (assq (car (or (assq 'defun-open syntax)
-					 (assq 'defun-close syntax)
-					 (assq 'class-open syntax)
-					 (assq 'class-close syntax)
-					 (assq 'inline-open syntax)
-					 (assq 'inline-close syntax)
-					 (assq 'brace-list-open syntax)
-					 (assq 'brace-list-close syntax)
-					 (assq 'brace-list-intro syntax)
-					 (assq 'brace-list-entry syntax)
-					 (assq 'block-open syntax)
-					 (assq 'block-close syntax)
-					 (assq 'substatement-open syntax)
-					 (assq 'statement-case-open syntax)
-					 ))
-				c-hanging-braces-alist)
-			  '(ignore before after))))
-      ;; does a newline go before the open brace?
-      (if (memq 'before newlines)
-	  ;; we leave the newline we've put in there before,
-	  ;; but we need to re-indent the line above
-	  (let ((pos (- (point-max) (point)))
-		(here (point)))
-	    (forward-line -1)
-	    (c-indent-line)
-	    (goto-char (- (point-max) pos))
-	    ;; if the buffer has changed due to the indentation, we
-	    ;; need to recalculate syntax for the current line
-	    (if (/= (point) here)
-		(setq syntax (c-guess-basic-syntax))))
-	;; must remove the newline we just stuck in (if we really did it)
-	(and delete-temp-newline
-	     (delete-region (- (point) 2) (1- (point))))
-	;; since we're hanging the brace, we need to recalculate
-	;; syntax
-	(setq syntax (c-guess-basic-syntax)))
-      ;; now adjust the line's indentation
-      (c-indent-line syntax)
-      ;; Do all appropriate clean ups
-      (let ((here (point))
-	    (pos (- (point-max) (point)))
-	    mbeg mend)
-	;; clean up empty defun braces
-	(if (and c-auto-newline
-		 (memq 'empty-defun-braces c-cleanup-list)
-		 (= last-command-char ?\})
-		 (or (assq 'defun-close syntax)
-		     (assq 'class-close syntax)
-		     (assq 'inline-close syntax))
-		 (progn
-		   (forward-char -1)
-		   (skip-chars-backward " \t\n")
-		   (= (preceding-char) ?\{))
-		 ;; make sure matching open brace isn't in a comment
-		 (not (c-in-literal)))
-	    (delete-region (point) (1- here)))
-	;; clean up brace-else-brace
-	(if (and c-auto-newline
-		 (memq 'brace-else-brace c-cleanup-list)
-		 (= last-command-char ?\{)
-		 (re-search-backward "}[ \t\n]*else[ \t\n]*{" nil t)
-		 (progn
-		   (setq mbeg (match-beginning 0)
-			 mend (match-end 0))
-		   (= mend here))
-		 (not (c-in-literal)))
+	(c-insert-special-chars arg)	
+      (let (
+	    ;; we want to inhibit blinking the paren since this will
+	    ;; be most disruptive. we'll blink it ourselves later on
+	    (old-blink-paren (if (boundp 'blink-paren-function)
+				 blink-paren-function
+			       blink-paren-hook))
+	    blink-paren-function	; emacs19
+	    blink-paren-hook		; emacs18
+	    syntax newlines
+	    delete-temp-newline
+	    ;; shut this up too
+	    (c-echo-syntactic-information-p nil))
+	(setq syntax (progn
+		       ;; only insert a newline if there is
+		       ;; non-whitespace behind us
+		       (if (save-excursion
+			     (skip-chars-backward " \t")
+			     (not (bolp)))
+			   (progn (newline)
+				  (setq delete-temp-newline t)))
+		       (self-insert-command (prefix-numeric-value arg))
+		       (c-guess-basic-syntax))
+	      newlines (and
+			c-auto-newline
+			(or (assq (car (or (assq 'defun-open syntax)
+					   (assq 'defun-close syntax)
+					   (assq 'class-open syntax)
+					   (assq 'class-close syntax)
+					   (assq 'inline-open syntax)
+					   (assq 'inline-close syntax)
+					   (assq 'brace-list-open syntax)
+					   (assq 'brace-list-close syntax)
+					   (assq 'brace-list-intro syntax)
+					   (assq 'brace-list-entry syntax)
+					   (assq 'block-open syntax)
+					   (assq 'block-close syntax)
+					   (assq 'substatement-open syntax)
+					   (assq 'statement-case-open syntax)
+					   ))
+				  c-hanging-braces-alist)
+			    '(ignore before after))))
+	;; does a newline go before the open brace?
+	(if (memq 'before newlines)
+	    ;; we leave the newline we've put in there before,
+	    ;; but we need to re-indent the line above
+	    (let ((pos (- (point-max) (point)))
+		  (here (point)))
+	      (forward-line -1)
+	      (c-indent-line)
+	      (goto-char (- (point-max) pos))
+	      ;; if the buffer has changed due to the indentation, we
+	      ;; need to recalculate syntax for the current line
+	      (if (/= (point) here)
+		  (setq syntax (c-guess-basic-syntax))))
+	  ;; must remove the newline we just stuck in (if we really did it)
+	  (and delete-temp-newline
+	       (delete-region (- (point) 2) (1- (point))))
+	  ;; since we're hanging the brace, we need to recalculate
+	  ;; syntax
+	  (setq syntax (c-guess-basic-syntax)))
+	;; now adjust the line's indentation
+	(c-indent-line syntax)
+	;; Do all appropriate clean ups
+	(let ((here (point))
+	      (pos (- (point-max) (point)))
+	      mbeg mend)
+	  ;; clean up empty defun braces
+	  (if (and c-auto-newline
+		   (memq 'empty-defun-braces c-cleanup-list)
+		   (= last-command-char ?\})
+		   (or (assq 'defun-close syntax)
+		       (assq 'class-close syntax)
+		       (assq 'inline-close syntax))
+		   (progn
+		     (forward-char -1)
+		     (skip-chars-backward " \t\n")
+		     (= (preceding-char) ?\{))
+		   ;; make sure matching open brace isn't in a comment
+		   (not (c-in-literal)))
+	      (delete-region (point) (1- here)))
+	  ;; clean up brace-else-brace
+	  (if (and c-auto-newline
+		   (memq 'brace-else-brace c-cleanup-list)
+		   (= last-command-char ?\{)
+		   (re-search-backward "}[ \t\n]*else[ \t\n]*{" nil t)
+		   (progn
+		     (setq mbeg (match-beginning 0)
+			   mend (match-end 0))
+		     (= mend here))
+		   (not (c-in-literal)))
+	      (progn
+		(delete-region mbeg mend)
+		(insert "} else {")))
+	  (goto-char (- (point-max) pos))
+	  )
+	;; does a newline go after the brace?
+	(if (memq 'after (cdr-safe newlines))
 	    (progn
-	      (delete-region mbeg mend)
-	      (insert "} else {")))
-	(goto-char (- (point-max) pos))
-	)
-      ;; does a newline go after the brace?
-      (if (memq 'after (cdr-safe newlines))
-	  (progn
-	    (newline)
-	    (c-indent-line)))
-      ;; blink the paren
-      (and (= last-command-char ?\})
-	   old-blink-paren
-	   (save-excursion
-	     (c-backward-syntactic-ws bod)
-	     (if (boundp 'blink-paren-function)
-		 (funcall old-blink-paren)
-	       (run-hooks old-blink-paren))))
-      )))
+	      (newline)
+	      (c-indent-line)))
+	;; blink the paren
+	(and (= last-command-char ?\})
+	     old-blink-paren
+	     (save-excursion
+	       (c-backward-syntactic-ws bod)
+	       (if (boundp 'blink-paren-function)
+		   (funcall old-blink-paren)
+		 (run-hooks old-blink-paren))))
+	))))
       
 (defun c-electric-slash (arg)
   "Insert a slash character.
@@ -4182,7 +4184,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.106 $"
+(defconst c-version "$Revision: 4.107 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
