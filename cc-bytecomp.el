@@ -143,12 +143,16 @@ after the compilation.  Don't use within `eval-when-compile'."
 
 (defmacro cc-load (cc-part)
   "Force loading of the corresponding .el file in the current
-directory during compilation.  Don't use outside `eval-when-compile'.
+directory during compilation.  Don't use outside `eval-when-compile'
+or `eval-and-compile'.
 
 Having cyclic cc-load's will result in infinite recursion.  That's
 somewhat intentional."
   `(if (featurep 'cc-bytecomp)
        (cc-bytecomp-load ,cc-part)
+     ;; This is a fallback for use inside `eval-and-compile', since
+     ;; this code will be compiled then and we don't want to require
+     ;; cc-bytecomp at runtime.
      (load ,cc-part nil t nil)))
 
 (defun cc-bytecomp-is-compiling ()
