@@ -4403,14 +4403,15 @@ brace."
   (unless (= (point) (c-point 'boi))
     ;; What we have below is actually an extremely stripped variant of
     ;; c-beginning-of-statement-1.
-    (let ((pos (point)))
+    (let ((pos (point)) c-maybe-labelp)
       ;; Switch syntax table to avoid stopping at line continuations.
       (save-restriction
 	(if lim (narrow-to-region lim (point-max)))
 	(while (and (progn
 		      (c-backward-syntactic-ws)
 		      (c-safe (goto-char (scan-sexps (point) -1)) t))
-		    (not (c-crosses-statement-barrier-p (point) pos)))
+		    (not (c-crosses-statement-barrier-p (point) pos))
+		    (not c-maybe-labelp))
 	  (setq pos (point)))
 	(goto-char pos)))))
 
