@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-28 22:06:19 $
-;; Version:         $Revision: 2.81 $
+;; Last Modified:   $Date: 1992-05-28 22:07:23 $
+;; Version:         $Revision: 2.82 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-28 22:06:19 $|$Revision: 2.81 $|
+;; |$Date: 1992-05-28 22:07:23 $|$Revision: 2.82 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -127,7 +127,7 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 4
   "*Indentation offset for line which contains only C or C++ style comments.")
-(defvar c++-cleanup-}-else-{-p t
+(defvar c++-cleanup-brace-else-brace-p t
   "*Controls whether } else { style should remain on a single line.
 When t, cleans up this style (when only whitespace intervenes).")
 (defvar c++-hanging-braces t
@@ -197,7 +197,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.81 $
+  "Major mode for editing C++ code.  $Revision: 2.82 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -270,7 +270,7 @@ from their c-mode cousins.
     just under previous line's argument indentation.
  c++-comment-only-line-offset
     Extra indentation for a line containing only a C or C++ style comment.
- c++-cleanup-}-else-{-p
+ c++-cleanup-brace-else-brace-p
     Controls whether } else { style (with only whitespace intervening)
     should be cleaned up so that it sits on only a single line.
  c++-hanging-braces
@@ -550,7 +550,7 @@ backward-delete-char-untabify."
 	  (insert last-command-char)
 	  (let ((here (make-marker)) mbeg mend)
 	    (set-marker here (point))
-	    (if (and c++-cleanup-}-else-{-p
+	    (if (and c++-cleanup-brace-else-brace-p
 		     (= last-command-char ?\{)
 		     (let ((status (re-search-backward "}[ \t\n]*else[ \t\n]*{"
 						       nil t)))
@@ -1677,7 +1677,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.81 $"
+(defconst c++-version "$Revision: 2.82 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -1698,7 +1698,7 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-empty-arglist-indent
 		       'c++-always-arglist-indent-p
 		       'c++-comment-only-line-offset
-		       'c++-cleanup-}-else-{-p
+		       'c++-cleanup-brace-else-brace-p
 		       'c++-hanging-braces
 		       'c++-hanging-member-init-colon
 		       'c++-auto-hungry-initial-state
