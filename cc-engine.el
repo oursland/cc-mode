@@ -289,29 +289,41 @@
 ;; used for forward skipping.
 
 (defun c-forward-syntactic-ws (&optional lim)
-  ;; Forward skip of syntactic whitespace for Emacs 19.
+  ;; Forward skip of syntactic whitespace.
   (let* ((here (point-max))
 	 (hugenum (point-max)))
     (while (/= here (point))
-      (setq here (point))
       (c-forward-comment hugenum)
-      ;; skip preprocessor directives
-      (when (and (looking-at "#[a-zA-Z0-9]")
-		 (= (c-point 'boi) (point)))
-	(while (and (eq (char-before (c-point 'eol)) ?\\)
-		    (= (forward-line 1) 0)))
-	(end-of-line))
+      (setq here (point))
+      (if (looking-at "\\$")
+	  (forward-char)
+	;; skip preprocessor directives
+	(when (and (looking-at "#[a-zA-Z0-9]")
+		   (= (c-point 'boi) (point)))
+	  (while (and (eq (char-before (c-point 'eol)) ?\\)
+		      (= (forward-line 1) 0)))
+	  (end-of-line)
+	  (when (and lim (> (point) lim))
+	    ;; Don't move past the macro if that'd take us past the limit.
+	    (goto-char here))))
       )
     (if lim (goto-char (min (point) lim)))))
 
 (defun c-backward-syntactic-ws (&optional lim)
-  ;; Backward skip over syntactic whitespace for Emacs 19.
+  ;; Backward skip over syntactic whitespace.
   (let* ((here (point-min))
 	 (hugenum (- (point-max))))
     (while (/= here (point))
-      (setq here (point))
       (c-forward-comment hugenum)
-      (c-beginning-of-macro))
+      (setq here (point))
+      (if (and (eq (char-before) ?\\)
+	       (looking-at "$"))
+	  (backward-char)
+	(when (and (c-beginning-of-macro)
+		   lim
+		   (< (point) lim))
+	  ;; Don't move past the macro if that'd take us past the limit.
+	  (goto-char here))))
     (if lim (goto-char (max (point) lim)))))
 
 
