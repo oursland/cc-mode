@@ -91,7 +91,9 @@
   ;; bopl -- beginning of previous line
   ;; eopl -- end of previous line
   ;; 
-  ;; This function does not modify point or mark.
+  ;; If the referenced position doesn't exist, the closest accessible
+  ;; point to it is returned.  This function does not modify point or
+  ;; mark.
   `(save-excursion
      ,(if point `(goto-char ,point))
      ,(if (and (eq (car-safe position) 'quote)
@@ -107,7 +109,7 @@
 	     ((eq position 'eod)  `(c-end-of-defun-1))
 	     ((eq position 'eopl) `(progn
 				     (beginning-of-line)
-				     (backward-char)))
+				     (or (bobp) (backward-char))))
 	     ((eq position 'eonl) `(progn
 				     (forward-line 1)
 				     (end-of-line)))
@@ -130,7 +132,7 @@
 	    ((eq position 'eod)  (c-end-of-defun-1))
 	    ((eq position 'eopl) (progn
 				   (beginning-of-line)
-				   (backward-char)))
+				   (or (bobp) (backward-char))))
 	    ((eq position 'eonl) (progn
 				   (forward-line 1)
 				   (end-of-line)))
