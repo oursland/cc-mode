@@ -325,7 +325,7 @@ Works with: The `c' syntactic symbol."
   (save-excursion
     (let* ((here (point))
 	   (prefixlen (progn (back-to-indentation)
-			     (if (looking-at c-comment-prefix-regexp)
+			     (if (looking-at c-current-comment-prefix)
 				 (- (match-end 0) (point))
 			       0)))
 	   (starterlen (save-excursion
@@ -372,11 +372,11 @@ Works with: The `c' syntactic symbol."
 	  ;; line has a nonempty comment prefix, align with it.
 	  ;; Otherwise, align with the previous nonempty line, but
 	  ;; align the comment ender with the starter.
-	  (when (or (not (looking-at c-comment-prefix-regexp))
+	  (when (or (not (looking-at c-current-comment-prefix))
 		    (eq (match-beginning 0) (match-end 0)))
 	    (goto-char here)
 	    (back-to-indentation)
-	    (if (looking-at (concat "\\(" c-comment-prefix-regexp "\\)\\*/"))
+	    (if (looking-at (concat "\\(" c-current-comment-prefix "\\)\\*/"))
 		(goto-char (cdr langelem))
 	      (while (and (zerop (forward-line -1))
 			  (looking-at "^[ \t]*$")))
