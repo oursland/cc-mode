@@ -177,17 +177,19 @@ This variant works around bugs in `eval-when-compile' in various
 The current point is used if POINT isn't specified.  POSITION can be
 one of the following symbols:
 
-`bol'  -- beginning of line
-`eol'  -- end of line
-`bod'  -- beginning of defun
-`eod'  -- end of defun
-`boi'  -- beginning of indentation
-`ionl' -- indentation of next line
-`iopl' -- indentation of previous line
-`bonl' -- beginning of next line
-`eonl' -- end of next line
-`bopl' -- beginning of previous line
-`eopl' -- end of previous line
+`bol'   -- beginning of line
+`eol'   -- end of line
+`bod'   -- beginning of defun
+`eod'   -- end of defun
+`boi'   -- beginning of indentation
+`ionl'  -- indentation of next line
+`iopl'  -- indentation of previous line
+`bonl'  -- beginning of next line
+`eonl'  -- end of next line
+`bopl'  -- beginning of previous line
+`eopl'  -- end of previous line
+`bosws' -- beginning of syntactic whitespace
+`eosws' -- end of syntactic whitespace
 
 If the referenced position doesn't exist, the closest accessible point
 to it is returned.  This function does not modify the point or the mark."
@@ -278,36 +280,50 @@ to it is returned.  This function does not modify the point or the mark."
 	     (back-to-indentation)
 	     (point)))
 
+	 ((eq position 'bosws)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (c-backward-syntactic-ws)
+	     (point)))
+
+	 ((eq position 'eosws)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (c-forward-syntactic-ws)
+	     (point)))
+
 	 (t (error "Unknown buffer position requested: %s" position))))
 
     ;; The bulk of this should perhaps be in a function to avoid large
     ;; expansions, but this case is not used anywhere in CC Mode (and
     ;; probably not anywhere else either) so we only have it to be on
     ;; the safe side.
-    ;;(message "c-point long expansion")
+    (message "Warning: c-point long expansion")
     `(save-excursion
        ,@(if point `((goto-char ,point)))
        (let ((position ,position))
 	 (cond
-	  ((eq position 'bol)  (beginning-of-line))
-	  ((eq position 'eol)  (end-of-line))
-	  ((eq position 'boi)  (back-to-indentation))
-	  ((eq position 'bod)  (c-beginning-of-defun-1))
-	  ((eq position 'eod)  (c-end-of-defun-1))
-	  ((eq position 'bopl) (forward-line -1))
-	  ((eq position 'bonl) (forward-line 1))
-	  ((eq position 'eopl) (progn
-				 (beginning-of-line)
-				 (or (bobp) (backward-char))))
-	  ((eq position 'eonl) (progn
-				 (forward-line 1)
-				 (end-of-line)))
-	  ((eq position 'iopl) (progn
-				 (forward-line -1)
-				 (back-to-indentation)))
-	  ((eq position 'ionl) (progn
-				 (forward-line 1)
-				 (back-to-indentation)))
+	  ((eq position 'bol)	(beginning-of-line))
+	  ((eq position 'eol)	(end-of-line))
+	  ((eq position 'boi)	(back-to-indentation))
+	  ((eq position 'bod)	(c-beginning-of-defun-1))
+	  ((eq position 'eod)	(c-end-of-defun-1))
+	  ((eq position 'bopl)	(forward-line -1))
+	  ((eq position 'bonl)	(forward-line 1))
+	  ((eq position 'eopl)	(progn
+				  (beginning-of-line)
+				  (or (bobp) (backward-char))))
+	  ((eq position 'eonl)	(progn
+				  (forward-line 1)
+				  (end-of-line)))
+	  ((eq position 'iopl)	(progn
+				  (forward-line -1)
+				  (back-to-indentation)))
+	  ((eq position 'ionl)	(progn
+				  (forward-line 1)
+				(back-to-indentation)))
+	  ((eq position 'bosws)	(c-backward-syntactic-ws))
+	  ((eq position 'eosws)	(c-forward-syntactic-ws))
 	  (t (error "Unknown buffer position requested: %s" position))))
        (point))))
 
