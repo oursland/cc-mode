@@ -281,7 +281,7 @@ Key bindings:
  	c-conditional-key c-Java-conditional-key
  	c-comment-start-regexp c-Java-comment-start-regexp
   	c-class-key c-Java-class-key
-	c-method-key c-Java-method-key
+	c-method-key nil
  	c-baseclass-key nil
 	c-recognize-knr-p nil
  	c-access-key c-Java-access-key
