@@ -10,8 +10,7 @@ texinfo format as an approximately <a
 href="http://download.sourceforge.net/cc-mode/cc-mode-5.28.tar.gz">160KB
 gzip'd tarball</a> (also available <a
 href="ftp://ftp.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.28.tar.gz">via
-FTP</a>).  You can browse the <a href="src/">individual files</a> of
-the current too.
+FTP</a>).  You can browse the <a href="src/">individual files</a> too.
 
 <p>The documentation is also available in several forms.  You can
 either <a href="cc-mode.html#Top">browse the on-line documentation</a>
