@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.45 $
-;; Last Modified:   $Date: 1993-11-16 20:58:40 $
+;; Version:         $Revision: 3.46 $
+;; Last Modified:   $Date: 1993-11-16 21:07:17 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-16 20:58:40 $|$Revision: 3.45 $|
+;; |$Date: 1993-11-16 21:07:17 $|$Revision: 3.46 $|
 
 ;;; Code:
 
@@ -431,7 +431,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.45 $
+  "Major mode for editing C++ code.  $Revision: 3.46 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -462,7 +462,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.45 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.46 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2205,6 +2205,63 @@ of the expression are preserved."
     (run-hooks 'cc-special-indent-hook)
     shift-amt))
 
+(defun cc-lineup-arglist (langelem)
+  ;; lineup the current arglist line with the arglist appearing just
+  ;; after the containing paren which starts the arglist.
+  (save-excursion
+    (let ((containing-sexp (cdr langelem))
+	  cs-curcol)
+    (goto-char containing-sexp)
+    (setq cs-curcol (current-column))
+    (or (eolp)
+	(progn
+	  (forward-char 1)
+	  (cc-forward-syntactic-ws (cc-point 'eol))
+	  ))
+    (if (eolp)
+	2
+      (- (current-column) cs-curcol)
+      ))))
+
+(defun cc-lineup-streamop (langelem)
+  ;; lineup stream operators
+  (save-excursion
+    (let ((containing-sexp (cdr langelem))
+	  cs-curcol)
+      (goto-char containing-sexp)
+      (setq cs-curcol (current-column))
+      (skip-chars-forward "^><\n")
+      (- (current-column) cs-curcol))))
+
+(defun cc-lineup-multi-inher (langelem)
+  ;; line up multiple inheritance lines
+  (save-excursion
+    (let (cs-curcol
+	  (eol (cc-point 'eol))
+	  (here (point)))
+      (goto-char (cdr langelem))
+      (setq cs-curcol (current-column))
+      (skip-chars-forward "^:" eol)
+      (skip-chars-forward " \t:" eol)
+      (if (eolp)
+	  (cc-forward-syntactic-ws here))
+      (- (current-column) cs-curcol)
+      )))
+
+(defun cc-indent-for-comment (langelem)
+  ;; support old behavior for comment indentation. we look at
+  ;; cc-comment-only-line-offset to decide how to indent comment
+  ;; only-lines
+  (save-excursion
+    (back-to-indentation)
+    (if (not (bolp))
+	(or (car-safe cc-comment-only-line-offset)
+	    cc-comment-only-line-offset)
+      (or (cdr-safe cc-comment-only-line-offset)
+	  (car-safe cc-comment-only-line-offset)
+	  -1000				;jam it against the left side
+	  ))))
+
 
 ;; commands for "macroizations" -- making C++ parameterized types via
 ;; macros. Also commands for commentifying regions
@@ -2292,7 +2349,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.45 $"
+(defconst cc-version "$Revision: 3.46 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
