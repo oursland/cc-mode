@@ -1128,7 +1128,14 @@
 				nil)
 			       (t t)))))
 		     ((eq (char-after) ?\[)
-		      (setq braceassignp t))
+		      ;; In Java, an initialization brace list may
+		      ;; follow "new Foo[]", so check for []. Got to
+		      ;; watch out for the C++ "operator[]" defun,
+		      ;; though.
+		      (setq braceassignp
+			    (save-excursion
+			      (c-backward-token-1)
+			      (not (looking-at "operator")))))
 		     ))
 	     (if (memq braceassignp '(nil dontknow))
 		 (if (eq (char-after) ?\;)
