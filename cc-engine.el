@@ -2658,14 +2658,14 @@ brace."
 
 	     (save-excursion
 	       ;; If it's a K&R declaration then we're now at the
-	       ;; beginning of the function arglist. Check that there
+	       ;; beginning of the function arglist.  Check that there
 	       ;; isn't a '=' before it in this statement since that
 	       ;; means it some kind of initialization instead.
 	       (while (let (res)
 			(skip-chars-backward "^;=}{")
 			(and (eq (char-before) ?=)
 			     (if (setq res (c-literal-limits lim))
-				 (progn (goto-char (car res) t))
+				 (progn (goto-char (car res)) t)
 			       (c-beginning-of-macro lim)))))
 	       (not (eq (char-before) ?=)))
 
