@@ -4194,7 +4194,7 @@ This function does not do any hidden buffer changes."
   (c-with-syntax-table c++-template-syntax-table
     (c-backward-token-2 0 t lim)
     (while (and (or (looking-at c-symbol-start)
-		    (looking-at "[<,]"))
+		    (looking-at "[<,]\\|::"))
 		(zerop (c-backward-token-2 1 t lim))))))
 
 (defun c-in-method-def-p ()
