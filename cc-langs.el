@@ -185,6 +185,8 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (defconst c-Java-label-kwds c-C-label-kwds)
 ;;(defconst c-IDL-label-kwds nil)
 (defconst c-Pike-label-kwds c-C-label-kwds)
+(defvar c-label-kwds "\\<\\>")		; Matches nothing.
+(make-variable-buffer-local 'c-label-kwds)
 
 ;; Keywords that can occur anywhere in expressions.
 (defconst c-C-expr-kwds "sizeof")
@@ -317,6 +319,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
       (thr-kws "\\|finally\\|synchronized")
       (front   "\\<\\(")
       (back    "\\)\\>[^_]"))
+  ;; Keyword assumed to be in submatch 1.
   (setq c-C-conditional-key (concat front all-kws back)
 	c-C++-conditional-key (concat front all-kws exc-kws back)
 	;; c-IDL-conditional-key is nil.
