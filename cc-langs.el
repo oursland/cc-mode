@@ -175,23 +175,26 @@ the evaluated constant value at compile time."
 (eval-when-compile
   ;; Some helper functions used when building the language constants.
 
-  (defun c-filter-ops (ops opgroup-filter op-filter &optional post)
+  (defun c-filter-ops (ops opgroup-filter op-filter &optional xlate)
     ;; Used to filter operators from the list OPS in a DWIM:ey way:
     ;; OPS either has the structure of `c-operators', as a single
     ;; group in `c-operators', or is a plain list of operators.
     ;; OPGROUP-FILTER is used filter out the operator groups.  It can
-    ;; be t to choose all groups, a list of group type symbols, or a
-    ;; function which will be called with the group symbol for each
-    ;; group and should return non-nil for those to include.
-    ;; OP-FILTER filters the individual operators in each group.  It
-    ;; can be t to choose all operators, a regexp to test against each
-    ;; operator, or a function which will be called for each operator
-    ;; and should return non-nil for those to include.  If POST is
-    ;; given, it's a function which is called for each matching
-    ;; operators and its result is collected instead.  All matches are
-    ;; returned in a list with duplicates removed.
-    ;; `c-mode-syntax-table' for the current mode is in effect during
-    ;; the whole procedure.
+    ;; be t to choose all groups, a list of the group type symbols to
+    ;; accept, or a function which will be called with the group
+    ;; symbol for each group and should return non-nil for those to
+    ;; include.  OP-FILTER filters the individual operators in each
+    ;; group.  It can be t to choose all operators, a regexp to test
+    ;; against each operator, or a function which will be called for
+    ;; each operator and should return non-nil for those to include.
+    ;; If XLATE is given, it's a function which is called for each
+    ;; matching operator and its return value is collected instead.
+    ;; If it returns a list, the elements are spliced directly into
+    ;; the final result, which is returned as a list with duplicates
+    ;; removed using `equal'.  `c-mode-syntax-table' for the current
+    ;; mode is in effect during the whole procedure.
+    (unless (listp (car-safe ops))
+      (setq ops (list ops)))
     (cond ((eq opgroup-filter t)
 	   (setq opgroup-filter (lambda (opgroup) t)))
 	  ((not (functionp opgroup-filter))
@@ -202,13 +205,11 @@ the evaluated constant value at compile time."
 	  ((stringp op-filter)
 	   (setq op-filter `(lambda (op)
 			      (string-match ,op-filter op)))))
-    (unless post
-      (setq post 'identity))
+    (unless xlate
+      (setq xlate 'identity))
     (c-with-syntax-table (c-lang-const c-mode-syntax-table)
       (delete-duplicates
        (mapcan (lambda (opgroup)
-		 (unless (listp opgroup)
-		   (setq opgroup (list opgroup)))
 		 (when (if (symbolp (car opgroup))
 			   (when (funcall opgroup-filter (car opgroup))
 			     (setq opgroup (cdr opgroup))
@@ -216,7 +217,8 @@ the evaluated constant value at compile time."
 			 t)
 		   (mapcan (lambda (op)
 			     (when (funcall op-filter op)
-			       (list (funcall post op))))
+			       (let ((res (funcall xlate op)))
+				 (if (listp res) res (list res)))))
 			   opgroup)))
 	       ops)
        :test 'equal))))
