@@ -236,7 +236,7 @@ appended."
 ;; Regexp matching the operators that join symbols to fully qualified
 ;; identifiers, or nil in languages that doesn't have such things.
 ;; Does not contain a \| operator at the top level.
-(c-lang-defconst c-identifier-concat-key
+(c-lang-defconst c-opt-identifier-concat-key
   c++  "::"
   java "\\."
   pike "\\(::\\|\\.\\)")
@@ -244,51 +244,52 @@ appended."
 ;; Regexp matching a fully qualified identifier, like "A::B::c" in
 ;; C++.  (We cheat a bit here and don't recognize the full range of
 ;; syntactic whitespace between the tokens.)
-(c-lang-defconst c-qualified-identifier-key
+(c-lang-defconst c-identifier-key
   all (c-lang-var c-symbol-key)		; Default to `c-symbol-key'.
   ;; These languages allow a leading qualifier operator.
   (c++ pike) (concat
-	      "\\(" (c-lang-var c-identifier-concat-key) "[ \t\n\r]*\\)?"
-	      ;; The submatch below is depth of c-identifier-concat-key + 2.
+	      "\\(" (c-lang-var c-opt-identifier-concat-key) "[ \t\n\r]*\\)?"
+	      ;; The submatch below is depth of
+	      ;; `c-opt-identifier-concat-key' + 2.
 	      "\\(" (c-lang-var c-symbol-key) "\\)"
 	      (concat "\\("
 		      "[ \t\n\r]*"
-		      (c-lang-var c-identifier-concat-key)
+		      (c-lang-var c-opt-identifier-concat-key)
 		      "[ \t\n\r]*"
-		      ;; The submatch below is: c-symbol-key-depth +
-		      ;; 2 * depth of c-identifier-concat-key + 4.
+		      ;; The submatch below is: `c-symbol-key-depth' +
+		      ;; 2 * depth of `c-opt-identifier-concat-key' + 4.
 		      "\\(" (c-lang-var c-symbol-key) "\\)"
 		      "\\)*"))
   ;; Java does not allow a leading qualifier operator.
   java (concat "\\(" (c-lang-var c-symbol-key) "\\)" ; 1
 	       (concat "\\("
 		       "[ \t\n\r]*"
-		       (c-lang-var c-identifier-concat-key)
+		       (c-lang-var c-opt-identifier-concat-key)
 		       "[ \t\n\r]*"
-		       ;; The submatch below is c-symbol-key-depth +
-		       ;; depth of c-identifier-concat-key + 3.
+		       ;; The submatch below is `c-symbol-key-depth' +
+		       ;; depth of `c-opt-identifier-concat-key' + 3.
 		       "\\(" (c-lang-var c-symbol-key) "\\)"
 		       "\\)*")))
-(c-lang-defvar c-qualified-identifier-key
-  (c-lang-var c-qualified-identifier-key))
+(c-lang-defvar c-identifier-key
+  (c-lang-var c-identifier-key))
 
-;; Used to identify the submatch in `c-qualified-identifier-key' that
-;; surrounds the last symbol in the qualified identifier.  It's a list
-;; of submatch numbers, of which the first that have a match is taken.
+;; Used to identify the submatch in `c-identifier-key' that surrounds
+;; the last symbol in the qualified identifier.  It's a list of
+;; submatch numbers, of which the first that have a match is taken.
 ;; It's assumed that at least one have a match when the regexp have
 ;; matched.
-(c-lang-defconst c-qualified-identifier-last-sym-match
+(c-lang-defconst c-identifier-last-sym-match
   all '(0)
   (c++ pike) (list (+ (c-lang-var c-symbol-key-depth)
 		      (* 2 (c-regexp-opt-depth
-			    (c-lang-var c-identifier-concat-key)))
+			    (c-lang-var c-opt-identifier-concat-key)))
 		      4)
 		   (+ (c-regexp-opt-depth
-		       (c-lang-var c-identifier-concat-key))
+		       (c-lang-var c-opt-identifier-concat-key))
 		      2))
   java (list (+ (c-lang-var c-symbol-key-depth)
 		(c-regexp-opt-depth
-		 (c-lang-var c-identifier-concat-key))
+		 (c-lang-var c-opt-identifier-concat-key))
 		3)
 	     1))
 
@@ -384,10 +385,10 @@ appended."
 
 ;; An adorned regexp that matches `c-complex-type-kwds', or nil in
 ;; languages without such things.
-(c-lang-defconst c-complex-type-key
+(c-lang-defconst c-opt-complex-type-key
   all (and (c-lang-var c-complex-type-kwds)
 	   (c-make-keywords-re t (c-lang-var c-complex-type-kwds))))
-(c-lang-defvar c-complex-type-key (c-lang-var c-complex-type-key))
+(c-lang-defvar c-opt-complex-type-key (c-lang-var c-opt-complex-type-key))
 
 ;; All keywords that starts a type, i.e. the union of
 ;; `c-primitive-type-kwds' and `c-complex-type-kwds'.
@@ -426,11 +427,11 @@ appended."
 
 ;; Class/struct declaration keywords.
 (c-lang-defconst c-class-kwds
-  c '("struct" "union")
-  c++ '("class" "struct" "union")
+  c    '("struct" "union")
+  c++  '("class" "struct" "union")
   objc '("interface" "implementation")
   java '("class" "interface")
-  idl '("class" "interface" "struct" "union" "valuetype")
+  idl  '("class" "interface" "struct" "union" "valuetype")
   pike '("class"))
 
 ;; Regexp matching the start of a class.
@@ -443,7 +444,7 @@ appended."
 ;; Keywords introducing blocks besides classes that contain another
 ;; declaration level.
 (c-lang-defconst c-other-decl-block-kwds
-  c '("extern")
+  c   '("extern")
   c++ '("namespace" "extern")
   idl '("module"))
 
@@ -458,7 +459,7 @@ appended."
 ;; "class Foo { ... } foo;".  So if there is a block in a declaration
 ;; like that, it ends with the following ';' and not right away.
 (c-lang-defconst c-block-decls-with-vars
-  c '("struct" "union" "enum" "typedef")
+  c   '("struct" "union" "enum" "typedef")
   c++ '("class" "struct" "union" "enum" "typedef"))
 
 ;; Regexp matching the `c-block-decls-with-vars' keywords, or nil in
@@ -471,8 +472,8 @@ appended."
 
 ;; Keywords where the following symbol - if any - is a type name.
 (c-lang-defconst c-type-prefix-kwds
-  c '("struct" "union" "enum")
-  c++ '("class" "struct" "typename" "union" "enum")
+  c    '("struct" "union" "enum")
+  c++  '("class" "struct" "typename" "union" "enum")
   java '("class")
   pike '("class" "enum"))
 
@@ -485,7 +486,7 @@ appended."
 ;; by any of the above.
 (c-lang-defconst c-other-decl-kwds
   ;; FIXME: Shouldn't "template" be moved to `c-specifier-kwds' for C++?
-  c++ '("template" "using")
+  c++  '("template" "using")
   java '("import" "package")
   pike '("import" "inherit"))
 
@@ -500,9 +501,9 @@ appended."
 
 ;; Statement keywords followed directly by a substatement.
 (c-lang-defconst c-block-stmt-1-kwds
-  (c pike) '("do" "else")
+  (c pike)   '("do" "else")
   (c++ objc) '("do" "else" "asm" "try")
-  java '("do" "else" "finally" "try"))
+  java       '("do" "else" "finally" "try"))
 
 ;; Regexp matching the start of any statement followed directly by a
 ;; substatement (doesn't match a bare block, however).
@@ -512,10 +513,10 @@ appended."
 
 ;; Statement keywords followed by a paren sexp and then by a substatement.
 (c-lang-defconst c-block-stmt-2-kwds
-  c '("for" "if" "switch" "while")
+  c          '("for" "if" "switch" "while")
   (c++ objc) '("for" "if" "switch" "while" "catch")
-  java '("for" "if" "switch" "while" "catch" "synchronized")
-  pike '("for" "if" "switch" "while" "foreach"))
+  java       '("for" "if" "switch" "while" "catch" "synchronized")
+  pike       '("for" "if" "switch" "while" "foreach"))
 
 ;; Regexp matching the start of any statement followed by a paren sexp
 ;; and then by a substatement.
@@ -723,7 +724,7 @@ appended."
 ;; Regexp matching the beginning of a declaration specifier in the
 ;; region between the header and the body of a declaration.
 ;;
-;; FIXME: This is currently not used uniformly; c++-mode and java-mode
+;; TODO: This is currently not used uniformly; c++-mode and java-mode
 ;; each have their own ways of using it.
 (c-lang-defconst c-opt-decl-spec-key
   c++ (concat ":?[ \t\n\r]*\\(virtual[ \t\n\r]+\\)?\\("
@@ -736,7 +737,7 @@ appended."
 ;; Regexp describing friend declarations classes, or nil in languages
 ;; that doesn't have such things.
 (c-lang-defconst c-opt-friend-key
-  ;; FIXME: Ought to use `c-specifier-kwds' or similar, and the
+  ;; TODO: Ought to use `c-specifier-kwds' or similar, and the
   ;; template skipping isn't done properly.
   c++ "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+")
 (c-lang-defvar c-opt-friend-key (c-lang-var c-opt-friend-key))
@@ -768,10 +769,11 @@ appended."
 ;; Regexp matching the close paren(s) of a cast, or nil in languages
 ;; without casts.  Note that the corresponding open paren(s) should be
 ;; matched by `c-decl-prefix-re'.
-(c-lang-defconst c-cast-close-paren-key
+(c-lang-defconst c-opt-cast-close-paren-key
   (c c++ java) ")"
   pike "[\]\)]")
-(c-lang-defvar c-cast-close-paren-key (c-lang-var c-cast-close-paren-key))
+(c-lang-defvar c-opt-cast-close-paren-key
+  (c-lang-var c-opt-cast-close-paren-key))
 
 ;; Regexp matching the operators that might precede the identifier in
 ;; a declaration, e.g. the "*" in "char *argv".  This regexp should
@@ -811,17 +813,17 @@ appended."
 ;; Regexp matching operators that concatenate types, e.g. the "|" in
 ;; "int|string" in Pike.  The end of the first submatch is taken as
 ;; the end of the operator.  nil in languages without such operators.
-(c-lang-defconst c-type-concat-key
+(c-lang-defconst c-opt-type-concat-key
   pike "\\([|.&]\\)\\($\\|[^|.&]\\)")
-(c-lang-defvar c-type-concat-key (c-lang-var c-type-concat-key))
+(c-lang-defvar c-opt-type-concat-key (c-lang-var c-opt-type-concat-key))
 
 ;; Regexp matching operators that might follow after a type, or nil in
 ;; languages that doesn't have such operators.  The end of the first
 ;; submatch is taken as the end of the operator.
-(c-lang-defconst c-type-suffix-key
+(c-lang-defconst c-opt-type-suffix-key
   (c c++ pike) "\\(\\.\\.\\.\\)"
   java "\\(\\[[ \t\n\r]*\\]\\)")
-(c-lang-defvar c-type-suffix-key (c-lang-var c-type-suffix-key))
+(c-lang-defvar c-opt-type-suffix-key (c-lang-var c-opt-type-suffix-key))
 
 ;; Regexp matching the known type identifiers.  This is initialized
 ;; from the type keywords and `*-font-lock-extra-types'.  The first
@@ -838,7 +840,7 @@ appended."
 
 ;; Regexp matching the prefix of a cpp directive in the languages that
 ;; normally uses that macro preprocessor.
-(c-lang-defconst c-cpp-prefix
+(c-lang-defconst c-opt-cpp-prefix
   (c c++) "^\\s *#\\s *"
   ;; The preprocessor in Pike recognizes cpp directives anywhere,
   ;; not just at boi.
@@ -864,7 +866,7 @@ appended."
 
 ;; Regexp to match the start of any type of comment.
 ;;
-;; FIXME: Ought to use `c-comment-prefix-regexp' with some
+;; TODO: Ought to use `c-comment-prefix-regexp' with some
 ;; modifications instead of this.
 (c-lang-defconst c-comment-start-regexp
   ;; Might seem like overkill to make this a language dependent
@@ -1034,7 +1036,7 @@ appended."
 ;; Syntax tables.
 
 (defun c-populate-syntax-table (table)
-  ;; Populate the syntax TABLE
+  ;; Populate the syntax in TABLE.
   (modify-syntax-entry ?_  "_"     table)
   (modify-syntax-entry ?\\ "\\"    table)
   (modify-syntax-entry ?+  "."     table)

@@ -290,21 +290,21 @@ tools (e.g. Javadoc).")
   ;; Font lock matchers for preprocessor directives and purely lexical
   ;; stuff.  Used on level 1 and higher.
   all
-  `(,@(when (c-lang-var c-cpp-prefix)
+  `(,@(when (c-lang-var c-opt-cpp-prefix)
 	`(;; The stuff after #error and #warning is a message, so fontify it
 	  ;; as a string.
-	  (,(concat (c-lang-var c-cpp-prefix)
+	  (,(concat (c-lang-var c-opt-cpp-prefix)
 		    "\\(error\\|warning\\)\\>\\s *\\(.*\\)$")
 	   2 font-lock-string-face)
 
 	  ;; Fontify filenames in #include <...> as strings.
-	  (,(concat (c-lang-var c-cpp-prefix)
+	  (,(concat (c-lang-var c-opt-cpp-prefix)
 		    "\\(import\\|include\\)\\>\\s *\\(<[^>\n\r]*>?\\)")
 	   2 font-lock-string-face)
 
 	  ;; #define.
 	  (,(concat
-	     (c-lang-var c-cpp-prefix)
+	     (c-lang-var c-opt-cpp-prefix)
 	     "define\\s +"
 	     (concat "\\("		; 1
 		     ;; Macro with arguments - a "function".
@@ -321,7 +321,7 @@ tools (e.g. Javadoc).")
 	  ;; Fontify symbol names in #elif or #if ... defined preprocessor
 	  ;; directives.
 	  (eval . (list
-		   ,(concat (c-lang-var c-cpp-prefix) "\\(if\\|elif\\)\\>")
+		   ,(concat (c-lang-var c-opt-cpp-prefix) "\\(if\\|elif\\)\\>")
 		   (list
 		    ,(concat "\\<\\("	; 1
 			     ;; Don't use regexp-opt here to avoid the
@@ -337,16 +337,16 @@ tools (e.g. Javadoc).")
 		    '(2 font-lock-variable-name-face nil t))))
 
 	  ;; Fontify symbols after #ifdef and #ifndef.
-	  (,(concat (c-lang-var c-cpp-prefix)
+	  (,(concat (c-lang-var c-opt-cpp-prefix)
 		    "ifn?def\\s +\\(" (c-lang-var c-symbol-key) "\\)")
 	   1 font-lock-variable-name-face)
 
 	  ;; Fontify the directive names.
 	  (,(byte-compile
 	     `(lambda (limit)
-		(while (re-search-forward ,(concat (c-lang-var c-cpp-prefix)
-						   "[a-z]+")
-					  limit t)
+		(while (re-search-forward
+			,(concat (c-lang-var c-opt-cpp-prefix) "[a-z]+")
+			limit t)
 		  (or (c-skip-comments-and-strings limit)
 		      (save-match-data
 			(when (> (match-beginning 0)
@@ -436,7 +436,7 @@ tools (e.g. Javadoc).")
 
 	;; Fontify leading identifiers in fully qualified names like
 	;; "foo::bar" in languages that supports such things.
-	,@(when (c-lang-var c-identifier-concat-key)
+	,@(when (c-lang-var c-opt-identifier-concat-key)
 	    `((,(byte-compile
 		 ;; Must use a function here since we match longer
 		 ;; than we want to move before doing a new search.
@@ -449,7 +449,7 @@ tools (e.g. Javadoc).")
 			    ,(concat "\\(\\<" ; 1
 				     "\\(" (c-lang-var c-symbol-key) "\\)" ; 2
 				     "[ \t\n\r]*"
-				     (c-lang-var c-identifier-concat-key)
+				     (c-lang-var c-opt-identifier-concat-key)
 				     "[ \t\n\r]*"
 				     "\\)"
 				     (c-lang-var c-symbol-start))
@@ -486,8 +486,7 @@ tools (e.g. Javadoc).")
 			     3))
 			 (integer-offset
 			  (+ identifier-offset
-			     (c-regexp-opt-depth
-			      (c-lang-var c-qualified-identifier-key))
+			     (c-regexp-opt-depth (c-lang-var c-identifier-key))
 			     1)))
 
 		    `(list
@@ -500,7 +499,7 @@ tools (e.g. Javadoc).")
 			;; Match a qualified identifier.  We highlight
 			;; the last symbol in it as a label.
 			"\\(" (c-lang-var ; identifier-offset
-			       c-qualified-identifier-key) "\\)"
+			       c-identifier-key) "\\)"
 			"\\|"
 			;; Match an integer.
 			"\\(-?[0-9]+\\)" ; integer-offset
@@ -517,7 +516,7 @@ tools (e.g. Javadoc).")
 			 (lambda (submatch)
 			   `(list ,(+ identifier-offset submatch)
 				  c-label-face nil t))
-			 (c-lang-var c-qualified-identifier-last-sym-match))
+			 (c-lang-var c-identifier-last-sym-match))
 
 		      (list ,integer-offset c-label-face nil t)
 
@@ -598,10 +597,9 @@ tools (e.g. Javadoc).")
       ;; Fontify the qualified identifier within the type decl
       ;; expression.
       (goto-char id-start)
-      (when (c-syntactic-re-search-forward
-	     c-qualified-identifier-key id-end 'move)
+      (when (c-syntactic-re-search-forward c-identifier-key id-end 'move)
 
-	(if (eq c-qualified-identifier-key c-symbol-key)
+	(if (eq c-identifier-key c-symbol-key)
 	    ;; Got no qualified identifiers in this language.
 	    (unless (get-text-property (match-beginning 0) 'face)
 	      (put-text-property (match-beginning 0) (match-end 0)
@@ -1080,16 +1078,17 @@ tools (e.g. Javadoc).")
 	  ;; Check for a cast.
 	  (if (save-excursion
 		(and
-		 c-cast-close-paren-key
+		 c-opt-cast-close-paren-key
 		 arglist-match
 
 		 ;; Should be the first type/identifier in a paren.
 		 (memq (car arglist-match) '(?\( ?\[))
 
-		 ;; The closing paren should match `c-cast-close-paren-key'.
+		 ;; The closing paren should match
+		 ;; `c-opt-cast-close-paren-key'.
 		 (progn
 		   (c-forward-syntactic-ws)
-		   (looking-at c-cast-close-paren-key))
+		   (looking-at c-opt-cast-close-paren-key))
 
 		 ;; There should be a symbol or an expression open paren
 		 ;; after it.

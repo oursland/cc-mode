@@ -2118,7 +2118,7 @@ brace."
   ;; individual types in it are added to `c-found-types'.
   (goto-char from)
   (while (and (< (point) to)
-	      (re-search-forward c-qualified-identifier-key to 'move))
+	      (re-search-forward c-identifier-key to 'move))
     (let ((type (buffer-substring-no-properties (match-beginning 0)
 						(match-end 0))))
       (unless (looking-at c-type-prefix-key)
@@ -2153,8 +2153,8 @@ brace."
 
   (let* ((start (point))
 	 (res (cond
-	       ((and c-complex-type-key
-		     (looking-at c-complex-type-key))
+	       ((and c-opt-complex-type-key
+		     (looking-at c-opt-complex-type-key))
 		;; It's a type, but it might also be a complex one if it's
 		;; followed by a parenthesis.  This only applies to Pike.
 		(goto-char (match-end 1))
@@ -2201,7 +2201,7 @@ brace."
 		  (goto-char (match-end 1))
 		  t))
 
-	       ((and (looking-at c-qualified-identifier-key)
+	       ((and (looking-at c-identifier-key)
 		     (if use-font-property
 			 (not (eq (get-text-property (point) 'face)
 				  'font-lock-keyword-face))
@@ -2219,22 +2219,22 @@ brace."
     ;; of these alter the classification of the found type, since
     ;; these operators typically are allowed in normal expressions
     ;; too.
-    (when (and c-type-suffix-key res)
+    (when (and c-opt-type-suffix-key res)
       (let (pos)
 	(while (progn
 		 (setq pos (point))
 		 (c-forward-syntactic-ws)
-		 (looking-at c-type-suffix-key))
+		 (looking-at c-opt-type-suffix-key))
 	  (goto-char (match-end 1)))
 	(goto-char pos)))
 
-    (if (and c-type-concat-key res)
+    (if (and c-opt-type-concat-key res)
 	;; Look for a trailing operator that concatenate the type with
 	;; a following one, and if so step past that one through a
 	;; recursive call.
 	(let ((pos (point)) res2)
 	  (c-forward-syntactic-ws)
-	  (if (and (looking-at c-type-concat-key)
+	  (if (and (looking-at c-opt-type-concat-key)
 		   (progn
 		     (goto-char (match-end 1))
 		     (c-forward-syntactic-ws)
