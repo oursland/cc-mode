@@ -81,10 +81,10 @@
 (c-lang-defconst c-cpp-matchers
   c: (cons
       ;; Use the eval form for `font-lock-keywords' to be able to use
-      ;; the `c-preprocessor-face' variable that maps to a suitable
-      ;; face depending on the (X)Emacs version.
+      ;; the `c-preprocessor-face-name' variable that maps to a
+      ;; suitable face depending on the (X)Emacs version.
       '(eval . (list "^\\s *\\(#pragma\\)\\>\\(.*\\)"
-		     (list 1 c-preprocessor-face)
+		     (list 1 c-preprocessor-face-name)
 		     '(2 font-lock-string-face)))
       ;; There are some other things in `c-cpp-matchers' besides the
       ;; preprocessor support, so include it.
