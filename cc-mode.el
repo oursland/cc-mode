@@ -305,6 +305,19 @@
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
 
+(defun c-before-change (beg end)
+  ;; Function put on `before-change-functions' to adjust various
+  ;; caches.  Prefer speed to finesse here, since there will be an order
+  ;; of magnitude more calls to this function than any of the functions
+  ;; that use the caches.
+  ;;
+  ;; `before-change-functions' is used primarily because font locking
+  ;; is done from `after-change-functions' which means that we might
+  ;; get calls to functions using these caches from inside that hook,
+  ;; and we must thus be sure that this has already been executed.
+  (c-invalidate-large-sws-region beg)
+  (c-invalidate-state-cache beg))
+
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
 and the line breaking/filling code.  Intended to be used by other
@@ -393,10 +406,10 @@ same format as `c-default-style'."
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
 		  minor-mode-alist)))
 
-  ;; Install the function that ensures `c-state-cache' doesn't become
-  ;; invalid.
-  (make-local-variable 'after-change-functions)
-  (add-hook 'after-change-functions 'c-check-state-cache))
+  ;; Install the function that ensures that various internal caches
+  ;; don't become invalid due to buffer changes.
+  (make-local-variable 'before-change-functions)
+  (add-hook 'before-change-functions 'c-before-change))
 
 (defun c-common-init (mode)
   ;; Common initializations for all modes.
