@@ -86,19 +86,41 @@
       (if (> (- (point-max) pos) (point))
 	  (goto-char (- (point-max) pos))))))
 
-(defun c-indent-line (&optional syntax quiet)
-  ;; Indent the current line according to the syntactic context, if
-  ;; c-syntactic-indentation is non-nil.  Optional SYNTAX is the
-  ;; syntactic information for the current line.  Be silent about
-  ;; syntactic errors if the optional argument QUIET is non-nil.
-  ;; Returns the amount of indentation change (in columns).
-  (let ((c-macro-start c-macro-start)
-	(line-cont-backslash (save-excursion
+(defun c-indent-line (&optional syntax quiet ignore-point-pos)
+  "Indent the current line according to the syntactic context,
+if `c-syntactic-indentation' is non-nil.  Optional SYNTAX is the
+syntactic information for the current line.  Be silent about syntactic
+errors if the optional argument QUIET is non-nil.  Normally the
+position of point is used to decide where the old indentation is on a
+lines that is otherwise empty (ignoring any line continuation
+backslash), but that's not done if IGNORE-POINT-POS is non-nil.
+Returns the amount of indentation change (in columns)."
+  (let ((line-cont-backslash (save-excursion
 			       (end-of-line)
 			       (eq (char-before) ?\\)))
 	(c-fix-backslashes c-fix-backslashes)
 	bs-col
 	shift-amt)
+    (when (and (not ignore-point-pos)
+	       (save-excursion
+		 (beginning-of-line)
+		 (looking-at (if line-cont-backslash
+				 "\\(\\s *\\)\\\\$"
+			       "\\(\\s *\\)$")))
+	       (<= (point) (match-end 1)))
+      ;; Delete all whitespace after point if there's only whitespace
+      ;; on the line, so that any code that does back-to-indentation
+      ;; or similar gets the current column in this case.  If this
+      ;; removes a line continuation backslash it'll be restored
+      ;; at the end.
+      (unless c-auto-align-backslashes
+	;; Should try to keep the backslash alignment
+	;; in this case.
+	(save-excursion
+	  (goto-char (match-end 0))
+	  (setq bs-col (1- (current-column)))))
+      (delete-region (point) (match-end 0))
+      (setq c-fix-backslashes t))
     (if c-syntactic-indentation
 	(setq c-parsing-error
 	      (or (let* ((c-parsing-error nil)
@@ -106,26 +128,6 @@
 						  c-syntactic-context
 						  (c-guess-basic-syntax)))
 			 indent)
-		    (when (and (save-excursion
-				 (beginning-of-line)
-				 (looking-at (if line-cont-backslash
-						 "\\(\\s *\\)\\\\$"
-					       "\\(\\s *\\)$")))
-			       (<= (point) (match-end 1)))
-		      ;; Delete all whitespace after point if there's
-		      ;; only whitespace on the line, so that any
-		      ;; lineup functions that does
-		      ;; back-to-indentation or similar gets the
-		      ;; current column in this case.  If this removes
-		      ;; a backslash it'll be restored below.
-		      (unless c-auto-align-backslashes
-			;; Should try to keep the backslash alignment
-			;; in this case.
-			(save-excursion
-			  (goto-char (match-end 0))
-			  (setq bs-col (1- (current-column)))))
-		      (delete-region (point) (match-end 0))
-		      (setq c-fix-backslashes t))
 		    (setq indent (c-get-syntactic-indentation
 				  c-syntactic-context))
 		    (and (not (c-echo-parsing-error quiet))
@@ -146,23 +148,21 @@
 			nil))))
 	(setq shift-amt (- indent (current-indentation)))
 	(c-shift-line-indentation shift-amt)))
-    (when (and c-fix-backslashes
-	       line-cont-backslash
-	       (c-query-and-set-macro-start))
+    (when (and c-fix-backslashes line-cont-backslash)
       (if bs-col
 	  (save-excursion
 	    (indent-to bs-col 1)
 	    (insert ?\\))
-	;; Realign the line continuation backslash if inside a macro.
+	;; Realign the line continuation backslash.
 	(c-backslash-region (point) (point) nil t)))
     shift-amt))
 
 (defun c-newline-and-indent (&optional newline-arg)
-  ;; Inserts a newline and indents the new line.  This function fixes
-  ;; line continuation backslashes if inside a macro, and takes care
-  ;; to set the indentation before calling `indent-according-to-mode',
-  ;; so that lineup functions like `c-lineup-dont-change' works
-  ;; better.
+  "Inserts a newline and indents the new line.
+This function fixes line continuation backslashes if inside a macro,
+and takes care to set the indentation before calling
+`indent-according-to-mode', so that lineup functions like
+`c-lineup-dont-change' works better."
   (let ((c-macro-start (c-query-macro-start))
 	;; Avoid calling c-backslash-region from c-indent-line if it's
 	;; called during the newline call, which can happen due to
@@ -1869,7 +1869,7 @@ argument QUIET is non-nil."
 				 (assq 'cpp-macro syntax))
 			    ;; Record macro start.
 			    (setq in-macro (point)))
-			(c-indent-line syntax t)
+			(c-indent-line syntax t t)
 			(if (and in-macro
 				 (progn (end-of-line)
 					(not (eq (char-before) ?\\))))
@@ -2992,16 +2992,20 @@ If a fill prefix is specified, it overrides all the above."
 (defun c-context-line-break ()
   "Do a line break suitable to the context.
 
-When point is outside a comment, insert a newline and indent according
-to the syntactic context, unless `c-syntactic-indentation' is nil,
-which causes the new line to be indented as the previous non-empty
-line instead.  If point is inside a macro, a line continuation
-backslash is inserted and aligned appropriately.
+When point is outside a comment or macro, insert a newline and indent
+according to the syntactic context, unless `c-syntactic-indentation'
+is nil, in which case the new line is indented as the previous
+non-empty line instead.
+
+When point is inside the content of a preprocessor directive, a line
+continuation backslash is inserted before the line break and aligned
+appropriately.  The end of the cpp directive doesn't count as inside
+it.
 
 When point is inside a comment, continue it with the appropriate
 comment prefix (see the `c-comment-prefix-regexp' and
 `c-block-comment-prefix' variables for details).  The end of a
-C++-style line comment doesn't count as inside the comment, though."
+C++-style line comment doesn't count as inside it."
   (interactive "*")
   (let* ((c-lit-limits (c-literal-limits nil nil t))
 	 (c-lit-type (c-literal-type c-lit-limits))
@@ -3014,7 +3018,12 @@ C++-style line comment doesn't count as inside the comment, though."
 	    (and (or (not (eolp))
 		     (eq (char-before) ?\\))
 		 (c-query-and-set-macro-start)
-		 (< c-macro-start (point))))
+		 (<= (save-excursion
+		       (goto-char c-macro-start)
+		       (if (looking-at "#[ \t]*[a-zA-Z0-9!]+")
+			   (goto-char (match-end 0)))
+		       (point))
+		    (point))))
 	(let ((comment-multi-line t)
 	      (fill-prefix nil))
 	  (c-indent-new-comment-line nil t))
