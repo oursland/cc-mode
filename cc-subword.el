@@ -48,7 +48,7 @@
 ;; M-f     `forward-word'             `c-forward-subword'
 ;; M-f     `backward-word'            `c-backward-subword'
 ;; M-@     `mark-word'                `c-mark-subword'
-;; M-d     `kill-word'                `c-kill-word'
+;; M-d     `kill-word'                `c-kill-subword'
 ;; M-DEL   `backward-kill-word'       `c-backward-kill-subword'
 ;; M-t     `transpose-words'          `c-transpose-subword'
 ;; M-c     `capitalize-word'          `c-capitalize-subword'
@@ -58,6 +58,13 @@
 ;; Note: If you change the keybinds for the word oriented commands
 ;; in your .emacs or somewhere, the key you changed to is also used
 ;; in a subword oriented command.
+
+;; To make the mode turn on automatically, put the following code
+;; to your .emacs:
+;;
+;; (add-hook 'c-mode-common-hook
+;; 	  (lambda () (c-subword-move-mode 1)))
+;;
 
 ;; Acknowledgment:
 ;; The regular expressions to detect subwords is mostly based on
