@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.258 $
-;; Last Modified:   $Date: 1993-01-13 16:27:55 $
+;; Version:         $Revision: 2.259 $
+;; Last Modified:   $Date: 1993-01-13 17:28:10 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-13 16:27:55 $|$Revision: 2.258 $|
+;; |$Date: 1993-01-13 17:28:10 $|$Revision: 2.259 $|
 
 ;;; Code:
 
@@ -291,7 +291,7 @@ a paren which closes a block.  When non-nil, c-indent-level is
 subtracted, and c++-block-close-brace-offset is added to the line's
 offset.")
 (defvar c++-continued-member-init-offset nil
-  "*Extra indent for continuation lines of member inits; NIL means to align
+  "*Extra indent for continuation lines of member inits; nil means to align
 with previous initializations rather than with the colon on the first line.")
 (defvar c++-member-init-indent 0
   "*Indentation level of member initializations in function declarations.")
@@ -300,8 +300,8 @@ with previous initializations rather than with the colon on the first line.")
 (defvar c++-access-specifier-offset c-label-offset
   "*Extra indentation given to public, protected, and private labels.")
 (defvar c++-empty-arglist-indent nil
-  "*Indicates how far to indent an line following an empty argument
-list.  Nil indicates to just after the paren.")
+  "*Indicates how far to indent a line following an empty argument list.
+Nil means indent to just after the paren.")
 (defvar c++-comment-only-line-offset 0
   "*Indentation offset for line which contains only C or C++ style comments.
 This variable can take either a single integer or a list of integers.
@@ -452,23 +452,24 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.258 $
+  "Major mode for editing C++ code.  $Revision: 2.259 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
-1. Very much like editing C code.
-2. Expression and list commands understand all C++ brackets.
-3. Tab at left margin indents for C++ code
-4. Comments are delimited with /* ... */ {or with // ... <newline>}
-5. Paragraphs are separated by blank lines only.
-6. Delete converts tabs to spaces as it moves back.
+1. Very much like editing C code,
+2. Expression and list commands understand all C++ brackets,
+3. Tab at left margin indents for C++ code,
+4. Both C++ and C style block comments are recognized,
+5. Paragraphs are separated by blank lines only,
+6. Hungry delete and auto newline behaviors are optional.
 
 IMPORTANT NOTE: You may notice that some characters (by default, only
 single quote) will get escaped with a backslash when typed in a
 comment region.  This is a necessary workaround of a bug present in
 GNU emacs 18 and derivatives.  Enter \"\\[describe-variable] c++-untame-characters RET\"
 for more information. If you are running a patched emacs, no
-characters will be escaped in comment regions.
+characters will be escaped in comment regions, and many functions will
+run much faster.
 
 Key bindings:
 \\{c++-mode-map}
@@ -478,110 +479,122 @@ c-<thing> are inherited from c-mode.  Those with names like
 c++-<thing> are unique for this mode, or have extended functionality
 from their c-mode cousins.
 
+ c-argdecl-indent
+    Indentation level of declarations of C function arguments.
+ c-brace-imaginary-offset
+    An open brace following other text is treated as if it were
+    this far to the right of the start of its line.
+ c-brace-offset
+    Extra indentation for line if it starts with an open brace.
+ c-continued-brace-offset
+    Extra indentation given to a brace that starts a substatement.
+    This is in addition to c-continued-statement-offset.
+ c-continued-statement-offset
+    Extra indentation given to a substatement, such as the
+    then-clause of an if or body of a while.
  c-indent-level
     Indentation of C statements within surrounding block.
     The surrounding block's indentation is the indentation
     of the line on which the open-brace appears.
- c-continued-statement-offset
-    Extra indentation given to a substatement, such as the
-    then-clause of an if or body of a while.
- c-continued-brace-offset
-    Extra indentation given to a brace that starts a substatement.
-    This is in addition to c-continued-statement-offset.
- c-brace-offset
-    Extra indentation for line if it starts with an open brace.
- c-brace-imaginary-offset
-    An open brace following other text is treated as if it were
-    this far to the right of the start of its line.
- c-argdecl-indent
-    Indentation level of declarations of C function arguments.
  c-label-offset
-    Extra indentation for line that is a label, or case or ``default:'', or
-    ``public:'' or ``private:'', or ``protected:''.
+    Extra indentation for line that is a label, or case or ``default:''
 
- c++-tab-always-indent
-    Controls the operation of the TAB key.  t means always just
-    reindent the current line.  nil means indent the current line only
-    if point is at the left margin or in the line's indentation;
-    otherwise insert a tab.  If not-nil-or-t, then the line is first
-    reindented, then if the indentation hasn't changed, a tab is
-    inserted. This last mode is useful if you like to add tabs after
-    the # of preprocessor commands. Default is value for
-    c-tab-always-indent.
- c++-block-close-brace-offset
-    Extra indentation give to braces which close a block. This does
-    not affect braces which close top-level constructs (e.g. functions).
- c++-continued-member-init-offset
-    Extra indentation for continuation lines of member initializations; nil
-    means to align with previous initializations rather than with the colon.
- c++-member-init-indent
-    Indentation level of member initializations in function declarations,
-    if they are on a separate line beginning with a colon.
- c++-friend-offset
-    Offset of C++ friend class declarations relative to member declarations.
+ c++-C-block-comments-indent-p
+    Style of C block comments to support.
  c++-access-specifier-offset
     Extra indentation given to public, protected, and private keyword lines.
- c++-empty-arglist-indent
-    If non-nil, a function declaration or invocation which ends a line with a
-    left paren is indented this many extra spaces, instead of flush with the
-    left paren. If nil, it lines up with the left paren.
  c++-always-arglist-indent-p
     Control indentation of continued arglists. When non-nil, arglists
     continued on subsequent lines will always indent
     c++-empty-arglist-indent spaces, otherwise, they will indent to
     just under previous line's argument indentation.
- c++-comment-only-line-offset
-    Extra indentation for a line containing only a C or C++ style
-    comment. Can be an integer or list.
- c++-cleanup-list
-    A list of construct \"clean ups\" which c++-mode will perform when
-    auto-newline mode is on.  Current legal values are:
-    brace-else-brace, empty-defun-braces, defun-close-semi.
- c++-hanging-braces
-    Controls open brace hanging behavior when using auto-newline. Nil
-    says no braces hang, t says all open braces hang. Not nil or t
-    means top-level open braces don't hang, all others do.
- c++-hanging-member-init-colon
-    Defines how colons which introduce member initialization lists are
-    formatted. t means no newlines are inserted either before or after
-    the colon. Nil means newlines are inserted both before and after
-    the colon.  'before inserts newlines only before the colon, and
-    'after inserts newlines only after colon.
  c++-auto-hungry-initial-state
     Initial state of auto/hungry mode when a C++ buffer is first visited.
  c++-auto-hungry-toggle
     Enable/disable toggling of auto/hungry states.
+ c++-backscan-limit
+    Limit in characters for looking back while skipping syntactic
+    whitespace. This variable is only used in an un-patched emacs to
+    help improve performance at the expense of some accuracy. Patched
+    emacses are both fast and accurate.
+ c++-block-close-brace-offset
+    Extra indentation give to braces which close a block. This does
+    not affect braces which close top-level constructs (e.g. functions).
+ c++-cleanup-list
+    A list of construct \"clean ups\" which c++-mode will perform when
+    auto-newline mode is on.  Current legal values are:
+    brace-else-brace, empty-defun-braces, defun-close-semi.
+ c++-comment-only-line-offset
+    Extra indentation for a line containing only a C or C++ style
+    comment. Can be an integer or list, specifying the various styles
+    of comment-only line special indentations.
+ c++-continued-member-init-offset
+    Extra indentation for continuation lines of member initializations; nil
+    means to align with previous initializations rather than with the colon.
+ c++-default-macroize-column
+    Column to insert backslashes when macroizing a region.
+ c++-delete-function
+    Function called by c++-electric-delete when deleting a single char.
+ c++-electric-pound-behavior
+    List of behaviors for electric pound insertion.
+ c++-empty-arglist-indent
+    Extra indentation to apply to a line following an empty argument
+    list. nil means to line it up with the left paren.
+ c++-friend-offset
+    Offset of C++ friend class declarations relative to member declarations.
+ c++-hanging-braces
+    Controls open brace hanging behavior when using auto-newline. nil
+    says no braces hang, t says all open braces hang. non-nil-or-t
+    means top-level open braces don't hang, all others do.
+ c++-hanging-member-init-colon
+    Defines how colons which introduce member initialization lists are
+    formatted. t means no newlines are inserted either before or after
+    the colon. nil means newlines are inserted both before and after
+    the colon.  'before inserts newlines only before the colon, and
+    'after inserts newlines only after colon.
  c++-mailer
     Mailer to use when sending bug reports.
- c++-mode-help-address
-    Address to send bug report via email.
+ c++-member-init-indent
+    Indentation level of member initializations in function declarations,
+    if they are on a separate line beginning with a colon.
+ c++-paren-as-block-close-p
+    If non-nil, treat a parenthesis which is the first non-whitespace
+    on a line as a paren whcih closes a block (i.e. treat it similar
+    to right curly brace)
  c++-relative-offset-p
     Control the calculation for indentation. When non-nil (the
     default), indentation is calculated relative to the first
     statement in the block.  When nil, the indentation is calculated
-    without regard to how the first statement is indented. 
- c++-default-macroize-column
-    Column to insert backslashes when macroizing a region.
+    without regard to how the first statement is indented. Useful when
+    using a c++-special-indent-hook.
+ c++-special-indent-hook
+    Hook for user defined special indentation adjustments. You can use
+    this hook, which gets called after a line is indented by the mode,
+    to customize indentations of the line.
+ c++-tab-always-indent
+    Controls the operation of the TAB key.  t means always just indent
+    the current line.  nil means indent the current line only if point
+    is at the left margin or in the line's indentation; otherwise
+    insert a tab. If not-nil-or-t, then tab is inserted only within
+    literals (comments and strings) and inside preprocessor
+    directives, but the line is always reindented. Default is value
+    for c-tab-always-indent.
  c++-untame-characters
     When non-nil, inserts backslash escapes before certain untamed
     characters in comment regions. It is recommended that you keep the
     default setting to workaround a nasty emacs bug, unless you are
     running a patched emacs.
- c++-delete-function
-    Function called by c++-electric-delete when deleting a single char.
- c++-electric-pound-behavior
-    List of behaviors for electric pound insertion.
 
 Auto-newlining is no longer an all or nothing proposition. To be
 specific I don't believe it is possible to implement a perfect
 auto-newline algorithm. Sometimes you want it and sometimes you don't.
 So now auto-newline (and its companion, hungry-delete) can be toggled
 on and off on the fly.  Hungry-delete is the optional behavior of the
-delete key. When hungry-delete is enabled, hitting the delete key
-once consumes all preceeding whitespace, unless point is within a
-literal (defined as a C or C++ comment, or string).  Inside literals,
-and with hungry-delete disabled, the delete key just calls
-backward-delete-char-untabify.
+delete key so that, when enabled, hitting the delete key once consumes
+all preceeding whitespace, unless point is within a literal (defined
+as a C or C++ comment, or string).  Inside literals, and with
+hungry-delete disabled, the delete key just calls the function in
+c++-delete-function.
 
 Behavior is controlled by c++-auto-hungry-initial-state and
 c++-auto-hungry-toggle.  Legal values for both variables are:
@@ -598,8 +611,7 @@ hungry-delete state are on, then hitting \"\\[c++-toggle-auto-hungry-state]\"
 will toggle both states.  Hitting \"\\[c++-toggle-hungry-state]\" will
 always toggle hungry-delete state and hitting \"\\[c++-toggle-auto-state]\"
 will always toggle auto-newline state, regardless of the value of
-c++-auto-hungry-toggle.   Hungry-delete state, when on, makes the
-delete key consume all preceding whitespace.
+c++-auto-hungry-toggle.
 
 Settings for K&R, BSD, and Stroustrup indentation styles are
   c-indent-level                5    8    4
@@ -661,9 +673,9 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.258 $
-Documentation for this mode is available by doing a
-\"\\[describe-function] c++-mode\"."
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.259 $
+This mode is based on c++-mode. Documentation for this mode is
+available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
   (c++-mode)
   (setq major-mode 'c++-c-mode
@@ -710,12 +722,13 @@ This function ignores c++-auto-hungry-toggle variable.  Optional
 numeric ARG, if supplied turns on auto-newline when positive, turns
 off auto-newline when negative and toggles when zero."
   (interactive "P")
-  (let ((auto (cond ((not arg)
-		     (not c++-auto-newline))
-		    ((zerop (setq arg (prefix-numeric-value arg)))
-		     (not c++-auto-newline))
-		    ((< arg 0) nil)
-		    (t t))))
+  (let ((auto (cond
+	       ((not arg)
+		(not c++-auto-newline))
+	       ((zerop (setq arg (prefix-numeric-value arg)))
+		(not c++-auto-newline))
+	       ((< arg 0) nil)
+	       (t t))))
     (c++-set-auto-hungry-state auto c++-hungry-delete-key)))
 
 (defun c++-toggle-hungry-state (arg)
@@ -724,12 +737,13 @@ This function ignores c++-auto-hungry-toggle variable.  Optional
 numeric ARG, if supplied turns on hungry-delete-key when positive,
 turns off hungry-delete-key when negative and toggles when zero."
   (interactive "P")
-  (let ((hungry (cond ((not arg)
-		       (not c++-hungry-delete-key))
-		      ((zerop (setq arg (prefix-numeric-value arg)))
-		       (not c++-hungry-delete-key))
-		      ((< arg 0) nil)
-		      (t t))))
+  (let ((hungry (cond
+		 ((not arg)
+		  (not c++-hungry-delete-key))
+		 ((zerop (setq arg (prefix-numeric-value arg)))
+		  (not c++-hungry-delete-key))
+		 ((< arg 0) nil)
+		 (t t))))
     (c++-set-auto-hungry-state c++-auto-newline hungry)))
 
 (defun c++-toggle-auto-hungry-state (arg)
@@ -750,26 +764,28 @@ Optional argument has the following meanings when supplied:
   (let* ((numarg (prefix-numeric-value arg))
 	 (apl (list 'auto-only   'auto-hungry t))
 	 (hpl (list 'hungry-only 'auto-hungry t))
-	 (auto (cond ((not arg)
-		      (if (memq c++-auto-hungry-toggle apl)
-			  (not c++-auto-newline)
-			c++-auto-newline))
-		     ((listp arg)
-		      (memq c++-auto-hungry-initial-state apl))
-		     ((zerop numarg)
-		      (not c++-auto-newline))
-		     ((< arg 0) nil)
-		     (t t)))
-	 (hungry (cond ((not arg)
-			(if (memq c++-auto-hungry-toggle hpl)
-			    (not c++-hungry-delete-key)
-			  c++-hungry-delete-key))
-		       ((listp arg)
-			(memq c++-auto-hungry-initial-state hpl))
-		       ((zerop numarg)
-			(not c++-hungry-delete-key))
-		       ((< arg 0) nil)
-		       (t t))))
+	 (auto (cond
+		((not arg)
+		 (if (memq c++-auto-hungry-toggle apl)
+		     (not c++-auto-newline)
+		   c++-auto-newline))
+		((listp arg)
+		 (memq c++-auto-hungry-initial-state apl))
+		((zerop numarg)
+		 (not c++-auto-newline))
+		((< arg 0) nil)
+		(t t)))
+	 (hungry (cond
+		  ((not arg)
+		   (if (memq c++-auto-hungry-toggle hpl)
+		       (not c++-hungry-delete-key)
+		     c++-hungry-delete-key))
+		  ((listp arg)
+		   (memq c++-auto-hungry-initial-state hpl))
+		  ((zerop numarg)
+		   (not c++-hungry-delete-key))
+		  ((< arg 0) nil)
+		  (t t))))
     (c++-set-auto-hungry-state auto hungry)))
 
 (defun c++-tame-insert (arg)
@@ -796,19 +812,20 @@ backward-delete-char-untabify passing along ARG.
 If c++-hungry-delete-key is nil, just call
 backward-delete-char-untabify."
   (interactive "P")
-  (cond ((or (not c++-hungry-delete-key) arg)
-	 (funcall c++-delete-function (prefix-numeric-value arg)))
-	((let ((bod (c++-point 'bod)))
-	   (not (or (memq (c++-in-literal bod) '(c c++ string))
-		    (save-excursion
-		      (skip-chars-backward " \t")
-		      (= (preceding-char) ?#)))))
-	 (let ((here (point)))
-	   (skip-chars-backward " \t\n")
-	   (if (/= (point) here)
-	       (delete-region (point) here)
-	     (funcall c++-delete-function 1))))
-	(t (funcall c++-delete-function 1))))
+  (cond
+   ((or (not c++-hungry-delete-key) arg)
+    (funcall c++-delete-function (prefix-numeric-value arg)))
+   ((let ((bod (c++-point 'bod)))
+      (not (or (memq (c++-in-literal bod) '(c c++ string))
+	       (save-excursion
+		 (skip-chars-backward " \t")
+		 (= (preceding-char) ?#)))))
+    (let ((here (point)))
+      (skip-chars-backward " \t\n")
+      (if (/= (point) here)
+	  (delete-region (point) here)
+	(funcall c++-delete-function 1))))
+   (t (funcall c++-delete-function 1))))
 
 (defun c++-electric-pound (arg)
   (interactive "p")
@@ -1074,11 +1091,12 @@ for member initialization list."
 
 (defun c++-indent-command (&optional whole-exp)
   "Indent current line as C++ code, or in some cases insert a tab character.
-If c++-tab-always-indent is t (the default), always just indent the
-current line.  If nil, indent the current line only if point is at the
-left margin or in the line's indentation; otherwise insert a tab.  If
-not-nil-or-t, then tab is inserted only within literals (comments and
-strings) and inside preprocessor directives, but line is always reindented.
+
+If c++-tab-always-indent is t, always just indent the current line.
+If nil, indent the current line only if point is at the left margin or
+in the line's indentation; otherwise insert a tab.  If not-nil-or-t,
+then tab is inserted only within literals (comments and strings) and
+inside preprocessor directives, but line is always reindented.
 
 A numeric argument, regardless of its value, means indent rigidly all
 the lines of the expression starting after point so that this line
@@ -1328,13 +1346,14 @@ c++-untame-characters."
   "Jumps to the paren matching the one under point, if there is one."
   (interactive)
   (let ((parse-sexp-ignore-comments t))
-    (cond ((looking-at "[\(\[{]")
-	   (forward-sexp 1)
-	   (backward-char))
-	  ((looking-at "[])}]")
-	   (forward-char)
-	   (backward-sexp 1))
-	  (t (message "Could not find matching paren.")))))
+    (cond
+     ((looking-at "[\(\[{]")
+      (forward-sexp 1)
+      (backward-char))
+     ((looking-at "[])}]")
+      (forward-char)
+      (backward-sexp 1))
+     (t (message "Could not find matching paren.")))))
 
 (defun c++-forward-sexp (&optional arg)
   (interactive "p")
@@ -1418,16 +1437,20 @@ used."
 	   (here (point))
 	   (parse-sexp-ignore-comments t) ; may not be necessary
 	   (state (parse-partial-sexp backlim (point))))
-      (cond ((nth 4 state)
-	     ;; comment. c or c++? elt 7 wil be t for c comment
-	     (if (nth 7 state) 'c 'c++))
-	    ((nth 3 state) 'string)
-	    ((progn			; in a preproc line?
-	       (goto-char here)
-	       (beginning-of-line)
-	       (looking-at "[ \t]*#"))
-	     'pound)
-	    (t nil)))))
+      (cond
+       ;; comment. c or c++? elt 7 wil be t for c comment
+       ((nth 4 state)
+	(if (nth 7 state) 'c 'c++))
+       ;; in a string?
+       ((nth 3 state) 'string)
+       ;; in a preprocessor directive?
+       ((progn
+	  (goto-char here)
+	  (beginning-of-line)
+	  (looking-at "[ \t]*#"))
+	'pound)
+       ;; not in a literal
+       (t nil)))))
 
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
@@ -1533,63 +1556,65 @@ point of the beginning of the C++ definition."
 	 (pos (- (point-max) (point))))
     (beginning-of-line)
     (setq beg (point))
-    (cond ((eq indent nil)
-	   (setq indent (current-indentation)))
-	  ((eq indent t)
-	   (setq indent (c++-calculate-c-indent-within-comment)))
-	  ((looking-at "[ \t]*#")
-	   (setq indent 0))
-	  ((save-excursion
-	     (back-to-indentation)
-	     (looking-at "//\\|/\\*"))
-	   ;; we've found a comment-only line. we now must try to
-	   ;; determine if the line is a continuation from a comment
-	   ;; on the previous line.  we check to see if the comment
-	   ;; starts in comment-column and if so, we don't change its
-	   ;; indentation.
-	   (skip-chars-forward " \t")
-	   (if (= (current-column) comment-column)
-	       (setq indent comment-column)
-	     (setq indent (c++-comment-offset (bolp) indent))))
-	  (t
-	   (skip-chars-forward " \t")
-	   (if (listp indent) (setq indent (car indent)))
-	   (cond ((looking-at c++-access-key)
-		  (setq indent (+ indent c++-access-specifier-offset)))
-		 ((looking-at "default\\b")
-		  (setq indent (+ indent c-label-offset)))
-		 ((or (looking-at "case\\b")
-		      (and (looking-at "[A-Za-z]")
-			   (save-excursion
-			     (forward-sexp 1)
-			     (looking-at ":[^:]"))))
-		  (setq indent (max 1 (+ indent c-label-offset))))
-		 ((and (looking-at "else\\b")
-		       (not (looking-at "else\\s_")))
-		  (setq indent (save-excursion
-				 (c-backward-to-start-of-if)
-				 (back-to-indentation)
-				 (skip-chars-forward "{ \t")
-				 (current-column))))
-		 ((looking-at "\\<friend\\>")
-		  (setq indent (+ indent c++-friend-offset)))
-		 ((and (= (following-char) ?\))
-		       c++-paren-as-block-close-p)
-		  (setq indent (+ (- indent c-indent-level)
-				  (if (save-excursion
-					(forward-char 1)
-					(c++-at-top-level-p nil bod))
-				      (- c++-block-close-brace-offset)
-				    c++-block-close-brace-offset))))
-		 ((= (following-char) ?})
-		  (setq indent (+ (- indent c-indent-level)
-				  (if (save-excursion
-					(forward-char 1)
-					(c++-at-top-level-p nil bod))
-				      (- c++-block-close-brace-offset)
-				    c++-block-close-brace-offset))))
-		 ((= (following-char) ?{)
-		  (setq indent (+ indent c-brace-offset))))))
+    (cond
+     ((eq indent nil)
+      (setq indent (current-indentation)))
+     ((eq indent t)
+      (setq indent (c++-calculate-c-indent-within-comment)))
+     ((looking-at "[ \t]*#")
+      (setq indent 0))
+     ((save-excursion
+	(back-to-indentation)
+	(looking-at "//\\|/\\*"))
+      ;; we've found a comment-only line. we now must try to
+      ;; determine if the line is a continuation from a comment
+      ;; on the previous line.  we check to see if the comment
+      ;; starts in comment-column and if so, we don't change its
+      ;; indentation.
+      (skip-chars-forward " \t")
+      (if (= (current-column) comment-column)
+	  (setq indent comment-column)
+	(setq indent (c++-comment-offset (bolp) indent))))
+     (t
+      (skip-chars-forward " \t")
+      (if (listp indent) (setq indent (car indent)))
+      (cond
+       ((looking-at c++-access-key)
+	(setq indent (+ indent c++-access-specifier-offset)))
+       ((looking-at "default\\b")
+	(setq indent (+ indent c-label-offset)))
+       ((or (looking-at "case\\b")
+	    (and (looking-at "[A-Za-z]")
+		 (save-excursion
+		   (forward-sexp 1)
+		   (looking-at ":[^:]"))))
+	(setq indent (max 1 (+ indent c-label-offset))))
+       ((and (looking-at "else\\b")
+	     (not (looking-at "else\\s_")))
+	(setq indent (save-excursion
+		       (c-backward-to-start-of-if)
+		       (back-to-indentation)
+		       (skip-chars-forward "{ \t")
+		       (current-column))))
+       ((looking-at "\\<friend\\>")
+	(setq indent (+ indent c++-friend-offset)))
+       ((and (= (following-char) ?\))
+	     c++-paren-as-block-close-p)
+	(setq indent (+ (- indent c-indent-level)
+			(if (save-excursion
+			      (forward-char 1)
+			      (c++-at-top-level-p nil bod))
+			    (- c++-block-close-brace-offset)
+			  c++-block-close-brace-offset))))
+       ((= (following-char) ?})
+	(setq indent (+ (- indent c-indent-level)
+			(if (save-excursion
+			      (forward-char 1)
+			      (c++-at-top-level-p nil bod))
+			    (- c++-block-close-brace-offset)
+			  c++-block-close-brace-offset))))
+       ((= (following-char) ?{)
+	(setq indent (+ indent c-brace-offset))))))
     (skip-chars-forward " \t")
     (setq shift-amt (- indent (current-column)))
     (if (zerop shift-amt)
@@ -1644,347 +1669,345 @@ BOD is the beginning of the C++ definition."
 	(goto-char indent-point)
 	(c++-backward-syntactic-ws bod)
 	(setq char-before-ip (preceding-char)))
-      (cond ((memq literal '(string))
-	     ;; in a string.
-	     nil)
-	    ((memq literal '(c c++))
-	     ;; in a C or C++ style comment.
-	     t)
-	    ((setq inclass-depth (c++-at-top-level-p t bod))
-	     ;; Line is at top level.  May be comment-only line, data
-	     ;; or function definition, or may be function argument
-	     ;; declaration or member initialization.  Indent like the
-	     ;; previous top level line unless:
-	     ;;
-	     ;; 1. the previous line ends in a closeparen without
-	     ;; semicolon, in which case this line is the first
-	     ;; argument declaration or member initialization, or
-	     ;;
-	     ;; 2. the previous line ends with a closeparen
-	     ;; (closebrace), optional spaces, and a semicolon, in
-	     ;; which case this line follows a multiline function
-	     ;; declaration (class definition), or
-	     ;;
-	     ;; 3. the previous line begins with a colon, in which
-	     ;; case this is the second line of member inits.  It is
-	     ;; assumed that arg decls and member inits are not mixed.
-	     ;;
-	     (+
-	      ;; add an offset if we are inside a class defun body,
-	      ;; i.e. we are at the top level, but only wrt a
-	      ;; containing class
-	      (setq inclass-shift (* c-indent-level inclass-depth))
-	      (progn
-		(goto-char indent-point)
-		(skip-chars-forward " \t")
-		(if (or (= (following-char) ?{)
-			(progn
-			  (c++-backward-syntactic-ws parse-start)
-			  (bobp)))
-		    0
-		  (if (c++-in-function-p)
-		      (progn		; first arg decl or member init
-			(goto-char indent-point)
-			(skip-chars-forward " \t")
-			(if (= (following-char) ?:)
-			    c++-member-init-indent
-			  c-argdecl-indent))
-		    (if (= (preceding-char) ?\;)
-			(progn
-			  (backward-char 1)
-			  (skip-chars-backward " \t")))
-		    ;; may be first line after a hanging member init
-		    ;; colon. check to be sure its not a scope
-		    ;; operator meaning we are inside a member def
-		    (if (or (= (preceding-char) ?:)
-			    (save-excursion
-			      (forward-line 1)
-			      (skip-chars-forward " \t")
-			      (or (eobp) (forward-char 1))
-			      (and (= (preceding-char) ?:)
-				   (/= (following-char) ?:)))
-			    (save-excursion
-			      (and (= (preceding-char) ?,)
-				   (let ((bol (c++-point 'bol)))
-				     (skip-chars-backward "^:" bol)
-				     (= (preceding-char) ?:))
-				   (not (c++-in-parens-p))
-				   (progn
-				     (forward-char -1)
-				     (skip-chars-backward " \t")
-				     (not (bolp))))))
-			;; check to see if we're looking at a member
-			;; init, or access specifier
-			(if (progn
-			      (beginning-of-line)
-			      (skip-chars-forward " \t")
-			      (looking-at c++-access-key))
-			    ;; access specifier. class defun opening brace
-			    ;; may not be in col zero
-			    (progn (goto-char (or containing-sexp bod))
-				   (current-indentation))
-			  ;; member init, so add offset
-			  c++-member-init-indent)
-		      (if (or (= (preceding-char) ?})
-			      (= (preceding-char) ?\))
-			      (save-excursion
-				(beginning-of-line)
-				(looking-at "[ \t]*\\<friend\\>")))
-			  ;; indentation of class defun opening brace
-			  ;; may not be zero
-			  (progn (goto-char (or containing-sexp bod))
-				 (current-indentation))
-			;; cont arg decls or member inits
-			(beginning-of-line)
-			;; we might be inside a K&R C arg decl
-			(if (save-excursion
-			      (c++-backward-syntactic-ws bod)
-			      (and (eq major-mode 'c++-c-mode)
-				   (= (preceding-char) ?\))))
-			    c-argdecl-indent
-			  (skip-chars-forward " \t")
-			  (if (or (memq (c++-in-literal bod) '(c c++))
-				  (looking-at "/[/*]"))
-			      0
-			    (if (= (following-char) ?:)
-				(if c++-continued-member-init-offset
-				    (+ (current-indentation)
-				       c++-continued-member-init-offset)
-				  (progn
-				    (forward-char 1)
-				    (skip-chars-forward " \t")
-				    (- (current-column)
-				       inclass-shift)))
-			      ;; else first check to see if its a
-			      ;; multiple inheritance continuation line
-			      (if (looking-at
-				   (concat c++-class-key
-					   "[ \t]+"
-					   "\\(\\w+[ \t]*:[ \t]*\\)?"))
-				  (if (= char-before-ip ?,)
-				      (progn (goto-char (match-end 0))
-					     (current-column))
-				    0)
-				;; we might be looking at the opening
-				;; brace of a class defun
-				(if (= (following-char) ?\{)
-				    ;; indentation of opening brace may not
-				    ;; be zero
-				    (current-indentation)
-				  (if (eolp)
-				      ;; looking at a blank line, indent
-				      ;; next line to zero
-				      0
-				    (if (save-excursion
-					  (goto-char indent-point)
-					  (beginning-of-line)
-					  (bobp))
-					;; at beginning of buffer, if
-					;; nothing else, indent to zero 
-					0
-				      (if (c++-in-parens-p)
-					  ;; we are perhaps inside a
-					  ;; member init call
-					  (while (and (c++-in-parens-p)
-						      (< bod (point)))
-					    (forward-line -1)
-					    (skip-chars-forward " \t")))
-				      ;; check to be sure that we're
-				      ;; not on the first line of the
-				      ;; member init list
-				      (if (= (following-char) ?:)
-					  (progn
-					    (forward-char 1)
-					    (skip-chars-forward " \t")))
-				      ;; subtract inclass-shift since
-				      ;; its already incorporated by
-				      ;; default in current-column
-				      (- (current-column) inclass-shift)
-				      )))))))))
-		    )))))
-	    ((/= (char-after containing-sexp) ?{)
-	     ;; line is expression, not statement:
-	     ;; indent to just after the surrounding open -- unless
-	     ;; empty arg list, in which case we do what
-	     ;; c++-empty-arglist-indent says to do.
-	     (if (and c++-empty-arglist-indent
-		      (or c++-always-arglist-indent-p
-			  (null (nth 2 state))	;; indicates empty arg
-						;; list.
-			  ;; Use a heuristic: if the first
-			  ;; non-whitespace following left paren on
-			  ;; same line is not a comment,
-			  ;; is not an empty arglist.
-			  (save-excursion
-			    (goto-char (1+ containing-sexp))
-			    (looking-at "[ \t]*[/\n]"))))
-		 (progn
-		   (goto-char containing-sexp)
-		   (beginning-of-line)
+      (cond
+       ;; CASE 1: in a string.
+       ((memq literal '(string)) nil)
+       ;; CASE 2: in a C or C++ style comment.
+       ((memq literal '(c c++)) t)
+       ;; CASE 3: Line is at top level.  May be comment-only line,
+       ;; data or function definition, or may be function argument
+       ;; declaration or member initialization.  Indent like the
+       ;; previous top level line unless:
+       ;;
+       ;; 1. the previous line ends in a closeparen without
+       ;; semicolon, in which case this line is the first
+       ;; argument declaration or member initialization, or
+       ;;
+       ;; 2. the previous line ends with a closeparen
+       ;; (closebrace), optional spaces, and a semicolon, in
+       ;; which case this line follows a multiline function
+       ;; declaration (class definition), or
+       ;;
+       ;; 3. the previous line begins with a colon, in which
+       ;; case this is the second line of member inits.  It is
+       ;; assumed that arg decls and member inits are not mixed.
+       ;;
+       ((setq inclass-depth (c++-at-top-level-p t bod))
+	(+
+	 ;; add an offset if we are inside a class defun body,
+	 ;; i.e. we are at the top level, but only wrt a
+	 ;; containing class
+	 (setq inclass-shift (* c-indent-level inclass-depth))
+	 (progn
+	   (goto-char indent-point)
+	   (skip-chars-forward " \t")
+	   (if (or (= (following-char) ?{)
+		   (progn
+		     (c++-backward-syntactic-ws parse-start)
+		     (bobp)))
+	       0
+	     (if (c++-in-function-p)
+		 (progn			; first arg decl or member init
+		   (goto-char indent-point)
 		   (skip-chars-forward " \t")
-		   (goto-char (min (+ (point) c++-empty-arglist-indent)
-				   (1+ containing-sexp)))
-		   (current-column))
-	       ;; In C-mode, we would always indent to one after the
-	       ;; left paren.  Here, though, we may have an
-	       ;; empty-arglist, so we'll indent to the min of that
-	       ;; and the beginning of the first argument.
-	       (goto-char (1+ containing-sexp))
-	       ;; we want to skip any whitespace b/w open paren and
-	       ;; first argurment. this handles while (thing) style
-	       ;; and while( thing ) style
-	       (skip-chars-forward " \t")
-	       (current-column)))
-	    (t
-	     ;; Statement.  Find previous non-comment character.
-	     (goto-char indent-point)
-	     (c++-backward-syntactic-ws containing-sexp)
-	     (if (not (memq char-before-ip '(nil ?\, ?\; ?} ?: ?\{)))
-		 ;; This line is continuation of preceding line's statement;
-		 ;; indent  c-continued-statement-offset  more than the
-		 ;; previous line of the statement.
-		 (progn
-		   (c-backward-to-start-of-continued-exp containing-sexp)
-		   ;; take care of << and >> while in streams
-		   (if (let ((here (point)))
+		   (if (= (following-char) ?:)
+		       c++-member-init-indent
+		     c-argdecl-indent))
+	       (if (= (preceding-char) ?\;)
+		   (progn
+		     (backward-char 1)
+		     (skip-chars-backward " \t")))
+	       ;; may be first line after a hanging member init
+	       ;; colon. check to be sure its not a scope
+	       ;; operator meaning we are inside a member def
+	       (if (or (= (preceding-char) ?:)
+		       (save-excursion
+			 (forward-line 1)
+			 (skip-chars-forward " \t")
+			 (or (eobp) (forward-char 1))
+			 (and (= (preceding-char) ?:)
+			      (/= (following-char) ?:)))
+		       (save-excursion
+			 (and (= (preceding-char) ?,)
+			      (let ((bol (c++-point 'bol)))
+				(skip-chars-backward "^:" bol)
+				(= (preceding-char) ?:))
+			      (not (c++-in-parens-p))
+			      (progn
+				(forward-char -1)
+				(skip-chars-backward " \t")
+				(not (bolp))))))
+		   ;; check to see if we're looking at a member
+		   ;; init, or access specifier
+		   (if (progn
+			 (beginning-of-line)
+			 (skip-chars-forward " \t")
+			 (looking-at c++-access-key))
+		       ;; access specifier. class defun opening brace
+		       ;; may not be in col zero
+		       (progn (goto-char (or containing-sexp bod))
+			      (current-indentation))
+		     ;; member init, so add offset
+		     c++-member-init-indent)
+		 (if (or (= (preceding-char) ?})
+			 (= (preceding-char) ?\))
 			 (save-excursion
-			   (and (progn
-				  (goto-char indent-point)
-				  (looking-at "[ \t]*\\(<<\\|>>\\)"))
-				(progn
-				  (goto-char here)
-				  (skip-chars-forward "^><\n")
-				  (setq streamop-pos (current-column))
-				  (looking-at "\\(<<\\|>>\\)")))))
-		       streamop-pos
-		     (+ (current-column)
-			;; j.peck hack to prevent repeated continued
-			;; indentation:
-			(if (save-excursion
-			      (beginning-of-line 1)
-			      (c++-backward-syntactic-ws containing-sexp)
-			      (memq (preceding-char)
-				    '(nil ?\, ?\; ?} ?: ?\{)))
-			    c-continued-statement-offset
-			  ;; the following statements *do* indent even
-			  ;; for single statements (are there others?)
-			  (if (looking-at
-			       "\\(do\\|else\\|for\\|if\\|while\\)\\b")
-			      c-continued-statement-offset
-			    ;; else may be a continued statement inside
-			    ;; a simple for/else/while/if/do loop
-			    (beginning-of-line 1)
-			    (forward-char -1)
-			    (c++-backward-syntactic-ws containing-sexp)
-			    (c-backward-to-start-of-continued-exp
-			     containing-sexp)
-			    (if (looking-at
-				 "\\(do\\|else\\|for\\|if\\|while\\)\\b")
-				c-continued-statement-offset
-			      0)))
-			;; j.peck  [8/13/91]
-			;; j.peck hack replaced this line:
-			;; \(+ c-continued-statement-offset (current-column)
-			;; Add continued-brace-offset? [weikart]
-			(save-excursion
-			  (goto-char indent-point)
-			  (skip-chars-forward " \t")
-			  (cond ((= (following-char) ?\{)
-				 c-continued-brace-offset)
-				((and (= (following-char) ?\})
-				      (progn (forward-char 1)
-					     (c++-at-top-level-p nil bod)))
-				 (- c-continued-statement-offset))
-				(t 0))))))
-	       ;; This line may start a new statement, or it could
-	       ;; represent the while closure of a do/while construct
-	       (if (save-excursion
-		     (and (progn (goto-char indent-point)
-				 (skip-chars-forward " \t\n")
-				 (looking-at "while\\b"))
-			  (progn
-			    (c++-backward-to-start-of-do containing-sexp)
-			    (looking-at "do\\b"))
-			  (setq do-indentation (current-column))))
-		   do-indentation
-		 ;; this could be a case statement. if so we want to
-		 ;; indent it like the first case statement after a switch
-		 (if (save-excursion
-		       (goto-char indent-point)
-		       (skip-chars-forward " \t\n")
-		       (looking-at "case\\b"))
+			   (beginning-of-line)
+			   (looking-at "[ \t]*\\<friend\\>")))
+		     ;; indentation of class defun opening brace
+		     ;; may not be zero
+		     (progn (goto-char (or containing-sexp bod))
+			    (current-indentation))
+		   ;; cont arg decls or member inits
+		   (beginning-of-line)
+		   ;; we might be inside a K&R C arg decl
+		   (if (save-excursion
+			 (c++-backward-syntactic-ws bod)
+			 (and (eq major-mode 'c++-c-mode)
+			      (= (preceding-char) ?\))))
+		       c-argdecl-indent
+		     (skip-chars-forward " \t")
+		     (if (or (memq (c++-in-literal bod) '(c c++))
+			     (looking-at "/[/*]"))
+			 0
+		       (if (= (following-char) ?:)
+			   (if c++-continued-member-init-offset
+			       (+ (current-indentation)
+				  c++-continued-member-init-offset)
+			     (progn
+			       (forward-char 1)
+			       (skip-chars-forward " \t")
+			       (- (current-column)
+				  inclass-shift)))
+			 ;; else first check to see if its a
+			 ;; multiple inheritance continuation line
+			 (if (looking-at
+			      (concat c++-class-key
+				      "[ \t]+"
+				      "\\(\\w+[ \t]*:[ \t]*\\)?"))
+			     (if (= char-before-ip ?,)
+				 (progn (goto-char (match-end 0))
+					(current-column))
+			       0)
+			   ;; we might be looking at the opening
+			   ;; brace of a class defun
+			   (if (= (following-char) ?\{)
+			       ;; indentation of opening brace may not
+			       ;; be zero
+			       (current-indentation)
+			     (if (eolp)
+				 ;; looking at a blank line, indent
+				 ;; next line to zero
+				 0
+			       (if (save-excursion
+				     (goto-char indent-point)
+				     (beginning-of-line)
+				     (bobp))
+				   ;; at beginning of buffer, if
+				   ;; nothing else, indent to zero 
+				   0
+				 (if (c++-in-parens-p)
+				     ;; we are perhaps inside a
+				     ;; member init call
+				     (while (and (c++-in-parens-p)
+						 (< bod (point)))
+				       (forward-line -1)
+				       (skip-chars-forward " \t")))
+				 ;; check to be sure that we're
+				 ;; not on the first line of the
+				 ;; member init list
+				 (if (= (following-char) ?:)
+				     (progn
+				       (forward-char 1)
+				       (skip-chars-forward " \t")))
+				 ;; subtract inclass-shift since
+				 ;; its already incorporated by
+				 ;; default in current-column
+				 (- (current-column) inclass-shift)
+				 )))))))))
+	       )))))
+       ;; CASE 4: line is expression, not statement. indent to just
+       ;; after the surrounding open -- unless empty arg list, in
+       ;; which case we do what c++-empty-arglist-indent says to do.
+       ((/= (char-after containing-sexp) ?{)
+	(if (and c++-empty-arglist-indent
+		 (or c++-always-arglist-indent-p
+		     (null (nth 2 state))
+		     ;; indicates empty arg list.  Use a heuristic: if
+		     ;; the first non-whitespace following left paren
+		     ;; on same line is not a comment, is not an empty
+		     ;; arglist.
+		     (save-excursion
+		       (goto-char (1+ containing-sexp))
+		       (looking-at "[ \t]*[/\n]"))))
+	    (progn
+	      (goto-char containing-sexp)
+	      (beginning-of-line)
+	      (skip-chars-forward " \t")
+	      (goto-char (min (+ (point) c++-empty-arglist-indent)
+			      (1+ containing-sexp)))
+	      (current-column))
+	  ;; In C-mode, we would always indent to one after the
+	  ;; left paren.  Here, though, we may have an
+	  ;; empty-arglist, so we'll indent to the min of that
+	  ;; and the beginning of the first argument.
+	  (goto-char (1+ containing-sexp))
+	  ;; we want to skip any whitespace b/w open paren and
+	  ;; first argurment. this handles while (thing) style
+	  ;; and while( thing ) style
+	  (skip-chars-forward " \t")
+	  (current-column)))
+       ;; CASE 5: Statement.  Find previous non-comment character.
+       (t
+	(goto-char indent-point)
+	(c++-backward-syntactic-ws containing-sexp)
+	(if (not (memq char-before-ip '(nil ?\, ?\; ?} ?: ?\{)))
+	    ;; This line is continuation of preceding line's statement;
+	    ;; indent  c-continued-statement-offset  more than the
+	    ;; previous line of the statement.
+	    (progn
+	      (c-backward-to-start-of-continued-exp containing-sexp)
+	      ;; take care of << and >> while in streams
+	      (if (let ((here (point)))
+		    (save-excursion
+		      (and (progn
+			     (goto-char indent-point)
+			     (looking-at "[ \t]*\\(<<\\|>>\\)"))
+			   (progn
+			     (goto-char here)
+			     (skip-chars-forward "^><\n")
+			     (setq streamop-pos (current-column))
+			     (looking-at "\\(<<\\|>>\\)")))))
+		  streamop-pos
+		(+ (current-column)
+		   ;; j.peck hack to prevent repeated continued
+		   ;; indentation:
+		   (if (save-excursion
+			 (beginning-of-line 1)
+			 (c++-backward-syntactic-ws containing-sexp)
+			 (memq (preceding-char)
+			       '(nil ?\, ?\; ?} ?: ?\{)))
+		       c-continued-statement-offset
+		     ;; the following statements *do* indent even
+		     ;; for single statements (are there others?)
+		     (if (looking-at
+			  "\\(do\\|else\\|for\\|if\\|while\\)\\b")
+			 c-continued-statement-offset
+		       ;; else may be a continued statement inside
+		       ;; a simple for/else/while/if/do loop
+		       (beginning-of-line 1)
+		       (forward-char -1)
+		       (c++-backward-syntactic-ws containing-sexp)
+		       (c-backward-to-start-of-continued-exp
+			containing-sexp)
+		       (if (looking-at
+			    "\\(do\\|else\\|for\\|if\\|while\\)\\b")
+			   c-continued-statement-offset
+			 0)))
+		   ;; j.peck  [8/13/91]
+		   ;; j.peck hack replaced this line:
+		   ;; \(+ c-continued-statement-offset (current-column)
+		   ;; Add continued-brace-offset? [weikart]
+		   (save-excursion
+		     (goto-char indent-point)
+		     (skip-chars-forward " \t")
+		     (cond
+		      ((= (following-char) ?\{)
+		       c-continued-brace-offset)
+		      ((and (= (following-char) ?\})
+			    (progn (forward-char 1)
+				   (c++-at-top-level-p nil bod)))
+		       (- c-continued-statement-offset))
+		      (t 0))))))
+	  ;; This line may start a new statement, or it could
+	  ;; represent the while closure of a do/while construct
+	  (if (save-excursion
+		(and (progn (goto-char indent-point)
+			    (skip-chars-forward " \t\n")
+			    (looking-at "while\\b"))
 		     (progn
-		       (goto-char containing-sexp)
-		       (back-to-indentation)
-		       (+ (current-column) c-indent-level))
-		   ;; else, this is the start of a new statement
-		   ;; Position following last unclosed open.
-		   (goto-char containing-sexp)
-		   ;; Is line first statement after an open-brace?
-		   (or
-		    (and c++-relative-offset-p
-			 ;; If no, find that first statement and
-			 ;; indent like it.
-			 (save-excursion
-			   (forward-char 1)
-			   (while (progn (skip-chars-forward " \t\n")
-					 (looking-at
-					  (concat
-					   "#\\|/\\*\\|//"
-					   "\\|\\(case\\|default\\)[ \t]"
-					   "\\|[a-zA-Z0-9_$]*:[^:]"
-					   "\\|friend[ \t]"
-					   c++-class-key
-					   "[ \t]")))
-			     ;; Skip over comments and labels
-			     ;; following openbrace.
-			     (cond
-			      ((= (following-char) ?\#)
-			       (forward-line 1))
-			      ((looking-at "/\\*")
-			       (search-forward "*/" nil 'move))
-			      ((looking-at
-				(concat "//\\|friend[ \t]" c++-class-key
-					"[ \t]"))
-			       (forward-line 1))
-			      ((looking-at "\\(case\\|default\\)\\b")
-			       (forward-line 1))
-			      (t
-			       (re-search-forward ":[^:]" nil 'move))))
-			   ;; The first following code counts
-			   ;; if it is before the line we want to indent.
-			   (and (< (point) indent-point)
-				(+ (current-column)
-				   ;; check if this is a true
-				   ;; statement continuation, not a
-				   ;; list of enums or static arrays elems
-				   (if (and
-					(= char-before-ip ?,)
-					(c++-in-function-p containing-sexp))
-				       c-indent-level 0)))))
-		    ;; If no previous statement, indent it relative to
-		    ;; line brace is on.  For open brace in column
-		    ;; zero, don't let statement start there too.  If
-		    ;; c-indent-offset is zero, use c-brace-offset +
-		    ;; c-continued-statement-offset instead.  For
-		    ;; open-braces not the first thing in a line, add
-		    ;; in c-brace-imaginary-offset.
-		    (+ (if (and (bolp) (zerop c-indent-level))
-			   (+ c-brace-offset c-continued-statement-offset)
-			 c-indent-level)
-		       ;; Move back over whitespace before the openbrace.
-		       ;; If openbrace is not first nonwhite thing on the line,
-		       ;; add the c-brace-imaginary-offset.
-		       (progn (skip-chars-backward " \t")
-			      (if (bolp) 0 c-brace-imaginary-offset))
-		       ;; If the openbrace is preceded by a parenthesized exp,
-		       ;; move to the beginning of that;
-		       ;; possibly a different line
-		       (progn
-			 (if (eq (preceding-char) ?\))
-			     (forward-sexp -1))
-			 ;; Get initial indentation of the line we are on.
-			 (current-indentation))))))))))))
+		       (c++-backward-to-start-of-do containing-sexp)
+		       (looking-at "do\\b"))
+		     (setq do-indentation (current-column))))
+	      do-indentation
+	    ;; this could be a case statement. if so we want to
+	    ;; indent it like the first case statement after a switch
+	    (if (save-excursion
+		  (goto-char indent-point)
+		  (skip-chars-forward " \t\n")
+		  (looking-at "case\\b"))
+		(progn
+		  (goto-char containing-sexp)
+		  (back-to-indentation)
+		  (+ (current-column) c-indent-level))
+	      ;; else, this is the start of a new statement
+	      ;; Position following last unclosed open.
+	      (goto-char containing-sexp)
+	      ;; Is line first statement after an open-brace?
+	      (or
+	       (and c++-relative-offset-p
+		    ;; If no, find that first statement and
+		    ;; indent like it.
+		    (save-excursion
+		      (forward-char 1)
+		      (while (progn (skip-chars-forward " \t\n")
+				    (looking-at
+				     (concat
+				      "#\\|/\\*\\|//"
+				      "\\|\\(case\\|default\\)[ \t]"
+				      "\\|[a-zA-Z0-9_$]*:[^:]"
+				      "\\|friend[ \t]"
+				      c++-class-key
+				      "[ \t]")))
+			;; Skip over comments and labels
+			;; following openbrace.
+			(cond
+			 ((= (following-char) ?\#)
+			  (forward-line 1))
+			 ((looking-at "/\\*")
+			  (search-forward "*/" nil 'move))
+			 ((looking-at
+			   (concat "//\\|friend[ \t]" c++-class-key
+				   "[ \t]"))
+			  (forward-line 1))
+			 ((looking-at "\\(case\\|default\\)\\b")
+			  (forward-line 1))
+			 (t
+			  (re-search-forward ":[^:]" nil 'move))))
+		      ;; The first following code counts
+		      ;; if it is before the line we want to indent.
+		      (and (< (point) indent-point)
+			   (+ (current-column)
+			      ;; check if this is a true
+			      ;; statement continuation, not a
+			      ;; list of enums or static arrays elems
+			      (if (and
+				   (= char-before-ip ?,)
+				   (c++-in-function-p containing-sexp))
+				  c-indent-level 0)))))
+	       ;; If no previous statement, indent it relative to
+	       ;; line brace is on.  For open brace in column
+	       ;; zero, don't let statement start there too.  If
+	       ;; c-indent-offset is zero, use c-brace-offset +
+	       ;; c-continued-statement-offset instead.  For
+	       ;; open-braces not the first thing in a line, add
+	       ;; in c-brace-imaginary-offset.
+	       (+ (if (and (bolp) (zerop c-indent-level))
+		      (+ c-brace-offset c-continued-statement-offset)
+		    c-indent-level)
+		  ;; Move back over whitespace before the openbrace.
+		  ;; If openbrace is not first nonwhite thing on the line,
+		  ;; add the c-brace-imaginary-offset.
+		  (progn (skip-chars-backward " \t")
+			 (if (bolp) 0 c-brace-imaginary-offset))
+		  ;; If the openbrace is preceded by a parenthesized exp,
+		  ;; move to the beginning of that;
+		  ;; possibly a different line
+		  (progn
+		    (if (eq (preceding-char) ?\))
+			(forward-sexp -1))
+		    ;; Get initial indentation of the line we are on.
+		    (current-indentation))))))))))))
 
 (defun c++-calculate-c-indent-within-comment ()
   "Return the indentation amount for line, assuming that
@@ -2002,10 +2025,11 @@ the current line is to be regarded as part of a block comment."
       (skip-chars-forward " \t")
       (if (re-search-forward "/\\*[ \t]*" end t)
 	  (goto-char (+ (match-beginning 0)
-			(cond (c++-C-block-comments-indent-p 0)
-			      ((= stars 1) 1)
-			      ((= stars 2) 0)
-			      (t (- (match-end 0) (match-beginning 0)))))))
+			(cond
+			 (c++-C-block-comments-indent-p 0)
+			 ((= stars 1) 1)
+			 ((= stars 2) 0)
+			 (t (- (match-end 0) (match-beginning 0)))))))
       (current-column))))
 
 (defun c++-comment-offset (col0-line-p indent)
@@ -2109,14 +2133,15 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
       (condition-case err
 	  (progn
 	    (backward-sexp 1)
-	    (cond ((memq (c++-in-literal limit) '(c c++)))
-		  ((looking-at "while\\b")
-		   (setq do-level (1+ do-level)))
-		  ((looking-at "do\\b")
-		   (setq do-level (1- do-level)))
-		  ((< (point) limit)
-		   (setq do-level 0)
-		   (goto-char limit))))
+	    (cond
+	     ((memq (c++-in-literal limit) '(c c++)))
+	     ((looking-at "while\\b")
+	      (setq do-level (1+ do-level)))
+	     ((looking-at "do\\b")
+	      (setq do-level (1- do-level)))
+	     ((< (point) limit)
+	      (setq do-level 0)
+	      (goto-char limit))))
 	(error
 	 (goto-char limit)
 	 (setq do-level 0))))))
@@ -2139,11 +2164,12 @@ POSITION can be one of the following symbols:
   boi -- back to indentation
 This function does not modify point or mark."
   (let ((here (point)) bufpos)
-    (cond ((eq position 'bol) (beginning-of-line))
-	  ((eq position 'eol) (end-of-line))
-	  ((eq position 'bod) (c++-beginning-of-defun))
-	  ((eq position 'boi) (back-to-indentation))
-	  )
+    (cond
+     ((eq position 'bol) (beginning-of-line))
+     ((eq position 'eol) (end-of-line))
+     ((eq position 'bod) (c++-beginning-of-defun))
+     ((eq position 'boi) (back-to-indentation))
+     )
     (setq bufpos (point))
     (goto-char here)
     bufpos))
@@ -2319,27 +2345,28 @@ function definition.")
   (let ((c++-defun-header (if c++-match-header-strongly
 			      c++-defun-header-strong
 			    c++-defun-header-weak)))
-    (cond ((or (= arg 0) (and (> arg 0) (bobp))) nil)
-	  ((and (not (looking-at c++-defun-header))
-		(let ((curr-pos (point))
-		      (open-pos (if (search-forward "{" nil 'move)
-				    (point)))
-		      (beg-pos
-			(if (re-search-backward c++-defun-header nil 'move)
-			    (match-beginning 0))))
-		  (if (and open-pos beg-pos
-			   (< beg-pos curr-pos)
-			   (> open-pos curr-pos))
-		      (progn
-			(goto-char beg-pos)
-			(if (= arg 1) t nil));; Are we done?
-		    (goto-char curr-pos)
-		    nil))))
-	  (t
-	    (if (and (looking-at c++-defun-header) (not (bobp)))
-		(forward-char (if (< arg 0) 1 -1)))
-	    (and (re-search-backward c++-defun-header nil 'move (or arg 1))
-		 (goto-char (match-beginning 0)))))))
+    (cond
+     ((or (= arg 0) (and (> arg 0) (bobp))) nil)
+     ((and (not (looking-at c++-defun-header))
+	   (let ((curr-pos (point))
+		 (open-pos (if (search-forward "{" nil 'move)
+			       (point)))
+		 (beg-pos
+		  (if (re-search-backward c++-defun-header nil 'move)
+		      (match-beginning 0))))
+	     (if (and open-pos beg-pos
+		      (< beg-pos curr-pos)
+		      (> open-pos curr-pos))
+		 (progn
+		   (goto-char beg-pos)
+		   (if (= arg 1) t nil));; Are we done?
+	       (goto-char curr-pos)
+	       nil))))
+     (t
+      (if (and (looking-at c++-defun-header) (not (bobp)))
+	  (forward-char (if (< arg 0) 1 -1)))
+      (and (re-search-backward c++-defun-header nil 'move (or arg 1))
+	   (goto-char (match-beginning 0)))))))
 
 
 (defun c++-end-of-defun (arg)
@@ -2385,7 +2412,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.258 $"
+(defconst c++-version "$Revision: 2.259 $"
   "c++-mode version number.")
 
 (defun c++-version ()
