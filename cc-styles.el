@@ -129,6 +129,7 @@
 				(block-close . c-snug-do-while)
 				))
      (c-comment-continuation-stars . "")
+     (c-hanging-comment-ender-p . nil)
      )
     ("java"
      (c-basic-offset . 2)
