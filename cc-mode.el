@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.194 $
-;; Last Modified:   $Date: 1995-04-17 16:48:06 $
+;; Version:         $Revision: 4.195 $
+;; Last Modified:   $Date: 1995-04-17 22:48:26 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-17 16:48:06 $|$Revision: 4.194 $|
+;; |$Date: 1995-04-17 22:48:26 $|$Revision: 4.195 $|
 
 ;;; Code:
 
@@ -302,12 +302,15 @@ according to syntactic analysis via `c-offsets-alist', even when
 (defvar c-block-comments-indent-p nil
   "*Specifies how to re-indent C style block comments.
 
-4 styles of C block comments are supported.  If this variable is nil,
-then styles 1-3 are supported.  If this variable is non-nil, style 4
-only is supported.  Note that this currently has *no* effect on how
-comments are lined up or whether stars are inserted when C comments
-are auto-filled.  In any case, you still have to insert the stars
-manually.
+Four styles of C block comment indentation are supported, as shown
+below.  When this variable is nil, block comments are indented as
+shown in styles 1 through 3.  If this variable is non-nil, block
+comments are indented as shown in style 4.
+
+Note that cc-mode does not automatically insert any stars or block
+comment delimiters.  You must type these in manually.  This variable
+only controls how the lines within the block comment are indented when
+you hit ``\\[c-indent-command]''.
 
  style 1:       style 2:       style 3:       style 4:
  /*             /*             /*             /*
@@ -4562,7 +4565,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.194 $"
+(defconst c-version "$Revision: 4.195 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
