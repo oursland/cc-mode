@@ -1530,18 +1530,19 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (or (eq (point) last-cast-end)
 		      (progn
 			(c-backward-syntactic-ws)
-			(or (bobp)
-			    (and
-			     (progn
-			       (backward-char)
-			       ;; Check for a word or symbol char first since
-			       ;; `c-on-identifier' returns nil on keywords
-			       ;; and a paren after a keyword is not a cast.
-			       (not (looking-at "\\sw\\|\\s_\\|[\]\)]")))
-			     (progn
-			       (forward-char)
-			       (not (c-on-identifier))))))))))
+			(if (< (skip-syntax-backward "w_") 0)
+			    ;; It's a symbol.  Accept it only if it's one of
+			    ;; the keywords that can precede an expression
+			    ;; (without surrounding parens).
+			    (looking-at c-simple-stmt-key)
+			  (and
+			   ;; Check that it isn't a close paren (block close
+			   ;; is ok, though).
+			   (not (memq (char-before) '(?\) ?\])))
+			   ;; Check that it isn't a nonsymbol identifier.
+			   (not (c-on-identifier)))))))))
 
+	     ;; Handle the cast.
 	     (setq last-cast-end cast-end)
 	     (when (and at-type (not (eq at-type t)))
 	       (let ((c-promote-possible-types t))
