@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.52 $
-;; Last Modified:   $Date: 1993-11-17 15:31:07 $
+;; Version:         $Revision: 3.53 $
+;; Last Modified:   $Date: 1993-11-17 17:10:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-17 15:31:07 $|$Revision: 3.52 $|
+;; |$Date: 1993-11-17 17:10:45 $|$Revision: 3.53 $|
 
 ;;; Code:
 
@@ -431,7 +431,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.52 $
+  "Major mode for editing C++ code.  $Revision: 3.53 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -462,7 +462,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.52 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.53 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -753,11 +753,7 @@ literal, nothing special happens."
 	(setq semantics (cc-guess-basic-semantics bod)))
       ;; now adjust the line's indentation
       (cc-indent-via-language-element bod semantics)
-      ;; does a newline go after the brace?
-      (if (memq 'after (cdr-safe newlines))
-	  (progn
-	    (newline)
-	    (cc-indent-via-language-element)))
+      ;; Do all appropriate clean ups
       (let ((here (point))
 	    (pos (- (point-max) (point))))
 	;; clean up empty defun braces
@@ -785,6 +781,12 @@ literal, nothing special happens."
 	    (delete-region mbeg mend))
 	(goto-char (- (point-max) pos))
 	)
+      ;; does a newline go after the brace?
+      (if (memq 'after (cdr-safe newlines))
+	  (progn
+	    (newline)
+	    (cc-indent-via-language-element)))
+      ;; blink the paren
       (and (= last-command-char ?\})
 	   old-blink-paren-function
 	   (save-excursion
@@ -2315,7 +2317,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.52 $"
+(defconst cc-version "$Revision: 3.53 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
