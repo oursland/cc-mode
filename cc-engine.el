@@ -4947,15 +4947,16 @@ comment at the start of cc-engine.el for more info."
 
 (defun c-forward-decl-or-cast-1 (preceding-token-end context last-cast-end)
   ;; Move forward over a declaration or a cast if at the start of one.
-  ;; The point is assumed to be at the start of some token.  The point
-  ;; is clobbered on return if no declaration or cast is recognized.
+  ;; The point is assumed to be at the start of some token.  Nil is
+  ;; returned if no declaration or cast is recognized, and the point
+  ;; is clobbered in that case.
   ;;
   ;; If a declaration is parsed:
   ;;
-  ;;   If a declaration is parsed: The point is left at the first
-  ;;   token after the first complete declarator, if there is one.
-  ;;   The return value is a cons where the car is the position of the
-  ;;   first token in the declarator.  Some examples:
+  ;;   The point is left at the first token after the first complete
+  ;;   declarator, if there is one.  The return value is a cons where
+  ;;   the car is the position of the first token in the declarator.
+  ;;   Some examples:
   ;;
   ;; 	 void foo (int a, char *b) stuff ...
   ;; 	  car ^                    ^ point
@@ -7221,14 +7222,11 @@ comment at the start of cc-engine.el for more info."
 	     (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
 		 'same)
 	     (save-excursion
-	       ;; Look for a type followed by a symbol, i.e. the start of a
-	       ;; function declaration.  Doesn't work for declarations like
-	       ;; "int *foo() ..."; we'd need to refactor the more competent
-	       ;; analysis in `c-font-lock-declarations' for that.
-	       (and (c-forward-type)
-		    (progn
-		      (c-forward-syntactic-ws)
-		      (looking-at c-symbol-start)))))
+	       (let ((c-recognize-typeless-decls nil))
+		 ;; Turn off recognition of constructs that lacks a
+		 ;; type in this case, since that's more likely to be
+		 ;; a macro followed by a block.
+		 (c-forward-decl-or-cast-1 (c-point 'bosws) nil nil))))
 	(c-add-syntax 'defun-open nil)
 	(c-anchor-stmt t containing-sexp paren-state))
 
@@ -7273,14 +7271,11 @@ comment at the start of cc-engine.el for more info."
 	   (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
 	       'same)
 	   (save-excursion
-	     ;; Look for a type followed by a symbol, i.e. the start of a
-	     ;; function declaration.  Doesn't work for declarations like "int
-	     ;; *foo() ..."; we'd need to refactor the more competent analysis
-	     ;; in `c-font-lock-declarations' for that.
-	     (and (c-forward-type)
-		  (progn
-		    (c-forward-syntactic-ws)
-		    (looking-at c-symbol-start)))))
+	     (let ((c-recognize-typeless-decls nil))
+	       ;; Turn off recognition of constructs that lacks a
+	       ;; type in this case, since that's more likely to be
+	       ;; a macro followed by a block.
+	       (c-forward-decl-or-cast-1 (c-point 'bosws) nil nil))))
       (c-add-syntax 'func-decl-cont nil)
       (c-anchor-stmt t containing-sexp paren-state))
 
@@ -8427,15 +8422,11 @@ comment at the start of cc-engine.el for more info."
 		(and (not (c-looking-at-bos))
 		     (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
 		     (setq placeholder (point))
-		     ;; Look for a type or identifier followed by a
-		     ;; symbol, i.e. the start of a function declaration.
-		     ;; Doesn't work for declarations like "int *foo()
-		     ;; ..."; we'd need to refactor the more competent
-		     ;; analysis in `c-font-lock-declarations' for that.
-		     (c-forward-type)
-		     (progn
-		       (c-forward-syntactic-ws)
-		       (looking-at c-symbol-start))))
+		     (let ((c-recognize-typeless-decls nil))
+		       ;; Turn off recognition of constructs that
+		       ;; lacks a type in this case, since that's more
+		       ;; likely to be a macro followed by a block.
+		       (c-forward-decl-or-cast-1 (c-point 'bosws) nil nil))))
 	      (back-to-indentation)
 	      (if (/= (point) containing-sexp)
 		  (goto-char placeholder))
@@ -8580,15 +8571,11 @@ comment at the start of cc-engine.el for more info."
 	      (and (not (c-looking-at-bos))
 		   (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
 		   (setq placeholder (point))
-		   ;; Look for a type or identifier followed by a
-		   ;; symbol, i.e. the start of a function declaration.
-		   ;; Doesn't work for declarations like "int *foo()
-		   ;; ..."; we'd need to refactor the more competent
-		   ;; analysis in `c-font-lock-declarations' for that.
-		   (c-forward-type)
-		   (progn
-		     (c-forward-syntactic-ws)
-		     (looking-at c-symbol-start))))
+		   (let ((c-recognize-typeless-decls nil))
+		     ;; Turn off recognition of constructs that lacks
+		     ;; a type in this case, since that's more likely
+		     ;; to be a macro followed by a block.
+		     (c-forward-decl-or-cast-1 (c-point 'bosws) nil nil))))
 	    (back-to-indentation)
 	    (if (/= (point) containing-sexp)
 		(goto-char placeholder))
