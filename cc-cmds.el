@@ -779,7 +779,12 @@ keyword on the line, the keyword is not inserted inside a literal, and
 		    (point))
 		  (c-point 'boi))
 	       (not (c-in-literal (c-point 'bod))))
-      (indent-according-to-mode))))
+      ;; Have to temporarily insert the character so that
+      ;; c-guess-basic-syntax recognizes the keyword.
+      (insert last-command-char)
+      (unwind-protect
+	  (indent-according-to-mode)
+	(delete-char -1)))))
 
 
 ;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
@@ -2156,7 +2161,7 @@ command to conveniently insert and align the necessary backslashes."
 		  '("" . 0))))))
     ))
 
-(defun c-mask-comment (dont-ignore-ender fun &rest args)
+(defun c-mask-comment (dont-ignore-ender apply-outside-literal fun &rest args)
   ;; Calls FUN with ARGS ar arguments.  If point is inside a comment,
   ;; the comment starter and ender are masked and the buffer is
   ;; narrowed to make it look like a normal paragraph during the call.
@@ -2392,7 +2397,8 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 		  ;	  (goto-char (+ beg point-rel))
 		  ;	(goto-char (+ end point-rel))))
 		  ))
-	    (apply fun args)))
+	    (when apply-outside-literal
+	      (apply fun args))))
       (when (consp tmp-pre)
 	(delete-region (car tmp-pre) (cdr tmp-pre)))
       (when tmp-post
@@ -2437,7 +2443,7 @@ Optional prefix ARG means justify paragraph as well."
 	 ;; Avoid infinite recursion.
 	 (if (not (eq fill-paragraph-function 'c-fill-paragraph))
 	     fill-paragraph-function)))
-    (c-mask-comment t 'fill-paragraph arg))
+    (c-mask-comment t nil 'fill-paragraph arg))
   ;; Always return t.  This has the effect that if filling isn't done
   ;; above, it isn't done at all, and it's therefore effectively
   ;; disabled in normal code.
@@ -2454,7 +2460,7 @@ Optional prefix ARG means justify paragraph as well."
 	 ;; also used to detect whether fill-prefix is user set or
 	 ;; generated automatically by do-auto-fill.
 	 fill-prefix))
-    (c-mask-comment nil 'do-auto-fill)))
+    (c-mask-comment nil t 'do-auto-fill)))
 
 (defun c-indent-new-comment-line (&optional soft)
   "Break line at point and indent, continuing comment if within one.
