@@ -2392,10 +2392,21 @@ Keywords are recognized and not considered identifiers."
 ;; determining the syntactic analysis of the current line of code.
 ;; Yes, it's huge and bloated!
 
-;; It's useful to break out some parts of the decision tree to
-;; separate functions, which are all collected below.  Use dynamic
-;; binding to propagate back the syntax results from them.
-(defvar syntax)
+;; c-guess-basic-syntax and the preceding functions below implements
+;; the main decision tree for determining the syntactic analysis of
+;; the current line of code.
+
+(defsubst c-add-syntax (symbol &rest args)
+  ;; A simple function to prepend a new syntax element to
+  ;; c-syntactic-context.
+  (setq c-syntactic-context (cons (cons symbol args)
+				  c-syntactic-context)))
+
+(defsubst c-append-syntax (symbol &rest args)
+  ;; Like `c-add-syntax' but appends to the end of the syntax list.
+  ;; (Normally not necessary.)
+  (setq c-syntactic-context (nconc c-syntactic-context
+				   (list (cons symbol args)))))
 
 (defun c-add-stmt-syntax (syntax-symbol
 			  stop-at-boi-only
@@ -2678,7 +2689,7 @@ Keywords are recognized and not considered identifiers."
 	     (case-fold-search nil)
 	     (paren-state (c-parse-state))
 	     literal containing-sexp char-before-ip char-after-ip lim
-	     syntax placeholder c-in-literal-cache step-type
+	     c-syntactic-context placeholder c-in-literal-cache step-type
 	     tmpsymbol keyword injava-inher special-brace-list
 	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class paren-state
@@ -3516,7 +3527,7 @@ Keywords are recognized and not considered identifiers."
 	    (if (and (bolp)
 		     (assoc 'statement-cont
 			    (setq placeholder (c-guess-basic-syntax))))
-		(setq syntax placeholder)
+		(setq c-syntactic-context placeholder)
 	      (c-beginning-of-statement-1
 	       (c-safe-position (1- containing-sexp) paren-state))
 	      (c-forward-token-1 0)
@@ -3847,7 +3858,7 @@ Keywords are recognized and not considered identifiers."
 	  (c-add-syntax 'friend))
 
 	;; Set syntactic-relpos.
-	(let ((p syntax))
+	(let ((p c-syntactic-context))
 	  (while (and p
 		      (if (integerp (car-safe (cdr-safe (car p))))
 			  (progn
@@ -3864,21 +3875,23 @@ Keywords are recognized and not considered identifiers."
 	    (c-add-syntax 'cpp-macro)
 	  (when (and c-syntactic-indentation-in-macros macro-start)
 	    (if in-macro-expr
-		(when (or (< syntactic-relpos macro-start)
-			  (not (or (assq 'arglist-intro syntax)
-				   (assq 'arglist-cont syntax)
-				   (assq 'arglist-cont-nonempty syntax)
-				   (assq 'arglist-close syntax))))
+		(when (or
+		       (< syntactic-relpos macro-start)
+		       (not (or
+			     (assq 'arglist-intro c-syntactic-context)
+			     (assq 'arglist-cont c-syntactic-context)
+			     (assq 'arglist-cont-nonempty c-syntactic-context)
+			     (assq 'arglist-close c-syntactic-context))))
 		  ;; If inside a cpp expression, i.e. anywhere in a
 		  ;; cpp directive except a #define body, we only let
 		  ;; through the syntactic analysis that is internal
 		  ;; in the expression.  That means the arglist
 		  ;; elements, if they are anchored inside the cpp
 		  ;; expression.
-		  (setq syntax nil)
+		  (setq c-syntactic-context nil)
 		  (c-add-syntax 'cpp-macro-cont macro-start))
 	      (when (and (eq macro-start syntactic-relpos)
-			 (not (assq 'cpp-define-intro syntax))
+			 (not (assq 'cpp-define-intro c-syntactic-context))
 			 (save-excursion
 			   (goto-char macro-start)
 			   (or (not (c-forward-to-cpp-define-body))
@@ -3889,7 +3902,7 @@ Keywords are recognized and not considered identifiers."
 		;; indentation of the #define body.
 		(c-add-syntax 'cpp-define-intro)))))
 	;; return the syntax
-	syntax))))
+	c-syntactic-context))))
 
 
 (defun c-echo-parsing-error (&optional quiet)
