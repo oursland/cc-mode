@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-05 21:13:54 $
-;; Version:         $Revision: 2.88 $
+;; Last Modified:   $Date: 1992-06-08 15:56:40 $
+;; Version:         $Revision: 2.89 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-05 21:13:54 $|$Revision: 2.88 $|
+;; |$Date: 1992-06-08 15:56:40 $|$Revision: 2.89 $|
 
 
 ;; ======================================================================
@@ -207,7 +207,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.88 $
+  "Major mode for editing C++ code.  $Revision: 2.89 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -643,7 +643,7 @@ for member initialization list."
   (interactive "P")
   (let ((c++-auto-newline c++-auto-newline)
 	(insertion-point (point))
-	(bod (save-excursion (c++-beginning-of-defun) (point))))
+	(bod (c++-point-bod)))
     (save-excursion
       (cond
        ;; check for double-colon where the first colon is not in a
@@ -667,15 +667,26 @@ for member initialization list."
        ;; init list. if not, continue
        ((progn (c++-backward-to-noncomment bod)
 	       (= (preceding-char) ?\)))
+	(goto-char insertion-point)
 	;; at a member init list, figure out about auto newlining. if
-	;; t or 'before, then no post-colon newline
-	(if (memq c++-hanging-member-init-colon '(t before))
-	    (setq c++-auto-newline nil))
+	;; nil or before then put a newline before the colon and
+	;; adjust the insertion point, but *only* if there is no
+	;; newline already before the insertion point
 	(if (memq c++-hanging-member-init-colon '(nil before))
-	    (let ((c++-auto-newline t))
-	      (c++-auto-newline))))
+	    (if (not (save-excursion (skip-chars-backward " \t")
+				     (bolp)))
+		(let ((c++-auto-newline t))
+		  (c++-auto-newline)
+		  (setq insertion-point (point)))))
+	;; if hanging colon is after or nil, then newline is inserted
+	;; after colon. set up variable so c++-electric-terminator
+	;; places the newline correctly
+	(setq c++-auto-newline
+	      (memq c++-hanging-member-init-colon '(nil after))))
+       ;; last condition is always put newline after colon
        (t (setq c++-auto-newline nil))
-       )) ;end-cond, end-save-exc
+       )) ; end-cond, end-save-excursion
+    (goto-char insertion-point)
     (c++-electric-terminator arg)))
 
 (defun c++-electric-terminator (arg)
@@ -1206,7 +1217,9 @@ BOD is the beginning of the C++ definition."
 	       (if (= (following-char) ?{)
 		   0   ; Unless it starts a function body
 		 (c++-backward-to-noncomment (or parse-start (point-min)))
-		 (if (not (bobp)) (forward-char -1))
+		 (if (not (bobp))
+		     (progn (forward-char -1)
+			    (skip-chars-backward " \t")))
 		 (if (or (= (preceding-char) ?\))
 			 (and (= (preceding-char) ?t)
 			      (save-excursion
@@ -1729,7 +1742,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.88 $"
+(defconst c++-version "$Revision: 2.89 $"
   "c++-mode version number.")
 
 (defun c++-version ()
