@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.326 $
-;; Last Modified:   $Date: 1996-11-11 18:38:41 $
+;; Version:         $Revision: 4.327 $
+;; Last Modified:   $Date: 1996-12-03 17:07:18 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1248,6 +1248,9 @@ The expansion is entirely correct because it uses the C preprocessor."
 			     c-C-conditionals) "\\|")
 	  "\\)\\b[^_]")
   "Regexp describing a conditional control for Java.")
+(defconst c-Java-defun-prompt-regexp
+  "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f]*\\)+\\)?\\s-*"
+  "Regexp describing the beginning of a Java top-level definition.")
 
 ;; KLUDGE ALERT.  We default these variables to their `C' values so
 ;; that non-cc-mode-ized modes that depend on c-mode will still work
@@ -1412,7 +1415,8 @@ Key bindings:
 	c-double-slash-is-comments-p t
  	c-baseclass-key nil
 	c-recognize-knr-p nil
- 	c-access-key c-Java-access-key)
+ 	c-access-key c-Java-access-key
+	defun-prompt-regexp c-Java-defun-prompt-regexp)
   (c-set-style "java")
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook))
@@ -5018,7 +5022,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.326 $"
+(defconst c-version "$Revision: 4.327 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
