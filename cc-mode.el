@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-10 19:34:05 $
-;; Version:         $Revision: 2.147 $
+;; Last Modified:   $Date: 1992-07-10 21:53:23 $
+;; Version:         $Revision: 2.148 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -74,7 +74,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-10 19:34:05 $|$Revision: 2.147 $|
+;; |$Date: 1992-07-10 21:53:23 $|$Revision: 2.148 $|
 
 
 ;; ======================================================================
@@ -282,7 +282,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.147 $
+  "Major mode for editing C++ code.  $Revision: 2.148 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1147,8 +1147,8 @@ defaults to point-max."
 (defun c++-at-top-level-p (&optional wrt)
   "Return t if point is not inside a containing C++ expression, nil
 if it is embedded in an expression.  If optional WRT is supplied
-non-nil, returns t if point at the top level with respect to the
-containing class definition (useful for inline functions)."
+non-nil, returns nil if not at the top level with respect to an
+enclosing class, or the depth of class nesting at point."
   (save-excursion
     (let ((indent-point (point))
 	  (case-fold-search nil)
@@ -1161,17 +1161,20 @@ containing class definition (useful for inline functions)."
       (if (or (not wrt)
 	      (null containing-sexp))
 	  (if wrt 0 (null containing-sexp))
-	;; calculate depth wrt containing (possibly nested) classes
-	(goto-char containing-sexp)
-	(while (and (setq foundp (re-search-backward
-				  "\\<\\(class\\|struct\\)\\>" (point-min) t))
-		    (c++-in-literal)))
-	(setq state (c++-parse-state containing-sexp))
-	(and foundp
-	     (not (nth 1 state))
-	     (nth 2 state)
-	     paren-depth))
-      )))
+	(if (c++-in-parens-p)
+	    nil
+	  ;; calculate depth wrt containing (possibly nested) classes
+	  (goto-char containing-sexp)
+	  (while (and (setq foundp (re-search-backward
+				    "\\<\\(class\\|struct\\)\\>"
+				    (point-min) t))
+		      (c++-in-literal)))
+	  (setq state (c++-parse-state containing-sexp))
+	  (and foundp
+	       (not (nth 1 state))
+	       (nth 2 state)
+	       paren-depth))
+	))))
 
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
@@ -1975,7 +1978,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.147 $"
+(defconst c++-version "$Revision: 2.148 $"
   "c++-mode version number.")
 
 (defun c++-version ()
