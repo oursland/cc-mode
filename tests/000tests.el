@@ -367,12 +367,21 @@
   (if (consp resetp)
       (setq finished-tests nil))
   ;; TBD: HACK HACK HACK
-  (let ((old-c-echo-parsing-error (symbol-function 'c-echo-parsing-error)))
+  (let ((old-c-echo-parsing-error (symbol-function 'c-echo-parsing-error))
+	(total-errors 0))
     (fset 'c-echo-parsing-error 'shutup-parsing-error)
     (unwind-protect
-	(mapcar 'do-one-test list-of-tests)
-      (fset 'c-echo-parsing-error old-c-echo-parsing-error)))
-  (message "All tests passed!")
+	(mapcar (function (lambda (test)
+			    (condition-case nil
+				(do-one-test test)
+			      (error
+			       (setq total-errors (1+ total-errors)))
+			      )))
+		list-of-tests)
+      (fset 'c-echo-parsing-error old-c-echo-parsing-error))
+    (if (zerop total-errors)
+	(message "All tests passed!")
+      (message "Broken files encountered: %d" total-errors)))
   (setq finished-tests nil))
 
 (defun resfile ()
