@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.280 $
-;; Last Modified:   $Date: 1996-02-05 15:54:08 $
+;; Version:         $Revision: 4.281 $
+;; Last Modified:   $Date: 1996-02-06 22:35:36 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1365,7 +1365,7 @@ Key bindings:
   ;; Emacs 19.30 and beyond only, AFAIK
   (if (boundp 'fill-paragraph-function)
       (progn
-	(make-local-variable 'fill-paragraph-functoin)
+	(make-local-variable 'fill-paragraph-function)
 	(setq fill-paragraph-function 'c-fill-paragraph)))
   ;; now set their values
   (setq paragraph-start (if (memq 'new-re c-emacs-features)
@@ -4801,7 +4801,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.280 $"
+(defconst c-version "$Revision: 4.281 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
