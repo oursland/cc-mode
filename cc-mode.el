@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.352 $
-;; Last Modified:   $Date: 1993-06-21 21:40:15 $
+;; Version:         $Revision: 2.353 $
+;; Last Modified:   $Date: 1993-06-23 13:58:52 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-21 21:40:15 $|$Revision: 2.352 $|
+;; |$Date: 1993-06-23 13:58:52 $|$Revision: 2.353 $|
 
 ;;; Code:
 
@@ -487,7 +487,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.352 $
+  "Major mode for editing C++ code.  $Revision: 2.353 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -704,7 +704,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.352 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.353 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1583,7 +1583,11 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
 	  (unwind-protect
 	      (progn
 		(narrow-to-region lim (point))
-		(modify-syntax-entry ?# "< b" c++-mode-syntax-table)
+		;; cpp statements are comments for our purposes here
+		(if (eq major-mode 'c++-mode)
+		    (modify-syntax-entry ?# "< b" c++-mode-syntax-table)
+		  (modify-syntax-entry ?\n "> b" c++-c-mode-syntax-table)
+		  (modify-syntax-entry ?#  "< b" c++-c-mode-syntax-table))
 		(while (not donep)
 		  ;; if you're not running a patched lemacs, the new byte
 		  ;; compiler will complain about this function. ignore that
@@ -1597,7 +1601,11 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
 			     (setq donep (<= (point) lim)))
 		    (setq donep t))
 		  ))
-	    (modify-syntax-entry ?# "." c++-mode-syntax-table)))
+	    ;; cpp statements are not comments anywhere else
+	    (if (eq major-mode 'c++-mode)
+		(modify-syntax-entry ?# "." c++-mode-syntax-table)
+	      (modify-syntax-entry ?\n " " c++-c-mode-syntax-table)
+	      (modify-syntax-entry ?#  "." c++-c-mode-syntax-table))))
       )))
 
 ;; This is the way it should be done for all post 19.7 Lemacsen and
@@ -1614,11 +1622,19 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
 	  (unwind-protect
 	      (progn
 		(narrow-to-region lim (point))
-		(modify-syntax-entry ?# "< b" c++-mode-syntax-table)
+		;; cpp statements are comments for our purposes here
+		(if (eq major-mode 'c++-mode)
+		    (modify-syntax-entry ?# "< b" c++-mode-syntax-table)
+		  (modify-syntax-entry ?\n "> b" c++-c-mode-syntax-table)
+		  (modify-syntax-entry ?#  "< b" c++-c-mode-syntax-table))
 		(while (/= here (point))
 		  (setq here (point))
 		  (forward-comment -1)))
-	    (modify-syntax-entry ?# "." c++-mode-syntax-table)))
+	    ;; cpp statements are not comments everywhere else
+	    (if (eq major-mode 'c++-mode)
+		(modify-syntax-entry ?# "." c++-mode-syntax-table)
+	      (modify-syntax-entry ?\n " " c++-c-mode-syntax-table)
+	      (modify-syntax-entry ?#  "." c++-c-mode-syntax-table))))
       )))
 
 ;; This is the slow and ugly way, but its the best we can do in
@@ -2769,7 +2785,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.352 $"
+(defconst c++-version "$Revision: 2.353 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
