@@ -373,9 +373,11 @@
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (let ((id-start (point)) id-end id-face got-init)
+
     (while (and
 	    id-start
 	    (< (point) limit)
+
 	    (if (eq (char-after) ?\()
 		;; Allow a parenthesized declaration expression in the
 		;; first sexp of the declarator, to cope with
@@ -385,13 +387,14 @@
 		;; running away very far in incorrect code.
 		(= (car (parse-partial-sexp (point) (c-point 'eol) 0)) 0)
 	      t)
+
 	    ;; Search syntactically to the end of the identifier
 	    ;; declarator (";", ",", a close paren, eob etc) or to the
 	    ;; beginning of an initializer or function prototype ("="
 	    ;; or "\\s\(").
 	    (c-syntactic-re-search-forward
 	     "\\(\\)\\([;,\{\[]\\|\\s\)\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)\\)"
-	     limit t 1 t))
+	     limit t 1 t t))
 
       (setq id-end (match-beginning 0)
 	    id-face (if (match-beginning 4)
@@ -476,7 +479,7 @@
   ;; Clear the list of found types if we start from the start of the
   ;; buffer, to make it easier to get rid of misspelled types and
   ;; variables that has gotten recognized as types in malformed code.
-  (when (= (point) (point-min))
+  (when (bobp)
     (c-clear-found-types))
 
   (save-restriction
@@ -904,7 +907,7 @@
 		   (or (eq (point) last-cast-end)
 		       (progn
 			 (c-backward-syntactic-ws)
-			 (or (= (point) (point-min))
+			 (or (bobp)
 			     (and
 			      (progn
 				(backward-char)
