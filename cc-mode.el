@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-06 15:02:14 $
-;; Version:         $Revision: 2.129 $
+;; Last Modified:   $Date: 1992-07-06 18:35:18 $
+;; Version:         $Revision: 2.130 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-06 15:02:14 $|$Revision: 2.129 $|
+;; |$Date: 1992-07-06 18:35:18 $|$Revision: 2.130 $|
 
 
 ;; ======================================================================
@@ -246,7 +246,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.129 $
+  "Major mode for editing C++ code.  $Revision: 2.130 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1301,13 +1301,9 @@ BOD is the beginning of the C++ definition."
       (if parse-start
 	  (goto-char parse-start)
 	(goto-char bod))
-      (while (< (point) indent-point)
-	(let ((here (point))
-	      (pps (parse-partial-sexp (point) indent-point 0)))
-	  (if (not (c++-in-comment-p bod))
-	      (setq parse-start (point)
-		    state pps
-		    containing-sexp (car (cdr pps))))))
+      (setq state (c++-parse-state indent-point)
+	    containing-sexp (nth 1 state)
+	    parse-start (point))
       (cond ((c++-in-open-string-p bod)
 	     ;; in a string.
 	     nil)
@@ -1944,7 +1940,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.129 $"
+(defconst c++-version "$Revision: 2.130 $"
   "c++-mode version number.")
 
 (defun c++-version ()
