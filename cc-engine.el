@@ -702,8 +702,8 @@ of the same line to move over a line comment."
 
 
 ;; This is a dynamically bound cache used together with
-;; c-query-macro-start and c-query-and-set-macro-start.  It only works
-;; as long as point doesn't cross a macro boundary.
+;; `c-query-macro-start' and `c-query-and-set-macro-start'.  It only
+;; works as long as point doesn't cross a macro boundary.
 (defvar c-macro-start 'unknown)
 
 (defsubst c-query-and-set-macro-start ()
@@ -748,20 +748,9 @@ that doesn't end with a line continuation backslash."
 	     (forward-char)
 	     t))))
 
-(defun c-forward-syntactic-ws (&optional limit)
-  "Forward skip of syntactic whitespace.
-Syntactic whitespace is defined as whitespace characters, comments,
-and preprocessor directives.  However if point starts inside a comment
-or preprocessor directive, the content of it is not treated as
-whitespace.
-
-LIMIT sets an upper limit of the forward movement, if specified.  If
-LIMIT or the end of the buffer is reached inside a comment or
-preprocessor directive, the point will be left there."
-
+(defun c-forward-sws ()
+  ;; Used by `c-forward-syntactic-ws' to implement the unbounded search.
   (let ((here (point-max)))
-    (or limit (setq limit here))
-
     (while (/= here (point))
       (c-forward-comments)
       (setq here (point))
@@ -773,34 +762,19 @@ preprocessor directive, the point will be left there."
 	       (skip-chars-backward " \t")
 	       (bolp)))
 	(end-of-line)
-	(while (and (<= (point) limit)
-		    (eq (char-before) ?\\)
-			 (= (forward-line 1) 0))
-	  (end-of-line))
-	(when (> (point) limit)
-	  ;; Don't move past the macro if that'd take us past the limit.
-	  (goto-char here)))
+	(while (and (eq (char-before) ?\\)
+		    (= (forward-line 1) 0))
+	  (end-of-line)))
 
        ;; Skip in-comment line continuations (used for Pike refdoc).
        ((and c-opt-in-comment-lc (looking-at c-opt-in-comment-lc))
-	(goto-char (match-end 0)))))
+	(goto-char (match-end 0)))))))
 
-    (goto-char (min (point) limit))))
-
-(defun c-backward-syntactic-ws (&optional limit)
-  "Backward skip of syntactic whitespace.
-Syntactic whitespace is defined as whitespace characters, comments,
-and preprocessor directives.  However if point starts inside a comment
-or preprocessor directive, the content of it is not treated as
-whitespace.
-
-LIMIT sets a lower limit of the backward movement, if specified.  If
-LIMIT or the beginning of the buffer is reached inside a comment or
-preprocessor directive, the point might be left anywhere between the
-limit and the end of that comment or preprocessor directive."
-  (let ((here (point-min))
+(defun c-backward-sws ()
+  ;; Used by `c-backward-syntactic-ws' to implement the unbounded search.
+  (let ((start (point))
+	(here (point-min))
 	prev-pos)
-    (or limit (setq limit here))
 
     (while (/= here (point))
       (setq prev-pos (point))
@@ -814,15 +788,13 @@ limit and the end of that comment or preprocessor directive."
 			 (beginning-of-line)
 			 (and (c-safe (backward-char) t)
 			      (eq (char-before) ?\\)))
-		  (<= (point) macro-beg)
-		  (< macro-beg limit))
-	      ;; Don't move past the macro if we began inside it, or
-	      ;; if the move would take us past the limit.  We detect
-	      ;; the inside of the macro by checking that the previous
-	      ;; line doesn't end with "\" or that the macro begins on
-	      ;; this line.  That means that the position at the end
-	      ;; of the last line of the macro is also considered to
-	      ;; be within it.
+		  (<= (point) macro-beg))
+	      ;; Don't move past the macro if we began inside it.  We
+	      ;; detect the inside of the macro by checking that the
+	      ;; previous line doesn't end with "\" or that the macro
+	      ;; begins on this line.  That means that the position at
+	      ;; the end of the last line of the macro is also
+	      ;; considered to be within it.
 	      (goto-char here)
 	    (goto-char macro-beg))))
 
@@ -834,9 +806,7 @@ limit and the end of that comment or preprocessor directive."
 			    t)
 		    (looking-at c-opt-in-comment-lc)
 		    (eq (match-end 0) here))))
-	(goto-char (match-beginning 0)))))
-
-    (goto-char (max (point) limit))))
+	(goto-char (match-beginning 0)))))))
 
 (defun c-forward-token-1 (&optional count balanced lim)
   "Move forward by tokens.

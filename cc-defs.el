@@ -212,6 +212,39 @@
      (error nil)))
 (put 'c-safe 'lisp-indent-function 0)
 
+(defmacro c-forward-syntactic-ws (&optional limit)
+  "Forward skip over syntactic whitespace.
+Syntactic whitespace is defined as whitespace characters, comments,
+and preprocessor directives.  However if point starts inside a comment
+or preprocessor directive, the content of it is not treated as
+whitespace.
+
+LIMIT sets an upper limit of the forward movement, if specified.  If
+LIMIT or the end of the buffer is reached inside a comment or
+preprocessor directive, the point will be left there."
+  (if limit
+      `(save-restriction
+	 (narrow-to-region (point-min) (or ,limit (point-max)))
+	 (c-forward-sws))
+    '(c-forward-sws)))
+
+(defmacro c-backward-syntactic-ws (&optional limit)
+  "Backward skip over syntactic whitespace.
+Syntactic whitespace is defined as whitespace characters, comments,
+and preprocessor directives.  However if point starts inside a comment
+or preprocessor directive, the content of it is not treated as
+whitespace.
+
+LIMIT sets a lower limit of the backward movement, if specified.  If
+LIMIT or the beginning of the buffer is reached inside a comment or
+preprocessor directive, the point might be left anywhere between the
+limit and the end of that comment or preprocessor directive."
+  (if limit
+      `(save-restriction
+	 (narrow-to-region (or ,limit (point-min)) (point-max))
+	 (c-backward-sws))
+    '(c-backward-sws)))
+
 (defmacro c-forward-sexp (&optional arg)
   ;; like forward-sexp except
   ;;   1. this is much stripped down from the XEmacs version
@@ -326,6 +359,8 @@ continuations."
   '(progn
      (def-edebug-spec c-point t)
      (def-edebug-spec c-safe t)
+     (def-edebug-spec c-forward-syntactic-ws t)
+     (def-edebug-spec c-backward-syntactic-ws t)
      (def-edebug-spec c-forward-sexp t)
      (def-edebug-spec c-backward-sexp t)
      (def-edebug-spec c-up-list-forward t)
