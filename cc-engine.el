@@ -1580,9 +1580,9 @@
 	      (forward-char -1)
 	      (c-backward-syntactic-ws (c-point 'bol))
 	      (if (eq (char-before) ?\))
-		  (c-backward-sexp 1))
+		  (c-backward-sexp 2)
+		(c-backward-sexp 1))
 	      ;; now continue checking
-	      (beginning-of-line)
 	      (c-backward-syntactic-ws lim))
 	    (cond
 	     ;; CASE 5D.1: hanging member init colon, but watch out
@@ -1597,10 +1597,15 @@
 				 (= (c-backward-token-1 1 t lim) 0))
 		       (c-backward-syntactic-ws lim))
 		     (setq placeholder (point))
+		     (c-backward-syntactic-ws lim)
 		     (eq (char-before) ?:))
 		   (save-excursion
+		     (goto-char placeholder)
 		     (back-to-indentation)
-		     (not (looking-at c-access-key))))
+		     (and
+		      (not (looking-at c-access-key))
+		      (not (looking-at c-class-key)))
+		     ))
 	      (goto-char placeholder)
 	      (c-forward-syntactic-ws)
 	      (c-add-syntax 'member-init-cont (point))
@@ -1614,7 +1619,11 @@
 	      (skip-chars-forward " \t:")
 	      (c-add-syntax 'member-init-cont (point)))
 	     ;; CASE 5D.3: perhaps a multiple inheritance line?
-	     ((looking-at c-inher-key)
+	     ((save-excursion
+		(c-beginning-of-statement-1 lim)
+		(setq placeholder (point))
+		(looking-at c-inher-key))
+	      (goto-char placeholder)
 	      (c-add-syntax 'inher-cont (c-point 'boi)))
 	     ;; CASE 5D.4: perhaps a template list continuation?
 	     ((save-excursion
@@ -1622,9 +1631,12 @@
 		(skip-chars-backward "^<" lim)
 		;; not sure if this is the right test, but it should
 		;; be fast and mostly accurate.
+		(setq placeholder (point))
 		(and (eq (char-before) ?<)
 		     (not (c-in-literal lim))))
 	      ;; we can probably indent it just like an arglist-cont
+	      (goto-char placeholder)
+	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'template-args-cont (point)))
 	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
