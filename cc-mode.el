@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.106 $
-;; Last Modified:   $Date: 1993-12-01 23:35:44 $
+;; Version:         $Revision: 3.107 $
+;; Last Modified:   $Date: 1993-12-02 00:59:34 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-01 23:35:44 $|$Revision: 3.106 $|
+;; |$Date: 1993-12-02 00:59:34 $|$Revision: 3.107 $|
 
 ;;; Code:
 
@@ -494,7 +494,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.106 $
+  "Major mode for editing C++ code.  $Revision: 3.107 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -524,7 +524,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.106 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.107 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2073,7 +2073,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ))
 	   ;; CASE 7B: iostream insertion or extraction operator
 	   ((looking-at "<<\\|>>")
-	    (cc-add-semantics 'stream-op placeholder))
+	    (goto-char placeholder)
+	    (while (and (re-search-forward "<<\\|>>" indent-point 'move)
+			(cc-in-literal)))
+	    (cc-add-semantics 'stream-op (cc-point 'boi)))
 	   ;; CASE 7C: hanging continued statement
 	   (t (cc-add-semantics 'statement-cont placeholder))
 	   ))
@@ -2417,7 +2420,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.106 $"
+(defconst cc-version "$Revision: 3.107 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
