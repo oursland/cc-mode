@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.155 $
-;; Last Modified:   $Date: 1995-02-16 01:38:27 $
+;; Version:         $Revision: 4.156 $
+;; Last Modified:   $Date: 1995-03-01 19:29:44 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-02-16 01:38:27 $|$Revision: 4.155 $|
+;; |$Date: 1995-03-01 19:29:44 $|$Revision: 4.156 $|
 
 ;;; Code:
 
@@ -1439,12 +1439,6 @@ nil, or point is inside a literal then the function in the variable
 	(funcall c-delete-function 1)
 	))))
 
-;; for delsel
-(put 'c-electric-delete 'delete-selection 'supersede)
-;; for pending-del, even though XEmacs' version ships with this already
-(put 'c-electric-delete 'pending-delete 'supersede)
-
-
 (defun c-electric-pound (arg)
   "Electric pound (`#') insertion.
 Inserts a `#' character specially depending on the variable
@@ -1802,6 +1796,24 @@ value of `c-cleanup-list'."
 	    (c-indent-line)))
       )))
 
+;; set up electric character functions to work with pending-del,
+;; (a.k.a. delsel) mode.  All symbols get the t value except
+;; c-electric-delete which gets 'supercede.
+(mapcar
+ (lambda (sym)
+   (put sym 'delete-selection t)	; for delsel (FSF)
+   (put sym 'pending-delete t))		; for pending-del (XEmacs)
+ '(c-electric-pound
+   c-electric-brace
+   c-electric-slash
+   c-electric-star
+   c-electric-semi&comma
+   c-electric-colon))
+(put 'c-electric-delete 'delete-selection 'supersede) ; delsel
+(put 'c-electric-delete 'pending-delete   'supersede) ; pending-del
+
+
+
 (defun c-read-offset (langelem)
   ;; read new offset value for LANGELEM from minibuffer. return a
   ;; legal value only
@@ -4460,7 +4472,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.155 $"
+(defconst c-version "$Revision: 4.156 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
