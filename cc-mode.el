@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.151 $
-;; Last Modified:   $Date: 1995-02-08 22:52:15 $
+;; Version:         $Revision: 4.152 $
+;; Last Modified:   $Date: 1995-02-13 23:14:51 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-02-08 22:52:15 $|$Revision: 4.151 $|
+;; |$Date: 1995-02-13 23:14:51 $|$Revision: 4.152 $|
 
 ;;; Code:
 
@@ -3549,7 +3549,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-syntax 'member-init-cont (point)))
 	     ;; CASE 5D.3: perhaps a multiple inheritance line?
 	     ((looking-at c-inher-key)
-	      (c-add-syntax 'inher-cont-1 (c-point 'boi)))
+	      (c-add-syntax 'inher-cont (c-point 'boi)))
 	     ;; CASE 5D.4: perhaps a template list continuation?
 	     ((save-excursion
 		(skip-chars-backward "^<" lim)
@@ -4459,7 +4459,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.151 $"
+(defconst c-version "$Revision: 4.152 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
