@@ -442,6 +442,8 @@ CC Mode by making sure the proper entries are present on
   (message "Using CC Mode version %s" c-version)
   (c-keep-region-active))
 
+(defvar c-prepare-bug-report-hooks nil)
+
 (defun c-submit-bug-report ()
   "Submit via mail a bug report on CC Mode."
   (interactive)
@@ -500,11 +502,11 @@ CC Mode by making sure the proper entries are present on
 	vars)
       (function
        (lambda ()
+	 (run-hooks 'c-prepare-bug-report-hooks)
 	 (insert
 	  "Buffer Style: " style "\n\n"
 	  (format "c-emacs-features: %s\n" c-features)
-	  )))
-      nil))))
+	  )))))))
 
 
 (provide 'cc-mode)
