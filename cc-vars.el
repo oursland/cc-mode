@@ -1609,8 +1609,7 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 	;; See if `open-paren-in-column-0-is-defun-start' exists and
 	;; isn't buggy.
 	(when (boundp 'open-paren-in-column-0-is-defun-start)
-	  (let ((table (make-syntax-table))
-		(open-paren-in-column-0-is-defun-start nil)
+	  (let ((open-paren-in-column-0-is-defun-start nil)
 		(parse-sexp-ignore-comments t))
 	    (set-syntax-table (make-syntax-table))
 	    (modify-syntax-entry ?\' "\"")
