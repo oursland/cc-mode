@@ -4240,15 +4240,11 @@ This function does not do any hidden buffer changes."
   ;; Go to the first non-whitespace after the colon that starts a
   ;; multiple inheritance introduction.  Optional LIM is the farthest
   ;; back we should search.
-  (let* ((lim (or lim (save-excursion
-			(c-beginning-of-syntax)
-			(point)))))
-    (c-with-syntax-table c++-template-syntax-table
-      (c-backward-token-2 0 t lim)
-      (while (and (or (looking-at c-symbol-start)
-		      (looking-at "[<,]"))
-		  (zerop (c-backward-token-2 1 t lim))))
-      (skip-chars-forward "^:"))))
+  (c-with-syntax-table c++-template-syntax-table
+    (c-backward-token-2 0 t lim)
+    (while (and (or (looking-at c-symbol-start)
+		    (looking-at "[<,]"))
+		(zerop (c-backward-token-2 1 t lim))))))
 
 (defun c-in-method-def-p ()
   ;; Return nil if we aren't in a method definition, otherwise the
