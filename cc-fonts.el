@@ -177,7 +177,7 @@ tools (e.g. Javadoc).")
 ;; is used.  Since font-lock in Emacs expands all face names in
 ;; `font-lock-keywords' as variables we need to have a variable for it
 ;; that resolves to its own name.
-(defconst c-inverse-invalid-face 'c-inverse-invalid-face)
+(defconst c-nonbreakable-space-face 'c-nonbreakable-space-face)
 
 (cc-bytecomp-defun face-inverse-video-p) ; Only in Emacs.
 (cc-bytecomp-defun face-property-instance) ; Only in XEmacs.
@@ -361,12 +361,18 @@ tools (e.g. Javadoc).")
 		nil)))
 	  ))
 
+      ,@(when (c-major-mode-is 'pike-mode)
+	  `((eval . (list "\\`#![^\n\r]*"
+			  0 c-preprocessor-face))))
+
       ;; Make hard spaces visible through an inverted `c-invalid-face'.
       (eval . (list
 	       "\240"
 	       0 (progn
-		   (c-make-inverse-face c-invalid-face 'c-inverse-invalid-face)
-		   'c-inverse-invalid-face)))
+		   (unless (c-face-name-p 'c-nonbreakable-space-face)
+		     (c-make-inverse-face c-invalid-face
+					  'c-nonbreakable-space-face))
+		   'c-nonbreakable-space-face)))
       ))
 
 (defun c-font-lock-labels (limit)
