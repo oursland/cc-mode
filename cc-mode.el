@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.99 $
-;; Last Modified:   $Date: 1993-11-26 16:20:05 $
+;; Version:         $Revision: 3.100 $
+;; Last Modified:   $Date: 1993-11-26 19:01:34 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-26 16:20:05 $|$Revision: 3.99 $|
+;; |$Date: 1993-11-26 19:01:34 $|$Revision: 3.100 $|
 
 ;;; Code:
 
@@ -493,7 +493,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.99 $
+  "Major mode for editing C++ code.  $Revision: 3.100 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -523,7 +523,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.99 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.100 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1713,17 +1713,23 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	       (while (not donep)
 		 (setq foundp (re-search-backward cc-class-key lim t))
 		 (save-excursion
-		   (let* ((cop (scan-lists foundp 1 -1))
-			  (state (parse-partial-sexp cop search-end)))
+		   (let* ((cop (cc-safe (scan-lists foundp 1 -1)))
+			  (state (cc-safe (parse-partial-sexp cop search-end)))
+			  )
 		     (if (and foundp
+			      cop
 			      (not (cc-in-literal))
 			      (<= cop search-end)
 			      (<= 0 (nth 6 state))
 			      (<= 0 (nth 0 state)))
-			 (setq donep t
-			       foundp (cons (1- cop) foundp))
-		       ))))
-	       foundp))
+			 (progn
+			   (goto-char foundp)
+			   (setq donep t
+				 foundp (cons (1- cop) (cc-point 'boi)))
+			   )
+		       (setq donep (not foundp))) ;end if
+		     )))		;end while
+	       foundp))			;end s-e
 	 (error nil))))
 
 
@@ -2390,7 +2396,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.99 $"
+(defconst cc-version "$Revision: 3.100 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
