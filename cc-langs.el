@@ -1370,19 +1370,20 @@ statement."
   "Regexp matching something that might precede a declaration or a cast,
 such as the last token of a preceding statement or declaration.  It
 should not match bob, though.  It can't require a match longer than
-one character.  It must not match any following whitespace.  We match
-a sequence of characters to skip over things like \"};\" more
-quickly."
-  t    "[\{\}\(;,]+"
+two characters.  The end of the token is taken to be at the end of the
+first submatch.  It must not include any following whitespace."
+  ;; We match a sequence of characters to skip over things like \"};\"
+  ;; more quickly.
+  t    "\\([\{\}\(;,]+\\)"
   ;; We additionally match ")" in C for K&R region declarations, and
   ;; in C and C++ for when a cpp macro definition begins with a
   ;; declaration.
-  c    "[\{\}\(\);,]+"
-  ;; Additionally match ":" in C++ for protection labels.
-  c++  "[\{\}\(\);:,]+"
+  c    "\\([\{\}\(\);,]+\\)"
+  ;; Additionally match a single ":" in C++ for protection labels.
+  c++  "\\([\{\}\(\);,]+\\|\\(\\=\\|[^:]\\):\\)\\([^:]\\|\\'\\)"
   ;; Pike is like C but we also match "[" for multiple value
   ;; assignments and type casts.
-  pike "[\{\}\(\)\[;,]+")
+  pike "\\([\{\}\(\)\[;,]+\\)")
 (c-lang-defvar c-decl-prefix-re (c-lang-const c-decl-prefix-re)
   'dont-doc)
 
