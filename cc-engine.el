@@ -947,36 +947,41 @@ brace."
 	(lim (or (and lim (>= (point) lim) lim)
 		 (c-point 'bod)))
 	(at-if (looking-at "if\\b[^_]")))
-    (catch 'orphan-if
-      (while (and (not (bobp))
-		  (not (zerop if-level)))
-	(c-backward-syntactic-ws)
-	(condition-case nil
-	    (c-backward-sexp 1)
-	  (error
-	   (unless at-if
-	     (goto-char here)
-	     (c-beginning-of-statement-1)
-	     (setq c-parsing-error
-		   (format "No matching `if' found for `else' on line %d"
-			   (1+ (count-lines 1 here))))
-	     (throw 'orphan-if nil))))
-	(cond
-	 ((looking-at "else\\b[^_]")
-	  (setq if-level (1+ if-level)))
-	 ((looking-at "if\\b[^_]")
-	  ;; check for else if... skip over
-	  (let ((here (point)))
-	    (c-safe (c-forward-sexp -1))
-	    (if (looking-at "\\<else\\>[ \t]+\\<if\\>[^_]")
-		nil
-	      (setq if-level (1- if-level))
-	      (goto-char here))))
-	 ((< (point) lim)
-	  (setq if-level 0)
-	  (goto-char lim))
-	 ))
-      t)))
+    (or (catch 'orphan-if
+	  (while (and (not (bobp))
+		      (not (zerop if-level)))
+	    (c-backward-syntactic-ws)
+	    (condition-case nil
+		(c-backward-sexp 1)
+	      (error
+	       (unless at-if
+		 (throw 'orphan-if nil))))
+	    (cond
+	     ((looking-at "else\\b[^_]")
+	      (setq if-level (1+ if-level)))
+	     ((looking-at "if\\b[^_]")
+	      ;; check for else if... skip over
+	      (let ((here (point)))
+		(c-safe (c-forward-sexp -1))
+		(if (looking-at "\\<else\\>[ \t]+\\<if\\>[^_]")
+		    nil
+		  (setq if-level (1- if-level))
+		  (goto-char here))))
+	     ((looking-at "while\\b[^_]")
+	      (unless (c-backward-to-start-of-do lim)
+		(throw 'orphan-if nil)))
+	     ((< (point) lim)
+	      (setq if-level 0)
+	      (goto-char lim))
+	     ))
+	  t)
+	(progn
+	  (goto-char here)
+	  (c-beginning-of-statement-1)
+	  (setq c-parsing-error
+		(format "No matching `if' found for `else' on line %d"
+			(1+ (count-lines 1 here))))
+	  nil))))
 
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
@@ -2758,7 +2763,6 @@ brace."
 	  (while (and (= (forward-line -1) 0)
 		      (if (looking-at "\\s-*$")
 			  t
-			(back-to-indentation)
 			(setq indent (current-indentation))
 			nil))))
 	(setq shift-amt (- indent (current-indentation)))
