@@ -4960,7 +4960,7 @@ have been adapted to support it.
 If your (X)Emacs is set up to use the old file @file{awk-mode.elc}
 (which will usually be the case if you have obtained this @ccmode{}
 independently of (X)Emacs itself), or if you are not sure, insert the
-following form into your @file{.emacs} or @file{init} so that the new
+following form into your @file{.emacs} or @file{init.el} so that the new
 AWK mode will be used instead:
 
 @example
@@ -4979,7 +4979,7 @@ property.}, you need either GNU Emacs 20.1 (or later) or XEmacs 21.4
 (or later) to use it.  If your Emacs version is earlier than one of
 these, the older @file{awk-mode.el} will get loaded and run in place
 of the AWK mode described here, even when you have put the above
-@code{autoload} form into your @file{.emacs} or @file{init}.
+@code{autoload} form into your @file{.emacs} or @file{init.el}.
 Upgrading your (X)Emacs is strongly recommended if this is the case.
 
 Here is an overview of which @ccmode{} features currently work with
@@ -5060,7 +5060,7 @@ disabled in the AWK Mode hook.  @xref{Initialising AWK Mode}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node Initialising AWK Mode, AWK Mode Font Locking, , AWK Mode
 @comment  node-name,  next,  previous,  up
-@section AWK mode - What to put in your @file{.emacs} or @file{init}
+@section AWK mode - What to put in your @file{.emacs} or @file{init.el}
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Much of the AWK mode initialization can, of course, be done by the
@@ -5071,7 +5071,7 @@ the other modes, and you might thus have enabled them in a
 These features have not yet been amended for AWK mode, and far from
 being useful, can be irritating in AWK mode or actually make AWK code
 syntactically invalid.  Adding the following code to your
-@file{.emacs} or @file{init} file will disable them for AWK mode.
+@file{.emacs} or @file{init.el} file will disable them for AWK mode.
 
 @example
 (defun my-awk-mode-hook ()
