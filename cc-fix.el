@@ -1,12 +1,12 @@
-;;; cc-mode-19.el --- compatibility library for Emacs and XEmacs 19
+;;; cc-fix.el --- compatibility library for old (X)Emacs versions
 
-;; Copyright (C) 1985,1987,1992-2001 Free Software Foundation, Inc.
+;; Copyright (C) 1985,1987,1992-2003 Free Software Foundation, Inc.
 
 ;; Authors:    2000- Martin Stjernholm
 ;;	       1998-1999 Barry A. Warsaw and Martin Stjernholm
 ;;             1997 Barry A. Warsaw
 ;; Maintainer: bug-cc-mode@gnu.org
-;; Created:    03-Jul-1997
+;; Created:    03-Jul-1997 (as cc-mode-19.el)
 ;; Version:    See cc-mode.el
 ;; Keywords:   c languages oop
 
@@ -29,7 +29,9 @@
 
 ;;; Commentary:
 
-;; This file is necessary in order to run CC Mode 5 under (X)Emacs 19.
+;; This file is necessary in order to run CC Mode in older (X)Emacs
+;; versions.  It's not needed at all for the latest versions of Emacs
+;; and XEmacs.
 
 ;;; Code:
 
@@ -147,7 +149,7 @@
          (eq (regexp-opt-depth "\\(\\(\\)\\)") 2))
     (defalias 'c-regexp-opt-depth 'regexp-opt-depth)
   ;; (X)Emacs 19 doesn't have the regexp-opt package.
-  ;; Emacs 21.1 has a buggy regexp-opt-depth which prevents cc-mode building.
+  ;; Emacs 21.1 has a buggy regexp-opt-depth which prevents CC Mode building.
   ;; Those in Emacs 21.[23] are not entirely accurate.
   ;; The following definition comes from Emacs's regexp-opt.el CVS version 1.25
   ;; and is believed to be a rigorously correct implementation.
@@ -207,6 +209,7 @@ Each keyword has the form (MATCHER HIGHLIGHT ...).  See `font-lock-keywords'."
          (setq font-lock-keywords
                (font-lock-compile-keywords font-lock-keywords))))
      ))
+
 
-(cc-provide 'cc-mode-19)
-;;; cc-mode-19.el ends here
+(cc-provide 'cc-fix)
+;;; cc-fix.el ends here
