@@ -97,10 +97,14 @@
 	(if (not pos)
 	    (setq pos (point))))))
 
-(or (fboundp 'char-before)
-    ;; Emacs 19.34 doesn't have a char-before function.
-    (defsubst char-before (&optional pos)
-      (char-after (1- (or pos (point))))))
+;; The `eval' construct is necessary since later versions complain at
+;; compile time on the defsubst for `char-before' since it has become
+;; a built-in primitive.
+(eval
+ '(or (fboundp 'char-before)
+      ;; Emacs 19.34 doesn't have a char-before function.
+      (defsubst char-before (&optional pos)
+	(char-after (1- (or pos (point)))))))
 
 ;; Emacs 19.34 doesn't have a functionp function.  Here's its Emacs
 ;; 20 definition.
