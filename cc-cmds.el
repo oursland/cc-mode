@@ -1536,7 +1536,8 @@ function does not require the declaration to contain a brace block."
 
 (defun c-end-of-sentence-in-comment (range)
   ;; Move forward to the "end of a sentence" within the comment defined by
-  ;; RANGE, a cons of its starting and ending positions.  If we find an EOS,
+  ;; RANGE, a cons of its starting and ending positions (enclosing the opening
+  ;; comment delimiter and the terminating */ or newline).  If we find an EOS,
   ;; return NIL.  Otherwise, move point to just after the end of the comment
   ;; and return T.
   ;;
@@ -1578,7 +1579,7 @@ function does not require the declaration to contain a brace block."
 	    (concat "^[ \t]*\\(" c-current-comment-prefix "\\)\\=")))
       ;; Go forward one "comment-prefix which looks like sentence-end" each
       ;; time round the following:
-      (if (< (point) par-end)
+      (if (< (point) par-end)	; Point might start inside the delimiter "*/".
 	  (while (and (re-search-forward sentence-end par-end 'limit)
 		      (progn
 			(setq last (point))
@@ -1682,6 +1683,7 @@ function does not require the declaration to contain a brace block."
   ;; c-move-over-sentence.
   (save-match-data
     (let* ((here (point))
+	   last
 	   ;; paragraph-start's value in fundamental mode is "[ \t\n\f]"
 	   ;;                         in text mode it is "\f\\|[ \t]*$"
 	   ;; We adapt here Text Mode's version, additionally allowing escaped
@@ -1715,9 +1717,7 @@ function does not require the declaration to contain a brace block."
 		  (forward-paragraph 1)
 		  (while (or (/= (skip-chars-backward " \t\n\r\f") 0)
 			     (re-search-backward "\\\\\\($\\)\\=" nil t))))
-		(point))))
-
-	   last)
+		(point)))))
       ;; Go forward one sentence ender each time round the following.
       (when (re-search-forward sentence-end-with-esc-eol par-end 'limit)
 	(setq last (point))
@@ -1732,8 +1732,8 @@ function does not require the declaration to contain a brace block."
 (defun c-ascertain-adjacent-literal (backwards-flag)
   ;; Point is not in a literal (i.e. comment or string).  If a literal is the
   ;; next thing (aside from whitespace) to be found in the direction indicated
-  ;; by BACKWARDS-FLAG, return a cons of its start.end positions.  Otherwise
-  ;; return NIL.
+  ;; by BACKWARDS-FLAG, return a cons of its start.end positions (enclosing
+  ;; the delimiters).  Otherwise return NIL.
   (save-excursion
     (c-collect-line-comments
      (let (pos)
@@ -1780,16 +1780,11 @@ function does not require the declaration to contain a brace block."
   ;; code before encountering the literal/BOB or macro-boundary.
   ;;
   ;; Note that this function moves within either preprocessor commands
-  ;; (macros) or normal code, but not both within the same call.
+  ;; (macros) or normal code, but not both within the same invocation.
   ;;
-  ;; DO WE NEED A CONDITION CASE HERE????  There was one in the original
-  ;; function.  (2003/8/7) YES, WE DO!!!!  (to cope with possibly unbalanced
-  ;; ############, er thingies, and so on).
-  ;; 
   ;; Stop before `{' and after `;', `{', `}' and `};' when not followed by `}'
   ;; or `)', but on the other side of the syntactic ws.  Move by sexps and
   ;; move into parens.  Also stop before `#' when it's at boi on a line.
-  ;; 
   (save-match-data
     (let ((here (point))
 	  last) ; marks the position of non-ws code, what'll be BOS if, say, a
@@ -1831,20 +1826,12 @@ function does not require the declaration to contain a brace block."
 		  (goto-char last))
 	      (throw 'done '(nil . nil))))
 
-	   ;; Stop at token just after a preprocessor directive.
-	   ;; This bit was replaced, 2003/9/12.
-	   ;; 	 ((and (eq (char-after) ?#)       
-	   ;; 	       (eq (point) (c-point 'boi))
-	   ;; 	       (numberp last-below-line)
-	   ;; 	       (not (eq last-below-line here)))
-	   ;; 	  (goto-char last-below-line)
-	   ;; 	  (throw 'done nil))
 	   ((and macro-start (eq (point) macro-start))
 	    (throw 'done (cons (eq (point) here) 'macro-boundary)))
 
 	   ;; Stop at token just after "}" or ";".
-	   ((looking-at "[;}]")		; was "[;{}]", 2003/8/7
-;;;; If we've gone back over ;, {, or }, we're done.
+	   ((looking-at "[;}]")
+	    ;; If we've gone back over ;, {, or }, we're done.
 	    (if (or (= here last)
 		    (memq (char-after last) '(?\) ?})))	; we've moved backed from ) or }
 		(if (and (eq (char-before) ?}) ; If };, treat them as a unit.
@@ -1878,105 +1865,86 @@ function does not require the declaration to contain a brace block."
   ;; Point is left either after the end-of-statement, or at the opening
   ;; delimiter of the literal, or the # of the preprocessor statement, or at
   ;; EOB [or just after last non-WS stuff??]
+  ;; 
+  ;; Note that this function moves within either preprocessor commands
+  ;; (macros) or normal code, but not both within the same invocation.
+  ;;
+  ;; Stop before `{', `}', and `#' when it's at boi on a line, but on the
+  ;; other side of the syntactic ws, and after `;', `}' and `};'.  Only
+  ;; stop before `{' if at top level or inside braces, though.  Move by
+  ;; sexps and move into parens.  Also stop at eol of lines with `#' at
+  ;; the boi.
+  (let ((here (point))
+	last)
+    (catch 'done
+      ;; We go one ?token? forward each time round the following loop.
+      (while t
+	(setq last (point))
+	(c-skip-ws-forward)
+	(when (and macro-end (> (point) macro-end))
+	  (goto-char last)
+	  (throw 'done (cons (eq (point) here) 'macro-boundary)))
+	(if (save-excursion (c-forward-single-comment))
+	    (throw 'done '(t . literal)))
 
-  (condition-case nil	; DO WE NEED THIS condition-case AT ALL??? (2003/8/29)
-      ;; Stop before `{', `}', and `#' when it's at boi on a line, but on the
-      ;; other side of the syntactic ws, and after `;', `}' and `};'.  Only
-      ;; stop before `{' if at top level or inside braces, though.  Move by
-      ;; sexps and move into parens.  Also stop at eol of lines with `#' at
-      ;; the boi.
-      (let ((here (point))
-	    last)
-	(catch 'done
-	  ;; We go one ?token? forward each time round the following loop.
-	  (while t
-	    (setq last (point))
-	    (c-skip-ws-forward)
-	    (when (and macro-end (> (point) macro-end))
-	      (goto-char last)
-	      (throw 'done (cons (eq (point) here) 'macro-boundary)))
-	    (if (save-excursion (c-forward-single-comment))
-		(throw 'done '(t . literal)))
+	(when (eobp)			; Must handle eob specially
+	  (if (/= here last)
+	      (goto-char last))
+	  (throw 'done '(nil . nil)))
 
-	    (when (eobp)		; Must handle eob specially
-	      (if (/= here last)
-		  (goto-char last))
-	      (throw 'done '(nil . nil)))
-
-	    ;; If we encounter a '{', stop just after the previous token.
-	    (cond ((and (eq (char-after) ?{)
-			(not (and c-special-brace-lists
-				  (c-looking-at-special-brace-list)))
-			(/= here last)
-			(save-excursion	; Is this a check that we're NOT at top level?
+	;; If we encounter a '{', stop just after the previous token.
+	(cond ((and (eq (char-after) ?{)
+		    (not (and c-special-brace-lists
+			      (c-looking-at-special-brace-list)))
+		    (/= here last)
+		    (save-excursion ; Is this a check that we're NOT at top level?
 ;;;; NO!  This seems to check that (i) EITHER we're at the top level; OR (ii) The next enclosing
 ;;;; level of bracketing is a '{'.  HMM.  Doesn't seem to make sense.
 ;;;; 2003/8/8 This might have something to do with the GCC extension "Statement Expressions", e.g.
 ;;;; while ({stmt1 ; stmt2 ; exp ;}).  This form excludes such Statement Expressions.
-			  (or (not (c-safe (up-list -1) t)) ; UP-LIST always returns NIL (or fails).
-			      (= (char-after) ?{))))
-		   (goto-char last)
-		   (throw 'done '(nil . nil)))
+		      (or (not (c-safe (up-list -1) t))
+			  (= (char-after) ?{))))
+	       (goto-char last)
+	       (throw 'done '(nil . nil)))
 
-		  ;; End of a PIKE special brace list?  If so, step over it and continue.
-		  ((and c-special-brace-lists
-			(eq (char-after) ?})
-			(save-excursion
-			  (and (c-safe (up-list -1) t)
-			       (c-looking-at-special-brace-list))))
-		   (forward-char)
-		   (skip-syntax-forward "w_")) ; Speedup only.
+       ;; End of a PIKE special brace list?  If so, step over it and continue.
+	      ((and c-special-brace-lists
+		    (eq (char-after) ?})
+		    (save-excursion
+		      (and (c-safe (up-list -1) t)
+			   (c-looking-at-special-brace-list))))
+	       (forward-char)
+	       (skip-syntax-forward "w_")) ; Speedup only.
 
-		  ;; Have we got a '}' after having moved?  If so, stop after the previous token.
-		  ((and (eq (char-after) ?})
-			(/= here last))
-		   (goto-char last)
-		   (throw 'done '(nil . nil)))
+;; Have we got a '}' after having moved?  If so, stop after the previous token.
+	      ((and (eq (char-after) ?})
+		    (/= here last))
+	       (goto-char last)
+	       (throw 'done '(nil . nil)))
 
-		  ;; Here is where the stuff for #defines has been removed.
-		  ;; It was already removed by 5.28.
-		  ;; It would seem a good strategy to move to the end of the
-		  ;; #define line (apart from any comments) iff it's a single
-		  ;; line, otherwise to go through it as if it's just
-		  ;; statements.  2003/8/7.
-;		  ((and (eq (char-after) ?#)
-;			(= (point) (c-point 'boi)))
-;		   (if (= here last)
-;		       (or (re-search-forward "\\(^\\|[^\\]\\)$" nil t)
-;			   (goto-char (point-max)))
-;		     (goto-char last))
-;		   (throw 'done t))
+	      ;; Stop if we encounter a preprocessor line.
+	      ((and (not macro-end)
+		    (eq (char-after) ?#)
+		    (= (point) (c-point 'boi)))
+	       (goto-char last)
+	       (throw 'done (cons (eq (point) here) 'macro-boundary)))
 
-;;;; Replacement #define stuff, 2003/9/13:
-		  ;; Stop if we encounter a preprocessor line.
-		  ((and (not macro-end)
-			(eq (char-after) ?#)
-			(= (point) (c-point 'boi)))
-		   (goto-char last)
-		   (throw 'done (cons (eq (point) here) 'macro-boundary)))
+	      ;; Stop after a ';', '}' or "};"
+	      ((looking-at ";\\|};?")
+	       (goto-char (match-end 0))
+	       (throw 'done '(nil . nil)))
 
-		  ;; Stop after a ';', '}' or "};"
-		  ((looking-at ";\\|};?")
-		   (goto-char (match-end 0))
-		   (throw 'done '(nil . nil))) ; ??? OR do we check for '(nil . literal) ??? 2003/9/12.
+	      ;; Found a string?
+	      ((= (char-syntax (char-after)) ?\")
+	       (throw 'done '(t . literal)))
 
-		  ;; Found a string?
-		  ((= (char-syntax (char-after)) ?\")
-		   (throw 'done '(t . literal)))
-
-		  (t
-		   (forward-char)
-		   (skip-syntax-forward "w_") ; Speedup only.
-		   (when (and macro-end (> (point) macro-end))
-		     (goto-char last)
-		     (throw 'done (cons (eq (point) here) 'macro-boundary))))
-		  ))))
-
-    (error
-     (goto-char (point-max))
-     ;; (setq count 0)
-     ))
-)
+	      (t
+	       (forward-char)	  ; Can't fail - we checked (eobp) earlier on.
+	       (skip-syntax-forward "w_") ; Speedup only.
+	       (when (and macro-end (> (point) macro-end))
+		 (goto-char last)
+		 (throw 'done (cons (eq (point) here) 'macro-boundary))))
+	      )))))
 
 (defun c-one-line-string-p (range)
   ;; Is the literal defined by RANGE a string contained in a single line?
@@ -2046,7 +2014,8 @@ be more \"DWIM:ey\"."
 	      (setq range (c-ascertain-adjacent-literal (> count 0))
 		    lit-type (if range (c-literal-type range)))
 	      t)
-	     ;; Comment which comes BEFORE a statement (not inside one)
+	     ;; Comment which comes BEFORE a statement (not inside one),
+	     ;; (only in the backwards direction).
 	     ((and candidate
 		   (> count 0)
 		   (memq lit-type '(c c++))
@@ -2065,7 +2034,6 @@ be more \"DWIM:ey\"."
 	     (t (setq candidate nil)
 		(when (cond
 		       ((eq lit-type 'string)
-			;; (c-move-over-sentence range (> count 0))
 			(if (> count 0)
 			    (c-beginning-of-sentence-in-string range)
 			  (c-end-of-sentence-in-string range)))
@@ -2081,7 +2049,8 @@ be more \"DWIM:ey\"."
 	   (t (if (< count 0)
 		  (progn
 		    (setq res (c-forward-over-illiterals macro-fence))
-		    ;; Are we about to move into or out of a preprocessor command?
+		    ;; Are we about to move forward into or out of a
+		    ;; preprocessor command?
 		    (when (eq (cdr res) 'macro-boundary)
 		      (save-excursion
 			(end-of-line)
@@ -2099,7 +2068,8 @@ be more \"DWIM:ey\"."
 
 		(setq res (c-back-over-illiterals macro-fence))
 		(if (/= (point) here) (setq candidate (point)))	;; Code following a comment might be BOS
-		;; Are we about to move into or out of a preprocessor command?
+		;; Are we about to move backwards into or out of a
+		;; preprocessor command?
 		(when (eq (cdr res) 'macro-boundary)
 		  (save-excursion
 		    (beginning-of-line)
@@ -2107,15 +2077,13 @@ be more \"DWIM:ey\"."
 			  (and (not (bobp))
 			       (progn (c-skip-ws-backward) (c-beginning-of-macro))
 			       (point)))))
-		 ;; Are we about to move back into a literal?
+		 ;; Are we about to move backwards into a literal?
 		 (when (memq (cdr res) '(macro-boundary literal))
 		   (setq range (c-ascertain-adjacent-literal t)
 			 lit-type (if range (c-literal-type range))))
-		 ;; 
 		 (car res)))))
 
       (if (/= count 0) (setq count (if (> count 0) (1- count) (1+ count)))))
-    ;; Some stuff may be needed here for bumping into BOB or EOB, and so on.
     (c-keep-region-active)))
 
 (defun c-end-of-statement (&optional count lim sentence-flag)
