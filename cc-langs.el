@@ -302,20 +302,26 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
-  ;; Fix obsolete variables.
-  (if (boundp 'c-comment-continuation-stars)
-      (setq c-block-comment-prefix c-comment-continuation-stars))
   ;; now set the mode style based on c-default-style
-  (c-set-style (if (stringp c-default-style)
+  (let ((style (if (stringp c-default-style)
 		   (if (c-major-mode-is 'java-mode)
 		       "java"
 		     c-default-style)
 		 (or (cdr (assq major-mode c-default-style))
 		     (cdr (assq 'other c-default-style))
-		     "gnu"))
-	       ;; Don't override style variables unless
-	       ;; `c-old-style-variable-behavior' is set.
-	       (not c-old-style-variable-behavior))
+		     "gnu"))))
+    ;; Override style variables if `c-old-style-variable-behavior' is
+    ;; set.  Also override if we are using global style variables,
+    ;; have already initialized a style once, and are switching to a
+    ;; different style.  (It's doubtful whether this is desirable, but
+    ;; the whole situation with nonlocal style variables is a bit
+    ;; awkward.  It's at least the most compatible way with the old
+    ;; style init procedure.)
+    (c-set-style style (not (or c-old-style-variable-behavior
+				(and (not c-style-variables-are-local-p)
+				     c-indentation-style
+				     (not (string-equal c-indentation-style
+							style)))))))
   ;; Fix things up for paragraph recognition and filling inside
   ;; comments by using c-comment-prefix-regexp in the relevant places.
   ;; We use adaptive filling for this to make it possible to use
