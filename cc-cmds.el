@@ -46,6 +46,8 @@
 (cc-bytecomp-defvar delete-key-deletes-forward) ; XEmacs 20+
 (cc-bytecomp-defun delete-forward-p)	; XEmacs 21+
 (cc-bytecomp-obsolete-fun insert-and-inherit) ; Marked obsolete in XEmacs 19
+(cc-bytecomp-defvar filladapt-mode)	; c-fill-paragraph contains a kludge
+					; which looks at this.
 
 
 (defun c-calculate-state (arg prevstate)
@@ -2203,15 +2205,20 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 		       fill-paragraph-function))
 		  (fill-prefix
 		   (or fill-prefix
+		       ;; Kludge: If the function that adapts the fill prefix
+		       ;; doesn't produce the required comment starter for line
+		       ;; comments, then force it by setting fill-prefix.
 		       (when (and (eq lit-type 'c++)
+				  ;; Kludge the kludge: filladapt-mode doesn't
+				  ;; have this problem, but it doesn't override
+				  ;; fill-context-prefix currently (version
+				  ;; 2.12).
+				  (not (and (boundp 'filladapt-mode)
+					    filladapt-mode))
 				  (not (string-match
 					"\\`[ \t]*//"
 					(or (fill-context-prefix beg end)
 					    ""))))
-			 ;; Kludge: If the function that adapts the
-			 ;; fill prefix doesn't produce the required
-			 ;; comment starter for line comments, then
-			 ;; force it by setting fill-prefix.
 			 (car (or fill (c-guess-fill-prefix
 					lit-limits lit-type)))))))
 	      ;; Preparations finally done!  Now we can call the
