@@ -1916,6 +1916,19 @@ expression is considered to be a type."
 	(consp (c-lang-const c-<>-arglist-kwds))))
 (c-lang-defvar c-recognize-<>-arglists (c-lang-const c-recognize-<>-arglists))
 
+(c-lang-defconst c-recognize-paren-inits
+  "Non-nil means that parenthesis style initializers exist,
+i.e. constructs like
+
+Foo bar (gnu);
+
+in addition to the more classic
+
+Foo bar = gnu;"
+  t nil
+  c++ t)
+(c-lang-defvar c-recognize-paren-inits (c-lang-const c-recognize-paren-inits))
+
 (c-lang-defconst c-opt-<>-arglist-start
   ;; Regexp matching the start of angle bracket arglists in languages
   ;; where `c-recognize-<>-arglists' is set.  Does not exclude
