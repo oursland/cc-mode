@@ -28,7 +28,7 @@
 ;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(defconst c-version "5.29"
+(defconst c-version "5.30"
   "CC Mode version number.")
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -168,7 +168,7 @@
   (define-abbrev-table name nil)
   (let ((table (symbol-value name)))
     (while defs
-      (condition-case err
+      (condition-case nil
 	  (apply 'define-abbrev table (append (car defs) '(t)))
 	(wrong-number-of-arguments
 	 (apply 'define-abbrev table (car defs))))
