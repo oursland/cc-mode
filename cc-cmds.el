@@ -813,51 +813,70 @@ comment."
 	      (let* ((lit-type (c-literal-type range))
 		     (beg (save-excursion
 			    (goto-char (car range))
-			    (looking-at comment-start-skip)
+			    (looking-at (if (eq lit-type 'c)
+					    comment-start-skip
+					  (concat "\\("
+						  c-comment-prefix-regexp
+						  "\\)[ \t]*")))
 			    (goto-char (match-end 0))
 			    (point)))
 		     (end (save-excursion
 			    (goto-char (- (cdr range)
 					  (if (eq lit-type 'c) 2 1)))
-			    (point))))
+			    (point)))
+		     in-comment-prefix)
 		;; move by sentence, but not past the limit of the literal
 		(save-restriction
 		  (narrow-to-region beg end)
-		  (if (< count 0)
-		      (progn
-			(c-safe (forward-sentence 1))
-			;; In block comments, if there's only
-			;; horizontal ws between the text and the
-			;; comment ender, stop before it.  Stop after
-			;; the ender if there's either nothing or
-			;; newlines between.
-			(when (and (eq lit-type 'c) (eq (point) end))
-			  (widen)
-			  (skip-chars-backward " \t")
-			  (when (or (eq (point) end) (bolp))
-			    (goto-char (cdr range)))))
-		    (c-safe (forward-sentence -1))
-		    (when (memq lit-type '(c c++))
-		      ;; Don't stop in the comment prefix.
-		      (if (and (/= (point) beg)
-			       (save-excursion
-				 (looking-at (concat "[ \t]*\\("
-						     c-comment-prefix-regexp
-						     "\\)[ \t]*")))
-			       (/= (match-beginning 1) (match-end 1)))
-			  (if (save-excursion
-				(goto-char (match-end 0))
-				(or (eq (point) here) (eolp)))
-			      ;; Either need to move or shouldn't stay
-			      ;; on a line with nothing but a comment
-			      ;; prefix.
-			      (setq count (1+ count))
-			    (goto-char (match-end 0)))))
-		    (when (and (eq (point) beg) (looking-at "[ \t]*$"))
-		      ;; Stop before instead of after the comment
-		      ;; starter if nothing follows it.
-		      (widen)
-		      (goto-char (car range)))))
+		  (c-safe (forward-sentence (- (signum count))))
+		  (if (and (memq lit-type '(c c++))
+			   ;; Check if we stopped due to a comment
+			   ;; prefix and not a sentence end.
+			   (/= (point) beg)
+			   (save-excursion
+			     (beginning-of-line)
+			     (looking-at (concat "[ \t]*\\("
+						 c-comment-prefix-regexp
+						 "\\)[ \t]*")))
+			   (>= (point) (match-beginning 0))
+			   (/= (match-beginning 1) (match-end 1))
+			   (or (< (point) (match-end 0))
+			       (and
+				(= (point) (match-end 0))
+				;; The comment prefix may contain
+				;; characters that is regarded as end
+				;; of sentence.
+				(or (eolp)
+				    (and
+				     (save-excursion
+				       (forward-paragraph -1)
+				       (< (point) (match-beginning 0)))
+				     (save-excursion
+				       (beginning-of-line)
+				       (or (not (re-search-backward
+						 sentence-end
+						 (c-point 'bopl)
+						 t))
+					   (< (match-end 0)
+					      (c-point 'eol)))))))))
+		      (setq count (+ (signum count) count))
+		    (if (< count 0)
+			(progn
+			  ;; In block comments, if there's only
+			  ;; horizontal ws between the text and the
+			  ;; comment ender, stop before it.  Stop after
+			  ;; the ender if there's either nothing or
+			  ;; newlines between.
+			  (when (and (eq lit-type 'c) (eq (point) end))
+			    (widen)
+			    (skip-chars-backward " \t")
+			    (when (or (eq (point) end) (bolp))
+			      (goto-char (cdr range)))))
+		      (when (and (eq (point) beg) (looking-at "[ \t]*$"))
+			;; Stop before instead of after the comment
+			;; starter if nothing follows it.
+			(widen)
+			(goto-char (car range))))))
 		;; See if we should escape the literal.
 		(if (> count 0)
 		    (if (< (point) here)
@@ -1659,11 +1678,14 @@ command to conveniently insert and align the necessary backslashes."
   ;; comment.  Return a cons of the prefix string and the column where
   ;; it ends.  If fill-prefix is set, it'll override.  Note that this
   ;; function also uses the value of point in some heuristics.
-  (let ((here (point))
-	(prefix-regexp (concat "[ \t]*\\("
-			       c-comment-prefix-regexp
-			       "\\)[ \t]*"))
-	prefix-line comment-prefix res)
+  (let* ((here (point))
+	 (prefix-regexp (concat "[ \t]*\\("
+				c-comment-prefix-regexp
+				"\\)[ \t]*"))
+	 (comment-start-regexp (if (eq lit-type 'c++)
+				   prefix-regexp
+				 comment-start-skip))
+	 prefix-line comment-prefix res)
     (cond
      (fill-prefix
       (setq res (cons fill-prefix
@@ -1771,7 +1793,7 @@ command to conveniently insert and align the necessary backslashes."
 			  (unwind-protect
 			      (progn
 				(goto-char (car lit-limits))
-				(if (looking-at comment-start-skip)
+				(if (looking-at comment-start-regexp)
 				    (goto-char (match-end 0))
 				  (forward-char 2)
 				  (skip-chars-forward " \t"))
@@ -1859,7 +1881,7 @@ command to conveniently insert and align the necessary backslashes."
 			   ;; on the comment start line that we can
 			   ;; use after the prefix.
 			   (goto-char (car lit-limits))
-			   (if (looking-at comment-start-skip)
+			   (if (looking-at comment-start-regexp)
 			       (goto-char (match-end 0))
 			     (forward-char 2)
 			     (skip-chars-forward " \t"))
@@ -2059,7 +2081,9 @@ Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
 	      ;; with a number of 'x'.
 	      (save-excursion
 		(goto-char (car lit-limits))
-		(if (looking-at comment-start-skip)
+		(if (looking-at (if (eq lit-type 'c++)
+				    c-comment-prefix-regexp
+				  comment-start-skip))
 		    (goto-char (match-end 0))
 		  (forward-char 2)
 		  (skip-chars-forward " \t"))
