@@ -5598,21 +5598,32 @@ brace."
 
        ;; CASE B.3: The body of a function declared inside a normal
        ;; block.  Can occur e.g. in Pike and when using gcc
-       ;; extensions.  Might also trigger it with some macros followed
-       ;; by blocks, and this gives sane indentation then too.
+       ;; extensions, but watch out for macros followed by blocks.
        ;; C.f. cases E, 16F and 17G.
        ((and (not (c-looking-at-bos))
 	     (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
-		 'same))
+		 'same)
+	     (save-excursion
+	       ;; Look for a type followed by a symbol, i.e. the start of a
+	       ;; function declaration.  Doesn't work for declarations like
+	       ;; "int *foo() ..."; we'd need to refactor the more competent
+	       ;; analysis in `c-font-lock-declarations' for that.
+	       (and (c-forward-type)
+		    (progn
+		      (c-forward-syntactic-ws)
+		      (looking-at c-symbol-start)))))
 	(c-add-stmt-syntax 'defun-open nil t
 			   containing-sexp paren-state))
 
-       ;; CASE B.4: Continued statement with block open.
+       ;; CASE B.4: Continued statement with block open.  The most
+       ;; accurate analysis is perhaps `statement-cont' together with
+       ;; `block-open' but we play DWIM and use `substatement-open'
+       ;; instead.  The rationaly is that this typically is a macro
+       ;; followed by a block which makes it very similar to a
+       ;; statement with a substatement block.
        (t
-	(goto-char beg-of-same-or-containing-stmt)
-	(c-add-stmt-syntax 'statement-cont nil nil
-			   containing-sexp paren-state)
-	(c-add-syntax 'block-open))
+	(c-add-stmt-syntax 'substatement-open nil nil
+			   containing-sexp paren-state))
        ))
 
      ;; CASE C: iostream insertion or extraction operator
@@ -5631,8 +5642,8 @@ brace."
      ((and (save-excursion
 	     ;; Check that the next token is a '{'.  This works as
 	     ;; long as no language that allows nested function
-	     ;; definitions doesn't allow stuff like member init
-	     ;; lists, K&R declarations or throws clauses there.
+	     ;; definitions allows stuff like member init lists, K&R
+	     ;; declarations or throws clauses there.
 	     ;;
 	     ;; Note that we do a forward search for something ahead
 	     ;; of the indentation line here.  That's not good since
@@ -5643,7 +5654,16 @@ brace."
 	     (eq (char-after) ?{))
 	   (not (c-looking-at-bos))
 	   (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
-	       'same))
+	       'same)
+	   (save-excursion
+	     ;; Look for a type followed by a symbol, i.e. the start of a
+	     ;; function declaration.  Doesn't work for declarations like "int
+	     ;; *foo() ..."; we'd need to refactor the more competent analysis
+	     ;; in `c-font-lock-declarations' for that.
+	     (and (c-forward-type)
+		  (progn
+		    (c-forward-syntactic-ws)
+		    (looking-at c-symbol-start)))))
       (c-add-stmt-syntax 'func-decl-cont nil t
 			 containing-sexp paren-state))
 
@@ -6759,16 +6779,24 @@ This function does not do any hidden buffer changes."
 
 	     ;; CASE 16F: Can be a defun-close of a function declared
 	     ;; in a statement block, e.g. in Pike or when using gcc
-	     ;; extensions.  Might also trigger it with some macros
-	     ;; followed by blocks, and this gives sane indentation
-	     ;; then too.  Let it through to be handled below.
+	     ;; extensions, but watch out for macros followed by
+	     ;; blocks.  Let it through to be handled below.
 	     ;; C.f. cases B.3 and 17G.
 	     ((and (not inenclosing-p)
 		   lim
 		   (save-excursion
 		     (and (not (c-looking-at-bos))
 			  (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
-			  (setq placeholder (point)))))
+			  (setq placeholder (point))
+			  ;; Look for a type or identifier followed by a
+			  ;; symbol, i.e. the start of a function declaration.
+			  ;; Doesn't work for declarations like "int *foo()
+			  ;; ..."; we'd need to refactor the more competent
+			  ;; analysis in `c-font-lock-declarations' for that.
+			  (c-forward-type)
+			  (progn
+			    (c-forward-syntactic-ws)
+			    (looking-at c-symbol-start)))))
 	      (back-to-indentation)
 	      (if (/= (point) containing-sexp)
 		  (goto-char placeholder))
@@ -6901,13 +6929,21 @@ This function does not do any hidden buffer changes."
 
 	   ;; CASE 17G: First statement in a function declared inside
 	   ;; a normal block.  This can occur in Pike and with
-	   ;; e.g. the gcc extensions.  Might also trigger it with
-	   ;; some macros followed by blocks, and this gives sane
-	   ;; indentation then too.  C.f. cases B.3 and 16F.
+	   ;; e.g. the gcc extensions, but watch out for macros
+	   ;; followed by blocks.  C.f. cases B.3 and 16F.
 	   ((save-excursion
 	      (and (not (c-looking-at-bos))
 		   (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
-		   (setq placeholder (point))))
+		   (setq placeholder (point))
+		   ;; Look for a type or identifier followed by a
+		   ;; symbol, i.e. the start of a function declaration.
+		   ;; Doesn't work for declarations like "int *foo()
+		   ;; ..."; we'd need to refactor the more competent
+		   ;; analysis in `c-font-lock-declarations' for that.
+		   (c-forward-type)
+		   (progn
+		     (c-forward-syntactic-ws)
+		     (looking-at c-symbol-start))))
 	    (back-to-indentation)
 	    (if (/= (point) containing-sexp)
 		(goto-char placeholder))
