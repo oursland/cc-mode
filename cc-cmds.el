@@ -1021,7 +1021,6 @@ comment."
 	at-comment-col)
     (cond
      ((eq literal 'string))
-;;      (insert ?\n))
      ((or (not c-comment-continuation-stars)
 	  (not literal))
       (indent-new-comment-line soft))
@@ -1624,8 +1623,9 @@ Optional prefix ARG means justify paragraph as well."
 	      (narrow-to-region (c-point 'bol)
 				(save-excursion
 				  (forward-line 1)
-				  (while
-				      (looking-at (regexp-quote fill-prefix))
+				  (while (and (not eobp)
+					      (looking-at
+					       (regexp-quote fill-prefix)))
 				    (forward-line 1))
 				  (point)))
 	      (or (c-safe
