@@ -160,6 +160,7 @@ mode name.  Valid symbols are:
   :group 'c)
 
 (defcustom c-hanging-braces-alist '((brace-list-open)
+				    (brace-entry-open)
 				    (substatement-open after)
 				    (block-close . c-snug-do-while)
 				    (extern-lang-open after)
@@ -178,7 +179,7 @@ SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
 class-close, inline-open, inline-close, block-open, block-close,
 substatement-open, statement-case-open, extern-lang-open,
 extern-lang-close, brace-list-open, brace-list-close,
-brace-list-intro, or brace-list-entry. See `c-offsets-alist' for
+brace-list-intro, or brace-entry-open. See `c-offsets-alist' for
 details.
 
 ACTION can be either a function symbol or a list containing any
@@ -201,7 +202,7 @@ syntactic context for the brace line."
 			(const substatement-open) (const statement-case-open)
 			(const extern-lang-open) (const extern-lang-close)
 			(const brace-list-open) (const brace-list-close)
-			(const brace-list-intro) (const brace-list-entry))
+			(const brace-list-intro) (const brace-entry-open))
 		(choice :tag "Action"
 			(set :format "Insert a newline %v"
 			     :extra-offset 38
