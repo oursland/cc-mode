@@ -722,18 +722,19 @@ tools (e.g. Javadoc).")
 ;; `c-fl-decl-syntactic-pos', or nil if there's no such match.
 
 (defmacro c-fl-decl-prefix-search ()
-  (while (and (setq match (re-search-forward c-decl-prefix-re limit 'move))
-	      (if (memq (get-text-property (setq match-pos (1- (point))) 'face)
-			'(font-lock-comment-face font-lock-string-face))
-		  t
-		;; Skip forward past only comments to set the position
-		;; to continue at, so we don't skip macros.
-		(c-forward-comments)
-		(setq continue-pos (point))
-		nil))
-    ;; Search again if the match is within a comment or a string
-    ;; literal.
-    (goto-char (next-single-property-change match-pos 'face nil limit))))
+  '(while (and (setq match (re-search-forward c-decl-prefix-re limit 'move))
+	       (if (memq (get-text-property (setq match-pos (1- (point)))
+					    'face)
+			 '(font-lock-comment-face font-lock-string-face))
+		   t
+		 ;; Skip forward past only comments to set the position
+		 ;; to continue at, so we don't skip macros.
+		 (c-forward-comments)
+		 (setq continue-pos (point))
+		 nil))
+     ;; Search again if the match is within a comment or a string
+     ;; literal.
+     (goto-char (next-single-property-change match-pos 'face nil limit))))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
