@@ -209,17 +209,19 @@ the existing style.")
   ;; Recursively set the base style.  If no base style is given, the
   ;; default base style is "cc-mode" and the recursion stops.  Be sure
   ;; to detect loops.
-  (if (not (string-equal style "cc-mode"))
-      (let ((base (if (stringp (car basestyles))
-		      (downcase (car basestyles))
-		    "cc-mode")))
-	(if (memq base basestyles)
-	    (error "Style loop detected: %s in %s" base basestyles))
-	(c-set-style-2 base (cons base basestyles))))
   (let ((vars (cdr (or (assoc (downcase style) c-style-alist)
 		       (assoc (upcase style) c-style-alist)
 		       (assoc style c-style-alist)
 		       (error "Undefined style: %s" style)))))
+    (if (not (string-equal style "cc-mode"))
+	(let ((base (if (stringp (car vars))
+			(prog1
+			    (downcase (car vars))
+			  (setq vars (cdr vars)))
+		      "cc-mode")))
+	  (if (memq base basestyles)
+	      (error "Style loop detected: %s in %s" base basestyles))
+	  (c-set-style-2 base (cons base basestyles))))
     (mapcar 'c-set-style-1 vars)))
     
 (defvar c-set-style-history nil)
