@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-29 20:27:27 $
-;; Version:         $Revision: 2.17 $
+;; Last Modified:   $Date: 1992-04-29 22:23:25 $
+;; Version:         $Revision: 2.18 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-29 20:27:27 $|$Revision: 2.17 $|
+;; |$Date: 1992-04-29 22:23:25 $|$Revision: 2.18 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -105,7 +105,9 @@ top-level open braces; all other braces hang.")
   '("" mode-line-modified
     mode-line-buffer-identification
     "   " global-mode-string "   %[("
-    mode-name c++-auto-hungry-string
+    mode-name (c++-hungry-delete-key
+	       (c++-auto-newline "/ah" "/h")
+	       (c++-auto-newline "/a"))
     minor-mode-alist "%n"
     mode-line-process
     ")%]----" (-3 . "%p") "-%-")
@@ -129,8 +131,6 @@ Legal values are:
      'auto-hungry  -- both auto-newline and hungry-delete-key can be toggled.
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
-(defvar c++-auto-hungry-string ""
-  "For mode-line indication of auto/hungry state.")
 (defvar c++-hungry-delete-key nil
   "Internal state of hungry delete key.")
 (defvar c++-auto-newline nil
@@ -138,10 +138,9 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
 (make-variable-buffer-local 'c++-auto-newline)
 (make-variable-buffer-local 'c++-hungry-delete-key)
-(make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.17 $
+  "Major mode for editing C++ code.  $Revision: 2.18 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -281,12 +280,8 @@ no args, if that value is non-nil."
   (setq mode-line-format c++-mode-line-format)
   (run-hooks 'c++-mode-hook)
   (c++-set-auto-hungry-state
-   (or (eq c++-auto-hungry-initial-state 'auto-only)
-       (eq c++-auto-hungry-initial-state 'auto-hungry)
-       (eq c++-auto-hungry-initial-state t))
-   (or (eq c++-auto-hungry-initial-state 'hungry-only)
-       (eq c++-auto-hungry-initial-state 'auto-hungry)
-       (eq c++-auto-hungry-initial-state t))))
+   (memq c++-auto-hungry-initial-state '(auto-only   auto-hungry t))
+   (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-comment-indent ()
   "Used by indent-for-comment to decide how much to indent a comment
@@ -312,12 +307,7 @@ in C++ code based on its context."
 Update mode line to indicate state to user."
   (setq c++-auto-newline auto-p
 	c++-hungry-delete-key hungry-p)
-  (let ((slash  (if (or auto-p hungry-p) "/" nil))
-	(auto   (if auto-p "a" nil))
-	(hungry (if hungry-p "h" nil)))
-    (setq c++-auto-hungry-string (concat slash auto hungry))
-    ;; force mode line update
-    (set-buffer-modified-p (buffer-modified-p))))
+  (set-buffer-modified-p (buffer-modified-p)))
 
 (defun c++-toggle-auto-state (arg)
   "Toggle auto-newline state.
@@ -363,30 +353,24 @@ Optional argument has the following meanings when supplied:
           toggle both states regardless of c++auto-hungry-toggle-p."
   (interactive "P")
   (let* ((numarg (prefix-numeric-value arg))
+	 (apl (list 'auto-only   'auto-hungry t))
+	 (hpl (list 'hungry-only 'auto-hungry t))
 	 (auto (cond ((not arg)
-		      (if (or (eq c++-auto-hungry-toggle 'auto-only)
-			      (eq c++-auto-hungry-toggle 'auto-hungry)
-			      (eq c++-auto-hungry-toggle t))
+		      (if (memq c++-auto-hungry-toggle apl)
 			  (not c++-auto-newline)
 			c++-auto-newline))
 		     ((listp arg)
-		      (or (eq c++-auto-hungry-initial-state 'auto-only)
-			  (eq c++-auto-hungry-initial-state 'auto-hungry)
-			  (eq c++-auto-hungry-initial-state t)))
+		      (memq c++-auto-hungry-initial-state apl))
 		     ((zerop numarg)
 		      (not c++-auto-newline))
 		     ((< arg 0) nil)
 		     (t t)))
 	 (hungry (cond ((not arg)
-			(if (or (eq c++-auto-hungry-toggle 'hungry-only)
-				(eq c++-auto-hungry-toggle 'auto-hungry)
-				(eq c++-auto-hungry-toggle t))
+			(if (memq c++-auto-hungry-toggle hpl)
 			    (not c++-hungry-delete-key)
 			  c++-hungry-delete-key))
 		       ((listp arg)
-			(or (eq c++-auto-hungry-initial-state 'hungry-only)
-			    (eq c++-auto-hungry-initial-state 'auto-hungry)
-			    (eq c++-auto-hungry-initial-state t)))
+			(memq c++-auto-hungry-initial-state hpl))
 		       ((zerop numarg)
 			(not c++-hungry-delete-key))
 		       ((< arg 0) nil)
@@ -852,7 +836,7 @@ Returns nil if line starts inside a string, t if in a comment."
                           c-continued-statement-offset 0)
                       ;; j.peck  [8/13/91]
 		      ;; j.peck hack replaced this line:
-		      ;; (+ c-continued-statement-offset (current-column) ...)
+		      ;; \(+ c-continued-statement-offset (current-column)
 		      ;; Add continued-brace-offset? [weikart]
 		      (if (save-excursion (goto-char indent-point)
 					  (skip-chars-forward " \t")
@@ -1339,7 +1323,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.17 $"
+(defconst c++-version "$Revision: 2.18 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
@@ -1368,7 +1352,6 @@ Send bug reports to c++-mode-help@anthem.nlm.nih.gov"
 		       'c++-mode-line-format
 		       'c++-auto-hungry-initial-state
 		       'c++-auto-hungry-toggle
-		       'c++-auto-hungry-string
 		       'c++-hungry-delete-key
 		       'c++-auto-newline
 		       'c++-default-macroize-column
