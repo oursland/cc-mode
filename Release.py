@@ -2,7 +2,7 @@
 
 """Manage releases of CC Mode.
 
-Usage: %(program)s [-b] [-t] [-p] [-d] [-h] revnum
+Usage: %(program)s [-b] [-t|-T] [-p] [-d] [-h] revnum
 
 Where:
 
@@ -13,6 +13,12 @@ Where:
     --tag 
     -t
             tag all release files with minor revision number
+
+    --TAG
+    -T
+            like --tag, but relocates any existing tag.  See
+	    `cvs tag -F'.  Only one of --tag or --TAG can be given on the
+	    command line.
 
     --package
     -p
@@ -86,10 +92,10 @@ ALL_FILES = FILES + FATRELEASE_FILES
 
 
 
-def tag_release(revnum):
+def tag_release(revnum, retag):
     # first verify that the ChangeLog is up-to-date
     fp = open("ChangeLog")
-    cre = re.compile('^[ \t]*[*] Release ' + revre)
+    cre = re.compile('^[ \t]*[*] Release 5.(?P<rev>[0-9]{2})')
     while 1:
 	line = fp.readline()
 	if line == '':
@@ -105,7 +111,12 @@ def tag_release(revnum):
 		sys.exit(1)
 	    break
     fp.close()
-    os.system('cvs tag "Release_5_' + revnum + '"')
+    relname = '"Release_5_' + revnum + '"'
+    cvscmd = 'cvs tag'
+    option = ''
+    if retag:
+	option = '-F'
+    os.system('%s %s %s' % (cvscmd, option, relname))
 
 
 
@@ -232,8 +243,8 @@ def main():
     try:
 	opts, args = getopt.getopt(
 	    sys.argv[1:],
-	    'btpdh',
-	    ['bump', 'tag', 'package', 'docs', 'help'])
+	    'btTpdh',
+	    ['bump', 'tag', 'TAG', 'package', 'docs', 'help'])
     except getopt.error, msg:
 	print msg
 	usage(1)
@@ -246,6 +257,7 @@ def main():
 
     # default options
     tag = 0
+    retag = 0
     package = 0
     docs = 0
     help = 0
@@ -258,6 +270,9 @@ def main():
 	    bump = 1
 	elif opt in ('-t', '--tag'):
 	    tag = 1
+	elif opt in ('-T', '--TAG'):
+	    tag = 1
+	    retag = 1
 	elif opt in ('-p', '--package', '-P', '--PACKAGE'):
 	    package = 1
 	elif opt in ('-d', '--docs'):
@@ -269,7 +284,7 @@ def main():
     # very important!!!
     os.umask(002)
     if tag:
-	tag_release(revnum)
+	tag_release(revnum, retag)
 
     if package:
 	pkg_release(revnum)
