@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.19 $
-;; Last Modified:   $Date: 1993-09-28 21:52:07 $
+;; Version:         $Revision: 3.20 $
+;; Last Modified:   $Date: 1993-09-28 22:09:47 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-28 21:52:07 $|$Revision: 3.19 $|
+;; |$Date: 1993-09-28 22:09:47 $|$Revision: 3.20 $|
 
 ;;; Code:
 
@@ -197,7 +197,8 @@ FSF 19 (patched):        (8-bit v19)")
   (define-key c++-mode-map "\C-m"      'newline-and-indent)
   (define-key c++-mode-map "{"         'c++-electric-brace)
   (define-key c++-mode-map "}"         'c++-electric-brace)
-  (define-key c++-mode-map ";"         'c++-electric-semi)
+  (define-key c++-mode-map ";"         'c++-electric-semi&comma)
+  (define-key c++-mode-map ","         'c++-electric-semi&comma)
   (define-key c++-mode-map "#"         'c++-electric-pound)
   (define-key c++-mode-map "\e\C-h"    'mark-c-function)
   (define-key c++-mode-map "\e\C-q"    'c++-indent-exp)
@@ -363,7 +364,9 @@ Current legal values are:
                          placing them on the same line.
  `defun-close-semi'   -- cleans up the terminating semi-colon on class
                          definitions and functions by placing the semi
-                         on the same line as the closing brace.")
+                         on the same line as the closing brace.
+ `list-close-comma    -- cleans up commas following braces in array
+                         and aggregate initializers.")
 (defvar c++-hanging-braces t
   "*Controls the insertion of newlines before open (left) braces.
 This variable only has effect when auto-newline is on, as evidenced by
@@ -539,7 +542,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.19 $
+  "Major mode for editing C++ code.  $Revision: 3.20 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -613,7 +616,8 @@ from their c-mode cousins.
  c++-cleanup-list
     A list of construct \"clean ups\" which c++-mode will perform when
     auto-newline feature is on.  Current legal values are:
-    `brace-else-brace', `empty-defun-braces', `defun-close-semi'.
+    `brace-else-brace', `empty-defun-braces', `defun-close-semi',
+    `list-close-comma'.
  c++-comment-only-line-offset
     Extra indentation for a line containing only a C or C++ style
     comment.  Can be an integer or list, specifying the various styles
@@ -730,7 +734,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.19 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.20 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1041,21 +1045,27 @@ we're on a comment-only line, otherwise use `indent-for-comment' (\\[indent-for-
 	  (goto-char here)
 	  (c++-indent-line)))))
 
-(defun c++-electric-semi (arg)
+(defun c++-electric-semi&comma (arg)
   "Insert character and correct line's indentation."
   (interactive "P")
   (if (c++-in-literal)
       (self-insert-command (prefix-numeric-value arg))
-    (let ((here (point-marker)))
-      (if (and (memq 'defun-close-semi c++-cleanup-list)
+    (let ((here (point-marker))
+	  (lcc last-command-char))
+      (if (and (or (and (= lcc ?,)
+			(memq 'list-close-comma c++-cleanup-list))
+		   (and (= lcc ?\;)
+			(memq 'defun-close-semi c++-cleanup-list)))
 	       c++-auto-newline
 	       (progn
 		 (skip-chars-backward " \t\n")
 		 (= (preceding-char) ?})))
 	  (delete-region here (point)))
       (goto-char here)
-      (set-marker here nil))
-    (c++-electric-terminator arg)))
+      (set-marker here nil)
+      (if (= lcc ?,)
+	  (self-insert-command (prefix-numeric-value arg))
+	(c++-electric-terminator arg)))))
 
 (defun c++-electric-colon (arg)
   "Electrify colon.
@@ -2670,7 +2680,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.19 $"
+(defconst c++-version "$Revision: 3.20 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
