@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.196 $
-;; Last Modified:   $Date: 1995-04-18 17:10:54 $
+;; Version:         $Revision: 4.197 $
+;; Last Modified:   $Date: 1995-04-18 23:08:17 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-18 17:10:54 $|$Revision: 4.196 $|
+;; |$Date: 1995-04-18 23:08:17 $|$Revision: 4.197 $|
 
 ;;; Code:
 
@@ -302,21 +302,21 @@ according to syntactic analysis via `c-offsets-alist', even when
 (defvar c-block-comments-indent-p nil
   "*Specifies how to re-indent C style block comments.
 
-Four styles of C block comment indentation are supported, as shown
-below.  When this variable is nil, block comments are indented as
-shown in styles 1 through 3.  If this variable is non-nil, block
-comments are indented as shown in style 4.
+Examples of the supported styles of C block comment indentation are
+shown below.  When this variable is nil, block comments are indented
+as shown in styles 1 through 4.  If this variable is non-nil, block
+comments are indented as shown in style 5.
 
 Note that cc-mode does not automatically insert any stars or block
 comment delimiters.  You must type these in manually.  This variable
 only controls how the lines within the block comment are indented when
 you hit ``\\[c-indent-command]''.
 
- style 1:       style 2:       style 3:       style 4:
- /*             /*             /*             /*
-    blah         * blah        ** blah        blah
-    blah         * blah        ** blah        blah
-    */           */            */             */")
+ style 1:    style 2 (GNU):    style 3:     style 4:     style 5:
+ /*          /*                /*           /*           /*
+    blah        blah            * blah      ** blah      blah
+    blah        blah */         * blah      ** blah      blah
+    */                          */          */           */")
 
 (defvar c-cleanup-list '(scope-operator)
   "*List of various C/C++/ObjC constructs to \"clean up\".
@@ -4565,7 +4565,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.196 $"
+(defconst c-version "$Revision: 4.197 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
