@@ -1221,9 +1221,9 @@ XEmacs variable.  When this variable is non-@code{nil},
 with @code{c-electric-backspace}.
 
 In other Emacs versions, @ccmode{} doesn't bind either @key{Backspace}
-or @key{Delete}.  In XEmacs 19 and Emacs prior to 21 that means that
-it's up to you to fix them.  Emacs 21 automatically binds them as
-appropriate to @kbd{DEL} and @kbd{C-d}.
+or @key{Delete}.  In Emacs prior to 21 that means that it's up to you to
+fix them.  Emacs 21 automatically binds them as appropriate to @kbd{DEL}
+and @kbd{C-d}.
 
 Another way to use hungry deletion is to bind
 @code{c-hungry-backspace} and @code{c-hungry-delete-forward} directly
@@ -2277,8 +2277,7 @@ Only syntactic symbols not already bound on @code{c-offsets-alist} will
 be set from styles.  This means that any association you set on it, be
 it before or after mode initialization, will not be changed.  The
 @code{c-offsets-alist} variable may therefore be used from e.g. the
-Customization interface@footnote{Available in Emacs 20 and later, and
-XEmacs 19.15 and later.} to easily change indentation offsets without
+Customization interface to easily change indentation offsets without
 having to bother about styles.  Initially @code{c-offsets-alist} is
 empty, so that all syntactic symbols are set by the style system.
 
@@ -4974,15 +4973,6 @@ mode's doc string contains @code{To submit a problem report, enter
 `C-c C-b'} near the top of the doc string where the older mode has
 @code{This is much like C mode except ....}.
 
-Since this newer AWK mode makes essential use of a relatively new
-Emacs Lisp feature@footnote{Specifically, the @code{syntax-table} text
-property.}, you need either GNU Emacs 20.1 (or later) or XEmacs 21.4
-(or later) to use it.  If your Emacs version is earlier than one of
-these, the older @file{awk-mode.el} will get loaded and run in place
-of the AWK mode described here, even when you have put the above
-@code{autoload} form into your @file{.emacs} or @file{init.el}.
-Upgrading your (X)Emacs is strongly recommended if this is the case.
-
 Here is an overview of which @ccmode{} features currently work with
 AWK mode and which don't:
 
@@ -5370,19 +5360,6 @@ If you want to reformat old code, you're probably better off using some
 other tool instead, e.g. @ref{Top, , GNU indent, indent, The `indent'
 Manual}, which has more powerful reformatting capabilities than
 @ccmode{}.
-
-@item
-@vindex signal-error-on-buffer-boundary
-XEmacs has a variable called @code{signal-error-on-buffer-boundary}.
-It's used as a solution to user interface problems associated with
-buffer movement and the @code{zmacs-region} deactivation on errors.
-However, setting this variable to a non-default value in XEmacs 19 and
-20 had the deleterious side effect of breaking many built-in primitive
-functions.  @strong{Do not set this variable to @code{nil} in XEmacs
-19 and 20}; you will cause serious problems in @ccmode{} and probably
-other XEmacs packages!  In XEmacs 21 the effects of the variable is
-limited to some functions that are only used interactively, so it's
-not a problem there.
 @end itemize
 
 
@@ -5451,20 +5428,6 @@ back?}
 Use @kbd{C-M-f} and @kbd{C-M-b} to move over balanced brace blocks.  Use
 @kbd{M-a} and @kbd{M-e} to move by statements, which will also move into
 blocks.
-
-@item
-@emph{Whenever I try to indent a line or type an ``electric'' key such
-as @kbd{;}, @kbd{@{}, or @kbd{@}}, I get an error that look like this:
-@code{Invalid function: (macro . #[...}. What gives?}
-
-This is a common error when @ccmode{} hasn't been compiled correctly,
-especially under Emacs 19.34@footnote{Technically, it's because some
-macro wasn't defined during the compilation, so the byte compiler put
-in function calls instead of the macro expansions. Later, when the
-interpreter tries to call the macro as a function, it shows this
-(somewhat cryptic) error message.}. If you are using the standalone
-@ccmode{} distribution, try recompiling it according to the instructions
-in the @file{README} file.
 @end itemize
 
 
