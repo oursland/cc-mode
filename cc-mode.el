@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-28 19:19:55 $
-;; Version:         $Revision: 2.78 $
+;; Last Modified:   $Date: 1992-05-28 21:23:03 $
+;; Version:         $Revision: 2.79 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-28 19:19:55 $|$Revision: 2.78 $|
+;; |$Date: 1992-05-28 21:23:03 $|$Revision: 2.79 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -197,7 +197,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.78 $
+  "Major mode for editing C++ code.  $Revision: 2.79 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -626,7 +626,7 @@ for member initialization list."
   (interactive "P")
   (let ((c++-auto-newline c++-auto-newline)
 	(insertion-point (point))
-	(bod (save-excursion (c++-beginning-of-defun (point-min)) (point))))
+	(bod (save-excursion (c++-beginning-of-defun) (point))))
     (save-excursion
       (cond
        ;; check for double-colon where the first colon is not in a
@@ -685,7 +685,7 @@ for member initialization list."
 			       (end-of-line 1)
 			       (looking-at ":")))
 			(progn
-			  (beginning-of-defun)
+			  (c++-beginning-of-defun)
 			  (let ((pps (parse-partial-sexp (point) end)))
 			    (or (nth 3 pps) (nth 4 pps) (nth 5 pps))))))))
 	(progn
@@ -846,7 +846,7 @@ if it is embedded in an expression."
     (let ((indent-point (point))
 	  (case-fold-search nil)
 	  state containing-sexp parse-start)
-      (beginning-of-defun)
+      (c++-beginning-of-defun)
       (while (< (point) indent-point)
 	(setq parse-start (point))
 	(setq state (parse-partial-sexp (point) indent-point 0))
@@ -860,7 +860,7 @@ if it is embedded in an expression."
     (let* ((here (point))
 	   (state nil)
 	   (match nil))
-      (beginning-of-defun)
+      (c++-beginning-of-defun)
       (while (< (point) here)
 	(setq match
 	      (and (re-search-forward "\\(/[/*]\\)\\|[\"']" here 'move)
@@ -899,8 +899,7 @@ if it is embedded in an expression."
   (condition-case ()
       (save-excursion
 	(save-restriction
-	  (narrow-to-region (point)
-			    (progn (beginning-of-defun) (point)))
+	  (narrow-to-region (point) (progn (c++-beginning-of-defun) (point)))
 	  (goto-char (point-max))
 	  (= (char-after (or (scan-lists (point) -1 1) (point-min))) ?\()))
     (error nil)))
@@ -926,7 +925,7 @@ Returns nil if line starts inside a string, t if in a comment."
 	  containing-sexp)
       (if parse-start
 	  (goto-char parse-start)
-	(beginning-of-defun))
+	(c++-beginning-of-defun))
       (while (< (point) indent-point)
 	(let ((here (point))
 	      (pps (parse-partial-sexp (point) indent-point 0)))
@@ -1212,7 +1211,7 @@ Returns nil if line starts inside a string, t if in a comment."
 
 (defun c++-backward-to-start-of-do (&optional limit)
   "Move to the start of the last ``unbalanced'' do."
-  (or limit (setq limit (save-excursion (beginning-of-defun) (point))))
+  (or limit (setq limit (save-excursion (c++-beginning-of-defun) (point))))
   (let ((do-level 1)
 	(case-fold-search nil))
     (while (not (zerop do-level))
@@ -1599,8 +1598,9 @@ function definition.")
   "Weakly-defined regexp to match beginning of structure or function definition.")
 
 
-(defun c++-beginning-of-defun (arg)
+(defun c++-beginning-of-defun (&optional arg)
   (interactive "p")
+  (if (not arg) (setq arg 1))
   (let ((c++-defun-header (if c++-match-header-strongly
 			      c++-defun-header-strong
 			    c++-defun-header-weak)))
@@ -1659,7 +1659,7 @@ function definition.")
     (beginning-of-line 1)
     (let ((end (make-marker)))
       (set-marker end (point))
-      (c++-beginning-of-defun 1)
+      (c++-beginning-of-defun)
       (while (and (< (point) end))
 	(c++-indent-line)
 	(forward-line 1)
@@ -1671,7 +1671,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.78 $"
+(defconst c++-version "$Revision: 2.79 $"
   "c++-mode version number.")
 
 (defun c++-version ()
