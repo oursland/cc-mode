@@ -128,24 +128,14 @@
 (eval-when-compile
   (load-file "./cc-langs.el"))
 
-;; See the explanation in cc-mode.el, under c-emacs-features for why
-;; this workaround is necessary.  In Emacs, we punt because Emacs will
-;; put the mode name in the menu title of the popup, but we have to
-;; put "CC Mode" in the menu title of the menubar entry.  Sigh.
-(if (memq 'duplicate-menus c-emacs-features)
-    ;; Emacs
-    (easy-menu-define c-c-menu c-mode-map "CC Mode Commands"
-		      (c-mode-menu "CC Mode"))
-  ;; XEmacs
-  (easy-menu-define c-c-menu c-mode-map "C Mode Commands"
-		    (c-mode-menu "C"))
-  (easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
-		    (c-mode-menu "C++"))
-  (easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
-		    (c-mode-menu "ObjC"))
-  (easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
-		    (c-mode-menu "Java"))
-  )
+(easy-menu-define c-c-menu c-mode-map "C Mode Commands"
+		  (c-mode-menu "C"))
+(easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
+		  (c-mode-menu "C++"))
+(easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
+		  (c-mode-menu "ObjC"))
+(easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
+		  (c-mode-menu "Java"))
 
 
 (provide 'cc-menus)
