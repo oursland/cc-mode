@@ -111,7 +111,7 @@ CC Mode
 @cindex BOCM
 
 Welcome to @ccmode{}.  This is a GNU Emacs mode for editing files
-containing C, C++, Objective-C, Java, and CORBA IDL code.  This
+containing C, C++, Objective-C, Java, CORBA IDL, and Pike code.  This
 incarnation of the mode is descendant from @file{c-mode.el} (also called
 "Boring Old C Mode" or BOCM @code{:-)}, and @file{c++-mode.el} version
 2, which I have been maintaining since 1992.  @ccmode{} represents a
@@ -121,13 +121,15 @@ flexible mechanism for controlling indentation has been developed.
 
 @ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
 @footnote{``The Annotated C++ Reference Manual'', by Ellis and
-Stroustrup.} C++, Objective-C, Java and CORBA's Interface
-Definition Language files.  In this way, you can
-easily set up consistent coding styles for use in editing all C, C++,
-Objective-C, Java and IDL programs. @ccmode{} does @emph{not} handle
+Stroustrup.} C++, Objective-C, Java, CORBA's Interface Definition
+Language and @dfn{Pike}@footnote{A C-like scripting language with its
+roots in the LPC language used in some MUD engines.  See
+<http://pike.idonex.se/>.} files.  In this way, you can easily set up
+consistent coding styles for use in editing all C, C++, Objective-C,
+Java, IDL and Pike programs. @ccmode{} does @emph{not} handle
 font-locking (a.k.a. syntax coloring, keyword highlighting) or anything
-of that nature, for any of these modes.  Font-locking is handled by other
-Emacs packages.
+of that nature, for any of these modes.  Font-locking is handled by
+other Emacs packages.
 
 This manual will describe the following:
 
@@ -148,12 +150,14 @@ How to customize the new indentation engine.
 @findex objc-mode
 @findex java-mode
 @findex idl-mode
+@findex pike-mode
 Note that the name of this package is ``@ccmode{}'', but there is no top
 level @code{cc-mode} entry point.  All of the variables, commands, and
 functions in @ccmode{} are prefixed with @code{c-@var{<thing>}}, and
-@code{c-mode}, @code{c++-mode}, @code{objc-mode}, @code{java-mode}, and
-@code{idl-mode} entry points are provided.  This file is intended to be
-a replacement for @file{c-mode.el} and @file{c++-mode.el}.
+@code{c-mode}, @code{c++-mode}, @code{objc-mode}, @code{java-mode},
+@code{idl-mode}, and @code{pike-mode} entry points are provided.  This
+file is intended to be a replacement for @file{c-mode.el} and
+@file{c++-mode.el}.
 
 @cindex @file{cc-compat.el} file
 This distribution also contains a file
@@ -252,13 +256,13 @@ your personal coding style.
 @cindex relative buffer position
 The first thing @ccmode{} does when indenting a line of code, is to
 analyze the line, determining the @dfn{syntactic component list} of the
-construct on that line.  A syntactic component consists of a pair
-of information (in lisp parlance, a @emph{cons cell}), where the first
-part is a @dfn{syntactic symbol}, and the second part is a @dfn{relative
+construct on that line.  A syntactic component consists of a pair of
+information (in lisp parlance, a @emph{cons cell}), where the first part
+is a @dfn{syntactic symbol}, and the second part is a @dfn{relative
 buffer position}.  Syntactic symbols describe elements of C code
-@footnote{or C++, Objective-C, Java or IDL code.  In general, for the rest
-of this manual I'll use the term ``C code'' to refer to all the C-like
-dialects, unless otherwise noted.}, e.g. @code{statement},
+@footnote{or C++, Objective-C, Java, IDL, or Pike code.  In general, for
+the rest of this manual I'll use the term ``C code'' to refer to all the
+C-like dialects, unless otherwise noted.}, e.g. @code{statement},
 @code{substatement}, @code{class-open}, @code{class-close}, etc.
 @xref{Syntactic Symbols}, for a complete list of currently recognized
 syntactic symbols and their semantics.  The variable
@@ -512,9 +516,9 @@ The state of the minor modes is always reflected in the minor mode list
 on the modeline of the @ccmode{} buffer.  When auto-newline mode is
 enabled, you will see @samp{C/a} on the mode line @footnote{Remember
 that the @samp{C} could be replaced with @samp{C++}, @samp{ObjC},
-@samp{Java} or @samp{IDL}.}.  When hungry delete mode is enabled you
-would see @samp{C/h} and when both modes are enabled, you'd see
-@samp{C/ah}.
+@samp{Java}, @samp{IDL} or @samp{Pike}.}.  When hungry delete mode is
+enabled you would see @samp{C/h} and when both modes are enabled, you'd
+see @samp{C/ah}.
 
 @kindex C-c C-a
 @kindex C-c C-d
@@ -1363,10 +1367,10 @@ The command is used to fill a block style (C) or line style (C++)
 comment, in much the same way that text in the various text modes can be
 filled@footnote{You should not use specialized filling packages such as
 @code{filladapt} with CC Mode.  They don't work as well for filling as
-@code{c-fill-paragraph}}.  You should never attempt to fill non-comment
-code sections; you'll end up with garbage!  Two variables control how C
-style block comments are filled, specifically how the comment start and
-end delimiters are handled.
+@code{c-fill-paragraph}.}.  In Java buffers, the Javadoc markup words
+are recognized as paragraph starters.  Two variables control how C style
+block comments are filled, specifically how the comment start and end
+delimiters are handled.
 
 The variable @code{c-hanging-comment-starter-p} controls whether comment
 start delimiters which appear on a line by themselves, end up on a line
@@ -1623,6 +1627,7 @@ adjustments.
 @vindex objc-mode-hook
 @vindex java-mode-hook
 @vindex idl-mode-hook
+@vindex pike-mode-hook
 @vindex c-initialization-hook
 @vindex initialization-hook (c-)
 @cindex hooks
@@ -1667,6 +1672,8 @@ initialization hook:
 @code{java-mode-hook} --- for Java buffers only
 @item
 @code{idl-mode-hook} --- for IDL buffers only
+@item
+@code{pike-mode-hook} --- for Pike buffers only
 @item
 @code{c-mode-common-hook} --- common across all languages
 @item
@@ -2061,7 +2068,7 @@ Now, to associate the function @code{c-lineup-streamop} with the
 @code{stream-op} syntactic symbol, we can add something like the
 following to our @code{c++-mode-hook}@footnote{It probably makes more
 sense to add this to @code{c++-mode-hook} than @code{c-mode-common-hook}
-since stream operators are only relevent for C++.}:
+since stream operators are only relevant for C++.}:
 @example
 
 (c-set-offset 'stream-op 'c-lineup-streamop)
@@ -2188,6 +2195,15 @@ colons that separate arguments by aligning colons vertically.
 @code{c-lineup-ObjC-method-args-2} --- similar to
 @code{c-lineup-ObjC-method-args} but lines up the colon on the current
 line with the colon on the previous line.
+
+@findex c-lineup-inexpr-block
+@findex lineup-inexpr-block (c-)
+@item
+@code{c-lineup-inexpr-block} --- this can be used with the in-expression
+block symbols, i.e. @code{inexpr-statement}, @code{inexpr-class} and
+@code{inlambda}, to indent the whole block to the column where the
+construct is started.  E.g. for Java anonymous classes, this lines up
+the class under the @code{new} keyword.
 
 @findex c-lineup-dont-change
 @findex lineup-dont-change (c-)
@@ -2555,17 +2571,31 @@ definition
 @item
 @code{extern-lang-close} --- brace that closes an external language block
 @item
-@code{inextern-lang} --- analogous to `inclass' syntactic symbol, but
-used inside external language blocks (e.g. @code{extern "C" @{}).
+@code{inextern-lang} --- analogous to @code{inclass} syntactic symbol,
+but used inside external language blocks (e.g. @code{extern "C" @{}).
 @item
 @code{namespace-open} --- brace that opens a C++ namespace block.
 @item
 @code{namespace-close} --- brace that closes a C++ namespace block.
 @item
-@code{innamespace} --- analogous to `inextern-lang' syntactic symbol,
-but used inside C++ namespace blocks.
+@code{innamespace} --- analogous to @code{inextern-lang} syntactic
+symbol, but used inside C++ namespace blocks.
 @item
 @code{template-args-cont} --- C++ template argument list continuations
+@item
+@code{inlambda} --- analogous to @code{inclass} syntactic symbol, but
+used inside lambda (i.e. anonymous) functions.  Only used in Pike mode.
+@item
+@code{lambda-intro-cont} --- lines continuing the header of a lambda
+function, i.e. between the @code{lambda} keyword and the function body.
+Only used in Pike mode.
+@item
+@code{inexpr-statement} --- a statement block inside an expression.  The
+gcc C extension of this is recognized.  It's also used for the special
+functions that takes a statement block as an argument in Pike.
+@item
+@code{inexpr-class} --- a class definition inside an expression.  This
+is used for anonymous classes in Java.
 @end itemize
 
 @cindex -open syntactic symbols
@@ -2837,7 +2867,7 @@ Line 9 is a little different --- since it contains the keyword
 given the @code{else-clause} syntax.  Note also that line 10 is slightly
 different too.  Because @code{else} is considered a conditional
 introducing keyword @footnote{The list of conditional keywords are (in
-C, C++, Objective-C, and Java): @code{for}, @code{if}, @code{do},
+C, C++, Objective-C, Java, and Pike): @code{for}, @code{if}, @code{do},
 @code{else}, @code{while}, and @code{switch}.  C++ and Java have two
 additional conditional keywords: @code{try} and @code{catch}.  Java also
 has the @code{finally} and @code{synchronized} keywords.}, and because
@@ -2888,7 +2918,9 @@ block --- it is given @code{statement-case-open} syntax.
 There are a set of syntactic symbols that are used to recognize
 constructs inside of brace lists.  A brace list is defined as an
 @code{enum} or aggregate initializer list, such as might statically
-initialize an array of structs.  For example:
+initialize an array of structs.  The three special aggregate constructs
+in Pike, @code{(@{ @})}, @code{([ ])} and @code{(< >)}, are treated as
+brace lists too.  An example:
 @example
 @group
 
@@ -2936,7 +2968,7 @@ example:
 
 Here, you've already seen the analysis of lines 1, 2, 3, and 11.  On
 line 4, things get interesting; this line is assigned
-@code{brace-entry-open} syntactic symbol because is a bracelist entry
+@code{brace-entry-open} syntactic symbol because it's a bracelist entry
 line that starts with an open brace.  Lines 5 and 6 (and line 9) are
 pretty standard, and line 7 is a @code{brace-list-close} as you'd
 expect.  Once again, line 8 is assigned as @code{brace-entry-open} as is
@@ -2979,9 +3011,9 @@ symbols.  In this example:
 @end group
 @end example
 
-@cindex namespace-open syntactic-symbol
-@cindex namespace-close syntactic-symbol
-@cindex innamespace syntactic-symbol
+@cindex namespace-open syntactic symbol
+@cindex namespace-close syntactic symbol
+@cindex innamespace syntactic symbol
 @noindent
 line 2 is given the @code{namespace-open} syntax, while line 4 is given
 the @code{namespace-close} syntax.  The analysis for line 3 yields:
@@ -3066,7 +3098,6 @@ covered are illustrated by this C++ example:
 @end group
 @end example
 
-@cindex modifier syntactic symbol
 The lines to note in this example include:
 
 @itemize @bullet
@@ -3163,6 +3194,91 @@ illustrating these:
 Here, line 1 is assigned @code{objc-method-intro} syntax, and line 2 is
 assigned @code{objc-method-args-cont} syntax.  Lines 5 and 6 are both
 assigned @code{objc-method-call-cont} syntax.
+
+Java has a concept of anonymous classes, which may look something like
+this:
+@example
+@group
+
+  1: public void watch(Observable o) @{
+  2:     o.addObserver(new Observer() @{
+  3:             public void update(Observable o, Object arg) @{
+  4:                 history.addElement(arg);
+  5:             @}
+  6:         @});
+  7: @}
+
+@end group
+@end example
+
+@cindex inexpr-class syntactic symbol
+The brace following the @code{new} operator opens the anonymous class.
+Lines 3 and 6 are assigned the @code{inexpr-class} syntax, besides the
+@code{inclass} symbol used in normal classes.  Thus, the class will be
+indented just like a normal class, with the added indentation given to
+@code{inexpr-class}.
+
+There are a few occasions where a statement block may be used inside an
+expression.  One is in C code using the gcc extension for this, e.g:
+@example
+@group
+
+  1: int res = (@{
+  2:         int y = foo (); int z;
+  3:         if (y > 0) z = y; else z = - y;
+  4:         z;
+  5:     @});
+
+@end group
+@end example
+
+@cindex inexpr-statement syntactic symbol
+Lines 2 and 5 get the @code{inexpr-statement} syntax, besides the
+symbols they'd get in a normal block.  Therefore, the indentation put on
+@code{inexpr-statement} is added to the normal statement block
+indentation.
+
+In Pike code, there are a few other situations where blocks occur inside
+statements, as illustrated here:
+@example
+@group
+
+  1: array itgob()
+  2: @{
+  3:     string s = map (backtrace()[-2][3..],
+  4:                     lambda
+  5:                         (mixed arg)
+  6:                     @{
+  7:                         return sprintf ("%t", arg);
+  8:                     @}) * ", " + "\n";
+  9:     return catch @{
+ 10:             write (s + "\n");
+ 11:         @};
+ 12: @}
+
+@end group
+@end example
+
+@cindex inlambda syntactic symbol
+@cindex lambda-intro-cont syntactic symbol
+Lines 4 through 8 contain a lambda function, which CC Mode recognizes
+through the @code{lambda} keyword.  If the function argument list is put
+on a line of its own, as in line 5, it gets the @code{lambda-intro-cont}
+syntax.  The function body is handled as an inline method body, with the
+addition of the @code{inlambda} syntactic symbol.  This means that line
+6 gets @code{inlambda} and @code{inline-open}, and line 8 gets
+@code{inline-close}@footnote{You might wonder why it doesn't get
+@code{inlambda} too.  It's because the closing brace is relative to the
+opening brace, which stands on its own line in this example.  If the
+opening brace was hanging on the previous line, then the closing brace
+would get the @code{inlambda} syntax too to be indented correctly.}.
+
+@cindex inexpr-statement syntactic symbol
+On line 9, @code{catch} is a special function taking a statement block
+as its argument.  The block is handled as an in-expression statement
+with the @code{inexpr-statement} syntax, just like the gcc extended C
+example above.  The other similar special function, @code{gauge}, is
+handled like this too.
 
 @cindex knr-argdecl-intro syntactic symbol
 @cindex knr-argdecl syntactic symbol
@@ -3478,7 +3594,7 @@ about its availability!
     )
   "My C Programming Style")
 
-;; Customizations for all of c-mode, c++-mode, and objc-mode
+;; Customizations for all modes in CC Mode.
 (defun my-c-mode-common-hook ()
   ;; add my personal style and set it for the current buffer
   (c-add-style "PERSONAL" my-c-style t)
@@ -3492,7 +3608,7 @@ about its availability!
   (c-toggle-auto-hungry-state 1)
   ;; keybindings for all supported languages.  We can put these in
   ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
-  ;; java-mode-map, and idl-mode-map inherit from it.
+  ;; java-mode-map, idl-mode-map, and pike-mode-map inherit from it.
   (define-key c-mode-base-map "\C-m" 'newline-and-indent)
   )
 
