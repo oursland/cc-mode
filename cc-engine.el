@@ -1401,7 +1401,7 @@ brace."
   ;; backward search.
   (save-excursion
     (or lim (setq lim (point-min)))
-    (let ((block-follows (and (eq (char-after) ?{) (point))))
+    (let ((block-follows (eq (char-after) ?{)))
       ;; Look at the character after point only as a last resort when
       ;; we can't disambiguate.
       (if (and block-follows
@@ -1444,9 +1444,11 @@ brace."
 			 'maybe))))
 	  (if (eq res 'maybe)
 	      (when (and block-follows
-			 (c-safe (goto-char (scan-lists (point) -1 1)) t)
+			 (save-restriction
+			   (narrow-to-region lim (point))
+			   (c-safe (goto-char (scan-lists (point) -1 1)) t))
 			 (eq (char-after) ?\())
-		(cons 'inexpr-statement block-follows))
+		(cons 'inexpr-statement (point)))
 	    res))))))
 
 (defun c-looking-at-inexpr-block-backward (&optional lim)
