@@ -292,7 +292,7 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 
 
 (defconst c-offsets-alist
-  '((string                . -1000)
+  '((string                . c-lineup-dont-change)
     (c                     . c-lineup-C-comments)
     (defun-open            . 0)
     (defun-close           . 0)
