@@ -133,7 +133,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
          "class[ \t]+"
          "\\("                                ; the string we want to get
          "[a-zA-Z0-9_]+"                      ; class name
-         "\\(<[^>]+>\\)?"                     ; possibly explicitely specialized
+         "\\(<[^>]+>\\)?"                     ; possibly explicitly specialized
          "\\)"
          "[ \t\n]*[:{]"
          ) 2))

@@ -216,7 +216,7 @@ should be inserted.  Value must be a function taking no arguments."
   :group 'c)
 
 (defcustom c-syntactic-indentation t
-  "*Whether the identation should be controlled by the syntactic context.
+  "*Whether the indentation should be controlled by the syntactic context.
 
 If t, the indentation functions indents according to the syntactic
 context, using the style settings specified by `c-offsets-alist'.
@@ -789,7 +789,7 @@ should return an integer offset or nil if it can't decide.
 OFFSET can also be a list, in which case it is recursively evaluated
 using the semantics described above.  The first element of the list to 
 return a non-nil value succeeds.  If none of the elements returns a
-non-nil value, then what happends depends on the value of
+non-nil value, then what happens depends on the value of
 `c-strict-syntax-p'.  When `c-strict-syntax-p' is nil, then an offset
 of zero is used, otherwise an error is generated.
 

@@ -18,7 +18,7 @@ the list of <a href="changes-519.php">user visible changes for version
 
   <p><li>A new style <code>"user"</code> which captures all
   non-hook-ified (i.e. top-level) <code>.emacs</code> file variable
-  setings and customizations.  Style <code>"cc-mode"</code> is an
+  settings and customizations.  Style <code>"cc-mode"</code> is an
   alias for <code>"user"</code> and is deprecated.  <code>"gnu"</code>
   style is still the default however.
 

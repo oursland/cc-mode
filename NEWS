@@ -254,7 +254,7 @@ assigned to second and subsequent lines of a multiline macro
 definition.
 
 ** A new style "user" which captures all non-hook-ified
-(i.e. top-level) .emacs file variable setings and customizations.
+(i.e. top-level) .emacs file variable settings and customizations.
 Style "cc-mode" is an alias for "user" and is deprecated.  "gnu" style
 is still the default however.
 
