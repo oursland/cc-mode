@@ -3,10 +3,17 @@ Author: cc-mode-help@python.org
 
 <h1>CC Mode Version 5</h1>
 
-The <a href="index.html">current release</a> is version 5.15.  The
+The <a href="index.html">current release</a> is version 5.16.  The
 important recent changes are outlined below.  Be sure to see the list of 
 <a href="#compat">compatibility notes</a> for special notes about
 X/Emacs versions and package interactions.
+
+<p>See <a href="index.html">for other CC Mode files</a>.
+
+<h2> Changes since CC Mode 5.15</h2>
+
+This is primarily a bug fix release.  Users of XEmacs 19.15 and Emacs
+19.34 are highly encouraged to pick up this release.
 
 <h2> Changes since CC Mode 5.14</h2>
 
