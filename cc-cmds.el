@@ -3069,6 +3069,21 @@ C++-style line comment doesn't count as inside it."
 	(indent-to col))
       (indent-according-to-mode))))
 
+(defun c-context-open-line ()
+  "Insert a line break suitable to the context and leave point before it.
+This is the `c-context-line-break' equivalent to `open-line', which is
+normally bound to C-o.  See `c-context-line-break' for the details."
+  (interactive "*")
+  (let ((here (point)))
+    (unwind-protect
+	(progn
+	  ;; Temporarily insert a non-whitespace char to keep any
+	  ;; preceding whitespace intact.
+	  (insert ?x)
+	  (c-context-line-break))
+      (goto-char here)
+      (delete-char 1))))
+
 
 (cc-provide 'cc-cmds)
 
