@@ -738,22 +738,24 @@ comment."
 ;; for proposed new variable comment-line-break-function
 (defun c-comment-line-break-function (&optional soft)
   ;; we currently don't do anything with soft line breaks
-  (let ((here (point))
-	(leader c-comment-continuation-stars))
-    (back-to-indentation)
-    ;; are we looking at a block or lines style comment?
-    (if (and (looking-at (concat "\\(" c-comment-start-regexp "\\)[ \t]+"))
-	     (string-equal (match-string 1) "//"))
-	;; line style
-	(setq leader "// "))
-    (goto-char here)
-    (delete-region (progn (skip-chars-backward " \t") (point))
-		   (progn (skip-chars-forward " \t") (point)))
-    (newline)
-    ;; to avoid having an anchored comment that c-indent-line will
-    ;; trip up on
-    (insert " " leader)
-    (c-indent-line)))
+  (if (not c-comment-continuation-stars)
+      (indent-new-comment-line soft)
+    (let ((here (point))
+	  (leader c-comment-continuation-stars))
+      (back-to-indentation)
+      ;; are we looking at a block or lines style comment?
+      (if (and (looking-at (concat "\\(" c-comment-start-regexp "\\)[ \t]+"))
+	       (string-equal (match-string 1) "//"))
+	  ;; line style
+	  (setq leader "// "))
+      (goto-char here)
+      (delete-region (progn (skip-chars-backward " \t") (point))
+		     (progn (skip-chars-forward " \t") (point)))
+      (newline)
+      ;; to avoid having an anchored comment that c-indent-line will
+      ;; trip up on
+      (insert " " leader)
+      (c-indent-line))))
 
 ;; used by outline-minor-mode
 (defun c-outline-level ()
