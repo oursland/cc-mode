@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.253 $
-;; Last Modified:   $Date: 1996-01-05 23:14:12 $
+;; Version:         $Revision: 4.254 $
+;; Last Modified:   $Date: 1996-01-06 00:06:49 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-05 23:14:12 $|$Revision: 4.253 $|
+;; |$Date: 1996-01-06 00:06:49 $|$Revision: 4.254 $|
 
 ;;; Code:
 
@@ -136,7 +136,7 @@ reported and the syntactic symbol is ignored.")
     (class-close           . 0)
     (inline-open           . +)
     (inline-close          . 0)
-    (ansi-funcdecl-cont    . -)
+    (ansi-funcdecl-cont    . +)
     (knr-argdecl-intro     . +)
     (knr-argdecl           . 0)
     (topmost-intro         . 0)
@@ -3605,11 +3605,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     (c-recognize-knr-p
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
 	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	     ;; CASE 5B.3: nether region after a C++ func decl
+	     ;; CASE 5B.3: nether region after a C++ func decl.  could
+	     ;; include a `throw' declaration.
 	     (t
+	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'ansi-funcdecl-cont (c-point 'boi))
-	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	     ))
+	      )))
 	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
 	   ((or (and c-baseclass-key (looking-at c-baseclass-key))
@@ -4554,7 +4555,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.253 $"
+(defconst c-version "$Revision: 4.254 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
