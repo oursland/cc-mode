@@ -154,9 +154,9 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
      (,
       (concat
        "^\\([ \t]\\)*"
-       "\\([A-Za-z0-9_-]+[ \t]+\\)?"	      ; type specs; there can be
-        "\\([A-Za-z0-9_-]+[ \t]+\\)?"	      ; more than 3 tokens, right?
-       "\\([A-Za-z0-9_-]+[ \t]*[[]?[]]?\\)"
+       "\\([.A-Za-z0-9_-]+[ \t]+\\)?"	      ; type specs; there can be
+       "\\([.A-Za-z0-9_-]+[ \t]+\\)?"	      ; more than 3 tokens, right?
+       "\\([.A-Za-z0-9_-]+[ \t]*[[]?[]]?\\)"
        "\\([ \t]\\)"
        "\\([A-Za-z0-9_-]+\\)"		      ; the string we want to get
        "\\([ \t]*\\)+("
