@@ -361,8 +361,11 @@ that requires a literal mode spec at compile time."
       (if elem
 	  (setcdr elem t)
 	(setq text-property-default-nonsticky
-	      (cons (cons 'syntax-table t)
-		    text-property-default-nonsticky)))))
+	      (cons '(syntax-table . t)
+		    text-property-default-nonsticky))))
+    (setq text-property-default-nonsticky
+	  (cons '(c-<>-arg-start . t)
+		text-property-default-nonsticky)))
 
   (c-clear-found-types)
 
