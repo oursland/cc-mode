@@ -57,3 +57,7 @@
    ((consp obj)
     (if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
    (t nil)))
+
+
+(provide 'cc-mode-19)
+;;; cc-mode-19.el ends here
