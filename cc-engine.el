@@ -4076,30 +4076,47 @@ This function does not do any hidden buffer changes."
 	;; a following one, and if so step past that one through a
 	;; recursive call.
 	(setq pos (point))
-	(if (and (looking-at c-opt-type-concat-key)
-		 (let ((c-promote-possible-types
-			(or (memq res '(t known))
-			    c-promote-possible-types)))
-		   (goto-char (match-end 1))
-		   (c-forward-syntactic-ws)
-		   (setq res2 (c-forward-type))))
-	    ;; If either operand certainly is a type then both are,
-	    ;; but we don't let the existence of the operator itself
-	    ;; promote two uncertain types to a certain one.
-	    (cond ((eq res t))
-		  ((memq res2 '(t known))
-		   (c-add-type id-start id-end)
-		   (when c-record-type-identifiers
-		     (c-record-type-id id-range))
-		   (setq res t))
-		  ((eq res 'known)
-		   (setq res t))
-		  ((eq res 'found))
-		  ((eq res2 'found)
-		   (setq res 'found))
-		  (t
-		   (setq res 'maybe)))
-	  (goto-char pos)))
+	(let* ((c-promote-possible-types (or (memq res '(t known))
+					     c-promote-possible-types))
+	       ;; If we can't promote then set `c-record-found-types' so that
+	       ;; we can merge in the types from the second part afterwards if
+	       ;; it turns out to be a known type there.
+	       (c-record-found-types (and c-record-type-identifiers
+					  (not c-promote-possible-types))))
+	  (if (and (looking-at c-opt-type-concat-key)
+
+		   (progn
+		     (goto-char (match-end 1))
+		     (c-forward-syntactic-ws)
+		     (setq res2 (c-forward-type))))
+
+	      (progn
+		;; If either operand certainly is a type then both are, but we
+		;; don't let the existence of the operator itself promote two
+		;; uncertain types to a certain one.
+		(cond ((eq res t))
+		      ((or (eq res 'known) (memq res2 '(t known)))
+		       (c-add-type id-start id-end)
+		       (when c-record-type-identifiers
+			 (c-record-type-id id-range))
+		       (setq res t))
+		      ((eq res 'found))
+		      ((eq res2 'found)
+		       (setq res 'found))
+		      (t
+		       (setq res 'maybe)))
+
+		(when (and (eq res t)
+			   (consp c-record-found-types))
+		  ;; Merge in the ranges of any types found by the second
+		  ;; `c-forward-type'.
+		  (setq c-record-type-identifiers
+			;; `nconc' doesn't mind that the tail of
+			;; `c-record-found-types' is t.
+			(nconc c-record-found-types
+			       c-record-type-identifiers))))
+
+	    (goto-char pos))))
 
       (when (and c-record-found-types (memq res '(known found)) id-range)
 	(setq c-record-found-types
