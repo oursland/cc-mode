@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.206 $
-;; Last Modified:   $Date: 1992-11-12 16:45:30 $
+;; Version:         $Revision: 2.207 $
+;; Last Modified:   $Date: 1992-11-13 15:36:39 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-12 16:45:30 $|$Revision: 2.206 $|
+;; |$Date: 1992-11-13 15:36:39 $|$Revision: 2.207 $|
 
 ;;; Code:
 
@@ -371,7 +371,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.206 $
+  "Major mode for editing C++ code.  $Revision: 2.207 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -578,7 +578,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.206 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.207 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1884,12 +1884,18 @@ the current line is to be regarded as part of a block comment."
 ;; defuns to look backwards for things
 ;; ======================================================================
 
+(defvar c++-backscan-limit 2000
+  "*Limit in characters for looking back while skipping syntactic ws.")
+
 (defun c++-backward-over-syntactic-ws (&optional lim)
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives. Search no farther back than
 optional LIM.  If LIM is ommitted, point-min is used."
-  (let (literal stop skip (lim (or lim (point-min))))
+  (let ((lim (or lim (point-min)))
+	literal stop skip)
+    (if (> (- (point) lim) c++-backscan-limit)
+	(setq lim (- (point) c++-backscan-limit)))
     (while (not stop)
       (skip-chars-backward " \t\n\r\f" lim)
       (setq literal (c++-in-literal lim))
@@ -1915,7 +1921,15 @@ optional LIM.  If LIM is ommitted, point-min is used."
 	     (setq stop (<= (point) lim)))
 	    ((and (= (preceding-char) ?/)
 		  (= (char-after (- (point) 2)) ?*))
-	     (forward-char -2))
+	     (forward-char -2)
+	     (setq skip t)
+	     (while skip
+	       (skip-chars-backward "^*" lim)
+	       (skip-chars-backward "*" lim)
+	       (setq skip (not (and (= (following-char) ?*)
+				    (= (preceding-char) ?/))))
+	       )
+	     (forward-char -1))
 	    (t (setq stop t))
 	    ))))
 
@@ -1924,8 +1938,10 @@ optional LIM.  If LIM is ommitted, point-min is used."
 ;;Syntactic whitespace is defined as lexical whitespace, C and C++ style
 ;;comments, and preprocessor directives. Search no farther back than
 ;;optional LIM.  If LIM is ommitted, point-min is used."
-;;  (let (literal stop)
-;;    (setq lim (or lim (point-min)))
+;;  (let ((lim (or lim (point-min)))
+;;	literal stop)
+;;    (if (> (- (point) lim) c++-backscan-limit)
+;;	(setq lim (- (point) c++-backscan-limit)))
 ;;    (while (not stop)
 ;;      (skip-chars-backward " \t\n\r\f" lim)
 ;;      (setq literal (c++-in-literal))
@@ -2232,7 +2248,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.206 $"
+(defconst c++-version "$Revision: 2.207 $"
   "c++-mode version number.")
 
 (defun c++-version ()
