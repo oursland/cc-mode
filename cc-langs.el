@@ -946,6 +946,11 @@ type."
   pike '("constant" "final" "inline" "local" "nomask" "optional"
 	 "private" "protected" "public" "static" "typedef" "variant"))
 
+(c-lang-defconst c-specifier-key
+  ;; `c-specifier-kwds' as an adorned regexp.
+  t (c-make-keywords-re t (c-lang-const c-specifier-kwds)))
+(c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
+
 (c-lang-defconst c-typedef-specifier-kwds
   "Declaration specifier keywords that causes the declaration to
 declare the identifiers in it as types.  Assumed to be a subset of
@@ -972,21 +977,6 @@ declare the identifiers in it as types.  Assumed to be a subset of
 	       "\\)[ \t\n\r\f\v]*:")
   objc (concat "@" (c-make-keywords-re t (c-lang-const c-protection-kwds))))
 (c-lang-defvar c-opt-access-key (c-lang-const c-opt-access-key))
-
-(c-lang-defconst c-specifier-key
-  ;; Matches constructs that can prefix declarations.  This means
-  ;; `c-specifier-kwds' and also `c-protection-kwds' with the suitable
-  ;; surrounding tokens (e.g. the following ':' in C++).  If the first
-  ;; submatch has matched then the end if it is the end of the
-  ;; construct, otherwise the construct ends where the whole match ends.
-  t    (c-make-keywords-re t (c-lang-const c-specifier-kwds))
-  c++  (concat "\\(" (c-lang-const c-specifier-key)
-	       "\\|" (c-lang-const c-opt-access-key) "\\)")
-  objc (c-make-keywords-re t (nconc (mapcar (lambda (prot-kwd)
-					      (concat "@" prot-kwd))
-					    (c-lang-const c-protection-kwds))
-				    (c-lang-const c-specifier-kwds))))
-(c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
 
 (c-lang-defconst c-class-kwds
   "Class/struct declaration keywords."
@@ -1383,11 +1373,13 @@ should not match bob, though.  It can't require a match longer than
 one character.  It must not match any following whitespace.  We match
 a sequence of characters to skip over things like \"};\" more
 quickly."
-  t "[\{\}\(;,]+"
+  t    "[\{\}\(;,]+"
   ;; We additionally match ")" in C for K&R region declarations, and
   ;; in C and C++ for when a cpp macro definition begins with a
   ;; declaration.
-  (c c++) "[\{\}\(\);,]+"
+  c    "[\{\}\(\);,]+"
+  ;; Additionally match ":" in C++ for protection labels.
+  c++  "[\{\}\(\);:,]+"
   ;; Pike is like C but we also match "[" for multiple value
   ;; assignments and type casts.
   pike "[\{\}\(\)\[;,]+")
