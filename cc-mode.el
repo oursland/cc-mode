@@ -1,11 +1,17 @@
-;; C++ code editing commands for Emacs
-;; 1992 Barry Warsaw, Century Computing Inc., (bwarsaw@cen.com)
+;; C++ mode editing commands for Emacs
+;; 1992 Barry Warsaw, Century Computing Inc.
 ;; 1987 Dave Detlefs  (dld@cs.cmu.edu) 
 ;; and  Stewart Clamen (clamen@cs.cmu.edu).
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.25 $
+;; $Revision: 1.26 $
+;;
+;; If you have problems or questions, you can contact me at the
+;; following address: c++-mode-help@anthem.nlm.nih.gov
+;;
+;; Do a C-h f c++-dump-state for more information on submitting bug
+;; reports.
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -108,7 +114,10 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  Version: $Revision: 1.25 $
+  "Major mode for editing C++ code.  $Revision: 1.26 $
+Do a \"\\[describe-function] c++-dump-state\" for information on
+submitting bug reports.
+
 1. Very much like editing C code.
 2. Expression and list commands understand all C++ brackets.
 3. Tab at left margin indents for C++ code
@@ -1194,7 +1203,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.25 $"
+(defconst c++-version "$Revision: 1.26 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
@@ -1202,7 +1211,15 @@ function definition.")
 
 (defun c++-dump-state ()
   "Inserts into the c++-mode-state-buffer the current state of
-c++-mode for a particular buffer."
+c++-mode for a particular c++-mode buffer.
+
+For bug reports, please do the following:
+     <from a c++-mode buffer>
+     M-x c++-dump-state
+     <switch to the mail buffer>
+     M-x insert-buffer RET *c++-mode-state* RET
+
+Send bug reports to c++-mode-help@anthem.nlm.nih.gov"
   (interactive)
   (let ((buffer (get-buffer-create c++-mode-state-buffer))
 	(varlist (list 'c++-continued-member-init-offset
@@ -1234,7 +1251,8 @@ c++-mode for a particular buffer."
     (emacs-lisp-mode)
     (erase-buffer)
     (beginning-of-buffer)
-    (insert "c++-mode.el version: " c++-version
+    (insert (emacs-version) "\n")
+    (insert "c++-mode.el " c++-version
 	    "\n\ncurrent state:\n==============\n(setq\n")
     (mapcar
      (function (lambda (varsym)
