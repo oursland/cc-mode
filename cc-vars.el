@@ -500,19 +500,9 @@ listed in the alist, then the symbol `other' is looked up in it, and
 if found, the style in that entry is used.  If `other' is not found in
 the alist, then \"gnu\" style is used.
 
-Note that if you set any CC Mode variables in the top-level of your
-.emacs file (i.e. *not* in a hook), these get incorporated into the
-`user' style, so you would need to add:
-
-  (setq c-default-style '((other . \"user\")))
-
-to see your customizations.  This is also true if you use the Custom
-interface -- be sure to switch to a value list, make an entry for the
-mode `other' and set the default style to \"user\".
-
-Finally, the default style gets installed before your mode hooks run,
-so you can always override the use of `c-default-style' by making
-calls to `c-set-style' in the appropriate mode hook.
+The default style gets installed before your mode hooks run, so you
+can always override the use of `c-default-style' by making calls to
+`c-set-style' in the appropriate mode hook.
 
 Tip: If you use different styles in different languages, you probably
 want to set `c-style-variables-are-local-p'."
