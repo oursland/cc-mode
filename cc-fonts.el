@@ -872,6 +872,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	       got-parens nil
 	       got-identifier t
 	       got-suffix t
+	       got-suffix-after-parens t
 	       paren-depth 0))))
 
 (defun c-font-lock-declarations (limit)
@@ -1440,7 +1441,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			       ;; `c-after-suffixed-type-decl-key' has
 			       ;; matched.
 			       (progn (c-fl-shift-type-backward) t)
-			     got-suffix))
+			     got-suffix-after-parens))
 		  ;; A declaration according to
 		  ;; `c-after-suffixed-type-decl-key'.
 		  (throw 'at-decl-or-cast t))
