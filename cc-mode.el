@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.282 $
-;; Last Modified:   $Date: 1993-02-05 23:41:34 $
+;; Version:         $Revision: 2.283 $
+;; Last Modified:   $Date: 1993-02-06 00:04:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-05 23:41:34 $|$Revision: 2.282 $|
+;; |$Date: 1993-02-06 00:04:45 $|$Revision: 2.283 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.282 $
+  "Major mode for editing C++ code.  $Revision: 2.283 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.282 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.283 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -691,7 +691,20 @@ in C++ code based on its context."
       (skip-chars-backward " \t")
       (max
        ;; leave at least one space on non-empty lines.
-       (if (zerop (current-column)) 0 (1+ (current-column)))
+       (if (zerop (current-column))
+	   0
+	 (1+ (current-column)))
+       ;; use comment-column if previous line is comment only line
+       ;; indented to the left of comment-column
+       (save-excursion
+	 (beginning-of-line)
+	 (if (not (bobp)) (forward-line -1))
+	 (skip-chars-forward " \t")
+	 (if (looking-at "/\\*\\|//")
+	     (if (< (current-column) comment-column)
+		 comment-column
+	       (current-column))
+	   0))
        (let ((cur-pt (point)))
 	 (beginning-of-line 0)
 	 ;; If previous line had a comment, use it's indent
@@ -2472,7 +2485,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.282 $"
+(defconst c++-version "$Revision: 2.283 $"
   "c++-mode version number.")
 
 (defun c++-version ()
