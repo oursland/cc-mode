@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.248 $
-;; Last Modified:   $Date: 1995-11-20 16:08:39 $
+;; Version:         $Revision: 4.249 $
+;; Last Modified:   $Date: 1995-11-22 19:52:05 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-11-20 16:08:39 $|$Revision: 4.248 $|
+;; |$Date: 1995-11-22 19:52:05 $|$Revision: 4.249 $|
 
 ;;; Code:
 
@@ -2367,8 +2367,13 @@ comment."
 				   (and lim
 					(<= lim (point))
 					(not (c-in-literal lim))
-;					(looking-at c-conditional-key)))))
-					t))))
+;					(looking-at c-conditional-key)
+					(save-excursion
+					  (if (c-safe
+					       (progn (backward-up-list 1) t))
+					      (/= (following-char) ?\()
+					    t))
+					))))
 		     ;; did we find a conditional?
 		     (if (not foundp)
 			 (goto-char here))
@@ -4557,7 +4562,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.248 $"
+(defconst c-version "$Revision: 4.249 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
