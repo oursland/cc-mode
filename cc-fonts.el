@@ -883,7 +883,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;;(message "c-font-lock-declarations search from %s to %s" (point) limit)
 
   (save-restriction
-    (let ((start-pos (point))
+    (let (start-pos
 	  c-disallow-comma-in-<>-arglists
 	  ;; Nonzero if the `c-decl-prefix-re' match is in an arglist context,
 	  ;; as opposed to a statement-level context.  The major difference is
@@ -902,7 +902,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; These record the start and end of the type or possible type found
 	  ;; by `c-forward-type'.  `type-start' is at the start of the first
 	  ;; type token, and `type-end' is at the start of the first token
-	  ;; after the type.
+	  ;; after the type (and after any specifiers).
 	  type-start type-end
 	  ;; These store `at-type', `type-start' and `type-end' of the
 	  ;; identifier before the one in those variables.  The previous
@@ -1061,57 +1061,72 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	     (goto-char start-pos))
 
 	   ;; Check for a type, but be prepared to skip over leading
-	   ;; specifiers like "static".  We treat any symbols as specifiers
-	   ;; here, to cope with macros like __INLINE__ or anything else that
-	   ;; might be in front of declarations.
+	   ;; specifiers like "static".  Unknown symbols are treated as
+	   ;; possible types, but they could also be specifiers disguised
+	   ;; through macros like __INLINE__, so we recognize both types and
+	   ;; known specifiers after them too.
 	   (while (let ((start (point))
-			(res (c-forward-type)))
+			(res (unless (eq at-type t)
+			       ;; Don't look for a type if we already found a
+			       ;; positive one; we only loop for the
+			       ;; `c-specifier-key' check then.
+			       (c-forward-type))))
 
-		    (cond (res
-			   ;; Found a known or possible type or a prefix of a
-			   ;; known type.
+		    (when res
+		      ;; Found a known or possible type or a prefix of a known
+		      ;; type.
 
-			   (when at-type
-			     ;; Got two identifiers with nothing but
-			     ;; whitespace between them.  That can only happen
-			     ;; in declarations.
-			     (setq at-decl-or-cast t)
+		      (when at-type
+			;; Got two identifiers with nothing but whitespace
+			;; between them.  That can only happen in
+			;; declarations.
+			(setq at-decl-or-cast t)
 
-			     (when (eq at-type 'found)
-			       ;; If the previous identifier is a found type
-			       ;; we record it as a real one; it might be some
-			       ;; sort of alias for a prefix like "unsigned".
-			       (save-excursion
-				 (goto-char type-start)
-				 (let ((c-promote-possible-types t))
-				   (c-forward-type)))))
+			(when (eq at-type 'found)
+			  ;; If the previous identifier is a found type we
+			  ;; record it as a real one; it might be some sort of
+			  ;; alias for a prefix like "unsigned".
+			  (save-excursion
+			    (goto-char type-start)
+			    (let ((c-promote-possible-types t))
+			      (c-forward-type)))))
 
-			   (setq prev-at-type at-type
-				 prev-type-start type-start
-				 prev-type-end type-end
-				 at-type res
-				 type-start start
-				 type-end (point))
+		      (setq prev-at-type at-type
+			    prev-type-start type-start
+			    prev-type-end type-end
+			    at-type res
+			    type-start start
+			    type-end (point))
 
-			   ;; If the type isn't known we continue so that
-			   ;; we'll jump over all specifiers and type
-			   ;; identifiers.  The reason to do this for a known
-			   ;; type prefix is to make things like "unsigned
-			   ;; INT16" work.
-			   (not (eq res t)))
+		      ;; If the type isn't known we continue so that we'll
+		      ;; jump over all specifiers and type identifiers.  The
+		      ;; reason to do this for a known type prefix is to make
+		      ;; things like "unsigned INT16" work.
+		      (setq res (not (eq res t))))
 
-			  ((looking-at c-specifier-key)
-			   ;; Found a known specifier keyword.
-			   (setq at-decl-or-cast t)
-			   (let ((kwd-sym (c-keyword-sym (match-string 1))))
-			     (when (c-keyword-member
-				    kwd-sym 'c-typedef-decl-kwds)
-			       (setq at-typedef t))
-			     (when (c-keyword-member
-				    kwd-sym 'c-typeless-decl-kwds)
-			       (setq maybe-typeless t)))
-			   (c-forward-keyword-clause)
-			   (setq start-pos (point))))))
+		    (if (looking-at c-specifier-key)
+			;; Found a known specifier keyword.  The specifier
+			;; keywords are restrictive, so we check for them
+			;; anywhere inside or around the type(s).  We thereby
+			;; avoid having special cases for specifiers like MSVC
+			;; '__declspec' which can come after the type.
+			(progn
+			  (setq at-decl-or-cast t)
+			  (let ((kwd-sym (c-keyword-sym (match-string 1))))
+			    (when (c-keyword-member
+				   kwd-sym 'c-typedef-decl-kwds)
+			      (setq at-typedef t))
+			    (when (c-keyword-member
+				   kwd-sym 'c-typeless-decl-kwds)
+			      (setq maybe-typeless t)))
+			  (c-forward-keyword-clause)
+			  ;; Move type-end forward if we've passed a type,
+			  ;; otherwise move start-pos forward.
+			  (if at-type
+			      (setq type-end (point))
+			    (setq start-pos (point))))
+
+		      res)))
 
 	   (cond
 	    ((eq at-type 'prefix)
@@ -1795,6 +1810,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 			      limit t)
 			(unless (c-skip-comments-and-strings limit)
 			  (c-forward-syntactic-ws)
+			  ;; Handle prefix declaration specifiers.
+			  (when (looking-at c-specifier-key)
+			    (c-forward-keyword-clause))
 			  ,(if (c-major-mode-is 'c++-mode)
 			       `(when (and (c-forward-type)
 					   (eq (char-after) ?=))
