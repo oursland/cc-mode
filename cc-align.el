@@ -49,6 +49,43 @@
 
 ;; Standard indentation line-ups
 
+(defun c-lineup-topmost-intro-cont (langelem)
+  "Line up declaration continuation lines zero or one indentation step.
+For lines preceding a definition, zero is used.  For other lines,
+`c-basic-offset' is added to the indentation.  E.g:
+
+int                      int
+neg (int i)       <->        neg (int i);    <- c-lineup-topmost-intro-cont
+{                        <--> c-basic-offset
+    return -i;
+}
+
+struct
+larch                 <- c-lineup-topmost-intro-cont
+{
+}
+    the_larch,        <- c-lineup-topmost-intro-cont
+    another_larch;    <- c-lineup-topmost-intro-cont
+<--> c-basic-offset
+
+\(This function is mainly provided to mimic the behavior of CC Mode
+5.28 and earlier where this case wasn't handled consistently so that
+those lines could be analyzed as either topmost-intro-cont or
+statement-cont.)
+
+Works with: topmost-intro-cont."
+  (save-excursion
+    (goto-char (cdr langelem))
+    (c-with-syntax-table (if (c-major-mode-is 'c++-mode)
+			     c++-template-syntax-table
+			   (syntax-table))
+      (c-search-decl-header-end)
+      (if (or (eq (char-before) ?{)
+	      (and c-recognize-knr-p
+		   (c-in-knr-argdecl (cdr langelem))))
+	  nil
+	c-basic-offset))))
+
 (defun c-lineup-arglist (langelem)
   "Line up the current argument line under the first argument.
 

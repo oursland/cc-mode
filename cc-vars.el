@@ -831,7 +831,7 @@ can always override the use of `c-default-style' by making calls to
        ;; Relpos: At the beginning of the first K&R argdecl.
        (topmost-intro         . 0)
        ;; Relpos: Bol at the last line of previous construct.
-       (topmost-intro-cont    . 0)
+       (topmost-intro-cont    . c-lineup-topmost-intro-cont)
        ;; Relpos: Boi at the topmost intro line.
        (member-init-intro     . +)
        ;; Relpos: Boi at the func decl arglist open.

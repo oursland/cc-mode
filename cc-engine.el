@@ -1549,6 +1549,23 @@ brace."
 	  (setq pos (point)))
 	(goto-char pos)))))
 
+(defsubst c-search-decl-header-end ()
+  ;; Search forward for the end of the "header" of the current
+  ;; declaration.  That's the position where the definition body
+  ;; starts, or the first variable initializer, or the ending
+  ;; semicolon.  I.e. search forward for the closest following
+  ;; (syntactically relevant) '{', '=' or ';' token.  Point is left
+  ;; _after_ the first found token, or at point-max if none is found.
+  (c-with-syntax-table (if (c-major-mode-is 'c++-mode)
+			   c++-template-syntax-table
+			 (syntax-table))
+    (while (and (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t)
+		;; In Pike it can be an operator identifier containing
+		;; '='.
+		(c-major-mode-is 'pike-mode)
+		(eq (char-before) ?=)
+		(c-on-identifier)))))
+
 (defun c-beginning-of-decl-1 (&optional lim)
   ;; Go to the beginning of the current declaration, or the beginning
   ;; of the previous one if already at the start of it.  Point won't
@@ -1566,17 +1583,17 @@ brace."
   (catch 'return
     (let* ((start (point))
 	 (last-stmt-start (point))
-	 (move (c-beginning-of-statement-1 lim t t)))
+	 (move (c-beginning-of-statement-1 lim nil t)))
 
     (while (and (/= last-stmt-start (point))
 		(save-excursion
 		  (c-backward-syntactic-ws lim)
-		  (not (memq (char-before) '(?\; ?} nil)))))
+		  (not (memq (char-before) '(?\; ?} ?: nil)))))
       ;; `c-beginning-of-statement-1' stops at a block start, but we
       ;; want to continue if the block doesn't begin a top level
-      ;; construct, i.e. if it isn't preceded by ';', '}', or bob.
+      ;; construct, i.e. if it isn't preceded by ';', '}', ':', or bob.
       (setq last-stmt-start (point)
-	    move (c-beginning-of-statement-1 lim t t)))
+	    move (c-beginning-of-statement-1 lim nil t)))
 
     (when c-recognize-knr-p
       (let ((fallback-pos (point)) knr-argdecl-start)
@@ -1592,7 +1609,7 @@ brace."
 		 (< knr-argdecl-start start)
 		 (progn
 		   (goto-char knr-argdecl-start)
-		   (not (eq (c-beginning-of-statement-1 lim t t) 'macro))))
+		   (not (eq (c-beginning-of-statement-1 lim nil t) 'macro))))
 	    (throw 'return
 		   (cons (if (eq (char-after fallback-pos) ?{)
 			     'previous
@@ -1636,17 +1653,7 @@ brace."
 			       c++-template-syntax-table
 			     (syntax-table))))
     (catch 'return
-
-      ;; Search forward to the closest ';', '=' or '{'.  We look for
-      ;; '=' since any block after it is part of a variable
-      ;; initialization and not the declaration itself.
-      (c-with-syntax-table decl-syntax-table
-	(while (and (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t)
-		    ;; In Pike it can be an operator identifier
-		    ;; containing '='.
-		    (c-major-mode-is 'pike-mode)
-		    (eq (char-before) ?=)
-		    (c-on-identifier))))
+      (c-search-decl-header-end)
 
       (when (and c-recognize-knr-p
 		 (eq (char-before) ?\;)
@@ -3039,11 +3046,23 @@ Keywords are recognized and not considered identifiers."
 			  (eq (char-after) ?:))))
 	      (goto-char placeholder)
 	      (c-add-syntax 'inher-cont (c-point 'boi)))
-	     ;; CASE 5D.5: perhaps a top-level statement-cont
+	     ;; CASE 5D.5: Continuation of the "expression part" of a
+	     ;; top level construct.
 	     (t
-	      (c-beginning-of-statement-1 lim)
-	      (c-add-stmt-syntax 'statement-cont nil
-				 containing-sexp paren-state))
+	      (while (and (eq (car (c-beginning-of-decl-1 containing-sexp))
+			      'same)
+			  (save-excursion
+			    (c-backward-syntactic-ws)
+			    (eq (char-before) ?}))))
+	      (c-add-stmt-syntax
+	       (if (eq char-before-ip ?,)
+		   ;; A preceding comma at the top level means that a
+		   ;; new variable declaration starts here.  Use
+		   ;; topmost-intro-cont for it, for consistency with
+		   ;; the first variable declaration.  C.f. case 5N.
+		   'topmost-intro-cont
+		 'statement-cont)
+	       nil containing-sexp paren-state))
 	     ))
 	   ;; CASE 5E: we are looking at a access specifier
 	   ((and inclass-p
@@ -3092,10 +3111,30 @@ Keywords are recognized and not considered identifiers."
 		 (looking-at c-opt-method-key))
 	    (c-beginning-of-statement-1 lim)
 	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
-	   ;; CASE 5J: we are at the topmost level, make sure we skip
-	   ;; back past any access specifiers
+	   ;; CASE 5N: At a variable declaration that follows a class
+	   ;; definition or some other block declaration that doesn't
+	   ;; end at the closing '}'.  C.f. case 5D.5.
 	   ((progn
 	      (c-backward-syntactic-ws lim)
+	      (and (eq (char-before) ?})
+		   (save-excursion
+		     (let ((start (point)))
+		       (if paren-state
+			   ;; Speed up the backward search a bit.
+			   (goto-char (car (car paren-state))))
+		       (c-beginning-of-decl-1 containing-sexp)
+		       (setq placeholder (point))
+		       (if (= start (point))
+			   ;; The '}' is unbalanced.
+			   nil
+			 (c-end-of-decl-1)
+			 (> (point) indent-point))))))
+	    (goto-char placeholder)
+	    (c-add-stmt-syntax 'topmost-intro-cont nil
+			       containing-sexp paren-state))
+	   ;; CASE 5J: we are at the topmost level, make
+	   ;; sure we skip back past any access specifiers
+	   ((progn
 	      (while (and inclass-p
 			  c-opt-access-key
 			  (not (bobp))
@@ -3105,22 +3144,7 @@ Keywords are recognized and not considered identifiers."
 		(c-backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
-		  (eq (char-before) ?\;)
-		  (and (eq (char-before) ?\})
-		       ;; Check that we aren't after a declaration
-		       ;; that doesn't end at the '}'.
-		       (save-excursion
-			 (if paren-state
-			     ;; Speed up the backward search a bit.
-			     (goto-char (car (car paren-state))))
-			 (if (eq (car (c-beginning-of-decl-1
-				       (c-safe-position (point) paren-state)))
-				 'same)
-			     ;; The '}' is unbalanced; say topmost-intro
-			     ;; instead of topmost-intro-cont.
-			     t
-			   (c-end-of-decl-1)
-			   (< (point) indent-point))))
+		  (memq (char-before) '(?\; ?}))
 		  (and (c-major-mode-is 'objc-mode)
 		       (progn
 			 (c-beginning-of-statement-1 lim)
