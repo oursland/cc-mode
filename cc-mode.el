@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.323 $
-;; Last Modified:   $Date: 1993-05-11 13:55:30 $
+;; Version:         $Revision: 2.324 $
+;; Last Modified:   $Date: 1993-05-11 21:41:13 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-05-11 13:55:30 $|$Revision: 2.323 $|
+;; |$Date: 1993-05-11 21:41:13 $|$Revision: 2.324 $|
 
 ;;; Code:
 
@@ -163,11 +163,11 @@ There are many flavors of emacs out on the net, each with different
 features supporting those needed by c++-mode.  Here's the current
 known list, along with the values for this variable:
 
-Vanilla GNU 18/Epoch 4: '(no-dual-comments v18)
-Patched GNU 18/Epoch 4: '(8-bit old-v19)
-Lemacs 19.4 - 19.6:     '(8-bit old-v19)
-Lemacs 19.7 and over:   '(8-bit v19)
-GNU 19:                 '(1-bit v19)")
+Vanilla GNU 18/Epoch 4: (no-dual-comments v18)
+Patched GNU 18/Epoch 4: (8-bit old-v19)
+Lemacs 19.4 - 19.6:     (8-bit old-v19)
+Lemacs 19.7 and over:   (8-bit v19)
+GNU 19:                 (1-bit v19)")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -465,7 +465,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.323 $
+  "Major mode for editing C++ code.  $Revision: 2.324 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -686,7 +686,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.323 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.324 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2611,7 +2611,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.323 $"
+(defconst c++-version "$Revision: 2.324 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
