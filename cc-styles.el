@@ -126,6 +126,7 @@
 				(substatement-open after)
 				(block-close . c-snug-do-while)
 				))
+     (c-comment-continuation-stars "")
      )
     ("java"
      (c-basic-offset . 2)
