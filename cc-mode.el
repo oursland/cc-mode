@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.138 $
-;; Last Modified:   $Date: 1995-01-12 01:17:13 $
+;; Version:         $Revision: 4.139 $
+;; Last Modified:   $Date: 1995-01-12 01:33:21 $
 ;; Keywords: C++ C Objective-C editing major-mode
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-12 01:17:13 $|$Revision: 4.138 $|
+;; |$Date: 1995-01-12 01:33:21 $|$Revision: 4.139 $|
 
 ;;; Code:
 
@@ -579,7 +579,7 @@ as designated in the variable `c-file-style'.")
 ;; Shut the byte-compiler up. Requires Emacs 19 or JWZ's improved
 ;; byte-compiler. Otherwise, comment this line out and ignore
 ;; any warnings.
-(byte-compiler-options (warnings nil))
+;;(byte-compiler-options (warnings nil))
 
 ;; figure out what features this Emacs has
 (defconst c-emacs-features
@@ -4370,7 +4370,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.138 $"
+(defconst c-version "$Revision: 4.139 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
