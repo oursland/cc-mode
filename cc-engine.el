@@ -8208,9 +8208,10 @@ comment at the start of cc-engine.el for more info."
 	   ;; for-list continuation line.  C.f. case 7A.
 	   ((progn
 	      (goto-char (1+ containing-sexp))
-	      (skip-chars-forward " \t")
-	      (and (not (eolp))
-		   (not (looking-at "\\\\$"))))
+	      (< (save-excursion
+		   (c-forward-syntactic-ws)
+		   (point))
+		 (c-point 'bonl)))
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
 	    (if (and (c-safe (backward-up-list 1) t)
