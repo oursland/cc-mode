@@ -1,10 +1,11 @@
-Title: Changes with CC Mode 5.26
-Author: cc-mode-help@python.org
-Links: links.h changelinks.h
+<!-- -*- html -*- -->
+<?php
+  $title = "Changes for CC Mode 5.26";
+  $menufiles = array ("links.h", "changelinks.h");
+  include ("header.h");
+?>
 
-<h2>Changes with CC Mode 5.26</h2>
-
-See also the <a href="changes-525.html">user visible changes for
+<p>See also the <a href="changes-525.php">user visible changes for
 5.25</a>.
 
 <p>Note: This release contains changes that might not be compatible
@@ -108,7 +109,7 @@ release.
     <p>Note though that the 2.12 version of Filladapt lacks a feature
     that causes it to work suboptimally when
     <code>c-comment-prefix-regexp</code> can match the empty string
-    (which it commonly does).  A <a href="filladapt.html">patch</a>
+    (which it commonly does).  A <a href="filladapt.php">patch</a>
     for that is available from the CC Mode web site.
 
     <p><li>It's now possible to selectively turn off auto filling.
@@ -177,3 +178,5 @@ release.
   situations.
 
 </ul>
+
+<?php include ("footer.h"); ?>

@@ -1,12 +1,12 @@
-Title: Using Filladapt in CC Mode
-Author: cc-mode-help@python.org
-Links: links.h changelinks.h
+<!-- -*- html -*- -->
+<?php
+  $title = "Using Filladapt in CC Mode";
+  include ("header.h");
+?>
 
-<h2>Using Filladapt mode in CC Mode</h2>
-
-As of version 5.26, CC Mode uses adaptive filling for text in comments
-and string literals.  Thus it's now possible to use Kyle E. Jones'
-Filladapt package (<a
+<p>As of version 5.26, CC Mode uses adaptive filling for text in
+comments and string literals.  Thus it's now possible to use Kyle
+E. Jones' Filladapt package (<a
 href="http://wonderworks.com/">http://wonderworks.com/</a>) inside CC
 Mode to get better handling of e.g. bulleted lists in comments.
 
@@ -82,3 +82,5 @@ three ways:
   future version of Filladapt.
 
 </ul>
+
+<?php include ("footer.h"); ?>

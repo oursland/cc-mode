@@ -1,6 +1,6 @@
 <!-- -*- html -*- -->
-<h3>Emacsen</h3>
-<li><a href="compat_xemacs.html">XEmacs, Emacs 20</a>
-<li><a href="compat_emacs19.html">Emacs 19</a>
-<li><a href="compat_emacs18.html">Emacs 18</a>
-<li><a href="compat_delbs_awk.html">Other Elisp</a>
+<h4>Compatibility</h4>
+<a href="compat_xemacs.php">XEmacs, Emacs 20</a><br />
+<a href="compat_emacs19.php">Emacs 19</a><br />
+<a href="compat_emacs18.php">Emacs 18</a><br />
+<a href="compat_delbs_awk.php">Other Elisp</a><br />
