@@ -2546,7 +2546,7 @@ This function does not do any hidden buffer changes."
 		     ;; Use `parse-partial-sexp' from a safe position down to
 		     ;; the point to check if it's outside comments and
 		     ;; strings.
-		     (let ((pos (point)) state-2)
+		     (let ((pos (point)) state-2 pps-end-pos)
 		       ;; Pick a safe position as close to the point as
 		       ;; possible.
 		       ;;
@@ -2592,17 +2592,25 @@ This function does not do any hidden buffer changes."
 			((and
 			  paren-level
 			  (save-excursion
-			    (setq state-2 (parse-partial-sexp pos start))
+			    (setq state-2 (parse-partial-sexp pos start -1)
+				  pps-end-pos (point))
 			    (/= (car state-2) 0)))
 			 ;; Not at the right level.
-			 (if (< (car state-2) 0)
+			 (if (and (< (car state-2) 0)
+				  ;; We stop above if we go out of a paren.
+				  ;; Now check whether it precedes or is
+				  ;; nested in the starting sexp.
+				  (save-excursion
+				    (setq state-2
+					  (parse-partial-sexp
+					   pps-end-pos start nil nil state-2))
+				    (< (car state-2) 0)))
 			     ;; We've stopped short of the starting position
 			     ;; so the hit was inside a nested list.  Go up
 			     ;; until we are at the right level.
 			     (condition-case nil
 				 (progn
-				   (goto-char (scan-lists pos -1
-							  (- (car state-2))))
+				   (goto-char (scan-lists pos -1 1))
 				   (if (and limit (>= limit (point)))
 				       (progn
 					 (goto-char limit)
