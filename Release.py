@@ -152,6 +152,23 @@ def bump_release():
 
 
 def tag_release(untag_first):
+    # first verify that the ChangeLog is up-to-date
+    fp = open("ChangeLog")
+    cre = regex.compile('[ \t]*[*] Release \(5.[0-9]+\)')
+    while 1:
+	line = fp.readline()
+	if line == '':
+	    print '*****WARNING*****'
+	    print 'Could not find a Release tag in the ChangeLog'
+	    sys.exit(1)
+	if cre.match(line) >= 0:
+	    docorel = cre.group(1)
+	    if docorel <> RELEASE:
+		print '*****WARNING*****'
+		print 'ChangeLog has not been updated... exiting!'
+		sys.exit(1)
+	    break
+    fp.close()
     for f, cre, format in FILES:
 	if untag_first:
 	    os.system('rcs -n%s %s' % (RELEASE_NAME, f))
