@@ -1872,38 +1872,45 @@ command to conveniently insert and align the necessary backslashes."
 		(goto-char (match-end 0))
 	      (forward-char 2)
 	      (skip-chars-forward " \t"))
-	    (setq res
-		  (if (eq (c-point 'boi) (car lit-limits))
-		      ;; There is only whitespace before the comment
-		      ;; starter; take the prefix straight from this
-		      ;; line.
-		      (cons (buffer-substring-no-properties
+	    (let (str col)
+	      (if (eq (c-point 'boi) (car lit-limits))
+		  ;; There is only whitespace before the comment
+		  ;; starter; take the prefix straight from this line.
+		  (setq str (buffer-substring-no-properties
 			     (c-point 'bol) (point))
-			    (current-column))
-		    ;; There is code before the comment starter, so we
-		    ;; have to temporarily insert and indent a new
-		    ;; line to get the right space/tab mix in the
-		    ;; indentation.
-		    (let ((buffer-modified (buffer-modified-p))
-			  (buffer-undo-list t)
-			  (prefix-len (- (point) (car lit-limits)))
-			  tmp)
-		      (unwind-protect
-			  (progn
-			    (goto-char (car lit-limits))
-			    (indent-to (prog1 (current-column)
-					 (insert ?\n)))
-			    (setq tmp (point))
-			    (forward-char prefix-len)
-			    (cons (buffer-substring-no-properties
+			col (current-column))
+		;; There is code before the comment starter, so we
+		;; have to temporarily insert and indent a new line to
+		;; get the right space/tab mix in the indentation.
+		(let ((buffer-modified (buffer-modified-p))
+		      (buffer-undo-list t)
+		      (prefix-len (- (point) (car lit-limits)))
+		      tmp)
+		  (unwind-protect
+		      (progn
+			(goto-char (car lit-limits))
+			(indent-to (prog1 (current-column)
+				     (insert ?\n)))
+			(setq tmp (point))
+			(forward-char prefix-len)
+			(setq str (buffer-substring-no-properties
 				   (c-point 'bol) (point))
-				  (current-column)))
-			(delete-region (car lit-limits) tmp)
-			(set-buffer-modified-p buffer-modified))))
-		  )))))
+			      col (current-column)))
+		    (delete-region (car lit-limits) tmp)
+		    (set-buffer-modified-p buffer-modified))))
+	      (setq res
+		    (if (or (string-match "\\s \\'" str) (not (eolp)))
+			(cons str col)
+		      ;; The prefix ends the line with no whitespace
+		      ;; after it.  Default to a single space.
+		      (cons (concat str " ") (1+ col))))
+	      )))))
      (t
+      (setq comment-text-end
+	    (save-excursion
+	      (goto-char (- (cdr lit-limits) 2))
+	      (if (looking-at "\\*/") (point) (cdr lit-limits))))
       (save-excursion
-	(setq comment-text-end (- (cdr lit-limits) 2))
 	(beginning-of-line)
 	(if (and (> (point) (car lit-limits))
 		 (not (and (looking-at "[ \t]*\\*/")
@@ -1943,7 +1950,8 @@ command to conveniently insert and align the necessary backslashes."
 			      (progn
 				(goto-char (car lit-limits))
 				(if (looking-at comment-start-regexp)
-				    (goto-char (match-end 0))
+				    (goto-char (min (match-end 0)
+						    comment-text-end))
 				  (forward-char 2)
 				  (skip-chars-forward " \t"))
 				(when (eq (char-syntax (char-before)) ?\ )
@@ -2040,10 +2048,13 @@ command to conveniently insert and align the necessary backslashes."
 		(when fb-string
 		  ;; A good line wasn't found, but at least we have a
 		  ;; fallback that matches the comment prefix regexp.
-		  (cond ((string-match "\\s \\'" fb-string)
-			 ;; There are ws after the prefix, so let's use it.
-			 (cons fb-string
-			       (progn (goto-char fb-endpos) (current-column))))
+		  (cond ((or (string-match "\\s \\'" fb-string)
+			     (progn
+			       (goto-char fb-endpos)
+			       (not (eolp))))
+			 ;; There are ws or text after the prefix, so
+			 ;; let's use it.
+			 (cons fb-string (current-column)))
 			((progn
 			   ;; Check if there's any whitespace padding
 			   ;; on the comment start line that we can
@@ -2053,7 +2064,8 @@ command to conveniently insert and align the necessary backslashes."
 			       (goto-char (match-end 0))
 			     (forward-char 2)
 			     (skip-chars-forward " \t"))
-			   (eq (char-syntax (char-before)) ?\ ))
+			   (or (not (eolp))
+			       (eq (char-syntax (char-before)) ?\ )))
 			 (setq fb-string (buffer-substring-no-properties
 					  (save-excursion
 					    (skip-chars-backward " \t")
@@ -2431,7 +2443,7 @@ If a fill prefix is specified, it overrides all the above."
 	   (insert-and-inherit fill-prefix))
 	  ((progn
 	     (unless c-lit-limits
-	       (setq c-lit-limits (c-literal-limits nil nil t)))
+	       (setq c-lit-limits (c-literal-limits)))
 	     (unless c-lit-type
 	       (setq c-lit-type (c-literal-type c-lit-limits)))
 	     (memq c-lit-type '(c c++)))
@@ -2445,35 +2457,36 @@ If a fill prefix is specified, it overrides all the above."
 			    (setq c-lit-limits
 				  (c-collect-line-comments c-lit-limits))
 			    c-lit-type))
-		     (pos (point)))
-		 (if (save-excursion
-		       (back-to-indentation)
-		       (> (point) (car c-lit-limits))
-		       (looking-at c-current-comment-prefix))
+		     (pos (point))
+		     (comment-text-end
+		      (or (and (eq c-lit-type 'c)
+			       (save-excursion
+				 (goto-char (- (cdr c-lit-limits) 2))
+				 (if (looking-at "\\*/") (point))))
+			  (cdr c-lit-limits))))
+		 ;; Skip forward past the fill prefix in case
+		 ;; we're standing in it.
+		 (while (and (< (current-column) (cdr fill))
+			     (not (eolp)))
+		   (forward-char 1))
+		 (if (and (> (point) comment-text-end)
+			  (> (c-point 'bol) (car c-lit-limits)))
 		     (progn
-		       ;; Skip forward past the fill prefix in case
-		       ;; we're standing in it.
-		       (while (and (< (current-column) (cdr fill))
-				   (not (eolp)))
-			 (forward-char 1))
-		       (if (> (point) (if (and (eq c-lit-type 'c)
-					       (save-excursion
-						 (forward-char -2)
-						 (looking-at "\\*/")))
-					  (- (cdr c-lit-limits) 2)
-					(cdr c-lit-limits)))
-			   (progn
-			     ;; The skip takes us out of the comment;
-			     ;; insert the fill prefix at bol instead
-			     ;; and keep the position.
-			     (setq pos (copy-marker pos t))
-			     (beginning-of-line)
-			     (insert-and-inherit (car fill))
-			     (if soft (insert-and-inherit ?\n) (newline 1))
-			     (goto-char pos)
-			     (set-marker pos nil))
-			 (funcall do-line-break)
-			 (insert-and-inherit (car fill))))
+		       ;; The skip takes us out of the (block)
+		       ;; comment; insert the fill prefix at bol
+		       ;; instead and keep the position.
+		       (setq pos (copy-marker pos t))
+		       (beginning-of-line)
+		       (insert-and-inherit (car fill))
+		       (if soft (insert-and-inherit ?\n) (newline 1))
+		       (goto-char pos)
+		       (set-marker pos nil))
+		   ;; Don't break in the middle of a comment starter
+		   ;; or ender.
+		   (cond ((> (point) comment-text-end)
+			  (goto-char comment-text-end))
+			 ((< (point) (+ (car c-lit-limits) 2))
+			  (goto-char (+ (car c-lit-limits) 2))))
 		   (funcall do-line-break)
 		   (insert-and-inherit (car fill))))
 	     ;; Inside a comment that should be broken.
