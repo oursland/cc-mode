@@ -5591,9 +5591,11 @@ This function does not do any hidden buffer changes."
 
 	;; now figure out syntactic qualities of the current line
 	(cond
+
 	 ;; CASE 1: in a string.
 	 ((eq literal 'string)
 	  (c-add-syntax 'string (c-point 'bopl)))
+
 	 ;; CASE 2: in a C or C++ style comment.
 	 ((and (memq literal '(c c++))
 	       ;; This is a kludge for XEmacs where we use
@@ -5606,6 +5608,7 @@ This function does not do any hidden buffer changes."
 	       ;; we're inside a comment.
 	       (setq placeholder (c-literal-limits lim)))
 	  (c-add-syntax literal (car placeholder)))
+
 	 ;; CASE 3: in a cpp preprocessor macro continuation.
 	 ((and (save-excursion
 		 (when (c-beginning-of-macro)
@@ -5631,11 +5634,13 @@ This function does not do any hidden buffer changes."
 			 nil)))))
 	  (c-add-syntax tmpsymbol macro-start)
 	  (setq macro-start nil))
+
 	 ;; CASE 11: an else clause?
 	 ((looking-at "else\\>[^_]")
 	  (c-beginning-of-statement-1 containing-sexp)
 	  (c-add-stmt-syntax 'else-clause nil t nil
 			     containing-sexp paren-state))
+
 	 ;; CASE 12: while closure of a do/while construct?
 	 ((and (looking-at "while\\>[^_]")
 	       (save-excursion
@@ -5645,6 +5650,7 @@ This function does not do any hidden buffer changes."
 	  (goto-char placeholder)
 	  (c-add-stmt-syntax 'do-while-closure nil t nil
 			     containing-sexp paren-state))
+
 	 ;; CASE 13: A catch or finally clause?  This case is simpler
 	 ;; than if-else and do-while, because a block is required
 	 ;; after every try, catch and finally.
@@ -5668,6 +5674,7 @@ This function does not do any hidden buffer changes."
 	  (goto-char placeholder)
 	  (c-add-stmt-syntax 'catch-clause nil t nil
 			     containing-sexp paren-state))
+
 	 ;; CASE 18: A substatement we can recognize by keyword.
 	 ((save-excursion
 	    (and c-opt-block-stmt-key
@@ -5710,6 +5717,7 @@ This function does not do any hidden buffer changes."
 		     (and (zerop (c-forward-token-2 1 nil))
 			  (eq (char-after) ?\())
 		   (looking-at c-opt-block-stmt-key))))
+
 	  (if (eq step-type 'up)
 	      ;; CASE 18A: Simple substatement.
 	      (progn
@@ -5727,6 +5735,7 @@ This function does not do any hidden buffer changes."
 		 (t
 		  (c-add-stmt-syntax 'substatement nil nil nil
 				     containing-sexp paren-state))))
+
 	    ;; CASE 18B: Some other substatement.  This is shared
 	    ;; with case 10.
 	    (c-guess-continued-construct indent-point
@@ -5734,6 +5743,7 @@ This function does not do any hidden buffer changes."
 					 placeholder
 					 lim
 					 paren-state)))
+
 	 ;; CASE 4: In-expression statement.  C.f. cases 7B, 16A and
 	 ;; 17E.
 	 ((and (or c-opt-inexpr-class-key
@@ -5761,9 +5771,11 @@ This function does not do any hidden buffer changes."
 			     (c-whack-state-after (point) paren-state))
 	  (unless (eq (point) (cdr placeholder))
 	    (c-add-syntax (car placeholder))))
+
 	 ;; CASE 5: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
+
 	   ;; CASE 5A: we are looking at a defun, brace list, class,
 	   ;; or inline-inclass method opening brace
 	   ((setq special-brace-list
@@ -5771,6 +5783,7 @@ This function does not do any hidden buffer changes."
 			   (c-looking-at-special-brace-list))
 		      (eq char-after-ip ?{)))
 	    (cond
+
 	     ;; CASE 5A.1: Non-class declaration block open.
 	     ((save-excursion
 		(goto-char indent-point)
@@ -5792,6 +5805,7 @@ This function does not do any hidden buffer changes."
 		     ))
 	      (goto-char placeholder)
 	      (c-add-syntax tmpsymbol (c-point 'boi)))
+
 	     ;; CASE 5A.2: we are looking at a class opening brace
 	     ((save-excursion
 		(goto-char indent-point)
@@ -5801,6 +5815,7 @@ This function does not do any hidden buffer changes."
 		       (setq placeholder (aref decl 0)))
 		  ))
 	      (c-add-syntax 'class-open placeholder))
+
 	     ;; CASE 5A.3: brace list open
 	     ((save-excursion
 		(c-beginning-of-decl-1 lim)
@@ -5842,10 +5857,12 @@ This function does not do any hidden buffer changes."
 		    (c-beginning-of-statement-1 lim)
 		    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 		(c-add-syntax 'brace-list-open placeholder)))
+
 	     ;; CASE 5A.4: inline defun open
 	     ((and inclass-p (not inenclosing-p))
 	      (c-add-syntax 'inline-open)
 	      (c-add-class-syntax 'inclass inclass-p paren-state))
+
 	     ;; CASE 5A.5: ordinary defun open
 	     (t
 	      (goto-char placeholder)
@@ -5854,9 +5871,11 @@ This function does not do any hidden buffer changes."
 		;; Bogus to use bol here, but it's the legacy.
 		(c-add-syntax 'defun-open (c-point 'bol)))
 	      )))
+
 	   ;; CASE 5B: first K&R arg decl or member init
 	   ((c-just-after-func-arglist-p lim)
 	    (cond
+
 	     ;; CASE 5B.1: a member init
 	     ((or (eq char-before-ip ?:)
 		  (eq char-after-ip ?:))
@@ -5884,22 +5903,26 @@ This function does not do any hidden buffer changes."
 	      ;; we don't need to add any class offset since this
 	      ;; should be relative to the ctor's indentation
 	      )
+
 	     ;; CASE 5B.2: K&R arg decl intro
 	     (c-recognize-knr-p
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
 	      (if inclass-p
 		  (c-add-class-syntax 'inclass inclass-p paren-state)))
+
 	     ;; CASE 5B.3: Inside a member init list.
 	     ((c-beginning-of-member-init-list lim)
 	      (c-forward-syntactic-ws)
 	      (c-add-syntax 'member-init-cont (point)))
+
 	     ;; CASE 5B.4: Nether region after a C++ or Java func
 	     ;; decl, which could include a `throws' declaration.
 	     (t
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'func-decl-cont (c-point 'boi))
 	      )))
+
 	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
 	   ((or (and (c-major-mode-is 'c++-mode)
@@ -5944,6 +5967,7 @@ This function does not do any hidden buffer changes."
 							 (point)))
 		     ))
 	    (cond
+
 	     ;; CASE 5C.1: non-hanging colon on an inher intro
 	     ((eq char-after-ip ?:)
 	      (c-beginning-of-statement-1 lim)
@@ -5951,12 +5975,14 @@ This function does not do any hidden buffer changes."
 	      ;; don't add inclass symbol since relative point already
 	      ;; contains any class offset
 	      )
+
 	     ;; CASE 5C.2: hanging colon on an inher intro
 	     ((eq char-before-ip ?:)
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
 	      (if inclass-p
 		  (c-add-class-syntax 'inclass inclass-p paren-state)))
+
 	     ;; CASE 5C.3: in a Java implements/extends
 	     (injava-inher
 	      (let ((where (cdr injava-inher))
@@ -5972,6 +5998,7 @@ This function does not do any hidden buffer changes."
 					      (c-beginning-of-statement-1 lim)
 					      (point))))
 		      )))
+
 	     ;; CASE 5C.4: a continued inheritance line
 	     (t
 	      (c-beginning-of-inheritance-list lim)
@@ -5979,6 +6006,7 @@ This function does not do any hidden buffer changes."
 	      ;; don't add inclass symbol since relative point already
 	      ;; contains any class offset
 	      )))
+
 	   ;; CASE 5D: this could be a top-level initialization, a
 	   ;; member init list continuation, or a template argument
 	   ;; list continuation.
@@ -5998,6 +6026,7 @@ This function does not do any hidden buffer changes."
 	    (setq placeholder
 		  (c-beginning-of-member-init-list lim))
 	    (cond
+
 	     ;; CASE 5D.1: hanging member init colon, but watch out
 	     ;; for bogus matches on access specifiers inside classes.
 	     ((and placeholder
@@ -6026,12 +6055,14 @@ This function does not do any hidden buffer changes."
 	      ;; we do not need to add class offset since relative
 	      ;; point is the member init above us
 	      )
+
 	     ;; CASE 5D.2: non-hanging member init colon
 	     ((progn
 		(c-forward-syntactic-ws indent-point)
 		(eq (char-after) ?:))
 	      (skip-chars-forward " \t:")
 	      (c-add-syntax 'member-init-cont (point)))
+
 	     ;; CASE 5D.3: perhaps a template list continuation?
 	     ((and (c-major-mode-is 'c++-mode)
 		   (save-excursion
@@ -6056,6 +6087,7 @@ This function does not do any hidden buffer changes."
 	      ;; FIXME: Should use c-add-stmt-syntax, but it's not yet
 	      ;; template aware.
 	      (c-add-syntax 'template-args-cont (point)))
+
 	     ;; CASE 5D.4: perhaps a multiple inheritance line?
 	     ((and (c-major-mode-is 'c++-mode)
 		   (save-excursion
@@ -6072,6 +6104,7 @@ This function does not do any hidden buffer changes."
 			  (eq (char-after) ?:))))
 	      (goto-char placeholder)
 	      (c-add-syntax 'inher-cont (c-point 'boi)))
+
 	     ;; CASE 5D.5: Continuation of the "expression part" of a
 	     ;; top level construct.
 	     (t
@@ -6090,6 +6123,7 @@ This function does not do any hidden buffer changes."
 		 'statement-cont)
 	       nil nil nil containing-sexp paren-state))
 	     ))
+
 	   ;; CASE 5E: we are looking at a access specifier
 	   ((and inclass-p
 		 c-opt-access-key
@@ -6098,11 +6132,13 @@ This function does not do any hidden buffer changes."
 						  paren-state))
 	    ;; Append access-label with the same anchor point as inclass gets.
 	    (c-append-syntax 'access-label placeholder))
+
 	   ;; CASE 5F: Close of a non-class declaration level block.
 	   ((and inenclosing-p
 		 (eq char-after-ip ?}))
 	    (c-add-syntax (intern (concat inenclosing-p "-close"))
 			  (aref inclass-p 0)))
+
 	   ;; CASE 5G: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
 	   ((and inclass-p
@@ -6115,6 +6151,7 @@ This function does not do any hidden buffer changes."
 			  (= (point) (aref inclass-p 1))
 			  ))))
 	    (c-add-class-syntax 'class-close inclass-p paren-state))
+
 	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
 		 (not (eq char-before-ip ?}))
@@ -6130,11 +6167,13 @@ This function does not do any hidden buffer changes."
 		 (< placeholder indent-point))
 	    (goto-char placeholder)
 	    (c-add-syntax 'knr-argdecl (point)))
+
 	   ;; CASE 5I: ObjC method definition.
 	   ((and c-opt-method-key
 		 (looking-at c-opt-method-key))
 	    (c-beginning-of-statement-1 lim)
 	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
+
            ;; CASE 5P: AWK pattern or function or continuation
            ;; thereof.
            ((c-major-mode-is 'awk-mode)
@@ -6146,6 +6185,7 @@ This function does not do any hidden buffer changes."
                'topmost-intro)
              nil nil nil
              containing-sexp paren-state))
+
 	   ;; CASE 5N: At a variable declaration that follows a class
 	   ;; definition or some other block declaration that doesn't
 	   ;; end at the closing '}'.  C.f. case 5D.5.
@@ -6167,6 +6207,7 @@ This function does not do any hidden buffer changes."
 	    (goto-char placeholder)
 	    (c-add-stmt-syntax 'topmost-intro-cont nil nil nil
 			       containing-sexp paren-state))
+
 	   ;; CASE 5J: we are at the topmost level, make
 	   ;; sure we skip back past any access specifiers
 	   ((progn
@@ -6209,6 +6250,7 @@ This function does not do any hidden buffer changes."
 		(c-add-syntax 'cpp-define-intro)
 		(setq macro-start nil))
 	      ))
+
 	   ;; CASE 5K: we are at an ObjC method definition
 	   ;; continuation line.
 	   ((and c-opt-method-key
@@ -6217,17 +6259,21 @@ This function does not do any hidden buffer changes."
 		   (beginning-of-line)
 		   (looking-at c-opt-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
+
 	   ;; CASE 5L: we are at the first argument of a template
 	   ;; arglist that begins on the previous line.
 	   ((eq (char-before) ?<)
 	    (c-beginning-of-statement-1 (c-safe-position (point) paren-state))
 	    (c-add-syntax 'template-args-cont (c-point 'boi)))
+
 	   ;; CASE 5M: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement-1 (c-safe-position (point) paren-state))
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 	   ))
+
 	 ;; (CASE 6 has been removed.)
+
 	 ;; CASE 7: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
 	 ;; call argument list
@@ -6237,6 +6283,7 @@ This function does not do any hidden buffer changes."
 			  (c-looking-at-special-brace-list)))
 		   (eq (char-after containing-sexp) ?{)))
 	  (cond
+
 	   ;; CASE 7A: we are looking at the arglist closing paren.
 	   ;; C.f. case 7F.
 	   ((memq char-after-ip '(?\) ?\]))
@@ -6251,6 +6298,7 @@ This function does not do any hidden buffer changes."
 	    (c-add-stmt-syntax 'arglist-close (list containing-sexp) t nil
 			       (c-most-enclosing-brace paren-state (point))
 			       (c-whack-state-after (point) paren-state)))
+
 	   ;; CASE 7B: Looking at the opening brace of an
 	   ;; in-expression block or brace list.  C.f. cases 4, 16A
 	   ;; and 17E.
@@ -6277,6 +6325,7 @@ This function does not do any hidden buffer changes."
 			       (c-whack-state-after (point) paren-state))
 	    (if (/= (point) placeholder)
 		(c-add-syntax (cdr tmpsymbol))))
+
 	   ;; CASE 7C: we are looking at the first argument in an empty
 	   ;; argument list. Use arglist-close if we're actually
 	   ;; looking at a close paren or bracket.
@@ -6289,6 +6338,7 @@ This function does not do any hidden buffer changes."
 	      (skip-chars-forward " \t")
 	      (setq placeholder (point)))
 	    (c-add-syntax 'arglist-intro placeholder))
+
 	   ;; CASE 7D: we are inside a conditional test clause. treat
 	   ;; these things as statements
 	   ((progn
@@ -6301,6 +6351,7 @@ This function does not do any hidden buffer changes."
 		(c-add-syntax 'statement (point))
 	      (c-add-syntax 'statement-cont (point))
 	      ))
+
 	   ;; CASE 7E: maybe a continued ObjC method call. This is the
 	   ;; case when we are inside a [] bracketed exp, and what
 	   ;; precede the opening bracket is not an identifier.
@@ -6312,6 +6363,7 @@ This function does not do any hidden buffer changes."
 		   (if (not (looking-at c-symbol-key))
 		       (c-add-syntax 'objc-method-call-cont containing-sexp))
 		   )))
+
 	   ;; CASE 7F: we are looking at an arglist continuation line,
 	   ;; but the preceding argument is on the same line as the
 	   ;; opening paren.  This case includes multi-line
@@ -6334,11 +6386,13 @@ This function does not do any hidden buffer changes."
 			       t nil
 			       (c-most-enclosing-brace c-state-cache (point))
 			       (c-whack-state-after (point) paren-state)))
+
 	   ;; CASE 7G: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (c-forward-syntactic-ws indent-point)
 	      (c-add-syntax 'arglist-cont (c-point 'boi)))
 	   ))
+
 	 ;; CASE 8: func-local multi-inheritance line
 	 ((and (c-major-mode-is 'c++-mode)
 	       (save-excursion
@@ -6348,18 +6402,22 @@ This function does not do any hidden buffer changes."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
+
 	   ;; CASE 8A: non-hanging colon on an inher intro
 	   ((eq char-after-ip ?:)
 	    (c-backward-syntactic-ws lim)
 	    (c-add-syntax 'inher-intro (c-point 'boi)))
+
 	   ;; CASE 8B: hanging colon on an inher intro
 	   ((eq char-before-ip ?:)
 	    (c-add-syntax 'inher-intro (c-point 'boi)))
+
 	   ;; CASE 8C: a continued inheritance line
 	   (t
 	    (c-beginning-of-inheritance-list lim)
 	    (c-add-syntax 'inher-cont (point))
 	    )))
+
 	 ;; CASE 9: we are inside a brace-list
 	 ((and (not (c-major-mode-is 'awk-mode))  ; Maybe this isn't needed (ACM, 2002/3/29)
                (setq special-brace-list
@@ -6369,6 +6427,7 @@ This function does not do any hidden buffer changes."
                                 (c-looking-at-special-brace-list)))
                          (c-inside-bracelist-p containing-sexp paren-state))))
 	  (cond
+
 	   ;; CASE 9A: In the middle of a special brace list opener.
 	   ((and (consp special-brace-list)
 		 (save-excursion
@@ -6388,6 +6447,7 @@ This function does not do any hidden buffer changes."
 		(goto-char (match-end 1))
 		(c-forward-syntactic-ws))
 	      (c-add-syntax 'brace-list-open (c-point 'boi))))
+
 	   ;; CASE 9B: brace-list-close brace
 	   ((if (consp special-brace-list)
 		;; Check special brace list closer.
@@ -6414,6 +6474,7 @@ This function does not do any hidden buffer changes."
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-stmt-syntax 'brace-list-close nil t t lim
 				 (c-whack-state-after (point) paren-state))))
+
 	   (t
 	    ;; Prepare for the rest of the cases below by going to the
 	    ;; token following the opening brace
@@ -6428,6 +6489,7 @@ This function does not do any hidden buffer changes."
 	      (goto-char (max start (c-point 'bol))))
 	    (c-skip-ws-forward indent-point)
 	    (cond
+
 	     ;; CASE 9C: we're looking at the first line in a brace-list
 	     ((= (point) indent-point)
 	      (if (consp special-brace-list)
@@ -6439,6 +6501,7 @@ This function does not do any hidden buffer changes."
 		(c-beginning-of-statement-1 lim)
 		(c-add-stmt-syntax 'brace-list-intro nil t t lim
 				   (c-whack-state-after (point) paren-state))))
+
 	     ;; CASE 9D: this is just a later brace-list-entry or
 	     ;; brace-entry-open
 	     (t (if (or (eq char-after-ip ?{)
@@ -6451,6 +6514,7 @@ This function does not do any hidden buffer changes."
 		  (c-add-syntax 'brace-list-entry (point))
 		  ))
 	     ))))
+
 	 ;; CASE 10: A continued statement or top level construct.
 	 ((and (if (c-major-mode-is 'awk-mode)
                    (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
@@ -6468,6 +6532,7 @@ This function does not do any hidden buffer changes."
 				       placeholder
 				       containing-sexp
 				       paren-state))
+
 	 ;; CASE 14: A case or default label
 	 ((looking-at c-label-kwds-regexp)
 	  (goto-char containing-sexp)
@@ -6475,6 +6540,7 @@ This function does not do any hidden buffer changes."
 	  (c-backward-to-block-anchor lim)
 	  (c-add-stmt-syntax 'case-label nil t nil
 			     lim paren-state))
+
 	 ;; CASE 15: any other label
 	 ((looking-at c-label-key)
 	  (goto-char containing-sexp)
@@ -6491,6 +6557,7 @@ This function does not do any hidden buffer changes."
 	  (c-backward-to-block-anchor lim)
 	  (c-add-stmt-syntax tmpsymbol nil t nil
 			     lim paren-state))
+
 	 ;; CASE 16: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((eq char-after-ip ?})
@@ -6498,6 +6565,7 @@ This function does not do any hidden buffer changes."
 	  (setq lim (c-most-enclosing-brace paren-state))
 	  (goto-char containing-sexp)
 	    (cond
+
 	     ;; CASE 16E: Closing a statement block?  This catches
 	     ;; cases where it's preceded by a statement keyword,
 	     ;; which works even when used in an "invalid" context,
@@ -6506,6 +6574,7 @@ This function does not do any hidden buffer changes."
 	      (c-backward-to-block-anchor lim)
 	      (c-add-stmt-syntax 'block-close nil t nil
 				 lim paren-state))
+
 	     ;; CASE 16A: closing a lambda defun or an in-expression
 	     ;; block?  C.f. cases 4, 7B and 17E.
 	     ((setq placeholder (c-looking-at-inexpr-block
@@ -6525,6 +6594,7 @@ This function does not do any hidden buffer changes."
 				   (c-whack-state-after (point) paren-state))
 		(if (/= (point) (cdr placeholder))
 		    (c-add-syntax (car placeholder)))))
+
 	     ;; CASE 16B: does this close an inline or a function in
 	     ;; a non-class declaration level block?
 	     ((setq placeholder (c-search-uplist-for-classkey paren-state))
@@ -6535,6 +6605,7 @@ This function does not do any hidden buffer changes."
 		    (looking-at c-other-decl-block-key))
 		  (c-add-syntax 'defun-close (point))
 		(c-add-syntax 'inline-close (point))))
+
 	     ;; CASE 16F: Can be a defun-close of a function declared
 	     ;; in a statement block, e.g. in Pike or when using gcc
 	     ;; extensions.  Might also trigger it with some macros
@@ -6552,6 +6623,7 @@ This function does not do any hidden buffer changes."
 		  (goto-char placeholder))
 	      (c-add-stmt-syntax 'defun-close nil t nil
 				 lim paren-state))
+
 	     ;; CASE 16C: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close.  C.f. case 17H.
@@ -6572,6 +6644,7 @@ This function does not do any hidden buffer changes."
 		;; situations are handled in case 16E above.
 		(c-add-stmt-syntax 'block-close nil t nil
 				   lim paren-state)))
+
 	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
@@ -6585,6 +6658,7 @@ This function does not do any hidden buffer changes."
 		    (back-to-indentation)
 		    (c-add-syntax 'defun-close (point)))))
 	      )))
+
 	 ;; CASE 17: Statement or defun catchall.
 	 (t
 	  (goto-char indent-point)
@@ -6599,11 +6673,13 @@ This function does not do any hidden buffer changes."
 		     (setq step-type last-step-type)
 		     (/= (point) (c-point 'boi)))))
 	  (cond
+
 	   ;; CASE 17B: continued statement
 	   ((and (eq step-type 'same)
 		 (/= (point) indent-point))
 	    (c-add-stmt-syntax 'statement-cont nil nil nil
 			       containing-sexp paren-state))
+
 	   ;; CASE 17A: After a case/default label?
 	   ((progn
 	      (while (and (eq step-type 'label)
@@ -6615,6 +6691,7 @@ This function does not do any hidden buffer changes."
 				   'statement-case-open
 				 'statement-case-intro)
 			       nil t nil containing-sexp paren-state))
+
 	   ;; CASE 17D: any old statement
 	   ((progn
 	      (while (eq step-type 'label)
@@ -6625,6 +6702,7 @@ This function does not do any hidden buffer changes."
 			       containing-sexp paren-state)
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
+
 	   ;; CASE 17I: Inside a substatement block.
 	   ((progn
 	      ;; The following tests are all based on containing-sexp.
@@ -6637,6 +6715,7 @@ This function does not do any hidden buffer changes."
 			       lim paren-state)
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
+
 	   ;; CASE 17E: first statement in an in-expression block.
 	   ;; C.f. cases 4, 7B and 16A.
 	   ((setq placeholder (c-looking-at-inexpr-block
@@ -6657,6 +6736,7 @@ This function does not do any hidden buffer changes."
 		  (c-add-syntax (car placeholder))))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
+
 	   ;; CASE 17F: first statement in an inline, or first
 	   ;; statement in a top-level defun. we can tell this is it
 	   ;; if there are no enclosing braces that haven't been
@@ -6669,6 +6749,7 @@ This function does not do any hidden buffer changes."
 	    (c-backward-to-decl-anchor lim)
 	    (back-to-indentation)
 	    (c-add-syntax 'defun-block-intro (point)))
+
 	   ;; CASE 17G: First statement in a function declared inside
 	   ;; a normal block.  This can occur in Pike and with
 	   ;; e.g. the gcc extensions.  Might also trigger it with
@@ -6683,6 +6764,7 @@ This function does not do any hidden buffer changes."
 		(goto-char placeholder))
 	    (c-add-stmt-syntax 'defun-block-intro nil t nil
 			       lim paren-state))
+
 	   ;; CASE 17H: First statement in a block.  C.f. case 16C.
 	   (t
 	    ;; If the block is preceded by a case/switch label on the
@@ -6704,13 +6786,16 @@ This function does not do any hidden buffer changes."
 		(c-add-syntax 'block-open)))
 	   ))
 	 )
+
 	;; now we need to look at any modifiers
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
+
 	;; are we looking at a comment only line?
 	(when (and (looking-at c-comment-start-regexp)
 		   (/= (c-forward-token-2 0 nil (c-point 'eol)) 0))
 	  (c-append-syntax 'comment-intro))
+
 	;; we might want to give additional offset to friends (in C++).
 	(when (and c-opt-friend-key
 		   (looking-at c-opt-friend-key))
@@ -6760,6 +6845,7 @@ This function does not do any hidden buffer changes."
 		;; we add cpp-define-intro to get the extra
 		;; indentation of the #define body.
 		(c-add-syntax 'cpp-define-intro)))))
+
 	;; return the syntax
 	c-syntactic-context))))
 
