@@ -1144,8 +1144,7 @@ This function does not do any hidden buffer changes."
     (while (progn
 	     (skip-chars-backward " \t\n\r\f\v")
 	     (and (looking-at "[\n\r]")
-		  (eq (char-before) ?\\)
-		  (< (point) start)))
+		  (eq (char-before) ?\\)))
       (backward-char))
 
     (if (bobp)

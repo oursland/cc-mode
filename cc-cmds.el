@@ -1716,42 +1716,51 @@ function does not require the declaration to contain a brace block."
 	(goto-char (cdr range))
 	t))))
 
-(defun c-ascertain-adjacent-literal (backwards-flag)
+(defun c-ascertain-preceding-literal ()
   ;; Point is not in a literal (i.e. comment or string (include AWK regexp)).
-  ;; If a literal is the next thing (aside from whitespace) to be found in the
-  ;; direction indicated by BACKWARDS-FLAG, return a cons of its start.end
-  ;; positions (enclosing the delimiters).  Otherwise return NIL.
+  ;; If a literal is the next thing (aside from whitespace) to be found before
+  ;; point, return a cons of its start.end positions (enclosing the
+  ;; delimiters).  Otherwise return NIL.
+  ;;
+  ;; This function might do hidden buffer changes.
+  (save-excursion
+    (c-collect-line-comments
+     (let ((here (point))
+	   pos)
+       (if (c-backward-single-comment)
+	   (cons (point) (progn (c-forward-single-comment) (point)))
+	 (save-restriction
+	   ;; to prevent `looking-at' seeing a " at point.
+	   (narrow-to-region (point-min) here)
+	   (when
+	       (or
+		;; An EOL can act as an "open string" terminator in AWK.
+		(looking-at c-ws*-string-limit-regexp)
+		(and (not (bobp))
+		     (progn (backward-char)
+			    (looking-at c-string-limit-regexp))))
+	     (goto-char (match-end 0))	; just after the string terminator.
+	     (setq pos (point))
+	     (c-safe (c-backward-sexp 1) ; move back over the string.
+		     (cons (point) pos)))))))))
+
+(defun c-ascertain-following-literal ()
+  ;; Point is not in a literal (i.e. comment or string (include AWK regexp)).
+  ;; If a literal is the next thing (aside from whitespace) following point,
+  ;; return a cons of its start.end positions (enclosing the delimiters).
+  ;; Otherwise return NIL.
   ;;
   ;; This function might do hidden buffer changes.
   (save-excursion
     (c-collect-line-comments
      (let (pos)
-      (if backwards-flag
-	  (save-restriction
-	    ;; prevent `looking-at' seeing a " at point.
-	    (narrow-to-region (point-min) (point))
-	    (if (c-backward-single-comment)
-		(cons (point) (progn (c-forward-single-comment) (point)))
-	      ;;(c-skip-ws-backward) ;;;; REMOVE THIS, SURELY?  2004/3/28
-	                             ;;;; Removed, 2004/4/3
-	      (setq pos (point))
-	      (when
-		  (or
-		   ;; An EOL can act as an "open string" terminator in AWK.
-		   (looking-at c-ws*-string-limit-regexp)
-		   (and (not (bobp))
-			(progn (backward-char)
-			       (looking-at c-string-limit-regexp))))
-		  (goto-char (match-end 0)) ; just after the string terminator.
-		  (c-safe (c-backward-sexp 1) ; move back over the string.
-			  (cons (point) pos)))))
-	(c-skip-ws-forward)
-	(if (looking-at c-string-limit-regexp) ; string-delimiter.
-	    (cons (point) (or (c-safe (progn (c-forward-sexp 1) (point)))
-			      (point-max)))
-	  (setq pos (point))
-	  (if (c-forward-single-comment)
-	      (cons pos (point)))))))))
+       (c-skip-ws-forward)
+       (if (looking-at c-string-limit-regexp) ; string-delimiter.
+	   (cons (point) (or (c-safe (progn (c-forward-sexp 1) (point)))
+			     (point-max)))
+	 (setq pos (point))
+	 (if (c-forward-single-comment)
+	     (cons pos (point))))))))
 
 (defun c-after-statement-terminator-p () ; Should we pass in LIM here?
   ;; Does point immediately follow a statement "terminator"?  A virtual
@@ -2075,7 +2084,7 @@ be more \"DWIM:ey\"."
 	       ((or (null sentence-flag)
 		    (c-one-line-string-p range))
 		(goto-char (car range))
-		(setq range (c-ascertain-adjacent-literal t))
+		(setq range (c-ascertain-preceding-literal))
 		;; N.B. The following is essentially testing for an AWK regexp
 		;; at BOS:
 		;; Was the previous non-ws thing an end of statement?
@@ -2090,7 +2099,7 @@ be more \"DWIM:ey\"."
 			      (if (eq (c-literal-type range) 'string)
 				  (c-beginning-of-sentence-in-string range)
 				(c-beginning-of-sentence-in-comment range)))
-		    (setq range (c-ascertain-adjacent-literal t)))
+		    (setq range (c-ascertain-preceding-literal)))
 		  res)))
 
 	     ;; Non-literal code.
@@ -2119,7 +2128,7 @@ be more \"DWIM:ey\"."
 			       (point)))))
 		;; Are we about to move backwards into a literal?
 		(when (memq (cdr res) '(macro-boundary literal))
-		  (setq range (c-ascertain-adjacent-literal t)))
+		  (setq range (c-ascertain-preceding-literal)))
 		not-bos))
 	  (setq last (point)))
 
@@ -2172,7 +2181,7 @@ sentence motion in or near comments and multiline strings."
 	       ((or (null sentence-flag)
 		    (c-one-line-string-p range))
 		(goto-char (cdr range))
-		(setq range (c-ascertain-adjacent-literal nil))
+		(setq range (c-ascertain-following-literal))
 		;; Is there a virtual semicolon here (e.g. for AWK)?
 		(not (c-at-vsemi-p)))
 
@@ -2181,7 +2190,7 @@ sentence motion in or near comments and multiline strings."
 			      (if (eq (c-literal-type range) 'string)
 				  (c-end-of-sentence-in-string range)
 				(c-end-of-sentence-in-comment range)))
-		    (setq range (c-ascertain-adjacent-literal nil)))
+		    (setq range (c-ascertain-following-literal)))
 		  ;; If we've just come forward out of a literal, check for
 		  ;; vsemi.  (N.B. AWK can't have a vsemi after a comment, but
 		  ;; some other language may do in the future)
@@ -2204,11 +2213,12 @@ sentence motion in or near comments and multiline strings."
 				      (point))))))
 		;; Are we about to move forward into a literal?
 		(when (memq (cdr res) '(macro-boundary literal))
-		  (setq range (c-ascertain-adjacent-literal nil)))
+		  (setq range (c-ascertain-following-literal)))
 		(car res))))
 
 	(if (/= count 0) (setq count (1- count))))
       (c-keep-region-active))))
+			       
 
 
 ;; set up electric character functions to work with pending-del,
