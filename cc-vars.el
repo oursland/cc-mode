@@ -875,7 +875,7 @@ can always override the use of `c-default-style' by making calls to
        ;; Relpos: At the containing statement(*).
        (substatement-open     . +)
        ;; Relpos: At the containing statement(*).
-       (substatement-label    . *)
+       (substatement-label    . 2)
        ;; Relpos: At the containing statement(*).
        (case-label            . 0)
        ;; Relpos: At the start of the switch block(*).
