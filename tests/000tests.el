@@ -183,7 +183,6 @@
 		 'font-lock-default-fontify-buffer))
 	    (font-lock-fontify-buffer)))
       (when (and noninteractive orig-font-lock-make-faces)
-	(message "uncovered font-lock-make-faces")
 	(fset 'font-lock-make-faces orig-font-lock-make-faces))
       (when orig-noninteractive-function
 	(fset 'noninteractive orig-noninteractive-function)))))
