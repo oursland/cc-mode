@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.158 $
-;; Last Modified:   $Date: 1993-12-28 16:36:06 $
+;; Version:         $Revision: 3.159 $
+;; Last Modified:   $Date: 1993-12-29 17:06:28 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-28 16:36:06 $|$Revision: 3.158 $|
+;; |$Date: 1993-12-29 17:06:28 $|$Revision: 3.159 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.158 $
+CC-MODE REVISION: $Revision: 3.159 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.158 $
+CC-MODE REVISION: $Revision: 3.159 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2457,10 +2457,22 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		 (= char-after-ip ?\)))
 	    (goto-char containing-sexp)
 	    (c-add-semantics 'arglist-close (c-point 'boi)))
-	   ;; CASE 5C: we are looking at an arglist continuation line,
+	   ;; CASE 5C: we are inside a conditional test clause. treat
+	   ;; these things as statements
+	   ((save-excursion
+	     (goto-char containing-sexp)
+	     (and (c-safe (progn (forward-sexp -1) t))
+		  (looking-at c-conditional-key)))
+	    (c-beginning-of-statement 1 containing-sexp)
+	    (if (= char-before-ip ?\;)
+		(c-add-semantics 'statement (point))
+	      (c-add-semantics 'statement-cont (point))
+	      ))
+	   ;; CASE 5D: we are looking at an arglist continuation line,
 	   ;; but the preceding argument is on the same line as the
 	   ;; opening paren.  This case includes multi-line
-	   ;; mathematical paren groupings
+	   ;; mathematical paren groupings, but we could be on a
+	   ;; for-list continuation line
 	   ((and (save-excursion
 		   (goto-char (1+ containing-sexp))
 		   (skip-chars-forward " \t")
@@ -2470,16 +2482,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (skip-chars-backward " \t(")
 		   (<= (point) containing-sexp)))
 	    (c-add-semantics 'arglist-cont-nonempty containing-sexp))
-	   ;; CASE 5D: two possibilities here. First, its possible
-	   ;; that the arglist we're in is really a forloop expression
-	   ;; and we are looking at one of the clauses broken up
-	   ;; across multiple lines.  ==> statement-cont
-	   ((and (not (memq char-before-ip '(?\; ?,)))
-		 (save-excursion
-		   (c-beginning-of-statement nil containing-sexp)
-		   (setq placeholder (point))
-		   (/= (point) containing-sexp)))
-	    (c-add-semantics 'statement-cont placeholder))
 	   ;; CASE 5E: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (c-add-semantics 'arglist-cont (c-point 'boi)))
@@ -2943,7 +2945,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.158 $"
+(defconst c-version "$Revision: 3.159 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
