@@ -1,6 +1,44 @@
-Wed Aug 21 16:43:22 1996  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+Fri Oct  4 19:10:15 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
-	* Public Release 4.315
+	* Public Release 4.322
+
+Fri Oct  4 20:28:14 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-backslash-region):
+	If a line ends at the end of the region, always
+	delete backslash from it.
+
+	Given by Richard Stallman <rms@ethanol.gnu.ai.mit.edu> 1996-08-31
+
+	(c-backslash-region): In XEmacs, keep region active.
+
+	* cc-mode.el (c-mode-map):
+	Install FSF mode menu into menubar using the name
+	"CC-Mode" for all supported modes.
+
+	(c++-mode-map, objc-mode-map, java-mode-map): Don't install an
+	additional FSF menu.
+
+	* cc-mode.el:
+	Removed the following variables from the built-in "cc-mode" style:
+
+	    c-echo-syntactic-information-p
+	    c-string-syntax-p
+	    c-tab-always-indent
+	    c-inhibit-startup-warnings-p
+
+	These control how the mode acts, not how code looks.
+
+Mon Sep 30 22:24:48 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-indent-command):
+	Sync docstring with texinfo documentation, and
+	actual behavior.
+
+Thu Sep 19 18:13:13 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-style-alist):
+	Added "linux" style.
 
 Tue Aug 20 21:08:13 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 

@@ -1,18 +1,17 @@
-MANIFEST for tar distribution of cc-mode.el 4.315
+MANIFEST for tar distribution of cc-mode.el 4.322
 Barry A. Warsaw <cc-mode-help@python.org>
-$Date: 1996-08-21 20:45:30 $
+$Date: 1996-10-04 23:12:06 $
 
-You should have received the following files in the distribution tar
-file for cc-mode 4.315:
+You should have received the following files in this distribution:
 
     ANNOUNCEMENT: Release announcement as it appeared on various
     forums.
 
     MANIFEST: This file.
 
-    cc-mode.el: Version 4.315 of the mode.
+    cc-mode.el: The latest version of this mode.
 
-    cc-mode.texi: Version 2.55 of the CC-MODE Texinfo manual.
+    cc-mode.texi: The latest CC-Mode Texinfo manual.
 
     cc-compat.el: Helps ease the transition from c-mode.el to cc-mode
     style indentation control.  This is provided for your convenience
@@ -32,7 +31,3 @@ file for cc-mode 4.315:
     README: Quick intro into how to get cc-mode up and running.
 
     ChangeLog: Extremely verbose history of changes.
-
-Note that the DUMPING file from previous distributions is obsoleted by
-the fact that the latest XEmacs and Emacs 19 both come pre-configured
-to use cc-mode.
