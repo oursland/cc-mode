@@ -899,6 +899,30 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	   (cc-eval-when-compile
 	     (boundp 'parse-sexp-lookup-properties))))
 
+      ;; Below we fontify a whole declaration even when it crosses the limit,
+      ;; to avoid gaps when lazy-lock fontifies the file a screenful at a
+      ;; time.  That is however annoying during editing, e.g. the following is
+      ;; a common situation while the first line is being written:
+      ;;
+      ;;     my_variable
+      ;;     some_other_variable = 0;
+      ;;
+      ;; font-lock will put the limit at the beginning of the second line
+      ;; here, and if we go past it we'll fontify "my_variable" as a type and
+      ;; "some_other_variable" as an identifier, and the latter will not
+      ;; correct itself until the second line is changed.  To avoid that we
+      ;; narrow to the limit if the region to fontify is a single line.
+      (when (<= limit (c-point 'bonl))
+	(narrow-to-region
+	 (point-min)
+	 (save-excursion
+	   ;; Narrow after any operator chars following the limit though, since
+	   ;; those characters can be useful in recognizing a declaration (in
+	   ;; particular the '{' that opens a function body after the header).
+	   (goto-char limit)
+	   (skip-chars-forward "^_a-zA-Z0-9$")
+	   (point))))
+
       (c-find-decl-spots
        limit
        c-identifier-start
@@ -933,6 +957,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			    (eq arglist-match ?<))
 			;; Inside an angle bracket arglist.
 			(setq arglist-type '<>))
+		       (type
+			;; Got a cached hit in some other type of arglist.
+			(setq arglist-type 'other))
 		       ((if inside-macro
 			    (< match-pos max-type-decl-end-before-token)
 			  (< match-pos max-type-decl-end))
@@ -1308,6 +1335,16 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      ;; We could do a better job if we knew the point when
 		      ;; the fontification was invoked.
 		      (throw 'at-decl-or-cast t))))
+
+		(when (and c-recognize-paren-inits
+			   got-identifier
+			   prev-at-type
+			   got-parens
+			   (not got-prefix)
+			   (not got-suffix)
+			   (not (eq at-type t)))
+		  (c-put-char-property type-end 'c-type 'c-init-arg-start)
+		  (c-fl-shift-type-backward))
 
 		(when at-decl-or-cast
 		  ;; By now we've located the type in the declaration that we
