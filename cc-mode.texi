@@ -128,6 +128,7 @@ Minor Modes
 Commands
 
 * Indentation Commands::
+* Movement Commands::
 * Other Commands::
 
 Customizing Indentation
@@ -2483,7 +2484,8 @@ list.
 @findex semi&comma-inside-parenlist (c-)
 @findex semi&comma-no-newlines-for-oneline-inliners (c-)
 The function @code{c-semi&comma-inside-parenlist} is what prevents
-newlines from being inserted inside @code{for}-loops.  In addition to
+newlines from being inserted inside the parenthesis list of @code{for}
+statements.  In addition to
 @code{c-semi&comma-no-newlines-before-nonblanks} described above,
 @ccmode{} also comes with the criteria function
 @code{c-semi&comma-no-newlines-for-oneline-inliners}, which suppresses
