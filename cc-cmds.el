@@ -132,8 +132,10 @@ consumed.  If however an ARG is supplied, or `c-hungry-delete-key' is
 nil, or point is inside a literal then the function in the variable
 `c-delete-function' is called."
   (interactive "*P")
-  (if (and (boundp 'delete-key-deletes-forward)
-	   delete-key-deletes-forward)
+  (if (or (and (fboundp 'delete-forward-p) ;XEmacs 21
+	       (delete-forward-p))
+	  (and (boundp 'delete-key-deletes-forward) ;XEmacs 20
+	       delete-key-deletes-forward))
       (if (or (not c-hungry-delete-key)
 	      arg
 	      (c-in-literal))
