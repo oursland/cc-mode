@@ -1,6 +1,6 @@
 README for cc-mode.el 4.85
 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-$Date: 1994-09-10 17:18:01 $
+$Date: 1994-09-12 17:08:13 $
 
 Note, you can browse this file either as a flat, multiple page file,
 or as an Emacs outline.  As a flat file, just use "C-x ]" to move
@@ -466,7 +466,7 @@ in your Emacs documentation.
 				      empty-defun-braces
 				      defun-close-semi))
     (c-offsets-alist               . ((arglist-close     . c-lineup-arglist)
-				      (substatement-open . 0
+				      (substatement-open . 0)
 				      (case-label        . 4)
 				      (block-open        . 0)
 				      (knr-argdecl-intro . -)))
