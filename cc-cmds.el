@@ -285,9 +285,12 @@ This function does various newline cleanups based on the value of
 	(if (memq 'before newlines)
 	    ;; we leave the newline we've put in there before,
 	    ;; but we need to re-indent the line above
-	    (let ((pos (- (point-max) (point)))
+	    (let (old-ind
+		  (old-point-max (point-max))
+		  (pos (- (point-max) (point)))
 		  (here (point)))
 	      (forward-line -1)
+	      (setq old-ind (c-point 'boi))
 	      (let ((c-state-cache (c-whack-state (point) c-state-cache)))
 		;; we may need to update the cache. this should
 		;; still be faster than recalculating the state
@@ -304,8 +307,8 @@ This function does various newline cleanups based on the value of
 			      (c-hack-state (point) 'open c-state-cache)))))
 		(if c-syntactic-indentation
 		    (indent-according-to-mode)))
-	      (setq c-state-cache (c-adjust-state (c-point 'bol) here
-						  (- (point) (c-point 'bol))
+	      (setq c-state-cache (c-adjust-state (c-point 'bol) old-point-max
+						  (- (c-point 'boi) old-ind)
 						  c-state-cache))
 	      (goto-char (- (point-max) pos))
 	      ;; if the buffer has changed due to the indentation, we
