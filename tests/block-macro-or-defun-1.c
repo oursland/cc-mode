@@ -24,12 +24,11 @@ void f() {
     {
 	x;
     }
-    /* The following case is currently not recognized correctly. */
     int *FOO6()
 	/* a */
-	{
-	    x;
-	}
+    {
+	x;
+    }
     if (foo)
 	{
 	    x;
