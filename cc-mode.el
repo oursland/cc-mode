@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.243 $
-;; Last Modified:   $Date: 1992-12-17 23:29:18 $
+;; Version:         $Revision: 2.244 $
+;; Last Modified:   $Date: 1992-12-18 16:15:12 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-17 23:29:18 $|$Revision: 2.243 $|
+;; |$Date: 1992-12-18 16:15:12 $|$Revision: 2.244 $|
 
 ;;; Code:
 
@@ -408,7 +408,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.243 $
+  "Major mode for editing C++ code.  $Revision: 2.244 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -616,7 +616,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.243 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.244 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1983,21 +1983,22 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
       (skip-chars-backward " \t\n\r\f" lim)
       ;; c++ comment
       (if (eq (setq literal (c++-in-literal lim)) 'c++)
-	  (let ((skip t))
-	    (while skip
+	  (progn
+	    (skip-chars-backward "^/" lim)
+	    (skip-chars-backward "/" lim)
+	    (while (not (and (= (following-char) ?/)
+			     (= (char-after (1+ (point))) ?/)))
 	      (skip-chars-backward "^/" lim)
-	      (skip-chars-backward "/" lim)
-	      (setq skip (not (and (= (following-char) ?/)
-				   (= (char-after (1+ (point))) ?/))))
-	      ))
+	      (skip-chars-backward "/" lim)))
 	;; c comment
 	(if (eq literal 'c)
-	    (let ((skip t))
-	      (while skip
+	    (progn
+	      (skip-chars-backward "^*" lim)
+	      (skip-chars-backward "*" lim)
+	      (while (not (and (= (following-char) ?*)
+			       (= (preceding-char) ?/)))
 		(skip-chars-backward "^*" lim)
-		(skip-chars-backward "*" lim)
-		(setq skip (not (and (= (following-char) ?*)
-				     (= (preceding-char) ?/)))))
+		(skip-chars-backward "*" lim))
 	      (forward-char -1))
 	  ;; preprocessor directive
 	  (if (eq literal 'pound)
@@ -2007,13 +2008,13 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 	    ;; just outside of c block
 	    (if (and (= (preceding-char) ?/)
 		     (= (char-after (- (point) 2)) ?*))
-		(let ((skip t))
-		  (forward-char -2)
-		  (while skip
+		(progn
+		  (skip-chars-backward "^*" lim)
+		  (skip-chars-backward "*" lim)
+		  (while (not (and (= (following-char) ?*)
+				   (= (preceding-char) ?/)))
 		    (skip-chars-backward "^*" lim)
-		    (skip-chars-backward "*" lim)
-		    (setq skip (not (and (= (following-char) ?*)
-					 (= (preceding-char) ?/)))))
+		    (skip-chars-backward "*" lim))
 		  (forward-char -1))
 	      ;; none of the above
 	      (setq stop t))))))))
@@ -2305,7 +2306,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.243 $"
+(defconst c++-version "$Revision: 2.244 $"
   "c++-mode version number.")
 
 (defun c++-version ()
