@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.287 $
-;; Last Modified:   $Date: 1993-02-16 20:30:37 $
+;; Version:         $Revision: 2.288 $
+;; Last Modified:   $Date: 1993-03-01 14:49:02 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-16 20:30:37 $|$Revision: 2.287 $|
+;; |$Date: 1993-03-01 14:49:02 $|$Revision: 2.288 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.287 $
+  "Major mode for editing C++ code.  $Revision: 2.288 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.287 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.288 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2270,10 +2270,10 @@ This function does not modify point or mark."
 ;; defuns for "macroizations" -- making C++ parameterized types via macros
 ;; ======================================================================
 (defun c++-macroize-region (from to arg)
-  "Insert backslashes at end of every line in region.  Useful for defining cpp
-macros.  If called with negative argument, will remove trailing backslashes,
-so that indentation will work right."
-  (interactive "r\np")
+  "Insert backslashes at end of every line in region.
+Useful for defining cpp macros.  If called with a prefix argument,
+it will remove trailing backslashes."
+  (interactive "r\nP")
   (save-excursion
     (goto-char from)
     (beginning-of-line 1)
@@ -2281,7 +2281,7 @@ so that indentation will work right."
 	  (to-line (save-excursion (goto-char to)
 				   (count-lines (point-min) (point)))))
       (while (< line to-line)
-	(c++-backslashify-current-line (> arg 0))
+	(c++-backslashify-current-line (null arg))
 	(forward-line 1) (setq line (1+ line))))))
 
 (defun c++-backslashify-current-line (doit)
@@ -2504,7 +2504,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.287 $"
+(defconst c++-version "$Revision: 2.288 $"
   "c++-mode version number.")
 
 (defun c++-version ()
