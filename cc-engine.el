@@ -903,17 +903,18 @@
   ;; speed.
   (or
    ;; this will pick up enum lists
-   (condition-case ()
-       (save-excursion
-	 (goto-char containing-sexp)
-	 (forward-sexp -1)
-	 (if (and (or (looking-at "enum[\t\n ]+")
-		      (progn (forward-sexp -1)
-			     (looking-at "enum[\t\n ]+")))
-		  (progn (c-end-of-statement-1)
-			 (> (point) containing-sexp)))
-	     (point)))
-     (error nil))
+   (c-safe
+    (save-excursion
+      (goto-char containing-sexp)
+      (forward-sexp -1)
+      (let (bracepos)
+	(if (and (or (looking-at "enum[\t\n ]+")
+		     (progn (forward-sexp -1)
+			    (looking-at "enum[\t\n ]+")))
+		 (setq bracepos (c-safe (scan-lists (point) 1 -1)))
+		 (not (c-crosses-statement-barrier-p (point)
+						     (- bracepos 2))))
+	    (point)))))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
      (let (bufpos okp)
