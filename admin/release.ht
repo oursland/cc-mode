@@ -11,7 +11,7 @@ Other-links:
 
 The current release is available in several forms.  You can download
 the entire source distribution, including the manual in texinfo format 
-as an approximately <a href="cc-mode.tar.gz">106KB gzip'd
+as an approximately <a href="cc-mode.tar.gz">116KB gzip'd
 tarball</a>.  You can also download the <a href="cc-mode/">individual
 files</a> of the current release, or <code>patch(1)</code> style
 <a href="patches/">context diffs</a> if you are upgrading from a
