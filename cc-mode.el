@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-14 21:37:53 $
-;; Version:         $Revision: 2.53 $
+;; Last Modified:   $Date: 1992-05-18 15:27:46 $
+;; Version:         $Revision: 2.54 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-14 21:37:53 $|$Revision: 2.53 $|
+;; |$Date: 1992-05-18 15:27:46 $|$Revision: 2.54 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -187,7 +187,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.53 $
+  "Major mode for editing C++ code.  $Revision: 2.54 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1050,7 +1050,7 @@ Returns nil if line starts inside a string, t if in a comment."
 				    (looking-at
 				     (concat
 				      "#\\|/\\*\\|//"
-				      "\\|case[ \t]"
+				      "\\|\\(case\\|default\\)[ \t]"
 				      "\\|[a-zA-Z0-9_$]*:[^:]"
 				      "\\|friend[ \t]class[ \t]")))
 			;; Skip over comments and labels following openbrace.
@@ -1060,7 +1060,7 @@ Returns nil if line starts inside a string, t if in a comment."
 			       (search-forward "*/" nil 'move))
 			      ((looking-at "//\\|friend[ \t]class[ \t]")
 			       (forward-line 1))
-			      ((looking-at "case\\b")
+			      ((looking-at "\\(case\\|default\\)\\b")
 			       (forward-line 1))
 			      (t
 			       (re-search-forward ":[^:]" nil 'move))))
@@ -1563,7 +1563,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.53 $"
+(defconst c++-version "$Revision: 2.54 $"
   "c++-mode version number.")
 
 (defun c++-version ()
