@@ -179,7 +179,7 @@
 		     ;; `case' or `default' is first thing on line
 		     (let ((here (point)))
 		       (beginning-of-line)
-		       (c-forward-syntactic-ws)
+		       (c-forward-syntactic-ws here)
 		       (if (looking-at c-switch-label-key)
 			   t
 			 (goto-char here)
