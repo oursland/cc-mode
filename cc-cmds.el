@@ -1107,6 +1107,16 @@ defun."
 	      nil
 	    (goto-char pos))
 
+	  (setq pos (point))
+	  ;; Try to be line oriented; position point at the closest
+	  ;; preceding boi that isn't inside a comment, but if we hit
+	  ;; the previous declaration then we use the current point
+	  ;; instead.
+	  (while (and (/= (point) (c-point 'boi))
+		      (c-forward-comment -1)))
+	  (if (/= (point) (c-point 'boi))
+	      (goto-char pos))
+
 	  (setq arg (1- arg)))))
     (c-keep-region-active)
     (= arg 0)))
@@ -1181,9 +1191,9 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 		       (not (c-syntactic-re-search-forward "{" pos t 1 t))))))
 
 	  (setq pos (point))
-	  ;; Try to be line oriented; find the next newline that
-	  ;; isn't inside a comment, but if we hit the next
-	  ;; declaration then we use the current point instead.
+	  ;; Try to be line oriented; position point after the next
+	  ;; newline that isn't inside a comment, but if we hit the
+	  ;; next declaration then we use the current point instead.
 	  (while (and (not (bolp))
 		      (not (looking-at "\\s *$"))
 		      (c-forward-comment 1)))
@@ -1275,15 +1285,24 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 
 	(if (and (not near) (> (point) start))
 	    nil
-	  (cons (point)
-		(save-excursion
+
+	  ;; Try to be line oriented; position the limits at the
+	  ;; closest preceding boi, and after the next newline, that
+	  ;; isn't inside a comment, but if we hit a neighboring
+	  ;; declaration then we instead use the exact declaration
+	  ;; limit in that direction.
+	  (cons (progn
+		  (setq pos (point))
+		  (while (and (/= (point) (c-point 'boi))
+			      (c-forward-comment -1)))
+		  (if (/= (point) (c-point 'boi))
+		      pos
+		    (point)))
+		(progn
 		  (if end-pos
 		      (goto-char end-pos)
 		    (c-end-of-decl-1))
 		  (setq pos (point))
-		  ;; Try to be line oriented; find the next newline that
-		  ;; isn't inside a comment, but if we hit the next
-		  ;; declaration then we use the current point instead.
 		  (while (and (not (bolp))
 			      (not (looking-at "\\s *$"))
 			      (c-forward-comment 1)))
