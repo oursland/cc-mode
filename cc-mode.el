@@ -154,7 +154,8 @@
     ))
 
 
-;; Common routines
+;;; Common routines.
+
 (defvar c-mode-base-map ()
   "Keymap shared by all CC Mode related modes.")
 
@@ -175,14 +176,16 @@
   ;; Compatibility wrapper for `define-abbrev' which passes a non-nil
   ;; sixth argument for SYSTEM-FLAG in emacsen that support it
   ;; (currently only Emacs 21.2).
-  (define-abbrev-table name nil)
-  (let ((table (symbol-value name)))
+  (let ((table (or (symbol-value name)
+		   (progn (define-abbrev-table name nil)
+			  (symbol-value name)))))
     (while defs
       (condition-case nil
 	  (apply 'define-abbrev table (append (car defs) '(t)))
 	(wrong-number-of-arguments
 	 (apply 'define-abbrev table (car defs))))
       (setq defs (cdr defs)))))
+(put 'c-define-abbrev-table 'lisp-indent-function 1)
 
 (if c-mode-base-map
     nil
@@ -247,13 +250,11 @@
     ;; `delete-key-deletes-forward' to decide what [delete] should do.
     (define-key c-mode-base-map [delete]    'c-electric-delete)
     (define-key c-mode-base-map [backspace] 'c-electric-backspace))
-  ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-base-map ","         'c-electric-semi&comma)
   (define-key c-mode-base-map "*"         'c-electric-star)
   (define-key c-mode-base-map "/"         'c-electric-slash)
   (define-key c-mode-base-map "\C-c\C-q"  'c-indent-defun)
   (define-key c-mode-base-map "\C-c\C-\\" 'c-backslash-region)
-  ;; TBD: where if anywhere, to put c-backward|forward-into-nomenclature
   (define-key c-mode-base-map "\C-c\C-a"  'c-toggle-auto-state)
   (define-key c-mode-base-map "\C-c\C-b"  'c-submit-bug-report)
   (define-key c-mode-base-map "\C-c\C-c"  'comment-region)
@@ -700,6 +701,13 @@ Key bindings:
   ;; add bindings which are only useful for Java
   )
 
+;; Regexp trying to describe the beginning of a Java top-level
+;; definition.  This is not used by CC Mode, nor is it maintained
+;; since it's practically impossible to write a regexp that reliably
+;; matches such a construct.  Other tools are necessary.
+(defconst c-Java-defun-prompt-regexp
+  "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f\v]*\\)+\\)?\\s-*")
+
 (easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
 		  (c-mode-menu "Java"))
 
@@ -932,11 +940,13 @@ Key bindings:
 	(mapcar (lambda (var) (unless (boundp var) (delq var vars)))
 		'(signal-error-on-buffer-boundary
 		  filladapt-mode
-		  defun-prompt-regexp))
+		  defun-prompt-regexp
+		  font-lock-mode
+		  font-lock-maximum-decoration))
 	vars)
       (lambda ()
 	(run-hooks 'c-prepare-bug-report-hooks)
-	(insert (format "Buffer Style: %s\n\nc-emacs-features: %s\n"
+	(insert (format "Buffer Style: %s\nc-emacs-features: %s\n"
 			style c-features)))))))
 
 
