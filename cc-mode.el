@@ -388,13 +388,11 @@ same format as `c-default-style'."
   (make-local-variable 'require-final-newline)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
-  (make-local-variable 'comment-column)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
 
   (setq require-final-newline t
 	outline-regexp "[^#\n\^M]"
-	outline-level 'c-outline-level
-	comment-column 32))
+	outline-level 'c-outline-level))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables.
