@@ -792,7 +792,7 @@ can always override the use of `c-default-style' by making calls to
 ;; *) At the start of a statement means in more detail: At the
 ;; closest preceding statement that starts at boi and doesn't have a
 ;; label or comment at that position.  If there's no such statement
-;; within the same block, then back up to surrounding block or
+;; within the same block, then back up to the surrounding block or
 ;; statement, add the appropriate statement-block-intro,
 ;; defun-block-intro or substatement syntax symbol and continue
 ;; searching.
@@ -903,14 +903,14 @@ can always override the use of `c-default-style' by making calls to
        ;; Relpos: At the corresponding if statement(*).
        (catch-clause          . 0)
        ;; Relpos: At the previous try or catch statement clause(*).
-       (comment-intro         . c-lineup-comment)
+       (comment-intro         . (c-lineup-knr-region-comment c-lineup-comment))
        ;; Relpos: None.
        (arglist-intro         . +)
        ;; Relpos: Boi at the open paren, or at the first non-ws after
        ;; the open paren of the surrounding sexp, whichever is later.
-       (arglist-cont          . 0)
+       (arglist-cont          . (c-lineup-gcc-asm-reg 0))
        ;; Relpos: At the first token after the open paren.
-       (arglist-cont-nonempty . c-lineup-arglist)
+       (arglist-cont-nonempty . (c-lineup-gcc-asm-reg c-lineup-arglist))
        ;; Relpos: Boi at the open paren, or at the first non-ws after
        ;; the open paren of the surrounding sexp, whichever is later.
        (arglist-close         . +)
