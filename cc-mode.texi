@@ -3,6 +3,7 @@
 @comment FIXME: Document c-indent-comment-alist.
 @comment FIXME: Tune docs for the statement anchor fixes, if necessary.
 @comment FIXME: Document c-report-syntactic-errors.
+@comment FIXME: Document macro indentation and movement.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment %**start of header (This is for running Texinfo on a region)
@@ -102,7 +103,7 @@ font-locking; there are other Emacs packages for that.
 @menu
 * Introduction::
 * Getting Connected::
-* New Indentation Engine::
+* Indentation Engine::
 * Minor Modes::
 * Text Filling and Line Breaking::
 * Commands::
@@ -119,13 +120,13 @@ font-locking; there are other Emacs packages for that.
  --- Indices ---
 
 * Concept Index::
-* Command Index::
+* Command and Function Index::
 * Key Index::
 * Variable Index::
 
  --- The Detailed Node Listing ---
 
-New Indentation Engine
+Indentation Engine
 
 * Syntactic Analysis::
 * Indentation Calculation::
@@ -252,7 +253,7 @@ early beta stages of @ccmode{}'s development.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Getting Connected, New Indentation Engine, Introduction, Top
+@node    Getting Connected, Indentation Engine, Introduction, Top
 @comment node-name, next, previous, up
 @chapter    Getting Connected
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -288,18 +289,18 @@ where @samp{XX} is the minor release number.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    New Indentation Engine, Minor Modes, Getting Connected, Top
+@node    Indentation Engine, Minor Modes, Getting Connected, Top
 @comment node-name, next, previous, up
 @chapter    New Indentation Engine
 @cindex indentation engine
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@ccmode{} has a new indentation engine, providing a simplified, yet
-flexible and general mechanism for customizing indentation. It separates
-indentation calculation into two steps: first, @ccmode{} analyzes the
-line of code being indented to determine the kind of language construct
-it's looking at, then it applies user defined offsets to the current
-line based on this analysis.
+@ccmode{} has an indentation engine that provides a flexible and general
+mechanism for customizing indentation. It separates indentation
+calculation into two steps: first, @ccmode{} analyzes the line of code
+being indented to determine the kind of language construct it's looking
+at, then it applies user defined offsets to the current line based on
+this analysis.
 
 This section will briefly cover how indentation is calculated in
 @ccmode{}. It is important to understand the indentation model
@@ -313,7 +314,7 @@ your personal coding style.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Syntactic Analysis, Indentation Calculation, , New Indentation Engine
+@node    Syntactic Analysis, Indentation Calculation, , Indentation Engine
 @comment node-name, next, previous, up
 @section    Syntactic Analysis
 @cindex syntactic analysis
@@ -454,7 +455,7 @@ components.  Also notice that the first component,
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Calculation, , Syntactic Analysis, New Indentation Engine
+@node    Indentation Calculation, , Syntactic Analysis, Indentation Engine
 @comment node-name, next, previous, up
 @section    Indentation Calculation
 @cindex indentation calculation
@@ -560,7 +561,7 @@ the minibuffer when you hit @kbd{TAB}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Minor Modes, Text Filling and Line Breaking, New Indentation Engine, Top
+@node    Minor Modes, Text Filling and Line Breaking, Indentation Engine, Top
 @comment node-name, next, previous, up
 @chapter    Minor Modes
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -888,8 +889,8 @@ in:
 
 void spam( int i ) 
 @{
-        // this is a comment-only line...
-    if( i == 7 )                             // but this is not
+    // this is a comment-only line...
+    if( i == 7 )                // but this is not
     @{
         dosomething(i);
     @}
@@ -1111,7 +1112,6 @@ class Spam
 @end example
 @noindent
 is transformed into this when the semi-colon is typed:
-
 @example
 @group
 
@@ -2771,9 +2771,8 @@ that separate @code{for}-clause statements).
 Here's an example of a criteria function, provided by @ccmode{}, that
 will prevent newlines from being inserted after semicolons when there is
 a non-blank following line.  Otherwise, it makes no determination.  To
-use, add this to the front of the @code{c-hanging-semi&comma-criteria}
-list.
-
+use, add this function to the front of the
+@code{c-hanging-semi&comma-criteria} list.
 @example
 @group
 
@@ -3126,7 +3125,6 @@ inheritance list is given @code{inher-cont} syntax.
 @cindex access-label syntactic symbol
 @cindex inclass syntactic symbol
 Hitting @kbd{C-c C-s} on line 5 shows the following analysis:
-
 @example
 @group
 
@@ -3143,7 +3141,6 @@ definition, the analysis actually shows two syntactic symbols.  The
 other syntactic symbol assigned to this line is @code{inclass}.
 Similarly, line 6 is given both @code{inclass} and @code{topmost-intro}
 syntax:
-
 @example
 @group
 
@@ -3165,7 +3162,6 @@ list started on line 7.
 @cindex inline-open syntactic symbol
 @cindex inline-close syntactic symbol
 Line 11's analysis is a bit more complicated:
-
 @example
 @group
 
@@ -3216,7 +3212,6 @@ syntax, while line 12 is given @code{defun-block-open} syntax, and lines
 13 through 15 are all given @code{statement} syntax.  Line 17 is
 interesting in that its syntactic analysis list contains three
 elements:
-
 @example
 
 @code{((friend) (inclass . 58) (topmost-intro . 380))}
@@ -3227,7 +3222,6 @@ The @code{friend} syntactic symbol is a modifier that typically does not
 have a relative buffer position.
 
 Template definitions introduce yet another syntactic symbol:
-
 @example
 @group
 
@@ -3355,7 +3349,7 @@ brace lists too.  An example:
   3:     "Ham",
   4:     "Salt",
   5:     NULL
-  6: @}
+  6: @};
 
 @end group
 @end example
@@ -3387,7 +3381,7 @@ example:
   8:     @{ 1,
   9:       2 @},
  10:     @{ 3, 4 @}
- 11: @}
+ 11: @};
 
 @end group
 @end example
@@ -4316,6 +4310,61 @@ returned if there's no template argument on the first line.
 
 @comment ------------------------------------------------------------
 
+@findex c-lineup-topmost-intro-cont
+@findex lineup-topmost-intro-cont (c-)
+@item c-lineup-topmost-intro-cont
+Line up declaration continuation lines zero or one indentation
+step@footnote{This function is mainly provided to mimic the behavior of
+CC Mode 5.28 and earlier where this case wasn't handled consistently so
+that those lines could be analyzed as either topmost-intro-cont or
+statement-cont.  It's used for @code{topmost-intro-cont} by default, but
+you might consider using @code{+} instead.}.  For lines preceding a
+definition, zero is used.  For other lines, @code{c-basic-offset} is
+added to the indentation.  E.g:
+@example
+@group
+
+int
+neg (int i)           <- c-lineup-topmost-intro-cont
+@{
+    return -i;
+@}
+
+@end group
+@end example
+@noindent
+and
+@example
+@group
+
+struct
+larch                 <- c-lineup-topmost-intro-cont
+@{
+    double height;
+@}
+    the_larch,        <- c-lineup-topmost-intro-cont
+    another_larch;    <- c-lineup-topmost-intro-cont
+
+<--> c-basic-offset
+
+@end group
+@end example
+@noindent
+and
+@example
+@group
+
+struct larch
+the_larch,            <- c-lineup-topmost-intro-cont
+    another_larch;    <- c-lineup-topmost-intro-cont
+
+@end group
+@end example
+
+@workswith @code{topmost-intro-cont}.
+
+@comment ------------------------------------------------------------
+
 @findex c-lineup-whitesmith-in-block
 @findex lineup-whitesmith-in-block (c-)
 @item c-lineup-whitesmith-in-block
@@ -4376,8 +4425,7 @@ insertion point, and because C's syntax is fairly difficult to parse in
 the backwards direction, @ccmode{} often tries to find the nearest
 position higher up in the buffer from which to begin a forward scan.
 The farther this position is from the current insertion point, the
-slower the mode gets.  Some coding styles can even force @ccmode{}
-to scan from the beginning of the buffer for every line of code!
+slower the mode gets.
 
 @findex beginning-of-defun
 @findex defun-prompt-regexp
@@ -4617,7 +4665,6 @@ Due to release schedule skew, it is likely that all of these Emacsen
 have old versions of @ccmode{} and so should be upgraded.  Access to the 
 @ccmode{} source code, as well as more detailed information on Emacsen
 compatibility, etc. are all available via the Web at:
-
 @example
 @group
 
@@ -4732,7 +4779,7 @@ will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Concept Index, Command Index, Sample .emacs File, Top
+@node    Concept Index, Command and Function Index, Sample .emacs File, Top
 @comment node-name, next, previous, up
 @unnumbered Concept Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4741,9 +4788,9 @@ will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Command Index, Key Index, Concept Index, Top
+@node    Command and Function Index, Key Index, Concept Index, Top
 @comment node-name, next, previous, up
-@unnumbered Command Index
+@unnumbered Command and Function Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Since most @ccmode{} commands are prepended with the string
@@ -4756,7 +4803,7 @@ Since most @ccmode{} commands are prepended with the string
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Key Index, Variable Index, Command Index, Top
+@node    Key Index, Variable Index, Command and Function Index, Top
 @comment node-name, next, previous, up
 @unnumbered Key Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
