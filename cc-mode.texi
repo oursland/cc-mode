@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.40 $
+@comment manual version: $Revision: 2.41 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-30 19:50:13 $
+@comment Last modification: $Date: 1996-05-30 22:12:41 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.40 $)
+@center (manual revision: $Revision: 2.41 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1444,7 +1444,7 @@ are provided, according to Emacs major mode conventions:
 @code{java-mode-hook}.  These get run as the last thing when you enter
 @code{c-mode}, @code{c++-mode}, @code{objc-mode}, or
 @code{java-mode-hook} respectively.  @code{cc-mode} also provides a hook
-called @code{c-mode-common-hook} which is run by all three modes
+called @code{c-mode-common-hook} which is run by all four modes
 @emph{before} the language specific hook.  Thus, to make changes
 consistently across all supported @code{cc-mode} modes, use
 @code{c-mode-common-hook}.  Most of the examples in this section will
