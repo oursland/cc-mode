@@ -69,9 +69,10 @@
 (defmacro c-identifier-re (re)
   `(concat "\\<\\(" ,re "\\)\\>[^_]"))
 
-(defmacro c-point (position)
-  ;; Returns the value of point at certain commonly referenced POSITIONs.
-  ;; POSITION can be one of the following symbols:
+(defmacro c-point (position &optional point)
+  ;; Returns the value of certain commonly referenced POSITIONs
+  ;; relative to POINT.  The current point is used if POINT isn't
+  ;; specified.  POSITION can be one of the following symbols:
   ;; 
   ;; bol  -- beginning of line
   ;; eol  -- end of line
@@ -85,6 +86,7 @@
   ;; 
   ;; This function does not modify point or mark.
   `(save-excursion
+     ,(if point `(goto-char ,point))
      ,(if (and (eq (car-safe position) 'quote)
 	       (symbolp (eval position)))
 	  (let ((position (eval position)))
@@ -154,16 +156,20 @@
 (defmacro c-add-class-syntax (symbol classkey)
   ;; The inclass and class-close syntactic symbols are added in
   ;; several places and some work is needed to fix everything.
-  ;; Therefore it's collected here.
+  ;; Therefore it's collected here.  This is a macro mostly because
+  ;; c-add-syntax doesn't work otherwise.
   `(save-restriction
      (widen)
      (let ((symbol ,symbol)
-	   (classkey ,classkey))
+	   (classkey ,classkey)
+	   inexpr)
        (goto-char (aref classkey 1))
        (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
 	   (c-add-syntax symbol (point))
 	 (c-add-syntax symbol (aref classkey 0))
-	 (if (and c-inexpr-class-key (c-looking-at-inexpr-block))
+	 (if (and c-inexpr-class-key
+		  (setq inexpr (c-looking-at-inexpr-block))
+		  (/= (cdr inexpr) (c-point 'boi (cdr inexpr))))
 	     (c-add-syntax 'inexpr-class))))))
 
 (defmacro c-update-modeline ()
