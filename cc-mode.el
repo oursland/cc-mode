@@ -6,8 +6,13 @@
 ;;
 ;; Mar, 1992 (Barry Warsaw, bwarsaw@cen.com)
 ;;   added feature to indent comment lines different from code lines
-;;   changed c-auto-newline to c++-auto-newline for col0 only autonewline brace option
-;;   also fixed c++-auto-newline for double colons and }; syntax
+;;   column zero comments don't indent however
+;;   fixed c++-auto-newline for double colons and }; syntax
+;;   made electric chars comment & open-string safe
+;;   made electric brace w/auto-fill work
+;;   made calculate-c++-indent work for while( foo ) style
+;;   added c++-hanging-braces-p for no auto-newline on left braces
+;;   changed c-auto-newline to c++-auto-newline
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -131,6 +136,8 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 4
   "*Indentation offset for line which contains only comments.")
+(defvar c++-hanging-braces-p t
+  "*If t, override c++-auto-newline for left braces.")
 
 
 (defun c++-mode ()
@@ -247,21 +254,29 @@ no args,if that value is non-nil."
 (defun electric-c++-brace (arg)
   "Insert character and correct line's indentation."
   (interactive "P")
-  (debug)
   (let (insertpos)
     (if (and (not arg)
 	     (eolp)
 	     (or (save-excursion
 		   (skip-chars-backward " \t")
 		   (bolp))
-		 (if c++-auto-newline (progn (c++-indent-line) (newline) t))))
+		 (let ((c++-auto-newline c++-auto-newline))
+		   (if (and c++-hanging-braces-p
+			    (= last-command-char ?{))
+		       (setq c++-auto-newline nil))
+		   (c++-auto-newline)
+		   ;; this may have auto-filled so we need to indent
+		   ;; the previous line
+		   (save-excursion
+		     (forward-line -1)
+		     (c++-indent-line))
+		   t)))
 	(progn
 	  (insert last-command-char)
 	  (c++-indent-line)
-	  (if c++-auto-newline
+	  (if (c++-auto-newline)
 	      (progn
-		(newline)
-		;; (newline) may have done auto-fill
+		;; (c++-auto-newline) may have done an auto-fill
 		(setq insertpos (- (point) 2))
 		(c++-indent-line)))
 	  (save-excursion
@@ -417,8 +432,9 @@ Return the amount the indentation changed by."
 	  ((looking-at "[ \t]*#")
 	   (setq indent 0))
 	  ((save-excursion
-	     (progn (back-to-indentation)
-		    (looking-at "//\\|/\\*")))
+	     (and (not (back-to-indentation))
+		  (looking-at "//\\|/\\*")
+		  (/= (current-column) 0)))
 	   (setq indent (+ indent c++-comment-only-line-offset)))
 	  (t
 	   (skip-chars-forward " \t")
@@ -456,11 +472,32 @@ Return the amount the indentation changed by."
     shift-amt))
 
 
-(defun c++-in-c-comment-p ()
+(defun c++-in-comment-p ()
+  "Return t if in a C-style comment."
   (save-excursion
-    (and (re-search-backward "\\(/\\*\\|\\*/\\)" (point-min) t)
-	 (looking-at "/\\*"))))
+    (let ((here (point))
+	  (bod (progn (beginning-of-defun) (point)))
+	  state)
+      (setq state (parse-partial-sexp bod here 0))
+      (nth 4 state))))
 
+(defun c++-in-open-string-p ()
+  "Return non-nil if in an open string."
+  (save-excursion
+    (let ((here (point))
+	  (bod (progn (beginning-of-defun) (point)))
+	  state)
+      (setq state (parse-partial-sexp bod here 0))
+      (nth 3 state))))
+
+(defun c++-auto-newline ()
+  "Insert a newline iff we're not in a literal.
+Literals are defined as being inside a C or C++ style comment or open
+string."
+  (and c++-auto-newline
+       (not (c++-in-comment-p))
+       (not (c++-in-open-string-p))
+       (not (newline))))
 
 (defun calculate-c++-indent (&optional parse-start)
   "Return appropriate indentation for current line as C++ code.
@@ -482,7 +519,7 @@ Returns nil if line starts inside a string, t if in a comment."
       (cond ((nth 3 state)
 	     ;; in a string.
 	     nil)
-	    ((c++-in-c-comment-p)
+	    ((c++-in-comment-p)
 	     ;; in a C comment.
 	     t)
 	    ((null containing-sexp)
@@ -551,6 +588,10 @@ Returns nil if line starts inside a string, t if in a comment."
 	       ;; empty-arglist, so we'll indent to the min of that
 	       ;; and the beginning of the first argument.
 	       (goto-char (1+ containing-sexp))
+	       ;; we want to skip any whitespace b/w open paren and
+	       ;; first argurment. this handles while (thing) style
+	       ;; and while( thing ) style
+	       (skip-chars-forward " \t")
 	       (current-column)))
 	    (t
 	     ;; Statement.  Find previous non-comment character.
