@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.359 $
-;; Last Modified:   $Date: 1997-02-06 01:15:28 $
+;; Version:         $Revision: 4.360 $
+;; Last Modified:   $Date: 1997-02-06 18:25:37 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4591,7 +4591,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ;; CASE 15D: any old statement
 	   ((< (point) indent-point)
 	    (let ((safepos (c-most-enclosing-brace fullstate))
-		  relpos)
+		  relpos done)
 	      (goto-char indent-point)
 	      (c-beginning-of-statement-1 safepos)
 	      ;; It is possible we're on the brace that opens a nested
@@ -4608,9 +4608,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		    (end-of-line)
 		    (forward-sexp -1)))
 	      (setq relpos (c-point 'boi))
-	      (while (and (<= safepos (point))
+	      (while (and (not done)
+			  (<= safepos (point))
 			  (/= relpos (point)))
 		(c-beginning-of-statement-1 safepos)
+		(if (= relpos (c-point 'boi))
+		    (setq done t))
 		(setq relpos (c-point 'boi)))
 	      (c-add-syntax 'statement relpos)
 	      (if (= char-after-ip ?{)
@@ -5101,7 +5104,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.359 $"
+(defconst c-version "$Revision: 4.360 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
