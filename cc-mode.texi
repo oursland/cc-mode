@@ -194,15 +194,15 @@ release.
 The first thing you will want to do is put the @ccmode{} source files in
 a subdirectory somewhere on your @code{load-path} so Emacs can find it.
 The distribution tarball unpacks into its own subdirectory tagged with
-the version number of the release.  E.g. @ccmode{} release 5.02 will
-unpack into the @file{cc-mode-5.02} directory.  Assuming you unpacked
+the version number of the release.  E.g. @ccmode{} release 5.00 will
+unpack into the @file{cc-mode-5.00} directory.  Assuming you unpacked
 the distribution in your home directory, you should add the following to
 your @file{.emacs} file in order to pick up the latest version of
 @ccmode{} over the one distributed with your Emacs:
 
 @example
 
-(setq load-path (cons "~/cc-mode-5.02" load-path))
+(setq load-path (cons "~/cc-mode-5.00" load-path))
 
 @end example
 
@@ -217,13 +217,13 @@ this again: @strong{You really can ignore all byte-compiler warnings!}
 
 To byte-compile the source files, be sure you have access to the
 @code{make(1)} program.  In a shell, execute the following commands
-(again, assuming you unpacked @ccmode{} version 5.02 in your home
+(again, assuming you unpacked @ccmode{} version 5.00 in your home
 directory@footnote{Of course, the version numbers will probably be
 different.}):
 
 @example
 
-% cd ~/cc-mode-5.02
+% cd ~/cc-mode-5.00
 % make
 
 @end example
@@ -242,7 +242,7 @@ You can test this by visiting a C file and hitting @kbd{M-x c-version
 RET}; you should see this message in the echo area:
 @example
 
-Using CC Mode version 5.02
+Using CC Mode version 5.00
 
 @end example
 
@@ -1375,17 +1375,10 @@ So, for example, because most of the default offsets are defined in
 terms of @code{+}, @code{-}, and @code{0}, if you like the general
 indentation style, but you use 4 spaces instead of 2 spaces per level,
 you can probably achieve your style just by changing
-@code{c-basic-offset} like so (in your @file{.emacs} file)@footnote{The
-reason you need to use @code{setq-default} instead of @code{setq} is
-that @code{c-basic-offset} is a buffer local variable, as are most
-configuration variables.  If you were to put this code in, e.g. your
-@code{c-mode-common-hook} function, you could use @code{setq}.
-Alternatively, you can keep these variables global by setting
-@code{c-style-variables-are-local-p} to @code{nil}, but you must do this
-before @code{cc-mode.el} is loaded into your Emacs session.}:
+@code{c-basic-offset} like so (in your @file{.emacs} file):
 @example
 
-(setq-default c-basic-offset 4)
+(setq c-basic-offset 4)
 
 @end example
 
@@ -1553,8 +1546,30 @@ adjustments.
 @vindex objc-mode-hook
 @vindex java-mode-hook
 @cindex hooks
-To make this change permanent, you need to add some lisp code to your
-@file{.emacs} file.  @ccmode{} provides several hooks that you can
+To make your changes permanent, you need to add some lisp code to your
+@file{.emacs} file, but first you need to decide whether your styles
+should be global in every buffer, or local to each specific buffer.
+
+If you edit primarily one style of C (or C++, Objective-C, Java) code,
+you may want to make the @ccmode{} style variables have global values so
+that every buffer will share the style settings.  This will allow you to
+set the @ccmode{} variables at the top level of your @file{.emacs}
+file.  This is the default way @ccmode{} works.
+
+@vindex c-mode-common-hook
+@vindex mode-common-hook (c-)
+@vindex c-style-variables-are-local-p
+@vindex style-variables-are-local-p (c-)
+If you edit many different styles of C (or C++, Objective-C, Java) at
+the same time, you probably want to make the @ccmode{} style variables
+have buffer local values.  If you do this, then you will need to set any
+@ccmode{} style variables in a hook function (e.g. off of
+@code{c-mode-common-hook} instead of at the top level of your
+@file{.emacs} file.  The recommended way to do this is to set the
+variable @code{c-style-variables-are-local-p} to @code{t}
+@strong{before} @ccmode{} is loaded into your Emacs session.
+
+@ccmode{} provides several hooks that you can
 use to customize the mode according to your coding style.  Each language
 mode has its own hook, adhering to standard Emacs major mode
 conventions.  There is also one general hook:
@@ -1861,13 +1876,11 @@ you will have to make the variables buffer local.  The variable
 
 When @code{c-style-variables-are-local-p} is non-nil, then the style
 variables will have a different settable value for each buffer,
-otherwise all buffers will share the same values.  This variable only
-takes effect when @ccmode{} is loaded into your Emacs session.  By
-default (for backwards compatibility reasons), its value is @code{t}.
-Note that once the variables are made buffer local, they will retain
-this property for the remainder of the current Emacs session.  To change
-this behavior, set @code{c-style-variables-are-local-p} to @code{nil}
-@emph{before} you load @file{cc-mode.el}.
+otherwise all buffers will share the same values.  By default, its value
+is @code{nil} (i.e. global values).  You @strong{must} set this variable
+before @ccmode{} is loaded into your Emacs session, and once the
+variables are made buffer local, they cannot be made global again
+(unless you restart Emacs of course!)
 
 @menu
 * Custom Indentation Functions::
@@ -3074,22 +3087,6 @@ constructs appear in different colors, or in bold face, etc.?}
 
 @strong{A.} ``Syntax Colorization'' is an Emacs 19 feature, controlled
 by @code{font-lock-mode}.  It is not part of @ccmode{}.
-
-@sp 1
-@strong{Q.} @emph{I @code{setq} @code{c-basic-offset} to 4 in my
-@file{.emacs} file, but why does everything still get indented with only
-2 spaces?}
-
-@vindex c-style-variables-are-local-p
-@vindex style-variables-are-local-p
-@strong{A.} It's because @code{c-basic-offset} is, by default, a
-``buffer local variable'', meaning its value is unique to each buffer.
-The prefered way to customize this is to change its value in a ``mode
-hook'' (most likely @code{c-mode-common-hook}).  Alternatively you can
-use @code{setq-default} to change its value globally.  Better yet,
-before you load @file{cc-mode.el}, set the variable
-@code{c-style-variables-are-local-p} to @code{nil}.  @xref{Advanced
-Customizations}.
 
 @end quotation
 
