@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.15 $
-;; Last Modified:   $Date: 1993-09-27 19:15:51 $
+;; Version:         $Revision: 3.16 $
+;; Last Modified:   $Date: 1993-09-28 00:49:03 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-27 19:15:51 $|$Revision: 3.15 $|
+;; |$Date: 1993-09-28 00:49:03 $|$Revision: 3.16 $|
 
 ;;; Code:
 
@@ -479,7 +479,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.15 $
+  "Major mode for editing C++ code.  $Revision: 3.16 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -718,7 +718,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.15 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.16 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -2072,19 +2072,19 @@ BOD is the beginning of the C++ definition."
 	   (goto-char indent-point)
 	   (skip-chars-forward " \t")
 	   (cond
-	    ;; CASE 1: are we at the top-level wrt enclosing class defn?
+	    ;; CASE 3A: are we at the top-level wrt enclosing class defn?
 	    ((or (= (following-char) ?{)
 		 (progn (c++-backward-syntactic-ws parse-start)
 			(bobp)))
 	     top-open-paren)
-	    ;; CASE 2: first arg decl or member init
+	    ;; CASE 3B: first arg decl or member init
 	    ((c++-in-function-p)
 	     (goto-char indent-point)
 	     (skip-chars-forward " \t")
 	     (if (= (following-char) ?:)
 		 c++-member-init-indent
 	       c-argdecl-indent))
-	    ;; CASE 3: 1st line after hanging mem init colon or access
+	    ;; CASE 3C: 1st line after hanging mem init colon or access
 	    ;; specifier
 	    ((progn
 	       ;; skip past optional semicolons
@@ -2142,7 +2142,7 @@ BOD is the beginning of the C++ definition."
 	       (+ c++-member-init-indent
 		  (if (looking-at ":[ \t]*$")
 		      (or c++-continued-member-init-offset 0) 0))))
-	    ;; CASE 4: friend declaration?
+	    ;; CASE 3D: friend declaration?
 	    ((or (= (preceding-char) ?})
 		 (= (preceding-char) ?\))
 		 (save-excursion
@@ -2154,7 +2154,7 @@ BOD is the beginning of the C++ definition."
 	     (- (current-indentation)
 		;; remove some nested inclass indentation
 		inclass-unshift))
-	    ;; CASE 5: cont arg decls or member inits, or we might be
+	    ;; CASE 3E: cont arg decls or member inits, or we might be
 	    ;; inside a K&R C arg decl
 	    ((save-excursion
 	       (while (and (< bod (point))
@@ -2170,14 +2170,14 @@ BOD is the beginning of the C++ definition."
 		  (if (= (preceding-char) ?,)
 		      c-continued-statement-offset
 		    0))))
-	    ;; CASE 6: whitespace before comment?
+	    ;; CASE 3F: whitespace before comment?
 	    ((progn
 	       (beginning-of-line)
 	       (skip-chars-forward " \t")
 	       (or (memq (c++-in-literal bod) '(c c++))
 		   (looking-at "/[/*]")))
 	     0)
-	    ;; CASE 7: are we looking at the first member init?
+	    ;; CASE 3G: are we looking at the first member init?
 	    ((and (= (following-char) ?:)
 		  (save-excursion
 		    (c++-backward-syntactic-ws bod)
@@ -2190,33 +2190,47 @@ BOD is the beginning of the C++ definition."
 		 (skip-chars-forward " \t")
 		 (- (current-column)
 		    inclass-shift))))
-	    ;; CASE 8: else first check to see if its a multiple
+	    ;; CASE 3H: else first check to see if its a multiple
 	    ;; inheritance continuation line, but not a K&R C arg decl
 	    ((and (not (eq major-mode 'c++-c-mode))
-		  (looking-at c++-inher-key))
+		  (or (looking-at c++-inher-key)
+		      (looking-at
+		       (concat ":?[ \t]*\\(public\\|private\\|protected\\)?"
+			       "\\(\\w\\|_\\)+"))))
 	     (if (= char-before-ip ?,)
-		 (progn (goto-char (match-end 0))
-			(current-column))
+		 (let ((pnt (match-end 0))
+		       (boi (c++-point 'boi)))
+		   ;; check to see if inheritance is on same line as
+		   ;; class decl, or on next line
+		   ;; TBD: HERE'S A BUG
+		   (if (/= (char-after boi) ?:)
+		       (if (looking-at c++-inher-key)
+			   (goto-char pnt)
+			 (goto-char pnt))
+		     (goto-char boi)
+		     (forward-char 1)
+		     (skip-chars-forward " \t"))
+		   (current-column))
 	       ;; nope, its probably a nested class
 	       0))
-	    ;; CASE 9: we might be looking at the opening brace of a
+	    ;; CASE 3I: we might be looking at the opening brace of a
 	    ;; class defun
 	    ((= (following-char) ?\{)
 	     ;; indentation of opening brace may not be zero
 	     (- (current-indentation)
 		;; remove some nested inclass indentation
 		inclass-unshift))
-	    ;; CASE 10: blank line, indent next line to zero
+	    ;; CASE 3J: blank line, indent next line to zero
 	    ((eolp)
 	     0)
-	    ;; CASE 11: at beginning of buffer, if nothing else,
+	    ;; CASE 3K: at beginning of buffer, if nothing else,
 	    ;; indent to zero
 	    ((save-excursion
 	       (goto-char indent-point)
 	       (beginning-of-line)
 	       (bobp))
 	     0)
-	    ;; CASE 12: this could be a compound statement, but make
+	    ;; CASE 3L: this could be a compound statement, but make
 	    ;; sure its not a member init list
 	    ((save-excursion
 	       (goto-char indent-point)
@@ -2230,7 +2244,7 @@ BOD is the beginning of the C++ definition."
 		      (forward-line 1)
 		      (not (setq in-meminit-p (looking-at "[ \t]*:"))))))
 	     c-continued-statement-offset)
-	    ;; CASE 13: default case, we could be in a member init
+	    ;; CASE 3M: default case, we could be in a member init
 	    ;; call, or the first line of a member init list, or a
 	    ;; compound state.
 	    (t
@@ -2650,7 +2664,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.15 $"
+(defconst c++-version "$Revision: 3.16 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
