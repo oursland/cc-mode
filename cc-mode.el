@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-20 14:08:42 $
-;; Version:         $Revision: 2.162 $
+;; Last Modified:   $Date: 1992-07-20 14:47:01 $
+;; Version:         $Revision: 2.163 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-20 14:08:42 $|$Revision: 2.162 $|
+;; |$Date: 1992-07-20 14:47:01 $|$Revision: 2.163 $|
 
 
 ;; ======================================================================
@@ -135,7 +135,9 @@
   )
 
 (defvar c++-mode-syntax-table nil
-  "Syntax table in use in C++-mode buffers.")
+  "Syntax table used in c++-mode buffers.")
+(defvar c++-c-mode-syntax-table nil
+  "Syntax table used in c++-c-mode buffers.")
 
 (if c++-mode-syntax-table
     ()
@@ -153,6 +155,23 @@
   (modify-syntax-entry ?|  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-mode-syntax-table)
   (modify-syntax-entry ?\n ">"     c++-mode-syntax-table)
+  )
+
+(if c++-c-mode-syntax-table
+    ()
+  (setq c++-c-mode-syntax-table (make-syntax-table))
+  (modify-syntax-entry ?\\ "\\"    c++-c-mode-syntax-table)
+  (modify-syntax-entry ?/  ". 14"  c++-c-mode-syntax-table)
+  (modify-syntax-entry ?*  ". 23"  c++-c-mode-syntax-table)
+  (modify-syntax-entry ?+  "."     c++-c-mode-syntax-table)
+  (modify-syntax-entry ?-  "."     c++-c-mode-syntax-table)
+  (modify-syntax-entry ?=  "."     c++-c-mode-syntax-table)
+  (modify-syntax-entry ?%  "."     c++-c-mode-syntax-table)
+  (modify-syntax-entry ?<  "."     c++-c-mode-syntax-table)
+  (modify-syntax-entry ?>  "."     c++-c-mode-syntax-table)
+  (modify-syntax-entry ?&  "."     c++-c-mode-syntax-table)
+  (modify-syntax-entry ?|  "."     c++-c-mode-syntax-table)
+  (modify-syntax-entry ?\' "\""    c++-c-mode-syntax-table)
   )
 
 (defvar c++-tab-always-indent
@@ -293,7 +312,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.162 $
+  "Major mode for editing C++ code.  $Revision: 2.163 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -494,7 +513,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.162 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.163 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -503,6 +522,8 @@ Documentation for this mode is available by doing a
 	mode-name "C--")
   (setq comment-start "/* "
 	comment-end   " */")
+  ;; some syntax differences are necessary for C vs. C++
+  (set-syntax-table c++-c-mode-syntax-table)
   (run-hooks 'c++-c-mode-hook))
 
 (defun c++-comment-indent ()
@@ -2026,7 +2047,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.162 $"
+(defconst c++-version "$Revision: 2.163 $"
   "c++-mode version number.")
 
 (defun c++-version ()
