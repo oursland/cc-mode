@@ -392,7 +392,6 @@ same format as `c-default-style'."
   (make-local-variable 'require-final-newline)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
-  (make-local-variable 'font-lock-defaults)
 
   (setq require-final-newline t
 	outline-regexp "[^#\n\^M]"
@@ -402,6 +401,7 @@ same format as `c-default-style'."
 			  (match-string 0 (symbol-name mode)))))
     ;; This is not the recommended way to initialize font-lock in
     ;; XEmacs, but it works.
+    (make-local-variable 'font-lock-defaults)
     (setq font-lock-defaults
 	  `(,(mapcan
 	      (lambda (keywords-name)
