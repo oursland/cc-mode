@@ -135,6 +135,7 @@
 ;; definitions, though, since the generated functions aren't called
 ;; during compilation.
 (cc-bytecomp-defvar c-preprocessor-face-name)
+(cc-bytecomp-defvar c-reference-face-name)
 (cc-bytecomp-defun c-fontify-recorded-types-and-refs)
 (cc-bytecomp-defun c-font-lock-declarators)
 (cc-bytecomp-defun c-font-lock-objc-iip-decl)
