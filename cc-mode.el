@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.347 $
-;; Last Modified:   $Date: 1994-05-19 22:27:55 $
+;; Version:         $Revision: 3.348 $
+;; Last Modified:   $Date: 1994-05-23 15:43:07 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-19 22:27:55 $|$Revision: 3.347 $|
+;; |$Date: 1994-05-23 15:43:07 $|$Revision: 3.348 $|
 
 ;;; Code:
 
@@ -834,7 +834,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.347 $
+cc-mode Revision: $Revision: 3.348 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -867,7 +867,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.347 $
+cc-mode Revision: $Revision: 3.348 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1234,10 +1234,15 @@ the brace is inserted inside a literal."
       (if (memq 'before newlines)
 	  ;; we leave the newline we've put in there before,
 	  ;; but we need to re-indent the line above
-	  (let ((pos (- (point-max) (point))))
+	  (let ((pos (- (point-max) (point)))
+		(here (point)))
 	    (forward-line -1)
 	    (c-indent-line)
-	    (goto-char (- (point-max) pos)))
+	    (goto-char (- (point-max) pos))
+	    ;; if the buffer has changed due to the indentation, we
+	    ;; need to recalculate semantics for the current line
+	    (if (/= (point) here)
+		(setq semantics (c-guess-basic-semantics))))
 	;; must remove the newline we just stuck in (if we really did it)
 	(and delete-temp-newline
 	     (delete-region (- (point) 2) (1- (point))))
@@ -3582,7 +3587,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.347 $"
+(defconst c-version "$Revision: 3.348 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
