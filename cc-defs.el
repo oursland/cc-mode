@@ -662,23 +662,74 @@ be after it."
 	  (looking-at defun-prompt-regexp)
 	  (goto-char (match-end 0)))))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; V i r t u a l   S e m i c o l o n s 
+;;
+;; In most CC Mode languages, statements are terminated explicitly by
+;; semicolons or closing braces.  In some of the CC modes (currently only AWK
+;; Mode (April 2004)), statements are (or can be) terminated by EOLs.  Such a
+;; statement is said to be terminated by a "virtual semicolon" (VS).  A
+;; statement terminated by an actual semicolon or brace is never considered to
+;; have a VS.
+;;
+;; The indentation engine (or whatever) tests for a VS at a specific position
+;; by invoking the macro `c-at-vsemi-p', which in its turn calls the mode
+;; specific function (if any) which is the value of the language variable
+;; `c-at-vsemi-p-fn'.  The actual details of what constitutes a VS in a
+;; language are thus encapsulated in code specific to that language
+;; (e.g. cc-awk.el).  `c-at-vsemi-p' returns non-nil if point (or the optional
+;; parameter POS) is at a VS, nil otherwise.
+;;
+;; The language specific function might well do extensive analysis of the
+;; source text, and may use a cacheing scheme to speed up repeated calls.
+;;
+;; The "virtual semicolon" lies just after the last non-ws token on the line.
+;; Like POINT, it is considered to lie between two characters.  For example,
+;; at the place shown in the following AWK source line:
+;;
+;;          kbyte = 1024             # 1000 if you're not picky
+;;                      ^
+;;                      |
+;;              Virtual Semicolon
+;;
+;; In addition to `c-at-vsemi-p-fn', a mode may need to supply a function for
+;; `c-vsemi-status-unknown-p-fn'.  The macro `c-vsemi-status-unknown-p' is a
+;; rather recondite kludge.  It exists because the function
+;; `c-beginning-of-statement-1' sometimes tests for VSs as an optimisation,
+;; but `c-at-vsemi-p' might well need to call `c-beginning-of-statement-1' in
+;; its calculations, thus potentially leading to infinite recursion.
+;;
+;; The macro `c-vsemi-status-unknown-p' resolves this problem; it may return
+;; non-nil at any time; returning nil is a guarantee that an immediate
+;; invocation of `c-at-vsemi-p' at point will NOT call
+;; `c-beginning-of-statement-1'.  `c-vsemi-status-unknown-p' may not itself
+;; call `c-beginning-of-statement-1'.
+;;
+;; The macro `c-vsemi-status-unknown-p' will typically check the cacheing
+;; scheme used by the `c-at-vsemp-p-fn', hence the name - the status is
+;; "unknown" if there is no cache entry current for the line. 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (defmacro c-at-vsemi-p (&optional pos)
   ;; Is there a virtual semicolon (not a real one or a }) at POS (defaults to
   ;; point)?  Always returns nil for languages which don't have Virtual
   ;; semicolons.
+  ;; This macro might do hidden buffer changes.
   `(if c-at-vsemi-p-fn
        (funcall c-at-vsemi-p-fn ,@(if pos `(,pos)))))
 
 (defmacro c-vsemi-status-unknown-p ()
-  ;; Is the presence or absence of a virtual semicolon on the current physical
-  ;; line unknown?  The (admittedly kludgey) purpose of this macro is to
-  ;; prevent an infinite recursion in c-beginning-of-statement-1 when point
-  ;; starts at a `while' token.  The function compiled by this macro MUST NOT
-  ;; UNDER ANY CIRCUMSTANCES call c-beginning-of-statement-1, even indirectly.
+  ;; Return NIL only if it can be guaranteed that an immediate
+  ;; (c-at-vsemi-p) will NOT call c-beginning-of-statement-1.  Otherwise,
+  ;; return non-nil.  (See comments above).  The function invoked by this
+  ;; macro MUST NOT UNDER ANY CIRCUMSTANCES itself call
+  ;; c-beginning-of-statement-1.
   ;; Languages which don't have EOL terminated statements always return NIL
   ;; (they _know_ there's no vsemi ;-).
   `(if c-vsemi-status-unknown-p-fn (funcall c-vsemi-status-unknown-p-fn)))
 
+
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
