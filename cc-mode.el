@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.300 $
-;; Last Modified:   $Date: 1996-05-31 17:46:04 $
+;; Version:         $Revision: 4.301 $
+;; Last Modified:   $Date: 1996-05-31 19:12:02 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1095,7 +1095,8 @@ behavior that users are familiar with.")
    c-protection-key "[ \t]+\\)" c-symbol-key)
   "Regexp describing C++ base classes in a derived class definition.")
 
-(defvar c-recognize-knr-p t
+;; defconst'd instead of defvar'd to override any old pre-loaded versions
+(defconst c-recognize-knr-p t
   "Non-nil means K&R style argument declarations are valid.")
 
 ;; minor mode variables
@@ -4913,7 +4914,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.300 $"
+(defconst c-version "$Revision: 4.301 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
