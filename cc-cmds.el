@@ -2636,6 +2636,7 @@ command to conveniently insert and align the necessary backslashes."
 		((< here (point))
 		 ;; The point was on the comment opener line, so we might want
 		 ;; to treat this as a not yet closed comment.
+
 		 (if (and (match-beginning 1)
 			  (/= (match-beginning 1) (match-end 1)))
 		     ;; Above `prefix-regexp' matched a nonempty prefix on the
@@ -2648,13 +2649,36 @@ command to conveniently insert and align the necessary backslashes."
 		     (if (= (match-end 0) (c-point 'eol))
 			 (setq comment-prefix (match-string 1))
 		       (setq prefix-line (point)))
-		   ;; There's no nonempty prefix on the line after the comment
-		   ;; opener.  We could be at the start of a "free text"
-		   ;; comment, in which case the indentation of the next line
-		   ;; is more appropriate.  It's however more likely that it's
-		   ;; the start of an unclosed comment, so use
-		   ;; `c-block-comment-prefix'.
-		   (setq comment-prefix (or c-block-comment-prefix ""))))
+
+		   ;; There's no nonempty prefix on the line after the
+		   ;; comment opener.  If the line is empty, or if the
+		   ;; text on has less or equal indentation than the
+		   ;; comment starter we assume it's an unclosed
+		   ;; comment starter, i.e. that
+		   ;; `c-block-comment-prefix' should be used.
+		   ;; Otherwise we assume it's a closed comment where
+		   ;; the prefix really is the empty string.
+		   ;; E.g. this is an unclosed comment:
+		   ;;
+		   ;;     /*
+		   ;;     foo
+		   ;;
+		   ;; But this is not:
+		   ;;
+		   ;;     /*
+		   ;;       foo
+		   ;;     */
+		   ;;
+		   ;; (Looking for the presence of the comment closer
+		   ;; rarely works since it's probably the closer of
+		   ;; some comment further down when the comment
+		   ;; really is unclosed.)
+		   (if (<= (save-excursion (back-to-indentation)
+					   (current-column))
+			   (save-excursion (goto-char (car lit-limits))
+					   (current-column)))
+		       (setq comment-prefix (or c-block-comment-prefix ""))
+		     (setq prefix-line (point)))))
 
 		(t
 		 ;; Otherwise the line after the comment starter is good
