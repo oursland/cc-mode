@@ -188,10 +188,6 @@ Commands
 * Minor Modes::                 
 * Other Commands::              
 
-Movement Commands
-
-* AWK Mode Defuns::             
-
 Minor Modes
 
 * Auto-newlines::               
@@ -435,6 +431,24 @@ where @samp{XX} is the minor release number.
 @chapter Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+This chapter specifies all of CC Mode's commands, and thus contains
+nearly everything you need to know to @emph{use} @ccmode{} (as
+contrasted with configuring it).  @dfn{Commands} here means both
+control key sequences and @dfn{electric keys}, these being characters
+such as @samp{;} which, as well as inserting themselves, also do other
+things.
+
+You might well want to review
+@ifset X
+@ref{Lists,,,@emacsman{}, @emacsmantitle{}},
+@end ifset
+@ifclear X
+@ref{Moving by Parens,,,@emacsman{}, @emacsmantitle{}},
+@end ifclear
+which describes commands for moving around brace and parenthesis
+structures.
+
+
 @menu
 * Indentation Commands::        
 * Movement Commands::           
@@ -608,55 +622,77 @@ often (in seconds) progress messages are to be displayed.
 
 @table @asis
 @item @kbd{M-x c-beginning-of-defun}
+@itemx @kbd{M-x c-end-of-defun}
 @findex c-beginning-of-defun
-@findex beginning-of-defun (c-)
-@findex beginning-of-defun
-Move point back to the least-enclosing brace.  This function is
-analogous to the Emacs built-in command @code{beginning-of-defun},
-except it eliminates the constraint that the top-level opening brace
-must be in column zero.  See @code{beginning-of-defun} for more
-information.
-
-Depending on the coding style being used, you might prefer
-@code{c-beginning-of-defun} to @code{beginning-of-defun}.  If so,
-consider binding @kbd{C-M-a} to the former instead.  For backwards
-compatibility reasons, the default binding remains in effect.
-
-In AWK mode, a defun doesn't necessarily have braces at all.  AWK Mode
-therefore has its own version of this function which is bound by
-default to @kbd{C-M-a}.  You can thus chose freely which function to
-bind to @kbd{C-M-a} for the other modes without worrying about AWK
-buffers.  @xref{AWK Mode Defuns}.
-
-@item @kbd{M-x c-end-of-defun}
 @findex c-end-of-defun
+@findex beginning-of-defun (c-)
 @findex end-of-defun (c-)
+@findex beginning-of-defun
 @findex end-of-defun
-Moves point to the end of the current top-level definition.  This
-function is analogous to the Emacs built-in command @code{end-of-defun},
-except it eliminates the constraint that the top-level opening brace of
-the defun must be in column zero.  See @code{end-of-defun} for more
-information.
+Move to the start or end of the current top-level definition, this
+being the outermost brace pair which encloses point.  These functions
+are analogous to the Emacs built-in commands @code{beginning-of-defun}
+and @code{end-of-defun}, except they eliminate the constraint that the
+top-level opening brace of the defun must be in column zero.  See
+@ref{Defuns,,,@emacsman{}, @emacstitle{}}, for more information.
 
-Depending on the coding style being used, you might prefer
-@code{c-end-of-defun} to @code{end-of-defun}.  If so,
-consider binding @kbd{C-M-e} to the former instead.  For backwards
-compatibility reasons, the default binding remains in effect.
+Depending on the coding style you're using, you might prefer these two
+commands to the standard Emacs ones.  If so, consider binding them to
+@kbd{C-M-a} and @kbd{C-M-e}.  @xref{Sample .emacs File}.  This
+customization won't affect the special bindings for these key
+sequences in force in AWK Mode.  For backwards compatibility reasons,
+the default bindings for @kbd{C-M-a} and @kbd{C-M-e} remain in effect.
 
-In AWK Mode, a defun doesn't necessarily have braces at all.  AWK Mode
-therefore has its own version of this function which is bound by
-default to @kbd{C-M-e}.  You can thus chose freely which function to
-bind to @kbd{C-M-e} for the other modes without worrying about AWK
-buffers.  @ref{AWK Mode Defuns}.
+@item @kbd{C-M-a} (AWK Mode) (@code{c-awk-beginning-of-defun})
+@itemx @kbd{C-M-e} (AWK Mode) (@code{c-awk-end-of-defun})
+@kindex C-M-a (AWK Mode)
+@kindex C-M-e (AWK Mode)
+@findex c-awk-beginning-of-defun
+@findex awk-beginning-of-defun (c-)
+@findex c-awk-end-of-defun
+@findex awk-end-of-defun (c-)
+Move back to the beginning or forward to the end of the current AWK
+defun.  These functions are bound to @kbd{C-M-a} and @kbd{C-M-e} by
+default in AWK Mode.  They can take prefix-arguments, their
+functionality being entirely equivalent to @code{beginning-of-defun}
+and @code{end-of-defun}.
+
+AWK Mode @dfn{defuns} are either pattern/action pairs (either of which
+may be implicit) or user defined functions.  Having the @samp{@{} and
+@samp{@}} (if there are any) in column zero, as is suggested for some
+modes, is neither necessary nor helpful in AWK mode.
+
+@item @kbd{M-a} (@code{c-beginning-of-statement})
+@itemx @kbd{M-e} (@code{c-end-of-statement})
+@kindex M-a
+@kindex M-e
+@findex c-beginning-of-statement
+@findex c-end-of-statement
+@findex beginning-of-statement (c-)
+@findex end-of-statement (c-)
+Move to the beginning or end of the innermost C statement.  If point
+is already there, move to the next beginning or end of a statement,
+even if that means moving into a block.  (Use @kbd{C-M-b} or
+@kbd{C-M-f} to move over a balanced block.)  A prefix argument @var{n}
+means move over @var{n} statements.
+
+If point is within or next to a comment or a string which spans more
+than one line, these commands move by sentences instead of statements.
+
+When called from a program, these functions take three optional
+arguments: the repetition count, a buffer position limit which is the
+farthest back to search for the syntactic context, and a flag saying
+whether to do sentence motion in or near comments and multiline
+strings.
 
 @item @kbd{C-c C-u} (@code{c-up-conditional})
 @kindex C-c C-u
 @findex c-up-conditional
 @findex up-conditional (c-)
-Move point back to the containing preprocessor conditional, leaving the
-mark behind.  A prefix argument acts as a repeat count.  With a negative
-argument, move point forward to the end of the containing
-preprocessor conditional.
+Move back to the containing preprocessor conditional, leaving the mark
+behind.  A prefix argument acts as a repeat count.  With a negative
+argument, move forward to the end of the containing preprocessor
+conditional.
 
 @samp{#elif} is treated like @samp{#else} followed by @samp{#if}, so the
 function stops at them when going backward, but not when going
@@ -674,10 +710,10 @@ lines.  Normally those lines are ignored.
 @item @kbd{M-x c-down-conditional}
 @findex c-down-conditional
 @findex down-conditional (c-)
-Move point forward into the next nested preprocessor conditional,
-leaving the mark behind.  A prefix argument acts as a repeat count.
-With a negative argument, move point backward into the previous
-nested preprocessor conditional.
+Move forward into the next nested preprocessor conditional, leaving
+the mark behind.  A prefix argument acts as a repeat count.  With a
+negative argument, move backward into the previous nested preprocessor
+conditional.
 
 @samp{#elif} is treated like @samp{#else} followed by @samp{#if}, so the
 function stops at them when going forward, but not when going backward.
@@ -689,137 +725,37 @@ A variety of @code{c-down-conditional} that also stops at @samp{#else}
 lines.  Normally those lines are ignored.
 
 @item @kbd{C-c C-p} (@code{c-backward-conditional})
+@itemx @kbd{C-c C-n} (@code{c-forward-conditional})
 @kindex C-c C-p
-@findex c-backward-conditional
-@findex backward-conditional (c-)
-Move point back over a preprocessor conditional, leaving the mark
-behind.  A prefix argument acts as a repeat count.  With a negative
-argument, move forward.
-
-This key sequence is not bound in AWK Mode, which doesn't have
-preprocessor statements.
-
-@item @kbd{C-c C-n} (@code{c-forward-conditional})
 @kindex C-c C-n
+@findex c-backward-conditional
 @findex c-forward-conditional
+@findex backward-conditional (c-)
 @findex forward-conditional (c-)
-Move point forward across a preprocessor conditional, leaving the mark
-behind.  A prefix argument acts as a repeat count.  With a negative
-argument, move backward.
+Move backward or forward across a preprocessor conditional, leaving
+the mark behind.  A prefix argument acts as a repeat count.  With a
+negative argument, move in the opposite direction.
 
-This key sequence is not bound in AWK Mode, which doesn't have
+These key sequences are not bound in AWK Mode, which doesn't have
 preprocessor statements.
 
-@item @kbd{M-a} (@code{c-beginning-of-statement})
-@kindex M-a
-@findex c-beginning-of-statement
-@findex beginning-of-statement (c-)
-Move point to the beginning of the innermost C statement.  If point is
-already at the beginning of a statement, move to the beginning of the
-closest preceding statement, even if that means moving into a block (you
-can use @kbd{C-M-b} to move over a balanced block).  With prefix
-argument @var{n}, move back @var{n} @minus{} 1 statements.
-
-If point is within or next to a comment or a string which spans more
-than one line, this command moves by sentences instead of statements.
-
-When called from a program, this function takes three optional
-arguments: the repetition count, a buffer position limit which is the
-farthest back to search for the syntactic context, and a flag saying
-whether to do sentence motion in or near comments and multiline strings.
-
-@item @kbd{M-e} (@code{c-end-of-statement})
-@kindex M-e
-@findex c-end-of-statement
-@findex end-of-statement (c-)
-Move point to the end of the innermost C statement.  If point is at the
-end of a statement, move to the end of the next statement, even if it's
-inside a nested block (use @kbd{C-M-f} to move to the other side of the
-block).  With prefix argument @var{n}, move forward @var{n} @minus{} 1
-statements.
-
-If point is within or next to a comment or a string which spans more
-than one line, this command moves by sentences instead of statements.
-
-When called from a program, this function takes three optional
-arguments: the repetition count, a buffer position limit which is the
-farthest back to search for the syntactic context, and a flag saying
-whether to do sentence motion in or near comments and multiline strings.
-
-@item @kbd{M-x c-forward-into-nomenclature}
+@item @kbd{M-x c-backward-into-nomenclature}
+@itemx @kbd{M-x c-forward-into-nomenclature}
+@findex c-backward-into-nomenclature
 @findex c-forward-into-nomenclature
+@findex backward-into-nomenclature (c-)
 @findex forward-into-nomenclature (c-)
 A popular programming style, especially for object-oriented languages
 such as C++ is to write symbols in a mixed case format, where the first
 letter of each word is capitalized, and not separated by underscores.
 E.g. @samp{SymbolsWithMixedCaseAndNoUnderlines}.
 
-This command moves point forward to next capitalized word.  With prefix
-argument @var{n}, move @var{n} times.
-
-@item @kbd{M-x c-backward-into-nomenclature}
-@findex c-backward-into-nomenclature
-@findex backward-into-nomenclature (c-)
-Move point backward to beginning of the next capitalized
-word.  With prefix argument @var{n}, move @var{n} times.  If
-@var{n} is negative, move forward.
+These commands move backward or forward to the beginning of the next
+capitalized word.  With prefix argument @var{n}, move @var{n} times.
+If @var{n} is negative, move in the opposite direction.
 @end table
 
-@menu
-* AWK Mode Defuns::             
-@end menu
-
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    AWK Mode Defuns,  , Movement Commands, Movement Commands
-@comment  node-name,  next,  previous,  up
-@subsection AWK Mode Defuns
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-In AWK mode, @dfn{defun} means either a user-defined function or a
-pattern-action pair.  Either the pattern or the action may be
-implicit.
-
-The beginning of a defun is recognised heuristically as, more or less,
-code which begins in column zero.  Having the @samp{@{} in column zero,
-as is suggested for some modes, is neither necessary nor helpful in AWK
-mode.
-
-More precisely, the beginning of a defun is code which begins in
-column zero, and which isn't a closing brace, a comment, or a
-continuation of the previous line.  Code is the @dfn{continuation of
-the previous line} when that line is syntactically incomplete, for
-example when it ends with @samp{@{} or an escaped newline.
-
-The end of a defun is the @samp{@}} which matches the @samp{@{} (if
-any) at the beginning of the action or function body, or the EOL or
-@samp{;} which marks an implicit action.  Although this @samp{@}} is
-usually placed in column zero, AWK mode doesn't need it to be placed
-there.
-
-@table @asis
-@item @kbd{C-M-a} @code{c-awk-beginning-of-defun}
-@itemx @kbd{C-M-e} @code{c-awk-end-of-defun}
-@findex c-awk-beginning-of-defun
-@findex awk-beginning-of-defun (c-)
-@findex c-awk-end-of-defun
-@findex awk-end-of-defun (c-)
-Move point back to the beginning or forward to the end of the current
-AWK defun.  These functions can take prefix-arguments, their
-functionality being entirely equivalent to @code{beginning-of-defun}
-and @code{end-of-defun}.
-@ifset X
-@xref{Defuns,,,xemacs, XEmacs User's Manual}.
-@end ifset
-@ifclear X
-@xref{Moving by Defuns,,,emacs, GNU Emacs Manual}.
-@end ifclear
-
-@item @kbd{C-M-h} @code{c-mark-function}
-This works fine with AWK defuns.  @xref{Indentation Commands}.
-@end table
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Filling and Breaking, Electric Keys, Movement Commands, Commands
 @comment  node-name,  next,  previous,  up
 @section Filling and Line Breaking Commands
@@ -1727,7 +1663,7 @@ Lisp functions, which you will usually do by adding code to your
 depending on the precise effect you want:
 
 @table @asis
-@item Top-level commands
+@item Top-level commands or the ``customization interface''
 Most simply, you can write @code{setq} and similar commands at the top
 level of the file.  These commands need to run @emph{before} @ccmode{}
 is first initialized@footnote{The first initialization of @ccmode{}
@@ -1742,14 +1678,20 @@ thus:
 (setq c-basic-offset 4)
 @end example
 
-You can also use the more user friendly Customization interface, but
-this manual does not cover how that works.
+You can instead use the more user friendly Customization interface,
+but this manual does not cover in detail how that works.  To do this,
+start by typing @kbd{M-x customize-group @key{RET} c @key{RET}}.
+@xref{Easy Customization,,,@emacsman{}, @emacsmantitle{}}.  Emacs
+normally writes the customizations at the end of your @file{.emacs}
+file.  If you use @code{desktop-read} (@pxref{Saving Emacs Sessions,,,
+emacs, GNU Emacs Manual}), you should edit your @file{.emacs} to place
+the call to @code{desktop-read} @emph{after} them.
 
-For basic use of Emacs, this way of configuring is adequate.  However,
-the settings are then the same in all @ccmode{} buffers and it can be
-clumsy to communicate them between programmers.  For more flexibility,
-you'll want to use one (or both) of @ccmode{}'s more sophisticated
-facilities, hooks and styles.
+For basic use of Emacs, either of these ways of configuring is
+adequate.  However, the settings are then the same in all @ccmode{}
+buffers and it can be clumsy to communicate them between programmers.
+For more flexibility, you'll want to use one (or both) of @ccmode{}'s
+more sophisticated facilities, hooks and styles.
 
 @item Hooks
 An Emacs @dfn{hook} is a place to put Lisp functions that you want
