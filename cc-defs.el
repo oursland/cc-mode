@@ -35,7 +35,9 @@
 ;; cc-mode-19.el contains compatibility macros that should be compiled
 ;; in if needed.
 (if (or (not (fboundp 'functionp))
-	(not (fboundp 'char-before))
+	(not (condition-case nil
+		 (progn (char-before) t)
+	       (error nil)))
 	(not (condition-case nil
 		 (progn (char-after) t)
 	       (error nil)))

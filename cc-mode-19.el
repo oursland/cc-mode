@@ -27,7 +27,8 @@
 
 ;;; Commentary:
 
-;; This file is necessary in order to run CC Mode 5 under Emacs 19.34.
+;; This file is necessary in order to run CC Mode 5 under Emacs 19.34
+;; and MULE based on Emacs 19.34.
 
 ;;; Code:
 
@@ -36,19 +37,35 @@
 
 ;; Emacs 19.34 requires the POS argument to char-after.  Emacs 20
 ;; makes it optional, as it has long been in XEmacs.
-(defadvice char-after (before c-char-after-advice (&optional pos)
-			      activate preactivate)
-  "POS is optional and defaults to the position of point."
-  (if (not pos)
-      (setq pos (point))))
-
-;; Emacs 19.34 doesn't have a char-before function.  Here's it's Emacs
-;; 20 definition.
-(or (fboundp 'char-before)
-    (defsubst char-before (&optional pos)
+(or (condition-case nil
+	(progn (char-after) t)
+      (error nil))
+    (defadvice char-after (before c-char-after-advice
+				  (&optional pos)
+				  activate preactivate)
+      "POS is optional and defaults to the position of point."
       (if (not pos)
-	  (setq pos (point)))
-      (char-after (1- pos))))
+	  (setq pos (point)))))
+
+(if (fboundp 'char-before)
+    (or (condition-case nil
+	    (progn (char-before) t)
+	  (error nil))
+	;; MULE based on Emacs 19.34 has a char-before function, but
+	;; it requires a position.  It also has a second optional
+	;; argument that we must pass on.
+	(defadvice char-before (before c-char-before-advice
+				       (&optional pos byte-unit)
+				       activate preactivate)
+	  "POS is optional and defaults to the position of point."
+	  (if (not pos)
+	      (setq pos (point)))))
+  ;; Emacs 19.34 doesn't have a char-before function.  Here's it's
+  ;; Emacs 20 definition.
+  (defsubst char-before (&optional pos)
+    (if (not pos)
+	(setq pos (point)))
+    (char-after (1- pos))))
 
 ;; Emacs 19.34 doesn't have a functionp function.  Here's it's Emacs
 ;; 20 definition.
