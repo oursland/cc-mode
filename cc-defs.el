@@ -406,7 +406,7 @@ read-only, but it is assumed to always return nil in that case."
 	  ;; No need to use markers for the point and mark; if the
 	  ;; undo got out of synch we're hosed anyway.
 	  (point)			; 2
-	  (mark)			; 3
+	  (mark t)			; 3
 	  (c-region-is-active-p)	; 4
 	  (buffer-modified-p)))		; 5
 
