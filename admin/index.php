@@ -21,8 +21,8 @@ href="installation.php">installation notes</a> and Emacs/XEmacs <a
 href="compat.php">compatibility details</a>.
 
 <p>You can <a href="cc-mode.html#Top">browse the documentation
-on-line</a>.  There are also some (recently) archived <a
-href="lists.php">mailing lists</a> which you can browse and join.
+on-line</a>.  There are also some archived <a href="lists.php">mailing
+lists</a> which you can browse and join.
 
 <p>See also <a href="contrib.php">some related Emacs packages</a> that
 have been contributed by CC Mode users.
