@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.26 $
-;; Last Modified:   $Date: 1993-09-28 23:08:03 $
+;; Version:         $Revision: 3.27 $
+;; Last Modified:   $Date: 1993-09-28 23:11:04 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-28 23:08:03 $|$Revision: 3.26 $|
+;; |$Date: 1993-09-28 23:11:04 $|$Revision: 3.27 $|
 
 ;;; Code:
 
@@ -253,14 +253,14 @@ FSF 19 (patched):        (8-bit v19)")
     (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
     (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
    ((memq '1-bit c++-emacs-features)
-    ;; FSF19 has sub-optimal, but workable implementation
-    ;; Some strange behavior may be encountered.  LOBBY FSF!
+    ;; FSF19 does things differently, but we can work with it
     (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23b" c++-mode-syntax-table)
     (modify-syntax-entry ?\n ">"     c++-mode-syntax-table))
    (t
-    ;; Vanilla GNU18 is just plain busted.  We'll do the best we can,
-    ;; but some strange behavior may be encountered.  PATCH or UPGRADE!
+    ;; Vanilla GNU18 doesn't support mult-style comments.  We'll do
+    ;; the best we can, but some strange behavior may be encountered.
+    ;; PATCH or UPGRADE!
     (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"  c++-mode-syntax-table)
     (modify-syntax-entry ?\n ">"     c++-mode-syntax-table))
@@ -542,7 +542,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.26 $
+  "Major mode for editing C++ code.  $Revision: 3.27 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -734,7 +734,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.26 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.27 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'.  Only real
 difference is that this sets up the buffer for editing C code, and it
@@ -2658,7 +2658,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.26 $"
+(defconst c++-version "$Revision: 3.27 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
