@@ -476,7 +476,7 @@ stuff.  Used on level 1 and higher."
 					   (c-lang-const c-cpp-defined-fns)
 					   nil)
 					  "\\)\\>"
-					  "\\s *\(")
+					  "\\s *\(?")
 				 limit 'move)
 			   (c-put-font-lock-face (match-beginning 1)
 						 (match-end 1)
