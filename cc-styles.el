@@ -425,9 +425,8 @@ and exists only for compatibility reasons."
      (list langelem offset current-prefix-arg)))
   ;; sanity check offset
   (unless (c-valid-offset offset)
-    (error (concat "Offset must be int, func, var, vector, list, "
-		   "or in [+,-,++,--,*,/]: %s")
-	   offset))
+    (error "Invalid indentation setting for symbol %s: %s"
+	   symbol offset))
   (let ((entry (assq symbol c-offsets-alist)))
     (if entry
 	(setcdr entry offset)
