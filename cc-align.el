@@ -463,10 +463,11 @@ Works with: template-args-cont."
 
 (defun c-lineup-ObjC-method-call (langelem)
   "Line up selector args as elisp-mode does with function args:
-go to the position right after the message receiver, and if you are at
-\(eolp) indent the current line by a constant offset from the opening
-bracket; otherwise we are looking at the first character of the first
-method call argument, so lineup the current line with it.
+Go to the position right after the message receiver, and if you are at
+the end of the line, indent the current line c-basic-offset columns
+from the opening bracket; otherwise you are looking at the first
+character of the first method call argument, so lineup the current
+line with it.
 
 Works with: objc-method-call-cont."
   (save-excursion
