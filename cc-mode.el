@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.35 $
-;; Last Modified:   $Date: 1994-07-18 21:15:23 $
+;; Version:         $Revision: 4.36 $
+;; Last Modified:   $Date: 1994-07-21 22:34:19 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-07-18 21:15:23 $|$Revision: 4.35 $|
+;; |$Date: 1994-07-21 22:34:19 $|$Revision: 4.36 $|
 
 ;;; Code:
 
@@ -852,14 +852,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 We cannot use just `word' syntax class since `_' cannot be in word
 class.  Putting underscore in word class breaks forward word movement
 behavior that users are familiar with.")
-(defconst c-class-key
-  (concat
-   "\\(\\(extern\\|typedef\\)\\s +\\)?"
-   "\\(template\\s *<[^>]*>\\s *\\)?"
-   ;; I'd like to add \\= in the first grouping below, but 1. its not
-   ;; defined in v18, and 2. doesn't seem to work in v19 anyway.
-   "\\([^<a-zA-Z0-9_]\\|\\`\\)[ \t]*"
-   "\\(class\\|struct\\|union\\)\\([ \t\n]+\\|\\'\\)")
+(defconst c-class-key "\\(class\\|struct\\|union\\)"
   "Regexp describing a class declaration, including templates.")
 (defconst c-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
@@ -904,7 +897,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.35 $
+cc-mode Revision: $Revision: 4.36 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -939,7 +932,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.35 $
+cc-mode Revision: $Revision: 4.36 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -973,7 +966,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.35 $
+cc-mode Revision: $Revision: 4.36 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2716,52 +2709,30 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (goto-char search-start)
 	    (let (foundp class match-end)
 	      (while (and (not foundp)
-			  (save-restriction
+			  (progn
 			    (c-forward-syntactic-ws)
-			    ;; see c-class-key comments for why we
-			    ;; need to do this.
-			    (widen)
-			    (narrow-to-region (point) search-end)
 			    (re-search-forward c-class-key search-end t)))
 		(setq class (match-beginning 0)
 		      match-end (match-end 0))
-		(if (not (c-in-literal search-start))
-		    (progn
-		      (goto-char class)
-		      (skip-chars-forward " \t\n")
-		      (setq foundp (vector (c-point 'boi) search-end))
-		      ;; make sure we're really looking at a class
-		      ;; definition and not a forward or arg
-		      ;; declaration. We must do this programmatically
-		      ;; since its impossible to define a regexp for
-		      ;; this.
-		      (skip-chars-forward "^;=,)" search-end)
-		      (setq placeholder (point))
-		      (if (and (/= (point) search-end)
-			       (save-excursion
-				 (or (/= (following-char) ?,)
-				     (progn
-				       (goto-char class)
-				       (skip-chars-forward "^:" placeholder)
-				       (= (point) placeholder))
-				     (progn
-				       (forward-char 1)
-				       (c-forward-syntactic-ws)
-				       (not (looking-at c-protection-key))
-				       ))))
-
-			  (progn
-			    (setq foundp nil)
-			    (goto-char match-end))
-			;; make sure we aren't looking at the `class'
-			;; keyword inside a template arg list
-			(goto-char class)
-			(skip-chars-backward " \t\n")
-			(if (= (preceding-char) ?<)
-			    (progn
-			      (setq foundp nil)
-			      (skip-chars-forward "^>" search-end))))
-		      )))
+		(if (c-in-literal search-start)
+		    nil			; its in a comment or string, ignore
+		  (goto-char class)
+		  (skip-chars-forward " \t\n")
+		  (setq foundp (vector (c-point 'boi) search-end))
+		  ;; make sure we're really looking at the start of a
+		  ;; class definition, and not a forward decl, return
+		  ;; arg, or template arg list. Its impossible to
+		  ;; define a regexp for this, and nearly so to do it
+		  ;; programmatically.
+		  ;;
+		  ;; ; picks up forward decls
+		  ;; = picks up init lists
+		  ;; ) picks up return types
+		  ;; > picks up arg lists
+		  (skip-chars-forward "^;=)>" search-end)
+		  (if (/= (point) search-end)
+		      (setq foundp nil))
+		  ))
 	      foundp))
 	  )))))
 
@@ -3859,7 +3830,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.35 $"
+(defconst c-version "$Revision: 4.36 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
