@@ -1,4 +1,4 @@
-;;; cc-mode.el --- major mode for editing C, C++, and Objective-C code
+;;; cc-mode.el --- major mode for editing C, C++, Objective-C, and Java code
 
 ;; Copyright (C) 1985, 87, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 
@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.301 $
-;; Last Modified:   $Date: 1996-05-31 19:12:02 $
+;; Version:         $Revision: 4.302 $
+;; Last Modified:   $Date: 1996-05-31 21:08:07 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -184,6 +184,7 @@ reported and the syntactic symbol is ignored.")
     (objc-method-call-cont . c-lineup-ObjC-method-call)
     (extern-lang-open      . 0)
     (extern-lang-close     . 0)
+    (inextern-lang         . +)
     )
   "*Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
@@ -277,6 +278,7 @@ Here is the current list of valid syntactic element symbols:
  objc-method-call-cont  -- lines continuing an Objective-C method call
  extern-lang-open       -- brace that opens an external language block
  extern-lang-close      -- brace that closes an external language block
+ inextern-lang          -- analogous to `inclass' syntactic symbol
 ")
 
 (defvar c-tab-always-indent t
@@ -3585,12 +3587,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	(save-excursion
 	  (save-restriction
 	    (goto-char search-start)
-	    (let (foundp class match-end)
+	    (let ((search-key (concat c-class-key "\\|extern[^_]"))
+		  foundp class match-end)
 	      (while (and (not foundp)
 			  (progn
 			    (c-forward-syntactic-ws)
 			    (> search-end (point)))
-			  (re-search-forward c-class-key search-end t))
+			  (re-search-forward search-key search-end t))
 		(setq class (match-beginning 0)
 		      match-end (match-end 0))
 		(if (c-in-literal search-start)
@@ -3759,8 +3762,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 				     (looking-at c-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache inswitch-p
-	     ;; narrow out any enclosing class
+	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
+	     (inextern-p (and inclass-p
+			      (save-excursion
+				(save-restriction
+				  (widen)
+				  (goto-char (aref inclass-p 0))
+				  (looking-at "extern[^_]")))))
 	     )
 
 	;; get the buffer position of the most nested opening brace,
@@ -3831,7 +3840,20 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ;; inline-inclass method opening brace
 	   ((= char-after-ip ?{)
 	    (cond
-	     ;; CASE 5A.1: we are looking at a class opening brace
+	     ;; CASE 5A.1: extern declaration
+	     ((save-excursion
+		(goto-char indent-point)
+		(skip-chars-forward " \t")
+		(and (c-safe (progn (backward-sexp 2) t))
+		     (looking-at "extern[^_]")
+		     (progn
+		       (setq placeholder (point))
+		       (forward-sexp 1)
+		       (c-forward-syntactic-ws)
+		       (= (following-char) ?\"))))
+	      (goto-char placeholder)
+	      (c-add-syntax 'extern-lang-open (c-point 'boi)))
+	     ;; CASE 5A.2: we are looking at a class opening brace
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
@@ -3852,7 +3874,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (setq placeholder (aref decl 0)))
 		  ))
 	      (c-add-syntax 'class-open placeholder))
-	     ;; CASE 5A.2: brace list open
+	     ;; CASE 5A.3: brace list open
 	     ((save-excursion
 		(c-beginning-of-statement-1 lim)
 		;; c-b-o-s could have left us at point-min
@@ -3866,20 +3888,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (not (memq (following-char) '(?\; ?\()))
 		       )))
 	      (c-add-syntax 'brace-list-open placeholder))
-	     ;; CASE 5A.3: inline defun open
-	     (inclass-p
+	     ;; CASE 5A.4: inline defun open
+	     ((and inclass-p (not inextern-p))
 	      (c-add-syntax 'inline-open)
 	      (c-add-syntax 'inclass (aref inclass-p 0)))
-	     ;; CASE 5A.4: extern declaration
-	     ((save-excursion
-		(goto-char placeholder)
-		(and (looking-at "extern[^_]")
-		     (progn
-		       (forward-sexp 1)
-		       (c-forward-syntactic-ws)
-		       (= (following-char) ?\"))))
-	      (goto-char placeholder)
-	      (c-add-syntax 'extern-lang-open (c-point 'boi)))
 	     ;; CASE 5A.5: ordinary defun open
 	     (t
 	      (goto-char placeholder)
@@ -4015,7 +4027,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		 (looking-at c-access-key))
 	    (c-add-syntax 'access-label (c-point 'bonl))
 	    (c-add-syntax 'inclass (aref inclass-p 0)))
-	   ;; CASE 5F: we are looking at the brace which closes the
+	   ;; CASE 5F: extern-lang-close?
+	   ((and inextern-p
+		 (= char-after-ip ?}))
+	    (c-add-syntax 'extern-lang-close (aref inclass-p 1)))
+	   ;; CASE 5G: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
 	   ((and inclass-p
 		 (= char-after-ip ?})
@@ -4033,7 +4049,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (widen)
 	      (goto-char (aref inclass-p 0))
 	      (c-add-syntax 'class-close (c-point 'boi))))
-	   ;; CASE 5G: we could be looking at subsequent knr-argdecls
+	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
 		 ;; here we essentially use the hack that is used in
 		 ;; Emacs' c-mode.el to limit how far back we should
@@ -4069,7 +4085,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (not (looking-at "typedef[ \t\n]+"))))
 	    (goto-char placeholder)
 	    (c-add-syntax 'knr-argdecl (c-point 'boi)))
-	   ;; CASE 5H: we are at the topmost level, make sure we skip
+	   ;; CASE 5I: we are at the topmost level, make sure we skip
 	   ;; back past any access specifiers
 	   ((progn
 	      (c-backward-syntactic-ws lim)
@@ -4091,8 +4107,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (if inclass-p
 		  (progn
 		    (goto-char (aref inclass-p 1))
-		    (c-add-syntax 'inclass (c-point 'boi))))))
-	   ;; CASE 5I: we are at an ObjC or Java method definition
+		    (if inextern-p
+			(c-add-syntax 'inextern-lang)
+		      (c-add-syntax 'inclass (c-point 'boi)))))
+		))
+	   ;; CASE 5J: we are at an ObjC or Java method definition
 	   ;; continuation line.
 	   ((and c-method-key
 		 (progn
@@ -4100,7 +4119,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (beginning-of-line)
 		   (looking-at c-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
-	   ;; CASE 5J: we are at a topmost continuation line
+	   ;; CASE 5K: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement-1 lim)
 	    (c-forward-syntactic-ws)
@@ -4349,26 +4368,23 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			   (c-point 'boi))))
 	    (cond
 	     ;; CASE 14A: does this close an inline?
-	     ((progn
-		(goto-char containing-sexp)
-		(c-search-uplist-for-classkey state))
+	     ((let ((inclass-p (progn
+				 (goto-char containing-sexp)
+				 (c-search-uplist-for-classkey state))))
+		;; inextern-p in higher level let*
+		(setq inextern-p (and inclass-p
+				      (progn
+					(goto-char (aref inclass-p 0))
+					(looking-at "extern[^_]"))))
+		(and inclass-p (not inextern-p)))
 	      (c-add-syntax 'inline-close relpos))
 	     ;; CASE 14B: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close
-	     ((c-most-enclosing-brace state)
+	     ((and (not inextern-p)
+		   (c-most-enclosing-brace state))
 	      (c-add-syntax 'block-close relpos))
-	     ;; CASE 14C: extern-lang-close?
-	     ((save-excursion
-		(goto-char containing-sexp)
-		(and (c-safe (progn (backward-sexp 2) t))
-		     (looking-at "extern[^_]")
-		     (progn
-		       (forward-sexp 1)
-		       (c-forward-syntactic-ws)
-		       (= (following-char) ?\"))))
-	      (c-add-syntax 'extern-lang-close containing-sexp))
-	     ;; CASE 14D: find out whether we're closing a top-level
+	     ;; CASE 14C: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
 	      (save-restriction
@@ -4914,7 +4930,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.301 $"
+(defconst c-version "$Revision: 4.302 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
