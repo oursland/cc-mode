@@ -373,10 +373,12 @@ Here is the current list of valid syntactic element symbols:
  class-close            -- brace that closes a class definition
  inline-open            -- brace that opens an in-class inline method
  inline-close           -- brace that closes an in-class inline method
- func-decl-cont         -- the nether region between a function
-                           declaration and the defun opening brace.
-                           In C++ and Java, this can include `throws'
-                           declarations
+ func-decl-cont         -- the region between a function definition's
+                           argument list and the function opening brace
+                           (excluding K&R argument declarations). In C, you
+                           cannot put anything but whitespace and comments
+                           between them; in C++ and Java, throws declarations
+                           and other things can appear in this context.
  knr-argdecl-intro      -- first line of a K&R C argument declaration
  knr-argdecl            -- subsequent lines in a K&R C argument declaration
  topmost-intro          -- the first line in a topmost construct definition
