@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.44 $
-;; Last Modified:   $Date: 1994-08-03 15:49:57 $
+;; Version:         $Revision: 4.45 $
+;; Last Modified:   $Date: 1994-08-03 17:37:30 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-03 15:49:57 $|$Revision: 4.44 $|
+;; |$Date: 1994-08-03 17:37:30 $|$Revision: 4.45 $|
 
 ;;; Code:
 
@@ -908,7 +908,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.44 $
+cc-mode Revision: $Revision: 4.45 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -943,7 +943,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.44 $
+cc-mode Revision: $Revision: 4.45 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -977,7 +977,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.44 $
+cc-mode Revision: $Revision: 4.45 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1966,7 +1966,7 @@ search."
   ;; move to the start of the current statement, or the previous
   ;; statement if already at the beginning of one.
   (let ((firstp t)
-	donep literal-cache
+	donep c-in-literal-cache
 	(last-begin (point)))
     (while (not donep)
       ;; stop at beginning of buffer
@@ -1994,10 +1994,10 @@ search."
 	 ;; CASE 0: did we hit the error condition above?
 	 (donep)
 	 ;; CASE 1: are we in a literal?
-	 ((eq (setq literal-cache (c-in-literal)) 'pound)
+	 ((eq (c-in-literal) 'pound)
 	  (beginning-of-line))
 	 ;; CASE 2: some other kind of literal?
-	 (literal-cache)
+	 ((c-in-literal))
 	 ;; CASE 3: is this the first time we're checking?
 	 (firstp (setq firstp nil
 		       last-begin (point)))
@@ -2020,13 +2020,14 @@ search."
 	  (setq last-begin (point)
 		donep t))
 	 ;; CASE 5: have we crossed a statement barrier?
-	 ((let (crossedp)
+	 ((let ((lim (point))
+		crossedp)
 	    (save-excursion
 	      (while (and (not crossedp)
 			  (< (point) last-begin))
 		(skip-chars-forward "^;{}" last-begin)
 		(if (and (memq (following-char) '(?\; ?{ ?}))
-			 (not (c-in-literal)))
+			 (not (c-in-literal lim)))
 		    (setq crossedp t
 			  donep t)
 		  (forward-char 1))))
@@ -3859,7 +3860,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.44 $"
+(defconst c-version "$Revision: 4.45 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
