@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-28 13:58:44 $
-;; Version:         $Revision: 2.75 $
+;; Last Modified:   $Date: 1992-05-28 15:51:21 $
+;; Version:         $Revision: 2.76 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-28 13:58:44 $|$Revision: 2.75 $|
+;; |$Date: 1992-05-28 15:51:21 $|$Revision: 2.76 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -197,7 +197,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.75 $
+  "Major mode for editing C++ code.  $Revision: 2.76 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1199,14 +1199,9 @@ Returns nil if line starts inside a string, t if in a comment."
 	      (let ((sblim (max (c++-point-bol) lim)))
 		(if (< (point) sblim)
 		    nil
-		  (search-backward "//" (max (c++-point-bol) lim) 'move)))
+		  (search-backward "//" sblim 'move)))
 	      (not (c++-in-open-string-p))))
-	  (t (beginning-of-line)
-	     (skip-chars-forward " \t")
-	     (if (looking-at "#")
-		 (setq stop (<= (point) lim))
-	       (setq stop t)
-	       (goto-char opoint)))))))
+	    (t (setq stop (<= (point) lim)))))))
 
 (defun c++-backward-to-start-of-do (&optional limit)
   "Move to the start of the last ``unbalanced'' do."
@@ -1669,7 +1664,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.75 $"
+(defconst c++-version "$Revision: 2.76 $"
   "c++-mode version number.")
 
 (defun c++-version ()
