@@ -1459,9 +1459,6 @@ brace."
 	     (case-fold-search nil)
 	     (fullstate (c-parse-state))
 	     (state fullstate)
-	     (in-method-intro-p (and (c-major-mode-is 'objc-mode)
-				     c-method-key
-				     (looking-at c-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache inswitch-p
 	     tmpsymbol keyword injava-inher special-brace-list
@@ -1492,7 +1489,6 @@ brace."
 	  (skip-chars-forward " \t}")
 	  (skip-chars-backward " \t")
 	  (while (and state
-		      (not in-method-intro-p)
 		      (not containing-sexp))
 	    (setq containing-sexp (car state)
 		  state (cdr state))
@@ -1544,9 +1540,7 @@ brace."
 		     (setq placeholder (point)))
 		   (c-point 'boi)))
 	  (c-add-syntax 'cpp-macro-cont placeholder))
-	 ;; CASE 4: in an objective-c method intro
-	 (in-method-intro-p
-	  (c-add-syntax 'objc-method-intro (c-point 'boi)))
+	 ;; (CASE 4 has been removed)
 	 ;; CASE 5: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
@@ -1890,7 +1884,11 @@ brace."
 		   (not (looking-at "typedef[ \t\n]+"))))
 	    (goto-char placeholder)
 	    (c-add-syntax 'knr-argdecl (c-point 'boi)))
-	   ;; CASE 5I: we are at the topmost level, make sure we skip
+	   ;; CASE 5I: ObjC method definition.
+	   ((and c-method-key
+		 (looking-at c-method-key))
+	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
+	   ;; CASE 5J: we are at the topmost level, make sure we skip
 	   ;; back past any access specifiers
 	   ((progn
 	      (c-backward-syntactic-ws lim)
@@ -1922,7 +1920,7 @@ brace."
 		     (t (c-add-class-syntax 'inclass inclass-p)))
 		    ))
 	      ))
-	   ;; CASE 5J: we are at an ObjC or Java method definition
+	   ;; CASE 5K: we are at an ObjC or Java method definition
 	   ;; continuation line.
 	   ((and c-method-key
 		 (progn
@@ -1930,13 +1928,13 @@ brace."
 		   (beginning-of-line)
 		   (looking-at c-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
-	   ;; CASE 5K: we are at the first argument of a template
+	   ;; CASE 5L: we are at the first argument of a template
 	   ;; arglist that begins on the previous line.
 	   ((eq (char-before) ?<)
 	    (c-beginning-of-statement-1 lim)
 	    (c-forward-syntactic-ws)
 	    (c-add-syntax 'template-args-cont (c-point 'boi)))
-	   ;; CASE 5L: we are at a topmost continuation line
+	   ;; CASE 5M: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement-1 lim)
 	    (c-forward-syntactic-ws)
