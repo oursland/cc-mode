@@ -1599,7 +1599,9 @@ Optional prefix ARG means justify paragraph as well."
 				  (search-forward "*/" nil 'move)
 				  (forward-line 1)
 				  (point)))
-	      (fill-paragraph arg)
+	      ;; Avoids recursion
+	      (let (fill-paragraph-function)
+		(fill-paragraph arg))
 	      (save-excursion
 		;; Delete the chars we inserted to avoid clobbering
 		;; the stuff before the comment start.
