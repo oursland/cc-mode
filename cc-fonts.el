@@ -961,46 +961,45 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      (looking-at c-not-decl-init-keywords))
 	     (throw 'false-alarm t))
 
-	   ;; Set `arglist-match' and `arglist-type'.  We look at whether the
-	   ;; match token is a statement-level one since the tokens that can
-	   ;; start arglists vary more between the languages.  Look for ":"
-	   ;; for the sake of C++-style protection labels.
+	   ;; Set `arglist-match' and `arglist-type'.  Look for "<" for the
+	   ;; sake of C++-style template arglists.
 	   (setq arglist-match (char-before match-pos))
-	   (if (memq arglist-match '(nil ?{ ?} ?\; ?\) ?:))
-	       (setq arglist-match nil
-		     arglist-type nil)
+	   (if (memq arglist-match '(?\( ?, ?\[ ?<))
 
-	     ;; Find out the type of the arglist.
-	     (if (<= match-pos (point-min))
-		 (setq arglist-type 'other)
-	       (let ((type (c-get-char-property (1- match-pos) 'c-type)))
-		 (cond ((eq type 'c-decl-arg-start)
-			;; Got a cached hit in a declaration arglist.
-			(setq arglist-type 'decl))
-		       ((or (eq type 'c-<>-arg-sep)
-			    (eq arglist-match ?<))
-			;; Inside an angle bracket arglist.
-			(setq arglist-type '<>))
-		       (type
-			;; Got a cached hit in some other type of arglist.
-			(setq arglist-type 'other))
-		       ((if inside-macro
-			    (< match-pos max-type-decl-end-before-token)
-			  (< match-pos max-type-decl-end))
-			;; The point is within the range of a previously
-			;; encountered type decl expression, so the arglist is
-			;; probably one that contains declarations.  However,
-			;; if `c-recognize-paren-inits' is set it might also
-			;; be an initializer arglist.
-			(setq arglist-type 'decl)
-			;; The result of this check is cached with a char
-			;; property on the match token, so that we can look it
-			;; up again when refontifying single lines in a
-			;; multiline declaration.
-			(c-put-char-property (1- match-pos)
-					     'c-type 'c-decl-arg-start))
-		       (t
-			(setq arglist-type 'other))))))
+	       ;; Find out the type of the arglist.
+	       (if (<= match-pos (point-min))
+		   (setq arglist-type 'other)
+		 (let ((type (c-get-char-property (1- match-pos) 'c-type)))
+		   (cond ((eq type 'c-decl-arg-start)
+			  ;; Got a cached hit in a declaration arglist.
+			  (setq arglist-type 'decl))
+			 ((or (eq type 'c-<>-arg-sep)
+			      (eq arglist-match ?<))
+			  ;; Inside an angle bracket arglist.
+			  (setq arglist-type '<>))
+			 (type
+			  ;; Got a cached hit in some other type of arglist.
+			  (setq arglist-type 'other))
+			 ((if inside-macro
+			      (< match-pos max-type-decl-end-before-token)
+			    (< match-pos max-type-decl-end))
+			  ;; The point is within the range of a previously
+			  ;; encountered type decl expression, so the arglist
+			  ;; is probably one that contains declarations.
+			  ;; However, if `c-recognize-paren-inits' is set it
+			  ;; might also be an initializer arglist.
+			  (setq arglist-type 'decl)
+			  ;; The result of this check is cached with a char
+			  ;; property on the match token, so that we can look
+			  ;; it up again when refontifying single lines in a
+			  ;; multiline declaration.
+			  (c-put-char-property (1- match-pos)
+					       'c-type 'c-decl-arg-start))
+			 (t
+			  (setq arglist-type 'other)))))
+
+	     (setq arglist-match nil
+		   arglist-type nil))
 
 	   (setq at-type nil
 		 at-decl-or-cast nil
