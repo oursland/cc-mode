@@ -39,8 +39,8 @@
 ;;  NSGraphicsContext  =>  "NS", "Graphics" and "Context"
 
 ;; The subword oriented commands defined in this package recognize
-;; subwords in a nomenclature to move between subwords and to edit
-;; them as words.
+;; subwords in a nomenclature to move between them and to edit them as
+;; words.
 
 ;; In the minor mode, all common key bindings for word oriented
 ;; commands are overridden by the subword oriented commands:
@@ -69,7 +69,7 @@
 ;;
 
 ;; Acknowledgment:
-;; The regular expressions to detect subwords is mostly based on
+;; The regular expressions to detect subwords are mostly based on
 ;; the old `c-forward-into-nomenclature' originally contributed by
 ;; Terry_Glanfield dot Southern at rxuk dot xerox dot com.
 
@@ -250,7 +250,7 @@ Optional argument ARG is the same as for `downcase-word'."
   (downcase-region (point) (c-forward-subword arg)))
 
 (defun c-upcase-subword (arg)
-  "Do the same as `upcase-word' on subwords.
+  "Do the same as `upcase-word' but on subwords.
 See the command `c-subword-move-mode' for a description of subwords.
 Optional argument ARG is the same as for `upcase-word'."
   (interactive "p")
