@@ -543,7 +543,7 @@ appended."
 
 ;; Statement keywords followed by an assembler expression.
 (c-lang-defconst c-asm-stmt-kwds
-  (c c++) '("asm" "__asm__"))
+  (c c++) '("asm" "__asm__")) ;; Not standard, but common.
 
 ;; Regexp matching the start of an assembler statement.  Nil in
 ;; languages that doesn't support that.
@@ -555,8 +555,11 @@ appended."
 ;; Keywords introducing labels in blocks.
 (c-lang-defconst c-label-kwds (c c++ java pike) '("case" "default"))
 
-;; Keywords followed by a label or a label reference.
-(c-lang-defconst c-before-label-kwds (c c++ java pike) '("case" "goto"))
+;; Keywords that may be followed by a label or a label reference.
+(c-lang-defconst c-before-label-kwds
+  (c c++ java pike) '("case" "goto")
+  (java pike) (append '("break" "continue")
+		      (c-lang-var c-before-label-kwds)))
 
 ;; Regexp matching any keyword that introduces a label.
 (c-lang-defconst c-label-kwds-regexp
