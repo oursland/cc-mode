@@ -6,7 +6,7 @@ int foo()
 	       printf ("hmm\n");
   x:
   foo: if (a)
-      printf ("hmm\n");		// Ought to compensate for the label.
+	printf ("hmm\n");
   bar: b=
-      printf ("hmm\n");		// Same here.
+	printf ("hmm\n");
 }
