@@ -341,22 +341,6 @@ the brace is inserted inside a literal."
 	      (progn
 		(delete-region mbeg mend)
 		(insert "} else {")))
-	  ;; clean up brace-elseif-brace
-	  (if (and c-auto-newline
-		   (memq 'brace-elseif-brace c-cleanup-list)
-		   (eq last-command-char ?\{)
-		   (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*" nil t)
-		   (save-excursion
-		     (goto-char (match-end 0))
-		     (c-safe (c-forward-sexp 1))
-		     (skip-chars-forward " \t\n")
-		     (setq mbeg (match-beginning 0)
-			   mend (match-end 0))
-		     (= here (1+ (point))))
-		   (not (c-in-literal)))
-	      (progn
-		(delete-region mbeg mend)
-		(insert "} else if ")))
 	  (goto-char (- (point-max) pos))
 	  )
 	;; does a newline go after the brace?
@@ -587,6 +571,11 @@ a literal, in which case the line will not be re-indented."
 
 (defun c-electric-paren (arg)
   "Insert a parenthesis.
+
+If the auto-newline feature is turned on, as evidenced by the \"/a\"
+or \"/ah\" string on the mode line, some newline cleanups are done if
+appropriate.
+
 Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the colon, or
 the colon is inserted inside a literal."
@@ -605,6 +594,39 @@ the colon is inserted inside a literal."
 	     blink-paren-function)
 	(self-insert-command (prefix-numeric-value arg))
 	(c-indent-line)
+	(when c-auto-newline
+	  ;; Do all appropriate clean ups
+	  (let ((here (point))
+		(pos (- (point-max) (point)))
+		mbeg mend)
+	    ;; clean up brace-elseif-brace
+	    (if (and (memq 'brace-elseif-brace c-cleanup-list)
+		     (eq last-command-char ?\()
+		     (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*("
+					 nil t)
+		     (save-excursion
+		       (setq mbeg (match-beginning 0)
+			     mend (match-end 0))
+		       (= mend here))
+		     (not (c-in-literal)))
+		(progn
+		  (delete-region mbeg mend)
+		  (insert "} else if (")))
+	    ;; clean up brace-catch-brace in Java mode
+	    (if (and (eq major-mode 'java-mode)
+		     (memq 'brace-catch-brace c-cleanup-list)
+		     (eq last-command-char ?\()
+		     (re-search-backward "}[ \t\n]*catch[ \t\n]*(" nil t)
+		     (save-excursion
+		       (setq mbeg (match-beginning 0)
+			     mend (match-end 0))
+		       (= mend here))
+		     (not (c-in-literal)))
+		(progn
+		  (delete-region mbeg mend)
+		  (insert "} catch (")))
+	    (goto-char (- (point-max) pos))
+	    ))
 	(funcall old-blink-paren)))))
 
 
