@@ -420,7 +420,7 @@
   ;; Do not change the indentation of the current line
   (save-excursion
     (back-to-indentation)
-    (current-column)))
+    (- (current-column) (c-langelem-col langelem))))
 
 
 
