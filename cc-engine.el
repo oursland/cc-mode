@@ -2650,25 +2650,38 @@ comment at the start of cc-engine.el for more info."
   ;;(message "c-syntactic-re-search-forward %s %s %S" (point) bound regexp)
 
   (let ((start (point))
-	(pos (point))
+	tmp
+	;; Start position for the last search.
+	search-pos
+	;; The `parse-partial-sexp' state between the start position
+	;; and the point.
+	state
+	;; The current position after the last state update.  The next
+	;; `parse-partial-sexp' continues from here.
+	(state-pos (point))
+	;; The position at which to check the state and the state there.
+	check-pos check-state
+	;; Last position known to end a token.
 	(last-token-end-pos (point-min))
-	match-pos found state check-pos check-state tmp)
+	;; Set when a valid match is found.
+	found)
 
     (condition-case err
 	(while
 	    (and
-	     (re-search-forward regexp bound noerror)
+	     (progn
+	       (setq search-pos (point))
+	       (re-search-forward regexp bound noerror))
 
 	     (progn
-	       (setq match-pos (point)
-		     state (parse-partial-sexp
-			    pos (match-beginning 0) paren-level nil state)
-		     pos (point))
+	       (setq state (parse-partial-sexp
+			    state-pos (match-beginning 0) paren-level nil state)
+		     state-pos (point))
 	       (if (setq check-pos (and lookbehind-submatch
 					(match-end lookbehind-submatch)))
 		   (setq check-state (parse-partial-sexp
-				      pos check-pos paren-level nil state))
-		 (setq check-pos pos
+				      state-pos check-pos paren-level nil state))
+		 (setq check-pos state-pos
 		       check-state state))
 
 	       ;; If we got a look behind subexpression and get an
@@ -2685,14 +2698,14 @@ comment at the start of cc-engine.el for more info."
 		 ;; Match inside a string.
 		 (if (or lookbehind-submatch
 			 (not (integerp tmp)))
-		     (goto-char (min (1+ pos) bound))
+		     (goto-char (min (1+ state-pos) bound))
 		   ;; Skip to the end of the string before continuing.
 		   (let ((ender (make-string 1 tmp)) (continue t))
 		     (while (if (search-forward ender bound noerror)
 				(progn
 				  (setq state (parse-partial-sexp
-					       pos (point) nil nil state)
-					pos (point))
+					       state-pos (point) nil nil state)
+					state-pos (point))
 				  (elt state 3))
 			      (setq continue nil)))
 		     continue)))
@@ -2725,11 +2738,9 @@ comment at the start of cc-engine.el for more info."
 				 (c-end-of-current-token last-token-end-pos))
 			       (setq last-token-end-pos (point))))))
 		 ;; Match inside a token.
-		 (cond ((<= (point) bound)
-			(goto-char (min (1+ pos) bound))
-			t)
+		 (cond ((<= (point) bound) t)
 		       (noerror nil)
-		       (t (signal 'search-failed "end of token"))))
+		       (t (signal 'search-failed '("end of token")))))
 
 		((save-excursion
 		   (save-match-data
@@ -2738,45 +2749,54 @@ comment at the start of cc-engine.el for more info."
 		 (c-end-of-macro)
 		 (cond ((<= (point) bound) t)
 		       (noerror nil)
-		       (t (signal 'search-failed "end of macro"))))
+		       (t (signal 'search-failed '("end of macro")))))
 
 		((and paren-level
 		      (/= (setq tmp (car check-state)) 0))
 		 (if (> tmp 0)
 		     ;; Match inside a nested paren sexp.
-		     (if lookbehind-submatch
-			 (goto-char (min (1+ pos) bound))
-		       ;; Skip out of the paren quickly.
-		       (setq state (parse-partial-sexp pos bound 0 nil state)
-			     pos (point)))
-		   ;; Have exited the current paren sexp.  The
-		   ;; `parse-partial-sexp' above has left us just after the
-		   ;; closing paren in this case.  Just make
-		   ;; `re-search-forward' above fail in the appropriate way;
-		   ;; we'll adjust the leave off point below if necessary.
-		   (setq bound (point))))
+		     (or lookbehind-submatch
+			 ;; Skip out of the paren quickly.
+			 (setq state (parse-partial-sexp state-pos bound 0 nil state)
+			       state-pos (point)))
+		   ;; Have exited the current paren sexp.
+		   ;; `parse-partial-sexp' above has left us just
+		   ;; after the closing paren in this case.
+		   (if noerror
+		       nil
+		     (signal 'search-failed '("end of containing sexp")))))
 
 		(t
 		 ;; A real match.
 		 (setq found t)
-		 nil)))))
+		 nil)))
+
+	     ;; Should loop now to search again, but take care to
+	     ;; avoid looping on the same spot.
+	     (or (/= search-pos (point))
+		 (if (= (point) bound)
+		     (if noerror
+			 nil
+		       (signal 'search-failed (list regexp)))
+		   (forward-char)
+		   t))))
 
       (error
        (goto-char start)
        (signal (car err) (cdr err))))
 
-    ;;(message "c-syntactic-re-search-forward done %s" (or match-pos (point)))
+    ;;(message "c-syntactic-re-search-forward done %s" (or (match-end 0) (point)))
 
     (if found
 	(progn
-	  (goto-char match-pos)
-	  match-pos)
+	  (goto-char (match-end 0))
+	  (match-end 0))
 
       ;; Search failed.  Set point as appropriate.
       (cond ((eq noerror t)
 	     (goto-char start))
 	    (paren-level
-	     (if (eq (car (parse-partial-sexp pos bound -1 nil state)) -1)
+	     (if (eq (car (parse-partial-sexp state-pos bound -1 nil state)) -1)
 		 (backward-char)))
 	    (t
 	     (goto-char bound)))
