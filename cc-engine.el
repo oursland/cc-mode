@@ -3100,11 +3100,23 @@ isn't moved."
 	      (c-add-stmt-syntax 'defun-close t lim state))
 	     ;; CASE 16C: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
-	     ;; block-close.
-	     ((and (not inenclosing-p)
-		   lim)
-	      (c-backward-to-block-anchor lim)
-	      (c-add-stmt-syntax 'block-close t lim state))
+	     ;; block-close.  C.f. case 17H.
+	     ((and (not inenclosing-p) lim)
+	      ;; If the block is preceded by a case/switch label on
+	      ;; the same line, we anchor at the first preceding label
+	      ;; at boi.  The default handling in c-add-stmt-syntax is
+	      ;; really fixes it better, but we do like this to keep
+	      ;; the indentation compatible with version 5.28 and
+	      ;; earlier.
+	      (while (and (/= (setq placeholder (point)) (c-point 'boi))
+			  (eq (c-beginning-of-statement-1 lim) 'label)))
+	      (goto-char placeholder)
+	      (if (looking-at c-switch-label-key)
+		  (c-add-syntax 'block-close (point))
+		(goto-char containing-sexp)
+		;; c-backward-to-block-anchor not necessary here; those
+		;; situations are handled in case 16E above.
+		(c-add-stmt-syntax 'block-close t lim state)))
 	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
@@ -3215,10 +3227,22 @@ isn't moved."
 	    (if (/= (point) containing-sexp)
 		(goto-char placeholder))
 	    (c-add-stmt-syntax 'defun-block-intro t lim state))
-	   ;; CASE 17H: first statement in a block
+	   ;; CASE 17H: First statement in a block.  C.f. case 16C.
 	   (t
-	    (c-backward-to-block-anchor lim)
-	    (c-add-stmt-syntax 'statement-block-intro t lim state)
+	    ;; If the block is preceded by a case/switch label on the
+	    ;; same line, we anchor at the first preceding label at
+	    ;; boi.  The default handling in c-add-stmt-syntax is
+	    ;; really fixes it better, but we do like this to keep the
+	    ;; indentation compatible with version 5.28 and earlier.
+	    (while (and (/= (setq placeholder (point)) (c-point 'boi))
+			(eq (c-beginning-of-statement-1 lim) 'label)))
+	    (goto-char placeholder)
+	    (if (looking-at c-switch-label-key)
+		(c-add-syntax 'statement-block-intro (point))
+	      (goto-char containing-sexp)
+	      ;; c-backward-to-block-anchor not necessary here; those
+	      ;; situations are handled in case 17I above.
+	      (c-add-stmt-syntax 'statement-block-intro t lim state))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ))
