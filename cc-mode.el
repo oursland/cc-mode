@@ -88,8 +88,6 @@
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-(defvar c-inhibit-startup-warnings-p nil
-  "*If non-nil, inhibits start up compatibility warnings.")
 (defvar c-strict-syntax-p nil
   "*If non-nil, all syntactic symbols must be found in `c-offsets-alist'.
 If the syntactic symbol for a particular line does not match a symbol
@@ -716,129 +714,42 @@ The list of variables to buffer localize are:
 
 ;; figure out what features this Emacs has
 (defconst c-emacs-features
-  (let ((major (and (boundp 'emacs-major-version)
-		    emacs-major-version))
-	(minor (and (boundp 'emacs-minor-version)
-		    emacs-minor-version))
-	(re-suite 'old-re)
-	flavor comments infodock-p)
-    ;; figure out version numbers if not already discovered
-    (and (or (not major) (not minor))
-	 (string-match "\\([0-9]+\\).\\([0-9]+\\)" emacs-version)
-	 (setq major (string-to-int (substring emacs-version
-					       (match-beginning 1)
-					       (match-end 1)))
-	       minor (string-to-int (substring emacs-version
-					       (match-beginning 2)
-					       (match-end 2)))))
-    (if (not (and major minor))
-	(error "Cannot figure out the major and minor version numbers."))
-    ;; calculate the major version
-    (cond
-     ((= major 18) (setq major 'v18))	;Emacs 18
-     ((= major 4)  (setq major 'v18))	;Epoch 4
-     ((= major 19) (setq major 'v19	;Emacs 19
-			 flavor (if (or (string-match "Lucid" emacs-version)
-					(string-match "XEmacs" emacs-version))
-				    'XEmacs 'FSF)
-			 infodock-p (boundp 'infodock-version)))
-     ((= major 20) (setq major 'v20	;XEmacs 20
-			 flavor 'XEmacs))
-     ;; I don't know
-     (t (error "Cannot recognize major version number: %s" major)))
-    ;; Regular expression suites...
-    (if (or (eq major 'v20)
-	    (and (eq major 'v19)
-		 (or (and (eq flavor 'XEmacs) (>= minor 14))
-		     (and (eq flavor 'FSF) (>= minor 30)))))
-	(setq re-suite 'new-re))
-    ;; XEmacs 19 uses 8-bit modify-syntax-entry flags, as do all
-    ;; patched Emacs 19, Emacs 18, Epoch 4's.  Only Emacs 19 uses a
-    ;; 1-bit flag.  Let's be as smart as we can about figuring this
-    ;; out.
-    (if (or (eq major 'v20) (eq major 'v19))
-	(let ((table (copy-syntax-table)))
-	  (modify-syntax-entry ?a ". 12345678" table)
-	  (cond
-	   ;; XEmacs pre 20 and Emacs pre 19.30 use vectors for syntax tables.
-	   ((vectorp table)
-	    (if (= (logand (lsh (aref table ?a) -16) 255) 255)
-		(setq comments '8-bit)
-	      (setq comments '1-bit)))
-	   ;; XEmacs 20 is known to be 8-bit
-	   ((eq flavor 'XEmacs) (setq comments '8-bit))
-	   ;; Emacs 19.30 and beyond are known to be 1-bit
-	   ((eq flavor 'FSF) (setq comments '1-bit))
-	   ;; Don't know what this is
-	   (t (error "Couldn't figure out syntax table format."))
-	   ))
-      ;; Emacs 18 has no support for dual comments
-      (setq comments 'no-dual-comments))
-    ;; lets do some minimal sanity checking.
-    (if (and (or
-	      ;; Lucid Emacs before 19.6 had bugs
-	      (and (eq major 'v19) (eq flavor 'XEmacs) (< minor 6))
-	      ;; Emacs 19 before 19.21 has known bugs
-	      (and (eq major 'v19) (eq flavor 'FSF) (< minor 21)))
-	     (not c-inhibit-startup-warnings-p))
-	(with-output-to-temp-buffer "*cc-mode warnings*"
-	  (print (format
-"The version of Emacs that you are running, %s,
-has known bugs in its syntax.c parsing routines which will affect the
-performance of CC Mode. You should strongly consider upgrading to the
-latest available version.  CC Mode may continue to work, after a
-fashion, but strange indentation errors could be encountered."
-		     emacs-version))))
-    ;; Emacs 18, with no patch is not too good
-    (if (and (eq major 'v18) (eq comments 'no-dual-comments)
-	     (not c-inhibit-startup-warnings-p))
-	(with-output-to-temp-buffer "*cc-mode warnings*"
-	  (print (format
-"The version of Emacs 18 you are running, %s,
-has known deficiencies in its ability to handle dual C++ comments,
-i.e. C++ line style comments and C block style comments.  This will
-not be much of a problem for you if you are only editing C code, but
-if you are doing much C++ editing, you should strongly consider
-upgrading to one of the latest Emacs 19's.  In Emacs 18, you may also
-experience performance degradations. Emacs 19 has some new built-in
-routines which will speed things up for you.
-
-Because of these inherent problems, CC Mode is no longer being
-actively maintained for Emacs 18, however, until you can upgrade to
-Emacs 19, you may want to look at cc-mode-18.el in the CC Mode
-distribution.  THIS FILE IS COMPLETELY UNSUPPORTED!  If you use it,
-you are on your own, although patch contributions will be folded into
-the main release."
-			    emacs-version))))
-    ;; Emacs 18 with the syntax patches are no longer supported
-    (if (and (eq major 'v18) (not (eq comments 'no-dual-comments))
-	     (not c-inhibit-startup-warnings-p))
-	(with-output-to-temp-buffer "*cc-mode warnings*"
-	  (print (format
-"You are running a syntax patched Emacs 18 variant.  While this should
-work for you, you may want to consider upgrading to Emacs 19.  The
-syntax patches are no longer supported either for syntax.c or
-CC Mode."))))
+  (let ((infodock-p (boundp 'infodock-version))
+	(comments
+	 ;; XEmacs 19 and beyond use 8-bit modify-syntax-entry flags.
+	 ;; Emacs 19 uses a 1-bit flag.  We will have to set up our
+	 ;; syntax tables differently to handle this.
+	 (let ((table (copy-syntax-table))
+	       entry)
+	   (modify-syntax-entry ?a ". 12345678" table)
+	   (cond
+	    ;; XEmacs 19
+	    ((vectorp table) (setq entry (aref table ?a)))
+	    ;; XEmacs 20
+	    ((fboundp 'get-char-table) (setq entry (get-char-table ?a table)))
+	    ;; Emacs 19
+	    ((and (fboundp 'char-table-p)
+		  (char-table-p table))
+	     (setq entry (car (char-table-range table [?a]))))
+	    ;; incompatible
+	    (t (error "CC Mode is incompatible with this version of Emacs")))
+	   (if (= (logand (lsh entry -16) 255) 255)
+	       '8-bit
+	     '1-bit))))
     (if infodock-p
-	(list major comments re-suite 'infodock)
-      (list major comments re-suite)))
+	(list comments 'infodock)
+      (list comments)))
   "A list of features extant in the Emacs you are using.
 There are many flavors of Emacs out there, each with different
 features supporting those needed by CC Mode.  Here's the current
 supported list, along with the values for this variable:
 
- Emacs 18/Epoch 4:           (v18 no-dual-comments RS)
- Emacs 18/Epoch 4 (patch2):  (v18 8-bit RS)
- XEmacs 19:                  (v19 8-bit RS)
- XEmacs 20:                  (v20 8-bit RS)
- Emacs 19:                   (v19 1-bit RS)
-
-RS is the regular expression suite to use.  XEmacs versions after
-19.13, and Emacs versions after 19.29 use the `new-re' regex suite.
-All other Emacsen use the `old-re' suite.
+ XEmacs 19:                  (8-bit)
+ XEmacs 20:                  (8-bit)
+ Emacs 19:                   (1-bit)
 
 Infodock (based on XEmacs) has an additional symbol on this list:
-'infodock")
+'infodock.")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in c++-mode buffers.")
@@ -963,86 +874,45 @@ Infodock (based on XEmacs) has an additional symbol on this list:
        (not (boundp 'mode-popup-menu)))
       (define-key c-mode-map 'button3 'c-popup-menu)))
 
+(defsubst c-make-inherited-keymap ()
+  (let ((map (make-sparse-keymap)))
+    (cond
+     ;; XEmacs 19 & 20
+     ((fboundp 'set-keymap-parents)
+      (set-keymap-parents c++-mode-map c-mode-map))
+     ;; Emacs 19
+     ((fboundp 'set-keymap-parent)
+      (set-keymap-parent c++-mode-map c-mode-map))
+     ;; incompatible
+     (t (error "CC Mode is incompatible with this version of Emacs")))
+    map))
+
 (defvar c++-mode-map ()
   "Keymap used in c++-mode buffers.")
 (if c++-mode-map
-    ()
-  ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (or
-       (memq 'v19 c-emacs-features)
-       (memq 'v20 c-emacs-features))
-      ;; XEmacs and Emacs 19 do this differently
-      (cond
-       ;; XEmacs 19.13
-       ((fboundp 'set-keymap-parents)
-	(setq c++-mode-map (make-sparse-keymap))
-	(set-keymap-parents c++-mode-map c-mode-map))
-       ((fboundp 'set-keymap-parent)
-	(setq c++-mode-map (make-sparse-keymap))
-	(set-keymap-parent c++-mode-map c-mode-map))
-       (t (setq c++-mode-map (cons 'keymap c-mode-map))))
-    ;; Do it the hard way for Emacs 18 -- given by JWZ
-    (setq c++-mode-map (nconc (make-sparse-keymap) c-mode-map)))
+    nil
+  (setq c++-mode-map (c-make-inherited-keymap))
   ;; add bindings which are only useful for C++
   (define-key c++-mode-map "\C-c:"  'c-scope-operator)
   (define-key c++-mode-map "/"      'c-electric-slash)
   (define-key c++-mode-map "<"      'c-electric-lt-gt)
-  (define-key c++-mode-map ">"      'c-electric-lt-gt)
-  ;; Emacs 19 defines menus in the mode map. This call will return
-  ;; t on Emacs 19, otherwise no-op and return nil.
-;  (c-mode-fsf-menu "C++" c++-mode-map)
-  )
+  (define-key c++-mode-map ">"      'c-electric-lt-gt))
 
 (defvar objc-mode-map ()
   "Keymap used in objc-mode buffers.")
 (if objc-mode-map
-    ()
-  ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
-      ;; XEmacs and Emacs 19 do this differently
-      (cond
-       ;; XEmacs 19.13
-       ((fboundp 'set-keymap-parents)
-	(setq objc-mode-map (make-sparse-keymap))
-	(set-keymap-parents objc-mode-map c-mode-map))
-       ((fboundp 'set-keymap-parent)
-	(setq objc-mode-map (make-sparse-keymap))
-	(set-keymap-parent objc-mode-map c-mode-map))
-       (t (setq objc-mode-map (cons 'keymap c-mode-map))))
-    ;; Do it the hard way for Emacs 18 -- given by JWZ
-    (setq objc-mode-map (nconc (make-sparse-keymap) c-mode-map)))
+    nil
+  (setq objc-mode-map (c-make-inherited-keymap))
   ;; add bindings which are only useful for Objective-C
-  (define-key objc-mode-map "/"      'c-electric-slash)
-  ;; Emacs 19 defines menus in the mode map. This call will return
-  ;; t on Emacs 19, otherwise no-op and return nil.
-;  (c-mode-fsf-menu "ObjC" objc-mode-map)
-  )
+  (define-key objc-mode-map "/"      'c-electric-slash))
 
 (defvar java-mode-map ()
   "Keymap used in java-mode buffers.")
 (if java-mode-map
-    ()
-  ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
-      ;; XEmacs and Emacs 19 do this differently
-      (cond
-       ;; XEmacs 19.13
-       ((fboundp 'set-keymap-parents)
-	(setq java-mode-map (make-sparse-keymap))
-	(set-keymap-parents java-mode-map c-mode-map))
-       ((fboundp 'set-keymap-parent)
-	(setq java-mode-map (make-sparse-keymap))
-	(set-keymap-parent java-mode-map c-mode-map))
-       (t (setq java-mode-map (cons 'keymap c-mode-map)))
-       )
-    ;; Do it the hard way for Emacs 18 -- given by JWZ
-    (setq java-mode-map (nconc (make-sparse-keymap) c-mode-map)))
+    nil
+  (setq java-mode-map (c-make-inherited-keymap))
   ;; add bindings which are only useful for Java
-  (define-key java-mode-map "/"      'c-electric-slash)
-  ;; Emacs 19 defines menus in the mode map. This call will return t
-  ;; on Emacs 19, otherwise no-op and return nil.
-;  (c-mode-fsf-menu "Java" java-mode-map)
-  )
+  (define-key java-mode-map "/"      'c-electric-slash))
 
 (defun c-populate-syntax-table (table)
   ;; Populate the syntax TABLE
@@ -1062,20 +932,22 @@ Infodock (based on XEmacs) has an additional symbol on this list:
 (defun c-setup-dual-comments (table)
   ;; Set up TABLE to handle block and line style comments
   (cond
+   ;; XEmacs 19 & 20
    ((memq '8-bit c-emacs-features)
-    ;; XEmacs 19 has the best implementation
     (modify-syntax-entry ?/  ". 1456" table)
     (modify-syntax-entry ?*  ". 23"   table)
     (modify-syntax-entry ?\n "> b"    table)
     ;; Give CR the same syntax as newline, for selective-display
     (modify-syntax-entry ?\^m "> b"    table))
+   ;; Emacs 19
    ((memq '1-bit c-emacs-features)
-    ;; Emacs 19 does things differently, but we can work with it
     (modify-syntax-entry ?/  ". 124b" table)
     (modify-syntax-entry ?*  ". 23"   table)
     (modify-syntax-entry ?\n "> b"    table)
     ;; Give CR the same syntax as newline, for selective-display
     (modify-syntax-entry ?\^m "> b"   table))
+   ;; incompatible
+   (t (error "CC Mode is incompatible with this version of Emacs"))
    ))
 
 (defvar c-mode-syntax-table nil
@@ -1495,9 +1367,7 @@ For use with the variable `java-mode-hook'."
 	(make-local-variable 'fill-paragraph-function)
 	(setq fill-paragraph-function 'c-fill-paragraph)))
   ;; now set their values
-  (setq paragraph-start (if (memq 'new-re c-emacs-features)
-			    (concat page-delimiter "\\|$")
-			  (concat "^$\\|" page-delimiter))
+  (setq paragraph-start (concat page-delimiter "\\|$")
 	paragraph-separate paragraph-start
 	paragraph-ignore-fill-prefix t
 	require-final-newline t
@@ -1508,11 +1378,7 @@ For use with the variable `java-mode-hook'."
 	outline-level 'c-outline-level
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *"
-	;; For all but XEmacs 19.13, the default should be nil
-	adaptive-fill-regexp (and (memq 'v19 c-emacs-features)
-				  (= emacs-minor-version 13)
-				  "[ \t]*\\([#;>*]+ +\\)?")
-	)
+	adaptive-fill-regexp nil)
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
@@ -1773,12 +1639,7 @@ global and affect all future `c-mode' buffers."
 	(if c-auto-newline
 	    (if c-hungry-delete-key "/ah" "/a")
 	  (if c-hungry-delete-key "/h" nil)))
-  ;; updates the modeline for all Emacsen
-  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
-      (if (boundp 'redraw-modeline)
-	  (redraw-modeline)
-	(force-mode-line-update))
-    (set-buffer-modified-p (buffer-modified-p))))
+  (force-mode-line-update))
 
 (defun c-calculate-state (arg prevstate)
   ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
@@ -2362,10 +2223,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 		    (let* ((syntax (c-guess-basic-syntax))
 			   (len (length syntax))
 			   (ic (format "%s" (car (nth (1- len) syntax)))))
-		      (if (or (memq 'v19 c-emacs-features)
-			      (memq 'v20 c-emacs-features))
-			  (cons ic 0)
-			ic))
+		      (cons ic 0))
 		    )))
 	  (offset (c-read-offset langelem)))
      (list langelem offset current-prefix-arg)))
@@ -2488,10 +2346,7 @@ Optional prefix ARG means justify paragraph as well."
 	    (skip-chars-forward " \t\n")
 	    (and (looking-at comment-start-skip)
 		 (setq comment-start-place (point)))))
-	 (re1 (if (memq 'new-re c-emacs-features)
-		  "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"
-		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
-	 )
+	 (re1 "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
     (if (and c-double-slash-is-comments-p
 	     (save-excursion
 	       (beginning-of-line)
@@ -5395,54 +5250,53 @@ command to conveniently insert and align the necessary backslashes."
 ;; set up bc warnings for obsolete variables, but for now lets not
 ;; worry about obsolete functions.  maybe later some will be important
 ;; to flag
-(and (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
-     (let* ((na "Nothing appropriate.")
-	    (vars
-	     (list
-	      (cons 'c++-c-mode-syntax-table 'c-mode-syntax-table)
-	      (cons 'c++-tab-always-indent 'c-tab-always-indent)
-	      (cons 'c++-always-arglist-indent-p na)
-	      (cons 'c++-block-close-brace-offset 'c-offsets-alist)
-	      (cons 'c++-paren-as-block-close-p na)
-	      (cons 'c++-continued-member-init-offset 'c-offsets-alist)
-	      (cons 'c++-member-init-indent 'c-offsets-alist)
-	      (cons 'c++-friend-offset na)
-	      (cons 'c++-access-specifier-offset 'c-offsets-alist)
-	      (cons 'c++-empty-arglist-indent 'c-offsets-alist)
-	      (cons 'c++-comment-only-line-offset 'c-comment-only-line-offset)
-	      (cons 'c++-C-block-comments-indent-p na)
-	      (cons 'c++-cleanup-list 'c-cleanup-list)
-	      (cons 'c++-hanging-braces 'c-hanging-braces-alist)
-	      (cons 'c++-hanging-member-init-colon 'c-hanging-colons-alist)
-	      (cons 'c++-auto-hungry-initial-state
-		    "Use `c-auto-newline' and `c-hungry-delete-key' instead.")
-	      (cons 'c++-auto-hungry-toggle na)
-	      (cons 'c++-relative-offset-p na)
-	      (cons 'c++-special-indent-hook 'c-special-indent-hook)
-	      (cons 'c++-delete-function 'c-delete-function)
-	      (cons 'c++-electric-pound-behavior 'c-electric-pound-behavior)
-	      (cons 'c++-hungry-delete-key 'c-hungry-delete-key)
-	      (cons 'c++-auto-newline 'c-auto-newline)
-	      (cons 'c++-match-header-strongly na)
-	      (cons 'c++-defun-header-strong-struct-equivs na)
-	      (cons 'c++-version 'c-version)
-	      (cons 'c++-mode-help-address 'c-mode-help-address)
-	      (cons 'c-indent-level 'c-basic-offset)
-	      (cons 'c-brace-imaginary-offset na)
-	      (cons 'c-brace-offset 'c-offsets-alist)
-	      (cons 'c-argdecl-indent 'c-offsets-alist)
-	      (cons 'c-label-offset 'c-offsets-alist)
-	      (cons 'c-continued-statement-offset 'c-offsets-alist)
-	      (cons 'c-continued-brace-offset 'c-offsets-alist)
-	      (cons 'c-default-macroize-column 'c-backslash-column)
-	      (cons 'c++-default-macroize-column 'c-backslash-column)
-	      (cons 'c-block-comments-indent-p na)
-	      )))
-       (mapcar
-	(function
-	 (lambda (elt)
-	   (make-obsolete-variable (car elt) (cdr elt))))
-	vars)))
+(let* ((na "Nothing appropriate.")
+       (vars
+	(list
+	 (cons 'c++-c-mode-syntax-table 'c-mode-syntax-table)
+	 (cons 'c++-tab-always-indent 'c-tab-always-indent)
+	 (cons 'c++-always-arglist-indent-p na)
+	 (cons 'c++-block-close-brace-offset 'c-offsets-alist)
+	 (cons 'c++-paren-as-block-close-p na)
+	 (cons 'c++-continued-member-init-offset 'c-offsets-alist)
+	 (cons 'c++-member-init-indent 'c-offsets-alist)
+	 (cons 'c++-friend-offset na)
+	 (cons 'c++-access-specifier-offset 'c-offsets-alist)
+	 (cons 'c++-empty-arglist-indent 'c-offsets-alist)
+	 (cons 'c++-comment-only-line-offset 'c-comment-only-line-offset)
+	 (cons 'c++-C-block-comments-indent-p na)
+	 (cons 'c++-cleanup-list 'c-cleanup-list)
+	 (cons 'c++-hanging-braces 'c-hanging-braces-alist)
+	 (cons 'c++-hanging-member-init-colon 'c-hanging-colons-alist)
+	 (cons 'c++-auto-hungry-initial-state
+	       "Use `c-auto-newline' and `c-hungry-delete-key' instead.")
+	 (cons 'c++-auto-hungry-toggle na)
+	 (cons 'c++-relative-offset-p na)
+	 (cons 'c++-special-indent-hook 'c-special-indent-hook)
+	 (cons 'c++-delete-function 'c-delete-function)
+	 (cons 'c++-electric-pound-behavior 'c-electric-pound-behavior)
+	 (cons 'c++-hungry-delete-key 'c-hungry-delete-key)
+	 (cons 'c++-auto-newline 'c-auto-newline)
+	 (cons 'c++-match-header-strongly na)
+	 (cons 'c++-defun-header-strong-struct-equivs na)
+	 (cons 'c++-version 'c-version)
+	 (cons 'c++-mode-help-address 'c-mode-help-address)
+	 (cons 'c-indent-level 'c-basic-offset)
+	 (cons 'c-brace-imaginary-offset na)
+	 (cons 'c-brace-offset 'c-offsets-alist)
+	 (cons 'c-argdecl-indent 'c-offsets-alist)
+	 (cons 'c-label-offset 'c-offsets-alist)
+	 (cons 'c-continued-statement-offset 'c-offsets-alist)
+	 (cons 'c-continued-brace-offset 'c-offsets-alist)
+	 (cons 'c-default-macroize-column 'c-backslash-column)
+	 (cons 'c++-default-macroize-column 'c-backslash-column)
+	 (cons 'c-block-comments-indent-p na)
+	 )))
+  (mapcar
+   (function
+    (lambda (elt)
+      (make-obsolete-variable (car elt) (cdr elt))))
+   vars))
 
 (provide 'cc-mode)
 ;;; cc-mode.el ends here
