@@ -714,7 +714,9 @@ This function does not do any hidden buffer changes."
      (def-edebug-spec c-skip-ws-forward t)
      (def-edebug-spec c-skip-ws-backward t)
      (def-edebug-spec c-major-mode-is t)
+     (def-edebug-spec c-put-char-property t)
      (def-edebug-spec c-get-char-property t)
+     (def-edebug-spec c-clear-char-property t)
      (def-edebug-spec c-clear-char-properties t)
      (def-edebug-spec cc-eval-when-compile t)))
 
