@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.256 $
-;; Last Modified:   $Date: 1993-01-13 03:39:02 $
+;; Version:         $Revision: 2.257 $
+;; Last Modified:   $Date: 1993-01-13 04:22:15 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -69,28 +69,35 @@
 
 ;; Important Note about Escapes in Comments, and Performance
 ;; =========================================================
-;; You will notice that certain characters, when typed in comment
+;; You may notice that certain characters, when typed in comment
 ;; regions, get escaped with a backslash.  This is a workaround for an
-;; emacs bug.  In brief, GNU emacs 18 and its derivatives cannot
-;; handle more than 1 comment style per mode, and as you know, C++
-;; supports 2 orthogonal comment styles.  Thus emacs' syntax parsing
-;; code will sometimes choke on unbalanced parentheses and single
+;; emacs bug. In brief, syntax parsing in emacs 18 and derivatives is
+;; broken in 2 ways: syntax tables are not rich enough to support more
+;; than 1 comment style per mode (as C++ requires), and backward
+;; parsing over comment regions is not perfect.  The result is that
+;; emacs will sometimes choke on unbalanced parentheses and single
 ;; quotes in comments.  Please do a "C-h v c++-untame-characters" for
-;; more information. Also note that there are patches on the beta
-;; access site to fix this problem for GNU 18.59 and Lemacs 19.2. The
-;; patches aren't perfect, but they do eliminate many of the most
-;; troublesome bugs.
+;; more information.
 ;;
-;; This problem affects both the accuracy and performance of c++-mode
+;; These problems affect both the accuracy and performance of c++-mode
 ;; because some parsing must be performed in elisp instead of relying
-;; on the C primitives.  In general I've chosen accuracy over
-;; performance, but have worked hard to give acceptable performance in
-;; all but the most uncommon situations. You will most likely notice
-;; c++-mode becoming slow when you're editing a file of preprocessor
+;; on the C primitives. In general, I've chosen accuracy over
+;; performance, but have worked hard to give moderately acceptable
+;; speed in all but the most uncommon situations. You will most likely
+;; notice c++-mode slowing when you're editing a file of preprocessor
 ;; commands, or inside long functions or class definitions.
-;; Optimization is an ongoing concern. If you install the patches to
-;; emacs, c++-mode will automatically use the faster and more accurate
-;; parsing algorithms.
+;; Optimization is an ongoing concern, but the real solution is to fix
+;; emacs.
+;;
+;; Patches to Lucid Emacs 19 have been submitted and may possibly show
+;; up in a future release of that editor.  Some patches for GNU emacs
+;; 18 have been released on the beta site, but they are not up-to-date
+;; with the proposed Lemacs patches. I probably won't re-engineer the
+;; GNU patches, but if you do, please send them to me so I can make
+;; them available to other users via the beta site. If you have the
+;; patches installed, c++-mode will automatically recognize this and
+;; use the faster built-in primitives instead, and no characters will
+;; be tamed (ie no backslashes in comment regions).
 
 ;; Beta Testers Mailing List
 ;; =========================
@@ -123,27 +130,21 @@
 
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
-;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-13 03:39:02 $|$Revision: 2.256 $|
+;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
+;; |$Date: 1993-01-13 04:22:15 $|$Revision: 2.257 $|
 
 ;;; Code:
 
 ;; some people may not have c-mode loaded in by default. c++-mode.el
 ;; unfortunately still depends on distrib c-mode. c-mode doesn't
 ;; provide itself so this hack is best known way to ensure its loaded
-;; in
-(or (boundp 'c-indent-level)
+(or (fboundp 'c-mode)
     (load "c-mode" nil t))
 
 
 ;; ======================================================================
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-
-;; Note that there is a patch available to fix the syntax bug in both
-;; emacs 18.59 and Lemacs 19.4. When fixed, emacs will allows 2
-;; orthogonal comment styles in a single mode.  In this case, some
-;; lispy ugliness can be ignored.  Also no characters need be tamed.
 
 (defconst c++-emacs-is-fixed-p
   (= 8 (length (parse-partial-sexp (point) (point))))
@@ -185,12 +186,13 @@ styles in a single mode.")
   (define-key c++-mode-map "\C-c\C-t"  'c++-toggle-auto-hungry-state)
   (define-key c++-mode-map "\C-c\C-h"  'c++-toggle-hungry-state)
   (define-key c++-mode-map "\C-c\C-a"  'c++-toggle-auto-state)
-  (define-key c++-mode-map "\C-c'"     'c++-tame-comments)
-  (define-key c++-mode-map "'"         'c++-tame-insert)
-  (define-key c++-mode-map "["         'c++-tame-insert)
-  (define-key c++-mode-map "]"         'c++-tame-insert)
-  (define-key c++-mode-map "("         'c++-tame-insert)
-  (define-key c++-mode-map ")"         'c++-tame-insert)
+  (if c++-emacs-is-fixed-p nil
+    (define-key c++-mode-map "\C-c'"     'c++-tame-comments)
+    (define-key c++-mode-map "'"         'c++-tame-insert)
+    (define-key c++-mode-map "["         'c++-tame-insert)
+    (define-key c++-mode-map "]"         'c++-tame-insert)
+    (define-key c++-mode-map "("         'c++-tame-insert)
+    (define-key c++-mode-map ")"         'c++-tame-insert))
   (define-key c++-mode-map "\C-c\C-b"  'c++-submit-bug-report)
   (define-key c++-mode-map "\C-c\C-v"  'c++-version)
   ;; these are necessary because default forward-sexp and
@@ -450,7 +452,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.256 $
+  "Major mode for editing C++ code.  $Revision: 2.257 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -461,11 +463,12 @@ from a c++-mode buffer.
 5. Paragraphs are separated by blank lines only.
 6. Delete converts tabs to spaces as it moves back.
 
-IMPORTANT NOTE: You will notice that some characters (by default, only
+IMPORTANT NOTE: You may notice that some characters (by default, only
 single quote) will get escaped with a backslash when typed in a
 comment region.  This is a necessary workaround of a bug present in
 GNU emacs 18 and derivatives.  Enter \"\\[describe-variable] c++-untame-characters RET\"
-for more information.
+for more information. If you are running a patched emacs, no
+characters will be escaped in comment regions.
 
 Key bindings:
 \\{c++-mode-map}
@@ -562,8 +565,8 @@ from their c-mode cousins.
  c++-untame-characters
     When non-nil, inserts backslash escapes before certain untamed
     characters in comment regions. It is recommended that you keep the
-    default setting to workaround a nasty emacs bug.  Otherwise, this
-    variable contains a list of characters to escape.
+    default setting to workaround a nasty emacs bug, unless you are
+    running a patched emacs.
  c++-delete-function
     Function called by c++-electric-delete when deleting a single char.
  c++-electric-pound-behavior
@@ -658,7 +661,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.256 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.257 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -771,10 +774,11 @@ Optional argument has the following meanings when supplied:
 
 (defun c++-tame-insert (arg)
   "Safely inserts certain troublesome characters in comment regions.
-Because of a syntax bug in emacs' scan-lists function, characters with
-string or parenthesis syntax must be escaped with a backslash or lots
-of things get messed up. Unfortunately, setting
-parse-sexp-ignore-comments to non-nil does not fix the problem.
+Because of syntax bugs in emacs, characters with string or parenthesis
+syntax must be escaped with a backslash or lots of things get messed
+up. Unfortunately, setting parse-sexp-ignore-comments to non-nil does
+not fix the problem, but this function is unnecessary if you are
+running a patched emacs.
 
 See also the variable c++-untame-characters."
   (interactive "p")
@@ -1295,9 +1299,10 @@ of the expression are preserved."
 
 (defun c++-tame-comments ()
   "Backslashifies all untamed in comment regions found in the buffer.
-This is the best available workaround for an emacs syntax bug in
-scan-lists which exists at least as recently as v18.58.  Untamed
-characters to escape are defined in the variable c++-untame-characters."
+This is a workaround for emacs syntax bugs. This function is
+unnecessary (and un-used automatically) if you are running a patched
+emacs. Untamed characters to escape are defined in the variable
+c++-untame-characters."
   (interactive)
   ;; make the list into a valid charset, escaping where necessary
   (let ((charset (concat "^" (mapconcat
@@ -2380,7 +2385,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.256 $"
+(defconst c++-version "$Revision: 2.257 $"
   "c++-mode version number.")
 
 (defun c++-version ()
