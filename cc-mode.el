@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-10 22:19:52 $
-;; Version:         $Revision: 2.184 $
+;; Last Modified:   $Date: 1992-08-11 14:06:02 $
+;; Version:         $Revision: 2.185 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-10 22:19:52 $|$Revision: 2.184 $|
+;; |$Date: 1992-08-11 14:06:02 $|$Revision: 2.185 $|
 
 
 ;; ======================================================================
@@ -331,7 +331,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.184 $
+  "Major mode for editing C++ code.  $Revision: 2.185 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -532,7 +532,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.184 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.185 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1217,9 +1217,10 @@ defaults to point-max."
 
 (defun c++-at-top-level-p (wrt &optional bod)
   "Return t if point is not inside a containing C++ expression, nil
-if it is embedded in an expression.  If optional WRT is supplied
-non-nil, returns nil if not at the top level with respect to an
-enclosing class, or the depth of class nesting at point."
+if it is embedded in an expression.  When WRT is non-nil, returns nil
+if not at the top level with respect to an enclosing class, or the
+depth of class nesting at point.  With WRT nil, returns nil if not at
+the \"real\" top level.  Optional BOD is the beginning of defun."
   (save-excursion
     (let ((indent-point (point))
 	  (case-fold-search nil)
@@ -2116,7 +2117,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.184 $"
+(defconst c++-version "$Revision: 2.185 $"
   "c++-mode version number.")
 
 (defun c++-version ()
