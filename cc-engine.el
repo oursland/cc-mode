@@ -715,7 +715,7 @@
 
 (defun c-adjust-state (from to shift state)
   ;; Adjust all points in state that lie in the region FROM..TO by
-  ;; SHIFT amount (as would be returned by c-indent-line).
+  ;; SHIFT amount.
   (mapcar
    (function
     (lambda (e)
@@ -2316,7 +2316,7 @@
 (defun c-indent-line (&optional syntax)
   ;; indent the current line as C/C++/ObjC code. Optional SYNTAX is the
   ;; syntactic information for the current line. Returns the amount of
-  ;; indentation change
+  ;; indentation change (in columns).
   (let* ((c-syntactic-context (or syntax (c-guess-basic-syntax)))
 	 (pos (- (point-max) (point)))
 	 (indent (apply '+ (mapcar 'c-get-offset c-syntactic-context)))
