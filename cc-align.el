@@ -168,7 +168,7 @@ Works with: arglist-cont, arglist-cont-nonempty."
 
 (defun c-lineup-argcont-scan (&optional other-match)
   ;; Find the start of an argument, for `c-lineup-argcont'.
-  (when (eq 0 (c-backward-token-1 1 t))
+  (when (zerop (c-backward-token-1 1 t))
     (let ((c (char-after)))
       (if (or (eq c ?,) (eq c other-match))
 	  (progn
@@ -651,9 +651,9 @@ arglist-cont-nonempty."
 
 (defun c-lineup-cascaded-calls (langelem)
   "Line up \"cascaded calls\" under each other.
-If the line begins with \"->\" and the preceding line ends with one or
-more function calls preceded by \"->\", then the arrow is lined up with
-the first of those \"->\".  E.g:
+If the line begins with \"->\" or \".\" and the preceding line ends
+with one or more function calls preceded by the same token, then the
+arrow is lined up with the first of those tokens.  E.g:
 
 result = proc->add(17)->add(18)
              ->add(19) +           <- c-lineup-cascaded-calls
@@ -677,17 +677,17 @@ arglist-cont-nonempty."
       (save-excursion
 	(back-to-indentation)
 
-	(when (and (looking-at "->")
-		   (= (c-backward-token-1 1 t stmt-start) 0)
+	(when (and (looking-at "->\\|\\.")
+		   (zerop (c-backward-token-1 1 t stmt-start))
 		   (eq (char-after) ?\()
-		   (= (c-backward-token-1 3 t stmt-start) 0)
-		   (looking-at "->"))
+		   (zerop (c-backward-token-1 2 t stmt-start))
+		   (looking-at "->\\|\\."))
 	  (setq col (current-column))
 
-	  (while (and (= (c-backward-token-1 1 t stmt-start) 0)
+	  (while (and (zerop (c-backward-token-1 1 t stmt-start))
 		      (eq (char-after) ?\()
-		      (= (c-backward-token-1 3 t stmt-start) 0)
-		      (looking-at "->"))
+		      (zerop (c-backward-token-1 2 t stmt-start))
+		      (looking-at "->\\|\\."))
 	    (setq col (current-column)))
 
 	  (vector col))))))
