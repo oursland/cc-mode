@@ -278,7 +278,8 @@ if zero."
 	(hungry (if (and c++-hungry-delete-key-p c++-auto-newline)
 		    " hungry" nil)))
     (setq mode-name (concat "C++" auto hungry))
-    (redraw-display)
+    ;; force mode line update
+    (set-buffer-modified-p (buffer-modified-p))
     (if hungry
 	(define-key c++-mode-map "\177" 'c++-hungry-delete-key)
       (define-key c++-mode-map "\177" 'backward-delete-char-untabify))))
