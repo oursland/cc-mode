@@ -790,17 +790,19 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    (<= (point) limit)
 
 	    ;; Search syntactically to the end of the declarator (";",
-	    ;; ",", ")", ">" (for <> arglists), eob etc) or to the
-	    ;; beginning of an initializer or function prototype ("="
-	    ;; or "\\s\(").
+	    ;; ",", a closen paren, eob etc) or to the beginning of an
+	    ;; initializer or function prototype ("=" or "\\s\(").
+	    ;; Note that the open paren will match array specs in
+	    ;; square brackets, and we treat them as initializers too.
 	    (c-syntactic-re-search-forward
-	     "[\];,\{\}\[\)>]\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)" limit t t))
+	     "[;,]\\|\\s)\\|\\'\\|\\(=\\|\\s(\\)" limit t t))
 
       (setq next-pos (match-beginning 0)
-	    id-face (if (match-beginning 2)
+	    id-face (if (eq (char-after next-pos) ?\()
 			'font-lock-function-name-face
 		      'font-lock-variable-name-face)
-	    got-init (match-beginning 1))
+	    got-init (and (match-beginning 1)
+			  (char-after (match-beginning 1))))
 
       (if types
 	  ;; Register and fontify the identifer as a type.
@@ -831,9 +833,20 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		 (goto-char limit)))
 
 	      (got-init
-	       ;; Skip an initializer expression.
-	       (if (c-syntactic-re-search-forward "[;,]" limit 'move t)
-		   (backward-char)))
+	       ;; Skip an initializer expression.  If we're at a '='
+	       ;; then accept a brace list directly after it to cope
+	       ;; with array initializers.  Otherwise stop at braces
+	       ;; to avoid going past full function and class blocks.
+	       (and (if (and (eq got-init ?=)
+			     (= (c-forward-token-2) 0)
+			     (looking-at "{"))
+			(c-safe (c-forward-sexp) t)
+		      t)
+		    ;; FIXME: Should look for c-decl-end markers here;
+		    ;; we might go far into the following declarations
+		    ;; in e.g. ObjC mode (see e.g. methods-4.m).
+		    (c-syntactic-re-search-forward "[;,{]" limit 'move t)
+		    (backward-char)))
 
 	      (t (c-forward-syntactic-ws limit)))
 
