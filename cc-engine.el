@@ -2785,103 +2785,6 @@ This function does not do any hidden buffer changes."
 			  (point))))
 	   (state (parse-partial-sexp lim pos)))
 
-      (cond ((elt state 3)
-	     ;; String.  Search backward for the start.
-	     (while (elt state 3)
-	       (search-backward (make-string 1 (elt state 3)))
-	       (setq state (parse-partial-sexp lim (point))))
-	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
-			       (point-max))))
-
-	    ((elt state 7)
-	     ;; Line comment.  Search from bol for the comment starter.
-	     (beginning-of-line)
-	     (setq state (parse-partial-sexp lim (point))
-		   lim (point))
-	     (while (not (elt state 7))
-	       (search-forward "//")	; Should never fail.
-	       (setq state (parse-partial-sexp
-			    lim (point) nil nil state)
-		     lim (point)))
-	     (backward-char 2)
-	     (cons (point) (progn (c-forward-single-comment) (point))))
-
-	    ((elt state 4)
-	     ;; Block comment.  Search backward for the comment starter.
-	     (while (elt state 4)
-	       (search-backward "/*")	; Should never fail.
-	       (setq state (parse-partial-sexp lim (point))))
-	     (cons (point) (progn (c-forward-single-comment) (point))))
-
-	    ((and (not not-in-delimiter)
-		  (not (elt state 5))
-		  (eq (char-before) ?/)
-		  (looking-at "[/*]"))
-	     ;; We're standing in a comment starter.
-	     (backward-char 1)
-	     (cons (point) (progn (c-forward-single-comment) (point))))
-
-	    (near
-	     (goto-char pos)
-
-	     ;; Search forward for a literal.
-	     (skip-chars-forward " \t")
-
-	     (cond
-	      ((looking-at c-string-limit-regexp) ; String.
-	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
-				 (point-max))))
-
-	      ((looking-at c-comment-start-regexp) ; Line or block comment.
-	       (cons (point) (progn (c-forward-single-comment) (point))))
-
-	      (t
-	       ;; Search backward.
-	       (skip-chars-backward " \t")
-
-	       (let ((end (point)) beg)
-		 (cond
-		  ((save-excursion
-		     (< (skip-syntax-backward c-string-syntax) 0)) ; String.
-		   (setq beg (c-safe (c-backward-sexp 1) (point))))
-
-		  ((and (c-safe (forward-char -2) t)
-			(looking-at "*/"))
-		   ;; Block comment.  Due to the nature of line
-		   ;; comments, they will always be covered by the
-		   ;; normal case above.
-		   (goto-char end)
-		   (c-backward-single-comment)
-		   ;; If LIM is bogus, beg will be bogus.
-		   (setq beg (point))))
-
-		 (if beg (cons beg end))))))
-	    ))))
-
-(defun c-literal-limits-fast (&optional lim near not-in-delimiter)
-  ;; Like c-literal-limits, but for emacsen whose `parse-partial-sexp'
-  ;; returns the pos of the comment start.
-
-  "Return a cons of the beginning and end positions of the comment or
-string surrounding point (including both delimiters), or nil if point
-isn't in one.  If LIM is non-nil, it's used as the \"safe\" position
-to start parsing from.  If NEAR is non-nil, then the limits of any
-literal next to point is returned.  \"Next to\" means there's only
-spaces and tabs between point and the literal.  The search for such a
-literal is done first in forward direction.  If NOT-IN-DELIMITER is
-non-nil, the case when point is inside a starting delimiter won't be
-recognized.  This only has effect for comments, which have starting
-delimiters with more than one character.
-
-This function does not do any hidden buffer changes."
-
-  (save-excursion
-    (let* ((pos (point))
-	   (lim (or lim (progn
-			  (c-beginning-of-syntax)
-			  (point))))
-	   (state (parse-partial-sexp lim pos)))
-
       (cond ((elt state 3)		; String.
 	     (goto-char (elt state 8))
 	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
@@ -2936,8 +2839,8 @@ This function does not do any hidden buffer changes."
 		 (if beg (cons beg end))))))
 	    ))))
 
-(if (memq 'pps-extended-state c-emacs-features)
-    (defalias 'c-literal-limits 'c-literal-limits-fast))
+;; In case external callers use this; it did have a docstring.
+(defalias 'c-literal-limits-fast 'c-literal-limits)
 
 (defun c-collect-line-comments (range)
   "If the argument is a cons of two buffer positions (such as returned by
