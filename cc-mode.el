@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.347 $
-;; Last Modified:   $Date: 1997-01-21 20:28:41 $
+;; Version:         $Revision: 4.348 $
+;; Last Modified:   $Date: 1997-01-21 20:47:23 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2021,16 +2021,18 @@ the brace is inserted inside a literal."
 	  (if (and c-auto-newline
 		   (memq 'brace-elseif-brace c-cleanup-list)
 		   (= last-command-char ?\{)
-		   (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*{"
-				       nil t)
-		   (progn
+		   (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*" nil t)
+		   (save-excursion
+		     (goto-char (match-end 0))
+		     (c-safe (forward-sexp 1))
+		     (skip-chars-forward " \t\n")
 		     (setq mbeg (match-beginning 0)
 			   mend (match-end 0))
-		     (= mend here))
+		     (= here (1+ (point))))
 		   (not (c-in-literal)))
 	      (progn
 		(delete-region mbeg mend)
-		(insert "} else if {")))
+		(insert "} else if ")))
 	  (goto-char (- (point-max) pos))
 	  )
 	;; does a newline go after the brace?
@@ -5085,7 +5087,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.347 $"
+(defconst c-version "$Revision: 4.348 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
