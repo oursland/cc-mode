@@ -1,3 +1,28 @@
+Mon Mar 16 19:13:24 1998  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.22
+
+Thu Mar 12 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-menus.el (cc-imenu-c++-generic-expression): Fix to handle
+ 	explicitly specialized template classes.
+
+	* cc-mode.texi Added a paragraph on
+ 	signal-error-on-buffer-boundary in the Limitations and Known Bugs
+ 	section.
+
+Wed Mar 11 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed bug with member inits
+ 	on the same line as the function header.  Case 5D.1 changed.
+
+Wed Mar 11 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-submit-bug-report): Add
+ 	signal-error-on-buffer-boundary to the list of variables that get
+ 	reported.  This is a losing XEmacs variable that breaks many
+	things and should never be set by the user.
+
 Fri Mar  6 00:25:29 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.21
