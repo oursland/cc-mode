@@ -1711,7 +1711,7 @@ With universal argument, inserts the analysis as a comment on that line."
   (interactive "P")
   (let ((syntax (c-guess-basic-syntax)))
     (if (not (consp arg))
-	(message "syntactic analysis: %s" (c-guess-basic-syntax))
+	(message "syntactic analysis: %s" syntax)
       (indent-for-comment)
       (insert (format "%s" syntax))
       ))
