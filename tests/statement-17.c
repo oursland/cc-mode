@@ -11,8 +11,8 @@ int foo() {
 		p;
     while (b)
       foo: if (x) y; else
-			 while (t)
-			     p;
+	    while (t)
+		p;
     while (b)
       foo: if (x) y; if (x)
 			 while (t)
