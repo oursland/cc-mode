@@ -163,10 +163,10 @@ Useful as last item in a `choice' widget."
 (defvar c-style-variables
   '(c-basic-offset c-comment-only-line-offset c-indent-comment-alist
     c-indent-comments-syntactically-p c-block-comment-prefix
-    c-comment-prefix-regexp c-cleanup-list c-hanging-braces-alist
-    c-hanging-colons-alist c-hanging-semi&comma-criteria c-backslash-column
-    c-backslash-max-column c-special-indent-hook c-label-minimum-indentation
-    c-offsets-alist)
+    c-comment-prefix-regexp c-doc-comment-style c-cleanup-list
+    c-hanging-braces-alist c-hanging-colons-alist
+    c-hanging-semi&comma-criteria c-backslash-column c-backslash-max-column
+    c-special-indent-hook c-label-minimum-indentation c-offsets-alist)
   "List of the style variables.")
 
 (defvar c-fallback-style nil)
@@ -1243,6 +1243,7 @@ The list of variables to buffer localize are:
     c-comment-only-line-offset
     c-block-comment-prefix
     c-comment-prefix-regexp
+    c-doc-comment-style
     c-cleanup-list
     c-hanging-braces-alist
     c-hanging-colons-alist
