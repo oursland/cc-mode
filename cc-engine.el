@@ -1471,25 +1471,28 @@ brace."
 	       (looking-at "[-!%&*+/<=>^|~]\\|()\\|\\[]"))))))
 
 
-(defun c-most-enclosing-brace (state)
-  ;; return the bufpos of the most enclosing brace that hasn't been
-  ;; narrowed out by any enclosing class, or nil if none was found
+(defun c-most-enclosing-brace (state &optional bufpos)
+  ;; Return the bufpos of the innermost enclosing brace before bufpos
+  ;; that hasn't been narrowed out by any enclosing class, or nil if
+  ;; none was found.
   (let (enclosingp)
-    (while (and state (not enclosingp))
+    (or bufpos (setq bufpos 134217727))
+    (while state
       (setq enclosingp (car state)
 	    state (cdr state))
-      (if (consp enclosingp)
+      (if (or (consp enclosingp)
+	      (>= enclosingp bufpos))
 	  (setq enclosingp nil)
-	(if (> (point-min) enclosingp)
+	(if (< enclosingp (point-min))
 	    (setq enclosingp nil))
 	(setq state nil)))
     enclosingp))
 
-(defun c-least-enclosing-brace (state)
-  ;; return the bufpos of the least (highest) enclosing brace that
-  ;; hasn't been narrowed out by any enclosing class, or nil if none
-  ;; was found.
-  (c-most-enclosing-brace (nreverse state)))
+(defun c-least-enclosing-brace (state &optional bufpos)
+  ;; Return the bufpos of the outermost enclosing brace before bufpos
+  ;; that hasn't been narrowed out by any enclosing class, or nil if
+  ;; none was found.  Note: Destructive on the passed list.
+  (c-most-enclosing-brace (nreverse state) bufpos))
 
 (defun c-safe-position (bufpos state)
   ;; return the closest known safe position higher up than point
@@ -2543,7 +2546,7 @@ brace."
 	    (c-add-syntax 'statement-cont (c-point 'boi)))
 	   ;; CASE 17D: any old statement
 	   ((< (point) indent-point)
-	    (let ((safepos (c-most-enclosing-brace fullstate))
+	    (let ((safepos (c-most-enclosing-brace fullstate indent-point))
 		  relpos done)
 	      (goto-char indent-point)
 	      (c-beginning-of-statement-1 safepos)
