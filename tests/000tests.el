@@ -301,6 +301,7 @@
     "templates-4.cc"
     "templates-5.cc"
     "templates-6.cc"
+    "templates-7.cc"
     "top-1.cc"
     "top-2.cc"
     "top-3.cc"
