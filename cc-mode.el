@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.158 $
-;; Last Modified:   $Date: 1995-03-01 21:30:56 $
+;; Version:         $Revision: 4.159 $
+;; Last Modified:   $Date: 1995-03-04 00:01:52 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-01 21:30:56 $|$Revision: 4.158 $|
+;; |$Date: 1995-03-04 00:01:52 $|$Revision: 4.159 $|
 
 ;;; Code:
 
@@ -1002,6 +1002,14 @@ behavior that users are familiar with.")
    "\\(\\s *<[^>]+>\\)?"		;and maybe the adopted protocols list
    )
   "Regexp describing a class or protocol declaration for Objective-C.")
+
+;; KLUDGE ALERT.  We default these variables to their `C' values so
+;; that non-cc-mode-ized modes that depend on c-mode will still work
+;; out of the box.  The most glaring example is awk-mode.  There ought
+;; to be a better way.
+(setq-default c-conditional-key c-C-conditional-key
+	      c-class-key c-C-class-key
+	      c-comment-start-regexp "/\\*")
 
 
 ;; main entry points for the modes
@@ -4494,7 +4502,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.158 $"
+(defconst c-version "$Revision: 4.159 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
