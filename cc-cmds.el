@@ -168,7 +168,7 @@
 	;; c-electric-continued-statement, for example.  We also don't
 	;; want any backslash alignment from indent-according-to-mode.
 	(c-fix-backslashes nil)
-	insert-backslash
+	has-backslash insert-backslash
 	start col)
     (save-excursion
       (beginning-of-line)
@@ -176,19 +176,21 @@
       (while (and (looking-at "[ \t]*\\\\?$")
 		  (= (forward-line -1) 0)))
       (setq col (current-indentation)))
-    (when (and c-macro-start
-	       (eolp)
-	       (eq (char-before) ?\\))
-      ;; Ensure that the new line gets a backslash so that
-      ;; bs-col-after-end in c-backslash-region works better.
-      (setq insert-backslash t))
+    (when c-macro-start
+      (if (and (eolp) (eq (char-before) ?\\))
+	  ;; Ensure that the new line gets a backslash so that
+	  ;; bs-col-after-end in c-backslash-region works better.
+	  (setq insert-backslash t)
+	(setq has-backslash (eq (char-before (c-point 'eol)) ?\\))))
     (newline newline-arg)
     (indent-to col)
-    (when insert-backslash
-      (insert ?\\)
-      (backward-char))
     (when c-macro-start
-      (c-backslash-region start (point) nil t))
+      (if insert-backslash
+	  (progn
+	    (insert ?\\)
+	    (backward-char)
+	    (c-backslash-region start (point) nil t))
+	(c-backslash-region start (if has-backslash (point) start) nil t)))
     (when c-syntactic-indentation
       ;; Reindent syntactically.  The indentation done above is not
       ;; wasted, since c-indent-line might look at the current
@@ -205,7 +207,7 @@
 	    (indent-according-to-mode))
 	(goto-char (- (point-max) start))
 	(delete-char -1))
-      (when c-macro-start
+      (when has-backslash
 	;; Must align the backslash again after reindentation.  The
 	;; c-backslash-region call above can't be optimized to ignore
 	;; this line, since it then won't align correctly with the
