@@ -881,20 +881,6 @@ See `c-forward-token-1' for details."
 	      (if (bobp) (goto-char last)))))
       count)))
 
-(defun c-beginning-of-syntax ()
-  ;; This is used for font-lock-beginning-of-syntax-function.  Even
-  ;; though it doesn't necessary go out of the function it goes to a
-  ;; point outside any comment and string literal, so it should do.
-  (beginning-of-line)
-  (let ((paren-state (or c-state-cache (c-parse-state))))
-    (goto-char (catch 'done
-		 (while paren-state
-		   (when (and (integerp (car paren-state))
-			      (eq (char-after (car paren-state)) ?{))
-		     (throw 'done (car paren-state)))
-		   (setq paren-state (cdr paren-state)))
-		 (point-min)))))
-
 (defun c-syntactic-re-search-forward (regexp &optional bound noerror count
 					     paren-level)
   ;; Like `re-search-forward', but only report matches that are found
@@ -1500,6 +1486,17 @@ you need both the type of a literal and its limits."
 	 (backward-up-list 1)
 	 (c-beginning-of-statement-1 (point-min) nil t)
 	 (looking-at c-opt-asm-stmt-key))))
+
+(defun c-beginning-of-syntax ()
+  ;; This is used for font-lock-beginning-of-syntax-function.  It goes
+  ;; to the closest previous point that is known to be outside any
+  ;; string literal or comment, using c-state-cache.
+  (let ((paren-state (or c-state-cache (c-parse-state))))
+    (if paren-state
+	(if (consp (car paren-state))
+	    (goto-char (cdr (car paren-state)))
+	  (goto-char (car paren-state)))
+      (goto-char (point-min)))))
 
 (defun c-at-toplevel-p ()
   "Return a determination as to whether point is at the `top-level'.
@@ -2461,7 +2458,7 @@ Keywords are recognized and not considered identifiers."
 	  (syntax-last c-syntactic-context)
 	  (boi (c-point 'boi))
 	  (prev-paren (if at-block-start ?{ (char-after)))
-	  step-type step-tmp at-comment add-inexpr-stmt)
+	  step-type step-tmp at-comment)
       (apply 'c-add-syntax syntax-symbol nil syntax-extra-args)
 
       ;; Begin by skipping any labels and containing statements that
