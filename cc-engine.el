@@ -3072,10 +3072,11 @@ brace."
 ;; buffer positions surrounding each identifier.  This recording is
 ;; only activated when `c-record-type-identifiers' is non-nil.
 ;;
-;; All known types are recorded, and also possible types if
-;; `c-promote-possible-types' is set.  Only the names in C++ template
-;; style references (e.g. "tmpl" in "tmpl<a,b>::foo") are recorded as
-;; references, other references aren't handled here.
+;; All known types that can't be identifiers are recorded, and also
+;; other possible types if `c-promote-possible-types' is set.  Only
+;; the names in C++ template style references (e.g. "tmpl" in
+;; "tmpl<a,b>::foo") are recorded as references, other references
+;; aren't handled here.
 (defvar c-record-type-identifiers nil)
 (defvar c-record-ref-identifiers nil)
 
@@ -3128,7 +3129,7 @@ brace."
 		  nil
 		(and (looking-at c-keywords-regexp)
 		     (c-forward-keyword-clause))))
-       (when (memq res '(t found prefix))
+       (when (memq res '(t known found prefix))
 	 ,(when (eq type 'ref)
 	    `(when c-record-type-identifiers
 	       (c-record-ref-id c-last-identifier-range)))
@@ -3629,12 +3630,13 @@ brace."
 
 (defun c-forward-type ()
   ;; Move forward over a type spec i at the beginning of one, stopping
-  ;; at the next following token.  Return t if it is a known type, nil
-  ;; if it isn't (the point isn't moved then), 'prefix if it is a
-  ;; known prefix of a type (according to `c-known-type-key'), 'found
-  ;; if it's a type that matches one in `c-found-types', or 'maybe if
-  ;; it's an identfier that might be a type.  The point is assumed to
-  ;; be at the beginning of a token.
+  ;; at the next following token.  Return t if it's a known type that
+  ;; can't be a name, 'known if it's an otherwise known type
+  ;; (according to `*-font-lock-extra-types'), 'prefix if it's a known
+  ;; prefix of a type, 'found if it's a type that matches one in
+  ;; `c-found-types', 'maybe if it's an identfier that might be a
+  ;; type, or nil if it can't be a type (the point isn't moved then).
+  ;; The point is assumed to be at the beginning of a token.
   ;;
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
@@ -3678,20 +3680,25 @@ brace."
 	      (when res2
 		(setq id-end (point)
 		      id-range c-last-identifier-range))))
-	(and (c-with-syntax-table c-identifier-syntax-table
-	       (looking-at c-known-type-key))
+	(and (cond ((looking-at c-primitive-type-key)
+		    (setq res t))
+		   ((c-with-syntax-table c-identifier-syntax-table
+		      (looking-at c-known-type-key))
+		    (setq res 'known)))
 	     (or (not id-end)
 		 (>= (save-excursion
 		       (save-match-data
 			 (goto-char (match-end 1))
 			 (c-forward-syntactic-ws)
 			 (setq pos (point))))
-		     id-end))))
-      ;; Looking at a known type identifier.  We've checked for a name
-      ;; first so that we don't go here if the known type match only
-      ;; is a prefix of another name.
+		     id-end)
+		 (setq res nil))))
+      ;; Looking at a primitive or known type identifier.  We've
+      ;; checked for a name first so that we don't go here if the
+      ;; known type match only is a prefix of another name.
 
-      (when c-record-type-identifiers
+      (when (and c-record-type-identifiers
+		 (or c-promote-possible-types (eq res t)))
 	(c-record-type-id (cons (match-beginning 1) (match-end 1))))
 
       (if (and c-opt-type-component-key
@@ -3703,7 +3710,8 @@ brace."
 	    (while (progn
 		     (setq safe-pos (point))
 		     (looking-at c-opt-type-component-key))
-	      (when c-record-type-identifiers
+	      (when (and c-record-type-identifiers
+			 (looking-at c-primitive-type-key))
 		(c-record-type-id (cons (match-beginning 1)
 					(match-end 1))))
 	      (c-forward-keyword-clause))
@@ -3720,8 +3728,7 @@ brace."
 	  (if pos
 	      (goto-char pos)
 	    (goto-char (match-end 1))
-	    (c-forward-syntactic-ws)))
-	(setq res t)))
+	    (c-forward-syntactic-ws)))))
 
      (res2
       (cond ((eq res2 t)
@@ -3781,8 +3788,8 @@ brace."
 	    ;; If either operand certainly is a type then both are,
 	    ;; but we don't let the existence of the operator itself
 	    ;; promote two uncertain types to a more certain one.
-	    (cond ((eq res t))
-		  ((eq res2 t)
+	    (cond ((memq res '(t known)))
+		  ((memq res2 '(t known))
 		   (c-add-type id-start id-end)
 		   (when c-record-type-identifiers
 		     (c-record-type-id id-range))
