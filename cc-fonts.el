@@ -1729,21 +1729,18 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
       ;; Fontify method declarations in Objective-C, but first we have
       ;; to put the `c-decl-end' `c-type' property on all the @-style
-      ;; directives that haven't been handled in
-      ;; `c-basic-matchers-before'.
+      ;; directives that haven't been handled in `c-basic-matchers-before'.
       ,@(when (c-major-mode-is 'objc-mode)
-	  `((,(c-make-keywords-re t
+	  `(,(c-make-font-lock-search-function
+	      (c-make-keywords-re t
 		;; Exclude "@class" since that directive ends with a
 		;; semicolon anyway.
 		(delete "@class"
 			(append (c-lang-const c-protection-kwds)
 				(c-lang-const c-other-decl-kwds)
 				nil)))
-	     (,(byte-compile
-		(lambda (limit)
-		  (c-put-char-property (1- (match-end 1))
-				       'c-type 'c-decl-end)
-		  nil))))
+	      '((c-put-char-property (1- (match-end 1))
+				     'c-type 'c-decl-end)))
 
 	    c-font-lock-objc-methods))
 
