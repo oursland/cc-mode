@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.349 $
-;; Last Modified:   $Date: 1997-01-21 21:57:12 $
+;; Version:         $Revision: 4.350 $
+;; Last Modified:   $Date: 1997-01-21 22:02:26 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -866,10 +866,6 @@ Infodock (based on XEmacs) has an additional symbol on this list:
 	(define-key map [menu-bar] (make-sparse-keymap))
 	(define-key map [menu-bar c] (cons name (make-sparse-keymap name)))
 
-	(define-key map [menu-bar c compile]
-	  '("Compile" . compile)) 
-	(define-key map [menu-bar c separator1]
-	  '("----")) 
 	(define-key map [menu-bar c comment-region]
 	  '("Comment Out Region" . comment-region))
 	(define-key map [menu-bar c c-macro-expand]
@@ -5088,7 +5084,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.349 $"
+(defconst c-version "$Revision: 4.350 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
