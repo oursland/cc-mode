@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.357 $
-;; Last Modified:   $Date: 1997-02-06 00:04:26 $
+;; Version:         $Revision: 4.358 $
+;; Last Modified:   $Date: 1997-02-06 00:39:55 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -644,36 +644,39 @@ The list of variables to buffer localize are:
    ((nil
      (, 
       (concat
-       "^"				; beginning of line is required
-       "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a "template <...>"
-       "\\([a-zA-Z0-9_:]+[ \t]+\\)?"	; type specs; there can be no
-       "\\([a-zA-Z0-9_:]+[ \t]+\\)?"	; more than 3 tokens, right?
+       "^"				      ; beginning of line is required
+       "\\(template[ \t]*<[^>]+>[ \t]*\\)?"   ; there may be a "template <...>"
+       "\\([a-zA-Z0-9_:]+[ \t]+\\)?"	      ; type specs; there can be no
+       "\\([a-zA-Z0-9_:]+[ \t]+\\)?"	      ; more than 3 tokens, right?
         
-       "\\("				; last type spec including */&
+       "\\("				      ; last type spec including */&
        "[a-zA-Z0-9_:]+"
-       "\\([ \t]*[*&]+[ \t]*\\|[ \t]+\\)" ; either pointer/ref sign or whitespace
-       "\\)?"				; if there is a last type spec
-       "\\("				; name; take that into the imenu entry
-       "[a-zA-Z0-9_:~]+"		; member function, ctor or dtor...
- 					; (may not contain * because then 
- 					; "a::operator char*" would become "char*"!)
+       "\\([ \t]*[*&]+[ \t]*\\|[ \t]+\\)"     ; either ptr/ref sign or ws
+       "\\)?"				      ; if there is a last type spec
+       "\\("				      ; name, take into the imenu entry
+       "[a-zA-Z0-9_:~]+"		      ; member func, ctor or dtor...
+ 					      ; (may not contain * because then
+ 					      ; "a::operator char*" would
+					      ; become "char*"!)
        "\\|"
        "\\([a-zA-Z0-9_:~]*::\\)?operator"
-       "[^a-zA-Z1-9_][^(]*"		; ...or operator
+       "[^a-zA-Z1-9_][^(]*"		      ; ...or operator
        " \\)"
-       "[ \t]*([^)]*)[ \t\n]*[^		;]" ; require something other than a ; after
- 					; the (...) to avoid prototypes.  Can't
- 					; catch cases with () inside the parentheses
- 					; surrounding the parameters
- 					; (like "int foo(int a=bar()) {...}"
+       "[ \t]*([^)]*)[ \t\n]*[^		;]"   ; require something other than
+					      ; a `;' after the (...) to
+					      ; avoid prototypes.  Can't
+					      ; catch cases with () inside
+					      ; the parentheses surrounding
+					      ; the parameters.  e.g.:
+					      ; "int foo(int a=bar()) {...}"
         
        )) 6)    
     ("Class" 
      (, (concat 
- 	 "^"				; beginning of line is required
+ 	 "^"				      ; beginning of line is required
  	 "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a "template <...>"
  	 "class[ \t]+"
- 	 "\\([a-zA-Z0-9_]+\\)"		; this is the string we want to get
+ 	 "\\([a-zA-Z0-9_]+\\)"		      ; the string we want to get
  	 "[ \t]*[:{]"
  	 )) 2)))
   "Imenu generic expression for C++ mode.  See `imenu-generic-expression'.")
@@ -681,6 +684,26 @@ The list of variables to buffer localize are:
 (defvar cc-imenu-c-generic-expression
   cc-imenu-c++-generic-expression
   "Imenu generic expression for C mode.  See `imenu-generic-expression'.")
+
+(defvar cc-imenu-java-generic-expression
+  (`
+   ((nil
+     (,
+      (concat
+       "^\\([ \t]\\)*"
+       "\\([A-Za-z0-9_-]+[ \t]+\\)?"	      ; type specs; there can be
+        "\\([A-Za-z0-9_-]+[ \t]+\\)?"	      ; more than 3 tokens, right?
+       "\\([A-Za-z0-9_-]+[ \t]*[[]?[]]?\\)"
+       "\\([ \t]\\)"
+       "\\([A-Za-z0-9_-]+\\)"		      ; the string we want to get
+       "\\([ \t]*\\)+("
+       "\\([a-zA-Z,_1-9\n \t]*[[]?[]]?\\)*"   ; arguments
+       ")[ \t]*"
+       "[^;(]"
+       "[,a-zA-Z_1-9\n \t]*{"               
+       )) 6)))
+  "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
+
 
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1425,6 +1448,7 @@ Key bindings:
 	c-recognize-knr-p nil
  	c-access-key c-Java-access-key
 	;defun-prompt-regexp c-Java-defun-prompt-regexp
+	imenu-generic-expression cc-imenu-java-generic-expression
 	)
   (c-set-style "java")
   (run-hooks 'c-mode-common-hook)
@@ -5070,7 +5094,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.357 $"
+(defconst c-version "$Revision: 4.358 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
