@@ -4324,6 +4324,19 @@ suggestion to get a consistent style):
 
 @comment ------------------------------------------------------------
 
+@defun c-lineup-assignments
+@findex lineup-assignments (c-)
+Line up the current line after the assignment operator on the first
+line in the statement.  If there isn't any, return nil to allow
+stacking with other indentation functions.  If the current line
+contains an assignment operator too, try to align it with the first
+one.
+
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
+
+@comment ------------------------------------------------------------
+
 @defun c-lineup-C-comments
 @findex lineup-C-comments (c-)
 Line up C block comment continuation lines.  Various heuristics are used
@@ -4701,10 +4714,10 @@ expressions.
 
 @defun c-lineup-math
 @findex lineup-math (c-)
-Line up the current line to after the equal sign on the first line in the
-statement.  If there isn't any, indent with @code{c-basic-offset}.  If
-the current line contains an equal sign too, try to align it with the
-first one.
+Like @code{c-lineup-assignments} but indent with @code{c-basic-offset}
+if no assignment operator was found on the first line.  I.e. this
+function is the same as specifying a list @code{(c-lineup-assignments
++)@}.  It's provided for compatibility with old configurations.
 
 @workswith @code{topmost-intro-cont}, @code{statement-cont},
 @code{arglist-cont}, @code{arglist-cont-nonempty}.
