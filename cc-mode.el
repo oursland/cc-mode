@@ -782,9 +782,10 @@ Key bindings:
                              (font-lock-multiline . t) ; Switched on for experiments, ACM 2002/3/16
                              ))
   (c-awk-unstick-NL-prop)
-  (add-hook 'before-change-functions 'c-awk-clear-NL-props nil t) ; ACM, 2002/5/30
-  (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max))) ; ACM 2002/7/19
   (c-common-init 'awk-mode)
+  (add-hook 'before-change-functions 'c-awk-before-change nil t) ; ACM, 2002/5/30
+  (add-hook 'after-change-functions 'c-awk-after-change nil t) ; ACM, 2002/7/21
+  (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max))) ; ACM 2002/7/19
 ;  (cc-imenu-init cc-imenu-awk-generic-expression) ; cc-menus.el
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'awk-mode-hook)
