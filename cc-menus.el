@@ -79,6 +79,17 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
        "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
        "[ \t]*([^)]*)[ \t]*[^ \t;]"           ; see above
        )) 1)
+    ;; General function name regexp
+    (nil
+     (, 
+      (concat
+       "^\\<.*"                               ; line MUST start with word char
+       "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
+       "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
+       "[ \t]*("			      ; see above, BUT
+       "[ \t]*[^ \t(][^)]*)[ \t]*[^ \t;]"     ; the argument list must not start
+					      ; with a parentheses
+       )) 1)
     ;; Special case for definitions using phony prototype macros like:
     ;; `int main _PROTO( (int argc,char *argv[]) )'.
     ;; This case is only included if cc-imenu-c-prototype-macro-regexp is set.
@@ -93,17 +104,8 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
                    "[ \t]*"                   ; whitespace before macro name
                    cc-imenu-c-prototype-macro-regexp
                    "[ \t]*("                  ; ws followed by first paren.
-                   "[ \t]*([^)]*)[ \t]*[^ \t;]" ; see above
+                   "[ \t]*([^)]*)[ \t]*)[ \t]*[^ \t;]" ; see above
                    )) 1)))))
-    ;; General function name regexp
-    (nil
-     (, 
-      (concat
-       "^\\<.*"                               ; line MUST start with word char
-       "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
-       "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
-       "[ \t]*([^)]*)[ \t]*[^ \t;]"           ; see above
-       )) 1)
     ;; Class definitions
     ("Class" 
      (, (concat 
