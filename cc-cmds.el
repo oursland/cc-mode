@@ -1322,6 +1322,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
     (push-mark here)
     (push-mark eod nil t)))
 
+(defun c-indent-line-or-region ()
+  "When the region is active, indent it.  Otherwise indent the current line."
+  ;; Emacs has a variable called mark-active, XEmacs uses region-active-p
+  (interactive)
+  (if (or (and (fboundp 'region-active-p)
+	       (region-active-p))
+	  (and (boundp 'mark-active)
+	       mark-active))
+      (c-indent-region (region-beginning) (region-end))
+    (c-indent-command)))
+
 
 ;; for progress reporting
 (defvar c-progress-info nil)
