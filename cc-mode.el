@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.251 $
-;; Last Modified:   $Date: 1996-01-03 00:21:07 $
+;; Version:         $Revision: 4.252 $
+;; Last Modified:   $Date: 1996-01-05 22:09:37 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-03 00:21:07 $|$Revision: 4.251 $|
+;; |$Date: 1996-01-05 22:09:37 $|$Revision: 4.252 $|
 
 ;;; Code:
 
@@ -536,7 +536,7 @@ as designated in the variable `c-file-offsets'.")
 (defvar c-file-offsets nil
   "*Variable interface for setting offsets via File Local Variables.
 In a file's Local Variable section, you can set this variable to an
-association list similiar to the values allowed in `c-offsets-alist'.
+association list similar to the values allowed in `c-offsets-alist'.
 When the file is visited, cc-mode will institute these offset settings
 automatically.
 
@@ -1017,7 +1017,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
-of the problem, including a reproducable test case and send the
+of the problem, including a reproducible test case and send the
 message.
 
 To see what version of cc-mode you are running, enter `\\[c-version]'.
@@ -1053,7 +1053,7 @@ Key bindings:
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
-problem, including a reproducable test case and send the message.
+problem, including a reproducible test case and send the message.
 
 To see what version of cc-mode you are running, enter `\\[c-version]'.
 
@@ -1088,7 +1088,7 @@ Key bindings:
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
-of the problem, including a reproducable test case and send the
+of the problem, including a reproducible test case and send the
 message.
 
 To see what version of cc-mode you are running, enter `\\[c-version]'.
@@ -1191,7 +1191,7 @@ Key bindings:
 		  minor-mode-alist))))
 
 (defun c-postprocess-file-styles ()
-  "Function that post processes relevent file local variables.
+  "Function that post processes relevant file local variables.
 Currently, this function simply applies any style and offset settings
 found in the file's Local Variable list.  It first applies any style
 setting found in `c-file-style', then it applies any offset settings
@@ -1209,8 +1209,8 @@ it finds in `c-file-offsets'."
 	     )))
 	c-file-offsets)))
 
-;; Add the posprocessing function to hack-local-variables-hook.  As of
-;; 28-Aug-1995, XEmacs 19.12 and Emacs 19.29 support this.
+;; Add the postprocessing function to hack-local-variables-hook.  As
+;; of 28-Aug-1995, XEmacs 19.12 and Emacs 19.29 support this.
 (and (fboundp 'add-hook)
      (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles))
 
@@ -1871,7 +1871,7 @@ value of `c-cleanup-list'."
 
 ;; set up electric character functions to work with pending-del,
 ;; (a.k.a. delsel) mode.  All symbols get the t value except
-;; c-electric-delete which gets 'supercede.
+;; c-electric-delete which gets 'supersede.
 (mapcar
  (function
   (lambda (sym)
@@ -2654,7 +2654,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
     (if brace
 	(goto-char brace)
       (beginning-of-defun))
-    ;; if we're sitting at b-o-b, it might be becase there was no
+    ;; if we're sitting at b-o-b, it might be because there was no
     ;; least enclosing brace and we were sitting on the defun's open
     ;; brace.
     (if (and (bobp) (not (= (following-char) ?\{)))
@@ -3025,7 +3025,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (if (consp car)
 	  (setq car (car cdr)
 		cdr (cdr cdr)))
-      ;; TBD: is this test relevent???
+      ;; TBD: is this test relevant???
       (if (consp car)
 	  state				;on error, don't change
 	;; watch out for balanced expr already on cdr of list
@@ -4547,7 +4547,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.251 $"
+(defconst c-version "$Revision: 4.252 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
@@ -4712,7 +4712,7 @@ definition and conveniently use this command."
      (let* ((na "Nothing appropriate.")
 	    (vars
 	     (list
-	      (cons 'c++-c-mode-syntax-table 'c-mode-syntaxt-table)
+	      (cons 'c++-c-mode-syntax-table 'c-mode-syntax-table)
 	      (cons 'c++-tab-always-indent 'c-tab-always-indent)
 	      (cons 'c++-always-arglist-indent-p na)
 	      (cons 'c++-block-close-brace-offset 'c-offsets-alist)
