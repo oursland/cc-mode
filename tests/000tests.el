@@ -864,6 +864,8 @@ to be set as a file local variable.")
 
 	  (set-buffer save-buf)
 	  (goto-char save-point)
+	  (when (and (not error-found-p) (interactive-p))
+	    (kill-test-buffers))
 	  (not error-found-p))))))
 
 (defun do-all-tests (&optional resetp)
