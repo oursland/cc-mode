@@ -8,7 +8,7 @@
 (0 key) (5 reg) (6 typ) (10 reg) (11 var) (14 reg)
 (0 key) (5 reg) (6 typ) (10 reg) (13 var) (16 reg)
 (0 key) (5 reg) (6 typ) (10 reg) (11 var) (14 reg)
-(0 key) (5 reg) (6 typ) (10 reg) (12 var) (15 reg) (32 cmt)
+(0 key) (5 reg) (6 typ) (10 reg) (32 cmt)
 (0 reg)
 (0 typ) (4 reg) (7 fun) (10 reg) (13 typ) (17 reg)
 (13 typ) (17 reg)
