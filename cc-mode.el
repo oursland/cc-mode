@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.50 $
-;; Last Modified:   $Date: 1993-11-16 23:04:59 $
+;; Version:         $Revision: 3.51 $
+;; Last Modified:   $Date: 1993-11-17 15:06:11 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-16 23:04:59 $|$Revision: 3.50 $|
+;; |$Date: 1993-11-17 15:06:11 $|$Revision: 3.51 $|
 
 ;;; Code:
 
@@ -431,7 +431,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.50 $
+  "Major mode for editing C++ code.  $Revision: 3.51 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -462,7 +462,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.50 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.51 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -805,7 +805,7 @@ ARG is supplied, indentation is inhibited."
 		      (not (cc-in-literal)))))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
-	(cc-indent-line))))
+	(cc-indent-via-language-element))))
 
 (defun cc-electric-star (arg)
   "Insert a start, possibly indenting line as a C block comment.
@@ -819,7 +819,7 @@ If numeric ARG is supplied, indentation is inhibited."
 			  (= (preceding-char) ?/)))))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
-	(cc-indent-line))))
+	(cc-indent-via-language-element))))
 
 (defun cc-electric-semi&comma (arg)
   "Insert a comma or semicolon, possibly re-indenting line.
@@ -2302,7 +2302,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.50 $"
+(defconst cc-version "$Revision: 3.51 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
