@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.385 $
-;; Last Modified:   $Date: 1997-03-20 16:46:13 $
+;; Version:         $Revision: 4.386 $
+;; Last Modified:   $Date: 1997-03-20 17:00:31 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -421,8 +421,14 @@ This hook gets called after a line is indented by the mode.")
 (defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
+
 (defvar c-label-minimum-indentation 1
-  "*Minimum indentation for labels and case tags in `gnu' style.")
+  "*Minimum indentation for lines inside of top-level constructs.
+This variable typically only affects code using the `gnu' style, which
+mandates a minimum of one space in front of every line inside
+top-level constructs.  Specifically, the function
+`c-gnu-impose-minimum' on your `c-special-indent-hook' is what
+enforces this.")
 
 (defvar c-progress-interval 5
   "*Interval used to update progress status during long re-indentation.
@@ -5212,7 +5218,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.385 $"
+(defconst c-version "$Revision: 4.386 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
