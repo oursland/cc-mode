@@ -82,6 +82,7 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
+(cc-require 'cc-fix)
 (cc-require 'cc-defs)
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
@@ -141,6 +142,7 @@
 ;;;###autoload
 (defun c-initialize-cc-mode ()
   ;; This function does not do any hidden buffer changes.
+  (c-fix)                          ; repair any (X)Emacs version specific bugs
   (setq c-buffer-is-cc-mode t)
   (let ((initprop 'cc-mode-is-initialized)
 	c-initialization-ok)
@@ -994,6 +996,7 @@ Key bindings:
           abbrev-mode t)
     (use-local-map awk-mode-map)
     (c-init-language-vars awk-mode)
+    (c-common-init 'awk-mode)
     ;; The rest of CC Mode does not (yet) use `font-lock-syntactic-keywords',
     ;; so it's not set by `c-font-lock-init'.
     (make-local-variable 'font-lock-syntactic-keywords)
@@ -1001,7 +1004,6 @@ Key bindings:
           '((c-awk-set-syntax-table-properties
              0 (0)                      ; Everything on this line is a dummy.
              nil t)))
-    (c-common-init 'awk-mode)
     (add-hook 'before-change-functions 'c-awk-before-change nil t)
     (add-hook 'after-change-functions 'c-awk-after-change nil t)
     (c-save-buffer-state nil
