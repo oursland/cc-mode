@@ -1854,7 +1854,7 @@ brace."
 	  (cond
 	   ;; CASE 7A: we are looking at the arglist closing paren
 	   ((and (or (c-major-mode-is 'pike-mode)
-		     ;; Don't check this i Pike since it allows a
+		     ;; Don't check this in Pike since it allows a
 		     ;; comma after the last arg.
 		     (not (eq char-before-ip ?,)))
 		 (memq char-after-ip '(?\) ?\])))
@@ -1958,10 +1958,13 @@ brace."
 	   ((and (consp special-brace-list)
 		 (eq char-after-ip (car (cdr special-brace-list))))
 	    (goto-char (car (car special-brace-list)))
-	    (c-beginning-of-statement-1 lim)
-	    (c-forward-token-1 0)
-	    (if (looking-at "typedef\\>") (c-forward-token-1 1))
-	    (c-add-syntax 'brace-list-open (c-point 'boi)))
+	    (skip-chars-backward " \t")
+	    (if (bolp)
+		(setq syntax (c-guess-basic-syntax))
+	      (c-beginning-of-statement-1 lim)
+	      (c-forward-token-1 0)
+	      (if (looking-at "typedef\\>") (c-forward-token-1 1))
+	      (c-add-syntax 'brace-list-open (c-point 'boi))))
 	   ;; CASE 9B: brace-list-close brace
 	   ((if (consp special-brace-list)
 		;; Check special brace list closer.
@@ -2075,7 +2078,13 @@ brace."
 				  (= (c-backward-token-1 1 t) 0)
 				  (/= (char-after) ?=)))
 		      (eq (char-after) ?=)))
-		(c-add-syntax 'brace-list-open placeholder))
+		;; The most semantically accurate symbol here is
+		;; brace-list-open, but we report it simply as a
+		;; statement-cont.  The reason is that one normally
+		;; adjusts brace-list-open for brace lists as
+		;; top-level constructs, and brace lists inside
+		;; statements is a completely different context.
+		(c-add-syntax 'statement-cont placeholder))
 	       ;; CASE 10B.3: catch-all for unknown construct.
 	       (t
 		;; Can and should I add an extensibility hook here?
