@@ -19,6 +19,14 @@ Checklist for doing a release:
       the new release.  Make sure the copyright statements in all
       files are up-to-date.
 
+    - Update the web files in the admin directory:
+
+      o  Create a new changes-5xx.php file from the new items i NEWS.
+      o  Copy this new changes file to changes-latest.php.
+      o  Add a new entry for the changes file in changelinks.h.
+      o  Update the version number in index.php and release.php.
+      o  Check at least release.php for correctness.
+
     - Run "make release" to make all the tarballs and documentation.
 
       XX is the minor revision number of the new release.
