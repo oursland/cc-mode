@@ -1252,6 +1252,14 @@ Here is the current list of valid syntactic element symbols:
 	   (get 'c-offsets-alist 'c-stylevar-fallback)))
   :group 'c)
 
+;; The syntactic symbols that can occur inside code blocks. Used by
+;; `c-gnu-impose-minimum'.
+(defconst c-inside-block-syms
+  '(defun-block-intro block-open block-close statement statement-cont
+    statement-block-intro statement-case-intro statement-case-open
+    substatement substatement-open substatement-label case-label label
+    do-while-closure else-clause catch-clause inlambda))
+
 (defcustom c-style-variables-are-local-p t
   "*Whether style variables should be buffer local by default.
 If non-nil, then all indentation style related variables will be made
