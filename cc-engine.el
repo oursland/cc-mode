@@ -944,6 +944,30 @@ brace."
 		   ;; for, if, while, switch, catch, synchronized
 		   (t 2))))
 
+(defun c-beginning-of-closest-statement (&optional lim)
+  ;; Go back to the closest preceding statement start.
+  (let ((start (point))
+	(label-re (concat c-label-key "\\|"
+			  c-switch-label-key))
+	stmtbeg)
+    (if c-access-key
+	(setq label-re (concat label-re "\\|" c-access-key)))
+    (c-beginning-of-statement-1 lim)
+    (while (and (when (<= (point) start)
+		  (setq stmtbeg (point)))
+		(cond
+		 ((looking-at label-re)
+		  ;; Skip a label.
+		  (goto-char (match-end 0))
+		  t)
+		 ((looking-at c-conditional-key)
+		  ;; Skip a conditional statement.
+		  (c-safe (c-skip-conditional) t))
+		 (t nil)))
+      (c-forward-syntactic-ws start))
+    (if stmtbeg
+	(goto-char stmtbeg))))
+
 (defun c-skip-case-statement-forward (state &optional lim)
   ;; skip forward over case/default bodies, with optional maximal
   ;; limit. if no next case body is found, nil is returned and point
@@ -2147,7 +2171,8 @@ brace."
 		;; adjusts brace-list-open for brace lists as
 		;; top-level constructs, and brace lists inside
 		;; statements is a completely different context.
-		(goto-char placeholder)
+		(goto-char indent-point)
+		(c-beginning-of-closest-statement)
 		(c-add-syntax 'statement-cont (c-point 'boi)))
 	       ;; CASE 10B.3: catch-all for unknown construct.
 	       (t
@@ -2318,6 +2343,8 @@ brace."
 	      (c-add-syntax 'statement-case-intro placeholder)))
 	   ;; CASE 17B: continued statement
 	   ((eq char-before-ip ?,)
+	    (goto-char indent-point)
+	    (c-beginning-of-closest-statement)
 	    (c-add-syntax 'statement-cont (c-point 'boi)))
 	   ;; CASE 17C: a question/colon construct?  But make sure
 	   ;; what came before was not a label, and what comes after
@@ -2334,6 +2361,8 @@ brace."
 		       (skip-chars-forward " \t")
 		       ;; watch out for scope operator
 		       (not (looking-at "::")))))
+	    (goto-char indent-point)
+	    (c-beginning-of-closest-statement)
 	    (c-add-syntax 'statement-cont (c-point 'boi)))
 	   ;; CASE 17D: any old statement
 	   ((< (point) indent-point)
