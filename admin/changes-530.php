@@ -178,12 +178,30 @@ result = prefix + "A message "
   only in languages that mandate a final newline in source files (C,
   C++ and Objective-C).
 
-  <p><li>Slight API change for the syntactic context used by lineup
-  functions.  The syntactic context stored in
-  <code>c-syntactic-context</code> has been changed to allow more
-  information.  This might affect custom lineup functions, but only if
-  they use that variable directly.  See its docstring for more
-  details.
+  <p><li>Format change for syntactic context elements.
+
+  <p>The elements in the syntactic context returned by
+  <code>c-guess-basic-syntax</code> and stored in
+  <code>c-syntactic-context</code> has been changed somewhat to allow
+  attaching more information.  They are now lists instead of single
+  cons cells.  E.g. a line that previously had the syntactic analysis
+
+  <blockquote><pre>
+((inclass . 11) (topmost-intro . 13))</pre></blockquote>
+
+  is now analysed as
+
+  <blockquote><pre>
+((inclass 11) (topmost-intro 13))</pre></blockquote>
+
+  <p>In some cases there can be more than one position given for a
+  syntactic symbol.
+
+  <p>This change might affect code that call
+  <code>c-guess-basic-syntax</code> directly, and custom lineup
+  functions if they use <code>c-syntactic-context</code>.  However,
+  the argument given to lineup functions is still a single cons cell
+  with nil or an integer in the cdr.
 
   <p><li>API changes for derived modes.
 
