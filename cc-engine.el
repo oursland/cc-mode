@@ -2541,9 +2541,7 @@ sexps, and the search will also not go outside the current paren sexp.
 However, if LIMIT or the buffer limit is reached inside a nested paren
 then the point will be left at the limit.
 
-Non-nil is returned if the point moved, nil otherwise.
-
-This function does not do any hidden buffer changes."
+Non-nil is returned if the point moved, nil otherwise."
 
   (let ((start (point))
 	state
