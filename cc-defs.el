@@ -201,6 +201,19 @@
   (and (boundp 'zmacs-region-stays)
        (setq zmacs-region-stays t)))
 
+(defsubst c-region-is-active-p ()
+  ;; Return t when the region is active.  The determination of region
+  ;; activeness is different in both Emacs and XEmacs.
+  (cond
+   ;; XEmacs
+   ((and (fboundp 'region-active-p)
+	 zmacs-regions)
+    (region-active-p))
+   ;; Emacs
+   ((boundp 'mark-active) mark-active)
+   ;; fallback; shouldn't get here
+   (t (mark t))))
+
 
 (provide 'cc-defs)
 ;;; cc-defs.el ends here
