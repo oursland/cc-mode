@@ -93,9 +93,9 @@ syntactic information for the current line.  Be silent about syntactic
 errors if the optional argument QUIET is non-nil, even if
 `c-report-syntactic-errors' is non-nil.  Normally the position of
 point is used to decide where the old indentation is on a lines that
-is otherwise empty (ignoring any line continuation backslash), but
+is otherwise empty \(ignoring any line continuation backslash), but
 that's not done if IGNORE-POINT-POS is non-nil.  Returns the amount of
-indentation change (in columns)."
+indentation change \(in columns)."
   (let ((line-cont-backslash (save-excursion
 			       (end-of-line)
 			       (eq (char-before) ?\\)))
@@ -1098,7 +1098,12 @@ comment or multiline string, move by sentences instead of statements.
 When called from a program, this function takes 3 optional args: the
 repetition count, a buffer position limit which is the farthest back
 to search for the syntactic context, and a flag saying whether to do
-sentence motion in or near comments and multiline strings."
+sentence motion in or near comments and multiline strings.
+
+Note that `c-beginning-of-statement-1' is usually better to use from
+programs.  It has much more well defined semantics than this one,
+which is intended for interactive use and might therefore change to be
+more \"DWIM:ey\"."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     nil t))
   (let* ((count (or count 1))
