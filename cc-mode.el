@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-11 21:35:45 $
-;; Version:         $Revision: 2.43 $
+;; Last Modified:   $Date: 1992-05-11 22:28:30 $
+;; Version:         $Revision: 2.44 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-11 21:35:45 $|$Revision: 2.43 $|
+;; |$Date: 1992-05-11 22:28:30 $|$Revision: 2.44 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -174,8 +174,19 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
 
+(defvar c++-tame-comments-p t
+  "*Utilize a backslashing workaround of an emacs scan-lists bug.
+If non-nil, any of the following characters typed in a comment region
+will be prepended with a backslash: ' ( ) { } [ ]
+
+Setting this variable to nil will defeat this feature, but be
+forewarned!  Un-escaped characters in comment regions will break many
+things such as some indenting and blinking of parenthesis.
+
+See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
+
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.43 $
+  "Major mode for editing C++ code.  $Revision: 2.44 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -264,6 +275,10 @@ from their c-mode cousins.
     Address to send bug report via email.
  c++-default-macroize-column
     Column to insert backslashes when macroizing a region.
+ c++-tame-comments-p
+    When non-nil, inserts backslash escapes before certain untamed
+    characters in comment regions. It is recommended that you keep the
+    default setting to workaround a nasty emacs bug.
 
 Auto-newlining is no longer an all or nothing proposition. To be
 specific I don't believe it is possible to implement a perfect
@@ -437,9 +452,12 @@ Optional argument has the following meanings when supplied:
 Because of a syntax bug in emacs' scan-lists function, characters with
 string or parenthesis syntax must be escaped with a backslash or lots
 of things get messed up. Unfortunately, setting
-parse-sexp-ignore-comments to non-nil does not fix the problem."
+parse-sexp-ignore-comments to non-nil does not fix the problem.
+
+To turn this feature off, set c++-tame-comments-p to nil."
   (interactive "p")
-  (if (c++-in-comment-p)
+  (if (and c++-tame-comments-p
+	   (c++-in-comment-p))
       (insert "\\"))
   (self-insert-command arg))
 
@@ -488,7 +506,8 @@ backward-delete-char-untabify."
 		     (c++-indent-line))
 		   t)))
 	(progn
-	  (if (c++-in-comment-p)
+	  (if (and c++-tame-comments-p
+		   (c++-in-comment-p))
 	      (insert "\\"))
 	  (insert last-command-char)
 	  (let ((here (make-marker)) mbeg mend)
@@ -1517,7 +1536,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.43 $"
+(defconst c++-version "$Revision: 2.44 $"
   "c++-mode version number.")
 
 (defun c++-dump-state ()
@@ -1543,6 +1562,7 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-match-header-strongly
 		       'c++-defun-header-strong-struct-equivs
 		       'c++-tab-always-indent
+		       'c++-tame-comments-p
 		       'c-indent-level
 		       'c-continued-statement-offset
 		       'c-continued-brace-offset
