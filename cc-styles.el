@@ -382,9 +382,9 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 	     (goto-char relpos)
 	     (current-column))
 	 0)
-       (cond ((numberp offset) offset)
-	     ((symbolp offset) (symbol-value offset))
-	     (t 0)))
+       (or (and (numberp offset) offset)
+	   (and (symbolp offset) (symbol-value offset))
+	   0))
     ))
 
 
