@@ -204,6 +204,28 @@
 	  c-basic-offset
 	0))))
 
+(defun c-indent-multi-line-block (langelem)
+  ;; Keeps the indentation if the line is a one line block, otherwise
+  ;; adds c-basic-offset.  E.g:
+  ;;
+  ;; int *foo[] = {             int *foo[] = {
+  ;;   NULL,                      NULL,
+  ;;   {17},            <->         {        <- c-indent-multi-line-block
+  ;;                                17
+  ;;                                }
+  ;;
+  ;; (This is the reverse of c-indent-one-line-block.)
+  (save-excursion
+    (let ((eol (progn (end-of-line) (point))))
+      (beginning-of-line)
+      (skip-chars-forward " \t")
+      (if (and (eq (following-char) ?{)
+	       (c-safe (progn (c-forward-sexp) t))
+	       (<= (point) eol)
+	       (eq (preceding-char) ?}))
+	  0
+	c-basic-offset))))
+
 (defun c-lineup-C-comments (langelem)
   ;; line up C block comment continuation lines
   (save-excursion
@@ -431,6 +453,25 @@
 	   (progn
 	     (back-to-indentation)
 	     (current-column)))))))
+
+(defun c-lineup-whitesmith-in-block (langelem)
+  ;; Line up lines inside a block in whitesmith style both when the
+  ;; opening brace hangs and when it doesn't. E.g:
+  ;;
+  ;; something
+  ;;     {                      something {
+  ;;     foo;           <->         foo;     <- c-lineup-whitesmith-in-block
+  ;;     }                          }
+  ;;
+  ;; In the first case the indentation is kept unchanged, in the
+  ;; second c-basic-offset is added.  Intended for use on inclass and
+  ;; similar symbols.
+  (save-excursion
+    (goto-char (cdr langelem))
+    (back-to-indentation)
+    (if (eq (char-syntax (char-after)) ?\()
+	0
+      c-basic-offset)))
 
 (defun c-lineup-dont-change (langelem)
   ;; Do not change the indentation of the current line
