@@ -1030,9 +1030,15 @@ end with a line continuation backslash."
 	  (setcar pairs (1- (car pairs)))
 	  (setq c-state-cache (cons pairs c-state-cache)))
 	(if last-pos
-	    ;; Record the open paren and loop.
-	    (setq pos last-pos
-		  c-state-cache (cons (1- pos) c-state-cache))
+	    ;; Prepare to loop, but record the open paren only if it's
+	    ;; outside a macro or within the same macro as point.
+	    (progn
+	      (setq pos last-pos)
+	      (if (or (>= last-pos in-macro-start)
+		      (save-excursion
+			(goto-char last-pos)
+			(not (c-beginning-of-macro))))
+		  (setq c-state-cache (cons (1- pos) c-state-cache))))
 	  (if (setq last-pos (c-up-list-forward pos))
 	      ;; Found a close paren without a corresponding opening
 	      ;; one.  Maybe we didn't go back far enough, so try to
