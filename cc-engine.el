@@ -1898,7 +1898,7 @@ syntactic whitespace."
   "Return the type of literal point is in, if any.
 The return value is `c' if in a C-style comment, `c++' if in a C++
 style comment, `string' if in a string literal, `pound' if DETECT-CPP
-is non-nil and on a preprocessor line, or nil if somewhere else.
+is non-nil and in a preprocessor line, or nil if somewhere else.
 Optional LIM is used as the backward limit of the search.  If omitted,
 or nil, `c-beginning-of-defun' is used.
 
@@ -1945,12 +1945,12 @@ This function does not do any hidden buffer changes."
 string surrounding point (including both delimiters), or nil if point
 isn't in one.  If LIM is non-nil, it's used as the \"safe\" position
 to start parsing from.  If NEAR is non-nil, then the limits of any
-literal next to point is returned.  \"Next to\" means there's only [
-\t] between point and the literal.  The search for such a literal is
-done first in forward direction.  If NOT-IN-DELIMITER is non-nil, the
-case when point is inside a starting delimiter won't be recognized.
-This only has effect for comments, which have starting delimiters with
-more than one character.
+literal next to point is returned.  \"Next to\" means there's only
+spaces and tabs between point and the literal.  The search for such a
+literal is done first in forward direction.  If NOT-IN-DELIMITER is
+non-nil, the case when point is inside a starting delimiter won't be
+recognized.  This only has effect for comments, which have starting
+delimiters with more than one character.
 
 This function does not do any hidden buffer changes."
 
@@ -2037,8 +2037,20 @@ This function does not do any hidden buffer changes."
 (defun c-literal-limits-fast (&optional lim near not-in-delimiter)
   ;; Like c-literal-limits, but for emacsen whose `parse-partial-sexp'
   ;; returns the pos of the comment start.
-  ;;
-  ;; This function does not do any hidden buffer changes.
+
+  "Return a cons of the beginning and end positions of the comment or
+string surrounding point (including both delimiters), or nil if point
+isn't in one.  If LIM is non-nil, it's used as the \"safe\" position
+to start parsing from.  If NEAR is non-nil, then the limits of any
+literal next to point is returned.  \"Next to\" means there's only
+spaces and tabs between point and the literal.  The search for such a
+literal is done first in forward direction.  If NOT-IN-DELIMITER is
+non-nil, the case when point is inside a starting delimiter won't be
+recognized.  This only has effect for comments, which have starting
+delimiters with more than one character.
+
+This function does not do any hidden buffer changes."
+
   (save-excursion
     (let* ((pos (point))
 	   (lim (or lim (progn
@@ -2616,8 +2628,10 @@ brace."
   ;; Note: A declaration level context is assumed; the test can return
   ;; false positives for statements.  This test is even more easily
   ;; fooled than `c-just-after-func-arglist-p'.
+
   (save-excursion
     (save-restriction
+
       ;; Go back to the closest preceding normal parenthesis sexp.  We
       ;; take that as the argument list in the function header.  Then
       ;; check that it's followed by some symbol before the next ';'
@@ -2626,6 +2640,7 @@ brace."
       (if lim (narrow-to-region lim (point)))
       (let ((outside-macro (not (c-query-macro-start)))
 	    paren-end)
+
 	(catch 'done
 	  (while (if (and (c-safe (setq paren-end
 					(c-down-list-backward (point))))
@@ -2635,10 +2650,25 @@ brace."
 		       (if outside-macro
 			   (c-beginning-of-macro)))
 		   (throw 'done nil))))
+
 	(and (progn
 	       (c-forward-syntactic-ws)
 	       (looking-at "\\w\\|\\s_"))
 	     (c-safe (c-up-list-backward paren-end))
+
+	     (save-excursion
+	       ;; If it's a K&R declaration then we're now at the
+	       ;; beginning of the function arglist. Check that there
+	       ;; isn't a '=' before it in this statement since that
+	       ;; means it some kind of initialization instead.
+	       (while (let (res)
+			(skip-chars-backward "^;=}{")
+			(and (eq (char-before) ?=)
+			     (if (setq res (c-literal-limits lim))
+				 (progn (goto-char (car res) t))
+			       (c-beginning-of-macro lim)))))
+	       (not (eq (char-before) ?=)))
+
 	     (point))))))
 
 (defun c-skip-conditional ()
