@@ -142,9 +142,9 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	t)))
 
 (defmacro cc-require (cc-part)
-  "Force loading of the corresponding .el file in the current
-directory during compilation, but compile in a `require'.  Don't use
-within `eval-when-compile'.
+  "Force loading of the corresponding .el file in the current directory
+during compilation, but compile in a `require'.  Don't use within
+`eval-when-compile'.
 
 Having cyclic cc-require's will result in infinite recursion.  That's
 somewhat intentional."
@@ -160,15 +160,27 @@ after the compilation.  Don't use within `eval-when-compile'."
      (provide ,feature)))
 
 (defmacro cc-load (cc-part)
-  "Force loading of the corresponding .el file in the current
-directory during compilation.  Don't use outside `eval-when-compile'
-or `eval-and-compile'.
+  "Force loading of the corresponding .el file in the current directory
+during compilation.  Don't use outside `eval-when-compile' or
+`eval-and-compile'.
 
 Having cyclic cc-load's will result in infinite recursion.  That's
 somewhat intentional."
   `(or (and (featurep 'cc-bytecomp)
 	    (cc-bytecomp-load ,cc-part))
        (load ,cc-part nil t nil)))
+
+(defmacro cc-require-when-compile (cc-part)
+  "Force loading of the corresponding .el file in the current directory
+during compilation, but do a compile time `require' otherwise.  Don't
+use within `eval-when-compile'."
+  `(eval-when-compile
+     (if (and (featurep 'cc-bytecomp)
+	      (cc-bytecomp-is-compiling))
+	 (if (or (not load-in-progress)
+		 (not (featurep ,cc-part)))
+	     (cc-bytecomp-load (symbol-name ,cc-part)))
+       (require ,cc-part))))
 
 (defun cc-bytecomp-is-compiling ()
   "Return non-nil if eval'ed during compilation.  Don't use outside
