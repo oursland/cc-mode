@@ -143,17 +143,22 @@
   ;; just after that keyword.  If not, lineup under the previous line.
   (save-excursion
     (let ((iopl (c-point 'iopl))
-	  (langelem-col (c-langelem-col langelem t)))
+	  (langelem-col (c-langelem-col langelem t))
+	  (extra 0))
       (back-to-indentation)
       (cond
-       ((looking-at "throws[ \t\n]"))
+       ((looking-at "throws[ \t\n]")
+	(goto-char (cdr langelem))
+	(setq extra c-basic-offset))
        ((and (goto-char iopl)
-	     (looking-at "throws[ \t\n]")
-	     (progn (forward-word 1)
-		    (skip-chars-forward " \t")
-		    (not (eolp)))))
+	     (looking-at "throws[ \t\n]"))
+	(forward-word 1)
+	(skip-chars-forward " \t")
+	(when (eolp)
+	  (back-to-indentation)
+	  (setq extra c-basic-offset)))
        (t (goto-char iopl)))
-      (- (current-column) langelem-col))))
+      (+ (- (current-column) langelem-col) extra))))
 
 (defun c-lineup-C-comments (langelem)
   ;; line up C block comment continuation lines
