@@ -109,6 +109,7 @@
     "class-10.java"
     "comments.c"
     "comments-1.java"
+    "comments-2.c"
     "decls-1.java"
     "decls-2.java"
     "decls-3.java"
