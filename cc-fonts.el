@@ -872,6 +872,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	       got-parens nil
 	       got-identifier t
 	       got-suffix t
+	       got-suffix-after-parens t
 	       paren-depth 0))))
 
 (defun c-font-lock-declarations (limit)
@@ -1315,8 +1316,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			(throw 'at-decl-or-cast t))
 
 		      (when (and got-parens
-				 at-decl-end
-				 (not got-prefix-before-parens)
+				 (not got-prefix)
 				 (not got-suffix-after-parens)
 				 (or prev-at-type maybe-typeless))
 			;; Got a declaration of the form "foo bar (gnu);"
@@ -1406,22 +1406,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 		    ;; Still no identifier.
 
-		    (when (or (and got-prefix got-suffix)
-			      (and got-parens got-prefix)
-			      (and got-parens got-suffix))
-		      ;; Require at least two of `got-prefix', `got-parens',
-		      ;; and `got-suffix' to recognize it as an abstract
-		      ;; declarator: `got-parens' only is not enough since
-		      ;; it's probably an empty function call.  `got-suffix'
-		      ;; only is not enough since it can build an ordinary
-		      ;; expression together with the preceding identifier
-		      ;; which we've taken as a type.
-		      ;;
-		      ;; However, we could actually accept on `got-prefix'
-		      ;; only, but that can easily occur temporarily while
-		      ;; writing an expression so we avoid that case anyway.
-		      ;; We could do a better job if we knew the point when
-		      ;; the fontification was invoked.
+		    (when (and got-prefix (or got-parens got-suffix))
+		      ;; Require `got-prefix' together with either
+		      ;; `got-parens' or `got-suffix' to recognize it as an
+		      ;; abstract declarator: `got-parens' only is probably an
+		      ;; empty function call.  `got-suffix' only can build an
+		      ;; ordinary expression together with the preceding
+		      ;; identifier which we've taken as a type.  We could
+		      ;; actually accept on `got-prefix' only, but that can
+		      ;; easily occur temporarily while writing an expression
+		      ;; so we avoid that case anyway.  We could do a better
+		      ;; job if we knew the point when the fontification was
+		      ;; invoked.
 		      (throw 'at-decl-or-cast t))))
 
 		(when at-decl-or-cast
@@ -1445,7 +1441,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			       ;; `c-after-suffixed-type-decl-key' has
 			       ;; matched.
 			       (progn (c-fl-shift-type-backward) t)
-			     got-suffix))
+			     got-suffix-after-parens))
 		  ;; A declaration according to
 		  ;; `c-after-suffixed-type-decl-key'.
 		  (throw 'at-decl-or-cast t))
@@ -1509,7 +1505,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				 (not got-suffix))
 			;; Got something like "foo * bar;".  Since we're not
 			;; inside an arglist it would be a meaningless
-			;; expression since the result isn't used.  We
+			;; expression because the result isn't used.  We
 			;; therefore choose to recognize it as a declaration.
 			;; Do not allow a suffix since it could then be a
 			;; function call.
@@ -1530,8 +1526,14 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 		  (when (and arglist-type
 			     (or got-prefix
-				 (and got-parens got-suffix)))
-		    ;; Got a type followed by an abstract declarator.
+				 (and (eq arglist-type 'decl)
+				      (not c-recognize-paren-inits)
+				      (or got-parens got-suffix))))
+		    ;; Got a type followed by an abstract declarator.  If
+		    ;; `got-prefix' is set it's something like "a *" without
+		    ;; anything after it.  If `got-parens' or `got-suffix' is
+		    ;; set it's "a()", "a[]", "a()[]", or similar, which we
+		    ;; accept only if the context rules out expressions.
 		    (throw 'at-decl-or-cast t)))
 
 		;; If we had a complete symbol table here (which rules out
@@ -1752,22 +1754,29 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ,@(when (c-lang-const c-recognize-<>-arglists)
 	  `(c-font-lock-<>-arglists))
 
-      ;; Fontify method declarations in Objective-C, but first we have
-      ;; to put the `c-decl-end' `c-type' property on all the @-style
-      ;; directives that haven't been handled in `c-basic-matchers-before'.
-      ,@(when (c-major-mode-is 'objc-mode)
-	  `(,(c-make-font-lock-search-function
-	      (c-make-keywords-re t
-		;; Exclude "@class" since that directive ends with a
-		;; semicolon anyway.
-		(delete "@class"
-			(append (c-lang-const c-protection-kwds)
-				(c-lang-const c-other-decl-kwds)
-				nil)))
-	      '((c-put-char-property (1- (match-end 1))
-				     'c-type 'c-decl-end)))
+      ,@(if (c-major-mode-is 'objc-mode)
+	    ;; Fontify method declarations in Objective-C, but first
+	    ;; we have to put the `c-decl-end' `c-type' property on
+	    ;; all the @-style directives that haven't been handled in
+	    ;; `c-basic-matchers-before'.
+	    `(,(c-make-font-lock-search-function
+		(c-make-keywords-re t
+		  ;; Exclude "@class" since that directive ends with a
+		  ;; semicolon anyway.
+		  (delete "@class"
+			  (append (c-lang-const c-protection-kwds)
+				  (c-lang-const c-other-decl-kwds)
+				  nil)))
+		'((c-put-char-property (1- (match-end 1))
+				       'c-type 'c-decl-end)))
 
-	    c-font-lock-objc-methods))
+	      c-font-lock-objc-methods)
+
+	  (when (c-lang-const c-opt-access-key)
+	    `(,(c-make-font-lock-search-function
+		(c-lang-const c-opt-access-key)
+		'((c-put-char-property (1- (match-end 0))
+				       'c-type 'c-decl-end))))))
 
       ;; Fontify all declarations and casts.
       c-font-lock-declarations
