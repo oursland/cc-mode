@@ -1,0 +1,59 @@
+Title: CC Mode
+Author: cc-mode-help@python.org
+
+<h1>Installation notes</h1>
+
+<h3>Setting <code>load-path</code></h3>
+
+    You need to make sure that this new version of
+    CC Mode is on your <code>load-path</code>,
+    <em>before</em> any version that is distributed with your X/Emacs.
+    You can use this test:
+
+    <blockquote><pre>
+M-x locate-library RET cc-mode RET
+    </pre></blockquote>
+
+    Make sure this finds the one you expect it to find.   If not, you
+    can add this to your <code>.emacs</code> file:
+
+    <blockquote><pre>
+(setq load-path (cons "/dir/of/cc-mode/" load-path))
+    </pre></blockquote>
+
+<h3>Byte Compiling</h3>
+
+    It is <em>highly</em> recommended that you byte-compile CC Mode,
+    for both performance and compatibility reasons.  Running
+    CC Mode un-bytecompiled is not supported and <strong>may not
+    work</strong> at all depending on the flavor of X/Emacs you are
+    using.
+
+    <p>You can byte compile CC Mode by doing the following from your
+    shell:
+
+    <blockquote><pre>
+% cd /path/to/cc-mode
+% $(EMACS) -batch -no-site-file -q -l cc-make.el cc-*.el
+    </pre></blockquote>
+
+    where <code>$(EMACS)</code> is either <code>emacs</code> or
+    <code>xemacs</code> depending on the flavor you use.
+
+    <p>You can safely ignore any byte compiler warnings; they are due to
+    the cross X/Emacsen support.
+
+    <p>Be sure to see the list of <a href="compat.html">compatibility
+    issues</a>, for special notes about X/Emacs versions and package
+    interactions.
+
+    <p>To test that you have things set up correctly, visit a C file
+    and then type:<br>
+
+    <blockquote><pre>
+M-x c-version RET
+=> Using CC Mode version 5.XX
+    </pre></blockquote>
+
+    where <code>XX</code> is the correct minor revision number.
+
