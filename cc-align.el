@@ -1171,6 +1171,7 @@ Otherwise, no determination is made."
 	     ;;(/= (point-max)
 	     ;;    (save-excursion (skip-syntax-forward " ") (point))
 	     (zerop (forward-line 1))
+	     (bolp)			; forward-line has funny behavior at eob.
 	     (not (looking-at "^[ \t]*$")))
 	'stop
       nil)))

@@ -3196,6 +3196,7 @@ This function does not do any hidden buffer changes."
       ;; when font-lock refontifies the current line only.
       (when (save-excursion
 	      (and (= (forward-line 1) 0)
+		   (bolp)		; forward-line has funny behavior at eob.
 		   (or (< (c-point 'eol) cfd-limit)
 		       (progn (backward-char)
 			      (not (eq (char-before) ?\\))))))
