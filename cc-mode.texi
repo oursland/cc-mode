@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.38 $
+@comment manual version: $Revision: 2.39 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-24 15:34:19 $
+@comment Last modification: $Date: 1996-05-24 15:58:43 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.38 $)
+@center (manual revision: $Revision: 2.39 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1160,17 +1160,20 @@ Indentation Engine} for details.
 @vindex tab-always-indent (c-)
 @kindex TAB
 @cindex literal
+@vindex indent-tabs-mode
 To indent a single line of code, use @kbd{TAB}
 (@code{c-indent-command}).  The behavior of this command is controlled
 by the variable @code{c-tab-always-indent}.  When this variable is
 @code{t}, @kbd{TAB} always just indents the current line.  When
-@code{nil}, the line is indented only if point is at the left
-margin, or on or before the first non-whitespace character on the line,
-otherwise a real tab character is inserted.  If this variable's value is
-something other that @code{t} or @code{nil} (e.g. @code{'other}), then a
-real tab character is inserted only when point is inside a
-literal (see @ref{Auto-newline insertion}), otherwise the line is
-indented.
+@code{nil}, the line is indented only if point is at the left margin, or
+on or before the first non-whitespace character on the line, otherwise a
+real tab character is inserted.  If this variable's value is something
+other that @code{t} or @code{nil} (e.g. @code{'other}), then a
+@emph{real} tab character@footnote{Note that the value of the
+@code{indent-tabs-mode} variable will control whether an actual tab
+character is inserted, or the equivalent number of spaces.} is inserted
+only when point is inside a literal (see @ref{Auto-newline insertion}),
+otherwise the line is indented.
 
 @kindex M-C-q
 @findex c-indent-exp
