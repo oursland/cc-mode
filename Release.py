@@ -225,7 +225,7 @@ def bump_release(revnum):
 	    fp_out.write(line)
 	fp_in.close()
 	fp_out.close()
-#	os.rename(f + '.new', f)
+	os.rename(f + '.new', f)
 
 
 def main():
