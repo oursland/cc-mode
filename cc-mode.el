@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.38 $
-;; Last Modified:   $Date: 1994-07-22 18:14:28 $
+;; Version:         $Revision: 4.39 $
+;; Last Modified:   $Date: 1994-07-22 18:42:38 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-07-22 18:14:28 $|$Revision: 4.38 $|
+;; |$Date: 1994-07-22 18:42:38 $|$Revision: 4.39 $|
 
 ;;; Code:
 
@@ -588,8 +588,11 @@ experience performance degradations. Emacs 19 has some new built-in
 routines which will speed things up for you.
 
 Because of these inherent problems, cc-mode is no longer being
-actively maintained for Emacs 18, although patch contributions will be
-folded into the main release. "
+actively maintained for Emacs 18, however, until you can upgrade to
+Emacs 19, you may want to look at cc-mode-18.el in the cc-mode
+distribution.  THIS FILE IS COMPLETELY UNSUPPORTED!  If you use it,
+you are on your own, although patch contributions will be folded into
+the main release."
 			    emacs-version))))
     ;; Emacs 18 with the syntax patches are no longer supported
     (if (and (eq major 'v18) (not (eq comments 'no-dual-comments))
@@ -897,7 +900,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.38 $
+cc-mode Revision: $Revision: 4.39 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -932,7 +935,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.38 $
+cc-mode Revision: $Revision: 4.39 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -966,7 +969,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.38 $
+cc-mode Revision: $Revision: 4.39 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -3828,7 +3831,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.38 $"
+(defconst c-version "$Revision: 4.39 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
