@@ -613,18 +613,19 @@ construct.
 Works with: inlambda, inexpr-statement, inexpr-class."
   (save-excursion
     (back-to-indentation)
-    (let* ((state (c-parse-state))
-	   (containing-sexp (c-most-enclosing-brace state))
+    (let* ((paren-state (c-parse-state))
+	   (containing-sexp (c-most-enclosing-brace paren-state))
 	   (res (or (c-looking-at-inexpr-block
-		     (c-safe-position containing-sexp state)
+		     (c-safe-position containing-sexp paren-state)
 		     containing-sexp)
 		    (and containing-sexp
 			 (progn (goto-char containing-sexp)
 				(eq (char-after) ?{))
 			 (progn (setq containing-sexp
-				      (c-most-enclosing-brace state (point)))
+				      (c-most-enclosing-brace paren-state
+							      (point)))
 				(c-looking-at-inexpr-block
-				 (c-safe-position containing-sexp state)
+				 (c-safe-position containing-sexp paren-state)
 				 containing-sexp))))))
       (when res
 	(goto-char (cdr res))

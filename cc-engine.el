@@ -1261,27 +1261,27 @@ you need both the type of a literal and its limits."
 		  (<= beg elem))))
     (setq c-state-cache (cdr c-state-cache))))
 
-(defun c-whack-state-before (bufpos state)
-  ;; Whack off any state information from STATE which lies before
-  ;; BUFPOS.  Not destructive on state.
+(defun c-whack-state-before (bufpos paren-state)
+  ;; Whack off any state information from PAREN-STATE which lies
+  ;; before BUFPOS.  Not destructive on PAREN-STATE.
   (let* ((newstate (list nil))
 	 (ptr newstate)
 	 car)
-    (while state
-      (setq car (car state)
-	    state (cdr state))
+    (while paren-state
+      (setq car (car paren-state)
+	    paren-state (cdr paren-state))
       (if (< (if (consp car) (car car) car) bufpos)
-	  (setq state nil)
+	  (setq paren-state nil)
 	(setcdr ptr (list car))
 	(setq ptr (cdr ptr))))
     (cdr newstate)))
 
-(defun c-whack-state-after (bufpos state)
-  ;; Whack off any state information from STATE which lies at or after
-  ;; BUFPOS.  Not destructive on state.
+(defun c-whack-state-after (bufpos paren-state)
+  ;; Whack off any state information from PAREN-STATE which lies at or
+  ;; after BUFPOS.  Not destructive on PAREN-STATE.
   (catch 'done
-    (while state
-      (let ((car (car state)))
+    (while paren-state
+      (let ((car (car paren-state)))
 	(if (consp car)
 	    ;; just check the car, because in a balanced brace
 	    ;; expression, it must be impossible for the corresponding
@@ -1295,16 +1295,16 @@ you need both the type of a literal and its limits."
 		  ;; case, convert this to a non-cons element.  The
 		  ;; rest of the state is before bufpos, so we're
 		  ;; done.
-		  (throw 'done (cons (car car) (cdr state)))
+		  (throw 'done (cons (car car) (cdr paren-state)))
 		;; we know that both the open and close braces are
 		;; before bufpos, so we also know that everything else
 		;; on state is before bufpos.
-		(throw 'done state)))
+		(throw 'done paren-state)))
 	  (if (<= bufpos car)
 	      nil			; whack it off
 	    ;; it's before bufpos, so everything else should too.
-	    (throw 'done state)))
-	(setq state (cdr state)))
+	    (throw 'done paren-state)))
+	(setq paren-state (cdr paren-state)))
       nil)))
 
 
@@ -1342,9 +1342,9 @@ Otherwise, a 2-vector is returned where the zeroth element is the
 buffer position of the start of the class declaration, and the first
 element is the buffer position of the enclosing class's opening
 brace."
-  (let ((state (c-parse-state)))
-    (or (not (c-most-enclosing-brace state))
-	(c-search-uplist-for-classkey state))))
+  (let ((paren-state (c-parse-state)))
+    (or (not (c-most-enclosing-brace paren-state))
+	(c-search-uplist-for-classkey paren-state))))
 
 (defun c-forward-to-cpp-define-body ()
   ;; Assuming point is at the "#" that introduces a preprocessor
@@ -1582,26 +1582,26 @@ brace."
   (and (< limit (point))
        (eq (char-before) ?:)))
 
-(defun c-search-uplist-for-classkey (brace-state)
+(defun c-search-uplist-for-classkey (paren-state)
   ;; search for the containing class, returning a 2 element vector if
   ;; found. aref 0 contains the bufpos of the boi of the class key
   ;; line, and aref 1 contains the bufpos of the open brace.
-  (if (null brace-state)
-      ;; no brace-state means we cannot be inside a class
+  (if (null paren-state)
+      ;; no paren-state means we cannot be inside a class
       nil
-    (let ((carcache (car brace-state))
+    (let ((carcache (car paren-state))
 	  search-start search-end)
       (if (consp carcache)
 	  ;; a cons cell in the first element means that there is some
 	  ;; balanced sexp before the current bufpos. this we can
 	  ;; ignore. the nth 1 and nth 2 elements define for us the
 	  ;; search boundaries
-	  (setq search-start (nth 2 brace-state)
-		search-end (nth 1 brace-state))
+	  (setq search-start (nth 2 paren-state)
+		search-end (nth 1 paren-state))
 	;; if the car was not a cons cell then nth 0 and nth 1 define
 	;; for us the search boundaries
-	(setq search-start (nth 1 brace-state)
-	      search-end (nth 0 brace-state)))
+	(setq search-start (nth 1 paren-state)
+	      search-end (nth 0 paren-state)))
       ;; if search-end is nil, or if the search-end character isn't an
       ;; open brace, we are definitely not in a class
       (if (or (not search-end)
@@ -1685,7 +1685,7 @@ brace."
 	      foundp))
 	  )))))
 
-(defun c-inside-bracelist-p (containing-sexp brace-state)
+(defun c-inside-bracelist-p (containing-sexp paren-state)
   ;; return the buffer position of the beginning of the brace list
   ;; statement if we're inside a brace list, otherwise return nil.
   ;; CONTAINING-SEXP is the buffer pos of the innermost containing
@@ -1719,14 +1719,14 @@ brace."
 	   bufpos braceassignp lim next-containing)
        (while (and (not bufpos)
 		   containing-sexp)
-	   (when brace-state
-	     (if (consp (car brace-state))
-		 (setq lim (cdr (car brace-state))
-		       brace-state (cdr brace-state))
-	       (setq lim (car brace-state)))
-	     (when brace-state
-	       (setq next-containing (car brace-state)
-		     brace-state (cdr brace-state))))
+	   (when paren-state
+	     (if (consp (car paren-state))
+		 (setq lim (cdr (car paren-state))
+		       paren-state (cdr paren-state))
+	       (setq lim (car paren-state)))
+	     (when paren-state
+	       (setq next-containing (car paren-state)
+		     paren-state (cdr paren-state))))
 	   (goto-char containing-sexp)
 	   (if (c-looking-at-inexpr-block next-containing next-containing)
 	       ;; We're in an in-expression block of some kind.  Do not
@@ -1811,7 +1811,7 @@ brace."
 			 next-containing nil))
 	       ;; we've hit the beginning of the aggregate list
 	       (c-beginning-of-statement-1
-		(c-most-enclosing-brace brace-state))
+		(c-most-enclosing-brace paren-state))
 	       (setq bufpos (point))))
 	   )
        bufpos))
@@ -1959,23 +1959,24 @@ brace."
 	      (cons 'inexpr-statement (point))))
 	res))))
 
-(defun c-looking-at-inexpr-block-backward (state)
+(defun c-looking-at-inexpr-block-backward (paren-state)
   ;; Returns non-nil if we're looking at the end of an in-expression
-  ;; block, otherwise the same as `c-looking-at-inexpr-block'.  STATE
-  ;; is the paren state relevant at the current position.
+  ;; block, otherwise the same as `c-looking-at-inexpr-block'.
+  ;; PAREN-STATE is the paren state relevant at the current position.
   (save-excursion
     ;; We currently only recognize a block.
     (let ((here (point))
-	  (elem (car-safe state))
+	  (elem (car-safe paren-state))
 	  containing-sexp)
       (when (and (consp elem)
 		 (progn (goto-char (cdr elem))
 			(c-forward-syntactic-ws here)
 			(= (point) here)))
 	(goto-char (car elem))
-	(if (setq state (cdr state))
-	    (setq containing-sexp (car-safe state)))
-	(c-looking-at-inexpr-block (c-safe-position containing-sexp state)
+	(if (setq paren-state (cdr paren-state))
+	    (setq containing-sexp (car-safe paren-state)))
+	(c-looking-at-inexpr-block (c-safe-position containing-sexp
+						    paren-state)
 				   containing-sexp)))))
 
 (defun c-on-identifier ()
@@ -2002,39 +2003,39 @@ Keywords are recognized and not considered identifiers."
 	       (looking-at "[-!%&*+/<=>^|~]\\|()\\|\\[]"))))))
 
 
-(defun c-most-enclosing-brace (state &optional bufpos)
+(defun c-most-enclosing-brace (paren-state &optional bufpos)
   ;; Return the bufpos of the innermost enclosing brace before bufpos
   ;; that hasn't been narrowed out, or nil if none was found.
   (let (enclosingp)
     (or bufpos (setq bufpos 134217727))
-    (while state
-      (setq enclosingp (car state)
-	    state (cdr state))
+    (while paren-state
+      (setq enclosingp (car paren-state)
+	    paren-state (cdr paren-state))
       (if (or (consp enclosingp)
 	      (>= enclosingp bufpos))
 	  (setq enclosingp nil)
 	(if (< enclosingp (point-min))
 	    (setq enclosingp nil))
-	(setq state nil)))
+	(setq paren-state nil)))
     enclosingp))
 
-(defun c-least-enclosing-brace (state &optional bufpos)
+(defun c-least-enclosing-brace (paren-state &optional bufpos)
   ;; Return the bufpos of the outermost enclosing brace before bufpos
   ;; that hasn't been narrowed out, or nil if none was found.
   (let (pos elem)
     (or bufpos (setq bufpos 134217727))
-    (while state
-      (setq elem (car state)
-	    state (cdr state))
+    (while paren-state
+      (setq elem (car paren-state)
+	    paren-state (cdr paren-state))
       (unless (or (consp elem)
 		  (>= elem bufpos))
 	(if (>= elem (point-min))
 	    (setq pos elem))))
     pos))
 
-(defun c-safe-position (bufpos state)
+(defun c-safe-position (bufpos paren-state)
   ;; Return the closest known safe position higher up than BUFPOS, or
-  ;; nil if the state doesn't contain one.  Return nil if BUFPOS is
+  ;; nil if PAREN-STATE doesn't contain one.  Return nil if BUFPOS is
   ;; nil, which is useful to find the closest limit before a given
   ;; limit that might be nil.
   (when bufpos
@@ -2044,27 +2045,27 @@ Keywords are recognized and not considered identifiers."
 	  ;; Make sure bufpos is outside the macro we might be in.
 	  (setq bufpos c-macro-start))
       (catch 'done
-	(while state
+	(while paren-state
 	  (setq safepos
-		(if (consp (car state))
-		    (cdr (car state))
-		  (car state)))
+		(if (consp (car paren-state))
+		    (cdr (car paren-state))
+		  (car paren-state)))
 	  (if (< safepos bufpos)
 	      (throw 'done safepos)
-	    (setq state (cdr state))))
+	    (setq paren-state (cdr paren-state))))
 	(if (eq c-macro-start bufpos)
 	    ;; Backed up bufpos to the macro start and got outside the
 	    ;; state.  We know the macro is at the top level in this case,
 	    ;; so we can use the macro start as the safe position.
 	    c-macro-start)))))
 
-(defun c-narrow-out-enclosing-class (state lim)
+(defun c-narrow-out-enclosing-class (paren-state lim)
   ;; Narrow the buffer so that the enclosing class is hidden.  Uses
   ;; and returns the value from c-search-uplist-for-classkey.
-  (setq state (c-whack-state-after (point) state))
+  (setq paren-state (c-whack-state-after (point) paren-state))
   (let (inclass-p)
-    (and state
-	 (setq inclass-p (c-search-uplist-for-classkey state))
+    (and paren-state
+	 (setq inclass-p (c-search-uplist-for-classkey paren-state))
 	 (narrow-to-region
 	  (progn
 	    (goto-char (1+ (aref inclass-p 1)))
@@ -2097,7 +2098,7 @@ Keywords are recognized and not considered identifiers."
 (defun c-add-stmt-syntax (syntax-symbol
 			  stop-at-boi-only
 			  containing-sexp
-			  state
+			  paren-state
 			  &optional at-block-start)
   ;; Do the generic processing to anchor the given syntax symbol on
   ;; the preceding statement: Skip over any labels and containing
@@ -2194,8 +2195,9 @@ Keywords are recognized and not considered identifiers."
 	      (when (and (eq step-type 'same)
 			 containing-sexp)
 		(goto-char containing-sexp)
-		(setq state (c-whack-state-after containing-sexp state)
-		      containing-sexp (c-most-enclosing-brace state))
+		(setq paren-state (c-whack-state-after containing-sexp
+						       paren-state)
+		      containing-sexp (c-most-enclosing-brace paren-state))
 
 		(when (and (prog1
 			       (eq prev-paren ?{)
@@ -2252,7 +2254,7 @@ Keywords are recognized and not considered identifiers."
 	  (c-add-syntax 'inexpr-statement))
       )))
 
-(defun c-add-class-syntax (symbol classkey state)
+(defun c-add-class-syntax (symbol classkey paren-state)
   ;; The inclass and class-close syntactic symbols are added in
   ;; several places and some work is needed to fix everything.
   ;; Therefore it's collected here.
@@ -2264,9 +2266,11 @@ Keywords are recognized and not considered identifiers."
 	  (c-add-syntax symbol (setq anchor (point)))
 	(c-add-syntax symbol (setq anchor (aref classkey 0)))
 	(if (and c-opt-inexpr-class-key
-		 (setq containing-sexp (c-most-enclosing-brace state (point))
+		 (setq containing-sexp (c-most-enclosing-brace paren-state
+							       (point))
 		       inexpr (cdr (c-looking-at-inexpr-block
-				    (c-safe-position containing-sexp state)
+				    (c-safe-position containing-sexp
+						     paren-state)
 				    containing-sexp)))
 		 (/= inexpr (c-point 'boi inexpr)))
 	    (c-add-syntax 'inexpr-class)))
@@ -2277,7 +2281,7 @@ Keywords are recognized and not considered identifiers."
 				    beg-of-same-or-containing-stmt
 				    containing-sexp
 				    lim
-				    state)
+				    paren-state)
   ;; This function contains the decision tree reached through both
   ;; cases 18 and 10.  It's a continued statement or top level
   ;; construct of some kind.
@@ -2318,7 +2322,7 @@ Keywords are recognized and not considered identifiers."
 	;; brace lists as top-level constructs, and brace lists inside
 	;; statements is a completely different context.
 	(c-beginning-of-statement-1 lim)
-	(c-add-stmt-syntax 'statement-cont nil containing-sexp state))
+	(c-add-stmt-syntax 'statement-cont nil containing-sexp paren-state))
        ;; CASE B.3: The body of a function declared inside a normal
        ;; block.  Can occur e.g. in Pike and when using gcc
        ;; extensions.  Might also trigger it with some macros followed
@@ -2328,11 +2332,11 @@ Keywords are recognized and not considered identifiers."
 	  (goto-char indent-point)
 	  (and (not (c-looking-at-bos))
 	       (eq (c-beginning-of-statement-1 lim nil nil t) 'same)))
-	(c-add-stmt-syntax 'defun-open t containing-sexp state))
+	(c-add-stmt-syntax 'defun-open t containing-sexp paren-state))
        ;; CASE B.4: Continued statement with block open.
        (t
 	(goto-char beg-of-same-or-containing-stmt)
-	(c-add-stmt-syntax 'statement-cont nil containing-sexp state)
+	(c-add-stmt-syntax 'statement-cont nil containing-sexp paren-state)
 	(c-add-syntax 'block-open))
        ))
      ;; CASE C: iostream insertion or extraction operator
@@ -2349,7 +2353,7 @@ Keywords are recognized and not considered identifiers."
      ;; CASE D: continued statement.
      (t
       (c-beginning-of-statement-1 lim)
-      (c-add-stmt-syntax 'statement-cont nil containing-sexp state))
+      (c-add-stmt-syntax 'statement-cont nil containing-sexp paren-state))
      )))
 
 (defun c-guess-basic-syntax ()
@@ -2359,20 +2363,21 @@ Keywords are recognized and not considered identifiers."
       (beginning-of-line)
       (let* ((indent-point (point))
 	     (case-fold-search nil)
-	     (state (c-parse-state))
+	     (paren-state (c-parse-state))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache step-type
 	     tmpsymbol keyword injava-inher special-brace-list
 	     ;; narrow out any enclosing class or extern "C" block
-	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
+	     (inclass-p (c-narrow-out-enclosing-class paren-state
+						      indent-point))
 	     ;; c-state-cache is shadowed here.  That means we must
 	     ;; not do any changes during the execution of this
 	     ;; function, since c-check-state-cache then would change
 	     ;; this local variable and leave a bogus value in the
 	     ;; global one.
 	     (c-state-cache (if inclass-p
-				(c-whack-state-before (point-min) state)
-			      state))
+				(c-whack-state-before (point-min) paren-state)
+			      paren-state))
 	     inenclosing-p macro-start in-macro-expr
 	     ;; There's always at most one syntactic element which got
 	     ;; a relpos.  It's stored in syntactic-relpos.
@@ -2397,20 +2402,20 @@ Keywords are recognized and not considered identifiers."
 		   )))))
 	;; get the buffer position of the most nested opening brace,
 	;; if there is one, and it hasn't been narrowed out
-	(when state
-	  (setq containing-sexp (car state)
-		state (cdr state))
+	(when paren-state
+	  (setq containing-sexp (car paren-state)
+		paren-state (cdr paren-state))
 	  (if (consp containing-sexp)
 	      ;; Ignore balanced paren.  The next entry can't be
 	      ;; another one.
-	      (setq containing-sexp (car-safe state)
-		    state (cdr-safe state)))
+	      (setq containing-sexp (car-safe paren-state)
+		    paren-state (cdr-safe paren-state)))
 	  ;; Ignore the bufpos if it has been narrowed out by the
 	  ;; containing class.
 	  (if (and containing-sexp
 		   (< containing-sexp (point-min)))
 	      (setq containing-sexp nil
-		    state nil))
+		    paren-state nil))
 	  ;; If we're in a parenthesis list then ',' delimits the
 	  ;; "statements" rather than being an operator (with the
 	  ;; exception of the "for" clause).  This difference is
@@ -2422,8 +2427,8 @@ Keywords are recognized and not considered identifiers."
 
 	;; set the limit on the farthest back we need to search
 	(setq lim (or containing-sexp
-		      (and (consp (car-safe state))
-			   (cdr (car state)))
+		      (and (consp (car-safe paren-state))
+			   (cdr (car paren-state)))
 		      (point-min)))
 
 	;; cache char before and after indent point, and move point to
@@ -2474,7 +2479,7 @@ Keywords are recognized and not considered identifiers."
 	 ;; CASE 11: an else clause?
 	 ((looking-at "else\\>[^_]")
 	  (c-beginning-of-statement-1 containing-sexp)
-	  (c-add-stmt-syntax 'else-clause t containing-sexp state))
+	  (c-add-stmt-syntax 'else-clause t containing-sexp paren-state))
 	 ;; CASE 12: while closure of a do/while construct?
 	 ((and (looking-at "while\\>[^_]")
 	       (save-excursion
@@ -2482,7 +2487,7 @@ Keywords are recognized and not considered identifiers."
 			    'beginning)
 		   (setq placeholder (point)))))
 	  (goto-char placeholder)
-	  (c-add-stmt-syntax 'do-while-closure t containing-sexp state))
+	  (c-add-stmt-syntax 'do-while-closure t containing-sexp paren-state))
 	 ;; CASE 13: A catch or finally clause?  This case is simpler
 	 ;; than if-else and do-while, because a block is required
 	 ;; after every try, catch and finally.
@@ -2504,7 +2509,7 @@ Keywords are recognized and not considered identifiers."
 		 (looking-at "\\(try\\|catch\\)\\>[^_]")
 		 (setq placeholder (point))))
 	  (goto-char placeholder)
-	  (c-add-stmt-syntax 'catch-clause t containing-sexp state))
+	  (c-add-stmt-syntax 'catch-clause t containing-sexp paren-state))
 	 ;; CASE 18: A substatement we can recognize by keyword.
 	 ((save-excursion
 	    (and c-opt-block-stmt-key
@@ -2552,16 +2557,16 @@ Keywords are recognized and not considered identifiers."
 		(cond
 		 ((eq char-after-ip ?{)
 		  (c-add-stmt-syntax 'substatement-open nil
-				     containing-sexp state))
+				     containing-sexp paren-state))
 		 ((save-excursion
 		    (goto-char indent-point)
 		    (back-to-indentation)
 		    (looking-at c-label-key))
 		  (c-add-stmt-syntax 'substatement-label nil
-				     containing-sexp state))
+				     containing-sexp paren-state))
 		 (t
 		  (c-add-stmt-syntax 'substatement nil
-				     containing-sexp state))))
+				     containing-sexp paren-state))))
 	    ;; CASE 18B: Some other substatement.  This is shared
 	    ;; with case 10.
 	    (c-guess-continued-construct indent-point
@@ -2569,14 +2574,14 @@ Keywords are recognized and not considered identifiers."
 					 placeholder
 					 lim
 					 lim
-					 state)))
+					 paren-state)))
 	 ;; CASE 4: In-expression statement.  C.f. cases 7B, 16A and
 	 ;; 17E.
 	 ((and (or c-opt-inexpr-class-key
 		   c-opt-inexpr-block-key
 		   c-opt-lambda-key)
 	       (setq placeholder (c-looking-at-inexpr-block
-				  (c-safe-position containing-sexp state)
+				  (c-safe-position containing-sexp paren-state)
 				  containing-sexp)))
 	  (setq tmpsymbol (assq (car placeholder)
 				'((inexpr-class . class-open)
@@ -2594,7 +2599,7 @@ Keywords are recognized and not considered identifiers."
 	  (back-to-indentation)
 	  (c-add-stmt-syntax tmpsymbol t
 			     (c-most-enclosing-brace c-state-cache (point))
-			     (c-whack-state-after (point) state))
+			     (c-whack-state-after (point) paren-state))
 	  (unless (eq (point) (cdr placeholder))
 	    (c-add-syntax (car placeholder))))
 	 ;; CASE 5: Line is at top level.
@@ -2677,7 +2682,7 @@ Keywords are recognized and not considered identifiers."
 	     ;; CASE 5A.4: inline defun open
 	     ((and inclass-p (not inenclosing-p))
 	      (c-add-syntax 'inline-open)
-	      (c-add-class-syntax 'inclass inclass-p state))
+	      (c-add-class-syntax 'inclass inclass-p paren-state))
 	     ;; CASE 5A.5: ordinary defun open
 	     (t
 	      (goto-char placeholder)
@@ -2720,7 +2725,8 @@ Keywords are recognized and not considered identifiers."
 	     (c-recognize-knr-p
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
-	      (if inclass-p (c-add-class-syntax 'inclass inclass-p state)))
+	      (if inclass-p
+		  (c-add-class-syntax 'inclass inclass-p paren-state)))
 	     ;; CASE 5B.3: Inside a member init list.
 	     ((c-beginning-of-member-init-list lim)
 	      (c-forward-syntactic-ws)
@@ -2786,7 +2792,8 @@ Keywords are recognized and not considered identifiers."
 	     ((eq char-before-ip ?:)
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
-	      (if inclass-p (c-add-class-syntax 'inclass inclass-p state)))
+	      (if inclass-p
+		  (c-add-class-syntax 'inclass inclass-p paren-state)))
 	     ;; CASE 5C.3: in a Java implements/extends
 	     (injava-inher
 	      (let ((where (cdr injava-inher))
@@ -2889,13 +2896,15 @@ Keywords are recognized and not considered identifiers."
 	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
 	      (c-beginning-of-statement-1 lim)
-	      (c-add-stmt-syntax 'statement-cont nil containing-sexp state))
+	      (c-add-stmt-syntax 'statement-cont nil
+				 containing-sexp paren-state))
 	     ))
 	   ;; CASE 5E: we are looking at a access specifier
 	   ((and inclass-p
 		 c-opt-access-key
 		 (looking-at c-opt-access-key))
-	    (setq placeholder (c-add-class-syntax 'inclass inclass-p state))
+	    (setq placeholder (c-add-class-syntax 'inclass inclass-p
+						  paren-state))
 	    ;; Append access-label with the same anchor point as inclass gets.
 	    (nconc syntax (list (cons 'access-label placeholder))))
 	   ;; CASE 5F: extern-lang-close or namespace-close?
@@ -2916,7 +2925,7 @@ Keywords are recognized and not considered identifiers."
 		     (and (c-safe (progn (c-backward-sexp 1) t))
 			  (= (point) (aref inclass-p 1))
 			  ))))
-	    (c-add-class-syntax 'class-close inclass-p state))
+	    (c-add-class-syntax 'class-close inclass-p paren-state))
 	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
 		 (not (eq char-before-ip ?}))
@@ -2972,7 +2981,7 @@ Keywords are recognized and not considered identifiers."
 		      (c-add-syntax 'inextern-lang (c-point 'boi)))
 		     ((eq inenclosing-p 'namespace)
 		      (c-add-syntax 'innamespace (c-point 'boi)))
-		     (t (c-add-class-syntax 'inclass inclass-p state)))
+		     (t (c-add-class-syntax 'inclass inclass-p paren-state)))
 		    ))
 	      (when (and c-syntactic-indentation-in-macros
 			 macro-start
@@ -3023,13 +3032,15 @@ Keywords are recognized and not considered identifiers."
 	   ;; and 17E.
 	   ((and (eq char-after-ip ?{)
 		 (progn
-		   (setq placeholder (c-inside-bracelist-p (point) c-state-cache))
+		   (setq placeholder (c-inside-bracelist-p (point)
+							   c-state-cache))
 		   (if placeholder
 		       (setq tmpsymbol '(brace-list-open . inexpr-class))
 		     (setq tmpsymbol '(block-open . inexpr-statement)
 			   placeholder
 			   (cdr-safe (c-looking-at-inexpr-block
-				      (c-safe-position containing-sexp state)
+				      (c-safe-position containing-sexp
+						       paren-state)
 				      containing-sexp)))
 		     ;; placeholder is nil if it's a block directly in
 		     ;; a function arglist.  That makes us skip out of
@@ -3038,8 +3049,8 @@ Keywords are recognized and not considered identifiers."
 	    (goto-char placeholder)
 	    (back-to-indentation)
 	    (c-add-stmt-syntax (car tmpsymbol) t
-			       (c-most-enclosing-brace state (point))
-			       (c-whack-state-after (point) state))
+			       (c-most-enclosing-brace paren-state (point))
+			       (c-whack-state-after (point) paren-state))
 	    (if (/= (point) placeholder)
 		(c-add-syntax (cdr tmpsymbol))))
 	   ;; CASE 7C: we are looking at the first argument in an empty
@@ -3127,7 +3138,7 @@ Keywords are recognized and not considered identifiers."
 			 (save-excursion
 			   (goto-char containing-sexp)
 			   (c-looking-at-special-brace-list)))
-		    (c-inside-bracelist-p containing-sexp state)))
+		    (c-inside-bracelist-p containing-sexp paren-state)))
 	  (cond
 	   ;; CASE 9A: In the middle of a special brace list opener.
 	   ((and (consp special-brace-list)
@@ -3142,7 +3153,7 @@ Keywords are recognized and not considered identifiers."
 			    (setq placeholder (c-guess-basic-syntax))))
 		(setq syntax placeholder)
 	      (c-beginning-of-statement-1
-	       (c-safe-position (1- containing-sexp) state))
+	       (c-safe-position (1- containing-sexp) paren-state))
 	      (c-forward-token-1 0)
 	      (if (looking-at "typedef\\>[^_]") (c-forward-token-1 1))
 	      (c-add-syntax 'brace-list-open (c-point 'boi))))
@@ -3172,7 +3183,7 @@ Keywords are recognized and not considered identifiers."
 	      (setq lim (c-most-enclosing-brace c-state-cache (point)))
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-stmt-syntax 'brace-list-close t lim
-				 (c-whack-state-after (point) state) t)))
+				 (c-whack-state-after (point) paren-state) t)))
 	   (t
 	    ;; Prepare for the rest of the cases below by going to the
 	    ;; token following the opening brace
@@ -3197,7 +3208,8 @@ Keywords are recognized and not considered identifiers."
 		(setq lim (c-most-enclosing-brace c-state-cache (point)))
 		(c-beginning-of-statement-1 lim)
 		(c-add-stmt-syntax 'brace-list-intro t lim
-				   (c-whack-state-after (point) state) t)))
+				   (c-whack-state-after (point) paren-state)
+				   t)))
 	     ;; CASE 9D: this is just a later brace-list-entry or
 	     ;; brace-entry-open
 	     (t (if (or (eq char-after-ip ?{)
@@ -3225,13 +3237,13 @@ Keywords are recognized and not considered identifiers."
 				       placeholder
 				       containing-sexp
 				       lim
-				       state))
+				       paren-state))
 	 ;; CASE 14: A case or default label
 	 ((looking-at c-label-kwds-regexp)
 	  (goto-char containing-sexp)
 	  (setq lim (c-most-enclosing-brace c-state-cache containing-sexp))
 	  (c-backward-to-block-anchor lim)
-	  (c-add-stmt-syntax 'case-label t lim state))
+	  (c-add-stmt-syntax 'case-label t lim paren-state))
 	 ;; CASE 15: any other label
 	 ((looking-at c-label-key)
 	  (goto-char containing-sexp)
@@ -3246,12 +3258,12 @@ Keywords are recognized and not considered identifiers."
 		      'case-label
 		    'label)))
 	  (c-backward-to-block-anchor lim)
-	  (c-add-stmt-syntax tmpsymbol t lim state))
+	  (c-add-stmt-syntax tmpsymbol t lim paren-state))
 	 ;; CASE 16: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((eq char-after-ip ?})
 	  ;; From here on we have the next containing sexp in lim.
-	  (setq lim (c-most-enclosing-brace state))
+	  (setq lim (c-most-enclosing-brace paren-state))
 	  (goto-char containing-sexp)
 	    (cond
 	     ;; CASE 16E: Closing a statement block?  This catches
@@ -3260,11 +3272,11 @@ Keywords are recognized and not considered identifiers."
 	     ;; e.g. a macro argument.
 	     ((c-after-conditional)
 	      (c-backward-to-block-anchor lim)
-	      (c-add-stmt-syntax 'block-close t lim state))
+	      (c-add-stmt-syntax 'block-close t lim paren-state))
 	     ;; CASE 16A: closing a lambda defun or an in-expression
 	     ;; block?  C.f. cases 4, 7B and 17E.
 	     ((setq placeholder (c-looking-at-inexpr-block
-				 (c-safe-position containing-sexp state)
+				 (c-safe-position containing-sexp paren-state)
 				 nil))
 	      (setq tmpsymbol (if (eq (car placeholder) 'inlambda)
 				  'inline-close
@@ -3276,13 +3288,13 @@ Keywords are recognized and not considered identifiers."
 		(goto-char (cdr placeholder))
 		(back-to-indentation)
 		(c-add-stmt-syntax tmpsymbol t
-				   (c-most-enclosing-brace state (point))
-				   (c-whack-state-after (point) state))
+				   (c-most-enclosing-brace paren-state (point))
+				   (c-whack-state-after (point) paren-state))
 		(if (/= (point) (cdr placeholder))
 		    (c-add-syntax (car placeholder)))))
 	     ;; CASE 16B: does this close an inline or a function in
 	     ;; an extern block or namespace?
-	     ((setq placeholder (c-search-uplist-for-classkey state))
+	     ((setq placeholder (c-search-uplist-for-classkey paren-state))
 	      (c-backward-to-decl-anchor lim)
 	      (back-to-indentation)
 	      (if (save-excursion
@@ -3305,7 +3317,7 @@ Keywords are recognized and not considered identifiers."
 	      (back-to-indentation)
 	      (if (/= (point) containing-sexp)
 		  (goto-char placeholder))
-	      (c-add-stmt-syntax 'defun-close t lim state))
+	      (c-add-stmt-syntax 'defun-close t lim paren-state))
 	     ;; CASE 16C: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close.  C.f. case 17H.
@@ -3324,7 +3336,7 @@ Keywords are recognized and not considered identifiers."
 		(goto-char containing-sexp)
 		;; c-backward-to-block-anchor not necessary here; those
 		;; situations are handled in case 16E above.
-		(c-add-stmt-syntax 'block-close t lim state)))
+		(c-add-stmt-syntax 'block-close t lim paren-state)))
 	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
@@ -3332,7 +3344,7 @@ Keywords are recognized and not considered identifiers."
 		(narrow-to-region (point-min) indent-point)
 		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
 		  (if decl
-		      (c-add-class-syntax 'class-close decl state)
+		      (c-add-class-syntax 'class-close decl paren-state)
 		    (goto-char containing-sexp)
 		    (c-backward-to-decl-anchor lim)
 		    (back-to-indentation)
@@ -3355,7 +3367,8 @@ Keywords are recognized and not considered identifiers."
 	   ;; CASE 17B: continued statement
 	   ((and (eq step-type 'same)
 		 (/= (point) indent-point))
-	    (c-add-stmt-syntax 'statement-cont nil containing-sexp state))
+	    (c-add-stmt-syntax 'statement-cont nil
+			       containing-sexp paren-state))
 	   ;; CASE 17A: After a case/default label?
 	   ((progn
 	      (while (and (eq step-type 'label)
@@ -3366,14 +3379,14 @@ Keywords are recognized and not considered identifiers."
 	    (c-add-stmt-syntax (if (eq char-after-ip ?{)
 				   'statement-case-open
 				 'statement-case-intro)
-			       t containing-sexp state))
+			       t containing-sexp paren-state))
 	   ;; CASE 17D: any old statement
 	   ((progn
 	      (while (eq step-type 'label)
 		(setq step-type
 		      (c-beginning-of-statement-1 containing-sexp)))
 	      (eq step-type 'previous))
-	    (c-add-stmt-syntax 'statement t containing-sexp state)
+	    (c-add-stmt-syntax 'statement t containing-sexp paren-state)
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ;; CASE 17I: Inside a substatement block.
@@ -3381,16 +3394,16 @@ Keywords are recognized and not considered identifiers."
 	      ;; The following tests are all based on containing-sexp.
 	      (goto-char containing-sexp)
 	      ;; From here on we have the next containing sexp in lim.
-	      (setq lim (c-most-enclosing-brace state containing-sexp))
+	      (setq lim (c-most-enclosing-brace paren-state containing-sexp))
 	      (c-after-conditional))
 	    (c-backward-to-block-anchor lim)
-	    (c-add-stmt-syntax 'statement-block-intro t lim state)
+	    (c-add-stmt-syntax 'statement-block-intro t lim paren-state)
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ;; CASE 17E: first statement in an in-expression block.
 	   ;; C.f. cases 4, 7B and 16A.
 	   ((setq placeholder (c-looking-at-inexpr-block
-			       (c-safe-position containing-sexp state)
+			       (c-safe-position containing-sexp paren-state)
 			       nil))
 	    (setq tmpsymbol (if (eq (car placeholder) 'inlambda)
 				'defun-block-intro
@@ -3402,7 +3415,7 @@ Keywords are recognized and not considered identifiers."
 	      (back-to-indentation)
 	      (c-add-stmt-syntax tmpsymbol t
 				 (c-most-enclosing-brace c-state-cache (point))
-				 (c-whack-state-after (point) state))
+				 (c-whack-state-after (point) paren-state))
 	      (if (/= (point) (cdr placeholder))
 		  (c-add-syntax (car placeholder))))
 	    (if (eq char-after-ip ?{)
@@ -3418,8 +3431,8 @@ Keywords are recognized and not considered identifiers."
 	   ((save-excursion
 	      (save-restriction
 		(widen)
-		(c-narrow-out-enclosing-class state containing-sexp)
-		(not (c-most-enclosing-brace state))))
+		(c-narrow-out-enclosing-class paren-state containing-sexp)
+		(not (c-most-enclosing-brace paren-state))))
 	    (c-backward-to-decl-anchor lim)
 	    (back-to-indentation)
 	    (c-add-syntax 'defun-block-intro (point)))
@@ -3435,7 +3448,7 @@ Keywords are recognized and not considered identifiers."
 	    (back-to-indentation)
 	    (if (/= (point) containing-sexp)
 		(goto-char placeholder))
-	    (c-add-stmt-syntax 'defun-block-intro t lim state))
+	    (c-add-stmt-syntax 'defun-block-intro t lim paren-state))
 	   ;; CASE 17H: First statement in a block.  C.f. case 16C.
 	   (t
 	    ;; If the block is preceded by a case/switch label on the
@@ -3451,7 +3464,7 @@ Keywords are recognized and not considered identifiers."
 	      (goto-char containing-sexp)
 	      ;; c-backward-to-block-anchor not necessary here; those
 	      ;; situations are handled in case 17I above.
-	      (c-add-stmt-syntax 'statement-block-intro t lim state))
+	      (c-add-stmt-syntax 'statement-block-intro t lim paren-state))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ))

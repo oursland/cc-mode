@@ -1036,11 +1036,11 @@ defun."
   (if (< arg 0)
       (c-end-of-defun (- arg))
     (while (> arg 0)
-      (let ((state (reverse (c-parse-state)))
+      (let ((paren-state (reverse (c-parse-state)))
 	    prevbod bod)
-	(while (and state (not bod))
-	  (setq bod (car state)
-		state (cdr state))
+	(while (and paren-state (not bod))
+	  (setq bod (car paren-state)
+		paren-state (cdr paren-state))
 	  (if (consp bod)
 	      (setq prevbod (car bod)
 		    bod nil)))
@@ -1930,7 +1930,7 @@ non-nil."
   (interactive)
   (let ((here (point))
 	(eod (c-point 'eod))
-	(state (c-parse-state)))
+	(paren-state (c-parse-state)))
     ;; Are we sitting at the top level, someplace between either the
     ;; beginning of buffer, or the nearest preceding defun?  If so,
     ;; try first to figure out whether we're sitting on the
@@ -1939,20 +1939,20 @@ non-nil."
     ;;
     ;; If we're sitting on anything else at the top-level, we want to
     ;; just mark the statement that we're on
-    (if (or (and (consp (car state))
-		 (= (length state) 1))
-	    (null state))
+    (if (or (and (consp (car paren-state))
+		 (= (length paren-state) 1))
+	    (null paren-state))
 	;; Are we in the whitespace after the nearest preceding defun?
-	(if (and state
+	(if (and paren-state
 		 (looking-at "[ \t]*$")
 		 (= (save-excursion
 		      (c-backward-syntactic-ws)
 		      (skip-chars-backward ";")
 		      (point))
-		    (cdr (car state))))
+		    (cdr (car paren-state))))
 	    (progn
 	      (setq eod (point))
-	      (goto-char (car (car state)))
+	      (goto-char (car (car paren-state)))
 	      (c-beginning-of-statement-1))
 	  (if (= ?{ (save-excursion
 		      (c-end-of-statement-1)
@@ -1972,10 +1972,10 @@ non-nil."
       ;; need to find our way to the least enclosing brace.  Then, in
       ;; both cases, we to mark the region from the beginning of the
       ;; current statement, until the end of the next following defun
-      (while (and state)
-	(or (consp (car state))
-	    (goto-char (car state)))
-	(setq state (cdr state)))
+      (while (and paren-state)
+	(or (consp (car paren-state))
+	    (goto-char (car paren-state)))
+	(setq paren-state (cdr paren-state)))
       (c-beginning-of-statement-1))
     (push-mark here)
     (push-mark eod nil t)))
