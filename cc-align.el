@@ -195,9 +195,7 @@
       (beginning-of-line)
       (skip-chars-forward " \t")
       (if (and (eq (following-char) ?{)
-	       (condition-case nil
-		   (progn (forward-sexp) t)
-		 (error nil))
+	       (c-safe (progn (forward-sexp) t))
 	       (<= (point) eol)
 	       (eq (preceding-char) ?}))
 	  c-basic-offset
