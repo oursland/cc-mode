@@ -63,7 +63,7 @@
 
 ;;; Macros.
 
-;;; Helper for building regexps.
+;;; Helpers for building regexps.
 (defmacro c-paren-re (re)
   `(concat "\\(" ,re "\\)"))
 (defmacro c-identifier-re (re)
