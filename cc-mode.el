@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.230 $
-;; Last Modified:   $Date: 1992-12-05 02:52:04 $
+;; Version:         $Revision: 2.231 $
+;; Last Modified:   $Date: 1992-12-07 15:08:01 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -120,7 +120,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-05 02:52:04 $|$Revision: 2.230 $|
+;; |$Date: 1992-12-07 15:08:01 $|$Revision: 2.231 $|
 
 ;;; Code:
 
@@ -365,10 +365,12 @@ set to nil.")
   "*Column to insert backslashes.")
 (defvar c++-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
-This hook gets called after each line to allow the user to do whatever
-special indentation adjustments are desired.  If you have non-standard
-indentation, you will likely need to have c++-relative-offset-p set to
-nil.")
+This hook gets called after a line is indented by the mode. By
+supplying a hook, you can make adjustments to the line's standard
+indentation.  If you do use this hook, you will likely need to also
+set c++-relative-offset-p to nil.  The call to this hook is wrapped in
+a save-excursion so you don't need to worry about restoring point and
+mark inside the hook function.")
 (defvar c++-delete-function 'backward-delete-char-untabify
   "*Function called by c++-electric-delete when deleting a single char.")
 (defvar c++-electric-pound-behavior nil
@@ -401,7 +403,7 @@ value is, though, the slower parts of c++-mode can become.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.230 $
+  "Major mode for editing C++ code.  $Revision: 2.231 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -609,7 +611,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.230 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.231 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2285,7 +2287,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.230 $"
+(defconst c++-version "$Revision: 2.231 $"
   "c++-mode version number.")
 
 (defun c++-version ()
