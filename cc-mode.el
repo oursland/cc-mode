@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.64 $
-;; Last Modified:   $Date: 1994-08-26 14:46:36 $
+;; Version:         $Revision: 4.65 $
+;; Last Modified:   $Date: 1994-08-26 14:59:27 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-26 14:46:36 $|$Revision: 4.64 $|
+;; |$Date: 1994-08-26 14:59:27 $|$Revision: 4.65 $|
 
 ;;; Code:
 
@@ -950,7 +950,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.64 $
+cc-mode Revision: $Revision: 4.65 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -989,7 +989,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.64 $
+cc-mode Revision: $Revision: 4.65 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1026,7 +1026,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.64 $
+cc-mode Revision: $Revision: 4.65 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2064,10 +2064,7 @@ search."
 	  (beginning-of-line))
 	 ;; CASE 2: some other kind of literal?
 	 ((c-in-literal))
-	 ;; CASE 3: is this the first time we're checking?
-	 (firstp (setq firstp nil
-		       last-begin (point)))
-	 ;; CASE 4: are we looking at a conditional keyword?
+	 ;; CASE 3: are we looking at a conditional keyword?
 	 ((or (looking-at c-conditional-key)
 	      (and (= (following-char) ?\()
 		   (let ((here (point))
@@ -2085,6 +2082,9 @@ search."
 	      (forward-sexp -1))
 	  (setq last-begin (point)
 		donep t))
+	 ;; CASE 4: is this the first time we're checking?
+	 (firstp (setq firstp nil
+		       last-begin (point)))
 	 ;; CASE 5: have we crossed a statement barrier?
 	 ((let ((lim (point))
 		crossedp)
@@ -3996,7 +3996,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.64 $"
+(defconst c-version "$Revision: 4.65 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
