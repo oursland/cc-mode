@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.201 $
-;; Last Modified:   $Date: 1995-04-29 00:56:39 $
+;; Version:         $Revision: 4.202 $
+;; Last Modified:   $Date: 1995-05-01 15:01:58 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-29 00:56:39 $|$Revision: 4.201 $|
+;; |$Date: 1995-05-01 15:01:58 $|$Revision: 4.202 $|
 
 ;;; Code:
 
@@ -413,7 +413,7 @@ Default value is t, which inhibits leaving block comment ending string
   "*Hook for user defined special indentation adjustments.
 This hook gets called after a line is indented by the mode.")
 (defvar c-delete-function 'backward-delete-char-untabify
-  "*Function called by `c-electric-delete' when deleting a single char.")
+  "*Function called by `c-electric-delete' when deleting characters.")
 (defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
@@ -4570,7 +4570,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.201 $"
+(defconst c-version "$Revision: 4.202 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
