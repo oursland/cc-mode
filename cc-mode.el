@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-12 21:37:20 $
-;; Version:         $Revision: 2.48 $
+;; Last Modified:   $Date: 1992-05-13 20:35:16 $
+;; Version:         $Revision: 2.49 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-12 21:37:20 $|$Revision: 2.48 $|
+;; |$Date: 1992-05-13 20:35:16 $|$Revision: 2.49 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -83,6 +83,7 @@
   (define-key c++-mode-map "("         'c++-tame-insert)
   (define-key c++-mode-map ")"         'c++-tame-insert)
   (define-key c++-mode-map "\C-c\C-b"  'c++-submit-bug-report)
+  (define-key c++-mode-map "\C-c\C-v"  'c++-version)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -186,7 +187,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.48 $
+  "Major mode for editing C++ code.  $Revision: 2.49 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1550,8 +1551,13 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.48 $"
+(defconst c++-version "$Revision: 2.49 $"
   "c++-mode version number.")
+
+(defun c++-version ()
+  "Echo the current version of c++-mode."
+  (interactive)
+  (message "Using c++-mode.el %s" c++-version))
 
 (defun c++-dump-state ()
   "Inserts into the c++-mode-state-buffer the current state of
