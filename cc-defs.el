@@ -48,7 +48,6 @@
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
-(cc-bytecomp-defvar c-emacs-features)	; In cc-vars.el
 (cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
 (cc-bytecomp-defun region-active-p)	; XEmacs
 (cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
