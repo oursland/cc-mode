@@ -297,8 +297,7 @@ open parenthesis of the argument list, the indentation is
 `c-basic-offset' instead of the open paren column.  See
 `c-lineup-arglist' for further discussion of this \"DWIM\" measure.
 
-Works with: defun-close, class-close, inline-close, block-close,
-brace-list-close, arglist-close, extern-lang-close, namespace-close."
+Works with: All *-close symbols."
   (save-excursion
     (beginning-of-line)
     (c-go-up-list-backward)
@@ -809,7 +808,7 @@ Works with: template-args-cont."
 	  (vector (current-column))))))
 
 (defun c-lineup-ObjC-method-call (langelem)
-  "Line up selector args as elisp-mode does with function args:
+  "Line up selector args as Emacs Lisp mode does with function args:
 Go to the position right after the message receiver, and if you are at
 the end of the line, indent the current line c-basic-offset columns
 from the opening bracket; otherwise you are looking at the first
@@ -931,8 +930,8 @@ In the first case the indentation is kept unchanged, in the
 second `c-basic-offset' is added.
 
 Works with: defun-close, defun-block-intro, block-close,
-brace-list-close, brace-list-intro, statement-block-intro, inclass,
-inextern-lang, innamespace."
+brace-list-close, brace-list-intro, statement-block-intro and all in*
+symbols, e.g. inclass and inextern-lang."
   (save-excursion
     (goto-char (cdr langelem))
     (back-to-indentation)
