@@ -4,6 +4,7 @@ VERSION=5.30
 COREFILES=\
  NEWS \
  cc-align.el \
+ cc-awk.el \
  cc-bytecomp.el \
  cc-cmds.el \
  cc-compat.el \
@@ -18,7 +19,6 @@ COREFILES=\
  cc-mode.texi
 
 EXTRAFILES=\
- ANNOUNCEMENT \
  MANIFEST \
  README \
  COPYING \
