@@ -69,7 +69,7 @@
 	(if (bobp) (setq donep t)
 	  ;; go backwards one balanced expression, but be careful of
 	  ;; unbalanced paren being reached
-	  (if (not (c-safe (progn (backward-sexp 1) t)))
+	  (if (not (c-safe (progn (c-backward-sexp 1) t)))
 	      (progn
 		(if firstp
 		    (backward-up-list 1)
@@ -100,7 +100,7 @@
 	   ((or (looking-at c-conditional-key)
 		(and (eq (char-after) ?\()
 		     (save-excursion
-		       (forward-sexp 1)
+		       (c-forward-sexp 1)
 		       (c-forward-syntactic-ws)
 		       (not (eq (char-after) ?\;)))
 		     (let ((here (point))
@@ -120,11 +120,11 @@
 	    ;; are we in the middle of an else-if clause?
 	    (if (save-excursion
 		  (and (not substmt-p)
-		       (c-safe (progn (forward-sexp -1) t))
+		       (c-safe (progn (c-forward-sexp -1) t))
 		       (looking-at "\\<else\\>[ \t\n]+\\<if\\>")
 		       (not (c-in-literal lim))))
 		(progn
-		  (forward-sexp -1)
+		  (c-forward-sexp -1)
 		  (c-backward-to-start-of-if lim)))
 	    ;; are we sitting at an else clause, that we are not a
 	    ;; substatement of?
@@ -151,7 +151,7 @@
 	      (if (or (memq (char-after) '(?\( ?\[))
 		      (and (eq (char-after) ?{)
 			   (c-looking-at-inexpr-block lim)))
-		  (forward-sexp 1))
+		  (c-forward-sexp 1))
 	      (c-crosses-statement-barrier-p (point) last-begin))
 	    (setq donep t))
 	   ;; CASE 7: ignore labels
@@ -187,7 +187,7 @@
 	(while (and (not (eobp))
 		    (progn
 		      (setq beg (point))
-		      (forward-sexp 1)
+		      (c-forward-sexp 1)
 		      (setq end (point))
 		      (goto-char beg)
 		      (setq found nil)
@@ -428,7 +428,7 @@
 	     (while (nth 3 state)
 	       (search-backward (make-string 1 (nth 3 state)))
 	       (setq state (parse-partial-sexp lim (point))))
-	     (cons (point) (or (c-safe (forward-sexp 1) (point))
+	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 			       (point-max))))
 	    ((nth 7 state)
 	     ;; C++ comment.  Search from bol for the comment starter.
@@ -464,7 +464,7 @@
     (let ((state (parse-partial-sexp lim (point))))
       (cond ((nth 3 state)		; String.
 	     (goto-char (nth 8 state))
-	     (cons (point) (or (c-safe (forward-sexp 1) (point))
+	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 			       (point-max))))
 	    ((nth 4 state)		; Comment.
 	     (goto-char (nth 8 state))
@@ -739,13 +739,13 @@
 	   ;; check if we are looking at a method def
 	   (or (not c-method-key)
 	       (progn
-		 (forward-sexp -1)
+		 (c-forward-sexp -1)
 		 (forward-char -1)
 		 (c-backward-syntactic-ws)
 		 (not (or (memq (char-before) '(?- ?+))
 			  ;; or a class category
 			  (progn
-			    (forward-sexp -2)
+			    (c-forward-sexp -2)
 			    (looking-at c-class-key))
 			  )))))
       )))
@@ -765,7 +765,7 @@
       ;; while is not associated with a do will throw an error
       (condition-case nil
 	  (progn
-	    (backward-sexp 1)
+	    (c-backward-sexp 1)
 	    (cond
 	     ;; break infloop for illegal C code
 	     ((bobp) (setq do-level 0))
@@ -802,7 +802,7 @@
 		  (not (zerop if-level)))
 	(c-backward-syntactic-ws)
 	(condition-case nil
-	    (backward-sexp 1)
+	    (c-backward-sexp 1)
 	  (error
 	   (if at-if
 	       (throw 'orphan-if nil)
@@ -814,7 +814,7 @@
 	 ((looking-at "if\\b[^_]")
 	  ;; check for else if... skip over
 	  (let ((here (point)))
-	    (c-safe (forward-sexp -1))
+	    (c-safe (c-forward-sexp -1))
 	    (if (looking-at "\\<else\\>[ \t]+\\<if\\>")
 		nil
 	      (setq if-level (1- if-level))
@@ -828,13 +828,13 @@
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
   ;; statements in parentheses. No error checking is performed.
-  (forward-sexp (cond
-		 ;; else if()
-		 ((looking-at "\\<else\\>[ \t]+\\<if\\>") 3)
-		 ;; do, else, try, finally
-		 ((looking-at "\\<\\(do\\|else\\|try\\|finally\\)\\>") 1)
-		 ;; for, if, while, switch, catch, synchronized
-		 (t 2))))
+  (c-forward-sexp (cond
+		   ;; else if()
+		   ((looking-at "\\<else\\>[ \t]+\\<if\\>") 3)
+		   ;; do, else, try, finally
+		   ((looking-at "\\<\\(do\\|else\\|try\\|finally\\)\\>") 1)
+		   ;; for, if, while, switch, catch, synchronized
+		   (t 2))))
 
 (defun c-skip-case-statement-forward (state &optional lim)
   ;; skip forward over case/default bodies, with optional maximal
@@ -992,10 +992,10 @@
    (c-safe
     (save-excursion
       (goto-char containing-sexp)
-      (forward-sexp -1)
+      (c-forward-sexp -1)
       (let (bracepos)
 	(if (and (or (looking-at "enum[\t\n ]+")
-		     (progn (forward-sexp -1)
+		     (progn (c-forward-sexp -1)
 			    (looking-at "enum[\t\n ]+")))
 		 (setq bracepos (c-safe (scan-lists (point) 1 -1)))
 		 (not (c-crosses-statement-barrier-p (point)
@@ -1068,7 +1068,7 @@
 				  nil)))))
 	      (if (and beg type)
 		  (if (c-safe (goto-char beg)
-			      (forward-sexp 1)
+			      (c-forward-sexp 1)
 			      (setq end (point))
 			      (forward-char -1)
 			      (= (char-after) ?\)))
@@ -1119,7 +1119,7 @@
        (c-backward-syntactic-ws lim)
        (if (eq (char-before) ?})	; Recognize only a block currently.
 	   (progn
-	     (forward-sexp -1)
+	     (c-forward-sexp -1)
 	     (if (>= (point) lim)
 		 (c-looking-at-inexpr-block lim))))))))
 
@@ -1311,7 +1311,7 @@
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
-		(and (c-safe (progn (backward-sexp 2) t))
+		(and (c-safe (progn (c-backward-sexp 2) t))
 		     (looking-at c-extra-toplevel-key)
 		     (setq keyword (match-string 1)
 			   placeholder (point))
@@ -1319,7 +1319,7 @@
 			      (setq tmpsymbol 'namespace-open))
 			 (and (string-equal keyword "extern")
 			      (progn
-				(forward-sexp 1)
+				(c-forward-sexp 1)
 				(c-forward-syntactic-ws)
 				(eq (char-after) ?\"))
 			      (setq tmpsymbol 'extern-lang-open)))
@@ -1354,7 +1354,7 @@
 		(and (bobp)
 		     (c-forward-syntactic-ws indent-point))
 		(if (looking-at "typedef[^_]")
-		    (progn (forward-sexp 1)
+		    (progn (c-forward-sexp 1)
 			   (c-forward-syntactic-ws indent-point)))
 		(setq placeholder (c-point 'boi))
 		(or (consp special-brace-list)
@@ -1399,12 +1399,12 @@
 		  (progn (forward-char -1)
 			 (c-backward-syntactic-ws lim)))
 	      (if (eq (char-before) ?\))
-		  (backward-sexp 1))
+		  (c-backward-sexp 1))
 	      (setq placeholder (point))
 	      (save-excursion
-		(and (c-safe (backward-sexp 1) t)
+		(and (c-safe (c-backward-sexp 1) t)
 		     (looking-at "throw[^_]")
-		     (c-safe (backward-sexp 1) t)
+		     (c-safe (c-backward-sexp 1) t)
 		     (setq placeholder (point))))
 	      (goto-char placeholder)
 	      (c-add-syntax 'member-init-intro (c-point 'boi))
@@ -1450,7 +1450,7 @@
 			   (cond ((looking-at c-Java-special-key)
 				  (setq injava-inher (cons cont (point))
 					done t))
-				 ((or (not (c-safe (forward-sexp -1) t))
+				 ((or (not (c-safe (c-forward-sexp -1) t))
 				      (<= (point) fence))
 				  (setq done t))
 				 )
@@ -1505,7 +1505,7 @@
 	      (forward-char -1)
 	      (c-backward-syntactic-ws (c-point 'bol))
 	      (if (eq (char-before) ?\))
-		  (backward-sexp 1))
+		  (c-backward-sexp 1))
 	      ;; now continue checking
 	      (beginning-of-line)
 	      (c-backward-syntactic-ws lim))
@@ -1583,7 +1583,7 @@
 		   (save-restriction
 		     (widen)
 		     (forward-char 1)
-		     (and (c-safe (progn (backward-sexp 1) t))
+		     (and (c-safe (progn (c-backward-sexp 1) t))
 			  (= (point) (aref inclass-p 1))
 			  ))))
 	    (c-add-class-syntax 'class-close inclass-p))
@@ -1608,13 +1608,13 @@
 		     (and (eq (char-before) ?\))
 			  (or (not c-method-key)
 			      (progn
-				(forward-sexp -1)
+				(c-forward-sexp -1)
 				(forward-char -1)
 				(c-backward-syntactic-ws)
 				(not (or (memq (char-before) '(?- ?+))
 					 ;; or a class category
 					 (progn
-					   (forward-sexp -2)
+					   (c-forward-sexp -2)
 					   (looking-at c-class-key))
 					 )))))
 		     ))
@@ -1631,9 +1631,9 @@
 			  c-access-key
 			  (not (bobp))
 			  (save-excursion
-			    (c-safe (progn (backward-sexp 1) t))
+			    (c-safe (progn (c-backward-sexp 1) t))
 			    (looking-at c-access-key)))
-		(backward-sexp 1)
+		(c-backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
 		  (memq (char-before) '(?\; ?\}))))
@@ -1671,7 +1671,7 @@
 	   ))				; end CASE 5
 	 ;; CASE 6: In-expression statement.
 	 ((save-excursion
-	    (if (c-safe (forward-sexp -1)
+	    (if (c-safe (c-forward-sexp -1)
 			(setq placeholder (point))
 			t)
 		(cond
@@ -1688,13 +1688,13 @@
 		  (c-add-syntax 'inexpr-statement))
 		 ;; CASE 6C: At the beginning of a lambda function
 		 ;; body.
-		 ((and (c-safe (progn (forward-sexp -1) t))
+		 ((and (c-safe (progn (c-forward-sexp -1) t))
 		       c-lambda-key
 		       (looking-at c-lambda-key))
 		  (c-add-syntax 'inline-open (c-point 'boi))
 		  (c-add-syntax 'inlambda))
 		 ;; CASE 6D: At the beginning of an anonymous class.
-		 ((and (c-safe (progn (forward-sexp -1) t))
+		 ((and (c-safe (progn (c-forward-sexp -1) t))
 		       (eq char-after-ip ?{)
 		       (eq (char-after placeholder) ?\()
 		       c-inexpr-class-key
@@ -1732,7 +1732,7 @@
 	   ;; these things as statements
 	   ((save-excursion
 	      (goto-char containing-sexp)
-	      (and (c-safe (progn (forward-sexp -1) t))
+	      (and (c-safe (progn (c-forward-sexp -1) t))
 		   (looking-at "\\<for\\>[^_]")))
 	    (goto-char (1+ containing-sexp))
 	    (c-forward-syntactic-ws indent-point)
@@ -1830,7 +1830,7 @@
 	      ;; Normal brace list check.
 	      (and (eq char-after-ip ?})
 		   (c-safe (progn (forward-char 1)
-				  (backward-sexp 1)
+				  (c-backward-sexp 1)
 				  t))
 		   (= (point) containing-sexp)))
 	    (c-add-syntax 'brace-list-close (c-point 'boi)))
@@ -1979,7 +1979,7 @@
 	  (goto-char containing-sexp)
 	  ;; check for hanging braces
 	  (if (/= (point) (c-point 'boi))
-	      (forward-sexp -1))
+	      (c-forward-sexp -1))
 	  (c-add-syntax 'case-label (c-point 'boi)))
 	 ;; CASE 14: any other label
 	 ((looking-at c-label-key)
@@ -2104,7 +2104,7 @@
 		  (progn
 		    (goto-char placeholder)
 		    (end-of-line)
-		    (forward-sexp -1)))
+		    (c-forward-sexp -1)))
 	      (setq relpos (c-point 'boi))
 	      (while (and (not done)
 			  (<= safepos (point))
@@ -2146,8 +2146,8 @@
 	    (if (/= (point) (c-point 'boi))
 		(progn
 		  (c-backward-syntactic-ws)
-		  (c-safe (forward-sexp (if (eq (char-before) ?\))
-					    -1 -2)))
+		  (c-safe (c-forward-sexp (if (eq (char-before) ?\))
+					      -1 -2)))
 		  ;; looking at a Java throws clause following a
 		  ;; method's parameter list
 		  (c-beginning-of-statement-1)

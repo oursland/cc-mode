@@ -234,7 +234,7 @@ the brace is inserted inside a literal."
 		 (save-excursion
 		   (c-safe (if (= (char-before) ?{)
 			       (forward-char -1)
-			     (forward-sexp -1))
+			     (c-forward-sexp -1))
 			   (c-looking-at-special-brace-list))))
 	    (setq newlines nil))
 	;; If syntax is a function symbol, then call it using the
@@ -260,7 +260,7 @@ the brace is inserted inside a literal."
 		  (if (and (c-safe (progn (backward-up-list -1) t))
 			   (memq (char-before) '(?\) ?}))
 			   (progn (widen)
-				  (c-safe (progn (forward-sexp -1) t))))
+				  (c-safe (progn (c-forward-sexp -1) t))))
 		      (setq c-state-cache
 			    (c-hack-state (point) 'open c-state-cache))
 		    (if (and (car c-state-cache)
@@ -347,7 +347,7 @@ the brace is inserted inside a literal."
 		   (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*" nil t)
 		   (save-excursion
 		     (goto-char (match-end 0))
-		     (c-safe (forward-sexp 1))
+		     (c-safe (c-forward-sexp 1))
 		     (skip-chars-forward " \t\n")
 		     (setq mbeg (match-beginning 0)
 			   mend (match-end 0))
@@ -683,9 +683,9 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
       (while (and (c-safe (down-list 1) t)
 		  (not (eq (char-before) ?{)))
 	(forward-char -1)
-	(forward-sexp))
+	(c-forward-sexp))
       (c-beginning-of-defun 1)
-      (forward-sexp 1)
+      (c-forward-sexp 1)
       (setq arg (1- arg)))
     (forward-line 1))
   (c-keep-region-active))
@@ -805,7 +805,7 @@ comment."
 				   (throw 'done t)))
 				((= (char-syntax (char-after)) ?\")
 				 (forward-char)
-				 (backward-sexp))
+				 (c-backward-sexp))
 				))))
 		  (error
 		   (goto-char (point-min))
@@ -840,7 +840,7 @@ comment."
 			       (goto-char (match-end 0))
 			       (throw 'done t))
 			      ((= (char-syntax (char-after)) ?\")
-			       (forward-sexp))
+			       (c-forward-sexp))
 			      (t
 			       (forward-char))
 			      ))))
@@ -1139,7 +1139,7 @@ of the expression are preserved.
 	    (if (eq c-tab-always-indent t)
 		(beginning-of-line))
 	    (setq beg (point))
-	    (forward-sexp 1)
+	    (c-forward-sexp 1)
 	    (setq end (point))
 	    (goto-char beg)
 	    (forward-line 1)
@@ -1191,7 +1191,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 				(memq (char-after) '(?\( ?\[ ?\{))
 				(point)))))))
 	  ;; find balanced expression end
-	  (setq end (and (c-safe (progn (forward-sexp 1) t))
+	  (setq end (and (c-safe (progn (c-forward-sexp 1) t))
 			 (point-marker)))
 	  ;; sanity check
 	  (and (not start)
@@ -1282,7 +1282,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		    (while (< (point) nextline)
 		      (condition-case nil
 			  (progn
-			    (forward-sexp 1)
+			    (c-forward-sexp 1)
 			    (setq sexpend (point)))
 			(error (setq sexpend nil)
 			       (goto-char nextline)))
@@ -1293,7 +1293,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			  ;; current line and extends past it
 			  (goto-char sexpend)
 			  (setq sexpend (point-marker))
-			  (c-safe (backward-sexp 1))
+			  (c-safe (c-backward-sexp 1))
 			  (setq sexpbeg (point))))
 		    (if (and sexpbeg (< sexpbeg fence))
 			(setq sexpbeg fence)))

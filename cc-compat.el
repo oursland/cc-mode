@@ -115,7 +115,7 @@ This is in addition to c-continued-statement-offset.")
 	      ;; line
 	      (progn
 		(if (eq (char-before) ?\))
-		    (forward-sexp -1))
+		    (c-forward-sexp -1))
 		;; Get initial indentation of the line we are on.
 		(current-indentation)))))
       (- bocm-lossage curcol))))
