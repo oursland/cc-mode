@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.194 $
-;; Last Modified:   $Date: 1994-01-14 18:57:57 $
+;; Version:         $Revision: 3.195 $
+;; Last Modified:   $Date: 1994-01-14 18:59:57 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -85,7 +85,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-14 18:57:57 $|$Revision: 3.194 $|
+;; |$Date: 1994-01-14 18:59:57 $|$Revision: 3.195 $|
 
 ;;; Code:
 
@@ -685,7 +685,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.194 $
+cc-mode Revision: $Revision: 3.195 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -716,7 +716,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.194 $
+cc-mode Revision: $Revision: 3.195 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2979,7 +2979,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.194 $"
+(defconst c-version "$Revision: 3.195 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3096,7 +3096,7 @@ region."
        (mapcar
 	(function
 	 (lambda (elt)
-	   (make-variable-obsolete (car elt) (cdr elt))))
+	   (make-obsolete-variable (car elt) (cdr elt))))
 	vars)))
 
 (provide 'cc-mode)
