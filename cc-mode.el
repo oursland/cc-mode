@@ -185,7 +185,6 @@ Key bindings:
 	c-comment-start-regexp c-C++-comment-start-regexp
 	c-class-key c-C++-class-key
 	c-access-key c-C++-access-key
-	c-double-slash-is-comments-p t
 	c-recognize-knr-p nil
 	imenu-generic-expression cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
@@ -226,7 +225,6 @@ Key bindings:
  	c-class-key c-ObjC-class-key
 	c-baseclass-key nil
 	c-access-key c-ObjC-access-key
-	c-double-slash-is-comments-p t
 	c-method-key c-ObjC-method-key)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook)
@@ -267,7 +265,6 @@ Key bindings:
  	c-comment-start-regexp c-Java-comment-start-regexp
   	c-class-key c-Java-class-key
 	c-method-key c-Java-method-key
-	c-double-slash-is-comments-p t
  	c-baseclass-key nil
 	c-recognize-knr-p nil
  	c-access-key c-Java-access-key
@@ -312,7 +309,6 @@ Key bindings:
 	c-comment-start-regexp c-C++-comment-start-regexp
 	c-class-key c-C++-class-key
 	c-access-key c-C++-access-key
-	c-double-slash-is-comments-p t
 	c-recognize-knr-p nil)
 ;;	imenu-generic-expression cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
