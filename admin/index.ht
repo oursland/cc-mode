@@ -11,6 +11,9 @@ list of <a href="changes.html">recent changes</a> are given in detail,
 as well as some <a href="installation.html">installation notes</a> and 
 Emacs/XEmacs <a href="compat.html">compatibility details</a>.
 
+<p>You can also <a href="cc-mode.html/Top.html">browse the
+documentation on-line</a>.
+
 <p>Martin Stjernholm now joins Barry Warsaw as members of the
 <a href="mailto:cc-mode-help@python.org">CC Mode maintainers
 team</a>.  Martin's already been doing lots of cool stuff to CC Mode,
