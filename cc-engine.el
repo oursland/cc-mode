@@ -491,8 +491,8 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 
 (defun c-beginning-of-macro (&optional lim)
   "Go to the beginning of a cpp macro definition.
-Leaves point at the beginning of the macro and returns t if in a cpp
-macro definition, otherwise returns nil and leaves point unchanged."
+Leave point at the beginning of the macro and return t if in a cpp
+macro definition, otherwise return nil and leave point unchanged."
   (let ((here (point)))
     (save-restriction
       (if lim (narrow-to-region lim (point-max)))
@@ -923,26 +923,39 @@ end with a line continuation backslash."
   ;; and thus the state never contains two cons elements in
   ;; succession.
   (save-restriction
-    ;; Somewhat ugly use of c-check-state-cache to get rid of the part
-    ;; of the state cache that is after point.  Can't use
-    ;; c-whack-state-after for the same reasons as in that function.
-    (c-check-state-cache (point) nil nil)
     (let* ((here (point))
 	   (c-macro-start (c-query-macro-start))
 	   (in-macro-start (or c-macro-start (point)))
-	   old-state last-pos pairs
-	   (pos
+	   old-state last-pos pairs pos)
+      ;; Somewhat ugly use of c-check-state-cache to get rid of the
+      ;; part of the state cache that is after point.  Can't use
+      ;; c-whack-state-after for the same reasons as in that function.
+      (c-check-state-cache (point) nil nil)
+      ;; Get the latest position we know are directly inside the
+      ;; closest containing paren of the cached state.
+      (setq last-pos (and c-state-cache
+			  (if (consp (car c-state-cache))
+			      (cdr (car c-state-cache))
+			    (1+ (car c-state-cache)))))
+      ;; Check if the found last-pos is in a macro.  If it is, and
+      ;; we're not in the same macro, we must discard everything on
+      ;; c-state-cache that is inside the macro before using it.
+      (when last-pos
+	(save-excursion
+	  (goto-char last-pos)
+	  (when (and (c-beginning-of-macro)
+		     (/= (point) in-macro-start))
+	    (c-check-state-cache (point) nil nil)
+	    ;; Set last-pos again, just like above.
+	    (setq last-pos (and c-state-cache
+				(if (consp (car c-state-cache))
+				    (cdr (car c-state-cache))
+				  (1+ (car c-state-cache))))))))
+      (setq pos
 	    ;; Find the start position for the forward search.  (Can't
 	    ;; search in the backward direction since point might be
 	    ;; in some kind of literal.)
-	    (or (when (setq last-pos
-			    ;; Get the latest position we know are directly
-			    ;; inside the closest containing paren on the
-			    ;; cached state.
-			    (and c-state-cache
-				 (if (consp (car c-state-cache))
-				     (cdr (car c-state-cache))
-				   (1+ (car c-state-cache)))))
+	    (or (when last-pos
 		  ;; There's a cached state with a containing paren.  Pop
 		  ;; off the stale containing sexps from it by going
 		  ;; forward out of parens as far as possible.
@@ -990,7 +1003,7 @@ end with a line continuation backslash."
 		      (c-beginning-of-defun-1)
 		      (if (eq (char-after) ?\{)
 			  (setq cnt (1- cnt)))))
-		  (point)))))
+		  (point))))
       (narrow-to-region (point-min) here)
       (while pos
 	;; Find the balanced brace pairs.
