@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.302 $
-;; Last Modified:   $Date: 1994-03-25 15:34:52 $
+;; Version:         $Revision: 3.303 $
+;; Last Modified:   $Date: 1994-03-25 20:34:18 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-25 15:34:52 $|$Revision: 3.302 $|
+;; |$Date: 1994-03-25 20:34:18 $|$Revision: 3.303 $|
 
 ;;; Code:
 
@@ -788,7 +788,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.302 $
+cc-mode Revision: $Revision: 3.303 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -819,7 +819,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.302 $
+cc-mode Revision: $Revision: 3.303 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2123,11 +2123,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; Forward skip of syntactic whitespace for Emacs 19.
   (save-restriction
     (let* ((lim (or lim (point-max)))
-	   (here lim))
+	   (here lim)
+	   (hugenum (point-max)))
       (narrow-to-region lim (point))
       (while (/= here (point))
 	(setq here (point))
-	(forward-comment 1)
+	(forward-comment hugenum)
 	;; skip preprocessor directives
 	(if (and (= (following-char) ?#)
 		 (= (c-point 'boi) (point)))
@@ -2138,13 +2139,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; Backward skip over syntactic whitespace for Emacs 19.
   (save-restriction
     (let* ((lim (or lim (c-point 'bod)))
-	   (here lim))
+	   (here lim)
+	   (hugenum (- (point-max))))
       (if (< lim (point))
 	  (progn
 	    (narrow-to-region lim (point))
 	    (while (/= here (point))
 	      (setq here (point))
-	      (forward-comment -1)
+	      (forward-comment hugenum)
 	      (if (eq (c-in-literal lim) 'pound)
 		  (beginning-of-line))
 	      )))
@@ -3330,7 +3332,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.302 $"
+(defconst c-version "$Revision: 3.303 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
