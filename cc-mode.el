@@ -105,7 +105,7 @@ other non-CC Mode mode that calls `c-initialize-cc-mode'
 ;; (c-initialize-cc-mode)
 
 ;;;###autoload
-(defun c-initialize-cc-mode ()
+(defun c-initialize-cc-mode (&optional skip-styles)
   (setq c-buffer-is-cc-mode t)
   ;; sigh.  give in to the pressure, but make really sure all the
   ;; definitions we need are here
@@ -125,7 +125,8 @@ other non-CC Mode mode that calls `c-initialize-cc-mode'
     ;; run the initialization hook, but only once
     (or (get 'c-initialize-cc-mode initprop)
 	(progn
-	  (c-initialize-builtin-style)
+	  (or skip-styles
+	      (c-initialize-builtin-style))
 	  (run-hooks 'c-initialization-hook)
 	  (put 'c-initialize-cc-mode initprop t)))
     ))

@@ -581,6 +581,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
   ;; crucial because future c-set-style calls will always reset the
   ;; variables first to the `cc-mode' style before instituting the new
   ;; style.  Only do this once!
+  (c-initialize-cc-mode t)
   (or (assoc "cc-mode" c-style-alist)
       (assoc "user" c-style-alist)
       (let (copyfunc)
@@ -589,10 +590,10 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 		 (functionp (symbol-function 'copy-tree)))
 	    (setq copyfunc (symbol-function 'copy-tree))
 	  (setq copyfunc (lambda (tree)
-			    (if (consp tree)
-				(cons (funcall copyfunc (car tree))
-				      (funcall copyfunc (cdr tree)))
-			      tree))))
+			   (if (consp tree)
+			       (cons (funcall copyfunc (car tree))
+				     (funcall copyfunc (cdr tree)))
+			     tree))))
 	(c-add-style "user"
 		     (mapcar
 		      (function
