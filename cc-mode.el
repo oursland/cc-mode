@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.162 $
-;; Last Modified:   $Date: 1995-03-04 00:41:01 $
+;; Version:         $Revision: 4.163 $
+;; Last Modified:   $Date: 1995-03-09 16:57:43 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-04 00:41:01 $|$Revision: 4.162 $|
+;; |$Date: 1995-03-09 16:57:43 $|$Revision: 4.163 $|
 
 ;;; Code:
 
@@ -124,7 +124,7 @@ reported and the syntactic symbol is ignored.")
 (defvar c-basic-offset 4
   "*Amount of basic offset used by + and - symbols in `c-offsets-alist'.")
 
-(defconst c-offsets-alist-default
+(defvar c-offsets-alist
   '((string                . -1000)
     (c                     . c-lineup-C-comments)
     (defun-open            . 0)
@@ -178,11 +178,6 @@ reported and the syntactic symbol is ignored.")
     (objc-method-args-cont . c-lineup-ObjC-method-args)
     (objc-method-call-cont . c-lineup-ObjC-method-call)
     )
-  "Default settings for offsets of syntactic elements.
-Do not change this constant!  See the variable `c-offsets-alist' for
-more information.")
-
-(defvar c-offsets-alist (copy-alist c-offsets-alist-default)
   "*Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
 
@@ -900,16 +895,28 @@ supported list, along with the values for this variable:
 (defvar c-class-key nil
   "Buffer local language-specific class key regexp.")
 
+;; minor mode variables
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
 (make-variable-buffer-local 'c-auto-hungry-string)
+;; language differences
 (make-variable-buffer-local 'c-comment-start-regexp)
 (make-variable-buffer-local 'c-conditional-key)
 (make-variable-buffer-local 'c-access-key)
 (make-variable-buffer-local 'c-class-key)
 (make-variable-buffer-local 'c-recognize-knr-p)
+;; style variables
+(make-variable-buffer-local 'c-offsets-alist)
+(make-variable-buffer-local 'c-basic-offset)
 (make-variable-buffer-local 'c-file-style)
 (make-variable-buffer-local 'c-file-offsets)
+(make-variable-buffer-local 'c-comment-only-line-offset)
+(make-variable-buffer-local 'c-block-comments-indent-p)
+(make-variable-buffer-local 'c-cleanup-list)
+(make-variable-buffer-local 'c-hanging-braces-alist)
+(make-variable-buffer-local 'c-hanging-colons-alist)
+(make-variable-buffer-local 'c-hanging-comment-ender-p)
+(make-variable-buffer-local 'c-backslash-column)
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
@@ -1870,43 +1877,43 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 	(error "%s is not a valid syntactic symbol." symbol))))
   (c-keep-region-active))
 
-(defun c-set-style (style &optional local)
+(defun c-set-style-1 (stylevars)
+  ;; given a style's variable alist, institute the style
+  (mapcar
+   (function
+    (lambda (conscell)
+      (let ((attr (car conscell))
+	    (val  (cdr conscell)))
+	;; KLUDGE ALERT: special case for c-offsets-alist
+	(if (not (eq attr 'c-offsets-alist))
+	    (set attr val)
+	  (mapcar
+	   (function
+	    (lambda (langentry)
+	      (let ((langelem (car langentry))
+		    (offset (cdr langentry)))
+		(c-set-offset langelem offset)
+		)))
+	   val))
+	)))
+   vars))
+
+(defun c-set-style (stylename)
   "Set cc-mode variables to use one of several different indentation styles.
-STYLE is a string representing the desired style and optional LOCAL is
-a flag which, if non-nil, means to make the style variables being
-changed buffer local, instead of the default, which is to set the
-global variables.  Interactively, the flag comes from the prefix
-argument.  The styles are chosen from the `c-style-alist' variable."
-  (interactive (list (completing-read "Use which C indentation style? "
-                                      c-style-alist nil t)
-		     current-prefix-arg))
-  (let ((vars (cdr (assoc style c-style-alist))))
-    (or vars
-	(error "Invalid C indentation style `%s'" style))
-    ;; set all the variables
-    (mapcar
-     (function
-      (lambda (varentry)
-	(let ((var (car varentry))
-	      (val (cdr varentry)))
-	  (and local
-	       (make-local-variable var))
-	  ;; special case for c-offsets-alist
-	  (if (not (eq var 'c-offsets-alist))
-	      (set var val)
-	    ;; reset c-offsets-alist to the default value first
-	    (setq c-offsets-alist (copy-alist c-offsets-alist-default))
-	    ;; now set the langelems that are different
-	    (mapcar
-	     (function
-	      (lambda (langentry)
-		(let ((langelem (car langentry))
-		      (offset (cdr langentry)))
-		  (c-set-offset langelem offset)
-		  )))
-	     val))
-	  )))
-     vars))
+STYLENAME is a string representing the desired style from the list of
+styles described in the variable `c-style-alist'.  See that variable
+for details of setting up styles."
+  (interactive (list (completing-read "Indentation style? "
+                                      c-style-alist nil t)))
+  (let ((vars (cdr (assoc style c-style-alist)))
+	(default (assoc "Default" c-style-alist)))
+    (or vars (error "Invalid indentation style `%s'" style))
+    (or default (error "No \"Default\" style found!"))
+    ;; first reset the style to Default to give every style a common
+    ;; base. Then institute the new style.
+    (c-set-style-1 default)
+    (if (not (string= stylename "Default"))
+	(c-set-style-1 vars)))
   (c-keep-region-active))
 
 (defun c-add-style (style descrip &optional set-p)
@@ -4479,7 +4486,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.162 $"
+(defconst c-version "$Revision: 4.163 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
