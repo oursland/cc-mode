@@ -320,19 +320,41 @@ this variable to nil."
   :group 'c)
 
 (defcustom c-default-style "gnu"
-  "*Style which gets installed by default.
+  "*Style which gets installed by default when a file is visited.
 
 The value of this variable can be any style defined in
 `c-style-alist', including styles you add, if you add them before CC
-Mode gets initialized.  Note that if you set any CC Mode variables in
-the top-level of your .emacs file (i.e. *not* in a hook), these get
-incorporated into the `user' style so you would need to add:
+Mode gets initialized.  The value can also be an association list of
+major mode symbols to style names.
+
+When the value is a string, all CC Mode major modes will install this
+style by default, except `java-mode', which installs the \"java\"
+style (for backwards compatibility).  When the value is an alist, the
+named style is installed.  If the major mode is not listed in the
+alist, then styles fallback to \"gnu\" for all modes except
+`java-mode', where the fallback is \"java\" style.
+
+Note that if you set any CC Mode variables in the top-level of your
+.emacs file (i.e. *not* in a hook), these get incorporated into the
+`user' style, so you would need to add:
 
   (setq c-default-style \"user\")
 
 to see your customizations.  This is also true if you use the Custom
-interface -- be sure to set the default style to `user'."
-  :type 'string
+interface -- be sure to set the default style to `user'.
+
+Finally, the default style gets installed before your mode hooks run,
+so you can always override the use of `c-default-style' by making
+calls to `c-set-style' in the appropriate mode hook."
+  :type '(choice string
+		 (repeat :tag "" :menu-tag "Major mode list"
+		  (cons :tag ""
+		   (choice :tag "Mode"
+			   (const c-mode) (const c++-mode) (const objc-mode)
+			   (const java-mode) (const idl-mode)
+			   (const pike-mode))
+		   (string :tag "Style")
+		   )))
   :group 'c)
 
 (defcustom c-style-variables-are-local-p nil
