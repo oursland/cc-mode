@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.135 $
-;; Last Modified:   $Date: 1995-01-04 23:52:02 $
+;; Version:         $Revision: 4.136 $
+;; Last Modified:   $Date: 1995-01-04 23:57:11 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -103,7 +103,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-04 23:52:02 $|$Revision: 4.135 $|
+;; |$Date: 1995-01-04 23:57:11 $|$Revision: 4.136 $|
 
 ;;; Code:
 
@@ -4233,6 +4233,8 @@ ACTION associated with `block-close' syntax."
       (if (and (eq syntax 'block-close)
 	       (setq langelem (assq 'block-close c-syntactic-context))
 	       (progn (goto-char (cdr langelem))
+		      (if (= (following-char) ?{)
+			  (forward-sexp -1))
 		      (looking-at "\\<do\\>[^_]")))
 	  '(before)
 	'(before after)))))
@@ -4367,7 +4369,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.135 $"
+(defconst c-version "$Revision: 4.136 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
