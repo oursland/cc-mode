@@ -425,6 +425,7 @@ Works with: comment-intro."
 	    (assq 'knr-argdecl-intro c-syntactic-context)
 	    (assq 'lambda-intro-cont c-syntactic-context))
     (save-excursion
+      (beginning-of-line)
       (c-beginning-of-statement-1)
       (vector (current-column)))))
 
