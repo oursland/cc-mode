@@ -2764,6 +2764,7 @@ command to conveniently insert and align the necessary backslashes."
   ;; FILL-PARAGRAPH is non-nil if called for paragraph filling.  The
   ;; position of point is then less significant when doing masking and
   ;; narrowing.
+
   (let (fill
 	;; beg and end limits the region to narrow.  end is a marker.
 	beg end
@@ -2780,11 +2781,13 @@ command to conveniently insert and align the necessary backslashes."
 	(here (point))
 	(c-lit-limits c-lit-limits)
 	(c-lit-type c-lit-type))
+
     ;; Restore point on undo.  It's necessary since we do a lot of
     ;; hidden inserts and deletes below that should be as transparent
     ;; as possible.
     (if (and buffer-undo-list (not (eq buffer-undo-list t)))
 	(setq buffer-undo-list (cons (point) buffer-undo-list)))
+
     (save-restriction
       ;; Widen to catch comment limits correctly.
       (widen)
@@ -2793,6 +2796,7 @@ command to conveniently insert and align the necessary backslashes."
       (setq c-lit-limits (c-collect-line-comments c-lit-limits))
       (unless c-lit-type
 	(setq c-lit-type (c-literal-type c-lit-limits))))
+
     (save-excursion
       (unless (c-safe (backward-char)
 		      (forward-paragraph)
@@ -2807,14 +2811,17 @@ command to conveniently insert and align the necessary backslashes."
 	(goto-char here)
 	(backward-paragraph))
       (setq beg (point)))
+
     (unwind-protect
 	(progn
 	  (cond
+
 	   ((eq c-lit-type 'c++)	; Line comment.
 	    (save-excursion
 	      ;; Limit to the comment or paragraph end, whichever
 	      ;; comes first.
 	      (set-marker end (min end (cdr c-lit-limits)))
+
 	      (when (<= beg (car c-lit-limits))
 		;; The region includes the comment starter, so we must
 		;; check it.
@@ -2827,6 +2834,7 @@ command to conveniently insert and align the necessary backslashes."
 		  ;; comment.  We must fake a line that doesn't.
 		  (setq tmp-pre t)))
 	      ))
+
 	   ((eq c-lit-type 'c)		; Block comment.
 	    (when (>= end (cdr c-lit-limits))
 	      ;; The region includes the comment ender which we might
@@ -2838,63 +2846,78 @@ command to conveniently insert and align the necessary backslashes."
 						 c-current-comment-prefix
 						 "\\)\\*/"))
 			     (eq (cdr c-lit-limits) (match-end 0))
-			     ;; Leave the comment ender on its own line.
+			     ;; The comment ender is on a line of its
+			     ;; own.  Keep it that way.
 			     (set-marker end (point))))
-		(when fill-paragraph
-		  ;; The comment ender should hang.  Replace all cruft
-		  ;; between it and the last word with one or two 'x'
-		  ;; and include it in the region.  We'll change them
-		  ;; back to spaces afterwards.
-		  (let* ((ender-start (save-excursion
-					(goto-char (cdr c-lit-limits))
-					(skip-syntax-backward "^w ")
-					(point)))
-			 (point-rel (- ender-start here))
-			 spaces)
-		    (save-excursion
-		      (goto-char (cdr c-lit-limits))
-		      (setq tmp-post (point-marker))
-		      (insert ?\n)
-		      (set-marker end (point))
-		      (forward-line -1)
-		      (if (and (looking-at (concat "[ \t]*\\(\\("
-						   c-current-comment-prefix
-						   "\\)[ \t]*\\)"))
-			       (eq ender-start (match-end 0)))
-			  ;; The comment ender is prefixed by nothing
-			  ;; but a comment line prefix.  Remove it
-			  ;; along with surrounding ws.
-			  (setq spaces (- (match-end 1) (match-end 2)))
-			(goto-char ender-start))
-		      (skip-chars-backward " \t\r\n")
-		      (if (/= (point) ender-start)
-			  (progn
-			    (if (<= here (point))
-				;; Don't adjust point below if it's
-				;; before the string we replace.
-				(setq point-rel -1))
-			    ;; Keep one or two spaces between the text and
-			    ;; the ender, depending on how many there are now.
-			    (unless spaces
-			      (setq spaces (- ender-start (point))))
-			    (setq spaces
-				  (max (min spaces
-					    (if sentence-end-double-space 2 1))
-				       1))
-			    ;; Insert the filler first to keep marks right.
-			    (insert-char ?x spaces t)
-			    (delete-region (point) (+ ender-start spaces))
-			    (setq hang-ender-stuck spaces)
-			    (setq point-rel
-				  (and (>= point-rel 0)
-				       (- (point) (min point-rel spaces)))))
-			(setq point-rel nil)))
-		    (if point-rel
-			;; Point was in the middle of the string we
-			;; replaced above, so put it back in the same
-			;; relative position, counting from the end.
-			(goto-char point-rel))
-		    ))))
+
+		(if fill-paragraph
+		    ;; The comment ender should hang.  Replace all
+		    ;; cruft between it and the last word with one or
+		    ;; two 'x' and include it in the region.  We'll
+		    ;; change them back to spaces afterwards.  This
+		    ;; isn't done when auto filling, since that'd
+		    ;; effectively make it impossible to insert extra
+		    ;; spaces before the comment ender.
+		    (let* ((ender-start (save-excursion
+					  (goto-char (cdr c-lit-limits))
+					  (skip-syntax-backward "^w ")
+					  (point)))
+			   (point-rel (- ender-start here))
+			   spaces)
+
+		      (save-excursion
+			(goto-char (cdr c-lit-limits))
+			(setq tmp-post (point-marker))
+			(insert ?\n)
+			(set-marker end (point))
+			(forward-line -1)
+			(if (and (looking-at (concat "[ \t]*\\(\\("
+						     c-current-comment-prefix
+						     "\\)[ \t]*\\)"))
+				 (eq ender-start (match-end 0)))
+			    ;; The comment ender is prefixed by nothing
+			    ;; but a comment line prefix.  Remove it
+			    ;; along with surrounding ws.
+			    (setq spaces (- (match-end 1) (match-end 2)))
+			  (goto-char ender-start))
+			(skip-chars-backward " \t\r\n")
+
+			(if (/= (point) ender-start)
+			    (progn
+			      (if (<= here (point))
+				  ;; Don't adjust point below if it's
+				  ;; before the string we replace.
+				  (setq point-rel -1))
+			      ;; Keep one or two spaces between the
+			      ;; text and the ender, depending on how
+			      ;; many there are now.
+			      (unless spaces
+				(setq spaces (- ender-start (point))))
+			      (setq spaces
+				    (max
+				     (min spaces
+					  (if sentence-end-double-space 2 1))
+				     1))
+			      ;; Insert the filler first to keep marks right.
+			      (insert-char ?x spaces t)
+			      (delete-region (point) (+ ender-start spaces))
+			      (setq hang-ender-stuck spaces)
+			      (setq point-rel
+				    (and (>= point-rel 0)
+					 (- (point) (min point-rel spaces)))))
+			  (setq point-rel nil)))
+
+		      (if point-rel
+			  ;; Point was in the middle of the string we
+			  ;; replaced above, so put it back in the same
+			  ;; relative position, counting from the end.
+			  (goto-char point-rel)))
+
+		  ;; We're doing auto filling.  Just move the marker
+		  ;; to the comment end to ignore any code after the
+		  ;; comment.
+		  (move-marker end (cdr c-lit-limits)))))
+
 	    (when (<= beg (car c-lit-limits))
 	      ;; The region includes the comment starter.
 	      (save-excursion
@@ -2904,6 +2927,7 @@ command to conveniently insert and align the necessary backslashes."
 		    (setq beg (c-point 'bonl))
 		  ;; Fake the fill prefix in the first line.
 		  (setq tmp-pre t)))))
+
 	   ((eq c-lit-type 'string)	; String.
 	    (save-excursion
 	      (when (>= end (cdr c-lit-limits))
@@ -2918,7 +2942,9 @@ command to conveniently insert and align the necessary backslashes."
 			      ;; nothing but an escaped newline.
 			      (1+ (match-end 0))
 			    (point))))))
+
 	   (t (setq beg nil)))
+
 	  (when tmp-pre
 	    ;; Temporarily insert the fill prefix after the comment
 	    ;; starter so that the first line looks like any other
@@ -2960,6 +2986,7 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 		      (insert-and-inherit "\n" (car fill))
 		      (insert-char ?x (- col (current-column)) t))
 		  (setcdr tmp-pre (point))))))
+
 	  (if beg
 	      (let ((fill-prefix
 		     (or fill-prefix
@@ -2981,6 +3008,7 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 					      ""))))
 			   (car (or fill (c-guess-fill-prefix
 					  c-lit-limits c-lit-type))))))
+
 		    ;; Save the relative position of point if it's
 		    ;; outside the region we're going to narrow.  Want
 		    ;; to restore it in that case, but otherwise it
@@ -2988,6 +3016,7 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 		    ;; function.
 		    (point-rel (cond ((< (point) beg) (- (point) beg))
 				     ((> (point) end) (- (point) end)))))
+
 		;; Preparations finally done! Now we can call the
 		;; actual function.
 		(prog1
@@ -2999,10 +3028,13 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 		      (if (< point-rel 0)
 			  (goto-char (+ beg point-rel))
 			(goto-char (+ end point-rel))))))
+
 	    (when apply-outside-literal
 	      (apply fun args))))
+
       (when (consp tmp-pre)
 	(delete-region (car tmp-pre) (cdr tmp-pre)))
+
       (when tmp-post
 	(save-excursion
 	  (goto-char tmp-post)
@@ -3018,6 +3050,7 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 	  (delete-char hang-ender-stuck)
 	  (goto-char here))
 	(set-marker tmp-post nil))
+
       (set-marker end nil))))
 
 (defun c-fill-paragraph (&optional arg)
