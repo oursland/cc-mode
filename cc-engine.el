@@ -2459,31 +2459,46 @@ brace."
     (ding))
   c-parsing-error)
 
-;; indent via syntactic language elements
-(defun c-indent-line (&optional syntax)
-  ;; indent the current line as C/C++/ObjC code. Optional SYNTAX is the
-  ;; syntactic information for the current line. Returns the amount of
-  ;; indentation change (in columns).
-  (let* ((c-syntactic-context (or syntax (c-guess-basic-syntax)))
-	 (pos (- (point-max) (point)))
-	 (indent (apply '+ (mapcar 'c-get-offset c-syntactic-context)))
-	 (shift-amt  (- (current-indentation) indent)))
-    (and c-echo-syntactic-information-p
-	 (not (c-echo-parsing-error))
-	 (message "syntax: %s, indent= %d" c-syntactic-context indent))
+(defun c-shift-line-indentation (shift-amt)
+  (let ((pos (- (point-max) (point)))
+	(col (current-indentation)))
     (if (zerop shift-amt)
 	nil
       (delete-region (c-point 'bol) (c-point 'boi))
       (beginning-of-line)
-      (indent-to indent))
+      (indent-to (+ col shift-amt)))
     (if (< (point) (c-point 'boi))
 	(back-to-indentation)
       ;; If initial point was within line's indentation, position after
       ;; the indentation.  Else stay at same point in text.
       (if (> (- (point-max) pos) (point))
-	  (goto-char (- (point-max) pos)))
-      )
-    (run-hooks 'c-special-indent-hook)
+	  (goto-char (- (point-max) pos))))))
+
+(defun c-indent-line (&optional syntax)
+  ;; Indent the current line as C/C++/ObjC code, if
+  ;; c-syntactic-indentation is non-nil.  Optional SYNTAX is the
+  ;; syntactic information for the current line.  Returns the amount
+  ;; of indentation change (in columns).
+  (let (shift-amt)
+    (if c-syntactic-indentation
+	(let* ((c-syntactic-context (or syntax (c-guess-basic-syntax)))
+	       (indent (apply '+ (mapcar 'c-get-offset c-syntactic-context))))
+	  (and c-echo-syntactic-information-p
+	       (not (c-echo-parsing-error))
+	       (message "syntax: %s, indent= %d" c-syntactic-context indent))
+	  (setq shift-amt (- indent (current-indentation)))
+	  (c-shift-line-indentation shift-amt)
+	  (run-hooks 'c-special-indent-hook))
+      (let ((indent 0))
+	(save-excursion
+	  (while (and (= (forward-line -1) 0)
+		      (if (looking-at "\\s-*$")
+			  t
+			(back-to-indentation)
+			(setq indent (current-indentation))
+			nil))))
+	(setq shift-amt (- indent (current-indentation)))
+	(c-shift-line-indentation shift-amt)))
     shift-amt))
 
 (defun c-show-syntactic-information (arg)
