@@ -6657,33 +6657,44 @@ comment at the start of cc-engine.el for more info."
       (condition-case ()
 	  (save-excursion
 	    (let ((beg (point))
-		  end type)
+		  inner-beg end type)
 	      (c-forward-syntactic-ws)
 	      (if (eq (char-after) ?\()
 		  (progn
 		    (forward-char 1)
 		    (c-forward-syntactic-ws)
+		    (setq inner-beg (point))
 		    (setq type (assq (char-after) c-special-brace-lists)))
 		(if (setq type (assq (char-after) c-special-brace-lists))
 		    (progn
+		      (setq inner-beg (point))
 		      (c-backward-syntactic-ws)
 		      (forward-char -1)
 		      (setq beg (if (eq (char-after) ?\()
 				    (point)
 				  nil)))))
 	      (if (and beg type)
-		  (if (and (c-safe (goto-char beg)
+		  (if (and (c-safe
+			     (goto-char beg)
+			     (c-forward-sexp 1)
+			     (setq end (point))
+			     (= (char-before) ?\)))
+			   (c-safe
+			     (goto-char inner-beg)
+			     (if (looking-at "\\s(")
+				 ;; Check balancing of the inner paren
+				 ;; below.
+				 (progn
 				   (c-forward-sexp 1)
-				   (setq end (point))
-				   (= (char-before) ?\)))
-			   (c-safe (goto-char beg)
-				   (forward-char 1)
-				   (c-forward-sexp 1)
-				   ;; Kludges needed to handle inner
-				   ;; chars both with and without
-				   ;; paren syntax.
-				   (or (/= (char-syntax (char-before)) ?\))
-				       (= (char-before) (cdr type)))))
+				   t)
+			       ;; If the inner char isn't a paren then
+			       ;; we can't check balancing, so just
+			       ;; check the char before the outer
+			       ;; closing paren.
+			       (goto-char end)
+			       (backward-char)
+			       (c-backward-syntactic-ws)
+			       (= (char-before) (cdr type)))))
 		      (if (or (/= (char-syntax (char-before)) ?\))
 			      (= (progn
 				   (c-forward-syntactic-ws)
