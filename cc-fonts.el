@@ -2494,10 +2494,12 @@ need for `pike-font-lock-extra-types'.")
   ;; returned.
   ;;
   ;; After the fontification of a matching comment, fontification
-  ;; according to KEYWORDS is applied to it.  It's a list like
+  ;; according to KEYWORDS is applied inside it.  It's a list like
   ;; `font-lock-keywords' except that anchored matches and eval
   ;; clauses aren't supported and that some abbreviated forms can't be
-  ;; used.
+  ;; used.  The buffer is narrowed to the comment while KEYWORDS is
+  ;; applied; leading comment starters are included but trailing
+  ;; comment enders for block comment are not.
   ;;
   ;; Note that faces added through KEYWORDS should never replace the
   ;; existing `c-doc-face-name' face since the existence of that face
@@ -2550,6 +2552,12 @@ need for `pike-font-lock-extra-types'.")
 	(save-restriction
 	  ;; Narrow to the doc comment.  Among other things, this
 	  ;; helps by making "^" match at the start of the comment.
+	  ;; Do not include a trailing block comment ender, though.
+	  (and (> region-end (1+ region-beg))
+	       (progn (goto-char region-end)
+		      (backward-char 2)
+		      (looking-at "\\*/"))
+	       (setq region-end (point)))
 	  (narrow-to-region region-beg region-end)
 
 	  (while keylist
