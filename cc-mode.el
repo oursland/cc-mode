@@ -292,16 +292,6 @@ preferably use the `c-mode-menu' language constant directly."
     (let ((f (symbol-function 'c-populate-syntax-table)))
       (if (byte-code-function-p f) f (byte-compile f)))))
 
-(defun c-before-change (beg end)
-  ;; Function put on `before-change-functions' to adjust various
-  ;; caches.  Prefer speed to finesse here, since there will be an
-  ;; order of magnitude more calls to this function than any of the
-  ;; functions that use the caches.
-  ;;
-  ;; This function can make hidden buffer changes to clear caches.
-  ;; It's not a problem since a nonhidden change is done anyway.
-  (c-invalidate-sws-region-before beg end))
-
 (defun c-after-change (beg end len)
   ;; Function put on `after-change-functions' to adjust various
   ;; caches.  Prefer speed to finesse here, since there will be an
@@ -434,8 +424,6 @@ that requires a literal mode spec at compile time."
 
   ;; Install the functions that ensure that various internal caches
   ;; don't become invalid due to buffer changes.
-  (make-local-hook 'before-change-functions)
-  (add-hook 'before-change-functions 'c-before-change nil t)
   (make-local-hook 'after-change-functions)
   (add-hook 'after-change-functions 'c-after-change nil t))
 
