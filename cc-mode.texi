@@ -3914,6 +3914,13 @@ expose the bug.  Be especially sure to include any code that appears
 @emph{before} your bug example, if you think it might affect our ability
 to reproduce it.
 
+Please try to produce the problem in an Emacs instance without any
+customizations loaded (i.e. start it with the @code{-q -no-site-file}
+arguments).  If it works correctly there, the problem might be caused by
+faulty customizations in either your own or your site configuration.  In
+that case, we'd appreciate if you isolate the Emacs Lisp code that trigs
+the bug and include it in your report.
+
 Bug reports are now sent to the following email addresses:
 @email{bug-cc-mode@@gnu.org} and @email{bug-gnu-emacs@@gnu.org}; the
 latter is mirrored on the Usenet newsgroup @code{gnu.emacs.bug}.  You
