@@ -426,7 +426,10 @@ Frequently Asked Questions
     (c-cleanup-list                . (scope-operator
 				      empty-defun-braces
 				      defun-close-semi))
-    (c-offsets-alist               . ((arglist-close . c-lineup-arglist)))
+    (c-offsets-alist               . ((arglist-close     . c-lineup-arglist)
+				      (case-label        . 4)
+				      (block-open        . 0)
+				      (knr-argdecl-intro . -)))
     (c-echo-semantic-information-p . t)
     )
   "My C Programming Style")
