@@ -6344,8 +6344,8 @@ comment at the start of cc-engine.el for more info."
 	    ((and (c-major-mode-is 'pike-mode)
 		  (progn
 		    (goto-char open-brace)
-		    (= (c-backward-token-2) 0)
-		    (looking-at c-specifier-key))
+		    (= (c-backward-token-2) 0))
+		  (looking-at c-specifier-key)
 		  ;; Use this variant to avoid yet another special regexp.
 		  (c-keyword-member (c-keyword-sym (match-string 1))
 				    'c-modifier-kwds))
