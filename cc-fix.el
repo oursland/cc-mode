@@ -50,12 +50,14 @@
 (or (condition-case nil
 	(progn (char-after) t)
       (error nil))
-    (defadvice char-after (before c-char-after-advice
-				  (&optional pos)
-				  activate)
-      "POS is optional and defaults to the position of point."
-      (if (not pos)
-	  (setq pos (point)))))
+    (progn
+      (ad-define-subr-args 'char-after '(pos))
+      (defadvice char-after (before c-char-after-advice
+				    (&optional pos)
+				    activate)
+	"POS is optional and defaults to the position of point."
+	(if (not pos)
+	    (setq pos (point))))))
 
 (if (fboundp 'char-before)
     ;; (or (condition-case nil
@@ -72,12 +74,14 @@
     ;; MULE based on Emacs 19.34 has a char-before function, but
     ;; it requires a position.  It also has a second optional
     ;; argument that we must pass on.
-    (defadvice char-before (before c-char-before-advice
-				   (&optional pos byte-unit)
-				   activate)
-      "POS is optional and defaults to the position of point."
-      (if (not pos)
-	  (setq pos (point))))
+    (progn
+      (ad-define-subr-args 'char-before '(pos &optional byte-unit))
+      (defadvice char-before (before c-char-before-advice
+				     (&optional pos byte-unit)
+				     activate)
+	"POS is optional and defaults to the position of point."
+	(if (not pos)
+	    (setq pos (point)))))
   ;; Emacs 19.34 doesn't have a char-before function.  Here's it's
   ;; Emacs 20 definition.
   (defsubst char-before (&optional pos)
