@@ -724,6 +724,26 @@ parenthesis, the parenthesis is inserted inside a literal, or
 	(if old-blink-paren
 	    (funcall old-blink-paren))))))
 
+(defun c-electric-continued-statement ()
+  "Reindent the current line if appropriate.
+
+This function is used to reindent the line after a keyword which
+continues an earlier statement is typed, e.g. an \"else\" or the
+\"while\" in a do-while block.
+
+The line is reindented if there is nothing but whitespace before the
+keyword on the line, the keyword is not inserted inside a literal, and
+`c-syntactic-indentation' is non-nil."
+  (let (;; shut this up
+	(c-echo-syntactic-information-p nil))
+    (when (and c-syntactic-indentation
+	       (not (eq last-command-char ?_))
+	       (= (save-excursion
+		    (skip-syntax-backward "w")
+		    (point))
+		  (c-point 'boi))
+	       (not (c-in-literal (c-point 'bod))))
+      (indent-according-to-mode))))
 
 
 ;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
