@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.313 $
-;; Last Modified:   $Date: 1993-04-19 19:39:28 $
+;; Version:         $Revision: 2.314 $
+;; Last Modified:   $Date: 1993-04-19 19:40:19 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-04-19 19:39:28 $|$Revision: 2.313 $|
+;; |$Date: 1993-04-19 19:40:19 $|$Revision: 2.314 $|
 
 ;;; Code:
 
@@ -371,8 +371,6 @@ Legal values are:
      'auto-hungry  -- both auto-newline and hungry-delete-key can be toggled.
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
-(defvar c++-mailer 'mail
-  "*Mail package to use to generate bug report mail buffer.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
 
@@ -458,7 +456,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.313 $
+  "Major mode for editing C++ code.  $Revision: 2.314 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -558,8 +556,6 @@ from their c-mode cousins.
     the colon. nil means newlines are inserted both before and after
     the colon.  'before inserts newlines only before the colon, and
     'after inserts newlines only after colon.
- c++-mailer
-    Mailer to use when sending bug reports.
  c++-member-init-indent
     Indentation level of member initializations in function declarations,
     if they are on a separate line beginning with a colon.
@@ -681,7 +677,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.313 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.314 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2552,7 +2548,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.313 $"
+(defconst c++-version "$Revision: 2.314 $"
   "c++-mode version number.")
 
 (defun c++-version ()
