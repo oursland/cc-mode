@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-29 18:41:40 $
-;; Version:         $Revision: 2.13 $
+;; Last Modified:   $Date: 1992-04-29 18:53:39 $
+;; Version:         $Revision: 2.14 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-29 18:41:40 $|$Revision: 2.13 $|
+;; |$Date: 1992-04-29 18:53:39 $|$Revision: 2.14 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -141,7 +141,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.13 $
+  "Major mode for editing C++ code.  $Revision: 2.14 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1049,7 +1049,7 @@ Returns nil if line starts inside a string, t if in a comment."
 	(goto-char (match-end 0))
 	(set-fill-prefix))
       (while (looking-at fill-prefix)
-	(previous-line 1))
+	(forward-line -1))
       (forward-line 1)
       (insert-string "\n")
       (fill-paragraph nil)
@@ -1302,7 +1302,7 @@ function definition.")
     (beginning-of-line 1)
     (let ((end (point)))
       (c++-beginning-of-defun 1)
-      (while (<= (point) end)
+      (while (< (point) end)
 	(c++-indent-line)
 	(forward-line 1)
 	(beginning-of-line 1)))
@@ -1312,7 +1312,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.13 $"
+(defconst c++-version "$Revision: 2.14 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
