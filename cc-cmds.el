@@ -480,6 +480,9 @@ This function does various newline cleanups based on the value of
 	  (setq delete-temp-newline
 		(cons (save-excursion
 			(end-of-line 0)
+			(if (eq (char-before) ?\\)
+			    ;; Ignore a line continuation.
+			    (backward-char))
 			(skip-chars-backward " \t")
 			(copy-marker (point) t))
 		      (point-marker))))
