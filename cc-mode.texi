@@ -1930,7 +1930,9 @@ visited, @ccmode{} will automatically institute these offets using
 @code{c-set-offset}.
 
 Note that file style settings (i.e. @code{c-file-style}) are applied
-before file offset settings (i.e. @code{c-file-offsets}).
+before file offset settings (i.e. @code{c-file-offsets}).  Also, if
+either of these are set in a file's local variable section, all the
+style variable values are made local to that buffer.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
