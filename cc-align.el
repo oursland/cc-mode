@@ -590,7 +590,8 @@ the statement.  If there isn't any, indent with `c-basic-offset'.  If
 the current line contains an equal sign too, try to align it with the
 first one.
 
-Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
+Works with: topmost-intro-cont, statement-cont, arglist-cont,
+arglist-cont-nonempty."
   (let (startpos endpos equalp)
 
     (if (eq (car langelem) 'arglist-cont-nonempty)
@@ -660,7 +661,8 @@ result = proc->add(17)->add(18)
 In any other situation nil is returned to allow use in list
 expressions.
 
-Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
+Works with: topmost-intro-cont, statement-cont, arglist-cont,
+arglist-cont-nonempty."
 
   (if (and (eq (car langelem) 'arglist-cont-nonempty)
 	   (not (eq (nth 2 c-syntactic-element)
@@ -700,7 +702,8 @@ result = prefix + \"A message \"
 Nil is returned in other situations, to allow stacking with other
 lineup functions.
 
-Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
+Works with: topmost-intro-cont, statement-cont, arglist-cont,
+arglist-cont-nonempty."
   (save-excursion
     (back-to-indentation)
     (and (looking-at "\\s\"")

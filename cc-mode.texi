@@ -4027,8 +4027,8 @@ result = proc->add(17)->add(18)
 In any other situation nil is returned to allow use in list
 expressions.
 
-@workswith @code{statement-cont}, @code{arglist-cont},
-@code{arglist-cont-nonempty}.
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
 
 @comment ------------------------------------------------------------
 
@@ -4262,8 +4262,8 @@ statement.  If there isn't any, indent with @code{c-basic-offset}.  If
 the current line contains an equal sign too, try to align it with the
 first one.
 
-@workswith @code{statement-cont}, @code{arglist-cont},
-@code{arglist-cont-nonempty}.
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
 
 @comment ------------------------------------------------------------
 
@@ -4395,8 +4395,8 @@ result = prefix + \"A message \"
 @code{nil} is returned in other situations, to allow stacking with other
 lineup functions.
 
-@workswith @code{statement-cont}, @code{arglist-cont},
-@code{arglist-cont-nonempty}.
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
 
 @comment ------------------------------------------------------------
 
