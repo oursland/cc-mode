@@ -4493,11 +4493,11 @@ Editor}, for ways to enable font locking in @ccmode{} buffers.
 The font locking for most of the @ccmode{} languages were provided
 directly by the Font Lock package prior to version 5.30 of @ccmode{}.
 In the transition to @ccmode{} the patterns have been reworked
-completely and are applied uniformly across all the languages, just like
-the indentation rules (although each language still has some
-pecularities of its own, of course).  Since the languages previously had
-completely separate font locking patterns, this means that it's a bit
-different in most languages now.
+completely and are applied uniformly across all the languages except AWK
+mode, just like the indentation rules (although each language still has
+some pecularities of its own, of course).  Since the languages
+previously had completely separate font locking patterns, this means
+that it's a bit different in most languages now.
 
 @cindex faces
 @vindex c-invalid-face
