@@ -88,13 +88,14 @@
 (defmacro c-bos-save-error-info (missing got)
   `(setq saved-pos (vector pos ,missing ,got)))
 (defmacro c-bos-report-error ()
-  '(setq c-parsing-error
-	 (format "No matching `%s' found for `%s' on line %d"
-		 (elt saved-pos 1)
-		 (elt saved-pos 2)
-		 (1+ (count-lines 1 (c-point 'bol (elt saved-pos 0)))))))
+  '(unless noerror
+     (setq c-parsing-error
+	   (format "No matching `%s' found for `%s' on line %d"
+		   (elt saved-pos 1)
+		   (elt saved-pos 2)
+		   (1+ (count-lines 1 (c-point 'bol (elt saved-pos 0))))))))
 
-(defun c-beginning-of-statement-1 (&optional lim ignore-labels)
+(defun c-beginning-of-statement-1 (&optional lim ignore-labels noerror)
   "Move to the start of the current statement or declaration, or to
 the previous one if already at the beginning of one.  Only
 statements/declarations on the same level are considered, i.e. don't
@@ -105,8 +106,7 @@ and the \"while\" in \"do ... while\" if the start point is within
 them.  If starting at such a continuation, move to the corresponding
 statement start.  If at the beginning of a statement, move to the
 closest containing statement if there is any.  This might also stop at
-a continuation clause.  Note that \"else if\" is treated as a
-statement continuation.
+a continuation clause.
 
 Labels are treated as separate statements if IGNORE-LABELS is non-nil.
 The function is not overly intelligent in telling labels from other
@@ -130,7 +130,9 @@ if stopped at the same label without crossing the colon character.
 
 LIM may be given to limit the search.  If the search hits the limit,
 point will be left at the closest following token, or at the start
-position if that is less ('same is returned in this case)."
+position if that is less ('same is returned in this case).
+
+NOERROR turns off error logging to `c-parsing-error'."
 
   ;; The bulk of this function is a pushdown automaton that looks at
   ;; statement boundaries and the tokens in c-conditional-key.
@@ -143,9 +145,7 @@ position if that is less ('same is returned in this case)."
   ;; Common state:
   ;;   "else": Push state, goto state `else':
   ;;     boundary: Goto state `else-boundary':
-  ;;       "if": Save position, goto state `if':
-  ;;         "else": Goto state `else'
-  ;;         other: Restore position (if it's not at start), pop state.
+  ;;       "if": Pop state.
   ;;       boundary: Error, pop state.
   ;;       other: See common state.
   ;;     other: Error, pop state, retry token.
@@ -259,19 +259,10 @@ position if that is less ('same is returned in this case)."
 
 		     ((eq state 'else-boundary)
 		      (cond ((eq sym 'if)
-			     (c-bos-save-pos)
-			     (setq state 'if))
+			     (c-bos-pop-state (setq ret 'beginning)))
 			    ((eq sym 'boundary)
 			     (c-bos-report-error)
 			     (c-bos-pop-state))))
-
-		     ((eq state 'if)
-		      (cond ((eq sym 'else)
-			     (c-bos-save-error-info 'if 'else)
-			     (setq state 'else))
-			    (t
-			     (c-bos-restore-pos)
-			     (c-bos-pop-state (setq ret 'beginning)))))
 
 		     ((eq state 'while)
 		      (if (and (eq sym 'boundary)
@@ -1326,8 +1317,8 @@ isn't moved."
   ;; labels and the "else" of "else if", as long as they are on the
   ;; same line.
   (while (let ((savepos (point)))
-	   (and (or (eq (c-beginning-of-statement-1
-			 (c-point 'bol)) 'label)
+	   (and (or (eq (c-beginning-of-statement-1 (c-point 'bol) nil t)
+			'label)
 		    (if (looking-at "else\\>[^_]")
 			t
 		      (goto-char savepos)
