@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.4 $
-;; Last Modified:   $Date: 1993-07-12 20:37:27 $
+;; Version:         $Revision: 3.5 $
+;; Last Modified:   $Date: 1993-07-29 00:18:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-07-12 20:37:27 $|$Revision: 3.4 $|
+;; |$Date: 1993-07-29 00:18:00 $|$Revision: 3.5 $|
 
 ;;; Code:
 
@@ -193,7 +193,6 @@ FSF 19 (patched):        (8-bit v19)")
   (define-key c++-mode-map "\e\C-h"    'mark-c-function)
   (define-key c++-mode-map "\e\C-q"    'c++-indent-exp)
   (define-key c++-mode-map "\t"        'c++-indent-command)
-  (define-key c++-mode-map "\C-c\C-i"  'c++-insert-header)
   (define-key c++-mode-map "\C-c\C-\\" 'c++-macroize-region)
   (define-key c++-mode-map "\C-c\C-c"  'c++-comment-region)
   (define-key c++-mode-map "\C-c\C-u"  'c++-uncomment-region)
@@ -471,7 +470,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.4 $
+  "Major mode for editing C++ code.  $Revision: 3.5 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -703,7 +702,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.4 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.5 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1438,16 +1437,6 @@ of the expression are preserved."
 		    (progn (indent-for-comment)
 			   (beginning-of-line))))
 	    ))))))
-
-(defun c++-insert-header ()
-  "Insert header denoting C++ code at top of buffer."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (insert "// "
-	    "This may look like C code, but it is really "
-	    "-*- C++ -*-"
-	    "\n\n")))
 
 (defun c++-tame-comments ()
   "Backslashifies all untamed in comment regions found in the buffer.
@@ -2631,7 +2620,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.4 $"
+(defconst c++-version "$Revision: 3.5 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
