@@ -6811,5 +6811,5 @@ Fri Mar 13 23:47:34 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 
 Local Variables:
-add-log-mailing-address: "cc-mode-help@python.org"
+add-log-mailing-address: "bug-cc-mode@gnu.org"
 End:
