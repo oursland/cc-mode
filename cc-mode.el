@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.199 $
-;; Last Modified:   $Date: 1992-09-28 22:29:57 $
+;; Version:         $Revision: 2.200 $
+;; Last Modified:   $Date: 1992-09-28 22:36:49 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-09-28 22:29:57 $|$Revision: 2.199 $|
+;; |$Date: 1992-09-28 22:36:49 $|$Revision: 2.200 $|
 
 ;;; Code:
 
@@ -376,7 +376,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.199 $
+  "Major mode for editing C++ code.  $Revision: 2.200 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -583,7 +583,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.199 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.200 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1394,12 +1394,14 @@ Optional LIM is used as the backward limit of the search."
 	    (= (char-after (or (scan-lists (point) -1 1) (point-min))) ?\()))
       (error nil))))
 
-(defun c++-in-function-p (&optional bod)
-  "Return t if inside a C++ function definition."
+(defun c++-in-function-p (&optional containing)
+  "Return t if inside a C++ function definition.
+Optional CONTAINING is position of containing s-exp open brace. If not
+supplied, point is used as search start."
   (save-excursion
-    (let ((here (if (not bod)
+    (let ((here (if (not containing)
 		    (point)
-		  (goto-char bod)
+		  (goto-char containing)
 		  (c++-backward-over-syntactic-ws)
 		  (point))))
       (if (and (= (preceding-char) ?t)
@@ -1829,8 +1831,9 @@ BOD is the beginning of the C++ definition."
 				   ;; check if this is a true
 				   ;; statement continuation, not a
 				   ;; list of enums or static arrays elems
-				   (if (and (= char-before-ip ?,)
-					    (c++-in-function-p bod))
+				   (if (and
+					(= char-before-ip ?,)
+					(c++-in-function-p containing-sexp))
 				       c-indent-level 0)))))
 		    ;; If no previous statement, indent it relative to
 		    ;; line brace is on.  For open brace in column
@@ -2200,7 +2203,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.199 $"
+(defconst c++-version "$Revision: 2.200 $"
   "c++-mode version number.")
 
 (defun c++-version ()
