@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.345 $
-;; Last Modified:   $Date: 1993-06-17 21:52:21 $
+;; Version:         $Revision: 2.346 $
+;; Last Modified:   $Date: 1993-06-18 14:16:31 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-17 21:52:21 $|$Revision: 2.345 $|
+;; |$Date: 1993-06-18 14:16:31 $|$Revision: 2.346 $|
 
 ;;; Code:
 
@@ -487,7 +487,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.345 $
+  "Major mode for editing C++ code.  $Revision: 2.346 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -704,7 +704,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.345 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.346 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -2285,7 +2285,7 @@ BOD is the beginning of the C++ definition."
 			    (looking-at
 			     (concat
 			      "#\\|/\\*\\|//"
-			      "\\|\\(case[ \t]+.*\\|default[ \t]*\\)"
+			      "\\|\\(case[ \t]+.*\\|default[ \t]*\\):"
 			      "\\|[a-zA-Z0-9_$]*:[^:]"
 			      "\\|friend[ \t]"
 			      c++-class-key
@@ -2738,7 +2738,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.345 $"
+(defconst c++-version "$Revision: 2.346 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
