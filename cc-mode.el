@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.297 $
-;; Last Modified:   $Date: 1994-03-22 22:51:27 $
+;; Version:         $Revision: 3.298 $
+;; Last Modified:   $Date: 1994-03-22 23:12:58 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-22 22:51:27 $|$Revision: 3.297 $|
+;; |$Date: 1994-03-22 23:12:58 $|$Revision: 3.298 $|
 
 ;;; Code:
 
@@ -786,7 +786,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.297 $
+cc-mode Revision: $Revision: 3.298 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -817,7 +817,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.297 $
+cc-mode Revision: $Revision: 3.298 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2097,11 +2097,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-mark-function ()
   "Put mark at end of a C/C++ defun, point at beginning."
   (interactive)
-  (push-mark (point))
+  (let ((here (point))
+	(bod  (c-point 'bod))
+	;; there should be a c-point position for 'eod and 'bod2
+	(eod  (save-excursion (end-of-defun) (point)))
+	(bod2 (save-excursion (beginning-of-defun 2) (point))))
+  (push-mark here)
+  (push-mark eod nil t)
+  (goto-char bod2)
   (end-of-defun)
-  (push-mark (point) nil t)
-  (beginning-of-defun)
-  (backward-paragraph))
+  (if (>= (point) bod)
+      (goto-char bod2))))
 
 
 ;; Skipping of "syntactic whitespace" for Emacs 19.  Syntactic
@@ -3306,7 +3312,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.297 $"
+(defconst c-version "$Revision: 3.298 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
