@@ -360,6 +360,12 @@ that requires a literal mode spec at compile time."
 	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
 
+  ;; Install `c-fill-paragraph' on `fill-paragraph-function' so that a
+  ;; direct call to `fill-paragraph' behaves better.  This still
+  ;; doesn't work with filladapt but it's better than nothing.
+  (make-local-variable 'fill-paragraph-function)
+  (setq fill-paragraph-function 'c-fill-paragraph)
+
   ;; (X)Emacs 20 and later.
   (when (boundp 'comment-line-break-function)
     (make-local-variable 'comment-line-break-function)
