@@ -5,6 +5,11 @@ extern "C"
         int body;
         body = 3;
     }
+
+    int top_level_function_2()
+    {
+        int body;
+    }
 }
 
 extern "Grunch" 
