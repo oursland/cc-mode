@@ -3395,7 +3395,7 @@ This function does not do any hidden buffer changes."
 			t)
 
 		      (c-syntactic-re-search-forward
-		       "\\([^>]>\\)\\|[<;{},]" nil 'move t t 1)
+		       "\\([^>:-]>\\)\\|[<;{},]" nil 'move t t 1)
 
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
