@@ -1319,6 +1319,16 @@ This function does not do any hidden buffer changes."
 		      (forward-char))
 		    (< (point) start)))))))
 
+(defconst c-jump-syntax-balanced
+  (if (memq 'gen-string-delim c-emacs-features)
+      "\\w\\|\\s_\\|\\s\(\\|\\s\)\\|\\s\"\\|\\s|"
+    "\\w\\|\\s_\\|\\s\(\\|\\s\)\\|\\s\""))
+
+(defconst c-jump-syntax-unbalanced
+  (if (memq 'gen-string-delim c-emacs-features)
+      "\\w\\|\\s_\\|\\s\"\\|\\s|"
+    "\\w\\|\\s_\\|\\s\""))
+
 (defun c-forward-token-1 (&optional count balanced limit)
   "Move forward by tokens.
 A token is defined as all symbols and identifiers which aren't
@@ -1346,8 +1356,8 @@ COUNT guarantees that point is at the beginning of some token."
       (- (c-backward-token-1 (- count) balanced limit))
 
     (let ((jump-syntax (if balanced
-			   "\\w\\|\\s_\\|\\s\(\\|\\s\)\\|\\s\"\\|\\s|"
-			 "\\w\\|\\s_\\|\\s\"\\|\\s|"))
+			   c-jump-syntax-balanced
+			 c-jump-syntax-unbalanced))
 	  (last (point))
 	  (prev (point)))
 
@@ -1416,8 +1426,8 @@ See `c-forward-token-1' for details."
 
     (or limit (setq limit (point-min)))
     (let ((jump-syntax (if balanced
-			   "\\w\\|\\s_\\|\\s\(\\|\\s\)\\|\\s\"\\|\\s|"
-			 "\\w\\|\\s_\\|\\s\"\\|\\s|"))
+			   c-jump-syntax-balanced
+			 c-jump-syntax-unbalanced))
 	  (last (point)))
 
       (if (zerop count)
