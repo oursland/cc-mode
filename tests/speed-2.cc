@@ -57,7 +57,8 @@ static char *SCCS = "@(#) 6/6/94 8.26 Flow.cxx LTX";
 
 ev_ExitPortArray::
 ev_ExitPortArray(const ev_ExitPortArray &array, Flow *ptr)
-    : Shmptr1dArray(), ParentFlow(*ptr) {
+    : Shmptr1dArray(), ParentFlow(*ptr)
+{
     int size = array.GetSize();
     for (int ii = size-1; ii>= 0; ii--)
         {
@@ -67,7 +68,8 @@ ev_ExitPortArray(const ev_ExitPortArray &array, Flow *ptr)
 }
 
 ev_ExitPort* ev_ExitPortArray::
-ObtainExitPort(int exit_port) {
+ObtainExitPort(int exit_port)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     if ( operator[](exit_port) == SHMNULL)
         {
@@ -78,7 +80,8 @@ ObtainExitPort(int exit_port) {
 };		/* AddExitPort() */
 
 ev_ExitPortArray::
-~ev_ExitPortArray() {
+~ev_ExitPortArray()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     for(int index=0; index < GetSize(); index++)
         {
@@ -102,7 +105,8 @@ ev_ExitPort(Flow *flow)
       IntervalTime(),
       LocalRunNumber(0), 
       TraverseCount(0),
-      CumulativeTraverseCount(0) {
+      CumulativeTraverseCount(0)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     IntervalTime.JamType("S");
     IntervalTime.SetOutputExpr();
@@ -122,17 +126,20 @@ ev_ExitPort(const ev_ExitPort &port, Flow *flow)
       IntervalTime(port.IntervalTime,*flow,__FILE__, __LINE__),
       LocalRunNumber(0),
       TraverseCount(0),
-      CumulativeTraverseCount(0) {
+      CumulativeTraverseCount(0)
+{
     ActionExpression.SetBasePointer(*flow);
     IntervalTime.SetBasePointer(*flow);
 }
 
 ev_ExitPort::
-~ev_ExitPort() {
+~ev_ExitPort()
+{
 }
 
 boolean ev_ExitPort::
-PutNode(ev_BaseNode *node) {
+PutNode(ev_BaseNode *node)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     boolean rval = FALSE;
 
@@ -151,13 +158,15 @@ PutNode(ev_BaseNode *node) {
 };
 
 void  ev_ExitPort::
-CutNode() {
+CutNode()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     NextNode = SHMNULL;
 };
 
 void  ev_ExitPort::
-IncTraverseCount() {
+IncTraverseCount()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int run_num = GetFlowsRunNumber();
@@ -171,14 +180,16 @@ IncTraverseCount() {
 };
 
 int ev_ExitPort::
-GetFlowsRunNumber() {
+GetFlowsRunNumber()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     return ParentFlow -> GetRunNumber();
 };
 
 
 void ev_ExitPort::
-DebugDump (FILE * file, int indent) {
+DebugDump (FILE * file, int indent)
+{
 
     fprintf (file, "%sExitPort this=%08x:\n", Indent(indent), this);
     if (this)
@@ -225,7 +236,8 @@ ev_BaseNode (node_type type, Flow *parent, int index, int max_exit_ports)
       InternalTimer(),
       InternalTime(),
       CumulativeTimer(),
-      CumulativeTime() {
+      CumulativeTime()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (parent != NULL);
@@ -257,18 +269,21 @@ ev_BaseNode(const ev_BaseNode &node, Flow *parent) :
     ExitPorts(parent), ExitedPort(-1),
     InternalTimer(), InternalTime(node.InternalTime,*parent,__FILE__,__LINE__),
     CumulativeTimer(), CumulativeTime(node.CumulativeTime,*parent,__FILE__,__LINE__),
-    MaxNumExitPorts(node.MaxNumExitPorts) {
+    MaxNumExitPorts(node.MaxNumExitPorts)
+{
 }
 
 ev_BaseNode::
-~ev_BaseNode () {
+~ev_BaseNode ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG1 (FLOW_SUPPORT, BIT_0, FALSE, "EXIT  ev_BaseNode::~ev_BaseNode(), this = %x,%s", Id ());
 }
 
 const char *ev_BaseNode::
-Id() {
+Id()
+{
     if (this)
         {
             char id_buf[128];
@@ -303,13 +318,15 @@ Id() {
 }
 
 int ev_BaseNode::
-GetFlowsRunNumber() {
+GetFlowsRunNumber()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     return ParentFlow->GetRunNumber();
 }
 
 void ev_BaseNode::
-Connect (ev_BaseNode * p) {
+Connect (ev_BaseNode * p)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (p != NULL);
@@ -355,7 +372,8 @@ Connect (ev_BaseNode * p) {
 }
 
 void ev_BaseNode::
-Disconnect (ev_BaseNode * p) {
+Disconnect (ev_BaseNode * p)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (p != NULL);
@@ -399,7 +417,8 @@ Disconnect (ev_BaseNode * p) {
 }
 
 int ev_BaseNode::
-NumOfChildren () {
+NumOfChildren ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int rval;
@@ -413,7 +432,8 @@ NumOfChildren () {
 }
 
 boolean ev_BaseNode::
-AnyChildren () {
+AnyChildren ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     boolean rval;
@@ -427,7 +447,8 @@ AnyChildren () {
 }
 
 void ev_BaseNode::
-DefinePorts (int upto) {
+DefinePorts (int upto)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (upto >= 0);
@@ -438,7 +459,8 @@ DefinePorts (int upto) {
 }
 
 void ev_BaseNode::
-Move (int nx, int ny) {
+Move (int nx, int ny)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     portX = nx;
@@ -449,7 +471,8 @@ Move (int nx, int ny) {
 }
 
 int ev_BaseNode::
-GetX () {
+GetX ()
+{
     TR_DEBUG2 (FLOW_SUPPORT, BIT_2, FALSE,
 	       "EXIT  ev_BaseNode::GetX()=%d, this=%s",
 	       portX, Id());
@@ -457,7 +480,8 @@ GetX () {
 }
 
 int ev_BaseNode::
-GetY () {
+GetY ()
+{
     TR_DEBUG2 (FLOW_SUPPORT, BIT_2, FALSE,
 	       "EXIT  ev_BaseNode::GetY()=%d, this=%s",
 	       portY, Id());
@@ -465,7 +489,8 @@ GetY () {
 }
 
 int ev_BaseNode::
-NumOfParents () {
+NumOfParents ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG2(FLOW_SUPPORT, BIT_2, FALSE,
@@ -475,7 +500,8 @@ NumOfParents () {
 }
 
 boolean ev_BaseNode::
-AnyParents () {
+AnyParents ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int i = ParentNode.GetSize () - 1;
@@ -497,7 +523,8 @@ AnyParents () {
 }
 
 ev_BaseNode *ev_BaseNode::
-GetParent (int exit_port) {
+GetParent (int exit_port)
+{
     ev_BaseNode *rval = ParentNode[exit_port].dref ();
     TR_DEBUG2 (FLOW_SUPPORT, BIT_2, FALSE,
 	       "EXIT  ev_BaseNode::GetParent()=%x, this=%s",
@@ -506,7 +533,8 @@ GetParent (int exit_port) {
 }
 
 int ev_BaseNode::
-GetCumulativeTraverseCount (int port_index) {
+GetCumulativeTraverseCount (int port_index)
+{
     tr_assert (port_index >= 0);
     ev_ExitPort *ptr = ExitPorts.ObtainExitPort(port_index);
     int rval = ptr -> GetCumulativeTraverseCount();
@@ -517,7 +545,8 @@ GetCumulativeTraverseCount (int port_index) {
 }
 
 void ev_BaseNode::
-ResetCumulativeTraverseCounts() {
+ResetCumulativeTraverseCounts()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int num_ports = ExitPorts.LargestDefined() + 1;
@@ -532,21 +561,24 @@ ResetCumulativeTraverseCounts() {
 }
 
 void ev_BaseNode::
-ResetCumulativeTimers() {
+ResetCumulativeTimers()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     GetCumulativeTimeExpr() -> Jam( 0.0 );
     CumulativeTimer.set(0.0);
 }
 
 void ev_BaseNode::
-IncTraverseCount(int exit_port) {
+IncTraverseCount(int exit_port)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     ev_ExitPort *ptr = ExitPorts.ObtainExitPort(exit_port);
     ptr -> IncTraverseCount();
 }
 
 int ev_BaseNode::
-GetTraverseCount(int exit_port) {
+GetTraverseCount(int exit_port)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     ev_ExitPort *ptr = ExitPorts.ObtainExitPort(exit_port);
     int rval = ptr -> GetTraverseCount();
@@ -558,14 +590,16 @@ GetTraverseCount(int exit_port) {
 }
 
 const eVt_timestamp& ev_BaseNode::
-StartTimers(const eVt_timestamp&ts) {
+StartTimers(const eVt_timestamp&ts)
+{
     InternalTimer.synchro_start(ts,0.0);
     CumulativeTimer.synchro_start(ts);
     return ts;
 };				/* StartTimers() */
 
 eVt_timestamp ev_BaseNode::
-StopTimers(const eVt_timestamp& start_time, int exit_port) {
+StopTimers(const eVt_timestamp& start_time, int exit_port)
+{
     eVt_timestamp ts = InternalTimer.synchro_stop(
 	CumulativeTimer.synchro_stop( ) );
     InternalTime.Jam( InternalTimer.read() );
@@ -581,7 +615,8 @@ StopTimers(const eVt_timestamp& start_time, int exit_port) {
 
 
 boolean ev_BaseNode::
-PutNode (ev_BaseNode * node, int exit_port) {
+PutNode (ev_BaseNode * node, int exit_port)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (exit_port >= 0);
@@ -598,7 +633,8 @@ PutNode (ev_BaseNode * node, int exit_port) {
 }
 
 ev_BaseNode *ev_BaseNode::
-GetChild (int exit_port) {
+GetChild (int exit_port)
+{
     tr_assert (exit_port >= 0);
     ev_ExitPort *ptr = ExitPorts.ObtainExitPort(exit_port);
     ev_BaseNode *rval = ptr -> GetNode();
@@ -610,7 +646,8 @@ GetChild (int exit_port) {
 }
 
 void ev_BaseNode::
-CutNode (int port_index) {
+CutNode (int port_index)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (port_index >= 0);
@@ -631,7 +668,8 @@ CutNode (int port_index) {
 	       Id());
 }
 void ev_BaseNode::
-DebugDump (FILE * file, int indent) {
+DebugDump (FILE * file, int indent)
+{
 
     fprintf (file,
 	     "%sBaseNode at (%d, %d): %s\n",
@@ -692,7 +730,8 @@ DebugDump (FILE * file, int indent) {
 
 SpecPairArray::
 SpecPairArray(const SpecPairArray &array, Flow *parent)
-  : Shmptr1dArray() {
+  : Shmptr1dArray()
+{
     int size = array.GetSize();
     for (int ii = size-1; ii >= 0; ii--)
     {
@@ -706,7 +745,8 @@ SpecPair (Flow * flow, BaseSymbol * sheet, const char* catnum)
   : BaseSharedObject(),
     ParentFlow(*flow),
     Sheet (*sheet),
-    CatNum(*flow, __FILE__,__LINE__) {
+    CatNum(*flow, __FILE__,__LINE__)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     CatNum.FixType(EXPR_INTEGER);
@@ -727,12 +767,14 @@ SpecPair(const SpecPair &pair, Flow *flow)
   : BaseSharedObject(),
     ParentFlow(flow),
     Sheet(pair.Sheet),
-    CatNum(pair.CatNum, *flow, __FILE__,__LINE__) {
+    CatNum(pair.CatNum, *flow, __FILE__,__LINE__)
+{
     Sheet.dref()->AddAncestor(flow);
 }
 
 SpecPair::
-~SpecPair () {
+~SpecPair ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Flow *flow = ParentFlow.dref();
@@ -746,7 +788,8 @@ SpecPair::
 
 
 BaseSymbol *SpecPair::
-GetSheet () {
+GetSheet ()
+{
     BaseSymbol *rval = Sheet.dref ();
 
     tr_assert (rval != NULL);
@@ -757,7 +800,8 @@ GetSheet () {
 }
 
 int SpecPair::
-GetCat () {
+GetCat ()
+{
     TR_DEBUG2 (FLOW_SUPPORT, BIT_6, FALSE,
 	       "ENTER SpecPair::GetCat()=%d, this=%s",
 	       CatNum, Id());
@@ -766,7 +810,8 @@ GetCat () {
 }
 
 Expr* SpecPair::
-GetCatExpr () {
+GetCatExpr ()
+{
     TR_DEBUG2 (FLOW_SUPPORT, BIT_6, FALSE,
 	       "ENTER SpecPair::GetCatExpr()=%s, this=%s",
 	       CatNum.Id(), Id());
@@ -792,7 +837,8 @@ FlowNode (Flow * f, int index)
     FocusCal(EVM_STANDARD_CAL),
     EntryMcl(EV_MclLStatus::StoredStateOk), 
     ExitMcl(EV_MclLStatus::StoredStateOk),
-    TestMethodPtr() {
+    TestMethodPtr()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     for (int ii = 0; ii < EVg_MAX_WALK_INDEX; ii++) 
@@ -829,7 +875,8 @@ FlowNode(const FlowNode &fnode, Flow *flow)
     CalTabVal(), visited(fnode.visited), 
     EntryMcl(EV_MclLStatus::StoredStateOk),
     ExitMcl(EV_MclLStatus::StoredStateOk),
-    TestMethodPtr(fnode.TestMethodPtr) {
+    TestMethodPtr(fnode.TestMethodPtr)
+{
     if ((Exec != SHMNULL) && (Exec->GetName() == NULL))
     {
 	switch (Exec->GetType())
@@ -871,7 +918,8 @@ FlowNode(const FlowNode &fnode, Flow *flow)
 }
 
 FlowNode::
-~FlowNode () {
+~FlowNode ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
 				  /* delete any backarcs to this FlowNodes ParentFlow */
@@ -903,7 +951,8 @@ FlowNode::
 }
 
 int FlowNode::
-ExecSpecs (void) {
+ExecSpecs (void)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int count = 0;
@@ -929,7 +978,8 @@ ExecSpecs (void) {
 
 
 EVM_FocusCal FlowNode::
-GetFocusCal() {
+GetFocusCal()
+{
     EVM_FocusCal rval = FocusCal;
 //    if (FocusCal == EVM_DEFAULT_CAL) {
 //	BaseSymbol *test = Exec.dref();
@@ -943,7 +993,8 @@ GetFocusCal() {
 }
 
 boolean FlowNode::
-SetCalTId(const EVO_CalId &id) {
+SetCalTId(const EVO_CalId &id)
+{
     TR_DEBUG0 ( TIMING_CAL, BIT_22, 0,
 		"Enter FlowNode::SetCalTId()");
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
@@ -986,7 +1037,8 @@ SetCalTId(const EVO_CalId &id) {
 }
 
 boolean FlowNode::
-AllocCalTId() {
+AllocCalTId()
+{
     TR_DEBUG0 ( TIMING_CAL, BIT_22, 0,
 		"Enter FlowNode::AllocCalTId()");
     EVO_CalId id;
@@ -997,7 +1049,8 @@ AllocCalTId() {
 }
 
 boolean FlowNode::
-DeallocCalTId() {
+DeallocCalTId()
+{
     TR_DEBUG0 ( TIMING_CAL, BIT_22, 0, "Enter FlowNode::DeallocCalTId()");
     if (CalTabVal.Valid())
 	CalTabVal.Dealloc();
@@ -1007,7 +1060,8 @@ DeallocCalTId() {
 }
                                                
 void FlowNode::
-PutExec (BaseSymbol * ee) {
+PutExec (BaseSymbol * ee)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     EV_ASSERT0(ee != NULL, "Can't put a NULL exec object");
@@ -1045,7 +1099,8 @@ PutExec (BaseSymbol * ee) {
 }
 
 const char *FlowNode::
-GetExec () {
+GetExec ()
+{
     BaseSymbol *e = Exec.dref ();
     const char *rval;
     if (e)
@@ -1060,7 +1115,8 @@ GetExec () {
 }
 
 BaseSymbol *FlowNode::
-GetExecPtr () {
+GetExecPtr ()
+{
     BaseSymbol *rval = Exec.dref ();
     TR_DEBUG2 (FLOW_SUPPORT, BIT_10, FALSE,
 	       "EXIT  FlowNode::GetExecPtr()=%x, this=%s",
@@ -1070,7 +1126,8 @@ GetExecPtr () {
 
 
 boolean FlowNode::
-AddSpecPair (BaseSymbol * sheet, const char *cat) {
+AddSpecPair (BaseSymbol * sheet, const char *cat)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (sheet != NULL);
@@ -1101,7 +1158,8 @@ AddSpecPair (BaseSymbol * sheet, const char *cat) {
 }
 
 void FlowNode::
-DelSpecPair (BaseSymbol * sheet) {
+DelSpecPair (BaseSymbol * sheet)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (sheet != NULL);
@@ -1126,7 +1184,8 @@ DelSpecPair (BaseSymbol * sheet) {
 }
 
 int FlowNode::
-GetCatNum (BaseSymbol * sheet) {
+GetCatNum (BaseSymbol * sheet)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (sheet != NULL);
@@ -1161,7 +1220,8 @@ GetCatNum (BaseSymbol * sheet) {
 }
 
 Expr* FlowNode::
-GetCatExpr(BaseSymbol *sheet) {
+GetCatExpr(BaseSymbol *sheet)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (sheet != NULL);
@@ -1194,12 +1254,14 @@ GetCatExpr(BaseSymbol *sheet) {
 }
     
 evm_MethodPtrRec& FlowNode::
-GetTestMethodPtr() {
+GetTestMethodPtr()
+{
     return TestMethodPtr;
 }
 
 void FlowNode::
-DebugDump (FILE * file, int indent) {
+DebugDump (FILE * file, int indent)
+{
     BaseSymbol *symbol = Exec.dref ();
 
     if (symbol != NULL)
@@ -1251,7 +1313,8 @@ DebugDump (FILE * file, int indent) {
 PortNumber::
 PortNumber (Flow * f, int index)
   : ev_BaseNode(NODE_NUMBER, f, index, 1),
-    Number(-1) {
+    Number(-1)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     TR_DEBUG1(FLOW_SUPPORT, BIT_12, FALSE,
 	      "EXIT  PortNumber::PortNumber(), this=%s",
@@ -1261,11 +1324,13 @@ PortNumber (Flow * f, int index)
 PortNumber::
 PortNumber(const PortNumber &number, Flow *flow)
   : ev_BaseNode(number,flow),
-    Number(number.Number) {
+    Number(number.Number)
+{
 }
 
 PortNumber::
-~PortNumber () {
+~PortNumber ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG1 (FLOW_SUPPORT, BIT_12, FALSE,
@@ -1274,7 +1339,8 @@ PortNumber::
 }
 
 void PortNumber::
-SetPortNumber (int port_number) {
+SetPortNumber (int port_number)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Number = port_number;
@@ -1284,7 +1350,8 @@ SetPortNumber (int port_number) {
 }
 
 int PortNumber::
-GetPortNumber () {
+GetPortNumber ()
+{
     TR_DEBUG2 (FLOW_SUPPORT, BIT_14, FALSE,
 	       "EXIT  PortNumber::GetPortNumber()=%d, this=%s",
 	       Number,Id());
@@ -1292,7 +1359,8 @@ GetPortNumber () {
 }
 
 void PortNumber::
-DebugDump (FILE * file, int indent) {
+DebugDump (FILE * file, int indent)
+{
     fprintf (file,
 	     "%sPortNumber = %d\n",
 	     Indent(indent), Number);
@@ -1305,7 +1373,8 @@ DebugDump (FILE * file, int indent) {
 Bin::
 Bin (Flow * f, int index)
   : ev_BaseNode(NODE_BIN, f, index, 1),
-    Number(-1) {
+    Number(-1)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     TR_DEBUG1 (FLOW_SUPPORT, BIT_16, FALSE,
 	       "EXIT  Bin::Bin(), this=%s",
@@ -1315,18 +1384,21 @@ Bin (Flow * f, int index)
 Bin::
 Bin(const Bin &bin, Flow *flow)
   : ev_BaseNode(bin,flow),
-    Number(bin.Number) {
+    Number(bin.Number)
+{
 }
 
 Bin::
-~Bin () {
+~Bin ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG1 (FLOW_SUPPORT, BIT_16, FALSE, "EXIT  Bin::~Bin()", Id());
 }
 
 void Bin::
-SetBinNumber (int bin_number) {
+SetBinNumber (int bin_number)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Number = bin_number;
@@ -1349,7 +1421,8 @@ SetBinNumber (int bin_number) {
 }
 
 int Bin::
-GetBinNumber () {
+GetBinNumber ()
+{
     TR_DEBUG2(FLOW_SUPPORT, BIT_16, FALSE,
 	      "EXIT  Bin::GetBinNumber()=%d, this=%s",
 	      Number,Id());
@@ -1358,7 +1431,8 @@ GetBinNumber () {
 
 
 void Bin::
-IncCount () {
+IncCount ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG1 (FLOW_SUPPORT, BIT_17, FALSE,
@@ -1384,7 +1458,8 @@ IncCount () {
 
 
 const char *Bin::
-GetBinName () {
+GetBinName ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     const char *rval = NULL;
@@ -1410,7 +1485,8 @@ GetBinName () {
 }
 
 const char *Bin::
-GetBinDescript () {
+GetBinDescript ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     const char *rval = NULL;
@@ -1433,7 +1509,8 @@ GetBinDescript () {
 }
 
 const char *Bin::
-GetXColor () {
+GetXColor ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     const char *rval;
@@ -1459,7 +1536,8 @@ GetXColor () {
 }
 
 int Bin::
-GetXColorIndex () {
+GetXColorIndex ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int rval = -1;
@@ -1481,7 +1559,8 @@ GetXColorIndex () {
 }
 
 int Bin::
-GetBinCount () {
+GetBinCount ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int rval=-1;
@@ -1502,7 +1581,8 @@ GetBinCount () {
 }
 
 int Bin::
-GetMaxCount () {
+GetMaxCount ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int rval = -1;
@@ -1523,7 +1603,8 @@ GetMaxCount () {
 }
 
 int Bin::
-GetHWBinNumber () {
+GetHWBinNumber ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int rval=-1;
@@ -1545,7 +1626,8 @@ GetHWBinNumber () {
 }
 
 void Bin::
-ChangeBinName (const char *name) {
+ChangeBinName (const char *name)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     if (Number >= 0)
@@ -1564,7 +1646,8 @@ ChangeBinName (const char *name) {
 }
 
 void Bin::
-ChangeBinDescript (const char *descript) {
+ChangeBinDescript (const char *descript)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     if (Number >= 0)
@@ -1583,7 +1666,8 @@ ChangeBinDescript (const char *descript) {
 }
 
 void Bin::
-ChangeXColor (const char *color) {
+ChangeXColor (const char *color)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     if (Number >= 0)
@@ -1602,7 +1686,8 @@ ChangeXColor (const char *color) {
 }
 
 void Bin::
-ChangeXColorIndex (int index) {
+ChangeXColorIndex (int index)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     if (Number >= 0)
@@ -1621,7 +1706,8 @@ ChangeXColorIndex (int index) {
 }
 
 void Bin::
-DebugDump (FILE * file, int indent) {
+DebugDump (FILE * file, int indent)
+{
     fprintf (file, "%sBinNumber=%d\n", Indent(indent), Number);
     if (Number >= 0)
     {
@@ -1643,7 +1729,8 @@ DebugDump (FILE * file, int indent) {
 StartNode::
 StartNode (Flow * flow, int index)
   : ev_BaseNode(NODE_START, flow, index, 1),
-    EntryPoint(EVF_NOT_ENTRY_POINT) {
+    EntryPoint(EVF_NOT_ENTRY_POINT)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG1(FLOW_SUPPORT, BIT_20, FALSE,
@@ -1654,11 +1741,13 @@ StartNode (Flow * flow, int index)
 StartNode::
 StartNode(const StartNode &node, Flow *flow)
   : ev_BaseNode(node,flow),
-    EntryPoint(node.EntryPoint) {
+    EntryPoint(node.EntryPoint)
+{
 }
 
 StartNode::
-~StartNode() {
+~StartNode()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     if ((EntryPoint >= EVF_ON_START) &&
@@ -1676,7 +1765,8 @@ StartNode::
 
 
 void StartNode::
-SetAsEntryPoint (evf_flow_entry_point entry) {
+SetAsEntryPoint (evf_flow_entry_point entry)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Flow *flow = GetFlow();
@@ -1704,7 +1794,8 @@ SetAsEntryPoint (evf_flow_entry_point entry) {
 
 
 void StartNode::
-UnSetAsEntryPoint () {
+UnSetAsEntryPoint ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     EntryPoint = EVF_NOT_ENTRY_POINT;
@@ -1714,14 +1805,16 @@ UnSetAsEntryPoint () {
 }
 
 evf_flow_entry_point StartNode::
-GetEntryPoint () {
+GetEntryPoint ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     return EntryPoint;
 }
 
 
 void StartNode::
-DebugDump (FILE * file, int indent) {
+DebugDump (FILE * file, int indent)
+{
     fprintf (file,
 	     "%sEntryPoint = %d\n",
 	     Indent(indent), EntryPoint);
@@ -1732,19 +1825,22 @@ DebugDump (FILE * file, int indent) {
  ***************************************************************************/
 
 inline const SharedString*
-GetSharedString(const char*string) {
+GetSharedString(const char*string)
+{
     return EV_CURTP -> GetSharedStringTable ().Submit (EV_TEST, string);
 };
 
 boolean Flow::
-IsFlowToolUp() {
+IsFlowToolUp()
+{
     if ( FlowToolUp[0] == 0 )
         return FALSE;
     return TRUE; // True if flowtool is up.
 }
 
 void Flow::
-SetFlowTooUp( boolean ToolUp  ) {
+SetFlowTooUp( boolean ToolUp  )
+{
     if ( FlowToolUp.GetSize() == 0 )
         FlowToolUp.PreSize( 1 );
 
@@ -1777,7 +1873,8 @@ Flow (const char *name)
     NodeTable(32,32),
     FreeNodes(),
     FlowBack(),
-    FreeBacks() {
+    FreeBacks()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Expr *ee = new Expr ();
@@ -1831,7 +1928,8 @@ Flow ()
     CumulativeTimer(),
     CumulativeTime(*this,__FILE__,__LINE__),
     LastExecTimer(),
-    LastExecTime(*this,__FILE__,__LINE__) {
+    LastExecTime(*this,__FILE__,__LINE__)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Expr *ee = new Expr ();
@@ -1885,7 +1983,8 @@ Flow(const Flow &flow)
     CumulativeTimer(),
     CumulativeTime(flow.CumulativeTime,*this,__FILE__,__LINE__),
     LastExecTimer(),
-    LastExecTime(flow.LastExecTime,*this,__FILE__,__LINE__) {
+    LastExecTime(flow.LastExecTime,*this,__FILE__,__LINE__)
+{
     TR_DEBUG2 (FLOW_SUPPORT, BIT_28, FALSE,
 	       "ENTER Flow::Flow(%s),this=%s",
 	       flow.Id(),Id());
@@ -2065,7 +2164,8 @@ Flow(const Flow &flow)
 }
 
 Flow::
-~Flow () {
+~Flow ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int size = NodeTable.GetSize ();
@@ -2093,7 +2193,8 @@ Flow::
 }
 
 int Flow::
-GetExitedPort () {
+GetExitedPort ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG2(FLOW_SUPPORT, BIT_30, FALSE,
@@ -2103,7 +2204,8 @@ GetExitedPort () {
 }
 
 int Flow::
-GetNumOfExecs () {
+GetNumOfExecs ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG2 (FLOW_SUPPORT, BIT_30, FALSE,
@@ -2113,7 +2215,8 @@ GetNumOfExecs () {
 }
 
 int Flow::
-GetEntryPointStat (evf_flow_entry_point which) {
+GetEntryPointStat (evf_flow_entry_point which)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int rval=-1;
@@ -2126,7 +2229,8 @@ GetEntryPointStat (evf_flow_entry_point which) {
 }
 
 ev_BaseNode *Flow::
-AllocNode (node_type type) {
+AllocNode (node_type type)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int size = NodeTable.GetSize ();
@@ -2169,7 +2273,8 @@ AllocNode (node_type type) {
 }
 
 void Flow::
-DelNode (int which) {
+DelNode (int which)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (which >= 0);
@@ -2202,7 +2307,8 @@ DelNode (int which) {
 }
 
 void Flow::
-ChangeStart (evf_flow_entry_point entry, ev_BaseNode * p) {
+ChangeStart (evf_flow_entry_point entry, ev_BaseNode * p)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     ev_BaseNode *tp = p;
@@ -2231,7 +2337,8 @@ ChangeStart (evf_flow_entry_point entry, ev_BaseNode * p) {
 }
 
 ev_BaseNode *Flow::
-GetStart (evf_flow_entry_point entry) {
+GetStart (evf_flow_entry_point entry)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert ((entry >= EVF_ON_START) && (entry <= EVF_USR_DEF_9));
@@ -2243,7 +2350,8 @@ GetStart (evf_flow_entry_point entry) {
 }
 
 void Flow::
-SetEntryPoint (evf_flow_entry_point entry) {
+SetEntryPoint (evf_flow_entry_point entry)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert ((entry >= EVF_ON_START) && (entry <= EVF_USR_DEF_9));
@@ -2254,7 +2362,8 @@ SetEntryPoint (evf_flow_entry_point entry) {
 }
 
 evf_flow_entry_point Flow::
-GetCurrentEntryPoint () {
+GetCurrentEntryPoint ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG2 (FLOW_SUPPORT, BIT_30, FALSE,
@@ -2264,7 +2373,8 @@ GetCurrentEntryPoint () {
 }
 
 ev_BaseNode *Flow::
-GetNode (int i) {
+GetNode (int i)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (i >= 0);
@@ -2276,7 +2386,8 @@ GetNode (int i) {
 }
 
 int Flow::
-GetNodeTableSize () {
+GetNodeTableSize ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     int rval = NodeTable.GetSize ();
@@ -2287,7 +2398,8 @@ GetNodeTableSize () {
 }
 
 void Flow::
-PutBackInt (int index, int which, int data) {
+PutBackInt (int index, int which, int data)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (index >= 0);
@@ -2305,7 +2417,8 @@ PutBackInt (int index, int which, int data) {
 }
 
 int Flow::
-GetBackInt (int index, int which) {
+GetBackInt (int index, int which)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (index >= 0);
@@ -2321,7 +2434,8 @@ GetBackInt (int index, int which) {
 }
 
 void Flow::
-PutBackStr (int index, const char *str) {
+PutBackStr (int index, const char *str)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (index >= 0);
@@ -2339,7 +2453,8 @@ PutBackStr (int index, const char *str) {
 }
 
 const char *Flow::
-GetBackStr (int index) {
+GetBackStr (int index)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (index >= 0);
@@ -2354,7 +2469,8 @@ GetBackStr (int index) {
 }
 
 int Flow::
-AllocBack () {
+AllocBack ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     int where = FreeBacks.Pop ();
     if (where == INT_MIN)
@@ -2371,7 +2487,8 @@ AllocBack () {
 }
 
 void Flow::
-DelBack (int which) {
+DelBack (int which)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     tr_assert (which >= 0);
@@ -2391,7 +2508,8 @@ DelBack (int which) {
 }
 
 int Flow::
-NumOfBacks () {
+NumOfBacks ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     int rval = NumberOfBacks;
     TR_DEBUG2 (FLOW_SUPPORT, BIT_30, FALSE,
@@ -2401,7 +2519,8 @@ NumOfBacks () {
 }
 
 boolean Flow::
-ChangeLoop (const char *expr) {
+ChangeLoop (const char *expr)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Expr *ee = LoopExpr.dref ();
@@ -2414,7 +2533,8 @@ ChangeLoop (const char *expr) {
 }
 
 Expr *Flow::
-GetLoopPtr () {
+GetLoopPtr ()
+{
     Expr *rval = LoopExpr.dref ();
     tr_assert (rval != NULL);
     TR_DEBUG2 (FLOW_SUPPORT, BIT_30, FALSE,
@@ -2424,7 +2544,8 @@ GetLoopPtr () {
 }
 
 const char *Flow::
-GetLoopStr () {
+GetLoopStr ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     TR_DEBUG2 (FLOW_SUPPORT, BIT_30, FALSE,
@@ -2440,7 +2561,8 @@ GetLoopStr () {
 }
 
 const char *Flow::
-GetLoopVal (ValueDisplayType type) {
+GetLoopVal (ValueDisplayType type)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Expr *ee = LoopExpr.dref ();
@@ -2453,7 +2575,8 @@ GetLoopVal (ValueDisplayType type) {
 }
 
 void Flow::
-HaltLoop () {
+HaltLoop ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
     Expr *ee = LoopExpr.dref ();
     tr_assert (ee != NULL);
@@ -2464,7 +2587,8 @@ HaltLoop () {
 }
 
 void Flow::
-SetNotifyOnTest (boolean test) {
+SetNotifyOnTest (boolean test)
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     NotifyOnTest = test;
@@ -2474,7 +2598,8 @@ SetNotifyOnTest (boolean test) {
 }
 
 boolean Flow::
-GetLoopVal () {
+GetLoopVal ()
+{
     tr_check_shm_sem_c CheckShmSem(__FILE__,__LINE__);
 
     Expr *ee = LoopExpr.dref ();
@@ -2489,7 +2614,8 @@ GetLoopVal () {
 void Flow::
 SetAncChange__vtl(BaseStatusObj *,
 		  const EVO_Status &status,
-		  EVO_StatusData *data) {
+		  EVO_StatusData *data)
+{
 			// Ancestor change actions are: 1) (DeletedSubObj)
 			// dependent object getting deleted: just update
 			// references from old object to new (NULL) object 2)
@@ -2537,7 +2663,8 @@ SetAncChange__vtl(BaseStatusObj *,
 
 void Flow::
 DebugDump__vtl(FILE * file, unsigned int indent, const char*)
-const {
+const
+{
     BaseSymbol::DebugDump__vtl (file,indent);
     Flow * const Tmp = (Flow * const)this;
     fprintf (file, "%sFlow %s\n", Indent(indent), GetName ());
@@ -2619,7 +2746,8 @@ const {
 }
 
 void Flow::
-ResetCumulativeCounts() {
+ResetCumulativeCounts()
+{
     tr_check_shm_sem_c ShmSem(__FILE__,__LINE__);
 
     CumulativeTimer.set(0.0);
@@ -2638,7 +2766,8 @@ ResetCumulativeCounts() {
 }
 
 boolean Flow::
-DoCalibration() {
+DoCalibration()
+{
     tr_check_shm_sem_c ShmSem(__FILE__,__LINE__);
 
     return boolean(DoCalWhen.DateHasComeDue() || EV_CURTP->CalLoadboard()); 
@@ -2649,7 +2778,8 @@ DoCalibration() {
 /******************************************************************************/
 
 void Flow::
-InitTPCache__vtl(evc_prog_reset_t mode) {
+InitTPCache__vtl(evc_prog_reset_t mode)
+{
     TR_DEBUG1(TESTPROG_CACHE,BIT_0,FALSE,"Enter Flow::InitTPCache__vtl(), this = %s", Id());
 
     int NumNodes = GetNodeTableSize ();
@@ -2670,7 +2800,8 @@ InitTPCache__vtl(evc_prog_reset_t mode) {
 }
 
 void Flow::
-SetUserDefaultCal(int cal_id) {
+SetUserDefaultCal(int cal_id)
+{
     TR_DEBUG1(TIMING_CAL, BIT_25, FALSE,
 	      "Flow::SetUserDefaultCal to %3d",
               cal_id);
@@ -2678,7 +2809,8 @@ SetUserDefaultCal(int cal_id) {
 }
 
 int Flow::
-GetUserDefaultCal () {
+GetUserDefaultCal ()
+{
     TR_DEBUG1(TIMING_CAL, BIT_25, FALSE,
               "Flow::GetUserDefaultCal return %3d",
 	      UserDefaultCalId);
@@ -2687,23 +2819,27 @@ GetUserDefaultCal () {
 
 
 void Flow::
-SetStandardCalOnly(boolean yes) {
+SetStandardCalOnly(boolean yes)
+{
     StandardCalOnly.dref()->Change(BooleanName(yes));
 }
 
 boolean Flow::
-GetStandardCalOnly() {
+GetStandardCalOnly()
+{
     return (boolean)StandardCalOnly.dref()->GetValue();
 }
 
 Expr* Flow::
-GetStandardCalExpr() {
+GetStandardCalExpr()
+{
     return StandardCalOnly.dref();
 }
 
 #if PHASE_EXEC_LIB
 boolean Flow::
-ExecEntryPoint(ev_flow_entry_point new_entry_point) {
+ExecEntryPoint(ev_flow_entry_point new_entry_point)
+{
     ev_flow_entry_point old_entry_point	= GetCurrentEntryPoint();
     SetEntryPoint(new_entry_point);
     boolean rval = Exec();
@@ -2713,7 +2849,8 @@ ExecEntryPoint(ev_flow_entry_point new_entry_point) {
 #endif
 
 const char*
-Name(evf_flow_entry_point entry_point) {
+Name(evf_flow_entry_point entry_point)
+{
     switch(entry_point)
     {
       case EVF_NOT_ENTRY_POINT: return "EVF_NOT_ENTRY_POINT";
@@ -2743,7 +2880,7 @@ Name(evf_flow_entry_point entry_point) {
       case EVF_USR_DEF_7: return "EVF_USR_DEF_7";
       case EVF_USR_DEF_8: return "EVF_USR_DEF_8";
       case EVF_USR_DEF_9: return "EVF_USR_DEF_9";
-          
+    case EVF_USR_DEF_A: return "evf_usr_DEF_A";
     } /* switch */
     return "Unknown evf_flow_entry_point";
     // Here rather then switch/default to silence compiler warning.
