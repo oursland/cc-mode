@@ -3456,46 +3456,52 @@ The lines to note in this example include:
 
 @cindex func-decl-cont syntactic symbol
 @item
-line 2, assigned the @code{func-decl-cont} syntax;
+Line 2 is assigned the @code{func-decl-cont} syntax.
 
 @cindex comment-intro syntactic symbol
 @item
-line 4, assigned both @code{defun-block-intro} @emph{and}
-@code{comment-intro} syntax;
+Line 4 is assigned both @code{defun-block-intro} @emph{and}
+@code{comment-intro} syntax.
 
 @cindex c syntactic symbol
 @item
-line 5, assigned @code{c} syntax;
+Line 5 is assigned @code{c} syntax.
 
 @item
 @cindex syntactic whitespace
-line 6 which, even though it contains nothing but whitespace, is
+Line 6 which, even though it contains nothing but whitespace, is
 assigned @code{defun-block-intro}.  Note that the appearance of the
 comment on lines 4 and 5 do not cause line 6 to be assigned
 @code{statement} syntax because comments are considered to be
 @dfn{syntactic whitespace}, which are ignored when analyzing
-code;
+code.
 
 @cindex string syntactic symbol
 @item
-line 8, assigned @code{string} syntax;
+Line 8 is assigned @code{string} syntax.
 
 @cindex label syntactic symbol
 @item
-line 10, assigned @code{label} syntax;
+Line 10 is assigned @code{label} syntax.
 
 @cindex block-open syntactic symbol
 @item
-line 11, assigned @code{block-open} syntax;
+Line 11 is assigned @code{block-open} syntax.
 
 @cindex cpp-macro syntactic symbol
 @cindex cpp-macro-cont syntactic symbol
 @item
-lines 12 and 14, assigned @code{cpp-macro} syntax.
+Lines 12 and 14 are assigned @code{cpp-macro} syntax in addition to the
+normal syntactic symbols (@code{statement-block-intro} and
+@code{statement}, respectively).  Normally @code{cpp-macro} is
+configured to cancel out the normal syntactic context to make all
+preprocessor directives stick to the first column, but that's easily
+changed if you want preprocessor directives to be indented like the rest
+of the code.
 
 @cindex stream-op syntactic symbol
 @item
-line 17, assigned @code{stream-op} syntax.
+Line 17 is assigned @code{stream-op} syntax.
 
 @end itemize
 
