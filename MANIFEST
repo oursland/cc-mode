@@ -23,10 +23,12 @@ You should have received the following files in this distribution:
     cc-lobotomy.el: Performance vs. accuracy trade-offs.  May not
     work, yadda, yadda.
 
-    cc-mode-19.el: Compatibility for Emacs 19.34.  Do not use with
-    Emacs 20, XEmacs 19, or XEmacs 20.
+    cc-mode-19.el: Compatibility for Emacs 19.34.  Not used with any
+    other Emacs flavor.
 
-    cc-make.el: Helps with byte-compiling the CC Mode distribution.
+    cc-bytecomp.el: Contains helpers used during byte compiling to
+    ensure that there's no mixup with earler versions of CC Mode which
+    might be loaded.
 
     cc-mode.texi: The latest CC Mode Texinfo manual.
 
@@ -34,8 +36,8 @@ You should have received the following files in this distribution:
     forums.
 
 Note that of the above files, the following are distributed with Emacs
-20 and XEmacs 20:
+and XEmacs:
 
-    cc-align.el, cc-cmds.el, cc-compat.el, cc-defs.el, cc-engine.el,
-    cc-langs.el, cc-menus.el, cc-mode.el, cc-styles.el, cc-vars.el,
-    cc-mode.texi
+    cc-align.el, cc-bytecomp.el, cc-cmds.el, cc-compat.el, cc-defs.el,
+    cc-engine.el, cc-langs.el, cc-menus.el, cc-mode.el, cc-styles.el,
+    cc-vars.el, cc-mode.texi
