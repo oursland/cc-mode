@@ -2217,6 +2217,7 @@ If a fill prefix is specified, it overrides all the above."
 		     (pos (point)))
 		 (if (save-excursion
 		       (back-to-indentation)
+		       (> (point) (car c-lit-limits))
 		       (looking-at c-comment-prefix-regexp))
 		     (progn
 		       ;; Skip forward past the fill prefix in case
@@ -2224,13 +2225,12 @@ If a fill prefix is specified, it overrides all the above."
 		       (while (and (< (current-column) (cdr fill))
 				   (not (eolp)))
 			 (forward-char 1))
-		       (if (and (> (c-point 'bol) (car c-lit-limits))
-				(> (point) (if (and (eq c-lit-type 'c)
-						    (save-excursion
-						      (forward-char -2)
-						      (looking-at "\\*/")))
-					       (- (cdr c-lit-limits) 2)
-					     (cdr c-lit-limits))))
+		       (if (> (point) (if (and (eq c-lit-type 'c)
+					       (save-excursion
+						 (forward-char -2)
+						 (looking-at "\\*/")))
+					  (- (cdr c-lit-limits) 2)
+					(cdr c-lit-limits)))
 			   (progn
 			     ;; The skip takes us out of the comment;
 			     ;; insert the fill prefix at bol instead
