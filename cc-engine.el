@@ -1885,8 +1885,11 @@ This function does not do any hidden buffer changes."
 	   (= (point) (aref c-in-literal-cache 0)))
       (aref c-in-literal-cache 1)
     (let ((rtn (save-excursion
-		 (let* ((lim (or lim (c-point 'bod)))
-			(state (parse-partial-sexp lim (point))))
+		 (let* ((pos (point))
+			(lim (or lim (progn
+				       (c-beginning-of-syntax)
+				       (point))))
+			(state (parse-partial-sexp lim pos)))
 		   (cond
 		    ((elt state 3) 'string)
 		    ((elt state 4) (if (elt state 7) 'c++ 'c))
@@ -1928,8 +1931,10 @@ This function does not do any hidden buffer changes."
 
   (save-excursion
     (let* ((pos (point))
-	   (lim (or lim (c-point 'bod)))
-	   (state (parse-partial-sexp lim (point))))
+	   (lim (or lim (progn
+			  (c-beginning-of-syntax)
+			  (point))))
+	   (state (parse-partial-sexp lim pos)))
 
       (cond ((elt state 3)
 	     ;; String.  Search backward for the start.
@@ -2011,8 +2016,10 @@ This function does not do any hidden buffer changes."
   ;; This function does not do any hidden buffer changes.
   (save-excursion
     (let* ((pos (point))
-	   (lim (or lim (c-point 'bod)))
-	   (state (parse-partial-sexp lim (point))))
+	   (lim (or lim (progn
+			  (c-beginning-of-syntax)
+			  (point))))
+	   (state (parse-partial-sexp lim pos)))
 
       (cond ((elt state 3)		; String.
 	     (goto-char (elt state 8))
@@ -2431,7 +2438,9 @@ This function does not do any hidden buffer changes."
   ;; Go to the first non-whitespace after the colon that starts a
   ;; multiple inheritance introduction.  Optional LIM is the farthest
   ;; back we should search.
-  (let* ((lim (or lim (c-point 'bod))))
+  (let* ((lim (or lim (save-excursion
+			(c-beginning-of-syntax)
+			(point)))))
     (c-with-syntax-table c++-template-syntax-table
       (c-backward-token-2 0 t lim)
       (while (and (looking-at "[_a-zA-Z<,]")
