@@ -655,7 +655,7 @@ This function does not do any hidden buffer changes."
 ;; when the files are compiled in a certain order within the same
 ;; session.
 
-(defsubst c-beginning-of-defun-1 ()
+(defmacro c-beginning-of-defun-1 ()
   ;; Wrapper around beginning-of-defun.
   ;;
   ;; NOTE: This function should contain the only explicit use of
@@ -666,42 +666,44 @@ This function does not do any hidden buffer changes."
   ;;
   ;; This function does not do any hidden buffer changes.
 
-  (if (and (fboundp 'buffer-syntactic-context-depth)
-	   c-enable-xemacs-performance-kludge-p)
-      ;; XEmacs only.  This can improve the performance of
-      ;; c-parse-state to between 3 and 60 times faster when
-      ;; braces are hung.  It can also degrade performance by
-      ;; about as much when braces are not hung.
-      (let (pos)
-	(while (not pos)
-	  (save-restriction
-	    (widen)
-	    (setq pos (scan-lists (point) -1
-				  (buffer-syntactic-context-depth)
-				  nil t)))
-	  (cond
-	   ((bobp) (setq pos (point-min)))
-	   ((not pos)
-	    (let ((distance (skip-chars-backward "^{")))
-	      ;; unbalanced parenthesis, while illegal C code,
-	      ;; shouldn't cause an infloop!  See unbal.c
-	      (when (zerop distance)
-		;; Punt!
-		(beginning-of-defun)
-		(setq pos (point)))))
-	   ((= pos 0))
-	   ((not (eq (char-after pos) ?{))
-	    (goto-char pos)
-	    (setq pos nil))
-	   ))
-	(goto-char pos))
-    ;; Emacs, which doesn't have buffer-syntactic-context-depth
-    (beginning-of-defun))
-  ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
-  ;; open brace.
-  (and defun-prompt-regexp
-       (looking-at defun-prompt-regexp)
-       (goto-char (match-end 0))))
+  `(progn
+     (if (and ,(cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
+	      c-enable-xemacs-performance-kludge-p)
+	 ,(when (cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
+	    ;; XEmacs only.  This can improve the performance of
+	    ;; c-parse-state to between 3 and 60 times faster when
+	    ;; braces are hung.  It can also degrade performance by
+	    ;; about as much when braces are not hung.
+	    '(let (pos)
+	       (while (not pos)
+		 (save-restriction
+		   (widen)
+		   (setq pos (scan-lists (point) -1
+					 (buffer-syntactic-context-depth)
+					 nil t)))
+		 (cond
+		  ((bobp) (setq pos (point-min)))
+		  ((not pos)
+		   (let ((distance (skip-chars-backward "^{")))
+		     ;; unbalanced parenthesis, while illegal C code,
+		     ;; shouldn't cause an infloop!  See unbal.c
+		     (when (zerop distance)
+		       ;; Punt!
+		       (beginning-of-defun)
+		       (setq pos (point)))))
+		  ((= pos 0))
+		  ((not (eq (char-after pos) ?{))
+		   (goto-char pos)
+		   (setq pos nil))
+		  ))
+	       (goto-char pos)))
+       ;; Emacs, which doesn't have buffer-syntactic-context-depth
+       (beginning-of-defun))
+     ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
+     ;; open brace.
+     (and defun-prompt-regexp
+	  (looking-at defun-prompt-regexp)
+	  (goto-char (match-end 0)))))
 
 (defsubst c-end-of-defun-1 ()
   ;; Replacement for end-of-defun that use c-beginning-of-defun-1.
