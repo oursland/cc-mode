@@ -2779,6 +2779,15 @@ brace."
   `(setq c-record-ref-identifiers (cons (cons ,from ,to)
 					c-record-ref-identifiers)))
 
+;; Dynamically bound variable that instructs `c-forward-type' to record
+;; the ranges types that only are found.  Behaves otherwise like
+;; `c-record-type-identifiers'.
+(defvar c-record-found-types nil)
+
+(defmacro c-record-found-type (from to)
+  `(setq c-record-found-types (cons (cons ,from ,to)
+				    c-record-found-types)))
+
 (defun c-forward-c++-template-arglist ()
   ;; The point is assumed to be at a '<'.  Try to treat it as a C++
   ;; template arglist and move forward to the the corresponding '>'.
@@ -2791,17 +2800,34 @@ brace."
   ;; works well since comparison expressions on the forms "a < b > c"
   ;; or "a < b, c > d" in almost all cases would be pointless.
 
-  (let ((start (point)))
+  (let ((start (point))
+	;; If `c-record-type-identifiers' is set then activate
+	;; recording of any found types that constitute an argument in
+	;; the template arglist.
+	(c-record-found-types (if c-record-type-identifiers t)))
     (if (catch 'template-escape
-	  (c-forward-c++-template-arglist-recur))
-	t
+	  (setq c-record-found-types
+		(c-forward-c++-template-arglist-recur)))
+	(progn
+	  (when (consp c-record-found-types)
+	    (setq c-record-type-identifiers
+		  ;; `nconc' doesn't mind that the tail of
+		  ;; `c-record-found-types' is t.
+		  (nconc c-record-found-types c-record-type-identifiers)))
+	  t)
+
       (goto-char start)
       nil)))
 
 (defun c-forward-c++-template-arglist-recur ()
   ;; Recursive part of `c-forward-c++-template-arglist'.
 
-  (let ((start (point)) res pos tmp)
+  (let ((start (point)) res pos tmp
+	;; Cover this so that any recorded found type ranges are
+	;; automatically lost if it turns out to not be a template
+	;; arglist.  It's propagated through the return value on
+	;; successful completion.
+	(c-record-found-types c-record-found-types))
 
     ;; If the '<' has paren open syntax then we've marked it as a
     ;; template arglist before, so unless there's fontification work
@@ -2833,6 +2859,24 @@ brace."
       (unless (looking-at "[<=:%]")
 	(while (and
 		(progn
+		  ;; Check if this template argument is a sole type.  If it's
+		  ;; known then it's recorded in `c-record-type-identifiers'.
+		  ;; If it only is found then it's recorded in
+		  ;; `c-record-found-types' which we might roll back if it
+		  ;; turns out that this isn't a template arglist afterall.
+		  (when (and c-record-type-identifiers
+			     (memq (char-before) '(?, ?<)))
+		    (let ((orig-record-found-types c-record-found-types))
+		      (c-forward-syntactic-ws)
+		      (and (eq (c-forward-type) 'found)
+			   (progn (c-forward-syntactic-ws)
+				  (not (looking-at "[,>]")))
+			   ;; A found type was recorded but it's not the only
+			   ;; thing in the template argument, so reset
+			   ;; `c-record-found-types'.
+			   (setq c-record-found-types
+				 orig-record-found-types))))
+
 		  (setq pos (point))
 		  (or (when (eq (char-after) ?>)
 			;; Must check for '>' at the very start separately,
@@ -2840,8 +2884,16 @@ brace."
 			;; using \\=.
 			(forward-char)
 			t)
+
 		      (c-syntactic-re-search-forward
-		       "\\([^>]>\\)\\|[<;{]" nil 'move t t 1)
+		       (if c-record-type-identifiers
+			   ;; If we should record passed types then
+			   ;; additionally stop after each comma to check if
+			   ;; each template argument constitutes a type.
+			   "\\([^>]>\\)\\|[<;{,]"
+			 "\\([^>]>\\)\\|[<;{]")
+		       nil 'move t t 1)
+
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
 		      ;; closer above since we only search in the
@@ -2861,7 +2913,8 @@ brace."
 		  ;; Either an operator starting with '>' or the end of
 		  ;; the template arglist.
 
-		  (if (and (get-text-property (1- (point)) 'syntax-table)
+		  (if (and (/= (1- (point)) pos)
+			   (get-text-property (1- (point)) 'syntax-table)
 			   (progn
 			     (c-clear-char-syntax (1- (point)))
 			     (c-parse-sexp-lookup-properties)))
@@ -2895,18 +2948,21 @@ brace."
 		  ;; template arglist.
 
 		  (setq pos (point))
-		  (let (id-start id-end)
+		  (let (id-start id-end subres)
 		    (if (if (looking-at "[<=]")
 			    (setq tmp (match-end 0))
 			  (setq tmp pos)
 			  (backward-char)
-			  (not (and (save-excursion
-				      ;; There's always an identifier
-				      ;; before a template reference.
-				      (c-backward-syntactic-ws)
-				      (setq id-end (point))
-				      (setq id-start (c-on-identifier)))
-				    (c-forward-c++-template-arglist-recur))))
+			  (not (and
+				(save-excursion
+				  ;; There's always an identifier before a
+				  ;; template reference.
+				  (c-backward-syntactic-ws)
+				  (setq id-end (point))
+				  (setq id-start (c-on-identifier)))
+				(setq subres
+				      (c-forward-c++-template-arglist-recur))
+				)))
 
 			;; It was not a template.
 			(progn
@@ -2924,20 +2980,22 @@ brace."
 			    (c-remove-template-arg-properties pos (point)))
 			  (goto-char tmp))
 
-		      ;; It was a template.  Record the identifier
-		      ;; before the template as a type or reference
-		      ;; depending on whether the template is last in
-		      ;; a qualified identifier.
+		      ;; It was a template.
+		      (setq c-record-found-types subres)
+
+		      ;; Record the identifier before the template as a type
+		      ;; or reference depending on whether the template is
+		      ;; last in a qualified identifier.
 		      (when c-record-type-identifiers
 			(c-forward-syntactic-ws)
-			(when (looking-at "::")
-			  (c-record-ref-id id-start id-end)))))
+			(if (looking-at "::")
+			    (c-record-ref-id id-start id-end)
+			  (c-record-type-id id-start id-end)))))
 		  t)
 
 		 ((eq (char-before) ?,)
-		  ;; Just another template argument.  The
-		  ;; fontification stuff that made us stop at it is at
-		  ;; the top of the loop.
+		  ;; Just another template argument.  The type check stuff
+		  ;; that made us stop at it is at the top of the loop.
 		  t)
 
 		 (t
@@ -2947,7 +3005,8 @@ brace."
 		  ;; arglist if we're nested.
 		  (throw 'template-escape nil))))))
 
-      res)))
+      (if res
+	  (or c-record-found-types t)))))
 
 (defun c-forward-name ()
   ;; Move forward over a complete name if at the beginning of one.
@@ -2960,7 +3019,13 @@ brace."
   ;; 'template if it's a template reference, 'operator of it's an
   ;; operator identifier, or t if it's some other kind of name.
 
-  (let ((pos (point)) res id-start id-end)
+  (let ((pos (point)) res id-start id-end
+	;; Turn off `c-promote-possible-types' here since we might call
+	;; `c-forward-c++-template-arglist' and we don't want it to promote
+	;; every suspect thing in the template arglist to a type.  We're
+	;; typically called from `c-forward-type' in this case, and the caller
+	;; only wants the top level type that it finds to be promoted.
+	c-promote-possible-types)
     (while
 	(and
 	 (looking-at c-identifier-key)
@@ -3198,7 +3263,8 @@ brace."
 					 (c-simple-skip-symbol-backward)
 					 (point))
 				       id-end))
-		   (setq res (or res c-promote-possible-types 'found)))
+		   (unless res
+		     (setq res 'found)))
 	       (setq res (if (c-check-type id-start id-end)
 			     ;; It's an identifier that has been used as
 			     ;; a type somewhere else.
@@ -3238,38 +3304,46 @@ brace."
 	  (goto-char (match-end 1)))
 	(goto-char pos))
 
-      (if c-opt-type-concat-key
-	  ;; Look for a trailing operator that concatenate the type with
-	  ;; a following one, and if so step past that one through a
-	  ;; recursive call.
-	  (progn
-	    (setq pos (point))
-	    (c-forward-syntactic-ws)
-	    (if (and (looking-at c-opt-type-concat-key)
-		     (let ((c-promote-possible-types
-			    (or c-promote-possible-types (eq res t))))
-		       (goto-char (match-end 1))
-		       (c-forward-syntactic-ws)
-		       (setq res2 (c-forward-type))))
-		;; If either operand certainly is a type then both are,
-		;; but we don't let the existence of the operator itself
-		;; promote two uncertain types to a more certain one.
-		(cond ((eq res t) t)
-		      ((eq res2 t)
-		       (c-add-type id-start id-end)
-		       (when c-record-type-identifiers
-			 (c-record-type-id (save-excursion
-					     (goto-char id-end)
-					     (c-simple-skip-symbol-backward)
-					     (point))
-					   id-end))
-		       t)
-		      ((eq res 'found) 'found)
-		      ((eq res2 'found) 'found)
-		      (t 'maybe))
-	      (goto-char pos)
-	      res))
-	res))))
+      (when c-opt-type-concat-key
+	;; Look for a trailing operator that concatenate the type with
+	;; a following one, and if so step past that one through a
+	;; recursive call.
+	(setq pos (point))
+	(c-forward-syntactic-ws)
+	(if (and (looking-at c-opt-type-concat-key)
+		 (let ((c-promote-possible-types
+			(or (eq res t) c-promote-possible-types)))
+		   (goto-char (match-end 1))
+		   (c-forward-syntactic-ws)
+		   (setq res2 (c-forward-type))))
+	    ;; If either operand certainly is a type then both are,
+	    ;; but we don't let the existence of the operator itself
+	    ;; promote two uncertain types to a more certain one.
+	    (cond ((eq res t))
+		  ((eq res2 t)
+		   (c-add-type id-start id-end)
+		   (when c-record-type-identifiers
+		     (c-record-type-id (save-excursion
+					 (goto-char id-end)
+					 (c-simple-skip-symbol-backward)
+					 (point))
+				       id-end))
+		   (setq res t))
+		  ((eq res 'found))
+		  ((eq res2 'found)
+		   (setq res 'found))
+		  (t
+		   (setq res 'maybe)))
+	  (goto-char pos)))
+
+      (when (and c-record-found-types (eq res 'found))
+	(c-record-found-type (save-excursion
+			       (goto-char id-end)
+			       (c-simple-skip-symbol-backward)
+			       (point))
+			     id-end))
+
+      res)))
 
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
