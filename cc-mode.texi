@@ -2858,26 +2858,58 @@ string.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Adding Styles, File Styles, Choosing a Style, Styles
 @comment node-name, next, previous, up
-@subsection Adding Styles
+@subsection Adding and Amending Styles
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 If none of the built-in styles is appropriate, you'll probably want to
-add a new @dfn{style definition}.  Styles are kept in the
-@code{c-style-alist} variable, but you should never modify this
-variable directly.  Instead, @ccmode{} provides the function
-@code{c-add-style} that you can use to easily add new styles or change
-existing styles:
+create a new @dfn{style definition}, possibly based on an existing
+style.  To do this, put the new style's settings into a list with the
+following format - the list can then be passed as an argument to the
+function @code{c-add-style}:
+
+@cindex style definition
+@defvr {List} style definition
+([@var{BASE-STYLE}] [(@var{VARIABLE} . @var{VALUE}) @dots{}])
+
+Optional @var{base-style}, if present, must be a string which is the
+name of the @dfn{base style} from which this style inherits.  At most
+one @var{base-style} is allowed in a style definition.  If
+@var{base-style} is not specified, the style inherits from a table of
+default values@footnote{This table is stored internally in the
+variable c-fallback-style.  It is computed during the initialisation
+of @ccmode{} from the factory defaults of the style variables and any
+global values they may have been given since starting Emacs.} instead.
+All styles eventually inherit from this internal table.  Style loops
+generate errors.  The list of pre-existing styles can be seen in
+@ref{Built-in Styles}.
+
+The dotted pairs (@var{variable} . @var{value}) each consist of a
+variable and the value it is to be set to when the style is later
+activated.@footnote{In certain circumstances, this value can get
+overridden by another value.}  The variable can be either a @ccmode{}
+style-variable or an arbitrary emacs variable.  In the latter case, it
+is @emph{not} made buffer local by the @ccmode{} style system.
+@end defvr
+
+Styles are kept in the @code{c-style-alist} variable, but you
+should never modify this variable directly.  Instead, @ccmode{}
+provides the function @code{c-add-style} for this purpose.
 
 @defun c-add-style stylename description &optional set-p
 @findex add-style (c-)
-Add or update a style.  If @var{stylename} is not already in
-@code{c-style-alist} then a new style according to @var{description}
-is added, otherwise the existing style is changed.  If the optional
-@var{set-p} is non-@code{nil} then the new style is applied to the
-current buffer as well.
+Add or update a style called @var{stylename}, a string.
+@var{description} is the new style definition in the form described
+above.  If @var{stylename} already exists in @code{c-style-alist} then
+it is replaced by @var{description}.  (Note, this replacement is
+total.  The old style is @emph{not} merged into the new one.)
+Otherwise, a new style is added.  If the optional @var{set-p} is
+non-@code{nil} then the new style is applied to the current buffer as
+well.
 
 @comment TBD: The next paragraph is bogus.  I really need to better
 @comment document adding styles, including setting up inherited styles.
+@c ACM, 2004/3/7:  The style documentation has been considerably
+@c enhanced.
 
 The sample @file{.emacs} file provides a concrete example of how a new
 style can be added and automatically set.  @xref{Sample .emacs File}.
