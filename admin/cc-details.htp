@@ -10,6 +10,21 @@ X/Emacs versions and package interactions.
 
 <p>See <a href="index.html">for other CC Mode files</a>.
 
+<h2>Changes since CC Mode 5.18</h2>
+
+<ul><li><code>extern-lang-close</code> relative buffer positions have
+	changed.  The used to point to the extern's open brace, but
+	they now point to the first non-whitespace character on the
+	line with the open brace.
+
+    <li><code>c-progress-interval</code>'s semantics have changed
+	slightly.  When set to <code>nil</code>, indentation proceeds
+	silently.  Previously, even when <code>nil</code>, the start
+	and end messages were printed.
+
+    <li>The usual assortment of bug fixes.
+</ul>
+
 <h2>Changes since CC Mode 5.17</h2>
 
 <ul><li><code>M-a</code> and <code>M-e</code> should now properly move 
