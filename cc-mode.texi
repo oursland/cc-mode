@@ -1421,7 +1421,7 @@ something like this in your @file{.emacs}:
 @vindex comment-continuation-stars (c-)
 Normally the comment line prefix inserted for a new line inside a
 comment is deduced from other lines in it.  However there's one
-situation when there's no hint about how the prefix should look,
+situation when there's no hint about what the prefix should look like,
 namely when a block comment is broken for the first time.  This style
 variable@footnote{In versions before 5.26, this variable was called
 @code{c-comment-continuation-stars}.  As a compatibility measure,
@@ -2059,7 +2059,7 @@ is @code{nil}, the line is indented only if point is at the left margin,
 or on or before the first non-whitespace character on the line,
 otherwise some whitespace is inserted.  If this variable is the symbol
 @code{other}, then some whitespace is inserted only within strings and
-comments (literals), an inside preprocessor directives, but the line is
+comments (literals), and inside preprocessor directives, but the line is
 always reindented.
 @end defopt
 
@@ -2096,7 +2096,7 @@ often (in seconds) progress messages are to be displayed.
 @cindex movement
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@ccmode{} contains some useful command for moving around in C
+@ccmode{} contains some useful commands for moving around in C
 code.
 
 @table @asis
@@ -4086,7 +4086,7 @@ syntax.
 @cindex line-up function
 Often there are cases when a simple offset setting on a syntactic
 symbol isn't enough to get the desired indentation.  Therefore, it's
-also possible to use a @dfn{indentation function} (a.k.a. @dfn{line-up
+also possible to use an @dfn{indentation function} (a.k.a. @dfn{line-up
 function}) for a syntactic symbol.
 
 @ccmode{} comes with many predefined indentation functions for common
