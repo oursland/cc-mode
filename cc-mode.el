@@ -431,8 +431,7 @@ Key bindings:
   (cc-imenu-init cc-imenu-c-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook)
-  (c-update-modeline)
-  (c-init-no-escape-syntax-table))
+  (c-update-modeline))
 
 
 ;; Support for C++
@@ -502,8 +501,7 @@ Key bindings:
   (cc-imenu-init cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook)
-  (c-update-modeline)
-  (c-init-no-escape-syntax-table))
+  (c-update-modeline))
 
 
 ;; Support for Objective-C
@@ -570,8 +568,7 @@ Key bindings:
   (cc-imenu-init cc-imenu-objc-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook)
-  (c-update-modeline)
-  (c-init-no-escape-syntax-table))
+  (c-update-modeline))
 
 
 ;; Support for Java
@@ -645,8 +642,7 @@ Key bindings:
   (cc-imenu-init cc-imenu-java-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook)
-  (c-update-modeline)
-  (c-init-no-escape-syntax-table))
+  (c-update-modeline))
 
 
 ;; Support for CORBA's IDL language
@@ -706,8 +702,7 @@ Key bindings:
   ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;FIXME
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'idl-mode-hook)
-  (c-update-modeline)
-  (c-init-no-escape-syntax-table))
+  (c-update-modeline))
 
 
 ;; Support for Pike
@@ -780,8 +775,7 @@ Key bindings:
   ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;FIXME
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'pike-mode-hook)
-  (c-update-modeline)
-  (c-init-no-escape-syntax-table))
+  (c-update-modeline))
 
 
 ;; bug reporting

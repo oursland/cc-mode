@@ -460,16 +460,6 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
   ;; Give CR the same syntax as newline, for selective-display
   (modify-syntax-entry ?\^m "> b" table))
 
-(defvar c-no-escape-syntax-table nil
-  "A variant of the language syntax table where `\\' has operator
-instead of escape syntax.  Used e.g. when moving by sexps where line
-continuation backslashes shouldn't be considered sexps.")
-(make-variable-buffer-local 'c-no-escape-syntax-table)
-
-(defun c-init-no-escape-syntax-table ()
-  (setq c-no-escape-syntax-table (copy-syntax-table (syntax-table)))
-  (modify-syntax-entry ?\\ "." c-no-escape-syntax-table))
-
 ;;;###autoload
 (defvar c-mode-syntax-table nil
   "Syntax table used in c-mode buffers.")
