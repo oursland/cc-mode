@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.261 $
-;; Last Modified:   $Date: 1993-01-13 22:57:51 $
+;; Version:         $Revision: 2.262 $
+;; Last Modified:   $Date: 1993-01-20 23:39:40 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-13 22:57:51 $|$Revision: 2.261 $|
+;; |$Date: 1993-01-20 23:39:40 $|$Revision: 2.262 $|
 
 ;;; Code:
 
@@ -232,13 +232,9 @@ styles in a single mode.")
 	)
     ;; though its not optimal, these will work for older, broken
     ;; emacses. some strange behavior may be encountered. PATCH YOUR EMACS!
-    (message "using old syntax stuff...")
-    (sit-for 1)
     (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"  c++-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23b" c++-mode-syntax-table)
     (modify-syntax-entry ?\n ">"     c++-mode-syntax-table)
-    (message "using old syntax stuff... done")
-    (sit-for 1)
     ))
 
 (if c++-c-mode-syntax-table
@@ -452,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.261 $
+  "Major mode for editing C++ code.  $Revision: 2.262 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -673,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.261 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.262 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2078,8 +2074,9 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 	  (progn
 	    (skip-chars-backward "^/" lim)
 	    (skip-chars-backward "/" lim)
-	    (while (not (and (= (following-char) ?/)
-			     (= (char-after (1+ (point))) ?/)))
+	    (while (not (or (and (= (following-char) ?/)
+				 (= (char-after (1+ (point))) ?/))
+			    (<= (point) lim)))
 	      (skip-chars-backward "^/" lim)
 	      (skip-chars-backward "/" lim)))
 	;; c comment
@@ -2087,11 +2084,12 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 	    (progn
 	      (skip-chars-backward "^*" lim)
 	      (skip-chars-backward "*" lim)
-	      (while (not (and (= (following-char) ?*)
-			       (= (preceding-char) ?/)))
+	      (while (not (or (and (= (following-char) ?*)
+				   (= (preceding-char) ?/))
+			      (<= (point) lim)))
 		(skip-chars-backward "^*" lim)
 		(skip-chars-backward "*" lim))
-	      (forward-char -1))
+	      (or (bobp) (forward-char -1)))
 	  ;; preprocessor directive
 	  (if (eq literal 'pound)
 	      (progn
@@ -2103,11 +2101,12 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 		(progn
 		  (skip-chars-backward "^*" lim)
 		  (skip-chars-backward "*" lim)
-		  (while (not (and (= (following-char) ?*)
-				   (= (preceding-char) ?/)))
+		  (while (not (or (and (= (following-char) ?*)
+				       (= (preceding-char) ?/))
+				  (<= (point) lim)))
 		    (skip-chars-backward "^*" lim)
 		    (skip-chars-backward "*" lim))
-		  (forward-char -1))
+		  (or (bobp) (forward-char -1)))
 	      ;; none of the above
 	      (setq stop t))))))))
 
@@ -2415,7 +2414,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.261 $"
+(defconst c++-version "$Revision: 2.262 $"
   "c++-mode version number.")
 
 (defun c++-version ()
