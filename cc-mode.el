@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.310 $
-;; Last Modified:   $Date: 1993-04-16 15:03:12 $
+;; Version:         $Revision: 2.311 $
+;; Last Modified:   $Date: 1993-04-16 15:36:39 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -129,7 +129,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-04-16 15:03:12 $|$Revision: 2.310 $|
+;; |$Date: 1993-04-16 15:36:39 $|$Revision: 2.311 $|
 
 ;;; Code:
 
@@ -456,7 +456,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.310 $
+  "Major mode for editing C++ code.  $Revision: 2.311 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -679,7 +679,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.310 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.311 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1311,47 +1311,54 @@ of the expression are preserved."
 		(setcar indent-stack
 			(setq this-indent val))))
 	    ;; Adjust line indentation according to its contents
- 	    (if (looking-at c++-access-key)
- 		(setq this-indent (+ this-indent c++-access-specifier-offset))
-	      (if (or (looking-at "case[ \t]")
-		      (and (looking-at "[A-Za-z]")
-			   (save-excursion
-			     (forward-sexp 1)
-			     (looking-at ":[^:]"))))
-		  (setq this-indent (max 0 (+ this-indent c-label-offset)))))
-	    ;; looking at a comment only line?
-	    (if (looking-at comment-start-skip)
-		;; different indentation base on whether this is a
-		;; col0 comment only line or not. also, if comment is
-		;; in, or to the right of comment-column, the comment
-		;; doesn't move
-		(progn
-		  (skip-chars-forward " \t")
-		  (setq this-indent
-			(if (>= (current-column) comment-column)
-			    (current-column)
-			  (c++-comment-offset (bolp) this-indent)))))
-	    (if (looking-at "friend[ \t]")
-		(setq this-indent (+ this-indent c++-friend-offset)))
-	    (if (= (following-char) ?})
-		(setq this-indent (- this-indent c-indent-level)))
-	    (if (= (following-char) ?{)
-		(setq this-indent (+ this-indent c-brace-offset)))
-	    ;; check for continued statements
-	    (if (save-excursion
-		  (c++-backward-syntactic-ws (car contain-stack))
-		  (and (not (c++-in-parens-p))
-		       (not (memq (preceding-char)
-				  '(nil ?\000 ?\, ?\; ?\} ?\: ?\{)))
-		       (progn
-			 (beginning-of-line)
-			 (skip-chars-forward " \t")
-			 (not (looking-at c++-class-key)))))
-		(setq this-indent (+ this-indent c-continued-statement-offset))
-	      )
-	    ;; check for stream operator
-	    (if (looking-at "\\(<<\\|>>\\)")
-		(setq this-indent (c++-calculate-indent)))
+	    (cond
+	     ;; looking at public, protected, private line
+	     ((looking-at c++-access-key)
+	      (setq this-indent (+ this-indent c++-access-specifier-offset)))
+	     ;; looking at a case, default, or other label
+	     ((or (looking-at "case[ \t]+.*:")
+		  (looking-at "default[ \t]*:")
+		  (and (looking-at "[A-Za-z]")
+		       (save-excursion
+			 (forward-sexp 1)
+			 (looking-at ":[^:]"))))
+	      (setq this-indent (max 0 (+ this-indent c-label-offset))))
+	     ;; looking at a comment only line?
+	     ((looking-at comment-start-skip)
+	      ;; different indentation base on whether this is a col0
+	      ;; comment only line or not. also, if comment is in, or
+	      ;; to the right of comment-column, the comment doesn't
+	      ;; move
+	      (progn
+		(skip-chars-forward " \t")
+		(setq this-indent
+		      (if (>= (current-column) comment-column)
+			  (current-column)
+			(c++-comment-offset (bolp) this-indent)))))
+	     ;; looking at a friend declaration
+	     ((looking-at "friend[ \t]")
+	      (setq this-indent (+ this-indent c++-friend-offset)))
+	     ;; looking at a close brace
+	     ((= (following-char) ?})
+	      (setq this-indent (- this-indent c-indent-level)))
+	     ;; looking at an open brace
+	     ((= (following-char) ?{)
+	      (setq this-indent (+ this-indent c-brace-offset)))
+	     ;; check for continued statements
+	     ((save-excursion
+		(c++-backward-syntactic-ws (car contain-stack))
+		(and (not (c++-in-parens-p))
+		     (not (memq (preceding-char)
+				'(nil ?\000 ?\, ?\; ?\} ?\: ?\{)))
+		     (progn
+		       (beginning-of-line)
+		       (skip-chars-forward " \t")
+		       (not (looking-at c++-class-key)))))
+	      (setq this-indent (+ this-indent c-continued-statement-offset)))
+	     ;; check for stream operator
+	     ((looking-at "\\(<<\\|>>\\)")
+	      (setq this-indent (c++-calculate-indent)))
+	     ) ;; end-cond
 	    ;; Put chosen indentation into effect.
 	    (or (= (current-column) this-indent)
 		(= (following-char) ?\#)
@@ -2543,7 +2550,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.310 $"
+(defconst c++-version "$Revision: 2.311 $"
   "c++-mode version number.")
 
 (defun c++-version ()
