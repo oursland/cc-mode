@@ -2695,7 +2695,8 @@ brace."
   (defmacro c-find-decl-prefix-search ()
     '(while (and
 	     (setq cfd-match (re-search-forward c-decl-prefix-re nil 'move))
-	     (if (memq (get-text-property (setq cfd-match-pos (match-end 1))
+	     (if (memq (get-text-property (1- (setq cfd-match-pos
+						    (match-end 1)))
 					  'face)
 		       '(font-lock-comment-face font-lock-string-face))
 		 t
