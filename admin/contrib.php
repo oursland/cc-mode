@@ -4,6 +4,7 @@
   include ("header.h");
 ?>
 
+
 <h3>Font lock for IDL mode</h3>
 
 <p>Three people have contributed Emacs font-lock definitions for CORBA
@@ -28,10 +29,20 @@ you'll just get them automatically.
 
 </ul>
 
+
 <h3>Font lock for Pike mode</h3>
 
 <p>Like IDL mode, neither CC Mode nor X/Emacs does not come with
 font-lock definitions for Pike mode.  <a href="pike.el">This
 package</a> written by Per Hedbor and others provides that.
+
+
+<h3>Embedded SQL</h3>
+
+<p>CC Mode doesn't handle language mixes very well, and it probably
+won't for some time yet.  Therefore I'll try to put up any
+contributions to help out in those areas here.  One of them is
+embedded SQL, where Kevin Ruland has contributed an <a
+href="plsql.txt">indentation for Oracle ProC embedded SQL</a>.
 
 <?php include ("footer.h"); ?>
