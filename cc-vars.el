@@ -27,28 +27,23 @@
 ;; Boston, MA 02111-1307, USA.
 
 
-(defgroup cc-mode nil
-  "Major mode for editing C, C++, Objective-C, and Java"
-  :prefix "c-"
-  :group 'c)
-
 (defcustom c-strict-syntax-p nil
   "*If non-nil, all syntactic symbols must be found in `c-offsets-alist'.
 If the syntactic symbol for a particular line does not match a symbol
 in the offsets alist, an error is generated, otherwise no error is
 reported and the syntactic symbol is ignored."
   :type 'boolean
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-echo-syntactic-information-p nil
   "*If non-nil, syntactic info is echoed when the line is indented."
   :type 'boolean
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-basic-offset 4
   "*Amount of basic offset used by + and - symbols in `c-offsets-alist'."
   :type 'integer
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-tab-always-indent t
   "*Controls the operation of the TAB key.
@@ -69,15 +64,17 @@ by the `c-comment-only-line-offset' variable."
   :type '(choice (const :tag "Always indent, never TAB" t)
 		 (const :tag "Indent in left margin, otherwise TAB" nil)
 		 (const :tag "TAB in literals, otherwise indent" other))
-  :group 'cc-mode)
+  :group 'c)
 
+;; TBD: this one doesn't enforce that it be a function
 (defcustom c-insert-tab-function 'insert-tab
   "*Function used when inserting a tab for \\[TAB].
 Only used when `c-tab-always-indent' indicates a `real' tab character
 should be inserted.  Value must be a function taking no arguments."
   :type 'function
-  :group 'cc-mode)
+  :group 'c)
 
+;; TBD: this one doesn't handle the cons choice well
 (defcustom c-comment-only-line-offset 0
   "*Extra offset for line which contains only the start of a comment.
 Can contain an integer or a cons cell of the form:
@@ -91,7 +88,7 @@ Just an integer as value is equivalent to (<val> . -1000)."
   :type '(choice (integer :tag "Non-anchored offset")
 		 (cons (integer :tag "Non-anchored offset")
 		       (integer :tag "Anchored offset")))
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-indent-comments-syntactically-p nil
   "*Specifies how comment-only lines should be indented.
@@ -99,7 +96,7 @@ When this variable is non-nil, comment-only lines are indented
 according to syntactic analysis via `c-offsets-alist', even when
 \\[indent-for-comment] is used."
   :type 'boolean
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-cleanup-list '(scope-operator)
   "*List of various C/C++/ObjC constructs to \"clean up\".
@@ -137,8 +134,12 @@ mode name.  Valid symbols are:
 	      (const empty-defun-braces)
 	      (const list-close-comma)
 	      (const scope-operator))
-  :group 'cc-mode)
+  :group 'c)
 
+;; TBD: even when there are two choices, middle button should pop up
+;; menu instead of toggling between two states.  Also when changing to
+;; function, they all default to c-snug-do-while, which isn't correct.
+;; Also, function prompt doesn't give function completion.
 (defcustom c-hanging-braces-alist '((brace-list-open)
 				    (substatement-open after)
 				    (block-close . c-snug-do-while)
@@ -180,11 +181,10 @@ syntactic context for the brace line."
 		   (const extern-lang-open) (const extern-lang-close)
 		   (const brace-list-open) (const brace-list-close)
 		   (const brace-list-intro) (const brace-list-entry))
-	   (choice (const nil)
-		   function-item
-		   (set (const before) (const after)))
+	   (choice (set (const before) (const after))
+		   function)
 	   ))
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-hanging-colons-alist nil
   "*Controls the insertion of newlines before and after certain colons.
@@ -200,10 +200,8 @@ currently not supported for this variable."
   :type '(repeat
 	  (cons (choice (const case-label) (const label) (const access-label)
 			(const member-init-intro) (const inher-intro))
-		(choice (const nil)
-			(set (const before) (const after)))
-		))
-  :group 'cc-mode)
+		(set (const before) (const after))))
+  :group 'c)
 
 (defcustom c-hanging-semi&comma-criteria '(c-semi&comma-inside-parenlist)
   "*List of functions that decide whether to insert a newline or not.
@@ -220,7 +218,7 @@ no arguments, and should return one of the following values:
 If every function in the list is called with no determination made,
 then no newline is inserted."
   :type '(repeat function)
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-hanging-comment-ender-p t
   "*Controls what \\[fill-paragraph] does to C block comment enders.
@@ -228,7 +226,7 @@ When set to nil, C block comment enders are left on their own line.
 When set to t, block comment enders will be placed at the end of the
 previous line (i.e. they `hang' on that line)."
   :type 'boolean
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-hanging-comment-starter-p t
   "*Controls what \\[fill-paragraph] does to C block comment starters.
@@ -237,29 +235,29 @@ When set to t, text that follows a block comment starter will be
 placed on the same line as the block comment starter (i.e. the text
 `hangs' on that line)."
   :type 'boolean
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-backslash-column 48
   "*Column to insert backslashes when macroizing a region."
   :type 'integer
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
 This hook gets called after a line is indented by the mode."
   :type 'hook
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-delete-function 'backward-delete-char-untabify
   "*Function called by `c-electric-delete' when deleting characters."
   :type 'function
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'."
   :type '(set (const alignleft))
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-label-minimum-indentation 1
   "*Minimum indentation for lines inside of top-level constructs.
@@ -269,7 +267,7 @@ top-level constructs.  Specifically, the function
 `c-gnu-impose-minimum' on your `c-special-indent-hook' is what
 enforces this."
   :type 'integer
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-progress-interval 5
   "*Interval used to update progress status during long re-indentation.
@@ -277,59 +275,7 @@ If a number, percentage complete gets updated after each interval of
 that many seconds.  Set to nil to inhibit updating.  This is only
 useful for Emacs 19."
   :type 'integer
-  :group 'cc-mode)
-
-(defcustom c-file-style nil
-  "*Variable interface for setting style via File Local Variables.
-In a file's Local Variable section, you can set this variable to a
-string suitable for `c-set-style'.  When the file is visited, CC Mode
-will set the style of the file to this value automatically.
-
-Note that file style settings are applied before file offset settings
-as designated in the variable `c-file-offsets'."
-  :type '(choice (const nil) string)
-  :group 'cc-mode)
-
-(defcustom c-file-offsets nil
-  "*Variable interface for setting offsets via File Local Variables.
-In a file's Local Variable section, you can set this variable to an
-association list similar to the values allowed in `c-offsets-alist'.
-When the file is visited, CC Mode will institute these offset settings
-automatically.
-
-Note that file offset settings are applied after file style settings
-as designated in the variable `c-file-style'."
-  :type '(repeat
-	  (cons
-	   (choice (const string) (const c) (const defun-open)
-		   (const defun-close) (const defun-block-intro)
-		   (const class-open) (const class-close)
-		   (const inline-open) (const inline-close)
-		   (const func-decl-cont) (const knr-argdecl-intro)
-		   (const knr-argdecl) (const topmost-intro)
-		   (const topmost-intro-cont) (const member-init-intro)
-		   (const member-init-cont) (const inher-intro)
-		   (const inher-cont) (const block-open) (const block-close)
-		   (const brace-list-open) (const brace-list-close)
-		   (const brace-list-intro) (const brace-list-entry)
-		   (const statement) (const statement-cont)
-		   (const statement-block-intro)
-		   (const statement-case-intro)
-		   (const statement-case-open) (const substatement)
-		   (const substatement-open) (const case-label)
-		   (const access-label) (const label)
-		   (const do-while-closure) (const else-clause)
-		   (const comment-intro) (const arglist-intro)
-		   (const arglist-cont) (const arglist-cont-nonempty)
-		   (const arglist-close) (const stream-op) (const inclass)
-		   (const cpp-macro) (const friend)
-		   (const objc-method-intro) (const objc-method-args-cont)
-		   (const objc-method-call-cont) (const extern-lang-open)
-		   (const extern-lang-close) (const inextern-lang))
-	   (choice (const +) (const -) (const ++) (const --)
-		   (const *) (const /) integer variable-item
-		   function-item)))
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-site-default-style "gnu"
   "Default style for your site.
@@ -339,7 +285,7 @@ loaded into your Emacs at compile time, you will need to set this
 variable in the `site-init.el' file before CC Mode is loaded, then
 re-dump Emacs."
   :type 'string
-  :group 'cc-mode)
+  :group 'c)
 
 (defcustom c-style-variables-are-local-p t
   "*Whether style variables should be buffer local by default.
@@ -364,7 +310,7 @@ The list of variables to buffer localize are:
     c-special-indent-hook
     c-indentation-style"
   :type 'boolean
-  :group 'cc-mode)
+  :group 'c)
 
 
 (provide 'cc-vars)
