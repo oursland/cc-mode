@@ -92,7 +92,6 @@ INSTALLATION
 
         % cd /path/to/cc-mode
         % $(EMACS) -batch -no-site-file -q -l cc-make.el cc-*.el
-                                 
 
     where $(EMACS) is either emacs or xemacs depending on the flavor
     you use.

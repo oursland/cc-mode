@@ -8,6 +8,8 @@ You should have received the following files in this distribution:
 
     README: Quick intro into how to get CC Mode up and running.
 
+    NEWS: A list of the user visible changes in each version.
+
     cc-align.el, cc-cmds.el, cc-defs.el, cc-engine.el, cc-langs.el,
     cc-menus.el, cc-mode.el, cc-styles.el, cc-vars.el: The source code.
 

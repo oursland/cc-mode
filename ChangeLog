@@ -1,3 +1,73 @@
+Sun Dec  6 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* Release 5.25
+
+Mon Nov 18 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed some bugs with
+	comments with tricky contents in obscure places inside
+	bracelists.  Cases 5A.3 and 9C-D changed.
+
+Mon Nov 11 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-inside-bracelist-p): Don't trip up on C++
+	"operator[]".
+
+Mon Oct 31 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-statement-1): Fixed bug where
+	point would end up further down afterwards.  Recognize '@' as
+	a prefix operator for Pike.
+
+Mon Oct 24 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (c-major-mode-is): New defsubst to encapsulate
+	major-mode checking.
+
+	* cc-cmds.el, cc-engine.el, cc-lang.el: All major-mode
+	checking is now spelled (c-major-mode-is 'mode)
+
+Mon Oct 23 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-comment-indent): CASE 3: the looking-at should
+	match against c-comment-start-regexp instead of comment-start.
+
+	* cc-engine.el (c-inside-bracelist-p): Further
+	dekludgification.  When in C++ mode and searching to see if
+	we're in a template definition, don't get tripped up by
+	#include <thing.h> syntax!
+
+	* cc-mode.el (c-submit-bug-report): Add comment-column to list
+	of variables reported.
+
+Mon Oct 20 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-statement-1): Do not trip on
+	whitespace when skipping backwards over characters that can
+	start a statement.
+
+Mon Oct 17 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-inside-bracelist-p): Check for class open in
+	Pike mode.
+
+Mon Oct 16 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
+
+	* cc-langs.el (c-common-init): Make adaptive-fill-mode a
+	buffer local variable and set it to nil.
+
+Mon Oct 15 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
+
+	* cc-langs.el (c-common-init): Implement the new semantics for
+	c-default-style.
+
+	* cc-mode.texi Document the new semantics for c-default-style.
+
+	* cc-vars.el (c-default-style): Slightly different default
+	semantics when the value is an alist, and there's a new
+	special symbol in the choices: `other'.  This is used when the
+	major-mode is not specifically listed.
+
 Wed Oct 14 22:34:50 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
 
 	* Release 5.24
