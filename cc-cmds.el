@@ -236,8 +236,8 @@ nil.
 This function does various newline cleanups based on the value of
 `c-cleanup-list'."
   (interactive "*P")
-  (let* ((c-state-cache (c-parse-state))
-	 (safepos (c-safe-position (point) c-state-cache))
+  (c-parse-state)
+  (let* ((safepos (c-safe-position (point) c-state-cache))
 	 (literal (c-in-literal safepos))
 	 ;; We want to inhibit blinking the paren since this will be
 	 ;; most disruptive.  We'll blink it ourselves later on.
@@ -326,25 +326,7 @@ This function does various newline cleanups based on the value of
 		  (here (point)))
 	      (forward-line -1)
 	      (setq old-ind (c-point 'boi))
-	      (let ((c-state-cache
-		     (c-whack-state-after (point) c-state-cache)))
-		;; we may need to update the cache. this should
-		;; still be faster than recalculating the state
-		;; in many cases
-		(save-excursion
-		  (save-restriction
-		    (narrow-to-region here (point))
-		    (if (and (c-safe (progn (backward-up-list -1) t))
-			     (memq (char-before) '(?\) ?}))
-			     (progn (widen)
-				    (c-safe (progn (c-forward-sexp -1)
-						   t))))
-			(setq c-state-cache
-			      (c-hack-state (point) 'open c-state-cache)))))
-		(indent-according-to-mode))
-	      (setq c-state-cache (c-adjust-state (c-point 'bol) old-point-max
-						  (- (c-point 'boi) old-ind)
-						  c-state-cache))
+	      (indent-according-to-mode)
 	      (goto-char (- (point-max) pos))
 	      ;; if the buffer has changed due to the indentation, we
 	      ;; need to recalculate syntax for the current line, but
@@ -358,25 +340,11 @@ This function does various newline cleanups based on the value of
 		 ;; at least one space.
 		 (delete-indentation)
 		 (just-one-space)
-		 (setq c-state-cache
-		       (c-whack-state-after (point) c-state-cache))
 		 (if (not preserve-p)
 		     (delete-char -1))))
 	  ;; since we're hanging the brace, we need to recalculate
-	  ;; syntax.  Update the state to accurately reflect the
-	  ;; beginning of the line.  We punt if we cross any open or
-	  ;; closed parens because its just too hard to modify the
-	  ;; known state.  This limitation will be fixed in v5.
-	  (save-excursion
-	    (let ((bol (c-point 'bol)))
-	      (if (zerop (car (parse-partial-sexp bol (1- (point)))))
-		  (setq syntax (c-guess-basic-syntax))
-		;; gotta punt. this requires some horrible kludgery
-		(beginning-of-line)
-		(setq c-state-cache nil
-		      c-state-cache (c-parse-state)
-		      syntax nil))))
-	  )
+	  ;; syntax.
+	  (setq syntax (c-guess-basic-syntax)))
 	(when c-syntactic-indentation
 	  ;; Now adjust the line's indentation.  Don't update the state
 	  ;; cache since c-guess-basic-syntax isn't called when
@@ -384,10 +352,7 @@ This function does various newline cleanups based on the value of
 	  (let* ((old-ind (c-point 'boi))
 		 (old-point-max (point-max))
 		 (c-syntactic-context syntax))
-	    (indent-according-to-mode)
-	    (setq c-state-cache (c-adjust-state (c-point 'bol) old-point-max
-						(- (c-point 'boi) old-ind)
-						c-state-cache))))
+	    (indent-according-to-mode)))
 	;; Do all appropriate clean ups
 	(let ((here (point))
 	      (pos (- (point-max) (point)))
@@ -441,11 +406,7 @@ This function does various newline cleanups based on the value of
 	(if (memq 'after newlines)
 	    (progn
 	      (newline)
-	      ;; update on c-state-cache
-	      (let* ((bufpos (- (point) 2))
-		     (which (if (eq (char-after bufpos) ?{) 'open 'close))
-		     (c-state-cache (c-hack-state bufpos which c-state-cache)))
-		(indent-according-to-mode))))
+	      (indent-according-to-mode)))
 	)))
     ;; blink the paren
     (and (eq last-command-char ?\})
@@ -1638,7 +1599,6 @@ argument QUIET is non-nil."
     (setq c-parsing-error
 	  (or (let ((endmark (copy-marker end))
 		    (c-parsing-error nil)
-		    (c-state-cache c-state-cache)
 		    ;; shut up any echo msgs on indiv lines
 		    (c-echo-syntactic-information-p nil))
 		(unwind-protect
@@ -1653,7 +1613,6 @@ argument QUIET is non-nil."
 			(skip-chars-forward " \t\n")
 			(beginning-of-line)
 			;; indent the current line
-			(setq c-state-cache (c-parse-state))
 			(c-indent-line nil t)
 			(forward-line)))
 		  (set-marker endmark nil)
