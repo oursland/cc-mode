@@ -2552,7 +2552,8 @@ syntactic whitespace."
 			  (< check-pos
 			     (save-excursion
 			       (goto-char check-pos)
-			       (c-end-of-current-token last-token-end-pos)
+			       (save-match-data
+				 (c-end-of-current-token last-token-end-pos))
 			       (setq last-token-end-pos (point))))))
 		 ;; Match inside a token.
 		 (cond ((<= (point) bound)
