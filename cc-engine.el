@@ -2117,7 +2117,7 @@ comment at the start of cc-engine.el for more info."
 	(if last-pos
 	    ;; Prepare to loop, but record the open paren only if it's
 	    ;; outside a macro or within the same macro as point, and
-	    ;; if it is a "real" open paren and not some character
+	    ;; if it is a legitimate open paren and not some character
 	    ;; that got an open paren syntax-table property.
 	    (progn
 	      (setq pos last-pos)
@@ -2125,7 +2125,11 @@ comment at the start of cc-engine.el for more info."
 			     (save-excursion
 			       (goto-char last-pos)
 			       (not (c-beginning-of-macro))))
-			 (= (char-syntax (char-before last-pos)) ?\())
+			 ;; Check for known types of parens that we
+			 ;; want to record.  The syntax table is not to
+			 ;; be trusted here since the caller might be
+			 ;; using e.g. `c++-template-syntax-table'.
+			 (memq (char-before last-pos) '(?{ ?\( ?\[)))
 		(if (< last-pos here-bol)
 		    (setq c-state-cache-good-pos last-pos))
 		(setq c-state-cache (cons (1- last-pos) c-state-cache))))
