@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-05 18:43:24 $
-;; Version:         $Revision: 2.176 $
+;; Last Modified:   $Date: 1992-08-05 19:36:07 $
+;; Version:         $Revision: 2.177 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-05 18:43:24 $|$Revision: 2.176 $|
+;; |$Date: 1992-08-05 19:36:07 $|$Revision: 2.177 $|
 
 
 ;; ======================================================================
@@ -330,7 +330,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.176 $
+  "Major mode for editing C++ code.  $Revision: 2.177 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -531,7 +531,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.176 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.177 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -712,7 +712,7 @@ backward-delete-char-untabify."
 		   (if (and open-brace-p
 			    (or (eq c++-hanging-braces t)
 				(and c++-hanging-braces
-				     (not (c++-at-top-level-p t)))))
+				     (not (c++-at-top-level-p t bod)))))
 		       (setq c++-auto-newline nil))
 		   (if (c++-auto-newline)
 		       ;; this may have auto-filled so we need to
@@ -734,7 +734,7 @@ backward-delete-char-untabify."
 	  ;; try to clean up empty defun braces if conditions apply
 	  (let ((here (point-marker)))
 	    (and (memq 'empty-defun-braces c++-cleanup-list)
-		 (c++-at-top-level-p t)
+		 (c++-at-top-level-p t bod)
 		 c++-auto-newline
 		 (= last-command-char ?\})
 		 (progn (forward-char -1)
@@ -857,7 +857,7 @@ for member initialization list."
 	 ;; check for being at top level or top with respect to the
 	 ;; class. if not, process as normal
 	 ((progn (goto-char insertion-point)
-		 (not (c++-at-top-level-p t))))
+		 (not (c++-at-top-level-p t bod))))
 	 ;; if at top level, check to see if we are introducing a member
 	 ;; init list. if not, continue
 	 ((progn (c++-backward-over-syntactic-ws bod)
@@ -1215,7 +1215,7 @@ defaults to point-max."
       (setq state (parse-partial-sexp (point) limit 0)))
     state))
 
-(defun c++-at-top-level-p (&optional wrt)
+(defun c++-at-top-level-p (wrt &optional bod)
   "Return t if point is not inside a containing C++ expression, nil
 if it is embedded in an expression.  If optional WRT is supplied
 non-nil, returns nil if not at the top level with respect to an
@@ -1224,9 +1224,9 @@ enclosing class, or the depth of class nesting at point."
     (let ((indent-point (point))
 	  (case-fold-search nil)
 	  state containing-sexp paren-depth
-	  (bod (c++-point 'bod))
+	  (bod (or bod (c++-point 'bod)))
 	  foundp)
-      (c++-beginning-of-defun)
+      (goto-char bod)
       (setq state (c++-parse-state indent-point)
 	    containing-sexp (nth 1 state)
 	    paren-depth (nth 0 state))
@@ -1384,16 +1384,16 @@ point of the beginning of the C++ definition."
 		  (setq indent (+ (- indent c-indent-level)
 				  (save-excursion
 				    (forward-char 1)
-				    (cond ((c++-at-top-level-p)
+				    (cond ((c++-at-top-level-p nil bod)
 					   (- c++-block-close-brace-offset))
-					  ((c++-at-top-level-p t)
+					  ((c++-at-top-level-p t bod)
 					   c-indent-level)
 					  (t c++-block-close-brace-offset))))))
 		 ((= (following-char) ?})
 		  (setq indent (+ (- indent c-indent-level)
 				  (if (save-excursion
 					(forward-char 1)
-					(c++-at-top-level-p))
+					(c++-at-top-level-p nil bod))
 				      (- c++-block-close-brace-offset)
 				    c++-block-close-brace-offset))))
 		 ((= (following-char) ?{)
@@ -1464,7 +1464,7 @@ BOD is the beginning of the C++ definition."
 			 (or (zerop (current-column))
 			     (= (current-column) comment-column))))
 	     (current-column))
-	    ((setq inclass-depth (c++-at-top-level-p t))
+	    ((setq inclass-depth (c++-at-top-level-p t bod))
 	     ;; Line is at top level.  May be comment-only line, data
 	     ;; or function definition, or may be function argument
 	     ;; declaration or member initialization.  Indent like the
@@ -1681,7 +1681,7 @@ BOD is the beginning of the C++ definition."
 				 c-continued-brace-offset)
 				((and (= (following-char) ?\})
 				      (progn (forward-char 1)
-					     (c++-at-top-level-p)))
+					     (c++-at-top-level-p nil bod)))
 				 (- c-continued-statement-offset))
 				(t 0))))))
 	       ;; This line may start a new statement, or it could
@@ -2116,7 +2116,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.176 $"
+(defconst c++-version "$Revision: 2.177 $"
   "c++-mode version number.")
 
 (defun c++-version ()
