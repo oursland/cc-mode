@@ -27,31 +27,26 @@ where <code>$(EMACS)</code> is either <code>emacs</code> or
 will produce a lot of warnings for XEmacs 19.  They can safely be
 ignored.
 
-<h3>Setting <code>load-path</code></h3>
+<h3>Installing</h3>
 
-<p>You need to make sure that this new version of CC Mode is on your
-<code>load-path</code>, <em>before</em> any version that is
-distributed with your (X)Emacs.  Note that the CC Mode distribution
-unpacks into its own subdirectory.  You can use this test to see which
-version of CC Mode your (X)Emacs finds first:
+<p>Put the compiled files somewhere (X)Emacs will find them, i.e. in
+some path that's in the <code>load-path</code> variable.  You must
+make sure they are found before any CC Mode files which are
+distributed with (X)Emacs.  A directory has higher precendence than
+all directories after it in the <code>load-path</code> list.
 
-<pre>
-M-x locate-library RET cc-mode RET</pre>
-
-Make sure this finds the one you expect. If not, you can add this to
-your <code>.emacs</code> file:
+If you're going to be using AWK Mode, insert the following line
+into your <code>.emacs</code> or <code>init.el</code> file:
 
 <pre>
-(setq load-path (cons "/path/to/cc-mode/" load-path))</pre>
+(autoload 'awk-mode "cc-mode" nil t)</pre>
 
-The path you use should be an absolute path (starting with a slash).
-You cannot use a path beginning with "~" in the <code>load-path</code>
-variable.
+This will cause (X)Emacs to use the new AWK Mode for AWK files, rather
+than the older mode contained in the file <code>awk-mode.elc</code>.
+(But see the note in <a href="compat.php">Compatibility Issues</a>.)
 
-<p>Be sure to see the list of <a href="compat.php">compatibility
-issues</a>, for special notes about (X)Emacs versions and package
-interactions.  To test that you have things set up correctly, visit a
-C file and then type:<br>
+<p>To test that you have things set up correctly, visit a C file and
+then type:<br>
 
 <pre>
 M-x c-version RET
