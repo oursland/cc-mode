@@ -292,6 +292,10 @@ and keywords as words.
 The list is just like the one used in `font-lock-defaults': Each
 element is a cons where the car is the character to modify and the cdr
 the new syntax, as accepted by `modify-syntax-entry'."
+  ;; The $ character is not allowed in most languages (one exception
+  ;; is Java which allows it for legacy reasons) but we still classify
+  ;; it as an indentifier character since it's often used in various
+  ;; machine generated identifiers.
   t    '((?_ . "w") (?$ . "w"))
   objc (append '((?@ . "w"))
 	       (c-lang-const c-identifier-syntax-modifications)))
@@ -327,7 +331,8 @@ operator at the top level."
 This is on the form that fits inside [ ] in a regexp."
   ;; Pike note: With the backquote identifiers this would include most
   ;; operator chars too, but they are handled with other means instead.
-  t (concat c-alnum "_"))
+  t    (concat c-alnum "_$")
+  objc (concat c-alnum "_$@"))
 
 (c-lang-defconst c-symbol-key
   "Regexp matching identifiers and keywords.  Assumed to match if
