@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.379 $
-;; Last Modified:   $Date: 1997-03-10 00:59:10 $
+;; Version:         $Revision: 4.380 $
+;; Last Modified:   $Date: 1997-03-16 16:17:57 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2563,6 +2563,12 @@ Optional prefix ARG means justify paragraph as well."
 			    (progn
 			      (beginning-of-line)
 			      (skip-chars-forward " \t*" (c-point 'eol))
+			      ;; kludge alert, watch out for */, in
+			      ;; which case fill-prefix should *not*
+			      ;; be "*"!
+			      (if (and (= (following-char) ?/)
+				       (= (preceding-char) ?*))
+				  (forward-char -1))
 			      (point)))
 
 			 ;; If the comment is only one line followed
@@ -5199,7 +5205,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.379 $"
+(defconst c-version "$Revision: 4.380 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
