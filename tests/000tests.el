@@ -306,6 +306,7 @@
 	   (linenum 1)
 	   (style "TESTSTYLE")
 	   error-found-p
+	   expectedindent
 	   )
       (set-buffer testbuf)
       (goto-char (point-min))
@@ -348,8 +349,33 @@
        ((string-match "\\.pike$" filename) (pike-mode))
        (t (c-mode)))
       (c-set-style style)
+      (goto-char (point-max))
+      (while (= (forward-line -1) 0)
+	(setq expectedindent (cons (progn
+				     (back-to-indentation)
+				     (current-column))
+				   expectedindent)))
       (let ((c-progress-interval nil))
 	(indent-region (point-min) (point-max) nil))
+      (goto-char (point-min))
+      (setq linenum 1)
+      (while expectedindent
+	(let ((currentindent (progn
+			       (back-to-indentation)
+			       (current-column))))
+	  (if (= (car expectedindent) currentindent)
+	      nil
+	    (set-buffer testbuf)
+	    (goto-line linenum)
+	    (message "error found on line: %d" linenum)
+	    (message "expected indentation: %d, result: %d"
+		     (car expectedindent) currentindent)
+	    (indent-for-comment)
+	    (insert "!TBD: Regression!")
+	    (setq error-found-p t)))
+	(forward-line)
+	(setq expectedindent (cdr expectedindent)
+	      linenum (1+ linenum)))
       (and (buffer-modified-p)
 	   (setq error-found-p t))
       (if error-found-p
