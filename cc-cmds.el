@@ -54,6 +54,177 @@
 					; which looks at this.
 
 
+(defvar c-fix-backslashes t)
+
+(defun c-shift-line-indentation (shift-amt)
+  (let ((pos (- (point-max) (point)))
+	(c-macro-start c-macro-start)
+	tmp-char-inserted)
+    (if (zerop shift-amt)
+	nil
+      (when (and (c-query-and-set-macro-start)
+		 (looking-at "[ \t]*\\\\$")
+		 (save-excursion
+		   (skip-chars-backward " \t")
+		   (bolp)))
+	(insert ?x)
+	(backward-char)
+	(setq tmp-char-inserted t))
+      (unwind-protect
+	  (let ((col (current-indentation)))
+	    (delete-region (c-point 'bol) (c-point 'boi))
+	    (beginning-of-line)
+	    (indent-to (+ col shift-amt)))
+	(when tmp-char-inserted
+	  (delete-char 1))))
+    ;; If initial point was within line's indentation and we're not on
+    ;; a line with a line continuation in a macro, position after the
+    ;; indentation.  Else stay at same point in text.
+    (if (and (< (point) (c-point 'boi))
+	     (not tmp-char-inserted))
+	(back-to-indentation)
+      (if (> (- (point-max) pos) (point))
+	  (goto-char (- (point-max) pos))))))
+
+(defun c-indent-line (&optional syntax quiet)
+  ;; Indent the current line according to the syntactic context, if
+  ;; c-syntactic-indentation is non-nil.  Optional SYNTAX is the
+  ;; syntactic information for the current line.  Be silent about
+  ;; syntactic errors if the optional argument QUIET is non-nil.
+  ;; Returns the amount of indentation change (in columns).
+  (let ((c-macro-start c-macro-start)
+	(line-cont-backslash (save-excursion
+			       (end-of-line)
+			       (eq (char-before) ?\\)))
+	shift-amt)
+    (if c-syntactic-indentation
+	(setq c-parsing-error
+	      (or (let* ((c-parsing-error nil)
+			 (c-syntactic-context (or syntax
+						  c-syntactic-context
+						  (c-guess-basic-syntax)))
+			 indent)
+		    (when (and c-fix-backslashes
+			       (save-excursion
+				 (beginning-of-line)
+				 (looking-at (if line-cont-backslash
+						 "\\s *\\\\$"
+					       "\\s *$"))))
+		      ;; Delete all whitespace after point if there's
+		      ;; only whitespace on the line, so that any
+		      ;; lineup functions that does
+		      ;; back-to-indentation or similar gets the
+		      ;; current column in this case.  If we remove a
+		      ;; line continuation backslash then
+		      ;; c-backslash-region will put in a new one.
+		      (delete-region (point) (c-point 'eol)))
+		    (setq indent (c-get-syntactic-indentation
+				  c-syntactic-context))
+		    (and (not (c-echo-parsing-error quiet))
+			 c-echo-syntactic-information-p
+			 (message "syntax: %s, indent: %d"
+				  c-syntactic-context indent))
+		    (setq shift-amt (- indent (current-indentation)))
+		    (c-shift-line-indentation shift-amt)
+		    (run-hooks 'c-special-indent-hook)
+		    c-parsing-error)
+		  c-parsing-error))
+      (let ((indent 0))
+	(save-excursion
+	  (while (and (= (forward-line -1) 0)
+		      (if (looking-at "\\s *\\\\?$")
+			  t
+			(setq indent (current-indentation))
+			nil))))
+	(setq shift-amt (- indent (current-indentation)))
+	(c-shift-line-indentation shift-amt)))
+    (when (and c-fix-backslashes
+	       line-cont-backslash
+	       (c-query-and-set-macro-start))
+      ;; Realign the line continuation backslash if inside a macro.
+      (c-backslash-region (point) (point) nil t))
+    shift-amt))
+
+(defun c-newline-and-indent (&optional newline-arg)
+  ;; Inserts a newline and indents the new line.  This function fixes
+  ;; line continuation backslashes if inside a macro, and takes care
+  ;; to set the indentation before calling `indent-according-to-mode',
+  ;; so that lineup functions like `c-lineup-dont-change' works
+  ;; better.
+  (let ((c-macro-start (c-query-macro-start))
+	;; Avoid calling c-backslash-region from c-indent-line if it's
+	;; called during the newline call, which can happen due to
+	;; c-electric-continued-statement, for example.  We also don't
+	;; want any backslash alignment from indent-according-to-mode.
+	(c-fix-backslashes nil)
+	start col)
+    (save-excursion
+      (beginning-of-line)
+      (setq start (point))
+      (while (and (looking-at "[ \t]*\\\\?$")
+		  (= (forward-line -1) 0)))
+      (setq col (current-indentation)))
+    (when (and c-macro-start
+	       (or (and (eolp) (eq (char-before) ?\\))
+		   (looking-at "[ \t]*\\\\$")))
+      ;; Always break after the line continuation backslash, to
+      ;; preserve its alignment if c-auto-align-backslashes is nil.
+      ;; Must also insert a new backslash for the new line to make
+      ;; bs-col-after-end in c-backslash-region work better.
+      (end-of-line)
+      (insert ?\\)
+      (backward-char))
+    (newline newline-arg)
+    (indent-to col)
+    (when c-macro-start
+      (c-backslash-region start (point) nil t))
+    (when c-syntactic-indentation
+      ;; Reindent syntactically.  The indentation done above is not
+      ;; wasted, since c-indent-line might look at the current
+      ;; indentation.  We temporarily insert another line break, so
+      ;; that the new line will be indented as being empty.  This to
+      ;; make lineup functions which looks at the current line,
+      ;; e.g. c-lineup-macro-cont, more intuitive.
+      (insert ?\n)
+      (setq start (- (point-max) (point)))
+      (unwind-protect
+	  (progn
+	    (backward-char)
+	    (indent-according-to-mode))
+	(goto-char (- (point-max) start))
+	(delete-char -1))
+      (when c-macro-start
+	;; Must align the backslash again after reindentation.  The
+	;; c-backslash-region call above can't be optimized to ignore
+	;; this line, since it then won't align correctly with the
+	;; lines below if the first line in the macro is broken.
+	(c-backslash-region (point) (point) nil t)))))
+
+(defun c-show-syntactic-information (arg)
+  "Show syntactic information for current line.
+With universal argument, inserts the analysis as a comment on that line."
+  (interactive "P")
+  (let* ((c-parsing-error nil)
+	 (syntax (c-guess-basic-syntax)))
+    (if (not (consp arg))
+	(message "syntactic analysis: %s" syntax)
+      (indent-for-comment)
+      (insert (format "%s" syntax))
+      ))
+  (c-keep-region-active))
+
+(defun c-syntactic-information-on-region (from to)
+  "Inserts a comment with the syntactic analysis on every line in the region."
+  (interactive "*r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region from to)
+      (goto-char (point-min))
+      (while (not (eobp))
+	(c-show-syntactic-information '(0))
+	(forward-line)))))
+
+
 (defun c-calculate-state (arg prevstate)
   ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
   ;; arg is nil or zero, toggle the state. If arg is negative, turn
@@ -146,7 +317,7 @@ See also \\[c-electric-delete]."
 	  (c-in-literal))
       (funcall c-backspace-function (prefix-numeric-value arg))
     (let ((here (point)))
-      (skip-chars-backward " \t\n")
+      (c-skip-ws-backward)
       (if (/= (point) here)
 	  (delete-region (point) here)
 	(funcall c-backspace-function 1)
@@ -165,7 +336,7 @@ function in the variable `c-delete-function' is called."
 	  (c-in-literal))
       (funcall c-delete-function (prefix-numeric-value arg))
     (let ((here (point)))
-      (skip-chars-forward " \t\n")
+      (c-skip-ws-backward)
       (if (/= (point) here)
 	  (delete-region (point) here)
 	(funcall c-delete-function 1)))))
@@ -236,8 +407,7 @@ nil.
 This function does various newline cleanups based on the value of
 `c-cleanup-list'."
   (interactive "*P")
-  (c-parse-state)
-  (let* ((safepos (c-safe-position (point) c-state-cache))
+  (let* ((safepos (c-safe-position (point) (c-parse-state)))
 	 (literal (c-in-literal safepos))
 	 ;; We want to inhibit blinking the paren since this will be
 	 ;; most disruptive.  We'll blink it ourselves later on.
@@ -246,7 +416,7 @@ This function does various newline cleanups based on the value of
     (cond
      ((or literal arg)
       (self-insert-command (prefix-numeric-value arg)))
-     ((not (looking-at "[ \t]*$"))
+     ((not (looking-at "[ \t]*\\\\?$"))
       (self-insert-command (prefix-numeric-value arg))
       (if c-syntactic-indentation
 	  (indent-according-to-mode)))
@@ -265,93 +435,111 @@ This function does various newline cleanups based on the value of
 		namespace-open namespace-close
 		inexpr-class-open inexpr-class-close
 		))
-	    (insertion-point (point))
-	    delete-temp-newline
-	    (preserve-p (and (not (bobp))
-			     (eq ?\  (char-syntax (char-before)))))
-	    ;; shut this up too
-	    (c-echo-syntactic-information-p nil)
-	    (syntax (progn
-		      ;; only insert a newline if there is
-		      ;; non-whitespace behind us
-		      (if (save-excursion
-			    (skip-chars-backward " \t")
-			    (not (bolp)))
-			  (progn (newline)
-				 (setq delete-temp-newline t)))
-		      (if (eq last-command-char ?{)
-			  (setq c-state-cache (cons (point) c-state-cache)))
-		      (self-insert-command (prefix-numeric-value arg))
-		      ;; state cache doesn't change
-		      (c-guess-basic-syntax)))
-	    (newlines (and
-		       c-auto-newline
-		       (or (c-lookup-lists
-			    syms
-			    ;; Substitute inexpr-class and class-open
-			    ;; or class-close with inexpr-class-open
-			    ;; or inexpr-class-close.
-			    (if (assq 'inexpr-class syntax)
-				(cond ((assq 'class-open syntax)
-				       '((inexpr-class-open)))
-				      ((assq 'class-close syntax)
-				       '((inexpr-class-close)))
-				      (t syntax))
-			      syntax)
-			    c-hanging-braces-alist)
-			   '(ignore before after)))))
-	;; Do not try to insert newlines around a special (Pike-style)
-	;; brace list.
-	(if (and c-special-brace-lists
-		 (save-excursion
-		   (c-safe (if (= (char-before) ?{)
-			       (forward-char -1)
-			     (c-forward-sexp -1))
-			   (c-looking-at-special-brace-list))))
-	    (setq newlines nil))
-	;; If syntax is a function symbol, then call it using the
-	;; defined semantics.
-	(if (and (not (consp (cdr newlines)))
-		 (functionp (cdr newlines)))
-	    (let ((c-syntactic-context syntax))
+	     (insertion-point (point))
+	     (preserve-p (and (not (bobp))
+			      (eq ?\  (char-syntax (char-before)))))
+	     ;; shut this up too
+	     (c-echo-syntactic-information-p nil)
+	     delete-temp-newline syntax newlines)
+	;; only insert a newline if there is non-whitespace behind us
+	(when (save-excursion
+		(skip-chars-backward " \t")
+		(not (bolp)))
+	  (setq delete-temp-newline
+		(list (point-marker)))
+	  (c-newline-and-indent)
+	  (setcdr delete-temp-newline (point-marker)))
+	(unwind-protect
+	    (progn
+	      (if (eq last-command-char ?{)
+		  (setq c-state-cache (cons (point) c-state-cache)))
+	      (self-insert-command (prefix-numeric-value arg))
+	      (let ((c-syntactic-indentation-in-macros t))
+		;; Turn on syntactic macro analysis to help with auto
+		;; newlines only.
+		(setq syntax (c-guess-basic-syntax)))
 	      (setq newlines
-		    (funcall (cdr newlines) (car newlines) insertion-point))))
-	;; does a newline go before the open brace?
-	(if (memq 'before newlines)
-	    ;; we leave the newline we've put in there before,
-	    ;; but we need to re-indent the line above
-	    (let (old-ind
-		  (old-point-max (point-max))
-		  (pos (- (point-max) (point)))
-		  (here (point)))
-	      (forward-line -1)
-	      (setq old-ind (c-point 'boi))
-	      (indent-according-to-mode)
-	      (goto-char (- (point-max) pos))
-	      ;; if the buffer has changed due to the indentation, we
-	      ;; need to recalculate syntax for the current line, but
-	      ;; we won't need to update the state cache.
-	      (if (/= (point) here)
-		  (setq syntax (c-guess-basic-syntax))))
+		    (and
+		     c-auto-newline
+		     (or (c-lookup-lists
+			  syms
+			  ;; Substitute inexpr-class and class-open or
+			  ;; class-close with inexpr-class-open or
+			  ;; inexpr-class-close.
+			  (if (assq 'inexpr-class syntax)
+			      (cond ((assq 'class-open syntax)
+				     '((inexpr-class-open)))
+				    ((assq 'class-close syntax)
+				     '((inexpr-class-close)))
+				    (t syntax))
+			    syntax)
+			  c-hanging-braces-alist)
+			 '(ignore before after))))
+	      ;; Do not try to insert newlines around a special
+	      ;; (Pike-style) brace list.
+	      (if (and c-special-brace-lists
+		       (save-excursion
+			 (c-safe (if (= (char-before) ?{)
+				     (forward-char -1)
+				   (c-forward-sexp -1))
+				 (c-looking-at-special-brace-list))))
+		  (setq newlines nil))
+	      ;; If syntax is a function symbol, then call it using the
+	      ;; defined semantics.
+	      (if (and (not (consp (cdr newlines)))
+		       (functionp (cdr newlines)))
+		  (let ((c-syntactic-context syntax))
+		    (setq newlines
+			  (funcall (cdr newlines)
+				   (car newlines)
+				   insertion-point))))
+	      ;; does a newline go before the open brace?
+	      (when (memq 'before newlines)
+		;; we leave the newline we've put in there before,
+		;; but we need to re-indent the line above
+		(when delete-temp-newline
+		  (set-marker (car delete-temp-newline) nil)
+		  (set-marker (cdr delete-temp-newline) nil)
+		  (setq delete-temp-newline nil))
+		(when c-syntactic-indentation
+		  (let ((pos (- (point-max) (point)))
+			(here (point)))
+		    (forward-line -1)
+		    (indent-according-to-mode)
+		    (goto-char (- (point-max) pos))
+		    ;; if the buffer has changed due to the
+		    ;; indentation, we need to recalculate syntax for
+		    ;; the current line.
+		    (if (/= (point) here)
+			(let ((c-syntactic-indentation-in-macros t))
+			  ;; Turn on syntactic macro analysis to help
+			  ;; with auto newlines only.
+			  (setq syntax (c-guess-basic-syntax))))))))
 	  ;; must remove the newline we just stuck in (if we really did it)
-	  (and delete-temp-newline
-	       (save-excursion
-		 ;; if there is whitespace before point, then preserve
-		 ;; at least one space.
-		 (delete-indentation)
-		 (just-one-space)
-		 (if (not preserve-p)
-		     (delete-char -1))))
-	  ;; since we're hanging the brace, we need to recalculate
-	  ;; syntax.
-	  (setq syntax (c-guess-basic-syntax)))
+	  (when delete-temp-newline
+	    (save-excursion
+	      (delete-region (car delete-temp-newline)
+			     (cdr delete-temp-newline))
+	      (goto-char (car delete-temp-newline))
+	      (set-marker (car delete-temp-newline) nil)
+	      (set-marker (cdr delete-temp-newline) nil)
+	      ;; if there is whitespace before point, then preserve
+	      ;; at least one space.
+	      (just-one-space)
+	      (if (not preserve-p)
+		  (delete-char -1)))))
+	(if (not (memq 'before newlines))
+	    ;; since we're hanging the brace, we need to recalculate
+	    ;; syntax.
+	    (let ((c-syntactic-indentation-in-macros t))
+	      ;; Turn on syntactic macro analysis to help with auto
+	      ;; newlines only.
+	      (setq syntax (c-guess-basic-syntax))))
 	(when c-syntactic-indentation
 	  ;; Now adjust the line's indentation.  Don't update the state
 	  ;; cache since c-guess-basic-syntax isn't called when
 	  ;; c-syntactic-context is set.
-	  (let* ((old-ind (c-point 'boi))
-		 (old-point-max (point-max))
-		 (c-syntactic-context syntax))
+	  (let* ((c-syntactic-context syntax))
 	    (indent-according-to-mode)))
 	;; Do all appropriate clean ups
 	(let ((here (point))
@@ -365,18 +553,23 @@ This function does various newline cleanups based on the value of
 				      syntax)
 		   (progn
 		     (forward-char -1)
-		     (skip-chars-backward " \t\n")
+		     (c-skip-ws-backward)
 		     (eq (char-before) ?\{))
 		   ;; make sure matching open brace isn't in a comment
 		   (not (c-in-literal)))
 	      (delete-region (point) (1- here)))
 	  ;; clean up brace-else-brace and brace-elseif-brace
 	  (when (and c-auto-newline
-		     (eq last-command-char ?\{)
-		     (not (c-in-literal)))
+		     (eq last-command-char ?\{))
 	    (cond
 	     ((and (memq 'brace-else-brace c-cleanup-list)
-		   (re-search-backward "}[ \t\n]*else[ \t\n]*{" nil t)
+		   (re-search-backward
+		    (concat "}"
+			    "\\([ \t\n]\\|\\\\\n\\)*"
+			    "else"
+			    "\\([ \t\n]\\|\\\\\n\\)*"
+			    "{")
+		    nil t)
 		   (progn
 		     (setq mbeg (match-beginning 0)
 			   mend (match-end 0))
@@ -387,15 +580,21 @@ This function does various newline cleanups based on the value of
 		   (progn
 		     (goto-char (1- here))
 		     (setq mend (point))
-		     (skip-chars-backward " \t\n")
+		     (c-skip-ws-backward)
 		     (setq mbeg (point))
 		     (eq (char-before) ?\)))
 		   (= (c-backward-token-1 1 t) 0)
 		   (eq (char-after) ?\()
 		   (progn
 		     (setq tmp (point))
-		     (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*"
-					 nil t))
+		     (re-search-backward
+		      (concat "}"
+			      "\\([ \t\n]\\|\\\\\n\\)*"
+			      "else"
+			      "\\([ \t\n]\\|\\\\\n\\)+"
+			      "if"
+			      "\\([ \t\n]\\|\\\\\n\\)*")
+		      nil t))
 		   (eq (match-end 0) tmp))
 	      (delete-region mbeg mend)
 	      (goto-char mbeg)
@@ -404,9 +603,7 @@ This function does various newline cleanups based on the value of
 	  )
 	;; does a newline go after the brace?
 	(if (memq 'after newlines)
-	    (progn
-	      (newline)
-	      (indent-according-to-mode)))
+	    (c-newline-and-indent))
 	)))
     ;; blink the paren
     (and (eq last-command-char ?\})
@@ -431,13 +628,14 @@ If a numeric ARG is supplied, point is inside a literal, or
 `c-syntactic-indentation' is nil, indentation is inhibited."
   (interactive "*P")
   (let* ((ch (char-before))
+	 (literal (c-in-literal))
 	 (indentp (and c-syntactic-indentation
 		       (not arg)
 		       (eq last-command-char ?/)
 		       (or (and (eq ch ?/)
-				(not (c-in-literal)))
+				(not literal))
 			   (and (eq ch ?*)
-				(c-in-literal)))
+				literal))
 		       ))
 	 ;; shut this up
 	 (c-echo-syntactic-information-p nil))
@@ -457,7 +655,7 @@ If a numeric ARG is supplied, point is inside a literal, or
   ;; current line, unless this star introduces a comment-only line.
   (if (and c-syntactic-indentation
 	   (not arg)
-	   (memq (c-in-literal) '(c))
+	   (eq (c-in-literal) 'c)
 	   (eq (char-before) ?*)
 	   (save-excursion
 	     (forward-char -1)
@@ -496,7 +694,7 @@ following brace lists and semicolons following defuns."
       ;; do all cleanups and newline insertions if c-auto-newline is
       ;; turned on
       (if (or (not c-auto-newline)
-	      (not (looking-at "[ \t]*$")))
+	      (not (looking-at "[ \t]*\\\\?$")))
 	  (if c-syntactic-indentation
 	      (indent-according-to-mode))
 	;; clean ups
@@ -509,7 +707,7 @@ following brace lists and semicolons following defuns."
 			(memq 'defun-close-semi c-cleanup-list)))
 		   (progn
 		     (forward-char -1)
-		     (skip-chars-backward " \t\n")
+		     (c-skip-ws-backward)
 		     (eq (char-before) ?}))
 		   ;; make sure matching open brace isn't in a comment
 		   (not (c-in-literal lim)))
@@ -531,8 +729,7 @@ following brace lists and semicolons following defuns."
 	      (setq add-newline-p (not (eq answer 'stop)))
 	      ))
 	  (if add-newline-p
-	      (progn (newline)
-		     (indent-according-to-mode)))
+	      (c-newline-and-indent))
 	  )))))
 
 (defun c-electric-colon (arg)
@@ -557,7 +754,7 @@ value of `c-cleanup-list'."
     (cond
      ((or literal arg)
       (self-insert-command (prefix-numeric-value arg)))
-     ((not (looking-at "[ \t]*$"))
+     ((not (looking-at "[ \t]*\\\\?$"))
       (self-insert-command (prefix-numeric-value arg))
       (if c-syntactic-indentation
 	  (indent-according-to-mode)))
@@ -571,7 +768,7 @@ value of `c-cleanup-list'."
 		 (eq (char-before) ?:)
 		 (progn
 		   (forward-char -1)
-		   (skip-chars-backward " \t\n")
+		   (c-skip-ws-backward)
 		   (eq (char-before) ?:))
 		 (not (c-in-literal))
 		 (not (eq (char-after (- (point) 2)) ?:)))
@@ -580,22 +777,25 @@ value of `c-cleanup-list'."
 	      (setq is-scope-op t)))
 	(goto-char (- (point-max) pos)))
       ;; lets do some special stuff with the colon character
-      (setq syntax (c-guess-basic-syntax)
-	    ;; some language elements can only be determined by
-	    ;; checking the following line.  Lets first look for ones
-	    ;; that can be found when looking on the line with the
-	    ;; colon
-	    newlines
-	    (and c-auto-newline
-		 (or (c-lookup-lists '(case-label label access-label)
-				     syntax c-hanging-colons-alist)
-		     (c-lookup-lists '(member-init-intro inher-intro)
-				     (let ((buffer-undo-list t))
-				       (insert "\n")
-				       (unwind-protect
-					   (c-guess-basic-syntax)
-					 (delete-char -1)))
-				     c-hanging-colons-alist))))
+      (let ((c-syntactic-indentation-in-macros t))
+	;; Turn on syntactic macro analysis to help with auto newlines
+	;; only.
+	(setq syntax (c-guess-basic-syntax)
+	      ;; some language elements can only be determined by
+	      ;; checking the following line.  Lets first look for ones
+	      ;; that can be found when looking on the line with the
+	      ;; colon
+	      newlines
+	      (and c-auto-newline
+		   (or (c-lookup-lists '(case-label label access-label)
+				       syntax c-hanging-colons-alist)
+		       (c-lookup-lists '(member-init-intro inher-intro)
+				       (let ((buffer-undo-list t))
+					 (insert "\n")
+					 (unwind-protect
+					     (c-guess-basic-syntax)
+					   (delete-char -1)))
+				       c-hanging-colons-alist)))))
       ;; indent the current line if it's done syntactically.
       (if c-syntactic-indentation
 	  (let ((c-syntactic-context syntax))
@@ -610,15 +810,12 @@ value of `c-cleanup-list'."
 		 (not (bolp))))
 	  (let ((pos (- (point-max) (point))))
 	    (forward-char -1)
-	    (newline)
-	    (indent-according-to-mode)
+	    (c-newline-and-indent)
 	    (goto-char (- (point-max) pos))))
       ;; does a newline go after the colon?
       (if (and (memq 'after (cdr-safe newlines))
 	       (not is-scope-op))
-	  (progn
-	    (newline)
-	    (indent-according-to-mode)))
+	  (c-newline-and-indent))
       ))))
 
 (defun c-electric-lt-gt (arg)
@@ -649,10 +846,10 @@ Also, the line is re-indented unless a numeric ARG is supplied, the
 parenthesis is inserted inside a literal, or `c-syntactic-indentation'
 is nil."
   (interactive "*P")
-  (let (;; shut this up
+  (let ((literal (c-in-literal (c-point 'bod)))
+	;; shut this up
 	(c-echo-syntactic-information-p nil))
-    (if (or arg
-	    (c-in-literal (c-point 'bod)))
+    (if (or arg literal)
 	(self-insert-command (prefix-numeric-value arg))
       ;; do some special stuff with the character
       (let* (;; We want to inhibit blinking the paren since this will
@@ -663,7 +860,7 @@ is nil."
 	(self-insert-command (prefix-numeric-value arg))
 	(if c-syntactic-indentation
 	    (indent-according-to-mode))
-	(when (looking-at "[ \t]*$")
+	(when (looking-at "[ \t]*\\\\?$")
 	  (when c-auto-newline
 	    ;; Do all appropriate clean ups
 	    (let ((here (point))
@@ -672,8 +869,15 @@ is nil."
 	      ;; clean up brace-elseif-brace
 	      (if (and (memq 'brace-elseif-brace c-cleanup-list)
 		       (eq last-command-char ?\()
-		       (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*("
-					   nil t)
+		       (re-search-backward
+			(concat "}"
+				"\\([ \t\n]\\|\\\\\n\\)*"
+				"else"
+				"\\([ \t\n]\\|\\\\\n\\)+"
+				"if"
+				"\\([ \t\n]\\|\\\\\n\\)*"
+				"(")
+			nil t)
 		       (save-excursion
 			 (setq mbeg (match-beginning 0)
 			       mend (match-end 0))
@@ -686,7 +890,13 @@ is nil."
 		(goto-char here)
 		(if (and (memq 'brace-catch-brace c-cleanup-list)
 			 (eq last-command-char ?\()
-			 (re-search-backward "}[ \t\n]*catch[ \t\n]*(" nil t)
+			 (re-search-backward
+			  (concat "}"
+				  "\\([ \t\n]\\|\\\\\n\\)*"
+				  "catch"
+				  "\\([ \t\n]\\|\\\\\n\\)*"
+				  "(")
+			  nil t)
 			 (save-excursion
 			   (setq mbeg (match-beginning 0)
 				 mend (match-end 0))
@@ -743,11 +953,14 @@ keyword on the line, the keyword is not inserted inside a literal, and
 		  (c-point 'boi))
 	       (not (c-in-literal (c-point 'bod))))
       ;; Have to temporarily insert a space so that
-      ;; c-guess-basic-syntax recognizes the keyword.
-      (insert ?\ )
+      ;; c-guess-basic-syntax recognizes the keyword.  Follow the
+      ;; space with a nonspace to avoid messing up any whitespace
+      ;; sensitive meddling that might be done, e.g. by
+      ;; `c-backslash-region'.
+      (insert " x")
       (unwind-protect
 	  (indent-according-to-mode)
-	(delete-char -1)))))
+	(delete-char -2)))))
 
 
 ;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
@@ -873,14 +1086,13 @@ sentence motion in or near comments and multiline strings."
 		(if (c-forward-comment -1)
 		    (setq range (cons (point)
 				      (progn (c-forward-comment 1) (point))))
-		  (skip-chars-backward " \t\n\r\f")
+		  (c-skip-ws-backward)
 		  (setq range (point))
 		  (setq range
 			(if (eq (char-before) ?\")
 			    (c-safe (c-backward-sexp 1)
 				    (cons (point) range)))))
-	      ;; skip-syntax-* doesn't count \n as whitespace..
-	      (skip-chars-forward " \t\n\r\f")
+	      (c-skip-ws-forward)
 	      (if (eq (char-after) ?\")
 		  (setq range (cons (point)
 				    (progn
@@ -986,7 +1198,7 @@ sentence motion in or near comments and multiline strings."
 				      (bolp))
 			      (goto-char (cdr range)))))
 		      (when (and (eq (point) (point-min))
-				 (looking-at "[ \t]*$"))
+				 (looking-at "[ \t]*\\\\?$"))
 			;; Stop before instead of after the comment
 			;; starter if nothing follows it.
 			(widen)
@@ -1037,6 +1249,7 @@ sentence motion in or near comments and multiline strings."
 				   (not (eq last-below-line here)))
 			      (goto-char last-below-line))
 			  (throw 'done t)))
+		      (c-skip-ws-backward)
 		      (if literal-pos
 			  (c-forward-comment large-enough)
 			(when (c-forward-comment -1)
@@ -1104,7 +1317,7 @@ sentence motion in or near comments and multiline strings."
 		    (if literal-pos
 			(c-forward-comment large-enough)
 		      (if (progn
-			    (skip-chars-forward " \t\n\r\f")
+			    (c-skip-ws-forward)
 			    ;; Record position of first comment.
 			    (setq literal-pos (point))
 			    (c-forward-comment 1))
@@ -1130,13 +1343,13 @@ sentence motion in or near comments and multiline strings."
 				(/= here last))
 			   (goto-char last)
 			   (throw 'done t))
-			  ((and (eq (char-after) ?#)
-				(= (point) (c-point 'boi)))
-			   (if (= here last)
-			       (or (re-search-forward "\\(^\\|[^\\]\\)$" nil t)
-				   (goto-char (point-max)))
-			     (goto-char last))
-			   (throw 'done t))
+; 			  ((and (eq (char-after) ?#)
+; 				(= (point) (c-point 'boi)))
+; 			   (if (= here last)
+; 			       (or (re-search-forward "\\(^\\|[^\\]\\)$" nil t)
+; 				   (goto-char (point-max)))
+; 			     (goto-char last))
+; 			   (throw 'done t))
 			  ((looking-at ";\\|};?")
 			   (goto-char (match-end 0))
 			   (throw 'done t))
@@ -1241,6 +1454,10 @@ sentence motion in or near comments and multiline strings."
 			   (max (1+ col) (current-column))))))))
 	       ;; Recurse to handle value as a new spec.
 	       (c-calc-comment-indent (cdr entry)))))))
+
+;; To avoid warning about assignment without reference wrt
+;; c-add-syntax below.
+(cc-bytecomp-defvar syntactic-relpos)
 
 (defun c-comment-indent ()
   "Used by `indent-for-comment' to create and indent comments.
@@ -1471,15 +1688,21 @@ prefix argument is equivalent to -1.
   depending on the variable `indent-tabs-mode'."
 
   (interactive "p")
-  (let ((bod (c-point 'bod))
-	(indent-function
+  (let ((indent-function
 	 (if c-syntactic-indentation
 	     (symbol-function 'indent-according-to-mode)
 	   (lambda ()
-	     (let ((steps (cond ((not current-prefix-arg) 1)
+	     (let ((c-macro-start c-macro-start)
+		   (steps (cond ((not current-prefix-arg) 1)
 				((equal current-prefix-arg '(4)) -1)
 				(t arg))))
-	       (c-shift-line-indentation (* steps c-basic-offset)))
+	       (c-shift-line-indentation (* steps c-basic-offset))
+	       (when (and (save-excursion
+			    (end-of-line)
+			    (eq (char-before) ?\\))
+			  (c-query-and-set-macro-start))
+		 ;; Realign the line continuation backslash if inside a macro.
+		 (c-backslash-region (point) (point) nil t)))
 	     ))))
     (if (and c-syntactic-indentation current-prefix-arg)
 	;; If c-syntactic-indentation and got arg, always indent this
@@ -1521,7 +1744,7 @@ prefix argument is equivalent to -1.
        ;; CASE 3: if in a literal, insert a tab, but always indent the
        ;; line
        (t
-	(if (c-in-literal bod)
+	(if (c-in-literal)
 	    (funcall c-insert-tab-function))
 	(funcall indent-function)
 	)))))
@@ -1592,15 +1815,25 @@ syntactically."
 and END inclusive.  Be silent about syntactic errors if the optional
 argument QUIET is non-nil."
   (save-excursion
+    (goto-char end)
+    (skip-chars-backward " \t\n\r")
+    (setq end (point))
     (goto-char start)
     ;; Advance to first nonblank line.
-    (skip-chars-forward " \t\n")
+    (beginning-of-line)
+    (skip-chars-forward " \t\n\r")
+    (setq start (point))
     (beginning-of-line)
     (setq c-parsing-error
 	  (or (let ((endmark (copy-marker end))
 		    (c-parsing-error nil)
 		    ;; shut up any echo msgs on indiv lines
-		    (c-echo-syntactic-information-p nil))
+		    (c-echo-syntactic-information-p nil)
+		    (in-macro (and c-auto-align-backslashes
+				   (save-excursion (c-beginning-of-macro))
+				   start))
+		    (c-fix-backslashes nil)
+		    syntax)
 		(unwind-protect
 		    (progn
 		      (c-progress-init start end 'c-indent-region)
@@ -1609,12 +1842,27 @@ argument QUIET is non-nil."
 				  (< (point) endmark))
 			;; update progress
 			(c-progress-update)
-			;; skip blank lines
+			;; skip empty lines
 			(skip-chars-forward " \t\n")
 			(beginning-of-line)
-			;; indent the current line
-			(c-indent-line nil t)
-			(forward-line)))
+			;; Get syntax and indent.
+			(setq syntax (c-guess-basic-syntax))
+			(if (and c-auto-align-backslashes
+				 (assq 'cpp-macro syntax))
+			    ;; Record macro start.
+			    (setq in-macro (point)))
+			(c-indent-line syntax t)
+			(if (and in-macro
+				 (progn (end-of-line)
+					(not (eq (char-before) ?\\))))
+			    (progn
+			      ;; Fixup macro backslashes.
+			      (forward-line)
+			      (c-backslash-region in-macro (point) nil)
+			      (setq in-macro nil))
+			  (forward-line)))
+		      (if in-macro
+			  (c-backslash-region in-macro (c-point 'bopl) nil t)))
 		  (set-marker endmark nil)
 		  (c-progress-fini 'c-indent-region))
 		(c-echo-parsing-error quiet))
@@ -1746,71 +1994,189 @@ indent the current line."
 
 ;;; This page handles insertion and removal of backslashes for C macros.
 
-(defun c-backslash-region (from to delete-flag)
+(defun c-backslash-region (from to delete-flag &optional line-mode)
   "Insert, align, or delete end-of-line backslashes on the lines in the region.
 With no argument, inserts backslashes and aligns existing backslashes.
 With an argument, deletes the backslashes.
 
 This function does not modify blank lines at the start of the region.
-If the region ends at the start of a line, it always deletes the
-backslash (if any) at the end of the previous line.
+If the region ends at the start of a line and the macro doesn't
+continue below it, the backslash (if any) at the end of the previous
+line is deleted.
 
 You can put the region around an entire macro definition and use this
 command to conveniently insert and align the necessary backslashes."
   (interactive "*r\nP")
-  (save-excursion
-    (goto-char from)
-    (let ((column c-backslash-column)
-          (endmark (make-marker)))
-      (move-marker endmark to)
-      ;; Compute the smallest column number past the ends of all the lines.
-      (if (not delete-flag)
-          (while (< (point) to)
-            (end-of-line)
-            (if (eq (char-before) ?\\)
-                (progn (forward-char -1)
-                       (skip-chars-backward " \t")))
-            (setq column (max column (1+ (current-column))))
-            (forward-line 1)))
-      ;; Adjust upward to a tab column, if that doesn't push past the margin.
-      (if (> (% column tab-width) 0)
-          (let ((adjusted (* (/ (+ column tab-width -1) tab-width) tab-width)))
-            (if (< adjusted (window-width))
-                (setq column adjusted))))
-      ;; Don't modify blank lines at start of region.
-      (goto-char from)
-      (while (and (< (point) endmark) (eolp))
-        (forward-line 1))
-      ;; Add or remove backslashes on all the lines.
-      (while (< (point) endmark)
-	(if (and (not delete-flag)
- 		 ;; Un-backslashify the last line
- 		 ;; if the region ends right at the start of the next line.
- 		 (save-excursion
- 		   (forward-line 1)
- 		   (< (point) endmark)))
-            (c-append-backslash column)
-          (c-delete-backslash))
-        (forward-line 1))
-      (move-marker endmark nil))))
+  (let ((endmark (make-marker))
+	;; Keep the backslash trimming functions from changing the
+	;; whitespace around point, since in this case it's only the
+	;; position of point that tells the indentation of the line.
+	(point-pos (if (save-excursion
+			 (skip-chars-backward " \t")
+			 (and (bolp) (looking-at "[ \t]*\\\\?$")))
+		       (point-marker)
+		     (point-min)))
+	column longest-line-col bs-col-after-end)
+    (save-excursion
+      (goto-char to)
+      (if (and (not line-mode) (bobp))
+	  ;; Nothing to do if to is at bob, since we should back up
+	  ;; and there's no line to back up to.
+	  nil
+	(when (and (not line-mode) (bolp))
+	  ;; Do not back up the to line if line-mode is set, to make
+	  ;; e.g. c-newline-and-indent consistent regardless whether
+	  ;; the (newline) call leaves point at bol or not.
+	  (backward-char)
+	  (setq to (point)))
+	(if delete-flag
+	    (progn
+	      (set-marker endmark (point))
+	      (goto-char from)
+	      (c-delete-backslashes-forward endmark point-pos))
+	  ;; Set bs-col-after-end to the column of any backslash
+	  ;; following the region, or nil if there is none.
+	  (setq bs-col-after-end
+		(and (progn (end-of-line)
+			    (eq (char-before) ?\\))
+		     (= (forward-line 1) 0)
+		     (progn (end-of-line)
+			    (eq (char-before) ?\\))
+		     (1- (current-column))))
+	  (when line-mode
+	    ;; Back up the to line if line-mode is set, since the line
+	    ;; after the newly inserted line break should not be
+	    ;; touched in c-newline-and-indent.
+	    (setq to (max from (c-point 'eopl)))
+	    (unless bs-col-after-end
+	      ;; Set bs-col-after-end to non-nil in any case, since we
+	      ;; do not want to delete the backslash at the last line.
+	      (setq bs-col-after-end t)))
+	  (if (and line-mode
+		   (not c-auto-align-backslashes))
+	      (goto-char from)
+	    ;; Compute the smallest column number past the ends of all
+	    ;; the lines.
+	    (setq longest-line-col 0)
+	    (goto-char to)
+	    (if bs-col-after-end
+		;; Include one more line in the max column
+		;; calculation, since the to line will be backslashed
+		;; too.
+		(forward-line 1))
+	    (end-of-line)
+	    (while (and (>= (point) from)
+			(progn
+			  (if (eq (char-before) ?\\)
+			      (forward-char -1))
+			  (skip-chars-backward " \t")
+			  (setq longest-line-col (max longest-line-col
+						      (1+ (current-column))))
+			  (beginning-of-line)
+			  (not (bobp))))
+	      (backward-char))
+	    ;; Adjust upward to a tab column.
+	    (if (> (% longest-line-col tab-width) 0)
+		(setq longest-line-col (* (/ (+ longest-line-col tab-width -1)
+					     tab-width)
+					  tab-width)))
+	    ;; Try to align with surrounding backslashes.
+	    (goto-char from)
+	    (beginning-of-line)
+	    (if (and (not (bobp))
+		     (progn (backward-char)
+			    (eq (char-before) ?\\)))
+		(progn
+		  (setq column (1- (current-column)))
+		  (if (numberp bs-col-after-end)
+		      ;; Both a preceding and a following backslash.
+		      ;; Choose the greatest of them.
+		      (setq column (max column bs-col-after-end)))
+		  (goto-char from))
+	      ;; No preceding backslash.  Try to align with one
+	      ;; following the region.  Disregard the backslash at the
+	      ;; to line since it's likely to be bogus (e.g. when
+	      ;; called from c-newline-and-indent).
+	      (if (numberp bs-col-after-end)
+		  (setq column bs-col-after-end))
+	      ;; Don't modify blank lines at start of region.
+	      (goto-char from)
+	      (while (and (< (point) to) (bolp) (eolp))
+		(forward-line 1)))
+	    ;; Impose minimum limit only if we shouldn't align with
+	    ;; surrounding backslashes.
+	    (setq column (max (or column c-backslash-column)
+			      longest-line-col))
+	    ;; Always impose maximum limit.
+	    (setq column (min column c-backslash-max-column)))
+	  (if bs-col-after-end
+	      ;; Add backslashes on all lines if the macro continues
+	      ;; after the to line.
+	      (progn
+		(set-marker endmark to)
+		(c-append-backslashes-forward endmark column point-pos))
+	    ;; Add backslashes on all lines except the last, and
+	    ;; remove any on the last line.
+	    (if (save-excursion
+		  (goto-char to)
+		  (and (= (forward-line -1) 0)
+		       (set-marker endmark (point))))
+		(progn
+		  (c-append-backslashes-forward endmark column point-pos)
+		  ;; The function above leaves point on the line
+		  ;; following endmark.
+		  (set-marker endmark (point)))
+	      (set-marker endmark to))
+	    (c-delete-backslashes-forward endmark point-pos)))))
+    (set-marker endmark nil)
+    (if (markerp point-pos)
+	(set-marker point-pos nil))))
 
-(defun c-append-backslash (column)
-  (end-of-line)
-  (if (eq (char-before) ?\\)
-      (progn (forward-char -1)
-             (delete-horizontal-space)
-             (indent-to column))
-    (indent-to column)
-    (insert "\\")))
+(defun c-append-backslashes-forward (to-mark column point-pos)
+  (if column
+      (while
+	  (and (<= (point) to-mark)
+	       (progn
+		 (end-of-line)
+		 (unless (eq (char-before) ?\\)
+		   (insert ?\\))
+		 (backward-char)
+		 (delete-region
+		  (point)
+		  (progn (skip-chars-backward " \t" (if (>= (point) point-pos)
+							point-pos))
+			 (point)))
+		 (indent-to column (if (= (point) point-pos) 0 1))
+		 (= (forward-line 1) 0))))
+    ;; Make sure there are backslashes with at least one space in
+    ;; front of them.
+    (while
+	(and (<= (point) to-mark)
+	     (progn
+	       (end-of-line)
+	       (if (eq (char-before) ?\\)
+		   (progn
+		     (backward-char)
+		     (unless (memq (char-before) '(?\  ?\t))
+		       (insert ?\ )))
+		 (if (memq (char-before) '(?\  ?\t))
+		     (insert ?\\)
+		   (insert " \\")))
+	       (= (forward-line 1) 0))))))
 
-(defun c-delete-backslash ()
-  (end-of-line)
-  (or (bolp)
-      (progn
- 	(forward-char -1)
- 	(if (looking-at "\\\\")
- 	    (delete-region (1+ (point))
- 			   (progn (skip-chars-backward " \t") (point)))))))
+(defun c-delete-backslashes-forward (to-mark point-pos)
+  (while
+      (and (<= (point) to-mark)
+	   (progn
+	     (end-of-line)
+	     (if (eq (char-before) ?\\)
+		 (delete-region
+		  (point)
+		  (progn (backward-char)
+			 (skip-chars-backward " \t" (if (>= (point) point-pos)
+							point-pos))
+			 (point))))
+	     (= (forward-line 1) 0)))))
 
 
 
@@ -1945,7 +2311,7 @@ command to conveniently insert and align the necessary backslashes."
 		       (<= (1- (cdr lit-limits)) (match-end 0)))
 		  (and (< here (point))
 		       (or (not (match-beginning 0))
-			   (looking-at "[ \t]*$"))))
+			   (looking-at "[ \t]*\\\\?$"))))
 	      ;; The comment is either one line or the next line
 	      ;; contains just the comment ender.  Also, if point is
 	      ;; on the comment opener line and the following line is
@@ -2426,38 +2792,42 @@ Optional prefix ARG means justify paragraph as well."
 	 fill-prefix))
     (c-mask-comment nil t 'do-auto-fill)))
 
-(defun c-indent-new-comment-line (&optional soft)
-  "Break line at point and indent, continuing comment if within one.
+(defun c-indent-new-comment-line (&optional soft allow-auto-fill)
+  "Break line at point and indent, continuing comment or macro if within one.
 If inside a comment and `comment-multi-line' is non-nil, the
 indentation and line prefix are preserved (see the
 `c-comment-prefix-regexp' and `c-block-comment-prefix' variables for
 details).  If inside a single line comment and `comment-multi-line' is
 nil, a new comment of the same type is started on the next line and
-indented as appropriate for comments.
+indented as appropriate for comments.  If inside a macro, a line
+continuation backslash is inserted and aligned as appropriate, and the
+new line is indented according to `c-syntactic-indentation'.
 
 If a fill prefix is specified, it overrides all the above."
+  ;; allow-auto-fill is used from c-context-line-break to allow auto
+  ;; filling to break the line more than once.  Since this function is
+  ;; used from auto-fill itself, that's normally disabled to avoid
+  ;; unnecessary recursion.
   (interactive)
   (let ((fill-prefix fill-prefix)
 	(do-line-break
 	 (lambda ()
-	   (delete-region (progn (skip-chars-backward " \t") (point))
-			  (progn (skip-chars-forward " \t") (point)))
-	   (if soft (insert-and-inherit ?\n) (newline 1))))
+	   (delete-horizontal-space)
+	   (if soft
+	       (insert-and-inherit ?\n)
+	     (newline (if allow-auto-fill nil 1)))))
 	;; Already know the literal type and limits when called from
 	;; c-context-line-break.
 	(c-lit-limits c-lit-limits)
-	(c-lit-type c-lit-type))
+	(c-lit-type c-lit-type)
+	(c-macro-start c-macro-start))
     (when (not (eq c-auto-fill-prefix t))
       ;; Called from do-auto-fill.
       (unless c-lit-limits
 	(setq c-lit-limits (c-literal-limits nil nil t)))
       (unless c-lit-type
 	(setq c-lit-type (c-literal-type c-lit-limits)))
-      (if (memq (cond ((eq c-lit-type 'pound)
-		       ;; Come to think about it, "pound" is a bit
-		       ;; of a misnomer, so call it "cpp" instead
-		       ;; in user interaction.
-		       'cpp)
+      (if (memq (cond ((c-query-and-set-macro-start) 'cpp)
 		      ((null c-lit-type) 'code)
 		      (t c-lit-type))
 		c-ignore-auto-fill)
@@ -2489,6 +2859,7 @@ If a fill prefix is specified, it overrides all the above."
 	     (unless c-lit-type
 	       (setq c-lit-type (c-literal-type c-lit-limits)))
 	     (memq c-lit-type '(c c++)))
+	   ;; Some sort of comment.
 	   (if (or comment-multi-line
 		   (save-excursion
 		     (goto-char (car c-lit-limits))
@@ -2554,13 +2925,24 @@ If a fill prefix is specified, it overrides all the above."
 	       (indent-to col)
 	       (insert-and-inherit comment-start)
 	       (indent-for-comment))))
+	  ((c-query-and-set-macro-start)
+	   ;; In a macro.
+	   (unless (looking-at "[ \t]*\\\\$")
+	     ;; Do not clobber the alignment of the line continuation
+	     ;; slash; c-backslash-region might look at it.
+	     (delete-horizontal-space))
+	   ;; Got an asymmetry here: In normal code this command
+	   ;; doesn't indent the next line syntactically, and otoh a
+	   ;; normal syntactically indenting newline doesn't continue
+	   ;; the macro.
+	   (c-newline-and-indent (if allow-auto-fill nil 1)))
 	  (t
 	   ;; Somewhere else in the code.
 	   (let ((col (save-excursion
-			(while (progn (back-to-indentation)
-				      (and (looking-at "^\\s *$")
-					   (= (forward-line -1) 0))))
-			(current-column))))
+			(beginning-of-line)
+			(while (and (looking-at "[ \t]*\\\\?$")
+				    (= (forward-line -1) 0)))
+			(current-indentation))))
 	     (funcall do-line-break)
 	     (indent-to col))))))
 
@@ -2585,7 +2967,8 @@ If a fill prefix is specified, it overrides all the above."
 When point is outside a comment, insert a newline and indent according
 to the syntactic context, unless `c-syntactic-indentation' is nil,
 which causes the new line to be indented as the previous non-empty
-line instead.
+line instead.  If point is inside a macro, a line continuation
+backslash is inserted and aligned appropriately.
 
 When point is inside a comment, continue it with the appropriate
 comment prefix (see the `c-comment-prefix-regexp' and
@@ -2593,29 +2976,31 @@ comment prefix (see the `c-comment-prefix-regexp' and
 C++-style line comment doesn't count as inside the comment, though."
   (interactive "*")
   (let* ((c-lit-limits (c-literal-limits nil nil t))
-	 (c-lit-type (c-literal-type c-lit-limits)))
+	 (c-lit-type (c-literal-type c-lit-limits))
+	 (c-macro-start c-macro-start))
     (if (or (eq c-lit-type 'c)
 	    (and (eq c-lit-type 'c++)
 		 (< (point)
 		    (1- (cdr (setq c-lit-limits
-				   (c-collect-line-comments c-lit-limits)))))))
+				   (c-collect-line-comments c-lit-limits))))))
+	    (and (or (not (eolp))
+		     (eq (char-before) ?\\))
+		 (c-query-and-set-macro-start)
+		 (< c-macro-start (point))))
 	(let ((comment-multi-line t)
 	      (fill-prefix nil))
-	  (c-indent-new-comment-line))
-      (delete-region (point) (progn (skip-chars-backward " \t") (point)))
+	  (c-indent-new-comment-line nil t))
+      (delete-horizontal-space)
       (newline)
       ;; c-indent-line may look at the current indentation, so let's
       ;; start out with the same indentation as the previous line.
-      ;; That also fixes the indentation when c-syntactic-indentation
-      ;; is nil.
       (let ((col (save-excursion
 		   (forward-line -1)
-		   (while (and (looking-at "^\\s *$")
+		   (while (and (looking-at "[ \t]*\\\\?$")
 			       (= (forward-line -1) 0)))
 		   (current-indentation))))
 	(indent-to col))
-      (if c-syntactic-indentation
-	  (indent-according-to-mode)))))
+      (indent-according-to-mode))))
 
 
 (cc-provide 'cc-cmds)
