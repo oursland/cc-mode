@@ -341,7 +341,7 @@ See `c-toggle-auto-state' and `c-toggle-hungry-state' for details."
 ;; Electric keys
 
 (defun c-electric-backspace (arg)
-  "Deletes preceding character or whitespace.
+  "Delete the preceding character or whitespace.
 If `c-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
 \"/ah\" string on the mode line, then all preceding whitespace is
 consumed.  If however a prefix argument is supplied, or
@@ -354,15 +354,21 @@ See also \\[c-electric-delete]."
 	  arg
 	  (c-in-literal))
       (funcall c-backspace-function (prefix-numeric-value arg))
-    (let ((here (point)))
-      (c-skip-ws-backward)
-      (if (/= (point) here)
-	  (delete-region (point) here)
-	(funcall c-backspace-function 1)
-	))))
+    (c-hungry-backspace)))
+
+(defun c-hungry-backspace ()
+  "Delete the preceding character or all preceding whitespace
+back to the previous non-whitespace character.
+See also \\[c-hungry-delete-forward]."
+  (interactive)
+  (let ((here (point)))
+    (c-skip-ws-backward)
+    (if (/= (point) here)
+	(delete-region (point) here)
+      (funcall c-backspace-function 1))))
 
 (defun c-electric-delete-forward (arg)
-  "Deletes following character or whitespace.
+  "Delete the following character or whitespace.
 If `c-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
 \"/ah\" string on the mode line, then all following whitespace is
 consumed.  If however a prefix argument is supplied, or
@@ -373,11 +379,18 @@ function in the variable `c-delete-function' is called."
 	  arg
 	  (c-in-literal))
       (funcall c-delete-function (prefix-numeric-value arg))
-    (let ((here (point)))
-      (c-skip-ws-forward)
-      (if (/= (point) here)
-	  (delete-region (point) here)
-	(funcall c-delete-function 1)))))
+    (c-hungry-delete-forward)))
+
+(defun c-hungry-delete-forward ()
+  "Delete the following character or all following whitespace
+up to the next non-whitespace character.
+See also \\[c-hungry-backspace]."
+  (interactive)
+  (let ((here (point)))
+    (c-skip-ws-forward)
+    (if (/= (point) here)
+	(delete-region (point) here)
+      (funcall c-delete-function 1))))
 
 (defun c-electric-delete (arg)
   "Deletes preceding or following character or whitespace.

@@ -1235,6 +1235,25 @@ or @key{Delete}.  In XEmacs 19 and Emacs prior to 21 that means that
 it's up to you to fix them.  Emacs 21 automatically binds them as
 appropriate to @key{DEL} and @key{C-d}.
 
+@sp 1
+
+@findex c-hungry-backspace
+@findex hungry-backspace (c-)
+@findex c-hungry-delete-forward
+@findex hungry-delete-forward (c-)
+
+Another way to use hungry deletion is to bind
+@code{c-hungry-backspace} and @code{c-hungry-delete-forward} directly
+to keys, and not use the mode toggling.  For example @key{C-c C-d} and
+@key{C-c DEL} to match plain @key{C-d} and @key{DEL},
+
+@example
+(add-hook
+ 'c-mode-common-hook
+ (lambda ()
+   (define-key c-mode-base-map [?\C-c ?\d]   'c-hungry-backspace)
+   (define-key c-mode-base-map [?\C-c ?\C-d] 'c-hungry-delete-forward)))
+@end example
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Text Filling and Line Breaking, Commands, Minor Modes, Top
