@@ -271,6 +271,15 @@
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
 
+(defun c-mode-menu (modestr)
+  "Return a menu spec suitable for `easy-menu-define' that is exactly
+like the C mode menu except that the menu bar item name is MODESTR
+instead of \"C\".
+
+This function is provided for compatibility only; derived modes should
+preferably use the `c-mode-menu' language constant directly."
+  (cons modestr (c-lang-const c-mode-menu c)))
+
 (defun c-after-change (beg end len)
   ;; Function put on `after-change-functions' to adjust various
   ;; caches.  Prefer speed to finesse here, since there will be an order
