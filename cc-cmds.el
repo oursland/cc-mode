@@ -274,9 +274,6 @@ This function does various newline cleanups based on the value of
 	;; Do not try to insert newlines around a special (Pike-style)
 	;; brace list.
 	(if (and c-special-brace-lists
-		 (c-intersect-lists '(brace-list-open brace-list-close
-				      brace-list-intro brace-entry-open)
-				    syntax)
 		 (save-excursion
 		   (c-safe (if (= (char-before) ?{)
 			       (forward-char -1)
