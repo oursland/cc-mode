@@ -36,9 +36,6 @@
 
 ;;; Code:
 
-(defconst c-version "5.30"
-  "CC Mode version number.")
-
 (eval-when-compile
   (let ((load-path
 	 (if (and (boundp 'byte-compile-dest-file)
@@ -73,7 +70,6 @@
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
-(cc-bytecomp-defvar c-buffer-is-cc-mode) ; In cc-vars.el
 (cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
 (cc-bytecomp-defun region-active-p)	; XEmacs
 (cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
@@ -85,9 +81,17 @@
 (cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
 (cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
 (cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
+(cc-bytecomp-defun string-to-syntax)	; Emacs 21
 
 
-;; Defined here since it's dynamically bound at compile time.
+;;; Variables also used at compile time.
+
+(defconst c-version "5.30"
+  "CC Mode version number.")
+
+(defconst c-version-sym (intern c-version))
+;; A little more compact and faster in comparisons.
+
 (defvar c-buffer-is-cc-mode nil
   "Non-nil for all buffers with a major mode derived from CC Mode.
 Otherwise, this variable is nil.  I.e. this variable is non-nil for
@@ -826,12 +830,476 @@ appended."
 	(if adorn
 	    (concat "\\(" re "\\)"
 		    "\\("
-		    (get 'c-nonsymbol-key c-buffer-is-cc-mode)
+		    (c-get-lang-constant 'c-nonsymbol-key)
 		    "\\|$\\)")
 	  re))
     "\\<\\>"				; Matches nothing.
     ))
 (put 'c-make-keywords-re 'lisp-indent-function 1)
+
+
+;;; System for handling language dependent constants.
+
+;; This is used to set various language dependent data in a flexible
+;; way: Language constants can be built from the values of other
+;; language constants, also those for other languages.  They can also
+;; process the values of other language constants uniformly across all
+;; the languages.  E.g. one language constant can list all the type
+;; keywords in each language, and another can build a regexp for each
+;; language from those lists without code duplication.  Since the
+;; values of language constants are evaluated on demand, it's possible
+;; to refer to the values of constants defined later in the file, or
+;; in another file.  See cc-langs.el for a lot of examples.
+;;
+;; Language constants are evaluated at compile time, and when the
+;; compiled files are used in the normal way only the constants
+;; actually used in the code are loaded.  The source definitions for
+;; the constants are loaded on demand when `c-lang-const' is used
+;; interactively, so other packages and user code may use them also
+;; when CC Mode is compiled.
+
+(defun c-add-language (mode base-mode)
+  "Declare a new language in the language dependent variable system.
+This is intended to be used by modes that inherit CC Mode to add new
+languages.  It should be used at the top level before any calls to
+`c-lang-defconst'.  MODE is the mode name symbol for the new language,
+and BASE-MODE is the mode name symbol for the language in CC Mode that
+is to be the template for the new mode.
+
+The exact effect of BASE-MODE is to make all language constants that
+haven't got a setting in the new language fall back to their values in
+BASE-MODE.  BASE-MODE may be nil to avoid this, in which case all
+language constants will take on their catch-all values, which in
+practice means some sort of greatest common subset of all the CC Mode
+languages."
+  (unless (string-match "\\`\\(.*-\\)mode\\'" (symbol-name mode))
+    (error "The mode name symbol `%s' must end with \"-mode\"" mode))
+  (put mode 'c-mode-prefix (match-string 1 (symbol-name mode)))
+  (when base-mode
+    (unless (get base-mode 'c-mode-prefix)
+      (error "Unknown base mode `%s'" base-mode))
+    (put mode 'c-fallback-mode base-mode)))
+
+(defvar c-lang-constants (make-vector 151 0))
+;; Obarray containing the symbols for all the language constants that
+;; have been defined by `c-lang-defconst'.  The value cells of these
+;; symbols hold the evaluated values for the constant as alists where
+;; the car is the mode name symbol and the cdr is the value in that
+;; mode.  The property lists hold the source values and other
+;; miscellaneous data.  Might also contain miscellaneous other
+;; symbols, but those doesn't have any variable bindings.
+
+(defvar c-lang-const-expansion nil)
+(defvar c-langs-are-parametric nil)
+
+(defsubst c-get-current-file ()
+  ;; Return the base name of the current file.
+  (let ((file (cond
+	       (load-in-progress
+		;; Being loaded.
+		load-file-name)
+	       ((and (boundp 'byte-compile-dest-file)
+		     (stringp byte-compile-dest-file))
+		;; Being compiled.
+		byte-compile-dest-file)
+	       (t
+		;; Being evaluated interactively.
+		(buffer-file-name)))))
+    (and file
+	 (file-name-sans-extension
+	  (file-name-nondirectory file)))))
+
+(defmacro c-lang-defconst (name &rest args)
+  "Set the language specific values of the language constant NAME.
+The second argument can be an optional docstring.  The rest of the
+arguments are one or more repetitions of LANG VAL where LANG specifies
+the language(s) that VAL applies to.  LANG is the name of the
+language, i.e. the mode name without the \"-mode\" suffix, or a list
+of such language names, or `t' for all languages.  VAL is a form to
+evaluate to get the value.  Neither NAME, LANG nor VAL are evaluated
+directly - they should not be quoted.
+
+When VAL is evaluated for some language, that language is temporarily
+made current so that `c-lang-const' without an explicit language can
+be used inside VAL to refer to the value of a language constant in the
+same language.  That is particularly useful if LANG is `t'.
+
+VAL is not evaluated right away but rather when the value is requested
+with `c-lang-const'.  Thus it's possible to use `c-lang-const' inside
+VAL to refer to language constants that haven't been defined yet.
+However, if the definition of a language constant is in another file
+then that file must be loaded \(at compile time) before it's safe to
+reference the constant.
+
+The assignments in ARGS are processed in sequence like `setq', so
+\(c-lang-const NAME) may be used inside a VAL to refer to the last
+assigned value to this language constant, or a value that it has
+gotten in another earlier loaded file.
+
+To work well with repeated loads and interactive reevaluation, only
+one `c-lang-defconst' for each NAME is permitted per file.  If there
+already is one it will be completely replaced; the value in the
+earlier definition will not affect `c-lang-const' on the same
+constant.  A file is identified by its base name.
+
+This macro does not do any hidden buffer changes."
+
+  (let* ((sym (intern (symbol-name name) c-lang-constants))
+	 ;; Make `c-lang-const' expand to a straightforward call to
+	 ;; `c-get-lang-constant' in `cl-macroexpand-all' below.
+	 ;;
+	 ;; (The default behavior, i.e. to expand to a call inside
+	 ;; `eval-when-compile' should be equivalent, since that macro
+	 ;; should only expand to its content if it's used inside a
+	 ;; form that's already evaluated at compile time.  It's
+	 ;; however necessary to use our cover macro
+	 ;; `cc-eval-when-compile' due to bugs in `eval-when-compile',
+	 ;; and it expands to a bulkier form that in this case only is
+	 ;; unnecessary garbage that we don't want to store in the
+	 ;; language constant source values.)
+	 (c-lang-const-expansion 'call)
+	 (c-langs-are-parametric t)
+	 bindings
+	 pre-files)
+
+    (or (symbolp name)
+	(error "Not a symbol: %s" name))
+
+    (when (stringp (car-safe args))
+      ;; The docstring is hardly used anywhere since there's no normal
+      ;; symbol to attach it to.  It's primarily for getting the right
+      ;; format in the source.
+      (put sym 'variable-documentation (car args))
+      (setq args (cdr args)))
+
+    (or args
+	(error "No assignments in `c-lang-defconst'"))
+
+    ;; Rework ARGS to an association list to make it easier to handle.
+    ;; It's reversed at the same time to make it easier to implement
+    ;; the demand-driven (i.e. reversed) evaluation in `c-lang-const'.
+    (while args
+      (let ((assigned-mode
+	     (cond ((eq (car args) t) t)
+		   ((symbolp (car args))
+		    (list (intern (concat (symbol-name (car args))
+					  "-mode"))))
+		   ((listp (car args))
+		    (mapcar (lambda (lang)
+			      (or (symbolp lang)
+				  (error "Not a list of symbols: %s"
+					 (car args)))
+			      (intern (concat (symbol-name lang)
+					      "-mode")))
+			    (car args)))
+		   (t (error "Not a symbol or a list of symbols: %s"
+			     (car args)))))
+	    val)
+
+	(or (cdr args)
+	    (error "No value for %s" (car args)))
+	(setq args (cdr args)
+	      val (car args))
+
+	;; Emacs has a weird bug where it seems to fail to read
+	;; backquote lists from byte compiled files correctly (,@
+	;; forms, to be specific), so make sure the bindings in the
+	;; expansion below doesn't contain any backquote stuff.
+	;; (XEmacs handles it correctly and doesn't need this for that
+	;; reason, but we also use this expansion to register
+	;; dependencies on the `c-lang-const's in VAL.)
+	(setq val (cl-macroexpand-all val))
+
+	(setq bindings (cons (cons assigned-mode val) bindings)
+	      args (cdr args))))
+
+    ;; Compile in the other files that have provided source
+    ;; definitions for this symbol, to make sure the order in the
+    ;; `source' property is correct even when files are loaded out of
+    ;; order.
+    (setq pre-files (nreverse
+		     ;; Reverse to get the right load order.
+		     (mapcar 'car (get sym 'source))))
+
+    `(eval-and-compile
+       (c-define-lang-constant ',name ',bindings
+			       ,@(and pre-files `(',pre-files))))))
+
+(put 'c-lang-defconst 'lisp-indent-function 1)
+(eval-after-load "edebug"
+  '(def-edebug-spec c-lang-defconst
+     (&define name [&optional stringp] [&rest sexp def-form])))
+
+(defun c-define-lang-constant (name bindings &optional pre-files)
+  ;; Used by `c-lang-defconst'.  This function does not do any hidden
+  ;; buffer changes.
+
+  (let* ((sym (intern (symbol-name name) c-lang-constants))
+	 (source (get sym 'source))
+	 (file (intern
+		(or (c-get-current-file)
+		    (error "`c-lang-defconst' must be used in a file"))))
+	 (elem (assq file source)))
+
+    ;;(when (cdr-safe elem)
+    ;;  (message "Language constant %s redefined in %S" name file))
+
+    ;; Note that the order in the source alist is relevant.  Like how
+    ;; `c-lang-defconst' reverses the bindings, this reverses the
+    ;; order between files so that the last to evaluate comes first.
+    (unless elem
+      (while pre-files
+	(unless (assq (car pre-files) source)
+	  (setq source (cons (list (car pre-files)) source)))
+	(setq pre-files (cdr pre-files)))
+      (put sym 'source (cons (setq elem (list file)) source)))
+
+    (setcdr elem bindings)
+
+    ;; Bind the symbol as a variable, or clear any earlier evaluated
+    ;; value it has.
+    (set sym nil)
+
+    ;; Clear the evaluated values that depend on this source.
+    (let ((agenda (get sym 'dependents))
+	  (visited (make-vector 101 0))
+	  ptr)
+      (while agenda
+	(setq sym (car agenda)
+	      agenda (cdr agenda))
+	(intern (symbol-name sym) visited)
+	(set sym nil)
+	(setq ptr (get sym 'dependents))
+	(while ptr
+	  (setq sym (car ptr)
+		ptr (cdr ptr))
+	  (unless (intern-soft (symbol-name sym) visited)
+	    (setq agenda (cons sym agenda))))))
+
+    name))
+
+(defmacro c-lang-const (name &optional lang)
+  "Get the mode specific value of the language constant NAME in language LANG.
+LANG is the name of the language, i.e. the mode name without the
+\"-mode\" suffix.  If used inside `c-lang-defconst' or
+`c-lang-defvar', LANG may be left out to refer to the current
+language.  NAME and LANG are not evaluated so they should not be
+quoted.
+
+This macro does not do any hidden buffer changes."
+
+  (or (symbolp name)
+      (error "Not a symbol: %s" name))
+  (or (symbolp lang)
+      (error "Not a symbol: %s" lang))
+
+  (let ((sym (intern (symbol-name name) c-lang-constants))
+	mode source-files args)
+
+    (if lang
+	(progn
+	  (setq mode (intern (concat (symbol-name lang) "-mode")))
+	  (unless (get mode 'c-mode-prefix)
+	    (error
+	     "Unknown language %S since it got no `c-mode-prefix' property"
+	     (symbol-name lang) mode)))
+      (if c-buffer-is-cc-mode
+	  (setq lang c-buffer-is-cc-mode)
+	(or c-langs-are-parametric
+	    (error
+	     "`c-lang-const' requires a literal language in this context"))))
+
+    (if (eq c-lang-const-expansion 'immediate)
+	;; No need to find out the source file(s) when we evaluate
+	;; immediately since all the info is already there in the
+	;; `source' property.
+	`',(c-get-lang-constant name nil mode)
+
+      (let ((file (c-get-current-file)))
+	(if file (setq file (intern file)))
+	;; Get the source file(s) that must be loaded to get the value
+	;; of the constant.  If the symbol isn't defined yet we assume
+	;; that its definition will come later in this file, and thus
+	;; are no file dependencies needed.
+	(setq source-files (nreverse
+			    ;; Reverse to get the right load order.
+			    (mapcan (lambda (elem)
+				      (if (eq file (car elem))
+					  nil ; Exclude our own file.
+					(list (car elem))))
+				    (get sym 'source)))))
+
+      ;; Spend some effort to make a compact call to
+      ;; `c-get-lang-constant' since it will be compiled in.
+      (setq args (and mode `(',mode)))
+      (if (or source-files args)
+	  (setq args (cons (and source-files `',source-files)
+			   args)))
+
+      (if (or (eq c-lang-const-expansion 'call)
+	      load-in-progress
+	      (not (boundp 'byte-compile-dest-file))
+	      (not (stringp byte-compile-dest-file)))
+	  ;; Either a straight call is requested in the context, or
+	  ;; we're not being byte compiled so the compile time stuff
+	  ;; below is unnecessary.
+	  `(c-get-lang-constant ',name ,@args)
+
+	;; Being compiled.  If the loading and compiling version is
+	;; the same we use a value that is evaluated at compile time,
+	;; otherwise it's evaluated at runtime.
+	`(if (eq c-version-sym ',c-version-sym)
+	     (cc-eval-when-compile
+	       (c-get-lang-constant ',name ,@args))
+	   (c-get-lang-constant ',name ,@args))))))
+
+(defvar c-lang-constants-under-evaluation nil)
+
+(defun c-get-lang-constant (name &optional source-files mode)
+  ;; Used by `c-lang-const'.  This function does not do any hidden
+  ;; buffer changes.
+
+  (or mode
+      (setq mode c-buffer-is-cc-mode)
+      (error "No current language"))
+
+  (let* ((sym (intern (symbol-name name) c-lang-constants))
+	 (source (get sym 'source))
+	 elem
+	 (eval-in-sym (and c-lang-constants-under-evaluation
+			   (caar c-lang-constants-under-evaluation))))
+
+    ;; Record the dependencies between this symbol and the one we're
+    ;; being evaluated in.
+    (when eval-in-sym
+      (or (memq eval-in-sym (get sym 'dependents))
+	  (put sym 'dependents (cons eval-in-sym (get sym 'dependents)))))
+
+    ;; Make sure the source files have entries on the `source'
+    ;; property so that loading will take place when necessary.
+    (while source-files
+      (unless (assq (car source-files) source)
+	(put sym 'source
+	     (setq source (cons (list (car source-files)) source)))
+	;; Might pull in more definitions which affect the value.  The
+	;; clearing of dependent values etc is done when the
+	;; definition is encountered during the load; this is just to
+	;; jump past the check for a cached value below.
+	(set sym nil))
+      (setq source-files (cdr source-files)))
+
+    (if (and (boundp sym)
+	     (setq elem (assq mode (symbol-value sym))))
+	(cdr elem)
+
+      ;; Check if an evaluation of this symbol is already underway.
+      ;; In that case we just continue with the "assignment" before
+      ;; the one currently being evaluated, thereby creating the
+      ;; illusion if a `setq'-like sequence of assignments.
+      (let* ((c-buffer-is-cc-mode mode)
+	     (source-pos
+	      (or (assq sym c-lang-constants-under-evaluation)
+		  (cons sym (vector source nil))))
+	     ;; Append `c-lang-constants-under-evaluation' even if an
+	     ;; earlier entry is found.  It's only necessary to get
+	     ;; the recording of dependencies above correct.
+	     (c-lang-constants-under-evaluation
+	      (cons source-pos c-lang-constants-under-evaluation))
+	     (fallback (get mode 'c-fallback-mode))
+	     value)
+
+	(if (if fallback
+		(let ((backup-source-pos (copy-sequence (cdr source-pos))))
+		  (and
+		   ;; First try the original mode but don't accept an
+		   ;; entry matching all languages since the fallback
+		   ;; mode might have an explicit entry before that.
+		   (eq (setq value (c-find-assignment-for-mode
+				    (cdr source-pos) mode nil name))
+		       c-lang-constants)
+		   ;; Try again with the fallback mode from the
+		   ;; original position.  Note that
+		   ;; `c-buffer-is-cc-mode' still is the real mode if
+		   ;; language parameterization takes place.
+		   (eq (setq value (c-find-assignment-for-mode
+				    (setcdr source-pos backup-source-pos)
+				    fallback t name))
+		       c-lang-constants)))
+	      ;; A simple lookup with no fallback mode.
+	      (eq (setq value (c-find-assignment-for-mode
+			       (cdr source-pos) mode t name))
+		  c-lang-constants))
+	    (error
+	     "`%s' got no (prior) value in %s (might be a cyclic reference)"
+	     name mode))
+
+	(setq value (eval value))
+	(set sym (cons (cons mode value) (symbol-value sym)))
+	value))))
+
+(defun c-find-assignment-for-mode (source-pos mode match-any-lang name)
+  ;; Find the first assignment entry that applies to MODE at or after
+  ;; SOURCE-POS.  If MATCH-ANY-LANG is non-nil, entries with `t' as
+  ;; the language list are considered to match, otherwise they don't.
+  ;; On return SOURCE-POS is updated to point to the next assignment
+  ;; after the returned one.  If no assignment is found,
+  ;; `c-lang-constants' is returned as a magic value.
+  ;;
+  ;; SOURCE-POS is a vector that points out a specific assignment in
+  ;; the double alist that's used in the `source' property.  The first
+  ;; element is the position in the top alist which is indexed with
+  ;; the source files, and the second element is the position in the
+  ;; nested bindings alist.
+  ;;
+  ;; NAME is only used for error messages.
+
+  (catch 'found
+    (let ((file-entry (elt source-pos 0))
+	  (assignment-entry (elt source-pos 1))
+	  assignment)
+
+      (while (if assignment-entry
+		 t
+	       ;; Handled the last assignment from one file, begin on the
+	       ;; next.  Due to the check in `c-lang-defconst', we know
+	       ;; there's at least one.
+	       (when file-entry
+
+		 (unless (aset source-pos 1
+			       (setq assignment-entry (cdar file-entry)))
+		   ;; The file containing the source value has not
+		   ;; been loaded.
+		   (let ((file (symbol-name (caar file-entry)))
+			 (c-lang-constants-under-evaluation nil))
+		     ;;(message (concat "Loading %s to get the source "
+		     ;;			"value for language constant %s")
+		     ;;		file name)
+		     (load file))
+
+		   (unless (setq assignment-entry (cdar file-entry))
+		     ;; The load didn't fill in the source for the
+		     ;; constant as expected.  The situation is
+		     ;; probably that a derived mode was written for
+		     ;; and compiled with another version of CC Mode,
+		     ;; and the requested constant isn't in the
+		     ;; currently loaded one.  Put in a dummy
+		     ;; assignment that matches no language.
+		     (setcdr (car file-entry)
+			     (setq assignment-entry (list (list nil))))))
+
+		 (aset source-pos 0 (setq file-entry (cdr file-entry)))
+		 t))
+
+	(setq assignment (car assignment-entry))
+	(aset source-pos 1
+	      (setq assignment-entry (cdr assignment-entry)))
+
+	(when (if (listp (car assignment))
+		  (memq mode (car assignment))
+		match-any-lang)
+	  (throw 'found (cdr assignment))))
+
+      c-lang-constants)))
 
 
 (cc-provide 'cc-defs)
