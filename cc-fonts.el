@@ -1119,14 +1119,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		 got-prefix
 		 ;; True if the declarator is surrounded by a parenthesis pair.
 		 got-parens
-		 ;; True if the first match of `c-type-decl-prefix-key' is
-		 ;; before any open parenthesis that surrounds the declarator.
-		 got-prefix-before-parens
 		 ;; True if there is an identifier in the declarator.
 		 got-identifier
 		 ;; True if there's a non-close-paren match of
 		 ;; `c-type-decl-suffix-key'.
 		 got-suffix
+		 ;; True if there's a prefix or suffix match outside the
+		 ;; outermost paren pair that surrounds the declarator.
+		 got-prefix-before-parens
+		 got-suffix-after-parens
 		 ;; The earlier values of `at-type', `type-start' and
 		 ;; `type-end' if we've shifted the type backwards.
 		 identifier-type identifier-start identifier-end)
@@ -1173,10 +1174,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			      (setq paren-depth (1- paren-depth))
 			      (forward-char)
 			      t)
-			  (if (save-match-data (looking-at "\\s\("))
-			      (and (c-safe (c-forward-sexp 1) t)
-				   (setq got-suffix t))
-			    (goto-char (match-end 1))
+			  (when (if (save-match-data (looking-at "\\s\("))
+				    (c-safe (c-forward-sexp 1) t)
+				  (goto-char (match-end 1))
+				  t)
+			    (unless got-suffix-after-parens
+			      (setq got-suffix-after-parens (= paren-depth 0)))
 			    (setq got-suffix t)))
 		      ;; No suffix matched.  We might have matched the
 		      ;; identifier as a type and the open paren of a function
@@ -1249,8 +1252,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			  (throw 'at-decl-or-cast t)))
 
 		      (when (and got-parens
-				 (not got-prefix)
-				 (not got-suffix)
+				 (not got-prefix-before-parens)
+				 (not got-suffix-after-parens)
 				 (or prev-at-type maybe-typeless))
 			;; Got a declaration of the form "foo bar (gnu);"
 			;; where we've recognized "bar" as the type and "gnu"
@@ -1444,17 +1447,19 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			;; function call.
 			(throw 'at-decl-or-cast t))
 
-		      (when (and got-suffix
-				 (eq at-type 'found))
+		      (when (and got-suffix-after-parens
+				 (eq at-type 'found)
+				 (not (eq arglist-type 'other)))
 			;; Got something like "a (*b) (c);".  It could be an
-			;; odd expression where the result from a function is
-			;; called as a function or it could be a declaration.
-			;; Treat it as a declaration if "a" has been used as a
-			;; type somewhere else (if it's a known type we won't
-			;; get here).
+			;; odd expression or it could be a declaration.  Treat
+			;; it as a declaration if "a" has been used as a type
+			;; somewhere else (if it's a known type we won't get
+			;; here).
 			(throw 'at-decl-or-cast t)))
 
-		  (when (and arglist-type got-prefix)
+		  (when (and arglist-type
+			     (or got-prefix
+				 (and got-parens got-suffix)))
 		    ;; Got a type followed by an abstract declarator.
 		    (throw 'at-decl-or-cast t)))
 
