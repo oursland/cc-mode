@@ -1,116 +1,39 @@
-Title: CC Mode Changes 4.322 to 4.353
+Title: CC Mode Changes 4.353 to 4.379
 Author: bwarsaw@python.org
 
-<h1>CC Mode Changes 4.322 to 4.353</h1>
+<h1>CC Mode Changes 4.353 to 4.379</h1>
 
-The <a href="index.html">current release</a> is version 4.353.  Below
-is the list of changes since version 4.322.  See also the list of
-changes
-<a href="cc-details-4.322.html">between version 4.282 and 4.322</a>.
-
-<UL>
-    <LI>Better control over the <em>buffer localness</em> of the
-	indentation variables.  See <a href="#buflocal">below</a> for
-	details.
-    <LI>New variable <tt>c-indentation-style</tt> which holds the
-	current style name of the buffer.
-    <LI>Menus are not installed when running in
-	<a href="http://www.infodock.com/">Infodock</a>.
-    <LI>Improvements to the alignment of C block comments.  The
-	variable <tt>c-block-comments-indent-p</tt> has been removed.
-	See <a href="#comments">below</a> for details.
-    <LI>New indentation style <em>python</em>.  The blessed standard
-	for writing <a href="http://www.python.org/">Python</a>
-	extension modules in C.
-    <LI>New <tt>c-cleanup-list</tt> option: <em>brace-elseif-brace</em>
-    <LI>The usual set of bug fixes.
-</UL>
-
-
-<h2><a name="buflocal">Buffer Localness of Indentation Variables</a></h2>
-
-In previous version of <tt>cc-mode</tt> the variables that control
-indentation were always buffer local.  This was applauded by those who
-edited files in many different styles, but reviled by those who
-usually edit files of only one style.
-
-<p>
-You can now control whether these variables are buffer local or not,
-by setting the variable <tt>c-style-variables-are-local-p</tt>.  This
-variable only has effect at the time <tt>cc-mode.el</tt> is loaded.
-If this variable is non-nil, then all indentation style related
-variables will be made buffer local.  Otherwise, they will remain
-global, so that users can actually use <tt>setq</tt> in their
-top-level <tt>.emacs</tt> file without having to use a mode hook.
-
-<p>
-Note that once the variables are made buffer local, they cannot be
-made global again; they will remain buffer local for the rest of the
-current Emacs session.  The list of variables that are buffer
-localizable are:
+The <a href="index.html">current release</a> is version 4.379.  Below
+is the list of changes since version 4.353.  See also the list of
+<a href="cc-details-4.353.html">previous changes</a>.
 
 <ul>
-    <li>c-offsets-alist
-    <li>c-basic-offset
-    <li>c-file-style
-    <li>c-file-offsets
-    <li>c-comment-only-line-offset
-    <li>c-cleanup-list
-    <li>c-hanging-braces-alist
-    <li>c-hanging-colons-alist
-    <li>c-hanging-comment-ender-p
-    <li>c-backslash-column
-    <li>c-label-minimum-indentation
-    <li>c-special-indent-hook
-    <li>c-indentation-style
+    <li>The syntactic symbol <tt>ansi-funcdecl-cont</tt> is
+	changed to <tt>func-decl-cont</tt>.  <b>You may need to update
+	your personal styles.</b>
+	
+    <li>Slight change to the relative buffer position for 'c
+	and 'c++ syntactic symbols.
+
+    <li>In <tt>java-mode</tt>, <tt>defun-prompt-regexp</tt> is
+	no longer set to <tt>c-Java-defun-prompt-regexp</tt> by
+	default.  Doing so caused occasional infinite loop and
+	performance problems in both Emacs 19.34 and XEmacs 19.14.
+
+    <li>Better recognition of Java <em>implements</em>,
+	<em>extends</em>, and <em>throws</em> clauses.
+
+    <li>New variable <tt>c-hanging-comment-starter-p</tt>.
+
+    <li>Integration of <tt>java-mode</tt> and <tt>imenu</tt>.
+
+    <li><tt>c-set-style</tt> bound to <tt>C-c .</tt>
+
+    <li><tt>c-set-offset</tt> does completion on function
+	names.
+
+    <li>Changes to <em>ellemtel</em> style given by Colin
+	Rafferty &lt;craffert@spspme.ml.com&gt;
+
+    <li>The usual assortment of bug fixes.
 </ul>
-
-<p>
-For backwards compatibility, the default value of
-<tt>c-style-variables-are-local-p</tt> is non-nil, meaning the
-variables are buffer local by default.  This may change in the
-future.
-
-
-<h2><a name="comments">C Block Comments</a></h2>
-
-I have improved the <tt>c-lineup-C-comments</tt> function, which is
-responsible for lining up subsequent lines in C block comments.  It
-should now do the Right Thing for most comment styles that use some
-combination of stars at the beginning of comment lines (including zero
-stars! <tt>:-)</tt>.  For example, the following styles are aligned
-correctly by default:
-
-<pre>
-int main()
-{
-    /*
-     *
-     */
-
-    /*
-    **
-    **
-    */
-
-    /**
-     **
-     **
-     **/
-
-    /***
-     ***
-     ***
-     ***
-     ***/
-
-    /**
-    ***
-    ***
-    **/
-}
-</pre>
-
-<p>
-For this reason, the variable <tt>c-block-comments-indent-p</tt> has
-been removed.
