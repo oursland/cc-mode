@@ -1262,22 +1262,28 @@ brace."
 			      (cond
 			       ;; Check for operator =
 			       ((looking-at "operator\\>") nil)
-			       ;; Check for `<opchar>= (Pike)
-			       ((eq (char-after) ?`) nil)
+			       ;; Check for `<opchar>= in Pike.
+			       ((and (c-major-mode-is 'pike-mode)
+				     (or (eq (char-after) ?`)
+					 ;; Special case for Pikes `[]=, since
+					 ;; '[' is not in the punctuation class.
+					 (and (eq (char-after) ?\[)
+					      (eq (char-before) ?`))))
+				nil)
 			       ((looking-at "\\s.") 'maybe)
 			       ;; make sure we're not in a C++ template
 			       ;; argument assignment
-			       ((save-excursion
-				  (let ((here (point))
-					(pos< (progn
-						(skip-chars-backward "^<")
-						(point))))
-				    (and (c-major-mode-is 'c++-mode)
-					 (eq (char-before) ?<)
-					 (not (c-crosses-statement-barrier-p
-					       pos< here))
-					 (not (c-in-literal))
-					 )))
+			       ((and (c-major-mode-is 'c++-mode)
+				     (save-excursion
+				       (let ((here (point))
+					     (pos< (progn
+						     (skip-chars-backward "^<")
+						     (point))))
+					 (and (eq (char-before) ?<)
+					      (not (c-crosses-statement-barrier-p
+						    pos< here))
+					      (not (c-in-literal))
+					      ))))
 				nil)
 			       (t t))))))
 	       (if (and (eq braceassignp 'dontknow)
