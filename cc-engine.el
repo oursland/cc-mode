@@ -79,7 +79,7 @@
 		;; characters appearing at front of identifier
 		(save-excursion
 		  (c-backward-syntactic-ws lim)
-		  (skip-chars-backward "-+!*&:.~ \t\n")
+		  (skip-chars-backward "-+!*&:.~@ \t\n")
 		  (if (eq (char-before) ?\()
 		      (setq last-begin (point))))
 		(goto-char last-begin)
@@ -186,8 +186,9 @@
     (goto-char last-begin)
     ;; We always want to skip over the non-whitespace modifier
     ;; characters that can start a statement.
-    (skip-chars-backward "-+!*&~ \t\n" (c-point 'boi))
-    (skip-chars-forward " \t\n")))
+    (let ((lim (point)))
+      (skip-chars-backward "-+!*&~@ \t\n" (c-point 'boi))
+      (skip-chars-forward " \t\n" lim))))
 
 (defun c-end-of-statement-1 ()
   (condition-case nil
