@@ -152,7 +152,7 @@ Key bindings:
 \\{c:-mode-map}"
   (interactive)
   (kill-all-local-variables)
-  (c-initialize-cc-mode)
+  (c-initialize-cc-mode t)
   (set-syntax-table c:-mode-syntax-table)
   (setq major-mode 'c:-mode
 	mode-name "C:"
