@@ -1748,11 +1748,6 @@ foreign function interface.  For more information, see
 @code{java} --- The style for editing Java code.  Note that this style is
 automatically installed when you enter @code{java-mode}.
 
-@cindex JDK style
-@item
-@code{jdk} --- A style derived from @code{java} style, which conforms
-more closely to Sun's JDK source coding style.
-
 @cindex User style
 @cindex .emacs file
 @vindex c-default-style
