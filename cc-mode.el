@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.203 $
-;; Last Modified:   $Date: 1992-10-02 22:31:14 $
+;; Version:         $Revision: 2.204 $
+;; Last Modified:   $Date: 1992-11-03 20:01:50 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-10-02 22:31:14 $|$Revision: 2.203 $|
+;; |$Date: 1992-11-03 20:01:50 $|$Revision: 2.204 $|
 
 ;;; Code:
 
@@ -376,7 +376,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.203 $
+  "Major mode for editing C++ code.  $Revision: 2.204 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -583,7 +583,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.203 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.204 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1226,13 +1226,14 @@ characters to escape are defined in the variable c++-untame-characters."
 (defun c++-match-paren ()
   "Jumps to the paren matching the one under point, if there is one."
   (interactive)
-  (cond ((looking-at "[\(\[{]")
-	 (forward-sexp 1)
-	 (backward-char))
-	((looking-at "[])}]")
-	 (forward-char)
-	 (backward-sexp 1))
-	(t (message "Could not find matching paren."))))
+  (let ((parse-sexp-ignore-comments t))
+    (cond ((looking-at "[\(\[{]")
+	   (forward-sexp 1)
+	   (backward-char))
+	  ((looking-at "[])}]")
+	   (forward-char)
+	   (backward-sexp 1))
+	  (t (message "Could not find matching paren.")))))
 
 
 ;; ======================================================================
@@ -2200,7 +2201,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.203 $"
+(defconst c++-version "$Revision: 2.204 $"
   "c++-mode version number.")
 
 (defun c++-version ()
