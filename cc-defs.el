@@ -37,18 +37,19 @@
 	   load-path)))
     (require 'cc-bytecomp)))
 
-;; cc-mode-19.el contains compatibility macros that should be compiled
-;; in if needed.
-(if (or (not (fboundp 'functionp))
-	(not (condition-case nil
-		 (progn (eval '(char-before)) t)
-	       (error nil)))
-	(not (condition-case nil
-		 (progn (eval '(char-after)) t)
-	       (error nil)))
-	(not (fboundp 'when))
-	(not (fboundp 'unless)))
-  (cc-require 'cc-mode-19))
+;; cc-mode-19.el contains compatibility macros that should be used if
+;; needed.
+(eval-and-compile
+  (if (or (not (fboundp 'functionp))
+	  (not (condition-case nil
+		   (progn (eval '(char-before)) t)
+		 (error nil)))
+	  (not (condition-case nil
+		   (progn (eval '(char-after)) t)
+		 (error nil)))
+	  (not (fboundp 'when))
+	  (not (fboundp 'unless)))
+      (cc-load 'cc-mode-19)))
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
