@@ -34,48 +34,6 @@
   ;; try to increase performance by using this macro
   (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
 
-
-(defsubst c-point (position)
-  ;; Returns the value of point at certain commonly referenced POSITIONs.
-  ;; POSITION can be one of the following symbols:
-  ;; 
-  ;; bol  -- beginning of line
-  ;; eol  -- end of line
-  ;; bod  -- beginning of defun
-  ;; boi  -- back to indentation
-  ;; ionl -- indentation of next line
-  ;; iopl -- indentation of previous line
-  ;; bonl -- beginning of next line
-  ;; bopl -- beginning of previous line
-  ;; 
-  ;; This function does not modify point or mark.
-  (let ((here (point)))
-    (cond
-     ((eq position 'bol)  (beginning-of-line))
-     ((eq position 'eol)  (end-of-line))
-     ((eq position 'bod)
-      (beginning-of-defun)
-      ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at
-      ;; the open brace.
-      (and defun-prompt-regexp
-	   (looking-at defun-prompt-regexp)
-	   (goto-char (match-end 0)))
-      )
-     ((eq position 'boi)  (back-to-indentation))
-     ((eq position 'bonl) (forward-line 1))
-     ((eq position 'bopl) (forward-line -1))
-     ((eq position 'iopl)
-      (forward-line -1)
-      (back-to-indentation))
-     ((eq position 'ionl)
-      (forward-line 1)
-      (back-to-indentation))
-     (t (error "unknown buffer position requested: %s" position))
-     )
-    (prog1
-	(point)
-      (goto-char here))))
-
 (defsubst c-auto-newline ()
   ;; if auto-newline feature is turned on, insert a newline character
   ;; and return t, otherwise return nil.
