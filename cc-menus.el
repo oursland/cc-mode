@@ -106,9 +106,9 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
        "[^()]*"                               ; no parentheses before
        "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
        "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
-       "[ \t]*("			      ; see above, BUT
-       "[ \t]*\\([^ \t(*][^)]*\\)?)"          ; the arg list must not start
-       "[ \t]*[^ \t;(]"                       ; with an asterisk or parentheses
+       "[ \t\n]*("			      ; see above, BUT
+       "[ \t\n]*\\([^ \t\n(*][^)]*\\)?)"      ; the arg list must not start
+       "[ \t\n]*[^ \t\n;(]"                   ; with an asterisk or parentheses
        ) 1)
     ;; Special case for definitions using phony prototype macros like:
     ;; `int main _PROTO( (int argc,char *argv[]) )'.
