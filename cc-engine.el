@@ -3646,6 +3646,7 @@ comment at the start of cc-engine.el for more info."
        ;; optimize that like the completely-inside-literal above.
        ((save-excursion
 	  (and (= (forward-line 1) 0)
+	       (bolp)			; forward-line has funny behavior at eob.
 	       (>= (point) cfd-limit)
 	       (progn (backward-char)
 		      (eq (char-before) ?\\))))
