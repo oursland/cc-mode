@@ -21,7 +21,7 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(setq cc-path-to-the-custom-library
+(defconst cc-path-to-the-custom-library
       ;; In Emacs 19.34, change the following line to the directory
       ;; that contains Per Abrahamsen's new Custom library, which you
       ;; must download first.  You can get Custom from:
