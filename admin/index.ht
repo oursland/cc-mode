@@ -15,8 +15,7 @@ Stjernholm.
 5.25.  A list of <a href="changes-525.html">recent changes</a> are
 given in detail, as well as some
 <a href="installation.html">installation notes</a> and Emacs/XEmacs
-<a href="compat.html">compatibility details</a>.  You can also download the
-<a href="ChangeLog.gz">detailed ChangeLog file</a> (gzip'd ~66Kb).
+<a href="compat.html">compatibility details</a>.
 
 <p>You can <a href="cc-mode-html/Top.html">browse the
 documentation on-line</a>.  There is also an
