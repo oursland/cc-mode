@@ -1,3 +1,8 @@
+Wed Feb 04 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-mode, c++-mode, objc-mode, java-mode): set
+ 	imenu-case-fold-search to nil.
+
 Tue Feb 03 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-langs.el (c-postprocess-file-styles): If a file style or file
