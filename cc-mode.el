@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.307 $
-;; Last Modified:   $Date: 1993-04-01 22:55:04 $
+;; Version:         $Revision: 2.308 $
+;; Last Modified:   $Date: 1993-04-01 23:08:37 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-04-01 22:55:04 $|$Revision: 2.307 $|
+;; |$Date: 1993-04-01 23:08:37 $|$Revision: 2.308 $|
 
 ;;; Code:
 
@@ -325,7 +325,9 @@ style 1:       style 2:       style 3:       style 4:
 ")
 (defvar c++-cleanup-list nil
   "*List of various C++ constructs to \"clean up\".
-These cleanups only take place when auto-newline minor mode is on.
+These cleanups only take place when the auto-newline feature is turned
+on, as evidenced by the `/a' or `/ah' appearing next to the mode name.
+
 Current legal values are:
    brace-else-brace   -- clean up \"} else {\" constructs by placing entire
                          construct on a single line.  This cleanup only
@@ -338,7 +340,8 @@ Current legal values are:
                          on the same line as the closing brace.")
 (defvar c++-hanging-braces t
   "*Controls the insertion of newlines before open (left) braces.
-This variable only has effect when auto-newline is on.  If nil, open
+This variable only has effect when auto-newline is on, as evidenced by
+the `/a' or `/ah' appearing next to the mode name.  If nil, open
 braces do not hang (i.e. a newline is inserted before all open
 braces).  If t, all open braces hang -- no newline is inserted before
 open braces.  If not nil or t, newlines are only inserted before
@@ -351,7 +354,7 @@ Legal values are:
      'after  -- newlines inserted only after colon
      'before -- newlines inserted only before colon")
 (defvar c++-auto-hungry-initial-state 'none
-  "*Initial state of auto/hungry mode when buffer is first visited.
+  "*Initial state of auto/hungry features when buffer is first visited.
 Legal values are:
      'none         -- no auto-newline and no hungry-delete-key.
      'auto-only    -- auto-newline, but no hungry-delete-key.
@@ -360,11 +363,11 @@ Legal values are:
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
 (defvar c++-auto-hungry-toggle t
-  "*Enable/disable toggling of auto/hungry states.
+  "*Enable/disable toggling of auto/hungry features.
 Legal values are:
      'none         -- auto-newline and hungry-delete-key cannot be enabled.
-     'auto-only    -- only auto-newline state can be toggled.
-     'hungry-only  -- only hungry-delete-key state can be toggled.
+     'auto-only    -- only auto-newline feature can be toggled.
+     'hungry-only  -- only hungry-delete-key feature can be toggled.
      'auto-hungry  -- both auto-newline and hungry-delete-key can be toggled.
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
@@ -429,7 +432,7 @@ this variable to nil defeats backscan limits.")
 ;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
 ;; 
 (defvar c++-hungry-delete-key nil
-  "Internal state of hungry delete key.")
+  "Internal state of hungry delete key feature.")
 (defvar c++-auto-newline nil
   "Internal state of auto newline feature.")
 
@@ -455,7 +458,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.307 $
+  "Major mode for editing C++ code.  $Revision: 2.308 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -464,7 +467,7 @@ from a c++-mode buffer.
 3. Tab at left margin indents for C++ code,
 4. Both C++ and C style block comments are recognized,
 5. Paragraphs are separated by blank lines only,
-6. Hungry delete and auto newline behaviors are optional.
+6. Hungry delete key and auto newline features are optional.
 
 IMPORTANT NOTE: You may notice that some characters (by default, only
 single quote) will get escaped with a backslash when typed in a
@@ -512,9 +515,9 @@ from their c-mode cousins.
     c++-empty-arglist-indent spaces, otherwise, they will indent to
     just under previous line's argument indentation.
  c++-auto-hungry-initial-state
-    Initial state of auto/hungry mode when a C++ buffer is first visited.
+    Initial state of auto/hungry feature when a C++ buffer is first visited.
  c++-auto-hungry-toggle
-    Enable/disable toggling of auto/hungry states.
+    Enable/disable toggling of auto/hungry features.
  c++-backscan-limit
     Limit in characters for looking back while skipping syntactic
     whitespace. This variable is only used in an un-patched emacs to
@@ -525,7 +528,7 @@ from their c-mode cousins.
     not affect braces which close top-level constructs (e.g. functions).
  c++-cleanup-list
     A list of construct \"clean ups\" which c++-mode will perform when
-    auto-newline mode is on.  Current legal values are:
+    auto-newline feature is on.  Current legal values are:
     brace-else-brace, empty-defun-braces, defun-close-semi.
  c++-comment-only-line-offset
     Extra indentation for a line containing only a C or C++ style
@@ -546,8 +549,8 @@ from their c-mode cousins.
  c++-friend-offset
     Offset of C++ friend class declarations relative to member declarations.
  c++-hanging-braces
-    Controls open brace hanging behavior when using auto-newline. nil
-    says no braces hang, t says all open braces hang. non-nil-or-t
+    Controls open brace hanging behavior when using auto-newline feature.
+    nil says no braces hang, t says all open braces hang. non-nil-or-t
     means top-level open braces don't hang, all others do.
  c++-hanging-member-init-colon
     Defines how colons which introduce member initialization lists are
@@ -588,32 +591,34 @@ from their c-mode cousins.
     default setting to workaround a nasty emacs bug, unless you are
     running a patched emacs.
 
-Auto-newlining is no longer an all or nothing proposition. To be
-specific I don't believe it is possible to implement a perfect
+Auto-newlining is no longer an all or nothing proposition. In my
+opinion, I don't believe it is possible to implement a perfect
 auto-newline algorithm. Sometimes you want it and sometimes you don't.
-So now auto-newline (and its companion, hungry-delete) can be toggled
-on and off on the fly.  Hungry-delete is the optional behavior of the
-delete key so that, when enabled, hitting the delete key once consumes
-all preceeding whitespace, unless point is within a literal (defined
-as a C or C++ comment, or string).  Inside literals, and with
-hungry-delete disabled, the delete key just calls the function in
-c++-delete-function.
+So now auto-newline (and its companion feature, hungry-delete-key) can
+be toggled on and off on the fly.  Hungry-delete-key is the optional
+behavior of the delete key so that, when enabled, hitting the delete
+key once consumes all preceeding whitespace, unless point is within a
+literal (defined as a C or C++ comment, or string).  Inside literals,
+and with hungry-delete-key disabled, the delete key just calls the
+function in variable c++-delete-function.
 
-Behavior is controlled by c++-auto-hungry-initial-state and
-c++-auto-hungry-toggle.  Legal values for both variables are:
+Selection and toggling of these features is controlled by the
+variables c++-auto-hungry-initial-state and c++-auto-hungry-toggle.
+Legal values for both variables are:
 
-   'none (or nil)      -- no auto-newline or hungry-delete.
-   'auto-only          -- function affects only auto-newline state.
-   'hungry-only        -- function affects only hungry-delete state.
-   'auto-hungry (or t) -- function affects both states.
+   'none (or nil)      -- no auto-newline or hungry-delete-key.
+   'auto-only          -- function affects only auto-newline feature.
+   'hungry-only        -- function affects only hungry-delete-key feature.
+   'auto-hungry (or t) -- function affects both features.
 
 Thus if c++-auto-hungry-initial-state is 'hungry-only, then only
-hungry state is turned on when the buffer is first visited.  If
-c++-auto-hungry-toggle is 'auto-hungry, and both auto-newline and
-hungry-delete state are on, then hitting \"\\[c++-toggle-auto-hungry-state]\"
-will toggle both states.  Hitting \"\\[c++-toggle-hungry-state]\" will
-always toggle hungry-delete state and hitting \"\\[c++-toggle-auto-state]\"
-will always toggle auto-newline state, regardless of the value of
+hungry-delete-key feature is turned on when the buffer is first
+visited.  If c++-auto-hungry-toggle is 'auto-hungry, and both
+auto-newline and hungry-delete-key features are on, then hitting
+\"\\[c++-toggle-auto-hungry-state]\" will toggle both features.
+Hitting \"\\[c++-toggle-hungry-state]\" will always toggle
+hungry-delete-key feature and hitting \"\\[c++-toggle-auto-state]\"
+will always toggle auto-newline feature, regardless of the value of
 c++-auto-hungry-toggle.
 
 Settings for K&R, BSD, and Stroustrup indentation styles are
@@ -676,7 +681,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.307 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.308 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -734,7 +739,7 @@ Update mode line to indicate state to user."
   (set-buffer-modified-p (buffer-modified-p)))
 
 (defun c++-toggle-auto-state (arg)
-  "Toggle auto-newline state.
+  "Toggle auto-newline feature.
 This function ignores c++-auto-hungry-toggle variable.  Optional
 numeric ARG, if supplied turns on auto-newline when positive, turns
 off auto-newline when negative and toggles when zero."
@@ -749,7 +754,7 @@ off auto-newline when negative and toggles when zero."
     (c++-set-auto-hungry-state auto c++-hungry-delete-key)))
 
 (defun c++-toggle-hungry-state (arg)
-  "Toggle hungry-delete-key state.
+  "Toggle hungry-delete-key feature.
 This function ignores c++-auto-hungry-toggle variable.  Optional
 numeric ARG, if supplied turns on hungry-delete-key when positive,
 turns off hungry-delete-key when negative and toggles when zero."
@@ -764,19 +769,19 @@ turns off hungry-delete-key when negative and toggles when zero."
     (c++-set-auto-hungry-state c++-auto-newline hungry)))
 
 (defun c++-toggle-auto-hungry-state (arg)
-  "Toggle auto-newline and hungry-delete-key state.
-Actual toggling of these states is controlled by
+  "Toggle auto-newline and hungry-delete-key features.
+Actual toggling of these features is controlled by
 c++-auto-hungry-toggle variable.
 
 Optional argument has the following meanings when supplied:
      Universal argument \\[universal-argument]
-          resets state to c++-auto-hungry-initial-state.
+          resets features to c++-auto-hungry-initial-state.
      negative number
-          turn off both auto-newline and hungry-delete-key.
+          turn off both auto-newline and hungry-delete-key features.
      positive number
-          turn on both auto-newline and hungry-delete-key.
+          turn on both auto-newline and hungry-delete-key features.
      zero
-          toggle both states regardless of c++-auto-hungry-toggle-p."
+          toggle both features regardless of c++-auto-hungry-toggle-p."
   (interactive "P")
   (let* ((numarg (prefix-numeric-value arg))
 	 (apl (list 'auto-only   'auto-hungry t))
@@ -2539,7 +2544,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.307 $"
+(defconst c++-version "$Revision: 2.308 $"
   "c++-mode version number.")
 
 (defun c++-version ()
