@@ -1533,6 +1533,9 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 
 
 ;; Figure out what features this Emacs has
+
+(cc-bytecomp-defvar open-paren-in-column-0-is-defun-start)
+
 (defconst c-emacs-features
   (let (list)
 
