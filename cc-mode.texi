@@ -2534,13 +2534,13 @@ this to the @file{.emacs} file:
 
 @example
 @group
-(setq c-basic-offset
+(setq c-offsets-alist
       '((substatement-open . 0)))
 @end group
 @end example
 
 When @ccmode{} initializes a buffer, it will fill out
-@code{c-basic-offset} with the remaining syntactic symbols according to
+@code{c-offsets-alist} with the remaining syntactic symbols according to
 the style system.
 
 You can also use the more user friendly Customization interface, but
@@ -2548,7 +2548,7 @@ this manual does not cover how that works.
 
 Variables set like this at the top level in @file{.emacs} take effect in
 all @ccmode{} buffers, regardless of language.  The indentation style
-related variables, e.g. @code{c-basic-offset}, that you don't set this
+related variables, e.g. @code{c-offsets-alist}, that you don't set this
 way get their value from the style system (@pxref{Styles}), and they
 therefore depend on the setting of @code{c-default-style}.  Note that if
 you use Customize, this means that the greyed-out default values
