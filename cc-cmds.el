@@ -1249,8 +1249,9 @@ of the expression is preserved.
   "Indent each line in balanced expression following point.
 Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (interactive "*P")
-  (let ((here (point))
+  (let ((here (point-marker))
 	end progress-p)
+    (set-marker-insertion-type here t)
     (unwind-protect
 	(let ((c-echo-syntactic-information-p nil) ;keep quiet for speed
 	      (start (progn
@@ -1291,7 +1292,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   (set-marker end nil))
       (and progress-p
 	   (c-progress-fini 'c-indent-exp))
-      (goto-char here))))
+      (goto-char here)
+      (set-marker here nil))))
 
 (defun c-indent-defun ()
   "Re-indents the current top-level function def, struct or class declaration."
