@@ -66,10 +66,11 @@
 ;;
 ;; o  `c-doc-face' is an alias for `font-lock-doc-string-face' in
 ;;    XEmacs, `font-lock-doc-face' in Emacs 21 and later, or
-;;    `font-lock-string-face' in older Emacs.  FIXME: Doc comment
-;;    fontification currently only works with font-lock packages that
-;;    have `font-lock-syntactic-face-function', i.e Emacs 21 and
-;;    later.
+;;    `font-lock-comment-face' in older Emacs (that since source
+;;    documentation are actually comments in these languages, as
+;;    opposed to elisp).  FIXME: Doc comment fontification currently
+;;    only works with font-lock packages that have
+;;    `font-lock-syntactic-face-function', i.e Emacs 21 and later.
 ;;
 ;; o  `c-label-face' is an alias for either `font-lock-constant-face'
 ;;    (in Emacs 20 and later), or `font-lock-reference-face'
@@ -111,9 +112,9 @@
 (require 'font-lock)
 
 
-;; Note that XEmacs doesn't expand face names as variables, so we have
-;; to use the (eval . FORM) in the font lock matchers wherever we use
-;; these alias variables.
+;; Note that font-lock in XEmacs doesn't expand face names as
+;; variables, so we have to use the (eval . FORM) in the font lock
+;; matchers wherever we use these alias variables.
 
 (defvar c-doc-face
   (cond ((c-face-name-p 'font-lock-doc-string-face)
@@ -123,8 +124,9 @@
 	 ;; Emacs 21 and later.
 	 'font-lock-doc-face)
 	(t
-	 'font-lock-string-face))
-  "Face name used for preprocessor directives.")
+	 'font-lock-comment-face))
+  "Face name used for source documentation that's extracted by special
+tools (e.g. Javadoc).")
 
 (defvar c-preprocessor-face
   (cond ((c-face-name-p 'font-lock-preprocessor-face)
@@ -167,10 +169,33 @@
   (defface c-invalid-face
     '((((class color) (background light)) (:foreground "red"))
       (((class color)) (:foreground "hotpink"))
-      (((background light)) (:foreground "white" :background "black"))
-      (t (:foreground "black" :background "white")))
+      (t (:inverse-video t)))
     "Face used to highlight invalid syntax."
     :group 'c-fonts))
+
+;; To make hard spaces visible an inverted version of `c-invalid-face'
+;; is used.  Since font-lock in Emacs expands all face names in
+;; `font-lock-keywords' as variables we need to have a variable for it
+;; that resolves to its own name.
+(defconst c-inverse-invalid-face 'c-inverse-invalid-face)
+
+(cc-bytecomp-defun face-inverse-video-p) ; Only in Emacs.
+(cc-bytecomp-defun face-property-instance) ; Only in XEmacs.
+
+(defun c-make-inverse-face (oldface newface)
+  ;; Emacs and XEmacs have completely different face manipulation
+  ;; routines. :P
+  (copy-face oldface newface)
+  (if (fboundp 'face-inverse-video-p)
+      ;; Emacs way.  This only looks at the inverse flag in the
+      ;; current frame.  Other display configurations might be
+      ;; different, but it can only show if the same Emacs has frames
+      ;; on e.g. a color and a monochrome display simultaneously.
+      (unless (face-inverse-video-p oldface)
+	(invert-face newface))
+    ;; XEmacs way.  Same pitfall here.
+    (unless (face-property-instance oldface 'reverse)
+      (invert-face newface))))
 
 (defun c-font-lock-syntactic-face-function (state)
   (save-excursion
@@ -242,64 +267,73 @@
 	nil))))
 
 (c-lang-defconst c-cpp-matchers
-  ;; Font lock matchers for preprocessor stuff.  Used on level 1 and
-  ;; higher.
+  ;; Font lock matchers for preprocessor directives and purely lexical
+  ;; stuff.  Used on level 1 and higher.
   all
-  (when (c-lang-var c-cpp-prefix)
-    `(;; The stuff after #error and #warning is a message, so fontify it
-      ;; as a string.
-      (,(concat (c-lang-var c-cpp-prefix)
-		"\\(error\\|warning\\)\\>\\s *\\(.*\\)$")
-       2 font-lock-string-face)
+  `(,@(when (c-lang-var c-cpp-prefix)
+	`(;; The stuff after #error and #warning is a message, so fontify it
+	  ;; as a string.
+	  (,(concat (c-lang-var c-cpp-prefix)
+		    "\\(error\\|warning\\)\\>\\s *\\(.*\\)$")
+	   2 font-lock-string-face)
 
-      ;; Fontify filenames in #include <...> as strings.
-      (,(concat (c-lang-var c-cpp-prefix)
-		"\\(import\\|include\\)\\>\\s *\\(<[^>\n\r]*>?\\)")
-       2 font-lock-string-face)
+	  ;; Fontify filenames in #include <...> as strings.
+	  (,(concat (c-lang-var c-cpp-prefix)
+		    "\\(import\\|include\\)\\>\\s *\\(<[^>\n\r]*>?\\)")
+	   2 font-lock-string-face)
 
-      ;; #define.
-      (,(concat
-	 (c-lang-var c-cpp-prefix)
-	 "define\\s +"
-	 (concat "\\("			; 1
-		 ;; Macro with arguments - a "function".
-		 "\\(" (c-lang-var c-symbol-key) "\\)\(" ; 2
-		 "\\|"
-		 ;; Macro without arguments - a "variable".
-		 "\\(" (c-lang-var c-symbol-key) ; 3 + c-symbol-key-depth
-		 "\\)\\(\\s \\|$\\)"
-		 "\\)"))
-       (2 font-lock-function-name-face nil t)
-       (,(+ 3 (c-lang-var c-symbol-key-depth))
-	font-lock-variable-name-face nil t))
+	  ;; #define.
+	  (,(concat
+	     (c-lang-var c-cpp-prefix)
+	     "define\\s +"
+	     (concat "\\("		; 1
+		     ;; Macro with arguments - a "function".
+		     "\\(" (c-lang-var c-symbol-key) "\\)\(" ; 2
+		     "\\|"
+		     ;; Macro without arguments - a "variable".
+		     "\\(" (c-lang-var c-symbol-key) ; 3 + c-symbol-key-depth
+		     "\\)\\(\\s \\|$\\)"
+		     "\\)"))
+	   (2 font-lock-function-name-face nil t)
+	   (,(+ 3 (c-lang-var c-symbol-key-depth))
+	    font-lock-variable-name-face nil t))
 
-      ;; Fontify symbol names in #elif or #if ... defined preprocessor
-      ;; directives.
+	  ;; Fontify symbol names in #elif or #if ... defined preprocessor
+	  ;; directives.
+	  (eval . (list
+		   ,(concat (c-lang-var c-cpp-prefix) "\\(if\\|elif\\)\\>")
+		   (list
+		    ,(concat "\\<\\("	; 1
+			     ;; Don't use regexp-opt here to avoid the
+			     ;; depth hazzle.  As it happens, it currently
+			     ;; wouldn't have any effect anyway.
+			     (mapconcat 'regexp-quote
+					(c-lang-var c-cpp-defined-fns) "\\|")
+			     "\\)\\>"
+			     "\\s *\(?"
+			     "\\(" (c-lang-var c-symbol-key) "\\)?") ; 2
+		    nil nil
+		    (list 1 c-preprocessor-face)
+		    '(2 font-lock-variable-name-face nil t))))
+
+	  ;; Fontify symbols after #ifdef and #ifndef.
+	  (,(concat (c-lang-var c-cpp-prefix)
+		    "ifn?def\\s +\\(" (c-lang-var c-symbol-key) "\\)")
+	   1 font-lock-variable-name-face)
+
+	  ;; Fontify the directive names.
+	  (eval . (list
+		   ,(concat (c-lang-var c-cpp-prefix) "[a-z]+")
+		   0 c-preprocessor-face))
+	  ))
+
+      ;; Make hard spaces visible through an inverted `c-invalid-face'.
       (eval . (list
-	       ,(concat (c-lang-var c-cpp-prefix) "\\(if\\|elif\\)\\>")
-	       (list
-		,(concat "\\<\\("	; 1
-			 ;; Don't use regexp-opt here to avoid the
-			 ;; depth hazzle.  As it happens, it currently
-			 ;; wouldn't have any effect anyway.
-			 (mapconcat 'regexp-quote
-				    (c-lang-var c-cpp-defined-fns) "\\|")
-			 "\\)\\>"
-			 "\\s *\(?\\(" (c-lang-var c-symbol-key) "\\)?") ; 2
-		nil nil
-		(list 1 c-preprocessor-face)
-		'(2 font-lock-variable-name-face nil t))))
-
-      ;; Fontify symbols after #ifdef and #ifndef.
-      (,(concat (c-lang-var c-cpp-prefix)
-		"ifn?def\\s +\\(" (c-lang-var c-symbol-key) "\\)")
-       1 font-lock-variable-name-face)
-
-      ;; Fontify the directive names.
-      (eval . (list
-	       ,(concat (c-lang-var c-cpp-prefix) "[a-z]+")
-	       0 c-preprocessor-face))
-      )))
+	       "\240"
+	       0 (progn
+		   (c-make-inverse-face c-invalid-face 'c-inverse-invalid-face)
+		   'c-inverse-invalid-face)))
+      ))
 
 (defun c-font-lock-labels (limit)
   ;; Fontify all the declarations from the point to LIMIT.  Assumes
@@ -1199,7 +1233,29 @@
   all (c-lang-var c-matchers-3))
 
 
+(defun c-override-default-keywords (def-var new-def)
+  ;; This is used to override the value on a `*-font-lock-keywords'
+  ;; variable only if it's nil or has the same value as one of the
+  ;; `*-font-lock-keywords-*' variables.  Older font-lock packages
+  ;; define a default value for `*-font-lock-keywords' which we want
+  ;; to override, but we should otoh avoid clobbering a user setting.
+  ;; This heuristic for that isn't perfect, but I can't think of any
+  ;; better. /mast
+  (when (and (boundp def-var)
+	     (memq (symbol-value def-var)
+		   (cons nil
+			 (mapcar
+			  (lambda (suffix)
+			    (let ((sym (intern (concat (symbol-name def-var)
+						       suffix))))
+			      (and (boundp sym) (symbol-value sym))))
+			  '("-1" "-2" "-3" "-4")))))
+    (set def-var new-def)))
+
 ;;; C.
+
+(c-override-default-keywords 'c-font-lock-keywords
+			     (c-lang-var c-matchers-3 c))
 
 (defconst c-font-lock-keywords-1 (c-lang-var c-matchers-1 c)
   "Subdued level highlighting for C mode.
@@ -1218,14 +1274,13 @@ Like `c-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c-font-lock-extra-types'.")
 
-;; FIXME: The init values on these defvars aren't overridden, so we
-;; could still have the settings from an old font-lock package on this
-;; one.  If we override it we could otoh clobber user settings. :/
 (defvar c-font-lock-keywords c-font-lock-keywords-3
   "Default expressions to highlight in C mode.")
 
-
 ;;; C++.
+
+(c-override-default-keywords 'c++-font-lock-keywords
+			     (c-lang-var c-matchers-3 c++))
 
 (defconst c++-font-lock-keywords-1 (c-lang-var c-matchers-1 c++)
   "Subdued level highlighting for C++ mode.
@@ -1247,8 +1302,10 @@ need for `c++-font-lock-extra-types'.")
 (defvar c++-font-lock-keywords c++-font-lock-keywords-3
   "Default expressions to highlight in C++ mode.")
 
-
 ;;; Objective-C.
+
+(c-override-default-keywords 'objc-font-lock-keywords
+			     (c-lang-var c-matchers-3 objc))
 
 (defconst objc-font-lock-keywords-1 (c-lang-var c-matchers-1 objc)
   "Subdued level highlighting for ObjC mode.
@@ -1270,8 +1327,10 @@ need for `objc-font-lock-extra-types'.")
 (defvar objc-font-lock-keywords objc-font-lock-keywords-3
   "Default expressions to highlight in ObjC mode.")
 
-
 ;;; Java.
+
+(c-override-default-keywords 'java-font-lock-keywords
+			     (c-lang-var c-matchers-3 java))
 
 (defconst java-font-lock-keywords-1 (c-lang-var c-matchers-1 java)
   "Subdued level highlighting for Java mode.
@@ -1293,8 +1352,10 @@ need for `java-font-lock-extra-types'.")
 (defvar java-font-lock-keywords java-font-lock-keywords-3
   "Default expressions to highlight in Java mode.")
 
-
 ;;; IDL.
+
+(c-override-default-keywords 'idl-font-lock-keywords
+			     (c-lang-var c-matchers-3 idl))
 
 (defconst idl-font-lock-keywords-1 (c-lang-var c-matchers-1 idl)
   "Subdued level highlighting for IDL mode.
@@ -1316,8 +1377,10 @@ need for `idl-font-lock-extra-types'.")
 (defvar idl-font-lock-keywords idl-font-lock-keywords-3
   "Default expressions to highlight in IDL mode.")
 
-
 ;;; Pike.
+
+(c-override-default-keywords 'pike-font-lock-keywords
+			     (c-lang-var c-matchers-4 pike))
 
 (defconst pike-font-lock-keywords-1 (c-lang-var c-matchers-1 pike)
   "Subdued level highlighting for Pike mode.
