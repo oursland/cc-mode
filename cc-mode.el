@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-04 23:20:48 $
-;; Version:         $Revision: 2.29 $
+;; Last Modified:   $Date: 1992-05-04 23:33:51 $
+;; Version:         $Revision: 2.30 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-04 23:20:48 $|$Revision: 2.29 $|
+;; |$Date: 1992-05-04 23:33:51 $|$Revision: 2.30 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -152,7 +152,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.29 $
+  "Major mode for editing C++ code.  $Revision: 2.30 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -715,24 +715,19 @@ if it is embedded in an expression."
 
 (defun c++-in-comment-p ()
   "Return t if in a C or C++ style comment as defined by mode's syntax."
-  ;; hack to work around emacs comment bug
   (save-excursion
-    (let ((here (point))
-	  (bod (progn (beginning-of-defun) (point)))
-	  state)
-      (setq state (parse-partial-sexp bod here 0))
-      (nth 4 state))))
+    (let ((here (point)))
+      (beginning-of-defun)
+      (nth 4 (parse-partial-sexp (point) here 0)))))
 
 (defun c++-in-open-string-p ()
   "Return non-nil if in an open string as defined by mode's syntax."
   ;; temporarily change tick to string syntax, just for this check
   (modify-syntax-entry ?\' "\"" c++-mode-syntax-table)
   (save-excursion
-    (let ((here (point))
-	  (bod (progn (beginning-of-defun) (point)))
-	  state string-p)
-      (setq state (parse-partial-sexp bod here 0))
-      (setq string-p (nth 3 state))
+    (let* ((here (point))
+	   (string-p (progn (beginning-of-defun)
+			    (nth 3 (parse-partial-sexp (point) here 0)))))
       ;; change tick back to punctuation syntax
       (modify-syntax-entry ?\' "." c++-mode-syntax-table)
       string-p)))
@@ -1425,7 +1420,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.29 $"
+(defconst c++-version "$Revision: 2.30 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
