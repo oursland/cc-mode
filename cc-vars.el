@@ -1250,6 +1250,20 @@ Don't change this directly; call `c-set-style' instead.")
 Set from `c-comment-prefix-regexp' at mode initialization.")
 (make-variable-buffer-local 'c-current-comment-prefix)
 
+(defvar c-buffer-is-cc-mode nil
+  "Non-nil for all buffers with a major mode derived from CC Mode.
+Otherwise, this variable is nil.  I.e. this variable is non-nil for
+`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode',
+`pike-mode', and any other non-CC Mode mode that calls
+`c-initialize-cc-mode' (e.g. `awk-mode').  The value is the mode
+symbol itself (i.e. `c-mode' etc) of the original CC Mode mode, or
+just t if it's not known.")
+(make-variable-buffer-local 'c-buffer-is-cc-mode)
+
+;; Have to make `c-buffer-is-cc-mode' permanently local so that it
+;; survives the initialization of the derived mode.
+(put 'c-buffer-is-cc-mode 'permanent-local t)
+
 
 ;; Figure out what features this Emacs has
 ;;;###autoload
