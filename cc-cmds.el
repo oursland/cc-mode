@@ -1677,72 +1677,70 @@ function does not require the declaration to contain a brace block."
 	  (if (c-forward-single-comment)
 	      (cons pos (point)))))))))
 
-(defun c-after-statement-terminator-p ()
+(defun c-after-statement-terminator-p () ; Should we pass in LIM here?
   ;; Does point immediately follow a statement "terminator"?
   (save-excursion
     (backward-char)
-    (and (looking-at "[;{}]")
-	 (not (and c-special-brace-lists	; PIKE special brace lists.
-		   (eq (char-after) ?{)
-		   (c-looking-at-special-brace-list))))))
-;; #########################################################################
-;; ;;;; OLD STUFF, from cc-cmds.el 5.270 L 1594
-;;   (progn (backward-char)
-;; 	  (looking-at "[;{}]"))
-;;    (if (and c-special-brace-lists	; PIKE special brace lists.
-;; 	    (eq (char-after) ?{)
-;; 	    (c-looking-at-special-brace-list))
-;;        (skip-syntax-backward "w_")	; Speedup only.
-;;      (if (or (= here last) ; haven't gone back at all yet, this statement.
-;; 	     (memq (char-after last) '(?\) ?})))
-;; 	 (if (and (eq (char-before) ?})	; If };, treat them as a unit.
-;; 		  (eq (char-after) ?\;))
-;; 	     (backward-char))
-;;        (goto-char last)		  ; i.e., the stuff AFTER the } or ;
-;;        (throw 'done t)))
-;; #########################################################################
+    (or (and (looking-at "[;{}]")
+	     (not (and c-special-brace-lists ; PIKE special brace lists.
+		       (eq (char-after) ?{)
+		       (c-looking-at-special-brace-list))))
+	(save-excursion (c-beginning-of-macro)))))
 
-(defun c-back-over-illiterals ()
+(defun c-back-over-illiterals (macro-start)
   ;; Move backwards over code which isn't a literal (i.e. comment or string),
-  ;; stopping before reaching BOB or a literal or the "beginning of a
-  ;; statement".  Return NIL if we reached the "beginning of a statement" or
-  ;; BOB, T otherwise.
-  ;; 
+  ;; stopping before reaching BOB or a literal or the boundary of a
+  ;; preprocessor statement or the "beginning of a statement".  MACRO-START is
+  ;; the position of the '#' beginning the current preprocessor directive, or
+  ;; NIL if we're not in such.
+  ;;
+  ;; Return a cons (A.B), where
+  ;;   A is NIL if we moved back to a BOS (and know it), T otherwise (we
+  ;;     didn't move, or we hit a literal).
+  ;;   B is 'MACRO-BOUNDARY if we are about to cross the boundary out of or
+  ;;     into a macro, otherwise 'LITERAL if we've hit a literal, otherwise NIL
+  ;;
   ;; Point is left either at the beginning-of-statement, or at the last non-ws
-  ;; code before encountering the literal/BOB.
-  ;; 
+  ;; code before encountering the literal/BOB or macro-boundary.
+  ;;
+  ;; Note that this function moves within either preprocessor commands
+  ;; (macros) or normal code, but not both within the same call.
+  ;;
   ;; DO WE NEED A CONDITION CASE HERE????  There was one in the original
-  ;; function.  (2003/8/7)
+  ;; function.  (2003/8/7) YES, WE DO!!!!  (to cope with possibly unbalanced
+  ;; ############, er thingies, and so on).
   ;; 
   ;; Stop before `{' and after `;', `{', `}' and `};' when not followed by `}'
   ;; or `)', but on the other side of the syntactic ws.  Move by sexps and
   ;; move into parens.  Also stop before `#' when it's at boi on a line.
   ;; 
   (let ((here (point))
-	last ; marks the position of non-ws code, what'll be BOS if, say, a
-	     ; semicolon precedes it.
-	last-below-line) ; marks the position of what'll be BOS, should the
-			 ; previous line be a preprocessor line.
+	last) ; marks the position of non-ws code, what'll be BOS if, say, a
+	      ; semicolon precedes it.
     (catch 'done
       ;; We go back one ?token? each iteration of the following loop.
-      (while t
+      (while t		      ; OR ((not macro-start) (> (point) macro-start))
 	(setq last (point))
 
 	;; Stop at the token after a comment.
 	(when (c-backward-single-comment) ; Also functions as backwards-ws.
 	  (goto-char last)
-	  (throw 'done t))
+	  (throw 'done '(t . literal)))
 
-	;; If we've gone back over a LF, we might be on a preprocessor line.
-	(if (save-excursion
-	      (beginning-of-line)
-	      (re-search-forward "\\(^\\|[^\\]\\)[\n\r]" last t))
-	    (setq last-below-line last))
+	;; If we've gone back over a LF, we might have moved into a
+	;; preprocessor line.
+	(when (and (not macro-start)
+		   (save-excursion
+		     (beginning-of-line)
+		     (re-search-forward "\\(^\\|[^\\]\\)[\n\r]" last t))
+		   (c-beginning-of-macro))
+	  (goto-char last)
+	  (throw 'done (cons (eq (point) here) 'macro-boundary)))
 
 	(when (bobp)			; Must handle bob specially
 	  (if (/= here last)
 	      (goto-char last))
-	  (throw 'done nil))
+	  (throw 'done '(nil . nil)))
 
 	(backward-char)
 	(cond
@@ -1754,15 +1752,18 @@ function does not require the declaration to contain a brace block."
 	      (skip-syntax-backward "w_") ; Speedup only.
 	    (if (/= here last)
 		(goto-char last))
-	    (throw 'done nil)))
+	    (throw 'done '(nil . nil))))
 
 	 ;; Stop at token just after a preprocessor directive.
-	 ((and (eq (char-after) ?#)
-	       (eq (point) (c-point 'boi))
-	       (numberp last-below-line)
-	       (not (eq last-below-line here)))
-	  (goto-char last-below-line)
-	  (throw 'done nil))
+;; This bit was replaced, 2003/9/12.
+;; 	 ((and (eq (char-after) ?#)       
+;; 	       (eq (point) (c-point 'boi))
+;; 	       (numberp last-below-line)
+;; 	       (not (eq last-below-line here)))
+;; 	  (goto-char last-below-line)
+;; 	  (throw 'done nil))
+	 ((and macro-start (eq (point) macro-start))
+	  (throw 'done (cons (eq (point) here) 'macro-boundary)))
 
 	 ;; Stop at token just after "}" or ";".
 	 ((looking-at "[;}]")		; was "[;{}]", 2003/8/7
@@ -1773,24 +1774,35 @@ function does not require the declaration to contain a brace block."
 		       (eq (char-after) ?\;))
 		  (backward-char))
 	    (goto-char last)
-	    (throw 'done nil)))
+	    (throw 'done '(nil . nil))))
 
 	 ;; Stop at the token after a string.
 	 ((= (char-syntax (char-after)) ?\") ; Just gone back over a string terminator?
 	  (goto-char last)
-	  (throw 'done t))
+	  (throw 'done '(t . literal)))
 	 
 	 ;; Nothing special: go back word characters.
 	 (t (skip-syntax-backward "w_")) ; Speedup only.
 	 )))))
+;;;; END OF NEW VERSION (2003/9/12)
 
-(defun c-forward-over-illiterals ()
+
+(defun c-forward-over-illiterals (macro-end)
   ;; Move forwards over code, stopping before reaching EOB or a literal
-  ;; (i.e. a comment/string) or the "end of a statement".  Return NIL if
-  ;; we reached the "end of a statement" or EOB, T otherwise.
-
-  ;; Point is left either after the end-of-statement, or at the opening delimiter
-  ;; of the literal, or at EOB [or just after last non-WS stuff??]
+  ;; (i.e. a comment/string) or the boundary of a preprocessor statement or
+  ;; the "end of a statement".  MACRO-END is the position of the EOL/EOB which
+  ;; terminates the current preprocessor directive, or NIL if we're not in
+  ;; such.
+  ;;
+  ;; Return a cons (A.B), where
+  ;;   A is NIL if we moved forward to an EOS, T otherwise (we didn't move, or
+  ;;     we hit a literal).
+  ;;   B is 'MACRO-BOUNDARY if we are about to cross the boundary out of or
+  ;;     into a macro, otherwise 'LITERAL if we've hit a literal, otherwise NIL
+  ;;
+  ;; Point is left either after the end-of-statement, or at the opening
+  ;; delimiter of the literal, or the # of the preprocessor statement, or at
+  ;; EOB [or just after last non-WS stuff??]
 
   (condition-case nil	; DO WE NEED THIS condition-case AT ALL??? (2003/8/29)
       ;; Stop before `{', `}', and `#' when it's at boi on a line, but on the
@@ -1805,13 +1817,16 @@ function does not require the declaration to contain a brace block."
 	  (while t
 	    (setq last (point))
 	    (c-skip-ws-forward)
+	    (when (and macro-end (> (point) macro-end))
+	      (goto-char last)
+	      (throw 'done (cons (eq (point) here) 'macro-boundary)))
 	    (if (save-excursion (c-forward-single-comment))
-		(throw 'done t))
+		(throw 'done '(t . literal)))
 
 	    (when (eobp)		; Must handle eob specially
 	      (if (/= here last)
 		  (goto-char last))
-	      (throw 'done 'nil))
+	      (throw 'done '(nil . nil)))
 
 	    ;; If we encounter a '{', stop just after the previous token.
 	    (cond ((and (eq (char-after) ?{)
@@ -1826,7 +1841,7 @@ function does not require the declaration to contain a brace block."
 			  (or (not (c-safe (up-list -1) t)) ; UP-LIST always returns NIL (or fails).
 			      (= (char-after) ?{))))
 		   (goto-char last)
-		   (throw 'done nil))
+		   (throw 'done '(nil . nil)))
 
 		  ;; End of a PIKE special brace list?  If so, step over it and continue.
 		  ((and c-special-brace-lists
@@ -1841,7 +1856,7 @@ function does not require the declaration to contain a brace block."
 		  ((and (eq (char-after) ?})
 			(/= here last))
 		   (goto-char last)
-		   (throw 'done nil))
+		   (throw 'done '(nil . nil)))
 
 		  ;; Here is where the stuff for #defines has been removed.
 		  ;; It was already removed by 5.28.
@@ -1857,18 +1872,29 @@ function does not require the declaration to contain a brace block."
 ;		     (goto-char last))
 ;		   (throw 'done t))
 
+;;;; Replacement #define stuff, 2003/9/13:
+		  ;; Stop if we encounter a preprocessor line.
+		  ((and (not macro-end)
+			(eq (char-after) ?#)
+			(= (point) (c-point 'boi)))
+		   (goto-char last)
+		   (throw 'done (cons (eq (point) here) 'macro-boundary)))
+
 		  ;; Stop after a ';', '}' or "};"
 		  ((looking-at ";\\|};?")
 		   (goto-char (match-end 0))
-		   (throw 'done nil))
+		   (throw 'done '(nil . nil))) ; ??? OR do we check for '(nil . literal) ??? 2003/9/12.
 
 		  ;; Found a string?
 		  ((= (char-syntax (char-after)) ?\")
-		   (throw 'done t))
+		   (throw 'done '(t . literal)))
 
 		  (t
 		   (forward-char)
-		   (skip-syntax-forward "w_")) ; Speedup only.
+		   (skip-syntax-forward "w_") ; Speedup only.
+		   (when (and macro-end (> (point) macro-end))
+		     (goto-char last)
+		     (throw 'done (cons (eq (point) here) 'macro-boundary))))
 		  ))))
 
     (error
@@ -1907,7 +1933,12 @@ be more \"DWIM:ey\"."
   (c-save-buffer-state
       ((count (or count 1))
        here ; start point for going back/forward ONE statement.  Updated each statement.
-       candidate
+       (macro-fence
+	(save-excursion
+	  (if (< count 0)
+	      (and (not (eobp)) (c-beginning-of-macro) (progn (c-end-of-macro) (point)))
+	    (and (not (bobp)) (c-beginning-of-macro) (point)))))
+       candidate res
        (range (c-collect-line-comments (c-literal-limits lim))) ; (start.end) of current literal or NIL
        (lit-type (if range (c-literal-type range))))
 
@@ -1950,17 +1981,46 @@ be more \"DWIM:ey\"."
 	      nil)
 	     ;; Multi-line string or comment INSIDE a statement.
 	     (t (setq candidate nil)
-		(when (c-move-over-sentence range (> count 0)) ; Try and get rid of HERE.
+		(when (c-move-over-sentence range (> count 0))
 		  (setq range nil  lit-type nil) t))))
 
 	   ;; non-literal code.
-	   (t (when (if (< count 0)
-			(c-forward-over-illiterals)
-		      (prog1 (c-back-over-illiterals)
-			(if (/= (point) here) (setq candidate (point)))))
-		(setq range (c-ascertain-adjacent-literal (> count 0))
-		      lit-type (if range (c-literal-type range))) ; The IF is probably redundant.
-		t))))
+	   (t (if (< count 0)
+		  (progn
+		    (setq res (c-forward-over-illiterals macro-fence))
+		    ;; Are we about to move into or out of a preprocessor command?
+		    (when (eq (cdr res) 'macro-boundary)
+		      (save-excursion
+			(end-of-line)
+			(setq macro-fence
+			      (and (not (eobp))
+				   (progn (c-skip-ws-forward)
+					  (c-beginning-of-macro))
+				   (progn (c-end-of-macro)
+					  (point))))))
+		    ;; Are we about to move forward into a literal?
+		    (when (memq (cdr res) '(macro-boundary literal))
+		      (setq range (c-ascertain-adjacent-literal nil)
+			    lit-type (if range (c-literal-type range))))
+		    (car res))
+
+		(setq res (c-back-over-illiterals macro-fence))
+		(if (/= (point) here) (setq candidate (point)))	;; Code following a comment might be BOS
+		;; Are we about to move into or out of a preprocessor command?
+		(when (eq (cdr res) 'macro-boundary)
+		  (save-excursion
+		    (beginning-of-line)
+		    (setq macro-fence
+			  (and (not (bobp))
+			       (progn (c-skip-ws-backward) (c-beginning-of-macro))
+			       (point)))))
+		 ;; Are we about to move back into a literal?
+		 (when (memq (cdr res) '(macro-boundary literal))
+		   (setq range (c-ascertain-adjacent-literal t)
+			 lit-type (if range (c-literal-type range))))
+		 ;; 
+		 (car res)))))
+
       (if (/= count 0) (setq count (if (> count 0) (1- count) (1+ count)))))
     ;; Some stuff may be needed here for bumping into BOB or EOB, and so on.
     (c-keep-region-active)))
