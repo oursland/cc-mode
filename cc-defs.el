@@ -620,6 +620,9 @@ This function does not do any hidden buffer changes."
 		   (eq (char-before) ?\\)))
        (backward-char))))
 
+(eval-and-compile
+  (defvar c-langs-are-parametric nil))
+
 (defmacro c-major-mode-is (mode)
   "Return non-nil if the current CC Mode major mode is MODE.
 MODE is either a mode symbol or a list of mode symbols.
@@ -640,6 +643,13 @@ This function does not do any hidden buffer changes."
 	 (if (listp mode)
 	     (memq c-buffer-is-cc-mode mode)
 	   (eq c-buffer-is-cc-mode mode))))))
+
+(defmacro c-mode-is-new-awk-p ()
+  ;; Is the current mode the "new" awk mode?  It is important for
+  ;; (e.g.) the cc-engine functions do distinguish between the old and
+  ;; new awk-modes.
+  '(and (c-major-mode-is 'awk-mode)
+	(memq 'syntax-properties c-emacs-features)))
 
 (defmacro c-parse-sexp-lookup-properties ()
   ;; Return the value of the variable that says whether the
@@ -974,13 +984,6 @@ the value of the variable with that name.
 This function does not do any hidden buffer changes."
   (symbol-value (c-mode-symbol suffix)))
 
-(defsubst c-mode-is-new-awk-p ()
-  ;; Is the current mode the "new" awk mode?  It is important for
-  ;; (e.g.) the cc-engine functions do distinguish between the old and
-  ;; new awk-modes.
-  (and (c-major-mode-is 'awk-mode)
-       (memq 'syntax-properties c-emacs-features)))
-
 (defsubst c-got-face-at (pos faces)
   "Return non-nil if position POS in the current buffer has any of the
 faces in the list FACES.
@@ -1146,7 +1149,6 @@ system."
 ;; various other symbols, but those don't have any variable bindings.
 
 (defvar c-lang-const-expansion nil)
-(defvar c-langs-are-parametric nil)
 
 (defsubst c-get-current-file ()
   ;; Return the base name of the current file.
