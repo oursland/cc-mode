@@ -1552,8 +1552,8 @@ function does not require the declaration to contain a brace block."
     (let* ((here (point))
 	   (lit-type (c-literal-type range))
 	   (end (if (eq lit-type 'c)
-		    (if (and (eq (char-before (point-max)) ?/)
-			     (eq (char-before (1- (point-max))) ?*))
+		    (if (and (eq (char-before (cdr range)) ?/)
+			     (eq (char-before (1- (cdr range))) ?*))
 			(- (cdr range) 2)
 		      (point-max))
 		  (if (eq (cdr range) (point-max))
@@ -1578,14 +1578,15 @@ function does not require the declaration to contain a brace block."
 	    (concat "^[ \t]*\\(" c-current-comment-prefix "\\)\\=")))
       ;; Go forward one "comment-prefix which looks like sentence-end" each
       ;; time round the following:
-      (while (and (re-search-forward sentence-end par-end 'limit)
-		  (progn
-		    (setq last (point))
-		    (skip-chars-backward " \t\n")
-		    (or (and (not (bolp))
-			      (re-search-backward prefix-at-bol-here nil t))
-			(<= (point) here))))
-	(goto-char last))
+      (if (< (point) par-end)
+	  (while (and (re-search-forward sentence-end par-end 'limit)
+		      (progn
+			(setq last (point))
+			(skip-chars-backward " \t\n")
+			(or (and (not (bolp))
+				 (re-search-backward prefix-at-bol-here nil t))
+			    (<= (point) here))))
+	    (goto-char last)))
 
       ;; Take special action if we're up against the end of a block comment:
       ;; Leave point just after the last non-ws text.
