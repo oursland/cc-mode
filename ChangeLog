@@ -1,5 +1,7 @@
 2003-06-19  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
+	* Release 5.30.
+
 	* cc-engine.el, cc-align.el (c-add-stmt-syntax, c-lineup-arglist,
 	c-lineup-arglist-close-under-paren): Fixes to cope with special
 	brace lists in Pike.
