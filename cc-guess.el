@@ -5,8 +5,8 @@
 ;; Author:        1994-1995 Barry A. Warsaw
 ;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
 ;; Created:       August 1994
-;; Version:       $Revision: 1.3 $
-;; Last Modified: $Date: 1995-06-11 20:14:44 $
+;; Version:       $Revision: 1.4 $
+;; Last Modified: $Date: 1995-06-11 20:15:21 $
 ;; Keywords: c languages oop
 
 ;; This file is not part of GNU Emacs.
@@ -37,11 +37,6 @@
 ;;
 ;; The way this is intended to be run is for you to mark a region of
 ;; code to guess the style of, then run the command, cc-guess-region.
-
-;; LCD Archive Entry:
-;; cc-guess|Barry A. Warsaw|bwarsaw@cen.com
-;; |guess cc-mode indentation variable values
-;; |$Date: 1995-06-11 20:14:44 $|$Revision: 1.3 $|
 
 ;;; Code:
 
