@@ -113,7 +113,8 @@
 	   (format "No matching `%s' found for `%s' on line %d"
 		   (elt saved-pos 1)
 		   (elt saved-pos 2)
-		   (1+ (count-lines 1 (c-point 'bol (elt saved-pos 0))))))))
+		   (1+ (count-lines (point-min)
+				    (c-point 'bol (elt saved-pos 0))))))))
 
 (defun c-beginning-of-statement-1 (&optional lim ignore-labels
 					     noerror comma-delim)
@@ -1266,8 +1267,8 @@ you need both the type of a literal and its limits."
 		  (setq pos last-pos
 			c-parsing-error
 			(format "Unbalanced close paren at line %d"
-				(1+ (count-lines
-				     1 (c-point 'bol last-pos)))))))
+				(1+ (count-lines (point-min)
+						 (c-point 'bol last-pos)))))))
 	    (setq pos nil))))
       c-state-cache)))
 
