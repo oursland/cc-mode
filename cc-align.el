@@ -207,8 +207,8 @@ Works with: arglist-cont, arglist-cont-nonempty."
 	(c-lineup-argcont-scan other-match)))))
 
 (defun c-lineup-arglist-intro-after-paren (langelem)
-  "Line up a line just after the open paren of the surrounding paren or
-brace block.
+  "Line up a line to just after the open paren of the surrounding paren
+or brace block.
 
 Works with: defun-block-intro, brace-list-intro,
 statement-block-intro, statement-case-intro, arglist-intro."
@@ -258,8 +258,8 @@ arglist-close, arglist-cont and arglist-cont-nonempty."
 
 (defun c-lineup-arglist-operators (langelem)
   "Line up lines starting with an infix operator under the open paren.
-Return nil on lines that doesn't start with an operator, to leave
-those cases to other lineup functions.  Example:
+Return nil on lines that don't start with an operator, to leave those
+cases to other lineup functions.  Example:
 
 if (  x < 10
    || at_limit (x,       <- c-lineup-arglist-operators
@@ -389,7 +389,7 @@ Works with: inher-cont, member-init-cont."
 
 (defun c-lineup-java-inher (langelem)
   "Line up Java implements and extends declarations.
-If class names follows on the same line as the implements/extends
+If class names follow on the same line as the implements/extends
 keyword, they are lined up under each other.  Otherwise, they are
 indented by adding `c-basic-offset' to the column of the keyword.
 E.g:
@@ -410,7 +410,7 @@ Works with: inher-cont."
 
 (defun c-lineup-java-throws (langelem)
   "Line up Java throws declarations.
-If exception names follows on the same line as the throws keyword,
+If exception names follow on the same line as the throws keyword,
 they are lined up under each other.  Otherwise, they are indented by
 adding `c-basic-offset' to the column of the throws keyword.  The
 throws keyword itself is also indented by `c-basic-offset' from the
