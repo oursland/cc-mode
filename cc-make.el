@@ -33,7 +33,7 @@
   ;;
   ;; See the CC Mode homepage for installation details:
   ;;
-  ;; http://www.python.org/emacs/cc-mode/
+  ;; http://cc-mode.sourceforge.net/
   nil
   )
 
@@ -51,7 +51,7 @@ The Custom library was not found or is out of date.  A more current
 version is required to use CC Mode 5.  You MUST fix cc-make.el.  See
 that file or the CC Mode Web site for details:
 
-    <http://www.python.org/emacs/cc-mode/>"))
+    <http://cc-mode.sourceforge.net/>"))
 
 (setq load-path (cons default-directory load-path))
 

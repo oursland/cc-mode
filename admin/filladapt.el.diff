@@ -9,7 +9,7 @@
 + ;; This version has been patched to add the
 + ;; filladapt-token-match-empty feature.  Patch made by Martin
 + ;; Stjernholm <bug-cc-mode@gnu.org>; see
-+ ;; <http://www.python.org/emacs/cc-mode/filladapt.html> for details.
++ ;; <http://cc-mode.sourceforge.net/filladapt.php> for details.
 + 
   ;; LCD Archive Entry: 
   ;; filladapt|Kyle Jones|kyle_jones@wonderworks.com| 

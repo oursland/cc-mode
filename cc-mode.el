@@ -63,11 +63,9 @@
 ;; gnu.emacs.bug) as well as bug-cc-mode@gnu.org, which directly
 ;; contacts the CC Mode maintainers.  Questions can sent to
 ;; help-gnu-emacs@gnu.org (mirrored as gnu.emacs.help) and/or
-;; bug-cc-mode@gnu.org.  The old CC Mode contact address,
-;; cc-mode-help@python.org is currently still active, but its use is
-;; discouraged.  Please use bug-cc-mode@gnu.org instead.  Please do
-;; not send bugs or questions to our personal accounts; we reserve the
-;; right to ignore such email!
+;; bug-cc-mode@gnu.org.  Please use bug-cc-mode@gnu.org instead.
+;; Please do not send bugs or questions to our personal accounts; we
+;; reserve the right to ignore such email!
 
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
@@ -76,12 +74,12 @@
 ;; You can get the latest version of CC Mode, including PostScript
 ;; documentation and separate individual files from:
 ;;
-;;     http://www.python.org/emacs/cc-mode/
+;;     http://cc-mode.sourceforge.net/
 ;;
 ;; You can join a moderated CC Mode announcement-only mailing list by
 ;; visiting
 ;;
-;;    http://www.python.org/mailman/listinfo/cc-mode-announce
+;;    http://lists.sourceforge.net/mailman/listinfo/cc-mode-announce
 
 ;;; Code:
 

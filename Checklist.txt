@@ -60,7 +60,7 @@ Checklist for doing a release:
     - Update the Web page, using distilled changes from the
       ANNOUNCEMENT file.
 
-    - Send ANNOUNCEMENT file to cc-mode-announce@python.org
+    - Send ANNOUNCEMENT file to cc-mode-announce@lists.sourceforge.net
 
     - Post ANNOUNCEMENT to the following newsgroups:
 	gnu.emacs.sources

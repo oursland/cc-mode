@@ -1,17 +1,17 @@
 README for CC Mode 5.27
 Current maintainer : Martin Stjernholm
-Contact address    : bug-cc-mode@gnu.org (or cc-mode-help@python.org)
+Contact address    : bug-cc-mode@gnu.org
 
 INTRODUCTION
 
     The canonical Web location for all knowledge CC Mode is:
 
-	<http://www.python.org/emacs/cc-mode/>
+	<http://cc-mode.sourceforge.net/>
 
     Please read the cc-mode.texi manual for details on using CC Mode.
     This is available on-line from:
 
-        <http://www.python.org/emacs/cc-mode/cc-mode-html/Top.html>
+        <http://cc-mode.sourceforge.net/cc-mode-html/Top.html>
 
     As of this writing (22-Nov-1999), CC Mode version 5 currently
     works out of the box with XEmacs versions 19.15, 19.16, 20.3,
@@ -21,8 +21,7 @@ INTRODUCTION
 MORE INFORMATION
 
     NOTE: Since there are now multiple maintainers of CC Mode, you
-    MUST address all correspondence to bug-cc-mode@gnu.org (or
-    cc-mode-help@python.org, but that address is being phased out).
+    MUST address all correspondence to bug-cc-mode@gnu.org.
 
     Check out the CC Mode Web site for the latest information,
     updates, tips, installation and compatibility notes, etc. on using

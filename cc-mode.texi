@@ -23,8 +23,7 @@
 @comment Generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
-@comment Maintained by Barry A. Warsaw and Martin Stjernholm
-@comment <bug-cc-mode@gnu.org> (or <cc-mode-help@python.org>)
+@comment Maintained by Martin Stjernholm <bug-cc-mode@gnu.org>
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1282,7 +1281,7 @@ E. Jones' Filladapt package@footnote{It's available from
 lack a feature that makes it work suboptimally when
 @code{c-comment-prefix-regexp} matches the empty string (which it does
 by default).  A patch for that is available from
-@uref{http://www.python.org/emacs/cc-mode/,, the CC Mode site}.},
+@uref{http://cc-mode.sourceforge.net/,, the CC Mode site}.},
 which handles things like bulleted lists nicely.  There's a convenience
 function @code{c-setup-filladapt} that tunes the relevant variables in
 Filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
@@ -4384,7 +4383,7 @@ compatibility, etc. are all available via the Web at:
 @example
 @group
 
-        @uref{http://www.python.org/emacs/cc-mode/}
+        @uref{http://cc-mode.sourceforge.net/}
 
 @end group
 @end example
@@ -4521,20 +4520,16 @@ Bug reports are now sent to the following email addresses:
 latter is mirrored on the Usenet newsgroup @code{gnu.emacs.bug}.  You
 can send other questions and suggestions (kudos? @t{;-)} to
 @email{bug-cc-mode@@gnu.org}, or @email{help-gnu-emacs@@gnu.org} which is
-mirrored on newsgroup @code{gnu.emacs.help}.  The old contact address
-@email{cc-mode-help@@python.org} is still active, but its use is
-discouraged.
+mirrored on newsgroup @code{gnu.emacs.help}.
 
 @cindex beta testers mailing list
 @cindex announcement mailing list
-If you want to get announcements of new @ccmode{} releases, send the word
-@emph{subscribe} in the body of a message to
-@email{cc-mode-announce-request@@python.org}.  Announcements will also
-be posted to the Usenet newsgroups @code{gnu.emacs.sources},
+If you want to get announcements of new @ccmode{} releases, send the
+word @emph{subscribe} in the body of a message to
+@email{cc-mode-announce-request@@lists.sourceforge.net}.  Announcements
+will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
 @code{comp.emacs}, @code{comp.emacs.xemacs}, and possibly some of the
-language oriented newsgroups.  Note that the
-@code{cc-mode-victims@@python.org} mailing list has been
-decommissioned.
+language oriented newsgroups.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
