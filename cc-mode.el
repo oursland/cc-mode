@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.141 $
-;; Last Modified:   $Date: 1993-12-27 15:48:24 $
+;; Version:         $Revision: 3.142 $
+;; Last Modified:   $Date: 1993-12-27 15:55:23 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-27 15:48:24 $|$Revision: 3.141 $|
+;; |$Date: 1993-12-27 15:55:23 $|$Revision: 3.142 $|
 
 ;;; Code:
 
@@ -642,7 +642,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.141 $
+CC-MODE REVISION: $Revision: 3.142 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -676,7 +676,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.141 $
+CC-MODE REVISION: $Revision: 3.142 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -888,10 +888,11 @@ Key bindings:
   ;; update the mode line accordingly
   (setq c-auto-newline auto-p
 	c-hungry-delete-key hungry-p)
-  ;; hack to get mode line updated. Emacs19 should use
-  ;; force-mode-line-update, but that isn't portable to Emacs18
-  ;; and this at least works for both
-  (set-buffer-modified-p (buffer-modified-p)))
+  ;; update mode-line.  The Emacs18 solution works in 19, but I want
+  ;; to be a good citizen
+  (if (eq c-emacs-features 'v19)
+      (force-mode-line-update)
+    (set-buffer-modified-p (buffer-modified-p))))
 
 (defun c-toggle-auto-state (arg)
   "Toggle auto-newline feature.
@@ -2920,7 +2921,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.141 $"
+(defconst c-version "$Revision: 3.142 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
