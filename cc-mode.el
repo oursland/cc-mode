@@ -1,11 +1,11 @@
 ;; C++ code editing commands for Emacs
-;; 1992 Barry Warsaw, Century Computing Inc. (bwarsaw@cen.com)
+;; 1992 Barry Warsaw, Century Computing Inc., (bwarsaw@cen.com)
 ;; 1987 Dave Detlefs  (dld@cs.cmu.edu) 
 ;; and  Stewart Clamen (clamen@cs.cmu.edu).
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.20 $
+;; $Revision: 1.21 $
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -191,6 +191,14 @@ no args,if that value is non-nil."
   (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
   (set (make-local-variable 'require-final-newline) t)
   (set (make-local-variable 'parse-sexp-ignore-comments) nil)
+  ;; 
+  (set (make-local-variable 'indent-line-function) 'c++-indent-line)
+  (set (make-local-variable 'comment-start) "// ")
+  (set (make-local-variable 'comment-end) "")
+  (set (make-local-variable 'comment-column) 32)
+  (set (make-local-variable 'comment-start-skip) "/\\*+ *\\|// *")
+  (set (make-local-variable 'comment-indent-hook) 'c++-comment-indent)
+  ;;
   (setq mode-line-format c++-mode-line-format)
   (run-hooks 'c++-mode-hook)
   (c++-set-auto-hungry-state
@@ -1161,3 +1169,64 @@ function definition.")
 	(next-line 1)
 	(beginning-of-line 1)))
     (goto-char restore)))
+
+
+;; this function is provided for bug reports. it dumps the entire
+;; known state of c++-mode so that I know exactly how you've got it
+;; set up.
+
+(defconst c++-version "$Revision: 1.21 $"
+  "c++-mode version number.")
+
+(defconst c++-mode-state-buffer "*c++-mode-buffer*"
+  "Buffer name of c++-mode state dump.")
+
+(defun c++-dump-state ()
+  "Inserts into the c++-mode-state-buffer the current state of
+c++-mode for a particular buffer."
+  (interactive)
+  (let ((buffer (get-buffer-create c++-mode-state-buffer))
+	(varlist (list 'c++-continued-member-init-offset
+		       'c++-member-init-indent
+		       'c++-friend-offset
+		       'c++-electric-colon
+		       'c++-empty-arglist-indent
+		       'c++-comment-only-line-offset
+		       'c++-hanging-braces-p
+		       'c++-hanging-member-init-colon
+		       'c++-mode-line-format
+		       'c++-auto-hungry-initial-state
+		       'c++-auto-hungry-toggle-p
+		       'c++-auto-hungry-string
+		       'c++-hungry-delete-key
+		       'c++-auto-newline
+		       'c++-default-macroize-column
+		       'c++-match-header-strongly
+		       'c++-defun-header-strong-struct-equivs
+		       'c-tab-always-indent
+		       'c-indent-level
+		       'c-continued-statement-offset
+		       'c-continued-brace-offset
+		       'c-brace-offset
+		       'c-brace-imaginary-offset
+		       'c-argdecl-indent
+		       'c-label-offset
+		       )))
+    (set-buffer buffer)
+    (emacs-lisp-mode)
+    (erase-buffer)
+    (beginning-of-buffer)
+    (insert "c++-mode.el version: " c++-version
+	    "\n\ncurrent state:\n==============\n(setq\n")
+    (mapcar
+     (function (lambda (varsym)
+		 (insert "     "
+			 (symbol-name varsym) " "
+			 (prin1-to-string (eval varsym))
+			 "\n")))
+     varlist)
+    (insert "     )\n")
+    (indent-region (point-min) (point-max) nil)
+    (switch-to-buffer-other-window buffer)
+    (message "Please insert buffer %s into your mail message."
+	     c++-mode-state-buffer)))
