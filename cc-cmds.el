@@ -28,11 +28,16 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+(eval-when-compile
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+(require 'cc-engine)
 
 
-(eval-when-compile
-  (require 'cc-defs))
-
 (defun c-calculate-state (arg prevstate)
   ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
   ;; arg is nil or zero, toggle the state. If arg is negative, turn
@@ -132,10 +137,10 @@ consumed.  If however an ARG is supplied, or `c-hungry-delete-key' is
 nil, or point is inside a literal then the function in the variable
 `c-delete-function' is called."
   (interactive "*P")
-  (if (or (and (fboundp 'delete-forward-p) ;XEmacs 21
-	       (delete-forward-p))
-	  (and (boundp 'delete-key-deletes-forward) ;XEmacs 20
-	       delete-key-deletes-forward))
+  (if (or (c-if-fboundp delete-forward-p ;XEmacs 21
+	      (delete-forward-p))
+	  (c-if-boundp delete-key-deletes-forward ;XEmacs 20
+	      delete-key-deletes-forward))
       (if (or (not c-hungry-delete-key)
 	      arg
 	      (c-in-literal))
@@ -722,13 +727,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
   (if (< arg 0)
       (c-beginning-of-defun (- arg))
     (while (> arg 0)
-      ;; skip down into the next defun-block
-      (while (and (c-safe (down-list 1) t)
-		  (not (eq (char-before) ?{)))
-	(forward-char -1)
-	(c-forward-sexp))
-      (c-beginning-of-defun 1)
-      (c-forward-sexp 1)
+      (c-end-of-defun-1)
       (setq arg (1- arg)))
     (forward-line 1))
   (c-keep-region-active))
@@ -1057,15 +1056,16 @@ comment."
 	  (c-indent-line))))))
 
 ;; advice for indent-new-comment-line for older Emacsen
-(or (boundp 'comment-line-break-function)
-    (defadvice indent-new-comment-line (around c-line-break-advice
-					       activate preactivate)
-      "Calls c-comment-line-break-function if in a comment in CC Mode."
-      (if (or (not c-buffer-is-cc-mode)
-	      (not (c-in-literal))
-	      (not c-comment-continuation-stars))
-	  ad-do-it
-	(c-comment-line-break-function (ad-get-arg 0)))))
+(c-if-boundp comment-line-break-function
+    nil
+  (defadvice indent-new-comment-line (around c-line-break-advice
+					     activate preactivate)
+    "Calls c-comment-line-break-function if in a comment in CC Mode."
+    (if (or (not c-buffer-is-cc-mode)
+	    (not (c-in-literal))
+	    (not c-comment-continuation-stars))
+	ad-do-it
+      (c-comment-line-break-function (ad-get-arg 0)))))
 
 ;; used by outline-minor-mode
 (defun c-outline-level ()

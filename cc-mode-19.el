@@ -33,9 +33,18 @@
 
 ;;; Code:
 
-
+(provide 'cc-mode-19) ; Before loading cc-defs to avoid a file load loop.
+(eval-when-compile
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+
 (require 'advice)
 
+
 ;; Emacs 19.34 requires the POS argument to char-after.  Emacs 20
 ;; makes it optional, as it has long been in XEmacs.
 (or (condition-case nil
@@ -48,7 +57,7 @@
       (if (not pos)
 	  (setq pos (point)))))
 
-(if (fboundp 'char-before)
+(c-if-fboundp char-before
     ;; (or (condition-case nil
     ;;         (progn (char-before) t)
     ;;       (error nil))
@@ -79,30 +88,30 @@
 ;; Emacs 19.34 doesn't have a functionp function.  Here's it's Emacs
 ;; 20 definition.
 (or (fboundp 'functionp)
-    (defun functionp (obj)
-      "Returns t if OBJ is a function, nil otherwise."
-      (cond
-       ((symbolp obj) (fboundp obj))
-       ((subrp obj))
-       ((compiled-function-p obj))
-       ((consp obj)
-	(if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
-       (t nil))))
+    ;; Can't use c-if-fboundp here since this file will be evaled from
+    ;; cc-defs before it gets compiled, which results in no function
+    ;; definition in the compiled file.
+    (defun functionp (object)
+      "Non-nil if OBJECT is a type of object that can be called as a function."
+      (or (subrp object) (byte-code-function-p object)
+	  (eq (car-safe object) 'lambda)
+	  (and (symbolp object) (fboundp object)))))
 
 ;; Emacs 19.34 doesn't have a when macro.  Here's it's Emacs 20
 ;; definition.
-(or (fboundp 'when)
-    (defmacro when (cond &rest body)
-      "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
-      (list 'if cond (cons 'progn body))))
+(c-if-fboundp when
+    nil
+  (defmacro when (cond &rest body)
+    "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
+    (list 'if cond (cons 'progn body))))
 
 ;; Emacs 19.34 doesn't have an unless macro.  Here's it's Emacs 20
 ;; definition.
-(or (fboundp 'unless)
-    (defmacro unless (cond &rest body)
-      "(unless COND BODY...): if COND yields nil, do BODY, else return nil."
-      (cons 'if (cons cond (cons nil body)))))
+(c-if-fboundp unless
+    nil
+  (defmacro unless (cond &rest body)
+    "(unless COND BODY...): if COND yields nil, do BODY, else return nil."
+    (cons 'if (cons cond (cons nil body)))))
 
 
-(provide 'cc-mode-19)
 ;;; cc-mode-19.el ends here
