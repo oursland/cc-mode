@@ -38,9 +38,8 @@ visible changes in CC Mode 5.
   <p><li>The single <code>cc-mode.el</code> file was simply too
   unwieldy so I have split the file up.
 
-  <p>See the <a
-  href="ftp://cc-mode.sourceforge.net/pub/cc-mode/src/MANIFEST"><code>MANIFEST</code></a>
-  file for details.
+  <p>See the <a href="src/MANIFEST"><code>MANIFEST</code></a> file for
+  details.
 
   <p><li>Also, all user variables have been converted to Per
   Abrahamsen's <dfn>Custom</dfn> library, and all support for older

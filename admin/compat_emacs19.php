@@ -27,8 +27,8 @@ path to the Custom library when you byte-compile CC Mode.  You
 your run-time Emacs environment.
 
 <p>After you do this, read the <code><a
-href="ftp://cc-mode.sourceforge.net/pub/cc-mode/src/README">README</a></code>
-file that comes with the CC Mode distribution for more details.
+href="src/README">README</a></code> file that comes with the CC Mode
+distribution for more details.
 
 <p>I have no idea whether CC Mode 5 will work with Emacs versions
 before 19.34.  You might try following the directions above, but I do

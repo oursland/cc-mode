@@ -8,14 +8,14 @@
 download the entire source distribution, including the manual in
 texinfo format as an approximately <a
 href="http://download.sourceforge.net/cc-mode/cc-mode-5.28.tar.gz">160KB
-gzip'd tarball</a>.  You can also download the <a
-href="ftp://cc-mode.sourceforge.net/pub/cc-mode/src/">individual
-files</a> of the current release.
+gzip'd tarball</a> (also available <a
+href="ftp://ftp.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.28.tar.gz">via
+FTP</a>).  The <a href="src/">individual files</a> of the current
+release are available too.
 
 <p>The documentation is also available in several forms.  You can
 either <a href="cc-mode.html#Top">browse the on-line documentation</a>
-or grab one of the several <a
-href="ftp://cc-mode.sourceforge.net/pub/cc-mode/manual/">pre-formatted</a>
+or grab one of the several <a href="manual/">pre-formatted</a>
 documents generated from the texinfo source, including PostScript,
 Emacs Info, and HTML versions</a>.
 
