@@ -101,7 +101,7 @@
 	(topmost-intro         . 0)
 	(topmost-intro-cont    . 0)
 	(member-init-intro     . +)
-	(member-init-cont      . 0)
+	(member-init-cont      . c-lineup-multi-inher)
 	(inher-intro           . +)
 	(inher-cont            . c-lineup-multi-inher)
 	(block-open            . 0)
@@ -263,6 +263,7 @@
     "inher-1.cc"
     "inher-2.cc"
     "inher-3.cc"
+    "inher-4.cc"
     "interface-1.m"
     "ivar.java"
     "label-1.c"
