@@ -2964,9 +2964,18 @@ This function does not do any hidden buffer changes."
 	(goto-char start)
 	(setq res nil)))
 
-     ((c-with-syntax-table c-identifier-syntax-table
-	(looking-at c-known-type-key))
-      ;; Looking at a known type identifier.
+     ((progn
+	(if (looking-at c-identifier-start)
+	    (save-excursion
+	      (setq id-start (point)
+		    res2 (c-forward-name)
+		    id-end (point))))
+	(and (c-with-syntax-table c-identifier-syntax-table
+	       (looking-at c-known-type-key))
+	     (or (not id-end) (>= (match-end 1) id-end))))
+      ;; Looking at a known type identifier.  We check for a name
+      ;; first so that we don't go here if the known type match only
+      ;; is a prefix of another name.
       (when c-fontify-types-and-refs
 	(c-put-type-face (match-beginning 1) (match-end 1)))
       (if (and c-opt-type-component-key
@@ -2993,23 +3002,20 @@ This function does not do any hidden buffer changes."
 	(goto-char (match-end 1))
 	(setq res t)))
 
-     ((and (looking-at c-identifier-start)
-	   (setq pos (point)
-		 res2 (c-forward-name)))
+     (res2
       (cond ((eq res2 t)
 	     ;; A normal identifier.
+	     (goto-char id-end)
 	     (if (or res c-promote-possible-types)
 		 (progn
-		   (c-add-type pos (point))
+		   (c-add-type id-start id-end)
 		   (when c-fontify-types-and-refs
 		     (c-put-type-face (save-excursion
 					(c-simple-skip-symbol-backward)
 					(point))
-				      (point)))
+				      id-end))
 		   (setq res (or res c-promote-possible-types 'found)))
-	       (setq id-start pos
-		     id-end (point)
-		     res (if (c-check-type id-start id-end)
+	       (setq res (if (c-check-type id-start id-end)
 			     ;; It's an identifier that has been used as
 			     ;; a type somewhere else.
 			     'found
@@ -3017,6 +3023,7 @@ This function does not do any hidden buffer changes."
 			   'maybe))))
 	    ((eq res2 'template)
 	     ;; A template is a type.
+	     (goto-char id-end)
 	     (setq res t))
 	    (t
 	     ;; Otherwise it's an operator identifier, which is not a type.
