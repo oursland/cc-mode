@@ -1,0 +1,11 @@
+(0 typ) (4 reg) (5 fun) (6 reg)
+(4 key) (10 reg)
+(4 key) (8 reg) (10 str) (11 reg) (14 key) (18 reg) (20 str) (21 reg) (24 key) (28 reg) (29 lbl) (30 reg) (32 key) (36 reg) (37 lbl) (39 reg)
+
+(4 key) (8 reg) (9 lbl) (10 reg) (12 lbl) (14 reg)
+(4 key) (8 reg) (9 lbl) (12 reg) (15 lbl) (17 reg)
+
+(4 key) (8 reg) (12 lbl) (15 reg) (17 key) (21 reg) (22 lbl) (24 reg)
+(4 key) (8 reg) (9 ref) (10 reg) (11 lbl) (12 reg) (14 key) (18 reg) (19 ref) (20 reg) (24 lbl) (25 reg) (27 key) (31 reg) (32 key) (38 reg) (40 lbl) (41 reg)
+
+
