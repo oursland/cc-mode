@@ -178,6 +178,8 @@ mode name.  Valid symbols are:
 				    (substatement-open after)
 				    (block-close . c-snug-do-while)
 				    (extern-lang-open after)
+				    (inexpr-class-open after)
+				    (inexpr-class-close before)
 				    )
   "*Controls the insertion of newlines before and after braces.
 This variable contains an association list with elements of the
@@ -193,8 +195,12 @@ SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
 class-close, inline-open, inline-close, block-open, block-close,
 substatement-open, statement-case-open, extern-lang-open,
 extern-lang-close, brace-list-open, brace-list-close,
-brace-list-intro, or brace-entry-open. See `c-offsets-alist' for
-details.
+brace-list-intro, brace-entry-open, inexpr-class-open, or
+inexpr-class-close.  See `c-offsets-alist' for details, except for
+inexpr-class-open and inexpr-class-close, which doesn't have any
+corresponding symbols there.  Those two symbols are used for the
+opening and closing braces, respectively, of anonymous inner classes
+in Java.
 
 ACTION can be either a function symbol or a list containing any
 combination of the symbols `before' or `after'.  If the list is empty,
@@ -216,7 +222,8 @@ syntactic context for the brace line."
 			(const substatement-open) (const statement-case-open)
 			(const extern-lang-open) (const extern-lang-close)
 			(const brace-list-open) (const brace-list-close)
-			(const brace-list-intro) (const brace-entry-open))
+			(const brace-list-intro) (const brace-entry-open)
+			(const inexpr-class-open) (const inexpr-class-close))
 		(choice :tag "Action"
 			(set :format "Insert a newline %v"
 			     :extra-offset 38
