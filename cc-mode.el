@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-27 16:03:29 $
-;; Version:         $Revision: 2.4 $
+;; Last Modified:   $Date: 1992-04-28 00:00:14 $
+;; Version:         $Revision: 2.5 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-27 16:03:29 $|$Revision: 2.4 $|
+;; |$Date: 1992-04-28 00:00:14 $|$Revision: 2.5 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -135,7 +135,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.4 $
+  "Major mode for editing C++ code.  $Revision: 2.5 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -987,7 +987,7 @@ Returns nil if line starts inside a string, t if in a comment."
 	(set-fill-prefix))
       (while (looking-at fill-prefix)
 	(previous-line 1))
-      (next-line 1)
+      (forward-line 1)
       (insert-string "\n")
       (fill-paragraph nil)
       (delete-char -1)
@@ -1038,7 +1038,7 @@ so that indentation will work right."
 				   (count-lines (point-min) (point)))))
       (while (< line to-line)
 	(backslashify-current-line (> arg 0))
-	(next-line 1) (setq line (1+ line))))))
+	(forward-line 1) (setq line (1+ line))))))
 
 (defun backslashify-current-line (doit)
   "Backslashifies current line."
@@ -1079,7 +1079,7 @@ inserting \"// \" (comment-start)in front of each line."
 	    (beginning-of-line)
 	    (insert comment-start)
 	    (beginning-of-line)
-	    (next-line 1)))))
+	    (forward-line 1)))))
 
 (defun c++-uncomment-region ()
   "Uncomment all lines in region between mark and current point by deleting
@@ -1100,7 +1100,7 @@ the leading \"// \" from each line, if any."
 		  (zap-to-char 1 char)
 		  (delete-char len)))
 	    (beginning-of-line)
-	    (next-line 1)))))
+	    (forward-line 1)))))
 
 ;;; Below are two regular expressions that attempt to match defuns
 ;;; "strongly" and "weakly."  The strong one almost reconstructs the
@@ -1241,7 +1241,7 @@ function definition.")
       (c++-beginning-of-defun 1)
       (while (<= (point) end)
 	(c++-indent-line)
-	(next-line 1)
+	(forward-line 1)
 	(beginning-of-line 1)))
     (goto-char restore)))
 
@@ -1249,7 +1249,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.4 $"
+(defconst c++-version "$Revision: 2.5 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
