@@ -159,7 +159,9 @@ END {
 \
 (bar)
 }
+
 # Space after \ in what looks line an escaped newline.
+
 /pattern/ \
 {
     action
