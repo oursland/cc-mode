@@ -112,6 +112,8 @@
 
 (require 'font-lock)
 
+(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs only.
+
 ;; Need to declare these local symbols during compilation since
 ;; they're referenced from lambdas in `byte-compile' calls that are
 ;; executed at compile time.  They don't need to have the proper
@@ -122,7 +124,7 @@
 (cc-bytecomp-defun c-font-lock-declarators)
 (cc-bytecomp-defun c-font-lock-objc-iip-decl)
 (cc-bytecomp-defun c-font-lock-objc-method)
-(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs only.
+(cc-bytecomp-defun c-font-lock-invalid-string)
 
 
 ;; Note that font-lock in XEmacs doesn't expand face names as
@@ -247,7 +249,7 @@ tools (e.g. Javadoc).")
   (put 'c-fontify-types-and-refs 'lisp-indent-function 1)
   (eval-after-load "edebug" '(def-edebug-spec c-fontify-types-and-refs let*))
 
-  (defsubst c-skip-comments-and-strings (limit)
+  (defun c-skip-comments-and-strings (limit)
     ;; If the point is within a region fontified as a comment or
     ;; string literal skip to the end of it or to LIMIT, whichever
     ;; comes first, and return t.  Otherwise return nil.  The match
@@ -342,35 +344,6 @@ tools (e.g. Javadoc).")
       ;; dereferenced, since it's an alias in Emacs.
       (c-put-font-lock-face (car elem) (cdr elem)
 			    font-lock-reference-face))))
-
-(defun c-font-lock-syntactic-face-function (state)
-  ;; This function can make hidden buffer changes, but the font-lock
-  ;; context covers that.
-  (save-excursion
-    (if (nth 3 state)
-        ;; Check whether the string is properly terminated.
-	(let ((nstate (parse-partial-sexp (point) (c-point 'eol)
-                                          nil nil state 'syntax-table)))
-	  (if (and (eolp)
-		   (elt nstate 3)
-		   ;; We're at eol inside a string.
-		   (if (c-major-mode-is '(c-mode c++-mode objc-mode pike-mode))
-		       ;; There's no \ before the newline.
-		       (not (elt nstate 5))
-		     ;; Quoted newlines aren't supported.
-		     t)
-		   (if (c-major-mode-is 'pike-mode)
-		       ;; There's no # before the string, so newlines
-		       ;; aren't allowed.
-		       (not (eq (char-before (elt state 8)) ?#))
-		     t))
-              ;; We're inside a string, at EOL and there was no \.
-	      c-invalid-face
-            font-lock-string-face))
-      (goto-char (elt state 8))
-      (if (looking-at c-doc-comment-start-regexp)
-	  c-doc-face
-	font-lock-comment-face))))
 
 (c-lang-defconst c-cpp-matchers
   "Font lock matchers for preprocessor directives and purely lexical
@@ -478,6 +451,30 @@ stuff.  Used on level 1 and higher."
 		   'c-nonbreakable-space-face)))
       ))
 
+(defun c-font-lock-invalid-string ()
+  ;; Assuming the point is after the opening character of a string,
+  ;; fontify that char with `c-invalid-face' if the string decidedly
+  ;; isn't terminated properly.  Assumes the string already is
+  ;; syntactically fontified.
+  (let ((end (1+ (c-point 'eol))))
+    (and (eq (get-text-property (point) 'face) 'font-lock-string-face)
+	 (= (next-single-property-change (point) 'face nil end) end)
+	 ;; We're at eol inside a string.  The first check above is
+	 ;; necessary in XEmacs since it doesn't fontify the string
+	 ;; delimiters themselves.  Thus an empty string won't have
+	 ;; the string face anywhere.
+	 (if (c-major-mode-is '(c-mode c++-mode objc-mode pike-mode))
+	     ;; There's no \ before the newline.
+	     (not (eq (char-before (1- end)) ?\\))
+	   ;; Quoted newlines aren't supported.
+	   t)
+	 (if (c-major-mode-is 'pike-mode)
+	     ;; There's no # before the string, so newlines
+	     ;; aren't allowed.
+	     (not (eq (char-before (1- (point))) ?#))
+	   t)
+	 (c-put-font-lock-face (1- (point)) (point) c-invalid-face))))
+
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
 other easily recognizable things that should be fontified before generic
@@ -487,7 +484,19 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; sets `font-lock-type-face' in languages where
   ;; `c-recognize-<>-arglists' is set.
 
-  t `(;; Fontify keyword constants.
+  t `(;; Put a warning face on the opener of unclosed strings that
+      ;; can't span lines.  Later font
+      ;; lock packages have a `font-lock-syntactic-face-function' for
+      ;; this, but it doesn't give the control we want since any
+      ;; fontification done inside the function will be
+      ;; unconditionally overridden.
+      ,(c-make-font-lock-search-function
+	;; Match a char before the string starter to make
+	;; `c-skip-comments-and-strings' work correctly.
+	(concat ".\\(" c-string-limit-regexp "\\)")
+	'((c-font-lock-invalid-string)))
+
+      ;; Fontify keyword constants.
       ,@(when (c-lang-const c-constant-kwds)
 	  (let ((re (c-make-keywords-re nil (c-lang-const c-constant-kwds))))
 	    (if (c-major-mode-is 'pike-mode)
