@@ -19,7 +19,7 @@ we're not making it public until we get some wider feedback.
 <ul>
 
   <p><li>The big news is the addition of support for the <a
-  href="http://pike.idonex.se/">Pike</a> language, courtesy of Martin
+  href="http://pike.ida.liu.se/">Pike</a> language, courtesy of Martin
   Stjernholm.  There are also two new syntactic symbols specifically
   added for the Pike support: <code>inlambda</code>, and
   <code>lambda-intro-cont</code>.
