@@ -638,7 +638,7 @@ comment."
 
 ;; set up electric character functions to work with pending-del,
 ;; (a.k.a. delsel) mode.  All symbols get the t value except
-;; c-electric-delete which gets 'supersede.
+;; the functions which delete, which gets 'supersede.
 (mapcar
  (function
   (lambda (sym)
@@ -651,8 +651,10 @@ comment."
    c-electric-semi&comma
    c-electric-lt-gt
    c-electric-colon))
-(put 'c-electric-delete 'delete-selection 'supersede) ; delsel
-(put 'c-electric-delete 'pending-delete   'supersede) ; pending-del
+(put 'c-electric-delete    'delete-selection 'supersede) ; delsel
+(put 'c-electric-delete    'pending-delete   'supersede) ; pending-del
+(put 'c-electric-backspace 'delete-selection 'supersede) ; delsel
+(put 'c-electric-backspace 'pending-delete   'supersede) ; pending-del
 
 
 ;; This is used by indent-for-comment to decide how much to indent a
