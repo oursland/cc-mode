@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.29 $
-;; Last Modified:   $Date: 1993-09-29 21:08:29 $
+;; Version:         $Revision: 3.30 $
+;; Last Modified:   $Date: 1993-10-01 13:21:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-29 21:08:29 $|$Revision: 3.29 $|
+;; |$Date: 1993-10-01 13:21:00 $|$Revision: 3.30 $|
 
 ;;; Code:
 
@@ -504,7 +504,7 @@ this variable to nil defeats backscan limits.")
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
   (make-local-variable
-   (if (memq 'v19 c++-emacs-features)
+   (if (boundp 'comment-indent-function)
        'comment-indent-function
      'comment-indent-hook))
   ;; now set their values
@@ -517,8 +517,7 @@ this variable to nil defeats backscan limits.")
 	indent-region-function 'c-indent-region
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *")
-  ;; set comment indentation hook based on emacs version
-  (if (memq 'v19 c++-emacs-features)
+  (if (boundp 'comment-indent-function)
       (setq comment-indent-function 'c++-comment-indent)
     (setq comment-indent-hook 'c++-comment-indent))
   ;; hack auto-hungry designators into mode-line-format
@@ -542,7 +541,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.29 $
+  "Major mode for editing C++ code.  $Revision: 3.30 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -734,7 +733,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.29 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.30 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'.  Only real
 difference is that this sets up the buffer for editing C code, and it
@@ -2659,7 +2658,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.29 $"
+(defconst c++-version "$Revision: 3.30 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
