@@ -125,6 +125,8 @@
 (cc-bytecomp-defun c-font-lock-identifier-list)
 (cc-bytecomp-defun c-font-lock-declarators)
 (cc-bytecomp-defun c-font-lock-objc-prot-ref-list)
+(cc-bytecomp-defun c-font-lock-objc-iip-decl)
+(cc-bytecomp-defun c-font-lock-objc-method)
 
 
 ;; Note that font-lock in XEmacs doesn't expand face names as
@@ -1856,19 +1858,21 @@ need for `c-font-lock-extra-types'.")
 	    id-end (match-end 1)
 	    pos (point))
 
-      (goto-char (match-beginning 0))
+      (goto-char id-start)
       (unless (c-skip-comments-and-strings limit)
-
 	(goto-char (1- pos))
-	(c-fontify-types-and-refs ()
-	  (when (c-forward-c++-template-arglist)
-	    (unless (get-text-property id-start 'face)
-	      (c-forward-syntactic-ws)
-	      (if (looking-at "::")
+	;; Check for comment/string both at the identifier and at the "<".
+	(unless (c-skip-comments-and-strings limit)
+
+	  (c-fontify-types-and-refs ()
+	    (when (c-forward-c++-template-arglist)
+	      (unless (get-text-property id-start 'face)
+		(c-forward-syntactic-ws)
+		(if (looking-at "::")
+		    (c-put-font-lock-face id-start id-end
+					  font-lock-reference-face)
 		  (c-put-font-lock-face id-start id-end
-					font-lock-reference-face)
-		(c-put-font-lock-face id-start id-end
-				      'font-lock-type-face))))))))
+					'font-lock-type-face)))))))))
   nil)
 
 (defun c-font-lock-c++-new (limit)
