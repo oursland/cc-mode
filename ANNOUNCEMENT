@@ -1,19 +1,17 @@
-Release announcement for CC Mode 4.379
+Release announcement
+CC Mode Version 5.00
 Barry A. Warsaw <cc-mode-help@python.org>
-$Date: 1997-03-10 16:25:15 $
+$Date: 1997-05-12 16:26:49 $
 
-This message announces the availability of CC Mode version 4.379.
-CC Mode is a GNU Emacs mode for editing C (ANSI and K&R), C++,
-Objective-C, and Java code.  A list of user visible changes is
-available from <http://www.python.org/ftp/emacs/cc-details.html>.
+This message announces the available of a new version of CC Mode, a
+GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, and
+Java code.  A list of user visible changes is available from
+<http://www.python.org/ftp/emacs/cc-details.html>.
 
 Since the distribution is fairly large and since it is readily
 available via the Web, anonymous ftp, and email, the source code is
 not being posted here.  Downloading instructions are provided further
 down in this message.
-
-NOTE: XEmacs 19.14 and Emacs 19.34 both contain an older version of
-CC Mode, so users of these Emacsen should upgrade their CC Mode.
 
 If you want to become a beta tester send subscribe requests to
 cc-mode-victims-request@python.org.  If you just want announcements of
