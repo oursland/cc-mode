@@ -5,7 +5,7 @@
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.100 $
+;; $Revision: 1.101 $
 ;;
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -114,7 +114,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 1.100 $
+  "Major mode for editing C++ code.  $Revision: 1.101 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -634,6 +634,11 @@ Returns nil if line starts inside a string, t if in a comment."
 	    ((c++-in-comment-p)
 	     ;; in a C comment.
 	     t)
+	    ;; is this a comment-only line in the first column?
+	    ((progn (goto-char indent-point)
+		    (beginning-of-line)
+		    (looking-at "^/[/*]"))
+	     0)
 	    ((null containing-sexp)
 	     ;; Line is at top level.  May be data or function definition, or
 	     ;; may be function argument declaration or member initialization.
@@ -1203,7 +1208,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.100 $"
+(defconst c++-version "$Revision: 1.101 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
