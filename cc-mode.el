@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.185 $
-;; Last Modified:   $Date: 1995-03-29 17:27:40 $
+;; Version:         $Revision: 4.186 $
+;; Last Modified:   $Date: 1995-03-30 19:00:02 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-29 17:27:40 $|$Revision: 4.185 $|
+;; |$Date: 1995-03-30 19:00:02 $|$Revision: 4.186 $|
 
 ;;; Code:
 
@@ -900,6 +900,14 @@ supported list, along with the values for this variable:
   "Buffer local language-specific access key regexp.")
 (defvar c-class-key nil
   "Buffer local language-specific class key regexp.")
+(defconst c-protection-key
+  "\\<\\(public\\|protected\\|private\\)\\>"
+  "Regexp describing protection keywords.")
+(defconst c-symbol-key "\\(\\w\\|\\s_\\)+"
+  "Regexp describing a C/C++/ObjC symbol.
+We cannot use just `word' syntax class since `_' cannot be in word
+class.  Putting underscore in word class breaks forward word movement
+behavior that users are familiar with.")
 (defconst c-baseclass-key
   (concat
    ":?[ \t]*\\(virtual[ \t]+\\)?\\("
@@ -929,11 +937,6 @@ The expansion is entirely correct because it uses the C preprocessor."
 
 
 ;; constant regular expressions for looking at various constructs
-(defconst c-symbol-key "\\(\\w\\|\\s_\\)+"
-  "Regexp describing a C/C++/ObjC symbol.
-We cannot use just `word' syntax class since `_' cannot be in word
-class.  Putting underscore in word class breaks forward word movement
-behavior that users are familiar with.")
 (defconst c-C++-class-key "\\(class\\|struct\\|union\\)"
   "Regexp describing a C++ class declaration, including templates.")
 (defconst c-C-class-key "\\(struct\\|union\\)"
@@ -943,9 +946,6 @@ behavior that users are familiar with.")
 	  c-C++-class-key "[ \t]+" c-symbol-key
 	  "\\([ \t]*:[ \t]*\\)?\\s *[^;]")
   "Regexp describing a class inheritance declaration.")
-(defconst c-protection-key
-  "\\<\\(public\\|protected\\|private\\)\\>"
-  "Regexp describing protection keywords.")
 (defconst c-switch-label-key
   "\\(\\(case[( \t]+\\S .*\\)\\|default[ \t]*\\):"
   "Regexp describing a switch's case or default label")
@@ -4508,7 +4508,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.185 $"
+(defconst c-version "$Revision: 4.186 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
