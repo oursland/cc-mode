@@ -1645,7 +1645,6 @@ brace."
 	     ;; for bogus matches on access specifiers inside classes.
 	     ((and (save-excursion
 		     ;; There might be member inits on the first line too.
-		     (end-of-line)
 		     (while (and (> (point) lim)
 				 (eq (char-before) ?,)
 				 (= (c-backward-token-1 2 t lim) 0)
@@ -1653,8 +1652,9 @@ brace."
 				 (= (c-backward-token-1 1 t lim) 0))
 		       (c-backward-syntactic-ws lim))
 		     (setq placeholder (point))
-		     (c-backward-syntactic-ws lim)
-		     (eq (char-before) ?:))
+		     (c-backward-token-1 1 t lim)
+		     (and (eq (char-after) ?:)
+			  (not (eq (char-before) ?:))))
 		   (save-excursion
 		     (goto-char placeholder)
 		     (back-to-indentation)
