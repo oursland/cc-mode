@@ -273,6 +273,8 @@
     (erase-buffer)
     (list testbuf resultsbuf expectedbuf)))
 
+(defun shutup-parsing-error ())
+
 (defun do-one-test (filename)
   (interactive "fFile to test: ")
   (if (member filename finished-tests)
@@ -286,7 +288,8 @@
 	   (pop-up-windows t)
 	   (linenum 1)
 	   (style "TESTSTYLE")
-	   error-found-p)
+	   error-found-p
+	   )
       (set-buffer testbuf)
       (goto-char (point-min))
       (while (not (eobp))
@@ -344,7 +347,12 @@
   (c-version)
   (if (consp resetp)
       (setq finished-tests nil))
-  (mapcar 'do-one-test list-of-tests)
+  ;; TBD: HACK HACK HACK
+  (let ((old-c-echo-parsing-error (symbol-function 'c-echo-parsing-error)))
+    (fset 'c-echo-parsing-error 'shutup-parsing-error)
+    (unwind-protect
+	(mapcar 'do-one-test list-of-tests)
+      (fset 'c-echo-parsing-error old-c-echo-parsing-error)))
   (message "All tests passed!")
   (setq finished-tests nil))
 
