@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.119 $
-;; Last Modified:   $Date: 1994-12-16 15:41:05 $
+;; Version:         $Revision: 4.120 $
+;; Last Modified:   $Date: 1994-12-19 16:53:31 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-16 15:41:05 $|$Revision: 4.119 $|
+;; |$Date: 1994-12-19 16:53:31 $|$Revision: 4.120 $|
 
 ;;; Code:
 
@@ -173,8 +173,8 @@ reported and the syntactic symbol is ignored.")
     (cpp-macro             . -1000)
     (friend                . 0)
     (objc-method-intro     . -1000)
-    (objc-method-args-cont . c-lineup-objc-method-args)
-    (objc-method-call-cont . c-lineup-objc-method-call)
+    (objc-method-args-cont . c-lineup-ObjC-method-args)
+    (objc-method-call-cont . c-lineup-ObjC-method-call)
     )
   "Default settings for offsets of syntactic elements.
 Do not change this constant!  See the variable `c-offsets-alist' for
@@ -2243,9 +2243,8 @@ search."
 		   (looking-at c-label-key))))
 	 ;; CASE 7: ObjC method def
 	 ((and (eq major-mode 'objc-mode)
-	       (c-in-objc-method-def-p))
-	  (setq last-begin (point)
-		donep t))
+	       (setq last-begin (c-in-objc-method-def-p)))
+	  (setq donep t))
 	 ;; CASE 8: nothing special
 	 (t (setq last-begin (point)))
 	 )))
@@ -2882,13 +2881,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; Return nil if we aren't in a method definition, otherwise the
   ;; position of the initial [+-].
   (save-excursion
-    (c-backward-syntactic-ws)
-    (if (or (= (preceding-char) ?-)
-	    (= (preceding-char) ?+))
-	(let ((initial-pos (1- (point))))
-	  (beginning-of-line)
-	  (if (looking-at c-ObjC-method-key)
-	      initial-pos))
+    (beginning-of-line)
+    (if (looking-at c-ObjC-method-key)
+        (point)
       nil)))
 
 (defun c-just-after-func-arglist-p (&optional containing)
@@ -3487,7 +3482,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			(or (not (eq major-mode 'objc-mode))
 			    (progn
 			      (forward-sexp -1)
-			      (backward-char)
+			      (forward-char -1)
 			      (c-backward-syntactic-ws)
 			      (not (or (= (preceding-char) ?-)
 				       (= (preceding-char) ?+)
@@ -3542,11 +3537,18 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 ((/= (char-after containing-sexp) ?{)
 	  (c-backward-syntactic-ws containing-sexp)
 	  (cond
-	   ;; CASE 6A: we are looking at the arglist closing paren
+	   ;; CASE 6A: we are looking at the arglist closing paren or
+	   ;; at an Objective-C method call closing bracket.
 	   ((and (/= char-before-ip ?,)
 		 (memq char-after-ip '(?\) ?\])))
-	    (goto-char containing-sexp)
-	    (c-add-syntax 'arglist-close (c-point 'boi)))
+	    (if (and (eq major-mode 'objc-mode)
+		     (progn
+		       (goto-char (1- containing-sexp))
+		       (c-backward-syntactic-ws lim)
+		       (not (looking-at c-symbol-key))))
+		(c-add-syntax 'statement-cont containing-sexp)
+	      (goto-char containing-sexp)
+	      (c-add-syntax 'arglist-close (c-point 'boi))))
 	   ;; CASE 6B: we are looking at the first argument in an empty
 	   ;; argument list. Use arglist-close if we're actually
 	   ;; looking at a close paren or bracket.
@@ -4130,18 +4132,20 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	(- (current-column) equalp curcol))
       )))
 
-(defun c-lineup-objc-method-call (langelem)
+(defun c-lineup-ObjC-method-call (langelem)
   ;; Line up methods args as elisp-mode does with function args
   (save-excursion
-    (let* ((relpos (cdr langelem))
-	   (curcol (progn (goto-char relpos)
-			  (current-column))))
-      ;; We are now on the opening square bracket
-      (forward-char)		   
-      (forward-sexp)
-      (- (1+ (current-column)) curcol))))
+    (let* ((open-bracket-pos (cdr langelem))
+           (open-bracket-col (progn (goto-char open-bracket-pos)
+                                    (current-column)))
+           (target-col (progn (forward-char)
+                              (forward-sexp)
+                              (if (eolp)
+                                  (+ open-bracket-col (* 2 c-basic-offset))
+                                (current-column)))))
+      (- (1+ target-col) open-bracket-col))))
 
-(defun c-lineup-objc-method-args (langelem)
+(defun c-lineup-ObjC-method-args (langelem)
   ;; Line up the colons that separate args. This is done trying to
   ;; align colons vertically.
   (save-excursion
@@ -4162,7 +4166,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (+ curcol (- first-col-column (current-column)))
 	  c-basic-offset)))))
 
-(defun c-lineup-objc-method-args-2 (langelem)
+(defun c-lineup-ObjC-method-args-2 (langelem)
   ;; Line up the colons that separate args. This is done trying to
   ;; align the colon on the current line with the previous one.
   (save-excursion
@@ -4312,7 +4316,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.119 $"
+(defconst c-version "$Revision: 4.120 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
