@@ -126,15 +126,14 @@
   (let ((initprop 'cc-mode-is-initialized)
 	c-initialization-ok)
     (unless (get 'c-initialize-cc-mode initprop)
-      (put 'c-initialize-cc-mode initprop t)
-      (c-initialize-builtin-style)
       (unwind-protect
 	  (progn
+	    (put 'c-initialize-cc-mode initprop t)
+	    (c-initialize-builtin-style)
 	    (run-hooks 'c-initialization-hook)
 	    (setq c-initialization-ok t))
 	;; Will try initialization hooks again if they failed.
-	(unless c-initialization-ok
-	  (put 'c-initialize-cc-mode initprop nil))))
+	(put 'c-initialize-cc-mode initprop c-initialization-ok)))
     ))
 
 
