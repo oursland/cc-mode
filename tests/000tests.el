@@ -100,6 +100,12 @@
     (make-face 'font-lock-constant-face))
   (defvar font-lock-constant-face nil)
   (setq font-lock-constant-face 'font-lock-constant-face))
+(unless (c-face-name-p 'font-lock-label-face)
+  (if (c-face-name-p 'font-lock-reference-face)
+      (copy-face 'font-lock-reference-face 'font-lock-label-face)
+    (copy-face 'font-lock-constant-face 'font-lock-label-face))
+  (defvar font-lock-label-face nil)
+  (setq font-lock-label-face 'font-lock-label-face))
 
 ;; In Emacs face names are resolved as variables which can point to
 ;; another face.  Make sure we don't have such indirections when we
@@ -134,6 +140,7 @@
     (key . font-lock-keyword-face)
     (fun . font-lock-function-name-face)
     (var . font-lock-variable-name-face)
+    (con . font-lock-constant-face)
     (typ . font-lock-type-face)
     (ref . font-lock-reference-face)
     (doc . ,c-doc-face)
