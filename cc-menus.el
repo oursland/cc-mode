@@ -200,23 +200,23 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
    "\\|"
    ;; > General function name regexp
    ;; Pick a token by  (match-string 3)
-   (car (cdr (nth 2 cc-imenu-c++-generic-expression))) ; -> index += 2
+   (car (cdr (nth 2 cc-imenu-c++-generic-expression))) ; -> index += 5
    (prog2 (setq cc-imenu-objc-generic-expression-general-func-index 3) "")
    ;; > Special case for definitions using phony prototype macros like:
    ;; > `int main _PROTO( (int argc,char *argv[]) )'.
-   ;; Pick a token by  (match-string 5)
+   ;; Pick a token by  (match-string 8)
    (if cc-imenu-c-prototype-macro-regexp
        (concat    
 	"\\|"
 	(car (cdr (nth 3 cc-imenu-c++-generic-expression))) ; -> index += 1
-	(prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 6) "")
+	(prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 9) "")
 	)
-     (prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 5) "")
+     (prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 8) "")
      "")				; -> index += 0
-   (prog2 (setq cc-imenu-objc-generic-expression-proto-index 5) "")
+   (prog2 (setq cc-imenu-objc-generic-expression-proto-index 8) "")
    ;;
    ;; For Objective-C
-   ;; Pick a token by (match-string 5 or 6)
+   ;; Pick a token by (match-string 8 or 9)
    ;;
    "\\|\\("					     
    "^[-+][:a-zA-Z0-9()*_<>\n\t ]*[;{]"        ; Methods
@@ -406,7 +406,8 @@ Example:
 		  (setq last (cdr last)))
 		(setcdr last clist))))
       ;; Add C lang tokens as a sub menu
-      (setq toplist (cons (cons "C" clist) toplist)))
+      (if clist
+	  (setq toplist (cons (cons "C" clist) toplist))))
     ;;
     toplist
     ))
@@ -415,10 +416,11 @@ Example:
 ;  ())
 ; FIXME: Please contribute one!
 
-(defun cc-imenu-init (mode-generic-expression)
+(defun cc-imenu-init (mode-generic-expression
+		      &optional mode-create-index-function)
   ;; This function does not do any hidden buffer changes.
-  (make-local-variable 'imenu-generic-expression)
   (setq imenu-generic-expression mode-generic-expression
+	imenu-create-index-function mode-create-index-function
 	imenu-case-fold-search nil))
 
 
