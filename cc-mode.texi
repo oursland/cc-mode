@@ -2038,13 +2038,13 @@ These variables are also useful when indenting code:
 @vindex tab-always-indent (c-)
 @kindex TAB
 @cindex literal
-This variable controls how @kbd{TAB} (@code{c-indent-command}) operates.
-When it is @code{t}, @kbd{TAB} always indents the current line.  When it
-is @code{nil}, the line is indented only if point is at the left margin,
-or on or before the first non-whitespace character on the line,
-otherwise some whitespace is inserted.  If this variable is the symbol
-@code{other}, then some whitespace is inserted only within strings and
-comments (literals), and inside preprocessor directives, but the line is
+This variable controls how @kbd{TAB} (@code{c-indent-command})
+operates.  When it is @code{t}, @kbd{TAB} always indents the current
+line.  When it is @code{nil}, the line is indented only if point is at
+the left margin, or on or before the first non-whitespace character on
+the line, otherwise some whitespace is inserted.  If this variable is
+some other value (not @code{nil} or @code{t}), then some whitespace is
+inserted only within strings and comments (literals), but the line is
 always reindented.
 @end defopt
 
