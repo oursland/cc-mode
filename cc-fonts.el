@@ -993,16 +993,19 @@ other easily recognizable things.  Used on level 2 and higher."
 	  ;; The result of the last search for `c-decl-prefix-re'.
 	  match
 	  ;; The position of the last token matched by the last
-	  ;; `c-decl-prefix-re' match.
+	  ;; `c-decl-prefix-re' match.  0 for the implicit match at bob.
 	  match-pos
 	  ;; The position to continue searching at.
 	  continue-pos
 	  ;; The position of the last "real" token we've stopped at.  This can
 	  ;; be greater than `continue-pos' when we get hits inside macros.
 	  (token-pos 0)
-	  ;; Nonzero if `c-decl-prefix-re' matches inside a function arglist,
-	  ;; i.e. if it matches '(', '[', or ','.  If it's nonzero then the
-	  ;; car of the value is the matched char.
+	  ;; Nonzero if the `c-decl-prefix-re' match is in an arglist context,
+	  ;; as opposed to a statement-level context.  The major difference is
+	  ;; that "," works as declaration delimiter in an arglist context,
+	  ;; whereas it only separates declarators in the same declaration in
+	  ;; a statement context.  If it's nonzero then the value is the
+	  ;; matched char, e.g. ?\(, ?\[ or ?,.
 	  arglist-match
 	  ;; Set to the result of `c-forward-type'.
 	  at-type
@@ -1122,7 +1125,7 @@ other easily recognizable things.  Used on level 2 and higher."
 	      ;; an infinite loop.
 	      (progn (c-forward-comments)
 		     (setq match t
-			   match-pos (point-min)
+			   match-pos 0
 			   continue-pos (point)))
 	    (backward-char)
 	    (or (bobp) (backward-char))
@@ -1158,9 +1161,21 @@ other easily recognizable things.  Used on level 2 and higher."
 		       match
 
 		       (or
+			;; Kludge to filter out matches on "[" in C++
+			;; (see comment in `c-decl-prefix-re').
+			(and (c-major-mode-is 'c++-mode)
+			     (eq (char-after match-pos) ?\[))
+
 			(progn
-			  (setq arglist-match (memq (char-after match-pos)
-						    '(?\( ?\[ ?,)))
+			  ;; Set `arglist-match'.  We look at whether the
+			  ;; match token is a statement-level one since the
+			  ;; tokens that can start arglists vary more between
+			  ;; the languages.  Look for ":" for the sake of
+			  ;; C++-style protection labels.
+			  (setq arglist-match (char-after match-pos))
+			  (when (memq arglist-match '(?{ ?} ?\; ?:))
+			    (setq arglist-match nil))
+
 			  ;; If `continue-pos' is less or equal to
 			  ;; `token-pos', we've got a hit inside a macro
 			  ;; that's in the syntactic whitespace before the
@@ -1201,15 +1216,16 @@ other easily recognizable things.  Used on level 2 and higher."
 
 	(catch 'continue
 	  ;; Narrow to the end of the macro if we got a hit inside one.
-	  (save-excursion
-	    (goto-char match-pos)
-	    (when (>= match-pos macro-end)
-	      (setq macro-end
-		    (if (save-excursion (and (c-beginning-of-macro)
-					     (< (point) match-pos)))
-			(progn (c-end-of-macro)
-			       (point))
-		      -1))))
+	  (when (/= match-pos 0)
+	    (save-excursion
+	      (goto-char match-pos)
+	      (when (>= match-pos macro-end)
+		(setq macro-end
+		      (if (save-excursion (and (c-beginning-of-macro)
+					       (< (point) match-pos)))
+			  (progn (c-end-of-macro)
+				 (point))
+			-1)))))
 	  (when (/= macro-end -1)
 	    (when (<= macro-end (point))
 	      (setq macro-end -1)
@@ -1279,7 +1295,8 @@ other easily recognizable things.  Used on level 2 and higher."
 			      (progn
 				(goto-char (match-end 0))
 				(c-forward-syntactic-ws)
-				(unless (c-forward-c++-template-arglist)
+				(unless (and (eq (char-after) ?<)
+					     (c-forward-c++-template-arglist))
 				  (throw 'continue t))
 				(c-forward-syntactic-ws))
 			    (goto-char start))
@@ -1594,7 +1611,7 @@ other easily recognizable things.  Used on level 2 and higher."
 		 c-opt-cast-close-paren-key
 
 		 ;; Should be the first type/identifier in a paren.
-		 (memq (car-safe arglist-match) '(?\( ?\[))
+		 (memq arglist-match '(?\( ?\[))
 
 		 ;; The closing paren should match
 		 ;; `c-opt-cast-close-paren-key'.
@@ -1614,6 +1631,7 @@ other easily recognizable things.  Used on level 2 and higher."
 
 		 ;; There should either be a cast before it or something
 		 ;; that isn't an identifier or close paren.
+		 (/= match-pos 0)
 		 (progn
 		   (goto-char match-pos)
 		   (or (eq (point) last-cast-end)
@@ -1670,7 +1688,7 @@ other easily recognizable things.  Used on level 2 and higher."
 		   ;; Should normally not fontify a list of declarators inside
 		   ;; an arglist, but the first argument in the ';' separated
 		   ;; list of a "for" statement is an exception.
-		   (when (eq (car arglist-match) ?\()
+		   (when (and (eq arglist-match ?\() (/= match-pos 0))
 		     (save-excursion
 		       (goto-char match-pos)
 		       (c-backward-syntactic-ws)
@@ -1759,7 +1777,18 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 			      nil t)
 			(unless (c-skip-comments-and-strings limit)
 			  (c-forward-syntactic-ws)
-			  (c-forward-type))))))))))
+			  ,(if (c-major-mode-is 'c++-mode)
+			       `(when (and (c-forward-type)
+					   (progn (c-forward-syntactic-ws)
+						  (eq (char-after) ?=)))
+				  ;; In C++ we additionally check for a "class
+				  ;; X = Y" construct which is used in
+				  ;; templates, to fontify Y as a type.
+				  (forward-char)
+				  (c-forward-syntactic-ws)
+				  (c-forward-type))
+			     `(c-forward-type))
+			  )))))))))
 
       ;; Fontify symbols after closing braces as declaration
       ;; identifiers under the assumption that they are part of
