@@ -1992,10 +1992,14 @@ be more \"DWIM:ey\"."
       (setq here (point))		; ONLY HERE is HERE updated
       (setq candidate nil) ; Just after a comment is a canditate for BO-statement
 
-;;; Move the next bit into the new COND form.
-      (if (and (< count 0) (= here (point-max)))
-	  ;; Special case because eob might be in a literal.
-	  (setq range nil))
+;;;; Move the next bit into the new COND form.  Commented out, 2003/10/6.
+;;;; This next form can have no effect, since none of the movement functions
+;;;; called from within the cond can move in the "wrong direction", and so if
+;;;; (= here (point-max)), then point is necessarily also at (point-max), and
+;;;; thus this function will bail out in the first form within the next cond.
+      ;; (if (and (< count 0) (= here (point-max)))
+;; 	  ;; Special case because eob might be in a literal.
+;; 	  (setq range nil))
 
       ;; Go back/forward one "chunk" each time round the following loop,
       ;; stopping when we reach a statement boundary, etc.
