@@ -101,6 +101,7 @@ simplifications with lesser accuracy.")
 (defvar deactivate-mark)
 (defvar inhibit-point-motion-hooks)
 (defvar font-lock-global-modes)
+(defvar c-debug-parse-state)
 
 ;; Turn on debugging tools in CC Mode.
 (setq c-debug-parse-state t)
@@ -606,6 +607,8 @@ to be set as a file local variable.")
 (defvar cc-test-comp-buf nil)
 (defvar cc-test-comp-win nil)
 
+(defvar cc-test-last-backtrace nil)
+
 (defconst cc-test-clear-line-string
   (if cc-test-verbose "" (concat "\r" (make-string 60 ?\ ) "\r")))
 
@@ -1058,8 +1061,6 @@ to be set as a file local variable.")
 	  (when (and (not error-found-p) (interactive-p))
 	    (kill-test-buffers))
 	  (not error-found-p))))))
-
-(defvar cc-test-last-backtrace nil)
 
 (defvar signal-hook-function)		; Doesn't exist in XEmacs.
 
