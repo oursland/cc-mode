@@ -1227,25 +1227,6 @@ working due to this change.")
   "Highlighting settings for Font Lock mode."
   :group 'c)
 
-(defface c-doc-face
-  '((t))
-  "Face used to highlight documentation comments,
-i.e. comments that are used by documentation extraction tools like Javadoc.
-It's overlaid over `font-lock-comment-face'."
-  :group 'c-fonts)
-
-(defface c-doc-marker-face
-  '((t (:bold t)))
-  "Face used to highlight the characters that mark documentation comments.
-It's overlaid over `c-doc-face'."
-  :group 'c-fonts)
-
-(defface c-doc-markup-face
-  '((t (:bold nil)))
-  "Face used to highlight special markup inside documentation comments.
-It's overlaid over `font-lock-reference-face'."
-  :group 'c-fonts)
-
 (define-widget 'c-extra-types-widget 'radio
   ;; Widget for a list of regexps for the extra types.
   :args '((const :tag "none" nil)
