@@ -92,23 +92,15 @@
 (cc-require 'cc-align)
 (cc-require 'cc-menus)
 
-(defvar c-emacs-with-sttp-p
-;; Are syntax-table text properties supported by the current Emacs version?
-  (and (boundp 'emacs-major-version)
-       (if (featurep 'xemacs)
-           (or (> emacs-major-version 21)
-               (and (= emacs-major-version 21)
-                    (>= emacs-minor-version 4)))
-         (>= emacs-major-version 20))))
-
 (defun c-mode-is-new-awk-p ()
-  (and (c-major-mode-is 'awk-mode) c-emacs-with-sttp-p))
+  (and (c-major-mode-is 'awk-mode)
+       (memq 'syntax-properties c-emacs-features)))
 ;; Is the current mode the "new" awk mode?  It is important for (e.g.) the
 ;; cc-engine functions do distinguish between the old and new awk-modes.
 
 ;; On older versions of Emacs, invoking awk-mode will cause the old
 ;; awk-mode.el to get loaded.
-(if c-emacs-with-sttp-p (cc-require 'cc-awk))
+(if (memq 'syntax-properties c-emacs-features) (cc-require 'cc-awk))
 
 ;; SILENCE the compiler.
 (cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
@@ -922,7 +914,7 @@ Key bindings:
 ;; Support for awk.  This is purposely disabled for older (X)Emacsen which
 ;; don't support syntax-table properties.
 
-(if (not c-emacs-with-sttp-p)
+(if (not (memq 'syntax-properties c-emacs-features))
     (autoload 'awk-mode "awk-mode.el" "awk-mode doc string FIXME!!!" t)
   (defvar awk-mode-abbrev-table nil
     "Abbreviation table used in awk-mode buffers.")
@@ -988,7 +980,8 @@ Key bindings:
     (run-hooks 'c-mode-common-hook)
     (run-hooks 'awk-mode-hook)
     (c-update-modeline))
-)                                   ; closes the (if (not c-emacs-with-sttp-p)
+) ;; closes the (if (not (memq 'syntax-properties c-emacs-features))
+
 
 ;; bug reporting
 
