@@ -3760,10 +3760,41 @@ Line up C++ stream operators (i.e. @samp{<<} and @samp{>>}).
 @findex c-lineup-multi-inher
 @findex lineup-multi-inher (c-)
 @item c-lineup-multi-inher
-Line up the classes in C++ multiple inheritance clauses under each
-other.
+Line up the classes in C++ multiple inheritance clauses and member
+initializers under each other.  E.g:
+@example
+@group
 
-@workswith @code{inher-cont}.
+Foo::Foo (int a, int b):
+    Cyphr (a),
+    Bar (b)              // c-lineup-multi-inher
+
+@end group
+@end example
+@noindent
+and
+@example
+@group
+
+class Foo
+    : public Cyphr,
+      public Bar         // c-lineup-multi-inher
+
+@end group
+@end example
+@noindent
+and
+@example
+@group
+
+Foo::Foo (int a, int b)
+    : Cyphr (a)
+    , Bar (b)            // c-lineup-multi-inher
+
+@end group
+@end example
+
+@workswith @code{inher-cont}, @code{member-init-cont}.
 
 @findex c-lineup-java-inher
 @findex lineup-java-inher (c-)
