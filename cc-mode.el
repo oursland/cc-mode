@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.257 $
-;; Last Modified:   $Date: 1994-02-18 16:13:27 $
+;; Version:         $Revision: 3.258 $
+;; Last Modified:   $Date: 1994-02-18 16:23:50 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-18 16:13:27 $|$Revision: 3.257 $|
+;; |$Date: 1994-02-18 16:23:50 $|$Revision: 3.258 $|
 
 ;;; Code:
 
@@ -723,7 +723,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.257 $
+cc-mode Revision: $Revision: 3.258 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -754,14 +754,15 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.257 $
+cc-mode Revision: $Revision: 3.258 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
 problem, including a reproducable test case and send the message.
 
-Note that the details of configuring c-mode have been moved to
-the accompanying texinfo manual.
+Note that the details of configuring c-mode will soon be moved to the
+accompanying texinfo manual.  Until then, please read the README file
+that came with the cc-mode distribution.
 
 The hook variable `c-mode-hook' is run with no args, if that value is
 bound and has a non-nil value.  Also the common hook
@@ -3169,7 +3170,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.257 $"
+(defconst c-version "$Revision: 3.258 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
