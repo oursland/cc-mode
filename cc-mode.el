@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.36 $
-;; Last Modified:   $Date: 1993-10-29 22:00:38 $
+;; Version:         $Revision: 3.37 $
+;; Last Modified:   $Date: 1993-10-29 22:42:35 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-10-29 22:00:38 $|$Revision: 3.36 $|
+;; |$Date: 1993-10-29 22:42:35 $|$Revision: 3.37 $|
 
 ;;; Code:
 
@@ -537,7 +537,7 @@ this variable to nil defeats backscan limits.")
   )
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.36 $
+  "Major mode for editing C++ code.  $Revision: 3.37 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -732,7 +732,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.36 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.37 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'.  Only real
 difference is that this sets up the buffer for editing C code, and it
@@ -1925,7 +1925,7 @@ point of the beginning of the C++ definition."
 			    top-close-paren
 			  close-paren))))
        ((= (following-char) ?})
-	(setq indent (+ (- indent c-indent-level)
+	(setq indent (+ indent
 			(if (save-excursion
 			      (forward-char 1)
 			      (c++-at-top-level-p nil bod))
@@ -2024,10 +2024,10 @@ BOD is the beginning of the C++ definition."
 	  (case-fold-search nil)
 	  state do-indentation literal in-meminit-p
 	  containing-sexp streamop-pos char-before-ip
-	  (inclass-shift 0) inclass-depth inclass-unshift
 	  (bod (or bod (c++-point 'bod)))
 	  (open-paren (or (car-safe c-brace-offset)
 			  c-brace-offset))
+	  inclass-depth
 	  )				;end-let
       (if parse-start
 	  (goto-char parse-start)
@@ -2064,226 +2064,237 @@ BOD is the beginning of the C++ definition."
        ;; case this is the second line of member inits.  It is
        ;; assumed that arg decls and member inits are not mixed.
        ;;
+              ;;; depth of construct inside enclosing class
        ((setq inclass-depth (c++-at-top-level-p t bod))
-	(+
-	 ;; add an offset if we are inside a class defun body, i.e. we
-	 ;; are at the top level, but only wrt a containing class
-	 (let ((shift/level (+ c-indent-level c-brace-imaginary-offset)))
-	   (setq inclass-shift (* shift/level inclass-depth)
-		 inclass-unshift (* shift/level (max 0 (1- inclass-depth))))
-	   inclass-shift)
-	 (progn
-	   (goto-char indent-point)
-	   (skip-chars-forward " \t")
-	   (cond
-	    ;; CASE 3A: are we looking at the top-level opening
-	    ;; brace, or are we at the beginning of the buffer?
-	    ((or (= (following-char) ?{)
-		 (progn (c++-backward-syntactic-ws parse-start)
-			(bobp)))
-	     ;; top-level open paren offset gets applied elsewhere
-	     0)
-	    ;; CASE 3B: first arg decl or member init
-	    ((c++-in-function-p)
-	     (goto-char indent-point)
-	     (skip-chars-forward " \t")
-	     (if (= (following-char) ?:)
-		 c++-member-init-indent
-	       c-argdecl-indent))
-	    ;; CASE 3C: 1st line after hanging mem init colon or access
-	    ;; specifier
-	    ((progn
-	       ;; skip past optional semicolons
-	       (if (= (preceding-char) ?\;)
-		   (progn
-		     (backward-char 1)
-		     (skip-chars-backward " \t")))
-	       ;; may be first line after a hanging member init colon.
-	       ;; check to be sure its not a scope operator meaning we
-	       ;; are inside a member def
-	       (or (and
-		    (= (preceding-char) ?:)
-		    (/= (char-after (1- (point))) ?:))
-		   (save-excursion
-		     (forward-line 1)
-		     (skip-chars-forward " \t")
-		     (or (eobp) (forward-char 1))
-		     (and (= (preceding-char) ?:)
-			  (/= (following-char) ?:)))
-		   (save-excursion
-		     (and (= (preceding-char) ?,)
-			  (let ((bol (c++-point 'bol)))
-			    (skip-chars-backward "^:" bol)
-			    (= (preceding-char) ?:))
-			  (not (c++-in-parens-p))
-			  (progn
-			    (forward-char -1)
-			    (skip-chars-backward " \t")
-			    (not (bolp)))
-			  ;; make sure its not a multiple inheritance
-			  ;; continuation line
-			  (progn
-			    (beginning-of-line)
-			    (not (looking-at c++-inher-key)))
-			  ))))
-	     ;; check to see if we're looking at a member init, or
-	     ;; access specifier
-	     (if (progn
-		   (beginning-of-line)
-		   (skip-chars-forward " \t")
-		   (looking-at c++-access-key))
-		 ;; access specifier. class defun opening brace may
-		 ;; not be in col zero, and derived classes could be
-		 ;; on a separate line than class intro
-		 (progn
-		   (goto-char (or containing-sexp bod))
-		   (beginning-of-line)
-		   (skip-chars-forward " \t")
-		   (if (looking-at
-			":[ \t]*\\<\\(public\\|protected\\|private\\)\\>")
-		       (forward-line -1))
-		   (- (current-indentation)
-		      ;; remove some nested inclass indentation
-		      inclass-unshift))
-	       ;; member init, so add offset. add additional offset if
-	       ;; looking at line with just a member init colon
-	       (+ c++-member-init-indent
-		  (if (looking-at ":[ \t]*$")
-		      (or c++-continued-member-init-offset 0) 0))))
-	    ;; CASE 3D: friend declaration?
-	    ((or (= (preceding-char) ?})
-		 (= (preceding-char) ?\))
-		 (save-excursion
-		   (beginning-of-line)
-		   (looking-at "[ \t]*\\<friend\\>")))
-	     ;; indentation of class defun opening brace may not be
-	     ;; zero
-	     (goto-char (or containing-sexp bod))
-	     (- (current-indentation)
-		;; remove some nested inclass indentation
-		inclass-unshift))
-	    ;; CASE 3E: cont arg decls or member inits, or we might be
-	    ;; inside a K&R C arg decl
-	    ((save-excursion
-	       (while (and (< bod (point))
-			   (memq (preceding-char) '(?\, ?\;)))
-		 (beginning-of-line)
-		 (c++-backward-syntactic-ws bod))
-	       (and (eq major-mode 'c++-c-mode)
-		    (= (preceding-char) ?\))))
-	     (+ c-argdecl-indent
-		(progn
-		  (goto-char indent-point)
-		  (c++-backward-syntactic-ws bod)
-		  (if (= (preceding-char) ?,)
-		      c-continued-statement-offset
-		    0))))
-	    ;; CASE 3F: whitespace before comment?
-	    ((progn
-	       (beginning-of-line)
+	(let* (;; amount of right shift applied per level of enclosing
+	       ;; block (possibly for all levels except the top level)
+	       (shift-per-level (+ c-indent-level c-brace-imaginary-offset))
+	       ;; the depth minus the enclosing class block, can't be
+	       ;; less than zero
+	       (depth-sans-class (max 0 (1- inclass-depth)))
+	       ;; shift applied to defun opening brace
+	       (top-open-paren (or (cdr-safe c-brace-offset)
+				   c-brace-offset))
+	       ;; total amount of right shift applied to a line at
+	       ;; this brace level, including proper top-level shift
+	       (inclass-shift (+ (* (- inclass-depth depth-sans-class)
+				    top-open-paren)
+				 (* depth-sans-class shift-per-level)))
+	       ;; any left shift (i.e. unshift) which might be
+	       ;; necessary 
+	       (inclass-unshift (- inclass-shift top-open-paren))
+	       )
+	  (+ inclass-shift
+	     (progn
+	       (goto-char indent-point)
 	       (skip-chars-forward " \t")
-	       (or (memq (c++-in-literal bod) '(c c++))
-		   (looking-at "/[/*]")))
-	     0)
-	    ;; CASE 3G: are we looking at the first member init?
-	    ((and (= (following-char) ?:)
-		  (save-excursion
-		    (c++-backward-syntactic-ws bod)
-		    (= (preceding-char) ?\))))
-	     (if c++-continued-member-init-offset
-		 (+ (current-indentation)
-		    c++-continued-member-init-offset)
-	       (progn
-		 (forward-char 1)
+	       (cond
+		;; CASE 3A: are we looking at the top-level opening
+		;; brace, or are we at the beginning of the buffer?
+		((or (= (following-char) ?{)
+		     (progn (c++-backward-syntactic-ws parse-start)
+			    (bobp)))
+		 ;; top-level open paren offset gets applied elsewhere
+		 0)
+		;; CASE 3B: first arg decl or member init
+		((c++-in-function-p)
+		 (goto-char indent-point)
 		 (skip-chars-forward " \t")
-		 (- (current-column)
-		    inclass-shift))))
-	    ;; CASE 3H: else first check to see if its a multiple
-	    ;; inheritance continuation line, or continued member init
-	    ;; list, but not a K&R C arg decl
-	    ((and (not (eq major-mode 'c++-c-mode))
-		  (or (looking-at c++-inher-key)
-		      (looking-at c++-baseclass-key)))
-	     (if (= char-before-ip ?,)
-		 (let ((pnt (match-end 0))
-		       (boi (c++-point 'boi)))
-		   ;; check to see if inheritance is on same line as
-		   ;; class decl, or on next line
-		   (if (/= (char-after boi) ?:)
-		       (if (looking-at c++-inher-key)
-			   (goto-char pnt))
-		     (goto-char boi)
-		     (forward-char 1)
-		     (skip-chars-forward " \t"))
-		   (- (current-column) inclass-shift))
-	       ;; nope, its probably a nested class
-	       0))
-	    ;; CASE 3I: we might be looking at the opening brace of a
-	    ;; class defun
-	    ((= (following-char) ?\{)
-	     ;; indentation of opening brace may not be zero
-	     (- (current-indentation)
-		;; remove some nested inclass indentation
-		inclass-unshift))
-	    ;; CASE 3J: blank line, indent next line to zero
-	    ((eolp)
-	     0)
-	    ;; CASE 3K: at beginning of buffer, if nothing else,
-	    ;; indent to zero
-	    ((save-excursion
-	       (goto-char indent-point)
-	       (beginning-of-line)
-	       (bobp))
-	     0)
-	    ;; CASE 3L: this could be a compound statement, but make
-	    ;; sure its not a member init list
-	    ((save-excursion
-	       (goto-char indent-point)
-	       (c++-backward-syntactic-ws bod)
-	       (and (= (preceding-char) ?,)
-		    (save-excursion
-		      (while (and (< bod (point))
-				  (= (preceding-char) ?,))
-			(beginning-of-line)
-			(c++-backward-syntactic-ws bod))
-		      (forward-line 1)
-		      (not (setq in-meminit-p (looking-at "[ \t]*:"))))))
-	     c-continued-statement-offset)
-	    ;; CASE 3M: default case, we could be in a member init
-	    ;; call, or the first line of a member init list, or a
-	    ;; compound state.
-	    (t
-	     (if (c++-in-parens-p)
-		 ;; we are perhaps inside a member init call
-		 (while (and (c++-in-parens-p)
-			     (< bod (point)))
-		   (forward-line -1)
-		   (skip-chars-forward " \t")))
-	     ;; check to be sure that we're not on the first line of
-	     ;; the member init list
-	     (if (and (= (following-char) ?:)
+		 (if (= (following-char) ?:)
+		     c++-member-init-indent
+		   c-argdecl-indent))
+		;; CASE 3C: 1st line after hanging mem init colon or access
+		;; specifier
+		((progn
+		   ;; skip past optional semicolons
+		   (if (= (preceding-char) ?\;)
+		       (progn
+			 (backward-char 1)
+			 (skip-chars-backward " \t")))
+		   ;; may be first line after a hanging member init colon.
+		   ;; check to be sure its not a scope operator meaning we
+		   ;; are inside a member def
+		   (or (and
+			(= (preceding-char) ?:)
+			(/= (char-after (1- (point))) ?:))
+		       (save-excursion
+			 (forward-line 1)
+			 (skip-chars-forward " \t")
+			 (or (eobp) (forward-char 1))
+			 (and (= (preceding-char) ?:)
+			      (/= (following-char) ?:)))
+		       (save-excursion
+			 (and (= (preceding-char) ?,)
+			      (let ((bol (c++-point 'bol)))
+				(skip-chars-backward "^:" bol)
+				(= (preceding-char) ?:))
+			      (not (c++-in-parens-p))
+			      (progn
+				(forward-char -1)
+				(skip-chars-backward " \t")
+				(not (bolp)))
+			      ;; make sure its not a multiple inheritance
+			      ;; continuation line
+			      (progn
+				(beginning-of-line)
+				(not (looking-at c++-inher-key)))
+			      ))))
+		 ;; check to see if we're looking at a member init, or
+		 ;; access specifier
+		 (if (progn
+		       (beginning-of-line)
+		       (skip-chars-forward " \t")
+		       (looking-at c++-access-key))
+		     ;; access specifier. class defun opening brace may
+		     ;; not be in col zero, and derived classes could be
+		     ;; on a separate line than class intro
+		     (progn
+		       (goto-char (or containing-sexp bod))
+		       (beginning-of-line)
+		       (skip-chars-forward " \t")
+		       (if (looking-at
+			    ":[ \t]*\\<\\(public\\|protected\\|private\\)\\>")
+			   (forward-line -1))
+		       (- (current-indentation)
+			  ;; remove some nested inclass indentation
+			  inclass-unshift))
+		   ;; member init, so add offset. add additional offset if
+		   ;; looking at line with just a member init colon
+		   (+ c++-member-init-indent
+		      (if (looking-at ":[ \t]*$")
+			  (or c++-continued-member-init-offset 0) 0))))
+		;; CASE 3D: friend declaration?
+		((or (= (preceding-char) ?})
+		     (= (preceding-char) ?\))
+		     (save-excursion
+		       (beginning-of-line)
+		       (looking-at "[ \t]*\\<friend\\>")))
+		 ;; indentation of class defun opening brace may not be
+		 ;; zero
+		 (goto-char (or containing-sexp bod))
+		 (- (current-indentation) top-open-paren))
+		;; CASE 3E: cont arg decls or member inits, or we might be
+		;; inside a K&R C arg decl
+		((save-excursion
+		   (while (and (< bod (point))
+			       (memq (preceding-char) '(?\, ?\;)))
+		     (beginning-of-line)
+		     (c++-backward-syntactic-ws bod))
+		   (and (eq major-mode 'c++-c-mode)
+			(= (preceding-char) ?\))))
+		 (+ c-argdecl-indent
+		    (progn
+		      (goto-char indent-point)
+		      (c++-backward-syntactic-ws bod)
+		      (if (= (preceding-char) ?,)
+			  c-continued-statement-offset
+			0))))
+		;; CASE 3F: whitespace before comment?
+		((progn
+		   (beginning-of-line)
+		   (skip-chars-forward " \t")
+		   (or (memq (c++-in-literal bod) '(c c++))
+		       (looking-at "/[/*]")))
+		 0)
+		;; CASE 3G: are we looking at the first member init?
+		((and (= (following-char) ?:)
 		      (save-excursion
 			(c++-backward-syntactic-ws bod)
 			(= (preceding-char) ?\))))
-		 (progn
-		   (forward-char 1)
-		   (skip-chars-forward " \t")))
-	     ;; skip to start of compound statement, but only if we're
-	     ;; not in a member initialization list
-	     (if (not in-meminit-p)
-		 (let ((ipnt (point)))
-		   (c++-backward-syntactic-ws bod)
-		   (while (and (= (preceding-char) ?,)
-			       (< bod (point)))
-		     (beginning-of-line)
+		 (if c++-continued-member-init-offset
+		     (+ (current-indentation)
+			c++-continued-member-init-offset)
+		   (progn
+		     (forward-char 1)
 		     (skip-chars-forward " \t")
-		     (setq ipnt (point))
-		     (c++-backward-syntactic-ws bod))
-		   (goto-char ipnt)))
-	     ;; subtract inclass-shift since its already incorporated
-	     ;; by default in current-column
-	     (- (current-column) inclass-shift)
-	     )))))
+		     (- (current-column)
+			inclass-shift))))
+		;; CASE 3H: else first check to see if its a multiple
+		;; inheritance continuation line, or continued member init
+		;; list, but not a K&R C arg decl
+		((and (not (eq major-mode 'c++-c-mode))
+		      (or (looking-at c++-inher-key)
+			  (looking-at c++-baseclass-key)))
+		 (if (= char-before-ip ?,)
+		     (let ((pnt (match-end 0))
+			   (boi (c++-point 'boi)))
+		       ;; check to see if inheritance is on same line as
+		       ;; class decl, or on next line
+		       (if (/= (char-after boi) ?:)
+			   (if (looking-at c++-inher-key)
+			       (goto-char pnt))
+			 (goto-char boi)
+			 (forward-char 1)
+			 (skip-chars-forward " \t"))
+		       (- (current-column) inclass-shift))
+		   ;; nope, its probably a nested class
+		   0))
+		;; CASE 3I: we might be looking at the opening brace of a
+		;; class defun
+		((= (following-char) ?\{)
+		 ;; indentation of opening brace may not be zero
+		 (- (current-indentation)
+		    ;; remove some nested inclass indentation
+		    inclass-unshift))
+		;; CASE 3J: blank line, indent next line to zero
+		((eolp)
+		 0)
+		;; CASE 3K: at beginning of buffer, if nothing else,
+		;; indent to zero
+		((save-excursion
+		   (goto-char indent-point)
+		   (beginning-of-line)
+		   (bobp))
+		 0)
+		;; CASE 3L: this could be a compound statement, but make
+		;; sure its not a member init list
+		((save-excursion
+		   (goto-char indent-point)
+		   (c++-backward-syntactic-ws bod)
+		   (and (= (preceding-char) ?,)
+			(save-excursion
+			  (while (and (< bod (point))
+				      (= (preceding-char) ?,))
+			    (beginning-of-line)
+			    (c++-backward-syntactic-ws bod))
+			  (forward-line 1)
+			  (not (setq in-meminit-p (looking-at "[ \t]*:"))))))
+		 c-continued-statement-offset)
+		;; CASE 3M: default case, we could be in a member init
+		;; call, or the first line of a member init list, or a
+		;; compound state.
+		(t
+		 (if (c++-in-parens-p)
+		     ;; we are perhaps inside a member init call
+		     (while (and (c++-in-parens-p)
+				 (< bod (point)))
+		       (forward-line -1)
+		       (skip-chars-forward " \t")))
+		 ;; check to be sure that we're not on the first line of
+		 ;; the member init list
+		 (if (and (= (following-char) ?:)
+			  (save-excursion
+			    (c++-backward-syntactic-ws bod)
+			    (= (preceding-char) ?\))))
+		     (progn
+		       (forward-char 1)
+		       (skip-chars-forward " \t")))
+		 ;; skip to start of compound statement, but only if we're
+		 ;; not in a member initialization list
+		 (if (not in-meminit-p)
+		     (let ((ipnt (point)))
+		       (c++-backward-syntactic-ws bod)
+		       (while (and (= (preceding-char) ?,)
+				   (< bod (point)))
+			 (beginning-of-line)
+			 (skip-chars-forward " \t")
+			 (setq ipnt (point))
+			 (c++-backward-syntactic-ws bod))
+		       (goto-char ipnt)))
+		 ;; subtract inclass-shift since its already incorporated
+		 ;; by default in current-column
+		 (- (current-column) inclass-shift)
+		 ))))))
        ;; CASE 4: line is expression, not statement. indent to just
        ;; after the surrounding open -- unless empty arg list, in
        ;; which case we do what c++-empty-arglist-indent says to do.
@@ -2662,7 +2673,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.36 $"
+(defconst c++-version "$Revision: 3.37 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
