@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.186 $
-;; Last Modified:   $Date: 1995-03-30 19:00:02 $
+;; Version:         $Revision: 4.187 $
+;; Last Modified:   $Date: 1995-03-31 00:53:21 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-30 19:00:02 $|$Revision: 4.186 $|
+;; |$Date: 1995-03-31 00:53:21 $|$Revision: 4.187 $|
 
 ;;; Code:
 
@@ -2319,15 +2319,17 @@ search."
 	      (setq substmt-p nil))
 	  (setq last-begin (point)
 		donep substmt-p))
-	 ;; CASE 4: is this the first time we're checking?
+	 ;; CASE 4: are we looking at a label?
+	 ((looking-at c-label-key))
+	 ;; CASE 5: is this the first time we're checking?
 	 (firstp (setq firstp nil
 		       substmt-p (not (c-crosses-statement-barrier-p
 				       (point) last-begin))
 		       last-begin (point)))
-	 ;; CASE 5: have we crossed a statement barrier?
+	 ;; CASE 6: have we crossed a statement barrier?
 	 ((c-crosses-statement-barrier-p (point) last-begin)
 	  (setq donep t))
-	 ;; CASE 6: ignore labels
+	 ;; CASE 7: ignore labels
 	 ((and maybe-labelp
 	       (or (and c-access-key (looking-at c-access-key))
 		   ;; with switch labels, we have to go back further
@@ -2342,11 +2344,11 @@ search."
 		       (goto-char here)
 		       nil))
 		   (looking-at c-label-key))))
-	 ;; CASE 7: ObjC method def
+	 ;; CASE 8: ObjC method def
 	 ((and (eq major-mode 'objc-mode)
 	       (setq last-begin (c-in-objc-method-def-p)))
 	  (setq donep t))
-	 ;; CASE 8: nothing special
+	 ;; CASE 9: nothing special
 	 (t (setq last-begin (point)))
 	 )))
     (goto-char last-begin)
@@ -4508,7 +4510,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.186 $"
+(defconst c-version "$Revision: 4.187 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
