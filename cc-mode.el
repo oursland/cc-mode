@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.348 $
-;; Last Modified:   $Date: 1994-05-23 15:43:07 $
+;; Version:         $Revision: 3.349 $
+;; Last Modified:   $Date: 1994-05-24 22:04:15 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-23 15:43:07 $|$Revision: 3.348 $|
+;; |$Date: 1994-05-24 22:04:15 $|$Revision: 3.349 $|
 
 ;;; Code:
 
@@ -834,7 +834,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.348 $
+cc-mode Revision: $Revision: 3.349 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -867,7 +867,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.348 $
+cc-mode Revision: $Revision: 3.349 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2544,7 +2544,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	(save-excursion
 	  (save-restriction
 	    (goto-char search-start)
-	    (let (foundp class)
+	    (let (foundp class match-end)
 	      (while (and (not foundp)
 			  (save-restriction
 			    (c-forward-syntactic-ws)
@@ -2553,7 +2553,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			    (widen)
 			    (narrow-to-region (point) search-end)
 			    (re-search-forward c-class-key search-end t)))
-		(setq class (match-beginning 0))
+		(setq class (match-beginning 0)
+		      match-end (match-end 0))
 		(if (not (c-in-literal search-start))
 		    (progn
 		      (goto-char class)
@@ -2564,7 +2565,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		      ;; a forward declaration or a struct init.
 		      (skip-chars-forward "^;=,)" search-end)
 		      (if (/= (point) search-end)
-			  (setq foundp nil)
+			  (progn
+			    (setq foundp nil)
+			    (goto-char match-end))
 			;; make sure we aren't looking at the `class'
 			;; keyword inside a template arg list
 			(goto-char class)
@@ -3587,7 +3590,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.348 $"
+(defconst c-version "$Revision: 3.349 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
