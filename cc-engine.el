@@ -535,6 +535,31 @@ end with a line continuation backslash."
 	     (forward-char)
 	     t))))
 
+(defun c-forward-comment-lc (count)
+  ;; Like `c-forward-comment', but treat line continuations as
+  ;; whitespace.
+  (catch 'done
+    (if (> count 0)
+	(while (if (c-forward-comment 1)
+		   (progn
+		     (setq count (1- count))
+		     (> count 0))
+		 (if (looking-at "\\\\$")
+		     (progn
+		       (forward-char)
+		       t)
+		   (throw 'done nil))))
+      (while (if (c-forward-comment -1)
+		 (progn
+		   (setq count (1+ count))
+		   (< count 0))
+	       (if (and (eolp) (eq (char-before) ?\\))
+		   (progn
+		     (backward-char)
+		     t)
+		 (throw 'done nil)))))
+    t))
+
 ;; Skipping of "syntactic whitespace", defined as lexical whitespace,
 ;; C and C++ style comments, and preprocessor directives.  Search no
 ;; farther back or forward than optional LIM.
@@ -577,8 +602,8 @@ end with a line continuation backslash."
       ;; value, it'll loop all the way through if it hits bob.
       (while (c-forward-comment -5))
       (setq here (point))
-      (if (and (eq (char-before) ?\\)
-	       (eolp)
+      (if (and (eolp)
+	       (eq (char-before) ?\\)
 	       (if (<= prev-pos (c-point 'eonl))
 		   t
 		 ;; Passed a line continuation, but not from the line
