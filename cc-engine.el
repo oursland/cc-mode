@@ -78,6 +78,8 @@
 ;; the byte compiler.
 (defvar c-maybe-labelp nil)
 
+;; 
+;; New awk-compatible version of c-beginning-of-statement-1, ACM 2002/6/22
 ;; Macros used internally in c-beginning-of-statement-1 for the
 ;; automaton actions.
 (defmacro c-bos-push-state ()
@@ -113,21 +115,22 @@
 	   (format "No matching `%s' found for `%s' on line %d"
 		   (elt saved-pos 1)
 		   (elt saved-pos 2)
-		   (1+ (count-lines 1 (c-point 'bol (elt saved-pos 0))))))))
+		   (1+ (count-lines (point-min)
+				    (c-point 'bol (elt saved-pos 0))))))))
 
 (defun c-beginning-of-statement-1 (&optional lim ignore-labels
 					     noerror comma-delim)
   "Move to the start of the current statement or declaration, or to
 the previous one if already at the beginning of one.  Only
 statements/declarations on the same level are considered, i.e. don't
-move into or out of sexps.
+move into or out of sexps (not even normal expression parentheses).
 
-Stop at statement continuations like \"else\", \"catch\", \"finally\"
-and the \"while\" in \"do ... while\" if the start point is within
-them.  If starting at such a continuation, move to the corresponding
-statement start.  If at the beginning of a statement, move to the
-closest containing statement if there is any.  This might also stop at
-a continuation clause.
+Stop at statement continuation tokens like \"else\", \"catch\", \"finally\"
+and the \"while\" in \"do ... while\" if the start point is within the
+continuation.  If starting at such a token, move to the corresponding
+statement start.  If at the beginning of a statement, move to the closest
+containing statement if there is any.  This might also stop at a continuation
+clause.
 
 Labels are treated as separate statements if IGNORE-LABELS is non-nil.
 The function is not overly intelligent in telling labels from other
@@ -138,7 +141,7 @@ should be no such mistakes in a statement context, however.
 Macros are ignored unless point is within one, in which case the
 content of the macro is treated as normal code.  Aside from any normal
 statement starts found in it, stop at the first token of the content
-if the macro, i.e. the expression of an \"#if\" or the start of the
+in the macro, i.e. the expression of an \"#if\" or the start of the
 definition in a \"#define\".  Also stop at start of macros before
 leaving them.
 
@@ -158,81 +161,144 @@ NOERROR turns off error logging to `c-parsing-error'.
 Normally only ';' is considered to delimit statements, but if
 COMMA-DELIM is non-nil then ',' is treated likewise."
 
-  ;; The bulk of this function is a pushdown automaton that looks at
-  ;; statement boundaries and the tokens in c-opt-block-stmt-key.
+  ;; The bulk of this function is a pushdown automaton that looks at statement
+  ;; boundaries and the tokens (such as "while") in c-opt-block-stmt-key.  Its
+  ;; purpose is to keep track of nested statements, ensuring that such
+  ;; statments are skipped over in their entirety (somewhat akin to what C-M-p
+  ;; does with nested braces/brackets/parentheses).
   ;;
   ;; Note: The position of a boundary is the following token.
   ;;
-  ;; Begin with current token, stop when stack is empty and the
-  ;; position has been moved.
+  ;; Beginning with the current token (the one following point), move back one
+  ;; sexp at a time (where a sexp is, more or less, either a token or the
+  ;; entire contents of a brace/bracket/paren pair).  Each time a statement
+  ;; boundary is crossed or a "while"-like token is found, update the state of
+  ;; the PDA.  Stop at the beginning of a statement when the stack (holding
+  ;; nested statement info) is empty and the position has been moved.
+  ;;
+  ;; The following variables constitue the PDA:
+  ;;
+  ;; sym:    This is either the "while"-like token (e.g. 'for) we've just
+  ;;         scanned back over, 'boundary if we've just gone back over a
+  ;;         statement boundary, or nil otherwise.
+  ;; state:  takes one of the values (nil else else-boundary while
+  ;;         while-boundary catch catch-boundary).
+  ;;         nil means "no "while"-like token yet scanned".
+  ;;         'else, for example, means "just gone back over an else".
+  ;;         'else-boundary means "just gone back over a statement boundary
+  ;;         immediately after having gone back over an else".
+  ;; saved-pos: A vector of either saved positions (tok ptok pptok, etc.) or
+  ;;         of error reporting information.
+  ;; stack:  The stack onto which the PDA pushes its state.  Each entry
+  ;;         consists of a saved value of state and saved-pos.  An entry is
+  ;;         pushed when we move back over a "continuation" token (e.g. else)
+  ;;         and popped when we encounter the corresponding opening token
+  ;;         (e.g. if).
+  ;;
+  ;;
+  ;; The following diagram briefly outlines the PDA.  
   ;;
   ;; Common state:
-  ;;   "else": Push state, goto state `else':
-  ;;     boundary: Goto state `else-boundary':
-  ;;       "if": Pop state.
-  ;;       boundary: Error, pop state.
-  ;;       other: See common state.
-  ;;     other: Error, pop state, retry token.
-  ;;   "while": Push state, goto state `while':
-  ;;     boundary: Save position, goto state `while-boundary':
-  ;;       "do": Pop state.
-  ;;       boundary: Restore position if it's not at start, pop state.
-  ;;       other: See common state.
-  ;;     other: Pop state, retry token.
-  ;;   "catch" or "finally": Push state, goto state `catch':
-  ;;     boundary: Goto state `catch-boundary':
-  ;;       "try": Pop state.
-  ;;       "catch": Goto state `catch'.
-  ;;       boundary: Error, pop state.
-  ;;       other: See common state.
-  ;;     other: Error, pop state, retry token.
+  ;;   "else": Push state, goto state `else'.
+  ;;   "while": Push state, goto state `while'.
+  ;;   "catch" or "finally": Push state, goto state `catch'.
   ;;   other: Do nothing special.
+  ;;
+  ;; State `else':
+  ;;   boundary: Goto state `else-boundary'.
+  ;;   other: Error, pop state, retry token.
+  ;;
+  ;; State `else-boundary':
+  ;;   "if": Pop state.
+  ;;   boundary: Error, pop state.
+  ;;   other: See common state.
+  ;;
+  ;; State `while':
+  ;;   boundary: Save position, goto state `while-boundary'.
+  ;;   other: Pop state, retry token.
+  ;;
+  ;; State `while-boundary':
+  ;;   "do": Pop state.
+  ;;   boundary: Restore position if it's not at start, pop state. [*see below]
+  ;;   other: See common state.
+  ;;
+  ;; State `catch':
+  ;;   boundary: Goto state `catch-boundary'.
+  ;;   other: Error, pop state, retry token.
+  ;;
+  ;; State `catch-boundary':
+  ;;   "try": Pop state.
+  ;;   "catch": Goto state `catch'.
+  ;;   boundary: Error, pop state.
+  ;;   other: See common state.
+  ;;
+  ;; [*] In the `while-boundary' state, we had pushed a 'while state, and were
+  ;; searching for a "do" which would have opened a do-while.  If we didn't
+  ;; find it, we discard the analysis done since the "while", go back to this
+  ;; token in the buffer and restart the scanning there, this time WITHOUT
+  ;; pushing the 'while state onto the stack.
   ;;
   ;; In addition to the above there is some special handling of labels
   ;; and macros.
 
   (let ((case-fold-search nil)
 	(start (point))
-	(delims (if comma-delim '(?\; ?,) '(?\;)))
+	macro-start
+	(delims (if comma-delim '(?\; ?,) '(?\;))) ; What about \n, \r for Awk (ACM, 2002/5/31)
 	(c-stmt-delim-chars (if comma-delim
 				c-stmt-delim-chars-with-comma
 			      c-stmt-delim-chars))
 	pos				; Current position.
-	boundary-pos			; Position of last boundary.
+	boundary-pos      ; Position of last stmt boundary character (e.g. ;).
 	after-labels-pos		; Value of tok after first found colon.
 	last-label-pos			; Value of tok after last found colon.
-	sym				; Current symbol in the alphabet.
-	state				; Current state in the automaton.
-	saved-pos			; Current saved positions.
+	sym         ; Symbol just scanned back over (e.g. 'while or
+		    ; 'boundary). See above
+	state                     ; Current state in the automaton. See above.
+	saved-pos			; Current saved positions. See above
 	stack				; Stack of conses (state . saved-pos).
-	(cond-key (or c-opt-block-stmt-key
+	(cond-key (or c-opt-block-stmt-key ; regexp which matches "for", "if", etc.
 		      "\\<\\>"))	; Matches nothing.
-	(ret 'same)
-	tok ptok pptok			; Pos of last three sexps or bounds.
-	c-in-literal-cache c-maybe-labelp saved)
+	(ret 'same)                     ; Return value.
+	tok ptok pptok                  ; Pos of last three sexps or bounds.
+        saved)
 
     (save-restriction
       (if lim (narrow-to-region lim (point-max)))
 
-      ;; Try to skip over unary operator characters, to register
+      (if (save-excursion
+	    (and (c-beginning-of-macro)
+		 (/= (point) start)))
+	  (setq macro-start (point)))
+
+      ;; Try to skip back over unary operator characters, to register
       ;; that we've moved.
       (while (progn
 	       (setq pos (point))
-	       (c-backward-syntactic-ws)
-	       (/= (skip-chars-backward "-+!*&~@`#") 0)))
+	       (c-backward-syntactic-ws) ; might go back an awk-mode virtual semicolon, here.
+                                        ; How about using c-awk-NL-prop for awk-mode, here.
+                                        ; Something like c-awk-backward-syntactic-ws.
+                                        ; 2002/6/22.  Doesn't matter!  Leave it as it is.
+	       (/= (skip-chars-backward "-+!*&~@`#") 0))) ; ACM, 2002/5/31;
+							  ; Make a variable in
+							  ; cc-langs.el, maybe
 
-      ;; First check for bare semicolon.  Later on we ignore the
-      ;; boundaries for statements that doesn't contain any sexp.
-      ;; The only thing that is affected is that the error checking
-      ;; is a little less strict, and we really don't bother.
-      (if (and (memq (char-before) delims)
+      ;; Skip back over any semicolon here.  If it was a bare semicolon, we're
+      ;; done.  Later on we ignore the boundaries for statements that doesn't
+      ;; contain any sexp.  The only thing that is affected is that the error
+      ;; checking is a little less strict, and we really don't bother.
+      (if (and (memq (char-before) delims) ; ACM, 2002/5/31 - do something for awk-mode here.
 	       (progn (forward-char -1)
 		      (setq saved (point))
-		      (c-backward-syntactic-ws)
+		      (if (c-major-mode-is 'awk-mode)
+                          (c-awk-backward-syntactic-ws)
+                        (c-backward-syntactic-ws))
 		      (or (memq (char-before) delims)
 			  (memq (char-before) '(?: nil))
-			  (eq (char-syntax (char-before)) ?\())))
-	  (setq ret 'previous
+			  (eq (char-syntax (char-before)) ?\()
+                          (and (c-major-mode-is 'awk-mode)
+                               (c-awk-after-logical-semicolon))))) ; ACM 2002/6/22
+          (setq ret 'previous
 		pos saved)
 
 	;; Begin at start and not pos to detect macros if we stand
@@ -242,12 +308,19 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	    ;; Record this as the first token if not starting inside it.
 	    (setq tok start))
 
+        ;; The following while loop goes back one sexp (balanced parens,
+        ;; etc. with contents, or symbol or suchlike) each iteration.  This
+        ;; movement is accomplished with a call to scan-sexps approx 130 lines
+        ;; below.
 	(while
 	    (catch 'loop ;; Throw nil to break, non-nil to continue.
 	      (cond
-	       ;; Check for macro start.
+	       ;; Check for macro start.  Take this out for awk-mode (ACM, 2002/5/31)
+               ;; NO!! just make sure macro-start is nil in awk-mode (ACM, 2002/6/22)
+               ;; It always is (ACM, 2002/6/23)
 	       ((save-excursion
-		  (and (looking-at "[ \t]*[a-zA-Z0-9!]")
+		  (and macro-start
+		       (looking-at "[ \t]*[a-zA-Z0-9!]")
 		       (progn (skip-chars-backward " \t")
 			      (eq (char-before) ?#))
 		       (progn (setq saved (1- (point)))
@@ -267,8 +340,8 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			ignore-labels t))
 		(throw 'loop nil))
 
-	       ;; Do a round through the automaton if we found a
-	       ;; boundary or if looking at a statement keyword.
+	       ;; Do a round through the automaton if we've just passed a
+	       ;; statement boundary or passed a "while"-like token.
 	       ((or sym
 		    (and (looking-at cond-key)
 			 (setq sym (intern (match-string 1)))))
@@ -276,8 +349,20 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		(when (and (< pos start) (null stack))
 		  (throw 'loop nil))
 
-		;; The state handling.  Continue in the common state for
-		;; unhandled cases.
+		;; The PDA state handling.
+                ;;
+                ;; Refer to the description of the PDA in the openining
+                ;; comments.  In the following OR form, the first leaf
+                ;; attempts to handles one of the specific actions detailed
+                ;; (e.g., finding token "if" whilst in state `else-boundary').
+                ;; We drop through to the second leaf (which handles common
+                ;; state) if no specific handler is found in the first cond.
+                ;; If a parsing error is detected (e.g. an "else" with no
+                ;; preceding "if"), we throw to the enclosing catch.
+                ;;
+                ;; Note that the (eq state 'else) means
+		;; "we've just passed an else", NOT "we're looking for an
+		;; else".
 		(or (cond
 		     ((eq state 'else)
 		      (if (eq sym 'boundary)
@@ -301,14 +386,14 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			       (not after-labels-pos))
 			  (progn (c-bos-save-pos)
 				 (setq state 'while-boundary))
-			(c-bos-pop-state-and-retry)))
+			(c-bos-pop-state-and-retry))) ; Can't be a do-while
 
 		     ((eq state 'while-boundary)
 		      (cond ((eq sym 'do)
 			     (c-bos-pop-state (setq ret 'beginning)))
-			    ((eq sym 'boundary)
-			     (c-bos-restore-pos)
-			     (c-bos-pop-state))))
+			    ((eq sym 'boundary) ; isn't a do-while
+			     (c-bos-restore-pos) ; the position of the while
+			     (c-bos-pop-state)))) ; no longer searching for do.
 
 		     ((eq state 'catch)
 		      (if (eq sym 'boundary)
@@ -326,22 +411,34 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			(c-bos-report-error)
 			(c-bos-pop-state)))))
 
-		    ;; This is state common.
+		    ;; This is state common.  We get here when the previous
+		    ;; cond statement found no particular state handler.
 		    (cond ((eq sym 'boundary)
 			   (if (< pos start)
-			       (c-bos-pop-state)
-			     (c-bos-push-state)))
+			       (c-bos-pop-state) ; ??
+			     (c-bos-push-state))) ; ??
 			  ((eq sym 'else)
 			   (c-bos-push-state)
 			   (c-bos-save-error-info 'if 'else)
 			   (setq state 'else))
 			  ((eq sym 'while)
 			   (when (or (not pptok)
-				     (memq (char-after pptok) delims))
+				     (memq (char-after pptok) delims)
+                                     (and (c-major-mode-is 'awk-mode)
+                                          (or
+                                        ;; might we be calling this from
+                                        ;; c-awk-after-if-do-for-while-condition-p?
+                                        ;; If so, avoid infinite recursion.
+                                           (and (eq (point) start)
+                                                (c-awk-NL-prop-not-set))
+                                           ;; The following may recursively
+                                           ;; call this function.
+                                           (c-awk-completed-stmt-ws-ends-line-p pptok))))
 			     ;; Since this can cause backtracking we do a
 			     ;; little more careful analysis to avoid it: If
 			     ;; the while isn't followed by a semicolon it
 			     ;; can't be a do-while.
+                             ;; ACM, 2002/5/31;  IT CAN IN awk-mode. ;-(
 			     (c-bos-push-state)
 			     (setq state 'while)))
 			  ((memq sym '(catch finally))
@@ -357,16 +454,37 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			last-label-pos nil
 			c-maybe-labelp nil))))
 
-	      ;; Step to next sexp, but not if we crossed a boundary, since
-	      ;; that doesn't consume an sexp.
+	      ;; Step to previous sexp, but not if we crossed a boundary,
+	      ;; since that doesn't consume an sexp.
 	      (if (eq sym 'boundary)
 		  (setq ret 'previous)
-		;; Skip over any macros before we move by sexp.
-		(c-backward-syntactic-ws)
-		(or (c-safe (goto-char (scan-sexps (point) -1)) t)
-		    (throw 'loop nil))
+                ;; HERE IS THE SINGLE PLACE INSIDE THE PDA LOOP WHERE WE MOVE
+                ;; BACKWARDS THROUGH THE SOURCE. The following loop goes back
+                ;; one sexp and then only loops in special circumstances (line
+                ;; continuations and skipping past entire macros).
+		(while
+		    (progn
+		      (or (c-safe (goto-char (scan-sexps (point) -1)) t)
+			  (throw 'loop nil)) ; ?? Unmatched parens/braces/brackets?
+                      (cond ((looking-at "\\\\$")
+                             ;; Step again if we hit a line continuation.
+                             t)
+                            (macro-start
+                             ;; If we started inside a macro then this
+                             ;; sexp is always interesting.
+                             nil)
+                            ((not (c-major-mode-is 'awk-mode)) ; Changed from t, ACM 2002/6/25
+                             ;; Otherwise check that we didn't step
+                             ;; into a macro from the end.
+                             (let ((macro-start
+                                    (save-excursion
+                                      (and (c-beginning-of-macro)
+                                           (point)))))
+                               (when macro-start
+                                 (goto-char macro-start)
+                                 t))))))
 
-		;; Check for statement boundary.
+		;; Did the last movement by a sexp cross a statement boundary?
 		(when (save-excursion
 			(if (if (eq (char-after) ?{)
 				(c-looking-at-inexpr-block lim nil)
@@ -381,7 +499,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			ptok tok
 			tok boundary-pos
 			sym 'boundary)
-		  (throw 'loop t)))
+		  (throw 'loop t))) ; like a C "continue".  Analyze the next sexp.
 
 	      (when (and (numberp c-maybe-labelp) (not ignore-labels))
 		;; c-crosses-statement-barrier-p has found a colon, so
@@ -398,11 +516,12 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		      ignore-labels t)	; Avoid the label check on exit.
 		(throw 'loop nil))
 
+              ;; We've moved back by a sexp, so update the token positions. 
 	      (setq sym nil
 		    pptok ptok
 		    ptok tok
 		    tok (point)
-		    pos tok)))		; Not nil.
+		    pos tok)))		; Not nil (for the while loop).
 
 	;; If the stack isn't empty there might be errors to report.
 	(while stack
@@ -434,7 +553,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       (goto-char pos)
       (while (progn
 	       (c-backward-syntactic-ws)
-	       (/= (skip-chars-backward "-+!*&~@`#") 0))
+	       (/= (skip-chars-backward "-+!*&~@`#") 0)) ; Hopefully the # won't hurt awk.
 	(setq pos (point)))
       (goto-char pos)
       ret)))
@@ -455,12 +574,8 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 	(goto-char from)
 	(while (progn (skip-chars-forward skip-chars to)
 		      (< (point) to))
-	  (if (setq lit-range (c-literal-limits from))
-	      (progn (goto-char (setq from (cdr lit-range)))
-       ; Don't goto next line after awk comment, since this comment could be a
-       ; logical semi-colon.  OK, it's a nasty kludge.  :-(  ACM 2002/3/29.
-                     (if (and (c-major-mode-is 'awk-mode) (eq (preceding-char) ?\n))
-                         (goto-char (setq from (1- from)))))
+	  (if (setq lit-range (c-literal-limits from)) ; Have we landed in a string/comment?
+	      (progn (goto-char (setq from (cdr lit-range))))
             (cond ((eq (char-after) ?:)
 		   (forward-char)
 		   (if (and (eq (char-after) ?:)
@@ -473,10 +588,12 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 		   ;; looking for more : and ?.
 		   (setq c-maybe-labelp nil
                          skip-chars (substring c-stmt-delim-chars 0 -2)))
-                  ((and (eq (char-after) ?\n) ; Can only happen in awk-mode
-                        (save-excursion (forward-char)
-                                        (not (c-awk-complete-stmt-on-prev-line-p))))
+                  ((and (eolp)  ; Can only happen in awk-mode
+                        (not (c-awk-completed-stmt-ws-ends-line-p)))
                    (forward-char))
+                  ((and (c-major-mode-is 'awk-mode)
+                        (bolp) lit-range ; awk: comment/string ended prev line.
+                        (not (c-awk-completed-stmt-ws-ends-prev-line-p))))
                   (t (throw 'done (point))))))
         nil))))
 
@@ -505,6 +622,7 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 Leave point at the beginning of the macro and return t if in a cpp
 macro definition, otherwise return nil and leave point unchanged."
   (if (not (c-major-mode-is 'awk-mode)) ; ACM 2001/10/19.  Not sure if this is needed, 2002/3/29.
+                                        ; Yes it is!  2002/6/23.
       (let ((here (point)))
         (save-restriction
           (if lim (narrow-to-region lim (point-max)))
