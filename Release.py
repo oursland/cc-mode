@@ -62,6 +62,7 @@ FILES = [
      regex.compile('README for CC Mode \(5.[0-9]+\)'),
      'README for CC Mode %s\n'),
     ('Makefile', None, None),
+    ('ChangeLog', None, None),
     ('cc-mode.texi',
      regex.compile('@center @titlefont{CC Mode \(5.[0-9]+\)}'),
      '@center @titlefont{CC Mode %s}\n'),
@@ -111,7 +112,8 @@ def tag_release():
 	    fp_in.close()
 	    fp_out.close()
 	    os.rename(f + '.new', f)
-	os.system('ci -f -m"Bumping to release revision %s" %s' % (RELEASE, f))
+	os.system('ci -f -m"#Bumping to release revision %s" %s' %
+		  (RELEASE, f))
 	os.system('co -kv -u ' + f)
 	os.system('rcs -n%s: %s' % (RELEASE_NAME, f))
 
@@ -194,8 +196,9 @@ def make_docs():
 
 def main():
     try:
-	opts, args = getopt.getopt(sys.argv[1:], 'btpdh',
-				   ['bump', 'tag', 'package', 'docs', 'help'])
+	opts, args = getopt.getopt(
+	    sys.argv[1:], 'abtpdh',
+	    ['all', 'bump', 'tag', 'package', 'docs', 'help'])
     except getopt.error, msg:
 	print msg
 	usage(1)
@@ -210,6 +213,11 @@ def main():
     help = None
 
     for opt, arg in opts:
+	if opt in ('-a', '--all'):
+	    bump = 1
+	    tag = 1
+	    package = 1
+	    docs = 1
 	if opt in ('-b', '--bump'):
 	    bump = 1
 	elif opt in ('-t', '--tag'):
