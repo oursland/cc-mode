@@ -354,17 +354,28 @@ the brace is inserted inside a literal."
       
 (defun c-electric-slash (arg)
   "Insert a slash character.
-If slash is second of a double-slash C++ style comment introducing
-construct, and we are on a comment-only-line, indent line as comment.
+
+Indent the line as a comment, if:
+
+  1. The slash is second of a `//' line oriented comment introducing
+     token and we are on a comment-only-line, or
+
+  2. The slash is part of a `*/' token that closes a block oriented
+     comment.
+
 If numeric ARG is supplied or point is inside a literal, indentation
 is inhibited."
   (interactive "P")
-  (let ((indentp (and (not arg)
-		      (eq (char-before) ?/)
-		      (eq last-command-char ?/)
-		      (not (c-in-literal))))
-	;; shut this up
-	(c-echo-syntactic-information-p nil))
+  (let* ((ch (char-before))
+	 (indentp (and (not arg)
+		       (eq last-command-char ?/)
+		       (or (and (eq ch ?/)
+				(not (c-in-literal)))
+			   (and (eq ch ?*)
+				(c-in-literal)))
+		       ))
+	 ;; shut this up
+	 (c-echo-syntactic-information-p nil))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
 	(c-indent-line))))
