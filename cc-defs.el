@@ -63,6 +63,12 @@
 
 ;;; Macros.
 
+;;; Helper for building regexps.
+(defmacro c-paren-re (re)
+  `(concat "\\(" ,re "\\)"))
+(defmacro c-identifier-re (re)
+  `(concat "\\<\\(" ,re "\\)\\>[^_]"))
+
 (defmacro c-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
   ;; POSITION can be one of the following symbols:
