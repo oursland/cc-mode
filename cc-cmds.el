@@ -195,6 +195,7 @@ the brace is inserted inside a literal."
 		inline-open inline-close
 		brace-list-open brace-list-close
 		brace-list-intro brace-list-entry
+		brace-entry-open
 		block-open block-close
 		substatement-open statement-case-open
 		extern-lang-open extern-lang-close
