@@ -153,7 +153,8 @@ def new_release():
 
 
 def pkg_release():
-    dir = 'cc-mode-' + RELEASE
+#    dir = 'cc-mode-' + RELEASE
+    dir = 'cc-mode'
     os.mkdir(dir)
     for f, cre, format in FILES:
 	if f == 'ChangeLog':
