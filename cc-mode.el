@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-17 20:14:30 $
-;; Version:         $Revision: 2.161 $
+;; Last Modified:   $Date: 1992-07-20 14:08:42 $
+;; Version:         $Revision: 2.162 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-17 20:14:30 $|$Revision: 2.161 $|
+;; |$Date: 1992-07-20 14:08:42 $|$Revision: 2.162 $|
 
 
 ;; ======================================================================
@@ -293,7 +293,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.161 $
+  "Major mode for editing C++ code.  $Revision: 2.162 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -494,7 +494,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.161 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.162 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1188,25 +1188,28 @@ enclosing class, or the depth of class nesting at point."
       (setq state (c++-parse-state indent-point)
 	    containing-sexp (nth 1 state)
 	    paren-depth (nth 0 state))
-      (if (or (not wrt)
-	      (null containing-sexp))
-	  (if wrt 0 (null containing-sexp))
-	(if (c++-in-parens-p)
+      (cond
+       ((eq major-mode 'c++-c-mode)
+	(and (null containing-sexp) 0))
+       ((not wrt)
+	(null containing-sexp))
+       ((c++-in-parens-p) nil)
+       ((null containing-sexp) 0)
+       (t
+	;; calculate depth wrt containing (possibly nested) classes
+	(goto-char containing-sexp)
+	(while (and (setq foundp (re-search-backward
+				  "}\\|\\<\\(class\\|struct\\)\\>"
+				  (point-min) t))
+		    (c++-in-literal)))
+	(if (= (following-char) ?})
 	    nil
-	  ;; calculate depth wrt containing (possibly nested) classes
-	  (goto-char containing-sexp)
-	  (while (and (setq foundp (re-search-backward
-				    "}\\|\\<\\(class\\|struct\\)\\>"
-				    (point-min) t))
-		      (c++-in-literal)))
-	  (if (= (following-char) ?})
-	      nil
-	    (setq state (c++-parse-state containing-sexp))
-	    (and foundp
-		 (not (nth 1 state))
-		 (nth 2 state)
-		 paren-depth))
-	  )))))
+	  (setq state (c++-parse-state containing-sexp))
+	  (and foundp
+	       (not (nth 1 state))
+	       (nth 2 state)
+	       paren-depth))
+	)))))
 
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
@@ -2023,7 +2026,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.161 $"
+(defconst c++-version "$Revision: 2.162 $"
   "c++-mode version number.")
 
 (defun c++-version ()
