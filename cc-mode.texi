@@ -884,6 +884,15 @@ Less-than and greater-than signs (@code{c-electric-lt-gt}) are also
 electric, but only in C++ mode.  Hitting the second of two @kbd{<} or
 @kbd{>} keys re-indents the line if it is a C++ style stream operator.
 
+@findex c-electric-paren
+@findex electric-paren (c-)
+@kindex (
+@kindex )
+The normal parenthesis characters @samp{(} and @samp{)} also reindents
+the current line if they are used in normal code.  This is typically
+useful to get the closing parenthesis of an argument list reindented
+automatically.
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Clean-ups, , Other electric commands, Auto-newline insertion
@@ -3734,17 +3743,17 @@ expose the bug.  Be especially sure to include any code that appears
 to reproduce it.
 
 Bug reports are now sent to the following email addresses:
-@code{cc-mode-help@@python.org} and
-@code{bug-gnu-emacs@@prep.ai.mit.edu}; the latter is mirrored on the
+@email{cc-mode-help@@python.org} and
+@email{bug-gnu-emacs@@prep.ai.mit.edu}; the latter is mirrored on the
 Usenet newsgroup @code{gnu.emacs.bug}.  You can send other questions and
-suggestions (kudos? @code{;-)} to @code{cc-mode-help@@python.org}, or
-@code{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on newsgroup
+suggestions (kudos? @t{;-)} to @email{cc-mode-help@@python.org}, or
+@email{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on newsgroup
 @code{gnu.emacs.help}.
 
-If you want to get announcements of new CC Mode releases, send the
-word @emph{subscribe} in the body of a message to
-@code{cc-mode-announce-request@@python.org}.  Announcements will also be 
-posted to the Usenet newsgroups @code{gnu.emacs.sources},
+If you want to get announcements of new CC Mode releases, send the word
+@emph{subscribe} in the body of a message to
+@email{cc-mode-announce-request@@python.org}.  Announcements will also
+be posted to the Usenet newsgroups @code{gnu.emacs.sources},
 @code{comp.emacs}, @code{comp.emacs.xemacs}, and possibly some of the
 language oriented newsgroups.  Note that the
 @code{cc-mode-victims@@python.org} mailing list was recently
