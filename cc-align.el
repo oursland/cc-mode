@@ -940,7 +940,7 @@ Works with: inlambda, inexpr-statement, inexpr-class."
 	     (current-column)))))))
 
 (defun c-lineup-whitesmith-in-block (langelem)
-  "Line up lines inside a block in whitesmith style.
+  "Line up lines inside a block in Whitesmith style.
 It's done in a way that works both when the opening brace hangs and
 when it doesn't.  E.g:
 
@@ -953,21 +953,54 @@ something
 In the first case the indentation is kept unchanged, in the
 second `c-basic-offset' is added.
 
-Works with: defun-close, defun-block-intro, block-close,
-brace-list-close, brace-list-intro, statement-block-intro and all in*
+Works with: defun-close, defun-block-intro, inline-close, block-close,
+brace-list-close, brace-list-intro, statement-block-intro,
+arglist-intro, arglist-cont-nonempty, arglist-close, and all in*
 symbols, e.g. inclass and inextern-lang."
   (save-excursion
-    (+ (progn
-	 (back-to-indentation)
-	 (if (looking-at "\\s\(")
-	     c-basic-offset
-	   0))
-       (progn
-	 (goto-char (c-langelem-pos langelem))
-	 (back-to-indentation)
-	 (if (looking-at "\\s\(")
-	     0
-	   c-basic-offset)))))
+    (if (and (c-go-up-list-backward)
+	     (= (point) (c-point 'boi)))
+	nil
+      c-basic-offset)))
+
+(defun c-lineup-after-whitesmith-blocks (langelem)
+  "Compensate for Whitesmith style indentation of blocks.
+Due to the way CC Mode calculates anchor positions for normal lines
+inside blocks, this function is necessary for those lines to get
+correct Whitesmith style indentation.  Consider the following
+examples:
+
+                    int foo()
+                        {
+int foo()                   {
+    {                       a;
+    a;                      }
+    x;       <->        x;        <- c-lineup-after-whitesmith-blocks
+
+The fact that the line with \"x\" is preceded by a Whitesmith style
+indented block in one case and not the other should not affect its
+indentation.  But since CC Mode in cases like this uses the
+indentation of the preceding statement as anchor position, the \"x\"
+would in the rightmost case be indented too much if the offset for
+`statement' was set simply to zero.
+
+This lineup function corrects for this situation by detecting if the
+anchor position is at an open paren character.  In that case, it
+instead indents relative to the surrounding block just like
+`c-lineup-whitesmith-in-block'.
+
+Works with: brace-list-entry, brace-entry-open, statement,
+arglist-cont."
+  (save-excursion
+    (goto-char (c-langelem-pos langelem))
+    (when (looking-at "\\s\(")
+      (if (c-go-up-list-backward)
+	  (let ((pos (point)))
+	    (back-to-indentation)
+	    (if (= pos (point))
+		(vector (current-column))
+	      (vector (+ (current-column) c-basic-offset))))
+	(vector 0)))))
 
 (defun c-lineup-cpp-define (langelem)
   "Line up macro continuation lines according to the indentation of
