@@ -823,7 +823,7 @@ space."
 The value is an association list that for each language mode specifies
 the value to give to `require-final-newline' at mode initialization;
 see that variable for details about the value.  If a language isn't
-present on the association list, CC Mode won't set
+present on the association list, CC Mode won't touch
 `require-final-newline' in buffers for that language."
   :type `(set (cons :format "%v"
 		    (const :format "C     " c-mode)
