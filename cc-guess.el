@@ -4,9 +4,9 @@
 
 ;; Author:        1994-1995 Barry A. Warsaw
 ;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
-;; Created:       August 1994
-;; Version:       $Revision: 1.4 $
-;; Last Modified: $Date: 1995-06-11 20:15:21 $
+;; Created:       August 1994, split from cc-mode.el
+;; Version:       $Revision: 1.5 $
+;; Last Modified: $Date: 1995-06-11 21:39:57 $
 ;; Keywords: c languages oop
 
 ;; This file is not part of GNU Emacs.
