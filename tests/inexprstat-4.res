@@ -27,7 +27,7 @@
 ((arglist-cont-nonempty 192 212) (block-close 192))
 ((arglist-cont-nonempty 192 212))
 ((statement 192))
-((defun-block-intro 268) (statement 268))
+((arglist-cont-nonempty 247 267) (defun-block-intro 247) (statement 247))
 ((statement 284))
 ((arglist-cont-nonempty 247 267) (block-close 247))
 ((arglist-cont-nonempty 247 267))

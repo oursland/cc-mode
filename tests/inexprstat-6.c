@@ -27,8 +27,8 @@ int foo() {
 	},
 	b);
     NIFTY_LITTLE_APPLES (a, { x;
-			     y;
-			     z;
+	    y;
+	    z;
 	},
 	b);
 }
