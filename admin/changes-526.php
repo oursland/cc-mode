@@ -11,7 +11,7 @@
 <p><a
 href="http://download.sourceforge.net/cc-mode/cc-mode-5.26.tar.gz">Download</a>
 this CC Mode version (<a
-href="ftp://download.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.26.tar.gz">via
+href="ftp://ftp.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.26.tar.gz">via
 FTP</a>).</p>
 
 <p>Note: This release contains changes that might not be compatible
