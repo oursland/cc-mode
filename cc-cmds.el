@@ -2019,10 +2019,9 @@ indentation and line prefix are preserved (see the
 `c-comment-prefix-regexp' and `c-block-comment-prefix' variables for
 details).  If inside a comment and `comment-multi-line' is nil, a new
 comment of the same type is started on the next line and indented as
-appropriate.
+appropriate for comments.
 
-If a fill column is specified, it overrides the use of the comment
-column or comment indentation."
+If a fill prefix is specified, it overrides all the above."
   (interactive)
   (let ((do-line-break
 	 (lambda ()
