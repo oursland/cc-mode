@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-15 14:10:10 $
-;; Version:         $Revision: 2.108 $
+;; Last Modified:   $Date: 1992-06-15 14:17:09 $
+;; Version:         $Revision: 2.109 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-15 14:10:10 $|$Revision: 2.108 $|
+;; |$Date: 1992-06-15 14:17:09 $|$Revision: 2.109 $|
 
 
 ;; ======================================================================
@@ -212,7 +212,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.108 $
+  "Major mode for editing C++ code.  $Revision: 2.109 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -798,9 +798,10 @@ of the expression are preserved."
 	      (indent-code-rigidly beg end shift-amt "#")))
       (cond
        ((eq c++-tab-always-indent nil)
-	(if (save-excursion
-	      (skip-chars-backward " \t")
-	      (bolp))
+	(if (and (save-excursion
+		   (skip-chars-backward " \t")
+		   (bolp))
+		 (/= (point) (save-excursion (back-to-indentation) (point))))
 	    (c++-indent-line bod)
 	  (insert-tab)))
        ((eq c++-tab-always-indent t)
@@ -1818,7 +1819,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.108 $"
+(defconst c++-version "$Revision: 2.109 $"
   "c++-mode version number.")
 
 (defun c++-version ()
