@@ -5,14 +5,14 @@
 ?>
 
 <p>The current CC Mode development version is always available through
-anonymous CVS.  Being under development, there's of course no
+anonymous CVS.  Being under development, there are of course no
 guarantees that it will work well, or at all.  That said, it usually
-works well, maybe even better than the last release since bug fixes
+works well, often even better than the last release since bug fixes
 get there first.
 
-<p>You're welcome to report bugs, opinions and patches regarding the
-development version.  However, it's very likely that pilot error
-questions will go by unanswered.
+<p>You're very welcome to report bugs, opinions and patches regarding
+the development version.  However, it's even more likely that pilot
+error issues regarding it will go by unanswered.
 
 <h3>Checking out the CVS tree</h3>
 
