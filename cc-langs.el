@@ -36,11 +36,18 @@
 ;; Keywords defining protection levels
 (defconst c-protection-key "\\<\\(public\\|protected\\|private\\)\\>")
 
-;; Regex describing a `symbol' in all languages We cannot use just
+;; Regex describing a `symbol' in all languages.  We cannot use just
 ;; `word' syntax class since `_' cannot be in word class.  Putting
 ;; underscore in word class breaks forward word movement behavior that
-;; users are familiar with.
-(defconst c-symbol-key "\\(\\w\\|\\s_\\)+")
+;; users are familiar with.  Besides, this runs counter to Emacs
+;; convention.
+;;
+;; I suspect this definition isn't correct in light of Java's
+;; definition of a symbol as being Unicode.  I know so little about
+;; I18N (except how to sound cool and say I18N :-) that I'm willing to
+;; punt on this for now.
+
+(defconst c-symbol-key "[_a-zA-Z]\\(\\w\\|\\s_\\)*")
 
 
 ;; keywords introducing class definitions.  language specific
