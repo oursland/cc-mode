@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.61 $
+@comment manual version: $Revision: 2.62 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1997-02-03 16:36:03 $
+@comment Last modification: $Date: 1997-02-06 00:10:53 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.61 $)
+@center (manual revision: $Revision: 2.62 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1367,6 +1367,35 @@ section or word.  With prefix argument @var{n}, move @var{n} times.  If
 In C++, it is also sometimes desirable to insert the double-colon scope
 operator without performing the electric behavior of colon insertion.
 @kbd{C-c :} does just this.
+
+@item M-q (fill-paragraph)
+@kindex ESC q
+@findex fill-paragraph
+@vindex c-hanging-comment-starter-p
+@vindex c-hanging-comment-ender-p
+@vindex hanging-comment-starter-p (c-)
+@vindex hanging-comment-ender-p (c-)
+The command is used to fill a block style (C) or line style (C++)
+comment, in much the same way that text in the various text modes can be
+filled.  You should never attempt to fill non-comment code sections;
+you'll end up with garbage!  Two variables control how C style block
+comments are filled, specifically how the comment start and end
+delimiters are handled.
+
+The variable @code{c-hanging-comment-starter-p} controls whether comment
+start delimiters which appear on a line by themselves, end up on a line
+by themselves after the fill.  When the value is @code{nil}, the comment
+starter will remain on its own line@footnote{It will not be placed on a
+separate line if it is not already on a separate line.}.  Otherwise,
+text on the next line will be put on the same line as the comment
+starter.  This is called @dfn{hanging} because the following text hangs
+on the line with the comment starter.
+
+The variable @code{c-hanging-comment-ender-p} controls the analogous
+behavior for the block comment end delimiter.  When the value is
+@code{nil}, the comment ender will remain on its own line after the
+file@footnote{The same caveat as above holds true.}.  Otherwise, the
+comment end delimiter will be placed at the end of the previous line.
 
 @end table
 
@@ -3254,14 +3283,13 @@ Multi-line macros are not handled properly.
 Re-indenting large regions or expressions can be slow.
 
 @item
-Use with Emacs 18 can be slow and annoying. You should seriously
+Use with Emacs 18 can be slow and annoying.  You should seriously
 consider upgrading to Emacs 19.
 
 @item
-There is still some weird behavior when filling C block comments.
-My suggestion is to check out separate fill packages such as
-@code{filladapt} or @code{adaptive-fill-mode}.  These can do a much
-better job of filling comment regions.
+Add-on fill packages may not work as well as @code{cc-mode}'s built-in
+filling routines.  I no longer recommend you use @code{filladapt} to
+fill comments.
 
 @cindex c-indent-exp
 @cindex indent-exp (c-)
