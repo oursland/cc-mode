@@ -59,6 +59,7 @@ VERSIONED_FILES = [
     ('README', 'README for CC Mode '),
     ('cc-mode.el', r'\(defconst c-version "'),
     ('cc-mode.texi', r'@center @titlefont\{CC Mode '),
+    ('cc-mode.texi', r'version '),
     ]
 
 # list of files to go to X/Emacs maintainers
