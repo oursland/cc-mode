@@ -87,9 +87,11 @@
       (goto-char last-begin)
       (while (not donep)
 	;; stop at beginning of buffer
-	(if (bobp) (setq donep t)
+	(if (bobp)
+	    (setq donep t)
 	  ;; go backwards one balanced expression, but be careful of
 	  ;; unbalanced paren being reached
+	  (c-backward-syntactic-ws lim)	; To skip any macros.
 	  (if (not (c-safe (progn (c-backward-sexp 1) t)))
 	      (progn
 		(if firstp
@@ -111,13 +113,28 @@
 	  (cond
 	   ;; CASE 0: did we hit the error condition above?
 	   (donep)
-	   ;; CASE 1: are we in a macro?
-	   ((eq (c-in-literal lim) 'pound)
-	    (c-beginning-of-macro lim))
-	   ;; CASE 2: some other kind of literal?
-	   ((c-in-literal lim))
-	   ;; CASE 3: A line continuation?
+	   ;; CASE 1: Some kind of literal?
+	   ((c-literal-limits lim))
+	   ;; CASE 2: A line continuation?
 	   ((looking-at "\\\\$"))
+	   ;; CASE 3: A macro start?
+	   ((save-excursion
+	      (skip-chars-backward " \t")
+	      (when (and (eq (char-before) ?#)
+			 (eq (c-point 'boi) (1- (point)))
+			 (looking-at "[ \t]*define\\>[^_]")
+			 (c-safe (c-forward-sexp 2) t))
+		;; Note that if we weren't in the macro to begin with,
+		;; we'd never get here.
+		(setq saved (point))))
+	    (goto-char saved)
+	    (if (eq (char-after) ?\()
+		(c-safe (c-forward-sexp 1)))
+	    (c-forward-syntactic-ws)
+	    ;; Treate the first token inside the macro as the
+	    ;; statement start.
+	    (setq donep t
+		  last-begin (point)))
 	   ;; CASE 4: are we looking at a conditional keyword?
 	   ((or (and c-conditional-key (looking-at c-conditional-key))
 		(and (eq (char-after) ?\()
@@ -176,10 +193,18 @@
 			     (and (c-safe (backward-up-list 1) t)
 				  (eq (char-after) ?\()))))))
 	   ;; CASE 6: is this the first time we're checking?
-	   (firstp (setq firstp nil
-			 substmt-p (not (c-crosses-statement-barrier-p
-					 (point) last-begin))
-			 last-begin (point)))
+	   (firstp
+	    (setq firstp nil
+		  substmt-p (save-excursion
+			      ;; Move over in-expression blocks before
+			      ;; checking the barrier
+			      (if (or (memq (char-after) '(?\( ?\[))
+				      (and (eq (char-after) ?{)
+					   (c-looking-at-inexpr-block lim)))
+				  (c-forward-sexp 1))
+			      (not (c-crosses-statement-barrier-p
+				    (point) last-begin)))
+		  last-begin (point)))
 	   ;; CASE 7: have we crossed a statement barrier?
 	   ((save-excursion
 	      ;; Move over in-expression blocks before checking the
@@ -305,7 +330,7 @@
       (if (looking-at "\\\\$")
 	  (forward-char)
 	;; skip preprocessor directives
-	(when (and (looking-at "#[a-zA-Z0-9!]")
+	(when (and (looking-at "#[ \t]*[a-zA-Z0-9!]")
 		   (= (c-point 'boi) (point)))
 	  (while (and (eq (char-before (c-point 'eol)) ?\\)
 		      (= (forward-line 1) 0)))
@@ -319,23 +344,33 @@
 (defun c-backward-syntactic-ws (&optional lim)
   ;; Backward skip over syntactic whitespace.
   (let* ((here (point-min))
-	 (hugenum (- (point-max))))
+	 (hugenum (- (point-max)))
+	 (line-cont 'maybe))
     (while (/= here (point))
       (c-forward-comment hugenum)
       (setq here (point))
       (if (and (eq (char-before) ?\\)
 	       (looking-at "$"))
-	  (backward-char)
-	(when (and (c-beginning-of-macro)
-		   lim
-		   (< (point) lim))
-	  ;; Don't move past the macro if that'd take us past the limit.
-	  (goto-char here))))
+	  (progn
+	    (backward-char)
+	    (setq line-cont t))
+	(when (eq line-cont 'maybe)
+	  (save-excursion
+	    (end-of-line)
+	    (setq line-cont (eq (char-before) ?\\))))
+	(when (or line-cont
+		  (and (c-beginning-of-macro)
+		       lim
+		       (< (point) lim)))
+	  ;; Don't move past the macro if we began inside it, or if
+	  ;; that'd take us past the limit.
+	  (goto-char here))
+	(setq line-cont nil)))
     (if lim (goto-char (max (point) lim)))))
 
 
 ;; Moving by tokens, where a token is defined as all symbols and
-;; identifiers which aren't syntactic whitespace (note that "->" is
+;; identifiers which aren't syntactic whitespace (note that e.g. "->" is
 ;; considered to be two tokens).  Point is always either left at the
 ;; beginning of a token or not moved at all.  COUNT specifies the
 ;; number of tokens to move; a negative COUNT moves in the opposite
@@ -2670,6 +2705,16 @@ brace."
 		  relpos done)
 	      (goto-char indent-point)
 	      (c-beginning-of-statement-1 safepos)
+	      (when (and (>= (point) indent-point)
+			 (eq macro-start (c-point 'iopl)))
+		;; If we're on the first continued line of a macro
+		;; then c-beginning-of-statement-1 won't leave it.
+		;; Let's do that, to make the macro content "inherit"
+		;; the preceding indentation.  (This rule is a bit
+		;; dubious; maybe something better should be thought
+		;; out.)
+		(goto-char macro-start)
+		(c-beginning-of-statement-1 safepos))
 	      ;; It is possible we're on the brace that opens a nested
 	      ;; function.
 	      (if (and (eq (char-after) ?{)
@@ -2774,7 +2819,7 @@ brace."
 			   (eq (char-after (1+ placeholder)) ?\"))))
 	    (c-add-syntax 'cpp-macro)
 	  (when (and c-syntactic-analysis-in-macro
-		     macro-start)
+		     (eq macro-start (c-point 'iopl)))
 	    (c-add-syntax 'cpp-macro-cont)))
 	;; return the syntax
 	syntax))))
