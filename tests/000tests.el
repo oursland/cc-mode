@@ -90,6 +90,7 @@
     "arglist-5.cc"
     "arglist-6.cc"
     "arglist-7.java"
+    "arglist-8.java"
     "bl-1.cc"
     "bl-2.cc"
     "bod-1.cc"
