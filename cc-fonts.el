@@ -848,9 +848,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; a statement context.  If it's nonzero then the value is the
 	  ;; matched char, e.g. ?\( or ?,.
 	  arglist-match
-	  ;; 'decl if we're in an arglist containing declarations, '<> if the
-	  ;; arglist is of angle bracket type, 'other if it's some other
-	  ;; arglist, or nil if not in an arglist at all.
+	  ;; 'decl if we're in an arglist containing declarations (but if
+	  ;; `c-recognize-paren-inits' is set it might also be an initializer
+	  ;; arglist), '<> if the arglist is of angle bracket type, 'other if
+	  ;; it's some other arglist, or nil if not in an arglist at all.
 	  arglist-type
 	  ;; Set to the result of `c-forward-type'.
 	  at-type
@@ -957,19 +958,24 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			    (eq arglist-match ?<))
 			;; Inside an angle bracket arglist.
 			(setq arglist-type '<>))
+		       (type
+			;; Got a cached hit in some other type of arglist.
+			(setq arglist-type 'other))
 		       ((if inside-macro
 			    (< match-pos max-type-decl-end-before-token)
 			  (< match-pos max-type-decl-end))
 			;; The point is within the range of a previously
 			;; encountered type decl expression, so the arglist is
-			;; probably one that contains declarations.  The
-			;; result of this check is cached with a char property
-			;; on the match token, so that we can look it up again
-			;; when refontifying single lines in a multiline
-			;; declaration.
+			;; probably one that contains declarations.  However,
+			;; if `c-recognize-paren-inits' is set it might also
+			;; be an initializer arglist.
+			(setq arglist-type 'decl)
+			;; The result of this check is cached with a char
+			;; property on the match token, so that we can look it
+			;; up again when refontifying single lines in a
+			;; multiline declaration.
 			(c-put-char-property (1- match-pos)
-					     'c-type 'c-decl-arg-start)
-			(setq arglist-type 'decl))
+					     'c-type 'c-decl-arg-start))
 		       (t
 			(setq arglist-type 'other))))))
 
@@ -1226,19 +1232,35 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (throw 'at-decl-or-cast nil))
 
 		(if got-identifier
-		    (when (or at-type maybe-typeless)
-		      (when (not (or got-prefix got-parens))
-			;; Got another identifier directly after the type, so
-			;; it's a declaration.
-			(throw 'at-decl-or-cast t))
+		    (progn
 
-		      (when (looking-at "=[^=]")
-			;; There's an initializer after the type decl
-			;; expression so we know it's a declaration.  Don't
-			;; check for a C++ style initializer using parens
-			;; since that already has been matched as a suffix,
-			;; and if it hasn't then the paren is unbalanced.
-			(throw 'at-decl-or-cast t)))
+		      (when (or at-type maybe-typeless)
+			(when (not (or got-prefix got-parens))
+			  ;; Got another identifier directly after the type, so
+			  ;; it's a declaration.
+			  (throw 'at-decl-or-cast t))
+
+			(when (looking-at "=[^=]")
+			  ;; There's an initializer after the type decl
+			  ;; expression so we know it's a declaration.  Don't
+			  ;; check for a C++ style initializer using parens
+			  ;; since that already has been matched as a suffix,
+			  ;; and if it hasn't then the paren is unbalanced.
+			  (throw 'at-decl-or-cast t)))
+
+		      (when (and got-parens
+				 (not got-prefix)
+				 (not got-suffix)
+				 (or prev-at-type maybe-typeless))
+			;; Got a declaration of the form "foo bar (gnu);"
+			;; where we've recognized "bar" as the type and "gnu"
+			;; as the declarator.  In this case it's however more
+			;; likely that "bar" is the declarator and "gnu" a
+			;; function argument or initializer (if
+			;; `c-recognize-paren-inits' is set), since the parens
+			;; around "gnu" would be superfluous if it's a
+			;; declarator.  Shift the type one step backward.
+			(c-fl-shift-type-backward)))
 
 		  ;; Found no identifier.
 
@@ -1270,11 +1292,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   (cond
 			    ((eq arglist-type 'decl)
 			     ;; Inside an arglist that contains declarations.
-			     ;; If K&R style declarations aren't allowed then
-			     ;; the single identifier must be a type, else we
+			     ;; If K&R style declarations and parenthesis
+			     ;; style initializers aren't allowed then the
+			     ;; single identifier must be a type, else we
 			     ;; require that it's known or found (primitive
 			     ;; types are handled above).
-			     (or (not c-recognize-knr-p)
+			     (or (and (not c-recognize-knr-p)
+				      (not c-recognize-paren-inits))
 				 (memq at-type '(known found))))
 			    ((eq arglist-type '<>)
 			     ;; Inside a template arglist.  Accept known and
