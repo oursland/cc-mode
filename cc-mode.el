@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.103 $
-;; Last Modified:   $Date: 1994-11-15 00:15:27 $
+;; Version:         $Revision: 4.104 $
+;; Last Modified:   $Date: 1994-11-29 16:31:54 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -101,7 +101,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-11-15 00:15:27 $|$Revision: 4.103 $|
+;; |$Date: 1994-11-29 16:31:54 $|$Revision: 4.104 $|
 
 ;;; Code:
 
@@ -549,6 +549,11 @@ your style, only those that are different from the default.")
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
+
+;; shut the byte-compiler up as best as possible
+(and (fboundp 'byte-compiler-options)
+     (byte-compiler-options
+       (warnings (- unresolved unused-vars))))
 
 (defconst c-emacs-features
   (let ((major (and (boundp 'emacs-major-version)
@@ -4173,7 +4178,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.103 $"
+(defconst c-version "$Revision: 4.104 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
