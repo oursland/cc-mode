@@ -1,31 +1,54 @@
-;; -*- Mode: Emacs-Lisp -*-
-;; File:            c++-mode.el
-;; Description:     Mode for editing C++ code
-;; Authors:         1992 Barry A. Warsaw, Century Computing Inc.
-;;                  1987 Dave Detlefs  (dld@cs.cmu.edu)
-;;                   and Stewart Clamen (clamen@cs.cmu.edu)
-;;                  Done by fairly faithful modification of:
-;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-28 19:28:29 $
-;; Version:         $Revision: 2.173 $
+;; c-mode.el --- Combined mode for editing both C and C++ code for Emacs
+;;
+;; Copyright (C) 1985, 1986, 1987, 1992 Free Software Foundation, Inc.
+;;
+;; Maintainer: Barry A. Warsaw, Century Computing, Inc., Laurel Md.
+;; Keywords: c c++
 
-;; Do a "C-h m" in a c++-mode buffer for more information on customizing
-;; c++-mode.
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+
+;; Credit: This mode was originally modified from distribution
+;; c-mode.el by Dave Detlefs and Stewart Clamen in 1987. In 1992,
+;; Barry Warsaw fixed some outstanding problems and merged the many
+;; versions in existance around the net. He continues to maintain the
+;; mode as of 29-Jul-1992.
+
+;; Last Modified:   $Date: 1992-07-29 14:50:46 $
+;; Version:         $Revision: 2.173.1.1 $
+
+;; Usage Notes:
+;; ============
+;; Do a "C-h m" in a c-mode buffer for more information on customizing
+;; c-mode.
 ;;
 ;; If you have problems or questions, you can contact me at the
-;; following address: c++-mode-help@anthem.nlm.nih.gov
+;; following address: c-mode-help@anthem.nlm.nih.gov
 ;;
-;; To submit bug reports hit "C-c C-b" in a c++-mode buffer. This runs
+;; To submit bug reports hit "C-c C-b" in a c-mode buffer. This runs
 ;; the command c++-submit-bug-report and automatically sets up the
 ;; mail buffer with all the necessary information.
 ;;
 ;; Notes for Novice Emacs Users
 ;; ============================
-;; c++-mode facilitates editing of C++ code by automatically handling
-;; the indentation of lines of code in a manner very similar to c-mode
-;; as distributed with GNU emacs. Refer to the GNU Emacs manual,
-;; chapter 21 for more information on "Editing Programs".  In fact,
-;; c++-mode can also be used to edit C code!
+;; c-mode facilitates editing of both C and C++ code by automatically
+;; handling the indentation of lines of code. Refer to the GNU Emacs
+;; manual, chapter 21 for more information on "Editing Programs".  In
+;; fact, c-mode has entry points for c-mode and c++-mode for editing
+;; C++ code. The two modes are very similar (as you might expect).
 ;;
 ;; To use c++-mode you need to do two things: get this file loaded
 ;; into your emacs sessions at the right time; and tell emacs what
@@ -83,61 +106,73 @@
 ;;
 ;; LCD Archive Entry
 ;; =================
-;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
-;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-28 19:28:29 $|$Revision: 2.173 $|
+;; c-mode|Barry A. Warsaw|c-mode-help@anthem.nlm.nih.gov
+;; |Combined mode for editing both C and C++ code
+;; |$Date: 1992-07-29 14:50:46 $|$Revision: 2.173.1.1 $|
 
 
 ;; ======================================================================
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-(defvar c++-mode-abbrev-table nil
+(defvar c-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
 (define-abbrev-table 'c++-mode-abbrev-table ())
 
-(defvar c++-mode-map ()
-  "Keymap used in C++ mode.")
-(if c++-mode-map
+(defvar c-mode-map ()
+  "Keymap used in both C and C++ editing modes.")
+(if c-mode-map
     ()
-  (setq c++-mode-map (make-sparse-keymap))
-  (define-key c++-mode-map "\C-j"      'reindent-then-newline-and-indent)
-  (define-key c++-mode-map "{"         'c++-electric-brace)
-  (define-key c++-mode-map "}"         'c++-electric-brace)
-  (define-key c++-mode-map ";"         'c++-electric-semi)
-  (define-key c++-mode-map "#"         'c++-electric-pound)
-  (define-key c++-mode-map "\e\C-h"    'mark-c-function)
-  (define-key c++-mode-map "\e\C-q"    'c++-indent-exp)
-  (define-key c++-mode-map "\t"        'c++-indent-command)
-  (define-key c++-mode-map "\C-c\C-i"  'c++-insert-header)
-  (define-key c++-mode-map "\C-c\C-\\" 'c++-macroize-region)
-  (define-key c++-mode-map "\C-c\C-c"  'c++-comment-region)
-  (define-key c++-mode-map "\C-c\C-u"  'c++-uncomment-region)
-  (define-key c++-mode-map "\C-c\C-x"  'c++-match-paren)
-  (define-key c++-mode-map "\e\C-a"    'c++-beginning-of-defun)
-  (define-key c++-mode-map "\e\C-e"    'c++-end-of-defun)
-  (define-key c++-mode-map "\e\C-x"    'c++-indent-defun)
-  (define-key c++-mode-map "/"         'c++-electric-slash)
-  (define-key c++-mode-map "*"         'c++-electric-star)
-  (define-key c++-mode-map ":"         'c++-electric-colon)
-  (define-key c++-mode-map "\177"      'c++-electric-delete)
-  (define-key c++-mode-map "\C-c\C-t"  'c++-toggle-auto-hungry-state)
-  (define-key c++-mode-map "\C-c\C-h"  'c++-toggle-hungry-state)
-  (define-key c++-mode-map "\C-c\C-a"  'c++-toggle-auto-state)
-  (define-key c++-mode-map "\C-c'"     'c++-tame-comments)
-  (define-key c++-mode-map "'"         'c++-tame-insert)
-  (define-key c++-mode-map "["         'c++-tame-insert)
-  (define-key c++-mode-map "]"         'c++-tame-insert)
-  (define-key c++-mode-map "("         'c++-tame-insert)
-  (define-key c++-mode-map ")"         'c++-tame-insert)
-  (define-key c++-mode-map "\C-c\C-b"  'c++-submit-bug-report)
-  (define-key c++-mode-map "\C-c\C-v"  'c++-version)
+  (setq c-mode-map (make-sparse-keymap))
+  (define-key c-mode-map "\C-j"      'reindent-then-newline-and-indent)
+  (define-key c-mode-map "{"         'c-electric-brace)
+  (define-key c-mode-map "}"         'c-electric-brace)
+  (define-key c-mode-map ";"         'c-electric-semi)
+  (define-key c-mode-map "#"         'c-electric-pound)
+  (define-key c-mode-map "\e\C-h"    'mark-c-function)
+  (define-key c-mode-map "\e\C-q"    'c-indent-exp)
+  (define-key c-mode-map "\t"        'c-indent-command)
+  (define-key c-mode-map "\C-c\C-i"  'c-insert-header)
+  (define-key c-mode-map "\C-c\C-\\" 'c-macroize-region)
+  (define-key c-mode-map "\C-c\C-c"  'c-comment-region)
+  (define-key c-mode-map "\C-c\C-u"  'c-uncomment-region)
+  (define-key c-mode-map "\C-c\C-x"  'c-match-paren)
+  (define-key c-mode-map "\e\C-a"    'c-beginning-of-defun)
+  (define-key c-mode-map "\e\C-e"    'c-end-of-defun)
+  (define-key c-mode-map "\e\C-x"    'c-indent-defun)
+  (define-key c-mode-map "/"         'c-electric-slash)
+  (define-key c-mode-map "*"         'c-electric-star)
+  (define-key c-mode-map ":"         'c-electric-colon)
+  (define-key c-mode-map "\177"      'c-electric-delete)
+  (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
+  (define-key c-mode-map "\C-c\C-h"  'c-toggle-hungry-state)
+  (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
+  (define-key c-mode-map "\C-c'"     'c-tame-comments)
+  (define-key c-mode-map "\C-c\C-b"  'c-submit-bug-report)
+  (define-key c-mode-map "\C-c\C-v"  'c-version)
   )
 
+(defvar c-mode-syntax-table nil
+  "Syntax table used in c-mode buffers.")
 (defvar c++-mode-syntax-table nil
   "Syntax table used in c++-mode buffers.")
-(defvar c++-c-mode-syntax-table nil
-  "Syntax table used in c++-c-mode buffers.")
+
+(if c-mode-syntax-table
+    ()
+  (setq c-mode-syntax-table (make-syntax-table))
+  (modify-syntax-entry ?\\ "\\"    c-mode-syntax-table)
+  (modify-syntax-entry ?/  ". 14"  c-mode-syntax-table)
+  (modify-syntax-entry ?*  ". 23"  c-mode-syntax-table)
+  (modify-syntax-entry ?+  "."     c-mode-syntax-table)
+  (modify-syntax-entry ?-  "."     c-mode-syntax-table)
+  (modify-syntax-entry ?=  "."     c-mode-syntax-table)
+  (modify-syntax-entry ?%  "."     c-mode-syntax-table)
+  (modify-syntax-entry ?<  "."     c-mode-syntax-table)
+  (modify-syntax-entry ?>  "."     c-mode-syntax-table)
+  (modify-syntax-entry ?&  "."     c-mode-syntax-table)
+  (modify-syntax-entry ?|  "."     c-mode-syntax-table)
+  (modify-syntax-entry ?\' "\""    c-mode-syntax-table)
+  )
 
 (if c++-mode-syntax-table
     ()
@@ -157,25 +192,56 @@
   (modify-syntax-entry ?\n ">"     c++-mode-syntax-table)
   )
 
-(if c++-c-mode-syntax-table
-    ()
-  (setq c++-c-mode-syntax-table (make-syntax-table))
-  (modify-syntax-entry ?\\ "\\"    c++-c-mode-syntax-table)
-  (modify-syntax-entry ?/  ". 14"  c++-c-mode-syntax-table)
-  (modify-syntax-entry ?*  ". 23"  c++-c-mode-syntax-table)
-  (modify-syntax-entry ?+  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?-  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?=  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?%  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?<  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?>  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?&  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?|  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?\' "\""    c++-c-mode-syntax-table)
-  )
+;; c-<thing> variables control indentation in both C and C++ code
+(defconst c-indent-level 2
+  "*Indentation of C statements with respect to containing block.")
+(defconst c-brace-imaginary-offset 0
+  "*Imagined indentation of a C open brace that actually follows a statement.")
+(defconst c-brace-offset 0
+  "*Extra indentation for braces, compared with other text in same context.")
+(defconst c-argdecl-indent 5
+  "*Indentation level of declarations of C function arguments.")
+(defconst c-label-offset -2
+  "*Offset of C label lines and case statements relative to usual indentation.")
+(defconst c-continued-statement-offset 2
+  "*Extra indent for lines not starting new statements.")
+(defconst c-continued-brace-offset 0
+  "*Extra indent for substatements that start with open-braces.
+This is in addition to c-continued-statement-offset.")
+(defconst c-style-alist
+  '(("GNU"
+     (c-indent-level               .  2)
+     (c-argdecl-indent             .  5)
+     (c-brace-offset               .  0)
+     (c-label-offset               . -2)
+     (c-continued-statement-offset .  2))
+    ("K&R"
+     (c-indent-level               .  5)
+     (c-argdecl-indent             .  0)
+     (c-brace-offset               . -5)
+     (c-label-offset               . -5)
+     (c-continued-statement-offset .  5))
+    ("BSD"
+     (c-indent-level               .  4)
+     (c-argdecl-indent             .  4)
+     (c-brace-offset               . -4)
+     (c-label-offset               . -4)
+     (c-continued-statement-offset .  4))
+    (C++
+     (c-indent-level               . 4)
+     (c-continued-statement-offset . 4)
+     (c-brace-offset               . -4)
+     (c-argdecl-indent             . 0)
+     (c-label-offset               . -4)
+     (c-auto-newline               . t))
+    ("Whitesmith"
+     (c-indent-level               .  4)
+     (c-argdecl-indent             .  4)
+     (c-brace-offset               .  0)
+     (c-label-offset               . -4)
+     (c-continued-statement-offset .  4))))
 
-(defvar c++-tab-always-indent
-  (if (boundp 'c-tab-always-indent) c-tab-always-indent t)
+(defvar c-tab-always-indent t
   "*Controls the operation of the TAB key.
 t means always just reindent the current line.  nil means indent the
 current line only if point is at the left margin or in the line's
@@ -183,39 +249,26 @@ indentation; otherwise insert a tab.  If not-nil-or-t, then the line
 is first reindented, then if the indentation hasn't changed, a tab is
 inserted. This last mode is useful if you like to add tabs after the #
 of preprocessor commands.")
-(defvar c++-always-arglist-indent-p nil
+(defvar c-always-arglist-indent-p nil
   "*Control indentation of continued arglists.
 When non-nil, arglists continued on subsequent lines will always
-indent c++-empty-arglist-indent spaces, otherwise, they will indent to
+indent c-empty-arglist-indent spaces, otherwise, they will indent to
 just under previous line's argument indentation.")
-(defvar c++-class-member-indent c-indent-level
-  "*Extra indentation given to each member of a class, relative to the
-enclosing class's indentation.  Note that if you change c-indent-level
-in your c++-mode-hook, you will probably want to set this variable to
-the same value.")
-(defvar c++-block-close-brace-offset 0
-  "*Extra indentation given to close braces which close a block. This
-does not affect braces which close a top-level construct (e.g. function).")
-(defvar c++-paren-as-block-close-p nil
+(defvar c-block-close-brace-offset 0
+  "*Extra indentation given to close braces which close a block.
+This does not affect braces which close a top-level construct
+(e.g. function).")
+(defvar c-paren-as-block-close-p nil
   "*Treat a parenthesis which is the first non-whitespace on a line as
 a paren which closes a block.  When non-nil, c-indent-level is
-subtracted, and c++-block-close-brace-offset is added to the line's
+subtracted, and c-block-close-brace-offset is added to the line's
 offset.")
-(defvar c++-continued-member-init-offset nil
-  "*Extra indent for continuation lines of member inits; NIL means to align
-with previous initializations rather than with the colon on the first line.")
-(defvar c++-member-init-indent 0
-  "*Indentation level of member initializations in function declarations.")
-(defvar c++-friend-offset -4
-  "*Offset of C++ friend class declarations relative to member declarations.")
-(defvar c++-access-specifier-offset c-label-offset
-  "*Extra indentation given to public, protected, and private labels.")
-(defvar c++-empty-arglist-indent nil
+(defvar c-empty-arglist-indent nil
   "*Indicates how far to indent an line following an empty argument
 list.  Nil indicates to just after the paren.")
-(defvar c++-comment-only-line-offset 0
-  "*Indentation offset for line which contains only C or C++ style comments.")
-(defvar c++-C-block-comments-indent-p t
+(defvar c-comment-only-line-offset 0
+  "*Indentation offset for line which contains only a comment.")
+(defvar c-block-comments-indent-p t
   "*4 styles of C block comments are supported. If this variable is nil,
 then styles 1-3 are supported. If this variable is non-nil, style 4 is
 supported.
@@ -225,8 +278,8 @@ style 1:       style 2:       style 3:       style 4:
    blah         * blah        ** blah        blah
    */           */            */             */
 ")
-(defvar c++-cleanup-list nil
-  "*List of various C++ constructs to \"clean up\".
+(defvar c-cleanup-list nil
+  "*List of various C constructs to \"clean up\".
 These cleanups only take place when auto-newline minor mode is on.
 Current legal values are:
    brace-else-brace   -- clean up \"} else {\" constructs by placing entire
@@ -238,21 +291,14 @@ Current legal values are:
    defun-close-semi   -- cleans up the terminating semi-colon on class
                          definitions and functions by placing the semi
                          on the same line as the closing brace.")
-(defvar c++-hanging-braces t
+(defvar c-hanging-braces t
   "*Controls the insertion of newlines before open (left) braces.
 This variable only has effect when auto-newline is on.  If nil, open
 braces do not hang (i.e. a newline is inserted before all open
 braces).  If t, all open braces hang -- no newline is inserted before
 open braces.  If not nil or t, newlines are only inserted before
 top-level open braces; all other braces hang.")
-(defvar c++-hanging-member-init-colon 'before
-  "*Defines how colons which introduce member initializations are formatted.
-Legal values are:
-     t       -- no newlines inserted before or after colon
-     nil     -- newlines inserted before and after colon
-     'after  -- newlines inserted only after colon
-     'before -- newlines inserted only before colon")
-(defvar c++-auto-hungry-initial-state 'none
+(defvar c-auto-hungry-initial-state 'none
   "*Initial state of auto/hungry mode when buffer is first visited.
 Legal values are:
      'none         -- no auto-newline and no hungry-delete-key.
@@ -261,7 +307,7 @@ Legal values are:
      'auto-hungry  -- both auto-newline and hungry-delete-key enabled.
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
-(defvar c++-auto-hungry-toggle t
+(defvar c-auto-hungry-toggle t
   "*Enable/disable toggling of auto/hungry states.
 Legal values are:
      'none         -- auto-newline and hungry-delete-key cannot be enabled.
@@ -269,67 +315,152 @@ Legal values are:
      'hungry-only  -- only hungry-delete-key state can be toggled.
      'auto-hungry  -- both auto-newline and hungry-delete-key can be toggled.
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
-
-(defvar c++-mailer 'mail
-  "*Mail package to use to generate bug report mail buffer.")
-(defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
+(defvar c-mailer 'mail
+  "*Mail function to use to generate bug report mail buffer.")
+(defconst c-mode-help-address "c-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
-
-(defvar c++-relative-offset-p t
+(defvar c-relative-offset-p t
   "*Control the calculation for indentation.
 When non-nil (the default), indentation is calculated relative to the
 first statement in the block.  When nil, the indentation is calculated
 without regard to how the first statement is indented.")
-
-(defvar c++-untame-characters '(?\( ?\) ?\' ?\{ ?\} ?\[ ?\])
-  "*Utilize a backslashing workaround of an emacs scan-lists bug.
-If non-nil, this variable should contain a list of characters which
-will be prepended by a backslash in comment regions.  By default, the
-list contains all characters which can potentially cause problems if
-they exist unbalanced within comments.
-
-Setting this variable to nil will defeat this feature, but be
-forewarned!  Un-escaped characters in comment regions will break many
-things such as some indenting and blinking of parenthesis.
-
-Note further that only the default set of characters can be
-automatically escaped when typed in, but entering
-\\[c++-tame-comments] will escape all character in the set.")
-
-(defvar c++-default-macroize-column 78
-  "*Column to insert backslashes.")
-(defvar c++-special-indent-hook nil
+(defvar c-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
 This hook gets called after each line to allow the user to do whatever
 special indentation adjustments are desired.  If you have non-standard
-indentation, you will likely need to have c++-relative-offset-p set to
+indentation, you will likely need to have c-relative-offset-p set to
 nil.")
-(defvar c++-delete-function 'backward-delete-char-untabify
-  "*Function called by c++-electric-delete when deleting a single char.")
-(defvar c++-electric-pound-behavior nil
+(defvar c-delete-function 'backward-delete-char-untabify
+  "*Function called by c-electric-delete when deleting a single char.")
+(defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is '(alignleft).")
+
+;; cmacexp is lame because it uses no preprocessor symbols.
+;; It isn't very extensible either -- hardcodes /lib/cpp.
+(autoload 'c-macro-expand "cmacexp"
+  "Display the result of expanding all C macros occurring in the region.
+The expansion is entirely correct because it uses the C preprocessor."
+  t)
+
+;; c++-<thing> variables control indentation only in C++ code
+(defvar c++-class-member-indent c-indent-level
+  "*Extra indentation given to each member of a class, relative to the
+enclosing class's indentation.  Note that if you change c-indent-level
+in your c++-mode-hook, you will probably want to set this variable to
+the same value.")
+(defvar c++-continued-member-init-offset nil
+  "*Extra indent for continuation lines of member inits.
+NIL means to align with previous initializations rather than with the
+colon on the first line.")
+(defvar c++-member-init-indent 0
+  "*Indentation level of member initializations in function declarations.")
+(defvar c++-friend-offset -4
+  "*Offset of C++ friend class declarations relative to member declarations.")
+(defvar c++-access-specifier-offset c-label-offset
+  "*Extra indentation given to public, protected, and private labels.")
+(defvar c++-hanging-member-init-colon 'before
+  "*Defines how colons which introduce member initializations are formatted.
+Legal values are:
+     t       -- no newlines inserted before or after colon
+     nil     -- newlines inserted before and after colon
+     'after  -- newlines inserted only after colon
+     'before -- newlines inserted only before colon")
+(defvar c++-default-macroize-column 78
+  "*Column to insert backslashes.")
+
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
 ;; 
-(defvar c++-hungry-delete-key nil
+(defvar c-hungry-delete-key nil
   "Internal state of hungry delete key.")
-(defvar c++-auto-newline nil
+(defvar c-auto-newline nil
   "Internal state of auto newline feature.")
 
-(make-variable-buffer-local 'c++-auto-newline)
-(make-variable-buffer-local 'c++-hungry-delete-key)
+(make-variable-buffer-local 'c-auto-newline)
+(make-variable-buffer-local 'c-hungry-delete-key)
 
 
 
 ;; ======================================================================
-;; c++-mode main entry point
+;; c-mode main entry points
 ;; ======================================================================
-(defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.173 $
-To submit a bug report, enter \"\\[c++-submit-bug-report]\"
-from a c++-mode buffer.
+(defun c-modes-common-init-path (mode)
+  "Common initialization path for both C and C++ mode entry points.
+MODE is either the symbol 'c or 'c++."
+  (kill-all-local-variables)
+  (let (map table majmode name abbrev comstart comend comskip)
+    (if (eq mode 'c)
+	(setq map c-mode-map
+	      table c-mode-syntax-table
+	      majmode 'c-mode
+	      name "C"
+	      abbrev c-mode-abbrev-table
+	      comstart "/* "
+	      comend " */"
+	      comskip "/\\*+ *")
+      (setq map c++-mode-map
+	    table c++-mode-syntax-table
+	    majmode 'c++-mode
+	    name "C++"
+	    abbrev c++-mode-abbrev-table
+	    comstart "// "
+	    comend ""
+	    comskip "/\\*+ *\\|// *"))
+    (use-local-map map)
+    (setq major-mode majmode
+	  mode-name name
+	  local-abbrev-table abbrev)
+    (set-syntax-table table)
+    (set (make-local-variable 'paragraph-start)
+	 (concat "^$\\|" page-delimiter))
+    (set (make-local-variable 'paragraph-separate) paragraph-start)
+    (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
+    (set (make-local-variable 'indent-line-function) 'c-indent-line)
+    (set (make-local-variable 'indent-region-function) 'c-indent-region)
+    (set (make-local-variable 'require-final-newline) t)
+    (set (make-local-variable 'comment-start) comstart)
+    (set (make-local-variable 'comment-end) comend)
+    (set (make-local-variable 'comment-column) 32)
+    (set (make-local-variable 'comment-start-skip) comskip)
+    (set (make-local-variable 'comment-indent-hook) 'c-comment-indent)
+    (set (make-local-variable 'parse-sexp-ignore-comments) t)
+    ;; hack auto-hungry designators into mode-line-format
+    (if (listp mode-line-format)
+	(setq mode-line-format
+	      (let ((modeline nil))
+		(mapcar
+		 (function
+		  (lambda (element)
+		    (setq modeline
+			  (append modeline
+				  (if (eq element 'mode-name)
+				      '(mode-name
+					(c-hungry-delete-key
+					 (c-auto-newline "/ah" "/h")
+					 (c-auto-newline "/a")))
+				    (list element))))))
+		 mode-line-format)
+		modeline)))
+    (run-hooks (if (eq mode 'c) 'c-mode-hook 'c++-mode-hook))
+    (c-set-auto-hungry-state
+     (memq c-auto-hungry-initial-state '(auto-only   auto-hungry t))
+     (memq c-auto-hungry-initial-state '(hungry-only auto-hungry t)))))
+
+(defun c-mode ()
+  "Major mode for editing C code.  $Revision: 2.173.1.1 $
+Expression and list commands understand all C brackets.
+Tab indents for C code.
+Comments are delimited with /* ... */
+Paragraphs are separated by blank lines only.
+Delete converts tabs to spaces as it moves back.
+
+To submit a bug report, enter \"\\[c-submit-bug-report]\"
+from a c-mode buffer.
+
+Key bindings:
+\\{c-mode-map}
 
 1. Very much like editing C code.
 2. Expression and list commands understand all C++ brackets.
@@ -337,9 +468,6 @@ from a c++-mode buffer.
 4. Comments are delimited with /* ... */ {or with // ... <newline>}
 5. Paragraphs are separated by blank lines only.
 6. Delete converts tabs to spaces as it moves back.
-
-Key bindings:
-\\{c++-mode-map}
 
 These variables control indentation style. Those with names like
 c-<thing> are inherited from c-mode.  Those with names like
@@ -528,7 +656,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.173 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.173.1.1 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2111,7 +2239,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.173 $"
+(defconst c++-version "$Revision: 2.173.1.1 $"
   "c++-mode version number.")
 
 (defun c++-version ()
