@@ -5,9 +5,8 @@
   include ("header.h");
 ?>
 
-<p>If you are using Emacs 20.2 or later or any 21, or XEmacs 19.15,
-19.16, 20.4 or any 21, you should be able to use this version right
-out of the box.
+<p>If you are using Emacs 20.2 or later, or XEmacs 19.15, 19.16, 20.4
+or later, you should be able to use this version right out of the box.
 
 <p>An earlier version of CC Mode probably comes with your (X)Emacs, so
 you just need to make sure that the new CC Mode version you install is
