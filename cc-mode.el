@@ -2,13 +2,13 @@
 
 ;; Copyright (C) 1985-1995 Free Software Foundation, Inc.
 
-;; Authors: 1992-1995 Barry A. Warsaw
+;; Authors: 1992-1996 Barry A. Warsaw
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.250 $
-;; Last Modified:   $Date: 1995-11-27 15:50:58 $
+;; Version:         $Revision: 4.251 $
+;; Last Modified:   $Date: 1996-01-03 00:21:07 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-11-27 15:50:58 $|$Revision: 4.250 $|
+;; |$Date: 1996-01-03 00:21:07 $|$Revision: 4.251 $|
 
 ;;; Code:
 
@@ -4547,7 +4547,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.250 $"
+(defconst c-version "$Revision: 4.251 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
