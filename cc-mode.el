@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.178 $
-;; Last Modified:   $Date: 1995-03-21 00:01:02 $
+;; Version:         $Revision: 4.179 $
+;; Last Modified:   $Date: 1995-03-22 15:55:10 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-21 00:01:02 $|$Revision: 4.178 $|
+;; |$Date: 1995-03-22 15:55:10 $|$Revision: 4.179 $|
 
 ;;; Code:
 
@@ -2686,7 +2686,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			  ;; current line and extends past it
 			  (goto-char sexpend)
 			  (setq sexpend (point-marker))
-			  (backward-sexp 1)
+			  (c-safe (backward-sexp 1))
 			  (setq sexpbeg (point)))))
 		  ;; check to see if the next line starts a
 		  ;; comment-only line
@@ -4510,7 +4510,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.178 $"
+(defconst c-version "$Revision: 4.179 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
