@@ -174,8 +174,8 @@ NOERROR turns off error logging to `c-parsing-error'."
   ;;     other: Error, pop state, retry token.
   ;;   other: Do nothing special.
   ;;
-  ;; In addition to the above there are some special handling of
-  ;; labels and macros.
+  ;; In addition to the above there is some special handling of labels
+  ;; and macros.
 
   (let ((case-fold-search nil)
 	(start (point))
@@ -1760,13 +1760,18 @@ isn't moved."
   ;; back.
   (save-excursion
     (let ((res 'maybe) passed-bracket
-	  (closest-lim (or containing-sexp lim))
+	  (closest-lim (or containing-sexp lim (point-min)))
 	  ;; Look at the character after point only as a last resort
 	  ;; when we can't disambiguate.
 	  (block-follows (and (eq (char-after) ?{) (point))))
       (while (and (eq res 'maybe)
-		  (= (c-backward-token-1 1 t closest-lim) 0)
-		  (looking-at "[\(\[.]\\|\\w\\|\\s_"))
+		  (progn (c-backward-syntactic-ws)
+			 (> (point) closest-lim))
+		  (not (bobp))
+		  (progn (backward-char)
+			 (looking-at "[\]\).]\\|\\w\\|\\s_"))
+		  (progn (forward-char)
+			 (goto-char (scan-sexps (point) -1))))
 	(setq res
 	      (cond
 	       ((and block-follows
@@ -1779,7 +1784,7 @@ isn't moved."
 			 ;; in-expression class.
 			 (let ((prev (point)))
 			   (while (and
-				   (= (c-backward-token-1 1 t closest-lim) 0)
+				   (= (c-backward-token-1 1 nil closest-lim) 0)
 				   (eq (char-syntax (char-after)) ?w))
 			     (setq prev (point)))
 			   (goto-char prev)
