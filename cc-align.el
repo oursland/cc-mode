@@ -324,6 +324,13 @@
 	    (+ curcol (- prev-col-column (current-column)))
 	  c-basic-offset)))))
 
+(defun c-lineup-dont-change (langelem)
+  ;; Do not change the indentation of the current line
+  (back-to-indentation)
+  (current-column))
+
+
+
 (defun c-snug-do-while (syntax pos)
   "Dynamically calculate brace hanginess for do-while statements.
 Using this function, `while' clauses that end a `do-while' block will
