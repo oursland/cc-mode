@@ -1119,9 +1119,10 @@ indentation amount."
 	(setq paren-state (cdr paren-state)))
 
       (when paren-state
-	(back-to-indentation)
-	(if (zerop (current-column))
-	    (insert-char ?\  c-label-minimum-indentation t))))))
+	(save-excursion
+	  (back-to-indentation)
+	  (if (zerop (current-column))
+	      (insert-char ?\  c-label-minimum-indentation t)))))))
 
 
 ;; Useful for c-hanging-semi&comma-criteria
