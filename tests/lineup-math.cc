@@ -47,6 +47,6 @@ void f() {
 }
 
 /* Local Variables: */
-/* c-file-offsets: ((statement-cont . (c-lineup-math +)) (arglist-cont . c-lineup-math) (arglist-cont-nonempty . (c-lineup-math +))) */
+/* c-file-offsets: ((statement-cont . c-lineup-math) (arglist-cont . c-lineup-math) (arglist-cont-nonempty . c-lineup-math)) */
 /* End: */
 
