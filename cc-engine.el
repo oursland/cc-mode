@@ -337,8 +337,6 @@
 		   ;;(skip-chars-forward " \t}")
 		   (point)))
 	   (last-bod pos) (last-pos pos)
-	   (errmsg
-	    "unbalanced close brace at bufpos %d -- INDENTATION IS SUSPECT!")
 	   placeholder state sexp-end)
       ;; cache last bod position
       (while (catch 'backup-bod
@@ -379,9 +377,7 @@
 			 (if (not last-bod)
 			     (progn
 			       ;; bogus, but what can we do here?
-			       (message errmsg (1- placeholder))
-			       (setq c-parsing-error t)
-			       (ding)
+			       (setq c-parsing-error (1- placeholder))
 			       (throw 'backup-bod nil))
 			   (setq at-bob (= last-bod (point-min))
 				 pos last-bod)
@@ -1687,6 +1683,14 @@
 	syntax))))
 
 
+(defun c-echo-parsing-error ()
+  (if (not c-parsing-error)
+      nil
+    (message "unbalanced close brace at bufpos %d -- INDENTATION IS SUSPECT!"
+	     c-parsing-error)
+    (ding))
+  c-parsing-error)
+
 ;; indent via syntactic language elements
 (defun c-indent-line (&optional syntax)
   ;; indent the current line as C/C++/ObjC code. Optional SYNTAX is the
@@ -1697,7 +1701,7 @@
 	 (indent (apply '+ (mapcar 'c-get-offset c-syntactic-context)))
 	 (shift-amt  (- (current-indentation) indent)))
     (and c-echo-syntactic-information-p
-	 (not c-parsing-error)
+	 (not (c-echo-parsing-error))
 	 (message "syntax: %s, indent= %d" c-syntactic-context indent))
     (if (zerop shift-amt)
 	nil
@@ -1720,7 +1724,7 @@ With universal argument, inserts the analysis as a comment on that line."
   (interactive "P")
   (let ((syntax (c-guess-basic-syntax)))
     (if (not (consp arg))
-	(if (not c-parsing-error)
+	(if (not (c-echo-parsing-error))
 	    (message "syntactic analysis: %s" syntax))
       (indent-for-comment)
       (insert (format "%s" syntax))
