@@ -24,4 +24,4 @@ versions</a>.
 <p>The current version supports using Filladapt mode to fill text in
 comments and string literals.  There are however still some <a
 href="filladapt.html">issues</a> with this that you should be aware of
-if you want to set them up to work together.
+if you want to use Filladapt in CC Mode.
