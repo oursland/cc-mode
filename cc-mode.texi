@@ -2709,7 +2709,7 @@ Hitting @kbd{C-c C-s} on line 5 shows the following analysis:
 @example
 @group
 
-@code{((inclass . 1) (access-label . 67))}
+@code{((inclass . 58) (access-label . 67))}
 
 @end group
 @end example
@@ -2748,7 +2748,7 @@ Line 11's analysis is a bit more complicated:
 @example
 @group
 
-@code{((inclass . 1) (inline-open))}
+@code{((inclass . 58) (inline-open))}
 
 @end group
 @end example
