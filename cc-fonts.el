@@ -433,157 +433,173 @@
   ;; fontification itself, since it's cumbersome to generate the
   ;; proper sequence of match limits that font-lock normally acts on.
 
-  ;; Must back up a bit since we look for the end of the previous
-  ;; statement or declaration, which is earlier than the first
-  ;; returned match.
-  (c-backward-syntactic-ws)
-  (c-safe (backward-char))
+  (save-restriction
+    ;; Narrow to the limit to deliberately fail to fontify
+    ;; declarations that crosses it.  E.g. the following is a common
+    ;; situation while the first line is being written:
+    ;;
+    ;;     my_variable
+    ;;     some_other_variable = 0;
+    ;;
+    ;; font-lock will put the limit at the end of the first line here,
+    ;; and we use that to avoid recognizing my_variable as a type in a
+    ;; declaration that spans to the next line.  This way the
+    ;; statement isn't annoyingly flashed as a type while it's being
+    ;; entered.
+    (narrow-to-region (point-min) limit)
 
-  (let ((match (or (bobp)
-		   (re-search-forward c-decl-prefix-re limit 'move)))
-	type-start type-end at-decl)
+    ;; Must back up a bit since we look for the end of the previous
+    ;; statement or declaration, which is earlier than the first
+    ;; returned match.
+    (c-backward-syntactic-ws)
+    (c-safe (backward-char))
 
-    (while (progn
-	     (while (and
-		     match
+    (let ((match (or (bobp)
+		     (re-search-forward c-decl-prefix-re limit 'move)))
+	  type-start type-end at-decl)
 
-		     (or
-		      ;; Continue if the match is within a comment or a
-		      ;; string literal.
-		      (when (memq (get-text-property (point) 'face)
-				  '(font-lock-comment-face
-				    font-lock-string-face))
-			;; Go to the end of the highlighted region
-			;; before continuing the search above.
-			(goto-char (next-single-property-change
-				    (point) 'face nil limit))
-			t)
+      (while (progn
+	       (while (and
+		       match
 
-		      ;; Continue if the following token isn't some
-		      ;; kind of symbol or keyword that can't start a
-		      ;; declaration, or if it's fontified as a type
-		      ;; already.
+		       (or
+			;; Continue if the match is within a comment or a
+			;; string literal.
+			(when (memq (get-text-property (point) 'face)
+				    '(font-lock-comment-face
+				      font-lock-string-face))
+			  ;; Go to the end of the highlighted region
+			  ;; before continuing the search above.
+			  (goto-char (next-single-property-change
+				      (point) 'face nil limit))
+			  t)
+
+			;; Continue if the following token isn't some
+			;; kind of symbol or keyword that can't start a
+			;; declaration, or if it's fontified as a type
+			;; already.
+			(progn
+			  (c-forward-syntactic-ws)
+			  (and
+			   (< (point) limit)
+			   (or (not (looking-at c-symbol-start))
+			       (and (eq (get-text-property (point) 'face)
+					'font-lock-keyword-face)
+				    (looking-at c-not-decl-init-keywords)))))
+			))
+
+		 ;; We only want to match at bob the first time, to
+		 ;; avoid looping forever there.  That's not a problem
+		 ;; anywhere else since `re-search-forward' will move
+		 ;; forward at least one char (except at the limit).
+		 (setq match (re-search-forward c-decl-prefix-re limit 'move)))
+
+	       (< (point) limit))
+
+	(catch 'continue
+
+	  ;; Skip over leading specifiers like "static".
+	  (setq at-decl nil)
+	  (while (looking-at c-specifier-key)
+	    (setq at-decl t)		; We're sure this is a declaration.
+	    (goto-char (match-end 1))
+	    (c-forward-syntactic-ws))
+
+	  (setq type-start (point))
+	  (if at-decl
+	      (c-forward-type)
+	    (unless (setq at-decl (c-forward-type t))
+	      ;; Set the position to continue at.
+	      (setq type-end (if (= type-start (point)) (1+ (point)) (point)))
+	      (throw 'continue t)))
+	  (setq type-end (point))
+
+	  (when (eq at-decl 'maybe)
+	    ;; We found an identifier that could be a type but also an
+	    ;; expression.
+
+	    ;; Check for and step over a type decl expression.  If
+	    ;; parentheses are allowed we balance them and require that
+	    ;; none of them contains nothing but allowed type
+	    ;; declaration operators.
+	    (c-forward-syntactic-ws)
+	    (catch 'decl-ok
+	      (let ((start (point)) (paren-depth 0) (maybe-fun-call t))
+
+		;; Skip over type decl prefix operators.
+		(while (looking-at c-type-decl-prefix-key)
+		  (if (eq (char-after) ?\()
 		      (progn
-			(c-forward-syntactic-ws)
-			(and (< (point) limit)
-			     (or (not (looking-at c-symbol-start))
-				 (and (eq (get-text-property (point) 'face)
-					  'font-lock-keyword-face)
-				      (looking-at c-not-decl-init-keywords)))))
-		      ))
+			(setq paren-depth (1+ paren-depth))
+			(forward-char))
+		    (setq maybe-fun-call nil)
+		    (goto-char (match-end 1)))
+		  (c-forward-syntactic-ws))
 
-	       ;; We only want to match at bob the first time, to
-	       ;; avoid looping forever there.  That's not a problem
-	       ;; anywhere else since `re-search-forward' will move
-	       ;; forward at least one char (except at the limit).
-	       (setq match (re-search-forward c-decl-prefix-re limit 'move)))
-
-	     (< (point) limit))
-
-      (catch 'continue
-
-	;; Skip over leading specifiers like "static".
-	(setq at-decl nil)
-	(while (looking-at c-specifier-key)
-	  (setq at-decl t)		; We're sure this is a declaration.
-	  (goto-char (match-end 1))
-	  (c-forward-syntactic-ws))
-
-	(setq type-start (point))
-	(if at-decl
-	    (c-forward-type)
-	  (unless (setq at-decl (c-forward-type t))
-	    ;; Set the position to continue at.
-	    (setq type-end (if (= type-start (point)) (1+ (point)) (point)))
-	    (throw 'continue t)))
-	(setq type-end (point))
-
-	(when (eq at-decl 'maybe)
-	  ;; We found an identifier that could be a type but also an
-	  ;; expression.
-
-	  ;; Check for and step over a type decl expression.  If
-	  ;; parentheses are allowed we balance them and require that
-	  ;; none of them contains nothing but allowed type
-	  ;; declaration operators.
-	  (c-forward-syntactic-ws)
-	  (catch 'decl-ok
-	    (let ((start (point)) (paren-depth 0) (maybe-fun-call t))
-
-	      ;; Skip over type decl prefix operators.
-	      (while (looking-at c-type-decl-prefix-key)
-		(if (eq (char-after) ?\()
+		;; Skip over an identifier, but don't require it since
+		;; it's optional in some cases in (at least) C.
+		(if (looking-at c-symbol-key)
 		    (progn
-		      (setq paren-depth (1+ paren-depth))
-		      (forward-char))
-		  (setq maybe-fun-call nil)
-		  (goto-char (match-end 1)))
-		(c-forward-syntactic-ws))
+		      (when (= paren-depth 0)
+			;; We're not inside parentheses so it can't be a
+			;; function call.
+			(throw 'decl-ok t))
+		      (goto-char (match-end 1))
+		      (c-forward-syntactic-ws))
+		  (when (and (eq (char-after) ?\[)
+			     (= paren-depth 0))
+		    ;; We're looking at nothing but a [] argument, and
+		    ;; that's typically not a declaration.
+		    (throw 'continue t))
+		  (setq maybe-fun-call nil))
 
-	      ;; Skip over an identifier, but don't require it since
-	      ;; it's optional in some cases in (at least) C.
-	      (if (looking-at c-symbol-key)
-		  (progn
-		    (when (= paren-depth 0)
-		      ;; We're not inside parentheses so it can't be a
-		      ;; function call.
-		      (throw 'decl-ok t))
-		    (goto-char (match-end 1))
-		    (c-forward-syntactic-ws))
-		(when (and (eq (char-after) ?\[)
-			   (= paren-depth 0))
-		  ;; We're looking at nothing but a [] argument, and
-		  ;; that's typically not a declaration.
+		;; Skip over type decl suffix operators.
+		(while (and (looking-at c-type-decl-suffix-key)
+			    (if (eq (char-after) ?\))
+				(when (> paren-depth 0)
+				  (setq paren-depth (1- paren-depth))
+				  (forward-char)
+				  t)
+			      (if (eq (char-syntax (char-after)) ?\[)
+				  (unless (c-safe (c-forward-sexp 1) t)
+				    (throw 'continue t))
+				(goto-char (match-end 1)))
+			      (setq maybe-fun-call nil)
+			      t))
+		  (c-forward-syntactic-ws))
+
+		(when (> paren-depth 0)
+		  ;; We're at a token that isn't valid in a type decl
+		  ;; inside a parenthesis.
 		  (throw 'continue t))
-		(setq maybe-fun-call nil))
 
-	      ;; Skip over type decl suffix operators.
-	      (while (and (looking-at c-type-decl-suffix-key)
-			  (if (eq (char-after) ?\))
-			      (when (> paren-depth 0)
-				(setq paren-depth (1- paren-depth))
-				(forward-char)
-				t)
-			    (if (eq (char-syntax (char-after)) ?\[)
-				(unless (c-safe (c-forward-sexp 1) t)
-				  (throw 'continue t))
-			      (goto-char (match-end 1)))
-			    (setq maybe-fun-call nil)
-			    t))
-		(c-forward-syntactic-ws))
+		(when maybe-fun-call
+		  ;; maybe-fun-call is cleared if we've found a type
+		  ;; decl operator that isn't a parenthesis and when
+		  ;; there is an identifier.  So we get here if we've
+		  ;; passed at least one parenthesis (due to the check
+		  ;; above) with an identifier in it, but nothing else.
+		  ;; That's more likely to be a function call than a
+		  ;; declaration.
+		  (throw 'continue t))
 
-	      (when (> paren-depth 0)
-		;; We're at a token that isn't valid in a type decl
-		;; inside a parenthesis.
-		(throw 'continue t))
+		(when (= (point) start)
+		  ;; If we haven't moved then there's no type
+		  ;; declaration here.
+		  (throw 'continue t)))))
 
-	      (when maybe-fun-call
-		;; maybe-fun-call is cleared if we've found a type
-		;; decl operator that isn't a parenthesis and when
-		;; there is an identifier.  So we get here if we've
-		;; passed at least one parenthesis (due to the check
-		;; above) with an identifier in it, but nothing else.
-		;; That's more likely to be a function call than a
-		;; declaration.
-		(throw 'continue t))
+	  (c-font-lock-type type-start type-end)
+	  (c-forward-syntactic-ws)
+	  (c-font-lock-declarators limit))
 
-	      (when (= (point) start)
-		;; If we haven't moved then there's no type
-		;; declaration here.
-		(throw 'continue t)))))
+	;; Continue the search at the end of the type, since the
+	;; declaration list might contain nested blocks with
+	;; declarations.
+	(goto-char type-end)
 
-	(c-font-lock-type type-start type-end)
-	(c-forward-syntactic-ws)
-	(c-font-lock-declarators limit))
-
-      ;; Continue the search at the end of the type, since the
-      ;; declaration list might contain nested blocks with
-      ;; declarations.
-      (goto-char type-end)
-
-      ;; We search here to allow the first match at bob.  See note above.
-      (setq match (re-search-forward c-decl-prefix-re limit 'move))))
-  nil)
+	;; We search here to allow the first match at bob.  See note above.
+	(setq match (re-search-forward c-decl-prefix-re limit 'move))))
+    nil))
 
 ;; Need to declare these during compilation since they're referenced
 ;; from the lambda generated by
