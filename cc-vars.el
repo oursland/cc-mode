@@ -103,6 +103,12 @@ Useful as last item in a `choice' widget."
 		  (match-string 0 value)))
       value)))
 
+(define-widget 'c-integer-or-nil 'sexp
+  "An integer or the value nil."
+  :value nil
+  :tag "Optional integer"
+  :match (lambda (widget value) (or (integerp value) (null value))))
+
 (defvar c-style-variables
   '(c-basic-offset c-comment-only-line-offset c-block-comment-prefix
     c-comment-prefix-regexp c-cleanup-list c-hanging-braces-alist
@@ -254,6 +260,86 @@ default)."
 		       :extra-offset 8
 		       (integer :tag "Non-anchored offset")
 		       (integer :tag "Anchored offset")))
+  :group 'c)
+
+(defcustom-c-stylevar c-indent-comment-alist
+  '((anchored-comment . (column . 0))
+    (end-block . (space . 1))
+    (cpp-end-block . (space . 2)))
+  "*Specifies how \\[indent-for-comment] calculates the comment start column.
+This is an association list that contains entries of the form:
+
+ (LINE-TYPE . INDENT-SPEC)
+
+LINE-TYPE specifies a type of line as described below, and INDENT-SPEC
+says what \\[indent-for-comment] should do when used on that type of line.
+
+The recognized values for LINE-TYPE are:
+
+ empty-line        -- The line is empty.
+ anchored-comment  -- The line contains a comment that starts in column 0.
+ end-block         -- The line contains a solitary block closing brace.
+ cpp-end-block     -- The line contains a preprocessor directive that
+                      closes a block, i.e. either \"#endif\" or \"#else\".
+ other             -- The line does not match any of the above.
+
+The `empty-line' type is also controlled by
+`c-indent-comments-syntactically-p'.  If that variable is non-nil, the
+comment is indented syntactically, i.e. just like if \\[c-indent-command]
+was used instead, and the INDENT-SPEC for the `empty-line' type is
+ignored.
+
+An INDENT-SPEC is a cons cell of the form:
+
+ (ACTION . VALUE)
+
+ACTION says how \\[indent-for-comment] should align the comment, and
+VALUE is interpreted depending on ACTION.  ACTION can be any of the
+following:
+
+ space   -- Put VALUE spaces between the end of the line and the start
+            of the comment.
+ column  -- Start the comment at the column VALUE.  If the line is
+            longer than that, the comment is preceded by a single
+            space.  If VALUE is nil, `comment-column' is used.
+ align   -- Align the comment with one on the previous line, if there
+            is any.  If the line is too long, the comment is preceded
+            by a single space.  If there isn't a comment start on the
+            previous line, the behavior is specified by VALUE, which
+            in turn is interpreted as an INDENT-SPEC.
+
+If a LINE-TYPE is missing, then \\[indent-for-comment] indents the comment
+according to `comment-column'."
+  :type
+  (let ((space '(cons :tag "space"
+		      :format "%v"
+		      :value (space . 1)
+		      (const :format "space  " space)
+		      (integer :format "%v")))
+	(column '(cons :tag "column"
+		       :format "%v"
+		       (const :format "column " column)
+		       (c-integer-or-nil :format "%v"))))
+    `(set ,@(mapcar
+	     (lambda (elt)
+	       `(cons :format "%v"
+		      (c-const-symbol :format "%v: "
+				      :size 20
+				      :value ,elt)
+		      (choice
+		       :format "%[Choice%] %v"
+		       :value (column . nil)
+		       ,space
+		       ,column
+		       (cons :tag "align"
+			     :format "%v"
+			     (const :format "align  " align)
+			     (choice
+			      :format "%[Choice%] %v"
+			      :value (column . nil)
+			      ,space
+			      ,column)))))
+	     '(empty-line anchored-comment end-block cpp-end-block other))))
   :group 'c)
 
 (defcustom c-indent-comments-syntactically-p nil
@@ -488,7 +574,7 @@ syntactic context for the brace line."
 				    :size 20
 				    :value ,elt)
 		    (choice :format "%[Choice%] %v"
-		     :value (before after)
+			    :value (before after)
 			    (set :menu-tag "Before/after"
 				 :format "Newline %v brace\n"
 				 (const :format "%v, " before)

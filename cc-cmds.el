@@ -1239,82 +1239,88 @@ sentence motion in or near comments and multiline strings."
 (put 'c-electric-delete-forward 'pending-delete   'supersede) ; pending-del
 
 
-;; This is used by indent-for-comment to decide how much to indent a
-;; comment in C code based on its context.
+(defun c-calc-comment-indent (line-type &optional entry)
+  (if line-type
+      (setq entry (or (assq line-type c-indent-comment-alist)
+		      '(default . (column . nil)))))
+  (let ((action (car (cdr entry)))
+	(value (cdr (cdr entry)))
+	(col (current-column)))
+    (cond ((eq action 'space)
+	   (+ col value))
+	  ((eq action 'column)
+	   (unless value (setq value comment-column))
+	   (if (bolp)
+	       ;; Do not pad with one space if we're at bol.
+	       value
+	     (max (1+ col) value)))
+	  ((eq action 'align)
+	   (or (save-excursion
+		 (beginning-of-line)
+		 (unless (bobp)
+		   (backward-char)
+		   (let ((lim (c-literal-limits (c-point 'bol) t)))
+		     (when (consp lim)
+		       (goto-char (car lim))
+		       (when (looking-at "/[/*]")
+			 ;; Found comment to align with.
+			 (if (bolp)
+			     ;; Do not pad with one space if we're at bol.
+			     0
+			   (max (1+ col) (current-column))))))))
+	       ;; Recurse to handle value as a new spec.
+	       (c-calc-comment-indent nil (cdr entry)))))))
+
 (defun c-comment-indent ()
-  (if (looking-at (concat "^\\(" c-comment-start-regexp "\\)"))
-      0				;Existing comment at bol stays there.
-    (let ((opoint (point))
-	  placeholder)
-      (save-excursion
-	(beginning-of-line)
-	(cond
-	 ;; CASE 1: A comment following a solitary close-brace should
-	 ;; have only one space.
-	 ((looking-at (concat "[ \t]*}[ \t]*\\($\\|"
-			      c-comment-start-regexp
-			      "\\)"))
-	  (search-forward "}")
-	  (1+ (current-column)))
-	 ;; CASE 2: 2 spaces after #endif
-	 ((or (looking-at "[ \t]*#[ \t]*endif[ \t]*")
-	      (looking-at "[ \t]*#[ \t]*else[ \t]*"))
-	  7)
-	 ;; CASE 3: when c-indent-comments-syntactically-p is t,
-	 ;; calculate the offset according to c-offsets-alist.
-	 ;; E.g. identical to hitting TAB.
-	 ((and c-indent-comments-syntactically-p
-	       (save-excursion
-		 (skip-chars-forward " \t")
-		 (or (looking-at c-comment-start-regexp)
-		     (eolp))))
-	  (let ((syntax (c-guess-basic-syntax)))
-	    ;; BOGOSITY ALERT: if we're looking at the eol, its
-	    ;; because indent-for-comment hasn't put the comment-start
-	    ;; in the buffer yet.  this will screw up the syntactic
-	    ;; analysis so we kludge in the necessary info.  Another
-	    ;; kludge is that if we're at the bol, then we really want
-	    ;; to ignore any anchoring as specified by
-	    ;; c-comment-only-line-offset since it doesn't apply here.
-	    (if (save-excursion
-		  (back-to-indentation)
-		  (eolp))
-		(c-add-syntax 'comment-intro))
-	    (let ((c-comment-only-line-offset
-		   (if (consp c-comment-only-line-offset)
-		       c-comment-only-line-offset
-		     (cons c-comment-only-line-offset
-			   c-comment-only-line-offset))))
-	      (c-get-syntactic-indentation syntax))))
-	 ;; CASE 4: If previous line is a comment-only line, use its
-	 ;; indentation if it's greater than comment-column.  Leave at
-	 ;; least one space between the comment and the last nonblank
-	 ;; character in any case.
-	 ((save-excursion
-	    (beginning-of-line)
-	    (and (not (bobp))
-		 (forward-line -1))
-	    (skip-chars-forward " \t")
-	    (prog1
-		(looking-at c-comment-start-regexp)
-	      (setq placeholder (current-column))))
-	  (goto-char opoint)
-	  (skip-chars-backward " \t")
-	  (max (if (bolp) 0 (1+ (current-column)))
-	       placeholder
-	       comment-column))
-	 ;; CASE 5: If comment-column is 0, and nothing but space
-	 ;; before the comment, align it at 0 rather than 1.
-	 ((progn
-	    (goto-char opoint)
-	    (skip-chars-backward " \t")
-	    (and (= comment-column 0) (bolp)))
-	  0)
-	 ;; CASE 6: indent at comment column except leave at least one
-	 ;; space.
-	 (t (max (1+ (current-column))
-		 comment-column))
-	 )))))
+  "Used by `indent-for-comment' to create and indent comments.
+See `c-indent-comment-alist' for a description."
+  (save-excursion
+    (end-of-line)
+    (let ((eot (let ((lim (c-literal-limits (c-point 'bol) t)))
+		 (or (when (consp lim)
+		       (goto-char (car lim))
+		       (when (looking-at "/[/*]")
+			 (skip-chars-backward " \t")
+			 (point)))
+		     (progn
+		       (skip-chars-backward " \t")
+		       (point))))))
+      (cond
+       ((looking-at "^/[/*]")
+	(c-calc-comment-indent 'anchored-comment))
+       ((progn (beginning-of-line)
+	       (eq (point) eot))
+	(if c-indent-comments-syntactically-p
+	    (let ((syntax (c-guess-basic-syntax)))
+	      ;; BOGOSITY ALERT: if we're looking at the eol, its
+	      ;; because indent-for-comment hasn't put the comment-start
+	      ;; in the buffer yet.  this will screw up the syntactic
+	      ;; analysis so we kludge in the necessary info.  Another
+	      ;; kludge is that if we're at the bol, then we really want
+	      ;; to ignore any anchoring as specified by
+	      ;; c-comment-only-line-offset since it doesn't apply here.
+	      (if (eolp)
+		  (c-add-syntax 'comment-intro))
+	      (let ((c-comment-only-line-offset
+		     (if (consp c-comment-only-line-offset)
+			 c-comment-only-line-offset
+		       (cons c-comment-only-line-offset
+			     c-comment-only-line-offset))))
+		(c-get-syntactic-indentation syntax)))
+	  (c-calc-comment-indent 'empty-line)))
+       ((progn (back-to-indentation)
+	       (and (eq (char-after) ?})
+		    (eq (point) (1- eot))))
+	(forward-char)
+	(c-calc-comment-indent 'end-block))
+       ((and (looking-at "#[ \t]*\\(endif\\|else\\)")
+	     (eq (match-end 0) eot))
+	(goto-char eot)
+	(c-calc-comment-indent 'cpp-end-block))
+       (t
+	(goto-char eot)
+	(c-calc-comment-indent 'other))
+       ))))
 
 
 ;; used by outline-minor-mode
