@@ -61,10 +61,18 @@
 	  (not (fboundp 'when))
 	  (not (fboundp 'unless))
 	  (not (fboundp 'regexp-opt))
-	  (not (fboundp 'regexp-opt-depth)))
+	  (not (fboundp 'regexp-opt-depth))
+	  (/= (regexp-opt-depth "\\(\\(\\)\\)") 2))
       (cc-load "cc-mode-19")
     (defalias 'c-regexp-opt 'regexp-opt)
     (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
+
+(eval-after-load "font-lock"
+  '(if (and (not (featurep 'cc-mode-19)) ; only load the file once.
+            (let (font-lock-keywords)
+              (font-lock-compile-keywords '("\\<\\>"))
+              font-lock-keywords))     ; did the previous call foul this up?
+       (load "cc-mode-19")))
 
 (require 'cl)
 
