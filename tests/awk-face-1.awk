@@ -180,7 +180,3 @@ END {
     print _"Hello"
     print _"Hello
 } 
-
-# Local Variables:
-# cc-test-skip: (no-syntax-properties)
-# End:

@@ -11,7 +11,3 @@
 ((template-args-cont 325))
 ((topmost-intro-cont 381))
 ((class-open 325))
-((topmost-intro 418))
-((topmost-intro 418) (comment-intro))
-((topmost-intro 418) (comment-intro))
-((topmost-intro 418) (comment-intro))

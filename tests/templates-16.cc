@@ -11,7 +11,3 @@ struct default_member_getter_policy
     , return_internal_reference<>
     >,
 {};
-
-// Local Variables:
-// cc-test-skip: (no-syntax-properties)
-// End:

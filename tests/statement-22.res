@@ -103,7 +103,3 @@
 ((substatement 979))
 ((else-clause 989))
 ((defun-close 16))
-((topmost-intro 1))
-((topmost-intro 1) (comment-intro))
-((topmost-intro 1) (comment-intro))
-((topmost-intro 1) (comment-intro))
