@@ -70,6 +70,15 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 ;; punt on this for now.
 (defconst c-symbol-key "[_a-zA-Z]\\(\\w\\|\\s_\\)*")
 
+(defvar c-stmt-delim-chars "^;{}?:")
+;; The characters that should be considered to bound statements.  To
+;; optimize c-crosses-statement-barrier-p somewhat, it's assumed to
+;; begin with "^" to negate the set.  If ? : operators should be
+;; detected then the string must end with "?:".
+
+(defvar c-stmt-delim-chars-with-comma "^;,{}?:")
+;; Variant of c-stmt-delim-chars that additionally contains ','.
+
 ;; HELPME: Many of the following keyword lists are more or less bogus
 ;; for some languages (notably ObjC and IDL).  The effects of the
 ;; erroneous values in the language handling is miniscule since these
