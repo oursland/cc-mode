@@ -287,7 +287,9 @@
 (defun c-forward-token-1 (&optional count balanced lim)
   (let* ((jump-syntax (if balanced
 			  '(?w ?_ ?\" ?\\ ?/ ?$ ?' ?\( ?\))
-			'(?w ?_ ?\" ?\\ ?/ ?$ ?'))))
+			'(?w ?_ ?\" ?\\ ?/ ?$ ?')))
+	 ;; this is a XEmacs built-in that wreaks havoc
+	 (signal-error-on-buffer-boundary t))
     (or count (setq count 1))
     (condition-case nil
 	(while (progn
@@ -305,6 +307,8 @@
   (let* ((jump-syntax (if balanced
 			  '(?w ?_ ?\" ?\\ ?/ ?$ ?' ?\( ?\))
 			'(?w ?_ ?\" ?\\ ?/ ?$ ?')))
+	 ;; this is a XEmacs built-in that wreaks havoc
+	 (signal-error-on-buffer-boundary t)
 	 last)
     (or count (setq count 1))
     (condition-case nil
