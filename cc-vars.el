@@ -1232,11 +1232,6 @@ working due to this change.")
   :args '((const :tag "none" nil)
 	  (repeat :tag "types" regexp)))
 
-;; The following is a by now mostly obsolete method to fontify types
-;; not defined by the language.  Those types might be the user's own
-;; or they might be generally accepted and used.  Generally accepted
-;; types are used to provide default variable values.
-
 (eval-and-compile
   ;; XEmacs 19 evaluates this at compile time below, while most other
   ;; versions delays the evaluation until the package is loaded.
@@ -1249,12 +1244,16 @@ Each list item should be a regexp matching a single identifier.
 
 On decoration level 3 (and higher, where applicable), a method is used
 that finds most types and declarations by syntax alone.  This variable
-is then consulted only as a last resort when there's no other way to
-tell a type from another kind of identifier.
+is still used as a first step, but other types are recognized
+correctly anyway in most cases.  Therefore this variable should be
+fairly restrictive and not contain patterns that are uncertain.
 
 Note that this variable is only consulted when the major mode is
 initialized.  If you change it later you have to reinitialize CC Mode
-by doing \\[" mode2 "].")))
+by doing \\[" mode2 "].
+
+Despite the name, this variable is not only used for font locking but
+also elsewhere in CC Mode to tell types from other identifiers.")))
 
 ;; I do not appreciate the very Emacs-specific luggage on this
 ;; default value, but otoh it can hardly get in the way for other
