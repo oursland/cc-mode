@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-12 20:48:09 $
-;; Version:         $Revision: 2.47 $
+;; Last Modified:   $Date: 1992-05-12 21:37:20 $
+;; Version:         $Revision: 2.48 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-12 20:48:09 $|$Revision: 2.47 $|
+;; |$Date: 1992-05-12 21:37:20 $|$Revision: 2.48 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -186,7 +186,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.47 $
+  "Major mode for editing C++ code.  $Revision: 2.48 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -794,7 +794,16 @@ if it is embedded in an expression."
   "Return t if in a C or C++ style comment as defined by mode's syntax."
   (save-excursion
     (let ((here (point))
-	  (bod (save-excursion (beginning-of-defun) (point))))
+	  ;; we need to specially handle the case of hanging open
+	  ;; braces at the top level. they will mess up
+	  ;; parse-partial-sexp
+	  (bod (save-excursion
+		 (beginning-of-defun)
+		 (if (not (looking-at "\\s("))
+		     (progn (forward-line 1)
+			    (re-search-backward "\\s(" nil 'move)
+			    (skip-chars-forward " \t")))
+		 (point))))
       (or
        ;; in a c++ style comment?
        (nth 4 (parse-partial-sexp bod here 0))
@@ -802,6 +811,7 @@ if it is embedded in an expression."
        (let ((in-c-comment-p
 	      (progn (modify-syntax-entry ?\n " "    c++-mode-syntax-table)
 		     (modify-syntax-entry ?/  ". 14" c++-mode-syntax-table)
+		     (goto-char here)
 		     (nth 4 (parse-partial-sexp bod here 0)))))
 	 (modify-syntax-entry ?\n ">"    c++-mode-syntax-table)
 	 (modify-syntax-entry ?/  ". 12" c++-mode-syntax-table)
@@ -1540,7 +1550,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.47 $"
+(defconst c++-version "$Revision: 2.48 $"
   "c++-mode version number.")
 
 (defun c++-dump-state ()
