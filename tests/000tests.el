@@ -38,12 +38,10 @@
 ;;    proper extension.  This file must have a unique name within the
 ;;    tests directory (sans the extension).
 ;; 2) Create a `results' (.res) file with the base name of the file,
-;;    appended with .res.  Split the current window so that you have
-;;    two buffers visible, the new test file buffer on top, and the
-;;    .res file on bottom.  Put point at the top of the new test file
-;;    and type `M-x resfile'.  This will populate the .res file.
-;;    Verify that the results are what you expect, then save both
-;;    files, and check them into CVS.
+;;    appended with .res by doing `M-x resfile'.  The created or
+;;    changed results file will be shown in another window.  Verify
+;;    that the results are what you expect, then save both files, and
+;;    check them into CVS.
 
 ;; Some times the tests will fail without an actual regression being
 ;; introduced.  This might happen if, e.g. the default Java style
@@ -431,13 +429,20 @@
 
 (defun resfile ()
   (interactive)
-  (goto-char (point-min))
-  (other-window 1)
-  (goto-char (point-min))
-  (other-window 1)
-  (while (not (eobp))
-    (let ((syntax (c-guess-basic-syntax)))
-      (other-window 1)
-      (insert (format "%s\n" syntax)))
-    (other-window 1)
-    (forward-line 1)))
+  (save-excursion
+    (save-selected-window
+      (let* ((testbuf (current-buffer))
+	     (resfile (concat (file-name-sans-extension buffer-file-name)
+			      ".res"))
+	     (resbuf (find-file-noselect resfile)))
+	(switch-to-buffer-other-window resbuf)
+	(set-buffer resbuf)
+	(delete-region (point-min) (point-max))
+	(set-buffer testbuf)
+	(goto-char (point-min))
+	(while (not (eobp))
+	  (let ((syntax (c-guess-basic-syntax)))
+	    (set-buffer resbuf)
+	    (insert (format "%s\n" syntax)))
+	  (set-buffer testbuf)
+	  (forward-line 1))))))
