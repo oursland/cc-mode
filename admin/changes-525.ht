@@ -15,5 +15,5 @@ of 5.24.  See also the
     <code>c-default-style</code>, then the symbol `other' is looked
     up, and if this is not found then the "gnu" style is used.
 
-    <li>Many bug fixes.
+    <p><li>Many bug fixes.
 </ul>
