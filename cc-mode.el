@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.61 $
-;; Last Modified:   $Date: 1994-08-24 21:06:05 $
+;; Version:         $Revision: 4.62 $
+;; Last Modified:   $Date: 1994-08-25 13:31:31 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-24 21:06:05 $|$Revision: 4.61 $|
+;; |$Date: 1994-08-25 13:31:31 $|$Revision: 4.62 $|
 
 ;;; Code:
 
@@ -950,7 +950,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.61 $
+cc-mode Revision: $Revision: 4.62 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -989,7 +989,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.61 $
+cc-mode Revision: $Revision: 4.62 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1026,7 +1026,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.61 $
+cc-mode Revision: $Revision: 4.62 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2692,10 +2692,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   (or (not (eq major-mode 'objc-mode))
 	       (progn
 		 (forward-sexp -1)
-		 (backward-char)
+		 (forward-char -1)
 		 (c-backward-syntactic-ws)
 		 (not (or (= (preceding-char) ?-)
-			  (= (preceding-char) ?+))))))
+			  (= (preceding-char) ?+)
+			  ;; or a class category
+			  (progn
+			    (forward-sexp -2)
+			    (looking-at c-class-key))
+			  )))))
       )))
 
 ;; defuns to look backwards for things
@@ -3179,7 +3184,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			      (backward-char)
 			      (c-backward-syntactic-ws)
 			      (not (or (= (preceding-char) ?-)
-				       (= (preceding-char) ?+))))))
+				       (= (preceding-char) ?+)
+				       ;; or a class category
+				       (progn
+					 (forward-sexp -2)
+					 (looking-at c-class-key))
+				       )))))
 		   )
 		 (save-excursion
 		   (c-beginning-of-statement)
@@ -3845,7 +3855,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 				   (- (current-column) 1)))))
       (if (not prev-col-column)
 	  c-basic-offset
-	;; calculate offset of
 	(goto-char here)
 	(skip-chars-forward "^:" eol)
 	(if (= (following-char) ?:)
@@ -3982,7 +3991,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.61 $"
+(defconst c-version "$Revision: 4.62 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
