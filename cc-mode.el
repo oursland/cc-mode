@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.25 $
-;; Last Modified:   $Date: 1993-09-28 23:04:02 $
+;; Version:         $Revision: 3.26 $
+;; Last Modified:   $Date: 1993-09-28 23:08:03 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-28 23:04:02 $|$Revision: 3.25 $|
+;; |$Date: 1993-09-28 23:08:03 $|$Revision: 3.26 $|
 
 ;;; Code:
 
@@ -355,7 +355,7 @@ style 1:       style 2:       style 3:       style 4:
 These cleanups only take place when the auto-newline feature is turned
 on, as evidenced by the `/a' or `/ah' appearing next to the mode name.
 
-Current legal values are:
+Current valid values are:
  `brace-else-brace'   -- clean up `} else {' constructs by placing entire
                          construct on a single line.  This cleanup only
                          takes place when there is nothing but white
@@ -377,14 +377,14 @@ open braces.  If not nil or t, newlines are only inserted before
 top-level open braces; all other braces hang.")
 (defvar c++-hanging-member-init-colon 'before
   "*Defines how colons which introduce member initializations are formatted.
-Legal values are:
+Valid values are:
   t        -- no newlines inserted before or after colon
   nil      -- newlines inserted before and after colon
   `after'  -- newlines inserted only after colon
   `before` -- newlines inserted only before colon")
 (defvar c++-auto-hungry-initial-state 'none
   "*Initial state of auto/hungry features when buffer is first visited.
-Legal values are:
+Valid values are:
   `none'         -- no auto-newline and no hungry-delete-key.
   `auto-only'    -- auto-newline, but no hungry-delete-key.
   `hungry-only'  -- no auto-newline, but hungry-delete-key.
@@ -393,7 +393,7 @@ Nil is synonymous for `none' and t is synonymous for `auto-hungry'.")
 
 (defvar c++-auto-hungry-toggle t
   "*Enable/disable toggling of auto/hungry features.
-Legal values are:
+Valid values are:
   `none'         -- auto-newline and hungry-delete-key cannot be enabled.
   `auto-only'    -- only auto-newline feature can be toggled.
   `hungry-only'  -- only hungry-delete-key feature can be toggled.
@@ -542,7 +542,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.25 $
+  "Major mode for editing C++ code.  $Revision: 3.26 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -615,7 +615,7 @@ from their c-mode cousins.
     list or an integer.
  c++-cleanup-list
     A list of construct \"clean ups\" which c++-mode will perform when
-    auto-newline feature is on.  Current legal values are:
+    auto-newline feature is on.  Current valid values are:
     `brace-else-brace', `empty-defun-braces', `defun-close-semi',
     `list-close-comma'.
  c++-comment-only-line-offset
@@ -691,7 +691,7 @@ function in variable `c++-delete-function'.
 
 Selection and toggling of these features is controlled by the
 variables `c++-auto-hungry-initial-state' and `c++-auto-hungry-toggle'.
-Legal values for both variables are:
+Valid values for both variables are:
 
   `none' (or nil)      -- no auto-newline or hungry-delete-key.
   `auto-only'          -- function affects only auto-newline feature.
@@ -734,7 +734,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.25 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.26 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'.  Only real
 difference is that this sets up the buffer for editing C code, and it
@@ -2658,7 +2658,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.25 $"
+(defconst c++-version "$Revision: 3.26 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
