@@ -35,10 +35,10 @@
 ;; Note: The version string is in cc-defs.
 
 ;; This package provides GNU Emacs major modes for editing C, C++,
-;; Objective-C, Java, IDL and Pike code.  As of the latest Emacs and
-;; XEmacs releases, it is the default package for editing these
-;; languages.  This package is called "CC Mode", and should be spelled
-;; exactly this way.
+;; Objective-C, Java, CORBA's IDL and Pike code.  As of the latest
+;; Emacs and XEmacs releases, it is the default package for editing
+;; these languages.  This package is called "CC Mode", and should be
+;; spelled exactly this way.
 
 ;; CC Mode supports K&R and ANSI C, ANSI C++, Objective-C, Java,
 ;; CORBA's IDL, and Pike with a consistent indentation model across
@@ -807,7 +807,7 @@ Key bindings:
 
 ;;;###autoload
 (defun idl-mode ()
-  "Major mode for editing CORBA's IDL code.
+  "Major mode for editing CORBA's IDL, PSDL and CIDL code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 idl-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
