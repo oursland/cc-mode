@@ -3151,11 +3151,12 @@ to scan from the beginning of the buffer for every line of code!
 @findex beginning-of-defun
 @findex defun-prompt-regexp
 One of the simplest things you can do to reduce scan time, is make sure
-any brace that opens a top-level block construct always appears in the
+any brace that opens a top-level construct@footnote{e.g. a function in
+C, or outermost class definition in C++ or Java.} always appears in the
 leftmost column.  This is actually an Emacs constraint, as embodied in
 the @code{beginning-of-defun} function which @ccmode{} uses
 heavily.  If you insist on hanging top-level open braces on the right
-side of the line, then you should set the variable
+side of the line, then you might want to set the variable
 @code{defun-prompt-regexp} to something reasonable @footnote{Note that
 this variable is only defined in Emacs 19.}, however that ``something
 reasonable'' is difficult to define, so @ccmode{} doesn't do it
@@ -3175,6 +3176,23 @@ it is not used by default, but if you feel adventurous, you can set
 @code{defun-prompt-regexp} to it in your mode hook.  In any event,
 setting and rely on @code{defun-prompt-regexp} will definitely slow
 things down!
+
+@vindex c-enable-xemacs-performance-kludge-p
+@vindex enable-xemacs-performance-kludge-p (c-)
+Another alternative, if you are using XEmacs, is to set the variable
+@code{c-enable-xemacs-performance-kludge-p} to non-@code{nil}.  This
+tells @ccmode{} to use XEmacs-specific built-in functions which can
+locate the top-most opening brace much quicker than
+@code{beginning-of-defun}, in some circumstances.  Preliminary testing
+has shown that for styles where these braces are hung (e.g. most
+JDK-derived Java styles), this hack can improve performance of the core
+syntax parsing routines from 3 to 60 times.  However, for styles which
+@emph{do} conform to Emacs' recommended style by putting top-level
+braces in column zero, this hack may slightly degrade performance a few
+percentage points.  Observed degradation has been minor, but this
+feature should still be considered experimental.  Note that this
+variable has no effect in Emacs since the necessary built-in functions
+don't exist (as of Emacs 20.2 at this writing 24-Jan-1998).
 
 You will probably notice pathological behavior from @ccmode{} when
 working in files containing large amounts of C preprocessor macros.
