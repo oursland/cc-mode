@@ -732,7 +732,7 @@ that the aggregate constructs in Pike mode, @samp{(@{}, @samp{@})},
 @samp{([}, @samp{])}, and @samp{(<}, @samp{>)}, do not count as brace
 lists in this regard, even though they do for normal indentation
 purposes.  It's currently not possible to set automatic newlines on
-these constructs.}.  @xref{Syntactic Symbols} for a more detailed
+these constructs.}.  @xref{Syntactic Symbols}, for a more detailed
 description of these syntactic symbols, except for
 @code{inexpr-class-open} and @code{inexpr-class-close}, which aren't
 actual syntactic symbols.
@@ -747,7 +747,7 @@ normal indentation analysis.}.
 @cindex Custom Indentation Functions
 The value associated with each syntactic symbol in this association list
 is called an @var{ACTION} which can be either a function or a list.
-@xref{Custom Brace and Colon Hanging} for a more detailed discussion of
+@xref{Custom Brace and Colon Hanging}, for a more detailed discussion of
 using a function as a brace hanging @var{ACTION}.
 
 When the @var{ACTION} is a list, it can contain any combination of the
@@ -803,7 +803,7 @@ A word of caution: it is not a good idea to hang top-level construct
 introducing braces, such as @code{class-open} or @code{defun-open}.
 Emacs makes an assumption that such braces will always appear in column
 zero, hanging such braces can introduce performance problems.
-@xref{Performance Issues} for more information.
+@xref{Performance Issues}, for more information.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -829,7 +829,7 @@ Hanging} for details.
 In C++, double-colons are used as a scope operator but because these
 colons always appear right next to each other, newlines before and after
 them are controlled by a different mechanism, called @dfn{clean-ups} in
-@ccmode{}.  @xref{Clean-ups} for details.
+@ccmode{}.  @xref{Clean-ups}, for details.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -844,7 +844,7 @@ Semicolons and commas are also electric in @ccmode{}, but since
 these characters do not correspond directly to syntactic symbols, a
 different mechanism is used to determine whether newlines should be
 automatically inserted after these characters.  @xref{Customizing
-Semi-colons and Commas} for details.
+Semi-colons and Commas}, for details.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1547,7 +1547,7 @@ hook@footnote{Obviously, you use the keybinding interactively, and the
 function call programmatically!}.  You can set up @emph{styles} of
 indentation, which are groupings of syntactic symbol offsets and other
 variable values.  Most likely, you'll find that one of the pre-defined
-styles will suit your needs.  @xref{Styles} for an
+styles will suit your needs.  @xref{Styles}, for an
 explanation of how to set up named styles.
 
 @cindex c-basic-offset
@@ -1662,7 +1662,7 @@ your @file{.emacs} file so that your changes are more permanent.
 As an example of how to customize indentation, let's change the
 style of this example@footnote{In this an subsequent examples, the
 original code is formatted using the @samp{gnu} style unless otherwise
-indicated. @xref{Styles}.}:
+indicated.  @xref{Styles}.}:
 @example
 @group
 
@@ -1840,7 +1840,7 @@ Here's a simplified example of what you can add to your @file{.emacs}
 file to make the changes described in the previous section
 more permanent.  See the Emacs manuals
 for more information on customizing Emacs via hooks.  @xref{Sample
-.emacs File} for a more complete sample @file{.emacs} file.
+.emacs File}, for a more complete sample @file{.emacs} file.
 @example
 @group
 
@@ -1869,7 +1869,7 @@ can add this instead:
 Any time you make @ccmode{} customizations at the top-level of your
 @file{.emacs} file, either through the use of @code{setq}'s or as above,
 or when you use the Custom interface, you will need to include the first
-line.  @xref{Built-in Styles} for details.
+line.  @xref{Built-in Styles}, for details.
 
 For complex customizations, you will probably want to set up a
 @emph{style} that groups all your customizations under a single
@@ -1971,7 +1971,7 @@ or by doing @code{setq}'s at the top level of your @file{.emacs} file,
 these settings will be captured in the @code{user} style.  Also, all
 other styles implicitly inherit their settings from @code{user} style.
 This means that for any styles you add via @code{c-add-style}
-(@xref{Adding Styles}) you need only define the differences between your
+(@pxref{Adding Styles}) you need only define the differences between your
 new style and @code{user} style.
 
 Note however that @code{user} style is @emph{not} the default style.
