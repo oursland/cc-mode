@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.318 $
-;; Last Modified:   $Date: 1994-04-21 21:12:26 $
+;; Version:         $Revision: 3.319 $
+;; Last Modified:   $Date: 1994-04-26 15:19:48 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-21 21:12:26 $|$Revision: 3.318 $|
+;; |$Date: 1994-04-26 15:19:48 $|$Revision: 3.319 $|
 
 ;;; Code:
 
@@ -793,7 +793,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.318 $
+cc-mode Revision: $Revision: 3.319 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -824,7 +824,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.318 $
+cc-mode Revision: $Revision: 3.319 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2401,11 +2401,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		      (goto-char class)
 		      (skip-chars-forward " \t\n")
 		      (setq foundp (vector (c-point 'boi) search-end))
-		      ;; make sure there's no semi-colon between class
-		      ;; and brace. Otherwise, we found a forward
-		      ;; declaration.
-		      (skip-chars-forward "^;" search-end)
-		      (if (= (following-char) ?\;)
+		      ;; make sure there's no semi-colon or equal sign
+		      ;; between class and brace. Otherwise, we found
+		      ;; a forward declaration or a struct init.
+		      (skip-chars-forward "^;=" search-end)
+		      (if (memq (following-char) '(?= ?\;))
 			  (setq foundp nil)
 			;; make sure we aren't looking at the `class'
 			;; keyword inside a template arg list
@@ -3415,7 +3415,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.318 $"
+(defconst c-version "$Revision: 3.319 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
