@@ -3074,12 +3074,25 @@ brace."
 ;; assigned nil if there's no such symbol in the name.
 (defvar c-last-identifier-range nil)
 
-(defmacro c-record-type-id (from to)
-  `(setq c-record-type-identifiers (cons (cons ,from ,to)
-					 c-record-type-identifiers)))
-(defmacro c-record-ref-id (from to)
-  `(setq c-record-ref-identifiers (cons (cons ,from ,to)
-					c-record-ref-identifiers)))
+(defmacro c-record-type-id (range)
+  (if (eq (car-safe range) 'cons)
+      ;; Always true.
+      `(setq c-record-type-identifiers
+	     (cons ,range c-record-type-identifiers))
+    `(let ((range ,range))
+       (if range
+	   (setq c-record-type-identifiers
+		 (cons range c-record-type-identifiers))))))
+
+(defmacro c-record-ref-id (range)
+  (if (eq (car-safe range) 'cons)
+      ;; Always true.
+      `(setq c-record-ref-identifiers
+	     (cons ,range c-record-ref-identifiers))
+    `(let ((range ,range))
+       (if range
+	   (setq c-record-ref-identifiers
+		 (cons range c-record-ref-identifiers))))))
 
 ;; Dynamically bound variable that instructs `c-forward-type' to
 ;; record the ranges of types that only are found.  Behaves otherwise
@@ -3087,18 +3100,39 @@ brace."
 (defvar c-record-found-types nil)
 
 (cc-eval-when-compile
-  (defsubst c-forward-keyword-prefixed-type ()
+  (defmacro c-forward-keyword-prefixed-id (type)
     ;; Used internally in `c-forward-keyword-clause' to move forward
-    ;; over a type which possibly is prefixed by keywords and their
-    ;; associated clauses.  Try with a type first to not trip up on
-    ;; types that begin with a keyword.  Return t if a known or found
-    ;; type is moved over.  The point is clobbered if nil is returned.
-    (let (res)
-      (while (if (setq res (c-forward-type))
-		 nil
-	       (and (looking-at c-keywords-regexp)
-		    (c-forward-keyword-clause))))
-      (memq res '(t found prefix)))))
+    ;; over a type (if TYPE is 'type) or a name (otherwise) which
+    ;; possibly is prefixed by keywords and their associated clauses.
+    ;; Try with a type/name first to not trip up on those that begin
+    ;; with a keyword.  Return t if a known or found type is moved
+    ;; over.  The point is clobbered if nil is returned.  If range
+    ;; recording is enabled, the identifier is recorded on as a type
+    ;; if TYPE is 'type or as a reference if TYPE is 'ref.
+    `(let (res)
+       (while (if (setq res ,(if (eq type 'type)
+				 `(c-forward-type)
+			       `(c-forward-name)))
+		  nil
+		(and (looking-at c-keywords-regexp)
+		     (c-forward-keyword-clause))))
+       (when (memq res '(t found prefix))
+	 ,(when (eq type 'ref)
+	    `(when c-record-type-identifiers
+	       (c-record-ref-id c-last-identifier-range)))
+	 t)))
+
+  (defmacro c-forward-id-comma-list (type)
+    ;; Used internally in `c-forward-keyword-clause' to move forward
+    ;; over a comma separated list of types or names using
+    ;; `c-forward-keyword-prefixed-id'.
+    `(while (and (progn
+		   (setq safe-pos (point))
+		   (eq (char-after) ?,))
+		 (progn
+		   (forward-char)
+		   (c-forward-syntactic-ws)
+		   (c-forward-keyword-prefixed-id ,type))))))
 
 (defun c-forward-keyword-clause ()
   ;; The first submatch in the current match data is assumed to
@@ -3107,10 +3141,10 @@ brace."
   ;; following token.  t is returned in that case, otherwise the point
   ;; stays and nil is returned.  The kind of clauses that are
   ;; recognized are those specified by `c-type-list-kwds',
-  ;; `c-colon-type-list-kwds', `c-paren-type-kwds' and
-  ;; `c-<>-arglist-kwds'.
+  ;; `c-ref-list-kwds', `c-colon-type-list-kwds', `c-paren-type-kwds',
+  ;; and `c-<>-arglist-kwds'.
 
-  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos)
+  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos type)
     (when kwd-sym
       (goto-char (match-end 1))
       (c-forward-syntactic-ws)
@@ -3118,29 +3152,29 @@ brace."
 
       (cond
        ((cond ((and (c-keyword-member kwd-sym 'c-type-list-kwds)
-		    (c-forward-keyword-prefixed-type))
+		    (c-forward-keyword-prefixed-id type))
 	       ;; There's a type directly after a keyword in
 	       ;; `c-type-list-kwds'.
-	       t)
+	       (setq type t))
 	      ((and (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
 		    (looking-at c-colon-type-list-re)
 		    (progn
 		      (goto-char (match-end 0))
 		      (c-forward-syntactic-ws)
-		      (c-forward-keyword-prefixed-type)))
+		      (c-forward-keyword-prefixed-id type)))
 	       ;; There's a type after the `c-colon-type-list-re'
 	       ;; match after a keyword in `c-colon-type-list-kwds'.
-	       t))
+	       (setq type t)))
 
 	;; Move over a comma separated list of types, where each may
 	;; be prefixed by keywords.
-	(while (and (progn
-		      (setq safe-pos (point))
-		      (eq (char-after) ?,))
-		    (progn
-		      (forward-char)
-		      (c-forward-syntactic-ws)
-		      (c-forward-keyword-prefixed-type)))))
+	(c-forward-id-comma-list type))
+
+       ((and (c-keyword-member kwd-sym 'c-ref-list-kwds)
+	     (c-forward-keyword-prefixed-id ref))
+	;; There's a name directly after a keyword in
+	;; `c-ref-list-kwds'.
+	(c-forward-id-comma-list ref))
 
        ((and (c-keyword-member kwd-sym 'c-paren-type-kwds)
 	     (eq (char-after) ?\())
@@ -3384,8 +3418,8 @@ brace."
 				 (progn
 				   (c-forward-syntactic-ws)
 				   (looking-at c-opt-identifier-concat-key)))
-			    (c-record-ref-id id-start id-end)
-			  (c-record-type-id id-start id-end)))))
+			    (c-record-ref-id (cons id-start id-end))
+			  (c-record-type-id (cons id-start id-end))))))
 		  t)
 
 		 ((and (eq (char-before) ?,)
@@ -3541,7 +3575,7 @@ brace."
 		     ;; operator after the template argument.
 		     (progn
 		       (when c-record-type-identifiers
-			 (c-record-ref-id id-start id-end)
+			 (c-record-ref-id (cons id-start id-end))
 			 (setq c-last-identifier-range nil))
 		       (forward-char 2)
 		       (c-forward-syntactic-ws)
@@ -3550,7 +3584,7 @@ brace."
 		   ;; want to add types containing angle bracket
 		   ;; arglists.
 		   (when c-record-type-identifiers
-		     (c-record-type-id id-start id-end)
+		     (c-record-type-id (cons id-start id-end))
 		     (setq c-last-identifier-range nil))
 		   (setq res 'template)
 		   nil)))
@@ -3594,11 +3628,8 @@ brace."
 	      ;; In many languages the name can be used without the
 	      ;; prefix, so we add it to `c-found-types'.
 	      (c-add-type pos (point))
-	      (when (and c-record-type-identifiers
-			 c-last-identifier-range)
-		(setq c-record-type-identifiers
-		      (cons c-last-identifier-range
-			    c-record-type-identifiers))))
+	      (when c-record-type-identifiers
+		(c-record-type-id c-last-identifier-range)))
 	    (setq res t))
 	;; Invalid syntax.
 	(goto-char start)
@@ -3627,7 +3658,7 @@ brace."
       ;; is a prefix of another name.
 
       (when c-record-type-identifiers
-	(c-record-type-id (match-beginning 1) (match-end 1)))
+	(c-record-type-id (cons (match-beginning 1) (match-end 1))))
 
       (if (and c-opt-type-component-key
 	       (save-match-data
@@ -3639,12 +3670,14 @@ brace."
 		     (setq safe-pos (point))
 		     (looking-at c-opt-type-component-key))
 	      (when c-record-type-identifiers
-		(c-record-type-id (match-beginning 1) (match-end 1)))
+		(c-record-type-id (cons (match-beginning 1)
+					(match-end 1))))
 	      (c-forward-keyword-clause))
 	    (if (looking-at c-primitive-type-key)
 		(progn
 		  (when c-record-type-identifiers
-		    (c-record-type-id (match-beginning 1) (match-end 1)))
+		    (c-record-type-id (cons (match-beginning 1)
+					    (match-end 1))))
 		  (c-forward-keyword-clause)
 		  (setq res t))
 	      (goto-char safe-pos)
@@ -3663,9 +3696,8 @@ brace."
 	     (if (or res c-promote-possible-types)
 		 (progn
 		   (c-add-type id-start id-end)
-		   (when (and c-record-type-identifiers id-range)
-		     (setq c-record-type-identifiers
-			   (cons id-range c-record-type-identifiers)))
+		   (when c-record-type-identifiers
+		     (c-record-type-id id-range))
 		   (unless res
 		     (setq res 'found)))
 	       (setq res (if (c-check-type id-start id-end)
@@ -3718,9 +3750,8 @@ brace."
 	    (cond ((eq res t))
 		  ((eq res2 t)
 		   (c-add-type id-start id-end)
-		   (when (and c-record-type-identifiers id-range)
-		     (setq c-record-type-identifiers
-			   (cons id-range c-record-type-identifiers)))
+		   (when c-record-type-identifiers
+		     (c-record-type-id id-range))
 		   (setq res t))
 		  ((eq res 'found))
 		  ((eq res2 'found)
