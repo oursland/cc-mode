@@ -567,7 +567,7 @@
 				      (point) 'face nil limit))
 			  t)
 
-			(let (prop)
+			(progn
 			  (setq match-pos (match-beginning 0)
 				arglist-match (memq (char-before)
 						    '(?\( ?\[ ?,)))
@@ -583,7 +583,7 @@
 			  ;; second, so there's nothing to do.
 			  (= continue-pos token-pos))
 
-			(progn
+			(let (prop)
 			  ;; If `continue-pos' is less than `token-pos' we're
 			  ;; still searching macros in the syntactic
 			  ;; whitespace, so we need only to skip comments and
