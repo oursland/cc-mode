@@ -10,7 +10,7 @@
 ;; Created:    a long, long, time ago. adapted from the original c-mode.el
 ;; Keywords:   c languages oop
 
-(defconst c-version "5.24"
+(defconst c-version "5.25"
   "CC Mode version number.")
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!

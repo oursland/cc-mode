@@ -47,7 +47,7 @@ Copyright @copyright{} 1995,96,97,98 Free Software Foundation, Inc.
 @comment The title is printed in a large font.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@center @titlefont{CC Mode 5.24}
+@center @titlefont{CC Mode 5.25}
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
@@ -183,7 +183,7 @@ joined the @ccmode{} Maintainers Team, and implemented the Pike support.
 
 This manual describes @ccmode{}
 @comment The following line must appear on its own, so that the automated
-version 5.24.
+version 5.25.
 @comment Release.py script can update the version number automatically
 
 @ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
