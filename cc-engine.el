@@ -2575,6 +2575,59 @@ brace."
       (if (> (- (point-max) pos) (point))
 	  (goto-char (- (point-max) pos))))))
 
+(defun c-evaluate-offset (offset langelem symbol)
+  ;; offset can be a number, a function, a variable, a list, or one of
+  ;; the symbols + or -
+  (cond
+   ((eq offset '+)         (setq offset c-basic-offset))
+   ((eq offset '-)         (setq offset (- c-basic-offset)))
+   ((eq offset '++)        (setq offset (* 2 c-basic-offset)))
+   ((eq offset '--)        (setq offset (* 2 (- c-basic-offset))))
+   ((eq offset '*)         (setq offset (/ c-basic-offset 2)))
+   ((eq offset '/)         (setq offset (/ (- c-basic-offset) 2)))
+   ((functionp offset)     (setq offset (funcall offset langelem)))
+   ((listp offset)
+    (setq offset
+	  (let (done)
+	    (while (and (not done) offset)
+	      (setq done (c-evaluate-offset (car offset) langelem symbol)
+		    offset (cdr offset)))
+	    (if (not done)
+		(if c-strict-syntax-p
+		    (error "No offset found for syntactic symbol %s" symbol)
+		  0)
+	      done))))
+   ((not (numberp offset)) (setq offset (symbol-value offset)))
+   )
+  offset)
+
+(defun c-get-offset (langelem)
+  ;; Get offset from LANGELEM which is a cons cell of the form:
+  ;; (SYMBOL . RELPOS).  The symbol is matched against
+  ;; c-offsets-alist and the offset found there is either returned,
+  ;; or added to the indentation at RELPOS.  If RELPOS is nil, then
+  ;; the offset is simply returned.
+  (let* ((symbol (car langelem))
+	 (relpos (cdr langelem))
+	 (match  (assq symbol c-offsets-alist))
+	 (offset (cdr-safe match)))
+    (if (not match)
+	(if c-strict-syntax-p
+	    (error "No offset found for syntactic symbol %s" symbol)
+	  (setq offset 0
+		relpos 0))
+      (setq offset (c-evaluate-offset offset langelem symbol)))
+    (+ (if (and relpos
+		(< relpos (c-point 'bol)))
+	   (save-excursion
+	     (goto-char relpos)
+	     (current-column))
+	 0)
+       (or (and (numberp offset) offset)
+	   (and (symbolp offset) (symbol-value offset))
+	   0))
+    ))
+
 (defun c-indent-line (&optional syntax)
   ;; Indent the current line as C/C++/ObjC code, if
   ;; c-syntactic-indentation is non-nil.  Optional SYNTAX is the
