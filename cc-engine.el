@@ -1293,18 +1293,11 @@
 	 ((/= (char-after containing-sexp) ?{)
 	  (c-backward-syntactic-ws containing-sexp)
 	  (cond
-	   ;; CASE 6A: we are looking at the arglist closing paren or
-	   ;; at an Objective-C or Java method call closing bracket.
+	   ;; CASE 6A: we are looking at the arglist closing paren
 	   ((and (/= char-before-ip ?,)
 		 (memq char-after-ip '(?\) ?\])))
-	    (if (and c-method-key
-		     (progn
-		       (goto-char (1- containing-sexp))
-		       (c-backward-syntactic-ws lim)
-		       (not (looking-at c-symbol-key))))
-		(c-add-syntax 'statement-cont containing-sexp)
-	      (goto-char containing-sexp)
-	      (c-add-syntax 'arglist-close (c-point 'boi))))
+	    (goto-char containing-sexp)
+	    (c-add-syntax 'arglist-close (c-point 'boi)))
 	   ;; CASE 6B: we are looking at the first argument in an empty
 	   ;; argument list. Use arglist-close if we're actually
 	   ;; looking at a close paren or bracket.
