@@ -2510,16 +2510,24 @@ syntactic whitespace."
 	     (goto-char bound)))
       nil)))
 
-(defun c-syntactic-skip-backward (skip-chars &optional limit)
+(defun c-syntactic-skip-backward (skip-chars &optional limit paren-level)
   "Like `skip-chars-backward' but only look at syntactically relevant chars,
 i.e. don't stop at positions inside syntactic whitespace or string
 literals.  Preprocessor directives are also ignored, with the exception
 of the one that the point starts within, if any.  If LIMIT is given,
 it's assumed to be at a syntactically relevant position.
 
+If PAREN-LEVEL is non-nil, the function won't stop in nested paren
+sexps, and the search will also not go outside the current paren sexp.
+However, if LIMIT or the buffer limit is reached inside a nested paren
+then the point will be left at the limit.
+
+Non-nil is returned if the point moved, nil otherwise.
+
 This function does not do any hidden buffer changes."
 
   (let ((start (point))
+	state
 	;; A list of syntactically relevant positions in descending
 	;; order.  It's used to avoid scanning repeatedly over
 	;; potentially large regions with `parse-partial-sexp' to verify
@@ -2537,7 +2545,7 @@ This function does not do any hidden buffer changes."
 		     ;; Use `parse-partial-sexp' from a safe position down to
 		     ;; the point to check if it's outside comments and
 		     ;; strings.
-		     (let ((pos (point)) safe-pos state)
+		     (let ((pos (point)) safe-pos state-2)
 		       ;; Pick a safe position as close to the point as
 		       ;; possible.
 		       ;;
@@ -2554,13 +2562,18 @@ This function does not do any hidden buffer changes."
 					     (point-min))
 			       safe-pos-list (list safe-pos)))
 
+		       ;; Cache positions along the way to use if we have to
+		       ;; back up more.  We cache every closing paren on the
+		       ;; same level.  If the paren cache is relevant in this
+		       ;; region then we're typically already on the same
+		       ;; level as the target position.  Note that we might
+		       ;; cache positions after opening parens in case
+		       ;; safe-pos is in a nested list.  That's both uncommon
+		       ;; and harmless.
 		       (while (progn
 				(setq state (parse-partial-sexp
 					     safe-pos pos 0))
 				(< (point) pos))
-			 ;; Cache positions along the way to use if we have to
-			 ;; back up more.  Every closing paren on the same
-			 ;; level seems like fairly well spaced positions.
 			 (setq safe-pos (point)
 			       safe-pos-list (cons safe-pos safe-pos-list)))
 
@@ -2575,6 +2588,33 @@ This function does not do any hidden buffer changes."
 			   (goto-char (car (c-literal-limits safe-pos))))
 			 t)
 
+			((and
+			  paren-level
+			  (save-excursion
+			    (setq state-2 (parse-partial-sexp pos start))
+			    (/= (car state-2) 0)))
+			 ;; Not at the right level.
+			 (if (< (car state-2) 0)
+			     ;; We've stopped short of the starting position
+			     ;; so the hit was inside a nested list.  Go up
+			     ;; until we are at the right level.
+			     (condition-case nil
+				 (progn
+				   (goto-char (scan-lists pos -1
+							  (- (car state-2))))
+				   (if (and limit (>= limit (point)))
+				       (progn
+					 (goto-char limit)
+					 nil)
+				     t))
+			       (error
+				(goto-char (or limit (point-min)))
+				nil))
+			   ;; The hit was outside the list at the start
+			   ;; position.  Go to the start of the list and exit.
+			   (goto-char (1+ (elt state-2 1)))
+			   nil))
+
 			((c-beginning-of-macro limit)
 			 ;; Inside a macro.
 			 (if (< (point)
@@ -2588,7 +2628,16 @@ This function does not do any hidden buffer changes."
 			   ;; It's inside the same macro we started in so it's
 			   ;; a relevant match.
 			   (goto-char pos)
-			   nil))))))
+			   nil)))))
+
+	       ;; If the state contains the start of the containing sexp we
+	       ;; cache that position too, so that parse-partial-sexp in the
+	       ;; next run has a bigger chance of starting at the same level
+	       ;; as the target position and thus will get more good safe
+	       ;; positions into the list.
+	       (if (elt state 1)
+		   (setq safe-pos (1+ (elt state 1))
+			 safe-pos-list (cons safe-pos safe-pos-list))))
 
 	     (> (point)
 		(progn
@@ -2597,7 +2646,9 @@ This function does not do any hidden buffer changes."
 		  (c-backward-syntactic-ws)
 		  (point)))))
 
-    (- (point) start)))
+    ;; We might want to extend this with more useful return values in
+    ;; the future.
+    (/= (point) start)))
 
 
 ;; Tools for handling comments and string literals.
@@ -5950,7 +6001,7 @@ This function does not do any hidden buffer changes."
 		;; Note: We use the fact that lim is always after any
 		;; preceding brace sexp.
 		(while (and (zerop (c-backward-token-2 1 t lim))
-			    (not (looking-at "[;<,=]"))))
+			    (not (looking-at "[;,=]"))))
 		(or (memq (char-after) '(?, ?=))
 		    (and (c-major-mode-is 'c++-mode)
 			 (zerop (c-backward-token-2 1 nil lim))
@@ -5999,13 +6050,24 @@ This function does not do any hidden buffer changes."
 		     (save-restriction
 		       (c-with-syntax-table c++-template-syntax-table
 			 (goto-char indent-point)
-			 (setq placeholder (c-up-list-backward (point)))
+			 (setq placeholder (c-up-list-backward))
 			 (and placeholder
 			      (eq (char-after placeholder) ?<))))))
-	      ;; we can probably indent it just like an arglist-cont
-	      (goto-char placeholder)
-	      (c-beginning-of-statement-1 lim t)
-	      (c-add-syntax 'template-args-cont (c-point 'boi)))
+	      (c-with-syntax-table c++-template-syntax-table
+		(goto-char placeholder)
+		(c-beginning-of-statement-1 lim t)
+		(if (save-excursion
+		      (c-backward-syntactic-ws lim)
+		      (eq (char-before) ?<))
+		    ;; In a nested template arglist.
+		    (progn
+		      (goto-char placeholder)
+		      (c-syntactic-skip-backward "^,;" lim t)
+		      (c-forward-syntactic-ws))
+		  (back-to-indentation)))
+	      ;; FIXME: Should use c-add-stmt-syntax, but it's not yet
+	      ;; template aware.
+	      (c-add-syntax 'template-args-cont (point)))
 	     ;; CASE 5D.4: perhaps a multiple inheritance line?
 	     ((and (c-major-mode-is 'c++-mode)
 		   (save-excursion
