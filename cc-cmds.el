@@ -191,12 +191,10 @@ and takes care to set the indentation before calling
 	    ;; The backslash stayed on the previous line.  Insert one
 	    ;; before calling c-backslash-region, so that
 	    ;; bs-col-after-end in it works better.  Fixup the
-	    ;; backslashes on both lines if c-auto-align-backslashes
-	    ;; is set, otherwise only the newly inserted one.
+	    ;; backslashes on the newly inserted line.
 	    (insert ?\\)
 	    (backward-char)
-	    (c-backslash-region (if c-auto-align-backslashes start (point))
-				(point) nil t))
+	    (c-backslash-region (point) (point) nil t))
 	;; The backslash moved to the new line, if there was any.  Let
 	;; c-backslash-region fix a backslash on the previous line,
 	;; and the one that might be on the new line.
