@@ -327,6 +327,26 @@ to it is returned.  This function does not modify the point or the mark."
 	  (t (error "Unknown buffer position requested: %s" position))))
        (point))))
 
+(defmacro c-region-is-active-p ()
+  ;; Return t when the region is active.  The determination of region
+  ;; activeness is different in both Emacs and XEmacs.
+  (if (fboundp 'region-active-p)
+      ;; XEmacs.
+      '(region-active-p)
+    ;; Emacs.
+    'mark-active))
+
+(defmacro c-set-region-active (activate)
+  ;; Activate the region if ACTIVE is non-nil, deactivate it
+  ;; otherwise.  Covers the differences between Emacs and XEmacs.
+  (if (fboundp 'zmacs-activate-region)
+      ;; XEmacs.
+      `(if ,activate
+	   (zmacs-activate-region)
+	 (zmacs-deactivate-region))
+    ;; Emacs.
+    `(setq mark-active ,activate)))
+
 (defmacro c-safe (&rest body)
   ;; safely execute BODY, return nil if an error occurred
   `(condition-case nil
@@ -357,6 +377,70 @@ The return value is the value of the last form in BODY."
 	    (buffer-modified-p)
 	    (set-buffer-modified-p nil)))))
 (put 'c-save-buffer-state 'lisp-indent-function 1)
+
+(defmacro c-tentative-buffer-changes (&rest body)
+  "Eval BODY and optionally restore the buffer contents to the state it
+was in before BODY.  Any changes are kept if the last form in BODY
+returns non-nil.  Otherwise it's undone using the undo facility, and
+various other buffer state that might be affected by the changes is
+restored.  That includes the current buffer, point, mark and mark
+activation \(similar to `save-excursion').  The state is also restored
+if BODY exits nonlocally.  BODY may change the buffer even if it's
+read-only, but it is assumed to always return nil in that case."
+  `(let (-tnt-chng-keep
+	 -tnt-chng-state
+	 (inhibit-read-only t))
+     (unwind-protect
+	 ;; Insert an undo boundary for use with `undo-more'.  We
+	 ;; don't use `undo-boundary' since it doesn't insert one
+	 ;; unconditionally.
+	 (setq buffer-undo-list (cons nil buffer-undo-list)
+	       -tnt-chng-state (c-tnt-chng-record-state)
+	       -tnt-chng-keep (progn ,@body))
+       (c-tnt-chng-cleanup -tnt-chng-keep -tnt-chng-state))))
+(put 'c-tentative-buffer-changes 'lisp-indent-function 0)
+
+(defun c-tnt-chng-record-state ()
+  ;; Used internally in `c-tentative-buffer-changes'.
+  (vector buffer-undo-list		; 0
+	  (current-buffer)		; 1
+	  ;; No need to use markers for the point and mark; if the
+	  ;; undo got out of synch we're hosed anyway.
+	  (point)			; 2
+	  (mark)			; 3
+	  (c-region-is-active-p)	; 4
+	  (buffer-modified-p)))		; 5
+
+(defun c-tnt-chng-cleanup (keep saved-state)
+  ;; Used internally in `c-tentative-buffer-changes'.
+
+  (let ((saved-undo-list (elt saved-state 0)))
+    (if (eq buffer-undo-list saved-undo-list)
+	;; No change was done afterall.
+	(setq buffer-undo-list (cdr saved-undo-list))
+
+      (if keep
+	  ;; Find and remove the undo boundary.
+	  (let ((p buffer-undo-list))
+	    (while (not (eq (cdr p) saved-undo-list))
+	      (setq p (cdr p)))
+	    (setcdr p (cdr saved-undo-list)))
+
+	;; `primitive-undo' will remove the boundary.
+	(setq saved-undo-list (cdr saved-undo-list))
+	(let ((undo-in-progress t))
+	  (while (not (eq (setq buffer-undo-list
+				(primitive-undo 1 buffer-undo-list))
+			  saved-undo-list))))
+
+	(when (buffer-live-p (elt saved-state 1))
+	  (set-buffer (elt saved-state 1))
+	  (goto-char (elt saved-state 2))
+	  (set-mark (elt saved-state 3))
+	  (c-set-region-active (elt saved-state 4))
+	  (and (not (elt saved-state 5))
+	       (buffer-modified-p)
+	       (set-buffer-modified-p nil)))))))
 
 (defmacro c-forward-syntactic-ws (&optional limit)
   "Forward skip over syntactic whitespace.
@@ -801,8 +885,10 @@ MODE is either a mode symbol or a list of mode symbols."
 (eval-after-load "edebug"
   '(progn
      (def-edebug-spec c-point t)
+     (def-edebug-spec c-set-region-active t)
      (def-edebug-spec c-safe t)
      (def-edebug-spec c-save-buffer-state let*)
+     (def-edebug-spec c-with-temporary-change t)
      (def-edebug-spec c-forward-syntactic-ws t)
      (def-edebug-spec c-backward-syntactic-ws t)
      (def-edebug-spec c-forward-sexp t)
@@ -926,20 +1012,6 @@ always will be nil."
   ;; This is not needed for Emacs.
   (and (boundp 'zmacs-region-stays)
        (setq zmacs-region-stays t)))
-
-(defsubst c-region-is-active-p ()
-  ;; Return t when the region is active.  The determination of region
-  ;; activeness is different in both Emacs and XEmacs.
-  (cond
-   ;; XEmacs
-   ((and (fboundp 'region-active-p)
-	 (boundp 'zmacs-regions)
-	 zmacs-regions)
-    (region-active-p))
-   ;; Emacs
-   ((boundp 'mark-active) mark-active)
-   ;; fallback; shouldn't get here
-   (t (mark t))))
 
 (put 'c-mode    'c-mode-prefix "c-")
 (put 'c++-mode  'c-mode-prefix "c++-")
