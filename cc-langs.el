@@ -408,7 +408,7 @@ Note that the style variables are always made local to the buffer."
 	   "---"
 	   ["Indent Expression"      c-indent-exp
 	    (memq (char-after) '(?\( ?\[ ?\{))]
-	   ["Indent Line"            c-indent-command t]
+	   ["Indent Line or Region"  c-indent-line-or-region t]
 	   ["Up Conditional"         c-up-conditional t]
 	   ["Backward Conditional"   c-backward-conditional t]
 	   ["Forward Conditional"    c-forward-conditional t]
