@@ -65,7 +65,9 @@ COMPATIBILITY
     To test, visit a C file and then type:
 
         M-x c-version RET
-        ==> Using CC Mode version 5.15
+        ==> Using CC Mode version 5.XX
+
+    where XX is the current minor release number (see above).
 
     I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
     earlier. You might try following the directions for Emacs 19.34
