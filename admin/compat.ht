@@ -7,7 +7,7 @@ Other-links:
     <li><a href="compat_ntemacs.html">NTEmacs 19</a>
     <li><a href="compat_emacs18.html">Emacs 18</a>
 
-<h2>Compatibility Issues</h2>
+<h2>Compatibility Notes</h2>
 
     Setting up CC Mode is a little different for each version of
     XEmacs and Emacs.  Users of Emacs 19.34 or NTEmacs 19.34,
