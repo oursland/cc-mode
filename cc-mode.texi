@@ -123,10 +123,10 @@ other packages for that.
 * Introduction::                
 * Getting Connected::           
 * Commands::                    
-* Configuration Strategies::    
+* Config Strategies::           
 * Indentation Engine::          
 * Minor Modes::                 
-* Customizing Filling and Line Breaking::  
+* Custom Filling and Breaking::  
 * Macro Handling::              
 * Font Locking::                
 * Advanced Customizations::     
@@ -134,9 +134,9 @@ other packages for that.
 * Odds and Ends::               
 * Performance Issues::          
 * Limitations and Known Bugs::  
-* Frequently Asked Questions::  
-* Getting the Latest CC Mode Release::  
-* Mailing Lists and Submitting Bug Reports::  
+* FAQ::                         
+* Updating CC Mode::            
+* Mailing Lists and Bug Reports::  
 * Sample .emacs File::          
 * Command and Function Index::  
 * Variable Index::              
@@ -149,8 +149,8 @@ Commands
 
 * Indentation Commands::        
 * Movement Commands::           
-* Filling and Line Breaking Commands::  
-* Electric Keys and Keywords::  
+* Filling and Breaking::        
+* Electric Keys::               
 * Other Commands::              
 
 Configuration Strategies
@@ -177,13 +177,13 @@ Customizing Indentation
 * Interactive Customization::   
 * Permanent Customization::     
 * Line-Up Functions::           
-* Custom Line-Up Functions::    
-* Other Special Indentations::  
+* Custom Line-Up::              
+* Other Indentation::           
 
 Minor Modes
 
-* Auto-newline Insertion::      
-* Hungry-deletion of Whitespace::  
+* Auto-newlines::               
+* Hungry WS Deletion::          
 
 Auto-newline Insertion
 
@@ -196,12 +196,12 @@ Font Locking
 
 * Font Locking Preliminaries::  
 * Faces::                       
-* Documentation Comments::      
+* Doc Comments::                
 
 Advanced Customizations
 
-* Custom Brace and Colon Hanging::  
-* Customizing Semicolons and Commas::  
+* Custom Braces and Colons::    
+* Custom Semis and Commas::     
 
 Status of AWK Mode
 
@@ -286,12 +286,12 @@ If you got this version of @ccmode{} with Emacs or XEmacs, it should
 work just fine right out of the box.  Note however that you may not have
 the latest @ccmode{} release and may want to upgrade your copy.
 
-If you are upgrading an existing @ccmode{} installation, please see the
-@file{README} file for installation details.  @ccmode{} may not work
-with older versions of Emacs or XEmacs.  See the @ccmode{} release notes
-at @uref{http://cc-mode.sourceforge.net} for the latest information on
-Emacs version and package compatibility (@pxref{Getting the Latest CC
-Mode Release}).
+If you are upgrading an existing @ccmode{} installation, please see
+the @file{README} file for installation details.  @ccmode{} may not
+work with older versions of Emacs or XEmacs.  See the @ccmode{}
+release notes at @uref{http://cc-mode.sourceforge.net} for the latest
+information on Emacs version and package compatibility
+(@pxref{Updating CC Mode}).
 
 @deffn Command c-version
 @findex version (c-)
@@ -308,7 +308,7 @@ where @samp{XX} is the minor release number.
 @end deffn
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Commands, Configuration Strategies, Getting Connected, Top
+@node    Commands, Config Strategies, Getting Connected, Top
 @comment node-name, next, previous, up
 @chapter Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -316,8 +316,8 @@ where @samp{XX} is the minor release number.
 @menu
 * Indentation Commands::        
 * Movement Commands::           
-* Filling and Line Breaking Commands::  
-* Electric Keys and Keywords::  
+* Filling and Breaking::        
+* Electric Keys::               
 * Other Commands::              
 @end menu
 
@@ -482,7 +482,7 @@ often (in seconds) progress messages are to be displayed.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Movement Commands, Filling and Line Breaking Commands, Indentation Commands, Commands
+@node    Movement Commands, Filling and Breaking, Indentation Commands, Commands
 @comment node-name, next, previous, up
 @section Movement Commands
 @cindex movement
@@ -641,7 +641,7 @@ word.  With prefix argument @var{n}, move @var{n} times.  If
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Filling and Line Breaking Commands, Electric Keys and Keywords, Movement Commands, Commands
+@node    Filling and Breaking, Electric Keys, Movement Commands, Commands
 @comment  node-name,  next,  previous,  up
 @section Filling and Line Breaking Commands
 @cindex text filling
@@ -728,7 +728,7 @@ line break.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Electric Keys and Keywords, Other Commands, Filling and Line Breaking Commands, Commands
+@node    Electric Keys, Other Commands, Filling and Breaking, Commands
 @comment node-name, next, previous, up
 @section Electric Keys and Keywords
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -837,7 +837,7 @@ see @ref{Other Commands}.
 @itemx ,
 Typing a semicolon or comma reindents the current line.  Additionally,
 a newline might be inserted if auto-newline minor mode is enabled.
-@xref{Customizing Semicolons and Commas}.
+@xref{Custom Semis and Commas}.
 
 @end table
 
@@ -877,7 +877,7 @@ modes except IDL mode, since CORBA IDL doesn't have any statements.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Other Commands,  , Electric Keys and Keywords, Commands
+@node    Other Commands,  , Electric Keys, Commands
 @comment node-name, next, previous, up
 @section Other Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -895,7 +895,7 @@ operator without performing the electric behavior of colon insertion.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Configuration Strategies, Indentation Engine, Commands, Top
+@node    Config Strategies, Indentation Engine, Commands, Top
 @comment  node-name,  next,  previous,  up
 @chapter Configuration Strategies
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -930,15 +930,16 @@ you'll want to use one (or both) of @ccmode{}'s more sophisticated
 facilities, hooks and styles.
 
 @item Hooks
-A @dfn{hook} is a place to put Lisp functions that you write in order
-to be executed at specific places within the innards of Emacs.
-@xref{Hooks,,,elisp}.  @ccmode{} supplies an initialization hook for
-each language it supports and one ``common'' hook.  Any hook functions
-you supply are executed as the last part of a buffer's initialisation.
-Typically you use this flexibility to vary the customization settings
-between language modes.  For example, if you wanted different values
-of @code{c-basic-offset} in C Mode and Java Mode buffers, you could do
-it like this:
+An Emacs @dfn{hook} is a place to put Lisp functions that you want to
+be executed later from a specific place within the innards of Emacs.
+@xref{Hooks,,,elisp}.  @ccmode{} supplies an @dfn{initialization hook}
+for each language it supports - any functions you supply to this hook
+are executed as the last part of a buffer's initialization.  Typically
+you use this flexibility to vary the customization settings between
+language modes.  (There is also a ``common'' hook for initializations
+to be shared by all these modes.)  For example, if you wanted
+different values of @code{c-basic-offset} in C Mode and Java Mode
+buffers, you could do it like this:
 
 @example
 @group
@@ -1027,7 +1028,7 @@ could achieve this with code like this in your @file{.emacs}:
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hooks, Styles, Configuration Strategies, Configuration Strategies
+@node    Hooks, Styles, Config Strategies, Config Strategies
 @comment node-name, next, previous, up
 @section Hooks
 @cindex mode hooks
@@ -1084,7 +1085,7 @@ file.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Styles,  , Hooks, Configuration Strategies
+@node    Styles,  , Hooks, Config Strategies
 @comment node-name, next, previous, up
 @section Styles
 @cindex styles
@@ -1433,7 +1434,7 @@ style variable values are made local to that buffer.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Engine, Minor Modes, Configuration Strategies, Top
+@node    Indentation Engine, Minor Modes, Config Strategies, Top
 @comment node-name, next, previous, up
 @chapter Indentation Engine
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2629,8 +2630,8 @@ context.
 The function will be called and its return value will in turn be
 evaluated as an offset specification.  Functions are useful when more
 context than just the syntactic symbol is needed to get the desired
-indentation.  @xref{Line-Up Functions}, and @ref{Custom Line-Up
-Functions}, for details about them.
+indentation.  @xref{Line-Up Functions}, and @ref{Custom Line-Up}, for
+details about them.
 
 @item A list
 The offset can also be a list containing several offset specifications
@@ -2727,8 +2728,8 @@ your @file{.emacs} file so that your changes are more permanent.
 * Interactive Customization::   
 * Permanent Customization::     
 * Line-Up Functions::           
-* Custom Line-Up Functions::    
-* Other Special Indentations::  
+* Custom Line-Up::              
+* Other Indentation::           
 @end menu
 
 
@@ -2866,7 +2867,7 @@ values depend on the style, which may very well be different for
 different languages.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Line-Up Functions, Custom Line-Up Functions, Permanent Customization, Customizing Indentation
+@node    Line-Up Functions, Custom Line-Up, Permanent Customization, Customizing Indentation
 @comment node-name, next, previous, up
 @subsection Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2880,9 +2881,9 @@ function}) for a syntactic symbol.
 
 @ccmode{} comes with many predefined line-up functions for common
 situations.  If none of these does what you want, you can write your
-own, see @ref{Custom Line-Up Functions}.  If you do, it's probably a
-good idea to start working from one of these predefined functions, they
-can be found in the file @file{cc-align.el}.
+own, see @ref{Custom Line-Up}.  If you do, it's probably a good idea
+to start working from one of these predefined functions.  They can be
+found in the file @file{cc-align.el}.
 
 For every function below there is a ``works with'' list that indicates
 which syntactic symbols the function is intended to be used with.
@@ -3789,7 +3790,7 @@ and @code{inextern-lang}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Line-Up Functions, Other Special Indentations, Line-Up Functions, Customizing Indentation
+@node    Custom Line-Up, Other Indentation, Line-Up Functions, Customizing Indentation
 @comment node-name, next, previous, up
 @subsection Custom Line-Up Functions
 @cindex customization, indentation functions
@@ -3947,7 +3948,7 @@ contact @email{bug-cc-mode@@gnu.org}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Other Special Indentations,  , Custom Line-Up Functions, Customizing Indentation
+@node    Other Indentation,  , Custom Line-Up, Customizing Indentation
 @comment node-name, next, previous, up
 @subsection Other Special Indentations
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3988,7 +3989,7 @@ current setting for the buffer local value of
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Minor Modes, Customizing Filling and Line Breaking, Indentation Engine, Top
+@node    Minor Modes, Custom Filling and Breaking, Indentation Engine, Top
 @comment node-name, next, previous, up
 @chapter Minor Modes
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4044,13 +4045,13 @@ to your @file{.emacs} file:
 @end example
 
 @menu
-* Auto-newline Insertion::      
-* Hungry-deletion of Whitespace::  
+* Auto-newlines::               
+* Hungry WS Deletion::          
 @end menu
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Auto-newline Insertion, Hungry-deletion of Whitespace, Minor Modes, Minor Modes
+@node    Auto-newlines, Hungry WS Deletion, Minor Modes, Minor Modes
 @comment node-name, next, previous, up
 @section Auto-newline Insertion
 @cindex auto-newline
@@ -4091,7 +4092,7 @@ normal, with no @kbd{C-u} prefix).
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hanging Braces, Hanging Colons, Auto-newline Insertion, Auto-newline Insertion
+@node    Hanging Braces, Hanging Colons, Auto-newlines, Auto-newlines
 @comment node-name, next, previous, up
 @subsection Hanging Braces
 @cindex hanging braces
@@ -4140,10 +4141,10 @@ lists in this regard, even though they do for normal indentation
 purposes.  It's currently not possible to set automatic newlines on
 these constructs.
 
-The value associated with each syntactic symbol in this association list
-is called an @var{action}, which can be either a function or a list.
-@xref{Custom Brace and Colon Hanging}, for a more detailed discussion of
-using a function as a brace hanging @var{action}.
+The value associated with each syntactic symbol in this association
+list is called an @var{action}, which can be either a function or a
+list.  @xref{Custom Braces and Colons}, for a more detailed discussion
+of using a function as a brace hanging @var{action}.
 
 When the @var{action} is a list, it can contain any combination of the
 symbols @code{before} and @code{after}, directing @ccmode{} where to
@@ -4201,7 +4202,7 @@ themselves.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hanging Colons, Hanging Semicolons and Commas, Hanging Braces, Auto-newline Insertion
+@node    Hanging Colons, Hanging Semicolons and Commas, Hanging Braces, Auto-newlines
 @comment node-name, next, previous, up
 @subsection Hanging Colons
 @cindex hanging colons
@@ -4216,9 +4217,9 @@ colons can also be made to hang using the style variable
 
 The syntactic symbols appropriate for this association list are:
 @code{case-label}, @code{label}, @code{access-label},
-@code{member-init-intro}, and @code{inher-intro}.  Note however that for
-@code{c-hanging-colons-alist}, @var{action}s as functions are not
-supported. See also @ref{Custom Brace and Colon Hanging} for details.
+@code{member-init-intro}, and @code{inher-intro}.  Note however that
+for @code{c-hanging-colons-alist}, @var{action}s as functions are not
+supported. See also @ref{Custom Braces and Colons} for details.
 
 In C++, double-colons are used as a scope operator but because these
 colons always appear right next to each other, newlines before and after
@@ -4228,22 +4229,22 @@ them are controlled by a different mechanism, called @dfn{clean-ups} in
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hanging Semicolons and Commas, Clean-ups, Hanging Colons, Auto-newline Insertion
+@node    Hanging Semicolons and Commas, Clean-ups, Hanging Colons, Auto-newlines
 @comment node-name, next, previous, up
 @subsection Hanging Semicolons and Commas
 @cindex hanging semicolons
 @cindex hanging commas
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Semicolons and commas are also electric in @ccmode{}, but since
-these characters do not correspond directly to syntactic symbols, a
+Semicolons and commas are also electric in @ccmode{}, but since these
+characters do not correspond directly to syntactic symbols, a
 different mechanism is used to determine whether newlines should be
-automatically inserted after these characters.  @xref{Customizing
-Semicolons and Commas}, for details.
+automatically inserted after these characters.  @xref{Custom Semis and
+Commas}, for details.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Clean-ups,  , Hanging Semicolons and Commas, Auto-newline Insertion
+@node    Clean-ups,  , Hanging Semicolons and Commas, Auto-newlines
 @comment node-name, next, previous, up
 @subsection Clean-ups
 @cindex clean-ups
@@ -4264,12 +4265,12 @@ auto-newline minor mode is turned on.  Others will work all the time.
 @cindex literal
 
 You can configure @ccmode{}'s clean-ups by setting the style variable
-@code{c-cleanup-list}, which is a list of clean-up symbols.  By default,
-@ccmode{} cleans up only the @code{scope-operator} construct, which is
-necessary for proper C++ support.  Note that clean-ups are only
-performed when the construct does not occur within a literal
-(@pxref{Auto-newline Insertion}), and when there is nothing but
-whitespace appearing between the individual components of the construct.
+@code{c-cleanup-list}, which is a list of clean-up symbols.  By
+default, @ccmode{} cleans up only the @code{scope-operator} construct,
+which is necessary for proper C++ support.  Note that clean-ups are
+only performed when the construct does not occur within a literal
+(@pxref{Auto-newlines}), and when there is nothing but whitespace
+appearing between the individual components of the construct.
 @end defopt
 
 These are the clean-ups that are only active in the auto-newline minor
@@ -4440,7 +4441,7 @@ closing parenthesis is typed.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hungry-deletion of Whitespace,  , Auto-newline Insertion, Minor Modes
+@node    Hungry WS Deletion,  , Auto-newlines, Minor Modes
 @comment node-name, next, previous, up
 @section Hungry-deletion of Whitespace
 @cindex hungry-deletion
@@ -4465,7 +4466,7 @@ the preceding line.
 This command is run by default when you hit the @kbd{DEL} key.  It
 deletes any amount of whitespace in the backwards direction if
 hungry-delete mode is enabled.  When it's disabled, or when used with
-a prefix argument or in a literal (@pxref{Auto-newline Insertion}),
+a prefix argument or in a literal (@pxref{Auto-newlines}),
 the function contained in the @code{c-backspace-function} variable is
 called with the prefix argument.
 @end deffn
@@ -4547,7 +4548,7 @@ whether hungry-delete mode is enabled or not).
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Customizing Filling and Line Breaking, Macro Handling, Minor Modes, Top
+@node    Custom Filling and Breaking, Macro Handling, Minor Modes, Top
 @comment node-name, next, previous, up
 @chapter Customizing Filling and Line Breaking
 @ignore
@@ -4851,7 +4852,7 @@ line break.
 @c End of whole chunk.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Macro Handling, Font Locking, Customizing Filling and Line Breaking, Top
+@node    Macro Handling, Font Locking, Custom Filling and Breaking, Top
 @comment node-name, next, previous, up
 @chapter Macro Handling
 @cindex macros
@@ -4927,8 +4928,8 @@ backslashes are preceded by a single space.
 @end defopt
 
 The recommended line breaking function, @code{c-context-line-break}
-(@pxref{Filling and Line Breaking Commands}), is especially nice if
-you edit multiline macros frequently.  When used inside a macro, it
+(@pxref{Filling and Breaking}), is especially nice if you edit
+multiline macros frequently.  When used inside a macro, it
 automatically inserts and adjusts the mandatory backslash at the end
 of the line to keep the macro together, and it leaves the point at the
 right indentation column for the code.  Thus you can write code inside
@@ -4959,7 +4960,7 @@ Editor}, for ways to enable font locking in @ccmode{} buffers.
 @menu
 * Font Locking Preliminaries::  
 * Faces::                       
-* Documentation Comments::      
+* Doc Comments::                
 @end menu
 
 
@@ -5005,7 +5006,7 @@ simple types and declarations that are easy to recognize.  The variables
 @code{*-font-lock-extra-types} (where @samp{*} is the name of the
 language) are used to recognize types (see below).  Documentation
 comments like Javadoc are fontified according to
-@code{c-doc-comment-style} (@pxref{Documentation Comments}).
+@code{c-doc-comment-style} (@pxref{Doc Comments}).
 
 Use this if you think the font locking is too slow.  It's the closest
 corresponding level to level 3 in the old font lock patterns.
@@ -5059,7 +5060,7 @@ recognize types.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Faces, Documentation Comments, Font Locking Preliminaries, Font Locking
+@node    Faces, Doc Comments, Font Locking Preliminaries, Font Locking
 @comment node-name, next, previous, up
 @section Faces
 @cindex faces
@@ -5080,10 +5081,10 @@ Normal comments are fontified in @code{font-lock-comment-face}.
 @vindex font-lock-doc-face
 @vindex font-lock-doc-string-face
 @vindex font-lock-comment-face
-Comments that are recognized as documentation (@pxref{Documentation
-Comments}) get @code{font-lock-doc-face} (Emacs) or
-@code{font-lock-doc-string-face} (XEmacs) if those faces exist.  If they
-don't then @code{font-lock-comment-face} is used.
+Comments that are recognized as documentation (@pxref{Doc Comments})
+get @code{font-lock-doc-face} (Emacs) or
+@code{font-lock-doc-string-face} (XEmacs) if those faces exist.  If
+they don't then @code{font-lock-comment-face} is used.
 
 @item
 @vindex font-lock-string-face
@@ -5158,7 +5159,7 @@ since those aren't syntactic errors in themselves.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Documentation Comments,  , Faces, Font Locking
+@node    Doc Comments,  , Faces, Font Locking
 @comment node-name, next, previous, up
 @section Documentation Comments
 @cindex documentation comments
@@ -5214,7 +5215,7 @@ For Pike autodoc markup, the standard in Pike.
 
 The above is by no means complete.  If you'd like to see support for
 other doc comment styles, please let us know (@pxref{Mailing Lists and
-Submitting Bug Reports}).
+Bug Reports}).
 
 You can also write your own doc comment fontification support to use
 with @code{c-doc-comment-style}: Supply a variable or function
@@ -5246,12 +5247,12 @@ you to implement custom indentation calculations for situations not
 handled by the mode directly.
 
 @menu
-* Custom Brace and Colon Hanging::  
-* Customizing Semicolons and Commas::  
+* Custom Braces and Colons::    
+* Custom Semis and Commas::     
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Brace and Colon Hanging, Customizing Semicolons and Commas, Advanced Customizations, Advanced Customizations
+@node    Custom Braces and Colons, Custom Semis and Commas, Advanced Customizations, Advanced Customizations
 @comment node-name, next, previous, up
 @subsection Custom Brace and Colon Hanging
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5338,7 +5339,7 @@ been found for this feature, it isn't currently implemented!
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Customizing Semicolons and Commas,  , Custom Brace and Colon Hanging, Advanced Customizations
+@node    Custom Semis and Commas,  , Custom Braces and Colons, Advanced Customizations
 @comment node-name, next, previous, up
 @subsection Customizing Semicolons and Commas
 @cindex customization, semicolon newlines
@@ -5482,7 +5483,7 @@ the AWK language itself.  @xref{AWK Mode Font Locking}.
 
 @item String and Comment Commands
 The String and Comment formatting commands described in @ref{Filling
-and Line Breaking Commands} all work in AWK mode.
+and Breaking} all work in AWK mode.
 
 @item Movement Commands
 Most of the movement commands work in AWK mode.  This now includes
@@ -5810,7 +5811,7 @@ more info.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Limitations and Known Bugs, Frequently Asked Questions, Performance Issues, Top
+@node    Limitations and Known Bugs, FAQ, Performance Issues, Top
 @comment node-name, next, previous, up
 @chapter Limitations and Known Bugs
 @cindex limitations
@@ -5819,9 +5820,9 @@ more info.
 
 @itemize @bullet
 @item
-There is no way to apply auto newline settings (@pxref{Auto-newline
-Insertion}) on already typed lines.  That's only a feature to ease
-interactive editing.
+There is no way to apply auto newline settings (@pxref{Auto-newlines})
+on already typed lines.  That's only a feature to ease interactive
+editing.
 
 To generalize this issue a bit: @ccmode{} is not intended to be used as
 a reformatter for old code in some more or less batch-like way.  With
@@ -5837,7 +5838,7 @@ Manual}, which has more powerful reformatting capabilities than
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Frequently Asked Questions, Getting the Latest CC Mode Release, Limitations and Known Bugs, Top
+@node    FAQ, Updating CC Mode, Limitations and Known Bugs, Top
 @comment node-name, next, previous, up
 @appendix Frequently Asked Questions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5924,7 +5925,7 @@ there since it got its own system to keep track of blocks.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Getting the Latest CC Mode Release, Mailing Lists and Submitting Bug Reports, Frequently Asked Questions, Top
+@node    Updating CC Mode, Mailing Lists and Bug Reports, FAQ, Top
 @comment node-name, next, previous, up
 @appendix Getting the Latest CC Mode Release
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5944,7 +5945,7 @@ compatibility, etc. are all available on the web site:
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Mailing Lists and Submitting Bug Reports, Sample .emacs File, Getting the Latest CC Mode Release, Top
+@node    Mailing Lists and Bug Reports, Sample .emacs File, Updating CC Mode, Top
 @comment node-name, next, previous, up
 @appendix Mailing Lists and Submitting Bug Reports
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5984,7 +5985,7 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Sample .emacs File, Command and Function Index, Mailing Lists and Submitting Bug Reports, Top
+@node    Sample .emacs File, Command and Function Index, Mailing Lists and Bug Reports, Top
 @comment node-name, next, previous, up
 @appendix Sample .emacs file
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
