@@ -1,3 +1,97 @@
+Tue Jul  8 23:47:47 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.12
+
+Mon Jul  7 23:47:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el, cc-mode.el, cc-menus.el, cc-langs.el, cc-engine.el, cc-compat.el, cc-cmds.el, cc-align.el:
+	Reorganization to support byte-recompile-directory.
+
+	* Release: Don't put release number in tar file
+
+Thu Jul  3 22:54:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-mode-base-map):
+	Proper binding of c-electric-backspace and
+	c-electric-delete, based on the policy of the various maintainers.
+	Thank goodness for delete-key-deletes-forward!
+
+	* cc-vars.el (c-tab-always-indent, c-hanging-braces-alist):
+	Minor changes to the
+	cutomize format.
+
+	* cc-mode.texi: Fixed spelling of Texinfo
+
+	* cc-mode-19.el: Initial revision
+
+	* cc-menus.el, cc-engine.el, cc-compat.el, cc-cmds.el, cc-align.el:
+	Major Ebola eradication.
+
+Wed Jul  2 21:33:04 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-crosses-statement-barrier-p, c-guess-basic-syntax):
+	Ebola
+	eradication.
+
+	* cc-cmds.el (c-indent-region):
+	Call c-echo-parsing-error to echo last parsing
+	error that may have occurred.
+
+	* cc-engine.el (c-echo-parsing-error): New function.
+
+	* cc-engine.el (c-parsing-error): new variable
+
+	(c-parse-state): When an unbalanced close brace is discovered, don't
+	raise an error (prevents insertion of character).  Insert the
+	character, display a warning message, and set c-parsing-error so
+	syntax echoing will be disabled.
+
+	(c-show-syntactic-information, c-indent-line): Suppress syntax echoing
+	if c-parsing-error is non-nil.
+
+	* cc-styles.el: Added require of cl to pick up definition of copy-tree.
+
+Mon Jun 30 21:41:00 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el, cc-mode.el (c-mode-map, c++-mode-map, objc-mode-map, java-mode-map):
+	Moved
+	defvars from cc-langs.el to cc-mode.el for use in c-mode, c++-mode,
+	objc-mode, and java-mode docstrings.  Actual population of these mode
+	maps remains in cc-langs.el.
+
+	* cc-mode.el:
+	Require cc-langs at top level, so as to get the definitions for
+	c-mode-map, et al. that are used in the *-mode docstrings.
+
+Fri Jun 27 17:33:32 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-mode-syntax-table):
+	Added autoload cookie for gdb-mode.
+
+Thu Jun 26 21:12:56 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-guess-basic-syntax):
+	CASE 5H: Whack one ebola infection (e.g. using
+	memq with the results of following-char in XEmacs 20).
+
+	* cc-styles.el:
+	Added two require's that make autoload call of (c-set-style) work.
+
+Sun Jun 22 16:40:30 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-electric-delete):
+	Don't call c-electric-backspace interactively.
+
+Fri Jun 20 20:40:33 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-mode, c++-mode, objc-mode, java-mode):
+	Make sure to call
+	c-update-modeline after the hooks are run, so that the modeline
+	accurately reflects auto-newline and delete-key minor modes if the
+	hooks set c-hungry-delete-key or c-auto-newline directly.
+
+	* cc-align.el (c-lineup-java-throws): Fixed some regressions.
+
 Fri Jun 20 19:55:55 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Public Release 5.11
