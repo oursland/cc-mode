@@ -38,18 +38,24 @@
 ;; the following blurb at the top of the file:
 ;;
 ;;   (eval-when-compile
-;;     (let ((load-path
-;;   	      (if (and (boundp 'byte-compile-dest-file)
-;;   		       (stringp byte-compile-dest-file))
-;;   		  (cons (file-name-directory byte-compile-dest-file) load-path)
-;;   		load-path)))
-;;   	 (load "cc-bytecomp" nil t)))
+;;     (or load-in-progress
+;;         (let ((load-path
+;;                (if (and (boundp 'byte-compile-dest-file)
+;;                         (stringp byte-compile-dest-file))
+;;                    (cons (file-name-directory byte-compile-dest-file)
+;;                          load-path)
+;;                  load-path)))
+;;           (load "cc-bytecomp" nil t)))
 ;;
-;; This will ensure that the cc-bytecomp.el in the same directory as
-;; foo.el is loaded during byte compilation of it.  At the end of
-;; foo.el there should normally be a "(provide 'foo)".  Replace it
-;; with "(cc-provide 'foo)"; that is necessary to restore the
-;; environment after the byte compilation.  If you don't have a
+;; This (unfortunately rather clumsy) form will ensure that the
+;; cc-bytecomp.el in the same directory as foo.el is loaded during
+;; byte compilation of the latter, and that cc-bytecomp.el isn't
+;; loaded again in nested file loads (which is known to cause bugs in
+;; some versions of XEmacs).
+;;
+;; At the end of foo.el there should normally be a "(provide 'foo)".
+;; Replace it with "(cc-provide 'foo)"; that is necessary to restore
+;; the environment after the byte compilation.  If you don't have a
 ;; `provide' at the end, you have to add the following as the very
 ;; last form in the file:
 ;;
@@ -327,14 +333,6 @@ exclude any functions that have been bound during compilation with
 	     (eq (elt fun-elem 2) 'unbound))
 	nil
       `(fboundp ,symbol))))
-
-;; Override ourselves with a version loaded from source if we're
-;; compiling, like cc-require does for all the other files.
-(if (and (cc-bytecomp-is-compiling)
-	 (not load-in-progress))
-    (let ((load-path
-	   (cons (file-name-directory byte-compile-dest-file) load-path)))
-      (load "cc-bytecomp.el" nil t t)))
 
 
 (provide 'cc-bytecomp)
