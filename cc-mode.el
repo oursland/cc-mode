@@ -1,12 +1,12 @@
 ;;; cc-mode.el --- major mode for editing C++ and C code
 
-;; Authors: 1992 Barry A. Warsaw, Century Computing Inc. <bwarsaw@cen.com>
+;; Authors: 1992 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.81 $
-;; Last Modified:   $Date: 1994-09-06 13:49:46 $
+;; Version:         $Revision: 4.82 $
+;; Last Modified:   $Date: 1994-09-07 13:33:03 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-09-06 13:49:46 $|$Revision: 4.81 $|
+;; |$Date: 1994-09-07 13:33:03 $|$Revision: 4.82 $|
 
 ;;; Code:
 
@@ -963,7 +963,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.81 $
+cc-mode Revision: $Revision: 4.82 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1002,7 +1002,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.81 $
+cc-mode Revision: $Revision: 4.82 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1039,7 +1039,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.81 $
+cc-mode Revision: $Revision: 4.82 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -4111,7 +4111,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.81 $"
+(defconst c-version "$Revision: 4.82 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
