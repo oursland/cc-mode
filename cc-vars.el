@@ -1255,81 +1255,78 @@ It's overlaid over `font-lock-reference-face'."
 ;; or they might be generally accepted and used.  Generally accepted
 ;; types are used to provide default variable values.
 
-(let ((common-blurb "
-This variable is not used by default, since it's consulted only when
-the decoration level is 2 \(see `font-lock-maximum-decoration').  On
-higher levels another more accurate method to detect declarations is
-used which in almost all cases can detect user defined types without
-this variable.  However, it can still be useful if you think that the
-other method is too slow \(`lazy-lock-mode' is recommended)."))
+(eval-and-compile
+  (defun c-make-font-lock-extra-types-blurb (mode1 mode2 example)
+    (concat "
+*List of extra types (aside from the type keywords) to recognize in "
+mode1 " mode.
+Each list item should be a regexp matching a single identifier.
+" example "
 
-  ;; I do not appreciate the very Emacs-specific luggage on this
-  ;; default value, but otoh it can hardly get in the way for other
-  ;; users, and removing it would cause unnecessary grief for the old
-  ;; timers that are used to have Lisp_Object there. /mast
-  (defcustom c-font-lock-extra-types '("FILE" "\\sw+_t" "Lisp_Object")
-    (concat "*List of extra types to fontify in C mode.
-Each list item should be a regexp not containing word-delimiters.  For
-example, a value of (\"FILE\" \"\\\\sw+_t\") means the word FILE and
-words ending in _t are treated as type names.
-" common-blurb)
-    :type 'c-extra-types-widget
-    :group 'c-fonts)
+On decoration level 3 (and higher, where applicable), a method is used
+that finds most types and declarations by syntax alone.  This variable
+is then consulted only as a last resort when there's no other way to
+tell a declaration from an expression.
 
-  (defcustom c++-font-lock-extra-types
-    '("\\sw+_t"
-      "\\([iof]\\|str\\)+stream\\(buf\\)?" "ios"
-      "string" "rope"
-      "list" "slist"
-      "deque" "vector" "bit_vector"
-      "set" "multiset"
-      "map" "multimap"
-      "hash\\(_\\(m\\(ap\\|ulti\\(map\\|set\\)\\)\\|set\\)\\)?"
-      "stack" "queue" "priority_queue"
-      "type_info"
-      "iterator" "const_iterator" "reverse_iterator" "const_reverse_iterator"
-      "reference" "const_reference")
-    (concat "*List of extra types to fontify in C++ mode.
-Each list item should be a regexp not containing word-delimiters.  For
-example, a value of (\"string\") means the word string is treated as a
-type name.
-" common-blurb)
-    :type 'c-extra-types-widget
-    :group 'c-fonts)
+Note that this variable is only consulted when the major mode is
+initialized.  If you change it later you have to reinitialize CC Mode
+by doing \\[" mode2 "].")))
 
-  (defcustom objc-font-lock-extra-types '("Class" "BOOL" "IMP" "SEL")
-    (concat "*List of extra types to fontify in ObjC mode.
-Each list item should be a regexp not containing word-delimiters.  For
-example, a value of (\"Class\" \"BOOL\" \"IMP\" \"SEL\") means the
-words Class, BOOL, IMP and SEL are treated as type names.
-" common-blurb)
-    :type 'c-extra-types-widget
-    :group 'c-fonts)
+;; I do not appreciate the very Emacs-specific luggage on this
+;; default value, but otoh it can hardly get in the way for other
+;; users, and removing it would cause unnecessary grief for the old
+;; timers that are used to have Lisp_Object there. /mast
+(defcustom c-font-lock-extra-types '("FILE" "\\sw+_t" "Lisp_Object")
+  (c-make-font-lock-extra-types-blurb "C" "c-mode"
+"For example, a value of (\"FILE\" \"\\\\sw+_t\") means the word FILE
+and words ending in _t are treated as type names.")
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
 
-  (defcustom java-font-lock-extra-types
-    '("[A-Z\300-\326\330-\337]\\sw*[a-z]\\sw*")
-    (concat "*List of extra types to fontify in Java mode.
-Each list item should be a regexp not containing word-delimiters.  For
-example, a value of (\"[A-Z\300-\326\330-\337]\\\\sw*[a-z]\\\\sw*\")
-means capitalised words (and words conforming to the Java id spec) are
-treated as type names.
-" common-blurb)
-    :type 'c-extra-types-widget
-    :group 'c-fonts)
+(defcustom c++-font-lock-extra-types
+  '("\\sw+_t"
+    "\\([iof]\\|str\\)+stream\\(buf\\)?" "ios"
+    "string" "rope"
+    "list" "slist"
+    "deque" "vector" "bit_vector"
+    "set" "multiset"
+    "map" "multimap"
+    "hash\\(_\\(m\\(ap\\|ulti\\(map\\|set\\)\\)\\|set\\)\\)?"
+    "stack" "queue" "priority_queue"
+    "type_info"
+    "iterator" "const_iterator" "reverse_iterator" "const_reverse_iterator"
+    "reference" "const_reference")
+  (c-make-font-lock-extra-types-blurb "C++" "c++-mode"
+"For example, a value of (\"string\") means the word string is treated
+as a type name.")
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
 
-  (defcustom idl-font-lock-extra-types nil
-    (concat "*List of extra types to fontify in IDL mode.
-Each list item should be a regexp not containing word-delimiters.
-" common-blurb)
-    :type 'c-extra-types-widget
-    :group 'c-fonts)
+(defcustom objc-font-lock-extra-types '("Class" "BOOL" "IMP" "SEL")
+  (c-make-font-lock-extra-types-blurb "ObjC" "objc-mode"
+"For example, a value of (\"Class\" \"BOOL\" \"IMP\" \"SEL\") means
+the words Class, BOOL, IMP and SEL are treated as type names.")
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
 
-  (defcustom pike-font-lock-extra-types nil
-    (concat "*List of extra types to fontify in Pike mode.
-Each list item should be a regexp not containing word-delimiters.
-" common-blurb)
-    :type 'c-extra-types-widget
-    :group 'c-fonts))
+(defcustom java-font-lock-extra-types
+  '("[A-Z\300-\326\330-\337]\\sw*[a-z]\\sw*")
+  (c-make-font-lock-extra-types-blurb "Java" "java-mode"
+"For example, a value of (\"[A-Z\\300-\\326\\330-\\337]\\\\sw*[a-z]\\\\sw*\")
+means capitalized words (and words conforming to the Java id spec) are
+treated as type names.")
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
+
+(defcustom idl-font-lock-extra-types nil
+  (c-make-font-lock-extra-types-blurb "IDL" "idl-mode" "")
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
+
+(defcustom pike-font-lock-extra-types nil
+  (c-make-font-lock-extra-types-blurb "Pike" "pike-mode" "")
+  :type 'c-extra-types-widget
+  :group 'c-fonts)
 
 
 ;; Non-customizable variables, still part of the interface to CC Mode
