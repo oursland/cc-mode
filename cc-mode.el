@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.266 $
-;; Last Modified:   $Date: 1993-01-21 23:38:34 $
+;; Version:         $Revision: 2.267 $
+;; Last Modified:   $Date: 1993-01-25 23:30:38 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-21 23:38:34 $|$Revision: 2.266 $|
+;; |$Date: 1993-01-25 23:30:38 $|$Revision: 2.267 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.266 $
+  "Major mode for editing C++ code.  $Revision: 2.267 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.266 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.267 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2432,7 +2432,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.266 $"
+(defconst c++-version "$Revision: 2.267 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2495,9 +2495,11 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 	    (if (eq mode 'c++-mode) "C++" "C")
 	    " code) \n"
 	    (if c++-emacs-is-fixed-p
-		"You've applied the (hopefully most recent) syntax patch!\n")
+		"You've applied the (hopefully most recent) syntax patch!\n"
+	      "No syntax patch applied.\n")
 	    (if c++-emacs-is-really-fixed-p
-		"Looks like you've also got the parse-back patch. Good!\n")
+		"Looks like you've also got the parse-back patch. Good!\n"
+	      "No parse-back patch applied.\n")
 	    "\ncurrent state:\n==============\n(setq\n")
     (mapcar
      (function
