@@ -118,7 +118,7 @@ Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03, 04 Free Software 
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
-@center Barry A. Warsaw, Martin Stjernholm, Alan Mackenzie (AWK support)
+@center Barry A. Warsaw, Martin Stjernholm, Alan Mackenzie
 
 @page
 @vskip 0pt plus 1filll
@@ -142,11 +142,10 @@ CC Mode
 
 @ccmode{} is a GNU Emacs mode for editing files containing C, C++,
 Objective-C, Java, CORBA IDL (and the variants PSDL and CIDL), Pike
-code and to a certain extent, AWK code @xref{AWK Mode}.  It provides
-syntax-based indentation, font locking, and has several handy commands
-and some minor modes to make the editing easier.  It does not provide
-tools to look up and navigate between functions, classes etc - there are
-other packages for that.
+and AWK code.  It provides syntax-based indentation, font locking, and
+has several handy commands and some minor modes to make the editing
+easier.  It does not provide tools to look up and navigate between
+functions, classes etc - there are other packages for that.
 @end ifinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -154,6 +153,7 @@ other packages for that.
 
 @menu
 * Introduction::                
+* Overview::                    
 * Getting Connected::           
 * Commands::                    
 * Font Locking::                
@@ -161,16 +161,17 @@ other packages for that.
 * Custom Filling and Breaking::  
 * Custom Auto-newlines::        
 * Indentation Engine::          
+* Customizing Indentation::     
 * Macro Handling::              
 * Advanced Customizations::     
-* AWK Mode::                    
 * Odds and Ends::               
+* Sample .emacs File::          
 * Performance Issues::          
 * Limitations and Known Bugs::  
 * FAQ::                         
 * Updating CC Mode::            
 * Mailing Lists and Bug Reports::  
-* Sample .emacs File::          
+* Mode Initialization::         
 * Command and Function Index::  
 * Variable Index::              
 * Concept Index::               
@@ -187,6 +188,10 @@ Commands
 * Minor Modes::                 
 * Other Commands::              
 
+Movement Commands
+
+* AWK Mode Defuns::             
+
 Minor Modes
 
 * Auto-newlines::               
@@ -197,12 +202,12 @@ Font Locking
 * Font Locking Preliminaries::  
 * Faces::                       
 * Doc Comments::                
+* AWK Mode Font Locking::       
 
 Configuration Strategies
 
 * Hooks::                       
 * Styles::                      
-* Mode Initialization::         
 
 Styles
 
@@ -227,7 +232,6 @@ Indentation Engine
 * Syntactic Analysis::          
 * Syntactic Symbols::           
 * Indentation Calculation::     
-* Customizing Indentation::     
 
 Customizing Indentation
 
@@ -237,34 +241,35 @@ Customizing Indentation
 * Custom Line-Up::              
 * Other Indentation::           
 
-Status of AWK Mode
-
-* Initialising AWK Mode::       
-* AWK Mode Font Locking::       
-* AWK Mode Defuns::             
-
 @end detailmenu
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Introduction, Getting Connected, Top, Top
+@node    Introduction, Overview, Top, Top
 @comment node-name, next, previous, up
 @chapter Introduction
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @cindex BOCM
+@cindex history
+@cindex awk-mode.el
+@cindex c-mode.el
+@cindex c++-mode.el
 
 Welcome to @ccmode{}, a GNU Emacs mode for editing files containing C,
 C++, Objective-C, Java, CORBA IDL (and the variants CORBA PSDL and
-CIDL), Pike and to a certain extent, AWK code (@pxref{AWK Mode}).  This
-incarnation of the mode is descended from @file{c-mode.el} (also called
-``Boring Old C Mode'' or BOCM @t{:-)}, and @file{c++-mode.el} version 2,
-which Barry has been maintaining since 1992.  Late in 1997, Martin
-joined the @ccmode{} Maintainers Team, and implemented the Pike support.
-As of 2000 Martin has taken over as the sole maintainer.  @ccmode{} did
-not originally contain the font lock support for its languages --- that
-was added in version 5.30.  AWK support was also added in 5.30 by Alan
-Mackenzie.
+CIDL), Pike and AWK code.  This incarnation of the mode is descended
+from @file{c-mode.el} (also called ``Boring Old C Mode'' or BOCM
+@t{:-)}, @file{c++-mode.el} version 2, which Barry Warsaw had been
+maintaining since 1992, and @file{awk-mode.el}, a long neglected mode
+in the (X)Emacs base.
+
+Late in 1997, Martin Stjernholm joined Barry on the @ccmode{}
+Maintainers Team, and implemented the Pike support.  In 2000 Martin
+took over as the sole maintainer.  In 2001 Alan Mackenzie joined the
+team, implementing AWK support in version 5.30.  @ccmode{} did not
+originally contain the font lock support for its languages --- that
+was added in version 5.30.
 
 This manual describes @ccmode{}
 @comment The following line must appear on its own, so that the automated
@@ -310,8 +315,88 @@ like to thank all the @ccmode{} victims who help enormously during the
 early beta stages of @ccmode{}'s development.
 
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Overview, Getting Connected, Introduction, Top
+@comment  node-name,  next,  previous,  up@cindex organization of the manual
+@chapter Overview of the Manual
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@noindent
+The manual starts with several introductory chapters (including this
+one).
+
+@noindent
+The next chunk of the manual describes the day to day @emph{use} of
+@ccmode{} (as contrasted with how to customize it).
+
+@itemize @bullet
+@item
+The chapter ``Commands'' describes in detail how to use (nearly) all
+of @ccmode{}'s features.  There are extensive cross-references from
+here to the corresponding sections later in the manual which tell you
+how to customize these features.
+
+@item
+``Font Locking'' describes how ``syntax highlighting'' is applied to
+your buffers.  It is mainly background information and can be skipped
+over at a first reading.
+
+@item
+``AWK Mode'' supplements the information in the previous two chapters
+and should be perused if you are going to be writing in AWK.
+@end itemize
+
+@noindent
+The next chunk of the manual describes how to @emph{customize}
+@ccmode{}.  Typically, an overview of a topic is given at the chapter
+level, then the sections and subsections describe the material in
+increasing detail.
+
+@itemize @bullet
+@item
+The chapter ``Configuration Strategies'' tells you @emph{how} to write
+customizations - whether in hooks, in styles, in both, or in neither,
+depending on your needs.  It describes the @ccmode{} style system and
+lists the standard styles that @ccmode{} supplies.
+
+@item
+The next few chapters, describe in detail how to customize the various
+features of @ccmode{}.
+
+@item
+Finally, there is a sample @file{.emacs} fragment, which may help you
+in creating your own customization.
+@end itemize
+
+@noindent
+The manual ends with ``this and that'', things that don't fit cleanly
+into any of the previous chunks.
+
+@itemize @bullet
+@item
+Two chapters discuss the performance of @ccmode{} and known
+bugs/limitations.
+
+@item
+The FAQ contains a list of common problems and questions.
+
+@item
+The next two chapters tell you how to get in touch with the @ccmode{}
+project - whether for updating @ccmode{} or submitting bug reports.
+
+@item
+``Mode Initialization'' describes in full detail how @ccmode{} is
+loaded and initialized.  This is advanced material, mainly useful if
+you want to write a derived mode, or debug a difficult problem.
+FIXME!!!  It @emph{will} describe this in full detail, but is not yet
+written (2004/11/7).
+@end itemize
+
+@noindent
+Finally, there are the customary indices.
+
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Getting Connected, Commands, Introduction, Top
+@node    Getting Connected, Commands, Overview, Top
 @comment node-name, next, previous, up
 @chapter Getting Connected
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -321,10 +406,13 @@ work just fine right out of the box.  Note however that you may not have
 the latest @ccmode{} release and may want to upgrade your copy.
 
 If you are upgrading an existing @ccmode{} installation, please see
-the @file{README} file for installation details.  @ccmode{} may not
-work with older versions of Emacs or XEmacs.  See the @ccmode{}
-release notes at @uref{http://cc-mode.sourceforge.net} for the latest
-information on Emacs version and package compatibility
+the @file{README} file for installation details.  In particular, if
+you are going to be editing AWK files, @file{README} describes how to
+configure your (X)Emacs so that @ccmode{} will supersede the obsolete
+@code{awk-mode.el} which may have been supplied with your (X)Emacs.
+@ccmode{} may not work with older versions of Emacs or XEmacs.  See
+the @ccmode{} release notes at @uref{http://cc-mode.sourceforge.net}
+for the latest information on Emacs version and package compatibility
 (@pxref{Updating CC Mode}).
 
 @deffn Command c-version
@@ -360,6 +448,7 @@ where @samp{XX} is the minor release number.
 @node    Indentation Commands, Movement Commands, Commands, Commands
 @comment node-name, next, previous,up
 @section Indentation Commands
+@cindex indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The following list of commands reindent C constructs.  Note that when
@@ -374,7 +463,7 @@ only affect how on-the-fly code is formatted.  Changing the
 ``hanginess'' of a brace and then reindenting, will not move the brace
 to a different line.  For this, you're better off getting an external
 program like GNU @code{indent}, which will rearrange brace location,
-among other things.
+amongst other things.
 
 Reindenting large sections of code can take a long time.  When
 @ccmode{} reindents a region of code, it is essentially equivalent to
@@ -471,7 +560,6 @@ These variables are also useful when indenting code:
 
 @defopt c-tab-always-indent
 @vindex tab-always-indent (c-)
-@kindex TAB
 @cindex literal
 This variable controls how @kbd{TAB} (@code{c-indent-command})
 operates.  When it is @code{t}, @kbd{TAB} always indents the current
@@ -571,7 +659,11 @@ argument, move point forward to the end of the containing
 preprocessor conditional.
 
 @samp{#elif} is treated like @samp{#else} followed by @samp{#if}, so the
-function stops at them when going backward, but not when going forward.
+function stops at them when going backward, but not when going
+forward.
+
+This key sequence is not bound in AWK Mode, which doesn't have
+preprocessor statements.
 
 @item @kbd{M-x c-up-conditional-with-else}
 @findex c-up-conditional-with-else
@@ -604,6 +696,9 @@ Move point back over a preprocessor conditional, leaving the mark
 behind.  A prefix argument acts as a repeat count.  With a negative
 argument, move forward.
 
+This key sequence is not bound in AWK Mode, which doesn't have
+preprocessor statements.
+
 @item @kbd{C-c C-n} (@code{c-forward-conditional})
 @kindex C-c C-n
 @findex c-forward-conditional
@@ -611,6 +706,9 @@ argument, move forward.
 Move point forward across a preprocessor conditional, leaving the mark
 behind.  A prefix argument acts as a repeat count.  With a negative
 argument, move backward.
+
+This key sequence is not bound in AWK Mode, which doesn't have
+preprocessor statements.
 
 @item @kbd{M-a} (@code{c-beginning-of-statement})
 @kindex M-a
@@ -665,6 +763,59 @@ argument @var{n}, move @var{n} times.
 Move point backward to beginning of the next capitalized
 word.  With prefix argument @var{n}, move @var{n} times.  If
 @var{n} is negative, move forward.
+@end table
+
+@menu
+* AWK Mode Defuns::             
+@end menu
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    AWK Mode Defuns,  , Movement Commands, Movement Commands
+@comment  node-name,  next,  previous,  up
+@subsection AWK Mode Defuns
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+In AWK mode, @dfn{defun} means either a user-defined function or a
+pattern-action pair.  Either the pattern or the action may be
+implicit.
+
+The beginning of a defun is recognised heuristically as, more or less,
+code which begins in column zero.  Having the @samp{@{} in column zero,
+as is suggested for some modes, is neither necessary nor helpful in AWK
+mode.
+
+More precisely, the beginning of a defun is code which begins in
+column zero, and which isn't a closing brace, a comment, or a
+continuation of the previous line.  Code is the @dfn{continuation of
+the previous line} when that line is syntactically incomplete, for
+example when it ends with @samp{@{} or an escaped newline.
+
+The end of a defun is the @samp{@}} which matches the @samp{@{} (if
+any) at the beginning of the action or function body, or the EOL or
+@samp{;} which marks an implicit action.  Although this @samp{@}} is
+usually placed in column zero, AWK mode doesn't need it to be placed
+there.
+
+@table @asis
+@item @kbd{C-M-a} @code{c-awk-beginning-of-defun}
+@itemx @kbd{C-M-e} @code{c-awk-end-of-defun}
+@findex c-awk-beginning-of-defun
+@findex awk-beginning-of-defun (c-)
+@findex c-awk-end-of-defun
+@findex awk-end-of-defun (c-)
+Move point back to the beginning or forward to the end of the current
+AWK defun.  These functions can take prefix-arguments, their
+functionality being entirely equivalent to @code{beginning-of-defun}
+and @code{end-of-defun}.
+@ifset X
+@xref{Defuns,,,xemacs, XEmacs User's Manual}.
+@end ifset
+@ifclear X
+@xref{Moving by Defuns,,,emacs, GNU Emacs Manual}.
+@end ifclear
+
+@item @kbd{C-M-h} @code{c-mark-function}
+This works fine with AWK defuns.  @xref{Indentation Commands}.
 @end table
 
 
@@ -760,9 +911,9 @@ line break.
 @node    Electric Keys, Minor Modes, Filling and Breaking, Commands
 @comment node-name, next, previous, up
 @section Electric Keys and Keywords
+@cindex electric characters
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@cindex electric characters
 Most punctuation keys provide @dfn{electric} behavior - as well as
 inserting themselves they perform some other action, such as
 reindenting the line.  A few keywords, such as @code{else}, also
@@ -808,11 +959,11 @@ character.
 @findex electric-star (c-)
 @findex c-electric-slash
 @findex electric-slash (c-)
-A star or a slash causes reindentation when you type it as the second
-component of a C style block comment opener (@samp{/*}) or a C++ line
-comment opener (@samp{//}) respectively, but only if the comment
-opener is the first thing on the line (i.e. there's only whitespace
-before it).
+A star (bound to c-electric-star) or a slash (c-electric-slash) causes
+reindentation when you type it as the second component of a C style
+block comment opener (@samp{/*}) or a C++ line comment opener
+(@samp{//}) respectively, but only if the comment opener is the first
+thing on the line (i.e. there's only whitespace before it).
 
 In AWK mode, @samp{*} and @samp{/} do not delimit comments and are not
 electric.
@@ -833,30 +984,36 @@ electric, but only in C++ mode.  Hitting the second of two @kbd{<} or
 @kindex )
 @findex c-electric-paren
 @findex electric-paren (c-)
-The normal parenthesis characters @samp{(} and @samp{)} reindent the
-current line.  This is useful for getting the closing parenthesis of an
-argument list aligned automatically.  You can also configure
-@ccmode{} to insert a space automatically between a function name and
-the @samp{(} you've just typed, and to remove it automatically after
-typing @samp{)}, should the argument list be empty.  @xref{Clean-ups}.
+The normal parenthesis characters @samp{(} and @samp{)} (bound to
+c-electric-paren) reindent the current line.  This is useful for
+getting the closing parenthesis of an argument list aligned
+automatically.  You can also configure @ccmode{} to insert a space
+automatically between a function name and the @samp{(} you've just
+typed, and to remove it automatically after typing @samp{)}, should
+the argument list be empty.  @xref{Clean-ups}.
 
 @item @{
 @kindex @{
 @itemx @}
 @kindex @}
-Typing a brace reindents the current line.  Also, one or more newlines
-might be inserted if auto-newline minor mode is enabled.
-@xref{Auto-newlines}.  Additionally, you can configure @ccmode{}
-to compact excess whitespace inserted by auto-newline mode in certain
-circumstances.  @xref{Clean-ups}.
+@findex c-electric-brace
+@findex electric-brace (c-)
+Typing a brace (bound to c-electric-brace) reindents the current line.
+Also, one or more newlines might be inserted if auto-newline minor
+mode is enabled.  @xref{Auto-newlines}.  Additionally, you can
+configure @ccmode{} to compact excess whitespace inserted by
+auto-newline mode in certain circumstances.  @xref{Clean-ups}.
 
 @item :
 @kindex :
-Typing a colon reindents the current line.  Additionally, one or more
-newlines might be inserted if auto-newline minor mode is enabled.
-@xref{Auto-newlines}.  If you type a second colon immediately
-after such an auto-newline, by default the whitespace between the two
-colons is removed, leaving a C++ scope operator.  @xref{Clean-ups}.
+@findex c-electric-colon
+@findex electric-colon (c-)
+Typing a colon (bound to c-electric-colon) reindents the current line.
+Additionally, one or more newlines might be inserted if auto-newline
+minor mode is enabled.  @xref{Auto-newlines}.  If you type a second
+colon immediately after such an auto-newline, by default the
+whitespace between the two colons is removed, leaving a C++ scope
+operator.  @xref{Clean-ups}.
 
 If you prefer, you can insert @samp{::} in a single operation,
 avoiding all these spurious reindentations, newlines, and clean-ups.
@@ -866,12 +1023,14 @@ avoiding all these spurious reindentations, newlines, and clean-ups.
 @kindex ;
 @itemx ,
 @kindex ,
-Typing a semicolon or comma reindents the current line.  Also, a
-newline might be inserted if auto-newline minor mode is enabled.
-@xref{Auto-newlines}.  Additionally, you can configure @ccmode{} so
-that when auto-newline has inserted whitespace after a @samp{@}}, it
-will be removed again when you type a semicolon or comma just after
-it.  @xref{Clean-ups}.
+@findex c-electric-semi&comma
+@findex electric-semi&comma (c-)
+Typing a semicolon or comma (bound to c-electric-semi&comma) reindents
+the current line.  Also, a newline might be inserted if auto-newline
+minor mode is enabled.  @xref{Auto-newlines}.  Additionally, you can
+configure @ccmode{} so that when auto-newline has inserted whitespace
+after a @samp{@}}, it will be removed again when you type a semicolon
+or comma just after it.  @xref{Clean-ups}.
 
 @end table
 
@@ -914,6 +1073,7 @@ modes except IDL mode, since CORBA IDL doesn't have any statements.
 @node    Minor Modes, Other Commands, Electric Keys, Commands
 @comment node-name, next, previous, up
 @section Minor Modes
+@cindex Minor Modes
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} contains two minor-mode-like features that you might find
@@ -1061,7 +1221,6 @@ Here you toggle Hungry Delete minor mode with @kbd{C-c C-d} or
 @table @asis
 @item @kbd{@key{DEL}} (@code{c-electric-backspace})
 @kindex DEL
-@c @deffn Command c-electric-backspace
 @findex c-electric-backspace
 @findex electric-backspace (c-)
 This command is run by default when you hit the @kbd{DEL} key.  When
@@ -1071,9 +1230,7 @@ argument or in a literal (@pxref{Auto-newlines}), the command
 behaves like @code{backwards-delete-char-untabify}.  (Strictly
 speaking, the function contained in the @code{c-backspace-function}
 variable is called with the prefix argument.)
-@c @end deffn
 
-@c @defvar c-backspace-function
 @item @code{c-backspace-function}
 @vindex c-backspace-function
 @vindex backspace-function (c-)
@@ -1081,11 +1238,9 @@ variable is called with the prefix argument.)
 Hook that gets called by @code{c-electric-backspace} when it doesn't
 do an ``electric'' deletion of the preceding whitespace.  The default
 value is @code{backward-delete-char-untabify}.
-@c @end defvar
 
 @item @kbd{C-d} (@code{c-electric-delete-forward})
 @kindex C-d
-@c @deffn Command c-electric-delete-forward
 @findex c-electric-delete-forward
 @findex electric-delete-forward (c-)
 This function, which is bound to @kbd{C-d} by default, works just like
@@ -1094,9 +1249,7 @@ doesn't do an ``electric'' deletion of the following whitespace, it
 just does @code{delete-char}, more or less.  (Strictly speaking, it
 calls the function in @code{c-delete-function} with the prefix
 argument.)
-@c @end deffn
 
-@c @defvar c-delete-function
 @item @code{c-delete-function}
 @vindex c-delete-function
 @vindex delete-function (c-)
@@ -1104,7 +1257,6 @@ argument.)
 Hook that gets called by @code{c-electric-delete-forward} when it
 doesn't do an ``electric'' deletion of the following whitespace.  The
 default value is @code{delete-char}.
-@c @end defvar
 @end table
 
 @item Using Distinct Bindings
@@ -1187,6 +1339,24 @@ Here are the various other commands that didn't fit anywhere else:
 In C++, it is also sometimes desirable to insert the double-colon scope
 operator without performing the electric behavior of colon insertion.
 @kbd{C-c :} does just this.
+
+@item @kbd{C-c C-e} (@code{c-macro-expand})
+@kindex C-c C-e
+@findex c-macro-expand
+@findex macro-expand (c-)
+This command expands C, C++, Objective C or Pike macros in the region,
+using an appropriate external preprocessor program.  Normally it
+displays its output in a temporary buffer, but if you give it a prefix
+arg (with @kbd{C-u C-c C-e}) it will overwrite the original region
+with the expansion.
+
+The command does not work in any of the other modes, and the key
+sequence is not bound in these other modes.
+
+@code{c-macro-expand} isn't actually part of @ccmode{}, even though it
+is bound to a @ccmode{} key sequence.  If you need help setting it up
+or have other problems with it, you can either read its source code or
+ask for help in the standard (X)Emacs forums.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1197,8 +1367,9 @@ operator without performing the electric behavior of colon insertion.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @strong{Note:} The font locking in AWK mode is currently not integrated
-with the rest of @ccmode{}, so this section does not apply there.
-@xref{AWK Mode Font Locking}, instead.
+with the rest of @ccmode{}.  Only the last section of this chapter,
+@ref{AWK Mode Font Locking}, applies to AWK.  The other sections apply
+to the other languages.
 
 @cindex Font Lock mode
 
@@ -1214,6 +1385,7 @@ Lock,,, emacs, GNU Emacs Manual}, for ways to enable font locking in
 * Font Locking Preliminaries::  
 * Faces::                       
 * Doc Comments::                
+* AWK Mode Font Locking::       
 @end menu
 
 
@@ -1412,7 +1584,7 @@ since those aren't syntactic errors in themselves.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Doc Comments,  , Faces, Font Locking
+@node    Doc Comments, AWK Mode Font Locking, Faces, Font Locking
 @comment node-name, next, previous, up
 @section Documentation Comments
 @cindex documentation comments
@@ -1482,7 +1654,68 @@ If you add support for another doc comment style, please consider
 contributing it --- send a note to @email{bug-cc-mode@@gnu.org}.
 
 
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    AWK Mode Font Locking,  , Doc Comments, Font Locking
+@comment  node-name,  next,  previous,  up
+@section AWK Mode Font Locking
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+The general appearance of font-locking in AWK mode is much like in any
+other programming mode.  @xref{Faces For Font Lock,,,elisp, GNU Emacs
+Lisp Reference Manual}.
+
+The following faces are, however, used in a non-standard fashion in
+AWK mode:
+
+@table @asis
+@item @code{font-lock-variable-name-face}
+This face was intended for variable declarations.  Since variables are
+not declared in AWK, this face is used instead for AWK system
+variables (such as @code{NF}) and ``Special File Names'' (such as
+@code{"/dev/stderr"}).
+
+@item @code{font-lock-builtin-face} (Emacs)/@code{font-lock-preprocessor-face} (XEmacs)
+This face is normally used for preprocessor directives in @ccmode{}.
+There are no such things in AWK, so this face is used instead for
+standard functions (such as @code{match}).
+
+@item @code{font-lock-string-face}
+As well as being used for strings, including localizable strings,
+(delimited by @samp{"} and @samp{_"}), this face is also used for AWK
+regular expressions (delimited by @samp{/}).
+
+@item @code{font-lock-warning-face} (Emacs)/@code{c-invalid-face} (XEmacs)
+This face highlights the following syntactically invalid AWK
+constructs:
+
+@itemize @bullet
+@item
+An unterminated string or regular expression.  Here the opening
+delimiter (@samp{"} or @samp{/} or @samp{_"}) is displayed in
+@code{font-lock-warning-face}.  This is most noticeable when typing in a
+new string/regular expression into a buffer, when the warning-face
+serves as a continual reminder to terminate the construct.
+
+AWK mode fontifies unterminated strings/regular expressions
+differently from other modes: Only the text up to the end of the line
+is fontified as a string (escaped newlines being handled correctly),
+rather than the text up to the next string quote.
+
+@item
+A space between the function name and opening parenthesis when calling
+a user function.  The last character of the function name and the
+opening parenthesis are highlighted.  This font-locking rule will
+spuriously highlight a valid concatenation expression where an
+identifier precedes a parenthesised expression.  Unfortunately.
+
+@item
+Whitespace following the @samp{\} in what otherwise looks like an
+escaped newline.  The @samp{\} is highlighted.
+@end itemize
+@end table
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Config Strategies, Custom Filling and Breaking, Font Locking, Top
 @comment  node-name,  next,  previous,  up
 @chapter Configuration Strategies
@@ -1614,7 +1847,6 @@ could achieve this with code like this in your @file{.emacs}:
 @menu
 * Hooks::                       
 * Styles::                      
-* Mode Initialization::         
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1632,6 +1864,8 @@ also one general hook and one package initialization hook:
 @defvar c-initialization-hook
 @vindex initialization-hook (c-)
 Hook run only once per Emacs session, when @ccmode{} is initialized.
+This is a good place to add to or change any @ccmode key bindings.
+FIXME!!! clumsy phraseology, 2004/11/7.
 @end defvar
 
 @defvar c-mode-common-hook
@@ -1650,6 +1884,11 @@ language specific hook.
 The language specific mode hooks.  The appropriate one is run as the
 last thing when you enter that language mode.
 @end defvar
+
+Although these hooks are variables defined in @ccmode{}, you can give
+them values before @ccmode{}'s code is loaded - indeed, this is the
+only way to use @code{c-initialization-hook}.  Their values aren't
+overwritten when @ccmode{} gets loaded.
 
 Note that all the language-specific mode setup that CC Mode does is done
 prior to both @code{c-mode-common-hook} and the language specific hook.
@@ -1675,7 +1914,7 @@ file.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Styles, Mode Initialization, Hooks, Config Strategies
+@node    Styles,  , Hooks, Config Strategies
 @comment node-name, next, previous, up
 @section Styles
 @cindex styles
@@ -1820,6 +2059,12 @@ The style for editing Java code.  Note that the default
 value for @code{c-default-style} installs this style when you enter
 @code{java-mode}.
 
+@item awk
+@cindex AWK style
+The style for editing AWK code.  Note that the default value for
+@code{c-default-style} installs this style when you enter
+@code{awk-mode}.
+
 @item user
 @cindex User style
 This is a special style for several reasons.  First, the
@@ -1852,7 +2097,7 @@ interactively like this:
 @end example
 
 Note that all style names are case insensitive, even the ones you
-define.
+define yourself.
 
 Setting a style in this way does @emph{not} automatically reindent your
 file.  For commands that you can use to view the effect of your changes,
@@ -1860,12 +2105,12 @@ see @ref{Commands}.
 @end deffn
 
 The default style in all newly created buffers is @code{gnu}, except
-in Java mode where it's @code{java}.  Although the @code{user} style
-is not the default style, any style variable settings you do with the
-Customization interface or on the top level in your @file{.emacs} file
-will by default override the style system, so you don't need to set
-@code{c-default-style} to @code{user} to see the effect of such
-settings.
+in Java and AWK modes where it's @code{java} and @code{awk}.  Although
+the @code{user} style is not the default style, any style variable
+settings you do with the Customization interface or on the top level
+in your @file{.emacs} file will by default override the style system,
+so you don't need to set @code{c-default-style} to @code{user} to see
+the effect of such settings.
 
 @defopt c-default-style
 @vindex default-style (c-)
@@ -2021,22 +2266,6 @@ Note that file style settings (i.e. @code{c-file-style}) are applied
 before file offset settings (i.e. @code{c-file-offsets}).  Also, if
 either of these are set in a file's local variable section, all the
 style variable values are made local to that buffer.
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Mode Initialization,  , Styles, Config Strategies
-@comment  node-name,  next,  previous,  up
-@section Mode Initialization
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-This section describes in full detail how CC Mode gets initialised,
-and how ######.  This is advanced material and you don't need to
-understand it to be able to use CC Mode.  It might be useful if you
-need to debug your configuration settings, and will probably be useful
-if you want to write a ``derived mode'' (@pxref{Derived
-Modes,,,@lispref{}, @lispreftitle{}}.) based on one of CC Mode's
-component modes.
-
-Etc.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Custom Filling and Breaking, Custom Auto-newlines, Config Strategies, Top
@@ -2312,11 +2541,6 @@ certain specific circumstances.  @xref{Clean-ups}.
 @cindex hanging braces
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@findex c-electric-brace
-@findex electric-brace (c-)
-@kindex @{
-@kindex @}
-
 When the conditions for auto-newline hold (@pxref{Auto-newlines}) and
 you type an open or close brace at the end of a line, @ccmode{}
 proceeds as follows to decide where, if anywhere, to put
@@ -2348,7 +2572,7 @@ brace.
 This variable is an association list which maps syntactic symbols to
 lists of places to insert a newline.  @xref{Association
 Lists,,,@lispref{}}.  The key of each element is the syntactic symbol, the
-associated value is either nil, a list, or a function.
+associated value is either @code{nil}, a list, or a function.
 
 @table @asis
 @item The Key - the syntactic symbol
@@ -2451,23 +2675,23 @@ themselves.
 
 @vindex c-hanging-braces-alist
 @vindex hanging-braces-alist (c-)
+@cindex action functions
 Syntactic symbols aren't the only place where you can customize
-@ccmode{} with the lisp equivalent of callback functions.  Brace
-``hanginess'' can also be determined by custom functions associated with
-syntactic symbols on the @code{c-hanging-braces-alist} style variable.
-Remember that @var{action}'s are typically a list containing some
-combination of the symbols @code{before} and @code{after}
-(@pxref{Hanging Braces}).  However, an @var{action} can also be a
-function which gets called when a brace matching that syntactic symbol
-is entered.
+@ccmode{} with the lisp equivalent of callback functions.  Remember
+that @var{action}s are typically a list containing some combination of
+the symbols @code{before} and @code{after} (@pxref{Hanging Braces}).
+You can also specify brace ``hanginess'' by associating an @dfn{action
+function} with a syntactic symbol on the @code{c-hanging-braces-alist}
+style variable.
 
 @cindex customization, brace hanging
-These @var{action} functions are called with two arguments: the
-syntactic symbol for the brace, and the buffer position at which the
-brace was inserted.  The @var{action} function is expected to return a
-list containing some combination of @code{before} and @code{after},
-including neither of them (i.e. @code{nil}).  This return value has the
-normal brace hanging semantics.
+An action function is called with two arguments: the syntactic symbol
+for the brace (e.g. @code{substatement-open}), and the buffer position
+where the brace has been inserted.  Point is undefined on entry to an
+action function, but the function must preserve it (e.g. by using
+@code{save-excursion}).  The return value should be a list containing
+some combination of @code{before} and @code{after}, including neither
+of them (i.e. @code{nil}).
 
 As an example, @ccmode{} itself uses this feature to dynamically
 determine the hanginess of braces which close ``do-while''
@@ -2521,21 +2745,16 @@ During the call to the indentation or brace hanging @var{action}
 function, this variable is bound to the full syntactic analysis list.
 @end defvar
 
-@cindex customization, colon hanging
-@vindex c-hanging-colons-alist
-@vindex hanging-colons-alist (c-)
-Note that for symmetry, colon hanginess should be customizable by
-allowing function symbols as @var{action}s on the
-@code{c-hanging-colons-alist} style variable.  Since no use has actually
-been found for this feature, it isn't currently implemented!
-
-
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Hanging Colons, Hanging Semicolons and Commas, Hanging Braces, Custom Auto-newlines
 @comment node-name, next, previous, up
 @section Hanging Colons
 @cindex hanging colons
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@cindex customization, colon hanging
+@vindex c-hanging-colons-alist
+@vindex hanging-colons-alist (c-)
 
 Using a mechanism similar to brace hanging (@pxref{Hanging Braces}),
 colons can also be made to hang using the style variable
@@ -2569,6 +2788,11 @@ colons always appear right next to each other, newlines before and after
 them are controlled by a different mechanism, called @dfn{clean-ups} in
 @ccmode{}.  @xref{Clean-ups}, for details.
 
+Note that for symmetry, colon hanginess should be customizable by
+allowing function symbols as @var{action}s on the
+@code{c-hanging-colons-alist} style variable.  Since no use has actually
+been found for this feature, it isn't currently implemented!
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Hanging Semicolons and Commas, Clean-ups, Hanging Colons, Custom Auto-newlines
@@ -2583,11 +2807,13 @@ them are controlled by a different mechanism, called @dfn{clean-ups} in
 
 @defopt c-hanging-semi&comma-criteria
 @vindex hanging-semi&comma-criteria (c-)
-This style variable takes a list of functions that get called when a
-semicolon or comma is inserted.  The functions are called in order
-without arguments.  They don't insert newlines themselves, rather they
-direct @ccmode{} whether or not to do so.  They are expected to return
-one of the following values:
+This style variable takes a list of functions that get called when you
+type a semicolon or comma.  The functions are called in order without
+arguments.  When these functions are entered, point is just after the
+newly inserted @samp{;} or @samp{,} and they must preserve point
+(e.g., by using @code{save-excursion}).  They don't insert newlines
+themselves, rather they direct @ccmode{} whether or not to do so.
+They should return one of the following values:
 
 @table @code
 @item t
@@ -2602,15 +2828,14 @@ No determination is made, and the next function in the list is called.
 
 Note that auto-newlines are never inserted @emph{before} a semicolon
 or comma.  If every function in the list is called without a
-determination being made, then no newline is added. The default value
-for this variable is a list containing a single function,
-@code{c-semi&comma-inside-parenlist}, which inserts newlines only after
-semicolons which do not appear inside parenthesis lists (i.e. those
-that separate @code{for}-clause statements).
-@end defopt
+determination being made, then no newline is added.
 
-FIXME!!!  Add a sentence along the lines ``the following functions can
-all be put into @code{c-hanging-semi&comma-criteria}''.
+In AWK mode, this variable is set by default to @code{nil}.  In the
+other modes, the default value is a list containing a single function,
+@code{c-semi&comma-inside-parenlist}.  This inserts newlines only
+after semicolons which do not appear inside parenthesis lists
+(i.e. those that separate @code{for}-clause statements).
+@end defopt
 
 @defun c-semi&comma-no-newlines-before-nonblanks
 @findex semi&comma-no-newlines-before-nonblanks (c-)
@@ -2821,6 +3046,40 @@ be correct.  This usually only occurs when scoped identifiers appear in
 switch label tags.}.  Clean up occurs when the second colon is typed.
 You will always want @code{scope-operator} in the @code{c-cleanup-list}
 when you are editing C++ code.
+
+@item one-liner-defun
+Clean up a single line of code enclosed by defun braces by removing
+the space before and after the code.  The clean-up happens when the
+closing brace is typed.  If the variable @code{c-max-one-liner-length}
+is set, the cleanup is only done if the resulting line would be no
+longer the value of that variable.  This clean-up is intended mainly
+for short AWK pattern/action pairs.  For example, this:
+
+@example
+@group
+BEGIN @{
+    FS = "\t" # use <TAB> as a field separator
+@}
+@end group
+@end example
+
+@noindent
+gets compacted to the following when the closing brace is typed:
+
+@example
+@group
+BEGIN @{FS = "\t"@} # use <TAB> as a field separator
+@end group
+@end example
+
+@defopt c-max-one-liner-length
+@vindex max-one-liner-length (c-)
+The maximum length of the resulting line for which the clean-up
+@code{one-liner-defun} will be triggered.  This length is that of the entire
+line, including any leading whitespace and any trailing comment.  Its
+default value is 80.  If the value is zero or @code{nil}, no limit
+applies.
+@end defopt
 @end table
 
 The following clean-ups are always active when they occur on
@@ -2833,7 +3092,9 @@ Insert a space between the function name and the opening parenthesis
 of a function call.  This produces function calls in the style
 mandated by the GNU coding standards, e.g. @samp{signal@tie{}(SIGINT,
 SIG_IGN)} and @samp{abort@tie{}()}.  Clean up occurs when the opening
-parenthesis is typed.
+parenthesis is typed.  This clean-up should never be active in AWK
+Mode, since such a space is syntactically invalid for user defined
+functions.
 
 @item compact-empty-funcall
 Clean up any space between the function name and the opening parenthesis
@@ -2846,8 +3107,8 @@ closing parenthesis is typed.
 @end table
 
 
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Engine, Macro Handling, Custom Auto-newlines, Top
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Indentation Engine, Customizing Indentation, Custom Auto-newlines, Top
 @comment node-name, next, previous, up
 @chapter Indentation Engine
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2879,7 +3140,6 @@ the indentation associated variables, e.g. @code{c-special-indent-hook}.
 * Syntactic Analysis::          
 * Syntactic Symbols::           
 * Indentation Calculation::     
-* Customizing Indentation::     
 @end menu
 
 
@@ -3855,7 +4115,7 @@ syntax.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Calculation, Customizing Indentation, Syntactic Symbols, Indentation Engine
+@node    Indentation Calculation,  , Syntactic Symbols, Indentation Engine
 @comment node-name, next, previous, up
 @section Indentation Calculation
 @cindex indentation
@@ -3953,9 +4213,9 @@ minibuffer when you hit @kbd{TAB}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Customizing Indentation,  , Indentation Calculation, Indentation Engine
+@node    Customizing Indentation, Macro Handling, Indentation Engine, Top
 @comment node-name, next, previous, up
-@section Customizing Indentation
+@chapter Customizing Indentation
 @cindex customization, indentation
 @cindex indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4149,7 +4409,7 @@ your @file{.emacs} file so that your changes are more permanent.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Interactive Customization, Permanent Customization, Customizing Indentation, Customizing Indentation
 @comment node-name, next, previous, up
-@subsection Interactive Customization
+@section Interactive Customization
 @cindex customization, interactive
 @cindex interactive customization
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4256,7 +4516,7 @@ for that syntactic element.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Permanent Customization, Line-Up Functions, Interactive Customization, Customizing Indentation
 @comment node-name, next, previous, up
-@subsection Permanent Customization
+@section Permanent Customization
 @cindex customization, permanent
 @cindex permanent customization
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4282,7 +4542,7 @@ different languages.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Line-Up Functions, Custom Line-Up, Permanent Customization, Customizing Indentation
 @comment node-name, next, previous, up
-@subsection Line-Up Functions
+@section Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @cindex line-up function
@@ -4297,6 +4557,10 @@ situations.  If none of these does what you want, you can write your
 own, see @ref{Custom Line-Up}.  If you do, it's probably a good idea
 to start working from one of these predefined functions.  They can be
 found in the file @file{cc-align.el}.
+
+The line-up functions haven't been adapted for AWK buffers or tested
+with them.  Some of them may work serendipitously.  There shouldn't be
+any problems writing custom line-up functions for AWK mode.
 
 For every function below there is a ``works with'' list that indicates
 which syntactic symbols the function is intended to be used with.
@@ -5205,7 +5469,7 @@ and @code{inextern-lang}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Custom Line-Up, Other Indentation, Line-Up Functions, Customizing Indentation
 @comment node-name, next, previous, up
-@subsection Custom Line-Up Functions
+@section Custom Line-Up Functions
 @cindex customization, indentation functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -5363,7 +5627,7 @@ contact @email{bug-cc-mode@@gnu.org}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Indentation,  , Custom Line-Up, Customizing Indentation
 @comment node-name, next, previous, up
-@subsection Other Special Indentations
+@section Other Special Indentations
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Here are the remaining odds and ends regarding indentation:
@@ -5402,7 +5666,7 @@ current setting for the buffer local value of
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Macro Handling, Advanced Customizations, Indentation Engine, Top
+@node    Macro Handling, Advanced Customizations, Customizing Indentation, Top
 @comment node-name, next, previous, up
 @chapter Macro Handling
 @cindex macros
@@ -5488,7 +5752,7 @@ with the trailing backslashes.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Advanced Customizations, AWK Mode, Macro Handling, Top
+@node    Advanced Customizations, Odds and Ends, Macro Handling, Top
 @comment node-name, next, previous, up
 @chapter Advanced Customizations
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5516,256 +5780,8 @@ its logical position.  2004/10/15.
 
 @c Moved to ``Indentation Engine'' chapter, 2004/8/17.
 
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node AWK Mode, Odds and Ends, Advanced Customizations, Top
-@comment  node-name,  next,  previous,  up
-@chapter Status of AWK Mode
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@dfn{AWK mode} existed until recently in the file @file{awk-mode.el}
-as a mode derived from c-mode.  It had not been actively maintained to
-keep pace with the newer @ccmode{}, and its indentation mechanism no
-longer worked satisfactorally.
-
-The current AWK mode is based around the GNU implementation,
-@emph{GAWK version 3.1.0}, though it should work pretty well with any
-AWK.  It has now been updated and integrated into @ccmode{} to a
-substantial extent, though as yet not all the features of @ccmode{}
-have been adapted to support it.
-
-If your (X)Emacs is set up to use the old file @file{awk-mode.elc}
-(which will usually be the case if you have obtained this @ccmode{}
-independently of (X)Emacs itself), or if you are not sure, insert the
-following form into your @file{.emacs} or @file{init.el} so that the new
-AWK mode will be used instead:
-
-@example
-(autoload 'awk-mode "cc-mode" nil t)
-@end example
-
-You can check which AWK mode you are running by displaying the mode
-documentation string with @kbd{C-h m} from an AWK buffer.  The newer
-mode's doc string contains @code{To submit a problem report, enter
-`C-c C-b'} near the top of the doc string where the older mode has
-@code{This is much like C mode except ....}.
-
-Here is an overview of which @ccmode{} features currently work with
-AWK mode and which don't:
-
-@table @asis
-@item Indentation Engine
-The @ccmode{} indentation engine fully supports AWK mode.
-@xref{Indentation Engine}.
-
-AWK mode handles code formatted in the conventional AWK fashion:
-@samp{@{}s which start actions, user-defined functions, or compound
-statements are placed on the same line as the associated construct; the
-matching @samp{@}}s are normally placed under the start of the
-respective pattern, function definition, or structured statement.
-@c Add in a bit about the @samp{@}} being on the same line when the
-@c contents are short.
-
-The predefined line-up functions (@pxref{Line-Up Functions}) haven't yet
-been adapted for AWK mode, though some of them may work serendipitously.
-There shouldn't be any problems writing custom line-up functions for AWK
-mode.
-
-The command @kbd{C-c C-q} (@code{c-indent-defun}) hasn't yet been
-adapted for AWK, though in practice it works properly nearly all the
-time.  Should it fail, explicitly set the region around the function
-(using @kbd{C-u C-SPC}: @kbd{C-M-h} probably won't work either) then do
-@kbd{C-M-\} (@code{indent-region}).
-
-@item Font Locking
-There is a single level of font locking in AWK mode, rather than the
-three distinct levels the other modes have.  There are several
-idiosyncrasies in AWK mode's font-locking due to the peculiarities of
-the AWK language itself.  @xref{AWK Mode Font Locking}.
-
-@item String and Comment Commands
-The String and Comment formatting commands described in @ref{Filling
-and Breaking} all work in AWK mode.
-
-@item Movement Commands
-Most of the movement commands work in AWK mode.  This now includes
-@kbd{M-a} (@code{c-beginning-of-statement}) and @kbd{M-e}
-(@code{c-end-of-statement}).
-
-The notion of @dfn{defun} has been augmented to include pattern-action
-pairs.  See @ref{AWK Mode Defuns} for a description of commands which
-work on AWK ``defuns''.
-
-Since there is no preprocessor in AWK, the commands which move to
-preprocessor directives (e.g. @code{c-up-conditional}) are meaningless
-in AWK mode and are not bound in the AWK mode keymap.
-
-@item Auto-newline Insertion and Clean-ups
-Auto-newline insertion hasn't yet been adapted for AWK.  Some of the
-clean-ups can actually convert good AWK code into syntactically
-invalid code.
-
-If auto-newline or its associated clean-ups are enabled generally for
-the modes in @ccmode{}, you are strongly recommended to disable them
-in the AWK Mode hook.  @xref{Initialising AWK Mode}.
-
-The clean-up @code{space-before-funcall}, which is independent of
-auto-newline, should never be active in AWK mode (since inserting a
-space between a user function's name and its opening @samp{(} makes
-the call syntactically invalid).  If necessary, this should be
-disabled in the AWK Mode hook.  @xref{Initialising AWK Mode}.
-
-@end table
-
-@menu
-* Initialising AWK Mode::       
-* AWK Mode Font Locking::       
-* AWK Mode Defuns::             
-@end menu
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node Initialising AWK Mode, AWK Mode Font Locking, AWK Mode, AWK Mode
-@comment  node-name,  next,  previous,  up
-@section AWK mode - What to put in your @file{.emacs} or @file{init.el}
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Much of the AWK mode initialization can, of course, be done by the
-@ccmode{} general initialization procedure.  You may want to use certain
-@ccmode{} features such as @code{auto-newline} and @code{clean-ups} in
-the other modes, and you might thus have enabled them in a
-@code{c-mode-common-hook} function, as described in @ref{Sample .emacs File}.
-These features have not yet been amended for AWK mode, and far from
-being useful, can be irritating in AWK mode or actually make AWK code
-syntactically invalid.  Adding the following code to your
-@file{.emacs} or @file{init.el} file will disable them for AWK mode.
-
-@example
-(defun my-awk-mode-hook ()
-  "Disable certain @ccmode{} features which could impair AWK mode."
-  (c-toggle-auto-state -1)       ; disable automatic insertions of newlines
-  (if (memq 'space-before-funcall c-cleanup-list)
-      (setq c-cleanup-list ; don't automatically insert a space into "foo("
-            (remove 'space-before-funcall c-cleanup-list))))
-(add-hook 'awk-mode-hook 'my-awk-mode-hook)
-@end example
-
-Naturally you can add your own AWK-specific customizations to this
-function.  @xref{Hooks}.
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node AWK Mode Font Locking, AWK Mode Defuns, Initialising AWK Mode, AWK Mode
-@comment  node-name,  next,  previous,  up
-@section AWK Mode Font Locking
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-The general appearance of font-locking in AWK mode is much like in any
-other programming mode.  @xref{Faces For Font Lock,,,elisp, GNU Emacs
-Lisp Reference Manual}.
-
-The following faces are, however, used in a non-standard fashion in
-AWK mode:
-
-@table @asis
-@item @code{font-lock-variable-name-face}
-This face was intended for variable declarations.  Since variables are
-not declared in AWK, this face is used instead for AWK system
-variables (such as @code{NF}) and ``Special File Names'' (such as
-@code{"/dev/stderr"}).
-
-@item @code{font-lock-builtin-face} (Emacs)/@code{font-lock-preprocessor-face} (XEmacs)
-This face is normally used for preprocessor directives in @ccmode{}.
-There are no such things in AWK, so this face is used instead for
-standard functions (such as @code{match}).
-
-@item @code{font-lock-string-face}
-As well as being used for strings, including localizable strings,
-(delimited by @samp{"} and @samp{_"}), this face is also used for AWK
-regular expressions (delimited by @samp{/}).
-
-@item @code{font-lock-warning-face} (Emacs)/@code{c-invalid-face} (XEmacs)
-This face highlights the following syntactically invalid AWK
-constructs:
-
-@itemize @bullet
-@item
-An unterminated string or regular expression.  Here the opening
-delimiter (@samp{"} or @samp{/} or @samp{_"}) is displayed in
-@code{font-lock-warning-face}.  This is most noticeable when typing in a
-new string/regular expression into a buffer, when the warning-face
-serves as a continual reminder to terminate the construct.
-
-AWK mode fontifies unterminated strings/regular expressions
-differently from other modes: Only the text up to the end of the line
-is fontified as a string (escaped newlines being handled correctly),
-rather than the text up to the next string quote.
-
-@item
-A space between the function name and opening parenthesis when calling
-a user function.  The last character of the function name and the
-opening parenthesis are highlighted.  This font-locking rule will
-spuriously highlight a valid concatenation expression where an
-identifier precedes a parenthesised expression.  Unfortunately.
-
-@item
-Whitespace following the @samp{\} in what otherwise looks like an
-escaped newline.  The @samp{\} is highlighted.
-@end itemize
-@end table
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node AWK Mode Defuns,  , AWK Mode Font Locking, AWK Mode
-@comment  node-name,  next,  previous,  up
-@section AWK Mode Defuns
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-In AWK mode, @dfn{defun} means either a user-defined function or a
-pattern-action pair.  Either the pattern or the action may be
-implicit.
-
-The beginning of a defun is recognised heuristically as, more or less,
-code which begins in column zero.  Having the @samp{@{} in column zero,
-as is suggested for some modes, is neither necessary nor helpful in AWK
-mode.
-
-More precisely, the beginning of a defun is code which begins in
-column zero, and which isn't a closing brace, a comment, or a
-continuation of the previous line.  Code is the @dfn{continuation of
-the previous line} when that line is syntactically incomplete, for
-example when it ends with @samp{@{} or an escaped newline.
-
-The end of a defun is the @samp{@}} which matches the @samp{@{} (if
-any) at the beginning of the action or function body, or the EOL or
-@samp{;} which marks an implicit action.  Although this @samp{@}} is
-usually placed in column zero, AWK mode doesn't need it to be placed
-there.
-
-@table @asis
-@item @kbd{C-M-a} @code{c-awk-beginning-of-defun}
-@itemx @kbd{C-M-e} @code{c-awk-end-of-defun}
-@findex c-awk-beginning-of-defun
-@findex awk-beginning-of-defun (c-)
-@findex c-awk-end-of-defun
-@findex awk-end-of-defun (c-)
-Move point back to the beginning or forward to the end of the current
-AWK defun.  These functions can take prefix-arguments, their
-functionality being entirely equivalent to @code{beginning-of-defun}
-and @code{end-of-defun}.
-@ifset X
-@xref{Defuns,,,xemacs, XEmacs User's Manual}.
-@end ifset
-@ifclear X
-@xref{Moving by Defuns,,,emacs, GNU Emacs Manual}.
-@end ifclear
-
-@item @kbd{C-M-h} @code{c-mark-function}
-This works fine with AWK defuns.  @xref{Indentation Commands}.
-@end table
-
-
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Odds and Ends, Performance Issues, AWK Mode, Top
+@node    Odds and Ends, Sample .emacs File, Advanced Customizations, Top
 @comment node-name, next, previous, up
 @chapter Odds and Ends
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5809,7 +5825,60 @@ anchoring position to indent the line in that case.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Performance Issues, Limitations and Known Bugs, Odds and Ends, Top
+@node    Sample .emacs File, Performance Issues, Odds and Ends, Top
+@comment node-name, next, previous, up
+@appendix Sample .emacs file
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@example
+;; Here's a sample .emacs file that might help you along the way.
+;; Just copy this region and paste it into your .emacs file.  You may
+;; want to change some of the actual values.
+
+(defconst my-c-style
+  '((c-tab-always-indent        . t)
+    (c-comment-only-line-offset . 4)
+    (c-hanging-braces-alist     . ((substatement-open after)
+                                   (brace-list-open)))
+    (c-hanging-colons-alist     . ((member-init-intro before)
+                                   (inher-intro)
+                                   (case-label after)
+                                   (label after)
+                                   (access-label after)))
+    (c-cleanup-list             . (scope-operator
+                                   empty-defun-braces
+                                   defun-close-semi))
+    (c-offsets-alist            . ((arglist-close . c-lineup-arglist)
+                                   (substatement-open . 0)
+                                   (case-label        . 4)
+                                   (block-open        . 0)
+                                   (knr-argdecl-intro . -)))
+    (c-echo-syntactic-information-p . t))
+  "My C Programming Style")
+
+;; offset customizations not in my-c-style
+(setq c-offsets-alist '((member-init-intro . ++)))
+
+;; Customizations for all modes in CC Mode.
+(defun my-c-mode-common-hook ()
+  ;; add my personal style and set it for the current buffer
+  (c-add-style "PERSONAL" my-c-style t)
+  ;; other customizations
+  (setq tab-width 8
+        ;; this will make sure spaces are used instead of tabs
+        indent-tabs-mode nil)
+  ;; we like auto-newline and hungry-delete
+  (c-toggle-auto-hungry-state 1)
+  ;; key bindings for all supported languages.  We can put these in
+  ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
+  ;; java-mode-map, idl-mode-map, and pike-mode-map inherit from it.
+  (define-key c-mode-base-map "\C-m" 'c-context-line-break))
+
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+@end example
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Performance Issues, Limitations and Known Bugs, Sample .emacs File, Top
 @comment node-name, next, previous, up
 @chapter Performance Issues
 @cindex performance
@@ -5827,7 +5896,7 @@ with some coding styles, and what you can use to improve performance.
 The overall goal is that @ccmode{} shouldn't be overly slow (i.e. take
 more than a fraction of a second) in any interactive operation.
 I.e. it's tuned to limit the maximum response time in single operations,
-which sometimes is at the expense of batch-like operations like
+which is sometimes at the expense of batch-like operations like
 reindenting whole blocks.  If you find that @ccmode{} gradually gets
 slower and slower in certain situations, perhaps as the file grows in
 size or as the macro or comment you're editing gets bigger, then chances
@@ -6029,7 +6098,7 @@ other top-level block constructs in the @ccmode{} languages).
 @end ifclear
 
 This heuristic is built into the core syntax analysis routines in
-(X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs 21.4
+(X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs 21.1
 it has become possible to turn it off@footnote{Using the variable
 @code{open-paren-in-column-0-is-defun-start}.} and @ccmode{} does so
 there since it got its own system to keep track of blocks.
@@ -6058,7 +6127,7 @@ compatibility, etc. are all available on the web site:
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Mailing Lists and Bug Reports, Sample .emacs File, Updating CC Mode, Top
+@node    Mailing Lists and Bug Reports, Mode Initialization, Updating CC Mode, Top
 @comment node-name, next, previous, up
 @appendix Mailing Lists and Submitting Bug Reports
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -6098,61 +6167,23 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Sample .emacs File, Command and Function Index, Mailing Lists and Bug Reports, Top
-@comment node-name, next, previous, up
-@appendix Sample .emacs file
+@node    Mode Initialization, Command and Function Index, Mailing Lists and Bug Reports, Top
+@comment  node-name,  next,  previous,  up
+@appendix Mode Initialization
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@example
-;; Here's a sample .emacs file that might help you along the way.
-;; Just copy this region and paste it into your .emacs file.  You may
-;; want to change some of the actual values.
+This section describes in full detail how CC Mode gets initialised,
+and how ######.  This is advanced material and you don't need to
+understand it to be able to use CC Mode.  It might be useful if you
+need to debug your configuration settings, and will probably be useful
+if you want to write a ``derived mode'' (@pxref{Derived
+Modes,,,@lispref{}, @lispreftitle{}}.) based on one of CC Mode's
+component modes.
 
-(defconst my-c-style
-  '((c-tab-always-indent        . t)
-    (c-comment-only-line-offset . 4)
-    (c-hanging-braces-alist     . ((substatement-open after)
-                                   (brace-list-open)))
-    (c-hanging-colons-alist     . ((member-init-intro before)
-                                   (inher-intro)
-                                   (case-label after)
-                                   (label after)
-                                   (access-label after)))
-    (c-cleanup-list             . (scope-operator
-                                   empty-defun-braces
-                                   defun-close-semi))
-    (c-offsets-alist            . ((arglist-close . c-lineup-arglist)
-                                   (substatement-open . 0)
-                                   (case-label        . 4)
-                                   (block-open        . 0)
-                                   (knr-argdecl-intro . -)))
-    (c-echo-syntactic-information-p . t))
-  "My C Programming Style")
-
-;; offset customizations not in my-c-style
-(setq c-offsets-alist '((member-init-intro . ++)))
-
-;; Customizations for all modes in CC Mode.
-(defun my-c-mode-common-hook ()
-  ;; add my personal style and set it for the current buffer
-  (c-add-style "PERSONAL" my-c-style t)
-  ;; other customizations
-  (setq tab-width 8
-        ;; this will make sure spaces are used instead of tabs
-        indent-tabs-mode nil)
-  ;; we like auto-newline and hungry-delete
-  (c-toggle-auto-hungry-state 1)
-  ;; key bindings for all supported languages.  We can put these in
-  ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
-  ;; java-mode-map, idl-mode-map, and pike-mode-map inherit from it.
-  (define-key c-mode-base-map "\C-m" 'c-context-line-break))
-
-(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
-@end example
-
+Etc.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Command and Function Index, Variable Index, Sample .emacs File, Top
+@node    Command and Function Index, Variable Index, Mode Initialization, Top
 @comment node-name, next, previous, up
 @unnumbered Command and Function Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
