@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.221 $
-;; Last Modified:   $Date: 1992-12-01 00:13:20 $
+;; Version:         $Revision: 2.222 $
+;; Last Modified:   $Date: 1992-12-01 03:15:46 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -129,7 +129,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-01 00:13:20 $|$Revision: 2.221 $|
+;; |$Date: 1992-12-01 03:15:46 $|$Revision: 2.222 $|
 
 ;;; Code:
 
@@ -407,7 +407,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.221 $
+  "Major mode for editing C++ code.  $Revision: 2.222 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -615,7 +615,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.221 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.222 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1628,17 +1628,24 @@ BOD is the beginning of the C++ definition."
 			      (beginning-of-line)
 			      (skip-chars-forward " \t")
 			      (looking-at c++-access-key))
-			    ;; access specifier so add zero to inclass-shift
-			    0
+			    ;; access specifier. class defun opening brace
+			    ;; may not be in col zero
+			    (progn (goto-char containing-sexp)
+				   (current-indentation))
 			  ;; member init, so add offset, but
 			  ;; subtract inclass-shift
+			  (message "at questionable member init code...")
+			  (sit-for 4)
 			  (- c++-member-init-indent c-indent-level))
 		      (if (or (= (preceding-char) ?})
 			      (= (preceding-char) ?\))
 			      (save-excursion
 				(beginning-of-line)
 				(looking-at "[ \t]*\\<friend\\>")))
-			  0
+			  ;; indentation of class defun opening brace
+			  ;; may not be zero
+			  (progn (goto-char containing-sexp)
+				 (current-indentation))
 			;; cont arg decls or member inits
 			(beginning-of-line)
 			;; we might be inside a K&R C arg decl
@@ -1673,7 +1680,9 @@ BOD is the beginning of the C++ definition."
 				;; we might be looking at the opening
 				;; brace of a class defun
 				(if (= (following-char) ?\{)
-				    0
+				    ;; indentation of opening brace may not
+				    ;; be zero
+				    (current-indentation)
 				  (if (eolp)
 				      ;; looking at a blank line, indent
 				      ;; next line to zero
@@ -2265,7 +2274,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.221 $"
+(defconst c++-version "$Revision: 2.222 $"
   "c++-mode version number.")
 
 (defun c++-version ()
