@@ -216,7 +216,23 @@ With universal argument, inserts the analysis as a comment on that line."
 		   (c-save-buffer-state nil
 		     (c-guess-basic-syntax)))))
     (if (not (consp arg))
-	(message "syntactic analysis: %s" syntax)
+	(let (elem pos ol ols)
+	  (message "syntactic analysis: %s" syntax)
+	  (unwind-protect
+	      (progn
+		(while syntax
+		  (setq elem (pop syntax))
+		  (when (setq pos (c-langelem-pos elem))
+		    (setq ol (make-overlay pos (1+ pos)))
+		    (overlay-put ol 'face 'highlight)
+		    (push ol ols))
+		  (when (setq pos (c-langelem-2nd-pos elem))
+		    (setq ol (make-overlay pos (1+ pos)))
+		    (overlay-put ol 'face 'secondary-selection)
+		    (push ol ols)))
+		(sit-for 10))
+	    (while ols
+	      (delete-overlay (pop ols)))))
       (indent-for-comment)
       (insert-and-inherit (format "%s" syntax))
       ))
