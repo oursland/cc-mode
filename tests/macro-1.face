@@ -2,7 +2,7 @@
 
 (0 cpp) (7 reg) (8 var) (13 reg)
 
-(0 cpp) (7 reg) (8 fun) (26 reg)
+(0 cpp) (7 reg) (8 fun) (26 reg) (27 var) (34 reg) (36 var) (41 reg)
 (4 key) (7 reg)
 (8 key) (10 reg)
 (34 str) (53 reg)
