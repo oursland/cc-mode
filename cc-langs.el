@@ -75,6 +75,8 @@
    ;;"\\(\\s *implements *[^{]+{\\)?"	      ;maybe the adopted protocols list
    ))
 
+(defconst c-Pike-class-key "class")
+
 (defvar c-class-key c-C-class-key)
 (make-variable-buffer-local 'c-class-key)
 
@@ -88,12 +90,14 @@
 (defconst c-C++-access-key (concat c-protection-key "[ \t]*:"))
 (defconst c-ObjC-access-key (concat "@" c-protection-key))
 (defconst c-Java-access-key nil)
+(defconst c-Pike-access-key nil)
 
 
 ;; keywords introducing conditional blocks
 (defconst c-C-conditional-key nil)
 (defconst c-C++-conditional-key nil)
 (defconst c-Java-conditional-key nil)
+(defconst c-Pike-conditional-key nil)
 
 (let ((all-kws "for\\|if\\|do\\|else\\|while\\|switch")
       (exc-kws "\\|try\\|catch")
@@ -102,7 +106,8 @@
       (back    "\\)\\b[^_]"))
   (setq c-C-conditional-key (concat front all-kws back)
 	c-C++-conditional-key (concat front all-kws exc-kws back)
-	c-Java-conditional-key (concat front all-kws exc-kws thr-kws back)))
+	c-Java-conditional-key (concat front all-kws exc-kws thr-kws back)
+	c-Pike-conditional-key (concat front all-kws "\\|foreach" back)))
 
 (defvar c-conditional-key c-C-conditional-key)
 (make-variable-buffer-local 'c-conditional-key)
@@ -166,6 +171,25 @@
 ;; Regexp describing Javadoc markup that always starts paragraphs.
 (defconst c-Java-javadoc-paragraph-start
   "@\\(author\\|exception\\|param\\|return\\|see\\|version\\)")
+
+;; Regexp that starts lambda constructs.
+(defvar c-lambda-key nil)
+(make-variable-buffer-local 'c-lambda-key)
+(defconst c-Pike-lambda-key "\\<lambda\\>")
+
+;; Regexp for functions that takes a statement as argument.
+(defvar c-statarg-key nil)
+(make-variable-buffer-local 'c-statarg-key)
+(defconst c-Pike-statarg-key "\\<\\(catch\\|gauge\\)\\>")
+
+;; List of open- and close-chars that makes up a pike-style brace
+;; list, ie for a `([ ])' list there should be a cons (?\[ . ?\]) in
+;; this list.
+(defvar c-special-brace-lists nil)
+(make-variable-buffer-local 'c-statarg-key)
+(defconst c-Pike-special-brace-lists '((?{ . ?})
+				       (?\[ . ?\])
+				       (?< . ?>)))
 
 
 
@@ -397,6 +421,7 @@ Note that the style variables are always made local to the buffer."
 (defvar c-c++-menu nil)
 (defvar c-objc-menu nil)
 (defvar c-java-menu nil)
+(defvar c-pike-menu nil)
 
 (defun c-mode-menu (modestr)
   (let ((m
@@ -564,6 +589,33 @@ Note that the style variables are always made local to the buffer."
 
 (easy-menu-define c-idl-menu idl-mode-map "IDL Mode Commands"
 		  (c-mode-menu "IDL"))
+
+
+;; Support for Pike
+
+(defvar pike-mode-abbrev-table nil
+  "Abbreviation table used in pike-mode buffers.")
+(define-abbrev-table 'pike-mode-abbrev-table ())
+
+(defvar pike-mode-map ()
+  "Keymap used in pike-mode buffers.")
+(if pike-mode-map
+    nil
+  (setq pike-mode-map (c-make-inherited-keymap))
+  ;; additional bindings
+  (define-key pike-mode-map "\C-c\C-e" 'c-macro-expand))
+
+;;;###autoload
+(defvar pike-mode-syntax-table nil
+  "Syntax table used in pike-mode buffers.")
+(if pike-mode-syntax-table
+    ()
+  (setq pike-mode-syntax-table (make-syntax-table))
+  (c-populate-syntax-table pike-mode-syntax-table)
+  (modify-syntax-entry ?@ "." pike-mode-syntax-table))
+
+(easy-menu-define c-pike-menu pike-mode-map "Pike Mode Commands"
+		  (c-mode-menu "Pike"))
 
 
 
