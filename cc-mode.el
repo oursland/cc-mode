@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.305 $
-;; Last Modified:   $Date: 1993-03-18 18:49:42 $
+;; Version:         $Revision: 2.306 $
+;; Last Modified:   $Date: 1993-04-01 22:46:23 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-03-18 18:49:42 $|$Revision: 2.305 $|
+;; |$Date: 1993-04-01 22:46:23 $|$Revision: 2.306 $|
 
 ;;; Code:
 
@@ -455,7 +455,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.305 $
+  "Major mode for editing C++ code.  $Revision: 2.306 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -676,7 +676,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.305 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.306 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -970,10 +970,15 @@ we're on a comment-only line, otherwise use indent-for-comment (\\[indent-for-co
   (let ((here (point)) char)
     (self-insert-command (prefix-numeric-value arg))
     (if (and (setq char (char-after (1- here)))
-	     (or (= char ?/)
-		 (and (memq (c++-in-literal) '(c))
-		      (or (= (point) (c++-point 'boi))
-			  (= (preceding-char) ?*)))))
+	     (memq (c++-in-literal) '(c))
+	     (memq char '(?/ ?* ?\t 32 ?\n))
+	     (save-excursion
+	       (skip-chars-backward "* \t")
+	       (if (= (preceding-char) ?/)
+		   (progn
+		     (forward-char -1)
+		     (skip-chars-backward " \t")))
+	       (bolp)))
 	(save-excursion
 	  (goto-char here)
 	  (c++-indent-line)))))
@@ -2534,7 +2539,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.305 $"
+(defconst c++-version "$Revision: 2.306 $"
   "c++-mode version number.")
 
 (defun c++-version ()
