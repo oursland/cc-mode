@@ -54,7 +54,7 @@
 			 (inline-open . 0)
 			 ))
      (c-special-indent-hook . c-gnu-impose-minimum)
-     (c-comment-continuation-stars . "")
+     (c-block-comment-prefix . "")
      (c-hanging-comment-ender-p . t)
      )
     ("k&r"
@@ -142,7 +142,7 @@
 				(substatement-open after)
 				(block-close . c-snug-do-while)
 				))
-     (c-comment-continuation-stars . "")
+     (c-block-comment-prefix . "")
      (c-hanging-comment-ender-p . nil)
      (fill-column . 78)
      )
