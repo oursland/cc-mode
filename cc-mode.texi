@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.27 $
+@comment manual version: $Revision: 2.28 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-06-19 20:27:42 $
+@comment Last modification: $Date: 1995-07-21 22:08:04 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.27 $)
+@center (manual revision: $Revision: 2.28 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1256,12 +1256,17 @@ symbols correspond to:
 @noindent
 So, for example, because most of the default offsets are defined in
 terms of @code{+}, @code{-}, and @code{0}, if you like the general
-indentation style, but you use 2 spaces instead of 4 spaces per level,
+indentation style, but you use 4 spaces instead of 2 spaces per level,
 you can probably achieve your style just by changing
-@code{c-basic-offset} like so (in your @file{.emacs} file):
+@code{c-basic-offset} like so (in your @file{.emacs} file)@footnote{The
+reason you need to use @code{setq-default} instead of @code{setq} is
+that @code{c-basic-offset} is a buffer local variable, as are most of
+the @code{cc-mode} configuration variables.  If you were to put this
+code in, e.g. your @code{c-mode-common-hook} function, you could use
+@code{setq}.}:
 @example
 
-(setq c-basic-offset 2)
+(setq-default c-basic-offset 4)
 
 @end example
 
