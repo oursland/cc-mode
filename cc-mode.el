@@ -105,7 +105,12 @@
   (require 'cc-menus)
   (require 'cc-align)
   (require 'cc-styles)
-  (require 'cc-cmds))
+  (require 'cc-cmds)
+  ;; run the initialization hook, but only once
+  (or (get 'c-initialize-cc-mode 'cc-mode-is-initialized)
+      (progn
+	(run-hooks 'c-initialization-hook)
+	(put 'c-initialize-cc-mode 'cc-mode-is-initialized t))))
 
 
 
