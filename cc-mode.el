@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.232 $
-;; Last Modified:   $Date: 1992-12-07 16:26:51 $
+;; Version:         $Revision: 2.233 $
+;; Last Modified:   $Date: 1992-12-08 23:57:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -120,7 +120,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-07 16:26:51 $|$Revision: 2.232 $|
+;; |$Date: 1992-12-08 23:57:27 $|$Revision: 2.233 $|
 
 ;;; Code:
 
@@ -403,7 +403,7 @@ value is, though, the slower parts of c++-mode can become.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.232 $
+  "Major mode for editing C++ code.  $Revision: 2.233 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -611,7 +611,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.232 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.233 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2288,7 +2288,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.232 $"
+(defconst c++-version "$Revision: 2.233 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2369,26 +2369,40 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 (defun c++-submit-bug-report ()
   "Submit via mail a bug report using the mailer in c++-mailer."
   (interactive)
-  (let ((curbuf (current-buffer))
-	(mode   major-mode)
-	(mailbuf (progn (call-interactively c++-mailer)
-			(current-buffer))))
+  (let* ((curbuf (current-buffer))
+         (mode   major-mode)
+         (mailbuf (progn (call-interactively c++-mailer)
+                         (current-buffer))))
     (require 'sendmail)
     (pop-to-buffer curbuf)
     (pop-to-buffer mailbuf)
-    (mail-position-on-field "to")
-    (insert c++-mode-help-address)
-    (mail-position-on-field "subject")
-    (insert "Bug in c++-mode.el " c++-version)
-    (if (not (re-search-forward mail-header-separator (point-max) 'move))
-	(progn (goto-char (point-max))
-	       (insert "\n" mail-header-separator "\n")
-	       (goto-char (point-max)))
-      (forward-line 1))
-    (set-mark (point))			;user should see mark change
-    (insert "\n\n")
-    (c++-dump-state mode)
-    (exchange-point-and-mark)))
+    ;; different mailers use different separators, some may not even
+    ;; use m-h-s, but sendmail.el stuff must have m-h-s bound.
+    (let ((mail-header-separator
+           (save-excursion
+             (re-search-forward
+              (concat
+               "^\\("			;beginning of line
+               (mapconcat
+                'identity
+                (list "[        ]*"     ;simple SMTP form
+                      "-+"              ;mh-e form
+                      mail-header-separator) ;sendmail.el form
+                "\\|")			;or them together
+               "\\)$")			;end of line
+              nil
+              'move)			;search for and move
+             (buffer-substring (match-beginning 0) (match-end 0)))))
+      (mail-position-on-field "to")
+      (insert c++-mode-help-address)
+      (mail-position-on-field "subject")
+      (insert "Bug in c++-mode.el " c++-version)
+      (re-search-forward mail-header-separator (point-max) 'move)
+      (forward-line 1)
+      (set-mark (point))                ;user should see mark change
+      (insert "\n\n")
+      (c++-dump-state mode)
+      (exchange-point-and-mark))))
 
 
 ;; this is sometimes useful
