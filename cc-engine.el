@@ -2272,6 +2272,8 @@ isn't moved."
 	    (save-restriction
 	      (widen)
 	      (c-add-syntax 'topmost-intro (c-point 'bol))
+	      ;; Using bol instead of boi above is highly bogus, and
+	      ;; it makes our lives hard to remain compatible. :P
 	      (if inclass-p
 		  (progn
 		    (goto-char (aref inclass-p 1))
@@ -2284,6 +2286,11 @@ isn't moved."
 		      (c-add-syntax 'innamespace (c-point 'boi)))
 		     (t (c-add-class-syntax 'inclass inclass-p)))
 		    ))
+	      (when (and c-syntactic-analysis-in-macro
+			 macro-start
+			 (/= macro-start (c-point 'boi indent-point)))
+		(c-add-syntax 'cpp-macro-cont)
+		(setq macro-start nil))
 	      ))
 	   ;; CASE 5K: we are at an ObjC or Java method definition
 	   ;; continuation line.
