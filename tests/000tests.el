@@ -79,8 +79,17 @@
 (require 'font-lock)
 (require 'cc-defs)
 
-(defconst cc-test-verbose nil)
-(defconst cc-test-dump-backtraces nil)
+(defconst cc-test-verbose nil
+  "Turn on verbose logging.
+Status messages aren't overwritten in batch mode.")
+
+(defconst cc-test-dump-backtraces nil
+  "Dump backtraces for evaluation errors.")
+
+(defconst cc-test-benchmark-mode nil
+  "Turn off checking of the test results.
+Useful when measuring performance, especially when comparing with
+simplifications with lesser accuracy.")
 
 ;; Set to t to extend the set of faces so that all syntactic parts are
 ;; tested accurately.  This does otoh hide problems with missing
@@ -492,7 +501,7 @@ to be set as a file local variable.")
 (defvar cc-test-comp-win nil)
 
 (defconst cc-test-clear-line-string
-  (if cc-test-verbose "" (concat "\r" (make-string 40 ?\ ) "\r")))
+  (if cc-test-verbose "" (concat "\r" (make-string 60 ?\ ) "\r")))
 
 (defun cc-test-message (msg &rest args)
   (if noninteractive
@@ -628,7 +637,8 @@ to be set as a file local variable.")
 	     expectedindent
 	     c-echo-syntactic-information-p
 	     font-lock-verbose
-	     last-result)
+	     last-result
+	     (test-msg (if cc-test-benchmark-mode "Benching" "Testing")))
 
 	;; This shouldn't happen if CC Mode is byte compiled properly.
 	(when (and (featurep 'cc-langs)
@@ -650,32 +660,34 @@ to be set as a file local variable.")
 	      t)
 
 	  (when check-syntax
-	    (cc-test-tmp-message "Testing %s (syntax)" filename)
+	    (cc-test-tmp-message "%s %s (syntax)" test-msg filename)
 
 	    ;; Collect the syntactic analysis of all lines.
-	    (goto-char (point-min))
-	    (while (not (eobp))
-	      (let ((syntax
-		     (condition-case err
-			 (c-guess-basic-syntax)
-		       (error
-			(if no-error
-			    (unless error-found-p
-			      (setq error-found-p t)
-			      (cc-test-log
-			       "%s:%d: c-guess-basic-syntax error: %s"
-			       filename (1+ (count-lines (point-min) (point)))
-			       (error-message-string err))
-			      (when cc-test-last-backtrace
-				(cc-test-log "%s" cc-test-last-backtrace)
-				(setq cc-test-last-backtrace nil)))
-			  (signal (car err) (cdr err)))
-			""))
-		     ))
-		(set-buffer res-syntax-buf)
-		(insert (format "%s" syntax) "\n")
-		(set-buffer testbuf))
-	      (forward-line 1))
+	    (unless cc-test-benchmark-mode
+	      (goto-char (point-min))
+	      (while (not (eobp))
+		(let ((syntax
+		       (condition-case err
+			   (c-guess-basic-syntax)
+			 (error
+			  (if no-error
+			      (unless error-found-p
+				(setq error-found-p t)
+				(cc-test-log
+				 "%s:%d: c-guess-basic-syntax error: %s"
+				 filename
+				 (1+ (count-lines (point-min) (point)))
+				 (error-message-string err))
+				(when cc-test-last-backtrace
+				  (cc-test-log "%s" cc-test-last-backtrace)
+				  (setq cc-test-last-backtrace nil)))
+			    (signal (car err) (cdr err)))
+			  ""))
+		       ))
+		  (set-buffer res-syntax-buf)
+		  (insert (format "%s" syntax) "\n")
+		  (set-buffer testbuf))
+		(forward-line 1)))
 	    
 	    ;; Record the expected indentation and reindent.  This is done
 	    ;; in backward direction to avoid cascading errors.
@@ -707,15 +719,16 @@ to be set as a file local variable.")
 	  ;; test so that we check that it doesn't depend on the
 	  ;; properties added by the font locking.
 	  (when check-faces
-	    (cc-test-tmp-message "Testing %s (fonts)" filename)
+	    (cc-test-tmp-message "%s %s (fonts)" test-msg filename)
 
 	    (cc-test-force-font-lock-buffer)
 	    (goto-char (point-min))
-	    (cc-test-record-faces testbuf res-faces-buf nil))
+	    (unless cc-test-benchmark-mode
+	      (cc-test-record-faces testbuf res-faces-buf nil)))
 
-	  (cc-test-tmp-message "Testing %s" filename)
+	  (cc-test-tmp-message "%s %s" test-msg filename)
 
-	  (unless error-found-p
+	  (unless (or error-found-p cc-test-benchmark-mode)
 	    ;; Compare and report.
 	    (when check-syntax
 	      (set-buffer res-syntax-buf)
