@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.299 $
-;; Last Modified:   $Date: 1994-03-23 23:22:37 $
+;; Version:         $Revision: 3.300 $
+;; Last Modified:   $Date: 1994-03-24 16:19:35 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-23 23:22:37 $|$Revision: 3.299 $|
+;; |$Date: 1994-03-24 16:19:35 $|$Revision: 3.300 $|
 
 ;;; Code:
 
@@ -786,7 +786,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.299 $
+cc-mode Revision: $Revision: 3.300 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -817,7 +817,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.299 $
+cc-mode Revision: $Revision: 3.300 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2391,6 +2391,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
        ;; this will pick up enum lists
        (progn (goto-char containing-sexp)
 	      (c-beginning-of-statement)
+	      ;; c-b-o-s could have left us at point-min
+	      (and (bobp)
+		   (c-forward-syntactic-ws))
 	      (setq bufpos (point))
 	      (and (< bufpos containing-sexp)
 		   (looking-at "\\(typedef[ \t]+\\)?\\<enum\\>")))
@@ -2510,6 +2513,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ;; CASE 4A.2: brace list open
 	     ((save-excursion
 		(c-beginning-of-statement nil lim)
+		;; c-b-o-s could have left us at point-min
+		(and (bobp)
+		     (c-forward-syntactic-ws indent-point))
 		(setq placeholder (point))
 		(or (looking-at "\\<enum\\>")
 		    (= char-before-ip ?=)))
@@ -3315,7 +3321,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.299 $"
+(defconst c-version "$Revision: 3.300 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
