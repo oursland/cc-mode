@@ -289,20 +289,21 @@
 
 
 ;; Moving by tokens, where a token is defined as all symbols and
-;; identifiers which aren't syntactic whitespace.  Point is always
-;; either left at the beginning of a token or not moved at all.  COUNT
-;; specifies the number of tokens to move; a negative COUNT moves in
-;; the opposite direction.  A COUNT of 0 moves to the next token
-;; beginning only if not already at one.  If BALANCED is true, move
-;; over balanced parens, otherwise move into them.  Also, if BALANCED
-;; is true, never move out of an enclosing paren.  LIM sets the limit
-;; for the movement and defaults to the point limit.  Returns the
-;; number of tokens left to move (positive or negative).  If BALANCED
-;; is true, a move over a balanced paren counts as one.  Note that if
-;; COUNT is 0 and no appropriate token beginning is found, 1 will be
-;; returned.  Thus, a return value of 0 guarantees that point is at
-;; the requested position and a return value less (without signs) than
-;; COUNT guarantees that point is at the beginning of some token.
+;; identifiers which aren't syntactic whitespace (note that "->" is
+;; considered to be two tokens).  Point is always either left at the
+;; beginning of a token or not moved at all.  COUNT specifies the
+;; number of tokens to move; a negative COUNT moves in the opposite
+;; direction.  A COUNT of 0 moves to the next token beginning only if
+;; not already at one.  If BALANCED is true, move over balanced
+;; parens, otherwise move into them.  Also, if BALANCED is true, never
+;; move out of an enclosing paren.  LIM sets the limit for the
+;; movement and defaults to the point limit.  Returns the number of
+;; tokens left to move (positive or negative).  If BALANCED is true, a
+;; move over a balanced paren counts as one.  Note that if COUNT is 0
+;; and no appropriate token beginning is found, 1 will be returned.
+;; Thus, a return value of 0 guarantees that point is at the requested
+;; position and a return value less (without signs) than COUNT
+;; guarantees that point is at the beginning of some token.
 
 (defun c-forward-token-1 (&optional count balanced lim)
   (or count (setq count 1))
@@ -1058,7 +1059,12 @@
 	    (point)))))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
-     (let (bufpos lim braceassignp)
+     (let ((class-key
+	    ;; Pike can have class definitions anywhere, so we must
+	    ;; check for the class key here.
+	    (and (eq major-mode 'pike-mode)
+		 (concat c-class-key "\\|" c-extra-toplevel-key)))
+	   bufpos lim braceassignp)
        (while (and (not bufpos)
 		   containing-sexp)
 	 (if (consp containing-sexp)
@@ -1078,6 +1084,9 @@
 	     (while (and (eq braceassignp 'dontknow)
 			 (zerop (c-backward-token-1 1 t lim)))
 	       (cond ((eq (char-after) ?\;)
+		      (setq braceassignp nil))
+		     ((and class-key
+			   (looking-at class-key))
 		      (setq braceassignp nil))
 		     ((eq (char-after) ?=)
 		      ;; We've seen a =, but must check earlier tokens so
