@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.305 $
-;; Last Modified:   $Date: 1994-04-07 14:34:28 $
+;; Version:         $Revision: 3.306 $
+;; Last Modified:   $Date: 1994-04-14 00:55:06 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-07 14:34:28 $|$Revision: 3.305 $|
+;; |$Date: 1994-04-14 00:55:06 $|$Revision: 3.306 $|
 
 ;;; Code:
 
@@ -790,7 +790,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.305 $
+cc-mode Revision: $Revision: 3.306 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -821,7 +821,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.305 $
+cc-mode Revision: $Revision: 3.306 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1159,7 +1159,7 @@ the brace is inserted inside a literal."
 			    (progn (newline)
 				   (setq delete-temp-newline t)))
 			(self-insert-command (prefix-numeric-value arg))
-			(c-guess-basic-semantics bod))
+			(c-guess-basic-semantics))
 	    newlines (and
 		      c-auto-newline
 		      (or (assq (car (or (assq 'defun-open semantics)
@@ -1188,7 +1188,7 @@ the brace is inserted inside a literal."
 	     (delete-region (- (point) 2) (1- (point))))
 	;; since we're hanging the brace, we need to recalculate
 	;; semantics
-	(setq semantics (c-guess-basic-semantics bod)))
+	(setq semantics (c-guess-basic-semantics)))
       ;; now adjust the line's indentation
       (c-indent-via-language-element bod semantics)
       ;; Do all appropriate clean ups
@@ -1369,7 +1369,7 @@ value of `c-cleanup-list'."
 	    (delete-region (point) (1- here)))
 	(goto-char (- (point-max) pos)))
       ;; lets do some special stuff with the colon character
-      (setq semantics (c-guess-basic-semantics bod)
+      (setq semantics (c-guess-basic-semantics)
 	    ;; some language elements can only be determined by
 	    ;; checking the following line.  Lets first look for ones
 	    ;; that can be found when looking on the line with the
@@ -1384,7 +1384,7 @@ value of `c-cleanup-list'."
 			 (assq (car langelem) c-hanging-colons-alist)))
 		  (prog2
 		      (insert "\n")
-		      (let* ((semantics (c-guess-basic-semantics bod))
+		      (let* ((semantics (c-guess-basic-semantics))
 			     (langelem
 			      (or (assq 'member-init-intro semantics)
 				  (assq 'inher-intro semantics))))
@@ -2205,16 +2205,42 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 
 
 ;; utilities for moving and querying around semantic elements
-(defun c-parse-state (&optional lim)
-  ;; Determinate the syntactic state of the code at point.
-  ;; Iteratively uses `parse-partial-sexp' from point to LIM and
-  ;; returns the result of `parse-partial-sexp' at point.  LIM is
-  ;; optional and defaults to `point-max'.
-  (let ((lim (or lim (point-max)))
+(defun c-parse-state ()
+  ;; Find all open parens between BOD and point. BOD is optional and
+  ;; defaults to `beginning-of-defun'
+  (unwind-protect
+      ;; we're only interested in brace levels, so we're going to
+      ;; temporarily make parens not have paren class
+      (let ((pos (save-excursion
+		   (beginning-of-defun 2)
+		   (point)))
+	    (here (save-excursion
+		    (skip-chars-forward " \t}")
+		    (point)))
+	    state sexp-end)
+	(modify-syntax-entry ?\( ".")
+	(modify-syntax-entry ?\) ".")
+	(while (and pos (< pos here))
+	  (if (and (setq pos (c-safe (scan-lists pos 1 -1)))
+		   (<= pos here))
+	      (progn
+		(setq sexp-end (c-safe (scan-sexps (1- pos) 1)))
+		(if (and sexp-end
+			 (<= sexp-end here))
+		    ;; we want to record both the start and end of
+		    ;; this sexp, but we only want to record the
+		    ;; last-most of any of them before here
+		    (setq state (cons (cons (1- pos) sexp-end)
+				      (if (consp (car state))
+					  (cdr state)
+					state))
+			  pos sexp-end)
+		  ;; otherwise just put pos on front of list
+		  (setq state (cons (1- pos) state)))
+		)))
 	state)
-    (while (< (point) lim)
-      (setq state (parse-partial-sexp (point) lim 0)))
-    state))
+    (modify-syntax-entry ?\( "()")
+    (modify-syntax-entry ?\) ")(")))
 
 (defun c-beginning-of-inheritance-list (&optional lim)
   ;; Go to the first non-whitespace after the colon that starts a
@@ -2338,70 +2364,72 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
      (if (looking-at "\\<\\(do\\|else\\)\\>")
 	 1 2))))
 
-(defun c-search-uplist-for-classkey (&optional search-end)
-  (save-excursion
-    (save-restriction
-      (let ((end (or search-end (point)))
-	    (here (point))
-	    (bod2 (progn (beginning-of-defun 2) (point)))
-	    (start (c-safe (progn (end-of-defun) (point))))
-	    class brace state foundp)
-	;; if the end-of-defun leaves us after `here', or there was no
-	;; matching end-of-defun then the farthest back we look is
-	;; bod2
-	(if (or (not start)
-		(>= start here))
-	    (setq start bod2))
-	(narrow-to-region start end)
-	;; try to narrow the region even farther. skip over any
-	;; balanced lists between start and end.  Could be ill-formed
-	;; top-level constructs that b-o-d didn't pick up
-	(c-safe
-	 (let (newstart)
-	   (while (setq newstart (scan-lists start 1 0))
-	     (setq start newstart))))
-	(widen)
-	(narrow-to-region start end)
-	;; now parse from the point we're at to end
-	(setq state (parse-partial-sexp start end))
-	(if (and (setq brace (nth 1 state))
-		 (setq start (or (c-safe (scan-lists brace -1 -1))
-				 (c-safe (scan-lists brace -1 1))
-				 start)))
-	    (progn
-	      (goto-char start)
+(defun c-search-uplist-for-classkey (brace-state)
+  ;; search for the containing class, returning a 2 element vector if
+  ;; found. aref 0 contains the bufpos of the class key, and aref 1
+  ;; contains the bufpos of the open brace.
+  (if (null brace-state)
+      ;; no brace-state means we cannot be inside a class
+      nil
+    (let ((carcache (car brace-state))
+	  search-start search-end)
+      (if (consp carcache)
+	  ;; a cons cell in the first element means that there is some
+	  ;; balanced sexp before the current bufpos. this we can
+	  ;; ignore. the nth 1 and nth 2 elements define for us the
+	  ;; search boundaries
+	  (setq search-start (nth 2 brace-state)
+		search-end (nth 1 brace-state))
+	;; if the car was not a cons cell then nth 0 and nth 1 define
+	;; for us the search boundaries
+	(setq search-start (nth 1 brace-state)
+	      search-end (nth 0 brace-state)))
+      ;; if search-end is nil we are definitely not in a class
+      (if (not search-end)
+	  nil
+	;; search-end cannot be a cons cell
+	(and (consp search-end)
+	     (error "consp search-end: %s" search-end))
+	;; now, we need to look more closely at search-start.  if
+	;; search-start is nil, then our start boundary is really
+	;; point-min.
+	(if (not search-start)
+	    (setq search-start (point-min))
+	  ;; if search-start is a cons cell, then we can start
+	  ;; searching from the end of the balanced sexp just ahead of
+	  ;; us
+	  (if (consp search-start)
+	      (setq search-start (cdr search-start))))
+	;; now we can do a quick regexp search from search-start to
+	;; search-end and see if we can find a class key.  watch for
+	;; class like strings in literals
+	(save-excursion
+	  (save-restriction
+	    (goto-char search-start)
+	    (let (foundp class)
 	      (while (and (not foundp)
 			  (save-restriction
 			    (c-forward-syntactic-ws)
+			    ;; see c-class-key comments for why we
+			    ;; need to do this.
 			    (widen)
-			    (narrow-to-region (point) end)
-			    (re-search-forward c-class-key brace t)))
+			    (narrow-to-region (point) search-end)
+			    (re-search-forward c-class-key search-end t)))
 		(setq class (match-beginning 0))
-		(if (not (c-in-literal start))
+		(if (not (c-in-literal search-start))
 		    (progn
 		      (goto-char class)
 		      (skip-chars-forward " \t\n")
-		      (setq class (point))
-		      ;; now find opening brace
-		      (if (= (1+ brace)
-			     (or (c-safe (scan-lists (point) 1 -1))
-				 0))
-			  (progn
-			    (goto-char class)
-			    (setq foundp (vector (c-point 'boi) brace))))
+		      (setq foundp (vector (c-point 'boi) search-end))
 		      ;; make sure there's no semi-colon between class
 		      ;; and brace. Otherwise, we found a forward
 		      ;; declaration.
-		      (goto-char class)
-		      (skip-chars-forward "^;" brace)
+		      (skip-chars-forward "^;" search-end)
 		      (if (= (following-char) ?\;)
 			  (setq foundp nil))
-		      )))		;end while
-	      ))			;end if
-	;; right now this returns a cons cell, but later it will
-	;; return a vector for speed
-	;;(cons (aref foundp 1) (aref foundp 0)))
-	foundp))))
+		      )))
+	      foundp))
+	  )))))
 
 (defun c-inside-bracelist-p (containing-sexp)
   ;; return the buffer position of the beginning of the brace list
@@ -2455,44 +2483,62 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; list.  try to increase performance by using this macro
   (` (setq semantics (cons (cons (, symbol) (, relpos)) semantics))))
 
-(defun c-guess-basic-semantics (&optional lim)
+(defun c-guess-basic-semantics ()
   ;; guess the semantic description of the current line of C++ code.
-  ;; Optional LIM is the farthest back we should search
   (save-excursion
-    (beginning-of-line)
-    (let ((indent-point (point))
-	  (case-fold-search nil)
-	  state literal
-	  containing-sexp char-before-ip char-after-ip
-	  (lim (or lim (c-point 'bod)))
-	  semantics placeholder inclass-p
-	  )				;end-let
-      ;; narrow out the enclosing class
-      (save-restriction
-	(if (setq inclass-p (c-search-uplist-for-classkey))
-	    (progn
-	      (narrow-to-region
-	       (progn
-		 (goto-char (1+ (aref inclass-p 1)))
-		 (skip-chars-forward " \t\n" indent-point)
-		 ;; if point is now left of the class opening brace,
-		 ;; we're hosed, so try a different tact
-		 (if (<= (c-point 'bol) (aref inclass-p 1))
-		     (progn
-		       (goto-char (1+ (aref inclass-p 1)))
-		       (c-forward-syntactic-ws indent-point)))
-		 (c-point 'bol))
-	       (progn
-		 (goto-char indent-point)
-		 (c-point 'eol)))
-	      (setq lim (point-min))))
-	;; parse the state of the line
-	(goto-char lim)
-	(setq state (c-parse-state indent-point)
-	      containing-sexp (nth 1 state)
-	      literal (c-in-literal lim))
+    (save-restriction
+      (beginning-of-line)
+      (let ((indent-point (point))
+	    (case-fold-search nil)
+	    (state (c-parse-state))
+	    literal containing-sexp char-before-ip char-after-ip lim
+	    semantics placeholder inclass-p
+	    )				;end-let
+
+	;; narrow out any enclosing class
+	(if (and state
+		 (setq inclass-p (c-search-uplist-for-classkey state)))
+	    (narrow-to-region
+	     (progn
+	       (goto-char (1+ (aref inclass-p 1)))
+	       (skip-chars-forward " \t\n" indent-point)
+	       ;; if point is now left of the class opening brace,
+	       ;; we're hosed, so try a different tact
+	       (if (<= (c-point 'bol) (aref inclass-p 1))
+		   (progn
+		     (goto-char (1+ (aref inclass-p 1)))
+		     (c-forward-syntactic-ws indent-point)))
+	       (c-point 'bol))
+	     ;; end point is the end of the current line
+	     (progn
+	       (goto-char indent-point)
+	       (c-point 'eol))))
+
+	;; get the buffer position of the most nested opening brace,
+	;; if there is one, and it hasn't been narrowed out
+	(save-excursion
+	  (goto-char indent-point)
+	  (skip-chars-forward " \t}")
+	  (while (and state (not containing-sexp))
+	    (setq containing-sexp (car state)
+		  state (cdr state))
+	    (if (consp containing-sexp)
+		;; if cdr == point, then containing sexp is the brace
+		;; that opens the sexp we close
+		(if (= (cdr containing-sexp) (point))
+		    (setq containing-sexp (car containing-sexp))
+		  ;; otherwise, ignore this element
+		  (setq containing-sexp nil))
+	      ;; ignore the bufpos if its been narrowed out by the
+	      ;; containing class
+	      (if (<= containing-sexp (point-min))
+		  (setq containing-sexp nil)))))
+
+	;; set the limit on the farthest back we need to search
+	(setq lim (or containing-sexp (point-min)))
+
 	;; cache char before and after indent point, and move point to
-	;; the most like position to perform regexp tests
+	;; the most likely position to perform the majority of tests
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
 	(setq char-after-ip (following-char))
@@ -2500,6 +2546,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	(setq char-before-ip (preceding-char))
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
+
 	;; now figure out semantic qualities of the current line
 	(cond
 	 ;; CASE 1: in a string.
@@ -2526,7 +2573,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
-		(let ((decl (c-search-uplist-for-classkey (point))))
+		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
 		  (and decl
 		       (setq placeholder (aref decl 0)))
 		  ))
@@ -2823,7 +2870,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
-		(let ((decl (c-search-uplist-for-classkey (point))))
+		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
 		  (and decl
 		       (setq placeholder (aref decl 0)))
 		  ))
@@ -2905,17 +2952,25 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			  (if (/= (point) (c-point 'boi))
 			      (c-beginning-of-statement nil lim))
 			  (point))))
-	    ;; lets see if we close a top-level construct.
-	    (goto-char indent-point)
-	    (skip-chars-forward " \t}")
-	    (if (zerop (car (parse-partial-sexp lim (point))))
-		(if inclass-p
-		    (progn (goto-char relpos)
-			   (c-add-semantics 'inline-close (c-point 'boi)))
-		  (c-add-semantics 'defun-close relpos))
+	    (cond
+	     ;; CASE 13.A: inclass-p means this closes an inline
+	     (inclass-p
 	      (goto-char relpos)
-	      (c-add-semantics 'block-close (c-point 'boi))
-	      )))
+	      (c-add-semantics 'inline-close (c-point 'boi)))
+	     ;; CASE 13.B: state means this is a block-close
+	     (state
+	      (goto-char relpos)
+	      (c-add-semantics 'block-close (c-point 'boi)))
+	     ;; CASE 13.C: find out whether we're closing a class or a
+	     ;; regular old top-level defun
+	     (t
+	      (save-restriction
+		(narrow-to-region (point-min) indent-point)
+		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
+		  (if decl
+		      (c-add-semantics 'class-close (aref decl 0))
+		    (c-add-semantics 'defun-close relpos)))))
+	     )))
 	 ;; CASE 14: statement catchall
 	 (t
 	  ;; we know its a statement, but we need to find out if it is
@@ -2967,8 +3022,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-semantics 'statement (c-point 'boi))
 	      (if (= char-after-ip ?{)
 		  (c-add-semantics 'block-open)))
-	     ;; CASE 14.E: first statement in a top-level defun
-	     ((= containing-sexp (c-point 'bod))
+	     ;; CASE 14.E: first statement in an inline, or first
+	     ;; statement in a top-level defun
+	     ((or (= containing-sexp (c-point 'bod))
+		  (c-search-uplist-for-classkey state))
 	      (goto-char containing-sexp)
 	      (c-add-semantics 'defun-block-intro (c-point 'boi)))
 	     ;; CASE 14.F: first statement in a block
@@ -2979,27 +3036,28 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(if (= char-after-ip ?{)
 		    (c-add-semantics 'block-open)))
 	     )))
-	 ))				; end save-restriction
-      ;; now we need to look at any langelem modifiers
-      (goto-char indent-point)
-      (skip-chars-forward " \t")
-      (if (looking-at "\\(//\\|/\\*\\)")
-	  ;; we are looking at a comment. if the comment is at or to
-	  ;; the right of comment-column, then all we want on the
-	  ;; semantics list is comment-intro, otherwise, the
-	  ;; indentation of the comment is relative to where a normal
-	  ;; statement would indent
-	  (if (< (current-column) comment-column)
-	      (c-add-semantics 'comment-intro)
-	    ;; reset semantics kludge
-	    (setq semantics nil)
-	    (c-add-semantics 'comment-intro)))
-      ;; we might want to give additional offset to friends (in C++)
-      (if (and (eq major-mode 'c++-mode)
-	       (looking-at "friend[ \t]+"))
-	  (c-add-semantics 'friend))
-      ;; return the semantics
-      semantics)))
+	 )
+
+	;; now we need to look at any modifiers
+	(goto-char indent-point)
+	(skip-chars-forward " \t")
+	(if (looking-at "\\(//\\|/\\*\\)")
+	    ;; we are looking at a comment. if the comment is at or to
+	    ;; the right of comment-column, then all we want on the
+	    ;; semantics list is comment-intro, otherwise, the
+	    ;; indentation of the comment is relative to where a
+	    ;; normal statement would indent
+	    (if (< (current-column) comment-column)
+		(c-add-semantics 'comment-intro)
+	      ;; reset semantics kludge
+	      (setq semantics nil)
+	      (c-add-semantics 'comment-intro)))
+	;; we might want to give additional offset to friends (in C++)
+	(if (and (eq major-mode 'c++-mode)
+		 (looking-at "friend[ \t]+"))
+	    (c-add-semantics 'friend))
+	;; return the semantics
+	semantics))))
 
 
 ;; indent via semantic language elements
@@ -3043,7 +3101,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; information for the current line. Returns the amount of
   ;; indentation change
   (let* ((lim (or lim (c-point 'bod)))
-	 (c-semantics (or semantics (c-guess-basic-semantics lim)))
+	 (c-semantics (or semantics (c-guess-basic-semantics)))
 	 (pos (- (point-max) (point)))
 	 (indent (apply '+ (mapcar 'c-get-offset c-semantics)))
 	 (shift-amt  (- (current-indentation) indent)))
@@ -3341,7 +3399,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.305 $"
+(defconst c-version "$Revision: 3.306 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
