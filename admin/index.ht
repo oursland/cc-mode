@@ -2,6 +2,7 @@ Title: CC Mode
 Author: cc-mode-help@python.org
 Other-links:
     <h3>Related Links</h3>
+    <li><a href="contrib.html">Contributed Stuff</a>
     <li><a href="../">Back to Emacs Goodies</a>
 
 <h1>CC Mode Version 5</h1>
@@ -17,3 +18,6 @@ team</a>.  Martin's already been doing lots of cool stuff to CC Mode,
 and will be doing a lot more in the 
 coming months, including adding
 <a href="http://pike.idonex.se/">Pike</a> support.
+
+<p>See also <a href="contrib.html">some related Emacs packages</a>
+that have been contributed by CC Mode users.

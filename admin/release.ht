@@ -1,0 +1,27 @@
+Title: CC Mode
+Author: cc-mode-help@python.org
+Other-links:
+    <h3>Related Links</h3>
+    <li><a href="cc-mode.html/Top.html">On-line docs</a>
+    <li><a href="cc-mode.tar.gz">Gzip'd tarball [~106KB]</a>
+    <li><a href="cc-mode/">Individual files</a>
+    <li><a href="cc-mode-manual/">Pre-formatted docs</a>
+    <li><a href="patches/">Patches</a>
+    <li><a href="../">Back to Emacs Goodies</a>
+
+<h1>Current Release of CC Mode</h1>
+
+The current release is available in several forms.  You can download
+the entire source distribution, including the manual in texinfo format 
+as an approximately <a href="cc-mode.tar.gz">106KB gzip'd
+tarball</a>.  You can also download the <a href="cc-mode/">individual
+files</a> of the current release, or <code>patch(1)</code> style
+<a href="patches/">context diffs</a> if you are upgrading from a
+previous version of CC Mode.
+
+<p>The documentation is also available in several forms.  You can
+either <a href="cc-mode.html/Top.html">browse the on-line
+documentation</a> or grab one of the several
+<a href="cc-mode-manual/">pre-formatted</a> documents generated from
+the texinfo source, including PostScript, Emacs Info, and HTML
+versions</a>.
