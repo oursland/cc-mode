@@ -6018,20 +6018,8 @@ This function does not do any hidden buffer changes."
 	     ;; for bogus matches on access specifiers inside classes.
 	     ((and (c-beginning-of-member-init-list lim)
 		   (save-excursion
-		     (setq placeholder (point))
-		     (back-to-indentation)
-		     (or
-		      (/= (car (save-excursion
-				 (parse-partial-sexp (point) placeholder)))
-			  0)
-		      (and
-		       (if c-opt-access-key
-			   (not (looking-at c-opt-access-key)) t)
-		       (not (looking-at c-class-key))
-		       (if c-opt-bitfield-key
-			   (not (looking-at c-opt-bitfield-key)) t))
-		      )))
-	      (goto-char placeholder)
+		     (not (or (eq (c-beginning-of-statement-1 lim) 'label)
+			      (looking-at c-class-key)))))
 	      (c-forward-syntactic-ws)
 	      (c-add-syntax 'member-init-cont (point))
 	      ;; we do not need to add class offset since relative
@@ -6192,30 +6180,30 @@ This function does not do any hidden buffer changes."
 
 	   ;; CASE 5J: we are at the topmost level, make
 	   ;; sure we skip back past any access specifiers
-	   ((progn
-	      (while (and inclass-p
-			  c-opt-access-key
-			  (not (bobp))
-			  (save-excursion
-			    (c-safe (c-backward-sexp 1) t)
-			    (looking-at c-opt-access-key)))
-		(c-backward-sexp 1)
-		(c-backward-syntactic-ws lim))
-	      (or (bobp)
-                  (if (c-major-mode-is 'awk-mode)
-                      (not (c-awk-prev-line-incomplete-p))
-                    (memq (char-before) '(?\; ?})))
-		  (and (c-major-mode-is 'objc-mode)
-		       (progn
-			 (c-beginning-of-statement-1 lim)
-			 (eq (char-after) ?@)))))
+	   ((save-excursion
+	      (prog1 (or (if (c-major-mode-is 'awk-mode)
+			     (not (c-awk-prev-line-incomplete-p))
+			   (memq char-before-ip '(?\; ?} nil)))
+			 (when (and (eq char-before-ip ?:)
+				    (eq (c-beginning-of-statement-1 lim)
+					'label))
+			   (c-backward-syntactic-ws lim)
+			   t)
+			 (and (c-major-mode-is 'objc-mode)
+			      (progn
+				(c-beginning-of-statement-1 lim)
+				(eq (char-after) ?@))))
+		(setq placeholder (point))))
 	    ;; real beginning-of-line could be narrowed out due to
 	    ;; enclosure in a class block
 	    (save-restriction
 	      (widen)
+	      ;; For historic reasons we anchor at bol of the last
+	      ;; line of the previous declaration.  That's clearly
+	      ;; highly bogus and useless, and it makes our lives hard
+	      ;; to remain compatible.  :P
+	      (goto-char placeholder)
 	      (c-add-syntax 'topmost-intro (c-point 'bol))
-	      ;; Using bol instead of boi above is highly bogus, and
-	      ;; it makes our lives hard to remain compatible. :P
 	      (if inclass-p
 		  (progn
 		    (goto-char (aref inclass-p 1))
