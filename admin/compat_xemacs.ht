@@ -1,13 +1,8 @@
-Title: XEmacs and Emacs 20 Compatibility
+Title: XEmacs, and Emacs 20 Compatibility
 Author: cc-mode@python.org
-Other-links:
-    <h3>Emacsen</h3>
-    <li><a href="compat_xemacs.html">XEmacs, Emacs 20</a>
-    <li><a href="compat_emacs19.html">Emacs 19</a>
-    <li><a href="compat_emacs18.html">Emacs 18</a>
-    <li><a href="compat_delbs_awk.html">Other Elisp</a>
+Links: links.h compatlinks.h
 
-<h2>XEmacs and Emacs 20 Compatibility</h2>
+<h2>XEmacs, and Emacs 20 Compatibility</h2>
 
     If you are using XEmacs 19.15, 19.16, or 20.2 and beyond, you
     should be able to use this new version right out of the box.  An

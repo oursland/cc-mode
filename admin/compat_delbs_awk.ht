@@ -1,13 +1,8 @@
 Title: Other Elisp Compatibility
 Author: cc-mode@python.org
-Other-links:
-    <h3>Emacsen</h3>
-    <li><a href="compat_xemacs.html">XEmacs, Emacs 20</a>
-    <li><a href="compat_emacs19.html">Emacs 19</a>
-    <li><a href="compat_emacs18.html">Emacs 18</a>
-    <li><a href="compat_delbs_awk.html">Other Elisp</a>
+Links: links.h compatlinks.h
 
-<h3><code>delbackspace.el</code> and <code>awk-mode</code></h3>
+<h2><code>delbackspace.el</code> and <code>awk-mode</code></h2>
 
     You will encounter problems if you use either the
     <code>delbackspace</code> package or <code>awk-mode</code>, since
