@@ -1020,6 +1020,7 @@
 	     (while (and (setq okp (zerop (c-backward-token-1 1 t)))
 			 (not (memq (char-after) '(?{ ?\;)))
 			 (or (not (eq (char-after) ?=))
+			     (memq (char-before) '(?= ?`))
 			     (save-excursion
 			       (forward-word -1)
 			       (looking-at "operator[ \t]*=")))
