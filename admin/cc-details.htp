@@ -3,15 +3,13 @@ Author: cc-mode-help@python.org
 
 <h1>CC Mode Version 5</h1>
 
-The <a href="index.html">current release</a> is version 5.11.  This is
-the first v5 release, and there have been some significant user
-visible changes since version 4.379, as outlined below.  For more
-details, see the <a href="cc-mode/ChangeLog">ChangeLog</a> file.
-See also the list of <a href="cc-details-4.379.html">previous
-changes</a>.
+The <a href="index.html">current release</a> is version 5.12.  This is
+essentially a bug fix release.  There were significant changes between
+version 4.379 and 5.11, as detailed below.  Here are the
+<a href="cc-details-5.11.html">release notes for version 5.11</a>.
 
-<h2>User Visible Changes</h2>
-
+<h2>User visible changes between CC Mode 4 and CC Mode 5</h2>
+    
 <ul><li>CC Mode 5 will not work with Emacs 18, and will only work with
         the latest Emacs and XEmacs releases.  See the
 	<a href="#compat">compatibility notes</a> for details.
@@ -71,13 +69,19 @@ changes</a>.
     unpacks in it's own subdirectory now and contains a number of
     files.  Just make sure this subdirectory is on your
     <code>load-path</code> before the XEmacs distribution's lisp
-    directories.  Run <code>make</code> in this subdirectory to build
-    the <code>.elc</code> files.  That's it.  Everything should
-    autoload as appropriate.  To test, visit a C file and then type:<br>
+    directories.  You need to byte compile all the <code>.el</code>
+    files by doing the following:
+
+    <blockquote><pre>
+    % cd /path/to/cc-mode
+    % xemacs -batch -no-site-file -q -f batch-byte-compile cc-*.el
+    </pre></blockquote>
+
+    To test, visit a C file and then type:<br>
 
     <blockquote><pre>
     M-x c-version RET
-    => Using CC Mode version 5.11
+    => Using CC Mode version 5.12
     </pre></blockquote>
 
     I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
@@ -89,48 +93,18 @@ changes</a>.
 
     First of all, forget Emacs 18.
 
-    <p> CC Mode 5 will not work with Emacs 19.34 out of the
-    box.  You are missing three things. I have been able to get CC
-    Mode 5 working with Emacs 19.34 by:
+    <p> To use CC Mode 5 with Emacs 19.34, you will need to load the
+    file <code>cc-mode-19.el</code> <em>before</em> you load any of
+    the other CC Mode files.  You will also need to download and
+    install <a href="http://www.dina.kvl.dk/~abraham/custom/">
+    Per's Custom library</a>.
 
-    <ul><li>Downloading
-	    <a href="http://www.dina.kvl.dk/~abraham/custom/">
-	    Per's Custom library</a>, and installing it as described in its
-	    documentation.
-
-	<p><li>Adding the definition for
-	    <code>copy-tree</code> by putting this in your .emacs
-	    file:
-
-<blockquote><pre>
-(if (not (fboundp 'copy-tree))
-    (require 'cl))
-</pre></blockquote>
-
-	<p><li>Adding the definition of <code>functionp</code> by putting
-	    this in your .emacs file:
-	    
-<blockquote><pre>
-(defun my-functionp (obj)
-  "Returns t if OBJ is a function, nil otherwise."
-  (cond
-   ((symbolp obj) (fboundp obj))
-   ((subrp obj))
-   ((compiled-function-p obj))
-   ((consp obj)
-    (if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
-   (t nil)))
-(if (not (fboundp 'functionp))
-    (defalias 'functionp 'my-functionp))
-</pre></blockquote>
-
-    </ul>
-
-    <p> After you do this, follow the directions for XEmacs above.
+    <p> After you do this, follow the directions for XEmacs above.  Of
+    course, when you byte compile the directory, use
+    <code>emacs</code> instead of <code>xemacs</code>!
 
     <p> I have no idea whether CC Mode 5 will work with Emacs versions
     before 19.34.  You might try following the directions above, but I
-    do not plan to actively support any earlier Emacs version.  I have
-    tested CC Mode 5 with what may eventually be Emacs 19.35 (or Emacs
-    20.1, who knows?) and it works like a charm.  No, I have no idea
-    when that will be released, so don't ask!
+    do not plan to actively support any earlier Emacs version.  CC
+    Mode 5 will be released with the next version of Emacs, whenever
+    that happens (I have no idea).
