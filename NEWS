@@ -1,5 +1,43 @@
 CC Mode NEWS -- user visible changes.  -*- outline -*-
 
+* Changes in 5.29
+
+FIXME: Update cc-mode.texi with this.
+
+** Better handling of multiline macros.
+
+*** Syntactic indentation inside macros.
+Controlled by the new variable c-syntactic-indentation-in-macros.
+Note about how this requires macros to be written in a certain way to
+work well.
+
+*** New lineup function c-lineup-macro-cont.
+Now used by default to line up macro continuation lines.  The behavior
+of this function closely mimics the indentation one gets if the macro
+is indented while the line continuation backslashes are temporarily
+removed.  If syntactic indentation in macros is turned off, it works
+much line c-lineup-dont-change, which was used earlier, but handles
+empty lines within the macro better.
+
+*** Automatically inserted newlines continues the macro if used within one.
+This applies to the newlines inserted by the auto-newline mode, and to
+c-context-line-break.
+
+*** Better alignment of line continuation backslashes.
+c-backslash-region tries to adapt to surrounding backslashes.  New
+variable c-backslash-max-column.
+
+*** Automatic alignment of line continuation backslashes.
+Controlled by the new variable c-auto-align-backslashes.  Affects
+c-context-line-break and newlines inserted in auto-newline mode.
+
+*** Line indentation works better inside macros.
+Regardless whether syntactic indentation and syntactic indentation
+inside macros are enabled or not, line indentation now ignores the
+line continuation backslashes.  This is most noticeable when syntactic
+indentation is turned off and there are empty lines (save for the
+backslash) in the macro.
+
 * Changes in 5.28
 
 ** The hardcoded switch to "java" style in Java mode is gone.
