@@ -253,7 +253,7 @@ The syntax tables aren't stored directly since they're quite large."
   ;; lists are parsed.  Note that this encourages incorrect parsing of
   ;; templates since they might contain normal operators that uses the
   ;; '<' and '>' characters.  Therefore this syntax table might go
-  ;; away when CC Mode handles templates correctly.
+  ;; away when CC Mode handles templates correctly everywhere.
   t   nil
   c++ `(lambda ()
 	 (let ((table (funcall ,(c-lang-const c-make-mode-syntax-table))))
@@ -676,13 +676,34 @@ operators."
   t (c-make-keywords-re nil
       (c-with-syntax-table (c-lang-const c-mode-syntax-table)
 	(mapcan (lambda (op)
-		  (and (string-match
-			"\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'" op)
-		       (list op)))
+		  (if (string-match "\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'" op)
+		      (list op)))
 		(append (c-lang-const c-other-op-syntax-tokens)
 			(c-lang-const c-operator-list))))))
 (c-lang-defvar c-nonsymbol-token-regexp
   (c-lang-const c-nonsymbol-token-regexp))
+
+(c-lang-defconst c-<-op-cont-regexp
+  ;; Regexp matching the second and subsequent characters of all
+  ;; multicharacter tokens that begin with "<".
+  t (c-make-keywords-re nil
+      (mapcan (lambda (op)
+		(if (string-match "\\`<." op)
+		    (list (substring op 1))))
+	      (append (c-lang-const c-other-op-syntax-tokens)
+		      (c-lang-const c-operator-list)))))
+(c-lang-defvar c-<-op-cont-regexp (c-lang-const c-<-op-cont-regexp))
+
+(c-lang-defconst c->-op-cont-regexp
+  ;; Regexp matching the second and subsequent characters of all
+  ;; multicharacter tokens that begin with ">".
+  t (c-make-keywords-re nil
+      (mapcan (lambda (op)
+		(if (string-match "\\`>." op)
+		    (list (substring op 1))))
+	      (append (c-lang-const c-other-op-syntax-tokens)
+		      (c-lang-const c-operator-list)))))
+(c-lang-defvar c->-op-cont-regexp (c-lang-const c->-op-cont-regexp))
 
 (c-lang-defvar c-stmt-delim-chars "^;{}?:")
 ;; The characters that should be considered to bound statements.  To
@@ -960,8 +981,6 @@ C isn't a specifier since the whole \"struct foo\" is a type, but
 type."
   t nil
   (c c++) '("auto" "extern" "inline" "register" "typedef" "static")
-  ;; "template" typically needs custom treatment, as in
-  ;; `c-font-lock-declarations'.
   c++  (append '("explicit" "friend" "mutable" "template" "virtual")
 	       (c-lang-const c-specifier-kwds))
   objc '("auto" "extern" "typedef" "static"
@@ -1090,6 +1109,20 @@ declarations.  These are all followed by comma separated lists of type
 names."
   t    nil
   java '("extends" "implements" "throws"))
+
+(c-lang-defconst c-<>-arglist-kwds
+  "Keywords that can be followed by a C++ style template arglist; see
+`c-recognize-<>-arglists' for details.  That language constant is
+assumed to be set if this isn't nil."
+  t    nil
+  c++  '("template")
+  objc '("id")
+  idl  '())
+
+(c-lang-defconst c-<>-arglist-key
+  ;; `c-<>-arglist-kwds' as an adorned regexp.
+  t (c-make-keywords-re t (c-lang-const c-<>-arglist-kwds)))
+(c-lang-defvar c-<>-arglist-key (c-lang-const c-<>-arglist-key))
 
 (c-lang-defconst c-block-stmt-1-kwds
   "Statement keywords followed directly by a substatement."
@@ -1299,6 +1332,7 @@ Note that Java specific rules are currently applied to tell this from
 			       (c-lang-const c-type-prefix-kwds)
 			       (c-lang-const c-other-decl-kwds)
 			       (c-lang-const c-decl-spec-kwds)
+			       (c-lang-const c-<>-arglist-kwds)
 			       (c-lang-const c-block-stmt-1-kwds)
 			       (c-lang-const c-block-stmt-2-kwds)
 			       (c-lang-const c-simple-stmt-kwds)
@@ -1535,23 +1569,11 @@ end of the operator.  nil in languages without such operators."
 (c-lang-defconst c-opt-type-suffix-key
   "Regexp matching operators that might follow after a type, or nil in
 languages that doesn't have such operators.  The end of the first
-submatch is taken as the end of the operator."
+submatch is taken as the end of the operator.  This should not match
+things like C++ template arglists if `c-recognize-<>-arglists' is
+set."
   t nil
-  ;; Do not try to match C++ templates with a regexp here; that's
-  ;; handled by (loads and loads) of other measures elsewhere.
-  (c c++ pike) "\\(\\.\\.\\.\\)"
-  objc (concat "\\("
-	       "\\.\\.\\."
-	       "\\|"
-	       ;; A bracketed protocol reference list.
-	       (concat "<"
-		       (c-lang-const c-syntactic-ws)
-		       "\\("
-		       "\\(\\w\\|\\s_\\|,\\)+"
-		       (c-lang-const c-syntactic-ws)
-		       "\\)"
-		       ">")
-	       "\\)")
+  (c c++ objc pike) "\\(\\.\\.\\.\\)"
   java "\\(\\[[ \t\n\r\f\v]*\\]\\)")
 (c-lang-defvar c-opt-type-suffix-key (c-lang-const c-opt-type-suffix-key))
 
@@ -1582,6 +1604,28 @@ list."
   t nil
   c t)
 (c-lang-defvar c-recognize-knr-p (c-lang-const c-recognize-knr-p))
+
+(c-lang-defconst c-recognize-<>-arglists
+  "Non-nil means C++ style template arglists should be handled.  More
+specifically, this means a comma separated list of types or
+expressions surrounded by \"<\" and \">\".  It's always preceded by an
+identifier or one of the keywords on `c-<>-arglist-kwds'.  If there's
+an identifier before then the whole expression is considered to be a
+type."
+  t (consp (c-lang-const c-<>-arglist-kwds)))
+(c-lang-defvar c-recognize-<>-arglists (c-lang-const c-recognize-<>-arglists))
+
+(c-lang-defconst c-opt-<>-arglist-start
+  ;; Regexp matching the start of angle bracket arglists in languages
+  ;; where `c-recognize-<>-arglists' is set.  Does not exclude
+  ;; keywords outside `c-<>-arglist-kwds'.
+  t (if (c-lang-const c-recognize-<>-arglists)
+	(concat "\\("
+		(c-lang-const c-symbol-key)
+		"\\)"
+		(c-lang-const c-syntactic-ws)
+		"<")))
+(c-lang-defvar c-opt-<>-arglist-start (c-lang-const c-opt-<>-arglist-start))
 
 
 ;;; Wrap up the `c-lang-defvar' system.
