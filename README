@@ -78,7 +78,8 @@ COMPATIBILITY
     You should be able to use this version right out of the box (note
     that as of this writing, 7-Aug-1997, Emacs 20 has not been
     released -- and no I don't know when it *will* be released!).  You 
-    can basically follow the directions for XEmacs above.
+    can basically follow the directions for XEmacs above (substituting 
+    `emacs' for `xemacs' in the byte compilation step, of course!)
 
 
     3. Emacs 19.34
@@ -96,7 +97,9 @@ COMPATIBILITY
       that file's comments) to contain the path to the Custom library.
 
     - Now byte compile the CC Mode source as described in the XEmacs
-      section above.
+      section above (substituting `emacs' for `xemacs' in the byte
+      compilation step, of course!).  You'll get a lot of warnings,
+      BUT YOU CAN SAFELY IGNORE THEM.
 
     - You must edit your .emacs file so that the path to the Custom
       library is prepended to your load-path.  Here's some sample
