@@ -8,7 +8,7 @@ import string
 import regex
 
 
-RELEASE = '5.01'
+RELEASE = '5.02'
 RELEASE_NAME = 'Release_' + string.translate(RELEASE,
 					     string.maketrans('.', '_'))
 						       
