@@ -393,6 +393,7 @@ Key bindings:
  	c-access-key c-Pike-access-key
 	c-lambda-key c-Pike-lambda-key
 	c-inexpr-block-key c-Pike-inexpr-block-key
+	c-inexpr-class-key c-Pike-inexpr-class-key
 	c-special-brace-lists c-Pike-special-brace-lists
 	)
   ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;FIXME

@@ -233,6 +233,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (defvar c-inexpr-class-key nil)
 (make-variable-buffer-local 'c-inexpr-class-key)
 (defconst c-Java-inexpr-class-key "\\<new\\>")
+(defconst c-Pike-inexpr-class-key "\\<class\\>")
 
 ;; List of open- and close-chars that makes up a pike-style brace
 ;; list, ie for a `([ ])' list there should be a cons (?\[ . ?\]) in
