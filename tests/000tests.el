@@ -123,6 +123,8 @@
 	(label                 . *)
 	(do-while-closure      . 0)
 	(else-clause           . 0)
+	(catch-clause          . 0)
+	(finally-clause        . 0)
 	(comment-intro         . c-lineup-comment)
 	(arglist-intro         . +)
 	(arglist-cont          . 0)
@@ -226,6 +228,7 @@
     "except-2.cc"
     "except-3.cc"
     "except-4.java"
+    "except-5.java"
     "externs-1.cc"
     "externs-2.cc"
     "forloop.cc"
