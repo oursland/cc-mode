@@ -1633,7 +1633,9 @@ might be present:
 '8-bit              8 bit syntax entry flags (XEmacs style).
 '1-bit              1 bit syntax entry flags (Emacs style).
 'syntax-properties  It works to override the syntax for specific characters
-		    in the buffer with the 'syntax-table property.
+		    in the buffer with the 'syntax-table property.  It's
+		    always set - CC Mode no longer works in emacsen without
+		    this feature.
 'gen-comment-delim  Generic comment delimiters work
 		    (i.e. the syntax class `!').
 'gen-string-delim   Generic string delimiters work
