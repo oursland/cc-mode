@@ -5,7 +5,7 @@
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.24 $
+;; $Revision: 1.25 $
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -108,7 +108,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  Version: $Revision: 1.24 $
+  "Major mode for editing C++ code.  Version: $Revision: 1.25 $
 1. Very much like editing C code.
 2. Expression and list commands understand all C++ brackets.
 3. Tab at left margin indents for C++ code
@@ -116,11 +116,12 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 5. Paragraphs are separated by blank lines only.
 6. Delete converts tabs to spaces as it moves back.
 
+Key bindings:
 \\{c++-mode-map}
 
-Variables controlling indentation style. Those with names like
-c-<thing> are inherited from c-mode which c++-mode is derived from.
-Those with names like c++-<thing> are unique for this mode.
+These variables control indentation style. Those with names like
+c-<thing> are inherited from c-mode.  Those with names like
+c++-<thing> are unique for this mode.
 
  c-tab-always-indent
     Non-nil means TAB in C mode should always reindent the current line,
@@ -173,11 +174,10 @@ Those with names like c++-<thing> are unique for this mode.
     hungry-delete-key indicators.
  c++-auto-hungry-initial-state
     Initial state of auto/hungry mode when a C++ buffer is first
-    visited.  Do a \\[describe-variable] c++-auto-hungry-initial-state
-    for legal values.
+    visited. Do a \"\\[describe-variable] c++-auto-hungry-initial-state\" for legal values.
  c++-auto-hungry-toggle
     Enable/disable toggling of auto/hungry states. Do a
-    \\[describe-variable] c++-auto-hungry-toggle for legal values.
+    \"\\[describe-variable] c++-auto-hungry-toggle\" for legal values.
 
 Settings for K&R, BSD, and Stroustrup indentation styles are
   c-indent-level                5    8    4
@@ -1194,7 +1194,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.24 $"
+(defconst c++-version "$Revision: 1.25 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
