@@ -312,7 +312,9 @@ appended."
   objc '("char" "double" "float" "id" "int" "long" "short" "signed" "unsigned"
 	 "void")
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
-  pike '("float" "int" "string" "void"))
+  pike '(;; this_program isn't really a keyword, but it's practically
+	 ;; used as a builtin type.
+	 "float" "int" "string" "this_program" "void"))
 
 ;; An adorned regexp that matches `c-primitive-type-kwds'.
 (c-lang-defconst c-primitive-type-key
@@ -507,9 +509,10 @@ appended."
 ;; Keywords that can occur anywhere in expressions.
 (c-lang-defconst c-expr-kwds
   (c objc) '("sizeof")
-  c++ '("sizeof" "delete" "new" "operator" "this" "throw")
+  c++ '("delete" "new" "operator" "sizeof" "this" "throw")
   java '("instanceof" "new" "super" "this")
-  pike '("sizeof" "catch" "class" "gauge" "lambda" "predef"))
+  pike '(;; "this" isn't really a keyword, but it's works as one in practice.
+	 "catch" "class" "gauge" "global" "lambda" "predef" "this"))
 
 ;; Keywords that start lambda constructs, i.e. function definitions in
 ;; expressions.
