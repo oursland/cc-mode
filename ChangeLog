@@ -61,12 +61,6 @@ Wed Aug 25 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	* cc-menus.el (cc-imenu-c++-generic-expression): Match classes
 	with nonhanging open braces.  Thanks to andy.ling@quantel.com.
 
-Sat Aug 21 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
-
-	* cc-defs.el (c-forward-comment): Workaround for bug that
-	considers a line comment ending with backslash to continue to
-	the next line.
-
 Sun Aug 15 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-align.el: Added docstrings to all lineup functions.
