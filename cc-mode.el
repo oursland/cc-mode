@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.332 $
-;; Last Modified:   $Date: 1994-05-12 19:32:42 $
+;; Version:         $Revision: 3.333 $
+;; Last Modified:   $Date: 1994-05-12 22:11:35 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-12 19:32:42 $|$Revision: 3.332 $|
+;; |$Date: 1994-05-12 22:11:35 $|$Revision: 3.333 $|
 
 ;;; Code:
 
@@ -802,7 +802,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.332 $
+cc-mode Revision: $Revision: 3.333 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -834,7 +834,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.332 $
+cc-mode Revision: $Revision: 3.333 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2245,43 +2245,68 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 
 ;; utilities for moving and querying around semantic elements
 (defun c-parse-state ()
-  ;; Find all open parens between BOD and point. BOD is optional and
-  ;; defaults to `beginning-of-defun'
-  (let ((pos (save-excursion
-	       ;; go back 2 bods, but ignore any bogus b-o-d positions
-	       ;; (i.e. open paren in column zero)
-	       (let ((cnt 2))
-		 (while (> cnt 0)
-		   (beginning-of-defun)
-		   (if (= (following-char) ?\{)
-		       (setq cnt (1- cnt)))
-		   (if (bobp)
-		       (setq cnt 0))))
-	       (point)))
-	(here (save-excursion
-		;;(skip-chars-forward " \t}")
+  ;; Finds and records all open parens between some important point
+  ;; earlier in the file and point.
+  (let* (at-bob
+	 (pos (save-excursion
+		;; go back 2 bods, but ignore any bogus positions
+		;; returned by beginning-of-defun (i.e. open paren in
+		;; column zero)
+		(let ((cnt 0))
+		  (while (and (not at-bob) (< cnt 2))
+		    (beginning-of-defun)
+		    (if (= (following-char) ?\{)
+			(setq cnt (1+ cnt)))
+		    (if (bobp)
+			(setq at-bob t))))
 		(point)))
-	state sexp-end)
-    (while (and pos (< pos here))
-      (if (and (setq pos (c-safe (scan-lists pos 1 -1)))
-	       (<= pos here))
-	  (progn
-	    (setq sexp-end (c-safe (scan-sexps (1- pos) 1)))
-	    (if (and sexp-end
-		     (<= sexp-end here))
-		;; we want to record both the start and end of this
-		;; sexp, but we only want to record the last-most of
-		;; any of them before here
-		(progn
-		  (if (= (char-after (1- pos)) ?\{)
-		      (setq state (cons (cons (1- pos) sexp-end)
-					(if (consp (car state))
-					    (cdr state)
-					  state))))
-		  (setq pos sexp-end))
-	      ;; we're contained in this sexp so put pos on front of list
-	      (setq state (cons (1- pos) state)))
-	    )))
+	 (here (save-excursion
+		 ;;(skip-chars-forward " \t}")
+		 (point)))
+	 (last-bod pos) (last-pos pos) state sexp-end)
+    ;; cache last bod position
+    (while (catch 'backup-bod
+	     (setq state nil)
+	     (while (and pos (< pos here))
+	       (setq last-pos pos)
+	       (if (and (setq pos (c-safe (scan-lists pos 1 -1)))
+			(<= pos here))
+		   (progn
+		     (setq sexp-end (c-safe (scan-sexps (1- pos) 1)))
+		     (if (and sexp-end
+			      (<= sexp-end here))
+			 ;; we want to record both the start and end
+			 ;; of this sexp, but we only want to record
+			 ;; the last-most of any of them before here
+			 (progn
+			   (if (= (char-after (1- pos)) ?\{)
+			       (setq state (cons (cons (1- pos) sexp-end)
+						 (if (consp (car state))
+						     (cdr state)
+						   state))))
+			   (setq pos sexp-end))
+		       ;; we're contained in this sexp so put pos on
+		       ;; front of list
+		       (setq state (cons (1- pos) state))))
+		 ;; something bad happened. check to see if we crossed
+		 ;; an unbalanced close paren. if so, we didn't really
+		 ;; find the right `important bufpos' so lets back up
+		 ;; and try again
+		 (if (and (not pos) (not at-bob)
+			  (c-safe (scan-lists last-pos 1 1)))
+		     (save-excursion
+		       (let (donep)
+			 (goto-char last-bod)
+			 (while (and (not donep) (not at-bob))
+			   (beginning-of-defun)
+			   (if (= (following-char) ?\{)
+			       (setq last-bod (point)
+				     donep t))
+			   (setq at-bob (bobp)))
+			 (setq pos (point))
+			 (throw 'backup-bod t))))
+		 ))
+	     nil))
     state))
 
 (defun c-beginning-of-inheritance-list (&optional lim)
@@ -3485,7 +3510,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.332 $"
+(defconst c-version "$Revision: 3.333 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
