@@ -227,7 +227,7 @@ suggestion to get a consistent style):
 Works with: arglist-cont, arglist-cont-nonempty."
   (save-excursion
     (back-to-indentation)
-    (when (looking-at "[-+|&*%<>]\\|\\(/[^/*]\\)")
+    (when (looking-at "[-+|&*%<>=]\\|\\(/[^/*]\\)")
       ;; '-' can be both an infix and a prefix operator, but I'm lazy now..
       (c-lineup-arglist-close-under-paren langelem))))
 
