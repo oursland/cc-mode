@@ -3337,7 +3337,7 @@ controlled by @code{font-lock-mode}.  It is not part of @ccmode{}.
 balanced brace lists, but now they move into blocks.  How do I get the
 old behavior back?}
 
-@strong{A.} Use @kbd{C-M-a} and @kbd{C-M-e} to move over balanced brace
+@strong{A.} Use @kbd{C-M-f} and @kbd{C-M-b} to move over balanced brace
 blocks.  Use @kbd{M-a} and @kbd{M-e} to move by statements, which will
 move into blocks.
 
