@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.238 $
-;; Last Modified:   $Date: 1995-08-01 22:14:32 $
+;; Version:         $Revision: 4.239 $
+;; Last Modified:   $Date: 1995-08-21 16:08:59 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-08-01 22:14:32 $|$Revision: 4.238 $|
+;; |$Date: 1995-08-21 16:08:59 $|$Revision: 4.239 $|
 
 ;;; Code:
 
@@ -2656,6 +2656,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
     (if brace
 	(goto-char brace)
       (beginning-of-defun))
+    ;; if we're sitting at b-o-b, it might be becase there was no
+    ;; least enclosing brace and we were sitting on the defun's open
+    ;; brace.
+    (if (and (bobp) (not (= (following-char) ?\{)))
+	(goto-char here))
     ;; if defun-prompt-regexp is non-nil, b-o-d might not leave us at
     ;; the open brace. I consider this an Emacs bug.
     (and (boundp 'defun-prompt-regexp)
@@ -4527,7 +4532,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.238 $"
+(defconst c-version "$Revision: 4.239 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
