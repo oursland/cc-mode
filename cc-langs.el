@@ -989,13 +989,16 @@ Do not try to modify this list for end user customizations; the
 the appropriate place for that."
   t    '("char" "double" "float" "int" "long" "short" "signed"
 	 "unsigned" "void")
-  c    (append '("complex" "imaginary")	; Conditionally defined in C99.
-	       (c-lang-const c-primitive-type-kwds))
-  c++  (append '("bool" "wchar_t")
-	       (c-lang-const c-primitive-type-kwds))
+  c    (append
+	'("_Bool" "_Complex" "_Imaginary") ; Conditionally defined in C99.
+	(c-lang-const c-primitive-type-kwds))
+  c++  (append
+	'("bool" "wchar_t")
+	(c-lang-const c-primitive-type-kwds))
   ;; Objective-C extends C, but probably not the new stuff in C99.
-  objc (append '("id" "Class" "SEL" "IMP" "BOOL")
-	       (c-lang-const c-primitive-type-kwds))
+  objc (append
+	'("id" "Class" "SEL" "IMP" "BOOL")
+	(c-lang-const c-primitive-type-kwds))
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
   idl  '("Object" "ValueBase" "any" "boolean" "char" "double" "fixed" "float"
 	 "long" "octet" "sequence" "short" "string" "void" "wchar" "wstring"
@@ -1487,9 +1490,8 @@ nevertheless contains a list separated with ';' and not ','."
 (c-lang-defconst c-constant-kwds
   "Keywords for constants."
   t       nil
-  (c c++) '("NULL") ;; Not a keyword, but practically works as one.
-  c++     (append '("false" "true")
-		  (c-lang-const c-constant-kwds))
+  (c c++) '("NULL" ;; Not a keyword, but practically works as one.
+	    "false" "true")		; Defined in C99.
   objc    '("nil" "Nil")
   idl     '("TRUE" "FALSE")
   pike    '("UNDEFINED")) ;; Not a keyword, but practically works as one.
