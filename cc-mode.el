@@ -234,7 +234,8 @@ Key bindings:
  	c-class-key c-ObjC-class-key
 	c-baseclass-key nil
 	c-access-key c-ObjC-access-key
-	c-method-key c-ObjC-method-key)
+	c-method-key c-ObjC-method-key
+	imenu-create-index-function 'cc-imenu-objc-function)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook)
   (c-update-modeline))
