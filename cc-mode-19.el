@@ -42,17 +42,6 @@
   (if (not pos)
       (setq pos (point))))
 
-;; advice for indent-new-comment-line for older Emacsen
-(or (boundp 'comment-line-break-function)
-    (defadvice indent-new-comment-line (around c-line-break-advice
-					       activate preactivate)
-      "Calls c-comment-line-break-function if in a comment in a CC Mode."
-      (if (or (not c-buffer-is-cc-mode)
-	      (not (c-in-literal))
-	      (not c-comment-continuation-stars))
-	  ad-do-it
-	(c-comment-line-break-function (ad-get-arg 0)))))
-
 ;; Emacs 19.34 doesn't have a char-before function.  Here's it's Emacs
 ;; 20 definition.
 (or (fboundp 'char-before)

@@ -36,7 +36,6 @@
 ;; in if needed.
 (if (or (not (fboundp 'functionp))
 	(not (fboundp 'char-before))
-	(not (boundp 'comment-line-break-function))
 	(not (condition-case nil
 		 (progn (char-after) t)
 	       (error nil)))

@@ -977,6 +977,17 @@ comment."
 	      (indent-for-comment))
 	  (c-indent-line))))))
 
+;; advice for indent-new-comment-line for older Emacsen
+(or (boundp 'comment-line-break-function)
+    (defadvice indent-new-comment-line (around c-line-break-advice
+					       activate preactivate)
+      "Calls c-comment-line-break-function if in a comment in CC Mode."
+      (if (or (not c-buffer-is-cc-mode)
+	      (not (c-in-literal))
+	      (not c-comment-continuation-stars))
+	  ad-do-it
+	(c-comment-line-break-function (ad-get-arg 0)))))
+
 ;; used by outline-minor-mode
 (defun c-outline-level ()
   (save-excursion
