@@ -14,7 +14,7 @@ it is today, notably Barry Warsaw who took care of BOCM (Boring Old C
 Mode) in 1992 and revamped it to CC Mode.
 
 <p>The <a href="release.php">current release</a> is version
-5.26.  A list of <a href="changes-latest.php">recent changes</a> are
+5.27.  A list of <a href="changes-latest.php">recent changes</a> are
 given in detail, as well as some <a
 href="installation.php">installation notes</a> and Emacs/XEmacs <a
 href="compat.php">compatibility details</a>.

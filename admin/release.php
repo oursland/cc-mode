@@ -17,9 +17,9 @@ one of the several <a href="manual/">pre-formatted</a> documents generated
 from the texinfo source, including PostScript, Emacs Info, and HTML
 versions</a>.
 
-<p>The current version supports using Filladapt mode to fill text in
-comments and string literals.  There are however still some <a
-href="filladapt.php">issues</a> with this that you should be aware of if you
-want to use Filladapt in CC Mode.
+<p>Since version 5.26, CC Mode supports using Filladapt mode to fill
+text in comments and string literals.  There are however still some <a
+href="filladapt.php">issues</a> with this that you should be aware of
+if you want to use Filladapt in CC Mode.
 
 <?php include ("footer.h"); ?>
