@@ -304,9 +304,8 @@ brace-list-close, arglist-close, extern-lang-close, namespace-close."
       (when spec
 	(c-forward-syntactic-ws)
 	(forward-char 1))
-      (c-forward-syntactic-ws (c-point 'eol))
 
-      (if (eolp)
+      (if (looking-at c-syntactic-eol)
 	  ;; The arglist is "empty".
 	  0
 
