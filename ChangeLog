@@ -1,3 +1,23 @@
+2003-07-16  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* Patch release 5.30.4.
+
+	* cc-fonts.el (c-nonbreakable-space-face): Remove the variable and
+	use an extra quoted face name instead.  All the emacsen flavors
+	handle that correctly.
+
+	* cc-defs.el (c-langelem-sym, c-langelem-pos, c-langelem-2nd-pos):
+	Added accessor functions for syntactic elements.
+
+2003-07-09  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-literal-faces): Declare as a variable since it
+	might be modified.
+
+	* cc-langs.el: (c++-make-template-syntax-table,
+	c-syntactic-ws-start, c-syntactic-ws-end): Gave more consistent
+	names to these language constants.
+
 2003-07-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* Patch release 5.30.3.
