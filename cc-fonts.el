@@ -54,10 +54,10 @@
 ;;
 ;; Face aliases, mapped to different faces depending on (X)Emacs flavor:
 ;;
-;; c-doc-face			Documentation comments (like Javadoc).
-;; c-label-face			Label identifiers.
-;; c-preprocessor-face		Preprocessor directives.
-;; c-invalid-face		Invalid syntax.  Note that CC Mode normally
+;; c-label-face-name		Label identifiers.
+;; c-preprocessor-face-name	Preprocessor directives.
+;; c-doc-face-name		Documentation comments (like Javadoc).
+;; c-invalid-face-name		Invalid syntax.  Note that CC Mode normally
 ;;				doesn't try to fontify syntax errors.  Instead
 ;;				it's as picky as possible about only
 ;;				fontifying syntactically correct structures so
@@ -65,26 +65,22 @@
 ;;
 ;; Some comments on the use of faces:
 ;;
-;; o  `c-doc-face' is an alias for `font-lock-doc-string-face' in
-;;    XEmacs, `font-lock-doc-face' in Emacs 21 and later, or
+;; o  `c-label-face-name' is either `font-lock-constant-face' (in Emacs
+;;    20 and later), or `font-lock-reference-face' otherwise.
+;;
+;; o  `c-preprocessor-face-name' is `font-lock-preprocessor-face' in
+;;    XEmacs and - in lack of a closer equivalent -
+;;    `font-lock-builtin-face' or `font-lock-reference-face' in Emacs.
+;;
+;; o  `c-doc-face-name' is `font-lock-doc-string-face' in XEmacs,
+;;    `font-lock-doc-face' in Emacs 21 and later, or
 ;;    `font-lock-comment-face' in older Emacs (that since source
-;;    documentation are actually comments in these languages, as
-;;    opposed to elisp).  FIXME: Doc comment fontification currently
-;;    only works with font-lock packages that have
-;;    `font-lock-syntactic-face-function', i.e Emacs 21 and later.
+;;    documentation are actually comments in these languages, as opposed
+;;    to elisp).
 ;;
-;; o  `c-label-face' is an alias for either `font-lock-constant-face'
-;;    (in Emacs 20 and later), or `font-lock-reference-face'
-;;    otherwise.
-;;
-;; o  `c-preprocessor-face' is an alias for
-;;    `font-lock-preprocessor-face' in XEmacs and - in lack of a
-;;    closer equivalent - `font-lock-builtin-face' or
-;;    `font-lock-reference-face' in Emacs.
-;;
-;; o  `c-invalid-face' is an alias for `font-lock-warning-face' in
-;;    Emacs.  In XEmacs there's no corresponding standard face, so
-;;    there it's defined as a face that stands out sharply.
+;; o  `c-invalid-face-name' is `font-lock-warning-face' in Emacs.  In
+;;    XEmacs there's no corresponding standard face, so there it's
+;;    mapped to a face that stands out sharply.
 ;;
 ;;    This face is not used for the #error directive, since that's not
 ;;    a syntactic error in itself.  A parallel can be drawn to other
@@ -119,7 +115,7 @@
 ;; executed at compile time.  They don't need to have the proper
 ;; definitions, though, since the generated functions aren't called
 ;; during compilation.
-(cc-bytecomp-defvar c-preprocessor-face)
+(cc-bytecomp-defvar c-preprocessor-face-name)
 (cc-bytecomp-defun c-fontify-recorded-types-and-refs)
 (cc-bytecomp-defun c-font-lock-declarators)
 (cc-bytecomp-defun c-font-lock-objc-iip-decl)
@@ -138,19 +134,7 @@
 ;; variables, so we have to use the (eval . FORM) in the font lock
 ;; matchers wherever we use these alias variables.
 
-(defvar c-doc-face
-  (cond ((c-face-name-p 'font-lock-doc-string-face)
-	 ;; XEmacs.
-	 'font-lock-doc-string-face)
-	((c-face-name-p 'font-lock-doc-face)
-	 ;; Emacs 21 and later.
-	 'font-lock-doc-face)
-	(t
-	 'font-lock-comment-face))
-  "Face name used for source documentation that's extracted by special
-tools (e.g. Javadoc).")
-
-(defvar c-preprocessor-face
+(defconst c-preprocessor-face-name
   (cond ((c-face-name-p 'font-lock-preprocessor-face)
 	 ;; XEmacs has a font-lock-preprocessor-face.
 	 'font-lock-preprocessor-face)
@@ -159,12 +143,11 @@ tools (e.g. Javadoc).")
 	 ;; traditionally been used for preprocessor directives.
 	 'font-lock-builtin-face)
 	(t
-	 'font-lock-reference-face))
-  "Face name used for preprocessor directives.")
+	 'font-lock-reference-face)))
 
 (cc-bytecomp-defvar font-lock-constant-face)
 
-(defvar c-label-face
+(defconst c-label-face-name
   (cond ((c-face-name-p 'font-lock-label-face)
 	 ;; If it happen to occur in the future.  (Well, the more
 	 ;; pragmatic reason is to get unique faces for the test
@@ -174,20 +157,29 @@ tools (e.g. Javadoc).")
 	      (eq font-lock-constant-face 'font-lock-constant-face))
 	 ;; Test both if font-lock-constant-face exists and that it's
 	 ;; not an alias for something else.  This is important since
-	 ;; `c-font-lock-find-label' compares already set faces.
+	 ;; we compares already set faces in various places.
 	 'font-lock-constant-face)
 	(t
 	 'font-lock-reference-face)))
 
-(defvar c-invalid-face
+(defconst c-doc-face-name
+  (cond ((c-face-name-p 'font-lock-doc-string-face)
+	 ;; XEmacs.
+	 'font-lock-doc-string-face)
+	((c-face-name-p 'font-lock-doc-face)
+	 ;; Emacs 21 and later.
+	 'font-lock-doc-face)
+	(t
+	 'font-lock-comment-face)))
+
+(defconst c-invalid-face-name
   (if (c-face-name-p 'font-lock-warning-face)
       ;; Emacs 20 and later has a font-lock-warning-face.
       'font-lock-warning-face
     ;; Otherwise we provide a face.
-    'c-invalid-face)
-  "Face name used for invalid syntax.")
+    'c-invalid-face))
 
-(unless (c-face-name-p c-invalid-face)
+(unless (c-face-name-p c-invalid-face-name)
   (defface c-invalid-face
     '((((class color) (background light)) (:foreground "red"))
       (((class color)) (:foreground "hotpink"))
@@ -195,10 +187,10 @@ tools (e.g. Javadoc).")
     "Face used to highlight invalid syntax."
     :group 'c-fonts))
 
-;; To make hard spaces visible an inverted version of `c-invalid-face'
-;; is used.  Since font-lock in Emacs expands all face names in
-;; `font-lock-keywords' as variables we need to have a variable for it
-;; that resolves to its own name.
+;; To make hard spaces visible an inverted version of
+;; `c-invalid-face-name' is used.  Since font-lock in Emacs expands
+;; all face names in `font-lock-keywords' as variables we need to have
+;; a variable for it that resolves to its own name.
 (defconst c-nonbreakable-space-face 'c-nonbreakable-space-face)
 
 (cc-bytecomp-defun face-inverse-video-p) ; Only in Emacs.
@@ -462,7 +454,7 @@ stuff.  Used on level 1 and higher."
 				 limit 'move)
 			   (c-put-font-lock-face (match-beginning 1)
 						 (match-end 1)
-						 c-preprocessor-face)))
+						 c-preprocessor-face-name)))
 		       (goto-char (match-end ,(1+ ncle-depth)))))))
 
 	      ;; Fontify the directive names.
@@ -472,28 +464,28 @@ stuff.  Used on level 1 and higher."
 			 (c-lang-const c-opt-cpp-prefix)
 			 "[a-z]+"
 			 "\\)")
-		 `(,(1+ ncle-depth) c-preprocessor-face t)))
+		 `(,(1+ ncle-depth) c-preprocessor-face-name t)))
 	      )))
 
       ,@(when (c-major-mode-is 'pike-mode)
 	  `((eval . (list "\\`#![^\n\r]*"
-			  0 c-preprocessor-face))))
+			  0 c-preprocessor-face-name))))
 
-      ;; Make hard spaces visible through an inverted `c-invalid-face'.
+      ;; Make hard spaces visible through an inverted `c-invalid-face-name'.
       (eval . (list
 	       "\240"
 	       0 (progn
 		   (unless (c-face-name-p 'c-nonbreakable-space-face)
-		     (c-make-inverse-face c-invalid-face
+		     (c-make-inverse-face c-invalid-face-name
 					  'c-nonbreakable-space-face))
 		   'c-nonbreakable-space-face)))
       ))
 
 (defun c-font-lock-invalid-string ()
   ;; Assuming the point is after the opening character of a string,
-  ;; fontify that char with `c-invalid-face' if the string decidedly
-  ;; isn't terminated properly.  Assumes the string already is
-  ;; syntactically fontified.
+  ;; fontify that char with `c-invalid-face-name' if the string
+  ;; decidedly isn't terminated properly.  Assumes the string already
+  ;; is syntactically fontified.
   (let ((end (1+ (c-point 'eol))))
     (and (eq (get-text-property (point) 'face) 'font-lock-string-face)
 	 (= (next-single-property-change (point) 'face nil end) end)
@@ -511,7 +503,7 @@ stuff.  Used on level 1 and higher."
 	     ;; aren't allowed.
 	     (not (eq (char-before (1- (point))) ?#))
 	   t)
-	 (c-put-font-lock-face (1- (point)) (point) c-invalid-face))))
+	 (c-put-font-lock-face (1- (point)) (point) c-invalid-face-name))))
 
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
@@ -1841,7 +1833,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		       (c-backward-syntactic-ws)
 		       (not (bobp)))
 		     (eq (get-text-property (1- (point)) 'face)
-			 c-label-face))
+			 c-label-face-name))
 		;; Check for a keyword that precedes a statement.
 		(c-after-conditional)))
 
@@ -1850,7 +1842,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 	       (goto-char id-start)
 	       (looking-at c-symbol-key)
 	       (c-put-font-lock-face (match-beginning 0) (match-end 0)
-				     c-label-face)))
+				     c-label-face-name)))
 
 	(goto-char continue-pos))))
   nil)
@@ -1892,7 +1884,7 @@ higher."
 	    ;; which makes it a bit complicated: 1) The backquote
 	    ;; stuff is expanded when compiled or loaded, 2) the
 	    ;; eval form is evaluated at font-lock setup (to
-	    ;; substitute c-label-face correctly), and 3) the
+	    ;; substitute c-label-face-name correctly), and 3) the
 	    ;; resulting structure is interpreted during
 	    ;; fontification.)
 	    (eval
@@ -1934,14 +1926,16 @@ higher."
 		    ,@(mapcar
 		       (lambda (submatch)
 			 `(list ,(+ identifier-offset submatch)
-				c-label-face nil t))
+				c-label-face-name nil t))
 		       (c-lang-const c-identifier-last-sym-match))
 
-		    (list ,integer-offset c-label-face nil t)
+		    (list ,integer-offset c-label-face-name nil t)
 
 		    ,@(when (c-major-mode-is 'pike-mode)
-			`((list ,(+ integer-offset 2) c-label-face nil t)
-			  (list ,(+ integer-offset 3) c-label-face nil t)))
+			`((list ,(+ integer-offset 2)
+				c-label-face-name nil t)
+			  (list ,(+ integer-offset 3)
+				c-label-face-name nil t)))
 		    )))
 
 	    ;; Fontify normal labels.
@@ -2495,7 +2489,7 @@ need for `pike-font-lock-extra-types'.")
 
 (defun c-font-lock-doc-comments (prefix limit)
   ;; Fontify all comments whose start matches PREFIX from the point to
-  ;; LIMIT with `c-doc-face'.  Assumes comments have been fontified
+  ;; LIMIT with `c-doc-face-name'.  Assumes comments have been fontified
   ;; with `font-lock-comment-face' already.  Nil is always returned.
 
   (while (re-search-forward prefix limit t)
@@ -2506,7 +2500,7 @@ need for `pike-font-lock-extra-types'.")
 	(when (or (= start (point-min))
 		  (not (eq (get-text-property (1- start) 'face)
 			   'font-lock-comment-face)))
-	  (c-put-font-lock-face start (point) c-doc-face)))))
+	  (c-put-font-lock-face start (point) c-doc-face-name)))))
   nil)
 
 (defconst javadoc-font-lock-keywords
