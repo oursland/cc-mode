@@ -739,20 +739,13 @@ comment."
 	;; perhaps they should be changed, but that'd likely break a
 	;; lot in cc-engine.
 	(goto-char here)
-	;; Move out of any enclosing non-`{ }' parens.
-	(let ((last (point)))
-	  (while (and (c-safe (progn (up-list 1) t))
-		      (/= (char-before) ?\}))
-	    (setq last (point)))
-	  (goto-char last))
 	(if (> count 0)
 	    (if (condition-case nil
 		    ;; Stop before `{' and after `;', `{', `}' and
-		    ;; `};' when not followed by `}', but on the other
-		    ;; side of the syntactic ws.  Also stop before
-		    ;; `}', but only to catch comments.  Move by sexps
-		    ;; and move into `{ }', but not into any other
-		    ;; other type of paren.
+		    ;; `};' when not followed by `}' or `)', but on
+		    ;; the other side of the syntactic ws.  Also stop
+		    ;; before `}', but only to catch comments.  Move
+		    ;; by sexps and move into parens.
 		    (catch 'done
 		      (let (last)
 			(while t
@@ -772,14 +765,13 @@ comment."
 				((progn (backward-char)
 					(looking-at "[;{}]"))
 				 (if (or (= here last)
-					 (= (char-after last) ?}))
+					 (memq (char-after last) '(?\) ?})))
 				     (if (and (= (char-before) ?})
 					      (= (char-after) ?\;))
 					 (backward-char))
 				   (goto-char last)
 				   (throw 'done t)))
-				((or (= (char-syntax (char-after)) ?\))
-				     (= (char-syntax (char-after)) ?\"))
+				((= (char-syntax (char-after)) ?\")
 				 (forward-char)
 				 (backward-sexp))
 				))))
@@ -788,17 +780,22 @@ comment."
 		   t))
 		(setq count (1- count)))
 	  (if (condition-case nil
-		  ;; Stop before `{' and `}' and after `;', `}' and
-		  ;; `};'.  Also stop after `{', but only to catch
-		  ;; comments.  Move by sexps and move into `{ }', but
-		  ;; not into any other other type of paren.
+		  ;; Stop before `{' and `}', but on the other side of
+		  ;; the syntactic ws, and after `;', `}' and `};'.
+		  ;; Only stop before `{' if at top level or inside
+		  ;; braces, though.  Also stop after `{', but only to
+		  ;; catch comments.  Move by sexps and move into
+		  ;; parens.
 		  (catch 'done
 		    (let (last)
 		      (while t
 			(setq last (point))
 			(c-forward-syntactic-ws)
 			(cond ((= (char-after) ?{)
-			       (if (= here last)
+			       (if (or (= here last)
+				       (save-excursion
+					 (and (c-safe (progn (up-list -1) t))
+					      (/= (char-after) ?{))))
 				   (progn (forward-char)
 					  (throw 'done nil))
 				 (goto-char last)
@@ -810,8 +807,7 @@ comment."
 			      ((looking-at ";\\|};?")
 			       (goto-char (match-end 0))
 			       (throw 'done t))
-			      ((or (= (char-syntax (char-after)) ?\()
-				   (= (char-syntax (char-after)) ?\"))
+			      ((= (char-syntax (char-after)) ?\")
 			       (forward-sexp))
 			      (t
 			       (forward-char))
