@@ -5667,8 +5667,8 @@ other top-level block constructs in the @ccmode{} languages).
 (@xref{Defuns,,, emacs, The Emacs Editor}, in the Emacs 20 manual).
 
 This heuristic is built into the core syntax analysis routines in
-(X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs 21 it
-has become possible to turn it off@footnote{Using the variable
+(X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs 21.4
+it has become possible to turn it off@footnote{Using the variable
 @code{open-paren-in-column-0-is-defun-start}.} and @ccmode{} does so
 there since it got its own system to keep track of blocks.
 
