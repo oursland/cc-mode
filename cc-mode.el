@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.57 $
-;; Last Modified:   $Date: 1994-08-23 18:43:28 $
+;; Version:         $Revision: 4.58 $
+;; Last Modified:   $Date: 1994-08-24 19:30:03 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -52,11 +52,11 @@
 ;; my personal account, I may not get it for a long time.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
-;; the multi-Emacsen support. FSF's Emacs 19, Lucid's Emacs 19, and
-;; GNU Emacs 18 all do things differently and there's no way to shut
-;; the byte-compiler up at the necessary granularity.  Let me say this
-;; again: YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS (you'd be
-;; surprised at how many people don't follow this advice :-).
+;; the multi-Emacsen support. FSF's Emacs 19, XEmacs 19 (formerly
+;; Lucid), and GNU Emacs 18 all do things differently and there's no
+;; way to shut the byte-compiler up at the necessary granularity.  Let
+;; me say this again: YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS (you'd
+;; be surprised at how many people don't follow this advice :-).
 
 ;; If your Emacs is dumped with c-mode.el and/or c++-mode.el, you will
 ;; need to add the following to your .emacs file before any other
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-23 18:43:28 $|$Revision: 4.57 $|
+;; |$Date: 1994-08-24 19:30:03 $|$Revision: 4.58 $|
 
 ;;; Code:
 
@@ -534,7 +534,7 @@ your style, only those that are different from the default.")
     ["Backward Statement"     c-beginning-of-statement t]
     ["Forward Statement"      c-end-of-statement t]
     )
-  "Lucid Emacs menu for C/C++ modes.")
+  "XEmacs 19 (formerly Lucid) menu for C/C++ modes.")
 
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -562,14 +562,15 @@ your style, only those that are different from the default.")
      ((= major 18) (setq major 'v18))	;Emacs 18
      ((= major 4)  (setq major 'v18))	;Epoch 4
      ((= major 19) (setq major 'v19	;Emacs 19
-			 flavor (if (string-match "Lucid" emacs-version)
-				    'Lucid 'FSF)))
+			 flavor (if (or (string-match "Lucid" emacs-version)
+					(string-match "XEmacs" emacs-version))
+				    'XEmacs 'FSF)))
      ;; I don't know
      (t (error "Cannot recognize major version number: %s" major)))
-    ;; All Lucid 19's use 8-bit modify-syntax-entry flags, as do all
-    ;; patched (obsolete) FSF Emacs 19, Emacs 18, Epoch 4's.  Only
-    ;; vanilla FSF Emacs 19 uses 1-bit flag.  Lets be as smart as we
-    ;; can about figuring this out.
+    ;; All XEmacs 19's (formerly Lucid) use 8-bit modify-syntax-entry
+    ;; flags, as do all patched (obsolete) FSF Emacs 19, Emacs 18,
+    ;; Epoch 4's.  Only vanilla FSF Emacs 19 uses 1-bit flag.  Lets be
+    ;; as smart as we can about figuring this out.
     (if (eq major 'v19)
 	(let ((table (copy-syntax-table)))
 	  (modify-syntax-entry ?a ". 12345678" table)
@@ -580,7 +581,7 @@ your style, only those that are different from the default.")
     ;; lets do some minimal sanity checking.
     (if (and (or
 	      ;; Lemacs before 19.6 had bugs
-	      (and (eq major 'v19) (eq flavor 'Lucid) (< minor 6))
+	      (and (eq major 'v19) (eq flavor 'XEmacs) (< minor 6))
 	      ;; FSF 19 before 19.21 has known bugs
 	      (and (eq major 'v19) (eq flavor 'FSF) (< minor 21)))
 	     (not c-inhibit-startup-warnings-p))
@@ -620,18 +621,18 @@ the main release."
 	  (print (format
 "You are running a syntax patched Emacs 18 variant.  While this should
 work for you, you may want to consider upgrading to one of the latest
-Emacs 19's (FSF or Lucid).  The syntax patches are no longer supported
-either for syntax.c or cc-mode."))))
-    (list major flavor comments))
+Emacs 19's (FSF or XEmacs -- formerly Lucid).  The syntax patches are
+no longer supported either for syntax.c or cc-mode."))))
+    (list major comments))
   "A list of features extant in the Emacs you are using.
 There are many flavors of Emacs out there, each with different
 features supporting those needed by cc-mode.  Here's the current
 supported list, along with the values for this variable:
 
- Vanilla Emacs 18/Epoch 4:  (v18 no-dual-comments)
- Emacs 18/Epoch 4 (patch2): (v18 8-bit)
- Lucid Emacs 19:            (v19 Lucid 8-bit)
- FSF Emacs 19:              (v19 FSF 1-bit).")
+ Vanilla Emacs 18/Epoch 4:   (v18 no-dual-comments)
+ Emacs 18/Epoch 4 (patch2):  (v18 8-bit)
+ XEmacs (formerly Lucid) 19: (v19 8-bit)
+ FSF Emacs 19:               (v19 1-bit).")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in c++-mode buffers.")
@@ -650,7 +651,7 @@ supported list, along with the values for this variable:
 (if c-mode-map
     ()
   ;; TBD: should we even worry about naming this keymap. My vote: no,
-  ;; because FSF and Lucid do it differently.
+  ;; because FSF and XEmacs (formerly Lucid) do it differently.
   (setq c-mode-map (make-sparse-keymap))
   ;; put standard keybindings into MAP
   ;; the following mappings correspond more or less directly to BOCM
@@ -726,12 +727,14 @@ supported list, along with the values for this variable:
  	;; with that.  The menu is mainly for beginners, and for them,
  	;; the menubar requires less memory than a special click.
 	)
-    ;; in Lucid 19, we want the menu to popup when the 3rd button is
-    ;; hit.  In 19.10 and beyond this is done automatically if we put
-    ;; the menu on mode-popup-menu variable, see c-common-init
-    (if (memq 'Lucid c-emacs-features)
-	(if (not (boundp 'mode-popup-menu))
-	    (define-key c-mode-map 'button3 'c-popup-menu)))
+    ;; in XEmacs (formerly Lucid) 19, we want the menu to popup when
+    ;; the 3rd button is hit.  In 19.10 and beyond this is done
+    ;; automatically if we put the menu on mode-popup-menu variable,
+    ;; see c-common-init. RMS decided that this feature should not be
+    ;; included for FSF's Emacs.
+    (if (and (boundp 'current-menubar)
+	     (not (boundp 'mode-popup-menu)))
+	(define-key c-mode-map 'button3 'c-popup-menu))
     ))
 
 (defvar c++-mode-map ()
@@ -740,7 +743,7 @@ supported list, along with the values for this variable:
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
   (if (memq 'v19 c-emacs-features)
-      ;; Lucid and FSF Emacs 19 do this differently
+      ;; XEmacs (formerly Lucid) and FSF Emacs 19 do this differently
       (if (memq 'FSF c-emacs-features)
 	  (setq c++-mode-map (cons 'keymap c-mode-map))
 	(setq c++-mode-map (make-sparse-keymap))
@@ -757,7 +760,7 @@ supported list, along with the values for this variable:
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
   (if (memq 'v19 c-emacs-features)
-      ;; Lucid and FSF Emacs 19 do this differently
+      ;; XEmacs (formerly Lucid) and FSF Emacs 19 do this differently
       (if (memq 'FSF c-emacs-features)
 	  (setq objc-mode-map (cons 'keymap c-mode-map))
 	(setq objc-mode-map (make-sparse-keymap))
@@ -800,7 +803,7 @@ supported list, along with the values for this variable:
   ;; add extra comment syntax
   (cond
    ((memq '8-bit c-emacs-features)
-    ;; Lucid emacs has the best implementation
+    ;; XEmacs (formerly Lucid) has the best implementation
     (modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
     (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
@@ -832,7 +835,7 @@ supported list, along with the values for this variable:
   ;; add extra comment syntax
   (cond
    ((memq '8-bit c-emacs-features)
-    ;; Lucid emacs has the best implementation
+    ;; XEmacs (formerly Lucid) has the best implementation
     (modify-syntax-entry ?/  ". 1456" objc-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   objc-mode-syntax-table)
     (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table)
@@ -947,7 +950,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.57 $
+cc-mode Revision: $Revision: 4.58 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -986,7 +989,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.57 $
+cc-mode Revision: $Revision: 4.58 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1023,7 +1026,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.57 $
+cc-mode Revision: $Revision: 4.58 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1091,16 +1094,15 @@ Key bindings:
 	   (setq comment-indent-function 'c-comment-indent))
     (make-local-variable 'comment-indent-hook)
     (setq comment-indent-hook 'c-comment-indent))
-  ;; put C menu into menubar and on popup menu for Lucid 19. I think
-  ;; this happens automatically for FSF Emacs 19.
-  (if (and (memq 'Lucid c-emacs-features)
+  ;; put C menu into menubar and on popup menu for XEmacs (formerly
+  ;; Lucid) 19. I think this happens automatically for FSF Emacs 19.
+  (if (and (boundp 'current-menubar)
 	   current-menubar
 	   (not (assoc mode-name current-menubar)))
       (progn
 	(set-buffer-menubar (copy-sequence current-menubar))
 	(add-menu nil mode-name c-mode-menu)))
-  (if (and (memq 'Lucid c-emacs-features)
-	   (boundp 'mode-popup-menu))
+  (if (boundp 'mode-popup-menu)
       (setq mode-popup-menu
 	    (cons (concat mode-name " Mode Commands") c-mode-menu)))
   ;; put auto-hungry designators onto minor-mode-alist, but only once
@@ -1231,8 +1233,8 @@ Key bindings:
 
 ;; active regions, and auto-newline/hungry delete key
 (defun c-keep-region-active ()
-  ;; do whatever is necessary to keep the region active in
-  ;; Lucid. ignore byte-compiler warnings you might see
+  ;; do whatever is necessary to keep the region active in Xemacs
+  ;; (formerly Lucid). ignore byte-compiler warnings you might see
   (and (boundp 'zmacs-region-stays)
        (setq zmacs-region-stays t)))
 
@@ -1954,7 +1956,7 @@ No indentation or other \"electric\" behavior is performed."
   (interactive)
   (insert "::"))
 
-;; TBD: These are from Lucid Emacs 19.9's version of c-mode.el
+;; TBD: These are from XEmacs (formerly Lucid) 19.9's version of c-mode.el
 ;;(defun c-insert-brackets ()
 ;;  (interactive)
 ;;  (insert ?[)
@@ -3974,7 +3976,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.57 $"
+(defconst c-version "$Revision: 4.58 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4041,7 +4043,7 @@ it trailing backslashes are removed."
       ))))
 
 
-;; menus for Lucid
+;; menus for XEmacs (formerly Lucid)
 (defun c-popup-menu (e)
   "Pops up the C/C++ menu."
   (interactive "@e")
