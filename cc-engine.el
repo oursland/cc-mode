@@ -1232,28 +1232,32 @@ brace."
   ;; backward search.
   (save-excursion
     (or lim (setq lim (point-min)))
-    (if (and (eq (char-after) ?{)
-	     (progn (c-backward-syntactic-ws) (> (point) lim))
-	     (eq (char-before) ?\()
-	     (not (and c-special-brace-lists
-		       (c-looking-at-special-brace-list))))
-	(cons 'inexpr-statement (point))
-      (let (res)
-	(while (and (not res)
-		    (= (c-backward-token-1 1 t lim) 0)
-		    (>= (point) lim)
-		    (looking-at "(\\|\\w\\|\\s_\\|\\."))
-	  (setq res
-		(cond ((and c-inexpr-class-key
-			    (looking-at c-inexpr-class-key))
-		       (cons 'inexpr-class (point)))
-		      ((and c-inexpr-block-key
-			    (looking-at c-inexpr-block-key))
-		       (cons 'inexpr-statement (point)))
-		      ((and c-lambda-key
-			    (looking-at c-lambda-key))
-		       (cons 'inlambda (point))))))
-	res))))
+    (let ((block-follows (eq (char-after) ?{)))
+      ;; Look at the character after point only as a last resort when
+      ;; we can't disambiguate.
+      (if (and block-follows
+	       (progn (c-backward-syntactic-ws) (> (point) lim))
+	       (eq (char-before) ?\()
+	       (not (and c-special-brace-lists
+			 (c-looking-at-special-brace-list))))
+	  (cons 'inexpr-statement (point))
+	(let (res)
+	  (while (and (not res)
+		      (= (c-backward-token-1 1 t lim) 0)
+		      (>= (point) lim)
+		      (looking-at "(\\|\\w\\|\\s_\\|\\."))
+	    (setq res
+		  (cond ((and block-follows
+			      c-inexpr-class-key
+			      (looking-at c-inexpr-class-key))
+			 (cons 'inexpr-class (point)))
+			((and c-inexpr-block-key
+			      (looking-at c-inexpr-block-key))
+			 (cons 'inexpr-statement (point)))
+			((and c-lambda-key
+			      (looking-at c-lambda-key))
+			 (cons 'inlambda (point))))))
+	  res)))))
 
 (defun c-looking-at-inexpr-block-backward (&optional lim)
   ;; Returns non-nil if we're looking at the end of an in-expression
