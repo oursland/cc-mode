@@ -6,7 +6,7 @@
 
 <body bgcolor="#ffffff" text="#000000" link="#6060ff" vlink="#4848d0">
 
-<table cellpadding="2" cellspacing="1" width="100%">
+<table cellpadding="4" cellspacing="2" width="100%">
   <tr>
     <td><font size="+2"><b>CC Mode</b></font></td>
     <td><font size="+1"><b><?php 
