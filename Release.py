@@ -305,7 +305,7 @@ def main():
 	bump_release()
 
     if tag:
-	tag_release()
+	tag_release(untag_first)
 
     if package:
 	pkg_release(fat)
