@@ -688,7 +688,9 @@ This function does not do any hidden buffer changes."
   ;; `syntax-table'.
   (if c-use-extents
       ;; XEmacs.
-      `(map-extents 'delete-extent nil ,from ,to nil nil ,property)
+      `(map-extents (lambda (ext ignored)
+		      (delete-extent ext))
+		    nil ,from ,to nil nil ,property)
     ;; Emacs.
     `(remove-text-properties ,from ,to '(,(eval property) nil))))
 
