@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-05 20:51:21 $
-;; Version:         $Revision: 2.179 $
+;; Last Modified:   $Date: 1992-08-05 20:54:05 $
+;; Version:         $Revision: 2.180 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-05 20:51:21 $|$Revision: 2.179 $|
+;; |$Date: 1992-08-05 20:54:05 $|$Revision: 2.180 $|
 
 
 ;; ======================================================================
@@ -292,9 +292,9 @@ forewarned!  Un-escaped characters in comment regions will break many
 things such as some indenting and blinking of parenthesis.
 
 Note further that only the default set of characters will be escaped
-automatically as they are typed. But entering \\[c++-tame-comments]
-(c++-tame-comments) will escape all characters which are members of
-this set, found in comments throughout the file.
+automatically as they are typed. But, entering c++-tame-comments
+(\\[c++-tame-comments]) will escape all characters which are members
+of this set, and which are found in comments throughout the file.
 
 This (mis-)feature will probably not be necessary in emacs 19.")
 
@@ -333,7 +333,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.179 $
+  "Major mode for editing C++ code.  $Revision: 2.180 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -534,7 +534,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.179 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.180 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2119,7 +2119,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.179 $"
+(defconst c++-version "$Revision: 2.180 $"
   "c++-mode version number.")
 
 (defun c++-version ()
