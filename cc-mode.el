@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.341 $
-;; Last Modified:   $Date: 1993-06-15 21:47:25 $
+;; Version:         $Revision: 2.342 $
+;; Last Modified:   $Date: 1993-06-15 22:04:43 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-15 21:47:25 $|$Revision: 2.341 $|
+;; |$Date: 1993-06-15 22:04:43 $|$Revision: 2.342 $|
 
 ;;; Code:
 
@@ -481,7 +481,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.341 $
+  "Major mode for editing C++ code.  $Revision: 2.342 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -699,7 +699,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.341 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.342 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -2103,7 +2103,7 @@ BOD is the beginning of the C++ definition."
 		  (goto-char indent-point)
 		  (c++-backward-syntactic-ws bod)
 		  (if (= (preceding-char) ?,)
-		      c-indent-level
+		      c-continued-statement-offset
 		    0))))
 	    ((progn
 	       (beginning-of-line)
@@ -2158,7 +2158,7 @@ BOD is the beginning of the C++ definition."
 			(c++-backward-syntactic-ws bod))
 		      (forward-line 1)
 		      (not (setq in-meminit-p (looking-at "[ \t]*:"))))))
-	     c-indent-level)
+	     c-continued-statement-offset)
 	    (t
 	     (if (c++-in-parens-p)
 		 ;; we are perhaps inside a member init call
@@ -2392,7 +2392,7 @@ BOD is the `beginning-of-defun' point."
       in-enum-p)
     0)
    ;; assume we're not in a list of enums or static array elems
-   (t c-indent-level)
+   (t c-continued-statement-offset)
    ))
    
 
@@ -2712,7 +2712,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.341 $"
+(defconst c++-version "$Revision: 2.342 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
