@@ -107,9 +107,6 @@ other non-CC Mode mode that calls `c-initialize-cc-mode'
 (make-variable-buffer-local 'c-buffer-is-cc-mode)
 (put 'c-buffer-is-cc-mode 'permanent-local t)
 
-(defvar c-initialize-on-load nil
-  "When non-nil, CC Mode initializes when the cc-mode.el file is loaded.")
-  
 
 
 ;; Other modes and packages which depend on CC Mode should do the
@@ -419,16 +416,6 @@ Key bindings:
       nil
       "Dear Barry and Martin,"
       ))))
-
-
-;; Initialize everything.  This is backwards compatible with older
-;; .emacs files that just did a (require 'cc-mode) and expected
-;; everything to work (e.g. for CC Mode 4).  Maybe this should just
-;; happen by default, but previous versions of CC Mode 5 did not
-;; initialize by default.  I'm really not sure what is the right thing
-;; to do.
-(when c-initialize-on-load
-  (c-initialize-cc-mode))
 
 
 (provide 'cc-mode)
