@@ -136,6 +136,13 @@ release.
     <code>newline-and-indent</code>, you might want to switch to this
     function.
 
+    <p><li><code>c-hanging-comment-starter-p</code> and
+    <code>c-hanging-comment-ender-p</code> are obsolete.
+
+    <p>The new comment handling code no longer consults these two
+    variables.  It instead detects how the "hangingness" of the
+    comment delimiters looks like currently and simply keeps them that
+    way.
   </ul>
 
   <p><li>Fixes to IDL mode.

@@ -701,6 +701,10 @@ Sat Jul 31 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	* cc-vars.el (c-old-style-variable-behavior): New variable to
 	revert to the old style init behavior.
 
+	* cc-vars.el (c-hanging-comment-starter-p,
+	c-hanging-comment-ender-p): These variables are now obsolete and
+	therefore removed.
+
 	* cc-vars.el (c-file-style, c-file-offsets): Made always
 	buffer local.
 
