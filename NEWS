@@ -1,0 +1,121 @@
+CC Mode NEWS -- user visible changes. -*- mode:outline -*-
+
+* Changes in 5.24
+
+Note: See also changes in 5.23 to get the complete list of additions
+since the last public release.
+
+** c-default-style can now take an alist that associates a style to
+every major mode language.  There's no longer a hardcoded change to
+"java" style in Java mode, but the new semantics are
+backward-compatible, so the same thing will happen unless
+c-default-style is changed.
+
+** It's now possible to put a list as the offset on a syntactic
+symbol.  The list is evaluated recursively until a non-nil offset is
+found.  This is useful to combine several lineup functions to act in a
+prioritized order on a single line.  However, none of the supplied
+lineup functions use this feature currently.
+
+** New syntactic symbol catch-clause, which is used on the "catch" and
+"finally" lines in try-catch constructs in C and Java.
+
+** New cleanup brace-catch-brace on c-cleanup-list, which does for
+"catch" lines what brace-elseif-brace does for "else if" lines.
+
+** The braces of Java anonymous inner classes are treated separately
+from the braces of other classes in auto-newline mode.  Two new
+symbols inexpr-class-open and inexpr-class-close may be used on
+c-hanging-braces-alist to control the automatic newlines used for
+anonymous classes.
+
+* Changes in 5.23
+
+Note: Due to the extensive changes, this version was a beta test
+release that was never publically announced.
+
+** Support for the Pike language added, along with new Pike specific
+syntactic symbols: inlambda, lambda-intro-cont
+
+** Support for Java anonymous classes via new syntactic symbol
+inexpr-class.  New syntactic symbol inexpr-statement for Pike
+support and gcc-style statements inside expressions.  New lineup
+function c-lineup-inexpr-stat.
+
+** New syntactic symbol brace-entry-open which is used in brace lists
+(i.e. static initializers) when a list entry starts with an open
+brace.  These used to be recognized as brace-list-entry's.
+c-electric-brace also recognizes brace-entry-open braces
+(brace-list-entry's can no longer be electrified).
+
+** New command c-indent-line-or-region, not bound by default.
+
+** Improvements to M-C-h (c-mark-function).
+
+** Parentheses are now electric (via the new command c-electric-paren)
+for auto-reindenting lines when parens are typed.
+
+** In "gnu" style, inline-open offset is now set to zero.
+
+** Uniform handling of the inclass syntactic symbol.  The indentation
+associated with it is now always relative to the class opening brace.
+This means that the indentation behavior has changed in some
+circumstances, but only if you've put anything besides 0 on the
+class-open syntactic symbol (none of the default styles do that).
+
+** c-enable-xemacs-performance-kludge-p is set to nil by default,
+since for Emacs-friendly styles (i.e. where the top-level opening
+brace starts in column zero) setting this variable to t can degrade
+performance significantly.
+
+* Changes in 5.22
+
+Note: There was no net release of 5.22!  This version went only to the
+XEmacs developers and was primarily a bug fix release.
+
+* Changes in 5.21
+
+This is a bug fix release only.
+
+* Changes in 5.20
+
+** Martin Stjernholm has joined the cc-mode-help@python.org
+maintainers!
+
+** Multiline macros are now handled, both as they affect indentation,
+and as recognized syntax.  New syntactic symbol cpp-macro-cont is
+assigned to second and subsequent lines of a multiline macro
+definition.
+
+** A new style "user" which captures all non-hook-ified
+(i.e. top-level) .emacs file variable setings and customizations.
+Style "cc-mode" is an alias for "user" and is deprecated.  "gnu" style
+is still the default however.
+
+** "java" style now conforms to Sun's JDK coding style.
+
+** New commands c-beginning-of-defun, c-end-of-defun which are not
+bound by default to C-M-a and C-M-e.
+
+** New and improved implementations of M-a (c-beginning-of-statement)
+and M-e (c-end-of-statement).
+
+** C++ namespace blocks are supported, with new syntactic symbols
+namespace-open, namespace-close, and innamespace.
+
+** File local variable settings of c-file-style and c-file-offsets
+makes the style variables local to that buffer only.
+
+** New indentation functions c-lineup-close-paren,
+c-indent-one-line-block, c-lineup-dont-change.
+
+** Various Imenu patches (thanks to Masatake Yamato, Jan Dubois, and
+Peter Pilgrim).
+
+** Performance improvements.  Some improvements affect only Emacs or
+only XEmacs (see the variable c-enable-xemacs-performance-kludge-p).
+
+** Improvements (hopefully!) to the way CC Mode is loaded.  You should
+now be able to do a (require 'cc-mode) to get the entire package
+loaded properly for customization in your .emacs file.  A new variable
+c-initialize-on-load controls this and is set to t by default.
