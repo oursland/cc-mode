@@ -2878,7 +2878,7 @@ Keywords are recognized and not considered identifiers."
 	      (c-add-syntax 'class-open placeholder))
 	     ;; CASE 5A.3: brace list open
 	     ((save-excursion
-		(c-beginning-of-statement-1 lim t)
+		(c-beginning-of-decl-1 lim)
 		(if (looking-at "typedef\\>[^_]")
 		    (progn (c-forward-sexp 1)
 			   (c-forward-syntactic-ws indent-point)))
