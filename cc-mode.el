@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-30 21:39:23 $
-;; Version:         $Revision: 2.128 $
+;; Last Modified:   $Date: 1992-07-06 15:02:14 $
+;; Version:         $Revision: 2.129 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-30 21:39:23 $|$Revision: 2.128 $|
+;; |$Date: 1992-07-06 15:02:14 $|$Revision: 2.129 $|
 
 
 ;; ======================================================================
@@ -97,10 +97,21 @@
 
 (if c++-mode-syntax-table
     ()
-  (setq c++-mode-syntax-table (copy-syntax-table c-mode-syntax-table))
-  (modify-syntax-entry ?/ ". 12" c++-mode-syntax-table)
-  (modify-syntax-entry ?\n ">" c++-mode-syntax-table)
-  (modify-syntax-entry ?\' "\"" c++-mode-syntax-table))
+  (setq c++-mode-syntax-table (make-syntax-table))
+  (modify-syntax-entry ?\\ "\\"    c++-mode-syntax-table)
+  (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
+  (modify-syntax-entry ?*  ". 23"  c++-mode-syntax-table)
+  (modify-syntax-entry ?+  "."     c++-mode-syntax-table)
+  (modify-syntax-entry ?-  "."     c++-mode-syntax-table)
+  (modify-syntax-entry ?=  "."     c++-mode-syntax-table)
+  (modify-syntax-entry ?%  "."     c++-mode-syntax-table)
+  (modify-syntax-entry ?<  "."     c++-mode-syntax-table)
+  (modify-syntax-entry ?>  "."     c++-mode-syntax-table)
+  (modify-syntax-entry ?&  "."     c++-mode-syntax-table)
+  (modify-syntax-entry ?|  "."     c++-mode-syntax-table)
+  (modify-syntax-entry ?\' "\""    c++-mode-syntax-table)
+  (modify-syntax-entry ?\n ">"     c++-mode-syntax-table)
+  )
 
 (defvar c++-tab-always-indent
   (if (boundp 'c-tab-always-indent) c-tab-always-indent t)
@@ -235,7 +246,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.128 $
+  "Major mode for editing C++ code.  $Revision: 2.129 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1083,6 +1094,17 @@ characters to escape are defined in the variable c++-untame-characters."
 ;; ======================================================================
 ;; defuns for parsing syntactic elements
 ;; ======================================================================
+(defun c++-parse-state (&optional limit)
+  "Determinate the syntactic state of the code at point.
+Iteratively uses parse-partial-sexp from point to LIMIT and returns
+the result of parse-partial-sexp at point.  LIMIT is optional and
+defaults to point-max."
+  (setq limit (or limit (point-max)))
+  (let (state (parse-sexp-ignore-comments t))
+    (while (< (point) limit)
+      (setq state (parse-partial-sexp (point) limit 0)))
+    state))
+
 (defun c++-at-top-level-p (&optional wrt)
   "Return t if point is not inside a containing C++ expression, nil
 if it is embedded in an expression.  If optional WRT is supplied
@@ -1094,10 +1116,8 @@ containing class definition (useful for inline functions)."
 	  state containing-sexp parse-start
 	  (here (point)))
       (c++-beginning-of-defun)
-      (while (< (point) indent-point)
-	(setq parse-start (point))
-	(setq state (parse-partial-sexp (point) indent-point 0))
-	(setq containing-sexp (car (cdr state))))
+      (setq state (c++-parse-state indent-point)
+	    containing-sexp (nth 1 state))
       (or (null containing-sexp)
 	  (and wrt
 	       ;; check to see if we're at the top level with respect
@@ -1924,7 +1944,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.128 $"
+(defconst c++-version "$Revision: 2.129 $"
   "c++-mode version number.")
 
 (defun c++-version ()
