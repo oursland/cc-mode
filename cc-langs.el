@@ -304,11 +304,6 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 	       ;; Don't override style variables unless
 	       ;; `c-old-style-variable-behavior' is set.
 	       (not c-old-style-variable-behavior))
-  ;; Complete the missing style variables.  It's already been done in
-  ;; `c-initialize-builtin-style' if `c-old-style-variable-behavior'
-  ;; is set.
-  (unless c-old-style-variable-behavior
-    (c-complete-stylevars))
   ;; Fix things up for paragraph recognition and filling inside
   ;; comments by using c-comment-prefix-regexp in the relevant places.
   ;; We use adaptive filling for this to make it possible to use
