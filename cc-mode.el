@@ -445,6 +445,7 @@ Key bindings:
 		   'c-label-minimum-indentation
 		   'defun-prompt-regexp
 		   'tab-width
+		   'comment-column
 		   ;; A brain-damaged XEmacs only variable that, if
 		   ;; set to nil can cause all kinds of chaos.
 		   'signal-error-on-buffer-boundary
