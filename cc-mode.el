@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.330 $
-;; Last Modified:   $Date: 1993-05-24 23:18:21 $
+;; Version:         $Revision: 2.331 $
+;; Last Modified:   $Date: 1993-05-24 23:23:05 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-05-24 23:18:21 $|$Revision: 2.330 $|
+;; |$Date: 1993-05-24 23:23:05 $|$Revision: 2.331 $|
 
 ;;; Code:
 
@@ -148,7 +148,6 @@
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 (defconst c++-emacs-features
-;;(defun c++-emacs-features ()
   (let ((mse-spec 'no-dual-comments)
 	(scanner 'v18))
     (if (= 7 (length (parse-partial-sexp (point) (point))))
@@ -486,7 +485,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.330 $
+  "Major mode for editing C++ code.  $Revision: 2.331 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -707,7 +706,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.330 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.331 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2658,7 +2657,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.330 $"
+(defconst c++-version "$Revision: 2.331 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
