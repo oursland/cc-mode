@@ -28,15 +28,12 @@
 ;;; Commentary:
 ;;
 ;; This file contains routines that help guess the cc-mode style in a
-;; particular region of C, C++, or Objective-C code.  It is provided
-;; for example and experimentation only.  It is not supported in
-;; anyway.  Some folks have asked for a style guesser and the best way
-;; to show my thoughts on the subject is with this sample code.  Feel
-;; free to improve upon it in anyway you'd like.  Please send me the
-;; results.  Note that style guessing is lossy!
+;; particular region/buffer of C, C++, or Objective-C code.  It is
+;; provided for example and experimentation only.  It is not supported
+;; in anyway.  Note that style guessing is lossy!
 ;;
 ;; The way this is intended to be run is for you to mark a region of
-;; code to guess the style of, then run the command, cc-guess-region.
+;; code to guess the style of, then run the command, `cc-guess-region'.
 
 ;;; Code:
 
@@ -55,60 +52,160 @@
 (defvar cc-guessed-style nil
   "Currently guessed style.")
 
-(defvar cc-guess-conversions
+(defvar cc-guess-delta-accumulator nil)
+;; Accumulated sampled indent information.  Information is represented
+;; in a list.  Each element in it has following structure:
+;; 
+;;  (syntactic-symbol ((indentation-delta1 . number-of-times1)
+;; 		       (indentation-delta2 . number-of-times2)
+;; 		       ...))
+;; 
+;; This structure is built by `cc-guess-accumulate-delta'.
+;; 
+;; Here we call the pair (indentation-delta1 . number-of-times1) a
+;; counter.  `cc-guess-sort-delta-accumulator' sorts the order of
+;; counters by number-of-times.
+
+(defconst cc-guess-conversions
   '((c . c-lineup-C-comments)
     (inher-cont . c-lineup-multi-inher)
     (string . -1000)
     (comment-intro . c-lineup-comment)
     (arglist-cont-nonempty . c-lineup-arglist)
+    (arglist-close . c-lineup-close-paren)
     (cpp-macro . -1000)))
   
 
-(defun cc-guess-region (start end &optional reset)
-  "Sets `c-offset-alist' indentation values based on region of code.
+(defun cc-guess (&optional accumulate)
+  "Apply `cc-guess-region' on the whole current buffer.
+
+If given a prefix argument (or if the optional argument ACCUMULATE is
+non-nil) then the previous guess is extended, otherwise a new guess is
+made from scratch."
+  (interactive "P")
+  (cc-guess-region (point-min) (point-max) accumulate))
+
+(defun cc-guess-region (start end &optional accumulate)
+  "Set `c-offset-alist' indentation values based on region of code.
 Every line of code in the region is examined and the indentation
-values of the various syntactic symbols in `c-offset-alist' is
-guessed.  The first such positively identified indentation is used, so
-if an inconsistent style exists in the C code, the guessed indentation
-may be incorrect.
+values of the various syntactic symbols in `c-offset-alist' are
+guessed.  Frequencies of use are taken into account, so minor
+inconsistencies in the indentation style shouldn't produce wrong
+guesses.
 
-Note that the larger the region to guess in, the slower the
-guessing. Previous guesses can be concatenated together, unless the
-optional RESET is provided.
+The guessed style are put into `cc-guessed-style'.  It's also merged
+into `c-offsets-alist'.  Guessed offsets takes precedence over
+existing ones on `c-offsets-alist'.
 
-See `cc-guess-write-style' to find out how to save the guessed style,
-and `cc-guess-view-style' for viewing the guessed style."
+If given a prefix argument (or if the optional argument ACCUMULATE is
+non-nil) then the previous guess is extended, otherwise a new guess is
+made from scratch.
+
+Note that the larger the region to guess in, the slower the guessing."
   (interactive "r\nP")
-  (if (consp reset)
-      (setq cc-guessed-style nil))
-  (save-excursion
-    (goto-char start)
-    (while (< (point) end)
-      (c-save-buffer-state
+  (let ((delta-accumulator (when accumulate cc-guess-delta-accumulator))
+	(reporter (when (fboundp 'make-progress-reporter)
+		    (make-progress-reporter "Sampling Indentation " start end))))
+    ;;
+    ;; Sampling stage
+    ;;
+    (save-excursion
+      (goto-char start)
+      (while (< (point) end)
+	(c-save-buffer-state
 	    ((syntax (c-guess-basic-syntax))
-	     (relpos (cdr (car syntax)))
-	     (symbol (car (car syntax)))
-	     point-indent relpos-indent)
-	;; TBD: for now I can't guess indentation when more than 1
-	;; symbol is on the list, nor for symbols without relpos's
-	(if (or (/= 1 (length syntax))
-		(not (numberp relpos))
-		;; also, don't try to reguess an already guessed
-		;; symbol
-		(assq symbol cc-guessed-style))
-	    nil
-	  (back-to-indentation)
-	  (setq point-indent (current-column)
-		relpos-indent (save-excursion
-				(goto-char relpos)
-				(current-column)))
-	  ;; guessed indentation is the difference between point's and
-	  ;; relpos's current-column indentation
-	  (setq cc-guessed-style
-		(cons (cons symbol (- point-indent relpos-indent))
-		      cc-guessed-style))
-	  ))
-      (forward-line 1))))
+	     (relpos (car (cdr (car syntax))))
+	     (symbol (car (car syntax))))
+	  ;; TBD: for now I can't guess indentation when more than 1
+	  ;; symbol is on the list, nor for symbols without relpos's
+	  ;;
+	  ;; I think it is too stricted for ((topmost-intro) (comment-intro)).
+	  ;; -- Masatake
+	  (unless (or ; (/= 1 (length syntax))
+		   (not (numberp relpos))
+		   (eq (line-beginning-position)
+		       (line-end-position)))
+	    (setq delta-accumulator (cc-guess-accumulate-delta
+				     delta-accumulator
+				     symbol
+				     (- (progn (back-to-indentation)
+					       (current-column) )
+					(save-excursion
+					  (goto-char relpos)
+					  (current-column)))))))
+	(when reporter (progress-reporter-update reporter (point)))
+	(forward-line 1)))
+    (when reporter (progress-reporter-done reporter))
+    ;;
+    ;; Guessing stage
+    ;;
+    (setq delta-accumulator (cc-guess-sort-delta-accumulator  
+			     delta-accumulator)
+	  cc-guess-delta-accumulator delta-accumulator)
+    (let* ((typical-style (cc-guess-make-style delta-accumulator))
+	   (merged-style (cc-guess-merge-styles 
+			  (copy-list cc-guess-conversions)
+			  typical-style)))
+      (setq cc-guessed-style merged-style
+	    c-offsets-alist (cc-guess-merge-styles
+			     merged-style
+			     c-offsets-alist)))))
+
+(defun cc-guess-accumulate-delta (accumulator symbol delta)
+  ;; Added SYMBOL and DELTA to ACCUMULATOR.  See
+  ;; `cc-guess-delta-accumulator' about the structure of ACCUMULATOR.
+  (let* ((entry    (assoc symbol accumulator))
+	 (counters (cdr entry))
+	 counter)
+    (if entry
+	(progn
+	  (setq counter (assoc delta counters))
+	  (if counter
+	      (setcdr counter (1+ (cdr counter)))
+	    (setq counters (cons (cons delta 1) counters))
+	    (setcdr entry counters))
+	  accumulator)
+      (cons (cons symbol (cons (cons delta 1) nil)) accumulator))))
+
+(defun cc-guess-sort-delta-accumulator (accumulator)
+  ;; Sort the each element of ACCUMULATOR by the number-of-times.  See
+  ;; `cc-guess-delta-accumulator' for more details.
+  (mapcar
+   (lambda (entry)
+     (let ((symbol (car entry))
+	   (counters (cdr entry)))
+       (cons symbol (sort counters 
+			  (lambda (a b)
+			    (if (> (cdr a) (cdr b))
+				t
+			      (and 
+			       (eq (cdr a) (cdr b))
+			       (< (car a) (car b)))))))))
+   accumulator))
+	
+(defun cc-guess-make-style (accumulator)
+  ;; Throw away the rare cases in accumulator and make a style structure.
+  (mapcar 
+   (lambda (entry)
+     (cons (car entry) 
+	   (car (car (cdr entry)))))
+   accumulator))
+
+(defun cc-guess-merge-styles (strong weak)
+  ;; Merge two styles into one.  When two styles has the same symbol
+  ;; entry, give STRONG priority over WEAK.
+  (mapc
+   (lambda (weak-elt)
+     (unless (assoc (car weak-elt) strong)
+       (setq strong (cons weak-elt strong))))
+   weak)
+  strong)
+
+(defun cc-guess-view-style ()
+  "Show `cc-guessed-style'."
+  (interactive)
+  (with-output-to-temp-buffer "*Indentation Guessing Result*"
+    (pp cc-guessed-style)))
 
 
 (cc-provide 'cc-guess)
