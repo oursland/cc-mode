@@ -255,15 +255,6 @@ With universal argument, inserts the analysis as a comment on that line."
 	(forward-line)))))
 
 
-(defun c-calculate-state (arg prevstate)
-  ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
-  ;; arg is nil or zero, toggle the state. If arg is negative, turn
-  ;; the state off, and if arg is positive, turn the state on
-  (if (or (not arg)
-	  (zerop (setq arg (prefix-numeric-value arg))))
-      (not prevstate)
-    (> arg 0)))
-
 (defun c-toggle-syntactic-indentation (&optional arg)
   "Toggle syntactic indentation.
 Optional numeric ARG, if supplied, turns on syntactic indentation when
@@ -1044,7 +1035,7 @@ defun."
   (if (< arg 0)
       (c-end-of-defun (- arg))
     (while (> arg 0)
-      (let ((state (nreverse (c-parse-state)))
+      (let ((state (reverse (c-parse-state)))
 	    prevbod bod)
 	(while (and state (not bod))
 	  (setq bod (car state)
