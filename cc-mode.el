@@ -6,7 +6,8 @@
 ;;
 ;; Mar, 1992 (Barry Warsaw, bwarsaw@cen.com)
 ;;   added feature to indent comment lines different from code lines
-;;   also fixed c-auto-newline for double colons and }; syntax
+;;   changed c-auto-newline to c++-auto-newline for col0 only autonewline brace option
+;;   also fixed c++-auto-newline for double colons and }; syntax
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -145,9 +146,11 @@ Variables controlling indentation style:
     Non-nil means TAB in C mode should always reindent the current line,
     regardless of where in the line point is when the TAB command is used.
     Default is t.
- c-auto-newline
-    Non-nil means automatically newline before and after braces,
-    and after colons and semicolons, inserted in C code.
+ c++-auto-newline
+    Nil means don't automatically insert newlines before and after braces,
+    and after colons and semicolons, inserted in C++ code.  t means always
+    automatically insert newlines, and 'brace-column0-only means only insert
+    newlines before left braces iff the left brace ends up in column zero.
  c-indent-level
     Indentation of C statements within surrounding block.
     The surrounding block's indentation is the indentation
@@ -244,17 +247,18 @@ no args,if that value is non-nil."
 (defun electric-c++-brace (arg)
   "Insert character and correct line's indentation."
   (interactive "P")
+  (debug)
   (let (insertpos)
     (if (and (not arg)
 	     (eolp)
 	     (or (save-excursion
 		   (skip-chars-backward " \t")
 		   (bolp))
-		 (if c-auto-newline (progn (c++-indent-line) (newline) t))))
+		 (if c++-auto-newline (progn (c++-indent-line) (newline) t))))
 	(progn
 	  (insert last-command-char)
 	  (c++-indent-line)
-	  (if c-auto-newline
+	  (if c++-auto-newline
 	      (progn
 		(newline)
 		;; (newline) may have done auto-fill
@@ -276,15 +280,19 @@ indentation. if first non-whitespace character on line is not a slash,
 then we just insert the slash.  in this case use indent-for-comment if
 you want to add a comment to the end of a line."
   (interactive "P")
-  (if (memq (preceding-char) '(?/ ?*))
-      (electric-c++-terminator arg)
-    (self-insert-command (prefix-numeric-value arg))))
+  (let ((c++-auto-newline c++-auto-newline))
+    (if (= (preceding-char) ?/)
+	(setq c++-auto-newline nil))
+    (if (memq (preceding-char) '(?/ ?*))
+	(electric-c++-terminator arg)
+      (self-insert-command (prefix-numeric-value arg)))))
 
 (defun electric-c++-star (arg)
   "Works with electric-c++-slash to auto indent C style comment lines."
   (interactive "P")
   (if (= (preceding-char) ?/)
-      (electric-c++-terminator arg)
+      (let ((c++-auto-newline nil))
+	(electric-c++-terminator arg))
     (self-insert-command (prefix-numeric-value arg))))
 
 (defun electric-c++-semi (arg)
@@ -292,7 +300,7 @@ you want to add a comment to the end of a line."
   (interactive "P")
   (let ((insertion-point (point)))
     (save-excursion
-      (c++-backward-to-noncomment (point-min))
+      (skip-chars-backward " \t\n")
       (if (= (preceding-char) ?})
 	  (delete-region insertion-point (point)))))
   (electric-c++-terminator arg))
@@ -300,14 +308,14 @@ you want to add a comment to the end of a line."
 (defun electric-c++-colon (arg)
   "Electrify colon.  De-auto-newline double colons."
   (interactive "P")
-  (let ((c-auto-newline c-auto-newline)
+  (let ((c++-auto-newline c++-auto-newline)
 	(insertion-point (point)))
     (save-excursion
-      (c++-backward-to-noncomment (point-min))
+      (skip-chars-backward " \t\n")
       (if (= (preceding-char) ?:)
 	  (progn
 	    (delete-region insertion-point (point))
-	    (setq c-auto-newline nil))))
+	    (setq c++-auto-newline nil))))
     (electric-c++-terminator arg)))
 
 (defun electric-c++-terminator (arg)
@@ -340,7 +348,7 @@ you want to add a comment to the end of a line."
 	(progn
 	  (insert last-command-char)
 	  (c++-indent-line)
-	  (and c-auto-newline
+	  (and c++-auto-newline
 	       (not (c-inside-parens-p))
 	       (progn
 		 ;; the new marker object, used to be just an integer
@@ -349,7 +357,7 @@ you want to add a comment to the end of a line."
 		 (set-marker insertpos (1- (point)))
 		 ;; do this before the newline, since in auto fill can break
 		 (newline)
-		 (c-indent-line)))
+		 (c++-indent-line)))
 	  (save-excursion
 	    (if insertpos (goto-char (1+ insertpos)))
 	    (delete-char -1))))
