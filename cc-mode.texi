@@ -4,6 +4,9 @@
 @comment %**start of header (This is for running Texinfo on a region)
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@comment No overfull hbox marks in the dvi file.
+@finalout
+
 @setfilename  cc-mode.info
 @settitle     CC Mode Version 5 Documentation
 @footnotestyle end
@@ -1184,25 +1187,21 @@ necessary.
 @vindex c-comment-prefix-regexp
 @vindex comment-prefix-regexp (c-)
 @cindex comment line prefix
+@vindex comment-start
+@vindex comment-end
+@vindex comment-start-skip
+@vindex paragraph-start
+@vindex paragraph-separate
+@vindex paragraph-ignore-fill-prefix
+@vindex adaptive-fill-mode
+@vindex adaptive-fill-regexp
+@vindex adaptive-fill-first-line-regexp
 To make Emacs recognize comments and treat text in them as normal
 paragraphs, @ccmode{} makes several standard
-variables@footnote{@vindex comment-start
-@code{comment-start},
-@vindex comment-end
-@code{comment-end},
-@vindex comment-start-skip
-@code{comment-start-skip},
-@vindex paragraph-start
-@code{paragraph-start},
-@vindex paragraph-separate
-@code{paragraph-separate},
-@vindex paragraph-ignore-fill-prefix
-@code{paragraph-ignore-fill-prefix},
-@vindex adaptive-fill-mode
-@code{adaptive-fill-mode},
-@vindex adaptive-fill-regexp
-@code{adaptive-fill-regexp}, and
-@vindex adaptive-fill-first-line-regexp
+variables@footnote{@code{comment-start}, @code{comment-end},
+@code{comment-start-skip}, @code{paragraph-start},
+@code{paragraph-separate}, @code{paragraph-ignore-fill-prefix},
+@code{adaptive-fill-mode}, @code{adaptive-fill-regexp}, and
 @code{adaptive-fill-first-line-regexp}.} buffer local and modifies them
 according to the language syntax and the style of line decoration that
 starts every line in a comment.  The style variable
@@ -1274,9 +1273,9 @@ both paragraphs will be filled with the left margins kept intact:
 @findex setup-filladapt (c-)
 @findex filladapt-mode
 @vindex filladapt-mode
-@cindex filladapt mode
+@cindex Filladapt mode
 It's also possible to use other adaptive filling packages, notably Kyle
-E. Jones' filladapt package@footnote{It's available from
+E. Jones' Filladapt package@footnote{It's available from
 @uref{http://www.wonderworks.com/}.  As of version 2.12, it does however
 lack a feature that makes it work suboptimally when
 @code{c-comment-prefix-regexp} matches the empty string (which it does
@@ -1284,7 +1283,7 @@ by default).  A patch for that is available from
 @uref{http://www.python.org/emacs/cc-mode/,, the @ccmode{} site}.},
 which handles things like bulleted lists nicely.  There's a convenience
 function @code{c-setup-filladapt} that tunes the relevant variables in
-filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
+Filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
 something like this in your @file{.emacs}:
 @example
 @group
@@ -1299,17 +1298,17 @@ something like this in your @file{.emacs}:
 
 @vindex c-block-comment-prefix
 @vindex block-comment-prefix (c-)
+@vindex c-comment-continuation-stars
+@vindex comment-continuation-stars (c-)
 Normally the comment line prefix inserted for a new line inside a
 comment is deduced from other lines in it.  However there's one
 situation when there's no clue about how the prefix should look, namely
 when a block comment is broken for the first time.  The string in the
-style variable
-@code{c-block-comment-prefix}@footnote{@vindex c-comment-continuation-stars
-@vindex comment-continuation-stars (c-)
-In versions before 5.26, this variable was called
-@code{c-comment-continuation-stars}.  As a compatibility measure,
-@ccmode{} still uses the value on that variable if it's set.} is used in
-that case.  It defaults to @samp{* }, which makes a comment
+style variable @code{c-block-comment-prefix}@footnote{In versions before
+5.26, this variable was called @code{c-comment-continuation-stars}.  As
+a compatibility measure, @ccmode{} still uses the value on that variable
+if it's set.} is used in that case.  It defaults to @samp{* }, which
+makes a comment
 @example
 
 /* Got O(n^2) here, which is a Bad Thing. */
@@ -1817,18 +1816,18 @@ syntactic symbol is needed to get the desired indentation.
 @xref{Indentation Functions}, and @ref{Custom Indentation Functions},
 for details about them.
 
+@vindex c-strict-syntax-p
+@vindex strict-syntax-p (c-)
 The offset can also be a list, in which case it is evaluated recursively
 using the semantics described above.  The first element of the list that
 returns a non-@code{nil} value succeeds and the evaluation stops.  If
 none of the list elements return a non-@code{nil} value, then an offset
-of 0 (zero) is used@footnote{@vindex c-strict-syntax-p
-@vindex strict-syntax-p (c-)
-There is however a variable @code{c-strict-syntax-p} that, when set to
-non-@code{nil}, will cause an error to be signalled in that case.  It's
-now considered obsolete since it doesn't work well with some of the
-alignment functions that now returns @code{nil} instead of zero to be
-more usable in lists.  You should therefore leave
-@code{c-strict-syntax-p} set to @code{nil}.}.
+of 0 (zero) is used@footnote{There is however a variable
+@code{c-strict-syntax-p} that, when set to non-@code{nil}, will cause an
+error to be signalled in that case.  It's now considered obsolete since
+it doesn't work well with some of the alignment functions that now
+returns @code{nil} instead of zero to be more usable in lists.  You
+should therefore leave @code{c-strict-syntax-p} set to @code{nil}.}.
 
 So, for example, because most of the default offsets are defined in
 terms of @code{+}, @code{-}, and @code{0}, if you like the general
@@ -2162,15 +2161,15 @@ local to specific buffers by executing
 @noindent
 in e.g. a language hook function (@pxref{Hooks}).
 
+@vindex c-old-style-variable-behavior
+@vindex old-style-variable-behavior (c-)
 @item
 The default value of any style variable is the special symbol
 @code{set-from-style}.  Variables that are still set to that symbol when
 a @ccmode{} buffer is initialized will be set according to the current
-style, otherwise they will keep their current
-value.@footnote{@vindex c-old-style-variable-behavior
-@vindex old-style-variable-behavior (c-)
-This is a big change from versions of @ccmode{} earlier than 5.26, where
-such settings would get overridden by the style system unless special
+style, otherwise they will keep their current value.@footnote{This is a
+big change from versions of @ccmode{} earlier than 5.26, where such
+settings would get overridden by the style system unless special
 precautions were taken.  That was changed since it was counterintuitive
 and confusing, especially to novice users.  If your configuration
 depends on the old overriding behavior, you can set the variable
@@ -3939,9 +3938,9 @@ to handle most of the common comment styles.  Some examples:
     Free form text comments:
  In comments with a long delimiter line at the
  start, the indentation is kept unchanged for lines
- that doesn't start with a nonempty comment line
- prefix.  The delimiter line is whatever matches
- the @code{comment-start-skip} regexp.
+ that start with an empty comment line prefix.  The
+ delimiter line is whatever matches the
+ @code{comment-start-skip} regexp.
 **************************************************/
 @end group
 
