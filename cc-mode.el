@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.23 $
-;; Last Modified:   $Date: 1993-09-28 22:41:38 $
+;; Version:         $Revision: 3.24 $
+;; Last Modified:   $Date: 1993-09-28 22:57:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-28 22:41:38 $|$Revision: 3.23 $|
+;; |$Date: 1993-09-28 22:57:27 $|$Revision: 3.24 $|
 
 ;;; Code:
 
@@ -542,7 +542,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.23 $
+  "Major mode for editing C++ code.  $Revision: 3.24 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -734,7 +734,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.23 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.24 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1441,33 +1441,15 @@ of the expression are preserved."
 		       (skip-chars-forward " \t")
 		       (not (looking-at c++-class-key)))))
 	      (setq this-indent
-		    (+ this-indent
-		       (save-excursion
-			 (c++-compound-offset
-			  (progn
-			    (c++-backward-syntactic-ws (car contain-stack))
-			    (preceding-char))
-			  (car contain-stack)
-			  (c++-point 'bod)))
-		       ;; are we in a member init list?
-		       (if (not (looking-at "[ \t]*:"))
-			   (save-excursion
-			     (let ((lim (car contain-stack)))
-			       (c++-backward-syntactic-ws lim)
-			       (while (and (< lim (point))
-					   (= (preceding-char) ?,))
-				 (beginning-of-line)
-				 (c++-backward-syntactic-ws))
-			       (forward-line 1)
-			       (beginning-of-line)
-			       (if (looking-at "[ \t]*:")
-				   (- (save-excursion
-					(skip-chars-forward " \t")
-					(point))
-				      (point))
-				 0)))
-			 0)
-		       )))
+		    (save-excursion
+		      (c++-cont-indent
+		       (point)
+		       (progn
+			 (c++-backward-syntactic-ws (car contain-stack))
+			 (preceding-char))
+		       (car contain-stack))
+		      )
+		    ))
 	     ;; check for stream operator
 	     ((looking-at "\\(<<\\|>>\\)")
 	      (setq this-indent (c++-calculate-indent)))
@@ -2674,7 +2656,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.23 $"
+(defconst c++-version "$Revision: 3.24 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
