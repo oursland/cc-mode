@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.267 $
-;; Last Modified:   $Date: 1994-02-24 23:09:43 $
+;; Version:         $Revision: 3.268 $
+;; Last Modified:   $Date: 1994-02-24 23:34:08 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-24 23:09:43 $|$Revision: 3.267 $|
+;; |$Date: 1994-02-24 23:34:08 $|$Revision: 3.268 $|
 
 ;;; Code:
 
@@ -770,7 +770,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.267 $
+cc-mode Revision: $Revision: 3.268 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -801,7 +801,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.267 $
+cc-mode Revision: $Revision: 3.268 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1122,6 +1122,7 @@ the brace is inserted inside a literal."
 	 blink-paren-function		; emacs19
 	 blink-paren-hook		; emacs18
 	 semantics newlines
+	 delete-temp-newline
 	 ;; shut this up
 	 (c-echo-semantic-information-p nil))
     (if (or literal
@@ -1129,11 +1130,13 @@ the brace is inserted inside a literal."
 	    (not (looking-at "[ \t]*$")))
 	(c-insert-special-chars arg)
       (setq semantics (progn
-			;; only insert a newline if there is non-whitespace behind us
+			;; only insert a newline if there is
+			;; non-whitespace behind us
 			(if (save-excursion
 			      (skip-chars-backward " \t")
 			      (not (bolp)))
-			    (newline))
+			    (progn (newline)
+				   (setq delete-temp-newline t)))
 			(self-insert-command (prefix-numeric-value arg))
 			(c-guess-basic-semantics bod))
 	    newlines (and
@@ -1155,8 +1158,9 @@ the brace is inserted inside a literal."
 	    (forward-line -1)
 	    (c-indent-via-language-element bod)
 	    (goto-char (- (point-max) pos)))
-	;; must remove the newline we just stuck in
-	(delete-region (- (point) 2) (1- (point)))
+	;; must remove the newline we just stuck in (if we really did it)
+	(and delete-temp-newline
+	     (delete-region (- (point) 2) (1- (point))))
 	;; since we're hanging the brace, we need to recalculate
 	;; semantics
 	(setq semantics (c-guess-basic-semantics bod)))
@@ -3224,7 +3228,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.267 $"
+(defconst c-version "$Revision: 3.268 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
