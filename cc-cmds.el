@@ -151,7 +151,7 @@ function in the variable `c-delete-function' is called."
 	      (delete-region (point) here)
 	    (funcall c-delete-function 1))))
     ;; act just like c-electric-backspace
-    (call-interactively 'c-electric-backspace)))
+    (c-electric-backspace arg)))
 
 (defun c-electric-pound (arg)
   "Electric pound (`#') insertion.
