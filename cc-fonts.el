@@ -1165,10 +1165,25 @@ other easily recognizable things.  Used on level 2 and higher."
 	    (if (catch 'at-decl-or-cast
 		  (goto-char type-end)
 		  (c-forward-syntactic-ws)
-		  (let ((start (point)) (paren-depth 0)
-			got-prefix-before-parens got-prefix
-			got-parens got-identifier got-suffix
-			pos)
+		  (let ((start (point)) (paren-depth 0) pos
+			;; True if there's a non-open-paren match of
+			;; `c-type-decl-prefix-key'.
+			got-prefix
+			;; True if the declarator is surrounded by a
+			;; parenthesis pair.
+			got-parens
+			;; True if the first match of `c-type-decl-prefix-key'
+			;; is before any open parenthesis that surrounds the
+			;; declarator.
+			got-prefix-before-parens
+			;; True if there is an identifier in the declarator.
+			got-identifier
+			;; True if there's a non-close-paren match of
+			;; `c-type-decl-suffix-key'.
+			got-suffix
+			;; The earlier values of `at-type', `type-start' and
+			;; `type-end' if we've shifted the type backwards.
+			identifier-type identifier-start identifier-end)
 
 		    ;; Skip over type decl prefix operators.  (Note
 		    ;; similar code in `c-font-lock-declarators'.)
@@ -1249,11 +1264,15 @@ other easily recognizable things.  Used on level 2 and higher."
 					    (not arglist-match))
 					(setq pos (c-up-list-forward (point)))
 					(eq (char-before pos) ?\)))
-				 (setq at-type (if (eq prev-at-type 'prefix)
+				 (setq identifier-type at-type
+				       identifier-start type-start
+				       identifier-end type-end
+				       at-type (if (eq prev-at-type 'prefix)
 						   t
 						 prev-at-type)
 				       type-start (if prev-at-type
-						      prev-type-start)
+						      prev-type-start
+						    start-pos)
 				       type-end (if prev-at-type
 						    prev-type-end
 						  start-pos)
@@ -1266,6 +1285,11 @@ other easily recognizable things.  Used on level 2 and higher."
 				 t))
 		      (c-forward-syntactic-ws))
 
+		    ;; Now we've collected info about various characteristics
+		    ;; of the construct we're looking at.  Below follows a
+		    ;; decision tree based on that.  It's ordered to check
+		    ;; more certain signs before less certain ones.
+
 		    (when (or (= (point) start) (> paren-depth 0))
 		      ;; We haven't found anything.
 		      (throw 'at-decl-or-cast nil))
@@ -1277,16 +1301,10 @@ other easily recognizable things.  Used on level 2 and higher."
 			    ;; so it's a declaration.
 			    (throw 'at-decl-or-cast t))
 
-			  (when (and
-				 got-suffix
-				 (not arglist-match)
-				 (looking-at c-after-suffixed-type-decl-key))
-			    (throw 'at-decl-or-cast t))
-
 			  (when (looking-at "=[^=]\\|\(")
 			    ;; There's an initializer after the type decl
 			    ;; expression so we know it's a declaration.
-			    ;; (Checking for `(' here normally has no effect
+			    ;; (Checking for "(" here normally has no effect
 			    ;; since it's probably matched as a suffix.
 			    ;; That's often not a problem, however.)
 			    (throw 'at-decl-or-cast t)))
@@ -1325,40 +1343,40 @@ other easily recognizable things.  Used on level 2 and higher."
 			;; the type in `prev-*'.
 			(throw 'at-decl-or-cast nil))
 
-		      (when (and
-			     got-parens
-			     (not got-identifier)
-			     (not got-prefix)
-			     (not arglist-match)
-			     (not (eq at-type t))
-			     ;; Got an empty paren pair and a preceding type
-			     ;; that probably really is the identifier.  Check
-			     ;; for a function declaration without return type.
-			     (or
-			      (looking-at c-after-suffixed-type-decl-key)
-			      (and (c-major-mode-is 'c++-mode)
-				   ;; In C++ we also check if it's the end of
-				   ;; and declaration and the identifier is a
-				   ;; known type, since (con|de)structors use
-				   ;; the class name as identifier.
-				   (eq (char-after) ?\;)
-				   (or (eq at-type 'found)
-				       (and (eq (char-after type-start) ?~)
-					    ;; `at-type' probably won't be
-					    ;; 'found for destructors since
-					    ;; the "~" is then part of the
-					    ;; type name being checked against
-					    ;; the list of known types, so do
-					    ;; a check without that operator.
-					    (c-check-type (1+ type-start)
-							  type-end))))))
-			;; Set things up to shift the type back a step and
-			;; still recognize it as a declaration.
-			(setq at-decl-or-cast t)
-			(unless prev-at-type
-			  (setq prev-at-type t
-				prev-type-end start-pos))
-			(throw 'at-decl-or-cast nil)))
+		      (when (and got-parens
+				 (not got-prefix)
+				 (not arglist-match)
+				 (not (eq at-type t)))
+			;; Got an empty paren pair and a preceding type that
+			;; probably really is the identifier.  Shift the type
+			;; backwards to make the last one the identifier.
+			;; This is analogous to the "backtracking" done inside
+			;; the `c-type-decl-suffix-key' loop above.
+			(setq identifier-type at-type
+			      identifier-start type-start
+			      identifier-end type-end
+			      at-type (if (eq prev-at-type 'prefix)
+					  t
+					prev-at-type)
+			      type-start (if prev-at-type
+					     prev-type-start
+					   start-pos)
+			      type-end (if prev-at-type
+					   prev-type-end
+					 start-pos)
+			      prev-at-type nil
+			      got-parens nil
+			      got-identifier t
+			      got-suffix t
+			      paren-depth 0)))
+
+		    (when (and got-identifier
+			       got-suffix
+			       (not arglist-match)
+			       (looking-at c-after-suffixed-type-decl-key))
+		      ;; A declaration according to
+		      ;; `c-after-suffixed-type-decl-key'.
+		      (throw 'at-decl-or-cast t))
 
 		    (unless (looking-at (if arglist-match "[,\)]" "[,;]"))
 		      ;; If this is a declaration it should end here, so check
@@ -1388,6 +1406,25 @@ other easily recognizable things.  Used on level 2 and higher."
 		      ;; since the result isn't used.  We therefore choose to
 		      ;; recognize it as a declaration.  Do not allow a suffix
 		      ;; since it could then be a function call.
+		      (throw 'at-decl-or-cast t))
+
+		    (when (and (c-major-mode-is 'c++-mode)
+			       ;; In C++ we check if the identifier is a known
+			       ;; type, since (con|de)structors use the class
+			       ;; name as identifier.  We've always shifted
+			       ;; over the identifier as a type and then
+			       ;; backed up in this case.
+			       identifier-type
+			       (or (eq identifier-type 'found)
+				   (and (eq (char-after identifier-start) ?~)
+					;; `at-type' probably won't be 'found
+					;; for destructors since the "~" is
+					;; then part of the type name being
+					;; checked against the list of known
+					;; types, so do a check without that
+					;; operator.
+					(c-check-type (1+ identifier-start)
+						      identifier-end))))
 		      (throw 'at-decl-or-cast t))
 
 		    ;; If we had a complete symbol table here (which rules out
