@@ -214,6 +214,9 @@ For use with the variable `java-mode-hook'."
   (make-local-variable 'outline-level)
   (make-local-variable 'adaptive-fill-regexp)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
+  ;; X/Emacs 20 only
+  (and (boundp 'comment-line-break-function)
+       (make-local-variable 'comment-line-break-function))
   ;; Emacs 19.30 and beyond only, AFAIK
   (if (boundp 'fill-paragraph-function)
       (progn
