@@ -49,6 +49,16 @@
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
 
 
+(defun c-calculate-state (arg prevstate)
+  ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
+  ;; arg is nil or zero, toggle the state. If arg is negative, turn
+  ;; the state off, and if arg is positive, turn the state on
+  (if (or (not arg)
+	  (zerop (setq arg (prefix-numeric-value arg))))
+      (not prevstate)
+    (> arg 0)))
+
+
 (defvar c-in-literal-cache t)
 (defvar c-parsing-error nil)
 
@@ -1053,6 +1063,26 @@ end with a line continuation backslash."
 	    (setq pos nil))))
       c-state-cache)))
 
+;; Debug tool to catch cache inconsistencies.
+(defvar c-debug-parse-state nil)
+(unless (fboundp 'c-real-parse-state)
+  (fset 'c-real-parse-state (symbol-function 'c-parse-state)))
+(defun c-debug-parse-state ()
+  (let ((res1 (c-real-parse-state)) res2)
+    (let ((c-state-cache nil))
+      (setq res2 (c-real-parse-state)))
+    (unless (equal res1 res2)
+      (error "c-parse-state inconsistency: using cache: %s, from scratch: %s"
+	     res1 res2))
+    res1))
+(defun c-toggle-parse-state-debug (&optional arg)
+  (interactive "P")
+  (setq c-debug-parse-state (c-calculate-state arg c-debug-parse-state))
+  (fset 'c-parse-state (symbol-function (if c-debug-parse-state
+					    'c-debug-parse-state
+					  'c-real-parse-state)))
+  (c-keep-region-active))
+
 (defun c-check-state-cache (beg end old-length)
   ;; Used on `after-change-functions' to adjust `c-state-cache'.
   ;; Prefer speed to finesse here, since there will be many more calls
@@ -1072,7 +1102,7 @@ end with a line continuation backslash."
 
 (defun c-whack-state-before (bufpos state)
   ;; Whack off any state information from STATE which lies before
-  ;; BUFPOS.
+  ;; BUFPOS.  Not destructive on state.
   (let* ((newstate (list nil))
 	 (ptr newstate)
 	 car)
@@ -1087,7 +1117,7 @@ end with a line continuation backslash."
 
 (defun c-whack-state-after (bufpos state)
   ;; Whack off any state information from STATE which lies at or after
-  ;; BUFPOS.
+  ;; BUFPOS.  Not destructive on state.
   (catch 'done
     (while state
       (let ((car (car state)))
