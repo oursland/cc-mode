@@ -1171,69 +1171,63 @@ extremely useful.  In fact, you might find yourself wanting
 hungry-delete in @strong{all} your editing modes!
 
 @kindex DEL
-@kindex Backspace
-In a nutshell, when hungry-delete mode is enabled, hitting the
-@key{Backspace} key@footnote{I say ``hit the @key{Backspace} key'' but
-what I really mean is ``when Emacs receives the @code{BackSpace} key
-event''.  The difference usually isn't significant to most users, but
-advanced users will realize that under window systems such as X, any
-physical key (keycap) on the keyboard can be configured to generate any
-keysym, and thus any Emacs key event.  Also, the use of Emacs on TTYs
-will affect which keycap generates which key event.  From a pedantic
-point of view, here we are only concerned with the key event that
-Emacs receives.} will consume all preceding whitespace, including
-newlines and tabs.  This can really cut down on the number of
-@key{Backspace}'s you have to type if, for example you made a mistake on
+@kindex C-d
+
+In a nutshell, when hungry-delete mode is enabled, hitting the @key{DEL}
+or @key{C-d} keys will consume all preceding or following whitespace,
+including newlines and tabs.  This can really cut down on the number of
+times you have to hit these keys if, for example, you made a mistake on
 the preceding line.
 
 @findex c-electric-backspace
 @findex electric-backspace (c-)
 @vindex c-backspace-function
 @vindex backspace-function (c-)
+@findex backward-delete-char-untabify
+
+By default, when you hit the @key{DEL} key @ccmode{} runs the command
+@code{c-electric-backspace}, which deletes any amount of whitespace in
+the backwards direction.  When used with a prefix argument, or in a
+literal (@pxref{Auto-newline Insertion}), or when hungry-delete mode is
+disabled, the function contained in the @code{c-backspace-function}
+variable is called with the prefix argument.  This variable is set to
+@code{backward-delete-char-untabify} by default.
+
+@findex c-electric-delete-forward
+@findex electric-delete-forward (c-)
+@vindex c-delete-function
+@vindex delete-function (c-)
+@findex delete-char
+
+The @code{c-electric-delete-forward} function, which is bound to
+@key{C-d} by default, works just like above but in the forward
+direction.  When it doesn't do an ``electric'' deletion of the following
+whitespace, it calls the function in @code{c-delete-function} with its
+prefix argument.  The @code{c-delete-function} variable is set to
+@code{delete-char} by default.
+
+Above we have only talked about the @key{DEL} and @key{C-d} key events,
+without connecting them to the physical keys commonly known as
+@key{Backspace} and @key{Delete}.  The default behavior of those two
+depends on the flavor of (X)Emacs you are using.
 
 @findex c-electric-delete
 @findex electric-delete (c-)
-@vindex c-delete-function
-@vindex delete-function (c-)
-@cindex literal
-
-@findex backward-delete-char-untabify
-
-By default, when you hit the @key{Backspace} key @ccmode{} runs the
-command @code{c-electric-backspace}, which deletes text in the backwards
-direction.  When deleting a single character, or when @key{Backspace} is
-hit in a literal (@pxref{Auto-newline Insertion}), or when hungry-delete
-mode is disabled, the function contained in the
-@code{c-backspace-function} variable is called with one argument (the
-number of characters to delete).  This variable is set to
-@code{backward-delete-char-untabify} by default.
-
 @vindex delete-key-deletes-forward
-@findex delete-char
 
-The default behavior of the @key{Delete} key depends on the flavor of
-Emacs you are using.  By default in XEmacs 20.3 and beyond, the
-@key{Delete} key is bound to @code{c-electric-delete}.  You control the
-direction that the @key{Delete} key deletes by setting the variable
-@code{delete-key-deletes-forward}, a standard XEmacs variable.  When
-this variable is non-@code{nil} and hungry-delete mode is enabled,
-@code{c-electric-delete} will consume all whitespace @emph{following}
-point.  When @code{delete-key-deletes-forward} is @code{nil}, it deletes
-all whitespace @emph{preceding} point@footnote{i.e. it literally calls
-@code{c-electric-backspace}.}  When deleting a single character, or if
-@key{Delete} is hit in a literal, or hungry-delete mode is disabled, the
-function contained in @code{c-delete-function} is called with one
-argument: the number of characters to delete.  This variable is set to
-@code{delete-char} by default.
+In XEmacs 20.3 and beyond, the @key{Backspace} key is bound to
+@code{c-electric-backspace} and the @key{Delete} key is bound to
+@code{c-electric-delete}.  You control the direction it deletes in by
+setting the variable @code{delete-key-deletes-forward}, a standard
+XEmacs variable.  When this variable is non-@code{nil},
+@code{c-electric-delete} will do forward deletion with
+@code{c-electric-delete-forward}, otherwise it does backward deletion
+with @code{c-electric-backspace}.
 
-In Emacs 19 or Emacs 20, both the @key{Delete} and @key{Backspace} keys
-are bound to @code{c-electric-backspace}, however you can change this by
-explicitly binding @code{[delete]}@footnote{E.g. to
-@code{c-electric-delete} in your @file{.emacs} file.  Note however, that
-Emacs 20 does not have a standard variable such as
-@code{delete-key-deletes-forward}.}.
-
-XEmacsen older than 20.3 behave similar to Emacs 19 and Emacs 20.
+In other Emacs versions, @ccmode{} doesn't bind either @key{Backspace}
+or @key{Delete}.  In XEmacs 19 and Emacs prior to 21 that means that
+it's up to you to fix them.  Emacs 21 automatically binds them as
+appropriate to @key{DEL} and @key{C-d}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2328,7 +2322,7 @@ places.}.
 
 @cindex Linux style
 @item
-@code{linux} --- C coding standard for Linux development.
+@code{linux} --- C coding standard for Linux (the kernel).
 
 @cindex Python style
 @item
