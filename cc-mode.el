@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.319 $
-;; Last Modified:   $Date: 1993-05-10 18:09:28 $
+;; Version:         $Revision: 2.320 $
+;; Last Modified:   $Date: 1993-05-10 18:18:12 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-05-10 18:09:28 $|$Revision: 2.319 $|
+;; |$Date: 1993-05-10 18:18:12 $|$Revision: 2.320 $|
 
 ;;; Code:
 
@@ -465,7 +465,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.319 $
+  "Major mode for editing C++ code.  $Revision: 2.320 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -686,7 +686,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.319 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.320 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1425,7 +1425,7 @@ c++-untame-characters."
 (defun c++-match-paren ()
   "Jumps to the paren matching the one under point, if there is one."
   (interactive)
-  (let ((parse-sexp-ignore-comments (memq 'v19 c++-emacs-features))
+  (let ((parse-sexp-ignore-comments (memq 'v19 c++-emacs-features)))
     (cond
      ((looking-at "[\(\[{]")
       (forward-sexp 1)
@@ -1552,7 +1552,7 @@ comments, and preprocessor directives. Search no farther back than
 optional LIM.  If LIM is ommitted, beginning-of-defun is used."
   (save-restriction
     (let ((lim (or lim (c++-point 'bod)))
-	  done boi char)
+	  donep boi char)
       (if (< lim (point))
 	  (unwind-protect
 	      (progn
@@ -1659,7 +1659,7 @@ used."
   (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-1)
   (fset 'c++-in-literal 'c++-in-literal-quick))
  ((memq 'v19 c++-emacs-features)
-  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-1))
+  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-1)
   (fset 'c++-in-literal 'c++-in-literal-quick))
  )
 
@@ -2611,7 +2611,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.319 $"
+(defconst c++-version "$Revision: 2.320 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
