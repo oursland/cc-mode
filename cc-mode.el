@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.131 $
-;; Last Modified:   $Date: 1993-12-21 17:11:57 $
+;; Version:         $Revision: 3.132 $
+;; Last Modified:   $Date: 1993-12-21 18:27:26 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-21 17:11:57 $|$Revision: 3.131 $|
+;; |$Date: 1993-12-21 18:27:26 $|$Revision: 3.132 $|
 
 ;;; Code:
 
@@ -118,6 +118,7 @@ reported and the semantic symbol is ignored.")
     ;;(block-open            . c-adaptive-block-open)
     (block-open            . 0)
     (block-close           . 0)
+    (brace-list-open       . 0)
     (statement             . 0)
     (statement-cont        . +)
     (statement-block-intro . +)
@@ -257,10 +258,11 @@ Valid symbols are:
 (defvar c-hanging-braces-alist nil
   "*Controls the insertion of newlines before and after open braces.
 This variable contains an association list with elements of the
-following form: (LANGSYM . (NL-LIST)).
+following form: (LANGELEM . (NL-LIST)).
 
-LANGSYSM can be any of: defun-open, class-open, inline-open, and
-block-open (as defined by the `c-offsets-alist' variable).
+LANGELEM can be any of: defun-open, class-open, inline-open,
+block-open, or brace-list-open (as defined by the `c-offsets-alist'
+variable).
 
 NL-LIST can contain any combination of the symbols `before' or
 `after'. It also be nil.  When an open brace is inserted, the language
@@ -635,7 +637,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.131 $
+CC-MODE REVISION: $Revision: 3.132 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -668,7 +670,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.131 $
+CC-MODE REVISION: $Revision: 3.132 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1018,6 +1020,7 @@ the brace is inserted inside a literal."
 		      (or (assq (car (or (assq 'defun-open semantics)
 					 (assq 'class-open semantics)
 					 (assq 'inline-open semantics)
+					 (assq 'brace-list-open semantics)
 					 (assq 'block-open semantics)))
 				c-hanging-braces-alist)
 			  (if (= last-command-char ?{)
@@ -2179,7 +2182,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
-		(let ((decl (c-search-uplist-for-classkey (point))))
+		(let ((decl (and (eq major-mode 'c++-mode)
+				 (c-search-uplist-for-classkey (point)))))
 		  (and decl
 		       (setq placeholder (cdr decl)))
 		  ))
@@ -2187,7 +2191,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ;; CASE 4A.2: inline defun open
 	     (inclass-p
 	      (c-add-semantics 'inline-open (cdr inclass-p)))
-	     ;; CASE 4A.3: ordinary defun open
+	     ;; CASE 4A.3: brace list open
+	     ((save-excursion
+		(c-beginning-of-statement lim)
+		(setq placeholder (point))
+		(or (looking-at "\\<enum\\>")
+		    (= char-before-ip ?=)))
+	      (c-add-semantics 'brace-list-open placeholder))
+	     ;; CASE 4A.4: ordinary defun open
 	     (t
 	      (c-add-semantics 'defun-open (c-point 'bol))
 	      )))
@@ -2410,22 +2421,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
-	   ;; CASE 7A: func local class opening brace
-	   ((and (= char-after-ip ?{)
-		 (save-excursion
-		   (goto-char indent-point)
-		   (skip-chars-forward " \t{")
-		   (let ((decl (c-search-uplist-for-classkey (point))))
-		     (and decl
-			  (setq placeholder (cdr decl)))
-		     )))
-	    (c-add-semantics 'class-open placeholder))
-	   ;; CASE 7B: iostream insertion or extraction operator
-	   ((looking-at "<<\\|>>")
-	    (goto-char placeholder)
-	    (while (and (re-search-forward "<<\\|>>" indent-point 'move)
-			(c-in-literal)))
-	    (c-add-semantics 'stream-op (c-point 'boi)))
 	   ;; CASE 7C: substatement
 	   ((save-excursion
 	      (goto-char placeholder)
@@ -2436,6 +2431,32 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (c-add-semantics 'substatement placeholder)
 	    (if (= char-after-ip ?{)
 		(c-add-semantics 'block-open)))
+	   ;; CASE 7A: open braces for class or brace-lists
+	   ((= char-after-ip ?{)
+	    (cond
+	     ;; CASE 7A.1: class-open
+	     ((save-excursion
+		(goto-char indent-point)
+		(skip-chars-forward " \t{")
+		(let ((decl (and (eq major-mode 'c++-mode)
+				 (c-search-uplist-for-classkey (point)))))
+		  (and decl
+		       (setq placeholder (cdr decl)))
+		  ))
+	      (c-add-semantics 'class-open placeholder))
+	     ;; CASE 7A.2: brace-list-open
+	     ((or (save-excursion
+		    (goto-char placeholder)
+		    (looking-at "\\<enum\\>"))
+		  (= char-before-ip ?=))
+	      (c-add-semantics 'brace-list-open placeholder))
+	     ))
+	   ;; CASE 7B: iostream insertion or extraction operator
+	   ((looking-at "<<\\|>>")
+	    (goto-char placeholder)
+	    (while (and (re-search-forward "<<\\|>>" indent-point 'move)
+			(c-in-literal)))
+	    (c-add-semantics 'stream-op (c-point 'boi)))
 	   ;; CASE 7D: continued statement. find the accurate
 	   ;; beginning of statement or substatement
 	   (t
@@ -2801,7 +2822,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.131 $"
+(defconst c-version "$Revision: 3.132 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
