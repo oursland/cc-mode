@@ -5,7 +5,7 @@
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.21 $
+;; $Revision: 1.22 $
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -1175,7 +1175,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.21 $"
+(defconst c++-version "$Revision: 1.22 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
@@ -1227,6 +1227,7 @@ c++-mode for a particular buffer."
      varlist)
     (insert "     )\n")
     (indent-region (point-min) (point-max) nil)
+    (goto-char (point-min))
     (switch-to-buffer-other-window buffer)
     (message "Please insert buffer %s into your mail message."
 	     c++-mode-state-buffer)))
