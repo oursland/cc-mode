@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-02 15:18:25 $
-;; Version:         $Revision: 2.87 $
+;; Last Modified:   $Date: 1992-06-05 21:13:54 $
+;; Version:         $Revision: 2.88 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,8 +43,12 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-02 15:18:25 $|$Revision: 2.87 $|
+;; |$Date: 1992-06-05 21:13:54 $|$Revision: 2.88 $|
 
+
+;; ======================================================================
+;; user definable variables
+;; ======================================================================
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
 (define-abbrev-table 'c++-mode-abbrev-table ())
@@ -196,8 +200,14 @@ Note further that only the default set of characters can be
 automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
+(defvar c++-default-macroize-column 78
+  "*Column to insert backslashes.")
+
+;; ======================================================================
+;; c++-mode main entry point
+;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.87 $
+  "Major mode for editing C++ code.  $Revision: 2.88 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -410,6 +420,10 @@ in C++ code based on its context."
 	       (current-column))
 	   comment-column))))))		; otherwise indent at comment column.
 
+
+;; ======================================================================
+;; most command level (interactive) and related
+;; ======================================================================
 (defun c++-set-auto-hungry-state (auto-p hungry-p)
   "Set auto/hungry to state indicated by AUTO-P and HUNGRY-P.
 Update mode line to indicate state to user."
@@ -765,85 +779,204 @@ of the expression are preserved."
 	       (if indent-p (insert-tab))))
 	    (t (c++-indent-line bod))))))
 
-(defun c++-indent-line (&optional bod)
-  "Indent current line as C++ code.
-Return the amount the indentation changed by.  Optional BOD is the
-point of the beginning of the C++ definition."
-  (let* ((bod (or bod (c++-point-bod)))
-	 (indent (c++-calculate-indent nil bod))
-	 beg shift-amt
-	 (comcol nil)
-	 (case-fold-search nil)
-	 (pos (- (point-max) (point))))
-    (beginning-of-line)
-    (setq beg (point))
-    (cond ((eq indent nil)
-	   (setq indent (current-indentation)))
-	  ((eq indent t)
-	   (setq indent (calculate-c-indent-within-comment)))
-	  ((looking-at "[ \t]*#")
-	   (setq indent 0))
-	  ((save-excursion
-	     (and (not (back-to-indentation))
-		  (looking-at "//\\|/\\*")
-		  (/= (setq comcol (current-column)) 0)))
-	   ;; we've found a comment-only line. we now must try to
-	   ;; determine if the line is a continuation from a comment
-	   ;; on the previous line.  we check to see if the comment
-	   ;; starts in comment-column and if so, we don't change its
-	   ;; indentation.
-	   (if (= comcol comment-column)
-	       (setq indent comment-column)
-	     (setq indent (+ indent c++-comment-only-line-offset))))
-	  (t
-	   (skip-chars-forward " \t")
-	   (if (listp indent) (setq indent (car indent)))
-	   (cond ((looking-at "\\(public\\|private\\|protected\\):")
-		  (setq indent (+ indent c++-access-specifier-offset)))
-		 ((looking-at "default:")
-		  (setq indent (+ indent c-label-offset)))
-		 ((or (looking-at "case\\b")
-		      (and (looking-at "[A-Za-z]")
-			   (save-excursion
-			     (forward-sexp 1)
-			     (looking-at ":[^:]"))))
-		  (setq indent (max 1 (+ indent c-label-offset))))
-		 ((and (looking-at "else\\b")
-		       (not (looking-at "else\\s_")))
-		  (setq indent (save-excursion
-				 (c-backward-to-start-of-if)
-				 (current-indentation))))
-		 ((looking-at "friend\[ \t]\\(class\\|struct\\)[ \t]")
-		  (setq indent (+ indent c++-friend-offset)))
-		 ((= (following-char) ?\))
-		  (setq indent (+ (- indent c-indent-level)
-				  (if (save-excursion
-					(forward-char 1)
-					(c++-at-top-level-p))
-				      (- c++-block-close-brace-offset)
-				    c++-block-close-brace-offset))))
-		 ((= (following-char) ?})
-		  (setq indent (+ (- indent c-indent-level)
-				  (if (save-excursion
-					(forward-char 1)
-					(c++-at-top-level-p))
-				      (- c++-block-close-brace-offset)
-				    c++-block-close-brace-offset))))
-		 ((= (following-char) ?{)
-		  (setq indent (+ indent c-brace-offset))))))
-    (skip-chars-forward " \t")
-    (setq shift-amt (- indent (current-column)))
-    (if (zerop shift-amt)
-	(if (> (- (point-max) pos) (point))
-	    (goto-char (- (point-max) pos)))
-      (delete-region beg (point))
-      (indent-to indent)
-      ;; If initial point was within line's indentation,
-      ;; position after the indentation.  Else stay at same point in text.
-      (if (> (- (point-max) pos) (point))
-	  (goto-char (- (point-max) pos))))
-    shift-amt))
+(defun c++-indent-exp ()
+  "Indent each line of the C++ grouping following point."
+  (interactive)
+  (let ((indent-stack (list nil))
+	(contain-stack (list (point)))
+	(case-fold-search nil)
+	restart outer-loop-done inner-loop-done state ostate
+	this-indent last-sexp last-depth
+	at-else at-brace
+	(opoint (point))
+	(next-depth 0))
+    (save-excursion
+      (forward-sexp 1))
+    (save-excursion
+      (setq outer-loop-done nil)
+      (while (and (not (eobp)) (not outer-loop-done))
+	(setq last-depth next-depth)
+	;; Compute how depth changes over this line
+	;; plus enough other lines to get to one that
+	;; does not end inside a comment or string.
+	;; Meanwhile, do appropriate indentation on comment lines.
+	(setq inner-loop-done nil)
+	(while (and (not inner-loop-done)
+		    (not (and (eobp) (setq outer-loop-done t))))
+	  (setq ostate state)
+	  ;; fix by reed@adapt.net.com
+	  ;; must pass in the return past the end of line, so that
+	  ;; parse-partial-sexp finds it, and recognizes that a "//"
+	  ;; comment is over. otherwise, state is set that we're in a
+	  ;; comment, and never gets unset, causing outer-loop to only
+	  ;; terminate in (eobp). old:
+	  ;;(setq state (parse-partial-sexp (point)
+	  ;;(progn (end-of-line) (point))
+	  ;;nil nil state))
+	  (let ((start (point))
+		(line-end (progn (end-of-line) (point)))
+		(end (progn (forward-char) (point))))
+	    (setq state (parse-partial-sexp start end nil nil state))
+	    (goto-char line-end))
+	  (setq next-depth (car state))
+	  (if (and (car (cdr (cdr state)))
+		   (>= (car (cdr (cdr state))) 0))
+	      (setq last-sexp (car (cdr (cdr state)))))
+	  (if (or (nth 4 ostate))
+	      (c++-indent-line))
+	  (if (or (nth 3 state))
+	      (forward-line 1)
+	    (setq inner-loop-done t)))
+	(if (<= next-depth 0)
+	    (setq outer-loop-done t))
+	(if outer-loop-done
+	    nil
+	  ;; If this line had ..))) (((.. in it, pop out of the levels
+	  ;; that ended anywhere in this line, even if the final depth
+	  ;; doesn't indicate that they ended.
+	  (while (> last-depth (nth 6 state))
+	    (setq indent-stack (cdr indent-stack)
+		  contain-stack (cdr contain-stack)
+		  last-depth (1- last-depth)))
+	  (if (/= last-depth next-depth)
+	      (setq last-sexp nil))
+	  ;; Add levels for any parens that were started in this line.
+	  (while (< last-depth next-depth)
+	    (setq indent-stack (cons nil indent-stack)
+		  contain-stack (cons nil contain-stack)
+		  last-depth (1+ last-depth)))
+	  (if (null (car contain-stack))
+	      (setcar contain-stack (or (car (cdr state))
+					(save-excursion (forward-sexp -1)
+							(point)))))
+	  (forward-line 1)
+	  (skip-chars-forward " \t")
+	  (if (eolp)
+	      nil
+	    (if (and (car indent-stack)
+		     (>= (car indent-stack) 0))
+		;; Line is on an existing nesting level.
+		;; Lines inside parens are handled specially.
+		(if (/= (char-after (car contain-stack)) ?{)
+		    (setq this-indent (car indent-stack))
+		  ;; Line is at statement level.
+		  ;; Is it a new statement?  Is it an else?
+		  ;; Find last non-comment character before this line
+		  (save-excursion
+		    (setq at-else (looking-at "else\\W"))
+		    (setq at-brace (= (following-char) ?{))
+		    (c++-backward-to-noncomment opoint)
+		    (if (not (memq (preceding-char) '(nil ?\, ?\; ?} ?: ?{)))
+			;; Preceding line did not end in comma or semi;
+			;; indent this line  c-continued-statement-offset
+			;; more than previous.
+			(progn
+			  (c-backward-to-start-of-continued-exp
+			   (car contain-stack))
+			  (setq this-indent
+				(+ c-continued-statement-offset
+				   (current-column)
+				   (if at-brace c-continued-brace-offset 0))))
+		      ;; Preceding line ended in comma or semi;
+		      ;; use the standard indent for this level.
+		      (if at-else
+			  (progn (c-backward-to-start-of-if opoint)
+				 (setq this-indent (current-indentation)))
+			(setq this-indent (car indent-stack))))))
+	      ;; Just started a new nesting level.
+	      ;; Compute the standard indent for this level.
+	      (let ((val (c++-calculate-indent
+			  (if (car indent-stack)
+			      (- (car indent-stack))))))
+		(setcar indent-stack
+			(setq this-indent val))))
+	    ;; Adjust line indentation according to its contents
+ 	    (if (looking-at "\\(public\\|private\\|protected\\):")
+ 		(setq this-indent (- this-indent c-indent-level)))
+ 	    (if (or (looking-at "case[ \t]")
+ 		    (and (looking-at "[A-Za-z]")
+ 			 (save-excursion
+ 			   (forward-sexp 1)
+ 			   (looking-at ":[^:]"))))
+ 		(setq this-indent (max 0 (+ this-indent c-label-offset))))
+	    (if (looking-at "friend[ \t]\\(class\\|struct\\)[ \t]")
+		(setq this-indent (+ this-indent c++-friend-offset)))
+	    (if (= (following-char) ?})
+		(setq this-indent (- this-indent c-indent-level)))
+	    (if (= (following-char) ?{)
+		(setq this-indent (+ this-indent c-brace-offset)))
+	    ;; Put chosen indentation into effect.
+	    (or (= (current-column) this-indent)
+		(= (following-char) ?\#)
+		(progn
+		  (delete-region (point) (progn (beginning-of-line) (point)))
+		  (indent-to this-indent)))
+	    ;; Indent any comment following the text.
+	    (or (looking-at comment-start-skip)
+		(if (re-search-forward
+		     comment-start-skip
+		     (save-excursion (end-of-line) (point)) t)
+		    (progn (indent-for-comment) (beginning-of-line))))))))))
 
+(defun c++-fill-C-comment ()
+  "Fill a C style comment."
+  (interactive)
+  (save-excursion
+    (let ((save fill-prefix))
+      (beginning-of-line 1)
+      (save-excursion
+	(re-search-forward comment-start-skip
+			   (save-excursion (end-of-line) (point))
+			   t)
+	(goto-char (match-end 0))
+	(set-fill-prefix))
+      (while (looking-at fill-prefix)
+	(forward-line -1))
+      (forward-line 1)
+      (insert-string "\n")
+      (fill-paragraph nil)
+      (delete-char -1)
+      (setq fill-prefix save))))
+
+(defun c++-insert-header ()
+  "Insert header denoting C++ code at top of buffer."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (insert "// "
+	    "This may look like C code, but it is really "
+	    "-*- C++ -*-"
+	    "\n\n")))
+
+(defun c++-tame-comments ()
+  "Backslashifies all untamed in comment regions found in the buffer.
+This is the best available workaround for an emacs syntax bug in
+scan-lists which exists at least as recently as v18.58.  Untamed
+characters to escape are defined in the variable c++-untame-characters."
+  (interactive)
+  ;; make the list into a valid charset, escaping where necessary
+  (let ((charset (concat "^" (mapconcat
+			      (function
+			       (lambda (char)
+				 (if (memq char '(?\\ ?^ ?-))
+				     (concat "\\" (char-to-string char))
+				   (char-to-string char))))
+			      c++-untame-characters ""))))
+    (save-excursion
+      (beginning-of-buffer)
+      (while (not (eobp))
+	(skip-chars-forward charset)
+	(if (and (not (zerop (following-char)))
+		 (c++-in-comment-p)
+		 (/= (preceding-char) ?\\ ))
+	    (insert "\\"))
+	(if (not (eobp))
+	    (forward-char 1))))))
+
+
+;; ======================================================================
+;; defuns for parsing syntactic elements
+;; ======================================================================
 (defun c++-at-top-level-p ()
   "Return t if point is not inside a containing C++ expression, nil
 if it is embedded in an expression."
@@ -922,16 +1055,88 @@ Optional LIM is used as the backward limit of the search."
 	    (goto-char (point-max))
 	    (= (char-after (or (scan-lists (point) -1 1) (point-min))) ?\()))
       (error nil))))
-
-(defun c++-auto-newline ()
-  "Insert a newline iff we're not in a literal.
-Literals are defined as being inside a C or C++ style comment or open
-string according to mode's syntax."
-  (let ((bod (c++-point-bod)))
-    (and c++-auto-newline
-	 (not (c++-in-comment-p bod))
-	 (not (c++-in-open-string-p bod))
-	 (not (newline)))))
+
+;; ======================================================================
+;; defuns for calculating indentation
+;; ======================================================================
+(defun c++-indent-line (&optional bod)
+  "Indent current line as C++ code.
+Return the amount the indentation changed by.  Optional BOD is the
+point of the beginning of the C++ definition."
+  (let* ((bod (or bod (c++-point-bod)))
+	 (indent (c++-calculate-indent nil bod))
+	 beg shift-amt
+	 (comcol nil)
+	 (case-fold-search nil)
+	 (pos (- (point-max) (point))))
+    (beginning-of-line)
+    (setq beg (point))
+    (cond ((eq indent nil)
+	   (setq indent (current-indentation)))
+	  ((eq indent t)
+	   (setq indent (calculate-c-indent-within-comment)))
+	  ((looking-at "[ \t]*#")
+	   (setq indent 0))
+	  ((save-excursion
+	     (and (not (back-to-indentation))
+		  (looking-at "//\\|/\\*")
+		  (/= (setq comcol (current-column)) 0)))
+	   ;; we've found a comment-only line. we now must try to
+	   ;; determine if the line is a continuation from a comment
+	   ;; on the previous line.  we check to see if the comment
+	   ;; starts in comment-column and if so, we don't change its
+	   ;; indentation.
+	   (if (= comcol comment-column)
+	       (setq indent comment-column)
+	     (setq indent (+ indent c++-comment-only-line-offset))))
+	  (t
+	   (skip-chars-forward " \t")
+	   (if (listp indent) (setq indent (car indent)))
+	   (cond ((looking-at "\\(public\\|private\\|protected\\):")
+		  (setq indent (+ indent c++-access-specifier-offset)))
+		 ((looking-at "default:")
+		  (setq indent (+ indent c-label-offset)))
+		 ((or (looking-at "case\\b")
+		      (and (looking-at "[A-Za-z]")
+			   (save-excursion
+			     (forward-sexp 1)
+			     (looking-at ":[^:]"))))
+		  (setq indent (max 1 (+ indent c-label-offset))))
+		 ((and (looking-at "else\\b")
+		       (not (looking-at "else\\s_")))
+		  (setq indent (save-excursion
+				 (c-backward-to-start-of-if)
+				 (current-indentation))))
+		 ((looking-at "friend\[ \t]\\(class\\|struct\\)[ \t]")
+		  (setq indent (+ indent c++-friend-offset)))
+		 ((= (following-char) ?\))
+		  (setq indent (+ (- indent c-indent-level)
+				  (if (save-excursion
+					(forward-char 1)
+					(c++-at-top-level-p))
+				      (- c++-block-close-brace-offset)
+				    c++-block-close-brace-offset))))
+		 ((= (following-char) ?})
+		  (setq indent (+ (- indent c-indent-level)
+				  (if (save-excursion
+					(forward-char 1)
+					(c++-at-top-level-p))
+				      (- c++-block-close-brace-offset)
+				    c++-block-close-brace-offset))))
+		 ((= (following-char) ?{)
+		  (setq indent (+ indent c-brace-offset))))))
+    (skip-chars-forward " \t")
+    (setq shift-amt (- indent (current-column)))
+    (if (zerop shift-amt)
+	(if (> (- (point-max) pos) (point))
+	    (goto-char (- (point-max) pos)))
+      (delete-region beg (point))
+      (indent-to indent)
+      ;; If initial point was within line's indentation,
+      ;; position after the indentation.  Else stay at same point in text.
+      (if (> (- (point-max) pos) (point))
+	  (goto-char (- (point-max) pos))))
+    shift-amt))
 
 (defun c++-calculate-indent (&optional parse-start bod)
   "Return appropriate indentation for current line as C++ code.
@@ -1213,6 +1418,10 @@ BOD is the beginning of the C++ definition."
 			 ;; Get initial indentation of the line we are on.
 			 (current-indentation))))))))))))
 
+
+;; ======================================================================
+;; defuns to look backwards for things
+;; ======================================================================
 (defun c++-backward-to-noncomment (lim)
   "Skip backwards to first preceding non-comment character.
 Search no farther back than LIM."
@@ -1261,164 +1470,16 @@ Search no farther back than LIM."
 	 (goto-char limit)
 	 (setq do-level 0))))))
 
-(defun c++-indent-exp ()
-  "Indent each line of the C++ grouping following point."
-  (interactive)
-  (let ((indent-stack (list nil))
-	(contain-stack (list (point)))
-	(case-fold-search nil)
-	restart outer-loop-done inner-loop-done state ostate
-	this-indent last-sexp last-depth
-	at-else at-brace
-	(opoint (point))
-	(next-depth 0))
-    (save-excursion
-      (forward-sexp 1))
-    (save-excursion
-      (setq outer-loop-done nil)
-      (while (and (not (eobp)) (not outer-loop-done))
-	(setq last-depth next-depth)
-	;; Compute how depth changes over this line
-	;; plus enough other lines to get to one that
-	;; does not end inside a comment or string.
-	;; Meanwhile, do appropriate indentation on comment lines.
-	(setq inner-loop-done nil)
-	(while (and (not inner-loop-done)
-		    (not (and (eobp) (setq outer-loop-done t))))
-	  (setq ostate state)
-	  ;; fix by reed@adapt.net.com
-	  ;; must pass in the return past the end of line, so that
-	  ;; parse-partial-sexp finds it, and recognizes that a "//"
-	  ;; comment is over. otherwise, state is set that we're in a
-	  ;; comment, and never gets unset, causing outer-loop to only
-	  ;; terminate in (eobp). old:
-	  ;;(setq state (parse-partial-sexp (point)
-	  ;;(progn (end-of-line) (point))
-	  ;;nil nil state))
-	  (let ((start (point))
-		(line-end (progn (end-of-line) (point)))
-		(end (progn (forward-char) (point))))
-	    (setq state (parse-partial-sexp start end nil nil state))
-	    (goto-char line-end))
-	  (setq next-depth (car state))
-	  (if (and (car (cdr (cdr state)))
-		   (>= (car (cdr (cdr state))) 0))
-	      (setq last-sexp (car (cdr (cdr state)))))
-	  (if (or (nth 4 ostate))
-	      (c++-indent-line))
-	  (if (or (nth 3 state))
-	      (forward-line 1)
-	    (setq inner-loop-done t)))
-	(if (<= next-depth 0)
-	    (setq outer-loop-done t))
-	(if outer-loop-done
-	    nil
-	  ;; If this line had ..))) (((.. in it, pop out of the levels
-	  ;; that ended anywhere in this line, even if the final depth
-	  ;; doesn't indicate that they ended.
-	  (while (> last-depth (nth 6 state))
-	    (setq indent-stack (cdr indent-stack)
-		  contain-stack (cdr contain-stack)
-		  last-depth (1- last-depth)))
-	  (if (/= last-depth next-depth)
-	      (setq last-sexp nil))
-	  ;; Add levels for any parens that were started in this line.
-	  (while (< last-depth next-depth)
-	    (setq indent-stack (cons nil indent-stack)
-		  contain-stack (cons nil contain-stack)
-		  last-depth (1+ last-depth)))
-	  (if (null (car contain-stack))
-	      (setcar contain-stack (or (car (cdr state))
-					(save-excursion (forward-sexp -1)
-							(point)))))
-	  (forward-line 1)
-	  (skip-chars-forward " \t")
-	  (if (eolp)
-	      nil
-	    (if (and (car indent-stack)
-		     (>= (car indent-stack) 0))
-		;; Line is on an existing nesting level.
-		;; Lines inside parens are handled specially.
-		(if (/= (char-after (car contain-stack)) ?{)
-		    (setq this-indent (car indent-stack))
-		  ;; Line is at statement level.
-		  ;; Is it a new statement?  Is it an else?
-		  ;; Find last non-comment character before this line
-		  (save-excursion
-		    (setq at-else (looking-at "else\\W"))
-		    (setq at-brace (= (following-char) ?{))
-		    (c++-backward-to-noncomment opoint)
-		    (if (not (memq (preceding-char) '(nil ?\, ?\; ?} ?: ?{)))
-			;; Preceding line did not end in comma or semi;
-			;; indent this line  c-continued-statement-offset
-			;; more than previous.
-			(progn
-			  (c-backward-to-start-of-continued-exp
-			   (car contain-stack))
-			  (setq this-indent
-				(+ c-continued-statement-offset
-				   (current-column)
-				   (if at-brace c-continued-brace-offset 0))))
-		      ;; Preceding line ended in comma or semi;
-		      ;; use the standard indent for this level.
-		      (if at-else
-			  (progn (c-backward-to-start-of-if opoint)
-				 (setq this-indent (current-indentation)))
-			(setq this-indent (car indent-stack))))))
-	      ;; Just started a new nesting level.
-	      ;; Compute the standard indent for this level.
-	      (let ((val (c++-calculate-indent
-			  (if (car indent-stack)
-			      (- (car indent-stack))))))
-		(setcar indent-stack
-			(setq this-indent val))))
-	    ;; Adjust line indentation according to its contents
- 	    (if (looking-at "\\(public\\|private\\|protected\\):")
- 		(setq this-indent (- this-indent c-indent-level)))
- 	    (if (or (looking-at "case[ \t]")
- 		    (and (looking-at "[A-Za-z]")
- 			 (save-excursion
- 			   (forward-sexp 1)
- 			   (looking-at ":[^:]"))))
- 		(setq this-indent (max 0 (+ this-indent c-label-offset))))
-	    (if (looking-at "friend[ \t]\\(class\\|struct\\)[ \t]")
-		(setq this-indent (+ this-indent c++-friend-offset)))
-	    (if (= (following-char) ?})
-		(setq this-indent (- this-indent c-indent-level)))
-	    (if (= (following-char) ?{)
-		(setq this-indent (+ this-indent c-brace-offset)))
-	    ;; Put chosen indentation into effect.
-	    (or (= (current-column) this-indent)
-		(= (following-char) ?\#)
-		(progn
-		  (delete-region (point) (progn (beginning-of-line) (point)))
-		  (indent-to this-indent)))
-	    ;; Indent any comment following the text.
-	    (or (looking-at comment-start-skip)
-		(if (re-search-forward
-		     comment-start-skip
-		     (save-excursion (end-of-line) (point)) t)
-		    (progn (indent-for-comment) (beginning-of-line))))))))))
 
-(defun c++-fill-C-comment ()
-  "Fill a C style comment."
-  (interactive)
-  (save-excursion
-    (let ((save fill-prefix))
-      (beginning-of-line 1)
-      (save-excursion
-	(re-search-forward comment-start-skip
-			   (save-excursion (end-of-line) (point))
-			   t)
-	(goto-char (match-end 0))
-	(set-fill-prefix))
-      (while (looking-at fill-prefix)
-	(forward-line -1))
-      (forward-line 1)
-      (insert-string "\n")
-      (fill-paragraph nil)
-      (delete-char -1)
-      (setq fill-prefix save))))
+(defun c++-auto-newline ()
+  "Insert a newline iff we're not in a literal.
+Literals are defined as being inside a C or C++ style comment or open
+string according to mode's syntax."
+  (let ((bod (c++-point-bod)))
+    (and c++-auto-newline
+	 (not (c++-in-comment-p bod))
+	 (not (c++-in-open-string-p bod))
+	 (not (newline)))))
 
 (defun c++-point-bol ()
   "Returns the value of the point at beginning of the current line."
@@ -1432,52 +1493,10 @@ Search no farther back than LIM."
     (c++-beginning-of-defun)
     (point)))
 
-(defun c++-insert-header ()
-  "Insert header denoting C++ code at top of buffer."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (insert "// "
-	    "This may look like C code, but it is really "
-	    "-*- C++ -*-"
-	    "\n\n")))
-
 
-;;; this page contains functions which try to tame single quotes in
-;;; comment regions
-
-(defun c++-tame-comments ()
-  "Backslashifies all untamed in comment regions found in the buffer.
-This is the best available workaround for an emacs syntax bug in
-scan-lists which exists at least as recently as v18.58.  Untamed
-characters to escape are defined in the variable c++-untame-characters."
-  (interactive)
-  ;; make the list into a valid charset, escaping where necessary
-  (let ((charset (concat "^" (mapconcat
-			      (function
-			       (lambda (char)
-				 (if (memq char '(?\\ ?^ ?-))
-				     (concat "\\" (char-to-string char))
-				   (char-to-string char))))
-			      c++-untame-characters ""))))
-    (save-excursion
-      (beginning-of-buffer)
-      (while (not (eobp))
-	(skip-chars-forward charset)
-	(if (and (not (zerop (following-char)))
-		 (c++-in-comment-p)
-		 (/= (preceding-char) ?\\ ))
-	    (insert "\\"))
-	(if (not (eobp))
-	    (forward-char 1))))))
-
-
-;;; This page covers "macroization;" making C++ parameterized types
-;;; via macros.
-
-(defvar c++-default-macroize-column 78
-  "*Place to insert backslashes.")
-
+;; ======================================================================
+;; defuns for "macroizations" -- making C++ parameterized types via macros
+;; ======================================================================
 (defun c++-macroize-region (from to arg)
   "Insert backslashes at end of every line in region.  Useful for defining cpp
 macros.  If called with negative argument, will remove trailing backslashes,
@@ -1516,8 +1535,9 @@ so that indentation will work right."
 	       (kill-line))))))
 
 
-;;; This page covers commenting out multiple lines.
-
+;; ======================================================================
+;; defuns for  commenting out multiple lines.
+;; ======================================================================
 (defun c++-comment-region ()
   "Comment out all lines in a region between mark and current point by
 inserting \"// \" (comment-start)in front of each line."
@@ -1555,6 +1575,10 @@ the leading \"// \" from each line, if any."
 	    (beginning-of-line)
 	    (forward-line 1)))))
 
+;; ======================================================================
+;; grammer pasing
+;; ======================================================================
+
 ;;; Below are two regular expressions that attempt to match defuns
 ;;; "strongly" and "weakly."  The strong one almost reconstructs the
 ;;; grammar of C++; the weak one just figures anything id or curly on
@@ -1702,10 +1726,10 @@ function definition.")
     (goto-char restore)))
 
 
-;; this page is provided for bug reports. it dumps the entire known
-;; state of c++-mode so that I know exactly how you've got it set up.
-
-(defconst c++-version "$Revision: 2.87 $"
+;; ======================================================================
+;; defuns for submitting bug reports
+;; ======================================================================
+(defconst c++-version "$Revision: 2.88 $"
   "c++-mode version number.")
 
 (defun c++-version ()
