@@ -161,6 +161,7 @@
     "bos-1.cc"
     "bos-2.cc"
     "bos-3.cc"
+    "bracelist-1.java"
     "class-1.cc"
     "class-2.cc"
     "class-3.cc"
