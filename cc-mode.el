@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.206 $
-;; Last Modified:   $Date: 1995-05-08 19:42:48 $
+;; Version:         $Revision: 4.207 $
+;; Last Modified:   $Date: 1995-05-08 19:52:58 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-08 19:42:48 $|$Revision: 4.206 $|
+;; |$Date: 1995-05-08 19:52:58 $|$Revision: 4.207 $|
 
 ;;; Code:
 
@@ -2907,8 +2907,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
     ;; appears as the first non-whitespace on a line inside another
     ;; literal.
     (let* (state
+	   (char-at-boi (char-after (c-point 'boi)))
 	   (rtn (cond
-		 ((= (char-after (c-point 'boi)) ?#)
+		 ((and char-at-boi (= char-at-boi ?#))
 		  'pound)
 		 ((nth 3 (setq state (save-excursion
 				       (parse-partial-sexp
@@ -4576,7 +4577,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.206 $"
+(defconst c-version "$Revision: 4.207 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
