@@ -1,13 +1,13 @@
-;;; cc-lobotomy.el --- excise portions of cc-mode in the name of speed
+;;; cc-lobotomy.el --- excise portions of cc-mode's brain... for speed
 
-;; Copyright (C) Barry A. Warsaw
+;; Copyright (C) 1985-1995 Free Software Foundation, Inc.
 
-;; Author: 1995 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-;; Maintainer:    cc-mode-help@anthem.nlm.nih.gov
-;; Created:       March 1995
-;; Version:       $Revision: 1.5 $
-;; Last Modified: $Date: 1995-05-26 22:09:06 $
-;; Keywords: C++ C Objective-C cc-mode
+;; Author:        1995 Barry A. Warsaw
+;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
+;; Created:       March 1995, split from cc-mode.el
+;; Version:       $Revision: 1.6 $
+;; Last Modified: $Date: 1995-06-11 20:38:12 $
+;; Keywords: c languages oop
 
 ;; This file is not part of GNU Emacs.
 
@@ -35,38 +35,75 @@
 ;; most normal usage.  Others disagree.  I have no intention of
 ;; including these hacks in the main distribution.  When cc-mode
 ;; version 5 comes out, it will include a rewritten indentation engine
-;; so that performance will be greatly improved automatically, at the
-;; expense of breaking Emacs 18 support.
+;; so that performance will be greatly improved automatically.  This
+;; was not included in this release of version 4 so that Emacs 18
+;; could still be supported.  Note that this implies that cc-mode
+;; version 5 will *not* work on Emacs 18!
 ;;
-;; You can expect possibly incorrect indentation within class and
-;; struct declarations and within brace lists.  There may be other
-;; places where indentation breaks, so if you use the hacks in this
-;; file, don't complain to me about incorrect indentation.  That's the
-;; price you pay for speed in some circumstances so you'll have to
-;; live with it!  Most incorrect indentation can probably be corrected
-;; by hand though.
+;; To use, see the variable cc-lobotomy-pith-list and the function
+;; cc-lobotomize.   The variable contains a good explanation of the
+;; speed/accuracy trade-offs for each option.  Set it to what you'd
+;; like, and call cc-lobotomy in your c-mode-hook.
 ;;
-;; To use this file, just `require' it by adding the following to your
-;; .emacs file:
+;; This will redefine certain cc-mode functions and affect all cc-mode
+;; buffers globally.
 ;;
-;;   (require 'cc-lobotomy)
-;;
-;; This will redefine certain cc-mode functions.
-
-;; LCD Archive Entry:
-;; cc-lobotomy|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
-;; |excise portions of cc-mode in the name of speed
-;; |$Date: 1995-05-26 22:09:06 $|$Revision: 1.5 $|
+;; This file is completely unsupported!
 
 
 ;;; Code:
-
 (require 'cc-mode)
 
+(defvar cc-lobotomy-pith-list ()
+  "*List of things to dumb-ify to speed up cc-mode.  Note that each
+incurs a penalty in correct identification of certain code constructs.
+Possible values to put on this list:
+
+  'literal -- `c-in-literal' is lobotomized.  This will significantly
+              speed up parsing over large lists of cpp macros, as seen
+	      for instance in header files.  The penalty is that you
+	      cannot put the `#' character as the first non-whitespace
+	      character on a line inside other multi-line literals
+	      (i.e. comments or strings)
+
+  'class   -- `c-narrow-out-enclosing-class' and `c-search-uplist for
+              classkey' are lobotomized.  This speeds up some
+	      indenting inside and around class and struct
+	      definitions.  The penalty is that elements inside of
+	      classes and structs may not indent correctly.
+
+  'lists   -- `c-inside-bracelist-p' is lobotomized.  This speeds up
+              indenting inside and around brace lists (e.g. aggregate
+	      initializers, enum lists, etc.).  The penalty is that
+	      elements inside these lists may not indent correctly.")
+
+(defun cc-lobotomize ()
+  "Perform lobotomies on cc-mode as described in `c-lobotomy-pith-list'."
+  (let (pithedp)
+    (if (memq 'literal c-lobotomy-pith-list)
+	(progn
+	  (fset 'c-in-literal 'c-in-literal-lobotomized)
+	  (setq pithedp t)))
+    (if (memq 'class c-lobotomy-pith-list)
+	(progn
+	  (fset 'c-narrow-out-enclosing-class
+		'c-narrow-out-enclosing-class-lobotomized)
+	  (fset 'c-search-uplist-for-classkey
+		'c-search-uplist-for-classkey-lobotomized)
+	  (setq pithedp t)))
+    (if (memq 'lists c-lobotomy-pith-list)
+	(progn
+	  (fset 'c-inside-bracelist-p 'c-inside-bracelist-p-lobotomized)
+	  (setq pithedp t)))
+    (if pithedp
+	(fset 'c-submit-bug-report 'c-submit-bug-report-lobotomized))
+    ))
+
+
 ;; This is a faster version of c-in-literal.  It trades speed for one
 ;; approximation, namely that within other literals, the `#' character
 ;; cannot be the first non-whitespace on a line.
-(defun c-in-literal (&optional lim)
+(defun c-in-literal-lobotomized (&optional lim)
   ;; first check the cache
   (if (and (boundp 'c-in-literal-cache)
 	   c-in-literal-cache
@@ -92,13 +129,13 @@
 	   (setq c-in-literal-cache (vector (point) rtn)))
       rtn)))
 
-(defun c-narrow-out-enclosing-class (dummy1 dummy2) nil)
+(defun c-narrow-out-enclosing-class-lobotomized (dummy1 dummy2) nil)
 
-(defun c-search-uplist-for-classkey (dummy) nil)
+(defun c-search-uplist-for-classkey-lobotomized (dummy) nil)
 
-(defun c-inside-bracelist-p (dummy1 dummy2) nil)
+(defun c-inside-bracelist-p-lobotomized (dummy1 dummy2) nil)
 
-(defun c-submit-bug-report ()
+(defun c-submit-bug-report-lobotomized ()
   "Submit via mail a bug report on cc-mode."
   (interactive)
   ;; load in reporter
