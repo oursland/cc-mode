@@ -327,16 +327,22 @@
 				     (not (string-equal c-indentation-style
 							style)))))))
   ;; Fix things up for paragraph recognition and filling inside
-  ;; comments by using c-comment-prefix-regexp in the relevant places.
-  ;; We use adaptive filling for this to make it possible to use
-  ;; filladapt or some other fancy package.
+  ;; comments by using c-current-comment-prefix in the relevant
+  ;; places.  We use adaptive filling for this to make it possible to
+  ;; use filladapt or some other fancy package.
+  (setq c-current-comment-prefix
+	(if (listp c-comment-prefix-regexp)
+	    (cdr-safe (or (assoc major-mode c-comment-prefix-regexp)
+			  (assoc 'other c-comment-prefix-regexp)))
+	  c-comment-prefix-regexp))
   (let ((comment-line-prefix
-	 (concat "[ \t]*\\(" c-comment-prefix-regexp "\\)?[ \t]*")))
+	 (concat "[ \t]*\\(" c-current-comment-prefix "\\)[ \t]*")))
     (setq paragraph-start (concat comment-line-prefix
 				  c-append-paragraph-start
 				  "\\|"
 				  page-delimiter)
-	  paragraph-separate (concat comment-line-prefix "$"
+	  paragraph-separate (concat comment-line-prefix
+				     c-append-paragraph-separate
 				     "\\|"
 				     page-delimiter)
 	  paragraph-ignore-fill-prefix t
@@ -741,7 +747,9 @@ Key bindings:
   (set-syntax-table pike-mode-syntax-table)
   (setq major-mode 'pike-mode
  	mode-name "Pike"
- 	local-abbrev-table pike-mode-abbrev-table)
+ 	local-abbrev-table pike-mode-abbrev-table
+	c-append-paragraph-start c-Pike-pikedoc-paragraph-start
+	c-append-paragraph-separate c-Pike-pikedoc-paragraph-separate)
   (use-local-map pike-mode-map)
   (c-common-init)
   (setq comment-start "// "
@@ -787,10 +795,10 @@ CC Mode by making sure the proper entries are present on
     (while (and p (not (eq (car-safe (cdr-safe (car-safe p))) 'c-comment)))
       (setq p (cdr-safe p)))
     (if p
-	(setcar (car p) c-comment-prefix-regexp)
+	(setcar (car p) c-current-comment-prefix)
       (setq filladapt-token-table
 	    (append (list (car filladapt-token-table)
-			  (list c-comment-prefix-regexp 'c-comment))
+			  (list c-current-comment-prefix 'c-comment))
 		    (cdr filladapt-token-table)))))
   (unless (assq 'c-comment filladapt-token-match-table)
     (setq filladapt-token-match-table
