@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.214 $
-;; Last Modified:   $Date: 1992-11-13 21:26:11 $
+;; Version:         $Revision: 2.215 $
+;; Last Modified:   $Date: 1992-11-13 21:39:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-13 21:26:11 $|$Revision: 2.214 $|
+;; |$Date: 1992-11-13 21:39:45 $|$Revision: 2.215 $|
 
 ;;; Code:
 
@@ -400,7 +400,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.214 $
+  "Major mode for editing C++ code.  $Revision: 2.215 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -608,7 +608,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.214 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.215 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -943,7 +943,8 @@ for member initialization list."
 	  ;; nil or before then put a newline before the colon and
 	  ;; adjust the insertion point, but *only* if there is no
 	  ;; newline already before the insertion point
-	  (if (memq c++-hanging-member-init-colon '(nil before))
+	  (if (and (memq c++-hanging-member-init-colon '(nil before))
+		   c++-auto-newline)
 	      (if (not (save-excursion (skip-chars-backward " \t")
 				       (bolp)))
 		  (let ((c++-auto-newline t))
@@ -953,7 +954,8 @@ for member initialization list."
 	  ;; after colon. set up variable so c++-electric-terminator
 	  ;; places the newline correctly
 	  (setq c++-auto-newline
-		(memq c++-hanging-member-init-colon '(nil after))))
+		(and c++-auto-newline
+		     (memq c++-hanging-member-init-colon '(nil after)))))
 	 ;; last condition is always put newline after colon
 	 (t (setq c++-auto-newline nil))
 	 ))				; end-cond, end-save-excursion
@@ -2271,7 +2273,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.214 $"
+(defconst c++-version "$Revision: 2.215 $"
   "c++-mode version number.")
 
 (defun c++-version ()
