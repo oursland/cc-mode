@@ -57,7 +57,7 @@
 			    (setq saved (point))
 			    t))
 	     (progn (c-backward-syntactic-ws lim)
-		    (memq (char-before) '(?\; ?{ ?} ?:)))
+		    (memq (char-before) '(?\; ?{ ?:)))
 	     )
 	(setq last-begin saved)
       (goto-char last-begin)
