@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.59 $
-;; Last Modified:   $Date: 1993-11-17 23:29:41 $
+;; Version:         $Revision: 3.60 $
+;; Last Modified:   $Date: 1993-11-18 17:17:28 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-17 23:29:41 $|$Revision: 3.59 $|
+;; |$Date: 1993-11-18 17:17:28 $|$Revision: 3.60 $|
 
 ;;; Code:
 
@@ -119,6 +119,7 @@ reported and the semantic symbol is ignored.")
     (arglist-close         . 0)
     (stream-op             . cc-lineup-streamop)
     (inclass               . +)
+    (cpp-macro             . -1000)
     )
   "*Association list of semantic symbols and indentation offsets.
 Each element in this list is a cons cell of the form:
@@ -168,6 +169,7 @@ list of valid semantic symbols:
  arglist-close          -- the solo close paren of an argument list
  stream-op              -- lines continuing a stream operator construct
  inclass                -- the construct is nested inside a class definition
+ cpp-macro              -- the start of a cpp macro
 ")
 
 (defvar cc-tab-always-indent t
@@ -366,7 +368,7 @@ when loaded, you should upgrade your Emacs.")
   (define-key cc-mode-map "*"         'cc-electric-star)
   (define-key cc-mode-map ":"         'cc-electric-colon)
   (define-key cc-mode-map "\C-c\C-;"  'cc-scope-operator)
-  (define-key cc-mode-map "\C-c\C-/"  'cc-show-semantic-information)
+  (define-key cc-mode-map "\C-c\C-s"  'cc-show-semantic-information)
   (define-key cc-mode-map "\177"      'cc-electric-delete)
   (define-key cc-mode-map "\C-c\C-t"  'cc-toggle-auto-hungry-state)
   (define-key cc-mode-map "\C-c\C-h"  'cc-toggle-hungry-state)
@@ -485,7 +487,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.59 $
+  "Major mode for editing C++ code.  $Revision: 3.60 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -516,7 +518,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.59 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.60 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -637,16 +639,15 @@ Key bindings:
   ;; then, I don't now of a way to keep the region active in FSFmacs.
   (` (if (interactive-p) (setq zmacs-region-stays t))))
 
-(defmacro cc-set-auto-hungry-state (auto-p hungry-p)
+(defun cc-set-auto-hungry-state (auto-p hungry-p)
   ;; Set auto/hungry to state indicated by AUTO-P and HUNGRY-P, and
   ;; update the mode line accordingly
-  (` (progn
-       (setq cc-auto-newline (, auto-p)
-	     cc-hungry-delete-key (, hungry-p))
-       ;; hack to get mode line updated. Emacs19 should use
-       ;; force-mode-line-update, but that isn't portable to Emacs18
-       ;; and this at least works for both
-       (set-buffer-modified-p (buffer-modified-p)))))
+  (setq cc-auto-newline auto-p
+	cc-hungry-delete-key hungry-p)
+  ;; hack to get mode line updated. Emacs19 should use
+  ;; force-mode-line-update, but that isn't portable to Emacs18
+  ;; and this at least works for both
+  (set-buffer-modified-p (buffer-modified-p)))
 
 (defun cc-toggle-auto-state (arg)
   "Toggle auto-newline feature.
@@ -1359,7 +1360,10 @@ of the expression are preserved."
 ;; used for forward skipping.
 ;;
 ;; Emacs 19 has nice built-in functions to do this, but Emacs 18 does
-;; not.
+;; not.  Also note that only Emacs19 implementation currently has
+;; support for multi-line macros, and this feature is imposes the
+;; restriction that backslashes at the end of a line can only occur on
+;; multi-line macro lines.
 
 ;; This is the best we can do in vanilla GNU 18 Emacsen.
 (defun cc-emacs18-fsws (&optional lim)
@@ -1440,12 +1444,17 @@ of the expression are preserved."
       (narrow-to-region lim (point))
       (while (/= here (point))
 	(setq here (point))
+	;; skip cpp intro lines
+	(if (and (< (point) lim)
+		 (= (char-after (cc-point 'boi)) ?#))
+	    (end-of-line))
 	(forward-comment 1)
-	;; skip preprocessor directives
-	(if (and (= (following-char) ?#)
-		 (= (cc-point 'boi) (point)))
-	    (end-of-line)
-	  )))))
+	;; skip multi-line preprocessor directives
+	(while (and (< (point) lim)
+		    (= (char-after (1- (cc-point 'eol))) ?\\))
+	  (forward-line)
+	  (end-of-line))
+	))))
 
 (defun cc-emacs19-accurate-bsws (&optional lim)
   ;; Backward skip over syntactic whitespace for Emacs 19.
@@ -1458,7 +1467,8 @@ of the expression are preserved."
 	    (while (/= here (point))
 	      (setq here (point))
 	      (forward-comment -1)
-	      (if (eq (cc-in-literal lim) 'pound)
+	      (if (or (= (char-after (1- (cc-point 'eol))) ?\\)
+		      (= (char-after (cc-point 'boi)) ?#))
 		  (beginning-of-line))
 	      )))
       )))
@@ -1584,16 +1594,16 @@ of the expression are preserved."
 
 
 ;; utilities for moving and querying around semantic elements
-(defmacro cc-parse-state (&optional lim)
+(defun cc-parse-state (&optional lim)
   ;; Determinate the syntactic state of the code at point.
   ;; Iteratively uses `parse-partial-sexp' from point to LIM and
   ;; returns the result of `parse-partial-sexp' at point.  LIM is
   ;; optional and defaults to `point-max'."
-  (` (let ((lim (or lim (point-max)))
-	   state)
-       (while (< (point) lim)
-	 (setq state (parse-partial-sexp (point) lim 0)))
-       state)))
+  (let ((lim (or lim (point-max)))
+	state)
+    (while (< (point) lim)
+      (setq state (parse-partial-sexp (point) lim 0)))
+    state))
 
 (defmacro cc-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
@@ -1689,6 +1699,11 @@ of the expression are preserved."
       (goto-char here)
       (back-to-indentation))
     ))
+
+(defun cc-beginning-of-macro (&optional lim)
+  ;; Go to the beginning of the macro. Right now we don't support
+  ;; multi-line macros too well
+  (back-to-indentation))
 
 (defun cc-just-after-func-arglist-p (&optional containing)
   ;; Return t if we are between a function's argument list closing
@@ -1894,31 +1909,35 @@ of the expression are preserved."
 	 ;; CASE 2: in a C or C++ style comment.
 	 ((memq literal '(c c++))
 	  (cc-add-semantics literal (cc-point 'bopl)))
-	 ;; CASE 3: Line is at top level.
+	 ;; CASE 3: in a cpp preprocessor
+	 ((eq literal 'pound)
+	  (cc-beginning-of-macro lim)
+	  (cc-add-semantics 'cpp-macro (cc-point 'boi)))
+	 ;; CASE 4: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
-	   ;; CASE 3A: we are looking at a defun, class, or
+	   ;; CASE 4A: we are looking at a defun, class, or
 	   ;; inline-inclass method opening brace
 	   ((= char-after-ip ?{)
 	    (cond
-	     ;; CASE 3A.1: we are looking at a class opening brace
+	     ;; CASE 4A.1: we are looking at a class opening brace
 	     ((save-excursion
 		(let ((decl (cc-search-uplist-for-classkey indent-point)))
 		  (and decl
 		       (setq placeholder (cdr decl)))
 		  ))
 	      (cc-add-semantics 'class-open placeholder))
-	     ;; CASE 3A.2: inline defun open
+	     ;; CASE 4A.2: inline defun open
 	     (inclass-p
 	      (cc-add-semantics 'inline-open (cdr inclass-p)))
-	     ;; CASE 3A.3: ordinary defun open
+	     ;; CASE 4A.3: ordinary defun open
 	     (t
 	      (cc-add-semantics 'defun-open (cc-point 'bol))
 	      )))
-	   ;; CASE 3B: first K&R arg decl or member init
+	   ;; CASE 4B: first K&R arg decl or member init
 	   ((cc-just-after-func-arglist-p)
 	    (cond
-	     ;; CASE 3B.1: a member init
+	     ;; CASE 4B.1: a member init
 	     ((or (= char-before-ip ?:)
 		  (= char-after-ip ?:))
 	      ;; this line should be indented relative to the beginning
@@ -1933,35 +1952,35 @@ of the expression are preserved."
 	      ;; we don't need to add any class offset since this
 	      ;; should be relative to the ctor's indentation
 	      )
-	     ;; CASE 3B.2: nether region after a C++ func decl
+	     ;; CASE 4B.2: nether region after a C++ func decl
 	     ((eq major-mode 'cc-c++-mode)
 	      (cc-add-semantics 'c++-funcdecl-cont (cc-point 'boi))
 	      (and inclass-p (cc-add-semantics 'inclass (cdr inclass-p))))
-	     ;; CASE 3B.3: K&R arg decl intro
+	     ;; CASE 4B.3: K&R arg decl intro
 	     (t
 	      (cc-add-semantics 'knr-argdecl-intro (cc-point 'boi))
 	      (and inclass-p (cc-add-semantics 'inclass (cdr inclass-p))))
 	     ))
-	   ;; CASE 3C: inheritance line. could be first inheritance
+	   ;; CASE 4C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
 	   ((looking-at cc-baseclass-key)
 	    (cond
-	     ;; CASE 3C.1: non-hanging colon on an inher intro
+	     ;; CASE 4C.1: non-hanging colon on an inher intro
 	     ((= char-after-ip ?:)
 	      (cc-backward-syntactic-ws lim)
 	      (cc-add-semantics 'inher-intro (cc-point 'boi))
 	      (and inclass-p (cc-add-semantics 'inclass (cdr inclass-p))))
-	     ;; CASE 3C.2: hanging colon on an inher intro
+	     ;; CASE 4C.2: hanging colon on an inher intro
 	     ((= char-before-ip ?:)
 	      (cc-add-semantics 'inher-intro (cc-point 'boi))
 	      (and inclass-p (cc-add-semantics 'inclass (cdr inclass-p))))
-	     ;; CASE 3C.3: a continued inheritance line
+	     ;; CASE 4C.3: a continued inheritance line
 	     (t
 	      (cc-beginning-of-inheritance-list lim)
 	      (cc-add-semantics 'inher-cont (point))
 	      (and inclass-p (cc-add-semantics 'inclass (cdr inclass-p)))
 	      )))
-	   ;; CASE 3D: this could be a top-level compound statement or a
+	   ;; CASE 4D: this could be a top-level compound statement or a
 	   ;; member init list continuation
 	   ((= char-before-ip ?,)
 	    (goto-char indent-point)
@@ -1978,7 +1997,7 @@ of the expression are preserved."
 	      (beginning-of-line)
 	      (cc-backward-syntactic-ws lim))
 	    (cond
-	     ;; CASE 3D.1: hanging member init colon
+	     ;; CASE 4D.1: hanging member init colon
 	     ((= (preceding-char) ?:)
 	      (goto-char indent-point)
 	      (cc-backward-syntactic-ws lim)
@@ -1986,44 +2005,45 @@ of the expression are preserved."
 	      ;; we do not need to add class offset since relative
 	      ;; point is the member init above us
 	      )
-	     ;; CASE 3D.2: non-hanging member init colon
+	     ;; CASE 4D.2: non-hanging member init colon
 	     ((progn
 		(cc-forward-syntactic-ws indent-point)
 		(= (following-char) ?:))
 	      (skip-chars-forward " \t:")
 	      (cc-add-semantics 'member-init-cont (point)))
-	     ;; CASE 3D.3: perhaps a multiple inheritance line?
+	     ;; CASE 4D.3: perhaps a multiple inheritance line?
 	     ((looking-at cc-inher-key)
 	      (cc-add-semantics 'inher-cont-1 (cc-point 'boi)))
-	     ;; CASE 3D.4: I don't know what the heck we're looking-at
+	     ;; CASE 4D.4: I don't know what the heck we're looking-at
 	     (t (cc-add-semantics 'unknown-construct-1))
 	     ))
-	   ;; CASE 3E: we are looking at a access specifier
+	   ;; CASE 4E: we are looking at a access specifier
 	   ((and inclass-p
 		 (looking-at cc-access-key))
 	    (cc-add-semantics 'access-label (cc-point 'bonl))
 	    (cc-add-semantics 'inclass (cdr inclass-p)))
-	   ;; CASE 3F: we are looking at the brace which closes the
+	   ;; CASE 4F: we are looking at the brace which closes the
 	   ;; enclosing class decl
-	  ((and inclass-p
-		(= char-after-ip ?})
-		(save-excursion
-		  (save-restriction
-		    (widen)
-		    (forward-char 1)
-		    (and
-		     (condition-case nil
-			 (progn (backward-sexp 1) t)
-		       (error nil))
-		     (= (point) (car inclass-p))
-		     ))))
+	   ((and inclass-p
+		 (= char-after-ip ?})
+		 (save-excursion
+		   (save-restriction
+		     (widen)
+		     (forward-char 1)
+		     (and
+		      (condition-case nil
+			  (progn (backward-sexp 1) t)
+			(error nil))
+		      (= (point) (car inclass-p))
+		      ))))
 	    (save-restriction
 	      (widen)
 	      (goto-char (car inclass-p))
 	      (cc-add-semantics 'class-close (cc-point 'boi))))
-	   ;; CASE 3G: we are at the topmost level, make sure we skip
+	   ;; CASE 4G: we are at the topmost level, make sure we skip
 	   ;; back past any access specifiers
 	   ((progn
+	      (cc-backward-syntactic-ws lim)
 	      (while (and inclass-p
 			  (= (preceding-char) ?:)
 			  (save-excursion
@@ -2035,27 +2055,27 @@ of the expression are preserved."
 		  (memq (preceding-char) '(?\; ?\}))))
 	    (cc-add-semantics 'topmost-intro (cc-point 'bol))
 	    (and inclass-p (cc-add-semantics 'inclass (cdr inclass-p))))
-	   ;; CASE 3H: we are at a topmost continuation line
+	   ;; CASE 4H: we are at a topmost continuation line
 	   (t
 	    (cc-add-semantics 'topmost-intro-cont (cc-point 'boi))
 	    (and inclass-p (cc-add-semantics 'inclass (cdr inclass-p))))
-	   )) ; end CASE 3
-	 ;; CASE 4: line is an expression, not a statement.  Most
+	   ))				; end CASE 4
+	 ;; CASE 5: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
 	 ;; call argument list
 	 ((/= (char-after containing-sexp) ?{)
 	  (cc-backward-syntactic-ws containing-sexp)
 	  (cond
-	   ;; CASE 4A: we are looking at the first argument in an empty
+	   ;; CASE 5A: we are looking at the first argument in an empty
 	   ;; argument list
 	   ((= char-before-ip ?\()
 	    (goto-char containing-sexp)
 	    (cc-add-semantics 'arglist-intro (cc-point 'boi)))
-	   ;; CASE 4B: we are looking at the arglist closing paren
+	   ;; CASE 5B: we are looking at the arglist closing paren
 	   ((and (/= char-before-ip ?,)
 		 (= char-after-ip ?\)))
 	    (cc-add-semantics 'arglist-close (cc-point 'boi)))
-	   ;; CASE 4C: we are looking at an arglist continuation line,
+	   ;; CASE 5C: we are looking at an arglist continuation line,
 	   ;; but the preceding argument is on the same line as the
 	   ;; opening paren.
 	   ((= (cc-point 'bol)
@@ -2063,11 +2083,17 @@ of the expression are preserved."
 		 (goto-char containing-sexp)
 		 (cc-point 'bol)))
 	    (cc-add-semantics 'arglist-cont-nonempty containing-sexp))
-	   ;; CASE 4D: we are looking at just a normal arglist
+	   ;; CASE 5D: it is possible that the arglist is really a
+	   ;; forloop expression, and thus maybe broken across
+	   ;; multiple lines
+	   ((not (memq char-before-ip '(?\; ?,)))
+	    (cc-beginning-of-statement containing-sexp)
+	    (cc-add-semantics 'statement-cont (point)))
+	   ;; CASE 5E: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (cc-add-semantics 'arglist-cont (cc-point 'boi)))
 	   ))
-	 ;; CASE 5: func-local multi-inheritance line
+	 ;; CASE 6: func-local multi-inheritance line
 	 ((save-excursion
 	    (goto-char indent-point)
 	    (skip-chars-forward " \t")
@@ -2075,19 +2101,19 @@ of the expression are preserved."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
-	   ;; CASE 5A: non-hanging colon on an inher intro
+	   ;; CASE 6A: non-hanging colon on an inher intro
 	   ((= char-after-ip ?:)
 	    (cc-backward-syntactic-ws lim)
 	    (cc-add-semantics 'inher-intro (cc-point 'boi)))
-	   ;; CASE 5B: hanging colon on an inher intro
+	   ;; CASE 6B: hanging colon on an inher intro
 	   ((= char-before-ip ?:)
 	    (cc-add-semantics 'inher-intro (cc-point 'boi)))
-	   ;; CASE 5C: a continued inheritance line
+	   ;; CASE 6C: a continued inheritance line
 	   (t
 	    (cc-beginning-of-inheritance-list lim)
 	    (cc-add-semantics 'inher-cont (point))
 	    )))
-	 ;; CASE 6: A continued statement
+	 ;; CASE 7: A continued statement
 	 ((> (point)
 	     (save-excursion
 	       (cc-beginning-of-statement containing-sexp)
@@ -2095,30 +2121,30 @@ of the expression are preserved."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
-	   ;; CASE 6A: a continued statement introducing a new block
+	   ;; CASE 7A: a continued statement introducing a new block
 	   ((= char-after-ip ?{)
 	    (cond
-	     ;; CASE 6A.1: could be a func-local class opening brace
+	     ;; CASE 7A.1: could be a func-local class opening brace
 	     ((save-excursion
 		(let ((decl (cc-search-uplist-for-classkey indent-point)))
 		  (and decl
 		       (setq placeholder (cdr decl)))
 		  ))
 	      (cc-add-semantics 'class-open placeholder))
-	     ;; CASE 6A.2: just an ordinary block opening brace
+	     ;; CASE 7A.2: just an ordinary block opening brace
 	     (t (cc-add-semantics 'block-open placeholder))
 	     ))
-	   ;; CASE 6B: iostream insertion or extraction operator
+	   ;; CASE 7B: iostream insertion or extraction operator
 	   ((looking-at "<<\\|>>")
 	    (cc-add-semantics 'stream-op placeholder))
-	   ;; CASE 6C: hanging continued statement
+	   ;; CASE 7C: hanging continued statement
 	   (t (cc-add-semantics 'statement-cont placeholder))
 	   ))
-	 ;; CASE 7: an else clause?
+	 ;; CASE 8: an else clause?
 	 ((looking-at "\\<else\\>")
 	  (cc-backward-to-start-of-if containing-sexp)
 	  (cc-add-semantics 'else-clause (cc-point 'boi)))
-	 ;; CASE 8: Statement. But what kind?  Lets see if its a while
+	 ;; CASE 9: Statement. But what kind?  Lets see if its a while
 	 ;; closure of a do/while construct
 	 ((progn
 	    (goto-char indent-point)
@@ -2130,18 +2156,18 @@ of the expression are preserved."
 		   (looking-at "do\\b"))
 		 ))
 	  (cc-add-semantics 'do-while-closure placeholder))
-	 ;; CASE 9: A case or default label
+	 ;; CASE 10: A case or default label
 	 ((looking-at cc-case-statement-key)
 	  (goto-char containing-sexp)
 	  ;; for a case label, we set relpos the first non-whitespace
 	  ;; char on the line containing the switch opening brace. this
 	  ;; should handle hanging switch opening braces correctly.
 	  (cc-add-semantics 'case-label (cc-point 'boi)))
-	 ;; CASE 10: any other label
+	 ;; CASE 11: any other label
 	 ((looking-at (concat cc-symbol-key ":[^:]"))
 	  (goto-char containing-sexp)
 	  (cc-add-semantics 'label (cc-point 'boi)))
-	 ;; CASE 11: block close brace, possibly closing the defun or
+	 ;; CASE 12: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((= char-after-ip ?})
 	  (if (= containing-sexp lim)
@@ -2151,7 +2177,7 @@ of the expression are preserved."
 		(cc-add-semantics 'inline-close containing-sexp)
 	      (cc-add-semantics 'block-close (cc-point 'boi))
 	      )))
-	 ;; CASE 12: statement catchall
+	 ;; CASE 13: statement catchall
 	 (t
 	  ;; we know its a statement, but we need to find out if it is
 	  ;; the first statement in a block
@@ -2168,7 +2194,7 @@ of the expression are preserved."
 	      (forward-line 1)
 	      (cc-forward-syntactic-ws indent-point))
 	    (cond
-	     ;; CASE 12.A: we saw a case/default statement so we must be
+	     ;; CASE 13.A: we saw a case/default statement so we must be
 	     ;; in a switch statement.  find out if we are at the
 	     ;; statement just after a case or default label
 	     ((and inswitch-p
@@ -2179,15 +2205,15 @@ of the expression are preserved."
 		     (setq checkpnt (point))
 		     (looking-at cc-case-statement-key)))
 	      (cc-add-semantics 'statement-case-intro checkpnt))
-	     ;; CASE 12.B: any old statement
+	     ;; CASE 13.B: any old statement
 	     ((< (point) indent-point)
 	      (cc-add-semantics 'statement (cc-point 'boi)))
-	     ;; CASE 12.C: first statement in a block
+	     ;; CASE 13.C: first statement in a block
 	     (t
 	      (goto-char containing-sexp)
 	      (cc-add-semantics 'statement-block-intro (cc-point 'boi)))
 	     )))
-       )) ; end save-restriction
+	 ))				; end save-restriction
       ;; now we need to look at any special additional indentations
       (goto-char indent-point)
       ;; look for a comment only line
@@ -2413,7 +2439,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.59 $"
+(defconst cc-version "$Revision: 3.60 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
