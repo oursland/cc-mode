@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.102 $
-;; Last Modified:   $Date: 1993-11-29 18:15:47 $
+;; Version:         $Revision: 3.103 $
+;; Last Modified:   $Date: 1993-11-29 19:05:19 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-29 18:15:47 $|$Revision: 3.102 $|
+;; |$Date: 1993-11-29 19:05:19 $|$Revision: 3.103 $|
 
 ;;; Code:
 
@@ -493,7 +493,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.102 $
+  "Major mode for editing C++ code.  $Revision: 3.103 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -523,7 +523,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.102 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.103 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1224,8 +1224,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
     (or shutup-p
 	(message "indenting expression... (this may take a while)"))
     (goto-char start)
+    (beginning-of-line)
     (while (< (point) end)
-      (cc-indent-via-language-element bod)
+      (if (not (looking-at "[ \t]*$"))
+	  (cc-indent-via-language-element bod))
       (forward-line 1))
     (or shutup-p
 	(message "indenting expression... done."))
@@ -2396,7 +2398,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.102 $"
+(defconst cc-version "$Revision: 3.103 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
