@@ -1,4 +1,4 @@
-;;; cc-vars.el --- customization variables for CC Mode
+;;; cc-vars.el --- user customization variables for CC Mode
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 
@@ -89,8 +89,9 @@ the amount of offset to give column-zero anchored comment-only lines.
 Just an integer as value is equivalent to (<val> . -1000)."
   :type '(choice (integer :tag "Non-anchored offset")
 		 (cons :tag "Non-anchored & anchored offset"
-		       (integer :tag "Non-anchored offset" :value 0)
-		       (integer :tag "Anchored offset" :value 0)))
+		       :value (0 . 0)
+		       (integer :tag "Non-anchored offset")
+		       (integer :tag "Anchored offset")))
   :group 'c)
 
 (defcustom c-indent-comments-syntactically-p nil
@@ -313,6 +314,31 @@ The list of variables to buffer localize are:
     c-special-indent-hook
     c-indentation-style"
   :type 'boolean
+  :group 'c)
+
+(defcustom c-mode-hook nil
+  "*Hook called by `c-mode'."
+  :type 'hook
+  :group 'c)
+
+(defcustom c++-mode-hook nil
+  "*Hook called by `c++-mode'."
+  :type 'hook
+  :group 'c)
+
+(defcustom objc-mode-hook nil
+  "*Hook called by `objc-mode'."
+  :type 'hook
+  :group 'c)
+
+(defcustom java-mode-hook nil
+  "*Hook called by `java-mode'."
+  :type 'hook
+  :group 'c)
+
+(defcustom c-mode-common-hook nil
+  "*Hook called by all CC Mode modes for common initializations."
+  :type 'hook
   :group 'c)
 
 
