@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.143 $
-;; Last Modified:   $Date: 1995-01-17 14:52:02 $
+;; Version:         $Revision: 4.144 $
+;; Last Modified:   $Date: 1995-01-18 15:41:38 $
 ;; Keywords: C++ C Objective-C editing major-mode
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-17 14:52:02 $|$Revision: 4.143 $|
+;; |$Date: 1995-01-18 15:41:38 $|$Revision: 4.144 $|
 
 ;;; Code:
 
@@ -3768,7 +3768,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      ;; us before the lim we're passing in.  It should be
 	      ;; fixed, but I'm worried about side-effects at this
 	      ;; late date.  Fix for v5.
-	      (goto-char (max after-cond-placeholder (point)))
+	      (goto-char (or (and after-cond-placeholder
+				  (max after-cond-placeholder (point)))
+			     (point)))
 	      (c-add-syntax 'statement-cont (point)))
 	     )))
 	 ;; CASE 10: an else clause?
@@ -4378,7 +4380,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.143 $"
+(defconst c-version "$Revision: 4.144 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
