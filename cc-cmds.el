@@ -1987,12 +1987,12 @@ non-nil."
 
 (defun c-indent-line-or-region ()
   "When the region is active, indent it syntactically.  Otherwise
-indent the current line."
+indent the current line syntactically."
   ;; Emacs has a variable called mark-active, XEmacs uses region-active-p
   (interactive)
   (if (c-region-is-active-p)
       (c-indent-region (region-beginning) (region-end))
-    (indent-according-to-mode)))
+    (c-indent-line)))
 
 
 ;; for progress reporting
