@@ -1,4 +1,5 @@
-;;; cc-mode.el --- major mode for editing C, C++, Objective-C, and Java code
+;;; cc-mode.el --- major mode for editing C, C++, Objective-C, Java, Pike and
+;;; Awk code
 
 ;; Copyright (C) 1985,1987,1992-2001 Free Software Foundation, Inc.
 
@@ -37,17 +38,17 @@
 ;;; Commentary:
 
 ;; This package provides GNU Emacs major modes for editing C, C++,
-;; Objective-C, Java, IDL and Pike code.  As of the latest Emacs and
-;; XEmacs releases, it is the default package for editing these
+;; Objective-C, Java, IDL, Pike and Awk code.  As of the latest Emacs
+;; and XEmacs releases, it is the default package for editing these
 ;; languages.  This package is called "CC Mode", and should be spelled
 ;; exactly this way.
 
 ;; CC Mode supports K&R and ANSI C, ANSI C++, Objective-C, Java,
-;; CORBA's IDL, and Pike with a consistent indentation model across
-;; all modes.  This indentation model is intuitive and very flexible,
-;; so that almost any desired style of indentation can be supported.
-;; Installation, usage, and programming details are contained in an
-;; accompanying texinfo manual.
+;; CORBA's IDL, Pike and Awk with a consistent indentation model
+;; across all modes.  This indentation model is intuitive and very
+;; flexible, so that almost any desired style of indentation can be
+;; supported.  Installation, usage, and programming details are
+;; contained in an accompanying texinfo manual.
 
 ;; CC Mode's immediate ancestors were, c++-mode.el, cplus-md.el, and
 ;; cplus-md1.el..
@@ -99,7 +100,12 @@
 (cc-require 'cc-engine)
 (cc-require 'cc-cmds)
 (cc-require 'cc-align)
-(cc-require 'cc-awk)                    ; ACM 2002/4/21.
+(cc-require 'cc-awk) ; FIXME!! Add a check for the (X)Emacs version
+		     ; here, and load cc-awk only with a good-enough
+		     ; Emacs.  Otherwise, the old awk-mode.el should
+		     ; prevail, and dummy functions for things like
+		     ; c-awk-after-logical-semicolon should be
+		     ; provided.  ACM, 2002/10/27.
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
@@ -172,7 +178,7 @@
   (define-key c-mode-base-map "{"         'c-electric-brace)
   (define-key c-mode-base-map "}"         'c-electric-brace)
   (define-key c-mode-base-map ";"         'c-electric-semi&comma)
-  (define-key c-mode-base-map "#"         'c-electric-pound) ; Remove for awk-mode, ACM 2002/4/21
+  (define-key c-mode-base-map "#"         'c-electric-pound)
   (define-key c-mode-base-map ":"         'c-electric-colon)
   (define-key c-mode-base-map "("         'c-electric-paren)
   (define-key c-mode-base-map ")"         'c-electric-paren)
@@ -736,14 +742,16 @@ Key bindings:
     nil
   (setq awk-mode-map (c-make-inherited-keymap))
   ;; add bindings which are only useful for awk.
-  (define-key awk-mode-map "#" 'self-insert-command) ; ACM 2002/4/21; remove c-electric-pound.
+  (define-key awk-mode-map "#" 'self-insert-command)
+  (define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
+  (define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun)
   )
 
 (easy-menu-define c-awk-menu awk-mode-map "Awk Mode Commands"
 		  (c-mode-menu "Awk"))
 
 ;;;###autoload
-(defun awk-mode () ; c-mode "AWK"
+(defun awk-mode ()
   "Major mode for editing AWK code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 awk-mode buffer.  This automatically sets up a mail buffer with version
@@ -757,63 +765,42 @@ bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
 run first.
 
 Key bindings:
-\\{awk-mode-map}"                         ; OR \\{c-mode-map} ?? ACM 2002/4/13
+\\{awk-mode-map}"
   (interactive)
   (kill-all-local-variables)
   (c-initialize-cc-mode)
-  (setq comment-start-skip "#+ *") ; ACM 2002/4/20
-  (set (make-local-variable 'c-stmt-delim-chars) "^;{}\n\r?:") ; ACM 2002/3/29
-  (set (make-local-variable 'c-stmt-delim-chars-with-comma) "^;,{}\n\r?:") ; ACM 2002/5/31 ?????
+  (setq comment-start-skip "#+ *")
+  (set (make-local-variable 'c-stmt-delim-chars) "^;{}\n\r?:")
+  (set (make-local-variable 'c-stmt-delim-chars-with-comma) "^;,{}\n\r?:")
   (set (make-local-variable 'parse-sexp-lookup-properties) t)
-  (set-syntax-table awk-mode-syntax-table) ; different file
+  (set-syntax-table awk-mode-syntax-table)
   (setq major-mode 'awk-mode
 	mode-name "AWK"
-	local-abbrev-table awk-mode-abbrev-table ; defined above
+	local-abbrev-table awk-mode-abbrev-table
 	abbrev-mode t)
-  (use-local-map awk-mode-map)          ; defined above
-;;  (set (make-local-variable 'font-lock-support-mode) nil) ; ACM 2002/4/27, for debugging only.
-  (make-local-variable 'font-lock-defaults) ; ACM 2002/1/1
+  (use-local-map awk-mode-map)
+  (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults '(awk-font-lock-keywords
 			     nil nil ((?_ . "w")) nil
-                             (font-lock-syntactic-keywords
-                              . ((c-awk-set-syntax-table-properties
-                                  0 (0) ; Everything on this line is a dummy.
-                                  nil t)))
-                             (font-lock-multiline . t) ; Switched on for experiments, ACM 2002/3/16
+                             ;; (font-lock-syntactic-keywords
+                             ;; . ((c-awk-set-syntax-table-properties
+                             ;;      0 (0) ; Everything on this line is a dummy.
+                             ;;      nil t)))
+;; Separated out 2002/9/12 because Xemacs doesn't support trailing dotted pairs here.
                              ))
+  (make-local-variable 'font-lock-syntactic-keywords)
+  (setq font-lock-syntactic-keywords
+        '((c-awk-set-syntax-table-properties
+           0 (0) ; Everything on this line is a dummy.
+           nil t)))
   (c-awk-unstick-NL-prop)
   (c-common-init 'awk-mode)
-  (add-hook 'before-change-functions 'c-awk-before-change nil t) ; ACM, 2002/5/30
-  (add-hook 'after-change-functions 'c-awk-after-change nil t) ; ACM, 2002/7/21
-  (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max))) ; ACM 2002/7/19
-;  (cc-imenu-init cc-imenu-awk-generic-expression) ; cc-menus.el
+  (add-hook 'before-change-functions 'c-awk-before-change nil t)
+  (add-hook 'after-change-functions 'c-awk-after-change nil t)
+  (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max)))
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'awk-mode-hook)
   (c-update-modeline))
-
-;;;;; Old contents of awk-mode (ACM 2002/4/13)
-;  (set (make-local-variable 'paragraph-start) (concat "$\\|" page-delimiter)) ; A touch complicated
-                                        ; It is created in c-common-init, but not given a value there.
-;; We got rid of the silly page-delimiter, and gave it the standard "$", like most other cc-mode modes, in cc-langs.el
-;  (set (make-local-variable 'paragraph-separate) paragraph-start) ; created in c-common-init.  Value in cc-langs.el.
-;  (set (make-local-variable 'comment-start) "# ") Moved to cc-langs.el, 2002/4/20
-;  (set (make-local-variable 'comment-end) "") Moved to cc-langs.el, 2002/4/20
-;  (set (make-local-variable 'comment-start-skip) "#+ *") Moved into awk-mode, 2002/4/20
-;  (set (make-local-variable 'c-stmt-delim-chars) "^;{}\n\r?:") ; ACM 2002/3/29.  Moved into awk-mode, 2002/4/20
-;  (set (make-local-variable 'c-comment-start-regexp) "#")     ; ACM 2002/3/9.  Moved to cc-langs.el, 2002/4/20.
-;  (set (make-local-variable 'parse-sexp-lookup-properties) t) ; ACM 2002/4/20.  Move to awk-mode
-
-;  (set-syntax-table awk-mode-syntax-table) ; ACM 2001/12/23 ; Already in awk-mode, 2002/4/20
-;  (make-local-variable 'font-lock-defaults) ; ACM 2002/1/1 ; 2002/4/20, move to awk-mode.
-;;   (setq font-lock-defaults '(awk-font-lock-keywords ; Move to awk-mode, 2002/4/20
-;; 			     nil nil ((?_ . "w")) nil
-;;                              (font-lock-syntactic-keywords
-;;                               . ((c-awk-set-syntax-table-properties
-;;                                   0 (0)         ; Everything on this line is a dummy.
-;;                                   nil t)))
-;;                              (font-lock-multiline . t) ; Switched on for experiments, ACM 2002/3/16
-;;                              ))
-;)
 
 (defconst c-mode-help-address
   "bug-cc-mode@gnu.org"
