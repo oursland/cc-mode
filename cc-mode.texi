@@ -28,6 +28,12 @@
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@comment Info directory entry for use by install-info
+@dircategory Emacs
+@direntry
+* CC mode: (cc-mode).      Emacs mode for editing C, C++, Objective-C,
+                           Java, Pike, and IDL code.
+@end direntry
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment The following line inserts the copyright notice 
