@@ -2416,6 +2416,14 @@ isn't moved."
 		       (setq placeholder (point))
 		       (c-backward-syntactic-ws limit))
 		     (and (eq (char-before) ?\))
+			  (or (not macro-start)
+			      ;; Ignore closing paren of a #define
+			      ;; argument list.
+			      (> (point)
+				 (save-excursion
+				   (goto-char macro-start)
+				   (c-forward-to-cpp-expression)
+				   (point))))
 			  (or (not c-method-key)
 			      (progn
 				(c-forward-sexp -1)
