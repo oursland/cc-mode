@@ -656,6 +656,8 @@ involve auto-newline inserted newlines:
 		 brace-catch-brace)
 	  (const :tag "Put empty defun braces on one line (empty-defun-braces)"
 		 empty-defun-braces)
+	  (const :tag "Compact defun braces which enclose a single line of code onto one line."
+		 one-liner-defun)
 	  (const :tag "Put short functions on one line (one-liner-defun)"
 		 one-liner-defun)
 	  (const :tag "Put \"};\" ending defuns on one line (defun-close-semi)"
