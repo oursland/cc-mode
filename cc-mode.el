@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.242 $
-;; Last Modified:   $Date: 1992-12-17 22:35:57 $
+;; Version:         $Revision: 2.243 $
+;; Last Modified:   $Date: 1992-12-17 23:29:18 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-17 22:35:57 $|$Revision: 2.242 $|
+;; |$Date: 1992-12-17 23:29:18 $|$Revision: 2.243 $|
 
 ;;; Code:
 
@@ -408,7 +408,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.242 $
+  "Major mode for editing C++ code.  $Revision: 2.243 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -616,7 +616,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.242 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.243 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1975,48 +1975,48 @@ Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives. Search no farther back than
 optional LIM.  If LIM is ommitted, beginning-of-defun is used."
   (let ((lim (or lim (c++-point 'bod)))
-	literal stop skip)
+	literal stop)
     (if (and c++-backscan-limit
 	     (> (- (point) lim) c++-backscan-limit))
 	(setq lim (- (point) c++-backscan-limit)))
     (while (not stop)
       (skip-chars-backward " \t\n\r\f" lim)
-      (setq literal (c++-in-literal lim))
-      (cond
-       ;; in a c++ comment
-       ((eq literal 'c++)
-	(setq skip t)
-	(while skip
-	  (skip-chars-backward "^/" lim)
-	  (skip-chars-backward "/" lim)
-	  (setq skip (not (and (= (following-char) ?/)
-			       (= (char-after (1+ (point))) ?/))))))
-       ;; in a c comment block
-       ((eq literal 'c)
-	(setq skip t)
-	(while skip
-	  (skip-chars-backward "^*" lim)
-	  (skip-chars-backward "*" lim)
-	  (setq skip (not (and (= (following-char) ?*)
-			       (= (preceding-char) ?/)))))
-	(forward-char -1))
-       ;; in a preprocessor directive
-       ((eq literal 'pound)
-	(beginning-of-line)
-	(setq stop (<= (point) lim)))
-       ;; looking at end of a c block comment
-       ((and (= (preceding-char) ?/)
-	     (= (char-after (- (point) 2)) ?*))
-	(forward-char -2)
-	(setq skip t)
-	(while skip
-	  (skip-chars-backward "^*" lim)
-	  (skip-chars-backward "*" lim)
-	  (setq skip (not (and (= (following-char) ?*)
-			       (= (preceding-char) ?/)))))
-	(forward-char -1))
-       ;; none of the above
-       (t (setq stop t))))))
+      ;; c++ comment
+      (if (eq (setq literal (c++-in-literal lim)) 'c++)
+	  (let ((skip t))
+	    (while skip
+	      (skip-chars-backward "^/" lim)
+	      (skip-chars-backward "/" lim)
+	      (setq skip (not (and (= (following-char) ?/)
+				   (= (char-after (1+ (point))) ?/))))
+	      ))
+	;; c comment
+	(if (eq literal 'c)
+	    (let ((skip t))
+	      (while skip
+		(skip-chars-backward "^*" lim)
+		(skip-chars-backward "*" lim)
+		(setq skip (not (and (= (following-char) ?*)
+				     (= (preceding-char) ?/)))))
+	      (forward-char -1))
+	  ;; preprocessor directive
+	  (if (eq literal 'pound)
+	      (progn
+		(beginning-of-line)
+		(setq stop (<= (point) lim)))
+	    ;; just outside of c block
+	    (if (and (= (preceding-char) ?/)
+		     (= (char-after (- (point) 2)) ?*))
+		(let ((skip t))
+		  (forward-char -2)
+		  (while skip
+		    (skip-chars-backward "^*" lim)
+		    (skip-chars-backward "*" lim)
+		    (setq skip (not (and (= (following-char) ?*)
+					 (= (preceding-char) ?/)))))
+		  (forward-char -1))
+	      ;; none of the above
+	      (setq stop t))))))))
 
 (defun c++-backward-to-start-of-do (&optional limit)
   "Move to the start of the last ``unbalanced'' do."
@@ -2305,7 +2305,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.242 $"
+(defconst c++-version "$Revision: 2.243 $"
   "c++-mode version number.")
 
 (defun c++-version ()
