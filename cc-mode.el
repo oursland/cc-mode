@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.212 $
-;; Last Modified:   $Date: 1995-05-18 23:49:51 $
+;; Version:         $Revision: 4.213 $
+;; Last Modified:   $Date: 1995-05-19 00:15:06 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-18 23:49:51 $|$Revision: 4.212 $|
+;; |$Date: 1995-05-19 00:15:06 $|$Revision: 4.213 $|
 
 ;;; Code:
 
@@ -1845,8 +1845,13 @@ value of `c-cleanup-list'."
 				     c-hanging-colons-alist))))
       ;; indent the current line
       (c-indent-line syntax)
-      ;; does a newline go before the colon?
-      (if (memq 'before newlines)
+      ;; does a newline go before the colon?  Watch out for already
+      ;; non-hung colons.  However, we don't unhang them because that
+      ;; would be a cleanup (and anti-social).
+      (if (and (memq 'before newlines)
+	       (save-excursion
+		 (skip-chars-backward ": \t")
+		 (not (bolp))))
 	  (let ((pos (- (point-max) (point))))
 	    (forward-char -1)
 	    (newline)
@@ -4596,7 +4601,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.212 $"
+(defconst c-version "$Revision: 4.213 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
