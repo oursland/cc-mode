@@ -741,17 +741,26 @@ appended."
 	"[ \t\n]*" (c-lang-var c-symbol-key)))
 (c-lang-defvar c-opt-method-key (c-lang-var c-opt-method-key))
 
-;; Regexp matching something that might precede a declaration,
-;; e.g. the last token of a preceding statement or declaration.  It
-;; should not match bob, though.
+;; Regexp matching something that might precede a declaration or a
+;; cast, e.g. the last token of a preceding statement or declaration.
+;; It should not match bob, though.
 (c-lang-defconst c-decl-prefix-re
   (java idl objc) "[\{\}\(;,]"
   ;; We additionally match ")" in C for K&R region declarations, and
   ;; in C and C++ for when a cpp macro definition begins with a
   ;; declaration.
   (c c++) "[\{\}\(\);,]"
-  pike "[\{\}\(\)\[;,]") ;; Also match "[" for multiple value assignments.
+  ;; Also match "[" for multiple value assignments and type casts in Pike.
+  pike "[\{\}\(\)\[;,]")
 (c-lang-defvar c-decl-prefix-re (c-lang-var c-decl-prefix-re))
+
+;; Regexp matching the close paren(s) of a cast, or nil in languages
+;; without casts.  Note that the corresponding open paren(s) should be
+;; matched by `c-decl-prefix-re'.
+(c-lang-defconst c-cast-close-paren-key
+  (c c++ java) ")"
+  pike "[\]\)]")
+(c-lang-defvar c-cast-close-paren-key (c-lang-var c-cast-close-paren-key))
 
 ;; Regexp matching the operators that might precede the identifier in
 ;; a declaration, e.g. the "*" in "char *argv".  This regexp should
