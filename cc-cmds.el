@@ -1033,6 +1033,11 @@ comment."
 	  (if (not (c-in-literal))
 	      (progn
 		(forward-line 1)
+		;; We may not have landed at the beginning of a line,
+		;; perhaps because this is the last line in the file
+		(if (bolp)
+		    (forward-comment -1)
+		  (back-to-indentation))
 		(forward-comment -1)
 		(setq at-comment-col (= (current-column) comment-column))))
 	  ;; are we looking at a block or lines style comment?
