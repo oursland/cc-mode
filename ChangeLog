@@ -1,6 +1,14 @@
-2003-07-02  Martin Stjernholm  <bug-cc-mode@gnu.org>
+2003-07-03  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* Patch release 5.30.1.
+
+	* cc-fonts.el (c-font-lock-complex-decl-prepare,
+	c-font-lock-declarators, c-font-lock-declarations,
+	c-complex-decl-matchers, c-basic-matchers-after): Use a text
+	property to mark the items in in declarator lists to handle
+	refontification inside multiline declarations better.
+
+2003-07-02  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-fonts.el (c-font-lock-declarations): Recognize a construct
 	like "a * b = c;" as a declaration.
