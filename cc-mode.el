@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.53 $
-;; Last Modified:   $Date: 1994-08-22 22:28:03 $
+;; Version:         $Revision: 4.54 $
+;; Last Modified:   $Date: 1994-08-23 14:01:06 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-22 22:28:03 $|$Revision: 4.53 $|
+;; |$Date: 1994-08-23 14:01:06 $|$Revision: 4.54 $|
 
 ;;; Code:
 
@@ -945,7 +945,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.53 $
+cc-mode Revision: $Revision: 4.54 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -984,7 +984,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.53 $
+cc-mode Revision: $Revision: 4.54 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1021,7 +1021,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.53 $
+cc-mode Revision: $Revision: 4.54 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2023,7 +2023,7 @@ search."
   ;; move to the start of the current statement, or the previous
   ;; statement if already at the beginning of one.
   (let ((firstp t)
-	donep c-in-literal-cache
+	donep c-in-literal-cache maybe-labelp
 	(last-begin (point)))
     (while (not donep)
       ;; stop at beginning of buffer
@@ -2045,6 +2045,7 @@ search."
 	      (goto-char last-begin)
 	      (setq donep t)))
 
+	(setq maybe-labelp nil)
 	;; see if we're in a literal. if not, then this bufpos may be
 	;; a candidate for stopping
 	(cond
@@ -2082,17 +2083,31 @@ search."
 	    (save-excursion
 	      (while (and (not crossedp)
 			  (< (point) last-begin))
-		(skip-chars-forward "^;{}" last-begin)
-		(if (and (memq (following-char) '(?\; ?{ ?}))
-			 (not (c-in-literal lim)))
-		    (setq crossedp t
-			  donep t)
+		(skip-chars-forward "^;{}:" last-begin)
+		(if (not (c-in-literal lim))
+		    (if (memq (following-char) '(?\; ?{ ?}))
+			(setq crossedp t
+			      donep t)
+		      (if (= (following-char) ?:)
+			  (setq maybe-labelp t))
+		      (forward-char 1))
 		  (forward-char 1))))
 	    crossedp))
 	 ;; CASE 6: ignore labels
-	 ((or (and c-access-key (looking-at c-access-key))
-	      (looking-at c-label-key)
-	      (looking-at c-switch-label-key)))
+	 ((and maybe-labelp
+	       (or (and c-access-key (looking-at c-access-key))
+		   ;; with switch labels, we have to go back further
+		   ;; to try to pick up the case or default
+		   ;; keyword. Potential bogosity alert: we assume
+		   ;; `case' or `default' is first thing on line
+		   (let ((here (point)))
+		     (beginning-of-line)
+		     (c-forward-syntactic-ws)
+		     (if (looking-at c-switch-label-key)
+			 t
+		       (goto-char here)
+		       nil))
+		   (looking-at c-label-key))))
 	 ;; CASE 7: ObjC method def
 	 ((and (eq major-mode 'objc-mode)
 	       (c-in-objc-method-def-p))
@@ -3942,7 +3957,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.53 $"
+(defconst c-version "$Revision: 4.54 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
