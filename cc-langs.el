@@ -186,7 +186,7 @@
 ;; list, ie for a `([ ])' list there should be a cons (?\[ . ?\]) in
 ;; this list.
 (defvar c-special-brace-lists nil)
-(make-variable-buffer-local 'c-statarg-key)
+(make-variable-buffer-local 'c-special-brace-lists)
 (defconst c-Pike-special-brace-lists '((?{ . ?})
 				       (?\[ . ?\])
 				       (?< . ?>)))
