@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.348 $
-;; Last Modified:   $Date: 1993-06-18 20:52:15 $
+;; Version:         $Revision: 2.349 $
+;; Last Modified:   $Date: 1993-06-18 21:00:56 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-18 20:52:15 $|$Revision: 2.348 $|
+;; |$Date: 1993-06-18 21:00:56 $|$Revision: 2.349 $|
 
 ;;; Code:
 
@@ -487,7 +487,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.348 $
+  "Major mode for editing C++ code.  $Revision: 2.349 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -704,7 +704,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.348 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.349 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1369,7 +1369,16 @@ of the expression are preserved."
 		(setq this-indent
 		      (if (>= (current-column) comment-column)
 			  (current-column)
-			(c++-comment-offset (bolp) this-indent)))))
+			(c++-comment-offset
+			 (bolp)
+			 (+ this-indent
+			    (if (save-excursion
+				  (c++-backward-syntactic-ws
+				   (car contain-stack))
+				  (memq (preceding-char)
+					'(nil ?\, ?\; ?} ?: ?{)))
+				0 c-continued-statement-offset))
+			 )))))
 	     ;; looking at a friend declaration
 	     ((looking-at "friend[ \t]")
 	      (setq this-indent (+ this-indent c++-friend-offset)))
@@ -2738,7 +2747,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.348 $"
+(defconst c++-version "$Revision: 2.349 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
