@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.316 $
-;; Last Modified:   $Date: 1994-04-21 14:16:03 $
+;; Version:         $Revision: 3.317 $
+;; Last Modified:   $Date: 1994-04-21 20:54:39 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-21 14:16:03 $|$Revision: 3.316 $|
+;; |$Date: 1994-04-21 20:54:39 $|$Revision: 3.317 $|
 
 ;;; Code:
 
@@ -133,8 +133,6 @@ reported and the semantic symbol is ignored.")
     (inher-intro           . +)
     (inher-cont            . c-lineup-multi-inher)
     (block-open            . 0)
-    ;; some people might prefer
-    ;;(block-open            . c-adaptive-block-open)
     (block-close           . 0)
     (brace-list-open       . 0)
     (brace-list-close      . 0)
@@ -149,6 +147,7 @@ reported and the semantic symbol is ignored.")
     (statement-block-intro . +)
     (statement-case-intro  . +)
     (substatement          . +)
+    (substatement-open     . +)
     (case-label            . 0)
     (access-label          . -)
     (label                 . 2)
@@ -234,6 +233,7 @@ Here is the current list of valid semantic element symbols:
  statement-block-intro  -- the first line in a new statement block
  statement-case-intro   -- the first line in a case `block'
  substatement           -- the first line after an if/while/for/do/else
+ substatement-open      -- the brace that opens a substatement block
  case-label             -- a case or default label
  access-label           -- C++ private/protected/public access label
  label                  -- any non-special C/C++ label
@@ -329,9 +329,9 @@ This variable contains an association list with elements of the
 following form: (SYNTACTIC-SYMBOL . (NL-LIST)).
 
 SYNTACTIC-SYMBOL can be any of: defun-open, defun-cloase, class-open,
-class-close, inline-open, inline-close, block-open, block-close,
-brace-list-open, or brace-list-close. See `c-offsets-alist' for
-details.
+class-close, inline-open, inline-close, block-open,
+block-close, substatement-open, brace-list-open, or
+brace-list-close. See `c-offsets-alist' for details.
 
 NL-LIST can contain any combination of the symbols `before' or
 `after'. It also be nil.  When a brace is inserted, the syntactic
@@ -373,7 +373,7 @@ Only currently supported behavior is `alignleft'.")
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . 5)
-			 (block-open . 0)
+			 (substatement-open . 0)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -383,7 +383,7 @@ Only currently supported behavior is `alignleft'.")
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . 0)
-			 (block-open . -)
+			 (substatement-open . -)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -393,7 +393,7 @@ Only currently supported behavior is `alignleft'.")
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . +)
-			 (block-open . -)
+			 (substatement-open . -)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -402,7 +402,7 @@ Only currently supported behavior is `alignleft'.")
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
-			 (block-open . -)
+			 (substatement-open . -)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -412,7 +412,7 @@ Only currently supported behavior is `alignleft'.")
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . +)
-			 (block-open . 0)
+			 (substatement-open . 0)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -421,7 +421,7 @@ Only currently supported behavior is `alignleft'.")
     ("Ellemtel"
      (c-basic-offset . 3)
      (c-comment-only-line-offset . 0)
-     (c-hanging-braces-alist     . ((block-open before)))
+     (c-hanging-braces-alist     . ((substatement-open before)))
      (c-offsets-alist . ((topmost-intro      . 0)
                          (topmost-intro-cont . -6)
                          (substatement       . 0)
@@ -793,7 +793,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.316 $
+cc-mode Revision: $Revision: 3.317 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -824,7 +824,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.316 $
+cc-mode Revision: $Revision: 3.317 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1178,6 +1178,7 @@ the brace is inserted inside a literal."
 					 (assq 'brace-list-close semantics)
 					 (assq 'block-open semantics)
 					 (assq 'block-close semantics)
+					 (assq 'substatement-open semantics)
 					 ))
 				c-hanging-braces-alist)
 			  '(ignore before after))))
@@ -2874,9 +2875,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (progn (c-forward-syntactic-ws)
 			  (>= (point) indent-point))))
 	    (goto-char placeholder)
-	    (c-add-semantics 'substatement (c-point 'boi))
 	    (if (= char-after-ip ?{)
-		(c-add-semantics 'block-open)))
+		(c-add-semantics 'substatement-open (c-point 'boi))
+	      (c-add-semantics 'substatement (c-point 'boi))))
 	   ;; CASE 8B: open braces for class or brace-lists
 	   ((= char-after-ip ?{)
 	    (cond
@@ -3237,13 +3238,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			 (t (- (match-end 0) (match-beginning 0)))))))
       (- (current-column) cs-curcol))))
 
-(defun c-adaptive-block-open (langelem)
-  ;; when substatement is on semantics list, return negative
-  ;; c-basic-offset, otherwise return zero
-  (if (assq 'substatement c-semantics)
-      (- c-basic-offset)
-    0))
-
 (defun c-lineup-comment (langelem)
   ;; support old behavior for comment indentation. we look at
   ;; c-comment-only-line-offset to decide how to indent comment
@@ -3425,7 +3419,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.316 $"
+(defconst c-version "$Revision: 3.317 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
