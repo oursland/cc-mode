@@ -108,6 +108,63 @@
   (popup-menu (c-mode-menu))
   (c-keep-region-active))
     
+(defconst c-mode-menu
+  '(["Comment Out Region"     comment-region (mark)]
+    ["Macro Expand Region"    c-macro-expand (mark)]
+    ["Backslashify"           c-backslash-region (mark)]
+    ["Indent Expression"      c-indent-exp
+     (memq (following-char) '(?\( ?\[ ?\{))]
+    ["Indent Line"            c-indent-command t]
+    ["Fill Comment Paragraph" c-fill-paragraph t]
+    ["Up Conditional"         c-up-conditional t]
+    ["Backward Conditional"   c-backward-conditional t]
+    ["Forward Conditional"    c-forward-conditional t]
+    ["Backward Statement"     c-beginning-of-statement t]
+    ["Forward Statement"      c-end-of-statement t]
+    )
+  "Basic XEmacs 19 menu for C/C++/ObjC/Java modes.")
+
+(defun c-mode-fsf-menu (name map)
+  ;; Add menu to a keymap, but don't add them for XEmacs.  This
+  ;; feature test will fail on other than Emacs 19.
+  (condition-case nil
+      (progn
+	(define-key map [menu-bar] (make-sparse-keymap))
+	(define-key map [menu-bar c] (cons name (make-sparse-keymap name)))
+
+	(define-key map [menu-bar c comment-region]
+	  '("Comment Out Region" . comment-region))
+	(define-key map [menu-bar c c-macro-expand]
+	  '("Macro Expand Region" . c-macro-expand))
+	(define-key map [menu-bar c c-backslash-region]
+	  '("Backslashify" . c-backslash-region))
+	(define-key map [menu-bar c indent-exp]
+	  '("Indent Expression" . c-indent-exp))
+	(define-key map [menu-bar c indent-line]
+	  '("Indent Line" . c-indent-command))
+	(define-key map [menu-bar c fill]
+	  '("Fill Comment Paragraph" . c-fill-paragraph))
+	(define-key map [menu-bar c separator2]
+	  '("----")) 
+	(define-key map [menu-bar c up]
+	  '("Up Conditional" . c-up-conditional))
+	(define-key map [menu-bar c backward]
+	  '("Backward Conditional" . c-backward-conditional))
+	(define-key map [menu-bar c forward]
+	  '("Forward Conditional" . c-forward-conditional))
+	(define-key map [menu-bar c backward-stmt]
+	  '("Backward Statement" . c-beginning-of-statement))
+	(define-key map [menu-bar c forward-stmt]
+	  '("Forward Statement" . c-end-of-statement))
+
+	;; RMS says: mouse-3 should not select this menu.  mouse-3's
+	;; global definition is useful in C mode and we should not
+	;; interfere with that.  The menu is mainly for beginners, and
+	;; for them, the menubar requires less memory than a special
+	;; click.
+	t)
+    (error nil)))
+
 
 (provide 'cc-menus)
 ;;; cc-menus.el ends here

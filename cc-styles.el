@@ -211,8 +211,8 @@ the existing style.")
   ;; default base style is "cc-mode" and the recursion stops.  Be sure
   ;; to detect loops.
   (if (not (string-equal style "cc-mode"))
-      (let ((base (if (stringp (car style))
-		      (downcase (car style))
+      (let ((base (if (stringp (car basestyles))
+		      (downcase (car basestyles))
 		    "cc-mode")))
 	(if (memq base basestyles)
 	    (error "Style loop detected: %s in %s" base basestyles))

@@ -127,6 +127,13 @@ Infodock (based on XEmacs) has an additional symbol on this list:
 
 
 
+;; important macros
+(defmacro c-safe (&rest body)
+  ;; safely execute BODY, return nil if an error occurred
+  (` (condition-case nil
+	 (progn (,@ body))
+       (error nil))))
+
 (defsubst c-keep-region-active ()
   ;; Do whatever is necessary to keep the region active in XEmacs.
   ;; Ignore byte-compiler warnings you might see.  This is not needed
@@ -134,6 +141,198 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   (and (boundp 'zmacs-region-stays)
        (setq zmacs-region-stays t)))
 
+
+
+(defsubst c-load-all ()
+  ;; make sure all necessary components of CC Mode are loaded in.
+  (require 'cc-vars)
+  (require 'cc-engine)
+  (require 'cc-menus)
+  (require 'cc-langs)
+  (require 'cc-align)
+  (require 'cc-styles)
+  (require 'cc-cmds))
+  
+
+;;;###autoload
+(defun c-mode ()
+  "Major mode for editing K&R and ANSI C code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
+c-mode buffer.  This automatically sets up a mail buffer with version
+information already added.  You just need to add a description of the
+problem, including a reproducible test case and send the message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook variable `c-mode-hook' is run with no args, if that value is
+bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
+run first.
+
+Key bindings:
+\\{c-mode-map}"
+  (interactive)
+  (c-load-all)
+  (kill-all-local-variables)
+  (set-syntax-table c-mode-syntax-table)
+  (setq major-mode 'c-mode
+	mode-name "C"
+	local-abbrev-table c-mode-abbrev-table)
+  (use-local-map c-mode-map)
+  (c-common-init)
+  (setq comment-start "/* "
+	comment-end   " */"
+	comment-multi-line t
+	c-conditional-key c-C-conditional-key
+	c-class-key c-C-class-key
+	c-baseclass-key nil
+	c-comment-start-regexp c-C-comment-start-regexp
+	imenu-generic-expression cc-imenu-c-generic-expression)
+  (run-hooks 'c-mode-common-hook)
+  (run-hooks 'c-mode-hook))
+
+
+
+;;;###autoload
+(defun c++-mode ()
+  "Major mode for editing C++ code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
+c++-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook variable `c++-mode-hook' is run with no args, if that
+variable is bound and has a non-nil value.  Also the hook
+`c-mode-common-hook' is run first.
+
+Key bindings:
+\\{c++-mode-map}"
+  (interactive)
+  (c-load-all)
+  (kill-all-local-variables)
+  (set-syntax-table c++-mode-syntax-table)
+  (setq major-mode 'c++-mode
+	mode-name "C++"
+	local-abbrev-table c++-mode-abbrev-table)
+  (use-local-map c++-mode-map)
+  (c-common-init)
+  (setq comment-start "// "
+	comment-end ""
+	comment-multi-line nil
+	c-conditional-key c-C++-conditional-key
+	c-comment-start-regexp c-C++-comment-start-regexp
+	c-class-key c-C++-class-key
+	c-access-key c-C++-access-key
+	c-double-slash-is-comments-p t
+	c-recognize-knr-p nil
+	imenu-generic-expression cc-imenu-c++-generic-expression)
+  (run-hooks 'c-mode-common-hook)
+  (run-hooks 'c++-mode-hook))
+
+
+
+;;;###autoload
+(defun objc-mode ()
+  "Major mode for editing Objective C code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+objc-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook variable `objc-mode-hook' is run with no args, if that value
+is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
+is run first.
+
+Key bindings:
+\\{objc-mode-map}"
+  (interactive)
+  (c-load-all)
+  (kill-all-local-variables)
+  (set-syntax-table objc-mode-syntax-table)
+  (setq major-mode 'objc-mode
+	mode-name "ObjC"
+	local-abbrev-table objc-mode-abbrev-table)
+  (use-local-map objc-mode-map)
+  (c-common-init)
+  (setq comment-start "// "
+	comment-end   ""
+	comment-multi-line nil
+	c-conditional-key c-C-conditional-key
+	c-comment-start-regexp c-C++-comment-start-regexp
+ 	c-class-key c-ObjC-class-key
+	c-baseclass-key nil
+	c-access-key c-ObjC-access-key
+	c-double-slash-is-comments-p t
+	c-method-key c-ObjC-method-key)
+  (run-hooks 'c-mode-common-hook)
+  (run-hooks 'objc-mode-hook))
+
+
+
+;;;###autoload
+(defun java-mode ()
+  "Major mode for editing Java code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+java-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case and send the
+message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook variable `java-mode-hook' is run with no args, if that value
+is bound and has a non-nil value.  Also the common hook
+`c-mode-common-hook' is run first.  Note that this mode automatically
+sets the \"java\" style before calling any hooks so be careful if you
+set styles in `c-mode-common-hook'.
+
+Key bindings:
+\\{java-mode-map}"
+  (interactive)
+  (c-load-all)
+  (kill-all-local-variables)
+  (set-syntax-table java-mode-syntax-table)
+  (setq major-mode 'java-mode
+ 	mode-name "Java"
+ 	local-abbrev-table java-mode-abbrev-table)
+  (use-local-map java-mode-map)
+  (c-common-init)
+  (setq comment-start "// "
+ 	comment-end   ""
+ 	comment-multi-line nil
+ 	c-conditional-key c-Java-conditional-key
+ 	c-comment-start-regexp c-Java-comment-start-regexp
+  	c-class-key c-Java-class-key
+	c-method-key c-Java-method-key
+	c-double-slash-is-comments-p t
+ 	c-baseclass-key nil
+	c-recognize-knr-p nil
+ 	c-access-key c-Java-access-key
+	;defun-prompt-regexp c-Java-defun-prompt-regexp
+	imenu-generic-expression cc-imenu-java-generic-expression
+	)
+  (c-set-style "java")
+  (run-hooks 'c-mode-common-hook)
+  (run-hooks 'java-mode-hook))
+
+
+
+;; This comment was here before me:
+;;
+;;     cmacexp is lame because it uses no preprocessor symbols.  It
+;;     isn't very extensible either -- hardcodes /lib/cpp.
+;;
+;; I add it here only because c-mode had it -- BAW
+;;
+(autoload 'c-macro-expand "cmacexp"
+  "Display the result of expanding all C macros occurring in the region.
+The expansion is entirely correct because it uses the C preprocessor."
+  t)
 
 
 ;; defuns for submitting bug reports

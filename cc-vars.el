@@ -352,6 +352,28 @@ The list of variables to buffer localize are:
 
 
 ;; Non-customizable variables, still part of the interface to CC Mode
+(defvar c-file-style nil
+  "Variable interface for setting style via File Local Variables.
+In a file's Local Variable section, you can set this variable to a
+string suitable for `c-set-style'.  When the file is visited, CC Mode
+will set the style of the file to this value automatically.
+
+Note that file style settings are applied before file offset settings
+as designated in the variable `c-file-offsets'.")
+
+(defvar c-file-offsets nil
+  "Variable interface for setting offsets via File Local Variables.
+In a file's Local Variable section, you can set this variable to an
+association list similar to the values allowed in `c-offsets-alist'.
+When the file is visited, CC Mode will institute these offset settings
+automatically.
+
+Note that file offset settings are applied after file style settings
+as designated in the variable `c-file-style'.")
+
+(defvar c-syntactic-context nil
+  "Variable containing syntactic analysis list during indentation.")
+
 (defvar c-indentation-style c-site-default-style
   "Name of style installed in the current buffer.")
 

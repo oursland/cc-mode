@@ -189,7 +189,7 @@ the brace is inserted inside a literal."
 	;; If syntax is a function symbol, then call it using the
 	;; defined semantics.
 	(if (and (not (consp (cdr newlines)))
-		 (c-functionp (cdr newlines)))
+		 (functionp (cdr newlines)))
 	    (let ((c-syntactic-context syntax))
 	      (setq newlines
 		    (funcall (cdr newlines) (car newlines) insertion-point))))
@@ -1161,6 +1161,184 @@ command to conveniently insert and align the necessary backslashes."
  	(if (looking-at "\\\\")
  	    (delete-region (1+ (point))
  			   (progn (skip-chars-backward " \t") (point)))))))
+
+
+(defun c-fill-paragraph (&optional arg)
+  "Like \\[fill-paragraph] but handles C and C++ style comments.
+If any of the current line is a comment or within a comment,
+fill the comment or the paragraph of it that point is in,
+preserving the comment indentation or line-starting decorations.
+
+Optional prefix ARG means justify paragraph as well."
+  (interactive "P")
+  (let* (comment-start-place
+	 (first-line
+	  ;; Check for obvious entry to comment.
+	  (save-excursion
+	    (beginning-of-line)
+	    (skip-chars-forward " \t\n")
+	    (and (looking-at comment-start-skip)
+		 (setq comment-start-place (point)))))
+	 (re1 "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
+    (if (and c-double-slash-is-comments-p
+	     (save-excursion
+	       (beginning-of-line)
+	       (looking-at ".*//")))
+	(let (fill-prefix
+	       ;; Lines containing just a comment start or just an end
+	       ;; should not be filled into paragraphs they are next
+	       ;; to.
+	      (paragraph-start (concat paragraph-start re1))
+	      (paragraph-separate (concat paragraph-separate re1)))
+	  (save-excursion
+	    (beginning-of-line)
+	    ;; Move up to first line of this comment.
+	    (while (and (not (bobp))
+ 			(looking-at "[ \t]*//[ \t]*[^ \t\n]"))
+	      (forward-line -1))
+ 	    (if (not (looking-at ".*//[ \t]*[^ \t\n]"))
+		(forward-line 1))
+	    ;; Find the comment start in this line.
+	    (re-search-forward "[ \t]*//[ \t]*")
+	    ;; Set the fill-prefix to be what all lines except the first
+	    ;; should start with.
+	    (setq fill-prefix (buffer-substring (match-beginning 0)
+						(match-end 0)))
+	    (save-restriction
+	      ;; Narrow down to just the lines of this comment.
+	      (narrow-to-region (c-point 'bol)
+				(save-excursion
+				  (forward-line 1)
+				  (while (looking-at fill-prefix)
+				    (forward-line 1))
+				  (point)))
+	      (fill-paragraph arg)
+	      t)))
+      ;; else C style comments
+      (if (or first-line
+	      ;; t if we enter a comment between start of function and
+	      ;; this line.
+	      (eq (c-in-literal) 'c)
+	      ;; t if this line contains a comment starter.
+	      (setq first-line
+		    (save-excursion
+		      (beginning-of-line)
+		      (prog1
+			  (re-search-forward comment-start-skip
+					     (save-excursion (end-of-line)
+							     (point))
+					     t)
+			(setq comment-start-place (point))))))
+	  ;; Inside a comment: fill one comment paragraph.
+	  (let ((fill-prefix
+		 ;; The prefix for each line of this paragraph
+		 ;; is the appropriate part of the start of this line,
+		 ;; up to the column at which text should be indented.
+		 (save-excursion
+		   (beginning-of-line)
+		   (if (looking-at "[ \t]*/\\*.*\\*/")
+		       (progn (re-search-forward comment-start-skip)
+			      (make-string (current-column) ?\ ))
+		     (if first-line (forward-line 1))
+
+		     (let ((line-width (progn (end-of-line) (current-column))))
+		       (beginning-of-line)
+		       (prog1
+			   (buffer-substring
+			    (point)
+
+			    ;; How shall we decide where the end of the
+			    ;; fill-prefix is?
+			    (progn
+			      (beginning-of-line)
+			      (skip-chars-forward " \t*" (c-point 'eol))
+			      ;; kludge alert, watch out for */, in
+			      ;; which case fill-prefix should *not*
+			      ;; be "*"!
+			      (if (and (= (following-char) ?/)
+				       (= (preceding-char) ?*))
+				  (forward-char -1))
+			      (point)))
+
+			 ;; If the comment is only one line followed
+			 ;; by a blank line, calling move-to-column
+			 ;; above may have added some spaces and tabs
+			 ;; to the end of the line; the fill-paragraph
+			 ;; function will then delete it and the
+			 ;; newline following it, so we'll lose a
+			 ;; blank line when we shouldn't.  So delete
+			 ;; anything move-to-column added to the end
+			 ;; of the line.  We record the line width
+			 ;; instead of the position of the old line
+			 ;; end because move-to-column might break a
+			 ;; tab into spaces, and the new characters
+			 ;; introduced there shouldn't be deleted.
+
+			 ;; If you can see a better way to do this,
+			 ;; please make the change.  This seems very
+			 ;; messy to me.
+			 (delete-region (progn (move-to-column line-width)
+					       (point))
+					(progn (end-of-line) (point))))))))
+
+		;; Lines containing just a comment start or just an end
+		;; should not be filled into paragraphs they are next
+		;; to.
+		(paragraph-start (concat paragraph-start re1))
+		(paragraph-separate (concat paragraph-separate re1))
+		(chars-to-delete 0)
+		)
+	    (save-restriction
+	      ;; Don't fill the comment together with the code
+	      ;; following it.  So temporarily exclude everything
+	      ;; before the comment start, and everything after the
+	      ;; line where the comment ends.  If comment-start-place
+	      ;; is non-nil, the comment starter is there.  Otherwise,
+	      ;; point is inside the comment.
+	      (narrow-to-region (save-excursion
+				  (if comment-start-place
+				      (goto-char comment-start-place)
+				    (search-backward "/*"))
+				  (if (and (not c-hanging-comment-starter-p)
+					   (looking-at
+					    (concat c-comment-start-regexp
+						    "[ \t]*$")))
+				      (forward-line 1))
+				  ;; Protect text before the comment
+				  ;; start by excluding it.  Add
+				  ;; spaces to bring back proper
+				  ;; indentation of that point.
+				  (let ((column (current-column)))
+				    (prog1 (point)
+				      (setq chars-to-delete column)
+				      (insert-char ?\  column))))
+				(save-excursion
+				  (if comment-start-place
+				      (goto-char (+ comment-start-place 2)))
+				  (search-forward "*/" nil 'move)
+				  (forward-line 1)
+				  (point)))
+	      (fill-paragraph arg)
+	      (save-excursion
+		;; Delete the chars we inserted to avoid clobbering
+		;; the stuff before the comment start.
+		(goto-char (point-min))
+		(if (> chars-to-delete 0)
+		    (delete-region (point) (+ (point) chars-to-delete)))
+		;; Find the comment ender (should be on last line of
+		;; buffer, given the narrowing) and don't leave it on
+		;; its own line, unless that's the style that's desired.
+		(goto-char (point-max))
+		(forward-line -1)
+		(search-forward "*/" nil 'move)
+		(beginning-of-line)
+		(if (and c-hanging-comment-ender-p
+			 (looking-at "[ \t]*\\*/"))
+		    ;(delete-indentation)))))
+		    (let ((fill-column (+ fill-column 9999)))
+		      (forward-line -1)
+		      (fill-region-as-paragraph (point) (point-max))))))
+	    t)))))
 
 
 (provide 'cc-cmds)
