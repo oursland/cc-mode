@@ -1321,29 +1321,18 @@ isn't moved."
 		  (looking-at c-block-stmt-2-kwds)))
 	 (point))))
 
-(defun c-beginning-of-closest-statement (&optional lim)
-  ;; Go back to the closest preceding statement start.
-  (let ((start (point))
-	(label-re (concat c-label-key "\\|"
-			  c-switch-label-key))
-	stmtbeg)
-    (if c-access-key
-	(setq label-re (concat label-re "\\|" c-access-key)))
-    (c-beginning-of-statement-1 lim)
-    (while (and (when (<= (point) start)
-		  (setq stmtbeg (point)))
-		(cond
-		 ((looking-at label-re)
-		  ;; Skip a label.
-		  (goto-char (match-end 0))
-		  t)
-		 ((looking-at c-conditional-key)
-		  ;; Skip a conditional statement.
-		  (c-safe (c-skip-conditional) t))
-		 (t nil)))
-      (c-forward-syntactic-ws start))
-    (if stmtbeg
-	(goto-char stmtbeg))))
+(defun c-backward-labels-and-else ()
+  ;; Used for all statement-cont and substatement to back up over
+  ;; labels and the "else" of "else if", as long as they are on the
+  ;; same line.
+  (while (let ((savepos (point)))
+	   (and (or (eq (c-beginning-of-statement-1
+			 (c-point 'bol)) 'label)
+		    (if (looking-at "else\\>[^_]")
+			t
+		      (goto-char savepos)
+		      nil))
+		(/= (point) savepos)))))
 
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
@@ -1930,15 +1919,16 @@ isn't moved."
 	;; brace lists as top-level constructs, and brace lists inside
 	;; statements is a completely different context.
 	(goto-char indent-point)
-	(c-beginning-of-closest-statement)
-	(c-add-syntax 'statement-cont (c-point 'boi)))
+	(c-beginning-of-statement-1 lim)
+	(c-backward-labels-and-else)
+	(c-add-syntax 'statement-cont (point)))
        ;; CASE B.3: The body of a function declared inside a normal
        ;; block.  This can only occur in Pike.
        ((and (c-major-mode-is 'pike-mode)
 	     (progn
 	       (goto-char indent-point)
 	       (not (c-looking-at-bos))))
-	(c-beginning-of-closest-statement)
+	(c-beginning-of-statement-1 lim)
 	(c-add-syntax 'defun-open (c-point 'boi)))
        ;; CASE B.4: catch-all for unknown construct.
        (t
@@ -1946,23 +1936,24 @@ isn't moved."
 	;; like c-recognize-hook so support for unknown constructs could
 	;; be added.  It's probably a losing proposition, so I dunno.
 	(goto-char placeholder)
-	(c-add-syntax 'statement-cont (c-point 'boi))
+	(c-backward-labels-and-else)
+	(c-add-syntax 'statement-cont (point))
 	(c-add-syntax 'block-open))
        ))
      ;; CASE C: iostream insertion or extraction operator
-     ((looking-at "<<\\|>>")
-      (goto-char placeholder)
-      (while (and (re-search-forward "<<\\|>>" indent-point 'move)
-		  (c-in-literal placeholder)))
-      ;; if we ended up at indent-point, then the first streamop is on a
-      ;; separate line. Indent the line like a statement-cont instead
-      (if (/= (point) indent-point)
-	  (c-add-syntax 'stream-op (c-point 'boi))
-	(c-backward-syntactic-ws lim)
-	(c-add-syntax 'statement-cont (c-point 'boi))))
+     ((and (looking-at "<<\\|>>")
+	   (progn
+	     (goto-char placeholder)
+	     (while (and (re-search-forward "<<\\|>>" indent-point 'move)
+			 (c-in-literal placeholder)))
+	     ;; if we ended up at indent-point, then the first streamop is on a
+	     ;; separate line. Indent the line like a statement-cont instead
+	     (if (/= (point) indent-point)
+		 (c-add-syntax 'stream-op (c-point 'boi))))))
      ;; CASE D: continued statement.
      (t
-      (c-beginning-of-statement-1 containing-sexp)
+      (c-beginning-of-statement-1 lim)
+      (c-backward-labels-and-else)
       (c-add-syntax 'statement-cont (point)))
      )))
 
@@ -2133,9 +2124,10 @@ isn't moved."
 	      ;; CASE 18A: Simple substatement.
 	      (progn
 		(goto-char placeholder)
+		(c-backward-labels-and-else)
 		(if (eq char-after-ip ?{)
-		    (c-add-syntax 'substatement-open (c-point 'boi))
-		  (c-add-syntax 'substatement (c-point 'boi))))
+		    (c-add-syntax 'substatement-open (point))
+		  (c-add-syntax 'substatement (point))))
 	    ;; CASE 18B: Some other substatement.  This is shared
 	    ;; with CASE 10.
 	    (c-guess-continued-construct indent-point
@@ -2451,13 +2443,14 @@ isn't moved."
 	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
 	      (c-beginning-of-statement-1 lim)
+	      (c-backward-labels-and-else)
 	      ;; skip over any access-specifiers
 	      (and inclass-p c-access-key
 		   (while (looking-at c-access-key)
 		     (forward-line 1)))
 	      ;; skip over comments, whitespace
 	      (c-forward-syntactic-ws indent-point)
-	      (c-add-syntax 'statement-cont (c-point 'boi)))
+	      (c-add-syntax 'statement-cont (point)))
 	     ))
 	   ;; CASE 5E: we are looking at a access specifier
 	   ((and inclass-p
@@ -2911,6 +2904,9 @@ isn't moved."
 	   ;; CASE 17B: continued statement
 	   ((and (eq step-type 'same)
 		 (/= (point) indent-point))
+	    (goto-char indent-point)
+	    (c-beginning-of-statement-1 containing-sexp)
+	    (c-backward-labels-and-else)
 	    (c-add-syntax 'statement-cont (c-point 'boi)))
 	   ;; CASE 17A: After a case/default label?
 	   ((progn
