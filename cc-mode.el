@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.286 $
-;; Last Modified:   $Date: 1993-02-16 17:06:49 $
+;; Version:         $Revision: 2.287 $
+;; Last Modified:   $Date: 1993-02-16 20:30:37 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-16 17:06:49 $|$Revision: 2.286 $|
+;; |$Date: 1993-02-16 20:30:37 $|$Revision: 2.287 $|
 
 ;;; Code:
 
@@ -220,7 +220,6 @@ styles in a single mode.")
   (modify-syntax-entry ?>  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?&  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?|  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?_  "w"     c++-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-mode-syntax-table)
   ;; comment syntax
   (if c++-emacs-is-really-fixed-p
@@ -250,7 +249,6 @@ styles in a single mode.")
   (modify-syntax-entry ?>  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?&  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?|  "."     c++-c-mode-syntax-table)
-  (modify-syntax-entry ?_  "w"     c++-c-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-c-mode-syntax-table)
   ;; comment syntax
   (if c++-emacs-is-really-fixed-p
@@ -450,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.286 $
+  "Major mode for editing C++ code.  $Revision: 2.287 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -671,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.286 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.287 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1625,9 +1623,9 @@ point of the beginning of the C++ definition."
       (cond
        ((looking-at c++-access-key)
 	(setq indent (+ indent c++-access-specifier-offset)))
-       ((looking-at "default\\b")
+       ((looking-at "default[ \t]*:")
 	(setq indent (+ indent c-label-offset)))
-       ((or (looking-at "case\\b")
+       ((or (looking-at "case[ \t]*:")
 	    (and (looking-at "[A-Za-z]")
 		 (save-excursion
 		   (forward-sexp 1)
@@ -2008,7 +2006,7 @@ BOD is the beginning of the C++ definition."
 	    (if (save-excursion
 		  (goto-char indent-point)
 		  (skip-chars-forward " \t\n")
-		  (looking-at "case\\b"))
+		  (looking-at "case[ \t]*:"))
 		(progn
 		  (goto-char containing-sexp)
 		  (back-to-indentation)
@@ -2043,7 +2041,7 @@ BOD is the beginning of the C++ definition."
 			   (concat "//\\|friend[ \t]" c++-class-key
 				   "[ \t]"))
 			  (forward-line 1))
-			 ((looking-at "\\(case\\|default\\)\\b")
+			 ((looking-at "\\(case\\|default\\)[ \t]*:")
 			  (forward-line 1))
 			 (t
 			  (re-search-forward ":[^:]" nil 'move))))
@@ -2506,7 +2504,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.286 $"
+(defconst c++-version "$Revision: 2.287 $"
   "c++-mode version number.")
 
 (defun c++-version ()
