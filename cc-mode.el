@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-19 19:21:19 $
-;; Version:         $Revision: 2.59 $
+;; Last Modified:   $Date: 1992-05-19 19:34:16 $
+;; Version:         $Revision: 2.60 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-19 19:21:19 $|$Revision: 2.59 $|
+;; |$Date: 1992-05-19 19:34:16 $|$Revision: 2.60 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -192,7 +192,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.59 $
+  "Major mode for editing C++ code.  $Revision: 2.60 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -978,7 +978,12 @@ Returns nil if line starts inside a string, t if in a comment."
 				 (forward-char 1)
 				 (skip-chars-forward " \t")
 				 (current-column)))
-			   (current-indentation)))))
+			   ;; else first check to see if its a
+			   ;; multiple inheritance continuation line
+			   (if (looking-at "class[ \t]+\\w+[ \t]+:[ \t]+")
+			       (progn (goto-char (match-end 0))
+				      (current-column))
+			     (current-indentation))))))
 		   ))))
 	    ((/= (char-after containing-sexp) ?{)
 	     ;; line is expression, not statement:
@@ -1607,7 +1612,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.59 $"
+(defconst c++-version "$Revision: 2.60 $"
   "c++-mode version number.")
 
 (defun c++-version ()
