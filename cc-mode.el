@@ -243,7 +243,7 @@
 	    (comment-region (region-beginning) (region-end) '(4))
 	    (c-fn-region-is-active-p)]
 	   ["Fill Comment Paragraph" c-fill-paragraph t]
-	   "---"
+	   "----"
 	   ["Indent Expression"      c-indent-exp
 	    (memq (char-after) '(?\( ?\[ ?\{))]
 	   ["Indent Line or Region"  c-indent-line-or-region t]
@@ -252,10 +252,15 @@
 	   ["Forward Conditional"    c-forward-conditional t]
 	   ["Backward Statement"     c-beginning-of-statement t]
 	   ["Forward Statement"      c-end-of-statement t]
-	   "---"
+	   "----"
 	   ["Macro Expand Region"    c-macro-expand (c-fn-region-is-active-p)]
 	   ["Backslashify"	     c-backslash-region
 	    (c-fn-region-is-active-p)]
+	   "----"
+	   ("Toggle..."
+	    ["Syntactic indentation" c-toggle-syntactic-indentation t]
+	    ["Auto newline"          c-toggle-auto-state t]
+	    ["Hungry delete"         c-toggle-hungry-state t])
 	   )))
     (cons modestr m)))
 
