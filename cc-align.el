@@ -1086,7 +1086,7 @@ ACTION associated with `block-close' syntax."
     (let (langelem)
       (if (and (eq syntax 'block-close)
 	       (setq langelem (assq 'block-close c-syntactic-context))
-	       (progn (goto-char (cdr langelem))
+	       (progn (goto-char (elt langelem 1))
 		      (if (eq (char-after) ?{)
 			  (c-safe (c-forward-sexp -1)))
 		      (looking-at "\\<do\\>[^_]")))
