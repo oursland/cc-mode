@@ -670,7 +670,8 @@ parenthesis, or the parenthesis is inserted inside a literal."
 		  (insert "} catch (")))
 	    (goto-char (- (point-max) pos))
 	    ))
-	(funcall old-blink-paren)))))
+	(if old-blink-paren
+	    (funcall old-blink-paren))))))
 
 
 
