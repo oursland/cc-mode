@@ -9,7 +9,7 @@
 5.26</a>.
 
 <p>Note: This is mostly a bugfix release.  The features labeled
-experimental in 5.26 remains and are now considered permanent.
+experimental in 5.26 remain and are now considered permanent.
 
 <ul>
 

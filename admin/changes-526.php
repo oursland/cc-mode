@@ -10,7 +10,7 @@
 
 <p>Note: This release contains changes that might not be compatible
 with current user setups (although it's believed that these
-incompatibilities will only show in very uncommon circumstances).
+incompatibilities will only show up in very uncommon circumstances).
 However, since the impact is uncertain, these changes may be rolled
 back depending on user feedback.  Therefore there's no forward
 compatibility guarantee wrt the new features introduced in this
@@ -22,7 +22,7 @@ release.
   initial style for a buffer is determined by CC Mode (from the
   variable <code>c-default-style</code>), the global values of style
   variables now take precedence over the values specified by the
-  chosen style.  This is different than the old behavior: previously,
+  chosen style.  This is different from the old behavior: previously,
   the style-specific settings would override the global settings.
   This change makes it possible to do simple configuration in the
   intuitive way with Customize or with <code>setq</code> lines in
