@@ -1677,6 +1677,13 @@ brace."
 	      (if (eq (char-before) ?\))
 		  (c-backward-sexp 2)
 		(c-backward-sexp 1))
+	      ;; Skip backwards over a fully::qualified::name.
+	      (while (and (eq (char-before) ?:)
+			  (save-excursion
+			    (forward-char -1)
+			    (eq (char-before) ?:)))
+		(backward-char 2)
+		(c-backward-sexp 1))
 	      ;; now continue checking
 	      (c-backward-syntactic-ws lim))
 	    (cond
