@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.223 $
-;; Last Modified:   $Date: 1995-06-26 15:55:11 $
+;; Version:         $Revision: 4.224 $
+;; Last Modified:   $Date: 1995-06-30 21:42:23 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-06-26 15:55:11 $|$Revision: 4.223 $|
+;; |$Date: 1995-06-30 21:42:23 $|$Revision: 4.224 $|
 
 ;;; Code:
 
@@ -1037,6 +1037,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
+	comment-multi-line nil
 	c-conditional-key c-C++-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
 	c-class-key c-C++-class-key
@@ -1117,6 +1118,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end   ""
+	comment-multi-line nil
 	c-conditional-key c-C-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
  	c-class-key c-ObjC-class-key
@@ -4486,7 +4488,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.223 $"
+(defconst c-version "$Revision: 4.224 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
