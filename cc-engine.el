@@ -2983,8 +2983,9 @@ This function does not do any hidden buffer changes."
 	    (goto-char syntactic-pos)
 	    (c-forward-syntactic-ws)
 	    (setq cfd-match-pos c-find-decl-match-pos
-		  cfd-continue-pos syntactic-pos
-		  cfd-token-pos (point)))
+		  cfd-continue-pos syntactic-pos)
+	    (if (< cfd-continue-pos (point))
+		(setq cfd-token-pos (point))))
 
 	(setq c-find-decl-syntactic-pos syntactic-pos)
 
