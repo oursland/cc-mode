@@ -290,22 +290,50 @@ style comments."
   :type 'string
   :group 'c)
 
-(defcustom-c-stylevar c-comment-prefix-regexp "//+\\|\\**"
+(defcustom-c-stylevar c-comment-prefix-regexp
+  '((pike-mode . "//+!?\\|\\**")
+    (other . "//+\\|\\**"))
   "*Regexp to match the line prefix inside comments.
 This regexp is used to recognize the fill prefix inside comments for
 correct paragraph filling and other things.
 
-It should match the prefix used in both C++ style line comments and C
-style block comments, but it does not need to match a block comment
-starter.  In other words, it should at least match \"//\" for line
-comments and the string in `c-block-comment-prefix', which is
-sometimes inserted by CC Mode inside block comments.  It should not
-match any surrounding whitespace.
+If this variable is a string, it will be used in all CC Mode major
+modes.  It can also be an association list, to associate specific
+regexps to specific major modes.  The symbol for the major mode is
+looked up in the association list, and its value is used as the line
+prefix regexp.  If it's not found, then the symbol `other' is looked
+up and its value is used instead.
+
+The regexp should match the prefix used in both C++ style line
+comments and C style block comments, but it does not need to match a
+block comment starter.  In other words, it should at least match
+\"//\" for line comments and the string in `c-block-comment-prefix',
+which is sometimes inserted by CC Mode inside block comments.  It
+should not match any surrounding whitespace.
 
 Note that CC Mode modifies other variables from this one at mode
-initialization, so you might need to do \\[c-mode] (or whatever mode
+initialization, so you will need to do \\[c-mode] (or whatever mode
 you're currently using) if you change it in a CC Mode buffer."
-  :type 'regexp
+  :type '(radio
+	  (regexp :tag "Regexp for all modes")
+	  (list
+	   :tag "Mode-specific regexps"
+	   (set
+	    :inline t :format "%v"
+	    (cons :format "%v"
+		  (const :format "C     " c-mode) (regexp :format "%v"))
+	    (cons :format "%v"
+		  (const :format "C++   " c++-mode) (regexp :format "%v"))
+	    (cons :format "%v"
+		  (const :format "ObjC  " objc-mode) (regexp :format "%v"))
+	    (cons :format "%v"
+		  (const :format "Java  " java-mode) (regexp :format "%v"))
+	    (cons :format "%v"
+		  (const :format "IDL   " idl-mode) (regexp :format "%v"))
+	    (cons :format "%v"
+		  (const :format "Pike  " pike-mode) (regexp :format "%v")))
+	   (cons :format "    %v"
+		 (const :format "Other " other) (regexp :format "%v"))))
   :group 'c)
 
 (defcustom c-ignore-auto-fill '(string cpp code)
@@ -579,16 +607,21 @@ Tip: If you use different styles in different languages, you probably
 want to set `c-style-variables-are-local-p'."
   :type '(radio
 	  (string :tag "Style in all modes (except Java)")
-	  (repeat :tag "Mode-specific styles"
-		  :value ((other . "gnu"))
-		  (cons :format "%v"
-			(choice :tag "Mode"
-				(const c-mode) (const c++-mode)
-				(const objc-mode) (const java-mode)
-				(const idl-mode) (const pike-mode)
-				(const other))
-			(string :tag "Style")
-			)))
+	  (set :tag "Mode-specific styles"
+	    (cons :format "%v"
+		  (const :format "C     " c-mode) (string :format "%v"))
+	    (cons :format "%v"
+		  (const :format "C++   " c++-mode) (string :format "%v"))
+	    (cons :format "%v"
+		  (const :format "ObjC  " objc-mode) (string :format "%v"))
+	    (cons :format "%v"
+		  (const :format "Java  " java-mode) (string :format "%v"))
+	    (cons :format "%v"
+		  (const :format "IDL   " idl-mode) (string :format "%v"))
+	    (cons :format "%v"
+		  (const :format "Pike  " pike-mode) (string :format "%v"))
+	    (cons :format "%v"
+		  (const :format "Other " other) (string :format "%v"))))
   :group 'c)
 
 (put 'c-offsets-alist 'c-stylevar-fallback
@@ -1033,6 +1066,11 @@ This is always bound dynamically.  It should never be set statically
 (defvar c-indentation-style nil
   "Name of the currently installed style.
 Don't change this directly; call `c-set-style' instead.")
+
+(defvar c-current-comment-prefix nil
+  "The current comment prefix regexp.
+Set from `c-comment-prefix-regexp' at mode initialization.")
+(make-variable-buffer-local 'c-current-comment-prefix)
 
 
 ;; Figure out what features this Emacs has
