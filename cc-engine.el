@@ -1848,7 +1848,10 @@ brace."
 	  (c-backward-syntactic-ws containing-sexp)
 	  (cond
 	   ;; CASE 7A: we are looking at the arglist closing paren
-	   ((and (not (eq char-before-ip ?,))
+	   ((and (or (c-major-mode-is 'pike-mode)
+		     ;; Don't check this i Pike since it allows a
+		     ;; comma after the last arg.
+		     (not (eq char-before-ip ?,)))
 		 (memq char-after-ip '(?\) ?\])))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-close (c-point 'boi)))
