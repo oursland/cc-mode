@@ -110,7 +110,8 @@ Useful as last item in a `choice' widget."
   :match (lambda (widget value) (or (integerp value) (null value))))
 
 (defvar c-style-variables
-  '(c-basic-offset c-comment-only-line-offset c-block-comment-prefix
+  '(c-basic-offset c-comment-only-line-offset c-indent-comment-alist
+    c-indent-comments-syntactically-p c-block-comment-prefix
     c-comment-prefix-regexp c-cleanup-list c-hanging-braces-alist
     c-hanging-colons-alist c-hanging-semi&comma-criteria c-backslash-column
     c-special-indent-hook c-label-minimum-indentation c-offsets-alist)
@@ -281,13 +282,8 @@ The recognized values for LINE-TYPE are:
  end-block         -- The line contains a solitary block closing brace.
  cpp-end-block     -- The line contains a preprocessor directive that
                       closes a block, i.e. either \"#endif\" or \"#else\".
- other             -- The line does not match any of the above.
-
-The `empty-line' type is also controlled by
-`c-indent-comments-syntactically-p'.  If that variable is non-nil, the
-comment is indented syntactically, i.e. just like if \\[c-indent-command]
-was used instead, and the INDENT-SPEC for the `empty-line' type is
-ignored.
+ other             -- The line does not match any other entry
+                      currently on the list.
 
 An INDENT-SPEC is a cons cell of the form:
 
@@ -309,7 +305,11 @@ following:
             in turn is interpreted as an INDENT-SPEC.
 
 If a LINE-TYPE is missing, then \\[indent-for-comment] indents the comment
-according to `comment-column'."
+according to `comment-column'.
+
+Note that a non-nil value on `c-indent-comments-syntactically-p'
+overrides this variable, so empty lines are indentented syntactically
+in that case, i.e. as if \\[c-indent-command] was used instead."
   :type
   (let ((space '(cons :tag "space"
 		      :format "%v"
@@ -342,7 +342,7 @@ according to `comment-column'."
 	     '(empty-line anchored-comment end-block cpp-end-block other))))
   :group 'c)
 
-(defcustom c-indent-comments-syntactically-p nil
+(defcustom-c-stylevar c-indent-comments-syntactically-p nil
   "*Specifies how \\[indent-for-comment] should handle comment-only lines.
 When this variable is non-nil, comment-only lines are indented
 according to syntactic analysis via `c-offsets-alist'.  Otherwise, the

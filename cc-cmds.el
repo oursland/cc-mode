@@ -1239,9 +1239,10 @@ sentence motion in or near comments and multiline strings."
 (put 'c-electric-delete-forward 'pending-delete   'supersede) ; pending-del
 
 
-(defun c-calc-comment-indent (line-type &optional entry)
-  (if line-type
-      (setq entry (or (assq line-type c-indent-comment-alist)
+(defun c-calc-comment-indent (entry)
+  (if (symbolp entry)
+      (setq entry (or (assq entry c-indent-comment-alist)
+		      (assq 'other c-indent-comment-alist)
 		      '(default . (column . nil)))))
   (let ((action (car (cdr entry)))
 	(value (cdr (cdr entry)))
@@ -1269,58 +1270,57 @@ sentence motion in or near comments and multiline strings."
 			     0
 			   (max (1+ col) (current-column))))))))
 	       ;; Recurse to handle value as a new spec.
-	       (c-calc-comment-indent nil (cdr entry)))))))
+	       (c-calc-comment-indent (cdr entry)))))))
 
 (defun c-comment-indent ()
   "Used by `indent-for-comment' to create and indent comments.
 See `c-indent-comment-alist' for a description."
   (save-excursion
     (end-of-line)
-    (let ((eot (let ((lim (c-literal-limits (c-point 'bol) t)))
-		 (or (when (consp lim)
-		       (goto-char (car lim))
-		       (when (looking-at "/[/*]")
-			 (skip-chars-backward " \t")
-			 (point)))
-		     (progn
-		       (skip-chars-backward " \t")
-		       (point))))))
-      (cond
-       ((looking-at "^/[/*]")
-	(c-calc-comment-indent 'anchored-comment))
-       ((progn (beginning-of-line)
-	       (eq (point) eot))
-	(if c-indent-comments-syntactically-p
-	    (let ((syntax (c-guess-basic-syntax)))
-	      ;; BOGOSITY ALERT: if we're looking at the eol, its
-	      ;; because indent-for-comment hasn't put the comment-start
-	      ;; in the buffer yet.  this will screw up the syntactic
-	      ;; analysis so we kludge in the necessary info.  Another
-	      ;; kludge is that if we're at the bol, then we really want
-	      ;; to ignore any anchoring as specified by
-	      ;; c-comment-only-line-offset since it doesn't apply here.
-	      (if (eolp)
-		  (c-add-syntax 'comment-intro))
-	      (let ((c-comment-only-line-offset
-		     (if (consp c-comment-only-line-offset)
-			 c-comment-only-line-offset
-		       (cons c-comment-only-line-offset
-			     c-comment-only-line-offset))))
-		(c-get-syntactic-indentation syntax)))
-	  (c-calc-comment-indent 'empty-line)))
-       ((progn (back-to-indentation)
-	       (and (eq (char-after) ?})
-		    (eq (point) (1- eot))))
-	(forward-char)
-	(c-calc-comment-indent 'end-block))
-       ((and (looking-at "#[ \t]*\\(endif\\|else\\)")
-	     (eq (match-end 0) eot))
+    (let* ((eot (let ((lim (c-literal-limits (c-point 'bol) t)))
+		  (or (when (consp lim)
+			(goto-char (car lim))
+			(when (looking-at "/[/*]")
+			  (skip-chars-backward " \t")
+			  (point)))
+		      (progn
+			(skip-chars-backward " \t")
+			(point)))))
+	   (line-type
+	    (cond ((looking-at "^/[/*]")
+		   'anchored-comment)
+		  ((progn (beginning-of-line)
+			  (eq (point) eot))
+		   'empty-line)
+		  ((progn (back-to-indentation)
+			  (and (eq (char-after) ?})
+			       (eq (point) (1- eot))))
+		   'end-block)
+		  ((and (looking-at "#[ \t]*\\(endif\\|else\\)")
+			(eq (match-end 0) eot))
+		   'cpp-end-block)
+		  (t
+		   'other))))
+      (if (and (memq line-type '(anchored-comment empty-line))
+	       c-indent-comments-syntactically-p)
+	  (let ((syntax (c-guess-basic-syntax)))
+	    ;; BOGOSITY ALERT: if we're looking at the eol, its
+	    ;; because indent-for-comment hasn't put the comment-start
+	    ;; in the buffer yet.  this will screw up the syntactic
+	    ;; analysis so we kludge in the necessary info.  Another
+	    ;; kludge is that if we're at the bol, then we really want
+	    ;; to ignore any anchoring as specified by
+	    ;; c-comment-only-line-offset since it doesn't apply here.
+	    (if (eolp)
+		(c-add-syntax 'comment-intro))
+	    (let ((c-comment-only-line-offset
+		   (if (consp c-comment-only-line-offset)
+		       c-comment-only-line-offset
+		     (cons c-comment-only-line-offset
+			   c-comment-only-line-offset))))
+	      (c-get-syntactic-indentation syntax)))
 	(goto-char eot)
-	(c-calc-comment-indent 'cpp-end-block))
-       (t
-	(goto-char eot)
-	(c-calc-comment-indent 'other))
-       ))))
+	(c-calc-comment-indent line-type)))))
 
 
 ;; used by outline-minor-mode
