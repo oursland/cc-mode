@@ -153,14 +153,16 @@
 
 (defsubst c-end-of-defun-1 ()
   ;; Replacement for end-of-defun that use c-beginning-of-defun-1.
-
-  ;; Skip forward into the next defun block. Don't bother to avoid
-  ;; comments, literals etc, since beginning-of-defun doesn't do that
-  ;; anyway.
-  (skip-chars-forward "^{}")
-  (skip-chars-forward "{")
-  (c-beginning-of-defun-1)
-  (c-forward-sexp))
+  (let ((start (point)))
+    ;; Skip forward into the next defun block. Don't bother to avoid
+    ;; comments, literals etc, since beginning-of-defun doesn't do that
+    ;; anyway.
+    (skip-chars-forward "^}")
+    (c-beginning-of-defun-1)
+    (if (eq (char-after) ?{)
+	(c-forward-sexp))
+    (if (< (point) start)
+	(goto-char (point-max)))))
 
 (defmacro c-forward-sexp (&optional arg)
   ;; like forward-sexp except
