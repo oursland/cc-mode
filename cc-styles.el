@@ -440,6 +440,8 @@ Here is the current list of valid syntactic element symbols:
  label                  -- any ordinary label
  do-while-closure       -- the `while' that ends a do/while construct
  else-clause            -- the `else' of an if/else construct
+ catch-clause           -- the `catch' of a try/catch construct
+ finally-clause         -- the `finally' of a try/catch/finally construct
  comment-intro          -- a line containing only a comment introduction
  arglist-intro          -- the first line in an argument list
  arglist-cont           -- subsequent argument list lines when no
