@@ -220,7 +220,8 @@ and takes care to set the indentation before calling
       ;; Reindent syntactically.  The indentation done above is not
       ;; wasted, since c-indent-line might look at the current
       ;; indentation.
-      (c-save-buffer-state ((c-syntactic-context (c-guess-basic-syntax)))
+      (let ((c-syntactic-context (c-save-buffer-state nil
+				   (c-guess-basic-syntax))))
 	;; We temporarily insert another line break, so that the
 	;; lineup functions will see the line as empty.  That makes
 	;; e.g. c-lineup-cpp-define more intuitive since it then
@@ -649,8 +650,8 @@ This function does various newline cleanups based on the value of
 	 (not executing-kbd-macro)
 	 old-blink-paren
 	 (save-excursion
-	   ;; Don't bother with `c-save-buffer-state' here.
-	   (c-backward-syntactic-ws safepos)
+	   (c-save-buffer-state nil
+	     (c-backward-syntactic-ws safepos))
 	   (funcall old-blink-paren)))))
 
 (defun c-electric-slash (arg)
@@ -822,7 +823,8 @@ value of `c-cleanup-list'."
 	  ;; since that's made with c-syntactic-indentation-in-macros
 	  ;; always set to t.
 	  (indent-according-to-mode))
-      (c-save-buffer-state ((c-syntactic-indentation-in-macros t)
+      (c-save-buffer-state
+	    ((c-syntactic-indentation-in-macros t)
 	     ;; Turn on syntactic macro analysis to help with auto newlines
 	     ;; only.
 	     (syntax (c-guess-basic-syntax))
@@ -840,7 +842,7 @@ value of `c-cleanup-list'."
 		   (or (c-lookup-lists '(case-label label access-label)
 				       syntax c-hanging-colons-alist)
 		       (c-lookup-lists '(member-init-intro inher-intro)
-				       (c-save-buffer-state nil
+				       (progn
 					 (insert ?\n)
 					 (unwind-protect
 					     (c-guess-basic-syntax)
@@ -2963,48 +2965,48 @@ command to conveniently insert and align the necessary backslashes."
 
 	   (t (setq beg nil)))
 
-	  (c-save-buffer-state nil
-	    (when tmp-pre
-	      ;; Temporarily insert the fill prefix after the comment
-	      ;; starter so that the first line looks like any other
-	      ;; comment line in the narrowed region.
-	      (setq fill (c-guess-fill-prefix c-lit-limits c-lit-type))
-	      (unless (string-match (concat "\\`[ \t]*\\("
-					    c-current-comment-prefix
-					    "\\)[ \t]*\\'")
-				    (car fill))
-		;; Oops, the prefix doesn't match the comment prefix
-		;; regexp.  This could produce very confusing
-		;; results with adaptive fill packages together with
-		;; the insert prefix magic below, since the prefix
-		;; often doesn't appear at all.  So let's warn about
-		;; it.
-		(message "\
+	  (when tmp-pre
+	    ;; Temporarily insert the fill prefix after the comment
+	    ;; starter so that the first line looks like any other
+	    ;; comment line in the narrowed region.
+	    (setq fill (c-save-buffer-state nil
+			 (c-guess-fill-prefix c-lit-limits c-lit-type)))
+	    (unless (string-match (concat "\\`[ \t]*\\("
+					  c-current-comment-prefix
+					  "\\)[ \t]*\\'")
+				  (car fill))
+	      ;; Oops, the prefix doesn't match the comment prefix
+	      ;; regexp.  This could produce very confusing
+	      ;; results with adaptive fill packages together with
+	      ;; the insert prefix magic below, since the prefix
+	      ;; often doesn't appear at all.  So let's warn about
+	      ;; it.
+	      (message "\
 Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix %S"
-			 (car fill)))
-	      ;; Find the right spot on the line, break it, insert
-	      ;; the fill prefix and make sure we're back in the
-	      ;; same column by temporarily prefixing the first word
-	      ;; with a number of 'x'.
-	      (save-excursion
-		(goto-char (car c-lit-limits))
-		(if (looking-at (if (eq c-lit-type 'c++)
-				    c-current-comment-prefix
-				  comment-start-skip))
-		    (goto-char (match-end 0))
-		  (forward-char 2)
-		  (skip-chars-forward " \t"))
-		(while (and (< (current-column) (cdr fill))
-			    (not (eolp)))
-		  (forward-char 1))
-		(let ((col (current-column)))
-		  (setq beg (1+ (point))
-			tmp-pre (list (point)))
-		  (unwind-protect
-		      (progn
-			(insert-and-inherit "\n" (car fill))
-			(insert-char ?x (- col (current-column)) t))
-		    (setcdr tmp-pre (point)))))))
+		       (car fill)))
+	    ;; Find the right spot on the line, break it, insert
+	    ;; the fill prefix and make sure we're back in the
+	    ;; same column by temporarily prefixing the first word
+	    ;; with a number of 'x'.
+	    (save-excursion
+	      (goto-char (car c-lit-limits))
+	      (if (looking-at (if (eq c-lit-type 'c++)
+				  c-current-comment-prefix
+				comment-start-skip))
+		  (goto-char (match-end 0))
+		(forward-char 2)
+		(skip-chars-forward " \t"))
+	      (while (and (< (current-column) (cdr fill))
+			  (not (eolp)))
+		(forward-char 1))
+	      (let ((col (current-column)))
+		(setq beg (1+ (point))
+		      tmp-pre (list (point)))
+		(unwind-protect
+		    (progn
+		      (insert-and-inherit "\n" (car fill))
+		      (insert-char ?x (- col (current-column)) t))
+		  (setcdr tmp-pre (point))))))
 
 	  (if beg
 	      (let ((fill-prefix
