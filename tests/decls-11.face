@@ -2,5 +2,5 @@
 (4 ref) (7 reg) (11 typ) (14 reg) (15 var) (16 reg)
 
 (4 ref) (7 reg)
-(4 ref) (7 reg) (9 typ) (12 reg) (14 var) (15 reg)
+(4 ref) (7 reg) (9 typ) (12 reg) (15 fun) (16 reg) (19 typ) (20 reg)
 

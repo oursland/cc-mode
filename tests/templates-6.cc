@@ -35,7 +35,3 @@ void xyzzy<i>::frob()
 {
     printf("%d\n", i);
 };
-
-// Local Variables:
-// cc-test-skip: (no-syntax-properties)
-// End:

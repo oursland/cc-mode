@@ -1,4 +1,5 @@
 void f() {
+    c b;
     extern int foo (a < b, c > d);
     extern int foo (xx, a < b, c > d);
     extern int foo (a < b, c > d, yy);

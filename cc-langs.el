@@ -31,11 +31,25 @@
 
 ;;; Commentary:
 
+;; HACKERS NOTE: There's heavy macro magic here.  If you need to make
+;; changes in this or other files containing `c-lang-defconst' but
+;; don't want to read through the complete explanations below then
+;; read this:
+;;
+;; o  A change in a `c-lang-defconst' or `c-lang-defvar' will not take
+;;    effect if the file containing the mode init function (typically
+;;    cc-mode.el) is byte compiled.
+;; o  To make changes show in font locking you need to reevaluate the
+;;    `*-font-lock-keywords-*' constants, which normally is easiest to
+;;    do with M-x eval-buffer in cc-fonts.el.
+;; o  In either case it's necessary to reinitialize the mode to make
+;;    the changes show in an existing buffer.
+
 ;; This file contains all the language dependent variables, except
-;; those used for font locking which reside in cc-fonts.el.  As far as
-;; possible, all the differences between the languages that CC Mode
-;; supports are described with these variables only, so that the code
-;; can be shared.
+;; those specific for font locking which reside in cc-fonts.el.  As
+;; far as possible, all the differences between the languages that CC
+;; Mode supports are described with these variables only, so that the
+;; code can be shared.
 ;;
 ;; The language constant system (see cc-defs.el) is used to specify
 ;; various language dependent info at a high level, such as lists of
@@ -1693,17 +1707,15 @@ first submatch.  It must not include any following whitespace."
   ;; begins with a declaration.
   t "\\([\{\}\(\);,]+\\)"
   java "\\([\{\}\(;,]+\\)"
-  ;; Match open paren syntax in C++ to get the first argument in a
-  ;; template arglist, where the "<" got that syntax.  This means that
-  ;; "[" also is matched, which we really don't want.
-  ;; `c-font-lock-declarations' has a special kludge to check for
-  ;; that.
+  ;; Match "<" in C++ to get the first argument in a template arglist.
+  ;; In that case there's an additional check in `c-find-decl-spots'
+  ;; that it got open paren syntax.
   ;;
   ;; Also match a single ":" for protection labels.  We cheat a little
   ;; and require a symbol immediately before to avoid false matches
   ;; when starting directly on a single ":", which can be the start of
   ;; the base class initializer list in a constructor.
-  c++ "\\([\}\);,]+\\|\\s\(\\|\\(\\w\\|\\s_\\):\\)\\([^:]\\|\\'\\)"
+  c++ "\\([\{\}\(\);,<]+\\|\\(\\w\\|\\s_\\):\\)\\([^:]\\|\\'\\)"
   ;; Additionally match the protection directives in Objective-C.
   ;; Note that this doesn't cope with the longer directives, which we
   ;; would have to match from start to end since they don't end with
@@ -1785,13 +1797,18 @@ first submatch is taken as the end of the operator."
 `c-type-decl-suffix-key' has matched.  If it matches then the
 construct is taken as a declaration.  It's typically used to match the
 beginning of a function body or whatever might occur after the
-function header in a function declaration or definition."
+function header in a function declaration or definition.
+
+Note that it's used in cases like after \"foo (bar)\" so it should
+only match when it's certain that it's a declaration, e.g \"{\" but
+not \",\" or \";\"."
   t "{"
   ;; If K&R style declarations should be recognized then one could
   ;; consider to match the start of any symbol since we want to match
   ;; the start of the first declaration in the "K&R region".  That
   ;; could however produce false matches on code like "FOO(bar) x"
-  ;; where FOO is a cpp macro.
+  ;; where FOO is a cpp macro, so it's better to leave it out and rely
+  ;; on the other heuristics in that case.
   t (if (c-lang-const c-decl-spec-kwds)
 	;; Add on the keywords in `c-decl-spec-kwds'.
 	(concat (c-lang-const c-after-suffixed-type-decl-key)
@@ -1807,6 +1824,14 @@ function header in a function declaration or definition."
 (c-lang-defvar c-after-suffixed-type-decl-key
   (c-lang-const c-after-suffixed-type-decl-key)
   'dont-doc)
+
+(c-lang-defconst c-after-suffixed-type-maybe-decl-key
+  ;; Regexp that in addition to `c-after-suffixed-type-decl-key'
+  ;; matches ";" and ",".
+  t (concat "\\(" (c-lang-const c-after-suffixed-type-decl-key) "\\)"
+	    "\\|[;,]"))
+(c-lang-defvar c-after-suffixed-type-maybe-decl-key
+  (c-lang-const c-after-suffixed-type-maybe-decl-key))
 
 (c-lang-defconst c-opt-type-concat-key
   "Regexp matching operators that concatenate types, e.g. the \"|\" in
@@ -1834,7 +1859,7 @@ set."
   ;; submatch is the one that matches the type.  Note that this regexp
   ;; assumes that symbol constituents like '_' and '$' have word
   ;; syntax.
-  (let ((extra-types (unless (c-major-mode-is 'awk-mode)
+  (let ((extra-types (when (boundp (c-mode-symbol "font-lock-extra-types"))
                        (c-mode-var "font-lock-extra-types"))))
     (concat "\\<\\("
 	    (c-make-keywords-re nil (c-lang-const c-primitive-type-kwds))
@@ -1871,7 +1896,9 @@ expression is considered to be a type."
 (c-lang-defconst c-opt-<>-arglist-start
   ;; Regexp matching the start of angle bracket arglists in languages
   ;; where `c-recognize-<>-arglists' is set.  Does not exclude
-  ;; keywords outside `c-<>-arglist-kwds'.
+  ;; keywords outside `c-<>-arglist-kwds'.  The first submatch is
+  ;; assumed to surround the preceding symbol.  The whole match is
+  ;; assumed to end directly after the opening "<".
   t (if (c-lang-const c-recognize-<>-arglists)
 	(concat "\\("
 		(c-lang-const c-symbol-key)

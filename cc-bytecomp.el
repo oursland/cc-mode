@@ -257,19 +257,16 @@ about incorrect number of arguments.  It's dangerous to try to replace
 existing functions since the byte compiler might need the definition
 at compile time, e.g. for macros and inline functions."
   `(eval-when-compile
-     (if (not (assq ',fun cc-bytecomp-original-functions))
-	 (setq cc-bytecomp-original-functions
-	       (cons (list ',fun
-			   nil
-			   (if (fboundp ',fun)
-			       (symbol-function ',fun)
-			     'unbound))
-		     cc-bytecomp-original-functions)))
-     (if (and (cc-bytecomp-is-compiling)
-	      (not load-in-progress)
-	      (not (fboundp ',fun)))
-	 (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
-				     (symbol-name ',fun)))))))
+     (if (fboundp ',fun)
+	 nil
+       (if (not (assq ',fun cc-bytecomp-original-functions))
+	   (setq cc-bytecomp-original-functions
+		 (cons (list ',fun nil 'unbound)
+		       cc-bytecomp-original-functions)))
+       (if (and (cc-bytecomp-is-compiling)
+		(not load-in-progress))
+	   (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
+				       (symbol-name ',fun))))))))
 
 (put 'cc-bytecomp-defmacro 'lisp-indent-function 'defun)
 (defmacro cc-bytecomp-defmacro (fun &rest temp-macro)

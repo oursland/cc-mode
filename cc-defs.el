@@ -68,26 +68,6 @@
 
 (require 'cl)
 
-;; `add-to-list' is used with three arguments in autoload directives,
-;; which works in the latest (X)Emacsen.  Have to make an advice to
-;; fix it at package load time in older versions, though.
-(condition-case nil
-    ;; `eval' avoids argcount warnings.
-    (eval '(let (foo) (add-to-list 'foo 17 t)))
-  (error
-   (require 'advice)
-   (defadvice add-to-list (around append-argument
-			   (list-var element &optional append)
-			   activate preactivate)
-     "If the optional argument APPEND is non-nil, ELEMENT is added at the end."
-     (if append
-	 (setq ad-return-value
-	       (if (member element (symbol-value list-var))
-		   (symbol-value list-var)
-		 (set list-var (append (symbol-value list-var)
-				       (list element)))))
-       ad-do-it))))
-
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
 (cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
@@ -178,8 +158,10 @@ This variant works around bugs in `eval-when-compile' in various
 	 ;; arguably a bug because the point with `eval-when-compile' is
 	 ;; that it should evaluate rather than compile its contents.
 	 ;;
-	 ;; We get around it by expanding the body to a quoted constant
-	 ;; that we eval.
+	 ;; We get around it by expanding the body to a quoted
+	 ;; constant that we eval.  That otoh introduce a problem in
+	 ;; that a returned lambda expression doesn't get byte
+	 ;; compiled (even if `function' is used).
 	 (eval '(let ((c-inside-eval-when-compile t)) ,@body)))))
 
   (put 'cc-eval-when-compile 'lisp-indent-hook 0))
@@ -585,61 +567,130 @@ This function does not do any hidden buffer changes."
 	 `lookup-syntax-properties)
 	(t nil)))
 
-(defmacro c-clear-char-syntax (pos)
-  ;; Remove the syntax-table property at POS if there is any.
-  (if (and (fboundp 'make-extent)
-	   (fboundp 'delete-extent)
-	   (fboundp 'set-extent-properties))
-      ;; XEmacs.  Check all the extent functions we'll use since some
-      ;; packages might do compatibility aliases for some of them in
-      ;; Emacs.
-      `(let ((ext (extent-at ,pos nil 'syntax-table)))
-	 (if ext (delete-extent ext)))
-    ;; Emacs.
-    `(let ((pos ,pos))
-       ,(if (cc-bytecomp-boundp 'text-property-default-nonsticky)
-	    ;; In Emacs 21 we got the rear-nonsticky property covered
-	    ;; by `text-property-default-nonsticky'.
-	    `(remove-text-properties pos (1+ pos) '(syntax-table nil))
-	  ;; In Emacs 20 we have to mess with the rear-nonsticky property.
-	  `(when (get-text-property pos 'syntax-table)
-	     (remove-text-properties pos (1+ pos) '(syntax-table nil))
-	     (put-text-property pos (1+ pos)
-				'rear-nonsticky
-				(delq 'syntax-table
-				      (get-text-property
-				       pos 'rear-nonsticky))))))))
+
+;; Macros/functions to handle so-called "char properties", which are
+;; properties set on a single character and that never spreads to any
+;; other characters.
 
-(defmacro c-put-char-syntax (pos syntax)
-  ;; Put a syntax-table property at POS and make it front and rear
-  ;; nonsticky (or start and end open in XEmacs vocabulary).
-  (cond ((and (fboundp 'make-extent)
-	      (fboundp 'delete-extent)
-	      (fboundp 'set-extent-properties))
-	 ;; XEmacs.  Check all the extent functions we'll use since
-	 ;; some packages might do compatibility aliases for some of
-	 ;; them in Emacs.
-	 `(let ((pos ,pos))
-	    (set-extent-properties (make-extent pos (1+ pos))
-				   (list 'syntax-table ,syntax
-					 'start-open t
-					 'end-open t))))
+(cc-eval-when-compile
+  ;; Constant used at compile time to decide whether or not to use
+  ;; XEmacs extents.  Check all the extent functions we'll use since
+  ;; some packages might add compatibility aliases for some of them in
+  ;; Emacs.
+  (defconst c-use-extents (and (cc-bytecomp-fboundp 'extent-at)
+			       (cc-bytecomp-fboundp 'set-extent-property)
+			       (cc-bytecomp-fboundp 'set-extent-properties)
+			       (cc-bytecomp-fboundp 'make-extent)
+			       (cc-bytecomp-fboundp 'extent-property)
+			       (cc-bytecomp-fboundp 'delete-extent)
+			       (cc-bytecomp-fboundp 'map-extents))))
+
+;; `c-put-char-property' is complex enough in XEmacs and Emacs < 21 to
+;; make it a function.
+(defalias 'c-put-char-property-fun
+  (cc-eval-when-compile
+    (cond (c-use-extents
+	   ;; XEmacs.
+	   (byte-compile
+	    (lambda (pos property value)
+	      (let ((ext (extent-at pos nil property)))
+		(if ext
+		    (set-extent-property ext property value)
+		  (set-extent-properties (make-extent pos (1+ pos))
+					 (cons property
+					       (cons value
+						     '(start-open t
+						       end-open t)))))))))
+
+	  ((not (cc-bytecomp-boundp 'text-property-default-nonsticky))
+	   ;; In Emacs < 21 we have to mess with the `rear-nonsticky' property.
+	   (byte-compile
+	    (lambda (pos property value)
+	      (put-text-property pos (1+ pos) property value)
+	      (let ((prop (get-text-property pos 'rear-nonsticky)))
+		(or (memq property prop)
+		    (put-text-property pos (1+ pos)
+				       'rear-nonsticky
+				       (cons property prop))))))))))
+(cc-bytecomp-defun c-put-char-property-fun) ; Make it known below.
+
+(defmacro c-put-char-property (pos property value)
+  ;; Put the given property with the given value on the character at
+  ;; POS and make it front and rear nonsticky, or start and end open
+  ;; in XEmacs vocabulary.  If the character already has the given
+  ;; property then the value is replaced.  PROPERTY is assumed to be
+  ;; constant.
+  ;;
+  ;; If there's a `text-property-default-nonsticky' variable (Emacs
+  ;; 21) then it's assumed that the property is present on it.
+  (if (or c-use-extents
+	  (not (cc-bytecomp-boundp 'text-property-default-nonsticky)))
+      ;; XEmacs and Emacs < 21.
+      `(c-put-char-property-fun ,pos ,property ,value)
+    ;; In Emacs 21 we got the `rear-nonsticky' property covered
+    ;; by `text-property-default-nonsticky'.
+    `(let ((-pos- ,pos))
+       (put-text-property -pos- (1+ -pos-) ,property ,value))))
+
+(defmacro c-get-char-property (pos property)
+  ;; Get the value of the given property on the character at POS if
+  ;; it's been put there by `c-put-char-property'.  PROPERTY is
+  ;; assumed to be constant.
+  (if c-use-extents
+      ;; XEmacs.
+      `(let ((ext (extent-at ,pos nil ,property)))
+	 (if ext (extent-property ext ,property)))
+    ;; Emacs.
+    `(get-text-property ,pos ,property)))
+
+;; `c-clear-char-property' is complex enough in Emacs < 21 to make it
+;; a function, since we have to mess with the `rear-nonsticky' property.
+(defalias 'c-clear-char-property-fun
+  (cc-eval-when-compile
+    (unless (or c-use-extents
+		(cc-bytecomp-boundp 'text-property-default-nonsticky))
+      (byte-compile
+       (lambda (pos property)
+	 (when (get-text-property pos property)
+	   (remove-text-properties pos (1+ pos) (list property nil))
+	   (put-text-property pos (1+ pos)
+			      'rear-nonsticky
+			      (delq property (get-text-property
+					      pos 'rear-nonsticky)))))))))
+(cc-bytecomp-defun c-clear-char-property-fun) ; Make it known below.
+
+(defmacro c-clear-char-property (pos property)
+  ;; Remove the given property on the character at POS if it's been put
+  ;; there by `c-put-char-property'.  PROPERTY is assumed to be
+  ;; constant.
+  (cond (c-use-extents
+	 ;; XEmacs.
+	 `(let ((ext (extent-at ,pos nil ,property)))
+	    (if ext (delete-extent ext))))
 	((cc-bytecomp-boundp 'text-property-default-nonsticky)
-	 ;; In Emacs 21 we got the rear-nonsticky property covered
+	 ;; In Emacs 21 we got the `rear-nonsticky' property covered
 	 ;; by `text-property-default-nonsticky'.
 	 `(let ((pos ,pos))
-	    (put-text-property pos (1+ pos)
-			       'syntax-table ,syntax)))
+	    (remove-text-properties pos (1+ pos)
+				    '(,(eval property) nil))))
 	(t
-	 ;; In Emacs 20 we have to mess with the rear-nonsticky property.
-	 `(let* ((pos ,pos)
-		 (prop (get-text-property pos 'rear-nonsticky)))
-	    (put-text-property pos (1+ pos)
-			       'syntax-table ,syntax)
-	    (or (memq 'syntax-table prop)
-		(put-text-property pos (1+ pos)
-				   'rear-nonsticky
-				   (cons 'syntax-table prop)))))))
+	 ;; Emacs < 21.
+	 `(c-clear-char-property-fun ,pos ,property))))
+
+(defmacro c-clear-char-properties (from to property)
+  ;; Remove all the occurences of the given property in the given
+  ;; region that has been put with `c-put-char-property'.  PROPERTY is
+  ;; assumed to be constant.
+  ;;
+  ;; Note that this function does not clean up the property from the
+  ;; lists of the `rear-nonsticky' properties in the region, if such
+  ;; are used.  Thus it should not be used for common properties like
+  ;; `syntax-table'.
+  (if c-use-extents
+      ;; XEmacs.
+      `(map-extents 'delete-extent nil ,from ,to nil nil ,property)
+    ;; Emacs.
+    `(remove-text-properties ,from ,to '(,(eval property) nil))))
 
 
 ;; Make edebug understand the macros.
@@ -663,8 +714,10 @@ This function does not do any hidden buffer changes."
      (def-edebug-spec c-skip-ws-forward t)
      (def-edebug-spec c-skip-ws-backward t)
      (def-edebug-spec c-major-mode-is t)
-     (def-edebug-spec c-clear-char-syntax t)
-     (def-edebug-spec c-put-char-syntax t)
+     (def-edebug-spec c-put-char-property t)
+     (def-edebug-spec c-get-char-property t)
+     (def-edebug-spec c-clear-char-property t)
+     (def-edebug-spec c-clear-char-properties t)
      (def-edebug-spec cc-eval-when-compile t)))
 
 
@@ -675,7 +728,7 @@ This function does not do any hidden buffer changes."
 ;; when the files are compiled in a certain order within the same
 ;; session.
 
-(defsubst c-beginning-of-defun-1 ()
+(defmacro c-beginning-of-defun-1 ()
   ;; Wrapper around beginning-of-defun.
   ;;
   ;; NOTE: This function should contain the only explicit use of
@@ -686,42 +739,44 @@ This function does not do any hidden buffer changes."
   ;;
   ;; This function does not do any hidden buffer changes.
 
-  (if (and (fboundp 'buffer-syntactic-context-depth)
-	   c-enable-xemacs-performance-kludge-p)
-      ;; XEmacs only.  This can improve the performance of
-      ;; c-parse-state to between 3 and 60 times faster when
-      ;; braces are hung.  It can also degrade performance by
-      ;; about as much when braces are not hung.
-      (let (pos)
-	(while (not pos)
-	  (save-restriction
-	    (widen)
-	    (setq pos (scan-lists (point) -1
-				  (buffer-syntactic-context-depth)
-				  nil t)))
-	  (cond
-	   ((bobp) (setq pos (point-min)))
-	   ((not pos)
-	    (let ((distance (skip-chars-backward "^{")))
-	      ;; unbalanced parenthesis, while illegal C code,
-	      ;; shouldn't cause an infloop!  See unbal.c
-	      (when (zerop distance)
-		;; Punt!
-		(beginning-of-defun)
-		(setq pos (point)))))
-	   ((= pos 0))
-	   ((not (eq (char-after pos) ?{))
-	    (goto-char pos)
-	    (setq pos nil))
-	   ))
-	(goto-char pos))
-    ;; Emacs, which doesn't have buffer-syntactic-context-depth
-    (beginning-of-defun))
-  ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
-  ;; open brace.
-  (and defun-prompt-regexp
-       (looking-at defun-prompt-regexp)
-       (goto-char (match-end 0))))
+  `(progn
+     (if (and ,(cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
+	      c-enable-xemacs-performance-kludge-p)
+	 ,(when (cc-bytecomp-fboundp 'buffer-syntactic-context-depth)
+	    ;; XEmacs only.  This can improve the performance of
+	    ;; c-parse-state to between 3 and 60 times faster when
+	    ;; braces are hung.  It can also degrade performance by
+	    ;; about as much when braces are not hung.
+	    '(let (pos)
+	       (while (not pos)
+		 (save-restriction
+		   (widen)
+		   (setq pos (scan-lists (point) -1
+					 (buffer-syntactic-context-depth)
+					 nil t)))
+		 (cond
+		  ((bobp) (setq pos (point-min)))
+		  ((not pos)
+		   (let ((distance (skip-chars-backward "^{")))
+		     ;; unbalanced parenthesis, while illegal C code,
+		     ;; shouldn't cause an infloop!  See unbal.c
+		     (when (zerop distance)
+		       ;; Punt!
+		       (beginning-of-defun)
+		       (setq pos (point)))))
+		  ((= pos 0))
+		  ((not (eq (char-after pos) ?{))
+		   (goto-char pos)
+		   (setq pos nil))
+		  ))
+	       (goto-char pos)))
+       ;; Emacs, which doesn't have buffer-syntactic-context-depth
+       (beginning-of-defun))
+     ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
+     ;; open brace.
+     (and defun-prompt-regexp
+	  (looking-at defun-prompt-regexp)
+	  (goto-char (match-end 0)))))
 
 (defsubst c-end-of-defun-1 ()
   ;; Replacement for end-of-defun that use c-beginning-of-defun-1.
@@ -743,7 +798,7 @@ This function does not do any hidden buffer changes."
   ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
   ;; doesn't support syntax properties, so this function might not
   ;; have any effect.
-  (c-put-char-syntax pos c-<-as-paren-syntax))
+  (c-put-char-property pos 'syntax-table c-<-as-paren-syntax))
 
 (defconst c->-as-paren-syntax '(5 . ?<))
 
@@ -752,7 +807,7 @@ This function does not do any hidden buffer changes."
   ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
   ;; doesn't support syntax properties, so this function might not
   ;; have any effect.
-  (c-put-char-syntax pos c->-as-paren-syntax))
+  (c-put-char-property pos 'syntax-table c->-as-paren-syntax))
 
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
