@@ -249,7 +249,7 @@
 (defun c-get-primitive-types ()
   ;; Returns the union of `c-primitive-type-kwds',
   ;; `c-complex-type-kwds' and the appropriate *-font-lock-extra-types
-  ;; variable.
+  ;; variable.  The second submatch is the one that matches the type.
   (let* ((extra-types (cond ((c-major-mode-is 'c-mode)
 			     c-font-lock-extra-types)
 			    ((c-major-mode-is 'c++-mode)
@@ -662,10 +662,11 @@
 	    (let ((prefix-re (c-make-keywords-re nil
 			       (c-lang-var c-type-prefix-kwds))))
 	      `((,(c-make-simple-font-lock-decl-function
-		   (concat "\\(" prefix-re "\\)"
+		   (concat "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
+			   "\\(" prefix-re "\\)"
 			   "[ \t\n\r]+"
 			   (c-lang-var c-symbol-key))
-		   (+ (c-regexp-opt-depth prefix-re) 2)
+		   (+ (c-regexp-opt-depth prefix-re) 3)
 		   '(progn (goto-char (match-end 2))
 			   (c-forward-syntactic-ws))
 		   '(goto-char (match-end 2)))))))
@@ -680,17 +681,19 @@
 	;; type keyword is inadvertently used as a variable name.
 
 	;; Fontify basic types.
-	(,(c-make-keywords-re t (c-lang-var c-type-kwds))
-	 1 'font-lock-type-face)
+	(,(concat "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
+		  (c-make-keywords-re t (c-lang-var c-type-kwds)))
+	 2 'font-lock-type-face)
 
 	;; Fontify types preceded by `c-type-prefix-kwds'.
 	,@(when (c-lang-var c-type-prefix-kwds)
 	    (let ((prefix-re (c-make-keywords-re nil
 			       (c-lang-var c-type-prefix-kwds))))
-	      `((,(concat "\\(" prefix-re "\\)"
+	      `((,(concat "\\(\\=\\|" (c-lang-var c-nonsymbol-key) "\\)"
+			  "\\(" prefix-re "\\)"
 			  "[ \t\n\r]+"
 			  (c-lang-var c-symbol-key))
-		 ,(+ (c-regexp-opt-depth prefix-re) 2) 'font-lock-type-face))))
+		 ,(+ (c-regexp-opt-depth prefix-re) 3) 'font-lock-type-face))))
 
 	;; Fontify symbols after closing braces as declaration
 	;; identifiers under the assumption that they are part of
