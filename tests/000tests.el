@@ -279,6 +279,7 @@
     "member-7.cc"
     "member-8.cc"
     "methods-1.java"
+    "methods-2.m"
     "namespace-1.cc"
     "namespace-2.cc"
     "namespace-3.cc"
@@ -497,5 +498,4 @@
       (other-window 1)
       (insert (format "%s\n" syntax)))
     (other-window 1)
-    (forward-line 1))
-  (delete-backward-char 1))
+    (forward-line 1)))
