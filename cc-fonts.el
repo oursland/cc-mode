@@ -1355,8 +1355,9 @@ tools (e.g. Javadoc).")
 	(eval . (list (c-make-simple-font-lock-decl-function
 		       c-known-type-key
 		       1
-		       '(progn (goto-char (match-end 1))
-			       (c-forward-syntactic-ws))
+		       '(save-match-data
+			  (goto-char (match-end 1))
+			  (c-forward-syntactic-ws))
 		       '(goto-char (match-end 1)))))
 
 	;; Fontify types preceded by `c-type-prefix-kwds' and the
@@ -1369,8 +1370,9 @@ tools (e.g. Javadoc).")
 			   "[ \t\n\r\f\v]+"
 			   "\\(" (c-lang-var c-symbol-key) "\\)")
 		   (+ (c-regexp-opt-depth prefix-re) 2)
-		   '(progn (goto-char (match-end 2))
-			   (c-forward-syntactic-ws))
+		   '(save-match-data
+		      (goto-char (match-end 2))
+		      (c-forward-syntactic-ws))
 		   '(goto-char (match-end 2)))))))
 	))
 
