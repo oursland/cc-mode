@@ -280,9 +280,9 @@ context keys, when applicable.
 
 When it's turned off, the electric keys don't reindent, the indentation
 functions indents every new line to the same level as the previous
-nonempty line, and \\[c-indent-command] adjusts the indentation in seps
-specified `c-basic-offset'.  The indentation style has no effect in this
-mode, nor any of the indentation associated variables,
+nonempty line, and \\[c-indent-command] adjusts the indentation in steps
+specified by `c-basic-offset'.  The indentation style has no effect in
+this mode, nor any of the indentation associated variables,
 e.g. `c-special-indent-hook'.
 
 This command sets the variable `c-syntactic-indentation'."
@@ -306,7 +306,7 @@ after special characters such as brace, comma, semi-colon, and colon."
   (c-keep-region-active))
 
 (defalias 'c-toggle-auto-state 'c-toggle-auto-newline)
-(make-obsolete 'c-toggle-auto-state 'c-toggle-auto-newline "5.31")
+(make-obsolete 'c-toggle-auto-state 'c-toggle-auto-newline)
 
 (defun c-toggle-hungry-state (&optional arg)
   "Toggle hungry-delete-key feature.
