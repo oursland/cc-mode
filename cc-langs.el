@@ -493,7 +493,7 @@ that at least one does when the regexp has matched."
 normally use that macro preprocessor.  Tested at bol.  Assumed to not
 contain any submatches."
   t "\\s *#\\s *"
-  java nil)
+  (java awk) nil)
 (c-lang-defvar c-opt-cpp-prefix (c-lang-const c-opt-cpp-prefix))
 
 (c-lang-defconst c-cpp-defined-fns
@@ -728,7 +728,8 @@ operators."
 	       (c-lang-const c-other-op-syntax-tokens))
   pike (append '("..")
 	       (c-lang-const c-other-op-syntax-tokens)
-	       (c-lang-const c-overloadable-operators)))
+	       (c-lang-const c-overloadable-operators))
+  awk '("{" "}" "(" ")" "[" "]" ";" "," "=" "/"))
 
 (c-lang-defconst c-nonsymbol-token-regexp
   ;; Regexp matching all tokens in the punctuation and parenthesis
@@ -828,13 +829,20 @@ operators."
 (c-lang-defvar comment-start-skip (c-lang-const comment-start-skip)
   'dont-doc)
 
-(c-lang-defvar c-syntactic-ws-start "[ \n\t\r\v\f#]\\|/[/*]\\|\\\\[\n\r]")
-;; Regexp matching any sequence that can start syntactic whitespace.
-;; The only uncertain case is '#' when there are cpp directives."
+(c-lang-defconst syntactic-ws-start
+  "Regexp matching any sequence that can start syntactic whitespace.
+The only uncertain case is '#' when there are cpp directives."
+  t     "[ \n\t\r\v\f#]\\|/[/*]\\|\\\\[\n\r]"
+  awk   "[ \n\t\r\v\f#]\\|\\\\[\n\r]")
+(c-lang-defvar c-syntactic-ws-start (c-lang-const syntactic-ws-start)
+  'dont-doc)
 
-(c-lang-defvar c-syntactic-ws-end "[ \n\t\r\v\f/]")
-;; Regexp matching any single character that might end syntactic
-;; whitespace.
+(c-lang-defconst syntactic-ws-end
+  "Regexp matching any single character that might end syntactic whitespace."
+  t     "[ \n\t\r\v\f/]"
+  awk   "[ \n\t\r\v\f]")
+(c-lang-defvar c-syntactic-ws-end (c-lang-const syntactic-ws-end)
+  'dont-doc)
 
 (c-lang-defconst c-nonwhite-syntactic-ws
   ;; Regexp matching a piece of syntactic whitespace that isn't a
@@ -854,7 +862,8 @@ operators."
 		 "\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/"
 		 "\\)")
 	    "\\|"
-	    "\\\\[\n\r]"))		; Line continuations.
+	    "\\\\[\n\r]")		; Line continuations.
+  awk ("#.*[\n\r]\\|\\\\[\n\r]"))
 
 (c-lang-defconst c-syntactic-ws
   ;; Regexp matching syntactic whitespace, including possibly the
@@ -889,7 +898,8 @@ operators."
   ;; a \| operator at the top level.
   t (concat "[ \t]*\\("
 	    "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/" ; Block comment
-	    "[ \t]*\\)*"))
+	    "[ \t]*\\)*")
+  awk ("[ \t]*\\(#.*$\\)?"))
 
 (c-lang-defconst c-single-line-syntactic-ws-depth
   ;; Number of regexp grouping parens in `c-single-line-syntactic-ws'.
@@ -1090,7 +1100,7 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
 `c-<>-arglist-kwds' then the associated clauses will be handled."
   t    '("enum")
-  java nil)
+  (java awk) nil)
 
 (c-lang-defconst c-brace-list-key
   ;; Regexp matching the start of declarations where the following
@@ -1126,7 +1136,7 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
 `c-<>-arglist-kwds' then the associated clauses will be handled."
   t    '("typedef")
-  java nil)
+  (java awk) nil)
 
 (c-lang-defconst c-typeless-decl-kwds
   "Keywords introducing declarations where the identifier (declarator)
@@ -1256,7 +1266,7 @@ too.
 Note: Use `c-typeless-decl-kwds' for keywords followed by a function
 or variable identifier (that's being defined)."
   t    '("struct" "union" "enum")
-  (c c++) nil
+  (c c++ awk) nil
   objc (append '("@class" "@interface" "@implementation" "@protocol")
 	       (c-lang-const c-type-list-kwds))
   java '("class" "import" "interface" "new" "extends" "implements" "throws")
@@ -1432,7 +1442,8 @@ nevertheless contains a list separated with ';' and not ','."
 
 (c-lang-defconst c-label-kwds
   "Keywords introducing labels in blocks."
-  t '("case" "default"))
+  t '("case" "default")
+  awk nil)
 
 (c-lang-defconst c-before-label-kwds
   "Keywords that may be followed by a label or a label reference."
