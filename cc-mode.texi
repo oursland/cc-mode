@@ -151,6 +151,7 @@ Commands
 * Movement Commands::           
 * Filling and Breaking::        
 * Electric Keys::               
+* Hungry WS Deletion::          
 * Other Commands::              
 
 Configuration Strategies
@@ -183,7 +184,6 @@ Customizing Indentation
 Minor Modes
 
 * Auto-newlines::               
-* Hungry WS Deletion::          
 
 Auto-newline Insertion
 
@@ -318,6 +318,7 @@ where @samp{XX} is the minor release number.
 * Movement Commands::           
 * Filling and Breaking::        
 * Electric Keys::               
+* Hungry WS Deletion::          
 * Other Commands::              
 @end menu
 
@@ -728,7 +729,7 @@ line break.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Electric Keys, Other Commands, Filling and Breaking, Commands
+@node    Electric Keys, Hungry WS Deletion, Filling and Breaking, Commands
 @comment node-name, next, previous, up
 @section Electric Keys and Keywords
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -877,7 +878,148 @@ modes except IDL mode, since CORBA IDL doesn't have any statements.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Other Commands,  , Electric Keys, Commands
+@node    Hungry WS Deletion, Other Commands, Electric Keys, Commands
+@comment node-name, next, previous, up
+@section Hungry Deletion of Whitespace
+@cindex hungry-deletion
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@kindex C-d
+
+If you want to delete an entire block of whitespace at point, you can
+use @dfn{hungry deletion}.  This deletes all the consecutive
+whitespace either before point or after point in a single operation.
+``Whitespace'' here includes tabs and newlines, but not comments.
+Hungry deletion can markedly cut down on the number of times you have
+to hit deletion keys when, for example, you've made a mistake on the
+preceding line and have already pressed @kbd{C-j}.
+
+Hungry deletion is a simple feature that some people find extremely
+useful.  In fact, you might find yourself wanting hungry Delete in
+@strong{all} your editing modes!
+
+There are two different ways you can use hungry deletion:
+
+@table @asis
+@item Using @dfn{Hungry Delete Mode} with @kbd{@key{DEL}} and @kbd{C-d}
+Here you toggle Hungry Delete minor mode with @kbd{C-c C-d} or
+@kbd{C-c C-t} (@pxref{Minor Modes}.)  This makes @kbd{@key{DEL}} and
+@kbd{C-d} do forward and backwards hungry deletion.
+
+@table @asis
+@item @kbd{@key{DEL}} (@code{c-electric-backspace})
+@kindex DEL
+@c @deffn Command c-electric-backspace
+@findex c-electric-backspace
+@findex electric-backspace (c-)
+This command is run by default when you hit the @kbd{DEL} key.  When
+hungry delete mode is enabled, it deletes any amount of whitespace in
+the backwards direction.  Otherwise, or when used with a prefix
+argument or in a literal (@pxref{Auto-newlines}), the command behaves
+like @code{backwards-delete-char-untabify}.  (Strictly speaking, the
+function contained in the @code{c-backspace-function} variable is
+called with the prefix argument.)
+@c @end deffn
+
+@c @defvar c-backspace-function
+@item @code{c-backspace-function}
+@vindex c-backspace-function
+@vindex backspace-function (c-)
+@findex backward-delete-char-untabify
+Hook that gets called by @code{c-electric-backspace} when it doesn't
+do an ``electric'' deletion of the preceding whitespace.  The default
+value is @code{backward-delete-char-untabify}.
+@c @end defvar
+
+@item @kbd{C-d} (@code{c-electric-delete-forward})
+@kindex C-d
+@c @deffn Command c-electric-delete-forward
+@findex c-electric-delete-forward
+@findex electric-delete-forward (c-)
+This function, which is bound to @kbd{C-d} by default, works just like
+@code{c-electric-backspace} but in the forward direction.  When it
+doesn't do an ``electric'' deletion of the following whitespace, it
+just does @code{delete-char}, more or less.  (Strictly speaking, it
+calls the function in @code{c-delete-function} with the prefix
+argument.)
+@c @end deffn
+
+@c @defvar c-delete-function
+@item @code{c-delete-function}
+@vindex c-delete-function
+@vindex delete-function (c-)
+@findex delete-char
+Hook that gets called by @code{c-electric-delete-forward} when it
+doesn't do an ``electric'' deletion of the following whitespace.  The
+default value is @code{delete-char}.
+@c @end defvar
+@end table
+
+@item Using Distinct Bindings
+The other (newer) way to use hungry deletion is to bind
+@code{c-hungry-backspace} and @code{c-hungry-delete-forward} directly
+to suitable key sequences rather than using the minor mode toggling.
+For example, to bind @kbd{C-c C-d} and @kbd{C-c DEL} (matching plain
+@kbd{C-d} and @kbd{DEL}), put this near the top of your @file{.emacs}
+file:
+
+@example
+(add-hook
+@c 'c-mode-common-hook  (Changed 2004/9/19)
+ 'c-mode-initialization-hook
+ (lambda ()
+   (define-key c-mode-base-map
+               [?\C-c ?\d] 'c-hungry-backspace)
+   (define-key c-mode-base-map
+               [?\C-c ?\C-d] 'c-hungry-delete-forward)))
+@end example
+
+@c (2004/9/19):  I've posted onto emacs-devel (X-posted to
+@c bug-gnu-emacs) asking if it would be OK to just bind C-c <del> and
+@c C-c <backspace> as standard.
+
+@deffn Command c-hungry-backspace
+@findex hungry-backspace (c-)
+Delete any amount of whitespace in the backwards direction (regardless
+whether hungry-delete mode is enabled or not).
+@end deffn
+
+@deffn Command c-hungry-delete-forward
+@findex hungry-delete-forward (c-)
+Delete any amount of whitespace in the forward direction (regardless
+whether hungry-delete mode is enabled or not).
+@end deffn
+@end table
+
+Above we have only talked about the @kbd{DEL} and @kbd{C-d} key events,
+without connecting them to the physical keys commonly known as
+@key{Backspace} and @key{Delete}.  The default behavior of those two
+depends on the flavor of (X)Emacs you are using.
+
+@findex c-electric-delete
+@findex electric-delete (c-)
+@vindex delete-key-deletes-forward
+
+In XEmacs 20.3 and beyond, the @key{Backspace} key is bound to
+@code{c-electric-backspace} and the @key{Delete} key is bound to
+@code{c-electric-delete}.  You control the direction it deletes in by
+setting the variable @code{delete-key-deletes-forward}, a standard
+XEmacs variable.  When this variable is non-@code{nil},
+@code{c-electric-delete} will do forward deletion with
+@code{c-electric-delete-forward}, otherwise it does backward deletion
+with @code{c-electric-backspace}.
+
+In other Emacs versions, @ccmode{} doesn't bind either @key{Backspace}
+or @key{Delete}.  In Emacs prior to 21 that means that it's up to you to
+fix them.  Emacs 21 automatically binds them as appropriate to @kbd{DEL}
+and @kbd{C-d}.
+
+Getting your @key{Backspace} and @key{Delete} keys properly set up can
+sometimes be tricky.  The information in @ref{DEL Does Not
+Delete,,,Emacs}, might be helpful if you're having trouble with this.
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Other Commands,  , Hungry WS Deletion, Commands
 @comment node-name, next, previous, up
 @section Other Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -930,8 +1072,8 @@ you'll want to use one (or both) of @ccmode{}'s more sophisticated
 facilities, hooks and styles.
 
 @item Hooks
-An Emacs @dfn{hook} is a place to put Lisp functions that you want to
-be executed later from a specific place within the innards of Emacs.
+An Emacs @dfn{hook} is a place to put Lisp functions that you want
+Emacs to execute later in specific circumstances.
 @xref{Hooks,,,elisp}.  @ccmode{} supplies an @dfn{initialization hook}
 for each language it supports - any functions you supply to this hook
 are executed as the last part of a buffer's initialization.  Typically
@@ -960,7 +1102,7 @@ A @ccmode{} @dfn{style} is a coherent collection of customizations
 with a name.  @ccmode{} is delivered with several existing styles.
 Additionally, you can create your own styles, possibly based on these
 existing styles.  If you worked in a programming group called the
-``free group'' which had it's own coding standards, you might well
+``Free Group'', which had it's own coding standards, you might well
 have this in your @file{.emacs} file:
 
 @example
@@ -4044,14 +4186,15 @@ to your @file{.emacs} file:
           (lambda () (c-toggle-auto-hungry-state 1)))
 @end example
 
+Full details on using hungry deletion are at @ref{Hungry WS Deletion}.
+
 @menu
 * Auto-newlines::               
-* Hungry WS Deletion::          
 @end menu
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Auto-newlines, Hungry WS Deletion, Minor Modes, Minor Modes
+@node    Auto-newlines,  , Minor Modes, Minor Modes
 @comment node-name, next, previous, up
 @section Auto-newline Insertion
 @cindex auto-newline
@@ -4438,113 +4581,6 @@ it's only an empty parenthesis pair.  I.e. you will get @samp{signal
 (SIGINT, SIG_IGN)}, but @samp{abort()}.  Clean up occurs when the
 closing parenthesis is typed.
 @end table
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Hungry WS Deletion,  , Auto-newlines, Minor Modes
-@comment node-name, next, previous, up
-@section Hungry-deletion of Whitespace
-@cindex hungry-deletion
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-Hungry deletion of whitespace, or as it more commonly called,
-@dfn{hungry-delete mode}, is a simple feature that some people find
-extremely useful.  In fact, you might find yourself wanting
-hungry-delete in @strong{all} your editing modes!
-
-@kindex DEL
-@kindex C-d
-
-In a nutshell, when hungry-delete mode is enabled, hitting the @kbd{DEL}
-or @kbd{C-d} keys will consume all preceding or following whitespace,
-including newlines and tabs.  This can really cut down on the number of
-times you have to hit these keys if, for example, you made a mistake on
-the preceding line.
-
-@deffn Command c-electric-backspace
-@findex electric-backspace (c-)
-This command is run by default when you hit the @kbd{DEL} key.  It
-deletes any amount of whitespace in the backwards direction if
-hungry-delete mode is enabled.  When it's disabled, or when used with
-a prefix argument or in a literal (@pxref{Auto-newlines}),
-the function contained in the @code{c-backspace-function} variable is
-called with the prefix argument.
-@end deffn
-
-@defvar c-backspace-function
-@vindex backspace-function (c-)
-@findex backward-delete-char-untabify
-Hook that gets called by @code{c-electric-backspace} when it doesn't
-do an ``electric'' deletion of the preceding whitespace.  The default
-value is @code{backward-delete-char-untabify}.
-@end defvar
-
-@deffn Command c-electric-delete-forward
-@findex electric-delete-forward (c-)
-This function, which is bound to @kbd{C-d} by default, works just like
-@code{c-electric-backspace} but in the forward direction.  When it
-doesn't do an ``electric'' deletion of the following whitespace, it
-calls the function in @code{c-delete-function} with its prefix
-argument.
-@end deffn
-
-@defvar c-delete-function
-@vindex delete-function (c-)
-@findex delete-char
-Hook that gets called by @code{c-electric-delete-forward} when it
-doesn't do an ``electric'' deletion of the following whitespace.  The
-default value is @code{delete-char}.
-@end defvar
-
-Above we have only talked about the @kbd{DEL} and @kbd{C-d} key events,
-without connecting them to the physical keys commonly known as
-@key{Backspace} and @key{Delete}.  The default behavior of those two
-depends on the flavor of (X)Emacs you are using.
-
-@findex c-electric-delete
-@findex electric-delete (c-)
-@vindex delete-key-deletes-forward
-
-In XEmacs 20.3 and beyond, the @key{Backspace} key is bound to
-@code{c-electric-backspace} and the @key{Delete} key is bound to
-@code{c-electric-delete}.  You control the direction it deletes in by
-setting the variable @code{delete-key-deletes-forward}, a standard
-XEmacs variable.  When this variable is non-@code{nil},
-@code{c-electric-delete} will do forward deletion with
-@code{c-electric-delete-forward}, otherwise it does backward deletion
-with @code{c-electric-backspace}.
-
-In other Emacs versions, @ccmode{} doesn't bind either @key{Backspace}
-or @key{Delete}.  In Emacs prior to 21 that means that it's up to you to
-fix them.  Emacs 21 automatically binds them as appropriate to @kbd{DEL}
-and @kbd{C-d}.
-
-Another way to use hungry deletion is to bind
-@code{c-hungry-backspace} and @code{c-hungry-delete-forward} directly
-to keys, and not use the mode toggling.  For example @kbd{C-c C-d} and
-@kbd{C-c DEL} to match plain @kbd{C-d} and @kbd{DEL},
-
-@example
-(add-hook
- 'c-mode-common-hook
- (lambda ()
-   (define-key c-mode-base-map
-               [?\C-c ?\d] 'c-hungry-backspace)
-   (define-key c-mode-base-map
-               [?\C-c ?\C-d] 'c-hungry-delete-forward)))
-@end example
-
-@deffn Command c-hungry-backspace
-@findex hungry-backspace (c-)
-Delete any amount of whitespace in the backwards direction (regardless
-whether hungry-delete mode is enabled or not).
-@end deffn
-
-@deffn Command c-hungry-delete-forward
-@findex hungry-delete-forward (c-)
-Delete any amount of whitespace in the forward direction (regardless
-whether hungry-delete mode is enabled or not).
-@end deffn
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
