@@ -395,17 +395,22 @@ it finds in `c-file-offsets'."
 (defun c-mode-menu (modestr)
   (let ((m
 	 '(["Comment Out Region"     comment-region (mark)]
-	   ["Macro Expand Region"    c-macro-expand (mark)]
-	   ["Backslashify"           c-backslash-region (mark)]
+	   ["Uncomment Region"
+	    (comment-region (region-beginning) (region-end) '(4))
+	    (mark)]
+	   ["Fill Comment Paragraph" c-fill-paragraph t]
+	   "---"
 	   ["Indent Expression"      c-indent-exp
 	    (memq (char-after) '(?\( ?\[ ?\{))]
 	   ["Indent Line"            c-indent-command t]
-	   ["Fill Comment Paragraph" c-fill-paragraph t]
 	   ["Up Conditional"         c-up-conditional t]
 	   ["Backward Conditional"   c-backward-conditional t]
 	   ["Forward Conditional"    c-forward-conditional t]
 	   ["Backward Statement"     c-beginning-of-statement t]
 	   ["Forward Statement"      c-end-of-statement t]
+	   "---"
+	   ["Macro Expand Region"    c-macro-expand (mark)]
+	   ["Backslashify"           c-backslash-region (mark)]
 	   )))
     (cons modestr m)))
 
