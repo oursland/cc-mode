@@ -17,8 +17,8 @@ XEmacs developers and was primarily a bug fix release.
 <h3>CC Mode 5.23</h3>
 
 <p>Note: Due to the extensive changes, this version was a beta test
-release that was never publically announced.  Here are a list of
-changes in that version:
+release that was never publically announced. Here is a list of changes
+in that version:
 
 <ul>
 
