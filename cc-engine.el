@@ -2289,8 +2289,8 @@ This function does not do any hidden buffer changes."
 (defun c-at-toplevel-p ()
   "Return a determination as to whether point is at the `top-level'.
 Being at the top-level means that point is either outside any
-enclosing block (such function definition), or inside a class,
-namespace or extern definition, but outside any method blocks.
+enclosing block (such function definition), or only inside a class,
+namespace or other block that contains another declaration level.
 
 If point is not at the top-level (e.g. it is inside a method
 definition), then nil is returned.  Otherwise, if point is at a
@@ -3377,15 +3377,15 @@ brace."
   ;; places in inconvenient locations.  Its a trade-off we make for
   ;; speed.
   (or
-   ;; this will pick up enum lists
+   ;; This will pick up brace list declarations.
    (c-safe
     (save-excursion
       (goto-char containing-sexp)
       (c-forward-sexp -1)
       (let (bracepos)
-	(if (and (or (looking-at "enum\\>[^_]")
+	(if (and (or (looking-at c-brace-list-key)
 		     (progn (c-forward-sexp -1)
-			    (looking-at "enum\\>[^_]")))
+			    (looking-at c-brace-list-key)))
 		 (setq bracepos (c-down-list-forward (point)))
 		 (not (c-crosses-statement-barrier-p (point)
 						     (- bracepos 2))))
@@ -3420,7 +3420,7 @@ brace."
 	     (setq braceassignp 'dontknow)
 	     (c-backward-token-1 1 t lim)
 	     ;; Checks to do only on the first sexp before the brace.
-	     (when (and (c-major-mode-is 'java-mode)
+	     (when (and c-opt-inexpr-brace-list-key
 			(eq (char-after) ?\[))
 	       ;; In Java, an initialization brace list may follow
 	       ;; directly after "new Foo[]", so check for a "new"
@@ -3428,7 +3428,7 @@ brace."
 	       (while (eq braceassignp 'dontknow)
 		 (setq braceassignp
 		       (cond ((/= (c-backward-token-1 1 t lim) 0) nil)
-			     ((looking-at "new\\>[^_]") t)
+			     ((looking-at c-opt-inexpr-brace-list-key) t)
 			     ((looking-at "\\sw\\|\\s_\\|[.[]")
 			      ;; Carry on looking if this is an
 			      ;; identifier (may contain "." in Java)
@@ -4108,23 +4108,20 @@ brace."
 	     ;; a relpos.  It's stored in syntactic-relpos.
 	     syntactic-relpos
 	     (c-stmt-delim-chars c-stmt-delim-chars))
-	;; check for meta top-level enclosing constructs, possible
-	;; extern language definitions, possibly (in C++) namespace
-	;; definitions.
+	;; Check for meta top-level enclosing constructs such as
+	;; extern language definitions.
 	(save-excursion
 	  (save-restriction
 	    (widen)
-	    (if (and inclass-p
-		     (progn
-		       (goto-char (aref inclass-p 0))
-		       (looking-at c-other-decl-block-key)))
-		(let ((enclosing (match-string 1)))
-		  (cond
-		   ((string-equal enclosing "extern")
-		    (setq inenclosing-p 'extern))
-		   ((string-equal enclosing "namespace")
-		    (setq inenclosing-p 'namespace))
-		   )))))
+	    (when (and inclass-p
+		       (progn
+			 (goto-char (aref inclass-p 0))
+			 (looking-at c-other-decl-block-key)))
+	      (setq inenclosing-p (match-string 1))
+	      (if (string-equal inenclosing-p "extern")
+		  ;; Compatibility with legacy choice of name for the
+		  ;; extern-lang syntactic symbols.
+		  (setq inenclosing-p "extern-lang")))))
 
 	;; Init some position variables:
 	;;
@@ -4365,7 +4362,7 @@ brace."
 			   (c-looking-at-special-brace-list))
 		      (eq char-after-ip ?{)))
 	    (cond
-	     ;; CASE 5A.1: extern language or namespace construct
+	     ;; CASE 5A.1: Non-class declaration block open.
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
@@ -4373,14 +4370,16 @@ brace."
 		     (looking-at c-other-decl-block-key)
 		     (setq keyword (match-string 1)
 			   placeholder (point))
-		     (or (and (string-equal keyword "namespace")
-			      (setq tmpsymbol 'namespace-open))
-			 (and (string-equal keyword "extern")
-			      (progn
-				(c-forward-sexp 1)
-				(c-forward-syntactic-ws)
-				(eq (char-after) ?\"))
-			      (setq tmpsymbol 'extern-lang-open)))
+		     (if (string-equal keyword "extern")
+			 ;; Special case for extern-lang-open.  The
+			 ;; check for a following string is disabled
+			 ;; since it doesn't disambiguate anything.
+			 (and ;;(progn
+			      ;;  (c-forward-sexp 1)
+			      ;;  (c-forward-syntactic-ws)
+			      ;;  (eq (char-after) ?\"))
+			      (setq tmpsymbol 'extern-lang-open))
+		       (setq tmpsymbol (intern (concat keyword "-open"))))
 		     ))
 	      (goto-char placeholder)
 	      (c-add-syntax tmpsymbol (c-point 'boi)))
@@ -4396,9 +4395,9 @@ brace."
 	     ;; CASE 5A.3: brace list open
 	     ((save-excursion
 		(c-beginning-of-decl-1 lim)
-		(if (looking-at "typedef\\>[^_]")
-		    (progn (c-forward-sexp 1)
-			   (c-forward-syntactic-ws indent-point)))
+		(while (looking-at c-specifier-key)
+		  (goto-char (match-end 1))
+		  (c-forward-syntactic-ws indent-point))
 		(setq placeholder (c-point 'boi))
 		(or (consp special-brace-list)
 		    (and (or (save-excursion
@@ -4407,11 +4406,12 @@ brace."
 			       (while (and (> (point) placeholder)
 					   (zerop (c-backward-token-1 1 t))
 					   (/= (char-after) ?=))
-				 (if (and (not tmpsymbol)
-					  (looking-at "new\\>[^_]"))
-				     (setq tmpsymbol 'topmost-intro-cont)))
+				 (and c-opt-inexpr-brace-list-key
+				      (not tmpsymbol)
+				      (looking-at c-opt-inexpr-brace-list-key)
+				      (setq tmpsymbol 'topmost-intro-cont)))
 			       (eq (char-after) ?=))
-			     (looking-at "enum\\>[^_]"))
+			     (looking-at c-brace-list-key))
 			 (save-excursion
 			   (while (and (< (point) indent-point)
 				       (zerop (c-forward-token-1 1 t))
@@ -4675,13 +4675,11 @@ brace."
 						  paren-state))
 	    ;; Append access-label with the same anchor point as inclass gets.
 	    (c-append-syntax 'access-label placeholder))
-	   ;; CASE 5F: extern-lang-close or namespace-close?
+	   ;; CASE 5F: Close of a non-class declaration level block.
 	   ((and inenclosing-p
 		 (eq char-after-ip ?}))
-	    (setq tmpsymbol (if (eq inenclosing-p 'extern)
-				'extern-lang-close
-			      'namespace-close))
-	    (c-add-syntax tmpsymbol (aref inclass-p 0)))
+	    (c-add-syntax (intern (concat inenclosing-p "-close"))
+			  (aref inclass-p 0)))
 	   ;; CASE 5G: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
 	   ((and inclass-p
@@ -4764,12 +4762,10 @@ brace."
 		    (goto-char (aref inclass-p 1))
 		    (or (= (point) (c-point 'boi))
 			(goto-char (aref inclass-p 0)))
-		    (cond
-		     ((eq inenclosing-p 'extern)
-		      (c-add-syntax 'inextern-lang (c-point 'boi)))
-		     ((eq inenclosing-p 'namespace)
-		      (c-add-syntax 'innamespace (c-point 'boi)))
-		     (t (c-add-class-syntax 'inclass inclass-p paren-state)))
+		    (if inenclosing-p
+			(c-add-syntax (intern (concat "in" inenclosing-p))
+				      (c-point 'boi))
+		      (c-add-class-syntax 'inclass inclass-p paren-state))
 		    ))
 	      (when (and c-syntactic-indentation-in-macros
 			 macro-start
@@ -4951,7 +4947,9 @@ brace."
 	      (c-beginning-of-statement-1
 	       (c-safe-position (1- containing-sexp) paren-state))
 	      (c-forward-token-1 0)
-	      (if (looking-at "typedef\\>[^_]") (c-forward-token-1 1))
+	      (while (looking-at c-specifier-key)
+		(goto-char (match-end 1))
+		(c-forward-syntactic-ws))
 	      (c-add-syntax 'brace-list-open (c-point 'boi))))
 	   ;; CASE 9B: brace-list-close brace
 	   ((if (consp special-brace-list)
@@ -5089,7 +5087,7 @@ brace."
 		(if (/= (point) (cdr placeholder))
 		    (c-add-syntax (car placeholder)))))
 	     ;; CASE 16B: does this close an inline or a function in
-	     ;; an extern block or namespace?
+	     ;; a non-class declaration level block?
 	     ((setq placeholder (c-search-uplist-for-classkey paren-state))
 	      (c-backward-to-decl-anchor lim)
 	      (back-to-indentation)
