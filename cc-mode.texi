@@ -180,69 +180,36 @@ early beta stages of @ccmode{}'s development.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-If you got this version of @ccmode{} with Emacs, it should work just
-fine right out of the box, and you can safely skip to the next chapter.
-Note however that you may not have the latest @ccmode{} release and may
-want to upgrade your copy.  See the @file{README} file, or the @ccmode{}
-Web pages latest information on Emacs version compatibility,
-@ref{Getting the latest CC Mode release}.
+If you got this version of @ccmode{} with Emacs or XEmacs, it should
+work just fine right out of the box.  Note however that you may not have
+the latest @ccmode{} release and may want to upgrade your copy.
+
+If you are upgrading an existing @ccmode{} installation, please see the
+@file{README} file for installation details.  @ccmode{} may not work
+with older versions of Emacs or XEmacs.  See the @ccmode{} release notes
+Web pages for the latest information on Emacs version and package
+compatibility, etc.  The Web page locations are outlined in @ref{Getting
+the latest CC Mode release}.
 
 @cindex @file{cc-mode-18.el} file
-@emph{@ccmode{} no longer works with Emacs 18!}  The
+@emph{Note that @ccmode{} no longer works with Emacs 18!}  The
 @file{cc-mode-18.el} file is no longer distributed with @ccmode{}.  If
-you haven't upgraded from Emacs 18 by now, you are out of luck.  The
-rest of these installation instructions assume you are using one of the
-new Emacs or XEmacs releases, that already come with @ccmode{}.  These
-instructions explain how to upgrade to use the latest @ccmode{}
-release.
+you haven't upgraded from Emacs 18 by now, you are out of luck.
 
-@cindex .emacs file
-
-The first thing you will want to do is put the @ccmode{} source files in
-a subdirectory somewhere on your @code{load-path} so Emacs can find it.
-The distribution tarball unpacks into its own subdirectory,
-e.g. @file{cc-mode/}.  Assuming you unpacked the distribution in your
-home directory, you should add the following to your @file{.emacs} file
-in order to pick up the latest version of @ccmode{} over the one
-distributed with your Emacs:
-
-@example
-
-(setq load-path (cons "~/cc-mode" load-path))
-
-@end example
-
-@cindex byte compile
-
-Next you want to @dfn{byte compile} all the @ccmode{} source files.
-@ccmode{} uses a lot of macros so if you don't byte compile it,
-things will be unbearably slow.  @emph{You can ignore all byte-compiler
-warnings!}  They are the result of the supporting different versions of
-Emacs, and none of the warnings have any effect on operation. Let me say
-this again: @strong{You really can ignore all byte-compiler warnings!}
-
-To byte-compile the source files, first @code{cd} to the directory you
-unpacked the tarball into.  Then run the following command at your shell 
-prompt:
-
-@example
-
-% $EMACS -batch -no-site-file -q -l cc-make.el cc-*.el
-
-@end example
-
-@noindent
-where $EMACS is either @code{emacs} or @code{xemacs} depending on the
-version you use.
-
-Next time you start up Emacs you should be using the latest @ccmode{}.
-You can test this by visiting a C file and hitting @kbd{M-x c-version
-RET}; you should see this message in the echo area:
+@findex c-version
+@findex version (c-)
+You can find out what version of @ccmode{} you are using by visiting a C
+file and entering @kbd{M-x c-version RET}.  You should see this message in
+the echo area:
 @example
 
 Using CC Mode version 5.XX
 
 @end example
+
+@noindent
+where @samp{XX} is the minor release number.
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node     New Indentation Engine, Minor Modes, Getting Connected, Top
@@ -590,6 +557,7 @@ to your @file{.emacs} file:
 @menu
 * Auto-newline insertion::
 * Hungry-deletion of whitespace::
+* Auto-fill mode interaction::
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1016,7 +984,7 @@ in the @code{c-cleanup-list} when you are editing C++ code.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Hungry-deletion of whitespace, , Auto-newline insertion, Minor Modes
+@node  Hungry-deletion of whitespace, Auto-fill mode interaction, Auto-newline insertion, Minor Modes
 @comment  node-name,              next,                    previous,up
 
 @section  Hungry-deletion of whitespace
@@ -1086,6 +1054,42 @@ in the @code{c-delete-function} variable is called with one argument
 However, if @code{delete-key-deletes-forward} is @code{nil}, or your
 Emacs does not support separation of @kbd{Backspace} and @kbd{DEL}, then 
 @code{c-electric-delete} simply calls @code{c-electric-backspace}.
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Auto-fill mode interaction, , Hungry-deletion of whitespace, Minor Modes
+@comment  node-name,              next,                    previous,up
+
+@section  Auto-fill mode interaction
+@cindex   Auto-fill mode interaction
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+One other note about minor modes is worth mentioning here.  CC Mode now
+works much better with auto-fill mode (a standard Emacs minor mode) by
+correctly auto-filling both line (e.g. C++ style) and block (e.g. C
+style) oriented comments.  When @code{auto-fill-mode} is enabled, line
+oriented comments will also be auto-filled by inserting a newline at the 
+line break, and inserting @samp{//} at the start of the next line.
+
+@vindex c-comment-continuation-stars
+@vindex comment-continuation-stars (c-)
+@vindex comment-line-break-function
+When auto-filling block oriented comments, the behavior is dependent on
+the value of the variable @code{c-comment-continuation-stars}.  When
+this variable is @code{nil}, the old behavior for auto-filling C
+comments is in effect.  In this case, the line is broken by closing the
+comment and starting a new comment on the next line.
+
+If you set @code{c-comment-continuation-stars} to a string, then a long
+C block comment line is broken by inserting a newline at the line break
+position, and inserting this string at the beginning of the next comment
+line.  The default value for @code{c-comment-continuation-stars} is
+@samp{* } (a star followed by a single space)@footnote{To get block
+comment continuation lines indented under the block comment starter
+(e.g. the @samp{/*}), it is not enough to set
+@code{c-comment-continuation-stars} to the empty string.  You need to do
+this, but you also need to set the offset for the @code{c} syntactic
+symbol to be zero.}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1854,10 +1858,10 @@ per-file basis by including a @dfn{Local Variable} block at the end of
 the file.  So far, you've only seen a functional interface to @ccmode{}
 customization, which is highly inconvenient for use in a Local Variable
 block.  @ccmode{} provides two variables that make it easier for you to
-customize your style on a per-file basis@footnote{Note that file styles
-don't work with Emacs versions before XEmacs 19.12 and Emacs 19.29.
-File styles work via the standard Emacs hook variable
-@code{hack-local-variables-hook}.}.
+customize your style on a per-file basis@footnote{Note that this feature
+doesn't work with Emacs versions before XEmacs 19.12 and Emacs 19.29.
+It works via the standard Emacs hook variable
+@code{hack-local-variables-hook}.}
 
 @vindex c-file-style
 @vindex file-style (c-)
@@ -2311,7 +2315,7 @@ That way, the current setting for the buffer local value of
 @vindex comment-column
 
 Normally, the standard Emacs command @kbd{M-;}
-(@code{indent-for-comment}) will indent comment-only lines to
+(@code{indent-for-comment}) will indent comment only lines to
 @code{comment-column}.  Some users however, prefer that @kbd{M-;} act
 just like @kbd{TAB} for purposes of indenting comment-only lines;
 i.e. they want the comments to always indent as they would for normal
@@ -2670,7 +2674,7 @@ Template definitions introduce yet another syntactic symbol:
    2:    Framework::Callback *,
    3:    Mutex> framework_callbacks;
 
-@group
+@end group
 @end example
 
 Here, line 1 is analyzed as a @code{topmost-intro}, but lines 2 and 3
@@ -3392,6 +3396,9 @@ Since all @ccmode{} commands are prepended with the string
 @unnumbered Variable Index
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@ifinfo
+
+@end ifinfo
 Since all @ccmode{} variables are prepended with the string
 @samp{c-}, each appears under its @code{c-@var{<thing>}} name and its
 @code{@var{<thing>} (c-)} name.
@@ -3399,6 +3406,7 @@ Since all @ccmode{} variables are prepended with the string
 @sp 2
 @end iftex
 @printindex vr
+@page
 @summarycontents
 @contents
 @bye
