@@ -2108,10 +2108,16 @@ This function does not do any hidden buffer changes."
     pos))
 
 (defun c-safe-position (bufpos paren-state)
-  ;; Return the closest known safe position higher up than BUFPOS, or
-  ;; nil if PAREN-STATE doesn't contain one.  Return nil if BUFPOS is
-  ;; nil, which is useful to find the closest limit before a given
-  ;; limit that might be nil.
+  ;; Return the closest "safe" position recorded on PAREN-STATE that
+  ;; is higher up than BUFPOS.  Return nil if PAREN-STATE doesn't
+  ;; contain any.  Return nil if BUFPOS is nil, which is useful to
+  ;; find the closest limit before a given limit that might be nil.
+  ;;
+  ;; A "safe" position is a position at or after a recorded open
+  ;; paren, or after a recorded close paren.  The returned position is
+  ;; thus either the first position after a close brace, or the first
+  ;; position after an enclosing paren, or at the enclosing paren in
+  ;; case BUFPOS is immediately after it.
   ;;
   ;; This function does not do any hidden buffer changes.
   (when bufpos
@@ -2680,11 +2686,7 @@ Non-nil is returned if the point moved, nil otherwise."
 			((or (elt state 3) (elt state 4))
 			 ;; Inside string or comment.  Continue search at the
 			 ;; beginning of it.
-			 (if (setq pos (nth 8 state))
-			     ;; It's an emacs where `parse-partial-sexp'
-			     ;; supplies the starting position.
-			     (goto-char pos)
-			   (goto-char (car (c-literal-limits safe-pos))))
+			 (goto-char (elt state 8))
 			 t)
 
 			((and paren-level
@@ -4807,7 +4809,7 @@ brace."
   ;; return the buffer position of the beginning of the brace list
   ;; statement if we're inside a brace list, otherwise return nil.
   ;; CONTAINING-SEXP is the buffer pos of the innermost containing
-  ;; paren.  BRACE-STATE is the remainder of the state of enclosing
+  ;; paren.  PAREN-STATE is the remainder of the state of enclosing
   ;; braces
   ;;
   ;; N.B.: This algorithm can potentially get confused by cpp macros
