@@ -26,8 +26,12 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+(eval-when-compile
+  (require 'cc-mode)			;for c-safe
+  (require 'cc-vars)			;for calculating "cc-mode" style
+  )
+
 
-;; Style definitions and manipulation functions
 (defconst c-style-alist
   '(("gnu"
      (c-basic-offset . 2)
@@ -141,27 +145,131 @@
 
      )
     )
-  "Styles of Indentation.
+  "Styles of indentation.
 Elements of this alist are of the form:
 
-  (STYLE-STRING (VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
+  (STYLE-STRING [BASE-STYLE] (VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
 
 where STYLE-STRING is a short descriptive string used to select a
-style, VARIABLE is any CC Mode variable, and VALUE is the intended
-value for that variable when using the selected style.
+style, VARIABLE is any Emacs variable, and VALUE is the intended value
+for that variable when using the selected style.
 
-There is one special case when VARIABLE is `c-offsets-alist'.  In this
-case, the VALUE is a list containing elements of the form:
+Optional BASE-STYLE if present, is a string and must follow
+STYLE-STRING.  BASE-STYLE names a style that this style inherits from.
+By default, all styles inherit from the \"cc-mode\" style, which is
+computed at run time.  Style loops generate errors.
 
-  (SYNTACTIC-SYMBOL . VALUE)
+Two variables are treated specially.  When VARIABLE is
+`c-offsets-alist', the VALUE is a list containing elements of the
+form:
+
+  (SYNTACTIC-SYMBOL . OFFSET)
 
 as described in `c-offsets-alist'.  These are passed directly to
 `c-set-offset' so there is no need to set every syntactic symbol in
 your style, only those that are different from the default.
 
-Note that all styles inherit from the `cc-mode' style, which is
-computed at the time the mode is loaded.")
+When VARIABLE is `c-special-indent-hook', its VALUE is added to
+`c-special-indent-hook' using `add-hook'.  If VALUE is a list, each
+element of the list is added with `add-hook'.
 
+Do not change this variable directly.  Use the function `c-add-style'
+to add new styles or modify existing styles (it is not a good idea to
+modify existing styles -- you should create a new style that inherits
+the existing style.")
+
+
+;; Functions that manipulate styles
+(defun c-set-style-1 (conscell)
+  ;; Set the style for one variable
+  (let ((attr (car conscell))
+	(val  (cdr conscell)))
+    (cond
+     ;; first special variable
+     ((eq attr 'c-offsets-alist)
+      (mapcar
+       (function
+	(lambda (langentry)
+	  (let ((langelem (car langentry))
+		(offset (cdr langentry)))
+	    (c-set-offset langelem offset)
+	    )))
+       val))
+     ;; second special variable
+     ((eq attr 'c-special-indent-hook)
+      (if (listp val)
+	  (while val
+	    (add-hook 'c-special-indent-hook (car val))
+	    (setq val (cdr val)))
+	(add-hook 'c-special-indent-hook val)))
+     ;; all other variables
+     (t (set attr val)))
+    ))
+
+(defun c-set-style-2 (style basestyles)
+  ;; Recursively set the base style.  If no base style is given, the
+  ;; default base style is "cc-mode" and the recursion stops.  Be sure
+  ;; to detect loops.
+  (if (not (string-equal style "cc-mode"))
+      (let ((base (if (stringp (car style))
+		      (downcase (car style))
+		    "cc-mode")))
+	(if (memq base basestyles)
+	    (error "Style loop detected: %s in %s" base basestyles))
+	(c-set-style-2 base (cons base basestyles))))
+  (let ((vars (cdr (or (assoc (downcase style) c-style-alist)
+		       (assoc (upcase style) c-style-alist)
+		       (assoc style c-style-alist)
+		       (error "Undefined style: %s" style)))))
+    (mapcar 'c-set-style-1 vars)))
+    
+(defvar c-set-style-history nil)
+
+;;;###autoload
+(defun c-set-style (stylename)
+  "Set CC Mode variables to use one of several different indentation styles.
+STYLENAME is a string representing the desired style from the list of
+styles described in the variable `c-style-alist'.  See that variable
+for details of setting up styles.
+
+The variable `c-indentation-style' always contains the buffer's current
+style name."
+  (interactive (list (let ((completion-ignore-case t)
+			   (prompt (format "Which %s indentation style? "
+					   mode-name)))
+		       (completing-read prompt c-style-alist nil t
+					(cons c-indentation-style 0)
+					'c-set-style-history))))
+  (c-set-style-2 stylename nil)
+  (setq c-indentation-style stylename)
+  (c-keep-region-active))
+
+;;;###autoload
+(defun c-add-style (style descrip &optional set-p)
+  "Adds a style to `c-style-alist', or updates an existing one.
+STYLE is a string identifying the style to add or update.  DESCRIP is
+an association list describing the style and must be of the form:
+
+  ([BASESTYLE] (VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
+
+See the variable `c-style-alist' for the semantics of BASESTYLE,
+VARIABLE and VALUE.  This function also sets the current style to
+STYLE using `c-set-style' if the optional SET-P flag is non-nil."
+  (interactive
+   (let ((stylename (completing-read "Style to add: " c-style-alist
+				     nil nil nil 'c-set-style-history))
+	 (description (eval-minibuffer "Style description: ")))
+     (list stylename description
+	   (y-or-n-p "Set the style too? "))))
+  (setq style (downcase style))
+  (let ((s (assoc style c-style-alist)))
+    (if s
+	(setcdr s (copy-alist descrip))	; replace
+      (setq c-style-alist (cons (cons style descrip) c-style-alist))))
+  (and set-p (c-set-style style)))
+
+
+
 (defconst c-offsets-alist
   '((string                . -1000)
     (c                     . c-lineup-C-comments)
@@ -219,7 +327,7 @@ computed at the time the mode is loaded.")
     (extern-lang-close     . 0)
     (inextern-lang         . +)
     )
-  "*Association list of syntactic element symbols and indentation offsets.
+  "Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
 
     (SYNTACTIC-SYMBOL . OFFSET)
@@ -249,10 +357,10 @@ element is ignored.
 Actually, OFFSET can be an integer, a function, a variable, or one of
 the following symbols: `+', `-', `++', `--', `*', or `/'.  These
 latter designate positive or negative multiples of `c-basic-offset',
-respectively: *1, *-1, *2, *-2, *0.5, and *-0.5. If OFFSET is a
-function, it is called with a single argument containing the cons of
-the syntactic element symbol and the relative indent point.  The
-function should return an integer offset.
+respectively: 1, -1, 2, -2, 0.5, and -0.5. If OFFSET is a function, it
+is called with a single argument containing the cons of the syntactic
+element symbol and the relative indent point.  The function should
+return an integer offset.
 
 Here is the current list of valid syntactic element symbols:
 
@@ -345,9 +453,7 @@ Here is the current list of valid syntactic element symbols:
 			 ((fboundp (setq interned (intern input)))
 			  interned)
 			 ;; a lambda function
-			 ((condition-case nil
-			      (c-functionp (setq raw (read input)))
-			    (error nil))
+			 ((c-safe (functionp (setq raw (read input))))
 			  raw)
 			 ;; a symbol with variable binding
 			 ((boundp interned) interned)
@@ -370,9 +476,8 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 			    (if current-prefix-arg " or add" "")
 			    ": ")
 		    (mapcar
-		     (function
-		      (lambda (langelem)
-			(cons (format "%s" (car langelem)) nil)))
+		     #'(lambda (langelem)
+			 (cons (format "%s" (car langelem)) nil))
 		     c-offsets-alist)
 		    nil (not current-prefix-arg)
 		    ;; initial contents tries to be the last element
@@ -393,7 +498,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
       (eq offset '*)
       (eq offset '/)
       (integerp offset)
-      (c-functionp offset)
+      (functionp offset)
       (boundp offset)
       (error "Offset must be int, func, var, or in [+,-,++,--,*,/]: %s"
 	     offset))
@@ -405,87 +510,6 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 	(error "%s is not a valid syntactic symbol." symbol))))
   (c-keep-region-active))
 
-(defun c-set-style-1 (stylevars)
-  ;; given a style's variable alist, institute the style
-  (mapcar
-   (function
-    (lambda (conscell)
-      (let ((attr (car conscell))
-	    (val  (cdr conscell)))
-	(cond
-	 ((eq attr 'c-offsets-alist)
-	  (mapcar
-	   (function
-	    (lambda (langentry)
-	      (let ((langelem (car langentry))
-		    (offset (cdr langentry)))
-		(c-set-offset langelem offset)
-		)))
-	   val))
-	 ((eq attr 'c-special-indent-hook)
-	  (if (listp val)
-	      (while val
-		(add-hook 'c-special-indent-hook (car val))
-		(setq val (cdr val)))
-	    (add-hook 'c-special-indent-hook val)))
-	 (t (set attr val)))
-	)))
-   stylevars))
-
-(defvar c-set-style-history nil)
-
-;;;###autoload
-(defun c-set-style (stylename)
-  "Set CC Mode variables to use one of several different indentation styles.
-STYLENAME is a string representing the desired style from the list of
-styles described in the variable `c-style-alist'.  See that variable
-for details of setting up styles.
-
-The variable `c-indentation-style' always contains the buffer's current
-style name."
-  (interactive (list (let ((completion-ignore-case t)
-			   (prompt (format "Which %s indentation style? "
-					   mode-name)))
-		       (completing-read prompt c-style-alist nil t
-					(cons c-indentation-style 0)
-					'c-set-style-history))))
-  (let ((vars (cdr (or (assoc (downcase stylename) c-style-alist)
-		       (assoc (upcase stylename) c-style-alist)
-		       (assoc stylename c-style-alist)
-		       )))
-	(default (cdr (assoc "cc-mode" c-style-alist))))
-    (or vars (error "Invalid indentation style `%s'" stylename))
-    (or default (error "No `cc-mode' style found!"))
-    ;; first reset the style to `cc-mode' to give every style a common
-    ;; base. Then institute the new style.
-    (c-set-style-1 default)
-    (setq c-indentation-style stylename)
-    (if (not (string= stylename "cc-mode"))
-	(c-set-style-1 vars)))
-  (c-keep-region-active))
-
-;;;###autoload
-(defun c-add-style (style descrip &optional set-p)
-  "Adds a style to `c-style-alist', or updates an existing one.
-STYLE is a string identifying the style to add or update.  DESCRIP is
-an association list describing the style and must be of the form:
-
-  ((VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
-
-See the variable `c-style-alist' for the semantics of VARIABLE and
-VALUE.  This function also sets the current style to STYLE using
-`c-set-style' if the optional SET-P flag is non-nil."
-  (interactive
-   (let ((stylename (completing-read "Style to add: " c-style-alist))
-	 (description (eval-minibuffer "Style description: ")))
-     (list stylename description
-	   (y-or-n-p "Set the style too? "))))
-  (setq style (downcase style))
-  (let ((s (assoc style c-style-alist)))
-    (if s
-	(setcdr s (copy-alist descrip))	; replace
-      (setq c-style-alist (cons (cons style descrip) c-style-alist))))
-  (and set-p (c-set-style style)))
 
 
 ;; Dynamically append the default value of most variables. This is
@@ -500,7 +524,7 @@ VALUE.  This function also sets the current style to STYLE using
 		     (lambda (var)
 		       (let ((val (symbol-value var)))
 			 (cons var (if (atom val) val
-				     (c-copy-tree val)
+				     (copy-tree val)
 				     ))
 			 )))
 		    '(c-backslash-column
