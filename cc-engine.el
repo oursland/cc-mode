@@ -748,9 +748,40 @@ that doesn't end with a line continuation backslash."
 	     (forward-char)
 	     t))))
 
+(defvar c-last-large-sws-start nil)
+(make-variable-buffer-local 'c-last-large-sws-start)
+(defvar c-last-large-sws-end nil)
+(make-variable-buffer-local 'c-last-large-sws-end)
+(defmacro c-large-sws-size () 200)
+;; Cache for the limits of the last large syntactic whitespace skipped
+;; over by `c-forward-sws' and `c-backward-sws'.
+;; `c-last-large-sws-start' and `c-last-large-sws-end' are set to the
+;; limits.  `c-large-sws-size' gives the minimum size of the syntactic
+;; whitespace that's recorded in the cache.
+
+(defsubst c-invalidate-large-sws-region (pos)
+  ;; Invalidate `c-last-large-sws-start' and `c-last-large-sws-end' if
+  ;; POS is less than the end position.  Since CC Mode almost always
+  ;; act on the text at or before where the buffer is changed it's no
+  ;; use trying to be clever here and offset the region if some change
+  ;; happened strictly before it; that region won't be used anyway.
+  (and c-last-large-sws-end
+       (< pos c-last-large-sws-end)
+       (setq c-last-large-sws-start nil
+	     c-last-large-sws-end nil)))
+
 (defun c-forward-sws ()
   ;; Used by `c-forward-syntactic-ws' to implement the unbounded search.
-  (let ((here (point-max)))
+  (let ((here (point-max)) (start (point)) search-start)
+
+    (when (eq start c-last-large-sws-start)
+      ;; Even if we get a cache hit we continue the search below since
+      ;; the cache might have been created in the other direction from
+      ;; a point in the middle of the syntactic whitespace.
+      ;;(message "c-forward-sws hit")
+      (goto-char c-last-large-sws-end))
+    (setq search-start (point))
+
     (while (/= here (point))
       (c-forward-comments)
       (setq here (point))
@@ -768,13 +799,50 @@ that doesn't end with a line continuation backslash."
 
        ;; Skip in-comment line continuations (used for Pike refdoc).
        ((and c-opt-in-comment-lc (looking-at c-opt-in-comment-lc))
-	(goto-char (match-end 0)))))))
+	(goto-char (match-end 0)))))
+
+    (when (and
+	   ;; Only record the range if the search itself was long.
+	   ;; This avoids extending an existing cached region by a
+	   ;; small increment since that could overextend it in the
+	   ;; not too uncommon case that an earlier search is repeated.
+	   (>= (- (point) search-start) (c-large-sws-size))
+	   ;; Don't record in the cache if we moved to the limit since
+	   ;; it might not be a correct syntactic ws range then.
+	   (< (point) (point-max)))
+      ;;(message "c-forward-sws cache ws region %s-%s (was %s-%s) %s"
+      ;;	 start (point) c-last-large-sws-start c-last-large-sws-end
+      ;;	 search-start)
+      (setq c-last-large-sws-start start
+	    c-last-large-sws-end (point)))))
 
 (defun c-backward-sws ()
   ;; Used by `c-backward-syntactic-ws' to implement the unbounded search.
-  (let ((start (point))
-	(here (point-min))
-	prev-pos)
+  (let ((here (point-min)) prev-pos (start (point)) search-start)
+
+    (when c-last-large-sws-end
+      ;; If the start position only is a short distance after the end
+      ;; of the cached region then see if we can get to it by skipping
+      ;; simple whitespace.  This turns out to be worthwhile due to
+      ;; how CC Mode uses `c-backward-syntactic-ws'.
+      (if (and (>= start c-last-large-sws-end)
+	       (< start (+ c-last-large-sws-end 20))
+	       (progn (skip-chars-backward " \t\n\r" c-last-large-sws-end)
+		      (= (point) c-last-large-sws-end)))
+
+	  ;; Even if we get a cache hit we continue the search below since
+	  ;; the cache might have been created in the other direction from
+	  ;; a point in the middle of the syntactic whitespace.
+	  (progn
+	    ;;(message "c-backward-sws hit")
+	    (goto-char c-last-large-sws-start))
+
+	;; Can't use this position as the start of the search since we
+	;; might have backed over a linefeed into a line comment or
+	;; cpp directive.  There's no use being smart about checking
+	;; up on that; just go back again.
+	(goto-char start)))
+    (setq search-start (point))
 
     (while (/= here (point))
       (setq prev-pos (point))
@@ -806,7 +874,22 @@ that doesn't end with a line continuation backslash."
 			    t)
 		    (looking-at c-opt-in-comment-lc)
 		    (eq (match-end 0) here))))
-	(goto-char (match-beginning 0)))))))
+	(goto-char (match-beginning 0)))))
+
+    (when (and
+	   ;; Only record the range if the search itself was long.
+	   ;; This avoids extending an existing cached region by a
+	   ;; small increment since that could overextend it in the
+	   ;; not too uncommon case that an earlier search is repeated.
+	   (>= (- search-start (point)) (c-large-sws-size))
+	   ;; Don't record in the cache if we moved to the limit since
+	   ;; it might not be a correct syntactic ws range then.
+	   (> (point) (point-min)))
+      ;;(message "c-backward-sws cache ws region %s-%s (was %s-%s) %s"
+      ;;	 (point) start c-last-large-sws-start c-last-large-sws-end
+      ;;	 search-start)
+      (setq c-last-large-sws-start (point)
+	    c-last-large-sws-end start))))
 
 (defun c-forward-token-1 (&optional count balanced lim)
   "Move forward by tokens.
@@ -1579,12 +1662,6 @@ you need both the type of a literal and its limits."
 					    'c-debug-parse-state
 					  'c-real-parse-state)))
   (c-keep-region-active))
-
-(defun c-check-state-cache (beg end old-length)
-  ;; Used on `after-change-functions' to adjust `c-state-cache'.
-  ;; Prefer speed to finesse here, since there will be many more calls
-  ;; to this function than times `c-state-cache' is used.
-  (c-invalidate-state-cache beg))
 
 (defun c-whack-state-before (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies
