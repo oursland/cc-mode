@@ -1523,17 +1523,27 @@ function does not require the declaration to contain a brace block."
 		     (< (match-end 0) ; ... that end of sentence is STRICTLY before EOL.
 			(c-point 'eol)))))))))))
 
-(defun sentence-end-with-prefices ()
-  ;; Return the regexp sentence-end, so modified that it matches
-  ;; trailing occurrances of comment-prefix as well as trailing
-  ;; whitespace following the end of the sentence.
-  (save-match-data
-    (let ((without-trailing-ws
-	   (if (string-match "\\[[ \t\n\r\f]+\\][*+]\\'" sentence-end)
-	       (substring sentence-end 0 (match-beginning 0))
-	     sentence-end)))
-      (concat without-trailing-ws "\\([ \t\n\r\f]\\|"
-	      c-current-comment-prefix "\\)*"))))
+(defun c-beginning-of-sentence (filler-here)
+  ;; Move backwards to the "beginning of a sentence" within a literal.  This
+  ;; is either the text which follows a regexp match of sentence-end, with
+  ;; intervening FILLER, or beginning of the narrowed region.
+  ;;
+  ;; FILLER-HERE is a regexp matching text AT POINT (it MUST begin with "\\=")
+  ;; which can come between the end of a sentence and the beginning of the
+  ;; next, e.g. whitespace, escaped newlines (in a string), comment-prefices
+  ;; (in a comment).  It should match the empty string.
+  ;;
+  ;; This code was adapted from GNU Emacs's forward-sentence in paragraphs.el.
+  ;; It is not a general function, but is inteded only for calling from
+  ;; c-move-over-sentence.  In particular, it assumes the buffer is narrowed
+  ;; to a paragraph within the current comment.
+  (let ((here (point)) last)
+    (while (and (re-search-backward sentence-end nil 'limit)
+		(setq last (point))
+		(goto-char (match-end 0))
+		(re-search-forward filler-here here t) ; always succeeds
+		(>= (point) here))
+      (goto-char last))))
 
 (defun c-move-over-sentence (range backwards-flag)
   ;; Move to the next beginning/end of sentence (as indicated by
@@ -1616,11 +1626,14 @@ function does not require the declaration to contain a brace block."
 	    ;; sentence and the end of the previous one,
 	    ;; (forward-sentence -1) finds that beginning of
 	    ;; sentence.
-	    (let ((sentence-end
-		   (if (and backwards-flag (memq lit-type '(c c++)))
-		       (sentence-end-with-prefices)
-		     sentence-end))) ; for the function forward-sentence.
-	      (c-safe (forward-sentence (if backwards-flag -1 1)))) 
+	    (if backwards-flag
+		(c-beginning-of-sentence
+		 (concat "\\=\\([ \t\n\r\f]\\|"
+			 (if (eq lit-type 'string)
+			     "\\\\[\n\r]"
+			   c-current-comment-prefix)
+			 "\\)*"))
+	      (c-safe (forward-sentence 1)))
 	    (and (/= (point) last)
 		 (memq lit-type '(c c++))
 		 (c-in-comment-line-prefix-p))))
@@ -1641,17 +1654,18 @@ function does not require the declaration to contain a brace block."
 	;; the text and the comment ender, stop before it.  Stop
 	;; after the ender if there's either nothing or newlines
 	;; between.
-	(when (and (eq lit-type 'c)
-		   (eq (point) (point-max)))
-	  (widen)
-	  (when (or (= (skip-chars-backward " \t") 0)
-		    (eq (point) (point-max))
-		    (bolp))
-	    (goto-char (cdr range))))
-	(when (<= (point) here)
-	  (widen)
-	  (goto-char (cdr range))
-	  t)))))
+	(or (when (and (eq lit-type 'c)
+		       (eq (point) (point-max)))
+	      (widen)
+	      (when (or (= (skip-chars-backward " \t") 0)
+			(eq (point) (point-max))
+			(bolp))
+		(goto-char (cdr range))
+		t))
+	    (when (<= (point) here)
+	      (widen)
+	      (goto-char (cdr range))
+	      t))))))
  
 (defun c-ascertain-adjacent-literal (backwards-flag)
   ;; Point is not in a literal (i.e. comment or string).  If a literal is the
@@ -1784,8 +1798,6 @@ function does not require the declaration to contain a brace block."
 	 ;; Nothing special: go back word characters.
 	 (t (skip-syntax-backward "w_")) ; Speedup only.
 	 )))))
-;;;; END OF NEW VERSION (2003/9/12)
-
 
 (defun c-forward-over-illiterals (macro-end)
   ;; Move forwards over code, stopping before reaching EOB or a literal
@@ -1982,7 +1994,9 @@ be more \"DWIM:ey\"."
 	     ;; Multi-line string or comment INSIDE a statement.
 	     (t (setq candidate nil)
 		(when (c-move-over-sentence range (> count 0))
-		  (setq range nil  lit-type nil) t))))
+		  (setq range (c-ascertain-adjacent-literal (> count 0))
+			lit-type (if range (c-literal-type range)))
+		  t))))
 
 	   ;; non-literal code.
 	   (t (if (< count 0)
