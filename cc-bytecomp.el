@@ -236,10 +236,13 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 
 (defmacro cc-bytecomp-defun (fun)
   "Bind the symbol as a function during compilation of the file,
-to silence the byte compiler.  If the symbol is already bound as a
-macro it won't be covered since macros are expanded during byte
-compilation and therefore need their real definitions.  Don't use
-within `eval-when-compile'."
+to silence the byte compiler.  Don't use within `eval-when-compile'.
+
+If the symbol already is bound as a function, it will keep that
+definition.  That means that this macro will not shut up warnings
+about incorrect number of arguments.  It's dangerous to try to replace
+existing functions since the byte compiler might need the definition
+at compile time, e.g. for macros and inline functions."
   `(eval-when-compile
      (if (not (assq ',fun cc-bytecomp-original-functions))
 	 (setq cc-bytecomp-original-functions
@@ -251,8 +254,7 @@ within `eval-when-compile'."
 		     cc-bytecomp-original-functions)))
      (if (and (cc-bytecomp-is-compiling)
 	      (not load-in-progress)
-	      (not (and (fboundp ',fun)
-			(eq (car-safe (symbol-function ',fun)) 'macro))))
+	      (not (fboundp ',fun)))
 	 (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
 				     (symbol-name ',fun)))))))
 
