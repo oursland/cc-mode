@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.275 $
-;; Last Modified:   $Date: 1996-01-22 17:41:27 $
+;; Version:         $Revision: 4.276 $
+;; Last Modified:   $Date: 1996-01-22 17:47:38 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -879,7 +879,7 @@ All other Emacsen use the `old-re' suite.")
 	   ;; button is hit.  In Lucid Emacs 19.10 and beyond this is
 	   ;; done automatically if we put the menu on mode-popup-menu
 	   ;; variable, see c-common-init. RMS decided that Emacs 19
-	   ;; should use C-Mouse-3.
+	   ;; should use C-Mouse-3 and this just works by default.
 	   (boundp 'current-menubar)
 	   (not (boundp 'mode-popup-menu)))
       (define-key c-mode-map 'button3 'c-popup-menu)))
@@ -4783,7 +4783,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.275 $"
+(defconst c-version "$Revision: 4.276 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
