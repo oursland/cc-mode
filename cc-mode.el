@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-08 16:08:35 $
-;; Version:         $Revision: 2.92 $
+;; Last Modified:   $Date: 1992-06-08 16:24:55 $
+;; Version:         $Revision: 2.93 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-08 16:08:35 $|$Revision: 2.92 $|
+;; |$Date: 1992-06-08 16:24:55 $|$Revision: 2.93 $|
 
 
 ;; ======================================================================
@@ -134,6 +134,12 @@ list.  Nil indicates to just after the paren.")
 (defvar c++-cleanup-brace-else-brace-p nil
   "*Controls whether } else { style should remain on a single line.
 When t, cleans up this style (when only whitespace intervenes).")
+(defvar c++-cleanup-empty-defun-braces-p nil
+  "*Controls whether braces for an empty defun are placed on separate lines.
+This only has effect if c++-auto-newline is non-nil.  If this is the
+case, and c++-cleanup-empty-defun-braces-p is also non-nil, then
+typing the closing brace of an empty defun marries the the two braces
+onto the same line.")
 (defvar c++-hanging-braces t
   "*Controls the insertion of newlines before open (left) braces.
 This variable only has effect when auto-newline is on.  If nil, open
@@ -207,7 +213,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.92 $
+  "Major mode for editing C++ code.  $Revision: 2.93 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -283,6 +289,12 @@ from their c-mode cousins.
  c++-cleanup-brace-else-brace-p
     Controls whether } else { style (with only whitespace intervening)
     should be cleaned up so that it sits on only a single line.
+ c++-cleanup-empty-defun-braces-p
+    Controls whether braces for an empty defun are placed on separate
+    lines.  This only has effect if c++-auto-newline is non-nil.  If
+    this is the case, and c++-cleanup-empty-defun-braces-p is also
+    non-nil, then typing the closing brace of an empty defun marries
+    the the two braces onto the same line.
  c++-hanging-braces
     Controls open brace hanging behavior when using auto-newline. Nil
     says no braces hang, t says all open braces hang. Not nil or t
@@ -564,6 +576,19 @@ backward-delete-char-untabify."
 	  (if (and (memq last-command-char c++-untame-characters)
 		   (c++-in-comment-p bod))
 	      (insert "\\"))
+	  ;; try to clean up empty defun braces if conditions apply
+	  (let ((here (make-marker)))
+	    (set-marker here (point))
+	    (and c++-cleanup-empty-defun-braces-p
+		 c++-auto-newline
+		 (= last-command-char ?\})
+		 (progn (skip-chars-backward " \t\n")
+			(= (preceding-char) ?\{))
+		 (not (c++-in-comment-p))
+		 (not (c++-in-open-string-p))
+		 (delete-region (point) here))
+	    (goto-char here)
+	    (set-marker here nil))
 	  (insert last-command-char)
 	  (let ((here (make-marker)) mbeg mend)
 	    (set-marker here (point))
@@ -1742,7 +1767,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.92 $"
+(defconst c++-version "$Revision: 2.93 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -1764,6 +1789,7 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-always-arglist-indent-p
 		       'c++-comment-only-line-offset
 		       'c++-cleanup-brace-else-brace-p
+		       'c++-cleanup-empty-defun-braces-p
 		       'c++-hanging-braces
 		       'c++-hanging-member-init-colon
 		       'c++-auto-hungry-initial-state
