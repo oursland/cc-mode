@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.53 $
+@comment manual version: $Revision: 2.54 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-08-06 21:53:56 $
+@comment Last modification: $Date: 1996-08-06 22:12:35 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.53 $)
+@center (manual revision: $Revision: 2.54 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1195,7 +1195,7 @@ by the variable @code{c-tab-always-indent}.  When this variable is
 @code{t}, @kbd{TAB} always just indents the current line.  When
 @code{nil}, the line is indented only if Point is at the left margin, or
 on or before the first non-whitespace character on the line, otherwise
-@emph{something else happens}@footnote{The something else that happens
+@emph{something else happens}@footnote{Actually what happens
 is that the function stored in the variable @code{c-insert-tab-function}
 is called.  Normally this just inserts a real tab character, or the
 equivalent number of spaces, depending on the setting of the variable
@@ -1316,9 +1316,9 @@ past that place).
 @findex c-forward-into-nomenclature
 @findex forward-into-nomenclature (c-)
 A popular programming style, especially for object-oriented languages
-such as C++ is to write symbols in a mixed case format, where words are
-not separated by underscores, and the first letter of each word is
-capitalized, e.g. @samp{SymbolsWithMixedCaseAndNoUnderlines}.
+such as C++ is to write symbols in a mixed case format, where the first
+letter of each word is capitalized, and not separated by underscores.
+E.g. @samp{SymbolsWithMixedCaseAndNoUnderlines}.
 
 This command moves Point forward to end of a C++ nomenclature
 section or word.  With prefix argument @var{n}, move @var{n} times.
@@ -1576,16 +1576,16 @@ to customize your language editing styles.  Four language specific hooks
 are provided, according to Emacs major mode conventions:
 @code{c-mode-hook}, @code{c++-mode-hook}, @code{objc-mode-hook}, and
 @code{java-mode-hook}.  These get run as the last thing when you enter
-@code{c-mode}, @code{c++-mode}, @code{objc-mode}, or
-@code{java-mode} respectively.  @code{cc-mode} also provides a hook
-called @code{c-mode-common-hook} which is run by all four modes
-@emph{before} the language specific hook.  Thus, to make changes
-consistently across all supported @code{cc-mode} modes, use
-@code{c-mode-common-hook}.  Most of the examples in this section will
-assume you are using the common hook@footnote{The interaction between
-@code{java-mode} and the hook variables is slightly different than for
-the other modes.  @code{java-mode} sets the style @ref{Styles} of the
-buffer to "java" @emph{before} running the @code{c-mode-common-hook} or
+@code{c-mode}, @code{c++-mode}, @code{objc-mode}, or @code{java-mode}
+respectively.  @code{cc-mode} also provides a hook called
+@code{c-mode-common-hook} which is run by all four modes @emph{before}
+the language specific hook.  Thus, to make changes consistently across
+all supported @code{cc-mode} modes, use @code{c-mode-common-hook}.  Most
+of the examples in this section will assume you are using the common
+hook@footnote{The interaction between @code{java-mode} and the hook
+variables is slightly different than for the other modes.
+@code{java-mode} sets the style (see @ref{Styles}) of the buffer to
+"java" @emph{before} running the @code{c-mode-common-hook} or
 @code{java-mode-hook}.  You need to be aware of this so any style
 settings in @code{c-mode-common-hook} doesn't clobber your Java style.}.
 
@@ -2900,7 +2900,6 @@ this variable is only defined in Emacs 19.}, however that ``something
 reasonable'' is difficult to define, so @code{cc-mode} doesn't do it
 for you.
 
-@cindex @file{cc-lobotomy.el} file
 You will probably notice pathological behavior from @code{cc-mode} when
 working in files containing large amounts of cpp macros.  This is
 because @code{cc-mode} cannot quickly skip backwards over these lines.
@@ -2917,9 +2916,10 @@ space, and that the function headers are not indented at all.  With
 current versionso fo @code{cc-mode},
 @code{c-recognize-knr-p} is deprecated.
 
+@cindex @file{cc-lobotomy.el} file
 @vindex cc-lobotomy-pith-list
 You might want to investigate some of the
-speed-ups provided for you in the file @file{cc-lobotomy.el}, which
+speed-ups contained in the file @file{cc-lobotomy.el}, which
 is part of the canonical @code{cc-mode} distribution.  As mentioned
 previous, @code{cc-mode} always trades accuracy for speed, however it is
 recognized that sometimes you need speed and can sacrifice some accuracy
@@ -3006,12 +3006,14 @@ simply add the following to the top of your @file{.emacs} file:
 See the sample @file{.emacs} file @ref{Sample .emacs File} for
 details.
 
+@sp 2
 @strong{Q.} @emph{How do I make strings, comments, keywords, and other
 constructs appear in different colors, or in bold face, etc.?}
 
 @strong{A.} ``Syntax Colorization'' is an Emacs 19 feature, controlled
 by @code{font-lock-mode}.  It is not part of @code{cc-mode}.
 
+@sp 2
 @strong{Q.} @emph{I @code{setq} @code{c-basic-offset} to 4 in my
 @file{.emacs} file, but why does everything still get indented with only
 2 spaces?}
@@ -3189,7 +3191,8 @@ expose the bug.  Be especially sure to include any code that appears
 @emph{before} your bug example, if you think it might affect my ability
 to reproduce it.
 
-Bug reports are now to be sent to @code{cc-mode-help@@python.org} and
+Bug reports are now to be sent to email addresses:
+@code{cc-mode-help@@python.org} and
 @code{bug-gnu-emacs@@prep.ai.mit.edu}; the latter is mirrored on the Usenet
 newsgroup @code{gnu.emacs.bug}.  Other questions and suggestions should
 be mailed to @code{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on
