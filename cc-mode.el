@@ -5,10 +5,9 @@
 ;; Authors: 1992-1996 Barry A. Warsaw
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
-;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.272 $
-;; Last Modified:   $Date: 1996-01-19 18:57:01 $
+;; Version:         $Revision: 4.273 $
+;; Last Modified:   $Date: 1996-01-19 19:02:45 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -49,11 +48,12 @@
 ;; Java support contributed by Eduardo Pelegri-Llopart
 ;; <pelegri@calterra.eng.sun.com>.
 
-;; To submit bug reports, type "C-c C-b". Please include a code sample
-;; and exact recipe so I can reproduce your problem.  If you have
-;; other questions contact me at the following address:
-;; cc-mode-help@merlin.cnri.reston.va.us.  Please don't send bug
-;; reports to my personal account, I may not get it for a long time.
+;; To submit bug reports, type "C-c C-b".  These will be sent to
+;; bug-gnu-emacs@prep.ai.mit.edu and I'll read about them there (this
+;; is mirrored as the Usenet newsgroup gnu.emacs.bug).  Questions can
+;; sent to help-gnu-emacs@prep.ai.mit.edu (mirrored as
+;; gnu.emacs.help).  Please do not send bugs or questions to my
+;; personal account.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
 ;; the multi-Emacsen support.  Emacs 19 (from the FSF), XEmacs 19
@@ -4794,7 +4794,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.272 $"
+(defconst c-version "$Revision: 4.273 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
