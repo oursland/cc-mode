@@ -648,23 +648,25 @@ involve auto-newline inserted newlines:
                         Clean up occurs when the closing parenthesis
                         is typed."
   :type '(set
-	  (const :tag "Put \"} else {\" on one line"
+	  (const :tag "Put \"} else {\" on one line (brace-else-brace)"
 		 brace-else-brace)
-	  (const :tag "Put \"} else if (...) {\" on one line"
+	  (const :tag "Put \"} else if (...) {\" on one line (brace-elseif-brace)"
 		 brace-elseif-brace)
-	  (const :tag "Put \"} catch (...) {\" on one line"
+	  (const :tag "Put \"} catch (...) {\" on one line (brace-catch-brace)"
 		 brace-catch-brace)
-	  (const :tag "Put empty defun braces on one line"
+	  (const :tag "Put empty defun braces on one line (empty-defun-braces)"
 		 empty-defun-braces)
-	  (const :tag "Put \"};\" ending defuns on one line"
+	  (const :tag "Put short functions on one line (one-liner-defun)"
+		 one-liner-defun)
+	  (const :tag "Put \"};\" ending defuns on one line (defun-close-semi)"
 		 defun-close-semi)
-	  (const :tag "Put \"},\" in aggregates on one line"
+	  (const :tag "Put \"},\" in aggregates on one line (list-close-comma)"
 		 list-close-comma)
-	  (const :tag "Put C++ style \"::\" on one line"
+	  (const :tag "Put C++ style \"::\" on one line (scope-operator)"
 		 scope-operator)
-	  (const :tag "Put a space before funcall parens, e.g. \"foo (bar)\""
+	  (const :tag "Put a space before funcall parens, e.g. \"foo (bar)\" (space-before-funcall)"
 		 space-before-funcall)
-	  (const :tag "Remove space before empty funcalls, e.g. \"foo()\""
+	  (const :tag "Remove space before empty funcalls, e.g. \"foo()\" (compact-empty-funcall)"
 		 compact-empty-funcall))
   :group 'c)
 
