@@ -349,7 +349,7 @@ position if that is less ('same is returned in this case)."
 		;; Check for statement boundary.
 		(when (save-excursion
 			(if (if (eq (char-after) ?{)
-				(c-looking-at-inexpr-block)
+				(c-looking-at-inexpr-block lim t)
 			      (eq (char-syntax (char-after)) ?\())
 			    ;; Need to move over parens and
 			    ;; in-expression blocks to get a good start
@@ -1310,6 +1310,17 @@ isn't moved."
 		     ;; for, if, while, switch, catch, synchronized, foreach
 		     (t 2)))))
 
+(defun c-after-conditional (&optional lim)
+  ;; If looking at the token after a conditional then return the
+  ;; position of its start, otherwise return nil.
+  (save-excursion
+    (and (= (c-backward-token-1 1 t lim) 0)
+	 (or (looking-at c-block-stmt-1-kwds)
+	     (and (eq (char-after) ?\()
+		  (= (c-backward-token-1 1 t lim) 0)
+		  (looking-at c-block-stmt-2-kwds)))
+	 (point))))
+
 (defun c-beginning-of-closest-statement (&optional lim)
   ;; Go back to the closest preceding statement start.
   (let ((start (point))
@@ -1702,18 +1713,21 @@ isn't moved."
 		       (progn (backward-char)
 			      (c-looking-at-special-brace-list))))))))
 
-(defun c-looking-at-inexpr-block (&optional lim)
+(defun c-looking-at-inexpr-block (&optional lim ignore-enclosing)
   ;; Returns non-nil if we're looking at the beginning of a block
   ;; inside an expression.  The value returned is actually a cons of
   ;; either 'inlambda, 'inexpr-statement or 'inexpr-class and the
   ;; position of the beginning of the construct.  LIM limits the
-  ;; backward search.
+  ;; backward search.  Do not look at the type of the enclosing paren
+  ;; if IGNORE-ENCLOSING is non-nil.
   (save-excursion
     (or lim (setq lim (point-min)))
-    (let ((block-follows (eq (char-after) ?{)))
+    (let ((block-follows (eq (char-after) ?{))
+	  (use-enclosing (not ignore-enclosing)))
       ;; Look at the character after point only as a last resort when
       ;; we can't disambiguate.
       (if (and block-follows
+	       use-enclosing
 	       (progn (c-backward-syntactic-ws) (> (point) lim))
 	       (eq (char-before) ?\())
 	  (if (and c-special-brace-lists
@@ -1753,6 +1767,7 @@ isn't moved."
 			 'maybe))))
 	  (if (eq res 'maybe)
 	      (when (and block-follows
+			 use-enclosing
 			 (save-restriction
 			   (narrow-to-region lim (point))
 			   (c-safe (goto-char (scan-lists (point) -1 1)) t))
@@ -1827,19 +1842,20 @@ isn't moved."
 	     (< c-macro-start bufpos))
 	;; Make sure bufpos is outside the macro we might be in.
 	(setq bufpos c-macro-start))
-    (while state
-      (setq safepos
-	    (if (consp (car state))
-		(cdr (car state))
-	      (car state)))
-      (if (< safepos bufpos)
-	  (setq state nil)
-	(setq state (cdr state))))
-    (when (eq c-macro-start bufpos)
-      ;; Backed up bufpos to the macro start and got outside the
-      ;; state.  We know the macro is at the top level in this case,
-      ;; so we can use the macro start as the safe position.
-      c-macro-start)))
+    (catch 'done
+      (while state
+	(setq safepos
+	      (if (consp (car state))
+		  (cdr (car state))
+		(car state)))
+	(if (< safepos bufpos)
+	    (throw 'done safepos)
+	  (setq state (cdr state))))
+      (if (eq c-macro-start bufpos)
+	  ;; Backed up bufpos to the macro start and got outside the
+	  ;; state.  We know the macro is at the top level in this case,
+	  ;; so we can use the macro start as the safe position.
+	  c-macro-start))))
 
 (defun c-narrow-out-enclosing-class (state lim)
   ;; narrow the buffer so that the enclosing class is hidden
@@ -2052,26 +2068,6 @@ isn't moved."
 			  (= (point) (c-point 'boi indent-point))))))
 	  (c-add-syntax 'cpp-macro-cont macro-start)
 	  (setq macro-start nil))
-	 ;; CASE 4: In-expression statement.
-	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
-	       (setq placeholder (c-looking-at-inexpr-block)))
-	  (setq tmpsymbol (assq (car placeholder)
-				'((inexpr-class . class-open)
-				  (inexpr-statement . block-open))))
-	  (if tmpsymbol
-	      ;; It's a statement block or an anonymous class.
-	      (setq tmpsymbol (cdr tmpsymbol))
-	    ;; It's a Pike lambda.  Check whether we are between the
-	    ;; lambda keyword and the argument list or at the defun
-	    ;; opener.
-	    (setq tmpsymbol (if (eq char-after-ip ?{)
-				'inline-open
-			      'lambda-intro-cont)))
-	  (goto-char (cdr placeholder))
-	  (back-to-indentation)
-	  (c-add-syntax tmpsymbol (point))
-	  (unless (eq (point) (cdr placeholder))
-	    (c-add-syntax (car placeholder))))
 	 ;; CASE 11: an else clause?
 	 ((looking-at "else\\>[^_]")
 	  (c-beginning-of-statement-1 lim)
@@ -2111,18 +2107,19 @@ isn't moved."
 		    (progn
 		      ;; Ought to cache the result from the
 		      ;; c-beginning-of-statement-1 calls here.
-		      (if (and (eq (setq step-type
-					 (prog1
-					     (c-beginning-of-statement-1 lim)
-					   (setq placeholder (point))))
-				   'same)
-			       (not (looking-at c-conditional-key)))
-			  ;; Step up to the containing statement if we
-			  ;; stayed in the same one.
-			  (if (eq (c-beginning-of-statement-1 lim) 'up)
-			      (setq placeholder (point))
-			    ;; There was no containing statement afterall.
-			    (goto-char placeholder)))
+		      (setq placeholder (point))
+		      (setq step-type (c-beginning-of-statement-1 lim))
+		      (if (eq step-type 'previous)
+			  (goto-char placeholder)
+			(setq placeholder (point))
+			(if (and (eq step-type 'same)
+				 (not (looking-at c-conditional-key)))
+			    ;; Step up to the containing statement if we
+			    ;; stayed in the same one.
+			    (if (eq (c-beginning-of-statement-1 lim) 'up)
+				(setq placeholder (point))
+			      ;; There was no containing statement afterall.
+			      (goto-char placeholder))))
 		      placeholder))
 		 (if (looking-at c-block-stmt-2-kwds)
 		     ;; Require a parenthesis after these keywords.
@@ -2146,6 +2143,26 @@ isn't moved."
 					 placeholder
 					 lim
 					 lim)))
+	 ;; CASE 4: In-expression statement.
+	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
+	       (setq placeholder (c-looking-at-inexpr-block nil t)))
+	  (setq tmpsymbol (assq (car placeholder)
+				'((inexpr-class . class-open)
+				  (inexpr-statement . block-open))))
+	  (if tmpsymbol
+	      ;; It's a statement block or an anonymous class.
+	      (setq tmpsymbol (cdr tmpsymbol))
+	    ;; It's a Pike lambda.  Check whether we are between the
+	    ;; lambda keyword and the argument list or at the defun
+	    ;; opener.
+	    (setq tmpsymbol (if (eq char-after-ip ?{)
+				'inline-open
+			      'lambda-intro-cont)))
+	  (goto-char (cdr placeholder))
+	  (back-to-indentation)
+	  (c-add-syntax tmpsymbol (point))
+	  (unless (eq (point) (cdr placeholder))
+	    (c-add-syntax (car placeholder))))
 	 ;; CASE 5: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
@@ -2586,7 +2603,6 @@ isn't moved."
 			  (goto-char containing-sexp)
 			  (c-looking-at-special-brace-list)))
 		   (eq (char-after containing-sexp) ?{)))
-	  (c-backward-syntactic-ws containing-sexp)
 	  (cond
 	   ;; CASE 7A: we are looking at the arglist closing paren
 	   ((and (or (c-major-mode-is 'pike-mode)
@@ -2629,13 +2645,12 @@ isn't moved."
 	    (c-add-syntax 'arglist-intro placeholder))
 	   ;; CASE 7D: we are inside a conditional test clause. treat
 	   ;; these things as statements
-	   ((save-excursion
+	   ((progn
 	      (goto-char containing-sexp)
 	      (and (c-safe (progn (c-forward-sexp -1) t))
 		   (looking-at "\\<for\\>[^_]")))
 	    (goto-char (1+ containing-sexp))
 	    (c-forward-syntactic-ws indent-point)
-	    (c-beginning-of-statement-1 containing-sexp)
 	    (if (eq char-before-ip ?\;)
 		(c-add-syntax 'statement (point))
 	      (c-add-syntax 'statement-cont (point))
@@ -2645,7 +2660,7 @@ isn't moved."
 	   ;; the opening bracket is not an identifier.
 	   ((and c-method-key
 		 (eq (char-after containing-sexp) ?\[)
-		 (save-excursion
+		 (progn
 		   (goto-char (1- containing-sexp))
 		   (c-backward-syntactic-ws (c-point 'bod))
 		   (if (not (looking-at c-symbol-key))
@@ -2656,7 +2671,7 @@ isn't moved."
 	   ;; opening paren.  This case includes multi-line
 	   ;; mathematical paren groupings, but we could be on a
 	   ;; for-list continuation line
-	   ((save-excursion
+	   ((progn
 	      (goto-char (1+ containing-sexp))
 	      (skip-chars-forward " \t")
 	      (not (eolp)))
@@ -2670,8 +2685,9 @@ isn't moved."
 	    (c-add-syntax 'arglist-cont-nonempty placeholder))
 	   ;; CASE 7G: we are looking at just a normal arglist
 	   ;; continuation line
-	   (t (c-beginning-of-statement-1 containing-sexp)
-	      (forward-char 1)
+	   (t (goto-char indent-point)
+	      (c-beginning-of-statement-1 containing-sexp)
+	      ;(forward-char 1)
 	      (c-forward-syntactic-ws indent-point)
 	      (c-add-syntax 'arglist-cont (c-point 'boi)))
 	   ))
@@ -2810,10 +2826,25 @@ isn't moved."
 	  (let* ((lim (c-safe-position (1- containing-sexp) fullstate))
 		 (relpos (save-excursion
 			   (goto-char containing-sexp)
-			   (if (/= (point) (c-point 'boi))
-			       (c-beginning-of-statement-1 lim))
+			   (while (and (/= (point) (c-point 'boi))
+				       (let ((old-pos (point)))
+					 (c-beginning-of-statement-1 lim)
+					 (/= (point) old-pos))))
 			   (c-point 'boi))))
 	    (cond
+	     ;; CASE 16E: Closing a statement block?  This catches
+	     ;; cases where it's preceded by a statement keyword,
+	     ;; which works even when used in an "invalid" context,
+	     ;; e.g. a macro argument.
+	     ((progn
+		(goto-char containing-sexp)
+		(c-after-conditional))
+	      (setq placeholder (point))
+	      (goto-char containing-sexp)
+	      (back-to-indentation)
+	      (unless (= (point) containing-sexp)
+		(goto-char relpos))
+	      (c-add-syntax 'block-close (point)))
 	     ;; CASE 16A: closing a lambda defun or an in-expression
 	     ;; block?
 	     ((save-excursion
@@ -2854,23 +2885,6 @@ isn't moved."
 			     (c-beginning-of-statement-1)
 			     (looking-at c-conditional-key)))))
 	      (c-add-syntax 'block-close relpos))
-	     ;; CASE 16E: Closing a statement block?  It's not a
-	     ;; statement context here but there might be one anyway,
-	     ;; e.g. on the top level inside a macro.
-	     ((progn
-		(goto-char containing-sexp)
-		(and (= (c-backward-token-1 1 t lim) 0)
-		     (or (looking-at c-block-stmt-1-kwds)
-			 (and (eq (char-after) ?\()
-			      (= (c-backward-token-1 1 t lim) 0)
-			      (looking-at c-block-stmt-2-kwds)))))
-	      (setq placeholder (point))
-	      (goto-char containing-sexp)
-	      (back-to-indentation)
-	      (unless (= (point) containing-sexp)
-		(goto-char placeholder)
-		(back-to-indentation))
-	      (c-add-syntax 'block-close (point)))
 	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
@@ -2929,7 +2943,8 @@ isn't moved."
 	   ((progn
 	      ;; The following tests are all based on containing-sexp.
 	      (goto-char containing-sexp)
-	      (setq placeholder (c-looking-at-inexpr-block)))
+	      (and (setq placeholder (c-looking-at-inexpr-block))
+		   (not (c-after-conditional))))
 	    (back-to-indentation)
 	    (let ((block-intro (if (eq (car placeholder) 'inlambda)
 				   'defun-block-intro
@@ -2951,12 +2966,7 @@ isn't moved."
 	   ;; recognize by keywords.  That increases the robustness in
 	   ;; cases where statements are used on the top level,
 	   ;; e.g. in macro definitions.
-	   ((and (not (save-excursion
-			(and (= (c-backward-token-1 1 t) 0)
-			     (or (looking-at c-block-stmt-1-kwds)
-				 (and (eq (char-after) ?\()
-				      (= (c-backward-token-1 1 nil) 0)
-				      (looking-at c-block-stmt-2-kwds))))))
+	   ((and (not (c-after-conditional))
 		 (save-excursion
 		   (save-restriction
 		     (widen)
