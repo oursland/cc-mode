@@ -19,3 +19,7 @@
 #
 /regexp/
 (NF == 3)
+
+# Local Variables:
+# cc-test-skip: (no-syntax-properties)
+# End:
