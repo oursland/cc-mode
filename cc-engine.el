@@ -688,9 +688,7 @@ This function does not do any hidden buffer changes."
       ;; backed up over any above, since forward-comment won't move
       ;; backward over a line comment if point is at the end of the
       ;; same line.
-      (if (and (looking-at "\\s *[\n\r]")
-	       (<= (match-end 0) start))
-	  (goto-char (match-end 0)))
+      (re-search-forward "\\`\\s *[\n\r]" start t)
 
       (if (if (forward-comment -1)
 	      (if (eolp)
@@ -871,7 +869,7 @@ This function does not do any hidden buffer changes."
     ;; if it's anything that can't start syntactic ws, so we can bail out
     ;; early in the majority of cases when there just are a few ws chars.
     (skip-chars-forward " \t\n\r\f\v")
-    (unless (looking-at "[^/#\\]\\|\\'")
+    (when (looking-at c-syntactic-ws-start)
 
       (setq rung-end-pos (min (1+ (point)) (point-max)))
       (if (setq rung-is-marked (text-property-any rung-pos rung-end-pos
@@ -938,7 +936,8 @@ This function does not do any hidden buffer changes."
 	      (not (eobp)))
 
 	     ((save-excursion
-		(and (looking-at "#[ \t]*[a-zA-Z0-9!]")
+		(and c-opt-cpp-prefix
+		     (looking-at "#[ \t]*[a-zA-Z0-9!]")
 		     (progn (skip-chars-backward " \t")
 			    (bolp))
 		     (or (bobp)
@@ -1037,10 +1036,10 @@ This function does not do any hidden buffer changes."
     ;; chars.  Newlines are complicated in the backward direction, so we can't
     ;; skip over them.
     (skip-chars-backward " \t\f")
-    (unless (or (bobp)
-		(save-excursion
-		  (backward-char)
-		  (looking-at "[^/\n\r]")))
+    (when (and (not (bobp))
+	       (save-excursion
+		 (backward-char)
+		 (looking-at c-syntactic-ws-end)))
 
       ;; Try to find a rung position in the simple ws preceding point, so that
       ;; we can get a cache hit even if the last bit of the simple ws has
@@ -1108,7 +1107,8 @@ This function does not do any hidden buffer changes."
 	    (setq cmt-skip-pos (point))
 
 	    (cond
-	     ((c-beginning-of-macro)
+	     ((and c-opt-cpp-prefix
+		   (c-beginning-of-macro))
 	      ;; Inside a cpp directive.  See if it should be skipped over.
 	      (let ((cpp-beg (point)))
 		(if (or (progn (goto-char simple-ws-beg)
@@ -1220,17 +1220,104 @@ This function does not do any hidden buffer changes."
 	  )))))
 
 
-(defun c-forward-token-1 (&optional count balanced lim)
+(defun c-on-identifier ()
+  "Return non-nil if the point is on or directly after an identifier.
+Keywords are recognized and not considered identifiers.  If an
+identifier is detected, the returned value is its starting position.
+If an identifier both starts and stops at the point \(can only happen
+in Pike) then the point for the preceding one is returned.
+
+This function does not do any hidden buffer changes."
+
+  (save-excursion
+    (if (zerop (skip-syntax-backward "w_"))
+
+	(when (c-major-mode-is 'pike-mode)
+	  ;; Handle the `<operator> syntax in Pike.
+	  (let ((pos (point)))
+	    (skip-chars-backward "!%&*+\\-/<=>^|~[]()")
+	    (and (if (< (skip-chars-backward "`") 0)
+		     t
+		   (goto-char pos)
+		   (eq (char-after) ?\`))
+		 (looking-at c-symbol-key)
+		 (>= (match-end 0) pos)
+		 (point))))
+
+      (and (not (looking-at c-keywords-regexp))
+	   (point)))))
+
+(defsubst c-simple-skip-symbol-backward ()
+  ;; If the point is at the end of a symbol then skip backward to the
+  ;; beginning of it.  Don't move otherwise.  Return non-nil if point
+  ;; moved.
+  (or (< (skip-syntax-backward "w_") 0)
+      (and (c-major-mode-is 'pike-mode)
+	   ;; Handle the `<operator> syntax in Pike.
+	   (let ((pos (point)))
+	     (if (and (< (skip-chars-backward "!%&*+\\-/<=>^|~[]()") 0)
+		      (< (skip-chars-backward "`") 0)
+		      (looking-at c-symbol-key)
+		      (>= (match-end 0) pos))
+		 t
+	       (goto-char pos)
+	       nil)))))
+
+(defsubst c-beginning-of-current-token (&optional back-limit)
+  ;; Move to the beginning of the current token.  Do not move if not
+  ;; in the middle of one.  BACK-LIMIT may be used to bound the
+  ;; backward search; if given it's assumed to be at the boundary
+  ;; between two tokens.
+  (if (looking-at "\\w\\|\\s_")
+      (skip-syntax-backward "w_" back-limit)
+    (let ((start (point)))
+      (when (< (skip-syntax-backward ".()" back-limit) 0)
+	(looking-at c-nonsymbol-token-regexp)
+	(while (let ((pos (or (match-end 0)
+			      ;; `c-nonsymbol-token-regexp' should always match
+			      ;; since we've skipped backward over punctuator
+			      ;; or paren syntax, but consume one char in case
+			      ;; it doesn't so that we don't leave point before
+			      ;; some earlier incorrect token.
+			      (1+ (point)))))
+		 (if (<= pos start)
+		     (goto-char pos))
+		 (< pos start))
+	  (looking-at c-nonsymbol-token-regexp))))))
+
+(defsubst c-end-of-current-token (&optional back-limit)
+  ;; Move to the end of the current token.  Do not move if not in the
+  ;; middle of one.  BACK-LIMIT may be used to bound the backward
+  ;; search; if given it's assumed to be at the boundary between two
+  ;; tokens.
+  (let ((start (point)))
+    (cond ((< (skip-syntax-backward "w_" (1- start)) 0)
+	   (skip-syntax-forward "w_"))
+	  ((< (skip-syntax-backward ".()" back-limit) 0)
+	   (while (progn
+		    (if (looking-at c-nonsymbol-token-regexp)
+			(goto-char (match-end 0))
+		      ;; `c-nonsymbol-token-regexp' should always match since
+		      ;; we've skipped backward over punctuator or paren
+		      ;; syntax, but move forward in case it doesn't so that
+		      ;; we don't leave point earlier than we started with.
+		      (forward-char))
+		    (< (point) start)))))))
+
+(defun c-forward-token-1 (&optional count balanced limit)
   "Move forward by tokens.
 A token is defined as all symbols and identifiers which aren't
-syntactic whitespace \(note that e.g. \"->\" is considered to be two
-tokens).  Point is always either left at the beginning of a token or
-not moved at all.  COUNT specifies the number of tokens to move; a
-negative COUNT moves in the opposite direction.  A COUNT of 0 moves to
-the next token beginning only if not already at one.  If BALANCED is
-true, move over balanced parens, otherwise move into them.  Also, if
-BALANCED is true, never move out of an enclosing paren.  LIM sets the
-limit for the movement and defaults to the point limit.
+syntactic whitespace \(note that multicharacter tokens like \"==\" are
+treated properly).  Point is always either left at the beginning of a
+token or not moved at all.  COUNT specifies the number of tokens to
+move; a negative COUNT moves in the opposite direction.  A COUNT of 0
+moves to the next token beginning only if not already at one.  If
+BALANCED is true, move over balanced parens, otherwise move into them.
+Also, if BALANCED is true, never move out of an enclosing paren.
+
+LIMIT sets the limit for the movement and defaults to the point limit.
+The case when LIMIT is set in the middle of a token, comment or macro
+is handled correctly, i.e. the point won't be left there.
 
 Return the number of tokens left to move \(positive or negative).  If
 BALANCED is true, a move over a balanced paren counts as one.  Note
@@ -1238,86 +1325,135 @@ that if COUNT is 0 and no appropriate token beginning is found, 1 will
 be returned.  Thus, a return value of 0 guarantees that point is at
 the requested position and a return value less \(without signs) than
 COUNT guarantees that point is at the beginning of some token."
+
   (or count (setq count 1))
   (if (< count 0)
-      (- (c-backward-token-1 (- count) balanced lim))
+      (- (c-backward-token-1 (- count) balanced limit))
+
     (let ((jump-syntax (if balanced
-			   '(?w ?_ ?\( ?\) ?\" ?\\ ?/ ?$ ?')
-			 '(?w ?_ ?\" ?\\ ?/ ?')))
+			   "\\w\\|\\s_\\|\\s\(\\|\\s\)\\|\\s\"\\|\\s|"
+			 "\\w\\|\\s_\\|\\s\"\\|\\s|"))
 	  (last (point))
 	  (prev (point)))
+
+      (if (zerop count)
+	  ;; If count is zero we should jump if in the middle of a token.
+	  (c-end-of-current-token))
+
       (save-restriction
-	(if lim (narrow-to-region (point-min) lim))
+	(if limit (narrow-to-region (point-min) limit))
 	(if (/= (point)
 		(progn (c-forward-syntactic-ws) (point)))
-	    ;; Skip whitespace.  Count this as a move if we did in fact
-	    ;; move and aren't out of bounds.
-	    (or (eobp)
-		(setq count (max (1- count) 0))))
-	(if (and (= count 0)
-		 (or (and (memq (char-syntax (or (char-after) ? )) '(?w ?_))
-			  (memq (char-syntax (or (char-before) ? )) '(?w ?_)))
-		     (eobp)))
-	    ;; If count is zero we should jump if in the middle of a
-	    ;; token or if there is whitespace between point and the
-	    ;; following token beginning.
-	    (setq count 1))
+	    ;; Skip whitespace.  Count this as a move if we did in
+	    ;; fact move.
+	    (setq count (max (1- count) 0)))
+
 	(if (eobp)
-	    (goto-char last)
-	  ;; Avoid having the limit tests inside the loop.
+	    ;; Moved out of bounds.  Make sure the returned count isn't zero.
+	    (progn
+	      (if (zerop count) (setq count 1))
+	      (goto-char last))
+
+	  ;; Use `condition-case' to avoid having the limit tests
+	  ;; inside the loop.
 	  (condition-case nil
-	      (while (> count 0)
-		(setq prev last
-		      last (point))
-		(if (memq (char-syntax (char-after)) jump-syntax)
-		    (goto-char (scan-sexps (point) 1))
-		  (forward-char))
+	      (while (and
+		      (> count 0)
+		      (progn
+			(setq last (point))
+			(cond ((looking-at jump-syntax)
+			       (goto-char (scan-sexps (point) 1))
+			       t)
+			      ((looking-at c-nonsymbol-token-regexp)
+			       (goto-char (match-end 0))
+			       t)
+			      ;; `c-nonsymbol-token-regexp' above should always
+			      ;; match if there are correct tokens.  Try to
+			      ;; widen to see if the limit was set in the
+			      ;; middle of one, else fall back to treating
+			      ;; the offending thing as a one character token.
+			      ((and limit
+				    (save-restriction
+				      (widen)
+				      (looking-at c-nonsymbol-token-regexp)))
+			       nil)
+			      (t
+			       (forward-char)
+			       t))))
 		(c-forward-syntactic-ws)
-		(setq count (1- count)))
+		(setq prev last
+		      count (1- count)))
 	    (error (goto-char last)))
+
 	  (when (eobp)
 	    (goto-char prev)
 	    (setq count (1+ count)))))
+
       count)))
 
-(defun c-backward-token-1 (&optional count balanced lim)
+(defun c-backward-token-1 (&optional count balanced limit)
   "Move backward by tokens.
 See `c-forward-token-1' for details."
+
   (or count (setq count 1))
   (if (< count 0)
-      (- (c-forward-token-1 (- count) balanced lim))
+      (- (c-forward-token-1 (- count) balanced limit))
+
+    (or limit (setq limit (point-min)))
     (let ((jump-syntax (if balanced
-			   '(?w ?_ ?\( ?\) ?\" ?\\ ?/ ?$ ?')
-			 '(?w ?_ ?\" ?\\ ?/ ?')))
-	  last)
-      (if (and (= count 0)
-	       (or (and (memq (char-syntax (or (char-after) ? )) '(?w ?_))
-			(memq (char-syntax (or (char-before) ? )) '(?w ?_)))
-		   (/= (point)
-		       (save-excursion
-			 (c-forward-syntactic-ws (1+ lim))
-			 (point)))
-		   (eobp)))
-	  ;; If count is zero we should jump if in the middle of a
-	  ;; token or if there is whitespace between point and the
-	  ;; following token beginning.
-	  (setq count 1))
-      (save-restriction
-	(if lim (narrow-to-region lim (point-max)))
-	(or (bobp)
-	    (progn
-	      ;; Avoid having the limit tests inside the loop.
-	      (condition-case nil
-		  (while (progn
-			   (setq last (point))
-			   (> count 0))
+			   "\\w\\|\\s_\\|\\s\(\\|\\s\)\\|\\s\"\\|\\s|"
+			 "\\w\\|\\s_\\|\\s\"\\|\\s|"))
+	  (last (point)))
+
+      (if (zerop count)
+	  ;; The count is zero so try to skip to the beginning of the
+	  ;; current token.
+	  (if (> (point)
+		 (progn (c-beginning-of-current-token) (point)))
+	      (if (< (point) limit)
+		  ;; The limit is inside the same token, so return 1.
+		  (setq count 1))
+
+	    ;; We're not in the middle of a token.  If there's
+	    ;; whitespace after the point then we must move backward,
+	    ;; so set count to 1 in that case.
+	    (and (looking-at c-syntactic-ws-start)
+		 ;; If we're looking at a '#' that might start a cpp
+		 ;; directive then we have to do a more elaborate check.
+		 (or (/= (char-after) ?#)
+		     (not c-opt-cpp-prefix)
+		     (save-excursion
+		       (and (= (point)
+			       (progn (beginning-of-line)
+				      (looking-at "[ \t]*")
+				      (match-end 0)))
+			    (or (bobp)
+				(progn (backward-char)
+				       (not (eq (char-before) ?\\)))))))
+		 (setq count 1))))
+
+      ;; Use `condition-case' to avoid having to check for buffer
+      ;; limits in `backward-char', `scan-sexps' and `goto-char' below.
+      (condition-case nil
+	  (while (and
+		  (> count 0)
+		  (progn
 		    (c-backward-syntactic-ws)
-		    (if (memq (char-syntax (char-before)) jump-syntax)
-			(goto-char (scan-sexps (point) -1))
-		      (backward-char))
-		    (setq count (1- count)))
-		(error (goto-char last)))
-	      (if (bobp) (goto-char last)))))
+		    (backward-char)
+		    (if (looking-at jump-syntax)
+			(goto-char (scan-sexps (1+ (point)) -1))
+		      ;; This can be very inefficient if there's a long
+		      ;; sequence of operator tokens without any separation.
+		      ;; That doesn't happen in practice, anyway.
+		      (c-beginning-of-current-token))
+		    (>= (point) limit)))
+	    (setq last (point)
+		  count (1- count)))
+	(error (goto-char last)))
+
+      (if (< (point) limit)
+	  (goto-char last))
+
       count)))
 
 (defun c-syntactic-re-search-forward (regexp &optional bound noerror
@@ -1424,29 +1560,16 @@ syntactic whitespace."
 		   (search-forward "*/" bound noerror)))
 
 		((and not-inside-token
-		      (> check-pos last-token-end-pos)
-		      (save-match-data
-			(let (tmp-pos)
-			  (save-excursion
-			    (when (zerop (skip-syntax-backward
-					  ".()" last-token-end-pos))
-			      (backward-char))
-			    (while (if (looking-at
-					c-multichar-op-sym-token-regexp)
-				       (< (setq tmp-pos (match-end 0)) pos)
-				     (setq tmp-pos nil))
-			      (goto-char tmp-pos)))
-			  (and tmp-pos
-			       (> tmp-pos check-pos)
-			       (progn (goto-char tmp-pos)
-				      (skip-syntax-forward "w_")
-				      (setq last-token-end-pos (point))
-				      t)))))
+		      (or (< check-pos last-token-end-pos)
+			  (< check-pos
+			     (save-excursion
+			       (goto-char check-pos)
+			       (c-end-of-current-token last-token-end-pos)
+			       (setq last-token-end-pos (point))))))
 		 ;; Match inside a token.
-		 (cond (lookbehind-submatch
+		 (cond ((<= (point) bound)
 			(goto-char (min (1+ pos) bound))
 			t)
-		       ((<= (point) bound) t)
 		       (noerror nil)
 		       (t (signal 'search-failed "end of token"))))
 
@@ -2061,7 +2184,7 @@ This function does not do any hidden buffer changes."
     (c-with-syntax-table c++-template-syntax-table
       (c-backward-token-1 0 t lim)
       (while (and (looking-at "[_a-zA-Z<,]")
-		  (= (c-backward-token-1 1 t lim) 0)))
+		  (zerop (c-backward-token-1 1 t lim))))
       (skip-chars-forward "^:"))))
 
 (defun c-in-method-def-p ()
@@ -2126,48 +2249,6 @@ brace."
   (let ((paren-state (c-parse-state)))
     (or (not (c-most-enclosing-brace paren-state))
 	(c-search-uplist-for-classkey paren-state))))
-
-(defun c-on-identifier ()
-  "Return non-nil if the point is on or directly after an identifier.
-Keywords are recognized and not considered identifiers.  If an
-identifier is detected, the returned value is its starting position.
-If an identifier both starts and stops at the point \(can only happen
-in Pike) then the point for the preceding one is returned.
-
-This function does not do any hidden buffer changes."
-
-  (save-excursion
-    (if (zerop (skip-syntax-backward "w_"))
-
-	(when (c-major-mode-is 'pike-mode)
-	  ;; Handle the `<operator> syntax in Pike.
-	  (let ((pos (point)))
-	    (skip-chars-backward "!%&*+\\-/<=>^|~[]()")
-	    (and (if (< (skip-chars-backward "`") 0)
-		     t
-		   (goto-char pos)
-		   (eq (char-after) ?\`))
-		 (looking-at c-symbol-key)
-		 (>= (match-end 0) pos)
-		 (point))))
-
-      (and (not (looking-at c-keywords-regexp))
-	   (point)))))
-
-(defsubst c-simple-skip-symbol-backward ()
-  ;; If the point is at the end of a symbol then skip backward to the
-  ;; beginning of it.  Don't move otherwise.  Return non-nil if point
-  ;; moved.
-  (or (< (skip-syntax-backward "w_") 0)
-      (and (c-major-mode-is 'pike-mode)
-	   (let ((pos (point)))
-	     (if (and (< (skip-chars-backward "!%&*+\\-/<=>^|~[]()") 0)
-		      (< (skip-chars-backward "`") 0)
-		      (looking-at c-symbol-key)
-		      (>= (match-end 0) pos))
-		 t
-	       (goto-char pos)
-	       nil)))))
 
 (defun c-forward-to-cpp-define-body ()
   ;; Assuming point is at the "#" that introduces a preprocessor
@@ -2296,10 +2377,10 @@ This function does not do any hidden buffer changes."
   ;; If looking at the token after a conditional then return the
   ;; position of its start, otherwise return nil.
   (save-excursion
-    (and (= (c-backward-token-1 1 t lim) 0)
+    (and (zerop (c-backward-token-1 1 t lim))
 	 (or (looking-at c-block-stmt-1-key)
 	     (and (eq (char-after) ?\()
-		  (= (c-backward-token-1 1 t lim) 0)
+		  (zerop (c-backward-token-1 1 t lim))
 		  (looking-at c-block-stmt-2-key)))
 	 (point))))
 
@@ -2633,7 +2714,7 @@ This function does not do any hidden buffer changes."
     ;; to do try to skip an sexp and see that the close paren matches.
     (if (and (not c-fontify-types-and-refs)
 	     (looking-at "\\s\(")
-	     (if (and (not (looking-at "<[<=]"))
+	     (if (and (not (looking-at "<[<=:%]"))
 		      (c-safe (c-forward-sexp) t)
 		      (= (skip-chars-backward ">") -1)
 		      (looking-at ">\\([^>=]\\|$\\)"))
@@ -2655,12 +2736,18 @@ This function does not do any hidden buffer changes."
 	t
 
       (forward-char)
-      (unless (looking-at "[<=]")
+      (unless (looking-at "[<=:%]")
 	(while (and
 		(progn
 		  (setq pos (point))
-		  (or (c-syntactic-re-search-forward
-		       "\\(\\(\\=\\|[^>]\\)>\\)\\|[<;{]" nil 'move t t 1)
+		  (or (when (eq (char-after) ?>)
+			;; Must check for '>' at the very start separately,
+			;; since the regexp below has to avoid ">>" without
+			;; using \\=.
+			(forward-char)
+			t)
+		      (c-syntactic-re-search-forward
+		       "\\([^>]>\\)\\|[<;{]" nil 'move t t 1)
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
 		      ;; closer above since we only search in the
@@ -2850,7 +2937,7 @@ This function does not do any hidden buffer changes."
 				     (looking-at c-opt-type-modifier-key))
 			      (goto-char (match-end 1))))))
 
-		       ((looking-at c-op-token-regexp)
+		       ((looking-at c-overloadable-operators-regexp)
 			;; Got some other operator.
 			(setq pos (match-end 0)
 			      res 'operator)))
@@ -3193,7 +3280,7 @@ This function does not do any hidden buffer changes."
 		   ;; Check if this is an anonymous inner class.
 		   ((and c-opt-inexpr-class-key
 			 (looking-at c-opt-inexpr-class-key))
-		    (while (and (= (c-forward-token-1 1 t) 0)
+		    (while (and (zerop (c-forward-token-1 1 t))
 				(looking-at "(\\|\\w\\|\\s_\\|\\.")))
 		    (if (eq (point) search-end)
 			;; We're done.  Just trap this case in the cond.
@@ -3468,7 +3555,7 @@ This function does not do any hidden buffer changes."
 			 (save-excursion
 			   (and (c-major-mode-is 'pike-mode)
 				(progn (goto-char block-follows)
-				       (= (c-forward-token-1 1 t) 0))
+				       (zerop (c-forward-token-1 1 t)))
 				(eq (char-after) ?\())))
 		     (cons 'inexpr-class (point))))
 	       ((and c-opt-inexpr-block-key
@@ -4151,7 +4238,7 @@ This function does not do any hidden buffer changes."
 		     ;; Necessary to catch e.g. synchronized in Java,
 		     ;; which can be used both as statement and
 		     ;; modifier.
-		     (and (= (c-forward-token-1 1 nil) 0)
+		     (and (zerop (c-forward-token-1 1 nil))
 			  (eq (char-after) ?\())
 		   (looking-at c-opt-block-stmt-key))))
 	  (if (eq step-type 'up)
@@ -4255,7 +4342,7 @@ This function does not do any hidden buffer changes."
 			       (goto-char indent-point)
 			       (setq tmpsymbol nil)
 			       (while (and (> (point) placeholder)
-					   (= (c-backward-token-1 1 t) 0)
+					   (zerop (c-backward-token-1 1 t))
 					   (/= (char-after) ?=))
 				 (if (and (not tmpsymbol)
 					  (looking-at "new\\>[^_]"))
@@ -4264,7 +4351,7 @@ This function does not do any hidden buffer changes."
 			     (looking-at "enum\\>[^_]"))
 			 (save-excursion
 			   (while (and (< (point) indent-point)
-				       (= (c-forward-token-1 1 t) 0)
+				       (zerop (c-forward-token-1 1 t))
 				       (not (memq (char-after) '(?\; ?\()))))
 			   (not (memq (char-after) '(?\; ?\()))
 			   ))))
@@ -4428,11 +4515,11 @@ This function does not do any hidden buffer changes."
 	      (save-excursion
 		;; Note: We use the fact that lim is always after any
 		;; preceding brace sexp.
-		(while (and (= (c-backward-token-1 1 t lim) 0)
+		(while (and (zerop (c-backward-token-1 1 t lim))
 			    (not (looking-at "[;<,=]"))))
 		(or (memq (char-after) '(?, ?=))
 		    (and (c-major-mode-is 'c++-mode)
-			 (= (c-backward-token-1 1 nil lim) 0)
+			 (zerop (c-backward-token-1 1 nil lim))
 			 (eq (char-after) ?<)))))
 	    (goto-char indent-point)
 	    (c-beginning-of-member-init-list lim)
@@ -4491,10 +4578,10 @@ This function does not do any hidden buffer changes."
 		     (if (looking-at "static\\>[^_]")
 			 (c-forward-token-1 1 nil indent-point))
 		     (and (looking-at c-class-key)
-			  (= (c-forward-token-1 2 nil indent-point) 0)
+			  (zerop (c-forward-token-1 2 nil indent-point))
 			  (if (eq (char-after) ?<)
 			      (c-with-syntax-table c++-template-syntax-table
-				(= (c-forward-token-1 1 t indent-point) 0))
+				(zerop (c-forward-token-1 1 t indent-point)))
 			    t)
 			  (eq (char-after) ?:))))
 	      (goto-char placeholder)
@@ -4817,7 +4904,7 @@ This function does not do any hidden buffer changes."
 			  (eq (1+ (point)) (cdr (car special-brace-list))))
 		     ;; We were before the special close char.
 		     (and (eq (char-after) (cdr (cdr special-brace-list)))
-			  (= (c-forward-token-1) 0)
+			  (zerop (c-forward-token-1))
 			  (eq (1+ (point)) (cdr (car special-brace-list)))))))
 	      ;; Normal brace list check.
 	      (and (eq char-after-ip ?})
