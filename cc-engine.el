@@ -1394,12 +1394,15 @@ you need both the type of a literal and its limits."
   ;; the cdr is the position following the closing paren.  Only the
   ;; last closed brace paren pair before each open paren is recorded,
   ;; and thus the state never contains two cons elements in
-  ;; succession.
+  ;; succession.  No characters which are given paren syntax with the
+  ;; syntax-table property are recorded, i.e. C++ template arglist
+  ;; parens are never present here.
 
   (save-restriction
     (let* ((here (point))
 	   (c-macro-start (c-query-macro-start))
 	   (in-macro-start (or c-macro-start (point)))
+	   parse-sexp-lookup-properties
 	   old-state last-pos pairs pos)
 
       ;; Somewhat ugly use of c-check-state-cache to get rid of the
@@ -1545,13 +1548,18 @@ you need both the type of a literal and its limits."
 
 	(if last-pos
 	    ;; Prepare to loop, but record the open paren only if it's
-	    ;; outside a macro or within the same macro as point.
+	    ;; outside a macro or within the same macro as point.  In
+	    ;; XEmacs it doesn't work to disable the syntax-table
+	    ;; property with `parse-sexp-lookup-properties' so we must
+	    ;; also look at the type of open paren since we don't want
+	    ;; to record '<' chars with open paren syntax.
 	    (progn
 	      (setq pos last-pos)
-	      (if (or (>= last-pos in-macro-start)
-		      (save-excursion
-			(goto-char last-pos)
-			(not (c-beginning-of-macro))))
+	      (if (and (memq (char-before pos) '(?\( ?\[ ?{))
+		       (or (>= last-pos in-macro-start)
+			   (save-excursion
+			     (goto-char last-pos)
+			     (not (c-beginning-of-macro)))))
 		  (setq c-state-cache (cons (1- pos) c-state-cache))))
 
 	  (if (setq last-pos (c-up-list-forward pos))
@@ -1729,6 +1737,46 @@ brace."
   (let ((paren-state (c-parse-state)))
     (or (not (c-most-enclosing-brace paren-state))
 	(c-search-uplist-for-classkey paren-state))))
+
+(defun c-on-identifier ()
+  "Return non-nil if the point is on or directly after an identifier.
+Keywords are recognized and not considered identifiers.  If an
+identifier is detected, the returned value is its starting position.
+If an identifier both starts and stops at the point \(can only happen
+in Pike) then the point for the preceding one is returned."
+
+  (save-excursion
+    (if (zerop (skip-syntax-backward "w_"))
+
+	(when (c-major-mode-is 'pike-mode)
+	  ;; Handle the `<operator> syntax in Pike.
+	  (let ((pos (point)))
+	    (skip-chars-backward "!%&*+\\-/<=>^|~[]()")
+	    (and (if (< (skip-chars-backward "`") 0)
+		     t
+		   (goto-char pos)
+		   (eq (char-after) ?\`))
+		 (looking-at c-symbol-key)
+		 (>= (match-end 0) pos)
+		 (point))))
+
+      (and (not (looking-at c-keywords-regexp))
+	   (point)))))
+
+(defsubst c-simple-skip-symbol-backward ()
+  ;; If the point is at the end of a symbol then skip backward to the
+  ;; beginning of it.  Don't move otherwise.  Return non-nil if point
+  ;; moved.
+  (or (< (skip-syntax-backward "w_") 0)
+      (and (c-major-mode-is 'pike-mode)
+	   (let ((pos (point)))
+	     (if (and (< (skip-chars-backward "!%&*+\\-/<=>^|~[]()") 0)
+		      (< (skip-chars-backward "`") 0)
+		      (looking-at c-symbol-key)
+		      (>= (match-end 0) pos))
+		 t
+	       (goto-char pos)
+	       nil)))))
 
 (defun c-forward-to-cpp-define-body ()
   ;; Assuming point is at the "#" that introduces a preprocessor
@@ -2071,14 +2119,33 @@ brace."
 		 (c-syntactic-re-search-forward ";" nil 'move t))))
       nil)))
 
-(defun c-remove-ws (string)
-  ;; Return the given string with any whitespace characters removed.
-  (let* ((pos 0) (parts (list nil)) (tail parts))
-    (while (string-match "[^ \t\n\r]+" string pos)
-      (setcdr tail (list (match-string 0 string)))
-      (setq tail (cdr tail)
-	    pos (match-end 0)))
-    (apply 'concat (cdr parts))))
+(defun c-syntactic-content (from to)
+  ;; Return the given region as a string where all syntactic
+  ;; whitespace is removed or, where necessary, replaced with a single
+  ;; space.
+  (save-excursion
+    (goto-char from)
+    (let* ((parts (list nil)) (tail parts) pos)
+      (while (re-search-forward c-syntactic-ws-start to t)
+	(goto-char (setq pos (match-beginning 0)))
+	(c-forward-syntactic-ws to)
+	(if (= (point) pos)
+	    (forward-char)
+	  (if (and (> pos from)
+		   (< (point) to)
+		   (looking-at "\\w\\|\\s_")
+		   (save-excursion
+		     (goto-char (1- pos))
+		     (looking-at "\\w\\|\\s_")))
+	      (progn
+		(setcdr tail (list (buffer-substring-no-properties from pos)
+				   " "))
+		(setq tail (cddr tail)))
+	    (setcdr tail (list (buffer-substring-no-properties from pos)))
+	    (setq tail (cdr tail)))
+	  (setq from (point))))
+      (setcdr tail (list (buffer-substring-no-properties from to)))
+      (apply 'concat (cdr parts)))))
 
 ;; Buffer local variable that contains an obarray with the types we've
 ;; found.  If a declaration is recognized somewhere we record the
@@ -2097,34 +2164,30 @@ brace."
   ;; Clears `c-found-types'.
   (setq c-found-types (make-vector 53 0)))
 
-(defsubst c-add-type (type)
-  ;; Add the given string as a type in `c-found-types'.  If there's
+(defsubst c-add-type (from to)
+  ;; Add the given region as a type in `c-found-types'.  If there's
   ;; already a type which is equal to the given one except that the
   ;; last character is missing, it's removed.  That's done to avoid
   ;; adding all prefixes of a type as it's being entered and font
-  ;; locked.  We should perhaps do the same when characters are
-  ;; removed from the end of a type, but that'd require some sort of
-  ;; fast lookup based on prefixes.
-  (setq type (c-remove-ws type))
-  (unintern (substring type 0 -1) c-found-types)
-  (intern type c-found-types))
+  ;; locked.  This doesn't cover cases like when characters are
+  ;; removed from a type or added in the middle.  We'd need the
+  ;; position of point when the font locking is invoked to solve this
+  ;; well.
+  (unless (and (c-major-mode-is 'c++-mode)
+	       (save-excursion
+		 (goto-char from)
+		 (c-syntactic-re-search-forward "<" to t)))
+    ;; To avoid storing very long strings, do not add a type that
+    ;; contains '<' in C++ since it then contains a template spec and
+    ;; those can be fairly sized programs in themselves.
+    (let ((type (c-syntactic-content from to)))
+      (unintern (substring type 0 -1) c-found-types)
+      (intern type c-found-types))))
 
-(defsubst c-check-type (string)
-  ;; Return non-nil if the given string is a type in `c-found-types'.
-  (intern-soft (c-remove-ws string) c-found-types))
-
-(defsubst c-add-complex-type (from to)
-  ;; The given region is taken to contain a type expression.  The
-  ;; individual types in it are added to `c-found-types'.
-  (goto-char from)
-  (while (and (< (point) to)
-	      (re-search-forward c-identifier-key to 'move))
-    (let ((type (buffer-substring-no-properties (match-beginning 0)
-						(match-end 0))))
-      (unless (looking-at c-type-prefix-key)
-	;; This adds types on `c-known-type-key' too.  There's no real
-	;; harm in doing so, and it's simpler than checking.
-	(c-add-type type)))))
+(defsubst c-check-type (from to)
+  ;; Return non-nil if the given region contains a type in
+  ;; `c-found-types'.
+  (intern-soft (c-syntactic-content from to) c-found-types))
 
 (defun c-list-found-types ()
   ;; Return all the types in `c-found-types' as a sorted list of
@@ -2136,120 +2199,491 @@ brace."
 	      c-found-types)
     (sort type-list 'string-lessp)))
 
-(defun c-forward-type (&optional use-font-property)
+(defsubst c-remove-template-arg-properties (from to)
+  ;; Remove the syntax-table properties from all '<' and '>' in the
+  ;; specified region.  Point is clobbered.
+  (goto-char from)
+  (while (progn (skip-chars-forward "^<>" to)
+		(< (point) to))
+    (c-clear-char-syntax (point))
+    (forward-char)))
+
+;; Dynamically bound variable that instructs `c-forward-type' to also
+;; treat possible types (i.e. those that it normally returns 'maybe or
+;; 'found for) as actual types (and always return 'found for them).
+(defvar c-promote-possible-types nil)
+
+;; Dynamically bound variable that instructs `c-forward-name' and
+;; `c-forward-type' to put reference and type faces on the constructs
+;; they identify.  All known types are fontified, and also possible
+;; types if `c-promote-possible-types' is set.  Only the names in C++
+;; template style references (e.g. "tmpl" in "tmpl<a,b>::foo") are
+;; fontified as references, other references aren't handled.
+(defvar c-fontify-types-and-refs nil)
+
+(defun c-forward-c++-template-arglist ()
+  ;; The point is assumed to be at a '<'.  Try to treat it as a C++
+  ;; template arglist and move forward to the the corresponding '>'.
+  ;; If successful, point is left after the '>' and t is returned,
+  ;; otherwise point isn't moved and nil is returned.
+  ;;
+  ;; C++ disambiguates template arglists by checking whether the
+  ;; preceding name is a template or not.  We can't do that, so we
+  ;; assume it is a template if it can be parsed as one.  This usually
+  ;; works well since comparison expressions on the forms "a < b > c"
+  ;; or "a < b, c > d" in almost all cases would be pointless.
+
+  (let ((start (point)) res pos tmp)
+
+    ;; If the '<' has paren open syntax then we've marked it as a
+    ;; template arglist before, so try to skip an sexp and see that
+    ;; the close paren matches.
+    (if (and (looking-at "\\s\(")
+	     (if (and (not (looking-at "<[<=]"))
+		      (c-safe (c-forward-sexp) t)
+		      (= (skip-chars-backward ">") -1)
+		      (looking-at ">\\([^>=]\\|$\\)"))
+		 (progn (forward-char)
+			t)
+
+	       ;; Got unmatched paren brackets or either paren was
+	       ;; actually some other token.  Recover by clearing the
+	       ;; syntax properties on all the '<' and '>' in the
+	       ;; range where we'll search for a template arglist
+	       ;; below.
+	       (goto-char start)
+	       (while (progn (skip-chars-forward "^<>;{")
+			     (looking-at "[<>]"))
+		 (c-clear-char-syntax (point))
+		 (forward-char))
+	       (goto-char start)
+	       nil))
+	t
+
+      (forward-char)
+      (unless (looking-at "[<=]")
+	(while (and
+		(progn
+		  (setq pos (point))
+		  (or (c-syntactic-re-search-forward
+		       "\\(\\(\\=\\|[^>]\\)>\\)\\|[<;{]" nil 'move t t 1)
+		      ;; If the arglist starter has lost its open paren
+		      ;; syntax but not the closer, we won't find the
+		      ;; closer above since we only search in the
+		      ;; balanced sexp.  In that case we stop just short
+		      ;; of it so check if the following char is the closer.
+		      (when (eq (char-after) ?>)
+			;; Remove its syntax so that we don't enter the
+			;; recovery code below.  That's not necessary
+			;; since there's no real reason to suspect that
+			;; things inside the arglist are unbalanced.
+			(c-clear-char-syntax (point))
+			(forward-char)
+			t)))
+
+		(cond
+		 ((eq (char-before) ?>)
+		  ;; Either an operator starting with '>' or the end of
+		  ;; the template arglist.
+
+		  (if (and (get-text-property (1- (point)) 'syntax-table)
+			   (progn
+			     (c-clear-char-syntax (1- (point)))
+			     parse-sexp-lookup-properties))
+
+		      ;; We've skipped past a list that ended with '>'.
+		      ;; It must be unbalanced since template arglists
+		      ;; are handled in the case below.  Recover by
+		      ;; removing all template arglist properties in the
+		      ;; searched region and redo the search.
+		      (progn
+			(c-remove-template-arg-properties pos (point))
+			(goto-char pos)
+			t)
+
+		    (if (looking-at "[>=]")
+			(progn
+			  (when (text-property-not-all
+				 (1- (point)) (match-end 0) 'syntax-table nil)
+			    (c-remove-template-arg-properties (1- (point))
+							      (match-end 0)))
+			  (goto-char (match-end 0))
+			  t)
+		      ;; The template list is finished.
+		      (c-mark-template-open start)
+		      (c-mark-template-close (1- (point)))
+		      (setq res t)
+		      nil)))
+
+		 ((eq (char-before) ?<)
+		  ;; Either an operator starting with '<' or a nested
+		  ;; template arglist.
+
+		  (setq pos (point))
+		  (let (id-start id-end)
+		    (if (if (looking-at "[<=]")
+			    (setq tmp (match-end 0))
+			  (setq tmp pos)
+			  (backward-char)
+			  (not (and (save-excursion
+				      ;; There's always an identifier
+				      ;; before a template reference.
+				      (c-backward-syntactic-ws)
+				      (setq id-end (point))
+				      (setq id-start (c-on-identifier)))
+				    (c-forward-c++-template-arglist))))
+
+			;; It was not a template.
+			(progn
+			  (when (text-property-not-all
+				 (1- pos) tmp 'syntax-table nil)
+			    (if parse-sexp-lookup-properties
+				;; Got an invalid open paren syntax on this
+				;; '<'.  We'll probably get an unbalanced '>'
+				;; further ahead if we just remove the syntax
+				;; here, so recover by removing all template
+				;; arglist properties up to and including the
+				;; balancing close paren.
+				(parse-partial-sexp pos (point-max) -1)
+			      (goto-char tmp))
+			    (c-remove-template-arg-properties pos (point)))
+			  (goto-char tmp))
+
+		      ;; It was a template.  If we should fontify then
+		      ;; we fontify the identifier before the template
+		      ;; as a type or reference depending on whether
+		      ;; the template is last in a qualified identifier.
+		      (when c-fontify-types-and-refs
+			(c-forward-syntactic-ws)
+			(if (looking-at "::")
+			    (c-fontify-reference id-start id-end)
+			  (c-fontify-type id-start id-end)))))
+		  t)
+
+		 (t
+		  ;; Got a character that can't be in a template
+		  ;; argument, so abort.
+		  nil)))))
+
+      (if res
+	  t
+	(goto-char start)
+	nil))))
+
+(defun c-forward-name ()
+  ;; Move forward over a complete name if at the beginning of one.
+  ;; Otherwise the point stays put.  A name could be something as
+  ;; simple as "foo" in C or something as complex as "X<Y<class
+  ;; A<int>::B, BIT_MAX >> b>, ::operator<> :: Z<(a>b)> :: operator
+  ;; const X<&foo>::T Q::G<unsigned short int>::*volatile const" in
+  ;; C++ (this function is actually little more than a `looking-at'
+  ;; call in all modes except C++).  Return nil if no name is found,
+  ;; 'template if it's a template reference, 'operator of it's an
+  ;; operator identifier, or t if it's some other kind of name.
+
+  (let ((pos (point)) res id-start id-end)
+    (while
+	(and
+	 (looking-at c-identifier-key)
+
+	 (progn
+	   ;; Check for keyword.  We go to the last symbol in
+	   ;; `c-identifier-key' first.
+	   (if (eq c-identifier-key c-symbol-key)
+	       (setq id-start pos
+		     id-end (match-end 0))
+	     (goto-char (setq id-end (match-end 0)))
+	     (c-simple-skip-symbol-backward)
+	     (setq id-start (point)))
+
+	   (if (looking-at c-keywords-regexp)
+	       (when (and (c-major-mode-is 'c++-mode)
+			  (looking-at
+			   (eval-when-compile
+			     (concat "\\(operator\\|\\(template\\)\\)"
+				     "\\(" (c-lang-var c-nonsymbol-key c++)
+				     "\\|$\\)")))
+			  (if (match-beginning 2)
+			      ;; "template" is only valid inside an
+			      ;; identifier if preceded by "::".
+			      (save-excursion
+				(c-backward-syntactic-ws)
+				(and (c-safe (backward-char 2) t)
+				     (looking-at "::")))
+			    t))
+
+		 ;; Handle a C++ operator or template identifier.
+		 (goto-char id-end)
+		 (c-forward-syntactic-ws)
+		 (cond ((eq (char-before id-end) ?e)
+			;; Got "... ::template".
+			(let ((subres (c-forward-name)))
+			  (when subres
+			    (setq pos (point)
+				  res subres))))
+
+		       ((looking-at c-identifier-start)
+			;; Got a cast operator.
+			(when (c-forward-type)
+			  (setq pos (point)
+				res 'operator)
+			  ;; Now we should match a sequence of either
+			  ;; '*', '&' or a name followed by ":: *",
+			  ;; where each can be followed by a sequence
+			  ;; of `c-opt-type-modifier-key'.
+			  (while (progn
+				   (c-forward-syntactic-ws)
+				   (cond
+				    ((looking-at "[*&]")
+				     (goto-char (match-end 0))
+				     t)
+				    ((looking-at c-identifier-start)
+				     (and
+				      (c-forward-name)
+				      (progn
+					(c-forward-syntactic-ws)
+					(looking-at "::"))
+				      (progn
+					(goto-char (match-end 0))
+					(c-forward-syntactic-ws)
+					(eq (char-after) ?*))
+				      (progn
+					(forward-char)
+					t)))))
+			    (while (progn
+				     (setq pos (point))
+				     (c-forward-syntactic-ws)
+				     (looking-at c-opt-type-modifier-key))
+			      (goto-char (match-end 1))))))
+
+		       ((looking-at c-op-token-regexp)
+			;; Got some other operator.
+			(setq pos (match-end 0)
+			      res 'operator)))
+
+		 nil)
+	     (setq pos id-end
+		   res t)))
+
+	 (progn
+	   (goto-char pos)
+	   (when c-opt-identifier-concat-key ; Note: Set in C++.
+	     (c-forward-syntactic-ws)
+
+	     (cond
+	      ((looking-at c-opt-identifier-concat-key)
+	       ;; Got a concatenated identifier.  This handles the
+	       ;; cases with tricky syntactic whitespace that aren't
+	       ;; covered in `c-identifier-key'.
+	       (goto-char (match-end 0))
+	       (c-forward-syntactic-ws)
+	       t)
+
+	      ((and (c-major-mode-is 'c++-mode)
+		    (eq (char-after) ?<))
+	       ;; Maybe a C++ template arglist.
+	       (when (c-forward-c++-template-arglist)
+		 ;; Continue if there's an identifier concatenation
+		 ;; operator after the template argument.
+		 (setq pos (point))
+		 (c-forward-syntactic-ws)
+		 (if (looking-at "::")
+		     (progn
+		       (when c-fontify-types-and-refs
+			 (c-fontify-reference id-start id-end))
+		       (forward-char 2)
+		       (c-forward-syntactic-ws)
+		       t)
+		   ;; `c-add-type' isn't called here since we don't
+		   ;; want to add types containing template
+		   ;; references.
+		   (when c-fontify-types-and-refs
+		     (c-fontify-type id-start id-end))
+		   (setq res 'template)
+		   nil)))
+	      )))))
+
+    (goto-char pos)
+    res))
+
+(defun c-forward-type ()
   ;; If the point is at the beginning of a type spec, move to the end
   ;; of it.  Return t if it is a known type, nil if it isn't (the
   ;; point isn't moved), 'prefix if it is a known prefix of a type,
   ;; 'found if it's a type that matches one in `c-found-types', or
   ;; 'maybe if it's an identfier that might be a type.  The point is
-  ;; assumed to be at the beginning of a token.  If USE-FONT-PROPERTY
-  ;; is non-nil then we use the 'font text property instead of some
-  ;; regexp matches, under the assumption that the font-lock package
-  ;; has fontified the nontype keywords.
+  ;; assumed to be at the beginning of a token.
   ;;
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
   ;; "enum {a, b, c} foo".
+  (let ((start (point)) pos res res2 id-start id-end)
 
-  (let* ((start (point))
-	 (res (cond
-	       ((and c-opt-complex-type-key
-		     (looking-at c-opt-complex-type-key))
-		;; It's a type, but it might also be a complex one if it's
-		;; followed by a parenthesis.  This only applies to Pike.
-		(goto-char (match-end 1))
-		(let ((end (point)))
-		  (c-forward-syntactic-ws)
-		  (unless (and (eq (char-after) ?\()
-			       (c-safe (c-forward-sexp 1) t))
-		    (goto-char end)))
-		t)
+    ;; Skip leading type modifiers.  If any are found we know it's a
+    ;; prefix of a type.
+    (when c-opt-type-modifier-key
+      (while (looking-at c-opt-type-modifier-key)
+	(goto-char (match-end 1))
+	(c-forward-syntactic-ws)
+	(setq res 'prefix)))
 
-	       ((looking-at c-type-prefix-key)
-		;; Looking at a keyword that prefixes a type
-		;; identifier, e.g. "class".
-		(goto-char (match-end 1))
-		(c-forward-syntactic-ws)
-		(if (looking-at c-symbol-key)
-		    (progn (goto-char (match-end 0))
-			   (c-add-type (buffer-substring-no-properties
-					(match-beginning 0) (match-end 0)))
-			   t)
-		  (goto-char start)
-		  nil))
+    (cond
+     ((and c-opt-complex-type-key
+	   (looking-at c-opt-complex-type-key))
+      ;; It's a type, but it might also be a complex one if it's
+      ;; followed by a parenthesis.  This only applies to Pike.
+      (setq pos (point))
+      (goto-char (match-end 1))
+      (let ((end (point)))
+	(c-forward-syntactic-ws)
+	(if (and (eq (char-after) ?\()
+		 (c-safe (c-forward-sexp 1) t))
+	    (setq end (point))
+	  (goto-char end))
+	(when c-fontify-types-and-refs
+	  ;; Fontify all the symbols within the complex type.
+	  (goto-char pos)
+	  (while (c-syntactic-re-search-forward c-symbol-key end 'move)
+	    (c-fontify-type (match-beginning 0) (match-end 0))
+	    (goto-char (match-end 0)))))
+      (setq res t))
 
-	       ((c-with-syntax-table c-identifier-syntax-table
-		  (looking-at c-known-type-key))
-		;; Looking at a known type identifier.
+     ((looking-at c-type-prefix-key)
+      ;; Looking at a keyword that prefixes a type identifier,
+      ;; e.g. "class".
+      (goto-char (match-end 1))
+      (c-forward-syntactic-ws)
+      (setq pos (point))
+      (if (memq (setq res2 (c-forward-name)) '(t template))
+	  (progn
+	    (when (eq res2 t)
+	      ;; In many languages the name can be used without the
+	      ;; prefix, so we add it to `c-found-types'.
+	      (c-add-type pos (point))
+	      (when c-fontify-types-and-refs
+		(c-fontify-type (save-excursion
+				  (c-simple-skip-symbol-backward)
+				  (point))
+				(point))))
+	    (setq res t))
+	;; Invalid syntax.
+	(goto-char start)
+	(setq res nil)))
 
-		(if (and c-primitive-type-prefix-key
-			 (save-match-data
-			   (looking-at c-primitive-type-prefix-key)))
-		    ;; There might be more keywords for the type.
-		    (let (pos)
-		      (goto-char (match-end 1))
-		      (while (progn
-			       (setq pos (point))
-			       (c-forward-syntactic-ws)
-			       (looking-at c-primitive-type-prefix-key))
-			(goto-char (match-end 1)))
-		      (if (looking-at c-primitive-type-key)
-			  (progn (goto-char (match-end 1))
-				 t)
-			(goto-char pos)
-			'prefix))
+     ((c-with-syntax-table c-identifier-syntax-table
+	(looking-at c-known-type-key))
+      ;; Looking at a known type identifier.
+      (when c-fontify-types-and-refs
+	(c-fontify-type (match-beginning 1) (match-end 1)))
+      (if (and c-opt-type-component-key
+	       (save-match-data
+		 (looking-at c-opt-type-component-key)))
+	  ;; There might be more keywords for the type.
+	  (let (pos)
+	    (goto-char (match-end 1))
+	    (while (progn
+		     (setq pos (point))
+		     (c-forward-syntactic-ws)
+		     (looking-at c-opt-type-component-key))
+	      (when c-fontify-types-and-refs
+		(c-fontify-type (match-beginning 1) (match-end 1)))
+	      (goto-char (match-end 1)))
+	    (if (looking-at c-primitive-type-key)
+		(progn
+		  (when c-fontify-types-and-refs
+		    (c-fontify-type (match-beginning 1) (match-end 1)))
 		  (goto-char (match-end 1))
-		  t))
+		  (setq res t))
+	      (goto-char pos)
+	      (setq res 'prefix)))
+	(goto-char (match-end 1))
+	(setq res t)))
 
-	       ((and (looking-at c-identifier-key)
-		     (if use-font-property
-			 (not (eq (get-text-property (point) 'face)
-				  'font-lock-keyword-face))
-		       (save-match-data
-			 (not (looking-at c-nontype-keywords-regexp)))))
-		(goto-char (match-end 0))
-		(if (c-check-type (match-string 0))
-		    ;; It's an identifier that has been used as a type
-		    ;; somewhere else.
-		    'found
-		  ;; It's an identifier that might be a type.
-		  'maybe)))))
+     ((and (looking-at c-identifier-start)
+	   (setq pos (point)
+		 res2 (c-forward-name)))
+      (cond ((eq res2 t)
+	     ;; A normal identifier.
+	     (if (or res c-promote-possible-types)
+		 (progn
+		   (c-add-type pos (point))
+		   (when c-fontify-types-and-refs
+		     (c-fontify-type (save-excursion
+				       (c-simple-skip-symbol-backward)
+				       (point))
+				     (point)))
+		   'found)
+	       (setq id-start pos
+		     id-end (point)
+		     res (if (c-check-type id-start id-end)
+			     ;; It's an identifier that has been used as
+			     ;; a type somewhere else.
+			     'found
+			   ;; It's an identifier that might be a type.
+			   'maybe))))
+	    ((eq res2 'template)
+	     ;; A template is a type.
+	     (setq res t))
+	    (t
+	     ;; Otherwise it's an operator identifier, which is not a type.
+	     (goto-char start)
+	     (setq res nil)))))
 
-    ;; Step over any type suffix operators.  Do not let the existence
-    ;; of these alter the classification of the found type, since
-    ;; these operators typically are allowed in normal expressions
-    ;; too.
-    (when (and c-opt-type-suffix-key res)
-      (let (pos)
+    (when res
+      ;; Skip trailing type modifiers.  If any are found we know it's
+      ;; a type.
+      (when c-opt-type-modifier-key
+	(while (progn
+		 (setq pos (point))
+		 (c-forward-syntactic-ws)
+		 (looking-at c-opt-type-modifier-key))
+	  (goto-char (match-end 1))
+	  (setq res t))
+	(goto-char pos))
+
+      ;; Step over any type suffix operator.  Do not let the existence
+      ;; of these alter the classification of the found type, since
+      ;; these operators typically are allowed in normal expressions
+      ;; too.
+      (when c-opt-type-suffix-key
 	(while (progn
 		 (setq pos (point))
 		 (c-forward-syntactic-ws)
 		 (looking-at c-opt-type-suffix-key))
 	  (goto-char (match-end 1)))
-	(goto-char pos)))
+	(goto-char pos))
 
-    (if (and c-opt-type-concat-key res)
-	;; Look for a trailing operator that concatenate the type with
-	;; a following one, and if so step past that one through a
-	;; recursive call.
-	(let ((pos (point)) res2)
-	  (c-forward-syntactic-ws)
-	  (if (and (looking-at c-opt-type-concat-key)
-		   (progn
-		     (goto-char (match-end 1))
-		     (c-forward-syntactic-ws)
-		     (setq res2 (c-forward-type))))
-	      ;; If either operand certainly is a type then both are,
-	      ;; but we don't let the existence of the operator itself
-	      ;; promote two uncertain types to a certain one.
-	      (cond ((eq res t) t)
-		    ((eq res2 t) t)
-		    ((eq res 'found) 'found)
-		    ((eq res2 'found) 'found)
-		    (t 'maybe))
-	    (goto-char pos)
-	    res))
-      res)))
+      (if c-opt-type-concat-key
+	  ;; Look for a trailing operator that concatenate the type with
+	  ;; a following one, and if so step past that one through a
+	  ;; recursive call.
+	  (progn
+	    (setq pos (point))
+	    (c-forward-syntactic-ws)
+	    (if (and (looking-at c-opt-type-concat-key)
+		     (progn
+		       (goto-char (match-end 1))
+		       (c-forward-syntactic-ws)
+		       (setq res2 (c-forward-type))))
+		;; If either operand certainly is a type then both are,
+		;; but we don't let the existence of the operator itself
+		;; promote two uncertain types to a more certain one.
+		(cond ((eq res t) t)
+		      ((eq res2 t)
+		       (c-add-type id-start id-end)
+		       (when c-fontify-types-and-refs
+			 (c-fontify-type (save-excursion
+					   (goto-char id-end)
+					   (c-simple-skip-symbol-backward)
+					   (point))
+					 id-end))
+		       t)
+		      ((eq res 'found) 'found)
+		      ((eq res2 'found) 'found)
+		      (t 'maybe))
+	      (goto-char pos)
+	      res))
+	res))))
 
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
@@ -2683,31 +3117,6 @@ brace."
 	(c-looking-at-inexpr-block (c-safe-position containing-sexp
 						    paren-state)
 				   containing-sexp)))))
-
-(defun c-on-identifier ()
-  "Return non-nil if the point is on or directly after an identifier.
-Keywords are recognized and not considered identifiers.  If an
-identifier is detected, the returned value is its starting position.
-If an identifier both starts and stops at the point \(can only happen
-in Pike) then the point for the preceding one is returned."
-
-  (save-excursion
-    (if (zerop (skip-syntax-backward "w_"))
-
-	(when (c-major-mode-is 'pike-mode)
-	  ;; Handle the `<operator> syntax in Pike.
-	  (let ((pos (point)))
-	    (skip-chars-backward "!%&*+\\-/<=>^|~")
-	    (and (if (eq (char-before) ?\`)
-		     (progn (backward-char) t)
-		   (goto-char pos)
-		   (eq (char-after) ?\`))
-		 (looking-at c-multichar-op-sym-token-regexp)
-		 (>= (match-end 0) pos)
-		 (point))))
-
-      (and (not (looking-at c-keywords-regexp))
-	   (point)))))
 
 
 (defun c-most-enclosing-brace (paren-state &optional bufpos)
