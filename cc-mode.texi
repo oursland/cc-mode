@@ -3894,6 +3894,27 @@ expressions for the operands.
 @item c-lineup-arglist
 Line up the current argument line under the first argument.
 
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+@code{c-basic-offset} only.  This is intended as a "DWIM" measure in
+cases like macros that contains statement blocks, e.g:
+@example
+@group
+
+A_VERY_LONG_MACRO_NAME ({
+        some (code, with + long, lines * in[it]);
+    });
+
+<--> c-basic-offset
+
+@end group
+@end example
+
+This is motivated partly because it's more in line with how code
+blocks are handled, and partly since it approximates the behavior of
+earlier CC Mode versions, which due to inaccurate analysis tended to
+indent such cases this way.
+
 @workswith @code{arglist-cont-nonempty}, @code{arglist-close}.
 
 @comment ------------------------------------------------------------
@@ -3918,6 +3939,11 @@ so that parentheses that close argument lists will line up under the
 parenthesis that opened the argument list.  It can also be used with
 @code{arglist-cont} and @code{arglist-cont-nonempty} to line up all
 lines inside a parenthesis under the open paren.
+
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+@code{c-basic-offset} only.  See @code{c-lineup-arglist} for further
+discussion of this "DWIM" measure.
 
 @workswith Almost all symbols, but are typically most useful on
 @code{arglist-close}, @code{arglist-cont} and @code{arglist-cont-nonempty}.
@@ -4058,6 +4084,11 @@ main (
 
 @end group
 @end example
+
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+@code{c-basic-offset} instead of the open paren column.  See
+@code{c-lineup-arglist} for further discussion of this "DWIM" measure.
 
 @workswith @code{defun-close}, @code{class-close}, @code{inline-close},
 @code{block-close}, @code{brace-list-close}, @code{arglist-close},
