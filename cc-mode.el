@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.143 $
-;; Last Modified:   $Date: 1993-12-27 15:57:05 $
+;; Version:         $Revision: 3.144 $
+;; Last Modified:   $Date: 1993-12-27 16:34:52 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-27 15:57:05 $|$Revision: 3.143 $|
+;; |$Date: 1993-12-27 16:34:52 $|$Revision: 3.144 $|
 
 ;;; Code:
 
@@ -605,6 +605,11 @@ The expansion is entirely correct because it uses the C preprocessor."
 
 
 ;; constant regular expressions for looking at various constructs
+(defconst c-symbol-key "\\(\\w\\|\\s_\\)+"
+  "Regexp describing a C/C++ symbol.
+We cannot use just `word' syntax class since `_' cannot be in word
+class.  Putting underscore in word class breaks forward word movement
+behavior that users are familiar with.")
 (defconst c-class-key
   (concat
    "\\(\\(extern\\|typedef\\)\\s +\\)?"
@@ -613,8 +618,8 @@ The expansion is entirely correct because it uses the C preprocessor."
   "Regexp describing a class declaration, including templates.")
 (defconst c-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
-	  c-class-key
-	  "[ \t]+\\s_\\([ \t]*:[ \t]*\\)?\\s *[^;]")
+	  c-class-key "[ \t]+" c-symbol-key
+	  "\\([ \t]*:[ \t]*\\)?\\s *[^;]")
   "Regexp describing a class inheritance declaration.")
 (defconst c-protection-key
   "\\<\\(public\\|protected\\|private\\)\\>"
@@ -622,17 +627,16 @@ The expansion is entirely correct because it uses the C preprocessor."
 (defconst c-baseclass-key
   (concat
    ":?[ \t]*\\(virtual[ \t]+\\)?\\("
-   c-protection-key
-   "[ \t]+\\)\\s_")
+   c-protection-key "[ \t]+\\)" c-symbol-key)
   "Regexp describing base classes in a derived class definition.")
 (defconst c-switch-label-key
-  "\\(\\(case[ \t]+\\(\\s_\\|[']\\|-?[0-9]+\\)+\\)\\|default\\)[ \t]*:"
+  "\\(\\(case[ \t]+\\(\\w\\|\\s_\\|[-']\\)+\\)\\|default\\)[ \t]*:"
   "Regexp describing a switch's case or default label")
 (defconst c-access-key
   (concat c-protection-key ":")
   "Regexp describing access specification keywords.")
 (defconst c-label-key
-  "\\s_:\\([^:]\\|$\\)"
+  (concat c-symbol-key ":\\([^:]\\|$\\)")
   "Regexp describing any label.")
 (defconst c-conditional-key
   "\\<\\(for\\|if\\|do\\|else\\|while\\)\\>"
@@ -642,7 +646,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.143 $
+CC-MODE REVISION: $Revision: 3.144 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -676,7 +680,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.143 $
+CC-MODE REVISION: $Revision: 3.144 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2921,7 +2925,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.143 $"
+(defconst c-version "$Revision: 3.144 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
