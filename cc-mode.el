@@ -491,6 +491,16 @@ CC Mode by making sure the proper entries are present on
 		   ;; A brain-damaged XEmacs only variable that, if
 		   ;; set to nil can cause all kinds of chaos.
 		   'signal-error-on-buffer-boundary
+		   ;; Variables that affect line breaking and comments.
+		   'auto-fill-mode
+		   'comment-multi-line
+		   'comment-start-skip
+		   'fill-prefix
+		   'paragraph-start
+		   'adaptive-fill-mode
+		   'adaptive-fill-regexp
+		   'c-comment-prefix-regexp
+		   'c-block-comment-prefix
 		   )))
 	(if (not (boundp 'defun-prompt-regexp))
 	    (delq 'defun-prompt-regexp vars)
