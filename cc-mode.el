@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.83 $
-;; Last Modified:   $Date: 1993-11-22 21:35:01 $
+;; Version:         $Revision: 3.84 $
+;; Last Modified:   $Date: 1993-11-22 21:55:32 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-22 21:35:01 $|$Revision: 3.83 $|
+;; |$Date: 1993-11-22 21:55:32 $|$Revision: 3.84 $|
 
 ;;; Code:
 
@@ -485,11 +485,14 @@ that users are familiar with.")
   "Regexp describing a switch's case or default label")
 (defconst cc-access-key "\\<\\(public\\|protected\\|private\\)\\>:"
   "Regexp describing access specification keywords.")
+(defconst cc-label-key
+  (concat cc-symbol-key ":\\([^:]\\|$\\)")
+  "Regexp describing any label.")
 
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.83 $
+  "Major mode for editing C++ code.  $Revision: 3.84 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -519,7 +522,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.83 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.84 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2069,7 +2072,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	  ;; should handle hanging switch opening braces correctly.
 	  (cc-add-semantics 'case-label (cc-point 'boi)))
 	 ;; CASE 11: any other label
-	 ((looking-at (concat cc-symbol-key ":[^:]"))
+	 ((looking-at cc-label-key)
 	  (goto-char containing-sexp)
 	  (cc-add-semantics 'label (cc-point 'boi)))
 	 ;; CASE 12: block close brace, possibly closing the defun or
@@ -2090,9 +2093,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	  (forward-char 1)
 	  (cc-forward-syntactic-ws indent-point)
 	  ;; we want to ignore labels when skipping forward
-	  (let ((ignore-re
-		 (concat cc-case-statement-key "\\|" cc-symbol-key ":[^:]"))
-		inswitch-p checkpnt)
+	  (let ((ignore-re (concat cc-case-statement-key "\\|" cc-label-key))
+		inswitch-p)
 	    (while (looking-at ignore-re)
 	      (if (looking-at cc-case-statement-key)
 		  (setq inswitch-p t))
@@ -2107,17 +2109,23 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 		     (goto-char indent-point)
 		     (cc-backward-syntactic-ws containing-sexp)
 		     (back-to-indentation)
-		     (setq checkpnt (point))
+		     (setq placeholder (point))
 		     (looking-at cc-case-statement-key)))
-	      (cc-add-semantics 'statement-case-intro checkpnt))
+	      (cc-add-semantics 'statement-case-intro placeholder))
 	     ;; CASE 13.B: an embedded block open
 	     ((= char-after-ip ?{)
 	      (cc-add-semantics 'block-open (cc-point 'boi)))
 	     ;; CASE 13.C: continued statement
 	     ((= char-before-ip ?,)
 	      (cc-add-semantics 'statement-cont (cc-point 'boi)))
-	     ;; CASE 13.D: a question/colon construct?
-	     ((or (memq char-before-ip '(?: ??))
+	     ;; CASE 13.D: a question/colon construct?  But make sure
+	     ;; what came before was not a label!
+	     ((or (and (memq char-before-ip '(?: ??))
+		       (save-excursion
+			 (goto-char indent-point)
+			 (cc-backward-syntactic-ws lim)
+			 (back-to-indentation)
+			 (not (looking-at cc-label-key))))
 		  (memq char-after-ip '(?: ??)))
 	      (cc-add-semantics 'statement-cont (cc-point 'boi)))
 	     ;; CASE 13.E: any old statement
@@ -2374,7 +2382,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.83 $"
+(defconst cc-version "$Revision: 3.84 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
