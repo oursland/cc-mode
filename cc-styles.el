@@ -28,10 +28,7 @@
 ;; Boston, MA 02111-1307, USA.
 
 (eval-when-compile
-  (require 'cc-mode)			;for c-safe
-  (require 'cc-vars)			;for calculating "cc-mode" style
-  (require 'cc-align)			;for lineup functions
-  )
+  (load-file "./cc-align.el"))
 
 
 (defconst c-style-alist
