@@ -28,10 +28,8 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-
 ;; Get all the necessary compile time definitions.
 (require 'custom)
-(require 'cc-menus)
 (require 'derived)			;only necessary in Emacs 20
 
 ;; cc-mode-19.el contains compatibility macros that should be compiled
@@ -48,7 +46,7 @@
     (require 'cc-mode-19))
 
 
-(defsubst c-point (position)
+(defmacro c-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
   ;; POSITION can be one of the following symbols:
   ;; 
@@ -63,23 +61,73 @@
   ;; bopl -- beginning of previous line
   ;; 
   ;; This function does not modify point or mark.
-  (let ((here (point)))
-    (cond
-     ((eq position 'bol)  (beginning-of-line))
-     ((eq position 'eol)  (end-of-line))
-     ((eq position 'boi)  (back-to-indentation))
-     ((eq position 'bonl) (forward-line 1))
-     ((eq position 'bopl) (forward-line -1))
-     ((eq position 'iopl)
-      (forward-line -1)
-      (back-to-indentation))
-     ((eq position 'ionl)
-      (forward-line 1)
-      (back-to-indentation))
-     ((eq position 'eod)  (c-end-of-defun))
-     ((eq position 'bod)
-      (if (and (fboundp 'buffer-syntactic-context-depth)
-	       c-enable-xemacs-performance-kludge-p)
+  `(save-excursion
+     ,(if (and (eq (car-safe position) 'quote)
+	       (symbolp (eval position)))
+	  (let ((position (eval position)))
+	    (cond
+	     ((eq position 'bol)  `(beginning-of-line))
+	     ((eq position 'eol)  `(end-of-line))
+	     ((eq position 'boi)  `(back-to-indentation))
+	     ((eq position 'bonl) `(forward-line 1))
+	     ((eq position 'bopl) `(forward-line -1))
+	     ((eq position 'bod)  `(c-beginning-of-defun-1))
+	     ((eq position 'eod)  `(c-end-of-defun-1))
+	     ((eq position 'iopl) `(progn
+				     (forward-line -1)
+				     (back-to-indentation)))
+	     ((eq position 'ionl) `(progn
+				     (forward-line 1)
+				     (back-to-indentation)))
+	     (t (error "unknown buffer position requested: %s" position))))
+	;;(message "c-point long expansion")
+	`(let ((position ,position))
+	   (cond
+	    ((eq position 'bol)  (beginning-of-line))
+	    ((eq position 'eol)  (end-of-line))
+	    ((eq position 'boi)  (back-to-indentation))
+	    ((eq position 'bonl) (forward-line 1))
+	    ((eq position 'bopl) (forward-line -1))
+	    ((eq position 'bod)  (c-beginning-of-defun-1))
+	    ((eq position 'eod)  (c-end-of-defun-1))
+	    ((eq position 'iopl) (progn
+				   (forward-line -1)
+				   (back-to-indentation)))
+	    ((eq position 'ionl) (progn
+				   (forward-line 1)
+				   (back-to-indentation)))
+	    (t (error "unknown buffer position requested: %s" position)))))
+     (point)))
+
+
+(defmacro c-safe (&rest body)
+  ;; safely execute BODY, return nil if an error occurred
+  (` (condition-case nil
+	 (progn (,@ body))
+       (error nil))))
+
+(defmacro c-if-boundp (sym then &rest else)
+  ;; Expands to THEN iff SYM is a symbol bound to a variable, to ELSE
+  ;; otherwise.  Note that the check is done at compile time.
+  (if (boundp sym) then `(progn ,@else)))
+(put 'c-if-boundp 'lisp-indent-function 2)
+
+(defmacro c-if-fboundp (sym then &rest else)
+  ;; Expands to THEN iff SYM is a symbol bound to a function, to ELSE
+  ;; otherwise.  Note that the check is done at compile time.
+  (if (fboundp sym) then `(progn ,@else)))
+(put 'c-if-fboundp 'lisp-indent-function 2)
+
+(defsubst c-beginning-of-defun-1 ()
+  ;; Wrapper around beginning-of-defun.
+  ;;
+  ;; NOTE: This function should contain the only explicit use of
+  ;; beginning-of-defun in CC Mode.  Eventually something better than
+  ;; b-o-d will be available and this should be the only place the
+  ;; code needs to change.  Everything else should use
+  ;; (c-beginning-of-defun-1)
+  (c-if-fboundp buffer-syntactic-context-depth
+      (if c-enable-xemacs-performance-kludge-p
 	  ;; XEmacs only.  This can improve the performance of
 	  ;; c-parse-state to between 3 and 60 times faster when
 	  ;; braces are hung.  It can also degrade performance by
@@ -107,32 +155,24 @@
 		(setq pos nil))
 	       ))
 	    (goto-char pos))
-	;; Emacs, which doesn't have buffer-syntactic-context-depth
-	;;
-	;; NOTE: This should be the only explicit use of
-	;; beginning-of-defun in CC Mode.  Eventually something better
-	;; than b-o-d will be available and this should be the only
-	;; place the code needs to change.  Everything else should use
-	;; (goto-char (c-point 'bod))
-	(beginning-of-defun)
-	;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at
-	;; the open brace.
-	(and defun-prompt-regexp
-	     (looking-at defun-prompt-regexp)
-	     (goto-char (match-end 0)))
-	))
-     (t (error "unknown buffer position requested: %s" position))
-     )
-    (prog1
-	(point)
-      (goto-char here))))
+	(beginning-of-defun))
+    ;; Emacs, which doesn't have buffer-syntactic-context-depth
+    (beginning-of-defun))
+  ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
+  ;; open brace.
+  (and defun-prompt-regexp
+       (looking-at defun-prompt-regexp)
+       (goto-char (match-end 0))))
 
-
-(defmacro c-safe (&rest body)
-  ;; safely execute BODY, return nil if an error occurred
-  (` (condition-case nil
-	 (progn (,@ body))
-       (error nil))))
+(defsubst c-end-of-defun-1 ()
+  ;; Replacement for end-of-defun that use c-beginning-of-defun-1.
+  (while (and (c-safe (down-list 1) t)
+	      (not (eq (char-before) ?{)))
+    ;; skip down into the next defun-block
+    (forward-char -1)
+    (c-forward-sexp))
+  (c-beginning-of-defun-1)
+  (c-forward-sexp))
 
 (defmacro c-forward-sexp (&optional arg)
   ;; like forward-sexp except
@@ -152,17 +192,47 @@
   (or arg (setq arg 1))
   `(c-forward-sexp ,(if (numberp arg) (- arg) `(- ,arg))))
 
+(defsubst c-beginning-of-macro (&optional lim)
+  ;; Go to the beginning of a cpp macro definition.  Leaves point at
+  ;; the beginning of the macro and returns t if in a cpp macro
+  ;; definition, otherwise returns nil and leaves point unchanged.
+  ;; `lim' is currently ignored, but the interface requires it.
+  (let ((here (point)))
+    (beginning-of-line)
+    (while (eq (char-before (1- (point))) ?\\)
+      (forward-line -1))
+    (back-to-indentation)
+    (if (eq (char-after) ?#)
+	t
+      (goto-char here)
+      nil)))
+
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
   ;; try to increase performance by using this macro
   (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
 
-(defsubst c-auto-newline ()
+(defmacro c-add-class-syntax (symbol classkey)
+  ;; The inclass and class-close syntactic symbols are added in
+  ;; several places and some work is needed to fix everything.
+  ;; Therefore it's collected here.
+  `(save-restriction
+     (widen)
+     (let ((symbol ,symbol)
+	   (classkey ,classkey))
+       (goto-char (aref classkey 1))
+       (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
+	   (c-add-syntax symbol (point))
+	 (c-add-syntax symbol (aref classkey 0))
+	 (if (and c-inexpr-class-key (c-looking-at-inexpr-block))
+	     (c-add-syntax 'inexpr-class))))))
+
+(defmacro c-auto-newline ()
   ;; if auto-newline feature is turned on, insert a newline character
   ;; and return t, otherwise return nil.
-  (and c-auto-newline
-       (not (c-in-literal))
-       (not (newline))))
+  `(and c-auto-newline
+	(not (c-in-literal))
+	(not (newline))))
 
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
@@ -188,33 +258,34 @@
 	  (goto-char here))
       )))
 
-(defsubst c-update-modeline ()
+(defmacro c-update-modeline ()
   ;; set the c-auto-hungry-string for the correct designation on the modeline
-  (setq c-auto-hungry-string
-	(if c-auto-newline
-	    (if c-hungry-delete-key "/ah" "/a")
-	  (if c-hungry-delete-key "/h" nil)))
-  (force-mode-line-update))
+  `(progn
+     (setq c-auto-hungry-string
+	   (if c-auto-newline
+	       (if c-hungry-delete-key "/ah" "/a")
+	     (if c-hungry-delete-key "/h" nil)))
+     (force-mode-line-update)))
 
 (defsubst c-keep-region-active ()
   ;; Do whatever is necessary to keep the region active in XEmacs.
   ;; Ignore byte-compiler warnings you might see.  This is not needed
   ;; for Emacs.
-  (and (boundp 'zmacs-region-stays)
-       (setq zmacs-region-stays t)))
+  (c-if-boundp zmacs-region-stays
+      (setq zmacs-region-stays t)))
 
 (defsubst c-region-is-active-p ()
   ;; Return t when the region is active.  The determination of region
   ;; activeness is different in both Emacs and XEmacs.
-  (cond
-   ;; XEmacs
-   ((and (fboundp 'region-active-p)
-	 zmacs-regions)
-    (region-active-p))
-   ;; Emacs
-   ((boundp 'mark-active) mark-active)
-   ;; fallback; shouldn't get here
-   (t (mark t))))
+  (c-if-fboundp region-active-p
+      ;; XEmacs
+      (and zmacs-regions
+	   (region-active-p))
+    ;; Emacs
+    (c-if-boundp mark-active
+	`mark-active
+      ;; fallback; shouldn't get here
+      (mark t))))
 
 (defsubst c-major-mode-is (mode)
   (eq (derived-mode-class major-mode) mode))
