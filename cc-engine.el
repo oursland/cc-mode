@@ -1281,8 +1281,9 @@ brace."
 			       ;; Check for `<opchar>= in Pike.
 			       ((and (c-major-mode-is 'pike-mode)
 				     (or (eq (char-after) ?`)
-					 ;; Special case for Pikes `[]=, since
-					 ;; '[' is not in the punctuation class.
+					 ;; Special case for Pikes
+					 ;; `[]=, since '[' is not in
+					 ;; the punctuation class.
 					 (and (eq (char-after) ?\[)
 					      (eq (char-before) ?`))))
 				nil)
@@ -1293,7 +1294,7 @@ brace."
 				     (save-excursion
 				       (let ((here (point))
 					     (pos< (progn
-						     (skip-chars-backward "^<")
+						     (skip-chars-backward "^<>")
 						     (point))))
 					 (and (eq (char-before) ?<)
 					      (not (c-crosses-statement-barrier-p
