@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.346 $
-;; Last Modified:   $Date: 1994-05-18 22:07:15 $
+;; Version:         $Revision: 3.347 $
+;; Last Modified:   $Date: 1994-05-19 22:27:55 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-18 22:07:15 $|$Revision: 3.346 $|
+;; |$Date: 1994-05-19 22:27:55 $|$Revision: 3.347 $|
 
 ;;; Code:
 
@@ -374,7 +374,7 @@ Only currently supported behavior is `alignleft'.")
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . 5)
-			 (substatement-open . 0)
+			 (substatement-open . +)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -384,7 +384,7 @@ Only currently supported behavior is `alignleft'.")
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . 0)
-			 (substatement-open . -)
+			 (substatement-open . 0)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -394,7 +394,7 @@ Only currently supported behavior is `alignleft'.")
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . +)
-			 (substatement-open . -)
+			 (substatement-open . 0)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -403,7 +403,7 @@ Only currently supported behavior is `alignleft'.")
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
-			 (substatement-open . -)
+			 (substatement-open . 0)
 			 (label . -)
 			 (statement-cont . +)
 			 ))
@@ -450,6 +450,30 @@ case, the VALUE is a list containing elements of the form:
 as described in `c-offsets-alist'.  These are passed directly to
 `c-set-offset' so there is no need to set every syntactic symbol in
 your style, only those that are different from the default.")
+
+;; dynamically append the default value of most variables
+(or (assoc "Default" c-style-alist)
+    (let* ((varlist '(c-inhibit-startup-warnings-p
+		      c-strict-semantics-p
+		      c-echo-semantic-information-p
+		      c-basic-offset
+		      c-offsets-alist
+		      c-tab-always-indent
+		      c-comment-only-line-offset
+		      c-block-comments-indent-p
+		      c-cleanup-list
+		      c-hanging-braces-alist
+		      c-hanging-colons-alist
+		      c-backslash-column
+		      c-electric-pound-behavior))
+	   (default (cons "Default"
+			  (mapcar
+			   (function
+			    (lambda (var)
+			      (cons var (symbol-value var))
+			      ))
+			   varlist))))
+      (setq c-style-alist (cons default c-style-alist))))
 
 (defvar c-mode-hook nil
   "*Hook called by `c-mode'.")
@@ -810,7 +834,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.346 $
+cc-mode Revision: $Revision: 3.347 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -843,7 +867,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.346 $
+cc-mode Revision: $Revision: 3.347 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3558,7 +3582,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.346 $"
+(defconst c-version "$Revision: 3.347 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
