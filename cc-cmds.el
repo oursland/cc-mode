@@ -1111,9 +1111,10 @@ sentence motion in or near comments and multiline strings."
 	  (save-excursion
 	    ;; Find the comment next to point if we're not in one.
 	    (if (> count 0)
-		(if (c-forward-comment -1)
+		(if (c-forward-comment-lc -1)
 		    (setq range (cons (point)
-				      (progn (c-forward-comment 1) (point))))
+				      (progn (c-forward-comment-lc 1)
+					     (point))))
 		  (c-skip-ws-backward)
 		  (setq range (point))
 		  (setq range
@@ -1127,7 +1128,7 @@ sentence motion in or near comments and multiline strings."
 				      (c-forward-sexp 1)
 				      (point))))
 		(setq range (point))
-		(setq range (if (c-forward-comment 1)
+		(setq range (if (c-forward-comment-lc 1)
 				(cons range (point))
 			      nil))))
 	    (setq range (c-collect-line-comments range))))
@@ -1278,13 +1279,13 @@ sentence motion in or near comments and multiline strings."
 		      ;; style comment. /mast
 		      ;;(c-skip-ws-backward)
 		      (if literal-pos
-			  (c-forward-comment large-enough)
-			(when (c-forward-comment -1)
+			  (c-forward-comment-lc large-enough)
+			(when (c-forward-comment-lc -1)
 			  ;; Record position of first comment.
 			  (save-excursion
-			    (c-forward-comment 1)
+			    (c-forward-comment-lc 1)
 			    (setq literal-pos (point)))
-			  (c-forward-comment large-enough)))
+			  (c-forward-comment-lc large-enough)))
 		      (unless last-below-line
 			(if (save-excursion
 			      (re-search-forward "\\(^\\|[^\\]\\)$" last t))
@@ -1342,13 +1343,13 @@ sentence motion in or near comments and multiline strings."
 		  (while t
 		    (setq last (point))
 		    (if literal-pos
-			(c-forward-comment large-enough)
+			(c-forward-comment-lc large-enough)
 		      (if (progn
 			    (c-skip-ws-forward)
 			    ;; Record position of first comment.
 			    (setq literal-pos (point))
-			    (c-forward-comment 1))
-			  (c-forward-comment large-enough)
+			    (c-forward-comment-lc 1))
+			  (c-forward-comment-lc large-enough)
 			(setq literal-pos nil)))
 		    (cond ((and (eq (char-after) ?{)
 				(not (and c-special-brace-lists
