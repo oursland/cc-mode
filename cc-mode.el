@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.84 $
-;; Last Modified:   $Date: 1994-09-08 14:19:15 $
+;; Version:         $Revision: 4.85 $
+;; Last Modified:   $Date: 1994-09-08 14:27:45 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -34,16 +34,18 @@
 ;; Objective-C code. It is intended to be a replacement for c-mode.el
 ;; (a.k.a. BOCM -- Boring Old C-Mode), and c++-mode.el, both of which
 ;; are ancestors of this file.  A number of important improvements
-;; have been made, briefly: complete K&R C, ANSI C, and C++ support
-;; with consistent indentation across all modes, more intuitive
-;; indentation controlling variables, compatibility across all known
-;; Emacsen, nice new features, and tons of bug fixes.  This package is
-;; called "cc-mode" to distinguish it from its ancestors, but there
-;; really is no top-level cc-mode.
+;; have been made, briefly: complete K&R C, ANSI C, `ARM' C++, and
+;; Objective-C support with consistent indentation across all modes,
+;; more intuitive indentation controlling variables, compatibility
+;; across all known Emacsen, nice new features, and tons of bug fixes.
+;; This package is called "cc-mode" to distinguish it from its
+;; ancestors, but there really is no top-level cc-mode.
 
-;; Details on how to use cc-mode will soon be contained in an
-;; accompanying texinfo manual.  Volunteers to help finish this
-;; manual would be greatly appreciated!
+;; Details on how to use cc-mode will some day be contained in an
+;; accompanying texinfo manual.  Volunteers to help finish this manual
+;; would be greatly appreciated!  Contact me at the address above if
+;; you'd like to volunteer. Until the manual is finished, an
+;; accompanying README is the only documentation available.
 
 ;; To submit bug reports, hit "C-c C-b", and please try to include a
 ;; code sample and exact recipe so I can reproduce your problem.  If
@@ -99,7 +101,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-09-08 14:19:15 $|$Revision: 4.84 $|
+;; |$Date: 1994-09-08 14:27:45 $|$Revision: 4.85 $|
 
 ;;; Code:
 
@@ -967,7 +969,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.84 $
+cc-mode Revision: $Revision: 4.85 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1006,7 +1008,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.84 $
+cc-mode Revision: $Revision: 4.85 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1043,7 +1045,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.84 $
+cc-mode Revision: $Revision: 4.85 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -4114,7 +4116,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.84 $"
+(defconst c-version "$Revision: 4.85 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
