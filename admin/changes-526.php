@@ -60,7 +60,7 @@ release.
   <ul>
 
     <p><li><code>c-offsets-alist</code> is now a customizable
-    variable.  This became possible as a result of this new
+    variable.  This became possible as a result of the new
     initialization behavior.
 
     <p>This variable is treated slightly differently from the other
