@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 """ChangeLog updater.  X/Emacs's rcs2log is just f*cking broken.
 
 Rather than try to fix the brokenness in rcs2log and vc-update-change-log,
