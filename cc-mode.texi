@@ -1564,6 +1564,16 @@ symbols correspond to:
 
 @end table
 
+@vindex c-strict-syntax-p
+@vindex strict-syntax-p (c-)
+The offset can also be a list, in which case it is evaluated recursively
+using the semantics described above.  The first element of the list that
+returns a non-@code{nil} value succeeds and the evaluation stops.  If
+none of the list elements return a non-@code{nil} value, then what
+happens depends on the value of @code{c-strict-syntax-p}.  When
+@code{c-strict-syntax-p} is @code{nil}, then an offset of 0 (zero) is
+used, otherwise @ccmode{} issues an error.
+
 @vindex c-style-variables-are-local-p
 @vindex style-variables-are-local-p (c-)
 @noindent
