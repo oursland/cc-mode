@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.276 $
-;; Last Modified:   $Date: 1994-03-09 17:41:55 $
+;; Version:         $Revision: 3.277 $
+;; Last Modified:   $Date: 1994-03-10 23:32:37 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-09 17:41:55 $|$Revision: 3.276 $|
+;; |$Date: 1994-03-10 23:32:37 $|$Revision: 3.277 $|
 
 ;;; Code:
 
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.276 $
+cc-mode Revision: $Revision: 3.277 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.276 $
+cc-mode Revision: $Revision: 3.277 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1752,20 +1752,20 @@ search."
 
 (defun c-beginning-of-statement-1 ()
   (let ((last-begin (point))
+	in-literal
 	(first t))
     (condition-case ()
 	(progn
-	  (while (and (progn (c-backward-syntactic-ws) t)
-		      (not (bobp))
+	  (while (and (not (bobp))
 		      (progn
 			(backward-sexp 1)
 			(or first
 			    (not (re-search-forward "[;{}]" last-begin t))
 			    ))
-		      (not (or (c-in-literal)
+		      (not (or (setq in-literal (c-in-literal))
 			       (looking-at c-conditional-key)))
 		      )
-	    (if (and (not (c-in-literal))
+	    (if (and (not in-literal)
 		     (not (looking-at c-switch-label-key))
 		     (not (looking-at c-label-key)))
 		(setq last-begin (point)
@@ -3260,7 +3260,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.276 $"
+(defconst c-version "$Revision: 3.277 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
