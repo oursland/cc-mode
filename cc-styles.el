@@ -390,35 +390,24 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 			  "or [+,-,++,--,*,/] "
 			  defstr))
 	 (prompt (concat symname " offset " defstr))
-	 offset input interned raw)
+	 (keymap (make-sparse-keymap))
+	 (minibuffer-completion-table obarray)
+	 (minibuffer-completion-predicate 'fboundp)
+	 offset input)
+    ;; In principle completing-read is used here, but SPC is unbound
+    ;; to make it less annoying to enter lists.
+    (set-keymap-parent keymap minibuffer-local-completion-map)
+    (define-key keymap " " 'self-insert-command)
     (while (not offset)
-      (setq input (completing-read prompt obarray 'fboundp nil nil
-				   'c-read-offset-history)
-	    offset (cond ((string-equal "" input) oldoff)  ; default
-			 ((string-equal "+" input) '+)
-			 ((string-equal "-" input) '-)
-			 ((string-equal "++" input) '++)
-			 ((string-equal "--" input) '--)
-			 ((string-equal "*" input) '*)
-			 ((string-equal "/" input) '/)
-			 ((string-match "^-?[0-9]+$" input)
-			  (string-to-int input))
-			 ;; a symbol with a function binding
-			 ((fboundp (setq interned (intern input)))
-			  interned)
-			 ;; a symbol with variable binding
-			 ((boundp interned) interned)
-			 ;; a lambda function or a vector
-			 ((progn
-			    (c-safe (setq raw (read input)))
-			    (or (functionp raw)
-				(vectorp raw)))
-			  raw)
-			 ;; error, but don't signal one, keep trying
-			 ;; to read an input value
-			 (t (ding)
-			    (setq prompt errmsg)
-			    nil))))
+      (setq input (read-from-minibuffer prompt nil keymap t
+					'c-read-offset-history
+					(format "%s" oldoff)))
+      (if (c-valid-offset input)
+	  (setq offset input)
+	;; error, but don't signal one, keep trying
+	;; to read an input value
+	(ding)
+	(setq prompt errmsg)))
     offset))
 
 ;;;###autoload
