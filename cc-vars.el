@@ -1530,39 +1530,6 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 	;; I've no idea what this actually is, but it's legacy. /mast
 	(setq list (cons 'infodock list)))
 
-    (let ((buf (generate-new-buffer "test"))
-	  (parse-sexp-lookup-properties t)
-	  (lookup-syntax-properties t))
-      (save-excursion
-	(set-buffer buf)
-	(set-syntax-table (make-syntax-table))
-
-	;; Find out if the `syntax-table' text property works.
-	(modify-syntax-entry ?< ".")
-	(modify-syntax-entry ?> ".")
-	(insert "<()>")
-	(c-mark-<-as-paren 1)
-	(c-mark->-as-paren 4)
-	(goto-char 1)
-	(c-forward-sexp)
-	(if (= (point) 5)
-	    (setq list (cons 'syntax-properties list)))
-
-	;; Find out if generic comment delimiters work.
-	(c-safe
-	  (modify-syntax-entry ?x "!")
-	  (if (string-match "\\s!" "x")
-	      (setq list (cons 'gen-comment-delim list))))
-
-	;; Find out if generic string delimiters work.
-	(c-safe
-	  (modify-syntax-entry ?x "|")
-	  (if (string-match "\\s|" "x")
-	      (setq list (cons 'gen-string-delim list))))
-
-	(set-buffer-modified-p nil))
-      (kill-buffer buf))
-
     ;; XEmacs 19 and beyond use 8-bit modify-syntax-entry flags.
     ;; Emacs 19 uses a 1-bit flag.  We will have to set up our
     ;; syntax tables differently to handle this.
@@ -1587,6 +1554,72 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 			   '8-bit
 			 '1-bit)
 		       list)))
+
+    (let ((buf (generate-new-buffer "test"))
+	  parse-sexp-lookup-properties
+	  parse-sexp-ignore-comments
+	  lookup-syntax-properties)
+      (save-excursion
+	(set-buffer buf)
+	(set-syntax-table (make-syntax-table))
+
+	;; For some reason we have to set some of these after the
+	;; buffer has been made current.  (Specifically,
+	;; `parse-sexp-ignore-comments' in Emacs 21.)
+	(setq parse-sexp-lookup-properties t
+	      parse-sexp-ignore-comments t
+	      lookup-syntax-properties t)
+
+	;; Find out if the `syntax-table' text property works.
+	(modify-syntax-entry ?< ".")
+	(modify-syntax-entry ?> ".")
+	(insert "<()>")
+	(c-mark-<-as-paren 1)
+	(c-mark->-as-paren 4)
+	(goto-char 1)
+	(c-forward-sexp)
+	(if (= (point) 5)
+	    (setq list (cons 'syntax-properties list)))
+
+	;; Find out if generic comment delimiters work.
+	(c-safe
+	  (modify-syntax-entry ?x "!")
+	  (if (string-match "\\s!" "x")
+	      (setq list (cons 'gen-comment-delim list))))
+
+	;; Find out if generic string delimiters work.
+	(c-safe
+	  (modify-syntax-entry ?x "|")
+	  (if (string-match "\\s|" "x")
+	      (setq list (cons 'gen-string-delim list))))
+
+	;; See if `open-paren-in-column-0-is-defun-start' exists and
+	;; isn't buggy.
+	(when (boundp 'open-paren-in-column-0-is-defun-start)
+	  (let ((table (make-syntax-table))
+		(open-paren-in-column-0-is-defun-start nil)
+		(parse-sexp-ignore-comments t))
+	    (set-syntax-table (make-syntax-table))
+	    (modify-syntax-entry ?\' "\"")
+	    (cond
+	     ;; XEmacs.  Afaik this is currently an Emacs-only
+	     ;; feature, but it's good to be prepared.
+	     ((memq '8-bit list)
+	      (modify-syntax-entry ?/ ". 1456")
+	      (modify-syntax-entry ?* ". 23"))
+	     ;; Emacs
+	     ((memq '1-bit list)
+	      (modify-syntax-entry ?/ ". 124b")
+	      (modify-syntax-entry ?* ". 23")))
+	    (modify-syntax-entry ?\n "> b")
+	    (insert "/* '\n   () */")
+	    (backward-sexp)
+	    (if (bobp)
+		(setq list (cons 'col-0-paren list))))
+	  (kill-buffer buf))
+
+	(set-buffer-modified-p nil))
+      (kill-buffer buf))
 
     ;; See if `parse-partial-sexp' returns the eighth element.
     (when (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
@@ -1614,6 +1647,8 @@ might be present:
 		    elements, i.e. it contains the position of the
 		    start of the last comment or string.
 'posix-char-classes The regexp engine understands POSIX character classes.
+'col-0-paren        It's possible to turn off the ad-hoc rule that a paren
+		    in column zero is the start of a defun.
 'infodock           This is Infodock (based on XEmacs).
 
 '8-bit and '1-bit are mutually exclusive.")
