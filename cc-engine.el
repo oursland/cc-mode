@@ -7960,12 +7960,15 @@ comment at the start of cc-engine.el for more info."
 	   ((memq char-before-ip '(?\( ?\[))
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
-	    (when (and (c-safe (backward-up-list 1) t)
-		       (>= (point) placeholder))
-	      (forward-char)
-	      (skip-chars-forward " \t")
-	      (setq placeholder (point)))
-	    (c-add-syntax 'arglist-intro placeholder))
+	    (if (and (c-safe (backward-up-list 1) t)
+		     (>= (point) placeholder))
+		(progn
+		  (forward-char)
+		  (skip-chars-forward " \t"))
+	      (goto-char placeholder))
+	    (c-add-stmt-syntax 'arglist-intro (list containing-sexp) t
+			       (c-most-enclosing-brace paren-state (point))
+			       paren-state))
 
 	   ;; CASE 7D: we are inside a conditional test clause. treat
 	   ;; these things as statements
