@@ -149,24 +149,35 @@ other packages for that.
 
 Configuration Strategies
 
-* Hooks::
-* Styles::
+* Hooks::                       
+* Styles::                      
+
+Styles
+
+* Built-in Styles::
+* Choosing a Style::
+* Adding Styles::
+* File Styles::
 
 Indentation Engine
 
-* Syntactic Analysis::
-* Indentation Calculation::
+* Syntactic Analysis::          
+* Syntactic Symbols::           
+* Indentation Calculation::     
+* Customizing Indentation::     
+
+Customizing Indentation
+
+* Interactive Customization::   
+* Permanent Customization::     
+* Line-Up Functions::           
+* Custom Line-Up Functions::    
+* Other Special Indentations::  
 
 Minor Modes
 
 * Auto-newline Insertion::
 * Hungry-deletion of Whitespace::
-
-Font Locking
-
-* Font Locking Preliminaries::
-* Faces::
-* Documentation Comments::
 
 Auto-newline Insertion
 
@@ -176,42 +187,31 @@ Auto-newline Insertion
 * Other Electric Commands::
 * Clean-ups::
 
+Font Locking
+
+* Font Locking Preliminaries::
+* Faces::
+* Documentation Comments::
+
 Commands
 
 * Indentation Commands::
 * Movement Commands::
 * Other Commands::
 
-Customizing Indentation
-
-* Interactive Customization::
-* Permanent Customization::
-* Line-Up Functions::
-* Custom Line-Up Functions::
-* Other Special Indentations::
-
-Styles
-
-* Built-in Styles::
-* Choosing a Style::
-* Adding Styles::
-* File Styles::
-
 Advanced Customizations
 
-* Custom Line-Up Functions::
-* Custom Brace and Colon Hanging::
-* Customizing Semicolons and Commas::
-* Other Special Indentations::
+* Custom Brace and Colon Hanging::  
+* Customizing Semicolons and Commas::  
 
-AWK Mode
+Status of AWK Mode
 
 * Initialising AWK Mode::
 * AWK Mode Font Locking::
 * AWK Mode Defuns::
+
 @end detailmenu
 @end menu
-
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Introduction, Getting Connected, Top, Top
