@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.54 $
-;; Last Modified:   $Date: 1993-11-17 17:20:16 $
+;; Version:         $Revision: 3.55 $
+;; Last Modified:   $Date: 1993-11-17 17:36:08 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-17 17:20:16 $|$Revision: 3.54 $|
+;; |$Date: 1993-11-17 17:36:08 $|$Revision: 3.55 $|
 
 ;;; Code:
 
@@ -431,7 +431,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.54 $
+  "Major mode for editing C++ code.  $Revision: 3.55 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -462,7 +462,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.54 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.55 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -976,7 +976,8 @@ See also the variable `cc-untame-characters'."
 		 (/= (preceding-char) ?\\ ))
 	    (insert-char  ?\\ 1))
 	(if (not (eobp))
-	    (forward-char 1))))))
+	    (forward-char 1)))))
+  (cc-keep-region-active))
 
 
 ;; commands to indent a line and a balanced expression
@@ -1030,7 +1031,8 @@ of the expression are preserved."
 	(if (cc-in-literal bod)
 	    (insert-tab))
 	(cc-indent-via-language-element bod)
-	)))))
+	))))
+  (cc-keep-region-active))
 
 (defun c++-indent-exp ()
   "Indent each line of the C++ grouping following point."
@@ -1764,7 +1766,6 @@ of the expression are preserved."
 (defun cc-guess-basic-semantics (&optional lim)
   ;; guess the semantic description of the current line of C++ code.
   ;; Optional LIM is the farthest back we should search
-  (interactive)
   (save-excursion
     (beginning-of-line)
     (let ((indent-point (point))
@@ -2292,7 +2293,8 @@ inserting `comment-start' in front of each line."
 	(insert comment-start)
 	(forward-line 1))
       (if (eq major-mode 'cc-c-mode)
-	  (insert comment-end)))))
+	  (insert comment-end))))
+  (cc-keep-region-active))
 
 (defun cc-uncomment-region (beg end)
   "Uncomment all lines in region between mark and current point by deleting
@@ -2313,12 +2315,13 @@ the leading `// ' from each line, if any."
 	(while (not (eobp))
 	  (if (looking-at comment-regexp)
 	      (delete-region (match-beginning 0) (match-end 0)))
-	  (forward-line 1))))))
+	  (forward-line 1)))))
+  (cc-keep-region-active))
 
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.54 $"
+(defconst cc-version "$Revision: 3.55 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -2326,7 +2329,8 @@ the leading `// ' from each line, if any."
 (defun cc-version ()
   "Echo the current version of CC-Mode in the minibuffer."
   (interactive)
-  (message "Using CC-Mode version %s" cc-version))
+  (message "Using CC-Mode version %s" cc-version)
+  (cc-keep-region-active))
 
 (defun cc-submit-bug-report ()
   "Submit via mail a bug report on cc-mode."
@@ -2369,10 +2373,9 @@ the leading `// ' from each line, if any."
 		    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
 	  "\n")
 	)))
-    )))
+    ))
+  (cc-keep-region-active))
 
 
-;; this is sometimes useful
 (provide 'cc-mode)
-
 ;;; cc-mode.el ends here
