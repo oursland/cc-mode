@@ -665,6 +665,16 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; and it's near the point most of the time.
   (c-parse-state)
 
+  ;; Check if the fontified region starts inside a declarator list so
+  ;; that `c-font-lock-declarators' should be called at the start.
+  (let ((prop (save-excursion
+		(c-backward-syntactic-ws)
+		(unless (bobp)
+		  (c-get-char-property (1- (point)) 'c-type)))))
+    (when (memq prop '(c-decl-id-start c-decl-type-start))
+      (c-forward-syntactic-ws limit)
+      (c-font-lock-declarators limit t (eq prop 'c-decl-type-start))))
+
   nil)
 
 (defun c-font-lock-<>-arglists (limit)
@@ -718,7 +728,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
   nil)
 
 (defun c-font-lock-declarators (limit list types)
-  ;; Assuming the point is in the start of a declarator in a
+  ;; Assuming the point is at the start of a declarator in a
   ;; declaration, fontify it.  If LIST is non-nil, fontify also all
   ;; following declarators in a comma separated list (e.g.  "foo" and
   ;; "bar" in "int foo = 17, bar;").  Stop at LIMIT.  If TYPES is
@@ -730,7 +740,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ((pos (point)) next-pos id-start id-end
        paren-depth
        id-face got-init
-       c-last-identifier-range)
+       c-last-identifier-range
+       (separator-prop (if types 'c-decl-type-start 'c-decl-id-start)))
 
     (while (and
 	    pos
@@ -830,6 +841,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	;; If a ',' is found we set pos to the next declarator and iterate.
 	(when (and (< (point) limit) (looking-at ","))
+	  (c-put-char-property (point) 'c-type separator-prop)
 	  (forward-char)
 	  (c-forward-syntactic-ws limit)
 	  (setq pos (point))))))
@@ -1650,20 +1662,34 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		 (c-forward-type)))
 
 	     (goto-char type-end)
-	     (c-font-lock-declarators
-	      (point-max)
-	      (if arglist-type
-		  ;; Should normally not fontify a list of declarators inside
-		  ;; an arglist, but the first argument in the ';' separated
-		  ;; list of a "for" statement is an exception.
-		  (when (and (eq arglist-match ?\() (/= match-pos 0))
-		    (save-excursion
-		      (goto-char (1- match-pos))
-		      (c-backward-syntactic-ws)
-		      (and (c-simple-skip-symbol-backward)
-			   (looking-at c-paren-stmt-key))))
-		t)
-	      at-typedef))
+
+	     (let ((decl-list
+		    (if arglist-type
+			;; Should normally not fontify a list of declarators
+			;; inside an arglist, but the first argument in the
+			;; ';' separated list of a "for" statement is an
+			;; exception.
+			(when (and (eq arglist-match ?\() (/= match-pos 0))
+			  (save-excursion
+			    (goto-char (1- match-pos))
+			    (c-backward-syntactic-ws)
+			    (and (c-simple-skip-symbol-backward)
+				 (looking-at c-paren-stmt-key))))
+		      t)))
+
+	       ;; Fix the `c-decl-id-start' or `c-decl-type-start' property
+	       ;; before the first declarator if it's a list.
+	       ;; `c-font-lock-declarators' handles the rest.
+	       (when decl-list
+		 (save-excursion
+		   (c-backward-syntactic-ws)
+		   (unless (bobp)
+		     (c-put-char-property (1- (point)) 'c-type
+					  (if at-typedef
+					      'c-decl-type-start
+					    'c-decl-id-start)))))
+
+	       (c-font-lock-declarators (point-max) decl-list at-typedef)))
 
 	    (t
 	     ;; False alarm.  Skip the fontification done below.
@@ -1745,7 +1771,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 3 and higher."
 
   t `(;; Initialize some things before the search functions below.
-      ;; This is not really a matcher.
       c-font-lock-complex-decl-prepare
 
       ;; Fontify angle bracket arglists like templates in C++.
@@ -1854,9 +1879,12 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		       (c-lang-const c-symbol-key)
 		       "\\)")
 	       `((c-font-lock-declarators limit t nil)
-		 (goto-char (match-beginning
-			     ,(1+ (c-lang-const
-				   c-single-line-syntactic-ws-depth))))
+		 (progn
+		   (c-put-char-property (match-beginning 0) 'c-type
+					'c-decl-id-start)
+		   (goto-char (match-beginning
+			       ,(1+ (c-lang-const
+				     c-single-line-syntactic-ws-depth)))))
 		 (goto-char (match-end 0)))))))
 
       ;; Fontify the type in C++ "new" expressions.
@@ -1939,6 +1967,8 @@ higher."
 	       '((c-font-lock-declarators limit t nil)
 		 (save-match-data
 		   (goto-char (match-end 0))
+		   (c-put-char-property (1- (point)) 'c-type
+					'c-decl-id-start)
 		   (c-forward-syntactic-ws))
 		 (goto-char (match-end 0)))))))
 
