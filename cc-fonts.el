@@ -1509,9 +1509,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			  (match-beginning 2)
 			  (if (match-beginning 1)
 			      ;; Expression begins with an ambiguous operator.
-			      ;; Treat it as a cast if we've recognized the
-			      ;; type somewhere else.
-			      (memq at-type '(t known found))
+			      ;; Treat it as a cast if it's a type decl or if
+			      ;; we've recognized the type somewhere else.
+			      (or at-decl-or-cast
+				  (memq at-type '(t known found)))
 			    ;; Unless it's a keyword, it's the beginning of a
 			    ;; primary expression.
 			    (not (looking-at c-keywords-regexp)))))
