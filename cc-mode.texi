@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.4 $
+@comment manual version: $Revision: 2.5 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-03-01 01:18:29 $
+@comment Last modification: $Date: 1995-03-01 01:30:13 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -84,10 +84,13 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 * Getting Connected::           
 * New Indentation Engine::
 * Customizing Indentation::
+* Syntactic Symbols::
+* Frequently Asked Questions::
+* Sample .emacs File::
 * Requirements::                
-* Limitations and known bugs::  
+* Limitations and Known Bugs::  
 * Mailing Lists and Submitting Bug Reports::  
-* reporter.el info::            
+* reporter.el Info::            
 * Dumping cc-mode 4.155::       Dumping @code{cc-mode} 4.155
 * Concept Index::               
 * Command Index::               Command Index
@@ -579,6 +582,13 @@ indentation calculation by setting the variable
 @cindex   Customizing Indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@menu
+* Interactive Customization::
+* Permanent Customization::
+* Styles::
+* Advanced Customizations::
+@end menu
+
 @cindex c-set-offset
 @cindex set-offset (c-)
 The @code{c-offsets-alist} variable is where you customize all your
@@ -768,7 +778,7 @@ gain enormous flexibility in customizing indentation @ref{Advanced
 Customizations}.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node     Styles, Advanced Customization, Permanent Customizations, Customizing Indentation
+@node     Styles, Advanced Customizations, Permanent Customization, Customizing Indentation
 @comment  node-name,              next,                    previous,up
 
 @section  Styles
@@ -801,7 +811,7 @@ Customizations}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Frequently Asked Questions, Sample .emacs File, Customizing Indentation, Top
+@node  Frequently Asked Questions, Sample .emacs File, Syntactic Symbols, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Frequently Asked Questions
@@ -865,7 +875,7 @@ Customizations}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Sample .emacs File, cc-mode.el vs. c-mode.el, Frequently Asked Questions, Top
+@node  Sample .emacs File, Requirements, Frequently Asked Questions, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Sample @file{.emacs} file
@@ -931,7 +941,7 @@ Customizations}.
 @end example
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Requirements, Limitations and known bugs, cc-mode.el vs. c++-mode.el 2.353, Top
+@node  Requirements, Limitations and Known Bugs, Sample .emacs File, Top
 @comment  node-name,              next,                    previous,up
 @chapter  Requirements
 @cindex   Requirements
@@ -959,7 +969,7 @@ reporter (1.23)	      02-Feb-1993
 @end example
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Limitations and known bugs, Mailing Lists and Submitting Bug Reports, Requirements, Top
+@node  Limitations and Known Bugs, Mailing Lists and Submitting Bug Reports, Requirements, Top
 @comment  node-name,              next,                    previous,up
 @chapter  Limitations and Known Bugs
 @cindex   Limitations and Known Bugs
@@ -984,7 +994,7 @@ My suggestion is to check out add-on fill packages such as
 
 @end itemize
 
-@node  Mailing Lists and Submitting Bug Reports, reporter.el info, Limitations and known bugs, Top
+@node  Mailing Lists and Submitting Bug Reports, reporter.el Info, Limitations and Known Bugs, Top
 @comment  node-name,              next,                    previous,up
 @chapter  Mailing Lists and Submitting Bug Reports
 @cindex   Mailing Lists and Submitting Bug Reports
@@ -1022,13 +1032,13 @@ list.
 Please use these addresses instead of my personal address so I can keep
 track of all the incoming mail!
 
-@node  reporter.el info, User visible changes since 4.35, Mailing Lists and Submitting Bug Reports, Top
+@node  reporter.el Info, Dumping cc-mode 4.155, Mailing Lists and Submitting Bug Reports, Top
 @comment  node-name,              next,                    previous,up
 @chapter  @file{reporter.el} info
 @cindex   @file{reporter.el} info
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Dumping cc-mode 4.155, Concept Index, User visible changes since 3.229, Top
+@node    Dumping cc-mode 4.155, Concept Index, reporter.el Info, Top
 @comment node-name,    next,  previous,      up
 @chapter  Dumping @code{cc-mode} 4.155
 @cindex   Dumping @code{cc-mode} 4.155
@@ -1205,7 +1215,7 @@ Since all @code{cc-mode} commands are prepended with the string
 
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Variable Index,    ,  Command Index, Top
+@node    Variable Index,    ,  Key Index, Top
 @comment node-name,    next,  previous,      up
 @unnumbered Variable Index
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
