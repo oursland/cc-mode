@@ -86,6 +86,9 @@ distcommon: distdir
 	chmod 644 cc-mode-$(VERSION)/*
 	tar cf - cc-mode-$(VERSION) | gzip -c > dist/$(TARGZFILE)
 
+test:
+	$(EMACS) -q -batch -no-site-file -l tests/000tests.el -f do-all-tests
+
 clean:
 	$(RM) *.elc
 	$(RM) ChangeLog.gz
