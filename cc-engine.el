@@ -118,6 +118,11 @@
 ;; Dynamically bound cache for `c-in-literal'.
 (defvar c-in-literal-cache t)
 
+;; Must be set in buffers where the `c-type' text property might be used
+;; with the value `c-decl-end'.
+(defvar c-type-decl-end-used nil)
+(make-variable-buffer-local 'c-type-decl-end-used)
+
 
 ;;; Basic utility functions.
 
@@ -2852,10 +2857,10 @@ This function does not do any hidden buffer changes."
   ;; point to CFD-LIMIT.  A spot for a declaration is the first token
   ;; in the buffer and each token after the ones matched by
   ;; `c-decl-prefix-re' and after the occurrences of the `c-type'
-  ;; property with the value `c-decl-end'.  Only a spot that match
-  ;; CFD-DECL-RE and whose face is in the CFD-FACE-CHECKLIST list
-  ;; causes CFD-FUN to be called.  The face check is disabled if
-  ;; CFD-FACE-CHECKLIST is nil.
+  ;; property with the value `c-decl-end' (if `c-type-decl-end-used'
+  ;; is set).  Only a spot that match CFD-DECL-RE and whose face is in
+  ;; the CFD-FACE-CHECKLIST list causes CFD-FUN to be called.  The
+  ;; face check is disabled if CFD-FACE-CHECKLIST is nil.
   ;;
   ;; If the match is inside a macro then the buffer is narrowed to the
   ;; end of it, so that CFD-FUN can investigate the following tokens
@@ -2880,9 +2885,12 @@ This function does not do any hidden buffer changes."
   ;; collision with the (dynamically bound) variables used in CFD-FUN.
 
   (let ((cfd-buffer-end (point-max))
-	;; The last regexp match and property match, respectively,
-	;; found by `c-find-decl-prefix-search'.
-	cfd-re-match cfd-prop-match
+	;; The last regexp match found by `c-find-decl-prefix-search'.
+	cfd-re-match
+	;; The last `c-decl-end' found by `c-find-decl-prefix-search'.
+	;; If searching for the property isn't needed then we disable
+	;; it by faking a first match at the limit.
+	(cfd-prop-match (unless c-type-decl-end-used cfd-limit))
 	;; The position of the last match found by
 	;; `c-find-decl-prefix-search'.  For regexp matches it's the
 	;; end of the matched token, for property matches it's the end

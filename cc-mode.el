@@ -726,6 +726,9 @@ Key bindings:
 	mode-name "ObjC"
 	local-abbrev-table objc-mode-abbrev-table
 	abbrev-mode t)
+  ;; The `c-type' text property with `c-decl-end' is used to mark the
+  ;; end of the @-style directives.
+  (setq c-type-decl-end-used t)
   (use-local-map objc-mode-map)
   (c-init-language-vars objc-mode)
   (c-common-init 'objc-mode)

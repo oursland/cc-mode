@@ -3,7 +3,6 @@
 ;; Copyright (C) 2002 Free Software Foundation, Inc.
 
 ;; Authors:    2002- Martin Stjernholm
-;;             jwz, then rms, then sm
 ;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    07-Jan-2002
 ;; Version:    See cc-mode.el
@@ -2731,6 +2730,11 @@ need for `pike-font-lock-extra-types'.")
 (defun autodoc-font-lock-keywords ()
   ;; Note that we depend on that `c-current-comment-prefix' has got
   ;; its proper value here.
+
+  ;; The `c-type' text property with `c-decl-end' is used to mark the
+  ;; end of the `autodoc-decl-keywords' occurrences to fontify the
+  ;; following declarations.
+  (setq c-type-decl-end-used t)
 
   (list
    (byte-compile
