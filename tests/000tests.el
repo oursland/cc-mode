@@ -161,7 +161,6 @@
     (c-basic-offset . 4)
     (c-comment-only-line-offset . (0 . 0))
     ;; the following preserves Javadoc starter lines
-    (c-hanging-comment-starter-p . nil)
     (c-offsets-alist . ((inline-open . 0)
 			(topmost-intro-cont    . +)
 			(statement-block-intro . +)
@@ -271,6 +270,7 @@
     "member-3.cc"
     "member-4.cc"
     "member-5.cc"
+    "member-6.cc"
     "methods-1.java"
     "namespace-1.cc"
     "namespace-2.cc"
