@@ -695,34 +695,36 @@ comment."
 	  ;; eob.  This can't happen at bob.
 	  (setq range nil))
       (if range
-	  (if sentence-flag
-	      (progn
-		;; move by sentence, but not past the limit of the literal
-		(save-restriction
-		  (narrow-to-region (save-excursion
-				      (goto-char (car range))
-				      (if (= (char-syntax (char-after)) ?\")
-					  (forward-char)
-					(looking-at comment-start-skip)
-					(goto-char (match-end 0)))
-				      (point))
-				    (save-excursion
-				      (goto-char (cdr range))
-				      (if (= (char-syntax (char-before)) ?\")
-					  (backward-char)
-					(if (save-excursion
-					      (goto-char (car range))
-					      (looking-at "/\\*"))
-					    (backward-char 2))
-					(skip-chars-backward " \t\n"))
-				      (point)))
-		  (c-safe (forward-sentence (if (> count 0) -1 1))))
-		;; See if we should escape the literal.
-		(if (= (point) here)
-		    (goto-char (if (> count 0) (car range) (cdr range)))
-		  (setq count (if (> count 0) (1- count) (1+ count)))))
-	    ;; Just move past it.
-	    (goto-char (if (> count 0) (car range) (cdr range))))
+	  (progn
+	    (setq range (c-collect-line-comments range))
+	    (if sentence-flag
+		(progn
+		  ;; move by sentence, but not past the limit of the literal
+		  (save-restriction
+		    (narrow-to-region (save-excursion
+					(goto-char (car range))
+					(if (= (char-syntax (char-after)) ?\")
+					    (forward-char)
+					  (looking-at comment-start-skip)
+					  (goto-char (match-end 0)))
+					(point))
+				      (save-excursion
+					(goto-char (cdr range))
+					(if (= (char-syntax (char-before)) ?\")
+					    (backward-char)
+					  (if (save-excursion
+						(goto-char (car range))
+						(looking-at "/\\*"))
+					      (backward-char 2))
+					  (skip-chars-backward " \t\n"))
+					(point)))
+		    (c-safe (forward-sentence (if (> count 0) -1 1))))
+		  ;; See if we should escape the literal.
+		  (if (= (point) here)
+		      (goto-char (if (> count 0) (car range) (cdr range)))
+		    (setq count (if (> count 0) (1- count) (1+ count)))))
+	      ;; Just move past it.
+	      (goto-char (if (> count 0) (car range) (cdr range)))))
 	;; Below we do approximately the same as
 	;; c-beginning-of-statement-1 and c-end-of-statement-1 and
 	;; perhaps they should be changed, but that'd likely break a
