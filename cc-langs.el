@@ -226,11 +226,6 @@
 
 
 
-(defun c-use-java-style ()
-  "Institutes `java' indentation style.
-For use with the variable `java-mode-hook'."
-  (c-set-style "java"))
-
 (defun c-common-init ()
   ;; Common initializations for all modes.
   ;; these variables should always be buffer local; they do not affect
@@ -311,7 +306,21 @@ For use with the variable `java-mode-hook'."
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
-		  minor-mode-alist))))
+		  minor-mode-alist)))
+  ;; now set the mode style based on c-default-style
+  (if (stringp c-default-style)
+      (if (eq major-mode 'java-mode)
+	  (c-set-style "java")
+	(c-set-style c-default-style))
+    (let ((style (cdr (assq major-mode c-default-style))))
+      (if (stringp style)
+	  (c-set-style style)
+	(if (eq major-mode 'java-mode)
+	    (c-set-style "java")
+	  (c-set-style "gnu")
+	  ))))
+  )
+
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables.
