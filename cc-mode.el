@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.216 $
-;; Last Modified:   $Date: 1992-11-13 22:42:04 $
+;; Version:         $Revision: 2.217 $
+;; Last Modified:   $Date: 1992-11-27 20:18:12 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -129,7 +129,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-13 22:42:04 $|$Revision: 2.216 $|
+;; |$Date: 1992-11-27 20:18:12 $|$Revision: 2.217 $|
 
 ;;; Code:
 
@@ -407,7 +407,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.216 $
+  "Major mode for editing C++ code.  $Revision: 2.217 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -615,7 +615,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.216 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.217 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -869,30 +869,29 @@ backward-delete-char-untabify."
       (self-insert-command (prefix-numeric-value arg)))))
 
 (defun c++-electric-slash (arg)
-  "Slash as first non-whitespace character on line indents as comment
-unless we're inside a C style comment, or a string, does not do
-indentation. if first non-whitespace character on line is not a slash,
-then we just insert the slash.  in this case use indent-for-comment if
-you want to add a comment to the end of a line."
+  "Insert slash, and if slash is second of a double-slash comment
+introducing construct, indent line as comment.  This only indents if
+we're on a comment-only line, otherwise use indent-for-comment (\\[indent-for-comment])."
   (interactive "P")
-  (let ((c++-auto-newline c++-auto-newline))
-    (if (= (preceding-char) ?/)
-	(setq c++-auto-newline nil))
-    (if (memq (preceding-char) '(?/ ?*))
-	(c++-electric-terminator arg)
-      (self-insert-command (prefix-numeric-value arg)))))
+  (let ((here (point)))
+    (self-insert-command (prefix-numeric-value arg))
+    (if (= (char-after (1- here)) ?/)
+	(save-excursion
+	  (goto-char here)
+	  (c++-indent-line)))))
 
 (defun c++-electric-star (arg)
   "Works with c++-electric-slash to auto indent C style comment lines."
   (interactive "P")
-  (if (= (preceding-char) ?/)
-      (let ((c++-auto-newline nil))
-	(c++-electric-terminator arg))
+  (let ((here (point)))
     (self-insert-command (prefix-numeric-value arg))
-    (if (and (memq (c++-in-literal) '(c))
-	     (or (= (point) (c++-point 'boi))
-		 (= (preceding-char) ?*)))
-	(c++-indent-line))))
+    (if (or (= (char-after (1- here)) ?/)
+	    (and (memq (c++-in-literal) '(c))
+		 (or (= (point) (c++-point 'boi))
+		     (= (preceding-char) ?*))))
+	(save-excursion
+	  (goto-char here)
+	  (c++-indent-line)))))
 
 (defun c++-electric-semi (arg)
   "Insert character and correct line's indentation."
@@ -1202,7 +1201,7 @@ of the expression are preserved."
 	    (if (looking-at comment-start-skip)
 		;; different indentation base on whether this is a
 		;; col0 comment only line or not
-		(setq this-indent (+ this-indent (c++-comment-offset (bolp)))))
+		(setq this-indent (c++-comment-offset (bolp) this-indent)))
 	    (if (looking-at "friend[ \t]")
 		(setq this-indent (+ this-indent c++-friend-offset)))
 	    (if (= (following-char) ?})
@@ -1453,7 +1452,6 @@ point of the beginning of the C++ definition."
   (let* ((bod (or bod (c++-point 'bod)))
 	 (indent (c++-calculate-indent nil bod))
 	 beg shift-amt
-	 (comcol nil)
 	 (case-fold-search nil)
 	 (pos (- (point-max) (point))))
     (beginning-of-line)
@@ -1465,17 +1463,17 @@ point of the beginning of the C++ definition."
 	  ((looking-at "[ \t]*#")
 	   (setq indent 0))
 	  ((save-excursion
-	     (and (not (back-to-indentation))
-		  (looking-at "//\\|/\\*")))
+	     (back-to-indentation)
+	     (looking-at "//\\|/\\*"))
 	   ;; we've found a comment-only line. we now must try to
 	   ;; determine if the line is a continuation from a comment
 	   ;; on the previous line.  we check to see if the comment
 	   ;; starts in comment-column and if so, we don't change its
 	   ;; indentation.
-	   (setq comcol (current-column))
-	   (if (= comcol comment-column)
+	   (skip-chars-forward " \t")
+	   (if (= (current-column) comment-column)
 	       (setq indent comment-column)
-	     (setq indent (+ indent (c++-comment-offset (zerop comcol))))))
+	     (setq indent (c++-comment-offset (bolp) indent))))
 	  (t
 	   (skip-chars-forward " \t")
 	   (if (listp indent) (setq indent (car indent)))
@@ -1898,18 +1896,27 @@ the current line is to be regarded as part of a block comment."
 			      (t (- (match-end 0) (match-beginning 0)))))))
       (current-column))))
 
-(defun c++-comment-offset (col0-line-p)
+(defun c++-comment-offset (col0-line-p indent)
   "Calculates and returns the comment-only line offset.
-Offset is based on the value of c++-comment-only-line-offset and the
-argument COL0-LINE-P."
-  (if col0-line-p
-      (if (listp c++-comment-only-line-offset)
-	  (let ((offset (car (cdr c++-comment-only-line-offset))))
-	    (setq offset (or offset (car c++-comment-only-line-offset))))
-	0)
-    (if (listp c++-comment-only-line-offset)
-	(car c++-comment-only-line-offset)
-      c++-comment-only-line-offset)))
+Offset is based on the value of c++-comment-only-line-offset, the
+argument COL0-LINE-P, and the current indentation INDENT."
+  (let ((offset 0))
+    (if col0-line-p
+	;; col0 means we need to look at the second member of the var's
+	;; list value. if value is not a list, then zero is used
+	(if (listp c++-comment-only-line-offset)
+	    ;; it is a list, so second element must be nil or a number
+	    (setq offset
+		  (+ indent
+		     (or (car (cdr c++-comment-only-line-offset))
+			 (car c++-comment-only-line-offset)))))
+      ;; not in column zero so indentation is car or value of variable
+      (setq offset
+	    (+ indent
+	       (if (listp c++-comment-only-line-offset)
+		   (car c++-comment-only-line-offset)
+		 c++-comment-only-line-offset))))
+    offset))
 
 
 ;; ======================================================================
@@ -2277,7 +2284,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.216 $"
+(defconst c++-version "$Revision: 2.217 $"
   "c++-mode version number.")
 
 (defun c++-version ()
