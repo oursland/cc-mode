@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.241 $
-;; Last Modified:   $Date: 1994-02-10 21:42:13 $
+;; Version:         $Revision: 3.242 $
+;; Last Modified:   $Date: 1994-02-10 23:30:11 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-10 21:42:13 $|$Revision: 3.241 $|
+;; |$Date: 1994-02-10 23:30:11 $|$Revision: 3.242 $|
 
 ;;; Code:
 
@@ -615,38 +615,39 @@ supported list, along with the values for this variable:
   (modify-syntax-entry ?>  "."     table)
   (modify-syntax-entry ?&  "."     table)
   (modify-syntax-entry ?|  "."     table)
-  (modify-syntax-entry ?\' "\""    table)
-  ;; comment syntax
-  (cond
-   ((eq major-mode 'c-mode)
-    (modify-syntax-entry ?/  ". 14"  table)
-    (modify-syntax-entry ?*  ". 23"  table))
-   ;; the rest are for C++'s dual comments
-   ((memq '8-bit c-emacs-features)
-    ;; Lucid emacs has the best implementation
-    (modify-syntax-entry ?/  ". 1456" table)
-    (modify-syntax-entry ?*  ". 23"   table)
-    (modify-syntax-entry ?\n "> b"    table))
-   ((memq '1-bit c-emacs-features)
-    ;; FSF Emacs 19 does things differently, but we can work with it
-    (modify-syntax-entry ?/  ". 124b" table)
-    (modify-syntax-entry ?*  ". 23"   table)
-    (modify-syntax-entry ?\n "> b"    table))
-   ))
+  (modify-syntax-entry ?\' "\""    table))
 
 (defvar c-mode-syntax-table nil
   "Syntax table used in c-mode buffers.")
 (if c-mode-syntax-table
     ()
   (setq c-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table c-mode-syntax-table))
+  (c-populate-syntax-table c-mode-syntax-table)
+  ;; add extra comment syntax
+  (modify-syntax-entry ?/  ". 14"  c-mode-syntax-table)
+  (modify-syntax-entry ?*  ". 23"  c-mode-syntax-table))
 
 (defvar c++-mode-syntax-table nil
   "Syntax table used in c++-mode buffers.")
 (if c++-mode-syntax-table
     ()
   (setq c++-mode-syntax-table (make-syntax-table))
-  (c-populate-syntax-table c++-mode-syntax-table))
+  (c-populate-syntax-table c++-mode-syntax-table)
+  ;; add extra comment syntax
+  (cond
+   ((memq '8-bit c-emacs-features)
+    ;; Lucid emacs has the best implementation
+    (modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
+    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
+   ((memq '1-bit c-emacs-features)
+    ;; FSF Emacs 19 does things differently, but we can work with it
+    (modify-syntax-entry ?/  ". 124b" c++-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
+    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
+   )
+  ;; TBD: does it make sense for colon to be symbol class in C++?  I think, yes.
+  (modify-syntax-entry ?: "_" c++-mode-syntax-table))
 
 (defvar c-hungry-delete-key nil
   "Internal state of hungry delete key feature.")
@@ -712,7 +713,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.241 $
+cc-mode Revision: $Revision: 3.242 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -743,7 +744,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.241 $
+cc-mode Revision: $Revision: 3.242 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3104,7 +3105,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.241 $"
+(defconst c-version "$Revision: 3.242 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
