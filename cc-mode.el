@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.282 $
-;; Last Modified:   $Date: 1994-03-11 14:39:22 $
+;; Version:         $Revision: 3.283 $
+;; Last Modified:   $Date: 1994-03-11 17:14:31 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-11 14:39:22 $|$Revision: 3.282 $|
+;; |$Date: 1994-03-11 17:14:31 $|$Revision: 3.283 $|
 
 ;;; Code:
 
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.282 $
+cc-mode Revision: $Revision: 3.283 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.282 $
+cc-mode Revision: $Revision: 3.283 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1962,12 +1962,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	(end (and (c-safe (progn (forward-sexp 1) t))
 		  (point-marker))))
     ;; sanity check
-    (and (not start)
-	 (not shutup-p)
-	 (error "Cannot find start of balanced expression to indent."))
-    (and (not end)
-	 (not shutup-p)
-	 (error "Cannot find end of balanced expression to indent."))
+    (unwind-protect
+	(progn
+	  (and (not start)
+	       (not shutup-p)
+	       (error "Cannot find start of balanced expression to indent."))
+	  (and (not end)
+	       (not shutup-p)
+	       (error "Cannot find end of balanced expression to indent.")))
+      (goto-char here))
     (or shutup-p
 	(message "indenting expression... (this may take a while)"))
     (goto-char start)
@@ -3273,7 +3276,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.282 $"
+(defconst c-version "$Revision: 3.283 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
