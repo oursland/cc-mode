@@ -1,0 +1,30 @@
+Title: Compatibility Notes
+Author: cc-mode@python.org
+Other-links:
+    <h3>Emacsen</h3>
+    <li><a href="compat_xemacs.html">X/Emacs 20</a>
+    <li><a href="compat_emacs19.html">Emacs 19</a>
+    <li><a href="compat_emacs18.html">Emacs 18</a>
+    <li><a href="compat_delbs_awk.html">Other Elisp</a>
+
+<h2>XEmacs and Emacs 20 Compatibility</h2>
+
+    If you are using XEmacs 19.15, 19.16, or 20.2 and beyond, you
+    should be able to use this new version right out of the box.  The
+    distribution unpacks in its own subdirectory.  An
+    earlier version of CC Mode probably comes with
+    your XEmacs, so you just need to make sure that this new version
+    comes earlier on your
+    <code>load-path</code> than the version that comes with XEmacs.
+    See the <a href="installation.html">installation notes</a> for
+    more details.
+
+    <p>The same goes for Emacs 20 as of 20.2 and beyond.  Also, you
+    <strong>must</strong> byte-compile <code>python-mode.el</code> for
+    it to run in Emacs 20.
+
+    <p>I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
+    earlier.  You might try following the directions for Emacs 19.34
+    below (although you will <em>not</em> need the
+    <code>cc-mode-19.el</code> file).  I do not plan to actively
+    support any earlier XEmacs version.
