@@ -888,8 +888,8 @@ operators."
   "Primitive type keywords.
 
 If any of these also are on `c-type-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds' or `c-<>-arglist-kwds',
-the clauses associated with them will be handled."
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-arglist-kwds', or
+`c-ref-list-kwds' then the associated clauses will be handled."
   t    '("char" "double" "float" "int" "long" "short" "signed"
 	 "unsigned" "void")
   c    (append '("complex" "imaginary")	; Conditionally defined in C99.
@@ -968,8 +968,8 @@ C isn't a specifier since the whole \"struct foo\" is a type, but
 type.
 
 If any of these also are on `c-type-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds' or `c-<>-arglist-kwds',
-the clauses associated with them will be handled."
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-arglist-kwds', or
+`c-ref-list-kwds' then the associated clauses will be handled."
   t nil
   (c c++) '("auto" "extern" "inline" "register" "typedef" "static")
   c++  (append '("explicit" "friend" "mutable" "template" "virtual")
@@ -1116,10 +1116,21 @@ declarations."
   "Keywords that may be followed by a comma separated list of type
 identifiers, where each optionally can be prefixed by keywords.  (Can
 also be used for the special case when the list can contain only one
-element.)"
-  t    (c-lang-const c-decl-spec-kwds)
+element.)  Assumed to be mutually exclusive with `c-ref-list-kwds'."
+  t    nil
   objc '("@class" "@interface" "@implementation" "@protocol")
+  java (c-lang-const c-decl-spec-kwds)
   pike '("inherit"))
+
+(c-lang-defconst c-ref-list-kwds
+  "Keywords that may be followed by a comma separated list of
+reference (i.e. namespace/scope/module) identifiers, where each
+optionally can be prefixed by keywords.  (Can also be used for the
+special case when the list can contain only one element.)  Assumed to
+be mutually exclusive with `c-type-list-kwds'."
+  t    nil
+  c++  '("namespace" "using")
+  pike '("import"))
 
 (c-lang-defconst c-colon-type-list-kwds
   "Keywords that may be followed (not necessarily directly) by a colon
