@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-08 16:24:55 $
-;; Version:         $Revision: 2.93 $
+;; Last Modified:   $Date: 1992-06-08 16:32:27 $
+;; Version:         $Revision: 2.94 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-08 16:24:55 $|$Revision: 2.93 $|
+;; |$Date: 1992-06-08 16:32:27 $|$Revision: 2.94 $|
 
 
 ;; ======================================================================
@@ -213,7 +213,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.93 $
+  "Major mode for editing C++ code.  $Revision: 2.94 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -678,7 +678,8 @@ for member initialization list."
 		    (not (c++-in-comment-p bod))
 		    (not (c++-in-open-string-p bod))))
 	(progn (delete-region insertion-point (point))
-	       (setq c++-auto-newline nil)))
+	       (setq c++-auto-newline nil
+		     insertion-point (point))))
        ;; check for ?: construct which may be at any level
        ((progn (goto-char insertion-point)
 	       (backward-sexp 1)
@@ -1767,7 +1768,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.93 $"
+(defconst c++-version "$Revision: 2.94 $"
   "c++-mode version number.")
 
 (defun c++-version ()
