@@ -970,27 +970,31 @@ ACTION associated with `block-close' syntax."
   "Imposes a minimum indentation for lines inside a top-level construct.
 The variable `c-label-minimum-indentation' specifies the minimum
 indentation amount."
-  (let ((non-top-levels '(defun-block-intro statement statement-cont
-			   statement-block-intro statement-case-intro
-			   statement-case-open substatement substatement-open
-			   case-label label do-while-closure else-clause
-			   ))
-	(syntax c-syntactic-context)
-	langelem)
-    (while syntax
-      (setq langelem (car (car syntax))
-	    syntax (cdr syntax))
-      ;; don't adjust macro or comment-only lines
-      (cond ((memq langelem '(cpp-macro comment-intro))
-	     (setq syntax nil))
-	    ((memq langelem non-top-levels)
-	     (save-excursion
-	       (setq syntax nil)
-	       (back-to-indentation)
-	       (if (zerop (current-column))
-		   (insert-char ?\  c-label-minimum-indentation t))
-	       ))
-	    ))))
+
+  ;; Don't adjust macro or comment-only lines.
+  (unless (or (assq 'cpp-macro c-syntactic-context)
+	      (assq 'comment-intro c-syntactic-context))
+
+    (let ((paren-state (save-excursion
+			 ;; Get the parenthesis state, but skip past
+			 ;; an initial closing paren on the line since
+			 ;; the close brace of a block shouldn't be
+			 ;; considered to be inside the block.
+			 (back-to-indentation)
+			 (when (looking-at "\\s\)")
+			   (forward-char))
+			 (c-parse-state))))
+
+      ;; Search for an enclosing brace on paren-state.
+      (while (and paren-state
+		  (not (and (integer-or-marker-p (car paren-state))
+			    (eq (char-after (car paren-state)) ?{))))
+	(setq paren-state (cdr paren-state)))
+
+      (when paren-state
+	(back-to-indentation)
+	(if (zerop (current-column))
+	    (insert-char ?\  c-label-minimum-indentation t))))))
 
 
 ;; Useful for c-hanging-semi&comma-criteria
