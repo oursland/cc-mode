@@ -678,11 +678,12 @@ Works with: The `statement' syntactic symbol."
 	(unless (eolp)
 	  (vector (current-column))))))
 
-(defun c-lineup-math (langelem)
-  "Line up the current line after the equal sign on the first line in
-the statement.  If there isn't any, indent with `c-basic-offset'.  If
-the current line contains an equal sign too, try to align it with the
-first one.
+(defun c-lineup-assignments (langelem)
+  "Line up the current line after the assignment operator on the first
+line in the statement.  If there isn't any, return nil to allow
+stacking with other indentation functions.  If the current line
+contains an assignment operator too, try to align it with the first
+one.
 
 Works with: topmost-intro-cont, statement-cont, arglist-cont,
 arglist-cont-nonempty."
@@ -732,7 +733,7 @@ arglist-cont-nonempty."
 		(eolp)))
 	  ;; There's no equal sign on the line, or there is one but
 	  ;; nothing follows it.
-	  c-basic-offset
+	  nil
 
 	;; calculate indentation column after equals and ws, unless
 	;; our line contains an equals sign
@@ -743,6 +744,17 @@ arglist-cont-nonempty."
 
 	(vector (- (current-column) equalp)))
       )))
+
+(defun c-lineup-math (langelem)
+  "Like `c-lineup-assignments' but indent with `c-basic-offset' if no
+assignment operator was found on the first line.  I.e. this function
+is the same as specifying a list (c-lineup-assignments +).  It's
+provided for compatibility with old configurations.
+
+Works with: topmost-intro-cont, statement-cont, arglist-cont,
+arglist-cont-nonempty."
+  (or (c-lineup-assignments langelem)
+      c-basic-offset))
 
 (defun c-lineup-cascaded-calls (langelem)
   "Line up \"cascaded calls\" under each other.
