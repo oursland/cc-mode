@@ -32,7 +32,9 @@
 ;; o  `c-label-face-name' is either `font-lock-constant-face' (in Emacs
 ;;    20 and later), or `font-lock-reference-face'.
 ;;
-;; o  `c-reference-face-name' is set up like `c-label-face-name'.
+;; o  `c-constant-face-name', `c-reference-face-name' and
+;;    `c-doc-markup-face-name' are essentially set up like
+;;    `c-label-face-name'.
 ;;
 ;; o  `c-preprocessor-face-name' is `font-lock-preprocessor-face' in
 ;;    XEmacs and - in lack of a closer equivalent -
@@ -43,8 +45,6 @@
 ;;    `font-lock-comment-face' in older Emacs (that since source
 ;;    documentation are actually comments in these languages, as opposed
 ;;    to elisp).
-;;
-;; o  `c-doc-markup-face-name' is set up like `c-label-face-name'.
 ;;
 ;; o  `c-invalid-face-name' is `font-lock-warning-face' in Emacs.  In
 ;;    older XEmacs there's no corresponding standard face, so there
@@ -142,6 +142,14 @@
 	 'font-lock-constant-face)
 	(t
 	 'font-lock-reference-face)))
+
+(defconst c-constant-face-name
+  (if (and (c-face-name-p 'font-lock-constant-face)
+	   (eq font-lock-constant-face 'font-lock-constant-face))
+      ;; This doesn't exist in XEmacs <= 20 and some earlier versions
+      ;; of XEmacs 21.
+      'font-lock-constant-face
+    c-label-face-name))
 
 (defconst c-reference-face-name
   (if (and (c-face-name-p 'font-lock-reference-face)
@@ -535,11 +543,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (let ((re (c-make-keywords-re nil (c-lang-const c-constant-kwds))))
 	    (if (c-major-mode-is 'pike-mode)
 		;; No symbol is a keyword after "->" in Pike.
-		`((,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
-			    "\\<\\(" re "\\)\\>")
-		   3 font-lock-constant-face))
-	      `((,(concat "\\<\\(" re "\\)\\>")
-		 1 font-lock-constant-face)))))
+		`((eval . (list ,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
+					 "\\<\\(" re "\\)\\>")
+				3 c-constant-face-name)))
+	      `((eval . (list ,(concat "\\<\\(" re "\\)\\>")
+			      1 c-constant-face-name))))))
 
       ;; Fontify all keywords except the primitive types.
       ,(if (c-major-mode-is 'pike-mode)
