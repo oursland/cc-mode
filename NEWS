@@ -46,6 +46,14 @@ global variable settings when a buffer's default style is set.
 (Thanks to Eric Eide for clarifying this explanation a bit.)
 
 *** c-offsets-alist is now a customizable variable.
+This became possible as a result of the new initialization behavior.
+
+This variable is treated slightly differently from the other style
+variables; instead of using the symbol set-from-style, it will be
+completed with the syntactic symbols it doesn't already contain when
+the style is first initialized.  This means it now defaults to the
+empty list to make all syntactic elements get their values from the
+style system.
 
 *** Compatibility variable to restore the old behavior.
 In case your configuration doesn't work with this change, you can set
