@@ -51,7 +51,7 @@ changes in CC Mode 5.
     <p><li>Also, all user variables have been converted to Per
 	Abrahamsen's <dfn>Custom</dfn> library, and all support for
 	older Emacsen have been ripped out.  See the
-	<a href="#compat">release notes</a>
+	<a href="compat.html">release notes</a>
 	below for details of running CC Mode 5 in your version of
 	Emacs.
 
