@@ -144,8 +144,10 @@
 		(setq substmt-p nil))
 	    (setq last-begin (point)
 		  donep substmt-p))
-	   ;; CASE 4: are we looking at a label?
-	   ((looking-at c-label-key))
+	   ;; CASE 4: are we looking at a label?  (But we handle
+	   ;; switch labels later.)
+	   ((and (looking-at c-label-key)
+		 (not (looking-at "default\\>"))))
 	   ;; CASE 5: is this the first time we're checking?
 	   (firstp (setq firstp nil
 			 substmt-p (not (c-crosses-statement-barrier-p
