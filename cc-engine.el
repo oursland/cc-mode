@@ -1083,25 +1083,50 @@ comment at the start of cc-engine.el for more info."
 	    (point)
 	  nil)))))
 
-(defun c-at-statement-start-p (&optional comma-delim)
+(defun c-at-statement-start-p ()
   "Return non-nil if the point is at the first token in a statement
 or somewhere in the syntactic whitespace before it.
 
-If COMMA-DELIM is non-nil then ',' is added to the set of statement
-delimiters, otherwise not.
+A \"statement\" here is not restricted to those inside code blocks.
+Any kind of declaration-like construct that occur outside function
+bodies is also considered a \"statement\".
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
 
   (save-excursion
     (let ((end (point))
-	  (c-stmt-delim-chars (if comma-delim
-				  c-stmt-delim-chars-with-comma
-				c-stmt-delim-chars))
 	  c-maybe-labelp)
       (c-syntactic-skip-backward (substring c-stmt-delim-chars 1) nil t)
       (or (bobp)
 	  (memq (char-before) '(?{ ?}))
+	  (c-crosses-statement-barrier-p (point) end)))))
+
+(defun c-at-expression-start-p ()
+  "Return non-nil if the point is at the first token in an expression or
+statement, or somewhere in the syntactic whitespace before it.
+
+An \"expression\" here is a bit different from the normal language
+grammar sense: It's any sequence of expression tokens except commas,
+unless they are enclosed inside parentheses of some kind.  Also, an
+expression never continues past an enclosing parenthesis, but it might
+contain parenthesis pairs of any sort except braces.
+
+Since expressions never cross statement boundaries, this function also
+recognizes statement beginnings, just like `c-at-statement-start-p'.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
+
+  (save-excursion
+    (let ((end (point))
+	  (c-stmt-delim-chars c-stmt-delim-chars-with-comma)
+	  c-maybe-labelp)
+      (c-syntactic-skip-backward (substring c-stmt-delim-chars 1) nil t)
+      (or (bobp)
+	  (memq (char-before) '(?{ ?}))
+	  (save-excursion (backward-char)
+			  (looking-at "\\s("))
 	  (c-crosses-statement-barrier-p (point) end)))))
 
 
@@ -7029,6 +7054,8 @@ comment at the start of cc-engine.el for more info."
 	      ;; Stepped out of a parenthesis block, so we're in an
 	      ;; expression now.
 	      (progn
+		;; FIXME: Why is no syntactic symbol added just
+		;; because the paren starts a line?
 		(when (/= paren-pos boi)
 		  (if (and c-recognize-paren-inexpr-blocks
 			   (progn
@@ -8097,13 +8124,8 @@ comment at the start of cc-engine.el for more info."
 	   ;; C.f. case 7F.
 	   ((memq char-after-ip '(?\) ?\]))
 	    (goto-char containing-sexp)
-	    (setq placeholder (c-point 'boi))
-	    (if (and (c-safe (backward-up-list 1) t)
-		     (>= (point) placeholder))
-		(progn
-		  (forward-char)
-		  (skip-chars-forward " \t"))
-	      (goto-char placeholder))
+	    (unless (c-at-expression-start-p)
+	      (c-backward-syntactic-ws))
 	    (c-add-syntax 'arglist-close nil containing-sexp)
 	    (c-anchor-stmt t (c-most-enclosing-brace paren-state (point))
 			   paren-state))
