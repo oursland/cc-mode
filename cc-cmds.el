@@ -102,7 +102,7 @@ nil, or point is inside a literal then the function in the variable
 `c-backspace-function' is called.
 
 See also \\[c-electric-delete]."
-  (interactive "P")
+  (interactive "*P")
   (if (or (not c-hungry-delete-key)
 	  arg
 	  (c-in-literal))
@@ -129,7 +129,7 @@ Emacs, then deletion occurs in the forward direction.  So if
 consumed.  If however an ARG is supplied, or `c-hungry-delete-key' is
 nil, or point is inside a literal then the function in the variable
 `c-delete-function' is called."
-  (interactive "P")
+  (interactive "*P")
   (if (and (boundp 'delete-key-deletes-forward)
 	   delete-key-deletes-forward)
       (if (or (not c-hungry-delete-key)
