@@ -153,6 +153,12 @@
 			 ))
 
      )
+    ("jdk" "java"
+     (c-basic-offset . 4)
+     (c-offsets-alist . ((inline-open . 0)
+			 (func-decl-cont . +)
+			 ))
+     )
     )
   "Styles of indentation.
 Elements of this alist are of the form:
