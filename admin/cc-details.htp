@@ -3,9 +3,20 @@ Author: bwarsaw@python.org
 
 <h1>CC Mode Changes</h1>
 
+The <a href="../index.html">current release</a> is version 4.322.
 Here's what's changed since the last release (version 4.282):
 
 <UL>
+
+<li> A new style <em>linux</em> has been added.
+
+<li>The following variables have been removed from the default
+<em>cc-mode</em> style:
+    <ul><li><tt>c-echo-syntactic-information-p</tt>
+	<li><tt>c-string-syntax-p</tt>
+	<li><tt>c-tab-always-indent</tt>
+	<li><tt>c-inhibit-startup-warnings-p</tt>
+    </ul>
 
 <LI> External language declaration blocks are now handled properly.
 Three new syntactic symbols have been added:
@@ -25,8 +36,8 @@ Three new syntactic symbols have been added:
     </DL>
 
 <LI> New variable: <tt>c-label-minimum-indentation</tt> which defines
-the minimum indentation a label can have in GNU style.  This variable
-has no effect in other styles.
+the minimum indentation a label can have in <em>gnu</em> style.  This
+variable has no effect in other styles.
 
 <LI> <tt>c-special-indent-hook</tt> is handled slightly differently
 when it appears in a style definition; the functions in the style
@@ -45,7 +56,7 @@ private, protected) and the trailing colon in C++.
 <LI> Java mode now recognizes the <tt>finally</tt> and
 <tt>synchronized</tt> keywords.
 
-<LI> New lineup function: <tt>c-linup-arglist-close-under-paren</tt>.
+<LI> New lineup function: <tt>c-lineup-arglist-close-under-paren</tt>.
 Try setting <tt>arglist-close</tt> to this function.
 
 <LI> The variable <tt>c-recognize-knr-p</tt> is deprecated.  Now by
