@@ -310,7 +310,7 @@ this variable to nil."
   :group 'c)
 
 (defcustom c-default-style "user"
-  "Style which gets installed by default.
+  "*Style which gets installed by default.
 The value of this variable can be any style defined in
 `c-style-alist', including styles you add, if you add them before CC
 Mode gets initialized."
