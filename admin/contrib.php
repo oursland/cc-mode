@@ -1,8 +1,17 @@
 <!-- -*- html -*- -->
 <?php
-  $title = "Contributed Stuff";
+  $title = "Links and Contributions";
   include ("header.h");
 ?>
+
+
+<h3>C# support</h3>
+
+<p>Brad Merrill has <a
+href="http://www.cybercom.net/~zbrad/DotNet/Emacs/">patched</a> CC
+Mode 5.25 to support C#.  Scott Hofmann has contributed an <a
+href="csharp-mode.tar.gz">update</a> of it to CC Mode 5.28.  CC Mode
+will hopefully get built-in support for C#.</p>
 
 
 <h3>Font lock for IDL mode</h3>
@@ -44,5 +53,13 @@ won't for some time yet.  Therefore I'll try to put up any
 contributions to help out in those areas here.  One of them is
 embedded SQL, where Kevin Ruland has contributed an <a
 href="plsql.txt">indentation for Oracle ProC embedded SQL</a>.
+
+
+<h3>Other stuff</h3>
+
+<p>There's a <a
+href="http://apache.bsilabs.com/~tim/cc-mode/description.html">patch</a>
+by Timothy M. Schaeffer that tries to achieve tab-size independent
+indentation.</p>
 
 <?php include ("footer.h"); ?>
