@@ -49,7 +49,9 @@
 
 The Custom library was not found or is out of date.  A more current
 version is required to use CC Mode 5.  You MUST fix cc-make.el.  See
-that file or the CC Mode README for details."))
+that file or the CC Mode Web site for details:
+
+    <http://www.python.org/emacs/cc-mode/"))
 
 (setq load-path (cons default-directory load-path))
 
