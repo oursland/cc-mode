@@ -146,7 +146,7 @@
 	  (cs-curcol (progn (goto-char (cdr langelem))
 			    (current-column))))
       (back-to-indentation)
-      (if (not (re-search-forward "/[*]+" (c-point 'eol) t))
+      (if (not (re-search-forward "/\\([*]+\\)" (c-point 'eol) t))
 	  (progn
 	    (if (not (looking-at "[*]+"))
 		(progn
@@ -159,14 +159,20 @@
 		    (goto-char (cdr langelem))
 		    (back-to-indentation))))
 	    (- (current-column) cs-curcol))
-	;; special handling of Javadoc comments
-	(if (and (eq major-mode 'java-mode)
-		 (string-equal (match-string 0) "/**"))
-	    (setq stars (1+ stars)))
 	(if (zerop stars)
-	    (skip-chars-forward " \t"))
-	(- (current-column) stars cs-curcol))
-      )))
+	    (progn
+	      (skip-chars-forward " \t")
+	      (- (current-column) cs-curcol))
+	  ;; how many stars on comment opening line?  if greater than
+	  ;; on current line, align left.  if less than or equal,
+	  ;; align right.  this should also pick up Javadoc style
+	  ;; comments.
+	  (if (> (length (match-string 1)) stars)
+	      (progn
+		(back-to-indentation)
+		(- (current-column) -1 cs-curcol))
+	    (- (current-column) stars cs-curcol))
+	  )))))
 
 (defun c-lineup-comment (langelem)
   ;; support old behavior for comment indentation. we look at
