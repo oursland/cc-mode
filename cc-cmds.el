@@ -606,6 +606,55 @@ No indentation or other \"electric\" behavior is performed."
   (interactive "*")
   (insert "::"))
 
+(defun c-beginning-of-defun (&optional arg)
+  "Move backward to the beginning of a defun.
+With argument, do it that many times.  Negative arg -N
+means move forward to Nth following beginning of defun.
+Returns t unless search stops due to beginning or end of buffer.
+
+Unlike the built-in `beginning-of-defun' this tries to be smarter
+about finding the char with open-parenthesis syntax that starts the
+defun."
+  (interactive "p")
+  (if (< arg 0)
+      (c-end-of-defun (- arg))
+    (while (> arg 0)
+      (let ((state (nreverse (c-parse-state)))
+	    prevbod bod)
+	(while (and state (not bod))
+	  (setq bod (car state)
+		state (cdr state))
+	  (if (consp bod)
+	      (setq prevbod (car bod)
+		    bod nil)))
+	(cond
+	 (bod (goto-char bod))
+	 (prevbod (goto-char prevbod))
+	 (t (beginning-of-defun))))
+      (setq arg (1- arg))))
+  (c-keep-region-active))
+
+(defun c-end-of-defun (&optional arg)
+  "Move forward to next end of defun.  With argument, do it that many times.
+Negative argument -N means move back to Nth preceding end of defun.
+
+An end of a defun occurs right after the close-parenthesis that matches
+the open-parenthesis that starts a defun; see `beginning-of-defun'."
+  (interactive "p")
+  (if (< arg 0)
+      (c-beginning-of-defun (- arg))
+    (while (> arg 0)
+      ;; skip down into the next defun-block
+      (while (and (c-safe (down-list 1) t)
+		  (not (eq (char-before) ?{)))
+	(forward-char -1)
+	(forward-sexp))
+      (c-beginning-of-defun 1)
+      (forward-sexp 1)
+      (setq arg (1- arg)))
+    (forward-line 1))
+  (c-keep-region-active))
+
 
 (defun c-beginning-of-statement (&optional count lim sentence-flag)
   "Go to the beginning of the innermost C statement.
