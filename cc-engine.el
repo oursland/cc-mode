@@ -2983,7 +2983,11 @@ isn't moved."
 	    (c-add-syntax 'cpp-macro)
 	  (when (and c-syntactic-indentation-in-macros
 		     macro-start
-		     (eq macro-start syntactic-relpos))
+		     (eq macro-start syntactic-relpos)
+		     (save-excursion
+		       (goto-char macro-start)
+		       (or (not (c-forward-to-cpp-expression))
+			   (<= (point) (c-point 'boi indent-point)))))
 	    (c-add-syntax 'cpp-macro-cont)))
 	;; return the syntax
 	syntax))))
