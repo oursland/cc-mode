@@ -280,6 +280,15 @@ This function is provided for compatibility only; derived modes should
 preferably use the `c-mode-menu' language constant directly."
   (cons modestr (c-lang-const c-mode-menu c)))
 
+;; Ugly hack to pull in the definition of `c-populate-syntax-table'
+;; from cc-langs to make it available at runtime.  It's either this or
+;; moving the definition for it to cc-defs, but that would mean to
+;; break up the syntax table setup over two files.
+(defalias 'c-populate-syntax-table
+  (cc-eval-when-compile
+    (let ((f (symbol-function 'c-populate-syntax-table)))
+      (if (byte-code-function-p f) f (byte-compile f)))))
+
 (defun c-after-change (beg end len)
   ;; Function put on `after-change-functions' to adjust various
   ;; caches.  Prefer speed to finesse here, since there will be an order

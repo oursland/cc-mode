@@ -190,42 +190,51 @@
 
 ;;; Syntax tables.
 
+(defun c-populate-syntax-table (table)
+  "Populate the given syntax table as necessary for a C-like language.
+This includes setting ' and \" as string delimiters, and setting up
+the comment syntax to handle both line style \"//\" and block style
+\"/*\" \"*/\" comments."
+
+  (modify-syntax-entry ?_  "_"     table)
+  (modify-syntax-entry ?\\ "\\"    table)
+  (modify-syntax-entry ?+  "."     table)
+  (modify-syntax-entry ?-  "."     table)
+  (modify-syntax-entry ?=  "."     table)
+  (modify-syntax-entry ?%  "."     table)
+  (modify-syntax-entry ?<  "."     table)
+  (modify-syntax-entry ?>  "."     table)
+  (modify-syntax-entry ?&  "."     table)
+  (modify-syntax-entry ?|  "."     table)
+  (modify-syntax-entry ?\' "\""    table)
+  (modify-syntax-entry ?\240 "."   table)
+
+  ;; Set up block and line oriented comments.  The new C
+  ;; standard mandates both comment styles even in C, so since
+  ;; all languages now require dual comments, we make this the
+  ;; default.
+  (cond
+   ;; XEmacs
+   ((memq '8-bit c-emacs-features)
+    (modify-syntax-entry ?/  ". 1456" table)
+    (modify-syntax-entry ?*  ". 23"   table))
+   ;; Emacs
+   ((memq '1-bit c-emacs-features)
+    (modify-syntax-entry ?/  ". 124b" table)
+    (modify-syntax-entry ?*  ". 23"   table))
+   ;; incompatible
+   (t (error "CC Mode is incompatible with this version of Emacs")))
+
+  (modify-syntax-entry ?\n "> b"  table)
+  ;; Give CR the same syntax as newline, for selective-display
+  (modify-syntax-entry ?\^m "> b" table))
+
 (c-lang-defconst c-make-mode-syntax-table
   "Functions that generates the mode specific syntax tables.
 The syntax tables aren't stored directly since they're quite large."
   t `(lambda ()
        (let ((table (make-syntax-table)))
-	 (modify-syntax-entry ?_  "_"     table)
-	 (modify-syntax-entry ?\\ "\\"    table)
-	 (modify-syntax-entry ?+  "."     table)
-	 (modify-syntax-entry ?-  "."     table)
-	 (modify-syntax-entry ?=  "."     table)
-	 (modify-syntax-entry ?%  "."     table)
-	 (modify-syntax-entry ?<  "."     table)
-	 (modify-syntax-entry ?>  "."     table)
-	 (modify-syntax-entry ?&  "."     table)
-	 (modify-syntax-entry ?|  "."     table)
-	 (modify-syntax-entry ?\' "\""    table)
-	 (modify-syntax-entry ?\240 "."   table)
-	 ;; Set up block and line oriented comments.  The new C
-	 ;; standard mandates both comment styles even in C, so since
-	 ;; all languages now require dual comments, we make this the
-	 ;; default.
-	 (cond
-	  ;; XEmacs
-	  ((memq '8-bit c-emacs-features)
-	   (modify-syntax-entry ?/  ". 1456" table)
-	   (modify-syntax-entry ?*  ". 23"   table))
-	  ;; Emacs
-	  ((memq '1-bit c-emacs-features)
-	   (modify-syntax-entry ?/  ". 124b" table)
-	   (modify-syntax-entry ?*  ". 23"   table))
-	  ;; incompatible
-	  (t (error "CC Mode is incompatible with this version of Emacs"))
-	  )
-	 (modify-syntax-entry ?\n "> b"  table)
-	 ;; Give CR the same syntax as newline, for selective-display
-	 (modify-syntax-entry ?\^m "> b" table)
+	 (c-populate-syntax-table table)
 	 ;; Mode specific syntaxes.
 	 ,(cond ((c-major-mode-is 'objc-mode)
 		 `(modify-syntax-entry ?@ "_" table))
@@ -1320,9 +1329,9 @@ Note that Java specific rules are currently applied to tell this from
   (c-lang-const c-not-decl-init-keywords))
 
 (c-lang-defconst c-label-key
-  "Regexp matching a normal label, i.e. not a label that's recognized
-with a keyword, like switch labels.  It's only used at the beginning
-of a statement."
+  "Regexp matching a normal label, i.e. a label that doesn't begin with
+a keyword like switch labels.  It's only used at the beginning of a
+statement."
   t "\\<\\>"
   (c c++ java pike) (concat "\\(" (c-lang-const c-symbol-key) "\\)"
 			    "[ \t\n\r\f\v]*:\\([^:]\\|$\\)"))
