@@ -1182,7 +1182,7 @@
 	   ;; CASE 5F: extern-lang-close?
 	   ((and inextern-p
 		 (eq char-after-ip ?}))
-	    (c-add-syntax 'extern-lang-close (aref inclass-p 1)))
+	    (c-add-syntax 'extern-lang-close (aref inclass-p 0)))
 	   ;; CASE 5G: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
 	   ((and inclass-p
