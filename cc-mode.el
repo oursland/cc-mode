@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-22 13:28:54 $
-;; Version:         $Revision: 2.169 $
+;; Last Modified:   $Date: 1992-07-23 17:11:02 $
+;; Version:         $Revision: 2.170 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-22 13:28:54 $|$Revision: 2.169 $|
+;; |$Date: 1992-07-23 17:11:02 $|$Revision: 2.170 $|
 
 
 ;; ======================================================================
@@ -326,7 +326,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.169 $
+  "Major mode for editing C++ code.  $Revision: 2.170 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -527,7 +527,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.169 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.170 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1727,7 +1727,12 @@ BOD is the beginning of the C++ definition."
 			   ;; The first following code counts
 			   ;; if it is before the line we want to indent.
 			   (and (< (point) indent-point)
-				(current-column))))
+				(+ (current-column)
+				   (if (save-excursion
+					 (goto-char indent-point)
+					 (c++-backward-over-syntactic-ws)
+					 (= (preceding-char) ?,))
+				       c-indent-level 0)))))
 		    ;; If no previous statement, indent it relative to
 		    ;; line brace is on.  For open brace in column
 		    ;; zero, don't let statement start there too.  If
@@ -2095,7 +2100,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.169 $"
+(defconst c++-version "$Revision: 2.170 $"
   "c++-mode version number.")
 
 (defun c++-version ()
