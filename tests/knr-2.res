@@ -2,7 +2,7 @@
 ((topmost-intro 1))
 ((arglist-cont-nonempty 2 8))
 ((c 79))
-((knr-argdecl-intro 2))
+((func-decl-cont 2))
 ((knr-argdecl-intro 2))
 ((knr-argdecl 127))
 ((knr-argdecl 127))

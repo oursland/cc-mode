@@ -8,7 +8,7 @@
 ((arglist-cont-nonempty 167 171))
 ((topmost-intro 1) (cpp-macro))
 ((topmost-intro 1) (cpp-macro))
-((cpp-define-intro) (knr-argdecl-intro 220))
+((cpp-define-intro) (func-decl-cont 220))
 ((topmost-intro 1) (cpp-macro))
 ((cpp-define-intro) (arglist-cont-nonempty 269 282))
 ((cpp-define-intro) (arglist-close 269 282))
