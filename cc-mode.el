@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-26 15:27:40 $
-;; Version:         $Revision: 2.190 $
+;; Last Modified:   $Date: 1992-08-26 15:35:18 $
+;; Version:         $Revision: 2.191 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -96,7 +96,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-26 15:27:40 $|$Revision: 2.190 $|
+;; |$Date: 1992-08-26 15:35:18 $|$Revision: 2.191 $|
 
 
 ;; ======================================================================
@@ -346,7 +346,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.190 $
+  "Major mode for editing C++ code.  $Revision: 2.191 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -356,6 +356,12 @@ from a c++-mode buffer.
 4. Comments are delimited with /* ... */ {or with // ... <newline>}
 5. Paragraphs are separated by blank lines only.
 6. Delete converts tabs to spaces as it moves back.
+
+IMPORTANT NOTE: You will notice that some characters (by default, only
+single quote) will get escaped with a backslash when typed in a
+comment region.  This is a necessary workaround of a bug present in
+GNU emacs 18 and derivatives.  Enter \"\\[describe-variable] c++-untame-characters RET\"
+for more information.
 
 Key bindings:
 \\{c++-mode-map}
@@ -547,7 +553,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.190 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.191 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2137,7 +2143,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.190 $"
+(defconst c++-version "$Revision: 2.191 $"
   "c++-mode version number.")
 
 (defun c++-version ()
