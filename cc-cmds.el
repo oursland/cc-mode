@@ -204,9 +204,9 @@ or \"/ah\" string on the mode line, newlines are inserted before and
 after braces based on the value of `c-hanging-braces-alist'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
-are non-whitespace characters present on the line after the brace, the
-brace is inserted inside a literal, or `c-syntactic-indentation' is
-nil.
+are non-whitespace characters present on the line before the brace,
+the brace is inserted inside a literal, or `c-syntactic-indentation'
+is nil.
 
 This function does various newline cleanups based on the value of
 `c-cleanup-list'."
@@ -214,12 +214,7 @@ This function does various newline cleanups based on the value of
   (let* ((c-state-cache (c-parse-state))
 	 (safepos (c-safe-position (point) c-state-cache))
 	 (literal (c-in-literal safepos)))
-    ;; if we're in a literal, or we're not at the end of the line, or
-    ;; a numeric arg is provided, or auto-newlining is turned off,
-    ;; then just insert the character.
-    (if (or literal
-	    arg
-	    (not (looking-at "[ \t]*$")))
+    (if (or literal arg)
 	(self-insert-command (prefix-numeric-value arg))
       (let* ((syms
 	      ;; This is the list of brace syntactic symbols that can
@@ -350,16 +345,21 @@ This function does various newline cleanups based on the value of
 		      c-state-cache (c-parse-state)
 		      syntax nil))))
 	  )
-	;; Now adjust the line's indentation.  Don't update the state
-	;; cache since c-guess-basic-syntax isn't called when
-	;; c-syntactic-context is set.
-	(let* ((old-ind (c-point 'boi))
-	       (old-point-max (point-max))
-	       (c-syntactic-context syntax))
-	  (indent-according-to-mode)
-	  (setq c-state-cache (c-adjust-state (c-point 'bol) old-point-max
-					      (- (c-point 'boi) old-ind)
-					      c-state-cache)))
+	(when (and c-syntactic-indentation
+		   (save-excursion
+		     (backward-char)
+		     (skip-chars-backward " \t")
+		     (bolp)))
+	  ;; Now adjust the line's indentation.  Don't update the state
+	  ;; cache since c-guess-basic-syntax isn't called when
+	  ;; c-syntactic-context is set.
+	  (let* ((old-ind (c-point 'boi))
+		 (old-point-max (point-max))
+		 (c-syntactic-context syntax))
+	    (indent-according-to-mode)
+	    (setq c-state-cache (c-adjust-state (c-point 'bol) old-point-max
+						(- (c-point 'boi) old-ind)
+						c-state-cache))))
 	;; Do all appropriate clean ups
 	(let ((here (point))
 	      (pos (- (point-max) (point)))
@@ -410,14 +410,14 @@ This function does various newline cleanups based on the value of
 	  (goto-char (- (point-max) pos))
 	  )
 	;; does a newline go after the brace?
-	(if (memq 'after newlines)
-	    (progn
-	      (newline)
-	      ;; update on c-state-cache
-	      (let* ((bufpos (- (point) 2))
-		     (which (if (eq (char-after bufpos) ?{) 'open 'close))
-		     (c-state-cache (c-hack-state bufpos which c-state-cache)))
-		(indent-according-to-mode))))
+	(when (and c-syntactic-indentation
+		   (memq 'after newlines))
+	  (newline)
+	  ;; update on c-state-cache
+	  (let* ((bufpos (- (point) 2))
+		 (which (if (eq (char-after bufpos) ?{) 'open 'close))
+		 (c-state-cache (c-hack-state bufpos which c-state-cache)))
+	    (indent-according-to-mode)))
 	;; blink the paren
 	(and (eq last-command-char ?\})
 	     old-blink-paren
@@ -542,9 +542,10 @@ following brace lists and semicolons following defuns."
 	      ;; only 'stop specifically says do not add a newline
 	      (setq add-newline-p (not (eq answer 'stop)))
 	      ))
-	  (if add-newline-p
-	      (progn (newline)
-		     (indent-according-to-mode)))
+	  (when (and add-newline-p
+		     c-syntactic-indentation)
+	    (newline)
+	    (indent-according-to-mode))
 	  )))))
 
 (defun c-electric-colon (arg)
