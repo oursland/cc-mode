@@ -19,7 +19,8 @@ Sat May 31 17:35:55 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 	Conversion to the easymenu library for creation of popup and menubar
 	menus.
 
-	* cc-mode.el (c-emacs-features): Make this work for Emacs 19.35.
+	* cc-mode.el (c-emacs-features): Make this work for Emacsen after
+	19.34.
 
 Fri May 30 15:38:09 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
