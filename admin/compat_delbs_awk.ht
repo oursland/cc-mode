@@ -1,5 +1,5 @@
 Title: Other Elisp Compatibility
-Author: cc-mode@python.org
+Author: cc-mode-help@python.org
 Links: links.h compatlinks.h
 
 <h2><code>delbackspace.el</code> and <code>awk-mode</code></h2>
