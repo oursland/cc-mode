@@ -4515,6 +4515,10 @@ In the first case the indentation is kept unchanged, in the second
 @cindex font locking
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@strong{Note:} The font locking in AWK mode is currently not integrated
+with the rest of @ccmode{}, so this section does not apply there.
+@xref{awk-mode Font Locking}, instead.
+
 @cindex Font Lock mode
 
 @ccmode{} provides font locking for its supported languages by supplying
