@@ -20,7 +20,7 @@
 ((brace-list-close . 174))
 ((topmost-intro . 203))
 ((brace-list-intro . 207))
-((brace-list-open . 217))
+((brace-entry-open . 217))
 ((brace-list-entry . 232))
 ((brace-list-close . 227))
 ((brace-list-entry . 217))
