@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.9 $
+@comment manual version: $Revision: 2.10 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-03-15 01:34:30 $
+@comment Last modification: $Date: 1995-04-06 04:24:37 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -90,7 +90,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 * Requirements::                
 * Limitations and Known Bugs::  
 * Mailing Lists and Submitting Bug Reports::  
-* Dumping cc-mode 4.155::       Dumping @code{cc-mode} 4.155
+* Dumping cc-mode 4::       Dumping @code{cc-mode} 4
 * Concept Index::               
 * Command Index::               Command Index
 * Key Index::                   Key Index
@@ -144,19 +144,23 @@ and functions in @code{cc-mode} are prefixed with @code{c-<thing>}, and
 provided.  This file is intended to be a replacement for
 @file{c-mode.el} and @file{c++-mode.el} -- you should be able to remove
 them and dump Emacs with @file{cc-mode.el} instead. See @ref{Dumping
-cc-mode 4.155} for details on how to do this.
+cc-mode 4} for details on how to do this.
 
+@kindex C-c C-v
+@findex c-version
 The major version number was incremented to 4 with the addition of
-@code{objc-mode}. This distribution contains release 4.155 of
-@code{cc-mode}.  This release will be the last for major release version
-4.  Work has already begun on version 5, which will not support use of
-Emacs 18.
+@code{objc-mode}. To find the minor revision number of this release, use
+@kbd{C-c C-v} (@code{c-version}).  This release will be the last for
+major release version 4, and work has already begun on version 5, which
+will not support use of Emacs 18.
 
 XEmacs 19.11 (formerly Lucid Emacs) is distributed with
 @file{cc-mode.el} 4.85 dumped in the executable.  It has completely
 replaced @file{c-mode.el} and @file{c++-mode.el}.  If you have XEmacs
-19.11 you should upgrade your @file{cc-mode.el} to version 4.155.
-XEmacs 19.12 will be distributed with @file{cc-mode.el} version 4.155.
+19.11 you should upgrade your @file{cc-mode.el} to latest version of
+@code{cc-mode} 4 (@xref{Getting the latest @code{cc-mode} release}).
+XEmacs 19.12 will be distributed with @file{cc-mode.el} the latest
+version 4 release.
 
 Both XEmacs and this distribution also contain a new file called
 @file{cc-compat.el} which should ease your transition from BOCM to
@@ -194,11 +198,12 @@ it is highly recommended that you upgrade to Emacs 19.  If you use
 @code{cc-mode} under Emacs 18, you're on your own.  With @code{cc-mode}
 version 5, Emacs 18 support will be dropped altogether.
 
-Note that XEmacs 19.12 already comes with @code{cc-mode} version 4.155
-preconfigured for your use.  You should be able to safely skip the rest
-of the setup information in this chapter.  XEmacs 19.11 ships with
-@code{cc-mode} version 4.85, so those users will want to continue
-reading to learn how to upgrade to version 4.155.
+Note that XEmacs 19.12 already comes with the latest @code{cc-mode}
+version 4 preconfigured for your use.  You should be able to safely skip
+the rest of the setup information in this chapter.  XEmacs 19.11 ships
+with @code{cc-mode} version 4.85, so those users will want to continue
+reading to learn how to upgrade to the latest @code{cc-mode} version 4
+(@xref{Getting the latest @code{cc-mode} release}).
 
 @cindex .emacs file
 The first thing you will want to do is put @file{cc-mode.el} somewhere
@@ -321,8 +326,11 @@ C-v} in the @code{c-mode}, @code{c++-mode}, or @code{objc-mode} buffer.
 You should see this message in the echo area:
 
 @example
-Using @code{cc-mode} version 4.155
+Using @code{cc-mode} version 4.@var{XXX}
 @end example
+
+@noindent
+where @var{XXX} will be some minor revision number.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1002,7 +1010,8 @@ before file offset settings (i.e. @code{c-file-offsets}).
 @cindex   Advanced Customizations
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-[blah blah about advanced customizations]
+@cindex custom indentation functions
+TBD: talk about custom indentation functions.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1013,7 +1022,12 @@ before file offset settings (i.e. @code{c-file-offsets}).
 @cindex   Syntactic Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-[list of syntactic symbols]
+@vindex c-offsets-alist
+The complete list of recognized syntactic symbols is described in the
+@code{c-offsets-alist} variable.  This chapter will provide some
+examples to help clarify these symbols.
+
+TBD: fill this stuff in.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1204,7 +1218,7 @@ My suggestion is to check out add-on fill packages such as
 
 @end itemize
 
-@node  Mailing Lists and Submitting Bug Reports, Dumping cc-mode 4.155, Limitations and Known Bugs, Top
+@node  Mailing Lists and Submitting Bug Reports, Dumping cc-mode 4, Limitations and Known Bugs, Top
 @comment  node-name,              next,                    previous,up
 @chapter  Mailing Lists and Submitting Bug Reports
 @cindex   Mailing Lists and Submitting Bug Reports
@@ -1243,10 +1257,10 @@ Please use these addresses instead of my personal address so I can keep
 track of all the incoming mail!
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Dumping cc-mode 4.155, Concept Index, Mailing Lists and Submitting Bug Reports, Top
+@node    Dumping cc-mode 4, Concept Index, Mailing Lists and Submitting Bug Reports, Top
 @comment node-name,    next,  previous,      up
-@chapter  Dumping @code{cc-mode} 4.155
-@cindex   Dumping @code{cc-mode} 4.155
+@chapter  Dumping @code{cc-mode} 4
+@cindex   Dumping @code{cc-mode} 4
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 For now, you're going to be kind of on your own, but here are my, and
@@ -1386,7 +1400,7 @@ need to do an @code{update-directory-autoloads}.
 @end example
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Concept Index, Command Index,  Dumping cc-mode 4.155, Top
+@node    Concept Index, Command Index,  Dumping cc-mode 4, Top
 @comment node-name,    next,  previous,      up
 @unnumbered Concept Index
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
