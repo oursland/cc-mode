@@ -3,11 +3,14 @@ file for cc-mode 3.304:
 
     MANIFEST: This file
 
-    README: manual on how to use cc-mode to edit C and C++
-    files. Eventually this will be replaced by a texinfo manual.
-
-    ChangeLog: Extremely verbose history of changes.
-
     cc-mode.el: Version 3.304 of the mode
 
     cc-mode-18.el: Emacs 18 compatibility file
+
+    README: manual on how to use cc-mode to edit C and C++
+    files. Eventually this will be replaced by a texinfo manual.
+
+    DUMPING: A guide to ditching c-mode.el in favor of cc-mode.el.
+
+    ChangeLog: Extremely verbose history of changes.
+
