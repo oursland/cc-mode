@@ -1,2 +1,2 @@
-  case '<': emit("iinc p -1");
-  case '>':
+case '<': emit("iinc p -1");
+case '>':
