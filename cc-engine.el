@@ -193,6 +193,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 
   (let ((case-fold-search nil)
 	(start (point))
+	macro-start
 	(delims (if comma-delim '(?\; ?,) '(?\;)))
 	(c-stmt-delim-chars (if comma-delim
 				c-stmt-delim-chars-with-comma
@@ -213,6 +214,11 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 
     (save-restriction
       (if lim (narrow-to-region lim (point-max)))
+
+      (if (save-excursion
+	    (and (c-beginning-of-macro)
+		 (/= (point) start)))
+	  (setq macro-start (point)))
 
       ;; Try to skip over unary operator characters, to register
       ;; that we've moved.
@@ -247,7 +253,8 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	      (cond
 	       ;; Check for macro start.
 	       ((save-excursion
-		  (and (looking-at "[ \t]*[a-zA-Z0-9!]")
+		  (and macro-start
+		       (looking-at "[ \t]*[a-zA-Z0-9!]")
 		       (progn (skip-chars-backward " \t")
 			      (eq (char-before) ?#))
 		       (progn (setq saved (1- (point)))
@@ -361,10 +368,27 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	      ;; that doesn't consume an sexp.
 	      (if (eq sym 'boundary)
 		  (setq ret 'previous)
-		;; Skip over any macros before we move by sexp.
-		(c-backward-syntactic-ws)
-		(or (c-safe (goto-char (scan-sexps (point) -1)) t)
-		    (throw 'loop nil))
+		(while
+		    (progn
+		      (or (c-safe (goto-char (scan-sexps (point) -1)) t)
+			  (throw 'loop nil))
+		      (cond ((looking-at "\\\\$")
+			     ;; Step again if we hit a line continuation.
+			     t)
+			    (macro-start
+			     ;; If we started inside a macro then this
+			     ;; sexp is always interesting.
+			     nil)
+			    (t
+			     ;; Otherwise check that we didn't step
+			     ;; into a macro from the end.
+			     (let ((macro-start
+				    (save-excursion
+				      (and (c-beginning-of-macro)
+					   (point)))))
+			       (when macro-start
+				 (goto-char macro-start)
+				 t))))))
 
 		;; Check for statement boundary.
 		(when (save-excursion
