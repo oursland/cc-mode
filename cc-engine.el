@@ -7139,7 +7139,7 @@ comment at the start of cc-engine.el for more info."
 	   ;; `indent-point' if `containing-sexp' is nil.
 	   (paren-state (c-parse-state))
 	   ;; There's always at most one syntactic element which got
-	   ;; a relpos.  It's stored in syntactic-relpos.
+	   ;; an anchor pos.  It's stored in syntactic-relpos.
 	   syntactic-relpos
 	   (c-stmt-delim-chars c-stmt-delim-chars))
 
@@ -8508,9 +8508,9 @@ comment at the start of cc-engine.el for more info."
   ;; Get offset from LANGELEM which is a list beginning with the
   ;; syntactic symbol and followed by any analysis data it provides.
   ;; That data may be zero or more elements, but if at least one is
-  ;; given then the first is the relpos (or nil).  The symbol is
-  ;; matched against `c-offsets-alist' and the offset calculated from
-  ;; that is returned.
+  ;; given then the first is the anchor position (or nil).  The symbol
+  ;; is matched against `c-offsets-alist' and the offset calculated
+  ;; from that is returned.
   ;;
   ;; This function might do hidden buffer changes.
   (let* ((symbol (c-langelem-sym langelem))
@@ -8531,8 +8531,8 @@ comment at the start of cc-engine.el for more info."
 (defun c-get-offset (langelem)
   ;; This is a compatibility wrapper for `c-calc-offset' in case
   ;; someone is calling it directly.  It takes an old style syntactic
-  ;; element on the form (SYMBOL . RELPOS) and converts it to the new
-  ;; list form.
+  ;; element on the form (SYMBOL . ANCHOR-POS) and converts it to the
+  ;; new list form.
   ;;
   ;; This function might do hidden buffer changes.
   (if (c-langelem-pos langelem)
@@ -8544,11 +8544,11 @@ comment at the start of cc-engine.el for more info."
   ;; Calculate the syntactic indentation from a syntactic description
   ;; as returned by `c-guess-syntax'.
   ;;
-  ;; Note that topmost-intro always has a relpos at bol, for
+  ;; Note that topmost-intro always has an anchor position at bol, for
   ;; historical reasons.  It's often used together with other symbols
   ;; that has more sane positions.  Since we always use the first
-  ;; found relpos, we rely on that these other symbols always precede
-  ;; topmost-intro in the LANGELEMS list.
+  ;; found anchor position, we rely on that these other symbols always
+  ;; precede topmost-intro in the LANGELEMS list.
   ;;
   ;; This function might do hidden buffer changes.
   (let ((indent 0) anchor)
@@ -8572,9 +8572,7 @@ comment at the start of cc-engine.el for more info."
 	  ;; Use the anchor position from the first syntactic
 	  ;; element with one.
 	  (unless anchor
-	    (let ((relpos (c-langelem-pos (car langelems))))
-	      (if relpos
-		  (setq anchor relpos)))))
+	    (setq anchor (c-langelem-pos (car langelems)))))
 
 	(setq langelems (cdr langelems))))
 

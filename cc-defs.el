@@ -1043,28 +1043,28 @@ MODE is either a mode symbol or a list of mode symbols."
 (defsubst c-langelem-sym (langelem)
   "Return the syntactic symbol in LANGELEM.
 
-LANGELEM is a syntactic element, i.e. either a cons cell on the
-\"old\" form given as the first argument to lineup functions or a list
-on the \"new\" form as used in `c-syntactic-element'."
+LANGELEM is either a cons cell on the \"old\" form given as the first
+argument to lineup functions or a syntactic element on the \"new\"
+form as used in `c-syntactic-element'."
   (car langelem))
 
 (defsubst c-langelem-pos (langelem)
-  "Return the (primary) anchor position in LANGELEM, or nil if there is none.
+  "Return the anchor position in LANGELEM, or nil if there is none.
 
-LANGELEM is a syntactic element, i.e. either a cons cell on the
-\"old\" form given as the first argument to lineup functions or a list
-on the \"new\" form as used in `c-syntactic-element'."
+LANGELEM is either a cons cell on the \"old\" form given as the first
+argument to lineup functions or a syntactic element on the \"new\"
+form as used in `c-syntactic-element'."
   (if (consp (cdr langelem))
       (car-safe (cdr langelem))
     (cdr langelem)))
 
 (defun c-langelem-col (langelem &optional preserve-point)
-  "Return the column of the (primary) anchor position in LANGELEM.
-Leave point at that position unless PRESERVE-POINT is non-nil.
+  "Return the column of the anchor position in LANGELEM.
+Also move the point to that position unless PRESERVE-POINT is non-nil.
 
-LANGELEM is a syntactic element, i.e. either a cons cell on the
-\"old\" form given as the first argument to lineup functions or a list
-on the \"new\" form as used in `c-syntactic-element'."
+LANGELEM is either a cons cell on the \"old\" form given as the first
+argument to lineup functions or a syntactic element on the \"new\"
+form as used in `c-syntactic-element'."
   (let ((pos (c-langelem-pos langelem))
 	(here (point)))
     (if pos
@@ -1078,10 +1078,10 @@ on the \"new\" form as used in `c-syntactic-element'."
 (defsubst c-langelem-2nd-pos (langelem)
   "Return the secondary position in LANGELEM, or nil if there is none.
 
-LANGELEM is a syntactic element, typically on the \"new\" form as used
-in `c-syntactic-element'.  It may be on the \"old\" form that is used
-as the first argument to lineup functions, but then the returned value
-always will be nil."
+LANGELEM is typically a syntactic element on the \"new\" form as used
+in `c-syntactic-element'.  It may also be a cons cell as passed in the
+first argument to lineup functions, but then the returned value always
+will be nil."
   (car-safe (cdr-safe (cdr-safe langelem))))
 
 (defsubst c-keep-region-active ()

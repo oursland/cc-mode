@@ -921,170 +921,171 @@ can always override the use of `c-default-style' by making calls to
 ;; symbol and continue searching.
 (c-set-stylevar-fallback 'c-offsets-alist
      '((string                . c-lineup-dont-change)
-       ;; Relpos: Beg of previous line.
+       ;; Anchor pos: Beg of previous line.
        (c                     . c-lineup-C-comments)
-       ;; Relpos: Beg of the comment.
+       ;; Anchor pos: Beg of the comment.
        (defun-open            . 0)
-       ;; Relpos: When inside a class: Boi at the func decl start.
+       ;; Anchor pos: When inside a class: Boi at the func decl start.
        ;; When at top level: Bol at the func decl start.  When inside
        ;; a code block (only possible in Pike): At the func decl
        ;; start(*).
        (defun-close           . 0)
-       ;; Relpos: At the defun block open if it's at boi, otherwise
-       ;; boi at the func decl start.
+       ;; Anchor pos: At the defun block open if it's at boi,
+       ;; otherwise boi at the func decl start.
        (defun-block-intro     . +)
-       ;; Relpos: At the block open(*).
+       ;; Anchor pos: At the block open(*).
        (class-open            . 0)
-       ;; Relpos: Boi at the class decl start.
+       ;; Anchor pos: Boi at the class decl start.
        (class-close           . 0)
-       ;; Relpos: Boi at the class decl start.
+       ;; Anchor pos: Boi at the class decl start.
        (inline-open           . +)
-       ;; Relpos: None for functions (inclass got the relpos then),
-       ;; boi at the lambda start for lambdas.
+       ;; Anchor pos: None for functions (inclass got the relpos
+       ;; then), boi at the lambda start for lambdas.
        (inline-close          . 0)
-       ;; Relpos: Inexpr functions: At the lambda block open if it's
-       ;; at boi, else at the statement(*) at boi of the start of the
-       ;; lambda construct.  Otherwise: At the inline block open if
-       ;; it's at boi, otherwise boi at the func decl start.
+       ;; Anchor pos: Inexpr functions: At the lambda block open if
+       ;; it's at boi, else at the statement(*) at boi of the start of
+       ;; the lambda construct.  Otherwise: At the inline block open
+       ;; if it's at boi, otherwise boi at the func decl start.
        (func-decl-cont        . +)
-       ;; Relpos: Boi at the func decl start.
+       ;; Anchor pos: Boi at the func decl start.
        (knr-argdecl-intro     . +)
-       ;; Relpos: Boi at the topmost intro line.
+       ;; Anchor pos: Boi at the topmost intro line.
        (knr-argdecl           . 0)
-       ;; Relpos: At the beginning of the first K&R argdecl.
+       ;; Anchor pos: At the beginning of the first K&R argdecl.
        (topmost-intro         . 0)
-       ;; Relpos: Bol at the last line of previous construct.
+       ;; Anchor pos: Bol at the last line of previous construct.
        (topmost-intro-cont    . c-lineup-topmost-intro-cont)
-       ;; Relpos: Boi at the topmost intro line.
+       ;; Anchor pos: Boi at the topmost intro line.
        (member-init-intro     . +)
-       ;; Relpos: Boi at the func decl arglist open.
+       ;; Anchor pos: Boi at the func decl arglist open.
        (member-init-cont      . c-lineup-multi-inher)
-       ;; Relpos: Beg of the first member init.
+       ;; Anchor pos: Beg of the first member init.
        (inher-intro           . +)
-       ;; Relpos: Boi at the class decl start.
+       ;; Anchor pos: Boi at the class decl start.
        (inher-cont            . c-lineup-multi-inher)
-       ;; Relpos: Java: At the implements/extends keyword start.
+       ;; Anchor pos: Java: At the implements/extends keyword start.
        ;; Otherwise: At the inher start colon, or boi at the class
        ;; decl start if the first inherit clause hangs and it's not a
        ;; func-local inherit clause (when does that occur?).
        (block-open            . 0)
-       ;; Relpos: Inexpr statement: At the statement(*) at boi of the
-       ;; start of the inexpr construct.  Otherwise: None.
+       ;; Anchor pos: Inexpr statement: At the statement(*) at boi of
+       ;; the start of the inexpr construct.  Otherwise: None.
        (block-close           . 0)
-       ;; Relpos: Inexpr statement: At the inexpr block open if it's
-       ;; at boi, else at the statement(*) at boi of the start of the
-       ;; inexpr construct.  Block hanging on a case/default label: At
-       ;; the closest preceding label that starts at boi.  Otherwise:
-       ;; At the block open(*).
+       ;; Anchor pos: Inexpr statement: At the inexpr block open if
+       ;; it's at boi, else at the statement(*) at boi of the start of
+       ;; the inexpr construct.  Block hanging on a case/default
+       ;; label: At the closest preceding label that starts at boi.
+       ;; Otherwise: At the block open(*).
        (brace-list-open       . 0)
-       ;; Relpos: Boi at the brace list decl start, but a starting
+       ;; Anchor pos: Boi at the brace list decl start, but a starting
        ;; "typedef" token is ignored.
        (brace-list-close      . 0)
-       ;; Relpos: At the brace list decl start(*).
+       ;; Anchor pos: At the brace list decl start(*).
        (brace-list-intro      . +)
-       ;; Relpos: At the brace list decl start(*).
+       ;; Anchor pos: At the brace list decl start(*).
        (brace-list-entry      . 0)
-       ;; Relpos: At the first non-ws char after the open paren if the
-       ;; first token is on the same line, otherwise boi at that
+       ;; Anchor pos: At the first non-ws char after the open paren if
+       ;; the first token is on the same line, otherwise boi at that
        ;; token.
        (brace-entry-open      . 0)
-       ;; Relpos: Same as brace-list-entry.
+       ;; Anchor pos: Same as brace-list-entry.
        (statement             . 0)
-       ;; Relpos: After a `;' in the condition clause of a for
+       ;; Anchor pos: After a `;' in the condition clause of a for
        ;; statement: At the first token after the starting paren.
        ;; Otherwise: At the preceding statement(*).
        (statement-cont        . +)
-       ;; Relpos: After the first token in the condition clause of a
-       ;; for statement: At the first token after the starting paren.
-       ;; Otherwise: At the containing statement(*).
+       ;; Anchor pos: After the first token in the condition clause of
+       ;; a for statement: At the first token after the starting
+       ;; paren.  Otherwise: At the containing statement(*).
        (statement-block-intro . +)
-       ;; Relpos: In inexpr statement block: At the inexpr block open
-       ;; if it's at boi, else at the statement(*) at boi of the start
-       ;; of the inexpr construct.  In a block hanging on a
+       ;; Anchor pos: In inexpr statement block: At the inexpr block
+       ;; open if it's at boi, else at the statement(*) at boi of the
+       ;; start of the inexpr construct.  In a block hanging on a
        ;; case/default label: At the closest preceding label that
        ;; starts at boi.  Otherwise: At the start of the containing
        ;; block(*).
        (statement-case-intro  . +)
-       ;; Relpos: At the case/default label(*).
+       ;; Anchor pos: At the case/default label(*).
        (statement-case-open   . 0)
-       ;; Relpos: At the case/default label(*).
+       ;; Anchor pos: At the case/default label(*).
        (substatement          . +)
-       ;; Relpos: At the containing statement(*).
+       ;; Anchor pos: At the containing statement(*).
        (substatement-open     . +)
-       ;; Relpos: At the containing statement(*).
+       ;; Anchor pos: At the containing statement(*).
        (substatement-label    . 2)
-       ;; Relpos: At the containing statement(*).
+       ;; Anchor pos: At the containing statement(*).
        (case-label            . 0)
-       ;; Relpos: At the start of the switch block(*).
+       ;; Anchor pos: At the start of the switch block(*).
        (access-label          . -)
-       ;; Relpos: Same as inclass.
+       ;; Anchor pos: Same as inclass.
        (label                 . 2)
-       ;; Relpos: At the start of the containing block(*).
+       ;; Anchor pos: At the start of the containing block(*).
        (do-while-closure      . 0)
-       ;; Relpos: At the corresponding while statement(*).
+       ;; Anchor pos: At the corresponding while statement(*).
        (else-clause           . 0)
-       ;; Relpos: At the corresponding if statement(*).
+       ;; Anchor pos: At the corresponding if statement(*).
        (catch-clause          . 0)
-       ;; Relpos: At the previous try or catch statement clause(*).
+       ;; Anchor pos: At the previous try or catch statement clause(*).
        (comment-intro         . (c-lineup-knr-region-comment c-lineup-comment))
-       ;; Relpos: None.
+       ;; Anchor pos: None.
        (arglist-intro         . +)
-       ;; Relpos: Boi at the open paren, or at the first non-ws after
-       ;; the open paren of the surrounding sexp, whichever is later.
+       ;; Anchor pos: Boi at the open paren, or at the first non-ws
+       ;; after the open paren of the surrounding sexp, whichever is
+       ;; later.
        (arglist-cont          . (c-lineup-gcc-asm-reg 0))
-       ;; Relpos: At the first token after the open paren.
+       ;; Anchor pos: At the first token after the open paren.
        (arglist-cont-nonempty . (c-lineup-gcc-asm-reg c-lineup-arglist))
-       ;; Relpos: At the containing statement(*).
+       ;; Anchor pos: At the containing statement(*).
        ;; 2nd pos: At the open paren.
        (arglist-close         . +)
-       ;; Relpos: At the containing statement(*).
+       ;; Anchor pos: At the containing statement(*).
        ;; 2nd pos: At the open paren.
        (stream-op             . c-lineup-streamop)
-       ;; Relpos: Boi at the first stream op in the statement.
+       ;; Anchor pos: Boi at the first stream op in the statement.
        (inclass               . +)
-       ;; Relpos: At the class open brace if it's at boi, otherwise
-       ;; boi at the class decl start.
+       ;; Anchor pos: At the class open brace if it's at boi,
+       ;; otherwise boi at the class decl start.
        (cpp-macro             . [0])
-       ;; Relpos: None.
+       ;; Anchor pos: None.
        (cpp-macro-cont        . +)
-       ;; Relpos: At the macro start (always at boi).
+       ;; Anchor pos: At the macro start (always at boi).
        (cpp-define-intro      . (c-lineup-cpp-define +))
-       ;; Relpos: None.
+       ;; Anchor pos: None.
        (friend                . 0)
-       ;; Relpos: None.
+       ;; Anchor pos: None.
        (objc-method-intro     . [0])
-       ;; Relpos: Boi.
+       ;; Anchor pos: Boi.
        (objc-method-args-cont . c-lineup-ObjC-method-args)
-       ;; Relpos: At the method start (always at boi).
+       ;; Anchor pos: At the method start (always at boi).
        (objc-method-call-cont . c-lineup-ObjC-method-call)
-       ;; Relpos: At the open bracket.
+       ;; Anchor pos: At the open bracket.
        (extern-lang-open      . 0)
        (namespace-open        . 0)
        (module-open           . 0)
        (composition-open      . 0)
-       ;; Relpos: Boi at the extern/namespace/etc keyword.
+       ;; Anchor pos: Boi at the extern/namespace/etc keyword.
        (extern-lang-close     . 0)
        (namespace-close       . 0)
        (module-close          . 0)
        (composition-close     . 0)
-       ;; Relpos: Boi at the corresponding extern/namespace/etc keyword.
+       ;; Anchor pos: Boi at the corresponding extern/namespace/etc keyword.
        (inextern-lang         . +)
        (innamespace           . +)
        (inmodule              . +)
        (incomposition         . +)
-       ;; Relpos: At the extern/namespace/etc block open brace if it's
-       ;; at boi, otherwise boi at the keyword.
+       ;; Anchor pos: At the extern/namespace/etc block open brace if
+       ;; it's at boi, otherwise boi at the keyword.
        (template-args-cont    . (c-lineup-template-args +))
-       ;; Relpos: Boi at the decl start.  This might be changed; the
-       ;; logical position is clearly the opening '<'.
+       ;; Anchor pos: Boi at the decl start.  This might be changed;
+       ;; the logical position is clearly the opening '<'.
        (inlambda              . c-lineup-inexpr-block)
-       ;; Relpos: None.
+       ;; Anchor pos: None.
        (lambda-intro-cont     . +)
-       ;; Relpos: Boi at the lambda start.
+       ;; Anchor pos: Boi at the lambda start.
        (inexpr-statement      . +)
-       ;; Relpos: None.
+       ;; Anchor pos: None.
        (inexpr-class          . +)
-       ;; Relpos: None.
+       ;; Anchor pos: None.
        ))
 (defcustom c-offsets-alist nil
   "Association list of syntactic element symbols and indentation offsets.
@@ -1525,9 +1526,9 @@ as designated in the variable `c-file-style'.")
 ;; access the list.
 ;;
 ;; Specifically, the element returned by `c-langelem-pos' is the
-;; relpos (a.k.a. anchor position), or nil if there isn't any.  See
-;; the comments in the `c-offsets-alist' variable for more detailed
-;; info about the data each syntactic symbol provides.
+;; anchor position, or nil if there isn't any.  See the comments in
+;; the `c-offsets-alist' variable for more detailed info about the
+;; data each syntactic symbol provides.
 ;; 
 ;; This is always bound dynamically.  It should never be set
 ;; statically (e.g. with `setq').

@@ -45,24 +45,10 @@
 (cc-require 'cc-engine)
 
 
-;; Standard indentation line-ups
-
-;; Calling convention:
+;; Standard line-up functions
 ;;
-;; The single argument is a cons cell containing the syntactic symbol
-;; in the car, and the relpos (a.k.a. anchor position) in the cdr.
-;; The cdr may be nil for syntactic symbols which doesn't have an
-;; associated relpos.
-;;
-;; Some syntactic symbols provide more information, usually more
-;; interesting positions.  The complete list for the syntactic element
-;; (beginning with the symbol itself) is available in
-;; `c-syntactic-element'.
-;;
-;; Lineup functions must not change the content of the buffer unless
-;; it's completely reversed again.  They are however allowed to do
-;; hidden buffer changes, i.e. set text properties for caching
-;; purposes etc.  Buffer undo recording is disabled while they run.
+;; See the section "Custom Indentation Functions" in the manual for
+;; details on the calling convention.
 
 (defun c-lineup-topmost-intro-cont (langelem)
   "Line up declaration continuation lines zero or one indentation step.
@@ -282,7 +268,7 @@ arglist-close, brace-list-close, arglist-cont and arglist-cont-nonempty."
 (defun c-lineup-arglist-operators (langelem)
   "Line up lines starting with an infix operator under the open paren.
 Return nil on lines that don't start with an operator, to leave those
-cases to other lineup functions.  Example:
+cases to other line-up functions.  Example:
 
 if (  x < 10
    || at_limit (x,       <- c-lineup-arglist-operators
@@ -290,7 +276,7 @@ if (  x < 10
    )
 
 Since this function doesn't do anything for lines without an infix
-operator you typically want to use it together with some other lineup
+operator you typically want to use it together with some other line-up
 settings, e.g. as follows \(the arglist-close setting is just a
 suggestion to get a consistent style):
 
@@ -686,9 +672,8 @@ Works with: The `statement' syntactic symbol."
 (defun c-lineup-assignments (langelem)
   "Line up the current line after the assignment operator on the first
 line in the statement.  If there isn't any, return nil to allow
-stacking with other indentation functions.  If the current line
-contains an assignment operator too, try to align it with the first
-one.
+stacking with other line-up functions.  If the current line contains
+an assignment operator too, try to align it with the first one.
 
 Works with: topmost-intro-cont, statement-cont, arglist-cont,
 arglist-cont-nonempty."
@@ -816,7 +801,7 @@ result = prefix + \"A message \"
                   \"string.\";      <- c-lineup-string-cont
 
 Nil is returned in other situations, to allow stacking with other
-lineup functions.
+line-up functions.
 
 Works with: topmost-intro-cont, statement-cont, arglist-cont,
 arglist-cont-nonempty."
@@ -851,7 +836,7 @@ Works with: template-args-cont."
 Go to the position right after the message receiver, and if you are at
 the end of the line, indent the current line c-basic-offset columns
 from the opening bracket; otherwise you are looking at the first
-character of the first method call argument, so lineup the current
+character of the first method call argument, so line up the current
 line with it.
 
 Works with: objc-method-call-cont."
@@ -1080,9 +1065,10 @@ Works with: cpp-define-intro."
 The \"x\" line is aligned to the text after the \":\" on the \"w\" line, and
 similarly \"z\" under \"y\".
 
-This is done only in an \"asm\" or \"__asm__\" block, and only to those
-lines mentioned.  Anywhere else nil is returned.  The usual arrangement is
-to have this routine as an extra feature at the start of arglist lineups, e.g.
+This is done only in an \"asm\" or \"__asm__\" block, and only to
+those lines mentioned.  Anywhere else nil is returned.  The usual
+arrangement is to have this routine as an extra feature at the start
+of arglist line-ups, e.g.
 
     (c-lineup-gcc-asm-reg c-lineup-arglist)
 
