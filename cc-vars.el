@@ -956,7 +956,7 @@ can always override the use of `c-default-style' by making calls to
        ;; Relpos: None.
        (lambda-intro-cont     . +)
        ;; Relpos: Boi at the lambda start.
-       (inexpr-statement      . 0)
+       (inexpr-statement      . +)
        ;; Relpos: None.
        (inexpr-class          . +)
        ;; Relpos: None.
