@@ -526,7 +526,7 @@ want to set `c-style-variables-are-local-p'."
   :type '(radio
 	  (string :tag "Style in all modes (except Java)")
 	  (repeat :tag "Mode-specific styles"
-		  :value ((other . "user"))
+		  :value ((other . "gnu"))
 		  (cons :format "%v"
 			(choice :tag "Mode"
 				(const c-mode) (const c++-mode)
@@ -846,7 +846,7 @@ Here is the current list of valid syntactic element symbols:
 	   (get 'c-offsets-alist 'c-stylevar-fallback)))
   :group 'c)
 
-(defcustom c-style-variables-are-local-p nil
+(defcustom c-style-variables-are-local-p t
   "*Whether style variables should be buffer local by default.
 If non-nil, then all indentation style related variables will be made
 buffer local by default.  If nil, they will remain global.  Variables
