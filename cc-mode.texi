@@ -1,5 +1,5 @@
 \input texinfo  @comment -*-texinfo-*-
-@comment $Revision: 1.2 $
+@comment $Revision: 1.3 $
 @comment %**start of header (This is for running Texinfo on a region.)
 @setfilename cc-mode.info
 @settitle Combined C/C++ Mode User's Manual
@@ -14,7 +14,7 @@
 %\global\baselineskip 30pt      % For printing in double spaces
 @end tex
 @ifinfo
-This document describes CC-Mode, a combined C and C++ editing mode for
+This document describes cc-mode, a combined C and C++ editing mode for
 the GNU Emacs editor.
 
 Copyright @copyright{} 1993 Barry A@. Warsaw
@@ -34,11 +34,11 @@ notice identical to this one except for the removal of this paragraph
 @c
 @titlepage
 @sp 6
-@center @titlefont{CC Mode User's Manual}
+@center @titlefont{cc-mode User's Manual}
 @sp 2
 @center @titlefont{Combined C/C++ Editing Mode}
 @sp 4
-@center Manual Revision: $Revision: 1.2 $
+@center Manual Revision: $Revision: 1.3 $
 @center November 1993
 @sp 5
 @center Barry A@. Warsaw
@@ -58,14 +58,14 @@ are preserved on all copies.
 @node Top, Introduction, (dir), (dir)
 @comment  node-name,  next,  previous,  up
 
-This document describes CC-Mode, a package for editing C and C++ code
+This document describes cc-mode, a package for editing C and C++ code
 for the GNU Emacs editor.  The manual is divided into the following
 chapters.
 
 @menu
 * Introduction::
 * Thanks and History::
-* The CC-Mode Mailing List::
+* The cc-mode Mailing List::
 
 * Concept Index::
 * Command Index::
@@ -81,36 +81,502 @@ chapters.
 
 @end ifinfo
 @cindex ARM, The
-CC-Mode is a GNU Emacs package written entirely in Emacs Lisp.  It is
-used to edit C and C++ code and provides customizable indentation
-styles and other conveniences for writing, using, and maintaining C
-and C++ programs.  CC-Mode supports both ANSI-C style prototyped
-headers and K&R style function declarations.  CC-Mode also supports
-C++ code, using the Annotated C++ Reference Manual (a.k.a. @dfn{The
-ARM}) as a standard. @xref{References}.
+cc-mode is a GNU Emacs package written entirely in Emacs Lisp.  It is
+used to edit C and C++ code (and eventually Objective-C code). It
+provides customizable indentation styles and other conveniences for
+writing, using, and maintaining C and C++ programs.  It provides many
+advantages over the Emacs distribution's @file{c-mode.el} (also known as
+Boring Old C Mode, or BOCM :-). cc-mode supports ANSI-C style prototyped
+functions, K&R style function declarations and C++, using the Annotated
+C++ Reference Manual (a.k.a. @dfn{The ARM}) as a
+standard. @xref{References}.  cc-mode also provides a new, more
+intuitive and flexible mechanism for customizing indentation.
 
-@node  Customizing Indentation, Usage Overview, Top, Top
+@file{cc-mode.el} traces its history originally from an old version of
+Emacs 18's @file{c-mode.el}.  From there, it branched off into separate
+development as @file{c++-mode.el} which supported only C++, for the most
+part.  After I inherited the mode in 1992, @file{c++-mode.el} was
+generalized so that it could also handle ANSI and K&R C, but it
+continued to suffer from its @file{c-mode.el} heritage, i.e. it still
+supported a vast number of confusing indentation variables.
+
+In 1993, I decided to merge development of this mode back with Emacs
+19's @file{c-mode.el} and finally eliminate any gratuitous distinction
+between the two modes.  At about the same time, I came up with a
+different (and hopefully more intuitive) mechanism for customizing
+indentation.  The result of this work is @file{cc-mode.el}.  At this
+point, @file{cc-mode.el} is fully merged back with @file{c-mode.el}, and
+though both of these, along with various incarnations of
+@file{c++-mode.el}, continue to be distributed, the hope is that
+eventually @file{cc-mode.el} will become the default for editing C and
+C++ and all other files will be merged into @file{dinosaur.el}
+@samp{:-)}.  There are also visions of generalizing @file{cc-mode.el} to
+handle other C-like languages such as Objective-C, Perl, shells, TCL,
+lex, and yacc.  Objective-C is the only language that's actually been
+merged in, but those patches have not become part of the cc-mode
+distribution... yet.
+
+This manual will try to cover a range of usage issues, including how to
+get started, how to customize indentation, and performance issues that
+you should be aware of.  There should be plenty of examples to help you
+along the way.
+
+Note that although the name of the file is @file{cc-mode.el}, and I'll
+often refer to the mode as @emph{cc-mode}, but there really is no top
+level cc-mode entry point.  I call it cc-mode simply to differentiate it
+from @file{c-mode.el}.  All of the variables, commands, and functions in
+cc-mode are prefixed with @code{c-<thing>}, and both @code{c-mode} and
+@code{c++-mode} entry points are provided, along with the expected hook,
+keymap, syntax table, and abbrev variables.  This file is intended to be
+a drop-in replacement for @file{c-mode.el} -- you should be able to
+remove @file{c-mode.el} and dump Emacs with @file{cc-mode.el} instead.
+
+cc-mode works with both FSF Emacs 19 and Lucid Emacs 19.  It's also
+rumored to work with Emacs 18, albeit in a limited manner.  For more
+information on the differences in support, see @xref{Support for Emacs
+Versions}.
+
+@node Getting Started, Customizing Indentation, Introduction, Top
 @comment  node-name,  next,  previous,  up
-@chapter Customizing Indentation
+@chapter Getting Started
+@ifinfo
+
+This chapter will explain how to quickly get started using cc-mode, from
+a novice's point of view.  Some of this information might be too mundane
+to more experienced users.  For details on how to configure cc-mode to
+support your personal indentation style, @xref{Customizing Indentation}.
+
+@section Setting up load-path
+@cindex load-path
+The first thing you want to do is put @file{cc-mode.el} somewhere on
+your @var{load-path} where Emacs can find it.  @var{load-path} is a
+variable that contains a list of directories that Emacs uses to find its
+lisp files.  See the Emacs manual for more information.
+
+You can type @kbd{C-h v load-path RET} to see all the directories Emacs
+looks at when loading a file.  If you do not have write permission in
+any of these directories, then you'll need to create a new directory to
+hold the @file{cc-mode.el} file.  For example:
+
+@example
+[in your favorite Un*x shell]
+% cd
+% mkdir mylisp
+% mv cc-mode.el mylisp
+% cd mylisp
+@end example
+
+@cindex .emacs file
+Now to make sure that Emacs searches this new directory, add the
+following to your @file{~/.emacs} file:
+
+@example
+(setq load-path (cons "~/mylisp" load-path))
+@end example
+
+This puts the new directory at the front of your @var{load-path} so that
+Emacs searches it first.
+
+@section Byte compiling
+@cindex byte-compilation
+The next thing you want to do is to byte-compile the @file{cc-mode.el}
+file. @dfn{Byte-compiling} this lisp file produces a @file{cc-mode.elc}
+file that Emacs will use to load and run faster.  To do this, enter the
+following inside Emacs:
+
+@example
+M-x byte-compile-file RET ~/mylisp/cc-mode.el RET
+@end example
+
+Please note that you can ignore all warnings produced by the
+byte-compiler.  They are a byproduct of the support for multiple Emacs
+versions and have no effect on your use of the mode.
+
+@section Overriding the Default c-mode
+The typical Emacs installation comes with a version of @file{c-mode.el}
+(BOCM) already pre-loaded (dumped) into the executable image.  In such
+an environment you must either re-dump Emacs with @file{cc-mode.el}
+instead of @file{c-mode.el}, or you must add some lisp magic to your
+@file{~/.emacs} so that cc-mode will override the built-in defaults.
+Its also possible that your Emacs is dumped with an older version of
+@file{c++-mode.el}.
+
+Re-dumping Emacs with cc-mode is not for novices or the faint of heart,
+but if you feel ambitious, @pxref{Dumping Emacs with cc-mode}.  Most
+people should just add the magic lisp and leave it at that.
+
+@concept .emacs file
+To make sure that any existing definitions of c-mode or c++-mode don't
+interfere with cc-mode, you will want to add the following to your
+@file{~/.emacs} @emph{before} any other reference to c-mode or c++-mode:
+
+@example
+(fmakunbound 'c-mode)
+(makunbound 'c-mode-map)
+(fmakunbound 'c++-mode)
+(makunbound 'c++-mode-map)
+(makunbound 'c-style-alist)
+@end example
+
+@section Loading cc-mode.el
+@cindex autoload
+The next step is to get Emacs to load @file{cc-mode.el} at the right
+time, so that you can start editing C and C++ files with it.  There are
+two ways to do this.  The first involves setting up Emacs to
+@dfn{autoload} @file{cc-mode.el} at the first reference to it.  To do
+this, add the following lines to your @file{~/.emacs} file (these
+must appear @emph{after} the @code{makunbound} calls above):
+
+@example
+(autoload 'c++-mode            "cc-mode" "C++ Editing Mode" t)
+(autoload 'c-mode              "cc-mode" "C Editing Mode" t)
+(autoload 'c-submit-bug-report "cc-mode" "C Editing Mode" t)
+@end example
+
+@cindex mode hook
+This is a good way to load in cc-mode if you use it infrequently since
+Emacs will only load it when you need it.  The downside is that, since
+cc-mode won't be loaded at the time your @file{~/.emacs} file is
+executed, you cannot set cc-mode indentation parameters at the top level
+of your @file{~/.emacs} file.  You would need to set these parameters in
+a @dfn{mode hook}.  This isn't any harder to do, you just need to be
+aware of the differences.  For more information on cc-mode's mode hooks,
+@pxref{Customizing}.
+
+An alternative is to simply load cc-mode unconditionally at the start of
+your Emacs session.  If you do this, you will be able to call cc-mode's
+indentation functions at any place in your @file{~/.emacs} file without
+having to use a hook.  If you want to do this, instead of the
+@code{autoload} calls above, put this in your @file{~/.emacs} file:
+
+@example
+(load "cc-mode")
+@end example
+
+@section Visiting Files
+@vindex auto-mode-alist
+The final piece of the puzzle is to get Emacs to use c-mode or c++-mode
+when you visit a C or C++ file.  The simplest way to do this is to set
+up the @var{auto-mode-alist} variable.  This variable associates file
+names with Emacs modes, so that when you visit a file with a name that
+matches one of the entries in this variable, the buffer is placed in the
+associated mode.
+
+Here is an example which is appropriate for your @file{~/.emacs} file.
+It tells Emacs that files ending in @samp{.C}, @samp{.cc}, and
+@samp{.hh} are C++ files and should be edited using c++-mode, while
+files ending in @samp{.c} and @samp{.h} are C files and should be edited
+using c-mode. Note that this appends the new specifications onto your
+@var{auto-mode-alist} variable so that you don't lose your other
+file-mode assocations.
+
+@example
+(setq auto-mode-alist
+  (append '(("\\.C$"  . c++-mode)
+            ("\\.cc$" . c++-mode)
+            ("\\.hh$" . c++-mode)
+            ("\\.c$"  . c-mode)
+            ("\\.h$"  . c-mode)
+           ) auto-mode-alist))
+@end example
+
+What happens if you have some @samp{.h} files that are C and others that
+are C++?  In this case you can add a comment to the top of the C++
+@samp{.h} file like so:
+
+@example
+// This is really a -*- C++ -*- file
+@end example
+
+See the Emacs manual for more details on specifying file modes.
+
+@section Simple Customizations
+cc-mode is virtually plug-and-play-ware, if your coding standard
+resembles the default indentation style, or one of the more well-known C
+and C++ standard styles.  The styles currently supported are BSD,
+Ellemtel, GNU, K&R, Stroustrup, and Whitesmith.  There is also a Default
+style, which resets the indentation variables to the default cc-mode
+values. Detailed examples of the differences in these styles is provided
+@xref{Someplace Later}.
+
+To select a style, hit @kbd{M-x c-set-style} in the cc-mode buffer.  You
+will be prompted, with completion, for a style to use.  Note that
+selecting a style @emph{does not} re-indent the existing code to the new
+style.  There are cc-mode commands that can help you with this.
+@xref{Someplace Later}.
+
+@cindex{hooks}
+@vindex{c-mode-common-hook}
+@vindex{c++-mode-hook}
+@vindex{c-mode-hook}
+@findex{add-hook}
+@comment
+If you know that you'll always want to use a particular style for all
+your C and C++ code, you can set the style programmatically in a
+@dfn{hook} function.  Hooks are described in greater detail in the Emacs
+manual.  cc-mode defines the hook variables @var{c-mode-hook} and
+@var{c++-mode-hook}, which are run only by the modes c-mode and c++-mode
+respectively.  cc-mode defines a third hook, @var{c-mode-common-hook}
+which is run by both c-mode and c++-mode.  Thus if you want to use the
+same coding style for both C and C++, you might include the following in
+your @file{~/.emacs} file:
+
+@example
+(defun set-my-style ()
+  ;; substitute whatever style you want if GNU is not it
+  (c-set-style "GNU"))
+;; add-hook only exists for Emacs 19
+(add-hook 'c-mode-common-hook 'set-my-style)
+@end example
+
+There are other ways to customize indentation, and you can also define
+and add your own coding style to the list of default styles.  How to do
+this is explained @xref{Someplace Later}.
+
+@node  Customizing, Usage Overview, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter The Indentation Engine
 @ifinfo
 
 @end ifinfo
-@cindex semantics
-@cindex langelem
-Unlike BOCM and c++-mode, indentation customization in CC-Mode is much
-more intuitive and flexible.  This is because indentation for a
-particular line is split into two distinct steps.  First, CC-Mode tries
-to determine the @dfn{semantics} of the line.  In other words, what
-semantic role in the source code does the line play?  Is it a label?  Is
-it the first statement in a block?  CC-Mode will first analyze the line,
-generating a list of language elements (abbreviated here as
-@dfn{langelems}) describing the semantics of the line.
+Although cc-mode can be used pretty much as plug-and-play-ware, it helps
+to have some understanding of the underlying model used to calculate
+indentation.  This isn't entirely necessary in order to get started, but
+it becomes essential if you want to customize cc-mode to your particular
+indentation style.
 
+@cindex syntactic context
+Unlike @file{c-mode.el} and @file{c++-mode.el}, indentation calculation
+and customization in cc-mode is much more intuitive and flexible.  This
+is because indentation for a particular line is split into two distinct
+steps.  First, cc-mode tries to determine the @dfn{syntactic context} of
+the line.  In other words it asks the question, what syntactic role does
+the line play?  Is it a label?  Is it the first statement in a block?  A
+substatement?  cc-mode first analyzes the line, then it calculates the
+indentation based on this analysis and your preferences.
+
+@section Syntactic Analysis
+@cindex syntactic symbol
+During the syntactic analysis phase, cc-mode looks at the current line
+of source code, and tries to figure out what role it plays in the
+surrounding C or C++ code.  cc-mode assigns a @dfn{syntactic symbol} to
+each role.  A particular line of code can have more than one role, so
+the complete syntactic analysis consists of a list of syntactic symbols.
+
+@cindex syntactic analysis list
+@cindex relative buffer position
+@cindex relpos
+@cindex car
+@cindex cdr
+Each entry in this list has two parts (a @dfn{car} and a @dfn{cdr} for
+you lisp-literate types).  These entries are called the @dfn{syntactic
+components} and the list is called the @dfn{syntactic analysis list}.
+The first part (car) is the syntactic symbol, and the second part (cdr)
+is a buffer position.  This buffer position is at some location higher
+up in the file, and is called the @dfn{relative buffer position} (or
+@dfn{relpos}) for the associated syntactic symbol.  It represents the
+place in the buffer that the current line will be indented relative to.
+
+@findex c-show-syntactic-information
+@kindex C-c C-s
+Since the syntactic analysis phase is separate from the indentation
+calculation phase, you can always just view the analysis for a
+particular line without re-indenting it by hitting @kbd{C-c C-s}
+@code{(c-show-syntactic-information)}.  The syntactic analysis list is
+echoed in the minibuffer.  This is an extremely useful command, as you
+will see when you learn how to customize indentation.
+
+Lets look at a simple example to illustrate the syntactic analysis
+phase. Suppose we had the following function in a c-mode buffer (note
+that the line numbers are provided for descriptive purposes only):
+
+@example
+1: int factorial( int n )
+2: {
+3:     int rtnval = n;
+4: 
+5:     if( n > 1 )
+6:         rtnval *= factorial( n-1 );
+7: 
+8:     return rtnval;
+9: }
+@end example
+
+If you were to hit @kbd{C-c C-s} on every line, this is what you would
+see:
+
+@example
+1: ((topmost-intro . 1))
+2: ((defun-open . 1))
+3: ((defun-block-intro . 24))
+4: ((statement . 30))
+5: ((statement . 30))
+6: ((substatement . 51))
+7: ((statement . 30))
+8: ((statement . 30))
+9: ((defun-close . 24))
+@end example
+
+A detailed description of all the available syntactic symbols is
+provided in section @xref{Someplace Later}, however the type of
+construct they describe will be pretty obvious from the name of the
+symbol.  There are a few general rules to the naming scheme.  If the
+line is the first of a particular construct, it's syntactic symbol
+usually contains the @code{-intro} suffix
+(e.g. @code{defun-block-intro}, @code{topmost-intro}, etc).  If the line
+starts with an open brace, it usually contains the @code{-open} suffix
+(e.g. @code{defun-open}, @code{class-open}, etc).  Likewise, if the line
+starts with a close brace it usually contains the @code{-close} suffix
+(e.g. @code{defun-close}, @code{class-close}, etc).
+
+For example, the syntactic analysis for line 1 is
+@code{((topmost-intro .1))}.  This indicates that this line is
+the first line of a top level construct (hence the @code{"-intro"}
+suffix).
+The syntax for line 6 is @code{((substatement . 30))}
+because it is the first line after a conditional
+or loop clause.  And the syntax for line 9 is
+@code{((defun-close . 24))} because it contains
+the right brace that closes the function @code{factorial}.
+
+But what do those funny numbers after the syntactic symbols mean? They
+are the buffer positions which are used to calculate relative
+indentation offsets for each subsequent line of code.
+
+Thus, the syntactic analysis for line 3 tells us that the line is the
+first in a defun (function) block, and that it is indented relative to
+buffer position 24, which happens to be the open brace on line 2.
+Similarly, the analysis for line 6 tells us that the line is indented
+relative to buffer position 51, which is the `i' in "if" on line 5.
+
+@section Offset Calculation
 @vindex{c-offsets-alist}
 @vindex{c-basic-offset}
-After the semantic list is generated, CC-Mode calculates the indentation
-offset of the line by added up the individual offset values for each
-langelem on the list.  The association list @var{c-offsets-alist}
-contains a customizable list associating langelems with offsets.  These
-offsets are usually described in terms of a basic indentation value, as
-described in the variable @var{c-basic-offset}.
+@comment
+So, how does the syntactic analysis guide the calculation of
+indentation for a particular line?  Well, once the syntactic analysis
+list is generated, cc-mode consults the @var{c-offsets-alist} variable
+to find out how much offset to apply for each syntactic symbol found in
+the list. 
+
+@vindex c-basic-offset
+@var{c-offsets-alist} is a list which associates syntactic symbols to
+integer offsets.  These offsets are added to any indentation already
+found at the relative buffer position.  The sum of these offsets
+provides the offset for the line being indented.  The actual values in
+the list can be one of the following: an integer, the symbol `+' or the
+symbol `-', or a function.  Integer values are self explanatory.  The
+symbols `+' and `-' are short-hand for positive and negative multiples
+of the variable @var{c-basic-offset}.  In this way, you can define the
+template for indentation levels, and simply change the number of spaces
+per level by modifying @var{c-basic-offset}.
+
+Associating a function with a syntactic symbol is how you can get almost
+unlimited flexibility in customizing your indentation style.  This is
+pretty advanced stuff, though, so it is covered separately.
+@xref{Custom Indentation Functions}.
+
+To see how all this works, let's return to our example function:
+
+@example
+1: int factorial( int n )
+2: {
+3:     int rtnval = n;
+4: 
+5:     if( n > 1 )
+6:         rtnval *= factorial( n-1 );
+7: 
+8:     return rtnval;
+9: }
+@end example
+
+@noindent
+and its syntactic analysis:
+
+@example
+1: ((topmost-intro . 1))
+2: ((defun-open . 1))
+3: ((defun-block-intro . 24))
+4: ((statement . 30))
+5: ((statement . 30))
+6: ((substatement . 51))
+7: ((statement . 30))
+8: ((statement . 30))
+9: ((defun-close . 24))
+@end example
+
+As described above, the syntactic analysis for line 6 is
+@samp{((substatement . 51))}.  Here's the steps cc-mode takes to
+calculate the indentation for the line:
+
+@enumerate
+@item A running indentation total is initialized to zero.
+
+@item cc-mode then looks at the first (and in this case only) componant in
+the syntactic analysis list: @samp{(substatement . 51)}.
+
+@item cc-mode moves to the relative buffer position in the componant. In
+this case, this is buffer position 51.
+
+@item cc-mode find the horizontal offset (column number) at that
+buffer position.  For the @code{factorial} function example, this
+returns 4, which is added to the running indentation total.
+
+@item Next, the offset for the @code{substatement} syntactic symbol is
+looked up in @code{c-offsets-alist}.  Lets assume this returns the
+symbol `+', and that the variable @code{c-basic-offset} has the value of
+4.  Thus 4 is added to the running indentation total.
+
+@item Return to step 2 and continue for each syntactic symbol on the
+analysis list.
+@end enumerate
+
+You can follow this for line 6 of our example to see how the line gets
+indented by 8 spaces.  Its as simple as that (well, almost...)!
+
+@section Syntactic Modifiers
+@cindex comment-only line
+Remember that the results of syntactic analysis are a list.  So far the
+lists we've seen contain only one element (a cons cell of a symbol and a
+buffer position).  Under certain circumstances, longer lists can be
+returned.  This can happen when a modifier of the normal syntactic role
+is encountered.  The most common example is when a @dfn{comment-only
+line} is found.
+
+Lets look at part of our @code{factorial} function from the previous
+section.  This time a comment has been added:
+
+@example
+1: int factorial( int n )
+2: {
+3:     int rtnval = n;
+4: 
+5:     if( n > 1 )
+6:             // recursively call ourselves
+7:         rtnval *= factorial( n-1 );
+8: 
+9:     return rtnval;
+10:}
+@end example
+
+Up until line 6, the syntactic analysis is unchanged.  However if we
+were to hit @kbd{C-c C-s} on line 6, we would now see:
+
+@example
+((comment-intro) (substatement . 51))
+@end example
+
+Note that the syntactic analysis list contains two elements, the second
+of which should look familar.  The first element, @code{(comment-intro)}
+looks a bit strange because there it has no relpos.  This is because
+@code{comment-intro} is a modifier of a normal syntactic symbol.  When
+calculating the amount that this adds to the total indentation, only the
+value associated with this symbol from @var{c-offsets-alist} is added;
+since there is no relpos, cc-mode can't move to a buffer position and
+find a relative offset amount.
+
+If, in @var{c-offsets-alist}, @code{comment-intro} had an offset of 4,
+then all other factors being the same as in our previous example, the
+total line offset would be 12.  I.e. 4 for the @code{comment-intro}
+offset, plus 4 for the @code{substatement} offset, plus 4 for the
+horizonal offset at buffer position 51.
