@@ -2261,7 +2261,11 @@ If a fill prefix is specified, it overrides all the above."
 	     (unless c-lit-type
 	       (setq c-lit-type (c-literal-type c-lit-limits)))
 	     (memq c-lit-type '(c c++)))
-	   (if comment-multi-line
+	   (if (or comment-multi-line
+		   (save-excursion
+		     (goto-char (car c-lit-limits))
+		     (end-of-line)
+		     (< (point) (cdr c-lit-limits))))
 	       ;; Inside a comment that should be continued.
 	       (let ((fill (c-guess-fill-prefix
 			    (setq c-lit-limits
