@@ -978,6 +978,9 @@ brace."
 	(progn
 	  (goto-char here)
 	  (c-beginning-of-statement-1)
+	  (or (< (point) here)
+	      (c-safe (backward-up-list 1) t)
+	      (goto-char lim))
 	  (setq c-parsing-error
 		(format "No matching `if' found for `else' on line %d"
 			(1+ (count-lines 1 here))))
