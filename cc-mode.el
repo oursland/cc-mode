@@ -1,16 +1,31 @@
-;; -*- Mode: Emacs-Lisp -*-
 ;;; c++-mode.el --- major mode for editing C++ (and C) code
-
-;; Copyright (C) 1992 Free Software Foundation, Inc.
 
 ;; Author: 1992 Barry A. Warsaw, Century Computing Inc. <baw@cen.com>
 ;;         1987 Dave Detlefs and Stewart Clamen
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.193 $
-;; Last Modified:   $Date: 1992-08-27 15:31:38 $
+;; Version:         $Revision: 2.194 $
+;; Last Modified:   $Date: 1992-08-27 16:41:30 $
 ;; Keywords: C++ C editing major-mode
+
+;; Copyright (C) 1992 Free Software Foundation, Inc.
+
+;; This file is part of GNU Emacs.
+
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING.  If not, write to
+;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
 ;; Introduction
 ;; ============
@@ -105,7 +120,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-27 15:31:38 $|$Revision: 2.193 $|
+;; |$Date: 1992-08-27 16:41:30 $|$Revision: 2.194 $|
 
 ;;; Code:
 
@@ -357,7 +372,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.193 $
+  "Major mode for editing C++ code.  $Revision: 2.194 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -564,7 +579,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.193 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.194 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2154,7 +2169,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.193 $"
+(defconst c++-version "$Revision: 2.194 $"
   "c++-mode version number.")
 
 (defun c++-version ()
