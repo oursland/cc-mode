@@ -82,7 +82,6 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
-;(cc-require 'cc-fix)
 (cc-require 'cc-defs)
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
@@ -129,7 +128,7 @@
 ;; (c-init-language-vars some-mode)
 ;; (c-common-init 'some-mode) ; Or perhaps (c-basic-common-init 'some-mode)
 ;;
-;; See cc-langs.el for furher info.  A small example of a derived mode
+;; See cc-langs.el for further info.  A small example of a derived mode
 ;; is also available at <http://cc-mode.sourceforge.net/
 ;; derived-mode-ex.el>.
 
@@ -474,7 +473,7 @@ This does not load the font-lock package.  Use after
 
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults
-	`(,(if (c-major-mode-is 'awk-mode)
+	`(,(if (c-mode-is-new-awk-p)
 	       ;; awk-mode currently has only one font lock level.
 	       'awk-font-lock-keywords
 	     (mapcar 'c-mode-symbol
@@ -964,7 +963,17 @@ Key bindings:
 ;; don't support syntax-table properties.
 
 (if (not (memq 'syntax-properties c-emacs-features))
-    (autoload 'awk-mode "awk-mode.el" "awk-mode doc string FIXME!!!" t)
+    (autoload 'awk-mode "awk-mode.el" "Major mode for editing AWK code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+awk-mode buffer.  This automatically sets up a mail buffer with version
+information already added.  You just need to add a description of the
+problem, including a reproducible test case and send the message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook `c-mode-common-hook' is run with no args at mode
+initialization, then `awk-mode-hook'.
+"  t)
   (defvar awk-mode-abbrev-table nil
     "Abbreviation table used in awk-mode buffers.")
   (c-define-abbrev-table 'awk-mode-abbrev-table
@@ -1012,8 +1021,9 @@ initialization, then `awk-mode-hook'.
 Key bindings:
 \\{awk-mode-map}"
     (interactive)
+    (require 'cc-awk)                   ; Added 2003/6/10.
     (kill-all-local-variables)
-    (c-initialize-cc-mode)
+    (c-initialize-cc-mode t)
     (set-syntax-table awk-mode-syntax-table)
     (setq major-mode 'awk-mode
           mode-name "AWK"
