@@ -1033,6 +1033,37 @@ This function does not do any hidden buffer changes."
 ;   '((t (:underline t)))
 ;   "Debug face to mark the `c-in-sws' property.")
 
+; (defun c-debug-put-sws-faces ()
+;   ;; Put the sws debug faces on all the `c-is-sws' and `c-in-sws'
+;   ;; properties in the buffer.
+;   (interactive)
+;   (save-excursion
+;     (let (in-face)
+;       (goto-char (point-min))
+;       (setq in-face (if (get-text-property (point) 'c-is-sws)
+; 			(point)))
+;       (while (progn
+; 	       (goto-char (next-single-property-change
+; 			   (point) 'c-is-sws nil (point-max)))
+; 	       (if in-face
+; 		   (progn
+; 		     (c-debug-add-face in-face (point) 'c-debug-is-sws-face)
+; 		     (setq in-face nil))
+; 		 (setq in-face (point)))
+; 	       (not (eobp))))
+;       (goto-char (point-min))
+;       (setq in-face (if (get-text-property (point) 'c-in-sws)
+; 			(point)))
+;       (while (progn
+; 	       (goto-char (next-single-property-change
+; 			   (point) 'c-in-sws nil (point-max)))
+; 	       (if in-face
+; 		   (progn
+; 		     (c-debug-add-face in-face (point) 'c-debug-in-sws-face)
+; 		     (setq in-face nil))
+; 		 (setq in-face (point)))
+; 	       (not (eobp)))))))
+
 (defmacro c-debug-sws-msg (&rest args)
   ;;`(message ,@args)
   )
@@ -1048,13 +1079,6 @@ This function does not do any hidden buffer changes."
      (put-text-property beg end 'c-in-sws t)
      ,@(when (facep 'c-debug-is-sws-face)
 	 `((c-debug-add-face beg end 'c-debug-in-sws-face)))))
-
-(defmacro c-put-is-and-in-sws (beg end)
-  `(let ((beg ,beg) (end ,end))
-     (add-text-properties beg end '(c-is-sws t c-in-sws t))
-     ,@(when (facep 'c-debug-is-sws-face)
-	 `((c-debug-add-face beg end 'c-debug-is-sws-face)
-	   (c-debug-add-face beg end 'c-debug-in-sws-face)))))
 
 (defmacro c-remove-is-sws (beg end)
   `(let ((beg ,beg) (end ,end))
@@ -1075,14 +1099,6 @@ This function does not do any hidden buffer changes."
 	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)
 	   (c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
-(defvar c-sws-separation nil)
-;; This variable is used to signal that a changed region wasn't
-;; continuously marked with `c-in-sws' before the change.
-
-(defsubst c-invalidate-sws-region-before (beg end)
-  ;; Called from `before-change-functions'.
-  (setq c-sws-separation (text-property-any beg end 'c-in-sws nil)))
-
 (defsubst c-invalidate-sws-region-after (beg end)
   ;; Called from `after-change-functions'.  Note that if
   ;; `c-forward-sws' or `c-backward-sws' are used outside
@@ -1102,13 +1118,22 @@ This function does not do any hidden buffer changes."
     (when (and (eolp) (not (eobp)))
       (setq end (1+ (point)))))
 
-  (when (and c-sws-separation
-	     (= beg end)
+  (when (and (= beg end)
 	     (get-text-property beg 'c-in-sws)
 	     (not (bobp))
 	     (get-text-property (1- beg) 'c-in-sws))
-    ;; Avoid that two separate `c-in-sws' ranges are merged to one.
-    (setq end (1+ end)))
+    ;; Ensure that an `c-in-sws' range gets broken.  Note that it isn't
+    ;; safe to keep a range that was continuous before the change.  E.g:
+    ;;
+    ;;    #define foo
+    ;;         \
+    ;;    bar
+    ;;
+    ;; There can be a "ladder" between "#" and "b".  Now, if the newline
+    ;; after "foo" is removed then "bar" will become part of the cpp
+    ;; directive instead of a syntactically relevant token.  In that
+    ;; case there's no longer syntactic ws from "#" to "b".
+    (setq beg (1- beg)))
 
   (c-debug-sws-msg "c-invalidate-sws-region-after [%s..%s]" beg end)
   (c-remove-is-and-in-sws beg end))
@@ -1181,9 +1206,14 @@ This function does not do any hidden buffer changes."
 	      ;; use the cache again.
 	      (c-debug-sws-msg
 	       "c-forward-sws extending rung with [%s..%s] (max %s)"
-	       (1+ rung-pos) (min (1+ (point)) (point-max)) (point-max))
+	       (1+ rung-pos) (1+ (point)) (point-max))
+	      (unless (get-text-property (point) 'c-is-sws)
+		;; Remove any `c-in-sws' property from the last char of
+		;; the rung before we mark it with `c-is-sws', so that we
+		;; won't connect with the remains of a broken "ladder".
+		(c-remove-in-sws (point) (1+ (point))))
 	      (c-put-is-sws (1+ rung-pos)
-			    (min (1+ (point)) (point-max)))
+			    (1+ (point)))
 	      (c-put-in-sws rung-pos
 			    (setq rung-pos (point)
 				  last-put-in-sws-pos rung-pos)))
@@ -1262,6 +1292,11 @@ This function does not do any hidden buffer changes."
 	      (c-put-in-sws rung-pos
 			    (setq rung-pos (point)
 				  last-put-in-sws-pos rung-pos))
+	      (unless (get-text-property (1- rung-end-pos) 'c-is-sws)
+		;; Remove any `c-in-sws' property from the last char of
+		;; the rung before we mark it with `c-is-sws', so that we
+		;; won't connect with the remains of a broken "ladder".
+		(c-remove-in-sws (1- rung-end-pos) rung-end-pos))
 	      (c-put-is-sws next-rung-pos
 			    rung-end-pos))
 
@@ -1378,8 +1413,15 @@ This function does not do any hidden buffer changes."
 	      (c-debug-sws-msg
 	       "c-backward-sws extending rung with [%s..%s] (min %s)"
 	       rung-is-marked rung-pos (point-min))
-	      (c-put-is-and-in-sws rung-is-marked
-				   rung-pos)
+	      (unless (get-text-property (1- rung-pos) 'c-is-sws)
+		;; Remove any `c-in-sws' property from the last char of
+		;; the rung before we mark it with `c-is-sws', so that we
+		;; won't connect with the remains of a broken "ladder".
+		(c-remove-in-sws (1- rung-pos) rung-pos))
+	      (c-put-is-sws rung-is-marked
+			    rung-pos)
+	      (c-put-in-sws rung-is-marked
+			    (1- rung-pos))
 	      (setq rung-pos rung-is-marked
 		    last-put-in-sws-pos rung-pos))
 
@@ -1388,22 +1430,25 @@ This function does not do any hidden buffer changes."
 
 	    (cond
 	     ((and c-opt-cpp-prefix
+		   (/= cmt-skip-pos simple-ws-beg)
 		   (c-beginning-of-macro))
 	      ;; Inside a cpp directive.  See if it should be skipped over.
 	      (let ((cpp-beg (point)))
-		(if (or (progn (goto-char simple-ws-beg)
-			       (beginning-of-line)
-			       (<= (point) cpp-beg))
-			(and (not (bobp))
-			     (progn (backward-char)
-				    (eq (char-before) ?\\))))
 
+		;; Move back over all line continuations in the region skipped
+		;; over by `c-backward-comments'.  If we go past it then we
+		;; started inside the cpp directive.
+		(goto-char simple-ws-beg)
+		(beginning-of-line)
+		(while (and (> (point) cmt-skip-pos)
+			    (progn (backward-char)
+				   (eq (char-before) ?\\)))
+		  (beginning-of-line))
+
+		(if (< (point) cmt-skip-pos)
 		    ;; Don't move past the cpp directive if we began inside
-		    ;; it.  We detect the inside of it by checking that it
-		    ;; doesn't start on the same line we begun searching from,
-		    ;; and that the line before that one doesn't end with "\".
-		    ;; That means that the position at the end of the last
-		    ;; line of the macro is also considered to be within it.
+		    ;; it.  Note that the position at the end of the last line
+		    ;; of the macro is also considered to be within it.
 		    (progn (goto-char cmt-skip-pos)
 			   nil)
 
@@ -1478,9 +1523,15 @@ This function does not do any hidden buffer changes."
 	      ;; anyway.
 	      (c-remove-is-sws (1+ next-rung-pos) simple-ws-beg)
 	      (unless (and rung-is-marked (= simple-ws-beg rung-pos))
-		(c-put-is-sws simple-ws-beg
-			      (min (1+ rung-pos) (point-max)))
-		(setq rung-is-marked t))
+		(let ((rung-end-pos (min (1+ rung-pos) (point-max))))
+		  (unless (get-text-property (1- rung-end-pos) 'c-is-sws)
+		    ;; Remove any `c-in-sws' property from the last char of
+		    ;; the rung before we mark it with `c-is-sws', so that we
+		    ;; won't connect with the remains of a broken "ladder".
+		    (c-remove-in-sws (1- rung-end-pos) rung-end-pos))
+		  (c-put-is-sws simple-ws-beg
+				rung-end-pos)
+		  (setq rung-is-marked t)))
 	      (c-put-in-sws (setq simple-ws-beg (point)
 				  last-put-in-sws-pos simple-ws-beg)
 			    rung-pos)
