@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.118 $
-;; Last Modified:   $Date: 1994-12-14 23:11:59 $
+;; Version:         $Revision: 4.119 $
+;; Last Modified:   $Date: 1994-12-16 15:41:05 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-14 23:11:59 $|$Revision: 4.118 $|
+;; |$Date: 1994-12-16 15:41:05 $|$Revision: 4.119 $|
 
 ;;; Code:
 
@@ -3728,7 +3728,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-syntax 'statement-cont (point)))
 	     )))
 	 ;; CASE 10: an else clause?
-	 ((looking-at "\\<else\\>")
+	 ((looking-at "\\<else\\>[^_]")
 	  (c-backward-to-start-of-if containing-sexp)
 	  (c-add-syntax 'else-clause (c-point 'boi)))
 	 ;; CASE 11: Statement. But what kind?  Lets see if its a
@@ -4312,7 +4312,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.118 $"
+(defconst c-version "$Revision: 4.119 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
