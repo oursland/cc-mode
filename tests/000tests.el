@@ -201,6 +201,7 @@
     "member-1.cc"
     "member-2.cc"
     "methods-1.java"
+    "namespace-1.cc"
     "nested-1.cc"
     "nested-2.c"
     "nometh.m"
