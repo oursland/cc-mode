@@ -264,7 +264,7 @@
 	 (hugenum (point-max)))
     (while (/= here (point))
       (setq here (point))
-      (forward-comment hugenum)		; Don't need c-forward-comment here.
+      (c-forward-comment hugenum)
       ;; skip preprocessor directives
       (when (and (eq (char-after) ?#)
 		 (= (c-point 'boi) (point)))
@@ -280,7 +280,7 @@
 	 (hugenum (- (point-max))))
     (while (/= here (point))
       (setq here (point))
-      (forward-comment hugenum)		; Don't need c-forward-comment here.
+      (c-forward-comment hugenum)
       (c-beginning-of-macro))
     (if lim (goto-char (max (point) lim)))))
 
