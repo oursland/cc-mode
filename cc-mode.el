@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.22 $
-;; Last Modified:   $Date: 1993-09-28 22:25:21 $
+;; Version:         $Revision: 3.23 $
+;; Last Modified:   $Date: 1993-09-28 22:41:38 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-28 22:25:21 $|$Revision: 3.22 $|
+;; |$Date: 1993-09-28 22:41:38 $|$Revision: 3.23 $|
 
 ;;; Code:
 
@@ -542,7 +542,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.22 $
+  "Major mode for editing C++ code.  $Revision: 3.23 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -734,7 +734,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.22 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.23 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -2664,23 +2664,17 @@ the leading `// ' from each line, if any."
 (defun c++-indent-defun ()
   "Indents the current function def, struct or class declaration."
   (interactive)
-  (let ((restore (point)))
-    (end-of-defun 1)
-    (beginning-of-line 1)
-    (let ((end (point-marker)))
-      (beginning-of-defun)
-      (while (and (< (point) end))
-	(c++-indent-line)
-	(forward-line 1)
-	(beginning-of-line 1))
-      (set-marker end nil))
-    (goto-char restore)))
+  (let ((here (point-marker)))
+    (beginning-of-defun)
+    (c++-indent-exp)
+    (goto-char here)
+    (set-marker here nil)))
 
 
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.22 $"
+(defconst c++-version "$Revision: 3.23 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
