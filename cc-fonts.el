@@ -1179,11 +1179,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		       ;; `c-after-suffixed-type-decl-key'.
 		       (throw 'at-decl-or-cast t))
 
-		     (unless (looking-at (if arglist-match "[,\)]" "[,;]"))
-		       ;; If this is a declaration it should end here, so
-		       ;; check for allowed separation tokens.
-		       (throw 'at-decl-or-cast nil))
-
 		     ;; If we get here we can't tell if this is a type decl or
 		     ;; a normal expression by looking at it alone.  (That's
 		     ;; under the assumption that normal expressions always
@@ -1192,21 +1187,34 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		     ;; uncommon (e.g. some placements of "const" in C++) it's
 		     ;; not worth the effort to look for them.)
 
-		     ;; It's a type decl expression if we know we're in a
-		     ;; declaration, or if the preceding identifier is a known
-		     ;; type.
-		     (when (or at-decl-or-cast (memq at-type '(t found)))
+		     (when at-decl-or-cast
+		       ;; It's a type decl expression if we know we're in a
+		       ;; declaration.
 		       (throw 'at-decl-or-cast t))
 
-		     (when (and got-prefix-before-parens
-				got-identifier
-				(not arglist-match)
-				(not got-suffix))
-		       ;; Got something like "foo * bar".  If we're not inside
-		       ;; an arglist then it would be a meaningless expression
-		       ;; since the result isn't used.  We therefore choose to
-		       ;; recognize it as a declaration.  Do not allow a
-		       ;; suffix since it could then be a function call.
+		     (when (and (memq at-type '(t found))
+				(or got-prefix (not got-parens)))
+		       ;; It's a type decl expression if a type precedes it
+		       ;; and the whole thing can't be an object creation
+		       ;; expression (i.e. where the type is directly followed
+		       ;; by an initializer parenthesis).
+		       (throw 'at-decl-or-cast t))
+
+		     (unless (looking-at (if arglist-match "[,\)]" "[,;]"))
+		       ;; If this is a declaration it should end here, so
+		       ;; check for allowed separation tokens.  Note that this
+		       ;; rule doesn't work e.g. with a K&R arglist after a
+		       ;; function header.
+		       (throw 'at-decl-or-cast nil))
+
+		     ;; Below are tests that only should be applied when we're
+		     ;; certain to not have parsed halfway through an
+		     ;; expression.
+
+		     (when (memq at-type '(t found))
+		       ;; The whole expression is something like "foo (bar);"
+		       ;; or "foo * bar;", but "foo" is recognized as a type
+		       ;; so treat it as a declaration.
 		       (throw 'at-decl-or-cast t))
 
 		     (when (and (c-major-mode-is 'c++-mode)
@@ -1214,7 +1222,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				;; known type, since (con|de)structors use the
 				;; class name as identifier.  We've always
 				;; shifted over the identifier as a type and
-				;; then backed up in this case.
+				;; then backed up again in this case.
 				identifier-type
 				(or (eq identifier-type 'found)
 				    (and (eq (char-after identifier-start) ?~)
@@ -1226,6 +1234,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					 ;; operator.
 					 (c-check-type (1+ identifier-start)
 						       identifier-end))))
+		       (throw 'at-decl-or-cast t))
+
+		     (when (and got-prefix-before-parens
+				got-identifier
+				(not arglist-match)
+				(not got-suffix))
+		       ;; Got something like "foo * bar;".  If we're not
+		       ;; inside an arglist then it would be a meaningless
+		       ;; expression since the result isn't used.  We
+		       ;; therefore choose to recognize it as a declaration.
+		       ;; Do not allow a suffix since it could then be a
+		       ;; function call.
 		       (throw 'at-decl-or-cast t))
 
 		     ;; If we had a complete symbol table here (which rules
