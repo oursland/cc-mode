@@ -2762,11 +2762,7 @@ isn't moved."
 		   (eq (char-after containing-sexp) ?{)))
 	  (cond
 	   ;; CASE 7A: we are looking at the arglist closing paren
-	   ((and (or (c-major-mode-is 'pike-mode)
-		     ;; Don't check this in Pike since it allows a
-		     ;; comma after the last arg.
-		     (not (eq char-before-ip ?,)))
-		 (memq char-after-ip '(?\) ?\])))
+	   ((memq char-after-ip '(?\) ?\]))
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
 	    (when (and (c-safe (backward-up-list 1) t)
@@ -2778,13 +2774,32 @@ isn't moved."
 	   ;; CASE 7B: Looking at the opening brace of an
 	   ;; in-expression block or brace list.  C.f. cases 4, 16A
 	   ;; and 17E.
-	   ((eq char-after-ip ?{)
-	    (setq placeholder (c-inside-bracelist-p (point) fullstate))
-	    (if placeholder
-		(setq tmpsymbol '(brace-list-open . inexpr-class))
-	      (setq tmpsymbol '(block-open . inexpr-statement)
-		    placeholder (cdr (c-looking-at-inexpr-block
-				      containing-sexp))))
+	   ((and (eq char-after-ip ?{)
+		 (progn
+		   (setq placeholder (c-inside-bracelist-p (point) fullstate))
+		   (if placeholder
+		       (setq tmpsymbol '(brace-list-open . inexpr-class))
+		     (let ((char (save-excursion
+				   (goto-char containing-sexp)
+				   (c-backward-syntactic-ws
+				    (c-safe-position containing-sexp state))
+				   (or (char-before) ?\ ))))
+		       ;; If we're looking at an in-expression
+		       ;; statement and are directly in a function
+		       ;; arglist, it got to be a macro.  We let it
+		       ;; past this case then, so that it's recognized
+		       ;; as any other arglist-intro, arglist-cont or
+		       ;; arglist-cont-nonempty.  The reason is that
+		       ;; the block-open case is then consistent with
+		       ;; how other "bare" statements are recognized
+		       ;; in macro arguments.
+		       (if (or (eq (char-syntax char) ?w)
+			       (= char ?_))
+			   nil
+			 (setq tmpsymbol '(block-open . inexpr-statement)
+			       placeholder (cdr (c-looking-at-inexpr-block
+						 containing-sexp)))
+			 t)))))
 	    (goto-char placeholder)
 	    (back-to-indentation)
 	    (c-add-stmt-syntax (car tmpsymbol) t
