@@ -2092,7 +2092,20 @@ brace."
 		  ;; It's an identifier that might be a type.
 		  'maybe)))))
 
-    (if (and res c-type-concat-key)
+    ;; Step over any type suffix operators.  Do not let the existence
+    ;; of these alter the classification of the found type, since
+    ;; these operators typically are allowed in normal expressions
+    ;; too.
+    (when (and c-type-suffix-key res)
+      (let (pos)
+	(while (progn
+		 (setq pos (point))
+		 (c-forward-syntactic-ws)
+		 (looking-at c-type-suffix-key))
+	  (goto-char (match-end 1)))
+	(goto-char pos)))
+
+    (if (and c-type-concat-key res)
 	;; Look for a trailing operator that concatenate the type with
 	;; a following one, and if so step past that one through a
 	;; recursive call.
