@@ -9,7 +9,7 @@ since the last public release.
 every major mode language.  There's no longer a hardcoded change to
 "java" style in Java mode, but the new semantics are
 backward-compatible, so the same thing will happen unless
-c-default-style is changed.
+c-default-style is changed.  See the variable's docstring for details.
 
 ** It's now possible to put a list as the offset on a syntactic
 symbol.  The list is evaluated recursively until a non-nil offset is
@@ -28,6 +28,9 @@ from the braces of other classes in auto-newline mode.  Two new
 symbols inexpr-class-open and inexpr-class-close may be used on
 c-hanging-braces-alist to control the automatic newlines used for
 anonymous classes.
+
+** bug-cc-mode@gnu.org is now the primary bug reporting address.
+This is an alias for cc-mode-help@python.org.
 
 * Changes in 5.23
 
