@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.241 $
-;; Last Modified:   $Date: 1995-08-28 16:10:40 $
+;; Version:         $Revision: 4.242 $
+;; Last Modified:   $Date: 1995-11-15 23:38:05 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-08-28 16:10:40 $|$Revision: 4.241 $|
+;; |$Date: 1995-11-15 23:38:05 $|$Revision: 4.242 $|
 
 ;;; Code:
 
@@ -2248,7 +2248,7 @@ No indentation or other \"electric\" behavior is performed."
   (insert "::"))
 
 
-(defun c-beginning-of-statement (&optional count lim)
+(defun c-beginning-of-statement (&optional count lim act-interactive-p)
   "Go to the beginning of the innermost C statement.
 With prefix arg, go back N - 1 statements.  If already at the
 beginning of a statement then go to the beginning of the preceding
@@ -2266,7 +2266,7 @@ search."
     (save-excursion
       (goto-char lim)
       (setq state (parse-partial-sexp (point) here nil nil)))
-    (if (and (interactive-p)
+    (if (and (or (interactive-p) act-interactive-p)
 	     (or (nth 3 state)
 		 (nth 4 state)
 		 (looking-at (concat "[ \t]*" comment-start-skip))
@@ -2297,7 +2297,7 @@ When called from a program, this function takes 2 optional args: the
 prefix arg, and a buffer position limit which is the farthest back to
 search."
   (interactive "p")
-  (c-beginning-of-statement (- (or count 1)) lim)
+  (c-beginning-of-statement (- (or count 1)) lim t)
   (c-keep-region-active))
 
 
@@ -4544,7 +4544,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.241 $"
+(defconst c-version "$Revision: 4.242 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
