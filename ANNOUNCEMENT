@@ -1,0 +1,118 @@
+Release announcement for cc-mode.el 4.85
+Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
+$Date: 1994-09-10 17:46:45 $
+
+This message is to announce the availability of cc-mode.el version
+4.85.  cc-mode.el is a GNU Emacs mode for editing C (K&R and ANSI),
+C++, and Objective-C code.  The last full release was of version
+4.35. A list of user visible changes is outlined below.
+
+Since the distribution is fairly large and since it is readily
+available both via anonymous ftp and email, the source code is not
+being posted here.  Downloading instructions are provided further down
+in this message.
+
+If you want to become a beta tester send add requests to
+cc-mode-victims-request@anthem.nlm.nih.gov.  Other mailing list
+addresses are outlined in the README file.
+
+This release was timed to coincide with a number of external events.
+One is the release of XEmacs 19.11 (formerly Lucid Emacs).  XEmacs
+19.11 comes with cc-mode already integrated, so XEmacs users will get
+all this for free.
+
+Note also that I am moving to a new job!  I don't yet know what the
+state of the mailing lists will be, but for a short while, I expect
+mail will get forwarded to my new address, so please continue to send
+bug reports, add/drop messages to the old addresses.  I'll make the
+appropriate announcements to the various newsgroups when I know more
+what's going to happen.  My *tentative* new email address is given
+above.  No guarantees that will really be it, as I don't start the job
+until Sept. 19, 1994.  Don't try sending mail there at least until
+after that date.
+
+As always a huge thank you goes out to all the cc-mode-victims beta
+testers!  Special thanks go to Lele Gaifax for the Objective-C mode
+patches.
+
+
+User visible changes since 4.35
+===============================
+
+c-set-offset and related functions and variables can now accept
+variable symbols.  Also ++ and -- which mean 2* positive and negative
+c-basic-offset respectively.
+
+New variable, c-recognize-knr-p, which controls whether K&R C
+contructs will be recognized.  Trying to recognize K&R constructs is a
+time hog so if you're programming strictly in ANSI C, set this
+variable to nil (it should already be nil in c++-mode).
+
+New variable, c-hanging-comment-ender-p for controlling
+c-fill-paragraph's behavior.
+
+New syntactic symbol: statement-case-open.  This is assigned to lines
+containing an open brace just after a case/default label.
+
+New variable, c-progress-interval, which controls minibuffer update
+message displays during long re-indention.  This is a new feature
+which prints percentage complete messages at specified intervals.
+
+Better menu titles in FSF's Emacs.
+
+Improved selective-display compatibility.
+
+Bug fixes, bug fixes, bug fixes!
+
+Some performance enhancements, but nothing radically better.
+
+
+Getting cc-mode.el
+===================
+The latest public release version of this file should always be
+available for anonymous ftp on the Emacs Lisp Archive machine.  The
+path to the file is:
+
+archive.cis.ohio-state.edu:pub/gnu/emacs/elisp-archive/modes/cc-mode.tar.Z
+
+This file contains .el source, README and ancillary files.
+
+For those of you without anon-ftp access, you can use the DEC
+ftpmail'er at the address ftpmail@decwrl.dec.com.  Send the
+following message in the body of your mail to that address to get
+cc-mode:
+
+reply <a valid net address back to you>
+connect archive.cis.ohio-state.edu
+binary
+uuencode
+chdir pub/gnu/emacs/elisp-archive/modes
+get cc-mode.tar.Z
+
+or just send the message "help" for more information on ftpmail.
+Response times will vary with the number of requests in the queue.
+
+
+Manifest (what you get in the tar file)
+=======================================
+MANIFEST: recursion
+
+cc-mode.el: Version 4.85 of the mode.
+
+cc-compat.el: version 1.2.  Helps ease the transition from c-mode.el
+to cc-mode style indentation control.  This is provided for your
+convenience only, and is completely unguaranteed and unsupported.
+
+cc-mode-18.el: Emacs 18 compatibility file.  This is provided for your
+convenience only, and is completely unguaranteed and unsupported.
+Emacs 18 support will probably be completely dropped in cc-mode
+version 5.
+
+README: manual on how to use cc-mode to edit C, C++, and Objective-C
+files. Eventually this will be replaced by a texinfo manual.
+VOLUNTEERS ARE SOUGHT to help complete the manual.
+
+DUMPING: A guide to ditching c-mode.el and c++-mode.el in favor of
+cc-mode.el.  Unnecessary for XEmacs 19.11!  Yay!
+
+ChangeLog: Extremely verbose history of changes.
