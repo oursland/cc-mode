@@ -103,12 +103,10 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	  (setq p (cdr p)))
 	(setq cc-bytecomp-environment-set nil))))
 
-(defun cc-load (cc-part)
-  "Force loading of the corresponding .el file in the current
-directory during compilation.  Don't use outside `eval-when-compile'.
-
-Having cyclic cc-load's will result in infinite recursion.  That's
-somewhat intentional."
+(defun cc-bytecomp-load (cc-part)
+  ;; Eval'ed during compilation to load a CC Mode file from the source
+  ;; directory (assuming it's the same as the compiled file
+  ;; destination dir).
   (if (and (boundp 'byte-compile-dest-file)
 	   (stringp byte-compile-dest-file))
       (progn
@@ -117,7 +115,7 @@ somewhat intentional."
 	      (load-path
 	       (cons (file-name-directory byte-compile-dest-file)
 		     load-path))
-	      (cc-file (concat (symbol-name cc-part) ".el")))
+	      (cc-file (concat cc-part ".el")))
 	  (if (member cc-file cc-bytecomp-loaded-files)
 	      ()
 	    (setq cc-bytecomp-loaded-files
@@ -133,7 +131,7 @@ within `eval-when-compile'.
 Having cyclic cc-require's will result in infinite recursion.  That's
 somewhat intentional."
   `(progn
-     (eval-when-compile (cc-load ,cc-part))
+     (eval-when-compile (cc-bytecomp-load (symbol-name ,cc-part)))
      (require ,cc-part)))
 
 (defmacro cc-provide (feature)
@@ -142,6 +140,16 @@ after the compilation.  Don't use within `eval-when-compile'."
   `(progn
      (eval-when-compile (cc-bytecomp-restore-environment))
      (provide ,feature)))
+
+(defmacro cc-load (cc-part)
+  "Force loading of the corresponding .el file in the current
+directory during compilation.  Don't use outside `eval-when-compile'.
+
+Having cyclic cc-load's will result in infinite recursion.  That's
+somewhat intentional."
+  `(if (featurep 'cc-bytecomp)
+       (cc-bytecomp-load ,cc-part)
+     (load ,cc-part nil t nil)))
 
 (defun cc-bytecomp-is-compiling ()
   "Return non-nil if eval'ed during compilation.  Don't use outside
