@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.29 $
+@comment manual version: $Revision: 2.30 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-08-11 17:38:06 $
+@comment Last modification: $Date: 1995-08-29 15:55:54 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.29 $)
+@center (manual revision: $Revision: 2.30 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -157,10 +157,10 @@ supported.  Work has already begun on @code{cc-mode} version 5.
 
 XEmacs 19.11 (formerly Lucid Emacs) is distributed with @code{cc-mode}
 4.85 as its default C and C++ editing modes; it has completely replaced
-@file{c-mode.el} and @file{c++-mode.el}.  If you have XEmacs 19.11 you
-should upgrade your @file{cc-mode.el} to version 4.222 (see @ref{Getting
-the latest cc-mode release}).  XEmacs 19.12 will be distributed with
-version 4.222.
+@file{c-mode.el} and @file{c++-mode.el}.  If you have XEmacs 19.11 or
+19.12 you should upgrade your @file{cc-mode.el} to version 4.241 (see
+@ref{Getting the latest cc-mode release}).  XEmacs 19.13 will be
+distributed with version 4.241.
 
 @cindex @file{cc-compat.el} file
 Both XEmacs and this distribution also contain a new file called
@@ -201,12 +201,12 @@ it is highly recommended that you upgrade to Emacs 19.  If you use
 @code{cc-mode} under Emacs 18, you're on your own.  With @code{cc-mode}
 version 5, Emacs 18 support will be dropped altogether.
 
-Note that XEmacs 19.12 already comes with the latest @code{cc-mode}
+Note that XEmacs 19.13 already comes with the latest @code{cc-mode}
 version 4 preconfigured for your use.  You should be able to safely skip
-the rest of the setup information in this chapter.  XEmacs 19.11 ships
-with @code{cc-mode} version 4.85, so those users will want to continue
-reading to learn how to upgrade to the latest @code{cc-mode} version 4
-(see @ref{Getting the latest cc-mode release}).
+the rest of the setup information in this chapter.  XEmacs 19.11 and
+19.12 ships older versions of @code{cc-mode}, so those users will want
+to continue reading to learn how to upgrade to the latest @code{cc-mode}
+version 4 (see @ref{Getting the latest cc-mode release}).
 
 @cindex @file{.emacs} file
 The first thing you will want to do is put @file{cc-mode.el} somewhere
@@ -251,9 +251,9 @@ M-x byte-compile-file RET ~/mylisp/cc-mode.el RET
 
 @end example
 
-If you are running XEmacs 19.11, you can simply add the following to
-your @file{.emacs} file in order to upgrade to the latest version of
-@code{cc-mode}:
+If you are running XEmacs 19.11 or 19.12, you can simply add the
+following to your @file{.emacs} file in order to upgrade to the latest
+version of @code{cc-mode}:
 @example
 
 (load "cc-mode")
@@ -336,7 +336,7 @@ in the @code{c-mode}, @code{c++-mode}, or @code{objc-mode} buffer.
 You should see this message in the echo area:
 @example
 
-Using @code{cc-mode} version 4.222.
+Using @code{cc-mode} version 4.241.
 
 @end example
 
