@@ -763,6 +763,7 @@ Key bindings:
   (c-initialize-cc-mode)
   (setq comment-start-skip "#+ *") ; ACM 2002/4/20
   (set (make-local-variable 'c-stmt-delim-chars) "^;{}\n\r?:") ; ACM 2002/3/29
+  (set (make-local-variable 'c-stmt-delim-chars-with-comma "^;,{}\n\r?:") ; ACM 2002/5/31 ?????
   (set (make-local-variable 'parse-sexp-lookup-properties) t)
   (set-syntax-table awk-mode-syntax-table) ; different file
   (setq major-mode 'awk-mode
@@ -780,6 +781,7 @@ Key bindings:
                                   nil t)))
                              (font-lock-multiline . t) ; Switched on for experiments, ACM 2002/3/16
                              ))
+  (add-hook 'before-change-functions 'c-awk-clear-NL-props nil t) ; ACM, 2002/5/30
   (c-common-init 'awk-mode)
 ;  (cc-imenu-init cc-imenu-awk-generic-expression) ; cc-menus.el
   (run-hooks 'c-mode-common-hook)
