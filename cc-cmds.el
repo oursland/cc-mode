@@ -180,7 +180,8 @@
       (if (and (eolp) (eq (char-before) ?\\))
 	  ;; Ensure that the new line gets a backslash so that
 	  ;; bs-col-after-end in c-backslash-region works better.
-	  (setq insert-backslash t)
+	  (setq insert-backslash t
+		has-backslash t)
 	(setq has-backslash (eq (char-before (c-point 'eol)) ?\\))))
     (newline newline-arg)
     (indent-to col)
