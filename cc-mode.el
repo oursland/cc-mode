@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-20 22:29:32 $
-;; Version:         $Revision: 2.66 $
+;; Last Modified:   $Date: 1992-05-20 22:51:25 $
+;; Version:         $Revision: 2.67 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-20 22:29:32 $|$Revision: 2.66 $|
+;; |$Date: 1992-05-20 22:51:25 $|$Revision: 2.67 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -142,18 +142,6 @@ Legal values are:
      nil     -- newlines inserted before and after colon
      'after  -- newlines inserted only after colon
      'before -- newlines inserted only before colon")
-(defvar c++-mode-line-format
-  '("" mode-line-modified
-    mode-line-buffer-identification
-    "   " global-mode-string "   %[("
-    mode-name (c++-hungry-delete-key
-	       (c++-auto-newline "/ah" "/h")
-	       (c++-auto-newline "/a"))
-    minor-mode-alist "%n"
-    mode-line-process
-    ")%]----" (-3 . "%p") "-%-")
-  "*Mode line format for c++-mode.")
-
 (defvar c++-auto-hungry-initial-state 'none
   "*Initial state of auto/hungry mode when buffer is first visited.
 Legal values are:
@@ -201,7 +189,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.66 $
+  "Major mode for editing C++ code.  $Revision: 2.67 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -285,9 +273,6 @@ from their c-mode cousins.
     the colon. Nil means newlines are inserted both before and after
     the colon.  'before inserts newlines only before the colon, and
     'after inserts newlines only after colon.
- c++-mode-line-format
-    Mode line format for c++-mode buffers. Includes auto-newline and
-    hungry-delete-key indicators.
  c++-auto-hungry-initial-state
     Initial state of auto/hungry mode when a C++ buffer is first visited.
  c++-auto-hungry-toggle
@@ -370,8 +355,21 @@ message."
   (set (make-local-variable 'comment-column) 32)
   (set (make-local-variable 'comment-start-skip) "/\\*+ *\\|// *")
   (set (make-local-variable 'comment-indent-hook) 'c++-comment-indent)
-  ;;
-  (setq mode-line-format c++-mode-line-format)
+  ;; hack auto-hungry designators into mode-line-format
+  (setq mode-line-format
+	(let ((modeline nil))
+	  (mapcar
+	   (function
+	    (lambda (element)
+	      (setq modeline
+		    (append modeline
+			    (if (eq element 'mode-name)
+				'(mode-name (c++-hungry-delete-key
+					     (c++-auto-newline "/ah" "/h")
+					     (c++-auto-newline "/a")))
+			      (list element))))))
+	   mode-line-format)
+	  modeline))
   (run-hooks 'c++-mode-hook)
   (c++-set-auto-hungry-state
    (memq c++-auto-hungry-initial-state '(auto-only   auto-hungry t))
@@ -1648,7 +1646,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.66 $"
+(defconst c++-version "$Revision: 2.67 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -1671,7 +1669,6 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-cleanup-}-else-{-p
 		       'c++-hanging-braces
 		       'c++-hanging-member-init-colon
-		       'c++-mode-line-format
 		       'c++-auto-hungry-initial-state
 		       'c++-auto-hungry-toggle
 		       'c++-hungry-delete-key
