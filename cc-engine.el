@@ -4084,12 +4084,13 @@ This function does not do any hidden buffer changes."
 (defun c-forward-type ()
   ;; Move forward over a type spec if at the beginning of one,
   ;; stopping at the next following token.  Return t if it's a known
-  ;; type that can't be a name, 'known if it's an otherwise known type
-  ;; (according to `*-font-lock-extra-types'), 'prefix if it's a known
-  ;; prefix of a type, 'found if it's a type that matches one in
-  ;; `c-found-types', 'maybe if it's an identfier that might be a
-  ;; type, or nil if it can't be a type (the point isn't moved then).
-  ;; The point is assumed to be at the beginning of a token.
+  ;; type that can't be a name or other expression, 'known if it's an
+  ;; otherwise known type (according to `*-font-lock-extra-types'),
+  ;; 'prefix if it's a known prefix of a type, 'found if it's a type
+  ;; that matches one in `c-found-types', 'maybe if it's an identfier
+  ;; that might be a type, or nil if it can't be a type (the point
+  ;; isn't moved then).  The point is assumed to be at the beginning
+  ;; of a token.
   ;;
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
@@ -4253,11 +4254,14 @@ This function does not do any hidden buffer changes."
 		;; don't let the existence of the operator itself promote two
 		;; uncertain types to a certain one.
 		(cond ((eq res t))
-		      ((or (eq res 'known) (memq res2 '(t known)))
+		      ((eq res2 t)
 		       (c-add-type id-start id-end)
 		       (when c-record-type-identifiers
 			 (c-record-type-id id-range))
 		       (setq res t))
+		      ((eq res 'known))
+		      ((eq res2 'known)
+		       (setq res 'known))
 		      ((eq res 'found))
 		      ((eq res2 'found)
 		       (setq res 'found))
