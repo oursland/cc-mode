@@ -13,10 +13,10 @@ INTRODUCTION
 
         <http://cc-mode.sourceforge.net/cc-mode.html>
 
-    As of this writing (February 25, 2001), CC Mode currently works
+    As of this writing (June 10, 2003), CC Mode currently works
     out of the box with XEmacs versions 19.15, 19.16, 20.3, 20.4,
     21.0, 21.1, and 21.2, and with Emacs versions 19.34, 20.x, and
-    21.0.  (It will very likely work with later versions too, when
+    21.x.  (It will very likely work with later versions too, when
     they become available.)
 
 MORE INFORMATION
@@ -37,8 +37,8 @@ MANUALS
     are all available at the CC Mode web page.
 
     To build the manual yourself, you will need the latest Texinfo
-    release (as of this writing, Texinfo 4.0 (!!!!Now 4.5 (ACM,
-    2003/5/11))).  To build the Info manual, simply type:
+    release (as of this writing, Texinfo 4.0).  To build the Info
+    manual, simply type:
 
         % makeinfo cc-mode.texi
 
@@ -88,7 +88,7 @@ INSTALLATION
     after it in the load-path list.
 
     If you're going to be using AWK Mode, insert the following line
-    into your .emacs or init file:
+    into your .emacs or init.el file:
 
         (autoload 'awk-mode "cc-mode" nil t)
 
@@ -116,11 +116,11 @@ INSTALLATION
 
     The new AWK Mode requires a feature (syntax-table text properties)
     which first appeared in Emacs 20.1 and XEmacs 21.4.  If you are
-    still using an older version of (X)Emacs, cc-mode will revert to
+    still using an older version of (X)Emacs, CC Mode will revert to
     using the older AWK Mode (from file awk-mode.elc) for AWK files,
-    even when the autoload form (see above) appears in your .emacs/init
-    file.  Upgrading your (X)Emacs is strongly recommended if this is
-    the case.  You can check which AWK Mode you are running by
+    even when the autoload form (see above) appears in your .emacs or
+    init.el file.  Upgrading your (X)Emacs is strongly recommended if
+    this is the case.  You can check which AWK Mode you are running by
     displaying the mode documentation string with C-h m from an AWK
     buffer.  The newer mode's doc string contains "to submit a problem
     report, enter `C-c C-b'" near the top of the doc string where the
