@@ -66,7 +66,7 @@
 ((substatement . 554))
 ((else-clause . 554))
 ((substatement . 578))
-((arglist-cont . 534))
+((arglist-cont . 468))
 ((substatement . 593))
 ((do-while-closure . 593))
 ((statement-cont . 609))
