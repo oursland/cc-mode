@@ -52,44 +52,18 @@
 (defun c-lineup-arglist (langelem)
   "Line up the current argument line under the first argument.
 
-Works with: arglist-cont-nonempty."
+Works with: arglist-cont-nonempty, arglist-close."
   (save-excursion
-    (let* ((containing-sexp
-	    (save-excursion
-	      ;; arglist-cont-nonempty gives relpos ==
-	      ;; to boi of containing-sexp paren. This
-	      ;; is good when offset is +, but bad
-	      ;; when it is c-lineup-arglist, so we
-	      ;; have to special case a kludge here.
-	      (if (memq (car langelem) '(arglist-intro arglist-cont-nonempty))
-		  (progn
-		    (beginning-of-line)
-		    (backward-up-list 1)
-		    (skip-chars-forward " \t" (c-point 'eol)))
-		(goto-char (cdr langelem)))
-	      (point)))
-	   (langelem-col (c-langelem-col langelem t)))
-      (if (save-excursion
-	    (beginning-of-line)
-	    (looking-at "[ \t]*)"))
-	  (progn (goto-char (match-end 0))
-		 (c-forward-sexp -1)
-		 (forward-char 1)
-		 (c-forward-syntactic-ws)
-		 (- (current-column) langelem-col))
-	(goto-char containing-sexp)
-	(or (eolp)
-	    (not (memq (char-after) '(?{ ?\( ?\[)))
-	    (let ((eol (c-point 'eol))
-		  (here (progn
-			  (forward-char 1)
-			  (skip-chars-forward " \t")
-			  (point))))
-	      (c-forward-syntactic-ws)
-	      (if (< (point) eol)
-		  (goto-char here))))
-	(- (current-column) langelem-col)
-	))))
+    (beginning-of-line)
+    (let ((containing-sexp (c-most-enclosing-brace (c-parse-state)))
+	  (langelem-col (c-langelem-col langelem t)))
+      (goto-char (1+ containing-sexp))
+      (let ((eol (c-point 'eol)))
+	(c-forward-syntactic-ws)
+	(when (< (point) eol)
+	  (goto-char (1+ containing-sexp))
+	  (skip-chars-forward " \t")))
+      (- (current-column) langelem-col))))
 
 (defun c-lineup-arglist-intro-after-paren (langelem)
   "Line up a line just after the open paren of the surrounding paren or
