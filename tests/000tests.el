@@ -91,7 +91,9 @@
 	 (copy-face 'font-lock-builtin-face 'font-lock-preprocessor-face))
 	((c-face-name-p 'font-lock-reference-face)
 	 (copy-face 'font-lock-reference-face 'font-lock-preprocessor-face))
-	(t (make-face 'font-lock-preprocessor-face))))
+	(t (make-face 'font-lock-preprocessor-face)))
+  (defvar font-lock-preprocessor-face nil)
+  (setq font-lock-preprocessor-face 'font-lock-preprocessor-face))
 (unless (c-face-name-p 'font-lock-constant-face)
   (if (c-face-name-p 'font-lock-reference-face)
       (copy-face 'font-lock-reference-face 'font-lock-constant-face)
@@ -123,16 +125,27 @@
     (cpp . ,c-preprocessor-face)
     (err . ,c-invalid-face)))
 
-(let ((alist cc-test-face-alist) elem facename)
+(let ((alist cc-test-face-alist) elem face facename)
   (while alist
     (setq elem (car alist)
 	  alist (cdr alist))
     (unless (eq (car elem) 'reg)
-      (when (and (setq facename (get (cdr elem) 'cc-test-face-name))
+      ;; Check that we don't have a duplicate.
+      (when (and (setq facename (get (setq face (cdr elem))
+				     'cc-test-face-name))
 		 (not (eq facename (car elem))))
 	(error (concat "Ambiguous face %s - can be both %s and %s"
 		       " (cc-fonts loaded too early?)")
 	       (cdr elem) facename (car elem)))
+
+      ;; In Emacs face names are resolved as variables which can point
+      ;; to another face.  Make sure we don't have such indirections
+      ;; when we create or check against .face files.
+      (when (and (boundp face)
+		 (not (eq (symbol-value face) face)))
+	(copy-face (symbol-value face) face)
+	(set face face))
+
       (put (cdr elem) 'cc-test-face-name (car elem)))))
 
 (defvar cc-test-font-lock-init-failed nil)
@@ -144,26 +157,36 @@
   (let ((orig-font-lock-make-faces
 	 (and (fboundp 'font-lock-make-faces)
 	      (symbol-function 'font-lock-make-faces)))
-	(orig-noninteractive
+	(orig-noninteractive-function
 	 (and (fboundp 'noninteractive)
-	      (symbol-function 'noninteractive))))
+	      (symbol-function 'noninteractive)))
+	(orig-noninteractive-variable
+	 (and (boundp 'noninteractive)
+	      (symbol-value 'noninteractive)))
+	;; font-lock in XEmacs 19 looks at a variable named `noninteractive'.
+	(noninteractive nil))
     (unwind-protect
 	(progn
-	  (when (and noninteractive orig-font-lock-make-faces)
+	  (when (and orig-noninteractive-variable orig-font-lock-make-faces)
 	    ;; `font-lock-make-faces' is used in Emacs 19.34 and
 	    ;; requires a window system.  Since we never actually
 	    ;; display the faces we can skip it.
 	    (fset 'font-lock-make-faces (lambda (&rest args))))
-	  (when orig-noninteractive
+	  (when orig-noninteractive-function
 	    ;; XEmacs (at least 21.4) calls `noninteractive' to check
 	    ;; for batch mode, so we let it lie.
 	    (fset 'noninteractive (lambda () nil)))
 	  (font-lock-mode 1)
-	  (font-lock-fontify-buffer))
+	  (let (;; Avoid getting some lazy fontification package that
+		;; might decide that nothing should be done.
+		(font-lock-fontify-buffer-function
+		 'font-lock-default-fontify-buffer))
+	    (font-lock-fontify-buffer)))
       (when (and noninteractive orig-font-lock-make-faces)
+	(message "uncovered font-lock-make-faces")
 	(fset 'font-lock-make-faces orig-font-lock-make-faces))
-      (when orig-noninteractive
-	(fset 'noninteractive orig-noninteractive)))))
+      (when orig-noninteractive-function
+	(fset 'noninteractive orig-noninteractive-function)))))
 
 (defconst cc-test-teststyle
   '((c-tab-always-indent           . t)
@@ -285,7 +308,9 @@
 
 (defun cc-test-record-faces (testbuf facebuf check-unknown-faces)
   (set-buffer testbuf)
-  (let (face prev-face (pos (point)) facename lines col)
+  (let (face prev-face (pos (point)) facename lines col preceding-entry
+	(emacs-strings (not (featurep 'xemacs)))
+	in-string)
 
     (while (progn
 	     (unless (eq (setq face (get-text-property pos 'face)) prev-face)
@@ -300,12 +325,63 @@
 		     (error "Unknown face %s" face)
 		   (setq facename face)))
 
-	       (setq col (current-column))
-	       (set-buffer facebuf)
-	       (insert (format "%s" (list col facename)))
-	       (set-buffer testbuf))
+	       (catch 'record-face
+		 ;; XEmacs does not highlight the quotes surrounding
+		 ;; string literals as strings, while Emacs does.  The
+		 ;; .face files follow the XEmacs variety since the
+		 ;; Emacs behavior can be more easily converted for
+		 ;; empty strings than the other way around.
+		 (when emacs-strings
+		   (if in-string
+		       (progn
+			 (backward-char)
+			 (setq in-string nil))
+		     (when (and (eq facename 'str)
+				(looking-at "\\s\""))
+		       (when (looking-at "\"\"\\|''")
+			 ;; Ignore empty strings altogether.
+			 (while (progn (goto-char (match-end 0))
+				       (looking-at "\"\"\\|''")))
+			 (throw 'record-face nil))
+		       (forward-char)
+		       (setq in-string t))))
 
-	     (setq pos (next-single-property-change pos 'face))
+		 (when (prog1 (and col (>= col (current-column)))
+			 (setq col (current-column))
+			 (set-buffer facebuf))
+		   ;; Since we might modify positions above we need
+		   ;; to deal with new face change entries that
+		   ;; override earlier ones.
+		   (let (pos)
+
+		     (while (and (not (bolp))
+				 (progn
+				   (c-backward-sexp)
+				   (setq pos (point)
+					 preceding-entry (read facebuf))
+				   (>= (car entry) col)))
+		       (goto-char pos)
+		       (setq preceding-entry nil))
+		     (delete-region (point) (c-point 'eol))
+
+		     (unless preceding-entry
+		       (save-excursion
+			 (c-safe
+			   (c-backward-sexp)
+			   (setq preceding-entry (read facebuf)))))))
+
+		 ;; Don't add a new entry if the preceding one has the
+		 ;; same face.
+		 (when (and preceding-entry
+			    (eq (car (cdr preceding-entry)) facename))
+		   (set-buffer testbuf)
+		   (throw 'record-face nil))
+
+		 (insert (format "%s" (setq preceding-entry
+					    (list col facename))))
+		 (set-buffer testbuf)))
+
+	     (setq pos (next-single-property-change (point) 'face))
 
 	     ;; Insert the same amount of line breaks in facebuf as
 	     ;; we've passed in testbuf (count-lines is clumsy here).
@@ -315,7 +391,8 @@
 	     (when (> lines 0)
 	       (set-buffer facebuf)
 	       (insert-char ?\n lines)
-	       (set-buffer testbuf))
+	       (set-buffer testbuf)
+	       (setq col nil))
 
 	     pos))))
 
@@ -602,31 +679,42 @@
 				 (and (or result expected)
 				      (equal result expected))))
 
-			(cond ((not (or result expected)))
-			      ((not result)
-			       (regression-msg
-				"Expected %s face at column %d"
-				(cadr expected) (car expected)))
-			      ((not expected)
-			       (regression-msg
-				"Got unexpected %s face at column %d"
-				(cadr result) (car result)))
-			      ((eq (car result) (car expected))
-			       (regression-msg
-				"Expected %s face at column %d, got %s face"
-				(cadr expected) (car expected)
-				(cadr result)))
-			      ((eq (cadr result) (cadr expected))
-			       (regression-msg
-				"Expected %s face at column %d, got it at %d"
-				(cadr expected) (car expected)
-				(car result)))
-			      (t
-			       (regression-msg
-				(concat "Expected %s face at column %d, "
-					"got %s face at %d")
-				(cadr expected) (car expected)
-				(cadr result) (car result))))
+			(cond
+			 ((not (or result expected)))
+			 ((not result)
+			  (regression-msg
+			   "Expected %s face at column %d"
+			   (cadr expected) (car expected)))
+			 ((not expected)
+			  (regression-msg
+			   "Got unexpected %s face at column %d"
+			   (cadr result) (car result)))
+			 ((eq (car result) (car expected))
+			  (if (and (featurep 'xemacs)
+				   (<= emacs-major-version 20)
+				   (eq (cadr result) 'doc)
+				   (eq (cadr expected) 'str))
+			      ;; `font-lock-fontify-syntactically-region'
+			      ;; in XEmacs <= 20 contains Lisp
+			      ;; specific crud that affects all modes:
+			      ;; Any string at nesting level 1 is
+			      ;; fontified with the doc face.  Argh!  Yuck!
+			      nil
+			    (regression-msg
+			     "Expected %s face at column %d, got %s face"
+			     (cadr expected) (car expected)
+			     (cadr result))))
+			 ((eq (cadr result) (cadr expected))
+			  (regression-msg
+			   "Expected %s face at column %d, got it at %d"
+			   (cadr expected) (car expected)
+			   (car result)))
+			 (t
+			  (regression-msg
+			   (concat "Expected %s face at column %d, "
+				   "got %s face at %d")
+			   (cadr expected) (car expected)
+			   (cadr result) (car result))))
 
 			(set-buffer res-faces-buf)
 			(forward-line 1)
@@ -744,11 +832,18 @@ It records the faces put into the buffer by font-lock in the test file."
   ;; don't want to record, e.g. fontification of whitespace.
 
   (interactive)
+
+  (when (and (featurep 'xemacs)
+	     (<= emacs-major-version 20))
+    ;; See special case in `do-one-test'.
+    (error "Won't make .face files in XEmacs <= 20 since those versions "
+	   "have broken syntactic fontification"))
+
   (let* ((testbuf (current-buffer))
 	 (facefile (concat (file-name-sans-extension buffer-file-name)
 			   ".face"))
 	 (facebuf (find-file-noselect facefile))
-	 err errpos)
+	 error errpos)
 
     (save-excursion
       (save-selected-window
@@ -771,11 +866,12 @@ It records the faces put into the buffer by font-lock in the test file."
 	      (unless (bolp) (insert "\n")))
 
 	  (error
+	   (setq error err)
 	   (set-buffer testbuf)
 	   (setq errpos (point))))))
-    (when err
+    (when error
       (when errpos (goto-char errpos))
-      (signal (car err) (cdr err)))))
+      (signal (car error) (cdr error)))))
 
 (defun resfile ()
   "Creates a .res file from the test file in the current buffer.
