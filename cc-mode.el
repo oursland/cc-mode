@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.320 $
-;; Last Modified:   $Date: 1994-04-26 16:17:29 $
+;; Version:         $Revision: 3.321 $
+;; Last Modified:   $Date: 1994-05-05 17:33:57 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-26 16:17:29 $|$Revision: 3.320 $|
+;; |$Date: 1994-05-05 17:33:57 $|$Revision: 3.321 $|
 
 ;;; Code:
 
@@ -793,7 +793,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.320 $
+cc-mode Revision: $Revision: 3.321 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -824,7 +824,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.320 $
+cc-mode Revision: $Revision: 3.321 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1839,6 +1839,37 @@ search."
 	 (goto-char beg)
 	 (search-forward ";" end 'move))))))
 
+
+;;(defun c-beginning-of-defun (count)
+;;  "Move the the COUNTth `real' beginning-of-defun.
+;;This is defined as the first declaration line of the most enclosing
+;;top level construct; i.e. class/struct, function, enum, etc.  With
+;;negative COUNT, go forward."
+;;  (interactive "p")
+;;  )
+;;
+;;(defun c-beginning-of-defun-1 ()
+;;  ;; move to the real beginning of defun. `Real' being defined as the
+;;  ;; first C/C++ declaration line of the most enclosing top level construct.
+;;  (let* ((state (c-parse-state))
+;;	 (search-start (car state)))
+;;    ;; if the last thing is a cons then start searching from the end
+;;    ;; of the previous balanced sexp
+;;    (goto-char (or (car-safe search-start)
+;;		   (and (numberp search-start)
+;;			search-start)
+;;		   (point)))
+;;    (c-beginning-of-statement)
+;;    (if (bobp)
+;;	(c-forward-syntactic-ws))
+;;    ))
+;;
+;;(defun c-end-of-defun-1 ()
+;;  ;; move to the end of the defun.
+;;  (let* ((state (c-parse-state))
+;;	 (search-start (car state))
+;;	 )))
+;;
 
 (defun c-up-conditional (count)
   "Move back to the containing preprocessor conditional, leaving mark behind.
@@ -3423,7 +3454,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.320 $"
+(defconst c-version "$Revision: 3.321 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
