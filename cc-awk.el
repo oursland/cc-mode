@@ -31,45 +31,46 @@
 
 (defvar awk-mode-syntax-table
   (let ((st (make-syntax-table)))
-  (modify-syntax-entry ?\\ "\\" st)
-  (modify-syntax-entry ?\n ">   " st)
-  (modify-syntax-entry ?\r ">   " st)   ; ACM, 2002/3/24
-  (modify-syntax-entry ?\f ">   " st)
-  (modify-syntax-entry ?\# "<   " st)
-  ;; / can delimit regexes or be a division operator.  We assume that it is
-  ;; more commonly used for regexes and fix the remaining cases with
-  ;; `font-lock-syntactic-keywords'.
-  ;; NO! Do it the other way round.  ACM 2002/4/27.
-;  (modify-syntax-entry ?/ "\"" st)
-  (modify-syntax-entry ?/ "." st)       ; ACM 2002/4/27.  
-  (modify-syntax-entry ?* "." st)
-  (modify-syntax-entry ?+ "." st)
-  (modify-syntax-entry ?- "." st)
-  (modify-syntax-entry ?= "." st)
-  (modify-syntax-entry ?% "." st)
-  (modify-syntax-entry ?< "." st)
-  (modify-syntax-entry ?> "." st)
-  (modify-syntax-entry ?& "." st)
-  (modify-syntax-entry ?| "." st)
-  (modify-syntax-entry ?_ "_" st)
-  (modify-syntax-entry ?\' "\"" st)
-  st)
+    (modify-syntax-entry ?\\ "\\" st)
+    (modify-syntax-entry ?\n ">   " st)
+    (modify-syntax-entry ?\r ">   " st) ; ACM, 2002/3/24
+    (modify-syntax-entry ?\f ">   " st)
+    (modify-syntax-entry ?\# "<   " st)
+    ;; / can delimit regexes or be a division operator.  We assume that it is
+    ;; more commonly used for regexes and fix the remaining cases with
+    ;; `font-lock-syntactic-keywords'.
+    ;; NO! Do it the other way round.  ACM 2002/4/27.
+                                        ;  (modify-syntax-entry ?/ "\"" st)
+    (modify-syntax-entry ?/ "." st)     ; ACM 2002/4/27.  
+    (modify-syntax-entry ?* "." st)
+    (modify-syntax-entry ?+ "." st)
+    (modify-syntax-entry ?- "." st)
+    (modify-syntax-entry ?= "." st)
+    (modify-syntax-entry ?% "." st)
+    (modify-syntax-entry ?< "." st)
+    (modify-syntax-entry ?> "." st)
+    (modify-syntax-entry ?& "." st)
+    (modify-syntax-entry ?| "." st)
+    (modify-syntax-entry ?_ "_" st)
+;;    (modify-syntax-entry ?\' "\"" st) ; ACM 2002/5/28. ' isn't a string character in awk!
+    (modify-syntax-entry ?\' "." st)
+    st)
   "Syntax table in use in `awk-mode' buffers.")
 
 
 ;; (require 'syntax)
 (defun c-awk-back-to-contentful-text ()
-;;  awk-mode: move point back to just after the last non-ws text, if any,
-;;  keeping track of whether there is a continuous chain of (real) escaped
-;;  newlines from that point to the line we started in.
-;;  Return value: whether we have this chain of escaped newlines.
-;;
-;;  Point should be at the start of a line when calling this function.  This
+  ;;  awk-mode: move point back to just after the last non-ws text, if any,
+  ;;  keeping track of whether there is a continuous chain of (real) escaped
+  ;;  newlines from that point to the line we started in.
+  ;;  Return value: whether we have this chain of escaped newlines.
+  ;;
+  ;;  Point should be at the start of a line when calling this function.  This
 ;;  is to ensure that the various backward-comment functions will work properly.
   (let ((bksl-active t)
         (bol-pos (point)))
     (while ;; We are at the beginning of a line here, and go back one line
-	   ;; each iteration.
+        ;; each iteration.
         (and
          (progn (c-backward-syntactic-ws (c-point 'bopl))
                 (< (point) bol-pos))    ; Stop if we reach point-min
@@ -86,14 +87,14 @@
                    (progn (end-of-line) ; escaped EOL.
                           (backward-char)
                           (c-backward-syntactic-ws bol-pos))
-                 (end-of-line) ; The \ at eol is a fake.
+                 (end-of-line)          ; The \ at eol is a fake.
                  (setq bksl-active nil))
              (setq bksl-active nil))    ; no \ at EOL
            (bolp)))) ; If we moved back to BOL, there was nothing on the line.
     bksl-active))
 
 (defun c-awk-after-if-do-for-while-condition-p (&optional lim)
-;; Are we just after the ) in "if/do/for/while (<condition>)"?
+  ;; Are we just after the ) in "if/do/for/while (<condition>)"?
 ;; Note that at the end of the ) in a do .... while (<condition>) doesn't count.
   (and
    (eq (char-before) ?\))
@@ -106,26 +107,26 @@
                        'beginning)))))))
 
 (defun c-awk-after-function-decl-param-list ()
-;; Are we just after the ) in "function foo (bar)" ?
+  ;; Are we just after the ) in "function foo (bar)" ?
   (and (eq (char-before) ?\))
        (save-excursion
          (goto-char (c-safe (scan-lists (point) -1 0))) ; back over "(...)"
          (c-backward-token-1)
          (and (looking-at "[_a-zA-Z][_a-zA-Z0-9]*\\>")
               (progn (c-backward-token-1)
-                     (looking-at "function\\>"))))))
+                     (looking-at "func\\(tion\\)?\\>")))))) ; Abbreviation for gawk 3.1, ACM 2002/5/29
 
 (defun c-awk-after-continue-token ()
 ;; Are we just after a token which can be continued onto the next line without
-;; a backslash?
+  ;; a backslash?
   (save-excursion
     (c-backward-token-1)
     (if (looking-at "[&|]") (backward-char)) ; c-backward-token-1 doesn't do this :-(
     (looking-at "[,{?:]\\|&&\\|||\\|do\\>\\|else\\>")))
 
 (defun c-awk-after-statement-semicolon ()
-;; Are we just after a ; which closes a statement?
-;; Be careful about ;s in for loop control bits.  They don't count!
+  ;; Are we just after a ; which closes a statement?
+  ;; Be careful about ;s in for loop control bits.  They don't count!
   (and
    (eq (char-before) ?\;)
    (not (save-excursion
@@ -137,18 +138,18 @@
 (defun c-awk-prev-line-incomplete-p (&optional do-lim)
 ;;  awk-mode: Is there an incomplete statement at the end of the previous line?
 
-;; Four cases to consider, with respect to the previous line:
+  ;; Four cases to consider, with respect to the previous line:
 ;;  1: A '\' continuation marker at EOL (only valid where there's no comment) 
-;;     We need to check for '\'s on consecutive (otherwise) empty lines
-;;     Even if all the above hold, we still need to ensure that there's
-;;     something to continue;
+  ;;     We need to check for '\'s on consecutive (otherwise) empty lines
+  ;;     Even if all the above hold, we still need to ensure that there's
+  ;;     something to continue;
 ;;  2: A line: "if/while/for/do (...)" (without ';') [careful about do-while :-];
-;;  3: A line ending with one of ,, {, ?, :, &&, ||, do, else
+  ;;  3: A line ending with one of ,, {, ?, :, &&, ||, do, else
 ;;  4: A line "function foo (a, b)", possibly followed by a comment.  (The next
-;;     line then must start with '{'.  Should we check this? NO!!
-;;
-;; Note: we use the previous line as part of the definition so that the
-;; various backward-comment functions work.
+  ;;     line then must start with '{'.  Should we check this? NO!!
+  ;;
+  ;; Note: we use the previous line as part of the definition so that the
+  ;; various backward-comment functions work.
   (save-excursion
     (save-match-data
       (let (bksl-active) ; "Chain of BacKSLashed newlines to the starting line."
@@ -158,7 +159,7 @@
         (beginning-of-line)
         (setq bksl-active (c-awk-back-to-contentful-text))
 
-        (and (> (point) (point-min))  ; start of buffer ??
+        (and (> (point) (point-min))    ; start of buffer ??
              (or (c-awk-after-if-do-for-while-condition-p do-lim) ; CASE 2
                  (c-awk-after-function-decl-param-list) ; CASE 4
                  (c-awk-after-continue-token) ; CASE 3
@@ -166,9 +167,9 @@
                       (not (c-awk-after-statement-semicolon)))))))))
 
 (defun c-awk-complete-stmt-on-prev-line-p (&optional do-lim)
-;;  awk-mode: Is there a complete statement on the previous line?  This
-;;  divides into two parts: i) Is there a statement on the previous line?
-;;  ii) Is it complete?
+  ;;  awk-mode: Is there a complete statement on the previous line?  This
+  ;;  divides into two parts: i) Is there a statement on the previous line?
+  ;;  ii) Is it complete?
   (and
    (save-excursion
      ;; Go back over whitespace on the previous line;
@@ -177,30 +178,55 @@
      (> (point) (c-point 'bol))) ;; Do we have any meat on this previous line?
    (not (c-awk-prev-line-incomplete-p))))
 
-(defun c-awk-beginning-of-logical-line ()
-;;   awk-mode: Go back to the start of the (apparent) current logical line.
-;; Return the buffer position of that point.  I.e., go back to the last line
-;; which doesn't have an escaped EOL before it.  This is guaranteed to be
-;; "safe" for syntactic analysis, i.e. outwith any comment, string or regexp.
-;; IT MAY WELL BE that this function should not be executed on a narrowed
-;; buffer.
+(defun c-awk-beginning-of-logical-line (&optional pos)
+  ;;   awk-mode: Go back to the start of the (apparent) current line (or the
+  ;;   start of the line containing POS).
+  ;; Return the buffer position of that point.  I.e., go back to the last line
+  ;; which doesn't have an escaped EOL before it.  This is guaranteed to be
+ ;; "safe" for syntactic analysis, i.e. outwith any comment, string or regexp.
+  ;; IT MAY WELL BE that this function should not be executed on a narrowed
+  ;; buffer.
+  (if pos (goto-char pos))
   (forward-line 0)
   (while (and (> (point) (point-min))
               (eq (char-before (1- (point))) ?\\))
     (forward-line -1))
   (point))
 
-(defun c-awk-end-of-logical-line ()
-;;   awk-mode: Go forward to the end of the (apparent) current logical line.
+(defun c-awk-end-of-logical-line (&optional pos)
+;;   awk-mode: Go forward to the end of the (apparent) current logical line
+;; (or the end of the line containing POS).
 ;; Return the buffer position of that point.  I.e., go to the end of the next
 ;; line which doesn't have an escaped EOL.  This is guaranteed to be "safe" for
 ;; syntactic analysis, i.e. outwith any comment, string or regexp.  IT MAY WELL
-;; BE that this function should not be executed on a narrowed buffer.
+  ;; BE that this function should not be executed on a narrowed buffer.
+  (if pos (goto-char pos))
   (end-of-line)
   (while (and (< (point) (point-max))
               (eq (char-before) ?\\))
     (end-of-line 2))
   (point))
+
+;; ACM 2002/5/25.  When font-locking is invoked by a buffer change, the region
+;; specified by the font-lock after-change function must be expanded to
+;; include ALL of any string or regexp within the region.  The simplest way to
+;; do this in practice is to use the beginning/end-of-logical-line functions.
+;; Don't overlook the possibility of the buffer change being the "recapturing"
+;; of a previously escaped newline.
+(defmacro c-awk-advise-fl-for-awk-region (function)
+  `(defadvice ,function (before get-awk-region activate)
+  "When font-locking an awk-mode buffer, make sure that any string/regexp is completely font-locked."
+  (when (eq major-mode 'awk-mode)
+    (save-excursion
+      (ad-set-arg 0 (c-awk-beginning-of-logical-line (ad-get-arg 0)))
+      (ad-set-arg 1 (progn (goto-char (ad-get-arg 1))
+                           (forward-line 1) ; Maybe a "recaptured" NL.
+                           (c-awk-end-of-logical-line)))))))
+
+(c-awk-advise-fl-for-awk-region font-lock-after-change-function)
+(c-awk-advise-fl-for-awk-region jit-lock-after-change)
+(c-awk-advise-fl-for-awk-region lazy-lock-defer-rest-after-change)
+(c-awk-advise-fl-for-awk-region lazy-lock-defer-line-after-change)
 
 ;;; ACM, 2002/02/02:  Give up the FSM approach, and use regexps as suggested by
 ;;; Martin S. in his Email of 19th January 2002.
@@ -226,10 +252,13 @@
 ;; assumes that the start point of a search is outwith any string or comment.
 
 ;; REGEXPS FOR "HARMLESS" STRINGS/LINES.
-(defconst c-awk-harmless-char-re "[^#/\"\\\\\n\r]")
-;;   Matches any character but a #, /, ", \, or newline
+(defconst c-awk-harmless-char-re "[^_#/\"\\\\\n\r]")
+;;   Matches any character but a #, /, ", \, or newline.  N.B. _" starts a
+;; localisation string in gawk 3.1
+(defconst c-awk-harmless-_ "_\\([^\"]\\|\\'\\)")
+;;   Matches an underline NOT followed by ".
 (defconst c-awk-harmless-string*-re
-  (concat "\\(" c-awk-harmless-char-re "\\|" c-awk-esc-pair-re "\\)*"))
+  (concat "\\(" c-awk-harmless-char-re "\\|" c-awk-esc-pair-re "\\|" c-awk-harmless-_ "\\)*"))
 ;;   Matches a (possibly empty) sequence of chars without unescaped /, ", \,
 ;; #, or newlines.
 (defconst c-awk-harmless-string*-here-re
@@ -256,12 +285,14 @@
   (concat "\\(" c-awk-string-ch-re "\\|" c-awk-esc-pair-re "\\)*"))
 ;;   Matches the inside of an awk string (i.e. without the enclosing quotes).
 (defconst c-awk-string-noeol-re
-  (concat "\"" c-awk-string-innards-re "\\(\"\\|" c-awk-$-or-eob "\\)"))
+  (concat "_?\"" c-awk-string-innards-re "\\(\"\\|" c-awk-$-or-eob "\\)"))
 ;;   Matches an awk string, without swallowing EOL if it's missing its terminating ".
+;; A gawk 3.1+ string may look like _"localisable string".
 (defconst c-awk-string-re
-  (concat "\"" c-awk-string-innards-re "\\(\"\\|" c-awk-nl-or-eob "\\)"))
+  (concat "_?\"" c-awk-string-innards-re "\\(\"\\|" c-awk-nl-or-eob "\\)"))
 ;;   Matches an awk string at point, including EOL/EOB if it's missing its
 ;;   terminating \".
+;; A gawk 3.1+ string may look like _"localisable string".
 (defconst c-awk-string-here-re
   (concat "\\=" c-awk-string-re))
 ;;(defconst c-awk-unterminated-string-re
@@ -334,24 +365,21 @@
 ;; "punctuation", to reduce hassle when this character appears within a string
 ;; or comment.
 
-;; (defun c-awk-set-string-regexp-syntax-table-properties (beg end)
-;; ;;   BEG and END bracket a string or regexp.  If the closing delimiter is
-;; ;; missing (i.e., there is an EOL there) set the STRING-FENCE property on the
-;; ;; opening " or / and closing EOL.
-;;   (when (or (< (- end beg) 2)   ; Only a single delimiter - can happen at EOB.
-;;             (/= (char-after beg) (char-before end)))
-;;     (put-text-property beg (1+ beg) 'syntax-table '(15)) ; (1) = "string fence".
-;;     (put-text-property (1- end) end 'syntax-table '(15))))
-
 (defun c-awk-set-string-regexp-syntax-table-properties (beg end)
-;;   BEG and END bracket a string or regexp.  If the closing delimiter is
-;; missing (i.e., there is an EOL there) set the STRING-FENCE property on the
-;; opening " or / and closing EOL.
-  (cond ((< (- (point-max) beg) 2)   ; At end of buffer
+;;   BEG and END bracket a string or regexp.  "String" here can also mean a
+;; gawk 3.1 "localizable" string which starts with _".  In this case, we step
+;; over the _ and ignore it; It will get it's font from an entry in
+;; awk-font-lock-keywords.
+;;
+;; If the closing delimiter is missing (i.e., there is an EOL there) set the
+;; STRING-FENCE property on the opening " or / and closing EOL.
+  (if (eq (char-after beg) ?_) (setq beg (1+ beg)))
+  (cond ((< (- (point-max) beg) 2)   ; BEG is at end of buffer
          (put-text-property beg (1+ beg) 'syntax-table '(15))) ; (15) = "string fence"
         ((/= (char-after beg) (char-before end)) ; mismatched "delimiters"
          (put-text-property beg (1+ beg) 'syntax-table '(15))
-         (put-text-property (1- end) end 'syntax-table '(15)))
+         (if (< end (point-max)) ; If END is at EOB, don't mark the last char.
+             (put-text-property (1- end) end 'syntax-table '(15))))
         ((eq (char-after beg) ?/)       ; Properly bracketed regexp
          (put-text-property beg (1+ beg) 'syntax-table '(7)) ; (7) = "string"
          (put-text-property (1- end) end 'syntax-table '(7)))
@@ -451,38 +479,47 @@ after-change-functions."
   (eval-when-compile
     (list
      ;; Function names.
-     '("^[ \t]*\\(function\\)\\>[ \t]*\\(\\sw+\\)?"
+     '("^[ \t]*\\(func\\(tion\\)?\\)\\>[ \t]*\\(\\sw+\\)?"
        (1 font-lock-keyword-face) (2 font-lock-function-name-face nil t))
      ;;
      ;; Variable names.
-     (cons (regexp-opt
-	    '("ARGC" "ARGIND" "ARGV" "CONVFMT" "ENVIRON" "ERRNO"
-	      "FIELDWIDTHS" "FILENAME" "FNR" "FS" "IGNORECASE" "NF" "NR"
-	      "OFMT" "OFS" "ORS" "RLENGTH" "RS" "RSTART" "SUBSEP") 'words)
+     (cons (c-regexp-opt
+	    '("ARGC" "ARGIND" "ARGV" "BINMODE" "CONVFMT" "ENVIRON" "ERRNO"
+	      "FIELDWIDTHS" "FILENAME" "FNR" "FS" "IGNORECASE" "LINT" "NF"
+              "NR" "OFMT" "OFS" "ORS" "PROCINFO" "RLENGTH" "RS" "RSTART" "RT"
+              "SUBSEP" "TEXTDOMAIN" "dev/stdin" "/dev/stdout" "dev/stderr") 'words)
 	   'font-lock-variable-name-face)
      ;;
      ;; Keywords.
-     (regexp-opt
-      '("BEGIN" "END" "break" "continue" "delete" "exit" "else" "for"
-	"getline" "if" "next" "print" "printf" "return" "while") 'words)
+     (c-regexp-opt
+      '("BEGIN" "END" "break" "continue" "delete" "do" "exit" "else" "for"
+	"getline" "if" "in" "next" "print" "printf" "return" "while") 'words)
      ;;
      ;; Builtins.
-     (list (regexp-opt
-	    '("atan2" "close" "cos" "ctime" "exp" "gsub" "index" "int"
-	      "length" "log" "match" "rand" "sin" "split" "sprintf"
-	      "sqrt" "srand" "sub" "substr" "system" "time"
-	      "tolower" "toupper") 'words)
+     (list (c-regexp-opt
+	    '("and" "asort" "atan2" "bindtextdomain" "close" "compl" "cos"
+              "ctime" "dcgettext" "exp" "extension" "fflush" "gensub" "gsub"
+              "index" "int" "length" "log" "lshift" "match" "mktime" "nextfile"
+              "or" "rand" "rshift" "sin" "split" "sprintf" "sqrt" "srand"
+              "strftime" "strtonum" "sub" "substr" "system" "systime" "time"
+              "tolower" "toupper" "xor") 'words)
 	   1 'font-lock-builtin-face)
      ;;
      ;; Operators.  Is this too much?
-     (cons (regexp-opt '("&&" "||" "<=" "<" ">=" ">" "==" "!=" "!~" "~"))
-	   'font-lock-constant-face)
+     ;; ACM, 2002/5/26.  Yes, this is _far_ too much!  Take it out
+;; (cons (c-regexp-opt '("&&" "||" "<=" "<" ">=" ">" "==" "!=" "!~" "~"))
+;; 	   'font-lock-constant-face)
+
      ;; Unbalanced string (") or regexp (/) delimiters.  ACM 2002/02/16.
      '("\\s|" 0 font-lock-warning-face t nil)
+;; Patterns for gawk 3.1 localizable strings ( _"translate me!").  ACM, 2002/5/21
+     '("\\(_\\)\\s|" 1 font-lock-warning-face)
+     '("\\(_\\)\\s\"" 1 font-lock-string-face)
      ))
  "Default expressions to highlight in AWK mode.")
 
 
-(provide 'cc-awk)                       ; Changed from 'awk-mode, ACM 2002/4/21
+(provide 'cc-awk)                       ; Changed from 'awk-mode, ACM 2002/5/21
 
 ;;; awk-mode.el ends here
+
