@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-29 18:53:39 $
-;; Version:         $Revision: 2.14 $
+;; Last Modified:   $Date: 1992-04-29 19:06:36 $
+;; Version:         $Revision: 2.15 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-29 18:53:39 $|$Revision: 2.14 $|
+;; |$Date: 1992-04-29 19:06:36 $|$Revision: 2.15 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -141,7 +141,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.14 $
+  "Major mode for editing C++ code.  $Revision: 2.15 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -628,6 +628,13 @@ Return the amount the indentation changed by."
 				 (current-indentation))))
 		 ((looking-at "friend\[ \t]class[ \t]")
 		  (setq indent (+ indent c++-friend-offset)))
+		 ((= (following-char) ?\))
+		  (setq indent (+ (- indent c-indent-level)
+				  (if (save-excursion
+					(forward-char 1)
+					(c++-at-top-level-p))
+				      (- c++-block-close-brace-offset)
+				    c++-block-close-brace-offset))))
 		 ((= (following-char) ?})
 		  (setq indent (+ (- indent c-indent-level)
 				  (if (save-excursion
@@ -1312,7 +1319,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.14 $"
+(defconst c++-version "$Revision: 2.15 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
