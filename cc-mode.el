@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.156 $
-;; Last Modified:   $Date: 1993-12-28 15:02:13 $
+;; Version:         $Revision: 3.157 $
+;; Last Modified:   $Date: 1993-12-28 16:19:08 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-28 15:02:13 $|$Revision: 3.156 $|
+;; |$Date: 1993-12-28 16:19:08 $|$Revision: 3.157 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.156 $
+CC-MODE REVISION: $Revision: 3.157 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.156 $
+CC-MODE REVISION: $Revision: 3.157 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1465,9 +1465,14 @@ search."
 		      (progn
 			(backward-sexp 1)
 			(or first
-			    (not (re-search-forward "[;{}]" last-begin t)))))
-	    (setq last-begin (point) first nil))
-	  (goto-char last-begin))
+			    (not (re-search-forward "[;{}]" last-begin t))
+			    ))
+		      (not (looking-at c-conditional-key))
+		      )
+	    (setq last-begin (point)
+		  first nil))
+	  (if (not (looking-at c-conditional-key))
+	      (goto-char last-begin)))
       ;; error for condition-case
       (error (if first
 		 (backward-up-list 1)
@@ -2937,7 +2942,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.156 $"
+(defconst c-version "$Revision: 3.157 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
