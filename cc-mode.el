@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.146 $
-;; Last Modified:   $Date: 1995-01-30 16:49:10 $
+;; Version:         $Revision: 4.147 $
+;; Last Modified:   $Date: 1995-02-02 16:49:21 $
 ;; Keywords: C++ C Objective-C editing major-mode
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-30 16:49:10 $|$Revision: 4.146 $|
+;; |$Date: 1995-02-02 16:49:21 $|$Revision: 4.147 $|
 
 ;;; Code:
 
@@ -1484,7 +1484,7 @@ the brace is inserted inside a literal."
     ;; a numeric arg is provided, or auto-newlining is turned off,
     ;; then just insert the character.
     (if (or literal arg
-	    (not c-auto-newline)
+;	    (not c-auto-newline)
 	    (not (looking-at "[ \t]*$")))
 	(c-insert-special-chars arg)	
       (let* ((syms '(class-open class-close defun-open defun-close 
@@ -1547,7 +1547,10 @@ the brace is inserted inside a literal."
 			     (<= (point) (car c-state-cache)))
 			(setq c-state-cache (cdr c-state-cache))
 		      ))))
-	      (c-indent-line)
+	      (let ((here (point))
+		    (shift (c-indent-line)))
+		(setq c-state-cache (c-adjust-state (c-point 'bol) here
+						    (- shift) c-state-cache)))
 	      (goto-char (- (point-max) pos))
 	      ;; if the buffer has changed due to the indentation, we
 	      ;; need to recalculate syntax for the current line, but
@@ -1563,7 +1566,10 @@ the brace is inserted inside a literal."
 	;; now adjust the line's indentation. don't update the state
 	;; cache since c-guess-basic-syntax isn't called when the
 	;; syntax is passed to c-indent-line
-	(c-indent-line syntax)
+	(let ((here (point))
+	      (shift (c-indent-line syntax)))
+	  (setq c-state-cache (c-adjust-state (c-point 'bol) here
+					      (- shift) c-state-cache)))
 	;; Do all appropriate clean ups
 	(let ((here (point))
 	      (pos (- (point-max) (point)))
@@ -2888,6 +2894,24 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (if (consp (car cdr))
 		  (cdr cdr) cdr))
 	))))
+
+(defun c-adjust-state (from to shift state)
+  ;; Adjust all points in state that lie in the region FROM..TO by
+  ;; SHIFT amount (as would be returned by c-indent-line).
+  (mapcar
+   (function
+    (lambda (e)
+      (if (consp e)
+	  (let ((car (car e))
+		(cdr (cdr e)))
+	    (if (and (<= from car) (< car to))
+		(setcar e (+ shift car)))
+	    (if (and (<= from cdr) (< cdr to))
+		(setcdr e (+ shift cdr))))
+	(if (and (<= from e) (< e to))
+	    (setq e (+ shift e))))
+      e))
+   state))
 
 
 (defun c-beginning-of-inheritance-list (&optional lim)
@@ -4390,7 +4414,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.146 $"
+(defconst c-version "$Revision: 4.147 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
