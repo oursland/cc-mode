@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.32 $
-;; Last Modified:   $Date: 1994-07-12 14:36:10 $
+;; Version:         $Revision: 4.33 $
+;; Last Modified:   $Date: 1994-07-15 13:48:39 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-07-12 14:36:10 $|$Revision: 4.32 $|
+;; |$Date: 1994-07-15 13:48:39 $|$Revision: 4.33 $|
 
 ;;; Code:
 
@@ -898,7 +898,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.32 $
+cc-mode Revision: $Revision: 4.33 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -931,7 +931,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.32 $
+cc-mode Revision: $Revision: 4.33 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -964,7 +964,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.32 $
+cc-mode Revision: $Revision: 4.33 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2679,12 +2679,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	;; for us the search boundaries
 	(setq search-start (nth 1 brace-state)
 	      search-end (nth 0 brace-state)))
-      ;; if search-end is nil we are definitely not in a class
-      (if (not search-end)
+      ;; search-end cannot be a cons cell
+      (and (consp search-end)
+	   (error "consp search-end: %s" search-end))
+      ;; if search-end is nil, or if the search-end character isn't an
+      ;; open brace, we are definitely not in a class
+      (if (or (not search-end)
+	      (/= (char-after search-end) ?{))
 	  nil
-	;; search-end cannot be a cons cell
-	(and (consp search-end)
-	     (error "consp search-end: %s" search-end))
 	;; now, we need to look more closely at search-start.  if
 	;; search-start is nil, then our start boundary is really
 	;; point-min.
@@ -3843,7 +3845,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.32 $"
+(defconst c-version "$Revision: 4.33 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
