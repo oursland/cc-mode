@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.274 $
-;; Last Modified:   $Date: 1996-01-22 17:17:02 $
+;; Version:         $Revision: 4.275 $
+;; Last Modified:   $Date: 1996-01-22 17:41:27 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -658,6 +658,7 @@ re-dump Emacs.")
 		    emacs-major-version))
 	(minor (and (boundp 'emacs-minor-version)
 		    emacs-minor-version))
+	(re-suite 'old-re)
 	flavor comments)
     ;; figure out version numbers if not already discovered
     (and (or (not major) (not minor))
@@ -680,6 +681,11 @@ re-dump Emacs.")
 				    'XEmacs 'FSF)))
      ;; I don't know
      (t (error "Cannot recognize major version number: %s" major)))
+    ;; Regular expression suites...
+    (if (and (eq major 'v19)
+	     (or (and (eq flavor 'XEmacs) (>= minor 14))
+		 (and (eq flavor 'FSF) (>= minor 30))))
+	(setq re-suite 'new-re))
     ;; XEmacs 19 uses 8-bit modify-syntax-entry flags, as do all
     ;; patched Emacs 19, Emacs 18, Epoch 4's.  Only Emacs 19 uses a
     ;; 1-bit flag.  Let's be as smart as we can about figuring this
@@ -747,16 +753,20 @@ the main release."
 work for you, you may want to consider upgrading to one of the latest
 Emacs 19's.  The syntax patches are no longer supported either for
 syntax.c or cc-mode."))))
-    (list major comments))
+    (list major comments re-suite))
   "A list of features extant in the Emacs you are using.
 There are many flavors of Emacs out there, each with different
 features supporting those needed by cc-mode.  Here's the current
 supported list, along with the values for this variable:
 
- Emacs 18/Epoch 4:           (v18 no-dual-comments)
- Emacs 18/Epoch 4 (patch2):  (v18 8-bit)
- XEmacs 19:                  (v19 8-bit)
- Emacs 19:                   (v19 1-bit).")
+ Emacs 18/Epoch 4:           (v18 no-dual-comments <RS>)
+ Emacs 18/Epoch 4 (patch2):  (v18 8-bit <RS>)
+ XEmacs 19:                  (v19 8-bit <RS>)
+ Emacs 19:                   (v19 1-bit <RS>)
+
+<RS> is the regular expression suite to use.  XEmacs versions after
+19.13, and Emacs versions after 19.29 use the `new-re' regex suite.
+All other Emacsen use the `old-re' suite.")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in c++-mode buffers.")
@@ -1342,12 +1352,9 @@ Key bindings:
 	(make-local-variable 'fill-paragraph-functoin)
 	(setq fill-paragraph-function 'c-fill-paragraph)))
   ;; now set their values
-  (setq paragraph-start (concat "^$\\|" page-delimiter)
-	;; TBD:
-	;; Emacs 19.31 pretest uses (concat page-delimiter "\\|$")
-	;; in the line above, but I have no idea how to feature test
-	;; this, or whether making this change will break other
-	;; Emacsen. -- BAW 17-Jan-1996
+  (setq paragraph-start (if (memq 'new-re c-emacs-features)
+			    (concat page-delimiter "\\|$")
+			  (concat "^$\\|" page-delimiter))
 	paragraph-separate paragraph-start
 	paragraph-ignore-fill-prefix t
 	require-final-newline t
@@ -2278,30 +2285,21 @@ Optional prefix ARG means justify paragraph as well."
 	    (beginning-of-line)
 	    (skip-chars-forward " \t\n")
 	    (and (looking-at comment-start-skip)
-		 (setq comment-start-place (point))))))
+		 (setq comment-start-place (point)))))
+	 (re1 (if (memq 'new-re c-emacs-features)
+		  "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"
+		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+	 )
     (if (and c-double-slash-is-comments-p
 	     (save-excursion
 	       (beginning-of-line)
 	       (looking-at ".*//")))
 	(let (fill-prefix
-	      (paragraph-start
 	       ;; Lines containing just a comment start or just an end
-	       ;; should not be filled into paragraphs they are next to.
-	       (concat 
-		paragraph-start
-		;; TBD: Emacs 19.31 pretest uses the following:
-		;;"\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
-		;; instead of what you see here.  I have no idea about
-		;; potential compatibility problems with other
-		;; Emacsen. -- BAW 17-Jan-1996
-		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
-	      (paragraph-separate
-	       (concat
-		paragraph-separate
-		;; TBD: Emacs 19.31 pretest uses the following:
-		;; "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$")))
-		;; The same note applies
-		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$")))
+	       ;; should not be filled into paragraphs they are next
+	       ;; to.
+	      (paragraph-start (concat paragraph-start re1))
+	      (paragraph-separate (concat paragraph-separate re1)))
 	  (save-excursion
 	    (beginning-of-line)
 	    ;; Move up to first line of this comment.
@@ -2387,20 +2385,11 @@ Optional prefix ARG means justify paragraph as well."
 					       (point))
 					(progn (end-of-line) (point))))))))
 
-		(paragraph-start
-		 ;; Lines containing just a comment start or just an end
-		 ;; should not be filled into paragraphs they are next to.
-		 (concat 
-		  paragraph-start
-		  ;; TBD: See my earlier notes about the Emacs 19.31 pretest
-		  ;; "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
-		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
-		(paragraph-separate
-		 (concat
-		  paragraph-separate
-		  ;; TBD: See my earlier notes about the Emacs 19.31 pretest
-		  ;;"\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
-		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+		;; Lines containing just a comment start or just an end
+		;; should not be filled into paragraphs they are next
+		;; to.
+		(paragraph-start (concat paragraph-start re1))
+		(paragraph-separate (concat paragraph-separate re1))
 		(chars-to-delete 0))
 	    (save-restriction
 	      ;; Don't fill the comment together with the code
@@ -4794,7 +4783,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.274 $"
+(defconst c-version "$Revision: 4.275 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
