@@ -240,6 +240,7 @@ def main():
 
     # required minor rev number
     if len(args) <> 1:
+	print 'Minor revision number is required'
 	usage(1)
     revnum = args[0]
 
