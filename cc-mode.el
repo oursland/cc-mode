@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.239 $
-;; Last Modified:   $Date: 1994-02-09 17:48:21 $
+;; Version:         $Revision: 3.240 $
+;; Last Modified:   $Date: 1994-02-10 15:33:17 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -63,6 +63,7 @@
 ;; (makunbound 'c-mode-map)
 ;; (fmakunbound 'c++-mode)
 ;; (makunbound 'c++-mode-map)
+;; (makunbound 'c-style-alist)
 
 ;; There are two major mode entry points provided by this package, one
 ;; for editing C++ code and the other for editing C code (both K&R and
@@ -92,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-09 17:48:21 $|$Revision: 3.239 $|
+;; |$Date: 1994-02-10 15:33:17 $|$Revision: 3.240 $|
 
 ;;; Code:
 
@@ -704,7 +705,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.239 $
+cc-mode Revision: $Revision: 3.240 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -735,7 +736,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.239 $
+cc-mode Revision: $Revision: 3.240 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3096,7 +3097,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.239 $"
+(defconst c-version "$Revision: 3.240 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
