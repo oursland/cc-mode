@@ -358,6 +358,13 @@ The list of variables to buffer localize are:
   :type '(hook :format "%{CC Mode Common Hook%}:\n%v")
   :group 'c)
 
+(defcustom c-initialization-hook nil
+  "*Hook called when the CC Mode package gets initialized.
+This hook is only run once per Emacs session and can be used as a
+`load-hook' or in place of using `eval-after-load'."
+  :type 'hook
+  :group 'c)
+
 
 
 ;; Non-customizable variables, still part of the interface to CC Mode
