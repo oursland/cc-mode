@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-01 18:45:22 $
-;; Version:         $Revision: 2.23 $
+;; Last Modified:   $Date: 1992-05-01 21:09:09 $
+;; Version:         $Revision: 2.24 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-01 18:45:22 $|$Revision: 2.23 $|
+;; |$Date: 1992-05-01 21:09:09 $|$Revision: 2.24 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -92,6 +92,9 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 4
   "*Indentation offset for line which contains only C or C++ style comments.")
+(defvar c++-cleanup-}-else-{ t
+  "*Controls whether } else { style should remain on a single line.
+When t, cleans up this style (when only whitespace intervenes).")
 (defvar c++-hanging-braces t
   "*Controls the insertion of newlines before open (left) braces.
 This variable only has effect when auto-newline is on.  If nil, open
@@ -140,7 +143,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.23 $
+  "Major mode for editing C++ code.  $Revision: 2.24 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -200,6 +203,9 @@ c++-<thing> are unique for this mode.
     left paren. If nil, it lines up with the left paren.
  c++-comment-only-line-offset
     Extra indentation for a line containing only a C or C++ style comment.
+ c++-cleanup-}-else-{
+    Controls whether } else { style (with only whitespace intervening)
+    should be cleaned up so that it sits on only a single line.
  c++-hanging-braces
     Controls open brace hanging behavior when using auto-newline. Nil
     says no braces hang, t says all open braces hang. Not nil or t
@@ -414,9 +420,6 @@ backward-delete-char-untabify."
 				(and c++-hanging-braces
 				     (not (c++-at-top-level-p)))))
 		       (setq c++-auto-newline nil))
-		   ;; (if (and c++-hanging-braces
-		   ;; (= last-command-char ?{))
-		   ;; (setq c++-auto-newline nil))
 		   (c++-auto-newline)
 		   ;; this may have auto-filled so we need to indent
 		   ;; the previous line
@@ -426,6 +429,33 @@ backward-delete-char-untabify."
 		   t)))
 	(progn
 	  (insert last-command-char)
+	  (if (and c++-cleanup-}-else-{
+		   (= (preceding-char) ?\{)
+		   (save-excursion
+		     (forward-char -1)
+		     (skip-chars-backward " \t\n")
+		     (forward-word -1)
+		     (and (looking-at "else\\b")
+			  (not (c++-in-open-string-p))
+			  (not (c++-in-comment-p))
+			  (progn
+			    (skip-chars-backward " \t\n")
+			    (and (not (c++-in-open-string-p))
+				 (not (c++-in-comment-p))
+				 (= (preceding-char) ?\}))))))
+	      (progn
+		;; we should clean up brace-else-brace syntax
+		(message "cleaning up } else {...")
+		(let ((brace-point (make-marker)))
+		  (set-marker brace-point (point))
+		  (forward-char -1)
+		  (delete-region (point)
+				 (progn (skip-chars-backward "^}")
+					(point)))
+		  (insert " else ")
+		  (goto-char brace-point)
+		  (set-marker brace-point nil))
+		(message "cleaning up } else {... done.")))
 	  (c++-indent-line)
 	  (if (c++-auto-newline)
 	      (progn
@@ -1376,7 +1406,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.23 $"
+(defconst c++-version "$Revision: 2.24 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
@@ -1400,6 +1430,7 @@ Send bug reports to c++-mode-help@anthem.nlm.nih.gov"
 		       'c++-friend-offset
 		       'c++-empty-arglist-indent
 		       'c++-comment-only-line-offset
+		       'c++-cleanup-}-else-{
 		       'c++-hanging-braces
 		       'c++-hanging-member-init-colon
 		       'c++-mode-line-format
