@@ -795,15 +795,16 @@ appended."
 
 ;; Regexp matching something that might precede a declaration or a
 ;; cast, e.g. the last token of a preceding statement or declaration.
-;; It should not match bob, though.
+;; It should not match bob, though.  We match a sequence of characters
+;; to skip over things like "};" more quickly.
 (c-lang-defconst c-decl-prefix-re
-  (java idl objc) "[\{\}\(;,]"
+  (java idl objc) "[\{\}\(;,]+"
   ;; We additionally match ")" in C for K&R region declarations, and
   ;; in C and C++ for when a cpp macro definition begins with a
   ;; declaration.
-  (c c++) "[\{\}\(\);,]"
+  (c c++) "[\{\}\(\);,]+"
   ;; Also match "[" for multiple value assignments and type casts in Pike.
-  pike "[\{\}\(\)\[;,]")
+  pike "[\{\}\(\)\[;,]+")
 (c-lang-defvar c-decl-prefix-re (c-lang-var c-decl-prefix-re))
 
 ;; Regexp matching the close paren(s) of a cast, or nil in languages
