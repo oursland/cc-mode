@@ -5,10 +5,10 @@
 ;; Authors: 1992-1995 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
-;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
+;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.216 $
-;; Last Modified:   $Date: 1995-05-22 19:18:04 $
+;; Version:         $Revision: 4.217 $
+;; Last Modified:   $Date: 1995-05-26 21:48:51 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -53,8 +53,8 @@
 ;; To submit bug reports, hit "C-c C-b", and please try to include a
 ;; code sample and exact recipe so I can reproduce your problem.  If
 ;; you have other questions contact me at the following address:
-;; cc-mode-help@anthem.nlm.nih.gov.  Please don't send bug reports to
-;; my personal account, I may not get it for a long time.
+;; cc-mode-help@merlin.cnri.reston.va.us.  Please don't send bug
+;; reports to my personal account, I may not get it for a long time.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
 ;; the multi-Emacsen support. FSF's Emacs 19, XEmacs 19 (formerly
@@ -90,21 +90,19 @@
 ;;             ("\\.h$"  . c-mode)
 ;;             ("\\.m$"  . objc-mode)
 ;;            ) auto-mode-alist))
-;;
-;; If you would like to join the beta testers list, send add/drop
-;; requests to cc-mode-victims-request@anthem.nlm.nih.gov.
-;; Discussions go to cc-mode-victims@anthem.nlm.nih.gov, but bug
-;; reports and such should still be sent to cc-mode-help only (see
-;; above).
-;;
+
+;; To join the beta testers list, send the world `help' in a message
+;; to cc-mode-victims-request@merlin.cnri.reston.va.us, and subscribe
+;; yourself to the cc-mode-victims mailing list.
+
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
 ;; encouragement cc-mode.el would be a far inferior package.
 
 ;; LCD Archive Entry:
-;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
+;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-22 19:18:04 $|$Revision: 4.216 $|
+;; |$Date: 1995-05-26 21:48:51 $|$Revision: 4.217 $|
 
 ;;; Code:
 
@@ -4605,9 +4603,9 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.216 $"
+(defconst c-version "$Revision: 4.217 $"
   "cc-mode version number.")
-(defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
+(defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
 
 (defun c-version ()
