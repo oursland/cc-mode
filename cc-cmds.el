@@ -484,7 +484,10 @@ This function does various newline cleanups based on the value of
 		extern-lang-open extern-lang-close
 		namespace-open namespace-close
 		inexpr-class-open inexpr-class-close
-		))
+		;; `statement-cont' is here for the case with a brace
+		;; list opener inside a statement.  C.f. CASE B.2 in
+		;; `c-guess-continued-construct'.
+		statement-cont))
 	     (insertion-point (point))
 	     (preserve-p (and (not (bobp))
 			      (eq ?\  (char-syntax (char-before)))))
