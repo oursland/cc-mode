@@ -715,6 +715,7 @@ Unlike the built-in `beginning-of-defun' this tries to be smarter
 about finding the char with open-parenthesis syntax that starts the
 defun."
   (interactive "p")
+  (unless arg (setq arg 1))
   (if (< arg 0)
       (c-end-of-defun (- arg))
     (while (> arg 0)
@@ -729,13 +730,16 @@ defun."
 	(cond
 	 (bod (goto-char bod))
 	 (prevbod (goto-char prevbod))
-	 (t (goto-char (c-point 'bod)))))
-      (setq arg (1- arg))))
-  (c-keep-region-active))
+	 (t (goto-char (point-min))
+	    (setq arg 0)))
+	(setq arg (1- arg))))
+    (c-keep-region-active)
+    (= arg 0)))
 
 (defun c-end-of-defun (&optional arg)
   "Move forward to next end of defun.  With argument, do it that many times.
 Negative argument -N means move back to Nth preceding end of defun.
+Returns t unless search stops due to beginning or end of buffer.
 
 An end of a defun occurs right after the close-parenthesis that matches
 the open-parenthesis that starts a defun; see `beginning-of-defun'."
@@ -745,10 +749,25 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
   (if (< arg 0)
       (c-beginning-of-defun (- arg))
     (while (> arg 0)
-      (c-end-of-defun-1)
-      (setq arg (1- arg)))
-    (forward-line 1))
-  (c-keep-region-active))
+      (let ((pos (point))
+	    eol)
+	(while (and (c-safe (down-list 1) t)
+		    (not (eq (char-before) ?{)))
+	  ;; skip down into the next defun-block
+	  (forward-char -1)
+	  (c-forward-sexp))
+	(c-beginning-of-defun 1)
+	(setq eol (c-point 'eol))
+	(c-forward-sexp)
+	(if (< eol (point))
+	    ;; Don't move to next line for one line defuns.
+	    (forward-line 1))
+	(when (<= (point) pos)
+	  (goto-char (point-max))
+	  (setq arg 0))
+	(setq arg (1- arg))))
+    (c-keep-region-active)
+    (= arg 0)))
 
 
 (defun c-beginning-of-statement (&optional count lim sentence-flag)
@@ -1917,10 +1936,11 @@ Optional prefix ARG means justify paragraph as well."
 	;; string.
 	tmp-pre tmp-post
 	hang-ender-stuck)
-    ;; Trick to save the correct position in the undo list.  It's
-    ;; necessary since we do a lot of hidden inserts and deletes below
-    ;; that should be as transparent as possible.
-    (insert ?x) (delete-char -1)
+    ;; Restore point on undo.  It's necessary since we do a lot of
+    ;; hidden inserts and deletes below that should be as transparent
+    ;; as possible.
+    (if (and buffer-undo-list (not (eq buffer-undo-list t)))
+	(setq buffer-undo-list (cons (point) buffer-undo-list)))
     (save-excursion
       (save-restriction
 	;; Widen to catch comment limits correctly.
