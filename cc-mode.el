@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.172 $
-;; Last Modified:   $Date: 1995-03-09 21:31:28 $
+;; Version:         $Revision: 4.173 $
+;; Last Modified:   $Date: 1995-03-13 17:31:45 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-09 21:31:28 $|$Revision: 4.172 $|
+;; |$Date: 1995-03-13 17:31:45 $|$Revision: 4.173 $|
 
 ;;; Code:
 
@@ -908,18 +908,7 @@ supported list, along with the values for this variable:
 (make-variable-buffer-local 'c-access-key)
 (make-variable-buffer-local 'c-class-key)
 (make-variable-buffer-local 'c-recognize-knr-p)
-;; style variables
-(make-variable-buffer-local 'c-offsets-alist)
-(make-variable-buffer-local 'c-basic-offset)
-(make-variable-buffer-local 'c-file-style)
-(make-variable-buffer-local 'c-file-offsets)
-(make-variable-buffer-local 'c-comment-only-line-offset)
-(make-variable-buffer-local 'c-block-comments-indent-p)
-(make-variable-buffer-local 'c-cleanup-list)
-(make-variable-buffer-local 'c-hanging-braces-alist)
-(make-variable-buffer-local 'c-hanging-colons-alist)
-(make-variable-buffer-local 'c-hanging-comment-ender-p)
-(make-variable-buffer-local 'c-backslash-column)
+;; style variables are made buffer local at tail end of this file.
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
@@ -1185,10 +1174,7 @@ Key bindings:
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
-		  minor-mode-alist)))
-  ;; the default style is now GNU.  This can be overridden in
-  ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
-  (c-set-style "GNU"))
+		  minor-mode-alist))))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevent file local variables.
@@ -4495,7 +4481,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.172 $"
+(defconst c-version "$Revision: 4.173 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4594,6 +4580,24 @@ it trailing backslashes are removed."
 		c-hanging-colons-alist
 		c-backslash-column
 		c-electric-pound-behavior)))
+
+;; the default style is now GNU.  This can be overridden in
+;; c-mode-common-hook or {c,c++,objc}-mode-hook.
+(c-set-style "GNU")
+
+;; style variables
+(make-variable-buffer-local 'c-offsets-alist)
+(make-variable-buffer-local 'c-basic-offset)
+(make-variable-buffer-local 'c-file-style)
+(make-variable-buffer-local 'c-file-offsets)
+(make-variable-buffer-local 'c-comment-only-line-offset)
+(make-variable-buffer-local 'c-block-comments-indent-p)
+(make-variable-buffer-local 'c-cleanup-list)
+(make-variable-buffer-local 'c-hanging-braces-alist)
+(make-variable-buffer-local 'c-hanging-colons-alist)
+(make-variable-buffer-local 'c-hanging-comment-ender-p)
+(make-variable-buffer-local 'c-backslash-column)
+
 
 
 ;; fsets for compatibility with BOCM
