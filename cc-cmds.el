@@ -852,8 +852,8 @@ comment or multiline string, move by sentences instead of statements.
 
 When called from a program, this function takes 3 optional args: the
 repetition count, a buffer position limit which is the farthest back
-to search, and a flag saying whether to do sentence motion near a
-comment or multiline string."
+to search for the syntactic context, and a flag saying whether to do
+sentence motion in or near comments and multiline strings."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     nil t))
   (let* ((count (or count 1))
@@ -1161,23 +1161,20 @@ comment or multiline string."
       ;; If we haven't moved we're near a buffer limit.
       (when (and (not (zerop count)) (= (point) here))
 	(goto-char (if (> count 0) (point-min) (point-max)))
-	(setq count 0)))
-    ;; its possible we've been left up-buf of lim
-    (if lim (goto-char (max (point) lim))))
+	(setq count 0))))
   (c-keep-region-active))
 
 (defun c-end-of-statement (&optional count lim sentence-flag)
   "Go to the end of the innermost C statement.
 With prefix arg, go forward N - 1 statements.  Move forward to the end
 of the next statement if already at end, and move into nested blocks
-\(use \\[forward-sexp] to skip over a block).  If within a comment, or
-next to a comment (only whitespace between), move by sentences instead
-of statements.
+\(use \\[forward-sexp] to skip over a block).  If within or next to a
+comment or multiline string, move by sentences instead of statements.
 
 When called from a program, this function takes 3 optional args: the
 repetition count, a buffer position limit which is the farthest back
-to search, and a flag saying whether to do sentence motion when in a
-comment."
+to search for the syntactic context, and a flag saying whether to do
+sentence motion in or near comments and multiline strings."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     nil t))
   (c-beginning-of-statement (- (or count 1)) lim sentence-flag)
