@@ -3,7 +3,7 @@
 """ChangeLog updater.  X/Emacs's rcs2log is just f*cking broken.
 
 Rather than try to fix the brokenness in rcs2log and vc-update-change-log,
-this Python script will get you 90% of the way toward converting the CVS logs
+this Python script will get you 90%% of the way toward converting the CVS logs
 to ChangeLog format.  I took a few liberties with the ChangeLog format, namely
 eliminating the time field, but I still like my format better than the ISO8106
 format that VC uses by default.
@@ -14,13 +14,37 @@ have to be collapsed.  That's not a huge penalty because the CVS logs always
 have to be, er, sanitized (proofread) before sending to RMS.
 
 This script does properly ignore `#' leading log messages.
+
+Usage: %(PROGRAM)s [-d] [-h]
+
+Where:
+
+    -d
+    --date
+        print the log-from date only.  do not generate change log output
+
+    -h
+    --help
+        print this help message
+
 """
 
+import sys
 import os
 import string
 import re
 import time
+import getopt
 import pwd
+
+PROGRAM = sys.argv[0]
+
+
+
+def usage(status):
+    print __doc__ % globals()
+    sys.exit(status)
+
 
 
 date_re = re.compile(
@@ -28,7 +52,7 @@ date_re = re.compile(
     '(?P<dow>Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+'
     '(?P<mon>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+'
     '(?P<day>\d{1,2})\s+'
-    '(?P<time>\d{2}:\d{2}:\d{2})\s+'
+    '(?:(?P<time>\d{2}:\d{2}:\d{2})\s+)?'
     '(?P<year>\d{4})\s+'
     )
 
@@ -81,7 +105,10 @@ def read_revision(fp):
 
 
 def get_log_entries(dow, mon, day, time, year):
-    cvscmd = 'cvs log -d">%s-%s-%s %s"' % (day, mon, year, time)
+    if time is None:
+	cvscmd = 'cvs log -d">%s-%s-%s"' % (day, mon, year)
+    else:
+	cvscmd = 'cvs log -d">%s-%s-%s %s"' % (day, mon, year, time)
     fp = os.popen(cvscmd, 'r')
 
     changes = {}
@@ -137,7 +164,7 @@ def datecmp(date1, date2):
     
 
 
-if __name__ == '__main__':
+def main():
     usernames = {}
 
     lastchange = get_last_date('ChangeLog')
@@ -159,3 +186,33 @@ if __name__ == '__main__':
 	    print '\n%s  %s  <cc-mode-help@python.org>' % (timestr, longname)
 	    for filename, logmsg in changes_byuser[name]:
 		print '\n\t*', filename, logmsg
+
+
+if __name__ == '__main__':
+    try:
+	opts, args = getopt.getopt(sys.argv[1:], 'dh', ['date', 'help'])
+    except getopt.error, msg:
+	print msg
+	usage(1)
+
+    if args:
+	usage(1)
+
+    # option defaults
+    getdate_only = 0
+
+    for opt, arg in opts:
+	if opt in ('-h', '--help'):
+	    usage(0)
+	elif opt in ('-d', '--date'):
+	    getdate_only = 1
+
+    if getdate_only:
+	datetuple = get_last_date('ChangeLog')
+	if datetuple is None:
+	    print "Couldn't find a date stamp in ChangeLog"
+	else:
+	    print 'Generating entries since:', \
+		  string.join(filter(None, datetuple), ' ')
+    else:
+	main()
