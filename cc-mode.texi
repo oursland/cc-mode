@@ -860,12 +860,12 @@ normal code (as opposed to in a string literal or comment), and
 @findex electric-pound (c-)
 @vindex electric-pound-behavior (c-)
 @kbd{#} (@code{c-electric-pound}) is electric when typed as the first
-non-whitespace character on a line.  In this case, the variable
-@code{c-electric-pound-behavior} is consulted for the electric behavior.
-This variable takes a list value, although the only element currently
-defined is @code{alignleft}, which tells this command to force the
-@samp{#} character into column zero.  This is useful for entering C
-preprocessor macro definitions.
+non-whitespace character on a line and not within a macro definition.
+In this case, the variable @code{c-electric-pound-behavior} is consulted
+for the electric behavior.  This variable takes a list value, although
+the only element currently defined is @code{alignleft}, which tells this
+command to force the @samp{#} character into column zero.  This is
+useful for entering C preprocessor macro definitions.
 
 @item
 @findex c-electric-star
