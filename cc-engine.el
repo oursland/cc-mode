@@ -3214,7 +3214,9 @@ isn't moved."
 		   (and (not (c-looking-at-bos))
 			(eq (c-beginning-of-statement-1 lim) 'same)
 			(setq placeholder (point)))))
-	    (goto-char placeholder)
+	    (back-to-indentation)
+	    (if (/= (point) containing-sexp)
+		(goto-char placeholder))
 	    (c-add-stmt-syntax 'defun-block-intro t lim state))
 	   ;; CASE 17H: first statement in a block
 	   (t
