@@ -1420,7 +1420,7 @@ will be handled."
 (c-lang-defvar c-brace-list-key (c-lang-const c-brace-list-key))
 
 (c-lang-defconst c-other-block-decl-kwds
-  "Keywords where the following block (if any) contain another
+  "Keywords where the following block (if any) contains another
 declaration level that should not be considered a class.  For every
 keyword here, CC Mode will add a set of special syntactic symbols for
 those blocks.  E.g. if the keyword is \"foo\" then there will be
