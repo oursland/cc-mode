@@ -3044,13 +3044,15 @@ brace."
 	      c-found-types)
     (sort type-list 'string-lessp)))
 
-(defsubst c-remove-<>-paren-properties (from to)
-  ;; Remove the syntax-table properties from all '<' and '>' in the
-  ;; specified region.  Point is clobbered.
+(defsubst c-remove-<>-arglist-properties (from to)
+  ;; Remove all `c-<>-arg-start' properties and the syntax-table
+  ;; properties from all '<' and '>' in the specified region.  Point
+  ;; is clobbered.
+  (c-clear-char-properties from to 'c-<>-arg-start)
   (goto-char from)
   (while (progn (skip-chars-forward "^<>" to)
 		(< (point) to))
-    (c-clear-char-syntax (point))
+    (c-clear-char-property (point) 'syntax-table)
     (forward-char)))
 
 ;; Dynamically bound variable that instructs `c-forward-type' to also
@@ -3073,8 +3075,13 @@ brace."
 ;; only activated when `c-record-type-identifiers' is non-nil.
 ;;
 ;; All known types that can't be identifiers are recorded, and also
-;; other possible types if `c-promote-possible-types' is set.  Only
-;; the names in C++ template style references (e.g. "tmpl" in
+;; other possible types if `c-promote-possible-types' is set.
+;; Recording is however disabled inside angle bracket arglists that
+;; are encountered inside names and other angle bracket arglists.
+;; Such occurences are taken care of by `c-font-lock-<>-arglists'
+;; instead.
+;;
+;; Only the names in C++ template style references (e.g. "tmpl" in
 ;; "tmpl<a,b>::foo") are recorded as references, other references
 ;; aren't handled here.
 (defvar c-record-type-identifiers nil)
@@ -3226,6 +3233,12 @@ brace."
   ;; returned.  If ALL-TYPES is t, then all encountered arguments in
   ;; the arglist that might be types are treated as found types.
   ;;
+  ;; The surrounding '<' and '>' are given syntax-table properties to
+  ;; make them behave like parentheses.  Each argument separating ','
+  ;; is also given the `c-<>-arg-start' property.  These properties
+  ;; are also cleared in a relevant region forward from the point if
+  ;; they seems to be set and it turns out to not be an arglist.
+  ;;
   ;; This is primarily used in C++ to mark up template arglists.  C++
   ;; disambiguates them by checking whether the preceding name is a
   ;; template or not.  We can't do that, so we assume it is a template
@@ -3263,7 +3276,10 @@ brace."
 	;; automatically lost if it turns out to not be an angle
 	;; bracket arglist.  It's propagated through the return value
 	;; on successful completion.
-	(c-record-found-types c-record-found-types))
+	(c-record-found-types c-record-found-types)
+	;; List that collects the positions after the argument
+	;; separating ',' in the arglist.
+	arg-start-pos)
 
     ;; If the '<' has paren open syntax then we've marked it as an
     ;; angle bracket arglist before, so unless there's range recording
@@ -3291,8 +3307,13 @@ brace."
 		 (goto-char start)
 		 (while (progn (skip-chars-forward "^<>;{")
 			       (looking-at "[<>]"))
-		   (c-clear-char-syntax (point))
+		   (c-clear-char-property (point) 'syntax-table)
 		   (forward-char))
+		 ;; The following can leave garbage in the
+		 ;; `rear-nonsticky' properties in some emacsen but
+		 ;; that doesn't matter since this property is
+		 ;; internal.
+		 (c-clear-char-properties start (point) 'c-<>-arg-start)
 		 (goto-char start)
 		 nil)))
 	t
@@ -3339,11 +3360,7 @@ brace."
 			t)
 
 		      (c-syntactic-re-search-forward
-		       (if (or c-record-type-identifiers
-			       c-disallow-comma-in-<>-arglists)
-			   "\\([^>]>\\)\\|[<;{,]"
-			 "\\([^>]>\\)\\|[<;{]")
-		       nil 'move t t 1)
+		       "\\([^>]>\\)\\|[<;{,]" nil 'move t t 1)
 
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
@@ -3355,7 +3372,7 @@ brace."
 			;; recovery code below.  That's not necessary
 			;; since there's no real reason to suspect that
 			;; things inside the arglist are unbalanced.
-			(c-clear-char-syntax (point))
+			(c-clear-char-property (point) 'syntax-table)
 			(forward-char)
 			t)))
 
@@ -3365,9 +3382,9 @@ brace."
 		  ;; the angle bracket arglist.
 
 		  (if (and (/= (1- (point)) pos)
-			   (get-text-property (1- (point)) 'syntax-table)
+			   (c-get-char-property (1- (point)) 'syntax-table)
 			   (progn
-			     (c-clear-char-syntax (1- (point)))
+			     (c-clear-char-property (1- (point)) 'syntax-table)
 			     (c-parse-sexp-lookup-properties)))
 
 		      ;; We've skipped past a list that ended with '>'.  It
@@ -3376,7 +3393,7 @@ brace."
 		      ;; properties on '<' and '>' in the searched region and
 		      ;; redo the search.
 		      (progn
-			(c-remove-<>-paren-properties pos (point))
+			(c-remove-<>-arglist-properties pos (point))
 			(goto-char pos)
 			t)
 
@@ -3384,11 +3401,16 @@ brace."
 			(progn
 			  (when (text-property-not-all
 				 (1- (point)) (match-end 0) 'syntax-table nil)
-			    (c-remove-<>-paren-properties (1- (point))
-							  (match-end 0)))
+			    (c-remove-<>-arglist-properties (1- (point))
+							    (match-end 0)))
 			  (goto-char (match-end 0))
 			  t)
+
 		      ;; The angle bracket arglist is finished.
+		      (while arg-start-pos
+			(c-put-char-property (1- (car arg-start-pos))
+					     'c-<>-arg-start t)
+			(setq arg-start-pos (cdr arg-start-pos)))
 		      (c-mark-<-as-paren start)
 		      (c-mark->-as-paren (1- (point)))
 		      (setq res t)
@@ -3419,11 +3441,13 @@ brace."
 				(setq id-start (point))))
 
 			    (setq subres
-				  (c-forward-<>-arglist-recur
-				   (and keyword-match
-					(c-keyword-member
-					 (c-keyword-sym (match-string 1))
-					 'c-<>-type-kwds)))))))
+				  (let ((c-record-type-identifiers nil)
+					(c-record-found-types nil))
+				    (c-forward-<>-arglist-recur
+				     (and keyword-match
+					  (c-keyword-member
+					   (c-keyword-sym (match-string 1))
+					   'c-<>-type-kwds))))))))
 
 			;; It was not an angle bracket arglist.
 			(progn
@@ -3438,7 +3462,7 @@ brace."
 				;; balancing close paren.
 				(parse-partial-sexp pos (point-max) -1)
 			      (goto-char tmp))
-			    (c-remove-<>-paren-properties pos (point)))
+			    (c-remove-<>-arglist-properties pos (point)))
 			  (goto-char tmp))
 
 		      ;; It was an angle bracket arglist.
@@ -3459,9 +3483,10 @@ brace."
 
 		 ((and (eq (char-before) ?,)
 		       (not c-disallow-comma-in-<>-arglists))
-		  ;; Just another argument.  The type check stuff that
-		  ;; made us stop at it is at the top of the loop.
-		  t)
+		  ;; Just another argument.  Record the position.  The
+		  ;; type check stuff that made us stop at it is at
+		  ;; the top of the loop.
+		  (setq arg-start-pos (cons (point) arg-start-pos)))
 
 		 (t
 		  ;; Got a character that can't be in an angle bracket
@@ -3601,7 +3626,9 @@ brace."
 	      ((and c-recognize-<>-arglists
 		    (eq (char-after) ?<))
 	       ;; Maybe an angle bracket arglist.
-	       (when (c-forward-<>-arglist nil)
+	       (when (let ((c-record-type-identifiers nil)
+			   (c-record-found-types nil))
+		       (c-forward-<>-arglist nil))
 		 (c-forward-syntactic-ws)
 		 (setq pos (point))
 		 (if (and c-opt-identifier-concat-key
