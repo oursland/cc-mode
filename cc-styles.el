@@ -298,12 +298,23 @@ will be reassigned.
 Obviously, specifying DONT-OVERRIDE is useful mainly when the initial
 style is chosen for a CC Mode buffer by a major mode.  Since this is
 done internally by CC Mode, there's hardly ever a reason to use it."
-  (interactive (list (let ((completion-ignore-case t)
-			   (prompt (format "Which %s indentation style? "
-					   mode-name)))
-		       (completing-read prompt c-style-alist nil t
-					(cons c-indentation-style 0)
-					'c-set-style-history))))
+  (interactive
+   (list (let ((completion-ignore-case t)
+	       (prompt (format "Which %s indentation style? "
+			       mode-name)))
+	   (condition-case nil
+	       ;; The default argument is preferred over
+	       ;; initial-contents, but it only exists in Emacs >= 20
+	       ;; and XEmacs >= 21.
+	       (completing-read prompt c-style-alist nil t nil
+				'c-set-style-history
+				c-indentation-style)
+	     (wrong-number-of-arguments
+	      ;; If the call above failed, we fall back to the old way
+	      ;; of specifying the default value.
+	      (completing-read prompt c-style-alist nil t
+			       (cons c-indentation-style 0)
+			       'c-set-style-history))))))
   (c-initialize-builtin-style)
   (let ((vars (c-get-style-variables stylename nil)))
     (mapcar (lambda (elem)
