@@ -1,8 +1,9 @@
 \input texinfo
 
-@comment FIXME: Document c-indent-comment-alist.
 @comment FIXME: Tune docs for the statement anchor fixes, if necessary.
 @comment FIXME: Document c-report-syntactic-errors.
+@comment FIXME: Document macro indentation and movement.
+@comment FIXME: Look over the performance issues chapter.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment %**start of header (This is for running Texinfo on a region)
@@ -44,7 +45,7 @@ Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01 Free Software Foundation, 
 @dircategory Emacs
 @direntry
 * CC Mode: (cc-mode).   Emacs mode for editing C, C++, Objective-C,
-                          Java, Pike, and IDL code.
+			  Java, Pike, and CORBA IDL code.
 @end direntry
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -63,7 +64,7 @@ Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01 Free Software Foundation, 
 @titlepage
 @sp 10
 
-@center @titlefont{CC Mode 5.29}
+@center @titlefont{CC Mode 5.30}
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
@@ -90,10 +91,11 @@ CC Mode
 @top @ccmode{}
 
 @ccmode{} is a GNU Emacs mode for editing files containing C, C++,
-Objective-C, Java, CORBA IDL, and Pike code.  It provides syntax-based
-indentation and has several handy commands and some minor modes to make
-the editing easier.  Note that @ccmode{} does @emph{not} provide
-font-locking; there are other Emacs packages for that.
+Objective-C, Java, CORBA IDL (and the variants PSDL and CIDL), and Pike
+code.  It provides syntax-based indentation and has several handy
+commands and some minor modes to make the editing easier.  Note that
+@ccmode{} does @emph{not} provide font-locking; there are other Emacs
+packages for that.
 @end ifinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -102,7 +104,7 @@ font-locking; there are other Emacs packages for that.
 @menu
 * Introduction::
 * Getting Connected::
-* New Indentation Engine::
+* Indentation Engine::
 * Minor Modes::
 * Text Filling and Line Breaking::
 * Commands::
@@ -119,13 +121,13 @@ font-locking; there are other Emacs packages for that.
  --- Indices ---
 
 * Concept Index::
-* Command Index::
+* Command and Function Index::
 * Key Index::
 * Variable Index::
 
  --- The Detailed Node Listing ---
 
-New Indentation Engine
+Indentation Engine
 
 * Syntactic Analysis::
 * Indentation Calculation::
@@ -181,19 +183,20 @@ Advanced Customizations
 @cindex BOCM
 
 Welcome to @ccmode{}, a GNU Emacs mode for editing files containing C,
-C++, Objective-C, Java, CORBA IDL, and Pike code.  This incarnation of
-the mode is descended from @file{c-mode.el} (also called "Boring Old C
-Mode" or BOCM @t{:-)}, and @file{c++-mode.el} version 2, which Barry has
-been maintaining since 1992.  @ccmode{} represents a significant
-milestone in the mode's life.  It has been fully merged back with Emacs
-19's @file{c-mode.el}. Also a new, more intuitive and flexible mechanism
-for controlling indentation has been developed.  Late in 1997, Martin
-joined the @ccmode{} Maintainers Team, and implemented the Pike support.
-As of 2000 Martin has taken over as the sole maintainer.
+C++, Objective-C, Java, CORBA IDL (and the variants CORBA PSDL and
+CIDL), and Pike code.  This incarnation of the mode is descended from
+@file{c-mode.el} (also called "Boring Old C Mode" or BOCM @t{:-)}, and
+@file{c++-mode.el} version 2, which Barry has been maintaining since
+1992.  @ccmode{} represents a significant milestone in the mode's life.
+It has been fully merged back with Emacs 19's @file{c-mode.el}. Also a
+new, more intuitive and flexible mechanism for controlling indentation
+has been developed.  Late in 1997, Martin joined the @ccmode{}
+Maintainers Team, and implemented the Pike support.  As of 2000 Martin
+has taken over as the sole maintainer.
 
 This manual describes @ccmode{}
 @comment The following line must appear on its own, so that the automated
-version 5.29.
+version 5.30.
 @comment Release.py script can update the version number automatically
 
 @ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
@@ -201,7 +204,7 @@ version 5.29.
 Stroustrup.} C++, Objective-C, Java, CORBA's Interface Definition
 Language, and Pike@footnote{A C-like scripting language with its roots
 in the LPC language used in some MUD engines.  See
-@uref{http://pike.idonex.se/}.} files.  In this way, you can easily set
+@uref{http://pike.ida.liu.se/}.} files.  In this way, you can easily set
 up consistent coding styles for use in editing all of these languages.
 @ccmode{} does @emph{not} handle font-locking (a.k.a. syntax coloring,
 keyword highlighting) or anything of that nature, for any of these
@@ -252,7 +255,7 @@ early beta stages of @ccmode{}'s development.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Getting Connected, New Indentation Engine, Introduction, Top
+@node    Getting Connected, Indentation Engine, Introduction, Top
 @comment node-name, next, previous, up
 @chapter    Getting Connected
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -264,8 +267,9 @@ the latest @ccmode{} release and may want to upgrade your copy.
 If you are upgrading an existing @ccmode{} installation, please see the
 @file{README} file for installation details.  @ccmode{} may not work
 with older versions of Emacs or XEmacs.  See the @ccmode{} release notes
-Web pages for the latest information on Emacs version and package
-compatibility (@pxref{Getting the Latest CC Mode Release}).
+at @uref{http://cc-mode.sourceforge.net} for the latest information on
+Emacs version and package compatibility (@pxref{Getting the Latest CC
+Mode Release}).
 
 @cindex @file{cc-mode-18.el} file
 @emph{Note that @ccmode{} no longer
@@ -288,18 +292,18 @@ where @samp{XX} is the minor release number.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    New Indentation Engine, Minor Modes, Getting Connected, Top
+@node    Indentation Engine, Minor Modes, Getting Connected, Top
 @comment node-name, next, previous, up
-@chapter    New Indentation Engine
+@chapter    Indentation Engine
 @cindex indentation engine
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@ccmode{} has a new indentation engine, providing a simplified, yet
-flexible and general mechanism for customizing indentation. It separates
-indentation calculation into two steps: first, @ccmode{} analyzes the
-line of code being indented to determine the kind of language construct
-it's looking at, then it applies user defined offsets to the current
-line based on this analysis.
+@ccmode{} has an indentation engine that provides a flexible and general
+mechanism for customizing indentation. It separates indentation
+calculation into two steps: first, @ccmode{} analyzes the line of code
+being indented to determine the kind of language construct it's looking
+at, then it applies user defined offsets to the current line based on
+this analysis.
 
 This section will briefly cover how indentation is calculated in
 @ccmode{}. It is important to understand the indentation model
@@ -313,7 +317,7 @@ your personal coding style.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Syntactic Analysis, Indentation Calculation, , New Indentation Engine
+@node    Syntactic Analysis, Indentation Calculation, , Indentation Engine
 @comment node-name, next, previous, up
 @section    Syntactic Analysis
 @cindex syntactic analysis
@@ -454,7 +458,7 @@ components.  Also notice that the first component,
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Calculation, , Syntactic Analysis, New Indentation Engine
+@node    Indentation Calculation, , Syntactic Analysis, Indentation Engine
 @comment node-name, next, previous, up
 @section    Indentation Calculation
 @cindex indentation calculation
@@ -490,7 +494,7 @@ our first example again:
 @end group
 @end example
 
-Let's say point is on line 3 and we hit the @kbd{TAB} key to re-indent
+Let's say point is on line 3 and we hit the @kbd{TAB} key to reindent
 the line.  Remember that the syntactic component list for that
 line is:
 @example
@@ -560,7 +564,7 @@ the minibuffer when you hit @kbd{TAB}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Minor Modes, Text Filling and Line Breaking, New Indentation Engine, Top
+@node    Minor Modes, Text Filling and Line Breaking, Indentation Engine, Top
 @comment node-name, next, previous, up
 @chapter    Minor Modes
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -682,11 +686,11 @@ normal, with no @kbd{C-u} prefix).
 When you type either an open or close brace (i.e. @kbd{@{} or @kbd{@}}),
 the electric command @code{c-electric-brace} gets run.  This command has
 two electric formatting behaviors.  First, it will perform some
-re-indentation of the line the brace was typed on, and second, it will
+reindentation of the line the brace was typed on, and second, it will
 add various newlines before and/or after the typed brace.
-Re-indentation occurs automatically whenever the electric behavior is
+Reindentation occurs automatically whenever the electric behavior is
 enabled.  If the brace ends up on a line other than the one it was typed
-on, then that line is also re-indented.
+on, then that line is also reindented.
 
 @cindex class-open syntactic symbol
 @cindex class-close syntactic symbol
@@ -888,8 +892,8 @@ in:
 
 void spam( int i ) 
 @{
-        // this is a comment-only line...
-    if( i == 7 )                             // but this is not
+    // this is a comment-only line...
+    if( i == 7 )                // but this is not
     @{
         dosomething(i);
     @}
@@ -909,7 +913,7 @@ defined by @code{c-offsets-alist}.
 @kindex >
 Less-than and greater-than signs (@code{c-electric-lt-gt}) are electric,
 but only in C++ mode.  Hitting the second of two @kbd{<} or @kbd{>} keys
-re-indents the line if it is a C++ style stream operator.
+reindents the line if it is a C++ style stream operator.
 
 @item
 @findex c-electric-paren
@@ -1111,7 +1115,6 @@ class Spam
 @end example
 @noindent
 is transformed into this when the semi-colon is typed:
-
 @example
 @group
 
@@ -1233,6 +1236,25 @@ or @key{Delete}.  In XEmacs 19 and Emacs prior to 21 that means that
 it's up to you to fix them.  Emacs 21 automatically binds them as
 appropriate to @key{DEL} and @key{C-d}.
 
+@sp 1
+
+@findex c-hungry-backspace
+@findex hungry-backspace (c-)
+@findex c-hungry-delete-forward
+@findex hungry-delete-forward (c-)
+
+Another way to use hungry deletion is to bind
+@code{c-hungry-backspace} and @code{c-hungry-delete-forward} directly
+to keys, and not use the mode toggling.  For example @key{C-c C-d} and
+@key{C-c DEL} to match plain @key{C-d} and @key{DEL},
+
+@example
+(add-hook
+ 'c-mode-common-hook
+ (lambda ()
+   (define-key c-mode-base-map [?\C-c ?\d]   'c-hungry-backspace)
+   (define-key c-mode-base-map [?\C-c ?\C-d] 'c-hungry-delete-forward)))
+@end example
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Text Filling and Line Breaking, Commands, Minor Modes, Top
@@ -1320,7 +1342,8 @@ lines in the comment.
 Emacs Editor}) to make Emacs correctly keep the line prefix when filling
 paragraphs.  That also makes Emacs preserve the text indentation
 @emph{inside} the comment line prefix.  E.g. in the following comment,
-both paragraphs will be filled with the left margins kept intact:
+both paragraphs will be filled with the left margins of the texts kept
+intact:
 @example
 @group
 
@@ -1346,7 +1369,7 @@ E. Jones' Filladapt package@footnote{It's available from
 lack a feature that makes it work suboptimally when
 @code{c-comment-prefix-regexp} matches the empty string (which it does
 by default).  A patch for that is available from
-@uref{http://cc-mode.sourceforge.net/,, the CC Mode site}.},
+@uref{http://cc-mode.sourceforge.net/,, the CC Mode web site}.},
 which handles things like bulleted lists nicely.  There's a convenience
 function @code{c-setup-filladapt} that tunes the relevant variables in
 Filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
@@ -1466,6 +1489,13 @@ indentation and line prefix are preserved.  If inside a comment and
 @code{comment-multi-line} is @code{nil}, a new comment of the same type
 is started on the next line and indented as appropriate for comments.
 
+Note that @ccmode{} sets @code{comment-multi-line} to @code{t} at
+startup.  The reason is that @kbd{M-j} otherwise can produce sequences
+of single line block comments for texts that logically are to be treated
+as one comment, and the rest of the paragraph handling code
+(e.g. @kbd{M-q} and @kbd{M-a}) can't cope with that, which would lead to
+inconsistent behavior.
+
 @findex c-context-line-break
 @findex context-line-break (c-)
 @item @kbd{M-x c-context-line-break}
@@ -1480,7 +1510,13 @@ It's not bound to a key by default, but it's intended to be used on the
 @kbd{RET} key.  If you like the behavior of @code{newline-and-indent} on
 @kbd{RET}, you might consider switching to this function.
 
-@comment FIXME: Add doc for c-context-open-line
+@findex c-context-open-line
+@findex context-open-line (c-)
+@item @kbd{M-x c-context-open-line}
+This is to @kbd{C-o} (@kbd{M-x open-line}) as
+@code{c-context-line-break} is to @kbd{RET}.  I.e. it works just like
+@code{c-context-line-break} but leaves the point before the inserted
+line break.
 
 @end table
 
@@ -1508,21 +1544,21 @@ that bit.
 @cindex indentation commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-The following list of commands re-indent C constructs.  Note that when
+The following list of commands reindent C constructs.  Note that when
 you change your coding style, either interactively or through some other 
-means, your file does @emph{not} automatically get re-indented.  You
+means, your file does @emph{not} automatically get reindented.  You
 will need to execute one of the following commands to see the effects of 
 your changes.
 
 @cindex GNU indent program
 Also, variables like @code{c-hanging-*} and @code{c-cleanup-list}
 only affect how on-the-fly code is formatted.  Changing the
-``hanginess'' of a brace and then re-indenting, will not move the brace
+``hanginess'' of a brace and then reindenting, will not move the brace
 to a different line.  For this, you're better off getting an external
-program like GNU @code{indent}, which will re-arrange brace location,
+program like GNU @code{indent}, which will rearrange brace location,
 among other things.
 
-Re-indenting large sections of code can take a long time.  When
+Reindenting large sections of code can take a long time.  When
 @ccmode{} reindents a region of code, it is essentially equivalent to
 hitting @kbd{TAB} on every line of the region.
 
@@ -1554,8 +1590,8 @@ want to indent.
 @item @kbd{C-c C-q} (@code{c-indent-defun})
 Indents the entire top-level function or class definition encompassing
 point.  It leaves point unchanged.  This function can't be used to
-re-indent a nested brace construct, such as a nested class or function,
-or a Java method.  The top-level construct being re-indented must be
+reindent a nested brace construct, such as a nested class or function,
+or a Java method.  The top-level construct being reindented must be
 complete, i.e. it must have both a beginning brace and an ending brace.
 
 @kindex C-M-\
@@ -1564,6 +1600,42 @@ complete, i.e. it must have both a beginning brace and an ending brace.
 Indents an arbitrary region of code.  This is a standard Emacs command,
 tailored for C code in a @ccmode{} buffer.  Note that of course, point
 and mark must delineate the region you want to indent.
+
+@kindex M-;
+@findex indent-for-comment
+@item @kbd{M-;} (@code{indent-for-comment})
+Insert a comment last on the current line, if none is there already.
+Then reindent the comment according to the variables
+@code{c-indent-comment-alist}, @code{c-indent-comments-syntactically-p}
+and @code{comment-column}.  Then position the point after the comment
+starter.  This is a standard Emacs command, but @ccmode{} enhances it a
+bit with two variables:
+
+@vindex c-indent-comment-alist
+@vindex indent-comment-alist (c-)
+@vindex comment-column
+The variable @code{c-indent-comment-alist} allows you to control which
+column @kbd{M-;} indents the comment to, depending on the preceding code
+and the indentation of a similar comment on the preceding line, if there
+is any.  It is an association list that maps different types of lines to
+actions describing how they should be handled.  If a certain line type
+isn't present on the list then the line is indented to the column
+specified by @code{comment-column}.  See the documentation string for
+@code{c-indent-comment-alist} for a full description of the available
+line types and actions (use @kbd{C-h v c-indent-comment-alist}).
+
+@vindex c-indent-comments-syntactically-p
+@vindex indent-comments-syntactically-p (c-)
+Normally -- when @code{c-indent-comments-syntactically-p} is @code{nil}
+-- @kbd{M-;} will indent comment-only lines according to
+@code{c-indent-comment-alist}, just as it does with lines where other
+code precede the comments.  However, if you want it to act just like
+@kbd{TAB} for comment-only lines you can get that by setting
+@code{c-indent-comments-syntactically-p} to non-@code{nil}.
+
+If @code{c-indent-comments-syntactically-p} is non-@code{nil} then
+@code{c-indent-comment-alist} won't be consulted at all for comment-only
+lines.
 
 @kindex C-M-h
 @findex c-mark-function
@@ -1585,14 +1657,14 @@ These variables are also useful when indenting code:
 @kindex TAB
 @cindex literal
 @item c-tab-always-indent
-This variable controls how @kbd{TAB} @code{c-indent-command} operates.
-When this variable is @code{t}, @kbd{TAB} always just indents the
-current line.  When it is @code{nil}, the line is indented only if point
-is at the left margin, or on or before the first non-whitespace
-character on the line, otherwise some whitespace is inserted.  If this
-variable is the symbol @code{other}, then some whitespace is inserted
-only within strings and comments (literals), an inside preprocessor
-directives, but the line is always reindented.
+This variable controls how @kbd{TAB} (@code{c-indent-command}) operates.
+When it is @code{t}, @kbd{TAB} always indents the current line.  When it
+is @code{nil}, the line is indented only if point is at the left margin,
+or on or before the first non-whitespace character on the line,
+otherwise some whitespace is inserted.  If this variable is the symbol
+@code{other}, then some whitespace is inserted only within strings and
+comments (literals), an inside preprocessor directives, but the line is
+always reindented.
 
 @vindex c-insert-tab-function
 @vindex insert-tab-function (c-)
@@ -1824,7 +1896,7 @@ The style variable @code{c-offsets-alist} contains the mappings between
 syntactic symbols and the offsets to apply for those symbols.  It's set
 at mode initialization from a @emph{style} you may specify.  Styles are
 groupings of syntactic symbol offsets and other style variable values.
-Most likely, you'll find that one of the pre-defined styles will suit
+Most likely, you'll find that one of the predefined styles will suit
 your needs.  @xref{Styles}, for an explanation of how to set up named
 styles.
 
@@ -1886,6 +1958,12 @@ for details about them.
 
 If the offset is a vector, its first element sets the absolute
 indentation column, which will override any relative indentation.
+
+@comment FIXME: Ought to be more detailed here: The overriding only
+@comment applies to relative indentation of surrounding structures but
+@comment not nested ones.  Such an explanation would require that we go
+@comment into details what this nesting is about, which seems out of
+@comment scope here.
 
 @vindex c-strict-syntax-p
 @vindex strict-syntax-p (c-)
@@ -2052,7 +2130,7 @@ needed to do.  Since the other affected lines are indented relative to
 line 4, they are automatically indented the way you'd expect.  For more
 complicated examples, this may not always work.  The general approach to
 take is to always start adjusting offsets for lines higher up in the
-file, then re-indent and see if any following lines need further
+file, then reindent and see if any following lines need further
 adjustments.
 
 
@@ -2417,7 +2495,7 @@ type the following in a @ccmode{} buffer:
 @kbd{C-c .} runs the command @code{c-set-style}.  Note that all style
 names are case insensitive, even the ones you define.
 
-Setting a style in this way does @emph{not} automatically re-indent your
+Setting a style in this way does @emph{not} automatically reindent your
 file.  For commands that you can use to view the effect of your changes,
 see @ref{Commands}.
 
@@ -2558,37 +2636,31 @@ with a @code{c-basic-offset} of 2, you can see that lines 4 through 6
 are simply indented two spaces to the right of line 3.  But perhaps we'd
 like @ccmode{} to be a little more intelligent so that it aligns
 all the @samp{<<} symbols in lines 3 through 6.  To do this, we have
-to write a custom indentation function which finds the column of first
+to write a custom indentation function which finds the column of the first
 stream operator on the first line of the statement.  Here is sample 
 lisp code implementing this:
 @example
 @group
 
 (defun c-lineup-streamop (langelem)
-  ;; lineup stream operators
   (save-excursion
-    (let* ((relpos (cdr langelem))
-           (curcol (progn (goto-char relpos)
-                          (current-column))))
-      (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
-      (goto-char (match-beginning 0))
-      (- (current-column) curcol))))
+    (goto-char (cdr langelem))
+    (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
+    (goto-char (match-beginning 0))
+    (vector (current-column))))
 
 @end group
 @end example
 @noindent
 Indentation functions take a single argument, which is a syntactic
-component cons cell (@pxref{Syntactic Analysis}).  The function returns
-an integer offset value that will be added to the running total
-indentation for the line.  Note that what actually gets returned is the
-difference between the column that the first stream operator is on, and
-the column of the buffer relative position passed in the function's
-argument.  Remember that @ccmode{} automatically adds in the column of
-the component's relative buffer position and we don't the column offset
-added in twice.
+component cons cell (@pxref{Syntactic Analysis}).  The function can
+return an integer which is added to the running total indentation for
+the line, or a vector containing an integer which is an absolute
+column to align to.  Usually an absolute column is wanted when
+aligning to existing text, as in this example.
 
 The function should return @code{nil} if it's used in a situation where
-it doesn't want to do any decision.  If the function is used in a list
+it doesn't want to make any decision.  If the function is used in a list
 expression (@pxref{Customizing Indentation}), that will cause @ccmode{}
 to go on and check the next entry in the list.
 
@@ -2606,7 +2678,7 @@ since stream operators are only relevant for C++.}:
 
 @end example
 
-Now the function looks like this after re-indenting (using @kbd{C-c
+Now the function looks like this after reindenting (using @kbd{C-c
 C-q}):
 @example
 @group
@@ -2771,9 +2843,8 @@ that separate @code{for}-clause statements).
 Here's an example of a criteria function, provided by @ccmode{}, that
 will prevent newlines from being inserted after semicolons when there is
 a non-blank following line.  Otherwise, it makes no determination.  To
-use, add this to the front of the @code{c-hanging-semi&comma-criteria}
-list.
-
+use, add this function to the front of the
+@code{c-hanging-semi&comma-criteria} list.
 @example
 @group
 
@@ -2836,27 +2907,6 @@ will be appended to @code{c-special-indent-hook} using @code{add-hook}.
 That way, the current setting for the buffer local value of
 @code{c-special-indent-hook} won't be overridden.
 
-@kindex M-;
-@findex indent-for-comment
-@vindex c-indent-comments-syntactically-p
-@vindex indent-comments-syntactically-p (c-)
-@vindex comment-column
-Normally, the standard Emacs command @kbd{M-;}
-(@code{indent-for-comment}) will indent comment only lines to
-@code{comment-column}.  Some users however, prefer that @kbd{M-;} act
-just like @kbd{TAB} for purposes of indenting comment-only lines;
-i.e. they want the comments to always indent as they would for normal
-code, regardless of whether @kbd{TAB} or @kbd{M-;} were used.  This
-behavior is controlled by the variable
-@code{c-indent-comments-syntactically-p}.  When @code{nil} (the
-default), @kbd{M-;} indents comment-only lines to @code{comment-column}, 
-otherwise, they are indented just as they would be if @kbd{TAB} were
-typed.
-
-Note that this has no effect for comment lines that are inserted with
-@kbd{M-;} at the end of regular code lines.  These comments will always
-start at @code{comment-column}.
-
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Syntactic Symbols, Indentation Functions, Customizing Indentation, Top
@@ -2903,7 +2953,9 @@ Subsequent lines in a K&R C argument declaration.
 @item topmost-intro
 The first line in a ``topmost'' definition.
 @item topmost-intro-cont
-Topmost definition continuation lines.
+Topmost definition continuation lines.  This is only used in the parts
+that aren't covered by other symbols such as @code{func-decl-cont} and
+@code{knr-argdecl}.
 @item member-init-intro
 First line in a member initialization list.
 @item member-init-cont
@@ -3096,7 +3148,7 @@ symbols:
   15:         gString.tune( 'G' );
   16:     @}
   17:     friend class Luthier;
-  18: @}
+  18: @};
 
 @end group
 @end example
@@ -3124,7 +3176,6 @@ inheritance list is given @code{inher-cont} syntax.
 @cindex access-label syntactic symbol
 @cindex inclass syntactic symbol
 Hitting @kbd{C-c C-s} on line 5 shows the following analysis:
-
 @example
 @group
 
@@ -3141,7 +3192,6 @@ definition, the analysis actually shows two syntactic symbols.  The
 other syntactic symbol assigned to this line is @code{inclass}.
 Similarly, line 6 is given both @code{inclass} and @code{topmost-intro}
 syntax:
-
 @example
 @group
 
@@ -3163,7 +3213,6 @@ list started on line 7.
 @cindex inline-open syntactic symbol
 @cindex inline-close syntactic symbol
 Line 11's analysis is a bit more complicated:
-
 @example
 @group
 
@@ -3190,7 +3239,7 @@ class Bass
 @{
 public:
     Bass();
-@}
+@};
 
 inline
 Bass::Bass()
@@ -3214,7 +3263,6 @@ syntax, while line 12 is given @code{defun-block-open} syntax, and lines
 13 through 15 are all given @code{statement} syntax.  Line 17 is
 interesting in that its syntactic analysis list contains three
 elements:
-
 @example
 
 @code{((friend) (inclass . 58) (topmost-intro . 380))}
@@ -3225,7 +3273,6 @@ The @code{friend} syntactic symbol is a modifier that typically does not
 have a relative buffer position.
 
 Template definitions introduce yet another syntactic symbol:
-
 @example
 @group
 
@@ -3353,7 +3400,7 @@ brace lists too.  An example:
   3:     "Ham",
   4:     "Salt",
   5:     NULL
-  6: @}
+  6: @};
 
 @end group
 @end example
@@ -3385,7 +3432,7 @@ example:
   8:     @{ 1,
   9:       2 @},
  10:     @{ 3, 4 @}
- 11: @}
+ 11: @};
 
 @end group
 @end example
@@ -3848,10 +3895,55 @@ block, which makes the function usable in list expressions.
 
 @comment ------------------------------------------------------------
 
+@findex c-lineup-argcont
+@findex lineup-argcont (c-)
+@item c-lineup-argcont
+Line up a continued argument.  E.g:
+@example
+@group
+
+foo (xyz, aaa + bbb + ccc
+          + ddd + eee + fff); // c-lineup-argcont
+
+@end group
+@end example
+
+Only continuation lines like this are touched, @code{nil} is returned on
+lines which are the start of an argument.
+
+Within a gcc @code{asm} block, @code{:} is recognised as an argument
+separator, but of course only between operand specifications, not in the
+expressions for the operands.
+
+@workswith @code{arglist-cont}, @code{arglist-cont-nonempty}.
+
+@comment ------------------------------------------------------------
+
 @findex c-lineup-arglist
 @findex lineup-arglist (c-)
 @item c-lineup-arglist
 Line up the current argument line under the first argument.
+
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+@code{c-basic-offset} only.  This is intended as a "DWIM" measure in
+cases like macros that contains statement blocks, e.g:
+@example
+@group
+
+A_VERY_LONG_MACRO_NAME (@{
+        some (code, with + long, lines * in[it]);
+    @});
+
+<--> c-basic-offset
+
+@end group
+@end example
+
+This is motivated partly because it's more in line with how code
+blocks are handled, and partly since it approximates the behavior of
+earlier CC Mode versions, which due to inaccurate analysis tended to
+indent such cases this way.
 
 @workswith @code{arglist-cont-nonempty}, @code{arglist-close}.
 
@@ -3872,14 +3964,55 @@ brace block.
 @findex c-lineup-arglist-close-under-paren
 @findex lineup-arglist-close-under-paren (c-)
 @item c-lineup-arglist-close-under-paren
-Set e.g. your @code{arglist-close} syntactic symbol to this line-up
-function so that parentheses that close argument lists will line up
-under the parenthesis that opened the argument list.
+Set your @code{arglist-close} syntactic symbol to this line-up function
+so that parentheses that close argument lists will line up under the
+parenthesis that opened the argument list.  It can also be used with
+@code{arglist-cont} and @code{arglist-cont-nonempty} to line up all
+lines inside a parenthesis under the open paren.
 
-@workswith @code{defun-close}, @code{class-close}, @code{inline-close},
-@code{block-close}, @code{brace-list-close}, @code{arglist-close},
-@code{extern-lang-close}, @code{namespace-close} (for most of these, a
-zero offset will normally produce the same result, though).
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+@code{c-basic-offset} only.  See @code{c-lineup-arglist} for further
+discussion of this "DWIM" measure.
+
+@workswith Almost all symbols, but are typically most useful on
+@code{arglist-close}, @code{arglist-cont} and @code{arglist-cont-nonempty}.
+
+@comment ------------------------------------------------------------
+
+@findex c-lineup-arglist-operators
+@findex lineup-arglist-operators (c-)
+@item c-lineup-arglist-operators
+Line up lines starting with an infix operator under the open paren.
+Return @code{nil} on lines that doesn't start with an operator, to leave
+those cases to other lineup functions.  Example:
+@example
+@group
+
+if (  x < 10
+   || at_limit (x,       <- c-lineup-arglist-operators
+                list)    <- c-lineup-arglist-operators returns nil
+   )
+
+@end group
+@end example
+
+Since this function doesn't do anything for lines without an infix
+operator you typically want to use it together with some other lineup
+settings, e.g. as follows (the @code{arglist-close} setting is just a
+suggestion to get a consistent style):
+@example
+@group
+
+(c-set-offset 'arglist-cont '(c-lineup-arglist-operators 0))
+(c-set-offset 'arglist-cont-nonempty '(c-lineup-arglist-operators
+                                       c-lineup-arglist))
+(c-set-offset 'arglist-close '(c-lineup-arglist-close-under-paren))
+
+@end group
+@end example
+
+@workswith @code{arglist-cont}, @code{arglist-cont-nonempty}.
 
 @comment ------------------------------------------------------------
 
@@ -3934,9 +4067,9 @@ line inside a comment.
 @findex lineup-cascaded-calls (c-)
 @item c-lineup-cascaded-calls
 Line up ``cascaded calls'' under each other.  If the line begins with
-@code{->} and the preceding line ends with one or more function calls
-preceded by @code{->}, then the arrow is lined up with the first of
-those @code{->}.  E.g:
+@code{->} or @code{.} and the preceding line ends with one or more
+function calls preceded by the same token, then the arrow is lined up
+with the first of those tokens.  E.g:
 @example
 @group
 
@@ -3950,8 +4083,8 @@ result = proc->add(17)->add(18)
 In any other situation nil is returned to allow use in list
 expressions.
 
-@workswith @code{statement-cont}, @code{arglist-cont},
-@code{arglist-cont-nonempty}.
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
 
 @comment ------------------------------------------------------------
 
@@ -3981,6 +4114,11 @@ main (
 
 @end group
 @end example
+
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+@code{c-basic-offset} instead of the open paren column.  See
+@code{c-lineup-arglist} for further discussion of this "DWIM" measure.
 
 @workswith @code{defun-close}, @code{class-close}, @code{inline-close},
 @code{block-close}, @code{brace-list-close}, @code{arglist-close},
@@ -4185,8 +4323,8 @@ statement.  If there isn't any, indent with @code{c-basic-offset}.  If
 the current line contains an equal sign too, try to align it with the
 first one.
 
-@workswith @code{statement-cont}, @code{arglist-cont},
-@code{arglist-cont-nonempty}.
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
 
 @comment ------------------------------------------------------------
 
@@ -4300,6 +4438,29 @@ Line up C++ stream operators (i.e. @samp{<<} and @samp{>>}).
 
 @comment ------------------------------------------------------------
 
+@findex c-lineup-string-cont
+@findex lineup-string-cont (c-)
+@item c-lineup-string-cont
+Line up a continued string under the one it continues.  A continued
+string in this sense is where a string literal follows directly after
+another one.  E.g:
+@example
+@group
+
+result = prefix + \"A message \"
+                  \"string.\";    // c-lineup-string-cont
+
+@end group
+@end example
+
+@code{nil} is returned in other situations, to allow stacking with other
+lineup functions.
+
+@workswith @code{topmost-intro-cont}, @code{statement-cont},
+@code{arglist-cont}, @code{arglist-cont-nonempty}.
+
+@comment ------------------------------------------------------------
+
 @findex c-lineup-template-args
 @findex lineup-template-args (c-)
 @item c-lineup-template-args
@@ -4311,6 +4472,61 @@ To allow this function to be used in a list expression, @code{nil} is
 returned if there's no template argument on the first line.
 
 @workswith @code{template-args-cont}.
+
+@comment ------------------------------------------------------------
+
+@findex c-lineup-topmost-intro-cont
+@findex lineup-topmost-intro-cont (c-)
+@item c-lineup-topmost-intro-cont
+Line up declaration continuation lines zero or one indentation
+step@footnote{This function is mainly provided to mimic the behavior of
+CC Mode 5.28 and earlier where this case wasn't handled consistently so
+that those lines could be analyzed as either topmost-intro-cont or
+statement-cont.  It's used for @code{topmost-intro-cont} by default, but
+you might consider using @code{+} instead.}.  For lines preceding a
+definition, zero is used.  For other lines, @code{c-basic-offset} is
+added to the indentation.  E.g:
+@example
+@group
+
+int
+neg (int i)           <- c-lineup-topmost-intro-cont
+@{
+    return -i;
+@}
+
+@end group
+@end example
+@noindent
+and
+@example
+@group
+
+struct
+larch                 <- c-lineup-topmost-intro-cont
+@{
+    double height;
+@}
+    the_larch,        <- c-lineup-topmost-intro-cont
+    another_larch;    <- c-lineup-topmost-intro-cont
+
+<--> c-basic-offset
+
+@end group
+@end example
+@noindent
+and
+@example
+@group
+
+struct larch
+the_larch,            <- c-lineup-topmost-intro-cont
+    another_larch;    <- c-lineup-topmost-intro-cont
+
+@end group
+@end example
+
+@workswith @code{topmost-intro-cont}.
 
 @comment ------------------------------------------------------------
 
@@ -4374,8 +4590,7 @@ insertion point, and because C's syntax is fairly difficult to parse in
 the backwards direction, @ccmode{} often tries to find the nearest
 position higher up in the buffer from which to begin a forward scan.
 The farther this position is from the current insertion point, the
-slower the mode gets.  Some coding styles can even force @ccmode{}
-to scan from the beginning of the buffer for every line of code!
+slower the mode gets.
 
 @findex beginning-of-defun
 @findex defun-prompt-regexp
@@ -4515,23 +4730,23 @@ to correct have been fixed in other, better ways.
 @kindex C-j
 @quotation
 
-@strong{Q.} @emph{How do I re-indent the whole file?}
+@strong{Q.} @emph{How do I reindent the whole file?}
 
 @strong{A.} Visit the file and hit @kbd{C-x h} to mark the whole
 buffer. Then hit @kbd{C-M-\}.
 
 @sp 1
-@strong{Q.} @emph{How do I re-indent the entire function?
+@strong{Q.} @emph{How do I reindent the entire function?
 @kbd{C-M-x} doesn't work.}
 
 @strong{A.} @kbd{C-M-x} is reserved for future Emacs use.
-To re-indent the entire function hit @kbd{C-c C-q}.
+To reindent the entire function hit @kbd{C-c C-q}.
 
 @sp 1
-@strong{Q.} @emph{How do I re-indent the current block?}
+@strong{Q.} @emph{How do I reindent the current block?}
 
 @strong{A.} First move to the brace which opens the block with
-@kbd{C-M-u}, then re-indent that expression with
+@kbd{C-M-u}, then reindent that expression with
 @kbd{C-M-q}.
 
 @sp 1
@@ -4611,11 +4826,11 @@ in the @file{README} file.
 @ccmode{} is standard with all versions of Emacs since 19.34 and of
 XEmacs since 19.16.
 
+@cindex web site
 Due to release schedule skew, it is likely that all of these Emacsen
-have old versions of @ccmode{} and so should be upgraded.  Access to the 
+have old versions of @ccmode{} and so should be upgraded.  Access to the
 @ccmode{} source code, as well as more detailed information on Emacsen
-compatibility, etc. are all available via the Web at:
-
+compatibility, etc. are all available on the web site:
 @example
 @group
 
@@ -4623,12 +4838,6 @@ compatibility, etc. are all available via the Web at:
 
 @end group
 @end example
-
-@emph{Old URLs, including the FTP URLs, should no longer be used.}
-
-There are many files under these directories; you can pick up the entire
-distribution (named @code{cc-mode.tar.gz}; a gzip'd tar file), or any of
-the individual files, including PostScript documentation.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4659,18 +4868,18 @@ that case, we'd appreciate if you isolate the Emacs Lisp code that trigs
 the bug and include it in your report.
 
 @cindex bug report mailing list
-Bug reports are now sent to the following email addresses:
-@email{bug-cc-mode@@gnu.org} and @email{bug-gnu-emacs@@gnu.org}; the
-latter is mirrored on the Usenet newsgroup @code{gnu.emacs.bug}.  You
-can send other questions and suggestions (kudos? @t{;-)} to
-@email{bug-cc-mode@@gnu.org}.
+Bug reports are sent to @email{bug-cc-mode@@gnu.org}.  You can also send
+other questions and suggestions (kudos? @t{;-)} to that address.  It's a
+mailing list which you can join or browse an archive of; see the web
+site at @uref{http://cc-mode.sourceforge.net/} for further details.
 
 @cindex announcement mailing list
 If you want to get announcements of new @ccmode{} releases, send the
 word @emph{subscribe} in the body of a message to
-@email{cc-mode-announce-request@@lists.sourceforge.net}.  Announcements
-will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
-@code{comp.emacs} and @code{comp.emacs.xemacs}.
+@email{cc-mode-announce-request@@lists.sourceforge.net}.  It's possible
+to subscribe from the web site too.  Announcements will also be posted
+to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
+@code{comp.emacs.xemacs}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4730,7 +4939,7 @@ will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Concept Index, Command Index, Sample .emacs File, Top
+@node    Concept Index, Command and Function Index, Sample .emacs File, Top
 @comment node-name, next, previous, up
 @unnumbered Concept Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4739,9 +4948,9 @@ will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Command Index, Key Index, Concept Index, Top
+@node    Command and Function Index, Key Index, Concept Index, Top
 @comment node-name, next, previous, up
-@unnumbered Command Index
+@unnumbered Command and Function Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Since most @ccmode{} commands are prepended with the string
@@ -4754,7 +4963,7 @@ Since most @ccmode{} commands are prepended with the string
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Key Index, Variable Index, Command Index, Top
+@node    Key Index, Variable Index, Command and Function Index, Top
 @comment node-name, next, previous, up
 @unnumbered Key Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

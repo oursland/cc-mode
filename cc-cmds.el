@@ -1362,7 +1362,7 @@ function does not require the declaration to contain a brace block."
       ;; declarations on the same line.
       (if (looking-at c-syntactic-eol)
 	  (c-backward-token-2 1 nil (c-point 'bol)))
-      (set decl-limits (c-declaration-limits t)))
+      (setq decl-limits (c-declaration-limits t)))
 
     (if (not decl-limits)
 	(error "Cannot find any declaration")

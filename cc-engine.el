@@ -162,13 +162,13 @@
 
 ;; String syntax chars, suitable for skip-syntax-(forward|backward).
 (defconst c-string-syntax (if (memq 'gen-string-delim c-emacs-features)
-			      "\"|"
-			    "\""))
+                              "\"|"
+                            "\""))
 
 ;; Regexp matching string start syntax.
 (defconst c-string-limit-regexp (if (memq 'gen-string-delim c-emacs-features)
-				    "\\s\"\\|\\s|"
-				  "\\s\""))
+                                    "\\s\"\\|\\s|"
+                                  "\\s\""))
 
 
 (defvar c-in-literal-cache t)
@@ -1981,7 +1981,7 @@ This function does not do any hidden buffer changes."
 		 (if beg (cons beg end))))))
 	    ))))
 
-(if (c-safe (> (length (save-excursion (parse-partial-sexp 1 1))) 8))
+(if (memq 'pps-extended-state c-emacs-features)
     (defalias 'c-literal-limits 'c-literal-limits-fast))
 
 (defun c-collect-line-comments (range)
@@ -3195,7 +3195,7 @@ brace."
   ;; `c-ref-list-kwds', `c-colon-type-list-kwds', `c-paren-type-kwds',
   ;; `c-<>-type-kwds', and `c-<>-arglist-kwds'.
 
-  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos)
+  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos pos)
     (when kwd-sym
       (goto-char (match-end 1))
       (c-forward-syntactic-ws)
@@ -3217,15 +3217,18 @@ brace."
 	;; There's an open paren after a keyword in `c-paren-type-kwds'.
 
 	(forward-char)
-	(when c-record-type-identifiers
-	  ;; Use `c-forward-type' on every identifier we can find
-	  ;; inside the paren, to record the types.
-	  (while (c-syntactic-re-search-forward
-		  c-symbol-start nil 'move t)
-	    (goto-char (match-beginning 0))
-	    (c-forward-type)))
+	(when (and (setq pos (c-up-list-forward))
+		   (eq (char-before pos) ?\)))
+	  (when c-record-type-identifiers
+	    ;; Use `c-forward-type' on every identifier we can find
+	    ;; inside the paren, to record the types.
+	    (while (c-syntactic-re-search-forward c-symbol-start pos t)
+	      (goto-char (match-beginning 0))
+	      (unless (c-forward-type)
+		(looking-at c-symbol-key) ; Always matches.
+		(goto-char (match-end 0)))))
 
-	(when (c-go-up-list-forward)
+	  (goto-char pos)
 	  (c-forward-syntactic-ws)
 	  (setq safe-pos (point))))
 
