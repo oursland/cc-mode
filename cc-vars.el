@@ -156,7 +156,9 @@ syntactic symbols in `c-offsets-alist'.  Please keep it set to nil."
   :group 'c)
 
 (defcustom-c-stylevar c-basic-offset 4
-  "*Amount of basic offset used by + and - symbols in `c-offsets-alist'."
+  "*Amount of basic offset used by + and - symbols in `c-offsets-alist'.
+Also used as the indentation step when `c-syntactic-indentation' is
+nil."
   :type 'integer
   :group 'c)
 
@@ -185,10 +187,24 @@ by the `c-comment-only-line-offset' variable."
   :group 'c)
 
 (defcustom c-insert-tab-function 'insert-tab
-  "*Function used when inserting a tab for \\[TAB].
+  "*Function used when inserting a tab for \\[c-indent-command].
 Only used when `c-tab-always-indent' indicates a `real' tab character
 should be inserted.  Value must be a function taking no arguments."
   :type 'function
+  :group 'c)
+
+(defcustom c-syntactic-indentation t
+  "*Whether the identation should be controlled by the syntactic context.
+
+If t, the indentation functions indents according to the syntactic
+context, using the style settings specified by `c-offsets-alist'.
+
+If nil, every line is just indented to the same level as the previous
+one, and the \\[c-indent-command] command adjusts the indentation in steps
+specified by `c-basic-offset'.  The indentation style have no effect
+in this mode, nor any of the indentation associated variables,
+e.g. `c-special-indent-hook'."
+  :type 'boolean
   :group 'c)
 
 (defcustom-c-stylevar c-comment-only-line-offset 0
