@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.160 $
-;; Last Modified:   $Date: 1995-03-04 00:23:54 $
+;; Version:         $Revision: 4.161 $
+;; Last Modified:   $Date: 1995-03-04 00:32:27 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-04 00:23:54 $|$Revision: 4.160 $|
+;; |$Date: 1995-03-04 00:32:27 $|$Revision: 4.161 $|
 
 ;;; Code:
 
@@ -502,30 +502,6 @@ case, the VALUE is a list containing elements of the form:
 as described in `c-offsets-alist'.  These are passed directly to
 `c-set-offset' so there is no need to set every syntactic symbol in
 your style, only those that are different from the default.")
-
-;; dynamically append the default value of most variables
-(or (assoc "Default" c-style-alist)
-    (let* ((varlist '(c-inhibit-startup-warnings-p
-		      c-strict-syntax-p
-		      c-echo-syntactic-information-p
-		      c-basic-offset
-		      c-offsets-alist
-		      c-tab-always-indent
-		      c-comment-only-line-offset
-		      c-block-comments-indent-p
-		      c-cleanup-list
-		      c-hanging-braces-alist
-		      c-hanging-colons-alist
-		      c-backslash-column
-		      c-electric-pound-behavior))
-	   (default (cons "Default"
-			  (mapcar
-			   (function
-			    (lambda (var)
-			      (cons var (symbol-value var))
-			      ))
-			   varlist))))
-      (setq c-style-alist (cons default c-style-alist))))
 
 (defvar c-file-style nil
   "*Variable interface for setting style via File Local Variables.
@@ -4503,7 +4479,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.160 $"
+(defconst c-version "$Revision: 4.161 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4579,6 +4555,30 @@ it trailing backslashes are removed."
   (popup-menu (cons (concat mode-name " Mode Commands") c-mode-menu))
   (c-keep-region-active))
     
+
+;; dynamically append the default value of most variables. This is
+;; crucial because future c-set-style calls will always reset the
+;; variables first to the "Default" style before instituting the new
+;; style.
+(c-add-style "Default"
+	     (mapcar
+	      (function
+	       (lambda (var)
+		 (cons var (symbol-value var))))
+	      '(c-inhibit-startup-warnings-p
+		c-strict-syntax-p
+		c-echo-syntactic-information-p
+		c-basic-offset
+		c-offsets-alist
+		c-tab-always-indent
+		c-comment-only-line-offset
+		c-block-comments-indent-p
+		c-cleanup-list
+		c-hanging-braces-alist
+		c-hanging-colons-alist
+		c-backslash-column
+		c-electric-pound-behavior)))
+
 
 ;; fsets for compatibility with BOCM
 (fset 'electric-c-brace      'c-electric-brace)
