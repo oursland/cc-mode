@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.82 $
-;; Last Modified:   $Date: 1993-11-22 19:17:28 $
+;; Version:         $Revision: 3.83 $
+;; Last Modified:   $Date: 1993-11-22 21:35:01 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-22 19:17:28 $|$Revision: 3.82 $|
+;; |$Date: 1993-11-22 21:35:01 $|$Revision: 3.83 $|
 
 ;;; Code:
 
@@ -489,7 +489,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.82 $
+  "Major mode for editing C++ code.  $Revision: 3.83 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -519,7 +519,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.82 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.83 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1162,8 +1162,10 @@ of the expression are preserved."
        ;; CASE 1: indent when at column zero or in lines indentation,
        ;; otherwise insert a tab
        ((not cc-tab-always-indent)
-	(if (or (< (point) (cc-point 'boi))
-		(= (cc-point 'boi) (cc-point 'eol)))
+	(if (and (<= (point) (cc-point 'boi))
+		 (or (looking-at "[ \t]*$")
+		     (/= (point) (cc-point 'boi))
+		     (bolp)))
 	    (cc-indent-via-language-element bod)
 	  (insert-tab)))
        ;; CASE 2: just indent the line
@@ -2372,7 +2374,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.82 $"
+(defconst cc-version "$Revision: 3.83 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
