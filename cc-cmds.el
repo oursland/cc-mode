@@ -1,4 +1,4 @@
-;;; cc-cmds.el --- user level commands for CC Mode 
+;;; cc-cmds.el --- user level commands for CC Mode
 
 ;; Copyright (C) 1985,87,92,93,94,95,96,97,98 Free Softare Foundation, Inc.
 
@@ -359,7 +359,7 @@ the brace is inserted inside a literal."
 	       (c-backward-syntactic-ws safepos)
 	       (funcall old-blink-paren)))
 	))))
-      
+
 (defun c-electric-slash (arg)
   "Insert a slash character.
 
@@ -1355,7 +1355,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			       (goto-char nextline)))
 		      (c-forward-syntactic-ws))
 		    (if sexpend
-			(progn 
+			(progn
 			  ;; make sure the sexp we found really starts on the
 			  ;; current line and extends past it
 			  (goto-char sexpend)
@@ -1527,7 +1527,7 @@ With an argument, deletes the backslashes.
 This function does not modify blank lines at the start of the region.
 If the region ends at the start of a line, it always deletes the
 backslash (if any) at the end of the previous line.
- 
+
 You can put the region around an entire macro definition and use this
 command to conveniently insert and align the necessary backslashes."
   (interactive "*r\nP")
