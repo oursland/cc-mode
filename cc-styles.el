@@ -130,7 +130,8 @@
     ("java"
      (c-basic-offset . 2)
      (c-comment-only-line-offset . (0 . 0))
-     (c-offsets-alist . ((statement-block-intro . +)
+     (c-offsets-alist . ((topmost-intro-cont    . +)
+			 (statement-block-intro . +)
  			 (knr-argdecl-intro     . 5)
  			 (substatement-open     . +)
  			 (label                 . 0)
