@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.30 $
+@comment manual version: $Revision: 2.31 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-08-29 15:55:54 $
+@comment Last modification: $Date: 1995-09-14 18:57:15 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.30 $)
+@center (manual revision: $Revision: 2.31 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -647,7 +647,7 @@ on the modeline of the @code{cc-mode} buffer.  When auto-newline mode is
 enabled, you will see @samp{C/a} on the mode line @footnote{Remember
 that the @samp{C} would be replaced with @samp{C++} or @samp{ObjC} if
 you were editing C++ or Objective-C code.}.  When hungry delete mode is
-enabled you would see @samp{C/h} and when mode modes are enabled, you'd
+enabled you would see @samp{C/h} and when both modes are enabled, you'd
 see @samp{C/ah}.
 
 @kindex C-c C-a
