@@ -1,6 +1,6 @@
 Mon Apr 22 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
-	* Release 5.29
+	* Release 5.29 (Test version; this is not a real release.)
 
 	* cc-engine.el: Incorporated change made in Emacs: Don't
 	assume point-min == 1 when counting lines.
