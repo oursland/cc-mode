@@ -947,7 +947,8 @@ comment."
   (let ((literal (c-in-literal))
 	at-comment-col)
     (cond
-     ((eq literal 'string))
+     ((eq literal 'string)
+      (insert ?\n))
      ((or (not c-comment-continuation-stars)
 	  (not literal))
       (indent-new-comment-line soft))
