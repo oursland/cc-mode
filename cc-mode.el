@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.329 $
-;; Last Modified:   $Date: 1994-05-10 16:10:04 $
+;; Version:         $Revision: 3.330 $
+;; Last Modified:   $Date: 1994-05-10 16:42:13 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-10 16:10:04 $|$Revision: 3.329 $|
+;; |$Date: 1994-05-10 16:42:13 $|$Revision: 3.330 $|
 
 ;;; Code:
 
@@ -802,7 +802,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.329 $
+cc-mode Revision: $Revision: 3.330 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -834,7 +834,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.329 $
+cc-mode Revision: $Revision: 3.330 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2092,64 +2092,74 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
     ;; Advance to first nonblank line.
     (skip-chars-forward " \t\n")
     (beginning-of-line)
-    (let ((endmark (copy-marker end))
-	  (c-tab-always-indent t)
-	  (c-echo-semantic-information-p nil)) ;shut up msgs on indiv lines
-      (while (and (bolp)
-		  (not (eobp))
-		  (< (point) endmark))
-	;; Indent one line as with TAB.
-	(let (nextline sexpend sexpbeg)
-	  ;; skip blank lines
-	  (skip-chars-forward " \t\n")
-	  (beginning-of-line)
-	  ;; indent the current line
-	  (c-indent-line)
-	  (if (save-excursion
+    (let (endmark)
+      (unwind-protect
+	  (let ((c-tab-always-indent t)
+		;; shut up any echo msgs on indiv lines
+		(c-echo-semantic-information-p nil))
+	    (setq endmark (copy-marker end))
+	    (while (and (bolp)
+			(not (eobp))
+			(< (point) endmark))
+	      ;; Indent one line as with TAB.
+	      (let (nextline sexpend sexpbeg)
+		;; skip blank lines
+		(skip-chars-forward " \t\n")
 		(beginning-of-line)
-		(looking-at "[ \t]*#"))
-	      (forward-line 1)
-	    (save-excursion
-	      ;; Find beginning of following line.
-	      (setq nextline (c-point 'bonl))
-	      ;; Find first beginning-of-sexp for sexp extending past
-	      ;; this line.
-	      (beginning-of-line)
-	      (while (< (point) nextline)
-		(condition-case nil
-		    (progn
-		      (forward-sexp 1)
-		      (setq sexpend (point)))
-		  (error (setq sexpend nil)
-			 (goto-char nextline)))
-		(c-forward-syntactic-ws))
-	      (if sexpend
-		  (progn 
-		    ;; make sure the sexp we found really starts on the
-		    ;; current line and extends past it
-		    (goto-char sexpend)
-		    (setq sexpend (point-marker))
-		    (backward-sexp 1)
-		    (setq sexpbeg (point)))))
-	    ;; If that sexp ends within the region, indent it all at
-	    ;; once, fast.
-	    (condition-case nil
-		(if (and sexpend
-			 (> sexpend nextline)
-			 (<= sexpend endmark))
-		    (progn
-		      (goto-char sexpbeg)
-		      (c-indent-exp 'shutup)
-		      (goto-char sexpend)))
-	      (error
-	       (goto-char sexpbeg)
-	       (c-indent-line)))
-	    ;; Move to following line and try again.
-	    (and sexpend
-		 (markerp sexpend)
-		 (set-marker sexpend nil))
-	    (forward-line 1))))
-      (set-marker endmark nil)))
+		;; indent the current line
+		(c-indent-line)
+		(if (save-excursion
+		      (beginning-of-line)
+		      (looking-at "[ \t]*#"))
+		    (forward-line 1)
+		  (save-excursion
+		    ;; Find beginning of following line.
+		    (setq nextline (c-point 'bonl))
+		    ;; Find first beginning-of-sexp for sexp extending past
+		    ;; this line.
+		    (beginning-of-line)
+		    (while (< (point) nextline)
+		      (condition-case nil
+			  (progn
+			    (forward-sexp 1)
+			    (setq sexpend (point)))
+			(error (setq sexpend nil)
+			       (goto-char nextline)))
+		      (c-forward-syntactic-ws))
+		    (if sexpend
+			(progn 
+			  ;; make sure the sexp we found really starts on the
+			  ;; current line and extends past it
+			  (goto-char sexpend)
+			  (setq sexpend (point-marker))
+			  (backward-sexp 1)
+			  (setq sexpbeg (point)))))
+		  ;; check to see if the next line starts a
+		  ;; comment-only line
+		  (save-excursion
+		    (forward-line 1)
+		    (skip-chars-forward " \t")
+		    (if (looking-at c-comment-start-regexp)
+			(setq sexpbeg (c-point 'bol))))
+		  ;; If that sexp ends within the region, indent it all at
+		  ;; once, fast.
+		  (condition-case nil
+		      (if (and sexpend
+			       (> sexpend nextline)
+			       (<= sexpend endmark))
+			  (progn
+			    (goto-char sexpbeg)
+			    (c-indent-exp 'shutup)
+			    (goto-char sexpend)))
+		    (error
+		     (goto-char sexpbeg)
+		     (c-indent-line)))
+		  ;; Move to following line and try again.
+		  (and sexpend
+		       (markerp sexpend)
+		       (set-marker sexpend nil))
+		  (forward-line 1)))))
+	(set-marker endmark nil))))
   (message "indenting region... done."))
 
 (defun c-mark-function ()
@@ -3472,7 +3482,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.329 $"
+(defconst c-version "$Revision: 3.330 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
