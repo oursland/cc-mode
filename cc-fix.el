@@ -34,13 +34,12 @@
 ;;; Code:
 
 (eval-when-compile
-  (or load-in-progress
-      (let ((load-path
-	     (if (and (boundp 'byte-compile-dest-file)
-		      (stringp byte-compile-dest-file))
-		 (cons (file-name-directory byte-compile-dest-file) load-path)
-	       load-path)))
-	(load "cc-bytecomp" nil t))))
+  (let ((load-path
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
+	   load-path)))
+    (load "cc-bytecomp" nil t)))
 
 ;; Silence the compiler (in case this file is compiled by other
 ;; Emacsen even though it isn't used by them).
