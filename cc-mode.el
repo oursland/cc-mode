@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-19 13:49:38 $
-;; Version:         $Revision: 2.57 $
+;; Last Modified:   $Date: 1992-05-19 18:53:35 $
+;; Version:         $Revision: 2.58 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-19 13:49:38 $|$Revision: 2.57 $|
+;; |$Date: 1992-05-19 18:53:35 $|$Revision: 2.58 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -130,8 +130,13 @@ braces do not hang (i.e. a newline is inserted before all open
 braces).  If t, all open braces hang -- no newline is inserted before
 open braces.  If not nil or t, newlines are only inserted before
 top-level open braces; all other braces hang.")
-(defvar c++-hanging-member-init-colon t
-  "*If non-nil, don't put a newline after member initialization colon.")
+(defvar c++-hanging-member-init-colon 'before
+  "*Defines how colons which introduce member initializations are formatted.
+Legal values are:
+     t       -- no newlines inserted before or after colon
+     nil     -- newlines inserted before and after colon
+     'after  -- newlines inserted only after colon
+     'before -- newlines inserted only before colon")
 (defvar c++-mode-line-format
   '("" mode-line-modified
     mode-line-buffer-identification
@@ -187,7 +192,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.57 $
+  "Major mode for editing C++ code.  $Revision: 2.58 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -261,8 +266,11 @@ from their c-mode cousins.
     says no braces hang, t says all open braces hang. Not nil or t
     means top-level open braces don't hang, all others do.
  c++-hanging-member-init-colon
-    If non-nil and auto-newline is on, newlines are not inserted after
-    member initialization colons.
+    Defines how colons which introduce member initialization lists are
+    formatted. t means no newlines are inserted either before or after
+    the colon. Nil means newlines are inserted both before and after
+    the colon.  'before inserts newlines only before the colon, and
+    'after inserts newlines only after colon.
  c++-mode-line-format
     Mode line format for c++-mode buffers. Includes auto-newline and
     hungry-delete-key indicators.
@@ -588,17 +596,40 @@ you want to add a comment to the end of a line."
 for member initialization list."
   (interactive "P")
   (let ((c++-auto-newline c++-auto-newline)
-	(insertion-point (point)))
+	(insertion-point (point))
+	(bod (save-excursion (c++-beginning-of-defun (point-min)) (point))))
     (save-excursion
-      (skip-chars-backward " \t\n")
-      (if (= (preceding-char) ?:)	;check for double colon
-	  (progn
-	    (delete-region insertion-point (point))
-	    (setq c++-auto-newline nil)))
-      (if (and c++-hanging-member-init-colon
-	       (progn (c++-backward-to-noncomment (point-min))
-		      (= (preceding-char) ?\))))
-	  (setq c++-auto-newline nil)))
+      (cond
+       ;; check for double-colon where the first colon is not in a
+       ;; comment or literal region
+       ((progn (skip-chars-backward " \t\n")
+	       (and (= (preceding-char) ?:)
+		    (not (c++-in-comment-p))
+		    (not (c++-in-open-string-p))))
+	(progn (delete-region insertion-point (point))
+	       (setq c++-auto-newline nil)))
+       ;; check for ?: construct which may be at any level
+       ((progn (goto-char insertion-point)
+	       (backward-sexp 1)
+	       (c++-backward-to-noncomment bod)
+	       (= (preceding-char) ?\?))
+	(setq c++-auto-newline nil))
+       ;; check for being at top level. if not, process as normal
+       ((progn (goto-char insertion-point)
+	       (not (c++-at-top-level-p))))
+       ;; if at top level, check to see if we are introducing a member
+       ;; init list. if not, continue
+       ((progn (c++-backward-to-noncomment bod)
+	       (= (preceding-char) ?\)))
+	;; at a member init list, figure out about auto newlining. if
+	;; t or 'before, then no post-colon newline
+	(if (memq c++-hanging-member-init-colon '(t before))
+	    (setq c++-auto-newline nil))
+	(if (memq c++-hanging-member-init-colon '(nil before))
+	    (let ((c++-auto-newline t))
+	      (c++-auto-newline))))
+       (t (setq c++-auto-newline nil))
+       )) ;end-cond, end-save-exc
     (c++-electric-terminator arg)))
 
 (defun c++-electric-terminator (arg)
@@ -1573,7 +1604,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.57 $"
+(defconst c++-version "$Revision: 2.58 $"
   "c++-mode version number.")
 
 (defun c++-version ()
