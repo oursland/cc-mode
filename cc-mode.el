@@ -181,6 +181,12 @@
   (substitute-key-definition 'indent-new-comment-line
 			     'c-indent-new-comment-line
 			     c-mode-base-map global-map)
+  (when (fboundp 'comment-indent-new-line)
+    ;; indent-new-comment-line has changed name to
+    ;; comment-indent-new-line in Emacs 21.
+    (substitute-key-definition 'comment-indent-new-line
+			       'c-indent-new-comment-line
+			       c-mode-base-map global-map))
   ;; RMS says don't make these the default.
 ;;  (define-key c-mode-base-map "\e\C-a"    'c-beginning-of-defun)
 ;;  (define-key c-mode-base-map "\e\C-e"    'c-end-of-defun)
