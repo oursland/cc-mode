@@ -20,12 +20,6 @@ array a =
 array a = (
 {
     1});
-mapping a =
-(
-[
-    1:1
-]
-);
 
 void foo()
 {
@@ -56,5 +50,11 @@ void foo()
     [
 	1:1
     ]
+    );
+    multiset a =
+    (
+    <
+	1
+    >
     );
 };
