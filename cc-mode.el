@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.34 $
-;; Last Modified:   $Date: 1993-10-29 21:37:55 $
+;; Version:         $Revision: 3.35 $
+;; Last Modified:   $Date: 1993-10-29 21:48:29 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-10-29 21:37:55 $|$Revision: 3.34 $|
+;; |$Date: 1993-10-29 21:48:29 $|$Revision: 3.35 $|
 
 ;;; Code:
 
@@ -537,7 +537,7 @@ this variable to nil defeats backscan limits.")
   )
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.34 $
+  "Major mode for editing C++ code.  $Revision: 3.35 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -732,7 +732,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.34 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.35 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'.  Only real
 difference is that this sets up the buffer for editing C code, and it
@@ -2028,8 +2028,6 @@ BOD is the beginning of the C++ definition."
 	  (bod (or bod (c++-point 'bod)))
 	  (open-paren (or (car-safe c-brace-offset)
 			  c-brace-offset))
-	  (top-open-paren (or (cdr-safe c-brace-offset)
-			      c-brace-offset))
 	  )				;end-let
       (if parse-start
 	  (goto-char parse-start)
@@ -2078,12 +2076,12 @@ BOD is the beginning of the C++ definition."
 	   (goto-char indent-point)
 	   (skip-chars-forward " \t")
 	   (cond
-	    ;; CASE 3A.a: are we looking at the top-level opening brace?
-	    ((= (following-char) ?{) top-open-paren)
-	    ;; CASE 3A.b: if we are at the first non-comment in the
-	    ;; (possibly narrowed) buffer, we apply an indent of zero
-	    ((progn (c++-backward-syntactic-ws parse-start)
-		    (bobp))
+	    ;; CASE 3A: are we looking at the top-level opening
+	    ;; brace, or are we at the beginning of the buffer?
+	    ((or (= (following-char) ?{)
+		 (progn (c++-backward-syntactic-ws parse-start)
+			(bobp)))
+	     ;; top-level open paren offset gets applied elsewhere
 	     0)
 	    ;; CASE 3B: first arg decl or member init
 	    ((c++-in-function-p)
@@ -2664,7 +2662,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.34 $"
+(defconst c++-version "$Revision: 3.35 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
