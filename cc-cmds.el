@@ -1985,38 +1985,56 @@ command to conveniently insert and align the necessary backslashes."
 		 (test-line
 		  (lambda ()
 		    (when (and (looking-at prefix-regexp)
-			       (< (match-end 0) comment-text-end))
+			       (<= (match-end 0) comment-text-end))
+		      (unless (eq (match-end 0) (c-point 'eol))
+			;; The match is fine if there's text after it.
+			(throw 'found (cons (buffer-substring-no-properties
+					     (match-beginning 0) (match-end 0))
+					    (progn (goto-char (match-end 0))
+						   (current-column)))))
 		      (unless fb-string
+			;; This match is better than nothing, so let's
+			;; remember it in case nothing better is found
+			;; on another line.
 			(setq fb-string (buffer-substring-no-properties
 					 (match-beginning 0) (match-end 0))
 			      fb-endpos (match-end 0)))
-		      (unless (eq (match-end 0) (c-point 'eol))
-			(throw 'found t))
 		      t))))
-	    (if (catch 'found
+	    (or (catch 'found
 		  ;; Search for a line which has text after the prefix
 		  ;; so that we get the proper amount of whitespace
 		  ;; after it.  We start with the current line, then
 		  ;; search backwards, then forwards.
 		  (goto-char prefix-line)
 		  (when (and (funcall test-line)
-			     (/= (match-end 1) (match-end 0)))
+			     (or (/= (match-end 1) (match-end 0))
+				 ;; The whitespace is sucked up by the
+				 ;; first [ \t]* glob if the prefix is empty.
+				 (and (= (match-beginning 1) (match-end 1))
+				      (/= (match-beginning 0) (match-end 0)))))
 		    ;; If the current line doesn't have text but do
 		    ;; have whitespace after the prefix, we'll use it.
-		    (throw 'found t))
-		  (while (and (zerop (forward-line -1))
-			      (> (point) (car lit-limits)))
-		    (funcall test-line))
+		    (throw 'found (cons fb-string
+					(progn (goto-char fb-endpos)
+					       (current-column)))))
+		  (if (eq lit-type 'c++)
+		      ;; For line comments we can search up to and
+		      ;; including the first line.
+		      (while (and (zerop (forward-line -1))
+				  (>= (point) (car lit-limits)))
+			(funcall test-line))
+		    ;; For block comments we must stop before the
+		    ;; block starter.
+		    (while (and (zerop (forward-line -1))
+				(> (point) (car lit-limits)))
+		      (funcall test-line)))
 		  (goto-char prefix-line)
 		  (while (and (zerop (forward-line 1))
 			      (< (point) (cdr lit-limits)))
 		    (funcall test-line))
 		  (goto-char prefix-line)
 		  nil)
-		;; A good line with text after the prefix was found.
-		(cons (buffer-substring-no-properties (point) (match-end 0))
-		      (progn (goto-char (match-end 0)) (current-column)))
-	      (if fb-string
+		(when fb-string
 		  ;; A good line wasn't found, but at least we have a
 		  ;; fallback that matches the comment prefix regexp.
 		  (cond ((string-match "\\s \\'" fb-string)
@@ -2059,7 +2077,7 @@ command to conveniently insert and align the necessary backslashes."
 			 ;; the prefix.
 			 (cons (concat fb-string " ")
 			       (progn (goto-char fb-endpos)
-				      (1+ (current-column))))))
+				      (1+ (current-column)))))))
 		;; The line doesn't match the comment prefix regexp.
 		(if comment-prefix
 		    ;; We have a fallback for line comments that we must use.
@@ -2072,7 +2090,7 @@ command to conveniently insert and align the necessary backslashes."
 		  ;; comment where the lines doesn't have any comment
 		  ;; prefix at all and we should just fill it as
 		  ;; normal text.
-		  '("" . 0)))))))
+		  '("" . 0))))))
     ))
 
 (defun c-fill-paragraph (&optional arg)
@@ -2157,15 +2175,15 @@ Optional prefix ARG means justify paragraph as well."
 	   ((eq lit-type 'c)		; Block comment.
 	    (when (>= end (cdr lit-limits))
 	      ;; The region to be filled includes the comment ender.
-	      (if (save-excursion
-		    (goto-char (cdr lit-limits))
-		    (beginning-of-line)
-		    (and (looking-at (concat "[ \t]*\\("
-					     c-current-comment-prefix
-					     "\\)\\*/"))
-			 (eq (cdr lit-limits) (match-end 0))))
-		  ;; Leave the comment ender on its own line.
-		  (set-marker end (point))
+	      (unless (save-excursion
+			(goto-char (cdr lit-limits))
+			(beginning-of-line)
+			(and (looking-at (concat "[ \t]*\\("
+						 c-current-comment-prefix
+						 "\\)\\*/"))
+			     (eq (cdr lit-limits) (match-end 0))
+			     ;; Leave the comment ender on its own line.
+			     (set-marker end (point))))
 		;; The comment ender should hang.  Replace all cruft
 		;; between it and the last word with one or two 'x'
 		;; and include it in the fill.  We'll change them back
