@@ -282,8 +282,8 @@ styles.  Some examples:
 /*********************************************************************
     Free form text comments:
  In comments with a long delimiter line at the start, the indentation
- is kept unchanged for lines that doesn't start with a nonempty
- comment line prefix.  The delimiter line is whatever matches the
+ is kept unchanged for lines that start with an empty comment line
+ prefix.  The delimiter line is whatever matches the
  `comment-start-skip' regexp.
 *********************************************************************/
 
