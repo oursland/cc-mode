@@ -1810,14 +1810,16 @@ function call programmatically!}.
 @vindex c-basic-offset
 @vindex basic-offset (c-)
 The offset associated with any particular syntactic symbol can be any of
-an integer, a function or lambda expression, a variable name, or one of
-the following symbols: @code{+}, @code{-}, @code{++}, @code{--},
-@code{*}, or @code{/}.  These latter describe offset in multiples of the
-value of the style variable @code{c-basic-offset}.  By defining a
-style's indentation in terms of this fundamental variable, you can
-change the amount of whitespace given to an indentation level while
-maintaining the same basic shape of your code.  Here are the values that
-the special symbols correspond to:
+an integer, a function or lambda expression, a variable name, a vector,
+a list, or one of the following symbols: @code{+}, @code{-}, @code{++},
+@code{--}, @code{*}, or @code{/}.
+
+Those last special symbols describe an offset in multiples of the value
+of the style variable @code{c-basic-offset}.  By defining a style's
+indentation in terms of this fundamental variable, you can change the
+amount of whitespace given to an indentation level while maintaining the
+same basic shape of your code.  Here are the values that the special
+symbols correspond to:
 
 @table @code
 
@@ -1843,6 +1845,9 @@ function}.  Such functions are useful when more context than just the
 syntactic symbol is needed to get the desired indentation.
 @xref{Indentation Functions}, and @ref{Custom Indentation Functions},
 for details about them.
+
+If the offset is a vector, its first element sets the absolute
+indentation column, which will override any relative indentation.
 
 @vindex c-strict-syntax-p
 @vindex strict-syntax-p (c-)
