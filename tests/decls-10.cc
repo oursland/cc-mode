@@ -21,4 +21,5 @@ int main() {
     v5 (id);
     v6 (id)[n];
     v7 [n];
+    v8 [n] = 1;
 }
