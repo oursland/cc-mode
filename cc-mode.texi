@@ -5,7 +5,7 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @setfilename  cc-mode.info
-@settitle     CC MODE Version 4 Documentation
+@settitle     CC MODE Version 5 Documentation
 @footnotestyle end
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
