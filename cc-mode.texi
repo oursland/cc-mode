@@ -61,9 +61,9 @@
 @syncodeindex ss cp
 @syncodeindex ky cp
 
-@macro copyrightblurb
+@copying
 Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03 Free Software Foundation, Inc.
-@end macro
+@end copying
 
 @comment Info directory entry for use by install-info. The indentation
 @comment here is by request from the FSF folks.
@@ -72,15 +72,6 @@ Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03 Free Software Foun
 * CC Mode: (cc-mode).   Emacs mode for editing C, C++, Objective-C,
                         Java, Pike, AWK, and CORBA IDL code.
 @end direntry
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@comment The following lines inserts the copyright notice
-@comment into the Info file.
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@ifnottex
-@copyrightblurb
-@end ifnottex
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment TeX title page
@@ -97,7 +88,7 @@ Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03 Free Software Foun
 
 @page
 @vskip 0pt plus 1filll
-@copyrightblurb
+@insertcopying
 @end titlepage
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -258,7 +249,7 @@ uniformly integrated as the other languages.
 @findex idl-mode
 @findex pike-mode
 @findex awk-mode
-Note that the name of this package is ``@ccmode{}'', but there is no top
+Note that the name of this package is ``@ccmode{},'' but there is no top
 level @code{cc-mode} entry point.  All of the variables, commands, and
 functions in @ccmode{} are prefixed with @code{c-@var{thing}}, and
 @code{c-mode}, @code{c++-mode}, @code{objc-mode}, @code{java-mode},
@@ -603,7 +594,7 @@ see @samp{C/ah}.
 @findex toggle-hungry-state (c-)
 @findex toggle-auto-state (c-)
 @findex toggle-auto-hungry-state (c-)
-@ccmode{} provides keybindings which allow you to toggle the minor
+@ccmode{} provides key bindings which allow you to toggle the minor
 modes on the fly while editing code.  To toggle just the auto-newline
 state, hit @kbd{C-c C-a} (bound to @code{c-toggle-auto-state}).  When
 you do this, you should see the @samp{a} indicator either appear or
@@ -959,7 +950,7 @@ modes except IDL mode, since CORBA IDL doesn't have any statements.
 @dfn{Clean-ups} are mechanisms complementary to colon and brace hanging.
 On the surface, it would seem that clean-ups overlap the functionality
 provided by the @code{c-hanging-*-alist} variables.  Clean-ups are
-however used to adjust code ``after-the-fact'', i.e. to adjust the
+however used to adjust code ``after-the-fact,'' i.e. to adjust the
 whitespace in constructs after they are typed.
 
 Most of the clean-ups are only applicable to counteract automatically
@@ -2754,7 +2745,7 @@ The classic Stroustrup style for C++ code.
 @item ellemtel
 @cindex Ellemtel style
 Popular C++ coding standards as defined by ``Programming in C++, Rules
-and Recommendations'', Erik Nyquist and Mats Henricson,
+and Recommendations,'' Erik Nyquist and Mats Henricson,
 Ellemtel@footnote{This document is available at
 @uref{http://www.doc.ic.ac.uk/lab/cplus/c++.rules/} among other
 places.}.
@@ -5559,7 +5550,7 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
         indent-tabs-mode nil)
   ;; we like auto-newline and hungry-delete
   (c-toggle-auto-hungry-state 1)
-  ;; keybindings for all supported languages.  We can put these in
+  ;; key bindings for all supported languages.  We can put these in
   ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
   ;; java-mode-map, idl-mode-map, and pike-mode-map inherit from it.
   (define-key c-mode-base-map "\C-m" 'c-context-line-break))
