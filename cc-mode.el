@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.124 $
-;; Last Modified:   $Date: 1994-12-19 18:14:56 $
+;; Version:         $Revision: 4.125 $
+;; Last Modified:   $Date: 1994-12-19 18:21:15 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-19 18:14:56 $|$Revision: 4.124 $|
+;; |$Date: 1994-12-19 18:21:15 $|$Revision: 4.125 $|
 
 ;;; Code:
 
@@ -2875,7 +2875,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		cdr (cdr cdr)))
       (if (or (null cdr) (consp car))
 	  state				;on error, don't change
-	(cons (cons car bufpos) cdr)
+	;; watch out for balanced expr already on cdr of list
+	(cons (cons car bufpos)
+	      (if (consp (car cdr))
+		  (cdr cdr) cdr))
 	))))
 
 
@@ -4344,7 +4347,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.124 $"
+(defconst c-version "$Revision: 4.125 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
