@@ -1368,35 +1368,48 @@ will be handled."
 (c-lang-defvar c-other-decl-block-key (c-lang-const c-other-decl-block-key))
 
 (c-lang-defconst c-typedef-decl-kwds
-  "Keywords introducing declarations where the identifiers are defined
-to be types.
+  "Keywords introducing declarations where the identifier(s) being
+declared are types.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
 `c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
 will be handled."
-  t    '("typedef")
-  (java awk) nil)
-
-(c-lang-defconst c-typeless-decl-kwds
-  "Keywords introducing declarations where the identifier (declarator)
-list follows directly after the keyword, without any type.
-
-If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
-`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
-will be handled."
-  t    nil
+  ;; Default to `c-class-decl-kwds' and `c-brace-list-decl-kwds'
+  ;; (since e.g. "Foo" is a type that's being defined in "class Foo
+  ;; {...}").
+  t    (append (c-lang-const c-class-decl-kwds)
+	       (c-lang-const c-brace-list-decl-kwds))
+  ;; Languages that have a "typedef" construct.
+  (c c++ objc idl pike) (append (c-lang-const c-typedef-decl-kwds)
+				'("typedef"))
   ;; Unlike most other languages, exception names are not handled as
   ;; types in IDL since they only can occur in "raises" specs.
-  idl  '("exception" "factory" "finder" "native"
-	 ;; In CORBA PSDL:
-	 "key" "stores"
-	 ;; In CORBA CIDL:
-	 ;; Note that "manages" here clashes with its presence on
-	 ;; `c-type-list-kwds' for IDL.
-	 "executor" "facet" "manages" "segment")
-  pike '("constant"))
+  idl  (delete "exception" (append (c-lang-const c-typedef-decl-kwds) nil)))
+
+(c-lang-defconst c-typeless-decl-kwds
+  "Keywords introducing declarations where the \(first) identifier
+\(declarator) follows directly after the keyword, without any type.
+
+If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled."
+  ;; Default to `c-class-decl-kwds' and `c-brace-list-decl-kwds'
+  ;; (since e.g. "Foo" is the identifier being defined in "class Foo
+  ;; {...}").
+  t    (append (c-lang-const c-class-decl-kwds)
+	       (c-lang-const c-brace-list-decl-kwds))
+  ;; Note: "manages" for CORBA CIDL clashes with its presence on
+  ;; `c-type-list-kwds' for IDL.
+  idl  (append (c-lang-const c-typeless-decl-kwds)
+	       '("factory" "finder" "native"
+		 ;; In CORBA PSDL:
+		 "key" "stores"
+		 ;; In CORBA CIDL:
+		 "facet"))
+  pike (append (c-lang-const c-class-decl-kwds)
+	       '("constant")))
 
 (c-lang-defconst c-modifier-kwds
   "Keywords that can prefix normal declarations of identifiers
@@ -1431,23 +1444,29 @@ will be handled."
   "Keywords that can start or prefix any declaration level construct,
 besides those on `c-class-decl-kwds', `c-brace-list-decl-kwds',
 `c-other-block-decl-kwds', `c-typedef-decl-kwds',
-`c-typeless-decl-kwds' and `c-modifier-kwds'.  In a declaration, these
-keywords are also recognized inside or after the identifiers that
-makes up the type.
+`c-typeless-decl-kwds' and `c-modifier-kwds'.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
 `c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
 will be handled."
   t       nil
-  (c c++) '("__declspec")		; MSVC extension.
   objc    '("@class" "@end" "@defs")
   java    '("import" "package")
   pike    '("import" "inherit"))
 
+(c-lang-defconst c-decl-start-kwds
+  "Keywords that always start declarations, wherever they occur.
+This can be used for declarations that aren't recognized by the normal
+combination of `c-decl-prefix-re' and `c-decl-start-re'."
+  t    nil
+  ;; Classes can be declared anywhere in a Pike expression.
+  pike '("class"))
+
 (c-lang-defconst c-specifier-key
   ;; Adorned regexp matching keywords that can start a declaration but
-  ;; not a type.
+  ;; not a type.  FIXME: This should be replaced with
+  ;; c-prefix-spec-kwds-re.
   t (c-make-keywords-re t
       (set-difference (append (c-lang-const c-class-decl-kwds)
 			      (c-lang-const c-brace-list-decl-kwds)
@@ -1455,12 +1474,52 @@ will be handled."
 			      (c-lang-const c-typedef-decl-kwds)
 			      (c-lang-const c-typeless-decl-kwds)
 			      (c-lang-const c-modifier-kwds)
-			      (c-lang-const c-other-decl-kwds))
+			      (c-lang-const c-other-decl-kwds)
+			      (c-lang-const c-decl-start-kwds))
 		      (append (c-lang-const c-primitive-type-kwds)
 			      (c-lang-const c-type-prefix-kwds)
 			      (c-lang-const c-type-modifier-kwds))
 		      :test 'string-equal)))
 (c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
+
+(c-lang-defconst c-decl-hangon-kwds
+  "Keywords that can occur anywhere in a declaration level construct.
+This is used for self-contained things that can be tacked on anywhere
+on a declaration and that should be ignored to be able to recognize it
+correctly.  Typical cases are compiler extensions like
+\"__attribute__\" or \"__declspec\":
+
+    __declspec(noreturn) void foo();
+    class __declspec(dllexport) classname {...};
+    void foo() __attribute__((noreturn));
+
+Note that unrecognized plain symbols are skipped anyway if they occur
+before the type, so such things are not necessary to mention here.
+Mentioning them here is necessary only if they can occur in other
+places, or if they are followed by a construct that must be skipped
+over \(like the parens in the \"__attribute__\" and \"__declspec\"
+examples above).  In the last case, they alse need to be present on
+one of `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds'."
+  ;; NB: These are currently not recognized in all parts of a
+  ;; declaration.  Specifically, they aren't recognized in the middle
+  ;; of multi-token types, inside declarators, and between the
+  ;; identifier and the arglist paren of a function declaration.
+  ;;
+  ;; FIXME: This ought to be user customizable since compiler stuff
+  ;; like this usually is wrapped in project specific macros.  (It'd
+  ;; of course be even better if we could cope without knowing this.)
+  t nil
+  (c c++) '(;; GCC extension.
+	    "__attribute__"
+	    ;; MSVC extension.
+	    "__declspec"))
+
+(c-lang-defconst c-decl-hangon-key
+  ;; Adorned regexp matching `c-decl-hangon-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-decl-hangon-kwds)))
+(c-lang-defvar c-decl-hangon-key (c-lang-const c-decl-hangon-key))
 
 (c-lang-defconst c-protection-kwds
   "Access protection label keywords in classes."
@@ -1493,7 +1552,6 @@ The keywords on list are assumed to also be present on one of the
 between the header and the body \(i.e. the \"K&R-region\") in
 declarations."
   t    nil
-  (c c++) '("__attribute__")		; GCC extension.
   java '("extends" "implements" "throws")
   idl  '("context" "getraises" "manages" "primarykey" "raises" "setraises"
 	 "supports"
@@ -1517,22 +1575,18 @@ reason to put keywords on this list if they are on `c-type-prefix-kwds'.
 There's also no reason to add keywords that prefixes a normal
 declaration consisting of a type followed by a declarator (list), so
 the keywords on `c-modifier-kwds' should normally not be listed here
-too.
+either.
 
 Note: Use `c-typeless-decl-kwds' for keywords followed by a function
 or variable identifier (that's being defined)."
-  t    '("struct" "union" "enum")
-  (c awk) nil
+  t    nil
   c++  '("operator")
-  objc (append '("@class" "@interface" "@implementation" "@protocol")
-	       (c-lang-const c-type-list-kwds))
-  java '("class" "import" "interface" "new" "extends" "implements" "throws")
-  idl  (append '("component" "eventtype" "home" "interface" "manages" "native"
-		 "primarykey" "supports" "valuetype"
-		 ;; In CORBA PSDL:
-		 "as" "implements" "of" "scope" "storagehome" "storagetype")
-	       (c-lang-const c-type-list-kwds))
-  pike '("class" "enum" "inherit"))
+  objc '("@class")
+  java '("import" "new" "extends" "implements" "throws")
+  idl  '("manages" "native" "primarykey" "supports"
+	 ;; In CORBA PSDL:
+	 "as" "implements" "of" "scope")
+  pike '("inherit"))
 
 (c-lang-defconst c-ref-list-kwds
   "Keywords that may be followed by a comma separated list of
@@ -1565,9 +1619,8 @@ special case when the list can contain only one element.)"
 (c-lang-defconst c-colon-type-list-re
   "Regexp matched after the keywords in `c-colon-type-list-kwds' to skip
 forward to the colon.  The end of the match is assumed to be directly
-after the colon, so the regexp should end with \":\" although that
-isn't necessary.  Must be a regexp if `c-colon-type-list-kwds' isn't
-nil."
+after the colon, so the regexp should end with \":\".  Must be a
+regexp if `c-colon-type-list-kwds' isn't nil."
   t (if (c-lang-const c-colon-type-list-kwds)
 	;; Disallow various common punctuation chars that can't come
 	;; before the ":" that starts the inherit list after "class"
@@ -1965,6 +2018,30 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defvar c-regular-keywords-regexp
   (c-lang-const c-regular-keywords-regexp))
 
+(c-lang-defconst c-prefix-spec-kwds-re
+  ;; Adorned regexp matching all specifier keywords that only occurs
+  ;; in the preamble of a declaration.  They typically occur before
+  ;; the type, but they are also matched after presumptive types since
+  ;; we often can't be sure that something is a type or just some sort
+  ;; of macro in front of the declaration.
+  t (c-make-keywords-re t
+      (append (c-lang-const c-class-decl-kwds)
+	      (c-lang-const c-brace-list-decl-kwds)
+	      (c-lang-const c-other-block-decl-kwds)
+	      (c-lang-const c-typedef-decl-kwds)
+	      (c-lang-const c-typeless-decl-kwds)
+	      (c-lang-const c-modifier-kwds)
+	      (c-lang-const c-other-decl-kwds)
+	      (c-lang-const c-decl-start-kwds)
+	      (c-lang-const c-decl-hangon-kwds))))
+(c-lang-defvar c-prefix-spec-kwds-re (c-lang-const c-prefix-spec-kwds-re))
+
+(c-lang-defconst c-postfix-spec-kwds
+  ;; Keywords that can occur after argument list of a function header
+  ;; declaration, i.e. in the "K&R region".
+  t (append (c-lang-const c-postfix-decl-spec-kwds)
+	    (c-lang-const c-decl-hangon-kwds)))
+
 (c-lang-defconst c-not-decl-init-keywords
   ;; Adorned regexp matching all keywords that can't appear at the
   ;; start of a declaration.
@@ -1979,7 +2056,8 @@ Note that Java specific rules are currently applied to tell this from
 			      (c-lang-const c-typedef-decl-kwds)
 			      (c-lang-const c-typeless-decl-kwds)
 			      (c-lang-const c-modifier-kwds)
-			      (c-lang-const c-other-decl-kwds))
+			      (c-lang-const c-other-decl-kwds)
+			      (c-lang-const c-decl-start-kwds))
 		      :test 'string-equal)))
 (c-lang-defvar c-not-decl-init-keywords
   (c-lang-const c-not-decl-init-keywords))
@@ -2074,12 +2152,34 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defconst c-decl-prefix-re
   "Regexp matching something that might precede a declaration, cast or
 label, such as the last token of a preceding statement or declaration.
-It should not match bob, though.  It can't require a match longer than
-one token.  The end of the token is taken to be at the end of the
-first submatch.  It must not include any following whitespace.  It's
-undefined whether identifier syntax (see `c-identifier-syntax-table')
-is in effect or not.  This regexp is assumed to be a superset of
-`c-label-prefix-re' if `c-recognize-colon-labels' is set."
+This is used in the common situation where a declaration or cast
+doesn't start with any specific token that can be searched for.
+
+The regexp should not match bob; that is done implicitly.  It can't
+require a match longer than one token.  The end of the token is taken
+to be at the end of the first submatch, which is assumed to always
+match.  It's undefined whether identifier syntax (see
+`c-identifier-syntax-table') is in effect or not.  This regexp is
+assumed to be a superset of `c-label-prefix-re' if
+`c-recognize-colon-labels' is set.
+
+Besides this, `c-decl-start-kwds' is used to find declarations.
+
+Note: This variable together with `c-decl-start-re' and
+`c-decl-start-kwds' is only used to detect \"likely\"
+declaration/cast/label starts.  I.e. they might produce more matches
+but should not miss anything (or else it's necessary to use text
+properties - see the next note).  Wherever they match, the following
+construct is analyzed to see if it indeed is a declaration, cast or
+label.  That analysis is not cheap, so it's important that not too
+many false matches are triggered.
+
+Note: If a declaration/cast/label start can't be detected with this
+variable, it's necessary to use the `c-type' text property with the
+value `c-decl-end' on the last char of the last token preceding the
+declaration.  See the comment blurb at the start of cc-engine.el for
+more info."
+
   ;; We match a sequence of characters to skip over things like \"};\"
   ;; more quickly.  We match ")" in C for K&R region declarations, and
   ;; in all languages except Java for when a cpp macro definition
@@ -2115,6 +2215,33 @@ constructs."
   objc "[@a-zA-Z]")
 (c-lang-defvar c-decl-start-re (c-lang-const c-decl-start-re))
 
+(c-lang-defconst c-decl-prefix-or-start-re
+  ;; Regexp matching something that might precede or start a
+  ;; declaration, cast or label.
+  ;;
+  ;; If the first submatch matches, it's taken to match the end of a
+  ;; token that might precede such a construct, e.g. ';', '}' or '{'.
+  ;; It's built from `c-decl-prefix-re'.
+  ;;
+  ;; If the first submatch did not match, the match of the whole
+  ;; regexp is taken to be at the first token in the declaration.
+  ;; `c-decl-start-re' is not checked in this case.
+  ;;
+  ;; Design note: The reason the same regexp is used to match both
+  ;; tokens that precede declarations and start them is to avoid an
+  ;; extra regexp search from the previous declaration spot in
+  ;; `c-find-decl-spots'.  Users of `c-find-decl-spots' also count on
+  ;; that it finds all declaration/cast/label starts in approximately
+  ;; linear order, so we can't do the searches in two separate passes.
+  t (if (c-lang-const c-decl-start-kwds)
+	(concat (c-lang-const c-decl-prefix-re)
+		"\\|"
+		(c-make-keywords-re t (c-lang-const c-decl-start-kwds)))
+      (c-lang-const c-decl-prefix-re)))
+(c-lang-defvar c-decl-prefix-or-start-re
+  (c-lang-const c-decl-prefix-or-start-re)
+  'dont-doc)
+
 (c-lang-defconst c-cast-parens
   ;; List containing the paren characters that can open a cast, or nil in
   ;; languages without casts.
@@ -2129,11 +2256,12 @@ constructs."
 (c-lang-defvar c-cast-parens (c-lang-const c-cast-parens))
 
 (c-lang-defconst c-type-decl-prefix-key
-  "Regexp matching the operators that might precede the identifier in a
-declaration, e.g. the \"*\" in \"char *argv\".  This regexp should
-match \"(\" if parentheses are valid in type declarations.  The end of
-the first submatch is taken as the end of the operator.  Identifier
-syntax is in effect when this is matched (see `c-identifier-syntax-table')."
+  "Regexp matching the declarator operators that might precede the
+identifier in a declaration, e.g. the \"*\" in \"char *argv\".  This
+regexp should match \"(\" if parentheses are valid in declarators.
+The end of the first submatch is taken as the end of the operator.
+Identifier syntax is in effect when this is matched
+(see `c-identifier-syntax-table')."
   t (if (c-lang-const c-type-modifier-kwds)
 	(concat (regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>")
       ;; Default to a regexp that never matches.
@@ -2163,9 +2291,9 @@ syntax is in effect when this is matched (see `c-identifier-syntax-table')."
   'dont-doc)
 
 (c-lang-defconst c-type-decl-suffix-key
-  "Regexp matching the operators that might follow after the identifier
-in a declaration, e.g. the \"[\" in \"char argv[]\".  This regexp
-should match \")\" if parentheses are valid in type declarations.  If
+  "Regexp matching the declarator operators that might follow after the
+identifier in a declaration, e.g. the \"[\" in \"char argv[]\".  This
+regexp should match \")\" if parentheses are valid in declarators.  If
 it matches an open paren of some kind, the type declaration check
 continues at the corresponding close paren, otherwise the end of the
 first submatch is taken as the end of the operator.  Identifier syntax
@@ -2195,7 +2323,7 @@ is in effect when this is matched (see `c-identifier-syntax-table')."
   'dont-doc)
 
 (c-lang-defconst c-after-suffixed-type-decl-key
-  "This regexp is matched after a type declaration expression where
+  "This regexp is matched after a declarator expression where
 `c-type-decl-suffix-key' has matched.  If it matches then the
 construct is taken as a declaration.  It's typically used to match the
 beginning of a function body or whatever might occur after the
@@ -2213,11 +2341,11 @@ not \",\" or \";\"."
   ;; could however produce false matches on code like "FOO(bar) x"
   ;; where FOO is a cpp macro, so it's better to leave it out and rely
   ;; on the other heuristics in that case.
-  t (if (c-lang-const c-postfix-decl-spec-kwds)
-	;; Add on the keywords in `c-postfix-decl-spec-kwds'.
+  t (if (c-lang-const c-postfix-spec-kwds)
+	;; Add on the keywords in `c-postfix-spec-kwds'.
 	(concat (c-lang-const c-after-suffixed-type-decl-key)
 		"\\|"
-		(c-make-keywords-re t (c-lang-const c-postfix-decl-spec-kwds)))
+		(c-make-keywords-re t (c-lang-const c-postfix-spec-kwds)))
       (c-lang-const c-after-suffixed-type-decl-key))
   ;; Also match the colon that starts a base class initializer list in
   ;; C++.  That can be confused with a function call before the colon
@@ -2383,7 +2511,7 @@ i.e. compound statements surrounded by parentheses inside expressions."
 	       (c-make-keywords-re nil (c-lang-const c-protection-kwds))
 	       "\\)" (c-lang-const c-simple-ws) "+"
 	       "\\(" (c-lang-const c-symbol-key) "\\)")
-  java (c-make-keywords-re t (c-lang-const c-postfix-decl-spec-kwds)))
+  java (c-make-keywords-re t (c-lang-const c-postfix-spec-kwds)))
 (c-lang-defvar c-opt-postfix-decl-spec-key
   (c-lang-const c-opt-postfix-decl-spec-key))
 
@@ -2439,8 +2567,8 @@ way."
   ;; Regexp describing friend declarations classes, or nil in
   ;; languages that don't have such things.
   ;;
-  ;; TODO: Ought to use `c-specifier-key' or similar, and the template
-  ;; skipping isn't done properly.  This will disappear soon.
+  ;; TODO: Ought to use `c-prefix-spec-kwds-re' or similar, and the
+  ;; template skipping isn't done properly.  This will disappear soon.
   t    nil
   c++  (concat "friend" (c-lang-const c-simple-ws) "+"
 	       "\\|"

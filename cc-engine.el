@@ -3215,21 +3215,46 @@ comment at the start of cc-engine.el for more info."
 				'c-decl-end)))))
 	 (setq cfd-prop-match (point))))
 
-     ;; Find the next `c-decl-prefix-re' match if we haven't got one already.
+     ;; Find the next `c-decl-prefix-or-start-re' match if we haven't
+     ;; got one already.
      (unless cfd-re-match
-       (while (and (setq cfd-re-match
-			 (re-search-forward c-decl-prefix-re cfd-limit 'move))
-		   (c-got-face-at (1- (setq cfd-re-match (match-end 1)))
-				  c-literal-faces))
-	 ;; Search again if the match is within a comment or a string literal.
+
+       (if (> cfd-re-match-end (point))
+	   (goto-char cfd-re-match-end))
+
+       (while (if (setq cfd-re-match-end
+			(re-search-forward c-decl-prefix-or-start-re
+					   cfd-limit 'move))
+
+		  ;; Match.  Check if it's inside a comment or string literal.
+		  (c-got-face-at
+		   (if (setq cfd-re-match (match-end 1))
+		       ;; Matched the end of a token preceding a decl spot.
+		       (progn
+			 (goto-char cfd-re-match)
+			 (1- cfd-re-match))
+		     ;; Matched a token that start a decl spot.
+		     (goto-char (match-beginning 0))
+		     (point))
+		   c-literal-faces)
+
+		;; No match.  Finish up and exit the loop.
+		(setq cfd-re-match cfd-limit)
+		nil)
+
+	 ;; Skip out of comments and string literals.
 	 (while (progn
 		  (goto-char (next-single-property-change
-			      cfd-re-match 'face nil cfd-limit))
+			      (point) 'face nil cfd-limit))
 		  (and (< (point) cfd-limit)
-		       (c-got-face-at (point) c-literal-faces)))
-	   (setq cfd-re-match (point))))
+		       (c-got-face-at (point) c-literal-faces)))))
+
+       ;; If we matched at the decl start, we have to back up over the
+       ;; preceding syntactic ws to set `cfd-match-pos' and to catch
+       ;; any decl spots in the syntactic ws.
        (unless cfd-re-match
-	 (setq cfd-re-match cfd-limit)))
+	 (c-backward-syntactic-ws)
+	 (setq cfd-re-match (point))))
 
      ;; Choose whichever match is closer to the start.
      (if (< cfd-re-match cfd-prop-match)
@@ -3252,14 +3277,21 @@ comment at the start of cc-engine.el for more info."
 				(point))))))
 
 (defun c-find-decl-spots (cfd-limit cfd-decl-re cfd-face-checklist cfd-fun)
-  ;; Call CFD-FUN for each possible spot for a declaration from the
-  ;; point to CFD-LIMIT.  A spot for a declaration is the first token
-  ;; in the buffer and each token after the ones matched by
-  ;; `c-decl-prefix-re' and after the occurrences of the `c-type'
-  ;; property with the value `c-decl-end' (if `c-type-decl-end-used'
-  ;; is set).  Only a spot that match CFD-DECL-RE and whose face is in
-  ;; the CFD-FACE-CHECKLIST list causes CFD-FUN to be called.  The
-  ;; face check is disabled if CFD-FACE-CHECKLIST is nil.
+  ;; Call CFD-FUN for each possible spot for a declaration, cast or
+  ;; label from the point to CFD-LIMIT.  Such a spot is:
+  ;;
+  ;; o  The first token after bob.
+  ;; o  The first token after the end of submatch 1 in
+  ;;    `c-decl-prefix-or-start-re' when that submatch matches.
+  ;; o  The start of each `c-decl-prefix-or-start-re' match when
+  ;;    submatch 1 doesn't match.
+  ;; o  The first token after the end of each occurence of the
+  ;;    `c-type' text property with the value `c-decl-end', provided
+  ;;    `c-type-decl-end-used' is set.
+  ;;
+  ;; Only a spot that match CFD-DECL-RE and whose face is in the
+  ;; CFD-FACE-CHECKLIST list causes CFD-FUN to be called.  The face
+  ;; check is disabled if CFD-FACE-CHECKLIST is nil.
   ;;
   ;; If the match is inside a macro then the buffer is narrowed to the
   ;; end of it, so that CFD-FUN can investigate the following tokens
@@ -3269,13 +3301,21 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; CFD-FUN is called with point at the start of the spot.  It's
   ;; passed two arguments: The first is the end position of the token
-  ;; that `c-decl-prefix-re' matched, or 0 for the implicit match at
-  ;; bob.  The second is a flag that is t when the match is inside a
-  ;; macro.  If CFD-FUN adds `c-decl-end' properties somewhere below
-  ;; the current spot, it should return non-nil so that the next
-  ;; search will find them.
+  ;; preceding the spot, or 0 for the implicit match at bob.  The
+  ;; second is a flag that is t when the match is inside a macro.  If
+  ;; CFD-FUN adds `c-decl-end' properties somewhere below the current
+  ;; spot, it should return non-nil to ensure that the next search
+  ;; will find them.
   ;;
-  ;; It's assumed that comment and strings are fontified in the
+  ;; The spots are visited approximately in order from top to bottom.
+  ;; It's however the positions where `c-decl-prefix-or-start-re'
+  ;; matches and where `c-decl-end' properties are found that are in
+  ;; order.  Since the spots often are at the following token, they
+  ;; might be visited out of order insofar as more spots are reported
+  ;; later on within the syntactic whitespace between the match
+  ;; positions and their spots.
+  ;;
+  ;; It's assumed that comments and strings are fontified in the
   ;; searched range.
   ;;
   ;; This is mainly used in fontification, and so has an elaborate
@@ -3289,17 +3329,23 @@ comment at the start of cc-engine.el for more info."
 
   (let ((cfd-start-pos (point))
 	(cfd-buffer-end (point-max))
-	;; The last regexp match found by `c-find-decl-prefix-search'.
+	;; The end of the token preceding the decl spot last found
+	;; with `c-decl-prefix-or-start-re'.  `cfd-limit' if there's
+	;; no match.
 	cfd-re-match
-	;; The last `c-decl-end' found by `c-find-decl-prefix-search'.
-	;; If searching for the property isn't needed then we disable
-	;; it by faking a first match at the limit.
+	;; The end position of the last `c-decl-prefix-or-start-re'
+	;; match.  If this is greater than `cfd-continue-pos', the
+	;; next regexp search is started here instead.
+	(cfd-re-match-end (point-min))
+	;; The end of the last `c-decl-end' found by
+	;; `c-find-decl-prefix-search'.  `cfd-limit' if there's no
+	;; match.  If searching for the property isn't needed then we
+	;; disable it by setting it to `cfd-limit' directly.
 	(cfd-prop-match (unless c-type-decl-end-used cfd-limit))
-	;; The position of the last match found by
-	;; `c-find-decl-prefix-search'.  For regexp matches it's the
-	;; end of the matched token, for property matches it's the end
-	;; of the property.  0 for the implicit match at bob.
-	;; `cfd-limit' if there's no match.
+	;; The end of the token preceding the decl spot last found by
+	;; `c-find-decl-prefix-search'.  0 for the implicit match at
+	;; bob.  `cfd-limit' if there's no match.  In other words,
+	;; this is the minimum of `cfd-re-match' and `cfd-prop-match'.
 	(cfd-match-pos cfd-limit)
 	;; The position to continue searching at.
 	cfd-continue-pos
@@ -3312,8 +3358,8 @@ comment at the start of cc-engine.el for more info."
 	(cfd-macro-end 0))
 
     ;; Initialize by finding a syntactically relevant start position
-    ;; before the point, and do the first `c-decl-prefix-re' search
-    ;; unless we're at bob.
+    ;; before the point, and do the first `c-decl-prefix-or-start-re'
+    ;; search unless we're at bob.
 
     (let (start-in-literal start-in-macro syntactic-pos)
       ;; Must back up a bit since we look for the end of the previous
@@ -3424,9 +3470,9 @@ comment at the start of cc-engine.el for more info."
 	  (when (if (bobp)
 		    ;; Always consider bob a match to get the first
 		    ;; declaration in the file.  Do this separately instead of
-		    ;; letting `c-decl-prefix-re' match bob, so that regexp
-		    ;; always can consume at least one character to ensure
-		    ;; that we won't get stuck in an infinite loop.
+		    ;; letting `c-decl-prefix-or-start-re' match bob, so that
+		    ;; regexp always can consume at least one character to
+		    ;; ensure that we won't get stuck in an infinite loop.
 		    (setq cfd-re-match 0)
 		  (backward-char)
 		  (c-beginning-of-current-token)
@@ -3755,14 +3801,14 @@ comment at the start of cc-engine.el for more info."
 ;; "if (a < b || c > d)", it's probably not a template.
 (defvar c-restricted-<>-arglists nil)
 
-;; Dynamically bound variables that instructs `c-forward-name',
-;; `c-forward-type', `c-forward-<>-arglist',
-;; `c-forward-decl-or-cast-1', and `c-forward-label' to record the
-;; ranges of all the type and reference identifiers they encounter.
-;; They will build lists on these variables where each element is a
-;; cons of the buffer positions surrounding each identifier.  This
-;; recording is only activated when `c-record-type-identifiers' is
-;; non-nil.
+;; Dynamically bound variables that instructs
+;; `c-forward-keyword-clause', `c-forward-<>-arglist',
+;; `c-forward-name', `c-forward-type', `c-forward-decl-or-cast-1', and
+;; `c-forward-label' to record the ranges of all the type and
+;; reference identifiers they encounter.  They will build lists on
+;; these variables where each element is a cons of the buffer
+;; positions surrounding each identifier.  This recording is only
+;; activated when `c-record-type-identifiers' is non-nil.
 ;;
 ;; All known types that can't be identifiers are recorded, and also
 ;; other possible types if `c-promote-possible-types' is set.
@@ -3836,14 +3882,15 @@ comment at the start of cc-engine.el for more info."
 	     (c-record-ref-id c-last-identifier-range)))
        t)))
 
-(defmacro c-forward-id-comma-list (type)
+(defmacro c-forward-id-comma-list (type update-safe-pos)
   ;; Used internally in `c-forward-keyword-clause' to move forward
   ;; over a comma separated list of types or names using
   ;; `c-forward-keyword-prefixed-id'.
   ;;
   ;; This macro might do hidden buffer changes.
   `(while (and (progn
-		 (setq safe-pos (point))
+		 ,(when update-safe-pos
+		    `(setq safe-pos (point)))
 		 (eq (char-after) ?,))
 	       (progn
 		 (forward-char)
@@ -3853,13 +3900,24 @@ comment at the start of cc-engine.el for more info."
 (defun c-forward-keyword-clause ()
   ;; The first submatch in the current match data is assumed to
   ;; surround a token.  If it's a keyword, move over it and any
-  ;; following clauses associated with it, stopping at the next
-  ;; following token.  t is returned in that case, otherwise the point
-  ;; stays and nil is returned.  The kind of clauses that are
-  ;; recognized are those specified by `c-type-list-kwds',
+  ;; immediately following clauses associated with it, stopping at the
+  ;; start of the next token.  t is returned in that case, otherwise
+  ;; the point stays and nil is returned.  The kind of clauses that
+  ;; are recognized are those specified by `c-type-list-kwds',
   ;; `c-ref-list-kwds', `c-colon-type-list-kwds',
   ;; `c-paren-nontype-kwds', `c-paren-type-kwds', `c-<>-type-kwds',
   ;; and `c-<>-arglist-kwds'.
+  ;;
+  ;; This function records identifier ranges on
+  ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
+  ;; `c-record-type-identifiers' is non-nil.
+  ;;
+  ;; Note that for `c-colon-type-list-kwds', which doesn't necessary
+  ;; apply directly after the keyword, the type list is moved over
+  ;; only when there is no unaccounted token before it (i.e. a token
+  ;; that isn't moved over due to some other keyword list).  The
+  ;; identifier ranges in the list are still recorded if that should
+  ;; be done, though.
   ;;
   ;; This function might do hidden buffer changes.
 
@@ -3880,12 +3938,12 @@ comment at the start of cc-engine.el for more info."
        ((and (c-keyword-member kwd-sym 'c-type-list-kwds)
 	     (c-forward-keyword-prefixed-id type))
 	;; There's a type directly after a keyword in `c-type-list-kwds'.
-	(c-forward-id-comma-list type))
+	(c-forward-id-comma-list type t))
 
        ((and (c-keyword-member kwd-sym 'c-ref-list-kwds)
 	     (c-forward-keyword-prefixed-id ref))
 	;; There's a name directly after a keyword in `c-ref-list-kwds'.
-	(c-forward-id-comma-list ref))
+	(c-forward-id-comma-list ref t))
 
        ((and (c-keyword-member kwd-sym 'c-paren-any-kwds)
 	     (eq (char-after) ?\())
@@ -3920,20 +3978,32 @@ comment at the start of cc-engine.el for more info."
 	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
 
-      (when (and (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
-		 (progn
-		   ;; If a keyword matched both one of the types above and
-		   ;; this one, we match `c-colon-type-list-re' after the
-		   ;; clause matched above.
-		   (goto-char safe-pos)
-		   (looking-at c-colon-type-list-re))
-		 (progn
-		   (goto-char (match-end 0))
-		   (c-forward-syntactic-ws)
-		   (c-forward-keyword-prefixed-id type)))
-	;; There's a type after the `c-colon-type-list-re'
-	;; match after a keyword in `c-colon-type-list-kwds'.
-	(c-forward-id-comma-list type))
+      (when (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
+	(if (eq (char-after) ?:)
+	    ;; If we are at the colon already, we move over the type
+	    ;; list after it.
+	    (progn
+	      (forward-char)
+	      (c-forward-syntactic-ws)
+	      (when (c-forward-keyword-prefixed-id type)
+		(c-forward-id-comma-list type t)))
+	  ;; Not at the colon, so stop here.  But the identifier
+	  ;; ranges in the type list later on should still be
+	  ;; recorded.
+	  (and c-record-type-identifiers
+	       (progn
+		 ;; If a keyword matched both one of the types above and
+		 ;; this one, we match `c-colon-type-list-re' after the
+		 ;; clause matched above.
+		 (goto-char safe-pos)
+		 (looking-at c-colon-type-list-re))
+	       (progn
+		 (goto-char (match-end 0))
+		 (c-forward-syntactic-ws)
+		 (c-forward-keyword-prefixed-id type))
+	       ;; There's a type after the `c-colon-type-list-re' match
+	       ;; after a keyword in `c-colon-type-list-kwds'.
+	       (c-forward-id-comma-list type nil))))
 
       (goto-char safe-pos)
       t)))
@@ -4561,18 +4631,26 @@ comment at the start of cc-engine.el for more info."
      ,(unless short
 	;; These identifiers are bound only in the inner let.
 	'(setq identifier-type at-type
-	       identifier-start type-start
-	       identifier-end type-end))
-     (if (setq at-type (if (eq prev-at-type 'prefix)
+	       identifier-start type-start))
+     (if (setq at-type (if (eq backup-at-type 'prefix)
 			   t
-			 prev-at-type))
-	 (setq type-start prev-type-start
-	       type-end prev-type-end)
+			 backup-at-type))
+	 (setq type-start backup-type-start
+	       id-start backup-id-start)
        (setq type-start start-pos
-	     type-end start-pos))
+	     id-start start-pos))
+
+     ;; When these flags already are set we've found specifiers that
+     ;; unconditionally signal these attributes - backtracking doesn't
+     ;; change that.  So keep them set in that case.
+     (or at-type-decl
+	 (setq at-type-decl backup-at-type-decl))
+     (or maybe-typeless
+	 (setq maybe-typeless backup-maybe-typeless))
+
      ,(unless short
 	;; These identifiers are bound only in the inner let.
-	'(setq start type-end
+	'(setq start id-start
 	       got-parens nil
 	       got-identifier t
 	       got-suffix t
@@ -4583,27 +4661,37 @@ comment at the start of cc-engine.el for more info."
   ;; Move forward over a declaration or a cast if at the start of one.
   ;; The point is assumed to be at the start of some token.
   ;;
-  ;; If a declaration is parsed: The point is left at the first
-  ;; token after the first complete declarator.  The return value is a
-  ;; cons where the car is the position of the first token in the
-  ;; declarator.  E.g:
-  ;;    void *foo (int a, char *b) stuff ...
-  ;;     car ^                     ^ point
-  ;;    int a, b;
-  ;;    car ^^ point
-  ;;    int a = 1, b;
-  ;;    car ^ ^ point
+  ;; If a declaration is parsed: The point is left at the first token
+  ;; after the first complete declarator, if there is one.  The return
+  ;; value is a cons where the car is the position of the first token
+  ;; in the declarator.  Some examples:
+  ;;    void foo (int a, char *b) stuff ...
+  ;;     car ^                    ^ point
+  ;;    float (*a)[], b;
+  ;;      car ^     ^ point
+  ;;    unsigned int a = c_style_initializer, b;
+  ;;             car ^ ^ point
+  ;;    unsigned int a (cplusplus_style_initializer), b;
+  ;;             car ^                              ^ point (might change)
+  ;;    class Foo : public Bar {}
+  ;;      car ^   ^ point
+  ;;    class PikeClass (int a, string b) stuff ...
+  ;;      car ^                           ^ point
+  ;;    enum bool;
+  ;;     car ^   ^ point
+  ;;    enum bool flag;
+  ;;          car ^   ^ point
   ;; The cdr of the return value is non-nil iff a
   ;; `c-typedef-decl-kwds' specifier is found in the declaration,
-  ;; i.e. the declared identifiers are types.
+  ;; i.e. the declared identifier(s) are types.
   ;;
   ;; If a cast is parsed: The point is left at the first token after
   ;; the closing paren of the cast.  The return value is `cast'.
   ;;
   ;; PRECEDING-TOKEN-END is the first position after the preceding
   ;; token, i.e. on the other side of the syntactic ws from the point.
-  ;; Use 0 if the point is at the first token in (the visible part of)
-  ;; the buffer.
+  ;; Use a value less than or equal to (point-min) if the point is at
+  ;; the first token in (the visible part of) the buffer.
   ;;
   ;; CONTEXT is a symbol that describes the context at the point:
   ;; 'decl     In a declaration context (perhaps inside a function
@@ -4631,30 +4719,44 @@ comment at the start of cc-engine.el for more info."
 	(start-pos (point))
 	;; Set to the result of `c-forward-type'.
 	at-type
-	;; These record the start and end of the type or possible type
-	;; found by `c-forward-type'.  `type-start' is at the start of
-	;; the first type token, and `type-end' is at the start of the
-	;; first token after the type (and after any specifiers).
-	type-start type-end
-	;; These store `at-type', `type-start' and `type-end' of the
+	;; The position of the first token in what we currently
+	;; believe is the type in the declaration or cast, after any
+	;; specifiers and their associated clauses.
+	type-start
+	;; The position of the first token in what we currently
+	;; believe is the declarator for the first identifier.  Set
+	;; when the type is found, and moved forward over any
+	;; `c-decl-hangon-kwds' and their associated clauses that
+	;; occurs after the type.
+	id-start
+	;; These store `at-type', `type-start' and `id-start' of the
 	;; identifier before the one in those variables.  The previous
 	;; identifier might turn out to be the real type in a
 	;; declaration if the last one has to be the declarator in it.
-	;; If `prev-at-type' is nil then the other variables have
+	;; If `backup-at-type' is nil then the other variables have
 	;; undefined values.
-	prev-at-type prev-type-start prev-type-end
+	backup-at-type backup-type-start backup-id-start
+	;; Set if we've found a specifier that makes the defined
+	;; identifier(s) types.
+	at-type-decl
+	;; Set if we've found a specifier that can start a declaration
+	;; where there's no type.
+	maybe-typeless
+	;; If a specifier is found that also can be a type prefix,
+	;; these flags are set instead of those above.  If we need to
+	;; back up an identifier, they are copied to the real flag
+	;; variables.  Thus they only take effect if we fail to
+	;; interpret it as a type.
+	backup-at-type-decl backup-maybe-typeless
 	;; Whether we've found a declaration or a cast.  We might know
-	;; this before we've found the type in it.
+	;; this before we've found the type in it.  It's 'ids if we've
+	;; found two consecutive identifiers (usually a sure sign, but
+	;; we should allow that in labels too), and t if we've found a
+	;; specifier keyword (a 100% sure sign).
 	at-decl-or-cast
 	;; Set when we need to back up to parse this as a declaration
 	;; but not as a cast.
 	backup-if-not-cast
-	;; Set if we've found a "typedef" specifier.  The identifiers
-	;; in the declaration are then fontified as types.
-	at-typedef
-	;; Set if we've found a specifier that can start a declaration
-	;; where there's no type.
-	maybe-typeless
 	;; For casts, the return position.
 	cast-end
 	;; Save `c-record-type-identifiers' and
@@ -4664,75 +4766,111 @@ comment at the start of cc-engine.el for more info."
 	(save-rec-type-ids c-record-type-identifiers)
 	(save-rec-ref-ids c-record-ref-identifiers))
 
-    ;; Check for a type, but be prepared to skip over leading
-    ;; specifiers like "static".  Unknown symbols are treated as
-    ;; possible types, but they could also be specifiers disguised
-    ;; through macros like __INLINE__, so we recognize both types and
-    ;; known specifiers after them too.
-    (while (let* ((start (point))
-		  (res (unless (eq at-type t)
-			 ;; Don't look for a type if we already found
-			 ;; a positive one; we only loop for the
-			 ;; `c-specifier-key' check then.
-			 (c-forward-type))))
+    ;; Check for a type.  Unknown symbols are treated as possible
+    ;; types, but they could also be specifiers disguised through
+    ;; macros like __INLINE__, so we recognize both types and known
+    ;; specifiers after them too.
+    (while
+	(let* ((start (point)) kwd-sym kwd-clause-end found-type)
 
-	     (when res
-	       ;; Found a known or possible type or a prefix of a
-	       ;; known type.
+	  ;; Look for a specifier keyword clause.
+	  (when (looking-at c-prefix-spec-kwds-re)
+	    (setq kwd-sym (c-keyword-sym (match-string 1)))
+	    (save-excursion
+	      (c-forward-keyword-clause)
+	      (setq kwd-clause-end (point))))
 
-	       (when at-type
-		 ;; Got two identifiers with nothing but whitespace
-		 ;; between them.  That can only happen in
-		 ;; declarations.
-		 (setq at-decl-or-cast t)
+	  (when (setq found-type (c-forward-type))
+	    ;; Found a known or possible type or a prefix of a known type.
 
-		 (when (eq at-type 'found)
-		   ;; If the previous identifier is a found type we
-		   ;; record it as a real one; it might be some sort
-		   ;; of alias for a prefix like "unsigned".
-		   (save-excursion
-		     (goto-char type-start)
-		     (let ((c-promote-possible-types t))
-		       (c-forward-type)))))
+	    (when at-type
+	      ;; Got two identifiers with nothing but whitespace
+	      ;; between them.  That can only happen in declarations.
+	      (setq at-decl-or-cast 'ids)
 
-	       (setq prev-at-type at-type
-		     prev-type-start type-start
-		     prev-type-end type-end
-		     at-type res
-		     type-start start
-		     type-end (point))
+	      (when (eq at-type 'found)
+		;; If the previous identifier is a found type we
+		;; record it as a real one; it might be some sort of
+		;; alias for a prefix like "unsigned".
+		(save-excursion
+		  (goto-char type-start)
+		  (let ((c-promote-possible-types t))
+		    (c-forward-type)))))
 
-	       ;; If the type isn't known we continue so that we'll
-	       ;; jump over all specifiers and type identifiers.  The
-	       ;; reason to do this for a known type prefix is to make
-	       ;; things like "unsigned INT16" work.
-	       (setq res (not (eq res t))))
+	    (setq backup-at-type at-type
+		  backup-type-start type-start
+		  backup-id-start id-start
+		  at-type found-type
+		  type-start start
+		  id-start (point)
+		  ;; The previous ambiguous specifier/type turned out
+		  ;; to be a type since we've parsed another one after
+		  ;; it, so clear these backup flags.
+		  backup-at-type-decl nil
+		  backup-maybe-typeless nil))
 
-	     (if (looking-at c-specifier-key)
-		 ;; Found a known specifier keyword.  The specifier
-		 ;; keywords are restrictive, so we check for them
-		 ;; anywhere inside or around the type(s).  We thereby
-		 ;; avoid having special cases for specifiers like
-		 ;; MSVC '__declspec' which can come after the type.
-		 (progn
-		   (setq at-decl-or-cast t)
-		   (let ((kwd-sym (c-keyword-sym (match-string 1))))
-		     (when (c-keyword-member
-			    kwd-sym 'c-typedef-decl-kwds)
-		       (setq at-typedef t))
-		     (when (c-keyword-member
-			    kwd-sym 'c-typeless-decl-kwds)
-		       (setq maybe-typeless t)))
-		   (c-forward-keyword-clause)
-		   ;; Move type-end forward if we've passed a type,
-		   ;; otherwise move start-pos forward.
-		   (if at-type
-		       (setq type-end (point))
-		     (setq start-pos (point))))
+	  (if kwd-sym
+	      (progn
+		;; Handle known specifier keywords and
+		;; `c-decl-hangon-kwds' which can occur after known
+		;; types.
 
-	       res)))
+		(if (c-keyword-member kwd-sym 'c-decl-hangon-kwds)
+		    ;; It's a hang-on keyword that can occur anywhere.
+		    (progn
+		      (setq at-decl-or-cast t)
+		      (if at-type
+			  ;; Move the identifier start position if
+			  ;; we've passed a type.
+			  (setq id-start kwd-clause-end)
+			;; Otherwise treat this as a specifier and
+			;; move the fallback position.
+			(setq start-pos kwd-clause-end))
+		      (goto-char kwd-clause-end))
+
+		  ;; It's an ordinary specifier so we know that
+		  ;; anything before this can't be the type.
+		  (setq backup-at-type nil
+			start-pos kwd-clause-end)
+
+		  (if found-type
+		      ;; It's ambiguous whether this keyword is a
+		      ;; specifier or a type prefix, so set the backup
+		      ;; flags.  (It's assumed that `c-forward-type'
+		      ;; moved further than `c-forward-keyword-clause'.)
+		      (progn
+			(when (c-keyword-member kwd-sym 'c-typedef-decl-kwds)
+			  (setq backup-at-type-decl t))
+			(when (c-keyword-member kwd-sym 'c-typeless-decl-kwds)
+			  (setq backup-maybe-typeless t)))
+
+		    (when (c-keyword-member kwd-sym 'c-typedef-decl-kwds)
+		      (setq at-type-decl t))
+		    (when (c-keyword-member kwd-sym 'c-typeless-decl-kwds)
+		      (setq maybe-typeless t))
+
+		    ;; Haven't matched a type so it's an umambiguous
+		    ;; specifier keyword and we know we're in a
+		    ;; declaration.
+		    (setq at-decl-or-cast t)
+
+		    (goto-char kwd-clause-end))))
+
+	    ;; If the type isn't known we continue so that we'll jump
+	    ;; over all specifiers and type identifiers.  The reason
+	    ;; to do this for a known type prefix is to make things
+	    ;; like "unsigned INT16" work.
+	    (and found-type (not (eq found-type t))))))
 
     (cond
+     ((eq at-type t)
+      ;; If a known type was found, we still need to skip over any
+      ;; hangon keyword clauses after it.  Otherwise it has already
+      ;; been done in the loop above.
+      (while (looking-at c-decl-hangon-key)
+	(c-forward-keyword-clause))
+      (setq id-start (point)))
+
      ((eq at-type 'prefix)
       ;; A prefix type is itself a primitive type when it's not
       ;; followed by another type.
@@ -4742,7 +4880,7 @@ comment at the start of cc-engine.el for more info."
       ;; Got no type but set things up to continue anyway to handle
       ;; the various cases when a declaration doesn't start with a
       ;; type.
-      (setq type-end start-pos))
+      (setq id-start start-pos))
 
      ((and (eq at-type 'maybe)
 	   (c-major-mode-is 'c++-mode))
@@ -4751,7 +4889,7 @@ comment at the start of cc-engine.el for more info."
       ;; (con|de)structor.
       (save-excursion
 	(let (name end-2 end-1)
-	  (goto-char type-end)
+	  (goto-char id-start)
 	  (c-backward-syntactic-ws)
 	  (setq end-2 (point))
 	  (when (and
@@ -4772,8 +4910,8 @@ comment at the start of cc-engine.el for more info."
 	    ;; identifier(s) that we might have taken as types.
 	    (goto-char type-start)
 	    (setq at-type nil
-		  prev-at-type nil
-		  type-end type-start))))))
+		  backup-at-type nil
+		  id-start type-start))))))
 
     ;; Check for and step over a type decl expression after the thing
     ;; that is or might be a type.  This can't be skipped since we
@@ -4797,9 +4935,9 @@ comment at the start of cc-engine.el for more info."
 	  ;; True if we've parsed the type decl to a token that is
 	  ;; known to end declarations in this context.
 	  at-decl-end
-	  ;; The earlier values of `at-type', `type-start' and
-	  ;; `type-end' if we've shifted the type backwards.
-	  identifier-type identifier-start identifier-end
+	  ;; The earlier values of `at-type' and `type-start' if we've
+	  ;; shifted the type backwards.
+	  identifier-type identifier-start
 	  ;; If `c-parse-and-markup-<>-arglists' is set we need to
 	  ;; turn it off during the name skipping below to avoid
 	  ;; getting `c-type' properties that might be bogus.  That
@@ -4807,7 +4945,7 @@ comment at the start of cc-engine.el for more info."
 	  ;; `c-restricted-<>-arglists' will be correct inside the
 	  ;; arglist paren that gets entered.
 	  c-parse-and-markup-<>-arglists)
-      (goto-char type-end)
+      (goto-char id-start)
 
       ;; Skip over type decl prefix operators.  (Note similar code in
       ;; `c-font-lock-declarators'.)
@@ -4872,8 +5010,9 @@ comment at the start of cc-engine.el for more info."
 	       (when (and (= paren-depth 1)
 			  (not got-prefix-before-parens)
 			  (not (eq at-type t))
-			  (or prev-at-type
+			  (or backup-at-type
 			      maybe-typeless
+			      backup-maybe-typeless
 			      (when c-recognize-typeless-decls
 				(not context)))
 			  (setq pos (c-up-list-forward (point)))
@@ -4883,11 +5022,10 @@ comment at the start of cc-engine.el for more info."
 		 t))
 	(c-forward-syntactic-ws))
 
-      (when (and maybe-typeless
+      (when (and (or maybe-typeless backup-maybe-typeless)
 		 (not got-identifier)
 		 (not got-prefix)
-		 at-type
-		 (not (eq at-type t)))
+		 at-type)
 	;; Have found no identifier but `c-typeless-decl-kwds' has
 	;; matched so we know we're inside a declaration.  The
 	;; preceding type must be the identifier instead.
@@ -4903,7 +5041,9 @@ comment at the start of cc-engine.el for more info."
 	  ;; expression.  Try to skip out to the same paren depth to
 	  ;; not confuse the cast check below.
 	  (c-safe (goto-char (scan-lists (point) 1 paren-depth)))
-	  (throw 'at-decl-or-cast nil))
+	  ;; If we've found a specifier keyword then it's a
+	  ;; declaration regardless.
+	  (throw 'at-decl-or-cast (eq at-decl-or-cast t)))
 
 	(setq at-decl-end
 	      (looking-at (cond ((eq context '<>) "[,>]")
@@ -4927,7 +5067,9 @@ comment at the start of cc-engine.el for more info."
 	      (when (and got-parens
 			 (not got-prefix)
 			 (not got-suffix-after-parens)
-			 (or prev-at-type maybe-typeless))
+			 (or backup-at-type
+			     maybe-typeless
+			     backup-maybe-typeless))
 		;; Got a declaration of the form "foo bar (gnu);" where we've
 		;; recognized "bar" as the type and "gnu" as the declarator.
 		;; In this case it's however more likely that "bar" is the
@@ -4939,7 +5081,7 @@ comment at the start of cc-engine.el for more info."
 
 	  ;; Found no identifier.
 
-	  (if prev-at-type
+	  (if backup-at-type
 	      (progn
 
 		(when (= (point) start)
@@ -4948,7 +5090,9 @@ comment at the start of cc-engine.el for more info."
 		  ;; declared identifier and we should back up to the previous
 		  ;; type, providing it isn't a cast.
 		  (if (eq (char-after) ?:)
-		      (throw 'at-decl-or-cast nil)
+		      ;; If we've found a specifier keyword then it's a
+		      ;; declaration regardless.
+		      (throw 'at-decl-or-cast (eq at-decl-or-cast t))
 		    (setq backup-if-not-cast t)
 		    (throw 'at-decl-or-cast t)))
 
@@ -4991,20 +5135,22 @@ comment at the start of cc-engine.el for more info."
 		     ;; constants in C++.
 		     (memq at-type '(known found)))))
 		  (throw 'at-decl-or-cast t)
-		(throw 'at-decl-or-cast nil))))
+		;; Can't be a valid declaration or cast, but if we've found a
+		;; specifier it can't be anything else either, so treat it as
+		;; an invalid/unfinished declaration or cast.
+		(throw 'at-decl-or-cast at-decl-or-cast))))
 
-	  (if (and
-	       got-parens
-	       (not got-prefix)
-	       (not context)
-	       (not (eq at-type t))
-	       (or
-		prev-at-type
-		maybe-typeless
-		(when c-recognize-typeless-decls
-		  (or (not got-suffix)
-		      (not (looking-at
-			    c-after-suffixed-type-maybe-decl-key))))))
+	  (if (and got-parens
+		   (not got-prefix)
+		   (not context)
+		   (not (eq at-type t))
+		   (or backup-at-type
+		       maybe-typeless
+		       backup-maybe-typeless
+		       (when c-recognize-typeless-decls
+			 (or (not got-suffix)
+			     (not (looking-at
+				   c-after-suffixed-type-maybe-decl-key))))))
 	      ;; Got an empty paren pair and a preceding type that probably
 	      ;; really is the identifier.  Shift the type backwards to make
 	      ;; the last one the identifier.  This is analogous to the
@@ -5079,7 +5225,11 @@ comment at the start of cc-engine.el for more info."
 	  ;;
 	  ;; *) Don't check for C++ style initializers using parens
 	  ;; since those already have been matched as suffixes.
-	  (throw 'at-decl-or-cast nil))
+	  ;;
+	  ;; If `at-decl-or-cast' is then we've found some other sign that
+	  ;; it's a declaration or cast, so then it's probably an
+	  ;; invalid/unfinished one.
+	  (throw 'at-decl-or-cast at-decl-or-cast))
 
 	;; Below are tests that only should be applied when we're certain to
 	;; not have parsed halfway through an expression.
@@ -5108,8 +5258,16 @@ comment at the start of cc-engine.el for more info."
 				  (c-with-syntax-table
 				      c-identifier-syntax-table
 				    (looking-at c-known-type-key)))
-				(c-check-type (1+ identifier-start)
-					      identifier-end)))))
+				(save-excursion
+				  (goto-char (1+ identifier-start))
+				  ;; We have already parsed the type earlier,
+				  ;; so it'd be possible to cache the end
+				  ;; position instead of redoing it here, but
+				  ;; then we'd need to keep track of another
+				  ;; position everywhere.
+				  (c-check-type (point)
+						(progn (c-forward-type)
+						       (point))))))))
 	  (throw 'at-decl-or-cast t))
 
 	(if got-identifier
@@ -5165,7 +5323,7 @@ comment at the start of cc-engine.el for more info."
 	 c-cast-parens
 
 	 ;; Should be the first type/identifier in a cast paren.
-	 (> preceding-token-end 0)
+	 (> preceding-token-end (point-min))
 	 (memq (char-before preceding-token-end) c-cast-parens)
 
 	 ;; The closing paren should follow.
@@ -5203,7 +5361,7 @@ comment at the start of cc-engine.el for more info."
 
 	 ;; There should either be a cast before it or something that isn't an
 	 ;; identifier or close paren.
-	 (/= preceding-token-end 0)
+	 (> preceding-token-end (point-min))
 	 (progn
 	   (goto-char (1- preceding-token-end))
 	   (or (eq (point) last-cast-end)
@@ -5249,7 +5407,7 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char type-start)
 	    (c-forward-type))))
 
-      (cons type-end at-typedef))
+      (cons id-start at-type-decl))
 
      (t
       ;; False alarm.  Restore the recorded ranges.
@@ -5272,8 +5430,9 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; If PRECEDING-TOKEN-END is given, it should be the first position
   ;; after the preceding token, i.e. on the other side of the
-  ;; syntactic ws from the point.  Use 0 if the point is at the first
-  ;; token in (the visible part of) the buffer.
+  ;; syntactic ws from the point.  Use a value less than or equal to
+  ;; (point-min) if the point is at the first token in (the visible
+  ;; part of) the buffer.
   ;;
   ;; The optional LIMIT limits the forward scan for the colon.
   ;;
