@@ -442,7 +442,7 @@ This does not load the font-lock package.  Use after
 	   . c-mark-function)))
 
   (make-local-hook 'font-lock-mode-hook)
-  (add-hook 'font-lock-mode-hook 'c-after-font-lock-init))
+  (add-hook 'font-lock-mode-hook 'c-after-font-lock-init nil t))
 
 (defun c-common-init (&optional mode)
   "Common initialization for all CC Mode modes.
