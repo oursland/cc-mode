@@ -19,39 +19,30 @@ Checklist for doing a release:
       the new release.  Make sure the copyright statements in all
       files are up-to-date.
 
-    - Run the Release.py script to create all the tarballs and
-      documentation: ./Release.py --package --docs XX
+    - Run "make release" to make all the tarballs and documentation.
 
       XX is the minor revision number of the new release.
 
-      This creates the following files in Distrib:
-          cc-mode-5.XX.rmslb.tar.gz
+      This creates the following files in dist:
+          cc-mode-5.XX.emacs.tar.gz
+          cc-mode-5.XX.xemacs.tar.gz
           cc-mode-5.XX.tar.gz
-          ChangeLog.gz
           cc-mode.dvi.gz
           cc-mode.ps.gz
           cc-mode.rev.ps.gz
           cc-mode.info.tar.gz
-          cc-mode.html.tar.gz
+          cc-mode.html.gz
 
-      The first is the tarball to be sent to RMS + SLB for Emacs and
-      XEmacs respectively.  They contain only the files that are
-      necessary for those releases.  However, I typically don't send
-      them stuff until they see the Net announcements and ask for the
-      files.  This lets them sync our releases up to their own release 
-      cycle.
+      The first two tarballs is to be sent to Emacs and XEmacs
+      respectively.  They contain only the files that are necessary
+      for those releases.  However, I typically don't send them stuff
+      until they see the Net announcements and ask for the files.
+      This lets them sync our releases up to their own release cycle.
 
-      RMS: Richard Stallman <rms@gnu.org>
-      SLB: Steve Baur <steve@xemacs.org>
-
-    - Send cc-mode-5.20.rmslb.tar.gz and the ChangeLog entries for
-      XX-1 to XX to RMS.  Sent just the tarball to SLB.  (see note
-      above).
-
-    - Copy the Distrib files (except *.rmslb.*) to the web site.
+    - Copy the dist files (except *emacs*) to the web site.
 
     - Unpack copies of cc-mode-5.XX.tar.gz, cc-mode.info.tar.gz,
-      cc-mode.html.tar.gz, for web access.
+      cc-mode.html.gz, for web access.
 
     - Create symbolic links 
 
