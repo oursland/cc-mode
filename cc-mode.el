@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.104 $
-;; Last Modified:   $Date: 1993-11-29 19:51:14 $
+;; Version:         $Revision: 3.105 $
+;; Last Modified:   $Date: 1993-11-29 22:50:30 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-29 19:51:14 $|$Revision: 3.104 $|
+;; |$Date: 1993-11-29 22:50:30 $|$Revision: 3.105 $|
 
 ;;; Code:
 
@@ -494,7 +494,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.104 $
+  "Major mode for editing C++ code.  $Revision: 3.105 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -524,7 +524,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.104 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.105 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1231,9 +1231,10 @@ of the expression are preserved."
 
 (defun cc-indent-exp (&optional shutup-p)
   "Indent each line in block following pont.
-Optional SHUTUP-P if non-nil, inhibits message printing."
+Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (interactive "P")
   (or (memq (following-char) '(?\( ?\[ ?\{))
+      shutup-p
       (error "Character under point does not start an expression."))
   (let ((start (point))
 	(bod (cc-point 'bod))
@@ -2414,7 +2415,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.104 $"
+(defconst cc-version "$Revision: 3.105 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
