@@ -289,6 +289,7 @@
     "statement-9.c"
     "statement-10.c"
     "statement-11.java"
+    "statement-12.pike"
     "stream-1.cc"
     "stream-2.cc"
     "struct-1.c"
