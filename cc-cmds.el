@@ -96,6 +96,7 @@
 	(line-cont-backslash (save-excursion
 			       (end-of-line)
 			       (eq (char-before) ?\\)))
+	(c-fix-backslashes c-fix-backslashes)
 	bs-col
 	shift-amt)
     (if c-syntactic-indentation
@@ -105,8 +106,7 @@
 						  c-syntactic-context
 						  (c-guess-basic-syntax)))
 			 indent)
-		    (when (and c-fix-backslashes
-			       (save-excursion
+		    (when (and (save-excursion
 				 (beginning-of-line)
 				 (looking-at (if line-cont-backslash
 						 "\\(\\s *\\)\\\\$"
@@ -124,7 +124,8 @@
 			(save-excursion
 			  (goto-char (match-end 0))
 			  (setq bs-col (1- (current-column)))))
-		      (delete-region (point) (match-end 0)))
+		      (delete-region (point) (match-end 0))
+		      (setq c-fix-backslashes t))
 		    (setq indent (c-get-syntactic-indentation
 				  c-syntactic-context))
 		    (and (not (c-echo-parsing-error quiet))
@@ -195,19 +196,21 @@
     (when c-syntactic-indentation
       ;; Reindent syntactically.  The indentation done above is not
       ;; wasted, since c-indent-line might look at the current
-      ;; indentation.  We temporarily insert another line break, so
-      ;; that the new line will be indented as being empty.  This to
-      ;; make lineup functions which looks at the current line,
-      ;; e.g. c-lineup-macro-cont, more intuitive.
-      (insert ?\n)
-      (delete-horizontal-space)
-      (setq start (- (point-max) (point)))
-      (unwind-protect
-	  (progn
-	    (backward-char)
-	    (indent-according-to-mode))
-	(goto-char (- (point-max) start))
-	(delete-char -1))
+      ;; indentation.
+      (let ((c-syntactic-context (c-guess-basic-syntax)))
+	;; We temporarily insert another line break, so that the
+	;; lineup functions will see the line as empty.  That makes
+	;; e.g. c-lineup-macro-cont more intuitive since it then
+	;; proceeds to the preceding line in this case.
+	(insert ?\n)
+	(delete-horizontal-space)
+	(setq start (- (point-max) (point)))
+	(unwind-protect
+	    (progn
+	      (backward-char)
+	      (indent-according-to-mode))
+	  (goto-char (- (point-max) start))
+	  (delete-char -1)))
       (when has-backslash
 	;; Must align the backslash again after reindentation.  The
 	;; c-backslash-region call above can't be optimized to ignore
