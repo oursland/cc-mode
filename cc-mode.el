@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.166 $
-;; Last Modified:   $Date: 1994-01-06 18:52:51 $
+;; Version:         $Revision: 3.167 $
+;; Last Modified:   $Date: 1994-01-07 14:18:03 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -61,11 +61,14 @@
 ;;             ("\\.h$"  . c-mode)   ; to edit C code
 ;;            ) auto-mode-alist))
 ;;
-;; CC-MODE is not compatible with BOCM.  If your Emacs is dumped with
-;; c-mode, you will need to add the following to your .emacs file:
+;; CC-MODE is not compatible with BOCM.  If your Emacs session already
+;; has either c-mode.el or c++-mode.el loaded in, you will need to add
+;; the following to your .emacs file:
 ;;
 ;; (fmakunbound 'c-mode)
 ;; (makunbound 'c-mode-map)
+;; (fmakunbound 'c++-mode)
+;; (makunbound 'c++-mode-map)
 
 ;; If you would like to join the beta testers list, send add/drop
 ;; requests to cc-mode-victims-request@anthem.nlm.nih.gov.
@@ -79,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-06 18:52:51 $|$Revision: 3.166 $|
+;; |$Date: 1994-01-07 14:18:03 $|$Revision: 3.167 $|
 
 ;;; Code:
 
@@ -649,7 +652,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.166 $
+CC-MODE REVISION: $Revision: 3.167 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +686,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.166 $
+CC-MODE REVISION: $Revision: 3.167 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2964,7 +2967,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.166 $"
+(defconst c-version "$Revision: 3.167 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
