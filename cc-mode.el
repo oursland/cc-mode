@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-20 19:29:00 $
-;; Version:         $Revision: 2.187 $
+;; Last Modified:   $Date: 1992-08-26 15:21:33 $
+;; Version:         $Revision: 2.188 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-20 19:29:00 $|$Revision: 2.187 $|
+;; |$Date: 1992-08-26 15:21:33 $|$Revision: 2.188 $|
 
 
 ;; ======================================================================
@@ -280,12 +280,17 @@ When non-nil (the default), indentation is calculated relative to the
 first statement in the block.  When nil, the indentation is calculated
 without regard to how the first statement is indented.")
 
-(defvar c++-untame-characters '(?\( ?\) ?\' ?\{ ?\} ?\[ ?\])
+(defvar c++-untame-characters '(?\')
   "*Utilize a backslashing workaround of an emacs scan-lists bug.
 If non-nil, this variable should contain a list of characters which
 will be prepended by a backslash in comment regions.  By default, the
-list contains all characters which can potentially cause problems if
-they exist unbalanced within comments.
+list contains only the most troublesome character, the single quote.
+To be completely safe, set this variable to:
+
+    '(?\( ?\) ?\' ?\{ ?\} ?\[ ?\])
+
+This is the full list of characters which can potentially cause
+problems if they exist unbalanced within comments.
 
 Setting this variable to nil will defeat this feature, but be
 forewarned!  Un-escaped characters in comment regions will break many
@@ -331,7 +336,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.187 $
+  "Major mode for editing C++ code.  $Revision: 2.188 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -532,7 +537,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.187 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.188 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2122,7 +2127,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.187 $"
+(defconst c++-version "$Revision: 2.188 $"
   "c++-mode version number.")
 
 (defun c++-version ()
