@@ -85,14 +85,6 @@
 ;; from byte compiled files, or when the source values for the
 ;; language constants are requested.
 
-;; HELPME: Many of the language constants here are likely more or less
-;; bogus for IDL.  The effects of the erroneous values in the language
-;; handling are mostly negligible since the constants that actually
-;; matter in the syntax detection code are mostly correct in the
-;; situations they are used.  The effects in font locking are probably
-;; more evident, though.  Please send code samples that are treated
-;; incorrectly to bug-cc-mode@gnu.org.
-
 ;;; Code:
 
 (eval-when-compile
@@ -338,6 +330,7 @@ not contain a \\| operator at the top level."
   t    nil
   c++  "::"
   java "\\."
+  idl  "::"
   pike "\\(::\\|\\.\\)")
 (c-lang-defvar c-opt-identifier-concat-key
   (c-lang-const c-opt-identifier-concat-key)
@@ -407,19 +400,23 @@ between the tokens; `c-forward-name' has to be used for that."
 	 ;; 3 * depth of `c-opt-identifier-concat-key' + 8.
 	 "\\(" (c-lang-const c-symbol-key) "\\)"
 	 "\\)"))
-  ;; Pike allows a leading qualifier operator.
-  pike (concat
-	"\\(" (c-lang-const c-opt-identifier-concat-key) "[ \t\n\r\f\v]*\\)?"
-	;; The submatch below is depth of `c-opt-identifier-concat-key' + 2.
-	"\\(" (c-lang-const c-symbol-key) "\\)"
-	(concat "\\("
-		"[ \t\n\r\f\v]*"
-		(c-lang-const c-opt-identifier-concat-key)
-		"[ \t\n\r\f\v]*"
-		;; The submatch below is: `c-symbol-key-depth' +
-		;; 2 * depth of `c-opt-identifier-concat-key' + 4.
-		"\\(" (c-lang-const c-symbol-key) "\\)"
-		"\\)*"))
+  ;; IDL and Pike allows a leading qualifier operator.
+  (idl pike) (concat
+	      "\\("
+	      (c-lang-const c-opt-identifier-concat-key)
+	      "[ \t\n\r\f\v]*"
+	      "\\)?"
+	      ;; The submatch below is depth of
+	      ;; `c-opt-identifier-concat-key' + 2.
+	      "\\(" (c-lang-const c-symbol-key) "\\)"
+	      (concat "\\("
+		      "[ \t\n\r\f\v]*"
+		      (c-lang-const c-opt-identifier-concat-key)
+		      "[ \t\n\r\f\v]*"
+		      ;; The submatch below is: `c-symbol-key-depth' +
+		      ;; 2 * depth of `c-opt-identifier-concat-key' + 4.
+		      "\\(" (c-lang-const c-symbol-key) "\\)"
+		      "\\)*"))
   ;; Java does not allow a leading qualifier operator.  If it ends
   ;; with ".*" (used in import declarations) we also consider that as
   ;; part of the name.  ("*" is actually recognized in any position
@@ -458,13 +455,13 @@ that at least one does when the regexp has matched."
 	     (+ (c-regexp-opt-depth
 		 (c-lang-const c-opt-identifier-concat-key))
 		3))
-  pike (list (+ (c-lang-const c-symbol-key-depth)
-		(* 2 (c-regexp-opt-depth
-		      (c-lang-const c-opt-identifier-concat-key)))
-		4)
-	     (+ (c-regexp-opt-depth
-		 (c-lang-const c-opt-identifier-concat-key))
-		2))
+  (idl pike) (list (+ (c-lang-const c-symbol-key-depth)
+		      (* 2 (c-regexp-opt-depth
+			    (c-lang-const c-opt-identifier-concat-key)))
+		      4)
+		   (+ (c-regexp-opt-depth
+		       (c-lang-const c-opt-identifier-concat-key))
+		      2))
   java (list (+ (c-lang-const c-symbol-key-depth)
 		(c-regexp-opt-depth
 		 (c-lang-const c-opt-identifier-concat-key))
@@ -478,8 +475,8 @@ that at least one does when the regexp has matched."
   "Regexp matching the prefix of a cpp directive in the languages that
 normally use that macro preprocessor.  Tested at bol.  Assumed to not
 contain any submatches."
-  t nil
-  (c c++ objc pike) "\\s *#\\s *")
+  t "\\s *#\\s *"
+  java nil)
 (c-lang-defvar c-opt-cpp-prefix (c-lang-const c-opt-cpp-prefix))
 
 (c-lang-defconst c-cpp-defined-fns
@@ -640,7 +637,31 @@ since CC Mode treats every identifier as an expression."
 	  '((prefix "throw")))
 
       ;; Sequence.
-      (left-assoc ",")))
+      (left-assoc ","))
+
+  ;; IDL got its own definition since it has a much smaller operator
+  ;; set than the other languages.
+  idl `(;; Preprocessor.
+	(prefix "#")
+	(left-assoc "##")
+	;; Primary.  Info duplicated in `c-opt-identifier-concat-key'
+	;; and `c-identifier-key'.
+	(left-assoc "::")
+	(prefix "::")
+	;; Unary.
+	(prefix  "+" "-" "~")
+	;; Multiplicative.
+	(left-assoc "*" "/" "%")
+	;; Additive.
+	(left-assoc "+" "-")
+	;; Shift.
+	(left-assoc "<<" ">>")
+	;; And.
+	(left-assoc "&")
+	;; Xor.
+	(left-assoc "^")
+	;; Or.
+	(left-assoc "|")))
 
 (c-lang-defconst c-operator-list
   ;; The operators as a flat list (without duplicates).
@@ -686,6 +707,8 @@ operators."
   c++  (append '("&") (c-lang-const c-other-op-syntax-tokens))
   objc (append '("#" "##"		; Used by cpp.
 		 "+" "-") (c-lang-const c-other-op-syntax-tokens))
+  idl  (append '("#" "##")		; Used by cpp.
+	       (c-lang-const c-other-op-syntax-tokens))
   pike (append '("..")
 	       (c-lang-const c-other-op-syntax-tokens)
 	       (c-lang-const c-overloadable-operators)))
@@ -925,6 +948,14 @@ the appropriate place for that."
   objc (append '("id" "Class" "SEL" "IMP" "BOOL")
 	       (c-lang-const c-primitive-type-kwds))
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
+  idl  '("Object" "ValueBase" "any" "boolean" "char" "double" "fixed" "float"
+	 "long" "octet" "sequence" "short" "string" "void" "wchar" "wstring"
+	 ;; In CORBA PSDL:
+	 "ref"
+	 ;; The following can't really end a type, but we have to specify them
+	 ;; here due to the assumption in `c-primitive-type-prefix-kwds'.  It
+	 ;; doesn't matter that much.
+	 "unsigned" "strong")
   pike '(;; this_program isn't really a keyword, but it's practically
 	 ;; used as a builtin type.
 	 "array" "float" "function" "int" "mapping" "mixed" "multiset"
@@ -938,8 +969,11 @@ the appropriate place for that."
 (c-lang-defconst c-primitive-type-prefix-kwds
   "Keywords that might act as prefixes for primitive types.  Assumed to
 be a subset of `c-primitive-type-kwds'."
-  t nil
-  (c c++) '("long" "short" "signed" "unsigned"))
+  t       nil
+  (c c++) '("long" "short" "signed" "unsigned")
+  idl     '("long" "unsigned"
+	    ;; In CORBA PSDL:
+	    "strong"))
 
 (c-lang-defconst c-type-prefix-kwds
   "Keywords where the following name - if any - is a type name, and
@@ -1004,7 +1038,12 @@ following identifier as a type; the keyword must also be present on
   objc '("struct" "union"
 	 "@interface" "@implementation" "@protocol")
   java '("class" "interface")
-  idl  '("class" "interface" "struct" "union" "valuetype")
+  idl  '("component" "eventtype" "exception" "home" "interface" "struct"
+	 "union" "valuetype"
+	 ;; In CORBA PSDL:
+	 "storagehome" "storagetype"
+	 ;; In CORBA CIDL:
+	 "catalog" "executor" "manages" "segment")
   pike '("class"))
 
 (c-lang-defconst c-class-key
@@ -1019,8 +1058,8 @@ any) is a brace list.
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
 then the associated clauses will be handled."
-  t nil
-  (c c++ objc pike) '("enum"))
+  t    '("enum")
+  java nil)
 
 (c-lang-defconst c-brace-list-key
   ;; Regexp matching the start of declarations where the following
@@ -1038,7 +1077,9 @@ then the associated clauses will be handled."
   t   nil
   c   '("extern")
   c++ '("namespace" "extern")
-  idl '("module"))
+  idl '("module"
+	;; In CORBA CIDL:
+	"composition"))
 
 (c-lang-defconst c-other-decl-block-key
   ;; Regexp matching the start of blocks besides classes that contain
@@ -1053,8 +1094,8 @@ to be types.
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
 then the associated clauses will be handled."
-  t nil
-  (c c++ objc pike) '("typedef"))
+  t    '("typedef")
+  java nil)
 
 (c-lang-defconst c-typeless-decl-kwds
   "Keywords introducing declarations where the identifier (declarator)
@@ -1064,6 +1105,15 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
 then the associated clauses will be handled."
   t    nil
+  ;; Unlike most other languages, exception names are not handled as
+  ;; types in IDL since they only can occur in "raises" specs.
+  idl  '("exception" "factory" "finder" "native"
+	 ;; In CORBA PSDL:
+	 "key" "stores"
+	 ;; In CORBA CIDL:
+	 ;; Note that "manages" here clashes with its presence on
+	 ;; `c-type-list-kwds' for IDL.
+	 "executor" "facet" "manages" "segment")
   pike '("constant"))
 
 (c-lang-defconst c-other-decl-kwds
@@ -1082,8 +1132,13 @@ then the associated clauses will be handled."
 	       (c-lang-const c-other-decl-kwds))
   objc '("auto" "bycopy" "byref" "extern" "in" "inout" "oneway" "out" "static"
 	 "@class" "@end" "@defs")
-  ;; I have no idea about IDL, so just use the specifiers in C.
-  idl  (c-lang-const c-other-decl-kwds c)
+  idl  '("abstract" "attribute" "const" "consumes" "custom" "emits" "import"
+	 "in" "inout" "local" "multiple" "oneway" "out" "private" "provides"
+	 "public" "publishes" "readonly" "typeid" "typeprefix" "uses"
+	 ;; In CORBA PSDL:
+	 "primary" "state"
+	 ;; In CORBA CIDL:
+	 "bindsTo" "delegatesTo" "implements" "proxy" "storedOn")
   ;; Note: "const" is not used in Java, but it's still a reserved keyword.
   java '("abstract" "const" "final" "import" "native" "package" "private"
 	 "protected" "public" "static" "strictfp" "synchronized" "transient"
@@ -1148,7 +1203,11 @@ The keywords on list are assumed to also be present on one of the
 between the header and the body \(i.e. the \"K&R-region\") in
 declarations."
   t    nil
-  java '("extends" "implements" "throws"))
+  java '("extends" "implements" "throws")
+  idl  '("context" "getraises" "manages" "primarykey" "raises" "setraises"
+	 "supports"
+	 ;; In CORBA PSDL:
+	 "as" "const" "implements" "of" "ref"))
 
 (c-lang-defconst c-type-list-kwds
   "Keywords that may be followed by a comma separated list of type
@@ -1157,14 +1216,24 @@ also be used for the special case when the list can contain only one
 element.)
 
 Assumed to be mutually exclusive with `c-ref-list-kwds'.  There's no
-reason to put keywords on this list if they are on
-`c-type-prefix-kwds'."
+reason to put keywords on this list if they are on `c-type-prefix-kwds'.
+There's also no reason to add keywords that prefixes a normal
+declaration consisting of a type followed by a declarator (list), so
+the keywords on `c-other-decl-kwds' should normally not be listed here
+too.
+
+Note: Use `c-typeless-decl-kwds' for keywords followed by a function
+or variable identifier (that's being defined)."
   t    '("struct" "union" "enum")
   (c c++) nil
   objc (append '("@class" "@interface" "@implementation" "@protocol")
 	       (c-lang-const c-type-list-kwds))
-  java (append '("class" "import" "interface" "new")
-	       (c-lang-const c-decl-spec-kwds))
+  java '("class" "import" "interface" "new" "extends" "implements" "throws")
+  idl  (append '("component" "eventtype" "home" "interface" "manages" "native"
+		 "primarykey" "supports" "valuetype"
+		 ;; In CORBA PSDL:
+		 "as" "implements" "of" "scope" "storagehome" "storagetype")
+	       (c-lang-const c-type-list-kwds))
   pike '("class" "enum" "inherit"))
 
 (c-lang-defconst c-ref-list-kwds
@@ -1172,10 +1241,16 @@ reason to put keywords on this list if they are on
 reference (i.e. namespace/scope/module) identifiers, where each
 optionally can be prefixed by keywords.  (Can also be used for the
 special case when the list can contain only one element.)  Assumed to
-be mutually exclusive with `c-type-list-kwds'."
+be mutually exclusive with `c-type-list-kwds'.
+
+Note: Use `c-typeless-decl-kwds' for keywords followed by a function
+or variable identifier (that's being defined)."
   t    nil
   c++  '("namespace")
   java '("package")
+  idl  '("import" "module"
+	 ;; In CORBA CIDL:
+	 "composition")
   pike '("import"))
 
 (c-lang-defconst c-colon-type-list-kwds
@@ -1184,7 +1259,10 @@ and then a comma separated list of type identifiers, where each
 optionally can be prefixed by keywords.  (Can also be used for the
 special case when the list can contain only one element.)"
   t    nil
-  c++  '("class" "struct"))
+  c++  '("class" "struct")
+  idl  '("component" "eventtype" "home" "interface" "valuetype"
+	 ;; In CORBA PSDL:
+	 "storagehome" "storagetype"))
 
 (c-lang-defconst c-colon-type-list-re
   "Regexp matched after the keywords in `c-colon-type-list-kwds' to skip
@@ -1206,6 +1284,7 @@ type identifiers separated by arbitrary tokens."
   t    nil
   c++  '("throw")
   objc '("@defs")
+  idl  '("switch")
   pike '("array" "function" "int" "mapping" "multiset" "object" "program"))
 
 (c-lang-defconst c-brace-id-list-kwds
@@ -1221,7 +1300,9 @@ assumed to be set if this isn't nil."
   t    nil
   c++  '("template")
   objc '("id")
-  idl  '())
+  idl  '("fixed" "sequence" "string" "wstring"
+	 ;; In CORBA PSDL:
+	 "ref"))
 
 (c-lang-defconst c-<>-arglist-key
   ;; `c-<>-arglist-kwds' as an adorned regexp.
@@ -1232,7 +1313,8 @@ assumed to be set if this isn't nil."
   "Statement keywords followed directly by a substatement."
   t    '("do" "else")
   c++  '("do" "else" "try")
-  java '("do" "else" "finally" "try"))
+  java '("do" "else" "finally" "try")
+  idl  nil)
 
 (c-lang-defconst c-block-stmt-1-key
   ;; Regexp matching the start of any statement followed directly by a
@@ -1245,6 +1327,7 @@ assumed to be set if this isn't nil."
   t    '("for" "if" "switch" "while")
   c++  '("for" "if" "switch" "while" "catch")
   java '("for" "if" "switch" "while" "catch" "synchronized")
+  idl  nil
   pike '("for" "if" "switch" "while" "foreach"))
 
 (c-lang-defconst c-block-stmt-2-key
@@ -1269,12 +1352,14 @@ assumed to be set if this isn't nil."
   t    '("break" "continue" "goto" "return")
   ;; Note: `goto' is not valid in Java, but the keyword is still reserved.
   java '("break" "continue" "goto" "return" "throw")
+  idl  nil
   pike '("break" "continue" "return"))
 
 (c-lang-defconst c-paren-stmt-kwds
   "Statement keywords followed by a parenthesis expression that
 nevertheless contains a list separated with ';' and not ','."
-  t '("for"))
+  t    '("for")
+  idl  nil)
 
 (c-lang-defconst c-paren-stmt-key
   ;; Adorned regexp matching `c-paren-stmt-kwds'.
@@ -1295,15 +1380,14 @@ nevertheless contains a list separated with ';' and not ','."
 
 (c-lang-defconst c-label-kwds
   "Keywords introducing labels in blocks."
-  t   '("case" "default")
-  idl nil)
+  t '("case" "default"))
 
 (c-lang-defconst c-before-label-kwds
   "Keywords that may be followed by a label or a label reference."
-  t           '("case" "goto")
+  t    '("case" "goto")
   (java pike) (append '("break" "continue")
 		      (c-lang-const c-before-label-kwds))
-  idl         nil)
+  idl  '("case"))
 
 (c-lang-defconst c-label-kwds-regexp
   ;; Regexp matching any keyword that introduces a label.
@@ -1317,6 +1401,7 @@ nevertheless contains a list separated with ';' and not ','."
   c++     (append '("false" "true")
 		  (c-lang-const c-constant-kwds))
   objc    '("nil" "Nil")
+  idl     '("TRUE" "FALSE")
   pike    '("UNDEFINED")) ;; Not a keyword, but practically works as one.
 
 (c-lang-defconst c-expr-kwds
@@ -1422,6 +1507,14 @@ Note that Java specific rules are currently applied to tell this from
   t       nil
   (c c++) (c-make-keywords-re t (c-lang-const c-bitfield-kwds)))
 (c-lang-defvar c-opt-bitfield-key (c-lang-const c-opt-bitfield-key))
+
+(c-lang-defconst c-other-kwds
+  "Keywords not accounted for by any other `*-kwds' language constant."
+  t    nil
+  idl  '("truncatable"
+	 ;; In CORBA CIDL: (These are declaration keywords that never
+	 ;; can start a declaration.)
+	 "entity" "process" "service" "session" "storage"))
 
 
 ;;; Constants built from keywords.
@@ -1551,12 +1644,11 @@ should not match bob, though.  It can't require a match longer than
 one token.  The end of the token is taken to be at the end of the
 first submatch.  It must not include any following whitespace."
   ;; We match a sequence of characters to skip over things like \"};\"
-  ;; more quickly.
-  t "\\([\{\}\(;,]+\\)"
-  ;; We additionally match ")" in C for K&R region declarations, and
-  ;; in C, C++ and Objective-C for when a cpp macro definition begins
-  ;; with a declaration.
-  c "\\([\{\}\(\);,]+\\)"
+  ;; more quickly.  We match ")" in C for K&R region declarations, and
+  ;; in all languages except Java for when a cpp macro definition
+  ;; begins with a declaration.
+  t "\\([\{\}\(\);,]+\\)"
+  java "\\([\{\}\(;,]+\\)"
   ;; Match open paren syntax in C++ to get the first argument in a
   ;; template arglist, where the "<" got that syntax.  This means that
   ;; "[" also is matched, which we really don't want.
@@ -1575,6 +1667,8 @@ first submatch.  It must not include any following whitespace."
   objc (concat "\\([\{\}\(\);,]+\\|"
 	       (c-make-keywords-re nil (c-lang-const c-protection-kwds))
 	       "\\)")
+  ;; Match ":" for switch labels inside union declarations in IDL.
+  idl "\\([\{\}\(\);:,]+\\)\\([^:]\\|\\'\\)"
   ;; Pike is like C but we also match "[" for multiple value
   ;; assignments and type casts.
   pike "\\([\{\}\(\)\[;,]+\\)")
@@ -1638,7 +1732,7 @@ first submatch is taken as the end of the operator."
 	       "\\(" (c-make-keywords-re nil
 		       (c-lang-const c-type-modifier-kwds)) "\\)\\>"
 	       "\\)")
-  java "\\([\[\(]\\)")
+  (java idl) "\\([\[\(]\\)")
 (c-lang-defvar c-type-decl-suffix-key (c-lang-const c-type-decl-suffix-key)
   'dont-doc)
 
