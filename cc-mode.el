@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.275 $
-;; Last Modified:   $Date: 1993-02-05 20:06:58 $
+;; Version:         $Revision: 2.276 $
+;; Last Modified:   $Date: 1993-02-05 20:38:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-05 20:06:58 $|$Revision: 2.275 $|
+;; |$Date: 1993-02-05 20:38:27 $|$Revision: 2.276 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.275 $
+  "Major mode for editing C++ code.  $Revision: 2.276 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.275 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.276 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1828,8 +1828,12 @@ BOD is the beginning of the C++ definition."
 				 ;; remove some nested inclass indentation
 				 (* (max 0 (1- inclass-depth)) c-indent-level)
 				 ))
-		     ;; member init, so add offset
-		     c++-member-init-indent)
+		     ;; member init, so add offset. add additional
+		     ;; offset if looking at line with just a member
+		     ;; init colon
+		     (+ c++-member-init-indent
+			(if (looking-at ":[ \t]*$")
+			    (or c++-continued-member-init-offset 0) 0)))
 		 (if (or (= (preceding-char) ?})
 			 (= (preceding-char) ?\))
 			 (save-excursion
@@ -2452,7 +2456,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.275 $"
+(defconst c++-version "$Revision: 2.276 $"
   "c++-mode version number.")
 
 (defun c++-version ()
