@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.356 $
-;; Last Modified:   $Date: 1997-02-05 23:50:52 $
+;; Version:         $Revision: 4.357 $
+;; Last Modified:   $Date: 1997-02-06 00:04:26 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -401,7 +401,7 @@ When set to nil, C block comment enders are left on their own line.
 When set to t, block comment enders will be placed at the end of the
 previous line (i.e. they `hang' on that line).")
 
-(defvar c-hanging-comment-starter-p nil
+(defvar c-hanging-comment-starter-p t
   "*Controls what \\[fill-paragraph] does to C block comment starters.
 When set to nil, C block comment starters are left on their own line.
 When set to t, text that follows a block comment starter will be
@@ -5070,7 +5070,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.356 $"
+(defconst c-version "$Revision: 4.357 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
