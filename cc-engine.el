@@ -1363,9 +1363,14 @@ brace."
 			      c-inexpr-class-key
 			      (looking-at c-inexpr-class-key)
 			      (or (not (looking-at c-class-key))
-				  (progn
-				    (forward-char)
-				    (c-beginning-of-statement-1 lim)
+				  (let ((prev (point)))
+				    (while (and (= (c-backward-token-1 1 t lim)
+						   0)
+						(>= (point) lim)
+						(eq (char-syntax (char-after))
+						    ?w))
+				      (setq prev (point)))
+				    (goto-char prev)
 				    (not (c-looking-at-bos)))))
 			 (cons 'inexpr-class (point)))
 			((and c-inexpr-block-key
@@ -1541,7 +1546,24 @@ brace."
 		     (setq placeholder (point)))
 		   (c-point 'boi)))
 	  (c-add-syntax 'cpp-macro-cont placeholder))
-	 ;; (CASE 4 has been removed)
+	 ;; CASE 4: In-expression statement.
+	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
+	       (setq placeholder (c-looking-at-inexpr-block)))
+	  (setq tmpsymbol (assq (car placeholder)
+				'((inexpr-class . class-open)
+				  (inexpr-statement . block-open))))
+	  (if tmpsymbol
+	      ;; It's a statement block or an anonymous class.
+	      (setq tmpsymbol (cdr tmpsymbol))
+	    ;; It's a Pike lambda.  Check whether we are between the
+	    ;; lambda keyword and the argument list or at the defun
+	    ;; opener.
+	    (setq tmpsymbol (if (eq char-after-ip ?{)
+				'inline-open
+			      'lambda-intro-cont)))
+	  (goto-char (cdr placeholder))
+	  (c-add-syntax tmpsymbol (c-point 'boi))
+	  (c-add-syntax (car placeholder)))
 	 ;; CASE 5: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
@@ -1941,24 +1963,7 @@ brace."
 	    (c-forward-syntactic-ws)
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 	   ))				; end CASE 5
-	 ;; CASE 6: In-expression statement.
-	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
-	       (setq placeholder (c-looking-at-inexpr-block)))
-	  (setq tmpsymbol (assq (car placeholder)
-				'((inexpr-class . class-open)
-				  (inexpr-statement . block-open))))
-	  (if tmpsymbol
-	      ;; It's a statement block or an anonymous class.
-	      (setq tmpsymbol (cdr tmpsymbol))
-	    ;; It's a Pike lambda.  Check whether we are between the
-	    ;; lambda keyword and the argument list or at the defun
-	    ;; opener.
-	    (setq tmpsymbol (if (eq char-after-ip ?{)
-				'inline-open
-			      'lambda-intro-cont)))
-	  (goto-char (cdr placeholder))
-	  (c-add-syntax tmpsymbol (c-point 'boi))
-	  (c-add-syntax (car placeholder)))
+	 ;; (CASE 6 has been removed.)
 	 ;; CASE 7: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
 	 ;; call argument list
