@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.204 $
-;; Last Modified:   $Date: 1995-05-03 22:52:32 $
+;; Version:         $Revision: 4.205 $
+;; Last Modified:   $Date: 1995-05-05 00:11:34 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-03 22:52:32 $|$Revision: 4.204 $|
+;; |$Date: 1995-05-05 00:11:34 $|$Revision: 4.205 $|
 
 ;;; Code:
 
@@ -4574,7 +4574,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.204 $"
+(defconst c-version "$Revision: 4.205 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4596,7 +4596,8 @@ it trailing backslashes are removed."
   (let ((reporter-prompt-for-summary-p t)
 	(reporter-dont-compact-list '(c-offsets-alist)))
     (and
-     (y-or-n-p "Do you want to submit a report on cc-mode? ")
+     (if (y-or-n-p "Do you want to submit a report on cc-mode? ")
+	 t (message "") nil)
      (require 'reporter)
      (reporter-submit-bug-report
       c-mode-help-address
