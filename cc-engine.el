@@ -1269,7 +1269,7 @@ This function does not do any hidden buffer changes."
 
   (when (and (= beg end)
 	     (get-text-property beg 'c-in-sws)
-	     (not (bobp))
+	     (> beg (point-min))
 	     (get-text-property (1- beg) 'c-in-sws))
     ;; Ensure that an `c-in-sws' range gets broken.  Note that it isn't
     ;; safe to keep a range that was continuous before the change.  E.g:
