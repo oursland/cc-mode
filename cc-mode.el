@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.86 $
-;; Last Modified:   $Date: 1993-11-22 23:29:19 $
+;; Version:         $Revision: 3.87 $
+;; Last Modified:   $Date: 1993-11-23 18:31:33 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-22 23:29:19 $|$Revision: 3.86 $|
+;; |$Date: 1993-11-23 18:31:33 $|$Revision: 3.87 $|
 
 ;;; Code:
 
@@ -492,7 +492,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.86 $
+  "Major mode for editing C++ code.  $Revision: 3.87 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -522,7 +522,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.86 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.87 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -760,6 +760,9 @@ Optional argument has the following meanings when supplied:
        (prog1
 	   (point)
 	 (goto-char here))
+       ;; workaround for an Emacs18 bug -- blech! Well, at least it
+       ;; doesn't hurt for v19
+       (,@ nil)
        )))
 
 (defmacro cc-auto-newline ()
@@ -834,8 +837,11 @@ the brace is inserted inside a literal."
 	 (literal (cc-in-literal bod))
 	 ;; we want to inhibit blinking the paren since this will be
 	 ;; most disruptive. we'll blink it ourselves later on
-	 (old-blink-paren-function blink-paren-function)
-	 (blink-paren-function nil)
+	 (old-blink-paren (if (memq 'v18 cc-emacs-features)
+			      blink-paren-hook
+			    blink-paren-function))
+	 blink-paren-function		; emacs19
+	 blink-paren-hook		; emacs18
 	 semantics newlines)
     (if (or literal
 	    arg
@@ -908,10 +914,12 @@ the brace is inserted inside a literal."
 	    (cc-indent-via-language-element)))
       ;; blink the paren
       (and (= last-command-char ?\})
-	   old-blink-paren-function
+	   old-blink-paren
 	   (save-excursion
 	     (cc-backward-syntactic-ws bod)
-	     (funcall old-blink-paren-function)))
+	     (if (memq 'v18 cc-emacs-features)
+		 (run-hooks old-blink-paren)
+	       (funcall old-blink-paren))))
       )))
       
 (defun cc-electric-slash (arg)
@@ -1269,7 +1277,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
   (interactive)
   (push-mark (point))
   (end-of-defun)
-  (push-mark (point) nil t)
+  ;; emacs 18/19 compatibility -- blech!
+  (if (memq 'v18 cc-emacs-features)
+      (funcall 'push-mark)
+    (funcall 'push-mark (point) nil t))
   (beginning-of-defun)
   (backward-paragraph))
 
@@ -2388,7 +2399,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.86 $"
+(defconst cc-version "$Revision: 3.87 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
