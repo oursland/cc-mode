@@ -139,8 +139,8 @@
    (save-excursion
      (let ((par-pos (c-safe (scan-lists (point) -1 0))))
        (when par-pos
-         (goto-char par-pos) ; back over "(...)"
-         (c-backward-token-1)
+         (goto-char par-pos)            ; back over "(...)"
+         (c-backward-token-1)           ; BOB isn't a problem.
          (or (looking-at "\\(if\\|for\\)\\>\\([^_]\\|$\\)")
              (and (looking-at "while\\>\\([^_]\\|$\\)") ; Ensure this isn't a do-while.
                   (not (eq (c-beginning-of-statement-1 do-lim)
@@ -150,17 +150,20 @@
   ;; Are we just after the ) in "function foo (bar)" ?
   (and (eq (char-before) ?\))
        (save-excursion
-         (goto-char (c-safe (scan-lists (point) -1 0))) ; back over "(...)"
-         (c-backward-token-1)
-         (and (looking-at "[_a-zA-Z][_a-zA-Z0-9]*\\>")
-              (progn (c-backward-token-1)
-                     (looking-at "func\\(tion\\)?\\>")))))) ; Abbreviation for gawk 3.1, ACM 2002/5/29
+         (let ((par-pos (c-safe (scan-lists (point) -1 0))))
+           (when par-pos
+             (goto-char par-pos)        ; back over "(...)"
+             (c-backward-token-1)       ; BOB isn't a problem
+             (and (looking-at "[_a-zA-Z][_a-zA-Z0-9]*\\>")
+                  (progn (c-backward-token-1)
+                         (looking-at "func\\(tion\\)?\\>"))))))))
 
+;; 2002/11/8:  FIXME!  Check c-backward-token-1/2 for success (0 return code).
 (defun c-awk-after-continue-token ()
 ;; Are we just after a token which can be continued onto the next line without
 ;; a backslash?
   (save-excursion
-    (c-backward-token-1)
+    (c-backward-token-1)              ; FIXME 2002/10/27.  What if this fails?
     (if (and (looking-at "[&|]") (not (bobp)))
         (backward-char)) ; c-backward-token-1 doesn't do this :-(
     (looking-at "[,{?:]\\|&&\\|||\\|do\\>\\|else\\>")))
@@ -171,11 +174,13 @@
   (or (eq (char-before) ?\})
       (and
        (eq (char-before) ?\;)
-       (not (save-excursion
-              (goto-char (c-safe (scan-lists (point) -1 1))) ; go back to containing (
-              (and (looking-at "(")
-                   (c-backward-token-1)
-                   (looking-at "for\\>")))))))
+       (save-excursion
+         (let ((par-pos (c-safe (scan-lists (point) -1 1))))
+           (when par-pos
+             (goto-char par-pos) ; go back to containing (
+             (not (and (looking-at "(")
+                       (c-backward-token-1) ; BOB isn't a problem
+                       (looking-at "for\\>")))))))))
 
 (defun c-awk-back-to-contentful-text-or-NL-prop ()
   ;;  Move back to just after the first found of either (i) a line which has
@@ -193,7 +198,7 @@
   ;;  is to ensure that the various backward-comment functions will work
   ;;  properly.
   (let ((nl-prop nil)
-        bol-pos bsws-pos) ; "backward-syntactic-ws position"
+        bol-pos bsws-pos) ; starting pos for a backward-syntactic-ws call.
     (while ;; We are at a BOL here.  Go back one line each iteration.
         (and
          (not (bobp))
@@ -202,7 +207,8 @@
                 (setq bsws-pos (point))
                 ;; N.B. the following function will not go back past an EOL if
                 ;; there is an open string (without \) on the previous line.
-                (or (/= (c-backward-syntactic-ws bol-pos) bsws-pos)
+                (c-backward-syntactic-ws bol-pos)
+                (or (/= (point) bsws-pos)
                     (progn (setq nl-prop ?\;)
                            nil)))
          ;; If we had a backslash at EOL, c-backward-syntactic-ws will
@@ -685,15 +691,6 @@
           (setq anchor-state-/div nil)))
     nil))
 
-;; FIXME!! Temporary definition, pending integration with cc-fonts.el.  ACM
-;; 2002/9/24.
-(if (not (boundp 'c-preprocessor-face))
-  (if (boundp 'font-lock-builtin-face)
-      ; (defvaralias 'c-preprocessor-face 'font-lock-builtin-face) ; GNU Emacs
-      (defvar c-preprocessor-face 'font-lock-builtin-face) ; GNU Emacs
-    ; (defvaralias 'c-preprocessor-face 'font-lock-preprocessor-face))) ; Xemacs
-    (defvar c-preprocessor-face 'font-lock-preprocessor-face))) ; Xemacs
-
 ;; Regexps written with help from Peter Galbraith <galbraith@mixing.qc.dfo.ca>.
 
 ;; Take GNU Emacs's 'words out of the following regexp-opts.  They dont work
@@ -741,7 +738,7 @@ in\\|out\\)\\)\\|dev/user\\)\\>" 'font-lock-keyword-face)
                       "or" "print" "printf" "rand" "rshift" "sin" "split"
                       "sprintf" "sqrt" "srand" "strftime" "strtonum" "sub"
                       "substr" "systime" "time" "tolower" "toupper" "xor") t)
-                   "\\>") 1 c-preprocessor-face)
+                   "\\>") 0 c-preprocessor-face)
 
      ;; gawk debugging keywords.  (ACM, 2002/7/21)
      (list (concat "\\<" (c-regexp-opt '("adump" "stopme") t) "\\>")
@@ -781,7 +778,8 @@ in\\|out\\)\\)\\|dev/user\\)\\>" 'font-lock-keyword-face)
   (save-restriction
     (save-excursion
       (setq c-awk-old-EOLL (c-awk-end-of-logical-line end))
-      (c-awk-clear-NL-props end (point-max)))))
+      (c-save-buffer-state nil
+       (c-awk-clear-NL-props end (point-max))))))
 
 (defun c-awk-end-of-change-region (beg end old-len)
   ;; Find the end of the region which needs to be font-locked after a change.
@@ -802,7 +800,9 @@ in\\|out\\)\\)\\|dev/user\\)\\>" 'font-lock-keyword-face)
         (save-excursion
           (setq end (c-awk-end-of-change-region beg end old-len))
           (c-awk-beginning-of-logical-line beg)
-          (c-awk-set-syntax-table-properties end)))))
+          (c-save-buffer-state nil ; So that read-only status isn't affected.
+                                   ; (e.g. when first loading the buffer)
+              (c-awk-set-syntax-table-properties end))))))
 
 ;; ACM 2002/5/25.  When font-locking is invoked by a buffer change, the region
 ;; specified by the font-lock after-change function must be expanded to
@@ -828,29 +828,6 @@ in\\|out\\)\\)\\|dev/user\\)\\>" 'font-lock-keyword-face)
 (c-awk-advise-fl-for-awk-region lazy-lock-defer-line-after-change)
 
 ;; ACM 2002/9/29.  Functions for C-M-a and C-M-e
-
-;; FIXME!!! The next two are TEMPORARY (they exist in the full version of
-;; cc-defs.el) and are to be removed on a full merge before release.
-(defmacro c-save-buffer-state (varlist &rest body)
-  "Bind variables according to VARLIST (in `let*' style) and eval BODY,
-then restore the buffer state under the assumption that no significant
-modification has been made.  A change is considered significant if it
-affected the buffer text in any way that wasn't completely restored
-again.  Changes in text properties like `face' or `syntax-table' are
-considered insignificant.  This macro allows text-properties to be
-changed, even in a read-only buffer.
-
-The return value is the value of the last form in BODY."
-  `(let* (,@(append '((modified (buffer-modified-p)) (buffer-undo-list t)
-		      (inhibit-read-only t) (inhibit-point-motion-hooks t)
-		      before-change-functions after-change-functions
-		      deactivate-mark)
-		    varlist))
-     (prog1 (progn ,@body)
-       (and (not modified)
-	    (buffer-modified-p)
-	    (set-buffer-modified-p nil)))))
-(put 'c-save-buffer-state 'lisp-indent-function 1)
 
 (defconst c-awk-terminated-regexp-or-string-here-re "\\=\\s\"\\S\"*\\s\"")
 ;; Matches a terminated string/regexp (utilising syntax-table properties).
