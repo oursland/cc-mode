@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-24 22:02:47 $
-;; Version:         $Revision: 2.3 $
+;; Last Modified:   $Date: 1992-04-27 16:03:29 $
+;; Version:         $Revision: 2.4 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-24 22:02:47 $|$Revision: 2.3 $|
+;; |$Date: 1992-04-27 16:03:29 $|$Revision: 2.4 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -135,7 +135,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.3 $
+  "Major mode for editing C++ code.  $Revision: 2.4 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -834,7 +834,10 @@ Returns nil if line starts inside a string, t if in a comment."
 		    (looking-at "\\*/")))
 	     (search-backward "/*" lim 'move))
 	    ((and
-	      (search-backward "//" (max (point-bol) lim) 'move)
+	      (let ((sblim (max (point-bol) lim)))
+		(if (< (point) sblim)
+		    nil
+		  (search-backward "//" (max (point-bol) lim) 'move)))
 	      (not (c++-in-open-string-p))))
 	  (t (beginning-of-line)
 	     (skip-chars-forward " \t")
@@ -1246,7 +1249,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.3 $"
+(defconst c++-version "$Revision: 2.4 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
