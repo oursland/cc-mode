@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-18 14:50:28 $
-;; Version:         $Revision: 2.115 $
+;; Last Modified:   $Date: 1992-06-18 15:10:04 $
+;; Version:         $Revision: 2.116 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-18 14:50:28 $|$Revision: 2.115 $|
+;; |$Date: 1992-06-18 15:10:04 $|$Revision: 2.116 $|
 
 
 ;; ======================================================================
@@ -231,7 +231,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.115 $
+  "Major mode for editing C++ code.  $Revision: 2.116 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -581,7 +581,7 @@ backward-delete-char-untabify."
       (set-marker here (point))
       (if (memq 'alignleft c++-electric-pound-behavior)
 	  (beginning-of-line))
-      (self-insert-command arg)
+      (insert-before-markers (make-string arg last-command-char))
       (if (not bolp)
 	  (goto-char here))
       (set-marker here nil))))
@@ -1890,7 +1890,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.115 $"
+(defconst c++-version "$Revision: 2.116 $"
   "c++-mode version number.")
 
 (defun c++-version ()
