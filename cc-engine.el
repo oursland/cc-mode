@@ -4387,12 +4387,9 @@ comment at the start of cc-engine.el for more info."
 	 (progn
 	   ;; Check for keyword.  We go to the last symbol in
 	   ;; `c-identifier-key' first.
-	   (if (eq c-identifier-key c-symbol-key)
-	       (setq id-start (point)
-		     id-end (match-end 0))
-	     (goto-char (setq id-end (match-end 0)))
-	     (if (c-simple-skip-symbol-backward)
-		 (setq id-start (point))))
+	   (goto-char (setq id-end (match-end 0)))
+	   (c-simple-skip-symbol-backward)
+	   (setq id-start (point))
 
 	   (if (looking-at c-keywords-regexp)
 	       (when (and (c-major-mode-is 'c++-mode)
@@ -4459,7 +4456,11 @@ comment at the start of cc-engine.el for more info."
 
 		 nil)
 
-	     (when id-start
+	     ;; `id-start' is equal to `id-end' if we've jumped over
+	     ;; an identifier that doesn't end with a symbol token.
+	     ;; That can occur e.g. for Java import directives on the
+	     ;; form "foo.bar.*".
+	     (when (and id-start (/= id-start id-end))
 	       (setq c-last-identifier-range
 		     (cons id-start id-end)))
 	     (goto-char id-end)
