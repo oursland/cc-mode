@@ -1852,8 +1852,9 @@ can add this instead:
 @end example
 
 Any time you make @ccmode{} customizations at the top-level of your
-@file{.emacs} file, you will need to include the first line.
-@xref{Built-in Styles} for details.
+@file{.emacs} file, either through the use of @code{setq}'s or as above,
+or when you use the Custom interface, you will need to include the first
+line.  @xref{Built-in Styles} for details.
 
 For complex customizations, you will probably want to set up a
 @emph{style} that groups all your customizations under a single
@@ -1900,9 +1901,7 @@ what you're looking for.  These include:
 @cindex GNU style
 @item
 @code{gnu} --- coding style blessed by the Free Software Foundation
-for C code in GNU programs.  This is the default style for all newly
-created buffers, but you can change this by setting the variable
-@code{c-default-style}.
+for C code in GNU programs.
 
 @cindex K&R style
 @item
@@ -1969,6 +1968,44 @@ be captured in the @code{user} style, you will also have to change
 customizations.
 
 @end itemize
+
+@code{c-default-style} actually takes either a style name string, or an
+association list of major mode symbols to style names.  Thus you can
+control exactly which default style is used for which CC Mode language
+mode.  Here are the rules:
+
+@vindex c-style-alist
+@vindex style-alist (c-)
+@vindex c-mode-common-hook
+@vindex mode-common-hook (c-)
+@cindex c-set-style
+@cindex set-style (c-)
+@enumerate
+@item
+When @code{c-default-style} is a string, it must be an existing style
+name as found in @code{c-style-alist}.  This style is then used for all
+modes @emph{except} @code{java-mode}, where the style @samp{java} is
+used by default@footnote{This is for backwards compatibility reasons.
+The hard-coding of @code{java-mode} style is admittedly bogus!}.
+
+@item
+When @code{c-default-style} is an association list, the current major
+mode is looked up to find a style name string.  In this case, this style 
+is always used exactly as specified.
+
+@item
+If @code{c-default-style} is an association list, but the current major
+mode isn't found, then @samp{gnu} style is used for all modes except
+@code{java-mode}, where @sampe{java} style is used.
+
+@item
+In all cases, the style described in @code{c-default-style} is installed 
+@emph{before} the language hooks are run, so you can always override
+this setting by including an explicit call to @code{c-set-style} in your 
+language mode hook, or in @code{c-mode-common-hook}.
+
+@end enumerate
+
 
 @findex c-set-style
 @findex set-style (c-)
