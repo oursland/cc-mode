@@ -1,42 +1,71 @@
 \input texinfo   @c -*- texinfo -*-
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment %**start of header (This is for running Texinfo on a region)
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @setfilename  cc.info
-@settitle @code{cc-mode 4.85} documentation
-@setchapternewpage odd
+@settitle     cc-mode Documentation
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@comment @setchapternewpage odd !! we don't want blank pages !!
 @comment %**end of header (This is for running Texinfo on a region)
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment README for @file{cc-mode.el} 4.85
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
 @comment 1994/09/10 17:18:01
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@ifinfo
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment The following line inserts the copyright notice 
 @comment into the Info file.
-   Copyright @copyright{} 1988 Free Software Foundation, Inc.
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@ifinfo
+Copyright @copyright{} 1988 Free Software Foundation, Inc.
 @end ifinfo
 
-     
-@comment The titlepage section does not appear in the Info file.
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@comment !!!The titlepage section does not appear in the Info file.!!!
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @titlepage
 @sp 10
-@comment The title is printed in a large font.
-@center @titlefont{@code{cc-mode 4.85} documentation}
 
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@comment The title is printed in a large font.
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@center @titlefont{cc-mode Documentation}
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment  The following two commands start the copyright page
 @comment  for the printed manual.  This will not appear in the Info file.
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @page
 @vskip 0pt plus 1filll
 Copyright @copyright{} year copyright-owner
 @end titlepage
 
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment The Top node contains the master menu for the Info file.
 @comment This appears only in the Info file, not the printed manual.
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @node    Top,       Introduction, (dir),    (dir)
 @comment node-name, next,          previous, up
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @menu
 * Introduction::
@@ -44,27 +73,32 @@ Copyright @copyright{} year copyright-owner
 * New indentation engine::
 * Customizing indentation::
 * Frequently Asked Questions::
-* User level differences between @file{cc-mode.el} and @file{c-mode.el}::
-* User level differences between @file{cc-mode.el} and @file{c++-mode.el} 2.353::
-* For more info::
+* Sample .emacs file::
+* cc-mode.el vs. c-mode.el::
+* cc-mode.el vs. c++-mode.el 2.353::
 * Requirements::
 * Limitations and known bugs::
 * Electronic Mail::
-* @file{reporter.el} info::
+* reporter.el info::
 * User visible changes since 4.35::
 * User visible changes since 3.349::
 * User visible changes since 3.304::
 * User visible changes since 3.229::
+* Dumping cc-mode 4.85::
+* Concept Index::
 @end menu
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @node     Introduction, Getting Started, Top,      Top
 @comment  node-name,    next,            previous, up
 @chapter  Introduction
 @cindex   Introduction
 
-Welcome to @code{cc-mode}, version 4.  This is a Emacs Lisp mode for
+Welcome to @code{cc-mode}, version 4.  This is an Emacs Lisp mode for
 editing C, C++, and Objective-C in GNU Emacs.  This mode is
-decendent from @file{c-mode.el} (also called "Boring Old C Mode" or bocm
+descendant from @file{c-mode.el} (also called "Boring Old C Mode" or bocm
 :-), and @file{c++-mode.el}, version 2, which I have been maintaining
 since 1992.  @code{cc-mode} represents a significant milestone in the
 mode's life.  It has been fully merged back with Emacs 19's
@@ -74,8 +108,7 @@ controlling indentation has been developed.  More on this below.
 You can now use @code{cc-mode} to edit K&R and ANSI C, most ARM C++, and
 Objective-C programs.  See below for limitations.
 
-In lieu of a texinfo manual (which is in the works -- volunteers
-are desperately sought!), this file will describe the following:
+This manual will describe the following:
 
 @itemize @bullet
 @item
@@ -99,16 +132,13 @@ entry point.  I call it @code{cc-mode} simply to differentiate it from
 @code{c++-mode}, and @code{objc-mode} entry points are provided.  This
 file is intended to be a replacement for @file{c-mode.el} and
 @file{c++-mode.el} -- you should be able to remove them and dump Emacs
-with @file{cc-mode.el} instead.  See the file @file{DUMPING} for details
+with @file{cc-mode.el} instead. See @ref{Dumping cc-mode 4.85} for details
 on how to do this. 
 
 The major version number was incremented to 4 with the addition of
-@code{objc-mode}.
-
-This distribution contains release 4.85 of @code{cc-mode}.  See below for
-a list of changes since the last release version 4.35.  See the
-@file{MANIFEST} for a list of files that should have been included in
-this distribution.
+@code{objc-mode}. This distribution contains release 4.85 of @code{cc-mode}.
+See @ref{User visible changes since 4.35} for a list of changes since
+the last release version 4.35. 
 
 XEmacs 19.11 (formerly Lucid Emacs) now comes with @file{cc-mode.el} 4.85 
 dumped in the executable.  It has completely replaced @file{c-mode.el}
@@ -116,21 +146,15 @@ and @file{c++-mode.el}.  Both XEmacs and this distribution now contain a
 new file called @file{cc-compat.el} which should ease your transition
 from bocm to @code{cc-mode}.  It comes unguaranteed and unsupported.
 
-Note also that I am moving to a new job!  I don't yet know what
-the state of the mailing lists will be, but for a short while, I
-expect mail will get forwarded to my new address, so please
-continue to send bug reports, add/drop messages to the old
-addresses.  I'll make the appropriate announcements to the various
-newsgroups when I know more what's going to happen.  My
-@emph{tentative} new email address is given above.  No guarantees that
-will really be it, as I don't start the job until Sept. 19, 1994.
-Don't try sending mail there at least until after that date.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @node     Getting Started, New indentation engine, Introduction,      Top
 @comment  node-name,       next,                   previous,          up
 @chapter  Getting Started
 @cindex   Getting Started
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @file{cc-mode.el} works well with the 2 main branches of Emacs 19, XEmacs
 (former Lucid Emacs) and the Emacs 19 maintained by the FSF.
@@ -142,9 +166,13 @@ fundamental functionality that makes Emacs 18 support a losing
 battle.  Hence it is no longer supported and it is highly
 recommended that you upgrade to Emacs 19.  If you use @code{cc-mode}
 under Emacs 18, you're on your own.  With @code{cc-mode} version 5, Emacs
-18 support will be dropped altogether.
+18 support will be dropped altogether. Note that XEmacs 19.11 and better
+already comes with @code{cc-mode} configured for your use. You should be
+able to skip all the setup steps in this chapter, however you may want
+to read the following description over in case you encounter any
+problems in your Emacs configuration.
 
-The first thing you want to do is put @file{cc-mode.el} somewhere on your
+The first thing you will want to do is put @file{cc-mode.el} somewhere on your
 @code{load-path} where Emacs can find it.  Do a @kbd{C-h v load-path} to see
 all the directories Emacs looks at when loading a file.  If none
 of these directories are appropriate, create a new directory and
@@ -185,10 +213,10 @@ lines at the top of your @file{.emacs} file:
 
 @example
 (fmakunbound 'c-mode)
-(makunbound 'c-mode-map)
+(makunbound  'c-mode-map)
 (fmakunbound 'c++-mode)
-(makunbound 'c++-mode-map)
-(makunbound 'c-style-alist)
+(makunbound  'c++-mode-map)
+(makunbound  'c-style-alist)
 @end example
 
 After those lines you will want to add the following autoloads to
@@ -200,13 +228,9 @@ your @file{.emacs} file so that @code{cc-mode} gets loaded at the right time:
 (autoload 'objc-mode "cc-mode" "Objective-C Editing Mode" t)
 @end example
 
-Important note: XEmacs 19.11 already have @file{cc-mode.el} dumped in
-their Emacs, so if you are using that Emacs, do @emph{not} add the
-@code{*makunbound} or @code{autoload} lines above!
-
 Next, you will want to set up Emacs so that it edits C files in
 @code{c-mode}, C++ files in @code{c++-mode}, and Objective-C files in
-@code{objc-mode}. All users (including XEmacs users) should add the
+@code{objc-mode}. All users should add the
 following to your @file{.emacs} file after the @code{autoload} lines
 above.  Note that this assumes you'll be editing @code{.h} and @code{.c}
 files as C, @code{.hh}, @code{.C}, and @code{.cc} files as C++, and
@@ -214,13 +238,14 @@ files as C, @code{.hh}, @code{.C}, and @code{.cc} files as C++, and
 
 @example
 (setq auto-mode-alist
-  (append '(("\\.C$"     . c++-mode)
-	    ("\\.cc$"    . c++-mode)
-	    ("\\.hh$"    . c++-mode)
-	    ("\\.c$"     . c-mode)
-	    ("\\.h$"     . c-mode)
-	    ("\\.m$"  . objc-mode)
-	   ) auto-mode-alist))
+  (append
+    '(("\\.C$"  . c++-mode)
+      ("\\.cc$" . c++-mode)
+      ("\\.hh$" . c++-mode)
+      ("\\.c$"  . c-mode)
+      ("\\.h$"  . c-mode)
+      ("\\.m$"  . objc-mode)
+     ) auto-mode-alist))
 @end example
 
 You may already have some or all of these settings on your
@@ -236,11 +261,15 @@ or @code{objc-mode} buffer.  You should see this message in the echo area:
 Using @code{cc-mode} version 4.85
 @end example
 
-@node     New indentation engine, Customizing Indentation, Getting Started, Top
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@node     New indentation engine, Customizing indentation, Getting Started, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  New indentation engine
 @cindex   New indentation engine
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @code{cc-mode} has a new indentation engine, providing a simplified, yet
 flexible and general mechanism for customizing indentation. It
@@ -251,22 +280,23 @@ type of construct it finds.
 
 This section will briefly cover how indentation is calculated in
 @code{cc-mode}. Only enough detail will be given so that you will know
-how to customize indentation.  Plenty of examples will be given to
-help you stylize your code, but more detailed examples will be
-left to the texinfo manual (when it is complete) and your own
-exploration.  You can also contact the help address given below.
-@comment !!!!!!!!! need to add xref to help address !!!!!!!!!!!
+how to customize indentation.  You can also contact the help address
+@ref{Electronic Mail}. 
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @menu
 * Step 1 -- Syntactic Analysis::
 * Step 2 -- Indentation Calculation::
 @end menu
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Step 1 -- Syntactic Analysis, Step 2 -- Indentation Calculation, , New indentation engine
 @comment  node-name,              next,                    previous,up
 @section  Step 1 -- Syntactic Analysis
 @cindex   Step 1 -- Syntactic Analysis
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 In the first step, @code{cc-mode} looks at the line you are currently
 indenting and tries to determine the syntactic components of the
@@ -291,11 +321,11 @@ buffer (the line numbers don't actually appear in the buffer):
   Example 1:
 
     1: void swap( int& a, int& b ) 
-    2: {
+    2: @{
     3:     int tmp = a;
     4:     a = b;
     5:     b = tmp;
-    6: }
+    6: @}
 @end example
 
 We can use the command @kbd{C-c C-s} (@code{c-show-syntactic-information}) to
@@ -324,13 +354,13 @@ Here's another example:
   Example 2:
 
     1: int add( int val, int incr, int doit )
-    2: {
+    2: @{
     3:     if( doit )
-    4:         {
+    4:         @{
     5:             return( val + incr );
-    6:         }
+    6:         @}
     7:     return( val );
-    8: }
+    8: @}
 @end example
 
 Hitting @kbd{C-c C-s} on line 4 gives us:
@@ -349,10 +379,12 @@ Syntactic analysis lists can contain more than one element
 (i.e. cons cell), and syntactic symbols need not have relative
 buffer positions.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Step 2 -- Indentation Calculation, , Step 1 -- Syntactic Analysis, New indentation engine
 @comment  node-name,              next,                    previous,up
 @section  Step 2 -- Indentation Calculation
 @cindex   Step 2 -- Indentation Calculation
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 Indentation for the current line is calculated using the list of
 syntactic components derived in step 1 above.  Each component
@@ -377,11 +409,11 @@ as a reminder and a convenience the code is presented again here.
   Example 1:
 
     1: void swap( int& a, int& b ) 
-    2: {
+    2: @{
     3:     int tmp = a;
     4:     a = b;
     5:     b = tmp;
-    6: }
+    6: @}
 @end example
 
 Lets say point is on line 3 and we hit the @key{TAB} key to re-indent
@@ -407,13 +439,13 @@ indentation for the line is 4 spaces.
   Example 2:
 
     1: int add( int val, int incr, int doit )
-    2: {
+    2: @{
     3:     if( doit )
-    4:         {
+    4:         @{
     5:             return( val + incr );
-    6:         }
+    6:         @}
     7:     return( val );
-    8: }
+    8: @}
 @end example
 
 If we were to hit @key{TAB} on line 4 in example 2 above, the same basic
@@ -438,11 +470,13 @@ having to think about it in this much detail.  But when
 customizing indentation, its good to have a general idea of the
 indentation model being used.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node     Customizing indentation, Frequently Asked Questions, New indentation engine, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Customizing indentation
 @cindex   Customizing indentation
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The @code{c-offsets-alist} variable is where you customize all your
 indentations.  You simply need to decide what additional offset
@@ -473,26 +507,26 @@ style of example 2 above from:
 
 @example
     1: int add( int val, int incr, int doit )
-    2: {
+    2: @{
     3:     if( doit )
-    4:         {
+    4:         @{
     5:             return( val + incr );
-    6:         }
+    6:         @}
     7:     return( val );
-    8: }
+    8: @}
 @end example
 
     to:
 
 @example
     1: int add( int val, int incr, int doit )
-    2: {
+    2: @{
     3:     if( doit )
-    4:     {
+    4:     @{
     5:         return( val + incr );
-    6:     }
+    6:     @}
     7:     return( val );
-    8: }
+    8: @}
 @end example
 
 Since line 4 is the start of the construct we want to re-indent,
@@ -525,35 +559,42 @@ example):
 You could also set up a @emph{style} that sets this and all your
 customizations in a convenient manner.  See the variable
 @code{c-style-alist} and the command @code{c-set-style} for more
-information, or take a look at the sample @file{.emacs} file below.
+information, or take a look at the sample @file{.emacs} file
+@ref{Sample .emacs file}.
     
-@node  Frequently Asked Questions, User level differences between cc-mode.el and c-mode.el, Customizing indentation, Top
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Frequently Asked Questions, Sample .emacs file, Customizing indentation, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Frequently Asked Questions
 @cindex   Frequently Asked Questions
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @quotation
 
     Q. How do I re-indent the whole file?
+
     A. Visit the file and hit @kbd{C-x h} to mark the whole buffer. Then
        hit @kbd{@key{ESC} C-\} to re-indent the entire region which you've just
        marked.
 
     Q. How do I re-indent the entire function? @kbd{@key{ESC} C-x} doesn't work
+
     A. @kbd{@key{ESC} C-x} is reserved for future Emacs use.  To re-indent the
        entire function hit @kbd{C-c C-q}.
 
     Q. How do I re-indent the current block?
+
     A. First move to the brace which opens the block with @kbd{@key{ESC} C-u},
        then re-indent that expression with @kbd{@key{ESC} C-q}.
 
     Q. Why doesn't the @key{RET} key indent the line to where the new text
        should go after inserting the newline?
+
     A. Emacs' convention is that @key{RET} just add a new line, and that
        @key{LFD} adds a newline and indents.  You can make @key{RET} do
        this too by adding this to your @code{c-mode-common-hook} 
-       (see the sample @file{.emacs} file below):
+       (see the sample @file{.emacs} file @ref{Sample .emacs file}):
 
 @example
        (define-key c-mode-map "\C-m" 'newline-and-indent)
@@ -565,24 +606,33 @@ information, or take a look at the sample @file{.emacs} file below.
     Q. I put @code{(c-set-offset 'substatement-open 0)} in my
        @file{.emacs} file and I get an error saying that @code{c-set-offset}'s
        function definition is void.
+
     A. Since @code{cc-mode} is autoloaded, it is typically not loaded into
        your Emacs session by the time of the @code{c-set-offset} call.
        Instead of putting this in your top-level @file{.emacs} file, put the
        call to @code{c-set-offset} in your @code{c-mode-common-hook}.  See the
-       sample @file{.emacs} file below for details.
+       sample @file{.emacs} file @ref{Sample .emacs file} for details.
 
 @end quotation
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Sample .emacs file, cc-mode.el vs. c-mode.el, Frequently Asked Questions, Top
+@comment  node-name,              next,                    previous,up
+
+@chapter  Sample @file{.emacs} file
+@cindex   Sample @file{.emacs} file
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @example
 
 ;; Sample .emacs file
 
-;; Of course there are lots of other indentation features that I
-;; haven't touched on here.  Until the texinfo is complete, you're
-;; going to have to explore these on your own.  Here's a sample .emacs
-;; file that might help you along the way.  Just hit "C-x C-p", then
-;; "ESC w" to copy this region, then paste it into your .emacs file
-;; with "C-y".  You may want to change some of the actual values.
+;; Of  course there are lots of  other  indentation features that I haven't
+;; touched on here.  Here's a sample .emacs file  that might help you along
+;; the way.  Just hit  "C-x C-p", then "ESC  w" to  copy this region,  then
+;; paste it into your .emacs file with "C-y".  You  may want to change some
+;; of the actual values.
 
 (defconst my-c-style
   '("PERSONAL"
@@ -606,6 +656,7 @@ information, or take a look at the sample @file{.emacs} file below.
     (c-echo-syntactic-information-p . t)
     )
   "My C Programming Style")
+  )
 
 ;; Customizations for both c-mode and c++-mode
 (defun my-c-mode-common-hook ()
@@ -633,15 +684,16 @@ information, or take a look at the sample @file{.emacs} file below.
 
 @end example
 
-@node  User level differences between cc-mode.el and c-mode.el, User level differences between cc-mode.el and c++-mode.el 2.353, Frequently Asked Questions, Top
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  cc-mode.el vs. c-mode.el, cc-mode.el vs. c++-mode.el 2.353, Sample .emacs file, Top
 @comment  node-name,              next,                    previous,up
-@chapter  User level differences between @file{cc-mode.el} and @file{c-mode.el}
-@cindex   User level differences between @file{cc-mode.el} and @file{c-mode.el}
-@comment  User level differences between @file{cc-mode.el} and @file{c-mode.el} (as
-@comment  distributed with FSF Emacs 19.22).
+@chapter  @file{cc-mode.el} vs. @file{c-mode.el}
+@cindex   @file{cc-mode.el} vs. @file{c-mode.el}
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @itemize @bullet
 @item
-New indentation engine (described above).
+New indentation engine @ref{New indentation engine}.
 
 @item
 Direct support for C++ and Objective-C editing.
@@ -677,9 +729,12 @@ Expanded semantics for variables:
 @end example
 
 @item
-New @code{minor-mode} features: @code{auto-newline} and
+New @code{minor-mode} features:
+@example
+@code{auto-newline}
 @code{hungry-delete-key} 
 (do @kbd{C-h f @code{c-toggle-auto-hungry-state} @key{RET}}  for more info).
+@end example
 
 @item
 New commands:
@@ -728,15 +783,16 @@ c-continued-brace-offset
 
 @end itemize
 
-@node  User level differences between cc-mode.el and c++-mode.el 2.353, For more info, User level differences between cc-mode.el and c-mode.el, Top
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  cc-mode.el vs. c++-mode.el 2.353, Requirements , cc-mode.el vs. c-mode.el, Top
 @comment  node-name,              next,                    previous,up
-@chapter  User level differences between @file{cc-mode.el} and @file{c++-mode.el} 2.353
-@cindex   User level differences between @file{cc-mode.el} and @file{c++-mode.el} 2.353
-@comment User level differences between @file{cc-mode.el} and @file{c++-mode.el} 2.353
-@comment  (a.k.a cplus-md1.el in FSF 19):
+@chapter  @file{cc-mode.el} vs. @file{c++-mode.el} 2.353
+@cindex   @file{cc-mode.el} vs. @file{c++-mode.el} 2.353
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @itemize @bullet
 @item
-New Indentation Engine (described above).
+New Indentation Engine. See @ref{New indentation engine}.
 
 @item
 General rename of all variables and defuns from @code{c++-<thing>} to
@@ -814,33 +870,26 @@ c++-uncomment-region
 
 @end itemize
 
-@node  For more info, Requirements, User level differences between cc-mode.el and c++-mode.el 2.353, Top
-@comment  node-name,              next,                    previous,up
-@chapter  For more info
-@cindex   For more info
-@comment * For more information
-
-The best thing to do at this point is poke around the source code.
-Eventually there will be an extensive texinfo manual describing
-the mode in greater detail.  Can I say this again?  Volunteers to
-help finish the manual are desperately sought!
-
-@node  Requirements, Limitations and known bugs, For more info, Top
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Requirements, Limitations and known bugs, cc-mode.el vs. c++-mode.el 2.353, Top
 @comment  node-name,              next,                    previous,up
 @chapter  Requirements
 @cindex   Requirements
-@comment* Requirements
+@comment * Requirements
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @file{cc-mode.el} requires @file{reporter.el} for submission of bug reports.
-@file{reporter.el} is distributed with the latest FSF and Lucid Emacs
-19's.  See below for Emacs Lisp Archive anonymous ftp'ing
+@file{reporter.el} is distributed with the latest FSF and XEmacs
+19's.  See @ref{reporter.el info} for Emacs Lisp Archive anonymous ftp'ing
 instructions for those of you who are using older Emacsen.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Limitations and known bugs, Electronic Mail, Requirements, Top
 @comment  node-name,              next,                    previous,up
 @chapter  Limitations and Known Bugs
 @cindex   Limitations and Known Bugs
 @comment * Limitations and Known Bugs
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @itemize @bullet
 @item
@@ -852,10 +901,6 @@ Re-indenting large regions or expressions can be slow.
 @item
 Use with Emacs 18 can be slow and annoying. You should seriously
 consider upgrading to Emacs 19.
-
-@item
-Indentation of some nested switch constructs are known to be
-broken.
 
 @item
 There is still some weird behavior when filling C block comments.
@@ -877,8 +922,9 @@ Make sure you include a stripped down code example.
 For other help or suggestions, send a message to
 @code{cc-mode-help@@anthem.nlm.nih.gov}.
 
-To get on the beta testers list, send an add message to
-@code{cc-mode-victims-request@@anthem.nlm.nih.gov}.  Note that this is a
+Send an add message to
+@code{cc-mode-victims-request@@anthem.nlm.nih.gov}
+to get on the beta testers list.  Note that this is a
 fairly technical discussion list so you should be moderately Emacs
 lisp fluent and have anonymous ftp access.
 
@@ -910,13 +956,13 @@ reporter (1.23)	      02-Feb-1993
 
 @end example
 
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  User visible changes since 4.35, User visible changes since 3.349, reporter.el info, Top
 @comment  node-name,              next,                    previous,up
 @chapter  User visible changes since 4.35
 @cindex   User visible changes since 4.35
-@comment * User visible changes since 4.35
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@comment !!!!!!!!!!!!!!!!!!! TO do !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @itemize @bullet
 @item
 @code{c-set-offset} and related functions and variables can now accept
@@ -956,11 +1002,13 @@ Some performance enhancements, but nothing radically better.
 
 @end itemize
 
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  User visible changes since 3.349, User visible changes since 3.304, User visible changes since 4.35, Top
 @comment  node-name,              next,                    previous,up
 @chapter  User visible changes since 3.349
 @cindex   User visible changes since 3.349
-@comment * User visible changes since 3.349
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @itemize @bullet
 @item
 New @code{major-mode}: @code{objc-mode} for Objective-C editing. Also added,
@@ -1015,11 +1063,13 @@ Usual gobs of bug fixes.
 
 @end itemize
 
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  User visible changes since 3.304, User visible changes since 3.229, User visible changes since 3.349, Top
 @comment  node-name,              next,                    previous,up
-@chapter  User-visible Changes Since 3.304
-@cindex   User-visible Changes Since 3.304
-@comment * User-visible Changes Since 3.304
+@chapter  User visible changes since 3.304
+@cindex   User visible changes since 3.304
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @itemize @bullet
 @item
 You can now specify `hanginess' of close braces. See
@@ -1027,7 +1077,7 @@ You can now specify `hanginess' of close braces. See
 
 @item
 New syntactic symbol `@code{substatement-open}' to control indentation of
-braces which open a substatement block (i.e. @code{if}, @code{for}, ...).  
+braces which open a substatement block (i.e. @code{if}, @code{for}, @dots{}).  
 @kbd{C-c C-s} used to call these 
 @code{((block-open . ??) (substatement . ??))}, but 
 now they are just @code{((substatement-open . ??))}.  @emph{Warning:
@@ -1053,8 +1103,9 @@ New buffer-local variable @code{c-comment-start-regexp}. Useful for using
 
 @item
 @code{c++-mode} handles @code{try}/@code{catch} blocks.  Assigns them
-`@code{substatement}' syntax similar to @code{if}/@code{for}/@code{while}/...
-@comment !!!!!!!!!!!!!! check for ellipses here !!!!!!!!!!!!!
+`@code{substatement}' syntax similar to @code{if}, @code{for},
+@code{while}, @dots{}
+
 @item
 @code{c-indent-via-language-element} renamed to @code{c-indent-line} for
 @code{awk-mode}, BOCM compatibility.
@@ -1064,11 +1115,13 @@ Usual gobs of bug fixes.
 
 @end itemize
 
-@node  User visible changes since 3.229, Concept Index, User visible changes since 3.304, Top
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  User visible changes since 3.229, Dumping cc-mode 4.85, User visible changes since 3.304, Top
 @comment  node-name,              next,                    previous,up
-@chapter  User-visible Changes Since 3.229
-@cindex   User-visible Changes Since 3.229
-@comment * User-visible Changes Since 3.229
+@chapter  User visible changes since 3.229
+@cindex   User visible changes since 3.229
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @itemize @bullet
 @item
 Tons 'o performance enhancements.
@@ -1099,10 +1152,9 @@ indentation for the first line in a top-level function or class.
 @code{c-scope-operator} moved to @kbd{C-c :}.
 
 @item 
-@comment !!!!!!!!!!!! add citation here !!!!!!!!!!!!!!!!!!!!
 New coding style added to @code{c-style-alist}: Ellemtel.  This supports
-the C++ coding style defined in "Programming in C++, Rules and
-Recommendations", Erik Nyquist and Mats Henricson, Ellemtel,
+the C++ coding style defined in @cite{Programming in C++, Rules and
+Recommendations}, by Erik Nyquist and Mats Henricson, Ellemtel,
 ftp'able from @code{euagate.eua.ericsson.se}.
 
 @item
@@ -1121,11 +1173,155 @@ the same line as the block opening brace.
 
 @end itemize
 
-@node    Concept Index,    ,  User visible changes since 3.229, Top
+
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Dumping cc-mode 4.85, Concept Index, User visible changes since 3.229, Top
+@comment node-name,    next,  previous,      up
+@chapter  Dumping @code{cc-mode} 4.85
+@cindex   Dumping @code{cc-mode} 4.85
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+For now, you're going to be kind of on your own, but here are my, and
+other, experiences in dumping Emacs with @code{cc-mode}.  If you like
+@file{cc-mode.el}, you should lobby RMS to adopt it as @emph{the}
+@code{c-mode}, 
+@code{c++-mode}, and @code{objc-mode} for FSF's Emacs.  Note that if
+you are using 
+XEmacs 19.11 (formerly Lucid Emacs), you do not need to do any of
+this.  XEmacs comes with @code{cc-mode} already dumped.  Yay!
+
+Do this:
+
+@example
+    % cd <wherever_c_mode.el_is>
+    % mv c-mode.el c-mode.el.bak
+    % mv cc-mode.el c-mode.el
+@end example
+
+Then @code{byte-compile} @file{c-mode.el} to produce @file{c-mode.elc}.
+
+In both FSF 19.22 and Lucid 19.9 @file{version.el} is loaded too late in
+the @file{loadup.el} file.  @file{cc-mode.el} depends on the value of
+@code{emacs-version} so you need to move the load of @file{version.el}
+higher up in the file. 
+
+You may need to crank up @code{PURESIZE} in @file{src/pursize.h}.  I
+found I had to add about 14k, others have reported an increase of about
+23k, but of course YMMV.
+
+Tell your users not to add the @code{f/makunbound}'s or @code{autoload}s to
+their @file{.emacs} files, since they'll now get @code{cc-mode} for free.
+
+In Lucid  19.9,   @file{loaddefs.el}  contains a  lot  of  automatically
+generated autoload  definitions which will cause  warnings when it finds
+pointers to  doc strings.  You  can either  ignore these  warnings (they
+won't hurt      you),  or you    can comment   out   the   autoloads for
+@code{c++-mode} and @code{c-style}.  Or you can regenerate the automatic
+autoloads  once  you've  moved @file{c++-mode.el}   and @file{c-mode.el}
+aside, but you'll have to figure this part out by yourself.
+
+I've also been told that under FSF Emacs 19, you  have to get rid of the
+autoloads   for  @file{cplus-md*.el} since  @file{c++-mode.el} has  been
+renamed. You should also do  an @code{update-directory-autoloads} on the
+lisp directory before you redump.
+
+
+Andrew Hall @code{<fmrco!ahall@@uunet.uu.net>} provides this diff which
+applies to FSF's Emacs 19.25.90 @file{loaddefs.el} file.  This zaps the
+autoloads for @file{cplus-md.el} and @file{c-mode.el} so you shouldn't
+need to do an @code{update-directory-autoloads}.
+
+@example
+*** loaddefs.el.orig	Sat Jul  2 15:39:30 1994
+--- loaddefs.el	Thu Jul 21 12:23:22 1994
+***************
+*** 1959,2035 ****
+  
+  ;;;***
+  
+- ;;;### (autoloads (c++-mode) "cplus-md" "cplus-md.el" (11649 1462))
+- ;;; Generated autoloads from cplus-md.el
+- 
+- (autoload (quote c++-mode) "cplus-md" "\
+- Major mode for editing C++ code.  Very much like editing C code.
+- Expression and list commands understand all C++ brackets.
+- Tab at left margin indents for C++ code
+- Comments are delimited with /* ... */ @{or with // ... <newline>@}
+- Paragraphs are separated by blank lines only.
+- Delete converts tabs to spaces as it moves back.
+- \\@{c++-mode-map@}
+- Variables controlling indentation style:
+-  c-tab-always-indent
+-     Non-nil means TAB in C mode should always reindent the current line,
+-     regardless of where in the line point is when the TAB command is used.
+-     Default is t.
+-  c-auto-newline
+-     Non-nil means automatically newline before and after braces,
+-     and after colons and semicolons, inserted in C code.
+-  c-indent-level
+-     Indentation of C statements within surrounding block.
+-     The surrounding block's indentation is the indentation
+-     of the line on which the open-brace appears.
+-  c-continued-statement-offset
+-     Extra indentation given to a substatement, such as the
+-     then-clause of an if or body of a while.
+-  c-continued-brace-offset
+-     Extra indentation given to a brace that starts a substatement.
+-     This is in addition to c-continued-statement-offset.
+-  c-brace-offset
+-     Extra indentation for line if it starts with an open brace.
+-  c-brace-imaginary-offset
+-     An open brace following other text is treated as if it were
+-     this far to the right of the start of its line.
+-  c-argdecl-indent
+-     Indentation level of declarations of C function arguments.
+-  c-label-offset
+-     Extra indentation for line that is a label, or case or ``default:'', or
+-     ``public:'' or ``private:'', or ``protected:''.
+-  c++-electric-colon
+-     If non-nil at invocation of c++-mode (t is the default) colon electricly
+-     indents.
+-  c++-empty-arglist-indent
+-     If non-nil, a function declaration or invocation which ends a line with a
+-     left paren is indented this many extra spaces, instead of flush with the
+-     left paren.
+-  c++-friend-offset
+-     Offset of C++ friend declarations relative to member declarations.
+-  c++-member-init-indent
+-     Indentation level of member initializations in function declarations,
+-     if they are on a separate line beginning with a colon.
+-  c++-continued-member-init-offset
+-     Extra indentation for continuation lines of member initializations; NIL
+-     means to align with previous initializations rather than with the colon.
+- 
+- Settings for K&R, BSD, and Stroustrup indentation styles are
+-   c-indent-level                5    8    4
+-   c-continued-statement-offset  5    8    4
+-   c-continued-brace-offset                0
+-   c-brace-offset               -5   -8    0
+-   c-brace-imaginary-offset                0
+-   c-argdecl-indent              0    8    4
+-   c-label-offset               -5   -8   -4
+-   c++-empty-arglist-indent                4
+-   c++-friend-offset                       0
+- 
+- Turning on C++ mode calls the value of the variable `c++-mode-hook' with
+- no args if that value is non-nil." t nil)
+- 
+- ;;;***
+- 
+  ;;;### (autoloads (dabbrev-expand) "dabbrev" "dabbrev.el" (11577 36858))
+  ;;; Generated autoloads from dabbrev.el
+  
+--- 1959,1964 ----
+@end example
+
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Concept Index,    ,  Dumping cc-mode 4.85, Top
 @comment node-name,    next,  previous,      up
 @unnumbered Concept Index
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @printindex cp
-
 @contents
 @bye
