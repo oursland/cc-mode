@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-08 15:36:35 $
-;; Version:         $Revision: 2.36 $
+;; Last Modified:   $Date: 1992-05-08 15:55:08 $
+;; Version:         $Revision: 2.37 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-08 15:36:35 $|$Revision: 2.36 $|
+;; |$Date: 1992-05-08 15:55:08 $|$Revision: 2.37 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -65,8 +65,12 @@
   (define-key c++-mode-map "\C-c\C-t"  'c++-toggle-auto-hungry-state)
   (define-key c++-mode-map "\C-c\C-h"  'c++-toggle-hungry-state)
   (define-key c++-mode-map "\C-c\C-a"  'c++-toggle-auto-state)
-  (define-key c++-mode-map "\C-c'"     'c++-tame-ticks)
-  (define-key c++-mode-map "'"         'c++-electric-tick)
+  (define-key c++-mode-map "\C-c'"     'c++-tame-comments)
+  (define-key c++-mode-map "'"         'c++-tame-insert)
+  (define-key c++-mode-map "["         'c++-tame-insert)
+  (define-key c++-mode-map "]"         'c++-tame-insert)
+  (define-key c++-mode-map "("         'c++-tame-insert)
+  (define-key c++-mode-map ")"         'c++-tame-insert)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -154,7 +158,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.36 $
+  "Major mode for editing C++ code.  $Revision: 2.37 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -400,10 +404,12 @@ Optional argument has the following meanings when supplied:
 		       (t t))))
     (c++-set-auto-hungry-state auto hungry)))
 
-(defun c++-electric-tick (arg)
-  "Safely inserts single quote characters inside comment regions.
-This is necessary to work around a syntax bug in emacs' scan-lists
-function. This bug still exists in emacs v18.58."
+(defun c++-tame-insert (arg)
+  "Safely inserts certain troublesome characters in comment regions.
+Because of a syntax bug in emacs' scan-lists function, characters with
+string or parenthesis syntax must be escaped with a backslash or lots
+of things get messed up. Unfortunately, setting
+parse-sexp-ignore-comments to non-nil does not fix the problem."
   (interactive "p")
   (if (c++-in-comment-p)
       (insert "\\"))
@@ -454,6 +460,8 @@ backward-delete-char-untabify."
 		     (c++-indent-line))
 		   t)))
 	(progn
+	  (if (c++-in-comment-p)
+	      (insert "\\"))
 	  (insert last-command-char)
 	  (let ((here (make-marker)) mbeg mend)
 	    (set-marker here (point))
@@ -1228,14 +1236,14 @@ line."
 ;;; this page contains functions which try to tame single quotes in
 ;;; comment regions
 
-(defun c++-tame-ticks ()
+(defun c++-tame-comments ()
   "Backslashifies all single quotes in comment regions found in the buffer.
 This is the best available workaround for an emacs syntax bug in
 scan-lists which exists at least as recently as v18.58"
   (interactive)
   (save-excursion
     (beginning-of-buffer)
-    (while (re-search-forward "[^\\]'" (point-max) 'move)
+    (while (re-search-forward "[^\\][][{}()']" (point-max) 'move)
       (if (c++-in-comment-p)
 	  (progn (forward-char -1)
 		 (insert "\\"))))))
@@ -1473,7 +1481,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.36 $"
+(defconst c++-version "$Revision: 2.37 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
