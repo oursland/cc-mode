@@ -766,13 +766,16 @@ other easily recognizable things.  Used on level 2 and higher."
 ;; `c-fl-decl-syntactic-pos', or nil if there's no such match.
 
 (defmacro c-fl-decl-prefix-search ()
+  ;; This is a macro instead of a defsubst since there are lots of unbound
+  ;; variables.
   '(while (and (setq match (re-search-forward c-decl-prefix-re nil 'move))
-	       (if (memq (get-text-property (setq match-pos (1- (point)))
+	       (if (memq (get-text-property (setq match-pos (1- (match-end 1)))
 					    'face)
 			 '(font-lock-comment-face font-lock-string-face))
 		   t
 		 ;; Skip forward past comments only, to set the position to
 		 ;; continue at, so we don't skip macros.
+		 (goto-char (match-end 1))
 		 (c-forward-comments)
 		 (setq continue-pos (point))
 		 nil))
@@ -935,6 +938,7 @@ other easily recognizable things.  Used on level 2 and higher."
 			   match-pos (point-min)
 			   continue-pos (point)))
 	    (backward-char)
+	    (or (bobp) (backward-char))
 	    (c-fl-decl-prefix-search))
 
 	  ;; Advance `continue-pos' if we got a hit before the start
@@ -1025,6 +1029,9 @@ other easily recognizable things.  Used on level 2 and higher."
 	      (throw 'continue t))
 	    (narrow-to-region (point-min) macro-end))
 
+	  ;; `start-pos' is used below to point to the start of the first
+	  ;; type, i.e. after any leading specifiers.  It might also point at
+	  ;; the beginning of the preceding syntactic whitespace.
 	  (setq start-pos (point)
 		at-type nil
 		at-decl-or-cast nil
@@ -1078,16 +1085,18 @@ other easily recognizable things.  Used on level 2 and higher."
 			  (setq start (or (match-end 1) (match-end 0)))
 			  (when (looking-at c-typedef-specifier-key)
 			    (setq at-typedef t))
-			  (goto-char start)
 
-			  (when (and (c-major-mode-is 'c++-mode)
-				     (looking-at "template\\>"))
-			    ;; Special case for a C++ template prefix.
-			    (c-forward-syntactic-ws)
-			    (unless (c-forward-c++-template-arglist)
-			      (throw 'continue t))
-			    (c-forward-syntactic-ws))
-			  t)))
+			  (if (and (c-major-mode-is 'c++-mode)
+				   (looking-at "template\\>"))
+			      ;; Special case for a C++ template prefix.
+			      (progn
+				(goto-char (match-end 0))
+				(c-forward-syntactic-ws)
+				(unless (c-forward-c++-template-arglist)
+				  (throw 'continue t))
+				(c-forward-syntactic-ws))
+			    (goto-char start))
+			  (setq start-pos (point)))))
 
 	    (c-forward-syntactic-ws))
 
@@ -1129,8 +1138,7 @@ other easily recognizable things.  Used on level 2 and higher."
 				    ;; then we're looking at an identifier
 				    ;; that's a prefix only if it specifies a
 				    ;; member pointer.
-				    (progn
-				      (c-forward-name)
+				    (when (c-forward-name)
 				      (if (looking-at "\\(::\\)")
 					  ;; We only check for a trailing "::"
 					  ;; and let the "*" that should
@@ -1191,9 +1199,8 @@ other easily recognizable things.  Used on level 2 and higher."
 		      ;; We're at a token that isn't valid in a type decl
 		      ;; inside a parenthesis.
 		      (when (and (= paren-depth 1)
-				 (not got-identifier)
 				 (not got-prefix)
-				 (not got-suffix)
+				 (not arglist-match)
 				 (not (eq at-type t))
 				 (c-safe
 				   (goto-char (scan-lists (point) 1 1))
@@ -1203,15 +1210,15 @@ other easily recognizable things.  Used on level 2 and higher."
 				     (and (c-major-mode-is 'c++-mode)
 					  (or (eq at-type 'found)
 					      (eq (char-after) ?:)))))
-			;; (*) Got no identifier but a paren pair and a
-			;; preceding type that might not be a type.  If it's
-			;; followed by an open brace it's really a function
-			;; that lacks a return type, which can happen in K&R C
-			;; and for (con|de)structors in C++.  In C++ we also
-			;; check if the type is known, since (con|de)structors
-			;; use the class name as identifier, or if the colon
-			;; of a base class member initializer follows.  See
-			;; also (#) below.
+			;; (*) Got a paren pair with no preceding identifier
+			;; but instead a preceding type that probably is the
+			;; identifier.  If it's followed by an open brace it's
+			;; really a function that lacks a return type, which
+			;; can happen in K&R C and for (con|de)structors in
+			;; C++.  In C++ we also check if the type is known,
+			;; since (con|de)structors use the class name as
+			;; identifier, or if the colon of a base class member
+			;; initializer follows.  See also (#) below.
 			(setq at-decl-or-cast t)
 			(unless prev-at-type
 			  (setq prev-at-type t
