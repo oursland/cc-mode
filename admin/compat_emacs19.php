@@ -17,8 +17,8 @@ the Custom support altogether. So if you later install a newer version
 of Custom, you will need to recompile CC Mode. Also note that if you
 have a newer Custom library installed locally, you might need to leave
 out the <code>-no-site-file</code> argument when you compile CC Mode,
-so that Emacs finds it. Whether that's necessary or not depends on how
-Emacs and the Custom library are installed.
+so that Emacs finds the new library. Whether that's necessary or not
+depends on how Emacs and the Custom library are installed.
 
 <p>I have no idea whether CC Mode 5 will work with Emacs versions
 before 19.34. You might try following the directions above, but no
