@@ -1,0 +1,8 @@
+((topmost-intro . 1))
+((class-open . 1))
+((inclass . 11) (topmost-intro . 13))
+((func-decl-cont . 15))
+((inclass . 1) (inline-open))
+((defun-block-intro . 97))
+((inline-close . 97))
+((class-close . 1))

@@ -1,0 +1,8 @@
+((topmost-intro . 1))
+((class-open . 1))
+((inclass . 19) (topmost-intro . 21))
+((inclass . 1) (inline-open))
+((defun-block-intro . 42))
+((arglist-intro . 50))
+((inline-close . 42))
+((class-close . 1))

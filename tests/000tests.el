@@ -121,8 +121,8 @@
     "except-4.java"
     "externs-1.cc"
     "externs-2.cc"
+    "forloop.cc"
     "funcs-1.cc"
-    "label-1.c"
     "if-1.cc"
     "if-2.cc"
     "if-3.cc"
@@ -133,6 +133,7 @@
     "inher-3.cc"
     "interface-1.m"
     "ivar.java"
+    "label-1.c"
     "member-1.cc"
     "member-2.cc"
     "methods-1.java"
@@ -170,6 +171,7 @@
     "top-3.cc"
     "typedef-1.c"
     "unbal.c"
+    "union.cc"
     ))
 
 (defvar finished-tests nil)
