@@ -7,12 +7,12 @@
 <p>CC Mode is available through anonymous CVS.  You can get the latest
 development version and also (as of version 5.30) the fixes that have
 been incorporated into the latest release, i.e. what becomes 5.30.1,
-5.30.2 etc.
+5.30.2 and so on.
 
-<h3>Checking out the latest release</h3>
+<h3>Checking out the latest release with fixes</h3>
 
 <p>To get the latest release with only bug fixes and no new features,
-check out the patch branch, which is called Branch_5_30:
+check out the patch branch, which is called <i>Branch_5_30</i>:
 
 <pre>
 cvs -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode login</pre>
