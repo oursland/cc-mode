@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.362 $
-;; Last Modified:   $Date: 1997-02-06 18:44:56 $
+;; Version:         $Revision: 4.363 $
+;; Last Modified:   $Date: 1997-02-06 19:00:56 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -951,6 +951,7 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   (define-key c-mode-map "\C-c\C-o"  'c-set-offset)
   (define-key c-mode-map "\C-c\C-s"  'c-show-syntactic-information)
   (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
+  (define-key c-mode-map "\C-c."     'c-set-style)
   ;; conflicts with OOBR
   ;;(define-key c-mode-map "\C-c\C-v"  'c-version)
   ;;
@@ -2410,6 +2411,8 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 	)))
    stylevars))
 
+(defvar c-set-style-history nil)
+
 ;;;###autoload
 (defun c-set-style (stylename)
   "Set cc-mode variables to use one of several different indentation styles.
@@ -2422,7 +2425,9 @@ style name."
   (interactive (list (let ((completion-ignore-case t)
 			   (prompt (format "Which %s indentation style? "
 					   mode-name)))
-		       (completing-read prompt c-style-alist nil t))))
+		       (completing-read prompt c-style-alist nil t
+					(cons c-site-default-style 0)
+					'c-set-style-history))))
   (let ((vars (cdr (or (assoc (downcase stylename) c-style-alist)
 		       (assoc (upcase stylename) c-style-alist)
 		       (assoc stylename c-style-alist)
@@ -5107,7 +5112,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.362 $"
+(defconst c-version "$Revision: 4.363 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
