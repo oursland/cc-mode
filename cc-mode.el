@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.130 $
-;; Last Modified:   $Date: 1994-12-21 00:19:36 $
+;; Version:         $Revision: 4.131 $
+;; Last Modified:   $Date: 1994-12-21 00:28:24 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-21 00:19:36 $|$Revision: 4.130 $|
+;; |$Date: 1994-12-21 00:28:24 $|$Revision: 4.131 $|
 
 ;;; Code:
 
@@ -1546,7 +1546,7 @@ the brace is inserted inside a literal."
 		  (setq syntax (c-guess-basic-syntax))))
 	  ;; must remove the newline we just stuck in (if we really did it)
 	  (and delete-temp-newline
-	       (delete-region (- (point) 2) (1- (point))))
+	       (save-excursion (delete-indentation)))
 	  ;; since we're hanging the brace, we need to recalculate
 	  ;; syntax, but we don't need to update the state cache.
 	  (setq syntax (c-guess-basic-syntax)))
@@ -4358,7 +4358,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.130 $"
+(defconst c-version "$Revision: 4.131 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
