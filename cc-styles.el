@@ -241,8 +241,6 @@ the existing style.")
        (if dont-override (reverse val) val)))
      ;; second special variable
      ((eq attr 'c-special-indent-hook)
-      (if (eq c-special-indent-hook 'set-from-style)
-	  (setq c-special-indent-hook nil))
       (let ((add-func (if dont-override
 			  (lambda (func)
 			    (unless (memq func c-special-indent-hook)
@@ -266,7 +264,7 @@ the existing style.")
 		       (assoc style c-style-alist)
 		       (error "Undefined style: %s" style)))))
     (if (string-equal style "user")
-	(copy-list vars)
+	(copy-alist vars)
       (let ((base (if (stringp (car vars))
 		      (prog1
 			  (downcase (car vars))
@@ -275,7 +273,7 @@ the existing style.")
 	(if (memq base basestyles)
 	    (error "Style loop detected: %s in %s" base basestyles))
 	(nconc (c-get-style-variables base (cons base basestyles))
-	       (copy-list vars))))))
+	       (copy-alist vars))))))
 
 (defvar c-set-style-history nil)
 
@@ -478,12 +476,6 @@ and exists only for compatibility reasons."
 
 
 
-(defun c-copy-tree (tree)
-  (if (consp tree)
-      (cons (c-copy-tree (car tree))
-            (c-copy-tree (cdr tree)))
-    tree))
-
 (defun c-initialize-builtin-style ()
   ;; Dynamically append the default value of most variables. This is
   ;; crucial because future c-set-style calls will always reset the
@@ -495,27 +487,28 @@ and exists only for compatibility reasons."
     (or (assoc "cc-mode" c-style-alist)
 	(assoc "user" c-style-alist)
 	(progn
-	  (c-add-style "user"
-		       (mapcar
-			(lambda (var)
-			  (let ((val (symbol-value var)))
-			    (cons var
-				  (if (eq var 'c-offsets-alist)
-				      (mapcar
-				       (lambda (langentry)
-					 (setq langentry
-					       (or (assq (car langentry) val)
-						   langentry))
-					 (cons (car langentry)
-					       (cdr langentry)))
-				       (get var 'c-stylevar-fallback))
-				    (c-copy-tree
-				     (if (eq val 'set-from-style)
-					 (get var 'c-stylevar-fallback)
-				       val))))))
-			c-style-variables))
-	  (c-add-style "cc-mode" '("user"))
-	  ))
+	  (c-add-style
+	   "user"
+	   (mapcar
+	    (lambda (var)
+	      (let ((val (symbol-value var)))
+		(cons var
+		      (cond ((eq var 'c-offsets-alist)
+			     (mapcar
+			      (lambda (langentry)
+				(setq langentry (or (assq (car langentry) val)
+						    langentry))
+				(cons (car langentry)
+				      (cdr langentry)))
+			      (get var 'c-stylevar-fallback)))
+			    ((eq var 'c-special-indent-hook)
+			     val)
+			    (t
+			     (if (eq val 'set-from-style)
+				 (get var 'c-stylevar-fallback)
+			       val))))))
+	    c-style-variables))
+	  (c-add-style "cc-mode" '("user"))))
     (if c-style-variables-are-local-p
 	(c-make-styles-buffer-local))))
 
@@ -543,7 +536,7 @@ instead of `make-variable-buffer-local'."
   (let ((func (if this-buf-only-p
 		  'make-local-variable
 		'make-variable-buffer-local))
-	(varsyms (cons 'c-indentation-style (c-copy-tree c-style-variables))))
+	(varsyms (cons 'c-indentation-style (copy-alist c-style-variables))))
     (delq 'c-special-indent-hook varsyms)
     (mapcar func varsyms)
     ;; Hooks must be handled specially
