@@ -4,26 +4,47 @@
   include ("header.h");
 ?>
 
-<p>The current CC Mode development version is always available through
-anonymous CVS.  Being under development, there are of course no
-guarantees that it will work well, or at all.  That said, it usually
-works well, often even better than the last release since bug fixes
-get there first.
+<p>CC Mode is available through anonymous CVS.  You can get the latest
+development version and also (as of version 5.30) the fixes that have
+been incorporated into the latest release, i.e. what becomes 5.30.1,
+5.30.2 etc.
 
-<p>You're very welcome to report bugs, opinions and patches regarding
-the development version.
+<h3>Checking out the latest release</h3>
 
-<h3>Checking out the CVS tree</h3>
+<p>To get the latest release with only bug fixes and no new features,
+check out the patch branch, which is called Branch_5_30:
 
-<ol>
+<pre>
+cvs -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode login</pre>
 
-  <p><li><i>cvs&nbsp;-d:pserver:anonymous@cvs.cc-mode.sourceforge.net:/cvsroot/cc-mode&nbsp;login</i>
+<p>Just press Enter at the password prompt.
 
-  <p>Just press Enter at the password prompt.
+<pre>
+cvs -z3 -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode co -rBranch_5_30 cc-mode</pre>
 
-  <p><li><i>cvs&nbsp;-z3&nbsp;-d:pserver:anonymous@cvs.cc-mode.sourceforge.net:/cvsroot/cc-mode&nbsp;co&nbsp;cc-mode</i>
+<p>It should always be safe to use the latest version on this branch.
+Please report any problems.
 
-</ol>
+<h3>Checking out the development version</h3>
+
+<p>The development version is on the main trunk in cvs:
+
+<pre>
+cvs -z3 -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode co cc-mode</pre>
+
+<p>Being under development, there are of course no guarantees that
+this version will work all the time, or at all.  That said, it usually
+works well; at least I (Martin) use it all the time in my daily work,
+not only when I hack on it.  It might not be entirely compatible with
+user settings, but it can get more advanced fixes that are considered
+too risky to be allowed into the patch branch.
+
+<p>You are especially welcome to report bugs, opinions and patches
+regarding the development version.  However if you've found a bug,
+it's a good idea to try an update before you report it since chances
+are that we have found it ourselves already.
+
+<h3>The source tree</h3>
 
 <p>The CC Mode source will be in the root of the checked out tree.
 You'll find the regression test suite in the <code>tests</code>
