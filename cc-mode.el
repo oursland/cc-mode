@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.281 $
-;; Last Modified:   $Date: 1994-03-11 04:13:13 $
+;; Version:         $Revision: 3.282 $
+;; Last Modified:   $Date: 1994-03-11 14:39:22 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-11 04:13:13 $|$Revision: 3.281 $|
+;; |$Date: 1994-03-11 14:39:22 $|$Revision: 3.282 $|
 
 ;;; Code:
 
@@ -449,7 +449,7 @@ your style, only those that are different from the default.")
 (defvar c++-mode-hook nil
   "*Hook called by `c++-mode'.")
 (defvar c-mode-common-hook nil
-  "*Hook called by both `c-mode' and `c++-mode' during their common init path.")
+  "*Hook called by both `c-mode' and `c++-mode' during common init path.")
 
 (defvar c-mode-menu
   '(["Comment Out Region"     comment-region (mark)]
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.281 $
+cc-mode Revision: $Revision: 3.282 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.281 $
+cc-mode Revision: $Revision: 3.282 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3273,7 +3273,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.281 $"
+(defconst c-version "$Revision: 3.282 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
