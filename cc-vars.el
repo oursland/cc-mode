@@ -1131,6 +1131,8 @@ buffer local by default.  If nil, they will remain global.  Variables
 are made buffer local when this file is loaded, and once buffer
 localized, they cannot be made global again.
 
+This variable must be set appropriately before CC Mode is loaded.
+
 The list of variables to buffer localize are:
     c-offsets-alist
     c-basic-offset
