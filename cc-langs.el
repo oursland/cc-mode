@@ -343,11 +343,22 @@ it finds in `c-file-offsets'."
   (define-key c-mode-base-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-base-map "\C-c\C-u"  'c-up-conditional)
   (define-key c-mode-base-map "\t"        'c-indent-command)
-  ;; In XEmacs 19 and Emacs 19, this binds both the BackSpace and
-  ;; Delete keysyms to c-electric-backspace.  In XEmacs 20 it binds
-  ;; only BackSpace, so we now bind them individually
-  (define-key c-mode-base-map [delete]    'c-electric-delete)
-  (define-key c-mode-base-map [backspace] 'c-electric-backspace)
+  ;; Caution!  Enter here at your own risk.  We are trying to support
+  ;; several behaviors and it gets disgusting. :-(
+  ;;
+  ;; In XEmacs 19, Emacs 19, and Emacs 20, we use this to bind
+  ;; backwards deletion behavior to DEL, which both Delete and
+  ;; Backspace get translated to.  There's no way to separate this
+  ;; behavior in a clean way, so deal with it!  Besides, it's been
+  ;; this way since the dawn of BOCM.
+  (if (not (boundp 'delete-key-deletes-forward))
+      (define-key c-mode-base-map "\177" 'c-electric-backspace)
+    ;; However, XEmacs 20 actually achieved enlightenment.  It is
+    ;; possible to sanely define both backward and forward deletion
+    ;; behavior under X separately (TTYs are forever beyond hope, but
+    ;; who cares?  XEmacs 20 does the right thing with these too).
+    (define-key c-mode-base-map [delete]    'c-electric-delete)
+    (define-key c-mode-base-map [backspace] 'c-electric-backspace))
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-base-map ","         'c-electric-semi&comma)
   (define-key c-mode-base-map "*"         'c-electric-star)
