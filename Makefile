@@ -1,5 +1,5 @@
 EMACS=emacs
-VERSION=5.28
+VERSION=5.29
 
 COREFILES=\
  cc-align.el \
