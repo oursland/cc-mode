@@ -708,7 +708,7 @@
 	(save-excursion
 	  (save-restriction
 	    (goto-char search-start)
-	    (let ((search-key (concat c-class-key "\\|extern[^_]"))
+	    (let ((search-key (concat c-class-key "\\|" c-extra-toplevel-key))
 		  foundp class match-end)
 	      (while (and (not foundp)
 			  (progn
@@ -883,17 +883,27 @@
 				     (looking-at c-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache inswitch-p
-	     injava-inher
+	     tmpsymbol keyword injava-inher
 	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
-	     (inextern-p (and inclass-p
-			      (save-excursion
-				(save-restriction
-				  (widen)
-				  (goto-char (aref inclass-p 0))
-				  (looking-at "extern[^_]")))))
-	     )
-
+	     inenclosing-p)
+	;; check for meta top-level enclosing constructs, possible
+	;; extern language definitions, possibly (in C++) namespace
+	;; definitions.
+	(save-excursion
+	  (save-restriction
+	    (widen)
+	    (if (and inclass-p
+		     (progn
+		       (goto-char (aref inclass-p 0))
+		       (looking-at c-extra-toplevel-key)))
+		(let ((enclosing (match-string 1)))
+		  (cond
+		   ((string-equal enclosing "extern")
+		    (setq inenclosing-p 'extern))
+		   ((string-equal enclosing "namespace")
+		    (setq inenclosing-p 'namespace))
+		   )))))
 	;; get the buffer position of the most nested opening brace,
 	;; if there is one, and it hasn't been narrowed out
 	(save-excursion
@@ -966,19 +976,25 @@
 	   ;; inline-inclass method opening brace
 	   ((eq char-after-ip ?{)
 	    (cond
-	     ;; CASE 5A.1: extern declaration
+	     ;; CASE 5A.1: extern language or namespace construct
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
 		(and (c-safe (progn (backward-sexp 2) t))
-		     (looking-at "extern[^_]")
-		     (progn
-		       (setq placeholder (point))
-		       (forward-sexp 1)
-		       (c-forward-syntactic-ws)
-		       (eq (char-after) ?\"))))
+		     (looking-at c-extra-toplevel-key)
+		     (setq keyword (match-string 1)
+			   placeholder (point))
+		     (or (and (string-equal keyword "namespace")
+			      (setq symbol 'namespace-open))
+			 (and (string-equal keyword "extern")
+			      (progn
+				(forward-sexp 1)
+				(c-forward-syntactic-ws)
+				(eq (char-after) ?\"))
+			      (setq symbol 'extern-lang-open)))
+		     ))
 	      (goto-char placeholder)
-	      (c-add-syntax 'extern-lang-open (c-point 'boi)))
+	      (c-add-syntax symbol (c-point 'boi)))
 	     ;; CASE 5A.2: we are looking at a class opening brace
 	     ((save-excursion
 		(goto-char indent-point)
@@ -1018,7 +1034,7 @@
 		       )))
 	      (c-add-syntax 'brace-list-open placeholder))
 	     ;; CASE 5A.4: inline defun open
-	     ((and inclass-p (not inextern-p))
+	     ((and inclass-p (not inenclosing-p))
 	      (c-add-syntax 'inline-open)
 	      (c-add-syntax 'inclass (aref inclass-p 0)))
 	     ;; CASE 5A.5: ordinary defun open
@@ -1205,9 +1221,12 @@
 	    (c-add-syntax 'access-label (c-point 'bonl))
 	    (c-add-syntax 'inclass (aref inclass-p 0)))
 	   ;; CASE 5F: extern-lang-close?
-	   ((and inextern-p
+	   ((and inenclosing-p
 		 (eq char-after-ip ?}))
-	    (c-add-syntax 'extern-lang-close (aref inclass-p 0)))
+	    (let ((symbol (if (eq inenclosing-p 'extern)
+			      'extern-lang-close
+			    'namespace-close)))
+	      (c-add-syntax symbol (aref inclass-p 0))))
 	   ;; CASE 5G: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
 	   ((and inclass-p
@@ -1286,10 +1305,14 @@
 		    (goto-char (aref inclass-p 1))
 		    (or (= (point) (c-point 'boi))
 			(goto-char (aref inclass-p 0)))
-		    (if inextern-p
-			(c-add-syntax 'inextern-lang)
-		      (c-add-syntax 'inclass (c-point 'boi)))))
-		))
+		    (cond
+		     ((eq inenclosing-p 'extern)
+		      (c-add-syntax 'inextern-lang))
+		     ((eq inenclosing-p 'namespace)
+		      (c-add-syntax 'innamespace))
+		     (t (c-add-syntax 'inclass (c-point 'boi))))
+		    ))
+	      ))
 	   ;; CASE 5J: we are at an ObjC or Java method definition
 	   ;; continuation line.
 	   ((and c-method-key
@@ -1324,9 +1347,9 @@
 	   ;; CASE 6C: we are inside a conditional test clause. treat
 	   ;; these things as statements
 	   ((save-excursion
-	     (goto-char containing-sexp)
-	     (and (c-safe (progn (forward-sexp -1) t))
-		  (looking-at "\\<for\\>[^_]")))
+	      (goto-char containing-sexp)
+	      (and (c-safe (progn (forward-sexp -1) t))
+		   (looking-at "\\<for\\>[^_]")))
 	    (goto-char (1+ containing-sexp))
 	    (c-forward-syntactic-ws indent-point)
 	    (c-beginning-of-statement-1 containing-sexp)
@@ -1406,7 +1429,7 @@
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'brace-list-intro (c-point 'boi))
 	    )
-	    ;;))			; end CASE 8B
+	   ;;))			; end CASE 8B
 	   ;; CASE 8C: this is just a later brace-list-entry
 	   (t (goto-char (1+ containing-sexp))
 	      (c-forward-syntactic-ws indent-point)
@@ -1541,17 +1564,17 @@
 	     ((let ((inclass-p (progn
 				 (goto-char containing-sexp)
 				 (c-search-uplist-for-classkey state))))
-		;; inextern-p in higher level let*
-		(setq inextern-p (and inclass-p
-				      (progn
-					(goto-char (aref inclass-p 0))
-					(looking-at "extern[^_]"))))
-		(and inclass-p (not inextern-p)))
+		;; inenclosing-p in higher level let*
+		(setq inenclosing-p (and inclass-p
+					 (progn
+					   (goto-char (aref inclass-p 0))
+					   (looking-at c-extra-toplevel-key))))
+		(and inclass-p (not inenclosing-p)))
 	      (c-add-syntax 'inline-close relpos))
 	     ;; CASE 14B: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close
-	     ((and (not inextern-p)
+	     ((and (not inenclosing-p)
 		   (c-most-enclosing-brace state))
 	      (c-add-syntax 'block-close relpos))
 	     ;; CASE 14C: find out whether we're closing a top-level
