@@ -443,7 +443,10 @@ Works with: statement-cont."
   (save-excursion
     (let ((equalp (save-excursion
 		    (goto-char (c-point 'boi))
-		    (skip-chars-forward "^=" (c-point 'eol))
+		    (let (eol (c-point 'eol))
+		      (c-forward-token-1 0 t eol)
+		      (while (and (not (eq (char-after) ?=))
+				  (= (c-forward-token-1 1 t eol) 0))))
 		    (and (eq (char-after) ?=)
 			 (- (point) (c-point 'boi)))))
 	  (langelem-col (c-langelem-col langelem))
