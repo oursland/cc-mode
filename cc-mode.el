@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.318 $
-;; Last Modified:   $Date: 1993-04-22 21:16:15 $
+;; Version:         $Revision: 2.319 $
+;; Last Modified:   $Date: 1993-05-10 18:09:28 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-04-22 21:16:15 $|$Revision: 2.318 $|
+;; |$Date: 1993-05-10 18:09:28 $|$Revision: 2.319 $|
 
 ;;; Code:
 
@@ -147,13 +147,27 @@
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-(defconst c++-emacs-is-fixed-p
-  (= 8 (length (parse-partial-sexp (point) (point))))
-  "True if you've patched your emacs to handle 2 orthogonal comment
-styles in a single mode.")
-(defconst c++-emacs-is-really-fixed-p
-  (fboundp 'backward-syntactic-ws)
-  "True if you've patched emacs to add the really fast back-parser.")
+(defconst c++-emacs-features
+  (list
+   (if (= 8 (length (parse-partial-sexp (point) (point))))
+       (if (or (string-match emacs-version "Lucid")
+	       (fboundp 'forward-syntactic-ws))
+	   '8-bit '1-bit)
+     'no-dual-comments)
+   (if (fboundp 'forward-syntactic-ws)
+       'old-v19
+     (if (fboundp 'forward-comment)
+	 'v19 'v18)))
+  "A list of needed features extant in the emacs you are using.
+There are many flavors of emacs out on the net, each with different
+features supporting those needed by c++-mode.  Here's the current
+known list, along with the values for this variable:
+
+Vanilla GNU 18/Epoch 4: '(no-dual-comments v18)
+Patched GNU 18/Epoch 4: '(8-bit old-v19)
+Lemacs 19.4 - 19.6:     '(8-bit old-v19)
+Lemacs 19.7 and over:   '(8-bit v19)
+GNU 19:                 '(1-bit v19)")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -187,13 +201,14 @@ styles in a single mode.")
   (define-key c++-mode-map "\C-c\C-t"  'c++-toggle-auto-hungry-state)
   (define-key c++-mode-map "\C-c\C-h"  'c++-toggle-hungry-state)
   (define-key c++-mode-map "\C-c\C-a"  'c++-toggle-auto-state)
-  (if c++-emacs-is-fixed-p nil
-    (define-key c++-mode-map "\C-c'"     'c++-tame-comments)
-    (define-key c++-mode-map "'"         'c++-tame-insert)
-    (define-key c++-mode-map "["         'c++-tame-insert)
-    (define-key c++-mode-map "]"         'c++-tame-insert)
-    (define-key c++-mode-map "("         'c++-tame-insert)
-    (define-key c++-mode-map ")"         'c++-tame-insert))
+  (if (memq 'v18 c++-emacs-features)
+      (progn
+	(define-key c++-mode-map "\C-c'"     'c++-tame-comments)
+	(define-key c++-mode-map "'"         'c++-tame-insert)
+	(define-key c++-mode-map "["         'c++-tame-insert)
+	(define-key c++-mode-map "]"         'c++-tame-insert)
+	(define-key c++-mode-map "("         'c++-tame-insert)
+	(define-key c++-mode-map ")"         'c++-tame-insert)))
   (define-key c++-mode-map "\C-c\C-b"  'c++-submit-bug-report)
   (define-key c++-mode-map "\C-c\C-v"  'c++-version)
   ;; these are necessary because default forward-sexp and
@@ -223,19 +238,25 @@ styles in a single mode.")
   (modify-syntax-entry ?|  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-mode-syntax-table)
   ;; comment syntax
-  (if c++-emacs-is-really-fixed-p
-      ;; these entries will only work with the latest patches to lemacs
-      (progn
-	(modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
-	(modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
-	(modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
-	)
-    ;; though its not optimal, these will work for older, broken
-    ;; emacses. some strange behavior may be encountered. PATCH YOUR EMACS!
+  (cond
+   ((memq '8-bit c++-emacs-features)
+    ;; Lucid emacs has the best implementation
+    (modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
+    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
+   ((memq '1-bit c++-emacs-features)
+    ;; GNU19 has sub-optimal, but workable implementation
+    ;; Some strange behavior may be encountered. LOBBY FSF!
     (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23b" c++-mode-syntax-table)
-    (modify-syntax-entry ?\n ">"     c++-mode-syntax-table)
-    ))
+    (modify-syntax-entry ?\n ">"     c++-mode-syntax-table))
+   (t
+    ;; Vanilla GNU18 is just plain busted. We'll do the best we can,
+    ;; but some strange behavior may be encountered. PATCH or UPGRADE!
+    (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"  c++-mode-syntax-table)
+    (modify-syntax-entry ?\n ">"     c++-mode-syntax-table))
+   ))
 
 (if c++-c-mode-syntax-table
     ()
@@ -250,19 +271,9 @@ styles in a single mode.")
   (modify-syntax-entry ?&  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?|  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-c-mode-syntax-table)
-  ;; comment syntax
-  (if c++-emacs-is-really-fixed-p
-      ;; these entries will only work with the latest patches to lemacs
-      (progn
-	(modify-syntax-entry ?\n "> b"  c++-c-mode-syntax-table)
-	(modify-syntax-entry ?/  ". 14" c++-c-mode-syntax-table)
-	(modify-syntax-entry ?*  ". 23" c++-c-mode-syntax-table)
-	)
-    ;; though its not optimal, these will work for older, broken
-    ;; emacses. some strange behavior may be encountered. PATCH YOUR EMACS!
-    (modify-syntax-entry ?/  ". 14"  c++-c-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"  c++-c-mode-syntax-table)
-    ))
+  (modify-syntax-entry ?/  ". 14"  c++-c-mode-syntax-table)
+  (modify-syntax-entry ?*  ". 23"  c++-c-mode-syntax-table)
+  )
 
 (defvar c++-tab-always-indent
   (if (boundp 'c-tab-always-indent) c-tab-always-indent t)
@@ -378,7 +389,7 @@ When non-nil (the default), indentation is calculated relative to the
 first statement in the block.  When nil, the indentation is calculated
 without regard to how the first statement is indented.")
 
-(defvar c++-untame-characters (and (not c++-emacs-is-fixed-p) '(?\'))
+(defvar c++-untame-characters (and (memq 'v18 c++-emacs-features) '(?\'))
   "*Utilize a backslashing workaround of an emacs syntax parsing bug.
 If non-nil, this variable should contain a list of characters which
 will be prepended by a backslash in comment regions.  By default, the
@@ -454,7 +465,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.318 $
+  "Major mode for editing C++ code.  $Revision: 2.319 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -675,7 +686,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.318 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.319 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1414,7 +1425,7 @@ c++-untame-characters."
 (defun c++-match-paren ()
   "Jumps to the paren matching the one under point, if there is one."
   (interactive)
-  (let ((parse-sexp-ignore-comments c++-emacs-is-fixed-p))
+  (let ((parse-sexp-ignore-comments (memq 'v19 c++-emacs-features))
     (cond
      ((looking-at "[\(\[{]")
       (forward-sexp 1)
@@ -1426,96 +1437,143 @@ c++-untame-characters."
 
 (defun c++-forward-sexp (&optional arg)
   (interactive "p")
-  (let ((parse-sexp-ignore-comments c++-emacs-is-fixed-p))
+  (let ((parse-sexp-ignore-comments (memq 'v19 c++-emacs-features)))
     (forward-sexp arg)))
 
 (defun c++-backward-sexp (&optional arg)
   (interactive "p")
-  (let ((parse-sexp-ignore-comments c++-emacs-is-fixed-p))
+  (let ((parse-sexp-ignore-comments (memq 'v19 c++-emacs-features)))
     (backward-sexp arg)))
 
 
 ;; ======================================================================
-;; defuns for parsing syntactic elements
+;; compatibility between emacsen
 ;; ======================================================================
-(defun c++-parse-state (&optional limit)
-  "Determinate the syntactic state of the code at point.
-Iteratively uses parse-partial-sexp from point to LIMIT and returns
-the result of parse-partial-sexp at point.  LIMIT is optional and
-defaults to point-max."
-  (setq limit (or limit (point-max)))
-  (let (state (parse-sexp-ignore-comments t))
-    (while (< (point) limit)
-      (setq state (parse-partial-sexp (point) limit 0)))
-    state))
 
-(defun c++-at-top-level-p (wrt &optional bod)
-  "Return t if point is not inside a containing C++ expression, nil
-if it is embedded in an expression.  When WRT is non-nil, returns nil
-if not at the top level with respect to an enclosing class, or the
-depth of class nesting at point.  With WRT nil, returns nil if not at
-the \"real\" top level.  Optional BOD is the beginning of defun."
-  (save-excursion
-    (let ((indent-point (point))
-	  (case-fold-search nil)
-	  state containing-sexp paren-depth
-	  (bod (or bod (c++-point 'bod)))
-	  foundp)
-      (goto-char bod)
-      (setq state (c++-parse-state indent-point)
-	    containing-sexp (nth 1 state)
-	    paren-depth (nth 0 state))
-      (cond
-       ((eq major-mode 'c++-c-mode)
-	(and (null containing-sexp) 0))
-       ((not wrt)
-	(null containing-sexp))
-       ((null containing-sexp) 0)
-       ((c++-in-parens-p) nil)
-       (t
-	;; calculate depth wrt containing (possibly nested) classes
-	(goto-char containing-sexp)
-	(while (and (setq foundp (re-search-backward
-				  (concat "[;}]\\|" c++-class-key)
-				  (point-min) t))
-		    (let ((bod (c++-point 'bod)))
-		      (or (c++-in-literal bod)
-			  (c++-in-parens-p bod)
-			  ;; see if class key is inside a template spec
-			  (and (looking-at c++-class-key)
-			       (progn (skip-chars-backward " \t\n")
-				      (memq (preceding-char) '(?, ?<))))))))
-	(if (memq (following-char) '(?} ?\;))
-	    nil
-	  (setq state (c++-parse-state containing-sexp))
-	  (and foundp
-	       (not (nth 1 state))
-	       (nth 2 state)
-	       paren-depth))
-	)))))
+;; This is the best we can do in vanilla GNU 18 emacsen. Note that the
+;; following problems exist:
+;; 1. We only look back to LIM, and that could place us inside a
+;;    literal if we are scanning backwards over lots of comments
+;; 2. This can potentially get slower the larger LIM is
+;; If anybody has a better solution, I'll all ears
+(defun c++-backward-syntactic-ws (&optional lim)
+  "Skip backwards over syntactic whitespace.
+Syntactic whitespace is defined as lexical whitespace, C and C++ style
+comments, and preprocessor directives. Search no farther back than
+optional LIM.  If LIM is ommitted, beginning-of-defun is used."
+  (let ((lim (or lim (c++-point 'bod)))
+	literal stop)
+    (if (and c++-backscan-limit
+	     (> (- (point) lim) c++-backscan-limit))
+	(setq lim (- (point) c++-backscan-limit)))
+    (while (not stop)
+      (skip-chars-backward " \t\n\r\f" lim)
+      ;; c++ comment
+      (if (eq (setq literal (c++-in-literal lim)) 'c++)
+	  (progn
+	    (skip-chars-backward "^/" lim)
+	    (skip-chars-backward "/" lim)
+	    (while (not (or (and (= (following-char) ?/)
+				 (= (char-after (1+ (point))) ?/))
+			    (<= (point) lim)))
+	      (skip-chars-backward "^/" lim)
+	      (skip-chars-backward "/" lim)))
+	;; c comment
+	(if (eq literal 'c)
+	    (progn
+	      (skip-chars-backward "^*" lim)
+	      (skip-chars-backward "*" lim)
+	      (while (not (or (and (= (following-char) ?*)
+				   (= (preceding-char) ?/))
+			      (<= (point) lim)))
+		(skip-chars-backward "^*" lim)
+		(skip-chars-backward "*" lim))
+	      (or (bobp) (forward-char -1)))
+	  ;; preprocessor directive
+	  (if (eq literal 'pound)
+	      (progn
+		(beginning-of-line)
+		(setq stop (<= (point) lim)))
+	    ;; just outside of c block
+	    (if (and (= (preceding-char) ?/)
+		     (= (char-after (- (point) 2)) ?*))
+		(progn
+		  (skip-chars-backward "^*" lim)
+		  (skip-chars-backward "*" lim)
+		  (while (not (or (and (= (following-char) ?*)
+				       (= (preceding-char) ?/))
+				  (<= (point) lim)))
+		    (skip-chars-backward "^*" lim)
+		    (skip-chars-backward "*" lim))
+		  (or (bobp) (forward-char -1)))
+	      ;; none of the above
+	      (setq stop t))))))))
 
-(defun c++-in-literal-quick (&optional lim)
-  "Determine if point is in a C++ `literal'.
-Return 'c if in a C-style comment, 'c++ if in a C++ style comment,
-'string if in a string literal, 'pound if on a preprocessor line, or
-nil if not in a comment at all.  Optional LIM is used as the backward
-limit of the search.  If omitted, or nil, c++-beginning-of-defun is
-used."
-  (save-excursion
-    (let* ((backlim (or lim (c++-point 'bod)))
-	   (here (point))
-	   (parse-sexp-ignore-comments t) ; may not be necessary
-	   (state (parse-partial-sexp backlim (point))))
-      (cond
-       ((nth 3 state) 'string)
-       ((nth 4 state) (if (nth 7 state) 'c++ 'c))
-       ((progn
-	  (goto-char here)
-	  (beginning-of-line)
-	  (looking-at "[ \t]*#"))
-	'pound)
-       (t nil)))))
+;; This defun works well for Lemacs 19.4 through 19.6, which
+;; implemented a first shot at doing this via a C built-in
+;; backward-syntactic-ws.  This has been obsoleted in future Lemacsen
+;; and in GNU19
+(defun c++-fast-backward-syntactic-ws-1 (&optional lim)
+  "Skip backwards over syntactic whitespace.
+Syntactic whitespace is defined as lexical whitespace, C and C++ style
+comments, and preprocessor directives. Search no farther back than
+optional LIM.  If LIM is ommitted, beginning-of-defun is used."
+  (save-restriction
+    (let ((parse-sexp-ignore-comments t)
+	  donep boi char
+	  (lim (or lim (c++-point 'bod))))
+      (if (< lim (point))
+	  (unwind-protect
+	      (progn
+		(narrow-to-region lim (point))
+		(modify-syntax-entry ?# "< b" c++-mode-syntax-table)
+		(while (not donep)
+		  ;; if you're not running a patched lemacs, the new byte
+		  ;; compiler will complain about this function. ignore that
+		  (backward-syntactic-ws)
+		  (if (not (looking-at "#\\|/\\*\\|//\\|\n"))
+		      (forward-char 1))
+		  (setq boi (c++-point 'boi)
+			char (char-after boi))
+		  (if (and char (= char ?#))
+		      (progn (goto-char boi)
+			     (setq donep (<= (point) lim)))
+		    (setq donep t))
+		  ))
+	    (modify-syntax-entry ?# "." c++-mode-syntax-table)))
+      )))
 
+;; This is the way it should be done for all post 19.6 Lemacsen and
+;; for all GNU19 implementations
+(defun c++-fast-backward-syntactic-ws-2 (&optional lim)
+  "Skip backwards over syntactic whitespace.
+Syntactic whitespace is defined as lexical whitespace, C and C++ style
+comments, and preprocessor directives. Search no farther back than
+optional LIM.  If LIM is ommitted, beginning-of-defun is used."
+  (save-restriction
+    (let ((lim (or lim (c++-point 'bod)))
+	  done boi char)
+      (if (< lim (point))
+	  (unwind-protect
+	      (progn
+		(narrow-to-region lim (point))
+		(modify-syntax-entry ?# "< b" c++-mode-syntax-table)
+		(while (not donep)
+		  (forward-comment -1)
+		  (if (not (looking-at "#\\|/\\*\\|//\\|\n"))
+		      (forward-char 1))
+		  (setq boi (c++-point 'boi)
+			char (char-after boi))
+		  (if (and char (= char ?#))
+		      (progn (goto-char boi)
+			     (setq donep (<= (point) lim)))
+		    (setq donep t))
+		  ))
+	    (modify-syntax-entry ?# "." c++-mode-syntax-table)))
+      )))
+
+;; This is the slow and ugly way, but its the best we can do in
+;; vanilla GNU18 emacsen
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
 Return 'c if in a C-style comment, 'c++ if in a C++ style comment,
@@ -1573,8 +1631,98 @@ used."
 	) ; end-while
       state)))
 
-(if c++-emacs-is-fixed-p
-    (fset 'c++-in-literal 'c++-in-literal-quick))
+;; This is for all v19 and patched v18 emacsen
+(defun c++-in-literal-quick (&optional lim)
+  "Determine if point is in a C++ `literal'.
+Return 'c if in a C-style comment, 'c++ if in a C++ style comment,
+'string if in a string literal, 'pound if on a preprocessor line, or
+nil if not in a comment at all.  Optional LIM is used as the backward
+limit of the search.  If omitted, or nil, c++-beginning-of-defun is
+used."
+  (save-excursion
+    (let* ((backlim (or lim (c++-point 'bod)))
+	   (here (point))
+	   (parse-sexp-ignore-comments t) ; may not be necessary
+	   (state (parse-partial-sexp backlim (point))))
+      (cond
+       ((nth 3 state) 'string)
+       ((nth 4 state) (if (nth 7 state) 'c++ 'c))
+       ((progn
+	  (goto-char here)
+	  (beginning-of-line)
+	  (looking-at "[ \t]*#"))
+	'pound)
+       (t nil)))))
+
+(cond
+ ((memq 'old-v19 c++-emacs-features)
+  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-1)
+  (fset 'c++-in-literal 'c++-in-literal-quick))
+ ((memq 'v19 c++-emacs-features)
+  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-1))
+  (fset 'c++-in-literal 'c++-in-literal-quick))
+ )
+
+
+;; ======================================================================
+;; defuns for parsing syntactic elements
+;; ======================================================================
+(defun c++-parse-state (&optional limit)
+  "Determinate the syntactic state of the code at point.
+Iteratively uses parse-partial-sexp from point to LIMIT and returns
+the result of parse-partial-sexp at point.  LIMIT is optional and
+defaults to point-max."
+  (let ((limit (or limit (point-max)))
+	(parse-sexp-ignore-comments t)
+	state)
+    (while (< (point) limit)
+      (setq state (parse-partial-sexp (point) limit 0)))
+    state))
+
+(defun c++-at-top-level-p (wrt &optional bod)
+  "Return t if point is not inside a containing C++ expression, nil
+if it is embedded in an expression.  When WRT is non-nil, returns nil
+if not at the top level with respect to an enclosing class, or the
+depth of class nesting at point.  With WRT nil, returns nil if not at
+the \"real\" top level.  Optional BOD is the beginning of defun."
+  (save-excursion
+    (let ((indent-point (point))
+	  (case-fold-search nil)
+	  state containing-sexp paren-depth
+	  (bod (or bod (c++-point 'bod)))
+	  foundp)
+      (goto-char bod)
+      (setq state (c++-parse-state indent-point)
+	    containing-sexp (nth 1 state)
+	    paren-depth (nth 0 state))
+      (cond
+       ((eq major-mode 'c++-c-mode)
+	(and (null containing-sexp) 0))
+       ((not wrt)
+	(null containing-sexp))
+       ((null containing-sexp) 0)
+       ((c++-in-parens-p) nil)
+       (t
+	;; calculate depth wrt containing (possibly nested) classes
+	(goto-char containing-sexp)
+	(while (and (setq foundp (re-search-backward
+				  (concat "[;}]\\|" c++-class-key)
+				  (point-min) t))
+		    (let ((bod (c++-point 'bod)))
+		      (or (c++-in-literal bod)
+			  (c++-in-parens-p bod)
+			  ;; see if class key is inside a template spec
+			  (and (looking-at c++-class-key)
+			       (progn (skip-chars-backward " \t\n")
+				      (memq (preceding-char) '(?, ?<))))))))
+	(if (memq (following-char) '(?} ?\;))
+	    nil
+	  (setq state (c++-parse-state containing-sexp))
+	  (and foundp
+	       (not (nth 1 state))
+	       (nth 2 state)
+	       paren-depth))
+	)))))
 
 (defun c++-in-parens-p (&optional lim)
   "Return t if inside a paren expression.
@@ -2155,93 +2303,6 @@ argument COL0-LINE-P, and the current indentation INDENT."
 ;; defuns to look backwards for things
 ;; ======================================================================
 
-(defun c++-backward-syntactic-ws (&optional lim)
-  "Skip backwards over syntactic whitespace.
-Syntactic whitespace is defined as lexical whitespace, C and C++ style
-comments, and preprocessor directives. Search no farther back than
-optional LIM.  If LIM is ommitted, beginning-of-defun is used."
-  (let ((lim (or lim (c++-point 'bod)))
-	literal stop)
-    (if (and c++-backscan-limit
-	     (> (- (point) lim) c++-backscan-limit))
-	(setq lim (- (point) c++-backscan-limit)))
-    (while (not stop)
-      (skip-chars-backward " \t\n\r\f" lim)
-      ;; c++ comment
-      (if (eq (setq literal (c++-in-literal lim)) 'c++)
-	  (progn
-	    (skip-chars-backward "^/" lim)
-	    (skip-chars-backward "/" lim)
-	    (while (not (or (and (= (following-char) ?/)
-				 (= (char-after (1+ (point))) ?/))
-			    (<= (point) lim)))
-	      (skip-chars-backward "^/" lim)
-	      (skip-chars-backward "/" lim)))
-	;; c comment
-	(if (eq literal 'c)
-	    (progn
-	      (skip-chars-backward "^*" lim)
-	      (skip-chars-backward "*" lim)
-	      (while (not (or (and (= (following-char) ?*)
-				   (= (preceding-char) ?/))
-			      (<= (point) lim)))
-		(skip-chars-backward "^*" lim)
-		(skip-chars-backward "*" lim))
-	      (or (bobp) (forward-char -1)))
-	  ;; preprocessor directive
-	  (if (eq literal 'pound)
-	      (progn
-		(beginning-of-line)
-		(setq stop (<= (point) lim)))
-	    ;; just outside of c block
-	    (if (and (= (preceding-char) ?/)
-		     (= (char-after (- (point) 2)) ?*))
-		(progn
-		  (skip-chars-backward "^*" lim)
-		  (skip-chars-backward "*" lim)
-		  (while (not (or (and (= (following-char) ?*)
-				       (= (preceding-char) ?/))
-				  (<= (point) lim)))
-		    (skip-chars-backward "^*" lim)
-		    (skip-chars-backward "*" lim))
-		  (or (bobp) (forward-char -1)))
-	      ;; none of the above
-	      (setq stop t))))))))
-
-(defun c++-fast-backward-syntactic-ws (&optional lim)
-  "Skip backwards over syntactic whitespace.
-Syntactic whitespace is defined as lexical whitespace, C and C++ style
-comments, and preprocessor directives. Search no farther back than
-optional LIM.  If LIM is ommitted, beginning-of-defun is used."
-  (save-restriction
-    (let ((parse-sexp-ignore-comments t)
-	  donep boi char
-	  (lim (or lim (c++-point 'bod))))
-      (if (< lim (point))
-	  (unwind-protect
-	      (progn
-		(narrow-to-region lim (point))
-		(modify-syntax-entry ?# "< b" c++-mode-syntax-table)
-		(while (not donep)
-		  ;; if you're not running a patched lemacs, the new byte
-		  ;; compiler will complain about this function. ignore that
-		  (backward-syntactic-ws)
-		  (if (not (looking-at "#\\|/\\*\\|//\\|\n"))
-		      (forward-char 1))
-		  (setq boi (c++-point 'boi)
-			char (char-after boi))
-		  (if (and char (= char ?#))
-		      (progn (goto-char boi)
-			     (setq donep (<= (point) lim)))
-		    (setq donep t))
-		  ))
-	    (modify-syntax-entry ?# "." c++-mode-syntax-table)))
-      )))
-
-(if c++-emacs-is-really-fixed-p
-    (fset 'c++-backward-syntactic-ws
-	  'c++-fast-backward-syntactic-ws))
-
 (defun c++-backward-to-start-of-do (&optional limit)
   "Move to the start of the last ``unbalanced'' do."
   (let ((do-level 1)
@@ -2550,7 +2611,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.318 $"
+(defconst c++-version "$Revision: 2.319 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -2574,6 +2635,7 @@ function definition.")
 	    (if (eq major-mode 'c++-mode) "C++" "C")
 	    " code)")
     (list
+     'c++-emacs-features
      'c++-C-block-comments-indent-p
      'c++-access-specifier-offset
      'c++-always-arglist-indent-p
@@ -2612,12 +2674,6 @@ function definition.")
     (function
      (lambda ()
        (insert
-	(if c++-emacs-is-fixed-p
-	    "You've applied the (hopefully most recent) syntax patch!\n"
-	  "No syntax patch applied.\n")
-	(if c++-emacs-is-really-fixed-p
-	    "Looks like you've also got the parse-back patch. Good!\n"
-	  "No parse-back patch applied.\n")
 	(if c++-special-indent-hook
 	    (concat "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 		    "c++-special-indent-hook is set to '"
