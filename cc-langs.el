@@ -235,7 +235,7 @@ appended."
 
 ;; Regexp matching the operators that join symbols to fully qualified
 ;; identifiers, or nil in languages that doesn't have such things.
-;; Should not contain a \| operator at the top level.
+;; Does not contain a \| operator at the top level.
 (c-lang-defconst c-identifier-concat-key
   c++  "::"
   java "\\."
@@ -314,13 +314,18 @@ appended."
 ;; made up of characters in the punctuation or parenthesis syntax
 ;; classes.
 (c-lang-defconst c-multichar-tokens
-    all '("->" "++" "--" "<<" ">>" "<=" ">=" "==" "!=" "&&" "||"
-	  "*=" "/=" "%=" "+=" "-=" "<<=" ">>=" "&=" "^=" "|=" "::")
-    (c c++ pike) (append (c-lang-var c-multichar-tokens)
-			 '("##")) ;; Used by cpp.
-    c++ (append (c-lang-var c-multichar-tokens)
-		'(".*" "->*"))
-    pike (append (c-lang-var c-multichar-tokens) c-pike-operator-symbols))
+  all '("++" "--" "<<" ">>" "<=" ">=" "==" "!=" "&&" "||"
+	"*=" "/=" "%=" "+=" "-=" "<<=" ">>=" "&=" "^=" "|=")
+  (c c++ pike) (append '("##"	; Used by cpp.
+			 "->" "::" "...")
+		       (c-lang-var c-multichar-tokens))
+  c++  (append '(".*" "->*" "<%" "%>" "%:" "%:%:")
+	       (c-lang-var c-multichar-tokens))
+  java (append '(">>>" ">>>=")
+	       (c-lang-var c-multichar-tokens))
+  pike (append (c-lang-var c-multichar-tokens)
+	       '("..")
+	       c-pike-operator-symbols))
 
 ;; Regexp matching all operator tokens and also any sequence of two
 ;; characters inside a symbol.
@@ -329,62 +334,6 @@ appended."
 	      (c-make-keywords-re nil (c-lang-var c-multichar-tokens))))
 (c-lang-defvar c-multichar-op-sym-token-regexp
   (c-lang-var c-multichar-op-sym-token-regexp))
-
-;; Regexp matching a piece of syntactic whitespace that isn't a
-;; sequence of simple whitespace characters.  As opposed to
-;; `c-(forward|backward)-syntactic-ws', this doesn't regard cpp
-;; directives as syntactic whitespace.
-(c-lang-defconst c-nonwhite-syntactic-ws
-  all (concat "/" (concat
-		   "\\("
-		   "/[^\n\r]*[\n\r]"	; Line comment.
-		   "\\|"
-		   ;; Block comment. We intentionally don't allow line
-		   ;; breaks in them to avoid going very far and risk
-		   ;; running out of regexp stack; this regexp is
-		   ;; intended to handle only short comments that
-		   ;; might be put in the middle of limited constructs
-		   ;; like declarations.
-		   "\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/"
-		   "\\)")
-	      "\\|"
-	      "\\\\[\n\r]"))		; Line continuations.
-
-;; Regexp matching syntactic whitespace, including possibly the empty
-;; string.  As opposed to `c-(forward|backward)-syntactic-ws', this
-;; doesn't regard cpp directives as syntactic whitespace.
-(c-lang-defconst c-syntactic-ws
-  all (concat "[ \t\n\r]*\\("
-	      "\\(" (c-lang-var c-nonwhite-syntactic-ws) "\\)"
-	      "[ \t\n\r]*\\)*"))
-
-;; Number of regexp grouping parens in `c-syntactic-ws'.
-(c-lang-defconst c-syntactic-ws-depth
-  all (c-regexp-opt-depth (c-lang-var c-syntactic-ws)))
-
-;; Regexp matching syntactic whitespace, which is at least one
-;; character long.  As opposed to `c-(forward|backward)-syntactic-ws',
-;; this doesn't regard cpp directives as syntactic whitespace.
-(c-lang-defconst c-nonempty-syntactic-ws
-  all (concat "\\([ \t\n\r]\\|"
-	      (c-lang-var c-nonwhite-syntactic-ws)
-	      "\\)+"))
-
-;; Number of regexp grouping parens in `c-nonempty-syntactic-ws'.
-(c-lang-defconst c-nonempty-syntactic-ws-depth
-  all (c-regexp-opt-depth (c-lang-var c-nonempty-syntactic-ws)))
-
-;; Regexp matching syntactic whitespace without any line breaks.  As
-;; opposed to `c-(forward|backward)-syntactic-ws', this doesn't regard
-;; cpp directives as syntactic whitespace.
-(c-lang-defconst c-single-line-syntactic-ws
-  all (concat "[ \t]*\\("
-	      "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/" ; Block comment
-	      "[ \t]*\\)*"))
-
-;; Number of regexp grouping parens in `c-single-line-syntactic-ws'.
-(c-lang-defconst c-single-line-syntactic-ws-depth
-  all (c-regexp-opt-depth (c-lang-var c-single-line-syntactic-ws)))
 
 ;; HELPME: Many of the following keyword lists are more or less bogus
 ;; for some languages (notably ObjC and IDL).  The effects of the
@@ -401,13 +350,15 @@ appended."
 		;; treated like one by font-lock.el when CC Mode took
 		;; over the settings.  FIXME: Check it in the standard.
 		)
-  c (append (c-lang-var c-primitive-type-kwds)
-	    '(
+  c (append '(
 	      ;; From font-lock.el: Henrik Enberg <henrik@enberg.org>
 	      ;; says these are new, but i'm very sceptical that they
 	      ;; are actually keywords.  FIXME: Check it in the standard.
 	      ;;"_Complex" "_Imaginary" "_Bool"
-	      ))
+	      )
+	    (c-lang-var c-primitive-type-kwds))
+  c++ (append '("bool" "wchar_t")
+	      (c-lang-var c-primitive-type-kwds))
   objc '("char" "double" "float" "id" "int" "long" "short" "signed" "unsigned"
 	 "void")
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
@@ -461,16 +412,20 @@ appended."
 ;; "typedef" is since it precedes the declaration that defines the
 ;; type.
 (c-lang-defconst c-specifier-kwds
-  c '("auto" "const" "extern" "register" "typedef" "static" "volatile"
-      ;; From font-lock.el: Dan Nicolaescu <done@gnu.org> says this is new.
-      "restrict"			; FIXME: How is this used?
-      ;; From font-lock.el: Henrik Enberg <henrik@enberg.org> says this is new.
-      "inline")
-  (c++ objc idl) (append '("friend" "virtual")
-			 (c-lang-var c-specifier-kwds c))
-  ;; Note: `const' is not used in Java, but it's still a reserved keyword.
+  (c c++) '("auto" "const" "extern" "inline" "register" "typedef"
+	    "static" "volatile")
+  c   (append '(;; From font-lock.el: Dan Nicolaescu <done@gnu.org> says
+		;; this is new.
+		"restrict"		; FIXME: How is this used?
+		)
+	      (c-lang-var c-specifier-kwds))
+  c++ (append '("explicit" "friend" "mutable" "virtual")
+	      (c-lang-var c-specifier-kwds))
+  ;; I have no idea about these languages, so just use the specifiers in C.
+  (objc idl) (c-lang-var c-specifier-kwds c)
+  ;; Note: "const" is not used in Java, but it's still a reserved keyword.
   java '("abstract" "const" "final" "native" "private" "protected"
-	 "public" "static" "synchronized" "transient" "volatile")
+	 "public" "static" "strictfp" "synchronized" "transient" "volatile")
   pike '("constant" "final" "inline" "local" "nomask" "optional"
 	 "private" "protected" "public" "static" "typedef" "variant"))
 
@@ -527,7 +482,7 @@ appended."
 ;; Keywords where the following symbol - if any - is a type name.
 (c-lang-defconst c-type-prefix-kwds
   c '("struct" "union" "enum")
-  c++ '("class" "struct" "union" "enum")
+  c++ '("class" "struct" "typename" "union" "enum")
   java '("class")
   pike '("class" "enum"))
 
@@ -540,7 +495,7 @@ appended."
 ;; by any of the above.
 (c-lang-defconst c-other-decl-kwds
   ;; FIXME: Shouldn't "template" be moved to `c-specifier-kwds' for C++?
-  c++ '("template")
+  c++ '("template" "using")
   java '("import" "package")
   pike '("import" "inherit"))
 
@@ -618,10 +573,19 @@ appended."
   all (c-make-keywords-re t (c-lang-var c-label-kwds)))
 (c-lang-defvar c-label-kwds-regexp (c-lang-var c-label-kwds-regexp))
 
+;; Keywords for constants.
+(c-lang-defconst c-constant-kwds
+  (c c++) '("NULL") ;; Not a keyword, but practically works as one.
+  c++ (append '("false" "true")
+	      (c-lang-var c-constant-kwds)))
+
 ;; Keywords that can occur anywhere in expressions.
 (c-lang-defconst c-expr-kwds
   (c objc) '("sizeof")
-  c++ '("delete" "new" "operator" "sizeof" "this" "throw")
+  c++ '("delete" "new" "operator" "sizeof" "this" "throw"
+	"const_cast" "dynamic_cast" "reinterpret_cast" "static_cast" "typeid"
+	"and" "and_eq" "bitand" "bitor" "compl" "not"
+	"not_eq" "or" "or_eq" "xor" "xor_eq")
   java '("instanceof" "new" "super" "this")
   pike '(;; "this" isn't really a keyword, but it works as one in practice.
 	 "catch" "class" "gauge" "global" "lambda" "predef" "this" "throw"))
@@ -706,6 +670,7 @@ appended."
 				 (c-lang-var c-simple-stmt-kwds)
 				 (c-lang-var c-asm-stmt-kwds)
 				 (c-lang-var c-label-kwds)
+				 (c-lang-var c-constant-kwds)
 				 (c-lang-var c-expr-kwds)
 				 (c-lang-var c-lambda-kwds)
 				 (c-lang-var c-inexpr-block-kwds)
@@ -720,7 +685,7 @@ appended."
   all (c-make-keywords-re t (c-lang-var c-keywords)))
 (c-lang-defvar c-keywords-regexp (c-lang-var c-keywords-regexp))
 
-;; All keywords that don't introduce a type as an adorned regexp.
+;; All keywords that aren't types as an adorned regexp.
 (c-lang-defconst c-nontype-keywords-regexp
   all (c-make-keywords-re t
 	(set-difference (c-lang-var c-keywords)
@@ -934,6 +899,65 @@ appended."
   c "*/"
   (c++ objc java idl pike) "")
 (c-lang-defvar comment-end (c-lang-var comment-end))
+
+;; Regexp matching a piece of syntactic whitespace that isn't a
+;; sequence of simple whitespace characters.  As opposed to
+;; `c-(forward|backward)-syntactic-ws', this doesn't regard cpp
+;; directives as syntactic whitespace.
+(c-lang-defconst c-nonwhite-syntactic-ws
+  all (concat "/" (concat
+		   "\\("
+		   "/[^\n\r]*[\n\r]"	; Line comment.
+		   "\\|"
+		   ;; Block comment. We intentionally don't allow line
+		   ;; breaks in them to avoid going very far and risk
+		   ;; running out of regexp stack; this regexp is
+		   ;; intended to handle only short comments that
+		   ;; might be put in the middle of limited constructs
+		   ;; like declarations.
+		   "\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/"
+		   "\\)")
+	      "\\|"
+	      "\\\\[\n\r]"))		; Line continuations.
+
+;; Regexp matching syntactic whitespace, including possibly the empty
+;; string.  As opposed to `c-(forward|backward)-syntactic-ws', this
+;; doesn't regard cpp directives as syntactic whitespace.  Does not
+;; contain a \| operator at the top level.
+(c-lang-defconst c-syntactic-ws
+  all (concat "[ \t\n\r]*\\("
+	      "\\(" (c-lang-var c-nonwhite-syntactic-ws) "\\)"
+	      "[ \t\n\r]*\\)*"))
+
+;; Number of regexp grouping parens in `c-syntactic-ws'.
+(c-lang-defconst c-syntactic-ws-depth
+  all (c-regexp-opt-depth (c-lang-var c-syntactic-ws)))
+
+;; Regexp matching syntactic whitespace, which is at least one
+;; character long.  As opposed to `c-(forward|backward)-syntactic-ws',
+;; this doesn't regard cpp directives as syntactic whitespace.  Does
+;; not contain a \| operator at the top level.
+(c-lang-defconst c-nonempty-syntactic-ws
+  all (concat "\\([ \t\n\r]\\|"
+	      (c-lang-var c-nonwhite-syntactic-ws)
+	      "\\)+"))
+
+;; Number of regexp grouping parens in `c-nonempty-syntactic-ws'.
+(c-lang-defconst c-nonempty-syntactic-ws-depth
+  all (c-regexp-opt-depth (c-lang-var c-nonempty-syntactic-ws)))
+
+;; Regexp matching syntactic whitespace without any line breaks.  As
+;; opposed to `c-(forward|backward)-syntactic-ws', this doesn't regard
+;; cpp directives as syntactic whitespace.  Does not contain a \|
+;; operator at the top level.
+(c-lang-defconst c-single-line-syntactic-ws
+  all (concat "[ \t]*\\("
+	      "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/" ; Block comment
+	      "[ \t]*\\)*"))
+
+;; Number of regexp grouping parens in `c-single-line-syntactic-ws'.
+(c-lang-defconst c-single-line-syntactic-ws-depth
+  all (c-regexp-opt-depth (c-lang-var c-single-line-syntactic-ws)))
 
 ;; Regexp that matches when there is no syntactically significant text
 ;; before eol.  Macros are regarded as syntactically significant text
