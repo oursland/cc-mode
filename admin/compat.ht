@@ -4,8 +4,8 @@ Other-links:
     <h3>Emacsen</h3>
     <li><a href="compat_xemacs.html">X/Emacs 20</a>
     <li><a href="compat_emacs19.html">Emacs 19</a>
-    <li><a href="compat_ntemacs.html">NTEmacs 19</a>
     <li><a href="compat_emacs18.html">Emacs 18</a>
+    <li><a href="compat_delbs_awk.html">Other Elisp</a>
 
 <h2>Compatibility Notes</h2>
 
@@ -17,6 +17,8 @@ Other-links:
     <ul><li><a href="compat_xemacs.html">XEmacs 20 and Emacs 20</a>
 	<li><a href="compat_emacs19.html">Emacs 19</a>, specifically
 	    Emacs 19.34.
-	<li><a href="compat_ntemacs.html">NTEmacs 19.34</a>
 	<li><a href="compat_emacs18.html">Emacs 18</a>
+	<li><a href="compat_delbs_awk.html">Interactions with other
+	    Elisp packages, e.g. <code>delbackspace.el</code>
+	    and <code>awk-mode</code>.
     </ul>

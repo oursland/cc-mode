@@ -7,18 +7,37 @@ Other-links:
     <li><a href="compat_emacs18.html">Emacs 18</a>
     <li><a href="compat_delbs_awk.html">Other Elisp</a>
 
-<h2>Compatibility Notes</h2>
+<h3><code>delbackspace.el</code> and <code>awk-mode</code></h3>
 
-    Setting up CC Mode is a little different for each version of
-    XEmacs and Emacs.  Users of Emacs 19.34 or NTEmacs 19.34,
-    especially will want to read the compatibility note for their
-    version.
+    You will encounter problems if you use either the
+    <code>delbackspace</code> package or <code>awk-mode</code>, since
+    neither package has been ported to CC Mode 5.  Best known
+    workarounds are as follows, but since I don't use either of these
+    packages, I can't completely vouch for them.
 
-    <ul><li><a href="compat_xemacs.html">XEmacs 20 and Emacs 20</a>
-	<li><a href="compat_emacs19.html">Emacs 19</a>, specifically
-	    Emacs 19.34.
-	<li><a href="compat_emacs18.html">Emacs 18</a>
-	<li><a href="compat_delbs_awk.html">Interactions with other
-	    Elisp packages, e.g. <code>delbackspace.el</code>
-	    and <code>awk-mode</code>.
+    <ul><li>If you use <code>delbackspace</code>, put the following in 
+	    your <code>.emacs</code> file <em>after</em> you load
+	    <code>delbackspace.el</code>, but <em>before</em> you load 
+	    CC Mode:
+
+<blockquote><pre>
+(setcar (assoc "cc-mode" after-load-alist) "cc-langs")
+</pre></blockquote>
+
+	Note that <code>delbackspace.el</code> is obsolete as of
+	XEmacs 20.3 so if you've upgraded, and in fact is no longer
+	distributed with XEmacs.
+
+	<p><li>If you use <code>awk-mode</code> in older X/Emacsen, you
+	    might need to make a
+	    change to the source code for <code>awk-mode.el</code>
+	    to look like:
+
+<blockquote><pre>
+(require 'cc-mode)
+(c-initialize-cc-mode)
+</pre></blockquote>
+
+	    in the <code>awk-mode</code> defun.  This is fixed in
+	    current versions of Emacs and XEmacs.
     </ul>
