@@ -21,7 +21,7 @@ gzip'd tarball</a>.  You can browse the <a href="src/">individual
 files</a> too.
 
 <p>The documentation is also available in several forms.  You can
-either <a href="manual/html/index.html">browse the on-line
+either <a href="html-manual/index.html">browse the on-line
 documentation</a> or grab one of the several <a
 href="manual/">pre-formatted</a> documents generated from the texinfo
 source, including PostScript, Emacs Info, and HTML versions</a>.

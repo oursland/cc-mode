@@ -32,7 +32,7 @@ visible changes in CC Mode 5.
   runs <code>c-delete-function</code>), and the <code>BackSpace</code>
   keysym to <code>c-electric-backspace</code> (which runs
   <code>c-backspace-function</code>).  See the <a
-  href="manual/html/Hungry-deletion%20of%20Whitespace.html">CC Mode
+  href="html-manual/Hungry-deletion%20of%20Whitespace.html">CC Mode
   manual</a> for details.
 
   <p><li>The single <code>cc-mode.el</code> file was simply too
