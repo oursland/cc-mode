@@ -13,7 +13,7 @@
 ((topmost-intro 130))
 ((topmost-intro 130))
 ((class-open 134))
-((comment-intro) (inclass 148) (topmost-intro 150))
+((inclass 148) (topmost-intro 150) (comment-intro))
 ((inclass 148) (topmost-intro 150))
 ((brace-list-open 198))
 ((brace-list-intro 219))

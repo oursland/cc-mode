@@ -4,7 +4,7 @@
 ((arglist-cont 46))
 ((arglist-cont 46))
 ((defun-open 1))
-((comment-intro) (defun-block-intro 145))
+((defun-block-intro 145) (comment-intro))
 ((defun-close 145))
 ((topmost-intro 158))
 ((topmost-intro 158))

@@ -3,5 +3,5 @@
 ((topmost-intro 11))
 ((class-open 15))
 ((topmost-intro 68))
-((comment-intro) (func-decl-cont 72))
+((func-decl-cont 72) (comment-intro))
 ((defun-open 72))

@@ -1,6 +1,6 @@
 ((topmost-intro 1))
 ((defun-open 1))
-((comment-intro) (defun-block-intro 12))
+((defun-block-intro 12) (comment-intro))
 ((defun-block-intro 12))
 ((case-label 70))
 ((statement-case-intro 92))

@@ -1,4 +1,4 @@
 ((topmost-intro 1))
 ((defun-block-intro 1))
-((comment-intro) (statement 18))
+((statement 18) (comment-intro))
 ((defun-close 1))

@@ -1,4 +1,4 @@
-((cpp-macro) (topmost-intro 1))
+((topmost-intro 1) (cpp-macro))
 ((cpp-define-intro) (statement-block-intro 1))
 ((substatement-open 29))
 ((statement-block-intro 44))

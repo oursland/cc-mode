@@ -1,4 +1,4 @@
-((comment-intro) (topmost-intro 1))
+((topmost-intro 1) (comment-intro))
 ((topmost-intro 1))
 ((inclass 12) (topmost-intro 25))
 ((defun-block-intro 29))

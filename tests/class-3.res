@@ -1,4 +1,4 @@
-((comment-intro) (topmost-intro 1))
+((topmost-intro 1) (comment-intro))
 ((topmost-intro 1))
 ((class-open 8))
 ((inclass 16) (topmost-intro 18))

@@ -25,7 +25,7 @@
 ((class-open 393))
 ((inclass 436) (topmost-intro 438))
 ((inclass 436) (inline-open))
-((comment-intro) (defun-block-intro 491))
+((defun-block-intro 491) (comment-intro))
 ((inline-close 491))
 ((inclass 436) (topmost-intro 509))
 ((inclass 436) (inline-open))

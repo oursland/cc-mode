@@ -7,7 +7,7 @@
 ((statement 55))
 ((block-close 21))
 ((defun-close 15))
-((comment-intro) (topmost-intro 74))
+((topmost-intro 74) (comment-intro))
 ((c 76))
 ((c 76))
 ((c 76))

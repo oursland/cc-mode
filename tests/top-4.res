@@ -29,7 +29,7 @@
 ((do-while-closure 152))
 ((statement-cont 167))
 ((topmost-intro 173))
-((cpp-macro) (topmost-intro 173))
+((topmost-intro 173) (cpp-macro))
 ((cpp-define-intro 183))
 ((statement-cont 203))
 ((substatement 203))

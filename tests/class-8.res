@@ -4,7 +4,7 @@
 ((substatement-open 22))
 ((case-label 41))
 ((statement-case-open 51))
-((comment-intro) (statement-block-intro 97))
+((statement-block-intro 97) (comment-intro))
 ((statement-block-intro 97))
 ((block-close 97))
 ((block-close 41))

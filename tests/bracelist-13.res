@@ -3,6 +3,6 @@
 ((brace-list-intro 24))
 ((brace-list-close 24))
 ((topmost-intro 49))
-((comment-intro) (brace-list-intro 52))
+((brace-list-intro 52) (comment-intro))
 ((brace-list-intro 52))
 ((brace-list-close 52))

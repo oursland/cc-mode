@@ -1,5 +1,5 @@
 ((topmost-intro 1))
-((cpp-macro) (topmost-intro 1))
+((topmost-intro 1) (cpp-macro))
 ((cpp-define-intro 2))
 ((knr-argdecl-intro 31))
 ((knr-argdecl 50))

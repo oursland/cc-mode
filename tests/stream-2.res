@@ -1,7 +1,7 @@
 ((topmost-intro 1))
 ((defun-open 1))
 ((defun-block-intro 12))
-((comment-intro) (statement-cont 18))
+((statement-cont 18) (comment-intro))
 ((statement-cont 18))
 ((statement-cont 18))
 ((statement-cont 18))
