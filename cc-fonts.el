@@ -288,7 +288,7 @@
 		 ;; Got a label.
 		 (goto-char id-start)
 		 (looking-at c-symbol-key)
-		 (put-text-property (match-beginning 1) (match-end 1)
+		 (put-text-property (match-beginning 0) (match-end 0)
 				    'face c-label-face))))))))
 
 ;; The compiler might complain about this variable when the lambda
@@ -303,44 +303,6 @@
 	(,(concat "\\<" (c-lang-var c-nontype-keywords-regexp))
 	 1 font-lock-keyword-face)
 
-	;; Fontify labels in languages that supports them.
-	,@(when (c-lang-var c-label-key)
-	    `(;; Fontify goto targets and case labels.
-	      (eval . (list
-		       ,(concat "\\<\\("
-				(c-make-keywords-re nil
-				  (c-lang-var c-before-label-kwds))
-				"\\)\\>[^:\n\r]*")
-		       (list
-			;; Fontify all integers and symbols between
-			;; (match-end 1) and (match-end 0) as labels.
-			;; (This is possible to do with a normal
-			;; anchored matcher in Emacs >= 20 and XEmacs
-			;; >= 21 where the PRE-MATCH-FORM can override
-			;; the limit.)
-			,(byte-compile
-			  `(lambda (limit)
-			     (setq limit (match-end 0))
-			     (goto-char (match-end 1))
-			     (while (re-search-forward
-				     ,(concat "\\(-?[0-9]+\\)\\|\\("
-					      (c-lang-var c-symbol-key)
-					      "\\)")
-				     limit t)
-			       (unless (get-text-property (match-beginning 0)
-							  'face)
-				 (if (match-beginning 1)
-				     (put-text-property (match-beginning 1)
-							(match-end 1)
-							'face c-label-face)
-				   (put-text-property (match-beginning 3)
-						      (match-end 3)
-						      'face c-label-face))))
-			     )))))
-
-	      ;; Fontify normal labels.
-	      c-font-lock-labels))
-
 	;; Fontify leading identifiers in fully qualified names like
 	;; "foo::bar" in languages that supports such things.
 	,@(when (c-lang-var c-identifier-concat-key)
@@ -353,16 +315,83 @@
 		 ;; problems in other places).
 		 `(lambda (limit)
 		    (when (re-search-forward
-			   ,(concat "\\(\\<"
-				    (c-lang-var c-symbol-key)
+			   ,(concat "\\(\\<" ; 1
+				    "\\(" (c-lang-var c-symbol-key) "\\)" ; 2
 				    "[ \t\n\r]*"
 				    (c-lang-var c-identifier-concat-key)
-				    "\\)"
 				    "[ \t\n\r]*"
+				    "\\)"
 				    (c-lang-var c-symbol-start))
-			  limit t)
+			   limit t)
 		      (goto-char (match-end 1)))))
 	       2 font-lock-reference-face)))
+
+	;; Fontify labels in languages that supports them.
+	,@(when (c-lang-var c-label-key)
+
+	    `(;; Fontify goto targets and case labels.  This
+	      ;; deliberately fontifies only a single identifier or a
+	      ;; signed integer as a label; all other forms are
+	      ;; considered to be expressions and thus fontified as
+	      ;; such (i.e. not at all).
+
+	      ;; (Got three different interpretation levels here,
+	      ;; which makes it a bit complicated: 1) The backquote
+	      ;; stuff is expanded when compiled or loaded, 2) the
+	      ;; eval form is evaluated at font-lock setup (to
+	      ;; substitute c-label-face correctly), and 3) the
+	      ;; resulting structure is interpreted during
+	      ;; fontification.)
+	      (eval
+	       . ,(let* ((c-before-label-re
+			  (c-make-keywords-re nil
+			    (c-lang-var c-before-label-kwds)))
+			 (identifier-offset
+			  (+ (c-regexp-opt-depth c-before-label-re)
+			     3))
+			 (integer-offset
+			  (+ identifier-offset
+			     (c-regexp-opt-depth
+			      (c-lang-var c-qualified-identifier-key))
+			     1)))
+
+		    `(list
+		      ,(concat
+			"\\<\\("
+			c-before-label-re
+			"\\)\\>"
+			"\\s *"
+			"\\("
+			;; Match a qualified identifier.  We highlight
+			;; the last symbol in it as a label.
+			"\\(" (c-lang-var ; identifier-offset
+			       c-qualified-identifier-key) "\\)"
+			"\\|"
+			;; Match an integer.
+			"\\(-?[0-9]+\\)" ; integer-offset
+			(if (c-major-mode-is 'pike-mode)
+			    ;; Pike allows integer ranges.
+			    (concat
+			     "\\(\\s *\\.\\.\\s *\\(-?[0-9]+\\)\\)?"
+			     "\\|\\.\\.\\s *\\(-?[0-9]+\\)")
+			  "")
+			"\\)")
+
+		      ,@(mapcar
+			 (lambda (submatch)
+			   `(list ,(+ identifier-offset submatch)
+				  c-label-face nil t))
+			 (c-lang-var c-qualified-identifier-last-sym-match))
+
+		      (list ,integer-offset c-label-face nil t)
+
+		      ,@(when (c-major-mode-is 'pike-mode)
+			  `((list ,(+ integer-offset 2) c-label-face nil t)
+			    (list ,(+ integer-offset 3) c-label-face nil t)))
+		      )))
+
+	      ;; Fontify normal labels.
+	      c-font-lock-labels))
 	))
 
 (defun c-font-lock-declarators (limit list)
@@ -410,15 +439,15 @@
 
 	(if (eq c-qualified-identifier-key c-symbol-key)
 	    ;; Got no qualified identifiers in this language.
-	    (unless (get-text-property (match-beginning 1) 'face)
-	      (put-text-property (match-beginning 1) (match-end 1)
+	    (unless (get-text-property (match-beginning 0) 'face)
+	      (put-text-property (match-beginning 0) (match-end 0)
 				 'face id-face))
 
-	  (goto-char (match-beginning 1))
-	  (let ((end (match-end 1)))
+	  (goto-char (match-beginning 0))
+	  (let ((end (match-end 0)))
 	    (while (c-syntactic-re-search-forward c-symbol-key end 'move)
-	      (unless (get-text-property (match-beginning 1) 'face)
-		(put-text-property (match-beginning 1) (match-end 1)
+	      (unless (get-text-property (match-beginning 0) 'face)
+		(put-text-property (match-beginning 0) (match-end 0)
 				   'face id-face))))
 	  (goto-char id-end)))
 
@@ -457,8 +486,8 @@
   ;;(message "c-font-lock-type from %s to %s" start end)
   (goto-char start)
   (while (c-syntactic-re-search-forward c-symbol-key end 'move)
-    (unless (get-text-property (match-beginning 1) 'face)
-      (put-text-property (match-beginning 1) (match-end 1)
+    (unless (get-text-property (match-beginning 0) 'face)
+      (put-text-property (match-beginning 0) (match-end 0)
 			 'face 'font-lock-type-face))))
 
 (defconst c-font-lock-maybe-type-faces
@@ -731,7 +760,7 @@
 			    ;; that isn't followed by a semicolon in front of
 			    ;; a statement.
 			    (throw 'at-decl-or-cast nil)
-			  (goto-char (match-end 1))
+			  (goto-char (match-end 0))
 			  (c-forward-syntactic-ws))
 		      ;; The identifier seems to be missing.
 		      (setq no-identifier t))
@@ -1029,7 +1058,7 @@
 	      `((,(c-make-simple-font-lock-decl-function
 		   (concat "\\<\\(" prefix-re "\\)"
 			   "[ \t\n\r]+"
-			   (c-lang-var c-symbol-key))
+			   "\\(" (c-lang-var c-symbol-key) "\\)")
 		   (+ (c-regexp-opt-depth prefix-re) 2)
 		   '(progn (goto-char (match-end 2))
 			   (c-forward-syntactic-ws))
@@ -1058,7 +1087,7 @@
 			       (c-lang-var c-type-prefix-kwds))))
 	      `((,(concat "\\<\\(" prefix-re "\\)"
 			  "[ \t\n\r]+"
-			  (c-lang-var c-symbol-key))
+			  "\\(" (c-lang-var c-symbol-key) "\\)")
 		 ,(+ (c-regexp-opt-depth prefix-re) 2) 'font-lock-type-face))))
 
 	;; Fontify symbols after closing braces as declaration
@@ -1075,7 +1104,7 @@
 	    `((,(c-make-simple-font-lock-decl-function
 		 (concat "}"
 			 (c-lang-var c-single-line-syntactic-ws)
-			 "\\("
+			 "\\("		; 1 + c-single-line-syntactic-ws-depth
 			 (c-lang-var c-type-decl-prefix-key)
 			 "\\|"
 			 (c-lang-var c-symbol-key)
@@ -1126,6 +1155,9 @@ Like `c-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c-font-lock-extra-types'.")
 
+;; FIXME: The init values on these defvars aren't overridden, so we
+;; could still have the settings from an old font-lock package on this
+;; one.  If we override it we could otoh clobber user settings. :/
 (defvar c-font-lock-keywords c-font-lock-keywords-3
   "Default expressions to highlight in C mode.")
 
