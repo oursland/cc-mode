@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.392 $
-;; Last Modified:   $Date: 1997-04-15 15:51:10 $
+;; Version:         $Revision: 4.393 $
+;; Last Modified:   $Date: 1997-04-17 13:38:23 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -5208,7 +5208,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.392 $"
+(defconst c-version "$Revision: 4.393 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5287,9 +5287,9 @@ command to conveniently insert and align the necessary backslashes."
       ))))
 
 
-;; menus for XEmacs 19
+;; menus for XEmacs
 (defun c-mode-menu ()
-  (cons (concat mode-name " Mode Commands") c-mode-menu))
+  (cons mode-name c-mode-menu))
 
 (defun c-popup-menu (e)
   "Pops up the C/C++/ObjC menu."
