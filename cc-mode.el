@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.257 $
-;; Last Modified:   $Date: 1996-01-06 00:51:42 $
+;; Version:         $Revision: 4.258 $
+;; Last Modified:   $Date: 1996-01-06 01:01:00 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-06 00:51:42 $|$Revision: 4.257 $|
+;; |$Date: 1996-01-06 01:01:00 $|$Revision: 4.258 $|
 
 ;;; Code:
 
@@ -2855,7 +2855,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (progn
 	(set-marker (aref c-progress-info 1) nil)
 	(setq c-progress-info nil)
-	(message "indenting region... done."))))
+	(message "indenting region... done"))))
 
 
 ;; Skipping of "syntactic whitespace" for Emacs 19.  Syntactic
@@ -4585,7 +4585,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.257 $"
+(defconst c-version "$Revision: 4.258 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
