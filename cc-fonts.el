@@ -99,7 +99,6 @@
 (cc-bytecomp-defvar c-reference-face-name)
 (cc-bytecomp-defun c-fontify-recorded-types-and-refs)
 (cc-bytecomp-defun c-font-lock-declarators)
-(cc-bytecomp-defun c-font-lock-objc-iip-decl)
 (cc-bytecomp-defun c-font-lock-objc-method)
 (cc-bytecomp-defun c-font-lock-invalid-string)
 
@@ -624,22 +623,21 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (if (> (point) limit) (goto-char limit)))))
 
 	    ;; The @interface/@implementation/@protocol directives.
-	    (,(concat "\\<"
+	    ,(c-make-font-lock-search-function
+	      (concat "\\<"
 		      (regexp-opt
 		       '("@interface" "@implementation" "@protocol")
 		       t)
 		      "\\>")
-	     (,(byte-compile
-		(lambda (limit)
-		  (let (;; The font-lock package in Emacs is known to clobber
-			;; `parse-sexp-lookup-properties' (when it exists).
-			(parse-sexp-lookup-properties
-			 (cc-eval-when-compile
-			   (boundp 'parse-sexp-lookup-properties))))
-		    (save-restriction
-		      (narrow-to-region (point-min) limit)
-		      (c-font-lock-objc-iip-decl)))
-		  nil))))))
+	      '((c-fontify-types-and-refs
+		    (;; The font-lock package in Emacs is known to clobber
+		     ;; `parse-sexp-lookup-properties' (when it exists).
+		     (parse-sexp-lookup-properties
+		      (cc-eval-when-compile
+			(boundp 'parse-sexp-lookup-properties))))
+		  (c-forward-objc-directive)
+		  nil)
+		(goto-char (match-beginning 0))))))
       ))
 
 (defun c-font-lock-complex-decl-prepare (limit)
@@ -1700,48 +1698,6 @@ need for `c++-font-lock-extra-types'.")
 
 
 ;;; Objective-C.
-
-(defun c-font-lock-objc-iip-decl ()
-  ;; Assuming the point is after an "@interface", "@implementation",
-  ;; "@protocol" declaration, fontify all the types in the directive.
-  ;; Return t if the directive was fully recognized.  Point will then
-  ;; be at the end of it.
-  ;;
-  ;; This function might do hidden buffer changes.
-
-  (c-fontify-types-and-refs
-      (start-char
-       (c-promote-possible-types t)
-       ;; Turn off recognition of angle bracket arglists while parsing
-       ;; types here since the protocol reference list might then be
-       ;; considered part of the preceding name or superclass-name.
-       c-recognize-<>-arglists)
-    (catch 'break
-
-      ;; Handle the name of the class itself.
-      (c-forward-syntactic-ws)
-      (unless (c-forward-type) (throw 'break nil))
-
-      ;; Look for ": superclass-name" or "( category-name )".
-      (when (looking-at "[:\(]")
-	(setq start-char (char-after))
-	(forward-char)
-	(c-forward-syntactic-ws)
-	(unless (c-forward-type) (throw 'break nil))
-	(when (eq start-char ?\()
-	  (unless (eq (char-after) ?\)) (throw 'break nil))
-	  (forward-char)
-	  (c-forward-syntactic-ws)))
-
-      ;; Look for a protocol reference list.
-      (when (if (eq (char-after) ?<)
-		(let ((c-recognize-<>-arglists t)
-		      (c-parse-and-markup-<>-arglists t)
-		      c-restricted-<>-arglists)
-		  (c-forward-<>-arglist t))
-	      t)
-	(c-put-char-property (1- (point)) 'c-type 'c-decl-end)
-	t))))
 
 (defun c-font-lock-objc-method ()
   ;; Assuming the point is after the + or - that starts an Objective-C

@@ -392,6 +392,25 @@ comment at the start of cc-engine.el for more info."
 (defvar c-literal-faces
   '(font-lock-comment-face font-lock-string-face))
 
+(defsubst c-put-c-type-property (pos value)
+  ;; Put a c-type property with the given value at POS.
+  (c-put-char-property pos 'c-type value))
+
+(defun c-clear-c-type-property (from to value)
+  ;; Remove all occurences of the c-type property that has the given
+  ;; value in the region between FROM and TO.  VALUE is assumed to not
+  ;; be nil.
+  ;;
+  ;; Note: This assumes that c-type is put on single chars only; it's
+  ;; very inefficient if matching properties cover large regions.
+  (save-excursion
+    (goto-char from)
+    (while (progn
+	     (when (eq (get-text-property (point) 'c-type) value)
+	       (c-clear-char-property (point) 'c-type))
+	     (goto-char (next-single-property-change (point) 'c-type nil to))
+	     (< (point) to)))))
+
 
 ;; Some debug tools to visualize various special positions.  This
 ;; debug code isn't as portable as the rest of CC Mode.
@@ -4311,8 +4330,8 @@ comment at the start of cc-engine.el for more info."
 		    ;; The angle bracket arglist is finished.
 		    (when c-parse-and-markup-<>-arglists
 		      (while arg-start-pos
-			(c-put-char-property (1- (car arg-start-pos))
-					     'c-type 'c-<>-arg-sep)
+			(c-put-c-type-property (1- (car arg-start-pos))
+					       'c-<>-arg-sep)
 			(setq arg-start-pos (cdr arg-start-pos)))
 		      (c-mark-<-as-paren start)
 		      (c-mark->-as-paren (1- (point))))
@@ -5652,7 +5671,7 @@ y	  ;; True if there's a suffix match outside the outermost
 	;; Make sure to propagate the `c-decl-arg-start' property to
 	;; the next argument if it's set in this one, to cope with
 	;; interactive refontification.
-	(c-put-char-property (point) 'c-type 'c-decl-arg-start))
+	(c-put-c-type-property (point) 'c-decl-arg-start))
 
       (when (and c-record-type-identifiers at-type (not (eq at-type t)))
 	(let ((c-promote-possible-types t))
@@ -5717,7 +5736,7 @@ y	  ;; True if there's a suffix match outside the outermost
 
 	    (progn
 	      (goto-char (match-beginning 2))
-	      (c-put-char-property (1- (point)) 'c-type 'c-decl-end)
+	      (c-put-c-type-property (1- (point)) 'c-decl-end)
 	      t)
 
 	  ;; It's an unfinished label.  We consider the keyword enough
@@ -5735,7 +5754,7 @@ y	  ;; True if there's a suffix match outside the outermost
       (goto-char (match-end 1))
       (when c-record-type-identifiers
 	(c-record-ref-id (cons (match-beginning 1) (point))))
-      (c-put-char-property (1- (point)) 'c-type 'c-decl-end)
+      (c-put-c-type-property (1- (point)) 'c-decl-end)
       t)
 
      ((and c-recognize-colon-labels
@@ -5830,7 +5849,7 @@ y	  ;; True if there's a suffix match outside the outermost
 	      (c-record-ref-id (cons (match-beginning 0)
 				     (match-end 0)))))
 
-	  (c-put-char-property (1- (point-max)) 'c-type 'c-decl-end)
+	  (c-put-c-type-property (1- (point-max)) 'c-decl-end)
 	  (goto-char (point-max))
 	  t)))
 
@@ -5838,6 +5857,78 @@ y	  ;; True if there's a suffix match outside the outermost
       ;; Not a label.
       (goto-char start)
       nil))))
+
+(defun c-forward-objc-directive ()
+  ;; Assuming the point is at the beginning of a token, try to move
+  ;; forward to the end of the Objective-C directive that starts
+  ;; there.  Return t if a directive was fully recognized, otherwise
+  ;; the point is moved as far as one could be successfully parsed and
+  ;; nil is returned.
+  ;;
+  ;; This function records identifier ranges on
+  ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
+  ;; `c-record-type-identifiers' is non-nil.
+  ;;
+  ;; This function might do hidden buffer changes.
+
+    (let ((start (point))
+	  start-char
+	  (c-promote-possible-types t)
+	  ;; Turn off recognition of angle bracket arglists while parsing
+	  ;; types here since the protocol reference list might then be
+	  ;; considered part of the preceding name or superclass-name.
+	  c-recognize-<>-arglists)
+
+      (if (or
+	   (when (looking-at
+		  (eval-when-compile
+		    (c-make-keywords-re t
+		      (append (c-lang-const c-protection-kwds objc)
+			      '("@end"))
+		      'objc-mode)))
+	     (goto-char (match-end 1))
+	     t)
+
+	   (and
+	    (looking-at
+	     (eval-when-compile
+	       (c-make-keywords-re t
+		 '("@interface" "@implementation" "@protocol")
+		 'objc-mode)))
+
+	    ;; Handle the name of the class itself.
+	    (progn
+	      (c-forward-token-2)
+	      (c-forward-type))
+
+	    (catch 'break
+	      ;; Look for ": superclass-name" or "( category-name )".
+	      (when (looking-at "[:\(]")
+		(setq start-char (char-after))
+		(forward-char)
+		(c-forward-syntactic-ws)
+		(unless (c-forward-type) (throw 'break nil))
+		(when (eq start-char ?\()
+		  (unless (eq (char-after) ?\)) (throw 'break nil))
+		  (forward-char)
+		  (c-forward-syntactic-ws)))
+
+	      ;; Look for a protocol reference list.
+	      (if (eq (char-after) ?<)
+		  (let ((c-recognize-<>-arglists t)
+			(c-parse-and-markup-<>-arglists t)
+			c-restricted-<>-arglists)
+		    (c-forward-<>-arglist t))
+		t))))
+
+	  (progn
+	    (c-backward-syntactic-ws)
+	    (c-clear-c-type-property start (1- (point)) 'c-decl-end)
+	    (c-put-c-type-property (1- (point)) 'c-decl-end)
+	    t)
+
+	(c-clear-c-type-property start (point) 'c-decl-end)
+	nil)))
 
 (defun c-beginning-of-inheritance-list (&optional lim)
   ;; Go to the first non-whitespace after the colon that starts a
@@ -5920,28 +6011,35 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; This function might do hidden buffer changes.
 
-  (let ((beg (point)) id-start)
-    (and (eq (c-beginning-of-statement-1 lim) 'same)
-	 (setq id-start
-	       (car-safe (c-forward-decl-or-cast-1 (c-point 'bosws) nil nil)))
-	 (< id-start beg)
-	 ;; There should not be a '=' or ',' between beg and the
-	 ;; start of the declaration since that means we were in the
-	 ;; "expression part" of the declaration.
-	 (or (> (point) beg)
-	     (not (looking-at "[=,]")))
-	 (save-excursion
-	   ;; Check that there's an arglist paren in the
-	   ;; declaration.
-	   (goto-char id-start)
-	   (when (eq (char-after) ?\()
-	     ;; The declarator is a paren expression, so skip past
-	     ;; it so that we don't get stuck on that instead of the
-	     ;; function arglist.
-	     (c-forward-sexp))
-	   (and (< (point) beg)
-		(c-syntactic-re-search-forward "(" beg t t)
-		(1- (point)))))))
+  (let ((beg (point)) end id-start)
+    (and
+     (eq (c-beginning-of-statement-1 lim) 'same)
+
+     (not (or (c-major-mode-is 'objc-mode)
+	      (c-forward-objc-directive)))
+
+     (setq id-start
+	   (car-safe (c-forward-decl-or-cast-1 (c-point 'bosws) nil nil)))
+     (< id-start beg)
+
+     ;; There should not be a '=' or ',' between beg and the
+     ;; start of the declaration since that means we were in the
+     ;; "expression part" of the declaration.
+     (or (> (point) beg)
+	 (not (looking-at "[=,]")))
+
+     (save-excursion
+       ;; Check that there's an arglist paren in the
+       ;; declaration.
+       (goto-char id-start)
+       (when (eq (char-after) ?\()
+	 ;; The declarator is a paren expression, so skip past
+	 ;; it so that we don't get stuck on that instead of the
+	 ;; function arglist.
+	 (c-forward-sexp))
+       (and (< (point) beg)
+	    (c-syntactic-re-search-forward "(" beg t t)
+	    (1- (point)))))))
 
 (defun c-in-knr-argdecl (&optional lim)
   ;; Return the position of the first argument declaration if point is
@@ -7841,18 +7939,25 @@ comment at the start of cc-engine.el for more info."
 	   ;; CASE 5J: we are at the topmost level, make
 	   ;; sure we skip back past any access specifiers
 	   ((save-excursion
-	      (prog1 (or (memq char-before-ip '(?\; ?{ ?} nil))
-			 (c-at-vsemi-p before-ws-ip)
-			 (when (and (eq char-before-ip ?:)
-				    (eq (c-beginning-of-statement-1 lim)
-					'label))
-			   (c-backward-syntactic-ws lim)
-			   t)
-			 (and (c-major-mode-is 'objc-mode)
-			      (progn
-				(c-beginning-of-statement-1 lim)
-				(eq (char-after) ?@))))
-		(setq placeholder (point))))
+	      (setq placeholder (point))
+	      (or (memq char-before-ip '(?\; ?{ ?} nil))
+		  (c-at-vsemi-p before-ws-ip)
+		  (when (and (eq char-before-ip ?:)
+			     (eq (c-beginning-of-statement-1 lim)
+				 'label))
+		    (c-backward-syntactic-ws lim)
+		    (setq placeholder (point)))
+		  (and (c-major-mode-is 'objc-mode)
+		       (catch 'not-in-directive
+			 (c-beginning-of-statement-1 lim)
+			 (setq placeholder (point))
+			 (while (and (c-forward-objc-directive)
+				     (< (point) indent-point))
+			   (c-forward-syntactic-ws)
+			   (if (>= (point) indent-point)
+			       (throw 'not-in-directive t))
+			   (setq placeholder (point)))
+			 nil))))
 	    ;; For historic reasons we anchor at bol of the last
 	    ;; line of the previous declaration.  That's clearly
 	    ;; highly bogus and useless, and it makes our lives hard
@@ -7906,6 +8011,13 @@ comment at the start of cc-engine.el for more info."
 	   ;; CASE 5M: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement-1 (c-safe-position (point) paren-state))
+	    (when (c-major-mode-is 'objc-mode)
+	      (setq placeholder (point))
+	      (while (and (c-forward-objc-directive)
+			  (< (point) indent-point))
+		(c-forward-syntactic-ws)
+		(setq placeholder (point)))
+	      (goto-char placeholder))
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 	   ))
 
