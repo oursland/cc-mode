@@ -1256,6 +1256,8 @@ It's overlaid over `font-lock-reference-face'."
 ;; types are used to provide default variable values.
 
 (eval-and-compile
+  ;; XEmacs 19 evaluates this at compile time below, while most other
+  ;; versions delays the evaluation until the package is loaded.
   (defun c-make-font-lock-extra-types-blurb (mode1 mode2 example)
     (concat "
 *List of extra types (aside from the type keywords) to recognize in "
