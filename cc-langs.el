@@ -225,8 +225,9 @@ appended."
 ;; Regexp matching the operators that join symbols to fully qualified
 ;; identifiers, or nil in languages that doesn't have such things.
 (c-lang-defconst c-identifier-concat-key
-  c++ "::"
-  (java pike) "\\.")
+  c++  "::"
+  java "\\."
+  pike "\\(::\\|\\.\\)")
 
 ;; Regexp matching a fully qualified identifier, like "A::B::c" in
 ;; C++.  The first submatch surrounds the whole qualified identifier.
@@ -362,6 +363,24 @@ appended."
 	 ;; used as a builtin type.
 	 "float" "mixed" "string" "this_program" "void"))
 
+;; An adorned regexp that matches `c-primitive-type-kwds'.
+(c-lang-defconst c-primitive-type-key
+  all (c-make-keywords-re t (c-lang-var c-primitive-type-kwds)))
+(c-lang-defvar c-primitive-type-key (c-lang-var c-primitive-type-key))
+
+;; Keywords that might act as prefixes for primitive types.  Note that
+;; this is assumed to be a subset of `c-primitive-type-kwds'.
+(c-lang-defconst c-primitive-type-prefix-kwds
+  (c c++) '("long" "short" "signed" "unsigned"))
+
+;; An adorned regexp that matches `c-primitive-type-prefix-kwds', or
+;; nil in languages without such things.
+(c-lang-defconst c-primitive-type-prefix-key
+  all (and (c-lang-var c-primitive-type-prefix-kwds)
+	   (c-make-keywords-re t (c-lang-var c-primitive-type-prefix-kwds))))
+(c-lang-defvar c-primitive-type-prefix-key
+  (c-lang-var c-primitive-type-prefix-key))
+
 ;; Keywords that can precede a parenthesis that contains a complex
 ;; type, e.g. "mapping(int:string)" in Pike.
 (c-lang-defconst c-complex-type-kwds
@@ -374,8 +393,8 @@ appended."
 	   (c-make-keywords-re t (c-lang-var c-complex-type-kwds))))
 (c-lang-defvar c-complex-type-key (c-lang-var c-complex-type-key))
 
-;; All type keywords, i.e. the union of `c-primitive-type-kwds' and
-;; `c-complex-type-kwds'.
+;; All keywords that starts a type, i.e. the union of
+;; `c-primitive-type-kwds' and `c-complex-type-kwds'.
 (c-lang-defconst c-type-kwds
   all (if (c-lang-var c-complex-type-kwds)
 	  ;; Don't need `delete-duplicates' since these two are
@@ -649,10 +668,11 @@ appended."
   all (c-make-keywords-re t (c-lang-var c-keywords)))
 (c-lang-defvar c-keywords-regexp (c-lang-var c-keywords-regexp))
 
-;; All nontype keywords as an adorned regexp.
+;; All keywords that don't introduce a type as an adorned regexp.
 (c-lang-defconst c-nontype-keywords-regexp
   all (c-make-keywords-re t
-	(set-difference (c-lang-var c-keywords) (c-lang-var c-type-kwds)
+	(set-difference (c-lang-var c-keywords)
+			(c-lang-var c-type-kwds)
 			:test 'string-equal)))
 (c-lang-defvar c-nontype-keywords-regexp
   (c-lang-var c-nontype-keywords-regexp))
