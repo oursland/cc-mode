@@ -31,8 +31,8 @@ analysis and font locking.
 
   <p>The main goal of the font locking in CC Mode is accuracy, to
   provide a dependable aid in recognizing the various constructs.
-  Some, like strings and comments, are easy to recognize while others
-  like declarations and types can be very tricky.  CC Mode can go to
+  Some, like strings and comments, are easy to recognize while others,
+  like declarations and types, can be very tricky.  CC Mode can go to
   great lengths to recognize declarations and casts correctly,
   especially when the types aren't recognized by standard patterns.
   This is a fairly demanding analysis which can be slow on older
@@ -45,7 +45,7 @@ analysis and font locking.
   waits with the fontification until the text is actually shown
   (e.g. Just-in-time Lock mode, which is the default in Emacs 21, or
   Lazy Lock mode).  Fontifying a file with several thousand lines in
-  one go can take the better part of a minute.
+  one go can take the better part of a minute even on a fast system.
 
   <ul>
 
@@ -88,7 +88,7 @@ analysis and font locking.
 
   </ul>
 
-  <p><li>Support for the AWK language been introduced.  The
+  <p><li>Support for the AWK language has been introduced.  The
   implementation is based around GNU AWK version 3.1, but it should
   work pretty well with any AWK.  As yet, not all features of CC Mode
   have been adapted for AWK.  Here is a summary:
@@ -233,5 +233,9 @@ result = prefix + "A message "
   features without sacrificing performance.
 
 </ul>
+
+<p>Since the last open release was version 5.28, you probably want to
+check out the list of <a href="changes-529.php">user visible changes
+for 5.29</a> too.
 
 <?php include ("footer.h"); ?>

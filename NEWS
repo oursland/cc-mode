@@ -17,8 +17,8 @@ different from the old patterns in various details for most languages.
 
 The main goal of the font locking in CC Mode is accuracy, to provide a
 dependable aid in recognizing the various constructs.  Some, like
-strings and comments, are easy to recognize while others like
-declarations and types can be very tricky.  CC Mode can go to great
+strings and comments, are easy to recognize while others, like
+declarations and types, can be very tricky.  CC Mode can go to great
 lengths to recognize declarations and casts correctly, especially when
 the types aren't recognized by standard patterns.  This is a fairly
 demanding analysis which can be slow on older hardware, and it can
@@ -30,7 +30,7 @@ fontification in mind, i.e.  there should be a support mode that waits
 with the fontification until the text is actually shown
 (e.g. Just-in-time Lock mode, which is the default in Emacs 21, or
 Lazy Lock mode).  Fontifying a file with several thousand lines in one
-go can take the better part of a minute.
+go can take the better part of a minute even on a fast system.
 
 *** The (c|c++|objc|java|idl|pike)-font-lock-extra-types variables
 are now used by CC Mode to recognize identifiers that are certain to
