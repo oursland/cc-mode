@@ -59,3 +59,50 @@ or just send the message "help" for more information on ftpmail.
 Response times will vary with the number of requests in the queue.
 Note that I am in no way connected with the DEC ftpmail'er so you are
 own your own with this route.
+
+Changes since 5.19
+==================
+
+- Martin Stjernholm has joined the cc-mode-help@python.org
+  maintainers!
+
+- Multiline macros are now handled, both as they affect indentation,
+  and as recognized syntax.  New syntactic symbol cpp-macro-cont is
+  assigned to second and subsequent lines of a multiline macro
+  definition. 
+
+- A new style "user" which captures all non-hook-ified
+  (i.e. top-level) .emacs file variable setings and customizations.
+  Style "cc-mode" is an alias for "user" and is deprecated.  "gnu"
+  style is still the default however.
+
+- "java" style now conforms to Sun's JDK coding style.
+
+- New commands c-beginning-of-defun, c-end-of-defun which are not
+  bound by default to M-C-a and M-C-a.
+
+- New implementations of M-a (c-beginning-of-statement) and M-e
+  (c-end-of-statement).
+
+- C++ namespace blocks are supported, with new syntactic symbols
+  namespace-open, namespace-close, and innamespace.
+
+- File local variable settings of c-file-style and c-file-offsets
+  makes the style variables local to that buffer only.
+
+- New indentation functions c-lineup-close-paren,
+  c-indent-one-line-block, c-lineup-dont-change.
+
+- Various Imenu patches (thanks to Masatake Yamato, Jan Dubois, and
+  Peter Pilgrim).
+
+- Performance improvements.  Some improvements affect only Emacs or
+  only XEmacs (see the variable c-enable-xemacs-performance-kludge-p).
+
+- Improvements (hopefully!) to the way CC Mode is loaded.  You should
+  now be able to do a (require 'cc-mode) to get the entire package
+  loaded properly for customization in your .emacs file.  A new
+  variable c-initialize-on-load controls this and is set to t by
+  default.
+
+- Usual assortment of bug fixes.
