@@ -5,7 +5,7 @@
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.23 $
+;; $Revision: 1.24 $
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -57,15 +57,15 @@ with previous initializations rather than with the colon on the first line.")
   "*Indentation level of member initializations in function declarations.")
 (defvar c++-friend-offset -4
   "*Offset of C++ friend class declarations relative to member declarations.")
-(defvar c++-electric-colon t
-  "*If t, colon is an electric terminator.")
 (defvar c++-empty-arglist-indent nil
   "*Indicates how far to indent an line following an empty argument
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 4
-  "*Indentation offset for line which contains only comments.")
+  "*Indentation offset for line which contains only C or C++ style comments.")
 (defvar c++-hanging-braces-p t
-  "*If t, override c++-auto-newline for left braces.")
+  "*If non-nil and auto-newline is on, no newlines are inserted before
+left braces. Newlines are always inserted after left braces when
+auto-newline is on.")
 (defvar c++-hanging-member-init-colon t
   "*If non-nil, don't put a newline after member initialization colon.")
 (defvar c++-mode-line-format
@@ -87,7 +87,7 @@ Legal values are:
      'auto-hungry  -- both auto-newline and hungry-delete-key enabled.
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
-(defvar c++-auto-hungry-toggle-p t
+(defvar c++-auto-hungry-toggle t
   "*Enable/disable toggling of auto/hungry states.
 Legal values are:
      'none         -- auto-newline and hungry-delete-key cannot be enabled.
@@ -108,23 +108,24 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  Very much like editing C code.
-Expression and list commands understand all C++ brackets.
-Tab at left margin indents for C++ code
-Comments are delimited with /* ... */ {or with // ... <newline>}
-Paragraphs are separated by blank lines only.
-Delete converts tabs to spaces as it moves back.
+  "Major mode for editing C++ code.  Version: $Revision: 1.24 $
+1. Very much like editing C code.
+2. Expression and list commands understand all C++ brackets.
+3. Tab at left margin indents for C++ code
+4. Comments are delimited with /* ... */ {or with // ... <newline>}
+5. Paragraphs are separated by blank lines only.
+6. Delete converts tabs to spaces as it moves back.
+
 \\{c++-mode-map}
-Variables controlling indentation style:
+
+Variables controlling indentation style. Those with names like
+c-<thing> are inherited from c-mode which c++-mode is derived from.
+Those with names like c++-<thing> are unique for this mode.
+
  c-tab-always-indent
     Non-nil means TAB in C mode should always reindent the current line,
     regardless of where in the line point is when the TAB command is used.
     Default is t.
- c++-auto-newline
-    Nil means don't automatically insert newlines before and after braces,
-    and after colons and semicolons, inserted in C++ code.  t means always
-    automatically insert newlines, and 'brace-column0-only means only insert
-    newlines before left braces iff the left brace ends up in column zero.
  c-indent-level
     Indentation of C statements within surrounding block.
     The surrounding block's indentation is the indentation
@@ -145,20 +146,38 @@ Variables controlling indentation style:
  c-label-offset
     Extra indentation for line that is a label, or case or ``default:'', or
     ``public:'' or ``private:'', or ``protected:''.
- c++-empty-arglist-indent
-    If non-nil, a function declaration or invocation which ends a line with a
-    left paren is indented this many extra spaces, instead of flush with the
-    left paren.
- c++-friend-offset
-    Offset of C++ friend class declarations relative to member declarations.
+
+ c++-continued-member-init-offset
+    Extra indentation for continuation lines of member initializations; nil
+    means to align with previous initializations rather than with the colon.
  c++-member-init-indent
     Indentation level of member initializations in function declarations,
     if they are on a separate line beginning with a colon.
- c++-continued-member-init-offset
-    Extra indentation for continuation lines of member initializations; NIL
-    means to align with previous initializations rather than with the colon.
+ c++-friend-offset
+    Offset of C++ friend class declarations relative to member declarations.
+ c++-empty-arglist-indent
+    If non-nil, a function declaration or invocation which ends a line with a
+    left paren is indented this many extra spaces, instead of flush with the
+    left paren. If nil, it lines up with the left paren.
  c++-comment-only-line-offset
-    Extra indentation for a line containing only a comment.
+    Extra indentation for a line containing only a C or C++ style comment.
+ c++-hanging-braces-p
+    If non-nil and auto-newline is on, no newlines are inserted
+    before left braces. Newlines are always inserted *after* left
+    braces when auto-newline is on.
+ c++-hanging-member-init-colon
+    If non-nil and auto-newline is on, newlines are not inserted after
+    member initialization colons.
+ c++-mode-line-format
+    Mode line format for c++-mode buffers. Includes auto-newline and
+    hungry-delete-key indicators.
+ c++-auto-hungry-initial-state
+    Initial state of auto/hungry mode when a C++ buffer is first
+    visited.  Do a \\[describe-variable] c++-auto-hungry-initial-state
+    for legal values.
+ c++-auto-hungry-toggle
+    Enable/disable toggling of auto/hungry states. Do a
+    \\[describe-variable] c++-auto-hungry-toggle for legal values.
 
 Settings for K&R, BSD, and Stroustrup indentation styles are
   c-indent-level                5    8    4
@@ -172,7 +191,7 @@ Settings for K&R, BSD, and Stroustrup indentation styles are
   c++-friend-offset                       0
 
 Turning on C++ mode calls the value of the variable c++-mode-hook with
-no args,if that value is non-nil."
+no args, if that value is non-nil."
   (interactive)
   (kill-all-local-variables)
   (use-local-map c++-mode-map)
@@ -243,7 +262,7 @@ Update mode line to indicate state to user."
 
 (defun c++-toggle-auto-state (arg)
   "Toggle auto-newline state.
-This function ignores c++-auto-hungry-toggle-p variable.  Optional
+This function ignores c++-auto-hungry-toggle variable.  Optional
 numeric ARG, if supplied turns on auto-newline when positive, turns
 off auto-newline when negative and toggles when zero."
   (interactive "P")
@@ -257,7 +276,7 @@ off auto-newline when negative and toggles when zero."
 
 (defun c++-toggle-hungry-state (arg)
   "Toggle hungry-delete-key state.
-This function ignores c++-auto-hungry-toggle-p variable.  Optional
+This function ignores c++-auto-hungry-toggle variable.  Optional
 numeric ARG, if supplied turns on hungry-delete-key when positive,
 turns off hungry-delete-key when negative and toggles when zero."
   (interactive "P")
@@ -272,7 +291,7 @@ turns off hungry-delete-key when negative and toggles when zero."
 (defun c++-toggle-auto-hungry-state (arg)
   "Toggle auto-newline and hungry-delete-key state.
 Actual toggling of these states is controlled by
-c++-auto-hungry-toggle-p variable.
+c++-auto-hungry-toggle variable.
 
 Optional argument has the following meanings when supplied:
      Universal argument \\[universal-argument]
@@ -286,9 +305,9 @@ Optional argument has the following meanings when supplied:
   (interactive "P")
   (let* ((numarg (prefix-numeric-value arg))
 	 (auto (cond ((not arg)
-		      (if (or (eq c++-auto-hungry-toggle-p 'auto-only)
-			      (eq c++-auto-hungry-toggle-p 'auto-hungry)
-			      (eq c++-auto-hungry-toggle-p t))
+		      (if (or (eq c++-auto-hungry-toggle 'auto-only)
+			      (eq c++-auto-hungry-toggle 'auto-hungry)
+			      (eq c++-auto-hungry-toggle t))
 			  (not c++-auto-newline)
 			c++-auto-newline))
 		     ((listp arg)
@@ -300,9 +319,9 @@ Optional argument has the following meanings when supplied:
 		     ((< arg 0) nil)
 		     (t t)))
 	 (hungry (cond ((not arg)
-			(if (or (eq c++-auto-hungry-toggle-p 'hungry-only)
-				(eq c++-auto-hungry-toggle-p 'auto-hungry)
-				(eq c++-auto-hungry-toggle-p t))
+			(if (or (eq c++-auto-hungry-toggle 'hungry-only)
+				(eq c++-auto-hungry-toggle 'auto-hungry)
+				(eq c++-auto-hungry-toggle t))
 			    (not c++-hungry-delete-key)
 			  c++-hungry-delete-key))
 		       ((listp arg)
@@ -1175,7 +1194,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.23 $"
+(defconst c++-version "$Revision: 1.24 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
@@ -1189,14 +1208,13 @@ c++-mode for a particular buffer."
 	(varlist (list 'c++-continued-member-init-offset
 		       'c++-member-init-indent
 		       'c++-friend-offset
-		       'c++-electric-colon
 		       'c++-empty-arglist-indent
 		       'c++-comment-only-line-offset
 		       'c++-hanging-braces-p
 		       'c++-hanging-member-init-colon
 		       'c++-mode-line-format
 		       'c++-auto-hungry-initial-state
-		       'c++-auto-hungry-toggle-p
+		       'c++-auto-hungry-toggle
 		       'c++-auto-hungry-string
 		       'c++-hungry-delete-key
 		       'c++-auto-newline
