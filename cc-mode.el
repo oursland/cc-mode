@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.191 $
-;; Last Modified:   $Date: 1995-04-12 16:50:02 $
+;; Version:         $Revision: 4.192 $
+;; Last Modified:   $Date: 1995-04-12 21:02:46 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-12 16:50:02 $|$Revision: 4.191 $|
+;; |$Date: 1995-04-12 21:02:46 $|$Revision: 4.192 $|
 
 ;;; Code:
 
@@ -1145,7 +1145,7 @@ Key bindings:
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
   ;; now set their values
-  (setq paragraph-start (concat "^$\\|" page-delimiter)
+  (setq paragraph-start (concat "$\\|" page-delimiter)
 	paragraph-separate paragraph-start
 	paragraph-ignore-fill-prefix t
 	require-final-newline t
@@ -2028,11 +2028,11 @@ preserving the comment indentation or line-starting decorations."
 	       ;; should not be filled into paragraphs they are next to.
 	       (concat 
 		paragraph-start
-		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+		"\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
 	      (paragraph-separate
 	       (concat
 		paragraph-separate
-		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$")))
+		"\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$")))
 	  (save-excursion
 	    (beginning-of-line)
 	    ;; Move up to first line of this comment.
@@ -2123,11 +2123,11 @@ preserving the comment indentation or line-starting decorations."
 		 ;; should not be filled into paragraphs they are next to.
 		 (concat 
 		  paragraph-start
-		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+		  "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
 		(paragraph-separate
 		 (concat
 		  paragraph-separate
-		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+		  "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
 		(chars-to-delete 0))
 	    (save-restriction
 	      ;; Don't fill the comment together with the code
@@ -4556,7 +4556,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.191 $"
+(defconst c-version "$Revision: 4.192 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
