@@ -11,17 +11,39 @@ compatibility guarantee wrt the new features introduced in this
 release.
 
 ** New initialization procedure for the style system.
-Changes made globally to the style variables now takes precedence over
-the style settings on c-style-alist, instead of the other way around.
-This makes it possible to do simple configuration the intuitive way
-with Customize or with setq lines in .emacs.
+When the initial style for a buffer is determined by CC Mode (from the
+variable c-default-style), the global values of style variables now
+take precedence over the values specified by the chosen style.  This
+is different than the old behavior: previously, the style-specific
+settings would override the global settings.  This change makes it
+possible to do simple configuration in the intuitive way with
+Customize or with setq lines in one's .emacs file.
 
-The style variables now takes a special value `set-from-style', which
-causes the value to be taken from the style system, and all style
-variables have this value by default.  That way, this new system is
-believed to be almost entirely compatible with current configurations,
-in spite of the changed precedence between style and global variable
-settings.
+By default, the global value of every style variable is the new
+special symbol set-from-style, which causes the value to be taken from
+the style system.  This means that in effect, only an explicit setting
+of a style variable will cause the "overriding" behavior described
+above.
+
+Also note that global settings override style-specific settings *only*
+when the initial style of a buffer is chosen by a CC Mode major mode
+function.  When a style is chosen in other ways --- for example, by a
+call like (c-set-style "gnu") in a hook, or via M-x c-set-style ---
+then the style-specific values take precedence over any global style
+values.  In Lisp terms, global values override style-specific values
+only when the new second argument to c-set-style is non-nil; see the
+function documentation for more info.
+
+The purpose of these changes is to make it easier for users,
+especially novice users, to do simple customizations with Customize or
+with setq in their .emacs files.  On the other hand, the new system is
+intended to be compatible with advanced users' customizations as well,
+such as those that choose styles in hooks or whatnot.  This new system
+is believed to be almost entirely compatible with current
+configurations, in spite of the changed precedence between style and
+global variable settings when a buffer's default style is set.
+
+(Thanks to Eric Eide for clarifying this explanation a bit.)
 
 *** c-offsets-alist is now a customizable variable.
 
