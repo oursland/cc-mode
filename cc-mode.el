@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.205 $
-;; Last Modified:   $Date: 1992-11-03 20:46:19 $
+;; Version:         $Revision: 2.206 $
+;; Last Modified:   $Date: 1992-11-12 16:45:30 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-03 20:46:19 $|$Revision: 2.205 $|
+;; |$Date: 1992-11-12 16:45:30 $|$Revision: 2.206 $|
 
 ;;; Code:
 
@@ -371,7 +371,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.205 $
+  "Major mode for editing C++ code.  $Revision: 2.206 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -578,7 +578,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.205 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.206 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1266,8 +1266,8 @@ the \"real\" top level.  Optional BOD is the beginning of defun."
 	(and (null containing-sexp) 0))
        ((not wrt)
 	(null containing-sexp))
-       ((c++-in-parens-p) nil)
        ((null containing-sexp) 0)
+       ((c++-in-parens-p) nil)
        (t
 	;; calculate depth wrt containing (possibly nested) classes
 	(goto-char containing-sexp)
@@ -1883,31 +1883,67 @@ the current line is to be regarded as part of a block comment."
 ;; ======================================================================
 ;; defuns to look backwards for things
 ;; ======================================================================
+
 (defun c++-backward-over-syntactic-ws (&optional lim)
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives. Search no farther back than
 optional LIM.  If LIM is ommitted, point-min is used."
-  (let (literal stop)
-    (setq lim (or lim (point-min)))
+  (let (literal stop skip (lim (or lim (point-min))))
     (while (not stop)
       (skip-chars-backward " \t\n\r\f" lim)
-      (setq literal (c++-in-literal))
+      (setq literal (c++-in-literal lim))
       (cond ((eq literal 'c++)
-	     (search-backward "//" lim 'move))
+	     (setq skip t)
+	     (while skip
+	       (skip-chars-backward "^/" lim)
+	       (skip-chars-backward "/" lim)
+	       (setq skip (not (and (= (following-char) ?/)
+				    (= (char-after (1+ (point))) ?/))))
+	       ))
 	    ((eq literal 'c)
-	     (if (search-backward "/*" lim 'move)
-		 (goto-char (match-beginning 0))
-	       (setq stop t)))
-	    ((and (eq literal 'pound)
-		  (> (c++-point 'bol) lim))
-	     (beginning-of-line))
-	    ((and (= (preceding-char) ?/)
-		  (progn (forward-char -1)
-			 (= (preceding-char) ?*)))
+	     (setq skip t)
+	     (while skip
+	       (skip-chars-backward "^*" lim)
+	       (skip-chars-backward "*" lim)
+	       (setq skip (not (and (= (following-char) ?*)
+				    (= (preceding-char) ?/))))
+	       )
 	     (forward-char -1))
+	    ((eq literal 'pound)
+	     (beginning-of-line)
+	     (setq stop (<= (point) lim)))
+	    ((and (= (preceding-char) ?/)
+		  (= (char-after (- (point) 2)) ?*))
+	     (forward-char -2))
 	    (t (setq stop t))
 	    ))))
+
+;;(defun c++-backward-over-syntactic-ws (&optional lim)
+;;  "Skip backwards over syntactic whitespace.
+;;Syntactic whitespace is defined as lexical whitespace, C and C++ style
+;;comments, and preprocessor directives. Search no farther back than
+;;optional LIM.  If LIM is ommitted, point-min is used."
+;;  (let (literal stop)
+;;    (setq lim (or lim (point-min)))
+;;    (while (not stop)
+;;      (skip-chars-backward " \t\n\r\f" lim)
+;;      (setq literal (c++-in-literal))
+;;      (cond ((eq literal 'c++)
+;;	     (search-backward "//" lim 'move))
+;;	    ((eq literal 'c)
+;;	     (if (search-backward "/*" lim 'move)
+;;		 (goto-char (match-beginning 0))
+;;	       (setq stop t)))
+;;	    ((and (eq literal 'pound)
+;;		  (> (c++-point 'bol) lim))
+;;	     (beginning-of-line))
+;;	    ((and (= (preceding-char) ?/)
+;;		  (progn (forward-char -1)
+;;			 (= (preceding-char) ?*)))
+;;	     (forward-char -1))
+;;	    (t (setq stop t))
+;;	    ))))
 
 (defun c++-backward-to-start-of-do (&optional limit)
   "Move to the start of the last ``unbalanced'' do."
@@ -2196,7 +2232,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.205 $"
+(defconst c++-version "$Revision: 2.206 $"
   "c++-mode version number.")
 
 (defun c++-version ()
