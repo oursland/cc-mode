@@ -1,6 +1,38 @@
-README for cc-mode.el 3.304
+README for cc-mode.el 3.349
 Barry A. Warsaw
-$Date: 1994-04-05 16:54:15 $
+$Date: 1994-05-30 14:46:28 $
+
+
+User-visible Changes Since 3.304
+
+* You can now specify `hanginess' of close braces (c-hanging-braces-alist).
+
+* New syntactic symbol `substatement-open' to control indentation of
+  braces which open a substatement block (i.e. if, for, ...).  C-c C-s
+  used to call these ((block-open . ??) (substatement . ??)), but now
+  they are just ((substatement-open . ??)).  WARNING: THIS CHANGE MAY
+  AFFECT YOUR CURRENT INDENTATION SETTINGS.
+
+* c-adaptive-block-open lineup function is removed. Obsoleted by
+  substatement-open change above.
+
+* New "Default" style returns indentation variables to their default
+  values.
+
+* Support for Lucid Emacs 19.10's mode-popup-menu convention.
+
+* c-macro-expand command put on C-c C-e.
+
+* New buffer-local variable c-comment-start-regexp. Useful for using
+  cc-mode as a basis for other C-like languages.
+
+* c++-mode handles try/catch blocks.  Assigns them `substatement'
+  syntax similar to if/for/while/...
+
+* c-indent-via-language-element renamed to c-indent-line for awk-mode,
+  BOCM compatibility.
+
+* Usual gobs of bug fixes.
 
 
 User-visible Changes Since 3.229
