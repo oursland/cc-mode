@@ -1,14 +1,14 @@
-;;; cc-mode.el --- major mode for editing C++ and C code
+;;; cc-mode.el --- major mode for editing C, C++, and Objective-C code
 
 ;; Copyright (C) 1985-1995 Free Software Foundation, Inc.
 
-;; Authors: 1992-1995 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
+;; Authors: 1992-1995 Barry A. Warsaw
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.219 $
-;; Last Modified:   $Date: 1995-05-30 23:11:57 $
+;; Version:         $Revision: 4.220 $
+;; Last Modified:   $Date: 1995-05-31 23:46:27 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -40,24 +40,17 @@
 ;; controlling variables, compatibility across all known Emacsen, nice
 ;; new features, and tons of bug fixes.  This package is called
 ;; "cc-mode" to distinguish it from its ancestors, but there really is
-;; no top-level cc-mode.
+;; no top-level cc-mode.  Usage and programming details are contained
+;; in an accompanying texinfo manual.
 
-;; Details on how to use cc-mode will eventually be contained in an
-;; accompanying texinfo manual.  Volunteers to help finish this manual
-;; would be greatly appreciated!  Contact me or the FSF if you'd like
-;; to volunteer.  Until the manual is finished, an accompanying README
-;; is the only documentation available.  If you did not get the README
-;; with your copy of cc-mode, contact the Maintainer address given
-;; above.
-
-;; To submit bug reports, hit "C-c C-b", and please try to include a
-;; code sample and exact recipe so I can reproduce your problem.  If
-;; you have other questions contact me at the following address:
+;; To submit bug reports, type "C-c C-b". Please include a code sample
+;; and exact recipe so I can reproduce your problem.  If you have
+;; other questions contact me at the following address:
 ;; cc-mode-help@merlin.cnri.reston.va.us.  Please don't send bug
 ;; reports to my personal account, I may not get it for a long time.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
-;; the multi-Emacsen support. FSF's Emacs 19, XEmacs 19 (formerly
+;; the multi-Emacsen support.  FSF's Emacs 19, XEmacs 19 (formerly
 ;; Lucid), and GNU Emacs 18 all do things differently and there's no
 ;; way to shut the byte-compiler up at the necessary granularity.  Let
 ;; me say this again: YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS (you'd
@@ -91,9 +84,14 @@
 ;;             ("\\.m$"  . objc-mode)
 ;;            ) auto-mode-alist))
 
-;; To join the beta testers list, send the world `help' in a message
-;; to cc-mode-victims-request@merlin.cnri.reston.va.us, and subscribe
-;; yourself to the cc-mode-victims mailing list.
+;; Several Majordomo mailing lists exist for those of you who are
+;; interested in beta testing new versions: cc-mode-announce for
+;; announcements of new beta versions only, and cc-mode-victims for
+;; more technical discussions of the mode.  For more information, send
+;; the word `help' in a message to one of the following addresses:
+;;
+;;       cc-mode-victims-request@merlin.cnri.reston.va.us
+;;       cc-mode-announce-request@merlin.cnri.reston.va.us
 
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
@@ -102,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-30 23:11:57 $|$Revision: 4.219 $|
+;; |$Date: 1995-05-31 23:46:27 $|$Revision: 4.220 $|
 
 ;;; Code:
 
@@ -4609,7 +4607,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.219 $"
+(defconst c-version "$Revision: 4.220 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
