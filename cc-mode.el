@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-23 18:13:55 $
-;; Version:         $Revision: 2.119 $
+;; Last Modified:   $Date: 1992-06-23 18:29:47 $
+;; Version:         $Revision: 2.120 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-23 18:13:55 $|$Revision: 2.119 $|
+;; |$Date: 1992-06-23 18:29:47 $|$Revision: 2.120 $|
 
 
 ;; ======================================================================
@@ -231,7 +231,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.119 $
+  "Major mode for editing C++ code.  $Revision: 2.120 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -416,20 +416,21 @@ message."
   (set (make-local-variable 'comment-start-skip) "/\\*+ *\\|// *")
   (set (make-local-variable 'comment-indent-hook) 'c++-comment-indent)
   ;; hack auto-hungry designators into mode-line-format
-  (setq mode-line-format
-	(let ((modeline nil))
-	  (mapcar
-	   (function
-	    (lambda (element)
-	      (setq modeline
-		    (append modeline
-			    (if (eq element 'mode-name)
-				'(mode-name (c++-hungry-delete-key
-					     (c++-auto-newline "/ah" "/h")
-					     (c++-auto-newline "/a")))
-			      (list element))))))
-	   mode-line-format)
-	  modeline))
+  (if (listp mode-line-format)
+      (setq mode-line-format
+	    (let ((modeline nil))
+	      (mapcar
+	       (function
+		(lambda (element)
+		  (setq modeline
+			(append modeline
+				(if (eq element 'mode-name)
+				    '(mode-name (c++-hungry-delete-key
+						 (c++-auto-newline "/ah" "/h")
+						 (c++-auto-newline "/a")))
+				  (list element))))))
+	       mode-line-format)
+	      modeline)))
   (run-hooks 'c++-mode-hook)
   (c++-set-auto-hungry-state
    (memq c++-auto-hungry-initial-state '(auto-only   auto-hungry t))
@@ -1894,7 +1895,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.119 $"
+(defconst c++-version "$Revision: 2.120 $"
   "c++-mode version number.")
 
 (defun c++-version ()
