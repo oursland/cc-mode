@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.302 $
-;; Last Modified:   $Date: 1996-05-31 21:08:07 $
+;; Version:         $Revision: 4.303 $
+;; Last Modified:   $Date: 1996-06-03 16:08:32 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -44,6 +44,12 @@
 ;; package is called "cc-mode" to distinguish it from its ancestors,
 ;; but there really is no top-level cc-mode.  Usage and programming
 ;; details are contained in an accompanying texinfo manual.
+
+;; NOTE: This mode does not perform font-locking (a.k.a syntactic
+;; coloring, keyword highlighting, etc.).  Typically this is done by a
+;; package called font-lock.el which I do *not* maintain.  You should
+;; contact the Emacs maintainer for questions about coloring or
+;; highlighting in any language mode.
 
 ;; To submit bug reports, type "C-c C-b".  These will be sent to
 ;; bug-gnu-emacs@prep.ai.mit.edu and I'll read about them there (this
@@ -107,9 +113,15 @@
 ;; Without their patience, testing, insight, code contributions, and
 ;; encouragement cc-mode.el would be a far inferior package.
 
-;; Anonymous ftp URL:
+;; You can get the latest version of cc-mode, including PostScript
+;; documentation and separate individual files from:
 ;;
-;;    ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz
+;;     http://www.python.org/ftp/emacs/
+
+;; Or if you don't have access to the World Wide Web, through
+;; anonymous ftp from:
+;;
+;;    ftp://ftp.python.org/pub/emacs
 
 ;;; Code:
 
@@ -4930,7 +4942,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.302 $"
+(defconst c-version "$Revision: 4.303 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
