@@ -79,6 +79,11 @@
 ;; awk-mode.el to get loaded.
 (if (memq 'syntax-properties c-emacs-features) (cc-require 'cc-awk))
 
+;; Avoid warnings for functions defined in cc-awk when it can't be used.
+(cc-bytecomp-defun c-awk-unstick-NL-prop)
+(cc-bytecomp-defun c-awk-clear-NL-props)
+(cc-bytecomp-defvar awk-mode-syntax-table)
+
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
 

@@ -49,6 +49,16 @@
 
 (cc-require 'cc-defs)
 
+;; Silence the byte compiler.
+(cc-bytecomp-defvar font-lock-mode)	; Checked with boundp before use.
+
+;; Some functions in cc-engine that are used below.  There's a cyclic
+;; dependency so it can't be required here.  (Perhaps some functions
+;; could be moved to cc-engine to avoid it.)
+(cc-bytecomp-defun c-backward-token-1)
+(cc-bytecomp-defun c-beginning-of-statement-1)
+(cc-bytecomp-defun c-backward-sws)
+
 (defvar awk-mode-syntax-table
   (let ((st (make-syntax-table)))
     (modify-syntax-entry ?\\ "\\" st)

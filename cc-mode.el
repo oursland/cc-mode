@@ -97,9 +97,10 @@
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs 20+
 (cc-bytecomp-defun set-keymap-parents)	; XEmacs
 
-;; We set this variable during mode init, yet we don't require
+;; We set these variables during mode init, yet we don't require
 ;; font-lock.
 (cc-bytecomp-defvar font-lock-defaults)
+(cc-bytecomp-defvar font-lock-syntactic-keywords)
 
 ;; Menu support for both XEmacs and Emacs.  If you don't have easymenu
 ;; with your version of Emacs, you are incompatible!

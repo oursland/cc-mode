@@ -44,6 +44,7 @@
 ;; Silence the compiler (in case this file is compiled by other
 ;; Emacsen even though it isn't used by them).
 (cc-bytecomp-obsolete-fun byte-code-function-p)
+(cc-bytecomp-defun regexp-opt-depth)
 
 (require 'advice)
 
@@ -81,17 +82,6 @@
        ;; being given a superfluous parameter, and "MULE Emacs 19" (a forked
        ;; version of Emacs) which must handle the extra paramter.  XEmacs will
        ;; never trigger this.
-       
-       ;; (or (condition-case nil
-       ;;         (progn (char-before) t)
-       ;;       (error nil))
-       ;;
-       ;; This test is commented out since it confuses the byte code
-       ;; optimizer (verified in Emacs 20.2 and XEmacs 20.4).  The effect
-       ;; of this is that the advice below may be activated in those
-       ;; versions, which is unnecessary but won't break anything.  It
-       ;; only occurs when this file is explicitly loaded; in normal use
-       ;; the test in cc-defs.el will skip it altogether.
 
        ;; MULE based on Emacs 19.34 has a char-before function, but
        ;; it requires a position.  It also has a second optional
