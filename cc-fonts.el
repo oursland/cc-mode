@@ -1148,7 +1148,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			    (or prev-at-type
 				(not got-suffix)
 				(not (looking-at
-				      c-lax-after-suffixed-type-decl-key))))
+				      c-after-suffixed-type-maybe-decl-key))))
 			   ;; Got an empty paren pair and a preceding type
 			   ;; that probably really is the identifier.  Shift
 			   ;; the type backwards to make the last one the
