@@ -214,11 +214,15 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (defconst c-Java-defun-prompt-regexp
   "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f]*\\)+\\)?\\s-*")
 
-;; Regexp describing Javadoc markup that always starts paragraphs.
+;; Regexp describing regexp to append to paragraph-start
+(defvar c-append-paragraph-start "$")
+(make-variable-buffer-local 'c-append-paragraph-start)
 (defconst c-Java-javadoc-paragraph-start
-  (concat "@\\(author\\|deprecated\\|exception\\|param\\|return\\|"
+  (concat "\\("
+	  "@\\(author\\|deprecated\\|exception\\|param\\|return\\|"
 	  "s\\(e\\(e\\|rial\\(\\|Data\\|Field\\)\\)\\|ince\\)\\|"
-	  "throws\\|version\\)"))
+	  "throws\\|version\\)"
+	  "\\|$\\)"))
 
 ;; Regexp that starts lambda constructs.
 (defvar c-lambda-key nil)
@@ -332,9 +336,13 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
   ;; filladapt or some other fancy package.
   (let ((comment-line-prefix
 	 (concat "[ \t]*\\(" c-comment-prefix-regexp "\\)?[ \t]*")))
-    (setq paragraph-start (concat comment-line-prefix "$\\|"
+    (setq paragraph-start (concat comment-line-prefix
+				  c-append-paragraph-start
+				  "\\|"
 				  page-delimiter)
-	  paragraph-separate paragraph-start
+	  paragraph-separate (concat comment-line-prefix "$"
+				     "\\|"
+				     page-delimiter)
 	  paragraph-ignore-fill-prefix t
 	  adaptive-fill-mode t
 	  adaptive-fill-regexp
