@@ -3130,7 +3130,7 @@ and that @key{C-j} adds a newline and indents it.  You can make
 @ref{Sample .emacs File}):
 @example
 
-(define-key c-mode-map "\C-m" 'newline-and-indent)
+(define-key c-mode-base-map "\C-m" 'newline-and-indent)
 
 @end example
 
