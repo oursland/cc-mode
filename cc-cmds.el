@@ -1,8 +1,8 @@
 ;;; cc-cmds.el --- user level commands for CC Mode
 
-;; Copyright (C) 1985,87,92,93,94,95,96,97,98 Free Softare Foundation, Inc.
+;; Copyright (C) 1985,1987,1992-1999 Free Software Foundation, Inc.
 
-;; Authors:    1998 Barry A. Warsaw and Martin Stjernholm
+;; Authors:    1998-1999 Barry A. Warsaw and Martin Stjernholm
 ;;             1992-1997 Barry A. Warsaw
 ;;             1987 Dave Detlefs and Stewart Clamen
 ;;             1985 Richard M. Stallman

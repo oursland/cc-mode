@@ -1,8 +1,8 @@
 ;;; cc-mode-19.el --- compatibility library for Emacs and XEmacs 19
 
-;; Copyright (C) 1985,87,92,93,94,95,96,97,98 Free Software Foundation, Inc.
+;; Copyright (C) 1985,1987,1992-1999 Free Software Foundation, Inc.
 
-;; Authors:    1998 Barry A. Warsaw and Martin Stjernholm
+;; Authors:    1998-1999 Barry A. Warsaw and Martin Stjernholm
 ;;             1997 Barry A. Warsaw
 ;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    03-Jul-1997

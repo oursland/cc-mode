@@ -1,9 +1,9 @@
 ;;; cc-compat.el --- cc-mode compatibility with c-mode.el confusion
 
-;; Copyright (C) 1985,87,92,93,94,95,96,97,98 Free Software Foundation, Inc.
+;; Copyright (C) 1985,1987,1992-1999 Free Software Foundation, Inc.
 
 ;; Author:     1994-1997 Barry A. Warsaw
-;; Maintainer: bug-cc-mode@gnu.org
+;; Maintainer: Unmaintained
 ;; Created:    August 1994, split from cc-mode.el
 ;; Version:    See cc-mode.el
 ;; Keywords:   c languages oop
