@@ -1565,9 +1565,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			    (not (looking-at c-keywords-regexp)))))
 		       ;; If `c-primary-expr-regexp' matched a nonsymbol
 		       ;; token, check that it matched a whole one so that we
-		       ;; don't e.g. confuse the operator '-' with '->'.
+		       ;; don't e.g. confuse the operator '-' with '->'.  It's
+		       ;; ok if it matches further, though, since it e.g. can
+		       ;; match the float '.5' while the operator regexp only
+		       ;; matches '.'.
 		       (or (not (looking-at c-nonsymbol-token-regexp))
-			   (= (match-end 0) pos))))
+			   (<= (match-end 0) pos))))
 
 		;; There should either be a cast before it or something that
 		;; isn't an identifier or close paren.
