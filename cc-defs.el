@@ -195,16 +195,16 @@
 
 ;; Make edebug understand the macros.
 (eval-after-load "edebug"
-  (progn
-    (def-edebug-spec c-paren-re t)
-    (def-edebug-spec c-identifier-re t)
-    (def-edebug-spec c-point ([&or symbolp form] &optional form))
-    (def-edebug-spec c-safe t)
-    (def-edebug-spec c-forward-sexp (&optional [&or numberp form]))
-    (def-edebug-spec c-backward-sexp (&optional [&or numberp form]))
-    (def-edebug-spec c-add-syntax t)
-    (def-edebug-spec c-add-class-syntax t)
-    (def-edebug-spec c-with-syntax-table t)))
+  '(progn
+     (def-edebug-spec c-paren-re t)
+     (def-edebug-spec c-identifier-re t)
+     (def-edebug-spec c-point ([&or symbolp form] &optional form))
+     (def-edebug-spec c-safe t)
+     (def-edebug-spec c-forward-sexp (&optional [&or numberp form]))
+     (def-edebug-spec c-backward-sexp (&optional [&or numberp form]))
+     (def-edebug-spec c-add-syntax t)
+     (def-edebug-spec c-add-class-syntax t)
+     (def-edebug-spec c-with-syntax-table t)))
 
 ;;; Inline functions.
 
