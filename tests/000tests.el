@@ -536,100 +536,107 @@
 			  (setq error-found-p t)))
 
 		    (when check-syntax
-		      ;; Compare the syntax analysis.
-		      (setq result (progn
-				     (set-buffer res-syntax-buf)
-				     (buffer-substring (c-point 'bol)
-						       (c-point 'eol)))
-			    expected (progn
-				       (set-buffer exp-syntax-buf)
-				       (buffer-substring (c-point 'bol)
-							 (c-point 'eol))))
-		      (unless (string= result expected)
-			(regression-msg "Expected analysis %s, got %s"
-					expected result))
-
-		      ;; Compare indentation.
-		      (set-buffer testbuf)
-		      (unless (= (car expectedindent)
-				 (progn (back-to-indentation)
-					(current-column)))
-			(regression-msg "Expected indentation %d, got %d"
-					(car expectedindent)
-					(current-column))
-			(setq indent-err t))
-
-		      (set-buffer res-syntax-buf)
-		      (forward-line 1)
 		      (set-buffer exp-syntax-buf)
-		      (when (/= (forward-line 1) 0)
-			(cc-test-log "%s:%d: Unexpected end of .res file"
-				     filename linenum)
-			(setq error-found-p t
-			      check-syntax nil)))
+		      (if (eobp)
+			  ;; Check for premature end of the .res file here
+			  ;; to avoid noise from the errors below.
+			  (progn
+			    (cc-test-log
+			     "%s:%d: Unexpected end of .res file"
+			     filename linenum)
+			    (setq error-found-p t
+				  check-syntax nil))
 
-		      ;; Compare faces, but don't bother if the
-		      ;; indentation is different.  Only report the
-		      ;; first inconsistency on the line.
-		      (when (and check-faces (not indent-err))
+			;; Compare the syntax analysis.
+			(setq result (progn
+				       (set-buffer res-syntax-buf)
+				       (buffer-substring (c-point 'bol)
+							 (c-point 'eol)))
+			      expected (progn
+					 (set-buffer exp-syntax-buf)
+					 (buffer-substring (c-point 'bol)
+							   (c-point 'eol))))
+			(unless (string= result expected)
+			  (regression-msg "Expected analysis %s, got %s"
+					  expected result))
+
+			;; Compare indentation.
+			(set-buffer testbuf)
+			(unless (= (car expectedindent)
+				   (progn (back-to-indentation)
+					  (current-column)))
+			  (regression-msg "Expected indentation %d, got %d"
+					  (car expectedindent)
+					  (current-column))
+			  (setq indent-err t))
+
+			(set-buffer res-syntax-buf)
+			(forward-line 1)
+			(set-buffer exp-syntax-buf)
+			(forward-line 1)))
+
+		    ;; Compare faces, but don't bother if the
+		    ;; indentation is different.  Only report the
+		    ;; first inconsistency on the line.
+		    (when (and check-faces (not indent-err))
+		      (set-buffer exp-faces-buf)
+		      (if (eobp)
+			  ;; Check for premature end of the .face file here
+			  ;; to avoid noise from the errors below.
+			  (progn
+			    (cc-test-log
+			     "%s:%d: Unexpected end of .face file"
+			     filename linenum)
+			    (setq error-found-p t
+				  check-faces nil))
+
+			(while (progn
+				 (set-buffer res-faces-buf)
+				 (skip-chars-forward " \t")
+				 (setq result (and (not (eolp))
+						   (read res-faces-buf)))
+				 (set-buffer exp-faces-buf)
+				 (skip-chars-forward " \t")
+				 (setq expected (and (not (eolp))
+						     (read exp-faces-buf)))
+				 (and (or result expected)
+				      (equal result expected))))
+
+			(cond ((not (or result expected)))
+			      ((not result)
+			       (regression-msg
+				"Expected %s face at column %d"
+				(cadr expected) (car expected)))
+			      ((not expected)
+			       (regression-msg
+				"Got unexpected %s face at column %d"
+				(cadr result) (car result)))
+			      ((eq (car result) (car expected))
+			       (regression-msg
+				"Expected %s face at column %d, got %s face"
+				(cadr expected) (car expected)
+				(cadr result)))
+			      ((eq (cadr result) (cadr expected))
+			       (regression-msg
+				"Expected %s face at column %d, got it at %d"
+				(cadr expected) (car expected)
+				(car result)))
+			      (t
+			       (regression-msg
+				(concat "Expected %s face at column %d, "
+					"got %s face at %d")
+				(cadr expected) (car expected)
+				(cadr result) (car result))))
+
+			(set-buffer res-faces-buf)
+			(forward-line 1)
 			(set-buffer exp-faces-buf)
-			(if (eobp)
-			    ;; Check for premature end of the .face file here
-			    ;; to avoid noise from the errors below.
-			    (progn
-			      (cc-test-log
-			       "%s:%d: Unexpected end of .face file"
-			       filename linenum)
-			      (setq error-found-p t
-				    check-faces nil))
+			(forward-line 1)))
 
-			  (while (progn
-				   (set-buffer res-faces-buf)
-				   (skip-chars-forward " \t")
-				   (setq result (and (not (eolp))
-						     (read res-faces-buf)))
-				   (set-buffer exp-faces-buf)
-				   (skip-chars-forward " \t")
-				   (setq expected (and (not (eolp))
-						       (read exp-faces-buf)))
-				   (and (or result expected)
-					(equal result expected))))
-
-			  (cond ((not (or result expected)))
-				((not result)
-				 (regression-msg
-				  "Expected %s face at column %d"
-				  (cadr expected) (car expected)))
-				((not expected)
-				 (regression-msg
-				  "Got unexpected %s face at column %d"
-				  (cadr result) (car result)))
-				((eq (car result) (car expected))
-				 (regression-msg
-				  "Expected %s face at column %d, got %s face"
-				  (cadr expected) (car expected)
-				  (cadr result)))
-				((eq (cadr result) (cadr expected))
-				 (regression-msg
-				  "Expected %s face at column %d, got it at %d"
-				  (cadr expected) (car expected)
-				  (car result)))
-				(t
-				 (regression-msg
-				  (concat "Expected %s face at column %d, "
-					  "got %s face at %d")
-				  (cadr expected) (car expected)
-				  (cadr result) (car result))))
-
-			  (set-buffer res-faces-buf)
-			  (forward-line 1)
-			  (set-buffer exp-faces-buf)
-			  (forward-line 1)))
-
-		      (set-buffer testbuf)
-		      (forward-line 1)
-		      (setq expectedindent (cdr-safe expectedindent)
-			    linenum (1+ linenum)))))
+		    (set-buffer testbuf)
+		    (forward-line 1)
+		    (setq expectedindent (cdr-safe expectedindent)
+			  linenum (1+ linenum)))))
 
 	      (when check-syntax
 		(set-buffer exp-syntax-buf)
@@ -718,7 +725,7 @@
     (kill-test-buffers)
     (when broken-files
       (cc-test-message "Broken file(s): %s"
-		       (mapconcat 'identity broken-files ", ")))
+		       (mapconcat 'identity (reverse broken-files) ", ")))
     (unless noninteractive
       (if broken-files
 	  (first-error)
