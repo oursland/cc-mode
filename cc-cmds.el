@@ -779,9 +779,9 @@ keyword on the line, the keyword is not inserted inside a literal, and
 		    (point))
 		  (c-point 'boi))
 	       (not (c-in-literal (c-point 'bod))))
-      ;; Have to temporarily insert the character so that
+      ;; Have to temporarily insert a space so that
       ;; c-guess-basic-syntax recognizes the keyword.
-      (insert last-command-char)
+      (insert ?\ )
       (unwind-protect
 	  (indent-according-to-mode)
 	(delete-char -1)))))
