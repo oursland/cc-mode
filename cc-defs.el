@@ -153,11 +153,12 @@
 
 (defsubst c-end-of-defun-1 ()
   ;; Replacement for end-of-defun that use c-beginning-of-defun-1.
-  (while (and (c-safe (down-list 1) t)
-	      (not (eq (char-before) ?{)))
-    ;; skip down into the next defun-block
-    (forward-char -1)
-    (c-forward-sexp))
+
+  ;; Skip forward into the next defun block. Don't bother to avoid
+  ;; comments, literals etc, since beginning-of-defun doesn't do that
+  ;; anyway.
+  (skip-chars-forward "^{}")
+  (skip-chars-forward "{")
   (c-beginning-of-defun-1)
   (c-forward-sexp))
 
