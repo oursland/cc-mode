@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.245 $
-;; Last Modified:   $Date: 1992-12-23 23:20:05 $
+;; Version:         $Revision: 2.246 $
+;; Last Modified:   $Date: 1992-12-29 00:08:32 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-23 23:20:05 $|$Revision: 2.245 $|
+;; |$Date: 1992-12-29 00:08:32 $|$Revision: 2.246 $|
 
 ;;; Code:
 
@@ -408,7 +408,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.245 $
+  "Major mode for editing C++ code.  $Revision: 2.246 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -616,7 +616,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.245 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.246 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1629,9 +1629,11 @@ BOD is the beginning of the C++ definition."
 	      (progn
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
-		(if (= (following-char) ?{)
+		(if (or (= (following-char) ?{)
+			(progn
+			  (c++-backward-over-syntactic-ws parse-start)
+			  (bobp)))
 		    0
-		  (c++-backward-over-syntactic-ws parse-start)
 		  (if (c++-in-function-p)
 		      (progn		; first arg decl or member init
 			(goto-char indent-point)
@@ -2315,7 +2317,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.245 $"
+(defconst c++-version "$Revision: 2.246 $"
   "c++-mode version number.")
 
 (defun c++-version ()
