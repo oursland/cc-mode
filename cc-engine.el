@@ -3108,8 +3108,17 @@ isn't moved."
 	 ((looking-at c-label-key)
 	  (goto-char containing-sexp)
 	  (setq lim (c-most-enclosing-brace fullstate containing-sexp))
+	  (save-excursion
+	    (setq tmpsymbol
+		  (if (and (eq (c-beginning-of-statement-1 lim) 'up)
+			   (looking-at "switch\\>[^_]"))
+		      ;; If the surrounding statement is a switch then
+		      ;; let's analyze all labels as switch labels, so
+		      ;; that they get lined up consistently.
+		      'case-label
+		    'label)))
 	  (c-backward-to-block-anchor lim)
-	  (c-add-stmt-syntax 'label t lim state))
+	  (c-add-stmt-syntax tmpsymbol t lim state))
 	 ;; CASE 16: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((eq char-after-ip ?})
