@@ -1004,6 +1004,7 @@ Key bindings:
           '((c-awk-set-syntax-table-properties
              0 (0)                      ; Everything on this line is a dummy.
              nil t)))
+    (c-awk-unstick-NL-prop)
     (add-hook 'before-change-functions 'c-awk-before-change nil t)
     (add-hook 'after-change-functions 'c-awk-after-change nil t)
     (c-save-buffer-state nil
