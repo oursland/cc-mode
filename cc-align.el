@@ -124,13 +124,12 @@ Works with: arglist-cont-nonempty, arglist-close."
       ;; line.  Note similar code in `c-lineup-close-paren' and
       ;; `c-lineup-arglist-close-under-paren'.
       (goto-char (elt (parse-partial-sexp (point) eol) 1))
-      (while (and (>= (point) savepos)
-		  (/= (char-after) ?{)
-		  (c-go-up-list-backward)))
-
-      (if (= (char-after) ?{)
-	  ;; An open brace was found.  Do not indent so much.
+      (if (and (= (char-after) ?{)
+	       (not (c-looking-at-special-brace-list))
+	       (progn (forward-char)
+		      (looking-at c-syntactic-eol)))
 	  c-basic-offset
+
 	;; Normal case.  Indent to the token after the arglist open paren.
 	(goto-char savepos)
 	(c-forward-syntactic-ws)
@@ -241,13 +240,12 @@ arglist-close, arglist-cont and arglist-cont-nonempty."
       ;; line.  Note similar code in `c-lineup-arglist' and
       ;; `c-lineup-close-paren'.
       (goto-char (elt (parse-partial-sexp savepos (c-point 'eol)) 1))
-      (while (and (> (point) savepos)
-		  (/= (char-after) ?{)
-		  (c-go-up-list-backward)))
-
-      (if (= (char-after) ?{)
-	  ;; An open brace was found.  Do not indent so much.
+      (if (and (= (char-after) ?{)
+	       (not (c-looking-at-special-brace-list))
+	       (progn (forward-char)
+		      (looking-at c-syntactic-eol)))
 	  c-basic-offset
+
 	;; Normal case.  Indent to the arglist open paren.
 	(goto-char savepos)
 	(vector (current-column))))))
@@ -316,13 +314,12 @@ brace-list-close, arglist-close, extern-lang-close, namespace-close."
 	;; same line.  Note similar code in `c-lineup-arglist' and
 	;; `c-lineup-arglist-close-under-paren'.
 	(goto-char (elt (parse-partial-sexp savepos (c-point 'eol)) 1))
-	(while (and (> (point) savepos)
-		    (/= (char-after) ?{)
-		    (c-go-up-list-backward)))
-
-	(if (= (char-after) ?{)
-	    ;; An open brace was found.  Do not indent so much.
+	(if (and (= (char-after) ?{)
+		 (not (c-looking-at-special-brace-list))
+		 (progn (forward-char)
+			(looking-at c-syntactic-eol)))
 	    c-basic-offset
+
 	  ;; Normal case.  Indent to the arglist open paren.
 	  (goto-char savepos)
 	  (vector (current-column)))))))
