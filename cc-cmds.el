@@ -28,7 +28,10 @@
 ;; Boston, MA 02111-1307, USA.
 
 (eval-when-compile
-  (load-file "./cc-engine.el"))
+  (require 'cc-engine)
+  (require 'cc-mode)
+  (require 'cc-langs)
+  (require 'cc-vars))
 
 
 ;; Utilities

@@ -27,11 +27,11 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(eval-when-compile
-  (load-file "./cc-align.el"))
-
 (require 'cc-vars)
 (require 'cc-align)
+(eval-when-compile
+  (require 'cc-mode)
+  (require 'cl))
 
 
 (defconst c-style-alist

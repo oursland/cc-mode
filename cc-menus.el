@@ -125,17 +125,6 @@
 	   )))
     (cons modestr m)))
 
-(eval-when-compile
-  (load-file "./cc-langs.el"))
-
-(easy-menu-define c-c-menu c-mode-map "C Mode Commands"
-		  (c-mode-menu "C"))
-(easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
-		  (c-mode-menu "C++"))
-(easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
-		  (c-mode-menu "ObjC"))
-(easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
-		  (c-mode-menu "Java"))
 
 
 (provide 'cc-menus)

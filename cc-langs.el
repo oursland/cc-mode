@@ -28,7 +28,11 @@
 ;; Boston, MA 02111-1307, USA.
 
 (eval-when-compile
-  (load-file "./cc-styles.el"))
+  (require 'cc-menus)
+  (require 'cc-styles)
+  (require 'cc-vars)
+  (require 'cc-mode))
+
 
 
 ;; Regular expressions and other values which must be parameterized on
@@ -412,6 +416,8 @@ global and affect all future `c-mode' buffers."
   (c-setup-dual-comments c-mode-syntax-table)
   (setq-default c-C-comment-start-regexp c-C++-comment-start-regexp))
 
+(easy-menu-define c-c-menu c-mode-map "C Mode Commands"
+		  (c-mode-menu "C"))
 
 
 ;; Support for C++
@@ -446,6 +452,8 @@ global and affect all future `c-mode' buffers."
   ;;(modify-syntax-entry ?: "_" c++-mode-syntax-table)
   )
 
+(easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
+		  (c-mode-menu "C++"))
 
 
 ;; Support for Objective-C
@@ -472,6 +480,8 @@ global and affect all future `c-mode' buffers."
   (modify-syntax-entry ?@ "_" objc-mode-syntax-table)
   )
 
+(easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
+		  (c-mode-menu "ObjC"))
 
 
 ;; Support for Java
@@ -498,6 +508,8 @@ global and affect all future `c-mode' buffers."
   (modify-syntax-entry ?@ "_" java-mode-syntax-table)
   )
 
+(easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
+		  (c-mode-menu "Java"))
 
 
 (provide 'cc-langs)

@@ -29,7 +29,10 @@
 
 
 (eval-when-compile
-  (load-file "./cc-engine.el"))
+  (require 'cc-engine)
+  (require 'cc-mode)
+  (require 'cc-langs)
+  (require 'cc-vars))
 
 (defsubst c-langelem-col (langelem &optional preserve-point)
   ;; convenience routine to return the column of langelem's relpos.
