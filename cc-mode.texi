@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.56 $
+@comment manual version: $Revision: 2.57 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-12-10 20:40:01 $
+@comment Last modification: $Date: 1996-12-19 21:10:35 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.56 $)
+@center (manual revision: $Revision: 2.57 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -439,7 +439,7 @@ on the current line.}:
 
 This tells us that the line is a statement and it is indented relative
 to buffer position 35, which happens to be the @samp{i} in @code{int} on
-line 3.  If you were to move Point to line 3 and hit @kbd{C-c C-s}, you
+line 3.  If you were to move point to line 3 and hit @kbd{C-c C-s}, you
 would see:
 @example
 
@@ -558,7 +558,7 @@ our first example again:
 @end example
 
 @kindex TAB
-Let's say Point is on line 3 and we hit the @key{TAB} key to re-indent
+Let's say point is on line 3 and we hit the @key{TAB} key to re-indent
 the line.  Remember that the syntactic component list for that
 line is:
 @example
@@ -1194,7 +1194,7 @@ To indent a single line of code, use @kbd{TAB}
 (@code{c-indent-command}).  The behavior of this command is controlled
 by the variable @code{c-tab-always-indent}.  When this variable is
 @code{t}, @kbd{TAB} always just indents the current line.  When
-@code{nil}, the line is indented only if Point is at the left margin, or
+@code{nil}, the line is indented only if point is at the left margin, or
 on or before the first non-whitespace character on the line, otherwise
 @emph{something else happens}@footnote{Actually what happens is that the
 function stored in the variable @code{c-insert-tab-function} is called.
@@ -1205,7 +1205,7 @@ number of spaces, depending on the setting of the variable
 If the value of @code{c-tab-always-indent} is something other than
 @code{t} or @code{nil} (e.g. @code{'other}), then a real tab
 character@footnote{The caveat about @code{indent-tabs-mode} in the
-previous footnote also applies here.}  is inserted only when Point is
+previous footnote also applies here.}  is inserted only when point is
 inside a literal (see @ref{Auto-newline insertion}), otherwise the line
 is indented.
 
@@ -1213,7 +1213,7 @@ is indented.
 @findex c-indent-exp
 @findex indent-exp (c-)
 To indent an entire balanced brace or parenthesis expression, use
-@kbd{M-C-q} (@code{c-indent-exp}).  Note that Point should be on
+@kbd{M-C-q} (@code{c-indent-exp}).  Note that point should be on
 the opening brace or parenthesis of the expression you want to indent.
 
 @kindex C-c C-q
@@ -1221,7 +1221,7 @@ the opening brace or parenthesis of the expression you want to indent.
 @findex indent-defun (c-)
 Another very convenient keystroke is @kbd{C-c C-q}
 (@code{c-indent-defun}) when re-indents the entire top-level function or
-class definition that encompases Point.  It leaves Point at the
+class definition that encompases point.  It leaves point at the
 same position within the buffer.
 
 @kindex M-C-\
@@ -1229,7 +1229,7 @@ same position within the buffer.
 To indent any arbitrary region of code, use @kbd{M-C-\}
 (@code{indent-region}).   This is a standard Emacs command, specially
 tailored for C code in a @code{cc-mode} buffer.  Note that of course,
-Point and Mark must delineate the region you
+point and mark must delineate the region you
 want to indent.
 
 @kindex M-C-h
@@ -1255,9 +1255,9 @@ code.
 @kindex C-c C-u
 @findex c-up-conditional
 @findex up-conditional (c-)
-Move Point back to the containing preprocessor conditional, leaving the
-Mark behind.  A prefix argument acts as a repeat count.  With a negative
-argument, move Point forward to the end of the containing
+Move point back to the containing preprocessor conditional, leaving the
+mark behind.  A prefix argument acts as a repeat count.  With a negative
+argument, move point forward to the end of the containing
 preprocessor conditional.  When going backwards, @code{#elif} is treated
 like @code{#else} followed by @code{#if}.  When going forwards,
 @code{#elif} is ignored.@refill
@@ -1266,7 +1266,7 @@ like @code{#else} followed by @code{#if}.  When going forwards,
 @kindex C-c C-p
 @findex c-backward-conditional
 @findex backward-conditional (c-)
-Move Point back over a preprocessor conditional, leaving Mark
+Move point back over a preprocessor conditional, leaving the mark
 behind.  A prefix argument acts as a repeat count.  With a negative
 argument, move forward.
 
@@ -1274,7 +1274,7 @@ argument, move forward.
 @kindex C-c C-n
 @findex c-forward-conditional
 @findex forward-conditional (c-)
-Move Point forward across a preprocessor conditional, leaving Mark
+Move point forward across a preprocessor conditional, leaving the mark
 behind.  A prefix argument acts as a repeat count.  With a negative
 argument, move backward.
 
@@ -1282,12 +1282,12 @@ argument, move backward.
 @kindex ESC a
 @findex c-beginning-of-statement
 @findex beginning-of-statement (c-)
-Move Point to the beginning of the innermost C statement.  If Point is
+Move point to the beginning of the innermost C statement.  If point is
 already at the beginning of a statement, it moves to the beginning of
 the preceding statement.  With prefix argument @var{n}, move back
 @var{n} @minus{} 1 statements.
 
-If Point is within a string or comment, or next to a comment (only
+If point is within a string or comment, or next to a comment (only
 whitespace between them), this command moves by sentences instead of
 statements.
 
@@ -1299,11 +1299,11 @@ back before that place).
 @kindex ESC e
 @findex c-end-of-statement
 @findex end-of-statement (c-)
-Move Point to the end of the innermost C statement.  If Point is at the
+Move point to the end of the innermost C statement.  If point is at the
 end of a statement, move to the end of the next statement.  With prefix
 argument @var{n}, move forward @var{n} @minus{} 1 statements.
 
-If Point is within a string or comment, or next to a comment (only
+If point is within a string or comment, or next to a comment (only
 whitespace between them), this command moves by sentences instead of
 statements.
 
@@ -1319,13 +1319,13 @@ such as C++ is to write symbols in a mixed case format, where the first
 letter of each word is capitalized, and not separated by underscores.
 E.g. @samp{SymbolsWithMixedCaseAndNoUnderlines}.
 
-This command moves Point forward to end of a C++ nomenclature
+This command moves point forward to end of a C++ nomenclature
 section or word.  With prefix argument @var{n}, move @var{n} times.
 
 @item M-x c-backward-into-nomenclature
 @findex c-backward-into-nomenclature
 @findex backward-into-nomenclature (c-)
-Move Point backward to beginning of a C++ nomenclature
+Move point backward to beginning of a C++ nomenclature
 section or word.  With prefix argument @var{n}, move @var{n} times.  If
 @var{n} is negative, move forward.
 
@@ -2218,7 +2218,7 @@ called after every line is indented by @code{cc-mode}.  You can use it
 to do any special indentation or line adjustments your style dictates,
 such as adding extra indentation to constructors or destructor
 declarations in a class definition, etc.  Note however, that you should
-not change Point or Mark inside your @code{c-special-indent-hook}
+not change point or mark inside your @code{c-special-indent-hook}
 functions (i.e. you'll probably want to wrap your function in a
 @code{save-excursion}).
 
