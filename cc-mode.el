@@ -1,17 +1,24 @@
-;; C++ mode editing commands for Emacs
-;; 1992 Barry Warsaw, Century Computing Inc.
-;; 1987 Dave Detlefs  (dld@cs.cmu.edu) 
-;; and  Stewart Clamen (clamen@cs.cmu.edu).
-;; Done by fairly faithful modification of:
-;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;;
-;; $Revision: 1.101 $
-;;
+;; -*- Mode: Emacs-Lisp -*-
+;; File:		c++-mode.el
+;; Description: 	Mode for editing C++ code
+;; Author:		1992 Barry A. Warsaw, Century Computing Inc.
+;;        		1987 Dave Detlefs  (dld@cs.cmu.edu)
+;;        		and  Stewart Clamen (clamen@cs.cmu.edu)
+;;        		Done by fairly faithful modification of:
+;;        		c-mode.el, Copyright (C) 1985 Richard M. Stallman.
+;; Last Modified:	$Date: 1992-04-16 17:05:40 $
+;; Version:		$Revision: 1.102 $
+
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
 ;;
 ;; Do a C-h f c++-dump-state for more information on submitting bug
 ;; reports.
+;;
+;; LCD Archive Entry:
+;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
+;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
+;; |$Date: 1992-04-16 17:05:40 $|$Revision: 1.102 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -114,7 +121,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 1.101 $
+  "Major mode for editing C++ code.  $Revision: 1.102 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1208,7 +1215,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.101 $"
+(defconst c++-version "$Revision: 1.102 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
