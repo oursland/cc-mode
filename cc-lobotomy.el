@@ -51,7 +51,6 @@
 ;; This file is completely unsupported!  I have no idea whether this
 ;; will work with such things as cc-mode-18.el.
 
-
 ;;; Code:
 
 (eval-when-compile
