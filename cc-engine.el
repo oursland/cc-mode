@@ -277,7 +277,7 @@
       (forward-line -1))
     (back-to-indentation)
     (if (and (<= (point) here)
-	     (looking-at "#[a-zA-Z0-9]"))
+	     (looking-at "#[ \t]*[a-zA-Z0-9]"))
 	t
       (goto-char here)
       nil)))
