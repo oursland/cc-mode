@@ -282,13 +282,13 @@ styles.  Some examples:
 /*********************************************************************
     Free form text comments:
  In comments with a long delimiter line at the start, the indentation
- isn't changed for lines that doesn't start with a nonempty comment
- line prefix.  The delimiter line is whatever matches the
+ is kept unchanged for lines that doesn't start with a nonempty
+ comment line prefix.  The delimiter line is whatever matches the
  `comment-start-skip' regexp.
 *********************************************************************/
 
 The variable `c-comment-prefix-regexp' is used to recognize the
-comment line prefix, such as `*', that usually starts every line
+comment line prefix, e.g. the `*' that usually starts every line
 inside a comment.
 
 Works with: The `c' syntactic symbol."
@@ -359,22 +359,25 @@ Works with: The `c' syntactic symbol."
 
 (defun c-lineup-comment (langelem)
   "Line up a comment start according to `c-comment-only-line-offset'.
-If the comment already starts at `comment-column', the indentation
-isn't changed.
+If the comment is lined up with a comment starter on the previous
+line, that alignment is preserved.
 
 Works with: comment-intro."
   (save-excursion
     (back-to-indentation)
     ;; this highly kludgiforous flag prevents the mapcar over
     ;; c-syntactic-context from entering an infinite loop
-    (let ((recurse-prevention-flag (boundp 'recurse-prevention-flag)))
+    (let ((recurse-prevention-flag (boundp 'recurse-prevention-flag))
+	  (col (current-column)))
       (cond
-       ;; CASE 1: preserve comment-column
        (recurse-prevention-flag 0)
-       ((= (current-column) comment-column)
+       ;; CASE 1: preserve aligned comments
+       ((save-excursion
+	  (and (c-forward-comment -1)
+	       (= col (current-column))))
 	;; we have to subtract out all other indentation
-	(- comment-column (apply '+ (mapcar 'c-get-offset
-					    c-syntactic-context))))
+	(- col (apply '+ (mapcar 'c-get-offset
+				 c-syntactic-context))))
        ;; indent as specified by c-comment-only-line-offset
        ((not (bolp))
 	(or (car-safe c-comment-only-line-offset)
@@ -459,11 +462,11 @@ Works with: template-args-cont."
 	  (- (current-column) (c-langelem-col langelem))))))
 
 (defun c-lineup-ObjC-method-call (langelem)
-  "Line up method args as elisp-mode does with function args: go to the
-position right after the message receiver, and if you are at \(eolp)
-indent the current line by a constant offset from the opening bracket;
-otherwise we are looking at the first character of the first method
-call argument, so lineup the current line with it.
+  "Line up selector args as elisp-mode does with function args:
+go to the position right after the message receiver, and if you are at
+\(eolp) indent the current line by a constant offset from the opening
+bracket; otherwise we are looking at the first character of the first
+method call argument, so lineup the current line with it.
 
 Works with: objc-method-call-cont."
   (save-excursion
@@ -537,7 +540,7 @@ Works with: objc-method-args-cont."
 (defun c-lineup-inexpr-block (langelem)
   "Line up the block for constructs that use a block inside an expression,
 e.g. anonymous classes in Java and lambda functions in Pike.  The body
-is aligned with the start of the header, e.g. the \"new\" or
+is aligned with the start of the header, e.g. with the \"new\" or
 \"lambda\" keyword.  Returns nil if the block isn't part of such a
 construct.
 
