@@ -261,7 +261,7 @@ For use with the variable `java-mode-hook'."
 	      (add-submenu nil (c-mode-menu))
 	      ))))
   (if (boundp 'mode-popup-menu)
-      (setq mode-popup-menu (c-mode-menu)))
+      (setq mode-popup-menu (c-mode-menu t)))
   ;; put auto-hungry designators onto minor-mode-alist, but only once
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
@@ -392,20 +392,10 @@ it finds in `c-file-offsets'."
   ;; conflicts with OOBR
   ;;(define-key c-mode-map "\C-c\C-v"  'c-version)
   ;;
-  (if (and
-       ;; Infodock has it's own menu
-       (not (memq 'infodock c-emacs-features))
-       ;; Emacs 19 defines menus in the mode map. This call will
-       ;; return t on Emacs 19, otherwise no-op and return nil.
-       (not (c-mode-fsf-menu "CC Mode" c-mode-map))
-       ;; In XEmacs 19, we want the menu to popup when the 3rd button
-       ;; is hit.  In Lucid Emacs 19.10 and beyond this is done
-       ;; automatically if we put the menu on mode-popup-menu
-       ;; variable, see c-common-init. Emacs 19 uses C-Mouse-3 for
-       ;; this, and it works with no special effort.
-       (boundp 'current-menubar)
-       (not (boundp 'mode-popup-menu)))
-      (define-key c-mode-map 'button3 'c-popup-menu)))
+  ;; Install the popup menu in Emacs 19.  XEmacs does this by setting
+  ;; the buffer local variable mode-popup-menu.  This call will no-op
+  ;; in XEmacs.
+  (c-mode-fsf-menu "CC Mode" c-mode-map))
 
 (defvar c-mode-syntax-table nil
   "Syntax table used in c-mode buffers.")
