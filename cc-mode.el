@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.65 $
-;; Last Modified:   $Date: 1993-11-19 16:24:38 $
+;; Version:         $Revision: 3.66 $
+;; Last Modified:   $Date: 1993-11-19 18:44:54 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-19 16:24:38 $|$Revision: 3.65 $|
+;; |$Date: 1993-11-19 18:44:54 $|$Revision: 3.66 $|
 
 ;;; Code:
 
@@ -489,7 +489,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.65 $
+  "Major mode for editing C++ code.  $Revision: 3.66 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -519,7 +519,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.65 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.66 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1847,8 +1847,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	     ;; CASE 4D.3: perhaps a multiple inheritance line?
 	     ((looking-at cc-inher-key)
 	      (cc-add-semantics 'inher-cont-1 (cc-point 'boi)))
-	     ;; CASE 4D.4: I don't know what the heck we're looking-at
-	     (t (cc-add-semantics 'unknown-construct-1))
+	     ;; CASE 4D.4: perhaps a template list continuation?
+	     ((save-excursion
+		(skip-chars-backward "^<" lim)
+		(= (preceding-char) ?<))
+	      ;; we can probably indent it just like and arglist-cont
+	      (cc-add-semantics 'arglist-cont (point)))
+	     ;; CASE 4D.5: perhaps a top-level statement-cont
+	     (t (cc-beginning-of-statement lim)
+		(cc-add-semantics 'statement-cont (cc-point 'boi)))
 	     ))
 	   ;; CASE 4E: we are looking at a access specifier
 	   ((and inclass-p
@@ -2041,10 +2048,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	     ;; CASE 13.B: an embedded block open
 	     ((= char-after-ip ?{)
 	      (cc-add-semantics 'block-open (cc-point 'boi)))
-	     ;; CASE 13.C: any old statement
+	     ;; CASE 13.C: continued statement
+	     ((= char-before-ip ?,)
+	      (cc-add-semantics 'statement-cont (cc-point 'boi)))
+	     ;; CASE 13.D: a question/colon construct?
+	     ((or (memq char-before-ip '(?: ??))
+		  (memq char-after-ip '(?: ??)))
+	      (cc-add-semantics 'statement-cont (cc-point 'boi)))
+	     ;; CASE 13.E: any old statement
 	     ((< (point) indent-point)
 	      (cc-add-semantics 'statement (cc-point 'boi)))
-	     ;; CASE 13.D: first statement in a block
+	     ;; CASE 13.F: first statement in a block
 	     (t
 	      (goto-char containing-sexp)
 	      (cc-add-semantics 'statement-block-intro (cc-point 'boi)))
@@ -2295,7 +2309,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.65 $"
+(defconst cc-version "$Revision: 3.66 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
