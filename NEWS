@@ -3,7 +3,7 @@ CC Mode NEWS -- user visible changes.  -*- outline -*-
 * Changes in 5.27
 
 Note: This is mostly a bugfix release.  The features labeled
-experimental in 5.26 remains and are now considered permanent.
+experimental in 5.26 remain and are now considered permanent.
 
 ** c-style-variables-are-local-p now defaults to t.
 This is an incompatible change that has been made to make the behavior
@@ -23,7 +23,7 @@ by default) to override the global settings made by the user.
 
 Note: This release contains changes that might not be compatible with
 current user setups (although it's believed that these
-incompatibilities will only show in very uncommon circumstances).
+incompatibilities will only show up in very uncommon circumstances).
 However, since the impact is uncertain, these changes may be rolled
 back depending on user feedback.  Therefore there's no forward
 compatibility guarantee wrt the new features introduced in this
@@ -33,7 +33,7 @@ release.
 When the initial style for a buffer is determined by CC Mode (from the
 variable c-default-style), the global values of style variables now
 take precedence over the values specified by the chosen style.  This
-is different than the old behavior: previously, the style-specific
+is different from the old behavior: previously, the style-specific
 settings would override the global settings.  This change makes it
 possible to do simple configuration in the intuitive way with
 Customize or with setq lines in one's .emacs file.
@@ -199,7 +199,7 @@ This is an alias for cc-mode-help@python.org.
 * Changes in 5.23
 
 Note: Due to the extensive changes, this version was a beta test
-release that was never publically announced.
+release that was never publicly announced.
 
 ** Support for the Pike language added, along with new Pike specific
 syntactic symbols: inlambda, lambda-intro-cont
@@ -375,7 +375,7 @@ them to be present in all other modes, this will break.  Put your
 keybindings in c-mode-base-map instead.
 
 ** The function c-electric-delete and variable c-delete-function are
-handled differently now, in order to accomodate the separation of the
+handled differently now, in order to accommodate the separation of the
 BackSpace and Delete keysyms.  CC Mode now binds only the Delete
 keysym to c-electric-delete (which runs c-delete-function), and the
 BackSpace keysym to c-electric-backspace (which runs
@@ -517,7 +517,7 @@ indentation a label can have in gnu style.  This variable has no
 effect in other styles.
 
 ** c-special-indent-hook is handled slightly differently when it
-appears in a style definition; the functions in the style defintion
+appears in a style definition; the functions in the style definition
 are appended to the global value of c-special-indent-hook.
 
 ** c-style-alist is defconst'd now.
