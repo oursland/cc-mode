@@ -204,7 +204,11 @@ New indentation engine
     which tells us 2 important things.  First, that there can be more
     than one syntactic component on the list, and second, that a
     syntactic component need not have a relative buffer position
-    (e.g. block-open).
+    (e.g. block-open).  By the way, a `substatement' indicates the
+    line after an if, else, while, do, switch, and for statements, and
+    a `block-open' indicates a line containing an compound statement's
+    block opening brace.  See the variable c-offsets-alist for a full
+    description of the available syntactic symbols.
 
   Step 2: Indentation Calculation
 
@@ -345,8 +349,8 @@ Customizing Indentation
 
     So we know either want to change the indentation for `block-open',
     or for `substatement'.  Since the `substatement' syntactic symbol
-    controls all indentation after if, while, else, switch, for, and
-    do statements, and since we still want to indented non-block
+    controls all indentation after if, else, while, do, switch, and
+    for statements, and since we still want to indented non-block
     substatements like this:
 
 	if( doit_again )
@@ -606,11 +610,18 @@ Requirements
 
 Limitations and Known Bugs
 
-    c++-mode does not recognize exception constructs.
+    c++-mode does not recognize exception constructs (will be fixed in
+    next release).
 
-    c++-mode does not recognize friend constructs.
+    c++-mode does not recognize friend constructs (will be fixed in
+    next release).
 
-    re-indenting large regions or expressions can be slow.
+    there should be some way to indent the first statement in a block
+    differently than the first statement in a defun (will be fixed in
+    next release).
+
+    re-indenting large regions or expressions can be slow (will be
+    addressed in next release).
 
     Use with Emacs 18 can be slow and annoying. You should seriously
     consider upgrading to Emacs 19.
@@ -619,6 +630,7 @@ Limitations and Known Bugs
     column zero, you could notice severe degradations in performance.
     Consider changing your coding style or defining the variable
     defun-prompt-regexp to something suitable (Emacs 19 only).
+
 
 
 Electronic Mail
