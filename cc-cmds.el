@@ -1051,6 +1051,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (setq fence (point))))))
 	(set-marker endmark nil)
 	(c-progress-fini 'c-indent-region)
+	(c-echo-parsing-error)
 	))))
 
 (defun c-mark-function ()
