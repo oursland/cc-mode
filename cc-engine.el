@@ -4329,7 +4329,8 @@ brace."
 	(c-backward-sexp 1))
     (c-backward-syntactic-ws limit)
     ;; Skip over any template arg to the class.
-    (if (eq (char-before) ?>)
+    (if (and (eq (char-before) ?>)
+	     (c-major-mode-is 'c++-mode))
 	(c-with-syntax-table c++-template-syntax-table
 	  (c-backward-sexp 1)))
     (c-backward-sexp 1)
