@@ -62,7 +62,55 @@ All the keywords used in CORBA IDL, PSDL, and CIDL are recognized and
 handled correctly, also wrt indentation.
 
 ** Support for the AWK language.
-FIXME
+
+Support for the AWK language has been introduced.  The implementation is
+based around GNU AWK version 3.1, but it should work pretty well with
+any AWK.  As yet, not all features of CC Mode have been adapted for AWK.
+Here is a summary:
+
+*** Indentation Engine
+The CC Mode indentation engine fully supports AWK mode.
+
+AWK mode handles code formatted in the conventional AWK fashion: `{'s
+which start actions, user-defined functions, or compound statements are
+placed on the same line as the associated construct; the matching `}'s
+are normally placed under the start of the respective pattern, function
+definition, or structured statement.
+
+The predefined indentation functions haven't yet been adapted for AWK
+mode, though some of them may work serendipitously.  There shouldn't be
+any problems writing custom indentation functions for AWK mode.
+
+The command `C-c C-q' (`c-indent-defun') hasn't yet been adapted for
+AWK, though in practice it works properly nearly all the time.  Should
+it fail, explicitly set the region around the function (using `C-u
+C-SPC': `C-M-h' probably won't work either) then do `C-M-\'
+(`indent-region').
+
+*** Font Locking
+There is a single level of font locking in AWK mode, rather than the
+three distinct levels the other modes have.  There are several
+idiosyncrasies in AWK mode's font-locking due to the peculiarities of
+the AWK language itself.
+
+*** Comment Commands
+`M-;' (`indent-for-comment') works fine.  None of the other CC Mode
+comment formatting commands have yet been adapted for AWK mode.
+
+*** Movement Commands
+Most of the movement commands work in AWK mode.  The most important
+exceptions are `M-a' (`c-beginning-of-statement') and `M-e'
+(`c-end-of-statement') which haven't yet been adapted.
+
+The notion of "defun" has been augmented to include AWK pattern-action
+pairs.  `C-M-a' (c-awk-beginning-of-defun) and `C-M-e'
+(c-awk-end-of-defun) recognise these pattern-action pairs, as well as
+user defined functions.
+
+*** Auto-newline Insertion and Clean-ups
+Auto-newline insertion hasn't yet been adapted for AWK.  Some of
+the clean-ups can actually convert good AWK code into syntactically
+invalid code.  These features are best disabled in AWK buffers.
 
 ** New syntactic symbols in IDL mode.
 The top level constructs "module" and "composition" (from CIDL) are
