@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.283 $
-;; Last Modified:   $Date: 1996-03-14 21:37:13 $
+;; Version:         $Revision: 4.284 $
+;; Last Modified:   $Date: 1996-03-14 21:37:45 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -437,7 +437,7 @@ If a number, percentage complete gets updated after each interval of
 that many seconds.   Set to nil to inhibit updating.  This is only
 useful for Emacs 19.")
 
-(defvar c-style-alist
+(defconst c-style-alist
   '(("gnu"
      (c-basic-offset . 2)
      (c-comment-only-line-offset . (0 . 0))
@@ -4805,7 +4805,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.283 $"
+(defconst c-version "$Revision: 4.284 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
