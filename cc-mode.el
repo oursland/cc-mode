@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-24 20:36:57 $
-;; Version:         $Revision: 2.2 $
+;; Last Modified:   $Date: 1992-04-24 22:02:47 $
+;; Version:         $Revision: 2.3 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-24 20:36:57 $|$Revision: 2.2 $|
+;; |$Date: 1992-04-24 22:02:47 $|$Revision: 2.3 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -135,7 +135,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.2 $
+  "Major mode for editing C++ code.  $Revision: 2.3 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -203,11 +203,32 @@ c++-<thing> are unique for this mode.
     Mode line format for c++-mode buffers. Includes auto-newline and
     hungry-delete-key indicators.
  c++-auto-hungry-initial-state
-    Initial state of auto/hungry mode when a C++ buffer is first
-    visited. Do a \"\\[describe-variable] c++-auto-hungry-initial-state\" for legal values.
+    Initial state of auto/hungry mode when a C++ buffer is first visited.
  c++-auto-hungry-toggle
-    Enable/disable toggling of auto/hungry states. Do a
-    \"\\[describe-variable] c++-auto-hungry-toggle\" for legal values.
+    Enable/disable toggling of auto/hungry states.
+
+Auto-newlining is no longer an all or nothing proposition. In
+particular its not possible to implement a perfect auto-newline
+algorithm. Sometimes you want it and sometimes you don't.  So now
+auto-newline (and its companion, hungry-delete) can be toggled on and
+off on the fly.  Behavior is controlled by
+c++-auto-hungry-initial-state and c++-auto-hungry-toggle.  Legal
+values for both variables are:
+
+   'none (or nil)      -- no auto-newline or hungry-delete.
+   'auto-only          -- function affects only auto-newline state.
+   'hungry-only        -- function affects only hungry-delete state.
+   'auto-hungry (or t) -- function affects both states.
+
+Thus if c++-auto-hungry-initial-state is 'hungry-only, then only
+hungry state is turned on when the buffer is first visited.  If
+c++-auto-hungry-toggle is 'auto-hungry, and both auto-newline and
+hungry-delete state are on, then hitting \"\\[c++-toggle-auto-hungry-state]\"
+will toggle both states.  Hitting \"\\[c++-toggle-hungry-state]\" will
+always toggle hungry-delete state and hitting \"\\[c++-toggle-auto-state]\"
+will always toggle auto-newline state, regardless of the value of
+c++-auto-hungry-toggle.   Hungry-delete state, when on, makes the
+delete key consume all preceding whitespace.
 
 Settings for K&R, BSD, and Stroustrup indentation styles are
   c-indent-level                5    8    4
@@ -228,12 +249,6 @@ no args, if that value is non-nil."
   (set-syntax-table c++-mode-syntax-table)
   (setq major-mode 'c++-mode
 	mode-name "C++"
-	indent-line-function 'c++-indent-line
-	comment-start "// "
-	comment-end ""
-	comment-column 32
-	comment-start-skip "/\\*+ *\\|// *"
-	comment-indent-hook 'c++-comment-indent
 	local-abbrev-table c++-mode-abbrev-table)
   (set (make-local-variable 'paragraph-start) (concat "^$\\|" page-delimiter))
   (set (make-local-variable 'paragraph-separate) paragraph-start)
@@ -1231,7 +1246,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.2 $"
+(defconst c++-version "$Revision: 2.3 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
