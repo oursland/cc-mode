@@ -16,7 +16,7 @@
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
-@comment TeXinfo manual for CC Mode
+@comment Texinfo manual for CC Mode
 @comment Generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
@@ -161,7 +161,7 @@ look at that file.  It maps BOCM configuration variables to
 @ccmode{}'s new indentation model.
 
 A special word of thanks goes to Krishna Padmasola for his work in
-converting the original @file{README} file to texinfo format.
+converting the original @file{README} file to Texinfo format.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
