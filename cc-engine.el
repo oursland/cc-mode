@@ -1477,14 +1477,13 @@ brace."
 	 ;; CASE 2: in a C or C++ style comment.
 	 ((memq literal '(c c++))
 	  (c-add-syntax literal (car (c-literal-limits lim))))
-	 ;; CASE 3: in a cpp preprocessor macro
-	 ((eq literal 'pound)
-	  (let ((boi (c-point 'boi))
-		(macrostart (progn (c-beginning-of-macro lim) (point))))
-	    (setq tmpsymbol (if (= boi macrostart)
-				'cpp-macro
-			      'cpp-macro-cont))
-	    (c-add-syntax tmpsymbol macrostart)))
+	 ;; CASE 3: in a cpp preprocessor macro continuation.
+	 ((and (eq literal 'pound)
+	       (/= (save-excursion
+		     (c-beginning-of-macro lim)
+		     (setq placeholder (point)))
+		   (c-point 'boi)))
+	  (c-add-syntax 'cpp-macro-cont placeholder))
 	 ;; CASE 4: in an objective-c method intro
 	 (in-method-intro-p
 	  (c-add-syntax 'objc-method-intro (c-point 'boi)))
@@ -2442,17 +2441,24 @@ brace."
 		  (c-add-syntax 'block-open)))
 	   ))
 	 )
-
 	;; now we need to look at any modifiers
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
-	;; are we looking at a comment only line?
-	(if (looking-at c-comment-start-regexp)
-	    (c-add-syntax 'comment-intro))
-	;; we might want to give additional offset to friends (in C++).
-	(if (and (c-major-mode-is 'c++-mode)
-		 (looking-at c-C++-friend-key))
-	    (c-add-syntax 'friend))
+	(cond
+	 ;; are we looking at a comment only line?
+	 ((looking-at c-comment-start-regexp)
+	  (c-add-syntax 'comment-intro))
+	 ;; we might want to give additional offset to friends (in C++).
+	 ((and (c-major-mode-is 'c++-mode)
+	       (looking-at c-C++-friend-key))
+	  (c-add-syntax 'friend))
+	 ;; Start of a preprocessor directive?
+	 ((and (eq literal 'pound)
+	       (= (save-excursion
+		    (c-beginning-of-macro lim)
+		    (setq placeholder (point)))
+		  (c-point 'boi)))
+	  (c-add-syntax 'cpp-macro)))
 	;; return the syntax
 	syntax))))
 
