@@ -183,6 +183,13 @@
     (c-benign-error "%s" c-parsing-error))
   c-parsing-error)
 
+;; Faces given to comments and string literals.  This is used in some
+;; situations to speed up recognition; it isn't mandatory that font
+;; locking is in use.  This variable is extended with the face in
+;; `c-doc-face-name' when fontification is activated in cc-fonts.el.
+(defconst c-literal-faces
+  '(font-lock-comment-face font-lock-string-face))
+
 
 ;; Some debug tools to visualize various special positions.  This
 ;; debug code isn't as portable as the rest of CC Mode.
@@ -2738,10 +2745,8 @@ This function does not do any hidden buffer changes."
   '(while (and
 	   (setq cfd-match
 		 (re-search-forward c-decl-prefix-re cfd-limit 'move))
-	   (if (memq (get-text-property (1- (setq cfd-match-pos
-						  (match-end 1)))
-					'face)
-		     '(font-lock-comment-face font-lock-string-face))
+	   (if (c-got-face-at (1- (setq cfd-match-pos (match-end 1)))
+			      c-literal-faces)
 	       t
 	     ;; Skip forward past comments only, to set the position
 	     ;; to continue at, so we don't skip macros.
@@ -2804,26 +2809,39 @@ This function does not do any hidden buffer changes."
     ;; before the point, and do the first `c-decl-prefix-re' search
     ;; unless we're at bob.
 
-    (let ((start-pos (point))
-	  (prop (get-text-property (point) 'face))
-	  syntactic-pos)
-
+    (let ((start-pos (point)) syntactic-pos)
       ;; Must back up a bit since we look for the end of the previous
       ;; statement or declaration, which is earlier than the first
       ;; returned match.
-      (when (memq prop '(font-lock-comment-face font-lock-string-face))
+
+      (when (c-got-face-at (point) c-literal-faces)
 	;; But first we need to move to a syntactically relevant
-	;; position.  Can't use backward movement on the face property
-	;; since the font-lock package might not have fontified the
-	;; comment or string all the way to the start.
-	(goto-char (next-single-property-change (point) 'face nil (point-max)))
-	(when (eq prop 'font-lock-comment-face)
-	  ;; Back up over the comment to compare to
-	  ;; `c-find-decl-syntactic-pos'.  There's no use in doing
-	  ;; something similar for string literals since even if
-	  ;; `c-decl-prefix-re' matches directly before it, it
-	  ;; couldn't be the start of a declaration.
-	  (c-backward-single-comment)))
+	;; position.  Use the faces to back up to the start of the
+	;; comment or string literal.
+	(when (and (not (bobp))
+		   (c-got-face-at (1- (point)) c-literal-faces))
+	  (while (progn
+		   (goto-char (previous-single-property-change
+			       (point) 'face nil (point-min)))
+		   (c-got-face-at (point) c-literal-faces))))
+
+	;; XEmacs doesn't fontify the quotes surrounding string
+	;; literals.
+	(and (featurep 'xemacs)
+	     (eq (get-text-property (point) 'face)
+		 'font-lock-string-face)
+	     (not (bobp))
+	     (progn (backward-char)
+		    (not (looking-at c-string-limit-regexp)))
+	     (forward-char))
+
+	;; The font lock package might not have fontified the start of
+	;; the literal at all so check that we have arrived at
+	;; something that looks like a start or else resort to
+	;; `c-literal-limits'.
+	(unless (looking-at c-literal-start-regexp)
+	  (let ((range (c-literal-limits)))
+	    (if range (goto-char (car range))))))
 
       ;; Must back out of any macro so that we don't miss any
       ;; declaration that could follow after it, unless the limit is
@@ -2933,13 +2951,11 @@ This function does not do any hidden buffer changes."
 
 			;; Continue if the following token fails the
 			;; CFD-DECL-RE and CFD-FACE-CHECKLIST checks.
-			(when (or
-			       (eobp)
-			       (not (looking-at cfd-decl-re))
-			       (and
-				cfd-face-checklist
-				(not (memq (get-text-property (point) 'face)
-					   cfd-face-checklist))))
+			(when (or (eobp)
+				  (not (looking-at cfd-decl-re))
+				  (and cfd-face-checklist
+				       (not (c-got-face-at
+					     (point) cfd-face-checklist))))
 			  (goto-char cfd-continue-pos)
 			  t)))
 
