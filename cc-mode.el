@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.236 $
-;; Last Modified:   $Date: 1995-07-25 22:27:37 $
+;; Version:         $Revision: 4.237 $
+;; Last Modified:   $Date: 1995-07-27 22:12:34 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-25 22:27:37 $|$Revision: 4.236 $|
+;; |$Date: 1995-07-27 22:12:34 $|$Revision: 4.237 $|
 
 ;;; Code:
 
@@ -4527,7 +4527,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.236 $"
+(defconst c-version "$Revision: 4.237 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
@@ -4617,7 +4617,7 @@ it trailing backslashes are removed."
 		     (lambda (var)
 		       (let ((val (symbol-value var)))
 			 (cons var (if (atom val) val
-				     (copy-alist val)))
+				     (copy-tree val)))
 			 )))
 		    '(c-backslash-column
 		      c-basic-offset
