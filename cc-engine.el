@@ -1223,7 +1223,7 @@
 		   (save-excursion
 		     (c-backward-syntactic-ws limit)
 		     (setq placeholder (point))
-		     (while (and (memq (preceding-char) '(?\; ?,))
+		     (while (and (memq (char-after (1- placeholder)) '(?\; ?,))
 				 (> (point) limit))
 		       (beginning-of-line)
 		       (setq placeholder (point))
