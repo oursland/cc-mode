@@ -868,7 +868,7 @@ operators."
   "String that ends comments inserted with M-; etc.
 `comment-end' is initialized from this."
   t    ""
-  c    "*/")
+  c    " */")
 (c-lang-defvar comment-end (c-lang-const comment-end)
   'dont-doc)
 
