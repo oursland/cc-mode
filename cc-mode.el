@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-23 19:59:45 $
-;; Version:         $Revision: 2.171 $
+;; Last Modified:   $Date: 1992-07-27 15:13:36 $
+;; Version:         $Revision: 2.172 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-23 19:59:45 $|$Revision: 2.171 $|
+;; |$Date: 1992-07-27 15:13:36 $|$Revision: 2.172 $|
 
 
 ;; ======================================================================
@@ -326,7 +326,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.171 $
+  "Major mode for editing C++ code.  $Revision: 2.172 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -527,7 +527,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.171 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.172 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1574,6 +1574,13 @@ BOD is the beginning of the C++ definition."
 					;; at beginning of buffer, if
 					;; nothing else, indent to zero 
 					0
+				      (if (c++-in-parens-p)
+					  ;; we are perhaps inside a
+					  ;; member init call
+					  (while (and (c++-in-parens-p)
+						      (< bod (point)))
+					    (forward-line -1)
+					    (skip-chars-forward " \t")))
 				      ;; subtract inclass-shift since
 				      ;; its already incorporated by
 				      ;; defaultin current-indentation
@@ -2103,7 +2110,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.171 $"
+(defconst c++-version "$Revision: 2.172 $"
   "c++-mode version number.")
 
 (defun c++-version ()
