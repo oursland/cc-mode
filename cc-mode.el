@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.300 $
-;; Last Modified:   $Date: 1993-03-04 23:00:30 $
+;; Version:         $Revision: 2.301 $
+;; Last Modified:   $Date: 1993-03-05 20:00:17 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-03-04 23:00:30 $|$Revision: 2.300 $|
+;; |$Date: 1993-03-05 20:00:17 $|$Revision: 2.301 $|
 
 ;;; Code:
 
@@ -455,7 +455,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.300 $
+  "Major mode for editing C++ code.  $Revision: 2.301 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -676,7 +676,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.300 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.301 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1639,7 +1639,7 @@ point of the beginning of the C++ definition."
 	(setq indent (+ indent c++-access-specifier-offset)))
        ((looking-at "default[ \t]*:")
 	(setq indent (+ indent c-label-offset)))
-       ((or (looking-at "case[ \t]*:")
+       ((or (looking-at "case[ \t]+.*:")
 	    (and (looking-at "[A-Za-z]")
 		 (save-excursion
 		   (forward-sexp 1)
@@ -2017,7 +2017,7 @@ BOD is the beginning of the C++ definition."
 	    (if (save-excursion
 		  (goto-char indent-point)
 		  (skip-chars-forward " \t\n")
-		  (looking-at "case[ \t]*:"))
+		  (looking-at "case[ \t]+.*:"))
 		(progn
 		  (goto-char containing-sexp)
 		  (back-to-indentation)
@@ -2032,15 +2032,17 @@ BOD is the beginning of the C++ definition."
 		    ;; indent like it.
 		    (save-excursion
 		      (forward-char 1)
-		      (while (progn (skip-chars-forward " \t\n")
-				    (looking-at
-				     (concat
-				      "#\\|/\\*\\|//"
-				      "\\|\\(case\\|default\\)[ \t]"
-				      "\\|[a-zA-Z0-9_$]*:[^:]"
-				      "\\|friend[ \t]"
-				      c++-class-key
-				      "[ \t]")))
+		      (while
+			  (progn
+			    (skip-chars-forward " \t\n")
+			    (looking-at
+			     (concat
+			      "#\\|/\\*\\|//"
+			      "\\|\\(case[ \t]+.*\\|default[ \t]*\\)"
+			      "\\|[a-zA-Z0-9_$]*:[^:]"
+			      "\\|friend[ \t]"
+			      c++-class-key
+			      "[ \t]")))
 			;; Skip over comments and labels
 			;; following openbrace.
 			(cond
@@ -2052,7 +2054,7 @@ BOD is the beginning of the C++ definition."
 			   (concat "//\\|friend[ \t]" c++-class-key
 				   "[ \t]"))
 			  (forward-line 1))
-			 ((looking-at "\\(case\\|default\\)[ \t]*:")
+			 ((looking-at "\\(case[ \t]+.*\\|default[ \t]*\\):")
 			  (forward-line 1))
 			 (t
 			  (re-search-forward ":[^:]" nil 'move))))
@@ -2535,7 +2537,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.300 $"
+(defconst c++-version "$Revision: 2.301 $"
   "c++-mode version number.")
 
 (defun c++-version ()
