@@ -1422,6 +1422,9 @@ just t if it's not known.")
 	  (lookup-syntax-properties t))
       (save-excursion
 	(set-buffer buf)
+	(set-syntax-table (make-syntax-table))
+
+	;; Find out if the `syntax-table' text property works.
 	(modify-syntax-entry ?< ".")
 	(modify-syntax-entry ?> ".")
 	(insert "<()>")
@@ -1431,6 +1434,19 @@ just t if it's not known.")
 	(c-forward-sexp)
 	(if (= (point) 5)
 	    (setq list (cons 'syntax-properties list)))
+
+	;; Find out if generic comment delimiters work.
+	(c-safe
+	  (modify-syntax-entry ?x "!")
+	  (if (string-match "\\s!" "x")
+	      (setq list (cons 'gen-comment-delim list))))
+
+	;; Find out if generic string delimiters work.
+	(c-safe
+	  (modify-syntax-entry ?x "|")
+	  (if  (string-match "\\s|" "x")
+	      (setq list (cons 'gen-string-delim list))))
+
 	(set-buffer-modified-p nil))
       (kill-buffer buf))
 
@@ -1469,6 +1485,10 @@ might be present:
 '1-bit              1 bit syntax entry flags (Emacs style).
 'syntax-properties  It works to override the syntax for specific characters
 		    in the buffer with the 'syntax-table property.
+'gen-comment-delim  Generic comment delimiters work
+		    (i.e. the syntax class `!').
+'gen-string-delim   Generic string delimiters work
+		    (i.e. the syntax class `|').
 'infodock           This is Infodock (based on XEmacs).
 
 '8-bit and '1-bit are mutually exclusive.")
