@@ -2773,6 +2773,23 @@ isn't moved."
 			     (c-beginning-of-statement-1)
 			     (looking-at c-conditional-key)))))
 	      (c-add-syntax 'block-close relpos))
+	     ;; CASE 16E: Closing a statement block?  It's not a
+	     ;; statement context here but there might be one anyway,
+	     ;; e.g. on the top level inside a macro.
+	     ((progn
+		(goto-char containing-sexp)
+		(and (= (c-backward-token-1 1 t lim) 0)
+		     (or (looking-at c-block-stmt-1-kwds)
+			 (and (eq (char-after) ?\()
+			      (= (c-backward-token-1 1 t lim) 0)
+			      (looking-at c-block-stmt-2-kwds)))))
+	      (setq placeholder (point))
+	      (goto-char containing-sexp)
+	      (back-to-indentation)
+	      (unless (= (point) containing-sexp)
+		(goto-char placeholder)
+		(back-to-indentation))
+	      (c-add-syntax 'block-close (point)))
 	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
