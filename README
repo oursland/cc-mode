@@ -13,9 +13,12 @@ INTRODUCTION
     Emacs 19.34 is missing some stuff that CC Mode requires, but you
     can make CC Mode 5 work with it by loading the file cc-mode-19.el.
     See that file for details.  Note that you *MUST* also upgrade your
-    version of the Custom library (and edit the cc-make.el file to
-    contain this path).  Per's Custom library is at
-    <http://www.dina.kvl.dk/~abraham/custom/>.
+    version of the Custom library.  You must edit the cc-make.el file
+    to contain this path for the byte-compilation step below, *and*
+    you must add this path to load-path in your .emacs file for your
+    run environment.  Per's Custom library is at
+    
+        <http://www.dina.kvl.dk/~abraham/custom/>
 
 BYTE COMPILING
 
