@@ -186,11 +186,19 @@ the brace is inserted inside a literal."
 ;	    (not c-auto-newline)
 	    (not (looking-at "[ \t]*$")))
 	(self-insert-command (prefix-numeric-value arg))
-      (let* ((syms '(class-open class-close defun-open defun-close 
-		     inline-open inline-close brace-list-open brace-list-close
-		     brace-list-intro brace-list-entry block-open block-close
-		     substatement-open statement-case-open
-		     extern-lang-open extern-lang-close))
+      (let* ((syms
+	      ;; This is the list of brace syntactic symbols that can
+	      ;; hang.  If any new ones are added to c-offsets-alist,
+	      ;; they should be added here as well.
+	      '(class-open class-close defun-open defun-close
+		inline-open inline-close
+		brace-list-open brace-list-close
+		brace-list-intro brace-list-entry
+		block-open block-close
+		substatement-open statement-case-open
+		extern-lang-open extern-lang-close
+		namespace-open namespace-close
+		))
 	    ;; we want to inhibit blinking the paren since this will
 	    ;; be most disruptive. we'll blink it ourselves later on
 	    (old-blink-paren blink-paren-function)
