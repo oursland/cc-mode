@@ -963,6 +963,24 @@ current language (taken from `c-buffer-is-cc-mode')."
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 
 
+;;; Some helper constants.
+
+;; If the regexp engine supports POSIX char classes (e.g. Emacs 21)
+;; then we can use them to handle extended charsets correctly.
+(if (string-match "[[:alpha:]]" "a")	; Can't use c-emacs-features here.
+    (progn
+      (defconst c-alpha "[:alpha:]")
+      (defconst c-alnum "[:alnum:]")
+      (defconst c-digit "[:digit:]")
+      (defconst c-upper "[:upper:]")
+      (defconst c-lower "[:lower:]"))
+  (defconst c-alpha "a-zA-Z")
+  (defconst c-alnum "a-zA-Z0-9")
+  (defconst c-digit "0-9")
+  (defconst c-upper "A-Z")
+  (defconst c-lower "a-z"))
+
+
 ;;; System for handling language dependent constants.
 
 ;; This is used to set various language dependent data in a flexible
