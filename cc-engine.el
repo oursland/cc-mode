@@ -294,6 +294,32 @@
 	   (setq c-in-literal-cache (vector (point) rtn)))
       rtn)))
 
+;; XEmacs has a built-in function that should make this much quicker.
+;; I don't think we even need the cache, which makes our lives more
+;; complicated anyway.  In this case, lim is ignored.
+(defun c-fast-in-literal (&optional lim)
+  (let* ((context (buffer-syntactic-context))
+	 (literal context))
+    (cond
+     ((eq context 'string))
+     ((eq context 'comment) (setq literal 'c++))
+     ((eq context 'block-comment) (setq literal 'c))
+     ((eq (char-after (c-point 'boi)) ?#) (setq literal 'pound))
+     ((let ((c (char-after (- (c-point 'bol) 2)))
+	    (here (point)))
+	(while (and c (eq c ?\\))
+	  (next-line -1)
+	  (setq c (char-after (- (point) 2))))
+	(prog1
+	    (eq (char-after (c-point 'bol)) ?#)
+	  (goto-char here)))
+      (setq literal 'pound)))
+    literal))
+
+(if (fboundp 'buffer-syntactic-context)
+    (defalias 'c-in-literal 'c-fast-in-literal))
+
+
 
 ;; utilities for moving and querying around syntactic elements
 (defvar c-parsing-error nil)
