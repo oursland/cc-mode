@@ -247,11 +247,9 @@ tools (e.g. Javadoc).")
 	font-lock-comment-face))))
 
 (eval-and-compile
-  ;; We need the following function during compilation since it's
+  ;; We need the following functions during compilation since they're
   ;; called when the `c-lang-defconst' initializers are evaluated.
-  ;; They're also used at runtime, e.g. when the type search function
-  ;; in `c-simple-decl-matchers' is compiled from
-  ;; `*-font-lock-extra-types' at mode start.
+  ;; Define them at runtime too for the sake of derived modes.
 
   (defsubst c-skip-comments-and-strings (limit)
     ;; If the point is within a region fontified as a comment or
@@ -953,13 +951,12 @@ tools (e.g. Javadoc).")
 	  ;; to the next token and set `token-pos'.  The loop below
 	  ;; will later go back using `continue-pos' to fix macros
 	  ;; inside the syntactic ws.
-	  (when match
-	    (save-excursion
-	      (goto-char syntactic-pos)
-	      (c-forward-syntactic-ws)
-	      (and continue-pos
-		   (< continue-pos (point))
-		   (setq token-pos (point)))))
+	  (when (and match (< (point) syntactic-pos))
+	    (goto-char syntactic-pos)
+	    (c-forward-syntactic-ws)
+	    (and continue-pos
+		 (< continue-pos (point))
+		 (setq token-pos (point))))
 
 	  (setq c-fl-decl-match-pos (and match-pos
 					 (< match-pos start-pos)
@@ -1417,13 +1414,13 @@ tools (e.g. Javadoc).")
 	;; declarations they might start.  Use eval here since
 	;; `c-known-type-key' gets its value from
 	;; `*-font-lock-extra-types' on mode init.
-	(eval . (list (c-make-simple-font-lock-decl-function
-		       c-known-type-key
-		       1
-		       '(save-match-data
-			  (goto-char (match-end 1))
-			  (c-forward-syntactic-ws))
-		       '(goto-char (match-end 1)))))
+	(eval . (list ,(c-make-simple-font-lock-decl-function
+			'c-known-type-key
+			1
+			'(save-match-data
+			   (goto-char (match-end 1))
+			   (c-forward-syntactic-ws))
+			'(goto-char (match-end 1)))))
 
 	;; Fontify types preceded by `c-type-prefix-kwds' and the
 	;; identifiers in the declarations they might start.
@@ -1551,155 +1548,155 @@ tools (e.g. Javadoc).")
 
 ;;; C.
 
-(c-override-default-keywords 'c-font-lock-keywords
-			     (c-lang-var c-matchers-3 c))
-
 (defconst c-font-lock-keywords-1 (c-lang-var c-matchers-1 c)
-  "Subdued level highlighting for C mode.
+  "Minimal highlighting for C mode.
 Fontifies only preprocessor directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst c-font-lock-keywords-2 (c-lang-var c-matchers-2 c)
-  "Medium level highlighting for C mode.
+  "Fast normal highlighting for C mode.
 In addition to `c-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, and
 the user defined types on `c-font-lock-extra-types'.")
 
 (defconst c-font-lock-keywords-3 (c-lang-var c-matchers-3 c)
-  "Gaudy level highlighting for C mode.
+  "Accurate normal highlighting for C mode.
 Like `c-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c-font-lock-extra-types'.")
+
+(c-override-default-keywords 'c-font-lock-keywords
+			     c-font-lock-keywords-3)
 
 (defvar c-font-lock-keywords c-font-lock-keywords-3
   "Default expressions to highlight in C mode.")
 
 ;;; C++.
 
-(c-override-default-keywords 'c++-font-lock-keywords
-			     (c-lang-var c-matchers-3 c++))
-
 (defconst c++-font-lock-keywords-1 (c-lang-var c-matchers-1 c++)
-  "Subdued level highlighting for C++ mode.
+  "Minimal highlighting for C++ mode.
 Fontifies only preprocessor directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst c++-font-lock-keywords-2 (c-lang-var c-matchers-2 c++)
-  "Medium level highlighting for C++ mode.
+  "Fast normal highlighting for C++ mode.
 In addition to `c++-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, and
 the user defined types on `c++-font-lock-extra-types'.")
 
 (defconst c++-font-lock-keywords-3 (c-lang-var c-matchers-3 c++)
-  "Gaudy level highlighting for C++ mode.
+  "Accurate normal highlighting for C++ mode.
 Like `c++-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c++-font-lock-extra-types'.")
+
+(c-override-default-keywords 'c++-font-lock-keywords
+			     c++-font-lock-keywords-3)
 
 (defvar c++-font-lock-keywords c++-font-lock-keywords-3
   "Default expressions to highlight in C++ mode.")
 
 ;;; Objective-C.
 
-(c-override-default-keywords 'objc-font-lock-keywords
-			     (c-lang-var c-matchers-3 objc))
-
 (defconst objc-font-lock-keywords-1 (c-lang-var c-matchers-1 objc)
-  "Subdued level highlighting for ObjC mode.
+  "Minimal highlighting for ObjC mode.
 Fontifies only compiler directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst objc-font-lock-keywords-2 (c-lang-var c-matchers-2 objc)
-  "Medium level highlighting for ObjC mode.
+  "Fast normal highlighting for ObjC mode.
 In addition to `objc-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, and
 the user defined types on `objc-font-lock-extra-types'.")
 
 (defconst objc-font-lock-keywords-3 (c-lang-var c-matchers-3 objc)
-  "Gaudy level highlighting for ObjC mode.
+  "Accurate normal highlighting for ObjC mode.
 Like `objc-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `objc-font-lock-extra-types'.")
+
+(c-override-default-keywords 'objc-font-lock-keywords
+			     objc-font-lock-keywords-3)
 
 (defvar objc-font-lock-keywords objc-font-lock-keywords-3
   "Default expressions to highlight in ObjC mode.")
 
 ;;; Java.
 
-(c-override-default-keywords 'java-font-lock-keywords
-			     (c-lang-var c-matchers-3 java))
-
 (defconst java-font-lock-keywords-1 (c-lang-var c-matchers-1 java)
-  "Subdued level highlighting for Java mode.
+  "Minimal highlighting for Java mode.
 Fontifies nothing except the syntactic fontification of strings and
 comments.")
 
 (defconst java-font-lock-keywords-2 (c-lang-var c-matchers-2 java)
-  "Medium level highlighting for Java mode.
+  "Fast normal highlighting for Java mode.
 In addition to `java-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, and
 the user defined types on `java-font-lock-extra-types'.")
 
 (defconst java-font-lock-keywords-3 (c-lang-var c-matchers-3 java)
-  "Gaudy level highlighting for Java mode.
+  "Accurate normal highlighting for Java mode.
 Like `java-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `java-font-lock-extra-types'.")
+
+(c-override-default-keywords 'java-font-lock-keywords
+			     java-font-lock-keywords-3)
 
 (defvar java-font-lock-keywords java-font-lock-keywords-3
   "Default expressions to highlight in Java mode.")
 
 ;;; IDL.
 
-(c-override-default-keywords 'idl-font-lock-keywords
-			     (c-lang-var c-matchers-3 idl))
-
 (defconst idl-font-lock-keywords-1 (c-lang-var c-matchers-1 idl)
-  "Subdued level highlighting for IDL mode.
+  "Minimal highlighting for IDL mode.
 Fontifies nothing except the syntactic fontification of strings and
 comments.")
 
 (defconst idl-font-lock-keywords-2 (c-lang-var c-matchers-2 idl)
-  "Medium level highlighting for IDL mode.
+  "Fast normal highlighting for IDL mode.
 In addition to `idl-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, and
 the user defined types on `idl-font-lock-extra-types'.")
 
 (defconst idl-font-lock-keywords-3 (c-lang-var c-matchers-3 idl)
-  "Gaudy level highlighting for IDL mode.
+  "Accurate normal highlighting for IDL mode.
 Like `idl-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `idl-font-lock-extra-types'.")
+
+(c-override-default-keywords 'idl-font-lock-keywords
+			     idl-font-lock-keywords-3)
 
 (defvar idl-font-lock-keywords idl-font-lock-keywords-3
   "Default expressions to highlight in IDL mode.")
 
 ;;; Pike.
 
-(c-override-default-keywords 'pike-font-lock-keywords
-			     (c-lang-var c-matchers-4 pike))
-
 (defconst pike-font-lock-keywords-1 (c-lang-var c-matchers-1 pike)
-  "Subdued level highlighting for Pike mode.
+  "Minimal highlighting for Pike mode.
 Fontifies only preprocessor directives (in addition to the syntactic
 fontification of strings and comments).")
 
 (defconst pike-font-lock-keywords-2 (c-lang-var c-matchers-2 pike)
-  "Medium level highlighting for Pike mode.
+  "Fast normal highlighting for Pike mode.
 In addition to `pike-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, and
 the user defined types on `pike-font-lock-extra-types'.")
 
 (defconst pike-font-lock-keywords-3 (c-lang-var c-matchers-3 pike)
-  "Gaudy level highlighting for Pike mode.
+  "Accurate normal highlighting for Pike mode.
 Like `pike-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `pike-font-lock-extra-types'.")
 
 (defconst pike-font-lock-keywords-4 (c-lang-var c-matchers-4 pike)
-  "Extra gaudy level highlighting for Pike mode.
+  "Accurate extra highlighting for Pike mode.
 In addition to `pike-font-lock-keywords-3', this adds fontification of
 refdoc comments and the markup inside them.")
+
+(c-override-default-keywords 'pike-font-lock-keywords
+			     pike-font-lock-keywords-4)
 
 (defvar pike-font-lock-keywords pike-font-lock-keywords-4
   "Default expressions to highlight in Pike mode.")
