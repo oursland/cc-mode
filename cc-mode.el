@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.150 $
-;; Last Modified:   $Date: 1993-12-27 22:22:12 $
+;; Version:         $Revision: 3.151 $
+;; Last Modified:   $Date: 1993-12-27 22:24:36 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-27 22:22:12 $|$Revision: 3.150 $|
+;; |$Date: 1993-12-27 22:24:36 $|$Revision: 3.151 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.150 $
+CC-MODE REVISION: $Revision: 3.151 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.150 $
+CC-MODE REVISION: $Revision: 3.151 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1403,7 +1403,9 @@ statement then go to the beginning of the preceding one.
 If within a string or comment, or next to a comment (only whitespace between),
 move by sentences instead of statements."
   (interactive "p")
-  (let ((here (point)) state)
+  (let ((here (point))
+	(count (or count 1))
+	state)
     (save-excursion
       (beginning-of-defun)
       (setq state (parse-partial-sexp (point) here nil nil)))
@@ -1426,7 +1428,7 @@ With prefix arg, go forward N - 1 statements.
 Move forward to end of the next statement if already at end.
 If within a string or comment, move by sentences instead of statements."
   (interactive "p")
-  (c-beginning-of-statement (- count)))
+  (c-beginning-of-statement (- (or count 1))))
 
 (defun c-beginning-of-statement-1 ()
   (let ((last-begin (point))
@@ -2937,7 +2939,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.150 $"
+(defconst c-version "$Revision: 3.151 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
