@@ -145,7 +145,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 ;;(defconst c-IDL-protection-kwds nil)
 ;;(defconst c-Pike-protection-kwds nil)
 
-;; Statement keywords followed directly by a block.
+;; Statement keywords followed directly by a statement.
 (defconst c-C-block-stmt-1-kwds "do\\|else")
 (defconst c-C++-block-stmt-1-kwds
   (concat c-C-block-stmt-1-kwds "\\|asm\\|try"))
@@ -157,7 +157,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (defvar c-block-stmt-1-kwds "\\<\\>")	; Matches nothing.
 (make-variable-buffer-local 'c-block-stmt-1-kwds)
 
-;; Statement keywords followed by a paren sexp and then by a block.
+;; Statement keywords followed by a paren sexp and then by a statement.
 (defconst c-C-block-stmt-2-kwds "for\\|if\\|switch\\|while")
 (defconst c-C++-block-stmt-2-kwds (concat c-C-block-stmt-2-kwds "\\|catch"))
 (defconst c-ObjC-block-stmt-2-kwds c-C++-block-stmt-2-kwds)
@@ -447,6 +447,16 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
   (modify-syntax-entry ?\n "> b"  table)
   ;; Give CR the same syntax as newline, for selective-display
   (modify-syntax-entry ?\^m "> b" table))
+
+(defvar c-no-escape-syntax-table nil
+  "A variant of the language syntax table where `\\' has operator
+instead of escape syntax.  Used e.g. when moving by sexps where line
+continuation backslashes shouldn't be considered sexps.")
+(make-variable-buffer-local 'c-no-escape-syntax-table)
+
+(defun c-init-no-escape-syntax-table ()
+  (setq c-no-escape-syntax-table (copy-syntax-table (syntax-table)))
+  (modify-syntax-entry ?\\ "." c-no-escape-syntax-table))
 
 ;;;###autoload
 (defvar c-mode-syntax-table nil
