@@ -5,7 +5,7 @@
 ;; Author:     1995 Barry A. Warsaw
 ;; Maintainer: Unmaintained
 ;; Created:    March 1995, split from cc-mode.el
-;; Version:    5.06
+;; Version:    5.07
 ;; Keywords:   c languages oop
 
 ;; This file is not part of GNU Emacs.
