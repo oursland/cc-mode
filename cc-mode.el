@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.333 $
-;; Last Modified:   $Date: 1996-12-19 15:50:02 $
+;; Version:         $Revision: 4.334 $
+;; Last Modified:   $Date: 1996-12-19 17:32:18 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -3052,7 +3052,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (unwind-protect
 	  (let ((c-tab-always-indent t)
 		;; shut up any echo msgs on indiv lines
-		(c-echo-syntactic-information-p nil))
+		(c-echo-syntactic-information-p nil)
+		fence)
 	    (c-progress-init start end 'c-indent-region)
 	    (setq endmark (copy-marker end))
 	    (while (and (bolp)
@@ -3067,6 +3068,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(beginning-of-line)
 		;; indent the current line
 		(c-indent-line)
+		(setq fence (point))
 		(if (save-excursion
 		      (beginning-of-line)
 		      (looking-at "[ \t]*#"))
@@ -3092,7 +3094,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			  (goto-char sexpend)
 			  (setq sexpend (point-marker))
 			  (c-safe (backward-sexp 1))
-			  (setq sexpbeg (point)))))
+			  (setq sexpbeg (point))))
+		    (if (and sexpbeg (< sexpbeg fence))
+			(setq sexpbeg fence)))
 		  ;; check to see if the next line starts a
 		  ;; comment-only line
 		  (save-excursion
@@ -3118,7 +3122,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (and sexpend
 		       (markerp sexpend)
 		       (set-marker sexpend nil))
-		  (forward-line 1)))))
+		  (forward-line 1)
+		  (setq fence (point))))))
 	(set-marker endmark nil)
 	(c-progress-fini 'c-indent-region)
 	))))
@@ -4136,6 +4141,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 				(point))))
 		   (save-excursion
 		     (c-backward-syntactic-ws limit)
+		     (setq placeholder (point))
 		     (while (and (memq (preceding-char) '(?\; ?,))
 				 (> (point) limit))
 		       (beginning-of-line)
@@ -5035,7 +5041,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.333 $"
+(defconst c-version "$Revision: 4.334 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
