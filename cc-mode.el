@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.22 $
-;; Last Modified:   $Date: 1994-06-28 23:57:42 $
+;; Version:         $Revision: 4.23 $
+;; Last Modified:   $Date: 1994-06-29 00:41:52 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-28 23:57:42 $|$Revision: 4.22 $|
+;; |$Date: 1994-06-29 00:41:52 $|$Revision: 4.23 $|
 
 ;;; Code:
 
@@ -895,7 +895,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.22 $
+cc-mode Revision: $Revision: 4.23 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -928,7 +928,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.22 $
+cc-mode Revision: $Revision: 4.23 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -961,7 +961,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.22 $
+cc-mode Revision: $Revision: 4.23 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2349,16 +2349,26 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   "Put mark at end of a C/C++ defun, point at beginning."
   (interactive)
   (let ((here (point))
-	(bod  (c-point 'bod))
-	;; there should be a c-point position for 'eod and 'bod2
+	;; there should be a c-point position for 'eod
 	(eod  (save-excursion (end-of-defun) (point)))
-	(bod2 (save-excursion (beginning-of-defun 2) (point))))
-  (push-mark here)
-  (push-mark eod nil t)
-  (goto-char bod2)
-  (end-of-defun)
-  (if (>= (point) bod)
-      (goto-char bod2))))
+	(state (c-parse-state))
+	brace)
+    (while state
+      (setq brace (car state))
+      (if (consp brace)
+	  (goto-char (cdr brace))
+	(goto-char brace))
+      (setq state (cdr state)))
+    (if (= (following-char) ?{)
+	(progn
+	  (forward-line -1)
+	  (while (not (or (bobp)
+			  (looking-at "[ \t]*$")))
+	    (forward-line -1)))
+      (forward-line 1)
+      (skip-chars-forward " \t\n"))
+    (push-mark here)
+    (push-mark eod nil t)))
 
 
 ;; Skipping of "syntactic whitespace" for Emacs 19.  Syntactic
@@ -3814,7 +3824,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.22 $"
+(defconst c-version "$Revision: 4.23 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
