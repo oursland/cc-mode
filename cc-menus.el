@@ -115,7 +115,10 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
          "^"                                  ; beginning of line is required
          "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a `template <...>'
          "class[ \t]+"
-         "\\([a-zA-Z0-9_]+\\)"                ; the string we want to get
+         "\\("                                ; the string we want to get
+         "[a-zA-Z0-9_]+"                      ; class name
+         "\\(<[^>]+>\\)?"                     ; possibly explicitely specialized
+         "\\)"
          "[ \t]*[:{]"
          )) 2)))
   "Imenu generic expression for C++ mode.  See `imenu-generic-expression'.")
