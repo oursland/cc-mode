@@ -208,7 +208,7 @@ def pkg_release(fat):
 #    dir = 'cc-mode-' + RELEASE
     dir = 'cc-mode'
     os.mkdir(dir)
-    os.chmod(dir, 02775)
+    os.chmod(dir, 02755)
     #
     if fat:
 	files = FILES
