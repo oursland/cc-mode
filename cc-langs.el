@@ -1458,10 +1458,18 @@ first submatch is taken as the end of the operator."
 construct is taken as a declaration.  It's typically used to match the
 beginning of a function body or whatever might occur after the
 function header in a function declaration or definition."
-  t   (if (c-lang-const c-decl-spec-kwds)
-	  (concat "{\\|"
-		  (c-make-keywords-re t (c-lang-const c-decl-spec-kwds)))
-	"{")
+  t "{"
+  ;; If K&R style declarations should be recognized then one could
+  ;; consider to match the start of any symbol since we want to match
+  ;; the start of the first declaration in the "K&R region".  That
+  ;; could however produce false matches on code like "FOO(bar) x"
+  ;; where FOO is a cpp macro.
+  t (if (c-lang-const c-decl-spec-kwds)
+	;; Add on the keywords in `c-decl-spec-kwds'.
+	(concat (c-lang-const c-after-suffixed-type-decl-key)
+		"\\|"
+		(c-make-keywords-re t (c-lang-const c-decl-spec-kwds)))
+      (c-lang-const c-after-suffixed-type-decl-key))
   ;; Also match the colon that starts a base class member initializer
   ;; list in C++.  That can be confused with a function call before
   ;; the colon in a ? : operator, but we count on that
