@@ -448,6 +448,7 @@ style comments."
 
 (defcustom-c-stylevar c-comment-prefix-regexp
   '((pike-mode . "//+!?\\|\\**")
+    (awk-mode . "#+")
     (other . "//+\\|\\**"))
   "*Regexp to match the line prefix inside comments.
 This regexp is used to recognize the fill prefix inside comments for
@@ -495,7 +496,9 @@ to redo it."
 	    (cons :format "%v"
 		  (const :format "IDL   " idl-mode) (regexp :format "%v"))
 	    (cons :format "%v"
-		  (const :format "Pike  " pike-mode) (regexp :format "%v")))
+		  (const :format "Pike  " pike-mode) (regexp :format "%v"))
+            (cons :format "%v"
+		  (const :format "AWK   " awk-mode) (regexp :format "%v")))
 	   (cons :format "    %v"
 		 (const :format "Other " other) (regexp :format "%v"))))
   :group 'c)

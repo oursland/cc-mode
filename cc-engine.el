@@ -2861,8 +2861,8 @@ This function does not do any hidden buffer changes."
     (condition-case nil
 	(if (and (consp range) (progn
 				 (goto-char (car range))
-				 (looking-at "//")))
-	    (let ((col (current-column))
+				 (looking-at c-line-comment-starter)))
+	    (let ((col (current-column)) 
 		  (beg (point))
 		  (bopl (c-point 'bopl))
 		  (end (cdr range)))
@@ -2870,13 +2870,13 @@ This function does not do any hidden buffer changes."
 	      ;; comments which are preceded by code.
 	      (while (and (c-backward-single-comment)
 			  (>= (point) bopl)
-			  (looking-at "//")
+			  (looking-at c-line-comment-starter)
 			  (= col (current-column)))
 		(setq beg (point)
 		      bopl (c-point 'bopl)))
 	      (goto-char end)
 	      (while (and (progn (skip-chars-forward " \t")
-				 (looking-at "//"))
+				 (looking-at c-line-comment-starter))
 			  (= col (current-column))
 			  (prog1 (zerop (forward-line 1))
 			    (setq end (point)))))

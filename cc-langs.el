@@ -838,6 +838,12 @@ operators."
   awk  "#")
 (c-lang-defvar c-comment-start-regexp (c-lang-const c-comment-start-regexp))
 
+(c-lang-defconst c-line-comment-starter
+  ;; The TODO in c-comment-start-regexp (above) probably applies here too.
+  t    "//"
+  awk  "#")
+(c-lang-defvar c-line-comment-starter (c-lang-const c-line-comment-starter))
+
 (c-lang-defconst c-literal-start-regexp
   ;; Regexp to match the start of comments and string literals.
   t (concat (c-lang-const c-comment-start-regexp)

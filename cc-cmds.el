@@ -3300,7 +3300,9 @@ If a fill prefix is specified, it overrides all the above."
 	    ;; wrong.  Ignore it to guess a better one below.
 	    (setq fill-prefix nil)
 	  (when (and (eq c-lit-type 'c++)
-		     (not (string-match "\\`[ \t]*//" (or fill-prefix ""))))
+;		     (not (string-match "\\`[ \t]*//" (or fill-prefix ""))))
+		     (not (string-match (concat "\\`[ \t]*" c-line-comment-starter)
+					(or fill-prefix ""))))
 	    ;; Kludge: If the function that adapted the fill prefix
 	    ;; doesn't produce the required comment starter for line
 	    ;; comments, then we ignore it.
