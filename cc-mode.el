@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.230 $
-;; Last Modified:   $Date: 1994-02-08 20:51:32 $
+;; Version:         $Revision: 3.231 $
+;; Last Modified:   $Date: 1994-02-08 21:05:59 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-08 20:51:32 $|$Revision: 3.230 $|
+;; |$Date: 1994-02-08 21:05:59 $|$Revision: 3.231 $|
 
 ;;; Code:
 
@@ -698,7 +698,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.230 $
+cc-mode Revision: $Revision: 3.231 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -729,7 +729,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.230 $
+cc-mode Revision: $Revision: 3.231 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1872,9 +1872,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (let ((here (point-marker))
 	(c-echo-semantic-information-p nil))
     (beginning-of-defun)
-    (c-indent-exp)
-    (goto-char here)
-    (set-marker here nil)))
+    ;; catch all errors in c-indent-exp so we can 1. give more
+    ;; meaningful error message, and 2. restore point
+    (unwind-protect
+	(condition-case ()
+	    (c-indent-exp)
+	  (error
+	   (error "Cannot find closed top-level defun containing point.")))
+      (goto-char here)
+      (set-marker here nil))))
 
 (defun c-indent-region (start end)
   ;; Indent every line whose first char is between START and END inclusive.
@@ -3074,7 +3080,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.230 $"
+(defconst c-version "$Revision: 3.231 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
