@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.333 $
-;; Last Modified:   $Date: 1993-05-28 22:20:57 $
+;; Version:         $Revision: 2.334 $
+;; Last Modified:   $Date: 1993-06-01 14:58:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-05-28 22:20:57 $|$Revision: 2.333 $|
+;; |$Date: 1993-06-01 14:58:00 $|$Revision: 2.334 $|
 
 ;;; Code:
 
@@ -157,17 +157,11 @@
 	;; patched GNU19, GNU18, Epoch4's.  Only vanilla GNU19.7-8
 	;; uses 1-bit flag. Lets be as smart as we can about figuring
 	;; this out.
-	(let ((cur (current-buffer))
-	      (buf (generate-new-buffer " --syntax-kludge-- ")))
-	  (unwind-protect
-	      (progn
-		(set-buffer buf)
-		(modify-syntax-entry ?a ". 12345678" (syntax-table))
-		(if (= (logand (lsh (aref (syntax-table) ?a) -16) 255) 255)
-		    (setq mse-spec '8-bit)
-		  (setq mse-spec '1-bit)))
-	    (kill-buffer buf)
-	    (set-buffer cur))
+	(let ((table (copy-syntax-table)))
+	  (modify-syntax-entry ?a ". 12345678" table)
+	  (if (= (logand (lsh (aref table ?a) -16) 255) 255)
+	      (setq mse-spec '8-bit)
+	    (setq mse-spec '1-bit))
 	  ;; we also know we're using a quicker, built-in comment
 	  ;; scanner, but we don't know if its old-style or new.
 	  ;; Fortunately we can ask emacs directly
@@ -485,7 +479,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.333 $
+  "Major mode for editing C++ code.  $Revision: 2.334 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -706,7 +700,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.333 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.334 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2663,7 +2657,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.333 $"
+(defconst c++-version "$Revision: 2.334 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
