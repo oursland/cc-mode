@@ -964,7 +964,7 @@ continuation of the preceding @code{if}.
 @cindex Abbrev mode
 @ccmode{} uses Abbrev mode (@pxref{Abbrevs,,, emacs, The Emacs Editor})
 to accomplish this. It's therefore turned on by default in all language
-modes except IDL mode, since IDL doesn't have any statements.
+modes except IDL mode, since CORBA IDL doesn't have any statements.
 
 @end itemize
 

@@ -2415,30 +2415,30 @@ need for `java-font-lock-extra-types'.")
   (c-compose-keywords-list java-font-lock-keywords))
 
 
-;;; IDL.
+;;; CORBA IDL.
 
 (c-override-default-keywords 'idl-font-lock-keywords)
 
 (defconst idl-font-lock-keywords-1 (c-lang-const c-matchers-1 idl)
-  "Minimal highlighting for IDL mode.
+  "Minimal highlighting for CORBA IDL mode.
 Fontifies nothing except the syntactic fontification of strings and
 comments.")
 
 (defconst idl-font-lock-keywords-2 (c-lang-const c-matchers-2 idl)
-  "Fast normal highlighting for IDL mode.
+  "Fast normal highlighting for CORBA IDL mode.
 In addition to `idl-font-lock-keywords-1', this adds fontification of
 keywords, simple types, declarations that are easy to recognize, the
 user defined types on `idl-font-lock-extra-types', and the doc comment
 styles specified by `c-doc-comment-style'.")
 
 (defconst idl-font-lock-keywords-3 (c-lang-const c-matchers-3 idl)
-  "Accurate normal highlighting for IDL mode.
+  "Accurate normal highlighting for CORBA IDL mode.
 Like `idl-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `idl-font-lock-extra-types'.")
 
 (defvar idl-font-lock-keywords idl-font-lock-keywords-3
-  "Default expressions to highlight in IDL mode.")
+  "Default expressions to highlight in CORBA IDL mode.")
 
 (defun idl-font-lock-keywords-2 ()
   (c-compose-keywords-list idl-font-lock-keywords-2))
