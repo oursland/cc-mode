@@ -72,7 +72,7 @@ INSTALLATION
     To compile CC Mode from the shell:
 
         % cd /path/to/cc-mode
-        % $(EMACS) -batch -q -f batch-byte-compile cc-*.el
+        % $(EMACS) -batch -no-site-file -q -f batch-byte-compile cc-*.el
 
     where $(EMACS) is either emacs or xemacs depending on the flavor
     you use.

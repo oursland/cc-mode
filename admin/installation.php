@@ -35,12 +35,12 @@ compile CC Mode by doing the following from your shell:
 
 <pre>
 % cd /path/to/cc-mode
-% $(EMACS) -batch -no-site-file -q -l cc-make.el cc-*.el</pre>
+% $(EMACS) -batch -no-site-file -q -f batch-byte-compile cc-*.el</pre>
 
 where <code>$(EMACS)</code> is either <code>emacs</code> or
-<code>xemacs</code> depending on the flavor you use.  You can safely
-ignore any byte compiler warnings; they are due to the cross X/Emacsen
-support.
+<code>xemacs</code> depending on the flavor you use.  The compilation
+will produce a lot of warnings for XEmacs 19.  They can safely be
+ignored.
 
 <p>Be sure to see the list of <a href="compat.php">compatibility
 issues</a>, for special notes about X/Emacs versions and package
