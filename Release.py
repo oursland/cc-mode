@@ -2,7 +2,7 @@
 
 """Bump version number and tag for next release.
 
-Usage: %(program)s [-b] [-t] [-h]
+Usage: %(program)s [-b] [-t] [-p] [-d] [-a] [-h]
 
 Where:
 
@@ -19,7 +19,7 @@ Where:
     -d      - create the documentation packages
 
     --all
-    -       - do all of the above
+    -a      - do all of the above
 
     --help
     -h      - this help message
