@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.208 $
-;; Last Modified:   $Date: 1992-11-13 18:21:51 $
+;; Version:         $Revision: 2.209 $
+;; Last Modified:   $Date: 1992-11-13 18:24:21 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-13 18:21:51 $|$Revision: 2.208 $|
+;; |$Date: 1992-11-13 18:24:21 $|$Revision: 2.209 $|
 
 ;;; Code:
 
@@ -253,14 +253,14 @@ list.  Nil indicates to just after the paren.")
 This variable can take either a single integer or a list of integers.
 If a single integer this is the extra indentation offset to apply to
 all comment-only lines, except those which start in column zero. If a
-list is used, the first integer is for all non-zero-column
-comment-only lines and the second integer is for all zero-column
+list is used, the first integer is for all non-column-zero
+comment-only lines and the second integer is for all column-zero
 lines. You can also use a list containing only 1 integer, in which
 case, this value is used for all comment-only lines.  For example:
 
 value     meaning
 =====     =======
-  0       no comment-only lines indent
+  0       comment-only lines do not indent
   4       non-col0 lines indent 4 spaces, col0 lines don't indent
 '(4)      all comment-only lines indent 4 spaces
 '(4 1)    non-col0 lines indent 4 spaces, col0 lines indent 1 space")
@@ -386,7 +386,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.208 $
+  "Major mode for editing C++ code.  $Revision: 2.209 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -594,7 +594,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.208 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.209 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2277,7 +2277,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.208 $"
+(defconst c++-version "$Revision: 2.209 $"
   "c++-mode version number.")
 
 (defun c++-version ()
