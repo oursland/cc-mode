@@ -7,6 +7,11 @@ Thu Jul 17 03:36:22 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 	* cc-langs.el (c-symbol-key):
 	first character must be a letter or underscore
 
+	* cc-defs.el (c-load-all): Function deleted.
+
+	* cc-mode.el (c-initialize-cc-mode): New function.
+	(c-mode, c++-mode, objc-mode, java-mode): Call it.
+	
 Tue Jul 15 04:18:38 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.texi:
