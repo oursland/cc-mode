@@ -9,7 +9,9 @@ IDL, and Pike. It's a standard package in both GNU Emacs and
 XEmacs.</strong>
 
 <p>CC Mode is brought to you by the current CC Mode maintainer Martin
-Stjernholm.
+Stjernholm.  Several people before him have helped make CC Mode what
+it is today, notably Barry Warsaw who took care of BOCM (Boring Old C
+Mode) in 1992 and revamped it to CC Mode.
 
 <p>The <a href="release.php">current release</a> is version
 5.26.  A list of <a href="changes-latest.php">recent changes</a> are
