@@ -789,13 +789,13 @@ can always override the use of `c-default-style' by making calls to
 		  (const :format "Other " other) (string :format "%v"))))
   :group 'c)
 
-;; *) At the start of a statement means in more detail: At the
-;; closest preceding statement that starts at boi and doesn't have a
-;; label or comment at that position.  If there's no such statement
-;; within the same block, then back up to the surrounding block or
-;; statement, add the appropriate statement-block-intro,
-;; defun-block-intro or substatement syntax symbol and continue
-;; searching.
+;; *) At the start of a statement or declaration means in more detail:
+;; At the closest preceding statement/declaration that starts at boi
+;; and doesn't have a label or comment at that position.  If there's
+;; no such statement within the same block, then back up to the
+;; surrounding block or statement, add the appropriate
+;; statement-block-intro, defun-block-intro or substatement syntax
+;; symbol and continue searching.
 (c-set-stylevar-fallback 'c-offsets-alist
      '((string                . c-lineup-dont-change)
        ;; Relpos: Beg of previous line.
@@ -857,9 +857,9 @@ can always override the use of `c-default-style' by making calls to
        ;; Relpos: Boi at the brace list decl start, but a starting
        ;; "typedef" token is ignored.
        (brace-list-close      . 0)
-       ;; Relpos: Boi at the brace list open.
+       ;; Relpos: At the brace list decl start(*).
        (brace-list-intro      . +)
-       ;; Relpos: Boi at the brace list open.
+       ;; Relpos: At the brace list decl start(*).
        (brace-list-entry      . 0)
        ;; Relpos: At the first non-ws char after the open paren if the
        ;; first token is on the same line, otherwise boi at that
