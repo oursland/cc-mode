@@ -219,8 +219,9 @@ This is primarily a bug fix release.  Users of XEmacs 19.15 and Emacs
     follows:
 
     <ul><li>If you use <code>delbackspace</code>, put the following in 
-	    your <code>.emacs</code> file <em>before</em> you load
-	    <code>delbackspace.el</code>:
+	    your <code>.emacs</code> file <em>after</em> you load
+	    <code>delbackspace.el</code>, but <em>before</em> you load 
+	    CC Mode:
 
 <blockquote><pre>
 (setcar (assoc "cc-mode" after-load-alist) "cc-langs")
