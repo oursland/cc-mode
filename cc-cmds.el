@@ -345,9 +345,7 @@ If `c-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
 \"/ah\" string on the mode line, then all preceding whitespace is
 consumed.  If however a prefix argument is supplied, or
 `c-hungry-delete-key' is nil, or point is inside a literal then the
-function in the variable `c-backspace-function' is called.
-
-See also \\[c-electric-delete]."
+function in the variable `c-backspace-function' is called."
   (interactive "*P")
   (if (or (not c-hungry-delete-key)
 	  arg
@@ -391,6 +389,7 @@ See also \\[c-hungry-backspace]."
 	(delete-region (point) here)
       (funcall c-delete-function 1))))
 
+;; This function is only used in XEmacs.
 (defun c-electric-delete (arg)
   "Deletes preceding or following character or whitespace.
 This function either deletes forward as `c-electric-delete-forward' or
