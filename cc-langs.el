@@ -1108,14 +1108,16 @@ appended."
   all (c-make-keywords-re t (c-lang-var c-keywords)))
 (c-lang-defvar c-keywords-regexp (c-lang-var c-keywords-regexp))
 
-;; All keywords that aren't types as an adorned regexp.
-(c-lang-defconst c-nontype-keywords-regexp
+;; An adorned regexp matching all keywords that aren't types or
+;; constants.
+(c-lang-defconst c-regular-keywords-regexp
   all (c-make-keywords-re t
 	(set-difference (c-lang-var c-keywords)
-			(c-lang-var c-type-kwds)
+			(append (c-lang-var c-type-kwds)
+				(c-lang-var c-constant-kwds))
 			:test 'string-equal)))
-(c-lang-defvar c-nontype-keywords-regexp
-  (c-lang-var c-nontype-keywords-regexp))
+(c-lang-defvar c-regular-keywords-regexp
+  (c-lang-var c-regular-keywords-regexp))
 
 ;; Adorned regexp matching all keywords that can't appear at the start
 ;; of a declaration.
