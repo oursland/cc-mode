@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.273 $
-;; Last Modified:   $Date: 1993-02-05 16:08:21 $
+;; Version:         $Revision: 2.274 $
+;; Last Modified:   $Date: 1993-02-05 19:51:49 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-05 16:08:21 $|$Revision: 2.273 $|
+;; |$Date: 1993-02-05 19:51:49 $|$Revision: 2.274 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.273 $
+  "Major mode for editing C++ code.  $Revision: 2.274 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.273 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.274 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1287,9 +1287,6 @@ of the expression are preserved."
 		(setq this-indent (- this-indent c-indent-level)))
 	    (if (= (following-char) ?{)
 		(setq this-indent (+ this-indent c-brace-offset)))
-	    ;; check for stream operator
-	    (if (looking-at "\\(<<\\|>>\\)")
-		(setq this-indent (c++-calculate-indent)))
 	    ;; check for continued statements
 	    (if (save-excursion
 		  (c++-backward-syntactic-ws (car contain-stack))
@@ -1297,6 +1294,9 @@ of the expression are preserved."
 			     '(nil ?\000 ?\, ?\; ?\} ?\: ?\{))))
 		(setq this-indent (+ this-indent c-continued-statement-offset))
 	      )
+	    ;; check for stream operator
+	    (if (looking-at "\\(<<\\|>>\\)")
+		(setq this-indent (c++-calculate-indent)))
 	    ;; Put chosen indentation into effect.
 	    (or (= (current-column) this-indent)
 		(= (following-char) ?\#)
@@ -2448,7 +2448,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.273 $"
+(defconst c++-version "$Revision: 2.274 $"
   "c++-mode version number.")
 
 (defun c++-version ()
