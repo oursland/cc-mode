@@ -1,3 +1,7 @@
+Sun Feb  8 15:30:43 1998  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.20
+
 Wed Feb 04 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-mode, c++-mode, objc-mode, java-mode): set
