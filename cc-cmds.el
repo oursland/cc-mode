@@ -2171,7 +2171,7 @@ If a fill prefix is specified, it overrides all the above."
 			  (progn (skip-chars-forward " \t") (point)))
 	   (if soft (insert-and-inherit ?\n) (newline 1))))
 	;; Already know the literal type and limits when called from
-	;; c-line-break-reindent.
+	;; c-context-line-break.
 	(c-lit-limits (if (boundp 'c-lit-limits) c-lit-limits))
 	(c-lit-type (if (boundp 'c-lit-type) c-lit-type))
 	col)
@@ -2204,10 +2204,7 @@ If a fill prefix is specified, it overrides all the above."
 	       (setq c-lit-limits (c-literal-limits nil nil t)))
 	     (unless c-lit-type
 	       (setq c-lit-type (c-literal-type c-lit-limits)))
-	     (eq c-lit-type 'string))
-	   ;; Inside a string.  Just break the line.
-	   (funcall do-line-break))
-	  ((memq c-lit-type '(c c++))
+	     (memq c-lit-type '(c c++)))
 	   (if comment-multi-line
 	       ;; Inside a comment that should be continued.
 	       (let ((fill (c-guess-fill-prefix
@@ -2270,11 +2267,12 @@ If a fill prefix is specified, it overrides all the above."
 	  (t
 	   ;; Somewhere else in the code.
 	   (setq col (save-excursion
-		       (back-to-indentation)
+		       (while (progn (back-to-indentation)
+				     (and (looking-at "^\\s *$")
+					  (= (forward-line -1) 0))))
 		       (current-column)))
 	   (funcall do-line-break)
-	   (indent-to col)
-	   (c-indent-line)))))
+	   (indent-to col)))))
 
 (defalias 'c-comment-line-break-function 'c-indent-new-comment-line)
 (make-obsolete 'c-comment-line-break-function 'c-indent-new-comment-line)
@@ -2290,10 +2288,14 @@ If a fill prefix is specified, it overrides all the above."
       (let (c-inside-line-break-advice)
 	(c-indent-new-comment-line (ad-get-arg 0))))))
 
-(defun c-line-break-reindent ()
-  "Insert a newline, then indent according to major mode.
-However, when point is inside a comment, continue it with the
-appropriate comment prefix (see the `c-comment-prefix-regexp' and
+(defun c-context-line-break ()
+  "Do a line break suitable to the context.
+
+When point is outside a comment, insert a newline and indent according
+to the syntactic context.
+
+When point is inside a comment, continue it with the appropriate
+comment prefix (see the `c-comment-prefix-regexp' and
 `c-block-comment-prefix' variables for details).  The end of a
 C++-style line comment doesn't count as inside the comment, though."
   (interactive "*")
@@ -2311,9 +2313,13 @@ C++-style line comment doesn't count as inside the comment, though."
       (newline)
       ;; c-indent-line may look at the current indentation, so let's
       ;; start out with the same indentation as the previous line.
-      (forward-line -1)
-      (back-to-indentation)
-      (indent-to (prog1 (current-column) (forward-line 1)))
+      (let ((col (save-excursion
+		   (forward-line -1)
+		   (while (progn (back-to-indentation)
+				 (and (looking-at "^\\s *$")
+				      (= (forward-line -1) 0))))
+		   (current-column))))
+	(indent-to col))
       (c-indent-line))))
 
 
