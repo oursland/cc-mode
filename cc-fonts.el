@@ -122,6 +122,7 @@
 (cc-bytecomp-defun c-font-lock-declarators)
 (cc-bytecomp-defun c-font-lock-objc-iip-decl)
 (cc-bytecomp-defun c-font-lock-objc-method)
+(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs only.
 
 
 ;; Note that font-lock in XEmacs doesn't expand face names as
