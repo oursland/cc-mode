@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.244 $
-;; Last Modified:   $Date: 1995-11-16 00:22:25 $
+;; Version:         $Revision: 4.245 $
+;; Last Modified:   $Date: 1995-11-17 20:05:55 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-11-16 00:22:25 $|$Revision: 4.244 $|
+;; |$Date: 1995-11-17 20:05:55 $|$Revision: 4.245 $|
 
 ;;; Code:
 
@@ -3772,8 +3772,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    ;; enclosure in a class block
 	    (save-restriction
 	      (widen)
-	      (c-add-syntax 'topmost-intro (c-point 'bol)))
-	    (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
+	      (c-add-syntax 'topmost-intro (c-point 'bol))
+	      (if inclass-p
+		  (progn
+		    (goto-char (aref inclass-p 1))
+		    (c-add-syntax 'inclass (c-point 'boi))))))
 	   ;; CASE 5I: we are at a method definition continuation line
 	   ((and (eq major-mode 'objc-mode)
 		 (progn
@@ -4546,7 +4549,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.244 $"
+(defconst c-version "$Revision: 4.245 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
