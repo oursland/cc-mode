@@ -265,6 +265,7 @@
     "member-2.cc"
     "member-3.cc"
     "member-4.cc"
+    "member-5.cc"
     "methods-1.java"
     "namespace-1.cc"
     "namespace-2.cc"
