@@ -3046,7 +3046,7 @@ C++-style line comment doesn't count as inside it."
 		 (< (point)
 		    (1- (cdr (setq c-lit-limits
 				   (c-collect-line-comments c-lit-limits))))))
-	    (and (or (not (eolp))
+	    (and (or (not (looking-at "\\s *$"))
 		     (eq (char-before) ?\\))
 		 (c-query-and-set-macro-start)
 		 (<= (save-excursion
