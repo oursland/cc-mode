@@ -414,7 +414,7 @@
 	      (compilation-set-window-height cc-test-comp-win)))
 	  (when (consp resetp)
 	    (setq cc-test-finished-tests nil))
-	  (cc-test-log "Using CC Mode version %s" c-version)
+	  (cc-test-log "Testing CC Mode %s in %s" c-version (emacs-version))
 	  (fset 'c-echo-parsing-error (lambda (&optional quiet)))
 	  (mapcar (lambda (test)
 		    (condition-case err
