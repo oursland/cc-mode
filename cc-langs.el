@@ -303,15 +303,241 @@ appended."
 
 ;; Constants and variables that are language dependent.
 
-;; Allow access to the appropriate syntax table above through
-;; `c-lang-var'.
-(c-lang-defconst c-syntax-table
-  c    c-mode-syntax-table
-  c++  c++-mode-syntax-table
-  objc objc-mode-syntax-table
-  java java-mode-syntax-table
-  idl  idl-mode-syntax-table
-  pike pike-mode-syntax-table)
+;; Syntax table built on the mode syntax table but additionally
+;; classifies '_' and '$' as word constituents, so that all
+;; identifiers are recognized as words.
+(c-lang-defvar c-identifier-syntax-table
+  (let ((table (make-syntax-table (c-mode-var "mode-syntax-table"))))
+    (modify-syntax-entry ?_ "w" table)
+    (modify-syntax-entry ?$ "w" table)
+    table))
+
+;; Regexp matching the prefix of a cpp directive in the languages that
+;; normally uses that macro preprocessor.  Tested at bol.
+(c-lang-defconst c-opt-cpp-prefix
+  (c c++ pike) "\\s *#\\s *")
+(c-lang-defvar c-opt-cpp-prefix (c-lang-var c-opt-cpp-prefix))
+
+;; Name of functions in cpp expressions that take an identifier as the
+;; argument.
+(c-lang-defconst c-cpp-defined-fns
+  (c c++) '("defined")
+  pike '("defined" "efun" "constant"))
+
+;; List describing all operators, along with their precedence and
+;; associativity.  The order in the list corresponds to the precedence
+;; of the operators: The operators in each element is a group with the
+;; same precedence, and the group has higher precedence than the
+;; groups in all following elements.  The car of each element
+;; describes the type of of the operator group, and the cdr is a list
+;; of the operator tokens in it.  The operator group types are:
+;;
+;; 'prefix	Unary prefix operators.
+;; 'postfix	Unary postfix operators.
+;; 'left-assoc	Binary left associative operators (i.e. a+b+c means (a+b)+c).
+;; 'right-assoc	Binary right associative operators (i.e. a=b=c means a=(b=c)).
+;; 'right-assoc-sequence
+;;		Right associative operator that constitutes of a
+;;		sequence of tokens that separate expressions.  All the
+;;		tokens in the group are in this case taken as
+;;		describing the sequence in one such operator, and the
+;;		order between them is therefore significant.
+;;
+;; Operators containing a character with paren syntax are taken to
+;; match with a corresponding open/close paren somewhere else.  A
+;; postfix operator with close paren syntax is taken to end a postfix
+;; expression started somewhere earlier, rather than start a new one
+;; at point.  Vice versa for prefix operators with open paren syntax.
+;;
+;; Note that operators like "." and "->" which in language references
+;; often are described as postfix operators are considered binary
+;; here, since CC Mode treats every identifier as an expression.
+(c-lang-defconst c-operators
+  all `(;; Preprocessor.
+	,@(when (c-lang-var c-opt-cpp-prefix)
+	    `((prefix "#"
+		      ,@(when (c-major-mode-is '(c-mode c++-mode))
+			  '("%:" "??=")))
+	      (left-assoc "##"
+			  ,@(when (c-major-mode-is '(c-mode c++-mode))
+			      '("%:%:" "??=??=")))))
+
+	;; Primary.  Info duplicated in `c-opt-identifier-concat-key'
+	;; and `c-identifier-key'.
+	,@(cond ((c-major-mode-is 'c++-mode)
+		 `((postfix-if-paren "<" ">") ; Templates.
+		   (prefix "~" "??-" "compl")
+		   (right-assoc "::")
+		   (prefix "::")))
+		((c-major-mode-is 'pike-mode)
+		 `((left-assoc "::")
+		   (prefix "::" "global" "predef")))
+		((c-major-mode-is 'java-mode)
+		 `(;; Not necessary since it's also in the postfix group below.
+		   ;;(left-assoc ".")
+		   (prefix "super"))))
+
+	;; Postfix.
+	,@(when (c-major-mode-is 'c++-mode)
+	    ;; The following need special treatment.
+	    `((prefix "dynamic_cast" "static_cast"
+		      "reinterpret_cast" "const_cast" "typeid")))
+	(left-assoc "."
+		    ,@(unless (c-major-mode-is 'java-mode)
+			'("->")))
+	(postfix "++" "--" "[" "]" "(" ")"
+		 ,@(when (c-major-mode-is '(c-mode c++-mode))
+		     '("<:" ":>" "??(" "??)")))
+
+	;; Unary.
+	(prefix "++" "--" "+" "-" "!" "~"
+		,@(when (c-major-mode-is 'c++-mode) '("not" "compl"))
+		,@(when (c-major-mode-is '(c-mode c++-mode))
+		    '("*" "&" "sizeof" "??-"))
+		;; The following need special treatment.
+		,@(cond ((c-major-mode-is 'c++-mode)
+			 '("new" "delete"))
+			((c-major-mode-is 'java-mode)
+			 '("new"))
+			((c-major-mode-is 'pike-mode)
+			 '("class" "lambda" "catch" "throw" "gauge")))
+		"(" ")")		; Cast.
+
+	;; Member selection.
+	,@(when (c-major-mode-is 'c++-mode)
+	    `((left-assoc ".*" "->*")))
+
+	;; Multiplicative.
+	(left-assoc "*" "/" "%")
+
+	;; Additive.
+	(left-assoc "+" "-")
+
+	;; Shift.
+	(left-assoc "<<" ">>"
+		    ,@(when (c-major-mode-is 'java-mode)
+			'(">>>")))
+
+	;; Relational.
+	(left-assoc "<" ">" "<=" ">="
+		    ,@(when (c-major-mode-is 'java-mode)
+			'("instanceof")))
+
+	;; Equality.
+	(left-assoc "==" "!="
+		    ,@(when (c-major-mode-is 'c++-mode) '("not_eq")))
+
+	;; Bitwise and.
+	(left-assoc "&"
+		    ,@(when (c-major-mode-is 'c++-mode) '("bitand")))
+
+	;; Bitwise exclusive or.
+	(left-assoc "^"
+		    ,@(when (c-major-mode-is '(c-mode c++-mode))
+			'("??'"))
+		    ,@(when (c-major-mode-is 'c++-mode) '("xor")))
+
+	;; Bitwise or.
+	(left-assoc "|"
+		    ,@(when (c-major-mode-is '(c-mode c++-mode))
+			'("??!"))
+		    ,@(when (c-major-mode-is 'c++-mode) '("bitor")))
+
+	;; Logical and.
+	(left-assoc "&&"
+		    ,@(when (c-major-mode-is 'c++-mode) '("and")))
+
+	;; Logical or.
+	(left-assoc "||"
+		    ,@(when (c-major-mode-is '(c-mode c++-mode))
+			'("??!??!"))
+		    ,@(when (c-major-mode-is 'c++-mode) '("or")))
+
+	;; Conditional.
+	(right-assoc-sequence "?" ":")
+
+	;; Assignment.
+	(right-assoc "=" "*=" "/=" "%=" "+=" "-=" ">>=" "<<=" "&=" "^=" "|="
+		     ,@(when (c-major-mode-is 'java-mode)
+			 '(">>>="))
+		     ,@(when (c-major-mode-is 'c++-mode)
+			 '("and_eq" "or_eq" "xor_eq")))
+
+	;; Exception.
+	,@(when (c-major-mode-is 'c++-mode)
+	    '((prefix "throw")))
+
+	;; Sequence.
+	(left-assoc ",")))
+
+;; The operators as a flat list (without duplicates).
+(c-lang-defconst c-operator-list
+  all (delete-duplicates (mapcan (lambda (elem) (append (cdr elem) nil))
+				 (c-lang-var c-operators))
+			 :test 'string-equal))
+
+;; List of the operators that are overloadable, in their "identifier
+;; form".
+(c-lang-defconst c-overloadable-operators
+  c++  '("new" "delete" ;; Can be followed by "[]" but we ignore that.
+	 "+" "-" "*" "/" "%"
+	 "^" "??'" "xor" "&" "bitand" "|" "??!" "bitor" "~" "??-" "compl"
+	 "!" "=" "<" ">" "+=" "-=" "*=" "/=" "%=" "^="
+	 "??'=" "xor_eq" "&=" "and_eq" "|=" "??!=" "or_eq"
+	 "<<" ">>" ">>=" "<<=" "==" "!=" "not_eq" "<=" ">="
+	 "&&" "and" "||" "??!??!" "or" "++" "--" "," "->*" "->"
+	 "()" "[]" "<::>" "??(??)")
+  ;; These work like identifiers in Pike.
+  pike '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~"
+	 "`==" "`<" "`>" "`!" "`[]" "`[]=" "`->" "`->=" "`()" "``+"
+	 "``-" "``&" "``|" "``^" "``<<" "``>>" "``*" "``/" "``%"
+	 "`+="))
+
+;; Regexp tested after an "operator" token in C++.
+(c-lang-defconst c-overloadable-operators-regexp
+  c++ (c-make-keywords-re nil (c-lang-var c-overloadable-operators)))
+(c-lang-defvar c-overloadable-operators-regexp
+  (c-lang-var c-overloadable-operators-regexp))
+
+;; List of the tokens made up of characters in the punctuation or
+;; parenthesis syntax classes that have uses other than as expression
+;; operators.
+(c-lang-defconst c-other-op-syntax-tokens
+  all '("{" "}" "(" ")" "[" "]" ";" ":" "," "=" "/*" "*/" "//")
+  (c c++ pike) (append '("#" "##"	; Used by cpp.
+			 "::" "...")
+		       (c-lang-var c-other-op-syntax-tokens))
+  (c c++) (append '("<%" "%>" "<:" ":>" "%:" "%:%:" "*")
+		  (c-lang-var c-other-op-syntax-tokens))
+  c++  (append '("&") (c-lang-var c-other-op-syntax-tokens))
+  objc (append '("+" "-") (c-lang-var c-other-op-syntax-tokens))
+  pike (append '("..")
+	       (c-lang-var c-other-op-syntax-tokens)
+	       (c-lang-var c-overloadable-operators)))
+
+;; Regexp matching all tokens in the punctuation and parenthesis
+;; syntax classes.
+(c-lang-defconst c-nonsymbol-token-regexp
+  all (c-make-keywords-re nil
+	(delete-duplicates
+	 (c-with-syntax-table (c-mode-var "mode-syntax-table")
+	   (mapcan (lambda (op)
+		     (and (string-match
+			   "\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'" op)
+			  (list op)))
+		   (append (c-lang-var c-other-op-syntax-tokens)
+			   (c-lang-var c-operator-list))))
+	 :test 'string-equal)))
+(c-lang-defvar c-nonsymbol-token-regexp (c-lang-var c-nonsymbol-token-regexp))
+
+(defvar c-stmt-delim-chars "^;{}?:")
+;; The characters that should be considered to bound statements.  To
+;; optimize `c-crosses-statement-barrier-p' somewhat, it's assumed to
+;; begin with "^" to negate the set.  If ? : operators should be
+;; detected then the string must end with "?:".
+
+(defvar c-stmt-delim-chars-with-comma "^;,{}?:")
+;; Variant of `c-stmt-delim-chars' that additionally contains ','.
 
 ;; Regexp that matches any character that can't be part of a symbol.
 ;; It's usually appended to other regexps to avoid matching a prefix.
@@ -335,14 +561,6 @@ appended."
    pike "[_a-zA-Z`]")
 (c-lang-defvar c-symbol-start (c-lang-var c-symbol-start))
 
-(cc-eval-when-compile
-  ;; The operator identifiers in Pike.
-  (defconst c-pike-operator-symbols
-    '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~"
-      "`==" "`<" "`>" "`!" "`[]" "`[]=" "`->" "`->=" "`()" "``+"
-      "``-" "``&" "``|" "``^" "``<<" "``>>" "``*" "``/" "``%"
-      "`+=")))
-
 ;; Regexp matching an identifier, not excluding keywords.
 ;;
 ;; We cannot use just `word' syntax class since `_' cannot be in word
@@ -352,7 +570,7 @@ appended."
 (c-lang-defconst c-symbol-key
   all "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
   pike (concat (c-lang-var c-symbol-key) "\\|"
-	       (c-make-keywords-re nil c-pike-operator-symbols)))
+	       (c-make-keywords-re nil (c-lang-var c-overloadable-operators))))
 (c-lang-defvar c-symbol-key (c-lang-var c-symbol-key))
 
 ;; Number of regexp grouping parens in `c-symbol-key'.
@@ -482,231 +700,6 @@ appended."
 	     1))
 (c-lang-defvar c-identifier-last-sym-match
   (c-lang-var c-identifier-last-sym-match))
-
-;; Syntax table built on the mode syntax table but additionally
-;; classifies '_' and '$' as word constituents, so that all
-;; identifiers are recognized as words.
-(c-lang-defvar c-identifier-syntax-table
-  (let ((table (make-syntax-table (c-mode-var "mode-syntax-table"))))
-    (modify-syntax-entry ?_ "w" table)
-    (modify-syntax-entry ?$ "w" table)
-    table))
-
-;; Regexp matching the prefix of a cpp directive in the languages that
-;; normally uses that macro preprocessor.
-(c-lang-defconst c-opt-cpp-prefix
-  (c c++) "^\\s *#\\s *"
-  ;; The preprocessor in Pike recognizes cpp directives anywhere,
-  ;; not just at boi.
-  pike "#\\s *")
-
-;; Name of functions in cpp expressions that take an identifier as the
-;; argument.
-(c-lang-defconst c-cpp-defined-fns
-  (c c++) '("defined")
-  pike '("defined" "efun" "constant"))
-
-;; List describing all operators, along with their precedence and
-;; associativity.  The order in the list corresponds to the precedence
-;; of the operators: The operators in each element is a group with the
-;; same precedence, and the group has higher precedence than the
-;; groups in all following elements.  The car of each element
-;; describes the type of of the operator group, and the cdr is a list
-;; of the operator tokens in it.  The operator group types are:
-;;
-;; 'prefix	Unary prefix operators.
-;; 'postfix	Unary postfix operators.
-;; 'left-assoc	Binary left associative operators (i.e. a+b+c means (a+b)+c).
-;; 'right-assoc	Binary right associative operators (i.e. a=b=c means a=(b=c)).
-;; 'right-assoc-sequence
-;;		Right associative operator that constitutes of a
-;;		sequence of tokens that separate expressions.  All the
-;;		tokens in the group are in this case taken as
-;;		describing the sequence in one such operator, and the
-;;		order between them is therefore significant.
-;;
-;; Operators containing a character with paren syntax are taken to
-;; match with a corresponding open/close paren somewhere else.  A
-;; postfix operator with close paren syntax is taken to end a postfix
-;; expression started somewhere earlier, rather than start a new one
-;; at point.  Vice versa for prefix operators with open paren syntax.
-;;
-;; Note that operators like "." and "->" which in language references
-;; often are described as postfix operators are considered binary
-;; here, since CC Mode treats every identifier as an expression.
-(c-lang-defconst c-operators
-  all `(;; Preprocessor.
-	,@(when (c-lang-var c-opt-cpp-prefix)
-	    `((prefix "#"
-		      ,@(when (c-major-mode-is '(c-mode c++-mode))
-			  '("%:" "??=")))
-	      (left-assoc "##"
-			  ,@(when (c-major-mode-is '(c-mode c++-mode))
-			      '("%:%:" "??=??=")))))
-
-	;; Primary.  Info duplicated in `c-opt-identifier-concat-key'
-	;; and `c-identifier-key'.
-	,@(cond ((c-major-mode-is 'c++-mode)
-		 `((postfix-if-paren "<" ">") ; Templates.
-		   (prefix "~" "??-" "compl")
-		   (right-assoc "::")
-		   (prefix "::")))
-		((c-major-mode-is 'pike-mode)
-		 `((left-assoc "::")
-		   (prefix "::" "global" "predef")))
-		((c-major-mode-is 'java-mode)
-		 `(;; Not necessary since it's also in the postfix group below.
-		   ;;(left-assoc ".")
-		   (prefix "super"))))
-
-	;; Postfix.
-	,@(when (c-major-mode-is 'c++-mode)
-	    ;; The following need special treatment.
-	    `((prefix "dynamic_cast" "static_cast"
-		      "reinterpret_cast" "const_cast" "typeid")))
-	(left-assoc "."
-		    ,@(unless (c-major-mode-is 'java-mode)
-			'("->")))
-	(postfix "++" "--" "[" "]" "(" ")"
-		 ,@(when (c-major-mode-is '(c-mode c++-mode))
-		     '("<:" ":>" "??(" "??)")))
-
-	;; Unary.
-	(prefix "++" "--" "+" "-" "!" "~"
-		    ,@(when (c-major-mode-is 'c++-mode) '("not" "compl"))
-		    ,@(when (c-major-mode-is '(c-mode c++-mode))
-		    '("*" "&" "sizeof" "??-"))
-		;; The following need special treatment.
-		,@(cond ((c-major-mode-is 'c++-mode)
-			 '("new" "delete"))
-			((c-major-mode-is 'java-mode)
-			 '("new"))
-			((c-major-mode-is 'pike-mode)
-			 '("class" "lambda" "catch" "throw" "gauge")))
-		"(" ")")		; Cast.
-
-	;; Member selection.
-	,@(when (c-major-mode-is 'c++-mode)
-	    `((left-assoc ".*" "->*")))
-
-	;; Multiplicative.
-	(left-assoc "*" "/" "%")
-
-	;; Additive.
-	(left-assoc "+" "-")
-
-	;; Shift.
-	(left-assoc "<<" ">>"
-		    ,@(when (c-major-mode-is 'java-mode)
-			'(">>>")))
-
-	;; Relational.
-	(left-assoc "<" ">" "<=" ">="
-		    ,@(when (c-major-mode-is 'java-mode)
-			'("instanceof")))
-
-	;; Equality.
-	(left-assoc "==" "!="
-		    ,@(when (c-major-mode-is 'c++-mode) '("not_eq")))
-
-	;; Bitwise and.
-	(left-assoc "&"
-		    ,@(when (c-major-mode-is 'c++-mode) '("bitand")))
-
-	;; Bitwise exclusive or.
-	(left-assoc "^"
-		    ,@(when (c-major-mode-is '(c-mode c++-mode))
-			'("??'"))
-		    ,@(when (c-major-mode-is 'c++-mode) '("xor")))
-
-	;; Bitwise or.
-	(left-assoc "|"
-		    ,@(when (c-major-mode-is '(c-mode c++-mode))
-			'("??!"))
-		    ,@(when (c-major-mode-is 'c++-mode) '("bitor")))
-
-	;; Logical and.
-	(left-assoc "&&"
-		    ,@(when (c-major-mode-is 'c++-mode) '("and")))
-
-	;; Logical or.
-	(left-assoc "||"
-		    ,@(when (c-major-mode-is 'c++-mode) '("or")))
-
-	;; Conditional.
-	(right-assoc-sequence "?" ":")
-
-	;; Assignment.
-	(right-assoc "=" "*=" "/=" "%=" "+=" "-=" ">>=" "<<=" "&=" "^=" "|="
-		     ,@(when (c-major-mode-is 'java-mode)
-			 '(">>>="))
-		     ,@(when (c-major-mode-is 'c++-mode)
-			 '("and_eq" "or_eq" "xor_eq")))
-
-	;; Exception.
-	,@(when (c-major-mode-is 'c++-mode)
-	    '((prefix "throw")))
-
-	;; Sequence.
-	(left-assoc ",")))
-
-;; List of the tokens made up of characters in the punctuation or
-;; parenthesis syntax classes that are used outside expressions.
-(c-lang-defconst c-other-op-syntax-tokens
-  all '("{" "}" "(" ")" "[" "]" ";" ":" "," "=")
-  (c c++ pike) (append '("#" "##"	; Used by cpp.
-			 "::" "...")
-		       (c-lang-var c-other-op-syntax-tokens))
-  (c c++) (append '("<%" "%>" "<:" ":>" "%:" "%:%:" "*")
-		  (c-lang-var c-other-op-syntax-tokens))
-  c++ (append '("&") (c-lang-var c-other-op-syntax-tokens))
-  objc (append '("+" "-") (c-lang-var c-other-op-syntax-tokens))
-  pike (append '("..") (c-lang-var c-other-op-syntax-tokens)
-	       c-pike-operator-symbols))
-
-;; List of all operator tokens that are made up only of characters in
-;; the punctuation or parenthesis syntax classes.
-(c-lang-defconst c-operator-tokens
-  all (delete-duplicates
-       (c-with-syntax-table (c-lang-var c-syntax-table)
-	 (mapcan (lambda (elem)
-		   (mapcan (lambda (op)
-			     (and (string-match
-				   "\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'" op)
-				  (list op)))
-			   (cdr elem)))
-		 (c-lang-var c-operators)))
-       :test 'string-equal))
-
-;; Regexp matching any sequence of two characters inside a symbol, and
-;; also all the tokens in the punctuation or parenthesis syntax
-;; classes that are longer than one char.
-(c-lang-defconst c-multichar-op-sym-token-regexp
-  all (concat "\\(\\w\\|\\s_\\)\\(\\w\\|\\s_\\)\\|"
-	      (c-make-keywords-re nil
-		(delete-duplicates
-		 (mapcan (lambda (op)
-			   (and (> (length op) 1) (list op)))
-			 (append (c-lang-var c-operator-tokens)
-				 (c-lang-var c-other-op-syntax-tokens)))
-		 :test 'string-equal))))
-(c-lang-defvar c-multichar-op-sym-token-regexp
-  (c-lang-var c-multichar-op-sym-token-regexp))
-
-;; Regexp matching all operator tokens (greedily).  Note that
-;; non-expression tokens like ';', '{' and '}' aren't matched.
-(c-lang-defconst c-op-token-regexp
-  all (c-make-keywords-re nil (c-lang-var c-operator-tokens)))
-(c-lang-defvar c-op-token-regexp (c-lang-var c-op-token-regexp))
-
-(defvar c-stmt-delim-chars "^;{}?:")
-;; The characters that should be considered to bound statements.  To
-;; optimize `c-crosses-statement-barrier-p' somewhat, it's assumed to
-;; begin with "^" to negate the set.  If ? : operators should be
-;; detected then the string must end with "?:".
-
-(defvar c-stmt-delim-chars-with-comma "^;,{}?:")
-;; Variant of `c-stmt-delim-chars' that additionally contains ','.
 
 ;; HELPME: Many of the following keyword lists are more or less bogus
 ;; for some languages (notably ObjC and IDL).  The effects of the
@@ -1005,15 +998,11 @@ appended."
 ;; Keywords that can occur anywhere in expressions.
 (c-lang-defconst c-expr-kwds
   ;; Start out with all keyword operators in `c-operators'.
-  all (delete-duplicates
-       (c-with-syntax-table (c-lang-var c-syntax-table)
-	 (mapcan (lambda (elem)
-		   (mapcan (lambda (op)
-			     (and (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
-				  (list op)))
-			   (cdr elem)))
-		 (c-lang-var c-operators)))
-       :test 'string-equal)
+  all (c-with-syntax-table (c-mode-var "mode-syntax-table")
+	(mapcan (lambda (op)
+		  (and (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
+		       (list op)))
+		(c-lang-var c-operator-list)))
   c++ (append '("operator" "this")
 	      (c-lang-var c-expr-kwds))
   java (append '("this")
@@ -1326,7 +1315,12 @@ appended."
 (c-lang-defvar comment-end (c-lang-var comment-end))
 
 ;; Regexp matching any sequence that can start syntactic whitespace.
-(c-lang-defvar c-syntactic-ws-start "[ \n\t\r#\\]\\|/[/*]")
+;; The uncertain case is '#' when there are cpp directives.
+(c-lang-defvar c-syntactic-ws-start "[ \n\t\r\v\f#]\\|/[/*]\\|\\\\[\n\r]")
+
+;; Regexp matching any single character that might end syntactic
+;; whitespace.
+(c-lang-defvar c-syntactic-ws-end "[ \n\t\r\v\f/]")
 
 ;; Regexp matching a piece of syntactic whitespace that isn't a
 ;; sequence of simple whitespace characters.  As opposed to
