@@ -65,6 +65,7 @@
 (cc-bytecomp-defvar mark-active)	; Emacs
 (cc-bytecomp-defun scan-lists)		; 5 args in XEmacs, 3 in Emacs
 (cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
+(cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
 (cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
 (require 'derived)			; Only necessary in Emacs
 
@@ -367,12 +368,12 @@ continuations."
 	(t nil)))
 
 (defmacro c-clear-char-syntax (pos)
-  ;; Remove any syntax-table property at POS.
+  ;; Remove the syntax-table property at POS if there is any.
   (if (fboundp 'make-extent)
       ;; XEmacs.
       `(let ((ext (extent-at ,pos nil 'syntax-table)))
 	 (if ext (delete-extent ext)))
-    ;; Emacs way.
+    ;; Emacs.
     `(let ((pos ,pos))
        ,(if (boundp 'text-property-default-nonsticky)
 	    ;; In Emacs 21 we got the rear-nonsticky property covered
