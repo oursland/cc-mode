@@ -750,7 +750,8 @@ comment."
 ;; for proposed new variable comment-line-break-function
 (defun c-comment-line-break-function (&optional soft)
   ;; we currently don't do anything with soft line breaks
-  (if (not c-comment-continuation-stars)
+  (if (or (not c-comment-continuation-stars)
+	  (not (c-in-literal)))
       (indent-new-comment-line soft)
     (let ((here (point))
 	  (leader c-comment-continuation-stars))
@@ -775,6 +776,7 @@ comment."
   (require 'advice)
   (defadvice indent-new-comment-line (around c-line-break-advice activate)
     (if (or (not c-buffer-is-cc-mode)
+	    (not (c-in-literal))
 	    (not c-comment-continuation-stars))
 	ad-do-it
       (c-comment-line-break-function (ad-get-arg 0)))))
