@@ -116,7 +116,9 @@
 	    (c-beginning-of-macro lim))
 	   ;; CASE 2: some other kind of literal?
 	   ((c-in-literal lim))
-	   ;; CASE 3: are we looking at a conditional keyword?
+	   ;; CASE 3: A line continuation?
+	   ((looking-at "\\\\$"))
+	   ;; CASE 4: are we looking at a conditional keyword?
 	   ((or (and c-conditional-key (looking-at c-conditional-key))
 		(and (eq (char-after) ?\()
 		     (save-excursion
@@ -164,7 +166,7 @@
 		(setq substmt-p nil))
 	    (setq last-begin (point)
 		  donep substmt-p))
-	   ;; CASE 4: are we looking at a label?  (But we handle
+	   ;; CASE 5: are we looking at a label?  (But we handle
 	   ;; switch labels later.)
 	   ((and (looking-at c-label-key)
 		 (not (looking-at "default\\>"))
@@ -173,12 +175,12 @@
 			     ;; Not inside a Pike type declaration?
 			     (and (c-safe (backward-up-list 1) t)
 				  (eq (char-after) ?\()))))))
-	   ;; CASE 5: is this the first time we're checking?
+	   ;; CASE 6: is this the first time we're checking?
 	   (firstp (setq firstp nil
 			 substmt-p (not (c-crosses-statement-barrier-p
 					 (point) last-begin))
 			 last-begin (point)))
-	   ;; CASE 6: have we crossed a statement barrier?
+	   ;; CASE 7: have we crossed a statement barrier?
 	   ((save-excursion
 	      ;; Move over in-expression blocks before checking the
 	      ;; barrier
@@ -188,7 +190,7 @@
 		  (c-forward-sexp 1))
 	      (c-crosses-statement-barrier-p (point) last-begin))
 	    (setq donep t))
-	   ;; CASE 7: ignore labels
+	   ;; CASE 8: ignore labels
 	   ((and c-maybe-labelp
 		 (or (and c-access-key (looking-at c-access-key))
 		     ;; with switch labels, we have to go back further
@@ -202,11 +204,11 @@
 			   t
 			 (goto-char here)
 			 nil)))))
-	   ;; CASE 8: ObjC or Java method def
+	   ;; CASE 9: ObjC or Java method def
 	   ((and c-method-key
 		 (setq last-begin (c-in-method-def-p)))
 	    (setq donep t))
-	   ;; CASE 9: Normal token.  At bob, we can end up at ws or a
+	   ;; CASE 10: Normal token.  At bob, we can end up at ws or a
 	   ;; comment, and last-begin shouldn't be updated then.
 	   ((not (looking-at "\\s \\|/[/*]"))
 	    (setq last-begin (point)))
@@ -300,7 +302,7 @@
     (while (/= here (point))
       (c-forward-comment hugenum)
       (setq here (point))
-      (if (looking-at "\\$")
+      (if (looking-at "\\\\$")
 	  (forward-char)
 	;; skip preprocessor directives
 	(when (and (looking-at "#[a-zA-Z0-9!]")
@@ -1059,7 +1061,7 @@ brace."
     (or (catch 'orphan-if
 	  (while (and (not (bobp))
 		      (not (zerop if-level)))
-	    (c-backward-syntactic-ws)
+	    (c-backward-syntactic-ws lim)
 	    (condition-case nil
 		(c-backward-sexp 1)
 	      (error
@@ -1674,7 +1676,7 @@ brace."
 	     (c-state-cache (if inclass-p
 				(c-whack-state-before (point-min) fullstate)
 			      fullstate))
-	     inenclosing-p)
+	     inenclosing-p macro-start)
 	;; check for meta top-level enclosing constructs, possible
 	;; extern language definitions, possibly (in C++) namespace
 	;; definitions.
@@ -1744,12 +1746,12 @@ brace."
 	 ((memq literal '(c c++))
 	  (c-add-syntax literal (car (c-literal-limits lim))))
 	 ;; CASE 3: in a cpp preprocessor macro continuation.
-	 ((and (eq literal 'pound)
-	       (/= (save-excursion
-		     (c-beginning-of-macro lim)
-		     (setq placeholder (point)))
-		   (c-point 'boi)))
-	  (c-add-syntax 'cpp-macro-cont placeholder))
+	 ((and (save-excursion
+		 (when (c-beginning-of-macro)
+		   (setq macro-start (point))))
+	       (/= macro-start (c-point 'boi))
+	       (not c-syntactic-analysis-in-macro))
+	  (c-add-syntax 'cpp-macro-cont macro-start))
 	 ;; CASE 4: In-expression statement.
 	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
 	       (setq placeholder (c-looking-at-inexpr-block)))
@@ -2757,24 +2759,23 @@ brace."
 	;; now we need to look at any modifiers
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
-	(cond
-	 ;; are we looking at a comment only line?
-	 ((and (looking-at c-comment-start-regexp)
-	       (/= (c-forward-token-1 0 nil (c-point 'eol)) 0))
+	;; are we looking at a comment only line?
+	(when (and (looking-at c-comment-start-regexp)
+		   (/= (c-forward-token-1 0 nil (c-point 'eol)) 0))
 	  (c-add-syntax 'comment-intro))
-	 ;; we might want to give additional offset to friends (in C++).
-	 ((and (c-major-mode-is 'c++-mode)
-	       (looking-at c-C++-friend-key))
+	;; we might want to give additional offset to friends (in C++).
+	(when (and (c-major-mode-is 'c++-mode)
+		   (looking-at c-C++-friend-key))
 	  (c-add-syntax 'friend))
-	 ;; Start of a preprocessor directive?
-	 ((and (eq literal 'pound)
-	       (= (save-excursion
-		    (c-beginning-of-macro lim)
-		    (setq placeholder (point)))
-		  (c-point 'boi))
-	       (not (and (c-major-mode-is 'pike-mode)
-			 (eq (char-after (1+ placeholder)) ?\"))))
-	  (c-add-syntax 'cpp-macro)))
+	;; Start of or a continuation of a preprocessor directive?
+	(if (and (eq literal 'pound)
+		 (= macro-start (c-point 'boi))
+		 (not (and (c-major-mode-is 'pike-mode)
+			   (eq (char-after (1+ placeholder)) ?\"))))
+	    (c-add-syntax 'cpp-macro)
+	  (when (and c-syntactic-analysis-in-macro
+		     macro-start)
+	    (c-add-syntax 'cpp-macro-cont)))
 	;; return the syntax
 	syntax))))
 
