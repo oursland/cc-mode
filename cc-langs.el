@@ -85,7 +85,7 @@
       (front   "\\b\\(")
       (back    "\\)\\b[^_]"))
   (setq c-C-conditional-key (concat front all-kws back)
-	c-C++conditional-key (concat front all-kws exc-kws back)
+	c-C++-conditional-key (concat front all-kws exc-kws back)
 	c-Java-conditional-key (concat front all-kws exc-kws thr-kws back)))
 
 (defvar c-conditional-key c-C-conditional-key)
