@@ -9,5 +9,5 @@
 ((topmost-intro 1))
 ((inher-intro 325))
 ((template-args-cont 325))
-((topmost-intro-cont 381))
+((template-args-cont 325))
 ((class-open 325))
