@@ -943,7 +943,7 @@ brace."
 		   ((looking-at "\\<else\\>[ \t]+\\<if\\>") 3)
 		   ;; do, else, try, finally
 		   ((looking-at "\\<\\(do\\|else\\|try\\|finally\\)\\>") 1)
-		   ;; for, if, while, switch, catch, synchronized
+		   ;; for, if, while, switch, catch, synchronized, foreach
 		   (t 2))))
 
 (defun c-beginning-of-closest-statement (&optional lim)
@@ -1728,11 +1728,15 @@ brace."
 		   (save-excursion
 		     (goto-char placeholder)
 		     (back-to-indentation)
-		     (and
-		      (if c-access-key (not (looking-at c-access-key)) t)
-		      (not (looking-at c-class-key))
-		      (if c-bitfield-key (not (looking-at c-bitfield-key)) t))
-		     ))
+		     (or
+		      (/= (car (save-excursion
+				 (parse-partial-sexp (point) placeholder)))
+			  0)
+		      (and
+		       (if c-access-key (not (looking-at c-access-key)) t)
+		       (not (looking-at c-class-key))
+		       (if c-bitfield-key (not (looking-at c-bitfield-key)) t))
+		      )))
 	      (goto-char placeholder)
 	      (c-forward-syntactic-ws)
 	      (c-add-syntax 'member-init-cont (point))
