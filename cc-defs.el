@@ -909,6 +909,20 @@ the value of the variable with that name.
 This function does not do any hidden buffer changes."
   (symbol-value (c-mode-symbol suffix)))
 
+(defsubst c-got-face-at (pos faces)
+  "Return non-nil if position POS in the current buffer has any of the
+faces in the list FACES.
+
+This function does not do any hidden buffer changes."
+  (let ((pos-faces (get-text-property pos 'face)))
+    (if (consp pos-faces)
+	(progn
+	  (while (and pos-faces
+		      (not (memq (car pos-faces) faces)))
+	    (setq pos-faces (cdr pos-faces)))
+	  pos-faces)
+      (memq pos-faces faces))))
+
 (defsubst c-face-name-p (facename)
   ;; Return t if FACENAME is the name of a face.  This method is
   ;; necessary since facep in XEmacs only returns t for the actual
