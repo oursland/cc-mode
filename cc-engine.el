@@ -4441,46 +4441,42 @@ brace."
       (forward-char 1)
     (c-backward-syntactic-ws limit))
 
-  (condition-case nil
-      (progn
-	(while (and (< limit (point))
-		    (eq (char-before) ?,))
+  (catch 'exit
+    (while (and (< limit (point))
+		(eq (char-before) ?,))
 
-	  ;; this will catch member inits with multiple
-	  ;; line arglists
-	  (forward-char -1)
-	  (c-backward-syntactic-ws limit)
-	  (if (eq (char-before) ?\))
-	      (c-backward-sexp 1))
-	  (c-backward-syntactic-ws limit)
+      ;; this will catch member inits with multiple
+      ;; line arglists
+      (forward-char -1)
+      (c-backward-syntactic-ws limit)
+      (if (eq (char-before) ?\))
+	  (unless (c-safe (c-backward-sexp 1))
+	    (throw 'exit nil)))
+      (c-backward-syntactic-ws limit)
 
-	  ;; Skip over any template arg to the class.  This way with a
-	  ;; syntax table is bogus but it'll have to do for now.
-	  (if (and (eq (char-before) ?>)
-		   (c-major-mode-is 'c++-mode))
-	      (c-with-syntax-table c++-template-syntax-table
-		(c-backward-sexp 1)))
-	  (c-backward-sexp 1)
-	  (c-backward-syntactic-ws limit)
+      ;; Skip over any template arg to the class.  This way with a
+      ;; syntax table is bogus but it'll have to do for now.
+      (if (and (eq (char-before) ?>)
+	       (c-major-mode-is 'c++-mode))
+	  (c-with-syntax-table c++-template-syntax-table
+	    (unless (c-safe (c-backward-sexp 1))
+	      (throw 'exit nil))))
+      (c-safe (c-backward-sexp 1))
+      (c-backward-syntactic-ws limit)
 
-	  ;; Skip backwards over a fully::qualified::name.
-	  (while (and (eq (char-before) ?:)
-		      (save-excursion
-			(forward-char -1)
-			(eq (char-before) ?:)))
-	    (backward-char 2)
-	    (c-backward-sexp 1))
+      ;; Skip backwards over a fully::qualified::name.
+      (while (and (eq (char-before) ?:)
+		  (save-excursion
+		    (forward-char -1)
+		    (eq (char-before) ?:)))
+	(backward-char 2)
+	(c-safe (c-backward-sexp 1)))
 
-	  ;; now continue checking
-	  (c-backward-syntactic-ws limit))
+      ;; now continue checking
+      (c-backward-syntactic-ws limit))
 
-	(and (< limit (point))
-	     (eq (char-before) ?:)))
-
-    (scan-error
-     ;; An unbalanced paren was found that caused one of the sexp
-     ;; routines above to fail.
-     nil)))
+    (and (< limit (point))
+	 (eq (char-before) ?:))))
 
 (defun c-search-uplist-for-classkey (paren-state)
   ;; search for the containing class, returning a 2 element vector if
