@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-01 18:33:19 $
-;; Version:         $Revision: 2.22 $
+;; Last Modified:   $Date: 1992-05-01 18:45:22 $
+;; Version:         $Revision: 2.23 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-01 18:33:19 $|$Revision: 2.22 $|
+;; |$Date: 1992-05-01 18:45:22 $|$Revision: 2.23 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -140,7 +140,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.22 $
+  "Major mode for editing C++ code.  $Revision: 2.23 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1078,7 +1078,7 @@ Returns nil if line starts inside a string, t if in a comment."
 			 (save-excursion
 			   (forward-sexp 1)
 			   (looking-at ":[^:]"))))
-		(setq this-indent (max 1 (+ this-indent c-label-offset))))
+		(setq this-indent (max 0 (+ this-indent c-label-offset))))
 	    (if (looking-at "friend[ \t]class[ \t]")
 		(setq this-indent (+ this-indent c++-friend-offset)))
 	    (if (= (following-char) ?})
@@ -1376,7 +1376,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.22 $"
+(defconst c++-version "$Revision: 2.23 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
