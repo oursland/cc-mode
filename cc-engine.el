@@ -1753,7 +1753,7 @@ isn't moved."
       (let* ((indent-point (point))
 	     (case-fold-search nil)
 	     (fullstate (c-parse-state))
-	     (state fullstate)
+ 	     (state fullstate)
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache inswitch-p
 	     tmpsymbol keyword injava-inher special-brace-list
@@ -1790,26 +1790,19 @@ isn't moved."
 		   )))))
 	;; get the buffer position of the most nested opening brace,
 	;; if there is one, and it hasn't been narrowed out
-	(save-excursion
-	  (goto-char indent-point)
-	  (skip-chars-forward " \t}")
-	  (skip-chars-backward " \t")
-	  (while (and state
-		      (not containing-sexp))
-	    (setq containing-sexp (car state)
-		  state (cdr state))
-	    (if (consp containing-sexp)
-		;; if cdr == point, then containing sexp is the brace
-		;; that opens the sexp we close
-		(if (= (cdr containing-sexp) (point))
-		    (setq containing-sexp (car containing-sexp))
-		  ;; otherwise, ignore this element
-		  (setq containing-sexp nil))
-	      ;; ignore the bufpos if its been narrowed out by the
-	      ;; containing class or does not contain the indent point
-	      (if (or (<= containing-sexp (point-min))
-		      (>= containing-sexp indent-point))
-		  (setq containing-sexp nil)))))
+	(when state
+	  (setq containing-sexp (car state)
+		state (cdr state))
+	  (if (consp containing-sexp)
+	      ;; Ignore balanced paren.  The next entry can't be
+	      ;; another one.
+	      (setq containing-sexp (car-safe state)
+		    state (cdr-safe state)))
+	  ;; Ignore the bufpos if it has been narrowed out by the
+	  ;; containing class.
+	  (if (and containing-sexp
+		   (< containing-sexp (point-min)))
+	      (setq containing-sexp nil)))
 
 	;; set the limit on the farthest back we need to search
 	(setq lim (or containing-sexp
