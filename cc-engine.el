@@ -1845,12 +1845,9 @@ brace."
 	    ;; It's a Pike lambda.  Check whether we are between the
 	    ;; lambda keyword and the argument list or at the defun
 	    ;; opener.
-	    (setq tmpsymbol
-		  (if (save-excursion
-			(and (c-safe (c-forward-sexp -1) t)
-			     (looking-at c-lambda-key)))
-		      'lambda-intro-cont
-		    'inline-open)))
+	    (setq tmpsymbol (if (eq char-after-ip ?{)
+				'inline-open
+			      'lambda-intro-cont)))
 	  (goto-char (cdr placeholder))
 	  (c-add-syntax tmpsymbol (c-point 'boi))
 	  (c-add-syntax (car placeholder)))
