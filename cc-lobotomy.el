@@ -55,7 +55,7 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cc-make))
+  (require 'cc-defs))
 
 (require 'cc-mode)
 

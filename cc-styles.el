@@ -30,7 +30,7 @@
 
 ;; explicit compile-time dependencies
 (eval-when-compile
-  (require 'cc-make))
+  (require 'cc-defs))
 
 
 (defconst c-style-alist

@@ -29,7 +29,7 @@
 
 
 (eval-when-compile
-  (require 'cc-make))
+  (require 'cc-defs))
 
 ;; KLUDGE ALERT: c-maybe-labelp is used to pass information between
 ;; c-crosses-statement-barrier-p and c-beginning-of-statement-1.  A

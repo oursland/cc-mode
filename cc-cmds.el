@@ -30,7 +30,7 @@
 
 
 (eval-when-compile
-  (require 'cc-make))
+  (require 'cc-defs))
 
 (defun c-calculate-state (arg prevstate)
   ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If

@@ -30,7 +30,7 @@
 
 
 (eval-when-compile
-  (require 'cc-make))
+  (require 'cc-defs))
 
 ;; Regular expressions and other values which must be parameterized on
 ;; a per-language basis.
