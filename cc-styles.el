@@ -395,6 +395,10 @@ is called with a single argument containing the cons of the syntactic
 element symbol and the relative indent point.  The function should
 return an integer offset.
 
+OFFSET can also be a list, in which case it is recursively evaluated
+using the semantics described above.  The first element of the list to 
+return a non-nil value succeeds.
+
 Here is the current list of valid syntactic element symbols:
 
  string                 -- inside multi-line string
@@ -475,6 +479,32 @@ Here is the current list of valid syntactic element symbols:
  inexpr-class           -- the class is inside an expression
 ")
 
+(defun c-evaluate-offset (offset)
+  ;; offset can be a number, a function, a variable, a list, or one of
+  ;; the symbols + or -
+  (cond
+   ((eq offset '+)         (setq offset c-basic-offset))
+   ((eq offset '-)         (setq offset (- c-basic-offset)))
+   ((eq offset '++)        (setq offset (* 2 c-basic-offset)))
+   ((eq offset '--)        (setq offset (* 2 (- c-basic-offset))))
+   ((eq offset '*)         (setq offset (/ c-basic-offset 2)))
+   ((eq offset '/)         (setq offset (/ (- c-basic-offset) 2)))
+   ((functionp offset)     (setq offset (funcall offset langelem)))
+   ((listp offset)
+    (setq offset
+	  (let (done)
+	    (while (and (not done) offset)
+	      (setq done (c-evaluate-offset (car offset))
+		    offset (cdr offset)))
+	    (if (not done)
+		(if c-strict-syntax-p
+		    (error "No offset found for syntactic symbol %s" symbol)
+		  0)
+	      done))))
+   ((not (numberp offset)) (setq offset (symbol-value offset)))
+   )
+  offset)
+
 (defun c-get-offset (langelem)
   ;; Get offset from LANGELEM which is a cons cell of the form:
   ;; (SYMBOL . RELPOS).  The symbol is matched against
@@ -485,30 +515,20 @@ Here is the current list of valid syntactic element symbols:
 	 (relpos (cdr langelem))
 	 (match  (assq symbol c-offsets-alist))
 	 (offset (cdr-safe match)))
-    ;; offset can be a number, a function, a variable, or one of the
-    ;; symbols + or -
-    (cond
-     ((not match)
-      (if c-strict-syntax-p
-	  (error "don't know how to indent a %s" symbol)
-	(setq offset 0
-	      relpos 0)))
-     ((eq offset '+)         (setq offset c-basic-offset))
-     ((eq offset '-)         (setq offset (- c-basic-offset)))
-     ((eq offset '++)        (setq offset (* 2 c-basic-offset)))
-     ((eq offset '--)        (setq offset (* 2 (- c-basic-offset))))
-     ((eq offset '*)         (setq offset (/ c-basic-offset 2)))
-     ((eq offset '/)         (setq offset (/ (- c-basic-offset) 2)))
-     ((functionp offset)     (setq offset (funcall offset langelem)))
-     ((not (numberp offset)) (setq offset (symbol-value offset)))
-     )
+    (if (not match)
+	(if c-strict-syntax-p
+	    (error "No offset found for syntactic symbol %s" symbol)
+	  (setq offset 0
+		relpos 0))
+      (setq offset (c-evaluate-offset offset)))
     (+ (if (and relpos
 		(< relpos (c-point 'bol)))
 	   (save-excursion
 	     (goto-char relpos)
 	     (current-column))
 	 0)
-       offset)))
+       (c-evaluate-offset offset))
+    ))
 
 
 (defvar c-read-offset-history nil)
@@ -519,7 +539,7 @@ Here is the current list of valid syntactic element symbols:
   (let* ((oldoff  (cdr-safe (assq langelem c-offsets-alist)))
 	 (symname (symbol-name langelem))
 	 (defstr  (format "(default %s): " oldoff))
-	 (errmsg  (concat "Offset must be int, func, var, "
+	 (errmsg  (concat "Offset must be int, func, var, list, "
 			  "or [+,-,++,--,*,/] "
 			  defstr))
 	 (prompt (concat symname " offset " defstr))
@@ -587,8 +607,9 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
       (eq offset '/)
       (integerp offset)
       (functionp offset)
+      (listp offset)
       (boundp offset)
-      (error "Offset must be int, func, var, or in [+,-,++,--,*,/]: %s"
+      (error "Offset must be int, func, var, list, or in [+,-,++,--,*,/]: %s"
 	     offset))
   (let ((entry (assq symbol c-offsets-alist)))
     (if entry
