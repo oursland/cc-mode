@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.335 $
-;; Last Modified:   $Date: 1994-05-12 22:52:12 $
+;; Version:         $Revision: 3.336 $
+;; Last Modified:   $Date: 1994-05-16 20:21:12 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-12 22:52:12 $|$Revision: 3.335 $|
+;; |$Date: 1994-05-16 20:21:12 $|$Revision: 3.336 $|
 
 ;;; Code:
 
@@ -808,7 +808,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.335 $
+cc-mode Revision: $Revision: 3.336 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -841,7 +841,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.335 $
+cc-mode Revision: $Revision: 3.336 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2530,7 +2530,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (c-forward-syntactic-ws))
 	      (setq bufpos (point))
 	      (and (< bufpos containing-sexp)
-		   (looking-at "\\(typedef[ \t]+\\)?\\<enum\\>")))
+		   (looking-at "\\(typedef[ \t]+\\)?enum[ \t\n]+")
+		   (save-excursion
+		     (skip-chars-forward "^;" containing-sexp)
+		     (= (point) containing-sexp))))
        ;; this will pick up array/aggregate init lists, even if they
        ;; are nested
        (progn (goto-char containing-sexp)
@@ -3521,7 +3524,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.335 $"
+(defconst c-version "$Revision: 3.336 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
