@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-20 20:22:58 $
-;; Version:         $Revision: 2.164 $
+;; Last Modified:   $Date: 1992-07-21 15:20:09 $
+;; Version:         $Revision: 2.165 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-20 20:22:58 $|$Revision: 2.164 $|
+;; |$Date: 1992-07-21 15:20:09 $|$Revision: 2.165 $|
 
 
 ;; ======================================================================
@@ -317,7 +317,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.164 $
+  "Major mode for editing C++ code.  $Revision: 2.165 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -518,7 +518,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.164 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.165 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1360,7 +1360,7 @@ point of the beginning of the C++ definition."
 				 (back-to-indentation)
 				 (skip-chars-forward "{ \t")
 				 (current-column))))
-		 ((looking-at "friend\[ \t]")
+		 ((looking-at "\\<friend\\>")
 		  (setq indent (+ indent c++-friend-offset)))
 		 ((and (= (following-char) ?\))
 		       c++-paren-as-block-close-p)
@@ -1515,7 +1515,10 @@ BOD is the beginning of the C++ definition."
 			    ;; subtract inclass-shift
 			    (- c++-member-init-indent c++-class-member-indent))
 			(if (or (= (preceding-char) ?})
-				(= (preceding-char) ?\)))
+				(= (preceding-char) ?\))
+				(save-excursion
+				  (beginning-of-line)
+				  (looking-at "[ \t]*\\<friend\\>")))
 			    0
 			  (beginning-of-line) ; cont arg decls or member inits
 			  (skip-chars-forward " \t")
@@ -2053,7 +2056,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.164 $"
+(defconst c++-version "$Revision: 2.165 $"
   "c++-mode version number.")
 
 (defun c++-version ()
