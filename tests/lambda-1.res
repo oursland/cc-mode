@@ -14,7 +14,7 @@
 ((inexpr-statement) (block-open . 222))
 ((inlambda) (inline-close . 155))
 ((statement . 155))
-((arglist-cont-nonempty . 271))
+((arglist-cont-nonempty . 276))
 ((inlambda) (statement-block-intro . 271))
 ((statement . 271))
 ((inlambda) (lambda-intro-cont . 340))

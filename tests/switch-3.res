@@ -1,7 +1,7 @@
 ((topmost-intro . 1))
 ((defun-open . 1))
 ((defun-block-intro . 12))
-((arglist-cont-nonempty . 18))
+((arglist-cont-nonempty . 25))
 ((case-label . 18))
 ((case-label . 18))
 ((statement-case-intro . 127))
