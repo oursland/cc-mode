@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.60 $
-;; Last Modified:   $Date: 1993-11-18 17:17:28 $
+;; Version:         $Revision: 3.61 $
+;; Last Modified:   $Date: 1993-11-18 20:22:07 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-18 17:17:28 $|$Revision: 3.60 $|
+;; |$Date: 1993-11-18 20:22:07 $|$Revision: 3.61 $|
 
 ;;; Code:
 
@@ -487,7 +487,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.60 $
+  "Major mode for editing C++ code.  $Revision: 3.61 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -518,7 +518,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.60 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.61 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1444,17 +1444,12 @@ of the expression are preserved."
       (narrow-to-region lim (point))
       (while (/= here (point))
 	(setq here (point))
-	;; skip cpp intro lines
-	(if (and (< (point) lim)
-		 (= (char-after (cc-point 'boi)) ?#))
-	    (end-of-line))
 	(forward-comment 1)
-	;; skip multi-line preprocessor directives
-	(while (and (< (point) lim)
-		    (= (char-after (1- (cc-point 'eol))) ?\\))
-	  (forward-line)
-	  (end-of-line))
-	))))
+	;; skip preprocessor directives
+	(if (and (= (following-char) ?#)
+		 (= (cc-point 'boi) (point)))
+	    (end-of-line)
+	  )))))
 
 (defun cc-emacs19-accurate-bsws (&optional lim)
   ;; Backward skip over syntactic whitespace for Emacs 19.
@@ -1467,8 +1462,7 @@ of the expression are preserved."
 	    (while (/= here (point))
 	      (setq here (point))
 	      (forward-comment -1)
-	      (if (or (= (char-after (1- (cc-point 'eol))) ?\\)
-		      (= (char-after (cc-point 'boi)) ?#))
+	      (if (eq (cc-in-literal lim) 'pound)
 		  (beginning-of-line))
 	      )))
       )))
@@ -2439,7 +2433,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.60 $"
+(defconst cc-version "$Revision: 3.61 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
