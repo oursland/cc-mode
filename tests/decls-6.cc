@@ -1,17 +1,38 @@
+__INLINE__ FOO Type var, x;
+__INLINE__ FOO Type (*var);
+__INLINE__ FOO Type var[3 * peq];
+__INLINE__ FOO Type (var);
+
+__INLINE__ FOO Type var = init, x = Type();
+__INLINE__ FOO Type (*var) = init;
+__INLINE__ FOO Type var[3 * peq] = init;
+__INLINE__ FOO Type (var) = init;
+__INLINE__ FOO Type int = "int"; // int
+
 Type var = init, x = Type();
 Type (*var) = init;
 Type var[3 * peq] = init;
-Type[xyz] var = init;		// FIXME: Java only?
-Type (var) = init;		// Currently recognized as a function call.
+Type (var) = init;
 Type int = "int";		// int
 
 const Type var;
 const Type (*var);
 const Type var[3 * peq];
-const Type (var);		// Currently recognized as a function call.
+const Type (var);
 
 Type (*foo) (Type *,
 	     Type (*)[x],
 	     Type (*var)[x],
-	     Type (var*)[x],	// An incorrect one.
+	     // An incorrect one that gets "var" is recorded as a type.
+	     Type (var*)[x],
 	     Type &);
+
+Type2 var;
+Type var;
+Type (*var);
+Type var[3 * peq];
+Type (var);
+
+#define low_assign_multiset_index(TO, NODE) do {			\
+    struct svalue *_ms_index_to2_ = (TO);				\
+  } while (0)
