@@ -669,40 +669,153 @@ to search, and a flag saying whether to do sentence motion when in a
 comment."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     nil t))
-  (let ((here (point))
-	(count (or count 1))
-	(lim (or lim (c-point 'bod)))
-	state)
-    (save-excursion
-      (goto-char lim)
-      (setq state (parse-partial-sexp (point) here nil nil)))
-    (if (and sentence-flag
-	     (or (nth 3 state)
-		 (nth 4 state)
-		 ;; skipping forward into a comment?
-		 (and (> 0 count)
-		      (save-excursion
-			(skip-chars-forward " \t\n")
-			(or (eobp)
-			    (looking-at comment-start-skip))))
-		 (and (< 0 count)
-		      (save-excursion
-			(skip-chars-backward " \t\n")
-			(goto-char (- (point) 2))
-			(looking-at "\\*/")))))
-	;; move forward by sentence, but not past the end of the comment
-	(let ((eoc (save-excursion (forward-comment 1) (point))))
-	  (forward-sentence (- count))
-	  (if (< eoc (point))
-	      (goto-char eoc)))
-      (while (> count 0)
-	(c-beginning-of-statement-1 lim)
-	(setq count (1- count)))
-      (while (< count 0)
-	(c-end-of-statement-1)
-	(setq count (1+ count))))
+  (let* ((count (or count 1))
+	here range)
+    (while (and (/= count 0) (or (not lim) (> (point) lim)))
+      (setq here (point))
+      ;; Find the literal around or next to point.
+      (if (> count 0)
+	  (skip-chars-backward " \t\n")
+	(skip-chars-forward " \t\n"))
+      (setq range (c-literal-limits lim))
+      (when (not range)
+	(setq range (if (> count 0)
+			(cons (save-excursion
+				(forward-comment -1)
+				(point))
+			      (point))
+		      (cons (point)
+			    (save-excursion
+			      (forward-comment 1)
+			      (point)))))
+	(if (= (car range) (cdr range))
+	    (setq range nil)))
+      (if (and (< count 0) (= here (point-max)))
+	  ;; Special case when we have no point between the range and
+	  ;; eob.  This can't happen at bob.
+	  (setq range nil))
+      (if range
+	  (if sentence-flag
+	      (progn
+		;; move by sentence, but not past the limit of the literal
+		(save-restriction
+		  (narrow-to-region (save-excursion
+				      (goto-char (car range))
+				      (if (= (char-syntax (char-after)) ?\")
+					  (forward-char)
+					(looking-at comment-start-skip)
+					(goto-char (match-end 0)))
+				      (point))
+				    (save-excursion
+				      (goto-char (cdr range))
+				      (if (= (char-syntax (char-before)) ?\")
+					  (backward-char)
+					(if (save-excursion
+					      (goto-char (car range))
+					      (looking-at "/\\*"))
+					    (backward-char 2))
+					(skip-chars-backward " \t\n"))
+				      (point)))
+		  (c-safe (forward-sentence (if (> count 0) -1 1))))
+		;; See if we should escape the literal.
+		(if (= (point) here)
+		    (goto-char (if (> count 0) (car range) (cdr range)))
+		  (setq count (if (> count 0) (1- count) (1+ count)))))
+	    ;; Just move past it.
+	    (goto-char (if (> count 0) (car range) (cdr range))))
+	;; Below we do approximately the same as
+	;; c-beginning-of-statement-1 and c-end-of-statement-1 and
+	;; perhaps they should be changed, but that'd likely break a
+	;; lot in cc-engine.
+	(goto-char here)
+	;; Move out of any enclosing non-`{ }' parens.
+	(let ((last (point)))
+	  (while (and (c-safe (progn (up-list 1) t))
+		      (/= (char-before) ?\}))
+	    (setq last (point)))
+	  (goto-char last))
+	(if (> count 0)
+	    (if (condition-case nil
+		    ;; Stop before `{' and after `;', `{', `}' and
+		    ;; `};' when not followed by `}', but on the other
+		    ;; side of the syntactic ws.  Also stop before
+		    ;; `}', but only to catch comments.  Move by sexps
+		    ;; and move into `{ }', but not into any other
+		    ;; other type of parens.
+		    (catch 'done
+		      (let (last)
+			(while t
+			  (setq last (point))
+			  (if (and (looking-at "[{}]")
+				   (/= here last))
+			      (throw 'done (= (char-after) ?{)))
+			  (c-backward-syntactic-ws)
+			  (cond ((bobp) ; Must handle bob specially.
+				 (if (= here last)
+				     (if (= last (point-min))
+					 (throw 'done t)
+				       (goto-char last)
+				       (throw 'done nil))
+				   (goto-char last)
+				   (throw 'done t)))
+				((progn (backward-char)
+					(looking-at "[;{}]"))
+				 (if (or (= here last)
+					 (= (char-after last) ?}))
+				     (if (and (= (char-before) ?})
+					      (= (char-after) ?\;))
+					 (backward-char))
+				   (goto-char last)
+				   (throw 'done t)))
+				((or (= (char-syntax (char-after)) ?\))
+				     (= (char-syntax (char-after)) ?\"))
+				 (forward-char)
+				 (backward-sexp))
+				))))
+		  (error
+		   (goto-char (point-min))
+		   t))
+		(setq count (1- count)))
+	  (if (condition-case nil
+		  ;; Stop before `{' and `}' and after `;', `}' and
+		  ;; `};'.  Also stop after '{', but only to catch
+		  ;; comments.  Move by sexps and move into `{ }', but
+		  ;; not into any other other type of parens.
+		  (catch 'done
+		    (let (last)
+		      (while t
+			(setq last (point))
+			(c-forward-syntactic-ws)
+			(cond ((= (char-after) ?{)
+			       (if (= here last)
+				   (progn (forward-char)
+					  (throw 'done nil))
+				 (goto-char last)
+				 (throw 'done t)))
+			      ((and (= (char-after) ?})
+				    (/= here last))
+			       (goto-char last)
+			       (throw 'done t))
+			      ((looking-at ";\\|};?")
+			       (goto-char (match-end 0))
+			       (throw 'done t))
+			      ((or (= (char-syntax (char-after)) ?\()
+				   (= (char-syntax (char-after)) ?\"))
+			       (forward-sexp))
+			      (t
+			       (forward-char))
+			      ))))
+		(error
+		 (goto-char (point-max))
+		 t))
+	      (setq count (1+ count))))
+	;; Check buffer limits here.
+	(if (> count 0)
+	    (if (bobp) (setq count 0))
+	  (if (eobp) (setq count 0)))
+	))
     ;; its possible we've been left up-buf of lim
-    (goto-char (max (point) lim))
+    (if lim (goto-char (max (point) lim)))
     )
   (c-keep-region-active))
 
