@@ -118,13 +118,6 @@
    ;; since it is considered the end of //-comments.
    "[ \t\n]*" c-symbol-key))
 
-(defconst c-Java-method-key
-  (concat
-   "^\\s *[+-]\\s *"
-   "\\(([^)]*)\\)?"			; return type
-   ;; \\s- in java syntax table does not include \n
-   ;; since it is considered the end of //-comments.
-   "[ \t\n]*" c-symbol-key))
 
 
 ;; comment starter definitions for various languages.  language specific
