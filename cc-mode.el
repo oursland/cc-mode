@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.195 $
-;; Last Modified:   $Date: 1995-04-17 22:48:26 $
+;; Version:         $Revision: 4.196 $
+;; Last Modified:   $Date: 1995-04-18 17:10:54 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-17 22:48:26 $|$Revision: 4.195 $|
+;; |$Date: 1995-04-18 17:10:54 $|$Revision: 4.196 $|
 
 ;;; Code:
 
@@ -358,7 +358,7 @@ following form: (SYNTACTIC-SYMBOL . ACTION).
 When a brace (either opening or closing) is inserted, the syntactic
 context it defines is looked up in this list, and if found, the
 associated ACTION is used to determine where newlines are inserted.
-If the context is not found, the defalt is to insert a newline both
+If the context is not found, the default is to insert a newline both
 before and after the brace.
 
 SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
@@ -4565,7 +4565,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.195 $"
+(defconst c-version "$Revision: 4.196 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
