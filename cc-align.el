@@ -316,16 +316,12 @@
   ;; To allow this function to be used in a list expression, nil is
   ;; returned if there's no template argument on the first line.
   (save-excursion
-    (let ((orig-syntax-table (syntax-table)))
-      (unwind-protect
-	  (progn
-	    (set-syntax-table c++-template-syntax-table)
-	    (beginning-of-line)
-	    (backward-up-list 1)
-	    (if (and (eq (char-after) ?<)
-		     (= (c-forward-token-1 1 nil (c-point 'eol)) 0))
-		(- (current-column) (c-langelem-col langelem))))
-	(set-syntax-table orig-syntax-table)))))
+    (c-with-syntax-table c++-template-syntax-table
+      (beginning-of-line)
+      (backward-up-list 1)
+      (if (and (eq (char-after) ?<)
+	       (= (c-forward-token-1 1 nil (c-point 'eol)) 0))
+	  (- (current-column) (c-langelem-col langelem))))))
 
 (defun c-lineup-ObjC-method-call (langelem)
   ;; Line up methods args as elisp-mode does with function args: go to
