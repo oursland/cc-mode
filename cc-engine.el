@@ -1087,6 +1087,15 @@
 			       ;; Check for `<opchar>= (Pike)
 			       ((eq (char-after) ?`) nil)
 			       ((looking-at "\\s.") 'maybe)
+			       ;; make sure we're not in a C++ template
+			       ;; argument assignment
+			       ((save-excursion
+				  (and (eq major-mode 'c++-mode)
+				       (zerop (c-backward-token-1 1 t lim))
+				       (looking-at c-class-key)
+				       ;; do we need to do more checking??
+				       ))
+				nil)
 			       (t t)))))
 		     ((eq (char-after) ?\[)
 		      (setq braceassignp t))
