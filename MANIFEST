@@ -22,6 +22,9 @@ You should have received the following files in this distribution:
 
     cc-lobotomy.el: Performance vs. accuracy trade-offs.
 
+    cc-mode-19.el: Compatibility for Emacs 19.34.  Do not use with
+    Emacs 20, XEmacs 19, or XEmacs 20.
+
     cc-mode.texi: The latest CC-Mode Texinfo manual.
 
     ANNOUNCEMENT: Release announcement as it appeared on various
