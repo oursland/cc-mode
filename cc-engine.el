@@ -1734,7 +1734,7 @@ brace."
 	      ;; we can probably indent it just like an arglist-cont
 	      (goto-char placeholder)
 	      (c-beginning-of-statement-1 lim)
-	      (c-add-syntax 'template-args-cont (point)))
+	      (c-add-syntax 'template-args-cont (c-point 'boi)))
 	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
 	      (c-beginning-of-statement-1 lim)
@@ -2119,7 +2119,8 @@ brace."
 		;; adjusts brace-list-open for brace lists as
 		;; top-level constructs, and brace lists inside
 		;; statements is a completely different context.
-		(c-add-syntax 'statement-cont placeholder))
+		(goto-char placeholder)
+		(c-add-syntax 'statement-cont (c-point 'boi)))
 	       ;; CASE 10B.3: catch-all for unknown construct.
 	       (t
 		;; Can and should I add an extensibility hook here?
@@ -2172,7 +2173,8 @@ brace."
 		   (setq placeholder (point))
 		   (looking-at "do\\b[^_]"))
 		 ))
-	  (c-add-syntax 'do-while-closure placeholder))
+	  (goto-char placeholder)
+	  (c-add-syntax 'do-while-closure (c-point 'boi)))
 	 ;; CASE 13: A catch or finally clause?  This case is simpler
 	 ;; than if-else and do-while, because a block is required
 	 ;; after every try, catch and finally.
