@@ -910,153 +910,117 @@ single `?' is found, then `c-maybe-labelp' is cleared."
   ;; and thus the state never contains two cons elements in
   ;; succession.
   (save-restriction
+    ;; Somewhat ugly use of c-check-state-cache to get rid of the part
+    ;; of the state cache that is after point.  Can't use
+    ;; c-whack-state-after for the same reasons as in that function.
+    (c-check-state-cache (point) nil nil)
     (let* ((here (point))
 	   (c-macro-start (c-query-macro-start))
 	   (in-macro-start (or c-macro-start (point)))
-	   state-tail-intact
-	   (state-head (list nil))	; First part of the state.
-	   (state-ptr state-head)	; Last cons in state-head.
-	   (state-foot			; Last part of the state.
-	    (and c-state-cache
-		 ;; Try to use cached info before point.
-		 (let ((newstate (c-whack-state-after here c-state-cache)))
-		   (and newstate
-			(or (cdr newstate)
-			    (eq (car newstate)
-				(let ((elem c-state-cache))
-				  (while (cdr elem)
-				    (setq elem (cdr elem)))
-				  (car elem))))
-			;; The last element in the cached state was
-			;; not changed by the whack.
-			(setq state-tail-intact t))
-		   newstate)))
-	   (pos here)
-	   placeholder last-pos sexp-pos)
-      (narrow-to-region
-       ;; Narrow out the first part of the buffer that should be
-       ;; outside the search.  If we got a cached state, we continue
-       ;; at its end, otherwise we go back two bods.
-       (or (when (setq last-pos
-		       ;; Get the latest position we know are directly
-		       ;; inside the closest containing paren on the
-		       ;; cached state.
-		       (and state-foot
-			    (if (consp (car state-foot))
-				(cdr (car state-foot))
-			      (1+ (car state-foot)))))
-	     ;; There's a cached state with a containing paren.  Pop
-	     ;; off the stale containing sexps from it by going
-	     ;; forward out of parens as far as possible.
-	     (narrow-to-region (point-min) here)
-	     (while (and state-foot
-			 (setq placeholder (c-up-list-forward last-pos)))
-	       (setq last-pos placeholder)
-	       (if (consp (car state-foot))
-		   (setq sexp-pos (car-safe (cdr state-foot))
-			 state-foot (cdr-safe (cdr state-foot)))
-		 (setq sexp-pos (car state-foot)
-		       state-foot (cdr state-foot))))
-	     (when (and sexp-pos (eq (char-after sexp-pos) ?{))
-	       ;; The last paren pair we moved out from was a brace
-	       ;; pair.  Modify the state to record this as a closed
-	       ;; pair now.
-	       (if (consp (car-safe state-foot))
-		   (setq state-foot (cdr state-foot)))
-	       (setq state-foot (cons (cons sexp-pos last-pos)
-				      state-foot)))
-	     ;; Check if the preceding balanced paren is within a
-	     ;; macro; it should be ignored if we're outside the
-	     ;; macro.  There's no need to check any further upwards;
-	     ;; if the macro contains an unbalanced opening paren then
-	     ;; we're smoked anyway.
-	     (when (and (<= (point) in-macro-start)
-			(consp (car state-foot)))
-	       (save-excursion
-		 (goto-char (car (car state-foot)))
-		 (when (c-beginning-of-macro)
-		   (setq here (point)
-			 state-foot (cdr state-foot)))))
-	     (when state-foot
-	       (if (or state-tail-intact
-		       (consp (car state-foot))
-		       (cdr state-foot))
-		   ;; If the whack above didn't touch the last element
-		   ;; of the state, we know it comes from an earlier
-		   ;; point and is thus complete (i.e. no risk there's
-		   ;; some closed sexp earlier that we should
-		   ;; include).  Otherwise we only use it if it still
-		   ;; got at least one closed sexp or two open ones.
-		   last-pos
-		 (setq state-foot nil))))
-	   (when state-foot
-	     ;; The cached state didn't provide any containing parens,
-	     ;; but it has a closed one before the current point.
-	     ;; Let's continue after that.
-	     (cdr (car state-foot)))
-	   (save-excursion
-	     ;; go back 2 bods, but ignore any bogus positions
-	     ;; returned by beginning-of-defun (i.e. open paren in
-	     ;; column zero)
-	     (goto-char here)
-	     (let ((cnt 2))
-	       (while (not (or (bobp) (zerop cnt)))
-		 (c-beginning-of-defun-1)
-		 (if (eq (char-after) ?\{)
-		     (setq cnt (1- cnt)))))
-	     (point)))
-       (point-max))
+	   old-state last-pos pairs
+	   (pos
+	    ;; Find the start position for the forward search.  (Can't
+	    ;; search in the backward direction since point might be
+	    ;; in some kind of literal.)
+	    (or (when (setq last-pos
+			    ;; Get the latest position we know are directly
+			    ;; inside the closest containing paren on the
+			    ;; cached state.
+			    (and c-state-cache
+				 (if (consp (car c-state-cache))
+				     (cdr (car c-state-cache))
+				   (1+ (car c-state-cache)))))
+		  ;; There's a cached state with a containing paren.  Pop
+		  ;; off the stale containing sexps from it by going
+		  ;; forward out of parens as far as possible.
+		  (narrow-to-region (point-min) here)
+		  (let (placeholder pair-beg)
+		    (while (and c-state-cache
+				(setq placeholder (c-up-list-forward last-pos)))
+		      (setq last-pos placeholder)
+		      (if (consp (car c-state-cache))
+			  (setq pair-beg (car-safe (cdr c-state-cache))
+				c-state-cache (cdr-safe (cdr c-state-cache)))
+			(setq pair-beg (car c-state-cache)
+			      c-state-cache (cdr c-state-cache))))
+		    (when (and pair-beg (eq (char-after pair-beg) ?{))
+		      ;; The last paren pair we moved out from was a brace
+		      ;; pair.  Modify the state to record this as a closed
+		      ;; pair now.
+		      (if (consp (car-safe c-state-cache))
+			  (setq c-state-cache (cdr c-state-cache)))
+		      (setq c-state-cache (cons (cons pair-beg last-pos)
+						c-state-cache))))
+		  ;; Check if the preceding balanced paren is within a
+		  ;; macro; it should be ignored if we're outside the
+		  ;; macro.  There's no need to check any further upwards;
+		  ;; if the macro contains an unbalanced opening paren then
+		  ;; we're smoked anyway.
+		  (when (and (<= (point) in-macro-start)
+			     (consp (car c-state-cache)))
+		    (save-excursion
+		      (goto-char (car (car c-state-cache)))
+		      (when (c-beginning-of-macro)
+			(setq here (point)
+			      c-state-cache (cdr c-state-cache)))))
+		  (when c-state-cache
+		    (setq old-state c-state-cache)
+		    last-pos))
+		(save-excursion
+		  ;; go back 2 bods, but ignore any bogus positions
+		  ;; returned by beginning-of-defun (i.e. open paren in
+		  ;; column zero)
+		  (goto-char here)
+		  (let ((cnt 2))
+		    (while (not (or (bobp) (zerop cnt)))
+		      (c-beginning-of-defun-1)
+		      (if (eq (char-after) ?\{)
+			  (setq cnt (1- cnt)))))
+		  (point)))))
+      (narrow-to-region (point-min) here)
       (while pos
-	;; Search backward for the closest preceding balanced brace pair.
-	(while (and
-		(setq last-pos (c-down-list-backward pos))
-		(progn
-		  (unless (setq pos (c-up-list-backward last-pos))
-		    ;; Found a close paren without a corresponding
-		    ;; opening one.
-		    (when (not state-foot)
-		      ;; Maybe we've narrowed too much.  If we're
-		      ;; building on a cached state that can't happen,
-		      ;; assuming the cache is correct.
-		      (narrow-to-region 1 (point-max))
-		      (setq pos (c-up-list-backward last-pos)))
-		    (unless pos
-		      (goto-char last-pos)
-		      (beginning-of-line)
-		      (setq c-parsing-error
-			    (format "Unbalanced close paren at line %d"
-				    (1+ (count-lines
-					 1 (c-point 'bol last-pos)))))))
-		  (when pos
-		    (if (and (eq (char-after pos) ?\{)
-			     ;; If both we and the pair is inside
-			     ;; the same macro then it's
-			     ;; interesting, otherwise it's only
-			     ;; interesting if not inside a macro.
-			     (or (>= pos in-macro-start)
-				 (not (save-excursion
-					(goto-char pos)
-					(c-beginning-of-macro)))))
-			(progn
-			  (setcdr state-ptr
-				  (list (cons pos (1+ last-pos))))
-			  (setq state-ptr (cdr state-ptr))
-			  nil)
-		      t)))))
-	;; Search backward for the closest containing open paren.
-	(when (and pos (setq pos (c-up-list-backward pos)))
-	  ;; NB: We don't check if the paren is in a macro here;
-	  ;; macros containing unbalanced parens will confuse CC Mode.
-	  ;; Could perhaps handle it here, but there are still
-	  ;; countless other places that trip up.
-	  (setcdr state-ptr (list pos))
-	  (setq state-ptr (cdr state-ptr))))
-      (setcdr state-ptr (if (and (consp (car state-ptr))
-				 (consp (car state-foot)))
-			    ;; Avoid two closed sexps in a row.
-			    (cdr state-foot)
-			  state-foot))
-      (setq c-state-cache (cdr state-head)))))
+	;; Find the balanced brace pairs.
+	(setq pairs nil)
+	(while (and (setq last-pos (c-down-list-forward pos))
+		    (setq pos (c-up-list-forward last-pos)))
+	  (if (eq (char-before last-pos) ?{)
+	      (setq pairs (cons (cons last-pos pos) pairs))))
+	;; Should ignore any pairs that are in a macro, providing
+	;; we're not in the same one.
+	(when (and pairs (< (car (car pairs)) in-macro-start))
+	  (while (and (save-excursion
+			(goto-char (car (car pairs)))
+			(c-beginning-of-macro))
+		      (setq pairs (cdr pairs)))))
+	;; Record the last brace pair.
+	(when pairs
+	  (if (and (eq c-state-cache old-state)
+		   (consp (car-safe c-state-cache)))
+	      ;; There's a closed pair on the cached state but we've
+	      ;; found a later one, so remove it.
+	      (setq c-state-cache (cdr c-state-cache)))
+	  (setq pairs (car pairs))
+	  (setcar pairs (1- (car pairs)))
+	  (setq c-state-cache (cons pairs c-state-cache)))
+	(if last-pos
+	    ;; Record the open paren and loop.
+	    (setq pos last-pos
+		  c-state-cache (cons (1- pos) c-state-cache))
+	  (if (setq last-pos (c-up-list-forward pos))
+	      ;; Found a close paren without a corresponding opening
+	      ;; one.  Maybe we didn't go back far enough, so try to
+	      ;; scan backward for the start paren and then start over.
+	      (progn
+		(setq pos (c-up-list-backward pos)
+		      c-state-cache nil)
+		(unless pos
+		  (setq pos last-pos
+			c-parsing-error
+			(format "Unbalanced close paren at line %d"
+				(1+ (count-lines
+				     1 (c-point 'bol last-pos)))))))
+	    (setq pos nil))))
+      c-state-cache)))
 
 (defun c-check-state-cache (beg end old-length)
   ;; Used on `after-change-functions' to adjust `c-state-cache'.
