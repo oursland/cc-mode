@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.311 $
-;; Last Modified:   $Date: 1993-04-16 15:36:39 $
+;; Version:         $Revision: 2.312 $
+;; Last Modified:   $Date: 1993-04-19 18:59:39 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -69,7 +69,6 @@
 
 ;; Important Note about Escapes in Comments, and Performance
 ;; =========================================================
-
 ;; You may notice that certain characters, when typed in comment
 ;; regions, get escaped with a backslash.  This is a workaround for
 ;; bugs in emacs' syntax parsing algorithms. In brief, syntax parsing
@@ -89,15 +88,12 @@
 ;; Optimization is an ongoing concern, but the real solution is to fix
 ;; emacs.
 ;;
-;; Patches to Lucid Emacs 19 have been submitted and may possibly show
-;; up in a future release of that editor.  Some patches for GNU emacs
-;; 18 have been released on the beta site, but they are not up-to-date
-;; with the proposed Lemacs patches. I probably won't re-engineer the
-;; v18 patches, but if you do, please send them to me so I can make
-;; them available to other users via the beta site. If you have the
-;; patches installed, c++-mode will automatically recognize this and
-;; use the faster built-in primitives instead, and no characters will
-;; be tamed (ie no backslashes in comment regions).
+;; As of release 19.4, Lucid Emacs is distributed with the fixes in
+;; place, and c++-mode will automatically take advantage of them so
+;; none of the above applies to you.  Similar patches will be part of
+;; GNU Emacs 19. Some patches for GNU emacs 18 have been released on
+;; the beta site, but they are unsupported. Email for more
+;; information.
 
 ;; Beta Testers Mailing List
 ;; =========================
@@ -118,18 +114,24 @@
 ;;
 ;; archive.cis.ohio-state.edu:pub/gnu/emacs/elisp-archive/modes/c++-mode.el.Z 
 ;; 
-;; c++-mode.el is no longer available through the mail-server at
-;; cme.nist.gov. For those of you without anon-ftp access, I'm sorry I
-;; can't help much, because I won't always have the latest version
-;; handy to send you. I will always post the source to the
-;; gnu.emacs.sources and comp.emacs newsgroups so look their or ask
-;; your fellow netters.  It would be great if someone who owns a
-;; mail-server would volunteer their services.
+;; For those of you without anon-ftp access, you can use the DEC's
+;; ftpmail'er at the address ftpmail@decwrl.dec.com. Send the
+;; following message in the body of your mail to that address to get
+;; c++-mode:
+;;
+;; reply <a valid net address back to you>
+;; connect archive.cis.ohio-state.edu
+;; binary
+;; chdir pub/gnu/emacs/elisp-archive/modes
+;; get c++-mode.el.Z
+;;
+;; or just send the message "help" for more information on ftpmail.
+;; Response times will vary with the number of requests in the queue.
 
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-04-16 15:36:39 $|$Revision: 2.311 $|
+;; |$Date: 1993-04-19 18:59:39 $|$Revision: 2.312 $|
 
 ;;; Code:
 
@@ -456,7 +458,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.311 $
+  "Major mode for editing C++ code.  $Revision: 2.312 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -679,7 +681,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.311 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.312 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2550,7 +2552,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.311 $"
+(defconst c++-version "$Revision: 2.312 $"
   "c++-mode version number.")
 
 (defun c++-version ()
