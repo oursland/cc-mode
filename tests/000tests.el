@@ -182,6 +182,7 @@
     "decls-3.java"
     "enum-1.cc"
     "enum-2.c"
+    "enum-3.c"
     "except-1.cc"
     "except-2.cc"
     "except-3.cc"
