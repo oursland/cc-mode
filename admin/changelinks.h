@@ -1,5 +1,6 @@
 <!-- -*- html -*- -->
 <h3>Versions</h3>
+<li><a href="changes-526.html">Changes for 5.26</a>
 <li><a href="changes-525.html">Changes for 5.25</a>
 <li><a href="changes-524.html">Changes for 5.24</a>
 <li><a href="changes-521.html">Changes for 5.21</a>

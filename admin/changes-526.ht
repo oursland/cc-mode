@@ -1,0 +1,137 @@
+Title: Changes with CC Mode 5.26
+Author: cc-mode-help@python.org
+Links: links.h changelinks.h
+
+<h2>Changes with CC Mode 5.26</h2>
+
+See also the <a href="changes-525.html">user visible changes for
+5.25</a>.
+
+<ul>
+
+  <p><li>New initialization procedure for the style system.  Changes
+  made globally to the style variables now takes precedence over the
+  style settings on <code>c-style-alist</code>, instead of the other
+  way around.  This makes it possible to do simple configuration the
+  intuitive way with Customize or with setq lines in
+  <code>.emacs</code>.
+
+  <p>The style variables now takes a special value
+  <code>set-from-style</code>, which causes the value to be taken from
+  the style system, and all style variables have this value by
+  default.  That way, this new system is believed to be almost
+  entirely compatible with current configurations, in spite of the
+  changed precedence between style and global variable settings.
+
+  <ul>
+
+    <p><li><code>c-offsets-alist</code> is now a customizable
+    variable.
+
+    <p><li>Compatibility variable to restore the old behavior.  In
+    case your configuration doesn't work with this change, you can set
+    <code>c-old-style-variable-behavior</code> to non-nil to get the
+    old behavior back.
+
+  </ul>
+
+  <p><li>Improvements to line breaking and text filling.  CC Mode now
+  handles this more intelligently and seamlessly wrt the surrounding
+  code, especially inside comments.  For details see the new chapter
+  about this in the manual.
+
+  <ul>
+
+    <p><li>New variable to recognize comment line prefix decorations.
+    The variable <code>c-comment-prefix-regexp</code> has been added
+    to properly recognize the line prefix in both block and line
+    comments.  It's primarily used to initialize the various paragraph
+    recognition and adaptive filling variables that the text handling
+    functions uses.
+
+    <p><li>New variable <code>c-block-comment-prefix</code>.  This is
+    a generalization of the now obsolete variable
+    <code>c-comment-continuation-stars</code> to handle arbitrary
+    strings.
+
+    <p><li>CC Mode now uses adaptive fill mode.  This to make it adapt
+    better to the paragraph style inside comments.
+
+    <p>It's also possible to use other adaptive filling packages
+    inside CC Mode, notably Kyle E. Jones' Filladapt mode (<a
+    href="http://wonderworks.com/">http://wonderworks.com/</a>).  A
+    new convenience function <code>c-setup-filladapt</code> sets up
+    Filladapt for use inside CC Mode.
+
+    <p>Note though that the 2.12 version of Filladapt lacks a feature
+    that causes it to work suboptimally when
+    <code>c-comment-prefix-regexp</code> can match the empty string
+    (which it commonly does).  A <a href="filladapt.html">patch</a>
+    for that is available from the CC Mode web site.
+
+    <p><li>It's now possible to selectively turn off auto filling.
+    The variable <code>c-ignore-auto-fill</code> is used to ignore
+    auto fill mode in specific contexts, e.g. in preprocessor
+    directives and in string literals.
+
+    <p><li>New context sensitive line break function
+    <code>c-context-line-break</code>.  It works like
+    <code>newline-and-indent</code> in normal code, and adapts the
+    line prefix according to the comment style when used inside
+    comments.  If you're normally using
+    <code>newline-and-indent</code>, you might want to switch to this
+    function.
+
+  </ul>
+
+  <p><li>Fixes to IDL mode.  It now does a better job in recognizing
+  only the constructs relevant to IDL.  E.g. it no longer matches
+  <code>class</code> as the beginning of a struct block, but it does
+  match the CORBA 2.3 <code>valuetype</code> keyword.  Thanks to Eric
+  Eide.
+
+  <p><li>Improvements to the Whitesmith style.  It now keeps the style
+  consistently on all levels and both when opening braces hangs and
+  when they don't.
+
+  <ul>
+
+    <p><li>New lineup function
+    <code>c-lineup-whitesmith-in-block</code>.
+
+  </ul>
+
+  <p><li>New lineup functions <code>c-lineup-template-args</code> and
+  <code>c-indent-multi-line-block</code>.  See their docstrings for
+  details.  <code>c-lineup-template-args</code> does a better job of
+  tracking the brackets used as parens in C++ templates, and is used
+  by default to line up continued template arguments.
+
+  <p><li><code>c-lineup-comment</code> now preserves alignment with a
+  comment on the previous line.  It used to instead preserve comments
+  that started in the column specified by <code>comment-column</code>.
+
+  <p><li><code>c-lineup-C-comments</code> handles "free form" text
+  comments.  In comments with a long delimiter line at the start, the
+  indentation is kept unchanged for lines that start with an empty
+  comment line prefix.  This is intended for the type of large block
+  comments that contain documentation with its own formatting.  In
+  these you normally don't want CC Mode to change the indentation.
+
+  <p><li>The <code>c</code> syntactic symbol is now relative to the
+  comment start instead of the previous line, to make integers usable
+  as lineup arguments.
+
+  <p><li>All lineup functions have gotten docstrings.
+
+  <p><li>More preprocessor directive movement functions.
+  <code>c-down-conditional</code> does the reverse of
+  <code>c-up-conditional</code>.
+  <code>c-up-conditional-with-else</code> and
+  <code>c-down-conditional-with-else</code> are variants of these that
+  also stops at <code>#else</code> lines (suggested by Don Provan).
+
+  <p><li>Minor improvements to many movement functions in tricky
+  situations.
+
+</ul>
