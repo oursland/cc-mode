@@ -344,7 +344,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (make-variable-buffer-local 'c-comment-start-regexp)
 
 ;; Regexp describing a switch's case or default label for all languages
-(defconst c-switch-label-key "\\(\\(case[( \t]+\\S .*\\)\\|default[ \t]*\\):")
+(defconst c-switch-label-key "\\(\\(case[( \t]+\\S [^:]*\\)\\|default[ \t]*\\):")
 ;; Regexp describing any label.
 (defconst c-label-key (concat c-symbol-key ":\\([^:]\\|$\\)"))
 
