@@ -223,9 +223,9 @@ If t, the indentation functions indents according to the syntactic
 context, using the style settings specified by `c-offsets-alist'.
 
 If nil, every line is just indented to the same level as the previous
-one, and the \\[c-indent-command] command adjusts the indentation in steps
-specified by `c-basic-offset'.  The indentation style have no effect
-in this mode, nor any of the indentation associated variables,
+one, and the \\[c-indent-command] command adjusts the indentation in
+steps specified by `c-basic-offset'.  The indentation style has no
+effect in this mode, nor any of the indentation associated variables,
 e.g. `c-special-indent-hook'."
   :type 'boolean
   :group 'c)
