@@ -1,3 +1,345 @@
+Tue Feb 03 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-postprocess-file-styles): If a file style or file
+ 	offsets are set, make the variables local to the buffer (via
+ 	make-local-variable).
+
+	* cc-styles.el (c-make-styles-buffer-local): Take an optional
+ 	argument which switches between make-variable-buffer-local and
+ 	make-local-variable.  Generalize.
+
+Mon Feb 02 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-align.el (c-lineup-close-paren, c-indent-one-line-block): New
+ 	indentation functions.
+
+	* cc-cmds.el (c-beginning-of-statement, c-end-of-statement): Do
+ 	not move by sentence in strings.  Doc fixes.
+
+	* cc-mode.texi: Document new indentation functions.
+
+Sat Jan 24 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-defs.el (c-point): In XEmacs, use scan-lists +
+ 	buffer-syntactic-context-depth to radically speed up locating
+ 	top-level defun opening brace in some situations.  When the braces
+ 	hang, this can make c-parse-state from between 3 to 60 times
+ 	faster.  When they don't hang, this may be a few percentage points
+ 	slower (not noticeable to me though).  The variable
+ 	c-enable-xemacs-performance-kludge-p toggles the behavior.  This
+ 	change has no effect on Emacs, which lacks the built-in function
+ 	buffer-syntactic-context-depth.
+
+	* cc-mode.texi: Discuss c-enable-xemacs-performance-kludge-p in
+ 	the section on performance.
+
+	* cc-vars.el (c-enable-xemacs-performance-kludge-p): New variable. 
+
+Fri Jan 23 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el cc-defs.el cc-engine.el (c-beginning-of-defun,
+ 	c-indent-defun, c-parse-state): Use (c-point 'bod) instead of
+ 	beginning-of-defun directly.
+
+Tue Jan 20 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-beginning-of-statement): Speedup; it's only
+ 	necessary to call `c-literal-limits' once when the function is
+ 	entered.
+
+Mon Jan 19 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-align.el (c-semi&comma-no-newlines-before-nonblanks,
+ 	c-semi&comma-no-newlines-for-oneline-inliners): New functions,
+ 	appropriate for c-hanging-semi&comma-criteria, but not placed on
+ 	that variable by default.
+
+	* cc-langs.el (c-mode-base-map): Comment out c-beginning-of-defun
+ 	and c-end-of-defun bindings, since RMS doesn't want these to be
+ 	the default.
+
+	* cc-mode.texi: Describe c-beginning-of-defun and c-end-of-defun.
+  	Describe the new c-hanging-semi&comma-criteria functions.
+
+Sun Jan 18 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-beginning-of-statement): Handle multiple C++ line
+ 	comments a little better.
+
+	Almost completely rewritten.  It's now more thorough when handling
+ 	strings and comments and the transitions between them and the
+ 	surrounding code.  The statement parsing is also rewritten because
+ 	`c-{beginning|end}-of-statement-1' does no longer do what we want
+ 	in this function (e.g. c-b-o-s-1 doesn't go into blocks).  It also
+ 	works better for different counts and when sentence-flag is nil.
+
+	* cc-engine.el (c-forward-syntactic-ws, c-backward-syntactic-ws):
+ 	Removed the narrowings which doesn't seem to have much effect.
+  	Instead a simple check is made against the given limit.  In
+ 	`c-backward-syntactic-ws' this means that there's no need to
+ 	search for bod, which helps up speed quite a lot in some areas.
+
+	(c-collect-line-comments): New function that given the limits of
+ 	one C++ style line comment returns the range for all adjacent line
+ 	comments.  This functionality is moved from the functions
+ 	`c-literal-limits' and `c-literal-limits-fast'.
+
+	(c-literal-limits): New function that finds the start and end pos
+ 	of a comment or string surrounding point.  This function is Emacs
+ 	19.34 compatible and it has a workaround for what seems to be a
+ 	bug in `parse-partial-sexp' when we use an existing state to get
+ 	the state for the very next character.
+
+	(c-literal-limits-fast): A faster variant of `c-literal-limits'
+ 	for newer Emacsen where the state returned from
+ 	`parse-partial-sexp' contains the starting pos of the last
+ 	literal.  This does not contain the workaround described above.
+  	The function is not yet tested and therefore not in use for now.
+  	Note that these functions regard the position between the first
+ 	and second char of a comment starter to be part of the comment.
+  	Although `parse-partial-sexp' (in Emacs 19 anyway) doesn't do
+ 	this, it seems more intuitive to me.  Maybe `c-in-literal' should
+ 	do this too?
+
+Thu Jan 15 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-mode-19.el Added `when' and `unless'. 
+
+Thu Jan 15 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed a few byte compiler
+ 	warnings.
+
+Wed Jan 14 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-beginning-of-defun, c-end-of-defun): New commands
+ 	which mimic the standard built-ins, but do a much better job of
+ 	finding the open brace when it's hung on the right side (as is the
+ 	case with the most common Java style).
+
+	* cc-engine.el (c-backward-to-start-of-do): Break infloop for
+ 	illegal code, e.g. when someone types while (TRUE) { at the top of
+ 	a buffer, we shouldn't hang when the { is typed!
+
+Tue Jan 13 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-beginning-of-statement): When moving forward by
+ 	sentences, because we're either inside or at the start of a
+ 	comment, be sure to limit movement to only within the extent of
+ 	the comment.
+
+Sat Jan 10 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-java-method-key): I really don't remember why
+ 	this was added, but it seems to do more harm than good.  Besides,
+ 	its value was clearly wrong, being inherited from Objective-C.
+
+	* cc-mode.el (java-mode): Set c-method-key to nil.  I don't think
+ 	this is necessary for Java, and besides, the old value was
+ 	inherited from Objective-C which was clearly not right.  With this
+ 	change, all regression tests pass and the example by Bengt
+ 	Martensson also passes:
+
+	class Baz
+	{
+	    int blah()
+	    {
+		return 1
+		    + 2
+		    + 3
+		    + foobar()
+		    + 5
+		    + 6;
+	    }
+	}
+
+	* cc-mode.texi Add some explanation to "gnu" style and "user"
+ 	style, describing the relationship between these and user
+ 	Customizations.
+
+	* cc-vars.el (c-default-style): Change this back to "gnu" after
+ 	(re-reading old) discussions with RMS.  This may confuse users who
+ 	set variables in the top-level of their .emacs files, or using the
+ 	Custom interface, since those changes will get incorporated into
+ 	the "user" style.  RMS insists, however, that the default style be
+ 	"gnu".
+
+Sun Jan 04 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-electric-colon): Newlines should not be inserted
+ 	before or after scope operators, regardless of the value of
+ 	c-hanging-colons.
+
+	* cc-engine.el (c-backward-to-start-of-if): Workaround a nasty to
+ 	track down bug.  If point is < lim, then this function can
+ 	actually land you forward into the buffer.  This can cause an
+ 	infloop in c-beginning-of-statement-1. It is probably a bug that
+ 	this function gets called with a lim > point, but that's even
+ 	harder to figure out, so if that's the case when this function is
+ 	called, it's simpler just to ignore lim and use bod.  This breaks
+ 	the infloop without causing broken indentation.
+
+Sat Jan 03 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-align.el (c-lineup-dont-change): New lineup function that
+ 	leaves the current line's indentation unchanged.  Used for the new
+ 	cpp-macro-cont syntactic symbol.
+
+	* cc-cmds.el (c-electric-brace): namespace-open and
+ 	namespace-close braces can hang.
+
+	* cc-defs.el (c-emacs-features): Added autoload cookie which Steve
+ 	Baur claims is necessary for XEmacs.
+
+	* cc-engine.el (c-search-uplist-for-classkey): When searching up
+ 	for a class key, instead of hardcoding the extended search for
+ 	"extern", use the new variable c-extra-toplevel-key, which is
+ 	language dependent.  For C++, this variable includes the keyword
+ 	"namespace" which will match C++ namespace introducing blocks.
+	
+  	(c-guess-basic-syntax): Support for recognizing C++ namespace
+ 	blocks, by elaborating on the mechanism used to find external
+ 	language blocks.  Searches which hardcoded "extern" now use
+ 	c-extra-toplevel-key, a language dependent variable.  Case clauses
+ 	that were modified: CASE 5A.1, CASE 5A.4, CASE 5F, CASE 5I, CASE
+ 	14A.
+
+  	CASE 3: we can now determine whether we're at the beginning of a
+ 	cpp macro definition, or inside the middle of one. Set syntax to
+ 	'cpp-macro in the former case, 'cpp-macro-cont in the latter.  In
+ 	both cases, the relpos is the beginning of the macro.
+
+	(c-forward-syntactic-ws): Added code that skips forward over
+ 	multi-line cpp macros.
+
+	(c-beginning-of-macro): Moved, and made into a defsubst.  This
+ 	function can now actually find the beginning of a multi-line C
+ 	preprocessor macro.
+	
+  	(c-backward-syntactic-ws): Use c-beginning-of-macro to skip
+ 	backwards over multi-line macro definitions.
+
+	(c-in-literal, c-fast-in-literal): Use c-beginning-of-macro to
+ 	find out whether we're in a multi-line macro definition.
+	
+	* cc-langs.el (c-C-extra-toplevel-key, c-C++-extra-toplevel-key,
+ 	c-extra-toplevel-key): New variables which parameterize the search
+ 	for additional top-level enclosing constructs.  In all languages,
+ 	extern lang blocks are supported (but maybe this should just be C
+ 	and C++?). In C++, also namespace blocks are supported.
+
+	* cc-menus.el Imenu patches by Masatake Yamato and Jan Dubois. 
+
+	* cc-mode.el (c++-mode): Set c-extra-toplevel-key to
+ 	c-C++-extra-toplevel-key.
+
+	(c-initialize-on-load): New variable, *not* customized.  When set
+ 	to t -- the default -- c-initialize-cc-mode is called when the
+ 	cc-mode.el file is loaded, e.g. via (require 'cc-mode).  This is
+ 	backwards compatible with .emacs files that used CC Mode 4.  I'm
+ 	still not 100% sure this is the right thing to do.
+
+	* cc-mode.texi: Added descriptions of the new C++ namespace
+ 	syntactic symbols: namespace-open, namespace-close, innamespace.
+  	Added an example for this and also multi-line macros.
+
+	Describe c-lineup-dont-change and the new cpp-macro-cont syntactic
+ 	symbol.  Remove the `known limitation' that multi-line macros
+ 	aren't supported.
+
+	* cc-styles.el (c-offsets-alist): Three new syntactic symbols:
+ 	innamespace, namespace-open, namespace-close.  These support C++
+ 	namespace blocks.
+
+	Added new syntactic symbol cpp-macro-cont, by default bound to
+ 	c-lineup-dont-change.  This symbol is assigned to subsequent lines
+ 	of a multi-line C preprocess macro definition.
+
+	* cc-vars.el (c-default-style): Variable is user customizable so
+ 	it's docstring should start with a `*'.
+
+Fri Jan 02 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-fast-in-literal): Function which should be
+ 	faster than c-in-literal.  This uses buffer-syntactic-context
+ 	which is a speedy built-in that exists only in XEmacs.  Make it's
+ 	alias conditional on that built-in's existance.  To be honest, the
+ 	performance effects should be tested.  Also c-fast-in-literal
+ 	knows about multi-line cpp macros while c-in-literal does not.
+  	The latter should be taught about this, but this change will wait
+ 	for a future mega-patch to handle multi-line macros.
+
+Thu Jan 01 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-comment-line-break-function): When breaking a
+ 	line-oriented comment, copy the comment leader from the previous
+ 	line instead of hardcoding it to "// ".  This ensures that
+ 	whitespace between the slashes and the text is preserved.
+
+Tue Nov 18 1997  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-mode-base-map): Bind c-mark-function using a
+ 	portable representation of C-M-h that differentiates this from
+ 	M-BS on both XEmacs and Emacs.
+
+Sat Nov 15 1997  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-electric-pound, c-electric-brace,
+ 	c-electric-slash, c-electric-star, c-electric-semi&comma,
+ 	c-electric-colon, c-electric-lt-gt, c-scope-operator,
+ 	c-indent-command, c-indent-exp, c-indent-defun,
+ 	c-backslash-region, c-fill-paragraph): Added "*" to interactive
+ 	spec to barf-if-buffer-read-only.
+
+Fri Nov 14 1997  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-fill-paragraph): regexp-quote the fill-prefix when
+ 	search forward for the end of line oriented comments.  This is in
+ 	case the fill-prefix contains regexp special characters
+ 	(e.g. fill-prefix == " //* ")
+
+	(c-backslash-region): Do not preserve the zmacs region (XEmacs). 
+
+Wed Nov 12 1997  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-mode-base-map): c-mark-function moved back to
+ 	M-C-h.  RMS says: "It ought to be on M-C-h, because that is the
+ 	key to mark one function definition in whatever language you're
+ 	using."  I don't remember why it was moved in the first place.
+
+Tue Nov 04 1997  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-electric-backspace, c-electric-delete):
+ 	Interactive spec should have a read-only *.
+
+Thu Oct 30 1997  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-styles-alist): Merged "jdk" into "java" style
+ 	and removed "jdk" style.  Only differences now are inline-open and
+ 	c-basic-offset.
+
+Wed Oct 29 1997  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi Document "jdk" style. 
+
+	* cc-styles.el (c-style-alist): "jdk" style given by Martin
+ 	Buchholz <mrb@Eng.Sun.COM> for conformance with Sun's JDK style.
+
+Fri Oct 10 1997  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-set-style-2, c-initialize-builtin-style): Don't
+ 	special case "cc-mode", it's a derived style.
+
+	Fix setup of derived style "cc-mode".
+
+	Introduce the new default style "user" which contains all user
+ 	customizations.  The style "cc-mode" is retained as an alias, but
+ 	it's use is deprecated.  The default style variable has been
+ 	renamed c-default-style.
+
+	* cc-vars.el (c-site-default-style): Renamed to c-default-style.
+  	Also, the default value is now "user".
+	
 Mon Oct  6 19:12:51 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.19
