@@ -50,6 +50,7 @@
 
 
 (defvar c-in-literal-cache t)
+(defvar c-parsing-error nil)
 
 ;; KLUDGE ALERT: c-maybe-labelp is used to pass information between
 ;; c-crosses-statement-barrier-p and c-beginning-of-statement-1.  A
@@ -726,8 +727,6 @@
 
 
 ;; utilities for moving and querying around syntactic elements
-
-(defvar c-parsing-error nil)
 
 (defvar c-state-cache nil)
 (make-variable-buffer-local 'c-state-cache)
@@ -2687,21 +2686,6 @@ isn't moved."
 		    (c-beginning-of-statement-1 containing-sexp)
 		    (setq placeholder (point))))
 	       (/= placeholder containing-sexp))
-	  (let ((after-cond-placeholder
-		 (save-excursion
-		   (goto-char placeholder)
-		   (if (and c-conditional-key (looking-at c-conditional-key))
-		       (progn
-			 (c-safe (c-skip-conditional))
-			 (c-forward-syntactic-ws)
-			 (if (eq (char-after) ?\;)
-			     (progn
-			       (forward-char 1)
-			       (c-forward-syntactic-ws)))
-			 (point))
-		     nil))))
-	    (when after-cond-placeholder
-	      (error "after-cond-placeholder not nil")))
 	  ;; This is shared with CASE 18.
 	  (c-guess-continued-construct indent-point
 				       char-after-ip
@@ -2982,8 +2966,7 @@ isn't moved."
 
 (defun c-echo-parsing-error (&optional quiet)
   (when (and c-parsing-error (not quiet))
-    (message "%s" c-parsing-error)
-    (ding))
+    (c-benign-error "%s" c-parsing-error))
   c-parsing-error)
 
 (defun c-evaluate-offset (offset langelem symbol)
@@ -3007,7 +2990,7 @@ isn't moved."
 	(setq done (c-evaluate-offset (car offset) langelem symbol)
 	      offset (cdr offset)))
       (if (and c-strict-syntax-p (not done))
-	  (error "No offset found for syntactic symbol %s" symbol))
+	  (c-benign-error "No offset found for syntactic symbol %s" symbol))
       done))
    (t (symbol-value offset))
    ))
@@ -3022,12 +3005,12 @@ isn't moved."
 	 (relpos (cdr langelem))
 	 (match  (assq symbol c-offsets-alist))
 	 (offset (cdr-safe match)))
-    (if (not match)
-	(if c-strict-syntax-p
-	    (error "No offset found for syntactic symbol %s" symbol)
-	  (setq offset 0
-		relpos 0))
-      (setq offset (c-evaluate-offset offset langelem symbol)))
+    (if match
+	(setq offset (c-evaluate-offset offset langelem symbol))
+      (if c-strict-syntax-p
+	  (c-benign-error "No offset found for syntactic symbol %s" symbol))
+      (setq offset 0
+	    relpos 0))
     (if (vectorp offset)
 	offset
       (+ (if (and relpos
