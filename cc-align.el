@@ -75,7 +75,6 @@ statement-cont.)
 
 Works with: topmost-intro-cont."
   (save-excursion
-    (goto-char (cdr langelem))
     (c-with-syntax-table (if (c-major-mode-is 'c++-mode)
 			     c++-template-syntax-table
 			   (syntax-table))
