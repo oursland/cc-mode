@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-13 20:35:16 $
-;; Version:         $Revision: 2.49 $
+;; Last Modified:   $Date: 1992-05-13 20:45:33 $
+;; Version:         $Revision: 2.50 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-13 20:35:16 $|$Revision: 2.49 $|
+;; |$Date: 1992-05-13 20:45:33 $|$Revision: 2.50 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -187,7 +187,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.49 $
+  "Major mode for editing C++ code.  $Revision: 2.50 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -794,17 +794,19 @@ if it is embedded in an expression."
 (defun c++-in-comment-p ()
   "Return t if in a C or C++ style comment as defined by mode's syntax."
   (save-excursion
-    (let ((here (point))
-	  ;; we need to specially handle the case of hanging open
-	  ;; braces at the top level. they will mess up
-	  ;; parse-partial-sexp
-	  (bod (save-excursion
-		 (beginning-of-defun)
-		 (if (not (looking-at "\\s("))
-		     (progn (forward-line 1)
-			    (re-search-backward "\\s(" nil 'move)
-			    (skip-chars-forward " \t")))
-		 (point))))
+    (let* ((here (point))
+	   ;; we need to specially handle the case of hanging open
+	   ;; braces at the top level. they will mess up
+	   ;; parse-partial-sexp
+	   (bod (save-excursion
+		  (if (beginning-of-defun)
+		      (if (not (looking-at "\\s("))
+			  (progn (forward-line 1)
+				 (re-search-backward "\\s(" nil 'move)
+				 (skip-chars-forward " \t")))
+		    (goto-char here)
+		    (re-search-backward "/[/*]" nil 'move))
+		  (point))))
       (or
        ;; in a c++ style comment?
        (nth 4 (parse-partial-sexp bod here 0))
@@ -1551,7 +1553,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.49 $"
+(defconst c++-version "$Revision: 2.50 $"
   "c++-mode version number.")
 
 (defun c++-version ()
