@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.370 $
-;; Last Modified:   $Date: 1997-02-14 15:32:32 $
+;; Version:         $Revision: 4.371 $
+;; Last Modified:   $Date: 1997-02-18 03:26:22 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -126,7 +126,7 @@ reported and the syntactic symbol is ignored.")
     (class-close           . 0)
     (inline-open           . +)
     (inline-close          . 0)
-    (ansi-funcdecl-cont    . +)
+    (func-decl-cont        . +)
     (knr-argdecl-intro     . +)
     (knr-argdecl           . 0)
     (topmost-intro         . 0)
@@ -219,8 +219,10 @@ Here is the current list of valid syntactic element symbols:
  class-close            -- brace that closes a class definition
  inline-open            -- brace that opens an in-class inline method
  inline-close           -- brace that closes an in-class inline method
- ansi-funcdecl-cont     -- the nether region between an ANSI function
-                           declaration and the defun opening brace
+ func-decl-cont         -- the nether region between a function
+                           declaration and the defun opening brace.
+                           In C++ and Java, this can include `throws'
+                           declarations
  knr-argdecl-intro      -- first line of a K&R C argument declaration
  knr-argdecl            -- subsequent lines in a K&R C argument declaration
  topmost-intro          -- the first line in a topmost construct definition
@@ -535,6 +537,7 @@ useful for Emacs 19.")
  			 (arglist-intro . c-lineup-arglist-intro-after-paren)
  			 (arglist-close . c-lineup-arglist)
  			 (access-label  . 0)
+			 (inher-cont    . c-lineup-java-inher)
 			 ))
 
      )
@@ -1273,6 +1276,7 @@ The expansion is entirely correct because it uses the C preprocessor."
   "Regexp describing access labels for Java.")
 (defconst c-Java-class-key
   (concat
+   "\\(" c-protection-key "\\)?\\s +"
    "\\(interface\\|class\\)\\s +"
    c-symbol-key				;name of the class
    "\\(\\s *extends\\s *" c-symbol-key "\\)?" ;maybe followed by superclass 
@@ -4084,11 +4088,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     (c-recognize-knr-p
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
 	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	     ;; CASE 5B.3: Nether region after a C++ func decl, which
-	     ;; could include a `throw' declaration.
+	     ;; CASE 5B.3: Nether region after a C++ or Java func
+	     ;; decl, which could include a `throws' declaration.
 	     (t
 	      (c-beginning-of-statement-1 lim)
-	      (c-add-syntax 'ansi-funcdecl-cont (c-point 'boi))
+	      (c-add-syntax 'func-decl-cont (c-point 'boi))
 	      )))
 	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
@@ -4163,10 +4167,23 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(= (following-char) ?:))
 	      (skip-chars-forward " \t:")
 	      (c-add-syntax 'member-init-cont (point)))
-	     ;; CASE 5D.3: perhaps a multiple inheritance line?
+	     ;; CASE 5D.3: Java extends, implements, and throws clauses
+	     ((and (eq major-mode 'java-mode)
+		   (save-excursion
+		     (prog1
+			 (re-search-forward
+			  "\\<\\(implements\\|extents\\|throws\\)\\>[^_]"
+			  indent-point t)
+		       (setq placeholder (match-beginning 1)))))
+	      (if (string= (buffer-substring (match-beginning 1)
+					     (match-end 1))
+			   "throws")
+		  (c-add-syntax 'func-decl-cont placeholder)
+		(c-add-syntax 'inher-cont placeholder)))
+	     ;; CASE 5D.4: perhaps a multiple inheritance line?
 	     ((looking-at c-inher-key)
 	      (c-add-syntax 'inher-cont (c-point 'boi)))
-	     ;; CASE 5D.4: perhaps a template list continuation?
+	     ;; CASE 5D.5: perhaps a template list continuation?
 	     ((save-excursion
 		(skip-chars-backward "^<" lim)
 		;; not sure if this is the right test, but it should
@@ -4175,7 +4192,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		     (not (c-in-literal lim))))
 	      ;; we can probably indent it just like and arglist-cont
 	      (c-add-syntax 'arglist-cont (point)))
-	     ;; CASE 5D.5: perhaps a top-level statement-cont
+	     ;; CASE 5D.6: perhaps a top-level statement-cont
 	     (t
 	      (c-beginning-of-statement-1 lim)
 	      ;; skip over any access-specifiers
@@ -4289,7 +4306,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   (t
 	    (c-beginning-of-statement-1 lim)
 	    (c-forward-syntactic-ws)
-	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
+	    (if (and (eq major-mode 'java-mode)
+		     (looking-at c-Java-class-key))
+		(c-add-syntax 'inher-intro (c-point 'boi))
+	      (c-add-syntax 'topmost-intro-cont (c-point 'boi))))
 	   ))				; end CASE 5
 	 ;; CASE 6: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
@@ -4856,6 +4876,15 @@ With universal argument, inserts the analysis as a comment on that line."
       (- (current-column) cs-curcol)
       )))
 
+(defun c-lineup-java-inher (langelem)
+  ;; line up Java implements and extends continuations
+  (save-excursion
+    (let ((cs-curcol (progn (goto-char (cdr langelem))
+			    (current-column))))
+      (forward-word 1)
+      (c-forward-syntactic-ws)
+      (- (current-column) cs-curcol))))
+
 (defun c-lineup-C-comments (langelem)
   ;; line up C block comment continuation lines
   (save-excursion
@@ -5129,7 +5158,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.370 $"
+(defconst c-version "$Revision: 4.371 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
