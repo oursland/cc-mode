@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.376 $
-;; Last Modified:   $Date: 1997-02-25 23:52:54 $
+;; Version:         $Revision: 4.377 $
+;; Last Modified:   $Date: 1997-02-28 18:12:02 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -5188,7 +5188,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.376 $"
+(defconst c-version "$Revision: 4.377 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5275,44 +5275,36 @@ command to conveniently insert and align the necessary backslashes."
     
 
 ;; Emacs/XEmacs Compatibility
-;; XEmacs has these, Emacs (even 19.31) does not
+;; XEmacs has these, Emacs does not
 
-;; Lift XEmacs 19.13's functionp from subr.el
-(defun c-functionp (obj)
-  "Returns t if OBJ is a function, nil otherwise."
-  (cond
-   ((symbolp obj) (fboundp obj))
-   ((subrp obj))
-   ((compiled-function-p obj))
-   ((consp obj)
-    (if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
-   (t nil)))
+(if (fboundp 'functionp)
+    (defalias 'c-functionp 'functionp)
+  ;; Lift XEmacs 19.13's functionp from subr.el
+  (defun c-functionp (obj)
+    "Returns t if OBJ is a function, nil otherwise."
+    (cond
+     ((symbolp obj) (fboundp obj))
+     ((subrp obj))
+     ((compiled-function-p obj))
+     ((consp obj)
+      (if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
+     (t nil))))
 
-(defun c-copy-tree (tree)
+(if (fboundp 'copy-tree)
+    (defalias 'c-copy-tree 'copy-tree)
   ;; Lift XEmacs 19.12's copy-tree
-  (if (consp tree)
-      (cons (c-copy-tree (car tree))
-	    (c-copy-tree (cdr tree)))
-    (if (vectorp tree)
-	(let* ((new (copy-sequence tree))
-	       (i (1- (length new))))
-	  (while (>= i 0)
-	    (aset new i (c-copy-tree (aref new i)))
-	    (setq i (1- i)))
-	  new)
-      tree)))
-
-(defun c-mapcar-defun (var)
-  (let ((val (symbol-value var)))
-    (cons var (if (atom val) val
-		;; XEmacs 19.12 and Emacs 19 + lucid.el have this
-		(if (fboundp 'copy-tree)
-		    (copy-tree val)
-		  ;; Emacs 19 and Emacs 18
-		  (c-copy-tree val)
-		  )))
-    ))
-
+  (defun c-copy-tree (tree)
+    (if (consp tree)
+	(cons (c-copy-tree (car tree))
+	      (c-copy-tree (cdr tree)))
+      (if (vectorp tree)
+	  (let* ((new (copy-sequence tree))
+		 (i (1- (length new))))
+	    (while (>= i 0)
+	      (aset new i (c-copy-tree (aref new i)))
+	      (setq i (1- i)))
+	    new)
+	tree))))
 
 
 ;; Dynamically append the default value of most variables. This is
@@ -5322,18 +5314,25 @@ command to conveniently insert and align the necessary backslashes."
 (or (assoc "cc-mode" c-style-alist)
     (progn
       (c-add-style "cc-mode"
-		   (mapcar 'c-mapcar-defun
-			   '(c-backslash-column
-			     c-basic-offset
-			     c-cleanup-list
-			     c-comment-only-line-offset
-			     c-electric-pound-behavior
-			     c-hanging-braces-alist
-			     c-hanging-colons-alist
-			     c-hanging-comment-starter-p
-			     c-hanging-comment-ender-p
-			     c-offsets-alist
-			     )))
+		   (mapcar
+		    (function
+		     (lambda (var)
+		       (let ((val (symbol-value var)))
+			 (cons var (if (atom val) val
+				     (c-copy-tree val)
+				     ))
+			 )))
+		    '(c-backslash-column
+		      c-basic-offset
+		      c-cleanup-list
+		      c-comment-only-line-offset
+		      c-electric-pound-behavior
+		      c-hanging-braces-alist
+		      c-hanging-colons-alist
+		      c-hanging-comment-starter-p
+		      c-hanging-comment-ender-p
+		      c-offsets-alist
+		      )))
       ;; the default style is now GNU.  This can be overridden in
       ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
       (c-set-style c-site-default-style)))
