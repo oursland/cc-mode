@@ -205,7 +205,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	state				; Current state in the automaton.
 	saved-pos			; Current saved positions.
 	stack				; Stack of conses (state . saved-pos).
-	(cond-key (or c-conditional-key
+	(cond-key (or c-opt-block-stmt-key
 		      "\\<\\>"))	; Matches nothing.
 	(ret 'same)
 	tok ptok pptok			; Pos of last three sexps or bounds.
@@ -392,7 +392,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		      c-maybe-labelp t))
 
 	      ;; ObjC method def?
-	      (when (and c-method-key
+	      (when (and c-opt-method-key
 			 (setq saved (c-in-method-def-p)))
 		(setq pos saved
 		      ignore-labels t)	; Avoid the label check on exit.
@@ -415,7 +415,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		   (not (memq sym '(boundary ignore nil))))
 	  ;; Need to investigate closer whether we've crossed
 	  ;; between a substatement and its containing statement.
-	  (if (setq saved (if (looking-at c-block-stmt-1-kwds)
+	  (if (setq saved (if (looking-at c-block-stmt-1-key)
 			      ptok
 			    pptok))
 	      (cond ((> start saved) (setq pos saved))
@@ -584,20 +584,25 @@ specified."
       ;; positive value, it'll loop all the way through if it hits eob.
       (while (c-forward-comment 5))
       (setq here (point))
-      (if (looking-at "\\\\$")
-	  (forward-char)
-	;; skip preprocessor directives
-	(when (and (looking-at "#[ \t]*[a-zA-Z0-9!]")
-		   (progn (skip-chars-backward " \t")
-			  (bolp)))
-	  (end-of-line)
-	  (while (and (<= (point) lim)
-		      (eq (char-before) ?\\)
-		      (= (forward-line 1) 0))
-	    (end-of-line))
-	  (when (> (point) lim)
-	    ;; Don't move past the macro if that'd take us past the limit.
-	    (goto-char here)))))
+      (cond
+       ;; Skip line continuations.
+       ((looking-at "\\\\$")
+	(forward-char))
+       ;; Skip preprocessor directives.
+       ((and (looking-at "#[ \t]*[a-zA-Z0-9!]")
+	     (progn (skip-chars-backward " \t")
+		    (bolp)))
+	(end-of-line)
+	(while (and (<= (point) lim)
+		    (eq (char-before) ?\\)
+			 (= (forward-line 1) 0))
+	  (end-of-line))
+	(when (> (point) lim)
+	  ;; Don't move past the macro if that'd take us past the limit.
+	  (goto-char here)))
+       ;; Skip in-comment line continuations (used for Pike refdoc).
+       ((and c-opt-in-comment-lc (looking-at c-opt-in-comment-lc))
+	(goto-char (match-end 0)))))
     (goto-char (min (point) lim))))
 
 (defun c-backward-syntactic-ws (&optional lim)
@@ -618,30 +623,40 @@ specified."
       ;; value, it'll loop all the way through if it hits bob.
       (while (c-forward-comment -5))
       (setq here (point))
-      (if (and (eolp)
-	       (eq (char-before) ?\\)
-	       (if (<= prev-pos (c-point 'eonl))
-		   t
-		 ;; Passed a line continuation, but not from the line
-		 ;; we started on.
-		 (forward-char)
-		 (setq line-cont nil)))
-	  (progn
-	    (backward-char)
-	    (setq line-cont t))
-	(when (eq line-cont 'maybe)
-	  (save-excursion
-	    (end-of-line)
-	    (setq line-cont (eq (char-before) ?\\))))
-	(when (or line-cont
-		  (and (< (point) start-line)
-		       (c-beginning-of-macro)
-		       (< (point) lim)))
-	  ;; Don't move past the macro if we began inside it or at the
-	  ;; end of the same line, or if the move would take us past
-	  ;; the limit.
-	  (goto-char here))
-	(setq line-cont nil)))
+      (cond
+       ((and (eolp)
+	     (eq (char-before) ?\\)
+	     (if (<= prev-pos (c-point 'eonl))
+		 t
+	       ;; Passed a line continuation, but not from the line we
+	       ;; started on.
+	       (forward-char)
+	       (setq line-cont nil)))
+	(backward-char)
+	(setq line-cont t))
+       ((progn
+	  (when (eq line-cont 'maybe)
+	    (save-excursion
+	      (end-of-line)
+	      (setq line-cont (eq (char-before) ?\\))))
+	  (or line-cont
+	      (and (< (point) start-line)
+		   (c-beginning-of-macro))))
+	(if (< (point) lim)
+	    ;; Don't move past the macro if we began inside it or at
+	    ;; the end of the same line, or if the move would take us
+	    ;; past the limit.
+	    (goto-char here))
+	(setq line-cont nil))
+       ;; Skip in-comment line continuations (used for Pike refdoc).
+       ((and c-opt-in-comment-lc
+	     (save-excursion
+	       (and (c-safe (beginning-of-line)
+			    (backward-char 2)
+			    t)
+		    (looking-at c-opt-in-comment-lc)
+		    (eq (match-end 0) here))))
+	(goto-char (match-beginning 0)))))
     (goto-char (max (point) lim))))
 
 (defun c-forward-token-1 (&optional count balanced lim)
@@ -753,7 +768,7 @@ is non-nil and on a preprocessor line, or nil if somewhere else.
 Optional LIM is used as the backward limit of the search.  If omitted,
 or nil, `c-beginning-of-defun' is used.
 
-We cache the last point calculated if the cache is enabled, i.e. if
+The last point calculated is cached if the cache is enabled, i.e. if
 `c-in-literal-cache' is bound to a two element vector."
   (if (and (vectorp c-in-literal-cache)
 	   (= (point) (aref c-in-literal-cache 0)))
@@ -1226,16 +1241,16 @@ you need both the type of a literal and its limits."
   ;; position of the initial [+-].
   (save-excursion
     (beginning-of-line)
-    (and c-method-key
-	 (looking-at c-method-key)
+    (and c-opt-method-key
+	 (looking-at c-opt-method-key)
 	 (point))
     ))
 
 (defun c-at-toplevel-p ()
   "Return a determination as to whether point is at the `top-level'.
 Being at the top-level means that point is either outside any
-enclosing block (such function definition), or inside a class
-definition, but outside any method blocks.
+enclosing block (such function definition), or inside a class,
+namespace or extern definition, but outside any method blocks.
 
 If point is not at the top-level (e.g. it is inside a method
 definition), then nil is returned.  Otherwise, if point is at a
@@ -1302,8 +1317,8 @@ brace."
 	  (goto-char checkpoint))
 	)
       (and (eq (char-before) ?\))
-	   ;; check if we are looking at a method def
-	   (or (not c-method-key)
+	   ;; check if we are looking at an ObjC method def
+	   (or (not c-opt-method-key)
 	       (progn
 		 (c-forward-sexp -1)
 		 (forward-char -1)
@@ -1338,10 +1353,10 @@ brace."
   ;; position of its start, otherwise return nil.
   (save-excursion
     (and (= (c-backward-token-1 1 t lim) 0)
-	 (or (looking-at c-block-stmt-1-kwds)
+	 (or (looking-at c-block-stmt-1-key)
 	     (and (eq (char-after) ?\()
 		  (= (c-backward-token-1 1 t lim) 0)
-		  (looking-at c-block-stmt-2-kwds)))
+		  (looking-at c-block-stmt-2-key)))
 	 (point))))
 
 (defsubst c-backward-to-block-anchor (&optional lim)
@@ -1429,9 +1444,6 @@ brace."
 	;; for us the search boundaries
 	(setq search-start (nth 1 brace-state)
 	      search-end (nth 0 brace-state)))
-      ;; search-end cannot be a cons cell
-      (and (consp search-end)
-	   (error "consp search-end: %s" search-end))
       ;; if search-end is nil, or if the search-end character isn't an
       ;; open brace, we are definitely not in a class
       (if (or (not search-end)
@@ -1454,21 +1466,17 @@ brace."
 	(save-excursion
 	  (save-restriction
 	    (goto-char search-start)
-	    (let ((search-key (concat c-class-key "\\|" c-extra-toplevel-key))
-		  foundp class match-end)
-	      (if c-inexpr-class-key
-		  (setq search-key (concat search-key "\\|"
-					   c-inexpr-class-key)))
+	    (let (foundp class match-end)
 	      (while (and (not foundp)
 			  (progn
 			    (c-forward-syntactic-ws search-end)
 			    (> search-end (point)))
-			  (re-search-forward search-key search-end t))
+			  (re-search-forward c-decl-block-key search-end t))
 		(setq class (match-beginning 0)
 		      match-end (match-end 0))
+		(goto-char class)
 		(if (c-in-literal search-start)
-		    nil			; its in a comment or string, ignore
-		  (goto-char class)
+		    (goto-char match-end) ; its in a comment or string, ignore
 		  (c-skip-ws-forward)
 		  (setq foundp (vector (c-point 'boi) search-end))
 		  (cond
@@ -1479,15 +1487,14 @@ brace."
 		    (goto-char match-end)
 		    (setq foundp nil))
 		   ;; make sure we're really looking at the start of a
-		   ;; class definition, and not a forward decl, return
-		   ;; arg, template arg list, or an ObjC or Java method.
-		   ((and c-method-key
-			 (re-search-forward c-method-key search-end t)
+		   ;; class definition, and not an ObjC method.
+		   ((and c-opt-method-key
+			 (re-search-forward c-opt-method-key search-end t)
 			 (not (c-in-literal class)))
 		    (setq foundp nil))
 		   ;; Check if this is an anonymous inner class.
-		   ((and c-inexpr-class-key
-			 (looking-at c-inexpr-class-key))
+		   ((and c-opt-inexpr-class-key
+			 (looking-at c-opt-inexpr-class-key))
 		    (while (and (= (c-forward-token-1 1 t) 0)
 				(looking-at "(\\|\\w\\|\\s_\\|\\.")))
 		    (if (eq (point) search-end)
@@ -1550,7 +1557,7 @@ brace."
 	    ;; Pike can have class definitions anywhere, so we must
 	    ;; check for the class key here.
 	    (and (c-major-mode-is 'pike-mode)
-		 (concat c-class-key "\\|" c-extra-toplevel-key)))
+		 c-decl-block-key))
 	   bufpos braceassignp lim next-containing)
        (while (and (not bufpos)
 		   containing-sexp)
@@ -1743,8 +1750,8 @@ brace."
 	(setq res
 	      (cond
 	       ((and block-follows
-		     c-inexpr-class-key
-		     (looking-at c-inexpr-class-key))
+		     c-opt-inexpr-class-key
+		     (looking-at c-opt-inexpr-class-key))
 		(and (not passed-bracket)
 		     (or (not (looking-at c-class-key))
 			 ;; If the class definition is at the start of
@@ -1766,14 +1773,14 @@ brace."
 				       (= (c-forward-token-1 1 t) 0))
 				(eq (char-after) ?\())))
 		     (cons 'inexpr-class (point))))
-	       ((and c-inexpr-block-key
-		     (looking-at c-inexpr-block-key))
+	       ((and c-opt-inexpr-block-key
+		     (looking-at c-opt-inexpr-block-key))
 		(cons 'inexpr-statement (point)))
-	       ((and c-lambda-key
-		     (looking-at c-lambda-key))
+	       ((and c-opt-lambda-key
+		     (looking-at c-opt-lambda-key))
 		(cons 'inlambda (point)))
-	       ((and c-conditional-key
-		     (looking-at c-conditional-key))
+	       ((and c-opt-block-stmt-key
+		     (looking-at c-opt-block-stmt-key))
 		nil)
 	       (t
 		(if (eq (char-after) ?\[)
@@ -1820,7 +1827,7 @@ Keywords are recognized and not considered identifiers."
 	  (memq (char-syntax (or (char-before) ? )) '(?w ?_)))
       (save-excursion
 	(skip-syntax-backward "w_")
-	(not (looking-at c-keywords)))
+	(not (looking-at c-keywords-regexp)))
     (if (c-major-mode-is 'pike-mode)
 	;; Handle the `<operator> syntax in Pike.
 	(save-excursion
@@ -2086,7 +2093,7 @@ Keywords are recognized and not considered identifiers."
       (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
 	  (c-add-syntax symbol (setq anchor (point)))
 	(c-add-syntax symbol (setq anchor (aref classkey 0)))
-	(if (and c-inexpr-class-key
+	(if (and c-opt-inexpr-class-key
 		 (setq containing-sexp (c-most-enclosing-brace state (point))
 		       inexpr (cdr (c-looking-at-inexpr-block
 				    (c-safe-position containing-sexp state)
@@ -2211,7 +2218,7 @@ Keywords are recognized and not considered identifiers."
 	    (if (and inclass-p
 		     (progn
 		       (goto-char (aref inclass-p 0))
-		       (looking-at (concat c-extra-toplevel-key "[^_]"))))
+		       (looking-at c-other-decl-block-key)))
 		(let ((enclosing (match-string 1)))
 		  (cond
 		   ((string-equal enclosing "extern")
@@ -2318,7 +2325,7 @@ Keywords are recognized and not considered identifiers."
 	  (c-add-stmt-syntax 'catch-clause t containing-sexp state))
 	 ;; CASE 18: A substatement we can recognize by keyword.
 	 ((save-excursion
-	    (and c-conditional-key
+	    (and c-opt-block-stmt-key
 		 (not (eq char-before-ip ?\;))
 		 (not (memq char-after-ip '(?\) ?\] ?,)))
 		 (or (not (eq char-before-ip ?}))
@@ -2335,7 +2342,7 @@ Keywords are recognized and not considered identifiers."
 			  (goto-char placeholder)
 			(setq placeholder (point))
 			(if (and (eq step-type 'same)
-				 (not (looking-at c-conditional-key)))
+				 (not (looking-at c-opt-block-stmt-key)))
 			    ;; Step up to the containing statement if we
 			    ;; stayed in the same one.
 			    (let (step)
@@ -2348,14 +2355,14 @@ Keywords are recognized and not considered identifiers."
 				;; There was no containing statement afterall.
 				(goto-char placeholder)))))
 		      placeholder))
-		 (if (looking-at c-block-stmt-2-kwds)
+		 (if (looking-at c-block-stmt-2-key)
 		     ;; Require a parenthesis after these keywords.
 		     ;; Necessary to catch e.g. synchronized in Java,
 		     ;; which can be used both as statement and
 		     ;; modifier.
 		     (and (= (c-forward-token-1 1 nil) 0)
 			  (eq (char-after) ?\())
-		   (looking-at c-conditional-key))))
+		   (looking-at c-opt-block-stmt-key))))
 	  (if (eq step-type 'up)
 	      ;; CASE 18A: Simple substatement.
 	      (progn
@@ -2383,7 +2390,9 @@ Keywords are recognized and not considered identifiers."
 					 state)))
 	 ;; CASE 4: In-expression statement.  C.f. cases 7B, 16A and
 	 ;; 17E.
-	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
+	 ((and (or c-opt-inexpr-class-key
+		   c-opt-inexpr-block-key
+		   c-opt-lambda-key)
 	       (setq placeholder (c-looking-at-inexpr-block
 				  (c-safe-position containing-sexp state)
 				  containing-sexp)))
@@ -2421,7 +2430,7 @@ Keywords are recognized and not considered identifiers."
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
 		(and (c-safe (progn (c-backward-sexp 2) t))
-		     (looking-at (concat c-extra-toplevel-key "[^_]"))
+		     (looking-at c-other-decl-block-key)
 		     (setq keyword (match-string 1)
 			   placeholder (point))
 		     (or (and (string-equal keyword "namespace")
@@ -2541,12 +2550,12 @@ Keywords are recognized and not considered identifiers."
 	      )))
 	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
-	   ((or (and c-baseclass-key
+	   ((or (and (c-major-mode-is 'c++-mode)
 		     (progn
 		       (when (eq char-after-ip ?,)
 			 (skip-chars-forward " \t")
 			 (forward-char))
-		       (looking-at c-baseclass-key)))
+		       (looking-at c-opt-decl-spec-key)))
 		(and (or (eq char-before-ip ?:)
 			 ;; watch out for scope operator
 			 (save-excursion
@@ -2570,7 +2579,7 @@ Keywords are recognized and not considered identifiers."
 			   cont done)
 		       (save-excursion
 			 (while (not done)
-			   (cond ((looking-at c-Java-special-key)
+			   (cond ((looking-at c-opt-decl-spec-key)
 				  (setq injava-inher (cons cont (point))
 					done t))
 				 ((or (not (c-safe (c-forward-sexp -1) t))
@@ -2647,9 +2656,11 @@ Keywords are recognized and not considered identifiers."
 				 (parse-partial-sexp (point) placeholder)))
 			  0)
 		      (and
-		       (if c-access-key (not (looking-at c-access-key)) t)
+		       (if c-opt-access-key
+			   (not (looking-at c-opt-access-key)) t)
 		       (not (looking-at c-class-key))
-		       (if c-bitfield-key (not (looking-at c-bitfield-key)) t))
+		       (if c-opt-bitfield-key
+			   (not (looking-at c-opt-bitfield-key)) t))
 		      )))
 	      (goto-char placeholder)
 	      (c-forward-syntactic-ws)
@@ -2699,8 +2710,8 @@ Keywords are recognized and not considered identifiers."
 	     ))
 	   ;; CASE 5E: we are looking at a access specifier
 	   ((and inclass-p
-		 c-access-key
-		 (looking-at c-access-key))
+		 c-opt-access-key
+		 (looking-at c-opt-access-key))
 	    (setq placeholder (c-add-class-syntax 'inclass inclass-p state))
 	    ;; Append access-label with the same anchor point as inclass gets.
 	    (nconc syntax (list (cons 'access-label placeholder))))
@@ -2750,7 +2761,7 @@ Keywords are recognized and not considered identifiers."
 				   (goto-char macro-start)
 				   (c-forward-to-cpp-expression)
 				   (point))))
-			  (or (not c-method-key)
+			  (or (not c-opt-method-key)
 			      (progn
 				(c-forward-sexp -1)
 				(forward-char -1)
@@ -2768,8 +2779,8 @@ Keywords are recognized and not considered identifiers."
 	    (goto-char placeholder)
 	    (c-add-syntax 'knr-argdecl (c-point 'boi)))
 	   ;; CASE 5I: ObjC method definition.
-	   ((and c-method-key
-		 (looking-at c-method-key))
+	   ((and c-opt-method-key
+		 (looking-at c-opt-method-key))
 	    (c-beginning-of-statement-1 lim)
 	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
 	   ;; CASE 5J: we are at the topmost level, make sure we skip
@@ -2777,11 +2788,11 @@ Keywords are recognized and not considered identifiers."
 	   ((progn
 	      (c-backward-syntactic-ws lim)
 	      (while (and inclass-p
-			  c-access-key
+			  c-opt-access-key
 			  (not (bobp))
 			  (save-excursion
 			    (c-safe (progn (c-backward-sexp 1) t))
-			    (looking-at c-access-key)))
+			    (looking-at c-opt-access-key)))
 		(c-backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
@@ -2815,13 +2826,13 @@ Keywords are recognized and not considered identifiers."
 		(c-add-syntax 'cpp-macro-cont)
 		(setq macro-start nil))
 	      ))
-	   ;; CASE 5K: we are at an ObjC or Java method definition
+	   ;; CASE 5K: we are at an ObjC method definition
 	   ;; continuation line.
-	   ((and c-method-key
+	   ((and c-opt-method-key
 		 (progn
 		   (c-beginning-of-statement-1 lim)
 		   (beginning-of-line)
-		   (looking-at c-method-key)))
+		   (looking-at c-opt-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
 	   ;; CASE 5L: we are at the first argument of a template
 	   ;; arglist that begins on the previous line.
@@ -2901,10 +2912,10 @@ Keywords are recognized and not considered identifiers."
 		(c-add-syntax 'statement (point))
 	      (c-add-syntax 'statement-cont (point))
 	      ))
-	   ;; CASE 7E: maybe a continued method call. This is the case
-	   ;; when we are inside a [] bracketed exp, and what precede
-	   ;; the opening bracket is not an identifier.
-	   ((and c-method-key
+	   ;; CASE 7E: maybe a continued ObjC method call. This is the
+	   ;; case when we are inside a [] bracketed exp, and what
+	   ;; precede the opening bracket is not an identifier.
+	   ((and c-opt-method-key
 		 (eq (char-after containing-sexp) ?\[)
 		 (progn
 		   (goto-char (1- containing-sexp))
@@ -2935,11 +2946,11 @@ Keywords are recognized and not considered identifiers."
 	      (c-add-syntax 'arglist-cont (c-point 'boi)))
 	   ))
 	 ;; CASE 8: func-local multi-inheritance line
-	 ((and c-baseclass-key
+	 ((and (c-major-mode-is 'c++-mode)
 	       (save-excursion
 		 (goto-char indent-point)
 		 (skip-chars-forward " \t")
-		 (looking-at c-baseclass-key)))
+		 (looking-at c-opt-decl-spec-key)))
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
@@ -3051,7 +3062,7 @@ Keywords are recognized and not considered identifiers."
 				       lim
 				       state))
 	 ;; CASE 14: A case or default label
-	 ((looking-at c-switch-label-key)
+	 ((looking-at c-label-kwds-regexp)
 	  (goto-char containing-sexp)
 	  (setq lim (c-most-enclosing-brace fullstate containing-sexp))
 	  (c-backward-to-block-anchor lim)
@@ -3111,7 +3122,7 @@ Keywords are recognized and not considered identifiers."
 	      (back-to-indentation)
 	      (if (save-excursion
 		    (goto-char (aref placeholder 0))
-		    (looking-at (concat c-extra-toplevel-key "[^_]")))
+		    (looking-at c-other-decl-block-key))
 		  (c-add-syntax 'defun-close (point))
 		(c-add-syntax 'inline-close (point))))
 	     ;; CASE 16F: Can be a defun-close of a function declared
@@ -3143,7 +3154,7 @@ Keywords are recognized and not considered identifiers."
 	      (while (and (/= (setq placeholder (point)) (c-point 'boi))
 			  (eq (c-beginning-of-statement-1 lim) 'label)))
 	      (goto-char placeholder)
-	      (if (looking-at c-switch-label-key)
+	      (if (looking-at c-label-kwds-regexp)
 		  (c-add-syntax 'block-close (point))
 		(goto-char containing-sexp)
 		;; c-backward-to-block-anchor not necessary here; those
@@ -3183,7 +3194,7 @@ Keywords are recognized and not considered identifiers."
 	   ;; CASE 17A: After a case/default label?
 	   ((progn
 	      (while (and (eq step-type 'label)
-			  (not (looking-at c-label-kwds)))
+			  (not (looking-at c-label-kwds-regexp)))
 		(setq step-type
 		      (c-beginning-of-statement-1 containing-sexp)))
 	      (eq step-type 'label))
@@ -3270,7 +3281,7 @@ Keywords are recognized and not considered identifiers."
 	    (while (and (/= (setq placeholder (point)) (c-point 'boi))
 			(eq (c-beginning-of-statement-1 lim) 'label)))
 	    (goto-char placeholder)
-	    (if (looking-at c-switch-label-key)
+	    (if (looking-at c-label-kwds-regexp)
 		(c-add-syntax 'statement-block-intro (point))
 	      (goto-char containing-sexp)
 	      ;; c-backward-to-block-anchor not necessary here; those
@@ -3288,8 +3299,8 @@ Keywords are recognized and not considered identifiers."
 		   (/= (c-forward-token-1 0 nil (c-point 'eol)) 0))
 	  (c-add-syntax 'comment-intro))
 	;; we might want to give additional offset to friends (in C++).
-	(when (and (c-major-mode-is 'c++-mode)
-		   (looking-at c-C++-friend-key))
+	(when (and c-opt-friend-key
+		   (looking-at c-opt-friend-key))
 	  (c-add-syntax 'friend))
 	;; Start of or a continuation of a preprocessor directive?
 	(if (and macro-start

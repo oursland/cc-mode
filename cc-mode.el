@@ -115,7 +115,25 @@
 ;; use:
 ;;
 ;; (require 'cc-mode)
+;;
+;; And in the major mode function:
+;;
 ;; (c-initialize-cc-mode)
+
+
+(defvar c-buffer-is-cc-mode nil
+  "Non-nil for all buffers with a major mode derived from CC Mode.
+Otherwise, this variable is nil.  I.e. this variable is non-nil for
+`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode',
+`pike-mode', and any other non-CC Mode mode that calls
+`c-initialize-cc-mode' (e.g. `awk-mode').  The value is the mode
+symbol itself (i.e. `c-mode' etc) of the original CC Mode mode, or
+just t if it's not known.")
+(make-variable-buffer-local 'c-buffer-is-cc-mode)
+(put 'c-buffer-is-cc-mode 'permanent-local t)
+
+(defun c-leave-cc-mode-mode ()
+  (setq c-buffer-is-cc-mode nil))
 
 ;;;###autoload
 (defun c-initialize-cc-mode ()
@@ -131,6 +149,7 @@
 	    ;; Fix obsolete variables.
 	    (if (boundp 'c-comment-continuation-stars)
 		(setq c-block-comment-prefix c-comment-continuation-stars))
+	    (add-hook 'change-major-mode-hook 'c-leave-cc-mode-mode)
 	    (setq c-initialization-ok t))
 	;; Will try initialization hooks again if they failed.
 	(put 'c-initialize-cc-mode initprop c-initialization-ok)))
@@ -273,8 +292,10 @@
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
 
-(defun c-common-init ()
+(defun c-common-init (mode)
   ;; Common initializations for all modes.
+  (setq c-buffer-is-cc-mode mode)
+
   ;; these variables should always be buffer local; they do not affect
   ;; indentation style.
   (make-local-variable 'require-final-newline)
@@ -295,12 +316,14 @@
   (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'adaptive-fill-regexp)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
+
   ;; X/Emacs 20 only
   (and (boundp 'comment-line-break-function)
        (progn
 	 (make-local-variable 'comment-line-break-function)
 	 (setq comment-line-break-function
 	       'c-indent-new-comment-line)))
+
   ;; now set their values
   (setq require-final-newline t
 	parse-sexp-ignore-comments t
@@ -312,10 +335,14 @@
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
+
+  ;; Fix keyword regexps.
+  (c-init-language-vars)
+
   ;; now set the mode style based on c-default-style
   (let ((style (if (stringp c-default-style)
 		   c-default-style
-		 (or (cdr (assq major-mode c-default-style))
+		 (or (cdr (assq mode c-default-style))
 		     (cdr (assq 'other c-default-style))
 		     "gnu"))))
     ;; Override style variables if `c-old-style-variable-behavior' is
@@ -331,20 +358,24 @@
 				     (not (string-equal c-indentation-style
 							style)))))))
   (c-setup-paragraph-variables)
+
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
+
   ;; setup the comment indent variable in a Emacs version portable way
-  ;; ignore any byte compiler warnings you might get here
   (make-local-variable 'comment-indent-function)
   (setq comment-indent-function 'c-comment-indent)
+
   ;; add menus to menubar
   (easy-menu-add (c-mode-menu mode-name))
+
   ;; put auto-hungry designators onto minor-mode-alist, but only once
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
 		  minor-mode-alist)))
+
   ;; Install the function that ensures `c-state-cache' doesn't become
   ;; invalid.
   (make-local-variable 'after-change-functions)
@@ -413,32 +444,21 @@ run first.
 Key bindings:
 \\{c-mode-map}"
   (interactive)
-  (c-initialize-cc-mode)
   (kill-all-local-variables)
+  (c-initialize-cc-mode)
   (set-syntax-table c-mode-syntax-table)
   (setq major-mode 'c-mode
 	mode-name "C"
 	local-abbrev-table c-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map c-mode-map)
-  (c-common-init)
-  (setq comment-start "/* "
-	comment-end   " */"
-	c-symbol-key c-C-symbol-key
-	c-block-stmt-1-kwds (concat "\\(" c-C-block-stmt-1-kwds "\\)\\>[^_]")
-	c-block-stmt-2-kwds (concat "\\(" c-C-block-stmt-2-kwds "\\)\\>[^_]")
-	c-label-kwds c-C-label-kwds
-	c-keywords (c-identifier-re c-C-keywords)
-	c-conditional-key c-C-conditional-key
-	c-class-key c-C-class-key
-	c-baseclass-key nil
-	c-comment-start-regexp c-C-comment-start-regexp
-	c-bitfield-key c-C-bitfield-key
-	)
+  (c-common-init 'c-mode)
   (cc-imenu-init cc-imenu-c-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook)
   (c-update-modeline))
+
+(put 'c-mode 'c-modevar-prefix "c-C-")
 
 
 ;; Support for C++
@@ -482,34 +502,21 @@ variable is bound and has a non-nil value.  Also the hook
 Key bindings:
 \\{c++-mode-map}"
   (interactive)
-  (c-initialize-cc-mode)
   (kill-all-local-variables)
+  (c-initialize-cc-mode)
   (set-syntax-table c++-mode-syntax-table)
   (setq major-mode 'c++-mode
 	mode-name "C++"
 	local-abbrev-table c++-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map c++-mode-map)
-  (c-common-init)
-  (setq comment-start "// "
-	comment-end ""
-	c-symbol-key c-C++-symbol-key
-	c-block-stmt-1-kwds (concat "\\(" c-C++-block-stmt-1-kwds "\\)\\>[^_]")
-	c-block-stmt-2-kwds (concat "\\(" c-C++-block-stmt-2-kwds "\\)\\>[^_]")
-	c-label-kwds c-C++-label-kwds
-	c-keywords (c-identifier-re c-C++-keywords)
-	c-conditional-key c-C++-conditional-key
-	c-comment-start-regexp c-C++-comment-start-regexp
-	c-class-key c-C++-class-key
-	c-extra-toplevel-key c-C++-extra-toplevel-key
-	c-access-key c-C++-access-key
-	c-recognize-knr-p nil
-	c-bitfield-key c-C-bitfield-key
-	)
+  (c-common-init 'c++-mode)
   (cc-imenu-init cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook)
   (c-update-modeline))
+
+(put 'c++-mode 'c-modevar-prefix "c-C++-")
 
 
 ;; Support for Objective-C
@@ -549,35 +556,21 @@ is run first.
 Key bindings:
 \\{objc-mode-map}"
   (interactive)
-  (c-initialize-cc-mode)
   (kill-all-local-variables)
+  (c-initialize-cc-mode)
   (set-syntax-table objc-mode-syntax-table)
   (setq major-mode 'objc-mode
 	mode-name "ObjC"
 	local-abbrev-table objc-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map objc-mode-map)
-  (c-common-init)
-  (setq comment-start "// "
-	comment-end   ""
-	c-symbol-key c-ObjC-symbol-key
-	c-block-stmt-1-kwds (concat "\\(" c-ObjC-block-stmt-1-kwds
-				    "\\)\\>[^_]")
-	c-block-stmt-2-kwds (concat "\\(" c-ObjC-block-stmt-2-kwds
-				    "\\)\\>[^_]")
-	c-label-kwds c-ObjC-label-kwds
-	c-keywords (c-identifier-re c-ObjC-keywords)
-	c-conditional-key c-ObjC-conditional-key
-	c-comment-start-regexp c-ObjC-comment-start-regexp
- 	c-class-key c-ObjC-class-key
-	c-baseclass-key nil
-	c-access-key c-ObjC-access-key
-	c-method-key c-ObjC-method-key
-	)
+  (c-common-init 'objc-mode)
   (cc-imenu-init cc-imenu-objc-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook)
   (c-update-modeline))
+
+(put 'objc-mode 'c-modevar-prefix "c-ObjC-")
 
 
 ;; Support for Java
@@ -621,38 +614,21 @@ set styles in `c-mode-common-hook'.
 Key bindings:
 \\{java-mode-map}"
   (interactive)
-  (c-initialize-cc-mode)
   (kill-all-local-variables)
+  (c-initialize-cc-mode)
   (set-syntax-table java-mode-syntax-table)
   (setq major-mode 'java-mode
  	mode-name "Java"
  	local-abbrev-table java-mode-abbrev-table
-	abbrev-mode t
-	c-append-paragraph-start c-Java-javadoc-paragraph-start)
+	abbrev-mode t)
   (use-local-map java-mode-map)
-  (c-common-init)
-  (setq comment-start "// "
- 	comment-end   ""
-	c-symbol-key c-Java-symbol-key
-	c-block-stmt-1-kwds (concat "\\(" c-Java-block-stmt-1-kwds
-				    "\\)\\>[^_]")
-	c-block-stmt-2-kwds (concat "\\(" c-Java-block-stmt-2-kwds
-				    "\\)\\>[^_]")
-	c-label-kwds c-Java-label-kwds
-	c-keywords (c-identifier-re c-Java-keywords)
- 	c-conditional-key c-Java-conditional-key
- 	c-comment-start-regexp c-Java-comment-start-regexp
-  	c-class-key c-Java-class-key
-	c-method-key nil
-	c-baseclass-key nil
-	c-recognize-knr-p nil
-	c-inexpr-class-key c-Java-inexpr-class-key
-	;defun-prompt-regexp c-Java-defun-prompt-regexp
-	)
+  (c-common-init 'java-mode)
   (cc-imenu-init cc-imenu-java-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook)
   (c-update-modeline))
+
+(put 'java-mode 'c-modevar-prefix "c-Java-")
 
 
 ;; Support for CORBA's IDL language
@@ -690,30 +666,20 @@ variable is bound and has a non-nil value.  Also the hook
 Key bindings:
 \\{idl-mode-map}"
   (interactive)
-  (c-initialize-cc-mode)
   (kill-all-local-variables)
+  (c-initialize-cc-mode)
   (set-syntax-table idl-mode-syntax-table)
   (setq major-mode 'idl-mode
 	mode-name "IDL"
 	local-abbrev-table idl-mode-abbrev-table)
   (use-local-map idl-mode-map)
-  (c-common-init)
-  (setq comment-start "// "
-	comment-end ""
-	c-symbol-key c-IDL-symbol-key
-	c-keywords (c-identifier-re c-IDL-keywords)
-	c-conditional-key c-IDL-conditional-key
-	c-comment-start-regexp c-IDL-comment-start-regexp
-	c-class-key c-IDL-class-key
-	c-method-key nil
-	c-baseclass-key nil
-	c-extra-toplevel-key c-IDL-extra-toplevel-key
-	c-recognize-knr-p nil
-	)
+  (c-common-init 'idl-mode)
   ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;FIXME
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'idl-mode-hook)
   (c-update-modeline))
+
+(put 'idl-mode 'c-modevar-prefix "c-IDL-")
 
 
 ;; Support for Pike
@@ -753,41 +719,21 @@ is bound and has a non-nil value.  Also the common hook
 Key bindings:
 \\{pike-mode-map}"
   (interactive)
-  (c-initialize-cc-mode)
   (kill-all-local-variables)
+  (c-initialize-cc-mode)
   (set-syntax-table pike-mode-syntax-table)
   (setq major-mode 'pike-mode
  	mode-name "Pike"
  	local-abbrev-table pike-mode-abbrev-table
-	abbrev-mode t
-	c-append-paragraph-start c-Pike-pikedoc-paragraph-start
-	c-append-paragraph-separate c-Pike-pikedoc-paragraph-separate)
+	abbrev-mode t)
   (use-local-map pike-mode-map)
-  (c-common-init)
-  (setq comment-start "// "
- 	comment-end   ""
-	c-symbol-key c-Pike-symbol-key
-	c-block-stmt-1-kwds (concat "\\(" c-Pike-block-stmt-1-kwds
-				    "\\)\\>[^_]")
-	c-block-stmt-2-kwds (concat "\\(" c-Pike-block-stmt-2-kwds
-				    "\\)\\>[^_]")
-	c-label-kwds c-Pike-label-kwds
-	c-keywords (c-identifier-re c-Pike-keywords)
- 	c-conditional-key c-Pike-conditional-key
-	c-comment-start-regexp c-Pike-comment-start-regexp
-  	c-class-key c-Pike-class-key
-	c-method-key nil
-	c-baseclass-key nil
-	c-recognize-knr-p nil
-	c-lambda-key c-Pike-lambda-key
-	c-inexpr-block-key c-Pike-inexpr-block-key
-	c-inexpr-class-key c-Pike-inexpr-class-key
-	c-special-brace-lists c-Pike-special-brace-lists
-	)
+  (c-common-init 'pike-mode)
   ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;FIXME
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'pike-mode-hook)
   (c-update-modeline))
+
+(put 'pike-mode 'c-modevar-prefix "c-Pike-")
 
 
 ;; bug reporting

@@ -466,11 +466,11 @@ variables."
   (let ((comment-line-prefix
 	 (concat "[ \t]*\\(" c-current-comment-prefix "\\)[ \t]*")))
     (setq paragraph-start (concat comment-line-prefix
-				  c-append-paragraph-start
+				  (c-modeval "paragraph-start")
 				  "\\|"
 				  page-delimiter)
 	  paragraph-separate (concat comment-line-prefix
-				     c-append-paragraph-separate
+				     (c-modeval "paragraph-separate")
 				     "\\|"
 				     page-delimiter)
 	  paragraph-ignore-fill-prefix t
