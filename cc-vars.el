@@ -45,7 +45,6 @@ reported and the syntactic symbol is ignored."
   :type 'integer
   :group 'c)
 
-;; TBD: "Tab Always Indent" goes away when widget is expanded.
 (defcustom c-tab-always-indent t
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil,
@@ -64,8 +63,7 @@ Note: indentation of lines containing only comments is also controlled
 by the `c-comment-only-line-offset' variable."
   :type '(radio
 	  :extra-offset 8
-;;	  :tag "The TAB key:"
-	  :format "The TAB key\n%v"
+	  :format "%{Tab Always Indent%}:\n   The TAB key\n%v"
 	  (const :tag "always indents, never inserts TAB" t)
 	  (const :tag "indents in left margin, otherwise inserts TAB" nil)
 	  (const :tag "inserts TAB in literals, otherwise indent" other))
