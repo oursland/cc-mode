@@ -773,7 +773,7 @@ indentation amount."
 	       (setq syntax nil)
 	       (back-to-indentation)
 	       (if (zerop (current-column))
-		   (insert (make-string c-label-minimum-indentation 32)))
+		   (insert-char ?\  c-label-minimum-indentation t))
 	       ))
 	    ))))
 

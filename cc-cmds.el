@@ -237,7 +237,7 @@ With universal argument, inserts the analysis as a comment on that line."
     (if (not (consp arg))
 	(message "syntactic analysis: %s" syntax)
       (indent-for-comment)
-      (insert (format "%s" syntax))
+      (insert-and-inherit (format "%s" syntax))
       ))
   (c-keep-region-active))
 
@@ -407,7 +407,7 @@ point is inside a literal or a macro, nothing special happens."
 	  (bolp (bolp)))
       (beginning-of-line)
       (delete-horizontal-space)
-      (insert-char last-command-char 1)
+      (insert last-command-char)
       (and (not bolp)
 	   (goto-char (- (point-max) pos)))
       )))
@@ -594,7 +594,7 @@ This function does various newline cleanups based on the value of
 			   mend (match-end 0))
 		     (eq (match-end 0) here)))
 	      (delete-region mbeg mend)
-	      (insert "} else {"))
+	      (insert-and-inherit "} else {"))
 	     ((and (memq 'brace-elseif-brace c-cleanup-list)
 		   (progn
 		     (goto-char (1- here))
@@ -617,7 +617,7 @@ This function does various newline cleanups based on the value of
 		   (eq (match-end 0) tmp))
 	      (delete-region mbeg mend)
 	      (goto-char mbeg)
-	      (insert " "))))
+	      (insert ?\ ))))
 	  (goto-char (- (point-max) pos))
 	  )
 	;; does a newline go after the brace?
@@ -820,7 +820,7 @@ value of `c-cleanup-list'."
 				       syntax c-hanging-colons-alist)
 		       (c-lookup-lists '(member-init-intro inher-intro)
 				       (let ((buffer-undo-list t))
-					 (insert "\n")
+					 (insert ?\n)
 					 (unwind-protect
 					     (c-guess-basic-syntax)
 					   (delete-char -1)))
@@ -910,7 +910,7 @@ is nil."
 		       (not (c-in-literal)))
 		  (progn
 		    (delete-region mbeg mend)
-		    (insert "} else if ("))
+		    (insert-and-inherit "} else if ("))
 		;; clean up brace-catch-brace
 		(goto-char here)
 		(if (and (memq 'brace-catch-brace c-cleanup-list)
@@ -929,7 +929,7 @@ is nil."
 			 (not (c-in-literal)))
 		    (progn
 		      (delete-region mbeg mend)
-		      (insert "} catch ("))))
+		      (insert-and-inherit "} catch ("))))
 	      (goto-char (- (point-max) pos))
 	      )))
 	(let (beg (end (1- (point))))
@@ -943,7 +943,7 @@ is nil."
 		 (save-excursion
 		   (delete-region beg end)
 		   (goto-char beg)
-		   (insert " ")))
+		   (insert ?\ )))
 		((and (memq 'compact-empty-funcall c-cleanup-list)
 		      (eq last-command-char ?\))
 		      (save-excursion
@@ -982,7 +982,7 @@ keyword on the line, the keyword is not inserted inside a literal, and
       ;; space with a nonspace to avoid messing up any whitespace
       ;; sensitive meddling that might be done, e.g. by
       ;; `c-backslash-region'.
-      (insert " x")
+      (insert-and-inherit " x")
       (unwind-protect
 	  (indent-according-to-mode)
 	(delete-char -2)))))
@@ -1017,7 +1017,7 @@ forward."
   "Insert a double colon scope operator at point.
 No indentation or other \"electric\" behavior is performed."
   (interactive "*")
-  (insert "::"))
+  (insert-and-inherit "::"))
 
 (defun c-beginning-of-defun (&optional arg)
   "Move backward to the beginning of a defun.
@@ -2229,7 +2229,7 @@ command to conveniently insert and align the necessary backslashes."
 		 (if (and (memq (char-before) '(?\  ?\t))
 			  (/= (point) point-pos))
 		     (insert ?\\)
-		   (insert " \\")))
+		   (insert ?\  ?\\)))
 	       (= (forward-line 1) 0))))))
 
 (defun c-delete-backslashes-forward (to-mark point-pos)
@@ -2295,7 +2295,7 @@ command to conveniently insert and align the necessary backslashes."
 			    (start (point)))
 			(unwind-protect
 			    (progn
-			      (insert ?\n fill-prefix)
+			      (insert-and-inherit "\n" fill-prefix)
 			      (current-column))
 			  (delete-region start (point))
 			  (set-buffer-modified-p buffer-modified))))))
@@ -2424,7 +2424,7 @@ command to conveniently insert and align the necessary backslashes."
 				;; character before the line break and
 				;; after comment-prefix in case it's
 				;; "" or ends with whitespace.
-				(insert "x\n" comment-prefix ?x)
+				(insert-and-inherit "x\n" comment-prefix "x")
 				(setq tmp-post (point-marker))
 				(indent-according-to-mode)
 				(goto-char (1- tmp-post))
@@ -2531,7 +2531,7 @@ command to conveniently insert and align the necessary backslashes."
 			   ;; ensure the column gets correct.  :P
 			   (unwind-protect
 			       (progn
-				 (insert fb-string)
+				 (insert-and-inherit fb-string)
 				 (cons (buffer-substring-no-properties
 					(c-point 'bol)
 					(point))
@@ -2680,7 +2680,7 @@ command to conveniently insert and align the necessary backslashes."
 					  (if sentence-end-double-space 2 1))
 				     1))
 			  ;; Insert the filler first to keep marks right.
-			  (insert (make-string spaces ?x))
+			  (insert-char ?x spaces t)
 			  (delete-region (point) (+ ender-start spaces))
 			  (setq hang-ender-stuck spaces)
 			  (setq point-rel
@@ -2753,8 +2753,8 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 		      tmp-pre (list (point)))
 		(unwind-protect
 		    (progn
-		      (insert ?\n (car fill))
-		      (insert (make-string (- col (current-column)) ?x)))
+		      (insert-and-inherit "\n" (car fill))
+		      (insert-char ?x (- col (current-column)) t))
 		  (setcdr tmp-pre (point))))))
 	  (if beg
 	      (let ((fill-prefix
@@ -2810,7 +2810,7 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 	  (goto-char tmp-post)
 	  (skip-syntax-backward "^w ")
 	  (forward-char (- hang-ender-stuck))
-	  (insert (make-string hang-ender-stuck ?\ ))
+	  (insert-char ?\  hang-ender-stuck t)
 	  (delete-char hang-ender-stuck)
 	  (goto-char here))
 	(set-marker tmp-post nil))
