@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.332 $
-;; Last Modified:   $Date: 1993-05-25 18:37:21 $
+;; Version:         $Revision: 2.333 $
+;; Last Modified:   $Date: 1993-05-28 22:20:57 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-05-25 18:37:21 $|$Revision: 2.332 $|
+;; |$Date: 1993-05-28 22:20:57 $|$Revision: 2.333 $|
 
 ;;; Code:
 
@@ -485,7 +485,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.332 $
+  "Major mode for editing C++ code.  $Revision: 2.333 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -706,7 +706,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.332 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.333 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -927,6 +927,12 @@ backward-delete-char-untabify."
 	  (if (and (memq last-command-char c++-untame-characters)
 		   (memq (c++-in-literal bod) '(c c++)))
 	      (insert "\\"))
+	  ;; we need to work around a bogus feature of emacs where an
+	  ;; open brace at bolp means a beginning-of-defun.  but it
+	  ;; really might not.
+	  (and (= last-command-char ?{)
+	       (bolp)
+	       (c++-indent-line))
 	  (insert last-command-char)
 	  ;; try to clean up empty defun braces if conditions apply
 	  (let ((here (point-marker)))
@@ -2657,7 +2663,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.332 $"
+(defconst c++-version "$Revision: 2.333 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
