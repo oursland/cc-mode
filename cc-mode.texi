@@ -362,10 +362,10 @@ the indentation associated variables, e.g. @code{c-special-indent-hook}.
 The first thing @ccmode{} does when indenting a line of code, is to
 analyze the line, determining the @dfn{syntactic component list} of the
 construct on that line.  A syntactic component consists of a pair of
-information (in lisp parlance, a @emph{cons cell}), where the first part
-is a @dfn{syntactic symbol}, and the second part is a @dfn{relative
+elements (in lisp parlance, a @emph{cons cell}), the first being
+a @dfn{syntactic symbol}, the second being a @dfn{relative
 buffer position}.  Syntactic symbols describe elements of C code
-@footnote{Unless otherwise noted, the term ``C code'' to refers to all
+@footnote{Unless otherwise noted, the term ``C code'' refers to all
 the C-like languages.}, e.g. @code{statement}, @code{substatement},
 @code{class-open}, @code{class-close}, etc.  @xref{Syntactic Symbols},
 for a complete list of currently recognized syntactic symbols and their
@@ -581,7 +581,7 @@ the minibuffer when you hit @kbd{TAB}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} contains two minor-mode-like features that you should
-find useful while you enter new C code.  The first is called
+find useful while entering new C code.  The first is called
 @dfn{auto-newline} mode, and the second is called @dfn{hungry-delete}
 mode.  These minor modes can be toggled on and off independently, and
 @ccmode{} can be configured so that it starts up with any
@@ -593,7 +593,7 @@ on the modeline of the @ccmode{} buffer.  When auto-newline mode is
 enabled, you will see @samp{C/a} on the mode line@footnote{The @samp{C}
 would be replaced with the name of the language in question for the
 other languages @ccmode{} supports.}.  When hungry delete mode is
-enabled you would see @samp{C/h} and when both modes are enabled, you'd
+enabled you will see @samp{C/h} and if both modes were enabled, you'd
 see @samp{C/ah}.
 
 @kindex C-c C-a
@@ -751,12 +751,12 @@ actual syntactic symbols.
 The braces of anonymous inner classes in Java are given the special
 symbols @code{inexpr-class-open} and @code{inexpr-class-close}, so that
 they can be distinguished from the braces of normal classes@footnote{The
-braces of anonymous classes produces a combination of
+braces of anonymous classes produce a combination of
 @code{inexpr-class}, and @code{class-open} or @code{class-close} in
 normal indentation analysis.}.
 
 The value associated with each syntactic symbol in this association list
-is called an @var{action} which can be either a function or a list.
+is called an @var{action}, which can be either a function or a list.
 @xref{Custom Brace and Colon Hanging}, for a more detailed discussion of
 using a function as a brace hanging @var{action}.
 
@@ -817,7 +817,7 @@ themselves.
 A word of caution: it is not a good idea to hang top-level construct
 introducing braces, such as @code{class-open} or @code{defun-open}.
 Emacs makes an assumption that such braces will always appear in column
-zero, hanging them can introduce performance problems.
+zero, and hanging them can introduce performance problems.
 @xref{Performance Issues}, for more information.
 
 
@@ -1007,7 +1007,7 @@ performed when the construct does not occur within a literal
 whitespace appearing between the individual components of the construct.
 @end defopt
 
-These are the clean-ups that only are active in the auto-newline minor
+These are the clean-ups that are only active in the auto-newline minor
 mode:
 
 @c FIXME: Would like to use some sort of @deffoo here; @table indents a
@@ -1165,7 +1165,7 @@ the GNU coding standards, e.g. @samp{signal (SIGINT, SIG_IGN)} and
 
 @item compact-empty-funcall
 Clean up any space between the function name and the opening parenthesis
-of a function call that have no arguments.  This is typically used
+of a function call that has no arguments.  This is typically used
 together with @code{space-before-funcall} if you prefer the GNU function
 call style for functions with arguments but think it looks ugly when
 it's only an empty parenthesis pair.  I.e. you will get @samp{signal
@@ -1441,8 +1441,8 @@ break into
 @end group
 @end example
 
-Note that it won't work to adjust the indentation by putting leading
-spaces in the @code{c-block-comment-prefix} string, since @ccmode{}
+Note that trying to adjust the indentation by putting leading
+spaces in the @code{c-block-comment-prefix} string won't work, since @ccmode{}
 still uses the normal indentation engine to indent the line.  Thus,
 the right way to fix the indentation is by setting the @code{c}
 syntactic symbol.  It defaults to @code{c-lineup-C-comments}, which
@@ -1483,7 +1483,7 @@ automatic line breaks there will produce poor results in the current
 implementation.
 @end defopt
 
-The commands that does the actual work follows.
+The commands that do the actual work follow.
 
 @table @asis
 @item @kbd{M-q} (@code{c-fill-paragraph})
@@ -1521,8 +1521,8 @@ indentation and line prefix are preserved.  If inside a comment and
 is started on the next line and indented as appropriate for comments.
 
 Note that @ccmode{} sets @code{comment-multi-line} to @code{t} at
-startup.  The reason is that @kbd{M-j} otherwise can produce sequences
-of single line block comments for texts that logically are to be treated
+startup.  The reason is that @kbd{M-j} could otherwise produce sequences
+of single line block comments for texts that should logically be treated
 as one comment, and the rest of the paragraph handling code
 (e.g. @kbd{M-q} and @kbd{M-a}) can't cope with that, which would lead to
 inconsistent behavior.
@@ -1571,8 +1571,8 @@ syntactic analysis, just like comments.
 The code inside macro definitions is still analyzed syntactically so
 that you get relative indentation there just as you'd get if the same
 code was outside a macro.  However, since there is no hint about the
-syntactic context, i.e. whether the macro expands to an expression, some
-statements, or perhaps whole functions, the syntactic recognition can be
+syntactic context, i.e. whether the macro expands to an expression, to some
+statements, or perhaps to whole functions, the syntactic recognition can be
 wrong.  @ccmode{} manages to figure it out correctly most of the time,
 though.  @xref{Syntactic Symbols}, for details about the indentation.
 
@@ -1583,7 +1583,7 @@ is @code{nil}, all lines inside macro definitions are analyzed as
 @code{cpp-macro-cont}.
 @end defopt
 
-@ccmode{} provides some tools to help keeping the line continuation
+@ccmode{} provides some tools to help keep the line continuation
 backslashes in macros neat and tidy:
 
 @table @asis
@@ -1615,11 +1615,11 @@ e.g. @code{c-backslash-region} and @code{c-context-line-break}.
 
 @code{c-backslash-column} specifies the minimum column for the
 backslashes.  If any line in the macro exceeds it then the next tab
-stop from that line is used as alignment column for all the
+stop from that line is used as the alignment column for all the
 backslashes, so that they remain in a single column.  However, if some
 lines exceed @code{c-backslash-max-column} then the backslashes in the
-rest of the macro will be kept at that column, so that the too long
-lines ``stick out'' instead.
+rest of the macro will be kept at that column, so that the 
+lines which are too long ``stick out'' instead.
 @end defopt
 
 The recommended line breaking function, @code{c-context-line-break}
@@ -1644,7 +1644,7 @@ trailing backslashes.
 @ccmode{} provides font locking for its supported languages by supplying
 patterns for use with Font Lock mode.  This means that you get distinct
 faces on the various syntactic parts such as comments, strings, keywords
-and types, which gives a big help in telling them apart at a glance and
+and types, which is very helpful in telling them apart at a glance and
 discovering syntactic errors.  @xref{Font Lock,,, emacs, The Emacs
 Editor}, for ways to enable font locking in @ccmode{} buffers.
 
@@ -1758,9 +1758,9 @@ recognize types.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} attempts to use the standard faces for programming languages
-as close as possible to their intentions.  No extra faces are currently
+in accordance with their intended purposes as far as possible.  No extra faces are currently
 provided, with the exception of a replacement face @code{c-invalid-face}
-for emacsen that doesn't provide @code{font-lock-warning-face}.
+for emacsen that don't provide @code{font-lock-warning-face}.
 
 @itemize @bullet
 @item
@@ -1794,7 +1794,7 @@ used for preprocessor defines with arguments.
 @item
 @vindex font-lock-variable-name-face
 Variables in declarations and definitions, and other identifiers in such
-variable contexts, gets @code{font-lock-variable-name-face}.  It's also
+variable contexts, get @code{font-lock-variable-name-face}.  It's also
 used for preprocessor defines without arguments.
 
 @item
@@ -1829,7 +1829,7 @@ labels.
 @vindex font-lock-reference-face
 Preprocessor directives get @code{font-lock-preprocessor-face} if it
 exists (i.e. XEmacs).  In Emacs they get @code{font-lock-builtin-face}
-or @code{font-lock-reference-face}, in lack of a closer equivalent.
+or @code{font-lock-reference-face}, for lack of a closer equivalent.
 
 @item
 @vindex font-lock-warning-face
@@ -1993,13 +1993,13 @@ brace.
 @kindex C-M-\
 @findex indent-region
 Indents an arbitrary region of code.  This is a standard Emacs command,
-tailored for C code in a @ccmode{} buffer.  Note that of course, point
+tailored for C code in a @ccmode{} buffer.  Note, of course, that point
 and mark must delineate the region you want to indent.
 
 @item @kbd{M-;} (@code{indent-for-comment})
 @kindex M-;
 @findex indent-for-comment
-Insert a comment last on the current line, if none is there already.
+Insert a comment at the end of the current line, if none is there already.
 Then reindent the comment according to the variables
 @code{c-indent-comment-alist}, @code{c-indent-comments-syntactically-p}
 and @code{comment-column}.  Then position the point after the comment
@@ -2081,8 +2081,8 @@ indentation, otherwise only spaces can be used.
 @vindex progress-interval (c-)
 When indenting large regions of code, this variable controls how often a
 progress message is displayed.  Set this variable to @code{nil} to
-inhibit the progress messages, or set it to an integer which is the
-interval in seconds that progress messages are displayed.
+inhibit the progress messages, or set it to an integer which is how
+often (in seconds) progress messages are to be displayed.
 @end defopt
 
 
@@ -2415,7 +2415,7 @@ your @file{.emacs} file so that your changes are more permanent.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 As an example of how to customize indentation, let's change the
-style of this example@footnote{In this an subsequent examples, the
+style of this example@footnote{In this and subsequent examples, the
 original code is formatted using the @samp{gnu} style unless otherwise
 indicated.  @xref{Styles}.}:
 
@@ -2557,7 +2557,7 @@ values depend on the style, which may very well be different for
 different languages.
 
 If you want to make more advanced configurations, e.g. language-specific
-customization, global variable settings isn't enough.  For that you can
+customization, setting global variables isn't enough.  For that you can
 use the language hooks, see @ref{Hooks}, and/or the style system, see
 @ref{Styles}.
 
@@ -3638,8 +3638,8 @@ as are lines 11 and 14.
 Line 9 is a little different --- since it contains the keyword
 @code{else} matching the @code{if} statement introduced on line 5, it is
 given the @code{else-clause} syntax.  The @code{try}-@code{catch}
-constructs in C++ and Java are treated this way too, with the only
-difference that the @code{catch}, and in Java also @code{finally}, is
+constructs in C++ and Java are treated this way too, except
+that @code{catch} and (in Java) @code{finally}, are
 marked with @code{catch-clause}.
 
 @ssindex substatement
@@ -3916,7 +3916,7 @@ Multiline preprocessor macro definitions are normally handled just like
 other code, i.e. the lines inside them are indented according to the
 syntactic analysis of the preceding lines inside the macro.  The first
 line inside a macro definition (i.e. the line after the starting line of
-the cpp directive itself) get @code{cpp-define-intro}.  In this example:
+the cpp directive itself) gets @code{cpp-define-intro}.  In this example:
 
 @example
  1: #define LIST_LOOP(cons, listp)                         \
@@ -4238,7 +4238,7 @@ indent such cases this way.
 
 @defun c-lineup-arglist-intro-after-paren
 @findex lineup-arglist-intro-after-paren (c-)
-Line up a line just after the open paren of the surrounding paren or
+Line up a line to just after the open paren of the surrounding paren or
 brace block.
 
 @workswith @code{defun-block-intro}, @code{brace-list-intro},
@@ -4270,7 +4270,7 @@ discussion of this ``DWIM'' measure.
 @defun c-lineup-arglist-operators
 @findex lineup-arglist-operators (c-)
 Line up lines starting with an infix operator under the open paren.
-Return @code{nil} on lines that doesn't start with an operator, to leave
+Return @code{nil} on lines that don't start with an operator, to leave
 those cases to other lineup functions.  Example:
 
 @example
@@ -4590,7 +4590,7 @@ construct.
 @defun c-lineup-java-inher
 @findex lineup-java-inher (c-)
 Line up Java implements and extends declarations.  If class names
-follows on the same line as the @samp{implements}/@samp{extends}
+follow on the same line as the @samp{implements}/@samp{extends}
 keyword, they are lined up under each other.  Otherwise, they are
 indented by adding @code{c-basic-offset} to the column of the keyword.
 E.g:
@@ -4622,7 +4622,7 @@ class Foo
 
 @defun c-lineup-java-throws
 @findex lineup-java-throws (c-)
-Line up Java throws declarations.  If exception names follows on the
+Line up Java throws declarations.  If exception names follow on the
 same line as the throws keyword, they are lined up under each other.
 Otherwise, they are indented by adding @code{c-basic-offset} to the
 column of the @samp{throws} keyword.  The @samp{throws} keyword itself
@@ -4680,7 +4680,7 @@ expressions.
 
 @defun c-lineup-math
 @findex lineup-math (c-)
-Line up the current line after the equal sign on the first line in the
+Line up the current line to after the equal sign on the first line in the
 statement.  If there isn't any, indent with @code{c-basic-offset}.  If
 the current line contains an equal sign too, try to align it with the
 first one.
@@ -4972,16 +4972,16 @@ some cases it can cause @code{beginning-of-defun} to hang@footnote{This
 has been observed in Emacs 19.34 and XEmacs 19.15.}.  For this reason,
 it is not used by default, but if you feel adventurous, you can set
 @code{defun-prompt-regexp} to it in your mode hook.  In any event,
-setting and rely on @code{defun-prompt-regexp} will definitely slow
+setting and relying on @code{defun-prompt-regexp} will definitely slow
 things down anyway because you'll be doing regular expression searches
-for every line you indent, so you're probably screwed either way!
+for every line you indent, so you'll probably be taking a hit either way!
 
 @vindex c-enable-xemacs-performance-kludge-p
 @vindex enable-xemacs-performance-kludge-p (c-)
 Another alternative for XEmacs users is to set the variable
 @code{c-enable-xemacs-performance-kludge-p} to non-@code{nil}.  This
 tells @ccmode{} to use XEmacs-specific built-in functions which, in some
-circumstances, can locate the top-most opening brace much quicker than
+circumstances, can locate the top-most opening brace much more quickly than
 @code{beginning-of-defun}.  Preliminary testing has shown that for
 styles where these braces are hung (e.g. most JDK-derived Java styles),
 this hack can improve performance of the core syntax parsing routines
@@ -4994,7 +4994,7 @@ effect in Emacs since the necessary built-in functions don't exist (in
 Emacs 21.3 as of this writing in May 2003).
 
 You will probably notice pathological behavior from @ccmode{} when
-working in files containing large amounts of preprocessor macros.  This
+working in files containing a lot of preprocessor macros.  This
 is because Emacs cannot skip backwards over these lines as quickly as it
 can comments.
 
@@ -5016,11 +5016,11 @@ column zero!
 You might want to investigate the speed-ups contained in the
 file @file{cc-lobotomy.el}, which comes as part of the @ccmode{}
 distribution, but is completely unsupported.
-As mentioned previous, @ccmode{} always trades speed for accuracy,
+As mentioned previously, @ccmode{} always trades speed for accuracy,
 however it is recognized that sometimes you need speed and can sacrifice
 some accuracy in indentation.  The file @file{cc-lobotomy.el} contains
 hacks that will ``dumb down'' @ccmode{} in some specific ways, making
-that trade-off of accurancy for speed.  I won't go into details of its
+that trade-off of accuracy for speed.  I won't go into details of its
 use here; you should read the comments at the top of the file, and look
 at the variable @code{cc-lobotomy-pith-list} for details.
 
@@ -5138,9 +5138,9 @@ as @kbd{;}, @kbd{@{}, or @kbd{@}}, I get an error that look like this:
 
 This is a common error when @ccmode{} hasn't been compiled correctly,
 especially under Emacs 19.34@footnote{Technically, it's because some
-macros wasn't defined during the compilation, so the byte compiler put
+macro wasn't defined during the compilation, so the byte compiler put
 in function calls instead of the macro expansions. Later, when the
-interpreter tries to call the macros as functions, it shows this
+interpreter tries to call the macro as a function, it shows this
 (somewhat cryptic) error message.}. If you are using the standalone
 @ccmode{} distribution, try recompiling it according to the instructions
 in the @file{README} file.
@@ -5153,8 +5153,8 @@ in the @file{README} file.
 @appendix Getting the Latest CC Mode Release
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@ccmode{} is standard with all versions of Emacs since 19.34 and of
-XEmacs since 19.16.
+@ccmode{} has been standard with all versions of Emacs since 19.34 and
+of XEmacs since 19.16.
 
 @cindex web site
 Due to release schedule skew, it is likely that all of these Emacsen
