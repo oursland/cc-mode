@@ -39,18 +39,15 @@ if (x)
 
   <ul>
 
-    <p><li>Syntactic indentation inside macros.
+    <p><li>Syntactic indentation inside macros: The contents of
+    multiline <code>#define</code>'s are now analyzed and indented
+    syntactically just like other code.  This can be disabled by the
+    new variable <code>c-syntactic-indentation-in-macros</code>.  A
+    new syntactic symbol <code>cpp-define-intro</code> has been added
+    to control the initial indentation inside <code>#define</code>'s.
 
-    <p>The contents of multiline <code>#define</code>'s are now
-    analyzed and indented syntactically just like other code.  This
-    can be disabled by the new variable
-    <code>c-syntactic-indentation-in-macros</code>.  A new syntactic
-    symbol <code>cpp-define-intro</code> has been added to control the
-    initial indentation inside <code>#define</code>'s.
-
-    <p><li>New lineup function <code>c-lineup-cpp-define</code>.
-
-    <p>Now used by default to line up macro continuation lines.  The
+    <p><li>New lineup function <code>c-lineup-cpp-define</code>, which
+    is now used by default to line up macro continuation lines.  The
     behavior of this function closely mimics the indentation one gets
     if the macro is indented while the line continuation backslashes
     are temporarily removed.  If syntactic indentation in macros is
@@ -64,32 +61,27 @@ if (x)
     <code>c-context-open-line</code>.
 
     <p><li>Better alignment of line continuation backslashes.
-
-    <p><code>c-backslash-region</code> tries to adapt to surrounding
+    <code>c-backslash-region</code> tries to adapt to surrounding
     backslashes.  New variable <code>c-backslash-max-column</code>
     which put a limit on how far out backslashes can be moved.
 
-    <p><li>Automatic alignment of line continuation backslashes.
-
-    <p>Controlled by the new variable
-    <code>c-auto-align-backslashes</code>.  Affects
+    <p><li>Automatic alignment of line continuation backslashes.  This
+    is controlled by the new variable
+    <code>c-auto-align-backslashes</code>.  It affects
     <code>c-context-line-break</code>,
     <code>c-context-open-line</code> and newlines inserted in
     auto-newline mode.
 
-    <p><li>Line indentation works better inside macros.
-
-    <p>Regardless whether syntactic indentation and syntactic
-    indentation inside macros are enabled or not, line indentation now
-    ignores the line continuation backslashes.  This is most
-    noticeable when syntactic indentation is turned off and there are
-    empty lines (save for the backslash) in the macro.
+    <p><li>Line indentation works better inside macros.  Regardless
+    whether syntactic indentation and syntactic indentation inside
+    macros are enabled or not, line indentation now ignores the line
+    continuation backslashes.  This is most noticeable when syntactic
+    indentation is turned off and there are empty lines (save for the
+    backslash) in the macro.
 
   </ul>
 
-  <p><li><code>indent-for-comment</code> is more customizable.
-
-  <p>The behavior of <code>M-;</code>
+  <p><li>The behavior of <code>M-;</code>
   (<code>indent-for-comment</code>) is now configurable through the
   variable <code>c-indent-comment-alist</code>.  The indentation
   behavior based on the preceding code on the line, e.g. to get two
@@ -113,7 +105,7 @@ if (x)
     region" between the function header and its body.
 
     <li><code>c-lineup-gcc-asm-reg</code> provides better indentation
-    inside asm blocks.  Contributed by Kevin Ryde.
+    inside <code>asm</code> blocks.  Contributed by Kevin Ryde.
 
     <li><code>c-lineup-argcont</code> lines up continued function
     arguments after the preceding comma.  Contributed by Kevin Ryde.
@@ -135,11 +127,10 @@ if (x)
   complex file that it'll take noticeable time to find out the
   syntactic context.
 
-  <p><li>Statements are recognized in a more robust way.
-
-  <p>Statements are recognized most of the time even if they occur in
-  an "invalid" context, e.g. in a function argument.  In practice that
-  can happen anyway when macros are involved.
+  <p><li>Statements are recognized in a more robust way. They are
+  handled even when they occur in an "invalid" context, e.g. in a
+  function argument.  In practice that can happen when macros are
+  involved.
 
   <p><li>Improved the way c-indent-exp chooses the block to indent.
   It now indents the block for the closest sexp following the point

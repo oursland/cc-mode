@@ -8,16 +8,21 @@
 <p>See also the <a href="changes-529.php">user visible changes for
 5.29</a>.
 
+<p><a
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.30.tar.gz">Download</a>
+this CC Mode version.</p>
+
 <ul>
 
   <p><li>Font lock support.
 
   <p>CC Mode now provides font lock support for all its languages.
   This supersedes the font lock patterns that have been in the core
-  font lock package.  Like indentation, font locking is done in a
-  uniform way across all languages (except the new AWK mode - see
-  below).  That means that the new font locking will be different from
-  the old patterns in various details for most languages.
+  font lock package for C, C++, Java and Objective-C.  Like
+  indentation, font locking is done in a uniform way across all
+  languages (except the new AWK mode - see below).  That means that
+  the new font locking will be different from the old patterns in
+  various details for most languages.
 
   <p>The main goal of the font locking in CC Mode is accuracy, to
   provide a dependable aid in recognizing the various constructs.
