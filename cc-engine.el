@@ -1930,24 +1930,37 @@ This function does not do any hidden buffer changes."
 (defun c-beginning-of-syntax ()
   ;; This is used for `font-lock-beginning-of-syntax-function'.  It
   ;; goes to the closest previous point that is known to be outside
-  ;; any string literal or comment, using `c-state-cache'.
-  (goto-char
-   (let ((paren-state (or c-state-cache (c-parse-state))) elem)
-     (catch 'done
-       ;; Note: Similar code in `c-safe-position'.  The difference is
-       ;; that we accept a safe position at the point and don't bother
-       ;; to go forward past open parens.
-       (while paren-state
-	 (setq elem (car paren-state))
-	 (if (consp elem)
-	     (cond ((<= (cdr elem) (point))
-		    (throw 'done (cdr elem)))
-		   ((<= (car elem) (point))
-		    (throw 'done (car elem))))
-	   (if (<= elem (point))
-	       (throw 'done elem)))
-	 (setq paren-state (cdr paren-state)))
-       (point-min)))))
+  ;; any string literal or comment.  `c-state-cache' is used if it has
+  ;; a position in the vicinity.
+  (let* ((paren-state c-state-cache)
+	 elem
+
+	 (pos (catch 'done
+		;; Note: Similar code in `c-safe-position'.  The
+		;; difference is that we accept a safe position at
+		;; the point and don't bother to go forward past open
+		;; parens.
+		(while paren-state
+		  (setq elem (car paren-state))
+		  (if (consp elem)
+		      (cond ((<= (cdr elem) (point))
+			     (throw 'done (cdr elem)))
+			    ((<= (car elem) (point))
+			     (throw 'done (car elem))))
+		    (if (<= elem (point))
+			(throw 'done elem)))
+		  (setq paren-state (cdr paren-state)))
+		(point-min))))
+
+    (if (> pos (- (point) 4000))
+	(goto-char pos)
+      ;; The position is far back.  Try `c-beginning-of-defun-1'
+      ;; (although we can't be entirely sure it will go to a position
+      ;; outside a comment or string in current emacsen).  FIXME:
+      ;; Consult `syntax-ppss' here.
+      (c-beginning-of-defun-1)
+      (if (< (point) pos)
+	  (goto-char pos)))))
 
 
 ;; Tools for scanning identifiers and other tokens.
@@ -2416,6 +2429,9 @@ This function does not do any hidden buffer changes."
 		     (let ((pos (point)) safe-pos state)
 		       ;; Pick a safe position as close to the point as
 		       ;; possible.
+		       ;;
+		       ;; FIXME: Consult `syntax-ppss' here if our
+		       ;; cache doesn't give a good position.
 		       (while (and safe-pos-list
 				   (> (car safe-pos-list) (point)))
 			 (setq safe-pos-list (cdr safe-pos-list)))
