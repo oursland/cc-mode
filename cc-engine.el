@@ -1501,8 +1501,9 @@ brace."
 		  ;; otherwise, ignore this element
 		  (setq containing-sexp nil))
 	      ;; ignore the bufpos if its been narrowed out by the
-	      ;; containing class
-	      (if (<= containing-sexp (point-min))
+	      ;; containing class or does not contain the indent point
+	      (if (or (<= containing-sexp (point-min))
+		      (>= containing-sexp indent-point))
 		  (setq containing-sexp nil)))))
 
 	;; set the limit on the farthest back we need to search
