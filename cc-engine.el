@@ -1002,6 +1002,16 @@ match is used."
 		 (or (search-forward "*/" bound noerror)
 		     (setq count -1)))
 
+		((and (not (elt state 5))
+		      (eq (char-before syntactic-match-pos) ?/)
+		      (memq (char-after syntactic-match-pos) '(?/ ?*)))
+		 ;; Match in the middle of the opener of a block or
+		 ;; line comment.
+		 (or (if (= (char-after syntactic-match-pos) ?/)
+			 (re-search-forward "[\n\r]" bound noerror)
+		       (search-forward "*/" bound noerror))
+		     (setq count -1)))
+
 		((and not-inside-token
 		      (> syntactic-match-pos last-token-end-pos)
 		      (save-match-data
@@ -1698,21 +1708,18 @@ brace."
 	     (not (= (match-end 0) (c-point 'eol))))
     (goto-char (match-end 0))))
 
-(defun c-just-after-func-arglist-p (&optional containing lim)
+(defun c-just-after-func-arglist-p (&optional lim)
   ;; Return t if we are between a function's argument list closing
   ;; paren and its opening brace.  Note that the list close brace
   ;; could be followed by a "const" specifier or a member init hanging
-  ;; colon.  Optional CONTAINING is position of containing s-exp open
-  ;; brace.  If not supplied, point is used as search start.  LIM is
-  ;; used as bound for some backward buffer searches; the search might
-  ;; continue past it.
+  ;; colon.  LIM is used as bound for some backward buffer searches;
+  ;; the search might continue past it.
   ;;
   ;; Note: This test is easily fooled.  It only works reasonably well
   ;; in the situations where `c-guess-basic-syntax' uses it.
   (save-excursion
     (c-backward-syntactic-ws lim)
-    (let ((checkpoint (or containing (point))))
-      (goto-char checkpoint)
+    (let ((checkpoint (point)))
       ;; could be looking at const specifier
       (if (and (eq (char-before) ?t)
 	       (forward-word -1)
@@ -2986,9 +2993,11 @@ in Pike) then the point for the preceding one is returned."
   ;; This function contains the decision tree reached through both
   ;; cases 18 and 10.  It's a continued statement or top level
   ;; construct of some kind.
+
   (let (special-brace-list)
     (goto-char indent-point)
     (skip-chars-forward " \t")
+
     (cond
      ;; (CASE A removed.)
      ;; CASE B: open braces for class or brace-lists
@@ -2996,27 +3005,22 @@ in Pike) then the point for the preceding one is returned."
 	    (or (and c-special-brace-lists
 		     (c-looking-at-special-brace-list))
 		(eq char-after-ip ?{)))
+
       (cond
        ;; CASE B.1: class-open
        ((save-excursion
-	  (goto-char indent-point)
-	  (skip-chars-forward " \t{")
+	  (skip-chars-forward "{")
 	  (let ((decl (c-search-uplist-for-classkey (c-parse-state))))
 	    (and decl
 		 (setq beg-of-same-or-containing-stmt (aref decl 0)))
 	    ))
 	(c-add-syntax 'class-open beg-of-same-or-containing-stmt))
+
        ;; CASE B.2: brace-list-open
        ((or (consp special-brace-list)
 	    (save-excursion
 	      (goto-char beg-of-same-or-containing-stmt)
-	      (looking-at "enum\\>[^_]"))
-	    (save-excursion
-	      (goto-char indent-point)
-	      (while (and (> (point) beg-of-same-or-containing-stmt)
-			  (= (c-backward-token-1 1 t) 0)
-			  (/= (char-after) ?=)))
-	      (eq (char-after) ?=)))
+	      (c-syntactic-re-search-forward "=" indent-point t 1 t t)))
 	;; The most semantically accurate symbol here is
 	;; brace-list-open, but we report it simply as a statement-cont.
 	;; The reason is that one normally adjusts brace-list-open for
@@ -3025,18 +3029,18 @@ in Pike) then the point for the preceding one is returned."
 	(c-beginning-of-statement-1 containing-sexp)
 	(c-add-stmt-syntax 'statement-cont nil nil nil
 			   containing-sexp paren-state))
+
        ;; CASE B.3: The body of a function declared inside a normal
        ;; block.  Can occur e.g. in Pike and when using gcc
        ;; extensions.  Might also trigger it with some macros followed
        ;; by blocks, and this gives sane indentation then too.
-       ;; C.f. cases 16F and 17G.
-       ((progn
-	  (goto-char indent-point)
-	  (and (not (c-looking-at-bos))
-	       (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
-		   'same)))
+       ;; C.f. cases E, 16F and 17G.
+       ((and (not (c-looking-at-bos))
+	     (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
+		 'same))
 	(c-add-stmt-syntax 'defun-open nil t nil
 			   containing-sexp paren-state))
+
        ;; CASE B.4: Continued statement with block open.
        (t
 	(goto-char beg-of-same-or-containing-stmt)
@@ -3044,17 +3048,39 @@ in Pike) then the point for the preceding one is returned."
 			   containing-sexp paren-state)
 	(c-add-syntax 'block-open))
        ))
+
      ;; CASE C: iostream insertion or extraction operator
      ((and (looking-at "<<\\|>>")
 	   (save-excursion
 	     (goto-char beg-of-same-or-containing-stmt)
-	     (while (and (re-search-forward "<<\\|>>" indent-point 'move)
-			 (c-in-literal beg-of-same-or-containing-stmt)))
-	     ;; if we ended up at indent-point, then the first streamop is on a
-	     ;; separate line. Indent the line like a statement-cont instead
-	     (when (/= (point) indent-point)
+	     ;; If there is no preceding streamop in the statement
+	     ;; then indent this line as a normal statement-cont.
+	     (when (c-syntactic-re-search-forward
+		    "<<\\|>>" indent-point 'move 1 t t)
 	       (c-add-syntax 'stream-op (c-point 'boi))
 	       t))))
+
+     ;; CASE E: In the "K&R region" of a function declared inside a
+     ;; normal block.  C.f. case B.3.
+     ((and (save-excursion
+	     ;; Check that the next token is a '{'.  This works as
+	     ;; long as no language that allows nested function
+	     ;; definitions doesn't allow stuff like member init
+	     ;; lists, K&R declarations or throws clauses there.
+	     ;;
+	     ;; Note that we do a forward search for something ahead
+	     ;; of the indentation line here.  That's not good since
+	     ;; the user might not have typed it yet.  Unfortunately
+	     ;; it's exceedingly tricky to recognize a function
+	     ;; prototype in a code block without resorting to this.
+	     (c-forward-syntactic-ws)
+	     (eq (char-after) ?{))
+	   (not (c-looking-at-bos))
+	   (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
+	       'same))
+      (c-add-stmt-syntax 'func-decl-cont nil t nil
+			 containing-sexp paren-state))
+
      ;; CASE D: continued statement.
      (t
       (c-beginning-of-statement-1 containing-sexp)
@@ -3419,7 +3445,7 @@ in Pike) then the point for the preceding one is returned."
 		(c-add-syntax 'defun-open (c-point 'bol)))
 	      )))
 	   ;; CASE 5B: first K&R arg decl or member init
-	   ((c-just-after-func-arglist-p nil lim)
+	   ((c-just-after-func-arglist-p lim)
 	    (cond
 	     ;; CASE 5B.1: a member init
 	     ((or (eq char-before-ip ?:)
