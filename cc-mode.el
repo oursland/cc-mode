@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.164 $
-;; Last Modified:   $Date: 1995-03-09 16:59:43 $
+;; Version:         $Revision: 4.165 $
+;; Last Modified:   $Date: 1995-03-09 17:03:21 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-09 16:59:43 $|$Revision: 4.164 $|
+;; |$Date: 1995-03-09 17:03:21 $|$Revision: 4.165 $|
 
 ;;; Code:
 
@@ -1185,7 +1185,10 @@ Key bindings:
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
-		  minor-mode-alist))))
+		  minor-mode-alist)))
+  ;; the default style is now GNU.  This can be overridden in
+  ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
+  (c-set-style "GNU"))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevent file local variables.
@@ -4489,7 +4492,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.164 $"
+(defconst c-version "$Revision: 4.165 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
