@@ -5,11 +5,10 @@ CC Mode NEWS -- user visible changes. -*- mode:outline -*-
 Note: See also changes in 5.23 to get the complete list of additions
 since the last public release.
 
-** c-default-style can now take an alist that associates a style to
-every major mode language.  There's no longer a hardcoded change to
-"java" style in Java mode, but the new semantics are
-backward-compatible, so the same thing will happen unless
-c-default-style is changed.  See the variable's docstring for details.
+** c-default-style can now take an association list that maps major
+modes to style names.  When this variable is an alist, Java mode no
+longer hardcodes a setting to "java" style.  See the variable's
+docstring for details.
 
 ** It's now possible to put a list as the offset on a syntactic
 symbol.  The list is evaluated recursively until a non-nil offset is
@@ -18,7 +17,7 @@ prioritized order on a single line.  However, none of the supplied
 lineup functions use this feature currently.
 
 ** New syntactic symbol catch-clause, which is used on the "catch" and
-"finally" lines in try-catch constructs in C and Java.
+"finally" lines in try-catch constructs in C++ and Java.
 
 ** New cleanup brace-catch-brace on c-cleanup-list, which does for
 "catch" lines what brace-elseif-brace does for "else if" lines.
@@ -54,6 +53,8 @@ c-electric-brace also recognizes brace-entry-open braces
 ** New command c-indent-line-or-region, not bound by default.
 
 ** Improvements to M-C-h (c-mark-function).
+
+** `#' is only electric when typed in the indentation of a line.
 
 ** Parentheses are now electric (via the new command c-electric-paren)
 for auto-reindenting lines when parens are typed.
