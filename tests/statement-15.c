@@ -64,12 +64,12 @@ int foo()
 	y;
   x:
     while (b)
-	foo: if (y)
+      foo: if (y)
 	    while (t)
 		p;
 	else t;
     while (b)
-	gnkt: if (y)
+      gnkt: if (y)
 	    do
 		if (i)
 		    while (x);
@@ -77,7 +77,7 @@ int foo()
     while (z);
     if (p)
 	while (b)
-	    gnkt: if (y)
+	  gnkt: if (y)
 		do if (i) while (x); while (y);
 	    else
 		z;
