@@ -1,33 +1,34 @@
-;;; pike.el -- Major mode for editing Pike and other LPC files.
-;;; $Id: pike.el,v 1.7 1999/10/02 05:49:54 mast Exp $
+;;; pike.el -- Font lock definitions for Pike and other LPC files.
+;;; $Id: pike.el,v 1.22 2001/02/13 14:11:55 mast Exp $
 ;;; Copyright (C) 1995, 1996, 1997, 1998, 1999 Per Hedbor.
 ;;; This file is distributed as GPL
 
 ;;; Keywords: Pike, LPC, uLPC, µLPC, highlight
 
-;;; This file also provides a highlight-syntax table for Pike.
-;;; In fact, it more or less require that you can set the highlight
-;;; table.. It require Emacs 19.30 or later
-
-;;; This file is modified by Martin Stjernholm <mast@lysator.liu.se>
-;;; to work with CC Mode that have Pike support.
-
-;;; Modified again by Per to support highlighting of 'new style' pike.
-;;; All pike manual stuff removed, there are normal manpages nowdays.
-
-;;; (load "pike")
-;;; (setq auto-mode-alist 
+;;; To use:
+;;;
+;;; (require 'pike)
+;;;
+;;; Older Emacs versions doesn't come with a Pike-aware CC Mode (M-x
+;;; c-version should report 5.23 or later), so you might have to
+;;; upgrade that (see http://www.python.org/emacs/cc-mode/). You
+;;; probably want this too in that case:
+;;;
+;;; (setq auto-mode-alist
 ;;;   (append '(("\\.pike$" . pike-mode)) auto-mode-alist)
 
-;;; Known problems:
-;;; The highlighting is at times quite bogus.
-
 (require 'font-lock)
+(require 'custom)
 
 ;; Added in later font-lock versions. Copied here for backward
 ;; compatibility.
 (defvar font-lock-preprocessor-face 'font-lock-keyword-face
   "Don't even think of using this.")
+(defvar pike-font-lock-refdoc-face 'pike-font-lock-refdoc-face)
+(defvar pike-font-lock-refdoc-init-face 'pike-font-lock-refdoc-init-face)
+(defvar pike-font-lock-refdoc-init2-face 'pike-font-lock-refdoc-init2-face)
+(defvar pike-font-lock-refdoc-keyword-face 'pike-font-lock-refdoc-keyword-face)
+(defvar pike-font-lock-refdoc-error-face 'pike-font-lock-refdoc-error-face)
 
 (defconst pike-font-lock-keywords-1 nil
  "For consideration as a value of `pike-font-lock-keywords'.
@@ -39,7 +40,40 @@ This adds highlighting of types and identifier names.")
 
 (defconst pike-font-lock-keywords-3 nil
  "For consideration as a value of `pike-font-lock-keywords'.
-This adds highlighting of Java documentation tags, such as @see.")
+Highlight some constructs differently")
+
+(defgroup pike-faces nil
+  "Faces used by the pike color highlighting mode."
+  :group 'font-lock
+  :group 'faces)
+
+(defface pike-font-lock-refdoc-face
+  '((t))
+  "Face to use for normal text in Pike documentation comments. It's
+overlaid over the `font-lock-comment-face'."
+  :group 'pike-faces)
+(defface pike-font-lock-refdoc-init-face
+  '((t (:bold t)))
+  "Face to use for the magic init char of Pike documentation comments. It's
+overlaid over the `font-lock-comment-face'."
+  :group 'pike-faces)
+(defface pike-font-lock-refdoc-init2-face
+  '((t))
+  "Face to use for the comment starters Pike documentation comments. It's
+overlaid over the `font-lock-comment-face'."
+  :group 'pike-faces)
+(defface pike-font-lock-refdoc-keyword-face
+  '((t))
+  "Face to use for markup keywords Pike documentation comments. It's
+overlaid over the `font-lock-reference-face'."
+  :group 'pike-faces)
+(defface pike-font-lock-refdoc-error-face
+  '((((class color) (background light)) (:foreground "red"))
+    (((class color)) (:foreground "hotpink"))
+    (((background light)) (:foreground "white" :background "black"))
+    (t (:foreground "black" :background "white")))
+  "Face to use for invalid markup in Pike documentation comments."
+  :group 'pike-faces)
 
 (defconst pike-font-lock-type-regexp
   (concat "\\<\\("
@@ -65,7 +99,7 @@ This adds highlighting of Java documentation tags, such as @see.")
   "Regexp which should match a primitive type.")
 
 
-; Problems: We really should allow 
+; Problems: We really should allow all unicode characters...
 (let ((capital-letter "A-Z\300-\326\330-\337")
       (letter "a-zA-Z\241-\377_")
       (digit  "0-9")
@@ -95,10 +129,10 @@ The name is assumed to begin with a capital letter.")
 
   (defconst pike-modifier-regexp
     (concat "\\<\\(public\\|inline\\|final\\|static\\|protected\\|"
-	    "local\\|private\\|nomask\\|\\)\\>"))
-  (defconst pike-operator-identifiers 
-    (concat "``?\\(!=\\|->=?\\|<[<=]\\|==\\|>[=>]\\|\\[\\]=?\\|\(\)"
-	    "\\|[!%&+*/<>^|~-]\\)"))
+	    "local\\|optional\\|private\\|nomask\\|variant\\)\\>"))
+  (defconst pike-operator-identifiers
+    (concat "`\\(->=?\\|+=?\\|==\\|\\[\\]=?\\|()\\|[!<>~]"
+	    "\\|`?\\(<<\\|>>\\|[%&*+/^|-]\\)\\)"))
 
   ;; Basic font-lock support:
   (setq pike-font-lock-keywords-1
@@ -156,7 +190,12 @@ The name is assumed to begin with a capital letter.")
 	       'font-lock-function-name-face)
 	 ;; Case statements:
 	 ;; Any constant expression is allowed.
-	 '("\\<case\\>\\s *\\(.*\\):" 1 font-lock-reference-face)))
+	 '("\\<case\\>\\s *\\(.*\\):"
+	   1 font-lock-reference-face)
+	 ;; Labels in statements:
+	 `(,(concat "\\<\\(break\\|continue\\)\\>\\s *\\("
+		    pike-font-lock-identifier-regexp "\\)")
+	   2 font-lock-reference-face)))
 
     ;; Types and declared variable names:
     (setq pike-font-lock-keywords-2
@@ -165,7 +204,7 @@ The name is assumed to begin with a capital letter.")
 	    '("^#!.*$" 0 font-lock-comment-face)
 
 	    '("^#[ \t]*error\\(.*\\)$"
-	      (1 font-lock-comment-face))
+	      (1 font-lock-string-face))
 
 	    ;; #charset char-set-name
 
@@ -219,7 +258,6 @@ The name is assumed to begin with a capital letter.")
 			    pike-font-lock-identifier-regexp ; 4
 			    ")")
 			   "\\)")
-		   ;;"\\s *\\(\\[\\s *\\]\\s *\\)*"
 		   (concat "\\("
 			   "[,:|\)]"
 			   "\\|"
@@ -248,25 +286,59 @@ The name is assumed to begin with a capital letter.")
 		    (goto-char (match-end 1))
 		    nil
 		    (1 font-lock-variable-name-face)))
-	    )))
+	    )
+
+	   ;; Labels. Do this after the type font locking above to
+	   ;; avoid highlighting "int" in "mapping(int:string)" as a
+	   ;; label.
+	   `((pike-font-lock-find-label
+	      0 font-lock-reference-face))
+	   ))
+
+    (setq pike-font-lock-keywords-1
+	  (append pike-font-lock-keywords-1
+		  `((pike-font-lock-find-label
+		     0 font-lock-reference-face))))
 
   ;; Modifier keywords
   (setq pike-font-lock-keywords-3
 	(append
 
-	 '(
+	 (list
 	   ;; Feature scoping:
 	   ;; These must come first or the Modifiers from keywords-1 will
 	   ;; catch them.  We don't want to use override fontification here
 	   ;; because then these terms will be fontified within comments.
-	   ("\\<public\\>"    0 font-lock-preprocessor-face)
-	   ("\\<inline\\>"   0 font-lock-preprocessor-face)
-	   ("\\<final\\>" 0 font-lock-preprocessor-face)
-	   ("\\<static\\>" 0 font-lock-preprocessor-face)
-	   ("\\<protected\\>" 0 font-lock-preprocessor-face)
-	   ("\\<local\\>" 0 font-lock-preprocessor-face)
-	   ("\\<private\\>"   0 font-lock-preprocessor-face)
-	   ("\\<nomask\\>" 0 font-lock-preprocessor-face))
+	  '("\\<public\\>"    0 font-lock-preprocessor-face)
+	  '("\\<inline\\>"    0 font-lock-preprocessor-face)
+	  '("\\<final\\>"     0 font-lock-preprocessor-face)
+	  '("\\<static\\>"    0 font-lock-preprocessor-face)
+	  '("\\<protected\\>" 0 font-lock-preprocessor-face)
+	  '("\\<local\\>"     0 font-lock-preprocessor-face)
+	  '("\\<private\\>"   0 font-lock-preprocessor-face)
+	  '("\\<nomask\\>"    0 font-lock-preprocessor-face)
+
+	  `(,(concat "^\\([^/]\\|/[^/]\\)*"
+		     "\\(//[^.!|\n\r]\\|\\(//\\)\\([.!|]\\)\\([^\n\r]*\\)\\)")
+	    (3 pike-font-lock-refdoc-init2-face prepend t)
+	    (4 pike-font-lock-refdoc-init-face prepend t)
+	    (5 pike-font-lock-refdoc-face prepend t)
+	    ("\\(@\\(\\w+{?\\|\\[[^\]]*\\]\\|[@}]\\|$\\)\\)\\|\\(@.\\)"
+	     (if (match-end 4) (goto-char (match-end 4)) (end-of-line))
+	     nil
+	     (1 font-lock-reference-face t t)
+	     (1 pike-font-lock-refdoc-keyword-face prepend t)
+	     (3 pike-font-lock-refdoc-error-face t t))
+	    ((lambda (limit)
+	       (if (looking-at "[ \t]*@\\(decl\\|member\\|index\\|elem\\)")
+		   (progn
+		     (put-text-property (match-end 0) limit 'face nil)
+		     (goto-char limit)
+		     t)))
+	     (if (match-end 4) (goto-char (match-end 4)) (end-of-line))
+	     nil)
+	    )
+	  )
 	 pike-font-lock-keywords-2
 	 )))
 
@@ -295,10 +367,20 @@ The name is assumed to begin with a capital letter.")
 		   (setq pos (point)))
 		 (goto-char pos)))
 	     (condition-case nil
-		 (prog2
-		     (forward-sexp)
-		     (save-match-data
-		       (looking-at "\\s *\\(`\\|\\<\\|$\\)")))
+		 (progn
+		   (while (save-match-data
+			    (forward-sexp)
+			    (if (looking-at
+				 (concat "\\s *|"
+					 "\\(" pike-font-lock-class-name-regexp
+					 "\\|" pike-font-lock-type-regexp
+					 "\\s *\(?\\)"))
+				(progn
+				  (if (eq (char-after (1- (match-end 0))) ?\()
+				      (forward-sexp))
+				  t))))
+		   (save-match-data
+		     (looking-at "\\s *\\(`\\|\\<\\|$\\)")))
 	       (error nil))))
     (goto-char limit)))
 
@@ -318,8 +400,6 @@ The name is assumed to begin with a capital letter.")
 		    (looking-at pike-font-lock-type-regexp))
 		(error nil)))
     (forward-char 1))
-;  (if (looking-at "\\s *\\(\\[\\s *\\]\\s *\\)*")
-;      (goto-char (match-end 0)))
   (looking-at "\\(\\s *\\.\\.\\.\\)?\\(\\s \\|/\\*\\([^*]\\|\\*[^/]\\)*\\*/\\)*")
   (goto-char (match-end 0))
   (and
@@ -332,8 +412,8 @@ The name is assumed to begin with a capital letter.")
      (save-excursion
        (goto-char (match-beginning 1))
        (not (looking-at
-	     (concat pike-font-lock-class-name-regexp
-		     ;;"\\s *\\(\\[\\s *\\]\\s *\\)*\\<")))))
+	     (concat "\\(\\sw+\\.\\)*"
+		     pike-font-lock-class-name-regexp
 		     "\\s *\\(\\<\\||\\)")))))
    (save-match-data
      (let ((start (match-end 0)))
@@ -352,6 +432,14 @@ The name is assumed to begin with a capital letter.")
 	  (if (not (looking-at "\\s *("))
 	      (goto-char limit)
 	    t)))))))
+
+(defun pike-font-lock-find-label (limit)
+  (catch 'found
+    (while (re-search-forward (concat pike-font-lock-identifier-regexp ":[^:]") limit t)
+      (save-excursion
+	;; Don't format identifiers as indexes in mapping constants.
+	(condition-case nil (up-list -1) (error (throw 'found t)))
+	(if (not (eq (char-after (point)) ?\[)) (throw 'found t))))))
 
 ;; XEmacs way.
 (put 'pike-mode 'font-lock-defaults 
@@ -373,4 +461,8 @@ The name is assumed to begin with a capital letter.")
 		   (font-lock-mark-block-function . mark-defun)))
 	   font-lock-defaults-alist)))
 
+;; Autoload spec for older emacsen that doesn't come with a Pike aware
+;; CC Mode. Doesn't do any harm in later emacsen.
 (autoload 'pike-mode "cc-mode" "Major mode for editing Pike code.")
+
+(provide 'pike)
