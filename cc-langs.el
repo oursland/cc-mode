@@ -803,6 +803,15 @@ operators."
   t "/[/*]")
 (c-lang-defvar c-comment-start-regexp (c-lang-const c-comment-start-regexp))
 
+(c-lang-defconst c-literal-start-regexp
+  ;; Regexp to match the start of comments and string literals.
+  t (concat (c-lang-const c-comment-start-regexp)
+	    "\\|"
+	    (if (memq 'gen-string-delim c-emacs-features)
+		"\"|"
+	      "\"")))
+(c-lang-defvar c-literal-start-regexp (c-lang-const c-literal-start-regexp))
+
 (c-lang-defconst c-doc-comment-start-regexp
   "Regexp to match the start of documentation comments."
   t    "\\<\\>"
