@@ -1,5 +1,6 @@
 Manifest for CC Mode 5.20
-Barry A. Warsaw <cc-mode-help@python.org>
+Barry A. Warsaw and Martin Stjernholm
+<mailto:cc-mode-help@python.org>
 
 You should have received the following files in this distribution:
 
@@ -12,11 +13,10 @@ You should have received the following files in this distribution:
 
     cc-compat.el: Helps ease the transition from c-mode.el (BOCM) to
     the new indentation engine.  This is provided for your convenience
-    only, and is completely unguaranteed and unsupported.
+    only, and is unguaranteed and unsupported.
 
     cc-guess.el: Experiments in style guessing.  This is provided for
-    your convenience only, and is completely unguaranteed and
-    unsupported.
+    your convenience only, and is unguaranteed and unsupported.
 
     cc-lobotomy.el: Performance vs. accuracy trade-offs.  May not
     work, yadda, yadda.
@@ -24,15 +24,15 @@ You should have received the following files in this distribution:
     cc-mode-19.el: Compatibility for Emacs 19.34.  Do not use with
     Emacs 20, XEmacs 19, or XEmacs 20.
 
-    cc-make.el: Helps with byte-compiling CC Mode.
+    cc-make.el: Helps with byte-compiling the CC Mode distribution.
 
     cc-mode.texi: The latest CC Mode Texinfo manual.
 
     ANNOUNCEMENT: Release announcement as it appeared on various
     forums.
 
-Note that of the above files, the following are distributed with the
-Emacs 20 and XEmacs 20:
+Note that of the above files, the following are distributed with Emacs
+20 and XEmacs 20:
 
     cc-align.el, cc-cmds.el, cc-compat.el, cc-defs.el, cc-engine.el,
     cc-langs.el, cc-menus.el, cc-mode.el, cc-styles.el, cc-vars.el,
