@@ -961,6 +961,11 @@ This function does not do any hidden buffer changes."
   ;; This function does not do any hidden buffer changes.
   (memq facename (face-list)))
 
+(defun c-concat-separated (list separator)
+  "Like `concat' on LIST, but separate each element with SEPARATOR.
+Notably, null elements in LIST are ignored."
+  (mapconcat 'identity (delete nil (append list nil)) separator))
+
 (defun c-make-keywords-re (adorn list &optional mode)
   "Make a regexp that matches all the strings the list.
 Duplicates and nil elements in the list are removed.  The resulting
