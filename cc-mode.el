@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.133 $
-;; Last Modified:   $Date: 1994-12-28 16:05:02 $
+;; Version:         $Revision: 4.134 $
+;; Last Modified:   $Date: 1995-01-04 23:38:40 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -103,7 +103,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-28 16:05:02 $|$Revision: 4.133 $|
+;; |$Date: 1995-01-04 23:38:40 $|$Revision: 4.134 $|
 
 ;;; Code:
 
@@ -1437,6 +1437,12 @@ nil, or point is inside a literal then the function in the variable
 	  (delete-region (point) here)
 	(funcall c-delete-function 1)
 	))))
+
+;; for delsel
+(put 'c-electric-delete 'delete-selection 'supersede)
+;; for pending-del, even though XEmacs' version ships with this already
+(put 'c-electric-delete 'pending-delete 'supersede)
+
 
 (defun c-electric-pound (arg)
   "Electric pound (`#') insertion.
@@ -4361,7 +4367,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.133 $"
+(defconst c-version "$Revision: 4.134 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
