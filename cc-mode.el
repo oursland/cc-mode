@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-08 21:46:02 $
-;; Version:         $Revision: 2.98 $
+;; Last Modified:   $Date: 1992-06-08 21:47:11 $
+;; Version:         $Revision: 2.99 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-08 21:46:02 $|$Revision: 2.98 $|
+;; |$Date: 1992-06-08 21:47:11 $|$Revision: 2.99 $|
 
 
 ;; ======================================================================
@@ -213,7 +213,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.98 $
+  "Major mode for editing C++ code.  $Revision: 2.99 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -939,7 +939,7 @@ of the expression are preserved."
  			   (forward-sexp 1)
  			   (looking-at ":[^:]"))))
  		(setq this-indent (max 0 (+ this-indent c-label-offset))))
-	    (if (looking-at "friend[ \t]\\(class\\|struct\\)[ \t]")
+	    (if (looking-at "friend[ \t]")
 		(setq this-indent (+ this-indent c++-friend-offset)))
 	    (if (= (following-char) ?})
 		(setq this-indent (- this-indent c-indent-level)))
@@ -1810,7 +1810,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.98 $"
+(defconst c++-version "$Revision: 2.99 $"
   "c++-mode version number.")
 
 (defun c++-version ()
