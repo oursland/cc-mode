@@ -16,6 +16,7 @@
 ;;   fixed auto-newline for member init list, new var:
 ;;         c++-auto-newline-member-init-p should handle hanging :'s
 ;;   added c++-hungry-delete-key-p
+;;   added c++-toggle-auto-newline function
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -113,6 +114,7 @@
   (define-key c++-mode-map "/" 'electric-c++-slash)
   (define-key c++-mode-map "*" 'electric-c++-star)
   (define-key c++-mode-map ":" 'electric-c++-colon)
+  (define-key c++-mode-map "\C-t" 'c++-toggle-auto-newline)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -141,6 +143,11 @@ list.  Nil indicates to just after the paren.")
   "*Indentation offset for line which contains only comments.")
 (defvar c++-hanging-braces-p t
   "*If t, override c++-auto-newline for left braces.")
+(defvar c++-auto-newline nil
+  "*Non-nil means automatically newline before and after braces,
+and after colons and semicolons, inserted in C++ code.  Unlike
+as with c-auto-newline, double colons and the like are handled
+correctly.")
 (defvar c++-auto-newline-member-init-p nil
   "*Put a newline after member initialization colon.")
 (defvar c++-hungry-delete-key-p t
@@ -237,8 +244,7 @@ no args,if that value is non-nil."
   (run-hooks 'c++-mode-hook)
   (if c++-electric-colon
       (define-key c++-mode-map ":" 'electric-c++-colon))
-  (if c++-hungry-delete-key-p
-      (define-key c++-mode-map "\177" 'c++-hungry-delete-key)))
+  (c++-toggle-auto-newline (if c++-auto-newline 1 0)))
 
 ;; This is used by indent-for-comment
 ;; to decide how much to indent a comment in C++ code
@@ -259,6 +265,23 @@ no args,if that value is non-nil."
 	       (goto-char (match-beginning 0))
 	       (current-column))
 	   comment-column))))))		; otherwise indent at comment column.
+
+(defun c++-toggle-auto-newline (arg)
+  "Toggle c++-auto-newline variable and c++-hungry-delete-key.
+Numeric argument, if supplied sets the variable if non-zero, unsets it
+if zero."
+  (interactive "P")
+  (setq c++-auto-newline
+	(cond ((not arg) (not c++-auto-newline))
+	      ((not (zerop (prefix-numeric-value arg))))))
+  (let ((auto (if c++-auto-newline " auto" nil))
+	(hungry (if (and c++-hungry-delete-key-p c++-auto-newline)
+		    " hungry" nil)))
+    (setq mode-name (concat "C++" auto hungry))
+    (redraw-display)
+    (if hungry
+	(define-key c++-mode-map "\177" 'c++-hungry-delete-key)
+      (define-key c++-mode-map "\177" 'backward-delete-char-untabify))))
 
 (defun c++-hungry-delete-key (arg)
   "Consume all preceding whitespace unless ARG is supplied.
