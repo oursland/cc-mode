@@ -743,8 +743,11 @@ that doesn't end with a line continuation backslash."
 Syntactic whitespace is defined as whitespace characters, comments,
 and preprocessor directives.  However if point starts inside a comment
 or preprocessor directive, the content of it is not treated as
-whitespace.  LIMIT sets an upper limit of the forward movement, if
-specified."
+whitespace.
+
+LIMIT sets an upper limit of the forward movement, if specified.  If
+LIMIT or the end of the buffer is reached inside a comment or
+preprocessor directive, the point will be left there."
 
   (let ((here (point-max)))
     (or limit (setq limit here))
@@ -778,8 +781,12 @@ specified."
 Syntactic whitespace is defined as whitespace characters, comments,
 and preprocessor directives.  However if point starts inside a comment
 or preprocessor directive, the content of it is not treated as
-whitespace.  LIMIT sets a lower limit of the backward movement, if
-specified."
+whitespace.
+
+LIMIT sets a lower limit of the backward movement, if specified.  If
+LIMIT or the beginning of the buffer is reached inside a comment or
+preprocessor directive, the point might be left anywhere between the
+limit and the end of that comment or preprocessor directive."
   (let ((here (point-min))
 	prev-pos)
     (or limit (setq limit here))
@@ -1302,21 +1309,25 @@ you need both the type of a literal and its limits."
   ;; last closed brace paren pair before each open paren is recorded,
   ;; and thus the state never contains two cons elements in
   ;; succession.
+
   (save-restriction
     (let* ((here (point))
 	   (c-macro-start (c-query-macro-start))
 	   (in-macro-start (or c-macro-start (point)))
 	   old-state last-pos pairs pos)
+
       ;; Somewhat ugly use of c-check-state-cache to get rid of the
       ;; part of the state cache that is after point.  Can't use
       ;; c-whack-state-after for the same reasons as in that function.
       (c-check-state-cache (point) nil nil)
+
       ;; Get the latest position we know are directly inside the
       ;; closest containing paren of the cached state.
       (setq last-pos (and c-state-cache
 			  (if (consp (car c-state-cache))
 			      (cdr (car c-state-cache))
 			    (1+ (car c-state-cache)))))
+
       ;; Check if the found last-pos is in a macro.  If it is, and
       ;; we're not in the same macro, we must discard everything on
       ;; c-state-cache that is inside the macro before using it.
@@ -1331,11 +1342,13 @@ you need both the type of a literal and its limits."
 				(if (consp (car c-state-cache))
 				    (cdr (car c-state-cache))
 				  (1+ (car c-state-cache))))))))
+
       (setq pos
 	    ;; Find the start position for the forward search.  (Can't
 	    ;; search in the backward direction since point might be
 	    ;; in some kind of literal.)
 	    (or (when last-pos
+
 		  ;; There's a cached state with a containing paren.  Pop
 		  ;; off the stale containing sexps from it by going
 		  ;; forward out of parens as far as possible.
@@ -1350,6 +1363,7 @@ you need both the type of a literal and its limits."
 				c-state-cache (cdr-safe (cdr c-state-cache)))
 			(setq pair-beg (car c-state-cache)
 			      c-state-cache (cdr c-state-cache))))
+
 		    (when (and pair-beg (eq (char-after pair-beg) ?{))
 		      ;; The last paren pair we moved out from was a brace
 		      ;; pair.  Modify the state to record this as a closed
@@ -1358,6 +1372,7 @@ you need both the type of a literal and its limits."
 			  (setq c-state-cache (cdr c-state-cache)))
 		      (setq c-state-cache (cons (cons pair-beg last-pos)
 						c-state-cache))))
+
 		  ;; Check if the preceding balanced paren is within a
 		  ;; macro; it should be ignored if we're outside the
 		  ;; macro.  There's no need to check any further upwards;
@@ -1370,9 +1385,11 @@ you need both the type of a literal and its limits."
 		      (when (c-beginning-of-macro)
 			(setq here (point)
 			      c-state-cache (cdr c-state-cache)))))
+
 		  (when c-state-cache
 		    (setq old-state c-state-cache)
 		    last-pos))
+
 		(save-excursion
 		  ;; go back 2 bods, but ignore any bogus positions
 		  ;; returned by beginning-of-defun (i.e. open paren in
@@ -1384,7 +1401,9 @@ you need both the type of a literal and its limits."
 		      (if (eq (char-after) ?\{)
 			  (setq cnt (1- cnt)))))
 		  (point))))
+
       (narrow-to-region (point-min) here)
+
       (while pos
 	;; Find the balanced brace pairs.
 	(setq pairs nil)
@@ -1392,6 +1411,7 @@ you need both the type of a literal and its limits."
 		    (setq pos (c-up-list-forward last-pos)))
 	  (if (eq (char-before last-pos) ?{)
 	      (setq pairs (cons (cons last-pos pos) pairs))))
+
 	;; Should ignore any pairs that are in a macro, providing
 	;; we're not in the same one.
 	(when (and pairs (< (car (car pairs)) in-macro-start))
@@ -1399,6 +1419,7 @@ you need both the type of a literal and its limits."
 			(goto-char (car (car pairs)))
 			(c-beginning-of-macro))
 		      (setq pairs (cdr pairs)))))
+
 	;; Record the last brace pair.
 	(when pairs
 	  (if (and (eq c-state-cache old-state)
@@ -1409,6 +1430,7 @@ you need both the type of a literal and its limits."
 	  (setq pairs (car pairs))
 	  (setcar pairs (1- (car pairs)))
 	  (setq c-state-cache (cons pairs c-state-cache)))
+
 	(if last-pos
 	    ;; Prepare to loop, but record the open paren only if it's
 	    ;; outside a macro or within the same macro as point.
@@ -1419,6 +1441,7 @@ you need both the type of a literal and its limits."
 			(goto-char last-pos)
 			(not (c-beginning-of-macro))))
 		  (setq c-state-cache (cons (1- pos) c-state-cache))))
+
 	  (if (setq last-pos (c-up-list-forward pos))
 	      ;; Found a close paren without a corresponding opening
 	      ;; one.  Maybe we didn't go back far enough, so try to
@@ -1433,6 +1456,7 @@ you need both the type of a literal and its limits."
 				(1+ (count-lines (point-min)
 						 (c-point 'bol last-pos)))))))
 	    (setq pos nil))))
+
       c-state-cache)))
 
 ;; Debug tool to catch cache inconsistencies.
