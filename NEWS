@@ -45,7 +45,7 @@ A new convenience function c-setup-filladapt sets up Filladapt for use
 inside CC Mode.
 
 Note though that the 2.12 version of Filladapt lacks a feature that
-causes it to work suboptimally when c-block-comment-prefix can match
+causes it to work suboptimally when c-comment-prefix-regexp can match
 the empty string (which it commonly does).  A patch for that is
 available from the CC Mode web site (http://www.python.org/emacs/
 cc-mode/).
