@@ -712,13 +712,15 @@ places to insert a newline.  The syntactic symbols that are useful for
 this list are: @code{class-open}, @code{class-close}, @code{defun-open},
 @code{defun-close}, @code{inline-open}, @code{inline-close},
 @code{brace-list-open}, @code{brace-list-close},
-@code{brace-list-intro},
-@code{brace-entry-open}, @code{block-open},
-@code{block-close}, @code{substatement-open}, 
-@code{statement-case-open},
-@code{extern-lang-open}, @code{extern-lang-close},
-@code{namespace-open}, and @code{namespace-close}.
-@xref{Syntactic Symbols} for a more
+@code{brace-list-intro}, @code{brace-entry-open}, @code{block-open},
+@code{block-close}, @code{substatement-open},
+@code{statement-case-open}, @code{extern-lang-open},
+@code{extern-lang-close}, @code{namespace-open}, and
+@code{namespace-close}@footnote{Note that the aggregate constructs in
+Pike mode, @code{(@{ @})}, @code{([ ])} and @code{(< >)}, do not count
+as brace lists in this regard, even though they do for normal
+indentation purposes.  It's currently not possible to set automatic
+newlines on these constructs.}.  @xref{Syntactic Symbols} for a more
 detailed description of these syntactic symbols.
 
 @cindex Custom Indentation Functions
