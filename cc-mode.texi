@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.35 $
+@comment manual version: $Revision: 2.36 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-01-19 20:50:48 $
+@comment Last modification: $Date: 1996-04-09 14:52:30 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.35 $)
+@center (manual revision: $Revision: 2.36 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1802,7 +1802,82 @@ C-q}):
 @vindex offsets-alist (c-)
 Custom indentation functions can be as simple or as complex as you like,
 and any syntactic symbol that appears in @code{c-offsets-alist} can have
-a custom indentation function associated with it.
+a custom indentation function associated with it.  @code{cc-mode} comes
+with several standard custom indentation functions, not all of which are
+used by the default styles.
+
+@itemize @bullet
+@item
+@findex c-lineup-arglist
+@findex lineup-arglist (c-)
+@code{c-lineup-arglist} -- lines up function argument lines under the
+argument on the previous line.
+
+@item
+@findex c-lineup-arglist-intro-after-paren
+@findex lineup-arglist-intro-after-paren (c-)
+@code{c-lineup-arglist-intro-after-paren} -- similar to
+@code{c-lineup-arglist}, but works for argument lists that begin with an
+open parenthesis followed by a newline.
+
+@item
+@findex c-lineup-streamop
+@findex lineup-streamop (c-)
+@code{c-lineup-streamop} -- lines up C++ stream operators
+(e.g. @samp{<<} and @samp{>>}).
+
+@item
+@findex c-lineup-multi-inher
+@findex lineup-multi-inher (c-)
+@code{c-lineup-multi-inher} -- lines up multiple inheritance lines.
+
+@item
+@findex c-lineup-C-comments
+@findex lineup-C-comments (c-)
+@code{c-lineup-C-comments} -- lines up C block comment continuation
+lines.
+
+@item
+@findex c-lineup-comment
+@findex lineup-comment (c-)
+@vindex c-comment-only-line-offset
+@vindex comment-only-line-offset (c-)
+@code{c-lineup-comment} -- implements the old comment line up behavior
+specified by the variable @code{c-comment-only-line-offset}.
+
+@item
+@findex c-lineup-runin-statements
+@findex lineup-runin-statements (c-)
+@code{c-lineup-runin-statements} -- lines up @code{statement}s for coding
+standards which place the first statement in a block on the same line as
+the block opening brace.
+
+@item
+@findex c-lineup-math
+@findex lineup-math (c-)
+@code{c-lineup-math} -- lines up math @code{statement-cont} lines under
+the previous line after the equals sign.
+
+@item
+@findex c-lineup-ObjC-method-call
+@findex lineup-ObjC-method-call (c-)
+@code{c-lineup-ObjC-method-call} -- for Objective-C code, lines up
+selector arguments just after the message receiver.
+
+@item
+@findex c-lineup-ObjC-method-args
+@findex lineup-ObjC-method-args (c-)
+@code{c-lineup-ObjC-method-args} -- for Objective-C code, lines up the
+colons that separate arguments by aligning colons vertically.
+
+@item
+@findex c-lineup-ObjC-method-args-2
+@findex lineup-ObjC-method-args-2 (c-)
+@code{c-lineup-ObjC-method-args-2} -- similar to
+@code{c-lineup-ObjC-method-args} but lines up the colon on the current
+line with the colon on the previous line.
+
+@end itemize
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node     Custom Brace and Colon Hanging, Customizing Semi-colons and Commas, Custom Indentation Functions, Advanced Customizations
