@@ -94,24 +94,64 @@ See `c-toggle-auto-state' and `c-toggle-hungry-state' for details."
 
 ;; Electric keys
 
-(defun c-electric-delete (arg)
+;; Note: In XEmacs 20.3 the Delete and BackSpace keysyms have been
+;; separated and "\177" is no longer an alias for both keys.  Also,
+;; the variable delete-key-deletes-forward controls in which direction
+;; the Delete keysym deletes characters.  The functions
+;; c-electric-delete and c-electric-backspace attempt to deal with
+;; this new functionality.  For Emacs 19 and XEmacs 19 backwards
+;; compatibility, the old behavior has moved to c-electric-backspace
+;; and c-backspace-function.
+
+(defun c-electric-backspace (arg)
   "Deletes preceding character or whitespace.
 If `c-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
 \"/ah\" string on the mode line, then all preceding whitespace is
 consumed.  If however an ARG is supplied, or `c-hungry-delete-key' is
 nil, or point is inside a literal then the function in the variable
-`c-delete-function' is called."
+`c-backspace-function' is called.
+
+See also \\[c-electric-delete]."
   (interactive "P")
   (if (or (not c-hungry-delete-key)
 	  arg
 	  (c-in-literal))
-      (funcall c-delete-function (prefix-numeric-value arg))
+      (funcall c-backspace-function (prefix-numeric-value arg))
     (let ((here (point)))
       (skip-chars-backward " \t\n")
       (if (/= (point) here)
 	  (delete-region (point) here)
-	(funcall c-delete-function 1)
+	(funcall c-backspace-function 1)
 	))))
+
+(defun c-electric-delete (arg)
+  "Deletes preceding or following character or whitespace.
+
+The behavior of this function depends on the variable
+`delete-key-deletes-forward'.  If this variable is nil (or does not
+exist, as in older Emacsen), then this function behaves identical to
+\\[c-electric-backspace].
+
+If `delete-key-deletes-forward' is non-nil, then deletion occurs in
+the forward direction.  So if `c-hungry-delete-key' is non-nil, as
+evidenced by the \"/h\" or \"/ah\" string on the mode line, then all
+following whitespace is consumed.  If however an ARG is supplied, or
+`c-hungry-delete-key' is nil, or point is inside a literal then the
+function in the variable `c-delete-function' is called."
+  (interactive "P")
+  (if (and (boundp 'delete-key-deletes-forward)
+	   delete-key-deletes-forward)
+      (if (or (not c-hungry-delete-key)
+	      arg
+	      (c-in-literal))
+	  (funcall c-delete-function (prefix-numeric-value arg))
+	(let ((here (point)))
+	  (skip-chars-forward " \t\n")
+	  (if (/= (point) here)
+	      (delete-region (point) here)
+	    (funcall c-delete-function 1))))
+    ;; act just like c-electric-backspace
+    (call-interactively 'c-electric-backspace)))
 
 (defun c-electric-pound (arg)
   "Electric pound (`#') insertion.
