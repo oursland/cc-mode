@@ -6017,7 +6017,8 @@ comment at the start of cc-engine.el for more info."
 
       ;; `c-beginning-of-statement-1' stops at a block start, but we
       ;; want to continue if the block doesn't begin a top level
-      ;; construct, i.e. if it isn't preceded by ';', '}', ':', or bob.
+      ;; construct, i.e. if it isn't preceded by ';', '}', ':', bob,
+      ;; or an open paren.
       (let ((beg (point)) tentative-move)
 	(while (and
 		;; Must check with c-opt-method-key in ObjC mode.
@@ -6027,6 +6028,9 @@ comment at the start of cc-engine.el for more info."
 		(progn
 		  (c-backward-syntactic-ws lim)
 		  (not (memq (char-before) '(?\; ?} ?: nil))))
+		(save-excursion
+		  (backward-char)
+		  (not (looking-at "\\s(")))
 		;; Check that we don't move from the first thing in a
 		;; macro to its header.
 		(not (eq (setq tentative-move
