@@ -315,9 +315,17 @@ block comment starter.  In other words, it should at least match
 which is sometimes inserted by CC Mode inside block comments.  It
 should not match any surrounding whitespace.
 
-Note that CC Mode modifies other variables from this one at mode
-initialization, so you will need to do \\[c-mode] (or whatever mode
-you're currently using) if you change it in a CC Mode buffer."
+Note that CC Mode uses this variable to set many other variables that
+handles the paragraph filling.  That's done at mode initialization or
+when you switch to a style which sets this variable.  Thus, if you
+change it in some other way, e.g. interactively in a CC Mode buffer,
+you will need to do \\[c-mode] (or whatever mode you're currently
+using) to reinitialize.
+
+Note also that when CC Mode starts up, the other variables are
+modified before the mode hooks are run.  If you change this variable
+in a mode hook, you can call `c-setup-paragraph-variables' afterwards
+to redo it."
   :type '(radio
 	  (regexp :tag "Regexp for all modes")
 	  (list
