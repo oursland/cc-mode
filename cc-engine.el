@@ -1981,8 +1981,13 @@ brace."
     (apply 'concat (cdr parts))))
 
 ;; Buffer local variable that contains an obarray with the types we've
-;; found.  If a declaration is recognized somewhere we record the type
-;; in it to recognize it elsewhere too.
+;; found.  If a declaration is recognized somewhere we record the
+;; fully qualified identifier in it to recognize it as a type
+;; elsewhere in the file too.  This is not accurate since we do not
+;; bother with the scoping rules of the languages, but in practice the
+;; same name is seldom used as both a type and something else in a
+;; file, and we only use this as a last resort in ambiguous cases (see
+;; `c-font-lock-declarations').
 ;;
 ;; FIXME: This doesn't yet correctly handle template types in C++.
 (defvar c-found-types nil)
@@ -2034,12 +2039,13 @@ brace."
 (defun c-forward-type (&optional use-font-property)
   ;; If the point is at the beginning of a type spec, move to the end
   ;; of it.  Return t if it is a known type, nil if it isn't (the
-  ;; point isn't moved), 'found if it's a type that matches one in
-  ;; `c-found-types', or 'maybe if it's an identfier that might be a
-  ;; type.  The point is assumed to be at the beginning of a token.
-  ;; If USE-FONT-PROPERTY is non-nil then we use the 'font text
-  ;; property instead of some regexp matches, under the assumption
-  ;; that the font-lock package has fontified the nontype keywords.
+  ;; point isn't moved), 'prefix if it is a known prefix of a type,
+  ;; 'found if it's a type that matches one in `c-found-types', or
+  ;; 'maybe if it's an identfier that might be a type.  The point is
+  ;; assumed to be at the beginning of a token.  If USE-FONT-PROPERTY
+  ;; is non-nil then we use the 'font text property instead of some
+  ;; regexp matches, under the assumption that the font-lock package
+  ;; has fontified the nontype keywords.
   ;;
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
@@ -2075,8 +2081,25 @@ brace."
 	       ((c-with-syntax-table c-identifier-syntax-table
 		  (looking-at c-known-type-key))
 		;; Looking at a known type identifier.
-		(goto-char (match-end 1))
-		t)
+
+		(if (and c-primitive-type-prefix-key
+			 (save-match-data
+			   (looking-at c-primitive-type-prefix-key)))
+		    ;; There might be more keywords for the type.
+		    (let (pos)
+		      (goto-char (match-end 1))
+		      (while (progn
+			       (setq pos (point))
+			       (c-forward-syntactic-ws)
+			       (looking-at c-primitive-type-prefix-key))
+			(goto-char (match-end 1)))
+		      (if (looking-at c-primitive-type-key)
+			  (progn (goto-char (match-end 1))
+				 t)
+			(goto-char pos)
+			'prefix))
+		  (goto-char (match-end 1))
+		  t))
 
 	       ((and (looking-at c-qualified-identifier-key)
 		     (if use-font-property
