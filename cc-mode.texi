@@ -111,18 +111,18 @@ CC Mode
 @cindex BOCM
 
 Welcome to @ccmode{}.  This is a GNU Emacs mode for editing files
-containing C, C++, Objective-C, Java, and IDL code.  This incarnation of
-the mode is descendant from @file{c-mode.el} (also called "Boring Old C
-Mode" or BOCM @code{:-)}, and @file{c++-mode.el} version 2, which I have
-been maintaining since 1992.  @ccmode{} represents a significant
-milestone in the mode's life.  It has been fully merged back with Emacs
-19's @file{c-mode.el}. Also a new, more intuitive and flexible mechanism
-for controlling indentation has been developed.
+containing C, C++, Objective-C, Java, and CORBA IDL code.  This
+incarnation of the mode is descendant from @file{c-mode.el} (also called
+"Boring Old C Mode" or BOCM @code{:-)}, and @file{c++-mode.el} version
+2, which I have been maintaining since 1992.  @ccmode{} represents a
+significant milestone in the mode's life.  It has been fully merged back
+with Emacs 19's @file{c-mode.el}. Also a new, more intuitive and
+flexible mechanism for controlling indentation has been developed.
 
 @ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
 @footnote{``The Annotated C++ Reference Manual'', by Ellis and
-Stroustrup.} C++, Objective-C, Java and IDL@footnote{CORBA's Interface
-Definition Language} files.  In this way, you can
+Stroustrup.} C++, Objective-C, Java and CORBA's Interface
+Definition Language files.  In this way, you can
 easily set up consistent coding styles for use in editing all C, C++,
 Objective-C, Java and IDL programs. @ccmode{} does @emph{not} handle
 font-locking (a.k.a. syntax coloring, keyword highlighting) or anything
@@ -1681,8 +1681,7 @@ styles, and as programmers come and go, there could be a number of
 styles in use.  For this reason, @ccmode{} makes it convenient for
 you to set up logical groupings of customizations called @dfn{styles},
 associate a single name for any particular style, and pretty easily
-start editing new or existing code using these styles.  This section
-describes how to set up styles and how to edit your C code using styles.
+start editing new or existing code using these styles.
 
 @menu
 * Built-in Styles::
@@ -1703,51 +1702,68 @@ If you're lucky, one of @ccmode{}'s built-in styles might be just
 what you're looking for.  These include:
 
 @itemize @bullet
-@item
 @cindex GNU style
+@item
 @code{gnu} --- coding style blessed by the Free Software Foundation
 for C code in GNU programs.
 
-@item
 @cindex K&R style
+@item
 @code{k&r} --- The classic Kernighan and Ritchie style for C code.
 
-@item
 @cindex BSD style
+@item
 @code{bsd} --- Also known as ``Allman style'' after Eric Allman.
 
-@item
 @cindex Whitesmith style
+@item
 @code{whitesmith} --- Popularized by the examples that came with
 Whitesmiths C, an early commercial C compiler.
 
-@item
 @cindex Stroustrup style
+@item
 @code{stroustrup} --- The classic Stroustrup style for C++ code.
 
-@item
 @cindex Ellemtel style
+@item
 @code{ellemtel} --- Popular C++ coding standards as defined by
 ``Programming in C++, Rules and Recommendations'', Erik Nyquist and Mats
 Henricson, Ellemtel @footnote{This document is ftp'able from
 @code{euagate.eua.ericsson.se}}.
 
-@item
 @cindex Linux style
+@item
 @code{linux} --- C coding standard for Linux development.
 
-@item
 @cindex Python style
+@item
 @code{python} --- C coding standard for Python extension
 modules@footnote{Python is a high level scripting language with a C/C++
 foreign function interface.  For more information, see
 @code{<http://www.python.org/>}.}.
 
-@item
 @cindex Java style
 @cindex java-mode
+@item
 @code{java} --- The style for editing Java code.  Note that this style is
 automatically installed when you enter @code{java-mode}.
+
+@cindex User style
+@cindex .emacs file
+@vindex c-default-style
+@vindex default-style (c-)
+@item
+@code{user} --- This is a special style for three reasons.  First, if you
+customize @ccmode{} by using either the new Custom
+interface@footnote{Available in Emacs 20, XEmacs 19.15 and XEmacs 20.}
+or by doing @code{setq}'s at the top level of your @file{.emacs} file,
+these settings will be captured in the @code{user} style.  @code{user}
+style is also the default style to get installed on newly created
+buffers, but you can change this via the variable
+@code{c-default-style}.  Finally, all other styles implicitly inherit
+their settings from @code{user} style.  This means that for any styles you
+add via @code{c-add-style} (@xref{Adding Styles}) you need only define
+the differences between your new style and @code{user} style.
 
 @end itemize
 
@@ -1787,19 +1803,6 @@ files.  You would add this:
 
 @end group
 @end example
-
-@cindex cc-mode style
-There is one other special style you can use, called @samp{cc-mode}
-style.  This style is special because all other styles implicitly
-inherit from it; in other words, whenever you set a style,
-@samp{cc-mode} is applied before the one you selected.  This means
-your style need only define the differences between it and
-@samp{cc-mode} style.
-
-Note @emph{you should never change any of the default styles}.
-Instead, it's better to add a new style using @code{c-add-style}
-(@xref{Adding Styles}).  This is especially true for @code{cc-mode} and
-@code{java} styles.
 
 @vindex c-indentation-style
 @vindex indentation-style (c-)
