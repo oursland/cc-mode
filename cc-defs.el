@@ -1280,8 +1280,8 @@ system."
     (error "The mode name symbol `%s' must end with \"-mode\"" mode))
   (put mode 'c-mode-prefix (match-string 1 (symbol-name mode)))
   (unless (get base-mode 'c-mode-prefix)
-    (error "Unknown base mode `%s'" base-mode)
-    (put mode 'c-fallback-mode base-mode)))
+    (error "Unknown base mode `%s'" base-mode))
+  (put mode 'c-fallback-mode base-mode))
 
 (defvar c-lang-constants (make-vector 151 0))
 ;; This obarray is a cache to keep track of the language constants
