@@ -77,7 +77,7 @@
 
 ;; On older versions of Emacs, invoking awk-mode will cause the old
 ;; awk-mode.el to get loaded.
-(if (memq 'syntax-properties c-emacs-features) (cc-require 'cc-awk))
+; (if (memq 'syntax-properties c-emacs-features) (cc-require 'cc-awk))
 
 ;; Avoid warnings for functions defined in cc-awk when it can't be used.
 (cc-bytecomp-defun c-awk-unstick-NL-prop)
@@ -6262,7 +6262,7 @@ brace."
 		  ))
 	     ))))
 	 ;; CASE 10: A continued statement or top level construct.
-	 ((and (if (eq major-mode 'awk-mode)
+	 ((and (if (c-mode-is-new-awk-p)
                    (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
                  (and (not (memq char-before-ip '(?\; ?:)))
                       (or (not (eq char-before-ip ?}))
