@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.198 $
-;; Last Modified:   $Date: 1994-01-24 20:06:52 $
+;; Version:         $Revision: 3.199 $
+;; Last Modified:   $Date: 1994-01-24 22:30:28 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-24 20:06:52 $|$Revision: 3.198 $|
+;; |$Date: 1994-01-24 22:30:28 $|$Revision: 3.199 $|
 
 ;;; Code:
 
@@ -736,7 +736,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.198 $
+cc-mode Revision: $Revision: 3.199 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -767,7 +767,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.198 $
+cc-mode Revision: $Revision: 3.199 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1232,37 +1232,38 @@ non-whitespace characters on the line following the semicolon."
 	(c-insert-and-tame arg)
       ;; do some special stuff with the character
       (self-insert-command (prefix-numeric-value arg))
-      (let ((pos (- (point-max) (point))))
-	;; possibly do some clean ups
-	(if (and c-auto-newline
-		 (or (and
-		      (= last-command-char ?,)
-		      (memq 'list-close-comma c-cleanup-list))
-		     (and
-		      (= last-command-char ?\;)
-		      (memq 'defun-close-semi c-cleanup-list)))
-		 (progn
-		   (forward-char -1)
-		   (skip-chars-backward " \t\n")
-		   (= (preceding-char) ?}))
-		 ;; make sure matching open brace isn't in a comment
-		 (not (c-in-literal)))
-	    (delete-region (point) here))
-	(goto-char (- (point-max) pos)))
-      ;; re-indent line
-      (c-indent-via-language-element bod)
-      ;; newline only after semicolon, but only if that semicolon is
-      ;; not inside a parenthesis list (e.g. a for loop statement)
-      (and c-auto-newline
-	   (= last-command-char ?\;)
-	   (condition-case nil
-	       (save-excursion
-		 (up-list -1)
-		 (/= (following-char) ?\())
-	     (error t))
-	   (progn (newline) t)
-	   (c-indent-via-language-element bod))
-      )))
+      ;; do all cleanups, reindentations, and newline insertions, but
+      ;; only if c-auto-newline is turned on
+      (if (not c-auto-newline) nil
+	;; clean ups
+	(let ((pos (- (point-max) (point))))
+	  (if (and (or (and
+			(= last-command-char ?,)
+			(memq 'list-close-comma c-cleanup-list))
+		       (and
+			(= last-command-char ?\;)
+			(memq 'defun-close-semi c-cleanup-list)))
+		   (progn
+		     (forward-char -1)
+		     (skip-chars-backward " \t\n")
+		     (= (preceding-char) ?}))
+		   ;; make sure matching open brace isn't in a comment
+		   (not (c-in-literal)))
+	      (delete-region (point) here))
+	  (goto-char (- (point-max) pos)))
+	;; re-indent line
+	(c-indent-via-language-element bod)
+	;; newline only after semicolon, but only if that semicolon is
+	;; not inside a parenthesis list (e.g. a for loop statement)
+	(and (= last-command-char ?\;)
+	     (condition-case nil
+		 (save-excursion
+		   (up-list -1)
+		   (/= (following-char) ?\())
+	       (error t))
+	     (progn (newline) t)
+	     (c-indent-via-language-element bod))
+	))))
 
 (defun c-scope-operator ()
   "Insert a double colon scope operator at point.
@@ -3033,7 +3034,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.198 $"
+(defconst c-version "$Revision: 3.199 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
