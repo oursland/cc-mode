@@ -4,6 +4,19 @@ CC Mode NEWS -- user visible changes.  -*- outline -*-
 
 FIXME: Update cc-mode.texi with this.
 
+** Changes in analysis of nested syntactic constructs.
+The syntactic analysis engine has improved handling of cases where
+several syntactic constructs appear nested on the same line.  They are
+now handled as if each construct started on a line of its own.
+
+FIXME: Insert example here.
+
+This means that CC Mode now indents some cases differently, and
+although it's more consistent there might be cases where the old way
+gave results that's more to one's liking.  So if you find a situation
+where you think that the indentation has become worse, please report
+it to bug-cc-mode@gnu.org.
+
 ** Better handling of multiline macros.
 
 *** Syntactic indentation inside macros.
