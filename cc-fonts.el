@@ -735,11 +735,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	    (<= (point) limit)
 
-	    ;; Search syntactically to the end of the declarator
-	    ;; (";", ",", ")", eob etc) or to the beginning of an
-	    ;; initializer or function prototype ("=" or "\\s\(").
+	    ;; Search syntactically to the end of the declarator (";",
+	    ;; ",", ")", ">" (for <> arglists), eob etc) or to the
+	    ;; beginning of an initializer or function prototype ("="
+	    ;; or "\\s\(").
 	    (c-syntactic-re-search-forward
-	     "[;,\{\[\)]\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)" limit t))
+	     "[\];,\{\}\[\)>]\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)" limit t t))
 
       (setq next-pos (match-beginning 0)
 	    id-face (if (match-beginning 2)
