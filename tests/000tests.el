@@ -102,6 +102,9 @@ simplifications with lesser accuracy.")
 (defvar inhibit-point-motion-hooks)
 (defvar font-lock-global-modes)
 
+;; Turn on debugging tools in CC Mode.
+(setq c-debug-parse-state t)
+
 ;; `font-lock-make-faces' is used in Emacs 19.34 to initialize the
 ;; faces and it uses some X functions.  If we're running
 ;; noninteractively we don't have any X connection, so provide some
