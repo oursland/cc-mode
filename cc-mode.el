@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.108 $
-;; Last Modified:   $Date: 1993-12-03 23:05:29 $
+;; Version:         $Revision: 3.109 $
+;; Last Modified:   $Date: 1993-12-06 15:32:26 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -78,7 +78,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-03 23:05:29 $|$Revision: 3.108 $|
+;; |$Date: 1993-12-06 15:32:26 $|$Revision: 3.109 $|
 
 ;;; Code:
 
@@ -460,12 +460,12 @@ Emacs.")
   (modify-syntax-entry ?\' "\""    c++-mode-syntax-table)
   ;; comment syntax
   (cond
-   ((memq '8-bit cc-emacs-features)
+   ((memq '8-bit c-emacs-features)
     ;; Lucid emacs has the best implementation
     (modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
     (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
-   ((memq '1-bit cc-emacs-features)
+   ((memq '1-bit c-emacs-features)
     ;; FSF19 does things differently, but we can work with it
     (modify-syntax-entry ?/  ". 124b" c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
@@ -546,7 +546,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.108 $
+  "Major mode for editing C++ code.  $Revision: 3.109 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -578,7 +578,7 @@ Key bindings:
    (memq c-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.108 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.109 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2472,7 +2472,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.108 $"
+(defconst c-version "$Revision: 3.109 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
