@@ -2614,8 +2614,11 @@ outside any comment, macro or string literal, or else the content of
 that region is taken as syntactically significant text.
 
 If PAREN-LEVEL is non-nil, an additional restriction is added to
-ignore matches in nested paren sexps, and the search will also not go
-outside the current paren sexp.
+ignore matches in nested paren sexps.  The search will also not go
+outside the current list sexp, which has the effect that if the point
+should be moved to BOUND when no match is found \(i.e. NOERROR is
+neither nil nor t), then it will be at the closing paren if the end of
+the current list sexp is encountered first.
 
 If NOT-INSIDE-TOKEN is non-nil, matches in the middle of tokens are
 ignored.  Things like multicharacter operators and special symbols
@@ -2631,11 +2634,15 @@ subexpression is never tested before the starting position, so it
 might be a good idea to include \\=\\= as a match alternative in it.
 
 Optimization note: Matches might be missed if the \"look behind\"
-subexpression should match the end of nonwhite syntactic whitespace,
+subexpression can match the end of nonwhite syntactic whitespace,
 i.e. the end of comments or cpp directives.  This since the function
-skips over such things before resuming the search.  It's also not safe
-to assume that the \"look behind\" subexpression never can match
-syntactic whitespace.
+skips over such things before resuming the search.  It's on the other
+hand not safe to assume that the \"look behind\" subexpression never
+matches syntactic whitespace.
+
+Bug: Unbalanced parens inside cpp directives are currently not handled
+correctly \(i.e. they don't get ignored as they should) when
+PAREN-LEVEL is set.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
@@ -2655,7 +2662,9 @@ comment at the start of cc-engine.el for more info."
 	;; The current position after the last state update.  The next
 	;; `parse-partial-sexp' continues from here.
 	(state-pos (point))
-	;; The position at which to check the state and the state there.
+	;; The position at which to check the state and the state
+	;; there.  This is separate from `state-pos' since we might
+	;; need to back up before doing the next search round.
 	check-pos check-state
 	;; Last position known to end a token.
 	(last-token-end-pos (point-min))
@@ -2674,38 +2683,25 @@ comment at the start of cc-engine.el for more info."
 			    state-pos (match-beginning 0) paren-level nil state)
 		     state-pos (point))
 	       (if (setq check-pos (and lookbehind-submatch
+					(or (not paren-level)
+					    (>= (car state) 0))
 					(match-end lookbehind-submatch)))
 		   (setq check-state (parse-partial-sexp
 				      state-pos check-pos paren-level nil state))
 		 (setq check-pos state-pos
 		       check-state state))
 
-	       ;; If we got a look behind subexpression and get an
-	       ;; insignificant match in something that isn't
+	       ;; NOTE: If we got a look behind subexpression and get
+	       ;; an insignificant match in something that isn't
 	       ;; syntactic whitespace (i.e. strings or in nested
 	       ;; parentheses), then we can never skip more than a
-	       ;; single character from the match position before
-	       ;; continuing the search.  That since the look behind
-	       ;; subexpression might match the end of the
-	       ;; insignificant region.
+	       ;; single character from the match start position
+	       ;; (i.e. `state-pos' here) before continuing the
+	       ;; search.  That since the look behind subexpression
+	       ;; might match the end of the insignificant region in
+	       ;; the next search.
 
 	       (cond
-		((setq tmp (elt check-state 3))
-		 ;; Match inside a string.
-		 (if (or lookbehind-submatch
-			 (not (integerp tmp)))
-		     (goto-char (min (1+ state-pos) bound))
-		   ;; Skip to the end of the string before continuing.
-		   (let ((ender (make-string 1 tmp)) (continue t))
-		     (while (if (search-forward ender bound noerror)
-				(progn
-				  (setq state (parse-partial-sexp
-					       state-pos (point) nil nil state)
-					state-pos (point))
-				  (elt state 3))
-			      (setq continue nil)))
-		     continue)))
-
 		((elt check-state 7)
 		 ;; Match inside a line comment.  Skip to eol.  Use
 		 ;; `re-search-forward' instead of `skip-chars-forward' to get
@@ -2718,12 +2714,74 @@ comment at the start of cc-engine.el for more info."
 
 		((and (not (elt check-state 5))
 		      (eq (char-before check-pos) ?/)
+		      (not (c-get-char-property (1- check-pos) 'syntax-table))
 		      (memq (char-after check-pos) '(?/ ?*)))
 		 ;; Match in the middle of the opener of a block or line
 		 ;; comment.
 		 (if (= (char-after check-pos) ?/)
 		     (re-search-forward "[\n\r]" bound noerror)
 		   (search-forward "*/" bound noerror)))
+
+		;; The last `parse-partial-sexp' above might have
+		;; stopped short of the real check position if the end
+		;; of the current sexp was encountered in paren-level
+		;; mode.  The checks above are always false in that
+		;; case, and since they can do better skipping in
+		;; lookbehind-submatch mode, we do them before
+		;; checking the paren level.
+
+		((and paren-level
+		      (/= (setq tmp (car check-state)) 0))
+		 ;; Check the paren level first since we're short of the
+		 ;; syntactic checking position if the end of the
+		 ;; current sexp was encountered by `parse-partial-sexp'.
+		 (if (> tmp 0)
+
+		     ;; Inside a nested paren sexp.
+		     (if lookbehind-submatch
+			 ;; See the NOTE above.
+			 (progn (goto-char state-pos) t)
+		       ;; Skip out of the paren quickly.
+		       (setq state (parse-partial-sexp state-pos bound 0 nil state)
+			     state-pos (point)))
+
+		   ;; Have exited the current paren sexp.
+		   (if noerror
+		       (progn
+			 ;; The last `parse-partial-sexp' call above
+			 ;; has left us just after the closing paren
+			 ;; in this case, so we can modify the bound
+			 ;; to leave the point at the right position
+			 ;; upon return.
+			 (setq bound (1- (point)))
+			 nil)
+		     (signal 'search-failed (list regexp)))))
+
+		((setq tmp (elt check-state 3))
+		 ;; Match inside a string.
+		 (if (or lookbehind-submatch
+			 (not (integerp tmp)))
+		     ;; See the NOTE above.
+		     (progn (goto-char state-pos) t)
+		   ;; Skip to the end of the string before continuing.
+		   (let ((ender (make-string 1 tmp)) (continue t))
+		     (while (if (search-forward ender bound noerror)
+				(progn
+				  (setq state (parse-partial-sexp
+					       state-pos (point) nil nil state)
+					state-pos (point))
+				  (elt state 3))
+			      (setq continue nil)))
+		     continue)))
+
+		((save-excursion
+		   (save-match-data
+		     (c-beginning-of-macro start)))
+		 ;; Match inside a macro.  Skip to the end of it.
+		 (c-end-of-macro)
+		 (cond ((<= (point) bound) t)
+		       (noerror nil)
+		       (t (signal 'search-failed (list regexp)))))
 
 		((and not-inside-token
 		      (or (< check-pos last-token-end-pos)
@@ -2733,42 +2791,19 @@ comment at the start of cc-engine.el for more info."
 			       (save-match-data
 				 (c-end-of-current-token last-token-end-pos))
 			       (setq last-token-end-pos (point))))))
-		 ;; Match inside a token.
-		 (cond ((<= (point) bound) t)
-		       (noerror nil)
-		       (t (signal 'search-failed '("end of token")))))
-
-		((save-excursion
-		   (save-match-data
-		     (c-beginning-of-macro start)))
-		 ;; Match inside a macro.  Skip to the end of it.
-		 (c-end-of-macro)
-		 (cond ((<= (point) bound) t)
-		       (noerror nil)
-		       (t (signal 'search-failed '("end of macro")))))
-
-		((and paren-level
-		      (/= (setq tmp (car check-state)) 0))
-		 (if (> tmp 0)
-		     ;; Match inside a nested paren sexp.
-		     (or lookbehind-submatch
-			 ;; Skip out of the paren quickly.
-			 (setq state (parse-partial-sexp state-pos bound 0 nil state)
-			       state-pos (point)))
-		   ;; Have exited the current paren sexp.
-		   ;; `parse-partial-sexp' above has left us just
-		   ;; after the closing paren in this case.
-		   (if noerror
-		       nil
-		     (signal 'search-failed '("end of containing sexp")))))
+		 ;; Inside a token.
+		 (if lookbehind-submatch
+		     ;; See the NOTE above.
+		     (goto-char state-pos)
+		   (goto-char (min last-token-end-pos bound))))
 
 		(t
 		 ;; A real match.
 		 (setq found t)
 		 nil)))
 
-	     ;; Should loop now to search again, but take care to
-	     ;; avoid looping on the same spot.
+	     ;; Should loop to search again, but take care to avoid
+	     ;; looping on the same spot.
 	     (or (/= search-pos (point))
 		 (if (= (point) bound)
 		     (if noerror
@@ -2789,13 +2824,9 @@ comment at the start of cc-engine.el for more info."
 	  (match-end 0))
 
       ;; Search failed.  Set point as appropriate.
-      (cond ((eq noerror t)
-	     (goto-char start))
-	    (paren-level
-	     (if (eq (car (parse-partial-sexp state-pos bound -1 nil state)) -1)
-		 (backward-char)))
-	    (t
-	     (goto-char bound)))
+      (if (eq noerror t)
+	  (goto-char start)
+	(goto-char bound))
       nil)))
 
 (defun c-syntactic-skip-backward (skip-chars &optional limit paren-level)
