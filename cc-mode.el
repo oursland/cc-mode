@@ -303,7 +303,8 @@ preferably use the `c-mode-menu' language constant directly."
   ;; This function can make hidden buffer changes to clear caches.
   ;; It's not a problem since a nonhidden change is done anyway.
   (c-invalidate-sws-region beg end)
-  (c-invalidate-state-cache beg))
+  (c-invalidate-state-cache beg)
+  (c-invalidate-find-decl-cache beg))
 
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
