@@ -29,6 +29,7 @@
 
 
 ;; Figure out what features this Emacs has
+;;;###autoload
 (defconst c-emacs-features
   (let ((infodock-p (boundp 'infodock-version))
 	(comments
