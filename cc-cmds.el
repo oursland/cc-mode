@@ -1301,34 +1301,57 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	))))
 
 (defun c-mark-function ()
-  "Put mark at end of a C, C++, or Objective-C defun, point at beginning."
+  "Put mark at end of current top-level defun, point at beginning."
   (interactive)
   (let ((here (point))
-	;; there should be a c-point position for 'eod
 	(eod (c-point 'eod))
-	(state (c-parse-state))
-	brace skipcons-p)
-    ;; go to the least enclosing brace
-    (while state
-      (setq brace (car state))
-      (if (consp brace)
-	  (if (not skipcons-p)
-	      (goto-char (cdr brace)))
-	(goto-char brace))
-      (setq state (cdr state)
-	    skipcons-p t))
-    (if (eq (char-after) ?{)
-	(let ((to (point)))
-	  (forward-line -1)
-	  (while (not (or (bobp)
-			  (looking-at "[ \t]*$")
-			  (c-crosses-statement-barrier-p (point) to)))
-	    (setq to (point))
-	    (forward-line -1))
-	  (goto-char to))
-      (if skipcons-p
-	  (forward-line 1))
-      (skip-chars-forward " \t\n"))
+	(state (c-parse-state)))
+    ;; Are we sitting at the top level, someplace between either the
+    ;; beginning of buffer, or the nearest preceding defun?  If so,
+    ;; try first to figure out whether we're sitting on the
+    ;; introduction to a top-level defun, in which case we want to
+    ;; mark the entire defun we're sitting on.
+    ;;
+    ;; If we're sitting on anything else at the top-level, we want to
+    ;; just mark the statement that we're on
+    (if (or (and (consp (car state))
+		 (= (length state) 1))
+	    (null state))
+	;; Are we in the whitespace after the nearest preceding defun?
+	(if (and state
+		 (looking-at "[ \t]*$")
+		 (= (save-excursion
+		      (c-backward-syntactic-ws)
+		      (skip-chars-backward ";")
+		      (point))
+		    (cdar state)))
+	    (progn
+	      (setq eod (point))
+	      (goto-char (caar state))
+	      (c-beginning-of-statement-1))
+	  (if (= ?{ (save-excursion
+		      (c-end-of-statement-1)
+		      (char-before)))
+	      ;; We must be in a defuns's introduction
+	      (progn
+		(c-end-of-statement-1)
+		(skip-chars-backward "{")
+		(c-beginning-of-statement-1)
+		(c-forward-syntactic-ws))
+	    ;; Just mark the statement
+	    (c-end-of-statement-1)
+	    (forward-line 1)
+	    (setq eod (point))
+	    (c-beginning-of-statement-1)))
+      ;; We are inside some enclosing brace structure, so we first
+      ;; need to find our way to the least enclosing brace.  Then, in
+      ;; both cases, we to mark the region from the beginning of the
+      ;; current statement, until the end of the next following defun
+      (while (and state)
+	(or (consp (car state))
+	    (goto-char (car state)))
+	(setq state (cdr state)))
+      (c-beginning-of-statement-1))
     (push-mark here)
     (push-mark eod nil t)))
 
