@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.26 $
-;; Last Modified:   $Date: 1994-06-30 13:56:29 $
+;; Version:         $Revision: 4.27 $
+;; Last Modified:   $Date: 1994-06-30 14:01:29 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-30 13:56:29 $|$Revision: 4.26 $|
+;; |$Date: 1994-06-30 14:01:29 $|$Revision: 4.27 $|
 
 ;;; Code:
 
@@ -336,9 +336,10 @@ This variable contains an association list with elements of the
 following form: (SYNTACTIC-SYMBOL . (NL-LIST)).
 
 SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
-class-close, inline-open, inline-close, block-open,
-block-close, substatement-open, brace-list-open, or
-brace-list-close. See `c-offsets-alist' for details.
+class-close, inline-open, inline-close, block-open, block-close,
+substatement-open, brace-list-open, brace-list-close,
+brace-list-intro, or brace-list-entry. See `c-offsets-alist' for
+details.
 
 NL-LIST can contain any combination of the symbols `before' or
 `after'. It also be nil.  When a brace is inserted, the syntactic
@@ -897,7 +898,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.26 $
+cc-mode Revision: $Revision: 4.27 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -930,7 +931,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.26 $
+cc-mode Revision: $Revision: 4.27 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -963,7 +964,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.26 $
+cc-mode Revision: $Revision: 4.27 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1320,6 +1321,8 @@ the brace is inserted inside a literal."
 					 (assq 'inline-close syntax)
 					 (assq 'brace-list-open syntax)
 					 (assq 'brace-list-close syntax)
+					 (assq 'brace-list-intro syntax)
+					 (assq 'brace-list-entry syntax)
 					 (assq 'block-open syntax)
 					 (assq 'block-close syntax)
 					 (assq 'substatement-open syntax)
@@ -3840,7 +3843,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.26 $"
+(defconst c-version "$Revision: 4.27 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
