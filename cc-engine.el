@@ -599,7 +599,7 @@ line if it moved past a line comment."
 	;; Emacs includes the ending newline in a b-style (c++)
 	;; comment, but XEmacs doesn't.  We depend on the Emacs
 	;; behavior (which also is symmetric).
-	(if (and (eolp) (nth 7 (parse-partial-sexp start (point))))
+	(if (and (eolp) (elt (parse-partial-sexp start (point)) 7))
 	    (condition-case nil (forward-char 1)))
 
 	t))))
@@ -962,20 +962,20 @@ See `c-forward-token-1' for details."
 					  paren-level nil state)
 		pos syntactic-match-pos)
 
-	  (cond ((nth 3 state)
+	  (cond ((elt state 3)
 		 ;; Match inside a string.  Skip to the end of it
 		 ;; before continuing.
-		 (let ((ender (make-string 1 (nth 3 state))))
+		 (let ((ender (make-string 1 (elt state 3))))
 		   (while (if (search-forward ender bound noerror)
 			      (progn
 				(setq state (parse-partial-sexp pos (point)
 								nil nil state)
 				      pos (point))
-				(nth 3 state))
+				(elt state 3))
 			    (setq count -1)
 			    nil))))
 
-		((nth 7 state)
+		((elt state 7)
 		 ;; Match inside a line comment.  Skip to eol.  Use
 		 ;; `re-search-forward' instead of
 		 ;; `skip-chars-forward' to get the right bound
@@ -983,7 +983,7 @@ See `c-forward-token-1' for details."
 		 (or (re-search-forward "[\n\r]" bound noerror)
 		     (setq count -1)))
 
-		((nth 4 state)
+		((elt state 4)
 		 ;; Match inside a block comment.  Skip to the '*/'.
 		 (or (search-forward "*/" bound noerror)
 		     (setq count -1)))
@@ -1052,8 +1052,8 @@ The last point calculated is cached if the cache is enabled, i.e. if
 		 (let* ((lim (or lim (c-point 'bod)))
 			(state (parse-partial-sexp lim (point))))
 		   (cond
-		    ((nth 3 state) 'string)
-		    ((nth 4 state) (if (nth 7 state) 'c++ 'c))
+		    ((elt state 3) 'string)
+		    ((elt state 4) (if (elt state 7) 'c++ 'c))
 		    ((and detect-cpp (c-beginning-of-macro lim)) 'pound)
 		    (t nil))))))
       ;; cache this result if the cache is enabled
@@ -1093,20 +1093,20 @@ more than one character."
 	   (lim (or lim (c-point 'bod)))
 	   (state (parse-partial-sexp lim (point))))
 
-      (cond ((nth 3 state)
+      (cond ((elt state 3)
 	     ;; String.  Search backward for the start.
-	     (while (nth 3 state)
-	       (search-backward (make-string 1 (nth 3 state)))
+	     (while (elt state 3)
+	       (search-backward (make-string 1 (elt state 3)))
 	       (setq state (parse-partial-sexp lim (point))))
 	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 			       (point-max))))
 
-	    ((nth 7 state)
+	    ((elt state 7)
 	     ;; Line comment.  Search from bol for the comment starter.
 	     (beginning-of-line)
 	     (setq state (parse-partial-sexp lim (point))
 		   lim (point))
-	     (while (not (nth 7 state))
+	     (while (not (elt state 7))
 	       (search-forward "//")	; Should never fail.
 	       (setq state (parse-partial-sexp
 			    lim (point) nil nil state)
@@ -1114,15 +1114,15 @@ more than one character."
 	     (backward-char 2)
 	     (cons (point) (progn (c-forward-single-comment) (point))))
 
-	    ((nth 4 state)
+	    ((elt state 4)
 	     ;; Block comment.  Search backward for the comment starter.
-	     (while (nth 4 state)
+	     (while (elt state 4)
 	       (search-backward "/*")	; Should never fail.
 	       (setq state (parse-partial-sexp lim (point))))
 	     (cons (point) (progn (c-forward-single-comment) (point))))
 
 	    ((and (not not-in-delimiter)
-		  (not (nth 5 state))
+		  (not (elt state 5))
 		  (eq (char-before) ?/)
 		  (looking-at "[/*]"))
 	     ;; We're standing in a comment starter.
@@ -1173,17 +1173,17 @@ more than one character."
 	   (lim (or lim (c-point 'bod)))
 	   (state (parse-partial-sexp lim (point))))
 
-      (cond ((nth 3 state)		; String.
-	     (goto-char (nth 8 state))
+      (cond ((elt state 3)		; String.
+	     (goto-char (elt state 8))
 	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 			       (point-max))))
 
-	    ((nth 4 state)		; Comment.
-	     (goto-char (nth 8 state))
+	    ((elt state 4)		; Comment.
+	     (goto-char (elt state 8))
 	     (cons (point) (progn (c-forward-single-comment) (point))))
 
 	    ((and (not not-in-delimiter)
-		  (not (nth 5 state))
+		  (not (elt state 5))
 		  (eq (char-before) ?/)
 		  (looking-at "[/*]"))
 	     ;; We're standing in a comment starter.
@@ -1971,15 +1971,75 @@ brace."
 		 (c-syntactic-re-search-forward ";" nil 'move 1 t))))
       nil)))
 
+(defun c-remove-ws (string)
+  ;; Return the given string with any whitespace characters removed.
+  (let* ((pos 0) (parts (list nil)) (tail parts))
+    (while (string-match "[^ \t\n\r]+" string pos)
+      (setcdr tail (list (match-string 0 string)))
+      (setq tail (cdr tail)
+	    pos (match-end 0)))
+    (apply 'concat (cdr parts))))
+
+;; Buffer local variable that contains an obarray with the types we've
+;; found.  If a declaration is recognized somewhere we record the type
+;; in it to recognize it elsewhere too.
+;;
+;; FIXME: This doesn't yet correctly handle template types in C++.
+(defvar c-found-types nil)
+(make-variable-buffer-local 'c-found-types)
+
+(defsubst c-clear-found-types ()
+  ;; Clears `c-found-types'.
+  (setq c-found-types (make-vector 53 0)))
+
+(defsubst c-add-type (type)
+  ;; Add the given string as a type in `c-found-types'.  If there's
+  ;; already a type which is equal to the given one except that the
+  ;; last character is missing, it's removed.  That's done to avoid
+  ;; adding all prefixes of a type as it's being entered and font
+  ;; locked.  We should perhaps do the same when characters are
+  ;; removed from the end of a type, but that'd require some sort of
+  ;; fast lookup based on prefixes.
+  (setq type (c-remove-ws type))
+  (unintern (substring type 0 -1) c-found-types)
+  (intern type c-found-types))
+
+(defsubst c-check-type (string)
+  ;; Return non-nil if the given string is a type in `c-found-types'.
+  (intern-soft (c-remove-ws string) c-found-types))
+
+(defsubst c-add-complex-type (from to)
+  ;; The given region is taken to contain a type expression.  The
+  ;; individual types in it are added to `c-found-types'.
+  (goto-char from)
+  (while (and (< (point) to)
+	      (re-search-forward c-qualified-identifier-key to 'move))
+    (let ((type (buffer-substring-no-properties (match-beginning 1)
+						(match-end 1))))
+      (unless (looking-at c-type-prefix-key)
+	;; This adds types on `c-known-type-key' too.  There's no real
+	;; harm in doing so, and it's simpler than checking.
+	(c-add-type type)))))
+
+(defun c-list-found-types ()
+  ;; Return all the types in `c-found-types' as a sorted list of
+  ;; strings.
+  (let (type-list)
+    (mapatoms (lambda (type)
+		(setq type-list (cons (symbol-name type)
+				      type-list)))
+	      c-found-types)
+    (sort type-list 'string-lessp)))
+
 (defun c-forward-type (&optional use-font-property)
   ;; If the point is at the beginning of a type spec, move to the end
-  ;; of it.  Return t if it is a type, nil if it isn't (the point
-  ;; isn't moved), or 'maybe if it's something that might be a type
-  ;; but also something else.  The point is assumed to be at the
-  ;; beginning of a token.  If USE-FONT-PROPERTY is non-nil then we
-  ;; use the 'font text property instead of some regexp matches, under
-  ;; the assumption that the font-lock package has fontified the
-  ;; nontype keywords.
+  ;; of it.  Return t if it is a known type, nil if it isn't (the
+  ;; point isn't moved), 'found if it's a type that matches one in
+  ;; `c-found-types', or 'maybe if it's an identfier that might be a
+  ;; type.  The point is assumed to be at the beginning of a token.
+  ;; If USE-FONT-PROPERTY is non-nil then we use the 'font text
+  ;; property instead of some regexp matches, under the assumption
+  ;; that the font-lock package has fontified the nontype keywords.
   ;;
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
@@ -1987,22 +2047,6 @@ brace."
 
   (let* ((start (point))
 	 (res (cond
-	       ((looking-at c-primitive-type-key)
-		;; Looking at a primitive type such as "int".
-		(goto-char (match-end 1))
-		t)
-
-	       ((looking-at c-type-prefix-key)
-		;; Looking at a keyword that prefixes a type
-		;; identifier, e.g. "class".
-		(goto-char (match-end 1))
-		(c-forward-syntactic-ws)
-		(if (looking-at c-symbol-key)
-		    (progn (goto-char (match-end 1))
-			   t)
-		  (goto-char start)
-		  nil))
-
 	       ((and c-complex-type-key
 		     (looking-at c-complex-type-key))
 		;; It's a type, but it might also be a complex one if it's
@@ -2015,15 +2059,38 @@ brace."
 		    (goto-char end)))
 		t)
 
-	       ((and (looking-at c-symbol-key)
+	       ((looking-at c-type-prefix-key)
+		;; Looking at a keyword that prefixes a type
+		;; identifier, e.g. "class".
+		(goto-char (match-end 1))
+		(c-forward-syntactic-ws)
+		(if (looking-at c-symbol-key)
+		    (progn (goto-char (match-end 1))
+			   (c-add-type (buffer-substring-no-properties
+					(match-beginning 1) (match-end 1)))
+			   t)
+		  (goto-char start)
+		  nil))
+
+	       ((c-with-syntax-table c-identifier-syntax-table
+		  (looking-at c-known-type-key))
+		;; Looking at a known type identifier.
+		(goto-char (match-end 1))
+		t)
+
+	       ((and (looking-at c-qualified-identifier-key)
 		     (if use-font-property
 			 (not (eq (get-text-property (point) 'face)
 				  'font-lock-keyword-face))
 		       (save-match-data
 			 (not (looking-at c-nontype-keywords-regexp)))))
-		;; It's an identifier that might be a type.
 		(goto-char (match-end 1))
-		'maybe))))
+		(if (c-check-type (match-string 1))
+		    ;; It's an identifier that has been used as a type
+		    ;; somewhere else.
+		    'found
+		  ;; It's an identifier that might be a type.
+		  'maybe)))))
 
     (if (and res c-type-concat-key)
 	;; Look for a trailing operator that concatenate the type with
@@ -2041,6 +2108,8 @@ brace."
 	      ;; promote two uncertain types to a certain one.
 	      (cond ((eq res t) t)
 		    ((eq res2 t) t)
+		    ((eq res 'found) 'found)
+		    ((eq res2 'found) 'found)
 		    (t 'maybe))
 	    (goto-char pos)
 	    res))
