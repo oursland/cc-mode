@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.190 $
-;; Last Modified:   $Date: 1995-04-10 22:00:28 $
+;; Version:         $Revision: 4.191 $
+;; Last Modified:   $Date: 1995-04-12 16:50:02 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-10 22:00:28 $|$Revision: 4.190 $|
+;; |$Date: 1995-04-12 16:50:02 $|$Revision: 4.191 $|
 
 ;;; Code:
 
@@ -383,6 +383,18 @@ following form: (SYNTACTIC-SYMBOL . ACTION).
 See the variable `c-hanging-braces-alist' for the semantics of this
 variable.  Note however that making ACTION a function symbol is
 currently not supported for this variable.")
+
+(defvar c-hanging-semi&comma-criteria '(c-semi&comma-inside-parenlist)
+  "*List of functions that decide whether to insert a newline or not.
+The functions in this list are called, in order, whenever the
+auto-newline minor mode is activated (as evidenced by a `/a' or `/ah'
+string in the mode line), and a semicolon or comma is typed.  Each
+function in this list is called with no arguments, and should return
+one of the following values:
+
+  nil       -- no determination made, continue checking
+  non-nil   -- insert a newline, and stop checking
+  'stop     -- do not insert a newline, but stop checking")
 
 (defvar c-hanging-comment-ender-p t
   "*If nil, `c-fill-paragraph' leaves C block comment enders on their own line.
@@ -1733,17 +1745,40 @@ non-whitespace characters on the line following the semicolon."
 	  (goto-char (- (point-max) pos)))
 	;; re-indent line
 	(c-indent-line)
-	;; newline only after semicolon, but only if that semicolon is
-	;; not inside a parenthesis list (e.g. a for loop statement)
-	(and (= last-command-char ?\;)
-	     (condition-case nil
-		 (save-excursion
-		   (up-list -1)
-		   (/= (following-char) ?\())
-	       (error t))
-	     (progn (newline) t)
-	     (c-indent-line))
-	))))
+	;; check to see if a newline should be added
+	(let ((criteria c-hanging-semi&comma-criteria)
+	      answer add-newline-p)
+	  (while criteria
+	    (setq answer (funcall (car criteria)))
+	    ;; only nil value means continue checking
+	    (if (not answer)
+		(setq criteria (cdr criteria))
+	      (setq criteria nil)
+	      ;; only 'stop specifically says do not add a newline
+	      (setq add-newline-p (not (eq answer 'stop)))
+	      ))
+	  (if add-newline-p
+	      (progn (newline)
+		     (c-indent-line)))
+	  )))))
+
+(defun c-semi&comma-inside-parenlist ()
+  "Determine if a newline should be added after a semicolon.
+If a comma was inserted, no determination is made.  If a semicolon was
+inserted inside a parenthesis list, no newline is added otherwise a
+newline is added.  In either case, checking is stopped.  This supports
+exactly the old newline insertion behavior."
+  ;; newline only after semicolon, but only if that semicolon is not
+  ;; inside a parenthesis list (e.g. a for loop statement)
+  (if (/= last-command-char ?\;)
+      nil				; continue checking
+    (if (condition-case nil
+	    (save-excursion
+	      (up-list -1)
+	      (/= (following-char) ?\())
+	  (error t))
+	t
+      'stop)))
 
 (defun c-electric-colon (arg)
   "Insert a colon.
@@ -4521,7 +4556,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.190 $"
+(defconst c-version "$Revision: 4.191 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
