@@ -112,9 +112,8 @@
 	(let (opencol spec)
 	  (beginning-of-line)
 	  (backward-up-list 1)
-	  (setq spec (if (fboundp 'c-looking-at-special-brace-list)
-			 (c-looking-at-special-brace-list)))
-	  (if spec (goto-char (car spec)))
+	  (setq spec (c-looking-at-special-brace-list))
+	  (if spec (goto-char (car (car spec))))
 	  (setq opencol (current-column))
 	  (forward-char 1)
 	  (if spec (progn
