@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-14 17:46:01 $
-;; Version:         $Revision: 2.154 $
+;; Last Modified:   $Date: 1992-07-14 21:33:04 $
+;; Version:         $Revision: 2.155 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -74,7 +74,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-14 17:46:01 $|$Revision: 2.154 $|
+;; |$Date: 1992-07-14 21:33:04 $|$Revision: 2.155 $|
 
 
 ;; ======================================================================
@@ -282,7 +282,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.154 $
+  "Major mode for editing C++ code.  $Revision: 2.155 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1025,7 +1025,9 @@ of the expression are preserved."
 		      ;; use the standard indent for this level.
 		      (if at-else
 			  (progn (c-backward-to-start-of-if opoint)
-				 (setq this-indent (current-indentation)))
+				 (back-to-indentation)
+				 (skip-chars-forward "{ \t")
+				 (setq this-indent (current-column)))
 			(setq this-indent (car indent-stack))))))
 	      ;; Just started a new nesting level.
 	      ;; Compute the standard indent for this level.
@@ -1298,7 +1300,9 @@ point of the beginning of the C++ definition."
 		       (not (looking-at "else\\s_")))
 		  (setq indent (save-excursion
 				 (c-backward-to-start-of-if)
-				 (current-indentation))))
+				 (back-to-indentation)
+				 (skip-chars-forward "{ \t")
+				 (current-column))))
 		 ((looking-at "friend\[ \t]")
 		  (setq indent (+ indent c++-friend-offset)))
 		 ((= (following-char) ?\))
@@ -1987,7 +1991,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.154 $"
+(defconst c++-version "$Revision: 2.155 $"
   "c++-mode version number.")
 
 (defun c++-version ()
