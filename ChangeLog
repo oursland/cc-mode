@@ -1,3 +1,26 @@
+Tue Feb  6 22:35:36 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+
+	* cc-mode.el (c-common-init): typo
+
+Mon Feb  5 15:54:08 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+
+	* cc-mode.el (c++-mode-map, objc-mode-map, java-mode-map):
+	In XEmacs, use set-keymap-parents if it is fboundp.
+
+	* cc-mode.el (c-delete-backslash):
+	Sync with old-c-mode.el.  Given by Ben Wing <wing@666.com>.
+
+Mon Jan 22 23:25:21 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+
+	* cc-mode.el: Added back autoload cookies.
+
+	* cc-mode.el (c-emacs-features):
+	Determine which paragraph filling regexp suite to use based on the
+	Emacs version number.
+
+	(c-fill-paragraph): Use the paragraph filling regexp suite as
+	determined in c-emacs-features.
+
 Fri Jan 19 18:57:01 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 
 	* cc-mode.el:
