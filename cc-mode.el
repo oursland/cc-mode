@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.202 $
-;; Last Modified:   $Date: 1992-09-29 00:19:22 $
+;; Version:         $Revision: 2.203 $
+;; Last Modified:   $Date: 1992-10-02 22:31:14 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-09-29 00:19:22 $|$Revision: 2.202 $|
+;; |$Date: 1992-10-02 22:31:14 $|$Revision: 2.203 $|
 
 ;;; Code:
 
@@ -376,7 +376,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.202 $
+  "Major mode for editing C++ code.  $Revision: 2.203 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -583,7 +583,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.202 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.203 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1898,12 +1898,7 @@ optional LIM.  If LIM is ommitted, point-min is used."
       (skip-chars-backward " \t\n\r\f" lim)
       (setq literal (c++-in-literal))
       (cond ((eq literal 'c++)
-	     (let ((sblim (max (c++-point 'bol) lim))
-		   (here (point)))
-	       (goto-char sblim)
-	       (if (search-forward "//" here 'move)
-		   (goto-char (match-beginning 0))
-		 (goto-char sblim))))
+	     (search-backward "//" lim 'move))
 	    ((eq literal 'c)
 	     (if (search-backward "/*" lim 'move)
 		 (goto-char (match-beginning 0))
@@ -2205,7 +2200,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.202 $"
+(defconst c++-version "$Revision: 2.203 $"
   "c++-mode version number.")
 
 (defun c++-version ()
