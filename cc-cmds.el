@@ -770,7 +770,7 @@ value of `c-cleanup-list'."
   (interactive "*P")
   (let* ((bod (c-point 'bod))
 	 (literal (c-in-literal bod))
-	 syntax newlines is-scope-op
+	 newlines is-scope-op
 	 ;; shut this up
 	 (c-echo-syntactic-information-p nil))
     (cond
