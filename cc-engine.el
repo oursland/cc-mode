@@ -528,7 +528,19 @@
 		  (let ((cnt 2))
 		    (while (not (or at-bob (zerop cnt)))
 		      (goto-char (c-point 'bod))
-		      (if (eq (char-after) ?\{)
+		      (if (and
+			   (eq (char-after) ?\{)
+			   ;; The following catches an obscure special
+			   ;; case where the brace is preceded by an
+			   ;; open paren.  That can only legally occur
+			   ;; with blocks inside expressions and in
+			   ;; Pike special brace lists.  Even so, this
+			   ;; test is still bogus then, but hopefully
+			   ;; good enough.  (We don't want to use
+			   ;; up-list here since it might be slow.)
+			   (save-excursion
+			     (c-backward-syntactic-ws)
+			     (/= (char-before) ?\()))
 			  (setq cnt (1- cnt)))
 		      (if (bobp)
 			  (setq at-bob t))))
@@ -1189,7 +1201,7 @@
 				     (looking-at c-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache inswitch-p
-	     tmpsymbol keyword injava-inher
+	     tmpsymbol keyword injava-inher special-brace-list
 	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
 	     inenclosing-p)
@@ -1278,9 +1290,12 @@
 	 ;; CASE 5: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
-	   ;; CASE 5A: we are looking at a defun, class, or
-	   ;; inline-inclass method opening brace
-	   ((eq char-after-ip ?{)
+	   ;; CASE 5A: we are looking at a defun, brace list, class,
+	   ;; or inline-inclass method opening brace
+	   ((setq special-brace-list
+		  (or (and c-special-brace-lists
+			   (c-looking-at-special-brace-list))
+		      (eq char-after-ip ?{)))
 	    (cond
 	     ;; CASE 5A.1: extern language or namespace construct
 	     ((save-excursion
@@ -1332,17 +1347,18 @@
 		    (progn (forward-sexp 1)
 			   (c-forward-syntactic-ws indent-point)))
 		(setq placeholder (c-point 'boi))
-		(and (or (looking-at "enum[ \t\n]+")
+		(or (consp special-brace-list)
+		    (and (or (looking-at "enum[ \t\n]+")
+			     (save-excursion
+			       (goto-char indent-point)
+			       (while (and (> (point) placeholder)
+					   (= (c-backward-token-1 1 t) 0)
+					   (/= (char-after) ?=)))
+			       (eq (char-after) ?=)))
 			 (save-excursion
-			   (goto-char indent-point)
-			   (while (and (> (point) placeholder)
-				       (= (c-backward-token-1 1 t) 0)
-				       (/= (char-after) ?=)))
-			   (eq (char-after) ?=)))
-		     (save-excursion
-		       (skip-chars-forward "^;(" indent-point)
-		       (not (memq (char-after) '(?\; ?\()))
-		       )))
+			   (skip-chars-forward "^;(" indent-point)
+			   (not (memq (char-after) '(?\; ?\()))
+			   ))))
 	      (c-add-syntax 'brace-list-open placeholder))
 	     ;; CASE 5A.4: inline defun open
 	     ((and inclass-p (not inenclosing-p))
@@ -1770,50 +1786,69 @@
 	    (c-add-syntax 'inher-cont (point))
 	    )))
 	 ;; CASE 9: we are inside a brace-list
-	 ((setq placeholder
+	 ((setq special-brace-list
 		(or (and c-special-brace-lists
 			 (save-excursion
 			   (goto-char containing-sexp)
 			   (c-looking-at-special-brace-list)))
 		    (c-inside-bracelist-p containing-sexp state)))
-	  ;; CASE 9A: brace-list-close brace
-	  (if (if (consp placeholder)
-		  ;; check special brace list closer
-		  (and (eq char-after-ip (cdr (cdr placeholder)))
-		       ;; check the following `)' if there is any
-		       (if (c-safe (forward-char 1)
-				   (c-forward-syntactic-ws (c-point 'eol))
-				   (not (eolp)))
-			   (and (eq (char-after) ?\))
-				;; check if the `)' closes the right list
-				(c-safe (forward-char 1)
-					(backward-sexp 1)
-					t)
-				(= (point) (car placeholder)))))
-		;; normal brace list check
-		(and (eq char-after-ip ?})
-		     (c-safe (progn (forward-char 1)
-				    (backward-sexp 1)
-				    t))
-		     (= (point) containing-sexp)))
-	      (c-add-syntax 'brace-list-close (c-point 'boi))
+	  (cond
+	   ;; CASE 9A: In the middle of a special brace list opener.
+	   ((and (consp special-brace-list)
+		 (eq char-after-ip (car (cdr special-brace-list))))
+	    (goto-char (car special-brace-list))
+	    (c-beginning-of-statement-1 lim)
+	    ;; c-b-o-s could have left us at point-min
+	    (and (bobp)
+		 (c-forward-syntactic-ws indent-point))
+	    (if (looking-at "typedef[^_]")
+		(progn (forward-sexp 1)
+		       (c-forward-syntactic-ws indent-point)))
+	    (c-add-syntax 'brace-list-open (c-point 'boi)))
+	   ;; CASE 9B: brace-list-close brace
+	   ((if (consp special-brace-list)
+		;; check special brace list closer
+		(or (and (eq char-after-ip (cdr (cdr special-brace-list)))
+			 ;; check the following `)' if there is any
+			 (if (c-safe (forward-char 1)
+				     (c-forward-syntactic-ws)
+				     t)
+			     (and (eq (char-after) ?\))
+				  ;; check if the `)' closes the right list
+				  (c-safe (forward-char 1)
+					  (backward-sexp 1)
+					  t)
+				  (= (point) (car special-brace-list)))))
+		    ;; We might stand between the special closer and
+		    ;; the `)', but that is rare.
+		    (when (eq char-after-ip ?\))
+		      (goto-char (car special-brace-list))
+		      t))
+	      ;; normal brace list check
+	      (and (eq char-after-ip ?})
+		   (c-safe (progn (forward-char 1)
+				  (backward-sexp 1)
+				  t))
+		   (= (point) containing-sexp)))
+	    (c-add-syntax 'brace-list-close (c-point 'boi)))
+	   (t
 	    ;; Prepare for the rest of the cases below by going to the
 	    ;; token following the opening brace
-	    (if (consp placeholder)
+	    (if (consp special-brace-list)
 		(progn
-		  (goto-char (1+ (car placeholder)))
-		  (c-forward-syntactic-ws indent-point)
+		  (goto-char (1+ (car special-brace-list)))
+		  (c-forward-syntactic-ws)
 		  (c-safe (forward-char 1)))
 	      (goto-char (1+ containing-sexp)))
 	    (c-forward-syntactic-ws indent-point)
 	    (cond
-	     ;; CASE 9B: we're looking at the first line in a brace-list
+	     ;; CASE 9C: we're looking at the first line in a brace-list
 	     ((= (point) indent-point)
 	      (goto-char containing-sexp)
 	      (c-add-syntax 'brace-list-intro (c-point 'boi))
 	      )
-	     ;;))		; end CASE 9B
-	     ;; CASE 9C: this is just a later brace-list-entry or
+	     ;;))		; end CASE 9C
+	     ;; CASE 9D: this is just a later brace-list-entry or
 	     ;; brace-entry-open 
 	     (t (if (or (eq char-after-ip ?{)
 			(and c-special-brace-lists
@@ -1823,8 +1858,8 @@
 			       (c-looking-at-special-brace-list (point)))))
 		    (c-add-syntax 'brace-entry-open (point))
 		  (c-add-syntax 'brace-list-entry (point))
-		  ))			; end CASE 9C
-	     )))			; end CASE 9
+		  ))			; end CASE 9D
+	     ))))			; end CASE 9
 	 ;; CASE 10: A continued statement
 	 ((and (not (memq char-before-ip '(?\; ?:)))
 	       (or (not (eq char-before-ip ?}))
@@ -1859,7 +1894,10 @@
 		  (c-add-syntax 'substatement-open (c-point 'boi))
 		(c-add-syntax 'substatement (c-point 'boi))))
 	     ;; CASE 10B: open braces for class or brace-lists
-	     ((eq char-after-ip ?{)
+	     ((setq special-brace-list
+		    (or (and c-special-brace-lists
+			     (c-looking-at-special-brace-list))
+			(eq char-after-ip ?{)))
 	      (cond
 	       ;; CASE 10B.1: class-open
 	       ((save-excursion
@@ -1871,7 +1909,8 @@
 		    ))
 		(c-add-syntax 'class-open placeholder))
 	       ;; CASE 10B.2: brace-list-open
-	       ((or (save-excursion
+	       ((or (consp special-brace-list)
+		    (save-excursion
 		      (goto-char placeholder)
 		      (looking-at "\\<enum\\>"))
 		    (save-excursion
