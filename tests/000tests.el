@@ -668,7 +668,11 @@ to be set as a file local variable.")
 			    (setq msg (apply 'format msg args))
 			    (cc-test-log "%s:%d: %s" filename linenum msg)
 			    (set-buffer testbuf)
-			    (indent-for-comment)
+			    (beginning-of-line)
+			    (unless (re-search-forward
+				     (concat "\\s *" c-comment-start-regexp)
+				     (c-point 'eol) t)
+			      (indent-for-comment))
 			    (when (re-search-forward
 				   "\\*/" (c-point 'eol) 'move)
 			      (goto-char (match-beginning 0)))
