@@ -79,6 +79,20 @@
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
 
 
+;;; Internal state variables.
+
+;; Internal state of hungry delete key feature
+(defvar c-hungry-delete-key nil)
+(make-variable-buffer-local 'c-hungry-delete-key)
+
+;; Internal state of auto newline feature.
+(defvar c-auto-newline nil)
+(make-variable-buffer-local 'c-auto-newline)
+
+;; Internal auto-newline/hungry-delete designation string for mode line.
+(defvar c-auto-hungry-string nil)
+(make-variable-buffer-local 'c-auto-hungry-string)
+
 (defun c-calculate-state (arg prevstate)
   ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
   ;; arg is nil or zero, toggle the state. If arg is negative, turn

@@ -1398,21 +1398,6 @@ are parsed.")
   "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f\v]*\\)+\\)?\\s-*")
 
 
-;; internal state variables
-
-;; Internal state of hungry delete key feature
-(defvar c-hungry-delete-key nil)
-(make-variable-buffer-local 'c-hungry-delete-key)
-
-;; Internal state of auto newline feature.
-(defvar c-auto-newline nil)
-(make-variable-buffer-local 'c-auto-newline)
-
-;; Internal auto-newline/hungry-delete designation string for mode line.
-(defvar c-auto-hungry-string nil)
-(make-variable-buffer-local 'c-auto-hungry-string)
-
-
 (cc-provide 'cc-langs)
 
 ;;; cc-langs.el ends here
