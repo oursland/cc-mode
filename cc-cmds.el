@@ -642,6 +642,8 @@ Negative argument -N means move back to Nth preceding end of defun.
 An end of a defun occurs right after the close-parenthesis that matches
 the open-parenthesis that starts a defun; see `beginning-of-defun'."
   (interactive "p")
+  (if (not arg)
+      (setq arg 1))
   (if (< arg 0)
       (c-beginning-of-defun (- arg))
     (while (> arg 0)
@@ -1303,22 +1305,29 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (interactive)
   (let ((here (point))
 	;; there should be a c-point position for 'eod
-	(eod  (save-excursion (end-of-defun) (point)))
+	(eod (c-point 'eod))
 	(state (c-parse-state))
-	brace)
+	brace skipcons-p)
+    ;; go to the least enclosing brace
     (while state
       (setq brace (car state))
       (if (consp brace)
-	  (goto-char (cdr brace))
+	  (if (not skipcons-p)
+	      (goto-char (cdr brace)))
 	(goto-char brace))
-      (setq state (cdr state)))
+      (setq state (cdr state)
+	    skipcons-p t))
     (if (eq (char-after) ?{)
-	(progn
+	(let ((to (point)))
 	  (forward-line -1)
 	  (while (not (or (bobp)
-			  (looking-at "[ \t]*$")))
-	    (forward-line -1)))
-      (forward-line 1)
+			  (looking-at "[ \t]*$")
+			  (c-crosses-statement-barrier-p (point) to)))
+	    (setq to (point))
+	    (forward-line -1))
+	  (goto-char to))
+      (if skipcons-p
+	  (forward-line 1))
       (skip-chars-forward " \t\n"))
     (push-mark here)
     (push-mark eod nil t)))
