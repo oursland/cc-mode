@@ -902,7 +902,7 @@ single `?' is found, then `c-maybe-labelp' is cleared."
   ;;
   ;; The returned value is a list of the noteworthy parens with the
   ;; last one first.  If an element in the list is an integer, it's
-  ;; the position of an open paren which have not been closed before
+  ;; the position of an open paren which has not been closed before
   ;; point.  If an element is a cons, it gives the position of a
   ;; closed brace paren pair; the car is the start paren position and
   ;; the cdr is the position following the closing paren.  Only the
@@ -1062,11 +1062,18 @@ single `?' is found, then `c-maybe-labelp' is cleared."
   ;; Used on `after-change-functions' to adjust `c-state-cache'.
   ;; Prefer speed to finesse here, since there will be many more calls
   ;; to this function than times `c-state-cache' is used.
-  (and c-state-cache
-       (if (consp (car c-state-cache))
-	   (< beg (cdr (car c-state-cache)))
-	 (<= beg (car c-state-cache)))
-       (setq c-state-cache (c-whack-state-after beg c-state-cache))))
+  ;;
+  ;; This is much like `c-whack-state-after', but it never changes a
+  ;; paren pair element into an open paren element.  Doing that would
+  ;; mean that the new open paren wouldn't have the required preceding
+  ;; paren pair element.
+  (while (and c-state-cache
+	      (let ((elem (car c-state-cache)))
+		(if (consp elem)
+		    (or (<= beg (car elem))
+			(< beg (cdr elem)))
+		  (<= beg elem))))
+    (setq c-state-cache (cdr c-state-cache))))
 
 (defun c-whack-state-before (bufpos state)
   ;; Whack off any state information from STATE which lies before
