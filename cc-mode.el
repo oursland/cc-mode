@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.222 $
-;; Last Modified:   $Date: 1994-01-31 20:02:02 $
+;; Version:         $Revision: 3.223 $
+;; Last Modified:   $Date: 1994-01-31 21:18:37 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-31 20:02:02 $|$Revision: 3.222 $|
+;; |$Date: 1994-01-31 21:18:37 $|$Revision: 3.223 $|
 
 ;;; Code:
 
@@ -731,7 +731,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.222 $
+cc-mode Revision: $Revision: 3.223 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -762,7 +762,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.222 $
+cc-mode Revision: $Revision: 3.223 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -823,9 +823,12 @@ Key bindings:
     (setq comment-indent-hook 'c-comment-indent))
   ;; put C menu into menubar for Lucid 19. I think this happens
   ;; automatically for FSF 19.
-  (and (memq 'Lucid c-emacs-features)
-       current-menubar
-       (add-menu nil "C/C++" c-mode-menu))
+  (if (and (memq 'Lucid c-emacs-features)
+	   current-menubar
+	   (not (assoc mode-name current-menubar)))
+      (progn
+	(set-buffer-menubar (copy-sequence current-menubar))
+	(add-menu nil mode-name c-mode-menu)))
   ;; put auto-hungry designators onto minor-mode-alist, but only once
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
@@ -3238,7 +3241,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.222 $"
+(defconst c-version "$Revision: 3.223 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3296,7 +3299,7 @@ region."
 (defun c-popup-menu (e)
   "Pops up the C/C++ menu."
   (interactive "@e")
-  (popup-menu (cons "C/C++ Mode Commands" c-mode-menu))
+  (popup-menu (cons (concat mode-name " Mode Commands") c-mode-menu))
   (c-keep-region-active))
     
 
