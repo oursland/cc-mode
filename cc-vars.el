@@ -105,14 +105,15 @@ according to syntactic analysis via `c-offsets-alist', even when
   :type 'boolean
   :group 'c)
 
-(defcustom c-comment-continuation-stars ""
+(defcustom c-comment-continuation-stars "* "
   "*Specifies the leader of continued block comments.
 You should set this variable to the literal string that gets inserted
 at the front of continued block style comment lines.  This should
 either be the empty string, or some number of stars followed by a
 single space.  Note that for line style comments, this variable is not
 used."
-  :type 'string
+  :type '(choice (const :tag "Use old semantics" nil)
+		 string)
   :group 'c)
 
 (defcustom c-cleanup-list '(scope-operator)
