@@ -298,6 +298,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			  (eq (char-syntax (char-before)) ?\()
                           (and (c-major-mode-is 'awk-mode)
                                (c-awk-after-logical-semicolon))))) ; ACM 2002/6/22
+          ;; ACM, 2002/7/20:  What about giving a limit to the above function?
           (setq ret 'previous
 		pos saved)
 
@@ -575,7 +576,9 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 	(while (progn (skip-chars-forward skip-chars to)
 		      (< (point) to))
 	  (if (setq lit-range (c-literal-limits from)) ; Have we landed in a string/comment?
-	      (progn (goto-char (setq from (cdr lit-range))))
+	      (progn (goto-char (setq from (cdr lit-range)))
+                     (if (and (c-major-mode-is 'awk-mode) (bolp)) ; ACM 2002/7/17. Make sure we
+                         (backward-char))) ; don't skip over a virtual semi-colon after an awk comment.  :-(
             (cond ((eq (char-after) ?:)
 		   (forward-char)
 		   (if (and (eq (char-after) ?:)
