@@ -2042,187 +2042,196 @@ Optional prefix ARG means justify paragraph as well."
 	;; a marker pointing to the single character of the appended
 	;; string.
 	tmp-pre tmp-post
-	hang-ender-stuck)
+	hang-ender-stuck
+	(here (point)))
     ;; Restore point on undo.  It's necessary since we do a lot of
     ;; hidden inserts and deletes below that should be as transparent
     ;; as possible.
     (if (and buffer-undo-list (not (eq buffer-undo-list t)))
 	(setq buffer-undo-list (cons (point) buffer-undo-list)))
+    (save-restriction
+      ;; Widen to catch comment limits correctly.
+      (widen)
+      (setq lit-limits (c-collect-line-comments (c-literal-limits nil t))
+	    lit-type (c-literal-type lit-limits)))
     (save-excursion
-      (save-restriction
-	;; Widen to catch comment limits correctly.
-	(widen)
-	(setq lit-limits (c-collect-line-comments (c-literal-limits nil t))
-	      lit-type (c-literal-type lit-limits)))
+      (backward-char)
       (forward-paragraph)
-      (setq end (point-marker))
+      (when (<= (point) here)
+	(goto-char here)
+	(forward-paragraph))
+      (setq end (point-marker)))
+    (save-excursion
+      (forward-char)
       (backward-paragraph)
+      (when (>= (point) here)
+	(goto-char here)
+	(backward-paragraph))
       (setq beg (point)))
-    (when (and (>= (point) beg) (<= (point) end))
-      (unwind-protect
-	  (progn
-	    (cond
-	     ((eq lit-type 'c++)	; Line comment.
-	      (save-excursion
-		;; Fill to the comment or paragraph end, whichever
-		;; comes first.
-		(set-marker end (min end (cdr lit-limits)))
-		(when (<= beg (car lit-limits))
-		  ;; The region to be filled includes the comment
-		  ;; starter, so we must check it.
-		  (goto-char (car lit-limits))
-		  (back-to-indentation)
-		  (if (eq (point) (car lit-limits))
-		      ;; Include the first line in the fill.
-		      (setq beg (c-point 'bol))
-		    ;; The first line contains code before the
-		    ;; comment.  We must fake a line that doesn't.
-		    (setq tmp-pre t)))
-		))
-	     ((eq lit-type 'c)		; Block comment.
-	      (save-excursion
-		(when (>= end (cdr lit-limits))
-		  ;; The region to be filled includes the comment ender.
-		  (goto-char (cdr lit-limits))
-		  (beginning-of-line)
-		  (if (and (looking-at (concat "[ \t]*\\("
-					       c-current-comment-prefix
-					       "\\)\\*/"))
-			   (eq (cdr lit-limits) (match-end 0)))
-		      ;; Leave the comment ender on its own line.
-		      (set-marker end (point))
-		    ;; The comment ender should hang.  Replace all
-		    ;; cruft between it and the last word with a 'x'
-		    ;; and include it in the fill.  We'll change it
-		    ;; back to a space afterwards.
-		    (let ((ender-start (progn
-					 (goto-char (cdr lit-limits))
-					 (skip-syntax-backward "^w ")
-					 (point)))
-			  spaces)
-		      (goto-char (cdr lit-limits))
-		      (setq tmp-post (point-marker))
-		      (insert ?\n)
-		      (set-marker end (point))
-		      (forward-line -1)
-		      (if (and (looking-at (concat "[ \t]*\\(\\("
-						   c-current-comment-prefix
-						   "\\)[ \t]*\\)"))
-			       (eq ender-start (match-end 0)))
-			  ;; The comment ender is prefixed by nothing
-			  ;; but a comment line prefix.  Remove it
-			  ;; along with surrounding ws.
-			  (setq spaces (- (match-end 1) (match-end 2)))
-			(goto-char ender-start))
-		      (skip-chars-backward " \t\r\n")
-		      (when (/= (point) ender-start)
-			;; Keep one or two spaces between the text and
-			;; the ender, depending on how many there are now.
-			(unless spaces (setq spaces (- ender-start (point))))
-			(setq spaces (max (min spaces 2) 1))
-			; Insert the filler first to keep marks right.
-			(insert (make-string spaces ?x))
-			(delete-region (point) (+ ender-start spaces))
-			(setq hang-ender-stuck spaces)))))
-		(when (<= beg (car lit-limits))
-		  ;; The region to be filled includes the comment starter.
-		  (goto-char (car lit-limits))
-		  (if (looking-at (concat "\\(" comment-start-skip "\\)$"))
-		      ;; Begin filling with the next line.
-		      (setq beg (c-point 'bonl))
-		    ;; Fake the fill prefix in the first line.
-		    (setq tmp-pre t)))
-		))
-	     ((eq lit-type 'string)	; String.
-	      (save-excursion
-		(when (>= end (cdr lit-limits))
-		  (goto-char (1- (cdr lit-limits)))
-		  (setq tmp-post (point-marker))
-		  (insert ?\n)
-		  (set-marker end (point)))
-		(when (<= beg (car lit-limits))
-		  (goto-char (1+ (car lit-limits)))
-		  (setq beg (if (looking-at "\\\\$")
-				;; Leave the start line if it's
-				;; nothing but an escaped newline.
-				(1+ (match-end 0))
-			      (point))))))
-	     (t (setq beg nil)))
-	    (when tmp-pre
-	      ;; Temporarily insert the fill prefix after the comment
-	      ;; starter so that the first line looks like any other
-	      ;; comment line in the narrowed region.
-	      (setq fill (c-guess-fill-prefix lit-limits lit-type))
-	      (unless (string-match (concat "\\`[ \t]*\\("
-					    c-current-comment-prefix
-					    "\\)[ \t]*\\'")
-				    (car fill))
-		;; Oops, the prefix doesn't match the comment prefix
-		;; regexp.  This could produce very confusing
-		;; results with adaptive fill packages together with
-		;; the insert prefix magic below, since the prefix
-		;; often doesn't appear at all.  So let's warn about
-		;; it.
-		(message "\
-Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix %S"
-			 (car fill)))
-	      ;; Find the right spot on the line, break it, insert
-	      ;; the fill prefix and make sure we're back in the
-	      ;; same column by temporarily prefixing the first word
-	      ;; with a number of 'x'.
-	      (save-excursion
+    (unwind-protect
+	(progn
+	  (cond
+	   ((eq lit-type 'c++)		; Line comment.
+	    (save-excursion
+	      ;; Fill to the comment or paragraph end, whichever
+	      ;; comes first.
+	      (set-marker end (min end (cdr lit-limits)))
+	      (when (<= beg (car lit-limits))
+		;; The region to be filled includes the comment
+		;; starter, so we must check it.
 		(goto-char (car lit-limits))
-		(if (looking-at (if (eq lit-type 'c++)
-				    c-comment-prefix-regexp
-				  comment-start-skip))
-		    (goto-char (match-end 0))
-		  (forward-char 2)
-		  (skip-chars-forward " \t"))
-		(while (< (current-column) (cdr fill)) (forward-char 1))
-		(let ((col (current-column)))
-		  (setq beg (1+ (point))
-			tmp-pre (list (point)))
-		  (unwind-protect
-		      (progn
-			(insert ?\n (car fill))
-			(insert (make-string (- col (current-column)) ?x)))
-		    (setcdr tmp-pre (point))))))
-	    (when beg
-	      (let ((fill-paragraph-function
-		     ;; Avoid infinite recursion.
-		     (if (not (eq fill-paragraph-function 'c-fill-paragraph))
-			 fill-paragraph-function))
-		    (fill-prefix
-		     (or fill-prefix
-			 (when (and (eq lit-type 'c++)
-				    (not (string-match
-					  "\\`[ \t]*//"
-					  (or (fill-context-prefix beg end)
-					      ""))))
-			   ;; Kludge: If the function that adapts the
-			   ;; fill prefix doesn't produce the required
-			   ;; comment starter for line comments, then
-			   ;; force it by setting fill-prefix.
-			   (car (or fill (c-guess-fill-prefix
-					  lit-limits lit-type)))))))
-		;; Preparations finally done!  Now we can call the
-		;; real fill function.
-		(save-restriction
-		  (narrow-to-region beg end)
-		  (fill-paragraph arg)))))
-	(when (consp tmp-pre)
-	  (delete-region (car tmp-pre) (cdr tmp-pre)))
-	(when tmp-post
-	  (save-excursion
-	    (goto-char tmp-post)
-	    (delete-char 1)
-	    (when hang-ender-stuck
-	      (skip-syntax-backward "^w ")
-	      (forward-char (- hang-ender-stuck))
-	      (insert (make-string hang-ender-stuck ?\ ))
-	      (delete-char hang-ender-stuck))
-	    (set-marker tmp-post nil)))))
-    (set-marker end nil))
+		(back-to-indentation)
+		(if (eq (point) (car lit-limits))
+		    ;; Include the first line in the fill.
+		    (setq beg (c-point 'bol))
+		  ;; The first line contains code before the
+		  ;; comment.  We must fake a line that doesn't.
+		  (setq tmp-pre t)))
+	      ))
+	   ((eq lit-type 'c)		; Block comment.
+	    (save-excursion
+	      (when (>= end (cdr lit-limits))
+		;; The region to be filled includes the comment ender.
+		(goto-char (cdr lit-limits))
+		(beginning-of-line)
+		(if (and (looking-at (concat "[ \t]*\\("
+					     c-current-comment-prefix
+					     "\\)\\*/"))
+			 (eq (cdr lit-limits) (match-end 0)))
+		    ;; Leave the comment ender on its own line.
+		    (set-marker end (point))
+		  ;; The comment ender should hang.  Replace all
+		  ;; cruft between it and the last word with a 'x'
+		  ;; and include it in the fill.  We'll change it
+		  ;; back to a space afterwards.
+		  (let ((ender-start (progn
+				       (goto-char (cdr lit-limits))
+				       (skip-syntax-backward "^w ")
+				       (point)))
+			spaces)
+		    (goto-char (cdr lit-limits))
+		    (setq tmp-post (point-marker))
+		    (insert ?\n)
+		    (set-marker end (point))
+		    (forward-line -1)
+		    (if (and (looking-at (concat "[ \t]*\\(\\("
+						 c-current-comment-prefix
+						 "\\)[ \t]*\\)"))
+			     (eq ender-start (match-end 0)))
+			;; The comment ender is prefixed by nothing
+			;; but a comment line prefix.  Remove it
+			;; along with surrounding ws.
+			(setq spaces (- (match-end 1) (match-end 2)))
+		      (goto-char ender-start))
+		    (skip-chars-backward " \t\r\n")
+		    (when (/= (point) ender-start)
+		      ;; Keep one or two spaces between the text and
+		      ;; the ender, depending on how many there are now.
+		      (unless spaces (setq spaces (- ender-start (point))))
+		      (setq spaces (max (min spaces 2) 1))
+					; Insert the filler first to keep marks right.
+		      (insert (make-string spaces ?x))
+		      (delete-region (point) (+ ender-start spaces))
+		      (setq hang-ender-stuck spaces)))))
+	      (when (<= beg (car lit-limits))
+		;; The region to be filled includes the comment starter.
+		(goto-char (car lit-limits))
+		(if (looking-at (concat "\\(" comment-start-skip "\\)$"))
+		    ;; Begin filling with the next line.
+		    (setq beg (c-point 'bonl))
+		  ;; Fake the fill prefix in the first line.
+		  (setq tmp-pre t)))
+	      ))
+	   ((eq lit-type 'string)	; String.
+	    (save-excursion
+	      (when (>= end (cdr lit-limits))
+		(goto-char (1- (cdr lit-limits)))
+		(setq tmp-post (point-marker))
+		(insert ?\n)
+		(set-marker end (point)))
+	      (when (<= beg (car lit-limits))
+		(goto-char (1+ (car lit-limits)))
+		(setq beg (if (looking-at "\\\\$")
+			      ;; Leave the start line if it's
+			      ;; nothing but an escaped newline.
+			      (1+ (match-end 0))
+			    (point))))))
+	   (t (setq beg nil)))
+	  (when tmp-pre
+	    ;; Temporarily insert the fill prefix after the comment
+	    ;; starter so that the first line looks like any other
+	    ;; comment line in the narrowed region.
+	    (setq fill (c-guess-fill-prefix lit-limits lit-type))
+	    (unless (string-match (concat "\\`[ \t]*\\("
+					  c-current-comment-prefix
+					  "\\)[ \t]*\\'")
+				  (car fill))
+	      ;; Oops, the prefix doesn't match the comment prefix
+	      ;; regexp.  This could produce very confusing
+	      ;; results with adaptive fill packages together with
+	      ;; the insert prefix magic below, since the prefix
+	      ;; often doesn't appear at all.  So let's warn about
+	      ;; it.
+	      (message "\
+Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix %S"
+		       (car fill)))
+	    ;; Find the right spot on the line, break it, insert
+	    ;; the fill prefix and make sure we're back in the
+	    ;; same column by temporarily prefixing the first word
+	    ;; with a number of 'x'.
+	    (save-excursion
+	      (goto-char (car lit-limits))
+	      (if (looking-at (if (eq lit-type 'c++)
+				  c-comment-prefix-regexp
+				comment-start-skip))
+		  (goto-char (match-end 0))
+		(forward-char 2)
+		(skip-chars-forward " \t"))
+	      (while (< (current-column) (cdr fill)) (forward-char 1))
+	      (let ((col (current-column)))
+		(setq beg (1+ (point))
+		      tmp-pre (list (point)))
+		(unwind-protect
+		    (progn
+		      (insert ?\n (car fill))
+		      (insert (make-string (- col (current-column)) ?x)))
+		  (setcdr tmp-pre (point))))))
+	  (when beg
+	    (let ((fill-paragraph-function
+		   ;; Avoid infinite recursion.
+		   (if (not (eq fill-paragraph-function 'c-fill-paragraph))
+		       fill-paragraph-function))
+		  (fill-prefix
+		   (or fill-prefix
+		       (when (and (eq lit-type 'c++)
+				  (not (string-match
+					"\\`[ \t]*//"
+					(or (fill-context-prefix beg end)
+					    ""))))
+			 ;; Kludge: If the function that adapts the
+			 ;; fill prefix doesn't produce the required
+			 ;; comment starter for line comments, then
+			 ;; force it by setting fill-prefix.
+			 (car (or fill (c-guess-fill-prefix
+					lit-limits lit-type)))))))
+	      ;; Preparations finally done!  Now we can call the
+	      ;; real fill function.
+	      (save-restriction
+		(narrow-to-region beg end)
+		(fill-paragraph arg)))))
+      (when (consp tmp-pre)
+	(delete-region (car tmp-pre) (cdr tmp-pre)))
+      (when tmp-post
+	(save-excursion
+	  (goto-char tmp-post)
+	  (delete-char 1)
+	  (when hang-ender-stuck
+	    (skip-syntax-backward "^w ")
+	    (forward-char (- hang-ender-stuck))
+	    (insert (make-string hang-ender-stuck ?\ ))
+	    (delete-char hang-ender-stuck))
+	  (set-marker tmp-post nil)))
+      (set-marker end nil)))
   ;; Always return t.  This has the effect that if filling isn't done
   ;; above, it isn't done at all, and it's therefore effectively
   ;; disabled in normal code.
