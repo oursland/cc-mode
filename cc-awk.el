@@ -168,18 +168,27 @@
 ;;   Matches any AWK regexp character which doesn't require special analysis.
 (defconst c-awk-escaped-newlines*-re "\\(\\\\[\n\r]\\)*")
 ;;   Matches a (possibly empty) sequence of escaped newlines.
+
+;; NOTE: In what follows, "[asdf]" in a regexp will be called a "character
+;; list", and "[:alpha:]" inside a character list will be known as a
+;; "character class".  These terms for these things vary between regexp
+;; descriptions .
 (defconst c-awk-regexp-char-class-re
+  "\\[:[a-z]+:\\]")
+  ;; Matches a character class spec (e.g. [:alpha:]).
+(defconst c-awk-regexp-char-list-re
   (concat "\\[" c-awk-escaped-newlines*-re "^?" c-awk-escaped-newlines*-re "]?"
-          "\\(" c-awk-esc-pair-re "\\|" "[^]\n\r]" "\\)*" "\\(]\\|$\\)"))
-;;   Matches a regexp char class, up to (but not including) EOL if the ] is
+          "\\(" c-awk-esc-pair-re "\\|" c-awk-regexp-char-class-re
+	  "\\|" "[^]\n\r]" "\\)*" "\\(]\\|$\\)"))
+;;   Matches a regexp char list, up to (but not including) EOL if the ] is
 ;;   missing.
-(defconst c-awk-regexp-one-line-possibly-open-char-class-re
+(defconst c-awk-regexp-one-line-possibly-open-char-list-re
   (concat "\\[\\]?\\(" c-awk-non-eol-esc-pair-re "\\|" "[^]\n\r]" "\\)*"
 	  "\\(]\\|\\\\?$\\|\\'\\)"))
 ;;   Matches the head (or all) of a regexp char class, up to (but not
 ;;   including) the first EOL.
 (defconst c-awk-regexp-innards-re
-  (concat "\\(" c-awk-esc-pair-re "\\|" c-awk-regexp-char-class-re
+  (concat "\\(" c-awk-esc-pair-re "\\|" c-awk-regexp-char-list-re
           "\\|" c-awk-regexp-normal-re "\\)*"))
 ;;   Matches the inside of an AWK regexp (i.e. without the enclosing /s)
 (defconst c-awk-regexp-without-end-re
@@ -187,7 +196,7 @@
 ;; Matches an AWK regexp up to, but not including, any terminating /. 
 (defconst c-awk-one-line-possibly-open-regexp-re
   (concat "/\\(" c-awk-non-eol-esc-pair-re
-	  "\\|" c-awk-regexp-one-line-possibly-open-char-class-re
+	  "\\|" c-awk-regexp-one-line-possibly-open-char-list-re
 	  "\\|" c-awk-regexp-normal-re "\\)*"
 	  "\\(/\\|\\\\?$\\|\\'\\)"))
 ;; Matches as much of the head of an AWK regexp which fits on one line,
@@ -203,7 +212,7 @@
 ;;   A "neutral" char(pair).  Doesn't change the "state" of a subsequent /.
 ;; This is space/tab, braces, an auto-increment/decrement operator or an
 ;; escaped character.  Or one of the (illegal) characters @ or `.  But NOT an
-;; end of line (even if escpaed).
+;; end of line (even if escaped).
 (defconst c-awk-neutrals*-re
   (concat "\\(" c-awk-neutral-re "\\)*"))
 ;;   A (possibly empty) string of neutral characters (or character pairs).
@@ -387,9 +396,12 @@
                 (setq bsws-pos (point))
                 ;; N.B. the following function will not go back past an EOL if
                 ;; there is an open string (without \) on the previous line.
+                ;; If we find such, set the c-awk-NL-prop on it, too
+                ;; (2004/3/29).
                 (c-backward-syntactic-ws bol-pos)
                 (or (/= (point) bsws-pos)
                     (progn (setq nl-prop ?\$)
+			   (c-put-char-property (1- (point)) 'c-awk-NL-prop nl-prop)
                            nil)))
          ;; If we had a backslash at EOL, c-backward-syntactic-ws will
          ;; have gone backwards over it.  Check the backslash was "real".

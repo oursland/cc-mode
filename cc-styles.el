@@ -514,9 +514,11 @@ variables."
   ;; paragraph-start/separate values, enhanced to accept escaped EOLs as
   ;; whitespace.  Used in c-beginning/end-of-sentence-in-string in cc-cmds.
   (setq c-string-par-start
-	(concat "\\(" (default-value 'paragraph-start) "\\)\\|[ \t]*\\\\$"))
+	;;(concat "\\(" (default-value 'paragraph-start) "\\)\\|[ \t]*\\\\$"))
+	"\f\\|[ \t]*\\\\?$")
   (setq c-string-par-separate
-	(concat "\\(" (default-value 'paragraph-separate) "\\)\\|[ \t]*\\\\$"))
+	;;(concat "\\(" (default-value 'paragraph-separate) "\\)\\|[ \t]*\\\\$"))
+	"[ \t\f]*\\\\?$")
   (setq c-sentence-end-with-esc-eol
 	(concat "\\(\\(" (default-value 'sentence-end) "\\)"
 		;; N.B.:  "$" would be illegal when not enclosed like "\\($\\)".

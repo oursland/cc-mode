@@ -1545,12 +1545,14 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 ;; c-setup-paragraph-variables.  Their initializations here are "just in
 ;; case".  ACM, 2004/2/15.  They are NOT buffer local (yet?).
 (defvar c-string-par-start
-  (concat "\\(" (default-value 'paragraph-start) "\\)\\|[ \t]*\\\\$")
+;;   (concat "\\(" (default-value 'paragraph-start) "\\)\\|[ \t]*\\\\$")
+  "\f\\|[ \t]*\\\\?$"
   "Value of paragraph-start used when scanning strings.
 It treats escaped EOLs as whitespace.")
 
 (defvar c-string-par-separate
-  (concat "\\(" (default-value 'paragraph-separate) "\\)\\|[ \t]*\\\\$")
+  ;; (concat "\\(" (default-value 'paragraph-separate) "\\)\\|[ \t]*\\\\$")
+  "[ \t\f]*\\\\?$"
   "Value of paragraph-separate used when scanning strings.
 It treats escaped EOLs as whitespace.")
 

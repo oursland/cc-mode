@@ -1718,26 +1718,34 @@ function does not require the declaration to contain a brace block."
 	t))))
 
 (defun c-ascertain-adjacent-literal (backwards-flag)
-  ;; Point is not in a literal (i.e. comment or string).  If a literal is the
-  ;; next thing (aside from whitespace) to be found in the direction indicated
-  ;; by BACKWARDS-FLAG, return a cons of its start.end positions (enclosing
-  ;; the delimiters).  Otherwise return NIL.
+  ;; Point is not in a literal (i.e. comment or string (include AWK regexp)).
+  ;; If a literal is the next thing (aside from whitespace) to be found in the
+  ;; direction indicated by BACKWARDS-FLAG, return a cons of its start.end
+  ;; positions (enclosing the delimiters).  Otherwise return NIL.
   ;;
   ;; This function might do hidden buffer changes.
   (save-excursion
     (c-collect-line-comments
      (let (pos)
       (if backwards-flag
-	  (if (c-backward-single-comment)
-	      (cons (point) (progn (c-forward-single-comment) (point)))
-	    (c-skip-ws-backward)
-	    (setq pos (point))
-	    (if (eq (char-before) ?\") ; We are just after the string terminator.
-	      (c-safe (c-backward-sexp 1) ; move back over the string.
-		      (cons (point) pos))))
-	(if (c-major-mode-is 'awk-mode)
-	    (c-awk-skip-semantic-ws-forward)
-	  (c-skip-ws-forward))
+	  (save-restriction
+	    ;; prevent `looking-at' seeing a " at point.
+	    (narrow-to-region (point-min) (point))
+	    (if (c-backward-single-comment)
+		(cons (point) (progn (c-forward-single-comment) (point)))
+	      (c-skip-ws-backward) ;;;; REMOVE THIS, SURELY?  2004/3/28
+	      (setq pos (point))
+	      (when
+		  (or
+		   ;; An EOL can act as an "open string" terminator in AWK.
+		   (looking-at c-ws*-string-limit-regexp)
+		   (and (not (bobp))
+			(progn (backward-char)
+			       (looking-at c-string-limit-regexp))))
+		  (goto-char (match-end 0)) ; just after the string terminator.
+		  (c-safe (c-backward-sexp 1) ; move back over the string.
+			  (cons (point) pos)))))
+	(c-skip-ws-forward)
 	(if (looking-at c-string-limit-regexp) ; string-delimiter.
 	    (cons (point) (or (c-safe (progn (c-forward-sexp 1) (point)))
 			      (point-max)))
@@ -1746,18 +1754,29 @@ function does not require the declaration to contain a brace block."
 	      (cons pos (point)))))))))
 
 (defun c-after-statement-terminator-p () ; Should we pass in LIM here?
-  ;; Does point immediately follow a statement "terminator"?
+  ;; Does point immediately follow a statement "terminator"?  A virtual
+  ;; semicolon is regarded here as such.  So is a an opening brace ;-)
   ;;
   ;; This function might do hidden buffer changes.
-  (if (c-major-mode-is 'awk-mode)
-      (c-awk-at-statement-end-p)
-    (save-excursion
-      (backward-char)
-      (or (and (looking-at "[;{}]")
-	       (not (and c-special-brace-lists ; Pike special brace lists.
-			 (eq (char-after) ?{)
-			 (c-looking-at-special-brace-list))))
-	  (c-beginning-of-macro)))))
+  (or (save-excursion
+	(backward-char)
+	(and (looking-at "[;{}]")
+	     (not (and c-special-brace-lists ; Pike special brace lists.
+		       (eq (char-after) ?{)
+		       (c-looking-at-special-brace-list)))))
+      (c-at-vsemi-p)
+      ;; The following (for macros) is not strict about exactly where we are
+      ;; wrt white space at the end of the macro.  Doesn't seem to matter too
+      ;; much.  ACM 2004/3/29.
+      (let (eom)
+	(save-excursion
+	  (if (c-beginning-of-macro)
+	      (setq eom (progn (c-end-of-macro)
+			       (point)))))
+	(when eom
+	  (save-excursion
+	    (c-forward-comments)
+	    (>= (point) eom))))))
 
 (defun c-back-over-illiterals (macro-start)
   ;; Move backwards over code which isn't a literal (i.e. comment or string),
@@ -1768,15 +1787,25 @@ function does not require the declaration to contain a brace block."
   ;;
   ;; Return a cons (A.B), where
   ;;   A is NIL if we moved back to a BOS (and know it), T otherwise (we
-  ;;     didn't move, or we hit a literal).
-  ;;   B is 'MACRO-BOUNDARY if we are about to cross the boundary out of or
-  ;;     into a macro, otherwise 'LITERAL if we've hit a literal, otherwise NIL
+  ;;     didn't move, or we hit a literal, or we're not sure about BOS).
+  ;;   B is MACRO-BOUNDARY if we are about to cross the boundary out of or
+  ;;     into a macro, otherwise LITERAL if we've hit a literal, otherwise NIL
+  ;;
+  ;;   The total collection of returned values is as follows:
+  ;;     (nil . nil): Found a BOS whilst remaining inside the illiterals.
+  ;;     (t . literal): No BOS found: only a comment/string.  We _might_ be at
+  ;;                    a BOS - the caller must check this.
+  ;;     (nil . macro-boundary): only happens with non-nil macro-start.  We've
+  ;;                             moved and reached the opening # of the macro.
+  ;;     (t . macro-boundary): Every other circumstance in which we're at a
+  ;;                           macro-boundary.  We might be at a BOS.
   ;;
   ;; Point is left either at the beginning-of-statement, or at the last non-ws
   ;; code before encountering the literal/BOB or macro-boundary.
   ;;
   ;; Note that this function moves within either preprocessor commands
-  ;; (macros) or normal code, but not both within the same invocation.
+  ;; (macros) or normal code, but will not cross a boundary between the two,
+  ;; or between two distinct preprocessor commands.
   ;;
   ;; Stop before `{' and after `;', `{', `}' and `};' when not followed by `}'
   ;; or `)', but on the other side of the syntactic ws.  Move by sexps and
@@ -1793,13 +1822,8 @@ function does not require the declaration to contain a brace block."
 	  (cond
 	  ;; Stop at the token after a comment.
 	   ((c-backward-single-comment) ; Also functions as backwards-ws.
-	    (throw 'done
-		   (if (prog1 (and (c-major-mode-is 'awk-mode)
-				   (c-awk-virtual-semicolon-ends-line-p)
-				   (/= last here))
-			 (goto-char last))
-		       '(nil . nil)
-		     '(t . literal))))
+	    (goto-char last)
+	    (throw 'done '(t . literal)))
 
 	  ;; If we've gone back over a LF, we might have moved into or out of
 	  ;; a preprocessor line.
@@ -1810,7 +1834,18 @@ function does not require the declaration to contain a brace block."
 		     (< (point) macro-start)
 		   (c-beginning-of-macro)))
 	    (goto-char last)
-	    (throw 'done (cons (eq (point) here) 'macro-boundary)))
+	    ;; Return a car of NIL ONLY if we've hit the opening # of a macro.
+	    (throw 'done (cons (or (eq (point) here)
+				   (not macro-start))
+			       'macro-boundary)))
+
+	   ;; Have we found a virtual semicolon?  If so, stop, unless the next
+	   ;; statement is where we started from.
+	   ((and (c-at-vsemi-p)
+		 (< last here)
+		 (not (memq (char-after last) '(?\) ?})))) ; we've moved back from ) or }
+	    (goto-char last)
+	    (throw 'done '(nil . nil)))
 
 	   ;; Hit the beginning of the buffer/region?
 	   ((bobp)
@@ -1830,19 +1865,17 @@ function does not require the declaration to contain a brace block."
 		  (goto-char last))
 	      (throw 'done '(nil . nil))))
 
-	   ;; Have we reached the start of a macro?
+	   ;; Have we reached the start of a macro?  This always counts as
+	   ;; BOS.  (N.B. I don't think (eq (point) here) can ever be true
+	   ;; here.  FIXME!!! ACM 2004/3/29)
 	   ((and macro-start (eq (point) macro-start))
-	    (throw 'done (cons (eq (point) here) 'macro-boundary)))
+ 	    (throw 'done (cons (eq (point) here) 'macro-boundary)))
 
-	   ;; Stop at token just after "}" or ";" or an AWK virtual semicolon
-	   ;; (without comment).
-	   ((or (looking-at "[;}]")
-		(and (c-major-mode-is 'awk-mode)
-		     (eolp)
-		     (c-awk-virtual-semicolon-ends-line-p))) 
+	   ;; Stop at token just after "}" or ";".
+	   ((looking-at "[;}]")
 	    ;; If we've gone back over ;, {, or }, we're done.
 	    (if (or (= here last)
-		    (memq (char-after last) '(?\) ?})))	; we've moved backed from ) or }
+		    (memq (char-after last) '(?\) ?})))	; we've moved back from ) or }
 		(if (and (eq (char-before) ?}) ; If };, treat them as a unit.
 			 (eq (char-after) ?\;))
 		    (backward-char))
@@ -1858,16 +1891,21 @@ function does not require the declaration to contain a brace block."
 	   (t (skip-syntax-backward "w_")) ; Speedup only.
 	   ))))))
 
-(defun c-forward-over-illiterals (macro-end)
+(defun c-forward-over-illiterals (macro-end allow-early-stop)
   ;; Move forwards over code, stopping before reaching EOB or a literal
   ;; (i.e. a comment/string) or the boundary of a preprocessor statement or
   ;; the "end of a statement".  MACRO-END is the position of the EOL/EOB which
   ;; terminates the current preprocessor directive, or NIL if we're not in
   ;; such.
   ;;
+  ;; ALLOW-EARLY-STOP is non-nil if it is permissible to return without moving
+  ;; forward at all, should we encounter a `{'.  This is an ugly kludge, but
+  ;; seems unavoidable.  Depending on the context this function is called
+  ;; from, we _sometimes_ need to stop there.
+  ;;
   ;; Return a cons (A.B), where
   ;;   A is NIL if we moved forward to an EOS, T otherwise (we didn't move, or
-  ;;     we hit a literal).
+  ;;     we hit a literal).  FIXME!!! This isn't accurate (2004/4/3)
   ;;   B is 'MACRO-BOUNDARY if we are about to cross the boundary out of or
   ;;     into a macro, otherwise 'LITERAL if we've hit a literal, otherwise NIL
   ;;
@@ -1894,10 +1932,13 @@ function does not require the declaration to contain a brace block."
     (catch 'done
       (while t ;; We go one "token" forward each time round this loop.
 	(setq last (point))
-	(if (c-major-mode-is 'awk-mode)
-	    (c-awk-skip-semantic-ws-forward)
-	  (c-skip-ws-forward))
 
+	;; If we've moved forward to a virtual semicolon, we're done.
+	(if (and (> last here) ; Should we check ALLOW-EARLY-STOP, here? 2004/4/3
+		 (c-at-vsemi-p))
+	    (throw 'done '(nil . nil)))
+
+	(c-skip-ws-forward)
 	(cond
 	 ;; Gone past the end of a macro?
 	 ((and macro-end (> (point) macro-end))
@@ -1906,7 +1947,7 @@ function does not require the declaration to contain a brace block."
 
 	 ;; About to hit a comment?
 	 ((save-excursion (c-forward-single-comment))
-	  (goto-char last)		; 2003/11/19
+	  (goto-char last)
 	  (throw 'done '(t . literal)))
 
 	 ;; End of buffer?
@@ -1919,7 +1960,7 @@ function does not require the declaration to contain a brace block."
 	 ((and (eq (char-after) ?{)
 	       (not (and c-special-brace-lists
 			 (c-looking-at-special-brace-list)))
-	       (/= here last)
+	       (or allow-early-stop (/= here last))
 	       (save-excursion	; Is this a check that we're NOT at top level?
 ;;;; NO!  This seems to check that (i) EITHER we're at the top level; OR (ii) The next enclosing
 ;;;; level of bracketing is a '{'.  HMM.  Doesn't seem to make sense.
@@ -1948,27 +1989,23 @@ function does not require the declaration to contain a brace block."
 
 	 ;; Stop if we encounter a preprocessor line.
 	 ((and (not macro-end)
-	       (not (c-major-mode-is 'awk-mode))
+	       ;; (not (c-major-mode-is 'awk-mode)) ;;;; 2004/3/19.  Can this
+					;;;; happen?  Isn't an AWK comment
+					;;;; dealt with by a previous clause?
 	       (eq (char-after) ?#)
 	       (= (point) (c-point 'boi)))
 	  (goto-char last)
-	  (throw 'done (cons (eq (point) here) 'macro-boundary)))
+	  ;(throw 'done (cons (eq (point) here) 'macro-boundary))) ; Changed 2003/3/26
+	  (throw 'done '(t . macro-boundary)))
 
 	 ;; Stop after a ';', '}', or "};"
 	 ((looking-at ";\\|};?")
 	  (goto-char (match-end 0))
 	  (throw 'done '(nil . nil)))
 
-	 ;; An AWK virtual semicolon (without a comment on the line)?
-	 ((and (eolp)
-	       (c-major-mode-is 'awk-mode)
-	       (c-awk-virtual-semicolon-ends-line-p))
-	  (goto-char last)		; to the end of the statement
-	  (throw 'done (cons (<= (point) here) nil)))
-
 	 ;; Found a string (this subsumes AWK regexps)?
 	 ((looking-at c-string-limit-regexp)
-	  (goto-char last)		; 2003/11/19
+	  (goto-char last)
 	  (throw 'done '(t . literal)))
 
 	 (t
@@ -2008,128 +2045,72 @@ which is intended for interactive use, and might therefore change to
 be more \"DWIM:ey\"."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     nil t))
-  (c-save-buffer-state
-      ((count (or count 1))
-       here ; start point for going back/forward ONE statement.  Updated each statement.
-       (macro-fence
-	(save-excursion
-	  (if (< count 0)
-	      (and (not (eobp)) (c-beginning-of-macro) (progn (c-end-of-macro) (point)))
-	    (and (not (bobp)) (c-beginning-of-macro) (point)))))
-       candidate			; candidate for BOS position.
-       res
-       (range (c-collect-line-comments (c-literal-limits lim))) ; (start.end) of current literal or NIL
-       (lit-type (if range (c-literal-type range))))
+  (if (< count 0)
+      (c-end-of-statement (- count) lim sentence-flag)
+    (c-save-buffer-state
+	((count (or count 1))
+	 last ; start point for going back ONE chunk.  Updated each chunk movement.
+	 (macro-fence
+	  (save-excursion (and (not (bobp)) (c-beginning-of-macro) (point))))
+	 res				; result from sub-function call
+	 not-bos			; "not beginning-of-statement"
+	 (range (c-collect-line-comments (c-literal-limits lim)))) ; (start.end) of current literal or NIL
 
-    ;; Go back/forward one statement at each iteration of the following loop.
-    (while (and (/= count 0)
-		(or (not lim) (> (point) lim)))
-      (setq here (point))		; ONLY HERE is HERE updated
-      (setq candidate nil) ; Just after a comment is a canditate for BO-statement
-
-      ;; Go back/forward one "chunk" each time round the following loop,
-      ;; stopping when we reach a statement boundary, etc.
-      (while
-	  (cond	; Each arm of this cond returns NIL on reaching a desired
-		; statement boundary, non-NIL otherwise.
-	   ((if (< count 0) (eobp) (bobp))
-	    (setq count 0)
-	    nil)
-
-	   (range
-	    (cond
-	     ;; Single line string
-	     ((c-one-line-string-p range)
-	      (goto-char (if (> count 0) (car range) (cdr range)))
-	      ;; For AWK, going forwards, remember POINT.  The end of the
-	      ;; string might well turn out to be an end of statement too.
-	      (when (c-major-mode-is 'awk-mode)
-		(setq candidate (point)))
-	      (setq range (c-ascertain-adjacent-literal (> count 0))
-		    lit-type (if range (c-literal-type range)))
-	      t)
-	     ;; Comment which comes BEFORE a statement (not inside one),
-	     ;; (only in the backwards direction).
-	     ((and candidate
-		   (> count 0)
-		   (memq lit-type '(c c++))
-		   (save-excursion
-		     (c-backward-comments)
-		     (or (bobp) (c-after-statement-terminator-p))))
-	      (goto-char candidate)
+      ;; Go back one statement at each iteration of the following loop.
+      (while (and (/= count 0)
+		  (or (not lim) (> (point) lim)))
+	;; Go back one "chunk" each time round the following loop, stopping
+	;; when we reach a statement boundary, etc.
+	(setq last (point))
+	(while
+	    (cond ; Each arm of this cond returns NIL on reaching a desired
+		  ; statement boundary, non-NIL otherwise.
+	     ((bobp)
+	      (setq count 0)
 	      nil)
-	     ;; AWK comment following what might turn out to be a statement end.
-	     ;; (only in the forwards direction).
-	     ((and candidate
-		   (> candidate here)
-		   (< count 0)
-		   (eq lit-type 'c++)
-		   (c-major-mode-is 'awk-mode)
-		   (save-excursion
-		     (c-forward-single-comment)
-		     (c-awk-virtual-semicolon-ends-prev-line-p)))
-	      (goto-char candidate)
-	      nil)
-	     ;; sentence-flag is null => skip the entire literal.
-	     ((null sentence-flag)
-	      (goto-char (if (> count 0) (car range) (cdr range)))
-	      (setq range (c-ascertain-adjacent-literal (> count 0))
-		    lit-type (if range (c-literal-type range)))
-	      t)
-	     ;; Comment INSIDE a statement or multi-line string.
-	     (t (setq candidate nil)
-		(when (cond
-		       ((eq lit-type 'string)
-			(if (> count 0)
-			    (c-beginning-of-sentence-in-string range)
-			  (if (c-end-of-sentence-in-string range)
-			      (if (c-major-mode-is 'awk-mode)
-				  (setq candidate (point)) ; Possibly EO stmt
-				t))))
-		       ((> count 0)
-			(c-beginning-of-sentence-in-comment range))
-		       (t
-			(c-end-of-sentence-in-comment range)))
-		  (setq range (c-ascertain-adjacent-literal (> count 0))
-			lit-type (if range (c-literal-type range)))
-		  t))))
 
-	   ;; Non-literal code.
-	   (t (if (< count 0)
-		  (progn
-		    (setq res (c-forward-over-illiterals macro-fence))
-		    ;; Are we about to move forward into or out of a
-		    ;; preprocessor command?
-		    (when (eq (cdr res) 'macro-boundary)
-		      (save-excursion
-			(end-of-line)
-			(setq macro-fence
-			      (and (not (eobp))
-				   (progn (c-skip-ws-forward)
-					  (c-beginning-of-macro))
-				   (progn (c-end-of-macro)
-					  (point))))))
-		    ;; Are we about to move forward into a literal?
-		    (when (memq (cdr res) '(macro-boundary literal))
-		      (setq range (c-ascertain-adjacent-literal nil)
-			    lit-type (if range (c-literal-type range))))
-		    ;; Remember the position of a potential AWK end of statement.
-		    (when (and (eq lit-type 'c++)
-			       (c-major-mode-is 'awk-mode))
-		      (setq candidate (point)))
-		    ;; Don't get stuck at an AWK virtual semicolon!
-		    (when (equal res '(t . nil))
-		      (if (> (point) here)
-			  ;; We can get here when a string is the last thing on a line.
-			  (setq res '(nil . nil)) ; We've moved to a statement end.
-			(c-awk-skip-semantic-ws-forward)
-			(forward-line))) ; Can't fail - we've already checked (eobp).
-		    (car res))
+	     (range		   ; point is within or approaching a literal.
+	      (cond
+	       ;; Single line string or sentence-flag is null => skip the
+	       ;; entire literal.
+	       ((or (null sentence-flag)
+		    (c-one-line-string-p range))
+		(goto-char (car range))
+		(setq range (c-ascertain-adjacent-literal t))
+		;; N.B. The following is essentially testing for an AWK regexp
+		;; at BOS:
+		;; Was the previous non-ws thing an end of statement?
+		(save-excursion
+		  (if macro-fence
+		      (c-backward-comments)
+		    (c-backward-syntactic-ws))
+		  (not (or (bobp) (c-after-statement-terminator-p)))))
 
-		(setq res (c-back-over-illiterals macro-fence))
-		(if (/= (point) here) (setq candidate (point)))	;; Code following a comment might be BOS
+	       ;; Comment inside a statement or a multi-line string.
+	       (t (when (setq res ; returns non-nil when we go out of the literal
+			      (if (eq (c-literal-type range) 'string)
+				  (c-beginning-of-sentence-in-string range)
+				(c-beginning-of-sentence-in-comment range)))
+		    (setq range (c-ascertain-adjacent-literal t)))
+		  res)))
+
+	     ;; Non-literal code.
+	     (t (setq res (c-back-over-illiterals macro-fence))
+		(setq not-bos	       ; "not reached beginning-of-statement".
+		      (or (= (point) last)
+			  (memq (char-after) '(?\) ?\}))
+			  (and
+			   (car res)
+			   ;; We're at a tentative BOS.  The next form goes
+			   ;; back over WS looking for an end of previous
+			   ;; statement.
+			   (not (save-excursion
+				  (if macro-fence
+				      (c-backward-comments)
+				    (c-backward-syntactic-ws))
+				  (or (bobp) (c-after-statement-terminator-p)))))))
 		;; Are we about to move backwards into or out of a
-		;; preprocessor command?
+		;; preprocessor command?  If so, locate it's beginning.
 		(when (eq (cdr res) 'macro-boundary)
 		  (save-excursion
 		    (beginning-of-line)
@@ -2137,14 +2118,14 @@ be more \"DWIM:ey\"."
 			  (and (not (bobp))
 			       (progn (c-skip-ws-backward) (c-beginning-of-macro))
 			       (point)))))
-		 ;; Are we about to move backwards into a literal?
-		 (when (memq (cdr res) '(macro-boundary literal))
-		   (setq range (c-ascertain-adjacent-literal t)
-			 lit-type (if range (c-literal-type range))))
-		 (car res)))))
+		;; Are we about to move backwards into a literal?
+		(when (memq (cdr res) '(macro-boundary literal))
+		  (setq range (c-ascertain-adjacent-literal t)))
+		not-bos))
+	  (setq last (point)))
 
-      (if (/= count 0) (setq count (if (> count 0) (1- count) (1+ count)))))
-    (c-keep-region-active)))
+	(if (/= count 0) (setq count (1- count))))
+      (c-keep-region-active))))
 
 (defun c-end-of-statement (&optional count lim sentence-flag)
   "Go to the end of the innermost C statement.
@@ -2159,8 +2140,76 @@ to search for the syntactic context, and a flag saying whether to do
 sentence motion in or near comments and multiline strings."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     nil t))
-  (c-beginning-of-statement (- (or count 1)) lim sentence-flag)
-  (c-keep-region-active))
+  (setq count (or count 1))
+  (if (< count 0) (c-beginning-of-statement (- count) lim sentence-flag)
+
+    (c-save-buffer-state
+	(here ; start point for going forward ONE statement.  Updated each statement.
+	 (macro-fence
+	  (save-excursion
+	    (and (not (eobp)) (c-beginning-of-macro)
+		 (progn (c-end-of-macro) (point)))))
+	 res
+	 (range (c-collect-line-comments (c-literal-limits lim)))) ; (start.end) of current literal or NIL
+
+      ;; Go back/forward one statement at each iteration of the following loop.
+      (while (and (/= count 0)
+		  (or (not lim) (< (point) lim)))
+	(setq here (point))		; ONLY HERE is HERE updated
+
+	;; Go forward one "chunk" each time round the following loop, stopping
+	;; when we reach a statement boundary, etc.
+	(while
+	    (cond    ; Each arm of this cond returns NIL on reaching a desired
+		     ; statement boundary, non-NIL otherwise.
+	     ((eobp)
+	      (setq count 0)
+	      nil)
+
+	     (range			; point is within a literal.
+	      (cond
+	       ;; sentence-flag is null => skip the entire literal.
+	       ;; or a Single line string.
+	       ((or (null sentence-flag)
+		    (c-one-line-string-p range))
+		(goto-char (cdr range))
+		(setq range (c-ascertain-adjacent-literal nil))
+		;; Is there a virtual semicolon here (e.g. for AWK)?
+		(not (c-at-vsemi-p)))
+
+	       ;; Comment or multi-line string.
+	       (t (when (setq res ; gets non-nil when we go out of the literal
+			      (if (eq (c-literal-type range) 'string)
+				  (c-end-of-sentence-in-string range)
+				(c-end-of-sentence-in-comment range)))
+		    (setq range (c-ascertain-adjacent-literal nil)))
+		  ;; If we've just come forward out of a literal, check for
+		  ;; vsemi.  (N.B. AWK can't have a vsemi after a comment, but
+		  ;; some other language may do in the future)
+		  (and res
+		       (not (c-at-vsemi-p))))))
+
+	     ;; Non-literal code.
+	     (t (setq res (c-forward-over-illiterals macro-fence
+						     (> (point) here)))
+		;; Are we about to move forward into or out of a
+		;; preprocessor command?
+		(when (eq (cdr res) 'macro-boundary)
+		  (save-excursion
+		    (end-of-line)
+		    (setq macro-fence
+			  (and (not (eobp))
+			       (progn (c-skip-ws-forward)
+				      (c-beginning-of-macro))
+			       (progn (c-end-of-macro)
+				      (point))))))
+		;; Are we about to move forward into a literal?
+		(when (memq (cdr res) '(macro-boundary literal))
+		  (setq range (c-ascertain-adjacent-literal nil)))
+		(car res))))
+
+	(if (/= count 0) (setq count (1- count))))
+      (c-keep-region-active))))
 
 
 ;; set up electric character functions to work with pending-del,
