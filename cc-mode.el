@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.293 $
-;; Last Modified:   $Date: 1993-03-02 19:30:00 $
+;; Version:         $Revision: 2.294 $
+;; Last Modified:   $Date: 1993-03-02 19:52:52 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-03-02 19:30:00 $|$Revision: 2.293 $|
+;; |$Date: 1993-03-02 19:52:52 $|$Revision: 2.294 $|
 
 ;;; Code:
 
@@ -439,7 +439,10 @@ this variable to nil defeats backscan limits.")
 (defconst c++-access-key "\\<\\(public\\|protected\\|private\\)\\>:"
   "Regexp which describes access specification keywords.")
 (defconst c++-class-key
-  "\\(template\\s *<[^>]*>\\s *\\)?\\<\\(class\\|struct\\|union\\)\\>"
+  (concat
+   "\\(extern\\s +\\)?"
+   "\\(template\\s *<[^>]*>\\s *\\)?"
+   "\\<\\(class\\|struct\\|union\\)\\>")
   "Regexp which describes a class declaration, including templates.")
 (defconst c++-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
@@ -452,7 +455,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.293 $
+  "Major mode for editing C++ code.  $Revision: 2.294 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -673,7 +676,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.293 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.294 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2196,25 +2199,26 @@ Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives. Search no farther back than
 optional LIM.  If LIM is ommitted, beginning-of-defun is used."
   (save-restriction
-    (let ((parse-sexp-ignore-comments t)
-	  donep boi char
-	  (lim (or lim (c++-point 'bod))))
-      (narrow-to-region lim (point))
-      (modify-syntax-entry ?# "< b" c++-mode-syntax-table)
-      (while (not donep)
-	;; if you're not running a patched lemacs, the new byte
-	;; compiler will complain about this function. ignore that
-	(backward-syntactic-ws)
-	(if (not (looking-at "#\\|/\\*\\|//"))
-	    (forward-char 1))
-	(setq boi (c++-point 'boi)
-	      char (char-after boi))
-	(if (and char (= char ?#))
-	    (progn (goto-char boi)
-		   (setq donep (<= (point) lim)))
-	  (setq donep t))
-	)
-      (modify-syntax-entry ?# "." c++-mode-syntax-table))))
+    (if (< lim (point))
+	(let ((parse-sexp-ignore-comments t)
+	      donep boi char
+	      (lim (or lim (c++-point 'bod))))
+	  (narrow-to-region lim (point))
+	  (modify-syntax-entry ?# "< b" c++-mode-syntax-table)
+	  (while (not donep)
+	    ;; if you're not running a patched lemacs, the new byte
+	    ;; compiler will complain about this function. ignore that
+	    (backward-syntactic-ws)
+	    (if (not (looking-at "#\\|/\\*\\|//"))
+		(forward-char 1))
+	    (setq boi (c++-point 'boi)
+		  char (char-after boi))
+	    (if (and char (= char ?#))
+		(progn (goto-char boi)
+		       (setq donep (<= (point) lim)))
+	      (setq donep t))
+	    )
+	  (modify-syntax-entry ?# "." c++-mode-syntax-table)))))
 
 (if c++-emacs-is-really-fixed-p
     (fset 'c++-backward-syntactic-ws
@@ -2527,7 +2531,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.293 $"
+(defconst c++-version "$Revision: 2.294 $"
   "c++-mode version number.")
 
 (defun c++-version ()
