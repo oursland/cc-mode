@@ -21,3 +21,17 @@ int compare(const String<T>& str1, const String<T>& str2)
         if (!C::eq(str1[i],str2[i])) return C::lt(str1[i],str2[i]);
     return str2.length()-str1.length();
 }
+
+template <int i = 5>
+class xyzzy
+{
+public:
+    static void frob();
+};
+
+
+template <int i = 5>
+void xyzzy<i>::frob()
+{
+    printf("%d\n", i);
+};
