@@ -847,14 +847,13 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 With prefix arg, go back N - 1 statements.  If already at the
 beginning of a statement then go to the beginning of the closest
 preceding one, moving into nested blocks if necessary (use
-\\[backward-sexp] to skip over a block).  If within a comment, or next
-to a comment (only whitespace between), move by sentences instead of
-statements.
+\\[backward-sexp] to skip over a block).  If within or next to a
+comment or multiline string, move by sentences instead of statements.
 
 When called from a program, this function takes 3 optional args: the
 repetition count, a buffer position limit which is the farthest back
-to search, and a flag saying whether to do sentence motion when in a
-comment."
+to search, and a flag saying whether to do sentence motion near a
+comment or multiline string."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     nil t))
   (let* ((count (or count 1))
@@ -867,63 +866,85 @@ comment."
 	  (save-excursion
 	    ;; Find the comment next to point if we're not in one.
 	    (if (> count 0)
-		(setq range (if (c-forward-comment -1)
-				(cons (point)
-				      (progn (c-forward-comment 1) (point)))))
-	      (skip-chars-forward " \t\n")
-	      (setq range (point))
-	      (setq range (if (c-forward-comment 1)
-			      (cons range (point))
-			    nil)))
+		(if (c-forward-comment -1)
+		    (setq range (cons (point)
+				      (progn (c-forward-comment 1) (point))))
+		  (skip-chars-backward " \t\n\r\f")
+		  (setq range (point))
+		  (setq range
+			(if (eq (char-before) ?\")
+			    (c-safe (c-backward-sexp 1)
+				    (cons (point) range)))))
+	      ;; skip-syntax-* doesn't count \n as whitespace..
+	      (skip-chars-forward " \t\n\r\f")
+	      (if (eq (char-after) ?\")
+		  (setq range (cons (point)
+				    (progn
+				      (c-forward-sexp 1)
+				      (point))))
+		(setq range (point))
+		(setq range (if (c-forward-comment 1)
+				(cons range (point))
+			      nil))))
 	    (setq range (c-collect-line-comments range))))
       (if (and (< count 0) (= here (point-max)))
 	  ;; Special case because eob might be in a literal.
 	  (setq range nil))
       (if range
 	  (if (and sentence-flag
-		   (/= (char-syntax (char-after (car range))) ?\"))
+		   (or (/= (char-syntax (char-after (car range))) ?\")
+		       ;; Only visit a string if it spans more than one line.
+		       (save-excursion
+			 (goto-char (car range))
+			 (skip-chars-forward "^\n" (cdr range))
+			 (< (point) (cdr range)))))
 	      (let* ((lit-type (c-literal-type range))
-		     (line-prefix (concat "\\("
+		     (line-prefix (concat "[ \t]*\\("
 					  c-current-comment-prefix
 					  "\\)[ \t]*"))
-		     (beg (save-excursion
-			    (goto-char (car range))
-			    (max (progn
-				   (looking-at comment-start-skip)
-				   (match-end 0))
-				 (progn
-				   (looking-at line-prefix)
-				   (match-end 0)))))
+		     (beg (if (eq lit-type 'string)
+			      (1+ (car range))
+			    (save-excursion
+			      (goto-char (car range))
+			      (max (progn
+				     (looking-at comment-start-skip)
+				     (match-end 0))
+				   (progn
+				     (looking-at line-prefix)
+				     (match-end 0))))))
 		     (end (- (cdr range) (if (eq lit-type 'c) 2 1)))
-		     (beg-of-para
-		      (lambda ()
-			(beginning-of-line)
-			(if (looking-at line-prefix)
-			    (goto-char (match-end 0))))))
+		     (beg-of-para (if (eq lit-type 'string)
+				      (lambda ())
+				    (lambda ()
+				      (beginning-of-line)
+				      (if (looking-at line-prefix)
+					  (goto-char (match-end 0)))))))
 		(save-restriction
 		  ;; Move by sentence, but not past the limit of the
 		  ;; literal, narrowed to the appropriate
 		  ;; paragraph(s).
 		  (narrow-to-region (save-excursion
-				      (goto-char (min (point) end))
-				      (forward-paragraph -1)
-				      (when (> (point) beg)
-					(funcall beg-of-para)
-					(when (eq (point) here)
-					  (forward-paragraph -2)
-					  (funcall beg-of-para)))
-				      (max (point) beg))
+				      (let ((pos (min here end)))
+					(goto-char pos)
+					(forward-paragraph -1)
+					(if (looking-at paragraph-separate)
+					    (forward-line))
+					(when (> (point) beg)
+					  (funcall beg-of-para)
+					  (when (>= (point) pos)
+					    (forward-paragraph -2)
+					    (funcall beg-of-para)))
+					(max (point) beg)))
 				    end)
 		  (c-safe (forward-sentence (if (< count 0) 1 -1)))
 		  (if (and (memq lit-type '(c c++))
 			   ;; Check if we stopped due to a comment
 			   ;; prefix and not a sentence end.
 			   (/= (point) (point-min))
+			   (/= (point) (point-max))
 			   (save-excursion
 			     (beginning-of-line)
-			     (looking-at (concat "[ \t]*\\("
-						 c-current-comment-prefix
-						 "\\)[ \t]*")))
+			     (looking-at line-prefix))
 			   (>= (point) (match-beginning 0))
 			   (/= (match-beginning 1) (match-end 1))
 			   (or (< (point) (match-end 0))
@@ -956,15 +977,19 @@ comment."
 			  (when (and (eq lit-type 'c)
 				     (eq (point) (point-max)))
 			    (widen)
-			    (skip-chars-backward " \t")
-			    (when (or (eq (point) (point-max)) (bolp))
+			    (when (or (= (skip-chars-backward " \t") 0)
+				      (eq (point) (point-max))
+				      (bolp))
 			      (goto-char (cdr range)))))
 		      (when (and (eq (point) (point-min))
 				 (looking-at "[ \t]*$"))
 			;; Stop before instead of after the comment
 			;; starter if nothing follows it.
 			(widen)
-			(goto-char (car range))))))
+			(goto-char (car range))
+			(if (and (eq lit-type 'string) (/= (point) here))
+			    (setq count (1+ count)
+				  range nil))))))
 		;; See if we should escape the literal.
 		(if (> count 0)
 		    (if (< (point) here)
@@ -989,7 +1014,7 @@ comment."
 		;; side of the syntactic ws.  Move by sexps and move
 		;; into parens.  Also stop before `#' when it's at boi
 		;; on a line.
-		(let ((comment-pos (not sentence-flag))
+		(let ((literal-pos (not sentence-flag))
 		      (large-enough (- (point-max)))
 		      last last-below-line)
 		  (catch 'done
@@ -1008,13 +1033,13 @@ comment."
 				   (not (eq last-below-line here)))
 			      (goto-char last-below-line))
 			  (throw 'done t)))
-		      (if comment-pos
+		      (if literal-pos
 			  (c-forward-comment large-enough)
 			(when (c-forward-comment -1)
 			  ;; Record position of first comment.
 			  (save-excursion
 			    (c-forward-comment 1)
-			    (setq comment-pos (point)))
+			    (setq literal-pos (point)))
 			  (c-forward-comment large-enough)))
 		      (unless last-below-line
 			(if (save-excursion
@@ -1039,14 +1064,22 @@ comment."
 				 (goto-char last)
 				 (throw 'done t))))
 			    ((= (char-syntax (char-after)) ?\")
-			     (forward-char)
-			     (c-backward-sexp))
+			     (let ((end (point)))
+			       (forward-char)
+			       (c-backward-sexp)
+			       (save-excursion
+				 (skip-chars-forward "^\n" end)
+				 (when (< (point) end)
+				   ;; Break at multiline string.
+				   (setq literal-pos (1+ end))
+				   (throw 'done t)))))
 			    (t (skip-syntax-backward "w_")) ; Speedup only.
 			    )))
-		  (if (and (numberp comment-pos)
-			   (< (point) comment-pos))
-		      ;; We jumped over a comment that should be investigated.
-		      (goto-char comment-pos)
+		  (if (and (numberp literal-pos)
+			   (< (point) literal-pos))
+		      ;; We jumped over a comment or string that
+		      ;; should be investigated.
+		      (goto-char literal-pos)
 		    (setq count (1- count))))
 	      (error
 	       (goto-char (point-min))
@@ -1058,21 +1091,21 @@ comment."
 	      ;; top level or inside braces, though.  Move by sexps
 	      ;; and move into parens.  Also stop at eol of lines
 	      ;; with `#' at the boi.
-	      (let ((comment-pos (not sentence-flag))
+	      (let ((literal-pos (not sentence-flag))
 		    (large-enough (point-max))
 		    last)
 		(catch 'done
 		  (while t
 		    (setq last (point))
-		    (if comment-pos
+		    (if literal-pos
 			(c-forward-comment large-enough)
 		      (if (progn
 			    (skip-chars-forward " \t\n\r\f")
 			    ;; Record position of first comment.
-			    (setq comment-pos (point))
+			    (setq literal-pos (point))
 			    (c-forward-comment 1))
 			  (c-forward-comment large-enough)
-			(setq comment-pos nil)))
+			(setq literal-pos nil)))
 		    (cond ((and (eq (char-after) ?{)
 				(not (and c-special-brace-lists
 					  (c-looking-at-special-brace-list)))
@@ -1104,15 +1137,22 @@ comment."
 			   (goto-char (match-end 0))
 			   (throw 'done t))
 			  ((= (char-syntax (char-after)) ?\")
-			   (c-forward-sexp))
+			   (let ((beg (point)))
+			     (c-forward-sexp)
+			     (save-excursion
+			       (skip-chars-backward "^\n" beg)
+			       (when (> (point) beg)
+				 ;; Break at multiline string.
+				 (setq literal-pos beg)
+				 (throw 'done t)))))
 			  (t
 			   (forward-char 1)
 			   (skip-syntax-forward "w_")) ; Speedup only.
 			  )))
-		(if (and (numberp comment-pos)
-			 (> (point) comment-pos))
+		(if (and (numberp literal-pos)
+			 (> (point) literal-pos))
 		    ;; We jumped over a comment that should be investigated.
-		    (goto-char comment-pos)
+		    (goto-char literal-pos)
 		  (setq count (1+ count))))
 	    (error
 	     (goto-char (point-max))
