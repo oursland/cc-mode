@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-26 15:21:33 $
-;; Version:         $Revision: 2.188 $
+;; Last Modified:   $Date: 1992-08-26 15:25:37 $
+;; Version:         $Revision: 2.189 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -19,6 +19,17 @@
 ;; the command c++-submit-bug-report and automatically sets up the
 ;; mail buffer with all the necessary information.
 ;;
+;; Important Note about Escapes in Comments
+;; ========================================
+;; You will notice that certain characters, when typed in comment
+;; regions, get escaped with a backslash.  This is a workaround for an
+;; emacs bug.  In brief, GNU emacs 18 and its derivatives cannot
+;; handle more than 1 comment style per mode, and as you know, C++
+;; supports 2 orthogonal comment styles.  Thus emacs' syntax parsing
+;; code will sometimes choke on unbalanced parentheses and single
+;; quotes in comments.  Please do a "C-h v c++-untame-characters" for
+;; more information.
+
 ;; Notes for Novice Emacs Users
 ;; ============================
 ;; c++-mode facilitates editing of C++ code by automatically handling
@@ -85,7 +96,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-26 15:21:33 $|$Revision: 2.188 $|
+;; |$Date: 1992-08-26 15:25:37 $|$Revision: 2.189 $|
 
 
 ;; ======================================================================
@@ -281,7 +292,7 @@ first statement in the block.  When nil, the indentation is calculated
 without regard to how the first statement is indented.")
 
 (defvar c++-untame-characters '(?\')
-  "*Utilize a backslashing workaround of an emacs scan-lists bug.
+  "*Utilize a backslashing workaround of an emacs syntax parsing bug.
 If non-nil, this variable should contain a list of characters which
 will be prepended by a backslash in comment regions.  By default, the
 list contains only the most troublesome character, the single quote.
@@ -336,7 +347,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.188 $
+  "Major mode for editing C++ code.  $Revision: 2.189 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -537,7 +548,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.188 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.189 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2127,7 +2138,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.188 $"
+(defconst c++-version "$Revision: 2.189 $"
   "c++-mode version number.")
 
 (defun c++-version ()
