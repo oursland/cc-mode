@@ -86,6 +86,12 @@
 (defvar c-extra-toplevel-key c-C-extra-toplevel-key)
 (make-variable-buffer-local 'c-extra-toplevel-key)
 
+;; Keywords that can introduce bitfields in the languages that supports that.
+(defconst c-C-bitfield-key "\\(char\\|int\\|long\\|signed\\|unsigned\\)")
+
+(defvar c-bitfield-key nil)
+(make-variable-buffer-local 'c-bitfield-key)
+
 
 ;; regexp describing access protection clauses.  language specific
 (defvar c-access-key nil)

@@ -163,6 +163,7 @@ Key bindings:
 	c-class-key c-C-class-key
 	c-baseclass-key nil
 	c-comment-start-regexp c-C++-comment-start-regexp
+	c-bitfield-key c-C-bitfield-key
 	imenu-generic-expression cc-imenu-c-generic-expression
 	imenu-case-fold-search nil
 	)
@@ -205,6 +206,7 @@ Key bindings:
 	c-extra-toplevel-key c-C++-extra-toplevel-key
 	c-access-key c-C++-access-key
 	c-recognize-knr-p nil
+	c-bitfield-key c-C-bitfield-key
 	imenu-generic-expression cc-imenu-c++-generic-expression
 	imenu-case-fold-search nil
 	)
