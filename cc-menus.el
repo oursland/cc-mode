@@ -28,8 +28,21 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-;; Pull in Imenu when compiling, if it exists
 (eval-when-compile
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+
+;; Dummy definitions to shut up the compiler in case imenu doesn't exist.
+(defvar imenu-generic-expression)
+(defvar imenu-case-fold-search)
+(defun imenu-progress-message (&rest args) nil)
+
+;; Try to pull in imenu.
+(eval-and-compile
   (condition-case nil
       (require 'imenu)
     (error nil)))
@@ -312,7 +325,7 @@ Example:
 	 ;;
 	 ;; Does this emacs has buffer-substring-no-properties? 
 	 ;;
-	 (if (fboundp 'buffer-substring-no-properties)
+	 (c-if-fboundp buffer-substring-no-properties
 	     'buffer-substring-no-properties
 	   'buffer-substring)))
     (goto-char (point-max))
@@ -397,6 +410,10 @@ Example:
 ;(defvar cc-imenu-pike-generic-expression
 ;  ())
 ; FIXME: Please contribute one!
+
+(defun cc-imenu-init (mode-generic-expression)
+  (setq imenu-generic-expression mode-generic-expression
+	imenu-case-fold-search nil))
 
 
 (provide 'cc-menus)
