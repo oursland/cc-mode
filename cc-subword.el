@@ -21,46 +21,48 @@
 
 ;;; Commentary:
 
-;; This program provides minor mode(`c-subword-move-mode')
-;; controlling activation of `subword' oriented commands.
+;; This package provides `subword' oriented commands and a minor mode
+;; (`c-subword-move-mode') that substitutes the common word handling
+;; functions with them.
 
-;; In spite of GNU Coding Standards, it is popular to name a symbol
-;; of type with mixing upcase and downcase letters, .e.g GtkWidget,
-;; EmacsFrameClass, NSGraphicsContext, etc.  Here we call these mixed
-;; case symbols `nomenclatures'.  Also, each capitalized(or upcase) parts
-;; of a nomenclature called `subwords'.  Here are examples:
+;; In spite of GNU Coding Standards, it is popular to name a symbol by
+;; mixing uppercase and lowercase letters, e.g. "GtkWidget",
+;; "EmacsFrameClass", "NSGraphicsContext", etc.  Here we call these
+;; mixed case symbols `nomenclatures'.  Also, each capitalized (or
+;; completely uppercase) part of a nomenclature is called a `subword'.
+;; Here are some examples:
 
-;;  nomenclature           subwords
+;;  Nomenclature           Subwords
 ;;  ===========================================================
 ;;  GtkWindow          =>  "Gtk" and "Window"
 ;;  EmacsFrameClass    =>  "Emacs", "Frame" and "Class"
 ;;  NSGraphicsContext  =>  "NS", "Graphics" and "Context"
 
-;; The subwords oriented commands defined in this program recognize
-;; subwords in a nomenclature; and provide the way to move the point
-;; between subwords and to edit subwords.
+;; The subword oriented commands defined in this package recognize
+;; subwords in a nomenclature to move between subwords and to edit
+;; them as words.
 
-;; In the minor mode, all major keybinds for the word oriented commands
-;; are overridden by the subwords oriented commands:
+;; In the minor mode, all common key bindings for word oriented
+;; commands are overridden by the subword oriented commands:
 
-;; Key     Word oriented commands     Subword oriented commands
+;; Key     Word oriented command      Subword oriented command
 ;; ============================================================
 ;; M-f     `forward-word'             `c-forward-subword'
 ;; M-f     `backward-word'            `c-backward-subword'
 ;; M-@     `mark-word'                `c-mark-subword'
 ;; M-d     `kill-word'                `c-kill-subword'
 ;; M-DEL   `backward-kill-word'       `c-backward-kill-subword'
-;; M-t     `transpose-words'          `c-transpose-subword'
+;; M-t     `transpose-words'          `c-transpose-subwords'
 ;; M-c     `capitalize-word'          `c-capitalize-subword'
 ;; M-u     `upcase-word'              `c-upcase-subword'
 ;; M-l     `downcase-word'            `c-downcase-subword'
 ;;
-;; Note: If you change the keybinds for the word oriented commands
-;; in your .emacs or somewhere, the key you changed to is also used
-;; in a subword oriented command.
+;; Note: If you have changed the key bindings for the word oriented
+;; commands in your .emacs or a similar place, the keys you've changed
+;; to are also used for the corresponding subword oriented commands.
 
-;; To make the mode turn on automatically, put the following code
-;; to your .emacs:
+;; To make the mode turn on automatically, put the following code in
+;; your .emacs:
 ;;
 ;; (add-hook 'c-mode-common-hook
 ;; 	  (lambda () (c-subword-move-mode 1)))
@@ -71,7 +73,7 @@
 ;; the old `c-forward-into-nomenclature' originally contributed by
 ;; Terry_Glanfield dot Southern at rxuk dot xerox dot com.
 
-;; TODO: Subword oriented C-w in insearch, dabbrev and ispell-word.
+;; TODO: Subword oriented C-w in isearch, dabbrev and ispell-word.
 
 ;;; Code:
 
@@ -91,7 +93,7 @@
 
 ;;; Autoload directives must be on the top level, so we construct an
 ;;; autoload form instead.
-;;;###autoload (autoload 'c-subword-move-mode "cc-subword" "Mode enabling subword point movement and editing keys." t)
+;;;###autoload (autoload 'c-subword-move-mode "cc-subword" "Mode enabling subword movement and editing keys." t)
 
 (when (fboundp 'define-minor-mode)
 
@@ -131,22 +133,23 @@
     "Keymap used in command `c-subword-move-mode' minor mode.")
 
   (define-minor-mode c-subword-move-mode
-    "Mode enabling subword point movement and editing keys.
- In spite of GNU Coding Standards, it is popular to name a symbol
- of type with mixing upcase and downcase letters, .e.g GtkWidget,
- EmacsFrameClass, NSGraphicsContext, etc. Here we call these mixed
- case symbols `nomenclatures'. Also, each capitalized(or upcase) parts
- of a nomenclature called `subwords'. Here are examples:
+    "Mode enabling subword movement and editing keys.
+In spite of GNU Coding Standards, it is popular to name a symbol by
+mixing uppercase and lowercase letters, e.g. \"GtkWidget\",
+\"EmacsFrameClass\", \"NSGraphicsContext\", etc.  Here we call these
+mixed case symbols `nomenclatures'. Also, each capitalized (or
+completely uppercase) part of a nomenclature is called a `subword'.
+Here are some examples:
 
-  nomenclature           subwords
+  Nomenclature           Subwords
   ===========================================================
   GtkWindow          =>  \"Gtk\" and \"Window\"
   EmacsFrameClass    =>  \"Emacs\", \"Frame\" and \"Class\"
   NSGraphicsContext  =>  \"NS\", \"Graphics\" and \"Context\"
 
- The subwords oriented commands activated in this minor mode recognize
- subwords in a nomenclature; and provide the way to move the point
- between subwords and to edit subwords.
+The subword oriented commands activated in this minor mode recognize
+subwords in a nomenclature to move between subwords and to edit them
+as words.
 
 \\{c-subword-move-mode-map}"
     nil
@@ -157,9 +160,9 @@
   )
 
 (defun c-forward-subword (&optional arg)
-  "Do the same as `forward-word' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `forward-word'."
+  "Do the same as `forward-word' but on subwords.
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `forward-word'."
   (interactive "p")
   (unless arg (setq arg 1))
   (c-keep-region-active)
@@ -174,16 +177,16 @@ Optional argument ARG is the same as that in `forward-word'."
     (point))))
 
 (defun c-backward-subword (&optional arg)
-  "Do the same as `backward-word' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `backward-word'."
+  "Do the same as `backward-word' but on subwords.
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `backward-word'."
   (interactive "p")
   (c-forward-subword (- (or arg 1))))
 
 (defun c-mark-subword (arg)
-  "Do the same as `backward-word' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `mark-word'."
+  "Do the same as `mark-word' but on subwords.
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `mark-word'."
   ;; This code is almost copied from `mark-word' in GNU Emacs.
   (interactive "p")
   (cond ((and (eq last-command this-command) (mark t))
@@ -200,30 +203,30 @@ Optional argument ARG is the same as that in `mark-word'."
 	  nil t))))
 
 (defun c-kill-subword (arg)
-  "Do the same as `kill-word' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `kill-word'."
+  "Do the same as `kill-word' but on subwords.
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `kill-word'."
   (interactive "p")
   (kill-region (point) (c-forward-subword arg)))
 
 (defun c-backward-kill-subword (arg)
-  "Do the same as `backward-kill-word' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `backward-kill-word'."
+  "Do the same as `backward-kill-word' but on subwords.
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `backward-kill-word'."
   (interactive "p")
   (c-kill-subword (- arg)))
 
 (defun c-transpose-subwords (arg)
-  "Do the same as `transpose-words' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `transpose-words'."
+  "Do the same as `transpose-words' but on subwords.
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `transpose-words'."
   (interactive "*p")
   (transpose-subr 'c-forward-subword arg))
 
 (defun c-capitalize-subword (arg)
-  "Do the same as `capitalize-word' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `capitalize-word'."
+  "Do the same as `capitalize-word' but on subwords.
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `capitalize-word'."
   (interactive "p")
   (let ((count (abs arg))
 	(direction (if (< 0 arg) 1 -1)))
@@ -240,16 +243,16 @@ Optional argument ARG is the same as that in `capitalize-word'."
 	(goto-char np)))))
 
 (defun c-downcase-subword (arg)
-  "Do the same as `downcase-word' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `downcase-word'."
+  "Do the same as `downcase-word' but on subwords.
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `downcase-word'."
   (interactive "p")
   (downcase-region (point) (c-forward-subword arg)))
 
 (defun c-upcase-subword (arg)
   "Do the same as `upcase-word' on subwords.
-See command `c-subword-move-mode' about subwords.
-Optional argument ARG is the same as that in `upcase-word'."
+See the command `c-subword-move-mode' for a description of subwords.
+Optional argument ARG is the same as for `upcase-word'."
   (interactive "p")
   (upcase-region (point) (c-forward-subword arg)))
 
