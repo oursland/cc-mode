@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.270 $
-;; Last Modified:   $Date: 1994-02-25 22:10:50 $
+;; Version:         $Revision: 3.271 $
+;; Last Modified:   $Date: 1994-02-25 23:01:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-25 22:10:50 $|$Revision: 3.270 $|
+;; |$Date: 1994-02-25 23:01:45 $|$Revision: 3.271 $|
 
 ;;; Code:
 
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.270 $
+cc-mode Revision: $Revision: 3.271 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.270 $
+cc-mode Revision: $Revision: 3.271 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2667,7 +2667,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 ;; CASE 7: we are inside a brace-list
 	 ((setq placeholder (c-inside-bracelist-p containing-sexp))
 	  (cond
-	   ;; CASE 7A: we're looking at the first line in a brace-list
+	   ;; CASE 7A: brace-list-close brace
+	   ((and (= char-after-ip ?})
+		 (c-safe (progn (forward-char 1)
+				(backward-sexp 1)
+				t))
+		 (= (point) containing-sexp))
+	    (c-add-semantics 'brace-list-close (c-point 'boi)))
+	   ;; CASE 7B: we're looking at the first line in a brace-list
 	   ((save-excursion
 	      (goto-char indent-point)
 	      (c-backward-syntactic-ws containing-sexp)
@@ -2676,13 +2683,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (c-add-semantics 'brace-list-intro (c-point 'boi))
 	    (if (= char-after-ip ?{)
 		(c-add-semantics 'block-open)))
-	   ;; CASE 7B: brace-list-close brace
-	   ((and (= char-after-ip ?})
-		 (c-safe (progn (forward-char 1)
-				(backward-sexp 1)
-				t))
-		 (= (point) containing-sexp))
-	    (c-add-semantics 'brace-list-close (c-point 'boi)))
 	   ;; CASE 7C: this is just a later brace-list-entry
 	   (t (goto-char (1+ containing-sexp))
 	      (c-forward-syntactic-ws indent-point)
@@ -3243,7 +3243,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.270 $"
+(defconst c-version "$Revision: 3.271 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
