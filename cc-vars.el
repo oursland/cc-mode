@@ -400,12 +400,13 @@ involve auto-newline inserted newlines:
  space-before-funcall -- Insert exactly one space before the opening
                         parenthesis of a function call.  Clean up
                         occurs when the opening parenthesis is typed.
- compact-empty-funcall -- Clean up any space before the opening
-                        parenthesis of a function call if and only if
-                        it's empty.  This is typically useful together
-                        with `space-before-funcall' to get the style
-                        \"foo (bar)\" and \"foo()\".  Clean up occurs
-                        when the closing parenthesis is typed."
+ compact-empty-funcall -- Clean up any space before the function call
+			opening parenthesis if and only if the
+                        argument list is empty.  This is typically
+                        useful together with `space-before-funcall' to
+                        get the style \"foo (bar)\" and \"foo()\".
+                        Clean up occurs when the closing parenthesis
+                        is typed."
   :type '(set
 	  :extra-offset 8
 	  (const :tag "Put \"} else {\" on one line"
