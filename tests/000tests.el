@@ -128,6 +128,7 @@
 	(stream-op             . c-lineup-streamop)
 	(inclass               . +)
 	(cpp-macro             . -1000)
+	(cpp-macro-cont        . c-lineup-dont-change)
 	(friend                . 0)
 	(objc-method-intro     . -1000)
 	(objc-method-args-cont . c-lineup-ObjC-method-args)
@@ -196,6 +197,7 @@
     "interface-1.m"
     "ivar.java"
     "label-1.c"
+    "macro-1.c"
     "member-1.cc"
     "member-2.cc"
     "methods-1.java"
