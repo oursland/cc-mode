@@ -2048,7 +2048,9 @@ indent the current line."
 (defun c-backslash-region (from to delete-flag &optional line-mode)
   "Insert, align, or delete end-of-line backslashes on the lines in the region.
 With no argument, inserts backslashes and aligns existing backslashes.
-With an argument, deletes the backslashes.
+With an argument, deletes the backslashes.  The backslash alignment is
+done according to the settings in `c-backslash-column',
+`c-backslash-max-column' and `c-auto-align-backslashes'.
 
 This function does not modify blank lines at the start of the region.
 If the region ends at the start of a line and the macro doesn't
@@ -2190,51 +2192,75 @@ command to conveniently insert and align the necessary backslashes."
 	(set-marker point-pos nil))))
 
 (defun c-append-backslashes-forward (to-mark column point-pos)
-  (if column
-      (while
-	  (and (<= (point) to-mark)
-	       (let (end col)
-		 (end-of-line)
-		 (unless (eq (char-before) ?\\)
-		   (insert ?\\))
-		 (backward-char)
-		 (setq col (current-column))
-		 ;; Avoid unnecessary changes of the buffer.
-		 (cond ((< col column)
-			(delete-region
-			 (point)
-			 (progn (skip-chars-backward
-				 " \t" (if (>= (point) point-pos) point-pos))
-				(point)))
-			(indent-to column))
-		       ((and (= col column)
-			     (memq (char-before) '(?\  ?\t))))
-		       ((progn
-			  (setq end (point))
-			  (or (/= (skip-chars-backward
-				   " \t" (if (>= (point) point-pos) point-pos))
-				  -1)
-			      (/= (char-after) ?\ )))
-			(delete-region (point) end)
-			(indent-to column 1)))
-		 (= (forward-line 1) 0))))
-    ;; Make sure there are backslashes with at least one space in
-    ;; front of them.
-    (while
-	(and (<= (point) to-mark)
-	     (progn
+  (let ((state (parse-partial-sexp (c-point 'bol) (point))))
+    (if column
+	(while
+	    (and
+	     (<= (point) to-mark)
+
+	     (let ((start (point)) (inserted nil) end col)
 	       (end-of-line)
-	       (if (eq (char-before) ?\\)
-		   (progn
-		     (backward-char)
-		     (unless (and (memq (char-before) '(?\  ?\t))
-				  (/= (point) point-pos))
-		       (insert ?\ )))
-		 (if (and (memq (char-before) '(?\  ?\t))
-			  (/= (point) point-pos))
-		     (insert ?\\)
-		   (insert ?\  ?\\)))
-	       (= (forward-line 1) 0))))))
+	       (unless (eq (char-before) ?\\)
+		 (insert ?\\)
+		 (setq inserted t))
+	       (setq state (parse-partial-sexp
+			    start (point) nil nil state))
+	       (backward-char)
+	       (setq col (current-column))
+
+	       ;; Avoid unnecessary changes of the buffer.
+	       (cond ((and (not inserted) (nth 3 state))
+		      ;; Don't realign backslashes in string literals
+		      ;; since that would change them.
+		      )
+
+		     ((< col column)
+		      (delete-region
+		       (point)
+		       (progn
+			 (skip-chars-backward
+			  " \t" (if (>= (point) point-pos) point-pos))
+			 (point)))
+		      (indent-to column))
+
+		     ((and (= col column)
+			   (memq (char-before) '(?\  ?\t))))
+
+		     ((progn
+			(setq end (point))
+			(or (/= (skip-chars-backward
+				 " \t" (if (>= (point) point-pos) point-pos))
+				-1)
+			    (/= (char-after) ?\ )))
+		      (delete-region (point) end)
+		      (indent-to column 1)))
+
+	       (= (forward-line 1) 0))))
+
+      ;; Make sure there are backslashes with at least one space in
+      ;; front of them.
+      (while
+	  (and
+	   (<= (point) to-mark)
+
+	   (let ((start (point)))
+	     (end-of-line)
+	     (setq state (parse-partial-sexp
+			  start (point) nil nil state))
+
+	     (if (eq (char-before) ?\\)
+		 (unless (nth 3 state)
+		   (backward-char)
+		   (unless (and (memq (char-before) '(?\  ?\t))
+				(/= (point) point-pos))
+		     (insert ?\ )))
+
+	       (if (and (memq (char-before) '(?\  ?\t))
+			(/= (point) point-pos))
+		   (insert ?\\)
+		 (insert ?\  ?\\)))
+
+	     (= (forward-line 1) 0)))))))
 
 (defun c-delete-backslashes-forward (to-mark point-pos)
   (while
