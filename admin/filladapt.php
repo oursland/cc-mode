@@ -44,10 +44,10 @@ Mode to get better handling of e.g. bulleted lists in comments.
 <h3>Filladapt problems</h3>
 
 <p>There is a minor problem, or rather lack of a feature, in the
-current version (2.12 when this is written) of Filladapt that makes it
+current version of Filladapt (2.12 when this is written) that makes it
 do a poor job when the regexp on <code>c-comment-prefix-regexp</code>
 matches the empty string.  The effect is that Filladapt fills only
-parts of a paragraph, or nothing at all.  You can fix this problem
+parts of a paragraph, or nothing at all.  You can fix this problem in
 three ways:
 
 <ul>
@@ -72,7 +72,7 @@ three ways:
   tokens that matches the empty string when it analyzes the fill
   prefix.  A variable <code>filladapt-token-match-empty</code>
   controls which tokens are allowed to match the empty string
-  (normally only the <code>beginning-of-line</code> and
+  (normally only <code>beginning-of-line</code> and
   <code>end-of-line</code> are meaningful).
 
   <p>To the best of my knowledge, this patch doesn't cause any adverse
