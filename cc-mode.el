@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.391 $
-;; Last Modified:   $Date: 1997-04-11 21:23:36 $
+;; Version:         $Revision: 4.392 $
+;; Last Modified:   $Date: 1997-04-15 15:51:10 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -3926,7 +3926,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     (case-fold-search nil)
 	     (fullstate (c-parse-state))
 	     (state fullstate)
-	     (in-method-intro-p (and c-method-key
+	     (in-method-intro-p (and (eq major-mode 'objc-mode)
+				     c-method-key
 				     (looking-at c-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache inswitch-p
@@ -5207,7 +5208,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.391 $"
+(defconst c-version "$Revision: 4.392 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
