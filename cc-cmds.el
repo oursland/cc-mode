@@ -43,7 +43,6 @@
 
 (cc-require 'cc-defs)
 (cc-require 'cc-vars)
-(cc-require 'cc-langs)
 (cc-require 'cc-engine)
 
 ;; Silence the compiler.
@@ -636,7 +635,7 @@ This function does various newline cleanups based on the value of
 		     (c-skip-ws-backward)
 		     (setq mbeg (point))
 		     (eq (char-before) ?\)))
-		   (= (c-save-buffer-state nil (c-backward-token-1 1 t)) 0)
+		   (zerop (c-save-buffer-state nil (c-backward-token-1 1 t)))
 		   (eq (char-after) ?\()
 		   (progn
 		     (setq tmp (point))
