@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-14 17:00:21 $
-;; Version:         $Revision: 2.153 $
+;; Last Modified:   $Date: 1992-07-14 17:46:01 $
+;; Version:         $Revision: 2.154 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -74,7 +74,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-14 17:00:21 $|$Revision: 2.153 $|
+;; |$Date: 1992-07-14 17:46:01 $|$Revision: 2.154 $|
 
 
 ;; ======================================================================
@@ -282,7 +282,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.153 $
+  "Major mode for editing C++ code.  $Revision: 2.154 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1209,6 +1209,8 @@ used."
 	       ;; looking at the opening of a double quote string
 	       ((string= "\"" match)
 		(if (not (save-restriction
+			   ;; this seems to be necessary since the
+			   ;; re-search-forward will not work without it
 			   (narrow-to-region (point) here)
 			   (re-search-forward
 			    ;; this regexp matches a double quote
@@ -1218,7 +1220,15 @@ used."
 		    'string))
 	       ;; looking at the opening of a single quote string
 	       ((string= "'" match)
-		(if (not (re-search-forward "[^\\]'" here 'move)) 'string))
+		(if (not (save-restriction
+			   ;; see comments from above
+			   (narrow-to-region (point) here)
+			   (re-search-forward
+			    ;; this matches a single quote which is
+			    ;; preceeded by zero or two backslashes.
+			    "\\([^\\]\\|^\\)\\(\\\\\\\\\\)?'"
+			    here 'move)))
+		    'string))
 	       ((string-match "[ \t]*#" match)
 		(if (<= here (progn (end-of-line) (point))) 'pound))
 	       (t nil)))
@@ -1977,7 +1987,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.153 $"
+(defconst c++-version "$Revision: 2.154 $"
   "c++-mode version number.")
 
 (defun c++-version ()
