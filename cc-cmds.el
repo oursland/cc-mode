@@ -233,6 +233,8 @@ This function does various newline cleanups based on the value of
 			    (not (bolp)))
 			  (progn (newline)
 				 (setq delete-temp-newline t)))
+		      (if (eq last-command-char ?{)
+			  (setq c-state-cache (cons (point) c-state-cache)))
 		      (self-insert-command (prefix-numeric-value arg))
 		      ;; state cache doesn't change
 		      (c-guess-basic-syntax)))
@@ -320,8 +322,7 @@ This function does various newline cleanups based on the value of
 	  (save-excursion
 	    (let ((bol (c-point 'bol)))
 	      (if (zerop (car (parse-partial-sexp bol (1- (point)))))
-		  (setq c-state-cache (c-whack-state bol c-state-cache)
-			syntax (c-guess-basic-syntax))
+		  (setq syntax (c-guess-basic-syntax))
 		;; gotta punt. this requires some horrible kludgery
 		(beginning-of-line)
 		(makunbound 'c-state-cache)
