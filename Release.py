@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-"""Bump version number and tag for next release.
+"""Manage releases of CC Mode.
 
 Usage: %(program)s [-b] [-t|-T] [-p] [-d] [-a] [-E] [-i] [-h]
 
@@ -95,7 +95,15 @@ FATRELEASE_FILES = [
 FILES = ALL_FILES + FATRELEASE_FILES
     
 
+WriteableError = 'WriteableError'
+
+
 def bump_release():
+    # make sure there are no readable (i.e. checked out) files
+    for f, cre, format in FILES:
+	mode = os.stat(f)[0]
+	if mode & 0200:			# S_IWUSR
+	    raise WritableError, f
     bump = []
     for f, cre, format in FILES:
 	if not cre or not format:
@@ -152,10 +160,13 @@ def tag_release(untag_first):
 
 
 def get_release():
+    # file VERSION contains the next release's version number
     global RELEASE, RELEASE_NAME
     fp = open('VERSION', 'r')
-    version = string.strip(fp.read())
+    [majnum, minnum] = map(string.atoi,
+			   string.split(string.strip(fp.read()), '.'))
     fp.close()
+    version = `majnum` + '.' + `(minnum - 1)`
     RELEASE = version
     RELEASE_NAME = 'Release_' + string.translate(RELEASE,
 						 string.maketrans('.', '_'))
@@ -290,9 +301,6 @@ def main():
 
     os.umask(002)
     get_release()
-    if incr:
-	incr_release()
-
     if bump:
 	bump_release()
 
@@ -304,6 +312,9 @@ def main():
 
     if docs:
 	make_docs()
+
+    if incr:
+	incr_release()
 
 if __name__ == '__main__':
     main()
