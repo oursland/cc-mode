@@ -370,6 +370,8 @@ Note that the style variables are always made local to the buffer."
   (define-key c-mode-base-map ";"         'c-electric-semi&comma)
   (define-key c-mode-base-map "#"         'c-electric-pound)
   (define-key c-mode-base-map ":"         'c-electric-colon)
+  (define-key c-mode-base-map "("         'c-electric-paren)
+  (define-key c-mode-base-map ")"         'c-electric-paren)
   ;; Separate M-BS from C-M-h.  The former should remain
   ;; backward-kill-word.
   (define-key c-mode-base-map [(control meta h)] 'c-mark-function)
