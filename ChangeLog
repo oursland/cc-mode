@@ -2,7 +2,7 @@ Wed May 14 18:08:07 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* First alpha release 5.05
 
-Tue May 13 22:57:24 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+Tue May 13 22:57:24 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-align.el (c-lineup-C-comments):
 	Fixes to handle all situations where the first line of a block
@@ -23,7 +23,7 @@ Tue May 13 22:57:24 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
 	Removed most byte-compiler warnings by removing many obsolete
 	variables.
 
-Fri May  9 21:54:27 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+Fri May  9 21:54:27 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-fill-paragraph):
 	Included franl@world.std.com (Francis Litterio)
@@ -33,7 +33,7 @@ Fri May  9 21:54:27 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
 	CASE 6C: when checking for a `for' statement,
 	watch out for underscore separated symbols: for_each
 
-Tue May  6 23:18:13 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+Tue May  6 23:18:13 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Restructuring completed for version 5.xx
 
