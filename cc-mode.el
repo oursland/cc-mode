@@ -475,7 +475,7 @@ This does not load the font-lock package.  Use after
 
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults
-	`(,(if (c-mode-is-new-awk-p)
+	`(,(if (c-major-mode-is 'awk-mode)
 	       ;; awk-mode currently has only one font lock level.
 	       'awk-font-lock-keywords
 	     (mapcar 'c-mode-symbol
@@ -968,8 +968,7 @@ Key bindings:
   (c-update-modeline))
 
 
-;; Support for awk.  This is purposely disabled for older (X)Emacsen which
-;; don't support syntax-table properties.
+;; Support for AWK
 
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.awk\\'" . awk-mode))
 ;;;###autoload (add-to-list 'interpreter-mode-alist '("awk" . awk-mode))
@@ -981,37 +980,34 @@ Key bindings:
 ;;; autoload form instead.
 ;;;###autoload (autoload 'awk-mode "cc-mode" "Major mode for editing AWK code.")
 
-(if (not (memq 'syntax-properties c-emacs-features))
-    (autoload 'awk-mode "awk-mode" "Major mode for editing AWK code."  t)
+(defvar awk-mode-abbrev-table nil
+  "Abbreviation table used in awk-mode buffers.")
+(c-define-abbrev-table 'awk-mode-abbrev-table
+  '(("else" "else" c-electric-continued-statement 0)
+    ("while" "while" c-electric-continued-statement 0)))
 
-  (defvar awk-mode-abbrev-table nil
-    "Abbreviation table used in awk-mode buffers.")
-  (c-define-abbrev-table 'awk-mode-abbrev-table
-    '(("else" "else" c-electric-continued-statement 0)
-      ("while" "while" c-electric-continued-statement 0)))
+(defvar awk-mode-map ()
+  "Keymap used in awk-mode buffers.")
+(if awk-mode-map
+    nil
+  (setq awk-mode-map (c-make-inherited-keymap))
+  ;; add bindings which are only useful for awk.
+  (define-key awk-mode-map "#" 'self-insert-command)
+  (define-key awk-mode-map "/" 'self-insert-command)
+  (define-key awk-mode-map "*" 'self-insert-command)
+  (define-key awk-mode-map "\C-c\C-n" 'undefined) ; #if doesn't exist in awk.
+  (define-key awk-mode-map "\C-c\C-p" 'undefined)
+  (define-key awk-mode-map "\C-c\C-u" 'undefined)
+  (define-key awk-mode-map "\M-a" 'undefined) ; c-awk-beginning-of-statement isn't yet implemented.
+  (define-key awk-mode-map "\M-e" 'undefined) ; c-awk-end-of-statement isn't yet implemented.
+  (define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
+  (define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun))
 
-  (defvar awk-mode-map ()
-    "Keymap used in awk-mode buffers.")
-  (if awk-mode-map
-      nil
-    (setq awk-mode-map (c-make-inherited-keymap))
-    ;; add bindings which are only useful for awk.
-    (define-key awk-mode-map "#" 'self-insert-command)
-    (define-key awk-mode-map "/" 'self-insert-command)
-    (define-key awk-mode-map "*" 'self-insert-command)
-    (define-key awk-mode-map "\C-c\C-n" 'undefined) ; #if doesn't exist in awk.
-    (define-key awk-mode-map "\C-c\C-p" 'undefined)
-    (define-key awk-mode-map "\C-c\C-u" 'undefined)
-    (define-key awk-mode-map "\M-a" 'undefined) ; c-awk-beginning-of-statement isn't yet implemented.
-    (define-key awk-mode-map "\M-e" 'undefined) ; c-awk-end-of-statement isn't yet implemented.
-    (define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
-    (define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun))
+(easy-menu-define c-awk-menu awk-mode-map "AWK Mode Commands"
+		  (cons "AWK" (c-lang-const c-mode-menu awk)))
 
-  (easy-menu-define c-awk-menu awk-mode-map "AWK Mode Commands"
-    (cons "AWK" (c-lang-const c-mode-menu awk)))
-
-  (defun awk-mode ()
-    "Major mode for editing AWK code.
+(defun awk-mode ()
+  "Major mode for editing AWK code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 awk-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1024,42 +1020,41 @@ initialization, then `awk-mode-hook'.
 
 Key bindings:
 \\{awk-mode-map}"
-    (interactive)
-    (require 'cc-awk)                   ; Added 2003/6/10.
-    (kill-all-local-variables)
-    (c-initialize-cc-mode t)
-    (set-syntax-table awk-mode-syntax-table)
-    (setq major-mode 'awk-mode
-          mode-name "AWK"
-          local-abbrev-table awk-mode-abbrev-table
-          abbrev-mode t)
-    (use-local-map awk-mode-map)
-    (c-init-language-vars awk-mode)
-    (c-common-init 'awk-mode)
-    ;; The rest of CC Mode does not (yet) use `font-lock-syntactic-keywords',
-    ;; so it's not set by `c-font-lock-init'.
-    (make-local-variable 'font-lock-syntactic-keywords)
-    (setq font-lock-syntactic-keywords
-          '((c-awk-set-syntax-table-properties
-             0 (0)                      ; Everything on this line is a dummy.
-             nil t)))
-    (c-awk-unstick-NL-prop)
-    (add-hook 'before-change-functions 'c-awk-before-change nil t)
-    (add-hook 'after-change-functions 'c-awk-after-change nil t)
-    (c-save-buffer-state nil
-      (save-restriction
-        (widen)
-        (c-awk-clear-NL-props (point-min) (point-max))
-        (c-awk-after-change (point-min) (point-max) 0))) ; Set syntax-table props.
+  (interactive)
+  (require 'cc-awk)			; Added 2003/6/10.
+  (kill-all-local-variables)
+  (c-initialize-cc-mode t)
+  (set-syntax-table awk-mode-syntax-table)
+  (setq major-mode 'awk-mode
+	mode-name "AWK"
+	local-abbrev-table awk-mode-abbrev-table
+	abbrev-mode t)
+  (use-local-map awk-mode-map)
+  (c-init-language-vars awk-mode)
+  (c-common-init 'awk-mode)
+  ;; The rest of CC Mode does not (yet) use `font-lock-syntactic-keywords',
+  ;; so it's not set by `c-font-lock-init'.
+  (make-local-variable 'font-lock-syntactic-keywords)
+  (setq font-lock-syntactic-keywords
+	'((c-awk-set-syntax-table-properties
+	   0 (0)			; Everything on this line is a dummy.
+	   nil t)))
+  (c-awk-unstick-NL-prop)
+  (add-hook 'before-change-functions 'c-awk-before-change nil t)
+  (add-hook 'after-change-functions 'c-awk-after-change nil t)
+  (c-save-buffer-state nil
+    (save-restriction
+      (widen)
+      (c-awk-clear-NL-props (point-min) (point-max))
+      (c-awk-after-change (point-min) (point-max) 0))) ; Set syntax-table props.
 
-    ;; Prevent Xemacs's buffer-syntactic-context being used.  See the comment
-    ;; in cc-engine.el, just before (defun c-fast-in-literal ...
-    (defalias 'c-in-literal 'c-slow-in-literal)
+  ;; Prevent Xemacs's buffer-syntactic-context being used.  See the comment
+  ;; in cc-engine.el, just before (defun c-fast-in-literal ...
+  (defalias 'c-in-literal 'c-slow-in-literal)
 
-    (run-hooks 'c-mode-common-hook)
-    (run-hooks 'awk-mode-hook)
-    (c-update-modeline))
-) ;; closes the (if (not (memq 'syntax-properties c-emacs-features))
+  (run-hooks 'c-mode-common-hook)
+  (run-hooks 'awk-mode-hook)
+  (c-update-modeline))
 
 
 ;; bug reporting
