@@ -1,9 +1,10 @@
-;;; awk-mode.el --- AWK code editing commands for Emacs
+;;; cc-awk.el --- AWK specific code within cc-mode.
 
-;; Copyright (C) 1988,94,96,2000  Free Software Foundation, Inc.
+;; Copyright (C) 1988,94,96,2000,01,02  Free Software Foundation, Inc.
 
+;; Author: Alan Mackenzie (originally based on awk-mode.el)
 ;; Maintainer: FSF
-;; Keywords: unix, languages
+;; Keywords: awk, cc-mode, unix, languages
 
 ;; This file is part of GNU Emacs.
 
@@ -24,8 +25,16 @@
 
 ;;; Commentary:
 
-;; Sets up C-mode with support for awk-style #-comments and a lightly
-;; hacked syntax table.
+;; This file contains (most of) the adaptations to cc-mode required for the
+;; integration of awk-mode.
+;; It is organised thusly:
+;;   1. The awk-mode-syntax table.
+;;   2. Indentation calculation stuff ("c-awk-NL-prop text-property").
+;;   3. Syntax-table property/font-locking stuff, including the
+;;      font-lock-keywords setting.
+;;   4. The awk-mode before/after-change-functions.
+;; The awk-mode keymap, abbreviation table, and the mode function itself are
+;; in cc-mode.el.
 
 ;;; Code:
 
@@ -57,19 +66,23 @@
     st)
   "Syntax table in use in `awk-mode' buffers.")
 
-;; ACM, 2002/5/29: Start on:
+;; ACM, 2002/5/29:
 
-;; c-awk-NL-prop text property.
+;; The next section of code is about determining whether or not an awk
+;; statement is complete or not.  We use this to indent the following line.
+;; This is pretty straightforward in C, where a statement ends with either a ;
+;; or a }.  Only "while" really gives any trouble, since it might be the end
+;; of a do-while.  In awk, semicolons are rarely used, and EOLs _usually_ act
+;; as "virtual semicolons".  In addition, we have the complexity of escaped
+;; EOLs.  The core of this analysis is in the middle of the function
+;; c-awk-calculate-NL-prop-prev-line, about 150 lines lower down.
 ;;
-;; This text property specifies the status of any incomplete or complete
-;; statements at the end of awk line.  It is set ONLY on EOLs.  It's purpose
-;; is a sort of "cache", to allow cc-engine functions to check for
-;; incomplete/complete statements which would be marked with a ; or } in C.
-;;
-;; It should be thought of as only really valid immediately after a buffer
+;; To avoid continually repeating this expensive analysis, we "cache" its
+;; result in a text-property, c-awk-NL-prop, which is set on EOLs.  This
+;; should be thought of as only really valid immediately after a buffer
 ;; change, not a permanently set property.
 ;;
-;; The valid values for it are nil and the following single characters:
+;; The valid values for c-awk-NL-prop are:
 ;;
 ;; nil The property is not currently set for this line.
 ;; ';' There is (at least part of) a statement on this line, and the last
@@ -85,18 +98,29 @@
 ;;     This '\' is essential to the syntax of the program.  (i.e. if it had
 ;;     been a frivolous \, it would have been ignored and the line been given
 ;;     one of the other property values.)
+;;
+;; This set of values has been chosen so that the property's value on a line
+;; is completely determined by the contents of the line and the property on
+;; the previous line, EXCEPT for where a "while" might be the closing
+;; statement of a do-while.
 
-(defun c-awk-after-if-do-for-while-condition-p (&optional lim)
-  ;; Are we just after the ) in "if/do/for/while (<condition>)"?
-;; Note that at the end of the ) in a do .... while (<condition>) doesn't count.
+(defun c-awk-after-if-for-while-condition-p (&optional do-lim)
+  ;; Are we just after the ) in "if/for/while (<condition>)"?
+  ;;
+  ;; Note that the end of the ) in a do .... while (<condition>) doesn't
+  ;; count, since the purpose of this routine is essentially to decide
+  ;; whether to indent the next line.
+  ;;
+  ;; DO-LIM sets a limit on how far back we search for the "do" of a possible
+  ;; do-while.
   (and
    (eq (char-before) ?\))
    (save-excursion
      (goto-char (c-safe (scan-lists (point) -1 0))) ; back over "(...)"
      (c-backward-token-1)
-     (or (looking-at "\\(if\\>\\|for\\>\\|do\\)\\>\\([^_]\\|$\\)")
-         (and (looking-at "while\\>\\([^_]\\|$\\)") ; make sure the while isn't from a do-while.
-              (not (eq (c-beginning-of-statement-1 lim)
+     (or (looking-at "\\(if\\|for\\)\\>\\([^_]\\|$\\)") ;was "\\(if\\>\\|for\\>\\|do\\)\\>\\([^_]\\|$\\)"
+         (and (looking-at "while\\>\\([^_]\\|$\\)") ; Ensure this isn't a do-while.
+              (not (eq (c-beginning-of-statement-1 do-lim)
                        'beginning)))))))
 
 (defun c-awk-after-function-decl-param-list ()
@@ -111,7 +135,7 @@
 
 (defun c-awk-after-continue-token ()
 ;; Are we just after a token which can be continued onto the next line without
-  ;; a backslash?
+;; a backslash?
   (save-excursion
     (c-backward-token-1)
     (if (looking-at "[&|]") (backward-char)) ; c-backward-token-1 doesn't do this :-(
@@ -130,11 +154,10 @@
                    (looking-at "for\\>")))))))
 
 (defun c-awk-back-to-contentful-text-or-NL-prop ()
-  ;;  awk-mode: move point back to first found of either (i) the BOL after the
-  ;;  first found EOL which has the c-awk-NL-prop text-property set.  In this
-  ;;  case, return the value of that property; or (ii) just after non-ws text,
-  ;;  in which case we return nil.  If we hit BOB, we also return nil.
-  ;;  The calling function can best distinguish the cases with (bolp).
+  ;;  Move back to just after the first found of either (i) an EOL which has
+  ;;  the c-awk-NL-prop text-property set; or (ii) non-ws text; or (iii) BOB.
+  ;;  We return either the value of c-awk-NL-prop (in case (i)) or nil.
+  ;;  Calling function can best distinguish cases (ii) and (iii) with (bolp).
   ;;
   ;;  Note that an escaped eol counts as whitespace here.
   ;;
@@ -142,7 +165,7 @@
   ;;  that the previous line contains an unterminated string (without \).  In
   ;;  this case, assume that the previous line's c-awk-NL-prop is a ;.
   ;; 
-  ;;  Point must be at the start of a line when calling this function.  This
+  ;;  POINT MUST BE AT THE START OF A LINE when calling this function.  This
   ;;  is to ensure that the various backward-comment functions will work
   ;;  properly.
   (let ((nl-prop nil)
@@ -178,10 +201,14 @@
   ;; Calculate and set the value of the c-awk-NL-prop on the immediately
   ;; preceding EOL.  This may also involve doing the same for several
   ;; preceding EOLs.
-  ;; NOTE that if the property was already set, we don't recalculate it.
-  ;;   (This is by accident rather than design.)
   ;; 
-  ;; Return the property set on the previous line.
+  ;; NOTE that if the property was already set, we return it without
+  ;; recalculation.  (This is by accident rather than design.)
+  ;; 
+  ;; Return the property which got set (or was already set) on the previous
+  ;; line.  Return nil if we hit BOB.
+  ;; 
+  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (save-excursion
     (save-match-data
       (beginning-of-line)
@@ -195,9 +222,9 @@
           (setq nl-prop
                 (cond
                  ;; Incomplete statement which doesn't require escaped EOL?
-                 ((or (c-awk-after-if-do-for-while-condition-p do-lim) ; CASE 2
-                      (c-awk-after-function-decl-param-list) ; CASE 4
-                      (c-awk-after-continue-token)) ; CASE 3
+                 ((or (c-awk-after-if-for-while-condition-p do-lim)
+                      (c-awk-after-function-decl-param-list)
+                      (c-awk-after-continue-token))
                   ?\{)
                  ;; Escaped EOL (where there's also something to continue)?
                  ((and (looking-at "[ \t]*\\\\$")
@@ -208,20 +235,15 @@
           (put-text-property (point) (1+ (point)) 'c-awk-NL-prop nl-prop)
           (forward-line))
 
-        ;; We are now at the start of a (possibly empty) sequence of
-        ;; content-free lines, nl-prop containing the c-awk-NL-prop value from
-        ;; the previous line.  Go round the following loop once for each such
-        ;; line, setting the appropriate value of the property on each \n,
-        ;; until we get back to our starting point.
-        (while (< (point) pos)
-          ;; possibilities are:   ?\; -> ?\#  ALWAYS (complete stat -> empty)
-          ;;                      ?\# -> ?\#  ALWAYS (empty stays empty)
-          ;;                      ?\\ -> ?\\ or ?\#  (still got escaped eol?)
-          ;;                      ?\{  -> ?\{  ALWAYS (open stat remains open)
-          (cond
+        ;; We are now at a (possibly empty) sequence of content-free lines.
+        ;; Set c-awk-NL-prop on each of these lines's EOL.
+        (while (< (point) pos)         ; one content-free line each iteration.
+          (cond              ; recalculate nl-prop from previous line's value.
            ((eq nl-prop ?\;) (setq nl-prop ?\#))
            ((eq nl-prop ?\\)
-            (if (not (looking-at "[ \t]*\\\\$")) (setq nl-prop ?\#))))
+            (if (not (looking-at "[ \t]*\\\\$")) (setq nl-prop ?\#)))
+           ;; ?\# (empty line) and ?\{ (open stmt) don't change.
+           )
           (forward-line)
           (put-text-property (1- (point)) (point) 'c-awk-NL-prop nl-prop))
         nl-prop))))
@@ -229,46 +251,28 @@
 (defun get-c-awk-NL-prop-prev-line (&optional do-lim)
   ;; Get the c-awk-NL-prop text-property from the previous line, calculating
   ;; it if necessary.  Return nil iff we're already at BOB.
+  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (if (bobp)
       nil
     (or (get-text-property (c-point 'eopl) 'c-awk-NL-prop)
         (c-awk-calculate-NL-prop-prev-line do-lim))))
 
 (defun c-awk-prev-line-incomplete-p (&optional do-lim)
-;;  awk-mode: Is there an incomplete statement at the end of the previous line?
-
-  ;; Four cases to consider, with respect to the previous line:
-  ;;  1: A '\' continuation marker at EOL (only valid where there's no comment) 
-  ;;     We need to check for '\'s on consecutive (otherwise) empty lines
-  ;;     Even if all the above hold, we still need to ensure that there's
-  ;;     something to continue;
-  ;;  2: A line: "if/while/for/do (...)" (without ';') [careful about do-while :-];
-  ;;  3: A line ending with one of ,, {, ?, :, &&, ||, do, else
-  ;;  4: A line "function foo (a, b)", possibly followed by a comment.  (The next
-  ;;     line then must start with '{'.  Should we check this? NO!!
-  ;;
-  ;; Note: we use the previous line as part of the definition so that the
-  ;; various backward-comment functions work.
+  ;; Is there an incomplete statement at the end of the previous line?
+  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (memq (get-c-awk-NL-prop-prev-line do-lim) '(?\\ ?\{)))
 
-(defun c-awk-clear-NL-props (beg end)
-  ;; This function is run from before-change-hooks.  It clears the
-  ;; c-awk-NL-prop text property from beg to the end of the buffer (The END
-  ;; parameter is ignored).  This ensures that the indentation engine will
-  ;; never use stale values for this property.
-  (save-restriction
-    (widen)
-    (put-text-property beg (point-max) 'c-awk-NL-prop nil)))
-
 (defun c-awk-completed-stmt-ws-ends-prev-line-p (&optional do-lim)
-  ;;  Is there a termination of a statement as the last thing (apart from an
-  ;;  optional comment) on the previous line?
+  ;; Is there a termination of a statement as the last thing (apart from an
+  ;; optional comment) on the previous line?
+  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (eq (get-c-awk-NL-prop-prev-line do-lim) ?\;))
 
 (defun c-awk-completed-stmt-ws-ends-line-p (&optional pos do-lim)
-  ;;  Same as previous function, but for the line containing position POS (or
-  ;;  the current line if POS is omitted).  If this line lacks an EOL, nil
-  ;;  will be returned.  (i.e., the line isn't terminated at all ;-)
+  ;; Same as previous function, but for the line containing position POS (or
+  ;; the current line if POS is omitted).  If this line lacks an EOL, nil
+  ;; will be returned.  (i.e., the line isn't terminated at all ;-)
+  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (save-excursion
     (if pos (goto-char pos))
     (and (eq (forward-line) 0)  (bolp)  ; check for unterminated line at EOB.
@@ -276,15 +280,16 @@
 
 (defun c-awk-after-logical-semicolon (&optional do-lim)
 ;; Are we at BOL, the preceding EOL being a "logical semicolon"?
+;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (and (bolp)
        (eq (get-c-awk-NL-prop-prev-line do-lim) ?\;)))
 
 (defun c-awk-backward-syntactic-ws (&optional lim) 
-;; Skip backwards over awk-syntactic whitespace.  Awk-syntactic whitespace is
-;; defined as whitespace characters, comments, and NEWLINES WHICH AREN'T
-;; "VIRTUAL SEMICOLONS".  However if point starts inside a comment or
-;; preprocessor directive, the content of it is not treated as whitespace.
-;; LIM sets a lower limit of the backward movement, if specified.
+;; Skip backwards over awk-syntactic whitespace.  This is whitespace
+;; characters, comments, and NEWLINES WHICH AREN'T "VIRTUAL SEMICOLONS".
+;; However if point starts inside a comment or preprocessor directive, the
+;; content of it is not treated as whitespace.
+;; LIM (optional) sets a limit on the backward movement.
   (let ((lim (or lim (point-min))))
     (while
         (and (> (point) lim)
@@ -295,6 +300,15 @@
 (defun c-awk-NL-prop-not-set ()
   ;; Is the NL-prop on the current line either nil or unset?
   (not (get-text-property (c-point 'eol) 'c-awk-NL-prop)))
+
+(defun c-awk-clear-NL-props (beg end)
+  ;; This function is run from before-change-hooks.  It clears the
+  ;; c-awk-NL-prop text property from beg to the end of the buffer (The END
+  ;; parameter is ignored).  This ensures that the indentation engine will
+  ;; never use stale values for this property.
+  (save-restriction
+    (widen)
+    (put-text-property beg (point-max) 'c-awk-NL-prop nil)))
 
 (defun c-awk-unstick-NL-prop ()
   ;; Ensure that the text property c-awk-NL-prop is "non-sticky".  Without
@@ -321,14 +335,32 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; The following section of the code is to do with font-locking.  The biggest
+;; problem for font-locking is deciding whether a / is a regular expression
+;; delimiter or a division sign - determining precisely where strings and
+;; regular expressions start and stop is also troublesome.  This is the
+;; purpose of the function c-awk-set-syntax-table-properties and the myriad
+;; elisp regular expressions it uses.
+;;
+;; Because awk is a line oriented language, I felt the normal cc-mode strategy
+;; for font-locking unterminated strings (i.e. font-locking the buffer up to
+;; the next string delimiter as a string) was inappropriate.  Instead,
+;; unbalanced string/regexp delimiters are given the warning font, being
+;; refonted with the string font as soon as the matching delimiter is entered.
+;;
+;; This requires the region processed by the current font-lock after-change
+;; function to have access to the start of the string/regexp which may be
+;; several lines back.  The elisp "advice" feature is used on these functions
+;; to allow this.
+
 (defun c-awk-beginning-of-logical-line (&optional pos)
-  ;;   awk-mode: Go back to the start of the (apparent) current line (or the
-  ;;   start of the line containing POS).
-  ;; Return the buffer position of that point.  I.e., go back to the last line
-  ;; which doesn't have an escaped EOL before it.  This is guaranteed to be
- ;; "safe" for syntactic analysis, i.e. outwith any comment, string or regexp.
-  ;; IT MAY WELL BE that this function should not be executed on a narrowed
-  ;; buffer.
+;; Go back to the start of the (apparent) current line (or the start of the
+;; line containing POS), returning the buffer position of that point.  I.e.,
+;; go back to the last line which doesn't have an escaped EOL before it.
+;; 
+;; This is guaranteed to be "safe" for syntactic analysis, i.e. outwith any
+;; comment, string or regexp.  IT MAY WELL BE that this function should not be
+;; executed on a narrowed buffer.
   (if pos (goto-char pos))
   (forward-line 0)
   (while (and (> (point) (point-min))
@@ -337,39 +369,19 @@
   (point))
 
 (defun c-awk-end-of-logical-line (&optional pos)
-;;   awk-mode: Go forward to the end of the (apparent) current logical line
-;; (or the end of the line containing POS).
-;; Return the buffer position of that point.  I.e., go to the end of the next
-;; line which doesn't have an escaped EOL.  This is guaranteed to be "safe" for
-;; syntactic analysis, i.e. outwith any comment, string or regexp.  IT MAY WELL
-  ;; BE that this function should not be executed on a narrowed buffer.
+;; Go forward to the end of the (apparent) current logical line (or the end of
+;; the line containing POS), returning the buffer position of that point.  I.e.,
+;; go to the end of the next line which doesn't have an escaped EOL.
+;;
+;; This is guaranteed to be "safe" for syntactic analysis, i.e. outwith any
+;; comment, string or regexp.  IT MAY WELL BE that this function should not be
+;; executed on a narrowed buffer.
   (if pos (goto-char pos))
   (end-of-line)
   (while (and (< (point) (point-max))
               (eq (char-before) ?\\))
     (end-of-line 2))
   (point))
-
-;; ACM 2002/5/25.  When font-locking is invoked by a buffer change, the region
-;; specified by the font-lock after-change function must be expanded to
-;; include ALL of any string or regexp within the region.  The simplest way to
-;; do this in practice is to use the beginning/end-of-logical-line functions.
-;; Don't overlook the possibility of the buffer change being the "recapturing"
-;; of a previously escaped newline.
-(defmacro c-awk-advise-fl-for-awk-region (function)
-  `(defadvice ,function (before get-awk-region activate)
-  "When font-locking an awk-mode buffer, make sure that any string/regexp is completely font-locked."
-  (when (eq major-mode 'awk-mode)
-    (save-excursion
-      (ad-set-arg 0 (c-awk-beginning-of-logical-line (ad-get-arg 0)))
-      (ad-set-arg 1 (progn (goto-char (ad-get-arg 1))
-                           (forward-line 1) ; Maybe a "recaptured" NL.
-                           (c-awk-end-of-logical-line)))))))
-
-(c-awk-advise-fl-for-awk-region font-lock-after-change-function)
-(c-awk-advise-fl-for-awk-region jit-lock-after-change)
-(c-awk-advise-fl-for-awk-region lazy-lock-defer-rest-after-change)
-(c-awk-advise-fl-for-awk-region lazy-lock-defer-line-after-change)
 
 ;;; ACM, 2002/02/02:  Give up the FSM approach, and use regexps as suggested by
 ;;; Martin S. in his Email of 19th January 2002.
@@ -406,7 +418,7 @@
 
 ;; REGEXPS FOR "HARMLESS" STRINGS/LINES.
 (defconst c-awk-harmless-char-re "[^_#/\"\\\\\n\r]")
-;;   Matches any character but a #, /, ", \, or newline.  N.B. _" starts a
+;;   Matches any character but a _, #, /, ", \, or newline.  N.B. _" starts a
 ;; localisation string in gawk 3.1
 (defconst c-awk-harmless-_ "_\\([^\"]\\|\\'\\)")
 ;;   Matches an underline NOT followed by ".
@@ -419,7 +431,6 @@
 ;; Matches the (possibly empty) sequence of chars without unescaped /, ", \,
 ;; at point.
 (defconst c-awk-harmless-line-re
-;;  (concat c-awk-harmless-string*-re "\\(#.*\\)?\\(\n\\|\r\\|\\'\\)"
   (concat c-awk-harmless-string*-re
           "\\(" c-awk-comment-without-nl "\\)?" c-awk-nl-or-eob))
 ;;   Matches (the tail of) an awk \"logical\" line not containing an unescaped
@@ -448,11 +459,6 @@
 ;; A gawk 3.1+ string may look like _"localisable string".
 (defconst c-awk-string-here-re
   (concat "\\=" c-awk-string-re))
-;;(defconst c-awk-unterminated-string-re
-;;  (concat "\\(\"\\)"         ; This gives "subexpression 1" in the match data.
-;;          c-awk-string-innards c-awk-nl-or-eob))
-;;   Matches an unterminated awk-string, including the final unescaped EOL (or
-;; up to EOB).  The opening \" constitutes subexpression 1 in the match data.
 
 
 ;; REGEXPS FOR AWK REGEXPS.
@@ -540,24 +546,24 @@
 (defun c-awk-set-syntax-table-properties (lim)
 ;;     Scan the buffer text between point and LIM, setting (and clearing) the
 ;; syntax-table property where necessary.
-
+;;
 ;; This function is designed to be called as the FUNCTION in a MATCHER in
 ;; font-lock-syntactic keywords, and it always returns NIL (to inhibit
 ;; repeated calls from font-lock).  It can also, with a bit of glue, be called
 ;; from after-change-functions.  Point is left "undefined" after this function
 ;; exits.  THE BUFFER SHOULD HAVE BEEN WIDENED, AND ANY PRECIOUS MATCH-DATA
 ;; SAVED BEFORE CALLING THIS ROUTINE.
-
+;;
 ;; We need to set/clear the syntax-table property on:
 ;; (i) / - It is set to "string" on a / which is the opening or closing
 ;;     delimiter of the properly terminated regexp.
-;; (ii) On an unterminated string/regexp opener, we set the property "generic
-;; string delimiter" on both the opening " or / and the end of the line where
-;; the closing delimiter is missing.
+;; (ii) On the opener of an unterminated string/regexp, we set the property
+;;    "generic string delimiter" on both the opening " or / and the end of the
+;;    line where the closing delimiter is missing.
 ;; (iii) Inside a comment, all syntax-table properties are cleared.
-    (let (anchor
+    (let (anchor /point
           (anchor-state-/div nil)) ; t means a following / would be a div sign.
-      (c-awk-beginning-of-logical-line)
+      (c-awk-beginning-of-logical-line) ; ACM 2002/7/21.  This is probably redundant.
       (put-text-property (point) lim 'syntax-table nil)
       (search-forward-regexp c-awk-harmless-lines+-here-re nil t) ; skip harmless lines.
 
@@ -565,7 +571,7 @@
       (while (< (point) lim)
         (setq anchor (point))
         (search-forward-regexp c-awk-harmless-string*-here-re nil t)
-        ;; We are now looking at either a '"' or a '/'.
+        ;; We are now looking at either a " or a /.
         (if (looking-at c-awk-string-re) ; a string
             (progn (setq anchor-state-/div t) ; ("15" / 5) gives 3 in awk ;-)
                    (c-awk-set-string-regexp-syntax-table-properties
@@ -598,33 +604,6 @@
         (if (search-forward-regexp c-awk-harmless-lines+-here-re nil t)
             (setq anchor-state-/div nil)))
       nil))
-
-
-;; ACM, 2002/02/15: The next function hasn't been fully thought out yet.
-;; Don't use it, it won't work!
-(defun c-awk-/syntax-after-change (beg end &optional old-len)
-  "Text in the buffer between BEG and END has been changed.  The previous
-length of text there was OLD-LEN, but we don't use this.  Set the syntax-table
-property as necessary on any '/' characters whose meaning may have
-changed. This function is designed to be called as a hook from
-after-change-functions."
-  (save-restriction
-    (widen)
-    (let* ((cur-state /bol)
-           (inhibit-point-motion-hooks t) ; copied from font-lock.el
-           (buf-pos (save-excursion ((c-awk-back-to-safe) (point)))))
-      ;; Calculate what CUR-STATE is at BEG.
-      (while (< buf-pos beg)
-        (setq cur-state (c-awk-new-state (char-after bufpos) cur-state)))
-      ;; Run through the FSM, setting the syntax-table text property on each
-      ;; '/' until the first (uncontinued) \n after END.
-      (while (and (< buf-pos end) (not (eq cur-state '/bol)))
-        (if (eq (char-after bufpos) ?/)
-            (put-text-property bufpos (1+ bufpos) 'syntax-table
-               (if (memq cur-state (list /bol /ws-re /re /misc-re /misc-- /misc-+))
-                    nil '(1)))            ; (1) means "punctuation"
-          (setq cur-state (c-awk-new-state (char-after bufpos) cur-state))
-          (setq bufpos (1+ bufpos)))))))
 
 ;; Regexps written with help from Peter Galbraith <galbraith@mixing.qc.dfo.ca>.
 (defconst awk-font-lock-keywords
@@ -678,6 +657,66 @@ after-change-functions."
      ))
  "Default expressions to highlight in AWK mode.")
 
+;; ACM, 2002/07/21: Thoughts: We need an awk-mode after-change function to set
+;; the syntax-table properties even when font-lock isn't enabled, for the
+;; subsequent use of movement functions, etc.  However, it seems that if font
+;; lock _is_ enabled, we can always leave it to do the job.
+(defvar c-awk-old-EOLL nil
+  "End of logical line following the region which is about to be changed.  Set
+in c-awk-before-change and used in c-awk-after-change.  This variable is
+buffer local.")
+(make-variable-buffer-local 'c-awk-old-EOLL)
+
+(defun c-awk-before-change (beg end)
+  "This function is called exclusively from the before-change-functions hook.
+It does two things: Finds the end of the (logical) line on which END lies, and
+clears c-awk-NL-prop text properties from this point onwards."
+  (save-restriction
+    (save-excursion
+      (setq c-awk-old-EOLL (c-awk-end-of-logical-line))
+      (c-awk-clear-NL-props end (point-max)))))
+
+(defun c-awk-end-of-change-region (beg end old-len)
+  ;; Find the end of the region which must be font-locked after a change.
+  ;; This is either the end of the logical line on which the change happened,
+  ;; either as it was before the change, or as it is now, which ever is later.
+  ;; N.B. point is left undefined.
+  (max (+ (- c-awk-old-EOLL old-len) (- end beg))
+       (c-awk-end-of-logical-line end)))
+
+(defun c-awk-after-change (beg end old-len)
+  "This function is called exclusively as an after-change function in
+awk-mode.  It ensures that the syntax-table properties get set in the changed
+region.  However, if font-lock is enabled, this function does nothing, since
+an enabled font-lock after-change function will always do this."
+  (if (not font-lock-mode)
+      (save-restriction
+        (save-excursion
+          (setq end (c-awk-end-of-change-region beg end old-len))
+          (c-awk-beginning-of-logical-line beg)
+          (c-awk-set-syntax-table-properties end)))))
+
+;; ACM 2002/5/25.  When font-locking is invoked by a buffer change, the region
+;; specified by the font-lock after-change function must be expanded to
+;; include ALL of any string or regexp within the region.  The simplest way to
+;; do this in practice is to use the beginning/end-of-logical-line functions.
+;; Don't overlook the possibility of the buffer change being the "recapturing"
+;; of a previously escaped newline.
+(defmacro c-awk-advise-fl-for-awk-region (function)
+  `(defadvice ,function (before get-awk-region activate)
+  "When font-locking an awk-mode buffer, make sure that any string/regexp is completely font-locked."
+  (when (eq major-mode 'awk-mode)
+    (save-excursion
+      (ad-set-arg 1 (c-awk-end-of-change-region
+                     (ad-get-arg 0)     ; beg
+                     (ad-get-arg 1)     ; end
+                     (ad-get-arg 2)))   ; old-len
+      (ad-set-arg 0 (c-awk-beginning-of-logical-line (ad-get-arg 0)))))))
+
+(c-awk-advise-fl-for-awk-region font-lock-after-change-function)
+(c-awk-advise-fl-for-awk-region jit-lock-after-change)
+(c-awk-advise-fl-for-awk-region lazy-lock-defer-rest-after-change)
+(c-awk-advise-fl-for-awk-region lazy-lock-defer-line-after-change)
 
 (provide 'cc-awk)                       ; Changed from 'awk-mode, ACM 2002/5/21
 
