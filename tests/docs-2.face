@@ -13,7 +13,7 @@
 (0 reg)
 (0 cpp) (7 reg) (8 var) (17 reg) (18 typ) (24 reg) (25 typ) (31 reg) (33 typ) (39 reg) (40 typ) (45 reg) (46 typ) (54 reg) (55 typ) (62 reg)
 (0 doc) (4 dmk doc) (9 reg) (10 key) (17 reg) (18 typ) (24 reg) (25 typ) (31 reg) (32 typ) (37 reg) (38 typ) (47 reg) (49 dmk doc) (50 doc)
-(3 reg) (18 typ) (26 reg) (38 dmk doc) (39 doc)
+(3 reg) (18 typ) (26 reg) (27 typ) (36 reg) (38 dmk doc) (39 doc)
 (3 reg) (18 typ) (25 reg) (47 typ) (56 reg)
 (0 doc)
 (0 reg)
