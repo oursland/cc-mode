@@ -570,6 +570,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; Called before any of the matchers in `c-complex-decl-matchers'.
   ;; Nil is always returned.
 
+  ;;(message "c-font-lock-complex-decl-prepare %s %s" (point) limit)
+
   ;; Clear the list of found types if we start from the start of the
   ;; buffer, to make it easier to get rid of misspelled types and
   ;; variables that has gotten recognized as types in malformed code.
@@ -862,29 +864,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	   (cc-eval-when-compile
 	     (boundp 'parse-sexp-lookup-properties))))
 
-      ;; Narrow to the limit to deliberately fail to fontify
-      ;; declarations that crosses it.  E.g. the following is a common
-      ;; situation while the first line is being written:
-      ;;
-      ;;     my_variable
-      ;;     some_other_variable = 0;
-      ;;
-      ;; font-lock will put the limit at the end of the first line here,
-      ;; and we use that to avoid recognizing my_variable as a type in a
-      ;; declaration that spans to the next line.  This way the
-      ;; statement isn't annoyingly flashed as a type while it's being
-      ;; entered.
-      (narrow-to-region
-       (point-min)
-       (save-excursion
-	 ;; Narrow after any operator chars following the limit though, since
-	 ;; those characters can be useful in recognizing a declaration (in
-	 ;; particular the '{' that opens a function body after the header).
-	 (goto-char limit)
-	 (skip-chars-forward "^_a-zA-Z0-9$")
-	 (point)))
-
       (c-find-decl-spots
+       limit
        c-identifier-start
        c-font-lock-maybe-decl-faces
 
@@ -957,14 +938,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	     ;; angle bracket arglists containing commas that's been
 	     ;; recognized inside it by the preceding slightly opportunistic
 	     ;; scan in `c-font-lock-<>-arglists'.
-	     (while (c-syntactic-re-search-forward
-		     c-opt-<>-arglist-start nil t t)
+	     (while (and (c-syntactic-re-search-forward
+			  c-opt-<>-arglist-start-in-paren nil t t)
+			 (match-beginning 1))
 	       (backward-char)
 	       (when (save-match-data
 		       (and (c-get-char-property (point) 'syntax-table)
 			    (not (c-forward-<>-arglist nil t))))
 		 (c-put-font-lock-face
-		  (match-beginning 1) (match-end 1) nil)))
+		  (match-beginning 2) (match-end 2) nil)))
 	     (goto-char start-pos))
 
 	   ;; Check for a type, but be prepared to skip over leading
@@ -2134,43 +2116,42 @@ need for `c++-font-lock-extra-types'.")
   ;; directive is found.  For this reason all directives are searched
   ;; for here, even those that don't need special handling.
 
-  (save-restriction
-    (narrow-to-region (point-min) limit)
-    (let (;; The font-lock package in Emacs is known to clobber
-	  ;; `parse-sexp-lookup-properties' (when it exists).
-	  (parse-sexp-lookup-properties
-	   (cc-eval-when-compile
-	     (boundp 'parse-sexp-lookup-properties))))
+  (let (;; The font-lock package in Emacs is known to clobber
+	;; `parse-sexp-lookup-properties' (when it exists).
+	(parse-sexp-lookup-properties
+	 (cc-eval-when-compile
+	   (boundp 'parse-sexp-lookup-properties))))
 
-      (c-find-decl-spots
-       "[-+@]"
-       '(nil font-lock-keyword-face)
+    (c-find-decl-spots
+     limit
+     "[-+@]"
+     '(nil font-lock-keyword-face)
 
-       (lambda (match-pos inside-macro)
-	 ;; Fontify a sequence of compiler directives.
-	 (while (eq (char-after) ?@)
-	   (unless (cond
-		    ;; Handle an @interface/@implementation/@protocol
-		    ;; directive.
-		    ((looking-at c-class-key)
-		     (goto-char (match-end 1))
-		     (c-font-lock-objc-iip-decl))
-		    ;; Handle a @class directive.  Fontification is done
-		    ;; through `c-type-list-kwds', so we only need to
-		    ;; skip to the end.
-		    ((looking-at "@class\\>")
-		     (c-syntactic-re-search-forward ";" nil t))
-		    ;; Otherwise we assume it's a protection directive.
-		    (t (skip-syntax-forward "w_")))
-	     ;; Failed to parse the directive.  Try to recover by
-	     ;; skipping to eol.
-	     (when (re-search-forward c-syntactic-eol (c-point 'eol) 'move)
-	       (goto-char (match-beginning 0))))
-	   (c-forward-syntactic-ws))
+     (lambda (match-pos inside-macro)
+       ;; Fontify a sequence of compiler directives.
+       (while (eq (char-after) ?@)
+	 (unless (cond
+		  ;; Handle an @interface/@implementation/@protocol
+		  ;; directive.
+		  ((looking-at c-class-key)
+		   (goto-char (match-end 1))
+		   (c-font-lock-objc-iip-decl))
+		  ;; Handle a @class directive.  Fontification is done
+		  ;; through `c-type-list-kwds', so we only need to
+		  ;; skip to the end.
+		  ((looking-at "@class\\>")
+		   (c-syntactic-re-search-forward ";" nil t))
+		  ;; Otherwise we assume it's a protection directive.
+		  (t (skip-syntax-forward "w_")))
+	   ;; Failed to parse the directive.  Try to recover by
+	   ;; skipping to eol.
+	   (when (re-search-forward c-syntactic-eol (c-point 'eol) 'move)
+	     (goto-char (match-beginning 0))))
+	 (c-forward-syntactic-ws))
 
-	 (when (looking-at "[-+]")
-	   (forward-char)
-	   (c-font-lock-objc-method))))))
+       (when (looking-at "[-+]")
+	 (forward-char)
+	 (c-font-lock-objc-method)))))
   nil)
 
 (defconst objc-font-lock-keywords-1 (c-lang-const c-matchers-1 objc)
