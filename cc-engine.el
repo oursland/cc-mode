@@ -5913,6 +5913,22 @@ This function does not do any hidden buffer changes."
 	      (c-add-syntax 'func-decl-cont (c-point 'boi))
 	      )))
 
+	   ;; CASE 5E: A class-level label.
+	   ((and inclass-p
+		 (or (and c-opt-extra-label-key
+			  (looking-at c-opt-extra-label-key))
+		     (save-excursion
+		       (and
+			(c-syntactic-re-search-forward
+			 "\\s.\\|\\s\(\\|\\s\"" nil t)
+			(eq (char-before) ?:)
+			(not (eq (char-after) ?:)) ; Check for "::" operator.
+			(eq (c-beginning-of-statement-1 lim) 'label)))))
+	    (setq placeholder (c-add-class-syntax 'inclass inclass-p
+						  paren-state))
+	    ;; Append access-label with the same anchor point as inclass gets.
+	    (c-append-syntax 'access-label placeholder))
+
 	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
 	   ((or (and (c-major-mode-is 'c++-mode)
@@ -6093,16 +6109,7 @@ This function does not do any hidden buffer changes."
 		 'statement-cont)
 	       nil nil nil containing-sexp paren-state))
 	     ))
-
-	   ;; CASE 5E: we are looking at a access specifier
-	   ((and inclass-p
-		 c-opt-access-key
-		 (looking-at c-opt-access-key))
-	    (setq placeholder (c-add-class-syntax 'inclass inclass-p
-						  paren-state))
-	    ;; Append access-label with the same anchor point as inclass gets.
-	    (c-append-syntax 'access-label placeholder))
-
+	   
 	   ;; CASE 5F: Close of a non-class declaration level block.
 	   ((and inenclosing-p
 		 (eq char-after-ip ?}))

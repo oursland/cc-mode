@@ -1765,9 +1765,13 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
 	      c-font-lock-objc-methods)
 
-	  (when (c-lang-const c-opt-access-key)
+	  (when (c-lang-const c-protection-kwds)
+	    ;; FIXME: Better method using `c-nonlabel-token-key'.
 	    `(,(c-make-font-lock-search-function
-		(c-lang-const c-opt-access-key)
+		(concat "\\("
+			(c-make-keywords-re nil
+			  (c-lang-const c-protection-kwds))
+			"\\)[ \t\n\r\f\v]*:")
 		'((c-put-char-property (1- (match-end 0))
 				       'c-type 'c-decl-end))))))
 
@@ -1868,7 +1872,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ))
 
 (defun c-font-lock-labels (limit)
-  ;; Fontify all the declarations from the point to LIMIT.  Assumes
+  ;; Fontify all statement labels from the point to LIMIT.  Assumes
   ;; that strings and comments have been fontified already.  Nil is
   ;; always returned.
   ;;

@@ -1312,20 +1312,10 @@ will be handled."
 (c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
 
 (c-lang-defconst c-protection-kwds
-  "Protection label keywords in classes."
+  "Access protection label keywords in classes."
   t    nil
   c++  '("private" "protected" "public")
   objc '("@private" "@protected" "@public"))
-
-(c-lang-defconst c-opt-access-key
-  ;; Regexp matching an access protection label in a class, or nil in
-  ;; languages that don't have such things.
-  t    (if (c-lang-const c-protection-kwds)
-	   (c-make-keywords-re t (c-lang-const c-protection-kwds)))
-  c++  (concat "\\("
-	       (c-make-keywords-re nil (c-lang-const c-protection-kwds))
-	       "\\)[ \t\n\r\f\v]*:"))
-(c-lang-defvar c-opt-access-key (c-lang-const c-opt-access-key))
 
 (c-lang-defconst c-block-decls-with-vars
   "Keywords introducing declarations that can contain a block which
@@ -2238,6 +2228,15 @@ isn't part of a ? : operator."
   ;; constructors.
   c++ (concat "\\s\(\\|" (c-lang-const c-nonlabel-token-key)))
 (c-lang-defvar c-nonlabel-token-key (c-lang-const c-nonlabel-token-key))
+
+(c-lang-defconst c-opt-extra-label-key
+  "Optional regexp matching an access protection label in a class.
+Anything in a class that is followed by a colon (and that isn't
+detected by `c-nonlabel-token-key') is taken as a label.  This regexp
+can be used if there are labels that aren't recognized that way."
+  t    nil
+  objc (c-make-keywords-re t (c-lang-const c-protection-kwds)))
+(c-lang-defvar c-opt-extra-label-key (c-lang-const c-opt-extra-label-key))
 
 (c-lang-defconst c-opt-friend-key
   ;; Regexp describing friend declarations classes, or nil in
