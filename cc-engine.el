@@ -3415,7 +3415,7 @@ This function does not do any hidden buffer changes."
 ;; other possible types if `c-promote-possible-types' is set.
 ;; Recording is however disabled inside angle bracket arglists that
 ;; are encountered inside names and other angle bracket arglists.
-;; Such occurences are taken care of by `c-font-lock-<>-arglists'
+;; Such occurrences are taken care of by `c-font-lock-<>-arglists'
 ;; instead.
 ;;
 ;; Only the names in C++ template style references (e.g. "tmpl" in
@@ -3424,11 +3424,11 @@ This function does not do any hidden buffer changes."
 (defvar c-record-type-identifiers nil)
 (defvar c-record-ref-identifiers nil)
 
-;; If `c-record-type-identifiers' is set, this will receive a cons
-;; cell of the range of the last single identifier symbol stepped over
-;; by `c-forward-name' if it's successful.  This is the range that
-;; should be put on one of the record lists by the caller.  It's
-;; assigned nil if there's no such symbol in the name.
+;; This variable will receive a cons cell of the range of the last
+;; single identifier symbol stepped over by `c-forward-name' if it's
+;; successful.  This is the range that should be put on one of the
+;; record lists above by the caller.  It's assigned nil if there's no
+;; such symbol in the name.
 (defvar c-last-identifier-range nil)
 
 (defmacro c-record-type-id (range)
@@ -3828,8 +3828,8 @@ This function does not do any hidden buffer changes."
 	       (setq id-start (point)
 		     id-end (match-end 0))
 	     (goto-char (setq id-end (match-end 0)))
-	     (c-simple-skip-symbol-backward)
-	     (setq id-start (point)))
+	     (if (c-simple-skip-symbol-backward)
+		 (setq id-start (point))))
 
 	   (if (looking-at c-keywords-regexp)
 	       (when (and (c-major-mode-is 'c++-mode)
@@ -3887,9 +3887,8 @@ This function does not do any hidden buffer changes."
 
 		       ((looking-at c-overloadable-operators-regexp)
 			;; Got some other operator.
-			(when c-record-type-identifiers
-			  (setq c-last-identifier-range
-				(cons (point) (match-end 0))))
+			(setq c-last-identifier-range
+			      (cons (point) (match-end 0)))
 			(goto-char (match-end 0))
 			(c-forward-syntactic-ws)
 			(setq pos (point)
@@ -3897,7 +3896,7 @@ This function does not do any hidden buffer changes."
 
 		 nil)
 
-	     (when c-record-type-identifiers
+	     (when id-start
 	       (setq c-last-identifier-range
 		     (cons id-start id-end)))
 	     (goto-char id-end)
@@ -3923,28 +3922,28 @@ This function does not do any hidden buffer changes."
 	      ((and c-recognize-<>-arglists
 		    (eq (char-after) ?<))
 	       ;; Maybe an angle bracket arglist.
-	       (when (let ((c-record-type-identifiers nil)
-			   (c-record-found-types nil))
+
+	       (when (let (c-record-type-identifiers
+			   c-record-found-types)
 		       (c-forward-<>-arglist nil))
 		 (c-forward-syntactic-ws)
-		 (setq pos (point))
+		 (setq pos (point)
+		       c-last-identifier-range nil)
+
 		 (if (and c-opt-identifier-concat-key
 			  (looking-at c-opt-identifier-concat-key))
+
 		     ;; Continue if there's an identifier concatenation
 		     ;; operator after the template argument.
 		     (progn
-		       (when c-record-type-identifiers
-			 (c-record-ref-id (cons id-start id-end))
-			 (setq c-last-identifier-range nil))
+		       (when (and c-record-type-identifiers id-start)
+			 (c-record-ref-id (cons id-start id-end)))
 		       (forward-char 2)
 		       (c-forward-syntactic-ws)
 		       t)
-		   ;; `c-add-type' isn't called here since we don't
-		   ;; want to add types containing angle bracket
-		   ;; arglists.
-		   (when c-record-type-identifiers
-		     (c-record-type-id (cons id-start id-end))
-		     (setq c-last-identifier-range nil))
+
+		   (when (and c-record-type-identifiers id-start)
+		     (c-record-type-id (cons id-start id-end)))
 		   (setq res 'template)
 		   nil)))
 	      )))))
@@ -3988,7 +3987,8 @@ This function does not do any hidden buffer changes."
 	      ;; In many languages the name can be used without the
 	      ;; prefix, so we add it to `c-found-types'.
 	      (c-add-type pos (point))
-	      (when c-record-type-identifiers
+	      (when (and c-record-type-identifiers
+			 c-last-identifier-range)
 		(c-record-type-id c-last-identifier-range)))
 	    (setq res t))
 	;; Invalid syntax.
@@ -4063,7 +4063,7 @@ This function does not do any hidden buffer changes."
 	     (if (or res c-promote-possible-types)
 		 (progn
 		   (c-add-type id-start id-end)
-		   (when c-record-type-identifiers
+		   (when (and c-record-type-identifiers id-range)
 		     (c-record-type-id id-range))
 		   (unless res
 		     (setq res 'found)))
@@ -4101,7 +4101,7 @@ This function does not do any hidden buffer changes."
 	  (c-forward-syntactic-ws)))
 
       (when c-opt-type-concat-key
-	;; Look for a trailing operator that concatenate the type with
+	;; Look for a trailing operator that concatenates the type with
 	;; a following one, and if so step past that one through a
 	;; recursive call.
 	(setq pos (point))
@@ -4126,7 +4126,7 @@ This function does not do any hidden buffer changes."
 		(cond ((eq res t))
 		      ((or (eq res 'known) (memq res2 '(t known)))
 		       (c-add-type id-start id-end)
-		       (when c-record-type-identifiers
+		       (when (and c-record-type-identifiers id-range)
 			 (c-record-type-id id-range))
 		       (setq res t))
 		      ((eq res 'found))
