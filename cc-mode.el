@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.308 $
-;; Last Modified:   $Date: 1996-07-05 23:25:30 $
+;; Version:         $Revision: 4.309 $
+;; Last Modified:   $Date: 1996-07-05 23:57:19 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1369,7 +1369,9 @@ To see what version of cc-mode you are running, enter `\\[c-version]'.
 
 The hook variable `java-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the common hook
-`c-mode-common-hook' is run first.
+`c-mode-common-hook' is run first.  Note that this mode automatically
+sets the \"java\" style before calling any hooks so be careful if you
+set styles in `c-mode-common-hook'.
 
 Key bindings:
 \\{java-mode-map}"
@@ -1392,7 +1394,7 @@ Key bindings:
  	c-baseclass-key nil
 	c-recognize-knr-p nil
  	c-access-key c-Java-access-key)
-;  (c-set-style "java")
+  (c-set-style "java")
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook))
 (setq c-list-of-mode-names (cons "Java" c-list-of-mode-names))
@@ -4954,7 +4956,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.308 $"
+(defconst c-version "$Revision: 4.309 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5101,7 +5103,7 @@ definition and conveniently use this command."
 			     c-inhibit-startup-warnings-p
 			     )))
       ;; the default style is now GNU.  This can be overridden in
-      ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
+      ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
       (c-set-style c-site-default-style)))
 
 ;; style variables
