@@ -62,8 +62,8 @@ Checklist for doing a release:
 	gnu.emacs.sources
 	comp.emacs.xemacs
 	comp.emacs
-	comp.lang.c.moderated (used to be just comp.lang.c)
-	comp.lang.c++.moderated (used to be just comp.lang.c++)
+	comp.lang.c
+	comp.lang.c++
 	comp.lang.objective-c
-	comp.lang.java.announce
+	comp.lang.java.programmer
 	comp.object.corba
