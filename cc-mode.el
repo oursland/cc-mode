@@ -56,10 +56,10 @@
 ;; language mode.
 
 ;; To submit bug reports, type "C-c C-b".  These will be sent to
-;; bug-gnu-emacs@prep.ai.mit.edu as well as cc-mode-help@python.org,
-;; and I'll read about them there (the former is mirrored as the
-;; Usenet newsgroup gnu.emacs.bug).  Questions can sent to
-;; help-gnu-emacs@prep.ai.mit.edu (mirrored as gnu.emacs.help) and/or
+;; bug-gnu-emacs@gnu.org as well as cc-mode-help@python.org, and I'll
+;; read about them there (the former is mirrored as the Usenet
+;; newsgroup gnu.emacs.bug).  Questions can sent to
+;; help-gnu-emacs@gnu.org (mirrored as gnu.emacs.help) and/or
 ;; cc-mode-help@python.org.  Please do not send bugs or questions to
 ;; my personal account.
 
@@ -387,7 +387,7 @@ Key bindings:
 ;; bug reporting
 
 (defconst c-mode-help-address
-  "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
+  "bug-gnu-emacs@gnu.org, cc-mode-help@python.org"
   "Address for CC Mode bug reports.")
 
 (defun c-version ()

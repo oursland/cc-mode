@@ -3786,10 +3786,10 @@ to reproduce it.
 
 Bug reports are now sent to the following email addresses:
 @email{cc-mode-help@@python.org} and
-@email{bug-gnu-emacs@@prep.ai.mit.edu}; the latter is mirrored on the
+@email{bug-gnu-emacs@@gnu.org}; the latter is mirrored on the
 Usenet newsgroup @code{gnu.emacs.bug}.  You can send other questions and
 suggestions (kudos? @t{;-)} to @email{cc-mode-help@@python.org}, or
-@email{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on newsgroup
+@email{help-gnu-emacs@@gnu.org} which is mirrored on newsgroup
 @code{gnu.emacs.help}.
 
 If you want to get announcements of new CC Mode releases, send the word
