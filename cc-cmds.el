@@ -1164,8 +1164,8 @@ comment."
 	  (search-forward "}")
 	  (1+ (current-column)))
 	 ;; CASE 2: 2 spaces after #endif
-	 ((or (looking-at "^[ \t]*#[ \t]*endif[ \t]*")
-	      (looking-at "^[ \t]*#[ \t]*else[ \t]*"))
+	 ((or (looking-at "[ \t]*#[ \t]*endif[ \t]*")
+	      (looking-at "[ \t]*#[ \t]*else[ \t]*"))
 	  7)
 	 ;; CASE 3: when c-indent-comments-syntactically-p is t,
 	 ;; calculate the offset according to c-offsets-alist.
@@ -1184,8 +1184,7 @@ comment."
 	    ;; to ignore any anchoring as specified by
 	    ;; c-comment-only-line-offset since it doesn't apply here.
 	    (if (save-excursion
-		  (beginning-of-line)
-		  (skip-chars-forward " \t")
+		  (back-to-indentation)
 		  (eolp))
 		(c-add-syntax 'comment-intro))
 	    (let ((c-comment-only-line-offset
@@ -1193,7 +1192,7 @@ comment."
 		       c-comment-only-line-offset
 		     (cons c-comment-only-line-offset
 			   c-comment-only-line-offset))))
-	      (apply '+ (mapcar 'c-get-offset syntax)))))
+	      (c-get-syntactic-indentation syntax))))
 	 ;; CASE 4: If previous line is a comment-only line, use its
 	 ;; indentation if it's greater than comment-column.  Leave at
 	 ;; least one space between the comment and the last nonblank
