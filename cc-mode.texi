@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.34 $
+@comment manual version: $Revision: 2.35 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-01-19 20:49:51 $
+@comment Last modification: $Date: 1996-01-19 20:50:48 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.34 $)
+@center (manual revision: $Revision: 2.35 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -2556,7 +2556,6 @@ URL:
 
 @end example
 
-@end example
 Note that this is a ``gzipped'' tar file.
 
 If you do not have anonymous ftp access, you can get the distribution
