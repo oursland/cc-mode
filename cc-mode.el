@@ -382,7 +382,7 @@ Key bindings:
 		   'c-hanging-comment-ender-p
 		   'c-indent-comments-syntactically-p
 		   'c-tab-always-indent
-		   'c-recognize-knr-p
+		   'c-comment-continuation-stars
 		   'c-label-minimum-indentation
 		   'defun-prompt-regexp
 		   'tab-width
