@@ -59,7 +59,29 @@
       (not prevstate)
     (> arg 0)))
 
-;; Auto-newline and hungry-delete
+(defun c-toggle-syntactic-indentation (&optional arg)
+  "Toggle syntactic indentation.
+Optional numeric ARG, if supplied, turns on syntactic indentation when
+positive, turns it off when negative, and just toggles it when zero or
+left out.
+
+When syntactic indentation is turned on (the default), the indentation
+functions and the electric keys indent according to the syntactic
+context keys, when applicable.
+
+When it's turned off, the electric keys does no reindentation, the
+indentation functions indents every new line to the same level as the
+previous nonempty line, and \\[c-indent-command] adjusts the
+indentation in seps specified `c-basic-offset'.  The indentation style
+has no effect in this mode, nor any of the indentation associated
+variables, e.g. `c-special-indent-hook'.
+
+This command sets the variable `c-syntactic-indentation'."
+  (interactive "P")
+  (setq c-syntactic-indentation
+	(c-calculate-state arg c-syntactic-indentation))
+  (c-keep-region-active))
+
 (defun c-toggle-auto-state (&optional arg)
   "Toggle auto-newline feature.
 Optional numeric ARG, if supplied, turns on auto-newline when
