@@ -60,24 +60,24 @@
 
 ;; Macros used internally in c-beginning-of-statement-1 for the
 ;; automaton actions.
-(defmacro c-push-state ()
+(defmacro c-bos-push-state ()
   '(setq stack (cons (cons state saved-pos)
 		     stack)))
-(defmacro c-pop-state (&optional do-if-done)
+(defmacro c-bos-pop-state (&optional do-if-done)
   `(if (setq state (car (car stack))
 	     saved-pos (cdr (car stack))
 	     stack (cdr stack))
        t
      ,do-if-done
      (throw 'loop nil)))
-(defmacro c-pop-state-and-retry ()
+(defmacro c-bos-pop-state-and-retry ()
   '(throw 'loop (setq state (car (car stack))
 		      saved-pos (cdr (car stack))
 		      ;; Throw nil if stack is empty, else throw non-nil.
 		      stack (cdr stack))))
-(defmacro c-save-pos ()
+(defmacro c-bos-save-pos ()
   '(setq saved-pos (vector pos tok ptok pptok)))
-(defmacro c-restore-pos ()
+(defmacro c-bos-restore-pos ()
   '(unless (eq (elt saved-pos 0) start)
      (setq pos (elt saved-pos 0)
 	   tok (elt saved-pos 1)
@@ -85,6 +85,14 @@
 	   pptok (elt saved-pos 3))
      (goto-char pos)
      (setq sym nil)))
+(defmacro c-bos-save-error-info (missing got)
+  `(setq saved-pos (vector pos ,missing ,got)))
+(defmacro c-bos-report-error ()
+  '(setq c-parsing-error
+	 (format "No matching `%s' found for `%s' on line %d"
+		 (elt saved-pos 1)
+		 (elt saved-pos 2)
+		 (1+ (count-lines 1 (c-point 'bol (elt saved-pos 0)))))))
 
 (defun c-beginning-of-statement-1 (&optional lim ignore-labels)
   "Move to the start of the current statement or declaration, or to
@@ -246,32 +254,24 @@ position if that is less ('same is returned in this case)."
 		     ((eq state 'else)
 		      (if (eq sym 'boundary)
 			  (setq state 'else-boundary)
-			(setq c-parsing-error
-			      (format (concat "No matching `if' found "
-					      "for `else' on line %d")
-				      (1+ (count-lines
-					   1 (c-point 'bol saved-pos)))))
-			(c-pop-state-and-retry)))
+			(c-bos-report-error)
+			(c-bos-pop-state-and-retry)))
 
 		     ((eq state 'else-boundary)
 		      (cond ((eq sym 'if)
-			     (c-save-pos)
+			     (c-bos-save-pos)
 			     (setq state 'if))
 			    ((eq sym 'boundary)
-			     (setq c-parsing-error
-				   (format (concat "No matching `if' found "
-						   "for `else' on line %d")
-					   (1+ (count-lines
-						1 (c-point 'bol saved-pos)))))
-			     (c-pop-state))))
+			     (c-bos-report-error)
+			     (c-bos-pop-state))))
 
 		     ((eq state 'if)
 		      (cond ((eq sym 'else)
-			     (setq saved-pos pos ; Saved for error report only.
-				   state 'else))
+			     (c-bos-save-error-info 'if 'else)
+			     (setq state 'else))
 			    (t
-			     (c-restore-pos)
-			     (c-pop-state (setq ret 'beginning)))))
+			     (c-bos-restore-pos)
+			     (c-bos-pop-state (setq ret 'beginning)))))
 
 		     ((eq state 'while)
 		      (if (and (eq sym 'boundary)
@@ -280,70 +280,54 @@ position if that is less ('same is returned in this case)."
 			       ;; If there's a label in front of the while
 			       ;; it can't be part of a do-while.
 			       (not after-labels-pos))
-			  (progn (c-save-pos)
+			  (progn (c-bos-save-pos)
 				 (setq state 'while-boundary))
-			(c-pop-state-and-retry)))
+			(c-bos-pop-state-and-retry)))
 
 		     ((eq state 'while-boundary)
 		      (cond ((eq sym 'do)
-			     (c-pop-state (setq ret 'beginning)))
+			     (c-bos-pop-state (setq ret 'beginning)))
 			    ((eq sym 'boundary)
-			     (c-restore-pos)
-			     (c-pop-state))))
+			     (c-bos-restore-pos)
+			     (c-bos-pop-state))))
 
 		     ((eq state 'catch)
 		      (if (eq sym 'boundary)
 			  (setq state 'catch-boundary)
-			(save-excursion
-			  (goto-char saved-pos)
-			  (looking-at cond-key)
-			  (setq c-parsing-error
-				(format (concat "No matching `try' found "
-						"for `%s' on line %d")
-					(match-string 1)
-					(1+ (count-lines
-					     1 (c-point 'bol saved-pos))))))
-			(c-pop-state-and-retry)))
+			(c-bos-report-error)
+			(c-bos-pop-state-and-retry)))
 
 		     ((eq state 'catch-boundary)
 		      (cond
 		       ((eq sym 'try)
-			(c-pop-state (setq ret 'beginning)))
+			(c-bos-pop-state (setq ret 'beginning)))
 		       ((eq sym 'catch)
 			(setq state 'catch))
 		       ((eq sym 'boundary)
-			(save-excursion
-			  (goto-char saved-pos)
-			  (looking-at cond-key)
-			  (setq c-parsing-error
-				(format (concat "No matching `try' found "
-						"for `%s' on line %d")
-					(match-string 1)
-					(1+ (count-lines
-					     1 (c-point 'bol saved-pos))))))
-			(c-pop-state)))))
+			(c-bos-report-error)
+			(c-bos-pop-state)))))
 
 		    ;; This is state common.
 		    (cond ((eq sym 'boundary)
 			   (if (< pos start)
-			       (c-pop-state)
-			     (c-push-state)))
+			       (c-bos-pop-state)
+			     (c-bos-push-state)))
 			  ((eq sym 'else)
-			   (c-push-state)
-			   (setq saved-pos pos ; Saved for error report only.
-				 state 'else))
+			   (c-bos-push-state)
+			   (c-bos-save-error-info 'if 'else)
+			   (setq state 'else))
 			  ((eq sym 'while)
 			   (when (or (not pptok) (eq (char-after pptok) ?\;))
 			     ;; Since this can cause backtracking we do a
 			     ;; little more careful analysis to avoid it: If
 			     ;; the while isn't followed by a semicolon it
 			     ;; can't be a do-while.
-			     (c-push-state)
+			     (c-bos-push-state)
 			     (setq state 'while)))
 			  ((memq sym '(catch finally))
-			   (c-push-state)
-			   (setq saved-pos pos ; Saved for error report only.
-				 state 'catch))))
+			   (c-bos-push-state)
+			   (c-bos-save-error-info 'try sym)
+			   (setq state 'catch))))
 
 		(when c-maybe-labelp
 		  ;; We're either past a statement boundary or at the
@@ -400,6 +384,13 @@ position if that is less ('same is returned in this case)."
 		    tok (point)
 		    pos tok)))		; Not nil.
 
+	  ;; If the stack isn't empty there might be errors to report.
+	  (while stack
+	    (if (and (vectorp saved-pos) (eq (length saved-pos) 3))
+		(c-bos-report-error))
+	    (setq saved-pos (cdr (car stack))
+		  stack (cdr stack)))
+
 	  (when (and (eq ret 'same)
 		     (not (memq sym '(boundary ignore nil))))
 	    ;; Need to investigate closer whether we've crossed
@@ -427,13 +418,6 @@ position if that is less ('same is returned in this case)."
 	  (setq pos (point)))
 	(goto-char pos)
 	ret))))
-
-(eval-when-compile
-  (fmakunbound 'c-push-state)
-  (fmakunbound 'c-pop-state)
-  (fmakunbound 'c-pop-state-and-retry)
-  (fmakunbound 'c-save-pos)
-  (fmakunbound 'c-restore-pos))
 
 (defun c-end-of-statement-1 ()
   (condition-case nil
