@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.281 $
-;; Last Modified:   $Date: 1996-02-06 22:35:36 $
+;; Version:         $Revision: 4.282 $
+;; Last Modified:   $Date: 1996-02-09 23:15:14 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -44,9 +44,6 @@
 ;; package is called "cc-mode" to distinguish it from its ancestors,
 ;; but there really is no top-level cc-mode.  Usage and programming
 ;; details are contained in an accompanying texinfo manual.
-;;
-;; Java support contributed by Eduardo Pelegri-Llopart
-;; <pelegri@calterra.eng.sun.com>.
 
 ;; To submit bug reports, type "C-c C-b".  These will be sent to
 ;; bug-gnu-emacs@prep.ai.mit.edu and I'll read about them there (this
@@ -72,7 +69,7 @@
 ;; (fmakunbound 'c++-mode)
 ;; (makunbound 'c++-mode-map)
 ;; (makunbound 'c-style-alist)
-;;
+
 ;; If your Emacs comes with cc-mode already (and as of 18-Jan-1996,
 ;; XEmacs 19.13 and Emacs 19.30 both do), you only need to add the
 ;; following to use the latest version of cc-mode:
@@ -84,10 +81,12 @@
 ;; There are four major mode entry points provided by this package,
 ;; one for editing C++ code, one for editing C code (both K&R and
 ;; ANSI), one for editing Objective-C code, and one for editing Java
-;; code..  To use cc-mode, add the following to your .emacs file.
-;; This assumes you will use .cc or .C extensions for your C++ source,
-;; .c for your C code, .m for your Objective-C code, and .java for
-;; your Java code:
+;; code.  The commands are M-x c-mode, M-x c++-mode, M-x objc-mode,
+;; and M-x java-mode.
+
+;; If you are using an old version of Emacs which does not come
+;; with cc-mode.el, you will need to do these things
+;; to use it:
 ;;
 ;; (autoload 'c++-mode  "cc-mode" "C++ Editing Mode" t)
 ;; (autoload 'c-mode    "cc-mode" "C Editing Mode" t)
@@ -102,8 +101,15 @@
 ;;             ("\\.java$" . java-mode)
 ;;            ) auto-mode-alist))
 ;;
-;; You do not need the autoload calls if your Emacs comes with cc-mode
-;; automatically.
+;; You do not need these changes in Emacs versions that come with cc-mode.
+
+;; Many, many thanks go out to all the folks on the beta test list.
+;; Without their patience, testing, insight, code contributions, and
+;; encouragement cc-mode.el would be a far inferior package.
+
+;; Anonymous ftp URL:
+;;
+;;    ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz
 
 ;;; Code:
 
@@ -417,7 +423,7 @@ This hook gets called after a line is indented by the mode.")
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
 
-(defvar c-recognize-knr-p nil		;RMS version uses t
+(defvar c-recognize-knr-p nil		; Emacs version uses t
   "*If non-nil, `c-mode' and `objc-mode' will recognize K&R constructs.
 This variable is needed because of ambiguities in C syntax that make
 fast recognition of K&R constructs problematic, and slow.  If you are
@@ -642,7 +648,6 @@ re-dump Emacs.")
   cc-imenu-c++-generic-expression
   "Imenu generic expression for C mode.  See `imenu-generic-expression'.")
 
-
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
@@ -694,7 +699,7 @@ re-dump Emacs.")
 	(let ((table (copy-syntax-table)))
 	  (modify-syntax-entry ?a ". 12345678" table)
 	  (cond
-	   ;; pre XEmacs 20 and Emacs 19.30 use vectors for the syntax table
+	   ;; XEmacs pre 20 and Emacs pre 19.30 use vectors for syntax tables.
 	   ((vectorp table)
 	    (if (= (logand (lsh (aref table ?a) -16) 255) 255)
 		(setq comments '8-bit)
@@ -750,21 +755,21 @@ the main release."
 	(with-output-to-temp-buffer "*cc-mode warnings*"
 	  (print (format
 "You are running a syntax patched Emacs 18 variant.  While this should
-work for you, you may want to consider upgrading to one of the latest
-Emacs 19's.  The syntax patches are no longer supported either for
-syntax.c or cc-mode."))))
+work for you, you may want to consider upgrading to Emacs 19.  The
+syntax patches are no longer supported either for syntax.c or
+cc-mode."))))
     (list major comments re-suite))
   "A list of features extant in the Emacs you are using.
 There are many flavors of Emacs out there, each with different
 features supporting those needed by cc-mode.  Here's the current
 supported list, along with the values for this variable:
 
- Emacs 18/Epoch 4:           (v18 no-dual-comments <RS>)
- Emacs 18/Epoch 4 (patch2):  (v18 8-bit <RS>)
- XEmacs 19:                  (v19 8-bit <RS>)
- Emacs 19:                   (v19 1-bit <RS>)
+ Emacs 18/Epoch 4:           (v18 no-dual-comments RS)
+ Emacs 18/Epoch 4 (patch2):  (v18 8-bit RS)
+ XEmacs 19:                  (v19 8-bit RS)
+ Emacs 19:                   (v19 1-bit RS)
 
-<RS> is the regular expression suite to use.  XEmacs versions after
+RS is the regular expression suite to use.  XEmacs versions after
 19.13, and Emacs versions after 19.29 use the `new-re' regex suite.
 All other Emacsen use the `old-re' suite.")
 
@@ -849,7 +854,7 @@ All other Emacsen use the `old-re' suite.")
   ;; every version of Emacs cc-mode supports.
   (if (not (boundp 'fill-paragraph-function))
       ;; I'd rather use an adaptive fill program instead of this.
-      (define-key c-mode-map "\eq"       'c-fill-paragraph))
+      (define-key c-mode-map "\eq"   'c-fill-paragraph))
   (define-key c-mode-map "\C-c\C-n"  'c-forward-conditional)
   (define-key c-mode-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-map "\C-c\C-u"  'c-up-conditional)
@@ -878,8 +883,8 @@ All other Emacsen use the `old-re' suite.")
 	   ;; in XEmacs 19, we want the menu to popup when the 3rd
 	   ;; button is hit.  In Lucid Emacs 19.10 and beyond this is
 	   ;; done automatically if we put the menu on mode-popup-menu
-	   ;; variable, see c-common-init. RMS decided that Emacs 19
-	   ;; should use C-Mouse-3 and this just works by default.
+	   ;; variable, see c-common-init. Emacs 19 uses C-Mouse-3 for
+	   ;; this, and it works with no special effort.
 	   (boundp 'current-menubar)
 	   (not (boundp 'mode-popup-menu)))
       (define-key c-mode-map 'button3 'c-popup-menu)))
@@ -899,8 +904,7 @@ All other Emacsen use the `old-re' suite.")
        ((fboundp 'set-keymap-parent)
 	(setq c++-mode-map (make-sparse-keymap))
 	(set-keymap-parent c++-mode-map c-mode-map))
-       (t (setq c++-mode-map (cons 'keymap c-mode-map)))
-       )
+       (t (setq c++-mode-map (cons 'keymap c-mode-map))))
     ;; Do it the hard way for Emacs 18 -- given by JWZ
     (setq c++-mode-map (nconc (make-sparse-keymap) c-mode-map)))
   ;; add bindings which are only useful for C++
@@ -927,8 +931,7 @@ All other Emacsen use the `old-re' suite.")
        ((fboundp 'set-keymap-parent)
 	(setq objc-mode-map (make-sparse-keymap))
 	(set-keymap-parent objc-mode-map c-mode-map))
-       (t (setq objc-mode-map (cons 'keymap c-mode-map)))
-       )
+       (t (setq objc-mode-map (cons 'keymap c-mode-map))))
     ;; Do it the hard way for Emacs 18 -- given by JWZ
     (setq objc-mode-map (nconc (make-sparse-keymap) c-mode-map)))
   ;; add bindings which are only useful for Objective-C
@@ -1201,8 +1204,8 @@ problem, including a reproducible test case and send the message.
 To see what version of cc-mode you are running, enter `\\[c-version]'.
 
 The hook variable `c-mode-hook' is run with no args, if that value is
-bound and has a non-nil value.  Also the common hook
-`c-mode-common-hook' is run first.
+bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
+run first.
 
 Key bindings:
 \\{c-mode-map}"
@@ -1232,13 +1235,13 @@ Key bindings:
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
-of the problem, including a reproducible test case and send the
+of the problem, including a reproducible test case, and send the
 message.
 
 To see what version of cc-mode you are running, enter `\\[c-version]'.
 
 The hook variable `c++-mode-hook' is run with no args, if that
-variable is bound and has a non-nil value.  Also the common hook
+variable is bound and has a non-nil value.  Also the hook
 `c-mode-common-hook' is run first.
 
 Key bindings:
@@ -1270,14 +1273,14 @@ Key bindings:
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
-of the problem, including a reproducible test case and send the
+of the problem, including a reproducible test case, and send the
 message.
 
 To see what version of cc-mode you are running, enter `\\[c-version]'.
 
 The hook variable `objc-mode-hook' is run with no args, if that value
-is bound and has a non-nil value.  Also the common hook
-`c-mode-common-hook' is run first.
+is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
+is run first.
 
 Key bindings:
 \\{objc-mode-map}"
@@ -4801,7 +4804,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.281 $"
+(defconst c-version "$Revision: 4.282 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
