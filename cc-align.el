@@ -290,7 +290,11 @@
 	(if (c-in-literal (cdr langelem))
 	    (forward-char 1)
 	  (setq donep t)))
-      (if (not (eq (char-after) ?=))
+      (if (or (not (eq (char-after) ?=))
+	      (save-excursion
+		(forward-char 1)
+		(c-forward-syntactic-ws (c-point 'eol))
+		(eolp)))
 	  ;; there's no equal sign on the line
 	  c-basic-offset
 	;; calculate indentation column after equals and ws, unless
