@@ -327,13 +327,16 @@
 					      (c-lang-var c-symbol-key)
 					      "\\)")
 				     limit t)
-			       (if (match-beginning 1)
-				   (put-text-property (match-beginning 1)
-						      (match-end 1)
-						      'face c-label-face)
-				 (put-text-property (match-beginning 3)
-						    (match-end 3)
-						    'face c-label-face))))))))
+			       (unless (get-text-property (match-beginning 0)
+							  'face)
+				 (if (match-beginning 1)
+				     (put-text-property (match-beginning 1)
+							(match-end 1)
+							'face c-label-face)
+				   (put-text-property (match-beginning 3)
+						      (match-end 3)
+						      'face c-label-face))))
+			     )))))
 
 	      ;; Fontify normal labels.
 	      c-font-lock-labels))
@@ -401,8 +404,7 @@
       ;; "foo<bar>::gnu" in C++).
       (goto-char id-start)
       (while (c-syntactic-re-search-forward c-symbol-key id-end 'move)
-	(unless (text-property-not-all (match-beginning 1) (match-end 1)
-				       'face nil)
+	(unless (get-text-property (match-beginning 1) 'face)
 	  (put-text-property (match-beginning 1) (match-end 1)
 			     'face id-face)))
 
