@@ -367,7 +367,8 @@ Customizing Indentation
 
     To check your changes quickly, just hit ESC C-x to reindent the
     entire function.  If this does what you want, you can put the
-    following lisp in your .emacs file:
+    following lisp in your c-mode-common-hook (see below for an
+    example):
 
     	(c-set-offset 'block-open 0)
 
@@ -400,6 +401,15 @@ Frequently Asked Questions
        (define-key c-mode-map "\C-m" 'newline-and-indent)
 
        This is a very common question. :-)
+
+    Q. I put (c-set-offset 'block-open 0) in my .emacs file and I get
+       an error saying that c-set-offset's function definition is
+       void.
+    A. Since cc-mode is autoloaded, it is typically not loaded into
+       your Emacs session by the time of the c-set-offset call.
+       Instead of putting this in your top-level .emacs file, put the
+       call to c-set-offset in your c-mode-common-hook.  See the
+       sample .emacs file below for details.
 
 
 ;; Sample .emacs file
@@ -440,6 +450,9 @@ Frequently Asked Questions
     (or (assoc my-style c-style-alist)
 	(setq c-style-alist (cons my-c-style c-style-alist)))
     (c-set-style my-style))
+  ;; offset customizations not in my-style
+  (c-set-offset 'block-open 'c-adaptive-block-open)
+  (c-set-offset 'member-init-intro (* 2 c-basic-offset))
   ;; other customizations
   (setq tab-width 8
 	;; this will make sure spaces are used instead of tabs
