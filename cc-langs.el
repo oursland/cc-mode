@@ -184,8 +184,6 @@
 
 
 
-(defconst c-list-of-mode-names '("C" "C++" "ObjC" "Java"))
-
 (defun c-use-java-style ()
   "Institutes `java' indentation style.
 For use with the variable `java-mode-hook'."
@@ -237,31 +235,8 @@ For use with the variable `java-mode-hook'."
   ;; ignore any byte compiler warnings you might get here
   (make-local-variable 'comment-indent-function)
   (setq comment-indent-function 'c-comment-indent)
-  ;; Put C menu into menubar and on popup menu for XEmacs 19. I think
-  ;; this happens automatically for Emacs 19.  Skip it for Infodock.
-  (if (and (not (memq 'infodock c-emacs-features))
-	   (boundp 'current-menubar)
-	   current-menubar
-	   (not (assoc mode-name current-menubar)))
-      ;; its possible that this buffer has changed modes from one of
-      ;; the other CC Mode modes.  In that case, only the menubar
-      ;; title of the menu changes.
-      (let ((modes (copy-sequence c-list-of-mode-names))
-	    changed-p)
-	(setq modes (delete major-mode modes))
-	(while modes
-	  (if (not (assoc (car modes) current-menubar))
-	      (setq modes (cdr modes))
-	    (relabel-menu-item (list (car modes)) mode-name)
-	    (setq modes nil
-		  changed-p t)))
-	(if (not changed-p)
-	    (progn
-	      (set-buffer-menubar (copy-sequence current-menubar))
-	      (add-submenu nil (c-mode-menu))
-	      ))))
-  (if (boundp 'mode-popup-menu)
-      (setq mode-popup-menu (c-mode-menu t)))
+  ;; add menus to menubar
+  (easy-menu-add (c-mode-menu mode-name))
   ;; put auto-hungry designators onto minor-mode-alist, but only once
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
@@ -391,11 +366,7 @@ it finds in `c-file-offsets'."
   (define-key c-mode-map "\C-c."     'c-set-style)
   ;; conflicts with OOBR
   ;;(define-key c-mode-map "\C-c\C-v"  'c-version)
-  ;;
-  ;; Install the popup menu in Emacs 19.  XEmacs does this by setting
-  ;; the buffer local variable mode-popup-menu.  This call will no-op
-  ;; in XEmacs.
-  (c-mode-fsf-menu "CC Mode" c-mode-map))
+  )
 
 (defvar c-mode-syntax-table nil
   "Syntax table used in c-mode buffers.")
