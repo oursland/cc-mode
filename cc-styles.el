@@ -108,6 +108,7 @@
      (c-basic-offset  . 8)
      (c-comment-only-line-offset . 0)
      (c-hanging-braces-alist . ((brace-list-open)
+				(brace-entry-open)
 				(substatement-open after)
 				(block-close . c-snug-do-while)))
      (c-cleanup-list . (brace-else-brace))
@@ -130,6 +131,7 @@
      (c-hanging-braces-alist . ((brace-list-open)
 				(brace-list-intro)
 				(brace-list-close)
+				(brace-entry-open)
 				(substatement-open after)
 				(block-close . c-snug-do-while)
 				))
@@ -312,6 +314,7 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
     (brace-list-close      . 0)
     (brace-list-intro      . +)
     (brace-list-entry      . 0)
+    (brace-entry-open      . 0)
     (statement             . 0)
     ;; some people might prefer
     ;;(statement             . c-lineup-runin-statements)
@@ -421,6 +424,8 @@ Here is the current list of valid syntactic element symbols:
  brace-list-close       -- close brace of an enum or static array list
  brace-list-intro       -- first line in an enum or static array list
  brace-list-entry       -- subsequent lines in an enum or static array list
+ brace-entry-open       -- subsequent lines in an enum or static array
+                           list that start with an open brace.
  statement              -- a C (or like) statement
  statement-cont         -- a continuation of a C (or like) statement
  statement-block-intro  -- the first line in a new statement block
