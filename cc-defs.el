@@ -382,10 +382,11 @@ The return value is the value of the last form in BODY."
 was in before BODY.  Any changes are kept if the last form in BODY
 returns non-nil.  Otherwise it's undone using the undo facility, and
 various other buffer state that might be affected by the changes is
-restored.  That includes the current buffer, point, mark and mark
-activation \(similar to `save-excursion').  The state is also restored
-if BODY exits nonlocally.  BODY may change the buffer even if it's
-read-only, but it is assumed to always return nil in that case."
+restored.  That includes the current buffer, point, mark, mark
+activation \(similar to `save-excursion'), and the modified state.
+The state is also restored if BODY exits nonlocally.  BODY may change
+the buffer even if it's read-only, but it is assumed to always return
+nil in that case."
   `(let (-tnt-chng-keep
 	 -tnt-chng-state
 	 (inhibit-read-only t))
