@@ -1432,18 +1432,18 @@ brace."
 	(not (looking-at c-keywords)))
     (if (c-major-mode-is 'pike-mode)
 	;; Handle the `<operator> syntax in Pike.
-	(if (eq (char-after) ?\`)
-	    t
-	  (save-excursion
-	    (skip-chars-backward "!%&*+\\-/<=>^|~")
-	    (let ((pos (point)))
-	      (cond ((memq (char-before) '(?\) ?\]))
-		     (c-safe (backward-char 2)))
-		    ((memq (char-before) '(?\( ?\[))
-		     (c-safe (backward-char 1))))
-	      (if (not (looking-at "()\\|\\[]"))
-		  (goto-char pos)))
-	    (eq (char-before) ?\`))))))
+	(save-excursion
+	  (if (eq (char-after) ?\`) (forward-char))
+	  (skip-chars-backward "!%&*+\\-/<=>^|~")
+	  (let ((pos (point)))
+	    (cond ((memq (char-before) '(?\) ?\]))
+		   (c-safe (backward-char 2)))
+		  ((memq (char-before) '(?\( ?\[))
+		   (c-safe (backward-char 1))))
+	    (if (not (looking-at "()\\|\\[]"))
+		(goto-char pos)))
+	  (and (eq (char-before) ?\`)
+	       (looking-at "[-!%&*+/<=>^|~]\\|()\\|\\[]"))))))
 
 
 (defun c-most-enclosing-brace (state)
