@@ -4250,7 +4250,7 @@ brace."
 	(c-search-uplist-for-classkey paren-state))))
 
 (defun c-just-after-func-arglist-p (&optional lim)
-  ;; Return t if we are between a function's argument list closing
+  ;; Return non-nil if we are between a function's argument list closing
   ;; paren and its opening brace.  Note that the list close brace
   ;; could be followed by a "const" specifier or a member init hanging
   ;; colon.  LIM is used as bound for some backward buffer searches;
@@ -4298,20 +4298,25 @@ brace."
 	   (or (not (c-beginning-of-macro))
 	       (and (c-forward-to-cpp-define-body)
 		    (< (point) checkpoint)))
-	   ;; check if we are looking at an ObjC method def
-	   (or (not c-opt-method-key)
-	       (progn
-		 (goto-char checkpoint)
-		 (c-forward-sexp -1)
-		 (forward-char -1)
-		 (c-backward-syntactic-ws lim)
-		 (not (or (memq (char-before) '(?- ?+))
-			  ;; or a class category
-			  (progn
-			    (c-forward-sexp -2)
-			    (looking-at c-class-key))
-			  )))))
-      )))
+	   ;; Check if we are looking at an ObjC method def or a class
+	   ;; category.
+	   (not (and c-opt-method-key
+		     (progn
+		       (goto-char checkpoint)
+		       (c-safe (c-backward-sexp) t))
+		     (progn
+		       (c-backward-syntactic-ws lim)
+		       (or (memq (char-before) '(?- ?+))
+			   (and (c-safe (c-forward-sexp -2) t)
+				(looking-at c-class-key))))))
+	   ;; Pike has compound types that include parens,
+	   ;; e.g. "array(string)".  Check that we aren't after one.
+	   (not (and (c-major-mode-is 'pike-mode)
+		     (progn
+		       (goto-char checkpoint)
+		       (c-safe (c-backward-sexp 2) t))
+		     (looking-at c-primitive-type-key)))
+	   ))))
 
 (defun c-in-knr-argdecl (&optional lim)
   ;; Return the position of the first argument declaration if point is
