@@ -1139,7 +1139,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		(when (> paren-depth 0)
 		  ;; Encountered something inside parens that isn't matched by
 		  ;; the `c-type-decl-*' regexps, so it's not a type decl
-		  ;; expression.
+		  ;; expression.  Try to skip out to the same paren depth to
+		  ;; not confuse the cast check below.
+		  (c-safe (goto-char (scan-lists (point) 1 paren-depth)))
 		  (throw 'at-decl-or-cast nil))
 
 		(if got-identifier
