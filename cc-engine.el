@@ -537,7 +537,8 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 
 (defun c-backward-syntactic-ws (&optional lim)
   ;; Backward skip over syntactic whitespace.
-  (let ((here (point-min))
+  (let ((start-line (c-point 'bol))
+	(here (point-min))
 	(line-cont 'maybe))
     (or lim (setq lim here))
     (while (/= here (point))
@@ -555,11 +556,12 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 	    (end-of-line)
 	    (setq line-cont (eq (char-before) ?\\))))
 	(when (or line-cont
-		  (looking-at "[ \t]*[^ \t\n]")
-		  (and (c-beginning-of-macro)
+		  (and (< (point) start-line)
+		       (c-beginning-of-macro)
 		       (< (point) lim)))
-	  ;; Don't move past the macro if we began inside it, or if
-	  ;; that'd take us past the limit.
+	  ;; Don't move past the macro if we began inside it or at the
+	  ;; end of the same line, or if the move would take us past
+	  ;; the limit.
 	  (goto-char here))
 	(setq line-cont nil)))
     (goto-char (max (point) lim))))
