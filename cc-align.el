@@ -28,6 +28,11 @@
 ;; Boston, MA 02111-1307, USA.
 
 
+(eval-when-compile
+  ;; When compiling via Makefile
+  (setq load-path (cons "." load-path))
+  (require 'cc-engine))
+
 ;; Standard indentation line-ups
 (defun c-lineup-arglist (langelem)
   ;; lineup the current arglist line with the arglist appearing just
