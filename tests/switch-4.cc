@@ -3,7 +3,7 @@ main(int argc, char *argv[])
     int i, j;
     switch (argc)
         {
-          stop:
+	stop:
             int k;
 
         case 0:
