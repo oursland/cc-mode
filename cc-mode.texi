@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.44 $
+@comment manual version: $Revision: 2.45 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-31 19:28:58 $
+@comment Last modification: $Date: 1996-05-31 19:33:03 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -50,8 +50,8 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 
 @center @titlefont{CC-MODE Version 4}
 @sp 2
-@center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.44 $)
+@center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
+@center (manual revision: $Revision: 2.45 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -299,12 +299,12 @@ above:
 @end example
 
 Next, you will want to set up Emacs so that it edits C files in
-@code{c-mode}, C++ files in @code{c++-mode}, and Objective-C files in
-@code{objc-mode}. All users should add the following to their
-@file{.emacs} file.  Note that this assumes you'll be editing @code{.h}
-and @code{.c} files as C, @code{.hh}, @code{.cc}, @code{.H}, and
-@code{.C} files as C++, @code{.m} files as Objective-C, and @code{.java}
-files as Java code. YMMV:
+@code{c-mode}, C++ files in @code{c++-mode}, Objective-C files in
+@code{objc-mode}, and Java files in @code{java-mode}. All users should
+add the following to their @file{.emacs} file.  Note that this assumes
+you'll be editing @code{.h} and @code{.c} files as C, @code{.hh},
+@code{.cc}, @code{.H}, and @code{.C} files as C++, @code{.m} files as
+Objective-C, and @code{.java} files as Java code. YMMV:
 @example
 @group
 
@@ -646,10 +646,10 @@ are turned off.
 The state of the minor modes is always reflected in the minor mode list
 on the modeline of the @code{cc-mode} buffer.  When auto-newline mode is
 enabled, you will see @samp{C/a} on the mode line @footnote{Remember
-that the @samp{C} would be replaced with @samp{C++} or @samp{ObjC} if
-you were editing C++ or Objective-C code.}.  When hungry delete mode is
-enabled you would see @samp{C/h} and when both modes are enabled, you'd
-see @samp{C/ah}.
+that the @samp{C} would be replaced with @samp{C++}, @samp{ObjC}, or
+@samp{Java} if you were editing C++, Objective-C, or Java code,
+respectively.}.  When hungry delete mode is enabled you would see
+@samp{C/h} and when both modes are enabled, you'd see @samp{C/ah}.
 
 @kindex C-c C-a
 @kindex C-c C-d
@@ -1590,7 +1590,7 @@ files.  You would add this:
 @group
 
 (defun my-c-mode-common-hook ()
-  ;; use Ellemtel style for all C, C++, and Objective-C code
+  ;; use Ellemtel style for all C like languages
   (c-set-style "ellemtel")
   ;; other customizations can go here
   )
@@ -2172,7 +2172,7 @@ unions are essentially equivalent syntactically (and are very similar
 semantically), so replacing the @code{class} keyword in the example
 above with @code{struct} or @code{union} would still result in a syntax
 of @code{class-open} for line 4 @footnote{This is the case even for C
-and Objective-C.  For consistency, structs in all three languages are
+and Objective-C.  For consistency, structs in all supported languages are
 syntactically equivalent to classes.  Note however that the keyword
 @code{class} is meaningless in C and Objective-C.}.  Similarly, line 18
 is assigned @code{class-close} syntax.
@@ -2306,7 +2306,7 @@ Line 9 is a little different -- since it contains the keyword
 given the @code{else-clause} syntax.  Note also that line 10 is slightly
 different too.  Because @code{else} is considered a conditional
 introducing keyword @footnote{The list of conditional keywords are (in
-C, Objective-C, C++, and Java): @code{for}, @code{if}, @code{do},
+C, C++, Objective-C, and Java): @code{for}, @code{if}, @code{do},
 @code{else}, @code{while}, and @code{switch}.  C++ and Java have two
 additional conditional keywords: @code{try} and @code{catch}.  Java also
 has the @code{finally} and @code{synchronized} keywords}, and because
@@ -2839,8 +2839,9 @@ about its availability!
         indent-tabs-mode nil)
   ;; we like auto-newline and hungry-delete
   (c-toggle-auto-hungry-state 1)
-  ;; keybindings for C, C++, and Objective-C.  We can put these in
-  ;; c-mode-map because c++-mode-map and objc-mode-map inherit it
+  ;; keybindings for all supported languages.  We can put these in
+  ;; c-mode-map because c++-mode-map, objc-mode-map, and java-mode-map
+  ;; inherit from it.
   (define-key c-mode-map "\C-m" 'newline-and-indent)
   )
 
