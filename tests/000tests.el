@@ -247,6 +247,7 @@
 	    (set-buffer testbuf)
 	    (goto-line linenum)
 	    (message "error found on line: %d" linenum)
+	    (message "expected: %s, results: %s" expected results)
 	    (indent-for-comment)
 	    (insert "!TBD: Regression!")
 	    (setq error-found-p t)))
@@ -272,6 +273,7 @@
 
 (defun do-all-tests (&optional resetp)
   (interactive "P")
+  (c-version)
   (if (consp resetp)
       (setq finished-tests nil))
   (mapcar 'do-one-test list-of-tests)
