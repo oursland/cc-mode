@@ -4,6 +4,29 @@
   include ("header.h");
 ?>
 
+<h3>Byte Compiling</h3>
+
+<p>It is <em>highly</em> recommended that you byte-compile CC Mode for
+performance reasons.  Running CC Mode non-byte-compiled is not
+supported.
+
+<p>You can compile CC Mode in the same way as any other package.  To
+compile it from a running (X)Emacs session:
+
+<pre>
+M-0 M-x byte-recompile-directory RET /path/to/cc-mode RET</pre>
+
+<p>To compile CC Mode from the shell:
+
+<pre>
+% cd /path/to/cc-mode
+% $(EMACS) -batch -no-site-file -q -f batch-byte-compile cc-*.el</pre>
+
+where <code>$(EMACS)</code> is either <code>emacs</code> or
+<code>xemacs</code> depending on the flavor you use.  The compilation
+will produce a lot of warnings for XEmacs 19.  They can safely be
+ignored.
+
 <h3>Setting <code>load-path</code></h3>
 
 <p>You need to make sure that this new version of CC Mode is on your
@@ -19,28 +42,11 @@ Make sure this finds the one you expect. If not, you can add this to
 your <code>.emacs</code> file:
 
 <pre>
-(setq load-path (cons "/dir/of/cc-mode/" load-path))</pre>
+(setq load-path (cons "/path/to/cc-mode/" load-path))</pre>
 
 The path you use should be an absolute path (starting with a slash).
 You cannot use a path beginning with "~" in the <code>load-path</code>
 variable.
-
-<h3>Byte Compiling</h3>
-
-<p>It is <em>highly</em> recommended that you byte-compile CC Mode,
-for both performance and compatibility reasons.  Running CC Mode
-un-bytecompiled is not supported and <strong>may not work</strong> at
-all depending on the flavor of (X)Emacs you are using.  You can byte
-compile CC Mode by doing the following from your shell:
-
-<pre>
-% cd /path/to/cc-mode
-% $(EMACS) -batch -no-site-file -q -f batch-byte-compile cc-*.el</pre>
-
-where <code>$(EMACS)</code> is either <code>emacs</code> or
-<code>xemacs</code> depending on the flavor you use.  The compilation
-will produce a lot of warnings for XEmacs 19.  They can safely be
-ignored.
 
 <p>Be sure to see the list of <a href="compat.php">compatibility
 issues</a>, for special notes about (X)Emacs versions and package

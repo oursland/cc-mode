@@ -25,7 +25,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
+;; along with GNU Emacs; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -39,10 +39,9 @@
 		  (stringp byte-compile-dest-file))
 	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (require 'cc-bytecomp)))
+    (load "cc-bytecomp" nil t)))
 
 (cc-require 'cc-defs)
-(cc-require 'cc-langs)
 (cc-require 'cc-vars)
 (cc-require 'cc-align)
 ;; cc-align is only indirectly required: Styles added with
@@ -142,8 +141,7 @@
      (c-comment-only-line-offset . 0)
      (c-hanging-braces-alist     . ((substatement-open before after)))
      (c-offsets-alist . ((topmost-intro        . 0)
-                         (topmost-intro-cont   . 0)
-                         (substatement         . +)
+			 (substatement         . +)
 			 (substatement-open    . 0)
                          (case-label           . +)
                          (access-label         . -)
@@ -243,36 +241,43 @@ the existing style.")
 ;; Functions that manipulate styles
 (defun c-set-style-1 (conscell dont-override)
   ;; Set the style for one variable
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (let ((attr (car conscell))
 	(val  (cdr conscell)))
     (cond
      ;; first special variable
      ((eq attr 'c-offsets-alist)
-      (mapcar
-       (function
-	(lambda (langentry)
-	  (let ((langelem (car langentry))
-		(offset (cdr langentry)))
-	    (unless (and dont-override
-			 (assq langelem c-offsets-alist))
-	      (c-set-offset langelem offset))
-	    )))
-       (if dont-override (reverse val) val)))
+      (let ((offsets (cond ((eq dont-override t)
+			    c-offsets-alist)
+			   (dont-override
+			    (default-value 'c-offsets-alist)))))
+	(mapcar (lambda (langentry)
+		  (let ((langelem (car langentry))
+			(offset (cdr langentry)))
+		    (unless (assq langelem offsets)
+		      (c-set-offset langelem offset))))
+		val)))
      ;; second special variable
      ((eq attr 'c-special-indent-hook)
-      (let ((add-func (if dont-override
-			  (lambda (func)
-			    (unless (memq func c-special-indent-hook)
-			      (add-hook 'c-special-indent-hook func t)))
-			(lambda (func)
-			  (add-hook 'c-special-indent-hook func)))))
+      ;; Maybe we should ignore dont-override here and always add new
+      ;; hooks?
+      (unless (cond ((eq dont-override t)
+		     c-special-indent-hook)
+		    (dont-override
+		     (default-value 'c-special-indent-hook)))
 	(if (listp val)
-	    (mapcar add-func (if dont-override (reverse val) val))
-	  (funcall add-func val))))
+	    (mapcar (lambda (func)
+		      (add-hook 'c-special-indent-hook func t t))
+		    val)
+	  (add-hook 'c-special-indent-hook val t t))))
      ;; all other variables
      (t (when (or (not dont-override)
 		  (not (memq attr c-style-variables))
-		  (eq (symbol-value attr) 'set-from-style))
+		  (eq (if (eq dont-override t)
+			  (symbol-value attr)
+			(default-value attr))
+		      'set-from-style))
 	  (set attr val)
 	  ;; Must update a number of other variables if
 	  ;; c-comment-prefix-regexp is set.
@@ -281,6 +286,8 @@ the existing style.")
 
 (defun c-get-style-variables (style basestyles)
   ;; Return all variables in a style by resolving inheritances.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (if (not style)
       (copy-alist c-fallback-style)
     (let ((vars (cdr (or (assoc (downcase style) c-style-alist)
@@ -310,15 +317,23 @@ for details of setting up styles.
 The variable `c-indentation-style' always contains the buffer's current
 style name.
 
-If the optional argument DONT-OVERRIDE is non-nil, no style variables
-that already have values will be overridden.  I.e. in the case of
+If the optional argument DONT-OVERRIDE is t, no style variables that
+already have values will be overridden.  I.e. in the case of
 `c-offsets-alist', syntactic symbols will only be added, and in the
 case of all other style variables, only those set to `set-from-style'
 will be reassigned.
 
-Obviously, specifying DONT-OVERRIDE is useful mainly when the initial
-style is chosen for a CC Mode buffer by a major mode.  Since this is
-done internally by CC Mode, there's hardly ever a reason to use it."
+If DONT-OVERRIDE is neither nil nor t, only those style variables that
+have default (i.e. non-buffer local) values will keep their settings
+while the rest will be overridden.  This is useful to avoid overriding
+global settings done in ~/.emacs when setting a style from a mode hook
+\(providing the style variables are buffer local, which is the
+default).
+
+Obviously, setting DONT-OVERRIDE to t is useful mainly when the
+initial style is chosen for a CC Mode buffer by a major mode.  Since
+that is done internally by CC Mode, it typically won't have any effect
+when used elsewhere."
   (interactive
    (list (let ((completion-ignore-case t)
 	       (prompt (format "Which %s indentation style? "
@@ -349,8 +364,8 @@ done internally by CC Mode, there's hardly ever a reason to use it."
     (mapcar (lambda (elem)
 	      (c-set-style-1 elem dont-override))
 	    ;; Need to go through the variables backwards when we
-	    ;; don't override.
-	    (if dont-override (nreverse vars) vars)))
+	    ;; don't override any settings.
+	    (if (eq dont-override t) (nreverse vars) vars)))
   (setq c-indentation-style stylename)
   (c-keep-region-active))
 
@@ -384,6 +399,8 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 (defun c-read-offset (langelem)
   ;; read new offset value for LANGELEM from minibuffer. return a
   ;; legal value only
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (let* ((oldoff  (cdr-safe (or (assq langelem c-offsets-alist)
 				(assq langelem (get 'c-offsets-alist
 						    'c-stylevar-fallback)))))
@@ -433,7 +450,8 @@ and exists only for compatibility reasons."
 		    ;; initial contents tries to be the last element
 		    ;; on the syntactic analysis list for the current
 		    ;; line
-		    (let* ((syntax (c-guess-basic-syntax))
+		    (c-save-buffer-state
+			  ((syntax (c-guess-basic-syntax))
 			   (len (length syntax))
 			   (ic (format "%s" (car (nth (1- len) syntax)))))
 		      (cons ic 0))
@@ -458,6 +476,9 @@ and exists only for compatibility reasons."
   "Fix things up for paragraph recognition and filling inside comments by
 incorporating the value of `c-comment-prefix-regexp' in the relevant
 variables."
+  ;;
+  ;; This function does not do any hidden buffer changes.
+
   (setq c-current-comment-prefix
 	(if (listp c-comment-prefix-regexp)
 	    (cdr-safe (or (assoc major-mode c-comment-prefix-regexp)
@@ -466,11 +487,11 @@ variables."
   (let ((comment-line-prefix
 	 (concat "[ \t]*\\(" c-current-comment-prefix "\\)[ \t]*")))
     (setq paragraph-start (concat comment-line-prefix
-				  (c-lang-var paragraph-start)
+				  c-paragraph-start
 				  "\\|"
 				  page-delimiter)
 	  paragraph-separate (concat comment-line-prefix
-				     (c-lang-var paragraph-separate)
+				     c-paragraph-separate
 				     "\\|"
 				     page-delimiter)
 	  paragraph-ignore-fill-prefix t
@@ -508,6 +529,8 @@ CC Mode by making sure the proper entries are present on
   ;; This function is intended to be used explicitly by the end user
   ;; only.
   ;;
+  ;; This function does not do any hidden buffer changes.
+
   ;; The default configuration already handles C++ comments, but we
   ;; need to add handling of C block comments.  A new filladapt token
   ;; `c-comment' is added for that.
@@ -536,6 +559,8 @@ CC Mode by making sure the proper entries are present on
   ;; crucial because future c-set-style calls will always reset the
   ;; variables first to the `cc-mode' style before instituting the new
   ;; style.  Only do this once!
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (unless (get 'c-initialize-builtin-style 'is-run)
     (put 'c-initialize-builtin-style 'is-run t)
     ;;(c-initialize-cc-mode)
@@ -560,24 +585,16 @@ CC Mode by making sure the proper entries are present on
 
 (defun c-make-styles-buffer-local (&optional this-buf-only-p)
   "Make all CC Mode style variables buffer local.
-If you edit primarily one style of C (or C++, Objective-C, Java, etc)
-code, you probably want style variables to be global.  This is the
-default.
+If `this-buf-only-p' is non-nil, the style variables will be made
+buffer local only in the current buffer.  Otherwise they'll be made
+permanently buffer local in any buffer that change their values.
 
-If you edit many different styles of C (or C++, Objective-C, Java,
-etc) at the same time, you probably want the CC Mode style variables
-to be buffer local.  If you do, it's advicable to set any CC Mode
-style variables in a hook function (e.g. off of `c-mode-common-hook'),
-instead of at the top level of your ~/.emacs file.
+The buffer localness of the style variables are normally controlled
+with the variable `c-style-variables-are-local-p', so there's seldom
+any reason to call this function directly."
+  ;;
+  ;; This function does not do any hidden buffer changes.
 
-This function makes all the CC Mode style variables buffer local.
-Call it after CC Mode is loaded into your Emacs environment.
-Conversely, set the variable `c-style-variables-are-local-p' to t in
-your .emacs file, before CC Mode is loaded, and this function will be
-automatically called when CC Mode is loaded.
-
-Optional argument, when non-nil, means use `make-local-variable'
-instead of `make-variable-buffer-local'."
   ;; style variables
   (let ((func (if this-buf-only-p
 		  'make-local-variable

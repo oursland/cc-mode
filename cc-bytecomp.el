@@ -8,18 +8,20 @@
 ;; Version:    See cc-mode.el
 ;; Keywords:   c languages oop
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation; either version 2 of the License, or
-;; (at your option) any later version.
+;; This file is part of GNU Emacs.
 
-;; This program is distributed in the hope that it will be useful,
+;; GNU Emacs is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 2, or (at your option)
+;; any later version.
+
+;; GNU Emacs is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
+;; along with GNU Emacs; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -32,7 +34,44 @@
 ;;
 ;; There's really nothing CC Mode specific here; this functionality
 ;; ought to be provided by the byte compilers or some accompanying
-;; library.
+;; library.  To use it from some package "foo.el", begin by putting
+;; the following blurb at the top of the file:
+;;
+;;   (eval-when-compile
+;;     (let ((load-path
+;;            (if (and (boundp 'byte-compile-dest-file)
+;;                     (stringp byte-compile-dest-file))
+;;                (cons (file-name-directory byte-compile-dest-file) load-path)
+;;              load-path)))
+;;       (load "cc-bytecomp" nil t))
+;;
+;; This (unfortunately rather clumsy) form will ensure that the
+;; cc-bytecomp.el in the same directory as foo.el is loaded during
+;; byte compilation of the latter.
+;;
+;; At the end of foo.el there should normally be a "(provide 'foo)".
+;; Replace it with "(cc-provide 'foo)"; that is necessary to restore
+;; the environment after the byte compilation.  If you don't have a
+;; `provide' at the end, you have to add the following as the very
+;; last form in the file:
+;;
+;;   (eval-when-compile (cc-bytecomp-restore-environment))
+;;
+;; Now everything is set to use the various functions and macros in
+;; this package.
+;;
+;; If your package is split into several files, you should use
+;; `cc-require', `cc-require-when-compile' or `cc-load' to load them.
+;; That ensures that the files in the same directory always are
+;; loaded, to avoid mixup with other versions of them that might exist
+;; elsewhere in the load path.
+;;
+;; To suppress byte compiler warnings, use the macros
+;; `cc-bytecomp-defun', `cc-bytecomp-defvar',
+;; `cc-bytecomp-obsolete-fun', and `cc-bytecomp-obsolete-var'.
+;;
+;; This file is not used at all after the package has been byte
+;; compiled.  It is however necessary when running uncompiled.
 
 
 ;;; Code:
@@ -40,53 +79,16 @@
 (defvar cc-bytecomp-unbound-variables nil)
 (defvar cc-bytecomp-original-functions nil)
 (defvar cc-bytecomp-original-properties nil)
-(defvar cc-bytecomp-load-depth 0)
 (defvar cc-bytecomp-loaded-files nil)
 (defvar cc-bytecomp-environment-set nil)
-
-(put 'cc-eval-when-compile 'lisp-indent-hook 0)
-(defmacro cc-eval-when-compile (&rest body)
-  "Like `progn', but evaluates the body at compile time.
-The result of the body appears to the compiler as a quoted constant.
-
-This variant works around what looks like a bug in
-`eval-when-compile': During byte compilation it byte compiles its
-contents before evaluating it.  That can cause forms to be compiled in
-situations they aren't intended to be compiled.  See cc-bytecomp.el
-for further discussion."
-  ;;
-  ;; Example: It's not possible to defsubst a primitive, e.g. the
-  ;; following will produce an error (in any emacs flavor), since
-  ;; `nthcdr' is a primitive function that's handled specially by the
-  ;; byte compiler and thus can't be redefined:
-  ;;
-  ;;     (defsubst nthcdr (val) val)
-  ;;
-  ;; `defsubst', like `defmacro', needs to be evaluated at compile
-  ;; time, so this will produce an error during byte compilation.
-  ;;
-  ;; CC Mode occasionally needs to do things like this for cross-emacs
-  ;; compatibility (although we try to avoid it since it results in
-  ;; byte code that isn't compatible between emacsen).  It therefore
-  ;; uses the following to conditionally do a `defsubst':
-  ;;
-  ;;     (eval-when-compile
-  ;;       (if (not (fboundp 'foo))
-  ;;           (defsubst foo ...)))
-  ;;
-  ;; But `eval-when-compile' byte compiles its contents and _then_
-  ;; evaluates it (in all current emacs versions, up to and including
-  ;; Emacs 20.6 and XEmacs 21.1 as of this writing).  So this will
-  ;; still produce an error, since the byte compiler will get to the
-  ;; defsubst anyway.  That's arguably a bug because the point with
-  ;; `eval-when-compile' is that it should evaluate rather than
-  ;; compile its contents.
-  `(eval-when-compile (eval '(progn ,@body))))
 
 (defun cc-bytecomp-setup-environment ()
   ;; Eval'ed during compilation to setup variables, functions etc
   ;; declared with `cc-bytecomp-defvar' et al.
-  (if (= cc-bytecomp-load-depth 0)
+  (if (not load-in-progress)
+      ;; Look at `load-in-progress' to tell whether we're called
+      ;; directly in the file being compiled or just from some file
+      ;; being loaded during compilation.
       (let (p)
 	(if cc-bytecomp-environment-set
 	    (error "Byte compilation environment already set - \
@@ -96,7 +98,8 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	  (if (not (boundp (car p)))
 	      (progn
 		(eval `(defvar ,(car p)))
-		(set (car p) 'cc-bytecomp-ignore)))
+		(set (car p) (intern (concat "cc-bytecomp-ignore-var:"
+					     (symbol-name (car p)))))))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-functions)
 	(while p
@@ -104,7 +107,8 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 		(temp-macro (car (cdr (car p)))))
 	    (if temp-macro
 		(eval `(defmacro ,fun ,@temp-macro))
-	      (fset fun 'cc-bytecomp-ignore)))
+	      (fset fun (intern (concat "cc-bytecomp-ignore-fun:"
+					(symbol-name fun))))))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-properties)
 	(while p
@@ -118,13 +122,15 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 (defun cc-bytecomp-restore-environment ()
   ;; Eval'ed during compilation to restore variables, functions etc
   ;; declared with `cc-bytecomp-defvar' et al.
-  (if (= cc-bytecomp-load-depth 0)
+  (if (not load-in-progress)
       (let (p)
 	(setq p cc-bytecomp-unbound-variables)
 	(while p
 	  (let ((var (car p)))
 	    (if (and (boundp var)
-		     (eq var 'cc-bytecomp-ignore))
+		     (eq (intern (concat "cc-bytecomp-ignore-var:"
+					 (symbol-name var)))
+			 var))
 		(makunbound var)))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-functions)
@@ -132,7 +138,9 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	  (let ((fun (car (car p)))
 		(def (car (cdr (cdr (car p))))))
 	    (if (and (fboundp fun)
-		     (eq (symbol-function fun) 'cc-bytecomp-ignore))
+		     (eq (intern (concat "cc-bytecomp-ignore-fun:"
+					 (symbol-name fun)))
+			 (symbol-function fun)))
 		(if (eq def 'unbound)
 		    (fmakunbound fun)
 		  (fset fun def))))
@@ -148,36 +156,43 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	  (setq p (cdr p)))
 	(setq cc-bytecomp-environment-set nil))))
 
-(defun cc-bytecomp-load (cc-part)
-  ;; Eval'ed during compilation to load a CC Mode file from the source
-  ;; directory (assuming it's the same as the compiled file
-  ;; destination dir).
-  (if (and (boundp 'byte-compile-dest-file)
-	   (stringp byte-compile-dest-file))
-      (progn
-	(cc-bytecomp-restore-environment)
-	(let ((cc-bytecomp-load-depth (1+ cc-bytecomp-load-depth))
-	      (load-path
-	       (cons (file-name-directory byte-compile-dest-file)
-		     load-path))
-	      (cc-file (concat cc-part ".el")))
-	  (if (member cc-file cc-bytecomp-loaded-files)
-	      ()
-	    (setq cc-bytecomp-loaded-files
-		  (cons cc-file cc-bytecomp-loaded-files))
-	    (load cc-file nil t t)))
-	(cc-bytecomp-setup-environment)
-	t)))
+(eval
+ ;; This eval is to avoid byte compilation of the function below.
+ ;; There's some bug in XEmacs 21.4.6 that can cause it to dump core
+ ;; here otherwise.  My theory is that `cc-bytecomp-load' might be
+ ;; redefined recursively during the `load' inside it, and if it in
+ ;; that case is byte compiled then the byte interpreter gets
+ ;; confused.  I haven't succeeded in isolating the bug, though. /mast
+
+ '(defun cc-bytecomp-load (cc-part)
+    ;; Eval'ed during compilation to load a CC Mode file from the source
+    ;; directory (assuming it's the same as the compiled file
+    ;; destination dir).
+    (if (and (boundp 'byte-compile-dest-file)
+	     (stringp byte-compile-dest-file))
+	(progn
+	  (cc-bytecomp-restore-environment)
+	  (let ((load-path
+		 (cons (file-name-directory byte-compile-dest-file)
+		       load-path))
+		(cc-file (concat cc-part ".el")))
+	    (if (member cc-file cc-bytecomp-loaded-files)
+		()
+	      (setq cc-bytecomp-loaded-files
+		    (cons cc-file cc-bytecomp-loaded-files))
+	      (load cc-file nil t t)))
+	  (cc-bytecomp-setup-environment)
+	  t))))
 
 (defmacro cc-require (cc-part)
-  "Force loading of the corresponding .el file in the current
-directory during compilation, but compile in a `require'.  Don't use
-within `eval-when-compile'.
+  "Force loading of the corresponding .el file in the current directory
+during compilation, but compile in a `require'.  Don't use within
+`eval-when-compile'.
 
 Having cyclic cc-require's will result in infinite recursion.  That's
 somewhat intentional."
   `(progn
-     (cc-eval-when-compile (cc-bytecomp-load (symbol-name ,cc-part)))
+     (eval-when-compile (cc-bytecomp-load (symbol-name ,cc-part)))
      (require ,cc-part)))
 
 (defmacro cc-provide (feature)
@@ -188,15 +203,27 @@ after the compilation.  Don't use within `eval-when-compile'."
      (provide ,feature)))
 
 (defmacro cc-load (cc-part)
-  "Force loading of the corresponding .el file in the current
-directory during compilation.  Don't use outside `eval-when-compile'
-or `eval-and-compile'.
+  "Force loading of the corresponding .el file in the current directory
+during compilation.  Don't use outside `eval-when-compile' or
+`eval-and-compile'.
 
 Having cyclic cc-load's will result in infinite recursion.  That's
 somewhat intentional."
   `(or (and (featurep 'cc-bytecomp)
 	    (cc-bytecomp-load ,cc-part))
        (load ,cc-part nil t nil)))
+
+(defmacro cc-require-when-compile (cc-part)
+  "Force loading of the corresponding .el file in the current directory
+during compilation, but do a compile time `require' otherwise.  Don't
+use within `eval-when-compile'."
+  `(eval-when-compile
+     (if (and (featurep 'cc-bytecomp)
+	      (cc-bytecomp-is-compiling))
+	 (if (or (not load-in-progress)
+		 (not (featurep ,cc-part)))
+	     (cc-bytecomp-load (symbol-name ,cc-part)))
+       (require ,cc-part))))
 
 (defun cc-bytecomp-is-compiling ()
   "Return non-nil if eval'ed during compilation.  Don't use outside
@@ -214,14 +241,21 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 	   (setq cc-bytecomp-unbound-variables
 		 (cons ',var cc-bytecomp-unbound-variables)))
        (if (and (cc-bytecomp-is-compiling)
-		(= cc-bytecomp-load-depth 0))
+		(not load-in-progress))
 	   (progn
 	     (defvar ,var)
-	     (set ',var 'cc-bytecomp-ignore))))))
+	     (set ',var (intern (concat "cc-bytecomp-ignore-var:"
+					(symbol-name ',var)))))))))
 
 (defmacro cc-bytecomp-defun (fun)
   "Bind the symbol as a function during compilation of the file,
-to silence the byte compiler.  Don't use within `eval-when-compile'."
+to silence the byte compiler.  Don't use within `eval-when-compile'.
+
+If the symbol already is bound as a function, it will keep that
+definition.  That means that this macro will not shut up warnings
+about incorrect number of arguments.  It's dangerous to try to replace
+existing functions since the byte compiler might need the definition
+at compile time, e.g. for macros and inline functions."
   `(eval-when-compile
      (if (not (assq ',fun cc-bytecomp-original-functions))
 	 (setq cc-bytecomp-original-functions
@@ -232,9 +266,10 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 			     'unbound))
 		     cc-bytecomp-original-functions)))
      (if (and (cc-bytecomp-is-compiling)
-	      (= cc-bytecomp-load-depth 0)
+	      (not load-in-progress)
 	      (not (fboundp ',fun)))
-	 (fset ',fun 'cc-bytecomp-ignore))))
+	 (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
+				     (symbol-name ',fun)))))))
 
 (put 'cc-bytecomp-defmacro 'lisp-indent-function 'defun)
 (defmacro cc-bytecomp-defmacro (fun &rest temp-macro)
@@ -254,7 +289,7 @@ file.  Don't use outside `eval-when-compile'."
 (defmacro cc-bytecomp-put (symbol propname value)
   "Set a property on a symbol during compilation (and evaluation) of
 the file.  Don't use outside `eval-when-compile'."
-  `(cc-eval-when-compile
+  `(eval-when-compile
      (if (not (assoc (cons ,symbol ,propname) cc-bytecomp-original-properties))
 	 (setq cc-bytecomp-original-properties
 	       (cons (cons (cons ,symbol ,propname)
@@ -263,7 +298,7 @@ the file.  Don't use outside `eval-when-compile'."
      (put ,symbol ,propname ,value)))
 
 (defmacro cc-bytecomp-obsolete-var (symbol)
-  "Suppress warnings about that the given symbol is an obsolete variable.
+  "Suppress warnings that the given symbol is an obsolete variable.
 Don't use within `eval-when-compile'."
   `(eval-when-compile
      (if (get ',symbol 'byte-obsolete-variable)
@@ -276,21 +311,35 @@ Don't use within `eval-when-compile'."
     (byte-compile-obsolete form)))
 
 (defmacro cc-bytecomp-obsolete-fun (symbol)
-  "Suppress warnings about that the given symbol is an obsolete function.
+  "Suppress warnings that the given symbol is an obsolete function.
 Don't use within `eval-when-compile'."
   `(eval-when-compile
      (if (eq (get ',symbol 'byte-compile) 'byte-compile-obsolete)
 	 (cc-bytecomp-put ',symbol 'byte-compile
 			  'cc-bytecomp-ignore-obsolete))))
 
-;; Override ourselves with a version loaded from source if we're
-;; compiling, like cc-require does for all the other files.
-(if (and (cc-bytecomp-is-compiling)
-	 (= cc-bytecomp-load-depth 0))
-    (let ((load-path
-	   (cons (file-name-directory byte-compile-dest-file) load-path))
-	  (cc-bytecomp-load-depth 1))
-      (load "cc-bytecomp.el" nil t t)))
+(defmacro cc-bytecomp-boundp (symbol)
+  "Return non-nil if the given symbol is bound as a variable outside
+the compilation.  This is the same as using `boundp' but additionally
+exclude any variables that have been bound during compilation with
+`cc-bytecomp-defvar'."
+  (if (and (cc-bytecomp-is-compiling)
+	   (memq (car (cdr symbol)) cc-bytecomp-unbound-variables))
+      nil
+    `(boundp ,symbol)))
+
+(defmacro cc-bytecomp-fboundp (symbol)
+  "Return non-nil if the given symbol is bound as a function outside
+the compilation.  This is the same as using `fboundp' but additionally
+exclude any functions that have been bound during compilation with
+`cc-bytecomp-defun'."
+  (let (fun-elem)
+    (if (and (cc-bytecomp-is-compiling)
+	     (setq fun-elem (assq (car (cdr symbol))
+				  cc-bytecomp-original-functions))
+	     (eq (elt fun-elem 2) 'unbound))
+	nil
+      `(fboundp ,symbol))))
 
 
 (provide 'cc-bytecomp)

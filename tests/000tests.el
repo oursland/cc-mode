@@ -43,6 +43,11 @@
 ;;    that the results are what you expect, then save both files, and
 ;;    check them into CVS.
 
+;; The test suite can also check the fontification done by the
+;; font-lock settings.  If there is a file with the extension .face,
+;; the fontification will be tested against it.  Such files are
+;; generated with `M-x facefile'.
+
 ;; Some times the tests will fail without an actual regression being
 ;; introduced.  This might happen if, e.g. the default Java style
 ;; changes.  In this case, you can modify the corresponding .res file
@@ -50,21 +55,179 @@
 ;; this.  Make sure you know this is what you want to do!
 ;;
 ;; To do this, you want to make sure the test source is indented
-;; properly, then clear the .res file and regenerate it using step #3
-;; above.
+;; properly, then regenerate the .res and/or .face files using
+;; `resfile' or `facefile', respectively.  There's also a convenience
+;; function `shift-res-offsets' that shifts the positions in a .res
+;; file after a certain point, which is useful if the length of a line
+;; inside a test changes for some reason.
+
+(defvar cc-test-dir nil)
+(eval-and-compile
+  (setq cc-test-dir
+	(let ((file (if (and (boundp 'byte-compile-dest-file)
+			     (stringp byte-compile-dest-file))
+			byte-compile-dest-file
+		      load-file-name)))
+	  (if file
+	      (file-name-directory file)
+	    default-directory)))
+  (let ((srcdir (expand-file-name (concat cc-test-dir ".."))))
+    (setq load-path (cons srcdir load-path))))
 
 (require 'compile)
 (require 'cl)
+(require 'font-lock)
+(require 'cc-defs)
 
-(defvar cc-test-dir nil)
-(setq cc-test-dir
-      (if load-file-name
-	  (file-name-directory load-file-name)
-	default-directory))
+;; Silence the compiler.
+(defvar font-lock-fontify-buffer-function)
+(defvar deactivate-mark)
+(defvar inhibit-point-motion-hooks)
+(defvar font-lock-global-modes)
 
-(let ((srcdir (expand-file-name (concat cc-test-dir ".."))))
-  (setq load-path (cons srcdir load-path)))
+;; Make sure all used faces are unique before loading cc-fonts.  We
+;; might be screwed if it's already loaded - the check for ambiguous
+;; faces below will complain in that case.
+(unless (c-face-name-p 'font-lock-doc-face)
+  (if (c-face-name-p 'font-lock-string-face)
+      (copy-face 'font-lock-string-face 'font-lock-doc-face)
+    (make-face 'font-lock-doc-face)))
+(unless (c-face-name-p 'font-lock-preprocessor-face)
+  (cond ((c-face-name-p 'font-lock-builtin-face)
+	 (copy-face 'font-lock-builtin-face 'font-lock-preprocessor-face))
+	((c-face-name-p 'font-lock-reference-face)
+	 (copy-face 'font-lock-reference-face 'font-lock-preprocessor-face))
+	(t (make-face 'font-lock-preprocessor-face)))
+  (defvar font-lock-preprocessor-face nil)
+  (setq font-lock-preprocessor-face 'font-lock-preprocessor-face))
+(unless (c-face-name-p 'font-lock-constant-face)
+  (if (c-face-name-p 'font-lock-reference-face)
+      (copy-face 'font-lock-reference-face 'font-lock-constant-face)
+    (make-face 'font-lock-constant-face))
+  (defvar font-lock-constant-face nil)
+  (setq font-lock-constant-face 'font-lock-constant-face))
+(unless (c-face-name-p 'font-lock-label-face)
+  (if (c-face-name-p 'font-lock-reference-face)
+      (copy-face 'font-lock-reference-face 'font-lock-label-face)
+    (copy-face 'font-lock-constant-face 'font-lock-label-face))
+  (defvar font-lock-label-face nil)
+  (setq font-lock-label-face 'font-lock-label-face))
+
+;; In Emacs face names are resolved as variables which can point to
+;; another face.  Make sure we don't have such indirections when we
+;; create or check against .face files.
+(mapcar (lambda (face)
+	  (when (and (boundp face)
+		     (not (eq (symbol-value face) face)))
+	    (copy-face (symbol-value face) face)
+	    (set face face)))
+	'(font-lock-comment-face
+	  font-lock-string-face
+	  font-lock-keyword-face
+	  font-lock-function-name-face
+	  font-lock-variable-name-face
+	  font-lock-type-face
+	  font-lock-reference-face
+	  font-lock-doc-string-face
+	  font-lock-reference-face
+	  font-lock-constant-face
+	  font-lock-preprocessor-face
+	  font-lock-builtin-face
+	  font-lock-warning-face))
+
 (require 'cc-mode)
+
+;; Alist that maps the symbols used for faces in the .face files to
+;; their actual names known by font-lock.
+(defconst cc-test-face-alist
+  `((reg . nil)
+    (cmt . font-lock-comment-face)
+    (str . font-lock-string-face)
+    (key . font-lock-keyword-face)
+    (fun . font-lock-function-name-face)
+    (var . font-lock-variable-name-face)
+    (con . font-lock-constant-face)
+    (typ . font-lock-type-face)
+    (ref . font-lock-reference-face)
+    (doc . ,c-doc-face)
+    (lbl . ,c-label-face)
+    (cpp . ,c-preprocessor-face)
+    (err . ,c-invalid-face)
+    (nbs . c-nonbreakable-space-face)))
+
+;; Check that we don't have duplicates.
+(let ((alist cc-test-face-alist) elem facename)
+  (while alist
+    (setq elem (car alist)
+	  alist (cdr alist))
+    (unless (eq (car elem) 'reg)
+      (when (and (setq facename (get (cdr elem) 'cc-test-face-name))
+		 (not (eq facename (car elem))))
+	(error (concat "Ambiguous face %s - can be both %s and %s"
+		       " (cc-fonts loaded too early?)")
+	       (cdr elem) facename (car elem)))
+      (put (cdr elem) 'cc-test-face-name (car elem)))))
+
+(defconst cc-test-emacs-features
+  (let ((features c-emacs-features))
+    (unless (memq 'syntax-properties features)
+      (setq features (cons 'no-syntax-properties
+			   features)))
+    (setq features (cons (if (string-match "XEmacs" emacs-version)
+			     ;; (featurep 'xemacs) doesn't work here
+			     ;; for some reason.
+			     'xemacs
+			   'emacs)
+			 features)
+	  features (cons (intern (concat (symbol-name (car features))
+					 (format "-%s" emacs-major-version)))
+			 features)
+	  features (cons (intern (concat (symbol-name (car features))
+					 (format "-%s" emacs-minor-version)))
+			 features))
+    features))
+
+(defvar cc-test-skip nil
+  "If this is a list that contains any symbol also present on
+`cc-test-emacs-features' then any test errors are ignored.  Intended
+to be set as a file local variable.")
+
+(defun cc-test-force-font-lock-buffer ()
+  ;; Try to forcibly font lock the current buffer, even in batch mode.
+  ;; We're doing really dirty things to trick font-lock into action in
+  ;; batch mode in the different emacsen.
+  (let ((orig-font-lock-make-faces
+	 (and (fboundp 'font-lock-make-faces)
+	      (symbol-function 'font-lock-make-faces)))
+	(orig-noninteractive-function
+	 (and (fboundp 'noninteractive)
+	      (symbol-function 'noninteractive)))
+	(orig-noninteractive-variable
+	 (and (boundp 'noninteractive)
+	      (symbol-value 'noninteractive)))
+	;; font-lock in XEmacs 19 looks at a variable named `noninteractive'.
+	(noninteractive nil))
+    (unwind-protect
+	(progn
+	  (when (and orig-noninteractive-variable orig-font-lock-make-faces)
+	    ;; `font-lock-make-faces' is used in Emacs 19.34 and
+	    ;; requires a window system.  Since we never actually
+	    ;; display the faces we can skip it.
+	    (fset 'font-lock-make-faces (lambda (&rest args))))
+	  (when orig-noninteractive-function
+	    ;; XEmacs (at least 21.4) calls `noninteractive' to check
+	    ;; for batch mode, so we let it lie.
+	    (fset 'noninteractive (lambda () nil)))
+	  (font-lock-mode 1)
+	  (let (;; Avoid getting some lazy fontification package that
+		;; might decide that nothing should be done.
+		(font-lock-fontify-buffer-function
+		 'font-lock-default-fontify-buffer))
+	    (font-lock-fontify-buffer)))
+      (when (and noninteractive orig-font-lock-make-faces)
+	(fset 'font-lock-make-faces orig-font-lock-make-faces))
+      (when orig-noninteractive-function
+	(fset 'noninteractive orig-noninteractive-function)))))
 
 (defconst cc-test-teststyle
   '((c-tab-always-indent           . t)
@@ -99,7 +262,7 @@
 	(knr-argdecl-intro     . +)
 	(knr-argdecl           . 0)
 	(topmost-intro         . 0)
-	(topmost-intro-cont    . 0)
+	(topmost-intro-cont    . c-lineup-topmost-intro-cont)
 	(member-init-intro     . +)
 	(member-init-cont      . c-lineup-multi-inher)
 	(inher-intro           . +)
@@ -130,8 +293,8 @@
 	(catch-clause          . 0)
 	(comment-intro         . c-lineup-comment)
 	(arglist-intro         . +)
-	(arglist-cont          . 0)
-	(arglist-cont-nonempty . c-lineup-arglist)
+	(arglist-cont          . (c-lineup-gcc-asm-reg 0))
+	(arglist-cont-nonempty . (c-lineup-gcc-asm-reg c-lineup-arglist))
 	(arglist-close         . +)
 	(stream-op             . c-lineup-streamop)
 	(inclass               . +)
@@ -184,13 +347,106 @@
 (c-add-style "teststyle" cc-test-teststyle)
 (c-add-style "javateststyle" cc-test-javateststyle)
 
+(defun cc-test-record-faces (testbuf facebuf check-unknown-faces)
+  (set-buffer testbuf)
+  (let (face prev-face (pos (point)) facename lines col preceding-entry
+	(emacs-strings (not (featurep 'xemacs)))
+	in-string)
+
+    (while (progn
+	     (unless (eq (setq face (get-text-property pos 'face)) prev-face)
+	       (setq prev-face face)
+
+	       ;; Translate the face to the short names used in the
+	       ;; .face files and check that we expect it.
+	       (unless (setq facename (if face
+					  (get face 'cc-test-face-name)
+					'reg))
+		 (if check-unknown-faces
+		     (error "Unknown face %s" face)
+		   (setq facename face)))
+
+	       (catch 'record-face
+		 ;; XEmacs does not highlight the quotes surrounding
+		 ;; string literals as strings, while Emacs does.  The
+		 ;; .face files follow the XEmacs variety since the
+		 ;; Emacs behavior can be more easily converted for
+		 ;; empty strings than the other way around.
+		 (when emacs-strings
+		   (if in-string
+		       (progn
+			 (backward-char)
+			 (setq in-string nil))
+		     (when (and (eq facename 'str)
+				(looking-at "\\s\""))
+		       (when (looking-at "\"\"\\|''")
+			 ;; Ignore empty strings altogether.
+			 (while (progn (goto-char (match-end 0))
+				       (looking-at "\"\"\\|''")))
+			 (throw 'record-face nil))
+		       (forward-char)
+		       (setq in-string t))))
+
+		 (when (prog1 (and col (>= col (current-column)))
+			 (setq col (current-column))
+			 (set-buffer facebuf))
+		   ;; Since we might modify positions above we need
+		   ;; to deal with new face change entries that
+		   ;; override earlier ones.
+		   (let (pos)
+
+		     (while (and (not (bolp))
+				 (progn
+				   (c-backward-sexp)
+				   (setq pos (point)
+					 preceding-entry (read facebuf))
+				   (>= (car preceding-entry) col)))
+		       (goto-char pos)
+		       (setq preceding-entry nil))
+		     (delete-region (point) (c-point 'eol))
+
+		     (unless preceding-entry
+		       (save-excursion
+			 (c-safe
+			   (c-backward-sexp)
+			   (setq preceding-entry (read facebuf)))))))
+
+		 ;; Don't add a new entry if the preceding one has the
+		 ;; same face.
+		 (when (and preceding-entry
+			    (eq (car (cdr preceding-entry)) facename))
+		   (set-buffer testbuf)
+		   (throw 'record-face nil))
+
+		 (insert (format "%s" (setq preceding-entry
+					    (list col facename))))
+		 (set-buffer testbuf)))
+
+	     (setq pos (next-single-property-change (point) 'face))
+
+	     ;; Insert the same amount of line breaks in facebuf as
+	     ;; we've passed in testbuf (count-lines is clumsy here).
+	     (setq lines 0)
+	     (while (re-search-forward "[\n\r]" pos 'move)
+	       (setq lines (1+ lines)))
+	     (when (> lines 0)
+	       (set-buffer facebuf)
+	       (insert-char ?\n lines)
+	       (set-buffer testbuf)
+	       (setq col nil))
+
+	     pos))))
+
 (defvar cc-test-finished-tests nil)
 (defvar cc-test-comp-buf nil)
 (defvar cc-test-comp-win nil)
 
+(defconst cc-test-clear-line-string (concat "\r" (make-string 40 ?\ ) "\r"))
+
 (defun cc-test-message (msg &rest args)
   (if noninteractive
-      (send-string-to-terminal (concat (apply 'format msg args) "\n"))
+      (send-string-to-terminal (concat cc-test-clear-line-string
+				       (apply 'format msg args) "\n"))
     (apply 'message msg args)))
 
 (defun cc-test-log (msg &rest args)
@@ -206,11 +462,13 @@
 
 (defun make-test-buffers (filename)
   (let ((testbuf (get-buffer-create "*cc-test*"))
-	(resultsbuf (get-buffer-create "*cc-results*"))
-	(expectedbuf (get-buffer-create "*cc-expected*"))
-	(resfile (concat (file-name-sans-extension filename) ".res")))
+	(resfile (concat (file-name-sans-extension filename) ".res"))
+	(facefile (concat (file-name-sans-extension filename) ".face"))
+	exp-syntax-buf res-syntax-buf exp-faces-buf res-faces-buf)
+
     ;; Setup the test file buffer.
     (set-buffer testbuf)
+    (kill-all-local-variables)
     (buffer-disable-undo testbuf)
     (erase-buffer)
     (insert-file-contents filename)
@@ -227,170 +485,377 @@
        ((string-match "\\.idl$" filename) (idl-mode))
        (t (c-mode))))
     (hack-local-variables)
-    ;; Setup the expected analysis buffer.
-    (set-buffer expectedbuf)
-    (buffer-disable-undo expectedbuf)
-    (erase-buffer)
-    (insert-file-contents resfile)
-    (text-mode)
-    (goto-char (point-min))
-    ;; Setup the resulting analysis buffer.
-    (set-buffer resultsbuf)
-    (buffer-disable-undo resultsbuf)
-    (erase-buffer)
-    (list testbuf resultsbuf expectedbuf)))
+
+    ;; Setup the expected and resulting analysis buffers.
+    (when (file-exists-p resfile)
+      (setq exp-syntax-buf (get-buffer-create "*cc-expected-syntax*"))
+      (set-buffer exp-syntax-buf)
+      (buffer-disable-undo exp-syntax-buf)
+      (erase-buffer)
+      (insert-file-contents resfile)
+      (goto-char (point-min))
+
+      (setq res-syntax-buf (get-buffer-create "*cc-resulting-syntax*"))
+      (set-buffer res-syntax-buf)
+      (buffer-disable-undo res-syntax-buf)
+      (erase-buffer))
+
+    ;; Setup the expected and resulting faces buffers.
+    (when (file-exists-p facefile)
+      (setq exp-faces-buf (get-buffer-create "*cc-expected-faces*"))
+      (set-buffer exp-faces-buf)
+      (buffer-disable-undo exp-faces-buf)
+      (erase-buffer)
+      (insert-file-contents facefile)
+      (goto-char (point-min))
+
+      (setq res-faces-buf (get-buffer-create "*cc-resulting-faces*"))
+      (set-buffer res-faces-buf)
+      (buffer-disable-undo res-faces-buf)
+      (erase-buffer))
+
+    (list testbuf res-syntax-buf exp-syntax-buf res-faces-buf exp-faces-buf)))
 
 (defun kill-test-buffers ()
   (let (buf)
     (if (setq buf (get-buffer "*cc-test*"))
 	(kill-buffer buf))
-    (if (setq buf (get-buffer "*cc-results*"))
+    (if (setq buf (get-buffer "*cc-expected-syntax*"))
 	(kill-buffer buf))
-    (if (setq buf (get-buffer "*cc-expected*"))
+    (if (setq buf (get-buffer "*cc-resulting-syntax*"))
+	(kill-buffer buf))
+    (if (setq buf (get-buffer "*cc-expected-faces*"))
+	(kill-buffer buf))
+    (if (setq buf (get-buffer "*cc-resulting-faces*"))
 	(kill-buffer buf))))
 
 (defun do-one-test (filename &optional no-error collect-tests)
   (interactive "fFile to test: ")
+
   (let ((default-directory cc-test-dir)
 	(save-buf (current-buffer))
-	(save-point (point)))
-    (if (or (when (and collect-tests
-		       (member filename cc-test-finished-tests))
-	      (cc-test-message "Skipping %s - already tested" filename)
-	      t)
-	    (when (not (file-exists-p
-			(concat (file-name-sans-extension filename) ".res")))
-	      (cc-test-log "Skipping %s - no .res file" filename)
-	      t))
-	t
-      (if noninteractive
-	  (send-string-to-terminal (format "Testing %s        \r" filename))
-	(message "Testing %s" filename))
-      (let* ((baw:c-testing-p t)
-	     (buflist (make-test-buffers filename))
+	(save-point (point))
+	(font-lock-maximum-decoration t)
+	(font-lock-global-modes nil))
+
+    (if (and collect-tests
+	     (member filename cc-test-finished-tests))
+	(progn
+	  (cc-test-message "Skipping %s - already tested" filename)
+	  t)
+
+      (let* ((buflist (make-test-buffers filename))
 	     (testbuf (car buflist))
-	     (resultsbuf (nth 1 buflist))
-	     (expectedbuf (nth 2 buflist))
+	     (res-syntax-buf (nth 1 buflist))
+	     (exp-syntax-buf (nth 2 buflist))
+	     (res-faces-buf (nth 3 buflist))
+	     (exp-faces-buf (nth 4 buflist))
+	     (check-syntax exp-syntax-buf)
+	     (check-faces exp-faces-buf)
 	     (pop-up-windows t)
 	     (linenum 1)
-	     (style "TESTSTYLE")
+	     ignore-errs
+	     test-error-found
 	     error-found-p
 	     expectedindent
-	     c-echo-syntactic-information-p)
-	(set-buffer testbuf)
-	(goto-char (point-min))
-	;; Collect the analysis of all lines.
-	(while (not (eobp))
-	  (let ((syntax
-		 (condition-case err
-		     (c-guess-basic-syntax)
-		   (error
-		    (if no-error
-			(unless error-found-p
-			  (setq error-found-p t)
-			  (cc-test-log "%s:%d: c-guess-basic-syntax error: %s"
-				       filename
-				       (1+ (count-lines (point-min) (point)))
-				       (error-message-string err)))
-		      (switch-to-buffer testbuf)
-		      (signal (car err) (cdr err)))
-		    ""))
-		 ))
-	    (set-buffer resultsbuf)
-	    (insert (format "%s" syntax) "\n")
-	    (set-buffer testbuf))
-	  (forward-line 1))
-	;; Record the expected indentation and reindent.  This is done
-	;; in backward direction to avoid cascading errors.
-	(while (= (forward-line -1) 0)
-	  (back-to-indentation)
-	  (setq expectedindent (cons (current-column) expectedindent))
-	  (unless (eolp)
-	    ;; Do not reindent empty lines; the test cases might have
-	    ;; whitespace at eol trimmed away, so that could produce
-	    ;; false alarms.
-	    (condition-case err
-		(c-indent-line)
-	      (error
-	       (if no-error
-		   (unless error-found-p
-		     (setq error-found-p t)
-		     (cc-test-log "%s:%d: c-indent-line error: %s"
-				  filename
-				  (1+ (count-lines (point-min) (c-point 'bol)))
-				  (error-message-string err)))
-		 (switch-to-buffer testbuf)
-		 (signal (car err) (cdr err)))))))
-	(unless error-found-p
-	  ;; Compare and report.
-	  (set-buffer resultsbuf)
-	  (goto-char (point-min))
-	  (set-buffer expectedbuf)
-	  (goto-char (point-min))
-	  (set-buffer testbuf)
-	  (goto-char (point-min))
-	  (while (not (eobp))
-	    (let* ((currentindent (progn
-				    (back-to-indentation)
-				    (current-column)))
-		   (results (prog2
-				(set-buffer resultsbuf)
-				(buffer-substring (c-point 'bol)
-						  (c-point 'eol))
-			      (forward-line 1)))
-		   (expected (prog2
-				 (set-buffer expectedbuf)
-				 (buffer-substring (c-point 'bol)
-						   (c-point 'eol))
-			       (forward-line 1)))
-		   regression-comment)
-	      (set-buffer testbuf)
-	      (unless (or (= (length results) 0)
-			  (string= results expected))
-		(let ((msg (format "Expected analysis %s, got %s"
-				   expected results)))
-		  (cc-test-log "%s:%d: %s" filename linenum msg)
-		  (indent-for-comment)
-		  (if (re-search-forward "\\*/" (c-point 'eol) 'move)
-		      (goto-char (match-beginning 0)))
-		  (delete-horizontal-space)
-		  (insert " !!! " msg ". ")
-		  (setq error-found-p t
-			regression-comment t)))
-	      (unless (= (car expectedindent) currentindent)
-		(let ((msg (format "Expected indentation %d, got %d"
-				   (car expectedindent) currentindent)))
-		  (cc-test-log "%s:%d: %s" filename linenum msg)
-		  (unless regression-comment
-		    (indent-for-comment)
-		    (if (re-search-forward "\\*/" (c-point 'eol) 'move)
-			(goto-char (match-beginning 0)))
-		    (delete-horizontal-space)
-		    (insert " !!! "))
-		  (insert msg ". ")
-		  (setq error-found-p t))))
-	    (forward-line 1)
-	    (setq expectedindent (cdr expectedindent)
-		  linenum (1+ linenum))))
-	(unless (or error-found-p (not collect-tests))
-	  (setq cc-test-finished-tests
-		(cons filename cc-test-finished-tests)))
-	(when (and error-found-p (not no-error))
-	  (set-buffer testbuf)
-	  (buffer-enable-undo testbuf)
-	  (set-buffer-modified-p nil)
-	  (set-buffer resultsbuf)
-	  (buffer-enable-undo resultsbuf)
-	  (set-buffer-modified-p nil)
-	  (set-buffer expectedbuf)
-	  (buffer-enable-undo expectedbuf)
-	  (set-buffer-modified-p nil)
-	  (switch-to-buffer testbuf)
-	  (error "Indentation regression found in file %s" filename))
-	(not error-found-p)
-	))
-    (set-buffer save-buf)
-    (goto-char save-point)))
+	     c-echo-syntactic-information-p
+	     font-lock-verbose)
+
+	;; This shouldn't happen if CC Mode is byte compiled properly.
+	(when (and (featurep 'cc-langs)
+		   (not (get 'cc-langs 'load-warning)))
+	  (put 'cc-langs 'load-warning t)
+	  (cc-test-log "Warning: cc-langs is loaded"))
+	(when (and (featurep 'cc-bytecomp)
+		   (not (get 'cc-bytecomp 'load-warning)))
+	  (put 'cc-bytecomp 'load-warning t)
+	  (cc-test-log "Warning: cc-bytecomp is loaded"))
+
+	(switch-to-buffer testbuf)
+	(setq ignore-errs (intersection cc-test-emacs-features
+					cc-test-skip))
+
+	(if (and (not check-syntax) (not check-faces))
+	    (progn
+	      (cc-test-log "Skipping %s - no .res or .face file" filename)
+	      t)
+
+	  ;; Collect the face changes.
+	  (when check-faces
+	    (if noninteractive
+		(send-string-to-terminal
+		 (format "%sTesting %s (fonts)  "
+			 cc-test-clear-line-string filename))
+	      (message "Testing %s (fonts)" filename))
+
+	    (cc-test-force-font-lock-buffer)
+	    (goto-char (point-min))
+	    (cc-test-record-faces testbuf res-faces-buf nil))
+
+	  (when check-syntax
+	    (if noninteractive
+		(send-string-to-terminal
+		 (format "%sTesting %s (syntax)  "
+			 cc-test-clear-line-string filename))
+	      (message "Testing %s (syntax)" filename))
+
+	    ;; Collect the syntactic analysis of all lines.
+	    (goto-char (point-min))
+	    (while (not (eobp))
+	      (let ((syntax
+		     (condition-case err
+			 (c-save-buffer-state nil (c-guess-basic-syntax))
+		       (error
+			(if no-error
+			    (unless error-found-p
+			      (setq error-found-p t)
+			      (cc-test-log
+			       "%s:%d: c-guess-basic-syntax error: %s"
+			       filename (1+ (count-lines (point-min) (point)))
+			       (error-message-string err)))
+			  (signal (car err) (cdr err)))
+			""))
+		     ))
+		(set-buffer res-syntax-buf)
+		(insert (format "%s" syntax) "\n")
+		(set-buffer testbuf))
+	      (forward-line 1))
+	    
+	    ;; Record the expected indentation and reindent.  This is done
+	    ;; in backward direction to avoid cascading errors.
+	    (while (= (forward-line -1) 0)
+	      (back-to-indentation)
+	      (setq expectedindent (cons (current-column) expectedindent))
+	      (unless (eolp)
+		;; Do not reindent empty lines; the test cases might have
+		;; whitespace at eol trimmed away, so that could produce
+		;; false alarms.
+		(condition-case err
+		    (c-indent-line)
+		  (error
+		   (if no-error
+		       (unless error-found-p
+			 (setq error-found-p t)
+			 (cc-test-log
+			  "%s:%d: c-indent-line error: %s"
+			  filename (1+ (count-lines (point-min)
+						    (c-point 'bol)))
+			  (error-message-string err)))
+		     (signal (car err) (cdr err))))))))
+
+	  (if noninteractive
+	      (send-string-to-terminal
+	       (format "%sTesting %s  "
+		       cc-test-clear-line-string filename))
+	    (message "Testing %s" filename))
+
+	  (unless error-found-p
+	    ;; Compare and report.
+	    (when check-syntax
+	      (set-buffer res-syntax-buf)
+	      (goto-char (point-min))
+	      (set-buffer exp-syntax-buf)
+	      (goto-char (point-min)))
+	    (when check-faces
+	      (set-buffer res-faces-buf)
+	      (goto-char (point-min))
+	      (set-buffer exp-faces-buf)
+	      (goto-char (point-min)))
+	    (set-buffer testbuf)
+	    (goto-char (point-min))
+
+	    (catch 'break-loop
+	      (while (not (eobp))
+		(let* (result expected regression-comment indent-err)
+
+		  (flet ((regression-msg (msg &rest args)
+			  (unless ignore-errs
+			    (setq msg (apply 'format msg args))
+			    (cc-test-log "%s:%d: %s" filename linenum msg)
+			    (set-buffer testbuf)
+			    (beginning-of-line)
+			    (unless (re-search-forward
+				     (concat "\\s *" c-comment-start-regexp)
+				     (c-point 'eol) t)
+			      (indent-for-comment))
+			    (when (re-search-forward
+				   "\\*/" (c-point 'eol) 'move)
+			      (goto-char (match-beginning 0)))
+			    (unless regression-comment
+			      (setq regression-comment t)
+			      (delete-horizontal-space)
+			      (insert " !!! "))
+			    (insert msg ". ")
+			    (setq error-found-p t))
+			  (setq test-error-found t)))
+
+		    (when check-syntax
+		      (set-buffer exp-syntax-buf)
+		      (if (eobp)
+			  ;; Check for premature end of the .res file here
+			  ;; to avoid noise from the errors below.
+			  (progn
+			    (cc-test-log
+			     "%s:%d: Unexpected end of .res file"
+			     filename linenum)
+			    (setq error-found-p t
+				  check-syntax nil))
+
+			;; Compare the syntax analysis.
+			(setq result (progn
+				       (set-buffer res-syntax-buf)
+				       (buffer-substring (c-point 'bol)
+							 (c-point 'eol)))
+			      expected (progn
+					 (set-buffer exp-syntax-buf)
+					 (buffer-substring (c-point 'bol)
+							   (c-point 'eol))))
+			(unless (string= result expected)
+			  (regression-msg "Expected analysis %s, got %s"
+					  expected result))
+
+			;; Compare indentation.
+			(set-buffer testbuf)
+			(unless (= (car expectedindent)
+				   (progn (back-to-indentation)
+					  (current-column)))
+			  (regression-msg "Expected indentation %d, got %d"
+					  (car expectedindent)
+					  (current-column))
+			  (setq indent-err t))
+
+			(set-buffer res-syntax-buf)
+			(forward-line 1)
+			(set-buffer exp-syntax-buf)
+			(forward-line 1)))
+
+		    ;; Compare faces.  Only report the first inconsistency on
+		    ;; the line.
+		    (when check-faces
+		      (set-buffer exp-faces-buf)
+		      (if (eobp)
+			  ;; Check for premature end of the .face file here
+			  ;; to avoid noise from the errors below.
+			  (progn
+			    (cc-test-log
+			     "%s:%d: Unexpected end of .face file"
+			     filename linenum)
+			    (setq error-found-p t
+				  check-faces nil))
+
+			;; Don't report fontification errors if there already
+			;; are indentation errors on this line.
+			(unless indent-err
+			  (while (progn
+				   (set-buffer res-faces-buf)
+				   (skip-chars-forward " \t")
+				   (setq result (and (not (eolp))
+						     (read res-faces-buf)))
+				   (set-buffer exp-faces-buf)
+				   (skip-chars-forward " \t")
+				   (setq expected (and (not (eolp))
+						       (read exp-faces-buf)))
+				   (and (or result expected)
+					(equal result expected))))
+
+			  (cond
+			   ((not (or result expected)))
+			   ((not result)
+			    (regression-msg
+			     "Expected %s face at column %d"
+			     (cadr expected) (car expected)))
+			   ((not expected)
+			    (regression-msg
+			     "Got unexpected %s face at column %d"
+			     (cadr result) (car result)))
+			   ((eq (car result) (car expected))
+			    (if (and (featurep 'xemacs)
+				     (<= emacs-major-version 20)
+				     (eq (cadr result) 'doc)
+				     (eq (cadr expected) 'str))
+				;; `font-lock-fontify-syntactically-region'
+				;; in XEmacs <= 20 contains Lisp
+				;; specific crud that affects all modes:
+				;; Any string at nesting level 1 is
+				;; fontified with the doc face.  Argh!  Yuck!
+				nil
+			      (regression-msg
+			       "Expected %s face at column %d, got %s face"
+			       (cadr expected) (car expected)
+			       (cadr result))))
+			   ((eq (cadr result) (cadr expected))
+			    (regression-msg
+			     "Expected %s face at column %d, got it at %d"
+			     (cadr expected) (car expected)
+			     (car result)))
+			   (t
+			    (regression-msg
+			     (concat "Expected %s face at column %d, "
+				     "got %s face at %d")
+			     (cadr expected) (car expected)
+			     (cadr result) (car result)))))
+
+			(set-buffer res-faces-buf)
+			(forward-line 1)
+			(set-buffer exp-faces-buf)
+			(forward-line 1)))
+
+		    (set-buffer testbuf)
+		    (forward-line 1)
+		    (setq expectedindent (cdr-safe expectedindent)
+			  linenum (1+ linenum)))))
+
+	      (when check-syntax
+		(set-buffer exp-syntax-buf)
+		(unless (eobp)
+		  (setq error-found-p t)
+		  (cc-test-log "%s:%d: Expected end of .res file"
+			       filename linenum)))
+	      (when check-faces
+		(set-buffer exp-faces-buf)
+		(unless (eobp)
+		  (setq error-found-p t)
+		  (cc-test-log "%s:%d: Expected end of .face file"
+			       filename linenum)))
+
+	      (when ignore-errs
+		(setq test-error-found (not test-error-found))
+		(when test-error-found
+		  (cc-test-log
+		   "%s:%d: Expected differences in syntax or fontification"
+		   filename linenum)))
+	      (if test-error-found (setq error-found-p t))))
+
+	  (unless (or error-found-p (not collect-tests))
+	    (setq cc-test-finished-tests
+		  (cons filename cc-test-finished-tests)))
+
+	  (when (and error-found-p (not no-error))
+	    (set-buffer testbuf)
+	    (buffer-enable-undo testbuf)
+	    (set-buffer-modified-p nil)
+
+	    (when exp-syntax-buf
+	      (set-buffer res-syntax-buf)
+	      (buffer-enable-undo res-syntax-buf)
+	      (set-buffer-modified-p nil)
+	      (set-buffer exp-syntax-buf)
+	      (buffer-enable-undo exp-syntax-buf)
+	      (set-buffer-modified-p nil))
+
+	    (when exp-faces-buf
+	      (set-buffer exp-faces-buf)
+	      (buffer-enable-undo exp-faces-buf)
+	      (set-buffer-modified-p nil))
+
+	    (error "Regression found in file %s" filename))
+
+	  (unless noninteractive
+	    (message nil))
+
+	  (set-buffer save-buf)
+	  (goto-char save-point)
+	  (not error-found-p))))))
 
 (defun do-all-tests (&optional resetp)
   (interactive "P")
@@ -430,11 +895,11 @@
 		   "\\.\\(c\\|cc\\|java\\|pike\\|idl\\|m\\)\\'")))
       (fset 'c-echo-parsing-error old-c-echo-parsing-error))
     (if noninteractive
-	(send-string-to-terminal "                              \r"))
+	(send-string-to-terminal cc-test-clear-line-string))
     (kill-test-buffers)
     (when broken-files
       (cc-test-message "Broken file(s): %s"
-		       (mapconcat 'identity broken-files ", ")))
+		       (mapconcat 'identity (reverse broken-files) ", ")))
     (unless noninteractive
       (if broken-files
 	  (first-error)
@@ -443,7 +908,61 @@
 	(kill-buffer cc-test-comp-buf)
 	(setq cc-test-finished-tests nil)))))
 
+(defun facefile ()
+  "Creates a .face file from the test file in the current buffer.
+It records the faces put into the buffer by font-lock in the test file."
+
+  ;; Note: fast-lock cache files can't be used for this since we need
+  ;; to take special precautions to make the results comparable
+  ;; between different (X)Emacsen.  This format is also more edit and
+  ;; cvs friendly.
+
+  (interactive)
+
+  (when (and (featurep 'xemacs)
+	     (<= emacs-major-version 20))
+    ;; See special case in `do-one-test'.
+    (error "Won't make .face files in XEmacs <= 20 since those versions "
+	   "have broken syntactic fontification"))
+
+  (let* ((testbuf (current-buffer))
+	 (facefile (concat (file-name-sans-extension buffer-file-name)
+			   ".face"))
+	 (facebuf (find-file-noselect facefile))
+	 error errpos)
+
+    (save-excursion
+      (save-selected-window
+	(condition-case err
+	    (progn
+	      (switch-to-buffer-other-window facebuf)
+	      (set-buffer facebuf)
+	      (erase-buffer)
+	      (set-buffer testbuf)
+
+	      (cc-test-force-font-lock-buffer)
+	      (goto-char (point-min))
+	      (cc-test-record-faces testbuf facebuf t)
+
+	      ;; Beautify the face file a little.
+	      (set-buffer facebuf)
+	      (goto-char (point-min))
+	      (while (search-forward ")(" nil 'move)
+		(replace-match ") (" t t))
+	      (unless (bolp) (insert "\n")))
+
+	  (error
+	   (setq error err)
+	   (set-buffer testbuf)
+	   (setq errpos (point))))))
+    (when error
+      (when errpos (goto-char errpos))
+      (signal (car error) (cdr error)))))
+
 (defun resfile ()
+  "Creates a .res file from the test file in the current buffer.
+It records the syntactic analysis of each line in the test file."
+
   (interactive)
   (save-excursion
     (save-selected-window
@@ -453,12 +972,33 @@
 	     (resbuf (find-file-noselect resfile)))
 	(switch-to-buffer-other-window resbuf)
 	(set-buffer resbuf)
-	(delete-region (point-min) (point-max))
+	(erase-buffer)
 	(set-buffer testbuf)
+
 	(goto-char (point-min))
 	(while (not (eobp))
-	  (let ((syntax (c-guess-basic-syntax)))
+	  (let ((syntax (c-save-buffer-state nil (c-guess-basic-syntax))))
 	    (set-buffer resbuf)
 	    (insert (format "%s\n" syntax)))
 	  (set-buffer testbuf)
 	  (forward-line 1))))))
+
+(defun shift-res-offsets (offset)
+  ;; Shifts the offsets in the corresponding .res files by the
+  ;; specified amount from the current point forward.
+  (interactive "nShift offsets at or after point with: ")
+  (let ((save-point (point))
+	(resfile (concat (file-name-sans-extension buffer-file-name) ".res"))
+	(count 0))
+    (unless (file-exists-p resfile)
+      (error "Cannot open result file %s" resfile))
+    (find-file resfile)
+    (goto-char (point-min))
+    (while (re-search-forward "\\<[0-9]+\\>" nil t)
+      (let ((pos (string-to-number (buffer-substring-no-properties
+				    (match-beginning 0) (match-end 0)))))
+	(when (>= pos save-point)
+	  (delete-region (match-beginning 0) (match-end 0))
+	  (insert-and-inherit (format "%d" (+ pos offset)))
+	  (setq count (1+ count)))))
+    (message "Shifted %d offsets" count)))

@@ -30,7 +30,7 @@ int x() {
      && defined (def))
 #endif
 #define x(y) defined (foo)			\
-		 && defined (bar)
+	&& defined (bar)
 #define x(y) (defined (foo)			\
 	      && defined (bar)			\
 	)
@@ -65,8 +65,3 @@ int x (int x,
     )						\
        a b
     );
-
-#define decl(X,Y,Z)				\
-    int X(Y)					\
-	int Y;					\
-    {Z}

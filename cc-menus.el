@@ -25,7 +25,7 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; see the file COPYING.  If not, write to
+;; along with GNU Emacs; see the file COPYING.  If not, write to
 ;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
@@ -39,7 +39,7 @@
 		  (stringp byte-compile-dest-file))
 	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (require 'cc-bytecomp)))
+    (load "cc-bytecomp" nil t)))
 
 ;; Try to pull in imenu if it exists.
 (condition-case nil
@@ -49,6 +49,7 @@
 ;; The things referenced in imenu, which we don't require.
 (cc-bytecomp-defvar imenu-case-fold-search)
 (cc-bytecomp-defvar imenu-generic-expression)
+(cc-bytecomp-defvar imenu-create-index-function)
 (cc-bytecomp-defun imenu-progress-message)
 
 
@@ -150,18 +151,21 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 (defvar cc-imenu-java-generic-expression
   `((nil
      ,(concat
-       "^\\([ \t]\\)*"
-       "\\([.A-Za-z0-9_-]+[ \t]+\\)?"	      ; type specs; there can be
-       "\\([.A-Za-z0-9_-]+[ \t]+\\)?"	      ; more than 3 tokens, right?
-       "\\([.A-Za-z0-9_-]+[ \t]*[[]?[]]?\\)"
-       "\\([ \t]\\)"
-       "\\([A-Za-z0-9_-]+\\)"		      ; the string we want to get
-       "\\([ \t]*\\)+("
-       "[][a-zA-Z,_1-9\n \t]*"		      ; arguments
-       ")[ \t]*"
-;       "[^;(]"
-       "[,a-zA-Z_1-9\n \t]*{"               
-       ) 6))
+       "[A-Za-z_][\]\[.A-Za-z0-9_]+[ \t\n\r]+" ; type spec
+       "\\([A-Za-z_][A-Za-z0-9_]+\\)"	; method name
+       "[ \t\n\r]*"
+       ;; An argument list that is either empty or contains at least
+       ;; two identifiers with only space between them.  This avoids
+       ;; matching e.g. "else if (foo)".
+       (concat "([ \t\n\r]*"
+	       "\\([\]\[.,A-Za-z0-9_]+"
+	       "[ \t\n\r]+"
+	       "[\]\[.,A-Za-z0-9_]"
+	       "[\]\[.,A-Za-z0-9_ \t\n\r]*"
+	       "\\)?)")
+       "[.,A-Za-z0-9_ \t\n\r]*"
+       "{"
+       ) 1))
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
 
 ;;                        *Warning for cc-mode developers* 
@@ -197,23 +201,23 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
    "\\|"
    ;; > General function name regexp
    ;; Pick a token by  (match-string 3)
-   (car (cdr (nth 2 cc-imenu-c++-generic-expression))) ; -> index += 2
+   (car (cdr (nth 2 cc-imenu-c++-generic-expression))) ; -> index += 5
    (prog2 (setq cc-imenu-objc-generic-expression-general-func-index 3) "")
    ;; > Special case for definitions using phony prototype macros like:
    ;; > `int main _PROTO( (int argc,char *argv[]) )'.
-   ;; Pick a token by  (match-string 5)
+   ;; Pick a token by  (match-string 8)
    (if cc-imenu-c-prototype-macro-regexp
        (concat    
 	"\\|"
 	(car (cdr (nth 3 cc-imenu-c++-generic-expression))) ; -> index += 1
-	(prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 6) "")
+	(prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 9) "")
 	)
-     (prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 5) "")
+     (prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 8) "")
      "")				; -> index += 0
-   (prog2 (setq cc-imenu-objc-generic-expression-proto-index 5) "")
+   (prog2 (setq cc-imenu-objc-generic-expression-proto-index 8) "")
    ;;
    ;; For Objective-C
-   ;; Pick a token by (match-string 5 or 6)
+   ;; Pick a token by (match-string 8 or 9)
    ;;
    "\\|\\("					     
    "^[-+][:a-zA-Z0-9()*_<>\n\t ]*[;{]"        ; Methods
@@ -240,6 +244,7 @@ Example:
 - perform: (SEL)aSelector withObject: object1 withObject: object2; /* METHOD */
 =>
 -perform:withObject:withObject:withObject: /* selector */"
+  ;; This function does not do any hidden buffer changes.
   (let ((return "")			; String to be returned
 	(p 0)				; Current scanning position in METHOD  
 	(pmax (length method))		; 
@@ -280,6 +285,7 @@ Example:
 
 (defun cc-imenu-objc-remove-white-space  (str)
   "Remove all spaces and tabs from STR."
+  ;; This function does not do any hidden buffer changes.
   (let ((return "")
 	(p 0)
 	(max (length str)) 
@@ -294,6 +300,7 @@ Example:
 
 (defun cc-imenu-objc-function ()
   "imenu supports for objc-mode."
+  ;; This function does not do any hidden buffer changes.
   (let (methodlist
 	clist
 	;;
@@ -400,7 +407,8 @@ Example:
 		  (setq last (cdr last)))
 		(setcdr last clist))))
       ;; Add C lang tokens as a sub menu
-      (setq toplist (cons (cons "C" clist) toplist)))
+      (if clist
+	  (setq toplist (cons (cons "C" clist) toplist))))
     ;;
     toplist
     ))
@@ -409,8 +417,11 @@ Example:
 ;  ())
 ; FIXME: Please contribute one!
 
-(defun cc-imenu-init (mode-generic-expression)
+(defun cc-imenu-init (mode-generic-expression
+		      &optional mode-create-index-function)
+  ;; This function does not do any hidden buffer changes.
   (setq imenu-generic-expression mode-generic-expression
+	imenu-create-index-function mode-create-index-function
 	imenu-case-fold-search nil))
 
 

@@ -10,3 +10,6 @@ typedef enum
 {
     RED, GREEN, BLUE
 } COLORS;
+
+typedef unsigned int *foo;
+typedef xyz xyz_array_t[1];

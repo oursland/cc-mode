@@ -29,8 +29,7 @@
 
 ;;; Commentary:
 
-;; This file is necessary in order to run CC Mode 5 under Emacs 19.34
-;; and MULE based on Emacs 19.34.
+;; This file is necessary in order to run CC Mode 5 under (X)Emacs 19.
 
 ;;; Code:
 
@@ -40,7 +39,7 @@
 		  (stringp byte-compile-dest-file))
 	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (require 'cc-bytecomp)))
+    (load "cc-bytecomp" nil t)))
 
 ;; Silence the compiler (in case this file is compiled by other
 ;; Emacsen even though it isn't used by them).
@@ -98,8 +97,11 @@
 	(if (not pos)
 	    (setq pos (point))))))
 
-(cc-eval-when-compile
-  (or (fboundp 'char-before)
+;; The `eval' construct is necessary since later versions complain at
+;; compile time on the defsubst for `char-before' since it has become
+;; a built-in primitive.
+(eval
+ '(or (fboundp 'char-before)
       ;; Emacs 19.34 doesn't have a char-before function.
       (defsubst char-before (&optional pos)
 	(char-after (1- (or pos (point)))))))
@@ -115,21 +117,51 @@
 
 ;; Emacs 19.34 doesn't have a when macro.  Here's its Emacs 20
 ;; definition.
-(cc-eval-when-compile
-  (or (fboundp 'when)
-      (defmacro when (cond &rest body)
-	"(when COND BODY...): if COND yields non-nil, "
-	"do BODY, else return nil."
-	(list 'if cond (cons 'progn body)))))
+(or (fboundp 'when)
+    (defmacro when (cond &rest body)
+      "(when COND BODY...): if COND yields non-nil, "
+      "do BODY, else return nil."
+      (list 'if cond (cons 'progn body))))
 
 ;; Emacs 19.34 doesn't have an unless macro.  Here's its Emacs 20
 ;; definition.
-(cc-eval-when-compile
-  (or (fboundp 'unless)
-      (defmacro unless (cond &rest body)
-	"(unless COND BODY...): if COND yields nil, "
-	"do BODY, else return nil."
-	(cons 'if (cons cond (cons nil body))))))
+(or (fboundp 'unless)
+    (defmacro unless (cond &rest body)
+      "(unless COND BODY...): if COND yields nil, "
+      "do BODY, else return nil."
+      (cons 'if (cons cond (cons nil body)))))
+
+(if (fboundp 'regexp-opt)
+    (defalias 'c-regexp-opt 'regexp-opt)
+  ;; (X)Emacs 19 doesn't have the regexp-opt package.
+  (defun c-regexp-opt (strings &optional paren)
+    ;; The regexp engine (in at least (X)Emacs 19) matches the
+    ;; alternatives in order and fails to be greedy if a longer
+    ;; alternative comes after a shorter one, so we sort the the
+    ;; list with the longest alternatives first to get greediness
+    ;; properly.
+    (setq strings (sort (append strings nil)
+			(lambda (a b) (> (length a) (length b)))))
+    (if paren
+	(concat "\\(" (mapconcat 'regexp-quote strings "\\|") "\\)")
+      (mapconcat 'regexp-quote strings "\\|"))))
+
+(if (fboundp 'regexp-opt-depth)
+    (defalias 'c-regexp-opt-depth 'regexp-opt-depth)
+  ;; (X)Emacs 19 doesn't have the regexp-opt package.
+  (defun c-regexp-opt-depth (regexp)
+    ;; This is the definition of `regexp-opt-depth' in Emacs 21 with
+    ;; the exception that "shy" grouping parens aren't detected.
+    (save-match-data
+      ;; Hack to signal an error if REGEXP does not have balanced
+      ;; parentheses.
+      (string-match regexp "")
+      (let ((count 0) start)
+	(while (string-match "\\(\\`\\|[^\\]\\)\\\\\\(\\\\\\\\\\)*("
+			     regexp start)
+	  (setq count (1+ count)
+		start (- (match-end 0) 1)))
+	count))))
 
 
 (cc-provide 'cc-mode-19)

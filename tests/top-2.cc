@@ -3,7 +3,7 @@ class whatever
 public:
     int i,
         j;
-}
+};
 
 class whatever
 {
@@ -11,7 +11,7 @@ public:
     whatever();
     int i,
         j;
-}
+};
 
 
 class whatever
@@ -20,4 +20,4 @@ class whatever
     // indenting:
     int i,
         j;
-}
+};

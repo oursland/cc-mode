@@ -17,15 +17,15 @@ int foo() {
 	     x;
 	);
     NIFTY_LITTLE_KANGAS ({
-			     x;
-			     y;
-			 },
-			 b);
+	    x;
+	    y;
+	},
+	b);
     NIFTY_LITTLE_KANGAS (a, {
-			     x;
-			     y;
-			 },
-			 b);
+	    x;
+	    y;
+	},
+	b);
     NIFTY_LITTLE_KANGAS (a, { x;
 			     y;
 			     z;

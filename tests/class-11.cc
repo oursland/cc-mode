@@ -1,5 +1,5 @@
 class foo
-{}
+{};
 
 
 class derived : public base1,

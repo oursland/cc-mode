@@ -10,3 +10,7 @@ class X
         }
     };
 };
+
+// Local Variables:
+// cc-test-skip: (no-syntax-properties)
+// End:

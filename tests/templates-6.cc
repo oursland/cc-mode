@@ -14,7 +14,7 @@ frob()
 }
 
 
-template <class T, class C = Cmp<T>>
+template <class T, class C = Cmp<T> >
 int compare(const String<T>& str1, const String<T>& str2)
 {
     for (int i=0; i<str1.length() && i<str2.length(); i++)
@@ -35,3 +35,7 @@ void xyzzy<i>::frob()
 {
     printf("%d\n", i);
 };
+
+// Local Variables:
+// cc-test-skip: (no-syntax-properties)
+// End:

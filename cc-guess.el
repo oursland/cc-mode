@@ -46,7 +46,7 @@
 		  (stringp byte-compile-dest-file))
 	     (cons (file-name-directory byte-compile-dest-file) load-path)
 	   load-path)))
-    (require 'cc-bytecomp)))
+    (load "cc-bytecomp" nil t)))
 
 (cc-require 'cc-defs)
 (cc-require 'cc-engine)
@@ -84,7 +84,8 @@ and `cc-guess-view-style' for viewing the guessed style."
   (save-excursion
     (goto-char start)
     (while (< (point) end)
-      (let* ((syntax (c-guess-basic-syntax))
+      (c-save-buffer-state
+	    ((syntax (c-guess-basic-syntax))
 	     (relpos (cdr (car syntax)))
 	     (symbol (car (car syntax)))
 	     point-indent relpos-indent)
