@@ -1099,7 +1099,11 @@ comment at the start of cc-engine.el for more info."
 	  c-maybe-labelp)
       (c-syntactic-skip-backward (substring c-stmt-delim-chars 1) nil t)
       (or (bobp)
-	  (memq (char-before) '(?{ ?}))
+	  (eq (char-before) ?})
+	  (and (eq (char-before) ?{)
+	       (not (and c-special-brace-lists
+			 (progn (backward-char)
+				(c-looking-at-special-brace-list)))))
 	  (c-crosses-statement-barrier-p (point) end)))))
 
 (defun c-at-expression-start-p ()
@@ -6758,17 +6762,12 @@ comment at the start of cc-engine.el for more info."
   ;; Return non-nil if between two statements or declarations, assuming
   ;; point is not inside a literal or comment.
   ;;
+  ;; Obsolete - `c-at-statement-start-p' or `c-at-expression-start-p'
+  ;; are recommended instead.
+  ;;
   ;; This function might do hidden buffer changes.
-  (save-excursion
-    (c-backward-syntactic-ws lim)
-    (or (bobp)
-	;; Return t if at the start inside some parenthesis expression
-	;; too, to catch macros that have statements as arguments.
-	(memq (char-before) '(?\; ?} ?\())
-	(and (eq (char-before) ?{)
-	     (not (and c-special-brace-lists
-		       (progn (backward-char)
-			      (c-looking-at-special-brace-list))))))))
+  (c-at-statement-start-p))
+(make-obsolete 'c-looking-at-bos 'c-at-statement-start-p)
 
 (defun c-looking-at-inexpr-block (lim containing-sexp &optional check-at-end)
   ;; Return non-nil if we're looking at the beginning of a block
@@ -6822,7 +6821,7 @@ comment at the start of cc-engine.el for more info."
 					 (eq (char-syntax (char-after)) ?w))
 				   (setq prev (point)))
 				 (goto-char prev)
-				 (not (c-looking-at-bos)))
+				 (not (c-at-statement-start-p)))
 			       ;; Also, in Pike we treat it as an
 			       ;; in-expression class if it's used in an
 			       ;; object clone expression.
@@ -7218,7 +7217,7 @@ comment at the start of cc-engine.el for more info."
        ;; block.  Can occur e.g. in Pike and when using gcc
        ;; extensions, but watch out for macros followed by blocks.
        ;; C.f. cases E, 16F and 17G.
-       ((and (not (c-looking-at-bos))
+       ((and (not (c-at-statement-start-p))
 	     (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
 		 'same)
 	     (save-excursion
@@ -7267,7 +7266,7 @@ comment at the start of cc-engine.el for more info."
 	     ;; prototype in a code block without resorting to this.
 	     (c-forward-syntactic-ws)
 	     (eq (char-after) ?{))
-	   (not (c-looking-at-bos))
+	   (not (c-at-statement-start-p))
 	   (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
 	       'same)
 	   (save-excursion
@@ -8430,7 +8429,7 @@ comment at the start of cc-engine.el for more info."
 	     ;; blocks.  Let it through to be handled below.
 	     ;; C.f. cases B.3 and 17G.
 	     ((save-excursion
-		(and (not (c-looking-at-bos))
+		(and (not (c-at-statement-start-p))
 		     (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
 		     (setq placeholder (point))
 		     (let ((c-recognize-typeless-decls nil))
@@ -8579,7 +8578,7 @@ comment at the start of cc-engine.el for more info."
 	   ;; e.g. the gcc extensions, but watch out for macros
 	   ;; followed by blocks.  C.f. cases B.3 and 16F.
 	   ((save-excursion
-	      (and (not (c-looking-at-bos))
+	      (and (not (c-at-statement-start-p))
 		   (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
 		   (setq placeholder (point))
 		   (let ((c-recognize-typeless-decls nil))
