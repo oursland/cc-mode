@@ -29,24 +29,16 @@ Checklist for doing a release
       XX is the minor revision number of the new release.
 
       This creates the following files in dist:
-          cc-mode-5.XX.emacs.tar.gz
-          cc-mode-5.XX.xemacs.tar.gz
-          cc-mode-5.XX.tar.gz
+	  cc-mode-5.XX.tar.gz
           cc-mode.dvi.gz
           cc-mode.ps.gz
           cc-mode.rev.ps.gz
           cc-mode.info.tar.gz
 	  cc-mode.html.tar.gz
 
-      The first two tarballs is to be sent to Emacs and XEmacs
-      respectively.  They contain only the files that are necessary
-      for those releases.  However, I typically don't send them stuff
-      until they see the Net announcements and ask for the files.
-      This lets them sync our releases up to their own release cycle.
-
     - Update the SourceForge site:
 
-      o  Do a new release in the SourceForge pages.
+      o  Do a new release in the SourceForge pages (see note below).
       o  Copy the manual files to the manual subdir.
       o  Unpack the standalone tarball into the web root dir and name
 	 the subdir "src".
@@ -120,9 +112,14 @@ Patch releases
     -  Since patch releases are so lightweight, they can be made
        fairly easily and without discussion.  The only requirement is
        that the ChangeLog is updated (since it's necessary when
-       merging the version into Emacs).  Spreading and announcing a
+       merging the version into (X)Emacs).  Spreading and announcing a
        patch release is optional; one can e.g. make one only to give
        to the XEmacs people, or only to upload to the web site.
+       Still, it's of course best to make it available in all three
+       places.
+
+    -  Note for SourceForge release: The patch release is mentioned in
+       these web pages: index.php, release.php, changes-5XX.php.
 
     -  Every fix and improvement _must_ be committed to the
        development branch, i.e. the main trunk.  The only exception is
@@ -155,3 +152,131 @@ Patch releases
        "Enough reason" is typically either that some time has gone by
        so that a bunch of minor fixes have accumulated, or that a
        really nasty bug has been fixed.
+
+
+SourceForge file release
+========================
+
+1.  Go to "Admin" -> "File Releases" -> "[Add Release]".
+    (https://sourceforge.net/project/admin/newrelease.php?package_id=3849&group_id=3875
+    might work).
+2.  Upload the tarball to <ftp://upload.sf.net/incoming/>.
+3.  Fill in the version number as the release name.
+4.  Fill in "Release Notes" on the next page:
+      Real release:
+	See the <a href="http://cc-mode.sourceforge.net/changes-530.php">CC Mode web site</a> for details about this release.
+      Patch release:
+	This release contains only bugfixes since <a href="http://cc-mode.sourceforge.net/changes-530.php">5.30</a>. See the ChangeLog for details.
+    (I don't bother with more; change logs etc are elsewhere.)
+3.  Add the the file.
+4.  "Edit Files In This Release":
+    Processor Type: Platform-Independent
+    File Type: .gz <since .tar.gz doesn't exist among the choices>
+5.  Blipp away an "Email Release Notice".
+
+
+Installing CC Mode in (X)Emacs
+==============================
+
+This is how I currently do it (cvs write access is required for both):
+
+1.  Do cvs update where CC Mode resides in the (X)Emacs tree.
+
+    Emacs: lisp/progmodes.
+    XEmacs: xemacs-packages/cc-mode in the package repository.
+
+    Investigate the changes made by others in cc-*.el if there are
+    any, and incorporate them in the CC Mode cvs if appropriate.
+
+2.  Update the cc-*.el files by patching from the last installed
+    version.  This is to keep the changes made by others and that
+    aren't wanted in the upstream CC Mode for some reason. (Such
+    differences should be avoided as far as possible though, so they
+    probably need to be discussed(*).)
+
+    Upstream files that currently aren't included:
+
+    Emacs: cc-guess.el, cc-lobotomy.el, cc-fix.el (not needed).
+
+    XEmacs: None.  (cc-fix.el is, or at least was, needed to work
+    around bugs in fairly recent XEmacs versions.  Besides, since the
+    packages are released individually it's not certain which version
+    of the XEmacs core that it will be used with.)
+
+3.  Do a quick test that the patched sources at least load correctly.
+
+4.  Update the other files.
+
+    For Emacs:
+
+    o  Copy the applicable ChangeLog entries to lisp/ChangeLog.
+       Combine them all to one entry at the current date.  I do not
+       include the "Patch release" entry (maybe I should?).
+
+       RMS prefers if the entries are condensed as much as possible to
+       summarize the overall code changes between the versions.  I
+       look through and remove entries that are superceded later on,
+       but I don't spend overly much time on rewriting it all to be as
+       compact as possible.
+
+    o  If it's a real release, merge the new entries in NEWS into
+       etc/NEWS.
+
+    For XEmacs:
+
+    o  Copy over MANIFEST, NEWS, README and cc-mode.texi if necessary.
+
+    o  If it's a real release, simply write "Update to CC Mode X.XX"
+       in xemacs-packages/ cc-mode/ChangeLog (that's apparently enough
+       to satisfy the XEmacs people).
+
+    o  If it's a patch release, add the applicable ChangeLog entries.
+       It seems to be acceptable to keep the entries but change all
+       dates to the current date.  I do not include the "Patch
+       release" entry (maybe I should?).
+
+    o  Update AUTHOR_VERSION in xemacs-packages/cc-mode/Makefile.  (Do
+       not touch VERSION; the XEmacs release guy will do that when he
+       has seen the message on xemacs-packages and makes a new package
+       release.)
+
+5.  Commit it.  Good commit messages with the relevant changes in each
+    file are nice, but I don't necessarily take the time to do that.
+    It's all there in the ChangeLog anyway (although the cvs logs
+    arguably are a better place).
+
+6.  For XEmacs: Send a message with the ChangeLog entries to
+    xemacs-patches@xemacs.org.
+
+
+*) One reason for differences:
+
+RMS doesn't allow the use of functions from the cl package at runtime
+since it isn't formally a part of Emacs.  Therefore some cl functions
+have been more or less duplicated where they are used in the Emacs
+cvs.
+
+I otoh refuse to comply with this "ban" against the cl functions;
+Emacs provide no alternatives and it's insane to have to duplicate
+this trivial functionality in every package that need it.  I won't
+spend one minute maintaining such duplicate code just because RMS
+doesn't like Common Lisp.  Afaik he has given no better grounds for
+the "ban" of the cl package (at least not the simpler parts of it,
+such as set manipulation and list search functions, which are what
+this is about).
+
+Note that I've discussed getting more cl functions "blessed" but found
+it intractable (on the emacs-devel list, in August and September 2003,
+the thread has the subject "cc-langs.el" or "Blessing cl functions").
+Functions might get approved but it seems that they have to be
+pondered individually.  That process is apparently very time consuming
+for reasons that largely remain a mystery to me (it goes something
+like "Emacs Lisp is not Common Lisp, so they can't simply be added").
+So perhaps one or a couple can creep in in every release, which means
+that it'll take somewhere between 50 and 200 years before Emacs will
+have a decent set of approved basic utility functions.
+
+Thankfully, the functions are afterall there already and there's no
+practical problem using them.  Thus this silliness can be ignored,
+which is exactly what I'm doing (except that I patch instead of
+overwrite the files when I update them).
