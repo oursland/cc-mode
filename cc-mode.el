@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.265 $
-;; Last Modified:   $Date: 1993-01-21 23:35:00 $
+;; Version:         $Revision: 2.266 $
+;; Last Modified:   $Date: 1993-01-21 23:38:34 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-21 23:35:00 $|$Revision: 2.265 $|
+;; |$Date: 1993-01-21 23:38:34 $|$Revision: 2.266 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.265 $
+  "Major mode for editing C++ code.  $Revision: 2.266 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.265 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.266 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1150,6 +1150,7 @@ of the expression are preserved."
 	restart outer-loop-done inner-loop-done state ostate
 	this-indent last-sexp last-depth
 	at-else at-brace
+	(parse-sexp-ignore-comments t)
 	(opoint (point))
 	(next-depth 0))
     (save-excursion
@@ -1177,8 +1178,7 @@ of the expression are preserved."
 	  ;;nil nil state))
 	  (let ((start (point))
 		(line-end (progn (end-of-line) (point)))
-		(end (progn (forward-char) (point)))
-		(parse-sexp-ignore-comments))
+		(end (progn (forward-char) (point))))
 	    (setq state (parse-partial-sexp start end nil nil state))
 	    (goto-char line-end))
 	  (setq next-depth (car state))
@@ -2432,7 +2432,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.265 $"
+(defconst c++-version "$Revision: 2.266 $"
   "c++-mode version number.")
 
 (defun c++-version ()
