@@ -181,11 +181,11 @@ def make_docs():
 	#
 	# make the html files
 	#
-	os.mkdir('cc-mode.html')
+	os.mkdir('cc-mode-html')
 	os.system('makeinfo -E tmpfile cc-mode.texi')
-	os.system('python texi2html.py tmpfile cc-mode.html')
-	os.system('tar cf - cc-mode.html | '
-		  'gzip -c > ../Distrib/cc-mode.html.tar.gz')
+	os.system('python texi2html.py tmpfile cc-mode-html')
+	os.system('tar cf - cc-mode-html | '
+		  'gzip -c > ../Distrib/cc-mode-html.tar.gz')
     finally:
 	#
 	# cleanup
