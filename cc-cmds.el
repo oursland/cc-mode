@@ -1284,9 +1284,11 @@ sentence motion in or near comments and multiline strings."
 
 ;; used by outline-minor-mode
 (defun c-outline-level ()
-  (save-excursion
-    (skip-chars-forward "\t ")
-    (current-column)))
+  (let (buffer-invisibility-spec);; This so that `current-column' DTRT
+				 ;; in otherwise-hidden text.
+    (save-excursion
+      (skip-chars-forward "\t ")
+      (current-column))))
 
 
 (defun c-up-conditional (count)
