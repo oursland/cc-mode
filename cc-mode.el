@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.122 $
-;; Last Modified:   $Date: 1993-12-17 21:42:27 $
+;; Version:         $Revision: 3.123 $
+;; Last Modified:   $Date: 1993-12-20 14:32:13 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-17 21:42:27 $|$Revision: 3.122 $|
+;; |$Date: 1993-12-20 14:32:13 $|$Revision: 3.123 $|
 
 ;;; Code:
 
@@ -627,7 +627,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.122 $
+CC-MODE REVISION: $Revision: 3.123 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -660,7 +660,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.122 $
+CC-MODE REVISION: $Revision: 3.123 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2630,12 +2630,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-lineup-streamop (langelem)
   ;; lineup stream operators
   (save-excursion
-    (let ((containing-sexp (cdr langelem))
-	  cs-curcol)
-      (goto-char containing-sexp)
-      (setq cs-curcol (current-column))
-      (skip-chars-forward "^><\n")
-      (- (current-column) cs-curcol))))
+    (let* ((relpos (cdr langelem))
+	   (curcol (progn (goto-char relpos)
+			  (current-column))))
+      (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
+      (goto-char (match-beginning 0))
+      (- (current-column) curcol))))
 
 (defun c-lineup-multi-inher (langelem)
   ;; line up multiple inheritance lines
@@ -2774,7 +2774,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.122 $"
+(defconst c-version "$Revision: 3.123 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
