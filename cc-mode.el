@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.228 $
-;; Last Modified:   $Date: 1995-07-10 15:44:55 $
+;; Version:         $Revision: 4.229 $
+;; Last Modified:   $Date: 1995-07-10 18:23:10 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-10 15:44:55 $|$Revision: 4.228 $|
+;; |$Date: 1995-07-10 18:23:10 $|$Revision: 4.229 $|
 
 ;;; Code:
 
@@ -3294,7 +3294,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (setq foundp (vector (c-point 'boi) search-end))
 		  (cond
 		   ;; check for embedded keywords
-		   ((/= (char-syntax class) 32)
+		   ((let ((char (char-after (1- class))))
+		      (and char
+			   (memq (char-syntax char) '(?w ?_))))
 		    (goto-char match-end)
 		    (setq foundp nil))
 		   ;; make sure we're really looking at the start of a
@@ -4497,7 +4499,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.228 $"
+(defconst c-version "$Revision: 4.229 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
