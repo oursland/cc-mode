@@ -3905,6 +3905,42 @@ lines inside a parenthesis under the open paren.
 
 @comment ------------------------------------------------------------
 
+@findex c-lineup-arglist-operators
+@findex lineup-arglist-operators (c-)
+@item c-lineup-arglist-operators
+Line up lines starting with an infix operator under the open paren.
+Return @code{nil} on lines that doesn't start with an operator, to leave
+those cases to other lineup functions.  Example:
+@example
+@group
+
+if (  x < 10
+   || at_limit (x,       <- c-lineup-arglist-operators
+                list)    <- c-lineup-arglist-operators returns nil
+   )
+
+@end group
+@end example
+
+Since this function doesn't do anything for lines without an infix
+operator you typically want to use it together with some other lineup
+settings, e.g. as follows (the @code{arglist-close} setting is just a
+suggestion to get a consistent style):
+@example
+@group
+
+(c-set-offset 'arglist-cont '(c-lineup-arglist-operators 0))
+(c-set-offset 'arglist-cont-nonempty '(c-lineup-arglist-operators
+                                       c-lineup-arglist))
+(c-set-offset 'arglist-close '(c-lineup-arglist-close-under-paren))
+
+@end group
+@end exampe
+
+@workswith @code{arglist-cont}, @code{arglist-cont-nonempty}.
+
+@comment ------------------------------------------------------------
+
 @findex c-lineup-C-comments
 @findex lineup-C-comments (c-)
 @item c-lineup-C-comments
