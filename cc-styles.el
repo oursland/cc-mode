@@ -393,13 +393,13 @@ Here is the current list of valid syntactic element symbols:
  statement              -- a C (or like) statement
  statement-cont         -- a continuation of a C (or like) statement
  statement-block-intro  -- the first line in a new statement block
- statement-case-intro   -- the first line in a case `block'
+ statement-case-intro   -- the first line in a case \"block\"
  statement-case-open    -- the first line in a case block starting with brace
  substatement           -- the first line after an if/while/for/do/else
  substatement-open      -- the brace that opens a substatement block
- case-label             -- a case or default label
+ case-label             -- a `case' or `default' label
  access-label           -- C++ private/protected/public access label
- label                  -- any non-special C (or like) label
+ label                  -- any ordinary label
  do-while-closure       -- the `while' that ends a do/while construct
  else-clause            -- the `else' of an if/else construct
  comment-intro          -- a line containing only a comment introduction
