@@ -110,7 +110,15 @@
 ;; should override the settings for c-font-lock-keywords etc that
 ;; font-lock managed in earlier versions.
 (eval-after-load "font-lock"
-  '(require 'cc-fonts))
+  '(progn
+     (require 'cc-fonts)
+     (unless (boundp 'font-lock-syntactic-face-function)
+       ;; Older versions of font-lock doesn't have this variable, but
+       ;; we set it from `font-lock-defaults' anyway.  If we don't
+       ;; ensure that it's declared as a variable then some of the
+       ;; older versions (e.g. the one in Emacs 19.34) might give
+       ;; errors.
+       (defvar font-lock-syntactic-face-function nil))))
 (autoload 'c-font-lock-syntactic-face-function "cc-fonts")
 
 
@@ -339,8 +347,8 @@ same format as `c-default-style'."
 	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
 
-  ;; Fix keyword regexps.
   (c-init-language-vars)
+  (c-clear-found-types)
 
   ;; now set the mode style based on default-style
   (let ((style (if (stringp default-style)
@@ -413,8 +421,7 @@ same format as `c-default-style'."
 		"font-lock-keywords-4"))
 	    nil nil ((?_ . "w") (?$ . "w")) c-beginning-of-syntax
 	    (font-lock-syntactic-face-function
-	     ;; This variable doesn't exist in older (X)Emacsen but
-	     ;; it's harmless to set it anyway.
+	     ;; This variable doesn't exist in older (X)Emacsen.
 	     . c-font-lock-syntactic-face-function)
 	    (font-lock-mark-block-function
 	     . c-mark-function)))))
