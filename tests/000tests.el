@@ -1,8 +1,6 @@
 (require 'cc-mode)
 (c-initialize-cc-mode)
 
-(defconst test-dir "~/src/elisp/cc-mode/tests/")
-
 (defconst TESTSTYLE
   '((c-tab-always-indent           . t)
     (c-basic-offset                . 4)
@@ -111,6 +109,7 @@
     "comments.c"
     "comments-1.java"
     "comments-2.c"
+    "cond-1.c"
     "decls-1.java"
     "decls-2.java"
     "decls-3.java"
@@ -175,21 +174,15 @@
 
 (defvar finished-tests nil)
 
-(defsubst file-name-with-extension (filename extension)
-  (save-match-data
-    (if (string-match "\\([^.]+\\)\\.[^.]*$" filename)
-	(concat (substring filename (match-beginning 1) (match-end 1))
-		extension))))
-
 (defun make-test-buffers (filename)
   (let ((testbuf (get-buffer-create "*cc-test*"))
 	(resultsbuf (get-buffer-create "*cc-results*"))
 	(expectedbuf (get-buffer-create "*cc-expected*"))
-	(resfile (file-name-with-extension filename ".res")))
+	(resfile (concat (file-name-sans-extension filename) ".res")))
     (set-buffer testbuf)
     (erase-buffer)
-    (insert-file filename)
-    (beginning-of-buffer)
+    (insert-file-contents filename)
+    (goto-char (point-min))
     (let ((style "TESTSTYLE")
 	  c-mode-hook c++-mode-hook objc-mode-hook c-mode-common-hook)
       (cond
@@ -202,9 +195,9 @@
       (c-set-style style))
     (set-buffer expectedbuf)
     (erase-buffer)
-    (insert-file resfile)
+    (insert-file-contents resfile)
     (text-mode)
-    (beginning-of-buffer)
+    (goto-char (point-min))
     (set-buffer resultsbuf)
     (erase-buffer)
     (list testbuf resultsbuf expectedbuf)))
@@ -214,8 +207,7 @@
   (if (member filename finished-tests)
       nil
     (message "Testing %s..." filename)
-    (let* ((filename (concat test-dir filename))
-	   (baw:c-testing-p t)
+    (let* ((baw:c-testing-p t)
 	   (buflist (make-test-buffers filename))
 	   (testbuf (car buflist))
 	   (resultsbuf (nth 1 buflist))
@@ -225,7 +217,7 @@
 	   (style "TESTSTYLE")
 	   error-found-p)
       (set-buffer testbuf)
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (while (not (eobp))
 	(let ((syntax (c-guess-basic-syntax)))
 	  (set-buffer resultsbuf)
@@ -233,9 +225,9 @@
 	  (set-buffer testbuf))
 	(forward-line 1))
       (set-buffer resultsbuf)
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (set-buffer expectedbuf)
-      (beginning-of-buffer)
+      (goto-char (point-min))
       (while (not (eobp))
 	(let ((results (prog2
 			   (set-buffer resultsbuf)
@@ -264,15 +256,17 @@
 	(setq style "java"))
        (t (c-mode)))
       (c-set-style style)
-      (indent-region (point-min) (point-max) nil)
+      (let ((c-progress-interval nil))
+	(indent-region (point-min) (point-max) nil))
       (and (buffer-modified-p)
 	   (setq error-found-p t))
       (if error-found-p
 	  (progn
 	    (pop-to-buffer testbuf)
-	    (error "Regression found in file: %s!" filename))))
+	    (error "Indentation regression found in file: %s!" filename))))
     (setq finished-tests (cons filename finished-tests))
-    (message "Testing %s... done." filename)))
+;    (message "Testing %s... done." filename)
+    ))
 
 (defun do-all-tests (&optional resetp)
   (interactive "P")
@@ -285,9 +279,9 @@
 
 (defun resfile ()
   (interactive)
-  (beginning-of-buffer)
+  (goto-char (point-min))
   (other-window 1)
-  (beginning-of-buffer)
+  (goto-char (point-min))
   (other-window 1)
   (while (not (eobp))
     (let ((syntax (c-guess-basic-syntax)))
