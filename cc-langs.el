@@ -305,6 +305,10 @@ The syntax tables aren't stored directly since they're quite large."
 	 (c-populate-syntax-table table)
 	 ;; Mode specific syntaxes.
 	 ,(cond ((c-major-mode-is 'objc-mode)
+		 ;; Let '@' be part of symbols in ObjC to cope with
+		 ;; its compiler directives as single keyword tokens.
+		 ;; This is then necessary since it's assumed that
+		 ;; every keyword is a single symbol.
 		 `(modify-syntax-entry ?@ "_" table))
 		((c-major-mode-is 'pike-mode)
 		 `(modify-syntax-entry ?@ "." table)))
@@ -372,6 +376,7 @@ so that all identifiers are recognized as words.")
 keyword.  It's unspecified how far it matches.  Does not contain a \\|
 operator at the top level."
   t    (concat "[" c-alpha "_]")
+  objc (concat "[" c-alpha "@]")
   pike (concat "[" c-alpha "_`]"))
 (c-lang-defvar c-symbol-start (c-lang-const c-symbol-start))
 
@@ -1384,7 +1389,7 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
 will be handled."
   t   nil
-  c   '("extern")
+  (c objc) '("extern")
   c++ '("namespace" "extern")
   idl '("module"
 	;; In CORBA CIDL:
@@ -2210,10 +2215,7 @@ It's used on the token after the one `c-decl-prefix-re' matched.  This
 regexp should not try to match those constructs accurately as it's
 only used as a sieve to avoid spending more time checking other
 constructs."
-  t    (c-lang-const c-identifier-start)
-  ;; Also match the '@' that starts the protection label keywords in
-  ;; Objective-C.
-  objc "[@a-zA-Z]")
+  t (c-lang-const c-identifier-start))
 (c-lang-defvar c-decl-start-re (c-lang-const c-decl-start-re))
 
 (c-lang-defconst c-decl-prefix-or-start-re
