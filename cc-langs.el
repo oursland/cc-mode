@@ -996,7 +996,7 @@ declare the identifiers in it as types.  Assumed to be a subset of
 
 (c-lang-defconst c-brace-list-kwds
   "Keywords introducing declarations where the following block is a
-brace list."
+brace list (containing identifier declarations)."
   t nil
   (c c++ pike) '("enum"))
 
@@ -1056,7 +1056,8 @@ declaration.  They are: `c-primitive-type-kwds',
 (c-lang-defconst c-decl-spec-kwds
   "Keywords introducing extra declaration specifiers in the region
 between the header and the body \(i.e. the \"K&R-region\") in
-declarations."
+declarations.  These are all followed by comma separated lists of type
+names."
   t    nil
   java '("extends" "implements" "throws"))
 
