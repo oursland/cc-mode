@@ -100,6 +100,57 @@ Works with: arglist-cont-nonempty, arglist-close."
 	  (skip-chars-forward " \t")))
       (vector (current-column)))))
 
+;; Contributed by Kevin Ryde <user42@zip.com.au>.
+(defun c-lineup-argcont (elem)
+  "Line up a continued argument.
+
+foo (xyz, aaa + bbb + ccc
+	  + ddd + eee + fff);    <- c-lineup-argcont
+
+Only continuation lines like this are touched, `nil' is returned on lines
+which are the start of an argument.
+
+Within a gcc asm block, \":\" is recognised as an argument separator,
+but of course only between operand specifications, not in the expressions
+for the operands.
+
+Works with: arglist-cont, arglist-cont-nonempty."
+
+  (save-excursion
+    (beginning-of-line)
+    (let ((bol (point)))
+
+      ;; Previous line ending in a comma means we're the start of an
+      ;; argument.  This should quickly catch most cases not for us.
+      (c-backward-syntactic-ws)
+      (let ((c (char-before)))
+	(unless (eq c ?,)
+
+	  ;; In a gcc asm, ":" on the previous line means the start of an
+	  ;; argument.  And lines starting with ":" are not for us, don't
+	  ;; want them to indent to the preceding operand.
+	  (let ((gcc-asm (save-excursion
+			   (goto-char bol)
+			   (c-in-gcc-asm-p))))
+	    (unless (and gcc-asm
+			 (or (eq c ?:)
+			     (save-excursion
+			       (goto-char bol)
+			       (looking-at "[ \t]*:"))))
+
+	      (c-lineup-argcont-scan (if gcc-asm ?:))
+	      (vector (current-column)))))))))
+
+(defun c-lineup-argcont-scan (&optional other-match)
+  ;; Find the start of an argument, for `c-lineup-argcont'.
+  (when (eq 0 (c-backward-token-1 1 t))
+    (let ((c (char-after)))
+      (if (or (eq c ?,) (eq c other-match))
+	  (progn
+	    (forward-char)
+	    (c-forward-syntactic-ws))
+	(c-lineup-argcont-scan other-match)))))
+
 (defun c-lineup-arglist-intro-after-paren (langelem)
   "Line up a line just after the open paren of the surrounding paren or
 brace block.
@@ -814,13 +865,9 @@ Works with: arglist-cont, arglist-cont-nonempty."
 	      (beginning-of-line)
 	      (not (looking-at "^[ \t]*:")))
 
-       ;; Only operate in an "asm" or "__asm__".  Note the use of "[^...]"
-       ;; rather than "\\>", because "_" is not normally a word character.
+       ;; Only operate in an asm statement.
        (progn (goto-char orig-pos)
-	      (beginning-of-line)
-	      (backward-up-list 1)
-	      (c-beginning-of-statement-1 (point-min) nil t)
-	      (looking-at "\\(asm\\|__asm__\\)[^a-zA-Z0-9_$]"))
+	      (c-in-gcc-asm-p))
 
        (- (progn (goto-char alignto)    (current-column))
 	  (progn (goto-char (cdr elem)) (current-column)))))))
