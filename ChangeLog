@@ -1,20 +1,25 @@
+Sun Jun  1 16:23:11 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-load-all): cc-menus depends on cc-langs.
+
+	* cc-langs.el (c-mode-base-map):
+	New variable.  All maps, including c-mode-map
+	inherit from this map.  This makes menu creation more straightforward
+	for Emacs, although it is unnecessary for XEmacs.
+
+	(c-make-inherited-keymap): Use c-mode-base-map as the parent map.
+
 Sat May 31 17:35:55 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-langs.el (c-common-init):
 	Conversion to the easymenu library for creation of
 	popup and menubar menus.
 
-	* cc-mode.el (c-emacs-features):
-	Added a check on emacs-version to figure out
-	whether inherited keymaps introduce duplicate menus if menus are
-	attached to derived keymaps.  I wish this could be a feature test
-	instead of an emacs-version test.
-
 	* cc-menus.el:
 	Conversion to the easymenu library for creation of popup and menubar
 	menus.
 
-	* cc-mode.el (c-emacs-features): Make this work for Emacs 19.34.94.
+	* cc-mode.el (c-emacs-features): Make this work for Emacs 19.35.
 
 Fri May 30 15:38:09 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
