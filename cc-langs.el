@@ -93,7 +93,7 @@ appended."
 	  ;; passing adorn to regexp-opt, since it in XEmacs makes the
 	  ;; top level grouping "shy".
 	  (if adorn
-	      (concat "\\(" re "\\)\\>\\([^_]\\|$\\)")
+	      (concat "\\(" re "\\)\\([^_a-zA-Z0-9$]\\|$\\)")
 	    re))
       "\\<\\>"				; Matches nothing.
       ))
