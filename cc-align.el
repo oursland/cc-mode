@@ -619,7 +619,7 @@ inextern-lang, innamespace."
 Works with: Any syntactic symbol."
   (save-excursion
     (back-to-indentation)
-    (- (current-column) (c-langelem-col langelem))))
+    (vector (current-column))))
 
 
 (defun c-snug-do-while (syntax pos)
