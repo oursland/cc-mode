@@ -4191,8 +4191,17 @@ brace."
 	 ((eq literal 'string)
 	  (c-add-syntax 'string (c-point 'bopl)))
 	 ;; CASE 2: in a C or C++ style comment.
-	 ((memq literal '(c c++))
-	  (c-add-syntax literal (car (c-literal-limits lim))))
+	 ((and (memq literal '(c c++))
+	       ;; This is a kludge for XEmacs where we use
+	       ;; `buffer-syntactic-context', which doesn't correctly
+	       ;; recognize "\*/" to end a block comment.
+	       ;; `parse-partial-sexp' which is used by
+	       ;; `c-literal-limits' will however do that in most
+	       ;; versions, which results in that we get nil from
+	       ;; `c-literal-limits' even when `c-in-literal' claims
+	       ;; we're inside a comment.
+	       (setq placeholder (c-literal-limits lim)))
+	  (c-add-syntax literal (car placeholder)))
 	 ;; CASE 3: in a cpp preprocessor macro continuation.
 	 ((and (save-excursion
 		 (when (c-beginning-of-macro)
