@@ -1695,8 +1695,10 @@ Optional prefix ARG means justify paragraph as well."
 		   (goto-char (car limits))
 		   (end-of-line)
 		   (< (point) (cdr limits))))
-	    (let (fill-prefix fill-paragraph-function
-		  (end-mark (copy-marker (cdr limits))))
+	    (let (fill-prefix
+		  fill-paragraph-function
+		  ;;(end-mark (copy-marker (cdr limits))))
+		  )
 	      (save-restriction
 		(narrow-to-region (save-excursion
 				    (goto-char (1+ (car limits)))
