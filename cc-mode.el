@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.235 $
-;; Last Modified:   $Date: 1992-12-09 14:42:19 $
+;; Version:         $Revision: 2.236 $
+;; Last Modified:   $Date: 1992-12-09 17:49:47 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-09 14:42:19 $|$Revision: 2.235 $|
+;; |$Date: 1992-12-09 17:49:47 $|$Revision: 2.236 $|
 
 ;;; Code:
 
@@ -407,7 +407,7 @@ value is, though, the slower parts of c++-mode can become.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.235 $
+  "Major mode for editing C++ code.  $Revision: 2.236 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -615,7 +615,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.235 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.236 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -873,22 +873,24 @@ backward-delete-char-untabify."
 introducing construct, indent line as comment.  This only indents if
 we're on a comment-only line, otherwise use indent-for-comment (\\[indent-for-comment])."
   (interactive "P")
-  (let ((here (point)))
+  (let ((here (point)) char)
     (self-insert-command (prefix-numeric-value arg))
-    (if (= (char-after (1- here)) ?/)
-	(save-excursion
-	  (goto-char here)
-	  (c++-indent-line)))))
+    (and (setq char (char-after (1- here)))
+	 (= char ?/)
+	 (save-excursion
+	   (goto-char here)
+	   (c++-indent-line)))))
 
 (defun c++-electric-star (arg)
   "Works with c++-electric-slash to auto indent C style comment lines."
   (interactive "P")
-  (let ((here (point)))
+  (let ((here (point)) char)
     (self-insert-command (prefix-numeric-value arg))
-    (if (or (= (char-after (1- here)) ?/)
-	    (and (memq (c++-in-literal) '(c))
-		 (or (= (point) (c++-point 'boi))
-		     (= (preceding-char) ?*))))
+    (if (and (setq char (char-after (1- here)))
+	     (or (= char ?/)
+		 (and (memq (c++-in-literal) '(c))
+		      (or (= (point) (c++-point 'boi))
+			  (= (preceding-char) ?*)))))
 	(save-excursion
 	  (goto-char here)
 	  (c++-indent-line)))))
@@ -2296,7 +2298,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.235 $"
+(defconst c++-version "$Revision: 2.236 $"
   "c++-mode version number.")
 
 (defun c++-version ()
