@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.337 $
-;; Last Modified:   $Date: 1996-12-23 23:48:26 $
+;; Version:         $Revision: 4.338 $
+;; Last Modified:   $Date: 1996-12-24 15:49:34 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1153,7 +1153,7 @@ behavior that users are familiar with.")
 ;; defconst'd instead of defvar'd to override any old pre-loaded versions
 (defconst c-recognize-knr-p t
   "Non-nil means K&R style argument declarations are valid.")
-(defvar c-indentation-style "gnu"
+(defvar c-indentation-style c-site-default-style
   "Name of style installed in the current buffer.")
 
 ;; minor mode variables
@@ -5055,7 +5055,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.337 $"
+(defconst c-version "$Revision: 4.338 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
