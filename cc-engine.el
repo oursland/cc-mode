@@ -812,6 +812,36 @@ See `c-forward-token-1' for details."
 	      (if (bobp) (goto-char last)))))
       count)))
 
+(defun c-syntactic-re-search-forward (regexp &optional bound noerror count)
+  ;; Like `re-search-forward', but only report matches that are found
+  ;; in syntactically significant text.  I.e. matches that begins in
+  ;; comments, macros or string literals are ignored.  The start point
+  ;; is assumed to be outside any comment, macro or string literal, or
+  ;; else the content of that region is taken as syntactically
+  ;; significant text.
+  (or count (setq count 1))
+  (let ((start (point))
+	(pos (point))
+	state)
+    (condition-case err
+	(while (and (> count 0)
+		    (re-search-forward regexp bound noerror))
+	  (setq state (parse-partial-sexp pos (point) nil nil state)
+		pos (point))
+	  (and (null (nth 3 state))
+	       (null (nth 4 state))
+	       (not (save-excursion (c-beginning-of-macro start)))
+	       (setq count (1- count))))
+      (error
+       (goto-char start)
+       (signal (car err) (cdr err))))
+    (if (= count 0)
+	(point)
+      (goto-char (if (eq noerror t)
+		     start
+		   (or bound (point-max))))
+      nil)))
+
 
 (defun c-in-literal (&optional lim detect-cpp)
   "Return the type of literal point is in, if any.
@@ -1447,6 +1477,74 @@ brace."
 		    (not (c-crosses-statement-barrier-p (point) pos)))
 	  (setq pos (point)))
 	(goto-char pos)))))
+
+(defun c-beginning-of-declaration (&optional lim)
+  ;; Go to the beginning of the current declaration.  Point is assumed
+  ;; to not be inside a code block.  Point won't be moved out of the
+  ;; surrounding paren.  Return point, unless we've jumped over K&R
+  ;; style argument declarations in which case the position of the
+  ;; first such argument declaration is returned instead.
+  (let ((here (point)) fallback-pos char-before)
+    (c-beginning-of-statement-1 lim)
+    (if (and (eq (char-after) ?{)
+	     (save-excursion
+	       (c-backward-syntactic-ws lim)
+	       (not (memq (setq char-before (char-before)) '(?\; ?})))))
+	;; c-beginning-of-statement-1 stops at a block start, but we
+	;; want to continue if the block doesn't begin a top level
+	;; construct, i.e. if it isn't preceded by ';' or '}'.
+	(c-beginning-of-statement-1 lim))
+    (if c-recognize-knr-p
+	;; It's K&R argdecls that makes this difficult.
+	(progn
+	  ;; Go back by "statements", as defined by
+	  ;; c-beginning-of-statement-1.  If the current statement
+	  ;; doesn't contain a '=' or paren of any sort, and if the
+	  ;; preceding one ends with a ';' then this might be a K&R
+	  ;; argument declaration, so back up another one and check
+	  ;; again.  If we've done that at least once, we must
+	  ;; eventually arrive at a statement which contains a '('
+	  ;; that isn't preceded by a '=' and where the corresponding
+	  ;; ')' is followed by some symbol before the next ';' or
+	  ;; '{'.  If we don't then none of those that was jumped over
+	  ;; were really K&R arguments, so we go back to the first
+	  ;; one.
+	  (setq fallback-pos (point))
+	  (if (and (eq (char-after) ?{)
+		   (eq char-before ?\;))
+	      ;; If we're accepting K&R argdecls then we shouldn't
+	      ;; consider a preceding ';' as a declaration delimiter
+	      ;; before '{' like we do above, so repeat it with a more
+	      ;; lax check.  In this case it's however only a
+	      ;; potential continuation of the declaration, so we must
+	      ;; do it after saving fallback-pos.
+	      (c-beginning-of-statement-1 lim))
+	  (while (and (< (point) here)
+		      (save-excursion
+			(setq here (point))
+			(not (and (c-syntactic-re-search-forward
+				   "[\]}\);=\({\[]" nil t)
+				  (memq (char-before) '(?= ?\( ?{ ?\[)))))
+		      (progn
+			(c-backward-syntactic-ws lim)
+			(eq (char-before) ?\;)))
+	    (c-beginning-of-statement-1 lim))
+	  (goto-char here)
+	  (if (and (c-syntactic-re-search-forward "[\]}\);=\({\[]" nil t)
+		   (eq (char-before) ?\()
+		   (c-safe (goto-char (c-up-list-forward (point))) t)
+		   (progn
+		     ;; The following is a bit overkill, but it makes
+		     ;; inconveniently placed macros to be handled a
+		     ;; little better.
+		     (while (and (not (looking-at "\\(\\w\\|[_;{]\\)"))
+				 (= (c-forward-token-1 1 t) 0)))
+		     (not (memq (char-after) '(?\; ?{)))))
+	      (prog1 (point)
+		(goto-char here))
+	    (goto-char fallback-pos)
+	    (point)))
+      (point))))
 
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
@@ -2821,28 +2919,19 @@ Keywords are recognized and not considered identifiers."
 	    (c-add-class-syntax 'class-close inclass-p state))
 	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
-		 ;; here we essentially use the hack that is used in
-		 ;; Emacs' c-mode.el to limit how far back we should
-		 ;; look.  The assumption is made that argdecls are
-		 ;; indented at least one space and that function
-		 ;; headers are not indented.
-		 (let ((limit (save-excursion
-				(re-search-backward "^[^ \^L\t\n#]" nil 'move)
-				(point))))
-		   (save-excursion
-		     (c-backward-syntactic-ws limit)
-		     (setq placeholder (point))
-		     (while (and (memq (char-before) '(?\; ?,))
-				 (> (point) limit))
-		       (beginning-of-line)
-		       (setq placeholder (point))
-		       (c-backward-syntactic-ws limit))
-		     (c-just-after-func-arglist-p nil lim)))
+		 (not (eq char-before-ip ?}))
 		 (save-excursion
-		   (c-beginning-of-statement-1)
-		   (not (looking-at "typedef\\>[^_]"))))
+		   (setq placeholder (c-beginning-of-declaration lim))
+		   (and (/= placeholder (point))
+			;; Do an extra check to avoid tripping up on
+			;; statements that occur in invalid contexts
+			;; (e.g. in macro bodies where we don't really
+			;; know the context of what we're looking at).
+			(not (and c-opt-block-stmt-key
+				  (looking-at c-opt-block-stmt-key)))))
+		 (< placeholder indent-point))
 	    (goto-char placeholder)
-	    (c-add-syntax 'knr-argdecl (c-point 'boi)))
+	    (c-add-syntax 'knr-argdecl (point)))
 	   ;; CASE 5I: ObjC method definition.
 	   ((and c-opt-method-key
 		 (looking-at c-opt-method-key))
