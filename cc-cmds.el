@@ -491,7 +491,7 @@ value of `c-cleanup-list'."
   (interactive "*P")
   (let* ((bod (c-point 'bod))
 	 (literal (c-in-literal bod))
-	 syntax newlines
+	 syntax newlines is-scope-op
 	 ;; shut this up
 	 (c-echo-syntactic-information-p nil))
     (if (or literal
@@ -511,7 +511,9 @@ value of `c-cleanup-list'."
 		   (eq (char-before) ?:))
 		 (not (c-in-literal))
 		 (not (eq (char-after (- (point) 2)) ?:)))
-	    (delete-region (point) (1- here)))
+	    (progn
+	      (delete-region (point) (1- here))
+	      (setq is-scope-op t)))
 	(goto-char (- (point-max) pos)))
       ;; lets do some special stuff with the colon character
       (setq syntax (c-guess-basic-syntax)
@@ -535,6 +537,7 @@ value of `c-cleanup-list'."
       ;; non-hung colons.  However, we don't unhang them because that
       ;; would be a cleanup (and anti-social).
       (if (and (memq 'before newlines)
+	       (not is-scope-op)
 	       (save-excursion
 		 (skip-chars-backward ": \t")
 		 (not (bolp))))
@@ -544,7 +547,8 @@ value of `c-cleanup-list'."
 	    (c-indent-line)
 	    (goto-char (- (point-max) pos))))
       ;; does a newline go after the colon?
-      (if (memq 'after (cdr-safe newlines))
+      (if (and (memq 'after (cdr-safe newlines))
+	       (not is-scope-op))
 	  (progn
 	    (newline)
 	    (c-indent-line)))
