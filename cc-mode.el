@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.144 $
-;; Last Modified:   $Date: 1993-12-27 16:34:52 $
+;; Version:         $Revision: 3.145 $
+;; Last Modified:   $Date: 1993-12-27 17:51:34 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-27 16:34:52 $|$Revision: 3.144 $|
+;; |$Date: 1993-12-27 17:51:34 $|$Revision: 3.145 $|
 
 ;;; Code:
 
@@ -639,14 +639,14 @@ behavior that users are familiar with.")
   (concat c-symbol-key ":\\([^:]\\|$\\)")
   "Regexp describing any label.")
 (defconst c-conditional-key
-  "\\<\\(for\\|if\\|do\\|else\\|while\\)\\>"
+  "\\<\\(for\\|if\\|do\\|else\\|while\\|switch\\)\\>"
   "Regexp describing a conditional control.")
 
 ;; main entry points for the modes
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.144 $
+CC-MODE REVISION: $Revision: 3.145 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -680,7 +680,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.144 $
+CC-MODE REVISION: $Revision: 3.145 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2524,7 +2524,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
-	   ;; CASE 8C: substatement
+	   ;; CASE 8A: substatement
 	   ((save-excursion
 	      (goto-char placeholder)
 	      (and (looking-at c-conditional-key)
@@ -2534,10 +2534,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (c-add-semantics 'substatement placeholder)
 	    (if (= char-after-ip ?{)
 		(c-add-semantics 'block-open)))
-	   ;; CASE 8A: open braces for class or brace-lists
+	   ;; CASE 8B: open braces for class or brace-lists
 	   ((= char-after-ip ?{)
 	    (cond
-	     ;; CASE 8A.1: class-open
+	     ;; CASE 8B.1: class-open
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
@@ -2547,14 +2547,16 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (setq placeholder (cdr decl)))
 		  ))
 	      (c-add-semantics 'class-open placeholder))
-	     ;; CASE 8A.2: brace-list-open
+	     ;; CASE 8B.2: brace-list-open
 	     ((or (save-excursion
 		    (goto-char placeholder)
 		    (looking-at "\\<enum\\>"))
 		  (= char-before-ip ?=))
 	      (c-add-semantics 'brace-list-open placeholder))
+	     (t
+	      (error "CASE 8B.3? Please report this error."))
 	     ))
-	   ;; CASE 8B: iostream insertion or extraction operator
+	   ;; CASE 8C: iostream insertion or extraction operator
 	   ((looking-at "<<\\|>>")
 	    (goto-char placeholder)
 	    (while (and (re-search-forward "<<\\|>>" indent-point 'move)
@@ -2925,7 +2927,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.144 $"
+(defconst c-version "$Revision: 3.145 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
