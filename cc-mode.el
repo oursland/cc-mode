@@ -98,11 +98,14 @@
 	       entry)
 	   (modify-syntax-entry ?a ". 12345678" table)
 	   (cond
-	    ;; XEmacs 19
-	    ((arrayp table) (setq entry (aref table ?a)))
+	    ;; XEmacs 19, and beyond Emacs 19.34
+	    ((arrayp table)
+	     (setq entry (aref table ?a))
+	     ;; In Emacs, table entries are cons cells
+	     (if (consp entry) (setq entry (car entry))))
 	    ;; XEmacs 20
 	    ((fboundp 'get-char-table) (setq entry (get-char-table ?a table)))
-	    ;; Emacs 19
+	    ;; before and including Emacs 19.34
 	    ((and (fboundp 'char-table-p)
 		  (char-table-p table))
 	     (setq entry (car (char-table-range table [?a]))))
