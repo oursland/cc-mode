@@ -193,33 +193,52 @@
 
 ;;; Basic utility functions.
 
-(defun c-syntactic-content (from to)
+(defun c-syntactic-content (from to paren-level)
   ;; Return the given region as a string where all syntactic
   ;; whitespace is removed or, where necessary, replaced with a single
-  ;; space.
+  ;; space.  If PAREN-LEVEL is given then all parens in the region are
+  ;; collapsed to "()", "[]" etc.
+
   (save-excursion
-    (goto-char from)
-    (let* ((parts (list nil)) (tail parts) pos)
-      (while (re-search-forward c-syntactic-ws-start to t)
-	(goto-char (setq pos (match-beginning 0)))
-	(c-forward-syntactic-ws to)
-	(if (= (point) pos)
-	    (forward-char)
-	  (if (and (> pos from)
-		   (< (point) to)
-		   (looking-at "\\w\\|\\s_")
-		   (save-excursion
-		     (goto-char (1- pos))
-		     (looking-at "\\w\\|\\s_")))
-	      (progn
-		(setcdr tail (list (buffer-substring-no-properties from pos)
-				   " "))
-		(setq tail (cddr tail)))
-	    (setcdr tail (list (buffer-substring-no-properties from pos)))
-	    (setq tail (cdr tail)))
-	  (setq from (point))))
-      (setcdr tail (list (buffer-substring-no-properties from to)))
-      (apply 'concat (cdr parts)))))
+    (save-restriction
+      (narrow-to-region from to)
+      (goto-char from)
+      (let* ((parts (list nil)) (tail parts) pos in-paren)
+
+	(while (re-search-forward c-syntactic-ws-start to t)
+	  (goto-char (setq pos (match-beginning 0)))
+	  (c-forward-syntactic-ws)
+	  (if (= (point) pos)
+	      (forward-char)
+
+	    (when paren-level
+	      (save-excursion
+		(setq in-paren (= (car (parse-partial-sexp from pos 1)) 1)
+		      pos (point))))
+
+	    (if (and (> pos from)
+		     (< (point) to)
+		     (looking-at "\\w\\|\\s_")
+		     (save-excursion
+		       (goto-char (1- pos))
+		       (looking-at "\\w\\|\\s_")))
+		(progn
+		  (setcdr tail (list (buffer-substring-no-properties from pos)
+				     " "))
+		  (setq tail (cddr tail)))
+	      (setcdr tail (list (buffer-substring-no-properties from pos)))
+	      (setq tail (cdr tail)))
+
+	    (when in-paren
+	      (when (= (car (parse-partial-sexp pos to -1)) -1)
+		(setcdr tail (list (buffer-substring-no-properties
+				    (1- (point)) (point))))
+		(setq tail (cdr tail))))
+
+	    (setq from (point))))
+
+	(setcdr tail (list (buffer-substring-no-properties from to)))
+	(apply 'concat (cdr parts))))))
 
 (defsubst c-keyword-sym (keyword)
   ;; Return non-nil if the string KEYWORD is a known keyword.  More
@@ -3293,6 +3312,17 @@ This function does not do any hidden buffer changes."
 ;; same name is seldom used as both a type and something else in a
 ;; file, and we only use this as a last resort in ambiguous cases (see
 ;; `c-font-lock-declarations').
+;;
+;; Template types in C++ are added here too but with the template
+;; arglist replaced with "<>" in references or "<" for the one in the
+;; primary type.  E.g. the type "Foo<A,B>::Bar<C>" is stored as
+;; "Foo<>::Bar<".  This avoids storing very long strings (since C++
+;; template specs can be fairly sized programs in themselves) and
+;; improves the hit ratio (it's a type regardless of the template
+;; args; it's just not the same type, but we're only interested in
+;; recognizing types, not telling distinct types apart).  Note that
+;; template types in references are added here too; from the example
+;; above there will also be an entry "Foo<".
 (defvar c-found-types nil)
 (make-variable-buffer-local 'c-found-types)
 
@@ -3311,23 +3341,16 @@ This function does not do any hidden buffer changes."
   ;; doesn't cover cases like when characters are removed from a type
   ;; or added in the middle.  We'd need the position of point when the
   ;; font locking is invoked to solve this well.
-  (unless (and c-recognize-<>-arglists
-	       (save-excursion
-		 (goto-char from)
-		 (c-syntactic-re-search-forward "<" to t)))
-    ;; To avoid storing very long strings, do not add a type that
-    ;; contains '<' in languages with angle bracket arglists, since
-    ;; the type then probably contains a C++ template spec and those
-    ;; can be fairly sized programs in themselves.
-    (let ((type (c-syntactic-content from to)))
-      (unless (intern-soft type c-found-types)
-	(unintern (substring type 0 -1) c-found-types)
-	(intern type c-found-types)))))
+  (let ((type (c-syntactic-content from to c-recognize-<>-arglists)))
+    (unless (intern-soft type c-found-types)
+      (unintern (substring type 0 -1) c-found-types)
+      (intern type c-found-types))))
 
 (defsubst c-check-type (from to)
   ;; Return non-nil if the given region contains a type in
   ;; `c-found-types'.
-  (intern-soft (c-syntactic-content from to) c-found-types))
+  (intern-soft (c-syntactic-content from to c-recognize-<>-arglists)
+	       c-found-types))
 
 (defun c-list-found-types ()
   ;; Return all the types in `c-found-types' as a sorted list of
@@ -3809,7 +3832,7 @@ This function does not do any hidden buffer changes."
   ;; angle bracket arglist, 'operator of it's an operator identifier,
   ;; or t if it's some other kind of name.
 
-  (let ((pos (point)) res id-start id-end
+  (let ((pos (point)) (start (point)) res id-start id-end
 	;; Turn off `c-promote-possible-types' here since we might
 	;; call `c-forward-<>-arglist' and we don't want it to promote
 	;; every suspect thing in the arglist to a type.  We're
@@ -3926,6 +3949,8 @@ This function does not do any hidden buffer changes."
 	       (when (let (c-record-type-identifiers
 			   c-record-found-types)
 		       (c-forward-<>-arglist nil))
+
+		 (c-add-type start (1+ pos))
 		 (c-forward-syntactic-ws)
 		 (setq pos (point)
 		       c-last-identifier-range nil)
@@ -3964,7 +3989,7 @@ This function does not do any hidden buffer changes."
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
   ;; "enum {a, b, c} foo".
-  (let ((start (point)) pos res res2 id-start id-end id-range)
+  (let ((start (point)) pos res name-res id-start id-end id-range)
 
     ;; Skip leading type modifiers.  If any are found we know it's a
     ;; prefix of a type.
@@ -3981,9 +4006,9 @@ This function does not do any hidden buffer changes."
       (goto-char (match-end 1))
       (c-forward-syntactic-ws)
       (setq pos (point))
-      (if (memq (setq res2 (c-forward-name)) '(t template))
+      (if (memq (setq name-res (c-forward-name)) '(t template))
 	  (progn
-	    (when (eq res2 t)
+	    (when (eq name-res t)
 	      ;; In many languages the name can be used without the
 	      ;; prefix, so we add it to `c-found-types'.
 	      (c-add-type pos (point))
@@ -4000,8 +4025,8 @@ This function does not do any hidden buffer changes."
 	(if (looking-at c-identifier-start)
 	    (save-excursion
 	      (setq id-start (point)
-		    res2 (c-forward-name))
-	      (when res2
+		    name-res (c-forward-name))
+	      (when name-res
 		(setq id-end (point)
 		      id-range c-last-identifier-range))))
 	(and (cond ((looking-at c-primitive-type-key)
@@ -4056,8 +4081,8 @@ This function does not do any hidden buffer changes."
 	    (goto-char (match-end 1))
 	    (c-forward-syntactic-ws)))))
 
-     (res2
-      (cond ((eq res2 t)
+     (name-res
+      (cond ((eq name-res t)
 	     ;; A normal identifier.
 	     (goto-char id-end)
 	     (if (or res c-promote-possible-types)
@@ -4073,7 +4098,7 @@ This function does not do any hidden buffer changes."
 			     'found
 			   ;; It's an identifier that might be a type.
 			   'maybe))))
-	    ((eq res2 'template)
+	    ((eq name-res 'template)
 	     ;; A template is a type.
 	     (goto-char id-end)
 	     (setq res t))
@@ -4101,9 +4126,11 @@ This function does not do any hidden buffer changes."
 	  (c-forward-syntactic-ws)))
 
       (when c-opt-type-concat-key
-	;; Look for a trailing operator that concatenates the type with
-	;; a following one, and if so step past that one through a
-	;; recursive call.
+	;; Look for a trailing operator that concatenates the type
+	;; with a following one, and if so step past that one through
+	;; a recursive call.  Note that we don't record concatenated
+	;; types in `c-found-types' - it's the component types that
+	;; are recorded when appropriate.
 	(setq pos (point))
 	(let* ((c-promote-possible-types (or (memq res '(t known))
 					     c-promote-possible-types))
@@ -4111,26 +4138,28 @@ This function does not do any hidden buffer changes."
 	       ;; we can merge in the types from the second part afterwards if
 	       ;; it turns out to be a known type there.
 	       (c-record-found-types (and c-record-type-identifiers
-					  (not c-promote-possible-types))))
+					  (not c-promote-possible-types)))
+	       subres)
 	  (if (and (looking-at c-opt-type-concat-key)
 
 		   (progn
 		     (goto-char (match-end 1))
 		     (c-forward-syntactic-ws)
-		     (setq res2 (c-forward-type))))
+		     (setq subres (c-forward-type))))
 
 	      (progn
 		;; If either operand certainly is a type then both are, but we
 		;; don't let the existence of the operator itself promote two
 		;; uncertain types to a certain one.
 		(cond ((eq res t))
-		      ((or (eq res 'known) (memq res2 '(t known)))
-		       (c-add-type id-start id-end)
+		      ((or (eq res 'known) (memq subres '(t known)))
+		       (unless (eq name-res 'template)
+			 (c-add-type id-start id-end))
 		       (when (and c-record-type-identifiers id-range)
 			 (c-record-type-id id-range))
 		       (setq res t))
 		      ((eq res 'found))
-		      ((eq res2 'found)
+		      ((eq subres 'found)
 		       (setq res 'found))
 		      (t
 		       (setq res 'maybe)))
