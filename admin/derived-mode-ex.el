@@ -129,10 +129,10 @@ Each list item should be a regexp matching a single identifier.")
   "Keymap used in c:-mode buffers.")
 
 (easy-menu-define c:-menu c:-mode-map "C: Mode Commands"
-		  ;; Can use `c:' as language to `c-mode-menu' since
-		  ;; its definition covers any language.  In this case
-		  ;; the language is used to adapt to the nonexistence
-		  ;; of a cpp pass and thus shorten down some
+		  ;; Can use `c:' as the language for `c-mode-menu'
+		  ;; since its definition covers any language.  In
+		  ;; this case the language is used to adapt to the
+		  ;; nonexistence of a cpp pass and thus removing some
 		  ;; irrelevant menu alternatives.
 		  (cons "C:" (c-lang-const c-mode-menu c:)))
 
@@ -159,6 +159,9 @@ Key bindings:
 	local-abbrev-table c:-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map c-mode-map)
+  ;; `c-init-language-vars' is a macro that is expanded at compile
+  ;; time to a large `setq' with all the language variables and their
+  ;; customized values for our language.
   (c-init-language-vars c:-mode)
   ;; `c-common-init' initializes most of the components of a CC Mode
   ;; buffer, including setup of the mode menu, font-lock, etc.
