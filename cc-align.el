@@ -198,9 +198,27 @@ the open paren.
 Works with: Almost all symbols, but are typically most useful on
 arglist-close, arglist-cont and arglist-cont-nonempty."
   (save-excursion
-    (beginning-of-line)
-    (backward-up-list 1)
+    (if (memq (car elem) '(arglist-cont-nonempty arglist-close))
+	(goto-char (elt c-syntactic-element 2))
+      (beginning-of-line)
+      (backward-up-list 1))
     (vector (current-column))))
+
+(defun c-lineup-arglist-operators (langelem)
+  "Line up lines starting with an infix operator under the open paren.
+Return `nil' on lines that doesn't start with an operator, to leave
+those cases to other lineup functions.  Example:
+
+if (  x < 10
+   || at_limit (x,       <- c-lineup-arglist-operators
+		list)    <- c-lineup-arglist-operators returns nil
+   )
+
+Works with: arglist-cont, arglist-cont-nonempty."
+  (save-excursion
+    (back-to-indentation)
+    (when (looking-at "[-+|&*%<>]\\|\\(/[^/*]\\)")
+      (c-lineup-arglist-close-under-paren langelem))))
 
 (defun c-lineup-close-paren (langelem)
   "Line up the closing paren under its corresponding open paren if the
