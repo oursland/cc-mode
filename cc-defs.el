@@ -205,20 +205,20 @@
 	  ;; behavior (which also is symmetric).
 	  (if (and (eolp) (nth 7 (parse-partial-sexp here (point))))
 	      (condition-case nil (forward-char 1)))
-	  t))
-    ;; When we got newline terminated comments, forward-comment in
-    ;; all supported emacsen so far will stop at eol of each line
-    ;; not ending with a comment when moving backwards.  The
-    ;; following corrects for it when count is -1.  The other common
-    ;; case, when count is large and negative, works regardless.
-    ;; It's too much work to correct for the rest of the cases.
-    (skip-chars-backward " \t\n\r\f")
-    (if (bobp)
-	;; Some emacsen return t when moving backwards at bob.
-	nil
-      (re-search-forward "[\n\r]" here t)
-      (if (forward-comment count)
-	  (if (eolp) (forward-comment -1) t)))))
+	  t)
+      ;; When we got newline terminated comments, forward-comment in
+      ;; all supported emacsen so far will stop at eol of each line
+      ;; not ending with a comment when moving backwards.  The
+      ;; following corrects for it when count is -1.  The other common
+      ;; case, when count is large and negative, works regardless.
+      ;; It's too much work to correct for the rest of the cases.
+      (skip-chars-backward " \t\n\r\f")
+      (if (bobp)
+	  ;; Some emacsen return t when moving backwards at bob.
+	  nil
+	(re-search-forward "[\n\r]" here t)
+	(if (forward-comment count)
+	    (if (eolp) (forward-comment -1) t))))))
 
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
