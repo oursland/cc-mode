@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.235 $
-;; Last Modified:   $Date: 1994-02-08 21:57:19 $
+;; Version:         $Revision: 3.236 $
+;; Last Modified:   $Date: 1994-02-08 22:05:48 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-08 21:57:19 $|$Revision: 3.235 $|
+;; |$Date: 1994-02-08 22:05:48 $|$Revision: 3.236 $|
 
 ;;; Code:
 
@@ -155,6 +155,7 @@ reported and the semantic symbol is ignored.")
     (stream-op             . c-lineup-streamop)
     (inclass               . +)
     (cpp-macro             . -1000)
+    (friend                . 0)
     )
   "Default settings for offsets of syntactic elements.
 Do not change this constant!  See the variable `c-offsets-alist' for
@@ -243,6 +244,7 @@ Here is the current list of valid semantic element symbols:
  stream-op              -- lines continuing a stream operator construct
  inclass                -- the construct is nested inside a class definition
  cpp-macro              -- the start of a cpp macro
+ friend                 -- a C++ friend declaration
 ")
 
 (defvar c-tab-always-indent t
@@ -702,7 +704,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.235 $
+cc-mode Revision: $Revision: 3.236 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -733,7 +735,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.235 $
+cc-mode Revision: $Revision: 3.236 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2774,6 +2776,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    ;; reset semantics kludge
 	    (setq semantics nil)
 	    (c-add-semantics 'comment-intro)))
+      ;; we might want to give additional offset to friends (in C++)
+      (if (and (eq major-mode 'c++-mode)
+	       (looking-at "friend[ \t]+"))
+	  (c-add-semantics 'friend))
       ;; return the semantics
       semantics)))
 
@@ -3087,7 +3093,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.235 $"
+(defconst c-version "$Revision: 3.236 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
