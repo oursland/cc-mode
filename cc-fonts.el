@@ -686,6 +686,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    (or (= paren-depth 0)
 		(c-safe (goto-char (scan-lists (point) 1 paren-depth))))
 
+	    (< (point) limit)
+
 	    ;; Search syntactically to the end of the declarator
 	    ;; (";", ",", ")", eob etc) or to the beginning of an
 	    ;; initializer or function prototype ("=" or "\\s\(").
@@ -1648,9 +1650,10 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		       (c-lang-const c-symbol-key)
 		       "\\)")
 	       `((c-font-lock-declarators limit t nil)
-		 (goto-char
-		  (match-beginning
-		   ,(1+ (c-lang-const c-single-line-syntactic-ws-depth)))))))))
+		 (goto-char (match-beginning
+			     ,(1+ (c-lang-const
+				   c-single-line-syntactic-ws-depth))))
+		 (goto-char (match-end 0)))))))
 
       ;; Fontify the type in C++ "new" expressions.
       ,@(when (c-major-mode-is 'c++-mode)
