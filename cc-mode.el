@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.92 $
-;; Last Modified:   $Date: 1994-10-12 15:42:04 $
+;; Version:         $Revision: 4.93 $
+;; Last Modified:   $Date: 1994-10-12 23:36:46 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -101,7 +101,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-10-12 15:42:04 $|$Revision: 4.92 $|
+;; |$Date: 1994-10-12 23:36:46 $|$Revision: 4.93 $|
 
 ;;; Code:
 
@@ -971,7 +971,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.92 $
+cc-mode Revision: $Revision: 4.93 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1010,7 +1010,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.92 $
+cc-mode Revision: $Revision: 4.93 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1047,7 +1047,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.92 $
+cc-mode Revision: $Revision: 4.93 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2643,11 +2643,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		;; go back 2 bods, but ignore any bogus positions
 		;; returned by beginning-of-defun (i.e. open paren in
 		;; column zero)
-		(let ((cnt 0))
-		  (while (and (not at-bob) (< cnt 2))
+		(let ((cnt 2))
+		  (while (not (or at-bob (zerop cnt)))
 		    (beginning-of-defun)
 		    (if (= (following-char) ?\{)
-			(setq cnt (1+ cnt)))
+			(setq cnt (1- cnt)))
 		    (if (bobp)
 			(setq at-bob t))))
 		(point)))
@@ -3109,7 +3109,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (setq containing-sexp nil)))))
 
 	;; set the limit on the farthest back we need to search
-	(setq lim (or containing-sexp (point-min)))
+	(setq lim (or containing-sexp
+		      (if (consp (car fullstate))
+			  (cdr (car fullstate))
+			nil)
+		      (point-min)))
 
 	;; cache char before and after indent point, and move point to
 	;; the most likely position to perform the majority of tests
@@ -4135,7 +4139,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.92 $"
+(defconst c-version "$Revision: 4.93 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
