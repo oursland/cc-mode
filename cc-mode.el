@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.9 $
-;; Last Modified:   $Date: 1993-09-24 22:01:18 $
+;; Version:         $Revision: 3.10 $
+;; Last Modified:   $Date: 1993-09-24 22:05:21 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-24 22:01:18 $|$Revision: 3.9 $|
+;; |$Date: 1993-09-24 22:05:21 $|$Revision: 3.10 $|
 
 ;;; Code:
 
@@ -470,7 +470,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.9 $
+  "Major mode for editing C++ code.  $Revision: 3.10 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -702,7 +702,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.9 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.10 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1387,7 +1387,8 @@ of the expression are preserved."
 	      (setq this-indent
 		    (+ this-indent c-brace-offset
 		       (if (c++-at-top-level-p t (car contain-stack))
-			   0 c-indent-level))))
+			   c-continued-brace-offset
+			 c-indent-level))))
 	     ;; check for continued statements
 	     ((save-excursion
 		(c++-backward-syntactic-ws (car contain-stack))
@@ -2601,7 +2602,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.9 $"
+(defconst c++-version "$Revision: 3.10 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
