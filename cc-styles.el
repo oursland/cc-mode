@@ -54,6 +54,7 @@
 			 (arglist-intro . c-lineup-arglist-intro-after-paren)
 			 (arglist-close . c-lineup-arglist)
 			 (inline-open . 0)
+			 (brace-list-open . +)
 			 ))
      (c-special-indent-hook . c-gnu-impose-minimum)
      (c-block-comment-prefix . "")
