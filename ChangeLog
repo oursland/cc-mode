@@ -1,3 +1,155 @@
+Tue Aug 20 21:08:13 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-lineup-comment): preserve comment-column.
+
+Mon Aug 19 22:24:41 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-gnu-impose-minimum):
+	Don't impose minimum on comment-only lines.
+
+Tue Aug  6 21:11:39 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-mark-function): Moved to C-c C-m
+
+	(c-show-syntactic-information): Optional universal argument inserts
+	analysis as a comment on the line.
+
+Fri Jul  5 23:57:19 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-insert-tab-function):
+	New variable allowing tab-to-tab-stop to be
+	used instead of insert-tab.
+
+	(c-indent-command): Use c-insert-tab-function variable.
+
+Fri Jun  7 14:31:47 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (java-mode): Use (c-set-style "java"); i.e. lowercase.
+
+	* cc-mode.el (c-functionp):
+	Emacs 19.3x doesn't have functionp, so lift the version
+	from XEmacs 19.13.
+
+	(c-electric-brace, c-read-offset, c-set-offset, c-get-offset): Use
+	c-functionp.
+
+Fri May 31 14:42:07 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-offsets-alist): New syntactic symbols:
+	extern-lang-open, extern-lang-close, inextern-lang
+
+	(c-hanging-braces-alist): Hang extern-lang-open by default.
+
+	(c-electric-brace): Add extern-lang-open and extern-lang-close to
+	list of symbols that can hang.
+
+	(c-guess-basic-syntax): CASE 5A.4 => 5A.5; New CASE 5A.4 added to
+	recognize extern-lang-open; CASE 14C => 14D; New CASE 14C added to
+	recognize extern-lang-close 
+	
+	(c-recognize-knr-p): defconst it.
+	
+	(c-search-uplist-for-classkey): When searching for c-class-key,
+	concat "\\|extern[^_]".  The logic for determining whether we are
+	inclass-p and inextern-p is essentially the same so this seems to
+	work very well in all test cases.
+
+	(c-guess-basic-syntax): If inclass-p, do an additional check to
+	see whether this is really inside an external language definition
+	block or a class definition and set inextern-p accordingly (a
+	boolean only). 
+
+	(c-guess-basic-syntax): CASE 5A.4 => 5A.1; 5A.1-5A.3 => 5A.2-5A.4;
+	New CASE 5F to check for extern-lang-close; CASE 5F-5J => 5G-5K;
+	CASE 5I: modifier could either be 'inclass or inextern-lang; CASE
+	14A: closing brace isn't an inline-close if we're inside an extern
+	language block; CASE 14B: watch out for same.
+	
+Thu May 30 14:42:07 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-guess-basic-syntax): CASE 5A.3: an inline-open
+	brace should also be given inclass syntax.  The problem is that
+	this breaks indentation for brace that start inline-inclass
+	functions inside a nested class since they will twice add the
+	indentation of the inner class to the running total.
+
+	The solution is to not give one of the two symbols a relpos.  The
+	decision was made to omit the relpos of the 'inline-open symbol. 
+	
+	(c-mode-help-address): Added cc-mode-help@python.org as the new
+	address.
+	
+	(c-recognize-knr-p, c++-mode, java-mode): Made into a non-user
+	configurable variable.  This variable is always t for C and
+	Objective-C modes and nil for C++ and Java modes.
+
+	(c-guess-basic-syntax): CASE 5G: Although we still test on
+	c-recognize-knr-p, this is no longer user configurable, and no
+	longer imposes potentially disasterous impact on performance.
+	Adopt c-mode.el assumption that argdecls are indented at least one
+	space and that function headers are not indented.  This prevents
+	us from potentially searching back to the top of the file when
+	looking at a large number of top-level delarations.
+	
+	(c-gnu-impose-minimum): New function
+
+	(c-label-minimum-indentation): New buffer-local variable
+
+	(c-style-alist): In "gnu" style, add c-gnu-impose-minimum to
+	c-special-indent-hook so case-label and label syntaxes will have a
+	minimum indentation.
+
+	(c-submit-bug-report): report on c-label-minimum-indentation
+
+	(c-set-style-1): special case c-special-indent-hook
+
+	make c-special-indent-hook buffer local
+	
+Wed May 29 20:13:34 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-skip-conditional): `try' clauses in C++ skip only
+	1 sexp.  Also take care of finally and synchronized statements.
+	
+Fri May 24 15:30:27 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-lineup-arglist-close-under-parent): New function.
+	
+	(c-C-conditionals): New constant.
+
+	(c-C-conditional-key, c-C++-conditional-key, c-Java-conditional-key):
+	Use c-C-conditionals.
+
+	(c-Java-conditional-key): Added support for "synchronized" keyword.
+	
+Fri May  3 22:03:13 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-Java-conditional-key): New variable.
+
+	(java-mode): Set buffer-local variable c-conditional-key to
+	c-Java-conditional-key.
+	
+Thu May  2 21:18:56 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-C++-access-key): Allow for whitespace between the
+		  protection key and the colon.
+	
+Wed Apr 10 04:50:50 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-set-style): as a last resort, match exact case for
+		  stylename.
+	
+Wed Apr  3 16:19:08 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-get-offset, c-read-offset, c-set-offset): Use
+	 functionp instead of fboundp to test for OFFSET being a function.
+  	 This makes the documentation more accurate and allows for
+ 	 lambda expressions to be used as offsets, instead of allowing
+	 only symbols with function bindings.
+
+Mon Apr  1 16:12:27 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Public Release 4.282
+
 Tue Feb  6 22:35:36 1996  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 
 	* cc-mode.el (c-common-init): typo
