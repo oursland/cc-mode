@@ -152,7 +152,31 @@
     )
   "Style for testing.")
 
+(defconst JAVATESTSTYLE
+  '("TESTSTYLE"
+    (c-basic-offset . 4)
+    (c-comment-only-line-offset . (0 . 0))
+    ;; the following preserves Javadoc starter lines
+    (c-hanging-comment-starter-p . nil)
+    (c-offsets-alist . ((inline-open . 0)
+			(topmost-intro-cont    . +)
+			(statement-block-intro . +)
+			(knr-argdecl-intro     . 5)
+			(substatement-open     . +)
+			(label                 . 0)
+			(statement-case-open   . +)
+			(statement-cont        . +)
+			(arglist-intro  . c-lineup-arglist-intro-after-paren)
+			(arglist-close  . c-lineup-arglist)
+			(access-label   . 0)
+			(inher-cont     . c-lineup-java-inher)
+			(func-decl-cont . c-lineup-java-throws)
+			))
+    )
+  "Style for testing Java code.")
+
 (c-add-style "TESTSTYLE" TESTSTYLE)
+(c-add-style "JAVATESTSTYLE" JAVATESTSTYLE)
 
 (defconst list-of-tests
   '("arglist-1.cc"
@@ -279,7 +303,7 @@
        ((string-match "\\.m$" filename) (objc-mode))
        ((string-match "\\.java$" filename)
 	(java-mode)
-	(setq style "java"))
+	(setq style "JAVATESTSTYLE"))
        ((string-match "\\.pike$" filename) (pike-mode))
        (t (c-mode)))
       (c-set-style style))
@@ -347,7 +371,7 @@
        ((string-match "\\.m$" filename) (objc-mode))
        ((string-match "\\.java$" filename)
 	(java-mode)
-	(setq style "java"))
+	(setq style "JAVATESTSTYLE"))
        ((string-match "\\.pike$" filename) (pike-mode))
        (t (c-mode)))
       (c-set-style style)
