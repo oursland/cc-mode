@@ -8129,17 +8129,14 @@ comment at the start of cc-engine.el for more info."
 		;; situations are handled in case 16E above.
 		(c-add-stmt-syntax 'block-close nil t lim paren-state)))
 
-	     ;; CASE 16D: find out whether we're closing a top-level
-	     ;; class or a defun
+	     ;; CASE 16D: Only defun close left.
 	     (t
-	      (let ((decl (c-search-uplist-for-classkey (c-parse-state))))
-		(if decl
-		    (c-add-class-syntax 'class-close decl paren-state)
-		  (goto-char containing-sexp)
-		  (c-backward-to-decl-anchor lim)
-		  (back-to-indentation)
-		  (c-add-syntax 'defun-close (point))))
-	      )))
+	      (goto-char containing-sexp)
+	      (c-backward-to-decl-anchor lim)
+	      (c-add-stmt-syntax 'defun-close nil nil
+				 (c-most-enclosing-brace paren-state)
+				 paren-state))
+	     ))
 
 	 ;; CASE 17: Statement or defun catchall.
 	 (t
