@@ -1295,9 +1295,9 @@ When this variable is @code{t}, @kbd{TAB} always just indents the
 current line.  When it is @code{nil}, the line is indented only if point
 is at the left margin, or on or before the first non-whitespace
 character on the line, otherwise some whitespace is inserted.  If this
-variable is other than @code{t} or @code{nil}, then some whitespace is
-inserted only within strings and comments (literals), an inside
-preprocessor directives, but the line is always reindented.
+variable is the symbol @code{other}, then some whitespace is inserted
+only within strings and comments (literals), an inside preprocessor
+directives, but the line is always reindented.
 
 @vindex c-insert-tab-function
 @vindex insert-tab-function (c-)

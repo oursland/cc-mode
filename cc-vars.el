@@ -32,6 +32,20 @@
 
 (require 'custom)
 
+;; Functions for use with custom settings below
+(defun c-custom-set-default-style (sym val)
+  ;; When the default style was set via Custom, we don't want settings
+  ;; of c-basic-offset to modify c-default-style
+  (put 'c-default-style 'c-lockdown-p t)
+  (set-default sym val))
+
+(defun c-custom-use-user-style (sym val)
+  ;; If c-default-style still has it's default value, change it to `user'
+  (when (not (get 'c-default-style 'c-lockdown-p))
+    (set-default 'c-default-style "user"))
+  (set-default sym val))
+
+
 
 (defcustom c-strict-syntax-p nil
   "*If non-nil, all syntactic symbols must be found in `c-offsets-alist'.
@@ -47,8 +61,13 @@ reported and the syntactic symbol is ignored."
   :group 'c)
 
 (defcustom c-basic-offset 4
-  "*Amount of basic offset used by + and - symbols in `c-offsets-alist'."
+  "*Amount of basic offset used by + and - symbols in `c-offsets-alist'.
+When this variable is set via Custom, and `c-default-style' has not
+been changed via Custom, then `c-default-style' will be set to `user'
+style."
   :type 'integer
+  :initialize 'custom-initialize-default
+  :set 'c-custom-use-user-style
   :group 'c)
 
 (defcustom c-tab-always-indent t
@@ -56,9 +75,9 @@ reported and the syntactic symbol is ignored."
 If t, hitting TAB always just indents the current line.  If nil,
 hitting TAB indents the current line if point is at the left margin or
 in the line's indentation, otherwise it insert a `real' tab character
-\(see note\).  If other than nil or t, then tab is inserted only
-within literals -- defined as comments and strings -- and inside
-preprocessor directives, but line is always reindented.
+\(see note\).  If the symbol `other', then tab is inserted only within
+literals -- defined as comments and strings -- and inside preprocessor
+directives, but the line is always reindented.
 
 Note: The value of `indent-tabs-mode' will determine whether a real
 tab character will be inserted, or the equivalent number of space.
@@ -330,6 +349,8 @@ incorporated into the `user' style so you would need to add:
 to see your customizations.  This is also true if you use the Custom
 interface -- be sure to set the default style to `user'."
   :type 'string
+  :set 'c-custom-set-default-style
+  :initialize 'custom-initialize-default
   :group 'c)
 
 (defcustom c-style-variables-are-local-p nil
