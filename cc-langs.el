@@ -1118,6 +1118,7 @@ identifiers, where each optionally can be prefixed by keywords.  (Can
 also be used for the special case when the list can contain only one
 element.)"
   t    (c-lang-const c-decl-spec-kwds)
+  objc '("@class")
   pike '("inherit"))
 
 (c-lang-defconst c-colon-type-list-kwds
