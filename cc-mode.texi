@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.21 $
+@comment manual version: $Revision: 2.22 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-05-01 23:12:58 $
+@comment Last modification: $Date: 1995-06-08 00:17:40 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,10 +51,9 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.21 $)
+@center (manual revision: $Revision: 2.22 $)
 @sp 2
 @center Barry A. Warsaw
-@center @code{bwarsaw@@cnri.reston.va.us}
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -84,10 +83,11 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 * Introduction::                
 * Getting Connected::           
 * New Indentation Engine::
-* Customizing Indentation::
-* Syntactic Symbols::
 * Minor Modes::
 * Indentation Commands::
+* Customizing Indentation::
+* Syntactic Symbols::
+* Performance Issues::
 * Frequently Asked Questions::
 * Getting the latest cc-mode release::
 * Sample .emacs File::
@@ -726,9 +726,13 @@ Auto-newline minor mode is enabled, as evidenced by a @samp{C/a} or
 @samp{C/ah} indicator on the modeline.
 
 @cindex literal
+@cindex syntactic whitespace
 @item
-The character was not typed inside of a literal, defined as any comment,
-string, or cpp macro definition.
+The character was not typed inside of a literal @footnote{A
+@dfn{literal} is defined in @code{cc-mode} as any comment,
+string, or cpp macro definition.  These constructs are also known as
+@dfn{syntactic whitespace} since they are usually ignored when scanning
+C code}.
 
 @item
 @kindex C-u
@@ -1078,12 +1082,14 @@ in the @code{c-cleanup-list} when you are editing C++ code.
 
 @end itemize
 
+@cindex literal
 You can configure @code{cc-mode}'s clean-ups by setting the variable
 @code{c-cleanup-list}, which is a list of clean-up symbols.  By default,
 @code{cc-mode} cleans up only the @code{scope-operator} construct.  Note
 that clean-ups are only performed when the construct does not occur
-within a literal, and when there is nothing but whitespace appearing
-between the individual components of the construct.
+within a literal (see @ref{Auto-newline insertion}), and when there is
+nothing but whitespace appearing between the individual components of
+the construct.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1117,9 +1123,9 @@ with no numeric argument), it really runs the function contained in the
 variable @code{c-delete-function}.  This function is called with a
 single argument, which is the number of characters to delete.
 @code{c-delete-function} is also called when the @kbd{DEL} key is typed
-inside a @dfn{literal}, defined as a comment, string, or cpp macro
-definition.  Inside a literal, @code{c-electric-delete} is not electric,
-which is typical of all the so-called electric commands.
+inside a literal (see @ref{Auto-newline insertion}.  Inside a literal,
+@code{c-electric-delete} is not electric, which is typical of all the
+so-called electric commands.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1130,7 +1136,93 @@ which is typical of all the so-called electric commands.
 @cindex   Indentation Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD>}
+@findex c-set-style
+@findex set-style (c-)
+Various commands are provided which allow you to conveniently re-indent
+C constructs, and these are outlined below.  There are several to note
+in general about these indentation commands.  First, when you change
+your programming style, either though @code{c-set-style} or some other
+means, your file does @emph{not} automatically get re-indented.  When
+you change style parameters, you will typically need to reformat the
+line, expression, or buffer to see the effects of your changes.
+
+@cindex c-hanging- functions
+@findex c-hanging-braces-alist
+@findex hanging-braces-alist (c-)
+Second, changing some variables have no effect on existing code, even
+when you do re-indent.  For example, the @code{c-hanging-} variables and
+@code{c-cleanup-list} only affect newly entered code.  So for example,
+changing @code{c-hanging-braces-alist} and re-indenting the buffer will
+not adjust placement of braces already in the file.
+
+@code c-progress-interval
+@code progress-interval (c-)
+Third, re-indenting large portions of code is currently rather
+inefficient.  Improvements have been made since previous releases of
+@code{cc-mode}, and much more radical improvements will be made for the
+next release, but for now you need to be aware of this @footnote{In
+particular, I have had people complain about the speed that
+@code{cc-mode} re-indents @code{lex(1)} output.  Lex, yacc, and other
+code generators usually output some pretty perverse code.  @emph{Don't}
+try to indent this stuff with @code{cc-mode}!}.  Some provision has been
+made to at least inform you as to the progress of your large
+re-indentation command.  The variable @code{c-progress-interval}
+controls how often a progress message is displayed.  Set this variable
+to @code{nil} to inhibit progress messages.  Note that this feature only
+works on Emacs 19.
+
+Fourth, except as noted below, re-indentation is always driven by the
+same mechanisms that control on-the-fly indentation of code.  @xref{New
+Indentation Engine} for details.
+
+@findex c-indent-command
+@findex indent-command (c-)
+@vindex c-tab-always-indent
+@vindex tab-always-indent (c-)
+@kindex TAB
+@cindex literal
+To indent a single line of code, use @kbd{TAB}
+(@code{c-indent-command}).  The behavior of this command is controlled
+by the variable @code{c-tab-always-indent}.  When this variable is
+@code{t}, @kbd{TAB} always just indents the current line.  When
+@code{nil}, the line is indented only if @code{point} is at the left
+margin, or on or before the first non-whitespace character on the line,
+otherwise a real tab character is inserted.  If this variable's value is
+something other that @code{t} or @code{nil} (e.g. @code{'other}), then a
+real tab character is inserted only when @code{point} is inside a
+literal (see @ref{Auto-newline insertion}), otherwise the line is
+indented.
+
+@kindex M-C-q
+@findex c-indent-exp
+@findex indent-exp (c-)
+To indent an entire, balanced brace or parenthesis expression, use
+@kbd{M-C-q} (@code{c-indent-exp}).  Note that @code{point} should be on
+the opening brace or parenthesis of the expression you want to indent.
+
+@kindex C-c C-q
+@findex c-indent-defun
+@findex indent-defun (c-)
+Another very convenient keystroke is @kbd{C-c C-q}
+(@code{c-indent-defun}) when re-indents the entire top-level function or
+class definition that encompases @code{point}.  It leaves point at the
+same position within the buffer.
+
+@kindex M-C-\
+@findex indent-region
+To indent any arbitrary entire region of code, use @kbd{M-C-\}
+@code{indent-region}.   This is a standard Emacs command, specially
+tailored for C code in a @code{cc-mode} buffer.  Note that of course,
+@code{point} and @code{mark} must be delineated around the region you
+want to indent.
+
+@kindex M-C-h
+@findex c-mark-function
+@findex mark-function (c-)
+While not strictly an indentation function, @kbd{M-C-h}
+(@code{c-mark_function}) is useful for marking the current top-level
+function or class definition as the current region.
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node     Customizing Indentation, Syntactic Symbols, Indentation Commands, Top
@@ -1445,7 +1537,8 @@ for C code in GNU programs.
 
 @item
 @cindex BSD style
-@code{BSD} -- @strong{<TBD> where does this style come from?}
+@code{BSD} -- @strong{<TBD> Anybody know anything about the history of
+this style?}
 
 @item
 @cindex Stroustrup style
@@ -1453,7 +1546,8 @@ for C code in GNU programs.
 
 @item
 @cindex Whitesmith style
-@code{Whitesmith} -- @strong{<TBD> where does this style come from?}
+@code{Whitesmith} -- @strong{<TBD> Anybody know anything about the history of
+this style?}
 
 @item
 @cindex Ellemtel style
@@ -1461,6 +1555,11 @@ for C code in GNU programs.
 ``Programming in C++, Rules and Recommendations'', Erik Nyquist and Mats
 Henricson, Ellemtel @footnote{This document is ftp'able from
 @code{euagate.eua.ericsson.se}}.
+
+@item
+@cindex CC-MODE style
+@code{CC-MODE} -- Style that encapsulates the default values of the
+@code{cc-mode} variables.  See below for details.
 
 @end itemize
 
@@ -1502,7 +1601,6 @@ files.  You would add this:
 @noindent
 @xref{Permanent Customization}.
 
-@cindex CC-MODE style
 There is one other special style you can use, called @code{CC-MODE}.
 This is a style that is calculated by @code{cc-mode} when it loads up.
 The @code{CC-MODE} style is also special because all other styles
@@ -1544,6 +1642,9 @@ institutes the new style in the current buffer.
 
 The sample @file{.emacs} file provides a concrete example of how a new
 style can be added and automatically set.  @xref{Sample .emacs File}.
+
+@strong{<TBD: give some examples of the built-in styles>}
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node     File Styles, ,  Adding Styles, Styles
@@ -1904,7 +2005,17 @@ contain the suffix @code{-block-intro}.
 symbol currently recognized}
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Frequently Asked Questions, Getting the latest cc-mode release, Syntactic Symbols, Top
+@node  Performance Issues, Frequently Asked Questions, Syntactic Symbols, Top
+@comment  node-name,              next,                    previous,up
+
+@chapter  Performance Issues
+@cindex   Performance Issues
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@string{<TBD>}
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Frequently Asked Questions, Getting the latest cc-mode release, Performance Issues, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Frequently Asked Questions
@@ -2128,23 +2239,31 @@ expose the bug.  Be especially sure to include any code that appears
 @emph{before} your bug example.
 
 For other help or suggestions, send a message to
-@code{cc-mode-help@@anthem.nlm.nih.gov}.
+@code{cc-mode-help@@merlin.cnri.reston.va.us}.
 
-Send an add message to
-@code{cc-mode-victims-request@@anthem.nlm.nih.gov} to get on the beta
-testers list.  Note that this is a fairly technical discussion list so
-you should be moderately Emacs lisp fluent and have anonymous ftp
-access.  I generally won't email patches to individual victims.
+Send the word @samp{subscribe} in the body of a message to
+@code{cc-mode-victims-request@@merlin.cnri.reston.va.us} to get on the
+beta testers list.  Note that this is a fairly technical discussion list
+so you should be moderately Emacs lisp fluent and have anonymous ftp
+access.  I generally won't email patches to individual victims.  Note
+that non-members are prohibited from posting messages to this list
+(i.e. you should join it first!).
 
 There is also an announce only list where you will get beta version
 update diffs, but will not join in the technical discussions.  You
 should still have anon-ftp, and you shouldn't expect beta releases to be
-as stable as public releases.  Send an add message to
-@code{cc-mode-announce-request@@anthem.nlm.nih.gov} to be added to this
-list.
+as stable as public releases.  Send the word @samp{subscribe} in the
+body of a message to
+@code{cc-mode-announce-request@@merlin.cnri.reston.va.us} to be added to
+this list.  This is is moderated; you cannot post messages to it.
 
-Please use these addresses instead of my personal address so I can keep
-track of all the incoming mail!
+Both of these lists are maintained by Majordomo.  You can send the word
+@samp{help} to @code{majordomo@@merlin.cnri.reston.va.us} for details of
+how to interact with these Majordomo administered mailing lists.
+
+Please use the proper address so I can concentrate less on administrivia
+and more on the next version of @code{cc-mode}!  Thanks!
+
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Dumping cc-mode 4, Concept Index, Mailing Lists and Submitting Bug Reports, Top
