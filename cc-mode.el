@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-28 20:52:09 $
-;; Version:         $Revision: 2.9 $
+;; Last Modified:   $Date: 1992-04-28 22:38:35 $
+;; Version:         $Revision: 2.10 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-28 20:52:09 $|$Revision: 2.9 $|
+;; |$Date: 1992-04-28 22:38:35 $|$Revision: 2.10 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -144,7 +144,7 @@ act hungry even inside literals.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.9 $
+  "Major mode for editing C++ code.  $Revision: 2.10 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -898,7 +898,7 @@ Returns nil if line starts inside a string, t if in a comment."
 	(contain-stack (list (point)))
 	(case-fold-search nil)
 	restart outer-loop-done inner-loop-done state ostate
-	this-indent last-sexp
+	this-indent last-sexp last-depth
 	at-else at-brace
 	(opoint (point))
 	(next-depth 0))
@@ -912,8 +912,8 @@ Returns nil if line starts inside a string, t if in a comment."
 	;; plus enough other lines to get to one that
 	;; does not end inside a comment or string.
 	;; Meanwhile, do appropriate indentation on comment lines.
-	(setq innerloop-done nil)
-	(while (and (not innerloop-done)
+	(setq inner-loop-done nil)
+	(while (and (not inner-loop-done)
 		    (not (and (eobp) (setq outer-loop-done t))))
 	  (setq ostate state)
 	  (setq state (parse-partial-sexp (point) (progn (end-of-line) (point))
@@ -926,7 +926,7 @@ Returns nil if line starts inside a string, t if in a comment."
 	      (c++-indent-line))
 	  (if (or (nth 3 state))
 	      (forward-line 1)
-	    (setq innerloop-done t)))
+	    (setq inner-loop-done t)))
 	(if (<= next-depth 0)
 	    (setq outer-loop-done t))
 	(if outer-loop-done
@@ -1294,7 +1294,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.9 $"
+(defconst c++-version "$Revision: 2.10 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
