@@ -660,8 +660,6 @@ involve auto-newline inserted newlines:
 		 one-liner-defun)
 	  (const :tag "Put short functions on one line (one-liner-defun)"
 		 one-liner-defun)
-	  (const :tag "Put \"};\" ending defuns on one line (defun-close-semi)"
-		 defun-close-semi)
 	  (const :tag "Put \"},\" in aggregates on one line (list-close-comma)"
 		 list-close-comma)
 	  (const :tag "Put C++ style \"::\" on one line (scope-operator)"
