@@ -1622,9 +1622,16 @@ brace."
 	      ;; don't add inclass symbol since relative point already
 	      ;; contains any class offset
 	      )))
-	   ;; CASE 5D: this could be a top-level compound statement or a
-	   ;; member init list continuation
-	   ((eq char-before-ip ?,)
+	   ;; CASE 5D: this could be a top-level compound statement, a
+	   ;; member init list continuation, or a template argument
+	   ;; list continuation.
+	   ((c-with-syntax-table (if (c-major-mode-is 'c++-mode)
+				     c++-template-syntax-table
+				   (syntax-table))
+	      (save-excursion
+		(while (and (= (c-backward-token-1 1 t lim) 0)
+			    (not (looking-at "[;{<,]"))))
+		(eq (char-after) ?,)))
 	    (goto-char indent-point)
 	    (c-backward-syntactic-ws lim)
 	    (while (and (< lim (point))
