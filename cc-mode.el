@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-02 18:12:21 $
-;; Version:         $Revision: 2.25 $
+;; Last Modified:   $Date: 1992-05-04 14:36:56 $
+;; Version:         $Revision: 2.26 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-02 18:12:21 $|$Revision: 2.25 $|
+;; |$Date: 1992-05-04 14:36:56 $|$Revision: 2.26 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -143,7 +143,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.25 $
+  "Major mode for editing C++ code.  $Revision: 2.26 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -429,33 +429,28 @@ backward-delete-char-untabify."
 		   t)))
 	(progn
 	  (insert last-command-char)
-	  (if (and c++-cleanup-}-else-{-p
-		   (= (preceding-char) ?\{)
-		   (save-excursion
-		     (forward-char -1)
-		     (skip-chars-backward " \t\n")
-		     (forward-word -1)
-		     (and (looking-at "else\\b")
-			  (not (c++-in-open-string-p))
-			  (not (c++-in-comment-p))
-			  (progn
-			    (skip-chars-backward " \t\n")
-			    (and (not (c++-in-open-string-p))
-				 (not (c++-in-comment-p))
-				 (= (preceding-char) ?\}))))))
-	      (progn
-		;; we should clean up brace-else-brace syntax
-		(message "cleaning up } else {...")
-		(let ((brace-point (make-marker)))
-		  (set-marker brace-point (point))
-		  (forward-char -1)
-		  (delete-region (point)
-				 (progn (skip-chars-backward "^}")
-					(point)))
-		  (insert " else ")
-		  (goto-char brace-point)
-		  (set-marker brace-point nil))
-		(message "cleaning up } else {... done.")))
+	  (let ((here (make-marker)) mbeg mend)
+	    (set-marker here (point))
+	    (if (and c++-cleanup-}-else-{-p
+		     (= last-command-char ?\{)
+		     (progn (debug) t)
+		     (let ((status (re-search-backward "}[ \t\n]*else[ \t\n]*{"
+						       nil t)))
+		       (setq mbeg (match-beginning 0)
+			     mend (match-end 0))
+		       status)
+		     (not (c++-in-open-string-p))
+		     (not (c++-in-comment-p)))
+		(progn
+		  ;; we should clean up brace-else-brace syntax
+		  (message "cleaning up } else {...")
+		  (delete-region mbeg mend)
+		  (insert-before-markers "} else {")
+		  (goto-char here)
+		  (set-marker here nil)
+		  (message "cleaning up } else {... done."))
+	      (goto-char here)
+	      (set-marker here nil)))
 	  (c++-indent-line)
 	  (if (c++-auto-newline)
 	      (progn
@@ -1406,7 +1401,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.25 $"
+(defconst c++-version "$Revision: 2.26 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
