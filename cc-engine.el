@@ -31,6 +31,16 @@
 
 ;;; Commentary:
 
+;; The functions which have docstring documentation can be considered
+;; part of an API which other packages can use in CC Mode buffers.
+;; Otoh, undocumented functions and functions with the documentation
+;; in comments are considered purely internal and can change semantics
+;; or even disappear in the future.
+;;
+;; (This policy applies to CC Mode as a whole, not just this file.  It
+;; probably also applies to many other Emacs packages, but here it's
+;; clearly spelled out.)
+
 ;;; Code:
 
 (eval-when-compile
@@ -560,12 +570,13 @@ end with a line continuation backslash."
 		 (throw 'done nil)))))
     t))
 
-;; Skipping of "syntactic whitespace", defined as lexical whitespace,
-;; C and C++ style comments, and preprocessor directives.  Search no
-;; farther back or forward than optional LIM.
-
 (defun c-forward-syntactic-ws (&optional lim)
-  ;; Forward skip of syntactic whitespace.
+  "Forward skip of syntactic whitespace.
+Syntactic whitespace is defined as whitespace characters, comments,
+and preprocessor directives.  However if point starts inside a comment
+or preprocessor directive, the content of it is not treated as
+whitespace.  LIM sets an upper limit of the forward movement, if
+specified."
   (let ((here (point-max)))
     (or lim (setq lim here))
     (while (/= here (point))
@@ -590,7 +601,12 @@ end with a line continuation backslash."
     (goto-char (min (point) lim))))
 
 (defun c-backward-syntactic-ws (&optional lim)
-  ;; Backward skip over syntactic whitespace.
+  "Backward skip of syntactic whitespace.
+Syntactic whitespace is defined as whitespace characters, comments,
+and preprocessor directives.  However if point starts inside a comment
+or preprocessor directive, the content of it is not treated as
+whitespace.  LIM sets a lower limit of the backward movement, if
+specified."
   (let ((start-line (c-point 'bol))
 	(here (point-min))
 	(line-cont 'maybe)
@@ -628,25 +644,24 @@ end with a line continuation backslash."
 	(setq line-cont nil)))
     (goto-char (max (point) lim))))
 
-
-;; Moving by tokens, where a token is defined as all symbols and
-;; identifiers which aren't syntactic whitespace (note that e.g. "->" is
-;; considered to be two tokens).  Point is always either left at the
-;; beginning of a token or not moved at all.  COUNT specifies the
-;; number of tokens to move; a negative COUNT moves in the opposite
-;; direction.  A COUNT of 0 moves to the next token beginning only if
-;; not already at one.  If BALANCED is true, move over balanced
-;; parens, otherwise move into them.  Also, if BALANCED is true, never
-;; move out of an enclosing paren.  LIM sets the limit for the
-;; movement and defaults to the point limit.  Return the number of
-;; tokens left to move (positive or negative).  If BALANCED is true, a
-;; move over a balanced paren counts as one.  Note that if COUNT is 0
-;; and no appropriate token beginning is found, 1 will be returned.
-;; Thus, a return value of 0 guarantees that point is at the requested
-;; position and a return value less (without signs) than COUNT
-;; guarantees that point is at the beginning of some token.
-
 (defun c-forward-token-1 (&optional count balanced lim)
+  "Move forward by tokens.
+A token is defined as all symbols and identifiers which aren't
+syntactic whitespace \(note that e.g. \"->\" is considered to be two
+tokens).  Point is always either left at the beginning of a token or
+not moved at all.  COUNT specifies the number of tokens to move; a
+negative COUNT moves in the opposite direction.  A COUNT of 0 moves to
+the next token beginning only if not already at one.  If BALANCED is
+true, move over balanced parens, otherwise move into them.  Also, if
+BALANCED is true, never move out of an enclosing paren.  LIM sets the
+limit for the movement and defaults to the point limit.
+
+Return the number of tokens left to move \(positive or negative).  If
+BALANCED is true, a move over a balanced paren counts as one.  Note
+that if COUNT is 0 and no appropriate token beginning is found, 1 will
+be returned.  Thus, a return value of 0 guarantees that point is at
+the requested position and a return value less \(without signs) than
+COUNT guarantees that point is at the beginning of some token."
   (or count (setq count 1))
   (if (< count 0)
       (- (c-backward-token-1 (- count) balanced lim))
@@ -690,6 +705,8 @@ end with a line continuation backslash."
       count)))
 
 (defun c-backward-token-1 (&optional count balanced lim)
+  "Move backward by tokens.
+See `c-forward-token-1' for details."
   (or count (setq count 1))
   (if (< count 0)
       (- (c-forward-token-1 (- count) balanced lim))
@@ -729,12 +746,15 @@ end with a line continuation backslash."
 
 
 (defun c-in-literal (&optional lim detect-cpp)
-  ;; Return `c' if in a C-style comment, `c++' if in a C++ style
-  ;; comment, `string' if in a string literal, `pound' if DETECT-CPP
-  ;; is non-nil and on a preprocessor line, or nil if somewhere else.
-  ;; Optional LIM is used as the backward limit of the search.  If
-  ;; omitted, or nil, `c-beginning-of-defun' is used.  We cache the
-  ;; last point calculated if the cache is enabled.
+  "Return the type of literal point is in, if any.
+The return value is `c' if in a C-style comment, `c++' if in a C++
+style comment, `string' if in a string literal, `pound' if DETECT-CPP
+is non-nil and on a preprocessor line, or nil if somewhere else.
+Optional LIM is used as the backward limit of the search.  If omitted,
+or nil, `c-beginning-of-defun' is used.
+
+We cache the last point calculated if the cache is enabled, i.e. if
+`c-in-literal-cache' is bound to a two element vector."
   (if (and (vectorp c-in-literal-cache)
 	   (= (point) (aref c-in-literal-cache 0)))
       (aref c-in-literal-cache 1)
@@ -767,17 +787,16 @@ end with a line continuation backslash."
     (defalias 'c-in-literal 'c-fast-in-literal))
 
 (defun c-literal-limits (&optional lim near not-in-delimiter)
-  ;; Returns a cons of the beginning and end positions of the comment
-  ;; or string surrounding point (including both delimiters), or nil
-  ;; if point isn't in one.  If LIM is non-nil, it's used as the
-  ;; "safe" position to start parsing from.  If NEAR is non-nil, then
-  ;; the limits of any literal next to point is returned.  "Next to"
-  ;; means there's only [ \t] between point and the literal.  The
-  ;; search for such a literal is done first in forward direction.  If
-  ;; NOT-IN-DELIMITER is non-nil, the case when point is inside a
-  ;; starting delimiter won't be recognized.  This only has effect for
-  ;; comments, which have starting delimiters with more than one
-  ;; character.
+  "Return a cons of the beginning and end positions of the comment or
+string surrounding point (including both delimiters), or nil if point
+isn't in one.  If LIM is non-nil, it's used as the \"safe\" position
+to start parsing from.  If NEAR is non-nil, then the limits of any
+literal next to point is returned.  \"Next to\" means there's only [
+\t] between point and the literal.  The search for such a literal is
+done first in forward direction.  If NOT-IN-DELIMITER is non-nil, the
+case when point is inside a starting delimiter won't be recognized.
+This only has effect for comments, which have starting delimiters with
+more than one character."
   (save-excursion
     (let* ((pos (point))
 	   (lim (or lim (c-point 'bod)))
@@ -897,12 +916,12 @@ end with a line continuation backslash."
     (defalias 'c-literal-limits 'c-literal-limits-fast))
 
 (defun c-collect-line-comments (range)
-  ;; If the argument is a cons of two buffer positions (such as
-  ;; returned by c-literal-limits), and that range contains a C++
-  ;; style line comment, then an extended range is returned that
-  ;; contains all adjacent line comments (i.e. all comments that
-  ;; starts in the same column with no empty lines or non-whitespace
-  ;; characters between them).  Otherwise the argument is returned.
+  "If the argument is a cons of two buffer positions (such as returned by
+`c-literal-limits'), and that range contains a C++ style line comment,
+then an extended range is returned that contains all adjacent line
+comments (i.e. all comments that starts in the same column with no
+empty lines or non-whitespace characters between them).  Otherwise the
+argument is returned."
   (save-excursion
     (condition-case nil
 	(if (and (consp range) (progn
@@ -931,10 +950,10 @@ end with a line continuation backslash."
       (error range))))
 
 (defun c-literal-type (range)
-  ;; Convenience function that given the result of c-literal-limits,
-  ;; returns nil or the type of literal that the range surrounds.
-  ;; It's much faster than using c-in-literal and is intended to be
-  ;; used when you need both the type of a literal and its limits.
+  "Convenience function that given the result of `c-literal-limits',
+returns nil or the type of literal that the range surrounds.  It's
+much faster than using `c-in-literal' and is intended to be used when
+you need both the type of a literal and its limits."
   (if (consp range)
       (save-excursion
 	(goto-char (car range))
@@ -1110,6 +1129,7 @@ end with a line continuation backslash."
 (defvar c-debug-parse-state nil)
 (unless (fboundp 'c-real-parse-state)
   (fset 'c-real-parse-state (symbol-function 'c-parse-state)))
+(cc-bytecomp-defun c-real-parse-state)
 (defun c-debug-parse-state ()
   (let ((res1 (c-real-parse-state)) res2)
     (let ((c-state-cache nil))
@@ -1189,69 +1209,6 @@ end with a line continuation backslash."
 	(setq state (cdr state)))
       nil)))
 
-(defun c-whack-state (bufpos state)
-  (c-whack-state-after bufpos state))
-(make-obsolete 'c-whack-state 'c-whack-state-after)
-
-(defun c-hack-state (bufpos which state)
-  ;; Using BUFPOS buffer position, and WHICH (must be 'open or
-  ;; 'close), hack the c-parse-state STATE and return the results.
-  ;;
-  ;; From code inspection, "hack" above is found out to mean:
-  ;;
-  ;; o  If WHICH is 'open: Prepend BUFPOS to the state if it's not
-  ;;    there already.  If the state has a cons as the first element,
-  ;;    its car is _not_ examined to see whether it's equal to BUFPOS.
-  ;;
-  ;; o  If WHICH is 'close: If the first element of the state isn't a
-  ;;    cons, make it a cons with BUFPOS as the cdr.  If the first
-  ;;    element is a cons, remove it from the state and check whether
-  ;;    the same thing can be done to the second element (which now
-  ;;    has become the first).
-  ;;
-  ;;    The state is assumed to not contain two or more cons in
-  ;;    succession, and the function also ensures that holds when a
-  ;;    cons is added to it.
-  (if (eq which 'open)
-      (let ((car (car state)))
-	(if (or (null car)
-		(consp car)
-		(/= bufpos car))
-	    (cons bufpos state)
-	  state))
-    ;; 'close brace
-    (let ((car (car state))
-	  (cdr (cdr state)))
-      (if (consp car)
-	  (setq car (car cdr)
-		cdr (cdr cdr)))
-      ;; TBD: is this test relevant???
-      (if (consp car)
-	  (error "Got two cons in succession in state: %s" state)
-	;; watch out for balanced expr already on cdr of list
-	(cons (cons car bufpos)
-	      (if (consp (car cdr))
-		  (cdr cdr) cdr))
-	))))
-
-(defun c-adjust-state (from to shift state)
-  ;; Adjust all points in state that lie in the region FROM..TO by
-  ;; SHIFT amount.
-  (mapcar
-   (function
-    (lambda (e)
-      (if (consp e)
-	  (let ((car (car e))
-		(cdr (cdr e)))
-	    (if (and (<= from car) (< car to))
-		(setcar e (+ shift car)))
-	    (if (and (<= from cdr) (< cdr to))
-		(setcdr e (+ shift cdr))))
-	(if (and (<= from e) (< e to))
-	    (setq e (+ shift e))))
-      e))
-   state))
-
 
 (defun c-beginning-of-inheritance-list (&optional lim)
   ;; Go to the first non-whitespace after the colon that starts a
@@ -1292,12 +1249,12 @@ brace."
 	(c-search-uplist-for-classkey state))))
 
 (defun c-forward-to-cpp-expression ()
-  "Assuming point is at the \"#\" that introduces a preprocessor
-directive, it's moved forward to the start of the expression it may
-contain, i.e. the definition of a \"#define\", or the test expression
-of an \"#if\", or the macro argument of an \"#ifdef\", etc. Non-nil is
-returned in this case, in all other cases nil is returned and point
-isn't moved."
+  ;; Assuming point is at the "#" that introduces a preprocessor
+  ;; directive, it's moved forward to the start of the expression it
+  ;; may contain, i.e. the definition of a "#define", or the test
+  ;; expression of an "#if", or the macro argument of an "#ifdef",
+  ;; etc.  Non-nil is returned in this case, in all other cases nil is
+  ;; returned and point isn't moved.
   (when (and (looking-at
 	      (concat "#[ \t]*\\("
 		      "define[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
@@ -1451,38 +1408,6 @@ isn't moved."
     (c-backward-syntactic-ws limit))
   (and (< limit (point))
        (eq (char-before) ?:)))
-
-(defun c-skip-case-statement-forward (state &optional lim)
-  ;; skip forward over case/default bodies, with optional maximal
-  ;; limit. if no next case body is found, nil is returned and point
-  ;; is not moved
-  (let ((lim (or lim (point-max)))
-	(here (point))
-	donep foundp bufpos
-	(safepos (point))
-	(balanced (car state)))
-    ;; search until we've passed the limit, or we've found our match
-    (while (and (< (point) lim)
-		(not donep))
-      (setq safepos (point))
-      ;; see if we can find a case statement, not in a literal
-      (if (and (re-search-forward c-switch-label-key lim 'move)
-	       (setq bufpos (match-beginning 0))
-	       (not (c-in-literal safepos))
-	       (/= bufpos here))
-	  ;; if we crossed into a balanced sexp, we know the case is
-	  ;; not part of our switch statement, so just bound over the
-	  ;; sexp and keep looking.
-	  (if (and (consp balanced)
-		   (> bufpos (car balanced))
-		   (< bufpos (cdr balanced)))
-	      (goto-char (cdr balanced))
-	    (goto-char bufpos)
-	    (setq donep t
-		  foundp t))))
-    (if (not foundp)
-	(goto-char here))
-    foundp))
 
 (defun c-search-uplist-for-classkey (brace-state)
   ;; search for the containing class, returning a 2 element vector if
@@ -1889,7 +1814,8 @@ isn't moved."
 				   containing-sexp)))))
 
 (defun c-on-identifier ()
-  ;; Returns non-nil if we're on or directly after an identifier.
+  "Return non-nil if we're on or directly after an identifier.
+Keywords are recognized and not considered identifiers."
   (if (or (memq (char-syntax (or (char-after) ? )) '(?w ?_))
 	  (memq (char-syntax (or (char-before) ? )) '(?w ?_)))
       (save-excursion
@@ -2250,6 +2176,7 @@ isn't moved."
      )))
 
 (defun c-guess-basic-syntax ()
+  "Return the syntactic context of the current line."
   (save-excursion
     (save-restriction
       (beginning-of-line)
