@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.20 $
+@comment manual version: $Revision: 2.21 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-05-01 16:34:42 $
+@comment Last modification: $Date: 1995-05-01 23:12:58 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.20 $)
+@center (manual revision: $Revision: 2.21 $)
 @sp 2
 @center Barry A. Warsaw
 @center @code{bwarsaw@@cnri.reston.va.us}
@@ -963,7 +963,127 @@ defined by @code{c-offsets-alist}.
 @cindex   Clean-ups
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD>}
+@dfn{Clean-ups} are a different mechanism that @code{cc-mode} provides
+to allow formating of specific language constructs.  On the surface, it
+would see that clean-ups overlap the functionality provided by the
+@code{c-hanging-*-alist} variables, and in fact, clean-ups are only
+enabled when auto-newline minor mode is enabled.  Clean-ups however
+actually are used to eliminate some whitespace that isn't inserted by
+electric commands, or whitespace that contains intervening constructs.
+Eventually however, @code{cc-mode} might implement a single consistent
+mechanism for handling these types of constructs.
+
+@vindex c-cleanup-list
+@vindex cleanup-list (c-)
+There are currently only five specific constructs that @code{cc-mode}
+can clean up, as indicated by these clean-up symbols:
+
+@itemize @bullet
+@item
+@code{brace-else-brace} -- cleans up @samp{@} else @{} constructs by
+placing the entire construct on a single line.  Clean-up occurs when the
+open brace after the @samp{else} is typed.  So for example, this:
+@example
+@group
+
+void spam(int i)
+@{
+    if( i==7 )
+    @{
+        dosomething();
+    @}
+    else
+    @{
+
+@end group
+@end example
+@noindent
+appears like this after the open brace is typed:
+@example
+@group
+
+void spam(int i)
+@{
+    if( i==7 ) @{
+        dosomething();
+    @} else @{
+
+@end group
+@end example
+
+@item
+@code{empty-defun-braces} -- cleans up braces following a top-level
+function or class definition that contains no body.  Clean up occurs
+when the closing brace is typed.  Thus the following:
+@example
+@group
+
+class Spam
+@{
+@}
+
+@end group
+@end example
+@noindent
+is transformed into the following, when the close brace is typed:
+@example
+@group
+
+class Spam
+@{@}
+
+@end group
+@end example
+
+@item
+@code{defun-close-semi} -- cleans up the terminating semi-colon on
+top-level function or class definitions when they follow a close
+brace. Clean up occurs when the semi-colon is typed.
+So for example, the following:
+@example
+@group
+
+class Spam
+@{
+@}
+;
+
+@end group
+@end example
+@noindent is transformed into the following, when the semi-colon is
+typed:
+
+@example
+@group
+
+class Spam
+@{
+@};
+
+@end group
+@end example
+
+@item
+@code{list-close-comma} -- cleans up commas following braces in array
+and aggregate initializers.  Clean up occurs when the comma is typed.
+
+@item
+@code{scope-operator} -- cleans up double colons which may designate a
+C++ scope operator split across multiple lines@footnote{Certain C++
+constructs introduce ambiguous situations so @code{scope-operator}
+clean-ups may not always be correct.  This usually only occurs when
+scoped identifiers appear in switch label tags.}.  Clean up occurs when
+the second colon is typed.  You will always want @code{scope-operator}
+in the @code{c-cleanup-list} when you are editing C++ code.
+
+@end itemize
+
+You can configure @code{cc-mode}'s clean-ups by setting the variable
+@code{c-cleanup-list}, which is a list of clean-up symbols.  By default,
+@code{cc-mode} cleans up only the @code{scope-operator} construct.  Note
+that clean-ups are only performed when the construct does not occur
+within a literal, and when there is nothing but whitespace appearing
+between the individual components of the construct.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
