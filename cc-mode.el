@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.246 $
-;; Last Modified:   $Date: 1995-11-17 22:01:36 $
+;; Version:         $Revision: 4.247 $
+;; Last Modified:   $Date: 1995-11-17 22:18:47 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-11-17 22:01:36 $|$Revision: 4.246 $|
+;; |$Date: 1995-11-17 22:18:47 $|$Revision: 4.247 $|
 
 ;;; Code:
 
@@ -2250,17 +2250,19 @@ No indentation or other \"electric\" behavior is performed."
   (insert "::"))
 
 
-(defun c-beginning-of-statement (&optional count lim act-interactive-p)
+(defun c-beginning-of-statement (&optional count lim sentence-flag)
   "Go to the beginning of the innermost C statement.
 With prefix arg, go back N - 1 statements.  If already at the
 beginning of a statement then go to the beginning of the preceding
 one.  If within a string or comment, or next to a comment (only
 whitespace between), move by sentences instead of statements.
 
-When called from a program, this function takes 2 optional args: the
-prefix arg, and a buffer position limit which is the farthest back to
-search."
-  (interactive "p")
+When called from a program, this function takes 3 optional args: the
+repetition count, a buffer position limit which is the farthest back
+to search, and a flag saying whether to do sentence motion when in a
+comment."
+  (interactive (list (prefix-numeric-value current-prefix-arg)
+		     nil t))
   (let ((here (point))
 	(count (or count 1))
 	(lim (or lim (c-point 'bod)))
@@ -2268,7 +2270,7 @@ search."
     (save-excursion
       (goto-char lim)
       (setq state (parse-partial-sexp (point) here nil nil)))
-    (if (and (or (interactive-p) act-interactive-p)
+    (if (and sentence-flag
 	     (or (nth 3 state)
 		 (nth 4 state)
 		 (looking-at (concat "[ \t]*" comment-start-skip))
@@ -2288,18 +2290,20 @@ search."
     )
   (c-keep-region-active))
 
-(defun c-end-of-statement (&optional count lim)
+(defun c-end-of-statement (&optional count lim sentence-flag)
   "Go to the end of the innermost C statement.
 
 With prefix arg, go forward N - 1 statements.  Move forward to end of
 the next statement if already at end.  If within a string or comment,
 move by sentences instead of statements.
 
-When called from a program, this function takes 2 optional args: the
-prefix arg, and a buffer position limit which is the farthest back to
-search."
-  (interactive "p")
-  (c-beginning-of-statement (- (or count 1)) lim t)
+When called from a program, this function takes 3 optional args: the
+repetition count, a buffer position limit which is the farthest back
+to search, and a flag saying whether to do sentence motion when in a
+comment."
+  (interactive (list (prefix-numeric-value current-prefix-arg)
+		     nil t))
+  (c-beginning-of-statement (- (or count 1)) lim sentence-flag)
   (c-keep-region-active))
 
 
@@ -4551,7 +4555,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.246 $"
+(defconst c-version "$Revision: 4.247 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
