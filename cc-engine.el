@@ -3144,36 +3144,21 @@ brace."
   ;; `c-ref-list-kwds', `c-colon-type-list-kwds', `c-paren-type-kwds',
   ;; and `c-<>-arglist-kwds'.
 
-  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos type)
+  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos)
     (when kwd-sym
       (goto-char (match-end 1))
       (c-forward-syntactic-ws)
       (setq safe-pos (point))
 
       (cond
-       ((cond ((and (c-keyword-member kwd-sym 'c-type-list-kwds)
-		    (c-forward-keyword-prefixed-id type))
-	       ;; There's a type directly after a keyword in
-	       ;; `c-type-list-kwds'.
-	       (setq type t))
-	      ((and (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
-		    (looking-at c-colon-type-list-re)
-		    (progn
-		      (goto-char (match-end 0))
-		      (c-forward-syntactic-ws)
-		      (c-forward-keyword-prefixed-id type)))
-	       ;; There's a type after the `c-colon-type-list-re'
-	       ;; match after a keyword in `c-colon-type-list-kwds'.
-	       (setq type t)))
-
-	;; Move over a comma separated list of types, where each may
-	;; be prefixed by keywords.
+       ((and (c-keyword-member kwd-sym 'c-type-list-kwds)
+	     (c-forward-keyword-prefixed-id type))
+	;; There's a type directly after a keyword in `c-type-list-kwds'.
 	(c-forward-id-comma-list type))
 
        ((and (c-keyword-member kwd-sym 'c-ref-list-kwds)
 	     (c-forward-keyword-prefixed-id ref))
-	;; There's a name directly after a keyword in
-	;; `c-ref-list-kwds'.
+	;; There's a name directly after a keyword in `c-ref-list-kwds'.
 	(c-forward-id-comma-list ref))
 
        ((and (c-keyword-member kwd-sym 'c-paren-type-kwds)
@@ -3198,6 +3183,21 @@ brace."
 	     (c-forward-<>-arglist))
 	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
+
+      (when (and (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
+		 (progn
+		   ;; If a keyword matched both one of the types above
+		   ;; and this one, we match `c-colon-type-list-re'
+		   ;; after the clause matched above.
+		   (goto-char safe-pos)
+		   (looking-at c-colon-type-list-re))
+		 (progn
+		   (goto-char (match-end 0))
+		   (c-forward-syntactic-ws)
+		   (c-forward-keyword-prefixed-id type)))
+	;; There's a type after the `c-colon-type-list-re'
+	;; match after a keyword in `c-colon-type-list-kwds'.
+	(c-forward-id-comma-list type))
 
       (goto-char safe-pos)
       t)))
