@@ -1,3 +1,121 @@
+Thu Aug  7 18:13:12 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.15
+
+Thu Aug  7 19:21:32 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-set-offset): Added autoload cookie.
+
+	* cc-langs.el (c++-mode-syntax-table, java-mode-syntax-table,
+	objc-mode-syntax-table, idl-mode-syntax-table):	Added autoload
+	cookies. c-mode-syntax-table already has one.
+
+Wed Aug  6 21:50:08 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-initialize-cc-mode):
+	Check all cc-mode-19 interface requirements.
+
+Tue Aug  5 21:56:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-align.el (c-lineup-java-throws):
+	Change the `when' clause to an `if-progn' :-(
+
+	* cc-langs.el (c-common-init):
+	Make comment-line-break-function buffer local iff it's boundp.
+
+	* cc-cmds.el:
+	defadvice for indent-new-comment-line keys off of c-buffer-is-cc-mode
+	instead of an explicit major-mode list.  this means non-CC Mode
+	derived modes will work properly
+
+	* cc-mode.el (c-initialize-cc-mode): Set c-buffer-is-cc-mode to t.
+
+	* cc-vars.el (c-buffer-is-cc-mode): New variable
+
+	* cc-mode.texi:
+	In FAQ section, document use of c-mode-base-map instead of c-mode-map.
+
+	* cc-mode.el (c-initialize-cc-mode):
+	Give in to the pressure.  require 'cc-mode-19
+	if functionp is not bound.  Too many novice errors without this.
+
+	* cc-cmds.el:
+	Added advice for indent-new-comment-line so older Emacsen work if they
+	don't have the variable comment-line-break-function.
+
+Mon Aug  4 14:55:40 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-mode-base-map, c++-mode-map):
+	Move `/' as an electric character
+	from c++-mode-map to c-mode-base-map for all languages.
+
+	* cc-cmds.el (c-electric-slash):
+	Make this work as the final slash in a */ block
+	oriented comment closing token.
+
+	* cc-vars.el (c-comment-continuation-stars):
+	Can take a nil value.  Also, the default value is "* ".
+
+	* cc-cmds.el (c-comment-line-break-function): nil value for
+	c-comment-continuation-stars means use old semantics
+
+Fri Aug  1 22:44:49 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-comment-line-break-function):
+	Added optional soft argument
+
+	* cc-langs.el (c-common-init): Set comment-multi-line and
+	comment-line-break-function here for all modes.
+
+	* cc-mode.el (c-mode, c++-mode, objc-mode, java-mode, idl-mode):
+	Don't set comment-multi-line here.
+
+	* cc-vars.el (c-comment-continuation-stars): New variable
+
+	* cc-cmds.el (c-comment-line-break-function): New function for proposed
+	mode-specific comment-line-break-function variable.
+
+	* cc-mode.el (c-mode): comment-multi-line => nil
+
+	* cc-mode.texi: Removed the description of c-enable-//-in-c-mode.
+
+	* cc-langs.el (c-C-comment-start-regexp): Obsolete.
+
+	(c-comment-start-regexp): Initialize from c-C++-comment-start-regexp.
+
+	(c-populate-syntax-table, c-setup-dual-comments): Merge both functions
+	into c-populate-syntax-table.  With the new 9X draft C standard, both
+	line and block oriented comments are supported in all modes, so always
+	set up the syntax tables to support both comment styles.
+
+	(c-mode-syntax-table, c++-mode-syntax-table, java-mode-syntax-table,
+	objc-mode-syntax-table, idl-mode-syntax-table): Use the new syntax
+	table initialization idioms.
+
+	(c-enable-//-in-c-mode): Obsolete.
+
+	* cc-mode.el (c-mode):
+	c-comment-start-regexp uses c-C++-comment-start-regexp to
+	support line oriented comments.
+
+Wed Jul 30 00:01:45 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-guess-basic-syntax):
+	CASE 5D.4: template argument continuation
+	lines are now analyzed as template-args-cont.
+
+	* cc-styles.el (c-offsets-alist):
+	Added template-args-cont syntactic symbol
+
+	* cc-mode.texi:
+	Added description of template-args-cont syntactic symbol
+
+Sat Jul 26 16:03:33 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-styles-alist):
+	In "java" style, set c-hanging-comment-starter-p to
+	nil to preserve Javadoc starter lines.
+
 Sat Jul 26 12:24:20 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.14
