@@ -96,6 +96,7 @@
 	(line-cont-backslash (save-excursion
 			       (end-of-line)
 			       (eq (char-before) ?\\)))
+	bs-col
 	shift-amt)
     (if c-syntactic-indentation
 	(setq c-parsing-error
@@ -108,16 +109,22 @@
 			       (save-excursion
 				 (beginning-of-line)
 				 (looking-at (if line-cont-backslash
-						 "\\s *\\\\$"
-					       "\\s *$"))))
+						 "\\(\\s *\\)\\\\$"
+					       "\\(\\s *\\)$")))
+			       (<= (point) (match-end 1)))
 		      ;; Delete all whitespace after point if there's
 		      ;; only whitespace on the line, so that any
 		      ;; lineup functions that does
 		      ;; back-to-indentation or similar gets the
-		      ;; current column in this case.  If we remove a
-		      ;; line continuation backslash then
-		      ;; c-backslash-region will put in a new one.
-		      (delete-region (point) (c-point 'eol)))
+		      ;; current column in this case.  If this removes
+		      ;; a backslash it'll be restored below.
+		      (unless c-auto-align-backslashes
+			;; Should try to keep the backslash alignment
+			;; in this case.
+			(save-excursion
+			  (goto-char (match-end 0))
+			  (setq bs-col (1- (current-column)))))
+		      (delete-region (point) (match-end 0)))
 		    (setq indent (c-get-syntactic-indentation
 				  c-syntactic-context))
 		    (and (not (c-echo-parsing-error quiet))
@@ -141,8 +148,12 @@
     (when (and c-fix-backslashes
 	       line-cont-backslash
 	       (c-query-and-set-macro-start))
-      ;; Realign the line continuation backslash if inside a macro.
-      (c-backslash-region (point) (point) nil t))
+      (if bs-col
+	  (save-excursion
+	    (indent-to bs-col 1)
+	    (insert ?\\))
+	;; Realign the line continuation backslash if inside a macro.
+	(c-backslash-region (point) (point) nil t)))
     shift-amt))
 
 (defun c-newline-and-indent (&optional newline-arg)
@@ -157,6 +168,7 @@
 	;; c-electric-continued-statement, for example.  We also don't
 	;; want any backslash alignment from indent-according-to-mode.
 	(c-fix-backslashes nil)
+	insert-backslash
 	start col)
     (save-excursion
       (beginning-of-line)
@@ -165,17 +177,16 @@
 		  (= (forward-line -1) 0)))
       (setq col (current-indentation)))
     (when (and c-macro-start
-	       (or (and (eolp) (eq (char-before) ?\\))
-		   (looking-at "[ \t]*\\\\$")))
-      ;; Always break after the line continuation backslash, to
-      ;; preserve its alignment if c-auto-align-backslashes is nil.
-      ;; Must also insert a new backslash for the new line to make
-      ;; bs-col-after-end in c-backslash-region work better.
-      (end-of-line)
-      (insert ?\\)
-      (backward-char))
+	       (eolp)
+	       (eq (char-before) ?\\))
+      ;; Ensure that the new line gets a backslash so that
+      ;; bs-col-after-end in c-backslash-region works better.
+      (setq insert-backslash t))
     (newline newline-arg)
     (indent-to col)
+    (when insert-backslash
+      (insert ?\\)
+      (backward-char))
     (when c-macro-start
       (c-backslash-region start (point) nil t))
     (when c-syntactic-indentation
@@ -186,6 +197,7 @@
       ;; make lineup functions which looks at the current line,
       ;; e.g. c-lineup-macro-cont, more intuitive.
       (insert ?\n)
+      (delete-horizontal-space)
       (setq start (- (point-max) (point)))
       (unwind-protect
 	  (progn
@@ -2136,17 +2148,25 @@ command to conveniently insert and align the necessary backslashes."
   (if column
       (while
 	  (and (<= (point) to-mark)
-	       (progn
+	       (let (end col)
 		 (end-of-line)
 		 (unless (eq (char-before) ?\\)
 		   (insert ?\\))
 		 (backward-char)
-		 (delete-region
-		  (point)
-		  (progn (skip-chars-backward " \t" (if (>= (point) point-pos)
-							point-pos))
-			 (point)))
-		 (indent-to column (if (= (point) point-pos) 0 1))
+		 (setq col (current-column))
+		 ;; Avoid unnecessary changes of the buffer.
+		 (cond ((< col column)
+			(indent-to column))
+		       ((and (= col column)
+			     (memq (char-before) '(?\  ?\t))))
+		       ((progn
+			  (setq end (point))
+			  (or (/= (skip-chars-backward
+				   " \t" (if (>= (point) point-pos) point-pos))
+				  -1)
+			      (/= (char-after) ?\ )))
+			(delete-region (point) end)
+			(indent-to column 1)))
 		 (= (forward-line 1) 0))))
     ;; Make sure there are backslashes with at least one space in
     ;; front of them.
@@ -2157,9 +2177,11 @@ command to conveniently insert and align the necessary backslashes."
 	       (if (eq (char-before) ?\\)
 		   (progn
 		     (backward-char)
-		     (unless (memq (char-before) '(?\  ?\t))
+		     (unless (and (memq (char-before) '(?\  ?\t))
+				  (/= (point) point-pos))
 		       (insert ?\ )))
-		 (if (memq (char-before) '(?\  ?\t))
+		 (if (and (memq (char-before) '(?\  ?\t))
+			  (/= (point) point-pos))
 		     (insert ?\\)
 		   (insert " \\")))
 	       (= (forward-line 1) 0))))))
