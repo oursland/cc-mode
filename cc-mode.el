@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.205 $
-;; Last Modified:   $Date: 1995-05-05 00:11:34 $
+;; Version:         $Revision: 4.206 $
+;; Last Modified:   $Date: 1995-05-08 19:42:48 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-05 00:11:34 $|$Revision: 4.205 $|
+;; |$Date: 1995-05-08 19:42:48 $|$Revision: 4.206 $|
 
 ;;; Code:
 
@@ -2894,27 +2894,29 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 ;; is used as the backward limit of the search.  If omitted, or nil,
 ;; `beginning-of-defun' is used."
 
-;; This is for all v19 Emacsen supporting either 1-bit or 8-bit syntax
+;; This is a faster version of c-in-literal.  It trades speed for one
+;; approximation, namely that within other literals, the `#' character
+;; cannot be the first non-whitespace on a line.
 (defun c-in-literal (&optional lim)
-  ;; Determine if point is in a C++ literal. we cache the last point
-  ;; calculated if the cache is enabled
+  ;; first check the cache
   (if (and (boundp 'c-in-literal-cache)
 	   c-in-literal-cache
 	   (= (point) (aref c-in-literal-cache 0)))
       (aref c-in-literal-cache 1)
-    (let ((rtn (save-excursion
-		 (let* ((lim (or lim (c-point 'bod)))
-			(here (point))
-			(state (parse-partial-sexp lim (point))))
-		   (cond
-		    ((nth 3 state) 'string)
-		    ((nth 4 state) (if (nth 7 state) 'c++ 'c))
-		    ((progn
-		       (goto-char here)
-		       (beginning-of-line)
-		       (looking-at "[ \t]*#"))
-		     'pound)
-		    (t nil))))))
+    ;; quickly check for cpp macro. this breaks if the `#' character
+    ;; appears as the first non-whitespace on a line inside another
+    ;; literal.
+    (let* (state
+	   (rtn (cond
+		 ((= (char-after (c-point 'boi)) ?#)
+		  'pound)
+		 ((nth 3 (setq state (save-excursion
+				       (parse-partial-sexp
+					(or lim (c-point 'bod))
+					(point)))))
+		  'string)
+		 ((nth 4 state) (if (nth 7 state) 'c++ 'c))
+		 (t nil))))
       ;; cache this result if the cache is enabled
       (and (boundp 'c-in-literal-cache)
 	   (setq c-in-literal-cache (vector (point) rtn)))
@@ -4574,7 +4576,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.205 $"
+(defconst c-version "$Revision: 4.206 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
