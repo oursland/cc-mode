@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.3 $
-;; Last Modified:   $Date: 1993-07-12 15:42:40 $
+;; Version:         $Revision: 3.4 $
+;; Last Modified:   $Date: 1993-07-12 20:37:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -44,8 +44,8 @@
 ;; the indentation of lines of code in a manner very similar to c-mode
 ;; as distributed with GNU Emacs.  Refer to the GNU Emacs manual,
 ;; chapter 21 for more information on "Editing Programs".  In fact,
-;; c++-mode (through its companion mode entry point c++-c-mode) can
-;; also be used to edit both K&R and ANSI C code!
+;; c++-mode (through its companion mode c++-c-mode) can also be used
+;; to edit both K&R and ANSI C code!
 ;;
 ;; To use c++-mode, add the following to your .emacs file.  This
 ;; assumes you will use .cc or .C extensions for your C++ source:
@@ -69,31 +69,23 @@
 
 ;; Important Note about Escapes in Comments, and Performance
 ;; =========================================================
-;; You may notice that certain characters, when typed in comment
-;; regions, get escaped with a backslash.  This is a workaround for
-;; bugs in Emacs' syntax parsing algorithms.  In brief, syntax parsing
-;; in Emacs 18 and derivatives is broken because syntax tables are not
-;; rich enough to support more than 1 comment style per mode (as C++
-;; requires).  The result is that Emacs will sometimes choke on
-;; unbalanced parentheses and single quotes in comments.  Please do a
-;; "C-h v c++-untame-characters" for more information.
+;; With the release of GNU Emacs 19, the syntax scanning algorithms
+;; have been greatly improved in two significant areas.  They now can
+;; recognize up to 2 distinct comment styles per mode (as in C++), and
+;; they also provide built-in routines to scan past comment regions,
+;; improving performance for some key routines.  c++-mode takes
+;; advantage of these improvments if you are running Emacs 19 (Lucid's
+;; and FSF's).
 ;;
-;; This problem affect both the accuracy and performance of c++-mode
-;; because some parsing must be performed in Emacs lisp instead of
-;; relying on the C primitives.  In general, I've chosen accuracy over
-;; performance, but have worked hard to give moderately acceptable
-;; speed in all but the most uncommon situations.  You will most likely
-;; notice c++-mode slowing when you're editing a file of preprocessor
-;; commands, or inside long functions or class definitions.
-;; Optimization is an ongoing concern, but the real solution is to fix
-;; Emacs.
-;;
-;; As of release 19.4, Lucid Emacs is distributed with the fixes in
-;; place, and c++-mode will automatically take advantage of them so
-;; none of the above applies to you.  Similar patches will be part of
-;; FSF GNU Emacs 19.  Some patches for GNU Emacs 18 have been released
-;; on the beta site, but they are unsupported.  Email for more
-;; information.
+;; If you are still running GNU Emacs 18, c++-mode will still work but
+;; you will notice two behaviors you may not like.  The first is that
+;; c++-mode will sometimes get very slow, especially when editing
+;; large functions, or files containing mostly cpp directives.  The
+;; second is that some characters will be backslashed inside C++
+;; comments.  The variables c++-backscan-limit and c++-untame-characters
+;; are provided to help you tune these behaviors while in Emacs 18.
+;; They have no effect when running in Emacs 19.  Do a describe
+;; variable on these for more information.
 
 ;; Beta Testers Mailing List
 ;; =========================
@@ -132,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-07-12 15:42:40 $|$Revision: 3.3 $|
+;; |$Date: 1993-07-12 20:37:27 $|$Revision: 3.4 $|
 
 ;;; Code:
 
@@ -479,7 +471,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.3 $
+  "Major mode for editing C++ code.  $Revision: 3.4 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -711,7 +703,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.3 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.4 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -2639,7 +2631,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.3 $"
+(defconst c++-version "$Revision: 3.4 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
