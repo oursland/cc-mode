@@ -200,6 +200,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
   ;;   "else": Push state, goto state `else'.
   ;;   "while": Push state, goto state `while'.
   ;;   "catch" or "finally": Push state, goto state `catch'.
+  ;;   boundary: Pop state.
   ;;   other: Do nothing special.
   ;;
   ;; State `else':
@@ -401,9 +402,12 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		    ;; This is state common.  We get here when the previous
 		    ;; cond statement found no particular state handler.
 		    (cond ((eq sym 'boundary)
-			   (if (< pos start)
-			       (c-bos-pop-state) ; ??
-			     (c-bos-push-state))) ; ??
+			   ;; If we have a boundary at the start
+			   ;; position we push a frame to go to the
+			   ;; previous statement.
+			   (if (>= pos start)
+			       (c-bos-push-state)
+			     (c-bos-pop-state)))
 			  ((eq sym 'else)
 			   (c-bos-push-state)
 			   (c-bos-save-error-info 'if 'else)
@@ -430,8 +434,8 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			last-label-pos nil
 			c-maybe-labelp nil))))
 
-	      ;; Step to previous sexp, but not if we crossed a boundary,
-	      ;; since that doesn't consume an sexp.
+	      ;; Step to the previous sexp, but not if we crossed a
+	      ;; boundary, since that doesn't consume an sexp.
 	      (if (eq sym 'boundary)
 		  (setq ret 'previous)
                 ;; HERE IS THE SINGLE PLACE INSIDE THE PDA LOOP WHERE WE MOVE
@@ -441,7 +445,10 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		(while
 		    (progn
 		      (or (c-safe (goto-char (scan-sexps (point) -1)) t)
-			  (throw 'loop nil)) ; ?? Unmatched parens/braces/brackets?
+			  ;; Give up if we hit an unbalanced block.
+			  ;; Since the stack won't be empty the code
+			  ;; below will report a suitable error.
+			  (throw 'loop nil))
 		      (cond ((looking-at "\\\\$")
 			     ;; Step again if we hit a line continuation.
 			     t)
@@ -929,20 +936,26 @@ See `c-forward-token-1' for details."
       count)))
 
 (defun c-syntactic-re-search-forward (regexp &optional bound noerror count
-					     paren-level)
-  ;; Like `re-search-forward', but only report matches that are found
-  ;; in syntactically significant text.  I.e. matches that begins in
-  ;; comments, macros or string literals are ignored.  The start point
-  ;; is assumed to be outside any comment, macro or string literal, or
-  ;; else the content of that region is taken as syntactically
-  ;; significant text.  If PAREN-LEVEL is non-nil, an additional
-  ;; restriction is added to ignore matches in nested paren sexps, and
-  ;; the search will also not go outside the current paren sexp.
-  ;;
-  ;; If there is at least one submatch in the regexp and the first one
-  ;; matches, the end position of that submatch is used to check for
-  ;; syntactic significance, otherwise the start position of the whole
-  ;; match is used.
+					     paren-level not-inside-token)
+  "Like `re-search-forward', but only report matches that are found
+in syntactically significant text.  I.e. matches in comments, macros
+or string literals are ignored.  The start point is assumed to be
+outside any comment, macro or string literal, or else the content of
+that region is taken as syntactically significant text.
+
+If PAREN-LEVEL is non-nil, an additional restriction is added to
+ignore matches in nested paren sexps, and the search will also not go
+outside the current paren sexp.
+
+If NOT-INSIDE-TOKEN is non-nil, matches in the middle of tokens are
+ignored.  Things like multicharacter operators and special symbols
+\(e.g. \"`()\" in Pike) are handled but currently not floating point
+constants.
+
+If there is at least one submatch in the regexp and the first one
+matches, the end position of that submatch is used to check for
+syntactic significance, otherwise the start position of the whole
+match is used."
 
   (or bound (setq bound (point-max)))
   (or count (setq count 1))
@@ -950,6 +963,7 @@ See `c-forward-token-1' for details."
 
   (let ((start (point))
 	(pos (point))
+	(last-token-end-pos (point-min))
 	match-pos syntactic-match-pos state)
 
     (condition-case err
@@ -987,6 +1001,31 @@ See `c-forward-token-1' for details."
 		 ;; Match inside a block comment.  Skip to the '*/'.
 		 (or (search-forward "*/" bound noerror)
 		     (setq count -1)))
+
+		((and not-inside-token
+		      (> syntactic-match-pos last-token-end-pos)
+		      (save-match-data
+			(let (tmp-pos)
+			  (save-excursion
+			    (when (zerop (skip-syntax-backward
+					  ".()" last-token-end-pos))
+			      (backward-char))
+			    (while (if (looking-at
+					c-multichar-op-sym-token-regexp)
+				       (< (setq tmp-pos (match-end 0)) pos)
+				     (setq tmp-pos nil))
+			      (goto-char tmp-pos)))
+			  (and tmp-pos
+			       (> tmp-pos syntactic-match-pos)
+			       (progn (goto-char tmp-pos)
+				      (skip-syntax-forward "w_")
+				      (setq last-token-end-pos (point))
+				      t)))))
+		 ;; Match inside a token.
+		 (when (> (point) bound)
+		   (if noerror
+		       (setq count -1)
+		     (signal 'search-failed "end of token"))))
 
 		((save-excursion
 		   (save-match-data
@@ -1800,24 +1839,17 @@ brace."
   ;; semicolon.  I.e. search forward for the closest following
   ;; (syntactically relevant) '{', '=' or ';' token.  Point is left
   ;; _after_ the first found token, or at point-max if none is found.
-  (cond ((c-major-mode-is 'c++-mode)
-	 ;; In C++ we need to take special care to handle those pesky
-	 ;; template brackets.
-	 (while (and (c-syntactic-re-search-forward "[;{=<]" nil 'move 1 t)
-		     (when (eq (char-before) ?<)
-		       (c-with-syntax-table c++-template-syntax-table
-			 (if (c-safe (goto-char (c-up-list-forward (point))))
-			     t
-			   (goto-char (point-max))
-			   nil))))))
-	((c-major-mode-is 'pike-mode)
-	 ;; In Pike there can be an operator identifiers containing '='.
-	 (while (and (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t)
-		     (eq (char-before) ?=)
-		     (c-on-identifier))))
-	(t
-	 ;; The other languages are trivial.
-	 (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t))))
+  (if (c-major-mode-is 'c++-mode)
+      ;; In C++ we need to take special care to handle those pesky
+      ;; template brackets.
+      (while (and (c-syntactic-re-search-forward "[;{=<]" nil 'move 1 t t)
+		  (when (eq (char-before) ?<)
+		    (c-with-syntax-table c++-template-syntax-table
+		      (if (c-safe (goto-char (c-up-list-forward (point))))
+			  t
+			(goto-char (point-max))
+			nil)))))
+    (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t t)))
 
 (defun c-beginning-of-decl-1 (&optional lim)
   ;; Go to the beginning of the current declaration, or the beginning
@@ -1906,7 +1938,7 @@ brace."
 					c++-template-syntax-table
 				      (syntax-table))
 		 (save-excursion
-		   (and (c-syntactic-re-search-forward "[;={]" start t 1 t)
+		   (and (c-syntactic-re-search-forward "[;={]" start t 1 t t)
 			(eq (char-before) ?=)
 			(c-syntactic-re-search-forward "[;{]" start t 1 t)
 			(eq (char-before) ?{)
@@ -1956,16 +1988,16 @@ brace."
 			    ;; Check for `c-opt-block-decls-with-vars-key'
 			    ;; before the first paren.
 			    (c-syntactic-re-search-forward
-			     (concat "[;=\(\[{]\\|\\<\\("
+			     (concat "[;=\(\[{]\\|\\("
 				     c-opt-block-decls-with-vars-key
 				     "\\)")
-			     lim t 1 t)
+			     lim t 1 t t)
 			    (match-beginning 1)
 			    (not (eq (char-before) ?_))
 			    ;; Check that the first following paren is
 			    ;; the block.
 			    (c-syntactic-re-search-forward "[;=\(\[{]"
-							   lim t 1 t)
+							   lim t 1 t t)
 			    (eq (char-before) ?{)))))))
 	    ;; The declaration doesn't have any of the
 	    ;; `c-opt-block-decls-with-vars' keywords in the
@@ -2593,30 +2625,29 @@ brace."
 				   containing-sexp)))))
 
 (defun c-on-identifier ()
-  "Return non-nil if point is on or directly after an identifier.
+  "Return non-nil if the point is on or directly after an identifier.
 Keywords are recognized and not considered identifiers.  If an
-identifier is detected, the returned value is its starting position."
-  (if (or (memq (char-syntax (or (char-after) ? )) '(?w ?_))
-	  (memq (char-syntax (or (char-before) ? )) '(?w ?_)))
-      (save-excursion
-	(skip-syntax-backward "w_")
-	(and (not (looking-at c-keywords-regexp))
-	     (point)))
-    (if (c-major-mode-is 'pike-mode)
-	;; Handle the `<operator> syntax in Pike.
-	(save-excursion
-	  (if (eq (char-after) ?\`) (forward-char))
-	  (skip-chars-backward "!%&*+\\-/<=>^|~")
+identifier is detected, the returned value is its starting position.
+If an identifier both starts and stops at the point \(can only happen
+in Pike) then the point for the preceding one is returned."
+
+  (save-excursion
+    (if (zerop (skip-syntax-backward "w_"))
+
+	(when (c-major-mode-is 'pike-mode)
+	  ;; Handle the `<operator> syntax in Pike.
 	  (let ((pos (point)))
-	    (if (cond ((memq (char-before) '(?\) ?\]))
-		       (c-safe (backward-char 2)))
-		      ((memq (char-before) '(?\( ?\[))
-		       (c-safe (backward-char 1))))
-		(if (not (looking-at "()\\|\\[]"))
-		    (goto-char pos))))
-	  (and (eq (char-before) ?\`)
-	       (looking-at "[-!%&*+/<=>^|~]\\|()\\|\\[]")
-	       (1- (point)))))))
+	    (skip-chars-backward "!%&*+\\-/<=>^|~")
+	    (and (if (eq (char-before) ?\`)
+		     (progn (backward-char) t)
+		   (goto-char pos)
+		   (eq (char-after) ?\`))
+		 (looking-at c-multichar-op-sym-token-regexp)
+		 (>= (match-end 0) pos)
+		 (point))))
+
+      (and (not (looking-at c-keywords-regexp))
+	   (point)))))
 
 
 (defun c-most-enclosing-brace (paren-state &optional bufpos)
