@@ -858,8 +858,8 @@
 
 (defun c-search-uplist-for-classkey (brace-state)
   ;; search for the containing class, returning a 2 element vector if
-  ;; found. aref 0 contains the bufpos of the class key, and aref 1
-  ;; contains the bufpos of the open brace.
+  ;; found. aref 0 contains the bufpos of the boi of the class key
+  ;; line, and aref 1 contains the bufpos of the open brace.
   (if (null brace-state)
       ;; no brace-state means we cannot be inside a class
       nil
@@ -1158,6 +1158,19 @@
     ;; return the class vector
     inclass-p))
 
+(defsubst c-add-class-syntax (symbol classkey)
+  ;; The inclass and class-close syntactic symbols are added in
+  ;; several places and some work is needed to fix everything.
+  ;; Therefore it's collected here.
+  (save-restriction
+    (widen)
+    (goto-char (aref classkey 1))
+    (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
+	(c-add-syntax symbol (point))
+      (c-add-syntax symbol (aref classkey 0))
+      (if (and c-inexpr-class-key (c-looking-at-inexpr-block))
+	  (c-add-syntax 'inexpr-class)))))
+
 
 ;; This function implements the main decision tree for determining the
 ;; syntactic analysis of the current line of code.  Yes, it's huge and
@@ -1334,7 +1347,7 @@
 	     ;; CASE 5A.4: inline defun open
 	     ((and inclass-p (not inenclosing-p))
 	      (c-add-syntax 'inline-open)
-	      (c-add-syntax 'inclass (aref inclass-p 0)))
+	      (c-add-class-syntax 'inclass inclass-p))
 	     ;; CASE 5A.5: ordinary defun open
 	     (t
 	      (goto-char placeholder)
@@ -1375,7 +1388,7 @@
 	     ;; CASE 5B.2: K&R arg decl intro
 	     (c-recognize-knr-p
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
-	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
+	      (if inclass-p (c-add-class-syntax 'inclass inclass-p)))
 	     ;; CASE 5B.3: Nether region after a C++ or Java func
 	     ;; decl, which could include a `throws' declaration.
 	     (t
@@ -1431,7 +1444,7 @@
 	     ;; CASE 5C.2: hanging colon on an inher intro
 	     ((eq char-before-ip ?:)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
-	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
+	      (if inclass-p (c-add-class-syntax 'inclass inclass-p)))
 	     ;; CASE 5C.3: in a Java implements/extends
 	     (injava-inher
 	      (let ((where (cdr injava-inher))
@@ -1528,7 +1541,7 @@
 		 c-access-key
 		 (looking-at c-access-key))
 	    (c-add-syntax 'access-label (c-point 'bonl))
-	    (c-add-syntax 'inclass (aref inclass-p 0)))
+	    (c-add-class-syntax 'inclass inclass-p))
 	   ;; CASE 5F: extern-lang-close or namespace-close?
 	   ((and inenclosing-p
 		 (eq char-after-ip ?}))
@@ -1547,10 +1560,7 @@
 		     (and (c-safe (progn (backward-sexp 1) t))
 			  (= (point) (aref inclass-p 1))
 			  ))))
-	    (save-restriction
-	      (widen)
-	      (goto-char (aref inclass-p 0))
-	      (c-add-syntax 'class-close (c-point 'boi))))
+	    (c-add-class-syntax 'class-close inclass-p))
 	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
 		 ;; here we essentially use the hack that is used in
@@ -1616,7 +1626,7 @@
 		      (c-add-syntax 'inextern-lang (c-point 'boi)))
 		     ((eq inenclosing-p 'namespace)
 		      (c-add-syntax 'innamespace (c-point 'boi)))
-		     (t (c-add-syntax 'inclass (c-point 'boi))))
+		     (t (c-add-class-syntax 'inclass inclass-p)))
 		    ))
 	      ))
 	   ;; CASE 5J: we are at an ObjC or Java method definition
@@ -1982,7 +1992,7 @@
 		(narrow-to-region (point-min) indent-point)
 		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
 		  (if decl
-		      (c-add-syntax 'class-close (aref decl 0))
+		      (c-add-class-syntax 'class-close decl)
 		    (c-add-syntax 'defun-close relpos)))))
 	     )))
 	 ;; CASE 16: statement catchall
