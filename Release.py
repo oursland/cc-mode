@@ -146,11 +146,17 @@ def pkg_release():
     dir = 'cc-mode-' + RELEASE
     os.mkdir(dir)
     for f, cre, format in FILES:
+	if f == 'ChangeLog':
+	    # package this up separately
+	    continue
 	os.system('cp %s %s' % (f, dir))
     os.system('tar cvf - %s | gzip -c > %s.tar.gz' % (dir, dir))
+    os.system('cp ChangeLog ' + dir)
+    os.system('cd %s ; gzip -c ChangeLog > ../ChangeLog.gz' % dir)
     for f, cre, format in FILES:
 	os.unlink(os.path.join(dir, f))
     os.rmdir(dir)
+    
 
 
 def make_docs():
