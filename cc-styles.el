@@ -342,6 +342,8 @@ when used elsewhere."
 	   (completing-read prompt c-style-alist nil t nil
 			    'c-set-style-history
 			    c-indentation-style))))
+  (or (stringp stylename)
+      (error "Argument to c-set-style was not a string"))
   (c-initialize-builtin-style)
   (let ((vars (c-get-style-variables stylename nil)))
     (unless dont-override
