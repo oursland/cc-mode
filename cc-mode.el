@@ -327,7 +327,8 @@ Key bindings:
 	comment-end ""
 	c-conditional-key c-C++-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
-	c-class-key c-C++-class-key
+	c-class-key c-IDL-class-key
+	c-extra-toplevel-key c-IDL-extra-toplevel-key
 	c-access-key c-C++-access-key
 	c-recognize-knr-p nil
 ;;	imenu-generic-expression cc-imenu-c++-generic-expression
