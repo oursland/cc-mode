@@ -333,12 +333,9 @@ it finds in `c-file-offsets'."
   (define-key c-mode-base-map ";"         'c-electric-semi&comma)
   (define-key c-mode-base-map "#"         'c-electric-pound)
   (define-key c-mode-base-map ":"         'c-electric-colon)
-  ;; Lucid Emacs 19.9 defined these two, the second of which was
-  ;; commented out...
-  ;; (define-key c-mode-base-map "\e{" 'c-insert-braces)
-  ;; Commented out electric square brackets because nobody likes them.
-  ;; (define-key c-mode-base-map "[" 'c-insert-brackets)
-  (define-key c-mode-base-map "\e\C-h"    'c-mark-function)
+  ;; Separate M-BS from C-M-h.  The former should remain
+  ;; backward-kill-word.
+  (define-key c-mode-base-map [(control meta h)] 'c-mark-function)
   (define-key c-mode-base-map "\e\C-q"    'c-indent-exp)
   (define-key c-mode-base-map "\ea"       'c-beginning-of-statement)
   (define-key c-mode-base-map "\ee"       'c-end-of-statement)
