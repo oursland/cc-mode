@@ -429,7 +429,10 @@ continuations."
    (t (mark t))))
 
 (defsubst c-major-mode-is (mode)
-  (eq (derived-mode-class major-mode) mode))
+  (eq c-buffer-is-cc-mode mode))
+
+(defsubst c-modevar (suffix)
+  (intern (concat (get c-buffer-is-cc-mode 'c-modevar-prefix) suffix)))
 
 
 (cc-provide 'cc-defs)
