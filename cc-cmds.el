@@ -312,6 +312,7 @@ This function does various newline cleanups based on the value of
 		 ;; at least one space.
 		 (delete-indentation)
 		 (just-one-space)
+		 (setq c-state-cache (c-whack-state (point) c-state-cache))
 		 (if (not preserve-p)
 		     (delete-char -1))))
 	  ;; since we're hanging the brace, we need to recalculate
