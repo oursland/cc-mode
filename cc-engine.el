@@ -2910,10 +2910,7 @@ isn't moved."
 	    (c-add-syntax 'arglist-cont-nonempty placeholder))
 	   ;; CASE 7G: we are looking at just a normal arglist
 	   ;; continuation line
-	   (t (goto-char indent-point)
-	      (c-beginning-of-statement-1 containing-sexp)
-	      ;(forward-char 1)
-	      (c-forward-syntactic-ws indent-point)
+	   (t (c-forward-syntactic-ws indent-point)
 	      (c-add-syntax 'arglist-cont (c-point 'boi)))
 	   ))
 	 ;; CASE 8: func-local multi-inheritance line
