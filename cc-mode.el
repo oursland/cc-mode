@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.132 $
-;; Last Modified:   $Date: 1994-12-28 16:02:34 $
+;; Version:         $Revision: 4.133 $
+;; Last Modified:   $Date: 1994-12-28 16:05:02 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -103,7 +103,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-28 16:02:34 $|$Revision: 4.132 $|
+;; |$Date: 1994-12-28 16:05:02 $|$Revision: 4.133 $|
 
 ;;; Code:
 
@@ -2489,7 +2489,7 @@ of the expression are preserved."
 Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (interactive "P")
   (let ((here (point))
-	end)
+	end progress-p)
     (unwind-protect
 	(let ((c-echo-syntactic-information-p nil) ;keep quiet for speed
 	      (start (progn
@@ -2518,6 +2518,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (error "Cannot find end of balanced expression to
 	       indent."))
 	  (c-progress-init start end 'c-indent-exp)
+	  (setq progress-p t)
 	  (goto-char start)
 	  (beginning-of-line)
 	  (while (< (point) end)
@@ -2528,7 +2529,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       ;; make sure marker is deleted
       (and end
 	   (set-marker end nil))
-      (c-progress-fini 'c-indent-exp)
+      (and progress-p
+	   (c-progress-fini 'c-indent-exp))
       (goto-char here))))
 
 (defun c-indent-defun ()
@@ -4359,7 +4361,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.132 $"
+(defconst c-version "$Revision: 4.133 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
