@@ -37,7 +37,7 @@ derived-mode-ex.elc: force
 	test -f derived-mode-ex.el || ln -s admin/derived-mode-ex.el .
 	EMACSLOADPATH=".${EMACSLOADPATH:+:}${EMACSLOADPATH}" $(EMACS) -batch -q -no-site-file -f batch-byte-compile derived-mode-ex.el
 
-release: docs dists
+release: docs dist
 
 distdir:
 	@test -d dist || mkdir dist
@@ -70,19 +70,6 @@ dvi:
 ps: dvi
 	dvips -o cc-mode.ps cc-mode.dvi
 	dvips -r -o cc-mode.rev.ps cc-mode.dvi
-
-dists: xemacsdist emacsdist dist
-
-# The Emacs maintainers' release.
-emacsdist:
-	gzip -c ChangeLog > ChangeLog.gz
-	$(MAKE) "FILES=ChangeLog.gz $(COREFILES)" \
-	        TARGZFILE=cc-mode-$(VERSION).emacs.tar.gz distcommon
-
-# The XEmacs maintainers' release.  They don't care about the ChangeLog.
-xemacsdist:
-	$(MAKE) "FILES=$(COREFILES)" \
-	        TARGZFILE=cc-mode-$(VERSION).xemacs.tar.gz distcommon
 
 # The standalone release.
 dist: force
