@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.318 $
-;; Last Modified:   $Date: 1996-09-30 22:30:18 $
+;; Version:         $Revision: 4.319 $
+;; Last Modified:   $Date: 1996-09-30 23:07:39 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2901,8 +2901,8 @@ of the expression are preserved.
 
   [*] The amount and kind of whitespace inserted is controlled by the
   variable `c-insert-tab-function', which is called to do the actual
-  insertion of whitespace.  Normally function in this variable just
-  inserts a tab character, or the equivalent number of spaces,
+  insertion of whitespace.  Normally the function in this variable
+  just inserts a tab character, or the equivalent number of spaces,
   depending on the variable `indent-tabs-mode'."
 
   (interactive "P")
@@ -5002,7 +5002,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.318 $"
+(defconst c-version "$Revision: 4.319 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
