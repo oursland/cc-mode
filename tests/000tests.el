@@ -314,6 +314,7 @@
     "top-2.cc"
     "top-3.cc"
     "typedef-1.c"
+    "typedef-2.pike"
     "unbal.c"
     "union.cc"
     ))
