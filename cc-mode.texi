@@ -1326,9 +1326,9 @@ block comments.
 @findex setup-paragraph-variables (c-)
 Also note that since @ccmode{} uses the value of
 @code{c-comment-prefix-regexp} to set up several other variables at mode
-initialization, there won't have any effect if you change it inside a
+initialization, there won't be any effect if you just change it inside a
 @ccmode{} buffer.  You need to call the command
-@code{c-setup-paragraph-variables} to update those other variables with
+@code{c-setup-paragraph-variables} too, to update those other variables with
 the new value.  That's also the case if you modify this variable in a
 mode hook, since @ccmode{} sets up all variables before calling them.
 @end defopt
@@ -5035,9 +5035,9 @@ The String and Comment formatting commands described in @ref{Text
 Filling and Line Breaking} all work in AWK mode.
 
 @item Movement Commands
-Most of the movement commands work in AWK mode.  The most important
-exceptions are @kbd{M-a} (@code{c-beginning-of-statement}) and
-@kbd{M-e} (@code{c-end-of-statement}) which haven't yet been adapted.
+Most of the movement commands work in AWK mode.  This now includes
+@kbd{M-a} (@code{c-beginning-of-statement}) and @kbd{M-e}
+(@code{c-end-of-statement}).
 
 The notion of @dfn{defun} has been augmented to include pattern-action
 pairs.  See @ref{AWK Mode Defuns} for a description of commands which

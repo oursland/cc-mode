@@ -144,6 +144,7 @@
 (cc-bytecomp-defun c-awk-NL-prop-not-set)
 (cc-bytecomp-defun c-awk-completed-stmt-ws-ends-line-p)
 (cc-bytecomp-defun c-awk-completed-stmt-ws-ends-prev-line-p)
+(cc-bytecomp-defun c-awk-virtual-semicolon-ends-line-p)
 (cc-bytecomp-defun c-awk-prev-line-incomplete-p)
 (cc-bytecomp-defun c-awk-after-change)
 
@@ -1045,21 +1046,34 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 ;; escapes in string literals correctly.)
 
 (defun c-forward-single-comment ()
-  "Move forward past whitespace and the closest following comment, if any.
-Return t if a comment was found, nil otherwise.  In either case, the
-point is moved past the following whitespace.  Line continuations,
-i.e. a backslashes followed by line breaks, are treated as whitespace.
-The line breaks that end line comments are considered to be the
-comment enders, so the point will be put on the beginning of the next
-line if it moved past a line comment.
+  "Move forward past whitespace at point and the following comment, if any.
+Return t if a comment was found, nil otherwise.  In either case, the point is
+moved past the leading whitespace.  Line continuations, i.e. backslashes
+followed by line breaks, are treated as whitespace.  In AWK Mode, an end of
+line which terminates a statement \(a \"virtual semicolon\") is NOT regarded
+as whitespace.  The line breaks that end line comments are considered to be
+the comment enders, so the point will be put on the beginning of the next line
+if it moved past a line comment.
 
 This function does not do any hidden buffer changes."
 
   (let ((start (point)))
-    (when (looking-at "\\([ \t\n\r\f\v]\\|\\\\[\n\r]\\)+")
-      (goto-char (match-end 0)))
+    (if (c-major-mode-is 'awk-mode)
+	(while	      ; Moves forward one blank line each time round the loop.
+	    (progn
+	      (skip-chars-forward " \t")
+	      ;; Experimentation shows that \f and \v are illegal in gawk
+	      ;; scripts (outside of strings (? and comments?)).
+	      (and (or (eolp)
+		       (looking-at "\\\\$"))
+		   (not (c-awk-virtual-semicolon-ends-line-p))))
+	  (forward-line))
+      (when (looking-at "\\([ \t\n\r\f\v]\\|\\\\[\n\r]\\)+")
+	(goto-char (match-end 0))))
 
-    (when (forward-comment 1)
+    (when (and (not (eolp)) ; Otherwise, in AWK mode, forward-comment would
+			    ; skip a virtual semicolon.
+	       (forward-comment 1))
       (if (eobp)
 	  ;; Some emacsen (e.g. XEmacs 21) return t when moving
 	  ;; forwards at eob.
@@ -1094,27 +1108,46 @@ This function does not do any hidden buffer changes."
 	    t))))
 
 (defun c-backward-single-comment ()
-  "Move backward past whitespace and the closest preceding comment, if any.
-Return t if a comment was found, nil otherwise.  In either case, the
-point is moved past the preceding whitespace.  Line continuations,
-i.e. a backslashes followed by line breaks, are treated as whitespace.
-The line breaks that end line comments are considered to be the
-comment enders, so the point cannot be at the end of the same line to
-move over a line comment.
+  "Move backward past whitespace and the immediately preceding comment, if any.
 
-This function does not do any hidden buffer changes."
+Return t if a comment was found, nil otherwise.  In either case, point is
+moved past the trailing whitespace.  Line continuations, i.e. backslashes
+followed by line breaks, are treated as whitespace.  In AWK Mode, an end of
+line which terminates a statement \(a \"virtual semicolon\") is NOT regarded
+as whitespace.  The line breaks that end line comments are considered to be
+the comment enders, so the point must be at the beginning of the next line to
+move back over a line comment.
 
-  (let ((start (point)))
+This function DOES DO some hidden buffer changes."
+
+  (let ((start (point))
+	(awk-$-pos nil))	      ; position after AWK "virtual semicolon"
     ;; When we got newline terminated comments, forward-comment in all
     ;; supported emacsen so far will stop at eol of each line not
     ;; ending with a comment when moving backwards.  This corrects for
     ;; that, and at the same time handles line continuations.
-    (while (progn
-	     (skip-chars-backward " \t\n\r\f\v")
-	     (and (looking-at "[\n\r]")
-		  (eq (char-before) ?\\)
-		  (< (point) start)))
-      (backward-char))
+    (if (c-major-mode-is 'awk-mode)
+	;; Move back over blank lines, stopping after going over a virtual
+	;; semicolon.
+	(progn
+	  (skip-chars-backward " \t")
+	  (while     ; Moves backward one blank line each time round the loop.
+	      (and (bolp)
+		   (not (bobp))
+		   (progn (when (c-awk-virtual-semicolon-ends-prev-line-p)
+			    (setq awk-$-pos (point)))
+			  (backward-char) ; to end of previous line.
+			  (if (eq (char-before) ?\\)
+			      (backward-char))
+			  (skip-chars-backward " \t")
+			  (not awk-$-pos)))))
+
+      (while (progn
+	       (skip-chars-backward " \t\n\r\f\v")
+	       (and (looking-at "[\n\r]")
+		    (eq (char-before) ?\\)
+		    (< (point) start)))
+	(backward-char)))
 
     (if (bobp)
 	;; Some emacsen (e.g. XEmacs 21.4) return t when moving
@@ -1126,6 +1159,9 @@ This function does not do any hidden buffer changes."
       ;; backward over a line comment if point is at the end of the
       ;; same line.
       (re-search-forward "\\=\\s *[\n\r]" start t)
+;     (re-search-forward "\\=\\s *\\\\?[\n\r]" start t)
+; Ask MS about this.  (forward-comment -1) fails when the previous line is a
+; line comment ending in \.
 
       (if (if (forward-comment -1)
 	      (if (eolp)
@@ -1139,7 +1175,10 @@ This function does not do any hidden buffer changes."
 	  ;; block comment that lacks an opener.
 	  (if (looking-at "\\*/")
 	      (progn (forward-char 2) nil)
-	    t)))))
+	    t)
+	(when awk-$-pos
+	  (goto-char awk-$-pos)
+	  nil)))))
 
 (defsubst c-backward-comments ()
   "Move backward past all preceding whitespace and comments.

@@ -106,6 +106,9 @@
 ;; after-change function) must be constantly updated for the mode to work
 ;; properly).
 ;;
+;; This text property is also used for "syntactic whitespace" movement, this
+;; being where the distinction between the values '$' and '}' is significant.
+;;
 ;; The valid values for c-awk-NL-prop are:
 ;;
 ;; nil The property is not currently set for this line.
@@ -120,11 +123,12 @@
 ;;     essential to the syntax of the program.  (i.e. if it had been a
 ;;     frivolous \, it would have been ignored and the line been given one of
 ;;     the other property values.)
-;; ';' A statement is completed as the last thing (aside from ws) on the line -
-;;     i.e. there is (at least part of) a statement on this line, and the last
-;;     statement on the line is complete, OR (2002/10/25) the line is
-;;     content-free but terminates a statement from the preceding (continued)
-;;     line (which has property \).
+;; '$' A non-empty statement is terminated on the line by an EOL (a "virtual
+;;     semicolon").  This might be a content-free line terminating a statement
+;;     from the preceding (continued) line (which has property \).
+;; '}' A statement, being the last thing (aside from ws/comments) is
+;;     explicitly terminated on this line by a closing brace (or sometimes a
+;;     semicolon).
 ;;
 ;; This set of values has been chosen so that the property's value on a line
 ;; is completely determined by the contents of the line and the property on
@@ -192,13 +196,13 @@
   ;;  Move back to just after the first found of either (i) an EOL which has
   ;;  the c-awk-NL-prop text-property set; or (ii) non-ws text; or (iii) BOB.
   ;;  We return either the value of c-awk-NL-prop (in case (i)) or nil.
-  ;;  Calling function can best distinguish cases (ii) and (iii) with (bolp).
+  ;;  Calling functions can best distinguish cases (ii) and (iii) with (bolp).
   ;;
   ;;  Note that an escaped eol counts as whitespace here.
   ;;
   ;;  Kludge: If c-backward-syntactic-ws gets stuck at a BOL, it is likely
   ;;  that the previous line contains an unterminated string (without \).  In
-  ;;  this case, assume that the previous line's c-awk-NL-prop is a ;.
+  ;;  this case, assume that the previous line's c-awk-NL-prop is a $.
   ;; 
   ;;  POINT MUST BE AT THE START OF A LINE when calling this function.  This
   ;;  is to ensure that the various backward-comment functions will work
@@ -215,7 +219,7 @@
                 ;; there is an open string (without \) on the previous line.
                 (c-backward-syntactic-ws bol-pos)
                 (or (/= (point) bsws-pos)
-                    (progn (setq nl-prop ?\;)
+                    (progn (setq nl-prop ?\$)
                            nil)))
          ;; If we had a backslash at EOL, c-backward-syntactic-ws will
          ;; have gone backwards over it.  Check the backslash was "real".
@@ -266,7 +270,9 @@
                  ((and (looking-at "[ \t]*\\\\$")
                        (not (c-awk-after-rbrace-or-statement-semicolon)))
                   ?\\)
-                 (t ?\;)))            ; A statement was completed on this line
+		 ;; A statement was completed on this line.  How?
+		 ((memq (char-before) '(?\; ?\}))  ?\})	; Real ; or }
+                 (t ?\$)))            ; A virtual semicolon.
           (end-of-line)
           (c-put-char-property (point) 'c-awk-NL-prop nl-prop)
           (forward-line))
@@ -275,9 +281,9 @@
         ;; Set c-awk-NL-prop on each of these lines's EOL.
         (while (< (point) pos)         ; one content-free line each iteration.
           (cond              ; recalculate nl-prop from previous line's value.
-           ((memq nl-prop '(?\; nil)) (setq nl-prop ?\#))
+           ((memq nl-prop '(?\} ?\$ nil)) (setq nl-prop ?\#))
            ((eq nl-prop ?\\)
-            (if (not (looking-at "[ \t]*\\\\$")) (setq nl-prop ?\;))) ; was ?\#  2002/10/25
+            (if (not (looking-at "[ \t]*\\\\$")) (setq nl-prop ?\$)))
            ;; ?\# (empty line) and ?\{ (open stmt) don't change.
            )
           (forward-line)
@@ -323,7 +329,7 @@
   ;; Is there a termination of a statement as the last thing (apart from an
   ;; optional comment) on the previous line?
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
-  (eq (c-awk-get-NL-prop-prev-line do-lim) ?\;))
+  (memq (c-awk-get-NL-prop-prev-line do-lim) '(?\} ?\$)))
 
 (defun c-awk-completed-stmt-ws-ends-line-p (&optional pos do-lim)
   ;; Same as previous function, but for the line containing position POS (or
@@ -331,13 +337,27 @@
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (save-excursion
     (if pos (goto-char pos))
-    (eq (c-awk-get-NL-prop-cur-line do-lim) ?\;)))
+    (memq (c-awk-get-NL-prop-cur-line do-lim) '(?\} ?\$))))
+
+(defun c-awk-virtual-semicolon-ends-prev-line-p (&optional do-lim)
+  ;; Is there a termination of a statement by EOL on the previous line?  (Any
+  ;; comment present doesn't change this.)
+  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  (eq (c-awk-get-NL-prop-prev-line do-lim) ?\$))
+
+(defun c-awk-virtual-semicolon-ends-line-p (&optional do-lim)
+  ;; Is there a termination of a statement by EOL on the current line?  (Any
+  ;; comment present doesn't change this.)
+  ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
+  (eq (c-awk-get-NL-prop-cur-line do-lim) ?\$))
 
 (defun c-awk-after-logical-semicolon (&optional do-lim)
-;; Are we at BOL, the preceding EOL being a "logical semicolon"?
+;; Are we at BOL, the preceding EOL being a "logical semicolon"?  This is
+;; either an explicit statement termination (by '}' or ';') or a "virtual
+;; semicolon".
 ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
   (and (bolp)
-       (eq (c-awk-get-NL-prop-prev-line do-lim) ?\;)))
+       (memq (c-awk-get-NL-prop-prev-line do-lim) '(?\$ ?\}))))
 
 (defun c-awk-backward-syntactic-ws (&optional lim) 
 ;; Skip backwards over awk-syntactic whitespace.  This is whitespace
@@ -353,20 +373,12 @@
     (while                    ; go back one WS line each time round this loop.
         (and (bolp)
              (> (point) lim)
-             (/= (c-awk-get-NL-prop-prev-line) ?\;)
+             (/= (c-awk-get-NL-prop-prev-line) ?\$)
              (/= (point)
                  ;; The following function requires point at BONL [not EOL] to
                  ;; recognise a preceding comment,.
                  (progn (c-backward-syntactic-ws (max lim (c-point 'bopl)))
-                        (point)))))
-    ;; Does the previous line end with a real ; or }?  If so, go back to it.
-    (if (and (bolp)
-             (eq (c-awk-get-NL-prop-prev-line) ?\;)
-             (save-excursion
-               (c-backward-syntactic-ws (max lim (c-point 'bopl)))
-               (setq after-real-br (point))
-               (c-awk-after-rbrace-or-statement-semicolon)))
-        (goto-char after-real-br))))
+                        (point)))))))
 
 (defun c-awk-NL-prop-not-set ()
   ;; Is the NL-prop on the current line either nil or unset?
@@ -776,7 +788,43 @@
 (c-awk-advise-fl-for-awk-region lazy-lock-defer-rest-after-change)
 (c-awk-advise-fl-for-awk-region lazy-lock-defer-line-after-change)
 
-;; ACM 2002/9/29.  Functions for C-M-a and C-M-e
+;; ACM 2002/9/29.  Movement functions, e.g. for C-M-a and C-M-e
+
+(defun c-awk-skip-semantic-ws-forward (&optional limit)
+  "Skip over any \(semanticallly insignificant) whitespace following point.
+This function skips over horizontal and vertical whitespace and line
+continuations EXCEPT line ends which terminate AWK statements.
+
+This function does hidden buffer changes (by setting text properties)."
+  (c-save-buffer-state ((limit (or limit (point-max))))
+    (while			 ; Goes forward one blank line each iteration.
+	(progn
+	  (search-forward-regexp "\\=[ \t]*" nil t)
+	  (and
+	   (or (eolp) (looking-at "\\\\$"))
+	   (not (eq (c-awk-get-NL-prop-cur-line) ?\$))
+	   (eq (forward-line) 0))))))
+
+(defun c-awk-skip-semantic-ws-backward (&optional limit)
+  "Skip over any \(semanticallly insignificant) whitespace following point.
+This function skips over horizontal and vertical whitespace and line
+continuations EXCEPT line ends which terminate AWK statements.
+
+This function does hidden buffer changes (by setting text properties)."
+  (c-save-buffer-state ((limit (or limit (point-min))))
+    (while			; Goes backward one blank line each iteration.
+	(progn
+	  (if (and (eq (char-before) ?\\)
+		   (eolp)
+		   (eq (c-awk-get-NL-prop-cur-line) ?\\))
+	      (backward-char))
+	  (skip-chars-backward " \t" limit)
+	  (and (> (point) limit)
+	       (bolp)
+	       (not (eq (c-awk-get-NL-prop-prev-line) ?\$))))
+      (backward-char))
+    (if (< (point) limit)
+	(goto-char limit))))
 
 (defconst c-awk-terminated-regexp-or-string-here-re "\\=\\s\"\\S\"*\\s\"")
 ;; Matches a terminated string/regexp (utilising syntax-table properties).
@@ -787,6 +835,21 @@
 (defconst c-awk-harmless-pattern-characters*
   (concat "\\([^{;#/\"\\\\\n\r]\\|" c-awk-esc-pair-re "\\)*"))
 ;; Matches any "harmless" character in a pattern or an escaped character pair.
+
+(defun c-awk-at-statement-end-p ()
+  ;; Point is not inside a comment or string.  Is it AT the end of a
+  ;; statement?  This means immediately after the last non-ws character of the
+  ;; statement.  The caller is responsible for widening the buffer, if
+  ;; appropriate.
+  (and (not (bobp))
+       (save-excursion
+	 (backward-char)
+	 (or (looking-at "[};]")
+	     (and (memq (c-awk-get-NL-prop-cur-line) '(?\$ ?\\))
+		  (looking-at
+		   (eval-when-compile
+		     (concat "[^ \t\n\r\\]" c-awk-escaped-nls*-with-space*
+			     "[#\n\r]"))))))))
 
 (defun c-awk-beginning-of-defun (&optional arg)
   "Move backward to the beginning of an AWK \"defun\".  With ARG, do it that
@@ -810,14 +873,14 @@ nor helpful."
              ;; is genuinely a beginning-of-defun.
              (while (and (setq found (search-backward-regexp
                                       "^[^#} \t\n\r]" (point-min) 'stop-at-limit))
-                         (not (memq (c-awk-get-NL-prop-prev-line) '(?\; ?\#)))))
+                         (not (memq (c-awk-get-NL-prop-prev-line) '(?\$ ?\} ?\#)))))
              (setq arg (1- arg)))
          ;; The same for a -ve arg.
          (if (not (eq (point) (point-max))) (forward-char 1))
          (while (and found (< arg 0) (not (eq (point) (point-max)))) ; The same for -ve arg.
            (while (and (setq found (search-forward-regexp
                                     "^[^#} \t\n\r]" (point-max) 'stop-at-limit))
-                       (not (memq (c-awk-get-NL-prop-prev-line) '(?\; ?\#)))))
+                       (not (memq (c-awk-get-NL-prop-prev-line) '(?\$ ?\} ?\#)))))
            (setq arg (1+ arg)))
          (if found (goto-char (match-beginning 0))))
        (eq arg 0)))))

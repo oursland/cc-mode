@@ -1039,8 +1039,8 @@ Key bindings:
   (define-key awk-mode-map "\C-c\C-n" 'undefined) ; #if doesn't exist in awk.
   (define-key awk-mode-map "\C-c\C-p" 'undefined)
   (define-key awk-mode-map "\C-c\C-u" 'undefined)
-  (define-key awk-mode-map "\M-a" 'undefined) ; c-awk-beginning-of-statement isn't yet implemented.
-  (define-key awk-mode-map "\M-e" 'undefined) ; c-awk-end-of-statement isn't yet implemented.
+  (define-key awk-mode-map "\M-a" 'c-beginning-of-statement) ; 2003/10/7
+  (define-key awk-mode-map "\M-e" 'c-end-of-statement) ; 2003/10/7
   (define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
   (define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun))
 
