@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.184 $
-;; Last Modified:   $Date: 1994-01-11 23:25:46 $
+;; Version:         $Revision: 3.185 $
+;; Last Modified:   $Date: 1994-01-11 23:50:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -82,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-11 23:25:46 $|$Revision: 3.184 $|
+;; |$Date: 1994-01-11 23:50:45 $|$Revision: 3.185 $|
 
 ;;; Code:
 
@@ -144,23 +144,40 @@ reported and the semantic symbol is ignored.")
     (inclass               . +)
     (cpp-macro             . -1000)
     )
-  "*Association list of language element symbols and indentation offsets.
-Each element in this list is a cons cell of the form:
+  "*Association list of syntactic element symbols and indentation offsets.
+As described below, each cons cell in this list has the form:
 
-    (LANGELEM . OFFSET)
+    (SYNTACTIC-ELEMENT . OFFSET)
 
-Where LANGELEM is a language element symbol and OFFSET is the
-additional offset applied to the line being indented.  OFFSET can be
-an integer, a function, or the symbol `+' or `-', designating
-positive or negative values of `c-basic-offset'.
+When a line is indented, cc-mode first determines the syntactic
+context of the line by generating a list of symbols called syntactic
+elements.  This list can contain more than one syntactic element and
+the global variable `c-semantics' contains the context list for the
+line being indented.  Each element in this list is actually a cons
+cell of the syntactic symbol and a buffer position.  This buffer
+position is call the relative indent point for the line.  Some
+syntactic symbols may not have a relative indent point associated with
+them.
 
-If OFFSET is a function, it is called with a single argument
-containing a cons cell with a langelem symbol in the car, and the
-relative indentation position in the cdr.  Also, the global variable
-`c-semantics' contains the entire list of language elements for the
-line being indented.  The function should return an integer.
+After the syntactic context list for a line is generated, cc-mode
+calculates the absolute indentation for the line by looking at each
+syntactic element in the list.  First, it compares the syntactic
+element against the SYNTACTIC-ELEMENT's in `c-offsets-alist'.  When it
+finds a match, it adds the OFFSET to the column of the relative indent
+point.  The sum of this calculation for each element in the syntactic
+list is the absolute offset for line being indented.
 
-Here is the current list of valid semantic symbols:
+If the syntactic element does not match any in the `c-offsets-alist',
+an error is generated if `c-strict-semantics-p' is non-nil, otherwise
+the element is ignored.
+
+Actually, OFFSET can be an integer, a function, or the symbol `+' or
+`-', the latter designating positive or negative values of
+`c-basic-offset'. If OFFSET is a function, it is called with a single
+argument containing the cons of the syntactic element symbol and the
+relative indent point.  The function should return an integer offset.
+
+Here is the current list of valid semantic element symbols:
 
  string                 -- inside multi-line string
  c                      -- inside a multi-line C style block comment
@@ -277,15 +294,14 @@ Valid symbols are:
 (defvar c-hanging-braces-alist '((brace-list-open))
   "*Controls the insertion of newlines before and after open braces.
 This variable contains an association list with elements of the
-following form: (LANGELEM . (NL-LIST)).
+following form: (SYNTACTIC-ELEMENT . (NL-LIST)).
 
-LANGELEM can be any of: defun-open, class-open, inline-open,
-block-open, or brace-list-open (as defined by the `c-offsets-alist'
-variable).
+SYNTACTIC-ELEMENT can be any of: defun-open, class-open, inline-open,
+block-open, or brace-list-open. See `c-offsets-alist' for details.
 
 NL-LIST can contain any combination of the symbols `before' or
-`after'. It also be nil.  When an open brace is inserted, the language
-element that it defines is looked up in this list, and if found, the
+`after'. It also be nil.  When an open brace is inserted, the
+syntactic context it defines is looked up in this list, and if found, the
 NL-LIST is used to determine where newlines are inserted.  If the
 language element for this brace is not found in this list, the default
 behavior is to insert a newline both before and after the brace.")
@@ -293,10 +309,11 @@ behavior is to insert a newline both before and after the brace.")
 (defvar c-hanging-colons-alist nil
   "*Controls the insertion of newlines before and after certain colons.
 This variable contains an association list with elements of the
-following form: (LANGSYM . (NL-LIST)).
+following form: (SYNTACTIC-ELEMENT . (NL-LIST)).
 
-LANGSYSM can be any of: member-init-intro, inher-intro, case-label,
-label, and access-label (as defined by the `c-offsets-alist' variable).
+SYNTACTIC-ELEMENT can be any of: member-init-intro, inher-intro,
+case-label, label, and access-label. See `c-offsets-alist' for
+details.
 
 NL-LIST can contain any combination of the symbols `before' or
 `after'. It also be nil.  When a colon is inserted, the language
@@ -649,7 +666,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.184 $
+CC-MODE REVISION: $Revision: 3.185 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -680,7 +697,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.184 $
+CC-MODE REVISION: $Revision: 3.185 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1261,10 +1278,10 @@ value of `c-cleanup-list'."
       )))
 
 (defun c-set-offset (symbol offset &optional add-p)
-  "Change the value of a langelem symbol in `c-offsets-alist'.
-SYMBOL is the langelem symbol to change and OFFSET is the offset for
-that langelem.  Optional ADD says to add SYMBOL to alist if it doesn't
-exist."
+  "Change the value of a syntactic element symbol in `c-offsets-alist'.
+SYMBOL is the syntactic element symbol to change and OFFSET is the new
+offset for that syntactic element.  Optional ADD says to add SYMBOL to
+`c-offsets-alist' if it doesn't already appear there."
   (interactive
    (let* ((langelem
 	   (intern (completing-read
@@ -1295,7 +1312,7 @@ exist."
 	(setcdr entry offset)
       (if add-p
 	  (setq c-offsets-alist (cons (cons symbol offset) c-offsets-alist))
-	(error "%s is not a valid langelem." symbol))))
+	(error "%s is not a valid syntactic symbol." symbol))))
   (c-keep-region-active))
 
 (defun c-up-block (arg)
@@ -2944,7 +2961,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.184 $"
+(defconst c-version "$Revision: 3.185 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
