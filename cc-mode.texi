@@ -4273,11 +4273,9 @@ of putting the @code{c-set-offset} line in your top-level
 @file{.emacs} file, put it in your @code{c-mode-common-hook}, or
 simply modify @code{c-offsets-alist} directly:
 @example
-@group
 
-(setq c-offsets-alist (cons '(substatement-open . 0)
-                            c-offsets-alist))
-@end group
+(setq c-offsets-alist '((substatement-open . 0)))
+
 @end example
 
 @sp 1
@@ -4395,8 +4393,7 @@ the individual files, including PostScript documentation.
   "My C Programming Style")
 
 ;; offset customizations not in my-c-style
-(setq c-offsets-alist (cons '(member-init-intro . ++)
-                            c-offsets-alist))
+(setq c-offsets-alist '((member-init-intro . ++)))
 
 ;; Customizations for all modes in CC Mode.
 (defun my-c-mode-common-hook ()
