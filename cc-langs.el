@@ -73,7 +73,7 @@
    "\\(" c-protection-key "\\s +\\)?"
    "\\(interface\\|class\\)\\s +"
    c-symbol-key				      ;name of the class
-   "\\(\\s *extends\\s *" c-symbol-key "\\)?" ;maybe followed by superclass 
+   "\\(\\s *extends\\s *" c-symbol-key "\\)?" ;maybe followed by superclass
    ;;"\\(\\s *implements *[^{]+{\\)?"	      ;maybe the adopted protocols list
    ))
 
@@ -339,6 +339,9 @@ Note that the style variables are always made local to the buffer."
 (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles)
 
 
+(defvar c-mode-base-map ()
+  "Keymap shared by all CC Mode related modes.")
+
 ;; Common routines
 (defun c-make-inherited-keymap ()
   (let ((map (make-sparse-keymap)))
@@ -386,9 +389,6 @@ Note that the style variables are always made local to the buffer."
   ;; Give CR the same syntax as newline, for selective-display
   (modify-syntax-entry ?\^m "> b" table))
 
-
-(defvar c-mode-base-map ()
-  "Keymap shared by all CC Mode related modes.")
 
 (if c-mode-base-map
     nil
