@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-10 19:10:31 $
-;; Version:         $Revision: 2.106 $
+;; Last Modified:   $Date: 1992-06-11 22:44:47 $
+;; Version:         $Revision: 2.107 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-10 19:10:31 $|$Revision: 2.106 $|
+;; |$Date: 1992-06-11 22:44:47 $|$Revision: 2.107 $|
 
 
 ;; ======================================================================
@@ -212,7 +212,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.106 $
+  "Major mode for editing C++ code.  $Revision: 2.107 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -564,12 +564,12 @@ backward-delete-char-untabify."
 				(and c++-hanging-braces
 				     (not (c++-at-top-level-p t)))))
 		       (setq c++-auto-newline nil))
-		   (c++-auto-newline)
-		   ;; this may have auto-filled so we need to indent
-		   ;; the previous line
-		   (save-excursion
-		     (forward-line -1)
-		     (c++-indent-line))
+		   (if (c++-auto-newline)
+		       ;; this may have auto-filled so we need to indent
+		       ;; the previous line
+		       (save-excursion
+			 (forward-line -1)
+			 (c++-indent-line)))
 		   t)))
 	(progn
 	  (if (and (memq last-command-char c++-untame-characters)
@@ -1816,7 +1816,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.106 $"
+(defconst c++-version "$Revision: 2.107 $"
   "c++-mode version number.")
 
 (defun c++-version ()
