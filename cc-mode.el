@@ -35,15 +35,15 @@
 ;;; Commentary:
 
 ;; This package provides GNU Emacs major modes for editing C, C++,
-;; Objective-C, Java and IDL code.  As of the latest Emacs and XEmacs
-;; releases, it is the default package for editing these languages.
-;; This package is called "CC Mode", and should be spelled exactly
-;; this way.  It supports K&R and ANSI C, ANSI C++, Objective-C, Java,
-;; and CORBA's IDL with a consistent indentation model across all
-;; modes.  This indentation model is intuitive and very flexible, so
-;; that almost any desired style of indentation can be supported.
-;; Installation, usage, and programming details are contained in an
-;; accompanying texinfo manual.
+;; Objective-C, Java, IDL and Pike code.  As of the latest Emacs and
+;; XEmacs releases, it is the default package for editing these
+;; languages.  This package is called "CC Mode", and should be spelled
+;; exactly this way.  It supports K&R and ANSI C, ANSI C++,
+;; Objective-C, Java, CORBA's IDL, and Pike with a consistent
+;; indentation model across all modes.  This indentation model is
+;; intuitive and very flexible, so that almost any desired style of
+;; indentation can be supported.  Installation, usage, and programming
+;; details are contained in an accompanying texinfo manual.
 
 ;; CC Mode's immediate ancestors were, c++-mode.el, cplus-md.el, and
 ;; cplus-md1.el..
@@ -92,10 +92,10 @@
 
 (defvar c-buffer-is-cc-mode nil
   "Non-nil for all buffers with a `major-mode' derived from CC Mode.
-Otherwise, this variable is nil.  I.e. this variable is non-nil for
-`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode', and any
-other non-CC Mode mode that calls `c-initialize-cc-mode'
-\(e.g. `awk-mode').")
+Otherwise, this variable is nil. I.e. this variable is non-nil for
+`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode',
+`pike-mode', and any other non-CC Mode mode that calls
+`c-initialize-cc-mode' (e.g. `awk-mode').")
 (make-variable-buffer-local 'c-buffer-is-cc-mode)
 (put 'c-buffer-is-cc-mode 'permanent-local t)
 
@@ -337,6 +337,51 @@ Key bindings:
   (c-update-modeline))
 
 
+;;;###autoload
+(defun pike-mode ()
+  "Major mode for editing Pike code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+idl-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook variable `pike-mode-hook' is run with no args, if that value
+is bound and has a non-nil value.  Also the common hook
+`c-mode-common-hook' is run first.
+
+Key bindings:
+\\{pike-mode-map}"
+  (interactive)
+  (c-initialize-cc-mode)
+  (kill-all-local-variables)
+  (set-syntax-table pike-mode-syntax-table)
+  (setq major-mode 'pike-mode
+ 	mode-name "Pike"
+ 	local-abbrev-table pike-mode-abbrev-table)
+  (use-local-map pike-mode-map)
+  (c-common-init)
+  (setq comment-start "// "
+ 	comment-end   ""
+ 	c-conditional-key c-Pike-conditional-key
+  	c-class-key c-Pike-class-key
+	c-method-key nil
+ 	c-baseclass-key nil
+	c-recognize-knr-p nil
+ 	c-access-key c-Pike-access-key
+	c-lambda-key c-Pike-lambda-key
+	c-statarg-key c-Pike-statarg-key
+	c-special-brace-lists c-Pike-special-brace-lists
+	;imenu-generic-expression cc-imenu-java-generic-expression ;FIXME
+	;imenu-case-fold-search nil ;FIXME
+	)
+  (run-hooks 'c-mode-common-hook)
+  (run-hooks 'pike-mode-hook)
+  (c-update-modeline))
+
+
 ;; bug reporting
 
 (defconst c-mode-help-address
@@ -371,6 +416,7 @@ Key bindings:
 		    ((eq major-mode 'c-mode)    "C")
 		    ((eq major-mode 'objc-mode) "ObjC")
 		    ((eq major-mode 'java-mode) "Java")
+		    ((eq major-mode 'pike-mode) "Pike")
 		    )
 	      ")")
       (let ((vars (list
