@@ -2631,27 +2631,28 @@ brace."
   ;; offset can be a number, a function, a variable, a list, or one of
   ;; the symbols + or -
   (cond
-   ((eq offset '+)         (setq offset c-basic-offset))
-   ((eq offset '-)         (setq offset (- c-basic-offset)))
-   ((eq offset '++)        (setq offset (* 2 c-basic-offset)))
-   ((eq offset '--)        (setq offset (* 2 (- c-basic-offset))))
-   ((eq offset '*)         (setq offset (/ c-basic-offset 2)))
-   ((eq offset '/)         (setq offset (/ (- c-basic-offset) 2)))
-   ((functionp offset)     (setq offset (funcall offset langelem)))
+   ((eq offset '+)         c-basic-offset)
+   ((eq offset '-)         (- c-basic-offset))
+   ((eq offset '++)        (* 2 c-basic-offset))
+   ((eq offset '--)        (* 2 (- c-basic-offset)))
+   ((eq offset '*)         (/ c-basic-offset 2))
+   ((eq offset '/)         (/ (- c-basic-offset) 2))
+   ((numberp offset)       offset)
+   ((functionp offset)     (c-evaluate-offset
+			    (funcall offset langelem) langelem symbol))
+   ((vectorp offset)       offset)
+   ((null offset)          nil)
    ((listp offset)
-    (setq offset
-	  (let (done)
-	    (while (and (not done) offset)
-	      (setq done (c-evaluate-offset (car offset) langelem symbol)
-		    offset (cdr offset)))
-	    (if (not done)
-		(if c-strict-syntax-p
-		    (error "No offset found for syntactic symbol %s" symbol)
-		  0)
-	      done))))
-   ((not (numberp offset)) (setq offset (symbol-value offset)))
-   )
-  offset)
+    (let (done)
+      (while (and (not done) offset)
+	(setq done (c-evaluate-offset (car offset) langelem symbol)
+	      offset (cdr offset)))
+      (if (not done)
+	  (if c-strict-syntax-p
+	      (error "No offset found for syntactic symbol %s" symbol))
+	done)))
+   (t (symbol-value offset))
+   ))
 
 (defun c-get-offset (langelem)
   ;; Get offset from LANGELEM which is a cons cell of the form:
@@ -2669,15 +2670,18 @@ brace."
 	  (setq offset 0
 		relpos 0))
       (setq offset (c-evaluate-offset offset langelem symbol)))
-    (+ (if (and relpos
-		(< relpos (c-point 'bol)))
-	   (save-excursion
-	     (goto-char relpos)
-	     (current-column))
-	 0)
-       (or (and (numberp offset) offset)
-	   (and (symbolp offset) (symbol-value offset))
-	   0))
+    (cond ((null offset) 0)
+	  ((vectorp offset) offset)
+	  (t
+	   (+ (if (and relpos
+		       (< relpos (c-point 'bol)))
+		  (save-excursion
+		    (goto-char relpos)
+		    (current-column))
+		0)
+	      (or (and (numberp offset) offset)
+		  (and (symbolp offset) (symbol-value offset))
+		  0))))
     ))
 
 (defun c-indent-line (&optional syntax)
@@ -2688,10 +2692,20 @@ brace."
   (let (shift-amt)
     (if c-syntactic-indentation
 	(let* ((c-syntactic-context (or syntax (c-guess-basic-syntax)))
-	       (indent (apply '+ (mapcar 'c-get-offset c-syntactic-context))))
+	       (langelemptr c-syntactic-context)
+	       (indent 0))
+	  (setq indent
+		(catch 'done
+		  (while langelemptr
+		    (let ((res (c-get-offset (car langelemptr))))
+		      (if (vectorp res)
+			  (throw 'done (elt res 0))
+			(setq indent (+ indent res)
+			      langelemptr (cdr langelemptr)))))
+		  indent))
 	  (and c-echo-syntactic-information-p
 	       (not (c-echo-parsing-error))
-	       (message "syntax: %s, indent= %d" c-syntactic-context indent))
+	       (message "syntax: %s, indent: %d" c-syntactic-context indent))
 	  (setq shift-amt (- indent (current-indentation)))
 	  (c-shift-line-indentation shift-amt)
 	  (run-hooks 'c-special-indent-hook))

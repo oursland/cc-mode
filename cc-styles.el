@@ -350,7 +350,7 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 						    'c-stylevar-fallback)))))
 	 (symname (symbol-name langelem))
 	 (defstr  (format "(default %s): " oldoff))
-	 (errmsg  (concat "Offset must be int, func, var, list, "
+	 (errmsg  (concat "Offset must be int, func, var, vector, list, "
 			  "or [+,-,++,--,*,/] "
 			  defstr))
 	 (prompt (concat symname " offset " defstr))
@@ -370,11 +370,14 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
 			 ;; a symbol with a function binding
 			 ((fboundp (setq interned (intern input)))
 			  interned)
-			 ;; a lambda function
-			 ((c-safe (functionp (setq raw (read input))))
-			  raw)
 			 ;; a symbol with variable binding
 			 ((boundp interned) interned)
+			 ;; a lambda function or a vector
+			 ((progn
+			    (c-safe (setq raw (read input)))
+			    (or (functionp raw)
+				(vectorp raw)))
+			  raw)
 			 ;; error, but don't signal one, keep trying
 			 ;; to read an input value
 			 (t (ding)
@@ -411,7 +414,8 @@ and exists only for compatibility reasons."
      (list langelem offset current-prefix-arg)))
   ;; sanity check offset
   (unless (c-valid-offset offset)
-    (error "Offset must be int, func, var, list, or in [+,-,++,--,*,/]: %s"
+    (error (concat "Offset must be int, func, var, vector, list, "
+		   "or in [+,-,++,--,*,/]: %s")
 	   offset))
   (let ((entry (assq symbol c-offsets-alist)))
     (if entry

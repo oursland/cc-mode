@@ -145,6 +145,7 @@ See `c-offsets-alist'."
       (eq offset '*)
       (eq offset '/)
       (integerp offset)
+      (vectorp offset)
       (functionp offset)
       (and (symbolp offset)
 	   (or (boundp offset)
@@ -713,13 +714,13 @@ want to set `c-style-variables-are-local-p'."
        (inclass               . +)
        ;; Relpos: At the class open brace if it's at boi, otherwise
        ;; boi at the class decl start.
-       (cpp-macro             . -1000)
+       (cpp-macro             . [0])
        ;; Relpos: None.
        (cpp-macro-cont        . c-lineup-dont-change)
        ;; Relpos: At the macro start (always at boi).
        (friend                . 0)
        ;; Relpos: None.
-       (objc-method-intro     . -1000)
+       (objc-method-intro     . [0])
        ;; Relpos: Boi.
        (objc-method-args-cont . c-lineup-ObjC-method-args)
        ;; Relpos: At the method start (always at boi).
@@ -775,23 +776,33 @@ The sum of this calculation for each element in the syntactic list is
 the absolute offset for line being indented.
 
 If the syntactic element does not match any in the `c-offsets-alist',
-an error is generated if `c-strict-syntax-p' is non-nil, otherwise the
-element is ignored.
+the element is ignored.
 
-Actually, OFFSET can be an integer, a function, a variable, or one of
-the following symbols: `+', `-', `++', `--', `*', or `/'.  These
-latter designate positive or negative multiples of `c-basic-offset',
-respectively: 1, -1, 2, -2, 0.5, and -0.5.  If OFFSET is a function,
-it is called with a single argument containing the cons of the
-syntactic element symbol and the relative indent point.  The function
-should return an integer offset or nil if it can't decide.
+If OFFSET is nil, the syntactic element is ignored in the offset
+calculation.
 
-OFFSET can also be a list, in which case it is recursively evaluated
-using the semantics described above.  The first element of the list to 
-return a non-nil value succeeds.  If none of the elements returns a
-non-nil value, then what happens depends on the value of
-`c-strict-syntax-p'.  When `c-strict-syntax-p' is nil, then an offset
-of zero is used, otherwise an error is generated.
+If OFFSET is an integer, it's added to the relative indent.
+
+If OFFSET is one of the symbols `+', `-', `++', `--', `*', or `/', a
+positive or negative multiple of `c-basic-offset' is added; 1, -1, 2,
+-2, 0.5, and -0.5, respectively.
+
+If OFFSET is a vector, it's first element, which must be an integer,
+is used as an absolute indentation column.  This overrides all
+relative offsets.  If there are several syntactic elements which
+evaluates to absolute indentation columns, the first one takes
+precedence.  You can see in which order CC Mode combines the syntactic
+elements in a certain context by using \\[c-show-syntactic-information] on the line.
+
+If OFFSET is a function, it's called with a single argument
+containing the cons of the syntactic element symbol and the relative
+indent point.  The return value from the function is then
+reinterpreted as an OFFSET value.
+
+If OFFSET is a list, it's recursively evaluated using the semantics
+described above.  The first element of the list to return a non-nil
+value succeeds.  If none of the elements returns a non-nil value, the
+syntactic element is ignored.
 
 `c-offsets-alist' is a style variable.  This means that the offsets on
 this variable are normally taken from the style system in CC Mode
