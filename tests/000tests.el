@@ -239,6 +239,7 @@
     "decls-2.java"
     "decls-3.java"
     "decls-4.idl"
+    "decls-5.pike"
     "enum-1.cc"
     "enum-2.c"
     "enum-3.c"
