@@ -1480,193 +1480,252 @@ function does not require the declaration to contain a brace block."
       (push-mark (cdr decl-limits) nil t))))
 
 
-(defun c-in-comment-line-prefix-p ()
-  ;; Is point currently within a (non-ws) comment prefix?  E.g.:
-  ;; /* Comment's first line
-  ;;  * comment's second line
-  ;; ^^
-  ;; ||
-  ;; here?
-  (let ((line-prefix (concat "[ \t]*\\("
-			     c-current-comment-prefix ; e.g. (for C) "//+\\|\\**"
-			     "\\)[ \t]*")))
-    (and
-     (/= (point) (point-min))
-     (/= (point) (point-max))
-     (save-excursion
-       (beginning-of-line)
-       (looking-at line-prefix)) ; This always matches WS at BOL with possibly embedded "//+" or "\\**"
-;;      (>= (point) (match-beginning 0)) ; How can this not match?  Should this not be (m-b 1)?
-;;      Commented out, 2003/8/9.
-     (/= (match-beginning 1) (match-end 1)) ; Was there a non-ws prefix on this line?
-;;; The next big (or) form seems to say "If there is no non-WS text between point and B.O.Paragraph.  (2003/7/23)
-     (or (< (point) (match-end 0)) ; Either POINT is strictly contained by the line prefix, or ....
-	 (and
-	  (= (point) (match-end 0)) ; POINT is AT the end of the line prefix, and ...
-	  ;; The comment prefix may contain
-	  ;; characters that are regarded as end
-	  ;; of sentence.
-	  (or (eolp) ; .... either the line contains ONLY the prefix ....
-	      (and			; .... or .....
-	       (save-excursion
-		 (save-match-data (forward-paragraph -1))
-		 (< (point) (match-beginning 0))) ; current paragraph starts on a PREVIOUS line, and ....
-;;;; What's going on in the next form?  The current state is: (i) We're AT the end of the line prefix;
-;;;; (ii) There is stuff on the line after the line prefix.
-	       (save-excursion
-		 (beginning-of-line)
-		 ;; Either there is no end-of-sentence wholly contained in the previous line, or ....
-		 (or (not (re-search-backward
-			   sentence-end	; Still has default Emacs value.
-			   (c-point 'bopl)
-			   t)) ; either the previous line doesn't contain and end-of-sentence, or ....
-		     (< (match-end 0) ; ... that end of sentence is STRICTLY before EOL.
-			(c-point 'eol)))))))))))
-
-(defun c-beginning-of-sentence (filler-here)
-  ;; Move backwards to the "beginning of a sentence" within a literal.  This
-  ;; is either the text which follows a regexp match of sentence-end, with
-  ;; intervening FILLER, or beginning of the narrowed region.
+(defun c-beginning-of-sentence-in-comment (range)
+  ;; Move backwards to the "beginning of a sentence" within the comment
+  ;; defined by RANGE, a cons of its starting and ending positions.  If we
+  ;; find a BOS, return NIL.  Otherwise, move point to just before the start
+  ;; of the comment and return T.
   ;;
-  ;; FILLER-HERE is a regexp matching text AT POINT (it MUST begin with "\\=")
-  ;; which can come between the end of a sentence and the beginning of the
-  ;; next, e.g. whitespace, escaped newlines (in a string), comment-prefices
-  ;; (in a comment).  It should match the empty string.
+  ;; The BOS is either the text which follows a regexp match of sentence-end
+  ;; or text which is a beginning of "paragraph".  
+  ;; Comment-prefixes are ignored when calculating BOSes or BOPs.
+  ;;
+  ;; This code was adapted from GNU Emacs's forward-sentence in paragraphs.el.
+  ;; It is not a general function, but is intended only for calling from
+  ;; c-move-over-sentence.
+  (save-match-data
+    (let* ((here (point)) last
+	   (here-filler		   ; matches WS and comment-prefices at point.
+	    (concat "\\=\\(^[ \t]*" c-current-comment-prefix
+		    "\\|[ \t\n\r\f]\\)*"))
+	   ;; First, find the previous paragraph start, if any.
+	   (par-beg  ; point where non-WS/non-prefix text of paragraph starts.
+	    (save-excursion
+	      (save-restriction
+		(narrow-to-region (car range) (cdr range))
+		(forward-paragraph -1)	; uses cc-mode values of
+					; paragraph-\(start\|separate\)
+		(if (looking-at c-block-comment-start-regexp)
+		    (goto-char (match-end 0)))
+		(if (> (re-search-forward here-filler nil t) here)
+		    (goto-char here))
+		(when (>= (point) here)
+		  (forward-paragraph -2)
+		  (if (looking-at c-block-comment-start-regexp)
+		      (goto-char (match-end 0)))
+		  (if (> (re-search-forward here-filler nil t) here)
+		      (goto-char here)))
+		(point)))))
+      ;; Now see if we can find a sentence end after PAR-BEG.
+      (while (and (re-search-backward sentence-end par-beg 'limit)
+		  (setq last (point))
+		  (goto-char (match-end 0))
+		  (or (> (point) (cdr range))
+		      (progn
+			(re-search-forward
+			 here-filler (cdr range) t) ; always succeeds.  Use (cdr
+					; range) rather than here, in case
+					; point is inside a comment prefix.
+			(>= (point) here))))
+	(goto-char last))
+      (re-search-forward here-filler here t)
+      (if (< (point) here)
+	  nil
+	(goto-char (car range))
+	t))))
+
+(defun c-end-of-sentence-in-comment (range)
+  ;; Move forward to the "end of a sentence" within the comment defined by
+  ;; RANGE, a cons of its starting and ending positions.  If we find an EOS,
+  ;; return NIL.  Otherwise, move point to just after the end of the comment
+  ;; and return T.
+  ;;
+  ;; The EOS is just after the non-WS part of the next match of the regexp
+  ;; sentence-end.  Typically, this is just after one of [.!?].  If there is
+  ;; no sentence-end match following point, any WS before the end of the
+  ;; comment will count as EOS, providing we're not already in it.
   ;;
   ;; This code was adapted from GNU Emacs's forward-sentence in paragraphs.el.
   ;; It is not a general function, but is inteded only for calling from
-  ;; c-move-over-sentence.  In particular, it assumes the buffer is narrowed
-  ;; to a paragraph within the current comment.
-  (let ((here (point)) last)
-    (while (and (re-search-backward sentence-end nil 'limit)
-		(setq last (point))
-		(goto-char (match-end 0))
-		(re-search-forward filler-here here t) ; always succeeds
-		(>= (point) here))
-      (goto-char last))))
+  ;; c-move-over-sentence.
+  (save-match-data
+    (let* ((here (point))
+	   (lit-type (c-literal-type range))
+	   (end (- (cdr range) (if (eq lit-type 'c) 2 1))) ; END is the latest position in the comment
 
-(defun c-move-over-sentence (range backwards-flag)
-  ;; Move to the next beginning/end of sentence (as indicated by
-  ;; BACKWARDS-FLAG) within a literal and return NIL, or if no sentence
-  ;; boundary is found, leave point just outside the literal boundary and
-  ;; return T.
+	   (par-end	; EOL position of last text in current/next paragraph.
+	    (save-excursion
+	      (save-restriction
+		(narrow-to-region (car range) end)
+		;; The cc-mode values of paragraph-\(start\|separate\), set in
+		;; c-setup-paragraph-variables, are used in the following.
+		(forward-paragraph 1)
+		(if (eq (preceding-char) ?\n) (forward-char -1))
+		(when (<= (point) here)	; can happen, e.g., when HERE is at EOL.
+		  (goto-char here)
+		  (forward-paragraph 2)
+		  (if (eq (preceding-char) ?\n) (forward-char -1)))
+		(point))))
+
+	   last
+	   (prefix-at-bol-here
+	    (concat "^[ \t]*\\(" c-current-comment-prefix "\\)\\=")))
+      ;; Go forward one "comment-prefix which looks like sentence-end" each
+      ;; time round the following:
+      (while (and (re-search-forward sentence-end par-end 'limit)
+		  (progn
+		    (setq last (point))
+		    (skip-chars-backward " \t\n")
+		    (or (and (not (bolp))
+			      (re-search-backward prefix-at-bol-here nil t))
+			(<= (point) here))))
+	(goto-char last))
+
+      ;; Take special action if we're up against the end of a block comment:
+      ;; Leave point just after the last non-ws text.
+      (if (and (eq (point) end) (eq lit-type 'c))
+	  (while
+	      (or (/= (skip-chars-backward " \t\n") 0)
+		  (re-search-backward prefix-at-bol-here nil t))))
+      (if (> (point) here)
+	  nil
+	(goto-char (cdr range))
+	t))))
+
+(defun c-beginning-of-sentence-in-string (range)
+  ;; Move backwards to the "beginning of a sentence" within the string defined
+  ;; by RANGE, a cons of its starting and ending positions (enclosing the
+  ;; string quotes).  If we find a BOS, return NIL.  Otherwise, move point to
+  ;; just before the start of the string and return T.
   ;;
-  ;; Point starts either inside the literal given by RANGE (a cons of the
-  ;; start.end positions of a literal) or just outside it, being (at most)
-  ;; whitespace away from it in the direction indicated by BACKWARDS-FLAG.
-  (let* ((lit-type (c-literal-type range))
-	 (escaped nil) ; an auxiliary flag indicating "we've hit the boundary"
-	 (here (point))
-	 (line-prefix (concat "[ \t]*\\("
-			      c-current-comment-prefix ; e.g. (for C) "//+\\|\\**"
-			      "\\)[ \t]*"))
-	 (beg (if (eq lit-type 'string)	; BEG is the earliest position in the
-					; literal apart from delimiters and WS.
-		  (1+ (car range))
-		(save-excursion
-		  (goto-char (car range))
-		  ;; Why the two alternatives, here?
-		  ;; (2003/8/8):  Perhaps for "starting" lines and "inside" lines?
-		  (max (progn
-			 (looking-at comment-start-skip) ; e.g (for C), "/\\*+ *\\|//+ *"
-			 (match-end 0))
-		       (progn
-			 (looking-at line-prefix) ; This matches "  ///...  " or "   ***....  " or the empty string.
-			 (match-end 0))))))
-	 (end (- (cdr range) (if (eq lit-type 'c) 2 1))) ; END is the latest position in the C/S ....
-	 (beg-of-para (if (eq lit-type 'string)	; BEG-OF-PARA moves back to just after LINE-PREFIX
-				    ; in a comment (does nothing in a string).
-			  (lambda ())
-			(lambda ()
-			  (beginning-of-line)
-			  (if (looking-at line-prefix)
-			      (goto-char (match-end 0)))))))
-    (save-restriction
-      ;; Move by sentence, but not past the limit of the
-      ;; literal, narrowed to the appropriate
-      ;; paragraph(s).
-      ;;
-      ;; What does "appropriate" mean here?  (ACM 2003/7/20)
-      ;; (2003/7/23): It means from the first "paragraph" start strictly before END (or HERE) to
-      ;;              the last character in the comment.
-      ;;
-      ;; [Comment from MS, in email to ACM, Friday 2003/8/1:
-      ;;   I think it's to get a stop at the first sentence in the paragraph
-      ;;   more reliably. I found that forward-sentence in the backward
-      ;;   direction often could get confused about the line prefix and miss the
-      ;;   sentence start in that case (since there's no immediately preceding
-      ;;   sentence end).
-      ;;
-      ;;   That was in Emacs 19.34 so maybe it's better
-      ;;   now. Unfortunately I don't remember the exact situations where I saw
-      ;;   it, so it's hard to know whether that precaution still is necessary.]
-      (narrow-to-region (save-excursion
-;;; The next (let) form finds the FIRST beginning of "paragraph" stricly before (min here end)
-;;; or BEG if there is no such position inside the comment.
-			  (let ((pos (min here end))) ; POS is .... ?????
-			    (goto-char pos)
-			    (forward-paragraph -1)
-			    (if (looking-at paragraph-separate)
-				(forward-line))	; onto non-"blank" line.
-			    (when (> (point) beg)
-			      (funcall beg-of-para)
-			      (when (>= (point) pos)
-				(forward-paragraph -2)
-				(funcall beg-of-para)))
-			    (max (point) beg)))
-			end)
+  ;; The BOS is either the text which follows a regexp match of sentence-end
+  ;; or text which is a beginning of "paragraph".  For the purposes of
+  ;; determining paragraph boundaries, escaped newlines are treated as
+  ;; ordinary newlines.
+  ;;
+  ;; This code was adapted from GNU Emacs's forward-sentence in paragraphs.el.
+  ;; It is not a general function, but is intended only for calling from
+  ;; c-move-over-sentence.
+  (save-match-data
+    (let* ((here (point)) last
+	   (end (1- (cdr range)))
+	   (here-filler		   ; matches WS and escaped newlines at point.
+	    "\\=\\([ \t\n\r\f]\\|\\\\[\n\r]\\)*")
 
-      ;; We move by one "pseudo-sentence" each time round the following loop
-      ;; (i.e., while we keep landing in the line-prefix).
-      (while
-	  (progn
-	    (setq last (point))
-	    ;; When moving backwards, modify sentence-end so that
-	    ;; when a comment-prefix separates the beginning of a
-	    ;; sentence and the end of the previous one,
-	    ;; (forward-sentence -1) finds that beginning of
-	    ;; sentence.
-	    (if backwards-flag
-		(c-beginning-of-sentence
-		 (concat "\\=\\([ \t\n\r\f]\\|"
-			 (if (eq lit-type 'string)
-			     "\\\\[\n\r]"
-			   c-current-comment-prefix)
-			 "\\)*"))
-	      (c-safe (forward-sentence 1)))
-	    (and (/= (point) last)
-		 (memq lit-type '(c c++))
-		 (c-in-comment-line-prefix-p))))
+	   ;; paragraph-start's value in fundamental mode is "[ \t\n\f]"
+	   ;;                         in text mode it is "\f\\|[ \t]*$"
+	   ;; We adapt here fundamental mode's version.
+	   (paragraph-start "[ \t\n\f]\\|[ \t]*\\\\$")
 
-      (if backwards-flag
-	  (progn (when (and (eq (point) (point-min))
-		     (looking-at "[ \t]*\\\\?$"))
-	  ;; Stop before instead of after the comment starter if
-	  ;; nothing follows it.
-		   (widen)
-		   (goto-char (car range))
-		   (setq escaped (and (eq lit-type 'string) (/= (point) here))))
-		 (when (or escaped (>= (point) here))
-		   (widen)
-		   (goto-char (car range))
-		   t))
-	;; In block comments, if there's only horizontal ws between
-	;; the text and the comment ender, stop before it.  Stop
-	;; after the ender if there's either nothing or newlines
-	;; between.
-	(or (when (and (eq lit-type 'c)
-		       (eq (point) (point-max)))
-	      (widen)
-	      (when (or (= (skip-chars-backward " \t") 0)
-			(eq (point) (point-max))
-			(bolp))
-		(goto-char (cdr range))
-		t))
-	    (when (<= (point) here)
-	      (widen)
-	      (goto-char (cdr range))
-	      t))))))
- 
+	   ;; paragraph-separate's value in fundamental mode is "[ \t\f]*$"
+	   ;;                            in text mode it is "\f\\|[ \t]*$"
+	   ;; We adapt here fundamental mode's version.
+	   (paragraph-separate "[ \t\f]*\\\\?$")
+
+	   (sentence-end-with-esc-eol
+	    (concat "\\(" sentence-end
+	      ;; N.B.:  "$" would be illegal when not enclosed like "\\($\\)".
+		    "\\|" "[.?!][]\"')}]* ?\\\\\\($\\)[ \t\n]*"
+		    "\\)"))
+
+	   (par-beg	       ; beginning of current (or previous) paragraph.
+	    (save-excursion
+	      (save-restriction
+		(narrow-to-region (1+ (car range)) end)
+		(forward-paragraph -1)	; uses above values of
+					; paragraph-\(start\|separate\)
+		(if (> (re-search-forward here-filler nil t) here)
+		    (goto-char here))
+		(when (>= (point) here)
+		  (forward-paragraph -2)
+		  (if (> (re-search-forward here-filler nil t) here)
+		      (goto-char here)))
+		(point)))))
+      ;; Now see if we can find a sentence end after PAR-BEG.
+      (while (and (re-search-backward sentence-end-with-esc-eol par-beg 'limit)
+		  (setq last (point))
+		  (goto-char (match-end 0))
+		  (or (> (point) end)
+		      (progn
+			(re-search-forward
+			 here-filler end t) ; always succeeds.  Use end rather
+					; than here, in case point starts
+					; beyond the closing quote.
+			(>= (point) here))))
+	(goto-char last))
+      (re-search-forward here-filler here t)
+      (if (< (point) here)
+	  nil
+	(goto-char (car range))
+	t))))
+
+(defun c-end-of-sentence-in-string (range)
+  ;; Move forward to the "end of a sentence" within the string defined by
+  ;; RANGE, a cons of its starting and ending positions.  If we find an EOS,
+  ;; return NIL.  Otherwise, move point to just after the end of the string
+  ;; and return T.
+  ;;
+  ;; The EOS is just after the non-WS part of the next match of the regexp
+  ;; sentence-end.  Typically, this is just after one of [.!?].  If there is
+  ;; no sentence-end match following point, any WS before the end of the
+  ;; string will count as EOS, providing we're not already in it.
+  ;;
+  ;; This code was adapted from GNU Emacs's forward-sentence in paragraphs.el.
+  ;; It is not a general function, but is inteded only for calling from
+  ;; c-move-over-sentence.
+  (save-match-data
+    (let* ((here (point))
+	   ;; paragraph-start's value in fundamental mode is "[ \t\n\f]"
+	   ;;                         in text mode it is "\f\\|[ \t]*$"
+	   ;; We adapt here Text Mode's version, additionally allowing escaped
+	   ;; newlines.
+	   (paragraph-start "\f\\|[ \t]*\\\\?$")
+
+	   ;; paragraph-separate's value in fundamental mode is "[ \t\f]*$"
+	   ;;                            in text mode it is "\f\\|[ \t]*$"
+	   ;; We adapt here Text Mode's version.
+	   (paragraph-separate "\f\\|[ \t]*\\\\?$")
+
+	   (sentence-end-with-esc-eol
+	    (concat "\\(" sentence-end
+		    ;; N.B.:  "\\($\\)" is in the following to make the $ legal.
+		    "\\|" "[.?!][]\"')}]* ?\\\\\\($\\)[ \t\n]*"
+		    "\\)"))
+
+	   (par-end	; EOL position of last text in current/next paragraph.
+	    (save-excursion
+	      (save-restriction
+		(narrow-to-region (car range) (1- (cdr range)))
+		;; The above values of paragraph-\(start\|separate\) are used
+		;; in the following.
+		(forward-paragraph 1)
+		(setq last (point))
+		;; (re-search-backward filler-here nil t)
+		(while (or (/= (skip-chars-backward " \t\n\r\f") 0)
+			   (when ;; (and (eq (char-after) ?\n) (eq (char-before) ?\\))
+			       (re-search-backward "\\\\\\($\\)\\=" nil t)
+			     (backward-char) t)))
+		(unless (> (point) here)
+		  (goto-char last)
+		  (forward-paragraph 1)
+		  (while (or (/= (skip-chars-backward " \t\n\r\f") 0)
+			     (when (and (eq (char-after) ?\n)
+					(eq (char-before) ?\\))
+			       (backward-char) t))))
+		(point))))
+
+	   last)
+      ;; Go forward one sentence ender each time round the following.
+      (when (re-search-forward sentence-end-with-esc-eol par-end 'limit)
+	(setq last (point))
+	(while (or (/= (skip-chars-backward " \t\n") 0)
+		   (re-search-backward "\\\\\\($\\)\\=" nil t))))
+      ;; Did we move a sentence, or did we hit the end of the string?
+      (if (> (point) here)
+	  nil
+	(goto-char (cdr range))
+	t))))
+
 (defun c-ascertain-adjacent-literal (backwards-flag)
   ;; Point is not in a literal (i.e. comment or string).  If a literal is the
   ;; next thing (aside from whitespace) to be found in the direction indicated
@@ -1728,76 +1787,77 @@ function does not require the declaration to contain a brace block."
   ;; or `)', but on the other side of the syntactic ws.  Move by sexps and
   ;; move into parens.  Also stop before `#' when it's at boi on a line.
   ;; 
-  (let ((here (point))
-	last) ; marks the position of non-ws code, what'll be BOS if, say, a
-	      ; semicolon precedes it.
-    (catch 'done
-      ;; We go back one ?token? each iteration of the following loop.
-      (while t		      ; OR ((not macro-start) (> (point) macro-start))
-	(setq last (point))
+  (save-match-data
+    (let ((here (point))
+	  last) ; marks the position of non-ws code, what'll be BOS if, say, a
+					; semicolon precedes it.
+      (catch 'done
+	;; We go back one ?token? each iteration of the following loop.
+	(while t	      ; OR ((not macro-start) (> (point) macro-start))
+	  (setq last (point))
 
-	;; Stop at the token after a comment.
-	(when (c-backward-single-comment) ; Also functions as backwards-ws.
-	  (goto-char last)
-	  (throw 'done '(t . literal)))
+	  ;; Stop at the token after a comment.
+	  (when (c-backward-single-comment) ; Also functions as backwards-ws.
+	    (goto-char last)
+	    (throw 'done '(t . literal)))
 
-	;; If we've gone back over a LF, we might have moved into a
-	;; preprocessor line.
-	(when (and (not macro-start)
-		   (save-excursion
-		     (beginning-of-line)
-		     (re-search-forward "\\(^\\|[^\\]\\)[\n\r]" last t))
-		   (c-beginning-of-macro))
-	  (goto-char last)
-	  (throw 'done (cons (eq (point) here) 'macro-boundary)))
+	  ;; If we've gone back over a LF, we might have moved into a
+	  ;; preprocessor line.
+	  (when (and (not macro-start)
+		     (save-excursion
+		       (beginning-of-line)
+		       (re-search-forward "\\(^\\|[^\\]\\)[\n\r]" last t))
+		     (c-beginning-of-macro))
+	    (goto-char last)
+	    (throw 'done (cons (eq (point) here) 'macro-boundary)))
 
-	(when (bobp)			; Must handle bob specially
-	  (if (/= here last)
-	      (goto-char last))
-	  (throw 'done '(nil . nil)))
-
-	(backward-char)
-	(cond
-	 ;; Stop at "{" (unless it's a PIKE special brace list.)
-	 ;; ?? Can we use c-after-statement-terminator-p here ?? (2003/8/29)
-	 ((eq (char-after) ?\{)
-	  (if (and c-special-brace-lists
-		   (c-looking-at-special-brace-list))
-	      (skip-syntax-backward "w_") ; Speedup only.
+	  (when (bobp)			; Must handle bob specially
 	    (if (/= here last)
 		(goto-char last))
-	    (throw 'done '(nil . nil))))
+	    (throw 'done '(nil . nil)))
 
-	 ;; Stop at token just after a preprocessor directive.
-;; This bit was replaced, 2003/9/12.
-;; 	 ((and (eq (char-after) ?#)       
-;; 	       (eq (point) (c-point 'boi))
-;; 	       (numberp last-below-line)
-;; 	       (not (eq last-below-line here)))
-;; 	  (goto-char last-below-line)
-;; 	  (throw 'done nil))
-	 ((and macro-start (eq (point) macro-start))
-	  (throw 'done (cons (eq (point) here) 'macro-boundary)))
+	  (backward-char)
+	  (cond
+	   ;; Stop at "{" (unless it's a PIKE special brace list.)
+	   ;; ?? Can we use c-after-statement-terminator-p here ?? (2003/8/29)
+	   ((eq (char-after) ?\{)
+	    (if (and c-special-brace-lists
+		     (c-looking-at-special-brace-list))
+		(skip-syntax-backward "w_") ; Speedup only.
+	      (if (/= here last)
+		  (goto-char last))
+	      (throw 'done '(nil . nil))))
 
-	 ;; Stop at token just after "}" or ";".
-	 ((looking-at "[;}]")		; was "[;{}]", 2003/8/7
+	   ;; Stop at token just after a preprocessor directive.
+	   ;; This bit was replaced, 2003/9/12.
+	   ;; 	 ((and (eq (char-after) ?#)       
+	   ;; 	       (eq (point) (c-point 'boi))
+	   ;; 	       (numberp last-below-line)
+	   ;; 	       (not (eq last-below-line here)))
+	   ;; 	  (goto-char last-below-line)
+	   ;; 	  (throw 'done nil))
+	   ((and macro-start (eq (point) macro-start))
+	    (throw 'done (cons (eq (point) here) 'macro-boundary)))
+
+	   ;; Stop at token just after "}" or ";".
+	   ((looking-at "[;}]")		; was "[;{}]", 2003/8/7
 ;;;; If we've gone back over ;, {, or }, we're done.
-	  (if (or (= here last)
-		  (memq (char-after last) '(?\) ?}))) ; we've moved backed from ) or }
-	      (if (and (eq (char-before) ?}) ; If };, treat them as a unit.
-		       (eq (char-after) ?\;))
-		  (backward-char))
-	    (goto-char last)
-	    (throw 'done '(nil . nil))))
+	    (if (or (= here last)
+		    (memq (char-after last) '(?\) ?})))	; we've moved backed from ) or }
+		(if (and (eq (char-before) ?}) ; If };, treat them as a unit.
+			 (eq (char-after) ?\;))
+		    (backward-char))
+	      (goto-char last)
+	      (throw 'done '(nil . nil))))
 
-	 ;; Stop at the token after a string.
-	 ((= (char-syntax (char-after)) ?\") ; Just gone back over a string terminator?
-	  (goto-char last)
-	  (throw 'done '(t . literal)))
+	   ;; Stop at the token after a string.
+	   ((= (char-syntax (char-after)) ?\") ; Just gone back over a string terminator?
+	    (goto-char last)
+	    (throw 'done '(t . literal)))
 	 
-	 ;; Nothing special: go back word characters.
-	 (t (skip-syntax-backward "w_")) ; Speedup only.
-	 )))))
+	   ;; Nothing special: go back word characters.
+	   (t (skip-syntax-backward "w_")) ; Speedup only.
+	   ))))))
 
 (defun c-forward-over-illiterals (macro-end)
   ;; Move forwards over code, stopping before reaching EOB or a literal
@@ -1950,7 +2010,8 @@ be more \"DWIM:ey\"."
 	  (if (< count 0)
 	      (and (not (eobp)) (c-beginning-of-macro) (progn (c-end-of-macro) (point)))
 	    (and (not (bobp)) (c-beginning-of-macro) (point)))))
-       candidate res
+       candidate			; candidate for BOS position.
+       res
        (range (c-collect-line-comments (c-literal-limits lim))) ; (start.end) of current literal or NIL
        (lit-type (if range (c-literal-type range))))
 
@@ -1961,7 +2022,6 @@ be more \"DWIM:ey\"."
       (setq candidate nil) ; Just after a comment is a canditate for BO-statement
 
 ;;; Move the next bit into the new COND form.
-;;;; DO WE NEED THIS, and what does it do?  2003/7/27.
       (if (and (< count 0) (= here (point-max)))
 	  ;; Special case because eob might be in a literal.
 	  (setq range nil))
@@ -1969,8 +2029,8 @@ be more \"DWIM:ey\"."
       ;; Go back/forward one "chunk" each time round the following loop,
       ;; stopping when we reach a statement boundary, etc.
       (while
-	  (cond	; Each arm of this cond returns NIL when we've reached a
-		; desired statement boundary, T otherwise.
+	  (cond	; Each arm of this cond returns NIL on reaching a desired
+		; statement boundary, T otherwise.
 	   ((if (< count 0) (eobp) (bobp))
 	    (setq count 0)
 	    t)
@@ -1980,7 +2040,8 @@ be more \"DWIM:ey\"."
 	     ;; Single line string
 	     ((c-one-line-string-p range)
 	      (goto-char (if (> count 0) (car range) (cdr range)))
-	      (setq  range nil  lit-type nil)
+	      (setq range (c-ascertain-adjacent-literal (> count 0))
+		    lit-type (if range (c-literal-type range)))
 	      t)
 	     ;; Comment which comes BEFORE a statement (not inside one)
 	     ((and candidate
@@ -1991,9 +2052,24 @@ be more \"DWIM:ey\"."
 		     (or (bobp) (c-after-statement-terminator-p))))
 	      (goto-char candidate)
 	      nil)
-	     ;; Multi-line string or comment INSIDE a statement.
+	     ;; sentence-flag is null => skip the entire literal.
+	     ((null sentence-flag)
+	      (goto-char (if (> count 0) (car range) (cdr range)))
+	      (setq range (c-ascertain-adjacent-literal (> count 0))
+		    lit-type (if range (c-literal-type range)))
+	      t)
+	     ;; Comment INSIDE a statement or multi-line string.
 	     (t (setq candidate nil)
-		(when (c-move-over-sentence range (> count 0))
+		(when (cond
+		       ((eq lit-type 'string)
+			;; (c-move-over-sentence range (> count 0))
+			(if (> count 0)
+			    (c-beginning-of-sentence-in-string range)
+			  (c-end-of-sentence-in-string range)))
+		       ((> count 0)
+			(c-beginning-of-sentence-in-comment range))
+		       (t
+			(c-end-of-sentence-in-comment range)))
 		  (setq range (c-ascertain-adjacent-literal (> count 0))
 			lit-type (if range (c-literal-type range)))
 		  t))))

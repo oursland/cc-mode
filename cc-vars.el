@@ -1127,7 +1127,7 @@ positive or negative multiple of `c-basic-offset' is added; 1, -1, 2,
 If OFFSET is a vector, it's first element, which must be an integer,
 is used as an absolute indentation column.  This overrides all
 relative offsets.  If there are several syntactic elements which
-evaluates to absolute indentation columns, the first one takes
+evaluate to absolute indentation columns, the first one takes
 precedence.  You can see in which order CC Mode combines the syntactic
 elements in a certain context by using \\[c-show-syntactic-information] on the line.
 
