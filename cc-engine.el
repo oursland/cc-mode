@@ -3142,7 +3142,7 @@ brace."
   ;; stays and nil is returned.  The kind of clauses that are
   ;; recognized are those specified by `c-type-list-kwds',
   ;; `c-ref-list-kwds', `c-colon-type-list-kwds', `c-paren-type-kwds',
-  ;; and `c-<>-arglist-kwds'.
+  ;; `c-<>-type-kwds', and `c-<>-arglist-kwds'.
 
   (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos)
     (when kwd-sym
@@ -3178,9 +3178,9 @@ brace."
 	  (c-forward-syntactic-ws)
 	  (setq safe-pos (point))))
 
-       ((and (c-keyword-member kwd-sym 'c-<>-arglist-kwds)
+       ((and (c-keyword-member kwd-sym 'c-<>-sexp-kwds)
 	     (eq (char-after) ?<)
-	     (c-forward-<>-arglist))
+	     (c-forward-<>-arglist (c-keyword-member kwd-sym 'c-<>-type-kwds)))
 	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
 
@@ -3202,12 +3202,13 @@ brace."
       (goto-char safe-pos)
       t)))
 
-(defun c-forward-<>-arglist ()
+(defun c-forward-<>-arglist (all-types)
   ;; The point is assumed to be at a '<'.  Try to treat it as the open
   ;; paren of an angle bracket arglist and move forward to the the
   ;; corresponding '>'.  If successful, the point is left after the
   ;; '>' and t is returned, otherwise the point isn't moved and nil is
-  ;; returned.
+  ;; returned.  If ALL-TYPES is t, then all encountered arguments in
+  ;; the arglist that might be types are treated as found types.
   ;;
   ;; This is primarily used in C++ to mark up template arglists.  C++
   ;; disambiguates them by checking whether the preceding name is a
@@ -3226,7 +3227,7 @@ brace."
 	(c-record-found-types (if c-record-type-identifiers t)))
     (if (catch 'angle-bracket-arglist-escape
 	  (setq c-record-found-types
-		(c-forward-<>-arglist-recur)))
+		(c-forward-<>-arglist-recur all-types)))
 	(progn
 	  (when (consp c-record-found-types)
 	    (setq c-record-type-identifiers
@@ -3238,7 +3239,7 @@ brace."
       (goto-char start)
       nil)))
 
-(defun c-forward-<>-arglist-recur ()
+(defun c-forward-<>-arglist-recur (all-types)
   ;; Recursive part of `c-forward-<>-arglist'.
 
   (let ((start (point)) res pos tmp
@@ -3284,23 +3285,34 @@ brace."
       (unless (looking-at c-<-op-cont-regexp)
 	(while (and
 		(progn
-		  ;; Check if this arglist argument is a sole type.  If it's
-		  ;; known then it's recorded in `c-record-type-identifiers'.
-		  ;; If it only is found then it's recorded in
-		  ;; `c-record-found-types' which we might roll back if it
-		  ;; turns out that this isn't an angle bracket arglist
-		  ;; afterall.
-		  (when (and c-record-type-identifiers
-			     (memq (char-before) '(?, ?<)))
-		    (let ((orig-record-found-types c-record-found-types))
-		      (c-forward-syntactic-ws)
-		      (and (eq (c-forward-type) 'found)
-			   (not (looking-at "[,>]"))
-			   ;; A found type was recorded but it's not the only
-			   ;; thing in the arglist argument, so reset
-			   ;; `c-record-found-types'.
-			   (setq c-record-found-types
-				 orig-record-found-types))))
+
+		  (when c-record-type-identifiers
+		    (if all-types
+
+			;; All encountered identifiers are types, so set the
+			;; promote flag and parse the type.
+			(progn
+			  (c-forward-syntactic-ws)
+			  (when (looking-at c-identifier-start)
+			    (let ((c-promote-possible-types t))
+			      (c-forward-type))))
+
+		      ;; Check if this arglist argument is a sole type.  If
+		      ;; it's known then it's recorded in
+		      ;; `c-record-type-identifiers'.  If it only is found
+		      ;; then it's recorded in `c-record-found-types' which we
+		      ;; might roll back if it turns out that this isn't an
+		      ;; angle bracket arglist afterall.
+		      (when (memq (char-before) '(?, ?<))
+			(let ((orig-record-found-types c-record-found-types))
+			  (c-forward-syntactic-ws)
+			  (and (eq (c-forward-type) 'found)
+			       (not (looking-at "[,>]"))
+			       ;; A found type was recorded but it's not the
+			       ;; only thing in the arglist argument, so reset
+			       ;; `c-record-found-types'.
+			       (setq c-record-found-types
+				     orig-record-found-types))))))
 
 		  (setq pos (point))
 		  (or (when (eq (char-after) ?>)
@@ -3377,18 +3389,25 @@ brace."
 			  (backward-char)
 			  (not
 			   (and
+
 			    (save-excursion
 			      ;; There's always an identifier before a angle
-			      ;; bracket arglist, or one of the
-			      ;; `c-<>-arglist-kwds' keywords.
+			      ;; bracket arglist, or a keyword in
+			      ;; `c-<>-type-kwds' or `c-<>-arglist-kwds'.
 			      (c-backward-syntactic-ws)
 			      (setq id-end (point))
 			      (c-simple-skip-symbol-backward)
 			      (when (or (setq keyword-match
-					      (looking-at c-<>-arglist-key))
+					      (looking-at c-opt-<>-sexp-key))
 					(not (looking-at c-keywords-regexp)))
 				(setq id-start (point))))
-			    (setq subres (c-forward-<>-arglist-recur)))))
+
+			    (setq subres
+				  (c-forward-<>-arglist-recur
+				   (and keyword-match
+					(c-keyword-member
+					 (c-keyword-sym (match-string 1))
+					 'c-<>-type-kwds)))))))
 
 			;; It was not an angle bracket arglist.
 			(progn
@@ -3566,7 +3585,7 @@ brace."
 	      ((and c-recognize-<>-arglists
 		    (eq (char-after) ?<))
 	       ;; Maybe an angle bracket arglist.
-	       (when (c-forward-<>-arglist)
+	       (when (c-forward-<>-arglist nil)
 		 (c-forward-syntactic-ws)
 		 (setq pos (point))
 		 (if (and c-opt-identifier-concat-key

@@ -560,7 +560,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(parse-sexp-lookup-properties
 	 (cc-eval-when-compile
 	   (boundp 'parse-sexp-lookup-properties)))
-	id-start id-end pos)
+	id-start id-end pos kwd-sym)
 
     (while (and (< (point) limit)
 		(re-search-forward c-opt-<>-arglist-start limit t))
@@ -571,15 +571,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
       (goto-char id-start)
       (unless (c-skip-comments-and-strings limit)
+	(setq kwd-sym nil)
 	(when (or (not (eq (get-text-property id-start 'face)
 			   'font-lock-keyword-face))
-		  (looking-at c-<>-arglist-key))
+		  (when (looking-at c-opt-<>-sexp-key)
+		    (setq kwd-sym (c-keyword-sym (match-string 1)))))
 	  (goto-char (1- pos))
 	  ;; Check for comment/string both at the identifier and at the "<".
 	  (unless (c-skip-comments-and-strings limit)
 
 	    (c-fontify-types-and-refs ()
-	      (when (c-forward-<>-arglist)
+	      (when (c-forward-<>-arglist
+		     (c-keyword-member kwd-sym 'c-<>-type-kwds))
 		(when (and c-opt-identifier-concat-key
 			   (not (get-text-property id-start 'face)))
 		  (c-forward-syntactic-ws)
@@ -1371,7 +1374,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					   (c-safe (c-forward-sexp)
 						   (1- (point))))))
 			    t)
-			  (not (c-forward-<>-arglist)))
+			  (not (c-forward-<>-arglist nil)))
 		 (c-clear-char-syntax (point))
 		 (if tmpl-end (c-clear-char-syntax tmpl-end))
 		 (c-put-font-lock-face id-start id-end nil)))
@@ -1968,7 +1971,7 @@ need for `c++-font-lock-extra-types'.")
       (if (eq (char-after) ?<)
 	  (progn
 	    (setq c-recognize-<>-arglists t)
-	    (c-forward-<>-arglist))
+	    (c-forward-<>-arglist t))
 	t))))
 
 (defun c-font-lock-objc-method ()
