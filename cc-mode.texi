@@ -2467,7 +2467,14 @@ definition
 @code{extern-lang-close} --- brace that closes an external language block
 @item
 @code{inextern-lang} --- analogous to `inclass' syntactic symbol, but
-for @code{extern} blocks.
+used inside external language blocks (e.g. @code{extern "C" @{}).
+@item
+@code{namespace-open} --- brace that opens a C++ namespace block.
+@item
+@code{namespace-close} --- brace that closes a C++ namespace block.
+@item
+@code{innamespace} --- analogous to `inextern-lang' syntactic symbol,
+but used inside C++ namespace blocks.
 @item
 @code{template-args-cont} --- C++ template argument list continuations
 @end itemize
@@ -2836,10 +2843,32 @@ symbols.  In this example:
 @cindex inextern-lang syntactic symbol
 @cindex inclass syntactic symbol
 @noindent
-line 2 is given the @code{extern-lang-open} syntax while line 5 is given
+line 2 is given the @code{extern-lang-open} syntax, while line 5 is given
 the @code{extern-lang-close} syntax.  The analysis for line 3 yields:
 @code{((inextern-lang) (topmost-intro . 14))}, where
 @code{inextern-lang} is a modifier similar in purpose to @code{inclass}.
+
+Similarly, C++ namespace constructs have their own associated syntactic
+symbols.  In this example:
+@example
+@group
+
+   1: namespace foo
+   2: @{
+   3:     void xxx() {}
+   4: @}
+
+@end group
+@end example
+
+@cindex namespace-open syntactic-symbol
+@cindex namespace-close syntactic-symbol
+@cindex innamespace syntactic-symbol
+@noindent
+line 2 is given the @code{namespace-open} syntax, while line 4 is given
+the @code{namespace-close} syntax.  The analysis for line 3 yields:
+@code{((innamespace) (topmost-intro . 17))}, where @code{innamespace} is 
+a modifier similar in purpose to @code{inextern-lang} and @code{inclass}.
 
 A number of syntactic symbols are associated with parenthesis lists,
 a.k.a argument lists, as found in function declarations and function
@@ -2961,10 +2990,31 @@ line 11, assigned @code{block-open} syntax;
 @cindex cpp-macro syntactic symbol
 @cindex cpp-macro-cont syntactic symbol
 @item
-lines 12 and 14, assigned @code{cpp-macro} syntax@footnote{Not shown
-here are multi-line macros.  They are now (somewhat) supported; the
-first line of a multi-line macro is given the @code{cpp-macro} syntax,
-while subsequent lines are give the @code{cpp-macro-cont} syntax.};
+lines 12 and 14, assigned @code{cpp-macro} syntax.
+
+@cindex multi-line macros
+@cindex syntactic whitespace
+Multi-line C preprocessor macros are now (somewhat) supported.  At least
+CC Mode now recognizes the fact that it is inside a multi-line macro,
+and it properly skips such macros as syntactic whitespace.  In this
+example:
+@example
+@group
+
+   1: #define EXTERNAL_LIST_LOOP(consvar, listp)                              \
+   2:   for (consvar = listp; !NILP (consvar); consvar = XCDR (consvar))      \
+   3:      if (!CONSP (consvar))                                              \
+   4:        signal_simple_error ("Invalid list format", listp);              \
+   5:      else
+
+@end group
+@end example
+@noindent
+line 1 is given the syntactic symbol @code{cpp-macro}.  This first line
+of a macro is always given this symbol.  The second and subsequent lines 
+(e.g. lines 2 through 5) are given the @code{cpp-macro-cont} syntactic
+symbol, with a relative buffer position pointing to the @code{#} which
+starts the macro definition.
 
 @cindex stream-op syntactic symbol
 @item
