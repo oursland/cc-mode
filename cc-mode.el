@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-20 20:48:52 $
-;; Version:         $Revision: 2.63 $
+;; Last Modified:   $Date: 1992-05-20 21:27:30 $
+;; Version:         $Revision: 2.64 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-20 20:48:52 $|$Revision: 2.63 $|
+;; |$Date: 1992-05-20 21:27:30 $|$Revision: 2.64 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -95,6 +95,10 @@
   (modify-syntax-entry ?/ ". 12" c++-mode-syntax-table)
   (modify-syntax-entry ?\n ">" c++-mode-syntax-table)
   (modify-syntax-entry ?\' "\"" c++-mode-syntax-table))
+
+(defvar c++-always-arglist-indent t
+  "*When non-nil, arglists continued on subsequent lines will always 
+indent c++-empty-arglist-indent spaces.")
 
 (defvar c++-tab-always-indent
   (if (boundp 'c-tab-always-indent) c-tab-always-indent t)
@@ -196,7 +200,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.63 $
+  "Major mode for editing C++ code.  $Revision: 2.64 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1001,7 +1005,8 @@ Returns nil if line starts inside a string, t if in a comment."
 	     ;; empty arg list, in which case we do what
 	     ;; c++-empty-arglist-indent says to do.
 	     (if (and c++-empty-arglist-indent
-		      (or (null (nth 2 state))	;; indicates empty arg
+		      (or c++-always-arglist-indent
+			  (null (nth 2 state))	;; indicates empty arg
 						;; list.
 			  ;; Use a heuristic: if the first
 			  ;; non-whitespace following left paren on
@@ -1637,7 +1642,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.63 $"
+(defconst c++-version "$Revision: 2.64 $"
   "c++-mode version number.")
 
 (defun c++-version ()
