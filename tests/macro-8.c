@@ -9,6 +9,13 @@
 #endif
 #define x(y) defined (foo)			\
 	&& defined (bar)
+#define x(y) (defined (foo)			\
+	      && defined (bar)			\
+	)
+#define x(y) (					\
+	defined (foo)				\
+	&& defined (bar)			\
+	)
 #define x(a,					\
 	  b					\
     )						\
@@ -24,6 +31,13 @@ int x() {
 #endif
 #define x(y) defined (foo)			\
 		 && defined (bar)
+#define x(y) (defined (foo)			\
+	      && defined (bar)			\
+	)
+#define x(y) (					\
+	defined (foo)				\
+	&& defined (bar)			\
+	)
 #define x(a,					\
 	  b					\
     )						\
@@ -39,6 +53,13 @@ int x (int x,
 #endif
 #define x(y) defined (foo)			\
        && defined (bar)
+#define x(y) (defined (foo)			\
+	      && defined (bar)			\
+	   )
+#define x(y) (					\
+	   defined (foo)			\
+	   && defined (bar)			\
+	   )
 #define x(a,					\
 	  b					\
     )						\
