@@ -350,11 +350,12 @@ This function does various newline cleanups based on the value of
 	;; Now adjust the line's indentation.  Don't update the state
 	;; cache since c-guess-basic-syntax isn't called when
 	;; c-syntactic-context is set.
-	(let* ((here (point))
+	(let* ((old-ind (c-point 'boi))
+	       (old-point-max (point-max))
 	       (c-syntactic-context syntax))
 	  (indent-according-to-mode)
-	  (setq c-state-cache (c-adjust-state (c-point 'bol) here
-					      (- (c-point 'boi) (c-point 'bol))
+	  (setq c-state-cache (c-adjust-state (c-point 'bol) old-point-max
+					      (- (c-point 'boi) old-ind)
 					      c-state-cache)))
 	;; Do all appropriate clean ups
 	(let ((here (point))
