@@ -12,9 +12,7 @@ Links: links.h compatlinks.h
     XEmacs.  See the <a href="installation.html">installation
     notes</a> for more details.
 
-    <p>The same goes for Emacs 20 as of 20.2 and beyond.  Also, you
-    <strong>must</strong> byte-compile <code>python-mode.el</code> for
-    it to run in Emacs 20.
+    <p>The same goes for Emacs 20 as of 20.2 and beyond.
 
     <p>I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
     earlier.  You might try following the directions for
@@ -22,3 +20,10 @@ Links: links.h compatlinks.h
     although you will <em>not</em> need the
     <code>cc-mode-19.el</code> file.  I do not plan to actively
     support any earlier XEmacs version.
+
+    <p>I have reports of problems with CC Mode and the XEmacs 21 beta
+    releases.  These have not been tracked down yet, but if you are a
+    XEmacs beta user and have seen bogus indentation and syntactic
+    analysis, please contact
+    <a href="mailto:cc-mode-help@python.org">us</a> if you can help
+    track these problems down.
