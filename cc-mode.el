@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.214 $
-;; Last Modified:   $Date: 1994-01-27 16:24:10 $
+;; Version:         $Revision: 3.215 $
+;; Last Modified:   $Date: 1994-01-27 16:57:08 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-27 16:24:10 $|$Revision: 3.214 $|
+;; |$Date: 1994-01-27 16:57:08 $|$Revision: 3.215 $|
 
 ;;; Code:
 
@@ -716,7 +716,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.214 $
+cc-mode Revision: $Revision: 3.215 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -747,7 +747,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.214 $
+cc-mode Revision: $Revision: 3.215 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2509,7 +2509,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (c-add-semantics 'string (c-point 'bopl)))
 	 ;; CASE 2: in a C or C++ style comment.
 	 ((memq literal '(c c++))
-	  (c-add-semantics literal (c-point 'bopl)))
+	  ;; we need to catch multi-paragraph C comments
+	  (while (and (zerop (forward-line -1))
+		      (looking-at "^[ \t]*$")))
+	  (c-add-semantics literal (c-point 'bol)))
 	 ;; CASE 3: in a cpp preprocessor
 	 ((eq literal 'pound)
 	  (c-beginning-of-macro lim)
@@ -3104,8 +3107,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (skip-chars-forward " \t")
 		   (if (looking-at "\\*\\*?")
 		       (- (match-end 0) (match-beginning 0))
-		     0))))
-      (goto-char (cdr langelem))
+		     0)))
+	  (cs-curcol (progn (goto-char (cdr langelem))
+			    (current-column))))
       (back-to-indentation)
       (if (re-search-forward "/\\*[ \t]*" (c-point 'eol) t)
 	  (goto-char (+ (match-beginning 0)
@@ -3114,7 +3118,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			 ((= stars 1) 1)
 			 ((= stars 2) 0)
 			 (t (- (match-end 0) (match-beginning 0)))))))
-      (current-column))))
+      (- (current-column) cs-curcol))))
 
 (defun c-adaptive-block-open (langelem)
   ;; when substatement is on semantics list, return negative
@@ -3228,7 +3232,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.214 $"
+(defconst c-version "$Revision: 3.215 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
