@@ -47,12 +47,11 @@
 ;; Pull in custom if it exists and is recent enough (the one in Emacs
 ;; 19.34 isn't).
 (eval
- (eval-when-compile
+ (cc-eval-when-compile
    (condition-case nil
        (progn
 	 (require 'custom)
 	 (or (fboundp 'defcustom) (error ""))
-	 ;; Seems like XEmacs bails out on this for some odd reason.
 	 (require 'wid-edit)
 	 '(progn			; Compile in the require's.
 	    (require 'custom)
