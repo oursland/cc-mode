@@ -15,6 +15,8 @@
 (setq load-path (cons "./" load-path))
 (if path-to-the-custom-library
     (setq load-path (cons path-to-the-custom-library load-path)))
+;; Always get the compile time definitions
+(require 'cc-defs)
 (if (and (condition-case nil
 	     (require 'custom)
 	   (error nil))
