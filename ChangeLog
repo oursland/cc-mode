@@ -1,3 +1,67 @@
+Sat Jul 26 12:24:20 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.14
+
+Sat Jul 26 16:03:33 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-styles-alist):
+	In "java" style, set c-hanging-comment-starter-p to
+	nil to preserve Javadoc starter lines.
+
+Fri Jul 25 22:17:07 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-beginning-of-statement-1):
+	When checking for bare semi, don't match
+	on a semi following a close brace, otherwise the following legal code
+	fails:
+
+	void foo()
+	{
+	    static struct Pattern nums
+	        = {1, 2, 3};
+
+	    int j = 2;
+	}
+
+	This might break some bare semi idioms but those are probably more
+	rare than static initializers.
+
+	* cc-mode.texi: Describe support for idl-mode
+
+	* cc-vars.el (idl-mode-hook): New variable.
+
+	* cc-mode.el (idl-mode): Support for CORBA's IDL language.
+
+	* idl-font-lock.el: Unsupported font-lock definitions for IDL.
+	This should be merged in with font-lock.el
+
+	* cc-mode.el (c-initialize-cc-mode):
+	move the calling of c-make-styles-buffer-local
+	into c-initialize-builtin-style.
+
+	* cc-styles.el (c-set-style-2):
+	Fixed broken implementation of inherited styles.
+
+	* cc-mode.texi:
+	Document c-initialization-hook.  Also rewrite the "Getting Connected"
+	section on byte compiling the source.
+
+	* cc-mode.el (c-initialize-cc-mode):
+	Run the c-initialization-hook, but only once
+	per Emacs session.
+
+	* cc-vars.el (c-initialization-hook): New variable.
+
+	* cc-engine.el (c-guess-basic-syntax):
+	CASE 5I: When adding 'inclass syntax, use the
+	relpos pointing to the class opening brace, unless that hangs on the
+	right side, in which case, use the start of the class/struct keyword.
+
+Thu Jul 17 03:36:22 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-symbol-key):
+	first character must be a letter or underscore
+
 Wed Jul 16 23:56:58 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.13.
