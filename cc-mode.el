@@ -2,12 +2,13 @@
 
 ;; Copyright (C) 1985,87,92,93,94,95,96,97 Free Software Foundation, Inc.
 
-;; Authors:  1992-1997 Barry A. Warsaw
-;;           1987 Dave Detlefs and Stewart Clamen
-;;           1985 Richard M. Stallman
-;; Created:  a long, long, time ago. adapted from the original c-mode.el
-;; Version:  5.00
-;; Keywords: c languages oop
+;; Authors:    1992-1997 Barry A. Warsaw
+;;             1987 Dave Detlefs and Stewart Clamen
+;;             1985 Richard M. Stallman
+;; Maintainer: cc-mode-help@python.org
+;; Created:    a long, long, time ago. adapted from the original c-mode.el
+;; Version:    5.00
+;; Keywords:   c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 ;; NOTE: See the accompanying texinfo manual for details on using this mode!

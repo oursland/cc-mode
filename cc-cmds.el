@@ -1,13 +1,14 @@
 ;;; cc-cmds.el --- user level commands for CC Mode 
 
-;; Copyright (C) 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985,87,92,93,94,95,96,97 Free Software Foundation, Inc.
 
-;; Authors:  1992-1997 Barry A. Warsaw
-;;           1987 Dave Detlefs and Stewart Clamen
-;;           1985 Richard M. Stallman
-;; Created:  22-Apr-1997 (split from cc-mode.el)
-;; Version:  5.00
-;; Keywords: c languages oop
+;; Authors:    1992-1997 Barry A. Warsaw
+;;             1987 Dave Detlefs and Stewart Clamen
+;;             1985 Richard M. Stallman
+;; Maintainer: cc-mode-help@python.org
+;; Created:    22-Apr-1997 (split from cc-mode.el)
+;; Version:    5.00
+;; Keywords:   c languages oop
 
 ;; This file is part of GNU Emacs.
 
@@ -26,11 +27,8 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-
 
 ;; Utilities
-
-
 (defsubst c-update-modeline ()
   ;; set the c-auto-hungry-string for the correct designation on the modeline
   (setq c-auto-hungry-string

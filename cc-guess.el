@@ -1,13 +1,12 @@
 ;;; cc-guess.el --- guess indentation values by scanning existing code
 
-;; Copyright (C) 1994-1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985,87,92,93,94,95,96,97 Free Software Foundation, Inc.
 
-;; Author:        1994-1995 Barry A. Warsaw
-;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
-;; Created:       August 1994, split from cc-mode.el
-;; Version:       $Revision: 1.7 $
-;; Last Modified: $Date: 1995-08-28 20:39:43 $
-;; Keywords: c languages oop
+;; Author:     1994-1995 Barry A. Warsaw
+;; Maintainer: Unmaintained
+;; Created:    August 1994, split from cc-mode.el
+;; Version:    5.00
+;; Keywords:   c languages oop
 
 ;; This file is not part of GNU Emacs.
 
@@ -22,8 +21,9 @@
 ;; GNU General Public License for more details.
 ;; 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program; if not, write to the Free Software
-;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 ;;

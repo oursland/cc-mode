@@ -1,13 +1,12 @@
 ;;; cc-compat.el --- cc-mode compatibility with c-mode.el confusion
 
-;; Copyright (C) 1985-1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985,87,92,93,94,95,96,97 Free Software Foundation, Inc.
 
-;; Author:        1994-1995 Barry A. Warsaw
-;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
-;; Created:       August 1994, split from cc-mode.el
-;; Version:       $Revision: 1.5 $
-;; Last Modified: $Date: 1995-06-11 20:15:44 $
-;; Keywords: c languages oop
+;; Author:     1994-1997 Barry A. Warsaw
+;; Maintainer: cc-mode-help@python.org
+;; Created:    August 1994, split from cc-mode.el
+;; Version:    5.00
+;; Keywords:   c languages oop
 
 ;; This file is part of GNU Emacs.
 
@@ -22,8 +21,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 ;;
