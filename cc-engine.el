@@ -3382,9 +3382,20 @@ This function does not do any hidden buffer changes."
 (defvar c-promote-possible-types nil)
 
 ;; Dynamically bound variable that instructs `c-forward-<>-arglist' to
-;; not accept arglists that contain more than one argument.  It's used
-;; to handle ambiguous cases like "foo (a < b, c > d)" better.
-(defvar c-disallow-comma-in-<>-arglists nil)
+;; not accept arglists that contain binary operators.
+;;
+;; This is primarily used to handle C++ template arglists.  C++
+;; disambiguates them by checking whether the preceding name is a
+;; template or not.  We can't do that, so we assume it is a template
+;; if it can be parsed as one.  That usually works well since
+;; comparison expressions on the forms "a < b > c" or "a < b, c > d"
+;; in almost all cases would be pointless.
+;;
+;; However, in function arglists, e.g. in "foo (a < b, c > d)", we
+;; should let the comma separate the function arguments instead.  And
+;; in a context where the value of the expression is taken, e.g. in
+;; "if (a < b || c > d)", it's probably not a template.
+(defvar c-restricted-<>-arglists nil)
 
 ;; Dynamically bound variables that instructs `c-forward-name',
 ;; `c-forward-type' and `c-forward-<>-arglist' to record the ranges of
@@ -3525,7 +3536,7 @@ This function does not do any hidden buffer changes."
 	     (eq (char-after) ?<)
 	     (c-forward-<>-arglist (c-keyword-member kwd-sym 'c-<>-type-kwds)
 				   (or c-record-type-identifiers
-				       c-disallow-comma-in-<>-arglists)))
+				       c-restricted-<>-arglists)))
 	(c-forward-syntactic-ws)
 	(setq safe-pos (point)))
 
@@ -3574,16 +3585,7 @@ This function does not do any hidden buffer changes."
   ;; necessary if the various side effects, e.g. recording of type
   ;; ranges, are important.  Setting REPARSE to t only applies
   ;; recursively to nested angle bracket arglists if
-  ;; `c-disallow-comma-in-<>-arglists' is set.
-  ;;
-  ;; This is primarily used in C++ to mark up template arglists.  C++
-  ;; disambiguates them by checking whether the preceding name is a
-  ;; template or not.  We can't do that, so we assume it is a template
-  ;; if it can be parsed as one.  This usually works well since
-  ;; comparison expressions on the forms "a < b > c" or "a < b, c > d"
-  ;; in almost all cases would be pointless.  Cases like function
-  ;; calls on the form "foo (a < b, c > d)" needs to be handled
-  ;; specially through the `c-disallow-comma-in-<>-arglists' variable.
+  ;; `c-restricted-<>-arglists' is set.
 
   (let ((start (point))
 	;; If `c-record-type-identifiers' is set then activate
@@ -3714,11 +3716,18 @@ This function does not do any hidden buffer changes."
 			(forward-char)
 			t)
 
-		      ;; Note: This regexp exploits the match order in
-		      ;; \| so that "<>" is matched by "<" rather than
-		      ;; "[^>:-]>".
+		      ;; Note: These regexps exploit the match order in \| so
+		      ;; that "<>" is matched by "<" rather than "[^>:-]>".
 		      (c-syntactic-re-search-forward
-		       "[<;{},]\\|\\([^>:-]>\\)" nil 'move t t 1)
+		       (if c-restricted-<>-arglists
+			   ;; Stop on ',', '|', '&', '+' and '-' to catch
+			   ;; common binary operators that could be between
+			   ;; two comparison expressions "a<b" and "c>d".
+			   "[<;{},|&+-]\\|\\([^>:-]>\\)"
+			 ;; Otherwise we still stop on ',' to find the
+			 ;; argument start positions.
+			 "[<;{},]\\|\\([^>:-]>\\)")
+		       nil 'move t t 1)
 
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
@@ -3807,7 +3816,7 @@ This function does not do any hidden buffer changes."
 					   (c-keyword-sym (match-string 1))
 					   'c-<>-type-kwds))
 				     (and reparse
-					  c-disallow-comma-in-<>-arglists))))
+					  c-restricted-<>-arglists))))
 			    )))
 
 			;; It was not an angle bracket arglist.
@@ -3843,7 +3852,7 @@ This function does not do any hidden buffer changes."
 		  t)
 
 		 ((and (eq (char-before) ?,)
-		       (not c-disallow-comma-in-<>-arglists))
+		       (not c-restricted-<>-arglists))
 		  ;; Just another argument.  Record the position.  The
 		  ;; type check stuff that made us stop at it is at
 		  ;; the top of the loop.
@@ -3990,7 +3999,7 @@ This function does not do any hidden buffer changes."
 	       (when (let ((c-record-type-identifiers nil)
 			   (c-record-found-types nil))
 		       (c-forward-<>-arglist
-			nil c-disallow-comma-in-<>-arglists))
+			nil c-restricted-<>-arglists))
 		 (c-forward-syntactic-ws)
 		 (setq pos (point))
 		 (if (and c-opt-identifier-concat-key
