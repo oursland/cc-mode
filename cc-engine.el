@@ -882,7 +882,7 @@
 		    (goto-char sexp-pos)
 		    (c-beginning-of-defun-1)
 		    (while (and (not (bobp))
-				(or (not (eq (char-after ?{)))
+				(or (not (eq (char-after) ?{))
 				    ;; See note above near the first use
 				    ;; of c-beginning-of-defun-1.
 				    (save-excursion
