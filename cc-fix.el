@@ -62,7 +62,7 @@
 	      (setq pos (point)))))
   ;; Emacs 19.34 doesn't have a char-before function.  Here's it's
   ;; Emacs 20 definition.
-  (defsubst char-before (&optional pos)
+  (defun char-before (&optional pos)
     (if (not pos)
 	(setq pos (point)))
     (char-after (1- pos))))
