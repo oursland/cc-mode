@@ -186,9 +186,17 @@
 For use with the variable `java-mode-hook'."
   (c-set-style "java"))
 
+(defvar c-styles-are-initialized nil)
+
 (defun c-common-init ()
-  ;; Common initializations for c++-mode and c-mode.
-  ;;
+  ;; Common initializations for all modes.
+  (if c-styles-are-initialized
+      nil
+    (require 'cc-styles)
+    (c-initialize-builtin-style)
+    (if c-style-variables-are-local-p
+	(c-make-styles-buffer-local))
+    (setq c-styles-are-initialized t))
   ;; these variables should always be buffer local; they do not affect
   ;; indentation style.
   (make-local-variable 'paragraph-start)

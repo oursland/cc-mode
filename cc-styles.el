@@ -611,15 +611,6 @@ automatically called when CC Mode is loaded."
   (make-variable-buffer-local 'c-special-indent-hook)
   (make-variable-buffer-local 'c-indentation-style))
 
-;; Don't do this when compiling!
-(eval-after-load
- "cc-styles.el"
- (require 'cl)
- (c-initialize-builtin-style)
- (if c-style-variables-are-local-p
-     (c-make-styles-buffer-local)))
-
-
 
 (provide 'cc-styles)
 ;;; cc-styles.el ends here
