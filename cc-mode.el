@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.34 $
-;; Last Modified:   $Date: 1994-07-17 18:29:51 $
+;; Version:         $Revision: 4.35 $
+;; Last Modified:   $Date: 1994-07-18 21:15:23 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -30,33 +30,36 @@
 
 ;;; Commentary:
 
-;; This package is intended to be a nearly interchangeable replacement
-;; for standard c-mode (a.k.a. BOCM -- "Boring Old C-Mode" :-).  There
-;; are some important differences.  Briefly: complete K&R C, ANSI C,
-;; and C++ support with consistent indentation across all modes, more
-;; intuitive indentation controlling variables, compatibility across
-;; all known Emacsen, nice new features, and tons of bug fixes.  This
-;; package is called CC-MODE to distinguish it from BOCM and its
-;; ancestor C++-MODE, but there really is no top-level CC-MODE (see
-;; below).  cc-mode.el is not compatible with c-mode.el or
-;; c++-mode.el.  You should use this file to edit all your C and C++
-;; code. 
+;; This package provides modes in GNU Emacs for editing C, C++, and
+;; Objective C code. It is intended to be a replacement for c-mode.el
+;; (a.k.a. BOCM -- Boring Old C-Mode), and c++-mode.el, both of which
+;; are ancestors of this file.  A number of important improvements
+;; have been made, briefly: complete K&R C, ANSI C, and C++ support
+;; with consistent indentation across all modes, more intuitive
+;; indentation controlling variables, compatibility across all known
+;; Emacsen, nice new features, and tons of bug fixes.  This package is
+;; called "cc-mode" to distinguish it from its ancestors, but there
+;; really is no top-level cc-mode.
 
-;; Details on CC-MODE are now (or will soon be) contained in an
-;; accompanying texinfo manual (cc-mode.texi).  To submit bug reports,
-;; hit "C-c C-b", and please try to include a code sample so I can
-;; reproduce your problem.  If you have other questions contact me at
-;; the following address: cc-mode-help@anthem.nlm.nih.gov.  Please
-;; don't send bug reports to my personal account, I may not get it for
-;; a long time.
+;; Details on how to use cc-mode will soon be contained in an
+;; accompanying texinfo manual.  Volunteers to help finish this
+;; manual would be greatly appreciated!
+
+;; To submit bug reports, hit "C-c C-b", and please try to include a
+;; code sample and exact recipe so I can reproduce your problem.  If
+;; you have other questions contact me at the following address:
+;; cc-mode-help@anthem.nlm.nih.gov.  Please don't send bug reports to
+;; my personal account, I may not get it for a long time.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
-;; the multi-Emacsen support. FSF Emacs 19, Lucid Emacs 19, and Emacs
-;; 18 all do things differently and there's no way to shut the
-;; byte-compiler up at the necessary granularity.
+;; the multi-Emacsen support. FSF's Emacs 19, Lucid's Emacs 19, and
+;; GNU Emacs 18 all do things differently and there's no way to shut
+;; the byte-compiler up at the necessary granularity.  Let me say this
+;; again: YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS (you'd be
+;; surprised at how many people don't follow this advice :-).
 
-;; If your Emacs is dumped with either c-mode.el or c++-mode.el, you
-;; will need to add the following to your .emacs file before any other
+;; If your Emacs is dumped with c-mode.el and/or c++-mode.el, you will
+;; need to add the following to your .emacs file before any other
 ;; reference to c-mode or c++-mode:
 ;;
 ;; (fmakunbound 'c-mode)
@@ -65,19 +68,22 @@
 ;; (makunbound 'c++-mode-map)
 ;; (makunbound 'c-style-alist)
 
-;; There are two major mode entry points provided by this package, one
-;; for editing C++ code and the other for editing C code (both K&R and
-;; ANSI).  To use CC-MODE, add the following to your .emacs file.
-;; This assumes you will use .cc or .C extensions for your C++ source,
-;; and .c for your C code:
+;; There are three major mode entry points provided by this package,
+;; one for editing C++ code, one for editing C code (both K&R and
+;; ANSI), and one for editing Objective-C code.  To use cc-mode, add
+;; the following to your .emacs file.  This assumes you will use .cc
+;; or .C extensions for your C++ source, .c for your C code, and .objc
+;; for your Objective-C code:
 ;;
-;; (autoload 'c++-mode "cc-mode" "C++ Editing Mode" t)
-;; (autoload 'c-mode   "cc-mode" "C Editing Mode" t)
+;; (autoload 'c++-mode  "cc-mode" "C++ Editing Mode" t)
+;; (autoload 'c-mode    "cc-mode" "C Editing Mode" t)
+;; (autoload 'objc-mode "cc-mode" "Objective-C Editing Mode" t)
 ;; (setq auto-mode-alist
-;;   (append '(("\\.C$"  . c++-mode)
-;;             ("\\.cc$" . c++-mode)
-;;             ("\\.c$"  . c-mode)   ; to edit C code
-;;             ("\\.h$"  . c-mode)   ; to edit C code
+;;   (append '(("\\.C$"    . c++-mode)
+;;             ("\\.cc$"   . c++-mode)
+;;             ("\\.c$"    . c-mode)
+;;             ("\\.h$"    . c-mode)
+;;             ("\\.objc$" . objc-mode)
 ;;            ) auto-mode-alist))
 ;;
 ;; If you would like to join the beta testers list, send add/drop
@@ -87,13 +93,13 @@
 ;; above).
 ;;
 ;; Many, many thanks go out to all the folks on the beta test list.
-;; Without their patience, testing, insight, and code contributions,
-;; and encouragement cc-mode.el would be a far inferior package.
+;; Without their patience, testing, insight, code contributions, and
+;; encouragement cc-mode.el would be a far inferior package.
 
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-07-17 18:29:51 $|$Revision: 4.34 $|
+;; |$Date: 1994-07-18 21:15:23 $|$Revision: 4.35 $|
 
 ;;; Code:
 
@@ -898,15 +904,17 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.34 $
+cc-mode Revision: $Revision: 4.35 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
 of the problem, including a reproducable test case and send the
 message.
 
-Note that the details of configuring c++-mode have been moved to
-the accompanying texinfo manual.
+Note that the details of configuring c++-mode have been moved to the
+accompanying texinfo manual (which is not yet completed -- volunteers
+are welcome).  Until then, please read the README file that came with
+the cc-mode distribution.
 
 The hook variable `c++-mode-hook' is run with no args, if that
 variable is bound and has a non-nil value.  Also the common hook
@@ -931,15 +939,16 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.34 $
+cc-mode Revision: $Revision: 4.35 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
 problem, including a reproducable test case and send the message.
 
-Note that the details of configuring c-mode will soon be moved to the
-accompanying texinfo manual.  Until then, please read the README file
-that came with the cc-mode distribution.
+Note that the details of configuring c++-mode have been moved to the
+accompanying texinfo manual (which is not yet completed -- volunteers
+are welcome).  Until then, please read the README file that came with
+the cc-mode distribution.
 
 The hook variable `c-mode-hook' is run with no args, if that value is
 bound and has a non-nil value.  Also the common hook
@@ -964,15 +973,17 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.34 $
+cc-mode Revision: $Revision: 4.35 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
 of the problem, including a reproducable test case and send the
 message.
 
-Note that the details of configuring objc-mode will soon be moved to the
-accompanying texinfo manual.
+Note that the details of configuring c++-mode have been moved to the
+accompanying texinfo manual (which is not yet completed -- volunteers
+are welcome).  Until then, please read the README file that came with
+the cc-mode distribution.
 
 The hook variable `objc-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the common hook
@@ -3848,7 +3859,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.34 $"
+(defconst c-version "$Revision: 4.35 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3881,7 +3892,6 @@ it trailing backslashes are removed."
 	      ")")
       (let ((vars (list
 		   ;; report only the vars that affect indentation
-		   'c-emacs-features
 		   'c-basic-offset
 		   'c-offsets-alist
 		   'c-block-comments-indent-p
@@ -3909,6 +3919,7 @@ it trailing backslashes are removed."
 		      ".\nPerhaps this is your problem?\n"
 		      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
 	    "\n")
+	  (format "c-emacs-features: %s\n" c-emacs-features)
 	  )))
       nil
       "Dear Barry,"
