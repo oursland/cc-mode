@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.313 $
-;; Last Modified:   $Date: 1996-08-19 22:24:41 $
+;; Version:         $Revision: 4.314 $
+;; Last Modified:   $Date: 1996-08-19 23:20:48 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -277,7 +277,7 @@ Here is the current list of valid syntactic element symbols:
  arglist-intro          -- the first line in an argument list
  arglist-cont           -- subsequent argument list lines when no
                            arguments follow on the same line as the
-                           the arglist opening paren
+                           arglist opening paren
  arglist-cont-nonempty  -- subsequent argument list lines when at
                            least one argument follows on the same
                            line as the arglist opening paren
@@ -4968,7 +4968,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.313 $"
+(defconst c-version "$Revision: 4.314 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
