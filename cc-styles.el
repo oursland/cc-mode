@@ -225,7 +225,6 @@ to add new styles or modify existing styles (it is not a good idea to
 modify existing styles -- you should create a new style that inherits
 the existing style.")
 
-
 
 ;; Functions that manipulate styles
 (defun c-set-style-1 (conscell dont-override)
@@ -356,7 +355,6 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
       (setq c-style-alist (cons (cons style descrip) c-style-alist))))
   (and set-p (c-set-style style)))
 
-
 
 (defvar c-read-offset-history nil)
 
@@ -442,7 +440,6 @@ and exists only for compatibility reasons."
 	(error "%s is not a valid syntactic symbol" symbol))))
   (c-keep-region-active))
 
-
 
 (defun c-setup-paragraph-variables ()
   "Fix things up for paragraph recognition and filling inside comments by
@@ -480,6 +477,45 @@ variables."
 		    ;; deal with the \` and \' it probably contains.
 		    "\\'")))))
 
+
+;; Helper for setting up Filladapt mode.  It's not used by CC Mode itself.
+
+(cc-bytecomp-defvar filladapt-token-table)
+(cc-bytecomp-defvar filladapt-token-match-table)
+(cc-bytecomp-defvar filladapt-token-conversion-table)
+
+(defun c-setup-filladapt ()
+  "Convenience function to configure Kyle E. Jones' Filladapt mode for
+CC Mode by making sure the proper entries are present on
+`filladapt-token-table', `filladapt-token-match-table', and
+`filladapt-token-conversion-table'.  This is intended to be used on
+`c-mode-common-hook' or similar."
+  ;; This function is intended to be used explicitly by the end user
+  ;; only.
+  ;;
+  ;; The default configuration already handles C++ comments, but we
+  ;; need to add handling of C block comments.  A new filladapt token
+  ;; `c-comment' is added for that.
+  (let (p)
+    (setq p filladapt-token-table)
+    (while (and p (not (eq (car-safe (cdr-safe (car-safe p))) 'c-comment)))
+      (setq p (cdr-safe p)))
+    (if p
+	(setcar (car p) c-current-comment-prefix)
+      (setq filladapt-token-table
+	    (append (list (car filladapt-token-table)
+			  (list c-current-comment-prefix 'c-comment))
+		    (cdr filladapt-token-table)))))
+  (unless (assq 'c-comment filladapt-token-match-table)
+    (setq filladapt-token-match-table
+	  (append '((c-comment c-comment))
+		  filladapt-token-match-table)))
+  (unless (assq 'c-comment filladapt-token-conversion-table)
+    (setq filladapt-token-conversion-table
+	  (append '((c-comment . exact))
+		  filladapt-token-conversion-table))))
+
+
 (defun c-initialize-builtin-style ()
   ;; Dynamically append the default value of most variables. This is
   ;; crucial because future c-set-style calls will always reset the

@@ -754,44 +754,6 @@ Key bindings:
   (c-update-modeline))
 
 
-;; Helper for setting up Filladapt mode.  It's not used by CC Mode itself.
-
-(cc-bytecomp-defvar filladapt-token-table)
-(cc-bytecomp-defvar filladapt-token-match-table)
-(cc-bytecomp-defvar filladapt-token-conversion-table)
-
-(defun c-setup-filladapt ()
-  "Convenience function to configure Kyle E. Jones' Filladapt mode for
-CC Mode by making sure the proper entries are present on
-`filladapt-token-table', `filladapt-token-match-table', and
-`filladapt-token-conversion-table'.  This is intended to be used on
-`c-mode-common-hook' or similar."
-  ;; This function is intended to be used explicitly by the end user
-  ;; only.
-  ;;
-  ;; The default configuration already handles C++ comments, but we
-  ;; need to add handling of C block comments.  A new filladapt token
-  ;; `c-comment' is added for that.
-  (let (p)
-    (setq p filladapt-token-table)
-    (while (and p (not (eq (car-safe (cdr-safe (car-safe p))) 'c-comment)))
-      (setq p (cdr-safe p)))
-    (if p
-	(setcar (car p) c-current-comment-prefix)
-      (setq filladapt-token-table
-	    (append (list (car filladapt-token-table)
-			  (list c-current-comment-prefix 'c-comment))
-		    (cdr filladapt-token-table)))))
-  (unless (assq 'c-comment filladapt-token-match-table)
-    (setq filladapt-token-match-table
-	  (append '((c-comment c-comment))
-		  filladapt-token-match-table)))
-  (unless (assq 'c-comment filladapt-token-conversion-table)
-    (setq filladapt-token-conversion-table
-	  (append '((c-comment . exact))
-		  filladapt-token-conversion-table))))
-
-
 ;; bug reporting
 
 (defconst c-mode-help-address
