@@ -2738,18 +2738,33 @@ need for `pike-font-lock-extra-types'.")
 	       '("ARGC" "ARGIND" "ARGV" "BINMODE" "CONVFMT" "ENVIRON" "ERRNO"
 		 "FIELDWIDTHS" "FILENAME" "FNR" "FS" "IGNORECASE" "LINT" "NF"
 		 "NR" "OFMT" "OFS" "ORS" "PROCINFO" "RLENGTH" "RS" "RSTART" "RT"
-		 "SUBSEP" "TEXTDOMAIN" "dev/stdin" "/dev/stdout" "dev/stderr")
-	       t) "\\>")
+		 "SUBSEP" "TEXTDOMAIN") t) "\\>")
       'font-lock-variable-name-face)
+
      ;; 
      ;; Special file names.  (acm, 2002/7/22)
-     ;; The following regexp was created by first evaluating this:
+     ;; The following regexp was created by first evaluating this in GNU Emacs 21.1:
      ;; (c-regexp-opt '("/dev/stdin" "/dev/stdout" "/dev/stderr" "/dev/fd/n" "/dev/pid"
-     ;;		       "/dev/ppid" "/dev/pgrpid" "dev/user") 'words)
-     ;; then removing the "?:" from each "\\(?:" (for backward compatibility),
-     ;; then replacing the "n" in "dev/fd/n" with "[0-9]+".
-     (cons "\\<\\(/dev/\\(fd/[0-9]+\\|p\\(\\(\\(gr\\)?p\\)?id\\)\\|std\\(err\\|\
-in\\|out\\)\\)\\|dev/user\\)\\>" 'font-lock-keyword-face)
+     ;;                 "/dev/ppid" "/dev/pgrpid" "/dev/user") 'words)
+     ;; , removing the "?:" from each "\\(?:" (for backward compatibility with older Emacsen)
+     ;; , replacing the "n" in "dev/fd/n" with "[0-9]+"
+     ;; , removing the unwanted \\< at the beginning, and finally filling out the
+     ;; regexp so that a " must come before, and either a " or heuristic stuff after.
+     ;; The surrounding quotes are fontified along with the filename, since, semantically,
+     ;; they are an indivisible unit.
+     '("\\(\"/dev/\\(fd/[0-9]+\\|p\\(\\(\\(gr\\)?p\\)?id\\)\\|std\\(err\\|in\\|out\\)\\|user\\)\\)\\>\
+\\(\\(\"\\)\\|\\([^\"/\n\r][^\"\n\r]*\\)?$\\)"
+       (1 font-lock-variable-name-face t)
+       (8 font-lock-variable-name-face t t))
+     ;; Do the same (almost) with
+     ;; (c-regexp-opt '("/inet/tcp/lport/rhost/rport" "/inet/udp/lport/rhost/rport"
+     ;;                 "/inet/raw/lport/rhost/rport") 'words)
+     ;; This cannot be combined with the above pattern, because the match number
+     ;; for the (optional) closing \" would then exceed 9.
+     '("\\(\"/inet/\\(\\(raw\\|\\(tc\\|ud\\)p\\)/lport/rhost/rport\\)\\)\\>\
+\\(\\(\"\\)\\|\\([^\"/\n\r][^\"\n\r]*\\)?$\\)"
+       (1 font-lock-variable-name-face t)
+       (6 font-lock-variable-name-face t t))
 
      ;; Keywords.
      (concat "\\<"
