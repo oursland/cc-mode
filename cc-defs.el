@@ -572,7 +572,7 @@ This function does not do any hidden buffer changes."
 ;; properties set on a single character and that never spreads to any
 ;; other characters.
 
-(cc-eval-when-compile
+(eval-and-compile
   ;; Constant used at compile time to decide whether or not to use
   ;; XEmacs extents.  Check all the extent functions we'll use since
   ;; some packages might add compatibility aliases for some of them in

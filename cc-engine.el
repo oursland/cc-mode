@@ -81,15 +81,14 @@
 
 ;; Make declarations for all the `c-lang-defvar' variables in cc-langs.
 
-(cc-eval-when-compile
-  (defmacro c-declare-lang-variables ()
-    `(progn
-       ,@(mapcan (lambda (init)
-		   `(,(if (elt init 2)
-			  `(defvar ,(car init) nil ,(elt init 2))
-			`(defvar ,(car init) nil))
-		     (make-variable-buffer-local ',(car init))))
-		 (cdr c-lang-variable-inits)))))
+(defmacro c-declare-lang-variables ()
+  `(progn
+     ,@(mapcan (lambda (init)
+		 `(,(if (elt init 2)
+			`(defvar ,(car init) nil ,(elt init 2))
+		      `(defvar ,(car init) nil))
+		   (make-variable-buffer-local ',(car init))))
+	       (cdr c-lang-variable-inits))))
 (c-declare-lang-variables)
 
 
@@ -2871,28 +2870,27 @@ brace."
        (< change-min-pos c-find-decl-syntactic-pos)
        (setq c-find-decl-syntactic-pos nil)))
 
-(cc-eval-when-compile
+(defmacro c-find-decl-prefix-search ()
   ;; Macro used inside `c-find-decl-spots'.  It ought to be a defsubst
   ;; or perhaps even a defun, but it contains lots of free variables
   ;; that refer to things inside `c-find-decl-spots'.
-  (defmacro c-find-decl-prefix-search ()
-    '(while (and
-	     (setq cfd-match (re-search-forward c-decl-prefix-re nil 'move))
-	     (if (memq (get-text-property (1- (setq cfd-match-pos
-						    (match-end 1)))
-					  'face)
-		       '(font-lock-comment-face font-lock-string-face))
-		 t
-	       ;; Skip forward past comments only, to set the position
-	       ;; to continue at, so we don't skip macros.
-	       (goto-char (match-end 1))
-	       (c-forward-comments)
-	       (setq cfd-continue-pos (point))
-	       nil))
-       ;; Search again if the match is within a comment or a string
-       ;; literal.
-       (goto-char (next-single-property-change
-		   cfd-match-pos 'face nil (point-max))))))
+  '(while (and
+	   (setq cfd-match (re-search-forward c-decl-prefix-re nil 'move))
+	   (if (memq (get-text-property (1- (setq cfd-match-pos
+						  (match-end 1)))
+					'face)
+		     '(font-lock-comment-face font-lock-string-face))
+	       t
+	     ;; Skip forward past comments only, to set the position
+	     ;; to continue at, so we don't skip macros.
+	     (goto-char (match-end 1))
+	     (c-forward-comments)
+	     (setq cfd-continue-pos (point))
+	     nil))
+     ;; Search again if the match is within a comment or a string
+     ;; literal.
+     (goto-char (next-single-property-change
+		 cfd-match-pos 'face nil (point-max)))))
 
 (defun c-find-decl-spots (cfd-decl-re cfd-face-checklist cfd-fun)
   ;; Call CFD-FUN for each possible spot for a declaration from the
@@ -3249,40 +3247,39 @@ brace."
 ;; like `c-record-type-identifiers'.
 (defvar c-record-found-types nil)
 
-(cc-eval-when-compile
-  (defmacro c-forward-keyword-prefixed-id (type)
-    ;; Used internally in `c-forward-keyword-clause' to move forward
-    ;; over a type (if TYPE is 'type) or a name (otherwise) which
-    ;; possibly is prefixed by keywords and their associated clauses.
-    ;; Try with a type/name first to not trip up on those that begin
-    ;; with a keyword.  Return t if a known or found type is moved
-    ;; over.  The point is clobbered if nil is returned.  If range
-    ;; recording is enabled, the identifier is recorded on as a type
-    ;; if TYPE is 'type or as a reference if TYPE is 'ref.
-    `(let (res)
-       (while (if (setq res ,(if (eq type 'type)
-				 `(c-forward-type)
-			       `(c-forward-name)))
-		  nil
-		(and (looking-at c-keywords-regexp)
-		     (c-forward-keyword-clause))))
-       (when (memq res '(t known found prefix))
-	 ,(when (eq type 'ref)
-	    `(when c-record-type-identifiers
-	       (c-record-ref-id c-last-identifier-range)))
-	 t)))
+(defmacro c-forward-keyword-prefixed-id (type)
+  ;; Used internally in `c-forward-keyword-clause' to move forward
+  ;; over a type (if TYPE is 'type) or a name (otherwise) which
+  ;; possibly is prefixed by keywords and their associated clauses.
+  ;; Try with a type/name first to not trip up on those that begin
+  ;; with a keyword.  Return t if a known or found type is moved
+  ;; over.  The point is clobbered if nil is returned.  If range
+  ;; recording is enabled, the identifier is recorded on as a type
+  ;; if TYPE is 'type or as a reference if TYPE is 'ref.
+  `(let (res)
+     (while (if (setq res ,(if (eq type 'type)
+			       `(c-forward-type)
+			     `(c-forward-name)))
+		nil
+	      (and (looking-at c-keywords-regexp)
+		   (c-forward-keyword-clause))))
+     (when (memq res '(t known found prefix))
+       ,(when (eq type 'ref)
+	  `(when c-record-type-identifiers
+	     (c-record-ref-id c-last-identifier-range)))
+       t)))
 
-  (defmacro c-forward-id-comma-list (type)
-    ;; Used internally in `c-forward-keyword-clause' to move forward
-    ;; over a comma separated list of types or names using
-    ;; `c-forward-keyword-prefixed-id'.
-    `(while (and (progn
-		   (setq safe-pos (point))
-		   (eq (char-after) ?,))
-		 (progn
-		   (forward-char)
-		   (c-forward-syntactic-ws)
-		   (c-forward-keyword-prefixed-id ,type))))))
+(defmacro c-forward-id-comma-list (type)
+  ;; Used internally in `c-forward-keyword-clause' to move forward
+  ;; over a comma separated list of types or names using
+  ;; `c-forward-keyword-prefixed-id'.
+  `(while (and (progn
+		 (setq safe-pos (point))
+		 (eq (char-after) ?,))
+	       (progn
+		 (forward-char)
+		 (c-forward-syntactic-ws)
+		 (c-forward-keyword-prefixed-id ,type)))))
 
 (defun c-forward-keyword-clause ()
   ;; The first submatch in the current match data is assumed to

@@ -130,15 +130,15 @@
 
 ;;; Setup for the `c-lang-defvar' system.
 
-(cc-eval-when-compile
+(eval-and-compile
   ;; These are used to collect the init forms from the subsequent
   ;; `c-lang-defvar'.  They are used to build the lambda in
   ;; `c-make-init-lang-vars-fun' below.
   (defconst c-lang-variable-inits (list nil))
-  (defconst c-lang-variable-inits-tail c-lang-variable-inits)
+  (defconst c-lang-variable-inits-tail c-lang-variable-inits))
 
-  (defmacro c-lang-defvar (var val &optional doc)
-    "Declares the buffer local variable VAR to get the value VAL at mode
+(defmacro c-lang-defvar (var val &optional doc)
+  "Declares the buffer local variable VAR to get the value VAL at mode
 initialization, at which point VAL is evaluated.  More accurately, VAL
 is evaluated and bound to VAR when the result from the macro
 `c-init-language-vars' is evaluated.
@@ -149,31 +149,31 @@ the evaluated constant value at compile time.
 
 This macro does not do any hidden buffer changes."
 
-    (when (and (not doc)
-	       (eq (car-safe val) 'c-lang-const)
-	       (eq (nth 1 val) var)
-	       (not (nth 2 val)))
-      ;; Special case: If there's no docstring and the value is a
-      ;; simple (c-lang-const foo) where foo is the same name as VAR
-      ;; then take the docstring from the language constant foo.
-      (setq doc (get (intern (symbol-name (nth 1 val)) c-lang-constants)
-		     'variable-documentation)))
-    (or (stringp doc)
-	(setq doc nil))
+  (when (and (not doc)
+	     (eq (car-safe val) 'c-lang-const)
+	     (eq (nth 1 val) var)
+	     (not (nth 2 val)))
+    ;; Special case: If there's no docstring and the value is a
+    ;; simple (c-lang-const foo) where foo is the same name as VAR
+    ;; then take the docstring from the language constant foo.
+    (setq doc (get (intern (symbol-name (nth 1 val)) c-lang-constants)
+		   'variable-documentation)))
+  (or (stringp doc)
+      (setq doc nil))
 
-    (let ((elem (assq var (cdr c-lang-variable-inits))))
-      (if elem
-	  (setcdr elem (list val doc))
-	(setcdr c-lang-variable-inits-tail (list (list var val doc)))
-	(setq c-lang-variable-inits-tail (cdr c-lang-variable-inits-tail))))
+  (let ((elem (assq var (cdr c-lang-variable-inits))))
+    (if elem
+	(setcdr elem (list val doc))
+      (setcdr c-lang-variable-inits-tail (list (list var val doc)))
+      (setq c-lang-variable-inits-tail (cdr c-lang-variable-inits-tail))))
 
-    ;; Return the symbol, like the other def* forms.
-    `',var)
+  ;; Return the symbol, like the other def* forms.
+  `',var)
 
-  (put 'c-lang-defvar 'lisp-indent-function 'defun)
-  (eval-after-load "edebug"
-    '(def-edebug-spec c-lang-defvar
-       (&define name def-form &optional stringp))))
+(put 'c-lang-defvar 'lisp-indent-function 'defun)
+(eval-after-load "edebug"
+  '(def-edebug-spec c-lang-defvar
+     (&define name def-form &optional stringp)))
 
 
 ;;; Various mode specific values that aren't language related.
@@ -1573,11 +1573,9 @@ Note that Java specific rules are currently applied to tell this from
 
 ;; Note: No `*-kwds' language constants may be defined below this point.
 
-(cc-eval-when-compile
+(eval-and-compile
   (defconst c-kwds-lang-consts
     ;; List of all the language constants that contain keyword lists.
-    ;; It only exists at compile time and should only be used inside
-    ;; `c-defconst-eval-immediately'.
     (let (list)
       (mapatoms (lambda (sym)
 		  (when (and (boundp sym)

@@ -756,34 +756,33 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	font-lock-reference-face
 	font-lock-keyword-face))
 
-(cc-eval-when-compile
-  ;; Macro used inside `c-font-lock-declarations'.  It ought to be a
-  ;; defsubst or perhaps even a defun, but it contains lots of free
-  ;; variables that refer to things inside `c-font-lock-declarations'.
-  (defmacro c-fl-shift-type-backward ()
-    ;; `c-font-lock-declarations' can consume an arbitrary length list
-    ;; of types when parsing a declaration, which means that it
-    ;; sometimes consumes the identifier in the declaration as a type.
-    ;; This is used to "backtrack" and make the last type be treated
-    ;; as an identifier instead.
-    '(setq identifier-type at-type
-	   identifier-start type-start
-	   identifier-end type-end
-	   at-type (if (eq prev-at-type 'prefix)
-		       t
-		     prev-at-type)
-	   type-start (if prev-at-type
-			  prev-type-start
-			start-pos)
-	   type-end (if prev-at-type
-			prev-type-end
+;; Macro used inside `c-font-lock-declarations'.  It ought to be a
+;; defsubst or perhaps even a defun, but it contains lots of free
+;; variables that refer to things inside `c-font-lock-declarations'.
+(defmacro c-fl-shift-type-backward ()
+  ;; `c-font-lock-declarations' can consume an arbitrary length list
+  ;; of types when parsing a declaration, which means that it
+  ;; sometimes consumes the identifier in the declaration as a type.
+  ;; This is used to "backtrack" and make the last type be treated
+  ;; as an identifier instead.
+  '(setq identifier-type at-type
+	 identifier-start type-start
+	 identifier-end type-end
+	 at-type (if (eq prev-at-type 'prefix)
+		     t
+		   prev-at-type)
+	 type-start (if prev-at-type
+			prev-type-start
 		      start-pos)
-	   start type-end
-	   prev-at-type nil
-	   got-parens nil
-	   got-identifier t
-	   got-suffix t
-	   paren-depth 0)))
+	 type-end (if prev-at-type
+		      prev-type-end
+		    start-pos)
+	 start type-end
+	 prev-at-type nil
+	 got-parens nil
+	 got-identifier t
+	 got-suffix t
+	 paren-depth 0))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
