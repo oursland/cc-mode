@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.230 $
-;; Last Modified:   $Date: 1995-07-20 19:57:39 $
+;; Version:         $Revision: 4.231 $
+;; Last Modified:   $Date: 1995-07-20 20:13:42 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-20 19:57:39 $|$Revision: 4.230 $|
+;; |$Date: 1995-07-20 20:13:42 $|$Revision: 4.231 $|
 
 ;;; Code:
 
@@ -3529,7 +3529,19 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ((save-excursion
 		(goto-char indent-point)
 		(skip-chars-forward " \t{")
-		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
+		;; TBD: watch out! there could be a bogus
+		;; c-state-cache in place when we get here.  we have
+		;; to go through much chicanery to ignore the cache.
+		;; But of course, there may not be!  BLECH!  BOGUS!
+		(let ((decl
+		       (if (boundp 'c-state-cache)
+			   (let ((old-cache c-state-cache))
+			     (prog2
+				 (makunbound 'c-state-cache)
+				 (c-search-uplist-for-classkey (c-parse-state))
+			       (setq c-state-cache old-cache)))
+			 (c-search-uplist-for-classkey (c-parse-state))
+			 )))
 		  (and decl
 		       (setq placeholder (aref decl 0)))
 		  ))
@@ -4499,7 +4511,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.230 $"
+(defconst c-version "$Revision: 4.231 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
