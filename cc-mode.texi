@@ -27,8 +27,6 @@
 @comment FIXME: Look over the performance issues chapter.
 @comment FIXME: Document c-require-final-newline.
 
-@comment FIXME: Font locking, c-doc-comment-style.
-
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment %**start of header (This is for running Texinfo on a region)
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -119,10 +117,10 @@ CC Mode
 
 @ccmode{} is a GNU Emacs mode for editing files containing C, C++,
 Objective-C, Java, CORBA IDL (and the variants PSDL and CIDL), and Pike
-code.  It provides syntax-based indentation and has several handy
-commands and some minor modes to make the editing easier.  Note that
-@ccmode{} does @emph{not} provide font-locking; there are other Emacs
-packages for that.
+code.  It provides syntax-based indentation, font locking, and has
+several handy commands and some minor modes to make the editing easier.
+It does not provide tools to look up and navigate between functions,
+classes etc - there are other packages for that.
 @end ifinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -139,6 +137,7 @@ packages for that.
 * Customizing Indentation::
 * Syntactic Symbols::
 * Indentation Functions::
+* Font Locking::
 * Performance Issues::
 * Limitations and Known Bugs::
 * Frequently Asked Questions::
@@ -219,12 +218,10 @@ C++, Objective-C, Java, CORBA IDL (and the variants CORBA PSDL and
 CIDL), and Pike code.  This incarnation of the mode is descended from
 @file{c-mode.el} (also called ``Boring Old C Mode'' or BOCM @t{:-)}, and
 @file{c++-mode.el} version 2, which Barry has been maintaining since
-1992.  @ccmode{} represents a significant milestone in the mode's life.
-It has been fully merged back with Emacs 19's @file{c-mode.el}. Also a
-new, more intuitive and flexible mechanism for controlling indentation
-has been developed.  Late in 1997, Martin joined the @ccmode{}
-Maintainers Team, and implemented the Pike support.  As of 2000 Martin
-has taken over as the sole maintainer.
+1992.  Late in 1997, Martin joined the @ccmode{} Maintainers Team, and
+implemented the Pike support.  As of 2000 Martin has taken over as the
+sole maintainer.  @ccmode{} did not originally contain the font lock
+support for its languages.  That was added in version 5.30.
 
 This manual describes @ccmode{}
 @comment The following line must appear on its own, so that the automated
@@ -237,10 +234,8 @@ Stroustrup.} C++, Objective-C, Java, CORBA's Interface Definition
 Language, and Pike@footnote{A C-like scripting language with its roots
 in the LPC language used in some MUD engines.  See
 @uref{http://pike.ida.liu.se/}.} files.  In this way, you can easily set
-up consistent coding styles for use in editing all of these languages.
-@ccmode{} does @emph{not} handle font-locking (a.k.a. syntax coloring,
-keyword highlighting) or anything of that nature, for any of these
-modes.  Font-locking is handled by other Emacs packages.
+up consistent font locking and coding styles for use in editing all of
+these languages.
 
 This manual will describe the following:
 
@@ -248,9 +243,9 @@ This manual will describe the following:
 @item
 How to get started using @ccmode{}.
 @item
-How the new indentation engine works.
+How the indentation engine works.
 @item
-How to customize the new indentation engine.
+How to customize the indentation engine.
 @end itemize
 
 @findex c-mode
@@ -263,9 +258,7 @@ Note that the name of this package is ``@ccmode{}'', but there is no top
 level @code{cc-mode} entry point.  All of the variables, commands, and
 functions in @ccmode{} are prefixed with @code{c-@var{thing}}, and
 @code{c-mode}, @code{c++-mode}, @code{objc-mode}, @code{java-mode},
-@code{idl-mode}, and @code{pike-mode} entry points are provided.  This
-package is intended to be a replacement for @file{c-mode.el} and
-@file{c++-mode.el}.
+@code{idl-mode}, and @code{pike-mode} entry points are provided.
 
 @cindex @file{cc-compat.el} file
 This distribution also contains a file
@@ -273,8 +266,8 @@ called @file{cc-compat.el} which should ease your transition from BOCM
 to @ccmode{}.  If you have a BOCM configuration you are really happy
 with, and want to postpone learning how to configure @ccmode{}, take a
 look at that file.  It maps BOCM configuration variables to @ccmode{}'s
-new indentation model.  It is not actively supported so for the long
-run, you should learn how to customize @ccmode{} to support your coding
+indentation model.  It is not actively supported so for the long run,
+you should learn how to customize @ccmode{} to support your coding
 style.
 
 A special word of thanks goes to Krishna Padmasola for his work in
@@ -299,11 +292,6 @@ with older versions of Emacs or XEmacs.  See the @ccmode{} release notes
 at @uref{http://cc-mode.sourceforge.net} for the latest information on
 Emacs version and package compatibility (@pxref{Getting the Latest CC
 Mode Release}).
-
-@cindex @file{cc-mode-18.el} file
-@emph{Note that @ccmode{} no longer
-works with Emacs 18!}, so if you haven't upgraded from Emacs 18 by now,
-you are out of luck.
 
 @deffn Command c-version
 @findex version (c-)
@@ -2207,18 +2195,19 @@ precisely controlled way by using styles and hook functions.
 
 The simplest way of customizing @ccmode{} permanently is to set the
 variables in your @file{.emacs} with @code{setq} and similar commands.
-So to make the setting of @code{substatement-open} permanent, add this
-to the @file{.emacs} file:
-@comment FIXME: Replace this with (setq c-offsets-alist ...)?
+So to make a permanent setting of @code{substatement-open} to 0, add
+this to the @file{.emacs} file:
 
 @example
-(require 'cc-mode)
-(c-set-offset 'substatement-open 0)
+@group
+(setq c-basic-offset
+      '((substatement-open . 0)))
+@end group
 @end example
 
-The @code{require} line is only needed once in the beginning to make
-sure @ccmode{} is loaded so that the @code{c-set-offset} function is
-defined.
+When @ccmode{} initializes a buffer, it will fill out
+@code{c-basic-offset} with the remaining syntactic symbols according to
+the style system.
 
 You can also use the more user friendly Customization interface, but
 this manual does not cover how that works.
@@ -3727,7 +3716,7 @@ syntax.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Functions, Performance Issues, Syntactic Symbols, Top
+@node    Indentation Functions, Font Locking, Syntactic Symbols, Top
 @comment node-name, next, previous, up
 @chapter Indentation Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4508,11 +4497,125 @@ In the first case the indentation is kept unchanged, in the second
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Performance Issues, Limitations and Known Bugs, Indentation Functions, Top
+@node    Font Locking, Performance Issues, Indentation Functions, Top
+@comment node-name, next, previous, up
+@chapter Font Locking
+@cindex font locking
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@cindex Font Lock mode
+
+@ccmode{} provides font locking for its supported languages by supplying
+patterns for use with Font Lock mode.  This means that you get distinct
+faces on the various syntactic parts such as comments, strings, keywords
+and types, which gives a big help in telling them apart at a glance and
+discovering syntactic errors.  @xref{Font Lock,,, emacs, The Emacs
+Editor}, for ways to enable font locking in @ccmode{} buffers.
+
+The font locking for most of the @ccmode{} languages were provided
+directly by the Font Lock package prior to version 5.30 of @ccmode{}.
+In the transition to @ccmode{} the patterns have been reworked
+completely and are applied uniformly across all the languages, just like
+the indentation rules (although each language still has some
+pecularities of its own, of course).  Since the languages previously had
+completely separate font locking patterns, this means that it's a bit
+different in most languages now.
+
+@cindex faces
+@vindex c-invalid-face
+@vindex invalid-face (c-)
+
+The standard faces for programming languages are used accordingly.
+@ccmode{} does not currently provide any extra faces, with the exception
+of a replacement face @code{c-invalid-face} for emacsen that doesn't
+provide @code{font-lock-warning-face}.
+
+The main goal for the font locking in @ccmode{} is accurancy, to provide
+a dependable aid in recognizing the various constructs.  Some, like
+strings and comments, are easy to recognize while others like
+declarations and types can be very tricky.  @ccmode{} can go to great
+lengths to recognize declarations and casts correctly, especially when
+the types aren't recognized by standard patterns.  This is a fairly
+demanding analysis which can be slow on older hardware, and it can
+therefore be disabled by choosing a lower decoration level with the
+variable @code{font-lock-maximum-decoration}.
+
+@vindex font-lock-maximum-decoration
+
+All modes utilize the decoration levels as follows:
+
+@enumerate
+@comment 1
+@item
+Minimal font locking: Fontify only comments, strings and cpp directives
+(in the languages that uses cpp).
+
+@comment 2
+@item
+Fast normal font locking: In addition to level 1, fontify keywords,
+simple types and declarations that are easy to recognize.  The variables
+@code{*-font-lock-extra-types} (where @samp{*} is the name of the
+language) are used to recognize types (see below).  Documentation
+comments like Javadoc are fontified according to
+@code{c-doc-comment-style}.
+
+Use this if you think the font locking is too slow.  It's the closest
+corresponding level to level 3 in the old font lock patterns.
+
+@comment 3
+@item
+Accurate normal font locking: Like level 2 but uses a different approach
+that can recognize types and declarations much more accurately.  The
+@code{*-font-lock-extra-types} variables are still used, but other types
+are recognized correctly anyway in most cases.  Therefore those
+variables should be fairly restrictive and not contain patterns that are
+uncertain.
+
+@cindex Lazy Lock mode
+@cindex Just-in-time Lock mode
+
+This level is designed for fairly modern hardware and a font lock
+support mode like Lazy Lock or Just-in-time Lock mode that only
+fontifies the parts that are actually shown.
+@end enumerate
+
+@defopt c-font-lock-extra-types
+@defoptx c++-font-lock-extra-types
+@defoptx objc-font-lock-extra-types
+@defoptx java-font-lock-extra-types
+@defoptx idl-font-lock-extra-types
+@defoptx pike-font-lock-extra-types
+For each language there's a variable @code{*-font-lock-extra-types},
+where @samp{*} stands for the language in question, e.g. @samp{c},
+@samp{objc}, etc.  It contains a list of regexps that matches
+identifiers that should be recognized as types, e.g. @samp{\\sw+_t} to
+recognize all identifiers ending with @samp{_t} as is customary in C
+code.  Each regexp should not match more than a single identifier.
+
+The default values contain regexps for many types in standard runtime
+libraries that are otherwise difficult to recognize, and patterns for
+standard type naming conventions like the @samp{_t} suffix in C and C++
+and that classes always begin with capital letters in Java, Objective-C
+and Pike.
+@end defopt
+
+@cindex Javadoc markup
+@cindex Pike autodoc markup
+
+@defopt c-doc-comment-style
+@vindex doc-comment-style (c-)
+FIXME
+@end defopt
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Performance Issues, Limitations and Known Bugs, Font Locking, Top
 @comment node-name, next, previous, up
 @chapter Performance Issues
 @cindex performance
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@comment FIXME: Update this.
 
 C and its derivative languages are highly complex creatures.  Often,
 ambiguous code situations arise that require @ccmode{} to scan
@@ -4561,19 +4664,18 @@ for every line you indent, so you're probably screwed either way!
 @vindex enable-xemacs-performance-kludge-p (c-)
 Another alternative for XEmacs users is to set the variable
 @code{c-enable-xemacs-performance-kludge-p} to non-@code{nil}.  This
-tells @ccmode{} to use XEmacs-specific built-in functions which, in
-some circumstances, can locate the top-most opening brace much quicker
-than @code{beginning-of-defun}.  Preliminary testing has shown that
-for styles where these braces are hung (e.g. most JDK-derived Java
-styles), this hack can improve performance of the core syntax parsing
-routines from 3 to 60 times.  However, for styles which @emph{do}
-conform to Emacs' recommended style of putting top-level braces in
-column zero, this hack can degrade performance by about as much.  Thus
-this variable is set to @code{nil} by default, since the
-Emacs-friendly styles should be more common (and encouraged!).  Note
-that this variable has no effect in Emacs since the necessary built-in
-functions don't exist (in Emacs 20.2 or 20.3 as of this writing
-27-Apr-1998).
+tells @ccmode{} to use XEmacs-specific built-in functions which, in some
+circumstances, can locate the top-most opening brace much quicker than
+@code{beginning-of-defun}.  Preliminary testing has shown that for
+styles where these braces are hung (e.g. most JDK-derived Java styles),
+this hack can improve performance of the core syntax parsing routines
+from 3 to 60 times.  However, for styles which @emph{do} conform to
+Emacs' recommended style of putting top-level braces in column zero,
+this hack can degrade performance by about as much.  Thus this variable
+is set to @code{nil} by default, since the Emacs-friendly styles
+should be more common (and encouraged!).  Note that this variable has no
+effect in Emacs since the necessary built-in functions don't exist (in
+Emacs 21.3 as of this writing in May 2003).
 
 You will probably notice pathological behavior from @ccmode{} when
 working in files containing large amounts of C preprocessor macros.
