@@ -406,6 +406,40 @@ continuations."
     (if (< (point) start)
 	(goto-char (point-max)))))
 
+(defsubst c-clear-char-syntax (pos)
+  ;; Remove any syntax-table property at POS.
+  (when (get-text-property pos 'syntax-table)
+    (remove-text-properties pos (1+ pos) '(syntax-table nil))
+    (put-text-property pos (1+ pos) 'rear-nonsticky
+		       (delq 'syntax-table
+			     (get-text-property pos 'rear-nonsticky)))))
+
+(defconst c-template-open-syntax '(4 . ?>))
+
+(defsubst c-mark-template-open (pos)
+  ;; Mark the '<' at POS as a C++ template opener using the
+  ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
+  ;; doesn't support syntax properties, so this function might not
+  ;; have any effect.
+  (put-text-property pos (1+ pos) 'syntax-table c-template-open-syntax)
+  (let ((nonsticky-prop (get-text-property pos 'rear-nonsticky)))
+    (or (memq 'syntax-table nonsticky-prop)
+	(put-text-property pos (1+ pos) 'rear-nonsticky
+			   (cons 'syntax-table nonsticky-prop)))))
+
+(defconst c-template-close-syntax '(5 . ?<))
+
+(defsubst c-mark-template-close (pos)
+  ;; Mark the '>' at POS as a C++ template closer using the
+  ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
+  ;; doesn't support syntax properties, so this function might not
+  ;; have any effect.
+  (put-text-property pos (1+ pos) 'syntax-table c-template-close-syntax)
+  (let ((nonsticky-prop (get-text-property pos 'rear-nonsticky)))
+    (or (memq 'syntax-table nonsticky-prop)
+	(put-text-property pos (1+ pos) 'rear-nonsticky
+			   (cons 'syntax-table nonsticky-prop)))))
+
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
   ;; in LIST.  Uses assq.
@@ -476,6 +510,19 @@ continuations."
   ;; about anywhere else) without providing a predicate that tests
   ;; face names.
   (memq facename (face-list)))
+
+(defsubst c-fontify-type (from to)
+  ;; Put the face `font-lock-type-face' on the given region.  Does not
+  ;; clobber match-data.
+  (put-text-property from to 'face 'font-lock-type-face))
+
+(cc-bytecomp-defvar font-lock-reference-face)
+
+(defsubst c-fontify-reference (from to)
+  ;; Put the face `font-lock-reference-face' on the given region.
+  ;; Does not clobber match-data.  Note that the face is a variable
+  ;; that is dereferenced, since it's an alias in Emacs.
+  (put-text-property from to 'face font-lock-reference-face))
 
 
 (cc-provide 'cc-defs)
