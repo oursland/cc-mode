@@ -1758,14 +1758,15 @@
 	      (c-add-syntax 'brace-list-intro (c-point 'boi))
 	      )
 	     ;;))		; end CASE 9B
-	     ;; CASE 9C: this is just a later brace-list-entry
+	     ;; CASE 9C: this is just a later brace-list-entry or
+	     ;; brace-entry-open 
 	     (t (if (or (eq char-after-ip ?{)
 			(and c-special-brace-lists
 			     (save-excursion
 			       (goto-char indent-point)
 			       (c-forward-syntactic-ws (c-point 'eol))
 			       (c-looking-at-special-brace-list (point)))))
-		    (c-add-syntax 'brace-list-open (point))
+		    (c-add-syntax 'brace-entry-open (point))
 		  (c-add-syntax 'brace-list-entry (point))
 		  ))			; end CASE 9C
 	     )))			; end CASE 9
