@@ -583,7 +583,7 @@ this variable to nil."
   :type 'integer
   :group 'c)
 
-(defcustom c-default-style "gnu"
+(defcustom c-default-style '((java-mode . "java") (other . "gnu"))
   "*Style which gets installed by default when a file is visited.
 
 The value of this variable can be any style defined in
@@ -591,8 +591,7 @@ The value of this variable can be any style defined in
 association list of major mode symbols to style names.
 
 When the value is a string, all CC Mode major modes will install this
-style by default, except `java-mode', which always installs the
-\"java\" style (this is for backwards compatibility).
+style by default.
 
 When the value is an alist, the major mode symbol is looked up in it
 and the associated style is installed.  If the major mode is not
@@ -602,12 +601,9 @@ the alist, then \"gnu\" style is used.
 
 The default style gets installed before your mode hooks run, so you
 can always override the use of `c-default-style' by making calls to
-`c-set-style' in the appropriate mode hook.
-
-Tip: If you use different styles in different languages, you probably
-want to set `c-style-variables-are-local-p'."
+`c-set-style' in the appropriate mode hook."
   :type '(radio
-	  (string :tag "Style in all modes (except Java)")
+	  (string :tag "Style in all modes")
 	  (set :tag "Mode-specific styles"
 	    (cons :format "%v"
 		  (const :format "C     " c-mode) (string :format "%v"))

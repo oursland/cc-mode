@@ -307,9 +307,7 @@
 	comment-multi-line t)
   ;; now set the mode style based on c-default-style
   (let ((style (if (stringp c-default-style)
-		   (if (c-major-mode-is 'java-mode)
-		       "java"
-		     c-default-style)
+		   c-default-style
 		 (or (cdr (assq major-mode c-default-style))
 		     (cdr (assq 'other c-default-style))
 		     "gnu"))))
