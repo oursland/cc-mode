@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-10 16:35:14 $
-;; Version:         $Revision: 2.144 $
+;; Last Modified:   $Date: 1992-07-10 16:50:46 $
+;; Version:         $Revision: 2.145 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-10 16:35:14 $|$Revision: 2.144 $|
+;; |$Date: 1992-07-10 16:50:46 $|$Revision: 2.145 $|
 
 
 ;; ======================================================================
@@ -251,7 +251,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.144 $
+  "Major mode for editing C++ code.  $Revision: 2.145 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -638,7 +638,7 @@ backward-delete-char-untabify."
 	  ;; try to clean up empty defun braces if conditions apply
 	  (let ((here (point-marker)))
 	    (and (memq 'empty-defun-braces c++-cleanup-list)
-		 (c++-at-top-level-p)
+		 (c++-at-top-level-p t)
 		 c++-auto-newline
 		 (= last-command-char ?\})
 		 (progn (forward-char -1)
@@ -1942,7 +1942,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.144 $"
+(defconst c++-version "$Revision: 2.145 $"
   "c++-mode version number.")
 
 (defun c++-version ()
