@@ -405,26 +405,24 @@ same format as `c-default-style'."
 	outline-regexp "[^#\n\^M]"
 	outline-level 'c-outline-level)
 
-  (let ((mode-prefix (and (string-match "^[^-]*-" (symbol-name mode))
-			  (match-string 0 (symbol-name mode)))))
-    ;; This is not the recommended way to initialize font-lock in
-    ;; XEmacs, but it works.
-    (make-local-variable 'font-lock-defaults)
-    (setq font-lock-defaults
-	  `(,(mapcan
-	      (lambda (keywords-name)
-		(let ((sym (intern (concat mode-prefix keywords-name))))
-		  (if (boundp sym)
-		      (list sym))))
-	      '("font-lock-keywords" "font-lock-keywords-1"
-		"font-lock-keywords-2" "font-lock-keywords-3"
-		"font-lock-keywords-4"))
-	    nil nil ((?_ . "w") (?$ . "w")) c-beginning-of-syntax
-	    (font-lock-syntactic-face-function
-	     ;; This variable doesn't exist in older (X)Emacsen.
-	     . c-font-lock-syntactic-face-function)
-	    (font-lock-mark-block-function
-	     . c-mark-function)))))
+  ;; This is not the recommended way to initialize font-lock in
+  ;; XEmacs, but it works.
+  (make-local-variable 'font-lock-defaults)
+  (setq font-lock-defaults
+	`(,(mapcan
+	    (lambda (keywords-name)
+	      (let ((sym (c-mode-symbol keywords-name)))
+		(if (boundp sym)
+		    (list sym))))
+	    '("font-lock-keywords" "font-lock-keywords-1"
+	      "font-lock-keywords-2" "font-lock-keywords-3"
+	      "font-lock-keywords-4"))
+	  nil nil ((?_ . "w") (?$ . "w")) c-beginning-of-syntax
+	  (font-lock-syntactic-face-function
+	   ;; This variable doesn't exist in older (X)Emacsen.
+	   . c-font-lock-syntactic-face-function)
+	  (font-lock-mark-block-function
+	   . c-mark-function))))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables in CC Mode.
