@@ -2778,19 +2778,20 @@ need for `pike-font-lock-extra-types'.")
 	       ,(concat
 		 "\\<"
 		 (c-regexp-opt
-		  '("and" "asort" "atan2" "bindtextdomain" "close" "compl"
-		    "cos" "ctime" "dcgettext" "exp" "extension" "fflush"
+		  '("adump" "and" "asort" "atan2" "bindtextdomain" "close"
+                    "compl" "cos" "dcgettext" "exp" "extension" "fflush"
                     "gensub" "gsub" "index" "int" "length" "log" "lshift"
                     "match" "mktime" "or" "print" "printf" "rand" "rshift"
-                    "sin" "split" "sprintf" "sqrt" "srand" "strftime"
-                    "strtonum" "sub" "substr"  "system" "systime" "time"
+                    "sin" "split" "sprintf" "sqrt" "srand" "stopme"
+                    "strftime" "strtonum" "sub" "substr"  "system" "systime"
                     "tolower" "toupper" "xor") t)
 		 "\\>")
 	       0 c-preprocessor-face-name))
 
      ;; gawk debugging keywords.  (acm, 2002/7/21)
-     (list (concat "\\<" (c-regexp-opt '("adump" "stopme") t) "\\>")
-	   0 'font-lock-warning-face)
+     ;; (Removed, 2003/6/6.  These functions are now fontified as built-ins)
+;;      (list (concat "\\<" (c-regexp-opt '("adump" "stopme") t) "\\>")
+;; 	   0 'font-lock-warning-face)
 
      ;; User defined functions with an apparent spurious space before the
      ;; opening parenthesis.  acm, 2002/5/30.
