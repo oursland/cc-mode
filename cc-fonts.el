@@ -667,9 +667,9 @@
 			   "[ \t\n\r]+"
 			   (c-lang-var c-symbol-key))
 		   (+ (c-regexp-opt-depth prefix-re) 3)
-		   '(progn (goto-char (match-end 2))
+		   '(progn (goto-char (match-end 3))
 			   (c-forward-syntactic-ws))
-		   '(goto-char (match-end 2)))))))
+		   '(goto-char (match-end 3)))))))
 	))
 
 (c-lang-defconst c-complex-decl-matchers
