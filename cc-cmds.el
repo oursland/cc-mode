@@ -1551,8 +1551,14 @@ function does not require the declaration to contain a brace block."
   (save-match-data
     (let* ((here (point))
 	   (lit-type (c-literal-type range))
-	   (end (- (cdr range) (if (eq lit-type 'c) 2 1))) ; END is the latest position in the comment
-
+	   (end (if (eq lit-type 'c)
+		    (if (and (eq (char-before (point-max)) ?/)
+			     (eq (char-before (1- (point-max))) ?*))
+			(- (cdr range) 2)
+		      (point-max))
+		  (if (eq (cdr range) (point-max))
+		      (point-max)
+		    (- (cdr range) 1))))
 	   (par-end	; EOL position of last text in current/next paragraph.
 	    (save-excursion
 	      (save-restriction
@@ -1728,7 +1734,6 @@ function does not require the declaration to contain a brace block."
   ;; by BACKWARDS-FLAG, return a cons of its start.end positions.  Otherwise
   ;; return NIL.
   (save-excursion
-    ;; Find the comment string next to point if we're not in one.
     (c-collect-line-comments
      (let (pos)
       (if backwards-flag
@@ -1741,7 +1746,8 @@ function does not require the declaration to contain a brace block."
 		      (cons (point) pos))))
 	(c-skip-ws-forward)
 	(if (eq (char-after) ?\")
-	    (cons (point) (progn (c-forward-sexp 1) (point)))
+	    (cons (point) (or (c-safe (progn (c-forward-sexp 1) (point)))
+			      (point-max)))
 	  (setq pos (point))
 	  (if (c-forward-single-comment)
 	      (cons pos (point)))))))))
@@ -2029,7 +2035,7 @@ be more \"DWIM:ey\"."
 		; statement boundary, T otherwise.
 	   ((if (< count 0) (eobp) (bobp))
 	    (setq count 0)
-	    t)
+	    nil)
 
 	   (range
 	    (cond
