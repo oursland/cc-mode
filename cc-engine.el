@@ -1904,7 +1904,13 @@ brace."
 		     (not (eq char-before-ip ?,)))
 		 (memq char-after-ip '(?\) ?\])))
 	    (goto-char containing-sexp)
-	    (c-add-syntax 'arglist-close (c-point 'boi)))
+	    (setq placeholder (c-point 'boi))
+	    (when (and (c-safe (backward-up-list 1) t)
+		       (> (point) placeholder))
+	      (forward-char)
+	      (skip-chars-forward " \t")
+	      (setq placeholder (point)))
+	    (c-add-syntax 'arglist-close placeholder))
 	   ;; CASE 7B: Looking at the opening brace of an
 	   ;; in-expression block or brace list.
 	   ((eq char-after-ip ?{)
@@ -1923,7 +1929,13 @@ brace."
 	   ;; looking at a close paren or bracket.
 	   ((memq char-before-ip '(?\( ?\[))
 	    (goto-char containing-sexp)
-	    (c-add-syntax 'arglist-intro (c-point 'boi)))
+	    (setq placeholder (c-point 'boi))
+	    (when (and (c-safe (backward-up-list 1) t)
+		       (> (point) placeholder))
+	      (forward-char)
+	      (skip-chars-forward " \t")
+	      (setq placeholder (point)))
+	    (c-add-syntax 'arglist-intro placeholder))
 	   ;; CASE 7D: we are inside a conditional test clause. treat
 	   ;; these things as statements
 	   ((save-excursion
@@ -1962,7 +1974,13 @@ brace."
 		   (skip-chars-backward " \t([")
 		   (<= (point) containing-sexp)))
 	    (goto-char containing-sexp)
-	    (c-add-syntax 'arglist-cont-nonempty (c-point 'boi)))
+	    (setq placeholder (c-point 'boi))
+	    (when (and (c-safe (backward-up-list 1) t)
+		       (> (point) placeholder))
+	      (forward-char)
+	      (skip-chars-forward " \t")
+	      (setq placeholder (point)))
+	    (c-add-syntax 'arglist-cont-nonempty placeholder))
 	   ;; CASE 7G: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (c-beginning-of-statement-1 containing-sexp)
