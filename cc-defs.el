@@ -187,25 +187,6 @@
      (if relpos-tmp (setq syntactic-relpos relpos-tmp))
      (setq syntax (cons (cons ,symbol relpos-tmp) syntax))))
 
-(defmacro c-add-class-syntax (symbol classkey)
-  ;; The inclass and class-close syntactic symbols are added in
-  ;; several places and some work is needed to fix everything.
-  ;; Therefore it's collected here.  This is a macro mostly because
-  ;; c-add-syntax doesn't work otherwise.
-  `(save-restriction
-     (widen)
-     (let ((symbol ,symbol)
-	   (classkey ,classkey)
-	   inexpr)
-       (goto-char (aref classkey 1))
-       (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
-	   (c-add-syntax symbol (point))
-	 (c-add-syntax symbol (aref classkey 0))
-	 (if (and c-inexpr-class-key
-		  (setq inexpr (c-looking-at-inexpr-block))
-		  (/= (cdr inexpr) (c-point 'boi (cdr inexpr))))
-	     (c-add-syntax 'inexpr-class))))))
-
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
