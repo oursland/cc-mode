@@ -1,3 +1,5 @@
+;; Version: 5.13
+
 (setq path-to-the-custom-library
       ;; In Emacs 19.34, change the following line to the directory
       ;; that contains Per's new custom library, which you should have
