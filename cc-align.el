@@ -137,6 +137,27 @@
 	(c-forward-syntactic-ws)
 	(- (current-column) cs-curcol)))))
 
+(defun c-lineup-java-throws (langelem)
+  ;; lineup func-decl-cont's in Java which are continuations of throws
+  ;; declarations.  If `throws' starts the previous line, line up to
+  ;; just after that keyword.  If not, lineup under the previous line.
+  (save-excursion
+    (let ((here (point))
+	  (iopl (c-point 'iopl))
+	  (cs-curcol (progn (goto-char (cdr langelem))
+			    (current-column))))
+      (goto-char iopl)
+      (cond
+       ((= (point) (cdr langelem)) c-basic-offset)
+       ((and (looking-at "throws[ \t\n]")
+	       (progn (forward-word 1)
+		      (skip-chars-forward " \t")
+		      (not (eolp))))
+	(- (current-column) cs-curcol))
+       (t (goto-char iopl)
+	  (- (current-column) cs-curcol))
+       ))))
+
 (defun c-lineup-C-comments (langelem)
   ;; line up C block comment continuation lines
   (save-excursion
