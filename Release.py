@@ -1,102 +1,90 @@
-#! /home/bwarsaw/bin/perl
-#
-# Perl script to support public releases of cc-mode
-# $Id: Release.py,v 1.4 1997-04-23 02:56:35 bwarsaw Exp $
-#
+#! /usr/bin/env python
 
-# parse command line options
-$Symname = 1;
+"""Bump version number and tag for next release.
+"""
 
-while ($_ = $ARGV[0], /^-/) {
-    shift;
-    /^-nosymname$/ && ($Symname=0, next);
-    /^-(h(elp)?)|\?$/ && ($HelpP++, next);
-
-    # error
-    $ErrorP++;
-    print STDERR "Illegal switch: $_\n";
-}
-if ($HelpP || $ErrorP) {
-    print STDERR "Usage: $0",
-    "\n\t-nosymname : do not assign a symbolic name to this branch.",
-    "\n\t-help      : print this message.",
-    "\n";
-
-    exit ($ErrorP ? $ErrorP : 0);
-}
+import os
+import string
+import regex
 
 
-# constants
-@Lisp = ("cc-compat", "cc-mode", "cc-mode-18");
-@Text = ("ChangeLog", "DUMPING", "MANIFEST", "README");
-@Files = (grep(($_ .= ".el") && 1, @Lisp), @Text);
-$Main = "cc-mode.el";
-$Tarfile = "cc-mode-XXX.tar";
-$Release = "X--------------------->Full";
-$Compress = "gzip";
-$Tmpdir = "./tmp$$";
+RELEASE = '5.01'
+RELEASE_NAME = 'Release_' + string.translate(RELEASE,
+					     string.maketrans('.', '_'))
+						       
+version_cre = regex.compile(';*[ \t]+Version:[ \t]+\(5.[0-9]+\)')
+version_format = ';; Version:    %s\n'
 
+FILES = [
+    ('cc-align.el',    version_cre, version_format),
+    ('cc-auto.el',     version_cre, version_format),
+    ('cc-cmds.el',     version_cre, version_format),
+    ('cc-compat.el',   version_cre, version_format),
+    ('cc-engine.el',   version_cre, version_format),
+    ('cc-guess.el',    version_cre, version_format),
+    ('cc-langs.el',    version_cre, version_format),
+    ('cc-lobotomy.el', version_cre, version_format),
+    ('cc-menus.el',    version_cre, version_format),
+    ('cc-mode.el',     version_cre, version_format),
+    ('cc-styles.el',   version_cre, version_format),
+    ('cc-vars.el',     version_cre, version_format),
+    ('ANNOUNCEMENT',
+     regex.compile('CC Mode Version \(5.[0-9]+\)'),
+     'CC Mode Version %s\n'),
+    ('MANIFEST',
+     regex.compile('Manifest for CC Mode \(5.[0-9]+\)'),
+     'Manifest for CC Mode %s\n'),
+    ('README',
+     regex.compile('README for CC Mode \(5.[0-9]+\)'),
+     'README for CC Mode %s\n'),
+    ('Makefile', None, None),
+    ('cc-mode.texi',
+     regex.compile('@center @titlefont{CC Mode \(5.[0-9]+\)}'),
+     '@center @titlefont{CC Mode %s}\n'),
+    ]
 
-# Calculate the new version number
-$_ = (grep(/^head:/, `rlog -h $Main`))[0];
-die "Could not extract branch head from $Main.\n"
-    if ( ! $_ || ! /^head:\s*([0-9.]+)/);
+def bump_els():
+    bump = []
+    for f, cre, format in FILES:
+	if not cre or not format:
+	    bump.append((f, cre, format))
+	    continue
+	print 'checking:', f
+	fp = open(f, 'r')
+	while 1:
+	    line = fp.readline()
+	    if not line:
+		print 'file has no matching version line:', f
+		break
+	    if cre.match(line) >= 0:
+		version = cre.group(1)
+		if version <> RELEASE:
+		    bump.append((f, cre, format))
+		break
+	fp.close()
+    # now bump them
+    for f, cre, format in bump:
+	print 'bumping:', f
+	os.system('co -l ' + f)
+	if cre and format:
+	    fp_in = open(f, 'r')
+	    fp_out = open(f + '.new', 'w')
+	    matched = None
+	    while 1:
+		line = fp_in.readline()
+		if not line:
+		    break
+		if matched or cre.match(line) < 0:
+		    fp_out.write(line)
+		else:
+		    fp_out.write(format % RELEASE)
+		    matched = 1
+	    fp_in.close()
+	    fp_out.close()
+	    os.rename(f + '.new', f)
+	os.system('ci -f -m"Bumping to release revision %s" %s' % (RELEASE, f))
+	os.system('co -kv -u ' + f)
+	os.system('rcs -n%s: %s' % (RELEASE_NAME, f))
 
-$Revision = $1;
-$Tarfile =~ s/XXX/$Revision/;
-print "Using revision number $Revision and tarfile: $Tarfile\n";
-
-
-# Make sure files we're going to tar up are not RCS locked
-@Locks = `rlog -L -R -l @Files`;
-die "The following distribution files are still locked: @Locks\n"
-    if @Locks;
-
-
-if ($Symname) {
-    # set the symbol name for the branch heads of all the files.
-    ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
-
-    $Month = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
-	      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[$mon];
-
-    $Monthday = ($mday < 10 ? "0" : "") . "$mday";
-
-    $SymbolicRevname = "${Release}_$Monthday-$Month-$year";
-    print "Assigning symbolic revision name: $SymbolicRevname\n";
-    system("rcs -n\"$SymbolicRevname\": @Files")
-	&& die "Could not assign symbolic revision name. $!\n";
-}
-else {
-    print "Skipping assignment of symbolic revision name.\n";
-}
-
-
-# Now check out all files, unlocked, with keywords removed.  Create a
-# temporary directory and move the files to that directory.  We do
-# this because we're going to hack the permissions before they go into
-# the tar file.
-system("co -u -kv @Files") && die "co -u -kv @Files failed. $!\n";
-
-mkdir($Tmpdir, 750) || die "Could not make temporary directory: $Tmpdir\n";
-system("cp @Files $Tmpdir") && die "Could not copy files to: $Tmpdir\n";
-chdir($Tmpdir) || die "Could not change to directory: $Tmpdir\n";
-chmod(644, @Files) || die "Could not change modes\n";
-
-
-# Now tar them up and compress the tar file
-print "Tar'ing and ${Compress}'ing...\n";
-@Unlinkables = split("\n", `ls ${Tarfile}* | cat`);
-#print "@Unlinkables\n";
-unlink(@Unlinkables);
-
-system("tar cvf $Tarfile @Files") && die "Couldn't tar: $!\n";
-system("$Compress $Tarfile") && die "Couldn't $Compress: $!\n";
-system("mv ${Tarfile}* ..");
-
-# clean up temp files
-unlink(@Files);
-chdir("..") || die "Could not chdir to parent (..)\n";
-rmdir($Tmpdir) || die "Could not rmdir: $Tmpdir\n";
-
-print "Done.\n";
+if __name__ == '__main__':
+    bump_els()
