@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.368 $
-;; Last Modified:   $Date: 1997-02-13 17:28:31 $
+;; Version:         $Revision: 4.369 $
+;; Last Modified:   $Date: 1997-02-13 21:39:38 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2739,112 +2739,123 @@ comment."
 	;; between c-crosses-statement-barrier-p and
 	;; c-beginning-of-statement-1.  A better way should be
 	;; implemented.
-	maybe-labelp
+	maybe-labelp saved
 	(last-begin (point)))
-    (while (not donep)
-      ;; stop at beginning of buffer
-      (if (bobp) (setq donep t)
-	;; go backwards one balanced expression, but be careful of
-	;; unbalanced paren being reached
-	(if (not (c-safe (progn (backward-sexp 1) t)))
-	    (progn
-	      (if firstp
-		  (backward-up-list 1)
-		(goto-char last-begin))
-	      ;; skip over any unary operators, or other special
-	      ;; characters appearing at front of identifier
-	      (save-excursion
-		(c-backward-syntactic-ws lim)
-		(skip-chars-backward "-+!*&:.~ \t\n")
-		(if (= (preceding-char) ?\()
-		    (setq last-begin (point))))
-	      (goto-char last-begin)
-	      (setq last-begin (point)
-		    donep t)))
-
-	(setq maybe-labelp nil)
-	;; see if we're in a literal. if not, then this bufpos may be
-	;; a candidate for stopping
-	(cond
-	 ;; CASE 0: did we hit the error condition above?
-	 (donep)
-	 ;; CASE 1: are we in a literal?
-	 ((eq (c-in-literal lim) 'pound)
-	  (beginning-of-line))
-	 ;; CASE 2: some other kind of literal?
-	 ((c-in-literal lim))
-	 ;; CASE 3: are we looking at a conditional keyword?
-	 ((or (looking-at c-conditional-key)
-	      (and (= (following-char) ?\()
-		   (save-excursion
-		     (forward-sexp 1)
-		     (c-forward-syntactic-ws)
-		     (/= (following-char) ?\;))
-		   (let ((here (point))
-			 (foundp (progn
-				   (c-backward-syntactic-ws lim)
-				   (forward-word -1)
-				   (and lim
-					(<= lim (point))
-					(not (c-in-literal lim))
-					(looking-at c-conditional-key)
-					))))
-		     ;; did we find a conditional?
-		     (if (not foundp)
-			 (goto-char here))
-		     foundp)))
-	  ;; are we in the middle of an else-if clause?
-	  (if (save-excursion
-		(and (not substmt-p)
-		     (c-safe (progn (forward-sexp -1) t))
-		     (looking-at "\\<else\\>[ \t\n]+\\<if\\>")
-		     (not (c-in-literal lim))))
+    ;; first check for bare semicolon
+    (if (and (progn (c-backward-syntactic-ws lim)
+		    (= (preceding-char) ?\;))
+	     (c-safe (progn (forward-char -1)
+			    (setq saved (point))
+			    t))
+	     (progn (c-backward-syntactic-ws lim)
+		    (memq (preceding-char) '(?\; ?{ ?})))
+	     )
+	(setq last-begin saved)
+      (goto-char last-begin)
+      (while (not donep)
+	;; stop at beginning of buffer
+	(if (bobp) (setq donep t)
+	  ;; go backwards one balanced expression, but be careful of
+	  ;; unbalanced paren being reached
+	  (if (not (c-safe (progn (backward-sexp 1) t)))
 	      (progn
-		(forward-sexp -1)
-		(c-backward-to-start-of-if lim)))
-	  ;; are we sitting at an else clause, that we are not a
-	  ;; substatement of?
-	  (if (and (not substmt-p)
-		   (looking-at "\\<else\\>[^_]"))
-	      (c-backward-to-start-of-if lim))
-	  ;; are we sitting at the while of a do-while?
-	  (if (and (looking-at "\\<while\\>[^_]")
-		   (c-backward-to-start-of-do lim))
-	      (setq substmt-p nil))
-	  (setq last-begin (point)
-		donep substmt-p))
-	 ;; CASE 4: are we looking at a label?
-	 ((looking-at c-label-key))
-	 ;; CASE 5: is this the first time we're checking?
-	 (firstp (setq firstp nil
-		       substmt-p (not (c-crosses-statement-barrier-p
-				       (point) last-begin))
-		       last-begin (point)))
-	 ;; CASE 6: have we crossed a statement barrier?
-	 ((c-crosses-statement-barrier-p (point) last-begin)
-	  (setq donep t))
-	 ;; CASE 7: ignore labels
-	 ((and maybe-labelp
-	       (or (and c-access-key (looking-at c-access-key))
-		   ;; with switch labels, we have to go back further
-		   ;; to try to pick up the case or default
-		   ;; keyword. Potential bogosity alert: we assume
-		   ;; `case' or `default' is first thing on line
-		   (let ((here (point)))
-		     (beginning-of-line)
-		     (c-forward-syntactic-ws)
-		     (if (looking-at c-switch-label-key)
-			 t
-		       (goto-char here)
-		       nil))
-		   (looking-at c-label-key))))
-	 ;; CASE 8: ObjC or Java method def
-	 ((and c-method-key
-	       (setq last-begin (c-in-method-def-p)))
-	  (setq donep t))
-	 ;; CASE 9: nothing special
-	 (t (setq last-begin (point)))
-	 )))
+		(if firstp
+		    (backward-up-list 1)
+		  (goto-char last-begin))
+		;; skip over any unary operators, or other special
+		;; characters appearing at front of identifier
+		(save-excursion
+		  (c-backward-syntactic-ws lim)
+		  (skip-chars-backward "-+!*&:.~ \t\n")
+		  (if (= (preceding-char) ?\()
+		      (setq last-begin (point))))
+		(goto-char last-begin)
+		(setq last-begin (point)
+		      donep t)))
+
+	  (setq maybe-labelp nil)
+	  ;; see if we're in a literal. if not, then this bufpos may be
+	  ;; a candidate for stopping
+	  (cond
+	   ;; CASE 0: did we hit the error condition above?
+	   (donep)
+	   ;; CASE 1: are we in a literal?
+	   ((eq (c-in-literal lim) 'pound)
+	    (beginning-of-line))
+	   ;; CASE 2: some other kind of literal?
+	   ((c-in-literal lim))
+	   ;; CASE 3: are we looking at a conditional keyword?
+	   ((or (looking-at c-conditional-key)
+		(and (= (following-char) ?\()
+		     (save-excursion
+		       (forward-sexp 1)
+		       (c-forward-syntactic-ws)
+		       (/= (following-char) ?\;))
+		     (let ((here (point))
+			   (foundp (progn
+				     (c-backward-syntactic-ws lim)
+				     (forward-word -1)
+				     (and lim
+					  (<= lim (point))
+					  (not (c-in-literal lim))
+					  (looking-at c-conditional-key)
+					  ))))
+		       ;; did we find a conditional?
+		       (if (not foundp)
+			   (goto-char here))
+		       foundp)))
+	    ;; are we in the middle of an else-if clause?
+	    (if (save-excursion
+		  (and (not substmt-p)
+		       (c-safe (progn (forward-sexp -1) t))
+		       (looking-at "\\<else\\>[ \t\n]+\\<if\\>")
+		       (not (c-in-literal lim))))
+		(progn
+		  (forward-sexp -1)
+		  (c-backward-to-start-of-if lim)))
+	    ;; are we sitting at an else clause, that we are not a
+	    ;; substatement of?
+	    (if (and (not substmt-p)
+		     (looking-at "\\<else\\>[^_]"))
+		(c-backward-to-start-of-if lim))
+	    ;; are we sitting at the while of a do-while?
+	    (if (and (looking-at "\\<while\\>[^_]")
+		     (c-backward-to-start-of-do lim))
+		(setq substmt-p nil))
+	    (setq last-begin (point)
+		  donep substmt-p))
+	   ;; CASE 4: are we looking at a label?
+	   ((looking-at c-label-key))
+	   ;; CASE 5: is this the first time we're checking?
+	   (firstp (setq firstp nil
+			 substmt-p (not (c-crosses-statement-barrier-p
+					 (point) last-begin))
+			 last-begin (point)))
+	   ;; CASE 6: have we crossed a statement barrier?
+	   ((c-crosses-statement-barrier-p (point) last-begin)
+	    (setq donep t))
+	   ;; CASE 7: ignore labels
+	   ((and maybe-labelp
+		 (or (and c-access-key (looking-at c-access-key))
+		     ;; with switch labels, we have to go back further
+		     ;; to try to pick up the case or default
+		     ;; keyword. Potential bogosity alert: we assume
+		     ;; `case' or `default' is first thing on line
+		     (let ((here (point)))
+		       (beginning-of-line)
+		       (c-forward-syntactic-ws)
+		       (if (looking-at c-switch-label-key)
+			   t
+			 (goto-char here)
+			 nil))
+		     (looking-at c-label-key))))
+	   ;; CASE 8: ObjC or Java method def
+	   ((and c-method-key
+		 (setq last-begin (c-in-method-def-p)))
+	    (setq donep t))
+	   ;; CASE 9: nothing special
+	   (t (setq last-begin (point)))
+	   ))))
     (goto-char last-begin)
     ;; we always do want to skip over non-whitespace modifier
     ;; characters that didn't get skipped above
@@ -5118,7 +5129,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.368 $"
+(defconst c-version "$Revision: 4.369 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
