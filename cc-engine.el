@@ -1357,7 +1357,7 @@ This function does not do any hidden buffer changes."
       "\\w\\|\\s_\\|\\s\"\\|\\s|"
     "\\w\\|\\s_\\|\\s\""))
 
-(defun c-forward-token-1 (&optional count balanced limit)
+(defun c-forward-token-2 (&optional count balanced limit)
   "Move forward by tokens.
 A token is defined as all symbols and identifiers which aren't
 syntactic whitespace \(note that multicharacter tokens like \"==\" are
@@ -1381,7 +1381,7 @@ COUNT guarantees that point is at the beginning of some token."
 
   (or count (setq count 1))
   (if (< count 0)
-      (- (c-backward-token-1 (- count) balanced limit))
+      (- (c-backward-token-2 (- count) balanced limit))
 
     (let ((jump-syntax (if balanced
 			   c-jump-syntax-balanced
@@ -1444,13 +1444,13 @@ COUNT guarantees that point is at the beginning of some token."
 
       count)))
 
-(defun c-backward-token-1 (&optional count balanced limit)
+(defun c-backward-token-2 (&optional count balanced limit)
   "Move backward by tokens.
-See `c-forward-token-1' for details."
+See `c-forward-token-2' for details."
 
   (or count (setq count 1))
   (if (< count 0)
-      (- (c-forward-token-1 (- count) balanced limit))
+      (- (c-forward-token-2 (- count) balanced limit))
 
     (or limit (setq limit (point-min)))
     (let ((jump-syntax (if balanced
@@ -1508,6 +1508,22 @@ See `c-forward-token-1' for details."
 	  (goto-char last))
 
       count)))
+
+(defun c-forward-token-1 (&optional count balanced limit)
+  "Like `c-forward-token-2' but doesn't treat multicharacter operator
+tokens like \"==\" as single tokens, i.e. all sequences of symbol
+characters are jumped over character by character.  This function is
+for compatibility only; it's only a wrapper over `c-forward-token-2'."
+  (let ((c-nonsymbol-token-regexp "\\s.\\|\\s\(\\|\\s\)"))
+    (c-forward-token-2 count balanced limit)))
+
+(defun c-backward-token-1 (&optional count balanced limit)
+  "Like `c-backward-token-2' but doesn't treat multicharacter operator
+tokens like \"==\" as single tokens, i.e. all sequences of symbol
+characters are jumped over character by character.  This function is
+for compatibility only; it's only a wrapper over `c-backward-token-2'."
+  (let ((c-nonsymbol-token-regexp "\\s.\\|\\s\(\\|\\s\)"))
+    (c-backward-token-2 count balanced limit)))
 
 (defun c-syntactic-re-search-forward (regexp &optional bound noerror
 				      paren-level not-inside-token
@@ -2235,9 +2251,9 @@ This function does not do any hidden buffer changes."
   ;; back we should search.
   (let* ((lim (or lim (c-point 'bod))))
     (c-with-syntax-table c++-template-syntax-table
-      (c-backward-token-1 0 t lim)
+      (c-backward-token-2 0 t lim)
       (while (and (looking-at "[_a-zA-Z<,]")
-		  (zerop (c-backward-token-1 1 t lim))))
+		  (zerop (c-backward-token-2 1 t lim))))
       (skip-chars-forward "^:"))))
 
 (defun c-in-method-def-p ()
@@ -2430,10 +2446,10 @@ brace."
   ;; If looking at the token after a conditional then return the
   ;; position of its start, otherwise return nil.
   (save-excursion
-    (and (zerop (c-backward-token-1 1 t lim))
+    (and (zerop (c-backward-token-2 1 t lim))
 	 (or (looking-at c-block-stmt-1-key)
 	     (and (eq (char-after) ?\()
-		  (zerop (c-backward-token-1 1 t lim))
+		  (zerop (c-backward-token-2 1 t lim))
 		  (looking-at c-block-stmt-2-key)))
 	 (point))))
 
@@ -3334,7 +3350,7 @@ brace."
 		   ;; Check if this is an anonymous inner class.
 		   ((and c-opt-inexpr-class-key
 			 (looking-at c-opt-inexpr-class-key))
-		    (while (and (zerop (c-forward-token-1 1 t))
+		    (while (and (zerop (c-forward-token-2 1 t))
 				(looking-at "(\\|\\w\\|\\s_\\|\\.")))
 		    (if (eq (point) search-end)
 			;; We're done.  Just trap this case in the cond.
@@ -3418,7 +3434,7 @@ brace."
 	     ;; see if the open brace is preceded by = or [...] in
 	     ;; this statement, but watch out for operator=
 	     (setq braceassignp 'dontknow)
-	     (c-backward-token-1 1 t lim)
+	     (c-backward-token-2 1 t lim)
 	     ;; Checks to do only on the first sexp before the brace.
 	     (when (and c-opt-inexpr-brace-list-key
 			(eq (char-after) ?\[))
@@ -3427,7 +3443,7 @@ brace."
 	       ;; earlier.
 	       (while (eq braceassignp 'dontknow)
 		 (setq braceassignp
-		       (cond ((/= (c-backward-token-1 1 t lim) 0) nil)
+		       (cond ((/= (c-backward-token-2 1 t lim) 0) nil)
 			     ((looking-at c-opt-inexpr-brace-list-key) t)
 			     ((looking-at "\\sw\\|\\s_\\|[.[]")
 			      ;; Carry on looking if this is an
@@ -3448,7 +3464,7 @@ brace."
 		      ;; that it isn't something that should be ignored.
 		      (setq braceassignp 'maybe)
 		      (while (and (eq braceassignp 'maybe)
-				  (zerop (c-backward-token-1 1 t lim)))
+				  (zerop (c-backward-token-2 1 t lim)))
 			(setq braceassignp
 			      (cond
 			       ;; Check for operator =
@@ -3480,7 +3496,7 @@ brace."
 				nil)
 			       (t t))))))
 	       (if (and (eq braceassignp 'dontknow)
-			(/= (c-backward-token-1 1 t lim) 0))
+			(/= (c-backward-token-2 1 t lim) 0))
 		   (setq braceassignp nil)))
 	     (if (not braceassignp)
 		 (if (eq (char-after) ?\;)
@@ -3598,7 +3614,7 @@ brace."
 			 ;; in-expression class.
 			 (let ((prev (point)))
 			   (while (and
-				   (= (c-backward-token-1 1 nil closest-lim) 0)
+				   (= (c-backward-token-2 1 nil closest-lim) 0)
 				   (eq (char-syntax (char-after)) ?w))
 			     (setq prev (point)))
 			   (goto-char prev)
@@ -3609,7 +3625,7 @@ brace."
 			 (save-excursion
 			   (and (c-major-mode-is 'pike-mode)
 				(progn (goto-char block-follows)
-				       (zerop (c-forward-token-1 1 t)))
+				       (zerop (c-forward-token-2 1 t)))
 				(eq (char-after) ?\())))
 		     (cons 'inexpr-class (point))))
 	       ((and c-opt-inexpr-block-key
@@ -4298,7 +4314,7 @@ brace."
 		     ;; Necessary to catch e.g. synchronized in Java,
 		     ;; which can be used both as statement and
 		     ;; modifier.
-		     (and (zerop (c-forward-token-1 1 nil))
+		     (and (zerop (c-forward-token-2 1 nil))
 			  (eq (char-after) ?\())
 		   (looking-at c-opt-block-stmt-key))))
 	  (if (eq step-type 'up)
@@ -4404,7 +4420,7 @@ brace."
 			       (goto-char indent-point)
 			       (setq tmpsymbol nil)
 			       (while (and (> (point) placeholder)
-					   (zerop (c-backward-token-1 1 t))
+					   (zerop (c-backward-token-2 1 t))
 					   (/= (char-after) ?=))
 				 (and c-opt-inexpr-brace-list-key
 				      (not tmpsymbol)
@@ -4414,7 +4430,7 @@ brace."
 			     (looking-at c-brace-list-key))
 			 (save-excursion
 			   (while (and (< (point) indent-point)
-				       (zerop (c-forward-token-1 1 t))
+				       (zerop (c-forward-token-2 1 t))
 				       (not (memq (char-after) '(?\; ?\()))))
 			   (not (memq (char-after) '(?\; ?\()))
 			   ))))
@@ -4578,11 +4594,11 @@ brace."
 	      (save-excursion
 		;; Note: We use the fact that lim is always after any
 		;; preceding brace sexp.
-		(while (and (zerop (c-backward-token-1 1 t lim))
+		(while (and (zerop (c-backward-token-2 1 t lim))
 			    (not (looking-at "[;<,=]"))))
 		(or (memq (char-after) '(?, ?=))
 		    (and (c-major-mode-is 'c++-mode)
-			 (zerop (c-backward-token-1 1 nil lim))
+			 (zerop (c-backward-token-2 1 nil lim))
 			 (eq (char-after) ?<)))))
 	    (goto-char indent-point)
 	    (c-beginning-of-member-init-list lim)
@@ -4591,7 +4607,7 @@ brace."
 	     ;; for bogus matches on access specifiers inside classes.
 	     ((and (save-excursion
 		     (setq placeholder (point))
-		     (c-backward-token-1 1 t lim)
+		     (c-backward-token-2 1 t lim)
 		     (and (eq (char-after) ?:)
 			  (not (eq (char-before) ?:))))
 		   (save-excursion
@@ -4639,12 +4655,12 @@ brace."
 		     (c-beginning-of-statement-1 lim)
 		     (setq placeholder (point))
 		     (if (looking-at "static\\>[^_]")
-			 (c-forward-token-1 1 nil indent-point))
+			 (c-forward-token-2 1 nil indent-point))
 		     (and (looking-at c-class-key)
-			  (zerop (c-forward-token-1 2 nil indent-point))
+			  (zerop (c-forward-token-2 2 nil indent-point))
 			  (if (eq (char-after) ?<)
 			      (c-with-syntax-table c++-template-syntax-table
-				(zerop (c-forward-token-1 1 t indent-point)))
+				(zerop (c-forward-token-2 1 t indent-point)))
 			    t)
 			  (eq (char-after) ?:))))
 	      (goto-char placeholder)
@@ -4946,7 +4962,7 @@ brace."
 		(setq c-syntactic-context placeholder)
 	      (c-beginning-of-statement-1
 	       (c-safe-position (1- containing-sexp) paren-state))
-	      (c-forward-token-1 0)
+	      (c-forward-token-2 0)
 	      (while (looking-at c-specifier-key)
 		(goto-char (match-end 1))
 		(c-forward-syntactic-ws))
@@ -4965,7 +4981,7 @@ brace."
 			  (eq (1+ (point)) (cdr (car special-brace-list))))
 		     ;; We were before the special close char.
 		     (and (eq (char-after) (cdr (cdr special-brace-list)))
-			  (zerop (c-forward-token-1))
+			  (zerop (c-forward-token-2))
 			  (eq (1+ (point)) (cdr (car special-brace-list)))))))
 	      ;; Normal brace list check.
 	      (and (eq char-after-ip ?})
@@ -4983,7 +4999,7 @@ brace."
 	    (if (consp special-brace-list)
 		(progn
 		  (goto-char (car (car special-brace-list)))
-		  (c-forward-token-1 1 nil indent-point))
+		  (c-forward-token-2 1 nil indent-point))
 	      (goto-char containing-sexp))
 	    (forward-char)
 	    (let ((start (point)))
@@ -5274,7 +5290,7 @@ brace."
 	(skip-chars-forward " \t")
 	;; are we looking at a comment only line?
 	(when (and (looking-at c-comment-start-regexp)
-		   (/= (c-forward-token-1 0 nil (c-point 'eol)) 0))
+		   (/= (c-forward-token-2 0 nil (c-point 'eol)) 0))
 	  (c-append-syntax 'comment-intro))
 	;; we might want to give additional offset to friends (in C++).
 	(when (and c-opt-friend-key
