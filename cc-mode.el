@@ -233,8 +233,8 @@ Key bindings:
 	c-comment-start-regexp c-C-comment-start-regexp
 	imenu-generic-expression cc-imenu-c-generic-expression)
   (run-hooks 'c-mode-common-hook)
-  (run-hooks 'c-mode-hook))
-
+  (run-hooks 'c-mode-hook)
+  (c-update-modeline))
 
 
 ;;;###autoload
@@ -274,8 +274,8 @@ Key bindings:
 	c-recognize-knr-p nil
 	imenu-generic-expression cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
-  (run-hooks 'c++-mode-hook))
-
+  (run-hooks 'c++-mode-hook)
+  (c-update-modeline))
 
 
 ;;;###autoload
@@ -315,8 +315,8 @@ Key bindings:
 	c-double-slash-is-comments-p t
 	c-method-key c-ObjC-method-key)
   (run-hooks 'c-mode-common-hook)
-  (run-hooks 'objc-mode-hook))
-
+  (run-hooks 'objc-mode-hook)
+  (c-update-modeline))
 
 
 ;;;###autoload
@@ -363,8 +363,8 @@ Key bindings:
 	)
   (c-set-style "java")
   (run-hooks 'c-mode-common-hook)
-  (run-hooks 'java-mode-hook))
-
+  (run-hooks 'java-mode-hook)
+  (c-update-modeline))
 
 
 ;; defuns for submitting bug reports
