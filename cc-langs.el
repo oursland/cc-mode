@@ -1379,8 +1379,11 @@ first submatch.  It must not include any following whitespace."
   ;; in C and C++ for when a cpp macro definition begins with a
   ;; declaration.
   c    "\\([\{\}\(\);,]+\\)"
-  ;; Additionally match a single ":" in C++ for protection labels.
-  c++  "\\([\{\}\(\);,]+\\|\\(\\=\\|[^:]\\):\\)\\([^:]\\|\\'\\)"
+  ;; Additionally match a single ":" in C++ for protection labels.  We
+  ;; cheat a little and require a symbol immediately before to avoid
+  ;; false matches when starting directly on a single ":", which can
+  ;; be the start of a base class member initializer list.
+  c++  "\\([\{\}\(\);,]+\\|\\(\\w\\|\\s_\\):\\)\\([^:]\\|\\'\\)"
   ;; Pike is like C but we also match "[" for multiple value
   ;; assignments and type casts.
   pike "\\([\{\}\(\)\[;,]+\\)")

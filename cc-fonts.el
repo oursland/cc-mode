@@ -766,7 +766,7 @@ other easily recognizable things.  Used on level 2 and higher."
 ;; `c-fl-decl-syntactic-pos', or nil if there's no such match.
 
 (defmacro c-fl-decl-prefix-search ()
-  ;; This is a macro instead of a defsubst since there are lots of unbound
+  ;; This is a macro instead of a defsubst since there are lots of free
   ;; variables.
   '(while (and (setq match (re-search-forward c-decl-prefix-re nil 'move))
 	       (if (memq (get-text-property (setq match-pos (1- (match-end 1)))
@@ -783,6 +783,28 @@ other easily recognizable things.  Used on level 2 and higher."
      ;; literal.
      (goto-char (next-single-property-change
 		 match-pos 'face nil (point-max)))))
+
+(defmacro c-fl-is-typeless-func-decl ()
+  ;; Check if we're at a function declaration/definition that lacks a return
+  ;; type.  The point is assumed to be at the first token following the
+  ;; function arglist.  Used inside `c-font-lock-declarations' only; there are
+  ;; lots of free variables and context assumptions.
+  ;;
+  ;; A function declaration can be without a return type in old style K&R C,
+  ;; and in (con|de)structors in C++.  An open brace is a sure sign of a
+  ;; function definition.  In C++ we also check if the type is known, since
+  ;; (con|de)structors use the class name as identifier, or if the colon of a
+  ;; base class member initializer follows.
+  '(or (eq (char-after) ?{)
+       (and (c-major-mode-is 'c++-mode)
+	    (or (eq at-type 'found)
+		(eq (char-after) ?:)
+		(and (eq (char-after type-start) ?~)
+		     ;; `at-type' probably won't be 'found for destructors
+		     ;; since the "~" is then part of the type name being
+		     ;; checked against the list of known types, so do a check
+		     ;; without that operator.
+		     (c-check-type (1+ type-start) type-end))))))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
@@ -1202,23 +1224,14 @@ other easily recognizable things.  Used on level 2 and higher."
 				 (not got-prefix)
 				 (not arglist-match)
 				 (not (eq at-type t))
-				 (c-safe
-				   (goto-char (scan-lists (point) 1 1))
-				   (eq (char-before) ?\)))
-				 (or (progn (c-forward-syntactic-ws)
-					    (eq (char-after) ?{))
-				     (and (c-major-mode-is 'c++-mode)
-					  (or (eq at-type 'found)
-					      (eq (char-after) ?:)))))
+				 (c-safe (goto-char (scan-lists (point) 1 1))
+					 (eq (char-before) ?\)))
+				 (progn (c-forward-syntactic-ws)
+					(c-fl-is-typeless-func-decl)))
 			;; (*) Got a paren pair with no preceding identifier
 			;; but instead a preceding type that probably is the
-			;; identifier.  If it's followed by an open brace it's
-			;; really a function that lacks a return type, which
-			;; can happen in K&R C and for (con|de)structors in
-			;; C++.  In C++ we also check if the type is known,
-			;; since (con|de)structors use the class name as
-			;; identifier, or if the colon of a base class member
-			;; initializer follows.  See also (#) below.
+			;; identifier.  Check for a function declaration
+			;; without return type.  See also (#) below.
 			(setq at-decl-or-cast t)
 			(unless prev-at-type
 			  (setq prev-at-type t
@@ -1285,19 +1298,11 @@ other easily recognizable things.  Used on level 2 and higher."
 				 (not got-prefix)
 				 (not got-suffix)
 				 (not (eq at-type t))
-				 (or (eq (char-after) ?{)
-				     (and (c-major-mode-is 'c++-mode)
-					  (or (eq at-type 'found)
-					      (eq (char-after) ?:)))))
+				 (c-fl-is-typeless-func-decl))
 			;; (#) Got an empty paren pair and a preceding type
-			;; that might not be a type.  If it's followed by an
-			;; open brace it's really a function that lacks a
-			;; return type, which can happen in K&R C and for
-			;; (con|de)structors in C++.  In C++ we also check if
-			;; the type is known, since (con|de)structors use the
-			;; class name as identifier, or if the colon of a base
-			;; class member initializer follows.  See also (*)
-			;; above.
+			;; that probably really is the identifier.  Check for
+			;; a function declaration without return type.  See
+			;; also (*) above.
 			(setq at-decl-or-cast t)
 			(unless prev-at-type
 			  (setq prev-at-type t
