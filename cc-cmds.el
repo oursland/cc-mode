@@ -2215,9 +2215,9 @@ Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
 If inside a comment and `comment-multi-line' is non-nil, the
 indentation and line prefix are preserved (see the
 `c-comment-prefix-regexp' and `c-block-comment-prefix' variables for
-details).  If inside a comment and `comment-multi-line' is nil, a new
-comment of the same type is started on the next line and indented as
-appropriate for comments.
+details).  If inside a single line comment and `comment-multi-line' is
+nil, a new comment of the same type is started on the next line and
+indented as appropriate for comments.
 
 If a fill prefix is specified, it overrides all the above."
   (interactive)
