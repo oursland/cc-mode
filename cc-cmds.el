@@ -420,7 +420,7 @@ This function does various newline cleanups based on the value of
 
   (interactive "*P")
   (let (safepos literal
-	;; We want to inhibit blinking the paren since this will be
+	;; We want to inhibit blinking the paren since this would be
 	;; most disruptive.  We'll blink it ourselves later on.
 	(old-blink-paren blink-paren-function)
 	blink-paren-function)
@@ -544,65 +544,83 @@ This function does various newline cleanups based on the value of
 	;; Do all appropriate clean ups
 	(let ((here (point))
 	      (pos (- (point-max) (point)))
-	      mbeg mend tmp)
+	      mbeg mend mbeg1 mend1 mbeg4 mend4
+	      eol-col cmnt-pos cmnt-col cmnt-gap tmp)
 
-	  ;; clean up empty defun braces
-	  (if (c-save-buffer-state ()
-		(and c-auto-newline
-		     (memq 'empty-defun-braces c-cleanup-list)
-		     (eq last-command-char ?\})
-		     (c-intersect-lists '(defun-close class-close inline-close)
-					syntax)
-		     (progn
-		       (forward-char -1)
-		       (c-skip-ws-backward)
-		       (eq (char-before) ?\{))
-		     ;; make sure matching open brace isn't in a comment
-		     (not (c-in-literal))))
-	      (delete-region (point) (1- here)))
+	  ;; `}': clean up empty defun braces
+	  (when (c-save-buffer-state ()
+		  (and c-auto-newline
+		       (memq 'empty-defun-braces c-cleanup-list)
+		       (eq last-command-char ?\})
+		       (c-intersect-lists '(defun-close class-close inline-close)
+					  syntax)
+		       (progn
+			 (forward-char -1)
+			 (c-skip-ws-backward)
+			 (eq (char-before) ?\{))
+		       ;; make sure matching open brace isn't in a comment
+		       (not (c-in-literal))))
+	    (delete-region (point) (1- here))
+	    (setq here (- (point-max) pos)))
+	  (goto-char here)
 
-	  ;; compact to a one-liner defun?  Mainly for AWK.
+	  ;; `}': compact to a one-liner defun?  Mainly for AWK.
 	  (save-match-data
 	    (when
-		(c-save-buffer-state ()
-		  (and c-auto-newline
-		       (eq last-command-char ?\})
-		       (memq 'one-liner-defun c-cleanup-list)
-		       (c-intersect-lists '(defun-close) syntax)
-		       (save-excursion
-			 (save-restriction
-			   (backward-list) (forward-char)
-			   (narrow-to-region (point) (1- here))	; innards of {.}
-			   (and (looking-at
-				 (concat
-				  "\\(" ; (match-beginning 1)
-				  "[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
-				  "\\)" ; (match-end 1)
-				  "[^ \t\r\n]+\\([ \t]+[^ \t\r\n]+\\)*"	; non-WS
-				  "\\(" ; (match-beginning 4)
-				  "[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
-				  "\\)\\'")) ; (match-end 4) at EOB.
-				(or (null c-max-one-liner-length)
-				    (zerop c-max-one-liner-length)
-				    (< (- (point-max)
-					  (cadr (assq 'defun-close syntax)) ; AWK pattern
-					  (- (match-end 4) (match-beginning 4))
-					  (- (match-end 1) (match-beginning 1)))
-				       c-max-one-liner-length)))))))
-	      (backward-char)		; back over the }
-	      (let* ((reg1-beg (match-beginning 1)) (reg1-end (match-end 1))
-		     (reg4-beg (match-beginning 4)) (reg4-end (match-end 4))
-		     (comment-pos (save-excursion
-				    (and (c-backward-single-comment) (point)))))
-		(delete-region reg4-beg reg4-end)
-		(delete-region reg1-beg reg1-end)
-		(when comment-pos
-		  (delete-char 1)	; the '}' has blundered into a comment
-		  (goto-char (- comment-pos (- reg1-end reg1-beg)))
+		(and c-auto-newline
+		     (eq last-command-char ?\})
+		     (memq 'one-liner-defun c-cleanup-list)
+		     (c-intersect-lists '(defun-close) syntax)
+		     (save-excursion
+		       (save-restriction
+			 (backward-list) (forward-char)
+			 (narrow-to-region (point) (1- here)) ; innards of {.}
+			 (and (looking-at
+			       (concat
+				"\\("	; (match-beginning 1)
+				"[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
+				"\\)"	; (match-end 1)
+				"[^ \t\r\n]+\\([ \t]+[^ \t\r\n]+\\)*" ; non-WS
+				"\\("	; (match-beginning 4)
+				"[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
+				"\\)\\'")))))) ; (match-end 4) at EOB.
+	      (c-tentative-buffer-changes
+		(setq mbeg1 (match-beginning 1) mend1 (match-end 1)
+		      mbeg4 (match-beginning 4) mend4 (match-end 4))
+		(backward-char)		; back over the `}'
+		(save-excursion
+		  (setq cmnt-pos (and (c-backward-single-comment)
+				      (- (point) (- mend1 mbeg1)))))
+		(delete-region mbeg4 mend4)
+		(delete-region mbeg1 mend1)
+		(setq eol-col (save-excursion (end-of-line) (current-column)))
+		(when cmnt-pos
+		  (delete-char 1)	; the `}' has blundered into a comment
+		  (goto-char cmnt-pos)
+		  (setq cmnt-col (1+ (current-column)))
+		  (setq cmnt-pos (1+ cmnt-pos)) ; we're inserting a `}'
 		  (c-skip-ws-backward)
-		  (self-insert-command 1)))))
+		  (self-insert-command 1) ; reinsert the `}' before the comment.
+		  (setq cmnt-gap (- cmnt-col (current-column)))
+		  (when (zerop cmnt-gap)
+		    (insert-char ?\  1) ; Put a space before a bare comment.
+		    (setq cmnt-gap 1)))
 
-	    ;; clean up brace-else-brace and brace-elseif-brace
+		(or (null c-max-one-liner-length)
+		    (zerop c-max-one-liner-length)
+		    (<= eol-col c-max-one-liner-length)
+		    ;; Can we trim space before comment to make the line fit?
+		    (and cmnt-gap
+			 (< (- eol-col cmnt-gap) c-max-one-liner-length)
+			 (progn (goto-char cmnt-pos)
+				(backward-delete-char-untabify
+				 (- eol-col c-max-one-liner-length))
+				t)))))
+
+	    (setq here (- (point-max) pos)) ; For any future cleanup on `}'
+	    (goto-char here))		; to after the `}'
+
+	  ;; `{': clean up brace-else-brace and brace-elseif-brace
 	  (when (and c-auto-newline
 		     (eq last-command-char ?\{))
 	    (cond
@@ -644,8 +662,7 @@ This function does various newline cleanups based on the value of
 	      (goto-char mbeg)
 	      (insert ?\ ))))
 
-	  (goto-char (- (point-max) pos))
-	  )
+	  (goto-char (- (point-max) pos)))
 
 	;; does a newline go after the brace?
 	(if (memq 'after newlines)
