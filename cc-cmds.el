@@ -1034,14 +1034,20 @@ keyword on the line, the keyword is not inserted inside a literal, and
 ;; originally contributed by Terry_Glanfield.Southern@rxuk.xerox.com
 (defun c-forward-into-nomenclature (&optional arg)
   "Move forward to end of a nomenclature section or word.
-With arg, to it arg times."
+With arg, do it arg times."
   (interactive "p")
   (let ((case-fold-search nil))
     (if (> arg 0)
-	(re-search-forward "\\W*\\([A-Z]*[a-z0-9]*\\)" (point-max) t arg)
+	(re-search-forward
+	 (cc-eval-when-compile
+	   (concat "\\W*\\([" c-upper "]*[" c-lower c-digit "]*\\)"))
+	 (point-max) t arg)
       (while (and (< arg 0)
 		  (re-search-backward
-		   "\\(\\(\\W\\|[a-z0-9]\\)[A-Z]+\\|\\W\\w+\\)"
+		   (cc-eval-when-compile
+		     (concat
+		      "\\(\\(\\W\\|[" c-lower c-digit "]\\)[" c-upper "]+"
+		      "\\|\\W\\w+\\)"))
 		   (point-min) 0))
 	(forward-char 1)
 	(setq arg (1+ arg)))))
@@ -3462,7 +3468,7 @@ C++-style line comment doesn't count as inside it."
 		 (c-query-and-set-macro-start)
 		 (<= (save-excursion
 		       (goto-char c-macro-start)
-		       (if (looking-at "#[ \t]*[a-zA-Z0-9!]+")
+		       (if (looking-at c-opt-cpp-start)
 			   (goto-char (match-end 0)))
 		       (point))
 		    (point))))

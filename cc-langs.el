@@ -318,39 +318,40 @@ so that all identifiers are recognized as words.")
   "Regexp that matches the start of a symbol, i.e. any identifier or
 keyword.  It's unspecified how far it matches.  Does not contain a \\|
 operator at the top level."
-  ;; If POSIX char classes are supported (e.g. Emacs 21) then we can
-  ;; do this right, otherwise this definition isn't correct for the
-  ;; first character in the languages that accept the full range of
-  ;; Unicode word constituents in identifiers (e.g. Java and Pike).
-  ;; For that we'd need to make a regexp that matches all characters
-  ;; in the word constituent class except 0-9.
-  t    (if (memq 'posix-char-classes c-emacs-features)
-	   "[[:alpha:]_]"
-	 "[a-zA-Z_]")
-  pike (if (memq 'posix-char-classes c-emacs-features)
-	   "[[:alpha:]_`]"
-	 "[a-zA-Z_`]"))
+  t    (concat "[" c-alpha "_]")
+  pike (concat "[" c-alpha "_`]"))
 (c-lang-defvar c-symbol-start (c-lang-const c-symbol-start))
+
+(c-lang-defconst c-symbol-chars
+  "Set of characters that can be part of a symbol.
+This is on the form that fits inside [ ] in a regexp."
+  ;; Pike note: With the backquote identifiers this would include most
+  ;; operator chars too, but they are handled with other means instead.
+  t (concat c-alnum "_"))
 
 (c-lang-defconst c-symbol-key
   "Regexp matching identifiers and keywords.  Assumed to match if
 `c-symbol-start' matches on the same position."
-  t    (if (memq 'posix-char-classes c-emacs-features)
-	   "[[:alpha:]_][[:alnum:]_]*"
-	 ;; We cannot use just `word' syntax class since `_' cannot be
-	 ;; in word class.  Putting underscore in word class breaks
-	 ;; forward word movement behavior that users are familiar
-	 ;; with.  Besides, it runs counter to Emacs convention.  Note
-	 ;; however that `_' got word syntax in font lock code.
-	 "[a-zA-Z_]\\(\\w\\|_\\)*")
-  pike (concat (c-lang-const c-symbol-key) "\\|"
-	       (c-make-keywords-re nil
-		 (c-lang-const c-overloadable-operators))))
+  t    (concat (c-lang-const c-symbol-start)
+	       "[" (c-lang-const c-symbol-chars) "]*")
+  pike (concat
+	;; Use the value from C here since the operator backquote is
+	;; covered by the other alternative.
+	(c-lang-const c-symbol-key c)
+	"\\|"
+	(c-make-keywords-re nil
+	  (c-lang-const c-overloadable-operators))))
 (c-lang-defvar c-symbol-key (c-lang-const c-symbol-key))
 
 (c-lang-defconst c-symbol-key-depth
   ;; Number of regexp grouping parens in `c-symbol-key'.
   t (c-regexp-opt-depth (c-lang-const c-symbol-key)))
+
+(c-lang-defconst c-nonsymbol-chars
+  "This is the set of chars that can't be part of a symbol, i.e. the
+negation of `c-symbol-chars'."
+  t (concat "^" (c-lang-const c-symbol-chars)))
+(c-lang-defvar c-nonsymbol-chars (c-lang-const c-nonsymbol-chars))
 
 (c-lang-defconst c-nonsymbol-key
   "Regexp that matches any character that can't be part of a symbol.
@@ -358,9 +359,7 @@ It's usually appended to other regexps to avoid matching a prefix.
 It's assumed to not contain any submatchers."
   ;; The same thing regarding Unicode identifiers applies here as to
   ;; `c-symbol-key'.
-  t (if (memq 'posix-char-classes c-emacs-features)
-	"[^[:alnum:]_$]"
-      "[^a-zA-Z0-9_$]"))
+  t (concat "[" (c-lang-const c-nonsymbol-chars) "]"))
 
 (c-lang-defconst c-opt-identifier-concat-key
   "Regexp matching the operators that join symbols to fully qualified
@@ -513,11 +512,23 @@ that at least one does when the regexp has matched."
 
 (c-lang-defconst c-opt-cpp-prefix
   "Regexp matching the prefix of a cpp directive in the languages that
-normally use that macro preprocessor.  Tested at bol.  Assumed to not
-contain any submatches or \\| operators."
+normally use that macro preprocessor.  Tested at bol or at boi.
+Assumed to not contain any submatches or \\| operators."
   t "\\s *#\\s *"
   java nil)
 (c-lang-defvar c-opt-cpp-prefix (c-lang-const c-opt-cpp-prefix))
+
+(c-lang-defconst c-opt-cpp-start
+  "Regexp matching the prefix of a cpp directive including the directive
+name, or nil in languages without preprocessor support.  The first
+submatch surrounds the directive name."
+  t    (if (c-lang-const c-opt-cpp-prefix)
+	   (concat (c-lang-const c-opt-cpp-prefix)
+		   "\\([" c-alnum "]+\\)"))
+  ;; Pike, being a scripting language, recognizes hash-bangs too.
+  pike (concat (c-lang-const c-opt-cpp-prefix)
+	       "\\([" c-alnum "]+\\|!\\)"))
+(c-lang-defvar c-opt-cpp-start (c-lang-const c-opt-cpp-start))
 
 (c-lang-defconst c-cpp-defined-fns
   ;; Name of functions in cpp expressions that take an identifier as
@@ -948,7 +959,7 @@ operators."
   "Regexp to append to `paragraph-start'."
   t    "$"
   java "\\(@[a-zA-Z]+\\>\\|$\\)"	; For Javadoc.
-  pike "\\(@[a-zA-Z]+\\>\\([^{]\\|$\\)\\|$\\)") ; For Pike refdoc.
+  pike "\\(@[a-zA-Z_-]+\\>\\([^{]\\|$\\)\\|$\\)") ; For Pike refdoc.
 (c-lang-defvar c-paragraph-start (c-lang-const c-paragraph-start))
 
 (c-lang-defconst c-paragraph-separate

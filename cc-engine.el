@@ -467,12 +467,12 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	       ;; Check for macro start.
 	       ((save-excursion
 		  (and macro-start
-		       (looking-at "[ \t]*[a-zA-Z0-9!]")
 		       (progn (skip-chars-backward " \t")
 			      (eq (char-before) ?#))
 		       (progn (setq saved (1- (point)))
 			      (beginning-of-line)
 			      (not (eq (char-before (1- (point))) ?\\)))
+		       (looking-at c-opt-cpp-start)
 		       (progn (skip-chars-forward " \t")
 			      (eq (point) saved))))
 		(goto-char saved)
@@ -925,18 +925,19 @@ Leave point at the beginning of the directive and return t if in one,
 otherwise return nil and leave point unchanged.
 
 This function does not do any hidden buffer changes."
-  (let ((here (point)))
-    (save-restriction
-      (if lim (narrow-to-region lim (point-max)))
-      (beginning-of-line)
-      (while (eq (char-before (1- (point))) ?\\)
-	(forward-line -1))
-      (back-to-indentation)
-      (if (and (<= (point) here)
-	       (looking-at "#[ \t]*[a-zA-Z0-9!]"))
-	  t
-	(goto-char here)
-	nil))))
+  (when c-opt-cpp-prefix
+    (let ((here (point)))
+      (save-restriction
+	(if lim (narrow-to-region lim (point-max)))
+	(beginning-of-line)
+	(while (eq (char-before (1- (point))) ?\\)
+	  (forward-line -1))
+	(back-to-indentation)
+	(if (and (<= (point) here)
+		 (looking-at c-opt-cpp-start))
+	    t
+	  (goto-char here)
+	  nil)))))
 
 (defun c-end-of-macro ()
   "Go to the end of a preprocessor directive.
@@ -1229,7 +1230,7 @@ This function does not do any hidden buffer changes."
 
 	     ((save-excursion
 		(and c-opt-cpp-prefix
-		     (looking-at "#[ \t]*[a-zA-Z0-9!]")
+		     (looking-at c-opt-cpp-start)
 		     (progn (skip-chars-backward " \t")
 			    (bolp))
 		     (or (bobp)
@@ -3999,7 +4000,8 @@ This function does not do any hidden buffer changes."
 			(point)))))
     (c-with-syntax-table c++-template-syntax-table
       (c-backward-token-2 0 t lim)
-      (while (and (looking-at "[_a-zA-Z<,]")
+      (while (and (or (looking-at c-symbol-start)
+		      (looking-at "[<,]"))
 		  (zerop (c-backward-token-2 1 t lim))))
       (skip-chars-forward "^:"))))
 

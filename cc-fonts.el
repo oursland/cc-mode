@@ -963,7 +963,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	   ;; those characters can be useful in recognizing a declaration (in
 	   ;; particular the '{' that opens a function body after the header).
 	   (goto-char limit)
-	   (skip-chars-forward "^_a-zA-Z0-9$")
+	   (skip-chars-forward c-nonsymbol-chars)
 	   (point))))
 
       (c-find-decl-spots
@@ -2413,7 +2413,8 @@ need for `objc-font-lock-extra-types'.")
 ;; `c-primitive-type-kwds'.
 (when (equal (sort (append objc-font-lock-extra-types nil) 'string-lessp)
 	     '("BOOL" "Class" "IMP" "SEL"))
-  (setq objc-font-lock-extra-types '("[A-Z]\\sw*")))
+  (setq objc-font-lock-extra-types
+	(cc-eval-when-compile (list (concat "[" c-upper "]\\sw*")))))
 
 
 ;;; Java.
