@@ -48,7 +48,6 @@
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
-(cc-bytecomp-defvar c-emacs-features)	; In cc-vars.el
 (cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
 (cc-bytecomp-defun region-active-p)	; XEmacs
 (cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
@@ -1270,11 +1269,162 @@ non-nil, a caret is prepended to invert the set."
 (defalias 'c-regexp-opt-depth 'regexp-opt-depth)
 
 
+;; Figure out what features this Emacs has
+
+(cc-bytecomp-defvar open-paren-in-column-0-is-defun-start)
+
+(defconst c-emacs-features
+  (let (list)
+
+    (if (boundp 'infodock-version)
+	;; I've no idea what this actually is, but it's legacy. /mast
+	(setq list (cons 'infodock list)))
+
+    ;; XEmacs uses 8-bit modify-syntax-entry flags.
+    ;; Emacs uses a 1-bit flag.  We will have to set up our
+    ;; syntax tables differently to handle this.
+    (let ((table (copy-syntax-table))
+	  entry)
+      (modify-syntax-entry ?a ". 12345678" table)
+      (cond
+       ;; Emacs
+       ((arrayp table)
+	(setq entry (aref table ?a))
+	;; In Emacs, table entries are cons cells
+	(if (consp entry) (setq entry (car entry))))
+       ;; XEmacs
+       ((fboundp 'get-char-table)
+	(setq entry (get-char-table ?a table)))
+       ;; incompatible
+       (t (error "CC Mode is incompatible with this version of Emacs")))
+      (setq list (cons (if (= (logand (lsh entry -16) 255) 255)
+			   '8-bit
+			 '1-bit)
+		       list)))
+
+    (let ((buf (generate-new-buffer " test"))
+	  parse-sexp-lookup-properties
+	  parse-sexp-ignore-comments
+	  lookup-syntax-properties)
+      (save-excursion
+	(set-buffer buf)
+	(set-syntax-table (make-syntax-table))
+
+	;; For some reason we have to set some of these after the
+	;; buffer has been made current.  (Specifically,
+	;; `parse-sexp-ignore-comments' in Emacs 21.)
+	(setq parse-sexp-lookup-properties t
+	      parse-sexp-ignore-comments t
+	      lookup-syntax-properties t)
+
+	;; Find out if the `syntax-table' text property works.
+	(modify-syntax-entry ?< ".")
+	(modify-syntax-entry ?> ".")
+	(insert "<()>")
+	(c-mark-<-as-paren 1)
+	(c-mark->-as-paren 4)
+	(goto-char 1)
+	(c-forward-sexp)
+	(if (= (point) 5)
+	    (setq list (cons 'syntax-properties list))
+	  (error (concat
+		  "CC Mode is incompatible with this version of Emacs - "
+		  "support for the `syntax-table' text property "
+		  "is required.")))
+
+	;; Find out if generic comment delimiters work.
+	(c-safe
+	  (modify-syntax-entry ?x "!")
+	  (if (string-match "\\s!" "x")
+	      (setq list (cons 'gen-comment-delim list))))
+
+	;; Find out if generic string delimiters work.
+	(c-safe
+	  (modify-syntax-entry ?x "|")
+	  (if (string-match "\\s|" "x")
+	      (setq list (cons 'gen-string-delim list))))
+
+	;; See if POSIX char classes work.
+	(when (and (string-match "[[:alpha:]]" "a")
+		   ;; All versions of Emacs 21 so far haven't fixed
+		   ;; char classes in `skip-chars-forward' and
+		   ;; `skip-chars-backward'.
+		   (progn
+		     (delete-region (point-min) (point-max))
+		     (insert "foo123")
+		     (skip-chars-backward "[:alnum:]")
+		     (bobp))
+		   (= (skip-chars-forward "[:alpha:]") 3))
+	  (setq list (cons 'posix-char-classes list)))
+
+	;; See if `open-paren-in-column-0-is-defun-start' exists and
+	;; isn't buggy.
+	(when (boundp 'open-paren-in-column-0-is-defun-start)
+	  (let ((open-paren-in-column-0-is-defun-start nil)
+		(parse-sexp-ignore-comments t))
+	    (delete-region (point-min) (point-max))
+	    (set-syntax-table (make-syntax-table))
+	    (modify-syntax-entry ?\' "\"")
+	    (cond
+	     ;; XEmacs.  Afaik this is currently an Emacs-only
+	     ;; feature, but it's good to be prepared.
+	     ((memq '8-bit list)
+	      (modify-syntax-entry ?/ ". 1456")
+	      (modify-syntax-entry ?* ". 23"))
+	     ;; Emacs
+	     ((memq '1-bit list)
+	      (modify-syntax-entry ?/ ". 124b")
+	      (modify-syntax-entry ?* ". 23")))
+	    (modify-syntax-entry ?\n "> b")
+	    (insert "/* '\n   () */")
+	    (backward-sexp)
+	    (if (bobp)
+		(setq list (cons 'col-0-paren list)))))
+
+	(set-buffer-modified-p nil))
+      (kill-buffer buf))
+
+    ;; See if `parse-partial-sexp' returns the eighth element.
+    (if (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
+	(setq list (cons 'pps-extended-state list))
+      (error (concat
+	      "CC Mode is incompatible with this version of Emacs - "
+	      "`parse-partial-sexp' has to return at least 10 elements.")))
+
+    ;;(message "c-emacs-features: %S" list)
+    list)
+  "A list of certain features in the (X)Emacs you are using.
+There are many flavors of Emacs out there, each with different
+features supporting those needed by CC Mode.  The following values
+might be present:
+
+'8-bit              8 bit syntax entry flags (XEmacs style).
+'1-bit              1 bit syntax entry flags (Emacs style).
+'syntax-properties  It works to override the syntax for specific characters
+		    in the buffer with the 'syntax-table property.  It's
+		    always set - CC Mode no longer works in emacsen without
+		    this feature.
+'gen-comment-delim  Generic comment delimiters work
+		    (i.e. the syntax class `!').
+'gen-string-delim   Generic string delimiters work
+		    (i.e. the syntax class `|').
+'pps-extended-state `parse-partial-sexp' returns a list with at least 10
+		    elements, i.e. it contains the position of the start of
+		    the last comment or string. It's always set - CC Mode no
+		    longer works in emacsen without this feature.
+'posix-char-classes The regexp engine understands POSIX character classes.
+'col-0-paren        It's possible to turn off the ad-hoc rule that a paren
+		    in column zero is the start of a defun.
+'infodock           This is Infodock (based on XEmacs).
+
+'8-bit and '1-bit are mutually exclusive.")
+
+
 ;;; Some helper constants.
 
-;; If the regexp engine supports POSIX char classes (e.g. Emacs 21)
-;; then we can use them to handle extended charsets correctly.
-(if (string-match "[[:alpha:]]" "a")	; Can't use c-emacs-features here.
+;; If the regexp engine supports POSIX char classes then we can use
+;; them to handle extended charsets correctly.
+(if (memq 'posix-char-classes c-emacs-features)
     (progn
       (defconst c-alpha "[:alpha:]")
       (defconst c-alnum "[:alnum:]")
