@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.134 $
-;; Last Modified:   $Date: 1995-01-04 23:38:40 $
+;; Version:         $Revision: 4.135 $
+;; Last Modified:   $Date: 1995-01-04 23:52:02 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -103,7 +103,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-04 23:38:40 $|$Revision: 4.134 $|
+;; |$Date: 1995-01-04 23:52:02 $|$Revision: 4.135 $|
 
 ;;; Code:
 
@@ -1541,9 +1541,9 @@ the brace is inserted inside a literal."
 			    (c-hack-state (point) 'open c-state-cache))
 		    (if (and (car c-state-cache)
 			     (not (consp (car c-state-cache)))
-			     (< (point) (car c-state-cache)))
-			(setq c-state-cache (cdr c-state-cache))))
-		  ))
+			     (<= (point) (car c-state-cache)))
+			(setq c-state-cache (cdr c-state-cache))
+		      ))))
 	      (c-indent-line)
 	      (goto-char (- (point-max) pos))
 	      ;; if the buffer has changed due to the indentation, we
@@ -4367,7 +4367,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.134 $"
+(defconst c-version "$Revision: 4.135 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
