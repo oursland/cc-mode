@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.244 $
-;; Last Modified:   $Date: 1994-02-11 19:02:29 $
+;; Version:         $Revision: 3.245 $
+;; Last Modified:   $Date: 1994-02-11 20:49:19 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-11 19:02:29 $|$Revision: 3.244 $|
+;; |$Date: 1994-02-11 20:49:19 $|$Revision: 3.245 $|
 
 ;;; Code:
 
@@ -713,7 +713,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.244 $
+cc-mode Revision: $Revision: 3.245 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -744,7 +744,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.244 $
+cc-mode Revision: $Revision: 3.245 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2760,7 +2760,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			 (back-to-indentation)
 			 (not (looking-at c-label-key))))
 		  (and (memq char-after-ip '(?: ??))
-		       (not (looking-at "[ \t]*::"))))
+		       (save-excursion
+			 (goto-char indent-point)
+			 (skip-chars-forward " \t")
+			 ;; watch out for scope operator
+			 (not (looking-at "::")))))
 	      (c-add-semantics 'statement-cont (c-point 'boi)))
 	     ;; CASE 14.D: any old statement
 	     ((< (point) indent-point)
@@ -3111,7 +3115,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.244 $"
+(defconst c-version "$Revision: 3.245 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
