@@ -31,6 +31,20 @@
 
 ;;; Commentary:
 
+;; HACKERS NOTE: There's heavy macro magic here.  If you need to make
+;; changes in this or other files containing `c-lang-defconst' but
+;; don't want to read through the complete explanations below then
+;; read this:
+;;
+;; o  A change in a `c-lang-defconst' or `c-lang-defvar' will not take
+;;    effect if the file containing the mode init function (typically
+;;    cc-mode.el) is byte compiled.
+;; o  To make changes show in font locking you need to reevaluate the
+;;    `*-font-lock-keywords-*' constants, which normally is easiest to
+;;    do with M-x eval-buffer in cc-fonts.el.
+;; o  In either case it's necessary to reinitialize the mode to make
+;;    the changes show in an existing buffer.
+
 ;; This file contains all the language dependent variables, except
 ;; those specific for font locking which reside in cc-fonts.el.  As
 ;; far as possible, all the differences between the languages that CC
