@@ -152,19 +152,17 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
    ;; Pick a token by (match-string 1)
    (car (cdr (nth 1 cc-imenu-c++-generic-expression))) ; 
    "\\|"
+   ;; > General function name regexp
+   ;; Pick a token by  (match-string 2)
+   (car (cdr (nth 2 cc-imenu-c++-generic-expression)))
+   ;; > Special case for definitions using phony prototype macros like:
+   ;; > `int main _PROTO( (int argc,char *argv[]) )'.
+   ;; Pick a token by  (match-string 3)
    (if cc-imenu-c-prototype-macro-regexp
-       (concat 
-	;; > Special case for definitions using phony prototype macros like:
-	;; > `int main _PROTO( (int argc,char *argv[]) )'.
-	;; Pick a token by  (match-string 2)
-	(car (cdr (nth 2 cc-imenu-c++-generic-expression)))
+       (concat    
 	"\\|"
-	;; > General function name regexp
-	;; Pick a token by  (match-string 3)
-	(car (cdr (nth 3 cc-imenu-c++-generic-expression)))) 
-     ;; > General function name regexp
-     ;; Pick a token by  (match-string 2)
-     (car (cdr (nth 2 cc-imenu-c++-generic-expression)))) 
+	(car (cdr (nth 3 cc-imenu-c++-generic-expression))))
+     "")
    ;;
    ;; For Objective-C
    ;; Pick a token by (match-string 3 or 4)
@@ -260,10 +258,10 @@ Example:
 	 (if cc-imenu-c-prototype-macro-regexp 4 3))
 	(C1 ; > Special case to match a line like `main() {}'
 	 1) 
-	(C2 ; > Special case for definitions using phony prototype macros like:
+	(C2 ; > General function name regexp
 	 2) 
-	(C3 ; > General function name regexp
-	 (if cc-imenu-c-prototype-macro-regexp 3 2))
+	(C3 ; > Special case for definitions using phony prototype macros like:
+	 3)
 	langnum
 	;;
 	(classcount 0)
