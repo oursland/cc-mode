@@ -853,6 +853,8 @@ Works with: arglist-cont, arglist-cont-nonempty."
 	alignto)
     (save-excursion
       (and
+       c-opt-asm-stmt-key
+
        ;; Find the ":" to align to.  Look for this first so as to quickly
        ;; eliminate pretty much all cases which are not for us.
        (re-search-backward "^[ \t]*:[ \t]*\\(.\\)?" (cdr elem) t)
@@ -869,8 +871,7 @@ Works with: arglist-cont, arglist-cont-nonempty."
        (progn (goto-char orig-pos)
 	      (c-in-gcc-asm-p))
 
-       (- (progn (goto-char alignto)    (current-column))
-	  (progn (goto-char (cdr elem)) (current-column)))))))
+       (vector (progn (goto-char alignto) (current-column)))))))
 
 (defun c-lineup-dont-change (langelem)
   "Do not change the indentation of the current line.
