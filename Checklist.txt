@@ -13,10 +13,10 @@ Checklist for doing a release:
     - Add `Release 5.xx' tag to ChangeLog using C-x a.  Release.py
       script looks for this.
 
-    - Distill changes for ANNOUNCEMENT file.
+    - Distill changes for NEWS file.
 
-    - Proofread and update ANNOUNCEMENT, MANIFEST, README for the new
-      release.
+    - Proofread and update ANNOUNCEMENT, MANIFEST, NEWS, README for
+      the new release.
 
     - Run the Release.py script to create all the tarballs and
       documentation: ./Release.py --package --docs XX
