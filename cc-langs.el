@@ -293,6 +293,22 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
+  ;; now set the mode style based on c-default-style
+  (c-set-style (if (stringp c-default-style)
+		   (if (c-major-mode-is 'java-mode)
+		       "java"
+		     c-default-style)
+		 (or (cdr (assq major-mode c-default-style))
+		     (cdr (assq 'other c-default-style))
+		     "gnu"))
+	       ;; Don't override style variables unless
+	       ;; `c-old-style-variable-behavior' is set.
+	       (not c-old-style-variable-behavior))
+  ;; Complete the missing style variables.  It's already been done in
+  ;; `c-initialize-builtin-style' if `c-old-style-variable-behavior'
+  ;; is set.
+  (unless c-old-style-variable-behavior
+    (c-complete-stylevars))
   ;; Fix things up for paragraph recognition and filling inside
   ;; comments by using c-comment-prefix-regexp in the relevant places.
   ;; We use adaptive filling for this to make it possible to use
@@ -329,14 +345,6 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
 		  minor-mode-alist)))
-  ;; now set the mode style based on c-default-style
-  (c-set-style (if (stringp c-default-style)
-		   (if (c-major-mode-is 'java-mode)
-		       "java"
-		     c-default-style)
-		 (or (cdr (assq major-mode c-default-style))
-		     (cdr (assq 'other c-default-style))
-		     "gnu")))
   ;; Fix obsolete variables.
   (if (boundp 'c-comment-continuation-stars)
       (setq c-block-comment-prefix c-comment-continuation-stars))
