@@ -164,7 +164,7 @@ indentation change \(in columns)."
     shift-amt))
 
 (defun c-newline-and-indent (&optional newline-arg)
-  "Inserts a newline and indents the new line.
+  "Insert a newline and indent the new line.
 This function fixes line continuation backslashes if inside a macro,
 and takes care to set the indentation before calling
 `indent-according-to-mode', so that lineup functions like
@@ -258,7 +258,7 @@ With universal argument, inserts the analysis as a comment on that line."
   (c-keep-region-active))
 
 (defun c-syntactic-information-on-region (from to)
-  "Inserts a comment with the syntactic analysis on every line in the region."
+  "Insert a comment with the syntactic analysis on every line in the region."
   (interactive "*r")
   (save-excursion
     (save-restriction
@@ -298,10 +298,10 @@ Optional numeric ARG, if supplied, turns on auto-newline when
 positive, turns it off when negative, and just toggles it when zero or
 left out.
 
-When the auto-newline feature is enabled (as evidenced by the `/a' or
-`/ah' on the modeline after the mode name) newlines are automatically
-inserted after special characters such as brace, comma, semi-colon,
-and colon."
+When the auto-newline feature is enabled (as evidenced by the \"/a\"
+or \"/ah\" on the modeline after the mode name) newlines are
+automatically inserted after special characters such as brace, comma,
+semi-colon, and colon."
   (interactive "P")
   (setq c-auto-newline (c-calculate-state arg c-auto-newline))
   (c-update-modeline)
@@ -314,7 +314,7 @@ positive, turns it off when negative, and just toggles it when zero or
 left out.
 
 When the hungry-delete-key feature is enabled (as evidenced by the
-`/h' or `/ah' on the modeline after the mode name) the delete key
+\"/h\" or \"/ah\" on the modeline after the mode name) the delete key
 gobbles all preceding whitespace in one fell swoop."
   (interactive "P")
   (setq c-hungry-delete-key (c-calculate-state arg c-hungry-delete-key))
@@ -409,8 +409,8 @@ Emacs 21 handles that automatically, though."
     (c-electric-backspace arg)))
 
 (defun c-electric-pound (arg)
-  "Electric pound (`#') insertion.
-Inserts a `#' character specially depending on the variable
+  "Insert a \"#\".
+Handle it specially according to the variable
 `c-electric-pound-behavior'.  If a numeric ARG is supplied, or if
 point is inside a literal or a macro, nothing special happens."
   (interactive "*P")
@@ -443,7 +443,7 @@ If the auto-newline feature is turned on, as evidenced by the \"/a\"
 or \"/ah\" string on the mode line, newlines are inserted before and
 after braces based on the value of `c-hanging-braces-alist'.
 
-Also, the line is re-indented unless a numeric ARG is supplied, the
+Also, the line is reindented unless a numeric ARG is supplied, the
 brace is inserted inside a literal, or `c-syntactic-indentation' is
 nil.
 
@@ -546,7 +546,7 @@ This function does various newline cleanups based on the value of
 	      ;; does a newline go before the open brace?
 	      (when (memq 'before newlines)
 		;; we leave the newline we've put in there before,
-		;; but we need to re-indent the line above
+		;; but we need to reindent the line above
 		(when delete-temp-newline
 		  (set-marker (car delete-temp-newline) nil)
 		  (set-marker (cdr delete-temp-newline) nil)
@@ -672,10 +672,10 @@ This function does various newline cleanups based on the value of
 
 Indent the line as a comment, if:
 
-  1. The slash is second of a `//' line oriented comment introducing
+  1. The slash is second of a \"//\" line oriented comment introducing
      token and we are on a comment-only-line, or
 
-  2. The slash is part of a `*/' token that closes a block oriented
+  2. The slash is part of a \"*/\" token that closes a block oriented
      comment.
 
 If a numeric ARG is supplied, point is inside a literal, or
@@ -705,7 +705,7 @@ If a numeric ARG is supplied, point is inside a literal, or
 `c-syntactic-indentation' is nil, indentation is inhibited."
   (interactive "*P")
   (self-insert-command (prefix-numeric-value arg))
-  ;; if we are in a literal, or if arg is given do not re-indent the
+  ;; if we are in a literal, or if arg is given do not reindent the
   ;; current line, unless this star introduces a comment-only line.
   (if (and c-syntactic-indentation
 	   (not arg)
@@ -729,7 +729,7 @@ or \"/ah\" string on the mode line, a newline might be inserted.  See
 the variable `c-hanging-semi&comma-criteria' for how newline insertion
 is determined.
 
-When a semicolon is inserted, the line is re-indented unless a numeric
+When a semicolon is inserted, the line is reindented unless a numeric
 arg is supplied, point is inside a literal, or
 `c-syntactic-indentation' is nil.
 
@@ -767,7 +767,7 @@ following brace lists and semicolons following defuns."
 		   (not (c-in-literal lim)))
 	      (delete-region (point) here))
 	  (goto-char (- (point-max) pos)))
-	;; re-indent line
+	;; reindent line
 	(if c-syntactic-indentation
 	    (indent-according-to-mode))
 	;; check to see if a newline should be added
@@ -793,7 +793,7 @@ If the auto-newline feature is turned on, as evidenced by the \"/a\"
 or \"/ah\" string on the mode line, newlines are inserted before and
 after colons based on the value of `c-hanging-colons-alist'.
 
-Also, the line is re-indented unless a numeric ARG is supplied, the
+Also, the line is reindented unless a numeric ARG is supplied, the
 colon is inserted inside a literal, or `c-syntactic-indentation' is
 nil.
 
@@ -881,12 +881,11 @@ value of `c-cleanup-list'."
       ))))
 
 (defun c-electric-lt-gt (arg)
-  "Insert a less-than, or greater-than character.
-The line will be re-indented if the character inserted is the second
-of a C++ style stream operator and the buffer is in C++ mode.
-Exceptions are when a numeric argument is supplied, point is inside a
-literal, or `c-syntactic-indentation' is nil, in which case the line
-will not be re-indented."
+  "Insert a \"<\" or \">\" character.
+The line will be reindented if the inserted character is a paren or if
+it finishes a C++ style stream operator in C++ mode.  Exceptions are
+when a numeric argument is supplied, the point is inside a literal, or
+`c-syntactic-indentation' is nil."
   (interactive "*P")
   (let ((indentp (and c-syntactic-indentation
 		      (not arg)
@@ -904,11 +903,11 @@ will not be re-indented."
 Some newline cleanups are done if appropriate; see the variable
 `c-cleanup-list'.
 
-Also, the line is re-indented unless a numeric ARG is supplied, the
+Also, the line is reindented unless a numeric ARG is supplied, the
 parenthesis is inserted inside a literal, or `c-syntactic-indentation'
 is nil."
   (interactive "*P")
-  (let ((literal (c-in-literal (c-point 'bod)))
+  (let ((literal (c-in-literal))
 	;; shut this up
 	(c-echo-syntactic-information-p nil))
     (if (or arg literal)
@@ -1844,15 +1843,16 @@ See `c-indent-comment-alist' for a description."
 A prefix argument acts as a repeat count.  With a negative argument,
 move forward to the end of the containing preprocessor conditional.
 
-`#elif' is treated like `#else' followed by `#if', so the function
-stops at them when going backward, but not when going forward."
+\"#elif\" is treated like \"#else\" followed by \"#if\", so the
+function stops at them when going backward, but not when going
+forward."
   (interactive "p")
   (c-forward-conditional (- count) -1)
   (c-keep-region-active))
   
 (defun c-up-conditional-with-else (count)
-  "Move back to the containing preprocessor conditional, including `#else'.
-Just like `c-up-conditional', except it also stops at `#else'
+  "Move back to the containing preprocessor conditional, including \"#else\".
+Just like `c-up-conditional', except it also stops at \"#else\"
 directives."
   (interactive "p")
   (c-forward-conditional (- count) -1 t)
@@ -1863,15 +1863,16 @@ directives."
 A prefix argument acts as a repeat count.  With a negative argument,
 move backward into the previous preprocessor conditional.
 
-`#elif' is treated like `#else' followed by `#if', so the function
-stops at them when going forward, but not when going backward."
+\"#elif\" is treated like \"#else\" followed by \"#if\", so the
+function stops at them when going forward, but not when going
+backward."
   (interactive "p")
   (c-forward-conditional count 1)
   (c-keep-region-active))
 
 (defun c-down-conditional-with-else (count)
-  "Move forward into the next preprocessor conditional, including `#else'.
-Just like `c-down-conditional', except it also stops at `#else'
+  "Move forward into the next preprocessor conditional, including \"#else\".
+Just like `c-down-conditional', except it also stops at \"#else\"
 directives."
   (interactive "p")
   (c-forward-conditional count 1 t)
@@ -1890,16 +1891,16 @@ move forward across a preprocessor conditional."
 A prefix argument acts as a repeat count.  With a negative argument,
 move backward across a preprocessor conditional.
 
-`#elif' is treated like `#else' followed by `#if', except that the
-nesting level isn't changed when tracking subconditionals.
+\"#elif\" is treated like \"#else\" followed by \"#if\", except that
+the nesting level isn't changed when tracking subconditionals.
 
 The optional argument TARGET-DEPTH specifies the wanted nesting depth
 after each scan.  I.e. if TARGET-DEPTH is -1, the function will move
 out of the enclosing conditional.  A non-integer non-nil TARGET-DEPTH
 counts as -1.
 
-If the optional argument WITH-ELSE is non-nil, `#else' directives are
-treated as conditional clause limits.  Normally they are ignored."
+If the optional argument WITH-ELSE is non-nil, \"#else\" directives
+are treated as conditional clause limits.  Normally they are ignored."
   (interactive "p")
   (let* ((forward (> count 0))
 	 (increment (if forward -1 1))
