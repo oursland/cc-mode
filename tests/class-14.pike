@@ -1,15 +1,15 @@
 object foo = class
-{
-    int bar()
     {
-	random();
-	class Gnu
+	int bar()
 	{
-	    int gurka()
+	    random();
+	    class Gnu
 	    {
-		return 17;
-	    }
-	}()->gurka
-	     ();		// TBD: This is anchored wrongly.
-    }
-}();
+		int gurka()
+		{
+		    return 17;
+		}
+	    }()->gurka
+		 ();		// TBD: This is anchored wrongly.
+	}
+    }();

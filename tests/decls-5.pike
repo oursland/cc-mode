@@ -23,9 +23,9 @@ void a2()
 	   2) +
 	17;
     program Bar = class
-    {
-	int i;
-    };
+	{
+	    int i;
+	};
 }
 void a2h()
 {
@@ -33,8 +33,8 @@ void a2h()
 	   2) +
 	17;
     program Bar = class {
-	int i;
-    };
+	    int i;
+	};
 }
 void b1()
 {
