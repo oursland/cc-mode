@@ -75,11 +75,14 @@
   ;; on that. :P
   (let ((firstp t)
 	(substmt-p t)
+	(case-fold-search nil)
 	donep c-in-literal-cache saved
 	(last-begin (point)))
+    (or lim (setq lim (point-min)))
     ;; first check for bare semicolon
     (if (and (progn (c-backward-syntactic-ws lim)
 		    (eq (char-before) ?\;))
+	     (> (point) lim)
 	     (c-safe (progn (forward-char -1)
 			    (setq saved (point))
 			    t))
@@ -90,27 +93,14 @@
       (goto-char last-begin)
       (while (not donep)
 	;; stop at beginning of buffer
-	(if (bobp)
+	(if (or (<= (point) lim) (bobp))
 	    (setq donep t)
 	  ;; go backwards one balanced expression, but be careful of
 	  ;; unbalanced paren being reached
-	  (c-backward-syntactic-ws)	; To skip any macros.
-	  (if (not (c-safe (progn (c-backward-sexp 1) t)))
-	      (progn
-		(if firstp
-		    (backward-up-list 1)
-		  (goto-char last-begin))
-		;; skip over any unary operators, or other special
-		;; characters appearing at front of identifier
-		(save-excursion
-		  (while (progn
-			   (c-backward-syntactic-ws lim)
-			   (/= (skip-chars-backward "-+!*&:.~@") 0)))
-		  (if (eq (char-before) ?\()
-		      (setq last-begin (point))))
-		(goto-char last-begin)
-		(setq donep t)))
-
+	  (c-backward-syntactic-ws lim)	; To skip any macros.
+	  (if (or (not (c-safe (progn (c-backward-sexp 1) t)))
+		  (< (point) lim))
+	      (setq donep t))
 	  (setq c-maybe-labelp nil)
 	  ;; see if we're in a literal. if not, then this bufpos may be
 	  ;; a candidate for stopping
@@ -123,7 +113,7 @@
 	   ((looking-at "\\\\$"))
 	   ;; CASE 3: A macro start?
 	   ((save-excursion
-	      (skip-chars-backward " \t")
+	      (skip-chars-backward " \t" lim)
 	      (when (and (eq (char-before) ?#)
 			 (eq (c-point 'boi) (1- (point)))
 			 (looking-at "[ \t]*define\\>[^_]")
@@ -135,8 +125,8 @@
 	    (if (eq (char-after) ?\()
 		(c-safe (c-forward-sexp 1)))
 	    (c-forward-syntactic-ws)
-	    ;; Treate the first token inside the macro as the
-	    ;; statement start.
+	    ;; Treat the first token inside the macro as the statement
+	    ;; start.
 	    (setq donep t
 		  last-begin (point)))
 	   ;; CASE 4: are we looking at a conditional keyword?
@@ -151,47 +141,61 @@
 				     (c-backward-syntactic-ws lim)
 				     (forward-word -1)
 				     (and lim
+					  c-conditional-key
 					  (<= lim (point))
 					  (not (c-in-literal lim))
 					  (not (eq (char-before) ?_))
-					  c-conditional-key
 					  (looking-at c-conditional-key)
 					  ))))
 		       ;; did we find a conditional?
 		       (if (not foundp)
 			   (goto-char here))
 		       foundp)))
-	    ;; are we in the middle of an else-if clause?
-	    (if (save-excursion
-		  (and (not substmt-p)
-		       (c-safe (progn (c-forward-sexp -1) t))
-		       (looking-at (concat "\\<else"
-					   "\\([ \t\n]\\|\\\\\n\\)+"
-					   "if\\>[^_]"))
-		       (not (c-in-literal lim))))
-		(progn
-		  (c-forward-sexp -1)
-		  (c-backward-to-start-of-if lim)))
-	    ;; are we sitting at an else clause, that we are not a
-	    ;; substatement of?
-	    (if (and (not substmt-p)
-		     (looking-at "\\<else\\>[^_]"))
-		(c-backward-to-start-of-if lim))
-	    ;; a finally or a series of catches?
-	    (if (not substmt-p)
-		(while (looking-at "\\<\\(catch\\|finally\\)\\>[^_]")
-		  (c-safe (c-backward-sexp 2))
-		  (if (eq (char-after) ?\()
-		      (c-safe (c-backward-sexp)))))
 	    ;; are we sitting at the while of a do-while?
-	    (if (and (looking-at "\\<while\\>[^_]")
-		     (c-backward-to-start-of-do lim))
-		(progn
-		  (setq last-begin (point))
+	    (if (and (looking-at "while\\>[^_]")
+		     (progn
+		       (setq saved (point))
+		       (c-backward-to-start-of-do lim)))
+		(save-excursion
+		  (goto-char saved)
 		  (c-backward-syntactic-ws lim)
-		  (setq donep (eq (char-before) ?\;)))
-	      (setq last-begin (point)
-		    donep substmt-p)))
+		  (setq substmt-p (eq (char-before) ?\;)))
+	      (when (not substmt-p)
+		(cond
+		 ;; are we in the middle of an else-if clause?
+		 ((save-excursion
+		    (looking-at "if\\>[^_]")
+		    (= (c-backward-token-1 1 nil lim) 0)
+		    (prog1 (looking-at "else\\>[^_]")
+		      (setq saved (point))))
+		  (goto-char saved)
+		  (c-backward-to-start-of-if lim))
+		 ;; are we sitting at an else clause?
+		 ((looking-at "else\\>[^_]")
+		  (c-backward-to-start-of-if lim))
+		 ;; a finally or a series of catches?
+		 ((and (or (c-major-mode-is 'c++-mode)
+			   (c-major-mode-is 'java-mode))
+		       (looking-at "\\(catch\\|finally\\)\\>[^_]"))
+		  (setq saved (point))
+		  (while (and (= (c-backward-token-1 2 t lim) 0)
+			      (if (eq (char-after) ?\()
+				  (= (c-backward-token-1 1 t lim) 0)
+				t)
+			      (looking-at "\\(catch\\|finally\\)\\>[^_]"))
+		    (setq saved (point)))
+		  (when (not (looking-at "try\\>[^_]"))
+		    (save-excursion
+		      (goto-char saved)
+		      (looking-at "\\(catch\\|finally\\)\\>[^_]")
+		      (setq c-parsing-error
+			    (format
+			     "No matching `try' found for `%s' on line %d"
+			     (match-string 1)
+			     (1+ (count-lines 1 (point))))))))
+		 )))
+	    (setq last-begin (point)
+		  donep substmt-p))
 	   ;; CASE 5: are we looking at a label?  (But we handle
 	   ;; switch labels later.)
 	   ((and (looking-at c-label-key)
@@ -234,14 +238,17 @@
 		     (let ((here (point)))
 		       (beginning-of-line)
 		       (c-forward-syntactic-ws here)
-		       (if (looking-at c-switch-label-key)
+		       (if (and (looking-at c-switch-label-key)
+				(>= (point) lim))
 			   t
 			 (goto-char here)
 			 nil)))))
 	   ;; CASE 9: ObjC or Java method def
 	   ((and c-method-key
-		 (setq last-begin (c-in-method-def-p)))
-	    (setq donep t))
+		 (setq saved (c-in-method-def-p))
+		 (>= saved lim))
+	    (setq last-begin saved
+		  donep t))
 	   ;; CASE 10: Normal token.  At bob, we can end up at ws or a
 	   ;; comment, and last-begin shouldn't be updated then.
 	   ((not (looking-at "\\s \\|/[/*]"))
@@ -250,9 +257,11 @@
     (goto-char last-begin)
     ;; We always want to skip over the non-whitespace modifier
     ;; characters that can start a statement.
-    (let ((lim (point)))
-      (skip-chars-backward "-+!*&~@`# \t" (c-point 'boi))
-      (skip-chars-forward " \t" lim))))
+    (while (progn
+	     (c-backward-syntactic-ws lim)
+	     (/= (skip-chars-backward "-+!*&~@`#" lim) 0))
+      (setq last-begin (point)))
+    (goto-char last-begin)))
 
 (defun c-end-of-statement-1 ()
   (condition-case nil
@@ -452,7 +461,7 @@
 		(if (memq (char-syntax (char-after)) jump-syntax)
 		    (goto-char (scan-sexps (point) 1))
 		  (forward-char))
-		(c-forward-syntactic-ws lim)
+		(c-forward-syntactic-ws)
 		(setq count (1- count)))
 	    (error (goto-char last)))
 	  (when (eobp)
@@ -472,7 +481,9 @@
 	       (or (and (memq (char-syntax (or (char-after) ? )) '(?w ?_))
 			(memq (char-syntax (or (char-before) ? )) '(?w ?_)))
 		   (/= (point)
-		       (save-excursion (c-forward-syntactic-ws) (point)))
+		       (save-excursion
+			 (c-forward-syntactic-ws (1+ lim))
+			 (point)))
 		   (eobp)))
 	  ;; If count is zero we should jump if in the middle of a
 	  ;; token or if there is whitespace between point and the
@@ -487,7 +498,7 @@
 		  (while (progn
 			   (setq last (point))
 			   (> count 0))
-		    (c-backward-syntactic-ws lim)
+		    (c-backward-syntactic-ws)
 		    (if (memq (char-syntax (char-before)) jump-syntax)
 			(goto-char (scan-sexps (point) -1))
 		      (backward-char))
@@ -753,26 +764,19 @@
 	   (state-ptr state-head)	; Last cons in state-head.
 	   (state-foot			; Last part of the state.
 	    (and c-state-cache
-		 ;; Try to use cached info before point, but back up
-		 ;; before any macro first, since the cached state
-		 ;; might contain braces inside macros which we should
-		 ;; ignore if we've exited the macro.
-		 (save-excursion
-		   (when (<= (point) in-macro-start)
-		     (c-backward-syntactic-ws)
-		     (setq here (point)))
-		   (let ((newstate (c-whack-state-after here c-state-cache)))
-		     (and newstate
-			  (or (cdr newstate)
-			      (eq (car newstate)
-				  (let ((elem c-state-cache))
-				    (while (cdr elem)
-				      (setq elem (cdr elem)))
-				    (car elem))))
-			  ;; The last element in the cached state was
-			  ;; not changed by the whack.
-			  (setq state-tail-intact t))
-		     newstate))))
+		 ;; Try to use cached info before point.
+		 (let ((newstate (c-whack-state-after here c-state-cache)))
+		   (and newstate
+			(or (cdr newstate)
+			    (eq (car newstate)
+				(let ((elem c-state-cache))
+				  (while (cdr elem)
+				    (setq elem (cdr elem)))
+				  (car elem))))
+			;; The last element in the cached state was
+			;; not changed by the whack.
+			(setq state-tail-intact t))
+		   newstate)))
 	   (pos here)
 	   placeholder last-pos sexp-pos)
       (narrow-to-region
@@ -790,7 +794,7 @@
 	     ;; There's a cached state with a containing paren.  Pop
 	     ;; off the stale containing sexps from it by going
 	     ;; forward out of parens as far as possible.
-	     (narrow-to-region (point-min) (point))
+	     (narrow-to-region (point-min) here)
 	     (while (and state-foot
 			 (setq placeholder (c-up-list-forward last-pos)))
 	       (setq last-pos placeholder)
@@ -807,6 +811,18 @@
 		   (setq state-foot (cdr state-foot)))
 	       (setq state-foot (cons (cons sexp-pos last-pos)
 				      state-foot)))
+	     ;; Check if the preceding balanced paren is within a
+	     ;; macro; it should be ignored if we're outside the
+	     ;; macro.  There's no need to check any further upwards;
+	     ;; if the macro contains an unbalanced opening paren then
+	     ;; we're smoked anyway.
+	     (when (and (<= (point) in-macro-start)
+			(consp (car state-foot)))
+	       (save-excursion
+		 (goto-char (car (car state-foot)))
+		 (when (c-beginning-of-macro)
+		   (setq here (point)
+			 state-foot (cdr state-foot)))))
 	     (when state-foot
 	       (if (or state-tail-intact
 		       (consp (car state-foot))
@@ -832,19 +848,7 @@
 	     (let ((cnt 2))
 	       (while (not (or (bobp) (zerop cnt)))
 		 (c-beginning-of-defun-1)
-		 (if (and
-		      (eq (char-after) ?\{)
-		      ;; The following catches an obscure special case
-		      ;; where the brace is preceded by an open paren.
-		      ;; That can only legally occur with blocks
-		      ;; inside expressions and in Pike special brace
-		      ;; lists.  Even so, this test is still bogus
-		      ;; then, but hopefully good enough.  (We don't
-		      ;; want to use up-list here since it might be
-		      ;; slow.)
-		      (save-excursion
-			(c-backward-syntactic-ws)
-			(not (eq (char-before) ?\())))
+		 (if (eq (char-after) ?\{)
 		     (setq cnt (1- cnt)))))
 	     (point)))
        (point-max))
@@ -1074,21 +1078,23 @@ isn't moved."
 	     (not (= (match-end 0) (c-point 'eol))))
     (goto-char (match-end 0))))
 
-(defun c-just-after-func-arglist-p (&optional containing)
+(defun c-just-after-func-arglist-p (&optional containing lim)
   ;; Return t if we are between a function's argument list closing
   ;; paren and its opening brace.  Note that the list close brace
   ;; could be followed by a "const" specifier or a member init hanging
   ;; colon.  Optional CONTAINING is position of containing s-exp open
-  ;; brace.  If not supplied, point is used as search start.
+  ;; brace.  If not supplied, point is used as search start.  LIM is
+  ;; used as bound for some backward buffer searches; the search might
+  ;; continue past it.
   (save-excursion
-    (c-backward-syntactic-ws)
+    (c-backward-syntactic-ws lim)
     (let ((checkpoint (or containing (point))))
       (goto-char checkpoint)
       ;; could be looking at const specifier
       (if (and (eq (char-before) ?t)
 	       (forward-word -1)
 	       (looking-at "\\<const\\>[^_]"))
-	  (c-backward-syntactic-ws)
+	  (c-backward-syntactic-ws lim)
 	;; otherwise, we could be looking at a hanging member init
 	;; colon
 	(goto-char checkpoint)
@@ -1100,11 +1106,11 @@ isn't moved."
 	  (if (eq (char-before) ?\))
 	      (c-backward-sexp 2)
 	    (c-backward-sexp 1))
-	  (c-backward-syntactic-ws))
+	  (c-backward-syntactic-ws lim))
 	(if (and (eq (char-before) ?:)
 		 (progn
 		   (forward-char -1)
-		   (c-backward-syntactic-ws)
+		   (c-backward-syntactic-ws lim)
 		   (looking-at "\\([ \t\n]\\|\\\\\n\\)*:\\([^:]+\\|$\\)")))
 	    nil
 	  (goto-char checkpoint))
@@ -1115,7 +1121,7 @@ isn't moved."
 	       (progn
 		 (c-forward-sexp -1)
 		 (forward-char -1)
-		 (c-backward-syntactic-ws)
+		 (c-backward-syntactic-ws lim)
 		 (not (or (memq (char-before) '(?- ?+))
 			  ;; or a class category
 			  (progn
@@ -1124,91 +1130,66 @@ isn't moved."
 			  )))))
       )))
 
-;; defuns to look backwards for things
 (defun c-backward-to-start-of-do (&optional lim)
   ;; Move to the start of the last "unbalanced" do expression.
   ;; Optional LIM is the farthest back to search.  If none is found,
   ;; nil is returned and point is left unchanged, otherwise t is returned.
   (let ((do-level 1)
-	(case-fold-search nil)
-	(lim (or lim (c-point 'bod)))
 	(here (point))
-	foundp)
-    (while (not (zerop do-level))
-      ;; we protect this call because trying to execute this when the
-      ;; while is not associated with a do will throw an error
-      (condition-case nil
-	  (progn
-	    (c-backward-sexp 1)
-	    (cond
-	     ;; break infloop for illegal C code
-	     ((bobp) (setq do-level 0))
-	     ((memq (c-in-literal lim) '(c c++)))
-	     ((looking-at "while\\b[^_]")
+	(search 1))
+    (or lim (setq lim (point-min)))
+    (c-safe
+     (while search
+       (c-backward-sexp 1)		; Might throw.
+       (cond ((looking-at "while\\>[^_]")
 	      (setq do-level (1+ do-level)))
-	     ((looking-at "do\\b[^_]")
+	     ((looking-at "do\\>[^_]")
 	      (if (zerop (setq do-level (1- do-level)))
-		  (setq foundp t)))
-	     ((<= (point) lim)
-	      (setq do-level 0)
-	      (goto-char lim))))
-	(error
-	 (goto-char lim)
-	 (setq do-level 0))))
-    (if (not foundp)
-	(goto-char here))
-    foundp))
+		  (setq search nil)))
+	     ((or (bobp) (<= (point) lim))
+	      ;; break infloop for illegal C code
+	      (setq search nil)))))
+    (if (eq do-level 0)
+	t
+      (goto-char here)
+      nil)))
 
 (defun c-backward-to-start-of-if (&optional lim)
-  ;; Move to the start of the last "unbalanced" if and return t.  If
-  ;; none is found, and we are looking at an if clause, nil is
-  ;; returned.
+  ;; Move to the start of the last "unbalanced" if expression.
+  ;; Optional LIM is the farthest back to search.  If none is found,
+  ;; nil is returned and point is left unchanged, otherwise t is returned.
   (let ((if-level 1)
-	(here (c-point 'bol))
-	(case-fold-search nil)
-	(lim (or (and lim (>= (point) lim) lim)
-		 (c-point 'bod)))
-	(at-if (looking-at "if\\b[^_]")))
-    (or (catch 'orphan-if
-	  (while (and (not (bobp))
-		      (not (zerop if-level)))
-	    (c-backward-syntactic-ws lim)
-	    (condition-case nil
-		(c-backward-sexp 1)
-	      (error
-	       (unless at-if
-		 (throw 'orphan-if nil))))
-	    (cond
-	     ((looking-at "else\\b[^_]")
+	(here (point))
+	(search 1)
+	last)
+    (or lim (setq lim (point-min)))
+    (c-safe
+     (while search
+       (setq last (point))
+       (c-backward-sexp 1)		; Might throw.
+       (cond ((looking-at "else\\>[^_]")
 	      (setq if-level (1+ if-level)))
-	     ((looking-at "if\\b[^_]")
-	      ;; check for else if... skip over
-	      (let ((here (point)))
-		(c-safe (c-forward-sexp -1))
-		(if (looking-at (concat "\\<else"
-					"\\([ \t\n]\\|\\\\\n\\)+"
-					"if\\>[^_]"))
-		    nil
-		  (setq if-level (1- if-level))
-		  (goto-char here))))
-	     ((looking-at "while\\b[^_]")
-	      (unless (c-backward-to-start-of-do lim)
-		(throw 'orphan-if nil)))
-	     ((< (point) lim)
-	      (setq if-level 0)
-	      (goto-char lim))
-	     ))
-	  t)
+	     ((zerop if-level)
+	      ;; Check for finish after else check, to skip over
+	      ;; else-if combinations.
+	      (setq search nil))
+	     ((looking-at "if\\>[^_]")
+	      (setq if-level (1- if-level)))
+	     ((looking-at "while\\>[^_]")
+	      (c-backward-to-start-of-do lim))
+	     ((or (bobp) (<= (point) lim))
+	      ;; break infloop for illegal C code
+	      (setq search nil)))))
+    (if (eq if-level 0)
 	(progn
-	  (goto-char here)
-	  (c-beginning-of-statement-1)
-	  (or (< (point) here)
-	      (c-safe (backward-up-list 1) t)
-	      (goto-char lim))
-	  (setq c-parsing-error
-		(format "No matching `if' found for `else' on line %d"
-			(1+ (count-lines 1 here))))
-	  nil))))
+	  (goto-char last)
+	  t)
+      (goto-char here)
+      (when (looking-at "else\\>[^_]")
+	(setq c-parsing-error
+	      (format "No matching `if' found for `else' on line %d"
+		      (1+ (count-lines 1 here)))))
+      nil)))
 
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
@@ -1526,17 +1507,18 @@ isn't moved."
 			       ((looking-at "\\s.") 'maybe)
 			       ;; make sure we're not in a C++ template
 			       ;; argument assignment
-			       ((and (c-major-mode-is 'c++-mode)
-				     (save-excursion
-				       (let ((here (point))
-					     (pos< (progn
-						     (skip-chars-backward "^<>")
-						     (point))))
-					 (and (eq (char-before) ?<)
-					      (not (c-crosses-statement-barrier-p
-						    pos< here))
-					      (not (c-in-literal))
-					      ))))
+			       ((and
+				 (c-major-mode-is 'c++-mode)
+				 (save-excursion
+				   (let ((here (point))
+					 (pos< (progn
+						 (skip-chars-backward "^<>")
+						 (point))))
+				     (and (eq (char-before) ?<)
+					  (not (c-crosses-statement-barrier-p
+						pos< here))
+					  (not (c-in-literal))
+					  ))))
 				nil)
 			       (t t))))))
 	       (if (and (eq braceassignp 'dontknow)
@@ -1737,7 +1719,8 @@ isn't moved."
   (c-most-enclosing-brace (nreverse state) bufpos))
 
 (defun c-safe-position (bufpos state)
-  ;; return the closest known safe position higher up than bufpos
+  ;; Return the closest known safe position higher up than bufpos, or
+  ;; nil if the state doesn't contain one.
   (let ((c-macro-start (c-query-macro-start)) safepos)
     (if (and c-macro-start
 	     (< c-macro-start bufpos))
@@ -1751,12 +1734,11 @@ isn't moved."
       (if (< safepos bufpos)
 	  (setq state nil)
 	(setq state (cdr state))))
-    ;; Normally bufpos is inside the state, but if we backed up
-    ;; outside the macro it might not be.  We know the macro is at the
-    ;; top level in this case, so we can use the macro start as the
-    ;; safe position.
-    (or c-macro-start
-	safepos)))
+    (when (eq c-macro-start bufpos)
+      ;; Backed up bufpos to the macro start and got outside the
+      ;; state.  We know the macro is at the top level in this case,
+      ;; so we can use the macro start as the safe position.
+      c-macro-start)))
 
 (defun c-narrow-out-enclosing-class (state lim)
   ;; narrow the buffer so that the enclosing class is hidden
@@ -1866,13 +1848,6 @@ isn't moved."
      ;; statement or substatement
      (t
       (c-beginning-of-statement-1 after-cond-placeholder)
-      ;; KLUDGE ALERT!  c-beginning-of-statement-1 can leave
-      ;; us before the lim we're passing in.  It should be
-      ;; fixed, but I'm worried about side-effects at this
-      ;; late date.  Fix for v5.
-      (goto-char (or (and after-cond-placeholder
-			  (max after-cond-placeholder (point)))
-		     (point)))
       (c-add-syntax 'statement-cont (point)))
      )))
 
@@ -2037,7 +2012,6 @@ isn't moved."
 		    (progn
 		      ;; Ought to cache the result here.
 		      (c-beginning-of-statement-1 lim)
-		      ;;(c-forward-syntactic-ws)
 		      (setq placeholder (point))))
 		 (if (looking-at c-block-stmt-2-kwds)
 		     ;; Require a parenthesis after these keywords.
@@ -2150,7 +2124,6 @@ isn't moved."
 		  ;; case 10B.2.
 		  (progn
 		    (c-beginning-of-statement-1 lim)
-		    (c-forward-syntactic-ws)
 		    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 		(c-add-syntax 'brace-list-open placeholder)))
 	     ;; CASE 5A.4: inline defun open
@@ -2165,7 +2138,7 @@ isn't moved."
 		(c-add-syntax 'defun-open (c-point 'bol)))
 	      )))
 	   ;; CASE 5B: first K&R arg decl or member init
-	   ((c-just-after-func-arglist-p)
+	   ((c-just-after-func-arglist-p nil lim)
 	    (cond
 	     ;; CASE 5B.1: a member init
 	     ((or (eq char-before-ip ?:)
@@ -2444,6 +2417,7 @@ isn't moved."
 	   ;; CASE 5I: ObjC method definition.
 	   ((and c-method-key
 		 (looking-at c-method-key))
+	    (c-beginning-of-statement-1 lim)
 	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
 	   ;; CASE 5J: we are at the topmost level, make sure we skip
 	   ;; back past any access specifiers
@@ -2458,7 +2432,11 @@ isn't moved."
 		(c-backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
-		  (memq (char-before) '(?\; ?\}))))
+		  (memq (char-before) '(?\; ?\}))
+		  (and (c-major-mode-is 'objc-mode)
+		       (progn
+			 (c-beginning-of-statement-1 lim)
+			 (eq (char-after) ?@)))))
 	    ;; real beginning-of-line could be narrowed out due to
 	    ;; enclosure in a class block
 	    (save-restriction
@@ -2496,12 +2474,10 @@ isn't moved."
 	   ;; arglist that begins on the previous line.
 	   ((eq (char-before) ?<)
 	    (c-beginning-of-statement-1 lim)
-	    (c-forward-syntactic-ws)
 	    (c-add-syntax 'template-args-cont (c-point 'boi)))
 	   ;; CASE 5M: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement-1 lim)
-	    (c-forward-syntactic-ws)
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 	   ))				; end CASE 5
 	 ;; (CASE 6 has been removed.)
@@ -2643,7 +2619,8 @@ isn't moved."
 		     (assoc 'statement-cont
 			    (setq placeholder (c-guess-basic-syntax))))
 		(setq syntax placeholder)
-	      (c-beginning-of-statement-1 lim)
+	      (c-beginning-of-statement-1
+	       (c-safe-position (1- containing-sexp) state))
 	      (c-forward-token-1 0)
 	      (if (looking-at "typedef\\>") (c-forward-token-1 1))
 	      (c-add-syntax 'brace-list-open (c-point 'boi))))
@@ -2708,7 +2685,6 @@ isn't moved."
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
-		    ;(c-forward-syntactic-ws)
 		    (setq placeholder (point))))
 	       (/= placeholder containing-sexp))
 	  (let ((after-cond-placeholder
@@ -2750,7 +2726,7 @@ isn't moved."
 	 ;; CASE 16: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((eq char-after-ip ?})
-	  (let* ((lim (c-safe-position containing-sexp fullstate))
+	  (let* ((lim (c-safe-position (1- containing-sexp) fullstate))
 		 (relpos (save-excursion
 			   (goto-char containing-sexp)
 			   (if (/= (point) (c-point 'boi))
