@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.194 $
-;; Last Modified:   $Date: 1992-08-27 16:41:30 $
+;; Version:         $Revision: 2.195 $
+;; Last Modified:   $Date: 1992-08-28 22:07:39 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -29,20 +29,17 @@
 
 ;; Introduction
 ;; ============
-;; Do a "C-h m" in a c++-mode buffer for more information on customizing
-;; c++-mode.
-;;
-;; If you have problems or questions, you can contact me at the
+;; Do a "C-h m" in a c++-mode buffer for more information on
+;; customizing c++-mode. To submit bug reports hit "C-c C-b" in a
+;; c++-mode buffer. This runs the command c++-submit-bug-report and
+;; automatically sets up the mail buffer with all the necessary
+;; information.  If you have other questions contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov. Please don't
 ;; send bug reports to my personal account, I may not get it for a
 ;; long time.
-;;
-;; To submit bug reports hit "C-c C-b" in a c++-mode buffer. This runs
-;; the command c++-submit-bug-report and automatically sets up the
-;; mail buffer with all the necessary information.
 
-;; Important Note about Escapes in Comments
-;; ========================================
+;; Important Note about Escapes in Comments, and Performance
+;; =========================================================
 ;; You will notice that certain characters, when typed in comment
 ;; regions, get escaped with a backslash.  This is a workaround for an
 ;; emacs bug.  In brief, GNU emacs 18 and its derivatives cannot
@@ -50,7 +47,15 @@
 ;; supports 2 orthogonal comment styles.  Thus emacs' syntax parsing
 ;; code will sometimes choke on unbalanced parentheses and single
 ;; quotes in comments.  Please do a "C-h v c++-untame-characters" for
-;; more information.
+;; more information. Note further that workarounds for this bug
+;; require that some buffer parsing be performed in elisp where it
+;; would normally be more efficient to do via the C primitives. I've
+;; chosen accuracy over performance but have worked hard to give
+;; acceptable performance in all but the most uncommon situations. You
+;; will most likely notice c++-mode becoming slow when you're editing
+;; a file of preprocessor commands, where the file contains few if any
+;; function definitions. None of this can be changed until emacs
+;; itself is fixed.
 
 ;; Notes for Novice Users
 ;; ======================
@@ -62,7 +67,7 @@
 ;;
 ;; To use c++-mode you need to do two things: get this file loaded
 ;; into your emacs sessions at the right time; and tell emacs what
-;; type of files are C++ files.  To the the former, make sure that
+;; type of files are C++ files.  To do the former, make sure that
 ;; c++-mode.el{c} is on your load-path, and add the following lines to
 ;; your .emacs file:
 ;; (autoload 'c++-mode   "c++-mode" "C++ Editing Mode" t)
@@ -114,13 +119,13 @@
 ;; available to send to you. The mail-server should get it to you
 ;; pretty quickly.  Remember that if you want advanced access to beta
 ;; releases, get on the victims list -- but be forewarned, you should
-;; be elisp and C++ fluent to be a beta tester.
+;; be elisp and C++ fluent, and should have anon-ftp access.
 
 ;; LCD Archive Entry
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-27 16:41:30 $|$Revision: 2.194 $|
+;; |$Date: 1992-08-28 22:07:39 $|$Revision: 2.195 $|
 
 ;;; Code:
 
@@ -372,7 +377,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.194 $
+  "Major mode for editing C++ code.  $Revision: 2.195 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -579,7 +584,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.194 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.195 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2169,7 +2174,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.194 $"
+(defconst c++-version "$Revision: 2.195 $"
   "c++-mode version number.")
 
 (defun c++-version ()
