@@ -26,4 +26,9 @@ int main() {
     v6 (id)[n];
     v7 [n];
     v8 [n] = 1;
+
+    t8 * id;
+    v14 *;
+    (v15 * id);
+    x (a*b, c*d);
 }
