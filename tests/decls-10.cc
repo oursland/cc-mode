@@ -36,6 +36,7 @@ int main() {
     (v15 * id);
     x (a*b, c*d);
     v16 (*id);
+    *v18 = v19;
 
     if(count_args(CDR(n))==1) {}
 }
