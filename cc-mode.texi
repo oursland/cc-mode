@@ -3154,11 +3154,11 @@ column zero!
 You might want to investigate the speed-ups contained in the
 file @file{cc-lobotomy.el}, which comes as part of the @ccmode{}
 distribution, but is completely unsupported.
-As mentioned previous, @ccmode{} always trades accuracy for speed,
+As mentioned previous, @ccmode{} always trades speed for accuracy,
 however it is recognized that sometimes you need speed and can sacrifice
 some accuracy in indentation.  The file @file{cc-lobotomy.el} contains
 hacks that will ``dumb down'' @ccmode{} in some specific ways, making
-that trade-off of speed for accuracy.  I won't go into details of its
+that trade-off of accurancy for speed.  I won't go into details of its
 use here; you should read the comments at the top of the file, and look
 at the variable @code{cc-lobotomy-pith-list} for details.
 
