@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.134 $
-;; Last Modified:   $Date: 1993-12-21 21:05:26 $
+;; Version:         $Revision: 3.135 $
+;; Last Modified:   $Date: 1993-12-21 22:33:30 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-21 21:05:26 $|$Revision: 3.134 $|
+;; |$Date: 1993-12-21 22:33:30 $|$Revision: 3.135 $|
 
 ;;; Code:
 
@@ -640,7 +640,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.134 $
+CC-MODE REVISION: $Revision: 3.135 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -673,7 +673,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.134 $
+CC-MODE REVISION: $Revision: 3.135 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2114,6 +2114,47 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  foundp))			;end s-e
     (error nil)))
 
+(defun c-inside-bracelist-p (containing-sexp)
+  ;; return the buffer position of the beginning of the brace list
+  ;; statement if we're inside a brace list, otherwise return nil.
+  ;; CONTAINING-SEXP is the buffer pos of the innermost containing
+  ;; paren
+  (let (donep bufpos)
+    (save-excursion
+      (or
+       ;; this will pick up enum lists
+       (progn (goto-char (1- containing-sexp))
+	      (c-beginning-of-statement)
+	      (setq bufpos (point))
+	      (and (< bufpos containing-sexp)
+		   (looking-at "\\<enum\\>")))
+       ;; this will pick up array/aggregate init lists, even if they
+       ;; are nested
+       (progn (goto-char (1- containing-sexp))
+	      (while (not donep)
+		(c-backward-syntactic-ws)
+		(cond
+		 ;; CASE 1: we've hit the beginning of the aggregate list
+		 ((= (preceding-char) ?=)
+		  (c-beginning-of-statement)
+		  (setq donep t
+			bufpos (point)))
+		 ;; CASE 2: maybe we're in a nested aggregate?
+		 ((= (preceding-char) ?{)
+		  (c-safe (forward-char -1)))
+		 ;; CASE 3: in a nested list, after the first one
+		 ;; perhaps?
+		 ((and (= (preceding-char) ?,)
+		       (= (char-after (- (point) 2)) ?}))
+		  (forward-char -1)
+		  (backward-sexp 1))
+		 ;; CASE 4: nope, we're done
+		 (t (setq donep t
+			  bufpos nil))
+		 )))
+       ))
+    bufpos))
+
 
 ;; defuns for calculating the semantic state and indenting a single
 ;; line of C/C++ code
@@ -2416,15 +2457,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (c-add-semantics 'inher-cont (point))
 	    )))
 	 ;; CASE 7: we are inside a brace-list
-	 ((save-excursion
-	    (or (progn (goto-char (1- containing-sexp))
-		       (c-beginning-of-statement)
-		       (setq placeholder (point))
-		       (looking-at "\\<enum\\>"))
-		(progn (goto-char (1- containing-sexp))
-		       (c-backward-syntactic-ws lim)
-		       (= (preceding-char) ?=))
-		))
+	 ((setq placeholder (c-inside-bracelist-p containing-sexp))
 	  (cond
 	   ;; CASE 7A: we're looking at the first line in a brace-list
 	   ((save-excursion
@@ -2855,7 +2888,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.134 $"
+(defconst c-version "$Revision: 3.135 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
