@@ -2806,15 +2806,18 @@ in\\|out\\)\\)\\|dev/user\\)\\>" 'font-lock-keyword-face)
 		"while") t) "\\>")
 
      ;; Builtins.
-     (list (concat "\\<"
-		   (c-regexp-opt
-		    '("and" "asort" "atan2" "bindtextdomain" "compl" "cos"
-		      "ctime" "dcgettext" "exp" "extension" "gensub" "gsub"
-		      "index" "int" "length" "log" "lshift" "match" "mktime"
-		      "or" "print" "printf" "rand" "rshift" "sin" "split"
-		      "sprintf" "sqrt" "srand" "strftime" "strtonum" "sub"
-		      "substr" "systime" "time" "tolower" "toupper" "xor") t)
-		   "\\>") 0 c-preprocessor-face-name)
+     `(eval . (list
+	       ,(concat
+		 "\\<"
+		 (c-regexp-opt
+		  '("and" "asort" "atan2" "bindtextdomain" "compl" "cos"
+		    "ctime" "dcgettext" "exp" "extension" "gensub" "gsub"
+		    "index" "int" "length" "log" "lshift" "match" "mktime"
+		    "or" "print" "printf" "rand" "rshift" "sin" "split"
+		    "sprintf" "sqrt" "srand" "strftime" "strtonum" "sub"
+		    "substr" "systime" "time" "tolower" "toupper" "xor") t)
+		 "\\>")
+	       0 c-preprocessor-face-name))
 
      ;; gawk debugging keywords.  (acm, 2002/7/21)
      (list (concat "\\<" (c-regexp-opt '("adump" "stopme") t) "\\>")
