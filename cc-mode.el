@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.365 $
-;; Last Modified:   $Date: 1997-02-09 03:15:02 $
+;; Version:         $Revision: 4.366 $
+;; Last Modified:   $Date: 1997-02-09 07:28:42 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2426,7 +2426,7 @@ style name."
 			   (prompt (format "Which %s indentation style? "
 					   mode-name)))
 		       (completing-read prompt c-style-alist nil t
-					(cons c-site-default-style 0)
+					(cons c-indentation-style 0)
 					'c-set-style-history))))
   (let ((vars (cdr (or (assoc (downcase stylename) c-style-alist)
 		       (assoc (upcase stylename) c-style-alist)
@@ -5119,7 +5119,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.365 $"
+(defconst c-version "$Revision: 4.366 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
