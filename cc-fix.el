@@ -131,26 +131,6 @@
 	"do BODY, else return nil."
 	(cons 'if (cons cond (cons nil body))))))
 
-(if (condition-case nil
-	(progn
-	  (require 'this-is-a-nonexistent-feature nil t)
-	  nil)
-      (error t))
-    (progn
-      ;; The require function doesn't have a third NOERROR argument in
-      ;; Emacs 19.34.
-      (ad-define-subr-args 'require '(feature &optional file-name))
-      (defadvice require (around c-require-advice
-				 (feature &optional file-name noerror)
-				 activate preactivate)
-	"If the optional third argument NOERROR is non-nil,
-then return nil if the file is not found.  Signal an error otherwise."
-	(condition-case err
-	    (progn ad-do-it feature)
-	  (file-error (if noerror
-			  nil
-			(signal (car err) (cdr err))))))))
-
 
 (cc-provide 'cc-mode-19)
 ;;; cc-mode-19.el ends here
