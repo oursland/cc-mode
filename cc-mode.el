@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.150 $
-;; Last Modified:   $Date: 1995-02-07 17:38:42 $
+;; Version:         $Revision: 4.151 $
+;; Last Modified:   $Date: 1995-02-08 22:52:15 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-02-07 17:38:42 $|$Revision: 4.150 $|
+;; |$Date: 1995-02-08 22:52:15 $|$Revision: 4.151 $|
 
 ;;; Code:
 
@@ -1570,10 +1570,11 @@ the brace is inserted inside a literal."
 	      (if (zerop (car (parse-partial-sexp bol (1- (point)))))
 		  (setq c-state-cache (c-whack-state bol c-state-cache)
 			syntax (c-guess-basic-syntax))
-		;; gotta punt. this includes some horrible kludgery
+		;; gotta punt. this requires some horrible kludgery
 		(beginning-of-line)
 		(makunbound 'c-state-cache)
-		(setq c-state-cache (c-parse-state)))))
+		(setq c-state-cache (c-parse-state)
+		      syntax nil))))
 	  )
 	;; now adjust the line's indentation. don't update the state
 	;; cache since c-guess-basic-syntax isn't called when the
@@ -4458,7 +4459,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.150 $"
+(defconst c-version "$Revision: 4.151 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
