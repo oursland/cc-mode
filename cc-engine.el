@@ -1706,6 +1706,7 @@ brace."
 		  (c-backward-sexp 2)
 		(c-backward-sexp 1))
 	      ;; Skip backwards over a fully::qualified::name.
+	      (c-backward-syntactic-ws lim)
 	      (while (and (eq (char-before) ?:)
 			  (save-excursion
 			    (forward-char -1)
@@ -1718,13 +1719,6 @@ brace."
 	     ;; CASE 5D.1: hanging member init colon, but watch out
 	     ;; for bogus matches on access specifiers inside classes.
 	     ((and (save-excursion
-		     ;; There might be member inits on the first line too.
-		     (while (and (> (point) lim)
-				 (eq (char-before) ?,)
-				 (= (c-backward-token-1 2 t lim) 0)
-				 (eq (char-after) ?\()
-				 (= (c-backward-token-1 1 t lim) 0))
-		       (c-backward-syntactic-ws lim))
 		     (setq placeholder (point))
 		     (c-backward-token-1 1 t lim)
 		     (and (eq (char-after) ?:)
