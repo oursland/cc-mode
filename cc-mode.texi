@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.63 $
+@comment manual version: $Revision: 2.64 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1997-02-06 19:07:09 $
+@comment Last modification: $Date: 1997-02-18 03:31:57 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.63 $)
+@center (manual revision: $Revision: 2.64 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -2354,8 +2354,9 @@ More detailed descriptions follow below.
 @item
 @code{inline-close} --- brace that closes an in-class inline method
 @item
-@code{ansi-funcdecl-cont} --- the nether region between an ANSI function
-declaration and the defun opening brace
+@code{func-decl-cont} --- the nether region between a function
+declaration and the defun opening brace.  In C++ and Java, this can
+include the @code{throws} clauses of a method declaration.
 @item
 @code{knr-argdecl-intro} --- first line of a K&R C argument declaration
 @item
@@ -2886,9 +2887,9 @@ The lines to note in this example include:
 
 @itemize @bullet
 
-@cindex ansi-funcdecl-cont syntactic symbol
+@cindex func-decl-cont syntactic symbol
 @item
-line 2, assigned the @code{ansi-funcdecl-cont} syntax;
+line 2, assigned the @code{func-decl-cont} syntax;
 
 @cindex comment-intro syntactic symbol
 @item
