@@ -107,7 +107,8 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
     (nil
      (, 
       (concat
-       "^\\<.*"                               ; line MUST start with word char
+       "^\\<"                                 ; line MUST start with word char
+       "[^()]*"                               ; no parentheses before
        "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
        "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
        "[ \t]*("			      ; see above, BUT
