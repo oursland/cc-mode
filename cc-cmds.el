@@ -1532,30 +1532,29 @@ balanced expression is found."
 	end)
     (set-marker-insertion-type here t)
     (unwind-protect
-	(let ((start (progn
-		       ;; try to be smarter about finding the range of
-		       ;; lines to indent. skip all following
-		       ;; whitespace, then try to find any
-		       ;; opening paren on the current line
-		       (skip-chars-forward " \t\n")
+	(let ((start (save-excursion
+		       ;; Find the closest following open paren that
+		       ;; ends on another line.
 		       (save-restriction
 			 (narrow-to-region (point-min) (c-point 'eol))
-			 (c-safe (1- (scan-lists (point) 1 -1)))))))
-	  ;; find balanced expression end
-	  (setq end (and (c-safe (progn (c-forward-sexp 1) t))
-			 (point)))
+			 (let (next)
+			   (while (setq next (c-safe (scan-sexps (point) 1)))
+			     (goto-char next)))
+			 (c-forward-syntactic-ws)
+			 (when (eq (char-syntax (char-after)) ?\()
+			   (point))))))
 	  ;; sanity check
 	  (if (not start)
 	     (unless shutup-p
 	       (error "Cannot find start of balanced expression to indent"))
 	    (goto-char start)
-	    (forward-line)
-	    (setq start (point))
+	    (setq end (c-safe (scan-sexps (point) 1)))
 	    (if (not end)
 		(unless shutup-p
 		  (error "Cannot find end of balanced expression to indent"))
-	      (if (< start end)
-		  (c-indent-region start end)))))
+	      (forward-line)
+	      (if (< (point) end)
+		  (c-indent-region (point) end)))))
       (goto-char here)
       (set-marker here nil))))
 
