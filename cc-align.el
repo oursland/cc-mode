@@ -673,21 +673,24 @@ arglist-cont-nonempty."
       ;; nested arglist starts on the same line.
       nil
 
-    (let ((stmt-start (cdr langelem)) col)
-      (save-excursion
-	(back-to-indentation)
+    (save-excursion
+      (back-to-indentation)
+      (let ((operator (and (looking-at "->\\|\\.")
+			   (regexp-quote (match-string 0))))
+	    (stmt-start (cdr langelem)) col)
 
-	(when (and (looking-at "->\\|\\.")
+	(when (and operator
+		   (looking-at operator)
 		   (zerop (c-backward-token-1 1 t stmt-start))
 		   (eq (char-after) ?\()
 		   (zerop (c-backward-token-1 2 t stmt-start))
-		   (looking-at "->\\|\\."))
+		   (looking-at operator))
 	  (setq col (current-column))
 
 	  (while (and (zerop (c-backward-token-1 1 t stmt-start))
 		      (eq (char-after) ?\()
 		      (zerop (c-backward-token-1 2 t stmt-start))
-		      (looking-at "->\\|\\."))
+		      (looking-at operator))
 	    (setq col (current-column)))
 
 	  (vector col))))))
