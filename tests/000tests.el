@@ -146,9 +146,6 @@
 	(inlambda              . c-lineup-inexpr-stat)
 	(lambda-intro-cont     . +)
 	(inexpr-statement      . 0)
-	(inexpr-block-open     . 0)
-	(inexpr-block-intro    . +)
-	(inexpr-block-close    . 0)
 	))
     (c-echo-syntactic-information-p . t)
     )
@@ -209,6 +206,7 @@
     "if-4.cc"
     "if-5.cc"
     "inexprstat-1.pike"
+    "inexprstat-2.cc"
     "inher-1.cc"
     "inher-2.cc"
     "inher-3.cc"
