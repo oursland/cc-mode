@@ -817,25 +817,12 @@ Unbalanced close brace at line %d" (1+ (count-lines 1 (point)))))
   ;; Go to the first non-whitespace after the colon that starts a
   ;; multiple inheritance introduction.  Optional LIM is the farthest
   ;; back we should search.
-  (let* ((lim (or lim (c-point 'bod)))
-	 (placeholder (progn
-			(back-to-indentation)
-			(point)))
-	 (chr (char-after)))
-    (c-backward-syntactic-ws lim)
-    (while (and (> (point) lim)
-		(or (eq chr ?,)
-		    (memq (char-before) '(?, ?:)))
-		(progn
-		  (beginning-of-line)
-		  (setq placeholder (point))
-		  (skip-chars-forward " \t")
-		  (setq chr (char-after))
-		  (not (looking-at c-class-key))
-		  ))
-      (c-backward-syntactic-ws lim))
-    (goto-char placeholder)
-    (skip-chars-forward "^:" (c-point 'eol))))
+  (let* ((lim (or lim (c-point 'bod))))
+    (c-with-syntax-table c++-template-syntax-table
+      (c-backward-token-1 0 t lim)
+      (while (and (looking-at "[_a-zA-Z<,]")
+		  (= (c-backward-token-1 1 t lim) 0)))
+      (skip-chars-forward "^:"))))
 
 (defun c-in-method-def-p ()
   ;; Return nil if we aren't in a method definition, otherwise the
@@ -1844,13 +1831,14 @@ brace."
 	    (cond
 	     ;; CASE 5C.1: non-hanging colon on an inher intro
 	     ((eq char-after-ip ?:)
-	      (c-backward-syntactic-ws lim)
+	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
 	      ;; don't add inclass symbol since relative point already
 	      ;; contains any class offset
 	      )
 	     ;; CASE 5C.2: hanging colon on an inher intro
 	     ((eq char-before-ip ?:)
+	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
 	      (if inclass-p (c-add-class-syntax 'inclass inclass-p)))
 	     ;; CASE 5C.3: in a Java implements/extends
@@ -1919,26 +1907,35 @@ brace."
 		(eq (char-after) ?:))
 	      (skip-chars-forward " \t:")
 	      (c-add-syntax 'member-init-cont (point)))
-	     ;; CASE 5D.3: perhaps a multiple inheritance line?
-	     ((save-excursion
-		(c-beginning-of-statement-1 lim)
-		(setq placeholder (point))
-		(looking-at c-inher-key))
-	      (goto-char placeholder)
-	      (c-add-syntax 'inher-cont (c-point 'boi)))
-	     ;; CASE 5D.4: perhaps a template list continuation?
-	     ((save-excursion
-		(goto-char indent-point)
-		(skip-chars-backward "^<" lim)
-		;; not sure if this is the right test, but it should
-		;; be fast and mostly accurate.
-		(setq placeholder (point))
-		(and (eq (char-before) ?<)
-		     (not (c-in-literal lim))))
+	     ;; CASE 5D.3: perhaps a template list continuation?
+	     ((and (c-major-mode-is 'c++-mode)
+		   (save-excursion
+		     (save-restriction
+		       (c-with-syntax-table c++-template-syntax-table
+			 (goto-char indent-point)
+			 (setq placeholder (c-safe (scan-lists (point) -1 1)))
+			 (and placeholder
+			      (eq (char-after placeholder) ?<))))))
 	      ;; we can probably indent it just like an arglist-cont
 	      (goto-char placeholder)
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'template-args-cont (c-point 'boi)))
+	     ;; CASE 5D.4: perhaps a multiple inheritance line?
+	     ((and (c-major-mode-is 'c++-mode)
+		   (save-excursion
+		     (c-beginning-of-statement-1 lim)
+		     (setq placeholder (point))
+		     (if (looking-at "\\<static\\>")
+			 (c-forward-token-1 1 nil indent-point))
+		     (and (looking-at c-class-key)
+			  (= (c-forward-token-1 2 nil indent-point) 0)
+			  (if (eq (char-after) ?<)
+			      (c-with-syntax-table c++-template-syntax-table
+				(= (c-forward-token-1 1 t indent-point) 0))
+			    t)
+			  (eq (char-after) ?:))))
+	      (goto-char placeholder)
+	      (c-add-syntax 'inher-cont (c-point 'boi)))
 	     ;; CASE 5D.5: perhaps a top-level statement-cont
 	     (t
 	      (c-beginning-of-statement-1 lim)
