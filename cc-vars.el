@@ -1582,6 +1582,10 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
     (when (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
       (setq list (cons 'pps-extended-state list)))
 
+    ;; See if POSIX char classes work.
+    (when (string-match "[[:alpha:]]" "a")
+      (setq list (cons 'posix-char-classes list)))
+
     list)
   "A list of certain features in the (X)Emacs you are using.
 There are many flavors of Emacs out there, each with different
@@ -1599,6 +1603,7 @@ might be present:
 'pps-extended-state `parse-partial-sexp' returns a list with at least 10
 		    elements, i.e. it contains the position of the
 		    start of the last comment or string.
+'posix-char-classes The regexp engine understands POSIX character classes.
 'infodock           This is Infodock (based on XEmacs).
 
 '8-bit and '1-bit are mutually exclusive.")
