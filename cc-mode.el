@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-30 20:52:33 $
-;; Version:         $Revision: 2.126 $
+;; Last Modified:   $Date: 1992-06-30 21:31:28 $
+;; Version:         $Revision: 2.127 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-30 20:52:33 $|$Revision: 2.126 $|
+;; |$Date: 1992-06-30 21:31:28 $|$Revision: 2.127 $|
 
 
 ;; ======================================================================
@@ -133,15 +133,19 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 0
   "*Indentation offset for line which contains only C or C++ style comments.")
-(defvar c++-cleanup-brace-else-brace-p nil
-  "*Controls whether } else { style should remain on a single line.
-When t, cleans up this style (when only whitespace intervenes).")
-(defvar c++-cleanup-empty-defun-braces-p nil
-  "*Controls whether braces for an empty defun are placed on separate lines.
-This only has effect if c++-auto-newline is non-nil.  If this is the
-case, and c++-cleanup-empty-defun-braces-p is also non-nil, then
-typing the closing brace of an empty defun marries the the two braces
-onto the same line.")
+(defvar c++-cleanup-list nil
+  "*List of various C++ constructs to \"clean up\".
+These cleanups only take place when auto-newline minor mode is on.
+Current legal values are:
+   brace-else-brace   -- clean up \"} else {\" constructs by placing entire
+                         construct on a single line.  This cleanup only
+                         takes place when there is nothing but white
+                         space between the braces and the else.  
+   empty-defun-braces -- cleans up empty C++ function braces by
+                         placing them on the same line.
+   defun-close-semi   -- cleans up the terminating semi-colon on class
+                         definitions and functions by placing the semi
+                         on the same line as the closing brace.")
 (defvar c++-hanging-braces t
   "*Controls the insertion of newlines before open (left) braces.
 This variable only has effect when auto-newline is on.  If nil, open
@@ -231,7 +235,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.126 $
+  "Major mode for editing C++ code.  $Revision: 2.127 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -304,15 +308,10 @@ from their c-mode cousins.
     just under previous line's argument indentation.
  c++-comment-only-line-offset
     Extra indentation for a line containing only a C or C++ style comment.
- c++-cleanup-brace-else-brace-p
-    Controls whether } else { style (with only whitespace intervening)
-    should be cleaned up so that it sits on only a single line.
- c++-cleanup-empty-defun-braces-p
-    Controls whether braces for an empty defun are placed on separate
-    lines.  This only has effect if c++-auto-newline is non-nil.  If
-    this is the case, and c++-cleanup-empty-defun-braces-p is also
-    non-nil, then typing the closing brace of an empty defun marries
-    the the two braces onto the same line.
+ c++-cleanup-list
+    A list of construct \"clean ups\" which c++-mode will perform when
+    auto-newline mode is on.  Current legal values are:
+    brace-else-brace, empty-defun-braces, defun-close-semi.
  c++-hanging-braces
     Controls open brace hanging behavior when using auto-newline. Nil
     says no braces hang, t says all open braces hang. Not nil or t
@@ -624,7 +623,7 @@ backward-delete-char-untabify."
 	  (insert last-command-char)
 	  ;; try to clean up empty defun braces if conditions apply
 	  (let ((here (point-marker)))
-	    (and c++-cleanup-empty-defun-braces-p
+	    (and (memq 'empty-defun-braces c++-cleanup-list)
 		 (c++-at-top-level-p)
 		 c++-auto-newline
 		 (= last-command-char ?\})
@@ -638,7 +637,7 @@ backward-delete-char-untabify."
 	    (set-marker here nil))
 	  (let ((here (point-marker))
 		mbeg mend)
-	    (if (and c++-cleanup-brace-else-brace-p
+	    (if (and (memq 'brace-else-brace c++-cleanup-list)
 		     (= last-command-char ?\{)
 		     (let ((status (re-search-backward "}[ \t\n]*else[ \t\n]*{"
 						       nil t)))
@@ -700,11 +699,15 @@ you want to add a comment to the end of a line."
 (defun c++-electric-semi (arg)
   "Insert character and correct line's indentation."
   (interactive "P")
-  (let ((insertion-point (point)))
-    (save-excursion
-      (skip-chars-backward " \t\n")
-      (if (= (preceding-char) ?})
-	  (delete-region insertion-point (point)))))
+  (let ((here (point-marker)))
+    (if (and (memq 'defun-close-semi c++-cleanup-list)
+	     c++-auto-newline
+	     (progn
+	       (skip-chars-backward " \t\n")
+	       (= (preceding-char) ?})))
+	(delete-region here (point)))
+    (goto-char here)
+    (set-marker here nil))
   (c++-electric-terminator arg))
 
 (defun c++-electric-colon (arg)
@@ -1919,7 +1922,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.126 $"
+(defconst c++-version "$Revision: 2.127 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -1940,8 +1943,7 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-empty-arglist-indent
 		       'c++-always-arglist-indent-p
 		       'c++-comment-only-line-offset
-		       'c++-cleanup-brace-else-brace-p
-		       'c++-cleanup-empty-defun-braces-p
+		       'c++-cleanup-list
 		       'c++-hanging-braces
 		       'c++-hanging-member-init-colon
 		       'c++-auto-hungry-initial-state
