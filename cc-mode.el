@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-29 15:48:46 $
-;; Version:         $Revision: 2.12 $
+;; Last Modified:   $Date: 1992-04-29 18:41:40 $
+;; Version:         $Revision: 2.13 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-29 15:48:46 $|$Revision: 2.12 $|
+;; |$Date: 1992-04-29 18:41:40 $|$Revision: 2.13 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -141,7 +141,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.12 $
+  "Major mode for editing C++ code.  $Revision: 2.13 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -723,13 +723,21 @@ Returns nil if line starts inside a string, t if in a comment."
 	     ;; Line is at top level.  May be comment-only line, data
 	     ;; or function definition, or may be function argument
 	     ;; declaration or member initialization.  Indent like the
-	     ;; previous top level line unless (1) the previous line
-	     ;; ends in a closeparen without semicolon, in which case
-	     ;; this line is the first argument declaration or member
-	     ;; initialization, or (2) the previous line begins with a
-	     ;; colon, in which case this is the second line of member
-	     ;; inits.  It is assumed that arg decls and member inits
-	     ;; are not mixed.
+	     ;; previous top level line unless:
+	     ;;
+	     ;; 1. the previous line ends in a closeparen without
+	     ;; semicolon, in which case this line is the first
+	     ;; argument declaration or member initialization, or
+	     ;;
+	     ;; 2. the previous line ends with a closeparen
+	     ;; (closebrace), optional spaces, and a semicolon, in
+	     ;; which case this line follows a multiline function
+	     ;; declaration (class definition), or
+	     ;;
+	     ;; 3. the previous line begins with a colon, in which
+	     ;; case this is the second line of member inits.  It is
+	     ;; assumed that arg decls and member inits are not mixed.
+	     ;;
 	     (goto-char indent-point)
 	     (skip-chars-forward " \t")
 	     (if (looking-at "/[/*]")
@@ -747,8 +755,11 @@ Returns nil if line starts inside a string, t if in a comment."
 			   c++-member-init-indent
 			 c-argdecl-indent))
 		   (if (= (preceding-char) ?\;)
-		       (backward-char 1))
-		   (if (= (preceding-char) ?})
+		       (progn
+			 (backward-char 1)
+			 (skip-chars-backward " \t")))
+		   (if (or (= (preceding-char) ?})
+			   (= (preceding-char) ?\)))
 		       0
 		     (beginning-of-line) ; continued arg decls or member inits
 		     (skip-chars-forward " \t")
@@ -816,7 +827,7 @@ Returns nil if line starts inside a string, t if in a comment."
                           c-continued-statement-offset 0)
                       ;; j.peck  [8/13/91]
 		      ;; j.peck hack replaced this line:
-		      ;; (+ c-continued-statement-offset (current-column)
+		      ;; (+ c-continued-statement-offset (current-column) ...)
 		      ;; Add continued-brace-offset? [weikart]
 		      (if (save-excursion (goto-char indent-point)
 					  (skip-chars-forward " \t")
@@ -1301,7 +1312,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.12 $"
+(defconst c++-version "$Revision: 2.13 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
