@@ -67,11 +67,6 @@ Checklist for doing a release:
 	gnu.emacs.sources
 	comp.emacs.xemacs
 	comp.emacs
-	comp.lang.c
-	comp.lang.c++
-	comp.lang.objective-c
-	comp.lang.java.programmer
-	comp.object.corba
 
     - Tag the release using "./Release.py --tag XX" where XX is the
       number used above.  If you find a problem in the released
