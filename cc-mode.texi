@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.2 $
+@comment manual version: $Revision: 2.3 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-03-01 00:59:29 $
+@comment Last modification: $Date: 1995-03-01 01:11:27 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -80,24 +80,17 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @menu
-* Introduction::
-* Getting Connected::
-* New indentation engine::
-* Customizing indentation::
-* Frequently Asked Questions::
-* Sample .emacs file::
-* cc-mode.el vs. c-mode.el::
-* cc-mode.el vs. c++-mode.el 2.353::
-* Requirements::
-* Limitations and known bugs::
-* Mailing Lists and Submitting Bug Reports::
-* reporter.el info::
-* User visible changes since 4.35::
-* User visible changes since 3.349::
-* User visible changes since 3.304::
-* User visible changes since 3.229::
-* Dumping cc-mode 4.85::
-* Concept Index::
+* Introduction::                
+* Getting Connected::           
+* Requirements::                
+* Limitations and known bugs::  
+* Mailing Lists and Submitting Bug Reports::  
+* reporter.el info::            
+* Dumping cc-mode 4.155::       Dumping @code{cc-mode} 4.155
+* Concept Index::               
+* Command Index::               Command Index
+* Key Index::                   Key Index
+* Variable Index::              Variable Index
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -151,11 +144,9 @@ cc-mode 4.155} for details on how to do this.
 
 The major version number was incremented to 4 with the addition of
 @code{objc-mode}. This distribution contains release 4.155 of
-@code{cc-mode}.  See @ref{User visible changes since 4.85} for a list of
-changes since the last release.  This release will be the last for major
-release version 4.  Work has already begun on version 5, which will not
-support use of Emacs 18.  The technical reasons for this decision are
-outlined in @ref{XXX}.
+@code{cc-mode}.  This release will be the last for major release version
+4.  Work has already begun on version 5, which will not support use of
+Emacs 18.
 
 XEmacs 19.11 (formerly Lucid Emacs) is distributed with
 @file{cc-mode.el} 4.85 dumped in the executable.  It has completely
@@ -176,7 +167,7 @@ available <clap> <clap> <clap>! @code{:-)}
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@node     Getting Connected, New indentation engine, Introduction,      Top
+@node     Getting Connected, New Indentation Engine, Introduction,      Top
 @comment  node-name,       next,                   previous,          up
 @chapter  Getting Connected
 @cindex   Getting Connected
@@ -314,11 +305,16 @@ Using @code{cc-mode} version 4.155
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@node     New indentation engine, Customizing indentation, Getting Connected, Top
+@menu
+* Step 1 -- Syntactic Analysis::  Step 1 -- Syntactic Analysis
+* Step 2 -- Indentation Calculation::  Step 2 -- Indentation Calculation
+@end menu
+
+@node     New Indentation Engine, Customizing Indentation, Getting Connected, Top
 @comment  node-name,              next,                    previous,up
 
-@chapter  New indentation engine
-@cindex   New indentation engine
+@chapter  New Indentation Engine
+@cindex   New Indentation Engine
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -342,7 +338,7 @@ your personal coding style.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Step 1 -- Syntactic Analysis, Step 2 -- Indentation Calculation, , New indentation engine
+@node  Step 1 -- Syntactic Analysis, Step 2 -- Indentation Calculation, , New Indentation Engine
 @comment  node-name,              next,                    previous,up
 @section  Step 1 -- Syntactic Analysis
 @cindex   Step 1 -- Syntactic Analysis
@@ -365,9 +361,10 @@ C++, or Objective-C code.  In general, for the rest of this manual I
 will use the term ``C code'' to refer to all the C-like dialects, unless
 otherwise explicitly noted.} code, e.g. @code{statement},
 @code{substatement}, @code{class-open}, @code{class-close}, etc.  See
-@ref{XXX} for a complete list of currently recognized syntactic symbols
-and their semantics.  Also, the variable @code{c-offsets-alist} contains
-the list of currently supported syntactic symbols.
+@ref{Syntactic Symbols} for a complete list of currently recognized
+syntactic symbols and their semantics.  Also, the variable
+@code{c-offsets-alist} contains the list of currently supported
+syntactic symbols.
 
 Conceptually, a line of C code is always indented relative to the
 indentation of some line higher up in the buffer.  This is represented
@@ -472,7 +469,7 @@ syntactic components.  Also notice that the first component,
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Step 2 -- Indentation Calculation, , Step 1 -- Syntactic Analysis, New indentation engine
+@node  Step 2 -- Indentation Calculation, , Step 1 -- Syntactic Analysis, New Indentation Engine
 @comment  node-name,              next,                    previous,up
 @section  Step 2 -- Indentation Calculation
 @cindex   Step 2 -- Indentation Calculation
@@ -573,11 +570,11 @@ indentation calculation by setting the variable
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node     Customizing indentation, Frequently Asked Questions, New indentation engine, Top
+@node     Customizing Indentation, Syntactic Symbols, New Indentation Engine, Top
 @comment  node-name,              next,                    previous,up
 
-@chapter  Customizing indentation
-@cindex   Customizing indentation
+@chapter  Customizing Indentation
+@cindex   Customizing Indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @cindex c-set-offset
@@ -639,6 +636,14 @@ value associated with various syntactic symbols in the
 @code{c-offsets-alist} variable.  First, I'll show you how to do that
 interactively, then I'll describe how to make changes to your
 @file{.emacs} file so that your changes are more permanent.
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node     Interactive Customization, Permanent Customization, , Customizing Indentation
+@comment  node-name,              next,                    previous,up
+
+@section  Customizing Indentation
+@cindex   Customizing Indentation
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 As an example of how to customize indentation, let's change the
 style of example 2 above from:
@@ -710,6 +715,14 @@ int add( int val, int incr, int doit )
 }
 @end example
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node     Permanent Customization, Styles, Interactive Customization, Customizing Indentation
+@comment  node-name,              next,                    previous,up
+
+@section  Permanent Indentation
+@cindex   Permanent Indentation
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @vindex c-mode-common-hook
 @vindex c-mode-hook
 @vindex c++-mode-hook
@@ -728,7 +741,8 @@ variable, and it always gets run @emph{before} the appropriate
 
 Here's a simplified example of what you can add to your @file{.emacs}
 file.  See the Emacs manuals for more information on customizing Emacs
-via hooks.  @ref{XXX} for a more complete sample @file{.emacs} file.
+via hooks.  @ref{Sample .emacs File} for a more complete sample
+@file{.emacs} file.
 
 @example
 (defun my-c-mode-common-hook ()
@@ -745,14 +759,47 @@ another reason for you to upgrade to Emacs 19.}
 
 For complex customizations, you will probably want to set up a
 @emph{style} that groups all your customizations under a single
-name. @ref{XXX} for details.
+name. @ref{Styles} for details.
 
 The offset value can also be a function, and this is how power users
-gain enormous flexibility in customizing indentation @ref{XXX}.
+gain enormous flexibility in customizing indentation @ref{Advanced
+Customizations}.
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node     Styles, Advanced Customization, Permanent Customizations, Customizing Indentation
+@comment  node-name,              next,                    previous,up
+
+@section  Styles
+@cindex   Styles
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+[blah blah about styles]
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Frequently Asked Questions, Sample .emacs file, Customizing indentation, Top
+@node     Advanced Customizations, , Styles, Customizing Indentation
+@comment  node-name,              next,                    previous,up
+
+@section  Advanced Customizations
+@cindex   Advanced Customizations
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+[blah blah about advanced customizations]
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Syntactic Symbols, Frequently Asked Questions, Customizing Indentation, Top
+@comment  node-name,              next,                    previous,up
+
+@chapter  Frequently Asked Questions
+@cindex   Frequently Asked Questions
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+[list of syntactic symbols]
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Frequently Asked Questions, Sample .emacs File, Customizing Indentation, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Frequently Asked Questions
@@ -793,7 +840,7 @@ gain enormous flexibility in customizing indentation @ref{XXX}.
     A. Emacs' convention is that @key{RET} just add a new line, and that
        @key{LFD} adds a newline and indents.  You can make @key{RET} do
        this too by adding this to your @code{c-mode-common-hook} 
-       (see the sample @file{.emacs} file @ref{Sample .emacs file}):
+       (see the sample @file{.emacs} file @ref{Sample .emacs File}):
 
 @example
        (define-key c-mode-map "\C-m" 'newline-and-indent)
@@ -810,13 +857,13 @@ gain enormous flexibility in customizing indentation @ref{XXX}.
        your Emacs session by the time of the @code{c-set-offset} call.
        Instead of putting this in your top-level @file{.emacs} file, put the
        call to @code{c-set-offset} in your @code{c-mode-common-hook}.  See the
-       sample @file{.emacs} file @ref{Sample .emacs file} for details.
+       sample @file{.emacs} file @ref{Sample .emacs File} for details.
 
 @end quotation
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Sample .emacs file, cc-mode.el vs. c-mode.el, Frequently Asked Questions, Top
+@node  Sample .emacs File, cc-mode.el vs. c-mode.el, Frequently Asked Questions, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Sample @file{.emacs} file
