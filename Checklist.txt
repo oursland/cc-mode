@@ -3,12 +3,63 @@ Checklist for doing a release:
     - Run regression tests in as many Emacsen as possible.  Make sure
       there are no failures.
 
-    - Proofread and update ANNOUNCEMENT, MANIFEST, README for the new
-      release.
+    - Proofread manual.
+
+    - Add `Release 5.xx' tag to ChangeLog.  Release script looks for
+      this.
 
     - Update ChangeLog.  Since C-x v a no longer works, use the new
       Python Update.py script, which sadly still needs to be manually
       hacked.
 
-    - Add `Release 5.xx' tag to ChangeLog.  Release script looks for
-      this.
+    - Distill changes for ANNOUNCEMENT file.
+
+    - Proofread and update ANNOUNCEMENT, MANIFEST, README for the new
+      release.
+
+    - Run the Release.py script to create all the tarballs and
+      documentation: ./Release.py --package --docs XX
+
+      XX is the minor revision number of the new release.
+
+      This creates the following files in Distrib:
+          cc-mode-5.XX.rmslb.tar.gz
+          cc-mode-5.XX.tar.gz
+          ChangeLog.gz
+          cc-mode.dvi.gz
+          cc-mode.ps.gz
+          cc-mode.rev.ps.gz
+          cc-mode.info.tar.gz
+          cc-mode.html.tar.gz
+
+      The first is the tarball to be sent to RMS + SLB for Emacs and
+      XEmacs respectively.  They contain some files that aren't
+      necessary for those releases.
+
+    - Send cc-mode-5.20.rmslb.tar.gz and the ChangeLog entries for
+      XX-1 to XX to RMS.  Sent just the tarball to SLB.
+
+    - Copy the Distrib files (except *.rmslb.*) to the FTP site.
+
+    - Unpack copies of cc-mode-5.XX.tar.gz, cc-mode.info.tar.gz,
+      cc-mode.html.tar.gz, for direct FTP access.
+
+    - Create symbolic links 
+
+	cc-mode.tar.gz -> cc-mode-5.XX.tar.gz
+	cc-mode -> cc-mode-5.XX
+
+    - Update the Web page, using distilled changes from the
+      ANNOUNCEMENT file.
+
+    - Send ANNOUNCEMENT file to cc-mode-announce@python.org
+
+    - Post ANNOUNCEMENT to the following newsgroups:
+	gnu.emacs.sources
+	comp.emacs.xemacs
+	comp.emacs
+	comp.lang.c.moderated (used to be just comp.lang.c)
+	comp.lang.c++.moderated (used to be just comp.lang.c++)
+	comp.lang.objective-c
+	comp.lang.java.announce
+	comp.object.corba
