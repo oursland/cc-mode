@@ -1,3 +1,893 @@
+Mon Apr 22 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* Release 5.29
+
+	* cc-engine.el: Incorporated change made in Emacs: Don't
+	assume point-min == 1 when counting lines.
+
+	* cc-mode.el: Incorporated changes made in Emacs:
+
+	(c-define-abbrev-table): New function to pass the SYSTEM-FLAG
+	to `define-abbrev' in a way that works in emacsen that doesn't
+	support it.
+
+	(c-mode-abbrev-table, c++-mode-abbrev-table,
+	objc-mode-abbrev-table) (java-mode-abbrev-table,
+	pike-mode-abbrev-table): Mark all the predefined abbrevs as
+	"system" abbrevs.
+
+	(c-submit-bug-report): Make sure that the arguments to
+	`insert' are strings.
+
+Sun Apr 21 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el, cc-engine.el, cc-styles.el, cc-vars.el
+	(c-guess-basic-syntax, c-lineup-topmost-intro-cont): Find
+	correct anchor for statement-cont in top level constructs.
+	Analyze variable initializations in top level constructs as
+	topmost-intro-cont instead of statement-cont.  That is an
+	incompatible change but it gives better consistency.  The new
+	lineup function c-lineup-topmost-intro-cont' compensates for
+	it and is now put on topmost-intro-cont by default.
+
+	* cc-align.el, cc-engine.el, cc-langs.el (c-lineup-argcont):
+	Lineup function contributed by Kevin Ryde.
+
+	(c-in-gcc-asm-p): Function to recognize asm statements.
+	Contributed by Kevin Ryde.
+
+	(c-opt-asm-stmt-key): New language variable to recognize the
+	beginning of asm statements.
+
+Sat Apr 20 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Detect variable
+	declarations after class and struct declarations correctly.
+	Fixed limit error when finding the anchor for
+	template-args-cont and topmost-intro-cont.
+
+Fri Apr 05 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-beginning-of-defun, c-declaration-limits):
+	Find the "line oriented" declaration start too, just like the
+	"line oriented" end is found.
+
+Thu Apr 04 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-vars.el (c-offsets-alist): A more sane default for
+	`inexpr-statement'.  This is not compatible, though.  I think
+	the benefit of a good default style outweights that in this
+	case.  Besides, `inexpr-statement' is not very common.
+
+Mon Apr 01 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-delete-forward): Fixed silly bug that
+	caused it to delete backwards in hungry delete mode.  (It's
+	amazing that this bug hasn't been reported.)
+
+	* cc-cmds.el (c-declaration-limits, c-mark-function):
+	Extracted the code to get the declaration limits from
+	`c-mark-function' to a new `c-declaration-limits'.
+
+	(c-indent-defun): Use the same method to get the limits of the
+	declaration or macro as `c-mark-function'.
+
+	* cc-engine.el (c-beginning-of-decl-1): Handle brace list
+	initializers correctly (but costly; it ought to be integrated
+	into `c-beginning-of-statement-1').
+
+Sun Mar 31 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el, cc-engine.el (c-beginning-of-defun,
+	c-end-of-defun, c-mark-function): Rewritten to detect the
+	declaration limits better.  Now handles K&R argdecls, class
+	definitions followed by variables etc.
+
+	(c-in-knr-argdecl): Broke out the K&R argdecl test in
+	`c-beginning-of-decl-1' to this new function.
+
+	(c-end-of-statement-1, c-end-of-decl-1): Replaced
+	`c-end-of-statement-1' with `c-end-of-decl-1', which correctly
+	handles declarations that continue after the block.
+
+	* cc-engine.el (c-syntactic-re-search-forward): Added an
+	option to restrict matching to the top level of the current
+	paren sexp.
+
+	* cc-langs.el (c-opt-block-decls-with-vars-key): New regexp to
+	recognize declarations that continue after the block.
+
+	(c-syntactic-eol): New regexp to match a "syntactic" eol.
+
+Sat Mar 30 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed a bug that often
+	caused the backward limit to be lost at the top level.  This
+	improves performance a bit.
+
+	* cc-engine.el (c-syntactic-re-search-forward): New function
+	that works like `re-search-forward' but only returns matches
+	in syntactically significant text.
+
+	* cc-engine.el: Fixed a faster and more accurate way to
+	recognize K&R argdecls.
+
+	(c-beginning-of-decl-1): New function that put point at the
+	beginning of the declaration.  It handles K&R argdecl blocks.
+
+	(c-guess-basic-syntax): Replaced the `knr-argdecl' recognition
+	code with one that doesn't depend on the current indentation.
+	The anchor position for `knr-argdecl' has also changed, but in
+	a way that is unlikely to cause compatibility problems.
+
+Mon Mar 25 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el, cc-engine.el (c-forward-comment):
+	`forward-comment' in XEmacs skips over line continuations in
+	the backward direction.  Correct for that.  Also made this a
+	defun since it has grown too large now to be a defsubst.
+
+	* cc-langs.el: More convenient and decentralized setup of the
+	language specific variables.  The regexp-opt mangling is also
+	done at compile time now.
+
+Tue Mar 19 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-indent-line-or-region): Call `c-indent-line'
+	directly instead of through `indent-according-to-mode' so that
+	this function always indents syntactically.
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed a bug where a
+	class beginning with a nested class could cause an infinite
+	loop (the state outside the narrowed out class is never used
+	now).
+
+Sun Mar 17 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el, cc-cmds.el, cc-engine.el, cc-vars.el: Fixes so
+	that the context sensitive analysis inside macros is
+	restricted to the bodies of #define's; other things, like #if
+	expressions, never have anything in common with their
+	surroundings.  The old `cpp-macro-cont' syntax is now used in
+	situations where the syntactic analysis isn't applicable, and
+	a new syntactic element `cpp-define-intro' is used to add
+	indentation in #define bodies.
+
+	(c-lineup-cpp-define): New name for `c-lineup-macro-cont' to
+	better reflect its use.
+
+	* cc-engine.el (c-guess-basic-syntax): Ignore line
+	continuation backslashes in the detection of
+	`arglist-cont-nonempty'.
+
+	* cc-align.el: Use the vector form in the return value in all
+	cases where lineup functions return absolute columns.
+
+Sat Mar 16 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-add-stmt-syntax, c-guess-basic-syntax):
+	Anchor `brace-list-intro' and `bracec-list-close' better for
+	brace lists nested inside expressions.
+
+	* cc-engine.el, cc-langs.el, cc-mode.el, cc-styles.el: Cleaned
+	up the various language specific variables and their
+	initialization.  The keyword regexps are now lists that are
+	combined with regexp-opt.  Some variables have changed names
+	to fit better with the naming convention.
+
+	* cc-defs.el, cc-vars.el (c-buffer-is-cc-mode): The value is
+	the mode symbol of the original CC Mode mode.
+
+	(c-major-mode-is): Compare against the buffer local variable
+	`c-buffer-is-cc-mode', which is faster than using
+	`derived-mode-class'.
+
+Sun Mar 10 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-forward-syntactic-ws,
+	c-backward-syntactic-ws, c-forward-token-1,
+	c-backward-token-1, c-in-literal, c-literal-limits,
+	c-collect-line-comments, c-literal-type, c-on-identifier,
+	c-guess-basic-syntax): These functions are now considered part
+	of the "CC Mode API" and may be used by other code.  That's
+	signified by making their documentation into docstrings.
+
+	(c-whack-state, c-hack-state, c-skip-case-statement-forward):
+	Removed these internal functions since they aren't used.
+
+	(c-forward-to-cpp-expression): Classified this function as
+	internal.
+
+Thu Mar 07 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-langs.el (c-ObjC-class-key, c-Java-class-key): Simplified
+	these regexps; the class keywords they contain ought to be
+	enough to avoid false matches, so checking for following
+	identifiers etc is just unnecessary (and might also fail for
+	oddly formatted code).
+
+Fri Feb 08 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el, cc-cmds.el (c-forward-comment-lc): New
+	function that behaves like `c-forward-comment', with the
+	exception that line continuations are treated as whitespace.
+
+	(c-beginning-of-statement): Use `c-forward-comment-lc', to
+	work correctly in macros and other places where line
+	continuations should be treated as whitespace.
+
+	* cc-engine.el (c-guess-basic-syntax): Analyze a normal label
+	in a switch block as a case label, to get consistent lineup
+	with the case labels.
+
+	* cc-engine.el (c-backward-syntactic-ws): Fixed bug in
+	skipping over a macro that ends with an empty line.
+
+	* cc-styles.el: Require cc-align since styles added with
+	`c-add-style' often contains references to functions defined
+	there, and so the `c-valid-offset' check might otherwise
+	complain on them.
+
+Sun Jan 20 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el, cc-mode.texi, cc-vars.el: Added two new lineup
+	functions:
+
+	(c-lineup-knr-region-comment): A new lineup function to get
+	(what most people think is) better indentation of comments in
+	the "K&R region" between the function header and its body.
+
+	(c-lineup-gcc-asm-reg): New lineup function for better
+	indentation inside gcc asm blocks.  Contributed by Kevin Ryde.
+
+	(c-offsets-alist): Use `c-lineup-gcc-asm-reg' and
+	`c-lineup-knr-region-comment' in the default offset
+	configuration, since these two functions have little impact
+	outside their intended use, and they generally do the right
+	thing when they kick in.
+
+	* cc-engine.el (c-guess-continued-construct,
+	c-guess-basic-syntax): Handle nested functions in all
+	languages, not just Pike.  In C and C++ there's a gcc
+	extension for this, and it also gives better treatment of
+	macros that are followed by blocks.
+
+	* cc-langs.el (c-symbol-key): Made this variable mode
+	specific, to handle Pike special symbols like `== better.
+
+Sat Jan 19 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el, cc-engine.el, cc-vars.el
+	(c-report-syntactic-errors): A new variable to control the
+	syntactic error messages.  It defaults to off; since CC Mode
+	ignores most syntactic errors it might as well ignore them all
+	for the sake of consistency.
+
+Sat Jan 05 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-mode.texi: Updated the Limitations and Known Bugs
+	section.  Various small fixes.
+
+Thu Nov 29 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-looking-at-inexpr-block): Optimization.  Can
+	give a noticeable speedup if there's a large preceding
+	function or class body.
+
+Sun Nov 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el, cc-cmds.el: Use more efficient and correct
+	insertion functions in many places.  Always inherit text
+	properties correctly if the text is permanent.  Also do it for
+	speed in temporary insertions, since I figure it's less work
+	to continue the surrounding text properties than to break
+	them.
+
+	* cc-styles.el (c-read-offset): Unbind SPC in the completion
+	to make it easier to enter lists.
+
+Wed Nov 21 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-beginning-of-defun): Fixed bug where
+	c-state-cache was clobbered.
+
+	* cc-cmds.el, cc-engine.el (c-calculate-state): Moved from
+	cc-cmds.el to cc-engine.el due to dependency.
+
+Mon Oct 22 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-parse-state): Ignore unbalanced open parens
+	in macros (if point isn't in the same one).
+
+Sat Oct 13 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-context-open-line): New function that is the
+	`open-line' equivalent to `c-context-line-break'.
+
+	* cc-mode.el (c-mode-base-map): Compatibility fix for Emacs 21
+	since `indent-new-comment-line' has been changed to
+	`comment-indent-new-line' there.
+
+Sun Oct 07 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el, cc-langs.el (c-stmt-delim-chars,
+	c-stmt-delim-chars-with-comma): New variables containing the
+	character sets used to recognize statement/declaration
+	boundaries.  These variables might help to support languages
+	like javascript and awk, where newlines sometimes delimits
+	statements.
+
+	(c-crosses-statement-barrier-p): Use `c-stmt-delim-chars' as
+	the set of statement delimiting characters, to allow it to be
+	changed dynamically and per-mode.
+
+Sat Oct 06 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-looking-at-bos, c-looking-at-inexpr-block,
+	c-add-stmt-syntax, c-guess-basic-syntax): Treat blocks
+	directly inside function calls like "bare" statements inside
+	function calls, and not like in-expression statements.  This
+	to make indentation of such blocks consistent with other
+	statements inside macro calls.
+
+	* cc-engine.el (c-guess-basic-syntax): Made arglist-cont
+	anchor correctly in arglists that contain statements.
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed consistent
+	anchoring of defun-block-intro in defuns in code blocks (can
+	only occur in Pike).
+
+	* cc-engine.el (c-looking-at-inexpr-block,
+	c-looking-at-inexpr-block-backward): Changed the arguments to
+	require containing sexps and paren state, for better
+	efficiency.
+
+Fri Oct 05 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el, cc-engine.el, cc-vars.el: Improved anchoring of
+	statement and handling of labels in front of substatements.
+
+	(c-guess-continued-construct, c-guess-basic-syntax): Improved
+	and unified anchoring at statements.  Statements beginning
+	with comments or labels are now avoided, by going out of
+	blocks and containing statements if necessary.  This nesting
+	handling also fixes the case when there's a statement after a
+	block open brace.  Added the syntactic symbol
+	`substatement-label'.
+
+	(c-electric-colon): Map the new `substatement-label' to
+	`label' when consulting `c-hanging-colons-alist'.
+
+	(c-offsets-alist): Added substatement-label.  Updated the
+	comments for the new anchoring positions at statements.
+
+	* cc-engine.el (c-guess-basic-syntax): Use more sane anchor
+	points for knr-argdecl-intro and access-label.  They used to
+	refer to some point on the same line, a bug which was
+	neutralized by a kludge in `c-get-syntactic-indentation' which
+	ignored such anchor points.
+
+	(c-get-syntactic-indentation): Removed the kludge that was
+	necessary due to buggy anchor points.
+
+	* cc-engine.el (c-guess-basic-syntax): Do not check the
+	absence of a comma before arglist-close (case 7A) in any
+	language, since there's nothing better to do that case anyway.
+	Added special case to make in-expression statements be
+	recognized as normal arglist-cont if we're directly in a macro
+	arglist, for consistency with other "bare" statements.
+
+	* cc-engine.el (c-looking-at-bos): Added optional limit arg
+	for backward searches.
+
+	* cc-engine.el (c-looking-at-inexpr-block): Anchor gcc
+	in-expression statements at the surrounding open parenthesis.
+	Treat a class body as an in-expression class if it's used in
+	an object clone expression in Pike.
+
+	* cc-engine.el (c-get-offset, c-get-syntactic-indentation):
+	Allow several anchor positions in the list of syntactic
+	symbols.  Only the first is used as the base for the offset
+	calculation.
+
+Tue Oct 02 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-indent-defun): Indent the current macro if
+	inside one at the top level.  Do not throw an error if used at
+	the top level outside a macro.
+
+	* cc-cmds.el (c-backslash-region): Do tab width alignment only
+	if the backslashes can't be aligned with surrounding
+	backslashes.
+
+	* cc-engine.el (c-end-of-macro): New function.
+
+	* cc-engine.el (c-least-enclosing-brace): Rewritten to not be
+	destructive.
+
+Sat Sep 29 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-context-line-break): Only do a macro line
+	break when point is inside the content of it; if it's in the
+	cpp keyword a normal line break is done.
+
+	* cc-engine.el (c-guess-basic-syntax): Do not add
+	cpp-macro-cont inside the argument list to a #define.
+
+Thu Sep 27 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (c-forward-comment): Implemented a kludge to
+	avoid the problem most forward-comment incarnations have with
+	`\' together with comment parsing.
+
+Wed Sep 26 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-check-state-cache): Fixed bug which could
+	cause the state returned by `c-parse-state' to lack a closed
+	paren element.  That in turn could result in very long
+	searches, since it's common that they start from the last
+	preceding close brace.
+
+Tue Sep 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-statement-1): Do not treat
+	else-if as a single continuation, since that'd make it hard to
+	get the right anchor point when there's a line break between
+	the two keywords.  This change causes else-clause to be
+	anchored on the closest preceding else-if and not always on
+	the starting if, but that doesn't affect the indentation for
+	any reasonably sane style.  Also introduced a noerror flag.
+
+	(c-beginning-of-closest-statement): Removed;
+	c-beginning-of-statement-1 now avoids the problem this one
+	solved.
+
+	* cc-engine.el (c-guess-continued-construct,
+	c-guess-basic-syntax): Better and more uniform anchor points
+	for 'statement-cont and 'substatement.  The effect is
+	noticeable mostly when there's a label on the same line as the
+	beginning of the statement, or when there are more stuff
+	before the start of the statement.
+
+	* cc-engine.el (c-looking-at-inexpr-block): Added flag to
+	disable looking at the type of the surrounding paren since
+	that confuses c-beginning-of-statement-1 and a couple of other
+	places.
+
+	* cc-engine.el (c-guess-basic-syntax): Avoid stepping to the
+	previous statement in case 18.  Improvements in recognition of
+	statement blocks on the top level.
+
+Sun Sep 23 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-statement-1,
+	c-crosses-statement-barrier-p): Rewritten to get a well
+	defined and documented behavior.  This fixes some tricky cases
+	in recognition of do-while constructs.
+
+	(c-backward-to-start-of-do, c-backward-to-start-of-if):
+	Removed; use c-beginning-of-statement-1 instead.
+
+	(c-guess-continued-construct, c-guess-basic-syntax): Various
+	fixes to not depend on the bugs previously in
+	c-beginning-of-statement-1.  Cleanups in cases 18 and 17 to
+	use the new behavior of c-beginning-of-statement-1 better.
+	Fixed recognition of catch blocks inside macros.
+
+	* cc-engine.el (c-backward-syntactic-ws): Fixed bug in
+	skipping over a macro.
+
+	* cc-langs.el (c-label-kwds): New variable to contain the
+	appropriate c-*-label-kwds value.
+
+	* cc-vars.el (defcustom-c-stylevar): Fixed value evaluation
+	bug that caused the widget for c-block-comment-prefix to bug
+	out.
+
+Fri Sep 21 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Improved recognition of
+	statements: They are now recognized in contexts where they
+	normally can't occur, e.g. on the top level or in function
+	call arguments.  This is mainly useful to recognize statements
+	in macros at the top level, and in arguments to macros.  The
+	cases has been moved around quite a bit, and case 10 has been
+	copied to case 18.  (The cases has not been renumbered because
+	of this.)
+
+	(c-guess-continued-construct): New function which has the
+	rules which are common between cases 10 and 18.
+
+	* cc-engine.el (c-beginning-of-statement-1,
+	c-backward-to-start-of-do, c-backward-to-start-of-if): Fixes
+	so that they really obey the passed limits.
+
+	(c-safe-position): Return nil if the state doesn't contain a
+	suitable position.
+
+	(c-guess-basic-syntax): Fixes some too short limits in calls
+	to c-beginning-of-statement-1.  Some fixes for top level
+	analysis in ObjC mode.
+
+	* cc-engine.el (c-beginning-of-statement-1): Fixed bug in
+	do-while statements where the body is not a block.
+
+	* cc-styles.el (c-set-style): Reset c-special-indent-hook to
+	its global value if in override mode.  Fixes problem where
+	functions on that hook remained after style switch.
+
+	* cc-engine.el (c-evaluate-offset, c-get-offset): Use
+	c-benign-error to report the c-strict-syntax-p error.
+
+Thu Sep 20 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el, cc-defs.el, cc-cmds.el, cc-engine.el,
+	cc-vars.el: Several fixes to treat macros as code and not
+	literals and to handle line continuations transparently.
+
+	(c-skip-ws-forward, c-skip-ws-backward): New macros to skip
+	through whitespace and line continuations, but not comments
+	and macros.
+
+	(c-in-literal): No longer recognizes macros as literals by
+	default. An extra flag argument is required to do that.
+
+	(c-macro-start, c-query-macro-start,
+	c-query-and-set-macro-start): Added a cache for the macro
+	start position.
+
+	(c-forward-syntactic-ws, c-backward-syntactic-ws): Fixes for
+	more speed when limits are given.  Workaround for bad behavior
+	in forward-comment in some emacsen when it hits a buffer limit
+	with a large repeat count.
+
+	(c-lineup-macro-cont): Improved behavior when
+	c-syntactic-indentation-in-macros is nil.
+
+	(c-syntactic-indentation-in-macros, c-backslash-max-column,
+	c-auto-align-backslashes): New customization variables to
+	control macro handling.
+
+	* cc-menus.el (cc-imenu-c++-generic-expression): Fixes to
+	handle line continuations.
+
+	* cc-defs.el, cc-styles.el (c-get-style-variables,
+	c-set-offset): Report style errors with message and ding
+	instead of error signal.  This to avoid interrupted mode init
+	if there's some style problem.
+
+	(c-benign-error): New macro to report errors that doesn't need
+	to interrupt the operation.
+
+	* cc-defs.el (c-point): Added eonl and eopl positions.
+
+Tue Sep 18 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-brace, c-indent-region): Removed most
+	of the c-state-cache fiddling, since the global state cache
+	now handles this.
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed bug when there's
+	an open paren at the very first char of the visible buffer
+	region.
+
+	* cc-engine.el (c-parse-state, c-check-state-cache): Cache the
+	state globally and invalidate it below every buffer change
+	with the new after change function `c-check-state-cache'.
+	This gives a considerable performance boost when editing large
+	functions or classes.
+
+	* cc-engine.el (c-whack-state-after): Slight optimization.
+
+Sun Sep 16 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el, cc-langs.el, cc-align.el: Improvements to
+	syntactic analysis inside macros:
+
+	(c-block-stmt-1-kwds, c-block-stmt-2-kwds): New variables used
+	by `c-guess-basic-syntax'.
+
+	(c-parse-state): Fixed bug with braces inside macros when
+	using cached state info.
+
+	(c-forward-to-cpp-expression): New function to aid in
+	syntactic analysis inside macros.
+
+	(c-beginning-of-statement-1, c-backward-syntactic-ws): Fixes
+	to work better inside macros.
+
+	(c-forward-syntactic-ws): Whitespace between the # and the
+	command should be allowed in preprocessor directives.
+
+	(c-lineup-macro-cont): New lineup function to get context
+	sensitive indentation inside macros.
+
+	(c-offsets-alist): Made `c-lineup-macro-cont' the default for
+	cpp-macro-cont.
+
+Sat Sep 15 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-statement-1,
+	c-forward-syntactic-ws): Fixes to handle continued lines.
+
+	(c-backward-to-start-of-if, c-guess-basic-syntax): Do
+	syntactic analysis inside macros.
+
+Sat Sep 08 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-indent-region): Did a speedup made possible by
+	the more flexible state cache.
+
+	* cc-engine.el (c-parse-state, c-whack-state-before,
+	c-whack-state-after, c-hack-state,
+	c-narrow-out-enclosing-class, c-guess-basic-syntax): Improved
+	the state cache system.  It now can use partial info from an
+	old cached state to calculate a new one at a different
+	position.  Removed some kludges to avoid the state cache.  The
+	new functions `c-whack-state-before' and `c-whack-state-after'
+	replace the now obsolete `c-whack-state'.
+
+	* cc-engine.el (c-beginning-of-statement-1): Optimized backing
+	through a macro.  This can speed things up quite a bit when
+	there are long macros before point.
+
+	(c-beginning-of-macro): Do not ignore the limit.
+
+Sun Sep 02 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-continued-statement): Fixed a bug
+	where the keyword wasn't reindented correctly if followed by
+	another keyword or identifier.
+
+	* cc-engine.el (c-parse-state): Ignore closed brace pairs that
+	are in macros.  Fixes some cases where e.g. the second of two
+	"do { } while (0)" macros after each other indented
+	differently.
+
+Fri Aug 31 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-macro, c-forward-syntactic-ws):
+	Recognize "#!" as a preprocessor directive when it begins a
+	line, to allow for script interpreter lines like
+	"#!/usr/bin/pike" at the beginning of the file.
+
+Thu Aug 30 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-looking-at-inexpr-block): Recognize brace
+	blocks inside a parenthesis expression as inexpr-statement.
+	Useful when writing statements as macro arguments.
+
+Sat Aug 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-fill-paragraph, c-do-auto-fill,
+	c-mask-comment): Broke out the comment masking code from
+	`c-fill-paragraph' to a new function `c-mask-comment', to be
+	able to do the same thing in `c-do-auto-fill'.  This should
+	make auto-fill-mode behave better.
+
+Mon Aug 20 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-brace, c-electric-paren): Check
+	`executing-macro' to avoid blinking parens when macros are
+	executed.
+
+	* cc-mode.el, cc-styles.el (c-setup-filladapt): Moved from
+	cc-mode.el to cc-styles.el for consistency with
+	`c-setup-paragraph-variables' (which was placed there due to
+	the dependency from `c-set-style').
+
+	* cc-styles.el, cc-vars.el: Fixed bug with incomplete
+	initialization from the style variable fallbacks if there
+	already is a style called "user" defined when CC Mode starts
+	up for the first time.
+
+Fri Aug 17 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el, cc-vars.el (c-comment-indent,
+	c-indent-comment-alist): Added new variable
+	`c-indent-comment-alist' to allow better control over
+	`c-comment-indent'.
+
+Tue Aug 14 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el (c-lineup-C-comments): Try to match both
+	`comment-start-skip' and the comment prefix on the current
+	line with the comment starter, so that we line up comments
+	which matches `c-comment-prefix-regexp' on the first line
+	(after the `/') without the need to make `comment-start-skip'
+	match whatever `c-comment-prefix-regexp' matches.
+
+	* cc-mode.el, cc-styles.el (c-common-init, c-set-style-1,
+	c-setup-paragraph-variables): Moved the variable
+	initialization based on `c-comment-prefix-regexp' to a new
+	function `c-setup-paragraph-variables', which is now used both
+	at mode init and when a style that sets
+	`c-comment-prefix-regexp' is activated.
+
+Sat Aug 11 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-member-init-list): Better
+	handling of C++ template args to avoid confusion with `<' and
+	`>' used as operators in member init expressions.
+
+Wed Jul 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-most-enclosing-brace,
+	c-least-enclosing-brace): Added optional second arg to limit
+	the search to before a certain point.
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed bug which could
+	cause incorrect analysis if a cached state is used (usually
+	only happens when an electric key reindents a line).
+
+Tue Jul 24 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (c-forward-comment): More idiosyncrasy
+	insulation.  This time for XEmacs 21.
+
+	* cc-engine.el, cc-langs.el: Improved handling of inheritance
+	lists:
+
+	(c-beginning-of-inheritance-list): Rewritten to use a more
+	syntactically correct method that doesn't get confused by
+	badly placed linebreaks and comments.
+
+	(c-guess-basic-syntax): Several fixes to the handling of
+	inheritance lists in combination with templates.  'inher-intro
+	is now anchored on the start of the class declaration and not
+	the indentation of the current line.  Switched places on cases
+	5D.3 and 5D.4 and made them use more syntactically correct
+	methods.
+
+	(c-inher-key): Removed since the code in
+	`c-guess-basic-syntax' now uses token-based search.
+
+	* cc-cmds.el, cc-mode.el (c-mode-menu): Added a submenu to
+	access some toggles.
+
+	(c-toggle-syntactic-indentation): New function to toggle the
+	variable `c-syntactic-indentation'.
+
+	* cc-styles.el (c-set-style): Improved the error message for
+	incorrect offsets a bit.
+
+Mon Jul 23 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-indent-exp): Don't require that the sexp
+	follows point immediately, instead find the closest following
+	open paren that ends on another line.
+
+Sat Jul 21 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el (c-lineup-cascaded-calls): New indentation function.
+
+	* cc-engine.el (c-beginning-of-macro): Bugfix for directives
+	with whitespace between the '#' and the name.
+
+	* cc-mode.texi: Rearranged the indentation functions in
+	alphabetic order.  Documented c-lineup-cascaded-calls.
+
+Fri Jul 20 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-forward-syntactic-ws,
+	c-backward-syntactic-ws): Handle line continuations as
+	whitespace.  Don't move past a macro if that'd take us past
+	the limit.
+
+Wed Jul 11 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-macro, c-forward-syntactic-ws):
+	Multiline strings begin with `#"' in Pike, and that shouldn't
+	be confused with a preprocessor directive.
+
+Mon Jul 09 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el: Extended the kludge to interoperate with the
+	delsel and pending-del packages wrt to the new function
+	`c-electric-delete-forward'.
+
+Fri Jul 06 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-indent-exp): Keep the indentation of the block
+	itself, i.e. only indent the contents in it.
+
+	* cc-styles.el (c-set-style): Use the default argument to
+	completing-read instead of initial-contents, if the function
+	is recent enough to support it.
+
+Mon Jun 11 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-mode.el (c-mode-help-address): Removed
+	bug-gnu-emacs@gnu.org from the receiver list for bug reports.
+	I've almost never seen a bug reported this way that should go
+	to that list, but it's rather common that the reports concern
+	the combination CC Mode and XEmacs instead.
+
+Sun Jun 10 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-paren): Fixed bug when both
+	brace-elseif-brace and brace-catch-brace are active and
+	there's a "else if"-block before the catch block.
+
+	* cc-menus.el (cc-imenu-c++-generic-expression): Detect
+	function headers that span lines.
+
+Sat May 12 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-brace, c-electric-semi&comma,
+	c-electric-colon, c-electric-paren): Check for last on line
+	only for doing the auto-newline-mode stuff, not for the
+	reindentation.
+
+	* cc-cmds.el (c-electric-brace): Fixed bugs in the handling of
+	c-syntactic-indentation: When it's nil, indent the new lines
+	but don't reindent the current one.  Reindent the line only
+	when the inserted brace comes first on it, instead of last.
+
+	* cc-cmds.el (c-electric-brace, c-electric-semi&comma): Fixed
+	two places where c-syntactic-indentation wasn't heeded.
+
+	* cc-cmds.el (c-electric-pound): Don't be electric inside a
+	macro.
+
+	* cc-engine.el (c-backward-to-start-of-if): Try a little
+	harder to find a fallback position when an orphan else is
+	found.  Fixed case where an else following a do-while
+	statement could be associated with an if inside the do-while.
+
+Fri May 11 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-guess-fill-prefix): Tuned the dwim for the
+	fallback to add a single space after the comment prefix.
+
+	* cc-cmds.el (c-indent-new-comment-line): Somewhat better
+	behavior in some special cases, especially for single-line
+	comments.  Avoid breaking up a comment starter or ender.
+
+Sat May 05 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-outline-level): Applied patch from the Emacs
+	sources to make this work in invisible text.
+
+	* cc-langs.el (c-switch-label-key): Fixed regexp to not be
+	confused by a later ':' on the same line as the label.
+
+Wed May 02 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el, cc-mode.el (c-electric-delete,
+	c-electric-delete-forward): Split `c-electric-delete' into two
+	functions where `c-electric-delete-forward' always deletes
+	forward and `c-electric-delete' only contains the code
+	necessary for XEmacs to choose between backward and forward
+	deletion.  `c-electric-delete-forward' is now bound to C-d to
+	get the electric behavior on that key too.
+
+	* cc-mode.texi: Updated the doc for hungry-delete mode wrt the
+	Backspace/Delete key handling.  Also incorporated a small
+	clarification from the Emacs people.
+
+Wed Mar 14 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-fill-paragraph): Fixed bogus direct use of
+	c-comment-prefix-regexp, which caused an error when it's a
+	list.
+
+Sun Feb 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-mode.el, cc-vars.el (c-common-init, c-default-style):
+	Removed the hardcoded switch to "java" style in Java mode.
+	It's instead taken care of by the default value for
+	c-default-style.
+
+	* cc-mode.texi: Documented the electric keyword feature.
+	Updated the mentions of the "java" style special case for Java
+	mode.
+
+Sat Feb 24 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el (c-lineup-math): Fix bug where lineup was
+	triggered by equal signs in string literals.
+
 Sun Feb 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* Release 5.28
@@ -342,7 +1232,7 @@ Sat Aug 12 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	wraps the corresponding macro, for use in places that aren't
 	compiled.  Thanks to Martin Buchholz for pointing out this.
 
-	* cc-langs.el (c-mode-menu): Use c-fn-region-is-active-p. 
+	* cc-langs.el (c-mode-menu): Use c-fn-region-is-active-p.
 
 	* cc-mode.el (c-prepare-bug-report-hooks): Hook variable to
 	add things to the bug report.
@@ -413,7 +1303,7 @@ Mon May 01 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 Sun Mar 19 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
-	* cc-mode.texi Documented the change of cpp-macro. 
+	* cc-mode.texi Documented the change of cpp-macro.
 
 Tue Mar 14 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
@@ -425,7 +1315,7 @@ Tue Mar 14 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	c-guess-basic-syntax): Fixed recognition of inheritance lists
 	when the lines begins with a comma.
 
-	* cc-mode.texi Updated doc for c-lineup-multi-inher. 
+	* cc-mode.texi Updated doc for c-lineup-multi-inher.
 
 	* cc-vars.el (c-offsets-alist): Changed default for
 	member-init-cont to c-lineup-multi-inher since it now handles
@@ -574,7 +1464,7 @@ Sat Dec 04 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	c-special-indent-hook as a style variable.  Don't talk about
 	doing (c-make-styles-buffer-local t) in a mode hook, since
 	that's already too late to work right.
-	
+
 	* cc-styles.el (c-make-styles-buffer-local): Flag style
 	variable localness in c-style-variables-are-local-p to make
 	the compatibility measure in c-common-init work well.
@@ -595,7 +1485,7 @@ Sat Dec 04 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	initialization of inheriting styles failed when the
 	dont-override flag is set.
 
- 	* cc-vars.el (c-special-indent-hook): Don't use set-from-style
+	* cc-vars.el (c-special-indent-hook): Don't use set-from-style
 	on this.
 
 Mon Nov 22 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
@@ -1066,21 +1956,21 @@ Wed Oct 14 22:34:50 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
 Thu Oct 08 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-cmds.el (c-electric-brace): Added inexpr-class-open and
- 	inexpr-class-close handling.
+	inexpr-class-close handling.
 
 	* cc-vars.el (c-hanging-braces-alist): Added inexpr-class-open and
- 	inexpr-class-close and changed the default setting for those two.
+	inexpr-class-close and changed the default setting for those two.
 
 Wed Oct 07 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 
 	* cc-cmds.el (c-electric-delete): Use function delete-forward-p if
- 	it exists.  This is the blessed XEmacs 21 way of checking for this
- 	condition.
+	it exists.  This is the blessed XEmacs 21 way of checking for this
+	condition.
 
 Wed Sep 16 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-engine.el (c-guess-basic-syntax): CASE 15: Handle labels at
- 	beginning of blocks with hanging braces.
+	beginning of blocks with hanging braces.
 
 Tue Sep 08 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 
@@ -1089,202 +1979,202 @@ Tue Sep 08 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 Mon Aug 31 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 
 	* cc-defs.el (c-region-is-active-p): New function which
- 	encapsulates region activeness determination in both XEmacs and
- 	Emacs, regardless of whether region highlighting
- 	(e.g. zmacs-regions / transient-mark-mode) is turned on.
+	encapsulates region activeness determination in both XEmacs and
+	Emacs, regardless of whether region highlighting
+	(e.g. zmacs-regions / transient-mark-mode) is turned on.
 
 	* cc-langs.el (c-mode-menu): Use c-region-is-active-p so
- 	appropriate menu entries are active correctly across all
- 	X/Emacsen.
+	appropriate menu entries are active correctly across all
+	X/Emacsen.
 
 	* cc-vars.el Added definition of `other' widget type, which allows
- 	any value other than t or nil, but doesn't let the user type in
- 	any old thing.  This is used in c-tab-always-indent as per Per's
- 	recommendation.
+	any value other than t or nil, but doesn't let the user type in
+	any old thing.  This is used in c-tab-always-indent as per Per's
+	recommendation.
 
 Fri Aug 28 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 
 	* cc-langs.el (c-use-java-style): Removed as obsolete.
-	
-  	(c-common-init): Implement the new semantics for
- 	c-default-style. Should be backwards compatible with old behavior,
- 	but allow for per-major-mode setting of the default style.
+
+	(c-common-init): Implement the new semantics for
+	c-default-style. Should be backwards compatible with old behavior,
+	but allow for per-major-mode setting of the default style.
 
 	* cc-mode.el (java-mode): No longer hard code the style setting to
- 	"java" style. This is now all handled by the new semantics for
- 	c-default-style.
+	"java" style. This is now all handled by the new semantics for
+	c-default-style.
 
 	* cc-styles.el (c-initialize-builtin-style): No longer call
- 	c-set-style to set the default style.  This is all handled by the
- 	new semantics for c-default-style.
+	c-set-style to set the default style.  This is all handled by the
+	new semantics for c-default-style.
 
 	* cc-vars.el (c-default-style): This variable can now take either
- 	a string or an association list, mapping major mode symbols to
- 	style names.  Update the docstring to describe the new interface,
- 	and elaborate the Custom widget to accept either type.
+	a string or an association list, mapping major mode symbols to
+	style names.  Update the docstring to describe the new interface,
+	and elaborate the Custom widget to accept either type.
 
 Thu Aug 27 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 
 	* cc-styles.el (c-offsets-alist): The offset for a syntactic
- 	symbol can now also be a list, which is recursively evaluated
- 	using the previous semantics. The first non-nil value succeeds.
-	
-  	(c-get-offset, c-evaluate-offset): Function to implement recursive
- 	evaluation for when a symbol's offset is a list (the first one to
- 	return a non-nil value succeeds -- should this be a stricter check
- 	for an integer return value?).  Factored out of c-get-offset.
-	
-  	(c-set-offset, c-read-offset): Error message indicates value could
- 	be a list.  In former function, add listp check.
+	symbol can now also be a list, which is recursively evaluated
+	using the previous semantics. The first non-nil value succeeds.
 
-	* cc-vars.el (c-strict-syntax-p): Describe addition responsibilities. 
+	(c-get-offset, c-evaluate-offset): Function to implement recursive
+	evaluation for when a symbol's offset is a list (the first one to
+	return a non-nil value succeeds -- should this be a stricter check
+	for an integer return value?).  Factored out of c-get-offset.
+
+	(c-set-offset, c-read-offset): Error message indicates value could
+	be a list.  In former function, add listp check.
+
+	* cc-vars.el (c-strict-syntax-p): Describe addition responsibilities.
 
 Mon Aug 24 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-engine.el (c-inside-bracelist-p, c-guess-basic-syntax): In
- 	Java brace lists may follow the new operator.  Do not recognize
- 	them as in-expression statements.  Case 7B changed in
- 	c-guess-basic-syntax.
+	Java brace lists may follow the new operator.  Do not recognize
+	them as in-expression statements.  Case 7B changed in
+	c-guess-basic-syntax.
 
 Sun Jun 07 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-engine.el (c-beginning-of-statement-1, c-guess-basic-syntax):
- 	Fixed indentation of try-catch-finally blocks nested inside
- 	if-statements. New case 13 in c-guess-basic-syntax; cases 13-16
- 	renamed for this. New syntactic symbol catch-clause.
+	Fixed indentation of try-catch-finally blocks nested inside
+	if-statements. New case 13 in c-guess-basic-syntax; cases 13-16
+	renamed for this. New syntactic symbol catch-clause.
 
 	* cc-styles.el New syntactic symbol catch-clause.  Changed the
- 	default to not alter the indentation of multiline strings in any
- 	way.
+	default to not alter the indentation of multiline strings in any
+	way.
 
 Sat Jun 06 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
-	* cc-langs.el Added recognition of IDL specific top-level keywords. 
+	* cc-langs.el Added recognition of IDL specific top-level keywords.
 
 Tue May 19 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-engine.el (c-search-uplist-for-classkey,
- 	c-looking-at-inexpr-block, c-guess-basic-syntax): Fixed bug in
- 	recognizing anonymous Java classes.  Cleanups in the code that
- 	handles in-expression brace constructs.
+	c-looking-at-inexpr-block, c-guess-basic-syntax): Fixed bug in
+	recognizing anonymous Java classes.  Cleanups in the code that
+	handles in-expression brace constructs.
 
 Sun May 03 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-engine.el (c-inside-bracelist-p): Rewrote the `=' detection
- 	loop to make it more clear and in some cases a lot
- 	faster.
+	loop to make it more clear and in some cases a lot
+	faster.
 
 	(c-forward-token-1, c-backward-token-1): Use narrowing for limits
- 	to improve speed when the limit is inside a huge balanced paren.
+	to improve speed when the limit is inside a huge balanced paren.
 
 Mon Apr 27 14:54:33 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.23
 
 	* (c-electric-pound): Do electric stuff only if # is hit at the
- 	beginning of the line.
+	beginning of the line.
 
 Mon Apr 27 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-align.el (c-lineup-math): Indent with c-basic-offset if the
- 	equal sign ends the first line.
+	equal sign ends the first line.
 
 Thu Apr 23 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-align.el, cc-cmds.el, cc-compat.el, cc-engine.el: Use
- 	c-{forward,backward}-sexp instead of {forward,backward}-sexp.
-	
+	c-{forward,backward}-sexp instead of {forward,backward}-sexp.
+
 Mon Apr 20 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-inside-bracelist-p): Don't recognize operator=()
- 	method definitions as bracelists.
+	method definitions as bracelists.
 
 Sun Apr 19 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-styles.el (c-style-alist): In "gnu" style, set inline-open
- 	offset to zero.
+	offset to zero.
 
 Thu Apr 16 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-electric-brace): Check for and exclude Pike-style
- 	brace lists from the auto-newline feature.
+	brace lists from the auto-newline feature.
 
 Wed Apr 15 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-electric-paren): New function for electric
- 	auto-indenting behavior for parenthesis.
+	auto-indenting behavior for parenthesis.
 
 Tue Apr 14 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-submit-bug-report): Don't include
- 	c-special-indent-hook iff hook is of length 1 and contains only
- 	c-gnu-impose-minimum.
+	c-special-indent-hook iff hook is of length 1 and contains only
+	c-gnu-impose-minimum.
 
 Mon Apr 13 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-add-class-syntax): New function that handles all
- 	inclass and related symbols in one place.  The anchor position of
- 	inclass has changed in some situations.
+	inclass and related symbols in one place.  The anchor position of
+	inclass has changed in some situations.
 
 Sun Apr 12 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-beginning-of-statement): Handle blocks inside
- 	expressions.
+	expressions.
 
 Wed Apr 08 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-mark-function): Much better implementation which
- 	catches all the expected cases.
+	catches all the expected cases.
 
 	(c-end-of-defun): When called programmatically with no arguments,
- 	arg is nil, so set it to 1.
+	arg is nil, so set it to 1.
 
-	* cc-defs.el (c-point): Added 'eod. 
+	* cc-defs.el (c-point): Added 'eod.
 
 Mon Apr 06 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-search-uplist-for-classkey,
- 	c-inside-bracelist-p, c-looking-at-inexpr-block,
- 	c-guess-basic-syntax): Support for Java anonymous classes.  New
- 	case 6D in c-guess-basic-syntax.
+	c-inside-bracelist-p, c-looking-at-inexpr-block,
+	c-guess-basic-syntax): Support for Java anonymous classes.  New
+	case 6D in c-guess-basic-syntax.
 
 	* cc-langs.el, cc-mode.el, cc-styles.el: Support for Java
- 	anonymous classes.  New syntactic element inexpr-class.
+	anonymous classes.  New syntactic element inexpr-class.
 
 Sun Apr 05 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-align.el (c-lineup-inexpr-stat): Added lineup of statements
- 	inside expressions.
+	inside expressions.
 
 	* cc-engine.el (c-inside-bracelist-p, c-looking-at-inexpr-stat,
- 	c-guess-basic-syntax): Added recognition of the gcc extension for
- 	statements inside expressions.  They're handled as
- 	`inexpr-statement' now.  Changed cases: 6, 10, 15A, 16E.  New case
- 	7B; old 7B-F renumbered.
+	c-guess-basic-syntax): Added recognition of the gcc extension for
+	statements inside expressions.  They're handled as
+	`inexpr-statement' now.  Changed cases: 6, 10, 15A, 16E.  New case
+	7B; old 7B-F renumbered.
 
 Fri Apr 03 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-electric-brace): Removed brace-list-entry from the
- 	list of symbols that can be electrified because all cases where
- 	brace-list-entry was used should now be brace-entry-open's.  Add
- 	new brace-entry-open to list of braces which can be electrified.
+	list of symbols that can be electrified because all cases where
+	brace-list-entry was used should now be brace-entry-open's.  Add
+	new brace-entry-open to list of braces which can be electrified.
 
 	* cc-engine.el (c-guess-basic-syntax): CASE 9C: brace-list-open =>
- 	brace-entry-open.
+	brace-entry-open.
 
 	* cc-styles.el (c-style-alist): In "linux" and "python" styles,
- 	add brace-entry-open to mimic brace-list-open.  Added description
- 	and entry for brace-entry-open, a new syntactic symbol.
+	add brace-entry-open to mimic brace-list-open.  Added description
+	and entry for brace-entry-open, a new syntactic symbol.
 
 	* cc-vars.el (c-hanging-braces-alist): Added brace-entry-open to
- 	mimic brace-list-open in default value.  Updated docstring and
- 	defcustom spec to describe brace-entry-open and remove
- 	brace-list-entry.
+	mimic brace-list-open in default value.  Updated docstring and
+	defcustom spec to describe brace-entry-open and remove
+	brace-list-entry.
 
 Thu Apr 02 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-align.el (c-lineup-inexpr-stat): New lineup function used in
- 	Pike mode.
+	Pike mode.
 
 	* cc-langs.el: New variables c-lambda-key and
 	c-special-brace-lists for Pike.
@@ -1293,35 +2183,35 @@ Thu Apr 02 1998  Martin Stjernholm  <cc-mode-help@python.org>
 	and inexpr-statement for Pike.
 
 	* cc-engine.el: Support for the Pike language.  Handle Pike-style
- 	brace lists ('({ })', '([ ])', '(< >)') and in-expression
- 	statements.  New case 6 in c-guess-basic-syntax; CASES >= 6 ARE
- 	RENAMED because of this.  New functions:
- 	c-looking-at-special-brace-list, c-looking-at-inexpr-stat,
- 	c-looking-at-inexpr-stat-backward.
+	brace lists ('({ })', '([ ])', '(< >)') and in-expression
+	statements.  New case 6 in c-guess-basic-syntax; CASES >= 6 ARE
+	RENAMED because of this.  New functions:
+	c-looking-at-special-brace-list, c-looking-at-inexpr-stat,
+	c-looking-at-inexpr-stat-backward.
 
-	* cc-mode.el (pike-mode): New function; support for the Pike language. 
+	* cc-mode.el (pike-mode): New function; support for the Pike language.
 
 Tue Mar 31 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-comment-line-break-function): Insert newline when
- 	in a string literal.
+	in a string literal.
 
 Fri Mar 27 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-defs.el (c-forward-sexp, c-backward-sexp): Implementations of
- 	replacement defsubst to insulate ourselves from changes to
- 	forward-sexp and backward-sexp user level command.
+	replacement defsubst to insulate ourselves from changes to
+	forward-sexp and backward-sexp user level command.
 
 	* cc-styles.el (c-read-offset): A better prompt which includes the
- 	syntactic symbol being changed.
+	syntactic symbol being changed.
 
 Wed Mar 18 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-indent-line-or-region): New command. Remove `*'
- 	from interactive spec.
+	from interactive spec.
 
 	* cc-langs.el (c-mode-menu): Change "Indent Line" to "Indent Line
- 	or Region".
+	or Region".
 
 Mon Mar 16 19:13:24 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 
@@ -1330,22 +2220,22 @@ Mon Mar 16 19:13:24 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 Thu Mar 12 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-menus.el (cc-imenu-c++-generic-expression): Fix to handle
- 	explicitly specialized template classes.
+	explicitly specialized template classes.
 
 	* cc-mode.texi: Added a paragraph on
- 	signal-error-on-buffer-boundary in the Limitations and Known Bugs
- 	section.
+	signal-error-on-buffer-boundary in the Limitations and Known Bugs
+	section.
 
 Wed Mar 11 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-guess-basic-syntax): Fixed bug with member inits
- 	on the same line as the function header.  Case 5D.1 changed.
+	on the same line as the function header.  Case 5D.1 changed.
 
 Wed Mar 11 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-submit-bug-report): Add
- 	signal-error-on-buffer-boundary to the list of variables that get
- 	reported.  This is a losing XEmacs variable that breaks many
+	signal-error-on-buffer-boundary to the list of variables that get
+	reported.  This is a losing XEmacs variable that breaks many
 	things and should never be set by the user.
 
 Fri Mar  6 00:25:29 1998  Barry A. Warsaw  <cc-mode-help@python.org>
@@ -1367,59 +2257,59 @@ Fri Feb 27 1998  Martin Stjernholm  <cc-mode-help@python.org>
 Wed Feb 25 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-fill-paragraph): Always keep point in the same
- 	relative position.  Fill comment before point if there's nothing
- 	else on the same line.  Fill block comments after code a little
- 	better.  Try harder to find a good fill-prefix when point is on a
- 	block comment ender line.  Use c-Java-javadoc-paragraph-start in
- 	block comments in Java mode.  Leave block comment ender alone when
- 	c-hanging-comment-ender-p is nil and point is on that line.
-  	Detect paragraph-separate in multiparagraph comments.  Fix for bug
- 	that may strip the `*' off `*/' if fill-prefix ends with `*' and
- 	c-hanging-comment-ender-p is t.  Added filling of multiline string
- 	literals.  Always return t to disable filling in any unhandled
- 	area, i.e. actual code where fill-paragraph only mess things up.
+	relative position.  Fill comment before point if there's nothing
+	else on the same line.  Fill block comments after code a little
+	better.  Try harder to find a good fill-prefix when point is on a
+	block comment ender line.  Use c-Java-javadoc-paragraph-start in
+	block comments in Java mode.  Leave block comment ender alone when
+	c-hanging-comment-ender-p is nil and point is on that line.
+	Detect paragraph-separate in multiparagraph comments.  Fix for bug
+	that may strip the `*' off `*/' if fill-prefix ends with `*' and
+	c-hanging-comment-ender-p is t.  Added filling of multiline string
+	literals.  Always return t to disable filling in any unhandled
+	area, i.e. actual code where fill-paragraph only mess things up.
 
 Tue Feb 24 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-collect-line-comments): Require same comment
- 	start column.
+	start column.
 
 	* cc-langs.el Added c-Java-javadoc-paragraph-start for use in
- 	c-fill-paragraph.
+	c-fill-paragraph.
 
 Tue Feb 24 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-fill-paragraph): Bind fill-paragraph-function to
- 	nil when calling fill-paragraph to avoid bogus recursion which
- 	will signal an error.
+	nil when calling fill-paragraph to avoid bogus recursion which
+	will signal an error.
 
 Sat Feb 21 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-guess-basic-syntax): Fixes for nesting of and
- 	repeated defun-open's inside extern and namespace clauses.  This
- 	is done by passing a relpos to 'inextern-lang and 'innamespace.
-  	Also, the relpos in 'defun-open is no longer always bol.  It's
- 	always bol when on the top level, however.  Changed cases: 5A.5,
- 	5I, 14A.
+	repeated defun-open's inside extern and namespace clauses.  This
+	is done by passing a relpos to 'inextern-lang and 'innamespace.
+	Also, the relpos in 'defun-open is no longer always bol.  It's
+	always bol when on the top level, however.  Changed cases: 5A.5,
+	5I, 14A.
 
 Thu Feb 19 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-forward-token-1, c-backward-token-1): New
- 	functions to move by tokens.
+	functions to move by tokens.
 
 	(c-guess-basic-syntax): Fixes for Java 1.1 array initialization
- 	brace lists.
+	brace lists.
 
 Tue Feb 17 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-mode-19.el Only define the functions if they aren't defined
- 	already.
+	already.
 
 Tue Feb 10 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-make.el Require cc-mode-19 if needed before batch compile,
- 	because it contains macro definitions that must be defined during
- 	compilation.
+	because it contains macro definitions that must be defined during
+	compilation.
 
 Sun Feb  8 15:30:43 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 
@@ -1428,149 +2318,149 @@ Sun Feb  8 15:30:43 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 Wed Feb 04 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-mode, c++-mode, objc-mode, java-mode): set
- 	imenu-case-fold-search to nil.
+	imenu-case-fold-search to nil.
 
 Tue Feb 03 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-langs.el (c-postprocess-file-styles): If a file style or file
- 	offsets are set, make the variables local to the buffer (via
- 	make-local-variable).
+	offsets are set, make the variables local to the buffer (via
+	make-local-variable).
 
 	* cc-styles.el (c-make-styles-buffer-local): Take an optional
- 	argument which switches between make-variable-buffer-local and
- 	make-local-variable.  Generalize.
+	argument which switches between make-variable-buffer-local and
+	make-local-variable.  Generalize.
 
 Mon Feb 02 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-align.el (c-lineup-close-paren, c-indent-one-line-block): New
- 	indentation functions.
+	indentation functions.
 
 	* cc-cmds.el (c-beginning-of-statement, c-end-of-statement): Do
- 	not move by sentence in strings.  Doc fixes.
+	not move by sentence in strings.  Doc fixes.
 
 	* cc-mode.texi: Document new indentation functions.
 
 Sat Jan 24 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-defs.el (c-point): In XEmacs, use scan-lists +
- 	buffer-syntactic-context-depth to radically speed up locating
- 	top-level defun opening brace in some situations.  When the braces
- 	hang, this can make c-parse-state from between 3 to 60 times
- 	faster.  When they don't hang, this may be a few percentage points
- 	slower (not noticeable to me though).  The variable
- 	c-enable-xemacs-performance-kludge-p toggles the behavior.  This
- 	change has no effect on Emacs, which lacks the built-in function
- 	buffer-syntactic-context-depth.
+	buffer-syntactic-context-depth to radically speed up locating
+	top-level defun opening brace in some situations.  When the braces
+	hang, this can make c-parse-state from between 3 to 60 times
+	faster.  When they don't hang, this may be a few percentage points
+	slower (not noticeable to me though).  The variable
+	c-enable-xemacs-performance-kludge-p toggles the behavior.  This
+	change has no effect on Emacs, which lacks the built-in function
+	buffer-syntactic-context-depth.
 
 	* cc-mode.texi: Discuss c-enable-xemacs-performance-kludge-p in
- 	the section on performance.
+	the section on performance.
 
-	* cc-vars.el (c-enable-xemacs-performance-kludge-p): New variable. 
+	* cc-vars.el (c-enable-xemacs-performance-kludge-p): New variable.
 
 Fri Jan 23 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el cc-defs.el cc-engine.el (c-beginning-of-defun,
- 	c-indent-defun, c-parse-state): Use (c-point 'bod) instead of
- 	beginning-of-defun directly.
+	c-indent-defun, c-parse-state): Use (c-point 'bod) instead of
+	beginning-of-defun directly.
 
 Tue Jan 20 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-beginning-of-statement): Speedup; it's only
- 	necessary to call `c-literal-limits' once when the function is
- 	entered.
+	necessary to call `c-literal-limits' once when the function is
+	entered.
 
 Mon Jan 19 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-align.el (c-semi&comma-no-newlines-before-nonblanks,
- 	c-semi&comma-no-newlines-for-oneline-inliners): New functions,
- 	appropriate for c-hanging-semi&comma-criteria, but not placed on
- 	that variable by default.
+	c-semi&comma-no-newlines-for-oneline-inliners): New functions,
+	appropriate for c-hanging-semi&comma-criteria, but not placed on
+	that variable by default.
 
 	* cc-langs.el (c-mode-base-map): Comment out c-beginning-of-defun
- 	and c-end-of-defun bindings, since RMS doesn't want these to be
- 	the default.
+	and c-end-of-defun bindings, since RMS doesn't want these to be
+	the default.
 
 	* cc-mode.texi: Describe c-beginning-of-defun and c-end-of-defun.
-  	Describe the new c-hanging-semi&comma-criteria functions.
+	Describe the new c-hanging-semi&comma-criteria functions.
 
 Sun Jan 18 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-beginning-of-statement): Handle multiple C++ line
- 	comments a little better.
+	comments a little better.
 
 	Almost completely rewritten.  It's now more thorough when handling
- 	strings and comments and the transitions between them and the
- 	surrounding code.  The statement parsing is also rewritten because
- 	`c-{beginning|end}-of-statement-1' does no longer do what we want
- 	in this function (e.g. c-b-o-s-1 doesn't go into blocks).  It also
- 	works better for different counts and when sentence-flag is nil.
+	strings and comments and the transitions between them and the
+	surrounding code.  The statement parsing is also rewritten because
+	`c-{beginning|end}-of-statement-1' does no longer do what we want
+	in this function (e.g. c-b-o-s-1 doesn't go into blocks).  It also
+	works better for different counts and when sentence-flag is nil.
 
 	* cc-engine.el (c-forward-syntactic-ws, c-backward-syntactic-ws):
- 	Removed the narrowings which doesn't seem to have much effect.
-  	Instead a simple check is made against the given limit.  In
- 	`c-backward-syntactic-ws' this means that there's no need to
- 	search for bod, which helps up speed quite a lot in some areas.
+	Removed the narrowings which doesn't seem to have much effect.
+	Instead a simple check is made against the given limit.  In
+	`c-backward-syntactic-ws' this means that there's no need to
+	search for bod, which helps up speed quite a lot in some areas.
 
 	(c-collect-line-comments): New function that given the limits of
- 	one C++ style line comment returns the range for all adjacent line
- 	comments.  This functionality is moved from the functions
- 	`c-literal-limits' and `c-literal-limits-fast'.
+	one C++ style line comment returns the range for all adjacent line
+	comments.  This functionality is moved from the functions
+	`c-literal-limits' and `c-literal-limits-fast'.
 
 	(c-literal-limits): New function that finds the start and end pos
- 	of a comment or string surrounding point.  This function is Emacs
- 	19.34 compatible and it has a workaround for what seems to be a
- 	bug in `parse-partial-sexp' when we use an existing state to get
- 	the state for the very next character.
+	of a comment or string surrounding point.  This function is Emacs
+	19.34 compatible and it has a workaround for what seems to be a
+	bug in `parse-partial-sexp' when we use an existing state to get
+	the state for the very next character.
 
 	(c-literal-limits-fast): A faster variant of `c-literal-limits'
- 	for newer Emacsen where the state returned from
- 	`parse-partial-sexp' contains the starting pos of the last
- 	literal.  This does not contain the workaround described above.
-  	The function is not yet tested and therefore not in use for now.
-  	Note that these functions regard the position between the first
- 	and second char of a comment starter to be part of the comment.
-  	Although `parse-partial-sexp' (in Emacs 19 anyway) doesn't do
- 	this, it seems more intuitive to me.  Maybe `c-in-literal' should
- 	do this too?
+	for newer Emacsen where the state returned from
+	`parse-partial-sexp' contains the starting pos of the last
+	literal.  This does not contain the workaround described above.
+	The function is not yet tested and therefore not in use for now.
+	Note that these functions regard the position between the first
+	and second char of a comment starter to be part of the comment.
+	Although `parse-partial-sexp' (in Emacs 19 anyway) doesn't do
+	this, it seems more intuitive to me.  Maybe `c-in-literal' should
+	do this too?
 
 Thu Jan 15 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
-	* cc-mode-19.el Added `when' and `unless'. 
+	* cc-mode-19.el Added `when' and `unless'.
 
 Thu Jan 15 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-guess-basic-syntax): Fixed a few byte compiler
- 	warnings.
+	warnings.
 
 Wed Jan 14 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-beginning-of-defun, c-end-of-defun): New commands
- 	which mimic the standard built-ins, but do a much better job of
- 	finding the open brace when it's hung on the right side (as is the
- 	case with the most common Java style).
+	which mimic the standard built-ins, but do a much better job of
+	finding the open brace when it's hung on the right side (as is the
+	case with the most common Java style).
 
 	* cc-engine.el (c-backward-to-start-of-do): Break infloop for
- 	illegal code, e.g. when someone types while (TRUE) { at the top of
- 	a buffer, we shouldn't hang when the { is typed!
+	illegal code, e.g. when someone types while (TRUE) { at the top of
+	a buffer, we shouldn't hang when the { is typed!
 
 Tue Jan 13 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-beginning-of-statement): When moving forward by
- 	sentences, because we're either inside or at the start of a
- 	comment, be sure to limit movement to only within the extent of
- 	the comment.
+	sentences, because we're either inside or at the start of a
+	comment, be sure to limit movement to only within the extent of
+	the comment.
 
 Sat Jan 10 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-langs.el (c-java-method-key): I really don't remember why
- 	this was added, but it seems to do more harm than good.  Besides,
- 	its value was clearly wrong, being inherited from Objective-C.
+	this was added, but it seems to do more harm than good.  Besides,
+	its value was clearly wrong, being inherited from Objective-C.
 
 	* cc-mode.el (java-mode): Set c-method-key to nil.  I don't think
- 	this is necessary for Java, and besides, the old value was
- 	inherited from Objective-C which was clearly not right.  With this
- 	change, all regression tests pass and the example by Bengt
- 	Martensson also passes:
+	this is necessary for Java, and besides, the old value was
+	inherited from Objective-C which was clearly not right.  With this
+	change, all regression tests pass and the example by Bengt
+	Martensson also passes:
 
 	class Baz
 	{
@@ -1586,192 +2476,192 @@ Sat Jan 10 1998  Barry Warsaw  <cc-mode-help@python.org>
 	}
 
 	* cc-mode.texi Add some explanation to "gnu" style and "user"
- 	style, describing the relationship between these and user
- 	Customizations.
+	style, describing the relationship between these and user
+	Customizations.
 
 	* cc-vars.el (c-default-style): Change this back to "gnu" after
- 	(re-reading old) discussions with RMS.  This may confuse users who
- 	set variables in the top-level of their .emacs files, or using the
- 	Custom interface, since those changes will get incorporated into
- 	the "user" style.  RMS insists, however, that the default style be
- 	"gnu".
+	(re-reading old) discussions with RMS.  This may confuse users who
+	set variables in the top-level of their .emacs files, or using the
+	Custom interface, since those changes will get incorporated into
+	the "user" style.  RMS insists, however, that the default style be
+	"gnu".
 
 Sun Jan 04 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-electric-colon): Newlines should not be inserted
- 	before or after scope operators, regardless of the value of
- 	c-hanging-colons.
+	before or after scope operators, regardless of the value of
+	c-hanging-colons.
 
 	* cc-engine.el (c-backward-to-start-of-if): Workaround a nasty to
- 	track down bug.  If point is < lim, then this function can
- 	actually land you forward into the buffer.  This can cause an
- 	infloop in c-beginning-of-statement-1. It is probably a bug that
- 	this function gets called with a lim > point, but that's even
- 	harder to figure out, so if that's the case when this function is
- 	called, it's simpler just to ignore lim and use bod.  This breaks
- 	the infloop without causing broken indentation.
+	track down bug.  If point is < lim, then this function can
+	actually land you forward into the buffer.  This can cause an
+	infloop in c-beginning-of-statement-1. It is probably a bug that
+	this function gets called with a lim > point, but that's even
+	harder to figure out, so if that's the case when this function is
+	called, it's simpler just to ignore lim and use bod.  This breaks
+	the infloop without causing broken indentation.
 
 Sat Jan 03 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-align.el (c-lineup-dont-change): New lineup function that
- 	leaves the current line's indentation unchanged.  Used for the new
- 	cpp-macro-cont syntactic symbol.
+	leaves the current line's indentation unchanged.  Used for the new
+	cpp-macro-cont syntactic symbol.
 
 	* cc-cmds.el (c-electric-brace): namespace-open and
- 	namespace-close braces can hang.
+	namespace-close braces can hang.
 
 	* cc-defs.el (c-emacs-features): Added autoload cookie which Steve
- 	Baur claims is necessary for XEmacs.
+	Baur claims is necessary for XEmacs.
 
 	* cc-engine.el (c-search-uplist-for-classkey): When searching up
- 	for a class key, instead of hardcoding the extended search for
- 	"extern", use the new variable c-extra-toplevel-key, which is
- 	language dependent.  For C++, this variable includes the keyword
- 	"namespace" which will match C++ namespace introducing blocks.
-	
-  	(c-guess-basic-syntax): Support for recognizing C++ namespace
- 	blocks, by elaborating on the mechanism used to find external
- 	language blocks.  Searches which hardcoded "extern" now use
- 	c-extra-toplevel-key, a language dependent variable.  Case clauses
- 	that were modified: CASE 5A.1, CASE 5A.4, CASE 5F, CASE 5I, CASE
- 	14A.
+	for a class key, instead of hardcoding the extended search for
+	"extern", use the new variable c-extra-toplevel-key, which is
+	language dependent.  For C++, this variable includes the keyword
+	"namespace" which will match C++ namespace introducing blocks.
 
-  	CASE 3: we can now determine whether we're at the beginning of a
- 	cpp macro definition, or inside the middle of one. Set syntax to
- 	'cpp-macro in the former case, 'cpp-macro-cont in the latter.  In
- 	both cases, the relpos is the beginning of the macro.
+	(c-guess-basic-syntax): Support for recognizing C++ namespace
+	blocks, by elaborating on the mechanism used to find external
+	language blocks.  Searches which hardcoded "extern" now use
+	c-extra-toplevel-key, a language dependent variable.  Case clauses
+	that were modified: CASE 5A.1, CASE 5A.4, CASE 5F, CASE 5I, CASE
+	14A.
+
+	CASE 3: we can now determine whether we're at the beginning of a
+	cpp macro definition, or inside the middle of one. Set syntax to
+	'cpp-macro in the former case, 'cpp-macro-cont in the latter.  In
+	both cases, the relpos is the beginning of the macro.
 
 	(c-forward-syntactic-ws): Added code that skips forward over
- 	multi-line cpp macros.
+	multi-line cpp macros.
 
 	(c-beginning-of-macro): Moved, and made into a defsubst.  This
- 	function can now actually find the beginning of a multi-line C
- 	preprocessor macro.
-	
-  	(c-backward-syntactic-ws): Use c-beginning-of-macro to skip
- 	backwards over multi-line macro definitions.
+	function can now actually find the beginning of a multi-line C
+	preprocessor macro.
+
+	(c-backward-syntactic-ws): Use c-beginning-of-macro to skip
+	backwards over multi-line macro definitions.
 
 	(c-in-literal, c-fast-in-literal): Use c-beginning-of-macro to
- 	find out whether we're in a multi-line macro definition.
-	
-	* cc-langs.el (c-C-extra-toplevel-key, c-C++-extra-toplevel-key,
- 	c-extra-toplevel-key): New variables which parameterize the search
- 	for additional top-level enclosing constructs.  In all languages,
- 	extern lang blocks are supported (but maybe this should just be C
- 	and C++?). In C++, also namespace blocks are supported.
+	find out whether we're in a multi-line macro definition.
 
-	* cc-menus.el Imenu patches by Masatake Yamato and Jan Dubois. 
+	* cc-langs.el (c-C-extra-toplevel-key, c-C++-extra-toplevel-key,
+	c-extra-toplevel-key): New variables which parameterize the search
+	for additional top-level enclosing constructs.  In all languages,
+	extern lang blocks are supported (but maybe this should just be C
+	and C++?). In C++, also namespace blocks are supported.
+
+	* cc-menus.el Imenu patches by Masatake Yamato and Jan Dubois.
 
 	* cc-mode.el (c++-mode): Set c-extra-toplevel-key to
- 	c-C++-extra-toplevel-key.
+	c-C++-extra-toplevel-key.
 
 	(c-initialize-on-load): New variable, *not* customized.  When set
- 	to t -- the default -- c-initialize-cc-mode is called when the
- 	cc-mode.el file is loaded, e.g. via (require 'cc-mode).  This is
- 	backwards compatible with .emacs files that used CC Mode 4.  I'm
- 	still not 100% sure this is the right thing to do.
+	to t -- the default -- c-initialize-cc-mode is called when the
+	cc-mode.el file is loaded, e.g. via (require 'cc-mode).  This is
+	backwards compatible with .emacs files that used CC Mode 4.  I'm
+	still not 100% sure this is the right thing to do.
 
 	* cc-mode.texi: Added descriptions of the new C++ namespace
- 	syntactic symbols: namespace-open, namespace-close, innamespace.
-  	Added an example for this and also multi-line macros.
+	syntactic symbols: namespace-open, namespace-close, innamespace.
+	Added an example for this and also multi-line macros.
 
 	Describe c-lineup-dont-change and the new cpp-macro-cont syntactic
- 	symbol.  Remove the `known limitation' that multi-line macros
- 	aren't supported.
+	symbol.  Remove the `known limitation' that multi-line macros
+	aren't supported.
 
 	* cc-styles.el (c-offsets-alist): Three new syntactic symbols:
- 	innamespace, namespace-open, namespace-close.  These support C++
- 	namespace blocks.
+	innamespace, namespace-open, namespace-close.  These support C++
+	namespace blocks.
 
 	Added new syntactic symbol cpp-macro-cont, by default bound to
- 	c-lineup-dont-change.  This symbol is assigned to subsequent lines
- 	of a multi-line C preprocess macro definition.
+	c-lineup-dont-change.  This symbol is assigned to subsequent lines
+	of a multi-line C preprocess macro definition.
 
 	* cc-vars.el (c-default-style): Variable is user customizable so
- 	it's docstring should start with a `*'.
+	it's docstring should start with a `*'.
 
 Fri Jan 02 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-engine.el (c-fast-in-literal): Function which should be
- 	faster than c-in-literal.  This uses buffer-syntactic-context
- 	which is a speedy built-in that exists only in XEmacs.  Make it's
- 	alias conditional on that built-in's existance.  To be honest, the
- 	performance effects should be tested.  Also c-fast-in-literal
- 	knows about multi-line cpp macros while c-in-literal does not.
-  	The latter should be taught about this, but this change will wait
- 	for a future mega-patch to handle multi-line macros.
+	faster than c-in-literal.  This uses buffer-syntactic-context
+	which is a speedy built-in that exists only in XEmacs.  Make it's
+	alias conditional on that built-in's existance.  To be honest, the
+	performance effects should be tested.  Also c-fast-in-literal
+	knows about multi-line cpp macros while c-in-literal does not.
+	The latter should be taught about this, but this change will wait
+	for a future mega-patch to handle multi-line macros.
 
 Thu Jan 01 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-comment-line-break-function): When breaking a
- 	line-oriented comment, copy the comment leader from the previous
- 	line instead of hardcoding it to "// ".  This ensures that
- 	whitespace between the slashes and the text is preserved.
+	line-oriented comment, copy the comment leader from the previous
+	line instead of hardcoding it to "// ".  This ensures that
+	whitespace between the slashes and the text is preserved.
 
 Tue Nov 18 1997  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-langs.el (c-mode-base-map): Bind c-mark-function using a
- 	portable representation of C-M-h that differentiates this from
- 	M-BS on both XEmacs and Emacs.
+	portable representation of C-M-h that differentiates this from
+	M-BS on both XEmacs and Emacs.
 
 Sat Nov 15 1997  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-electric-pound, c-electric-brace,
- 	c-electric-slash, c-electric-star, c-electric-semi&comma,
- 	c-electric-colon, c-electric-lt-gt, c-scope-operator,
- 	c-indent-command, c-indent-exp, c-indent-defun,
- 	c-backslash-region, c-fill-paragraph): Added "*" to interactive
- 	spec to barf-if-buffer-read-only.
+	c-electric-slash, c-electric-star, c-electric-semi&comma,
+	c-electric-colon, c-electric-lt-gt, c-scope-operator,
+	c-indent-command, c-indent-exp, c-indent-defun,
+	c-backslash-region, c-fill-paragraph): Added "*" to interactive
+	spec to barf-if-buffer-read-only.
 
 Fri Nov 14 1997  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-fill-paragraph): regexp-quote the fill-prefix when
- 	search forward for the end of line oriented comments.  This is in
- 	case the fill-prefix contains regexp special characters
- 	(e.g. fill-prefix == " //* ")
+	search forward for the end of line oriented comments.  This is in
+	case the fill-prefix contains regexp special characters
+	(e.g. fill-prefix == " //* ")
 
-	(c-backslash-region): Do not preserve the zmacs region (XEmacs). 
+	(c-backslash-region): Do not preserve the zmacs region (XEmacs).
 
 Wed Nov 12 1997  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-langs.el (c-mode-base-map): c-mark-function moved back to
- 	M-C-h.  RMS says: "It ought to be on M-C-h, because that is the
- 	key to mark one function definition in whatever language you're
- 	using."  I don't remember why it was moved in the first place.
+	M-C-h.  RMS says: "It ought to be on M-C-h, because that is the
+	key to mark one function definition in whatever language you're
+	using."  I don't remember why it was moved in the first place.
 
 Tue Nov 04 1997  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-electric-backspace, c-electric-delete):
- 	Interactive spec should have a read-only *.
+	Interactive spec should have a read-only *.
 
 Thu Oct 30 1997  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-styles.el (c-styles-alist): Merged "jdk" into "java" style
- 	and removed "jdk" style.  Only differences now are inline-open and
- 	c-basic-offset.
+	and removed "jdk" style.  Only differences now are inline-open and
+	c-basic-offset.
 
 Wed Oct 29 1997  Barry Warsaw  <cc-mode-help@python.org>
 
-	* cc-mode.texi Document "jdk" style. 
+	* cc-mode.texi Document "jdk" style.
 
 	* cc-styles.el (c-style-alist): "jdk" style given by Martin
- 	Buchholz <mrb@Eng.Sun.COM> for conformance with Sun's JDK style.
+	Buchholz <mrb@Eng.Sun.COM> for conformance with Sun's JDK style.
 
 Fri Oct 10 1997  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-styles.el (c-set-style-2, c-initialize-builtin-style): Don't
- 	special case "cc-mode", it's a derived style.
+	special case "cc-mode", it's a derived style.
 
 	Fix setup of derived style "cc-mode".
 
 	Introduce the new default style "user" which contains all user
- 	customizations.  The style "cc-mode" is retained as an alias, but
- 	it's use is deprecated.  The default style variable has been
- 	renamed c-default-style.
+	customizations.  The style "cc-mode" is retained as an alias, but
+	it's use is deprecated.  The default style variable has been
+	renamed c-default-style.
 
 	* cc-vars.el (c-site-default-style): Renamed to c-default-style.
-  	Also, the default value is now "user".
-	
+	Also, the default value is now "user".
+
 Mon Oct  6 19:12:51 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.19
@@ -1796,7 +2686,7 @@ Fri Oct  3 23:10:04 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 Fri Sep 26 23:30:58 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
-	* cc-menus.el: Patches to Imenu support given by 
+	* cc-menus.el: Patches to Imenu support given by
 	"Masatake (jet) YAMATO" <masata-y@is.aist-nara.ac.jp>.
 	(Jan Dubois) jan.dubois@ibm.net
 
@@ -1864,7 +2754,7 @@ Fri Sep  5 04:47:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	I don't know if this breaks something else, because I can't figure out
 	why it was commented out in the first place.
-	
+
 	* cc-langs.el:
 	Define `/' in c-mode-base-map since all modes now support
 	c-electric-slash.
@@ -2139,7 +3029,7 @@ Fri Jul 25 22:17:07 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 	void foo()
 	{
 	    static struct Pattern nums
-	        = {1, 2, 3};
+		= {1, 2, 3};
 
 	    int j = 2;
 	}
@@ -2196,7 +3086,7 @@ Thu Jul 17 03:36:22 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-initialize-cc-mode): New function.
 	(c-mode, c++-mode, objc-mode, java-mode): Call it.
-	
+
 Tue Jul 15 04:18:38 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.texi:
@@ -2652,19 +3542,19 @@ Wed Feb 19 23:29:00 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 Thu Feb 20 04:07:11 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-Java-special-key, c-guess-basic-syntax,
- 	c-lineup-java-inher): Recognize Java "extends", "implements", and
- 	"throws" clauses and map them into 'inher-intro, 'inher-cont, and
- 	'func-decl-cont syntactic symbols.  Do the indentation as
- 	of Java inheritance lines better.
+	c-lineup-java-inher): Recognize Java "extends", "implements", and
+	"throws" clauses and map them into 'inher-intro, 'inher-cont, and
+	'func-decl-cont syntactic symbols.  Do the indentation as
+	of Java inheritance lines better.
 
 Tue Feb 18 03:31:57 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.texi: Change documentation to reflect syntactic symbol
- 	change from 'ansi-funcdecl-cont to 'func-decl-cont.
+	change from 'ansi-funcdecl-cont to 'func-decl-cont.
 
 	* cc-mode.el (c-offsets-alist): Changed the syntactic symbol
- 	'ansi-funcdecl-cont to 'func-decl-cont.  This symbol is useful in
- 	Java throws declarations.
+	'ansi-funcdecl-cont to 'func-decl-cont.  This symbol is useful in
+	Java throws declarations.
 
 	(c-lineup-java-inher): New function for lining up "implements"
 	continuations (i.e. inheritance in Java).
@@ -2678,15 +3568,15 @@ Tue Feb 18 03:31:57 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 Thu Feb 13 21:39:38 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-beginning-of-statement-1): First, check for bare
- 	semi-colon, which is a legal statement but not caught by the more
- 	intense loop later on.
+	semi-colon, which is a legal statement but not caught by the more
+	intense loop later on.
 
 	* cc-mode.el (c-style-alist): Fixes to "ellemtel" style given by
- 	Colin Rafferty <craffert@spspme.ml.com>.
+	Colin Rafferty <craffert@spspme.ml.com>.
 
 	* cc-mode.el (c-beginning-of-statement): Don't use
- 	forward-sentence when looking at a C block comment start.
-  	c-beginning-of-statement-1 will do the right thing.
+	forward-sentence when looking at a C block comment start.
+	c-beginning-of-statement-1 will do the right thing.
 
 Sun Feb  9 07:28:42 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
@@ -2704,13 +3594,13 @@ Thu Feb  6 19:07:09 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 	(c-mode-map): Bind c-set-style on `C-c .'
 
 	* cc-mode.el (c-read-offset, c-read-offset-history): Use
- 	completing-read, with REQUIRE-MATCH nil, so that offsets can be
- 	completed when they are function names.  Also implement read
- 	history.
+	completing-read, with REQUIRE-MATCH nil, so that offsets can be
+	completed when they are function names.  Also implement read
+	history.
 
 	* cc-mode.el (c-guess-basic-syntax): CASE 15D: fix infinite loop
- 	problem in while... clause looking for statement starting at boi,
- 	when using run-in statement styles.
+	problem in while... clause looking for statement starting at boi,
+	when using run-in statement styles.
 
 	* cc-mode.el (cc-imenu-java-generic-expression): New variable for
 	integration of java-mode with imenu.
@@ -2724,19 +3614,19 @@ Thu Feb  6 19:07:09 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 Wed Feb  5 23:50:52 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-hanging-comment-starter-p): New variable,
- 	analogous to c-hanging-comment-ender-p.
+	analogous to c-hanging-comment-ender-p.
 
 	(c-fill-paragraph): Use c-hanging-comment-starter-p.
 
 Mon Feb  3 16:36:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.texi: Added a note about c-Java-defun-prompt-regexp in
- 	the section on performance.
+	the section on performance.
 
 	* cc-mode.el (java-mode): Do not set defun-prompt-regexp to
- 	c-Java-defun-prompt-regexp.  In the following example, putting
- 	point on he brace that opens main() and hitting M-C-a will send
- 	both Emacs 19.34 and XEmacs 19.15 into tight CPU loops.
+	c-Java-defun-prompt-regexp.  In the following example, putting
+	point on he brace that opens main() and hitting M-C-a will send
+	both Emacs 19.34 and XEmacs 19.15 into tight CPU loops.
 
 	-------------------- snip snip --------------------
 	import java.io.*;
@@ -2746,8 +3636,8 @@ Mon Feb  3 16:36:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 	{
 	public static void main(String[] args) throws java.io.IOException, java.io.FileNotFoundException
 	    {
-	        FileInputStream bs = new FileInputStream("j.dat");
-	        System.out.println(bs.readLine());
+		FileInputStream bs = new FileInputStream("j.dat");
+		System.out.println(bs.readLine());
 	    }
 	}
 
@@ -2956,10 +3846,10 @@ Fri May 31 14:42:07 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	(c-guess-basic-syntax): CASE 5A.4 => 5A.5; New CASE 5A.4 added to
 	recognize extern-lang-open; CASE 14C => 14D; New CASE 14C added to
-	recognize extern-lang-close 
-	
+	recognize extern-lang-close
+
 	(c-recognize-knr-p): defconst it.
-	
+
 	(c-search-uplist-for-classkey): When searching for c-class-key,
 	concat "\\|extern[^_]".  The logic for determining whether we are
 	inclass-p and inextern-p is essentially the same so this seems to
@@ -2968,14 +3858,14 @@ Fri May 31 14:42:07 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 	(c-guess-basic-syntax): If inclass-p, do an additional check to
 	see whether this is really inside an external language definition
 	block or a class definition and set inextern-p accordingly (a
-	boolean only). 
+	boolean only).
 
 	(c-guess-basic-syntax): CASE 5A.4 => 5A.1; 5A.1-5A.3 => 5A.2-5A.4;
 	New CASE 5F to check for extern-lang-close; CASE 5F-5J => 5G-5K;
 	CASE 5I: modifier could either be 'inclass or inextern-lang; CASE
 	14A: closing brace isn't an inline-close if we're inside an extern
 	language block; CASE 14B: watch out for same.
-	
+
 Thu May 30 14:42:07 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-guess-basic-syntax): CASE 5A.3: an inline-open
@@ -2985,11 +3875,11 @@ Thu May 30 14:42:07 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 	indentation of the inner class to the running total.
 
 	The solution is to not give one of the two symbols a relpos.  The
-	decision was made to omit the relpos of the 'inline-open symbol. 
-	
+	decision was made to omit the relpos of the 'inline-open symbol.
+
 	(c-mode-help-address): Added cc-mode-help@python.org as the new
 	address.
-	
+
 	(c-recognize-knr-p, c++-mode, java-mode): Made into a non-user
 	configurable variable.  This variable is always t for C and
 	Objective-C modes and nil for C++ and Java modes.
@@ -3001,7 +3891,7 @@ Thu May 30 14:42:07 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 	space and that function headers are not indented.  This prevents
 	us from potentially searching back to the top of the file when
 	looking at a large number of top-level delarations.
-	
+
 	(c-gnu-impose-minimum): New function
 
 	(c-label-minimum-indentation): New buffer-local variable
@@ -3015,46 +3905,46 @@ Thu May 30 14:42:07 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 	(c-set-style-1): special case c-special-indent-hook
 
 	make c-special-indent-hook buffer local
-	
+
 Wed May 29 20:13:34 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-skip-conditional): `try' clauses in C++ skip only
 	1 sexp.  Also take care of finally and synchronized statements.
-	
+
 Fri May 24 15:30:27 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-lineup-arglist-close-under-parent): New function.
-	
+
 	(c-C-conditionals): New constant.
 
 	(c-C-conditional-key, c-C++-conditional-key, c-Java-conditional-key):
 	Use c-C-conditionals.
 
 	(c-Java-conditional-key): Added support for "synchronized" keyword.
-	
+
 Fri May  3 22:03:13 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-Java-conditional-key): New variable.
 
 	(java-mode): Set buffer-local variable c-conditional-key to
 	c-Java-conditional-key.
-	
+
 Thu May  2 21:18:56 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-C++-access-key): Allow for whitespace between the
 		  protection key and the colon.
-	
+
 Wed Apr 10 04:50:50 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-set-style): as a last resort, match exact case for
 		  stylename.
-	
+
 Wed Apr  3 16:19:08 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-get-offset, c-read-offset, c-set-offset): Use
 	 functionp instead of fboundp to test for OFFSET being a function.
-  	 This makes the documentation more accurate and allows for
- 	 lambda expressions to be used as offsets, instead of allowing
+	 This makes the documentation more accurate and allows for
+	 lambda expressions to be used as offsets, instead of allowing
 	 only symbols with function bindings.
 
 Mon Apr  1 16:12:27 1996  Barry A. Warsaw  <cc-mode-help@python.org>
@@ -3166,9 +4056,9 @@ Fri Jan  5 23:14:12 1996  Barry Warsaw  <cc-mode-help@python.org>
 Wed Nov 22 14:55:12 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	*  (c-beginning-of-statement-1): CASE 3, can't just return t at
-           end of let clause since this will break arglist-cont-nonempty
-           lines (see buggy line below).  Doing a backward-up-list could
-           be slow, but I don't see any other way of doing this.
+	   end of let clause since this will break arglist-cont-nonempty
+	   lines (see buggy line below).  Doing a backward-up-list could
+	   be slow, but I don't see any other way of doing this.
 
 	   void
 	   C_entries (c_ext, inf)
@@ -3211,10 +4101,10 @@ Thu Nov 16 00:20:59 1995  Barry Warsaw  <cc-mode-help@python.org>
 
 	typedef struct {
 	    unsigned count:24,
-	        age:6,
-	        dirty:1,
-	        reserved:1,
-	        };
+		age:6,
+		dirty:1,
+		reserved:1,
+		};
 
 Wed Nov 15 23:38:05 1995  Barry Warsaw  <cc-mode-help@python.org>
 
@@ -4023,7 +4913,7 @@ Sun Jul 17 18:29:51 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-guess-basic-syntax):
 	Lele Gaifax's patch to fix an Objc problem...
-	
+
 	"this patch, applied to 4.32, will correct a little bug in ObjC
 	mode.  Currently objc-mode fails to recognize a continued arglist,
 	as it guesses every such construct is a continued method call."
@@ -4032,7 +4922,7 @@ Fri Jul 15 13:48:39 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-search-uplist-for-classkey): don't get fooled by
 	the following C construct:
-	
+
 	struct shmid_internal
 	shmconv(
 	    register int	s)
@@ -4046,20 +4936,20 @@ Tue Jul 12 14:36:10 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	part, don't use beginning-of-defun to find "real" bod since based
 	on some coding styles, this could loop us all the way back to
 	bob. E.g.:
-	
+
 	int foo() {
 	int a = 7;
 	{
 	    foobar();
 	}}
-	
+
 	int foo() {
 	int a = 7;
 	{
 	    foobar();
 	}}
-	
-	
+
+
 	Instead use scan-lists and be more robust about crossing
 	unbalanced close braces.  Now even antisocial coding styles like
 	the above can be quickly parsed correctly.
@@ -4086,7 +4976,7 @@ Thu Jun 30 21:03:55 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-electric-brace): added brace-list-intro and
 	brace-list-entry to list of hangables
-	
+
 	(c-hanging-braces-alist): added docstring for b-l-i and b-l-e
 	hangability
 
@@ -4095,7 +4985,7 @@ Thu Jun 30 21:03:55 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-lineup-arglist-intro-after-paren): new lineup
 	function to conform to GNU style.
-	
+
 	(c-style-alist): for style GNU, arglist-intro set to
 	c-lineup-arglist-intro-after-paren and arglist-close set to
 	c-lineup-arglist to conform to BOCM GNU style.
@@ -4103,14 +4993,14 @@ Thu Jun 30 21:03:55 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 Wed Jun 29 00:48:56 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-guess-basic-syntax): installed this patch:
-	
+
 	In ObjC mode 4.6 the tests 6D and 6E in c-guess-basic-syntax need
 	to be swapped. Otherwise what is a continued method call line will
 	be recognized as a 'arglist-cont-nonempty. Swapping these test
 	will not interfere with the normal behaviour of cc-mode, since the
 	test for the method call is surrounded with a test on (eq
 	major-mode 'objc-mode).
-	
+
 	Emanuele (lele) Gaifax     | ...calling Emacs convenient, of course, is
 	lele@nautilus.sublink.org  | like calling oxygen useful  -- Rens Troost
 
@@ -4120,7 +5010,7 @@ Wed Jun 29 00:48:56 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 Tue Jun 28 23:57:42 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-just-after-func-arglist-p): partial fix for this bug:
-	
+
 	class foo
 	{
 	   foo()
@@ -4129,8 +5019,8 @@ Tue Jun 28 23:57:42 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	   b (0)				// member-init-cont
 	   {}
 	};
-	
-	
+
+
 	note that if there is a comment after foo(), its still broken.
 	But that probably won't happen too often...
 
@@ -4178,7 +5068,7 @@ Fri Jun 17 22:25:41 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	otherwise brace-list-entry or brace-list-intro is found to start
 	with an open brace, the line is given brace-list-open syntax
 	instead
-	
+
 	(c-inside-bracelist-p): fix small bug in recognizing open brace at
 	brace-list-intro line, and infinite loop problem.
 
@@ -4207,31 +5097,31 @@ Thu Jun  9 14:15:00 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-offsets-alist-default): added syntactic symbols
 	objc-method-intro objc-method-args-cont objc-method-call-cont.
-	
+
 	(c-offsets-alist): added descriptions for above new syntactic symbols
-	
+
 	(objc-mode-hook) (objc-mode-abbrev-table) (objc-mode-map)
 	(objc-mode-syntax-table) (objc-mode): added for Objective-C support
-	
+
 	(c-objc-method-key): new regexp desribing an ObjC method intro.
-	
+
 	(c-electric-slash): objc-mode understands // comments
-	
+
 	(c-fill-paragraph): objc-mode understands // comments
-	
+
 	(c-beginning-of-statement-1): added CASE 7 for objc-mode
-	
+
 	(c-in-objc-method-def-p): checks to see if inside an Objective-C
 	method definition.
-	
+
 	(c-just-after-func-arglist-p): check for Objective-C method def
-	
+
 	(c-guess-basic-syntax): many modifications to look for Objective-C
 	syntactic symbols: CASE 3.5, CASE 4G, CASE 4I, CASE 5E.
-	
+
 	(c-lineup-objc-method-call) (c-lineup-objc-method-args): new custom
 	lineup functions for Objective-C methods.
-	
+
 	(c-submit-bug-report): look for ObjC mode
 
 Mon Jun  6 19:47:19 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -4248,11 +5138,11 @@ Mon Jun  6 19:47:19 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 Thu Jun  2 23:09:16 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-strict-syntactics-p): changed to c-strict-syntax-p
-	
+
 	(c-guess-basic-syntactics): changed to c-guess-basic-syntax
-	
+
 	(c-add-syntactics): changed to c-add-syntax
-	
+
 	(various): use new function and variable names
 
 Wed Jun  1 15:46:19 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -4263,16 +5153,16 @@ Wed Jun  1 15:46:19 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 Tue May 31 23:51:08 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-strict-semantics-p): changed to c-strict-syntactics-p
-	
+
 	(c-echo-semantic-information-p): changed to
 	c-echo-syntactic-information-p
-	
+
 	(c-semantics): changed to c-syntactic-context
-	
+
 	(c-guess-basic-semantics): changed to c-guess-basic-syntactics
-	
+
 	(c-show-semantic-information): changed to c-show-syntactic-information
-	
+
 	(cc-mode.el): other internal changes to make terminology consistent
 
 	* cc-mode.el (c-guess-basic-semantics):
@@ -4310,7 +5200,7 @@ Thu May 19 22:27:55 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-style-alist):
 	updated the various styles to set the correct values
 	for substatement-open
-	
+
 	(c-style-alist): added dynamic setting of default style.  The way this
 	works may or may not be a feature?
 
@@ -4327,7 +5217,7 @@ Wed May 18 22:07:15 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-beginning-of-statement-1):
 	on backward-sexp failure, skip over
 	funny chars and whitespace only when just before a paren
-	
+
 	(c-search-uplist-for-classkey): watch out for comma ending struct arg
 	declarations which doesn't leave us in a class definition.
 
@@ -4346,10 +5236,10 @@ Tue May 17 22:46:22 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	when backward-sexp fails and doing
 	backward-up-list, and before skipping over noise characters, skip over
 	any preceding syntactic whitespace:
-	
+
 	--------------V
 		if ( ! backup_dev ||
-	             sep1 != ':' || )
+		     sep1 != ':' || )
 
 	* cc-mode.el (c-beginning-of-statement-1):
 	fixed small infinite loop in CASE5 test
@@ -4369,13 +5259,13 @@ Mon May 16 20:21:12 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-inside-bracelist-p):
 	must check that enum keyword truly introduces
 	a bracelist and not that it is a type identifier for a declaration.
-	
+
 	I.e. match:
-	
+
 	enum foo { /* ... */ }
-	
+
 	but not:
-	
+
 	enum foo bar;
 
 Thu May 12 22:52:12 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -4384,7 +5274,7 @@ Thu May 12 22:52:12 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	CASE 4A.2 watch out for enum keywords in
 	K&R argdecl lists.  These don't open enum definitions, but they are
 	declarations instead.  E.g.:
-	
+
 	ret_stat (rpt_stat, filename, pcode)
 	    enum xrpt_status_codes rpt_stat;
 	    char filename[];
@@ -4396,7 +5286,7 @@ Thu May 12 22:52:12 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	describe conditionals in the two supported languages.  This is
 	necessary because `try' and `catch' blocks are defined as
 	substatements equivalent to `while', `for', etc., in C++ only
-	
+
 	(c-mode) (c++-mode): set c-conditional-key, which is now buffer-local,
 	to either c-C-conditional-key or c-C++-conditional-key.
 
@@ -4411,7 +5301,7 @@ Thu May 12 22:52:12 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-guess-basic-semantics):
 	CASE 4G, in c-mode, fix recognition of the
 	last line in the following construct:
-	
+
 	typedef int (*foobar)           /* if I break this into 2 lines ...*/
 	    (int foo, char *bar);
 	extern foobar really;       /* this is incorrectly indented */
@@ -4441,7 +5331,7 @@ Thu May  5 22:48:23 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-lineup-math):
 	can now line up equals signs even if the equals isn't
 	at boi.  E.g., it can now handle:
-	
+
 	float a = 1.0,
 	      b = 7,
 	      c = 9;
@@ -4475,13 +5365,13 @@ Thu Apr 21 21:12:26 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	arguments, i.e. lim and bod
 
 	* cc-mode.el (c-adaptive-block-open): obsolete
-	
+
 	(c-offsets-alist-default) (c-electric-brace): added substatement-open
 	syntactic symbol
-	
+
 	(c-hanging-braces-alist): added ability to hang substatement-open
 	braces.
-	
+
 	(c-style-alist): changed defaults of block-open to substatement-open
 
 	* cc-mode.el (c-safe):
@@ -4513,10 +5403,10 @@ Fri Apr 15 23:09:59 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-search-uplist-for-classkey):
 	programmatically ignore the `class'
 	keyword inside template arg lists
-	
+
 	(c-enclosing-brace) (c-narrow-out-enclosing-class): new helper
 	functions
-	
+
 	(c-guess-basic-semantics): fixed recognition of 'defun-open CASE 4A.4,
 	CASE 13.A, 'block-close CASE 13.B, 'defun-block-intro CASE 14.E
 
@@ -4549,10 +5439,10 @@ Thu Mar 31 15:10:09 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	class relpos should be at the 'boi of
 	where c-class-key gives us a match.  This is because its too hard to
 	make c-class-key match the typedef keyword on:
-	
+
 	typedef struct Foo
 	{
-	
+
 	so its easier to make this fix instead.
 
 Fri Mar 25 20:34:18 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -4570,7 +5460,7 @@ Fri Mar 25 20:34:18 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	It would be better to use \\`\\|\\= to match empty-string-at-point,
 	but that's not defined for v18, and doesn't seem to work anyway, at
 	least in Lemacs.
-	
+
 	(c-search-uplist-for-classkey): after finding a match for c-class-key,
 	skip non-semicolons up to brace point.  If a semi is found, we're
 	looking at a forward declaration, not a class definition.
@@ -4580,10 +5470,10 @@ Thu Mar 24 18:43:38 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-guess-basic-semantics): do not limit calls to
 	c-search-uplist-for-classkey to just c++-mode since even in C we can
 	have nested structs and unions.
-	
+
 	(c-search-uplist-for-classkey): now returns a vector instead of a
 	cons cell
-	
+
 	(c-guess-basic-semantics): modifications for new c-s-u-f-c return
 	value
 
@@ -4611,7 +5501,7 @@ Tue Mar 22 23:12:58 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-indent-exp):
 	restructure the unwind-protect call to ensure that the
 	`end' marker is always removed on any error condition.
-	
+
 	(c-indent-exp): find any open brace that occurs after point, ignoring
 	lexical whitespace, including newlines.
 
@@ -4670,7 +5560,7 @@ Tue Mar 15 23:29:16 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	to get to the proper character starting the class definition.
 
 	* cc-mode.el (c-read-offset): new helper function for c-set-offset
-	
+
 	(c-set-offset): sanity check OFFSET argument both interactively and
 	non-interactively.  This seems to trip up many novices.
 
@@ -4688,12 +5578,12 @@ Fri Mar 11 23:45:51 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	CASE 8C: after moving to placeholder, which
 	is bos, move over any conditional statments if looking at
 	c-conditional-key.  Otherwise the following code indents incorrectly:
-	
+
 	main()
 	{
 	    while (cin >> float)
-	        cout << float
-	             << float;   //  This should not be this far over but beneath <<
+		cout << float
+		     << float;   //  This should not be this far over but beneath <<
 	}
 
 	* cc-mode.el (c-indent-exp):
@@ -4702,7 +5592,7 @@ Fri Mar 11 23:45:51 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-class-key): another fix to recognize keyword
 	  `class' at beginning-of-buffer.
-	
+
 	(c-guess-basic-semantics): if class opening brace is not the last
 	non-whitespace on a line, the narrow-to-region narrowing out of
 	enclosing class will not have the proper begin point.  Make sure the
@@ -4711,7 +5601,7 @@ Fri Mar 11 23:45:51 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-indent-region):
 	fixed error signal when indenting region not
 	containing balanced sexp. e.g. at the top level:
-	
+
 	int i,
 	    j,
 	    k;
@@ -4736,16 +5626,16 @@ Wed Mar  9 22:15:26 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	(backward-up-list 1) call in the special case for arglist-intro and
 	arglist-cont-nonempty.  Without this, indentation would be different
 	when point was at the beginning and end of line.  E.g.:
-	
+
 	main()
 	{
 	    if ((BuddyRec* buf = (BuddyRec*)(bufs[message_bufs++]
 					     = ::new unsigned char[MessageBufSize]))
-	        == 0) {
+		== 0) {
 	    }
 	}
-	
-	
+
+
 	On the "== 0) {" line.
 
 	* cc-mode.el (c-indent-exp):
@@ -4762,7 +5652,7 @@ Mon Mar  7 17:39:45 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-skip-conditional):
 	new function. factorized duplicate code
-	
+
 	(c-guess-basic-semantics): fixed statement-cont relpos calculation in
 	a continued statement following an else clause. CASE 8A and 8D changed
 	to use c-skip-conditional.
@@ -4807,13 +5697,13 @@ Thu Feb 24 23:34:08 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	preceding point even after doing a forward-char -1.  Need to skip over
 	constructor parameter list that span multiple lines, with the member
 	init colon hanging on the last of those line.
-	
+
 	CASE 4D.1. added a backward-sexp call to handle member-init-cont's
 	which are paren-lists broken across multiple lines.
 
 	* cc-mode.el (c-inhibit-startup-warnings-p):
 	new variable, used in c-emacs-features
-	
+
 	(c-emacs-features): rewrote feature extraction logic to be based on
 	version numbers. This more closely reflects the current state of
 	affairs of the main Emacs flavors.  There is sanity checking and
@@ -4842,7 +5732,7 @@ Fri Feb 18 16:13:27 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	must handle arglist-intro lines just like
 	arglist-cont-nonempty lines in the calculation of containing-sexp in
 	the let* statement.
-	
+
 	(c-lineup-arglist): do not hard-code offset to 2 if at the end, we are
 	still looking at the eol.  I don't know why that was there...
 
@@ -4862,28 +5752,28 @@ Thu Feb 17 23:53:16 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-lineup-arglist):
 	fixed calculation of containing-sexp for the
 	following code:
-	
+
 	main()
 	{
 	    if( someFunction(someArg,
-	                     anotherArg) &&
-	        someOtherFunction(someArg,
-	                          anotherArg))
-	        doThis();
+			     anotherArg) &&
+		someOtherFunction(someArg,
+				  anotherArg))
+		doThis();
 	}
 
 	* cc-mode.el (c-class-key):
 	fixed class recognizing regexp so that it doesn't
 	falsely match the word `class' in a template function declaration,
 	e.g.:
-	
+
 	template<class T>
 	int A<T>::foo(
 
 	* cc-mode.el (c-mode-map):
 	moved c-indent-defun to C-c C-q.  This should be its
 	final resting place
-	
+
 	(c-lineup-math): new optional custom indent function, not used by
 	default.
 
@@ -4900,7 +5790,7 @@ Wed Feb 16 23:06:15 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-lineup-runin-statements):
 	new lineup function for people who hang
 	the first statement after the open brace.
-	
+
 	(c-offsets-alist-default): added comment about alternative indentation
 	style for `statement'
 
@@ -4942,7 +5832,7 @@ Thu Feb 10 23:30:11 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-populate-syntax-table):
 	only put c-mode/c++-mode common syntax
 	entries into syntax table.
-	
+
 	(c++-mode-syntax-table): colon (:) gets symbol class
 
 	* cc-mode.el:
@@ -4974,7 +5864,7 @@ Tue Feb  8 22:05:48 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	(c-offsets-alist) (c-offsets-alist-default): added `friend' syntactic
 	symbol for recognition of C++ friend declarations.  Default offset is
 	0.
-	
+
 	(c-guess-basic-semantics): recognize C++ friend declarations, and add
 	`friend' syntactic symbols as a modifier.
 
@@ -4999,28 +5889,28 @@ Tue Feb  8 22:05:48 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el: (c-untame-characters) (c-backscan-limit) (c-tame-insert)
 	(c-tame-comments) (c-emacs18-fsws) (c-emacs18-bsws) (c-emacs18-il):
 	moved these defuns and vars to cc-mode-18.el file.
-	
+
 	(c-mode-map): do not install Emacs 18-only bindings
-	
+
 	(c-populate-syntax-table): do not install Emacs 18-only syntax table
 	entries
-	
+
 	(c-insert-and-tame): renamed to c-insert-special-chars and make this
 	call only self-insert-command.  Don't worry about Emacs 18
 	compatibility.
-	
+
 	(c-mark-function) (c-common-init): Don't worry about Emacs 18
 	compatibility.
-	
+
 	(c-emacs19-accurate-fsws): renamed to c-forward-syntactic-ws. Don't
 	worry about Emacs 18 compatibility.
-	
+
 	(c-emacs19-accurate-bsws): renamed to c-backward-syntactic-ws. Don't
 	worry about Emacs 18 compatibility.
-	
+
 	(c-8bit-il): renamed to c-in-literal. Don't worry about Emacs 18
 	compatibility.
-	
+
 	(c-submit-bug-report): remove reporting of c-backscan-limit and
 	c-untame-characters since these are for Emacs 18 only.
 
@@ -5029,7 +5919,7 @@ Wed Feb  2 00:00:40 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-lineup-arglist):
 	add kludge for arglist-cont-nonempty to get
 	correct indentation.
-	
+
 	(c-guess-basic-semantics): CASE 5D: arglist-cont-nonempty's relpos
 	needs to be boi of containing-sexp paren.  this is good for + offset,
 	but bad for c-lineup-arglist, so add the kludge described above.
@@ -5047,7 +5937,7 @@ Tue Feb  1 22:14:35 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-default-macroize-column):
 	changed to c-backslash-column. Default
 	value changed to 48 from 78.  This is merged from c-mode.el
-	
+
 	(c-macroize-region): changed to c-backslash-region for c-mode.el merge.
 
 Mon Jan 31 22:57:05 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -5066,20 +5956,20 @@ Mon Jan 31 22:57:05 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-common-init):
 	better setting up of Lucid menubar (use mode-name as
 	menu bar title)
-	
+
 	(c-popup-menu): use mode-name in menu title
 
 	* cc-mode.el (c-keep-region-active):
 	shouldn't check for interactive-p in tests
-	
+
 	(c-submit-bug-report): don't keep region active.
 
 	* cc-mode.el (c-keep-region-active): no-op for FSF 19
-	
+
 	(c-set-style) (c-beginning-of-statement) (c-end-of-statement)
 	(c-up-conditional) (c-backward-conditional) (c-forward-conditional)
 	(c-popup-menu): added a call to c-keep-region-active
-	
+
 	(c-tame-comments) (c-indent-command) (c-indent-exp) (c-indent-defun)
 	(c-indent-region) (c-macroize-region) (c-comment-region): removed call
 	to c-keep-region-active
@@ -5116,7 +6006,7 @@ Thu Jan 27 21:15:57 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	that can occur before the comment. This fixes comment indentation for
 	the second and following paragraphs in a multi-paragraph C block
 	comment region with no leading stars.
-	
+
 	(c-lineup-C-comment): don't assume relpos is at the beginning of the
 	line (even though it usually is).
 
@@ -5135,10 +6025,10 @@ Thu Jan 27 21:15:57 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 Wed Jan 26 22:38:20 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-lineup-comment): renamed from c-indent-for-comment
-	
+
 	(c-lineup-comment): call c-comment-indent when a comment-only line's
 	indentation is at or to the right of comment-column.
-	
+
 	(c-guess-basic-semantics): when a comment-only line's indentation is
 	at or to the right of comment-column, only 'comment-intro is on the
 	semantics list since the comment does not indent relative to a
@@ -5151,10 +6041,10 @@ Wed Jan 26 22:38:20 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-offsets-alist-default):
 	new constant containing unchanging default
 	settings for langelems
-	
+
 	(c-offsets-alist): value is set as a distinct copy of
 	c-offsets-alist-default.
-	
+
 	(c-set-style): if 'c-offsets-alist is found in style, first reset the
 	value of this variable to c-offses-alist-default, then change only
 	those langelems that differ.
@@ -5180,7 +6070,7 @@ Tue Jan 25 18:01:01 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	fixed (hopefully) obvious parenthesis level typo
 
 	* cc-mode.el (c-fill-paragraph): added RMS's new C++ aware version
-	
+
 	(c-mode-map): put back the binding of M-q to c-fill-paragraph
 
 Mon Jan 24 22:52:53 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -5188,10 +6078,10 @@ Mon Jan 24 22:52:53 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-update-modeline): typo: use c-hungry-delete-key
 
 	* cc-mode.el (c-auto-hungry-string): minor-mode-alist variable
-	
+
 	(c-common-init): auto-hungry designation string happens on
 	minor-mode-alist now
-	
+
 	(c-update-modeline): sets the c-auto-hungry-string
 
 	* cc-mode.el (c-electric-semi&comma):
@@ -5199,12 +6089,12 @@ Mon Jan 24 22:52:53 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-mode-menu):
 	new Lucid menu variable for popup and menubar
-	
+
 	(c-popup-menu): command for popping up a menu in Lemacs
-	
+
 	(c-mode-map): FSF 19's menu initialization stuff is moved to here. Add
 	binding for Lemacs to put c-popup-menu on button 3.
-	
+
 	(c-common-init): put c-mode-menu on buffer-local menubar for Lucid
 
 Fri Jan 21 22:36:03 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -5214,12 +6104,12 @@ Fri Jan 21 22:36:03 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	do the job already
 
 	* cc-mode.el: (cc-mode.el) comment improvements
-	
+
 	(c-mode-map): a few merges from lemacs, but commented out for now.
-	
+
 	(c-insert-brackets) (c-insert-braces): taken from lemacs, but
 	commented out for now
-	
+
 	(cc-mode.el): menus added from FSF emacs.  Still need menus for
 	lemacs.
 
@@ -5265,7 +6155,7 @@ Wed Jan 12 14:24:11 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 Tue Jan 11 23:50:45 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-offsets-alist): vastly verbosified docstring.
-	
+
 	(cc-mode.el): LANGELEM in docstrings are changed to "syntactic element
 	symbols" for clarity (?!)
 
@@ -5275,7 +6165,7 @@ Tue Jan 11 23:50:45 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	minor docstring mods
 
 	* cc-mode.el (c-electric-colon): minor docstring mod
-	
+
 	(c-submit-bug-report): removed c-auto-hungry-initial-state from
 	reported var list
 
@@ -5285,15 +6175,15 @@ Tue Jan 11 23:50:45 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-auto-hungry-initial-state):
 	obsolete variable, use c-auto-newline
 	and c-hungry-delete-key variables instead
-	
+
 	(c-mode) (c++-mode): run-hooks is now the last thing
-	
+
 	(c-set-auto-hungry-state) (c-make-region-active): removed
-	
+
 	(c-keep-region-active): is now a defun
-	
+
 	(c-update-modeline) (c-calculate-state): added
-	
+
 	(c-toggle-auto-state) (c-toggle-hungry-state)
 	(c-toggle-auto-hungry-state): simplified vastly. also, docstrings now
 	explain what the features do.
@@ -5358,7 +6248,7 @@ Fri Jan  7 23:27:20 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 Thu Jan  6 18:52:51 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-beginning-of-statement-1): recognize "else if" clauses
-	
+
 	(c-guess-basic-semantics): CASE 8A recognizes "else if" clauses
 
 Mon Jan  3 23:01:58 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -5368,7 +6258,7 @@ Mon Jan  3 23:01:58 1994  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-beginning-of-statement-1):
 	before calculating last-begin, skip over
 	any bogus characters like *&:. for the following situations:
-	
+
 	    if(::foo(),
 	    if(.0123,
 	    if(&blatz,
@@ -5434,7 +6324,7 @@ Mon Dec 27 23:25:17 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	(c-beginning-of-statement) (c-end-of-statement): add another optional
 	argument, lim
-	
+
 	(c-guess-basic-semantics): corrected to use new arg list for the above
 
 	* cc-mode.el:
@@ -5449,22 +6339,22 @@ Mon Dec 27 23:25:17 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	it works any better
 
 	* cc-mode.el (c-set-style): put a space in front of c-style name
-	
+
 	(c-common-init): only hack on c-style-name once!
 
 	* cc-mode.el: provide cc-mode, not c-mode
 
 	* cc-mode.el (c-style-name): new variable, buffer local
-	
+
 	(c-common-init): hack on c-style-name to the minor-mode alist
-	
+
 	(c-set-style): set c-style-name variable for minor-mode
 
 	* cc-mode.el (c-conditional-key): added "switch"
-	
+
 	(c-guess-basic-semantics): renumbered CASE 8 subcases, no substantive
 	changes.
-	
+
 	(c-guess-basic-semantics): added dummy CASE 8B.3 to generate an error.
 	I don't know what constructs fall through this case.
 
@@ -5502,7 +6392,7 @@ Tue Dec 21 22:55:21 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-inside-bracelist-p):
 	new function to calculate whether we're inside
 	a brace list or not
-	
+
 	(c-guess-basic-semantics): use c-inside-bracelist-p where appropriate
 
 	* cc-mode.el (c-guess-basic-semantics):
@@ -5512,32 +6402,32 @@ Tue Dec 21 22:55:21 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-offsets-alist):
 	added brace-list-close, brace-list-intro,
 	brace-list-entry
-	
+
 	(c-guess-basic-semantics): added logic to recognize brace-list-open
 	new langelems
 
 	* cc-mode.el (c-hanging-braces-alist):
 	docstring addition: brace-list-open
-	
+
 	(c-offsets-alist): added brace-list-open
-	
+
 	(c-electric-brace): added logic to hang brace-list-open's
-	
+
 	(c-guess-basic-semantics): added logic to recognize brace-list-open's
 
 	* cc-mode.el (c-mode-map): removed binding to undefined c-match-paren
 
 	* cc-mode.el (c-semantics): new variable
-	
+
 	(c-indent-via-language-element): use globally advertised c-semantics
 	variable now.
-	
+
 	(c-offsets-alist): better docstring, describes c-semantics
 
 	* cc-mode.el (c-adaptive-block-open):
 	new function, but block-open doesn't use it
 	by default yet
-	
+
 	(c-guess-basic-semantics): moved M2 (block-open) test into body of
 	defun instead of at the end -- to many special case tests
 
@@ -5550,16 +6440,16 @@ Mon Dec 20 17:55:38 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (cc-mode.el): pulled in bocm's beginning-of-statement,
 	end-of-statement and related defuns, but I still need to make a pass
 	through them.
-	
+
 	(c-up-conditional) (c-backward-conditional) (c-forward-conditional):
 	yanked in verbatim from c-mode.el
-	
+
 	(c-backslash-region): fset from c-macroize-region.  also, we're
 	leaving c-backslash-column commented out. use
 	c-default-macroize-column instead.
 
 	* cc-mode.el (c-fill-paragraph): removed, use filladapt instead
-	
+
 	(c-comment-indent): adopted from c-mode.el, but fixed to handle C++
 	comments
 
@@ -5567,9 +6457,9 @@ Mon Dec 20 17:55:38 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	moved some defuns and defmacros around. no substantive changes
 
 	* cc-mode.el (c-symbol-key): obsolete, use \\s_ syntax class instead
-	
+
 	(c-protection-key): new defconst
-	
+
 	(c-case-statement-key): renamed to c-switch-label-key
 
 	* cc-mode.el (c-lineup-streamop):
@@ -5593,22 +6483,22 @@ Thu Dec 16 20:49:34 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	new optional add-p arg. when non-nil, require-match on
 	completion is inhibited and new langelem symbols can be added to the
 	c-offsets-alist.
-	
+
 	(c-guess-basic-semantics): CASE 7C has been extended to properly
 	recognize conditional's substatements.  CASE 7D now handles continued
 	statements.  CASE 7A now recognizes only func local class opening
 	braces, which means 7C + M2 will catch substatement block-opens.
-	
+
 	(c-offsets-alist): added substatement langelem
 
 	* cc-mode.el (c-strict-semantics-p):
 	default value to nil for debugging purposes
-	
+
 	(c-guess-basic-semantics): block-open langelem is now a relpos-less
 	langelem because it is really a modifier on the basic langelem of the
 	line.  Specifically: Case M2 added; CASE 7A.2 now places just a
 	statement-cont langelem on semantics; CASE 13.B is completely removed.
-	
+
 	(c-offsets-alist): block-open default offset is now 0.
 
 Mon Dec 13 15:29:26 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -5616,7 +6506,7 @@ Mon Dec 13 15:29:26 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c-guess-basic-semantics):
 	now it does the the test for c++-mode to
 	save a potential funcall in c-mode.
-	
+
 	(c-search-uplist-for-class): fixed bug where c-in-literal test was
 	testing end-point of parse-partial-sexp, not the classkey search begin
 	point.
@@ -5628,14 +6518,14 @@ Thu Dec  9 19:02:25 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c++-mode-map):
 	JWZ contributed a better way to share keymaps for v18
 	using nconc
-	
+
 	(c-populate-map): obsolete, move all define-keys into c-mode-map if
 	statement
 
 	* cc-mode.el (c-emacs-features):
 	for Emacs 19's, add a flavor member to distinguish
 	between FSF19 and Lucid19.
-	
+
 	(c++-mode-map): for Emacs 19's, inherit c++-mode-map from c-mode-map.
 	Handle FSF/Lucid properly and handle GNU18 the hard way.
 
@@ -5647,24 +6537,24 @@ Wed Dec  8 22:43:02 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	(c-populate-map) (c-populate-syntax-table): new funcs to consolatate
 	setting these structures
-	
+
 	(c-mode-map) (c++-mode-map): get as close as we can with BOCM's
 	mappings, but there are still some inconsistencies I need to clean up
 
 Tue Dec  7 23:52:29 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c-set-style): added functionality
-	
+
 	(c-macro-expand): added autoload
-	
+
 	(documentation and docstrings): updated many places
-	
+
 	(c-set-offset): better interactive spec
-	
+
 	(c-fill-paragraph): stolen from c-mode, but not looked at yet
-	
+
 	(cc-mode.el): added fset compatibility with c-mode
-	
+
 	NOTE: THERE ARE STILL SOME FUNCTIONS I HAVEN'T MOVED HERE YET.
 
 Mon Dec  6 15:46:30 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -5681,9 +6571,9 @@ Fri Dec  3 23:05:29 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	changed all symbols from cc-<thing> to c-<thing>, except
 	where both c-<thing> and c++-<thing> are needed:
 	c++-mode-abbrev-table, c++-mode-map, c++-mode-syntax-table,
-	
+
 	(c-mode-common-hook): new common hook name
-	
+
 	(c-mode-map): don't add c-scope-operator.
 
 Thu Dec  2 00:59:34 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -5698,7 +6588,7 @@ Wed Dec  1 23:35:44 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (cc-macroize-region):
 	simplified so begin/end semantics are identical
 	to cc-comment-region.
-	
+
 	(cc-backslashify-current-line): do not (forward-char -1) if eol ==
 	bol.  Also, must let-bind kill-lines-magic to nil so that blank line,
 	with only a \ on it will not consume the newline character
@@ -5712,7 +6602,7 @@ Mon Nov 29 22:50:30 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	(cc-uncomment-region) (cc-comment-region): combined into 1 function,
 	bound to C-c C-c and behavior analogous to cc-macroize-region.
-	
+
 	(cc-up-block) (cc-down-block): new commands, bound to C-c C-u and C-c
 	C-d respectively.
 
@@ -5745,16 +6635,16 @@ Fri Nov 26 19:01:34 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (cc-guess-basic-semantics):
 	arglist-close should relpos boi of
 	containing-sexp
-	
+
 	(cc-change-semantic-symbol-offset): fixed setqcdr typo
-	
+
 	(cc-offsets-alist): arglist-close default is now +
 
 	* cc-mode.el (cc-beginning-of-statement):
 	fix problem when crossing a paren level
 	(i.e. the cc-safe forward-sexp call fails).  just move back a space
 	and keep going.
-	
+
 	(cc-guess-basic-semantics): expand CASE 5C test and CASE 5E relpos
 	calculation
 
@@ -5762,22 +6652,22 @@ Wed Nov 24 22:54:31 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (cc-safe):
 	added this macro back in -- it seems to be useful
-	
+
 	(cc-beginning-of-statement): really improved this a lot. we only go
 	back a sexp if we aren't already at the beginning of indentation.
 	This is now a more generally useful function since it seems to do the
 	right thing under all circumstances.
-	
+
 	(cc-guess-basic-semantics): lots of changes to use the new cc-b-o-s
 	function.  All known indentations after hanging braces are now fixed.
 	This includes case 4D.5, CASE 7, CASE 12, and CASE 13.F.  Are there
 	others?
 
 	* cc-mode.el (cc-offsets-alist): added knr-argdecl offset
-	
+
 	(cc-change-semantic-symbol-offset): allow addition of new langelem
 	symbols with universal arg
-	
+
 	(cc-guess-basic-semantics): added recognition of subsequent
 	knr-argdecl langelems in cc-c-mode only
 
@@ -5787,13 +6677,13 @@ Wed Nov 24 22:54:31 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el:
 	(cc-back-block) (cc-safe-uplist) (cc-safe-downlist): obsolete
-	
+
 	(cc-search-uplist-for-classkey): completely rewritten for speed. it
 	now uses re-search-backwards limited to two bod's back.  Orders of
 	magnitude faster when operating towards the end of a large file.  In
 	fact exec time is not buffer size dependent anymore (but like
 	everything else, it is bod dependent of course).
-	
+
 	(cc-guess-basic-semantics): fixed cases 4, 7, and 12 to work with the
 	new cc-search-uplist-for-classkey
 
@@ -5811,7 +6701,7 @@ Tue Nov 23 22:41:41 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (cc-c++-mode-syntax-table):
 	switched A/B comment styles as per Paul
 	Smith's FSFmacs patch
-	
+
 	(cc-1bit-il): switched A/B comment styles as per Paul Smith's FSFmacs
 	patch
 
@@ -5826,10 +6716,10 @@ Tue Nov 23 22:41:41 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (cc-mark-function):
 	must funcall the second call to push-mark since
 	v18 only accepts 2 arguments, not the 3 of v19.
-	
+
 	(cc-electric-brace): fix the blink-paren-function/-hook mismatch for
 	v18 vs. v19.
-	
+
 	(cc-point): added the (,@ nil) form as a workaround for v18's
 	backquote bug.  Doesn't seem to hurt us for v19 so I left it in for
 	everyone.
@@ -5847,7 +6737,7 @@ Mon Nov 22 23:29:19 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (cc-label-key):
 	new constant, change all concat'd label regexps to use
 	this new constant
-	
+
 	(cc-guess-basic-semantics): fix case 13.D to not accidentally code a
 	statement that follows a label as a ?: construct
 
@@ -5869,7 +6759,7 @@ Mon Nov 22 23:29:19 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	expressions now correctly finds the beginning of statements for very
 	complex forloops and more.  We now no longer assume that expressions
 	begin and end on a single line.
-	
+
 	(cc-guess-basic-semantics): CASE 5C is expanded to correctly locate
 	multi-line mathematical paren groupings.  Also, CASE 5E now returns
 	boi at the beginning-of-statement for any arglist-cont.
@@ -5924,7 +6814,7 @@ Sat Nov 20 21:53:29 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (cc-keep-region-active):
 	support for FSFmacs and don't lay down calls
 	to variables that don't exist
-	
+
 	(cc-submit-bug-report): variable typos
 
 	* cc-mode.el:
@@ -5936,26 +6826,26 @@ Fri Nov 19 18:44:54 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (cc-guess-basic-semantics):
 	added some minimal recognition of template
 	continuation lines.  Probably not so great.
-	
+
 	(cc-guess-basic-semantics): fixed top-level decl continutation lines
-	
+
 	(cc-guess-basic-semantics): fixed ?: constructs
 
 	* cc-mode.el:
 	(cc-c++-mode) (cc-c-mode): setq'ing of comment-start/-end must happen
 	*after* cc-common-init for those values to retain their proper settings
-	
+
 	(cc-indent-exp): add optional SHUTUP-P argument to suppress
 	operational messages.
-	
+
 	(c++-indent-exp): removed this commented out function. I think the
 	byte-compiled, simplified cc-indent-exp is fast enough!
-	
+
 	(cc-indent-region): stolen from c-mode and fixed.
-	
+
 	(cc-beginning-of-inheritance): backscanning must stop when we're
 	looking at a cc-class-key
-	
+
 	(cc-guess-basic-semantics): inher-intro and inher-cont should not have
 	inclass langelem added since their relpos offsets already contain any
 	inclass offset
@@ -6048,7 +6938,7 @@ Thu Nov 11 21:24:06 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	renamed CC-Mode.  The file has been renamed cc-mode.el, and all
 	symbols have changed from c++-<thing> to cc-<thing>.  In addition, all
 	known remaining c-mode dependencies have been eliminated.
-	
+
 	There is still much work to be done.
 
 Tue Nov  9 22:26:06 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -6066,7 +6956,7 @@ Sun Oct 31 19:14:59 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	(c++-narrow-out-enclosing-class) (c++-search-uplist-for-classkey): new
 	defuns
-	
+
 	(c++-point): added 'boe and 'eoe positions
 
 Fri Oct 29 22:42:35 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -6095,7 +6985,7 @@ Wed Oct 27 14:28:16 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c++-common-init):
 	don't set the auto-hungry state here since the
 	mode hook has not been run yet.
-	
+
 	(c++-mode) (c++-c-mode): set the auto-hungry state for the buffer
 	after the mode hook has been run
 
@@ -6162,7 +7052,7 @@ Tue Sep 28 23:11:04 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c++-electric-semi):
 	renamed c++-electric-semi&comma to implement },
 	and }; cleanups
-	
+
 	(c++-cleanup-list): added list-close-comma to allow cleanups of },
 	constructs.
 
@@ -6171,14 +7061,14 @@ Tue Sep 28 23:11:04 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c++-common-init):
 	new function to provide one entry point for all
 	common initializations of the mode.
-	
+
 	(c++-mode) (c++-c-mode): use c++-common-init to do the common stuff,
 	then do mode specific stuff.
 
 	* cc-mode.el (c++-calculate-indent):
 	complete fix for proper indentation of base
 	classes in a multiple inheritance declaration.
-	
+
 	(c++-baseclass-key): new constant defining regexp for base class defs
 
 	* cc-mode.el: partial fix for multi-inher lines
@@ -6192,7 +7082,7 @@ Mon Sep 27 19:15:51 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c++-compound-offset):
 	fixed a bug when looking at "typedef enum",
 	this wasn't registering as an enum start.
-	
+
 	(c++-indent-exp): fixed indentation of comma separated compound
 	statements by using the function c++-compound-offset to calculate
 	offset instead of just using the variable c-continued-statement-offset
@@ -6205,18 +7095,18 @@ Mon Sep 27 19:15:51 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	(c++-indent-line) (c++-calculate-indent): improved calculate in
 	let-body for open-paren and top-open-paren values, using car-safe and
 	cdr-safe
-	
+
 	(c++-indent-line): fix typo bug when looking at open brace.
-	
+
 	(c++-indent-line): apply TOPLEVEL c-brace-offset when brace is at top
 	level wrt class, or real top level.
 
 	* cc-mode.el (c-brace-offset): moved here from c-mode.el
-	
+
 	(c++-mode): for vars c-brace-offset and c++-block-close-brace-offset,
 	both can now take list values.  describe these in the mode's
 	docstring.
-	
+
 	(c++-indent-exp) (c++-indent-line) (c++-calculate-indent): when
 	looking at an open brace, apply c-brace-offset depending on
 	top-level-ness of the opening brace.
@@ -6243,17 +7133,17 @@ Fri Sep 24 22:05:21 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el (c++-emacs19-accurate-bsws):
 	new function which skips syntactic
 	whitespace w/o treating cpp macros as comments syntactically.
-	
+
 	(c++-emacs18-bsws): renamed from c++-backwards-syntactic-ws
-	
+
 	(c++-lemacs-pre19-8-bsws): renamed from c++-backwards-syntactic-ws-1
-	
+
 	(c++-emacs18-il): renamed from c++-in-literal
-	
+
 	(c++-8bit-il): renamed from c++-in-literal-8-bit
-	
+
 	(c++-1bit-il): renamed from c++-in-literal-1-bit
-	
+
 	Changed the way compatibility is fset into the function symbols
 	c++-backward-syntactic-ws and c++-in-literal.
 
@@ -6277,7 +7167,7 @@ Fri Jul  2 22:42:03 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el (c++-mode-map): removed bindings to obsolete functions
 	c++-beginning-of-defun and c++-end-of-defun.
-	
+
 	(c++-electric-terminator) (c++-in-literal) (c++-in-literal-8-bit)
 	(c++-in-literal-1-bit) (c++-point) (c++-indent-defun): changed all
 	references of obsolete functions c++-beginning-of-defun and
@@ -6298,7 +7188,7 @@ Fri Jul  2 22:42:03 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	removed logic dealing with (null state) and
 	placed an error call there in anticipation of removal of header strong
 	matching stuff.  I want to be sure there's no way to get to this code
-	
+
 	(c++-electric-brace): added bod argument to calls to c++-indent-line
 	so the correct bod is found, not the newly created one with the just
 	inserted open brace.
@@ -6377,10 +7267,10 @@ Wed Jun 16 22:27:29 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	1. cleaned up the way closing block braces are adjusted in
 	   c++-indent-line.
-	
+
 	2. also extended c++-block-close-brace-offset to allow list value so
 	   the following style can be easily supported:
-	
+
 	foo(a)
 	{
 	    if(a)
@@ -6388,7 +7278,7 @@ Wed Jun 16 22:27:29 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 			asasdfsdf;
 			}
 	}
-	
+
 	  Previously, there was no way to adjust the closing brace into column
 	  zero.
 
@@ -6413,7 +7303,7 @@ Tue Jun 15 22:04:43 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	1. cleaned up the spaghetti if's in CASE3 of c++-calculate-indent, by
 	   converting all if's to a single cond statement -- I *hope* I got it
 	   right!
-	
+
 	2. Added indentation, via c-indent-level of multi-line,
 	   comma-separated, compound statements/declarations, with correction
 	   for enum and static array inits.
@@ -6604,7 +7494,7 @@ Tue Mar  2 20:11:48 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	calculation of state to be wrong.  Now, when calculating line-end, we
 	first check to see of eol is in a C comment, and if so, we scan
 	forward until we find the end of the block comment.
-	
+
 	this algorithm might break if there is code on the same line, but
 	after the closing */ of a comment. this is to bizarre to support
 
@@ -6614,11 +7504,11 @@ Tue Mar  2 20:11:48 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	c++-fast-backward-syntactic-ws.  Also, in this method, go into a loop
 	checking for cpp directives since its possible that a directive has a
 	comment on the end of the line:
-	
+
 	#include <foo.h>      /* opening a block comment here
-	                       * which isn't closed until here
+			       * which isn't closed until here
 						   */
-	
+
 	Finally, fix c++-in-literal-quick to handle new syntax class of #
 
 Mon Mar  1 23:32:40 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -6666,7 +7556,7 @@ Fri Feb  5 23:41:34 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	fixed c++-indent-command to follow documentation. previous the
 	following situation was broken: c++-tab-always-indent == nil and:
-	
+
 	...
 	{
 	foo;
@@ -6680,7 +7570,7 @@ Fri Feb  5 23:41:34 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	check for (not (c++-in-parens-p)) when deciding whether we're looking
 	at a continuation line or not to avoid bad indentation of continued
 	lines such as:
-	
+
 		if( !tnode->expanded_p() &&
 			docobj->hasChild_p() &&
 			docobj->tocLevel() < xmaxTocDepth )
@@ -6694,7 +7584,7 @@ Fri Feb  5 23:41:34 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	c++-continued-member-init-offset works for line with just single colon
 	line, where member inits follow on subsequent lines:
-	
+
 	ff::ff ()
 	   :
 	   xxx (0),
@@ -6762,7 +7652,7 @@ Wed Jan 20 23:39:40 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el: 1. remove infinite loop from c++-in-literal
 	2. get rid of messages
-	
+
 	note that c++-in-literal-quick is broken wrt to old emacs patches
 
 Wed Jan 13 22:57:51 1993  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -6852,9 +7742,9 @@ Fri Dec 11 16:26:05 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	in electric terminator, don't just check for eolp to determine if
 	terminator should electrify. also look for hanging whitespace which
 	may look like eolp, even though it isn't:
-	
-	        fooo();......\n
-	              ^------^
+
+		fooo();......\n
+		      ^------^
 	undiscovered ws---|
 
 Thu Dec 10 22:59:25 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
@@ -6876,7 +7766,7 @@ Wed Dec  9 17:55:17 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	don't treat double-colon as member init when member defun is split
 	across two lines at the scope operator. eg:
-	
+
 	HereIsAReallyLongClassName
 	::HereIsAReallyLongClassName( const WithALongConstructorArgument& )
 		: andItsFirstMemberInit( 7 )
@@ -6900,22 +7790,22 @@ Mon Dec  7 16:26:51 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 Sat Dec  5 02:52:04 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 
 	* cc-mode.el: handled member init lists with first embedded colon
-	
+
 	foo() : foo, foo,
 	    foo, foo,
 	    ^--- this should probably be indented to
 	      ^--- here (under colon)
-	
+
 	but that's really hard and of minimal use.
 
 	* cc-mode.el:
 	finally figured out that "questionable member init" indentation
 	section. It occurs when you have the following style:
-	
+
 	foo(...) :
 		foo(9), blat(10),
 		clob(3)
-	
+
 	Note the colon hanging on the previous line. Steve Vinoski is correct,
 	we should not subtract a level of indentation from the shift since
 	inclass-shift takes care of it.
@@ -6977,11 +7867,11 @@ Fri Nov 13 22:42:04 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	c++-auto-newline is off.
 
 	* cc-mode.el: fixed buggy regexp which would fail on this situation:
-	
+
 	int foo(									 // foo
 		int arg1,								 // arg1
 												 int arg2
-	
+
 	last line gets indented wrong because of the spaces b/w the foo( and
 	the comment
 
@@ -7090,10 +7980,10 @@ Thu Aug 20 19:29:00 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	attempted to address keyword "class" appearing inside a template
 	specification:
-	
+
 	template<class Foo>
 	Foo& Bar<Foo>::doit( void ){};
-	
+
 	template<class Foo, class Blat>
 	Foo& Bar<Foo>::doit( void ){};
 
@@ -7174,7 +8064,7 @@ Tue Jul 21 21:59:27 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	new function c++-calculate-c-indent-within-comment used instead of
 	calculate-c-indent-within-comment (from c-mode).  Supports 4 styles of
 	C block comments.
-	
+
 	Also, new variable c++-C-block-comments-indent-p to control which
 	style(s) to use.
 
@@ -7182,7 +8072,7 @@ Tue Jul 21 21:59:27 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	fixed c++-indent-exp to handle public/private/protected with friends
 
 	* cc-mode.el: fixed indentation for the following style:
-	
+
 	class foo {
 		friend class bar;
 		public:
@@ -7195,7 +8085,7 @@ Mon Jul 20 20:22:58 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	1. added c++-paren-as-block-close-p to control whether a closing paren is
 	   treated as a closing brace.
-	
+
 	2. also added c++-block-close-brace-offset to bug list of variables
 
 	* cc-mode.el: added a c++-c-mode-syntax-table
@@ -7299,13 +8189,13 @@ Thu Jul  9 21:54:08 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	fix to c++-at-top-level-p to ignore struct/class declarations inside a
 	defun which are not definitions:
-	
+
 	void foo()
 	{
 		struct blah;
-	
+
 		// we are not now (c++-at-top-level-p t)
-	
+
 	The function is still not perfect so we really need to rethink this
 	algorithm.
 
@@ -7339,7 +8229,7 @@ Mon Jul  6 21:25:17 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	null state so we can check for this and then let* bind
 	c++-match-header-strongly to t.  Then we re-calculate the beginning of
 	the c++ defun.
-	
+
 	Seems to work around the (char-after ...) bug
 
 	* cc-mode.el: swap back to another use of c++-parse-state
@@ -7468,7 +8358,7 @@ Tue Jun  9 22:45:24 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	lines after:
 	;; else first check to see if its a
 	;; multiple inheritance continuation line
-	
+
 	the regexp should match optional inheritance syntax.
 
 	* cc-mode.el:
@@ -7618,7 +8508,7 @@ Tue May 19 19:34:16 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	1. c++-electric-colon is made smarter so that it only adds newlines
 	   after a colong when absolutely necessary
-	
+
 	2. extended semantics of c++-hanging-member-init-colon
 
 	* cc-mode.el: fixed small bug in constness fix of 2.55
@@ -7793,14 +8683,14 @@ Wed Apr 29 22:23:25 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	1. fixed unbalanced paren problem (emacs bug) in comment by adding a
 	   paren to the j.peck hack comment (probably should eventually clean
 	   up these comments)
-	
+
 	2. applied Doug Moore's (dougm@cs.rice.edu) patch to fix continued
 	   function declarations of the form:
-	
+
 	   int foo( int i,
-	            int j );
+		    int j );
 	   ^---- next line should only indent to here
-	
+
 	3. cleaned up some comment sections
 
 	* cc-mode.el:
@@ -7817,7 +8707,7 @@ Tue Apr 28 22:38:35 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el: fixed free variable problems in indent-c++-exp
 	1. innerloop-done was let'ed as inner-loop-done. changed all
 	   innerloop-done's to inner-loop-done in body of defun
-	
+
 	2. last-depth wasn't let'ed
 
 	* cc-mode.el:
@@ -7834,14 +8724,14 @@ Tue Apr 28 22:38:35 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	non-top level open braces.
 
 	* cc-mode.el: fixed comment-only line related bugs:
-	
+
 	1. comment-only lines not in the first column, but at the top level
 	   were inserting all tab characters.
-	
+
 	2. fixed #1, but this caused non-comment top-level lines which follow
 	   indented top-level comment-only lines to indent, which they
 	   shouldn't do.
-	
+
 	I think this fixes all repercussions of comment-only lines.
 
 	* cc-mode.el:
@@ -7896,7 +8786,7 @@ Fri Apr 10 17:48:46 1992  Barry A. Warsaw, ITB  (warsaw@anthem)
 	* cc-mode.el:
 	1. updated mode documentation string for c++-mode to include new
 	   variables.
-	
+
 	2. changed c++-auto-hungry-toggle-p to c++-auto-hungry-toggle since it
 	   is not a binary valued variable.
 
