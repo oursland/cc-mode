@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.179 $
-;; Last Modified:   $Date: 1995-03-22 15:55:10 $
+;; Version:         $Revision: 4.180 $
+;; Last Modified:   $Date: 1995-03-22 16:05:24 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-22 15:55:10 $|$Revision: 4.179 $|
+;; |$Date: 1995-03-22 16:05:24 $|$Revision: 4.180 $|
 
 ;;; Code:
 
@@ -963,6 +963,9 @@ behavior that users are familiar with.")
 (defconst c-C++-conditional-key
   "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\|try\\|catch\\)\\b[^_]"
   "Regexp describing a conditional control for C++.")
+(defconst c-C++-friend-key
+  "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+"
+  "Regexp describing friend declarations in C++ classes.")
 
 (defconst c-ObjC-method-key
   (concat
@@ -4067,9 +4070,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	;; are we looking at a comment only line?
 	(if (looking-at c-comment-start-regexp)
 	    (c-add-syntax 'comment-intro))
-	;; we might want to give additional offset to friends (in C++)
+	;; we might want to give additional offset to friends (in C++).
 	(if (and (eq major-mode 'c++-mode)
-		 (looking-at "friend[ \t]+"))
+		 (looking-at c-C++-friend-key))
 	    (c-add-syntax 'friend))
 	;; return the syntax
 	syntax))))
@@ -4510,7 +4513,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.179 $"
+(defconst c-version "$Revision: 4.180 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
