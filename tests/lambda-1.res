@@ -25,6 +25,6 @@
 ((statement . 340))
 ((arglist-intro . 449))
 ((arglist-cont . 475))
-((inlambda) (defun-block-intro . 499))
-((inlambda) (inline-close . 499))
+((defun-block-intro . 499))
+((inline-close . 499))
 ((defun-close . 41))
