@@ -382,12 +382,7 @@
     (back-to-indentation)
     (let ((res (or (c-looking-at-inexpr-block)
 		   (if (c-safe (backward-up-list 1)
-			       (eq (char-after) ?{)
-			       ;; Do not add anything if we're looking
-			       ;; at the block open brace and it's at
-			       ;; boi, because then this pos will be
-			       ;; the anchor already.
-			       (/= (point) (c-point 'boi)))
+			       (eq (char-after) ?{))
 		       (c-looking-at-inexpr-block)))))
       (if (not res)
 	  0
