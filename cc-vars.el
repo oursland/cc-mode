@@ -56,10 +56,10 @@
        (progn
 	 (require 'custom)
 	 (or (fboundp 'defcustom) (error ""))
-	 (require 'wid-edit)
+	 (require 'widget)
 	 '(progn			; Compile in the require's.
 	    (require 'custom)
-	    (require 'wid-edit)))
+	    (require 'widget)))
      (error
       (message "Warning: Compiling without Customize support \
 since a (good enough) custom library wasn't found")
