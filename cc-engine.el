@@ -1998,7 +1998,10 @@
 	 ;; than if-else and do-while, because a block is required
 	 ;; after every try, catch and finally.
 	 ((save-excursion
-	    (and (looking-at "\\<\\(catch\\|finally\\)\\>[^_]")
+	    (and (cond ((eq major-mode 'c++-mode)
+			(looking-at "\\<catch\\>[^_]"))
+		       ((eq major-mode 'java-mode)
+			(looking-at "\\<\\(catch\\|finally\\)\\>[^_]")))
 		 (c-safe (c-backward-sexp) t)
 		 (eq (char-after) ?{)
 		 (c-safe (c-backward-sexp) t)
