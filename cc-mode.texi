@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.10 $
+@comment manual version: $Revision: 2.11 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-04-06 04:24:37 $
+@comment Last modification: $Date: 1995-04-06 18:51:09 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1027,8 +1027,21 @@ The complete list of recognized syntactic symbols is described in the
 @code{c-offsets-alist} variable.  This chapter will provide some
 examples to help clarify these symbols.
 
-TBD: fill this stuff in.
+@cindex -open syntactic symbols
+@cindex -close syntactic symbols
+Most syntactic symbol names follow a general naming convention.  When a
+line begins with an open or close brace, the syntactic symbol will
+contain the suffix @code{-open} or @code{-close} respectively.
 
+@cindex -intro syntactic symbols
+@cindex -cont syntactic symbols
+@cindex -block-intro syntactic symbols
+Usually, a distinction is made between the first line that introduces a
+construct and lines that continue a construct, and the syntactic symbols
+that represent these lines will contain the suffix @code{-intro} or
+@code{-cont} respectively.  As a sub-classification of this scheme, a
+line which is the first of a particular brace block construct will
+contain the suffix @code{-block-intro}.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Frequently Asked Questions, Sample .emacs File, Syntactic Symbols, Top
