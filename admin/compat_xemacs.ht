@@ -4,7 +4,7 @@ Links: links.h compatlinks.h
 
 <h2>XEmacs, and Emacs 20 Compatibility</h2>
 
-    If you are using XEmacs 19.15, 19.16, or 20.2 and beyond, you
+    If you are using XEmacs 19.15, 19.16, 20.4, or any XEmacs 21, you
     should be able to use this new version right out of the box.  An
     earlier version of CC Mode probably comes with your XEmacs, so you
     just need to make sure that this new version is found earlier on
@@ -20,10 +20,3 @@ Links: links.h compatlinks.h
     although you will <em>not</em> need the
     <code>cc-mode-19.el</code> file.  I do not plan to actively
     support any earlier XEmacs version.
-
-    <p>I have reports of problems with CC Mode and the XEmacs 21 beta
-    releases.  These have not been tracked down yet, but if you are a
-    XEmacs beta user and have seen bogus indentation and syntactic
-    analysis, please contact
-    <a href="mailto:cc-mode-help@python.org">us</a> if you can help
-    track these problems down.
