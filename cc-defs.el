@@ -965,7 +965,7 @@ MODE is either a mode symbol or a list of mode symbols."
      (def-edebug-spec c-set-region-active t)
      (def-edebug-spec c-safe t)
      (def-edebug-spec c-save-buffer-state let*)
-     (def-edebug-spec c-with-temporary-change t)
+     (def-edebug-spec c-tentative-buffer-changes t)
      (def-edebug-spec c-forward-syntactic-ws t)
      (def-edebug-spec c-backward-syntactic-ws t)
      (def-edebug-spec c-forward-sexp t)
