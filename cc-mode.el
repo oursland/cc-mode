@@ -1,11 +1,11 @@
 ;; C++ code editing commands for Emacs
-;; 1992 Barry Warsaw (bwarsaw@cen.com)
+;; 1992 Barry Warsaw, Century Computing Inc. (bwarsaw@cen.com)
 ;; 1987 Dave Detlefs  (dld@cs.cmu.edu) 
 ;; and  Stewart Clamen (clamen@cs.cmu.edu).
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.18 $
+;; $Revision: 1.19 $
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
