@@ -873,7 +873,7 @@
 			    ;; Avoid two closed sexps in a row.
 			    (cdr state-foot)
 			  state-foot))
-      (cdr state-head))))
+      (setq c-state-cache (cdr state-head)))))
 
 (defun c-check-state-cache (beg end old-length)
   ;; Used on `after-change-functions' to adjust `c-state-cache'.
