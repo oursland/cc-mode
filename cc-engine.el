@@ -2757,6 +2757,12 @@ brace."
 ;; 'found for) as actual types (and always return 'found for them).
 (defvar c-promote-possible-types nil)
 
+;; Dynamically bound variable that instructs
+;; `c-forward-c++-template-arglist' to not accept template arglists
+;; that contain more than one argument.  It's used to handle ambiguous
+;; cases like "foo (a < b, c > d)" better.
+(defvar c-disallow-comma-in-template-arglists nil)
+
 ;; Dynamically bound variables that instructs `c-forward-name',
 ;; `c-forward-type' and `c-forward-c++-template-arglist' to record the
 ;; ranges of all the type and reference identifiers they encounter.
@@ -2830,9 +2836,11 @@ brace."
 	(c-record-found-types c-record-found-types))
 
     ;; If the '<' has paren open syntax then we've marked it as a
-    ;; template arglist before, so unless there's fontification work
-    ;; to do try to skip an sexp and see that the close paren matches.
+    ;; template arglist before, so unless there's range recording work
+    ;; to do, or if we should be restrictive about commas, try to skip
+    ;; an sexp and see that the close paren matches.
     (if (and (not c-record-type-identifiers)
+	     (not c-disallow-comma-in-template-arglists)
 	     (looking-at "\\s\(")
 	     (if (and (not (looking-at "<[<=:%]"))
 		      (c-safe (c-forward-sexp) t)
@@ -2886,10 +2894,8 @@ brace."
 			t)
 
 		      (c-syntactic-re-search-forward
-		       (if c-record-type-identifiers
-			   ;; If we should record passed types then
-			   ;; additionally stop after each comma to check if
-			   ;; each template argument constitutes a type.
+		       (if (or c-record-type-identifiers
+			       c-disallow-comma-in-template-arglists)
 			   "\\([^>]>\\)\\|[<;{,]"
 			 "\\([^>]>\\)\\|[<;{]")
 		       nil 'move t t 1)
@@ -2993,7 +2999,8 @@ brace."
 			  (c-record-type-id id-start id-end)))))
 		  t)
 
-		 ((eq (char-before) ?,)
+		 ((and (eq (char-before) ?,)
+		       (not c-disallow-comma-in-template-arglists))
 		  ;; Just another template argument.  The type check stuff
 		  ;; that made us stop at it is at the top of the loop.
 		  t)
