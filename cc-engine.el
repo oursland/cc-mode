@@ -1656,9 +1656,9 @@
 		     (goto-char placeholder)
 		     (back-to-indentation)
 		     (and
-		      c-access-key
-		      (not (looking-at c-access-key))
-		      (not (looking-at c-class-key)))
+		      (if c-access-key (not (looking-at c-access-key)) t)
+		      (not (looking-at c-class-key))
+		      (if c-bitfield-key (not (looking-at c-bitfield-key)) t))
 		     ))
 	      (goto-char placeholder)
 	      (c-forward-syntactic-ws)
