@@ -199,6 +199,7 @@ def incr_release():
 	format = '%s.%03d\n'
     fp.write(format % (major_rev, next_rev))
     fp.close()
+    get_release()
 
 
 def pkg_release(fat):
