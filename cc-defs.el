@@ -618,30 +618,33 @@ This function does not do any hidden buffer changes."
   ;; Put the given property with the given value on the character at
   ;; POS and make it front and rear nonsticky, or start and end open
   ;; in XEmacs vocabulary.  If the character already has the given
-  ;; property then the value is replaced.  PROPERTY is assumed to be
-  ;; constant.
+  ;; property then the value is replaced, and the behavior is
+  ;; undefined if that property has been put by some other function.
+  ;; PROPERTY is assumed to be constant.
   ;;
   ;; If there's a `text-property-default-nonsticky' variable (Emacs
   ;; 21) then it's assumed that the property is present on it.
+  (setq property (eval property))
   (if (or c-use-extents
 	  (not (cc-bytecomp-boundp 'text-property-default-nonsticky)))
       ;; XEmacs and Emacs < 21.
-      `(c-put-char-property-fun ,pos ,property ,value)
+      `(c-put-char-property-fun ,pos ',property ,value)
     ;; In Emacs 21 we got the `rear-nonsticky' property covered
     ;; by `text-property-default-nonsticky'.
     `(let ((-pos- ,pos))
-       (put-text-property -pos- (1+ -pos-) ,property ,value))))
+       (put-text-property -pos- (1+ -pos-) ',property ,value))))
 
 (defmacro c-get-char-property (pos property)
   ;; Get the value of the given property on the character at POS if
   ;; it's been put there by `c-put-char-property'.  PROPERTY is
   ;; assumed to be constant.
+  (setq property (eval property))
   (if c-use-extents
       ;; XEmacs.
-      `(let ((ext (extent-at ,pos nil ,property)))
-	 (if ext (extent-property ext ,property)))
+      `(let ((ext (extent-at ,pos nil ',property)))
+	 (if ext (extent-property ext ',property)))
     ;; Emacs.
-    `(get-text-property ,pos ,property)))
+    `(get-text-property ,pos ',property)))
 
 ;; `c-clear-char-property' is complex enough in Emacs < 21 to make it
 ;; a function, since we have to mess with the `rear-nonsticky' property.
@@ -663,19 +666,20 @@ This function does not do any hidden buffer changes."
   ;; Remove the given property on the character at POS if it's been put
   ;; there by `c-put-char-property'.  PROPERTY is assumed to be
   ;; constant.
+  (setq property (eval property))
   (cond (c-use-extents
 	 ;; XEmacs.
-	 `(let ((ext (extent-at ,pos nil ,property)))
+	 `(let ((ext (extent-at ,pos nil ',property)))
 	    (if ext (delete-extent ext))))
 	((cc-bytecomp-boundp 'text-property-default-nonsticky)
 	 ;; In Emacs 21 we got the `rear-nonsticky' property covered
 	 ;; by `text-property-default-nonsticky'.
 	 `(let ((pos ,pos))
 	    (remove-text-properties pos (1+ pos)
-				    '(,(eval property) nil))))
+				    '(,property nil))))
 	(t
 	 ;; Emacs < 21.
-	 `(c-clear-char-property-fun ,pos ,property))))
+	 `(c-clear-char-property-fun ,pos ',property))))
 
 (defmacro c-clear-char-properties (from to property)
   ;; Remove all the occurences of the given property in the given
@@ -686,13 +690,14 @@ This function does not do any hidden buffer changes."
   ;; lists of the `rear-nonsticky' properties in the region, if such
   ;; are used.  Thus it should not be used for common properties like
   ;; `syntax-table'.
+  (setq property (eval property))
   (if c-use-extents
       ;; XEmacs.
       `(map-extents (lambda (ext ignored)
 		      (delete-extent ext))
-		    nil ,from ,to nil nil ,property)
+		    nil ,from ,to nil nil ',property)
     ;; Emacs.
-    `(remove-text-properties ,from ,to '(,(eval property) nil))))
+    `(remove-text-properties ,from ,to '(,property nil))))
 
 
 ;; Make edebug understand the macros.
