@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-08 21:42:23 $
-;; Version:         $Revision: 2.97 $
+;; Last Modified:   $Date: 1992-06-08 21:46:02 $
+;; Version:         $Revision: 2.98 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-08 21:42:23 $|$Revision: 2.97 $|
+;; |$Date: 1992-06-08 21:46:02 $|$Revision: 2.98 $|
 
 
 ;; ======================================================================
@@ -213,7 +213,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.97 $
+  "Major mode for editing C++ code.  $Revision: 2.98 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1160,7 +1160,7 @@ point of the beginning of the C++ definition."
 		  (setq indent (save-excursion
 				 (c-backward-to-start-of-if)
 				 (current-indentation))))
-		 ((looking-at "friend\[ \t]\\(class\\|struct\\)[ \t]")
+		 ((looking-at "friend\[ \t]")
 		  (setq indent (+ indent c++-friend-offset)))
 		 ((= (following-char) ?\))
 		  (setq indent (+ (- indent c-indent-level)
@@ -1810,7 +1810,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.97 $"
+(defconst c++-version "$Revision: 2.98 $"
   "c++-mode version number.")
 
 (defun c++-version ()
