@@ -426,27 +426,27 @@ stuff.  Used on level 1 and higher."
 
 	      ;; Fontify cpp function names in preprocessor
 	      ;; expressions in #if and #elif.
-	      ,(when (c-lang-const c-cpp-defined-fns)
-		 `(,(c-make-font-lock-search-function
-		     (concat noncontinued-line-end
-			     (c-lang-const c-opt-cpp-prefix)
-			     "\\(if\\|elif\\)\\>" ; 1 + ncle-depth
-			     ;; Match the whole logical line to look
-			     ;; for the functions in.
-			     "\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*")
-		     `((let ((limit (match-end 0)))
-			 (while (re-search-forward
-				 ,(concat "\\<\\("
-					  (regexp-opt
-					   (c-lang-const c-cpp-defined-fns)
-					   nil)
-					  "\\)\\>"
-					  "\\s *\(?")
-				 limit 'move)
-			   (c-put-font-lock-face (match-beginning 1)
-						 (match-end 1)
-						 c-preprocessor-face-name)))
-		       (goto-char (match-end ,(1+ ncle-depth)))))))
+	      ,@(when (c-lang-const c-cpp-defined-fns)
+		  `((,(c-make-font-lock-search-function
+		       (concat noncontinued-line-end
+			       (c-lang-const c-opt-cpp-prefix)
+			       "\\(if\\|elif\\)\\>" ; 1 + ncle-depth
+			       ;; Match the whole logical line to look
+			       ;; for the functions in.
+			       "\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*")
+		       `((let ((limit (match-end 0)))
+			   (while (re-search-forward
+				   ,(concat "\\<\\("
+					    (regexp-opt
+					     (c-lang-const c-cpp-defined-fns)
+					     nil)
+					    "\\)\\>"
+					    "\\s *\(?")
+				   limit 'move)
+			     (c-put-font-lock-face (match-beginning 1)
+						   (match-end 1)
+						   c-preprocessor-face-name)))
+			 (goto-char (match-end ,(1+ ncle-depth))))))))
 
 	      ;; Fontify the directive names.
 	      (,(c-make-font-lock-search-function
