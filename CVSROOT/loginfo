@@ -25,4 +25,4 @@
 # or
 #DEFAULT (echo ""; id; echo %{sVv}; date; cat) >> $CVSROOT/CVSROOT/commitlog
 
-DEFAULT $CVSROOT/CVSROOT/syncmail -u %{sVv} cc-mode-checkins@lists.sourceforge.net
+DEFAULT $CVSROOT/CVSROOT/syncmail -u %{sVv} cc-mode-checkins@lists.sourceforge.net mast@lysator.liu.se
