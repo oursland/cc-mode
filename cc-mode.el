@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.92 $
-;; Last Modified:   $Date: 1993-11-23 22:41:41 $
+;; Version:         $Revision: 3.93 $
+;; Last Modified:   $Date: 1993-11-24 19:09:35 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-23 22:41:41 $|$Revision: 3.92 $|
+;; |$Date: 1993-11-24 19:09:35 $|$Revision: 3.93 $|
 
 ;;; Code:
 
@@ -492,7 +492,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.92 $
+  "Major mode for editing C++ code.  $Revision: 3.93 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -522,7 +522,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.92 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.93 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -764,20 +764,6 @@ Optional argument has the following meanings when supplied:
        ;; doesn't hurt for v19
        (,@ nil)
        )))
-
-(defmacro cc-safe-uplist (arg)
-  ;; call up-list with ARG, but do not generate an error.  If the
-  ;; up-list fails, return nil, otherwise return t
-  (` (condition-case nil
-	 (progn (up-list (, arg)) t)
-       (error nil))))
-
-(defmacro cc-safe-downlist (arg)
-  ;; call down-list with ARG, but do not generate an error.  If the
-  ;; down-list fails, return nil, otherwise return t
-  (` (condition-case nil
-	 (progn (down-list (, arg)) t)
-       (error nil))))
 
 (defmacro cc-auto-newline ()
   ;; if auto-newline feature is turned on, insert a newline character
@@ -1546,12 +1532,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
       (setq state (parse-partial-sexp (point) lim 0)))
     state))
 
-(defmacro cc-back-block ()
-  ;; move up one block, returning t if successful, else returning nil
-  (` (or (cc-safe-uplist -1)
-	 (cc-safe-downlist -1)
-	 )))
-
 (defun cc-beginning-of-inheritance-list (&optional lim)
   ;; Go to the first non-whitespace after the colon that starts a
   ;; multiple inheritance introduction.  Optional LIM is the farthest
@@ -1644,81 +1624,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
       (= (preceding-char) ?\))
       )))
 
-(defun cc-search-uplist-for-classkey (&optional search-end)
-  ;; search upwards for a classkey, but only as far as we need to.
-  ;; this should properly find the inner class in a nested class
-  ;; situation, and in a func-local class declaration.  it should not
-  ;; get confused by forward declarations.
-  ;;
-  ;; if a classkey was found, return a cons cell containing the point
-  ;; of the class's opening brace in the car, and the class's
-  ;; declaration start in the cdr, otherwise return nil.
-  (and (eq major-mode 'cc-c++-mode)
-       (condition-case nil
-	   (save-excursion
-	     (let (search-start donep foundp)
-	       (and search-end
-		    (goto-char search-end))
-	       (while (not donep)
-		 ;; go backwards to the most enclosing C block
-		 (while (not search-end)
-		   (if (not (cc-back-block))
-		       (setq search-end (goto-char (cc-point 'bod)))
-		     (if (memq (following-char) '(?} ?{))
-			 (setq search-end (point))
-		       (forward-char 1)
-		       (backward-sexp 1)
-		       )))
-		 ;; go backwards from here to the next most enclosing
-		 ;; block
-		 (while (not search-start)
-		   (if (not (cc-back-block))
-		       (setq search-start (goto-char (cc-point 'bod)))
-		     (if (memq (following-char) '(?} ?{))
-			 (setq search-start (point))
-		       (forward-char 1)
-		       (backward-sexp 1)
-		       )))
-		 (cond
-		  ;; CASE 1: search-end is a close brace. we cannot
-		  ;; find the enclosing brace
-		  ((= (char-after search-end) ?})
-		   (setq donep t))
-		  ;; CASE 2: we have exhausted all our possible
-		  ;; searches
-		  ((= search-start search-end)
-		   (setq donep t))
-		  ;; CASE 3: now look for class key, but make sure its
-		  ;; not in a literal
-		  (t
-		   (while (and (re-search-forward cc-class-key search-end t)
-			       (cc-in-literal)))
-		   (if (and (/= (point) search-end)
-			    (/= (point) search-start)
-			    (not (cc-in-literal)))
-		       (setq donep t
-			     foundp t)
-		     ;; if the char under search-start is a close
-		     ;; brace, then we just traversed a top-level
-		     ;; defun, so there's no way we'll find an
-		     ;; enclosing class-key and we need look no
-		     ;; further.
-		     (if (= (char-after search-start) ?})
-			 (setq donep t)
-		       ;; not found in this region. reset search
-		       ;; extent and try again
-		       (setq search-end search-start
-			     search-start nil)
-		       (goto-char search-end))
-		     ))
-		  ))
-	       ;; we've search as much as we can.  if we've found a
-	       ;; classkey, then search-end should be at the class's
-	       ;; opening brace
-	       (and foundp (cons search-end (cc-point 'boi)))
-	       ))
-	 (error nil))))
-
 ;; defuns to look backwards for things
 (defun cc-backward-to-start-of-do (&optional lim)
   ;; Move to the start of the last "unbalanced" do expression.
@@ -1774,6 +1679,40 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	  (goto-char lim))
 	 ))
       t)))
+
+(defun cc-search-uplist-for-classkey (&optional search-end)
+  ;; search upwards for a classkey, but only as far as we need to.
+  ;; this should properly find the inner class in a nested class
+  ;; situation, and in a func-local class declaration.  it should not
+  ;; get confused by forward declarations.
+  ;;
+  ;; if a classkey was found, return a cons cell containing the point
+  ;; of the class's opening brace in the car, and the class's
+  ;; declaration start in the cdr, otherwise return nil.
+  (and (eq major-mode 'cc-c++-mode)
+       (condition-case nil
+	   (save-excursion
+	     (let ((search-end (or search-end (point)))
+		   (lim (save-excursion
+			  (beginning-of-defun)
+			  (cc-point 'bod)))
+		   donep foundp)
+	       (goto-char search-end)
+	       (while (not donep)
+		 (setq foundp (re-search-backward cc-class-key lim t))
+		 (save-excursion
+		   (let* ((cop (scan-lists foundp 1 -1))
+			  (state (parse-partial-sexp cop search-end)))
+		     (if (and foundp
+			      (not (cc-in-literal))
+			      (<= cop search-end)
+			      (<= 0 (nth 6 state))
+			      (<= 0 (nth 0 state)))
+			 (setq donep t
+			       foundp (cons (1- cop) foundp))
+		       ))))
+	       foundp))
+	 (error nil))))
 
 
 ;; defuns for calculating the semantic state and indenting a single
@@ -1843,7 +1782,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	    (cond
 	     ;; CASE 4A.1: we are looking at a class opening brace
 	     ((save-excursion
-		(let ((decl (cc-search-uplist-for-classkey indent-point)))
+		(goto-char indent-point)
+		(skip-chars-forward " \t{")
+		(let ((decl (cc-search-uplist-for-classkey (point))))
 		  (and decl
 		       (setq placeholder (cdr decl)))
 		  ))
@@ -2065,7 +2006,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	    (cond
 	     ;; CASE 7A.1: could be a func-local class opening brace
 	     ((save-excursion
-		(let ((decl (cc-search-uplist-for-classkey indent-point)))
+		(goto-char indent-point)
+		(skip-chars-forward " \t{")
+		(let ((decl (cc-search-uplist-for-classkey (point))))
 		  (and decl
 		       (setq placeholder (cdr decl)))
 		  ))
@@ -2109,18 +2052,24 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	 ;; CASE 12: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((= char-after-ip ?})
-	  (goto-char containing-sexp)
-	  (if (and (cc-safe-uplist -1)
-		   (>= (point) lim))
-	      ;; we are not closing a top-level construct
-	      (progn
-		(goto-char containing-sexp)
-		(cc-add-semantics 'block-close (cc-point 'boi)))
-	    ;; we are closing a top-level construct
-	    (if inclass-p
-		(cc-add-semantics 'inline-close (cc-point 'boi))
-	      (cc-add-semantics 'defun-close (cc-point 'boi)))
-	    ))
+	  (let ((relpos (save-excursion
+			  (goto-char containing-sexp)
+			  (cc-point 'boi))))
+	    ;; CASE 12.A: we are closing a top-level construct. it
+	    ;; must be a defun-close since class-close is caught much
+	    ;; earlier on
+	    (if (= containing-sexp lim)
+		(cc-add-semantics 'defun-close relpos)
+	      ;; CASE 12.B: we could be a block-close or inline-close.
+	      ;; if we are exactly 1 paren level deep, it must be an
+	      ;; inline-close, otherwise its a block-close
+	      (goto-char indent-point)
+	      (skip-chars-forward " \t}")
+	      (if (zerop (car (parse-partial-sexp lim (point))))
+		  (cc-add-semantics 'inline-close relpos)
+		;; CASE 12.C: we are a block-close
+		(cc-add-semantics 'block-close relpos)
+		))))
 	 ;; CASE 13: statement catchall
 	 (t
 	  ;; we know its a statement, but we need to find out if it is
@@ -2418,7 +2367,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.92 $"
+(defconst cc-version "$Revision: 3.93 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
