@@ -450,7 +450,10 @@ Key bindings:
        (lambda ()
 	 (insert
 	  "Buffer Style: " style "\n\n"
-	  (if hook
+	  (if (and hook
+		   (or (/= (length hook) 1)
+		       (not (eq (car hook) 'c-gnu-impose-minimum))
+		       ))
 	      (concat "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 		      "c-special-indent-hook is set to '"
 		      (format "%s" hook)
