@@ -1,6 +1,6 @@
 ((topmost-intro . 1))
 ((class-open . 1))
-((inclass . 12) (access-label . 22))
+((inclass . 12) (access-label . 12))
 ((inclass . 12) (topmost-intro . 14))
 ((inclass . 12) (topmost-intro . 14))
 ((topmost-intro-cont . 28))

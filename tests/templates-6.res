@@ -25,7 +25,7 @@
 ((topmost-intro . 398))
 ((topmost-intro-cont . 401))
 ((class-open . 422))
-((inclass . 434) (access-label . 443))
+((inclass . 434) (access-label . 434))
 ((inclass . 434) (topmost-intro . 436))
 ((class-close . 422))
 ((topmost-intro . 468))

@@ -3,7 +3,7 @@
 ((inclass . 9) (topmost-intro . 11))
 ((inclass . 9) (topmost-intro . 11))
 ((class-open . 51))
-((inclass . 78) (access-label . 91))
+((inclass . 78) (access-label . 78))
 ((inclass . 78) (topmost-intro . 80))
 ((inclass . 78) (inline-open))
 ((defun-block-intro . 106))
