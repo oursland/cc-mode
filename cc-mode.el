@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.250 $
-;; Last Modified:   $Date: 1994-02-16 23:06:15 $
+;; Version:         $Revision: 3.251 $
+;; Last Modified:   $Date: 1994-02-17 15:16:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-16 23:06:15 $|$Revision: 3.250 $|
+;; |$Date: 1994-02-17 15:16:00 $|$Revision: 3.251 $|
 
 ;;; Code:
 
@@ -535,7 +535,7 @@ supported list, along with the values for this variable:
   (define-key c-mode-map ","         'c-electric-semi&comma)
   (define-key c-mode-map "/"         'c-electric-slash)
   (define-key c-mode-map "*"         'c-electric-star)
-  (define-key c-mode-map "\e\C-x"    'c-indent-defun)
+  (define-key c-mode-map "\C-c\C-i"  'c-indent-defun)
   (define-key c-mode-map "\C-c\C-\\" 'c-backslash-region)
   ;; TBD: where if anywhere, to put c-backward|forward-into-nomenclature
   (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
@@ -721,7 +721,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.250 $
+cc-mode Revision: $Revision: 3.251 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -752,7 +752,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.250 $
+cc-mode Revision: $Revision: 3.251 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3148,7 +3148,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.250 $"
+(defconst c-version "$Revision: 3.251 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
