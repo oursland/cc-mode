@@ -282,7 +282,7 @@
 		  minor-mode-alist)))
   ;; now set the mode style based on c-default-style
   (c-set-style (if (stringp c-default-style)
-		   (if (eq major-mode 'java-mode)
+		   (if (c-major-mode-is 'java-mode)
 		       "java"
 		     c-default-style)
 		 (or (cdr (assq major-mode c-default-style))

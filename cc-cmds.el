@@ -1719,7 +1719,7 @@ Optional prefix ARG means justify paragraph as well."
 		;; Lines containing just a comment start or just an end
 		;; should not be filled into paragraphs they are next
 		;; to.
-		(paragraph-start (if (eq major-mode 'java-mode)
+		(paragraph-start (if (c-major-mode-is 'java-mode)
 				     (concat paragraph-start
 					     re1 "\\("
 					     c-Java-javadoc-paragraph-start

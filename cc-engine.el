@@ -1063,7 +1063,7 @@
      (let ((class-key
 	    ;; Pike can have class definitions anywhere, so we must
 	    ;; check for the class key here.
-	    (and (eq major-mode 'pike-mode)
+	    (and (c-major-mode-is 'pike-mode)
 		 (concat c-class-key "\\|" c-extra-toplevel-key)))
 	   bufpos lim braceassignp)
        (while (and (not bufpos)
@@ -1109,7 +1109,7 @@
 					(pos< (progn
 						(skip-chars-backward "^<")
 						(point))))
-				    (and (eq major-mode 'c++-mode)
+				    (and (c-major-mode-is 'c++-mode)
 					 (eq (char-before) ?<)
 					 (not (c-crosses-statement-barrier-p
 					       here pos<))
@@ -1322,7 +1322,7 @@
 	     (case-fold-search nil)
 	     (fullstate (c-parse-state))
 	     (state fullstate)
-	     (in-method-intro-p (and (eq major-mode 'objc-mode)
+	     (in-method-intro-p (and (c-major-mode-is 'objc-mode)
 				     c-method-key
 				     (looking-at c-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
@@ -1556,7 +1556,7 @@
 		       (back-to-indentation)
 		       (looking-at c-class-key)))
 		;; for Java
-		(and (eq major-mode 'java-mode)
+		(and (c-major-mode-is 'java-mode)
 		     (let ((fence (save-excursion
 				    (c-beginning-of-statement-1 lim)
 				    (point)))
@@ -2104,9 +2104,9 @@
 	 ;; than if-else and do-while, because a block is required
 	 ;; after every try, catch and finally.
 	 ((save-excursion
-	    (and (cond ((eq major-mode 'c++-mode)
+	    (and (cond ((c-major-mode-is 'c++-mode)
 			(looking-at "\\<catch\\>[^_]"))
-		       ((eq major-mode 'java-mode)
+		       ((c-major-mode-is 'java-mode)
 			(looking-at "\\<\\(catch\\|finally\\)\\>[^_]")))
 		 (c-safe (c-backward-sexp) t)
 		 (eq (char-after) ?{)
@@ -2318,7 +2318,7 @@
 	(if (looking-at c-comment-start-regexp)
 	    (c-add-syntax 'comment-intro))
 	;; we might want to give additional offset to friends (in C++).
-	(if (and (eq major-mode 'c++-mode)
+	(if (and (c-major-mode-is 'c++-mode)
 		 (looking-at c-C++-friend-key))
 	    (c-add-syntax 'friend))
 	;; return the syntax
