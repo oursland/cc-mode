@@ -3225,11 +3225,10 @@ This function does not do any hidden buffer changes."
 	   ;; Try to use the faces to back up to the start of the
 	   ;; literal.  FIXME: What if the point is on a declaration
 	   ;; inside a comment?
-	   (while (progn
-		    (goto-char (previous-single-property-change
-				(point) 'face nil (point-min)))
-		    (and (not (bobp))
-			 (c-got-face-at (1- (point)) c-literal-faces))))
+	   (while (and (not (bobp))
+		       (c-got-face-at (1- (point)) c-literal-faces))
+	     (goto-char (previous-single-property-change
+			 (point) 'face nil (point-min))))
 
 	   ;; XEmacs doesn't fontify the quotes surrounding string
 	   ;; literals.
@@ -3383,7 +3382,9 @@ This function does not do any hidden buffer changes."
 	    ;; skip it entirely.  (This won't skip past a string, but
 	    ;; that'll be handled quickly by the next
 	    ;; `c-find-decl-prefix-search' anyway.)
-	    (c-forward-single-comment)))
+	    (c-forward-single-comment)
+	    (if (> (point) cfd-limit)
+		(goto-char cfd-limit))))
 
 	 (t
 	  ;; If we started in normal code, the only match that might
