@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.307 $
-;; Last Modified:   $Date: 1996-06-11 15:22:18 $
+;; Version:         $Revision: 4.308 $
+;; Last Modified:   $Date: 1996-07-05 23:25:30 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -298,15 +298,22 @@ Here is the current list of valid syntactic element symbols:
 If t, hitting TAB always just indents the current line.  If nil,
 hitting TAB indents the current line if point is at the left margin or
 in the line's indentation, otherwise it insert a `real' tab character
-(see note).  If other than nil or t, then tab is inserted only within
+\(see note\).  If other than nil or t, then tab is inserted only within
 literals -- defined as comments and strings -- and inside preprocessor
 directives, but line is always reindented.
 
 Note: The value of `indent-tabs-mode' will determine whether a real
 tab character will be inserted, or the equivalent number of space.
+When inserting a tab, actually the function stored in the variable
+`c-insert-tab-function' is called.
 
 Note: indentation of lines containing only comments is also controlled
 by the `c-comment-only-line-offset' variable.")
+
+(defvar c-insert-tab-function 'insert-tab
+  "*Function used when inserting a tab for \\[TAB].
+Only used when `c-tab-always-indent' indicates a `real' tab character
+should be inserted.  Value must be a function taking no arguments.")
 
 (defvar c-comment-only-line-offset 0
   "*Extra offset for line which contains only the start of a comment.
@@ -2898,7 +2905,7 @@ of the expression are preserved."
 	(if (save-excursion
 	      (skip-chars-backward " \t")
 	      (not (bolp)))
-	    (insert-tab)
+	    (funcall c-insert-tab-function)
 	  (c-indent-line)))
        ;; CASE 2: just indent the line
        ((eq c-tab-always-indent t)
@@ -2907,7 +2914,7 @@ of the expression are preserved."
        ;; line
        (t
 	(if (c-in-literal bod)
-	    (insert-tab))
+	    (funcall c-insert-tab-function))
 	(c-indent-line)
 	)))))
 
@@ -4947,7 +4954,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.307 $"
+(defconst c-version "$Revision: 4.308 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
