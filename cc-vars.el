@@ -1380,7 +1380,7 @@ also elsewhere in CC Mode to tell types from other identifiers."))
 ;; in older versions in Emacs, so depending on the load order we might
 ;; not install the values below.  There's no kludge to cope with this
 ;; (as opposed to the *-font-lock-keywords-* variables) since the old
-;; values works fairly well anyway.
+;; values work fairly well anyway.
 
 (defcustom c-font-lock-extra-types
   '("FILE" "\\sw+_t"
@@ -1391,8 +1391,8 @@ also elsewhere in CC Mode to tell types from other identifiers."))
     ;; the old timers that are used to it. /mast
     "Lisp_Object")
   (c-make-font-lock-extra-types-blurb "C" "c-mode"
-"For example, a value of (\"FILE\" \"\\\\sw+_t\") means the word FILE
-and words ending in _t are treated as type names.")
+"For example, a value of (\"FILE\" \"\\\\sw+_t\") means the word \"FILE\"
+and words ending in \"_t\" are treated as type names.")
   :type 'c-extra-types-widget
   :group 'c)
 
@@ -1410,7 +1410,7 @@ and words ending in _t are treated as type names.")
     "iterator" "const_iterator" "reverse_iterator" "const_reverse_iterator"
     "reference" "const_reference")
   (c-make-font-lock-extra-types-blurb "C++" "c++-mode"
-"For example, a value of (\"string\") means the word string is treated
+"For example, a value of (\"string\") means the word \"string\" is treated
 as a type name.")
   :type 'c-extra-types-widget
   :group 'c)
