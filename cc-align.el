@@ -27,6 +27,10 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+(eval-when-compile
+  (require 'cc-langs)
+  (require 'cc-vars))
+
 
 (defsubst c-langelem-col (langelem &optional preserve-point)
   ;; convenience routine to return the column of langelem's relpos.

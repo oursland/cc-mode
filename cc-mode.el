@@ -152,9 +152,7 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   (require 'cc-cmds))
   
 
-(defvar c-mode-map ()
-  "Keymap used in c-mode buffers.")
-
+
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
