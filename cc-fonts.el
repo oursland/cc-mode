@@ -500,9 +500,10 @@
     (when (memq (get-text-property (point) 'face)
 		'(font-lock-comment-face font-lock-string-face))
       ;; But first we need to move to a syntactically relevant
-      ;; position.
-      (goto-char (previous-single-property-change (min (1+ (point)) limit)
-						  'face nil (point-min))))
+      ;; position.  Can't use backward movement since the font-lock
+      ;; package might not have fontified the comment or string all
+      ;; the way to the start.
+      (goto-char (next-single-property-change (point) 'face nil limit)))
     (c-backward-syntactic-ws)
     (c-safe (backward-char))
 
@@ -550,8 +551,7 @@
 	  ;; Same as `max-type-decl-end', but used when we're before
 	  ;; `token-pos'.
 	  (max-type-decl-end-before-token -1)
-	  ;; Start and end positions of the last entered macro.
-	  macro-start
+	  ;; The end position of the last entered macro.
 	  (macro-end -1))
 
       (while (progn
@@ -704,7 +704,8 @@
 		  (goto-char type-end)
 		  (c-forward-syntactic-ws)
 		  (let ((start (point)) (paren-depth 0)
-			got-prefix got-parens no-identifier got-suffix)
+			got-prefix-before-parens got-prefix
+			got-parens no-identifier got-suffix)
 
 		    ;; Skip over type decl prefix operators.
 		    (while (looking-at c-type-decl-prefix-key)
@@ -712,6 +713,8 @@
 			  (progn
 			    (setq paren-depth (1+ paren-depth))
 			    (forward-char))
+			(unless got-prefix-before-parens
+			  (setq got-prefix-before-parens (= paren-depth 0)))
 			(setq got-prefix t)
 			(goto-char (match-end 1)))
 		      (c-forward-syntactic-ws))
@@ -726,11 +729,7 @@
 			    ;; a statement.
 			    (throw 'at-decl-or-cast nil)
 			  (goto-char (match-end 1))
-			  (c-forward-syntactic-ws)
-			  (unless (or got-prefix got-parens)
-			    ;; Got another identifier directly after the type,
-			    ;; so it's a declaration.
-			    (throw 'at-decl-or-cast t)))
+			  (c-forward-syntactic-ws))
 		      ;; The identifier seems to be missing.
 		      (setq no-identifier t))
 
@@ -783,12 +782,25 @@
 
 			  (when (and got-suffix
 				     (not got-prefix)
+				     (not got-parens)
 				     prev-at-type)
 			    ;; Got only a suffix and there are two identifiers
 			    ;; before.  The second one is not the type
 			    ;; afterall, so return nil to let the conditional
 			    ;; below shift to the type in `prev-*'.
 			    (throw 'at-decl-or-cast nil)))
+
+		      (unless (or got-prefix got-parens)
+			;; Got another identifier directly after the type,
+			;; so it's a declaration.
+			(throw 'at-decl-or-cast t))
+
+		      (when (and got-suffix
+				 (not arglist-match)
+				 (eq (char-after) ?{))
+			;; Only in a function definition does a '{' follow
+			;; after the type decl expression.
+			(throw 'at-decl-or-cast t))
 
 		      (when (looking-at "[=\(]")
 			;; There's an initializer after the type decl
@@ -817,14 +829,15 @@
 		    (when (or at-decl-or-cast (memq at-type '(t found)))
 		      (throw 'at-decl-or-cast t))
 
-		    (when (and got-prefix
+		    (when (and got-prefix-before-parens
 			       (not no-identifier)
-			       (not got-suffix)
-			       (not arglist-match))
+			       (not arglist-match)
+			       (not got-suffix))
 		      ;; Got something like "foo * bar".  If we're not inside
 		      ;; an arglist then it would be a meaningless expression
 		      ;; since the result isn't used.  We therefore choose to
-		      ;; recognize it as a declaration.
+		      ;; recognize it as a declaration.  Do not allow a suffix
+		      ;; since it could then be a function call.
 		      (throw 'at-decl-or-cast t))
 
 		    ;; If we had a complete symbol table here (which rules out
