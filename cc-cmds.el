@@ -151,9 +151,10 @@ Inserts a `#' character specially depending on the variable
 `c-electric-pound-behavior'.  If a numeric ARG is supplied, or if
 point is inside a literal, nothing special happens."
   (interactive "*P")
-  (if (or (c-in-literal)
-	  arg
-	  (not (memq 'alignleft c-electric-pound-behavior)))
+  (if (or arg
+	  (not (memq 'alignleft c-electric-pound-behavior))
+	  (save-excursion (skip-chars-backward " \t") (not (bolp)))
+	  (c-in-literal))
       ;; do nothing special
       (self-insert-command (prefix-numeric-value arg))
     ;; place the pound character at the left edge
