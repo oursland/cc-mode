@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.287 $
-;; Last Modified:   $Date: 1996-04-10 04:50:50 $
+;; Version:         $Revision: 4.288 $
+;; Last Modified:   $Date: 1996-05-02 21:18:56 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1128,7 +1128,7 @@ The expansion is entirely correct because it uses the C preprocessor."
   "\\(\\(case[( \t]+\\S .*\\)\\|default[ \t]*\\):"
   "Regexp describing a switch's case or default label")
 (defconst c-C++-access-key
-  (concat c-protection-key ":")
+  (concat c-protection-key "[ \t]*:")
   "Regexp describing C++ access specification keywords.")
 (defconst c-label-key
   (concat c-symbol-key ":\\([^:]\\|$\\)")
@@ -4816,7 +4816,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.287 $"
+(defconst c-version "$Revision: 4.288 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
