@@ -219,7 +219,7 @@ should be inserted.  Value must be a function taking no arguments."
 (defcustom c-syntactic-indentation t
   "*Whether the indentation should be controlled by the syntactic context.
 
-If t, the indentation functions indents according to the syntactic
+If t, the indentation functions indent according to the syntactic
 context, using the style settings specified by `c-offsets-alist'.
 
 If nil, every line is just indented to the same level as the previous
