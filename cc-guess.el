@@ -28,9 +28,9 @@
 ;;; Commentary:
 ;;
 ;; This file contains routines that help guess the cc-mode style in a
-;; particular region/buffer of C, C++, or Objective-C code.  It is
-;; provided for example and experimentation only.  It is not supported
-;; in anyway.  Note that style guessing is lossy!
+;; particular region/buffer.  It is provided for example and
+;; experimentation only.  It is not supported in anyway.  Note that
+;; style guessing is lossy!
 ;;
 ;; The way this is intended to be run is for you to mark a region of
 ;; code to guess the style of, then run the command, `cc-guess-region'.
