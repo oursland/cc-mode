@@ -134,6 +134,12 @@
 			 (namespace-open . +)
 			 (innamespace . c-lineup-whitesmith-in-block)
 			 (namespace-close . +)
+			 (module-open . +)
+			 (inmodule . c-lineup-whitesmith-in-block)
+			 (module-close . +)
+			 (composition-open . +)
+			 (incomposition . c-lineup-whitesmith-in-block)
+			 (composition-close . +)
 			 ))
      )
     ("ellemtel"
