@@ -47,7 +47,8 @@
 ;;				"const" in them somewhere.
 ;; font-lock-type-face		Types (both pre- and user defined) and classes
 ;;				in type contexts.
-;; font-lock-reference-face	Name qualifiers.
+;; font-lock-reference-face	Name qualifiers and identifiers for
+;;				scope constructs like namespaces and modules.
 ;; font-lock-builtin-face	Not used directly.
 ;;
 ;; Face aliases, mapped to different faces depending on (X)Emacs flavor:
@@ -1696,38 +1697,19 @@ higher."
 	    ;; Fontify normal labels.
 	    c-font-lock-labels))
 
-      ;; Fontify type lists after Java style "throws" etc.
-      ,@(when (c-lang-const c-type-list-kwds)
+      ;; Fontify the clauses after various keywords.
+      ,@(when (or (c-lang-const c-type-list-kwds)
+		  (c-lang-const c-ref-list-kwds)
+		  (c-lang-const c-colon-type-list-kwds)
+		  (c-lang-const c-paren-type-kwds))
 	  `((,(c-make-font-lock-search-function
-	       (concat
-		"\\<\\("
-		(c-regexp-opt (c-lang-const c-type-list-kwds))
-		"\\)\\>")
-	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
-		   (c-forward-keyword-clause)
-		   (if (> (point) limit) (goto-char limit))))))))
-
-      ;; Fontify type lists in C++ style inherits.
-      ,@(when (c-lang-const c-colon-type-list-kwds)
-	  `((,(c-make-font-lock-search-function
-	       (concat
-		"\\<\\("
-		(c-regexp-opt (c-lang-const c-colon-type-list-kwds))
-		"\\)\\>"
-		(c-lang-const c-colon-type-list-re))
-	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
-		   (c-forward-keyword-clause)
-		   (if (> (point) limit) (goto-char limit))))))))
-
-      ;; Fontify type lists in C++ style throw specifications.
-      ,@(when (c-lang-const c-paren-type-kwds)
-	  `((,(c-make-font-lock-search-function
-	       (concat
-		"\\<\\("
-		(c-regexp-opt (c-lang-const c-paren-type-kwds))
-		"\\)\\>"
-		(c-lang-const c-syntactic-ws)
-		"(")
+	       (concat "\\<\\("
+		       (c-make-keywords-re nil
+			 (append (c-lang-const c-type-list-kwds)
+				 (c-lang-const c-ref-list-kwds)
+				 (c-lang-const c-colon-type-list-kwds)
+				 (c-lang-const c-paren-type-kwds)))
+		       "\\)\\>")
 	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
 		   (c-forward-keyword-clause)
 		   (if (> (point) limit) (goto-char limit))))))))
