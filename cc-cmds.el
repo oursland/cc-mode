@@ -179,7 +179,10 @@ after braces based on the value of `c-hanging-braces-alist'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the brace, or
-the brace is inserted inside a literal."
+the brace is inserted inside a literal.
+
+This function does various newline cleanups based on the value of
+`c-cleanup-list'."
   (interactive "*P")
   (let* ((c-state-cache (c-parse-state))
 	 (safepos (c-safe-position (point) c-state-cache))
@@ -436,7 +439,10 @@ is determined.
 
 When semicolon is inserted, the line is re-indented unless a numeric
 arg is supplied, point is inside a literal, or there are
-non-whitespace characters on the line following the semicolon."
+non-whitespace characters on the line following the semicolon.
+
+Based on the value of `c-cleanup-list', this function cleans up commas
+following brace lists and semicolons following defuns."
   (interactive "*P")
   (let* ((lim (c-most-enclosing-brace (c-parse-state)))
 	 (literal (c-in-literal lim))
@@ -539,10 +545,11 @@ value of `c-cleanup-list'."
 		 (or (c-lookup-lists '(case-label label access-label)
 				     syntax c-hanging-colons-alist)
 		     (c-lookup-lists '(member-init-intro inher-intro)
-				     (prog2
-					 (insert "\n")
-					 (c-guess-basic-syntax)
-				       (delete-char -1))
+				     (let ((buffer-undo-list t))
+				       (insert "\n")
+				       (unwind-protect
+					   (c-guess-basic-syntax)
+					 (delete-char -1)))
 				     c-hanging-colons-alist))))
       ;; indent the current line
       (c-indent-line syntax)
@@ -588,7 +595,7 @@ a literal, in which case the line will not be re-indented."
 
 If the auto-newline feature is turned on, as evidenced by the \"/a\"
 or \"/ah\" string on the mode line, some newline cleanups are done if
-appropriate.
+appropriate; see the variable `c-cleanup-list'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the colon, or

@@ -1860,7 +1860,7 @@ can add this instead:
 @example
 @group
 
-(setq c-default-style "user")
+(setq c-default-style '((other . "user")))
 (c-set-offset 'substatement-open 0)
 
 @end group
@@ -3682,10 +3682,27 @@ but the @samp{gnu} style is the default.  You should also add a setting
 of @code{c-default-style} to your @file{.emacs} file, like so:
 @example
 
-(setq c-default-style "user")
+(setq c-default-style '((other . "user")))
 (setq c-basic-offset 4)
 
 @end example
+
+@sp 1
+@strong{Q.} @emph{My style settings works in all the @ccmode{} language
+modes except for Java, where I still get e.g. 4 column indentation.}
+
+@strong{A.} Java mode switches to the @samp{java} style by default for
+historical reasons.  You can override it by putting an association list
+on @code{c-default-style}:
+@example
+
+(setq c-default-style '((other . "my-style")))
+
+@end example
+@noindent
+The @samp{other} symbol says that @ccmode{} should use "my-style" in all
+modes not explicitly listed.  Since there's nothing else on the list
+this causes "my-style" to be used in every mode.
 
 @sp 1
 @strong{Q.} @emph{How do I make strings, comments, keywords, and other

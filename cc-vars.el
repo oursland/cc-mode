@@ -143,7 +143,9 @@ mode name.  Valid symbols are:
                         Clean up occurs when the open-brace after the
                         `else' is typed.
  brace-elseif-brace  -- similar to brace-else-brace, but cleans up
-                        `} else if (...) {' constructs.
+                        `} else if (...) {' constructs.  Clean up occurs
+                        both after the open parenthesis and after the
+                        open brace.
  brace-catch-brace   -- similar to brace-elseif-brace, but cleans up
                         `} catch (...) {' constructs.
  empty-defun-braces  -- cleans up empty defun braces by placing the
@@ -354,7 +356,7 @@ Note that if you set any CC Mode variables in the top-level of your
 .emacs file (i.e. *not* in a hook), these get incorporated into the
 `user' style, so you would need to add:
 
-  (setq c-default-style \"user\")
+  (setq c-default-style '((other . \"user\")))
 
 to see your customizations.  This is also true if you use the Custom
 interface -- be sure to set the default style to `user'.
