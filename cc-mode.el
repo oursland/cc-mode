@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.197 $
-;; Last Modified:   $Date: 1995-04-18 23:08:17 $
+;; Version:         $Revision: 4.198 $
+;; Last Modified:   $Date: 1995-04-19 00:27:05 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-18 23:08:17 $|$Revision: 4.197 $|
+;; |$Date: 1995-04-19 00:27:05 $|$Revision: 4.198 $|
 
 ;;; Code:
 
@@ -313,9 +313,9 @@ only controls how the lines within the block comment are indented when
 you hit ``\\[c-indent-command]''.
 
  style 1:    style 2 (GNU):    style 3:     style 4:     style 5:
- /*          /*                /*           /*           /*
-    blah        blah            * blah      ** blah      blah
-    blah        blah */         * blah      ** blah      blah
+ /*          /* Blah           /*           /*           /*
+    blah        blah.  */       * blah      ** blah      blah
+    blah                        * blah      ** blah      blah
     */                          */          */           */")
 
 (defvar c-cleanup-list '(scope-operator)
@@ -4565,7 +4565,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.197 $"
+(defconst c-version "$Revision: 4.198 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
