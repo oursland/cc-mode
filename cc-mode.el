@@ -381,6 +381,11 @@ Key bindings:
   (run-hooks 'pike-mode-hook)
   (c-update-modeline))
 
+(or (rassq 'pike-mode auto-mode-alist)
+    (setq auto-mode-alist
+	  (nconc auto-mode-alist
+		 '(("\\.\\(u?lpc\\|pike\\|pmod\\)\\'" . pike-mode)))))
+
 
 ;; bug reporting
 
