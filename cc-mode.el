@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.306 $
-;; Last Modified:   $Date: 1996-06-11 15:20:47 $
+;; Version:         $Revision: 4.307 $
+;; Last Modified:   $Date: 1996-06-11 15:22:18 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -599,7 +599,7 @@ re-dump Emacs.")
   "*Hook called by `java-mode'.")
 
 (defvar c-mode-common-hook nil
-  "*Hook called by `c-mode', `c++-mode', and 'objc-mode' during common init.")
+  "*Hook called by all cc-mode modes for common initializations.")
 
 (defvar c-mode-menu
   '(["Comment Out Region"     comment-region (mark)]
@@ -4947,7 +4947,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.306 $"
+(defconst c-version "$Revision: 4.307 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
