@@ -3,8 +3,8 @@
 ;; Author: 1994 Barry A. Warsaw, Century Computing, Inc. <bwarsaw@cen.com>
 ;; Maintainer:    bwarsaw@cen.com
 ;; Created:       August 1994
-;; Version:       $Revision: 1.2 $
-;; Last Modified: $Date: 1994-08-10 17:54:53 $
+;; Version:       $Revision: 1.3 $
+;; Last Modified: $Date: 1995-05-04 17:48:55 $
 ;; Keywords: C++ C Objective-C cc-mode
 
 ;; Copyright (C) 1994 Barry A. Warsaw
@@ -40,7 +40,7 @@
 ;; LCD Archive Entry:
 ;; cc-compat|Barry A. Warsaw|bwarsaw@cen.com
 ;; |cc-mode compatibility with c-mode.el confusion
-;; |$Date: 1994-08-10 17:54:53 $|$Revision: 1.2 $|
+;; |$Date: 1995-05-04 17:48:55 $|$Revision: 1.3 $|
 
 ;;; Code:
 
@@ -66,29 +66,24 @@ This is in addition to c-continued-statement-offset.")
 
 ;; these offsets are taken by brute force testing c-mode.el, since
 ;; there's no logic to what it does.
-(let* ((offsets
-	'((defun-block-intro     . cc-block-intro-offset)
-	  (statement-block-intro . cc-block-intro-offset)
-	  (defun-open            . 0)
-	  (class-open            . 0)
-	  (inline-open           . c-brace-offset)
-	  (block-open            . c-brace-offset)
-	  (block-close           . cc-block-close-offset)
-	  (brace-list-open       . c-brace-offset)
-	  (substatement-open     . cc-substatement-open-offset)
-	  (substatement          . c-continued-statement-offset)
-	  (knr-argdecl-intro     . c-argdecl-indent)
-	  (case-label            . c-label-offset)
-	  (access-label          . c-label-offset)
-	  (label                 . c-label-offset)
-	  )))
-  (if (assoc "BOCM" c-style-alist)
-      (setcdr (assoc "BOCM" c-style-alist)
-	      (list (cons 'c-offsets-alist offsets)))
-    (setq c-style-alist
-	  (cons (list "BOCM" (cons 'c-offsets-alist offsets))
-		c-style-alist)))
-  )
+(let* ((offsets	'(c-offsets-alist .
+		    ((defun-block-intro     . cc-block-intro-offset)
+		     (statement-block-intro . cc-block-intro-offset)
+		     (defun-open            . 0)
+		     (class-open            . 0)
+		     (inline-open           . c-brace-offset)
+		     (block-open            . c-brace-offset)
+		     (block-close           . cc-block-close-offset)
+		     (brace-list-open       . c-brace-offset)
+		     (substatement-open     . cc-substatement-open-offset)
+		     (substatement          . c-continued-statement-offset)
+		     (knr-argdecl-intro     . c-argdecl-indent)
+		     (case-label            . c-label-offset)
+		     (access-label          . c-label-offset)
+		     (label                 . c-label-offset)
+		     ))))
+  (c-add-style "BOCM" offsets))
+
 
 (defun cc-block-intro-offset (langelem)
   ;; taken directly from calculate-c-indent confusion
