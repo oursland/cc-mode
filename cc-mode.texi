@@ -6,7 +6,7 @@
 
 @setfilename  cc-mode.info
 @settitle     CC-MODE Version 4 Documentation
-@footnotestle end
+@footnotestyle end
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment @setchapternewpage odd !! we don't want blank pages !!
@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.3 $
+@comment manual version: $Revision: 2.4 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-03-01 01:11:27 $
+@comment Last modification: $Date: 1995-03-01 01:18:29 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -82,6 +82,8 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @menu
 * Introduction::                
 * Getting Connected::           
+* New Indentation Engine::
+* Customizing Indentation::
 * Requirements::                
 * Limitations and known bugs::  
 * Mailing Lists and Submitting Bug Reports::  
@@ -608,26 +610,26 @@ This would change
 
 @example
 int add( int val, int incr, int doit )
-{
+@{
     if( doit )
-        {
+        @{
             return( val + incr );
-        }
+        @}
     return( val );
-}
+@}
 @end example
 
 to
 
 @example
 int add( int val, int incr, int doit )
-{
+@{
   if( doit )
-    {
+    @{
       return( val + incr );
-    }
+    @}
   return( val );
-}
+@}
 @end example
 
 
@@ -706,13 +708,13 @@ should now look like:
 
 @example
 int add( int val, int incr, int doit )
-{
+@{
     if( doit )
-    {
+    @{
         return( val + incr );
-    }
+    @}
     return( val );
-}
+@}
 @end example
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1183,7 +1185,7 @@ need to do an @code{update-directory-autoloads}.
 
 @ifinfo
 
-@end infinfo
+@end ifinfo
 Since all @code{cc-mode} commands are prepended with the string
 @samp{c-}, each appears under its @code{sc-<thing>} name and its
 @code{<thing> (sc-)} name.
@@ -1210,7 +1212,7 @@ Since all @code{cc-mode} commands are prepended with the string
 
 @ifinfo
 
-@end infinfo
+@end ifinfo
 Since all @code{cc-mode} variables are prepended with the string
 @samp{c-}, each appears under its @code{sc-<thing>} name and its
 @code{<thing> (sc-)} name.
