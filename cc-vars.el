@@ -1440,8 +1440,7 @@ names)."))
   (c-make-font-lock-extra-types-blurb "Java" "java-mode" (concat
 "For example, a value of (\"[" c-upper "]\\\\sw*[" c-lower "]\\\\sw*\") means
 capitalized words are treated as type names (the requirement for a
-lower case char is to avoid recognizing all-caps macro and constant
-names)."))
+lower case char is to avoid recognizing all-caps constant names)."))
   :type 'c-extra-types-widget
   :group 'c)
 
