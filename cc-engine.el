@@ -716,7 +716,7 @@
   ;; while moving forward.
   (save-restriction
     (narrow-to-region (point-min) (point))
-    (let* (placeholder sexp-pos inside
+    (let* (placeholder sexp-pos inside state-tail-intact
 	   (here (point))
 	   (in-macro-start
 	    (save-excursion
@@ -733,7 +733,18 @@
 		   (when (<= (point) in-macro-start)
 		     (c-backward-syntactic-ws)
 		     (setq here (point)))
-		   (c-whack-state-after here c-state-cache))))
+		   (let ((newstate (c-whack-state-after here c-state-cache)))
+		     (and newstate
+			  (or (cdr newstate)
+			      (eq (car newstate)
+				  (let ((elem c-state-cache))
+				    (while (cdr elem)
+				      (setq elem (cdr elem)))
+				    (car elem))))
+			  ;; The last element in the cached state was
+			  ;; not changed by the whack.
+			  (setq state-tail-intact t))
+		     newstate))))
 	   (last-pos
 	    ;; Last start position for forward paren search.  Set
 	    ;; initially to the latest position we know are directly
@@ -768,9 +779,16 @@
 		    (setq state (cons (cons sexp-pos last-pos)
 				      state)))
 		  (when state
-		    (if (or (consp (car state)) (cdr state))
-			;; Only use the cached state if it still got
-			;; at least one closed sexp or two open ones.
+		    (if (or state-tail-intact
+			    (consp (car state))
+			    (cdr state))
+			;; If the whack above didn't touch the last
+			;; element of the state, we know it comes from
+			;; an earlier point and is thus complete
+			;; (i.e. no risk there's some closed sexp
+			;; earlier that we should include).  Otherwise
+			;; we only use it if it still got at least one
+			;; closed sexp or two open ones.
 			(progn
 			  (if (or (not (consp (car state)))
 				  (cdr state))
