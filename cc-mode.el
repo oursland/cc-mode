@@ -33,15 +33,15 @@
 ;;; Commentary:
 
 ;; This package provides GNU Emacs major modes for editing C, C++,
-;; Objective-C, and Java code.  As of the latest Emacs and XEmacs
+;; Objective-C, Java and IDL code.  As of the latest Emacs and XEmacs
 ;; releases, it is the default package for editing these languages.
 ;; This package is called "CC Mode", and should be spelled exactly
-;; this way.  It supports K&R and ANSI C, ANSI C++, Objective-C, and
-;; Java, with a consistent indentation model across all modes.  This
-;; indentation model is intuitive and very flexible, so that almost
-;; any desired style of indentation can be supported.  Installation,
-;; usage, and programming details are contained in an accompanying
-;; texinfo manual.
+;; this way.  It supports K&R and ANSI C, ANSI C++, Objective-C, Java,
+;; and CORBA's IDL with a consistent indentation model across all
+;; modes.  This indentation model is intuitive and very flexible, so
+;; that almost any desired style of indentation can be supported.
+;; Installation, usage, and programming details are contained in an
+;; accompanying texinfo manual.
 
 ;; CC Mode's immediate ancestors were, c++-mode.el, cplus-md.el, and
 ;; cplus-md1.el..
@@ -60,14 +60,6 @@
 ;; help-gnu-emacs@prep.ai.mit.edu (mirrored as gnu.emacs.help) and/or
 ;; cc-mode-help@python.org.  Please do not send bugs or questions to
 ;; my personal account.
-
-;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
-;; the cross-Emacsen support.  GNU Emacs 19 (from the FSF), GNU XEmacs
-;; 19 (formerly Lucid Emacs), and GNU Emacs 18 all do things
-;; differently and there's no way to shut the byte-compiler up at the
-;; necessary granularity.  Let me say this again: YOU CAN IGNORE ALL
-;; BYTE-COMPILER WARNINGS (you'd be surprised at how many people don't
-;; follow this advice :-).
 
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
