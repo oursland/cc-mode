@@ -455,15 +455,13 @@ are parsed.")
 ;; syntax classes.
 (c-lang-defconst c-nonsymbol-token-regexp
   all (c-make-keywords-re nil
-	(delete-duplicates
-	 (c-with-syntax-table (c-mode-var "mode-syntax-table")
-	   (mapcan (lambda (op)
-		     (and (string-match
-			   "\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'" op)
-			  (list op)))
-		   (append (c-lang-var c-other-op-syntax-tokens)
-			   (c-lang-var c-operator-list))))
-	 :test 'string-equal)))
+	(c-with-syntax-table (c-mode-var "mode-syntax-table")
+	  (mapcan (lambda (op)
+		    (and (string-match
+			  "\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'" op)
+			 (list op)))
+		  (append (c-lang-var c-other-op-syntax-tokens)
+			  (c-lang-var c-operator-list))))))
 (c-lang-defvar c-nonsymbol-token-regexp (c-lang-var c-nonsymbol-token-regexp))
 
 (defvar c-stmt-delim-chars "^;{}?:")
@@ -878,8 +876,8 @@ are parsed.")
   all (if (or (c-lang-var c-block-stmt-1-kwds)
 	      (c-lang-var c-block-stmt-2-kwds))
 	  (c-make-keywords-re t
-	    (c-lang-var c-block-stmt-1-kwds)
-	    (c-lang-var c-block-stmt-2-kwds))))
+	    (append (c-lang-var c-block-stmt-1-kwds)
+		    (c-lang-var c-block-stmt-2-kwds)))))
 (c-lang-defvar c-opt-block-stmt-key (c-lang-var c-opt-block-stmt-key))
 
 ;; Statement keywords followed by an expression or nothing.
@@ -983,8 +981,8 @@ are parsed.")
 ;; expressions.
 (c-lang-defconst c-any-class-key
   all (c-make-keywords-re t
-	(c-lang-var c-class-kwds)
-	(c-lang-var c-inexpr-class-kwds)))
+	(append (c-lang-var c-class-kwds)
+		(c-lang-var c-inexpr-class-kwds))))
 (c-lang-defconst c-any-class-key	; ObjC needs some tuning of the regexp.
   objc (concat "@" (c-lang-var c-any-class-key)))
 (c-lang-defvar c-any-class-key (c-lang-var c-any-class-key))
@@ -994,9 +992,9 @@ are parsed.")
 ;; block.
 (c-lang-defconst c-decl-block-key
   all (c-make-keywords-re t
-	(c-lang-var c-class-kwds)
-	(c-lang-var c-other-decl-block-kwds)
-	(c-lang-var c-inexpr-class-kwds))
+	(append (c-lang-var c-class-kwds)
+		(c-lang-var c-other-decl-block-kwds)
+		(c-lang-var c-inexpr-class-kwds)))
   ;; ObjC needs some tuning of the regexp.
   objc (concat "@" (c-lang-var c-decl-block-key)))
 (c-lang-defvar c-decl-block-key (c-lang-var c-decl-block-key))

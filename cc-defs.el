@@ -792,19 +792,18 @@ This function does not do any hidden buffer changes."
   ;; that is dereferenced, since it's an alias in Emacs.
   (c-put-font-lock-face from to font-lock-reference-face))
 
-(defun c-make-keywords-re (adorn &rest lists)
-  "Make a regexp that matches all the strings in all the lists.
-Duplicates in the lists are removed.  The regexp may contain zero or
+(defun c-make-keywords-re (adorn list)
+  "Make a regexp that matches all the strings the list.
+Duplicates in the list are removed.  The regexp may contain zero or
 more submatch expressions.  If ADORN is non-nil there will be at least
 one submatch which matches the whole keyword, and the regexp will also
 not match a prefix of any identifier.  Adorned regexps cannot be
 appended."
-  (setq lists (delete-duplicates (apply 'append (nconc lists '(nil)))
-				 :test 'string-equal))
-  (if lists
-      (let ((re (c-regexp-opt lists)))
+  (setq list (delete-duplicates list :test 'string-equal))
+  (if list
+      (let ((re (c-regexp-opt list)))
 	;; Add our own grouping parenthesis around re instead of
-	;; passing adorn to regexp-opt, since it in XEmacs makes the
+	;; passing adorn to `regexp-opt', since in XEmacs it makes the
 	;; top level grouping "shy".
 	(if adorn
 	    (concat "\\(" re "\\)"
