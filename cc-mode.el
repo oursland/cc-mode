@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.197 $
-;; Last Modified:   $Date: 1994-01-21 22:36:03 $
+;; Version:         $Revision: 3.198 $
+;; Last Modified:   $Date: 1994-01-24 20:06:52 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-21 22:36:03 $|$Revision: 3.197 $|
+;; |$Date: 1994-01-24 20:06:52 $|$Revision: 3.198 $|
 
 ;;; Code:
 
@@ -566,6 +566,44 @@ supported list, along with the values for this variable:
 	(define-key c-mode-map "]"     'c-tame-insert)
 	(define-key c-mode-map "("     'c-tame-insert)
 	(define-key c-mode-map ")"     'c-tame-insert)))
+  ;; FSF Emacs 19 defines menus in the mode map
+  (if (memq 'FSF c-emacs-features)
+      (progn
+	(define-key c-mode-map [menu-bar] (make-sparse-keymap))
+
+	(define-key c-mode-map [menu-bar c]
+	  (cons "C/C++" (make-sparse-keymap "C/C++")))
+
+	(define-key c-mode-map [menu-bar c comment-region]
+	  '("Comment Out Region" . comment-region))
+	(define-key c-mode-map [menu-bar c c-macro-expand]
+	  '("Macro Expand Region" . c-macro-expand))
+	(define-key c-mode-map [menu-bar c c-backslash-region]
+	  '("Backslashify" . c-macroize-region))
+	(define-key c-mode-map [menu-bar c indent-exp]
+	  '("Indent Expression" . c-indent-exp))
+	(define-key c-mode-map [menu-bar c indent-line]
+	  '("Indent Line" . c-indent-command))
+	(define-key c-mode-map [menu-bar c fill]
+	  '("Fill Comment Paragraph" . c-fill-paragraph))
+	(define-key c-mode-map [menu-bar c up]
+	  '("Up Conditional" . c-up-conditional))
+	(define-key c-mode-map [menu-bar c backward]
+	  '("Backward Conditional" . c-backward-conditional))
+	(define-key c-mode-map [menu-bar c forward]
+	  '("Forward Conditional" . c-forward-conditional))
+	(define-key c-mode-map [menu-bar c backward-stmt]
+	  '("Backward Statement" . c-beginning-of-statement))
+	(define-key c-mode-map [menu-bar c forward-stmt]
+	  '("Forward Statement" . c-end-of-statement))
+
+	;; I do not know how to make FSF Emacs pop up a menu on 3rd
+	;; button down.
+	)
+    ;; in Lucid 19, we want the menu to popup when the 3rd button is
+    ;; hit
+    (if (memq 'Lucid c-emacs-features)
+	(define-key c-mode-map 'button3 'c-popup-menu)))
   )
 
 (defvar c++-mode-map ()
@@ -698,7 +736,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.197 $
+cc-mode Revision: $Revision: 3.198 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -729,7 +767,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.197 $
+cc-mode Revision: $Revision: 3.198 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -788,7 +826,14 @@ Key bindings:
 	   (setq comment-indent-function 'c-comment-indent))
     (make-local-variable 'comment-indent-hook)
     (setq comment-indent-hook 'c-comment-indent))
-  ;; hack auto-hungry designators into mode-line-format, but do it
+  ;; put C menu into menubar for Lucid 19. I think this happens
+  ;; automatically for FSF 19.
+  (if (memq 'Lucid c-emacs-features)
+      (and current-menubar
+	   (progn
+	     (set-buffer-menubar default-menubar)
+	     (add-menu nil "C/C++" c-mode-menu))))
+  ;; put auto-hungry designators into mode-line-format, but do it
   ;; only once
   (and (listp mode-line-format)
        (memq major-mode '(c++-mode c-mode))
@@ -2988,7 +3033,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.197 $"
+(defconst c-version "$Revision: 3.198 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3043,43 +3088,28 @@ region."
   (c-keep-region-active))
 
 
-;; menus
-(if (memq 'FSF c-emacs-features)
-    (progn
-      (define-key c-mode-map [menu-bar] (make-sparse-keymap))
+;; menus for Lucid
+(defvar c-mode-menu
+  '(["Comment Out Region"     comment-region (mark)]
+    ["Macro Expand Region"    c-macro-expand (mark)]
+    ["Backslashify"           c-macroize-region (mark)]
+    ["Indent Expression"      c-indent-exp
+     (memq (following-char) '(?\( ?\[ ?\{))]
+    ["Indent Line"            c-indent-command t]
+    ["Fill Comment Paragraph" c-fill-paragraph t]
+    ["Up Conditional"         c-up-conditional t]
+    ["Backward Conditional"   c-backward-conditional t]
+    ["Forward Conditional"    c-forward-conditional t]
+    ["Backward Statement"     c-beginning-of-statement t]
+    ["Forward Statement"      c-end-of-statement t]
+    )
+  "Menu for C/C++ modes.")
 
-      (define-key c-mode-map [menu-bar c]
-	(cons "C" (make-sparse-keymap "C")))
-
-      (define-key c-mode-map [menu-bar c comment-region]
-	'("Comment Out Region" . comment-region))
-      (define-key c-mode-map [menu-bar c c-macro-expand]
-	'("Macro Expand Region" . c-macro-expand))
-      (define-key c-mode-map [menu-bar c c-backslash-region]
-	'("Backslashify" . c-backslash-region))
-      (define-key c-mode-map [menu-bar c indent-exp]
-	'("Indent Expression" . indent-c-exp))
-      (define-key c-mode-map [menu-bar c indent-line]
-	'("Indent Line" . c-indent-command))
-      (define-key c-mode-map [menu-bar c fill]
-	'("Fill Comment Paragraph" . c-fill-paragraph))
-      (define-key c-mode-map [menu-bar c up]
-	'("Up Conditional" . c-up-conditional))
-      (define-key c-mode-map [menu-bar c backward]
-	'("Backward Conditional" . c-backward-conditional))
-      (define-key c-mode-map [menu-bar c forward]
-	'("Forward Conditional" . c-forward-conditional))
-      (define-key c-mode-map [menu-bar c backward-stmt]
-	'("Backward Statement" . c-beginning-of-statement))
-      (define-key c-mode-map [menu-bar c forward-stmt]
-	'("Forward Statement" . c-end-of-statement))
-      )
-  (if (memq 'Lucid c-emacs-features)
-      (progn
-	;; TBD: What menus should be used in Lucid?
-	)
-    ))
-
+(defun c-popup-menu (e)
+  "Pops up the C/C++ menu."
+  (interactive "@e")
+  (popup-menu (cons "C/C++ Mode Commands" c-mode-menu)))
+    
 
 ;; fsets for compatibility with BOCM
 (fset 'electric-c-brace      'c-electric-brace)
