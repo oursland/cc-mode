@@ -1889,6 +1889,12 @@ for details about them.
 If the offset is a vector, its first element sets the absolute
 indentation column, which will override any relative indentation.
 
+@comment FIXME: Ought to be more detailed here: The overriding only
+@comment applies to relative indentation of surrounding structures but
+@comment not nested ones.  Such an explanation would require that we go
+@comment into details what this nesting is about, which seems out of
+@comment scope here.
+
 @vindex c-strict-syntax-p
 @vindex strict-syntax-p (c-)
 The offset can also be a list, in which case it is evaluated recursively
