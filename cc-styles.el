@@ -238,16 +238,20 @@ the existing style.")
 			 (assq langelem c-offsets-alist))
 	      (c-set-offset langelem offset))
 	    )))
-       val))
+       (if dont-override (reverse val) val)))
      ;; second special variable
      ((eq attr 'c-special-indent-hook)
       (if (eq c-special-indent-hook 'set-from-style)
 	  (setq c-special-indent-hook nil))
-      (if (listp val)
-	  (while val
-	    (add-hook 'c-special-indent-hook (car val))
-	    (setq val (cdr val)))
-	(add-hook 'c-special-indent-hook val)))
+      (let ((add-func (if dont-override
+			  (lambda (func)
+			    (unless (memq func c-special-indent-hook)
+			      (add-hook 'c-special-indent-hook func t)))
+			(lambda (func)
+			  (add-hook 'c-special-indent-hook func)))))
+	(if (listp val)
+	    (mapcar add-func (if dont-override (reverse val) val))
+	  (funcall add-func val))))
      ;; all other variables
      (t (if (or (not dont-override)
 		(not (memq attr c-style-variables))
@@ -255,32 +259,24 @@ the existing style.")
 	    (set attr val))))
     ))
 
-(defun c-set-style-2 (style basestyles dont-override)
-  ;; Recursively set the base style.  If no base style is given, the
-  ;; default base style is "user" (a.k.a. "cc-mode") and the recursion
-  ;; stops.  Be sure to detect loops.
+(defun c-get-style-variables (style basestyles)
+  ;; Return all variables in a style by resolving inheritances.
   (let ((vars (cdr (or (assoc (downcase style) c-style-alist)
 		       (assoc (upcase style) c-style-alist)
 		       (assoc style c-style-alist)
-		       (error "Undefined style: %s" style))))
-	base)
-    (if (stringp (car vars))
-	(setq base (downcase (car vars))
-	      vars (cdr vars))
-      (setq base "user"))
-    (when dont-override
-      (mapcar (lambda (conscell)
-		(c-set-style-1 conscell dont-override))
-	      vars))
-    (when (not (string-equal style "user"))
-      (if (memq base basestyles)
-	  (error "Style loop detected: %s in %s" base basestyles))
-      (c-set-style-2 base (cons base basestyles) dont-override))
-    (unless dont-override
-      (mapcar (lambda (conscell)
-		(c-set-style-1 conscell dont-override))
-	      vars))))
-    
+		       (error "Undefined style: %s" style)))))
+    (if (string-equal style "user")
+	(copy-list vars)
+      (let ((base (if (stringp (car vars))
+		      (prog1
+			  (downcase (car vars))
+			(setq vars (cdr vars)))
+		    "user")))
+	(if (memq base basestyles)
+	    (error "Style loop detected: %s in %s" base basestyles))
+	(nconc (c-get-style-variables base (cons base basestyles))
+	       (copy-list vars))))))
+
 (defvar c-set-style-history nil)
 
 ;;;###autoload
@@ -294,10 +290,14 @@ The variable `c-indentation-style' always contains the buffer's current
 style name.
 
 If the optional argument DONT-OVERRIDE is non-nil, no style variables
-will be overridden.  I.e. in the case of `c-offsets-alist', syntactic
-symbols will only be added, not overridden, and in the case of all
-other style variables, only those set to 'set-from-style can be
-reassigned."
+that already have values will be overridden.  I.e. in the case of
+`c-offsets-alist', syntactic symbols will only be added, and in the
+case of all other style variables, only those set to `set-from-style'
+will be reassigned.
+
+Obviously, specifying DONT-OVERRIDE is useful mainly when the initial
+style is chosen for a CC Mode buffer by a major mode.  Since this is
+done internally by CC Mode, there's hardly ever a reason to use it."
   (interactive (list (let ((completion-ignore-case t)
 			   (prompt (format "Which %s indentation style? "
 					   mode-name)))
@@ -305,7 +305,12 @@ reassigned."
 					(cons c-indentation-style 0)
 					'c-set-style-history))))
   (c-initialize-builtin-style)
-  (c-set-style-2 stylename nil dont-override)
+  (let ((vars (c-get-style-variables stylename nil)))
+    (mapcar (lambda (elem)
+	      (c-set-style-1 elem dont-override))
+	    ;; Need to go through the variables backwards when we
+	    ;; don't override.
+	    (if dont-override (nreverse vars) vars)))
   (setq c-indentation-style stylename)
   (c-keep-region-active))
 
