@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.284 $
-;; Last Modified:   $Date: 1994-03-11 17:43:09 $
+;; Version:         $Revision: 3.285 $
+;; Last Modified:   $Date: 1994-03-11 23:18:33 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-11 17:43:09 $|$Revision: 3.284 $|
+;; |$Date: 1994-03-11 23:18:33 $|$Revision: 3.285 $|
 
 ;;; Code:
 
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.284 $
+cc-mode Revision: $Revision: 3.285 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.284 $
+cc-mode Revision: $Revision: 3.285 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1530,8 +1530,9 @@ preserving the comment indentation or line-starting decorations."
 	      )))
       ;; else C style comments
       (if (or first-line
-	      ;; t if we enter a comment between start of function and this line.
-	      (eq (calculate-c-indent) t)
+	      ;; t if we enter a comment between start of function and
+	      ;; this line.
+	      (eq (c-in-literal) 'c)
 	      ;; t if this line contains a comment starter.
 	      (setq first-line
 		    (save-excursion
@@ -1562,36 +1563,28 @@ preserving the comment indentation or line-starting decorations."
 
 			    ;; How shall we decide where the end of the
 			    ;; fill-prefix is?
-			    ;; calculate-c-indent-within-comment bases its value
-			    ;; on the indentation of previous lines; if they're
-			    ;; indented specially, it could return a column
-			    ;; that's well into the current line's text.  So
-			    ;; we'll take at most that many space, tab, or *
-			    ;; characters, and use that as our fill prefix.
-			    (let ((max-prefix-end
-				   (progn
-				     (move-to-column
-				      (calculate-c-indent-within-comment t)
-				      t)
-				     (point))))
+			    (progn
 			      (beginning-of-line)
-			      (skip-chars-forward " \t*" max-prefix-end)
+			      (skip-chars-forward " \t*" (c-point 'eol))
 			      (point)))
 
-			 ;; If the comment is only one line followed by a blank
-			 ;; line, calling move-to-column above may have added
-			 ;; some spaces and tabs to the end of the line; the
-			 ;; fill-paragraph function will then delete it and the
-			 ;; newline following it, so we'll lose a blank line
-			 ;; when we shouldn't.  So delete anything
-			 ;; move-to-column added to the end of the line.  We
-			 ;; record the line width instead of the position of the
-			 ;; old line end because move-to-column might break a
-			 ;; tab into spaces, and the new characters introduced
-			 ;; there shouldn't be deleted.
+			 ;; If the comment is only one line followed
+			 ;; by a blank line, calling move-to-column
+			 ;; above may have added some spaces and tabs
+			 ;; to the end of the line; the fill-paragraph
+			 ;; function will then delete it and the
+			 ;; newline following it, so we'll lose a
+			 ;; blank line when we shouldn't.  So delete
+			 ;; anything move-to-column added to the end
+			 ;; of the line.  We record the line width
+			 ;; instead of the position of the old line
+			 ;; end because move-to-column might break a
+			 ;; tab into spaces, and the new characters
+			 ;; introduced there shouldn't be deleted.
 
-			 ;; If you can see a better way to do this, please make
-			 ;; the change.  This seems very messy to me.
+			 ;; If you can see a better way to do this,
+			 ;; please make the change.  This seems very
+			 ;; messy to me.
 			 (delete-region (progn (move-to-column line-width)
 					       (point))
 					(progn (end-of-line) (point))))))))
@@ -1608,18 +1601,20 @@ preserving the comment indentation or line-starting decorations."
 		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
 		(chars-to-delete 0))
 	    (save-restriction
-	      ;; Don't fill the comment together with the code following it.
-	      ;; So temporarily exclude everything before the comment start,
-	      ;; and everything after the line where the comment ends.
-	      ;; If comment-start-place is non-nil, the comment starter is there.
-	      ;; Otherwise, point is inside the comment.
+	      ;; Don't fill the comment together with the code
+	      ;; following it.  So temporarily exclude everything
+	      ;; before the comment start, and everything after the
+	      ;; line where the comment ends.  If comment-start-place
+	      ;; is non-nil, the comment starter is there.  Otherwise,
+	      ;; point is inside the comment.
 	      (narrow-to-region (save-excursion
 				  (if comment-start-place
 				      (goto-char comment-start-place)
 				    (search-backward "/*"))
-				  ;; Protect text before the comment start 
-				  ;; by excluding it.  Add spaces to bring back 
-				  ;; proper indentation of that point.
+				  ;; Protect text before the comment
+				  ;; start by excluding it.  Add
+				  ;; spaces to bring back proper
+				  ;; indentation of that point.
 				  (let ((column (current-column)))
 				    (prog1 (point)
 				      (setq chars-to-delete column)
@@ -1637,8 +1632,9 @@ preserving the comment indentation or line-starting decorations."
 		(goto-char (point-min))
 		(if (> chars-to-delete 0)
 		    (delete-region (point) (+ (point) chars-to-delete)))
-		;; Find the comment ender (should be on last line of buffer,
-		;; given the narrowing) and don't leave it on its own line.
+		;; Find the comment ender (should be on last line of
+		;; buffer, given the narrowing) and don't leave it on
+		;; its own line.
 		(goto-char (point-max))
 		(forward-line -1)
 		(search-forward "*/" nil 'move)
@@ -3278,7 +3274,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.284 $"
+(defconst c-version "$Revision: 3.285 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
