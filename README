@@ -16,28 +16,15 @@ INTRODUCTION
 
 BYTE COMPILING
 
-    You must byte compile the CC Mode .el files.  For XEmacs 19.15 and 
-    Emacs 19.34, you should have a file called XXX.el in the CC Mode
-    distribution.  cd to the cc-mode directory that you just unpacked
-    and run:
+    You must byte compile the CC Mode .el files.  First, cd to the
+    directory you unpacked the files in.  For XEmacs 19.15, XEmacs
+    20.2 and Emacs 19.34, this can be any directory on your
+    load-path.  For Emacs 20 it must be $EMACSDIR/lisp/progmodes and
+    for XEmacs 20.3 it must be $EMACSDIR/lisp/cc-mode.
 
-    % $EMACS -batch -no-site-file -q -l XXX.el cc-*.el
+    Then, run the following at your shell prompt:
 
-    where $EMACS is either `emacs' or `xemacs'.
-
-    If you're upgrading the CC Mode 5 distribution in either XEmacs
-    20.3 or Emacs 20.0 or beyond, be sure to unpack the tarball in the 
-    same proper directory:
-
-    XEmacs: $EMACSDIR/lisp/cc-mode
-
-    Emacs:  $EMACSDIR/lisp/progmodes
-
-    then cd to that directory and run:
-
-    % $EMACS -batch -no-site-file -q cc-*.el
-
-    where $EMACS is either `emacs' or `xemacs'.
+    % $EMACS -batch -no-site-file -q -l cc-make.el cc-*.el
 
 MORE INFORMATION
 
