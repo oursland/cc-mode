@@ -266,8 +266,9 @@ the latest @ccmode{} release and may want to upgrade your copy.
 If you are upgrading an existing @ccmode{} installation, please see the
 @file{README} file for installation details.  @ccmode{} may not work
 with older versions of Emacs or XEmacs.  See the @ccmode{} release notes
-Web pages for the latest information on Emacs version and package
-compatibility (@pxref{Getting the Latest CC Mode Release}).
+at @uref{http://cc-mode.sourceforge.net} for the latest information on
+Emacs version and package compatibility (@pxref{Getting the Latest CC
+Mode Release}).
 
 @cindex @file{cc-mode-18.el} file
 @emph{Note that @ccmode{} no longer
@@ -4686,10 +4687,11 @@ in the @file{README} file.
 @ccmode{} is standard with all versions of Emacs since 19.34 and of
 XEmacs since 19.16.
 
+@cindex web site
 Due to release schedule skew, it is likely that all of these Emacsen
-have old versions of @ccmode{} and so should be upgraded.  Access to the 
+have old versions of @ccmode{} and so should be upgraded.  Access to the
 @ccmode{} source code, as well as more detailed information on Emacsen
-compatibility, etc. are all available via the Web at:
+compatibility, etc. are all available on the web site:
 @example
 @group
 
@@ -4697,12 +4699,6 @@ compatibility, etc. are all available via the Web at:
 
 @end group
 @end example
-
-@emph{Old URLs, including the FTP URLs, should no longer be used.}
-
-There are many files under these directories; you can pick up the entire
-distribution (named @code{cc-mode.tar.gz}; a gzip'd tar file), or any of
-the individual files, including PostScript documentation.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4733,18 +4729,18 @@ that case, we'd appreciate if you isolate the Emacs Lisp code that trigs
 the bug and include it in your report.
 
 @cindex bug report mailing list
-Bug reports are now sent to the following email addresses:
-@email{bug-cc-mode@@gnu.org} and @email{bug-gnu-emacs@@gnu.org}; the
-latter is mirrored on the Usenet newsgroup @code{gnu.emacs.bug}.  You
-can send other questions and suggestions (kudos? @t{;-)} to
-@email{bug-cc-mode@@gnu.org}.
+Bug reports are sent to @email{bug-cc-mode@@gnu.org}.  You can also send
+other questions and suggestions (kudos? @t{;-)} to that address.  It's a
+mailing list which you can join or browse an archive of; see the web
+site at @uref{http://cc-mode.sourceforge.net/} for further details.
 
 @cindex announcement mailing list
 If you want to get announcements of new @ccmode{} releases, send the
 word @emph{subscribe} in the body of a message to
-@email{cc-mode-announce-request@@lists.sourceforge.net}.  Announcements
-will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
-@code{comp.emacs} and @code{comp.emacs.xemacs}.
+@email{cc-mode-announce-request@@lists.sourceforge.net}.  It's possible
+to subscribe from the web site too.  Announcements will also be posted
+to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
+@code{comp.emacs.xemacs}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
