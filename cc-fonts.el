@@ -1,8 +1,9 @@
 ;;; cc-fonts.el --- font lock support for CC Mode
 
-;; Copyright (C) 2002 Free Software Foundation, Inc.
+;; Copyright (C) 2002, 03 Free Software Foundation, Inc.
 
-;; Authors:    2002- Martin Stjernholm
+;; Authors:    2003- Alan Mackenzie
+;;             2002- Martin Stjernholm
 ;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    07-Jan-2002
 ;; Version:    See cc-mode.el
@@ -81,7 +82,7 @@
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
 (cc-require 'cc-engine)
-;;(cc-require 'cc-awk); Removed 2003/6/10 to prevent cc-awk being loaded when
+(cc-require 'cc-awk); Removed 2003/6/10 to prevent cc-awk being loaded when
 ;;it's not needed.  There is now a (require 'cc-awk) in (defun awk-mode ..).
 
 ;; Avoid repeated loading through the eval-after-load directive in

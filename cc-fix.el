@@ -2,9 +2,9 @@
 
 ;; Copyright (C) 1985,1987,1992-2003 Free Software Foundation, Inc.
 
-;; Authors:    2000- Martin Stjernholm
-;;	       1998-1999 Barry A. Warsaw and Martin Stjernholm
-;;             1997 Barry A. Warsaw
+;; Authors:    2003- Alan Mackenzie
+;;             1998- Martin Stjernholm
+;;             1997-1999 Barry A. Warsaw
 ;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    03-Jul-1997 (as cc-mode-19.el)
 ;; Version:    See cc-mode.el
