@@ -50,34 +50,38 @@
 
 ;; Emacs 19.34 doesn't have a char-before function.  Here's it's Emacs
 ;; 20 definition.
-(defsubst char-before (&optional pos)
-  (if (not pos)
-      (setq pos (point)))
-  (char-after (1- pos)))
+(or (fboundp 'char-before)
+    (defsubst char-before (&optional pos)
+      (if (not pos)
+	  (setq pos (point)))
+      (char-after (1- pos))))
 
 ;; Emacs 19.34 doesn't have a functionp function.  Here's it's Emacs
 ;; 20 definition.
-(defun functionp (obj)
-  "Returns t if OBJ is a function, nil otherwise."
-  (cond
-   ((symbolp obj) (fboundp obj))
-   ((subrp obj))
-   ((compiled-function-p obj))
-   ((consp obj)
-    (if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
-   (t nil)))
+(or (fboundp 'functionp)
+    (defun functionp (obj)
+      "Returns t if OBJ is a function, nil otherwise."
+      (cond
+       ((symbolp obj) (fboundp obj))
+       ((subrp obj))
+       ((compiled-function-p obj))
+       ((consp obj)
+	(if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
+       (t nil))))
 
 ;; Emacs 19.34 doesn't have a when macro.  Here's it's Emacs 20
 ;; definition.
-(defmacro when (cond &rest body)
-  "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
-  (list 'if cond (cons 'progn body)))
+(or (fboundp 'when)
+    (defmacro when (cond &rest body)
+      "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
+      (list 'if cond (cons 'progn body))))
 
 ;; Emacs 19.34 doesn't have an unless macro.  Here's it's Emacs 20
 ;; definition.
-(defmacro unless (cond &rest body)
-  "(unless COND BODY...): if COND yields nil, do BODY, else return nil."
-  (cons 'if (cons cond (cons nil body))))
+(or (fboundp 'unless)
+    (defmacro unless (cond &rest body)
+      "(unless COND BODY...): if COND yields nil, do BODY, else return nil."
+      (cons 'if (cons cond (cons nil body)))))
 
 
 (provide 'cc-mode-19)
