@@ -364,7 +364,7 @@ that requires a literal mode spec at compile time."
 	      (cons '(syntax-table . t)
 		    text-property-default-nonsticky))))
     (setq text-property-default-nonsticky
-	  (cons '(c-<>-arg-start . t)
+	  (cons '(c-type . t)
 		text-property-default-nonsticky)))
 
   (c-clear-found-types)
