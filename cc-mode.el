@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.61 $
-;; Last Modified:   $Date: 1993-11-18 20:22:07 $
+;; Version:         $Revision: 3.62 $
+;; Last Modified:   $Date: 1993-11-18 21:40:56 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-18 20:22:07 $|$Revision: 3.61 $|
+;; |$Date: 1993-11-18 21:40:56 $|$Revision: 3.62 $|
 
 ;;; Code:
 
@@ -86,7 +86,7 @@ reported and the semantic symbol is ignored.")
   "*Amount of basic offset used by + and - symbols in `cc-offset-alist'.")
 (defvar cc-offsets-alist
   '((string                . +)
-    (c                     . +)
+    (c                     . cc-lineup-C-comments)
     (defun-open            . 0)
     (defun-close           . 0)
     (class-open            . 0)
@@ -197,7 +197,8 @@ Just an integer as value is equivalent to (<val> . 0)")
 then styles 1-3 are supported.  If this variable is non-nil, style 4
 only is supported.  Note that this currently has *no* effect on how
 comments are lined up or whether stars are inserted when C comments
-are auto-filled.
+are auto-filled.  In any case, you will still have to insert the stars
+manually.
 
  style 1:       style 2:       style 3:       style 4:
  /*             /*             /*             /*
@@ -487,7 +488,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.61 $
+  "Major mode for editing C++ code.  $Revision: 3.62 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -518,7 +519,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.61 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.62 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2211,7 +2212,7 @@ of the expression are preserved."
       ;; now we need to look at any special additional indentations
       (goto-char indent-point)
       ;; look for a comment only line
-      (if (looking-at "\\s *//\\|/\\*")
+      (if (looking-at "\\s *\\(//\\|/\\*\\)")
 	  (cc-add-semantics 'comment-intro))
       ;; return the semantics
       semantics)))
@@ -2330,6 +2331,26 @@ of the expression are preserved."
       (- (current-column) cs-curcol)
       )))
 
+(defun cc-lineup-C-comments (langelem)
+  ;; line up C block comment continuation lines
+  (save-excursion
+    (let ((stars (progn
+		   (beginning-of-line)
+		   (skip-chars-forward " \t")
+		   (if (looking-at "\\*\\*?")
+		       (- (match-end 0) (match-beginning 0))
+		     0))))
+      (goto-char (cdr langelem))
+      (back-to-indentation)
+      (if (re-search-forward "/\\*[ \t]*" (1- (cc-point 'eol)) t)
+	  (goto-char (+ (match-beginning 0)
+			(cond
+			 (cc-C-block-comments-indent-p 0)
+			 ((= stars 1) 1)
+			 ((= stars 2) 0)
+			 (t (- (match-end 0) (match-beginning 0)))))))
+      (current-column))))
+
 (defun cc-indent-for-comment (langelem)
   ;; support old behavior for comment indentation. we look at
   ;; cc-comment-only-line-offset to decide how to indent comment
@@ -2433,7 +2454,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.61 $"
+(defconst cc-version "$Revision: 3.62 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
