@@ -2,10 +2,6 @@
 
 	* Patch release 5.30.4.
 
-	* cc-fonts.el (c-nonbreakable-space-face): Remove the variable and
-	use an extra quoted face name instead.  All the emacsen flavors
-	handle that correctly.
-
 	* cc-defs.el (c-langelem-sym, c-langelem-pos, c-langelem-2nd-pos):
 	Added accessor functions for syntactic elements.
 
