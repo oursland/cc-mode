@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.74 $
-;; Last Modified:   $Date: 1993-11-20 21:22:42 $
+;; Version:         $Revision: 3.75 $
+;; Last Modified:   $Date: 1993-11-20 21:49:10 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-20 21:22:42 $|$Revision: 3.74 $|
+;; |$Date: 1993-11-20 21:49:10 $|$Revision: 3.75 $|
 
 ;;; Code:
 
@@ -488,7 +488,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.74 $
+  "Major mode for editing C++ code.  $Revision: 3.75 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -518,7 +518,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.74 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.75 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -634,13 +634,19 @@ Key bindings:
 
 
 ;; auto-newline/hungry delete key
-(defun cc-keep-region-active ()
-  ;; macro to keep region active in Emacs 19. Ignore any byte-compiler
-  ;; warnings you might see
+(defmacro cc-keep-region-active ()
+  ;; cut down on bytecompiler warnings
+  (` (and (interactive-p)
+	  (cc-make-region-active))))
+
+(defun cc-make-region-active ()
+  ;; do whatever is necessary to keep the region active. ignore
+  ;; byte-compiler warnings you might see
   (if (boundp 'zmacs-region-stays)
       (setq zmacs-region-stays t)
-   (if (boundp 'deactivate-mark)
-       (setq deactivate-mark (not mark-active)))))
+    (if (boundp 'deactivate-mark)
+	(setq deactivate-mark (not mark-active))
+      )))
 
 (defun cc-set-auto-hungry-state (auto-p hungry-p)
   ;; Set auto/hungry to state indicated by AUTO-P and HUNGRY-P, and
@@ -2319,7 +2325,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.74 $"
+(defconst cc-version "$Revision: 3.75 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
