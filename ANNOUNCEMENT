@@ -1,6 +1,7 @@
 Release Announcement
 CC Mode Version 5.30
 Martin Stjernholm <mailto:bug-cc-mode@gnu.org>
+Alan Mackenzie <mailto:bug-cc-mode@gnu.org> (AWK support)
 
 This message announces the availability of a new version of CC Mode,
 an Emacs and XEmacs mode for editing C (ANSI and K&R), C++,
