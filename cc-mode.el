@@ -5,7 +5,7 @@
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.26 $
+;; $Revision: 1.99 $
 ;;
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -114,7 +114,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 1.26 $
+  "Major mode for editing C++ code.  $Revision: 1.99 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1203,7 +1203,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.26 $"
+(defconst c++-version "$Revision: 1.99 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
