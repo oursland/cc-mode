@@ -10,13 +10,14 @@ Checklist for doing a release:
       Manually paste this into ChangeLog, then proofread.  Update.py
       could definitely be improved.
 
-    - Add `Release 5.xx' tag to ChangeLog using C-x a.  Release.py
+    - Add `Release 5.xx' tag to ChangeLog using C-x 4 a.  Release.py
       script looks for this.
 
     - Distill changes for NEWS file.
 
     - Proofread and update ANNOUNCEMENT, MANIFEST, NEWS, README for
-      the new release.
+      the new release.  Make sure the copyright statements in all
+      files are up-to-date.
 
     - Run the Release.py script to create all the tarballs and
       documentation: ./Release.py --package --docs XX
@@ -47,17 +48,17 @@ Checklist for doing a release:
       XX-1 to XX to RMS.  Sent just the tarball to SLB.  (see note
       above).
 
-    - Copy the Distrib files (except *.rmslb.*) to the Web site.
+    - Copy the Distrib files (except *.rmslb.*) to the web site.
 
     - Unpack copies of cc-mode-5.XX.tar.gz, cc-mode.info.tar.gz,
-      cc-mode.html.tar.gz, for Web access.
+      cc-mode.html.tar.gz, for web access.
 
     - Create symbolic links 
 
 	cc-mode.tar.gz -> cc-mode-5.XX.tar.gz
 	cc-mode -> cc-mode-5.XX
 
-    - Update the Web page, using distilled changes from the
+    - Update the web page, using distilled changes from the
       ANNOUNCEMENT file.
 
     - Send ANNOUNCEMENT file to cc-mode-announce@lists.sourceforge.net
