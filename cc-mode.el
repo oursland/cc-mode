@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.206 $
-;; Last Modified:   $Date: 1994-01-26 17:32:28 $
+;; Version:         $Revision: 3.207 $
+;; Last Modified:   $Date: 1994-01-26 17:36:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-26 17:32:28 $|$Revision: 3.206 $|
+;; |$Date: 1994-01-26 17:36:27 $|$Revision: 3.207 $|
 
 ;;; Code:
 
@@ -362,13 +362,8 @@ Only currently supported behavior is `alignleft'.")
 This variable has no effect under Emacs 19.  For details on why this
 is necessary under GNU Emacs 18, please refer to the texinfo manual.")
 
-(defconst c-style-alist
+(defvar c-style-alist
   '(("GNU"
-     ;(c-indent-level               .  2)
-     ;(c-argdecl-indent             .  5)
-     ;(c-brace-offset               .  0)
-     ;(c-label-offset               . -2)
-     ;(c-continued-statement-offset .  2)
      (c-basic-offset . 2)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -379,11 +374,6 @@ is necessary under GNU Emacs 18, please refer to the texinfo manual.")
 			 ))
      )
     ("K&R"
-     ;(c-indent-level               .  5)
-     ;(c-argdecl-indent             .  0)
-     ;(c-brace-offset               . -5)
-     ;(c-label-offset               . -5)
-     ;(c-continued-statement-offset .  5)
      (c-basic-offset . 5)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -394,11 +384,6 @@ is necessary under GNU Emacs 18, please refer to the texinfo manual.")
 			 ))
      )
     ("BSD"
-     ;(c-indent-level               .  4)
-     ;(c-argdecl-indent             .  4)
-     ;(c-brace-offset               . -4)
-     ;(c-label-offset               . -4)
-     ;(c-continued-statement-offset .  4)
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -409,12 +394,6 @@ is necessary under GNU Emacs 18, please refer to the texinfo manual.")
 			 ))
      )
     ("Stroustrup"
-     ;(c-indent-level               . 4)
-     ;(c-continued-statement-offset . 4)
-     ;(c-brace-offset               . -4)
-     ;(c-argdecl-indent             . 0)
-     ;(c-label-offset               . -4)
-     ;(c-auto-newline               . t)
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -424,11 +403,6 @@ is necessary under GNU Emacs 18, please refer to the texinfo manual.")
 			 ))
      )
     ("Whitesmith"
-     ;(c-indent-level               .  4)
-     ;(c-argdecl-indent             .  4)
-     ;(c-brace-offset               .  0)
-     ;(c-label-offset               . -4)
-     ;(c-continued-statement-offset .  4)
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -736,7 +710,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.206 $
+cc-mode Revision: $Revision: 3.207 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -767,7 +741,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.206 $
+cc-mode Revision: $Revision: 3.207 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3229,7 +3203,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.206 $"
+(defconst c-version "$Revision: 3.207 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
