@@ -132,6 +132,9 @@
 	    (put 'c-initialize-cc-mode initprop t)
 	    (c-initialize-builtin-style)
 	    (run-hooks 'c-initialization-hook)
+	    ;; Fix obsolete variables.
+	    (if (boundp 'c-comment-continuation-stars)
+		(setq c-block-comment-prefix c-comment-continuation-stars))
 	    (setq c-initialization-ok t))
 	;; Will try initialization hooks again if they failed.
 	(put 'c-initialize-cc-mode initprop c-initialization-ok)))
