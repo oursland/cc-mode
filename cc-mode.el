@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.217 $
-;; Last Modified:   $Date: 1994-01-27 20:49:18 $
+;; Version:         $Revision: 3.218 $
+;; Last Modified:   $Date: 1994-01-27 21:15:57 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-27 20:49:18 $|$Revision: 3.217 $|
+;; |$Date: 1994-01-27 21:15:57 $|$Revision: 3.218 $|
 
 ;;; Code:
 
@@ -731,7 +731,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.217 $
+cc-mode Revision: $Revision: 3.218 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -762,7 +762,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.217 $
+cc-mode Revision: $Revision: 3.218 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1443,7 +1443,8 @@ preserving the comment indentation or line-starting decorations."
 	  (save-excursion
 	    (beginning-of-line)
 	    ;; Move up to first line of this comment.
-	    (while (and (not (bobp)) (looking-at "[ \t]*//"))
+	    (while (and (not (bobp))
+			(looking-at "[ \t]*//"))
 	      (forward-line -1))
 	    (if (not (looking-at ".*//"))
 		(forward-line 1))
@@ -1451,24 +1452,18 @@ preserving the comment indentation or line-starting decorations."
 	    (re-search-forward "[ \t]*//[ \t]*")
 	    ;; Set the fill-prefix to be what all lines except the first
 	    ;; should start with.
-	    (let ((endcol (current-column)))
-	      (skip-chars-backward " \t")
-	      (setq fill-prefix
-		    (concat (make-string (- (current-column) 2) ?\ )
-			    "//"
-			    (make-string (- endcol (current-column)) ?\ ))))
+	    (setq fill-prefix (buffer-substring (match-beginning 0)
+						(match-end 0)))
 	    (save-restriction
 	      ;; Narrow down to just the lines of this comment.
-	      (narrow-to-region (point)
+	      (narrow-to-region (c-point 'bol)
 				(save-excursion
 				  (forward-line 1)
-				  (while (looking-at "[ \t]*//")
+				  (while (looking-at fill-prefix)
 				    (forward-line 1))
 				  (point)))
-	      (insert fill-prefix)
 	      (fill-paragraph arg)
-	      (delete-region (point-min)
-			     (+ (point-min) (length fill-prefix))))))
+	      )))
       ;; else C style comments
       (if (or first-line
 	      ;; t if we enter a comment between start of function and this line.
@@ -3247,7 +3242,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.217 $"
+(defconst c-version "$Revision: 3.218 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
