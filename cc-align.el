@@ -332,15 +332,28 @@ Works with: The `c' syntactic symbol."
 			     (if (looking-at c-current-comment-prefix)
 				 (- (match-end 0) (point))
 			       0)))
-	   (starterlen (save-excursion
-			 (goto-char (cdr langelem))
-			 (looking-at comment-start-skip)
-			 (- (save-excursion
-			      (goto-char (match-end 0))
-			      (skip-chars-backward " \t")
-			      (point))
-			    (or (match-end 1) (point))
-			    1)))	; Don't count the first '/'.
+	   (starterlen
+	    ;; Get the length of the comment starter, not including
+	    ;; the first '/'. We check if the comment prefix matched
+	    ;; on the current line matches the starter or if it
+	    ;; matches comment-start-skip, and choose whichever is
+	    ;; longest.
+	    (max (save-excursion
+		   (goto-char (1+ (cdr langelem)))
+		   (if (and (match-string 0)
+			    (looking-at (regexp-quote (match-string 0))))
+		       (- (match-end 0) (match-beginning 0))
+		     0))
+		 (save-excursion
+		   (goto-char (cdr langelem))
+		   (looking-at comment-start-skip)
+		   (- (or (match-end 1)
+			  (save-excursion
+			    (goto-char (match-end 0))
+			    (skip-chars-backward " \t")
+			    (point)))
+		      (point)
+		      1))))
 	   (langelem-col (save-excursion (c-langelem-col langelem))))
       (if (and (> starterlen 10) (zerop prefixlen))
 	  ;; The comment has a long starter and the line doesn't have
@@ -356,10 +369,13 @@ Works with: The `c' syntactic symbol."
 		;; starter.
 		(progn
 		  (goto-char (match-end 0))
-		  (if (looking-at "\\([ \t]+\\).+$")
-		      ;; Align with the text that hangs after the
-		      ;; comment starter.
-		      (goto-char (match-end 1)))
+		  ;; The following should not be necessary, since
+		  ;; comment-start-skip should match everything (i.e.
+		  ;; typically whitespace) that leads up to the text.
+		  ;;(if (looking-at "\\([ \t]+\\).+$")
+		  ;;    ;; Align with the text that hangs after the
+		  ;;    ;; comment starter.
+		  ;;    (goto-char (match-end 1)))
 		  (- (current-column) langelem-col))
 	      ;; How long is the comment starter?  if greater than the
 	      ;; length of the comment prefix, align left.  if less
@@ -369,8 +385,7 @@ Works with: The `c' syntactic symbol."
 		  (progn
 		    (goto-char (cdr langelem))
 		    (- (current-column) -1 langelem-col))
-		(goto-char (match-end 0))
-		(skip-chars-backward " \t")
+		(goto-char (+ (cdr langelem) starterlen 1))
 		(- (current-column) prefixlen langelem-col)))
 	  ;; Not on the second line in the comment.  If the previous
 	  ;; line has a nonempty comment prefix, align with it.
