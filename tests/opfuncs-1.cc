@@ -1,0 +1,4 @@
+Dum& Dum::operator== ()
+{
+}
+// foo
