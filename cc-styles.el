@@ -107,38 +107,55 @@
     ("whitesmith"
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
-     (c-offsets-alist . ((knr-argdecl-intro . +)
-			 (label . 0)
-			 (statement-cont . +)
+     ;; It's obvious that the CC Mode way of choosing anchor positions
+     ;; doesn't fit this style at all. :P
+     (c-offsets-alist . ((defun-open . +)
+			 (defun-close . c-lineup-whitesmith-in-block)
+			 (defun-block-intro . (add c-lineup-whitesmith-in-block
+						   c-indent-multi-line-block))
+			 (class-open . +)
+			 (class-close . +)
+			 (inline-open . +)
+			 (inline-close . c-lineup-whitesmith-in-block)
+			 (knr-argdecl-intro . +)
+			 (block-open . 0) ; Get indentation from `statement' instead.
+			 (block-close . c-lineup-whitesmith-in-block)
+			 (brace-list-open . +)
+			 (brace-list-close . c-lineup-whitesmith-in-block)
+			 (brace-list-intro . (add c-lineup-whitesmith-in-block
+						  c-indent-multi-line-block))
+			 (brace-list-entry . (add c-lineup-after-whitesmith-blocks
+						  c-indent-multi-line-block))
+			 (brace-entry-open . (add c-lineup-after-whitesmith-blocks
+						  c-indent-multi-line-block))
+			 (statement . (add c-lineup-after-whitesmith-blocks
+					   c-indent-multi-line-block))
+			 (statement-block-intro . (add c-lineup-whitesmith-in-block
+						       c-indent-multi-line-block))
 			 (substatement-open . +)
 			 (substatement-label . +)
-			 (block-open . +)
-			 (statement-block-intro . c-lineup-whitesmith-in-block)
-			 (block-close . c-lineup-whitesmith-in-block)
-			 (inline-open . +)
-			 (defun-open . +)
-			 (defun-block-intro . c-lineup-whitesmith-in-block)
-			 (defun-close . c-lineup-whitesmith-in-block)
-			 (brace-list-open . +)
-			 (brace-list-intro . c-lineup-whitesmith-in-block)
-			 (brace-entry-open . c-indent-multi-line-block)
-			 (brace-list-close . c-lineup-whitesmith-in-block)
-			 (class-open . +)
+			 (label . 0)
+			 (arglist-intro . (add c-lineup-whitesmith-in-block
+					       c-indent-multi-line-block))
+			 (arglist-cont . (add c-lineup-after-whitesmith-blocks
+					      c-indent-multi-line-block))
+			 (arglist-cont-nonempty . (add c-lineup-whitesmith-in-block
+						       c-indent-multi-line-block))
+			 (arglist-close . c-lineup-whitesmith-in-block)
 			 (inclass . c-lineup-whitesmith-in-block)
-			 (class-close . +)
-			 (inexpr-class . 0)
 			 (extern-lang-open . +)
-			 (inextern-lang . c-lineup-whitesmith-in-block)
-			 (extern-lang-close . +)
 			 (namespace-open . +)
-			 (innamespace . c-lineup-whitesmith-in-block)
-			 (namespace-close . +)
 			 (module-open . +)
-			 (inmodule . c-lineup-whitesmith-in-block)
-			 (module-close . +)
 			 (composition-open . +)
-			 (incomposition . c-lineup-whitesmith-in-block)
+			 (extern-lang-close . +)
+			 (namespace-close . +)
+			 (module-close . +)
 			 (composition-close . +)
+			 (inextern-lang . c-lineup-whitesmith-in-block)
+			 (innamespace . c-lineup-whitesmith-in-block)
+			 (inmodule . c-lineup-whitesmith-in-block)
+			 (incomposition . c-lineup-whitesmith-in-block)
+			 (inexpr-class . 0)
 			 ))
      )
     ("ellemtel"
@@ -459,7 +476,7 @@ and exists only for compatibility reasons."
 	      (setq c-offsets-alist (cons (cons symbol offset)
 					  c-offsets-alist))
 	    (c-benign-error "%s is not a valid syntactic symbol" symbol))))
-    (c-benign-error "Invalid indentation setting for symbol %s: %s"
+    (c-benign-error "Invalid indentation setting for symbol %s: %S"
 		    symbol offset))
   (c-keep-region-active))
 
