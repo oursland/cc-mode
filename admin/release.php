@@ -7,7 +7,7 @@
 <p>The current release is available in several forms.  You can download the
 entire source distribution, including the manual in texinfo format as an
 approximately <a
-href="http://download.sourceforge.net/cc-mode/cc-mode-5.26.tar.gz">150KB
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.27.tar.gz">150KB
 gzip'd tarball</a>.  You can also download the <a href="cc-mode/">individual
 files</a> of the current release.
 
