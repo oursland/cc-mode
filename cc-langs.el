@@ -278,6 +278,7 @@ appended."
 ;; It's assumed that at least one have a match when the regexp have
 ;; matched.
 (c-lang-defconst c-qualified-identifier-last-sym-match
+  all '(0)
   (c++ pike) (list (+ (c-lang-var c-symbol-key-depth)
 		      (* 2 (c-regexp-opt-depth
 			    (c-lang-var c-identifier-concat-key)))
