@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.161 $
-;; Last Modified:   $Date: 1995-03-04 00:32:27 $
+;; Version:         $Revision: 4.162 $
+;; Last Modified:   $Date: 1995-03-04 00:41:01 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-04 00:32:27 $|$Revision: 4.161 $|
+;; |$Date: 1995-03-04 00:41:01 $|$Revision: 4.162 $|
 
 ;;; Code:
 
@@ -296,7 +296,7 @@ Can contain an integer or a cons cell of the form:
 Where NON-ANCHORED-OFFSET is the amount of offset given to
 non-column-zero anchored comment-only lines, and ANCHORED-OFFSET is
 the amount of offset to give column-zero anchored comment-only lines.
-Just an integer as value is equivalent to (<val> . 0)")
+Just an integer as value is equivalent to (<val> . -1000).")
 
 (defvar c-block-comments-indent-p nil
   "*Specifies how to re-indent C style block comments.
@@ -419,7 +419,7 @@ useful for Emacs 19.")
 (defvar c-style-alist
   '(("GNU"
      (c-basic-offset . 2)
-     (c-comment-only-line-offset . 0)
+     (c-comment-only-line-offset . (0 . 0))
      (c-offsets-alist . ((statement-block-intro . +)
 			 (knr-argdecl-intro . 5)
 			 (substatement-open . +)
@@ -4479,7 +4479,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.161 $"
+(defconst c-version "$Revision: 4.162 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
