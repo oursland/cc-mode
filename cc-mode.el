@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.128 $
-;; Last Modified:   $Date: 1993-12-20 17:55:38 $
+;; Version:         $Revision: 3.129 $
+;; Last Modified:   $Date: 1993-12-21 14:37:01 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-20 17:55:38 $|$Revision: 3.128 $|
+;; |$Date: 1993-12-21 14:37:01 $|$Revision: 3.129 $|
 
 ;;; Code:
 
@@ -114,6 +114,8 @@ reported and the semantic symbol is ignored.")
     (member-init-cont      . 0)
     (inher-intro           . +)
     (inher-cont            . c-lineup-multi-inher)
+    ;;some people might like this behavior instead
+    ;;(block-open            . c-adaptive-block-open)
     (block-open            . 0)
     (block-close           . 0)
     (statement             . 0)
@@ -623,7 +625,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.128 $
+CC-MODE REVISION: $Revision: 3.129 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -656,7 +658,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.128 $
+CC-MODE REVISION: $Revision: 3.129 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2421,7 +2423,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (c-safe (progn (forward-sexp 2) t))
 		   (progn (c-forward-syntactic-ws)
 			  (>= (point) indent-point))))
-	    (c-add-semantics 'substatement placeholder))
+	    (c-add-semantics 'substatement placeholder)
+	    (if (= char-after-ip ?{)
+		(c-add-semantics 'block-open)))
 	   ;; CASE 7D: continued statement. find the accurate
 	   ;; beginning of statement or substatement
 	   (t
@@ -2522,13 +2526,16 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-semantics 'statement-cont (c-point 'boi)))
 	     ;; CASE 13.D: any old statement
 	     ((< (point) indent-point)
-	      (c-add-semantics 'statement (c-point 'boi)))
+	      (c-add-semantics 'statement (c-point 'boi))
+	      (if (= char-after-ip ?{)
+		  (c-add-semantics 'block-open)))
 	     ;; CASE 13.E: first statement in a block
-	     (t
-	      (goto-char containing-sexp)
-	      (if (/= (point) (c-point 'boi))
-		  (c-beginning-of-statement))
-	      (c-add-semantics 'statement-block-intro (c-point 'boi)))
+	     (t (goto-char containing-sexp)
+		(if (/= (point) (c-point 'boi))
+		    (c-beginning-of-statement))
+		(c-add-semantics 'statement-block-intro (c-point 'boi))
+		(if (= char-after-ip ?{)
+		    (c-add-semantics 'block-open)))
 	     )))
 	 ))				; end save-restriction
       ;; now we need to look at any langelem modifiers
@@ -2538,13 +2545,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
        ;; CASE M1: look for a comment only line
        ((looking-at "\\(//\\|/\\*\\)")
 	(c-add-semantics 'comment-intro))
-       ;; CASE M2: looking at a block-open brace, but make sure
-       ;; other brace open symbols aren't already on the list
-       ((and (= (following-char) ?{)
-	     (not (assq 'class-open semantics))
-	     (not (assq 'defun-open semantics))
-	     (not (assq 'inline-open semantics)))
-	(c-add-semantics 'block-open))
        )
       ;; return the semantics
       semantics)))
@@ -2683,6 +2683,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			 (t (- (match-end 0) (match-beginning 0)))))))
       (current-column))))
 
+(defun c-adaptive-block-open (langelem)
+  ;; when substatement is on semantics list, return negative
+  ;; c-basic-offset, otherwise return zero
+  (if (assq 'substatement semantics)
+      (- c-basic-offset)
+    0))
+
 (defun c-indent-for-comment (langelem)
   ;; support old behavior for comment indentation. we look at
   ;; c-comment-only-line-offset to decide how to indent comment
@@ -2784,7 +2791,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.128 $"
+(defconst c-version "$Revision: 3.129 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
