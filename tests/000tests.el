@@ -299,6 +299,7 @@
     "switch-5.cc"
     "switch-6.c"
     "switch-7.c"
+    "switch-8.java"
     "synch.java"
     "templates-1.cc"
     "templates-2.cc"
