@@ -75,6 +75,10 @@
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
 
+;; On older versions of Emacs, invoking awk-mode will cause the old
+;; awk-mode.el to get loaded.
+(if (memq 'syntax-properties c-emacs-features) (cc-require 'cc-awk))
+
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
 

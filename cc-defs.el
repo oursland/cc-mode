@@ -910,6 +910,13 @@ the value of the variable with that name.
 This function does not do any hidden buffer changes."
   (symbol-value (c-mode-symbol suffix)))
 
+(defsubst c-mode-is-new-awk-p ()
+  ;; Is the current mode the "new" awk mode?  It is important for
+  ;; (e.g.) the cc-engine functions do distinguish between the old and
+  ;; new awk-modes.
+  (and (c-major-mode-is 'awk-mode)
+       (memq 'syntax-properties c-emacs-features)))
+
 (defsubst c-got-face-at (pos faces)
   "Return non-nil if position POS in the current buffer has any of the
 faces in the list FACES.

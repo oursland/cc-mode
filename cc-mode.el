@@ -92,16 +92,6 @@
 (cc-require 'cc-align)
 (cc-require 'cc-menus)
 
-(defun c-mode-is-new-awk-p ()
-  (and (c-major-mode-is 'awk-mode)
-       (memq 'syntax-properties c-emacs-features)))
-;; Is the current mode the "new" awk mode?  It is important for (e.g.) the
-;; cc-engine functions do distinguish between the old and new awk-modes.
-
-;; On older versions of Emacs, invoking awk-mode will cause the old
-;; awk-mode.el to get loaded.
-(if (memq 'syntax-properties c-emacs-features) (cc-require 'cc-awk))
-
 ;; SILENCE the compiler.
 (cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs 20+
