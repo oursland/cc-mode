@@ -37,12 +37,13 @@
 ;;; Code:
 
 (eval-when-compile
-  (let ((load-path
-	 (if (and (boundp 'byte-compile-dest-file)
-		  (stringp byte-compile-dest-file))
-	     (cons (file-name-directory byte-compile-dest-file) load-path)
-	   load-path)))
-    (require 'cc-bytecomp)))
+  (or load-in-progress
+      (let ((load-path
+	     (if (and (boundp 'byte-compile-dest-file)
+		      (stringp byte-compile-dest-file))
+		 (cons (file-name-directory byte-compile-dest-file) load-path)
+	       load-path)))
+	(load "cc-bytecomp" nil t))))
 
 ;; `require' in XEmacs doesn't have the third NOERROR argument.
 (condition-case nil (require 'regexp-opt) (file-error nil))
