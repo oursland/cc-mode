@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-07 13:36:23 $
-;; Version:         $Revision: 2.32 $
+;; Last Modified:   $Date: 1992-05-07 15:28:54 $
+;; Version:         $Revision: 2.33 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-07 13:36:23 $|$Revision: 2.32 $|
+;; |$Date: 1992-05-07 15:28:54 $|$Revision: 2.33 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -152,7 +152,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.32 $
+  "Major mode for editing C++ code.  $Revision: 2.33 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -468,8 +468,14 @@ backward-delete-char-untabify."
 	  (c++-indent-line)
 	  (if (c++-auto-newline)
 	      (progn
-		;; (c++-auto-newline) may have done an auto-fill
-		(setq insertpos (- (point) 2))
+		;; c++-auto-newline may have done an auto-fill
+		(save-excursion
+		  (let ((here (make-marker)))
+		    (set-marker here (point))
+		    (goto-char (- (point) 2))
+		    (c++-indent-line)
+		    (setq insertpos (- (goto-char here) 2))
+		    (set-marker here nil)))
 		(c++-indent-line)))
 	  (save-excursion
 	    (if insertpos (goto-char (1+ insertpos)))
@@ -1428,7 +1434,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.32 $"
+(defconst c++-version "$Revision: 2.33 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
