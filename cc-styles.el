@@ -120,6 +120,7 @@
      (c-basic-offset   . 8)
      (c-offsets-alist  . ((substatement-open . 0)
 			  (inextern-lang . 0)
+			  (arglist-intro . +)
 			  ))
      (c-hanging-braces-alist . ((brace-list-open)
 				(brace-list-intro)
