@@ -62,11 +62,6 @@
 ;;				fontifying syntactically correct structures so
 ;;				that incorrect ones simply aren't fontified.
 ;;
-;; Special faces:
-;;
-;; c-doc-markup-face		Special markup in doc comments.
-;;				Overlaid over `c-doc-face'.
-;;
 ;; Some comments on the use of faces:
 ;;
 ;; o  `c-doc-face' is an alias for `font-lock-doc-string-face' in
@@ -523,12 +518,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				   (c-lang-const c-opt-identifier-concat-key)
 				   "[ \t\n\r\f\v]*"
 				   "\\)"
-				   (if (c-major-mode-is 'c++-mode)
-				       ;; Handle destructors and member
-				       ;; pointers.
-				       "\\([~*][ \t\n\r\f\v]*\\)?"
-				     "")
-				   (c-lang-const c-symbol-start))
+				   "\\("
+				   (c-lang-const c-opt-after-id-concat-key)
+				   "\\)")
 			  limit t)
 		    (unless (progn
 			      (goto-char (match-beginning 0))
