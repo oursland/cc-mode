@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.111 $
-;; Last Modified:   $Date: 1993-12-07 23:52:29 $
+;; Version:         $Revision: 3.112 $
+;; Last Modified:   $Date: 1993-12-08 19:52:06 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-07 23:52:29 $|$Revision: 3.111 $|
+;; |$Date: 1993-12-08 19:52:06 $|$Revision: 3.112 $|
 
 ;;; Code:
 
@@ -441,123 +441,107 @@ Emacs.")
   "Abbrev table in use in c-mode buffers.")
 (define-abbrev-table 'c-mode-abbrev-table ())
 
+(defun c-populate-map (map)
+  ;; put standard keybindings into MAP
+  ;; the following mappings correspond more or less directly to BOCM
+  (define-key map "{"         'c-electric-brace)
+  (define-key map "}"         'c-electric-brace)
+  (define-key map ";"         'c-electric-semi&comma)
+  (define-key map "#"         'c-electric-pound)
+  (define-key map ":"         'c-electric-colon)
+  (define-key map "\e\C-h"    'c-mark-function)
+  (define-key map "\e\C-q"    'c-indent-exp)
+  ;; TBD: implement these commands first
+  ;(define-key map "\ea"        'c-beginning-of-statement)
+  ;(define-key map "\ee"        'c-end-of-statement)
+  ;(define-key map "\eq"        'c-fill-paragraph)
+  ;(define-key map "\C-c\C-n"   'c-forward-conditional)
+  ;(define-key map "\C-c\C-p"   'c-backward-conditional)
+  ;(define-key map "\C-c\C-u"   'c-up-conditional)
+  (define-key map "\t"        'c-indent-command)
+  (define-key map "\177"      'c-electric-delete)
+  ;; these are new keybindings, with no counterpart to BOCM
+  (define-key map ","         'c-electric-semi&comma)
+  (define-key map "/"         'c-electric-slash)
+  (define-key map "*"         'c-electric-star)
+  (define-key map "\e\C-x"    'c-indent-defun)
+  (define-key map "\C-c\C-\\" 'c-macroize-region)
+  (define-key map "\C-c\C-a"  'c-toggle-auto-state)
+  (define-key map "\C-c\C-b"  'c-submit-bug-report)
+  (define-key map "\C-c\C-c"  'c-comment-region)
+  (define-key map "\C-c\C-d"  'c-down-block)
+  (define-key map "\C-c\C-h"  'c-toggle-hungry-state)
+  (define-key map "\C-c\C-o"  'c-set-offset)
+  (define-key map "\C-c\C-s"  'c-show-semantic-information)
+  (define-key map "\C-c\C-t"  'c-toggle-auto-hungry-state)
+  ;; TBD: this keybinding will conflict with c-up-conditional
+  (define-key map "\C-c\C-u"  'c-up-block)
+  (define-key map "\C-c\C-v"  'c-version)
+  (define-key map "\C-c\C-x"  'c-match-paren)
+  ;; only useful for C++
+  (if (eq major-mode 'c++-mode)
+      (define-key map "\C-c\C-;"  'c-scope-operator))
+  ;; old Emacsen need to tame certain characters
+  (if (memq 'v18 c-emacs-features)
+      (progn
+	(define-key map "\C-c'" 'c-tame-comments)
+	(define-key map "'"     'c-tame-insert)
+	(define-key map "["     'c-tame-insert)
+	(define-key map "]"     'c-tame-insert)
+	(define-key map "("     'c-tame-insert)
+	(define-key map ")"     'c-tame-insert)))
+  )
+  
 (defvar c-mode-map ()
   "Keymap used in c-mode buffers.")
 (if c-mode-map
     ()
   (setq c-mode-map (make-sparse-keymap))
-  (define-key c-mode-map "{"         'c-electric-brace)
-  (define-key c-mode-map "}"         'c-electric-brace)
-  (define-key c-mode-map ";"         'c-electric-semi&comma)
-  (define-key c-mode-map ","         'c-electric-semi&comma)
-  (define-key c-mode-map "#"         'c-electric-pound)
-  (define-key c-mode-map "/"         'c-electric-slash)
-  (define-key c-mode-map "*"         'c-electric-star)
-  (define-key c-mode-map ":"         'c-electric-colon)
-  (define-key c-mode-map "\t"        'c-indent-command)
-  (define-key c-mode-map "\177"      'c-electric-delete)
-  (define-key c-mode-map "\e\C-h"    'c-mark-function)
-  (define-key c-mode-map "\e\C-q"    'c-indent-exp)
-  (define-key c-mode-map "\e\C-x"    'c-indent-defun)
-  (define-key c-mode-map "\C-c\C-\\" 'c-macroize-region)
-  ;(define-key c-mode-map "\C-c\C-;"  'c-scope-operator)
-  (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
-  (define-key c-mode-map "\C-c\C-b"  'c-submit-bug-report)
-  (define-key c-mode-map "\C-c\C-c"  'c-comment-region)
-  (define-key c-mode-map "\C-c\C-d"  'c-down-block)
-  (define-key c-mode-map "\C-c\C-h"  'c-toggle-hungry-state)
-  (define-key c-mode-map "\C-c\C-o"  'c-set-offset)
-  (define-key c-mode-map "\C-c\C-s"  'c-show-semantic-information)
-  (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
-  (define-key c-mode-map "\C-c\C-u"  'c-up-block)
-  (define-key c-mode-map "\C-c\C-v"  'c-version)
-  (define-key c-mode-map "\C-c\C-x"  'c-match-paren)
-  (if (memq 'v18 c-emacs-features)
-      (progn
-	(define-key c-mode-map "\C-c'" 'c-tame-comments)
-	(define-key c-mode-map "'"     'c-tame-insert)
-	(define-key c-mode-map "["     'c-tame-insert)
-	(define-key c-mode-map "]"     'c-tame-insert)
-	(define-key c-mode-map "("     'c-tame-insert)
-	(define-key c-mode-map ")"     'c-tame-insert)))
-  )
+  (c-populate-map c-mode-map))
 
 (defvar c++-mode-map ()
   "Keymap used in c++-mode buffers.")
 (if c++-mode-map
     ()
   (setq c++-mode-map (make-sparse-keymap))
-  (define-key c++-mode-map "{"         'c-electric-brace)
-  (define-key c++-mode-map "}"         'c-electric-brace)
-  (define-key c++-mode-map ";"         'c-electric-semi&comma)
-  (define-key c++-mode-map ","         'c-electric-semi&comma)
-  (define-key c++-mode-map "#"         'c-electric-pound)
-  (define-key c++-mode-map "/"         'c-electric-slash)
-  (define-key c++-mode-map "*"         'c-electric-star)
-  (define-key c++-mode-map ":"         'c-electric-colon)
-  (define-key c++-mode-map "\t"        'c-indent-command)
-  (define-key c++-mode-map "\177"      'c-electric-delete)
-  (define-key c++-mode-map "\e\C-h"    'c-mark-function)
-  (define-key c++-mode-map "\e\C-q"    'c-indent-exp)
-  (define-key c++-mode-map "\e\C-x"    'c-indent-defun)
-  (define-key c++-mode-map "\C-c\C-\\" 'c-macroize-region)
-  (define-key c++-mode-map "\C-c\C-;"  'c-scope-operator)
-  (define-key c++-mode-map "\C-c\C-a"  'c-toggle-auto-state)
-  (define-key c++-mode-map "\C-c\C-b"  'c-submit-bug-report)
-  (define-key c++-mode-map "\C-c\C-c"  'c-comment-region)
-  (define-key c++-mode-map "\C-c\C-d"  'c-down-block)
-  (define-key c++-mode-map "\C-c\C-h"  'c-toggle-hungry-state)
-  (define-key c++-mode-map "\C-c\C-o"  'c-set-offset)
-  (define-key c++-mode-map "\C-c\C-s"  'c-show-semantic-information)
-  (define-key c++-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
-  (define-key c++-mode-map "\C-c\C-u"  'c-up-block)
-  (define-key c++-mode-map "\C-c\C-v"  'c-version)
-  (define-key c++-mode-map "\C-c\C-x"  'c-match-paren)
-  (if (memq 'v18 c-emacs-features)
-      (progn
-	(define-key c++-mode-map "\C-c'" 'c-tame-comments)
-	(define-key c++-mode-map "'"     'c-tame-insert)
-	(define-key c++-mode-map "["     'c-tame-insert)
-	(define-key c++-mode-map "]"     'c-tame-insert)
-	(define-key c++-mode-map "("     'c-tame-insert)
-	(define-key c++-mode-map ")"     'c-tame-insert)))
-  )
+  (c-populate-map c++-mode-map))
 
-(defvar c++-mode-syntax-table nil
-  "Syntax table used in c++-mode buffers.")
-(if c++-mode-syntax-table
-    ()
-  (setq c++-mode-syntax-table (make-syntax-table))
+(defun c-populate-syntax-table (table)
+  ;; Populate the syntax TABLE
   ;; DO NOT TRY TO SET _ (UNDERSCORE) TO WORD CLASS!
-  (modify-syntax-entry ?\\ "\\"    c++-mode-syntax-table)
-  (modify-syntax-entry ?+  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?-  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?=  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?%  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?<  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?>  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?&  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?|  "."     c++-mode-syntax-table)
-  (modify-syntax-entry ?\' "\""    c++-mode-syntax-table)
+  (modify-syntax-entry ?\\ "\\"    table)
+  (modify-syntax-entry ?+  "."     table)
+  (modify-syntax-entry ?-  "."     table)
+  (modify-syntax-entry ?=  "."     table)
+  (modify-syntax-entry ?%  "."     table)
+  (modify-syntax-entry ?<  "."     table)
+  (modify-syntax-entry ?>  "."     table)
+  (modify-syntax-entry ?&  "."     table)
+  (modify-syntax-entry ?|  "."     table)
+  (modify-syntax-entry ?\' "\""    table)
   ;; comment syntax
   (cond
+   ((eq major-mode 'c-mode)
+    (modify-syntax-entry ?/  ". 14"  table)
+    (modify-syntax-entry ?*  ". 23"  table))
+   ;; the rest are for C++'s dual comments
    ((memq '8-bit c-emacs-features)
     ;; Lucid emacs has the best implementation
-    (modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
+    (modify-syntax-entry ?/  ". 1456" table)
+    (modify-syntax-entry ?*  ". 23"   table)
+    (modify-syntax-entry ?\n "> b"    table))
    ((memq '1-bit c-emacs-features)
     ;; FSF19 does things differently, but we can work with it
-    (modify-syntax-entry ?/  ". 124b" c++-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
+    (modify-syntax-entry ?/  ". 124b" table)
+    (modify-syntax-entry ?*  ". 23"   table)
+    (modify-syntax-entry ?\n "> b"    table))
    (t
     ;; Vanilla GNU18 doesn't support mult-style comments.  We'll do
     ;; the best we can, but some strange behavior may be encountered.
     ;; PATCH or UPGRADE!
-    (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"  c++-mode-syntax-table)
-    (modify-syntax-entry ?\n ">"     c++-mode-syntax-table))
+    (modify-syntax-entry ?/  ". 124" table)
+    (modify-syntax-entry ?*  ". 23"  table)
+    (modify-syntax-entry ?\n ">"     table))
    ))
 
 (defvar c-mode-syntax-table nil
@@ -565,20 +549,14 @@ Emacs.")
 (if c-mode-syntax-table
     ()
   (setq c-mode-syntax-table (make-syntax-table))
-  ;; DO NOT TRY TO SET _ (UNDERSCORE) TO WORD CLASS!
-  (modify-syntax-entry ?\\ "\\"    c-mode-syntax-table)
-  (modify-syntax-entry ?+  "."     c-mode-syntax-table)
-  (modify-syntax-entry ?-  "."     c-mode-syntax-table)
-  (modify-syntax-entry ?=  "."     c-mode-syntax-table)
-  (modify-syntax-entry ?%  "."     c-mode-syntax-table)
-  (modify-syntax-entry ?<  "."     c-mode-syntax-table)
-  (modify-syntax-entry ?>  "."     c-mode-syntax-table)
-  (modify-syntax-entry ?&  "."     c-mode-syntax-table)
-  (modify-syntax-entry ?|  "."     c-mode-syntax-table)
-  (modify-syntax-entry ?\' "\""    c-mode-syntax-table)
-  (modify-syntax-entry ?/  ". 14"  c-mode-syntax-table)
-  (modify-syntax-entry ?*  ". 23"  c-mode-syntax-table)
-  )
+  (c-populate-syntax-table c-mode-syntax-table))
+
+(defvar c++-mode-syntax-table nil
+  "Syntax table used in c++-mode buffers.")
+(if c++-mode-syntax-table
+    ()
+  (setq c++-mode-syntax-table (make-syntax-table))
+  (c-populate-syntax-table c++-mode-syntax-table))
 
 (defvar c-hungry-delete-key nil
   "Internal state of hungry delete key feature.")
@@ -636,7 +614,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.111 $
+CC-MODE REVISION: $Revision: 3.112 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -669,7 +647,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.111 $
+CC-MODE REVISION: $Revision: 3.112 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2754,7 +2732,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.111 $"
+(defconst c-version "$Revision: 3.112 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
