@@ -31,6 +31,15 @@
 ;; Do *not* load this file if you are using XEmacs 19.15, Emacs 20 or
 ;; XEmacs 20!
 
+;; To conditionally load this only in Emacs 19.34, add the following
+;; to your .emacs file, *before* you load CC Mode.
+;;
+;; (or (fboundp 'functionp)
+;;     (require 'cc-mode-19))
+
+;;; Code:
+
+
 (require 'advice)
 
 ;; Emacs 19.34 requires the POS argument to char-after.  Emacs 20
