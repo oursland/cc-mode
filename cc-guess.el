@@ -85,15 +85,21 @@ made from scratch."
   (interactive "P")
   (cc-guess-region (point-min) (point-max) accumulate))
 
+(defun cc-guess-install ()
+  "Set the indentation style from the last guessed style (`cc-guessed-style')."
+  (interactive)
+  (setq c-offsets-alist (cc-guess-merge-styles cc-guessed-style
+					       c-offsets-alist)))
+
 (defun cc-guess-region (start end &optional accumulate)
-  "Set `c-offset-alist' indentation values based on region of code.
+  "Set the indentation style by examining the indentation in a region of code.
 Every line of code in the region is examined and the indentation
 values of the various syntactic symbols in `c-offset-alist' are
 guessed.  Frequencies of use are taken into account, so minor
 inconsistencies in the indentation style shouldn't produce wrong
 guesses.
 
-The guessed style are put into `cc-guessed-style'.  It's also merged
+The guessed style is put into `cc-guessed-style'.  It's also merged
 into `c-offsets-alist'.  Guessed offsets takes precedence over
 existing ones on `c-offsets-alist'.
 
