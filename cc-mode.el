@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.233 $
-;; Last Modified:   $Date: 1995-07-20 21:17:42 $
+;; Version:         $Revision: 4.234 $
+;; Last Modified:   $Date: 1995-07-25 18:53:25 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-20 21:17:42 $|$Revision: 4.233 $|
+;; |$Date: 1995-07-25 18:53:25 $|$Revision: 4.234 $|
 
 ;;; Code:
 
@@ -2626,8 +2626,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (error "Cannot find start of balanced expression to indent."))
 	  (and (not end)
 	       (not shutup-p)
-	       (error "Cannot find end of balanced expression to
-	       indent."))
+	       (error "Cannot find end of balanced expression to indent."))
 	  (c-progress-init start end 'c-indent-exp)
 	  (setq progress-p t)
 	  (goto-char start)
@@ -4515,7 +4514,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.233 $"
+(defconst c-version "$Revision: 4.234 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
