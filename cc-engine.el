@@ -81,15 +81,14 @@
 
 ;; Make declarations for all the `c-lang-defvar' variables in cc-langs.
 
-(cc-eval-when-compile
-  (defmacro c-declare-lang-variables ()
-    `(progn
-       ,@(mapcan (lambda (init)
-		   `(,(if (elt init 2)
-			  `(defvar ,(car init) nil ,(elt init 2))
-			`(defvar ,(car init) nil))
-		     (make-variable-buffer-local ',(car init))))
-		 (cdr c-lang-variable-inits)))))
+(defmacro c-declare-lang-variables ()
+  `(progn
+     ,@(mapcan (lambda (init)
+		 `(,(if (elt init 2)
+			`(defvar ,(car init) nil ,(elt init 2))
+		      `(defvar ,(car init) nil))
+		   (make-variable-buffer-local ',(car init))))
+	       (cdr c-lang-variable-inits))))
 (c-declare-lang-variables)
 
 
@@ -913,20 +912,21 @@ This function does not do any hidden buffer changes."
 ;;
 ;; o  If a syntactic whitespace region contains anything but simple
 ;;    whitespace (i.e. space, tab and line breaks), the text property
-;;    c-in-sws is put over it.  At places where we have stopped within
-;;    that region there's also a c-is-sws text property.  That since
-;;    there typically are nested whitespace inside that must be
-;;    handled separately, e.g. whitespace inside a comment or cpp
-;;    directive.  Thus, from one point with c-is-sws it's safe to jump
-;;    to another point with that property within the same c-in-sws
-;;    region.  It can be likened to a ladder where c-in-sws marks the
-;;    bars and c-is-sws the rungs.
+;;    `c-in-sws' is put over it.  At places where we have stopped
+;;    within that region there's also a `c-is-sws' text property.
+;;    That since there typically are nested whitespace inside that
+;;    must be handled separately, e.g. whitespace inside a comment or
+;;    cpp directive.  Thus, from one point with `c-is-sws' it's safe
+;;    to jump to another point with that property within the same
+;;    `c-in-sws' region.  It can be likened to a ladder where
+;;    `c-in-sws' marks the bars and `c-is-sws' the rungs.
 ;;
-;; o  The c-is-sws property is put on the simple whitespace chars at a
-;;    "rung position" and also maybe on the first following char.  As
-;;    many characters as can be conveniently found in this range are
-;;    marked, but no assumption can be made that the whole range is
-;;    marked (it could be clobbered by later changes, for instance).
+;; o  The `c-is-sws' property is put on the simple whitespace chars at
+;;    a "rung position" and also maybe on the first following char.
+;;    As many characters as can be conveniently found in this range
+;;    are marked, but no assumption can be made that the whole range
+;;    is marked (it could be clobbered by later changes, for
+;;    instance).
 ;;
 ;;    Note that some part of the beginning of a sequence of simple
 ;;    whitespace might be part of the end of a preceding line comment
@@ -937,18 +937,28 @@ This function does not do any hidden buffer changes."
 ;;
 ;;    The reason to include the first following char is to cope with
 ;;    "rung positions" that doesn't have any ordinary whitespace.  If
-;;    c-is-sws is put on a token character it does not have c-in-sws
-;;    set simultaneously.  That's the only case when that can occur,
-;;    and the reason for not extending the c-in-sws region to cover it
-;;    is that the c-in-sws region could then be accidentally merged
-;;    with a following one if the token is only one character long.
+;;    `c-is-sws' is put on a token character it does not have
+;;    `c-in-sws' set simultaneously.  That's the only case when that
+;;    can occur, and the reason for not extending the `c-in-sws'
+;;    region to cover it is that the `c-in-sws' region could then be
+;;    accidentally merged with a following one if the token is only
+;;    one character long.
 ;;
-;; o  On buffer changes the c-in-sws and c-is-sws properties are
+;; o  On buffer changes the `c-in-sws' and `c-is-sws' properties are
 ;;    removed in the changed region.  If the change was inside
 ;;    syntactic whitespace that means that the "ladder" is broken, but
 ;;    a later call to `c-forward-sws' or `c-backward-sws' will use the
 ;;    parts on either side and use an ordinary search only to "repair"
 ;;    the gap.
+;;
+;;    Special care needs to be taken if a region is removed: If there
+;;    are `c-in-sws' on both sides of it which do not connect inside
+;;    the region then they can't be joined.  If e.g. a marked macro is
+;;    broken, syntactic whitespace inside the new text might be
+;;    marked.  If those marks would become connected with the old
+;;    `c-in-sws' range around the macro then we could get a ladder
+;;    with one end outside the macro and the other at some whitespace
+;;    within it.
 ;;
 ;; The main motivation for this system is to increase the speed in
 ;; skipping over the large whitespace regions that can occur at the
@@ -957,38 +967,115 @@ This function does not do any hidden buffer changes."
 ;; slower than using `forward-comment' straightforwardly, but speed is
 ;; not a significant factor there anyway.
 
-(defsubst c-invalidate-sws-region (beg end)
-  ;; Called from `after-change-functions'.  Note that if
-  ;; `c-forward-sws' or `c-backward-sws' are used outside
-  ;; `c-save-buffer-state' or similar then this will remove the cache
-  ;; properties right after they're added.
-  (remove-text-properties
-   beg
-   (save-excursion
-     ;; Remove the properties in any following simple ws up to and
-     ;; including the next line break, if there is any after the
-     ;; changed region.  This is necessary e.g. when a rung marked
-     ;; empty line is converted to a line comment by inserting "//"
-     ;; before the line break.  In that case the line break would keep
-     ;; the rung mark which could make a later `c-backward-sws' move
-     ;; into the line comment instead of over it.
-     (goto-char end)
-     (skip-chars-forward " \t\f\v")
-     (if (and (eolp) (not (eobp)))
-	 (1+ (point))
-       end))
-   '(c-in-sws nil c-is-sws nil)))
+;; Some debug tools to see where the special properties are put.  This
+;; debug code isn't as portable as the rest of CC Mode.
+; (defface c-debug-is-sws-face
+;   '((t (:background "GreenYellow")))
+;   "Debug face to mark the `c-is-sws' property.")
+; (defface c-debug-in-sws-face
+;   '((t (:underline t)))
+;   "Debug face to mark the `c-in-sws' property.")
+; (defun c-debug-add-face (beg end face)
+;   (let ((overlays (overlays-in beg end)) overlay)
+;     (while overlays
+;       (setq overlay (car overlays)
+; 	    overlays (cdr overlays))
+;       (when (eq (overlay-get overlay 'face) face)
+; 	(setq beg (min beg (overlay-start overlay))
+; 	      end (max end (overlay-end overlay)))
+; 	(delete-overlay overlay)))
+;     (overlay-put (make-overlay beg end) 'face face)))
+; (defun c-debug-remove-face (beg end face)
+;   (let ((overlays (overlays-in beg end)) overlay
+; 	(ol-beg beg) (ol-end end))
+;     (while overlays
+;       (setq overlay (car overlays)
+; 	    overlays (cdr overlays))
+;       (when (eq (overlay-get overlay 'face) face)
+; 	(setq ol-beg (min ol-beg (overlay-start overlay))
+; 	      ol-end (max ol-end (overlay-end overlay)))
+; 	(delete-overlay overlay)))
+;     (when (< ol-beg beg)
+;       (overlay-put (make-overlay ol-beg beg) 'face face))
+;     (when (> ol-end end)
+;       (overlay-put (make-overlay end ol-end) 'face face))))
+(defmacro c-debug-add-face (beg end face))
+(defmacro c-debug-remove-face (beg end face))
 
 (defmacro c-debug-sws-msg (&rest args)
   ;;`(message ,@args)
   )
+
+(defsubst c-put-is-sws (beg end)
+  (put-text-property beg end 'c-is-sws t)
+  (c-debug-add-face beg end 'c-debug-is-sws-face))
+
+(defsubst c-put-in-sws (beg end)
+  (put-text-property beg end 'c-in-sws t)
+  (c-debug-add-face beg end 'c-debug-in-sws-face))
+
+(defsubst c-put-is-and-in-sws (beg end)
+  (add-text-properties beg end '(c-is-sws t c-in-sws t))
+  (c-debug-add-face beg end 'c-debug-is-sws-face)
+  (c-debug-add-face beg end 'c-debug-in-sws-face))
+
+(defsubst c-remove-is-sws (beg end)
+  (remove-text-properties beg end '(c-is-sws nil))
+  (c-debug-remove-face beg end 'c-debug-is-sws-face))
+
+(defsubst c-remove-in-sws (beg end)
+  (remove-text-properties beg end '(c-in-sws nil))
+  (c-debug-remove-face beg end 'c-debug-in-sws-face))
+
+(defsubst c-remove-is-and-in-sws (beg end)
+  (remove-text-properties beg end '(c-is-sws nil c-in-sws nil))
+  (c-debug-remove-face beg end 'c-debug-is-sws-face)
+  (c-debug-remove-face beg end 'c-debug-in-sws-face))
+
+(defvar c-sws-separation nil)
+;; This variable is used to signal that a changed region wasn't
+;; continuously marked with `c-in-sws' before the change.
+
+(defsubst c-invalidate-sws-region-before (beg end)
+  ;; Called from `before-change-functions'.
+  (setq c-sws-separation (text-property-any beg end 'c-in-sws nil)))
+
+(defsubst c-invalidate-sws-region-after (beg end)
+  ;; Called from `after-change-functions'.  Note that if
+  ;; `c-forward-sws' or `c-backward-sws' are used outside
+  ;; `c-save-buffer-state' or similar then this will remove the cache
+  ;; properties right after they're added.
+
+  (save-excursion
+    ;; Adjust the end to remove the properties in any following simple
+    ;; ws up to and including the next line break, if there is any
+    ;; after the changed region. This is necessary e.g. when a rung
+    ;; marked empty line is converted to a line comment by inserting
+    ;; "//" before the line break. In that case the line break would
+    ;; keep the rung mark which could make a later `c-backward-sws'
+    ;; move into the line comment instead of over it.
+    (goto-char end)
+    (skip-chars-forward " \t\f\v")
+    (when (and (eolp) (not (eobp)))
+      (setq end (1+ (point)))))
+
+  (when (and c-sws-separation
+	     (= beg end)
+	     (get-text-property beg 'c-in-sws)
+	     (not (bobp))
+	     (get-text-property (1- beg) 'c-in-sws))
+    ;; Avoid that two separate `c-in-sws' ranges are merged to one.
+    (setq end (1+ end)))
+
+  (c-debug-sws-msg "c-invalidate-sws-region-after [%s..%s]" beg end)
+  (c-remove-is-and-in-sws beg end))
 
 (defun c-forward-sws ()
   ;; Used by `c-forward-syntactic-ws' to implement the unbounded search.
 
   (let (;; `rung-pos' is set to a position as early as possible in the
 	;; unmarked part of the simple ws region.
-	(rung-pos (point)) next-rung-pos rung-end-pos
+	(rung-pos (point)) next-rung-pos rung-end-pos last-put-in-sws-pos
 	rung-is-marked next-rung-is-marked simple-ws-end
 	;; `safe-start' is set when it's safe to cache the start position.
 	;; It's not set if we've initially skipped over comments and line
@@ -1024,13 +1111,13 @@ This function does not do any hidden buffer changes."
 		(when (and rung-is-marked
 			   (get-text-property (point) 'c-in-sws))
 
-		  ;; The following search is the main reason that c-in-sws and
-		  ;; c-is-sws aren't combined to one property.
+		  ;; The following search is the main reason that `c-in-sws'
+		  ;; and `c-is-sws' aren't combined to one property.
 		  (goto-char (next-single-property-change
 			      (point) 'c-in-sws nil (point-max)))
 		  (unless (get-text-property (point) 'c-is-sws)
-		    ;; If the c-in-sws region extended past the last c-is-sws
-		    ;; char we have to go back a bit.
+		    ;; If the `c-in-sws' region extended past the last
+		    ;; `c-is-sws' char we have to go back a bit.
 		    (or (get-text-property (1- (point)) 'c-is-sws)
 			(goto-char (previous-single-property-change
 				    (point) 'c-is-sws)))
@@ -1050,14 +1137,13 @@ This function does not do any hidden buffer changes."
 	      ;; the previous one to join with it if there is one, and try to
 	      ;; use the cache again.
 	      (c-debug-sws-msg
-	       "c-forward-sws extended rung with [%s..%s] (max %s)"
+	       "c-forward-sws extending rung with [%s..%s] (max %s)"
 	       (1+ rung-pos) (min (1+ (point)) (point-max)) (point-max))
-	      (put-text-property (1+ rung-pos)
-				 (min (1+ (point)) (point-max))
-				 'c-is-sws t)
-	      (put-text-property rung-pos
-				 (setq rung-pos (point))
-				 'c-in-sws t))
+	      (c-put-is-sws (1+ rung-pos)
+			    (min (1+ (point)) (point-max)))
+	      (c-put-in-sws rung-pos
+			    (setq rung-pos (point)
+				  last-put-in-sws-pos rung-pos)))
 
 	    (setq simple-ws-end (point))
 	    (c-forward-comments)
@@ -1123,21 +1209,18 @@ This function does not do any hidden buffer changes."
 	       (point-max))
 
 	      ;; Remove the properties for any nested ws that might be cached.
-	      ;; Only necessary for c-is-sws since c-in-sws will be set anyway.
-	      (remove-text-properties (1+ simple-ws-end)
-				      next-rung-pos
-				      '(c-is-sws nil))
+	      ;; Only necessary for `c-is-sws' since `c-in-sws' will be set
+	      ;; anyway.
+	      (c-remove-is-sws (1+ simple-ws-end) next-rung-pos)
 	      (unless (and rung-is-marked (= rung-pos simple-ws-end))
-		(put-text-property rung-pos
-				   (1+ simple-ws-end)
-				   'c-is-sws t)
+		(c-put-is-sws rung-pos
+			      (1+ simple-ws-end))
 		(setq rung-is-marked t))
-	      (put-text-property rung-pos
-				 (setq rung-pos (point))
-				 'c-in-sws t)
-	      (put-text-property next-rung-pos
-				 rung-end-pos
-				 'c-is-sws t))
+	      (c-put-in-sws rung-pos
+			    (setq rung-pos (point)
+				  last-put-in-sws-pos rung-pos))
+	      (c-put-is-sws next-rung-pos
+			    rung-end-pos))
 
 	  (c-debug-sws-msg
 	   "c-forward-sws not caching [%s..%s] - [%s..%s] (max %s)"
@@ -1152,15 +1235,36 @@ This function does not do any hidden buffer changes."
 	      (setq rung-pos (1- (next-single-property-change
 				  rung-is-marked 'c-is-sws nil rung-end-pos)))
 	    (setq rung-pos next-rung-pos))
-	  (setq safe-start t)
-	  )))))
+	  (setq safe-start t)))
+
+      ;; Make sure that the newly marked `c-in-sws' region doesn't connect to
+      ;; another one after the point (which might occur when editing inside a
+      ;; comment or macro).
+      (when (eq last-put-in-sws-pos (point))
+	(cond ((< last-put-in-sws-pos (point-max))
+	       (c-debug-sws-msg
+		"c-forward-sws clearing at %s for cache separation"
+		last-put-in-sws-pos)
+	       (c-remove-in-sws last-put-in-sws-pos
+				(1+ last-put-in-sws-pos)))
+	      (t
+	       ;; If at eob we have to clear the last character before the end
+	       ;; instead since the buffer might be narrowed and there might
+	       ;; be a `c-in-sws' after (point-max).  In this case it's
+	       ;; necessary to clear both properties.
+	       (c-debug-sws-msg
+		"c-forward-sws clearing thoroughly at %s for cache separation"
+		(1- last-put-in-sws-pos))
+	       (c-remove-is-and-in-sws (1- last-put-in-sws-pos)
+				       last-put-in-sws-pos))))
+      )))
 
 (defun c-backward-sws ()
   ;; Used by `c-backward-syntactic-ws' to implement the unbounded search.
 
   (let (;; `rung-pos' is set to a position as late as possible in the unmarked
 	;; part of the simple ws region.
-	(rung-pos (point)) next-rung-pos
+	(rung-pos (point)) next-rung-pos last-put-in-sws-pos
 	rung-is-marked simple-ws-beg cmt-skip-pos)
 
     ;; Skip simple horizontal ws and do a quick check on the preceding
@@ -1196,13 +1300,13 @@ This function does not do any hidden buffer changes."
 			   (not (bobp))
 			   (get-text-property (1- (point)) 'c-in-sws))
 
-		  ;; The following search is the main reason that c-in-sws and
-		  ;; c-is-sws aren't combined to one property.
+		  ;; The following search is the main reason that `c-in-sws'
+		  ;; and `c-is-sws' aren't combined to one property.
 		  (goto-char (previous-single-property-change
 			      (point) 'c-in-sws nil (point-min)))
 		  (unless (get-text-property (point) 'c-is-sws)
-		    ;; If the c-in-sws region extended past the first c-is-sws
-		    ;; char we have to go forward a bit.
+		    ;; If the `c-in-sws' region extended past the first
+		    ;; `c-is-sws' char we have to go forward a bit.
 		    (goto-char (next-single-property-change
 				(point) 'c-is-sws)))
 
@@ -1229,12 +1333,12 @@ This function does not do any hidden buffer changes."
 	      ;; the previous one to join with it if there is one, and try to
 	      ;; use the cache again.
 	      (c-debug-sws-msg
-	       "c-backward-sws extended rung with [%s..%s] (min %s)"
+	       "c-backward-sws extending rung with [%s..%s] (min %s)"
 	       rung-is-marked rung-pos (point-min))
-	      (add-text-properties rung-is-marked
-				   rung-pos
-				   '(c-is-sws t c-in-sws t))
-	      (setq rung-pos rung-is-marked))
+	      (c-put-is-and-in-sws rung-is-marked
+				   rung-pos)
+	      (setq rung-pos rung-is-marked
+		    last-put-in-sws-pos rung-pos))
 
 	    (c-backward-comments)
 	    (setq cmt-skip-pos (point))
@@ -1327,21 +1431,18 @@ This function does not do any hidden buffer changes."
 	       (point-min))
 
 	      ;; Remove the properties for any nested ws that might be cached.
-	      ;; Only necessary for c-is-sws since c-in-sws will be set anyway.
-	      (remove-text-properties (1+ next-rung-pos)
-				      simple-ws-beg
-				      '(c-is-sws nil))
+	      ;; Only necessary for `c-is-sws' since `c-in-sws' will be set
+	      ;; anyway.
+	      (c-remove-is-sws (1+ next-rung-pos) simple-ws-beg)
 	      (unless (and rung-is-marked (= simple-ws-beg rung-pos))
-		(put-text-property simple-ws-beg
-				   (min (1+ rung-pos) (point-max))
-				   'c-is-sws t)
+		(c-put-is-sws simple-ws-beg
+			      (min (1+ rung-pos) (point-max)))
 		(setq rung-is-marked t))
-	      (put-text-property (setq simple-ws-beg (point))
-				 rung-pos
-				 'c-in-sws t)
-	      (put-text-property (setq rung-pos simple-ws-beg)
-				 (1+ next-rung-pos)
-				 'c-is-sws t))
+	      (c-put-in-sws (setq simple-ws-beg (point)
+				  last-put-in-sws-pos simple-ws-beg)
+			    rung-pos)
+	      (c-put-is-sws (setq rung-pos simple-ws-beg)
+			    (1+ next-rung-pos)))
 
 	  (c-debug-sws-msg
 	   "c-backward-sws not caching [%s..%s] - [%s..%s] (min %s)"
@@ -1350,7 +1451,29 @@ This function does not do any hidden buffer changes."
 	   (point-min))
 	  (setq rung-pos next-rung-pos
 		simple-ws-beg (point))
-	  )))))
+	  ))
+
+      ;; Make sure that the newly marked `c-in-sws' region doesn't connect to
+      ;; another one before the point (which might occur when editing inside a
+      ;; comment or macro).
+      (when (eq last-put-in-sws-pos (point))
+	(cond ((< (point-min) last-put-in-sws-pos)
+	       (c-debug-sws-msg
+		"c-backward-sws clearing at %s for cache separation"
+		(1- last-put-in-sws-pos))
+	       (c-remove-in-sws (1- last-put-in-sws-pos)
+				last-put-in-sws-pos))
+	      ((> (point-min) 1)
+	       ;; If at bob and the buffer is narrowed, we have to clear the
+	       ;; character we're standing on instead since there might be a
+	       ;; `c-in-sws' before (point-min).  In this case it's necessary
+	       ;; to clear both properties.
+	       (c-debug-sws-msg
+		"c-backward-sws clearing thoroughly at %s for cache separation"
+		last-put-in-sws-pos)
+	       (c-remove-is-and-in-sws last-put-in-sws-pos
+				       (1+ last-put-in-sws-pos)))))
+      )))
 
 
 (defun c-on-identifier ()
@@ -2786,28 +2909,27 @@ brace."
        (< change-min-pos c-find-decl-syntactic-pos)
        (setq c-find-decl-syntactic-pos nil)))
 
-(cc-eval-when-compile
+(defmacro c-find-decl-prefix-search ()
   ;; Macro used inside `c-find-decl-spots'.  It ought to be a defsubst
   ;; or perhaps even a defun, but it contains lots of free variables
   ;; that refer to things inside `c-find-decl-spots'.
-  (defmacro c-find-decl-prefix-search ()
-    '(while (and
-	     (setq cfd-match (re-search-forward c-decl-prefix-re nil 'move))
-	     (if (memq (get-text-property (1- (setq cfd-match-pos
-						    (match-end 1)))
-					  'face)
-		       '(font-lock-comment-face font-lock-string-face))
-		 t
-	       ;; Skip forward past comments only, to set the position
-	       ;; to continue at, so we don't skip macros.
-	       (goto-char (match-end 1))
-	       (c-forward-comments)
-	       (setq cfd-continue-pos (point))
-	       nil))
-       ;; Search again if the match is within a comment or a string
-       ;; literal.
-       (goto-char (next-single-property-change
-		   cfd-match-pos 'face nil (point-max))))))
+  '(while (and
+	   (setq cfd-match (re-search-forward c-decl-prefix-re nil 'move))
+	   (if (memq (get-text-property (1- (setq cfd-match-pos
+						  (match-end 1)))
+					'face)
+		     '(font-lock-comment-face font-lock-string-face))
+	       t
+	     ;; Skip forward past comments only, to set the position
+	     ;; to continue at, so we don't skip macros.
+	     (goto-char (match-end 1))
+	     (c-forward-comments)
+	     (setq cfd-continue-pos (point))
+	     nil))
+     ;; Search again if the match is within a comment or a string
+     ;; literal.
+     (goto-char (next-single-property-change
+		 cfd-match-pos 'face nil (point-max)))))
 
 (defun c-find-decl-spots (cfd-decl-re cfd-face-checklist cfd-fun)
   ;; Call CFD-FUN for each possible spot for a declaration from the
@@ -3164,40 +3286,39 @@ brace."
 ;; like `c-record-type-identifiers'.
 (defvar c-record-found-types nil)
 
-(cc-eval-when-compile
-  (defmacro c-forward-keyword-prefixed-id (type)
-    ;; Used internally in `c-forward-keyword-clause' to move forward
-    ;; over a type (if TYPE is 'type) or a name (otherwise) which
-    ;; possibly is prefixed by keywords and their associated clauses.
-    ;; Try with a type/name first to not trip up on those that begin
-    ;; with a keyword.  Return t if a known or found type is moved
-    ;; over.  The point is clobbered if nil is returned.  If range
-    ;; recording is enabled, the identifier is recorded on as a type
-    ;; if TYPE is 'type or as a reference if TYPE is 'ref.
-    `(let (res)
-       (while (if (setq res ,(if (eq type 'type)
-				 `(c-forward-type)
-			       `(c-forward-name)))
-		  nil
-		(and (looking-at c-keywords-regexp)
-		     (c-forward-keyword-clause))))
-       (when (memq res '(t known found prefix))
-	 ,(when (eq type 'ref)
-	    `(when c-record-type-identifiers
-	       (c-record-ref-id c-last-identifier-range)))
-	 t)))
+(defmacro c-forward-keyword-prefixed-id (type)
+  ;; Used internally in `c-forward-keyword-clause' to move forward
+  ;; over a type (if TYPE is 'type) or a name (otherwise) which
+  ;; possibly is prefixed by keywords and their associated clauses.
+  ;; Try with a type/name first to not trip up on those that begin
+  ;; with a keyword.  Return t if a known or found type is moved
+  ;; over.  The point is clobbered if nil is returned.  If range
+  ;; recording is enabled, the identifier is recorded on as a type
+  ;; if TYPE is 'type or as a reference if TYPE is 'ref.
+  `(let (res)
+     (while (if (setq res ,(if (eq type 'type)
+			       `(c-forward-type)
+			     `(c-forward-name)))
+		nil
+	      (and (looking-at c-keywords-regexp)
+		   (c-forward-keyword-clause))))
+     (when (memq res '(t known found prefix))
+       ,(when (eq type 'ref)
+	  `(when c-record-type-identifiers
+	     (c-record-ref-id c-last-identifier-range)))
+       t)))
 
-  (defmacro c-forward-id-comma-list (type)
-    ;; Used internally in `c-forward-keyword-clause' to move forward
-    ;; over a comma separated list of types or names using
-    ;; `c-forward-keyword-prefixed-id'.
-    `(while (and (progn
-		   (setq safe-pos (point))
-		   (eq (char-after) ?,))
-		 (progn
-		   (forward-char)
-		   (c-forward-syntactic-ws)
-		   (c-forward-keyword-prefixed-id ,type))))))
+(defmacro c-forward-id-comma-list (type)
+  ;; Used internally in `c-forward-keyword-clause' to move forward
+  ;; over a comma separated list of types or names using
+  ;; `c-forward-keyword-prefixed-id'.
+  `(while (and (progn
+		 (setq safe-pos (point))
+		 (eq (char-after) ?,))
+	       (progn
+		 (forward-char)
+		 (c-forward-syntactic-ws)
+		 (c-forward-keyword-prefixed-id ,type)))))
 
 (defun c-forward-keyword-clause ()
   ;; The first submatch in the current match data is assumed to

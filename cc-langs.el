@@ -33,8 +33,8 @@
 
 ;; HACKERS NOTE: There's heavy macro magic here.  If you need to make
 ;; changes in this or other files containing `c-lang-defconst' but
-;; don't want to read through the complete explanations below then
-;; read this:
+;; don't want to read through the longer discussion below then read
+;; this:
 ;;
 ;; o  A change in a `c-lang-defconst' or `c-lang-defvar' will not take
 ;;    effect if the file containing the mode init function (typically
@@ -45,6 +45,8 @@
 ;; o  In either case it's necessary to reinitialize the mode to make
 ;;    the changes show in an existing buffer.
 
+;;; Introduction to the language dependent variable system:
+;;
 ;; This file contains all the language dependent variables, except
 ;; those specific for font locking which reside in cc-fonts.el.  As
 ;; far as possible, all the differences between the languages that CC
@@ -83,11 +85,11 @@
 ;; Separate packages will also benefit from the compile time
 ;; evaluation; the byte compiled file(s) for them will contain the
 ;; compiled runtime constants ready for use by (the byte compiled) CC
-;; Mode, and the source values in this file don't have to be loaded
-;; then.  However, if a byte compiled package is loaded that has been
-;; compiled with a different version of CC Mode than the one currently
-;; loaded, then the compiled-in values will be discarded and new ones
-;; will be built when the mode is initialized.  That will
+;; Mode, and the source definitions in this file don't have to be
+;; loaded then.  However, if a byte compiled package is loaded that
+;; has been compiled with a different version of CC Mode than the one
+;; currently loaded, then the compiled-in values will be discarded and
+;; new ones will be built when the mode is initialized.  That will
 ;; automatically trig a load of the file(s) containing the source
 ;; definitions (i.e. this file and/or cc-fonts.el) if necessary.
 ;;
@@ -95,8 +97,19 @@
 ;; <http://cc-mode.sourceforge.net/derived-mode-ex.el>.  It also
 ;; contains some useful hints for derived mode developers.
 
+;;; Using language variables:
+;;
+;; The `c-lang-defvar' forms in this file comprise the language
+;; variables that CC Mode uses.  It does not work to use
+;; `c-lang-defvar' anywhere else (which isn't much of a limitation
+;; since these variables sole purpose is to interface with the CC Mode
+;; core functions).  The values in these `c-lang-defvar's are not
+;; evaluated right away but instead collected to a single large `setq'
+;; that can be inserted for a particular language with the
+;; `c-init-language-vars' macro.
+
 ;; This file is only required at compile time, or when not running
-;; from byte compiled files, or when the source values for the
+;; from byte compiled files, or when the source definitions for the
 ;; language constants are requested.
 
 ;;; Code:
@@ -117,47 +130,50 @@
 
 ;;; Setup for the `c-lang-defvar' system.
 
-(cc-eval-when-compile
+(eval-and-compile
   ;; These are used to collect the init forms from the subsequent
   ;; `c-lang-defvar'.  They are used to build the lambda in
   ;; `c-make-init-lang-vars-fun' below.
   (defconst c-lang-variable-inits (list nil))
-  (defconst c-lang-variable-inits-tail c-lang-variable-inits)
+  (defconst c-lang-variable-inits-tail c-lang-variable-inits))
 
-  (defmacro c-lang-defvar (var val &optional doc)
-    ;; Declares the buffer local variable VAR to get the value VAL at
-    ;; mode initialization, at which point VAL is evaluated.
-    ;; `c-lang-const' is typically used in VAL to get the right value
-    ;; for the language being initialized, and such calls will be
-    ;; macro expanded to the evaluated constant value at compile time.
-    ;;
-    ;; This macro does not do any hidden buffer changes.
+(defmacro c-lang-defvar (var val &optional doc)
+  "Declares the buffer local variable VAR to get the value VAL at mode
+initialization, at which point VAL is evaluated.  More accurately, VAL
+is evaluated and bound to VAR when the result from the macro
+`c-init-language-vars' is evaluated.
 
-    (when (and (not doc)
-	       (eq (car-safe val) 'c-lang-const)
-	       (eq (nth 1 val) var)
-	       (not (nth 2 val)))
-      ;; Special case: If there's no docstring and the value is a
-      ;; simple (c-lang-const foo) where foo is the same name as VAR
-      ;; then take the docstring from the language constant foo.
-      (setq doc (get (intern (symbol-name (nth 1 val)) c-lang-constants)
-		     'variable-documentation)))
-    (or (stringp doc)
-	(setq doc nil))
+`c-lang-const' is typically used in VAL to get the right value for the
+language being initialized, and such calls will be macro expanded to
+the evaluated constant value at compile time.
 
-    (let ((elem (assq var (cdr c-lang-variable-inits))))
-      (if elem
-	  (setcdr elem (list val doc))
-	(setcdr c-lang-variable-inits-tail (list (list var val doc)))
-	(setq c-lang-variable-inits-tail (cdr c-lang-variable-inits-tail))))
+This macro does not do any hidden buffer changes."
 
-    ;; Return the symbol, like the other def* forms.
-    `',var)
+  (when (and (not doc)
+	     (eq (car-safe val) 'c-lang-const)
+	     (eq (nth 1 val) var)
+	     (not (nth 2 val)))
+    ;; Special case: If there's no docstring and the value is a
+    ;; simple (c-lang-const foo) where foo is the same name as VAR
+    ;; then take the docstring from the language constant foo.
+    (setq doc (get (intern (symbol-name (nth 1 val)) c-lang-constants)
+		   'variable-documentation)))
+  (or (stringp doc)
+      (setq doc nil))
 
-  (put 'c-lang-defvar 'lisp-indent-function 'defun)
-  (eval-after-load "edebug"
-    '(def-edebug-spec c-lang-defvar
-       (&define name def-form &optional stringp))))
+  (let ((elem (assq var (cdr c-lang-variable-inits))))
+    (if elem
+	(setcdr elem (list val doc))
+      (setcdr c-lang-variable-inits-tail (list (list var val doc)))
+      (setq c-lang-variable-inits-tail (cdr c-lang-variable-inits-tail))))
+
+  ;; Return the symbol, like the other def* forms.
+  `',var)
+
+(put 'c-lang-defvar 'lisp-indent-function 'defun)
+(eval-after-load "edebug"
+  '(def-edebug-spec c-lang-defvar
+     (&define name def-form &optional stringp)))
 
 
 ;;; Various mode specific values that aren't language related.
@@ -491,7 +507,7 @@ that at least one does when the regexp has matched."
 (c-lang-defconst c-opt-cpp-prefix
   "Regexp matching the prefix of a cpp directive in the languages that
 normally use that macro preprocessor.  Tested at bol.  Assumed to not
-contain any submatches."
+contain any submatches or \\| operators."
   t "\\s *#\\s *"
   (java awk) nil)
 (c-lang-defvar c-opt-cpp-prefix (c-lang-const c-opt-cpp-prefix))
@@ -918,12 +934,15 @@ The only uncertain case is '#' when there are cpp directives."
 		   "\\*/")
 	   "\\)*")
 	  (concat
-	   ;; Match eol (possibly inside a block comment), or the
-	   ;; beginning of a line comment.  Note: This has to be
-	   ;; modified for awk where line comments start with '#'.
+	   ;; Match eol (possibly inside a block comment or preceded
+	   ;; by a line continuation backslash), or the beginning of a
+	   ;; line comment.  Note: This has to be modified for awk
+	   ;; where line comments start with '#'.
 	   "\\("
 	   (concat "\\("
 		   "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
+		   "\\|"
+		   "\\\\"
 		   "\\)?"
 		   "$")
 	   "\\|//\\)")))
@@ -1585,11 +1604,9 @@ Note that Java specific rules are currently applied to tell this from
 
 ;; Note: No `*-kwds' language constants may be defined below this point.
 
-(cc-eval-when-compile
+(eval-and-compile
   (defconst c-kwds-lang-consts
     ;; List of all the language constants that contain keyword lists.
-    ;; It only exists at compile time and should only be used inside
-    ;; `c-defconst-eval-immediately'.
     (let (list)
       (mapatoms (lambda (sym)
 		  (when (and (boundp sym)
@@ -1911,6 +1928,17 @@ list."
   c t)
 (c-lang-defvar c-recognize-knr-p (c-lang-const c-recognize-knr-p))
 
+(c-lang-defconst c-recognize-typeless-decls
+  "Non-nil means function declarations without return type should be
+recognized.  That can introduce an ambiguity with parenthesized macro
+calls before a brace block.  This setting does not affect declarations
+that are preceded by a declaration starting keyword, so
+e.g. `c-typeless-decl-kwds' may still be used when it's set to nil."
+  t nil
+  (c c++ objc) t)
+(c-lang-defvar c-recognize-typeless-decls
+  (c-lang-const c-recognize-typeless-decls))
+
 (c-lang-defconst c-recognize-<>-arglists
   "Non-nil means C++ style template arglists should be handled.  More
 specifically, this means a comma separated list of types or
@@ -2077,7 +2105,7 @@ This macro is expanded at compile time to a form tailored for the mode
 in question, so MODE must be a constant.  Therefore MODE is not
 evaluated and should not be quoted.
 
-This function does not do any hidden buffer changes."
+This macro does not do any hidden buffer changes."
   `(funcall ,(c-make-init-lang-vars-fun mode)))
 
 

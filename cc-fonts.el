@@ -570,6 +570,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
   (when (bobp)
     (c-clear-found-types))
 
+  ;; Clear the c-type char properties in the region to recalculate
+  ;; them properly. This is necessary e.g. to handle constructs that
+  ;; might been required as declarations temporarily during editing.
+  ;; The interesting properties are anyway those put on the closest
+  ;; token before the region.
+  (c-clear-char-properties (point) limit 'c-type)
+
   nil)
 
 (defun c-font-lock-<>-arglists (limit)
@@ -750,34 +757,33 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	font-lock-reference-face
 	font-lock-keyword-face))
 
-(cc-eval-when-compile
-  ;; Macro used inside `c-font-lock-declarations'.  It ought to be a
-  ;; defsubst or perhaps even a defun, but it contains lots of free
-  ;; variables that refer to things inside `c-font-lock-declarations'.
-  (defmacro c-fl-shift-type-backward ()
-    ;; `c-font-lock-declarations' can consume an arbitrary length list
-    ;; of types when parsing a declaration, which means that it
-    ;; sometimes consumes the identifier in the declaration as a type.
-    ;; This is used to "backtrack" and make the last type be treated
-    ;; as an identifier instead.
-    '(setq identifier-type at-type
-	   identifier-start type-start
-	   identifier-end type-end
-	   at-type (if (eq prev-at-type 'prefix)
-		       t
-		     prev-at-type)
-	   type-start (if prev-at-type
-			  prev-type-start
-			start-pos)
-	   type-end (if prev-at-type
-			prev-type-end
+;; Macro used inside `c-font-lock-declarations'.  It ought to be a
+;; defsubst or perhaps even a defun, but it contains lots of free
+;; variables that refer to things inside `c-font-lock-declarations'.
+(defmacro c-fl-shift-type-backward ()
+  ;; `c-font-lock-declarations' can consume an arbitrary length list
+  ;; of types when parsing a declaration, which means that it
+  ;; sometimes consumes the identifier in the declaration as a type.
+  ;; This is used to "backtrack" and make the last type be treated
+  ;; as an identifier instead.
+  '(setq identifier-type at-type
+	 identifier-start type-start
+	 identifier-end type-end
+	 at-type (if (eq prev-at-type 'prefix)
+		     t
+		   prev-at-type)
+	 type-start (if prev-at-type
+			prev-type-start
 		      start-pos)
-	   start type-end
-	   prev-at-type nil
-	   got-parens nil
-	   got-identifier t
-	   got-suffix t
-	   paren-depth 0)))
+	 type-end (if prev-at-type
+		      prev-type-end
+		    start-pos)
+	 start type-end
+	 prev-at-type nil
+	 got-parens nil
+	 got-identifier t
+	 got-suffix t
+	 paren-depth 0))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
@@ -1103,7 +1109,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				 (not got-prefix-before-parens)
 				 (not (eq at-type t))
 				 (or prev-at-type
-				     (not arglist-type))
+				     maybe-typeless
+				     (when c-recognize-typeless-decls
+				       (not arglist-type)))
 				 (setq pos (c-up-list-forward (point)))
 				 (eq (char-before pos) ?\)))
 			(c-fl-shift-type-backward)
@@ -1133,7 +1141,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		(when (> paren-depth 0)
 		  ;; Encountered something inside parens that isn't matched by
 		  ;; the `c-type-decl-*' regexps, so it's not a type decl
-		  ;; expression.
+		  ;; expression.  Try to skip out to the same paren depth to
+		  ;; not confuse the cast check below.
+		  (c-safe (goto-char (scan-lists (point) 1 paren-depth)))
 		  (throw 'at-decl-or-cast nil))
 
 		(if got-identifier
@@ -1191,28 +1201,33 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			  (throw 'at-decl-or-cast t)
 			(throw 'at-decl-or-cast nil))))
 
-		  (if (and got-parens
-			   (not got-prefix)
-			   (not arglist-type)
-			   (not (eq at-type t))
-			   (or prev-at-type
-			       (not got-suffix)
-			       (not (looking-at
-				     c-after-suffixed-type-maybe-decl-key))))
+		  (if (and
+		       got-parens
+		       (not got-prefix)
+		       (not arglist-type)
+		       (not (eq at-type t))
+		       (or
+			prev-at-type
+			maybe-typeless
+			(when c-recognize-typeless-decls
+			  (or (not got-suffix)
+			      (not (looking-at
+				    c-after-suffixed-type-maybe-decl-key))))))
 		      ;; Got an empty paren pair and a preceding type that
 		      ;; probably really is the identifier.  Shift the type
 		      ;; backwards to make the last one the identifier.  This
 		      ;; is analogous to the "backtracking" done inside the
 		      ;; `c-type-decl-suffix-key' loop above.
 		      ;;
-		      ;; Exception: Do not shift backward if there's no
-		      ;; preceding type and we're not looking at either
-		      ;; `c-after-suffixed-type-decl-key' or "[;,]".  If
-		      ;; there's no preceding type then the shift would mean
-		      ;; that the declaration is typeless.  But if the regexp
-		      ;; doesn't match then we will simply fall through in the
-		      ;; tests below and not recognize it at all, so it's
-		      ;; better to try it as an abstract declarator instead.
+		      ;; Exception: In addition to the conditions in that
+		      ;; "backtracking" code, do not shift backward if we're
+		      ;; not looking at either `c-after-suffixed-type-decl-key'
+		      ;; or "[;,]".  Since there's no preceding type, the
+		      ;; shift would mean that the declaration is typeless.
+		      ;; But if the regexp doesn't match then we will simply
+		      ;; fall through in the tests below and not recognize it
+		      ;; at all, so it's better to try it as an abstract
+		      ;; declarator instead.
 		      (c-fl-shift-type-backward)
 
 		    ;; Still no identifier.
@@ -2266,6 +2281,9 @@ refdoc comments and the markup inside them.")
 
 (defvar pike-font-lock-keywords pike-font-lock-keywords-4
   "Default expressions to highlight in Pike mode.")
+
+
+;; AWK.
 
 ;; Awk regexps written with help from Peter Galbraith
 ;; <galbraith@mixing.qc.dfo.ca>.

@@ -304,9 +304,8 @@ brace-list-close, arglist-close, extern-lang-close, namespace-close."
       (when spec
 	(c-forward-syntactic-ws)
 	(forward-char 1))
-      (c-forward-syntactic-ws (c-point 'eol))
 
-      (if (eolp)
+      (if (looking-at c-syntactic-eol)
 	  ;; The arglist is "empty".
 	  0
 
@@ -1086,7 +1085,7 @@ ACTION associated with `block-close' syntax."
     (let (langelem)
       (if (and (eq syntax 'block-close)
 	       (setq langelem (assq 'block-close c-syntactic-context))
-	       (progn (goto-char (cdr langelem))
+	       (progn (goto-char (elt langelem 1))
 		      (if (eq (char-after) ?{)
 			  (c-safe (c-forward-sexp -1)))
 		      (looking-at "\\<do\\>[^_]")))

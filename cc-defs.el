@@ -572,7 +572,7 @@ This function does not do any hidden buffer changes."
 ;; properties set on a single character and that never spreads to any
 ;; other characters.
 
-(cc-eval-when-compile
+(eval-and-compile
   ;; Constant used at compile time to decide whether or not to use
   ;; XEmacs extents.  Check all the extent functions we'll use since
   ;; some packages might add compatibility aliases for some of them in
@@ -618,30 +618,33 @@ This function does not do any hidden buffer changes."
   ;; Put the given property with the given value on the character at
   ;; POS and make it front and rear nonsticky, or start and end open
   ;; in XEmacs vocabulary.  If the character already has the given
-  ;; property then the value is replaced.  PROPERTY is assumed to be
-  ;; constant.
+  ;; property then the value is replaced, and the behavior is
+  ;; undefined if that property has been put by some other function.
+  ;; PROPERTY is assumed to be constant.
   ;;
   ;; If there's a `text-property-default-nonsticky' variable (Emacs
   ;; 21) then it's assumed that the property is present on it.
+  (setq property (eval property))
   (if (or c-use-extents
 	  (not (cc-bytecomp-boundp 'text-property-default-nonsticky)))
       ;; XEmacs and Emacs < 21.
-      `(c-put-char-property-fun ,pos ,property ,value)
+      `(c-put-char-property-fun ,pos ',property ,value)
     ;; In Emacs 21 we got the `rear-nonsticky' property covered
     ;; by `text-property-default-nonsticky'.
     `(let ((-pos- ,pos))
-       (put-text-property -pos- (1+ -pos-) ,property ,value))))
+       (put-text-property -pos- (1+ -pos-) ',property ,value))))
 
 (defmacro c-get-char-property (pos property)
   ;; Get the value of the given property on the character at POS if
   ;; it's been put there by `c-put-char-property'.  PROPERTY is
   ;; assumed to be constant.
+  (setq property (eval property))
   (if c-use-extents
       ;; XEmacs.
-      `(let ((ext (extent-at ,pos nil ,property)))
-	 (if ext (extent-property ext ,property)))
+      `(let ((ext (extent-at ,pos nil ',property)))
+	 (if ext (extent-property ext ',property)))
     ;; Emacs.
-    `(get-text-property ,pos ,property)))
+    `(get-text-property ,pos ',property)))
 
 ;; `c-clear-char-property' is complex enough in Emacs < 21 to make it
 ;; a function, since we have to mess with the `rear-nonsticky' property.
@@ -663,19 +666,20 @@ This function does not do any hidden buffer changes."
   ;; Remove the given property on the character at POS if it's been put
   ;; there by `c-put-char-property'.  PROPERTY is assumed to be
   ;; constant.
+  (setq property (eval property))
   (cond (c-use-extents
 	 ;; XEmacs.
-	 `(let ((ext (extent-at ,pos nil ,property)))
+	 `(let ((ext (extent-at ,pos nil ',property)))
 	    (if ext (delete-extent ext))))
 	((cc-bytecomp-boundp 'text-property-default-nonsticky)
 	 ;; In Emacs 21 we got the `rear-nonsticky' property covered
 	 ;; by `text-property-default-nonsticky'.
 	 `(let ((pos ,pos))
 	    (remove-text-properties pos (1+ pos)
-				    '(,(eval property) nil))))
+				    '(,property nil))))
 	(t
 	 ;; Emacs < 21.
-	 `(c-clear-char-property-fun ,pos ,property))))
+	 `(c-clear-char-property-fun ,pos ',property))))
 
 (defmacro c-clear-char-properties (from to property)
   ;; Remove all the occurences of the given property in the given
@@ -686,11 +690,14 @@ This function does not do any hidden buffer changes."
   ;; lists of the `rear-nonsticky' properties in the region, if such
   ;; are used.  Thus it should not be used for common properties like
   ;; `syntax-table'.
+  (setq property (eval property))
   (if c-use-extents
       ;; XEmacs.
-      `(map-extents 'delete-extent nil ,from ,to nil nil ,property)
+      `(map-extents (lambda (ext ignored)
+		      (delete-extent ext))
+		    nil ,from ,to nil nil ',property)
     ;; Emacs.
-    `(remove-text-properties ,from ,to '(,(eval property) nil))))
+    `(remove-text-properties ,from ,to '(,property nil))))
 
 
 ;; Make edebug understand the macros.
@@ -935,17 +942,33 @@ appended."
 ;; process the values of other language constants uniformly across all
 ;; the languages.  E.g. one language constant can list all the type
 ;; keywords in each language, and another can build a regexp for each
-;; language from those lists without code duplication.  Since the
-;; values of language constants are evaluated on demand, it's possible
-;; to refer to the values of constants defined later in the file, or
-;; in another file.  See cc-langs.el for a lot of examples.
+;; language from those lists without code duplication.
 ;;
-;; Language constants are evaluated at compile time, and when the
-;; compiled files are used in the normal way only the constants
-;; actually used in the code are loaded.  The source definitions for
-;; the constants are loaded on demand when `c-lang-const' is used
-;; interactively, so other packages and user code may use them also
-;; when CC Mode is compiled.
+;; Language constants are defined with `c-lang-defconst', and their
+;; value forms (referred to as source definitions) are evaluated only
+;; on demand when requested for a particular language with
+;; `c-lang-const'.  It's therefore possible to refer to the values of
+;; constants defined later in the file, or in another file, just as
+;; long as all the relevant `c-lang-defconst' have been loaded when
+;; `c-lang-const' is actually evaluated from somewhere else.
+;;
+;; `c-lang-const' forms are also evaluated at compile time and
+;; replaced with the values they produce.  Thus there's no overhead
+;; for this system when compiled code is used - only the values
+;; actually used in the code are present, and the file(s) containing
+;; the `c-lang-defconst' forms don't need to be loaded at all then.
+;; There are however safeguards to make sure that they can be loaded
+;; to get the source definitions for the values if there's a mismatch
+;; in compiled versions, or if `c-lang-const' is used uncompiled.
+;;
+;; Note that the source definitions in a `c-lang-defconst' form are
+;; compiled into the .elc file where it stands; there's no need to
+;; load the source file to get it.
+;;
+;; See cc-langs.el for more details about how this system is deployed
+;; in CC Mode, and how the associated language variable system
+;; (`c-lang-defvar') works.  That file also contains a lot of
+;; examples.
 
 (defun c-add-language (mode base-mode)
   "Declare a new language in the language dependent variable system.
@@ -967,13 +990,17 @@ system."
     (put mode 'c-fallback-mode base-mode)))
 
 (defvar c-lang-constants (make-vector 151 0))
-;; Obarray containing the symbols for all the language constants that
-;; have been defined by `c-lang-defconst'.  The value cells of these
-;; symbols hold the evaluated values for the constant as alists where
-;; the car is the mode name symbol and the cdr is the value in that
-;; mode.  The property lists hold the source values and other
-;; miscellaneous data.  Might also contain various other symbols, but
-;; those don't have any variable bindings.
+;; This obarray is a cache to keep track of the language constants
+;; defined by `c-lang-defconst' and the evaluated values returned by
+;; `c-lang-const'.  It's mostly used at compile time but it's not
+;; stored in compiled files.
+;;
+;; The obarray contains all the language constants as symbols.  The
+;; value cells hold the evaluated values as alists where each car is
+;; the mode name symbol and the corresponding cdr is the evaluated
+;; value in that mode.  The property lists hold the source definitions
+;; and other miscellaneous data.  The obarray might also contain
+;; various other symbols, but those don't have any variable bindings.
 
 (defvar c-lang-const-expansion nil)
 (defvar c-langs-are-parametric nil)
@@ -1011,6 +1038,9 @@ the language(s) that VAL applies to.  LANG is the name of the
 language, i.e. the mode name without the \"-mode\" suffix, or a list
 of such language names, or `t' for all languages.  VAL is a form to
 evaluate to get the value.
+
+If LANG isn't `t' or one of the core languages in CC Mode, it must
+have been declared with `c-add-language'.
 
 Neither NAME, LANG nor VAL are evaluated directly - they should not be
 quoted.  `c-lang-defconst-eval-immediately' can however be used inside
@@ -1053,7 +1083,7 @@ This macro does not do any hidden buffer changes."
 	 ;; `cc-eval-when-compile' due to bugs in `eval-when-compile',
 	 ;; and it expands to a bulkier form that in this case only is
 	 ;; unnecessary garbage that we don't want to store in the
-	 ;; language constant source values.)
+	 ;; language constant source definitions.)
 	 (c-lang-const-expansion 'call)
 	 (c-langs-are-parametric t)
 	 bindings
@@ -1200,7 +1230,7 @@ This macro does not do any hidden buffer changes."
 	  (unless (get mode 'c-mode-prefix)
 	    (error
 	     "Unknown language %S since it got no `c-mode-prefix' property"
-	     (symbol-name lang) mode)))
+	     (symbol-name lang))))
       (if c-buffer-is-cc-mode
 	  (setq lang c-buffer-is-cc-mode)
 	(or c-langs-are-parametric
@@ -1379,7 +1409,7 @@ This macro does not do any hidden buffer changes."
 
 		 (unless (aset source-pos 1
 			       (setq assignment-entry (cdar file-entry)))
-		   ;; The file containing the source value has not
+		   ;; The file containing the source definitions has not
 		   ;; been loaded.
 		   (let ((file (symbol-name (caar file-entry)))
 			 (c-lang-constants-under-evaluation nil))
