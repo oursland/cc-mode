@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.44 $
-;; Last Modified:   $Date: 1993-11-16 20:05:17 $
+;; Version:         $Revision: 3.45 $
+;; Last Modified:   $Date: 1993-11-16 20:58:40 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-16 20:05:17 $|$Revision: 3.44 $|
+;; |$Date: 1993-11-16 20:58:40 $|$Revision: 3.45 $|
 
 ;;; Code:
 
@@ -104,6 +104,7 @@ reported and the semantic symbol is ignored.")
     (block-close           . 0)
     (statement-cont        . +)
     (do-while-closure      . 0)
+    (else-clause           . 0)
     (case-label            . 0)
     (label                 . 2)
     (statement             . 0)
@@ -430,7 +431,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.44 $
+  "Major mode for editing C++ code.  $Revision: 3.45 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -461,7 +462,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.44 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.45 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -841,9 +842,16 @@ If numeric ARG is supplied, indentation is inhibited."
 	(goto-char (- (point-max) pos)))
       ;; re-indent line
       (cc-indent-via-language-element bod)
-      ;; newline only after semicolon
+      ;; newline only after semicolon, but only if that semicolon is
+      ;; not inside a parenthesis list (e.g. a for loop statement)
       (and (= last-command-char ?\;)
-	   (newline))
+	   (condition-case nil
+	       (save-excursion
+		 (up-list -1)
+		 (/= (following-char) ?\())
+	     (error t))
+	   (progn (newline) t)
+	   (cc-indent-via-language-element bod))
       )))
 
 (defun cc-scope-operator ()
@@ -1608,16 +1616,23 @@ of the expression are preserved."
   ;; beginning-of-defun is used.
   (let ((charlist '(nil ?\000 ?\, ?\; ?\} ?\: ?\{))
 	(lim (or lim (cc-point 'bod)))
-	checkpnt stop)
+	(here (point))
+	stop)
+    (beginning-of-line)
+    (cc-backward-syntactic-ws lim)
     (while (not stop)
-      (setq checkpnt (point))
-      (beginning-of-line)
-      (cc-backward-syntactic-ws lim)
-      (setq stop (or (memq (preceding-char) charlist)
-		     (<= (point) lim))))
+      (if (or (memq (preceding-char) charlist)
+	      (<= (point) lim))
+	  (setq stop t)
+	(back-to-indentation)
+	(setq here (point))
+	(if (looking-at "\\<\\(for\\|if\\|do\\|else\\|while\\)\\>")
+	    (setq stop t)
+	  (cc-backward-syntactic-ws lim)
+	  )))
     (if (< (point) lim)
 	(goto-char lim)
-      (goto-char checkpnt)
+      (goto-char here)
       (back-to-indentation))
     ))
 
@@ -2045,7 +2060,11 @@ of the expression are preserved."
 	   ;; CASE 6C: hanging continued statement
 	   (t (cc-add-semantics 'statement-cont placeholder))
 	   ))
-	 ;; CASE 7: Statement. But what kind?  Lets see if its a while
+	 ;; CASE 7: an else clause?
+	 ((looking-at "\\<else\\>")
+	  (cc-backward-to-start-of-if containing-sexp)
+	  (cc-add-semantics 'else-clause (cc-point 'boi)))
+	 ;; CASE 8: Statement. But what kind?  Lets see if its a while
 	 ;; closure of a do/while construct
 	 ((progn
 	    (goto-char indent-point)
@@ -2057,18 +2076,18 @@ of the expression are preserved."
 		   (looking-at "do\\b"))
 		 ))
 	  (cc-add-semantics 'do-while-closure placeholder))
-	 ;; CASE 8: A case or default label
+	 ;; CASE 9: A case or default label
 	 ((looking-at cc-case-statement-key)
 	  (goto-char containing-sexp)
 	  ;; for a case label, we set relpos the first non-whitespace
 	  ;; char on the line containing the switch opening brace. this
 	  ;; should handle hanging switch opening braces correctly.
 	  (cc-add-semantics 'case-label (cc-point 'boi)))
-	 ;; CASE 9: any other label
+	 ;; CASE 10: any other label
 	 ((looking-at (concat cc-symbol-key ":[^:]"))
 	  (goto-char containing-sexp)
 	  (cc-add-semantics 'label (cc-point 'boi)))
-	 ;; CASE 10: block close brace, possibly closing the defun or
+	 ;; CASE 11: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((= char-after-ip ?})
 	  (if (= containing-sexp lim)
@@ -2078,7 +2097,7 @@ of the expression are preserved."
 		(cc-add-semantics 'inline-close containing-sexp)
 	      (cc-add-semantics 'block-close (cc-point 'boi))
 	      )))
-	 ;; CASE 11: statement catchall
+	 ;; CASE 12: statement catchall
 	 (t
 	  ;; we know its a statement, but we need to find out if it is
 	  ;; the first statement in a block
@@ -2095,7 +2114,7 @@ of the expression are preserved."
 	      (forward-line 1)
 	      (cc-forward-syntactic-ws indent-point))
 	    (cond
-	     ;; CASE 11.A: we saw a case/default statement so we must be
+	     ;; CASE 12.A: we saw a case/default statement so we must be
 	     ;; in a switch statement.  find out if we are at the
 	     ;; statement just after a case or default label
 	     ((and inswitch-p
@@ -2106,10 +2125,10 @@ of the expression are preserved."
 		     (setq checkpnt (point))
 		     (looking-at cc-case-statement-key)))
 	      (cc-add-semantics 'statement-case-intro checkpnt))
-	     ;; CASE 11.B: any old statement
+	     ;; CASE 12.B: any old statement
 	     ((< (point) indent-point)
 	      (cc-add-semantics 'statement (cc-point 'boi)))
-	     ;; CASE 11.C: first statement in a block
+	     ;; CASE 12.C: first statement in a block
 	     (t
 	      (goto-char containing-sexp)
 	      (cc-add-semantics 'statement-block-intro (cc-point 'boi)))
@@ -2273,7 +2292,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.44 $"
+(defconst cc-version "$Revision: 3.45 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
