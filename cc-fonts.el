@@ -1624,10 +1624,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	       (c-fl-shift-type-backward t))
 
 	     (when (and (eq arglist-type 'decl) (looking-at ","))
-	       ;; Make sure to propagate the `c-type-arg-start' property to
+	       ;; Make sure to propagate the `c-decl-arg-start' property to
 	       ;; the next argument if it's set in this one, to cope with
 	       ;; interactive refontification.
-	       (c-put-char-property (point) 'c-type-arg-start t))
+	       (c-put-char-property (point) 'c-type 'c-decl-arg-start))
 
 	     ;; Set `max-type-decl-end' or `max-type-decl-end-before-token'
 	     ;; under the assumption that we're after the first type decl
