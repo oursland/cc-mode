@@ -269,12 +269,14 @@
 (defsubst c-langelem-col (langelem &optional preserve-point)
   ;; convenience routine to return the column of langelem's relpos.
   ;; Leaves point at the relpos unless preserve-point is non-nil.
-  (let ((here (point)))
-    (goto-char (cdr langelem))
-    (prog1 (current-column)
-      (if preserve-point
-	  (goto-char here))
-      )))
+  (if (cdr langelem)
+      (let ((here (point)))
+	(goto-char (cdr langelem))
+	(prog1 (current-column)
+	  (if preserve-point
+	      (goto-char here))
+	  ))
+    0))
 
 (defmacro c-update-modeline ()
   ;; set the c-auto-hungry-string for the correct designation on the modeline
