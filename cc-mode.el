@@ -492,7 +492,7 @@ This function does not do any hidden buffer changes."
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
 
-  (setq require-final-newline t
+  (setq require-final-newline c-require-final-newline
 	outline-regexp "[^#\n\^M]"
 	outline-level 'c-outline-level))
 
