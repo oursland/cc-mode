@@ -1954,31 +1954,42 @@ This function does not do any hidden buffer changes."
 
 	 ;; This let sets up the context for `c-mode-var' and similar
 	 ;; that could be in the result from `cl-macroexpand-all'.
-	 (let ((c-buffer-is-cc-mode ',mode))
+	 (let ((c-buffer-is-cc-mode ',mode)
+	       current-var)
+	   (condition-case err
 
-	   (if (eq c-version-sym ',c-version-sym)
-	       (setq ,@(let ((c-buffer-is-cc-mode mode)
-			     (c-lang-const-expansion 'immediate))
-			 ;; `c-lang-const' will expand to the evaluated
-			 ;; constant immediately in `cl-macroexpand-all'
-			 ;; below.
-			 (mapcan
-			  (lambda (init)
-			    `(,(car init) ,(cl-macroexpand-all (elt init 1))))
-			  (cdr c-lang-variable-inits))))
+	       (if (eq c-version-sym ',c-version-sym)
+		   (setq ,@(let ((c-buffer-is-cc-mode mode)
+				 (c-lang-const-expansion 'immediate))
+			     ;; `c-lang-const' will expand to the evaluated
+			     ;; constant immediately in `cl-macroexpand-all'
+			     ;; below.
+			     (mapcan
+			      (lambda (init)
+				`(current-var ',(car init)
+				  ,(car init) ,(cl-macroexpand-all
+						(elt init 1))))
+			      (cdr c-lang-variable-inits))))
 
-	     (unless (get ',mode 'c-has-warned-lang-consts)
-	       (message ,(concat "%s compiled with CC Mode %s "
-				 "but loaded with %s - evaluating "
-				 "language constants from source")
-			',mode ,c-version c-version)
-	       (put ',mode 'c-has-warned-lang-consts t))
+		 (unless (get ',mode 'c-has-warned-lang-consts)
+		   (message ,(concat "%s compiled with CC Mode %s "
+				     "but loaded with %s - evaluating "
+				     "language constants from source")
+			    ',mode ,c-version c-version)
+		   (put ',mode 'c-has-warned-lang-consts t))
 
-	     (require 'cc-langs)
-	     (let ((init (cdr c-lang-variable-inits)))
-	       (while init
-		 (set (caar init) (eval (cadar init)))
-		 (setq init (cdr init)))))))
+		 (require 'cc-langs)
+		 (let ((init (cdr c-lang-variable-inits)))
+		   (while init
+		     (setq current-var (caar init))
+		     (set (caar init) (eval (cadar init)))
+		     (setq init (cdr init)))))
+
+	     (error
+	      (if current-var
+		  (message "Eval error in the `c-lang-defvar' for `%s': %S"
+			   current-var err)
+		(signal (car err) (cdr err)))))))
 
     ;; Being evaluated from source.  Always use the dynamic method to
     ;; work well when `c-lang-defvar's in this file are reevaluated
@@ -1986,10 +1997,21 @@ This function does not do any hidden buffer changes."
     `(lambda ()
        (require 'cc-langs)
        (let ((c-buffer-is-cc-mode ',mode)
-	     (init (cdr c-lang-variable-inits)))
-	 (while init
-	   (set (caar init) (eval (cadar init)))
-	   (setq init (cdr init)))))))
+	     (init (cdr c-lang-variable-inits))
+	     current-var)
+	 (condition-case err
+
+	     (while init
+	       (setq current-var (caar init))
+	       (set (caar init) (eval (cadar init)))
+	       (setq init (cdr init)))
+
+	   (error
+	    (if current-var
+		(message "Eval error in the `c-lang-defvar' for `%s': %S"
+			 current-var err)
+	      (signal (car err) (cdr err)))))))
+    ))
 
 (defmacro c-init-language-vars (mode)
   "Initialize all the language dependent variables for the given mode.

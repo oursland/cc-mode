@@ -1280,7 +1280,17 @@ This macro does not do any hidden buffer changes."
 	     "`%s' got no (prior) value in %s (might be a cyclic reference)"
 	     name mode))
 
-	(setq value (eval value))
+	(condition-case err
+	    (setq value (eval value))
+	  (error
+	   ;; Print a message to aid in locating the error.  We don't
+	   ;; print the error itself since that will be done later by
+	   ;; some caller higher up.
+	   (message "Eval error in the `c-lang-defconst' for `%s' in %s:"
+		    sym mode)
+	   (makunbound sym)
+	   (signal (car err) (cdr err))))
+
 	(set sym (cons (cons mode value) (symbol-value sym)))
 	value))))
 
