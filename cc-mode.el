@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.241 $
-;; Last Modified:   $Date: 1992-12-16 21:52:41 $
+;; Version:         $Revision: 2.242 $
+;; Last Modified:   $Date: 1992-12-17 22:35:57 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-16 21:52:41 $|$Revision: 2.241 $|
+;; |$Date: 1992-12-17 22:35:57 $|$Revision: 2.242 $|
 
 ;;; Code:
 
@@ -408,7 +408,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.241 $
+  "Major mode for editing C++ code.  $Revision: 2.242 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -616,7 +616,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.241 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.242 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1973,8 +1973,8 @@ argument COL0-LINE-P, and the current indentation INDENT."
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives. Search no farther back than
-optional LIM.  If LIM is ommitted, point-min is used."
-  (let ((lim (or lim (point-min)))
+optional LIM.  If LIM is ommitted, beginning-of-defun is used."
+  (let ((lim (or lim (c++-point 'bod)))
 	literal stop skip)
     (if (and c++-backscan-limit
 	     (> (- (point) lim) c++-backscan-limit))
@@ -2305,7 +2305,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.241 $"
+(defconst c++-version "$Revision: 2.242 $"
   "c++-mode version number.")
 
 (defun c++-version ()
