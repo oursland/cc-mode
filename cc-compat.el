@@ -39,6 +39,10 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (load-file "./cc-styles.el")
+  (load-file "./cc-engine.el"))
+
 
 ;; In case c-mode.el isn't loaded
 (defvar c-indent-level 2
