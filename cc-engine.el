@@ -1067,7 +1067,7 @@ In AWK Mode, an end of line which terminates a statement \(a \"virtual
 semicolon\") is NOT regarded as whitespace.  The line breaks that end
 line comments are considered to be the comment enders, so the point
 will be put on the beginning of the next line if it moved past a line
-comment."
+comment.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
