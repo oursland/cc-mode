@@ -576,23 +576,41 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
       ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
       (c-set-style c-site-default-style)))
 
+(defun c-make-styles-buffer-local ()
+  "Make all CC Mode style variables buffer local.
+If you edit primarily one style of C (or C++, Objective-C, Java) code,
+you probably want style variables to be global.  This is the default.
+
+If you edit many different styles of C (or C++, Objective-C, Java) at
+the same time, you probably want the CC Mode style variables to be
+buffer local.  If you do, then you will need to set any CC Mode style
+variables in a hook function (e.g. off of c-mode-common-hook), instead
+of at the top level of your ~/.emacs file.
+
+This function makes all the CC Mode style variables buffer local.
+Call it after CC Mode is loaded into your Emacs environment.
+Conversely, set the variable `c-style-variables-are-local-p' to t in
+your .emacs file, before CC Mode is loaded, and this function will be
+automatically called when CC Mode is loaded."
+  ;; style variables
+  (make-variable-buffer-local 'c-offsets-alist)
+  (make-variable-buffer-local 'c-basic-offset)
+  (make-variable-buffer-local 'c-file-style)
+  (make-variable-buffer-local 'c-file-offsets)
+  (make-variable-buffer-local 'c-comment-only-line-offset)
+  (make-variable-buffer-local 'c-cleanup-list)
+  (make-variable-buffer-local 'c-hanging-braces-alist)
+  (make-variable-buffer-local 'c-hanging-colons-alist)
+  (make-variable-buffer-local 'c-hanging-comment-starter-p)
+  (make-variable-buffer-local 'c-hanging-comment-ender-p)
+  (make-variable-buffer-local 'c-backslash-column)
+  (make-variable-buffer-local 'c-label-minimum-indentation)
+  (make-variable-buffer-local 'c-special-indent-hook)
+  (make-variable-buffer-local 'c-indentation-style))
+
 (if c-style-variables-are-local-p
-    (progn
-      ;; style variables
-      (make-variable-buffer-local 'c-offsets-alist)
-      (make-variable-buffer-local 'c-basic-offset)
-      (make-variable-buffer-local 'c-file-style)
-      (make-variable-buffer-local 'c-file-offsets)
-      (make-variable-buffer-local 'c-comment-only-line-offset)
-      (make-variable-buffer-local 'c-cleanup-list)
-      (make-variable-buffer-local 'c-hanging-braces-alist)
-      (make-variable-buffer-local 'c-hanging-colons-alist)
-      (make-variable-buffer-local 'c-hanging-comment-starter-p)
-      (make-variable-buffer-local 'c-hanging-comment-ender-p)
-      (make-variable-buffer-local 'c-backslash-column)
-      (make-variable-buffer-local 'c-label-minimum-indentation)
-      (make-variable-buffer-local 'c-special-indent-hook)
-      (make-variable-buffer-local 'c-indentation-style)))
+    (c-make-styles-buffer-local))
+
 
 
 (provide 'cc-styles)
