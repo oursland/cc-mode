@@ -21,9 +21,6 @@
 @c o  Check line lengths in TeX output; they can typically be no longer
 @c    than 70 chars, 60 if the paragraph is indented.
 
-@comment FIXME: Document c-report-syntactic-errors.
-@comment FIXME: Document c-require-final-newline.
-
 @comment TBD: Document the finer details of statement anchoring?
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -69,7 +66,7 @@ Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03 Free Software Foun
 @dircategory Emacs
 @direntry
 * CC Mode: (cc-mode).   Emacs mode for editing C, C++, Objective-C,
-                          Java, Pike, and CORBA IDL code.
+                        Java, Pike, and CORBA IDL code.
 @end direntry
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -137,6 +134,7 @@ classes etc - there are other packages for that.
 * Customizing Indentation::
 * Syntactic Symbols::
 * Indentation Functions::
+* Odds and Ends::
 * Performance Issues::
 * Limitations and Known Bugs::
 * Frequently Asked Questions::
@@ -565,13 +563,10 @@ to think about it in this much detail.  But when customizing
 indentation, it's helpful to understand the general indentation model
 being used.
 
-@defvar c-echo-syntactic-information-p
-@vindex echo-syntactic-information-p (c-)
 As you configure @ccmode{}, you might want to set the variable
 @code{c-echo-syntactic-information-p} to non-@code{nil} so that the
 syntactic component list and calculated offset will always be echoed in
 the minibuffer when you hit @kbd{TAB}.
-@end defvar
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2300,13 +2295,9 @@ syntactic symbol is needed to get the desired indentation.
 for details about them.
 
 If the offset is a vector, its first element sets the absolute
-indentation column, which will override any relative indentation.
-
-@comment FIXME: Ought to be more detailed here: The overriding only
-@comment applies to relative indentation of surrounding structures but
-@comment not nested ones.  Such an explanation would require that we go
-@comment into details what this nesting is about, which seems out of
-@comment scope here.
+indentation column, which will override any previous relative
+indentation.  It won't override additional relative indentation for
+nested constructs, though.
 
 @vindex c-strict-syntax-p
 @vindex strict-syntax-p (c-)
@@ -3587,17 +3578,16 @@ is assigned to various conditional constructs:
  3:     for( int i=0; i<index; i++ )
  4:     @{
  5:         if( i == 10 )
- 6:         @{
- 7:             do_something_special();
- 8:         @}
- 9:         else
-10:             do_something( i );
-11:     @}
-12:     do @{
-13:         another_thing( i-- );
-14:     @}
-15:     while( i > 0 );
-16: @}
+ 6:             do_something_special();
+ 7:         else
+ 8:           silly_label:
+ 9:             do_something( i );
+10:     @}
+11:     do @{
+12:         another_thing( i-- );
+13:     @}
+14:     while( i > 0 );
+15: @}
 @end example
 
 Only the lines that illustrate new syntactic symbols will be discussed.
@@ -3608,36 +3598,36 @@ Only the lines that illustrate new syntactic symbols will be discussed.
 Line 4 has a brace which opens a conditional's substatement block.  It
 is thus assigned @code{substatement-open} syntax, and since line 5 is
 the first line in the substatement block, it is assigned
-@code{substatement-block-intro} syntax.  Lines 6 and 7 are assigned
-similar syntax.  Line 8 contains the brace that closes the inner
-substatement block.  It is given the syntax @code{block-close},
-as are lines 11 and 14.
+@code{substatement-block-intro} syntax.  Line 10 contains the brace that
+closes the inner substatement block, and is therefore given the syntax
+@code{block-close}.  Line 13 is treated the same way.
+
+@ssindex substatement
+Lines 6 and 9 are also substatements of conditionals, but since they
+don't start blocks they are given @code{substatement} syntax
+instead of @code{substatement-open}.
+
+@ssindex substatement-label
+Line 8 contains a label, which is normally given @code{label} syntax.
+This one is however a bit special since it's between a conditional and
+its substatement.  It's analyzed as @code{substatement-label} to let you
+handle this rather odd case differently from normal labels.
 
 @ssindex else-clause
 @ssindex catch-clause
-Line 9 is a little different --- since it contains the keyword
-@code{else} matching the @code{if} statement introduced on line 5, it is
-given the @code{else-clause} syntax.  The @code{try}-@code{catch}
-constructs in C++ and Java are treated this way too, except
-that @code{catch} and (in Java) @code{finally}, are
-marked with @code{catch-clause}.
-
-@ssindex substatement
-Line 10 is also slightly different.  Because @code{else} is considered a
-conditional introducing keyword @footnote{The list of conditional
-keywords are (in C, C++, Objective-C, Java, and Pike): @code{for},
-@code{if}, @code{do}, @code{else}, @code{while}, and @code{switch}.  C++
-and Java have two additional conditional keywords: @code{try} and
-@code{catch}.  Java also has the @code{finally} and @code{synchronized}
-keywords.}, and because the following substatement is not a brace block,
-line 10 is assigned the @code{substatement} syntax.
+Line 7 start with an @code{else} that matches the @code{if} statement on
+line 5.  It is therefore given the @code{else-clause} syntax and is
+anchored on the matching @code{if}.  The @code{try}-@code{catch}
+constructs in C++ and Java are treated this way too, except that
+@code{catch} and (in Java) @code{finally}, are marked with
+@code{catch-clause}.
 
 @ssindex do-while-closure
-One other difference is seen on line 15.  The @code{while} construct
-that closes a @code{do} conditional is given the special syntax
-@code{do-while-closure} if it appears on a line by itself.  Note that if
-the @code{while} appeared on the same line as the preceding close brace,
-that line would have been assigned @code{block-close} syntax instead.
+The @code{while} construct on line 14 that closes a @code{do}
+conditional is given the special syntax @code{do-while-closure} if it
+appears on a line by itself.  Note that if the @code{while} appeared on
+the same line as the preceding close brace, that line would still have
+@code{block-close} syntax.
 
 Switch statements have their own set of syntactic symbols.  Here's an
 example:
@@ -3882,8 +3872,6 @@ code.
 @ssindex string
 Line 8 is assigned @code{string} syntax.
 
-@comment FIXME: Document substatement-label.
-
 @item
 @ssindex label
 Line 10 is assigned @code{label} syntax.
@@ -4060,7 +4048,7 @@ syntax.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Functions, Performance Issues, Syntactic Symbols, Top
+@node    Indentation Functions, Odds and Ends, Syntactic Symbols, Top
 @comment node-name, next, previous, up
 @chapter Indentation Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4921,7 +4909,51 @@ e.g. @code{inclass} and @code{inextern-lang}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Performance Issues, Limitations and Known Bugs, Indentation Functions, Top
+@node    Odds and Ends, Performance Issues, Indentation Functions, Top
+@comment node-name, next, previous, up
+@chapter Odds and Ends
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+The stuff that didn't fit in anywhere else is documented here.
+
+@defopt c-require-final-newline
+@vindex require-final-newline (c-)
+Controls whether a final newline is ensured when the file is saved.  The
+value is an association list that for each language mode specifies the
+value to give to @code{require-final-newline} at mode initialization;
+see that variable for details about the value.  If a language isn't
+present on the association list, CC Mode won't set
+@code{require-final-newline} in buffers for that language.
+
+The default is to set @code{require-final-newline} to @code{t} in the
+languages that mandates that source files should end with newlines,
+i.e. C, C++ and Objective-C.
+@end defopt
+
+@defopt c-echo-syntactic-information-p
+@vindex echo-syntactic-information-p (c-)
+If non-@code{nil}, the syntactic analysis for the current line is shown
+in the echo area when it's indented (unless
+@code{c-syntactic-indentation} is @code{nil}).  That's useful when
+finding out which syntactic symbols to modify to get the indentation you
+want.
+@end defopt
+
+@defopt c-report-syntactic-errors
+@vindex report-syntactic-errors (c-)
+If non-@code{nil}, certain syntactic errors are reported with a ding and
+a message, for example when an @code{else} is indented for which there
+is no corresponding @code{if}.
+
+Note however that @ccmode{} doesn't make any special effort to check for
+syntactic errors; that's the job of the compiler.  The reason it can
+report cases like the one above is that it can't find the correct
+anchoring position to indent the line in that case.
+@end defopt
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Performance Issues, Limitations and Known Bugs, Odds and Ends, Top
 @comment node-name, next, previous, up
 @chapter Performance Issues
 @cindex performance
