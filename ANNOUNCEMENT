@@ -12,12 +12,12 @@ available via the Web, anonymous ftp, and email, the source code is
 not being posted here.  Downloading instructions are provided further
 down in this message.
 
-If you want to become a beta tester send subscribe requests to
-cc-mode-victims-request@python.org.  If you just want announcements of
-new versions, send subscribe requests to
-cc-mode-announce-request@python.org.  You do not need to subscribe to
-both of these lists!  These mailing lists are maintained by the
-Majordomo automated mailing list software.
+If you want to get announcements of new CC Mode releases, send the
+word `subscribe' in the body of a message to
+
+	cc-mode-announce-request@python.org
+
+Note that the cc-mode-victims mailing list was recently decommissioned.
 
 Getting CC Mode
 ===============
