@@ -27,6 +27,9 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+(eval-when-compile
+  (load-file "./cc-engine.el"))
+
 
 ;; Utilities
 (defsubst c-update-modeline ()
@@ -159,11 +162,8 @@ the brace is inserted inside a literal."
 		     extern-lang-open extern-lang-close))
 	    ;; we want to inhibit blinking the paren since this will
 	    ;; be most disruptive. we'll blink it ourselves later on
-	    (old-blink-paren (if (boundp 'blink-paren-function)
-				 blink-paren-function
-			       blink-paren-hook))
-	    blink-paren-function	; emacs19
-	    blink-paren-hook		; emacs18
+	    (old-blink-paren blink-paren-function)
+	    blink-paren-function
 	    (insertion-point (point))
 	    delete-temp-newline
 	    (preserve-p (= 32 (char-syntax (preceding-char))))
@@ -319,9 +319,7 @@ the brace is inserted inside a literal."
 	     old-blink-paren
 	     (save-excursion
 	       (c-backward-syntactic-ws safepos)
-	       (if (boundp 'blink-paren-function)
-		   (funcall old-blink-paren)
-		 (run-hooks old-blink-paren))))
+	       (funcall old-blink-paren)))
 	))))
       
 (defun c-electric-slash (arg)
