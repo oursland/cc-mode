@@ -153,6 +153,10 @@
 
 (c-add-style "TESTSTYLE" TESTSTYLE)
 
+;; Make sure we always get the test styles when this has been loaded.
+(add-hook 'c-mode-common-hook (lambda () (c-set-style "TESTSTYLE")) 'append)
+(add-hook 'java-mode-hook (lambda () (c-set-style "java")) 'append)
+
 (defconst list-of-tests
   '("arglist-1.cc"
     "arglist-2.cc"
