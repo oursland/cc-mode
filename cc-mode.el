@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.127 $
-;; Last Modified:   $Date: 1994-12-20 00:11:06 $
+;; Version:         $Revision: 4.128 $
+;; Last Modified:   $Date: 1994-12-20 00:15:48 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-20 00:11:06 $|$Revision: 4.127 $|
+;; |$Date: 1994-12-20 00:15:48 $|$Revision: 4.128 $|
 
 ;;; Code:
 
@@ -380,18 +380,11 @@ brace line.")
 (defvar c-hanging-colons-alist nil
   "*Controls the insertion of newlines before and after certain colons.
 This variable contains an association list with elements of the
-following form: (SYNTACTIC-SYMBOL . (NL-LIST)).
+following form: (SYNTACTIC-SYMBOL . ACTION).
 
-SYNTACTIC-SYMBOL can be any of: member-init-intro, inher-intro,
-case-label, label, and access-label. See `c-offsets-alist' for
-details.
-
-NL-LIST can contain any combination of the symbols `before' or
-`after'. It also be nil.  When a colon is inserted, the language
-element that it defines is looked up in this list, and if found, the
-NL-LIST is used to determine where newlines are inserted.  If the
-language element for the colon is not found in this list, the default
-behavior is to not insert any newlines.")
+See the variable `c-hanging-braces-alist' for the semantics of this
+variable.  Note however that making ACTION a function symbol is
+currently not supported for this variable.")
 
 (defvar c-hanging-comment-ender-p t
   "*If nil, `c-fill-paragraph' leaves C block comment enders on their own line.
@@ -4371,7 +4364,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.127 $"
+(defconst c-version "$Revision: 4.128 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
