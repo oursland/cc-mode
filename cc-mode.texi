@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.11 $
+@comment manual version: $Revision: 2.12 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-04-06 18:51:09 $
+@comment Last modification: $Date: 1995-04-10 21:59:45 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1228,6 +1228,12 @@ consider upgrading to Emacs 19.
 There is still some weird behavior when filling C block comments.
 My suggestion is to check out add-on fill packages such as
 @code{filladapt}, available at the elisp archive.
+
+@cindex inline-close
+@kindex TAB
+@item
+Lines following @code{inline-close} braces which hang ``after'' do not
+line up correctly.  Hit @kbd{TAB} to reindent the line.
 
 @end itemize
 
