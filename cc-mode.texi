@@ -38,7 +38,8 @@ Texts.  A copy of the license is included in the section entitled
 ``Licenses''.
 @end macro
 
-@comment Info directory entry for use by install-info
+@comment Info directory entry for use by install-info. The indentation
+@comment here is by request from the FSF folks.
 @dircategory Emacs
 @direntry
 * CC Mode: (cc-mode).   Emacs mode for editing C, C++, Objective-C,
@@ -109,11 +110,11 @@ font-locking; there are other Emacs packages for that.
 * Syntactic Symbols::
 * Indentation Functions::
 * Performance Issues::
+* Limitations and Known Bugs::
 * Frequently Asked Questions::
 * Getting the Latest CC Mode Release::
-* Sample .emacs File::
-* Limitations and Known Bugs::
 * Mailing Lists and Submitting Bug Reports::
+* Sample .emacs File::
 * Licenses::
 
  --- Indices ---
@@ -4178,7 +4179,7 @@ of it as an identity function for lineups; it is used for
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Performance Issues, Frequently Asked Questions, Indentation Functions, Top
+@node    Performance Issues, Limitations and Known Bugs, Indentation Functions, Top
 @comment node-name, next, previous, up
 @chapter    Performance Issues
 @cindex performance issues
@@ -4278,10 +4279,47 @@ use here; you should read the comments at the top of the file, and look
 at the variable @code{cc-lobotomy-pith-list} for details.
 
 
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Frequently Asked Questions, Getting the Latest CC Mode Release, Performance Issues, Top
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Limitations and Known Bugs, Frequently Asked Questions, Performance Issues, Top
 @comment node-name, next, previous, up
-@chapter    Frequently Asked Questions
+@chapter    Limitations and Known Bugs
+@cindex limitations
+@cindex bugs
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@itemize @bullet
+@item
+Re-indenting large regions or expressions can be slow.
+
+@findex c-indent-exp
+@findex indent-exp (c-)
+@item
+@code{c-indent-exp} has not been fully optimized.  It essentially
+equivalent to hitting @kbd{TAB} (@code{c-indent-command}) on every
+line.  Some information is cached from line to line, but such caching
+invariable causes inaccuracies in analysis in some bizarre situations.
+
+@vindex signal-error-on-buffer-boundary
+@item
+XEmacs versions from 19.15 until (as of this writing 12-Mar-1998) 20.4
+contain a variable called @code{signal-error-on-buffer-boundary}.  This
+was intended as a solution to user interface problems associated with
+buffer movement and the @code{zmacs-region} deactivation on errors.
+However, setting this variable to a non-default value had the
+deleterious side effect of breaking many built-in primitive functions.
+Most users will not be affected since they never change the value of
+this variable.  @strong{Do not set this variable to @code{nil}}; you
+will cause serious problems in @ccmode{} and probably other XEmacs
+packages!  As of at least XEmacs 20.4, the effects this variable tried
+to correct have been fixed in other, better ways.
+
+@end itemize
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Frequently Asked Questions, Getting the Latest CC Mode Release, Limitations and Known Bugs, Top
+@comment node-name, next, previous, up
+@appendix Frequently Asked Questions
 @cindex frequently asked questions
 @cindex FAQ
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4400,9 +4438,9 @@ in the @file{README} file.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Getting the Latest CC Mode Release, Sample .emacs File, Frequently Asked Questions, Top
+@node    Getting the Latest CC Mode Release, Mailing Lists and Submitting Bug Reports, Frequently Asked Questions, Top
 @comment node-name, next, previous, up
-@chapter    Getting the Latest CC Mode Release
+@appendix Getting the Latest CC Mode Release
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} is standard with all versions of Emacs since 19.34 and of
@@ -4428,10 +4466,52 @@ distribution (named @code{cc-mode.tar.gz}; a gzip'd tar file), or any of
 the individual files, including PostScript documentation.
 
 
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Sample .emacs File, Limitations and Known Bugs, Getting the Latest CC Mode Release, Top
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Mailing Lists and Submitting Bug Reports, Sample .emacs File, Getting the Latest CC Mode Release, Top
 @comment node-name, next, previous, up
-@chapter    Sample .emacs file
+@appendix Mailing Lists and Submitting Bug Reports
+@cindex mailing lists
+@cindex reporting bugs
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@kindex C-c C-b
+@findex c-submit-bug-report
+@findex submit-bug-report (c-)
+To report bugs, use the @kbd{C-c C-b} (@code{c-submit-bug-report})
+command.  This provides vital information we need to reproduce your
+problem.  Make sure you include a concise, but complete code example.
+Please try to boil your example down to just the essential code needed
+to reproduce the problem, and include an exact recipe of steps needed to
+expose the bug.  Be especially sure to include any code that appears
+@emph{before} your bug example, if you think it might affect our ability
+to reproduce it.
+
+Please try to produce the problem in an Emacs instance without any
+customizations loaded (i.e. start it with the @code{-q -no-site-file}
+arguments).  If it works correctly there, the problem might be caused by
+faulty customizations in either your own or your site configuration.  In
+that case, we'd appreciate if you isolate the Emacs Lisp code that trigs
+the bug and include it in your report.
+
+@cindex bug report mailing list
+Bug reports are now sent to the following email addresses:
+@email{bug-cc-mode@@gnu.org} and @email{bug-gnu-emacs@@gnu.org}; the
+latter is mirrored on the Usenet newsgroup @code{gnu.emacs.bug}.  You
+can send other questions and suggestions (kudos? @t{;-)} to
+@email{bug-cc-mode@@gnu.org}.
+
+@cindex announcement mailing list
+If you want to get announcements of new @ccmode{} releases, send the
+word @emph{subscribe} in the body of a message to
+@email{cc-mode-announce-request@@lists.sourceforge.net}.  Announcements
+will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
+@code{comp.emacs} and @code{comp.emacs.xemacs}.
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Sample .emacs File, Licenses, Mailing Lists and Submitting Bug Reports, Top
+@comment node-name, next, previous, up
+@appendix Sample .emacs file
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @example
@@ -4485,86 +4565,7 @@ the individual files, including PostScript documentation.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Limitations and Known Bugs, Mailing Lists and Submitting Bug Reports, Sample .emacs File, Top
-@comment node-name, next, previous, up
-@chapter    Limitations and Known Bugs
-@cindex limitations
-@cindex bugs
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@itemize @bullet
-@item
-Re-indenting large regions or expressions can be slow.
-
-@findex c-indent-exp
-@findex indent-exp (c-)
-@item
-@code{c-indent-exp} has not been fully optimized.  It essentially
-equivalent to hitting @kbd{TAB} (@code{c-indent-command}) on every
-line.  Some information is cached from line to line, but such caching
-invariable causes inaccuracies in analysis in some bizarre situations.
-
-@vindex signal-error-on-buffer-boundary
-@item
-XEmacs versions from 19.15 until (as of this writing 12-Mar-1998) 20.4
-contain a variable called @code{signal-error-on-buffer-boundary}.  This
-was intended as a solution to user interface problems associated with
-buffer movement and the @code{zmacs-region} deactivation on errors.
-However, setting this variable to a non-default value had the
-deleterious side effect of breaking many built-in primitive functions.
-Most users will not be affected since they never change the value of
-this variable.  @strong{Do not set this variable to @code{nil}}; you
-will cause serious problems in @ccmode{} and probably other XEmacs
-packages!  As of at least XEmacs 20.4, the effects this variable tried
-to correct have been fixed in other, better ways.
-
-@end itemize
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Mailing Lists and Submitting Bug Reports, Licenses, Limitations and Known Bugs, Top
-@comment node-name, next, previous, up
-@chapter    Mailing Lists and Submitting Bug Reports
-@cindex mailing lists
-@cindex reporting bugs
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@kindex C-c C-b
-@findex c-submit-bug-report
-@findex submit-bug-report (c-)
-To report bugs, use the @kbd{C-c C-b} (@code{c-submit-bug-report})
-command.  This provides vital information we need to reproduce your
-problem.  Make sure you include a concise, but complete code example.
-Please try to boil your example down to just the essential code needed
-to reproduce the problem, and include an exact recipe of steps needed to
-expose the bug.  Be especially sure to include any code that appears
-@emph{before} your bug example, if you think it might affect our ability
-to reproduce it.
-
-Please try to produce the problem in an Emacs instance without any
-customizations loaded (i.e. start it with the @code{-q -no-site-file}
-arguments).  If it works correctly there, the problem might be caused by
-faulty customizations in either your own or your site configuration.  In
-that case, we'd appreciate if you isolate the Emacs Lisp code that trigs
-the bug and include it in your report.
-
-@cindex bug report mailing list
-Bug reports are now sent to the following email addresses:
-@email{bug-cc-mode@@gnu.org} and @email{bug-gnu-emacs@@gnu.org}; the
-latter is mirrored on the Usenet newsgroup @code{gnu.emacs.bug}.  You
-can send other questions and suggestions (kudos? @t{;-)} to
-@email{bug-cc-mode@@gnu.org}.
-
-@cindex announcement mailing list
-If you want to get announcements of new @ccmode{} releases, send the
-word @emph{subscribe} in the body of a message to
-@email{cc-mode-announce-request@@lists.sourceforge.net}.  Announcements
-will also be posted to the Usenet newsgroups @code{gnu.emacs.sources},
-@code{comp.emacs} and @code{comp.emacs.xemacs}.
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Licenses, Concept Index, Mailing Lists and Submitting Bug Reports, Top
+@node    Licenses, Concept Index, Sample .emacs File, Top
 @comment node-name, next, previous, up
 @appendix Licenses
 @cindex Licenses
