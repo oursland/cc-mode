@@ -42,7 +42,7 @@
     (require 'imenu)
   (error nil))
 
-;; The things referenced in imenu, which we doesn't require.
+;; The things referenced in imenu, which we don't require.
 (cc-bytecomp-defvar imenu-case-fold-search)
 (cc-bytecomp-defvar imenu-generic-expression)
 (cc-bytecomp-defun imenu-progress-message)
