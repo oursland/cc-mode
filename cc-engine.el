@@ -567,6 +567,130 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 	nil))))
 
 
+;; A set of functions that covers various idiosyncrasies in
+;; implementations of `forward-comment'.
+;;
+;; Note: Some emacsen considers incorrectly that any line comment
+;; ending with a backslash continues to the next line.  I can't think
+;; of any way to work around that in a reliable way without changing
+;; the buffer, though.  Suggestions welcome. ;) (No, temporarily
+;; changing the syntax for backslash doesn't work since we must treat
+;; escapes in string literals correctly.)
+
+(defun c-forward-single-comment ()
+  "Move forward past whitespace and the closest following comment, if any.
+Return t if a comment was found, nil otherwise.  In either case, the
+point is moved past the following whitespace.  Line continuations,
+i.e. a backslashes followed by line breaks, are treated as whitespace.
+The line breaks that end line comments are considered to be the
+comment enders, so the point will be put on the beginning of the next
+line if it moved past a line comment."
+
+  (let ((start (point)))
+    (when (looking-at "\\([ \t\n\r\f]\\|\\\\[\n\r]\\)+")
+      (goto-char (match-end 0)))
+
+    (when (forward-comment 1)
+      (if (eobp)
+	  ;; Some emacsen (e.g. XEmacs 21) return t when moving
+	  ;; forwards at eob.
+	  nil
+
+	;; Emacs includes the ending newline in a b-style (c++)
+	;; comment, but XEmacs doesn't.  We depend on the Emacs
+	;; behavior (which also is symmetric).
+	(if (and (eolp) (nth 7 (parse-partial-sexp start (point))))
+	    (condition-case nil (forward-char 1)))
+
+	t))))
+
+(defun c-forward-comments ()
+  "Move forward past all following whitespace and comments.
+Line continuations, i.e. a backslashes followed by line breaks, are
+treated as whitespace."
+
+  (while (or
+	  ;; If forward-comment in at least XEmacs 21 is given a large
+	  ;; positive value, it'll loop all the way through if it hits
+	  ;; eob.
+	  (and (forward-comment 5)
+	       ;; Some emacsen (e.g. XEmacs 21) return t when moving
+	       ;; forwards at eob.
+	       (not (eobp)))
+
+	  (when (looking-at "\\\\[\n\r]")
+	    (forward-char 2)
+	    t))))
+
+(defun c-backward-single-comment ()
+  "Move backward past whitespace and the closest preceding comment, if any.
+Return t if a comment was found, nil otherwise.  In either case, the
+point is moved past the preceding whitespace.  Line continuations,
+i.e. a backslashes followed by line breaks, are treated as whitespace.
+The line breaks that end line comments are considered to be the
+comment enders, so the point cannot be at the end of the same line to
+move over a line comment."
+
+  (let ((start (point)))
+    ;; When we got newline terminated comments, forward-comment in all
+    ;; supported emacsen so far will stop at eol of each line not
+    ;; ending with a comment when moving backwards.  This corrects for
+    ;; that, and at the same time handles line continuations.
+    (while (progn
+	     (skip-chars-backward " \t\n\r\f")
+	     (and (looking-at "[\n\r]")
+		  (eq (char-before) ?\\)
+		  (< (point) start)))
+      (backward-char))
+
+    (if (bobp)
+	;; Some emacsen (e.g. Emacs 19.34) return t when moving
+	;; backwards at bob.
+	nil
+
+      ;; Leave point after the closest following newline if we've
+      ;; backed up over any above, since forward-comment won't move
+      ;; backward over a line comment if it starts at the end of that
+      ;; line.
+      (if (and (looking-at "\\s *[\n\r]")
+	       (<= (match-end 0) start))
+	  (goto-char (match-end 0)))
+
+      (if (forward-comment -1)
+	  (if (eolp)
+	      ;; If forward-comment above succeeded and we're at eol
+	      ;; then the newline we moved over above didn't end a
+	      ;; line comment, so we give it another go.
+	      (forward-comment -1)
+	    t)))))
+
+(defun c-backward-comments ()
+  "Move backward past all preceding whitespace and comments.
+Line continuations, i.e. a backslashes followed by line breaks, are
+treated as whitespace.  The line breaks that end line comments are
+considered to be the comment enders, so the point cannot be at the end
+of the same line to move over a line comment."
+
+  (let ((start (point)))
+    (while (or
+	    ;; If forward-comment in Emacs 19.34 is given a large
+	    ;; negative value, it'll loop all the way through if it
+	    ;; hits bob.
+	    (and (forward-comment -5)
+		 ;; Some emacsen (e.g. Emacs 19.34) return t when
+		 ;; moving backwards at bob.
+		 (not (bobp)))
+
+	    ;; XEmacs treats line continuations as whitespace but only
+	    ;; in the backward direction, which seems a bit odd.
+	    ;; Anyway, this is necessary for Emacs.
+	    (when (and (looking-at "[\n\r]")
+		       (eq (char-before) ?\\)
+		       (< (point) start))
+	      (backward-char)
+	      t)))))
+
+
 ;; This is a dynamically bound cache used together with
 ;; c-query-macro-start and c-query-and-set-macro-start.  It only works
 ;; as long as point doesn't cross a macro boundary.
@@ -614,162 +738,76 @@ that doesn't end with a line continuation backslash."
 	     (forward-char)
 	     t))))
 
-(defun c-forward-comment (count)
-  ;; Insulation from various idiosyncrasies in implementations of
-  ;; `forward-comment'.
-  ;;
-  ;; Note: Some emacsen considers incorrectly that any line comment
-  ;; ending with a backslash continues to the next line.  I can't
-  ;; think of any way to work around that in a reliable way without
-  ;; changing the buffer, though.  Suggestions welcome. ;)  (No,
-  ;; temporarily changing the syntax for backslash doesn't work since
-  ;; we must treat escapes in string literals correctly.)
-  ;;
-  ;; Another note: When moving backwards over a block comment, there's
-  ;; a bug in forward-comment that can make it stop at "/*" inside a
-  ;; line comment.  Haven't yet found a reasonably cheap way to kludge
-  ;; around that one either. :\
-  (let ((here (point)))
-    (if (>= count 0)
-	(when (forward-comment count)
-	  (if (eobp)
-	      ;; Some emacsen (e.g. XEmacs 21) return t when moving
-	      ;; forwards at eob.
-	      nil
-	    ;; Emacs includes the ending newline in a b-style (c++)
-	    ;; comment, but XEmacs doesn't.  We depend on the Emacs
-	    ;; behavior (which also is symmetric).
-	    (if (and (eolp) (nth 7 (parse-partial-sexp here (point))))
-		(condition-case nil (forward-char 1)))
-	    t))
-      ;; When we got newline terminated comments,
-      ;; forward-comment in all supported emacsen so far will
-      ;; stop at eol of each line not ending with a comment when
-      ;; moving backwards.  The following corrects for it when
-      ;; count is -1.  The other common case, when count is
-      ;; large and negative, works regardless.  It's too much
-      ;; work to correct for the rest of the cases.
-      (skip-chars-backward " \t\n\r\f")
-      (if (bobp)
-	  ;; Some emacsen return t when moving backwards at bob.
-	  nil
-	(re-search-forward "[\n\r]" here t)
-	(let* ((res (if (forward-comment count)
-			(if (eolp) (forward-comment -1) t)))
-	       (savepos (point)))
-	  ;; XEmacs treats line continuations as whitespace (but only
-	  ;; in the backward direction).
-	  (while (and (progn (end-of-line) (< (point) here))
-		      (eq (char-before) ?\\))
-	    (setq res nil
-		  savepos (point))
-	    (forward-line))
-	  (goto-char savepos)
-	  res)))))
-
-(defun c-forward-comment-lc (count)
-  ;; Like `c-forward-comment', but treat line continuations as
-  ;; whitespace.
-  (catch 'done
-    (if (> count 0)
-	(while (if (c-forward-comment 1)
-		   (progn
-		     (setq count (1- count))
-		     (> count 0))
-		 (if (looking-at "\\\\$")
-		     (progn
-		       (forward-char)
-		       t)
-		   (throw 'done nil))))
-      (while (if (c-forward-comment -1)
-		 (progn
-		   (setq count (1+ count))
-		   (< count 0))
-	       (if (and (eolp) (eq (char-before) ?\\))
-		   (progn
-		     (backward-char)
-		     t)
-		 (throw 'done nil)))))
-    t))
-
-(defun c-forward-syntactic-ws (&optional lim)
+(defun c-forward-syntactic-ws (&optional limit)
   "Forward skip of syntactic whitespace.
 Syntactic whitespace is defined as whitespace characters, comments,
 and preprocessor directives.  However if point starts inside a comment
 or preprocessor directive, the content of it is not treated as
-whitespace.  LIM sets an upper limit of the forward movement, if
+whitespace.  LIMIT sets an upper limit of the forward movement, if
 specified."
+
   (let ((here (point-max)))
-    (or lim (setq lim here))
+    (or limit (setq limit here))
+
     (while (/= here (point))
-      ;; If forward-comment in at least XEmacs 21 is given a large
-      ;; positive value, it'll loop all the way through if it hits eob.
-      (while (c-forward-comment 5))
+      (c-forward-comments)
       (setq here (point))
+
       (cond
-       ;; Skip line continuations.
-       ((looking-at "\\\\$")
-	(forward-char))
        ;; Skip preprocessor directives.
        ((and (looking-at "#[ \t]*[a-zA-Z0-9!]")
 	     (progn (skip-chars-backward " \t")
 		    (bolp)))
 	(end-of-line)
-	(while (and (<= (point) lim)
+	(while (and (<= (point) limit)
 		    (eq (char-before) ?\\)
 			 (= (forward-line 1) 0))
 	  (end-of-line))
-	(when (> (point) lim)
+	(when (> (point) limit)
 	  ;; Don't move past the macro if that'd take us past the limit.
 	  (goto-char here)))
+
        ;; Skip in-comment line continuations (used for Pike refdoc).
        ((and c-opt-in-comment-lc (looking-at c-opt-in-comment-lc))
 	(goto-char (match-end 0)))))
-    (goto-char (min (point) lim))))
 
-(defun c-backward-syntactic-ws (&optional lim)
+    (goto-char (min (point) limit))))
+
+(defun c-backward-syntactic-ws (&optional limit)
   "Backward skip of syntactic whitespace.
 Syntactic whitespace is defined as whitespace characters, comments,
 and preprocessor directives.  However if point starts inside a comment
 or preprocessor directive, the content of it is not treated as
-whitespace.  LIM sets a lower limit of the backward movement, if
+whitespace.  LIMIT sets a lower limit of the backward movement, if
 specified."
-  (let ((start-line (c-point 'bol))
-	(here (point-min))
-	(line-cont 'maybe)
+  (let ((here (point-min))
 	prev-pos)
-    (or lim (setq lim here))
+    (or limit (setq limit here))
+
     (while (/= here (point))
       (setq prev-pos (point))
-      ;; If forward-comment in Emacs 19.34 is given a large negative
-      ;; value, it'll loop all the way through if it hits bob.
-      (while (c-forward-comment -5))
+      (c-backward-comments)
       (setq here (point))
+
       (cond
-       ((and (eolp)
-	     (eq (char-before) ?\\)
-	     (if (<= prev-pos (c-point 'eonl))
-		 t
-	       ;; Passed a line continuation, but not from the line we
-	       ;; started on.
-	       (forward-char)
-	       (setq line-cont nil)))
-	(backward-char)
-	(setq line-cont t))
-       ((progn
-	  (when (eq line-cont 'maybe)
-	    (save-excursion
-	      (end-of-line)
-	      (setq line-cont (eq (char-before) ?\\))))
-	  (or line-cont
-	      (and (< (point) start-line)
-		   (c-beginning-of-macro))))
-	(if (< (point) lim)
-	    ;; Don't move past the macro if we began inside it or at
-	    ;; the end of the same line, or if the move would take us
-	    ;; past the limit.
-	    (goto-char here))
-	(setq line-cont nil))
+       ((c-beginning-of-macro)
+	(let ((macro-beg (point)))
+	  (if (or (progn (goto-char prev-pos)
+			 (beginning-of-line)
+			 (and (c-safe (backward-char) t)
+			      (eq (char-before) ?\\)))
+		  (<= (point) macro-beg)
+		  (< macro-beg limit))
+	      ;; Don't move past the macro if we began inside it, or
+	      ;; if the move would take us past the limit.  We detect
+	      ;; the inside of the macro by checking that the previous
+	      ;; line doesn't end with "\" or that the macro begins on
+	      ;; this line.  That means that the position at the end
+	      ;; of the last line of the macro is also considered to
+	      ;; be within it.
+	      (goto-char here)
+	    (goto-char macro-beg))))
+
        ;; Skip in-comment line continuations (used for Pike refdoc).
        ((and c-opt-in-comment-lc
 	     (save-excursion
@@ -779,7 +817,8 @@ specified."
 		    (looking-at c-opt-in-comment-lc)
 		    (eq (match-end 0) here))))
 	(goto-char (match-beginning 0)))))
-    (goto-char (max (point) lim))))
+
+    (goto-char (max (point) limit))))
 
 (defun c-forward-token-1 (&optional count balanced lim)
   "Move forward by tokens.
@@ -1031,10 +1070,12 @@ done first in forward direction.  If NOT-IN-DELIMITER is non-nil, the
 case when point is inside a starting delimiter won't be recognized.
 This only has effect for comments, which have starting delimiters with
 more than one character."
+
   (save-excursion
     (let* ((pos (point))
 	   (lim (or lim (c-point 'bod)))
 	   (state (parse-partial-sexp lim (point))))
+
       (cond ((nth 3 state)
 	     ;; String.  Search backward for the start.
 	     (while (nth 3 state)
@@ -1042,6 +1083,7 @@ more than one character."
 	       (setq state (parse-partial-sexp lim (point))))
 	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 			       (point-max))))
+
 	    ((nth 7 state)
 	     ;; Line comment.  Search from bol for the comment starter.
 	     (beginning-of-line)
@@ -1053,46 +1095,56 @@ more than one character."
 			    lim (point) nil nil state)
 		     lim (point)))
 	     (backward-char 2)
-	     (cons (point) (progn (c-forward-comment 1) (point))))
+	     (cons (point) (progn (c-forward-single-comment) (point))))
+
 	    ((nth 4 state)
 	     ;; Block comment.  Search backward for the comment starter.
 	     (while (nth 4 state)
 	       (search-backward "/*")	; Should never fail.
 	       (setq state (parse-partial-sexp lim (point))))
-	     (cons (point) (progn (c-forward-comment 1) (point))))
+	     (cons (point) (progn (c-forward-single-comment) (point))))
+
 	    ((and (not not-in-delimiter)
 		  (not (nth 5 state))
 		  (eq (char-before) ?/)
 		  (looking-at "[/*]"))
 	     ;; We're standing in a comment starter.
 	     (backward-char 1)
-	     (cons (point) (progn (c-forward-comment 1) (point))))
+	     (cons (point) (progn (c-forward-single-comment) (point))))
+
 	    (near
 	     (goto-char pos)
+
 	     ;; Search forward for a literal.
 	     (skip-chars-forward " \t")
+
 	     (cond
 	      ((eq (char-syntax (or (char-after) ?\ )) ?\") ; String.
 	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 				 (point-max))))
+
 	      ((looking-at "/[/*]")	; Line or block comment.
-	       (cons (point) (progn (c-forward-comment 1) (point))))
+	       (cons (point) (progn (c-forward-single-comment) (point))))
+
 	      (t
 	       ;; Search backward.
 	       (skip-chars-backward " \t")
+
 	       (let ((end (point)) beg)
 		 (cond
 		  ((eq (char-syntax (or (char-before) ?\ )) ?\") ; String.
 		   (setq beg (c-safe (c-backward-sexp 1) (point))))
+
 		  ((and (c-safe (forward-char -2) t)
 			(looking-at "*/"))
 		   ;; Block comment.  Due to the nature of line
 		   ;; comments, they will always be covered by the
 		   ;; normal case above.
 		   (goto-char end)
-		   (c-forward-comment -1)
+		   (c-backward-single-comment)
 		   ;; If LIM is bogus, beg will be bogus.
 		   (setq beg (point))))
+
 		 (if beg (cons beg end))))))
 	    ))))
 
@@ -1103,46 +1155,57 @@ more than one character."
     (let* ((pos (point))
 	   (lim (or lim (c-point 'bod)))
 	   (state (parse-partial-sexp lim (point))))
+
       (cond ((nth 3 state)		; String.
 	     (goto-char (nth 8 state))
 	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 			       (point-max))))
+
 	    ((nth 4 state)		; Comment.
 	     (goto-char (nth 8 state))
-	     (cons (point) (progn (c-forward-comment 1) (point))))
+	     (cons (point) (progn (c-forward-single-comment) (point))))
+
 	    ((and (not not-in-delimiter)
 		  (not (nth 5 state))
 		  (eq (char-before) ?/)
 		  (looking-at "[/*]"))
 	     ;; We're standing in a comment starter.
 	     (backward-char 1)
-	     (cons (point) (progn (c-forward-comment 1) (point))))
+	     (cons (point) (progn (c-forward-single-comment) (point))))
+
 	    (near
 	     (goto-char pos)
+
 	     ;; Search forward for a literal.
 	     (skip-chars-forward " \t")
+
 	     (cond
 	      ((eq (char-syntax (or (char-after) ?\ )) ?\") ; String.
 	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 				 (point-max))))
+
 	      ((looking-at "/[/*]")	; Line or block comment.
-	       (cons (point) (progn (c-forward-comment 1) (point))))
+	       (cons (point) (progn (c-forward-single-comment) (point))))
+
 	      (t
 	       ;; Search backward.
 	       (skip-chars-backward " \t")
+
 	       (let ((end (point)) beg)
 		 (cond
 		  ((eq (char-syntax (or (char-before) ?\ )) ?\") ; String.
 		   (setq beg (c-safe (c-backward-sexp 1) (point))))
+
 		  ((and (c-safe (forward-char -2) t)
 			(looking-at "*/"))
 		   ;; Block comment.  Due to the nature of line
 		   ;; comments, they will always be covered by the
 		   ;; normal case above.
 		   (goto-char end)
-		   (c-forward-comment -1)
+		   (c-backward-single-comment)
 		   ;; If LIM is bogus, beg will be bogus.
 		   (setq beg (point))))
+
 		 (if beg (cons beg end))))))
 	    ))))
 
@@ -1167,7 +1230,7 @@ argument is returned."
 		  (end (cdr range)))
 	      ;; Got to take care in the backward direction to handle
 	      ;; comments which are preceded by code.
-	      (while (and (c-forward-comment -1)
+	      (while (and (c-backward-single-comment)
 			  (>= (point) bopl)
 			  (looking-at "//")
 			  (= col (current-column)))
@@ -2488,7 +2551,7 @@ Keywords are recognized and not considered identifiers."
 		    ;; Always start by skipping over any comments that
 		    ;; stands between the statement and boi.
 		    (while (and (/= (setq savepos (point)) boi)
-				(c-forward-comment -1))
+				(c-backward-single-comment))
 		      (setq at-comment t
 			    boi (c-point 'boi)))
 		    (goto-char savepos)

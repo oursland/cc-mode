@@ -1113,7 +1113,7 @@ defun."
 	  ;; the previous declaration then we use the current point
 	  ;; instead.
 	  (while (and (/= (point) (c-point 'boi))
-		      (c-forward-comment -1)))
+		      (c-backward-single-comment)))
 	  (if (/= (point) (c-point 'boi))
 	      (goto-char pos))
 
@@ -1196,7 +1196,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 	  ;; next declaration then we use the current point instead.
 	  (while (and (not (bolp))
 		      (not (looking-at "\\s *$"))
-		      (c-forward-comment 1)))
+		      (c-forward-single-comment)))
 	  (cond ((bolp))
 		((looking-at "\\s *$")
 		 (forward-line 1))
@@ -1254,7 +1254,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 	  ;; declaration, but then we won't move significantly far
 	  ;; here.
 	  (goto-char pos)
-	  (while (c-forward-comment 10))
+	  (c-forward-comments)
 
 	  (when (and near (c-beginning-of-macro))
 	    (throw 'exit
@@ -1294,7 +1294,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 	  (cons (progn
 		  (setq pos (point))
 		  (while (and (/= (point) (c-point 'boi))
-			      (c-forward-comment -1)))
+			      (c-backward-single-comment)))
 		  (if (/= (point) (c-point 'boi))
 		      pos
 		    (point)))
@@ -1305,7 +1305,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 		  (setq pos (point))
 		  (while (and (not (bolp))
 			      (not (looking-at "\\s *$"))
-			      (c-forward-comment 1)))
+			      (c-forward-single-comment)))
 		  (cond ((bolp)
 			 (point))
 			((looking-at "\\s *$")
@@ -1364,9 +1364,9 @@ more \"DWIM:ey\"."
 	  (save-excursion
 	    ;; Find the comment next to point if we're not in one.
 	    (if (> count 0)
-		(if (c-forward-comment-lc -1)
+		(if (c-backward-single-comment)
 		    (setq range (cons (point)
-				      (progn (c-forward-comment-lc 1)
+				      (progn (c-forward-single-comment)
 					     (point))))
 		  (c-skip-ws-backward)
 		  (setq range (point))
@@ -1381,7 +1381,7 @@ more \"DWIM:ey\"."
 				      (c-forward-sexp 1)
 				      (point))))
 		(setq range (point))
-		(setq range (if (c-forward-comment-lc 1)
+		(setq range (if (c-forward-single-comment)
 				(cons range (point))
 			      nil))))
 	    (setq range (c-collect-line-comments range))))
@@ -1509,7 +1509,6 @@ more \"DWIM:ey\"."
 		;; into parens.  Also stop before `#' when it's at boi
 		;; on a line.
 		(let ((literal-pos (not sentence-flag))
-		      (large-enough (- (point-max)))
 		      last last-below-line)
 		  (catch 'done
 		    (while t
@@ -1532,13 +1531,13 @@ more \"DWIM:ey\"."
 		      ;; style comment. /mast
 		      ;;(c-skip-ws-backward)
 		      (if literal-pos
-			  (c-forward-comment-lc large-enough)
-			(when (c-forward-comment-lc -1)
+			  (c-backward-comments)
+			(when (c-backward-single-comment)
 			  ;; Record position of first comment.
 			  (save-excursion
-			    (c-forward-comment-lc 1)
+			    (c-forward-single-comment)
 			    (setq literal-pos (point)))
-			  (c-forward-comment-lc large-enough)))
+			  (c-backward-comments)))
 		      (unless last-below-line
 			(if (save-excursion
 			      (re-search-forward "\\(^\\|[^\\]\\)$" last t))
@@ -1590,19 +1589,18 @@ more \"DWIM:ey\"."
 	      ;; and move into parens.  Also stop at eol of lines
 	      ;; with `#' at the boi.
 	      (let ((literal-pos (not sentence-flag))
-		    (large-enough (point-max))
 		    last)
 		(catch 'done
 		  (while t
 		    (setq last (point))
 		    (if literal-pos
-			(c-forward-comment-lc large-enough)
+			(c-forward-comments)
 		      (if (progn
 			    (c-skip-ws-forward)
 			    ;; Record position of first comment.
 			    (setq literal-pos (point))
-			    (c-forward-comment-lc 1))
-			  (c-forward-comment-lc large-enough)
+			    (c-forward-single-comment))
+			  (c-forward-comments)
 			(setq literal-pos nil)))
 		    (cond ((and (eq (char-after) ?{)
 				(not (and c-special-brace-lists

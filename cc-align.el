@@ -495,7 +495,7 @@ Works with: comment-intro."
       (cond
        ;; CASE 1: preserve aligned comments
        ((save-excursion
-	  (and (c-forward-comment -1)
+	  (and (c-backward-single-comment)
 	       (= col (current-column))))
 	(vector col))			; Return an absolute column.
        ;; indent as specified by c-comment-only-line-offset
