@@ -297,32 +297,24 @@ Don't use within `eval-when-compile'."
   "Return non-nil if the given symbol is bound as a variable outside
 the compilation.  This is the same as using `boundp' but additionally
 exclude any variables that have been bound during compilation with
-`cc-bytecomp-defvar'.  Use only in places that are evaluated at
-compile time."
-  (if (cc-bytecomp-is-compiling)
-      `(if (boundp 'cc-bytecomp-unbound-variables)
-	   (if (boundp ,symbol)
-	       (not (memq ,symbol cc-bytecomp-unbound-variables))
-	     nil)
-	 (error "`cc-bytecomp-boundp' not evaluated during compilation."))
-    ;; Used if running uncompiled.
+`cc-bytecomp-defvar'."
+  (if (and (cc-bytecomp-is-compiling)
+	   (memq (car (cdr symbol)) cc-bytecomp-unbound-variables))
+      nil
     `(boundp ,symbol)))
 
 (defmacro cc-bytecomp-fboundp (symbol)
   "Return non-nil if the given symbol is bound as a function outside
 the compilation.  This is the same as using `fboundp' but additionally
 exclude any functions that have been bound during compilation with
-`cc-bytecomp-defun'.  Use only in places that are evaluated at compile
-time."
-  (if (cc-bytecomp-is-compiling)
-      `(if (boundp 'cc-bytecomp-original-functions)
-	   (if (fboundp ,symbol)
-	       (let ((elem (assq ,symbol cc-bytecomp-original-functions)))
-		 (not (eq (elt elem 2) 'unbound)))
-	     nil)
-	 (error "`cc-bytecomp-fboundp' not evaluated during compilation."))
-    ;; Used if running uncompiled.
-    `(fboundp ,symbol)))
+`cc-bytecomp-defun'."
+  (let (fun-elem)
+    (if (and (cc-bytecomp-is-compiling)
+	     (setq fun-elem (assq (car (cdr symbol))
+				  cc-bytecomp-original-functions))
+	     (eq (elt fun-elem 2) 'unbound))
+	nil
+      `(fboundp ,symbol))))
 
 ;; Override ourselves with a version loaded from source if we're
 ;; compiling, like cc-require does for all the other files.
