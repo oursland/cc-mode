@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-19 19:34:16 $
-;; Version:         $Revision: 2.60 $
+;; Last Modified:   $Date: 1992-05-20 14:37:51 $
+;; Version:         $Revision: 2.61 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-19 19:34:16 $|$Revision: 2.60 $|
+;; |$Date: 1992-05-20 14:37:51 $|$Revision: 2.61 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -192,7 +192,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.60 $
+  "Major mode for editing C++ code.  $Revision: 2.61 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -776,7 +776,7 @@ Return the amount the indentation changed by."
 		  (setq indent (save-excursion
 				 (c-backward-to-start-of-if)
 				 (current-indentation))))
-		 ((looking-at "friend\[ \t]class[ \t]")
+		 ((looking-at "friend\[ \t]\\(class\\|struct\\)[ \t]")
 		  (setq indent (+ indent c++-friend-offset)))
 		 ((= (following-char) ?\))
 		  (setq indent (+ (- indent c-indent-level)
@@ -980,7 +980,8 @@ Returns nil if line starts inside a string, t if in a comment."
 				 (current-column)))
 			   ;; else first check to see if its a
 			   ;; multiple inheritance continuation line
-			   (if (looking-at "class[ \t]+\\w+[ \t]+:[ \t]+")
+			   (if (looking-at
+				"\\(class\\|struct\\)[ \t]+\\w+[ \t]+:[ \t]+")
 			       (progn (goto-char (match-end 0))
 				      (current-column))
 			     (current-indentation))))))
@@ -1101,13 +1102,15 @@ Returns nil if line starts inside a string, t if in a comment."
 				      "#\\|/\\*\\|//"
 				      "\\|\\(case\\|default\\)[ \t]"
 				      "\\|[a-zA-Z0-9_$]*:[^:]"
-				      "\\|friend[ \t]class[ \t]")))
+				      "\\|friend[ \t]"
+				      "\\(class\\|struct\\)[ \t]")))
 			;; Skip over comments and labels following openbrace.
 			(cond ((= (following-char) ?\#)
 			       (forward-line 1))
 			      ((looking-at "/\\*")
 			       (search-forward "*/" nil 'move))
-			      ((looking-at "//\\|friend[ \t]class[ \t]")
+			      ((looking-at
+				"//\\|friend[ \t]\\(class\\|struct\\)[ \t]")
 			       (forward-line 1))
 			      ((looking-at "\\(case\\|default\\)\\b")
 			       (forward-line 1))
@@ -1307,7 +1310,7 @@ Returns nil if line starts inside a string, t if in a comment."
 			   (forward-sexp 1)
 			   (looking-at ":[^:]"))))
 		(setq this-indent (max 0 (+ this-indent c-label-offset))))
-	    (if (looking-at "friend[ \t]class[ \t]")
+	    (if (looking-at "friend[ \t]\\(class\\|struct\\)[ \t]")
 		(setq this-indent (+ this-indent c++-friend-offset)))
 	    (if (= (following-char) ?})
 		(setq this-indent (- this-indent c-indent-level)))
@@ -1612,7 +1615,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.60 $"
+(defconst c++-version "$Revision: 2.61 $"
   "c++-mode version number.")
 
 (defun c++-version ()
