@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.328 $
-;; Last Modified:   $Date: 1993-05-19 14:19:20 $
+;; Version:         $Revision: 2.329 $
+;; Last Modified:   $Date: 1993-05-24 22:00:33 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-05-19 14:19:20 $|$Revision: 2.328 $|
+;; |$Date: 1993-05-24 22:00:33 $|$Revision: 2.329 $|
 
 ;;; Code:
 
@@ -478,7 +478,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.328 $
+  "Major mode for editing C++ code.  $Revision: 2.329 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -699,7 +699,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.328 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.329 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1643,8 +1643,8 @@ used."
 	) ; end-while
       state)))
 
-;; This is for all v19 and patched v18 emacsen
-(defun c++-in-literal-quick (&optional lim)
+;; This is for all 8-bit emacsen (Lucid 19, patched GNU18)
+(defun c++-in-literal-8-bit (&optional lim)
   "Determine if point is in a C++ `literal'.
 Return 'c if in a C-style comment, 'c++ if in a C++ style comment,
 'string if in a string literal, 'pound if on a preprocessor line, or
@@ -1666,13 +1666,40 @@ used."
 	'pound)
        (t nil)))))
 
+;; This is for all 1-bit emacsen (GNU19)
+(defun c++-in-literal-1-bit (&optional lim)
+  "Determine if point is in a C++ `literal'.
+Return 'c if in a C-style comment, 'c++ if in a C++ style comment,
+'string if in a string literal, 'pound if on a preprocessor line, or
+nil if not in a comment at all.  Optional LIM is used as the backward
+limit of the search.  If omitted, or nil, c++-beginning-of-defun is
+used."
+  (save-excursion
+    (let* ((backlim (or lim (c++-point 'bod)))
+	   (here (point))
+	   (parse-sexp-ignore-comments t) ; may not be necessary
+	   (state (parse-partial-sexp backlim (point))))
+      (cond
+       ((nth 3 state) 'string)
+       ((nth 4 state) (if (nth 7 state) 'c 'c++))
+       ((progn
+	  (goto-char here)
+	  (beginning-of-line)
+	  (looking-at "[ \t]*#"))
+	'pound)
+       (t nil)))))
+
 (cond
  ((memq 'old-v19 c++-emacs-features)
-  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-1)
-  (fset 'c++-in-literal 'c++-in-literal-quick))
+  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-1))
  ((memq 'v19 c++-emacs-features)
-  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-2)
-  (fset 'c++-in-literal 'c++-in-literal-quick))
+  (fset 'c++-backward-syntactic-ws 'c++-fast-backward-syntactic-ws-2))
+ )
+(cond
+ ((memq '8-bit c++-emacs-features)
+  (fset 'c++-in-literal 'c++-in-literal-8-bit))
+ ((memq '1-bit c++-emacs-features)
+  (fset 'c++-in-literal 'c++-in-literal-1-bit))
  )
 
 
@@ -2623,7 +2650,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.328 $"
+(defconst c++-version "$Revision: 2.329 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
