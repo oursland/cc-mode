@@ -76,6 +76,9 @@
 	  (while mode
 	    (let* ((c-macroexpand-mode
 		    (intern (concat (symbol-name (car mode)) "-mode")))
+		   ;; Set `c-buffer-is-cc-mode' so that
+		   ;; `c-major-mode-is' works in the macro expansion.
+		   (c-buffer-is-cc-mode c-macroexpand-mode)
 		   (val (eval (car (cdr args)))))
 	      ;; Need to install the value also during compilation,
 	      ;; since val might refer to earlier mode specific
@@ -214,8 +217,7 @@ appended."
       "``-" "``&" "``|" "``^" "``<<" "``>>" "``*" "``/" "``%"
       "`+=")))
 
-;; Regexp describing a `symbol' in all languages, not excluding
-;; keywords.  The first submatch surrounds the whole symbol.
+;; Regexp matching an identifier, not excluding keywords.
 ;;
 ;; We cannot use just `word' syntax class since `_' cannot be in word
 ;; class.  Putting underscore in word class breaks forward word
@@ -223,54 +225,71 @@ appended."
 ;; counter to Emacs convention.
 (c-lang-defconst c-symbol-key
   all "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
-  (c c++ objc java idl) (concat "\\(" (c-lang-var c-symbol-key) "\\)")
-  pike (concat "\\(" (c-lang-var c-symbol-key) "\\|"
-	       (c-make-keywords-re nil c-pike-operator-symbols)
-	       "\\)"))
+  pike (concat (c-lang-var c-symbol-key) "\\|"
+	       (c-make-keywords-re nil c-pike-operator-symbols)))
 (c-lang-defvar c-symbol-key (c-lang-var c-symbol-key))
 
 ;; Number of regexp grouping parens in `c-symbol-key'.
 (c-lang-defconst c-symbol-key-depth
   all (c-regexp-opt-depth (c-lang-var c-symbol-key)))
-(c-lang-defvar c-symbol-key-depth (c-lang-var c-symbol-key-depth))
 
 ;; Regexp matching the operators that join symbols to fully qualified
 ;; identifiers, or nil in languages that doesn't have such things.
+;; Should not contain a \| operator at the top level.
 (c-lang-defconst c-identifier-concat-key
   c++  "::"
   java "\\."
   pike "\\(::\\|\\.\\)")
 
 ;; Regexp matching a fully qualified identifier, like "A::B::c" in
-;; C++.  The first submatch surrounds the whole qualified identifier.
-;; (We cheat a bit here and don't recognize the full range of
+;; C++.  (We cheat a bit here and don't recognize the full range of
 ;; syntactic whitespace between the tokens.)
 (c-lang-defconst c-qualified-identifier-key
   all (c-lang-var c-symbol-key)		; Default to `c-symbol-key'.
   ;; These languages allow a leading qualifier operator.
   (c++ pike) (concat
-	      "\\("
 	      "\\(" (c-lang-var c-identifier-concat-key) "[ \t\n\r]*\\)?"
-	      (c-lang-var c-symbol-key)
+	      ;; The submatch below is depth of c-identifier-concat-key + 2.
+	      "\\(" (c-lang-var c-symbol-key) "\\)"
 	      (concat "\\("
 		      "[ \t\n\r]*"
 		      (c-lang-var c-identifier-concat-key)
 		      "[ \t\n\r]*"
-		      (c-lang-var c-symbol-key)
-		      "\\)*")
-	      "\\)")
+		      ;; The submatch below is: c-symbol-key-depth +
+		      ;; 2 * depth of c-identifier-concat-key + 4.
+		      "\\(" (c-lang-var c-symbol-key) "\\)"
+		      "\\)*"))
   ;; Java does not allow a leading qualifier operator.
-  java (concat "\\("
-	       (c-lang-var c-symbol-key)
+  java (concat "\\(" (c-lang-var c-symbol-key) "\\)" ; 1
 	       (concat "\\("
 		       "[ \t\n\r]*"
 		       (c-lang-var c-identifier-concat-key)
 		       "[ \t\n\r]*"
-		       (c-lang-var c-symbol-key)
-		       "\\)*")
-	       "\\)"))
+		       ;; The submatch below is c-symbol-key-depth +
+		       ;; depth of c-identifier-concat-key + 3.
+		       "\\(" (c-lang-var c-symbol-key) "\\)"
+		       "\\)*")))
 (c-lang-defvar c-qualified-identifier-key
   (c-lang-var c-qualified-identifier-key))
+
+;; Used to identify the submatch in `c-qualified-identifier-key' that
+;; surrounds the last symbol in the qualified identifier.  It's a list
+;; of submatch numbers, of which the first that have a match is taken.
+;; It's assumed that at least one have a match when the regexp have
+;; matched.
+(c-lang-defconst c-qualified-identifier-last-sym-match
+  (c++ pike) (list (+ (c-lang-var c-symbol-key-depth)
+		      (* 2 (c-regexp-opt-depth
+			    (c-lang-var c-identifier-concat-key)))
+		      4)
+		   (+ (c-regexp-opt-depth
+		       (c-lang-var c-identifier-concat-key))
+		      2))
+  java (list (+ (c-lang-var c-symbol-key-depth)
+		(c-regexp-opt-depth
+		 (c-lang-var c-identifier-concat-key))
+		3)
+	     1))
 
 ;; Syntax table built on the mode syntax table but additionally
 ;; classifies '_' and '$' as word constituents, so that all
@@ -738,7 +757,7 @@ appended."
 ;; beginning of a statement.
 (c-lang-defconst c-label-key
   all "\\<\\>"
-  (c c++ java pike) (concat (c-lang-var c-symbol-key)
+  (c c++ java pike) (concat "\\(" (c-lang-var c-symbol-key) "\\)"
 			    "[ \t\n\r]*:\\([^:]\\|$\\)"))
 (c-lang-defvar c-label-key (c-lang-var c-label-key))
 
@@ -751,7 +770,7 @@ appended."
   c++ (concat ":?[ \t\n\r]*\\(virtual[ \t\n\r]+\\)?\\("
 	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
 	      "\\)[ \t\n\r]+"
-	      (c-lang-var c-symbol-key))
+	      "\\(" (c-lang-var c-symbol-key) "\\)")
   java (c-make-keywords-re t (c-lang-var c-decl-spec-kwds)))
 (c-lang-defvar c-opt-decl-spec-key (c-lang-var c-opt-decl-spec-key))
 
@@ -770,7 +789,7 @@ appended."
 	"\\(([^)]*)\\)?"		; return type
 	;; \\s- in objc syntax table does not include \n
 	;; since it is considered the end of //-comments.
-	"[ \t\n]*" (c-lang-var c-symbol-key)))
+	"[ \t\n]*\\(" (c-lang-var c-symbol-key) "\\)"))
 (c-lang-defvar c-opt-method-key (c-lang-var c-opt-method-key))
 
 ;; Regexp matching something that might precede a declaration or a
@@ -803,7 +822,7 @@ appended."
   c    "\\([*\(]\\)\\($\\|[^=]\\)"
   c++  (concat "\\("
 	       "[*\(&~]"
-	       "\\|\\(" (c-lang-var c-symbol-key) "[ \t\n\r]*\\)?::"
+	       "\\|\\(\\(" (c-lang-var c-symbol-key) "\\)[ \t\n\r]*\\)?::"
 	       "\\|const\\>\\|volatile\\>"
 	       "\\)"
 	       "\\($\\|[^=]\\)")
