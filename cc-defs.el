@@ -83,11 +83,13 @@
   ;; eol  -- end of line
   ;; bod  -- beginning of defun
   ;; eod  -- end of defun
-  ;; boi  -- back to indentation
+  ;; boi  -- beginning of indentation
   ;; ionl -- indentation of next line
   ;; iopl -- indentation of previous line
   ;; bonl -- beginning of next line
+  ;; eonl -- end of next line
   ;; bopl -- beginning of previous line
+  ;; eopl -- end of previous line
   ;; 
   ;; This function does not modify point or mark.
   `(save-excursion
@@ -99,10 +101,16 @@
 	     ((eq position 'bol)  `(beginning-of-line))
 	     ((eq position 'eol)  `(end-of-line))
 	     ((eq position 'boi)  `(back-to-indentation))
+	     ((eq position 'bod)  `(c-beginning-of-defun-1))
 	     ((eq position 'bonl) `(forward-line 1))
 	     ((eq position 'bopl) `(forward-line -1))
-	     ((eq position 'bod)  `(c-beginning-of-defun-1))
 	     ((eq position 'eod)  `(c-end-of-defun-1))
+	     ((eq position 'eopl) `(progn
+				     (beginning-of-line)
+				     (backward-char)))
+	     ((eq position 'eonl) `(progn
+				     (forward-line 1)
+				     (end-of-line)))
 	     ((eq position 'iopl) `(progn
 				     (forward-line -1)
 				     (back-to-indentation)))
@@ -116,10 +124,16 @@
 	    ((eq position 'bol)  (beginning-of-line))
 	    ((eq position 'eol)  (end-of-line))
 	    ((eq position 'boi)  (back-to-indentation))
+	    ((eq position 'bod)  (c-beginning-of-defun-1))
 	    ((eq position 'bonl) (forward-line 1))
 	    ((eq position 'bopl) (forward-line -1))
-	    ((eq position 'bod)  (c-beginning-of-defun-1))
 	    ((eq position 'eod)  (c-end-of-defun-1))
+	    ((eq position 'eopl) (progn
+				   (beginning-of-line)
+				   (backward-char)))
+	    ((eq position 'eonl) (progn
+				   (forward-line 1)
+				   (end-of-line)))
 	    ((eq position 'iopl) (progn
 				   (forward-line -1)
 				   (back-to-indentation)))
@@ -210,6 +224,46 @@
        (set-syntax-table c-with-syntax-table-orig-table))))
 (put 'c-with-syntax-table 'lisp-indent-function 1)
 
+(defmacro c-skip-ws-forward (&optional limit)
+  "Skip over any whitespace following point.
+This function skips over horizontal and vertical whitespace and line
+continuations."
+  (if limit
+      `(let ((-limit- (or ,limit (point-max))))
+	 (while (progn
+		  ;; skip-syntax-* doesn't count \n as whitespace..
+		  (skip-chars-forward " \t\n\r\f" -limit-)
+		  (when (and (eq (char-after) ?\\)
+			     (< (point) -limit-))
+		    (forward-char)
+		    (or (eolp)
+			(progn (backward-char) nil))))))
+    '(while (progn
+	      (skip-chars-forward " \t\n\r\f")
+	      (when (eq (char-after) ?\\)
+		(forward-char)
+		(or (eolp)
+		    (progn (backward-char) nil)))))))
+
+(defmacro c-skip-ws-backward (&optional limit)
+  "Skip over any whitespace preceding point.
+This function skips over horizontal and vertical whitespace and line
+continuations."
+  (if limit
+      `(let ((-limit- (or ,limit (point-min))))
+	 (while (progn
+		  ;; skip-syntax-* doesn't count \n as whitespace..
+		  (skip-chars-backward " \t\n\r\f" -limit-)
+		  (and (eolp)
+		       (eq (char-before) ?\\)
+		       (> (point) -limit-)))
+	   (backward-char)))
+    '(while (progn
+	      (skip-chars-backward " \t\n\r\f")
+	      (and (eolp)
+		   (eq (char-before) ?\\)))
+       (backward-char))))
+
 ;; Make edebug understand the macros.
 (eval-after-load "edebug"
   '(progn
@@ -221,7 +275,9 @@
      (def-edebug-spec c-backward-sexp (&optional [&or numberp form]))
      (def-edebug-spec c-add-syntax t)
      (def-edebug-spec c-add-class-syntax t)
-     (def-edebug-spec c-with-syntax-table t)))
+     (def-edebug-spec c-with-syntax-table t)
+     (def-edebug-spec c-skip-ws-forward t)
+     (def-edebug-spec c-skip-ws-backward t)))
 
 ;;; Inline functions.
 
