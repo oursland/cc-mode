@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.3 $
-;; Last Modified:   $Date: 1994-06-06 19:47:19 $
+;; Version:         $Revision: 4.4 $
+;; Last Modified:   $Date: 1994-06-07 14:48:29 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-06 19:47:19 $|$Revision: 4.3 $|
+;; |$Date: 1994-06-07 14:48:29 $|$Revision: 4.4 $|
 
 ;;; Code:
 
@@ -329,7 +329,7 @@ Valid symbols are:
 This variable contains an association list with elements of the
 following form: (SYNTACTIC-SYMBOL . (NL-LIST)).
 
-SYNTACTIC-SYMBOL can be any of: defun-open, defun-cloase, class-open,
+SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
 class-close, inline-open, inline-close, block-open,
 block-close, substatement-open, brace-list-open, or
 brace-list-close. See `c-offsets-alist' for details.
@@ -835,7 +835,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.3 $
+cc-mode Revision: $Revision: 4.4 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -868,7 +868,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.3 $
+cc-mode Revision: $Revision: 4.4 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3617,7 +3617,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.3 $"
+(defconst c-version "$Revision: 4.4 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
