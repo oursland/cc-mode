@@ -1,3 +1,26 @@
+Wed Nov 22 14:55:12 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
+
+	*  (c-beginning-of-statement-1): CASE 3, can't just return t at
+           end of let clause since this will break arglist-cont-nonempty
+           lines (see buggy line below).  Doing a backward-up-list could
+           be slow, but I don't see any other way of doing this.
+
+	   void
+	   C_entries (c_ext, inf)
+		int c_ext;			/* extension of C */
+		FILE *inf;			/* input file */
+	   {
+	     /* Consider token only if some complicated conditions... */
+	     if ((definedef != dnone
+		  || (cblev == 0 && structdef != scolonseen)
+		  || (cblev == 1 && structdef == sinbody)) /* buggy line */
+		 && typdef != tignore
+		 && definedef != dignorerest
+		 && funcdef != finlist)
+	       {
+	       }
+	   }
+
 Fri Nov 17 22:01:36 1995  Barry Warsaw  <bwarsaw@anthem (Barry Warsaw)>
 
 	* cc-mode.el (c-guess-basic-offset, c-beginning-of-statement-1):
@@ -650,7 +673,8 @@ Wed Aug 31 22:20:47 1994  Barry A. Warsaw, ITB  <warsaw@anthem>
 	have it).
 
 	* cc-mode.el (c-progress-info, c-progress-init,
-	  c-progress-update,c-progress-fini):
+	  c-progress-update,
+c-progress-fini):
 	new vars/defuns for better long indentation progress
 	reporting
 
