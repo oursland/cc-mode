@@ -32,6 +32,7 @@
 ;; Get all the necessary compile time definitions.
 (require 'custom)
 (require 'cc-menus)
+(require 'derived)			;only necessary in Emacs 20
 
 ;; cc-mode-19.el contains compatibility macros that should be compiled
 ;; in if needed.
@@ -214,6 +215,9 @@
    ((boundp 'mark-active) mark-active)
    ;; fallback; shouldn't get here
    (t (mark t))))
+
+(defsubst c-major-mode-is (mode)
+  (eq (derived-mode-class major-mode) mode))
 
 
 (provide 'cc-defs)
