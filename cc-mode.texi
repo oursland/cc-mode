@@ -1494,9 +1494,9 @@ the new line, and in normal code it's indented according to context by
 the indentation engine.
 
 In macros it acts like @code{newline-and-indent} but additionally
-inserts and aligns the line ending backslash so that the macro remains
-unbroken.  @xref{Macro Handling}, for details about the backslash
-alignment.
+inserts and optionally aligns the line ending backslash so that the
+macro remains unbroken.  @xref{Macro Handling}, for details about the
+backslash alignment.
 
 It's not bound to a key by default, but it's intended to be used on the
 @kbd{RET} key.  If you like the behavior of @code{newline-and-indent} on
@@ -1576,6 +1576,16 @@ backslashes, so that they remain in a single column.  However, if some
 lines exceed @code{c-backslash-max-column} then the backslashes in the
 rest of the macro will be kept at that column, so that the 
 lines which are too long ``stick out'' instead.
+@end defopt
+
+@defopt c-auto-align-backslashes
+@vindex auto-align-backslashes (c-)
+Align automatically inserted line continuation backslashes if
+non-@code{nil}.  When line continuation backslashes are inserted
+automatically for line breaks in multiline macros, e.g. by
+@code{c-context-line-break}, they are aligned with the other backslashes
+in the same macro if this flag is set.  Otherwise the inserted
+backslashes are preceded by a single space.
 @end defopt
 
 The recommended line breaking function, @code{c-context-line-break}
