@@ -460,47 +460,35 @@ CC Mode by making sure the proper entries are present on
 		    ((eq major-mode 'c-mode)    "C")
 		    ((eq major-mode 'objc-mode) "ObjC")
 		    ((eq major-mode 'java-mode) "Java")
-		    ((eq major-mode 'idl-mode) "IDL")
+		    ((eq major-mode 'idl-mode)  "IDL")
 		    ((eq major-mode 'pike-mode) "Pike")
 		    )
 	      ")")
-      (let ((vars (list
+      (let ((vars (append
 		   ;; report only the vars that affect indentation
-		   'c-basic-offset
-		   'c-offsets-alist
-		   'c-cleanup-list
-		   'c-comment-only-line-offset
-		   'c-backslash-column
-		   'c-delete-function
-		   'c-electric-pound-behavior
-		   'c-hanging-braces-alist
-		   'c-hanging-colons-alist
-		   'c-hanging-comment-starter-p
-		   'c-hanging-comment-ender-p
-		   'c-indent-comments-syntactically-p
-		   'c-tab-always-indent
-		   'c-block-comment-prefix
-		   'c-comment-prefix-regexp
-		   'c-label-minimum-indentation
-		   'defun-prompt-regexp
-		   'tab-width
-		   'comment-column
-		   'parse-sexp-ignore-comments
-		   ;; A brain-damaged XEmacs only variable that, if
-		   ;; set to nil can cause all kinds of chaos.
-		   'signal-error-on-buffer-boundary
-		   ;; Variables that affect line breaking and comments.
-		   'auto-fill-mode
-		   'filladapt-mode
-		   'comment-multi-line
-		   'comment-start-skip
-		   'fill-prefix
-		   'paragraph-start
-		   'adaptive-fill-mode
-		   'adaptive-fill-regexp
-		   'c-comment-prefix-regexp
-		   'c-block-comment-prefix
-		   )))
+		   c-style-variables
+		   '(c-delete-function
+		     c-electric-pound-behavior
+		     c-indent-comments-syntactically-p
+		     c-tab-always-indent
+		     defun-prompt-regexp
+		     tab-width
+		     comment-column
+		     parse-sexp-ignore-comments
+		     ;; A brain-damaged XEmacs only variable that, if
+		     ;; set to nil can cause all kinds of chaos.
+		     signal-error-on-buffer-boundary
+		     ;; Variables that affect line breaking and comments.
+		     auto-fill-mode
+		     filladapt-mode
+		     comment-multi-line
+		     comment-start-skip
+		     fill-prefix
+		     paragraph-start
+		     adaptive-fill-mode
+		     adaptive-fill-regexp)
+		   nil)))
+	(delq 'c-special-indent-hook vars)
 	(unless (boundp 'defun-prompt-regexp)
 	  (delq 'defun-prompt-regexp vars))
 	(unless (boundp 'filladapt-mode)
