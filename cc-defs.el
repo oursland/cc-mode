@@ -327,11 +327,11 @@ This function does not do any hidden buffer changes."
 (defmacro c-save-buffer-state (varlist &rest body)
   "Bind variables according to VARLIST (in `let*' style) and eval BODY,
 then restore the buffer state under the assumption that no significant
-modification has been made.  A change is considered significant if it
-affects the buffer text in any way that isn't completely restored
-again.  Changes in text properties like `face' or `syntax-table' are
-considered insignificant.  This macro allows text properties to be
-changed, even in a read-only buffer.
+modification has been made in BODY.  A change is considered
+significant if it affects the buffer text in any way that isn't
+completely restored again.  Changes in text properties like `face' or
+`syntax-table' are considered insignificant.  This macro allows text
+properties to be changed, even in a read-only buffer.
 
 The return value is the value of the last form in BODY."
   `(let* ((modified (buffer-modified-p)) (buffer-undo-list t)
@@ -339,7 +339,8 @@ The return value is the value of the last form in BODY."
 	  before-change-functions after-change-functions
 	  deactivate-mark
 	  ,@varlist)
-     (prog1 (progn ,@body)
+     (unwind-protect
+	 (progn ,@body)
        (and (not modified)
 	    (buffer-modified-p)
 	    (set-buffer-modified-p nil)))))
