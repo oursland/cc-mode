@@ -44,6 +44,9 @@
 	   load-path)))
     (require 'cc-bytecomp)))
 
+;; `require' in XEmacs doesn't have the third NOERROR argument.
+(condition-case nil (require 'regexp-opt) (file-error nil))
+
 
 (eval-and-compile
   ;; The following is used below during compilation.
@@ -115,8 +118,14 @@ This variant works around bugs in `eval-when-compile' in various
 		   (progn (eval '(char-after)) t)
 		 (error nil)))
 	  (not (fboundp 'when))
-	  (not (fboundp 'unless)))
-      (cc-load "cc-mode-19")))
+	  (not (fboundp 'unless))
+	  (not (fboundp 'regexp-opt))
+	  (not (fboundp 'regexp-opt-depth)))
+      (cc-load "cc-mode-19")
+    (defalias 'c-regexp-opt 'regexp-opt)
+    (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
+
+(require 'cl)
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
@@ -132,7 +141,6 @@ This variant works around bugs in `eval-when-compile' in various
 (cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
 (cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
 (cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
-(require 'derived)			; Only necessary in Emacs
 
 
 ;;; Macros.
@@ -783,6 +791,30 @@ This function does not do any hidden buffer changes."
   ;; Does not clobber match-data.  Note that the face is a variable
   ;; that is dereferenced, since it's an alias in Emacs.
   (c-put-font-lock-face from to font-lock-reference-face))
+
+(defun c-make-keywords-re (adorn &rest lists)
+  "Make a regexp that matches all the strings in all the lists.
+Duplicates in the lists are removed.  The regexp may contain zero or
+more submatch expressions.  If ADORN is non-nil there will be at least
+one submatch which matches the whole keyword, and the regexp will also
+not match a prefix of any identifier.  Adorned regexps cannot be
+appended."
+  (setq lists (delete-duplicates (apply 'append (nconc lists '(nil)))
+				 :test 'string-equal))
+  (if lists
+      (let ((re (c-regexp-opt lists)))
+	;; Add our own grouping parenthesis around re instead of
+	;; passing adorn to regexp-opt, since it in XEmacs makes the
+	;; top level grouping "shy".
+	(if adorn
+	    (concat "\\(" re "\\)"
+		    "\\("
+		    (get 'c-nonsymbol-key c-buffer-is-cc-mode)
+		    "\\|$\\)")
+	  re))
+    "\\<\\>"				; Matches nothing.
+    ))
+(put 'c-make-keywords-re 'lisp-indent-function 1)
 
 
 (cc-provide 'cc-defs)

@@ -29,8 +29,7 @@
 
 ;;; Commentary:
 
-;; This file is necessary in order to run CC Mode 5 under Emacs 19.34
-;; and MULE based on Emacs 19.34.
+;; This file is necessary in order to run CC Mode 5 under (X)Emacs 19.
 
 ;;; Code:
 
@@ -127,6 +126,38 @@
       "(unless COND BODY...): if COND yields nil, "
       "do BODY, else return nil."
       (cons 'if (cons cond (cons nil body)))))
+
+(if (fboundp 'regexp-opt)
+    (defalias 'c-regexp-opt 'regexp-opt)
+  ;; (X)Emacs 19 doesn't have the regexp-opt package.
+  (defun c-regexp-opt (strings &optional paren)
+    ;; The regexp engine (in at least (X)Emacs 19) matches the
+    ;; alternatives in order and fails to be greedy if a longer
+    ;; alternative comes after a shorter one, so we sort the the
+    ;; list with the longest alternatives first to get greediness
+    ;; properly.
+    (setq strings (sort (append strings nil)
+			(lambda (a b) (> (length a) (length b)))))
+    (if paren
+	(concat "\\(" (mapconcat 'regexp-quote strings "\\|") "\\)")
+      (mapconcat 'regexp-quote strings "\\|"))))
+
+(if (fboundp 'regexp-opt-depth)
+    (defalias 'c-regexp-opt-depth 'regexp-opt-depth)
+  ;; (X)Emacs 19 doesn't have the regexp-opt package.
+  (defun c-regexp-opt-depth (regexp)
+    ;; This is the definition of `regexp-opt-depth' in Emacs 21 with
+    ;; the exception that "shy" grouping parens aren't detected.
+    (save-match-data
+      ;; Hack to signal an error if REGEXP does not have balanced
+      ;; parentheses.
+      (string-match regexp "")
+      (let ((count 0) start)
+	(while (string-match "\\(\\`\\|[^\\]\\)\\\\\\(\\\\\\\\\\)*("
+			     regexp start)
+	  (setq count (1+ count)
+		start (- (match-end 0) 1)))
+	count))))
 
 
 (cc-provide 'cc-mode-19)

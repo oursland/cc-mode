@@ -237,70 +237,6 @@ are parsed.")
   )
 
 
-;; Some support functions that are used when the language specific
-;; constants are built.  Since the constants are built during compile
-;; time, these need to be defined then too.
-
-(eval-and-compile
-  ;; `require' in XEmacs doesn't have the third NOERROR argument.
-  (condition-case nil (require 'regexp-opt) (file-error nil))
-
-  (if (fboundp 'regexp-opt)
-      (fset 'c-regexp-opt (symbol-function 'regexp-opt))
-    ;; (X)Emacs 19 doesn't have the regexp-opt package.
-    (defun c-regexp-opt (strings &optional paren)
-      ;; The regexp engine (in at least (X)Emacs 19) matches the
-      ;; alternatives in order and fails to be greedy if a longer
-      ;; alternative comes after a shorter one, so we sort the the
-      ;; list with the longest alternatives first to get greediness
-      ;; properly.
-      (setq strings (sort (append strings nil)
-			  (lambda (a b) (> (length a) (length b)))))
-      (if paren
-	  (concat "\\(" (mapconcat 'regexp-quote strings "\\|") "\\)")
-	(mapconcat 'regexp-quote strings "\\|"))))
-
-  (if (fboundp 'regexp-opt-depth)
-      (fset 'c-regexp-opt-depth (symbol-function 'regexp-opt-depth))
-    ;; Emacs 19.34 doesn't have the regexp-opt package.
-    (defun c-regexp-opt-depth (regexp)
-      ;; This is the definition of `regexp-opt-depth' in Emacs 21 with
-      ;; the exception that "shy" grouping parens aren't detected.
-      (save-match-data
-	;; Hack to signal an error if REGEXP does not have balanced
-	;; parentheses.
-	(string-match regexp "")
-	(let ((count 0) start)
-	  (while (string-match "\\(\\`\\|[^\\]\\)\\\\\\(\\\\\\\\\\)*("
-			       regexp start)
-	    (setq count (1+ count)
-		  start (- (match-end 0) 1)))
-	  count))))
-
-  (defun c-make-keywords-re (adorn &rest lists)
-    "Make a regexp that matches all the strings in all the lists.
-Duplicates in the lists are removed.  The regexp may contain zero or
-more submatch expressions.  If ADORN is non-nil there will be at least
-one submatch which matches the whole keyword, and the regexp will also
-not match a prefix of any identifier.  Adorned regexps cannot be
-appended."
-    (setq lists (delete-duplicates (apply 'append (nconc lists '(nil)))
-				   :test 'string-equal))
-    (if lists
-	(let ((re (c-regexp-opt lists)))
-	  ;; Add our own grouping parenthesis around re instead of
-	  ;; passing adorn to regexp-opt, since it in XEmacs makes the
-	  ;; top level grouping "shy".
-	  (if adorn
-	      (concat "\\(" re "\\)"
-		      "\\(" (c-lang-var c-nonsymbol-key) "\\|$\\)")
-	    re))
-      "\\<\\>"				; Matches nothing.
-      ))
-  (put 'c-make-keywords-re 'lisp-indent-function 1)
-  )
-
-
 ;; Constants and variables that are language dependent.
 
 ;; Syntax table built on the mode syntax table but additionally
