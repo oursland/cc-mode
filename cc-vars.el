@@ -859,12 +859,11 @@ This hook gets called after a line is indented by the mode."
   :group 'c)
 
 (defcustom-c-stylevar c-label-minimum-indentation 1
-  "*Minimum indentation for lines inside of top-level constructs.
+  "*Minimum indentation for lines inside code blocks.
 This variable typically only affects code using the `gnu' style, which
-mandates a minimum of one space in front of every line inside
-top-level constructs.  Specifically, the function
-`c-gnu-impose-minimum' on your `c-special-indent-hook' is what
-enforces this."
+mandates a minimum of one space in front of every line inside code
+blocks.  Specifically, the function `c-gnu-impose-minimum' on your
+`c-special-indent-hook' is what enforces this."
   :type 'integer
   :group 'c)
 
