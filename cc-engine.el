@@ -1401,24 +1401,26 @@ brace."
   ;; backward search.
   (save-excursion
     (or lim (setq lim (point-min)))
-    (let ((block-follows (eq (char-after) ?{)))
+    (let ((block-follows (and (eq (char-after) ?{) (point))))
       ;; Look at the character after point only as a last resort when
       ;; we can't disambiguate.
       (if (and block-follows
 	       (progn (c-backward-syntactic-ws) (> (point) lim))
-	       (eq (char-before) ?\()
-	       (not (and c-special-brace-lists
-			 (c-looking-at-special-brace-list))))
-	  (cons 'inexpr-statement (point))
-	(let (res)
-	  (while (and (not res)
+	       (eq (char-before) ?\())
+	  (if (and c-special-brace-lists
+		   (c-looking-at-special-brace-list))
+	      nil
+	    (cons 'inexpr-statement (point)))
+	(let ((res 'maybe) passed-bracket)
+	  (while (and (eq res 'maybe)
 		      (= (c-backward-token-1 1 t lim) 0)
 		      (>= (point) lim)
-		      (looking-at "(\\|\\w\\|\\s_\\|\\."))
+		      (looking-at "[\(\[.]\\|\\w\\|\\s_"))
 	    (setq res
 		  (cond ((and block-follows
 			      c-inexpr-class-key
-			      (looking-at c-inexpr-class-key)
+			      (looking-at c-inexpr-class-key))
+			 (and (not passed-bracket)
 			      (or (not (looking-at c-class-key))
 				  (let ((prev (point)))
 				    (while (and (= (c-backward-token-1 1 t lim)
@@ -1428,15 +1430,24 @@ brace."
 						    ?w))
 				      (setq prev (point)))
 				    (goto-char prev)
-				    (not (c-looking-at-bos)))))
-			 (cons 'inexpr-class (point)))
+				    (not (c-looking-at-bos))))
+			      (cons 'inexpr-class (point))))
 			((and c-inexpr-block-key
 			      (looking-at c-inexpr-block-key))
 			 (cons 'inexpr-statement (point)))
 			((and c-lambda-key
 			      (looking-at c-lambda-key))
-			 (cons 'inlambda (point))))))
-	  res)))))
+			 (cons 'inlambda (point)))
+			(t
+			 (if (eq (char-after) ?\[)
+			     (setq passed-bracket t))
+			 'maybe))))
+	  (if (eq res 'maybe)
+	      (when (and block-follows
+			 (c-safe (goto-char (scan-lists (point) -1 1)) t)
+			 (eq (char-after) ?\())
+		(cons 'inexpr-statement block-follows))
+	    res))))))
 
 (defun c-looking-at-inexpr-block-backward (&optional lim)
   ;; Returns non-nil if we're looking at the end of an in-expression
