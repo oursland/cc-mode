@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-20 15:37:00 $
-;; Version:         $Revision: 2.62 $
+;; Last Modified:   $Date: 1992-05-20 20:48:52 $
+;; Version:         $Revision: 2.63 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-20 15:37:00 $|$Revision: 2.62 $|
+;; |$Date: 1992-05-20 20:48:52 $|$Revision: 2.63 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -196,7 +196,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.62 $
+  "Major mode for editing C++ code.  $Revision: 2.63 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -989,7 +989,11 @@ Returns nil if line starts inside a string, t if in a comment."
 				"\\(class\\|struct\\)[ \t]+\\w+[ \t]+:[ \t]+")
 			       (progn (goto-char (match-end 0))
 				      (current-column))
-			     (current-indentation))))))
+			     (if (eolp)
+				 ;; looking at a blank line, indent
+				 ;; next line to zero
+				 0
+			       (current-indentation)))))))
 		   ))))
 	    ((/= (char-after containing-sexp) ?{)
 	     ;; line is expression, not statement:
@@ -1633,7 +1637,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.62 $"
+(defconst c++-version "$Revision: 2.63 $"
   "c++-mode version number.")
 
 (defun c++-version ()
