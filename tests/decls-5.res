@@ -43,7 +43,7 @@
 ((statement-cont . 354))
 ((statement . 354))
 ((defun-open . 386))
-((defun-block-intro . 386))
+((defun-block-intro . 406))
 ((defun-close . 406))
 ((statement . 386))
 ((arglist-cont-nonempty . 430))
