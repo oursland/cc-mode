@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.58 $
-;; Last Modified:   $Date: 1994-08-24 19:30:03 $
+;; Version:         $Revision: 4.59 $
+;; Last Modified:   $Date: 1994-08-24 20:28:53 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-24 19:30:03 $|$Revision: 4.58 $|
+;; |$Date: 1994-08-24 20:28:53 $|$Revision: 4.59 $|
 
 ;;; Code:
 
@@ -950,7 +950,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.58 $
+cc-mode Revision: $Revision: 4.59 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -989,7 +989,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.58 $
+cc-mode Revision: $Revision: 4.59 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1026,7 +1026,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.58 $
+cc-mode Revision: $Revision: 4.59 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -3221,16 +3221,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 ((/= (char-after containing-sexp) ?{)
 	  (c-backward-syntactic-ws containing-sexp)
 	  (cond
-	   ;; CASE 6A: we are looking at the first argument in an empty
-	   ;; argument list
-	   ((memq char-before-ip '(?\( ?\[))
-	    (goto-char containing-sexp)
-	    (c-add-syntax 'arglist-intro (c-point 'boi)))
-	   ;; CASE 6B: we are looking at the arglist closing paren
+	   ;; CASE 6A: we are looking at the arglist closing paren
 	   ((and (/= char-before-ip ?,)
 		 (memq char-after-ip '(?\) ?\])))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-close (c-point 'boi)))
+	   ;; CASE 6B: we are looking at the first argument in an empty
+	   ;; argument list. Use arglist-close if we're actually
+	   ;; looking at a close paren or bracket.
+	   ((memq char-before-ip '(?\( ?\[))
+	    (goto-char containing-sexp)
+	    (c-add-syntax 'arglist-intro (c-point 'boi)))
 	   ;; CASE 6C: we are inside a conditional test clause. treat
 	   ;; these things as statements
 	   ((save-excursion
@@ -3976,7 +3977,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.58 $"
+(defconst c-version "$Revision: 4.59 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
