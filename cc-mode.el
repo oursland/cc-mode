@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.31 $
-;; Last Modified:   $Date: 1994-07-12 14:05:29 $
+;; Version:         $Revision: 4.32 $
+;; Last Modified:   $Date: 1994-07-12 14:36:10 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-07-12 14:05:29 $|$Revision: 4.31 $|
+;; |$Date: 1994-07-12 14:36:10 $|$Revision: 4.32 $|
 
 ;;; Code:
 
@@ -898,7 +898,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.31 $
+cc-mode Revision: $Revision: 4.32 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -931,7 +931,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.31 $
+cc-mode Revision: $Revision: 4.32 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -964,7 +964,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.31 $
+cc-mode Revision: $Revision: 4.32 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2496,18 +2496,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			  ;;(char-after (1- placeholder))
 			  (<= placeholder here)
 			  (= (char-after (1- placeholder)) ?\}))
-		     (save-excursion
-		       (let (donep)
-			 (goto-char last-bod)
-			 (while (and (not donep) (not at-bob))
-			   (beginning-of-defun)
-			   (if (= (following-char) ?\{)
-			       (setq last-bod (point)
-				     donep t))
-			   (setq at-bob (bobp)))
-			 (setq pos (point))
-			 (throw 'backup-bod t))))
-		 ))
+		     (while t
+		       (setq last-bod (c-safe (scan-lists last-bod -1 1)))
+		       (if (not last-bod)
+			   (error "unbalanced close brace found at position %d"
+				  (1- placeholder))
+			 (setq at-bob (= last-bod (point-min))
+			       pos last-bod)
+			 (if (= (char-after last-bod) ?\{)
+			     (throw 'backup-bod t)))
+		       ))		;end-if
+		 ))			;end-while
 	     nil))
     state))
 
@@ -3844,7 +3843,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.31 $"
+(defconst c-version "$Revision: 4.32 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
