@@ -338,16 +338,17 @@ this variable to nil."
   "*Style which gets installed by default when a file is visited.
 
 The value of this variable can be any style defined in
-`c-style-alist', including styles you add, if you add them before CC
-Mode gets initialized.  The value can also be an association list of
-major mode symbols to style names.
+`c-style-alist', including styles you add.  The value can also be an
+association list of major mode symbols to style names.
 
 When the value is a string, all CC Mode major modes will install this
-style by default, except `java-mode', which installs the \"java\"
-style (for backwards compatibility).  When the value is an alist, the
-named style is installed.  If the major mode is not listed in the
-alist, then styles fallback to \"gnu\" for all modes except
-`java-mode', where the fallback is \"java\" style.
+style by default, except `java-mode', which always installs the
+\"java\" style (this is for backwards compatibility).
+
+When the value is an alist, the named style is installed.  If the
+major mode is not listed in the alist, then the symbol `other' is
+looked up in the alist, and if found, the associated style is used.
+If `other' is not found in the alist, then \"gnu\" style is used.
 
 Note that if you set any CC Mode variables in the top-level of your
 .emacs file (i.e. *not* in a hook), these get incorporated into the
@@ -367,7 +368,7 @@ calls to `c-set-style' in the appropriate mode hook."
 		   (choice :tag "Mode"
 			   (const c-mode) (const c++-mode) (const objc-mode)
 			   (const java-mode) (const idl-mode)
-			   (const pike-mode))
+			   (const pike-mode) (const other))
 		   (string :tag "Style")
 		   )))
   :group 'c)
