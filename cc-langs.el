@@ -419,7 +419,7 @@ appended."
   pike '("constant" "final" "inline" "local" "nomask" "optional"
 	 "private" "protected" "public" "static" "typedef" "variant"))
 
-;; Declaration specifier keywords.
+;; The declaration specifier keywords as an adorned regexp.
 (c-lang-defconst c-specifier-key
   all (c-make-keywords-re t (c-lang-var c-specifier-kwds)))
 (c-lang-defvar c-specifier-key (c-lang-var c-specifier-key))
@@ -587,8 +587,8 @@ appended."
 ;; expressions.
 (c-lang-defconst c-lambda-kwds pike '("lambda"))
 
-;; Regexp matching the start of lambda constructs, or nil in languages
-;; that doesn't have such things.
+;; Adorned regexp matching the start of lambda constructs, or nil in
+;; languages that doesn't have such things.
 (c-lang-defconst c-opt-lambda-key
   pike (c-make-keywords-re t (c-lang-var c-lambda-kwds)))
 (c-lang-defvar c-opt-lambda-key (c-lang-var c-opt-lambda-key))
@@ -1046,6 +1046,7 @@ appended."
   (modify-syntax-entry ?&  "."     table)
   (modify-syntax-entry ?|  "."     table)
   (modify-syntax-entry ?\' "\""    table)
+  (modify-syntax-entry ?\240 "."   table)
   ;; Set up block and line oriented comments.  The new C standard
   ;; mandates both comment styles even in C, so since all languages
   ;; now require dual comments, we make this the default.
