@@ -50,6 +50,8 @@
 ;; Helpers for building of constants that are parameterized on a
 ;; per-language basis.
 
+;; FIXME: Note to derived mode implementors.
+
 (eval-and-compile
   (defvar c-macroexpand-mode nil
     ;; Dynamically set to the mode symbol during `c-lang-defconst' so
@@ -197,7 +199,9 @@ appended."
 (c-lang-defconst c-nonsymbol-key
   all "[^_a-zA-Z0-9$]")
 
-;; Regexp that matches the start of a symbol.
+;; Regexp that matches the start of a symbol.  I.e. any identifier,
+;; not excluding keywords.  It's unspecified how far it matches.  Does
+;; not contain a \| operator at the top level.
 ;;
 ;; This definition isn't correct for the first character in the
 ;; languages that accept the full range of Unicode word constituents
@@ -240,26 +244,73 @@ appended."
   c++  "::"
   java "\\."
   pike "\\(::\\|\\.\\)")
+(c-lang-defvar c-opt-identifier-concat-key
+  (c-lang-var c-opt-identifier-concat-key))
+
+;; Regexp that matches the start of an (optionally qualified)
+;; identifier.  It's unspecified how far it matches.
+(c-lang-defconst c-identifier-start
+  all (concat (c-lang-var c-symbol-start)
+	      (if (c-lang-var c-opt-identifier-concat-key)
+		  (concat "\\|" (c-lang-var c-opt-identifier-concat-key))
+		""))
+  c++ (concat (c-lang-var c-identifier-start)
+	      "\\|"
+	      "~[ \t\n\r]*" (c-lang-var c-symbol-start)))
+(c-lang-defvar c-identifier-start (c-lang-var c-identifier-start))
 
 ;; Regexp matching a fully qualified identifier, like "A::B::c" in
 ;; C++.  (We cheat a bit here and don't recognize the full range of
-;; syntactic whitespace between the tokens.)
+;; syntactic whitespace between the tokens; `c-forward-name' handles
+;; that too.)
 (c-lang-defconst c-identifier-key
   all (c-lang-var c-symbol-key)		; Default to `c-symbol-key'.
-  ;; These languages allow a leading qualifier operator.
-  (c++ pike) (concat
-	      "\\(" (c-lang-var c-opt-identifier-concat-key) "[ \t\n\r]*\\)?"
-	      ;; The submatch below is depth of
-	      ;; `c-opt-identifier-concat-key' + 2.
-	      "\\(" (c-lang-var c-symbol-key) "\\)"
-	      (concat "\\("
-		      "[ \t\n\r]*"
-		      (c-lang-var c-opt-identifier-concat-key)
-		      "[ \t\n\r]*"
-		      ;; The submatch below is: `c-symbol-key-depth' +
-		      ;; 2 * depth of `c-opt-identifier-concat-key' + 4.
-		      "\\(" (c-lang-var c-symbol-key) "\\)"
-		      "\\)*"))
+  ;; C++ allows a leading qualifier operator and a `~' before the last
+  ;; symbol.  This regexp is more complex than strictly necessary to
+  ;; ensure that it can be matched with a minimum of backtracking.
+  c++  (concat
+	"\\(" (c-lang-var c-opt-identifier-concat-key) "[ \t\n\r]*\\)?"
+	(concat
+	 "\\("
+	 ;; The submatch below is depth of `c-opt-identifier-concat-key' + 3.
+	 "\\(" (c-lang-var c-symbol-key) "\\)"
+	 (concat "\\("
+		 "[ \t\n\r]*"
+		 (c-lang-var c-opt-identifier-concat-key)
+		 "[ \t\n\r]*"
+		 ;; The submatch below is: `c-symbol-key-depth' +
+		 ;; 2 * depth of `c-opt-identifier-concat-key' + 5.
+		 "\\(" (c-lang-var c-symbol-key) "\\)"
+		 "\\)*")
+	 (concat "\\("
+		 "[ \t\n\r]*"
+		 (c-lang-var c-opt-identifier-concat-key)
+		 "[ \t\n\r]*"
+		 "~"
+		 "[ \t\n\r]*"
+		 ;; The submatch below is: 2 * `c-symbol-key-depth' +
+		 ;; 3 * depth of `c-opt-identifier-concat-key' + 7.
+		 "\\(" (c-lang-var c-symbol-key) "\\)"
+		 "\\)?")
+	 "\\|"
+	 "~[ \t\n\r]*"
+	 ;; The submatch below is: 3 * `c-symbol-key-depth' +
+	 ;; 3 * depth of `c-opt-identifier-concat-key' + 8.
+	 "\\(" (c-lang-var c-symbol-key) "\\)"
+	 "\\)"))
+  ;; Pike allows a leading qualifier operator.
+  pike (concat
+	"\\(" (c-lang-var c-opt-identifier-concat-key) "[ \t\n\r]*\\)?"
+	;; The submatch below is depth of `c-opt-identifier-concat-key' + 2.
+	"\\(" (c-lang-var c-symbol-key) "\\)"
+	(concat "\\("
+		"[ \t\n\r]*"
+		(c-lang-var c-opt-identifier-concat-key)
+		"[ \t\n\r]*"
+		;; The submatch below is: `c-symbol-key-depth' +
+		;; 2 * depth of `c-opt-identifier-concat-key' + 4.
+		"\\(" (c-lang-var c-symbol-key) "\\)"
+		"\\)*"))
   ;; Java does not allow a leading qualifier operator.
   java (concat "\\(" (c-lang-var c-symbol-key) "\\)" ; 1
 	       (concat "\\("
@@ -280,18 +331,35 @@ appended."
 ;; matched.
 (c-lang-defconst c-identifier-last-sym-match
   all '(0)
-  (c++ pike) (list (+ (c-lang-var c-symbol-key-depth)
-		      (* 2 (c-regexp-opt-depth
-			    (c-lang-var c-opt-identifier-concat-key)))
-		      4)
-		   (+ (c-regexp-opt-depth
-		       (c-lang-var c-opt-identifier-concat-key))
-		      2))
+  c++  (list (+ (* 3 (c-lang-var c-symbol-key-depth))
+		(* 3 (c-regexp-opt-depth
+		      (c-lang-var c-opt-identifier-concat-key)))
+		8)
+	     (+ (* 2 (c-lang-var c-symbol-key-depth))
+		(* 3 (c-regexp-opt-depth
+		      (c-lang-var c-opt-identifier-concat-key)))
+		7)
+	     (+ (c-lang-var c-symbol-key-depth)
+		(* 2 (c-regexp-opt-depth
+		      (c-lang-var c-opt-identifier-concat-key)))
+		5)
+	     (+ (c-regexp-opt-depth
+		 (c-lang-var c-opt-identifier-concat-key))
+		3))
+  pike (list (+ (c-lang-var c-symbol-key-depth)
+		(* 2 (c-regexp-opt-depth
+		      (c-lang-var c-opt-identifier-concat-key)))
+		4)
+	     (+ (c-regexp-opt-depth
+		 (c-lang-var c-opt-identifier-concat-key))
+		2))
   java (list (+ (c-lang-var c-symbol-key-depth)
 		(c-regexp-opt-depth
 		 (c-lang-var c-opt-identifier-concat-key))
 		3)
 	     1))
+(c-lang-defvar c-identifier-last-sym-match
+  (c-lang-var c-identifier-last-sym-match))
 
 ;; Syntax table built on the mode syntax table but additionally
 ;; classifies '_' and '$' as word constituents, so that all
@@ -317,6 +385,8 @@ appended."
 (c-lang-defconst c-multichar-tokens
   all '("++" "--" "<<" ">>" "<=" ">=" "==" "!=" "&&" "||"
 	"*=" "/=" "%=" "+=" "-=" "<<=" ">>=" "&=" "^=" "|=")
+  ;; Note that the operators beginning with '<' and '>' are also
+  ;; hardcoded in `c-forward-c++-template-arglist'.
   (c c++ pike) (append '("##"	; Used by cpp.
 			 "->" "::" "...")
 		       (c-lang-var c-multichar-tokens))
@@ -330,13 +400,21 @@ appended."
 	       '("..")
 	       c-pike-operator-symbols))
 
-;; Regexp matching all operator tokens and also any sequence of two
-;; characters inside a symbol.
+;; Regexp matching all multichar operator tokens and also any sequence
+;; of two characters inside a symbol.
 (c-lang-defconst c-multichar-op-sym-token-regexp
   all (concat "\\(\\w\\|\\s_\\)\\(\\w\\|\\s_\\)\\|"
 	      (c-make-keywords-re nil (c-lang-var c-multichar-tokens))))
 (c-lang-defvar c-multichar-op-sym-token-regexp
   (c-lang-var c-multichar-op-sym-token-regexp))
+
+;; Regexp matching all operator tokens (greedily).  Note that
+;; statement/declaration separating characters like ';', '{' and '}'
+;; aren't matched.
+(c-lang-defconst c-op-token-regexp
+  all (concat (c-make-keywords-re nil (c-lang-var c-multichar-tokens))
+	      "\\|[\]\[():+-*/%^&|~!=<>,]"))
+(c-lang-defvar c-op-token-regexp (c-lang-var c-op-token-regexp))
 
 ;; HELPME: Many of the following keyword lists are more or less bogus
 ;; for some languages (notably ObjC and IDL).  The effects of the
@@ -370,14 +448,6 @@ appended."
 (c-lang-defconst c-primitive-type-prefix-kwds
   (c c++) '("long" "short" "signed" "unsigned"))
 
-;; An adorned regexp that matches `c-primitive-type-prefix-kwds', or
-;; nil in languages without such things.
-(c-lang-defconst c-primitive-type-prefix-key
-  all (and (c-lang-var c-primitive-type-prefix-kwds)
-	   (c-make-keywords-re t (c-lang-var c-primitive-type-prefix-kwds))))
-(c-lang-defvar c-primitive-type-prefix-key
-  (c-lang-var c-primitive-type-prefix-key))
-
 ;; Keywords that can precede a parenthesis that contains a complex
 ;; type, e.g. "mapping(int:string)" in Pike.
 (c-lang-defconst c-complex-type-kwds
@@ -390,7 +460,7 @@ appended."
 	   (c-make-keywords-re t (c-lang-var c-complex-type-kwds))))
 (c-lang-defvar c-opt-complex-type-key (c-lang-var c-opt-complex-type-key))
 
-;; All keywords that starts a type, i.e. the union of
+;; All keywords that are primitive types, i.e. the union of
 ;; `c-primitive-type-kwds' and `c-complex-type-kwds'.
 (c-lang-defconst c-type-kwds
   all (if (c-lang-var c-complex-type-kwds)
@@ -400,17 +470,55 @@ appended."
 		  (c-lang-var c-complex-type-kwds))
 	(c-lang-var c-primitive-type-kwds)))
 
+;; Keywords where the following name - if any - is a type name, and
+;; where the keyword together with the symbol works as a type in
+;; declarations.
+(c-lang-defconst c-type-prefix-kwds
+  c    '("struct" "union" "enum")
+  c++  '("class" "struct" "typename" "union" "enum")
+  java '("class")
+  pike '("class" "enum"))
+
+;; Adorned regexp matching `c-type-prefix-kwds'.
+(c-lang-defconst c-type-prefix-key
+  all (c-make-keywords-re t (c-lang-var c-type-prefix-kwds)))
+(c-lang-defvar c-type-prefix-key (c-lang-var c-type-prefix-key))
+
+;; Type modifier keywords.  These can occur almost anywhere in types
+;; but they don't build a type of themselves.  They are fontified like
+;; keywords, similar to `c-specifier-kwds'.
+(c-lang-defconst c-type-modifier-kwds
+  c    '("const" "restrict" "volatile")
+  c++  '("const" "volatile"))
+
+;; Adorned regexp matching `c-type-modifier-kwds', or nil in languages
+;; without such keywords.
+(c-lang-defconst c-opt-type-modifier-key
+  all (and (c-lang-var c-type-modifier-kwds)
+	   (c-make-keywords-re t (c-lang-var c-type-modifier-kwds))))
+(c-lang-defvar c-opt-type-modifier-key (c-lang-var c-opt-type-modifier-key))
+
+;; An adorned regexp that matches `c-primitive-type-prefix-kwds' and
+;; `c-type-modifier-kwds', or nil in languages without any of them.
+(c-lang-defconst c-opt-type-component-key
+  all (and (or (c-lang-var c-primitive-type-prefix-kwds)
+	       (c-lang-var c-type-modifier-kwds))
+	   (c-make-keywords-re t
+	     (append (c-lang-var c-primitive-type-prefix-kwds)
+		     (c-lang-var c-type-modifier-kwds)))))
+(c-lang-defvar c-opt-type-component-key
+  (c-lang-var c-opt-type-component-key))
+
 ;; Declaration specifier keywords.  These are keywords that may
-;; precede declarations but that aren't part of a type, e.g. "struct"
+;; prefix declarations but that aren't part of a type, e.g. "struct"
 ;; in C isn't a specifier since the whole "struct foo" is a type, but
 ;; "typedef" is since it precedes the declaration that defines the
 ;; type.
 (c-lang-defconst c-specifier-kwds
-  (c c++) '("auto" "const" "extern" "inline" "register" "typedef"
-	    "static" "volatile")
-  c   (append '("restrict")
-	      (c-lang-var c-specifier-kwds))
-  c++ (append '("explicit" "friend" "mutable" "virtual")
+  (c c++) '("auto" "extern" "inline" "register" "typedef" "static")
+  ;; "template" typically needs custom treatment, as in
+  ;; `c-font-lock-declarations'.
+  c++ (append '("explicit" "friend" "mutable" "template" "virtual")
 	      (c-lang-var c-specifier-kwds))
   ;; I have no idea about these languages, so just use the specifiers in C.
   (objc idl) (c-lang-var c-specifier-kwds c)
@@ -420,9 +528,44 @@ appended."
   pike '("constant" "final" "inline" "local" "nomask" "optional"
 	 "private" "protected" "public" "static" "typedef" "variant"))
 
-;; The declaration specifier keywords as an adorned regexp.
+;; Declaration specifier keywords that causes the declaration to
+;; declare the identifiers in it as types.  Assumed to be a subset of
+;; `c-specifier-kwds'.
+(c-lang-defconst c-typedef-specifier-kwds
+  (c c++ pike) '("typedef"))
+
+;; `c-typedef-specifier-kwds' as an adorned regexp.
+(c-lang-defconst c-typedef-specifier-key
+  all (c-make-keywords-re t (c-lang-var c-typedef-specifier-kwds)))
+(c-lang-defvar c-typedef-specifier-key (c-lang-var c-typedef-specifier-key))
+
+;; Protection label keywords in classes.
+(c-lang-defconst c-protection-kwds
+  (c++ objc) '("private" "protected" "public"))
+
+;; Regexp matching an access protection label in a class, or nil in
+;; languages that doesn't have such things.
+(c-lang-defconst c-opt-access-key
+  c++ (concat "\\("
+	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
+	      "\\)[ \t\n\r]*:"))
+(c-lang-defconst c-opt-access-key
+  objc (concat "@" (c-make-keywords-re t (c-lang-var c-protection-kwds))))
+(c-lang-defvar c-opt-access-key (c-lang-var c-opt-access-key))
+
+;; Matches constructs that can prefix declarations.  This means
+;; `c-specifier-kwds' and also `c-protection-kwds' with the suitable
+;; surrounding tokens (e.g. the following ':' in C++).  If the first
+;; submatch has matched then the end if it is the end of the
+;; construct, otherwise the construct ends where the whole match ends.
 (c-lang-defconst c-specifier-key
-  all (c-make-keywords-re t (c-lang-var c-specifier-kwds)))
+  (c c++ idl java pike) (c-make-keywords-re t (c-lang-var c-specifier-kwds))
+  c++ (concat "\\(" (c-lang-var c-specifier-key)
+	      "\\|" (c-lang-var c-opt-access-key) "\\)")
+  objc (c-make-keywords-re t (nconc (mapcar (lambda (prot-kwd)
+					      (concat "@" prot-kwd))
+					    (c-lang-var c-protection-kwds))
+				    (c-lang-var c-specifier-kwds))))
 (c-lang-defvar c-specifier-key (c-lang-var c-specifier-key))
 
 ;; Class/struct declaration keywords.
@@ -470,23 +613,10 @@ appended."
 (c-lang-defvar c-opt-block-decls-with-vars-key
   (c-lang-var c-opt-block-decls-with-vars-key))
 
-;; Keywords where the following symbol - if any - is a type name.
-(c-lang-defconst c-type-prefix-kwds
-  c    '("struct" "union" "enum")
-  c++  '("class" "struct" "typename" "union" "enum")
-  java '("class")
-  pike '("class" "enum"))
-
-;; Adorned regexp matching `c-type-prefix-kwds'.
-(c-lang-defconst c-type-prefix-key
-  all (c-make-keywords-re t (c-lang-var c-type-prefix-kwds)))
-(c-lang-defvar c-type-prefix-key (c-lang-var c-type-prefix-key))
-
 ;; Keywords introducing declarations that has not been accounted for
 ;; by any of the above.
 (c-lang-defconst c-other-decl-kwds
-  ;; FIXME: Shouldn't "template" be moved to `c-specifier-kwds' for C++?
-  c++  '("template" "using")
+  c++  '("using")
   java '("import" "package")
   pike '("import" "inherit"))
 
@@ -494,10 +624,6 @@ appended."
 ;; between the header and the body (i.e. the "K&R-region") in
 ;; declarations.
 (c-lang-defconst c-decl-spec-kwds java '("extends" "implements" "throws"))
-
-;; Protection label keywords in classes.
-(c-lang-defconst c-protection-kwds
-  (c++ objc) '("private" "protected" "public"))
 
 ;; Statement keywords followed directly by a substatement.
 (c-lang-defconst c-block-stmt-1-kwds
@@ -541,6 +667,16 @@ appended."
   ;; Note: `goto' is not valid in Java, but the keyword is still reserved.
   java '("break" "continue" "goto" "return" "throw")
   pike '("break" "continue" "return"))
+
+;; Statement keywords followed by a parenthesis expression that
+;; nevertheless contains a list separated with ';' and not ','.
+(c-lang-defconst c-paren-stmt-kwds
+  all '("for"))
+
+;; Adorned regexp matching `c-paren-stmt-kwds'.
+(c-lang-defconst c-paren-stmt-key
+  all (c-make-keywords-re t (c-lang-var c-paren-stmt-kwds)))
+(c-lang-defvar c-paren-stmt-key (c-lang-var c-paren-stmt-key))
 
 ;; Statement keywords followed by an assembler expression.
 (c-lang-defconst c-asm-stmt-kwds
@@ -651,17 +787,19 @@ appended."
 ;; All keywords as a list.
 (c-lang-defconst c-keywords
   all (delete-duplicates (append (c-lang-var c-type-kwds)
+				 (c-lang-var c-type-modifier-kwds)
 				 (c-lang-var c-specifier-kwds)
+				 (c-lang-var c-protection-kwds)
 				 (c-lang-var c-class-kwds)
 				 (c-lang-var c-other-decl-block-kwds)
 				 (c-lang-var c-block-decls-with-vars)
 				 (c-lang-var c-type-prefix-kwds)
 				 (c-lang-var c-other-decl-kwds)
 				 (c-lang-var c-decl-spec-kwds)
-				 (c-lang-var c-protection-kwds)
 				 (c-lang-var c-block-stmt-1-kwds)
 				 (c-lang-var c-block-stmt-2-kwds)
 				 (c-lang-var c-simple-stmt-kwds)
+				 (c-lang-var c-paren-stmt-kwds)
 				 (c-lang-var c-asm-stmt-kwds)
 				 (c-lang-var c-label-kwds)
 				 (c-lang-var c-constant-kwds)
@@ -694,23 +832,15 @@ appended."
   all (c-make-keywords-re t
 	(set-difference (c-lang-var c-keywords)
 			(append (c-lang-var c-type-kwds)
+				(c-lang-var c-type-prefix-kwds)
+				(c-lang-var c-type-modifier-kwds)
 				(c-lang-var c-specifier-kwds)
 				(c-lang-var c-class-kwds)
 				(c-lang-var c-other-decl-block-kwds)
 				(c-lang-var c-block-decls-with-vars)
-				(c-lang-var c-type-prefix-kwds))
+				(c-lang-var c-protection-kwds))
 			:test 'string-equal)))
 (c-lang-defvar c-not-decl-init-keywords (c-lang-var c-not-decl-init-keywords))
-
-;; Regexp matching an access protection label in a class, or nil in
-;; languages that doesn't have such things.
-(c-lang-defconst c-opt-access-key
-  c++ (concat "\\("
-	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
-	      "\\)[ \t\n\r]*:"))
-(c-lang-defconst c-opt-access-key
-  objc (concat "@" (c-make-keywords-re t (c-lang-var c-protection-kwds))))
-(c-lang-defvar c-opt-access-key (c-lang-var c-opt-access-key))
 
 ;; Regexp matching a normal label, i.e. not a label that's recognized
 ;; with a keyword, like switch labels.  It's only used at the
@@ -761,8 +891,12 @@ appended."
   ;; We additionally match ")" in C for K&R region declarations, and
   ;; in C and C++ for when a cpp macro definition begins with a
   ;; declaration.
-  (c c++) "[\{\}\(\);,]+"
-  ;; Also match "[" for multiple value assignments and type casts in Pike.
+  c    "[\{\}\(\);,]+"
+  ;; In C++ we match the open paren syntax to get template arglists
+  ;; when they have been recognized.
+  c++  "\\(\\s\(\\|[\}\);,]\\)+"
+  ;; Pike is like C but we also match "[" for multiple value
+  ;; assignments and type casts.
   pike "[\{\}\(\)\[;,]+")
 (c-lang-defvar c-decl-prefix-re (c-lang-var c-decl-prefix-re))
 
@@ -783,11 +917,19 @@ appended."
   all  "\\<\\>" ;; Default to a regexp that never matches.
   c    "\\([*\(]\\)\\($\\|[^=]\\)"
   c++  (concat "\\("
-	       "[*\(&~]"
-	       "\\|\\(\\(" (c-lang-var c-symbol-key) "\\)[ \t\n\r]*\\)?::"
-	       "\\|const\\>\\|volatile\\>"
+	       "[*\(&]"
+	       "\\|"
+	       (concat "\\("	; 3
+		       ;; If this matches there's special treatment in
+		       ;; `c-font-lock-declarators' and
+		       ;; `c-font-lock-declarations' that check for a
+		       ;; complete name followed by ":: *".
+		       (c-lang-var c-identifier-start)
+		       "\\)")
+	       "\\|"
+	       (c-make-keywords-re nil (c-lang-var c-type-modifier-kwds)) "\\>"
 	       "\\)"
-	       "\\($\\|[^=]\\)")
+	       "\\([^=]\\|$\\)")
   pike "\\([*\(!~]\\)\\($\\|[^=]\\)")
 (c-lang-defvar c-type-decl-prefix-key (c-lang-var c-type-decl-prefix-key))
 
@@ -805,7 +947,8 @@ appended."
   c    "\\([\)\[\(]\\)"
   c++  (concat "\\("
 	       "[\)\[\(]"
-	       "\\|const\\>\\|volatile\\>"
+	       "\\|"
+	       (c-make-keywords-re nil (c-lang-var c-type-modifier-kwds)) "\\>"
 	       "\\)")
   java "\\([\[\(]\\)")
 (c-lang-defvar c-type-decl-suffix-key (c-lang-var c-type-decl-suffix-key))
@@ -894,6 +1037,9 @@ appended."
   c "*/"
   (c++ objc java idl pike) "")
 (c-lang-defvar comment-end (c-lang-var comment-end))
+
+;; Regexp matching any sequence that can start syntactic whitespace.
+(c-lang-defvar c-syntactic-ws-start "[ \n\t\r#\\]\\|/[/*]")
 
 ;; Regexp matching a piece of syntactic whitespace that isn't a
 ;; sequence of simple whitespace characters.  As opposed to
