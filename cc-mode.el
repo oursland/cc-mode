@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.111 $
-;; Last Modified:   $Date: 1994-12-09 17:03:19 $
+;; Version:         $Revision: 4.112 $
+;; Last Modified:   $Date: 1994-12-09 23:39:31 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-09 17:03:19 $|$Revision: 4.111 $|
+;; |$Date: 1994-12-09 23:39:31 $|$Revision: 4.112 $|
 
 ;;; Code:
 
@@ -3106,10 +3106,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
      (let ((safepos (c-most-enclosing-brace brace-state))
 	   (here (point)))
        (goto-char containing-sexp)
-       (c-beginning-of-statement nil safepos)
+       (if safepos
+	   (c-beginning-of-statement nil safepos)
+	 ;; if safepos is nil, then we know that the beginning of
+	 ;; statement is beginning of buffer, so use a faster way to
+	 ;; get us where we're going
+	 (beginning-of-buffer))
        ;; c-b-o-s could have left us at point-min
-       (and (bobp)
-	    (c-forward-syntactic-ws here))
+       (and (bobp) (c-forward-syntactic-ws here))
        (if (and (< (point) containing-sexp)
 		(looking-at "\\(typedef[ \t]+\\)?enum[ \t\n]+")
 		(save-excursion
@@ -4267,7 +4271,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.111 $"
+(defconst c-version "$Revision: 4.112 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
