@@ -659,9 +659,11 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 (defun c-beginning-of-statement (&optional count lim sentence-flag)
   "Go to the beginning of the innermost C statement.
 With prefix arg, go back N - 1 statements.  If already at the
-beginning of a statement then go to the beginning of the preceding
-one.  If within a string or comment, or next to a comment (only
-whitespace between), move by sentences instead of statements.
+beginning of a statement then go to the beginning of the closest
+preceding one, moving into nested blocks if necessary (use
+\\[backward-sexp] to skip over a block).  If within a comment, or next
+to a comment (only whitespace between), move by sentences instead of
+statements.
 
 When called from a program, this function takes 3 optional args: the
 repetition count, a buffer position limit which is the farthest back
@@ -677,8 +679,7 @@ comment."
       (setq here (point))
       (if (and (not range) sentence-flag)
 	  (save-excursion
-	    ;; Find the string or comment next to point if we're not
-	    ;; in one.
+	    ;; Find the comment next to point if we're not in one.
 	    (if (> count 0)
 		;; Finding a comment backwards is a bit cumbersome
 		;; because `forward-comment' regards every newline as
@@ -699,26 +700,23 @@ comment."
 	  ;; Special case because eob might be in a literal.
 	  (setq range nil))
       (if range
-	  (if sentence-flag
+	  (if (and sentence-flag
+		   (/= (char-syntax (char-after (car range))) ?\"))
 	      (progn
 		;; move by sentence, but not past the limit of the literal
 		(save-restriction
 		  (narrow-to-region (save-excursion
 				      (goto-char (car range))
-				      (if (= (char-syntax (char-after)) ?\")
-					  (forward-char)
-					(looking-at comment-start-skip)
-					(goto-char (match-end 0)))
+				      (looking-at comment-start-skip)
+				      (goto-char (match-end 0))
 				      (point))
 				    (save-excursion
 				      (goto-char (cdr range))
-				      (if (= (char-syntax (char-before)) ?\")
-					  (backward-char)
-					(if (save-excursion
-					      (goto-char (car range))
-					      (looking-at "/\\*"))
-					    (backward-char 2))
-					(skip-chars-backward " \t\n"))
+				      (if (save-excursion
+					    (goto-char (car range))
+					    (looking-at "/\\*"))
+					  (backward-char 2))
+				      (skip-chars-backward " \t\n")
 				      (point)))
 		  (c-safe (forward-sentence (if (> count 0) -1 1))))
 		;; See if we should escape the literal.
@@ -829,10 +827,11 @@ comment."
 
 (defun c-end-of-statement (&optional count lim sentence-flag)
   "Go to the end of the innermost C statement.
-
-With prefix arg, go forward N - 1 statements.  Move forward to end of
-the next statement if already at end.  If within a string or comment,
-move by sentences instead of statements.
+With prefix arg, go forward N - 1 statements.  Move forward to the end
+of the next statement if already at end, and move into nested blocks
+\(use \\[forward-sexp] to skip over a block).  If within a comment, or
+next to a comment (only whitespace between), move by sentences instead
+of statements.
 
 When called from a program, this function takes 3 optional args: the
 repetition count, a buffer position limit which is the farthest back
