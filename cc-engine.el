@@ -568,15 +568,23 @@ end with a line continuation backslash."
   ;; Backward skip over syntactic whitespace.
   (let ((start-line (c-point 'bol))
 	(here (point-min))
-	(line-cont 'maybe))
+	(line-cont 'maybe)
+	prev-pos)
     (or lim (setq lim here))
     (while (/= here (point))
+      (setq prev-pos (point))
       ;; If forward-comment in Emacs 19.34 is given a large negative
       ;; value, it'll loop all the way through if it hits bob.
       (while (c-forward-comment -5))
       (setq here (point))
       (if (and (eq (char-before) ?\\)
-	       (looking-at "$"))
+	       (eolp)
+	       (if (<= prev-pos (c-point 'eonl))
+		   t
+		 ;; Passed a line continuation, but not from the line
+		 ;; we started on.
+		 (forward-char)
+		 (setq line-cont nil)))
 	  (progn
 	    (backward-char)
 	    (setq line-cont t))
