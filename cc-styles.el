@@ -354,9 +354,6 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
     (inlambda              . c-lineup-inexpr-stat)
     (lambda-intro-cont     . +)
     (inexpr-statement      . 0)
-    (inexpr-block-open     . 0)
-    (inexpr-block-intro    . +)
-    (inexpr-block-close    . 0)
     )
   "Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
@@ -468,9 +465,6 @@ Here is the current list of valid syntactic element symbols:
  inlambda               -- in the header or body of a lambda function
  lambda-intro-cont      -- continuation of the header of a lambda function
  inexpr-statement       -- the statement is inside an expression
- inexpr-block-open      -- opening brace of a block inside an expression
- inexpr-block-intro     -- the first line in a block inside an expression
- inexpr-block-close     -- closing brace of a block inside an expression
 ")
 
 (defun c-get-offset (langelem)
