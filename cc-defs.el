@@ -619,17 +619,6 @@ This function does not do any hidden buffer changes."
 	   (memq c-buffer-is-cc-mode mode)
 	 (eq c-buffer-is-cc-mode mode)))))
 
-(defmacro c-parse-sexp-lookup-properties ()
-  ;; Return the value of the variable that says whether the
-  ;; syntax-table property affects the sexp routines.
-  ;;
-  ;; This function does not do any hidden buffer changes.
-  (cond ((cc-bytecomp-boundp 'parse-sexp-lookup-properties)
-	 `parse-sexp-lookup-properties)
-	((cc-bytecomp-boundp 'lookup-syntax-properties)
-	 `lookup-syntax-properties)
-	(t nil)))
-
 
 ;; Macros/functions to handle so-called "char properties", which are
 ;; properties set on a single character and that never spreads to any
