@@ -1106,7 +1106,7 @@
 	      (let ((where (cdr injava-inher))
 		    (cont (car injava-inher)))
 		(goto-char where)
-		(cond ((looking-at "throws[^_]")
+		(cond ((looking-at "throws[ \t\n]")
 		       (c-add-syntax 'func-decl-cont
 				     (progn (c-beginning-of-statement-1 lim)
 					    (c-point 'boi))))
@@ -1648,6 +1648,9 @@
 		  (c-backward-syntactic-ws)
 		  (c-safe (forward-sexp (if (= (preceding-char) ?\))
 					    -1 -2)))
+		  ;; looking at a Java throws clause following a
+		  ;; method's parameter list
+		  (c-beginning-of-statement-1)
 		  ))
 	    (c-add-syntax 'defun-block-intro (c-point 'boi)))
 	   ;; CASE 15F: first statement in a block
