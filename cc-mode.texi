@@ -1756,10 +1756,12 @@ used for preprocessor defines without arguments.
 
 @item
 @vindex font-lock-constant-face
-Builtin constants are fontified in @code{font-lock-constant-face}.  As
-opposed to the preceding two faces, this one is used on the names in
-expressions, and it's not used in declarations, even if there happen to
-be a @samp{const} in them somewhere.
+@vindex font-lock-reference-face
+Builtin constants are fontified in @code{font-lock-constant-face} if it
+exists, @code{font-lock-reference-face} otherwise.  As opposed to the
+preceding two faces, this is used on the names in expressions, and it's
+not used in declarations, even if there happen to be a @samp{const} in
+them somewhere.
 
 @item
 @vindex font-lock-type-face
@@ -1769,8 +1771,8 @@ defined) and classes in type contexts.
 @item
 @vindex font-lock-constant-face
 @vindex font-lock-reference-face
-Label identifiers get @code{font-lock-constant-face} in Emacs 20 and
-later, @code{font-lock-reference-face} otherwise.
+Label identifiers get @code{font-lock-constant-face} if it exists,
+@code{font-lock-reference-face} otherwise.
 
 @item
 Name qualifiers and identifiers for scope constructs are fontified like
