@@ -1,4 +1,4 @@
 ((cpp-macro) (topmost-intro . 1))
-((cpp-macro-cont . 1))
-((cpp-macro-cont) (topmost-intro . 22))
+((cpp-define-intro . 1))
+((cpp-define-intro) (topmost-intro . 22))
 ((topmost-intro . 1))

@@ -1,5 +1,5 @@
 ((cpp-macro) (topmost-intro . 1))
-((cpp-macro-cont) (statement-block-intro . 1))
+((cpp-define-intro) (statement-block-intro . 1))
 ((substatement-open . 29))
 ((statement-block-intro . 44))
 ((block-close . 44))
@@ -8,4 +8,4 @@
 ((substatement-open . 76))
 ((statement-block-intro . 108))
 ((block-close . 108))
-((cpp-macro-cont) (block-close . 1))
+((cpp-define-intro) (block-close . 1))

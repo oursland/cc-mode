@@ -1,6 +1,6 @@
 ((cpp-macro) (topmost-intro . 1))
 ((cpp-macro) (topmost-intro . 1))
-((cpp-macro-cont . 26))
+((cpp-define-intro . 26))
 ((topmost-intro-cont . 48))
 ((cpp-macro) (topmost-intro . 1))
 ((comment-intro) (topmost-intro . 1))

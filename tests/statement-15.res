@@ -105,5 +105,5 @@
 ((else-clause . 1019))
 ((defun-close . 11))
 ((cpp-macro) (topmost-intro . 1042))
-((cpp-macro-cont . 1044))
+((cpp-define-intro . 1044))
 ((topmost-intro-cont . 1066))

@@ -3,7 +3,7 @@
 ((cpp-macro) (topmost-intro . 1))
 ((topmost-intro . 1))
 ((cpp-macro) (topmost-intro . 1))
-((cpp-macro-cont . 30))
+((cpp-define-intro . 30))
 ((substatement . 82))
 ((substatement . 150))
 ((else-clause . 150))
