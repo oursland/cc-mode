@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.196 $
-;; Last Modified:   $Date: 1992-09-01 21:02:17 $
+;; Version:         $Revision: 2.197 $
+;; Last Modified:   $Date: 1992-09-28 21:44:53 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -125,7 +125,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-09-01 21:02:17 $|$Revision: 2.196 $|
+;; |$Date: 1992-09-28 21:44:53 $|$Revision: 2.197 $|
 
 ;;; Code:
 
@@ -377,7 +377,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.196 $
+  "Major mode for editing C++ code.  $Revision: 2.197 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -584,7 +584,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.196 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.197 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1187,25 +1187,6 @@ of the expression are preserved."
 		     comment-start-skip
 		     (save-excursion (end-of-line) (point)) t)
 		    (progn (indent-for-comment) (beginning-of-line))))))))))
-
-(defun c++-fill-C-comment ()
-  "Fill a C style comment."
-  (interactive)
-  (save-excursion
-    (let ((fill-prefix fill-prefix))
-      (beginning-of-line 1)
-      (save-excursion
-	(re-search-forward comment-start-skip
-			   (save-excursion (end-of-line) (point))
-			   t)
-	(goto-char (match-end 0))
-	(set-fill-prefix))
-      (while (looking-at fill-prefix)
-	(forward-line -1))
-      (forward-line 1)
-      (insert-string "\n")
-      (fill-paragraph nil)
-      (delete-char -1))))
 
 (defun c++-insert-header ()
   "Insert header denoting C++ code at top of buffer."
@@ -2207,7 +2188,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.196 $"
+(defconst c++-version "$Revision: 2.197 $"
   "c++-mode version number.")
 
 (defun c++-version ()
