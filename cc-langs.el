@@ -205,7 +205,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 
 ;; Regexp describing Javadoc markup that always starts paragraphs.
 (defconst c-Java-javadoc-paragraph-start
-  "@\\(author\\|exception\\|param\\|return\\|see\\|version\\)")
+  "@\\(author\\|exception\\|param\\|return\\|see\\|throws\\|version\\)")
 
 ;; Regexp that starts lambda constructs.
 (defvar c-lambda-key nil)
