@@ -1,5 +1,24 @@
 CC Mode NEWS -- user visible changes.  -*- outline -*-
 
+* Changes in 5.27
+
+Note: This is mostly a bugfix release.  The features labeled
+experimental in 5.26 remains and are now considered permanent.
+
+** c-style-variables-are-local-p now defaults to t.
+This is an incompatible change that has been made to make the behavior
+of the style system wrt global variable settings less confusing for
+non-advanced users.  If you know what this variable does you might
+want to set it to nil in your .emacs, otherwise you probably don't
+have to bother.
+
+Defaulting c-style-variables-are-local-p to t avoids the confusing
+situation that occurs when a user sets some style variables globally
+and edit both a Java and a non-Java file in the same Emacs session.
+If the style variables aren't buffer local in this case, loading of
+the second file will cause the default style (either "gnu" or "java"
+by default) to override the global settings made by the user.
+
 * Changes in 5.26
 
 Note: This release contains changes that might not be compatible with

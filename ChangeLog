@@ -1,3 +1,244 @@
+Mon Jul 10 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* Release 5.27
+
+Sun Jul 09 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-looking-at-inexpr-block): Replaced a call to
+	c-beginning-of-statement-1 that caused a bad case of recursion
+	which could consume a lot of CPU in large classes in languages
+	that have in-expression classes (i.e. Java and Pike).
+
+	* cc-engine.el (c-guess-basic-syntax): Check for in-expression
+	statements before top level constructs (i.e. case 6 is moved
+	before case 5 and is now case 4) to catch in-expression
+	classes in top level expressions correctly.
+
+Sun Jul 02 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Less naive handling of
+	objc-method-intro. Case 4 removed and case 5I added.
+
+	* cc-langs.el (c-append-paragraph-start): New variable used by
+	c-common-init to get paragraph-start correct.
+	* cc-langs.el (c-common-init): Use c-append-paragraph-start to
+	initialize paragraph-start to make it correct both with and
+	without the javadoc special case.
+
+	* cc-mode.el (java-mode): Use c-append-paragraph-start to
+	initialize paragraph-start for javadoc markup.
+
+	* cc-vars.el (c-style-variables-are-local-p): Incompatible
+	change by defaulting this to t.  It's motivated by the
+	confusing behavior that otherwise arise from the style system
+	when editing both java and non-java files at the same time
+	(see the comments about style setting in c-common-init).
+
+Tue Jun 20 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-indent-new-comment-line): Added a kludge
+	similar to the one in c-fill-paragraph to check the fill
+	prefix from the adaptive fill function for sanity.
+
+Mon May 01 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (c-end-of-defun-1): Fixed forward scanning into
+	defun block.
+
+Sun Mar 19 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-mode.texi Documented the change of cpp-macro. 
+
+Tue Mar 14 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el (c-lineup-multi-inher): Handle lines with
+	leading comma nicely. Extended to handle member initializers
+	too.
+
+	* cc-engine.el (c-beginning-of-inheritance-list,
+	c-guess-basic-syntax): Fixed recognition of inheritance lists
+	when the lines begins with a comma.
+
+	* cc-mode.texi Updated doc for c-lineup-multi-inher. 
+
+	* cc-vars.el (c-offsets-alist): Changed default for
+	member-init-cont to c-lineup-multi-inher since it now handles
+	member initializers and indents better for leading commas.
+
+Sun Mar 12 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-brace): Fixed some bugs in the state
+	handling that caused class open lines to be recognized as
+	statement-conts in some cases.
+
+	* cc-cmds.el (c-indent-new-comment-line): Keep the fill prefix
+	guessed by the adaptive fill function unless point is on the
+	first line of a block comment.
+
+	* cc-engine.el (c-forward-syntactic-ws): Fixed an infloop bug
+	when the buffer ends with a macro continuation char.
+
+	* cc-engine.el (c-guess-basic-syntax): Added support for
+	function definitions as statements in Pike.  The first
+	statement in a lambda block is now labeled defun-block-intro
+	instead of statement-block-intro.
+
+	* cc-engine.el (c-narrow-out-enclosing-class): Whack the state
+	so that the class surrounding point is selected, not the one
+	innermost in the state.
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed bug in
+	recognition of switch labels having hanging multiline
+	statements.
+
+	* cc-engine.el (c-beginning-of-member-init-list): Broke out
+	some code in c-guess-basic-syntax to a separate function.
+	* cc-engine.el (c-just-after-func-arglist-p): Fixed
+	recognition of member inits with multiple line arglists.
+	* cc-engine.el (c-guess-basic-syntax): New case 5B.3 to detect
+	member-init-cont when the commas are in funny places.
+
+Thu Mar 09 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (c-auto-newline): Removed this macro since it's
+	not used anymore.
+
+	* cc-engine.el (c-looking-at-bos): New helper function.
+	* cc-engine.el (c-looking-at-inexpr-block): More tests to tell
+	inexpr and toplevel classes apart in Pike.
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed bogus recognition
+	of case 9A.
+
+	* cc-langs.el, cc-mode.el (c-Pike-inexpr-class-key): New
+	constant, since "class" can introduce an in-expression class
+	in Pike nowadays.
+
+Sun Feb 06 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el (c-gnu-impose-minimum): Don't impose minimum
+	indentation on cpp-macro lines.
+
+	* cc-engine.el (c-guess-basic-syntax): Made the cpp-macro
+	a syntax modifier like comment-intro, to make it possible to
+	get syntactic indentation for preprocessor directives.  It's
+	incompatible wrt to lineup functions on cpp-macro, but it has
+	no observable effect in the 99.9% common case where cpp-macro
+	is set to -1000.
+
+Sat Feb 05 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed bug with missed
+	member-init-cont when the preceding arglist is several lines.
+
+Sat Jan 29 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-styles.el (c-style-alist): The basic offset for the BSD
+	style corrected to 8.
+
+Sun Jan 16 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-styles.el (c-style-alist): Adjusted the indentation of
+	brace list openers in the gnu style.
+
+Sun Jan 09 2000  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-indent-command): Obey c-syntactic-indentation.
+
+	* cc-cmds.el (c-electric-brace, c-electric-slash,
+	c-electric-star, c-electric-semi&comma, c-electric-colon,
+	c-electric-lt-gt, c-electric-paren): Don't reindent old lines
+	when c-syntactic-indentation is nil.
+
+	* cc-engine.el (c-beginning-of-statement-1): Fixed bug where
+	we were left at comments preceding the first statement when
+	reaching the beginning of the buffer.
+
+	* cc-vars.el (c-syntactic-indentation): New variable to turn
+	off all syntactic indentation.
+
+Tue Dec 28 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-fill-paragraph): Keep one or two spaces
+	between the text and the block comment ender when it hangs,
+	depending on how many there are before the fill.
+
+Sun Dec 19 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-closest-statement): New helper
+	function to go back to the closest preceding statement start,
+	which could be inside a conditional statement.
+	* cc-engine.el (c-guess-basic-syntax): Use
+	c-beginning-of-closest-statement in cases 10B.2, 17B and 17C.
+
+	* cc-engine.el (c-guess-basic-syntax): Better handling of
+	arglist-intro, arglist-cont-nonempty and arglist-close when
+	the arglist is nested inside parens.  Cases 7A, 7C and 7F
+	changed.
+
+	* cc-langs.el (c-Java-javadoc-paragraph-start): Brought
+	up-to-date with javadoc 1.2.
+
+Fri Dec 17 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-statement-1): Fixed handling of
+	multiline Pike type decls.
+
+Tue Dec 14 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-indent-new-comment-line): Always break
+	multiline comments in multiline mode, regardless of
+	comment-multi-line.
+
+Mon Dec 13 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed bug with
+	fully::qualified::names in C++ member init lists.  Preamble in
+	case 5D changed.
+
+Sat Dec 04 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-langs.el (c-common-init): Handling of obsolete variables
+	moved to c-initialize-cc-mode.  More compatible style override
+	when using global style variables.
+	* cc-mode.el (c-initialize-cc-mode): Handling of obsolete
+	variables moved here.
+
+	* cc-mode.texi Documented the special behavior of
+	c-special-indent-hook as a style variable.  Don't talk about
+	doing (c-make-styles-buffer-local t) in a mode hook, since
+	that's already too late to work right.
+	
+	* cc-styles.el (c-make-styles-buffer-local): Flag style
+	variable localness in c-style-variables-are-local-p to make
+	the compatibility measure in c-common-init work well.
+
+	* cc-styles.el (c-set-style-1): c-special-indent-hook can no
+	longer contain set-from-style.
+	* cc-styles.el (c-initialize-builtin-style): Don't check for
+	set-from-style on c-special-indent-hook.
+	* cc-styles.el (c-copy-tree): Obsolete.  The standard function
+	copy-alist is sufficient now.
+
+	* cc-styles.el (c-set-style, c-set-style-1,
+	c-get-style-variables): Fixes to variable initialization so
+	that duplicate entries in styles have the same effect
+	regardless of DONT-OVERRIDE.
+
+	* cc-styles.el (c-set-style-2): Fixed bug where the
+	initialization of inheriting styles failed when the
+	dont-override flag is set.
+
+ 	* cc-vars.el (c-special-indent-hook): Don't use set-from-style
+	on this.
+
+Mon Nov 22 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (c-forward-comment): Removed the workaround
+	introduced in 5.38 since it had worse side-effects.  If a line
+	contains the string "//\"", it regarded the // as a comment
+	start since the \ temporarily doesn't have escape syntax.
+
 Sun Nov 21 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* Release 5.26

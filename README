@@ -4,7 +4,7 @@ Contact address    : bug-cc-mode@gnu.org
 
 INTRODUCTION
 
-    The canonical Web location for all knowledge CC Mode is:
+    The canonical web location for all knowledge CC Mode is:
 
 	<http://cc-mode.sourceforge.net/>
 
@@ -20,10 +20,7 @@ INTRODUCTION
 
 MORE INFORMATION
 
-    NOTE: Since there are now multiple maintainers of CC Mode, you
-    MUST address all correspondence to bug-cc-mode@gnu.org.
-
-    Check out the CC Mode Web site for the latest information,
+    Check out the CC Mode web site for the latest information,
     updates, tips, installation and compatibility notes, etc. on using
     CC Mode.  The installation instructions given below are an excerpt
     of the on-line instructions.  If you have problems installing CC
@@ -36,12 +33,11 @@ MORE INFORMATION
 MANUALS
 
     Preformatted versions of the manual in DVI, PostScript, and Info,
-    are all available at the CC Mode Web page.
+    are all available at the CC Mode web page.
 
     To build the manual yourself, you will need the latest Texinfo
-    release (as of this writing, Texinfo 3.11).  Specifically, you
-    must make sure that your are using at least version 2.185 of the
-    texinfo.tex file.  To build the Info manual, simply type:
+    release (as of this writing, Texinfo 4.0).  To build the Info
+    manual, simply type:
 
         % makeinfo cc-mode.texi
 
@@ -58,7 +54,7 @@ INSTALLATION
 
     Here is a quick guide for installing CC Mode.  For the latest
     information on installing CC Mode, including compatibility notes
-    for the various flavors of Emacs, please see the CC Mode Web site
+    for the various flavors of Emacs, please see the CC Mode web site
     given above.
 
   Setting load-path
@@ -104,7 +100,7 @@ INSTALLATION
     errors later during normal use.
 
     Be sure to see the list of compatibility issues (in the CC Mode
-    canonical Web pages -- see above), for special notes about X/Emacs
+    canonical web pages -- see above), for special notes about X/Emacs
     versions and package interactions.
 
     To test that you have things set up correctly, visit a C file and

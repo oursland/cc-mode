@@ -7,9 +7,13 @@ This message announces the availability of a new version of CC Mode, a
 GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, Java,
 CORBA's IDL, and Pike code.
 
+Note that the CC Mode web home has moved from python.org to
+sourceforge.net.  Some URL:s and mail addresses have changed due to
+that; see below.
+
 A list of user visible changes is detailed in the NEWS file and in the
 URL listed below.  More information, including links to download the
-source, are available on the CC Mode Web page:
+source, are available on the CC Mode web page:
 
     <http://cc-mode.sourceforge.net/>
 
