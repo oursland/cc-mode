@@ -152,10 +152,10 @@
     (con . font-lock-constant-face)
     (typ . font-lock-type-face)
     (ref . font-lock-reference-face)
-    (doc . ,c-doc-face)
-    (lbl . ,c-label-face)
-    (cpp . ,c-preprocessor-face)
-    (err . ,c-invalid-face)
+    (doc . ,c-doc-face-name)
+    (lbl . ,c-label-face-name)
+    (cpp . ,c-preprocessor-face-name)
+    (err . ,c-invalid-face-name)
     (nbs . c-nonbreakable-space-face)))
 
 ;; Check that we don't have duplicates.
