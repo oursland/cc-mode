@@ -166,9 +166,12 @@ SourceForge file release
 3.  Fill in the version number as the release name.
 4.  Fill in "Release Notes" on the next page:
       Real release:
-	See the <a href="http://cc-mode.sourceforge.net/changes-530.php">CC Mode web site</a> for details about this release.
+	See the CC Mode web site
+	<http://cc-mode.sourceforge.net/changes-530.php> for details
+	about this release.
       Patch release:
-	This release contains only bugfixes since <a href="http://cc-mode.sourceforge.net/changes-530.php">5.30</a>. See the ChangeLog for details.
+	This release contains only bugfixes since 5.30. See the
+	ChangeLog for details.
     (It's not necessary to bother with more; change logs etc are
     elsewhere.)
 3.  Add the the file.
@@ -205,7 +208,7 @@ for both):
     XEmacs: None.  (cc-fix.el is, or at least was, needed to work
     around bugs in fairly recent XEmacs versions.  Besides, since the
     packages are released individually it's not certain which version
-    of the XEmacs core that it will be used with.)
+    of the XEmacs core it will be used with.)
 
 3.  Do a quick test that the patched sources at least load correctly.
 
@@ -214,8 +217,7 @@ for both):
     For Emacs:
 
     o  Copy the applicable ChangeLog entries to lisp/ChangeLog.
-       Combine them all to one entry at the current date.  I do not
-       include the "Patch release" entry (maybe I should?).
+       Combine them all to one entry at the current date.
 
        RMS prefers if the entries are condensed as much as possible to
        summarize the overall code changes between the versions.  I
@@ -239,8 +241,7 @@ for both):
 
     o  If it's a patch release, add the applicable ChangeLog entries.
        It seems to be acceptable to keep the entries but change all
-       dates to the current date.  I do not include the "Patch
-       release" entry (maybe I should?).
+       dates to the current date.
 
     o  Update AUTHOR_VERSION in xemacs-packages/cc-mode/Makefile.  (Do
        not touch VERSION; the XEmacs release guy will do that when he
