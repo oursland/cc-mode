@@ -454,7 +454,8 @@ inside a literal or a macro, nothing special happens."
 
 (defun c-point-syntax ()
   ;; Return the syntactic context of the construct at point.  (This is NOT
-  ;; nec. the same as the s.c. of the line point is on).
+  ;; nec. the same as the s.c. of the line point is on).  N.B. This won't work
+  ;; between the `#' of a cpp thing and what follows (see c-opt-cpp-prefix).
   (c-save-buffer-state (;; shut this up too
 	(c-echo-syntactic-information-p nil)
 	syntax)
@@ -462,8 +463,15 @@ inside a literal or a macro, nothing special happens."
       ;; insert a newline to isolate the construct at point for syntactic
       ;; analysis.
       (insert-char ?\n 1)
-      ;; In AWK (etc.), make sure this CR hasn't changed the syntax.
-      (when (c-at-vsemi-p (1- (point)))
+      ;; In AWK (etc.) or in a macro, make sure this CR hasn't changed
+      ;; the syntax.  (There might already be an escaped NL there.)
+      (when (or (c-at-vsemi-p (1- (point)))
+		(let ((pt (point)))
+		  (save-excursion
+		    (backward-char)
+		    (and (c-beginning-of-macro)
+			 (progn (c-end-of-macro)
+				(< (point) pt))))))
 	(backward-char)
 	(insert-char ?\\ 1)
 	(forward-char))

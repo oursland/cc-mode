@@ -577,6 +577,8 @@ e.g. identifiers with template arguments such as \"A<X,Y>\" in C++."
   "Regexp matching the prefix of a cpp directive in the languages that
 normally use that macro preprocessor.  Tested at bol or at boi.
 Assumed to not contain any submatches or \\| operators."
+  ;; TODO (ACM, 2005-04-01).  Amend the following to recognise escaped NLs;
+  ;; amend all uses of c-opt-cpp-prefix which count regexp-depth.
   t "\\s *#\\s *"
   (java awk) nil)
 (c-lang-defvar c-opt-cpp-prefix (c-lang-const c-opt-cpp-prefix))
