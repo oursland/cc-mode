@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.289 $
-;; Last Modified:   $Date: 1996-05-03 22:03:13 $
+;; Version:         $Revision: 4.290 $
+;; Last Modified:   $Date: 1996-05-24 15:30:27 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4555,6 +4555,18 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (current-column))))
       (- ce-curcol cs-curcol -1))))
 
+(defun c-lineup-arglist-close-under-paren (langelem)
+  ;; lineup an arglist-intro line to just after the open paren
+  (save-excursion
+    (let ((cs-curcol (save-excursion
+		       (goto-char (cdr langelem))
+		       (current-column)))
+	  (ce-curcol (save-excursion
+		       (beginning-of-line)
+		       (backward-up-list 1)
+		       (current-column))))
+      (- ce-curcol cs-curcol))))
+
 (defun c-lineup-streamop (langelem)
   ;; lineup stream operators
   (save-excursion
@@ -4820,7 +4832,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.289 $"
+(defconst c-version "$Revision: 4.290 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
