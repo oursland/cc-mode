@@ -1480,56 +1480,94 @@ function does not require the declaration to contain a brace block."
       (push-mark (cdr decl-limits) nil t))))
 
 
+(defun c-in-comment-line-prefix-p ()
+  ;; Point is within a comment.  Is it also within a comment-prefix?
+  ;; Space at BOL which precedes a comment-prefix counts as part of it.
+  (let ((here (point)))
+    (save-excursion
+      (beginning-of-line)
+      (skip-chars-forward " \t")
+      (and (looking-at c-current-comment-prefix)
+	   (/= (match-beginning 0) (match-end 0))
+	   (< here (match-end 0))))))
+
+(defun c-narrow-to-comment-innards (range)
+  ;; Narrow to the "inside" of the comment (block) defined by range, as
+  ;; follows:
+  ;; A c-style block comment has its opening "/*" and its closing "*/" (if
+  ;; present) removed.  A c++-style line comment has any final NL removed.
+  ;; 
+  ;; This narrowing simplifies the sentence movement functions, since it
+  ;; eliminates awkward things at the boundaries of the comment (block).
+  (let* ((lit-type (c-literal-type range))
+	 (beg (if (eq lit-type 'c) (+ (car range) 2) (car range)))
+	 (end (if (eq lit-type 'c)
+		  (if (and (eq (char-before (cdr range)) ?/)
+			   (eq (char-before (1- (cdr range))) ?*))
+		      (- (cdr range) 2)
+		    (point-max))
+		(if (eq (cdr range) (point-max))
+		    (point-max)
+		  (- (cdr range) 1)))))
+    (narrow-to-region beg end)))
+
 (defun c-beginning-of-sentence-in-comment (range)
   ;; Move backwards to the "beginning of a sentence" within the comment
   ;; defined by RANGE, a cons of its starting and ending positions.  If we
   ;; find a BOS, return NIL.  Otherwise, move point to just before the start
   ;; of the comment and return T.
   ;;
-  ;; The BOS is either the text which follows a regexp match of sentence-end
+  ;; The BOS is either text which follows a regexp match of sentence-end,
   ;; or text which is a beginning of "paragraph".  
-  ;; Comment-prefixes are ignored when calculating BOSes or BOPs.
+  ;; Comment-prefixes are treated like WS when calculating BOSes or BOPs.
   ;;
   ;; This code was adapted from GNU Emacs's forward-sentence in paragraphs.el.
   ;; It is not a general function, but is intended only for calling from
   ;; c-move-over-sentence.
   (save-match-data
-    (let* ((here (point)) last
-	   (here-filler		   ; matches WS and comment-prefices at point.
-	    (concat "\\=\\(^[ \t]*" c-current-comment-prefix
-		    "\\|[ \t\n\r\f]\\)*"))
-	   ;; First, find the previous paragraph start, if any.
-	   (par-beg  ; point where non-WS/non-prefix text of paragraph starts.
-	    (save-excursion
-	      (save-restriction
-		(narrow-to-region (car range) (cdr range))
-		(forward-paragraph -1)	; uses cc-mode values of
+    (let ((start-point (point)))
+      (save-restriction
+	(c-narrow-to-comment-innards range) ; This may move point back.
+	(let* ((here (point))
+	       last
+	       (here-filler	   ; matches WS and comment-prefices at point.
+		(concat "\\=\\(^[ \t]*\\(" c-current-comment-prefix "\\)"
+			"\\|[ \t\n\r\f]\\)*"))
+	       (prefix-at-bol-here ; matches WS and prefix at BOL, just before point
+		(concat "^[ \t]*\\(" c-current-comment-prefix "\\)[ \t\n\r\f]*\\="))
+	       ;; First, find the previous paragraph start, if any.
+	       (par-beg	; point where non-WS/non-prefix text of paragraph starts.
+		(save-excursion
+		  (forward-paragraph -1) ; uses cc-mode values of
 					; paragraph-\(start\|separate\)
-		(if (looking-at c-block-comment-start-regexp)
-		    (goto-char (match-end 0)))
-		(if (> (re-search-forward here-filler nil t) here)
-		    (goto-char here))
-		(when (>= (point) here)
-		  (forward-paragraph -2)
-		  (if (looking-at c-block-comment-start-regexp)
-		      (goto-char (match-end 0)))
 		  (if (> (re-search-forward here-filler nil t) here)
-		      (goto-char here)))
-		(point)))))
-      ;; Now see if we can find a sentence end after PAR-BEG.
-      (while (and (re-search-backward sentence-end par-beg 'limit)
-		  (setq last (point))
-		  (goto-char (match-end 0))
-		  (or (> (point) (cdr range))
-		      (progn
-			(re-search-forward
-			 here-filler (cdr range) t) ; always succeeds.  Use (cdr
-					; range) rather than here, in case
-					; point is inside a comment prefix.
-			(>= (point) here))))
-	(goto-char last))
-      (re-search-forward here-filler here t)
-      (if (< (point) here)
+		      (goto-char here))
+		  (when (>= (point) here)
+		    (forward-paragraph -2)
+		    (if (> (re-search-forward here-filler nil t) here)
+			(goto-char here)))
+		  (point))))
+
+	  ;; Now seek successively earlier sentence ends between PAR-BEG and
+	  ;; HERE, until the "start of sentence" following it is earlier than
+	  ;; HERE, or we hit PAR-BEG.  Beware of comment prefices!
+	  (while (and (re-search-backward sentence-end par-beg 'limit)
+		      (setq last (point))
+		      (goto-char (match-end 0))	; tentative beginning of sentence
+		      (or (>= (point) here)
+			  (and (not (bolp)) ; Found a non-blank comment-prefix?
+			       (save-excursion
+				 (if (re-search-backward prefix-at-bol-here nil t)
+				     (/= (match-beginning 1) (match-end 1)))))
+			  (progn	; Skip the crud to find a real b-o-s.
+			    (if (c-in-comment-line-prefix-p)
+				(beginning-of-line))
+			    (re-search-forward here-filler) ; always succeeds.
+			    (>= (point) here))))
+	    (goto-char last))
+	  (re-search-forward here-filler)))
+
+      (if (< (point) start-point)
 	  nil
 	(goto-char (car range))
 	t))))
@@ -1547,58 +1585,57 @@ function does not require the declaration to contain a brace block."
   ;; comment will count as EOS, providing we're not already in it.
   ;;
   ;; This code was adapted from GNU Emacs's forward-sentence in paragraphs.el.
-  ;; It is not a general function, but is inteded only for calling from
+  ;; It is not a general function, but is intended only for calling from
   ;; c-move-over-sentence.
   (save-match-data
-    (let* ((here (point))
-	   (lit-type (c-literal-type range))
-	   (end (if (eq lit-type 'c)
-		    (if (and (eq (char-before (cdr range)) ?/)
-			     (eq (char-before (1- (cdr range))) ?*))
-			(- (cdr range) 2)
-		      (point-max))
-		  (if (eq (cdr range) (point-max))
-		      (point-max)
-		    (- (cdr range) 1))))
-	   (par-end	; EOL position of last text in current/next paragraph.
-	    (save-excursion
-	      (save-restriction
-		(narrow-to-region (car range) end)
-		;; The cc-mode values of paragraph-\(start\|separate\), set in
-		;; c-setup-paragraph-variables, are used in the following.
-		(forward-paragraph 1)
-		(if (eq (preceding-char) ?\n) (forward-char -1))
-		(when (<= (point) here)	; can happen, e.g., when HERE is at EOL.
-		  (goto-char here)
-		  (forward-paragraph 2)
-		  (if (eq (preceding-char) ?\n) (forward-char -1)))
-		(point))))
+    (let ((start-point (point))
+	  (lit-type (c-literal-type range)))
+      (save-restriction
+	(c-narrow-to-comment-innards range) ; This might move point forwards.
+	(let* ((here (point))
+	       (par-end	; EOL position of last text in current/next paragraph.
+		(save-excursion
+		  ;; The cc-mode values of paragraph-\(start\|separate\), set
+		  ;; in c-setup-paragraph-variables, are used in the
+		  ;; following.
+		  (forward-paragraph 1)
+		  (if (eq (preceding-char) ?\n) (forward-char -1))
+		  (when (<= (point) here) ; can happen, e.g., when HERE is at EOL.
+		    (goto-char here)
+		    (forward-paragraph 2)
+		    (if (eq (preceding-char) ?\n) (forward-char -1)))
+		  (point)))
 
-	   last
-	   (prefix-at-bol-here
-	    (concat "^[ \t]*\\(" c-current-comment-prefix "\\)\\=")))
-      ;; Go forward one "comment-prefix which looks like sentence-end" each
-      ;; time round the following:
-      (if (< (point) par-end)	; Point might start inside the delimiter "*/".
+	       last
+	       (prefix-at-bol-here
+		(concat "^[ \t]*\\(" c-current-comment-prefix "\\)\\=")))
+	  ;; Go forward one "comment-prefix which looks like sentence-end"
+	  ;; each time round the following:
 	  (while (and (re-search-forward sentence-end par-end 'limit)
 		      (progn
 			(setq last (point))
 			(skip-chars-backward " \t\n")
 			(or (and (not (bolp))
-				 (re-search-backward prefix-at-bol-here nil t))
+				 (re-search-backward prefix-at-bol-here nil t)
+				 (/= (match-beginning 1) (match-end 1)))
 			    (<= (point) here))))
-	    (goto-char last)))
+	    (goto-char last))
 
-      ;; Take special action if we're up against the end of a block comment:
-      ;; Leave point just after the last non-ws text.
-      (if (and (eq (point) end) (eq lit-type 'c))
-	  (while
-	      (or (/= (skip-chars-backward " \t\n") 0)
-		  (re-search-backward prefix-at-bol-here nil t))))
-      (if (> (point) here)
-	  nil
-	(goto-char (cdr range))
-	t))))
+	  ;; Take special action if we're up against the end of a block
+	  ;; comment: Leave point just after the last non-ws text.
+	  ;; (2003/10/20: do the same for a line comment.)
+	  (if ;(and ; removed tentatively, 2003/10/20.
+	      (eq (point) (point-max))
+		   ;; (eq lit-type 'c)) ; removed tentatively, 2003/10/20.
+	      (while
+		  (or (/= (skip-chars-backward " \t\n") 0)
+		      (and (re-search-backward prefix-at-bol-here nil t)
+			   (/= (match-beginning 1) (match-end 1))))))))
+
+      (if (> (point) start-point)
+	      nil
+	    (goto-char (cdr range))
+	    t))))
 
 (defun c-beginning-of-sentence-in-string (range)
   ;; Move backwards to the "beginning of a sentence" within the string defined
@@ -1623,12 +1660,20 @@ function does not require the declaration to contain a brace block."
 	   ;; paragraph-start's value in fundamental mode is "[ \t\n\f]"
 	   ;;                         in text mode it is "\f\\|[ \t]*$"
 	   ;; We adapt here fundamental mode's version.
-	   (paragraph-start "[ \t\n\f]\\|[ \t]*\\\\$")
+	   ;; (2003/10/20) NO!  Concatenate escaped NL stuff with the current
+	   ;; value.
+	   ; (paragraph-start "[ \t\n\f]\\|[ \t]*\\\\$")
+	   (paragraph-start
+	    (concat "\\(" paragraph-start "\\)\\|[ \t]*\\\\$"))
 
 	   ;; paragraph-separate's value in fundamental mode is "[ \t\f]*$"
 	   ;;                            in text mode it is "\f\\|[ \t]*$"
 	   ;; We adapt here fundamental mode's version.
-	   (paragraph-separate "[ \t\f]*\\\\?$")
+	   ;; (2003/10/20 NO!  Concatenate escaped NL stuff with the current
+	   ;; value.
+	   ; (paragraph-separate "[ \t\f]*\\\\?$")
+	   (paragraph-separate
+	    (concat "\\(" paragraph-separate "\\)\\|[ \t]*\\\\$"))
 
 	   (sentence-end-with-esc-eol
 	    (concat "\\(" sentence-end
@@ -1686,14 +1731,21 @@ function does not require the declaration to contain a brace block."
 	   last
 	   ;; paragraph-start's value in fundamental mode is "[ \t\n\f]"
 	   ;;                         in text mode it is "\f\\|[ \t]*$"
-	   ;; We adapt here Text Mode's version, additionally allowing escaped
-	   ;; newlines.
-	   (paragraph-start "\f\\|[ \t]*\\\\?$")
+	   ;; We adapt here fundamental mode's version.
+	   ;; (2003/10/20) NO!  Concatenate escaped NL stuff with the current
+	   ;; value.
+	   ; (paragraph-start "[ \t\n\f]\\|[ \t]*\\\\$")
+	   (paragraph-start
+	    (concat "\\(" paragraph-start "\\)\\|[ \t]*\\\\$"))
 
 	   ;; paragraph-separate's value in fundamental mode is "[ \t\f]*$"
 	   ;;                            in text mode it is "\f\\|[ \t]*$"
-	   ;; We adapt here Text Mode's version.
-	   (paragraph-separate "\f\\|[ \t]*\\\\?$")
+	   ;; We adapt here fundamental mode's version.
+	   ;; (2003/10/20 NO!  Concatenate escaped NL stuff with the current
+	   ;; value.
+	   ; (paragraph-separate "[ \t\f]*\\\\?$")
+	   (paragraph-separate
+	    (concat "\\(" paragraph-separate "\\)\\|[ \t]*\\\\$"))
 
 	   (sentence-end-with-esc-eol
 	    (concat "\\(" sentence-end
@@ -1799,15 +1851,16 @@ function does not require the declaration to contain a brace block."
 	    (goto-char last)
 	    (throw 'done '(t . literal)))
 
-	  ;; If we've gone back over a LF, we might have moved into a
-	  ;; preprocessor line.
-	  (when (and (not macro-start)
-		     (save-excursion
-		       (beginning-of-line)
-		       (re-search-forward "\\(^\\|[^\\]\\)[\n\r]" last t))
-		     (c-beginning-of-macro))
-	    (goto-char last)
-	    (throw 'done (cons (eq (point) here) 'macro-boundary)))
+	  ;; If we've gone back over a LF, we might have moved into or out of
+	  ;; a preprocessor line.
+	  (if (save-excursion
+		(beginning-of-line)
+		(re-search-forward "\\(^\\|[^\\]\\)[\n\r]" last t))
+	      (when (if macro-start
+			(< (point) macro-start)
+		      (c-beginning-of-macro))
+		(goto-char last)
+		(throw 'done (cons (eq (point) here) 'macro-boundary))))
 
 	  (when (bobp)			; Must handle bob specially
 	    (if (/= here last)
