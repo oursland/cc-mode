@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.319 $
-;; Last Modified:   $Date: 1994-04-26 15:19:48 $
+;; Version:         $Revision: 3.320 $
+;; Last Modified:   $Date: 1994-04-26 16:17:29 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-26 15:19:48 $|$Revision: 3.319 $|
+;; |$Date: 1994-04-26 16:17:29 $|$Revision: 3.320 $|
 
 ;;; Code:
 
@@ -793,7 +793,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.319 $
+cc-mode Revision: $Revision: 3.320 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -824,7 +824,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.319 $
+cc-mode Revision: $Revision: 3.320 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2194,7 +2194,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; Find all open parens between BOD and point. BOD is optional and
   ;; defaults to `beginning-of-defun'
   (let ((pos (save-excursion
-	       (beginning-of-defun 2)
+	       ;; go back 2 bods, but ignore any bogus b-o-d positions
+	       ;; (i.e. open paren in column zero)
+	       (let ((cnt 2))
+		 (while (> cnt 0)
+		   (beginning-of-defun)
+		   (if (= (following-char) ?\{)
+		       (setq cnt (1- cnt)))
+		   (if (bobp)
+		       (setq cnt 0))))
 	       (point)))
 	(here (save-excursion
 		;;(skip-chars-forward " \t}")
@@ -3415,7 +3423,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.319 $"
+(defconst c-version "$Revision: 3.320 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
