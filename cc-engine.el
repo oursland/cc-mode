@@ -2126,14 +2126,10 @@ brace."
 	   ;; opening paren.  This case includes multi-line
 	   ;; mathematical paren groupings, but we could be on a
 	   ;; for-list continuation line
-	   ((and (save-excursion
-		   (goto-char (1+ containing-sexp))
-		   (skip-chars-forward " \t")
-		   (not (eolp)))
-		 (save-excursion
-		   (c-beginning-of-statement-1 lim)
-		   (skip-chars-backward " \t([")
-		   (<= (point) containing-sexp)))
+	   ((save-excursion
+	      (goto-char (1+ containing-sexp))
+	      (skip-chars-forward " \t")
+	      (not (eolp)))
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
 	    (when (and (c-safe (backward-up-list 1) t)
