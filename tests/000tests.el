@@ -276,7 +276,16 @@
 	  (goto-char (point-min))
 	  ;; Collect the analysis of all lines.
 	  (while (not (eobp))
-	    (let ((syntax (c-guess-basic-syntax)))
+	    (let ((syntax
+		   (condition-case err
+		       (c-guess-basic-syntax)
+		     (error
+		      (setq error-found-p t)
+		      (cc-test-log "%s:%d: c-guess-basic-syntax error: %s"
+				   filename (1+ (count-lines (point-min) (point)))
+				   (error-message-string err))
+		      ""))
+		   ))
 	      (set-buffer resultsbuf)
 	      (insert (format "%s" syntax) "\n")
 	      (set-buffer testbuf))
@@ -290,7 +299,20 @@
 	      ;; Do not reindent empty lines; the test cases might have
 	      ;; whitespace at eol trimmed away, so that could produce
 	      ;; false alarms.
-	      (c-indent-line)))
+	      (condition-case err
+		  (c-indent-line)
+		(error
+		 (setq error-found-p t)
+		 (let ((linenum (1+ (count-lines (point-min) (point)))))
+		   (set-buffer resultsbuf)
+		   (save-excursion
+		     (goto-line linenum)
+		     (unless (looking-at "^$")
+		       ;; Don't report lines caused that caused an error above.
+		       (cc-test-log "%s:%d: c-indent-line error: %s"
+				    filename linenum (error-message-string err))))
+		   (set-buffer testbuf)
+		   )))))
 	  ;; Compare and report.
 	  (set-buffer resultsbuf)
 	  (goto-char (point-min))
@@ -314,7 +336,8 @@
 			       (forward-line 1)))
 		   regression-comment)
 	      (set-buffer testbuf)
-	      (unless (string= results expected)
+	      (unless (or (= (length results) 0)
+			  (string= results expected))
 		(let ((msg (format "Expected analysis %s, got %s"
 				   expected results)))
 		  (cc-test-log "%s:%d: %s" filename linenum msg)
@@ -384,7 +407,7 @@
 			(unless (do-one-test test t)
 			  (setq broken-files (cons test broken-files)))
 		      (error
-		       (message "%s" (error-message-string err))
+		       (message "%s: Eval error: %s" test (error-message-string err))
 		       (setq broken-files (cons test broken-files)))
 		      ))
 		  (directory-files
