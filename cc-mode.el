@@ -6,11 +6,16 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-08 15:55:08 $
-;; Version:         $Revision: 2.37 $
+;; Last Modified:   $Date: 1992-05-08 19:23:39 $
+;; Version:         $Revision: 2.38 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
+;;
+;; Want to be a c++-mode victim, er, beta-tester?  Send add/drop
+;; requests to c++-mode-victims-request@anthem.nlm.nih.gov.
+;; Discussions go to c++-mode-victims, but bug reports and such should
+;; still be sent to c++-mode-help only.
 ;;
 ;; The latest version of this file should always be available for
 ;; anonymous ftp on the elisp archive machine:
@@ -32,7 +37,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-08 15:55:08 $|$Revision: 2.37 $|
+;; |$Date: 1992-05-08 19:23:39 $|$Revision: 2.38 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -158,7 +163,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.37 $
+  "Major mode for editing C++ code.  $Revision: 2.38 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1481,7 +1486,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.37 $"
+(defconst c++-version "$Revision: 2.38 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
