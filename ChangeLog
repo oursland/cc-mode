@@ -1,3 +1,42 @@
+Wed May 14 18:08:07 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* First alpha release 5.05
+
+Tue May 13 22:57:24 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+
+	* cc-align.el (c-lineup-C-comments):
+	Fixes to handle all situations where the first line of a block
+	comment has more stars on it than subsequent lines.  This not only
+	picks up the most comment Javadoc styles, but also
+
+	/*********************************************************************
+	 * Routines formerly in objectPalette.c
+	 *********************************************************************/
+
+	* cc-engine.el (c-guess-basic-syntax):
+	CASE 6A: Removed tests for ObjC & Java method
+	closing parens since none of the test cases touched this code, and it
+	broke close-paren on a separate line being recoginzied as
+	arglist-close.
+
+	* cc-langs.el:
+	Removed most byte-compiler warnings by removing many obsolete
+	variables.
+
+Fri May  9 21:54:27 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+
+	* cc-cmds.el (c-fill-paragraph):
+	Included franl@world.std.com (Francis Litterio)
+	patch that makes c-fill-paragraph preserve fill-prefix.
+
+	* cc-engine.el (c-guess-basic-syntax):
+	CASE 6C: when checking for a `for' statement,
+	watch out for underscore separated symbols: for_each
+
+Tue May  6 23:18:13 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+
+	* Restructuring completed for version 5.xx
+
 Tue May  6 19:16:48 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-style-alist, c-set-style-1): Added support for
