@@ -584,46 +584,48 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
   ;; crucial because future c-set-style calls will always reset the
   ;; variables first to the `cc-mode' style before instituting the new
   ;; style.  Only do this once!
-  (c-initialize-cc-mode t)
-  (or (assoc "cc-mode" c-style-alist)
-      (assoc "user" c-style-alist)
-      (let (copyfunc)
-	;; use built-in copy-tree if its there.
-	(if (and (fboundp 'copy-tree)
-		 (functionp (symbol-function 'copy-tree)))
-	    (setq copyfunc (symbol-function 'copy-tree))
-	  (setq copyfunc (lambda (tree)
-			   (if (consp tree)
-			       (cons (funcall copyfunc (car tree))
-				     (funcall copyfunc (cdr tree)))
-			     tree))))
-	(c-add-style "user"
-		     (mapcar
-		      (function
-		       (lambda (var)
-			 (let ((val (symbol-value var)))
-			   (cons var (if (atom val)
-					 val
-				       (funcall copyfunc val)
-				       ))
-			   )))
-		      '(c-backslash-column
-			c-basic-offset
-			c-cleanup-list
-			c-comment-only-line-offset
-			c-electric-pound-behavior
-			c-hanging-braces-alist
-			c-hanging-colons-alist
-			c-hanging-comment-starter-p
-			c-hanging-comment-ender-p
-			c-offsets-alist
-			)))
-	(c-add-style "cc-mode" '("user"))
-	;; the default style is now GNU.  This can be overridden in
-	;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
-	(c-set-style c-default-style)))
-  (if c-style-variables-are-local-p
-      (c-make-styles-buffer-local)))
+  (unless (get 'c-initialize-builtin-style 'is-run)
+    (put 'c-initialize-builtin-style 'is-run t)
+    (c-initialize-cc-mode)
+    (or (assoc "cc-mode" c-style-alist)
+	(assoc "user" c-style-alist)
+	(let (copyfunc)
+	  ;; use built-in copy-tree if its there.
+	  (if (and (fboundp 'copy-tree)
+		   (functionp (symbol-function 'copy-tree)))
+	      (setq copyfunc (symbol-function 'copy-tree))
+	    (setq copyfunc (lambda (tree)
+			     (if (consp tree)
+				 (cons (funcall copyfunc (car tree))
+				       (funcall copyfunc (cdr tree)))
+			       tree))))
+	  (c-add-style "user"
+		       (mapcar
+			(function
+			 (lambda (var)
+			   (let ((val (symbol-value var)))
+			     (cons var (if (atom val)
+					   val
+					 (funcall copyfunc val)
+					 ))
+			     )))
+			'(c-backslash-column
+			  c-basic-offset
+			  c-cleanup-list
+			  c-comment-only-line-offset
+			  c-electric-pound-behavior
+			  c-hanging-braces-alist
+			  c-hanging-colons-alist
+			  c-hanging-comment-starter-p
+			  c-hanging-comment-ender-p
+			  c-offsets-alist
+			  )))
+	  (c-add-style "cc-mode" '("user"))
+	  ;; the default style is now GNU.  This can be overridden in
+	  ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
+	  (c-set-style c-default-style)))
+    (if c-style-variables-are-local-p
+	(c-make-styles-buffer-local))))
 
 
 (defun c-make-styles-buffer-local (&optional this-buf-only-p)
