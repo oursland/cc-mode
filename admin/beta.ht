@@ -15,3 +15,6 @@ public with it until a wider audience has given us some feedback.
 <p>5.23 is being made available in a more bare-bones source
 distribution.  Please see <a href="beta/">for the tarballs</a> and
 other gzip'd files.
+
+<p>The documentation for version 5.23 is
+<a href="beta/cc-mode-html/Top.html">browsable on-line</a>.
