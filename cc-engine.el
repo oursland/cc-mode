@@ -2689,13 +2689,15 @@ brace."
     ))
 
 (defun c-indent-line (&optional syntax)
-  ;; Indent the current line as C/C++/ObjC code, if
+  ;; Indent the current line according to the syntactic context, if
   ;; c-syntactic-indentation is non-nil.  Optional SYNTAX is the
   ;; syntactic information for the current line.  Returns the amount
   ;; of indentation change (in columns).
   (let (shift-amt)
     (if c-syntactic-indentation
-	(let* ((c-syntactic-context (or syntax (c-guess-basic-syntax)))
+	(let* ((c-syntactic-context (or syntax
+					c-syntactic-context
+					(c-guess-basic-syntax)))
 	       (langelemptr c-syntactic-context)
 	       (indent 0))
 	  (setq indent
