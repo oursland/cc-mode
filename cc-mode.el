@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.317 $
-;; Last Modified:   $Date: 1996-09-30 22:24:48 $
+;; Version:         $Revision: 4.318 $
+;; Last Modified:   $Date: 1996-09-30 22:30:18 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2885,7 +2885,7 @@ move backward across a preprocessor conditional."
 
 ;; commands to indent lines, regions, defuns, and expressions
 (defun c-indent-command (&optional whole-exp)
-  "Indent current line as C++ code, or in some cases insert a tab character.
+  "Indent current line as C code, and/or insert some whitespace.
 
 If `c-tab-always-indent' is t, always just indent the current line.
 If nil, indent the current line only if point is at the left margin or
@@ -2901,9 +2901,10 @@ of the expression are preserved.
 
   [*] The amount and kind of whitespace inserted is controlled by the
   variable `c-insert-tab-function', which is called to do the actual
-  insertion of whitespace.  Normally this variable just inserts a tab
-  character, or the equivalent number of spaces, depending on the
-  variable `indent-tabs-mode'."
+  insertion of whitespace.  Normally function in this variable just
+  inserts a tab character, or the equivalent number of spaces,
+  depending on the variable `indent-tabs-mode'."
+
   (interactive "P")
   (let ((bod (c-point 'bod)))
     (if whole-exp
@@ -5001,7 +5002,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.317 $"
+(defconst c-version "$Revision: 4.318 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
