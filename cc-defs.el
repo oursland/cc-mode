@@ -92,6 +92,8 @@
   ;; If the referenced position doesn't exist, the closest accessible
   ;; point to it is returned.  This function does not modify point or
   ;; mark.
+  ;;
+  ;; This function does not do any hidden buffer changes.
 
   (if (eq (car-safe position) 'quote)
       (let ((position (eval position)))
@@ -210,10 +212,34 @@
 
 (defmacro c-safe (&rest body)
   ;; safely execute BODY, return nil if an error occurred
+  ;;
+  ;; This function does not do any hidden buffer changes.
   `(condition-case nil
        (progn ,@body)
      (error nil)))
 (put 'c-safe 'lisp-indent-function 0)
+
+;; The following is essentially `save-buffer-state' from lazy-lock.el.
+;; It ought to be a standard macro.
+(defmacro c-save-buffer-state (varlist &rest body)
+  "Bind variables according to VARLIST (in `let*' style) and eval BODY,
+then restore the buffer state under the assumption that no significant
+modification has been made.  A change is considered significant if it
+affected the buffer text in any way that wasn't completely restored
+again.  Changes in text properties like `face' or `syntax-table' are
+considered insignificant.
+
+The return value is the value of the last form in BODY."
+  `(let* (,@(append '((modified (buffer-modified-p)) (buffer-undo-list t)
+		      (inhibit-read-only t) (inhibit-point-motion-hooks t)
+		      before-change-functions after-change-functions
+		      deactivate-mark)
+		    varlist))
+     (prog1 (progn ,@body)
+       (and (not modified)
+	    (buffer-modified-p)
+	    (set-buffer-modified-p nil)))))
+(put 'c-save-buffer-state 'lisp-indent-function 1)
 
 (defmacro c-forward-syntactic-ws (&optional limit)
   "Forward skip over syntactic whitespace.
@@ -224,7 +250,10 @@ whitespace.
 
 LIMIT sets an upper limit of the forward movement, if specified.  If
 LIMIT or the end of the buffer is reached inside a comment or
-preprocessor directive, the point will be left there."
+preprocessor directive, the point will be left there.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
   (if limit
       `(save-restriction
 	 (narrow-to-region (point-min) (or ,limit (point-max)))
@@ -241,7 +270,10 @@ whitespace.
 LIMIT sets a lower limit of the backward movement, if specified.  If
 LIMIT or the beginning of the buffer is reached inside a comment or
 preprocessor directive, the point might be left anywhere between the
-limit and the end of that comment or preprocessor directive."
+limit and the end of that comment or preprocessor directive.
+
+Note that this function might do hidden buffer changes.  See the
+comment at the start of cc-engine.el for more info."
   (if limit
       `(save-restriction
 	 (narrow-to-region (or ,limit (point-min)) (point-max))
@@ -255,6 +287,8 @@ limit and the end of that comment or preprocessor directive."
   ;;      XEmacs' losing efforts to make forward-sexp more user
   ;;      friendly
   ;;   3. Preserves the semantics most of CC Mode is based on
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (or arg (setq arg 1))
   `(goto-char (or (scan-sexps (point) ,arg)
 		  ,(if (numberp arg)
@@ -268,6 +302,8 @@ limit and the end of that comment or preprocessor directive."
 
 ;; Wrappers for common scan-lists cases, mainly because it's almost
 ;; impossible to get a feel for how that function works.
+;;
+;; These functions do not do any hidden buffer changes.
 (defmacro c-up-list-forward (pos)
   `(c-safe (scan-lists ,pos 1 1)))
 (defmacro c-up-list-backward (pos)
@@ -280,12 +316,16 @@ limit and the end of that comment or preprocessor directive."
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   `(progn
      (message ,format ,@args)
      (ding)))
 
 (defmacro c-update-modeline ()
   ;; set the c-auto-hungry-string for the correct designation on the modeline
+  ;;
+  ;; This function does not do any hidden buffer changes.
   `(progn
      (setq c-auto-hungry-string
 	   (if c-auto-newline
@@ -296,6 +336,8 @@ limit and the end of that comment or preprocessor directive."
 (defmacro c-with-syntax-table (table &rest code)
   ;; Temporarily switches to the specified syntax table in a failsafe
   ;; way to execute code.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   `(let ((c-with-syntax-table-orig-table (syntax-table)))
      (unwind-protect
 	 (progn
@@ -307,7 +349,9 @@ limit and the end of that comment or preprocessor directive."
 (defmacro c-skip-ws-forward (&optional limit)
   "Skip over any whitespace following point.
 This function skips over horizontal and vertical whitespace and line
-continuations."
+continuations.
+
+This function does not do any hidden buffer changes."
   (if limit
       `(let ((-limit- (or ,limit (point-max))))
 	 (while (progn
@@ -328,7 +372,9 @@ continuations."
 (defmacro c-skip-ws-backward (&optional limit)
   "Skip over any whitespace preceding point.
 This function skips over horizontal and vertical whitespace and line
-continuations."
+continuations.
+
+This function does not do any hidden buffer changes."
   (if limit
       `(let ((-limit- (or ,limit (point-min))))
 	 (while (progn
@@ -347,6 +393,8 @@ continuations."
 (defmacro c-major-mode-is (mode)
   ;; Return non-nil if the current CC Mode major mode is MODE.  MODE
   ;; is either a mode symbol or a list of mode symbols.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (if (eq (car-safe mode) 'quote)
       (let ((mode (eval mode)))
 	(if (listp mode)
@@ -361,6 +409,8 @@ continuations."
   ;; Return the value of the variable that says whether the
   ;; syntax-table property affects the sexp routines.  Always return
   ;; nil in (X)Emacsen without support for that.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (cond ((boundp 'parse-sexp-lookup-properties)
 	 `parse-sexp-lookup-properties)
 	((boundp 'lookup-syntax-properties)
@@ -443,6 +493,7 @@ continuations."
   '(progn
      (def-edebug-spec c-point t)
      (def-edebug-spec c-safe t)
+     (def-edebug-spec c-save-buffer-state let)
      (def-edebug-spec c-forward-syntactic-ws t)
      (def-edebug-spec c-backward-syntactic-ws t)
      (def-edebug-spec c-forward-sexp t)
@@ -475,6 +526,9 @@ continuations."
   ;; b-o-d will be available and this should be the only place the
   ;; code needs to change.  Everything else should use
   ;; (c-beginning-of-defun-1)
+  ;;
+  ;; This function does not do any hidden buffer changes.
+
   (if (and (fboundp 'buffer-syntactic-context-depth)
 	   c-enable-xemacs-performance-kludge-p)
       ;; XEmacs only.  This can improve the performance of
@@ -546,6 +600,8 @@ continuations."
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
   ;; in LIST.  Uses assq.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (let (match)
     (while (and list
 		(not (setq match (assq (car list) alist))))
@@ -555,11 +611,15 @@ continuations."
 (defsubst c-lookup-lists (list alist1 alist2)
   ;; first, find the first entry from LIST that is present in ALIST1,
   ;; then find the entry in ALIST2 for that entry.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (assq (car (c-intersect-lists list alist1)) alist2))
 
 (defsubst c-langelem-col (langelem &optional preserve-point)
   ;; convenience routine to return the column of langelem's relpos.
   ;; Leaves point at the relpos unless preserve-point is non-nil.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (if (cdr langelem)
       (let ((here (point)))
 	(goto-char (cdr langelem))
@@ -572,12 +632,16 @@ continuations."
 (defsubst c-keep-region-active ()
   ;; Do whatever is necessary to keep the region active in XEmacs.
   ;; This is not needed for Emacs.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (and (boundp 'zmacs-region-stays)
        (setq zmacs-region-stays t)))
 
 (defsubst c-region-is-active-p ()
   ;; Return t when the region is active.  The determination of region
   ;; activeness is different in both Emacs and XEmacs.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (cond
    ;; XEmacs
    ((and (fboundp 'region-active-p)
@@ -599,11 +663,15 @@ continuations."
 (defsubst c-mode-symbol (suffix)
   ;; Prefix the current mode prefix (e.g. "c-") to SUFFIX and return
   ;; the corresponding symbol.
+  ;;
+  ;; This function does not do any hidden buffer changes.
    (intern (concat (get c-buffer-is-cc-mode 'c-mode-prefix) suffix)))
 
 (defsubst c-mode-var (suffix)
   ;; Prefix the current mode prefix (e.g. "c-") to SUFFIX and return
   ;; the value of the variable with that name.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (symbol-value (c-mode-symbol suffix)))
 
 (defsubst c-face-name-p (facename)
@@ -612,6 +680,8 @@ continuations."
   ;; face objects (while it's only their names that are used just
   ;; about anywhere else) without providing a predicate that tests
   ;; face names.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (memq facename (face-list)))
 
 (defsubst c-put-type-face (from to)

@@ -67,6 +67,8 @@
     ;; `c-macroexpand-mode' temporarily bound, so `c-lang-var' without
     ;; an explicit mode may be used within it.  The assignments in
     ;; ARGS are processed in sequence, similar to `setq'.
+    ;;
+    ;; This function does not do any hidden buffer changes.
     (let* ((res (list 'progn))
 	   (res-tail res))
       (while args
@@ -99,6 +101,8 @@
     ;; be nil to use the current value of `c-macroexpand-mode' (which
     ;; is useful inside `c-lang-defconst') or `c-buffer-is-cc-mode'
     ;; (which is useful inside `c-lang-defvar').
+    ;;
+    ;; This function does not do any hidden buffer changes.
     `(get ',var ,(if (eq mode 'nil)
 		     (if c-macroexpand-mode
 			 ;; In the macro expansion of `c-lang-defconst'.
@@ -117,6 +121,8 @@
     ;; mode initialization, at which point VAL is evaluated.
     ;; `c-lang-var' is typically used in VAL to get the right value
     ;; according to `c-buffer-is-cc-mode'.
+    ;;
+    ;; This function does not do any hidden buffer changes.
     (setcdr c-lang-defvar-init-form-tail (list var val))
     (setq c-lang-defvar-init-form-tail
 	  (cdr (cdr c-lang-defvar-init-form-tail)))
@@ -1164,6 +1170,8 @@ appended."
 (defun c-init-language-vars ()
   ;; Initialize all `c-lang-defvar' variables according to
   ;; `c-buffer-is-cc-mode'.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (if (not (memq c-buffer-is-cc-mode
 		 '(c-mode c++-mode objc-mode java-mode idl-mode pike-mode)))
       (error "Cannot initialize language variables for unknown mode %s"
@@ -1182,6 +1190,8 @@ appended."
 
 (defun c-populate-syntax-table (table)
   ;; Populate the syntax in TABLE.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (modify-syntax-entry ?_  "_"     table)
   (modify-syntax-entry ?\\ "\\"    table)
   (modify-syntax-entry ?+  "."     table)

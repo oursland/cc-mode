@@ -137,6 +137,7 @@
 
 ;;;###autoload
 (defun c-initialize-cc-mode ()
+  ;; This function does not do any hidden buffer changes.
   (setq c-buffer-is-cc-mode t)
   (let ((initprop 'cc-mode-is-initialized)
 	c-initialization-ok)
@@ -275,6 +276,7 @@
 (defvar c-pike-menu nil)
 
 (defun c-mode-menu (modestr)
+  ;; This function does not do any hidden buffer changes.
   (let ((m
 	 '(["Comment Out Region"     comment-region (c-fn-region-is-active-p)]
 	   ["Uncomment Region"
@@ -315,6 +317,9 @@
   ;; is done from `after-change-functions' which means that we might
   ;; get calls to functions using these caches from inside that hook,
   ;; and we must thus be sure that this has already been executed.
+  ;;
+  ;; This function can make hidden buffer changes to clear caches.
+  ;; It's not a problem since a nonhidden change is done anyway.
   (c-invalidate-large-sws-region beg)
   (c-invalidate-state-cache beg))
 
@@ -326,6 +331,8 @@ packages that embed CC Mode.
 MODE is the CC Mode flavor to set up, e.g. 'c-mode or 'java-mode.
 DEFAULT-STYLE tells which indentation style to install.  It has the
 same format as `c-default-style'."
+  ;;
+  ;; This function does not do any hidden buffer changes.
 
   (setq c-buffer-is-cc-mode mode)
 
@@ -427,6 +434,8 @@ same format as `c-default-style'."
 
 (defun c-common-init (mode)
   ;; Common initializations for all modes.
+  ;;
+  ;; This function does not do any hidden buffer changes.
 
   (c-basic-common-init mode c-default-style)
 
@@ -465,6 +474,9 @@ setting found in `c-file-style', then it applies any offset settings
 it finds in `c-file-offsets'.
 
 Note that the style variables are always made local to the buffer."
+  ;;
+  ;; This function does not do any hidden buffer changes.
+
   ;; apply file styles and offsets
   (when c-buffer-is-cc-mode
     (if (or c-file-style c-file-offsets)
@@ -741,7 +753,7 @@ Key bindings:
 	local-abbrev-table idl-mode-abbrev-table)
   (use-local-map idl-mode-map)
   (c-common-init 'idl-mode)
-  ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;FIXME
+  ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;TODO
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'idl-mode-hook)
   (c-update-modeline))
@@ -793,7 +805,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map pike-mode-map)
   (c-common-init 'pike-mode)
-  ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;FIXME
+  ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;TODO
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'pike-mode-hook)
   (c-update-modeline))

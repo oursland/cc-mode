@@ -197,6 +197,8 @@ tools (e.g. Javadoc).")
 (defun c-make-inverse-face (oldface newface)
   ;; Emacs and XEmacs have completely different face manipulation
   ;; routines. :P
+  ;;
+  ;; This function does not do any hidden buffer changes
   (copy-face oldface newface)
   (cond ((fboundp 'face-inverse-video-p)
 	 ;; Emacs 20 and later.  This only looks at the inverse flag
@@ -216,6 +218,8 @@ tools (e.g. Javadoc).")
 	 (invert-face newface))))
 
 (defun c-font-lock-syntactic-face-function (state)
+  ;; This function can make hidden buffer changes, but the font-lock
+  ;; context covers that.
   (save-excursion
     (if (nth 3 state)
         ;; Check whether the string is properly terminated.
@@ -273,6 +277,10 @@ tools (e.g. Javadoc).")
     ;; type.  It can be nil if there's no type to fontify.  PRE is run
     ;; before calling `c-font-lock-declarators' and POST is run
     ;; afterwards.
+    ;;
+    ;; This function does not do any hidden buffer changes, but the
+    ;; generated functions will.  They are however used in places
+    ;; covered by the font-lock context.
 
     ;; Note: Replace `byte-compile' with `eval' to debug the generated
     ;; lambda easier.
@@ -388,6 +396,9 @@ tools (e.g. Javadoc).")
   ;; function does both the search and the fontification itself to
   ;; avoid differences between the (X)Emacs flavors in where they
   ;; continue the search after a match.
+  ;;
+  ;; This function can make hidden buffer changes, but the font-lock
+  ;; context covers that.
 
   (while (re-search-forward ":[^:]" limit t)
 
@@ -744,6 +755,9 @@ tools (e.g. Javadoc).")
   ;; Fontify all the declarations and casts from the point to LIMIT.
   ;; Assumes that strings, comments and nontype keywords have been
   ;; fontified already.
+  ;;
+  ;; This function can make hidden buffer changes, but the font-lock
+  ;; context covers that.
 
   ;;(message "c-font-lock-declarations search from %s to %s" (point) limit)
 
@@ -1451,6 +1465,8 @@ tools (e.g. Javadoc).")
   ;; to override, but we should otoh avoid clobbering a user setting.
   ;; This heuristic for that isn't perfect, but I can't think of any
   ;; better. /mast
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (when (and (boundp def-var)
 	     (memq (symbol-value def-var)
 		   (cons nil

@@ -41,6 +41,26 @@
 ;; probably also applies to many other Emacs packages, but here it's
 ;; clearly spelled out.)
 
+;; Hidden buffer changes
+;;
+;; Various functions in CC Mode use text properties for caching and
+;; syntactic markup purposes, and those of them that might modify such
+;; properties are said to do "hidden buffer changes".  They should be
+;; used within `c-save-buffer-state' or a similar function that saves
+;; and restores buffer modifiedness etc.
+;;
+;; Interactive functions are assumed to not do hidden buffer changes
+;; (this isn't applicable in the specific parts of them that do real
+;; changes, though).
+;;
+;; All other functions are assumed to do hidden buffer changes and
+;; must thus be wrapped inside `c-save-buffer-state' if they're used
+;; from any function that does not do hidden buffer changes.
+;;
+;; Every function, except the interactive ones, that doesn't do hidden
+;; buffer changes have that explicitly stated in their docstring or
+;; comment.
+
 ;;; Code:
 
 (eval-when-compile
@@ -594,7 +614,9 @@ point is moved past the following whitespace.  Line continuations,
 i.e. a backslashes followed by line breaks, are treated as whitespace.
 The line breaks that end line comments are considered to be the
 comment enders, so the point will be put on the beginning of the next
-line if it moved past a line comment."
+line if it moved past a line comment.
+
+This function does not do any hidden buffer changes."
 
   (let ((start (point)))
     (when (looking-at "\\([ \t\n\r\f]\\|\\\\[\n\r]\\)+")
@@ -617,7 +639,9 @@ line if it moved past a line comment."
 (defun c-forward-comments ()
   "Move forward past all following whitespace and comments.
 Line continuations, i.e. a backslashes followed by line breaks, are
-treated as whitespace."
+treated as whitespace.
+
+This function does not do any hidden buffer changes."
 
   (while (or
 	  ;; If forward-comment in at least XEmacs 21 is given a large
@@ -639,7 +663,9 @@ point is moved past the preceding whitespace.  Line continuations,
 i.e. a backslashes followed by line breaks, are treated as whitespace.
 The line breaks that end line comments are considered to be the
 comment enders, so the point cannot be at the end of the same line to
-move over a line comment."
+move over a line comment.
+
+This function does not do any hidden buffer changes."
 
   (let ((start (point)))
     ;; When we got newline terminated comments, forward-comment in all
@@ -679,7 +705,9 @@ move over a line comment."
 Line continuations, i.e. a backslashes followed by line breaks, are
 treated as whitespace.  The line breaks that end line comments are
 considered to be the comment enders, so the point cannot be at the end
-of the same line to move over a line comment."
+of the same line to move over a line comment.
+
+This function does not do any hidden buffer changes."
 
   (let ((start (point)))
     (while (or
@@ -707,6 +735,7 @@ of the same line to move over a line comment."
 (defvar c-macro-start 'unknown)
 
 (defsubst c-query-and-set-macro-start ()
+  ;; This function does not do any hidden buffer changes.
   (if (symbolp c-macro-start)
       (setq c-macro-start (save-excursion
 			    (and (c-beginning-of-macro)
@@ -714,6 +743,7 @@ of the same line to move over a line comment."
     c-macro-start))
 
 (defsubst c-query-macro-start ()
+  ;; This function does not do any hidden buffer changes.
   (if (symbolp c-macro-start)
       (save-excursion
 	(and (c-beginning-of-macro)
@@ -723,7 +753,9 @@ of the same line to move over a line comment."
 (defun c-beginning-of-macro (&optional lim)
   "Go to the beginning of a preprocessor directive.
 Leave point at the beginning of the directive and return t if in one,
-otherwise return nil and leave point unchanged."
+otherwise return nil and leave point unchanged.
+
+This function does not do any hidden buffer changes."
   (let ((here (point)))
     (save-restriction
       (if lim (narrow-to-region lim (point-max)))
@@ -740,7 +772,9 @@ otherwise return nil and leave point unchanged."
 (defun c-end-of-macro ()
   "Go to the end of a preprocessor directive.
 More accurately, move point to the end of the closest following line
-that doesn't end with a line continuation backslash."
+that doesn't end with a line continuation backslash.
+
+This function does not do any hidden buffer changes."
   (while (progn
 	   (end-of-line)
 	   (when (and (eq (char-before) ?\\)
@@ -1180,7 +1214,9 @@ Optional LIM is used as the backward limit of the search.  If omitted,
 or nil, `c-beginning-of-defun' is used.
 
 The last point calculated is cached if the cache is enabled, i.e. if
-`c-in-literal-cache' is bound to a two element vector."
+`c-in-literal-cache' is bound to a two element vector.
+
+This function does not do any hidden buffer changes."
   (if (and (vectorp c-in-literal-cache)
 	   (= (point) (aref c-in-literal-cache 0)))
       (aref c-in-literal-cache 1)
@@ -1222,7 +1258,9 @@ literal next to point is returned.  \"Next to\" means there's only [
 done first in forward direction.  If NOT-IN-DELIMITER is non-nil, the
 case when point is inside a starting delimiter won't be recognized.
 This only has effect for comments, which have starting delimiters with
-more than one character."
+more than one character.
+
+This function does not do any hidden buffer changes."
 
   (save-excursion
     (let* ((pos (point))
@@ -1304,6 +1342,8 @@ more than one character."
 (defun c-literal-limits-fast (&optional lim near not-in-delimiter)
   ;; Like c-literal-limits, but for emacsen whose `parse-partial-sexp'
   ;; returns the pos of the comment start.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (save-excursion
     (let* ((pos (point))
 	   (lim (or lim (c-point 'bod)))
@@ -1371,7 +1411,9 @@ more than one character."
 then an extended range is returned that contains all adjacent line
 comments (i.e. all comments that starts in the same column with no
 empty lines or non-whitespace characters between them).  Otherwise the
-argument is returned."
+argument is returned.
+
+This function does not do any hidden buffer changes."
   (save-excursion
     (condition-case nil
 	(if (and (consp range) (progn
@@ -1403,7 +1445,9 @@ argument is returned."
   "Convenience function that given the result of `c-literal-limits',
 returns nil or the type of literal that the range surrounds.  It's
 much faster than using `c-in-literal' and is intended to be used when
-you need both the type of a literal and its limits."
+you need both the type of a literal and its limits.
+
+This function does not do any hidden buffer changes."
   (if (consp range)
       (save-excursion
 	(goto-char (car range))
@@ -1439,6 +1483,8 @@ you need both the type of a literal and its limits."
   ;; it never changes a paren pair element into an open paren element.
   ;; Doing that would mean that the new open paren wouldn't have the
   ;; required preceding paren pair element.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (while (and c-state-cache
 	      (let ((elem (car c-state-cache)))
 		(if (consp elem)
@@ -1464,6 +1510,8 @@ you need both the type of a literal and its limits."
   ;; succession.  No characters which are given paren syntax with the
   ;; syntax-table property are recorded, i.e. C++ template arglist
   ;; parens are never present here.
+  ;;
+  ;; This function does not do any hidden buffer changes.
 
   (save-restriction
     (let* ((here (point))
@@ -1662,6 +1710,8 @@ you need both the type of a literal and its limits."
 (defun c-whack-state-before (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies
   ;; before BUFPOS.  Not destructive on PAREN-STATE.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (let* ((newstate (list nil))
 	 (ptr newstate)
 	 car)
@@ -1677,6 +1727,8 @@ you need both the type of a literal and its limits."
 (defun c-whack-state-after (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies at or
   ;; after BUFPOS.  Not destructive on PAREN-STATE.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (catch 'done
     (while paren-state
       (let ((car (car paren-state)))
@@ -1785,7 +1837,9 @@ brace."
 Keywords are recognized and not considered identifiers.  If an
 identifier is detected, the returned value is its starting position.
 If an identifier both starts and stops at the point \(can only happen
-in Pike) then the point for the preceding one is returned."
+in Pike) then the point for the preceding one is returned.
+
+This function does not do any hidden buffer changes."
 
   (save-excursion
     (if (zerop (skip-syntax-backward "w_"))
@@ -2204,6 +2258,8 @@ in Pike) then the point for the preceding one is returned."
 
 (defsubst c-clear-found-types ()
   ;; Clears `c-found-types'.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (setq c-found-types (make-vector 53 0)))
 
 (defsubst c-add-type (from to)
@@ -3171,6 +3227,8 @@ in Pike) then the point for the preceding one is returned."
 (defun c-most-enclosing-brace (paren-state &optional bufpos)
   ;; Return the bufpos of the innermost enclosing open paren before
   ;; bufpos that hasn't been narrowed out, or nil if none was found.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (let (enclosingp)
     (or bufpos (setq bufpos 134217727))
     (while paren-state
@@ -3187,6 +3245,8 @@ in Pike) then the point for the preceding one is returned."
 (defun c-least-enclosing-brace (paren-state &optional bufpos)
   ;; Return the bufpos of the outermost enclosing open paren before
   ;; bufpos that hasn't been narrowed out, or nil if none was found.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (let (pos elem)
     (or bufpos (setq bufpos 134217727))
     (while paren-state
@@ -3203,6 +3263,8 @@ in Pike) then the point for the preceding one is returned."
   ;; nil if PAREN-STATE doesn't contain one.  Return nil if BUFPOS is
   ;; nil, which is useful to find the closest limit before a given
   ;; limit that might be nil.
+  ;;
+  ;; This function does not do any hidden buffer changes.
   (when bufpos
     (let ((c-macro-start (c-query-macro-start)) safepos)
       (if (and c-macro-start
@@ -4824,6 +4886,7 @@ in Pike) then the point for the preceding one is returned."
 
 
 (defun c-echo-parsing-error (&optional quiet)
+  ;; This function does not do any hidden buffer changes.
   (when (and c-report-syntactic-errors c-parsing-error (not quiet))
     (c-benign-error "%s" c-parsing-error))
   c-parsing-error)
