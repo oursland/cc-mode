@@ -32,6 +32,7 @@
 (0 typ) (4 reg) (7 var) (10 reg)
 (0 typ) (4 reg) (5 var) (8 reg)
 (0 typ) (4 reg) (6 var) (9 reg)
+(2 typ) (6 reg) (7 var) (10 reg)
 
 (0 typ) (8 reg) (9 typ) (12 reg) (13 var) (16 reg)
 (0 typ) (4 reg) (5 typ) (9 reg) (10 var) (11 reg)

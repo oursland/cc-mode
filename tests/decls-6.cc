@@ -23,7 +23,7 @@ const Type (var);
 Type (*foo) (Type *,
 	     Type (*)[x],
 	     Type (*var)[x],
-	     // An incorrect one that gets "var" is recorded as a type.
+	     // An incorrect one that gets "var" recorded as a type.
 	     Type (var*)[x],
 	     Type &);
 
@@ -32,6 +32,7 @@ Type var;
 Type (*var);
 Type var[3 * peq];
 Type (var);
+::Type var;
 
 unsigned foo bar;
 long long x;
