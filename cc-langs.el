@@ -222,6 +222,52 @@ appended."
   all (c-regexp-opt-depth (c-lang-var c-symbol-key)))
 (c-lang-defvar c-symbol-key-depth (c-lang-var c-symbol-key-depth))
 
+;; Regexp matching the operators that join symbols to fully qualified
+;; identifiers, or nil in languages that doesn't have such things.
+(c-lang-defconst c-identifier-concat-key
+  c++ "::"
+  (java pike) "\\.")
+
+;; Regexp matching a fully qualified identifier, like "A::B::c" in
+;; C++.  The first submatch surrounds the whole qualified identifier.
+;; (We cheat a bit here and don't recognize the full range of
+;; syntactic whitespace between the tokens.)
+(c-lang-defconst c-qualified-identifier-key
+  all  (c-lang-var c-symbol-key)	; Default to `c-symbol-key'.
+  ;; These languages allow a leading qualifier operator.
+  (c++ pike) (concat
+	      "\\("
+	      "\\(" (c-lang-var c-identifier-concat-key) "[ \t\n\r]*\\)?"
+	      (c-lang-var c-symbol-key)
+	      (concat "\\("
+		      "[ \t\n\r]*"
+		      (c-lang-var c-identifier-concat-key)
+		      "[ \t\n\r]*"
+		      (c-lang-var c-symbol-key)
+		      "\\)*")
+	      "\\)")
+  ;; Java does not allow a leading qualifier operator.
+  java (concat "\\("
+	       (c-lang-var c-symbol-key)
+	       (concat "\\("
+		       "[ \t\n\r]*"
+		       (c-lang-var c-identifier-concat-key)
+		       "[ \t\n\r]*"
+		       (c-lang-var c-symbol-key)
+		       "\\)*")
+	       "\\)"))
+(c-lang-defvar c-qualified-identifier-key
+  (c-lang-var c-qualified-identifier-key))
+
+;; Syntax table built on the mode syntax table but additionally
+;; classifies '_' and '$' as word constituents, so that all
+;; identifiers are recognized as words.
+(c-lang-defvar c-identifier-syntax-table
+  (let ((table (make-syntax-table (c-mode-var "mode-syntax-table"))))
+    (modify-syntax-entry ?_ "w" table)
+    (modify-syntax-entry ?$ "w" table)
+    table))
+
 (defvar c-stmt-delim-chars "^;{}?:")
 ;; The characters that should be considered to bound statements.  To
 ;; optimize `c-crosses-statement-barrier-p' somewhat, it's assumed to
@@ -314,17 +360,12 @@ appended."
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
   pike '(;; this_program isn't really a keyword, but it's practically
 	 ;; used as a builtin type.
-	 "float" "int" "string" "this_program" "void"))
-
-;; An adorned regexp that matches `c-primitive-type-kwds'.
-(c-lang-defconst c-primitive-type-key
-  all (c-make-keywords-re t (c-lang-var c-primitive-type-kwds)))
-(c-lang-defvar c-primitive-type-key (c-lang-var c-primitive-type-key))
+	 "float" "mixed" "string" "this_program" "void"))
 
 ;; Keywords that can precede a parenthesis that contains a complex
 ;; type, e.g. "mapping(int:string)" in Pike.
 (c-lang-defconst c-complex-type-kwds
-  pike '("array" "function" "mapping" "multiset" "object" "program"))
+  pike '("array" "function" "int" "mapping" "multiset" "object" "program"))
 
 ;; An adorned regexp that matches `c-complex-type-kwds', or nil in
 ;; languages without such things.
@@ -360,7 +401,7 @@ appended."
   java '("abstract" "const" "final" "native" "private" "protected"
 	 "public" "static" "synchronized" "transient" "volatile")
   pike '("constant" "final" "inline" "local" "nomask" "optional"
-	 "private" "protected" "static" "typedef" "variant"))
+	 "private" "protected" "public" "static" "typedef" "variant"))
 
 ;; Declaration specifier keywords.
 (c-lang-defconst c-specifier-key
@@ -511,8 +552,8 @@ appended."
   (c objc) '("sizeof")
   c++ '("delete" "new" "operator" "sizeof" "this" "throw")
   java '("instanceof" "new" "super" "this")
-  pike '(;; "this" isn't really a keyword, but it's works as one in practice.
-	 "catch" "class" "gauge" "global" "lambda" "predef" "this"))
+  pike '(;; "this" isn't really a keyword, but it works as one in practice.
+	 "catch" "class" "gauge" "global" "lambda" "predef" "this" "throw"))
 
 ;; Keywords that start lambda constructs, i.e. function definitions in
 ;; expressions.
@@ -698,10 +739,14 @@ appended."
 ;; of the first submatch is taken as the end of the operator.
 (c-lang-defconst c-type-decl-prefix-key
   all  "\\<\\>" ;; Default to a regexp that never matches.
-  c    "\\(\(\\|*\\)\\($\\|[^=]\\)"
-  c++  "\\(\(\\|[*&]\\)\\($\\|[^=]\\)"
-  pike "\\(\(\\|[*!~]\\)\\($\\|[^=]\\)"
-  java "\\(\(\\)")			; FIXME: Correct?
+  c    "\\([*\(]\\)\\($\\|[^=]\\)"
+  c++  (concat "\\("
+	       "[*\(&~]"
+	       "\\|\\(" (c-lang-var c-symbol-key) "[ \t\n\r]*\\)?::"
+	       "\\|const\\>\\|volatile\\>"
+	       "\\)"
+	       "\\($\\|[^=]\\)")
+  pike "\\([*\(!~]\\)\\($\\|[^=]\\)")
 (c-lang-defvar c-type-decl-prefix-key (c-lang-var c-type-decl-prefix-key))
 
 ;; Regexp matching the operators that might follow after the
@@ -712,17 +757,41 @@ appended."
 ;; otherwise the end of the first submatch is taken as the end of the
 ;; operator.
 (c-lang-defconst c-type-decl-suffix-key
-  all "\\<\\>" ;; Default to a regexp that never matches.
-  (c c++) "\\([\)\[\(]\\)"
-  java "\\(\\[\\)")			; FIXME: Correct?
+  all  "\\<\\>" ;; Default to a regexp that never matches.
+  c    "\\([\)\[\(]\\)"
+  c++  (concat "\\("
+	       "[\)\[\(]"
+	       "\\|const\\>\\|volatile\\>"
+	       "\\)")
+  java "\\(\\[\\)")
 (c-lang-defvar c-type-decl-suffix-key (c-lang-var c-type-decl-suffix-key))
 
-;; Regexp matching operators that concatenate types, e.g. "|" in
+;; Regexp matching operators that concatenate types, e.g. the "|" in
 ;; "int|string" in Pike.  The end of the first submatch is taken as
 ;; the end of the operator.  nil in languages without such operators.
 (c-lang-defconst c-type-concat-key
   pike "\\([|.&]\\)\\($\\|[^|.&]\\)")
 (c-lang-defvar c-type-concat-key (c-lang-var c-type-concat-key))
+
+;; Regexp matching operators that might follow after a type, or nil in
+;; languages that doesn't have such operators.  The end of the first
+;; submatch is taken as the end of the operator.
+(c-lang-defconst c-type-suffix-key
+  java "\\(\\[[ \t\n\r]*\\]\\)")
+(c-lang-defvar c-type-suffix-key (c-lang-var c-type-suffix-key))
+
+;; Regexp matching the known type identifiers.  This is initialized
+;; from the type keywords and `*-font-lock-extra-types'.  The first
+;; submatch is the one that matches the type.  Note that this regexp
+;; assumes that '_' and '$' have word syntax.
+(c-lang-defvar c-known-type-key
+  (let ((extra-types (c-mode-var "font-lock-extra-types")))
+    (concat "\\<\\("
+	    (c-make-keywords-re nil (c-lang-var c-type-kwds))
+	    (if (consp extra-types)
+		(concat "\\|" (mapconcat 'identity extra-types "\\|"))
+	      "")
+	    "\\)\\>")))
 
 ;; Regexp matching the prefix of a cpp directive in the languages that
 ;; normally uses that macro preprocessor.
