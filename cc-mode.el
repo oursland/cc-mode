@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.278 $
-;; Last Modified:   $Date: 1996-01-23 00:00:12 $
+;; Version:         $Revision: 4.279 $
+;; Last Modified:   $Date: 1996-02-05 15:45:05 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4773,15 +4773,17 @@ definition and conveniently use this command."
 
 (defun c-delete-backslash ()
   (end-of-line)
-  (forward-char -1)
-  (if (looking-at "\\\\")
-      (delete-region (1+ (point))
-                     (progn (skip-chars-backward " \t") (point)))))
+  (or (bolp)
+      (progn
+ 	(forward-char -1)
+ 	(if (looking-at "\\\\")
+ 	    (delete-region (1+ (point))
+ 			   (progn (skip-chars-backward " \t") (point)))))))
 
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.278 $"
+(defconst c-version "$Revision: 4.279 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
