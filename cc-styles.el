@@ -134,11 +134,12 @@
      (fill-column . 78)
      )
     ("java"
-     (c-basic-offset . 2)
+     (c-basic-offset . 4)
      (c-comment-only-line-offset . (0 . 0))
      ;; the following preserves Javadoc starter lines
      (c-hanging-comment-starter-p . nil)
-     (c-offsets-alist . ((topmost-intro-cont    . +)
+     (c-offsets-alist . ((inline-open . 0)
+			 (topmost-intro-cont    . +)
 			 (statement-block-intro . +)
  			 (knr-argdecl-intro     . 5)
  			 (substatement-open     . +)
@@ -152,12 +153,6 @@
 			 (func-decl-cont . c-lineup-java-throws)
 			 ))
 
-     )
-    ("jdk" "java"
-     (c-basic-offset . 4)
-     (c-offsets-alist . ((inline-open . 0)
-			 (func-decl-cont . +)
-			 ))
      )
     )
   "Styles of indentation.
