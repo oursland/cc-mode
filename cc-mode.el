@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.346 $
-;; Last Modified:   $Date: 1993-06-18 14:16:31 $
+;; Version:         $Revision: 2.347 $
+;; Last Modified:   $Date: 1993-06-18 18:04:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-18 14:16:31 $|$Revision: 2.346 $|
+;; |$Date: 1993-06-18 18:04:00 $|$Revision: 2.347 $|
 
 ;;; Code:
 
@@ -487,7 +487,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.346 $
+  "Major mode for editing C++ code.  $Revision: 2.347 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -625,7 +625,7 @@ auto-newline algorithm.  Sometimes you want it and sometimes you don't.
 So now auto-newline (and its companion feature, hungry-delete-key) can
 be toggled on and off on the fly.  Hungry-delete-key is the optional
 behavior of the delete key so that, when enabled, hitting the delete
-key once consumes all preceeding whitespace, unless point is within a
+key once consumes all preceding whitespace, unless point is within a
 literal (defined as a C or C++ comment, or string).  Inside literals,
 and with hungry-delete-key disabled, the delete key just calls the
 function in variable `c++-delete-function'.
@@ -704,7 +704,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.346 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.347 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1486,7 +1486,7 @@ Emacs.  Untamed characters to escape are defined in the variable
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives.  Search no farther back than
-optional LIM.  If LIM is ommitted, `beginning-of-defun' is used."
+optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
   (let ((lim (or lim (c++-point 'bod)))
 	literal stop)
     (if (and c++-backscan-limit
@@ -1542,7 +1542,7 @@ optional LIM.  If LIM is ommitted, `beginning-of-defun' is used."
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives.  Search no farther back than
-optional LIM.  If LIM is ommitted, `beginning-of-defun' is used."
+optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
   (save-restriction
     (let ((parse-sexp-ignore-comments t)
 	  donep boi char
@@ -1574,7 +1574,7 @@ optional LIM.  If LIM is ommitted, `beginning-of-defun' is used."
   "Skip backwards over syntactic whitespace.
 Syntactic whitespace is defined as lexical whitespace, C and C++ style
 comments, and preprocessor directives.  Search no farther back than
-optional LIM.  If LIM is ommitted, `beginning-of-defun' is used."
+optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
   (save-restriction
     (let* ((lim (or lim (c++-point 'bod)))
 	   (here lim))
@@ -1628,7 +1628,7 @@ used."
 			   (narrow-to-region (point) here)
 			   (re-search-forward
 			    ;; this regexp matches a double quote
-			    ;; which is preceeded by an even number
+			    ;; which is preceded by an even number
 			    ;; of backslashes, including zero
 			    "\\([^\\]\\|^\\)\\(\\\\\\\\\\)*\"" here 'move)))
 		    'string))
@@ -1639,7 +1639,7 @@ used."
 			   (narrow-to-region (point) here)
 			   (re-search-forward
 			    ;; this matches a single quote which is
-			    ;; preceeded by zero or two backslashes.
+			    ;; preceded by zero or two backslashes.
 			    "\\([^\\]\\|^\\)\\(\\\\\\\\\\)?'"
 			    here 'move)))
 		    'string))
@@ -1903,7 +1903,7 @@ point of the beginning of the C++ definition."
 (defun c++-cont-indent (ipnt char lim)
   "Calculate the indentation for a continued statement.
 IPNT is the indentation point; CHAR is the character before the
-indentation point, excluding any intervenine whitespace; LIM is the
+indentation point, excluding any intervening whitespace; LIM is the
 minimum point to search backwards to."
   (let ((charlist '(nil ?\000 ?\, ?\; ?\} ?\: ?\{))
 	streamop-pos here)
@@ -2241,7 +2241,7 @@ BOD is the beginning of the C++ definition."
 	  ;; and the beginning of the first argument.
 	  (goto-char (1+ containing-sexp))
 	  ;; we want to skip any whitespace b/w open paren and
-	  ;; first argurment. this handles while (thing) style
+	  ;; first argument. this handles while (thing) style
 	  ;; and while( thing ) style
 	  (skip-chars-forward " \t")
 	  (current-column)))
@@ -2600,7 +2600,7 @@ if non-nil, use `c++-defun-header-strong'.")
 (defconst c++-defun-header-strong
   (let*
       (; valid identifiers
-       ;; There's a real wierdness here -- if I switch the below
+       ;; There's a real weirdness here -- if I switch the below
        (id "\\(\\w\\|_\\)+")
        ;; to be
        ;; (id "\\(_\\|\\w\\)+")
@@ -2738,7 +2738,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.346 $"
+(defconst c++-version "$Revision: 2.347 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
