@@ -44,6 +44,9 @@
 (cc-require 'cc-defs)
 (cc-require 'cc-langs)
 (cc-require 'cc-vars)
+(cc-require 'cc-align)
+;; cc-align is only indirectly required: Styles added with
+;; `c-add-style' often contains references to functions defined there.
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs
