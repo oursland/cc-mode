@@ -906,7 +906,7 @@ but they don't build a type of themselves.  They are fontified like
 keywords, similar to `c-specifier-kwds'."
   t    nil
   c    '("const" "restrict" "volatile")
-  c++  '("const" "volatile"))
+  c++  '("const" "volatile" "throw"))
 
 (c-lang-defconst c-opt-type-modifier-key
   ;; Adorned regexp matching `c-type-modifier-kwds', or nil in
@@ -1442,11 +1442,35 @@ first submatch is taken as the end of the operator."
   c++  (concat "\\("
 	       "[\)\[\(]"
 	       "\\|"
-	       (c-make-keywords-re nil
-		 (c-lang-const c-type-modifier-kwds)) "\\>"
+	       ;; "throw" in `c-type-modifier-kwds' is followed by a
+	       ;; parenthesis list, but no extra measures are
+	       ;; necessary to handle that.
+	       "\\(" (c-make-keywords-re nil
+		       (c-lang-const c-type-modifier-kwds)) "\\)\\>"
 	       "\\)")
   java "\\([\[\(]\\)")
 (c-lang-defvar c-type-decl-suffix-key (c-lang-const c-type-decl-suffix-key)
+  'dont-doc)
+
+(c-lang-defconst c-after-suffixed-type-decl-key
+  "This regexp is matched after a type declaration expression where
+`c-type-decl-suffix-key' has matched.  If it matches then the
+construct is taken as a declaration.  It's typically used to match the
+beginning of a function body or whatever might occur after the
+function header in a function declaration or definition."
+  t   (if (c-lang-const c-decl-spec-kwds)
+	  (concat "{\\|"
+		  (c-make-keywords-re t (c-lang-const c-decl-spec-kwds)))
+	"{")
+  ;; Also match the colon that starts a base class member initializer
+  ;; list in C++.  That can be confused with a function call before
+  ;; the colon in a ? : operator, but we count on that
+  ;; `c-decl-prefix-re' won't match before such a thing (as a
+  ;; declaration-level construct; matches inside arglist contexts are
+  ;; already excluded).
+  c++ "[{:]")
+(c-lang-defvar c-after-suffixed-type-decl-key
+  (c-lang-const c-after-suffixed-type-decl-key)
   'dont-doc)
 
 (c-lang-defconst c-opt-type-concat-key
