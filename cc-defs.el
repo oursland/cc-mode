@@ -919,6 +919,14 @@ system."
 	 (file-name-sans-extension
 	  (file-name-nondirectory file)))))
 
+(defmacro c-lang-defconst-eval-immediately (form)
+  "Can be used inside a VAL in `c-lang-defconst' to evaluate FORM
+immediately, i.e. at the same time as the `c-lang-defconst' form
+itself is evaluated."
+  ;; Evaluate at macro expansion time, i.e. in the
+  ;; `cl-macroexpand-all' inside `c-lang-defconst'.
+  (eval form))
+
 (defmacro c-lang-defconst (name &rest args)
   "Set the language specific values of the language constant NAME.
 The second argument can be an optional docstring.  The rest of the
@@ -926,8 +934,11 @@ arguments are one or more repetitions of LANG VAL where LANG specifies
 the language(s) that VAL applies to.  LANG is the name of the
 language, i.e. the mode name without the \"-mode\" suffix, or a list
 of such language names, or `t' for all languages.  VAL is a form to
-evaluate to get the value.  Neither NAME, LANG nor VAL are evaluated
-directly - they should not be quoted.
+evaluate to get the value.
+
+Neither NAME, LANG nor VAL are evaluated directly - they should not be
+quoted.  `c-lang-defconst-eval-immediately' can however be used inside
+VAL to evaluate parts of it directly.
 
 When VAL is evaluated for some language, that language is temporarily
 made current so that `c-lang-const' without an explicit language can
@@ -1016,7 +1027,8 @@ This macro does not do any hidden buffer changes."
 	;; forms, to be specific), so make sure the bindings in the
 	;; expansion below doesn't contain any backquote stuff.
 	;; (XEmacs handles it correctly and doesn't need this for that
-	;; reason, but we also use this expansion to register
+	;; reason, but we also use this expansion handle
+	;; `c-lang-defconst-eval-immediately' and to register
 	;; dependencies on the `c-lang-const's in VAL.)
 	(setq val (cl-macroexpand-all val))
 
