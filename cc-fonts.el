@@ -454,7 +454,7 @@
 
     (let ((match (or (bobp)
 		     (re-search-forward c-decl-prefix-re limit 'move)))
-	  type-start type-end at-decl)
+	  type-start type-end at-type)
 
       (while (progn
 	       (while (and
@@ -497,96 +497,101 @@
 	(catch 'continue
 
 	  ;; Skip over leading specifiers like "static".
-	  (setq at-decl nil)
+	  (setq at-type nil)
 	  (while (looking-at c-specifier-key)
-	    (setq at-decl t)		; We're sure this is a declaration.
+	    (setq at-type t)		; We're sure this is a declaration.
 	    (goto-char (match-end 1))
 	    (c-forward-syntactic-ws))
 
 	  (setq type-start (point))
-	  (if at-decl
+	  (if at-type
 	      (c-forward-type)
-	    (unless (setq at-decl (c-forward-type t))
+	    (unless (setq at-type (c-forward-type t))
 	      ;; Set the position to continue at.
 	      (setq type-end (if (= type-start (point)) (1+ (point)) (point)))
 	      (throw 'continue t)))
 	  (setq type-end (point))
 
-	  (when (eq at-decl 'maybe)
-	    ;; We found an identifier that could be a type but also an
-	    ;; expression.
-
-	    ;; Check for and step over a type decl expression.  If
-	    ;; parentheses are allowed we balance them and require that
-	    ;; none of them contains nothing but allowed type
-	    ;; declaration operators.
-	    (c-forward-syntactic-ws)
-	    (catch 'decl-ok
-	      (let ((start (point)) (paren-depth 0) (maybe-fun-call t))
-
-		;; Skip over type decl prefix operators.
-		(while (looking-at c-type-decl-prefix-key)
-		  (if (eq (char-after) ?\()
-		      (progn
-			(setq paren-depth (1+ paren-depth))
-			(forward-char))
-		    (setq maybe-fun-call nil)
-		    (goto-char (match-end 1)))
-		  (c-forward-syntactic-ws))
-
-		;; Skip over an identifier, but don't require it since
-		;; it's optional in some cases in (at least) C.
-		(if (looking-at c-symbol-key)
-		    (progn
-		      (when (= paren-depth 0)
-			;; We're not inside parentheses so it can't be a
-			;; function call.
-			(throw 'decl-ok t))
-		      (goto-char (match-end 1))
-		      (c-forward-syntactic-ws))
-		  (when (and (eq (char-after) ?\[)
-			     (= paren-depth 0))
-		    ;; We're looking at nothing but a [] argument, and
-		    ;; that's typically not a declaration.
-		    (throw 'continue t)))
-
-		;; Skip over type decl suffix operators.
-		(while (and (looking-at c-type-decl-suffix-key)
-			    (if (eq (char-after) ?\))
-				(when (> paren-depth 0)
-				  (setq paren-depth (1- paren-depth))
-				  (forward-char)
-				  t)
-			      (if (eq (char-syntax (char-after)) ?\[)
-				  (unless (c-safe (c-forward-sexp 1) t)
-				    (throw 'continue t))
-				(goto-char (match-end 1)))
-			      (setq maybe-fun-call nil)
-			      t))
-		  (c-forward-syntactic-ws))
-
-		(when (> paren-depth 0)
-		  ;; We're at a token that isn't valid in a type decl
-		  ;; inside a parenthesis.
-		  (throw 'continue t))
-
-		(when maybe-fun-call
-		  ;; maybe-fun-call is cleared if we've found a type
-		  ;; decl operator that isn't a parenthesis.  So we
-		  ;; get here if we've passed at least one parenthesis
-		  ;; (due to the check above) with an identifier or
-		  ;; nothing in it.  That's more likely to be a
-		  ;; function call than a declaration.
-		  (throw 'continue t))
-
-		(when (= (point) start)
-		  ;; If we haven't moved then there's no type
-		  ;; declaration here.
-		  (throw 'continue t)))))
-
-	  (c-font-lock-type type-start type-end)
+	  ;; Check for and step over a type decl expression after the
+	  ;; thing that is or might be a type.  If parentheses are
+	  ;; allowed we balance them and require that none of them
+	  ;; contains nothing but allowed type declaration operators.
 	  (c-forward-syntactic-ws)
-	  (c-font-lock-declarators limit))
+	  (let ((start (point)) (paren-depth 0) (maybe-fun-call t))
+	    (if (catch 'at-decl
+
+		  ;; Skip over type decl prefix operators.
+		  (while (looking-at c-type-decl-prefix-key)
+		    (if (eq (char-after) ?\()
+			(progn
+			  (setq paren-depth (1+ paren-depth))
+			  (forward-char))
+		      (setq maybe-fun-call nil)
+		      (goto-char (match-end 1)))
+		    (c-forward-syntactic-ws))
+
+		  ;; Skip over an identifier, but don't require it since
+		  ;; it's optional in some cases in (at least) C.
+		  (if (looking-at c-symbol-key)
+		      (progn
+			(when (= paren-depth 0)
+			  ;; We're not inside parentheses so it can't be a
+			  ;; function call.
+			  (throw 'at-decl t))
+			(goto-char (match-end 1))
+			(c-forward-syntactic-ws))
+		    (when (and (eq (char-after) ?\[)
+			       (= paren-depth 0))
+		      ;; We're looking at nothing but a [] argument
+		      ;; and that's typically not a declaration, so
+		      ;; only treat it as one if there's a known type
+		      ;; before.
+		      (throw 'at-decl (eq at-type t))))
+
+		  ;; Skip over type decl suffix operators.
+		  (while (and (looking-at c-type-decl-suffix-key)
+			      (if (eq (char-after) ?\))
+				  (when (> paren-depth 0)
+				    (setq paren-depth (1- paren-depth))
+				    (forward-char)
+				    t)
+				(if (eq (char-syntax (char-after)) ?\[)
+				    (unless (c-safe (c-forward-sexp 1) t)
+				      (throw 'at-decl nil))
+				  (goto-char (match-end 1)))
+				(setq maybe-fun-call nil)
+				t))
+		    (c-forward-syntactic-ws))
+
+		  (when (> paren-depth 0)
+		    ;; We're at a token that isn't valid in a type decl
+		    ;; inside a parenthesis.
+		    (throw 'at-decl nil))
+
+		  (when maybe-fun-call
+		    ;; `maybe-fun-call' is cleared if we've found a
+		    ;; type decl operator that isn't a parenthesis.
+		    ;; So we get here if we've passed at least one
+		    ;; parenthesis (due to the check above) with an
+		    ;; identifier or nothing in it.  That's more
+		    ;; likely to be a function call than a declaration
+		    ;; (even if there's a known type before it).
+		    (throw 'at-decl nil))
+
+		  ;; There's a declaration here only if we've moved.
+		  (/= (point) start))
+
+		;; We're at a declaration.  Highlight the type and the
+		;; following declarators.
+		(progn
+		  (c-font-lock-type type-start type-end)
+		  (c-forward-syntactic-ws)
+		  (c-font-lock-declarators limit))
+
+	      ;; Not at a declaration, but if we know that we passed a
+	      ;; type we should still highlight it.
+	      (when (eq at-type t)
+		(c-font-lock-type type-start type-end)))))
 
 	;; Continue the search at the end of the type, since the
 	;; declaration list might contain nested blocks with
