@@ -691,7 +691,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 
 		;; The PDA state handling.
                 ;;
-                ;; Refer to the description of the PDA in the openining
+                ;; Refer to the description of the PDA in the opening
                 ;; comments.  In the following OR form, the first leaf
                 ;; attempts to handles one of the specific actions detailed
                 ;; (e.g., finding token "if" whilst in state `else-boundary').
@@ -868,7 +868,9 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			sym 'boundary)
 		  (throw 'loop t))) ; like a C "continue".  Analyze the next sexp.
 
-	      (when (and (numberp c-maybe-labelp) (not ignore-labels))
+	      (when (and (numberp c-maybe-labelp)
+			 (not ignore-labels)
+			 (not (looking-at "\\s\(")))
 		;; c-crosses-statement-barrier-p has found a colon, so
 		;; we might be in a label now.
 		(if (not after-labels-pos)
@@ -4450,24 +4452,12 @@ brace."
       (if start
 	  (goto-char start)))))
 
-(defun c-backward-to-decl-anchor (&optional lim)
+(defsubst c-backward-to-decl-anchor (&optional lim)
   ;; Assuming point is at a brace that opens the block of a top level
   ;; declaration of some kind, move to the proper anchor point for
   ;; that block.
   (unless (= (point) (c-point 'boi))
-    ;; What we have below is actually an extremely stripped variant of
-    ;; c-beginning-of-statement-1.
-    (let ((pos (point)) c-maybe-labelp)
-      ;; Switch syntax table to avoid stopping at line continuations.
-      (save-restriction
-	(if lim (narrow-to-region lim (point-max)))
-	(while (and (progn
-		      (c-backward-syntactic-ws)
-		      (c-safe (goto-char (scan-sexps (point) -1)) t))
-		    (not (c-crosses-statement-barrier-p (point) pos))
-		    (not c-maybe-labelp))
-	  (setq pos (point)))
-	(goto-char pos)))))
+    (c-beginning-of-statement-1 lim)))
 
 (defun c-search-decl-header-end ()
   ;; Search forward for the end of the "header" of the current
