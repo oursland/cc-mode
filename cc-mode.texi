@@ -3483,6 +3483,20 @@ equivalent to hitting @kbd{TAB} (@code{c-indent-command}) on every
 line.  Some information is cached from line to line, but such caching
 invariable causes inaccuracies in analysis in some bizarre situations.
 
+@vindex signal-error-on-buffer-boundary
+@item
+XEmacs versions from 19.15 until (as of this writing 12-Mar-1998) 20.4
+contain a variable called @code{signal-error-on-buffer-boundary}.  This
+was intended as a solution to user interface problems associated with
+buffer movement and the @code{zmacs-region} deactivation on errors.
+However, setting this variable to a non-default value had the
+deleterious side effect of breaking many built-in primitive functions.
+Most users will not be affected since they never change the value of
+this variable.  @strong{Do not set this variable to @code{nil}}; you
+will cause serious problems in @ccmode{} and probably other XEmacs
+packages!  As of at least XEmacs 20.4, the effects this variable tried
+to correct have been fixed in other, better ways.
+
 @end itemize
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
