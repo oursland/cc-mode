@@ -1037,15 +1037,47 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   (c-forward-keyword-clause)
 			   (setq start-pos (point))))))
 
-	   (cond ((eq at-type 'prefix)
-		  ;; A prefix type is itself a primitive type when it's not
-		  ;; followed by another type.
-		  (setq at-type t))
-		 ((not at-type)
-		  ;; Got no type but set things up to continue anyway to
-		  ;; handle the various cases when a declaration doesn't start
-		  ;; with a type.
-		  (setq type-end start-pos)))
+	   (cond
+	    ((eq at-type 'prefix)
+	     ;; A prefix type is itself a primitive type when it's not
+	     ;; followed by another type.
+	     (setq at-type t))
+
+	    ((not at-type)
+	     ;; Got no type but set things up to continue anyway to handle the
+	     ;; various cases when a declaration doesn't start with a type.
+	     (setq type-end start-pos))
+
+	    ((and (eq at-type 'maybe)
+		  (c-major-mode-is 'c++-mode))
+	     ;; If it's C++ then check if the last "type" ends on the form
+	     ;; "foo::foo" or "foo::~foo", i.e. if it's the name of a
+	     ;; (con|de)structor.
+	     (save-excursion
+	       (let (name end-2 end-1)
+		 (goto-char type-end)
+		 (c-backward-syntactic-ws)
+		 (setq end-2 (point))
+		 (when (and
+			(c-simple-skip-symbol-backward)
+			(progn
+			  (setq name
+				(buffer-substring-no-properties (point) end-2))
+			  ;; Cheating in the handling of syntactic ws below.
+			  (< (skip-chars-backward ":~ \t\n\r\v\f") 0))
+			(progn
+			  (setq end-1 (point))
+			  (c-simple-skip-symbol-backward))
+			(>= (point) type-start)
+			(equal (buffer-substring-no-properties (point) end-1)
+			       name))
+		   ;; It is a (con|de)structor name.  In that case the
+		   ;; declaration is typeless so zap out any preceding
+		   ;; identifier(s) that we might have taken as types.
+		   (goto-char type-start)
+		   (setq at-type nil
+			 prev-at-type nil
+			 type-end type-start))))))
 
 	   ;; Check for and step over a type decl expression after the thing
 	   ;; that is or might be a type.  This can't be skipped since we need
