@@ -285,6 +285,47 @@ Key bindings:
   (c-update-modeline))
 
 
+;;;###autoload
+(defun idl-mode ()
+  "Major mode for editing CORBA's IDL code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+idl-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducible test case, and send the
+message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook variable `idl-mode-hook' is run with no args, if that
+variable is bound and has a non-nil value.  Also the hook
+`c-mode-common-hook' is run first.
+
+Key bindings:
+\\{idl-mode-map}"
+  (interactive)
+  (c-initialize-cc-mode)
+  (kill-all-local-variables)
+  (set-syntax-table idl-mode-syntax-table)
+  (setq major-mode 'idl-mode
+	mode-name "IDL"
+	local-abbrev-table idl-mode-abbrev-table)
+  (use-local-map idl-mode-map)
+  (c-common-init)
+  (setq comment-start "// "
+	comment-end ""
+	comment-multi-line nil
+	c-conditional-key c-C++-conditional-key
+	c-comment-start-regexp c-C++-comment-start-regexp
+	c-class-key c-C++-class-key
+	c-access-key c-C++-access-key
+	c-double-slash-is-comments-p t
+	c-recognize-knr-p nil)
+;;	imenu-generic-expression cc-imenu-c++-generic-expression)
+  (run-hooks 'c-mode-common-hook)
+  (run-hooks 'idl-mode-hook)
+  (c-update-modeline))
+
+
 ;; defuns for submitting bug reports
 (defconst c-version "5.14"
   "CC Mode version number.")
