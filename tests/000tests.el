@@ -146,6 +146,7 @@
 	(inlambda              . c-lineup-inexpr-block)
 	(lambda-intro-cont     . +)
 	(inexpr-statement      . 0)
+	(inexpr-class          . 0)
 	))
     (c-echo-syntactic-information-p . t)
     )
@@ -186,6 +187,7 @@
     "class-9.cc"
     "class-10.java"
     "class-11.cc"
+    "class-12.java"
     "comments.c"
     "comments-1.java"
     "comments-2.c"
