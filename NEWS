@@ -4,13 +4,14 @@ CC Mode NEWS -- user visible changes.  -*- outline -*-
 
 ** Font lock support.
 CC Mode now provides font lock support for all its languages.  This
-supersedes the font lock patterns in font-lock.el.  Like indentation,
-font locking is done in a uniform way across all languages (except the
-new AWK mode).  That means that the new font locking will be different
-from the old patterns in various details for most languages.
+supersedes the font lock patterns that have been in the core font lock
+package for C, C++, Java and Objective-C.  Like indentation, font
+locking is done in a uniform way across all languages (except the new
+AWK mode - see below).  That means that the new font locking will be
+different from the old patterns in various details for most languages.
 
-The main goal for the font locking in CC Mode is accuracy, to provide
-a dependable aid in recognizing the various constructs.  Some, like
+The main goal of the font locking in CC Mode is accuracy, to provide a
+dependable aid in recognizing the various constructs.  Some, like
 strings and comments, are easy to recognize while others like
 declarations and types can be very tricky.  CC Mode can go to great
 lengths to recognize declarations and casts correctly, especially when
@@ -21,14 +22,15 @@ variable font-lock-maximum-decoration.
 
 Note that the most demanding font lock level has been tuned with lazy
 fontification in mind, i.e.  there should be a support mode that waits
-with the fontification until the text is actually shown (e.g. Lazy
-Lock mode or Just-in-time Lock mode).  Fontifying a complete file with
-several thousand lines in one go can take the better part of a minute.
+with the fontification until the text is actually shown
+(e.g. Just-in-time Lock mode, which is the default in Emacs 21, or
+Lazy Lock mode).  Fontifying a file with several thousand lines in one
+go can take the better part of a minute.
 
 *** The (c|c++|objc|java|idl|pike)-font-lock-extra-types variables
 are now used by CC Mode to recognize identifiers that are certain to
-be types (they are also used in cases that aren't related to font
-locking).  At the maximum decoration level, types are often recognized
+be types.  (They are also used in cases that aren't related to font
+locking.)  At the maximum decoration level, types are often recognized
 properly anyway, so these variables should be fairly restrictive and
 not contain patterns for uncertain types.
 
@@ -36,7 +38,7 @@ not contain patterns for uncertain types.
 There is a "plugin" system to fontify documentation comments like
 Javadoc and the markup within them.  It's independent of the host
 language, so it's possible to e.g. turn on Javadoc font locking in C
-too.  See the c-doc-comment-style variable for details.
+buffers.  See the variable c-doc-comment-style for details.
 
 Currently two kinds of doc comment styles are recognized: Suns Javadoc
 and Autodoc which is used in Pike.  This is by no means a complete
@@ -62,7 +64,6 @@ All the keywords used in CORBA IDL, PSDL, and CIDL are recognized and
 handled correctly, also wrt indentation.
 
 ** Support for the AWK language.
-
 Support for the AWK language has been introduced.  The implementation is
 based around GNU AWK version 3.1, but it should work pretty well with
 any AWK.  As yet, not all features of CC Mode have been adapted for AWK.
@@ -81,11 +82,10 @@ The predefined indentation functions haven't yet been adapted for AWK
 mode, though some of them may work serendipitously.  There shouldn't be
 any problems writing custom indentation functions for AWK mode.
 
-The command `C-c C-q' (`c-indent-defun') hasn't yet been adapted for
-AWK, though in practice it works properly nearly all the time.  Should
-it fail, explicitly set the region around the function (using `C-u
-C-SPC': `C-M-h' probably won't work either) then do `C-M-\'
-(`indent-region').
+The command C-c C-q (c-indent-defun) hasn't yet been adapted for AWK,
+though in practice it works properly nearly all the time.  Should it
+fail, explicitly set the region around the function (using C-u C-SPC:
+C-M-h probably won't work either) then do C-M-\ (indent-region).
 
 *** Font Locking
 There is a single level of font locking in AWK mode, rather than the
@@ -94,18 +94,18 @@ idiosyncrasies in AWK mode's font-locking due to the peculiarities of
 the AWK language itself.
 
 *** Comment Commands
-`M-;' (`indent-for-comment') works fine.  None of the other CC Mode
+M-; (indent-for-comment) works fine.  None of the other CC Mode
 comment formatting commands have yet been adapted for AWK mode.
 
 *** Movement Commands
 Most of the movement commands work in AWK mode.  The most important
-exceptions are `M-a' (`c-beginning-of-statement') and `M-e'
-(`c-end-of-statement') which haven't yet been adapted.
+exceptions are M-a (c-beginning-of-statement) and M-e
+(c-end-of-statement) which haven't yet been adapted.
 
 The notion of "defun" has been augmented to include AWK pattern-action
-pairs.  `C-M-a' (c-awk-beginning-of-defun) and `C-M-e'
-(c-awk-end-of-defun) recognise these pattern-action pairs, as well as
-user defined functions.
+pairs.  C-M-a (c-awk-beginning-of-defun) and C-M-e (c-awk-end-of-defun)
+recognise these pattern-action pairs, as well as user defined
+functions.
 
 *** Auto-newline Insertion and Clean-ups
 Auto-newline insertion hasn't yet been adapted for AWK.  Some of
@@ -147,8 +147,8 @@ more details.
 There have been extensive changes "under the hood" which can affect
 derived mode writers.  Some of these changes are likely to cause
 incompatibilities with existing derived modes, but on the other hand
-care has been taken to make it possible to extend and modify CC Mode
-with less risk of such problems in the future.
+care has now been taken to make it possible to extend and modify CC
+Mode with less risk of such problems in the future.
 
 *** New language variable system.
 See the comment blurb near the top of cc-langs.el.
@@ -215,9 +215,9 @@ variable c-backslash-max-column which put a limit on how far out
 backslashes can be moved.
 
 *** Automatic alignment of line continuation backslashes.
-Controlled by the new variable c-auto-align-backslashes.  Affects
-c-context-line-break, c-context-open-line and newlines inserted in
-auto-newline mode.
+This is controlled by the new variable c-auto-align-backslashes.  It
+affects c-context-line-break, c-context-open-line and newlines
+inserted in auto-newline mode.
 
 *** Line indentation works better inside macros.
 Regardless whether syntactic indentation and syntactic indentation
@@ -267,9 +267,9 @@ file that it'll take noticeable time to find out the syntactic
 context.
 
 ** Statements are recognized in a more robust way.
-Statements are recognized most of the time even if they occur in an
+Statements are recognized most of the time even when they occur in an
 "invalid" context, e.g. in a function argument.  In practice that can
-happen anyway when macros are involved.
+happen when macros are involved.
 
 ** Improved the way c-indent-exp chooses the block to indent.
 It now indents the block for the closest sexp following the point
