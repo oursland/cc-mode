@@ -1441,6 +1441,10 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 			 '1-bit)
 		       list)))
 
+    ;; See if `parse-partial-sexp' returns the eighth element.
+    (when (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
+      (setq list (cons 'pps-extended-state list)))
+
     list)
   "A list of certain features in the (X)Emacs you are using.
 There are many flavors of Emacs out there, each with different
@@ -1455,6 +1459,9 @@ might be present:
 		    (i.e. the syntax class `!').
 'gen-string-delim   Generic string delimiters work
 		    (i.e. the syntax class `|').
+'pps-extended-state `parse-partial-sexp' returns a list with at least 10
+		    elements, i.e. it contains the position of the
+		    start of the last comment or string.
 'infodock           This is Infodock (based on XEmacs).
 
 '8-bit and '1-bit are mutually exclusive.")

@@ -1933,7 +1933,7 @@ This function does not do any hidden buffer changes."
 		 (if beg (cons beg end))))))
 	    ))))
 
-(if (c-safe (> (length (save-excursion (parse-partial-sexp 1 1))) 8))
+(if (memq 'pps-extended-state c-emacs-features)
     (defalias 'c-literal-limits 'c-literal-limits-fast))
 
 (defun c-collect-line-comments (range)
