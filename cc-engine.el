@@ -1119,6 +1119,10 @@ you need both the type of a literal and its limits."
 ;; most effective if `c-parse-state' is used on each line while moving
 ;; forward.
 
+(defvar c-state-cache-start nil)
+;; This (point-min) when `c-state-cache' was calculated, to detect
+;; that the start point hasn't changed due to narrowing.
+
 (defun c-parse-state ()
   ;; Finds and records all noteworthy parens between some good point
   ;; earlier in the file and point.  That good point is at least the
@@ -1297,13 +1301,16 @@ you need both the type of a literal and its limits."
   ;; paren pair element into an open paren element.  Doing that would
   ;; mean that the new open paren wouldn't have the required preceding
   ;; paren pair element.
-  (while (and c-state-cache
-	      (let ((elem (car c-state-cache)))
-		(if (consp elem)
-		    (or (<= beg (car elem))
-			(< beg (cdr elem)))
-		  (<= beg elem))))
-    (setq c-state-cache (cdr c-state-cache))))
+  (if (not (eq c-state-cache-start (point-min)))
+      (setq c-state-cache-start (point-min)
+	    c-state-cache nil)
+    (while (and c-state-cache
+		(let ((elem (car c-state-cache)))
+		  (if (consp elem)
+		      (or (<= beg (car elem))
+			  (< beg (cdr elem)))
+		    (<= beg elem))))
+      (setq c-state-cache (cdr c-state-cache)))))
 
 (defun c-whack-state-before (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies
@@ -2428,7 +2435,6 @@ Keywords are recognized and not considered identifiers."
 				    char-after-ip
 				    beg-of-same-or-containing-stmt
 				    containing-sexp
-				    lim
 				    paren-state)
   ;; This function contains the decision tree reached through both
   ;; cases 18 and 10.  It's a continued statement or top level
@@ -2469,7 +2475,7 @@ Keywords are recognized and not considered identifiers."
 	;; The reason is that one normally adjusts brace-list-open for
 	;; brace lists as top-level constructs, and brace lists inside
 	;; statements is a completely different context.
-	(c-beginning-of-statement-1 lim)
+	(c-beginning-of-statement-1 containing-sexp)
 	(c-add-stmt-syntax 'statement-cont nil containing-sexp paren-state))
        ;; CASE B.3: The body of a function declared inside a normal
        ;; block.  Can occur e.g. in Pike and when using gcc
@@ -2479,7 +2485,8 @@ Keywords are recognized and not considered identifiers."
        ((progn
 	  (goto-char indent-point)
 	  (and (not (c-looking-at-bos))
-	       (eq (c-beginning-of-statement-1 lim nil nil t) 'same)))
+	       (eq (c-beginning-of-statement-1 containing-sexp nil nil t)
+		   'same)))
 	(c-add-stmt-syntax 'defun-open t containing-sexp paren-state))
        ;; CASE B.4: Continued statement with block open.
        (t
@@ -2500,7 +2507,7 @@ Keywords are recognized and not considered identifiers."
 	       t))))
      ;; CASE D: continued statement.
      (t
-      (c-beginning-of-statement-1 lim)
+      (c-beginning-of-statement-1 containing-sexp)
       (c-add-stmt-syntax 'statement-cont nil containing-sexp paren-state))
      )))
 
@@ -2526,6 +2533,7 @@ Keywords are recognized and not considered identifiers."
 	     (c-state-cache (if inclass-p
 				(c-whack-state-before (point-min) paren-state)
 			      paren-state))
+	     (c-state-cache-start (point-min))
 	     inenclosing-p macro-start in-macro-expr
 	     ;; There's always at most one syntactic element which got
 	     ;; a relpos.  It's stored in syntactic-relpos.
@@ -2548,41 +2556,53 @@ Keywords are recognized and not considered identifiers."
 		   ((string-equal enclosing "namespace")
 		    (setq inenclosing-p 'namespace))
 		   )))))
-	;; get the buffer position of the most nested opening brace,
-	;; if there is one, and it hasn't been narrowed out
-	(when paren-state
-	  (setq containing-sexp (car paren-state)
-		paren-state (cdr paren-state))
-	  (if (consp containing-sexp)
-	      (if paren-state
-		  ;; Ignore balanced paren.  The next entry can't be
-		  ;; another one.
-		  (setq containing-sexp (car paren-state)
-			paren-state (cdr paren-state))
-		;; If there is no surrounding open paren then put the
-		;; last balanced pair back on paren-state.
-		(setq paren-state (list containing-sexp)
-		      containing-sexp nil)))
-	  ;; Ignore the bufpos if it has been narrowed out by the
-	  ;; containing class.
-	  (if (and containing-sexp
-		   (< containing-sexp (point-min)))
-	      (setq containing-sexp nil
-		    paren-state nil))
-	  ;; If we're in a parenthesis list then ',' delimits the
-	  ;; "statements" rather than being an operator (with the
-	  ;; exception of the "for" clause).  This difference is
-	  ;; typically only noticeable when statements are used in
-	  ;; macro arglists.
-	  (when (and containing-sexp
-		     (eq (char-after containing-sexp) ?\())
-	    (setq c-stmt-delim-chars c-stmt-delim-chars-with-comma)))
 
-	;; set the limit on the farthest back we need to search
-	(setq lim (or containing-sexp
-		      (and (consp (car-safe paren-state))
-			   (cdr (car paren-state)))
-		      (point-min)))
+	;; Init some position variables:
+	;;
+	;; containing-sexp is the open paren of the closest
+	;; surrounding sexp or nil if there is none that hasn't been
+	;; narrowed out.
+	;;
+	;; lim is the position after the closest preceding brace sexp
+	;; (nested sexps are ignored), or the position after
+	;; containing-sexp if there is none, or (point-min) if
+	;; containing-sexp is nil.
+	;;
+	;; c-state-cache is the state from c-parse-state at
+	;; indent-point, without any parens outside the region
+	;; narrowed by c-narrow-out-enclosing-class.
+	;;
+	;; paren-state is the state from c-parse-state outside
+	;; containing-sexp, or at indent-point if containing-sexp is
+	;; nil.  paren-state is not limited to the narrowed region, as
+	;; opposed to c-state-cache.
+	(if c-state-cache
+	    (progn
+	      (setq containing-sexp (car paren-state)
+		    paren-state (cdr paren-state))
+	      (if (consp containing-sexp)
+		  (progn
+		    (setq lim (cdr containing-sexp))
+		    (if (cdr c-state-cache)
+			;; Ignore balanced paren.  The next entry
+			;; can't be another one.
+			(setq containing-sexp (car (cdr c-state-cache))
+			      paren-state (cdr paren-state))
+		      ;; If there is no surrounding open paren then
+		      ;; put the last balanced pair back on paren-state.
+		      (setq paren-state (cons containing-sexp paren-state)
+			    containing-sexp nil)))
+		(setq lim (1+ containing-sexp))))
+	  (setq lim (point-min)))
+
+	;; If we're in a parenthesis list then ',' delimits the
+	;; "statements" rather than being an operator (with the
+	;; exception of the "for" clause).  This difference is
+	;; typically only noticeable when statements are used in macro
+	;; arglists.
+	(when (and containing-sexp
+		   (eq (char-after containing-sexp) ?\())
+	  (setq c-stmt-delim-chars c-stmt-delim-chars-with-comma))
 
 	;; cache char before and after indent point, and move point to
 	;; the most likely position to perform the majority of tests
@@ -2725,7 +2745,6 @@ Keywords are recognized and not considered identifiers."
 	    (c-guess-continued-construct indent-point
 					 char-after-ip
 					 placeholder
-					 lim
 					 lim
 					 paren-state)))
 	 ;; CASE 4: In-expression statement.  C.f. cases 7B, 16A and
@@ -2969,7 +2988,7 @@ Keywords are recognized and not considered identifiers."
 	      ;; don't add inclass symbol since relative point already
 	      ;; contains any class offset
 	      )))
-	   ;; CASE 5D: this could be a top-level compound statement, a
+	   ;; CASE 5D: this could be a top-level initialization, a
 	   ;; member init list continuation, or a template argument
 	   ;; list continuation.
 	   ((c-with-syntax-table (if (c-major-mode-is 'c++-mode)
@@ -2977,9 +2996,10 @@ Keywords are recognized and not considered identifiers."
 				   (syntax-table))
 	      (save-excursion
 		(while (and (= (c-backward-token-1 1 t lim) 0)
-			    (not (looking-at "[;{<,]"))))
-		(or (eq (char-after) ?,)
-		    (and (= (c-backward-token-1 1 nil lim) 0)
+			    (not (looking-at "[;<,=]"))))
+		(or (memq (char-after) '(?, ?=))
+		    (and (c-major-mode-is 'c++-mode)
+			 (= (c-backward-token-1 1 nil lim) 0)
 			 (eq (char-after) ?<)))))
 	    (goto-char indent-point)
 	    (c-beginning-of-member-init-list lim)
@@ -3421,7 +3441,6 @@ Keywords are recognized and not considered identifiers."
 				       char-after-ip
 				       placeholder
 				       containing-sexp
-				       lim
 				       paren-state))
 	 ;; CASE 14: A case or default label
 	 ((looking-at c-label-kwds-regexp)
