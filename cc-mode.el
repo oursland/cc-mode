@@ -5,7 +5,7 @@
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.19 $
+;; $Revision: 1.20 $
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -36,6 +36,8 @@
   (define-key c++-mode-map ":" 'electric-c++-colon)
   (define-key c++-mode-map "\177" 'electric-c++-delete)
   (define-key c++-mode-map "\C-c\C-t" 'c++-toggle-auto-hungry-state)
+  (define-key c++-mode-map "\C-c\C-h" 'c++-toggle-hungry-state)
+  (define-key c++-mode-map "\C-c\C-a" 'c++-toggle-auto-state)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -101,15 +103,9 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (defvar c++-auto-newline nil
   "Internal state of auto newline feature.")
 
-  "Non-nil means automatically newline before and after braces,
-and after colons and semicolons, inserted in C++ code.  Unlike
-as with c-auto-newline, double colons and the like are handled
-correctly.")
-
 (make-variable-buffer-local 'c++-auto-newline)
 (make-variable-buffer-local 'c++-hungry-delete-key)
 (make-variable-buffer-local 'c++-auto-hungry-string)
-
 
 (defun c++-mode ()
   "Major mode for editing C++ code.  Very much like editing C code.
@@ -237,31 +233,78 @@ Update mode line to indicate state to user."
     ;; force mode line update
     (set-buffer-modified-p (buffer-modified-p))))
 
+(defun c++-toggle-auto-state (arg)
+  "Toggle auto-newline state.
+This function ignores c++-auto-hungry-toggle-p variable.  Optional
+numeric ARG, if supplied turns on auto-newline when positive, turns
+off auto-newline when negative and toggles when zero."
+  (interactive "P")
+  (let ((auto (cond ((not arg)
+		     (not c++-auto-newline))
+		    ((zerop (setq arg (prefix-numeric-value arg)))
+		     (not c++-auto-newline))
+		    ((< arg 0) nil)
+		    (t t))))
+    (c++-set-auto-hungry-state auto c++-hungry-delete-key)))
+
+(defun c++-toggle-hungry-state (arg)
+  "Toggle hungry-delete-key state.
+This function ignores c++-auto-hungry-toggle-p variable.  Optional
+numeric ARG, if supplied turns on hungry-delete-key when positive,
+turns off hungry-delete-key when negative and toggles when zero."
+  (interactive "P")
+  (let ((hungry (cond ((not arg)
+		       (not c++-hungry-delete-key))
+		      ((zerop (setq arg (prefix-numeric-value arg)))
+		       (not c++-hungry-delete-key))
+		      ((< arg 0) nil)
+		      (t t))))
+    (c++-set-auto-hungry-state c++-auto-newline hungry)))
+
 (defun c++-toggle-auto-hungry-state (arg)
   "Toggle auto-newline and hungry-delete-key state.
 Actual toggling of these states is controlled by
-c++-auto-hungry-toggle-p variable.  Universal argument
-\\[universal-argument] if supplied, resets state
-c++-auto-hungry-initial-state."
+c++-auto-hungry-toggle-p variable.
+
+Optional argument has the following meanings when supplied:
+     Universal argument \\[universal-argument]
+          resets state to c++-auto-hungry-initial-state.
+     negative number
+          turn off both auto-newline and hungry-delete-key.
+     positive number
+          turn on both auto-newline and hungry-delete-key.
+     zero
+          toggle both states regardless of c++auto-hungry-toggle-p."
   (interactive "P")
-  (let (auto hungry)
-    (if arg
-	(setq auto (or (eq c++-auto-hungry-initial-state 'auto-only)
-		       (eq c++-auto-hungry-initial-state 'auto-hungry)
-		       (eq c++-auto-hungry-initial-state t))
-	      hungry (or (eq c++-auto-hungry-initial-state 'hungry-only)
-			 (eq c++-auto-hungry-initial-state 'auto-hungry)
-			 (eq c++-auto-hungry-initial-state t)))
-      (setq auto (if (or (eq c++-auto-hungry-toggle-p 'auto-only)
-			 (eq c++-auto-hungry-toggle-p 'auto-hungry)
-			 (eq c++-auto-hungry-toggle-p t))
-		     (not c++-auto-newline)
-		   c++-auto-newline)
-	    hungry (if (or (eq c++-auto-hungry-toggle-p 'hungry-only)
-			   (eq c++-auto-hungry-toggle-p 'auto-hungry)
-			   (eq c++-auto-hungry-toggle-p t))
-		       (not c++-hungry-delete-key)
-		     c++-hungry-delete-key)))
+  (let* ((numarg (prefix-numeric-value arg))
+	 (auto (cond ((not arg)
+		      (if (or (eq c++-auto-hungry-toggle-p 'auto-only)
+			      (eq c++-auto-hungry-toggle-p 'auto-hungry)
+			      (eq c++-auto-hungry-toggle-p t))
+			  (not c++-auto-newline)
+			c++-auto-newline))
+		     ((listp arg)
+		      (or (eq c++-auto-hungry-initial-state 'auto-only)
+			  (eq c++-auto-hungry-initial-state 'auto-hungry)
+			  (eq c++-auto-hungry-initial-state t)))
+		     ((zerop numarg)
+		      (not c++-auto-newline))
+		     ((< arg 0) nil)
+		     (t t)))
+	 (hungry (cond ((not arg)
+			(if (or (eq c++-auto-hungry-toggle-p 'hungry-only)
+				(eq c++-auto-hungry-toggle-p 'auto-hungry)
+				(eq c++-auto-hungry-toggle-p t))
+			    (not c++-hungry-delete-key)
+			  c++-hungry-delete-key))
+		       ((listp arg)
+			(or (eq c++-auto-hungry-initial-state 'hungry-only)
+			    (eq c++-auto-hungry-initial-state 'auto-hungry)
+			    (eq c++-auto-hungry-initial-state t)))
+		       ((zerop numarg)
+			(not c++-hungry-delete-key))
+		       ((< arg 0) nil)
+		       (t t))))
     (c++-set-auto-hungry-state auto hungry)))
 
 (defun electric-c++-delete (arg)
