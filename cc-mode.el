@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.8 $
-;; Last Modified:   $Date: 1994-06-13 14:19:47 $
+;; Version:         $Revision: 4.9 $
+;; Last Modified:   $Date: 1994-06-13 17:40:08 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-13 14:19:47 $|$Revision: 4.8 $|
+;; |$Date: 1994-06-13 17:40:08 $|$Revision: 4.9 $|
 
 ;;; Code:
 
@@ -895,7 +895,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.8 $
+cc-mode Revision: $Revision: 4.9 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -928,7 +928,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.8 $
+cc-mode Revision: $Revision: 4.9 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -961,7 +961,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.8 $
+cc-mode Revision: $Revision: 4.9 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -3799,7 +3799,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.8 $"
+(defconst c-version "$Revision: 4.9 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3818,48 +3818,57 @@ it trailing backslashes are removed."
 (defun c-submit-bug-report ()
   "Submit via mail a bug report on cc-mode."
   (interactive)
-  (and
-   (y-or-n-p "Do you want to submit a report on cc-mode? ")
-   (require 'reporter)
-   (reporter-submit-bug-report
-    c-mode-help-address
-    (concat "cc-mode " c-version " ("
-	    (cond ((eq major-mode 'c++-mode)  "C++")
-		  ((eq major-mode 'c-mode)    "C")
-		  ((eq major-mode 'objc-mode) "ObjC"))
-	    ")")
-    (let ((vars (list
-		 ;; report only the vars that affect indentation
-		 'c-emacs-features
-		 'c-basic-offset
-		 'c-offsets-alist
-		 'c-block-comments-indent-p
-		 'c-cleanup-list
-		 'c-comment-only-line-offset
-		 'c-backslash-column
-		 'c-delete-function
-		 'c-electric-pound-behavior
-		 'c-hanging-braces-alist
-		 'c-hanging-colons-alist
-		 'c-tab-always-indent
-		 'defun-prompt-regexp
-		 'tab-width
-		 )))
-      (if (not (boundp 'defun-prompt-regexp))
-	  (delq 'defun-prompt-regexp vars)
-	vars))
-    (function
-     (lambda ()
-       (insert
-	(if c-special-indent-hook
-	    (concat "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-		    "c-special-indent-hook is set to '"
-		    (format "%s" c-special-indent-hook)
-		    ".\nPerhaps this is your problem?\n"
-		    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
-	  "\n")
-	)))
-    )))
+  ;; load in reporter
+  (require 'reporter)
+  (let ((reporter-prompt-for-summary-p t)
+	;; we will ask for confirmation if the version of reporter
+	;; being used is pre-2.0, which doesn't support auto confirm
+	(reporter-confirm-p (boundp 'reporter-confirm-p))
+	(reporter-package-abbrev "cc-mode"))
+    (and
+     (or reporter-confirm-p
+	 (y-or-n-p "Do you want to submit a report on cc-mode? "))
+     (reporter-submit-bug-report
+      c-mode-help-address
+      (concat "cc-mode " c-version " ("
+	      (cond ((eq major-mode 'c++-mode)  "C++")
+		    ((eq major-mode 'c-mode)    "C")
+		    ((eq major-mode 'objc-mode) "ObjC"))
+	      ")")
+      (let ((vars (list
+		   ;; report only the vars that affect indentation
+		   'c-emacs-features
+		   'c-basic-offset
+		   'c-offsets-alist
+		   'c-block-comments-indent-p
+		   'c-cleanup-list
+		   'c-comment-only-line-offset
+		   'c-backslash-column
+		   'c-delete-function
+		   'c-electric-pound-behavior
+		   'c-hanging-braces-alist
+		   'c-hanging-colons-alist
+		   'c-tab-always-indent
+		   'defun-prompt-regexp
+		   'tab-width
+		   )))
+	(if (not (boundp 'defun-prompt-regexp))
+	    (delq 'defun-prompt-regexp vars)
+	  vars))
+      (function
+       (lambda ()
+	 (insert
+	  (if c-special-indent-hook
+	      (concat "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
+		      "c-special-indent-hook is set to '"
+		      (format "%s" c-special-indent-hook)
+		      ".\nPerhaps this is your problem?\n"
+		      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
+	    "\n")
+	  )))
+      nil
+      "Dear Barry,"
+      ))))
 
 
 ;; menus for Lucid
