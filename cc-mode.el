@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.114 $
-;; Last Modified:   $Date: 1993-12-09 18:23:47 $
+;; Version:         $Revision: 3.115 $
+;; Last Modified:   $Date: 1993-12-09 18:29:44 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-09 18:23:47 $|$Revision: 3.114 $|
+;; |$Date: 1993-12-09 18:29:44 $|$Revision: 3.115 $|
 
 ;;; Code:
 
@@ -446,60 +446,57 @@ Emacs.")
   "Abbrev table in use in c-mode buffers.")
 (define-abbrev-table 'c-mode-abbrev-table ())
 
-(defun c-populate-map (map)
-  ;; put standard keybindings into MAP
-  ;; the following mappings correspond more or less directly to BOCM
-  (define-key map "{"         'c-electric-brace)
-  (define-key map "}"         'c-electric-brace)
-  (define-key map ";"         'c-electric-semi&comma)
-  (define-key map "#"         'c-electric-pound)
-  (define-key map ":"         'c-electric-colon)
-  (define-key map "\e\C-h"    'c-mark-function)
-  (define-key map "\e\C-q"    'c-indent-exp)
-  ;; TBD: implement these commands first
-  ;(define-key map "\ea"        'c-beginning-of-statement)
-  ;(define-key map "\ee"        'c-end-of-statement)
-  ;(define-key map "\eq"        'c-fill-paragraph)
-  ;(define-key map "\C-c\C-n"   'c-forward-conditional)
-  ;(define-key map "\C-c\C-p"   'c-backward-conditional)
-  ;(define-key map "\C-c\C-u"   'c-up-conditional)
-  (define-key map "\t"        'c-indent-command)
-  (define-key map "\177"      'c-electric-delete)
-  ;; these are new keybindings, with no counterpart to BOCM
-  (define-key map ","         'c-electric-semi&comma)
-  (define-key map "/"         'c-electric-slash)
-  (define-key map "*"         'c-electric-star)
-  (define-key map "\e\C-x"    'c-indent-defun)
-  (define-key map "\C-c\C-\\" 'c-macroize-region)
-  (define-key map "\C-c\C-a"  'c-toggle-auto-state)
-  (define-key map "\C-c\C-b"  'c-submit-bug-report)
-  (define-key map "\C-c\C-c"  'c-comment-region)
-  (define-key map "\C-c\C-d"  'c-down-block)
-  (define-key map "\C-c\C-h"  'c-toggle-hungry-state)
-  (define-key map "\C-c\C-o"  'c-set-offset)
-  (define-key map "\C-c\C-s"  'c-show-semantic-information)
-  (define-key map "\C-c\C-t"  'c-toggle-auto-hungry-state)
-  ;; TBD: this keybinding will conflict with c-up-conditional
-  (define-key map "\C-c\C-u"  'c-up-block)
-  (define-key map "\C-c\C-v"  'c-version)
-  (define-key map "\C-c\C-x"  'c-match-paren)
-  ;; old Emacsen need to tame certain characters
-  (if (memq 'v18 c-emacs-features)
-      (progn
-	(define-key map "\C-c'" 'c-tame-comments)
-	(define-key map "'"     'c-tame-insert)
-	(define-key map "["     'c-tame-insert)
-	(define-key map "]"     'c-tame-insert)
-	(define-key map "("     'c-tame-insert)
-	(define-key map ")"     'c-tame-insert)))
-  )
-  
 (defvar c-mode-map ()
   "Keymap used in c-mode buffers.")
 (if c-mode-map
     ()
   (setq c-mode-map (make-sparse-keymap))
-  (c-populate-map c-mode-map))
+  ;; put standard keybindings into MAP
+  ;; the following mappings correspond more or less directly to BOCM
+  (define-key c-mode-map "{"         'c-electric-brace)
+  (define-key c-mode-map "}"         'c-electric-brace)
+  (define-key c-mode-map ";"         'c-electric-semi&comma)
+  (define-key c-mode-map "#"         'c-electric-pound)
+  (define-key c-mode-map ":"         'c-electric-colon)
+  (define-key c-mode-map "\e\C-h"    'c-mark-function)
+  (define-key c-mode-map "\e\C-q"    'c-indent-exp)
+  ;; TBD: implement these commands first
+  ;(define-key c-mode-map "\ea"        'c-beginning-of-statement)
+  ;(define-key c-mode-map "\ee"        'c-end-of-statement)
+  ;(define-key c-mode-map "\eq"        'c-fill-paragraph)
+  ;(define-key c-mode-map "\C-c\C-n"   'c-forward-conditional)
+  ;(define-key c-mode-map "\C-c\C-p"   'c-backward-conditional)
+  ;(define-key c-mode-map "\C-c\C-u"   'c-up-conditional)
+  (define-key c-mode-map "\t"        'c-indent-command)
+  (define-key c-mode-map "\177"      'c-electric-delete)
+  ;; these are new keybindings, with no counterpart to BOCM
+  (define-key c-mode-map ","         'c-electric-semi&comma)
+  (define-key c-mode-map "/"         'c-electric-slash)
+  (define-key c-mode-map "*"         'c-electric-star)
+  (define-key c-mode-map "\e\C-x"    'c-indent-defun)
+  (define-key c-mode-map "\C-c\C-\\" 'c-macroize-region)
+  (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
+  (define-key c-mode-map "\C-c\C-b"  'c-submit-bug-report)
+  (define-key c-mode-map "\C-c\C-c"  'c-comment-region)
+  (define-key c-mode-map "\C-c\C-d"  'c-down-block)
+  (define-key c-mode-map "\C-c\C-h"  'c-toggle-hungry-state)
+  (define-key c-mode-map "\C-c\C-o"  'c-set-offset)
+  (define-key c-mode-map "\C-c\C-s"  'c-show-semantic-information)
+  (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
+  ;; TBD: this keybinding will conflict with c-up-conditional
+  (define-key c-mode-map "\C-c\C-u"  'c-up-block)
+  (define-key c-mode-map "\C-c\C-v"  'c-version)
+  (define-key c-mode-map "\C-c\C-x"  'c-match-paren)
+  ;; old Emacsen need to tame certain characters
+  (if (memq 'v18 c-emacs-features)
+      (progn
+	(define-key c-mode-map "\C-c'" 'c-tame-comments)
+	(define-key c-mode-map "'"     'c-tame-insert)
+	(define-key c-mode-map "["     'c-tame-insert)
+	(define-key c-mode-map "]"     'c-tame-insert)
+	(define-key c-mode-map "("     'c-tame-insert)
+	(define-key c-mode-map ")"     'c-tame-insert)))
+  )
 
 (defvar c++-mode-map ()
   "Keymap used in c++-mode buffers.")
@@ -511,9 +508,8 @@ Emacs.")
       (if (memq 'Lucid c-emacs-features)
 	  (set-keymap-parent c++-mode-map c-mode-map)
 	(setq c++-mode-map (cons 'keymap c-mode-map)))
-    ;; Do it the hard way for GNU18
-    (setq c++-mode-map (make-sparse-keymap))
-    (c-populate-map c++-mode-map))
+    ;; Do it the hard way for GNU18 -- given by JWZ
+    (setq c++-mode-map (nconc (make-sparse-keymap) c-mode-map)))
   ;; add bindings which are only useful for C++
   (define-key c++-mode-map "\C-c\C-;"  'c-scope-operator)
   )
@@ -626,7 +622,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.114 $
+CC-MODE REVISION: $Revision: 3.115 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -659,7 +655,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.114 $
+CC-MODE REVISION: $Revision: 3.115 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2744,7 +2740,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.114 $"
+(defconst c-version "$Revision: 3.115 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
