@@ -71,7 +71,7 @@
 ;;
 ;; The valid values for it are nil and the following single characters:
 ;;
-;; nil The property hasn't (yet) been set for this line.
+;; nil The property is not currently set for this line.
 ;; ';' There is (at least part of) a statement on this line, and the last
 ;;     statement on the line is complete.
 ;; '#' There is NO statement on this line (at most a comment), and no open
@@ -82,9 +82,9 @@
 ;;     with the && operator, or "if (condition)".  Note that even if the
 ;;     newline is redundantly escaped, it remains a '{' line.
 ;; '\' There is an escaped newline on this line after a partial statement.
-;;     The '\' is essential to the syntax of the program.  (i.e. if there is a
-;;     frivolous \ at the end of the line, it will be ignored, the line being
-;;     given one of the other property values.)
+;;     This '\' is essential to the syntax of the program.  (i.e. if it had
+;;     been a frivolous \, it would have been ignored and the line been given
+;;     one of the other property values.)
 
 (defun c-awk-after-if-do-for-while-condition-p (&optional lim)
   ;; Are we just after the ) in "if/do/for/while (<condition>)"?
@@ -117,16 +117,17 @@
     (if (looking-at "[&|]") (backward-char)) ; c-backward-token-1 doesn't do this :-(
     (looking-at "[,{?:]\\|&&\\|||\\|do\\>\\|else\\>")))
 
-(defun c-awk-after-statement-semicolon ()
-  ;; Are we just after a ; which closes a statement?
+(defun c-awk-after-rbrace-or-statement-semicolon ()
+  ;; Are we just after a } or a ; which closes a statement?
   ;; Be careful about ;s in for loop control bits.  They don't count!
-  (and
-   (eq (char-before) ?\;)
-   (not (save-excursion
-          (goto-char (c-safe (scan-lists (point) -1 1))) ; go back to containing (
-          (and (looking-at "(")
-               (c-backward-token-1)
-               (looking-at "for\\>"))))))
+  (or (eq (char-before) ?\})
+      (and
+       (eq (char-before) ?\;)
+       (not (save-excursion
+              (goto-char (c-safe (scan-lists (point) -1 1))) ; go back to containing (
+              (and (looking-at "(")
+                   (c-backward-token-1)
+                   (looking-at "for\\>")))))))
 
 (defun c-awk-back-to-contentful-text-or-NL-prop ()
   ;;  awk-mode: move point back to first found of either (i) the BOL after the
@@ -145,9 +146,8 @@
   ;;  is to ensure that the various backward-comment functions will work
   ;;  properly.
   (let ((nl-prop nil)
-        bol-pos bsws-pos)
-    (while ;; We are at the beginning of a line here.  Go back one line
-        ;; each iteration.
+        bol-pos bsws-pos) ; "backward-syntactic-ws position"
+    (while ;; We are at a BOL here.  Go back one line each iteration.
         (and
          (not (bobp))
          (not (setq nl-prop (get-text-property (1- (point)) 'c-awk-NL-prop)))
@@ -178,6 +178,9 @@
   ;; Calculate and set the value of the c-awk-NL-prop on the immediately
   ;; preceding EOL.  This may also involve doing the same for several
   ;; preceding EOLs.
+  ;; NOTE that if the property was already set, we don't recalculate it.
+  ;;   (This is by accident rather than design.)
+  ;; 
   ;; Return the property set on the previous line.
   (save-excursion
     (save-match-data
@@ -198,18 +201,18 @@
                   ?\{)
                  ;; Escaped EOL (where there's also something to continue)?
                  ((and (looking-at "[ \t]*\\\\$")
-                       (not (c-awk-after-statement-semicolon))) ; WHAT ABOUT after } ??
+                       (not (c-awk-after-rbrace-or-statement-semicolon)))
                   ?\\)
                  (t ?\;)))            ; A statement was completed on this line
           (end-of-line)
           (put-text-property (point) (1+ (point)) 'c-awk-NL-prop nl-prop)
           (forward-line))
 
-        ;; We are now at the start of a sequence of content-free lines,
-        ;; nl-prop containing the c-awk-NL-prop value from the previous line.
-        ;; Go round the following loop once for each line, setting the
-        ;; appropriate value of the property on each \n, until we get back to
-        ;; our starting point.
+        ;; We are now at the start of a (possibly empty) sequence of
+        ;; content-free lines, nl-prop containing the c-awk-NL-prop value from
+        ;; the previous line.  Go round the following loop once for each such
+        ;; line, setting the appropriate value of the property on each \n,
+        ;; until we get back to our starting point.
         (while (< (point) pos)
           ;; possibilities are:   ?\; -> ?\#  ALWAYS (complete stat -> empty)
           ;;                      ?\# -> ?\#  ALWAYS (empty stays empty)
@@ -223,31 +226,30 @@
           (put-text-property (1- (point)) (point) 'c-awk-NL-prop nl-prop))
         nl-prop))))
 
-(defun get-c-awk-NL-prop-prev-line ()
-  "Get the c-awk-NL-prop text-property from the previous line (if any).
-Return nil iff we're already at BOB.  If this text property is NOT already set
-on the line, then calculate it before returning it."
+(defun get-c-awk-NL-prop-prev-line (&optional do-lim)
+  ;; Get the c-awk-NL-prop text-property from the previous line, calculating
+  ;; it if necessary.  Return nil iff we're already at BOB.
   (if (bobp)
       nil
     (or (get-text-property (c-point 'eopl) 'c-awk-NL-prop)
-        (c-awk-calculate-NL-prop-prev-line))))
+        (c-awk-calculate-NL-prop-prev-line do-lim))))
 
 (defun c-awk-prev-line-incomplete-p (&optional do-lim)
 ;;  awk-mode: Is there an incomplete statement at the end of the previous line?
 
   ;; Four cases to consider, with respect to the previous line:
-;;  1: A '\' continuation marker at EOL (only valid where there's no comment) 
+  ;;  1: A '\' continuation marker at EOL (only valid where there's no comment) 
   ;;     We need to check for '\'s on consecutive (otherwise) empty lines
   ;;     Even if all the above hold, we still need to ensure that there's
   ;;     something to continue;
-;;  2: A line: "if/while/for/do (...)" (without ';') [careful about do-while :-];
+  ;;  2: A line: "if/while/for/do (...)" (without ';') [careful about do-while :-];
   ;;  3: A line ending with one of ,, {, ?, :, &&, ||, do, else
-;;  4: A line "function foo (a, b)", possibly followed by a comment.  (The next
+  ;;  4: A line "function foo (a, b)", possibly followed by a comment.  (The next
   ;;     line then must start with '{'.  Should we check this? NO!!
   ;;
   ;; Note: we use the previous line as part of the definition so that the
   ;; various backward-comment functions work.
-  (memq (get-c-awk-NL-prop-prev-line) '(?\\ ?\{)))
+  (memq (get-c-awk-NL-prop-prev-line do-lim) '(?\\ ?\{)))
 
 (defun c-awk-clear-NL-props (beg end)
   ;; This function is run from before-change-hooks.  It clears the
@@ -260,10 +262,8 @@ on the line, then calculate it before returning it."
 
 (defun c-awk-completed-stmt-ws-ends-prev-line-p (&optional do-lim)
   ;;  Is there a termination of a statement as the last thing (apart from an
-  ;;  optional comment) on the previous line?  This divides into two parts: i)
-  ;;  Is there any statement-stuff on the previous line?  ii) Is it
-  ;;  terminated?
-  (eq (get-c-awk-NL-prop-prev-line) ?\;))
+  ;;  optional comment) on the previous line?
+  (eq (get-c-awk-NL-prop-prev-line do-lim) ?\;))
 
 (defun c-awk-completed-stmt-ws-ends-line-p (&optional pos do-lim)
   ;;  Same as previous function, but for the line containing position POS (or
@@ -274,10 +274,10 @@ on the line, then calculate it before returning it."
     (and (eq (forward-line) 0)  (bolp)  ; check for unterminated line at EOB.
          (c-awk-completed-stmt-ws-ends-prev-line-p do-lim))))
 
-(defun c-awk-after-logical-semicolon ()
+(defun c-awk-after-logical-semicolon (&optional do-lim)
 ;; Are we at BOL, the preceding EOL being a "logical semicolon"?
   (and (bolp)
-       (eq (get-c-awk-NL-prop-prev-line) ?\;)))
+       (eq (get-c-awk-NL-prop-prev-line do-lim) ?\;)))
 
 (defun c-awk-backward-syntactic-ws (&optional lim) 
 ;; Skip backwards over awk-syntactic whitespace.  Awk-syntactic whitespace is
@@ -288,14 +288,22 @@ on the line, then calculate it before returning it."
   (let ((lim (or lim (point-min))))
     (while
         (and (> (point) lim)
-             (progn (c-backward-syntactic-ws (if (and lim (> lim (c-point 'bol)))
-                                                 lim (c-point 'bol)))
+             (progn (c-backward-syntactic-ws (max lim (c-point 'bol)))
                     (bolp))
              (/= (get-c-awk-NL-prop-prev-line) ?\;)))))
 
 (defun c-awk-NL-prop-not-set ()
   ;; Is the NL-prop on the current line either nil or unset?
   (not (get-text-property (c-point 'eol) 'c-awk-NL-prop)))
+
+(defun c-awk-unstick-NL-prop ()
+  ;; Ensure that the text property c-awk-NL-prop is "non-sticky".  Without
+  ;; this, a new newline inserted after an old newline (e.g. by C-j) would
+  ;; inherit any c-awk-NL-prop from the old newline.  This would be a Bad
+  ;; Thing.
+  (if (not (assoc 'c-awk-NL-prop text-property-default-nonsticky))
+      (setq text-property-default-nonsticky
+            (cons '(c-awk-NL-prop . t) text-property-default-nonsticky))))
   
 ;; The following is purely a diagnostic command, to be commented out of the
 ;; final release.  ACM, 2002/6/1
@@ -309,7 +317,7 @@ on the line, then calculate it before returning it."
              (if (setq cl-prop (get-text-property (c-point 'eol) 'c-awk-NL-prop))
                  (char-to-string cl-prop)
                "nil"))))
-;;(local-set-key [?\C-c ?\r] 'NL-props)
+(define-key awk-mode-map [?\C-c ?\r] 'NL-props)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
