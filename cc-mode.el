@@ -89,8 +89,14 @@
 	(not (fboundp 'unless)))
     (require 'cc-mode-19))
 
-(eval-when-compile
-  (require 'cc-menus))
+(require 'cc-defs)
+(require 'cc-menus)
+(require 'cc-vars)
+(require 'cc-engine)
+(require 'cc-langs)
+(require 'cc-align)
+(require 'cc-styles)
+(require 'cc-cmds)
 
 (defvar c-buffer-is-cc-mode nil
   "Non-nil for all buffers with a `major-mode' derived from CC Mode.
@@ -101,7 +107,7 @@ other non-CC Mode mode that calls `c-initialize-cc-mode'
 (make-variable-buffer-local 'c-buffer-is-cc-mode)
 (put 'c-buffer-is-cc-mode 'permanent-local t)
 
-(defvar c-initialize-on-load t
+(defvar c-initialize-on-load nil
   "When non-nil, CC Mode initializes when the cc-mode.el file is loaded.")
   
 
@@ -116,16 +122,7 @@ other non-CC Mode mode that calls `c-initialize-cc-mode'
 ;;;###autoload
 (defun c-initialize-cc-mode (&optional skip-styles)
   (setq c-buffer-is-cc-mode t)
-  ;; make sure all necessary components of CC Mode are loaded in.
   (let ((initprop 'cc-mode-is-initialized))
-    (require 'cc-vars)
-    (require 'cc-defs)
-    (require 'cc-engine)
-    (require 'cc-langs)
-    (require 'cc-menus)
-    (require 'cc-align)
-    (require 'cc-styles)
-    (require 'cc-cmds)
     ;; run the initialization hook, but only once
     (or (get 'c-initialize-cc-mode initprop)
 	(progn
