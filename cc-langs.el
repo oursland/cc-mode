@@ -1413,6 +1413,11 @@ identifiers that follows the type in a normal declaration."
   idl  nil
   pike '("break" "continue" "return"))
 
+(c-lang-defconst c-simple-stmt-key
+  ;; Adorned regexp matching `c-simple-stmt-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-simple-stmt-kwds)))
+(c-lang-defvar c-simple-stmt-key (c-lang-const c-simple-stmt-key))
+
 (c-lang-defconst c-paren-stmt-kwds
   "Statement keywords followed by a parenthesis expression that
 nevertheless contains a list separated with ';' and not ','."
