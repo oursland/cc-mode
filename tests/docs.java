@@ -16,6 +16,9 @@ public class dumb
      * @see Bar
      */
 
+    /** @return nil
+     */
+
     // Another java comment
 
     /*
