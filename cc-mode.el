@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.353 $
-;; Last Modified:   $Date: 1993-06-23 13:58:52 $
+;; Version:         $Revision: 2.354 $
+;; Last Modified:   $Date: 1993-06-28 15:47:13 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-23 13:58:52 $|$Revision: 2.353 $|
+;; |$Date: 1993-06-28 15:47:13 $|$Revision: 2.354 $|
 
 ;;; Code:
 
@@ -358,12 +358,12 @@ style 1:       style 2:       style 3:       style 4:
    */           */            */             */
 ")
 (defvar c++-cleanup-list nil
-  "*List of various C++ constructs to ``clean up''.
+  "*List of various C++ constructs to \"clean up\".
 These cleanups only take place when the auto-newline feature is turned
 on, as evidenced by the `/a' or `/ah' appearing next to the mode name.
 
 Current legal values are:
- `brace-else-brace'   -- clean up ``} else {'' constructs by placing entire
+ `brace-else-brace'   -- clean up `} else {' constructs by placing entire
                          construct on a single line.  This cleanup only
                          takes place when there is nothing but white
                          space between the braces and the else.  
@@ -487,7 +487,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.353 $
+  "Major mode for editing C++ code.  $Revision: 2.354 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -534,7 +534,7 @@ from their c-mode cousins.
     The surrounding block's indentation is the indentation
     of the line on which the open-brace appears.
  c-label-offset
-    Extra indentation for line that is a label, or case or ``default:''
+    Extra indentation for line that is a label, or case or `default:'.
 
  c++-C-block-comments-indent-p
     Style of C block comments to support.
@@ -557,7 +557,7 @@ from their c-mode cousins.
  c++-block-close-brace-offset
     Extra indentation give to braces which close a block.
  c++-cleanup-list
-    A list of construct ``clean ups'' which c++-mode will perform when
+    A list of construct \"clean ups\" which c++-mode will perform when
     auto-newline feature is on.  Current legal values are:
     `brace-else-brace', `empty-defun-braces', `defun-close-semi'.
  c++-comment-only-line-offset
@@ -609,9 +609,9 @@ from their c-mode cousins.
     Controls the operation of the TAB key.  t means always just indent
     the current line.  nil means indent the current line only if point
     is at the left margin or in the line's indentation; otherwise
-    insert a tab.  If not-nil-or-t, then tab is inserted only within
+    insert a tab.  Any other value means insert tab only within
     literals (comments and strings) and inside preprocessor
-    directives, but the line is always reindented.  Default is value
+    directives, but always reindent the line.  The default is value
     for `c-tab-always-indent'.
  c++-untame-characters
     When non-nil, inserts backslash escapes before certain untamed
@@ -704,7 +704,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.353 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.354 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1601,7 +1601,7 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
 			     (setq donep (<= (point) lim)))
 		    (setq donep t))
 		  ))
-	    ;; cpp statements are not comments anywhere else
+	    ;; cpp statements are not comments anywhere else.
 	    (if (eq major-mode 'c++-mode)
 		(modify-syntax-entry ?# "." c++-mode-syntax-table)
 	      (modify-syntax-entry ?\n " " c++-c-mode-syntax-table)
@@ -1640,7 +1640,7 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
 ;; This is the slow and ugly way, but its the best we can do in
 ;; vanilla GNU18 emacsen
 (defun c++-in-literal (&optional lim)
-  "Determine if point is in a C++ ``literal''.
+  "Determine if point is in a C++ \"literal\".
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
 nil if not in a comment at all.  Optional LIM is used as the backward
@@ -1698,7 +1698,7 @@ used."
 
 ;; This is for all 8-bit emacsen (Lucid 19, patched GNU18)
 (defun c++-in-literal-8-bit (&optional lim)
-  "Determine if point is in a C++ ``literal''.
+  "Determine if point is in a C++ \"literal\".
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
 nil if not in a comment at all.  Optional LIM is used as the backward
@@ -1721,7 +1721,7 @@ used."
 
 ;; This is for all 1-bit emacsen (FSF19)
 (defun c++-in-literal-1-bit (&optional lim)
-  "Determine if point is in a C++ ``literal''.
+  "Determine if point is in a C++ \"literal\".
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
 nil if not in a comment at all.  Optional LIM is used as the backward
@@ -1776,7 +1776,7 @@ defaults to `point-max'."
 if it is embedded in an expression.  When WRT is non-nil, returns nil
 if not at the top level with respect to an enclosing class, or the
 depth of class nesting at point.  With WRT nil, returns nil if not at
-the ``real'' top level.  Optional BOD is the beginning of defun."
+the \"real\" top level.  Optional BOD is the beginning of defun."
   (save-excursion
     (let ((indent-point (point))
 	  (case-fold-search nil)
@@ -2287,9 +2287,9 @@ BOD is the beginning of the C++ definition."
 	  ;; empty-arglist, so we'll indent to the min of that
 	  ;; and the beginning of the first argument.
 	  (goto-char (1+ containing-sexp))
-	  ;; we want to skip any whitespace b/w open paren and
-	  ;; first argument. this handles while (thing) style
-	  ;; and while( thing ) style
+	  ;; We want to skip any whitespace b/w open paren and
+	  ;; first argument. This handles while (thing) style
+	  ;; and while( thing ) style.
 	  (skip-chars-forward " \t")
 	  (current-column)))
        ;; CASE 5: Statement.  Find previous non-comment character.
@@ -2475,7 +2475,7 @@ BOD is the `beginning-of-defun' point."
 ;; ======================================================================
 
 (defun c++-backward-to-start-of-do (&optional limit)
-  "Move to the start of the last ``unbalanced'' do."
+  "Move to the start of the last \"unbalanced\" do."
   (let ((do-level 1)
 	(case-fold-search nil)
 	(limit (or limit (c++-point 'bod))))
@@ -2499,7 +2499,7 @@ BOD is the `beginning-of-defun' point."
 	 (setq do-level 0))))))
 
 (defun c++-backward-to-start-of-if (&optional limit)
-  "Move to the start of the last ``unbalanced'' if."
+  "Move to the start of the last \"unbalanced\" if."
   (let ((if-level 1)
 	(case-fold-search nil)
 	(limit (or limit (c++-point 'bod))))
@@ -2606,7 +2606,7 @@ inserting `comment-start' in front of each line."
 
 (defun c++-uncomment-region (beg end)
   "Uncomment all lines in region between mark and current point by deleting
-the leading ``// '' from each line, if any."
+the leading `// ' from each line, if any."
   (interactive "*r")
   (save-excursion
     (save-restriction
@@ -2785,7 +2785,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.353 $"
+(defconst c++-version "$Revision: 2.354 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
