@@ -553,7 +553,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 
 
 
-;; Emacs 19 does not give us copy-tree by default, nor autoloaded  :-(
+;; cl is not loaded by default in Emacs 19 or 20, but this definition.
 (or (boundp 'copy-tree)
     (require 'cl))
 
