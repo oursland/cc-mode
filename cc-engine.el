@@ -1421,6 +1421,7 @@ brace."
 
 (defun c-narrow-out-enclosing-class (state lim)
   ;; narrow the buffer so that the enclosing class is hidden
+  (setq state (c-whack-state (point) state))
   (let (inclass-p)
     (and state
 	 (setq inclass-p (c-search-uplist-for-classkey state))
