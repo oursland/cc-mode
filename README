@@ -1,6 +1,6 @@
 README for CC Mode 5.20
-Barry A. Warsaw and Martin Stjernholm
-cc-mode-help@python.org
+Current maintainers: Barry A. Warsaw and Martin Stjernholm
+Contact address:     cc-mode-help@python.org
 
 INTRODUCTION
 
@@ -13,6 +13,9 @@ INTRODUCTION
     "COMPATIBILITY" section below for details.
 
 MORE INFORMATION
+
+    NOTE: Since there are now multiple maintainers of CC Mode, you
+    MUST address all correspondence to cc-mode-help@python.org.
 
     The canonical Web site for CC Mode is
 
