@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.100 $
-;; Last Modified:   $Date: 1994-11-10 16:31:23 $
+;; Version:         $Revision: 4.101 $
+;; Last Modified:   $Date: 1994-11-14 16:19:10 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -101,7 +101,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-11-10 16:31:23 $|$Revision: 4.100 $|
+;; |$Date: 1994-11-14 16:19:10 $|$Revision: 4.101 $|
 
 ;;; Code:
 
@@ -970,14 +970,17 @@ behavior that users are familiar with.")
 
 ;; main entry points for the modes
 ;;;###autoload
+(defconst c-list-of-mode-names nil)
+
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.100 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
 of the problem, including a reproducable test case and send the
 message.
+
+To see what version of cc-mode you are running, enter `\\[c-version]'.
 
 Note that the details of configuring c++-mode have been moved to the
 accompanying texinfo manual (which is not yet completed -- volunteers
@@ -1008,17 +1011,19 @@ Key bindings:
 	c-access-key c-C++-access-key)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook))
+(setq c-list-of-mode-names (cons "C++" c-list-of-mode-names))
 
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.100 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
 problem, including a reproducable test case and send the message.
 
-Note that the details of configuring c++-mode have been moved to the
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+Note that the details of configuring c-mode have been moved to the
 accompanying texinfo manual (which is not yet completed -- volunteers
 are welcome).  Until then, please read the README file that came with
 the cc-mode distribution.
@@ -1046,18 +1051,20 @@ Key bindings:
 	c-comment-start-regexp "/\\*")
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook))
+(setq c-list-of-mode-names (cons "C" c-list-of-mode-names))
 
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.100 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
 of the problem, including a reproducable test case and send the
 message.
 
-Note that the details of configuring c++-mode have been moved to the
+To see what version of cc-mode you are running, enter `\\[c-version]'.
+
+Note that the details of configuring objc-mode have been moved to the
 accompanying texinfo manual (which is not yet completed -- volunteers
 are welcome).  Until then, please read the README file that came with
 the cc-mode distribution.
@@ -1086,6 +1093,7 @@ Key bindings:
 	c-access-key c-ObjC-access-key)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook))
+(setq c-list-of-mode-names (cons "ObjC" c-list-of-mode-names))
 
 (defun c-common-init ()
   ;; Common initializations for c++-mode and c-mode.
@@ -1124,9 +1132,22 @@ Key bindings:
   (if (and (boundp 'current-menubar)
 	   current-menubar
 	   (not (assoc mode-name current-menubar)))
-      (progn
-	(set-buffer-menubar (copy-sequence current-menubar))
-	(add-menu nil mode-name c-mode-menu)))
+      ;; its possible that this buffer has changed modes from one of
+      ;; the other cc-mode modes.  In that case, only the menubar
+      ;; title of the menu changes.
+      (let ((modes (copy-sequence c-list-of-mode-names))
+	    changed-p)
+	(setq modes (delete major-mode modes))
+	(while modes
+	  (if (not (assoc (car modes) current-menubar))
+	      (setq modes (cdr modes))
+	    (relabel-menu-item (list (car modes)) mode-name)
+	    (setq modes nil
+		  changed-p t)))
+	(if (not changed-p)
+	    (progn
+	      (set-buffer-menubar (copy-sequence current-menubar))
+	      (add-menu nil mode-name c-mode-menu)))))
   (if (boundp 'mode-popup-menu)
       (setq mode-popup-menu
 	    (cons (concat mode-name " Mode Commands") c-mode-menu)))
@@ -4150,7 +4171,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.100 $"
+(defconst c-version "$Revision: 4.101 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
