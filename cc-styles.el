@@ -42,7 +42,6 @@
     (require 'cc-bytecomp)))
 
 (cc-require 'cc-defs)
-(cc-require 'cc-langs)
 (cc-require 'cc-vars)
 (cc-require 'cc-align)
 ;; cc-align is only indirectly required: Styles added with
@@ -488,11 +487,11 @@ variables."
   (let ((comment-line-prefix
 	 (concat "[ \t]*\\(" c-current-comment-prefix "\\)[ \t]*")))
     (setq paragraph-start (concat comment-line-prefix
-				  (c-lang-var paragraph-start)
+				  c-paragraph-start
 				  "\\|"
 				  page-delimiter)
 	  paragraph-separate (concat comment-line-prefix
-				     (c-lang-var paragraph-separate)
+				     c-paragraph-separate
 				     "\\|"
 				     page-delimiter)
 	  paragraph-ignore-fill-prefix t
