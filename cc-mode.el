@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.331 $
-;; Last Modified:   $Date: 1993-05-24 23:23:05 $
+;; Version:         $Revision: 2.332 $
+;; Last Modified:   $Date: 1993-05-25 18:37:21 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-05-24 23:23:05 $|$Revision: 2.331 $|
+;; |$Date: 1993-05-25 18:37:21 $|$Revision: 2.332 $|
 
 ;;; Code:
 
@@ -150,30 +150,30 @@
 (defconst c++-emacs-features
   (let ((mse-spec 'no-dual-comments)
 	(scanner 'v18))
-    (if (= 7 (length (parse-partial-sexp (point) (point))))
-	;; vanilla GNU18/Epoch 4
-	(setq mse-spec 'no-dual-comments
-	      scanner 'v18)
-      ;; we know we're using v19 style dual-comment specifications.
-      ;; All Lemacsen use 8-bit modify-syntax-entry flags, as do all
-      ;; patched GNU19, GNU18, Epoch4's.  Only vanilla GNU19.7 uses
-      ;; 1-bit flag. Lets be as smart as we can about figuring this out.
-      (let ((buf (generate-new-buffer " --syntax-kludge-- ")))
-	(unwind-protect
-	    (progn
-	      (set-buffer buf)
-	      (modify-syntax-entry ?a ". 12345678" (syntax-table))
-	      (if (= (logand (lsh (aref (syntax-table) ?a) -16) 255) 255)
-		  (setq mse-spec '8-bit)
-		(setq mse-spec '1-bit))
-	      (kill-buffer buf))
-	  (kill-buffer buf)))
-      ;; we also know we're using a quicker, built-in comment scanner,
-      ;; but we don't know if its old-style or new. Fortunately we can
-      ;; ask emacs directly
-      (if (fboundp 'forward-comment)
-	  (setq scanner 'v19)
-	(setq scanner 'old-v19)))
+    ;; vanilla GNU18/Epoch 4 uses default values
+    (if (= 8 (length (parse-partial-sexp (point) (point))))
+	;; we know we're using v19 style dual-comment specifications.
+	;; All Lemacsen use 8-bit modify-syntax-entry flags, as do all
+	;; patched GNU19, GNU18, Epoch4's.  Only vanilla GNU19.7-8
+	;; uses 1-bit flag. Lets be as smart as we can about figuring
+	;; this out.
+	(let ((cur (current-buffer))
+	      (buf (generate-new-buffer " --syntax-kludge-- ")))
+	  (unwind-protect
+	      (progn
+		(set-buffer buf)
+		(modify-syntax-entry ?a ". 12345678" (syntax-table))
+		(if (= (logand (lsh (aref (syntax-table) ?a) -16) 255) 255)
+		    (setq mse-spec '8-bit)
+		  (setq mse-spec '1-bit)))
+	    (kill-buffer buf)
+	    (set-buffer cur))
+	  ;; we also know we're using a quicker, built-in comment
+	  ;; scanner, but we don't know if its old-style or new.
+	  ;; Fortunately we can ask emacs directly
+	  (if (fboundp 'forward-comment)
+	      (setq scanner 'v19)
+	    (setq scanner 'old-v19))))
     ;; now cobble up the necessary list
     (list mse-spec scanner))
   "A list of needed features extant in the emacs you are using.
@@ -485,7 +485,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.331 $
+  "Major mode for editing C++ code.  $Revision: 2.332 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -706,7 +706,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.331 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.332 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2657,7 +2657,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.331 $"
+(defconst c++-version "$Revision: 2.332 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
