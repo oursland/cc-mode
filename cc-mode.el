@@ -486,7 +486,7 @@ CC Mode by making sure the proper entries are present on
 		     ;; set to nil can cause all kinds of chaos.
 		     signal-error-on-buffer-boundary
 		     ;; Variables that affect line breaking and comments.
-		     auto-fill-mode
+		     auto-fill-function
 		     filladapt-mode
 		     comment-multi-line
 		     comment-start-skip
@@ -496,10 +496,10 @@ CC Mode by making sure the proper entries are present on
 		     adaptive-fill-regexp)
 		   nil)))
 	(delq 'c-special-indent-hook vars)
-	(unless (boundp 'defun-prompt-regexp)
-	  (delq 'defun-prompt-regexp vars))
-	(unless (boundp 'filladapt-mode)
-	  (delq 'filladapt-mode vars))
+	(mapcar (lambda (var) (unless (boundp var) (delq var vars)))
+		'(signal-error-on-buffer-boundary
+		  filladapt-mode
+		  defun-prompt-regexp))
 	vars)
       (function
        (lambda ()
@@ -517,9 +517,7 @@ CC Mode by making sure the proper entries are present on
 	    "\n")
 	  (format "c-emacs-features: %s\n" c-features)
 	  )))
-      nil
-      "Dear Barry and Martin,"
-      ))))
+      nil))))
 
 
 (provide 'cc-mode)
