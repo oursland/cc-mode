@@ -2944,7 +2944,8 @@ Keywords are recognized and not considered identifiers."
 	   ((progn
 	      (goto-char (1+ containing-sexp))
 	      (skip-chars-forward " \t")
-	      (not (eolp)))
+	      (and (not (eolp))
+		   (not (looking-at "\\\\$"))))
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
 	    (when (and (c-safe (backward-up-list 1) t)
