@@ -307,20 +307,20 @@
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
 
-(defun c-before-change (beg end)
-  ;; Function put on `before-change-functions' to adjust various
+(defun c-after-change (beg end len)
+  ;; Function put on `after-change-functions' to adjust various
   ;; caches.  Prefer speed to finesse here, since there will be an order
   ;; of magnitude more calls to this function than any of the functions
   ;; that use the caches.
   ;;
-  ;; `before-change-functions' is used primarily because font locking
-  ;; is done from `after-change-functions' which means that we might
-  ;; get calls to functions using these caches from inside that hook,
-  ;; and we must thus be sure that this has already been executed.
+  ;; Note that care must be taken so that this is called before any
+  ;; font-lock callbacks since we might get calls to functions using
+  ;; these caches from inside them, and we must thus be sure that this
+  ;; has already been executed.
   ;;
   ;; This function can make hidden buffer changes to clear caches.
   ;; It's not a problem since a nonhidden change is done anyway.
-  (c-invalidate-large-sws-region beg)
+  (c-invalidate-sws-region beg end)
   (c-invalidate-state-cache beg))
 
 (defun c-basic-common-init (mode default-style)
@@ -429,8 +429,13 @@ same format as `c-default-style'."
 
   ;; Install the function that ensures that various internal caches
   ;; don't become invalid due to buffer changes.
-  (make-local-variable 'before-change-functions)
-  (add-hook 'before-change-functions 'c-before-change))
+  (make-local-hook 'after-change-functions)
+  (add-hook 'after-change-functions 'c-after-change nil t))
+
+(defun c-font-lock-init ()
+  ;; Put on `font-lock-mode-hook'.
+  (remove-hook 'after-change-functions 'c-after-change t)
+  (add-hook 'after-change-functions 'c-after-change nil t))
 
 (defun c-common-init (mode)
   ;; Common initializations for all modes.
@@ -464,7 +469,10 @@ same format as `c-default-style'."
 	   ;; This variable doesn't exist in older (X)Emacsen.
 	   . c-font-lock-syntactic-face-function)
 	  (font-lock-mark-block-function
-	   . c-mark-function))))
+	   . c-mark-function)))
+
+  (make-local-hook 'font-lock-mode-hook)
+  (add-hook 'font-lock-mode-hook 'c-font-lock-init))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables in CC Mode.
