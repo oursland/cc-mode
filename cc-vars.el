@@ -2,12 +2,11 @@
 
 ;; Copyright (C) 1997 Free Software Foundation, Inc.
 
-;; Authors: 1992-1997 Barry A. Warsaw
-;;          1987 Dave Detlefs and Stewart Clamen
-;;          1985 Richard M. Stallman
-;; Created: 22-Apr-1997 (split from cc-mode.el)
-;; Version:         5.00
-;; Last Modified:   $Date: 1997-04-23 04:06:33 $
+;; Authors:  1992-1997 Barry A. Warsaw
+;;           1987 Dave Detlefs and Stewart Clamen
+;;           1985 Richard M. Stallman
+;; Created:  22-Apr-1997 (split from cc-mode.el)
+;; Version:  5.00
 ;; Keywords: c languages oop
 
 ;; This file is part of GNU Emacs.
