@@ -1715,6 +1715,9 @@ isn't moved."
 			((and c-lambda-key
 			      (looking-at c-lambda-key))
 			 (cons 'inlambda (point)))
+			((and c-conditional-key
+			      (looking-at c-conditional-key))
+			 nil)
 			(t
 			 (if (eq (char-after) ?\[)
 			     (setq passed-bracket t))
