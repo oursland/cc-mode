@@ -2340,7 +2340,7 @@ comment at the start of cc-engine.el for more info."
 	(when (c-major-mode-is 'pike-mode)
 	  ;; Handle the `<operator> syntax in Pike.
 	  (let ((pos (point)))
-	    (skip-chars-backward "!%&*+\\-/<=>^|~[]()")
+	    (skip-chars-backward "-!%&*+/<=>^|~[]()")
 	    (and (if (< (skip-chars-backward "`") 0)
 		     t
 		   (goto-char pos)
@@ -2362,7 +2362,7 @@ comment at the start of cc-engine.el for more info."
       (and (c-major-mode-is 'pike-mode)
 	   ;; Handle the `<operator> syntax in Pike.
 	   (let ((pos (point)))
-	     (if (and (< (skip-chars-backward "!%&*+\\-/<=>^|~[]()") 0)
+	     (if (and (< (skip-chars-backward "-!%&*+/<=>^|~[]()") 0)
 		      (< (skip-chars-backward "`") 0)
 		      (looking-at c-symbol-key)
 		      (>= (match-end 0) pos))
@@ -5535,7 +5535,7 @@ comment at the start of cc-engine.el for more info."
 		   (goto-char (1- preceding-token-end))
 		   ;; Essentially the same as the
 		   ;; `c-syntactic-re-search-forward' regexp below.
-		   (c-syntactic-skip-backward "^]:?;}=*/%&|,<>!@+-" nil t)
+		   (c-syntactic-skip-backward "^-]:?;}=*/%&|,<>!@+" nil t)
 		   (let ((pte (point))
 			 ;; If the caller turned on recording for us,
 			 ;; it shouldn't apply when we check the
