@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.68 $
-;; Last Modified:   $Date: 1994-08-30 15:18:52 $
+;; Version:         $Revision: 4.69 $
+;; Last Modified:   $Date: 1994-08-30 15:25:02 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-30 15:18:52 $|$Revision: 4.68 $|
+;; |$Date: 1994-08-30 15:25:02 $|$Revision: 4.69 $|
 
 ;;; Code:
 
@@ -240,8 +240,8 @@ Here is the current list of valid syntactic element symbols:
  brace-list-close       -- close brace of an enum or static array list
  brace-list-intro       -- first line in an enum or static array list
  brace-list-entry       -- subsequent lines in an enum or static array list
- statement              -- a C/C++ statement
- statement-cont         -- a continuation of a C/C++ statement
+ statement              -- a C/C++/ObjC statement
+ statement-cont         -- a continuation of a C/C++/ObjC statement
  statement-block-intro  -- the first line in a new statement block
  statement-case-intro   -- the first line in a case `block'
  statement-case-open    -- the first line in a case block starting with brace
@@ -249,7 +249,7 @@ Here is the current list of valid syntactic element symbols:
  substatement-open      -- the brace that opens a substatement block
  case-label             -- a case or default label
  access-label           -- C++ private/protected/public access label
- label                  -- any non-special C/C++ label
+ label                  -- any non-special C/C++/ObjC label
  do-while-closure       -- the `while' that ends a do/while construct
  else-clause            -- the `else' of an if/else construct
  comment-intro          -- a line containing only a comment introduction
@@ -310,7 +310,7 @@ manually.
     */           */            */             */")
 
 (defvar c-cleanup-list '(scope-operator)
-  "*List of various C/C++ constructs to \"clean up\".
+  "*List of various C/C++/ObjC constructs to \"clean up\".
 These clean ups only take place when the auto-newline feature is turned
 on, as evidenced by the `/a' or `/ah' appearing next to the mode name.
 Valid symbols are:
@@ -534,7 +534,7 @@ your style, only those that are different from the default.")
     ["Backward Statement"     c-beginning-of-statement t]
     ["Forward Statement"      c-end-of-statement t]
     )
-  "XEmacs 19 (formerly Lucid) menu for C/C++ modes.")
+  "XEmacs 19 (formerly Lucid) menu for C/C++/ObjC modes.")
 
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -697,7 +697,7 @@ supported list, along with the values for this variable:
 	(define-key c-mode-map [menu-bar] (make-sparse-keymap))
 
 	(define-key c-mode-map [menu-bar c]
-	  (cons "C/C++" (make-sparse-keymap "C/C++")))
+	  (cons "C/C++/ObjC" (make-sparse-keymap "C/C++/ObjC")))
 
 	(define-key c-mode-map [menu-bar c comment-region]
 	  '("Comment Out Region" . comment-region))
@@ -890,7 +890,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 
 ;; constant regular expressions for looking at various constructs
 (defconst c-symbol-key "\\(\\w\\|\\s_\\)+"
-  "Regexp describing a C/C++ symbol.
+  "Regexp describing a C/C++/ObjC symbol.
 We cannot use just `word' syntax class since `_' cannot be in word
 class.  Putting underscore in word class breaks forward word movement
 behavior that users are familiar with.")
@@ -950,7 +950,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.68 $
+cc-mode Revision: $Revision: 4.69 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -989,7 +989,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.68 $
+cc-mode Revision: $Revision: 4.69 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1026,7 +1026,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.68 $
+cc-mode Revision: $Revision: 4.69 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2900,7 +2900,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 
 
 ;; defuns for calculating the syntactic state and indenting a single
-;; line of C/C++ code
+;; line of C/C++/ObjC code
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
   ;; try to increase performance by using this macro
@@ -3632,7 +3632,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
        offset)))
 
 (defun c-indent-line (&optional syntax)
-  ;; indent the current line as C/C++ code. Optional SYNTAX is the
+  ;; indent the current line as C/C++/ObjC code. Optional SYNTAX is the
   ;; syntactic information for the current line. Returns the amount of
   ;; indentation change
   (let* ((c-syntactic-context (or syntax (c-guess-basic-syntax)))
@@ -4011,7 +4011,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.68 $"
+(defconst c-version "$Revision: 4.69 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4080,7 +4080,7 @@ it trailing backslashes are removed."
 
 ;; menus for XEmacs (formerly Lucid)
 (defun c-popup-menu (e)
-  "Pops up the C/C++ menu."
+  "Pops up the C/C++/ObjC menu."
   (interactive "@e")
   (popup-menu (cons (concat mode-name " Mode Commands") c-mode-menu))
   (c-keep-region-active))
