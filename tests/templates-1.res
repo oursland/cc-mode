@@ -9,7 +9,7 @@
 ((topmost-intro . 73))
 ((topmost-intro-cont . 77))
 ((class-open . 96))
-((inclass . 96) (access-label . 119))
+((inclass . 110) (access-label . 119))
 ((inclass . 110) (topmost-intro . 112))
 ((inclass . 110) (topmost-intro . 120))
 ((class-close . 96))
