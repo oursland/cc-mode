@@ -75,11 +75,8 @@
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
 
-;; On older versions of Emacs, invoking awk-mode will cause the old
-;; awk-mode.el to get loaded.
-; (if (memq 'syntax-properties c-emacs-features) (cc-require 'cc-awk))
-
-;; Avoid warnings for functions defined in cc-awk when it can't be used.
+;; Some functions in cc-awk.el that are called here.  (Can't use
+;; cc-require due to cyclicity.)
 (cc-bytecomp-defun c-awk-unstick-NL-prop)
 (cc-bytecomp-defun c-awk-clear-NL-props)
 (cc-bytecomp-defvar awk-mode-syntax-table)
@@ -4546,6 +4543,11 @@ brace."
 	(backward-char 2)
 	(c-safe (c-backward-sexp 1)))
 
+      ;; If we've stepped over a number then this is a bitfield.
+      (when (and c-opt-bitfield-key
+		 (looking-at "[0-9]"))
+	(throw 'exit nil))
+
       ;; now continue checking
       (c-backward-syntactic-ws limit))
 
@@ -5831,11 +5833,13 @@ brace."
 			 (zerop (c-backward-token-2 1 nil lim))
 			 (eq (char-after) ?<)))))
 	    (goto-char indent-point)
-	    (c-beginning-of-member-init-list lim)
+	    (setq placeholder
+		  (c-beginning-of-member-init-list lim))
 	    (cond
 	     ;; CASE 5D.1: hanging member init colon, but watch out
 	     ;; for bogus matches on access specifiers inside classes.
-	     ((and (save-excursion
+	     ((and placeholder
+		   (save-excursion
 		     (setq placeholder (point))
 		     (c-backward-token-2 1 t lim)
 		     (and (eq (char-after) ?:)
