@@ -473,10 +473,10 @@ Note that the style variables are always made local to the buffer."
 
 (defun c-mode-menu (modestr)
   (let ((m
-	 '(["Comment Out Region"     comment-region (mark)]
+	 '(["Comment Out Region"     comment-region (c-region-is-active-p)]
 	   ["Uncomment Region"
 	    (comment-region (region-beginning) (region-end) '(4))
-	    (mark)]
+	    (c-region-is-active-p)]
 	   ["Fill Comment Paragraph" c-fill-paragraph t]
 	   "---"
 	   ["Indent Expression"      c-indent-exp
@@ -488,8 +488,8 @@ Note that the style variables are always made local to the buffer."
 	   ["Backward Statement"     c-beginning-of-statement t]
 	   ["Forward Statement"      c-end-of-statement t]
 	   "---"
-	   ["Macro Expand Region"    c-macro-expand (mark)]
-	   ["Backslashify"           c-backslash-region (mark)]
+	   ["Macro Expand Region"    c-macro-expand (c-region-is-active-p)]
+	   ["Backslashify"           c-backslash-region (c-region-is-active-p)]
 	   )))
     (cons modestr m)))
 
