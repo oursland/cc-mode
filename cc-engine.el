@@ -2017,11 +2017,17 @@ Keywords are recognized and not considered identifiers."
 			   ;; backward another statement.
 			   (setq stop-at-boi-only t
 				 step-type (c-beginning-of-statement-1
-					    containing-sexp)
-				 boi (c-point 'boi))
-			   (when (eq step-type 'up)
+					    containing-sexp))
+			   ;; Record this a substatement if we skipped
+			   ;; up one level, but not if we're still on
+			   ;; the same line.  This so e.g. a sequence
+			   ;; of "else if" clauses won't indent deeper
+			   ;; and deeper.
+			   (when (and (eq step-type 'up)
+				      (< (point) boi))
 			     (setcdr syms-tail (list 'substatement))
 			     (setq syms-tail (cdr syms-tail)))
+			   (setq boi (c-point 'boi))
 			   (/= (point) savepos))))
 		(setq savepos (point)
 		      at-comment nil))
