@@ -282,6 +282,10 @@ This function does not do any hidden buffer changes."
 
 	 (t (error "Unknown buffer position requested: %s" position))))
 
+    ;; The bulk of this should perhaps be in a function to avoid large
+    ;; expansions, but this case is not used anywhere in CC Mode (and
+    ;; probably not anywhere else either) so we only have it to be on
+    ;; the safe side.
     ;;(message "c-point long expansion")
     `(save-excursion
        ,@(if point `((goto-char ,point)))
