@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.89 $
-;; Last Modified:   $Date: 1993-11-23 19:16:42 $
+;; Version:         $Revision: 3.90 $
+;; Last Modified:   $Date: 1993-11-23 22:06:42 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-23 19:16:42 $|$Revision: 3.89 $|
+;; |$Date: 1993-11-23 22:06:42 $|$Revision: 3.90 $|
 
 ;;; Code:
 
@@ -413,9 +413,9 @@ Emacs.")
     (modify-syntax-entry ?\n "> b"    cc-c++-mode-syntax-table))
    ((memq '1-bit cc-emacs-features)
     ;; FSF19 does things differently, but we can work with it
-    (modify-syntax-entry ?/  ". 124" cc-c++-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23b" cc-c++-mode-syntax-table)
-    (modify-syntax-entry ?\n ">"     cc-c++-mode-syntax-table))
+    (modify-syntax-entry ?/  ". 124b" cc-c++-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"   cc-c++-mode-syntax-table)
+    (modify-syntax-entry ?\n "> b"    cc-c++-mode-syntax-table))
    (t
     ;; Vanilla GNU18 doesn't support mult-style comments.  We'll do
     ;; the best we can, but some strange behavior may be encountered.
@@ -492,7 +492,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.89 $
+  "Major mode for editing C++ code.  $Revision: 3.90 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -522,7 +522,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.89 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.90 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1484,7 +1484,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	   (state (parse-partial-sexp lim (point))))
       (cond
        ((nth 3 state) 'string)
-       ((nth 4 state) (if (nth 7 state) 'c 'c++))
+       ((nth 4 state) (if (nth 7 state) 'c++ 'c))
        ((progn
 	  (goto-char here)
 	  (beginning-of-line)
@@ -2404,7 +2404,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.89 $"
+(defconst cc-version "$Revision: 3.90 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
