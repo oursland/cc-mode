@@ -4,7 +4,7 @@ Martin Stjernholm <mailto:bug-cc-mode@gnu.org>
 
 This message announces the availability of a new version of CC Mode,
 an Emacs and XEmacs mode for editing C (ANSI and K&R), C++,
-Objective-C, Java, CORBA's IDL, and Pike code.
+Objective-C, Java, CORBA's IDL, Pike and AWK code.
 
 A list of user visible changes is detailed in the NEWS file and in the
 URL listed below.  More information, including links to download the
