@@ -278,7 +278,7 @@
   ;; Note: Some emacsen considers incorrectly that any line comment
   ;; ending with a backslash continues to the next line.  I can't
   ;; think of any way to work around that in a reliable way without
-  ;; changing the buffer though.  Suggestions welcome. ;)
+  ;; changing the buffer, though.  Suggestions welcome. ;)
   ;;
   ;; Another note: When moving backwards over a block comment, there's
   ;; a bug in forward-comment that can make it stop at "/*" inside a
@@ -287,12 +287,16 @@
   (let ((here (point)))
     (if (>= count 0)
 	(when (forward-comment count)
-	  ;; Emacs includes the ending newline in a b-style (c++)
-	  ;; comment, but XEmacs doesn't.  We depend on the Emacs
-	  ;; behavior (which also is symmetric).
-	  (if (and (eolp) (nth 7 (parse-partial-sexp here (point))))
-	      (condition-case nil (forward-char 1)))
-	  t)
+	  (if (eobp)
+	      ;; Some emacsen (e.g. XEmacs 21) return t when moving
+	      ;; forwards at eob.
+	      nil
+	    ;; Emacs includes the ending newline in a b-style (c++)
+	    ;; comment, but XEmacs doesn't.  We depend on the Emacs
+	    ;; behavior (which also is symmetric).
+	    (if (and (eolp) (nth 7 (parse-partial-sexp here (point))))
+		(condition-case nil (forward-char 1)))
+	    t))
       ;; When we got newline terminated comments,
       ;; forward-comment in all supported emacsen so far will
       ;; stop at eol of each line not ending with a comment when
