@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.267 $
-;; Last Modified:   $Date: 1996-01-18 23:55:17 $
+;; Version:         $Revision: 4.268 $
+;; Last Modified:   $Date: 1996-01-19 04:17:11 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -111,7 +111,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-18 23:55:17 $|$Revision: 4.267 $|
+;; |$Date: 1996-01-19 04:17:11 $|$Revision: 4.268 $|
 
 ;;; Code:
 
@@ -563,6 +563,13 @@ automatically.
 
 Note that file offset settings are applied after file style settings
 as designated in the variable `c-file-style'.")
+
+(defvar c-site-default-style "gnu"
+  "Default style for your site.
+To change the default style at your site, you can set this variable to
+any style defined in `c-style-alist'.  However, if cc-mode is usually
+loaded into your Emacs at compile time, you will need to set this
+variable in the `site-init.el' file and re-dump Emacs.")
 
 (defvar c-mode-hook nil
   "*Hook called by `c-mode'.")
@@ -4787,7 +4794,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.267 $"
+(defconst c-version "$Revision: 4.268 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
@@ -4918,7 +4925,7 @@ definition and conveniently use this command."
 			     )))
       ;; the default style is now GNU.  This can be overridden in
       ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
-      (c-set-style "gnu")))
+      (c-set-style c-site-default-style)))
 
 ;; style variables
 (make-variable-buffer-local 'c-offsets-alist)
