@@ -1599,7 +1599,11 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 	(goto-char 1)
 	(c-forward-sexp)
 	(if (= (point) 5)
-	    (setq list (cons 'syntax-properties list)))
+	    (setq list (cons 'syntax-properties list))
+	  (error (concat
+		  "CC Mode is incompatible with this version of Emacs - "
+		  "support for the `syntax-table' text property "
+		  "is required.")))
 
 	;; Find out if generic comment delimiters work.
 	(c-safe
