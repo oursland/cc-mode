@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.327 $
-;; Last Modified:   $Date: 1996-12-03 17:07:18 $
+;; Version:         $Revision: 4.328 $
+;; Last Modified:   $Date: 1996-12-10 20:32:21 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1138,6 +1138,8 @@ behavior that users are familiar with.")
 ;; defconst'd instead of defvar'd to override any old pre-loaded versions
 (defconst c-recognize-knr-p t
   "Non-nil means K&R style argument declarations are valid.")
+(defconst c-buffer-style "gnu"
+  "Name of style installed in the current buffer.")
 
 ;; minor mode variables
 (make-variable-buffer-local 'c-auto-newline)
@@ -1152,6 +1154,7 @@ behavior that users are familiar with.")
 (make-variable-buffer-local 'c-double-slash-is-comments-p)
 (make-variable-buffer-local 'c-baseclass-key)
 (make-variable-buffer-local 'c-recognize-knr-p)
+(make-variable-buffer-local 'c-buffer-style)
 ;; style variables are made buffer local at tail end of this file.
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
@@ -2360,6 +2363,7 @@ for details of setting up styles."
     ;; first reset the style to `cc-mode' to give every style a common
     ;; base. Then institute the new style.
     (c-set-style-1 default)
+    (setq c-buffer-style stylename)
     (if (not (string= stylename "cc-mode"))
 	(c-set-style-1 vars)))
   (c-keep-region-active))
@@ -5022,7 +5026,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.327 $"
+(defconst c-version "$Revision: 4.328 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
