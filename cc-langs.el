@@ -179,10 +179,6 @@
 (defvar c-auto-hungry-string nil)
 (make-variable-buffer-local 'c-auto-hungry-string)
 
-;; Buffer local language-specific comment style flag.
-(defvar c-double-slash-is-comments-p nil)
-(make-variable-buffer-local 'c-double-slash-is-comments-p)
-
 ;; Non-nil means K&R style argument declarations are valid.
 (defvar c-recognize-knr-p t)
 (make-variable-buffer-local 'c-recognize-knr-p)
