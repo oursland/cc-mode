@@ -20,8 +20,8 @@ void|int foo (mapping(int:string) test)
 		  (object a,
 		   int b)
 	      {write (foo);
-	      a = catch
-		  {write (foo);};});
+		  a = catch
+		      {write (foo);};});
     string *paths = filter (
 	mac->pp_get_handles(),
 	lambda (string from) {

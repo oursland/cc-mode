@@ -2,7 +2,7 @@ void
 f(void)
 { 
     { b;
-    c;
-    d;
+	c;
+	d;
     }
 }
