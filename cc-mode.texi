@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.22 $
+@comment manual version: $Revision: 2.23 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-06-08 00:17:40 $
+@comment Last modification: $Date: 1995-06-13 23:38:33 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.22 $)
+@center (manual revision: $Revision: 2.23 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -2001,8 +2001,335 @@ that represent these lines will contain the suffix @code{-intro} or
 line which is the first of a particular brace block construct will
 contain the suffix @code{-block-intro}.
 
-@strong{<TBD> include the name and a brief example of every syntactic
-symbol currently recognized}
+@kindex C-c C-s
+Let's look at some examples to understand how this works.  Remember that
+you can check the syntax of any line by using @kbd{C-c C-s}.
+@example
+@group
+
+  1: void
+  2: swap( int& a, int& b )
+  3: @{
+  4:     int tmp = a;
+  5:     a = b;
+  6:     b = tmp;
+  7: @}
+
+@end group
+@end example
+
+Line 1 shows a @code{topmost-intro} since it is the first line that
+introduces a top-level construct.  Line 2 is a continuation of the
+top-level construct introduction so it has the syntax
+@code{topmost-intro-cont}.  Line 3 shows a @code{defun-open} since it is
+the brace that opens a top-level function definition.  Similar, line 7
+is a @code{defun-close} since it contains the brace that closes the
+top-level function definition.  Line 4 is a @code{defun-block-intro},
+i.e. it is the first line of a brace-block, which happens to be enclosed
+in a top-level function definition.
+
+Lines 5 and 6 are both of @code{statement} syntax since there isn't much
+special about them.
+
+Here's another example, which illustrates some C++ class syntactic
+symbols:
+@example
+@group
+
+   1: class Bass
+   2:     : public Guitar,
+   3:       public Amplifiable
+   4: @{
+   5: public:
+   6:     Bass()
+   7:         : eString( new BassString( 0.105 )),
+   8:           aString( new BassString( 0.085 )),
+   9:           dString( new BassString( 0.065 )),
+  10:           gString( new BassString( 0.045 ))
+  11:     @{
+  12:         eString.tune( 'E' );
+  13:         aString.tune( 'A' );
+  14:         dString.tune( 'D' );
+  15:         gString.tune( 'G' );
+  16:     @}
+  17: @}
+
+@end group
+@end example
+
+As in the example above, line 1 has the @code{topmost-intro} syntax.
+Here however, the brace that opens a C++ class definition on line 4 is
+assigned the @code{class-open}.  Note that in C++, structs and unions
+are essentially equivalent syntactically (and very similar
+semantically), replacing the keyword @code{class} in the example above
+with @code{struct} or @code{union} would still result in a syntax of
+@code{class-open} for line 4 @footnote{This is the case even for C and
+Objective-C.  For consistency, structs in all three languages are
+syntactically equivalent to classes.  Note however that the keyword
+@code{class} is meaningless in C and Objective-C}.  Similarly, line 17
+is assigned @code{class-close} syntax.
+
+Line 2 introduces the inheritance list for the class so it is assigned
+the @code{inher-intro} syntax, and line 3, which continues the
+inheritance list is given @code{inher-cont} syntax.
+
+Things get interesting at line 5.  The primary syntactic symbol for this
+line is @code{access-label} since this a label keyword that specifies
+access protection in C++.  However, this line actually shows two
+syntactic symbols when you hit @kbd{C-c C-s}.  This is because it is
+also a top-level construct inside a class definition.  Thus the other
+syntactic symbol assigned to this line is @code{inclass}.  Similarly,
+line 6 is given both @code{inclass} and @code{topmost-intro} syntax.
+
+Line 7 introduces a C++ member initialization list and as such is given
+@code{member-init-intro} syntax.  Note that in this case it is
+@emph{not} assigned @code{inclass} since this is not considered a
+top-level construct.  Lines 8 through 10 are all assigned
+@code{member-init-cont} since they continue the member initialization
+list started on line 7.
+
+@cindex in-class inline methods
+Line 11 is assigned @code{inline-open} because it opens an @dfn{in-class}
+C++ inline method definition.  This is distinct from, but related to,
+the C++ notion of an inline function in that it's definition occurs
+inside an enclosing class definition.  For example, if the definition of
+the @code{Bass} constructor appeared outside the class definition, line
+11 would be given the @code{defun-open} syntax, even if the keyword
+@code{inline} appeared before the method name, as in:
+@example
+@group
+
+inline
+Bass::Bass()
+    : eString( new BassString( 0.105 )),
+      aString( new BassString( 0.085 )),
+      dString( new BassString( 0.065 )),
+      gString( new BassString( 0.045 ))
+@{
+    eString.tune( 'E' );
+    aString.tune( 'A' );
+    dString.tune( 'D' );
+    gString.tune( 'G' );
+@}
+
+@end group
+@end example
+
+@noindent
+Similarly, line 16 is given @code{inline-close} syntax.
+
+As in the first example above, line 12 is given @code{defun-block-open}
+syntax and lines 13 through 15 are all given @code{statement} syntax.
+
+Here is another (totally contrived) example which illustrates how syntax
+is assigned to various conditional constructs:
+@example
+@group
+
+   1: void spam( int index )
+   2: @{
+   3:     for( int i=0; i<index; i++ )
+   4:     @{
+   5:         if( i == 10 )
+   6:         @{
+   7:             do_something_special();
+   8:         @}
+   9:         else
+  10:             do_something( i );
+  11:     @}
+  12:     do @{
+  13:         another_thing( i-- );
+  14:     @}
+  15:     while( i > 0 );
+  16: @}
+
+
+@end group
+@end example
+
+@noindent
+Only the lines that illustrate new syntactic symbols will be discussed.
+
+Line 4 has a brace which opens a conditional's substatement block.  It
+is thus assigned the @code{substatement-open}, and since line 5 is the
+first line in the substatement block, it is assigned
+@code{substatement-block-intro} syntax.  Lines 6 and 7 are assigned
+similar syntax.  Line 8 contains the brace that closes this substatement
+block.  It is given the generic syntax @code{block-close}, as are lines
+11 and 14.
+
+Line 9 is a little different -- since it contains the keyword
+@code{else} matching the @code{if} statement introduced on line 5, it is
+given the special syntax @code{else-clause}.  Note also that line 10 is
+slightly different too.  Because @code{else} is considered a conditional
+introducing keyword, @footnote{The list of conditional keywords are (in
+C, Objective-C and C++): @code{for}, @code{if}, @code{do}, @code{else},
+@code{while}, and @code{switch}.  C++ has two additional conditional
+keywords: @code{try} and @code{catch}.} and because the following
+substatement is not a brace block, line 10 is assigned the syntax
+@code{statement}.
+
+One other difference is seen on line 15.  The @code{while} construct
+that closes a @code{do} conditional is given the special syntax
+@code{do-while-closure} if it appears on a line by itself.  Note that if
+the @code{while} appeared on the same line as the preceding close brace,
+that line would have been assigned @code{block-close} syntax instead.
+
+Switch statements have their own set of syntactic symbols.  Here's an
+example:
+@example
+@group
+
+   1: void spam( enum Ingredient i )
+   2: @{
+   3:     switch( i ) @{
+   4:     case Ham:
+   5:         be_a_pig();
+   6:         break;
+   7:     case Salt:
+   8:         drink_some_water();
+   9:         break;
+  10:     default:
+  11:         @{
+  12:             throw_up();
+  13:             break;
+  14:         @}
+  15:     @}
+  14: @}
+
+@end group
+@end example
+
+Here, lines 4, 7, and 10 are all assigned @code{case-label} syntax,
+while lines 5 and 8 are assigned @code{statement-case-intro}.  Line 11
+is treated slightly differently since it contains a brace that opens a
+block -- it is given @code{statement-case-open} syntax.
+
+@cindex brace lists
+There are a set of syntactic symbols that are used to recognize
+constructs inside of brace lists.  A brace list is defined as an
+@code{enum} or aggregate initializer list, such as might statically
+initialize an array of structs.  For example:
+@example
+@group
+
+  1: static char* ingredients[] =
+  2: @{
+  3:     "Ham",
+  4:     "Salt",
+  5:     NULL
+  6: @}
+
+@end group
+@end example
+
+Following convention, line 2 in this example is assigned
+@code{brace-list-open} syntax, and line 3 is assigned
+@code{brace-list-intro} syntax.  Likewise, line 6 is assigned
+@code{brace-list-close} syntax.  Lines 4 and 5 however, are assigned
+@code{brace-list-entry} syntax, as would all subsequent lines in this
+initializer list.
+
+@strong{<TBD: arglist-intro, arglist-cont, arglist-cont-nonempty,
+arglist-close}
+
+A few miscellaneous syntactic symbols that haven't been previously
+covered are illustrated by this example:
+@example
+@group
+
+   1: void Bass::play( int volume )
+   2: const
+   3: @{
+   4:     /* this line starts a multi-line
+   5:      * comment.  This line should get `c' syntax */
+   6: 
+   7:     char* a_long_multiline_string = "This line starts a multi-line \
+   8: string.  This line should get `string' syntax.";
+   9: 
+  10:   note:
+  11:     @{
+  12: #ifdef LOCK
+  13:         Lock acquire();
+  14: #endif // LOCK
+  15:         slap_pop();
+  16:         cout << "I played "
+  17:              << "a note\n";
+  18:     @}
+  19: @}
+
+@end group
+@end example
+
+@cindex modifier syntactic symbol
+The lines to note in this example include:
+
+@itemize @bullet
+
+@item
+line 2 which is assigned the @code{ansi-funcdecl-cont} syntax;
+
+@item
+line 4 which is assigned both @code{defun-block-intro} @emph{and}
+@code{comment-intro} syntax @footnote{The @code{comment-intro} syntactic
+symbol is known generically as a @dfn{modifier} since it always appears
+on a syntactic analysis list with other symbols, and never has a
+relative buffer position.};
+
+@item
+line 5 which is assigned @code{c} syntax;
+
+@item
+@cindex syntactic whitespace
+line 6 which, even though it contains nothing but whitespace, is
+assigned @code{defun-block-intro}.  Note that the appearance of the
+comment on lines 4 and 5 do not cause line 6 to be assigned
+@code{statement} syntax because comments are considered to be
+@dfn{syntactic whitespace}, which are essentially ignored when analyzing
+code.
+
+@item
+line 8 which is assigned @code{string} syntax;
+
+@item
+line 10 which is assigned @code{label} syntax;
+
+@item
+line 11 which is assigned @code{block-open} syntax;
+
+@item
+lines 12 and 14 which are assigned @code{cpp-macro} syntax;
+
+@item
+line 17 which is assigned @code{stream-op} syntax @footnote{in C++ only}.
+
+@end itemize
+
+In Objective-C buffers, there are three additional syntactic symbols
+assigned to various message calling constructs.  Here's an example
+illustrating these:
+@example
+@group
+
+  1: - (void)setDelegate:anObject
+  2:           withStuff:stuff
+  3: @{
+  4:     [delegate masterWillRebind:self
+  5:               toDelegate:anObject
+  6:               withExtraStuff:stuff];
+  7: @}
+
+@end group
+@end example
+
+Here, line 1 is assigned @code{objc-method-intro} syntax, and line 2 is
+assigned @code{objc-method-args-cont} syntax.  Lines 5 and 6 are both
+assigned @code{objc-method-call-cont} syntax.
+
+Other syntactic symbols may be recognized by @code{cc-mode}, but these
+are more obscure and so I haven't included examples of them.  These
+include: @code{knr-argdecl-intro}, @code{knr-argdecl}, and the
+@code{friend} modifier.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Performance Issues, Frequently Asked Questions, Syntactic Symbols, Top
