@@ -4643,8 +4643,8 @@ brace."
       nil)))
 
 (defun c-beginning-of-member-init-list (&optional limit)
-  ;; Goes to the beginning of a member init list (i.e. just after the
-  ;; ':') if inside one.  Returns t in that case, nil otherwise.
+  ;; Go to the beginning of a member init list (i.e. just after the ":")
+  ;; if inside one.  Returns t in that case, nil otherwise.
   (or limit
       (setq limit (point-min)))
   (skip-chars-forward " \t")
@@ -4656,15 +4656,15 @@ brace."
   (catch 'exit
     (while (and (< limit (point))
 		(eq (char-before) ?,))
+      (forward-char -1)
+      (c-backward-syntactic-ws limit)
 
       ;; this will catch member inits with multiple
       ;; line arglists
-      (forward-char -1)
-      (c-backward-syntactic-ws limit)
-      (if (eq (char-before) ?\))
-	  (unless (c-safe (c-backward-sexp 1))
-	    (throw 'exit nil)))
-      (c-backward-syntactic-ws limit)
+      (when (eq (char-before) ?\))
+	(unless (c-safe (c-backward-sexp 1))
+	  (throw 'exit nil))
+	(c-backward-syntactic-ws limit))
 
       ;; Skip over any template arg to the class.  This way with a
       ;; syntax table is bogus but it'll have to do for now.
@@ -4673,21 +4673,22 @@ brace."
 	  (c-with-syntax-table c++-template-syntax-table
 	    (unless (c-safe (c-backward-sexp 1))
 	      (throw 'exit nil))))
-      (c-safe (c-backward-sexp 1))
-      (c-backward-syntactic-ws limit)
 
-      ;; Skip backwards over a fully::qualified::name.
-      (while (and (eq (char-before) ?:)
-		  (save-excursion
-		    (forward-char -1)
-		    (eq (char-before) ?:)))
-	(backward-char 2)
-	(c-safe (c-backward-sexp 1)))
+      ;; The identifier.
+      (c-safe (c-backward-sexp 1))
 
       ;; If we've stepped over a number then this is a bitfield.
       (when (and c-opt-bitfield-key
 		 (looking-at "[0-9]"))
 	(throw 'exit nil))
+
+      ;; Skip backwards over a fully::qualified::name.
+      (c-backward-syntactic-ws limit)
+      (while (and (eq (char-before) ?:)
+		  (save-excursion
+		    (forward-char -1)
+		    (eq (char-before) ?:)))
+	(c-safe (c-backward-sexp 1)))
 
       ;; now continue checking
       (c-backward-syntactic-ws limit))
@@ -6005,27 +6006,19 @@ This function does not do any hidden buffer changes."
 	      (save-excursion
 		;; Note: We use the fact that lim is always after any
 		;; preceding brace sexp.
-		(while (and (zerop (c-backward-token-2 1 t lim))
-			    (not (looking-at "[;,=]"))))
-		(or (memq (char-after) '(?, ?=))
+		(c-syntactic-skip-backward "^;,=" lim t)
+		(or (memq (char-before) '(?, ?=))
 		    (and (c-major-mode-is 'c++-mode)
-			 (zerop (c-backward-token-2 1 nil lim))
-			 (eq (char-after) ?<)))))
-	    (goto-char indent-point)
-	    (setq placeholder
-		  (c-beginning-of-member-init-list lim))
+			 (progn
+			   (c-backward-syntactic-ws)
+			   (eq (char-before) ?<))))))
 	    (cond
 
 	     ;; CASE 5D.1: hanging member init colon, but watch out
 	     ;; for bogus matches on access specifiers inside classes.
-	     ((and placeholder
+	     ((and (c-beginning-of-member-init-list lim)
 		   (save-excursion
 		     (setq placeholder (point))
-		     (c-backward-token-2 1 t lim)
-		     (and (eq (char-after) ?:)
-			  (not (eq (char-before) ?:))))
-		   (save-excursion
-		     (goto-char placeholder)
 		     (back-to-indentation)
 		     (or
 		      (/= (car (save-excursion
