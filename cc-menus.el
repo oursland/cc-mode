@@ -114,7 +114,7 @@
 	   ["Macro Expand Region"    c-macro-expand (mark)]
 	   ["Backslashify"           c-backslash-region (mark)]
 	   ["Indent Expression"      c-indent-exp
-	    (memq (following-char) '(?\( ?\[ ?\{))]
+	    (memq (char-after) '(?\( ?\[ ?\{))]
 	   ["Indent Line"            c-indent-command t]
 	   ["Fill Comment Paragraph" c-fill-paragraph t]
 	   ["Up Conditional"         c-up-conditional t]

@@ -72,7 +72,7 @@
 		 (- (current-column) langelem-col))
 	(goto-char containing-sexp)
 	(or (eolp)
-	    (not (memq (following-char) '(?{ ?\( )))
+	    (not (memq (char-after) '(?{ ?\( )))
 	    (let ((eol (c-point 'eol))
 		  (here (progn
 			  (forward-char 1)
@@ -225,7 +225,7 @@
 (defun c-lineup-runin-statements (langelem)
   ;; line up statements in coding standards which place the first
   ;; statement on the same line as the block opening brace.
-  (if (= (char-after (cdr langelem)) ?{)
+  (if (eq (char-after (cdr langelem)) ?{)
       (save-excursion
 	(let ((langelem-col (c-langelem-col langelem)))
 	  (forward-char 1)
@@ -239,7 +239,7 @@
     (let ((equalp (save-excursion
 		    (goto-char (c-point 'boi))
 		    (skip-chars-forward "^=" (c-point 'eol))
-		    (and (= (following-char) ?=)
+		    (and (eq (char-after) ?=)
 			 (- (point) (c-point 'boi)))))
 	  (langelem-col (c-langelem-col langelem))
 	  donep)
@@ -249,7 +249,7 @@
 	(if (c-in-literal (cdr langelem))
 	    (forward-char 1)
 	  (setq donep t)))
-      (if (/= (following-char) ?=)
+      (if (not (eq (char-after) ?=))
 	  ;; there's no equal sign on the line
 	  c-basic-offset
 	;; calculate indentation column after equals and ws, unless
@@ -273,7 +273,7 @@
     (let* ((extra (save-excursion
 		    (back-to-indentation)
 		    (c-backward-syntactic-ws (cdr langelem))
-		    (if (= (preceding-char) ?:)
+		    (if (eq (char-before) ?:)
 			(- c-basic-offset)
 		      0)))
 	   (open-bracket-pos (cdr langelem))
@@ -301,13 +301,13 @@
 	   (first-col-column (progn
 			       (goto-char relpos)
 			       (skip-chars-forward "^:" eol)
-			       (and (= (following-char) ?:)
+			       (and (eq (char-after) ?:)
 				    (current-column)))))
       (if (not first-col-column)
 	  c-basic-offset
 	(goto-char here)
 	(skip-chars-forward "^:" eol)
-	(if (= (following-char) ?:)
+	(if (eq (char-after) ?:)
 	    (+ curcol (- first-col-column (current-column)))
 	  c-basic-offset)))))
 
@@ -321,13 +321,13 @@
 	   (relpos (cdr langelem))
 	   (prev-col-column (progn
 			      (skip-chars-backward "^:" relpos)
-			      (and (= (preceding-char) ?:)
+			      (and (eq (char-before) ?:)
 				   (- (current-column) 1)))))
       (if (not prev-col-column)
 	  c-basic-offset
 	(goto-char here)
 	(skip-chars-forward "^:" eol)
-	(if (= (following-char) ?:)
+	(if (eq (char-after) ?:)
 	    (+ curcol (- prev-col-column (current-column)))
 	  c-basic-offset)))))
 
@@ -343,7 +343,7 @@ ACTION associated with `block-close' syntax."
       (if (and (eq syntax 'block-close)
 	       (setq langelem (assq 'block-close c-syntactic-context))
 	       (progn (goto-char (cdr langelem))
-		      (if (= (following-char) ?{)
+		      (if (eq (char-after) ?{)
 			  (c-safe (forward-sexp -1)))
 		      (looking-at "\\<do\\>[^_]")))
 	  '(before)
@@ -385,12 +385,12 @@ newline is added.  In either case, checking is stopped.  This supports
 exactly the old newline insertion behavior."
   ;; newline only after semicolon, but only if that semicolon is not
   ;; inside a parenthesis list (e.g. a for loop statement)
-  (if (/= last-command-char ?\;)
+  (if (not (eq last-command-char ?\;))
       nil				; continue checking
     (if (condition-case nil
 	    (save-excursion
 	      (up-list -1)
-	      (/= (following-char) ?\())
+	      (not (eq (char-after) ?\()))
 	  (error t))
 	t
       'stop)))
