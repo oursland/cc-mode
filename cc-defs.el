@@ -366,6 +366,54 @@ continuations."
 	 `lookup-syntax-properties)
 	(t nil)))
 
+(defmacro c-clear-char-syntax (pos)
+  ;; Remove any syntax-table property at POS.
+  (if (fboundp 'make-extent)
+      ;; XEmacs.
+      `(let ((ext (extent-at ,pos nil 'syntax-table)))
+	 (if ext (delete-extent ext)))
+    ;; Emacs way.
+    `(let ((pos ,pos))
+       ,(if (boundp 'text-property-default-nonsticky)
+	    ;; In Emacs 21 we got the rear-nonsticky property covered
+	    ;; by `text-property-default-nonsticky'.
+	    `(remove-text-properties pos (1+ pos) '(syntax-table nil))
+	  ;; In Emacs 20 we have to mess with the rear-nonsticky property.
+	  `(when (get-text-property pos 'syntax-table)
+	     (remove-text-properties pos (1+ pos) '(syntax-table nil))
+	     (put-text-property pos (1+ pos)
+				'rear-nonsticky
+				(delq 'syntax-table
+				      (get-text-property
+				       pos 'rear-nonsticky))))))))
+
+(defmacro c-put-char-syntax (pos syntax)
+  ;; Put a syntax-table property at POS and make it front and rear
+  ;; nonsticky (or start and end open in XEmacs vocabulary).
+  (cond ((fboundp 'make-extent)
+	 ;; XEmacs.
+	 `(let ((pos ,pos))
+	    (set-extent-properties (make-extent pos (1+ pos))
+				   (list 'syntax-table ,syntax
+					 'start-open t
+					 'end-open t))))
+	((boundp 'text-property-default-nonsticky)
+	 ;; In Emacs 21 we got the rear-nonsticky property covered
+	 ;; by `text-property-default-nonsticky'.
+	 `(let ((pos ,pos))
+	    (put-text-property pos (1+ pos)
+			       'syntax-table ,syntax)))
+	(t
+	 ;; In Emacs 20 we have to mess with the rear-nonsticky property.
+	 `(let* ((pos ,pos)
+		 (prop (get-text-property pos 'rear-nonsticky)))
+	    (put-text-property pos (1+ pos)
+			       'syntax-table ,syntax)
+	    (or (memq 'syntax-table prop)
+		(put-text-property pos (1+ pos)
+				   'rear-nonsticky
+				   (cons 'syntax-table prop)))))))
+
 (eval-when-compile
   ;; Used at compile time to get the right definition in
   ;; `c-put-font-lock-face'.  Not required anywhere except in
@@ -476,14 +524,6 @@ continuations."
     (if (< (point) start)
 	(goto-char (point-max)))))
 
-(defsubst c-clear-char-syntax (pos)
-  ;; Remove any syntax-table property at POS.
-  (when (get-text-property pos 'syntax-table)
-    (remove-text-properties pos (1+ pos) '(syntax-table nil))
-    (put-text-property pos (1+ pos) 'rear-nonsticky
-		       (delq 'syntax-table
-			     (get-text-property pos 'rear-nonsticky)))))
-
 (defconst c-template-open-syntax '(4 . ?>))
 
 (defsubst c-mark-template-open (pos)
@@ -491,11 +531,7 @@ continuations."
   ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
   ;; doesn't support syntax properties, so this function might not
   ;; have any effect.
-  (put-text-property pos (1+ pos) 'syntax-table c-template-open-syntax)
-  (let ((nonsticky-prop (get-text-property pos 'rear-nonsticky)))
-    (or (memq 'syntax-table nonsticky-prop)
-	(put-text-property pos (1+ pos) 'rear-nonsticky
-			   (cons 'syntax-table nonsticky-prop)))))
+  (c-put-char-syntax pos c-template-open-syntax))
 
 (defconst c-template-close-syntax '(5 . ?<))
 
@@ -504,11 +540,7 @@ continuations."
   ;; syntax-table property.  Note that Emacs 19 and XEmacs <= 20
   ;; doesn't support syntax properties, so this function might not
   ;; have any effect.
-  (put-text-property pos (1+ pos) 'syntax-table c-template-close-syntax)
-  (let ((nonsticky-prop (get-text-property pos 'rear-nonsticky)))
-    (or (memq 'syntax-table nonsticky-prop)
-	(put-text-property pos (1+ pos) 'rear-nonsticky
-			   (cons 'syntax-table nonsticky-prop)))))
+  (c-put-char-syntax pos c-template-close-syntax))
 
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
