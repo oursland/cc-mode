@@ -4,7 +4,7 @@ Author: bwarsaw@python.org
 <h1>CC Mode Changes</h1>
 
 The <a href="../index.html">current release</a> is version 4.322.
-Here's what's changed since the last release (version 4.282):
+Here's what's changed since the version 4.282, last public release:
 
 <UL>
 
@@ -13,7 +13,7 @@ Here's what's changed since the last release (version 4.282):
 <li>The following variables have been removed from the default
 <em>cc-mode</em> style:
     <ul><li><tt>c-echo-syntactic-information-p</tt>
-	<li><tt>c-string-syntax-p</tt>
+	<li><tt>c-strict-syntax-p</tt>
 	<li><tt>c-tab-always-indent</tt>
 	<li><tt>c-inhibit-startup-warnings-p</tt>
     </ul>
