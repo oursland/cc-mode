@@ -303,21 +303,21 @@ preferably use the `c-mode-menu' language constant directly."
   ;; these caches from inside them, and we must thus be sure that this
   ;; has already been executed.
   ;;
-  ;; This function can make hidden buffer changes to clear caches.
-  ;; It's not a problem since a nonhidden change is done anyway.
+  ;; This function does not do any hidden buffer changes.
 
-  (when (> end (point-max))
-    ;; Some emacsen might return positions past the end. This has been
-    ;; observed in Emacs 20.7 when rereading a buffer changed on disk
-    ;; (haven't been able to minimize it, but Emacs 21.3 appears to
-    ;; work).
-    (setq end (point-max))
-    (when (> beg end)
-      (setq beg end)))
+  (c-save-buffer-state ()
+    (when (> end (point-max))
+      ;; Some emacsen might return positions past the end. This has been
+      ;; observed in Emacs 20.7 when rereading a buffer changed on disk
+      ;; (haven't been able to minimize it, but Emacs 21.3 appears to
+      ;; work).
+      (setq end (point-max))
+      (when (> beg end)
+	(setq beg end)))
 
-  (c-invalidate-sws-region-after beg end)
-  (c-invalidate-state-cache beg)
-  (c-invalidate-find-decl-cache beg))
+    (c-invalidate-sws-region-after beg end)
+    (c-invalidate-state-cache beg)
+    (c-invalidate-find-decl-cache beg)))
 
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines
