@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.197 $
-;; Last Modified:   $Date: 1992-09-28 21:44:53 $
+;; Version:         $Revision: 2.198 $
+;; Last Modified:   $Date: 1992-09-28 21:46:09 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -121,11 +121,10 @@
 ;; releases, get on the victims list -- but be forewarned, you should
 ;; be elisp and C++ fluent, and should have anon-ftp access.
 
-;; LCD Archive Entry
-;; =================
+;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-09-28 21:44:53 $|$Revision: 2.197 $|
+;; |$Date: 1992-09-28 21:46:09 $|$Revision: 2.198 $|
 
 ;;; Code:
 
@@ -377,7 +376,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.197 $
+  "Major mode for editing C++ code.  $Revision: 2.198 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -584,7 +583,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.197 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.198 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2188,7 +2187,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.197 $"
+(defconst c++-version "$Revision: 2.198 $"
   "c++-mode version number.")
 
 (defun c++-version ()
