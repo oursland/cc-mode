@@ -321,7 +321,8 @@ then restore the buffer state under the assumption that no significant
 modification has been made.  A change is considered significant if it
 affected the buffer text in any way that wasn't completely restored
 again.  Changes in text properties like `face' or `syntax-table' are
-considered insignificant.
+considered insignificant.  This macro allows text-properties to be
+changed, even in a read-only buffer.
 
 The return value is the value of the last form in BODY."
   `(let* (,@(append '((modified (buffer-modified-p)) (buffer-undo-list t)
