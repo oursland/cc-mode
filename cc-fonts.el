@@ -737,7 +737,7 @@ tools (e.g. Javadoc).")
 ;; `c-fl-decl-syntactic-pos', or nil if there's no such match.
 
 (defmacro c-fl-decl-prefix-search ()
-  '(while (and (setq match (re-search-forward c-decl-prefix-re limit 'move))
+  '(while (and (setq match (re-search-forward c-decl-prefix-re nil 'move))
 	       (if (memq (get-text-property (setq match-pos (1- (point)))
 					    'face)
 			 '(font-lock-comment-face font-lock-string-face))
@@ -749,7 +749,7 @@ tools (e.g. Javadoc).")
 		 nil))
      ;; Search again if the match is within a comment or a string
      ;; literal.
-     (goto-char (next-single-property-change match-pos 'face nil limit))))
+     (goto-char (next-single-property-change match-pos 'face nil (point-max)))))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
@@ -831,7 +831,15 @@ tools (e.g. Javadoc).")
       ;; declaration that spans to the next line.  This way the
       ;; statement isn't annoyingly flashed as a type while it's being
       ;; entered.
-      (narrow-to-region (point-min) limit)
+      (narrow-to-region
+       (point-min)
+       (save-excursion
+	 ;; Narrow after any operator chars following the limit though, since
+	 ;; those characters can be useful in recognizing a declaration (in
+	 ;; particular the '{' that opens a function body after the header).
+	 (goto-char limit)
+	 (skip-chars-forward "^_a-zA-Z0-9$")
+	 (point)))
 
       ;; Must back up a bit since we look for the end of the previous
       ;; statement or declaration, which is earlier than the first
@@ -1176,8 +1184,8 @@ tools (e.g. Javadoc).")
 				(and got-parens got-prefix)
 				(and got-parens got-suffix))
 			;; Found no identifier.  If the type is known we know
-			;; that there can't be any identifier somewhere, and
-			;; it's only in declarations in e.g. function
+			;; that there can't be any identifier somewhere else,
+			;; and it's only in declarations in e.g. function
 			;; prototypes and in casts that the identifier may be
 			;; left out.
 			;;
