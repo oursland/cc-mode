@@ -273,7 +273,7 @@ it finds in `c-file-offsets'."
 
 
 ;; Common routines
-(defsubst c-make-inherited-keymap ()
+(defun c-make-inherited-keymap ()
   (let ((map (make-sparse-keymap)))
     (cond
      ;; XEmacs 19 & 20
