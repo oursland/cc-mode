@@ -1630,13 +1630,19 @@ brace."
       ;; want to continue if the block doesn't begin a top level
       ;; construct, i.e. if it isn't preceded by ';', '}', ':', or bob.
       (let ((beg (point)) tentative-move)
-	(while (and (/= last-stmt-start (point))
-		    (progn
-		      (c-backward-syntactic-ws lim)
-		      (not (memq (char-before) '(?\; ?} ?: nil))))
-		    (not (eq (setq tentative-move
-				   (c-beginning-of-statement-1 lim t t))
-			     'macro)))
+	(while (and
+		;; Must check with c-opt-method-key in ObjC mode.
+		(not (and c-opt-method-key
+			  (looking-at c-opt-method-key)))
+		(/= last-stmt-start (point))
+		(progn
+		  (c-backward-syntactic-ws lim)
+		  (not (memq (char-before) '(?\; ?} ?: nil))))
+		;; Check that we don't move from the first thing in a
+		;; macro to its header.
+		(not (eq (setq tentative-move
+			       (c-beginning-of-statement-1 lim t t))
+			 'macro)))
 	  (setq last-stmt-start beg
 		beg (point)
 		move tentative-move))
