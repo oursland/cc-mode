@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.180 $
-;; Last Modified:   $Date: 1995-03-22 16:05:24 $
+;; Version:         $Revision: 4.181 $
+;; Last Modified:   $Date: 1995-03-22 16:21:30 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-22 16:05:24 $|$Revision: 4.180 $|
+;; |$Date: 1995-03-22 16:21:30 $|$Revision: 4.181 $|
 
 ;;; Code:
 
@@ -4513,7 +4513,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.180 $"
+(defconst c-version "$Revision: 4.181 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4600,19 +4600,22 @@ it trailing backslashes are removed."
 		  (function
 		   (lambda (var)
 		     (cons var (symbol-value var))))
-		  '(c-inhibit-startup-warnings-p
-		    c-strict-syntax-p
-		    c-echo-syntactic-information-p
+		  '(c-backslash-column
 		    c-basic-offset
-		    c-offsets-alist
-		    c-tab-always-indent
-		    c-comment-only-line-offset
 		    c-block-comments-indent-p
 		    c-cleanup-list
+		    c-comment-only-line-offset
+		    c-echo-syntactic-information-p
+		    c-electric-pound-behavior
 		    c-hanging-braces-alist
 		    c-hanging-colons-alist
-		    c-backslash-column
-		    c-electric-pound-behavior))))
+		    c-hanging-comment-ender-p
+		    c-offsets-alist
+		    c-recognize-knr-p
+		    c-strict-syntax-p
+		    c-tab-always-indent
+		    c-inhibit-startup-warnings-p
+		    ))))
 
 (or (featurep 'cc-mode)
     ;; the default style is now GNU.  This can be overridden in
