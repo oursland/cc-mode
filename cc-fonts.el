@@ -322,17 +322,18 @@
   ;; Convert the ranges recorded on `c-record-type-identifiers' and
   ;; `c-record-ref-identifiers' to fontification.
   (let (elem)
-    ;; Can't use `dolist' here since the last cdr is t.
     (while (consp c-record-type-identifiers)
       (setq elem (car c-record-type-identifiers)
 	    c-record-type-identifiers (cdr c-record-type-identifiers))
       (c-put-font-lock-face (car elem) (cdr elem)
-			    'font-lock-type-face)))
-  (dolist (elem c-record-ref-identifiers)
-    ;; Note that the reference face is a variable that is
-    ;; dereferenced, since it's an alias in Emacs.
-    (c-put-font-lock-face (car elem) (cdr elem)
-			  c-reference-face-name)))
+			    'font-lock-type-face))
+    (while c-record-ref-identifiers
+      (setq elem (car c-record-ref-identifiers)
+	    c-record-ref-identifiers (cdr c-record-ref-identifiers))
+      ;; Note that the reference face is a variable that is
+      ;; dereferenced, since it's an alias in Emacs.
+      (c-put-font-lock-face (car elem) (cdr elem)
+			    c-reference-face-name))))
 
 (c-lang-defconst c-cpp-matchers
   "Font lock matchers for preprocessor directives and purely lexical
@@ -871,12 +872,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; Set according to the context to direct the heuristics for
 	  ;; recognizing C++ templates.
 	  c-restricted-<>-arglists
-	  ;; Allow recording of identifier ranges in `c-forward-type'
-	  ;; etc for later fontification.  Not using
-	  ;; `c-fontify-types-and-refs' here since the ranges should
-	  ;; be fontified selectively only when a declaration or cast
-	  ;; has been successfully recognized.
-	  c-record-type-identifiers
+	  ;; Turn on recording of identifier ranges in
+	  ;; `c-forward-decl-or-cast-1' and `c-forward-label' for
+	  ;; later fontification.
+	  (c-record-type-identifiers t)
 	  c-record-ref-identifiers
 	  ;; Make `c-forward-type' calls mark up template arglists if
 	  ;; it finds any.  That's necessary so that we later will
@@ -967,12 +966,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	      (setq context nil))
 
-	    (setq c-record-type-identifiers t
-		  c-record-ref-identifiers nil
-		  ;; If we're in a normal arglist context we don't want to
-		  ;; recognize commas in nested angle bracket arglists since
-		  ;; those commas could be part of our own arglist.
-		  c-restricted-<>-arglists (and c-recognize-<>-arglists
+	    ;; If we're in a normal arglist context we don't want to
+	    ;; recognize commas in nested angle bracket arglists since
+	    ;; those commas could be part of our own arglist.
+	    (setq c-restricted-<>-arglists (and c-recognize-<>-arglists
 						(eq context 'arglist))
 
 		  ;; Now analyze the construct.
@@ -1043,13 +1040,16 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	      nil))
 
 	  ;; It was a false alarm.  Check if we're in a label instead.
-	  (setq c-record-type-identifiers t
-		c-record-ref-identifiers nil)
 	  (goto-char start-pos)
 	  (when (c-forward-label t match-pos nil)
-	    (dolist (elem c-record-ref-identifiers)
-	      (c-put-font-lock-face (car elem) (cdr elem)
-				    c-label-face-name))
+	    ;; Can't use `c-fontify-types-and-refs' here since we
+	    ;; should use the label face.
+	    (let (elem)
+	      (while c-record-ref-identifiers
+		(setq elem (car c-record-ref-identifiers)
+		      c-record-ref-identifiers (cdr c-record-ref-identifiers))
+		(c-put-font-lock-face (car elem) (cdr elem)
+				      c-label-face-name)))
 	    ;; `c-forward-label' probably has added a `c-decl-end'
 	    ;; marker, so return t to `c-find-decl-spots' to signal
 	    ;; that.

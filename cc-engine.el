@@ -4553,7 +4553,13 @@ This function does not do any hidden buffer changes."
 	;; where there's no type.
 	maybe-typeless
 	;; For casts, the return position.
-	cast-end)
+	cast-end
+	;; Save `c-record-type-identifiers' and
+	;; `c-record-ref-identifiers' since ranges are recorded
+	;; speculatively and should be thrown away if it turns out
+	;; that it isn't a declaration or cast.
+	(save-rec-type-ids c-record-type-identifiers)
+	(save-rec-ref-ids c-record-ref-identifiers))
 
     ;; Check for a type, but be prepared to skip over leading
     ;; specifiers like "static".  Unknown symbols are treated as
@@ -5140,7 +5146,13 @@ This function does not do any hidden buffer changes."
 	    (goto-char type-start)
 	    (c-forward-type))))
 
-      (cons type-end at-typedef)))))
+      (cons type-end at-typedef))
+
+     (t
+      ;; False alarm.  Restore the recorded ranges.
+      (setq c-record-type-identifiers save-rec-type-ids
+	    c-record-ref-identifiers save-rec-ref-ids)
+      nil))))
 
 (defun c-forward-label (&optional assume-markup preceding-token-end limit)
   ;; Assuming the point is at the beginning of a token, check if it
