@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.36 $
+@comment manual version: $Revision: 2.37 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-04-09 14:52:30 $
+@comment Last modification: $Date: 1996-05-03 22:16:08 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.36 $)
+@center (manual revision: $Revision: 2.37 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1526,17 +1526,16 @@ for C code in GNU programs.
 
 @item
 @cindex BSD style
-@code{bsd} -- @strong{<TBD> Anybody know anything about the history of
-this style?}
+@code{bsd} -- Also known as ``Allman style'' after Eric Allman.
+
+@item
+@cindex Whitesmith style
+@code{whitesmith} -- Popularized by the examples that came with
+Whitesmiths C, an early commercial C compiler.
 
 @item
 @cindex Stroustrup style
 @code{stroustrup} -- The classic Stroustrup style for C++ code.
-
-@item
-@cindex Whitesmith style
-@code{whitesmith} -- @strong{<TBD> Anybody know anything about the history of
-this style?}
 
 @item
 @cindex Ellemtel style
