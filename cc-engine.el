@@ -958,28 +958,37 @@ See `c-forward-token-1' for details."
 		 ;; Match inside a string.  Skip to the end of it
 		 ;; before continuing.
 		 (let ((ender (make-string 1 (nth 3 state))))
-		   (while (progn
-			    (search-forward ender bound noerror)
-			    (setq state (parse-partial-sexp pos (point)
-							    nil nil state)
-				  pos (point))
-			    (nth 3 state)))))
+		   (while (if (search-forward ender bound noerror)
+			      (progn
+				(setq state (parse-partial-sexp pos (point)
+								nil nil state)
+				      pos (point))
+				(nth 3 state))
+			    (setq count -1)
+			    nil))))
 
 		((nth 7 state)
 		 ;; Match inside a line comment.  Skip to eol.  Use
-		 ;; re-search-forward for it to get the right bound
+		 ;; `re-search-forward' instead of
+		 ;; `skip-chars-forward' to get the right bound
 		 ;; behavior.
-		 (re-search-forward "[\n\r]" bound noerror))
+		 (or (re-search-forward "[\n\r]" bound noerror)
+		     (setq count -1)))
 
 		((nth 4 state)
 		 ;; Match inside a block comment.  Skip to the '*/'.
-		 (re-search-forward "\\*/" bound noerror))
+		 (or (search-forward "*/" bound noerror)
+		     (setq count -1)))
 
 		((save-excursion
 		   (save-match-data
 		     (c-beginning-of-macro start)))
 		 ;; Match inside a macro.  Skip to the end of it.
-		 (c-end-of-macro))
+		 (c-end-of-macro)
+		 (when (> (point) bound)
+		   (if noerror
+		       (setq count -1)
+		     (signal 'search-failed "end of macro"))))
 
 		((and paren-level (/= (car state) 0))
 		 (if (> (car state) 0)
