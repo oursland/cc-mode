@@ -17,7 +17,7 @@
 (10 str) (20 reg) (24 cmt) (31 reg) (33 str) (35 reg)
 
 (9 str) (11 reg)
-(8 lbl) (9 reg)
+
 (8 cmt) (15 reg) (19 str) (20 reg)
 
 (4 key) (7 reg) (10 str) (20 reg) (25 str) (27 reg)

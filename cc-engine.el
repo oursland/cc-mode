@@ -2089,9 +2089,11 @@ This function does not do any hidden buffer changes."
   ;; the cdr is the position following the closing paren.  Only the
   ;; last closed brace paren pair before each open paren is recorded,
   ;; and thus the state never contains two cons elements in
-  ;; succession.  No characters which are given paren syntax with the
+  ;; succession.
+  ;;
+  ;; Currently no characters which are given paren syntax with the
   ;; syntax-table property are recorded, i.e. angle bracket arglist
-  ;; parens are never present here.
+  ;; parens are never present here.  Note that this might change.
   ;;
   ;; This function does not do any hidden buffer changes.
 
@@ -2099,8 +2101,6 @@ This function does not do any hidden buffer changes."
     (let* ((here (point))
 	   (c-macro-start (c-query-macro-start))
 	   (in-macro-start (or c-macro-start (point)))
-	   parse-sexp-lookup-properties	; Emacs
-	   lookup-syntax-properties	; XEmacs
 	   old-state last-pos pairs pos)
       (c-invalidate-state-cache (point))
 
@@ -2235,21 +2235,24 @@ This function does not do any hidden buffer changes."
 	  (setcar pairs (1- (car pairs)))
 	  (when (consp (car-safe c-state-cache))
 	    ;; There could already be a cons first in `c-state-cache'
-	    ;; if we've jumped over an unbalanced open paren in a
+	    ;; if we've e.g. jumped over an unbalanced open paren in a
 	    ;; macro below.
 	    (setq c-state-cache (cdr c-state-cache)))
 	  (setq c-state-cache (cons pairs c-state-cache)))
 
 	(if last-pos
 	    ;; Prepare to loop, but record the open paren only if it's
-	    ;; outside a macro or within the same macro as point.
+	    ;; outside a macro or within the same macro as point, and
+	    ;; if it is a "real" open paren and not some character
+	    ;; that got an open paren syntax-table property.
 	    (progn
 	      (setq pos last-pos)
-	      (if (or (>= last-pos in-macro-start)
-		      (save-excursion
-			(goto-char last-pos)
-			(not (c-beginning-of-macro))))
-		  (setq c-state-cache (cons (1- pos) c-state-cache))))
+	      (if (and (or (>= last-pos in-macro-start)
+			   (save-excursion
+			     (goto-char last-pos)
+			     (not (c-beginning-of-macro))))
+		       (= (char-syntax (char-before last-pos)) ?\())
+		  (setq c-state-cache (cons (1- last-pos) c-state-cache))))
 
 	  (if (setq last-pos (c-up-list-forward pos))
 	      ;; Found a close paren without a corresponding opening

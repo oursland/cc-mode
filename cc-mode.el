@@ -116,6 +116,11 @@
 (eval-after-load "font-lock"
   '(require 'cc-fonts))
 
+;; cc-langs isn't loaded when we're byte compiled, so add autoload
+;; directives for the interface functions.
+(autoload 'c-make-init-lang-vars-fun "cc-langs")
+(autoload 'c-init-language-vars "cc-langs" nil nil 'macro)
+
 
 ;; Other modes and packages which depend on CC Mode should do the
 ;; following to make sure everything is loaded and available for their
@@ -1004,18 +1009,11 @@ Key bindings:
      (require 'reporter)
      (reporter-submit-bug-report
       c-mode-help-address
-      (concat "CC Mode " c-version " ("
-	      (cond ((eq major-mode 'c++-mode)  "C++")
-		    ((eq major-mode 'c-mode)    "C")
-		    ((eq major-mode 'objc-mode) "ObjC")
-		    ((eq major-mode 'java-mode) "Java")
-		    ((eq major-mode 'idl-mode)  "IDL")
-		    ((eq major-mode 'pike-mode) "Pike")
-		    (t (symbol-name major-mode)))
-	      ")")
+      (concat "CC Mode " c-version " (" mode-name ")")
       (let ((vars (append
 		   c-style-variables
-		   '(c-tab-always-indent
+		   '(c-buffer-is-cc-mode
+		     c-tab-always-indent
 		     c-syntactic-indentation
 		     c-syntactic-indentation-in-macros
 		     c-ignore-auto-fill
@@ -1030,6 +1028,8 @@ Key bindings:
 		     tab-width
 		     comment-column
 		     parse-sexp-ignore-comments
+		     parse-sexp-lookup-properties
+		     lookup-syntax-properties
 		     ;; A brain-damaged XEmacs only variable that, if
 		     ;; set to nil can cause all kinds of chaos.
 		     signal-error-on-buffer-boundary
@@ -1045,12 +1045,15 @@ Key bindings:
 		     adaptive-fill-mode
 		     adaptive-fill-regexp)
 		   nil)))
-	(mapcar (lambda (var) (unless (boundp var) (delq var vars)))
+	(mapcar (lambda (var) (unless (boundp var)
+				(setq vars (delq var vars))))
 		'(signal-error-on-buffer-boundary
 		  filladapt-mode
 		  defun-prompt-regexp
 		  font-lock-mode
-		  font-lock-maximum-decoration))
+		  font-lock-maximum-decoration
+		  parse-sexp-lookup-properties
+		  lookup-syntax-properties))
 	vars)
       (lambda ()
 	(run-hooks 'c-prepare-bug-report-hooks)

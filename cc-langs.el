@@ -131,7 +131,7 @@
     ;; for the language being initialized, and such calls will be
     ;; macro expanded to the evaluated constant value at compile time.
     ;;
-    ;; This function does not do any hidden buffer changes.
+    ;; This macro does not do any hidden buffer changes.
 
     (when (and (not doc)
 	       (eq (car-safe val) 'c-lang-const)
@@ -1711,7 +1711,9 @@ Note that Java specific rules are currently applied to tell this from
 such as the last token of a preceding statement or declaration.  It
 should not match bob, though.  It can't require a match longer than
 one token.  The end of the token is taken to be at the end of the
-first submatch.  It must not include any following whitespace."
+first submatch.  It must not include any following whitespace.  It's
+undefined whether identifier syntax (see `c-identifier-syntax-table')
+is in effect or not."
   ;; We match a sequence of characters to skip over things like \"};\"
   ;; more quickly.  We match ")" in C for K&R region declarations, and
   ;; in all languages except Java for when a cpp macro definition
@@ -1742,28 +1744,36 @@ first submatch.  It must not include any following whitespace."
 (c-lang-defvar c-decl-prefix-re (c-lang-const c-decl-prefix-re)
   'dont-doc)
 
-(c-lang-defconst c-opt-cast-close-paren-key
-  "Regexp matching the close paren(s) of a cast, or nil in languages
-without casts.  Note that the corresponding open paren(s) should be
-matched by `c-decl-prefix-re'."
+(c-lang-defconst c-cast-parens
+  "List containing the paren characters that can open a cast, or nil in
+languages without casts.  Identifier syntax is in effect when this is
+matched \(see `c-identifier-syntax-table')."
   t    nil
-  (c c++ objc java) "\)"
-  pike "[\]\)]")
-(c-lang-defvar c-opt-cast-close-paren-key
-  (c-lang-const c-opt-cast-close-paren-key)
+  (c c++ objc java) '(?\()
+  pike '(?\( ?\[))
+(c-lang-defvar c-cast-parens (c-lang-const c-cast-parens)
   'dont-doc)
 
 (c-lang-defconst c-type-decl-prefix-key
-"Regexp matching the operators that might precede the identifier in a
+  "Regexp matching the operators that might precede the identifier in a
 declaration, e.g. the \"*\" in \"char *argv\".  This regexp should
 match \"(\" if parentheses are valid in type declarations.  The end of
-the first submatch is taken as the end of the operator."
-  t    "\\<\\>" ;; Default to a regexp that never matches.
-  (c objc) "\\([*\(]\\)\\($\\|[^=]\\)"
+the first submatch is taken as the end of the operator.  Identifier
+syntax is in effect when this is matched (see `c-identifier-syntax-table')."
+  t (if (c-lang-const c-type-modifier-kwds)
+	(concat (c-regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>")
+      ;; Default to a regexp that never matches.
+      "\\<\\>")
+  (c objc) (concat "\\("
+		   "[*\(]"
+		   "\\|"
+		   (c-lang-const c-type-decl-prefix-key)
+		   "\\)"
+		   "\\([^=]\\|$\\)")
   c++  (concat "\\("
 	       "[*\(&]"
 	       "\\|"
-	       (concat "\\("	; 3
+	       (concat "\\("	; 2
 		       ;; If this matches there's special treatment in
 		       ;; `c-font-lock-declarators' and
 		       ;; `c-font-lock-declarations' that check for a
@@ -1771,11 +1781,10 @@ the first submatch is taken as the end of the operator."
 		       (c-lang-const c-identifier-start)
 		       "\\)")
 	       "\\|"
-	       (c-make-keywords-re nil
-		 (c-lang-const c-type-modifier-kwds)) "\\>"
+	       (c-lang-const c-type-decl-prefix-key)
 	       "\\)"
 	       "\\([^=]\\|$\\)")
-  pike "\\([*\(!~]\\)\\($\\|[^=]\\)")
+  pike "\\([*\(!~]\\)\\([^=]\\|$\\)")
 (c-lang-defvar c-type-decl-prefix-key (c-lang-const c-type-decl-prefix-key)
   'dont-doc)
 
@@ -1785,20 +1794,24 @@ in a declaration, e.g. the \"[\" in \"char argv[]\".  This regexp
 should match \")\" if parentheses are valid in type declarations.  If
 it matches an open paren of some kind, the type declaration check
 continues at the corresponding close paren, otherwise the end of the
-first submatch is taken as the end of the operator."
-  ;; Default to a regexp that matches only a function argument list
-  ;; parenthesis.
-  t    "\\(\(\\)"
-  (c objc) "\\([\)\[\(]\\)"
-  c++  (concat "\\("
-	       "[\)\[\(]"
-	       "\\|"
-	       ;; "throw" in `c-type-modifier-kwds' is followed by a
-	       ;; parenthesis list, but no extra measures are
-	       ;; necessary to handle that.
-	       "\\(" (c-make-keywords-re nil
-		       (c-lang-const c-type-modifier-kwds)) "\\)\\>"
-	       "\\)")
+first submatch is taken as the end of the operator.  Identifier syntax
+is in effect when this is matched (see `c-identifier-syntax-table')."
+  ;; Default to a regexp that matches `c-type-modifier-kwds' and a
+  ;; function argument list parenthesis.
+  t    (if (c-lang-const c-type-modifier-kwds)
+	   (concat "\\(\(\\|"
+		   (c-regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>"
+		   "\\)")
+	 "\\(\(\\)")
+  (c c++ objc) (concat
+		"\\("
+		"[\)\[\(]"
+		"\\|"
+		;; "throw" in `c-type-modifier-kwds' is followed by a
+		;; parenthesis list, but no extra measures are
+		;; necessary to handle that.
+		(c-regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>"
+		"\\)")
   (java idl) "\\([\[\(]\\)")
 (c-lang-defvar c-type-decl-suffix-key (c-lang-const c-type-decl-suffix-key)
   'dont-doc)
@@ -1808,7 +1821,9 @@ first submatch is taken as the end of the operator."
 `c-type-decl-suffix-key' has matched.  If it matches then the
 construct is taken as a declaration.  It's typically used to match the
 beginning of a function body or whatever might occur after the
-function header in a function declaration or definition.
+function header in a function declaration or definition.  It's
+undefined whether identifier syntax (see `c-identifier-syntax-table')
+is in effect or not.
 
 Note that it's used in cases like after \"foo (bar)\" so it should
 only match when it's certain that it's a declaration, e.g \"{\" but
@@ -1847,7 +1862,9 @@ not \",\" or \";\"."
 (c-lang-defconst c-opt-type-concat-key
   "Regexp matching operators that concatenate types, e.g. the \"|\" in
 \"int|string\" in Pike.  The end of the first submatch is taken as the
-end of the operator.  nil in languages without such operators."
+end of the operator.  nil in languages without such operators.  It's
+undefined whether identifier syntax (see `c-identifier-syntax-table')
+is in effect or not."
   t nil
   pike "\\([|.&]\\)\\($\\|[^|.&]\\)")
 (c-lang-defvar c-opt-type-concat-key (c-lang-const c-opt-type-concat-key)
@@ -1857,8 +1874,9 @@ end of the operator.  nil in languages without such operators."
   "Regexp matching operators that might follow after a type, or nil in
 languages that don't have such operators.  The end of the first
 submatch is taken as the end of the operator.  This should not match
-things like C++ template arglists if `c-recognize-<>-arglists' is
-set."
+things like C++ template arglists if `c-recognize-<>-arglists' is set.
+It's undefined whether identifier syntax (see `c-identifier-syntax-table')
+is in effect or not."
   t nil
   (c c++ objc pike) "\\(\\.\\.\\.\\)"
   java "\\(\\[[ \t\n\r\f\v]*\\]\\)")
