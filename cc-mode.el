@@ -161,6 +161,19 @@
      (t (error "CC Mode is incompatible with this version of Emacs")))
     map))
 
+(defun c-define-abbrev-table (name defs)
+  ;; Compatibility wrapper for `define-abbrev' which passes a non-nil
+  ;; sixth argument for SYSTEM-FLAG in emacsen that support it
+  ;; (currently only Emacs 21.2).
+  (define-abbrev-table name nil)
+  (let ((table (symbol-value name)))
+    (while defs
+      (condition-case err
+	  (apply 'define-abbrev table (append (car defs) '(t)))
+	(wrong-number-of-arguments
+	 (apply 'define-abbrev table (car defs))))
+      (setq defs (cdr defs)))))
+
 (if c-mode-base-map
     nil
   ;; TBD: should we even worry about naming this keymap. My vote: no,
@@ -384,12 +397,10 @@ Note that the style variables are always made local to the buffer."
        (c-set-style c-file-style))
   (and c-file-offsets
        (mapcar
-	(function
-	 (lambda (langentry)
-	   (let ((langelem (car langentry))
-		 (offset (cdr langentry)))
-	     (c-set-offset langelem offset)
-	     )))
+	(lambda (langentry)
+	  (let ((langelem (car langentry))
+		(offset (cdr langentry)))
+	    (c-set-offset langelem offset)))
 	c-file-offsets)))
 
 (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles)
@@ -399,7 +410,7 @@ Note that the style variables are always made local to the buffer."
 
 (defvar c-mode-abbrev-table nil
   "Abbreviation table used in c-mode buffers.")
-(define-abbrev-table 'c-mode-abbrev-table
+(c-define-abbrev-table 'c-mode-abbrev-table
   '(("else" "else" c-electric-continued-statement 0)
     ("while" "while" c-electric-continued-statement 0)))
 
@@ -451,7 +462,7 @@ Key bindings:
 
 (defvar c++-mode-abbrev-table nil
   "Abbreviation table used in c++-mode buffers.")
-(define-abbrev-table 'c++-mode-abbrev-table
+(c-define-abbrev-table 'c++-mode-abbrev-table
   '(("else" "else" c-electric-continued-statement 0)
     ("while" "while" c-electric-continued-statement 0)
     ("catch" "catch" c-electric-continued-statement 0)))
@@ -507,7 +518,7 @@ Key bindings:
 
 (defvar objc-mode-abbrev-table nil
   "Abbreviation table used in objc-mode buffers.")
-(define-abbrev-table 'objc-mode-abbrev-table
+(c-define-abbrev-table 'objc-mode-abbrev-table
   '(("else" "else" c-electric-continued-statement 0)
     ("while" "while" c-electric-continued-statement 0)))
 
@@ -559,7 +570,7 @@ Key bindings:
 
 (defvar java-mode-abbrev-table nil
   "Abbreviation table used in java-mode buffers.")
-(define-abbrev-table 'java-mode-abbrev-table
+(c-define-abbrev-table 'java-mode-abbrev-table
   '(("else" "else" c-electric-continued-statement 0)
     ("while" "while" c-electric-continued-statement 0)
     ("catch" "catch" c-electric-continued-statement 0)
@@ -615,7 +626,7 @@ Key bindings:
 
 (defvar idl-mode-abbrev-table nil
   "Abbreviation table used in idl-mode buffers.")
-(define-abbrev-table 'idl-mode-abbrev-table ())
+(c-define-abbrev-table 'idl-mode-abbrev-table nil)
 
 (defvar idl-mode-map ()
   "Keymap used in idl-mode buffers.")
@@ -664,7 +675,7 @@ Key bindings:
 
 (defvar pike-mode-abbrev-table nil
   "Abbreviation table used in pike-mode buffers.")
-(define-abbrev-table 'pike-mode-abbrev-table
+(c-define-abbrev-table 'pike-mode-abbrev-table
   '(("else" "else" c-electric-continued-statement 0)
     ("while" "while" c-electric-continued-statement 0)))
 
@@ -784,13 +795,10 @@ Key bindings:
 		  filladapt-mode
 		  defun-prompt-regexp))
 	vars)
-      (function
-       (lambda ()
-	 (run-hooks 'c-prepare-bug-report-hooks)
-	 (insert
-	  "Buffer Style: " style "\n\n"
-	  (format "c-emacs-features: %s\n" c-features)
-	  )))))))
+      (lambda ()
+	(run-hooks 'c-prepare-bug-report-hooks)
+	(insert (format "Buffer Style: %s\n\nc-emacs-features: %s\n"
+			style c-features)))))))
 
 
 (cc-provide 'cc-mode)
