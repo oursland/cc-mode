@@ -8,12 +8,15 @@ import string
 import regex
 
 
-RELEASE = '5.02'
+RELEASE = '5.03'
 RELEASE_NAME = 'Release_' + string.translate(RELEASE,
 					     string.maketrans('.', '_'))
 						       
 version_cre = regex.compile(';*[ \t]+Version:[ \t]+\(5.[0-9]+\)')
 version_format = ';; Version:    %s\n'
+
+extra_cre = regex.compile('(defconst c-version "\(5.[0-9]+\)"')
+extra_format = '(defconst c-version "%s"\n'
 
 FILES = [
     ('cc-align.el',    version_cre, version_format),
@@ -74,11 +77,16 @@ def bump_els():
 		line = fp_in.readline()
 		if not line:
 		    break
-		if matched or cre.match(line) < 0:
+		# TBD: hackery since cc-mode.el is special
+		if f == 'cc-mode.el' and extra_cre.match(line) >= 0:
+		    fp_out.write(extra_format % RELEASE)
+		    matched = 1
+		elif matched or cre.match(line) < 0:
 		    fp_out.write(line)
 		else:
 		    fp_out.write(format % RELEASE)
-		    matched = 1
+		    if f <> 'cc-mode.el':
+			matched = 1
 	    fp_in.close()
 	    fp_out.close()
 	    os.rename(f + '.new', f)
