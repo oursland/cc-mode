@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.276 $
-;; Last Modified:   $Date: 1993-02-05 20:38:27 $
+;; Version:         $Revision: 2.277 $
+;; Last Modified:   $Date: 1993-02-05 21:24:19 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-05 20:38:27 $|$Revision: 2.276 $|
+;; |$Date: 1993-02-05 21:24:19 $|$Revision: 2.277 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.276 $
+  "Major mode for editing C++ code.  $Revision: 2.277 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.276 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.277 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1178,7 +1178,7 @@ of the expression are preserved."
 	  ;;nil nil state))
 	  (let ((start (point))
 		(line-end (progn (end-of-line) (point)))
-		(end (progn (forward-char) (point))))
+		(end (progn (if (not (eobp)) (forward-char)) (point))))
 	    (setq state (parse-partial-sexp start end nil nil state))
 	    (goto-char line-end))
 	  (setq next-depth (car state))
@@ -1578,14 +1578,14 @@ point of the beginning of the C++ definition."
      ((save-excursion
 	(back-to-indentation)
 	(looking-at "//\\|/\\*"))
-      ;; we've found a comment-only line. we now must try to
-      ;; determine if the line is a continuation from a comment
-      ;; on the previous line.  we check to see if the comment
-      ;; starts in comment-column and if so, we don't change its
+      ;; we've found a comment-only line. we now must try to determine
+      ;; if the line is a continuation from a comment on the previous
+      ;; line.  we check to see if the comment starts in or to the
+      ;; right of comment-column and if so, we don't change its
       ;; indentation.
       (skip-chars-forward " \t")
-      (if (= (current-column) comment-column)
-	  (setq indent comment-column)
+      (if (>= (current-column) comment-column)
+	  (setq indent (current-column))
 	(setq indent (c++-comment-offset (bolp) indent))))
      (t
       (skip-chars-forward " \t")
@@ -2456,7 +2456,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.276 $"
+(defconst c++-version "$Revision: 2.277 $"
   "c++-mode version number.")
 
 (defun c++-version ()
