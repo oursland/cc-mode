@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.136 $
-;; Last Modified:   $Date: 1995-01-04 23:57:11 $
+;; Version:         $Revision: 4.137 $
+;; Last Modified:   $Date: 1995-01-06 16:48:56 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -103,7 +103,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-04 23:57:11 $|$Revision: 4.136 $|
+;; |$Date: 1995-01-06 16:48:56 $|$Revision: 4.137 $|
 
 ;;; Code:
 
@@ -1211,11 +1211,11 @@ it finds in `c-file-offsets'."
 	     )))
 	c-file-offsets)))
 
-;; Add the function to hack-local-variables-hook. as of 14-Dec-1994
-;; no Emacs supports this, although it is hoped XEmacs 19.12 and Emacs
-;; 19.29 will when they are released.
+;; Add the posprocessing function to hack-local-variables-hook. as of
+;; 14-Dec-1994 no Emacs supports this, although it is hoped XEmacs
+;; 19.12 and Emacs 19.29 will when they are released.
 (and (fboundp 'add-hook)
-     (add-hook 'hack-local-variables-hooks 'c-postprocess-file-styles))
+     (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles))
 
 
 ;; macros must be defined before first use
@@ -4369,7 +4369,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.136 $"
+(defconst c-version "$Revision: 4.137 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
