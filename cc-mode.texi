@@ -3314,18 +3314,14 @@ suggestions, and kudos to @code{cc-mode-help@@python.org}, or
 @code{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on newsgroup
 @code{gnu.emacs.help}.
 
-There are two mailing lists for @ccmode{}.  One is a general discussion
-list and the other is an announce-only list.  You do not need to
-subscribe to either list, but if you want to, only subscribe to one of
-these.  Announcements of new releases get sent to both lists.  To join
-the general discussion list, send a message with the word
-@emph{subscribe} in the body of the message to
-@code{cc-mode-victims-request@@python.org}.  To join just the
-announce-only list, send a message with the word @emph{subscribe} in the
-body of the message to @code{cc-mode-announce-request@@python.org}.
-Both mailing lists are managed by Majordomo, and if you are successfully
-subscribed, you will receive an email message with more information on
-using the list.
+If you want to get announcements of new CC Mode releases, send the
+word @emph{subscribe} in the body of a message to
+@code{cc-mode-announce-request@@python.org}.  Announcements will also be 
+posted to the Usenet newsgroups @code{gnu.emacs.sources},
+@code{comp.emacs}, @code{comp.emacs.xemacs}, and possibly some of the
+language oriented newsgroups.  Note that the
+@code{cc-mode-victims@@python.org} mailing list was recently
+decommissioned.
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Concept Index, Command Index,  Mailing Lists and Submitting Bug Reports, Top
