@@ -905,19 +905,30 @@ See `c-forward-token-1' for details."
   ;; significant text.  If PAREN-LEVEL is non-nil, an additional
   ;; restriction is added to ignore matches in nested paren sexps, and
   ;; the search will also not go outside the current paren sexp.
+  ;;
+  ;; If there is at least one submatch in the regexp and the first one
+  ;; matches, the end position of that submatch is used to check for
+  ;; syntactic significance, otherwise the start position of the whole
+  ;; match is used.
+
   (or bound (setq bound (point-max)))
   (or count (setq count 1))
   (if paren-level (setq paren-level -1))
+
   (let ((start (point))
 	(pos (point))
-	match-pos state)
+	match-pos syntactic-match-pos state)
+
     (condition-case err
 	(while (and (> count 0)
 		    (re-search-forward regexp bound noerror))
+
 	  (setq match-pos (point)
-		state (parse-partial-sexp pos (match-beginning 0)
+		syntactic-match-pos (or (match-end 1) (match-beginning 0))
+		state (parse-partial-sexp pos syntactic-match-pos
 					  paren-level nil state)
-		pos (point))
+		pos syntactic-match-pos)
+
 	  (cond ((nth 3 state)
 		 ;; Match inside a string.  Skip to the end of it
 		 ;; before continuing.
@@ -928,17 +939,21 @@ See `c-forward-token-1' for details."
 							    nil nil state)
 				  pos (point))
 			    (nth 3 state)))))
+
 		((nth 7 state)
 		 ;; Match inside a line comment.  Skip to eol.  Use
 		 ;; re-search-forward for it to get the right bound
 		 ;; behavior.
 		 (re-search-forward "[\n\r]" bound noerror))
+
 		((nth 4 state)
 		 ;; Match inside a block comment.  Skip to the '*/'.
 		 (re-search-forward "\\*/" bound noerror))
+
 		((save-excursion (c-beginning-of-macro start))
 		 ;; Match inside a macro.  Skip to the end of it.
 		 (c-end-of-macro))
+
 		((and paren-level (/= (car state) 0))
 		 (if (> (car state) 0)
 		     ;; Match inside a nested paren sexp.  Skip out of it.
@@ -951,16 +966,20 @@ See `c-forward-token-1' for details."
 		   ;; way; we'll adjust the leave off point below if
 		   ;; necessary.
 		   (setq bound (point))))
+
 		(t
 		 ;; A real match.
 		 (setq count (1- count)))))
+
       (error
        (goto-char start)
        (signal (car err) (cdr err))))
+
     (if (= count 0)
 	(progn
 	  (goto-char match-pos)
 	  match-pos)
+
       ;; Search failed.  Set point as appropriate.
       (cond ((eq noerror t)
 	     (goto-char start))
@@ -2420,7 +2439,7 @@ Keywords are recognized and not considered identifiers."
   ;;
   ;; Point is assumed to be at the prospective anchor point for the
   ;; given SYNTAX-SYMBOL.  More syntax entries are added if we need to
-  ;; skip past block opens and containing statement.  All the added
+  ;; skip past open parens and containing statements.  All the added
   ;; syntax elements will get the same anchor point.
   ;;
   ;; SYNTAX-EXTRA-ARGS are a list of the extra arguments for the
