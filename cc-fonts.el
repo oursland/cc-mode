@@ -825,11 +825,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	     type-end start-pos))
      ,(unless short
 	;; These identifiers are bound only in the inner let.
-	(setq start type-end
-	      got-parens nil
-	      got-identifier t
-	      got-suffix t
-	      paren-depth 0))))
+	'(setq start type-end
+	       got-parens nil
+	       got-identifier t
+	       got-suffix t
+	       paren-depth 0))))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
