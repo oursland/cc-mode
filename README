@@ -12,9 +12,9 @@ INTRODUCTION
 
     Emacs 19.34 is missing some stuff that CC Mode requires, but you
     can make CC Mode 5 work with it by loading the file cc-mode-19.el.
-    See that file for details.  Note that you *MUST* also upgrade your 
-    version of the Custom library.  See the CC Mode web pages for
-    details.
+    See that file for details.  Note that you *MUST* also upgrade your
+    version of the Custom library (and edit the cc-make.el file to
+    contain this path).  See the CC Mode web pages for details.
 
 BYTE COMPILING
 
