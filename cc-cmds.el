@@ -418,6 +418,7 @@ nil.
 
 This function does various newline cleanups based on the value of
 `c-cleanup-list'."
+
   (interactive "*P")
   (let (safepos literal
 	;; We want to inhibit blinking the paren since this will be
@@ -433,9 +434,10 @@ This function does various newline cleanups based on the value of
      ((or literal arg)
       (self-insert-command (prefix-numeric-value arg)))
      ((not (looking-at "[ \t]*\\\\?$"))
-      (self-insert-command (prefix-numeric-value arg))
+      (self-insert-command 1)
       (if c-syntactic-indentation
 	  (indent-according-to-mode)))
+
      (t
       (let* ((syms
 	      ;; This is the list of brace syntactic symbols that can
@@ -457,114 +459,73 @@ This function does various newline cleanups based on the value of
 		;; `c-guess-continued-construct'.
 		statement-cont))
 	     (insertion-point (point))
-	     (preserve-p (and (not (bobp))
-			      (eq ?\  (char-syntax (char-before)))))
 	     ;; shut this up too
 	     (c-echo-syntactic-information-p nil)
-	     delete-temp-newline syntax newlines)
-	;; only insert a newline if there is non-whitespace behind us
-	(when (save-excursion
-		(skip-chars-backward " \t")
-		(not (bolp)))
-	  (c-newline-and-indent)
-	  ;; Set markers around the newline and indention inserted
-	  ;; above.  We insert the start marker here and not before
-	  ;; the call to kludge around a misfeature in expand-abbrev:
-	  ;; If the line contains e.g. "else" then expand-abbrev will
-	  ;; be called when c-newline-and-indent inserts the newline.
-	  ;; That function first removes the abbrev "else" and then
-	  ;; inserts the expansion, which is an identical "else" in
-	  ;; this case.  So the marker that we put after "else" would
-	  ;; end up before it.
-	  (setq delete-temp-newline
-		(cons (save-excursion
-			(end-of-line 0)
-			(skip-chars-backward " \t")
-			(copy-marker (point) t))
-		      (point-marker))))
-	(unwind-protect
-	    (progn
-	      (if (eq last-command-char ?{)
-		  (setq c-state-cache (cons (point) c-state-cache)))
-	      (self-insert-command (prefix-numeric-value arg))
-	      (c-save-buffer-state ((c-syntactic-indentation-in-macros t)
-				    (c-auto-newline-analysis t))
-		;; Turn on syntactic macro analysis to help with auto
-		;; newlines only.
-		(setq syntax (c-guess-basic-syntax)))
-	      (setq newlines
-		    (and
-		     c-auto-newline
-		     (or (c-lookup-lists
-			  syms
-			  ;; Substitute inexpr-class and class-open or
-			  ;; class-close with inexpr-class-open or
-			  ;; inexpr-class-close.
-			  (if (assq 'inexpr-class syntax)
-			      (cond ((assq 'class-open syntax)
-				     '((inexpr-class-open)))
-				    ((assq 'class-close syntax)
-				     '((inexpr-class-close)))
-				    (t syntax))
-			    syntax)
-			  c-hanging-braces-alist)
-			 '(ignore before after))))
-	      ;; Do not try to insert newlines around a special
-	      ;; (Pike-style) brace list.
-	      (if (and c-special-brace-lists
-		       (save-excursion
-			 (c-save-buffer-state nil
-			   (c-safe (if (= (char-before) ?{)
-				       (forward-char -1)
-				     (c-forward-sexp -1))
-				   (c-looking-at-special-brace-list)))))
-		  (setq newlines nil))
-	      ;; If syntax is a function symbol, then call it using the
-	      ;; defined semantics.
-	      (if (and (not (consp (cdr newlines)))
-		       (functionp (cdr newlines)))
-		  (let ((c-syntactic-context syntax))
-		    (setq newlines
-			  (funcall (cdr newlines)
-				   (car newlines)
-				   insertion-point))))
-	      ;; does a newline go before the open brace?
-	      (when (memq 'before newlines)
-		;; we leave the newline we've put in there before,
-		;; but we need to reindent the line above
-		(when delete-temp-newline
-		  (set-marker (car delete-temp-newline) nil)
-		  (set-marker (cdr delete-temp-newline) nil)
-		  (setq delete-temp-newline nil))
-		(when c-syntactic-indentation
-		  (let ((pos (- (point-max) (point)))
-			(here (point)))
-		    (forward-line -1)
-		    (indent-according-to-mode)
-		    (goto-char (- (point-max) pos))
-		    ;; if the buffer has changed due to the
-		    ;; indentation, we need to recalculate syntax for
-		    ;; the current line.
-		    (if (/= (point) here)
-			(c-save-buffer-state
-			    ((c-syntactic-indentation-in-macros t)
-			     (c-auto-newline-analysis t))
-			  ;; Turn on syntactic macro analysis to help
-			  ;; with auto newlines only.
-			  (setq syntax (c-guess-basic-syntax))))))))
-	  ;; must remove the newline we just stuck in (if we really did it)
-	  (when delete-temp-newline
-	    (save-excursion
-	      (delete-region (car delete-temp-newline)
-			     (cdr delete-temp-newline))
-	      (goto-char (car delete-temp-newline))
-	      (set-marker (car delete-temp-newline) nil)
-	      (set-marker (cdr delete-temp-newline) nil)
-	      ;; if there is whitespace before point, then preserve
-	      ;; at least one space.
-	      (just-one-space)
-	      (if (not preserve-p)
-		  (delete-char -1)))))
+	     syntax newlines)
+
+	;; Insert the brace.  Note that expand-abbrev might reindent
+	;; the line here if there's a preceding "else" or something.
+	(self-insert-command 1)
+
+	(c-tentative-buffer-changes
+	  ;; only insert a newline if there is non-whitespace behind us
+	  (when (save-excursion
+		  (backward-char)
+		  (skip-chars-backward " \t")
+		  (not (bolp)))
+	    (backward-char)
+	    (c-newline-and-indent)
+	    (forward-char))
+
+	  (c-save-buffer-state ((c-syntactic-indentation-in-macros t)
+				(c-auto-newline-analysis t))
+	    ;; Turn on syntactic macro analysis to help with auto
+	    ;; newlines only.
+	    (setq syntax (c-guess-basic-syntax)))
+
+	  (setq newlines
+		(and
+		 c-auto-newline
+		 (or (c-lookup-lists
+		      syms
+		      ;; Substitute inexpr-class and class-open or
+		      ;; class-close with inexpr-class-open or
+		      ;; inexpr-class-close.
+		      (if (assq 'inexpr-class syntax)
+			  (cond ((assq 'class-open syntax)
+				 '((inexpr-class-open)))
+				((assq 'class-close syntax)
+				 '((inexpr-class-close)))
+				(t syntax))
+			syntax)
+		      c-hanging-braces-alist)
+		     '(ignore before after))))
+
+	  ;; Do not try to insert newlines around a special
+	  ;; (Pike-style) brace list.
+	  (if (and c-special-brace-lists
+		   (save-excursion
+		     (c-save-buffer-state nil
+		       (c-safe (if (= (char-before) ?{)
+				   (forward-char -1)
+				 (c-forward-sexp -1))
+			       (c-looking-at-special-brace-list)))))
+	      (setq newlines nil))
+
+	  ;; If syntax is a function symbol, then call it using the
+	  ;; defined semantics.
+	  (if (and (not (consp (cdr newlines)))
+		   (functionp (cdr newlines)))
+	      (let ((c-syntactic-context syntax))
+		(setq newlines
+		      (funcall (cdr newlines)
+			       (car newlines)
+			       insertion-point))))
+
+	  ;; Keep the newline inserted above of one should go before
+	  ;; the open brace.
+	  (memq 'before newlines))
+
 	(if (not (memq 'before newlines))
 	    ;; since we're hanging the brace, we need to recalculate
 	    ;; syntax.
@@ -573,16 +534,19 @@ This function does various newline cleanups based on the value of
 	      ;; Turn on syntactic macro analysis to help with auto
 	      ;; newlines only.
 	      (setq syntax (c-guess-basic-syntax))))
+
 	(when c-syntactic-indentation
 	  ;; Now adjust the line's indentation.  Don't update the state
 	  ;; cache since c-guess-basic-syntax isn't called when
 	  ;; c-syntactic-context is set.
-	  (let* ((c-syntactic-context syntax))
+	  (let ((c-syntactic-context syntax))
 	    (indent-according-to-mode)))
+
 	;; Do all appropriate clean ups
 	(let ((here (point))
 	      (pos (- (point-max) (point)))
 	      mbeg mend tmp)
+
 	  ;; clean up empty defun braces
 	  (if (c-save-buffer-state ()
 		(and c-auto-newline
@@ -597,6 +561,7 @@ This function does various newline cleanups based on the value of
 		     ;; make sure matching open brace isn't in a comment
 		     (not (c-in-literal))))
 	      (delete-region (point) (1- here)))
+
 	  ;; clean up brace-else-brace and brace-elseif-brace
 	  (when (and c-auto-newline
 		     (eq last-command-char ?\{))
@@ -638,12 +603,15 @@ This function does various newline cleanups based on the value of
 	      (delete-region mbeg mend)
 	      (goto-char mbeg)
 	      (insert ?\ ))))
+
 	  (goto-char (- (point-max) pos))
 	  )
+
 	;; does a newline go after the brace?
 	(if (memq 'after newlines)
 	    (c-newline-and-indent))
 	)))
+
     ;; blink the paren
     (and (eq last-command-char ?\})
 	 (not executing-kbd-macro)
@@ -735,7 +703,7 @@ following brace lists and semicolons following defuns."
     (if (or literal arg)
 	(self-insert-command (prefix-numeric-value arg))
       ;; do some special stuff with the character
-      (self-insert-command (prefix-numeric-value arg))
+      (self-insert-command 1)
       ;; do all cleanups and newline insertions if c-auto-newline is
       ;; turned on
       (if (or (not c-auto-newline)
@@ -801,12 +769,12 @@ value of `c-cleanup-list'."
      ((or literal arg)
       (self-insert-command (prefix-numeric-value arg)))
      ((not (looking-at "[ \t]*\\\\?$"))
-      (self-insert-command (prefix-numeric-value arg))
+      (self-insert-command 1)
       (if c-syntactic-indentation
 	  (indent-according-to-mode)))
      (t
       ;; insert the colon, then do any specified cleanups
-      (self-insert-command (prefix-numeric-value arg))
+      (self-insert-command 1)
       (let ((pos (- (point-max) (point)))
 	    (here (point)))
 	(if (c-save-buffer-state ()
@@ -1004,7 +972,7 @@ is nil."
 	     ;; afterwards.
 	     (old-blink-paren blink-paren-function)
 	     blink-paren-function)
-	(self-insert-command (prefix-numeric-value arg))
+	(self-insert-command 1)
 	(if c-syntactic-indentation
 	    (indent-according-to-mode))
 	(when (looking-at "[ \t]*\\\\?$")
