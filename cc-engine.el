@@ -1090,11 +1090,15 @@
 			       ;; make sure we're not in a C++ template
 			       ;; argument assignment
 			       ((save-excursion
-				  (and (eq major-mode 'c++-mode)
-				       (zerop (c-backward-token-1 1 t lim))
-				       (looking-at c-class-key)
-				       ;; do we need to do more checking??
-				       ))
+				  (let ((here (point))
+					(pos< (progn
+						(skip-chars-backward "^<")
+						(point))))
+				    (and (eq major-mode 'c++-mode)
+					 (eq (char-before) ?<)
+					 (not (c-crosses-statement-barrier-p
+					       here pos<))
+					 )))
 				nil)
 			       (t t)))))
 		     ((eq (char-after) ?\[)
