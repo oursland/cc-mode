@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.175 $
-;; Last Modified:   $Date: 1995-03-20 23:21:00 $
+;; Version:         $Revision: 4.176 $
+;; Last Modified:   $Date: 1995-03-20 23:27:56 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-20 23:21:00 $|$Revision: 4.175 $|
+;; |$Date: 1995-03-20 23:27:56 $|$Revision: 4.176 $|
 
 ;;; Code:
 
@@ -504,7 +504,7 @@ as described in `c-offsets-alist'.  These are passed directly to
 `c-set-offset' so there is no need to set every syntactic symbol in
 your style, only those that are different from the default.
 
-Note that all styles inherit from the \"Default\" style, which is
+Note that all styles inherit from the \"CC-MODE\" style, which is
 computed at the time the mode is loaded.")
 
 (defvar c-file-style nil
@@ -1932,13 +1932,13 @@ for details of setting up styles."
   (interactive (list (completing-read "Indentation style? "
                                       c-style-alist nil t)))
   (let ((vars (cdr (assoc stylename c-style-alist)))
-	(default (cdr (assoc "Default" c-style-alist))))
+	(default (cdr (assoc "CC-MODE" c-style-alist))))
     (or vars (error "Invalid indentation style `%s'" stylename))
-    (or default (error "No \"Default\" style found!"))
-    ;; first reset the style to Default to give every style a common
+    (or default (error "No \"CC-MODE\" style found!"))
+    ;; first reset the style to CC-MODE to give every style a common
     ;; base. Then institute the new style.
     (c-set-style-1 default)
-    (if (not (string= stylename "Default"))
+    (if (not (string= stylename "CC-MODE"))
 	(c-set-style-1 vars)))
   (c-keep-region-active))
 
@@ -4510,7 +4510,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.175 $"
+(defconst c-version "$Revision: 4.176 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4589,9 +4589,9 @@ it trailing backslashes are removed."
 
 ;; dynamically append the default value of most variables. This is
 ;; crucial because future c-set-style calls will always reset the
-;; variables first to the "Default" style before instituting the new
+;; variables first to the "CC-MODE" style before instituting the new
 ;; style.
-(c-add-style "Default"
+(c-add-style "CC-MODE"
 	     (mapcar
 	      (function
 	       (lambda (var)
