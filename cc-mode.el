@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.264 $
-;; Last Modified:   $Date: 1996-01-17 23:31:08 $
+;; Version:         $Revision: 4.265 $
+;; Last Modified:   $Date: 1996-01-18 16:29:12 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -108,7 +108,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-17 23:31:08 $|$Revision: 4.264 $|
+;; |$Date: 1996-01-18 16:29:12 $|$Revision: 4.265 $|
 
 ;;; Code:
 
@@ -659,10 +659,20 @@ as designated in the variable `c-file-style'.")
     (if (eq major 'v19)
 	(let ((table (copy-syntax-table)))
 	  (modify-syntax-entry ?a ". 12345678" table)
-	  (if (and (vectorp table)
-		   (= (logand (lsh (aref table ?a) -16) 255) 255))
-	      (setq comments '8-bit)
-	    (setq comments '1-bit)))
+	  (cond
+	   ;; pre XEmacs 20 and Emacs 19.30 use vectors for the syntax table
+	   ((vectorp table)
+	    (if (= (logand (lsh (aref table ?a) -16) 255) 255)
+		(setq comments '8-bit)
+	      (setq comments '1-bit)))
+	   ;; XEmacs 20 is known to be 8-bit
+	   ((eq flavor 'XEmacs) (setq comments '8-bit))
+	   ;; Emacs 19.30 and beyond are known to be 1-bit
+	   ((eq flavor 'FSF) (setq comments '1-bit))
+	   ;; Don't know what this is
+	   (t (error "Couldn't figure out syntax table format."))
+	   ))
+      ;; Emacs 18 has no support for dual comments
       (setq comments 'no-dual-comments))
     ;; lets do some minimal sanity checking.
     (if (and (or
@@ -1065,7 +1075,6 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;; main entry points for the modes
 (defconst c-list-of-mode-names nil)
 
-;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
@@ -1102,7 +1111,6 @@ Key bindings:
   (run-hooks 'c++-mode-hook))
 (setq c-list-of-mode-names (cons "C++" c-list-of-mode-names))
 
-;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
@@ -1138,7 +1146,6 @@ Key bindings:
   (run-hooks 'c-mode-hook))
 (setq c-list-of-mode-names (cons "C" c-list-of-mode-names))
 
-;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
@@ -4058,12 +4065,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(c-add-syntax 'brace-list-open placeholder))
 	       ;; CASE 9B.3: catch-all for unknown construct.
 	       (t
-		;; Even though this isn't right, it's the best I'm
-		;; going to do for now. Exceptions probably fall
-		;; through to here, but aren't supported yet.  Also,
-		;; after the next release, I may call a recognition
-		;; hook like so: (run-hooks 'c-recognize-hook), but I
-		;; dunno.
+		;; Can and should I add an extensibility hook here?
+		;; Something like c-recognize-hook so support for
+		;; unknown constructs could be added.  It's probably a
+		;; losing proposition, so I dunno.
 		(goto-char placeholder)
 		(c-add-syntax 'statement-cont (c-point 'boi))
 		(c-add-syntax 'block-open))
@@ -4655,7 +4660,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.264 $"
+(defconst c-version "$Revision: 4.265 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
