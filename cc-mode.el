@@ -1,13 +1,13 @@
 ;;; cc-mode.el --- major mode for editing C, C++, Objective-C, and Java code
 
-;; Copyright (C) 1985, 87, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
+;; Copyright (C) 1985,87,92,93,94,95,96,97 Free Software Foundation, Inc.
 
-;; Authors: 1992-1996 Barry A. Warsaw
+;; Authors: 1992-1997 Barry A. Warsaw
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.345 $
-;; Last Modified:   $Date: 1997-01-21 19:37:44 $
+;; Version:         $Revision: 4.346 $
+;; Last Modified:   $Date: 1997-01-21 19:39:51 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -5069,7 +5069,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.345 $"
+(defconst c-version "$Revision: 4.346 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
