@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.263 $
-;; Last Modified:   $Date: 1994-02-24 14:17:12 $
+;; Version:         $Revision: 3.264 $
+;; Last Modified:   $Date: 1994-02-24 14:46:07 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-24 14:17:12 $|$Revision: 3.263 $|
+;; |$Date: 1994-02-24 14:46:07 $|$Revision: 3.264 $|
 
 ;;; Code:
 
@@ -472,10 +472,10 @@ your style, only those that are different from the default.")
       ;; calculate the major version
       (cond
        ((= major 18) (setq major 'v18))	;Emacs 18
-       ((= major 4) (setq major 'v18))	;Epoch 4
-       ((= major "19") (setq major 'v19	;Emacs 19
-			     flavor (if (string-match "Lucid" emacs-version)
-					'Lucid 'FSF)))
+       ((= major 4)  (setq major 'v18))	;Epoch 4
+       ((= major 19) (setq major 'v19	;Emacs 19
+			   flavor (if (string-match "Lucid" emacs-version)
+				      'Lucid 'FSF)))
        ;; I don't know
        (t (error "Cannot recognize major version number: %s" major)))
       ;; All Lucid 19's use 8-bit modify-syntax-entry flags, as do all
@@ -490,15 +490,15 @@ your style, only those that are different from the default.")
 	      (setq comments '1-bit)))
 	(setq comments 'no-dual-comments))
       ;; lets do some minimal sanity checking.
-      (if (or
-	   ;; Lemacs before 19.6 had bugs
-	   (and (eq major 'v19) (eq flavor 'Lucid) (< minor 6))
-	   ;; FSF 19 before 19.21 has known bugs
-	   (and (eq major 'v19) (eq flavor 'FSF) (< minor 21)
-		(not c-inhibit-startup-warnings-p))
+      (if (and (or
+		;; Lemacs before 19.6 had bugs
+		(and (eq major 'v19) (eq flavor 'Lucid) (< minor 6))
+		;; FSF 19 before 19.21 has known bugs
+		(and (eq major 'v19) (eq flavor 'FSF) (< minor 21)))
+	       (not c-inhibit-startup-warnings-p))
 	  (with-output-to-temp-buffer "*cc-mode warnings*"
-	    (insert (format "
-The version of Emacs that you are running, %s,
+	    (print (format
+"The version of Emacs that you are running, %s,
 has known bugs in its syntax.c parsing routines which will affect the
 performance of cc-mode. You should strongly consider upgrading to the
 latest available version.  cc-mode may continue to work, after a
@@ -508,9 +508,8 @@ fashion, but strange indentation errors could be encountered."
       (if (and (eq major 'v18) (eq comments 'no-dual-comments)
 	       (not c-inhibit-startup-warnings-p))
 	  (with-output-to-temp-buffer "*cc-mode warnings*"
-	    (insert (format "
-The version of Emacs 18 you are running, %s,
-
+	    (print (format
+"The version of Emacs 18 you are running, %s,
 has known deficiencies in its ability to handle dual C++ comments,
 i.e. C++ line style comments and C block style comments.  This will
 not be much of a problem for you if you are only editing C code, but
@@ -527,8 +526,8 @@ folded into the main release. "
       (if (and (eq major 'v18) (not (eq comments 'no-dual-comments))
 	       (not c-inhibit-startup-warnings-p))
 	  (with-output-to-temp-buffer "*cc-mode warnings*"
-	    (insert (format "
-You are running a syntax patched Emacs 18 variant.  While this should
+	    (print (format
+"You are running a syntax patched Emacs 18 variant.  While this should
 work for you, you may want to consider upgrading to one of the latest
 Emacs 19's (FSF or Lucid).  The syntax patches are no longer supported
 either for syntax.c or cc-mode."))))
@@ -771,7 +770,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.263 $
+cc-mode Revision: $Revision: 3.264 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -802,7 +801,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.263 $
+cc-mode Revision: $Revision: 3.264 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3219,7 +3218,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.263 $"
+(defconst c-version "$Revision: 3.264 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
