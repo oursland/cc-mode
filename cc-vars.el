@@ -1096,50 +1096,66 @@ As described below, each cons cell in this list has the form:
 
 When a line is indented, CC Mode first determines the syntactic
 context of it by generating a list of symbols called syntactic
-elements.  This list can contain more than one syntactic element and
-the global variable `c-syntactic-context' contains the context list
-for the line being indented.  Each element in this list is actually a
-cons cell of the syntactic symbol and a buffer position.  This buffer
-position is called the relative indent point for the line.  Some
-syntactic symbols may not have a relative indent point associated with
-them.
+elements.  The global variable `c-syntactic-context' is bound to the
+that list.  Each element in the list is in turn a list where the first
+element is a syntactic symbol which tells what kind of construct the
+indentation point is located within.  More elements in the syntactic
+element lists are optional.  If there is one more and it isn't nil,
+then it's the anchor position for that construct.
 
-After the syntactic context list for a line is generated, CC Mode
-calculates the absolute indentation for the line by looking at each
-syntactic element in the list.  It compares the syntactic element
-against the SYNTACTIC-SYMBOL's in `c-offsets-alist'.  When it finds a
-match, it adds the OFFSET to the column of the relative indent point.
-The sum of this calculation for each element in the syntactic list is
+After generating the syntactic context for the line, CC Mode
+calculates the absolute indentation: First the base indentation is
+found by using the anchor position for the first syntactic element
+that provides one.  If none does, zero is used as base indentation.
+Then CC Mode looks at each syntactic element in the context in turn.
+It compares the car of the syntactic element against the
+SYNTACTIC-SYMBOL's in `c-offsets-alist'.  When it finds a match, it
+adds OFFSET to the base indentation.  The sum of this calculation is
 the absolute offset for line being indented.
 
 If the syntactic element does not match any in the `c-offsets-alist',
 the element is ignored.
 
-If OFFSET is nil, the syntactic element is ignored in the offset
-calculation.
+OFFSET can specify an offset in several different ways:
 
-If OFFSET is an integer, it's added to the relative indent.
+  If OFFSET is nil then it's ignored.
 
-If OFFSET is one of the symbols `+', `-', `++', `--', `*', or `/', a
-positive or negative multiple of `c-basic-offset' is added; 1, -1, 2,
--2, 0.5, and -0.5, respectively.
+  If OFFSET is an integer then it's used as relative offset, i.e. it's
+  added to the base indentation.
 
-If OFFSET is a vector, it's first element, which must be an integer,
-is used as an absolute indentation column.  This overrides all
-relative offsets.  If there are several syntactic elements which
-evaluate to absolute indentation columns, the first one takes
-precedence.  You can see in which order CC Mode combines the syntactic
-elements in a certain context by using \\[c-show-syntactic-information] on the line.
+  If OFFSET is one of the symbols `+', `-', `++', `--', `*', or `/'
+  then a positive or negative multiple of `c-basic-offset' is added to
+  the base indentation; 1, -1, 2, -2, 0.5, and -0.5, respectively.
 
-If OFFSET is a function, it's called with a single argument
-containing the cons of the syntactic element symbol and the relative
-indent point.  The return value from the function is then
-reinterpreted as an OFFSET value.
+  If OFFSET is a symbol with a value binding then that value, which
+  must be an integer, is used as relative offset.
 
-If OFFSET is a list, it's recursively evaluated using the semantics
-described above.  The first element of the list to return a non-nil
-value succeeds.  If none of the elements returns a non-nil value, the
-syntactic element is ignored.
+  If OFFSET is a vector then it's first element, which must be an
+  integer, is used as an absolute indentation column.  This overrides
+  the previous base indentation and the relative offsets applied to
+  it, and it becomes the new base indentation.
+
+  If OFFSET is a function or a lambda expression then it's called with
+  a single argument containing the cons of the syntactic symbol and
+  the anchor position (or nil if there is none).  The return value
+  from the function is then reinterpreted as an offset specification.
+
+  If OFFSET is a list then its elements are evaluated recursively as
+  offset specifications.  If the first element is any of the symbols
+  below then it isn't evaluated but instead specifies how the
+  remaining offsets in the list should be combined.  If it's something
+  else then the list is combined according the method `first'.  The
+  valid combination methods are:
+
+  `first' -- Use the first offset (that doesn't evaluate to nil).
+  `min'   -- Use the minimum of all the offsets.  All must be either
+             relative or absolute - they can't be mixed.
+  `max'   -- Use the maximum of all the offsets.  All must be either
+             relative or absolute - they can't be mixed.
+  `add'   -- Add all the evaluated offsets together.  Exactly one of
+             them may be absolute, in which case the result is
+             absolute.  Any relative offsets that preceded the
+             absolute one in the list will be ignored in that case.
 
 `c-offsets-alist' is a style variable.  This means that the offsets on
 this variable are normally taken from the style system in CC Mode
