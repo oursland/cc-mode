@@ -7580,7 +7580,11 @@ comment at the start of cc-engine.el for more info."
 	 ;; 17E.
 	 ((setq placeholder (c-looking-at-inexpr-block
 			     (c-safe-position containing-sexp paren-state)
-			     containing-sexp))
+			     containing-sexp
+			     ;; Have to turn on the heuristics after
+			     ;; the point even though it doesn't work
+			     ;; very well.  C.f. test case class-16.pike.
+			     t))
 	  (setq tmpsymbol (assq (car placeholder)
 				'((inexpr-class . class-open)
 				  (inexpr-statement . block-open))))
