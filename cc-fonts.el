@@ -122,7 +122,6 @@
 ;; during compilation.
 (cc-bytecomp-defvar c-preprocessor-face)
 (cc-bytecomp-defun c-fontify-recorded-types-and-refs)
-(cc-bytecomp-defun c-font-lock-identifier-list)
 (cc-bytecomp-defun c-font-lock-declarators)
 (cc-bytecomp-defun c-font-lock-objc-iip-decl)
 (cc-bytecomp-defun c-font-lock-objc-method)
@@ -475,63 +474,6 @@ stuff.  Used on level 1 and higher."
 					  'c-nonbreakable-space-face))
 		   'c-nonbreakable-space-face)))
       ))
-
-(defun c-font-lock-identifier-list (limit face)
-  ;; Fontify a comma separated list of identifiers with FACE in the
-  ;; region from the point to LIMIT.  Any highlighted keywords in
-  ;; front of each identifier are skipped over.  The list is taken to
-  ;; end when an identifier isn't followed by a comma.  The point is
-  ;; at the token following the last fontified identifier on return.
-  ;; Nil is always returned.
-
-  (save-restriction
-    (narrow-to-region (point-min) limit)
-
-    (c-fontify-types-and-refs
-	(id-end
-	 ;; If FACE is `font-lock-type-face' then all things we encounter
-	 ;; in the list are types.
-	 (c-promote-possible-types t)
-	 ;; The font-lock package in Emacs is known to clobber
-	 ;; `parse-sexp-lookup-properties' (when it exists).
-	 (parse-sexp-lookup-properties
-	  (cc-eval-when-compile
-	    (boundp 'parse-sexp-lookup-properties))))
-
-      (while (and
-	      (progn
-		(c-forward-syntactic-ws)
-		(not (eobp)))
-
-	      ;; Try to move forward over a type or name and fontify it.
-	      (if (save-restriction
-		    ;; Widen temporarily so that we don't trip up
-		    ;; on a limit set in an odd place.
-		    (widen)
-		    (if (eq face 'font-lock-type-face)
-			(c-forward-type)
-		      (when (c-forward-name)
-			(setq id-end (point))
-			(when (c-simple-skip-symbol-backward)
-			  (c-put-font-lock-face (point) id-end face))
-			(goto-char id-end)
-			t)))
-		  ;; If it worked, check for and skip over a following comma.
-		  (progn
-		    (c-forward-syntactic-ws)
-		    (when (eq (char-after) ?,)
-		      (forward-char)
-		      t))
-
-		;; If it failed, check if we're on a keyword and skip
-		;; over it in that case.  It's this way to handle that
-		;; a name might start with a keyword.
-		(when (eq (get-text-property (point) 'face)
-			  'font-lock-keyword-face)
-		  (goto-char (next-single-property-change
-			      (point) 'face nil limit))
-		  t))))))
-  nil)
 
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
@@ -1495,9 +1437,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ;; Fontify special declarations that lacks a type.
       ,@(when (c-lang-const c-typeless-decl-kwds)
 	  `((,(c-make-font-lock-search-function
-	       (concat "\\<"
-		       (c-regexp-opt (c-lang-const c-typeless-decl-kwds) t)
-		       "\\>")
+	       (concat "\\<\\("
+		       (c-regexp-opt (c-lang-const c-typeless-decl-kwds))
+		       "\\)\\>")
 	       '((c-font-lock-declarators limit t nil)
 		 (save-match-data
 		   (goto-char (match-end 1))
@@ -1757,31 +1699,37 @@ higher."
       ,@(when (c-lang-const c-type-list-kwds)
 	  `((,(c-make-font-lock-search-function
 	       (concat
-		"\\<"
-		(c-regexp-opt (c-lang-const c-type-list-kwds) t)
-		"\\>")
-	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
+		"\\<\\("
+		(c-regexp-opt (c-lang-const c-type-list-kwds))
+		"\\)\\>")
+	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
+		   (c-forward-keyword-clause)
+		   (if (> (point) limit) (goto-char limit))))))))
 
       ;; Fontify type lists in C++ style inherits.
       ,@(when (c-lang-const c-colon-type-list-kwds)
 	  `((,(c-make-font-lock-search-function
 	       (concat
-		"\\<"
-		(c-regexp-opt (c-lang-const c-colon-type-list-kwds) t)
-		"\\>"
+		"\\<\\("
+		(c-regexp-opt (c-lang-const c-colon-type-list-kwds))
+		"\\)\\>"
 		(c-lang-const c-colon-type-list-re))
-	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
+	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
+		   (c-forward-keyword-clause)
+		   (if (> (point) limit) (goto-char limit))))))))
 
       ;; Fontify type lists in C++ style throw specifications.
       ,@(when (c-lang-const c-paren-type-kwds)
 	  `((,(c-make-font-lock-search-function
 	       (concat
-		"\\<"
-		(c-regexp-opt (c-lang-const c-paren-type-kwds) t)
-		"\\>"
+		"\\<\\("
+		(c-regexp-opt (c-lang-const c-paren-type-kwds))
+		"\\)\\>"
 		(c-lang-const c-syntactic-ws)
 		"(")
-	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
+	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
+		   (c-forward-keyword-clause)
+		   (if (> (point) limit) (goto-char limit))))))))
       ))
 
 (c-lang-defconst c-matchers-1
@@ -2108,14 +2056,11 @@ need for `c++-font-lock-extra-types'.")
 		  ((looking-at c-class-key)
 		   (goto-char (match-end 1))
 		   (c-font-lock-objc-iip-decl))
-		  ;; Handle a @class directive.
+		  ;; Handle a @class directive.  Fontification is done
+		  ;; through `c-type-list-kwds', so we only need to
+		  ;; skip to the end.
 		  ((looking-at "@class\\>")
-		   (goto-char (match-end 0))
-		   (c-font-lock-identifier-list (point-max)
-						'font-lock-type-face)
-		   (when (eq (char-after) ?\;)
-		     (forward-char)
-		     t))
+		   (c-syntactic-re-search-forward ";" nil t))
 		  ;; Otherwise we assume it's a protection directive.
 		  (t (skip-syntax-forward "w_")))
 	   ;; Failed to parse the directive.  Try to recover by
