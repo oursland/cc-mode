@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.188 $
-;; Last Modified:   $Date: 1995-03-31 01:15:07 $
+;; Version:         $Revision: 4.189 $
+;; Last Modified:   $Date: 1995-03-31 01:30:00 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-31 01:15:07 $|$Revision: 4.188 $|
+;; |$Date: 1995-03-31 01:30:00 $|$Revision: 4.189 $|
 
 ;;; Code:
 
@@ -4102,8 +4102,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
      ((eq offset '-)  (setq offset (- c-basic-offset)))
      ((eq offset '++) (setq offset (* 2 c-basic-offset)))
      ((eq offset '--) (setq offset (* 2 (- c-basic-offset))))
-     ((eq offset '*)  (setq offset (/ 2 c-basic-offset)))
-     ((eq offset '/)  (setq offset (/ 2 (- c-basic-offset))))
+     ((eq offset '*)  (setq offset (/ c-basic-offset 2)))
+     ((eq offset '/)  (setq offset (/ (- c-basic-offset) 2)))
      ((and (not (numberp offset))
 	   (fboundp offset))
       (setq offset (funcall offset langelem)))
@@ -4516,7 +4516,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.188 $"
+(defconst c-version "$Revision: 4.189 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
