@@ -27,15 +27,7 @@
 
 ;;; Commentary:
 
-;; This file is necessary in order to run CC Mode 5 under Emacs 19.34
-;; Do *not* load this file if you are using XEmacs 19.15, Emacs 20 or
-;; XEmacs 20!
-
-;; To conditionally load this only in Emacs 19.34, add the following
-;; to your .emacs file, *before* you load CC Mode.
-;;
-;; (or (fboundp 'functionp)
-;;     (require 'cc-mode-19))
+;; This file is necessary in order to run CC Mode 5 under Emacs 19.34.
 
 ;;; Code:
 
@@ -44,9 +36,22 @@
 
 ;; Emacs 19.34 requires the POS argument to char-after.  Emacs 20
 ;; makes it optional, as it has long been in XEmacs.
-(defadvice char-after (before c-char-after-advice (&optional pos) activate)
+(defadvice char-after (before c-char-after-advice (&optional pos)
+			      activate preactivate)
+  "POS is optional and defaults to the position of point."
   (if (not pos)
       (setq pos (point))))
+
+;; advice for indent-new-comment-line for older Emacsen
+(or (boundp 'comment-line-break-function)
+    (defadvice indent-new-comment-line (around c-line-break-advice
+					       activate preactivate)
+      "Calls c-comment-line-break-function if in a comment in a CC Mode."
+      (if (or (not c-buffer-is-cc-mode)
+	      (not (c-in-literal))
+	      (not c-comment-continuation-stars))
+	  ad-do-it
+	(c-comment-line-break-function (ad-get-arg 0)))))
 
 ;; Emacs 19.34 doesn't have a char-before function.  Here's it's Emacs
 ;; 20 definition.
