@@ -12,7 +12,7 @@ Mon Apr 27 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 Thu Apr 23 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
-	* cc-align.el, cc-cmds.el, cc-compat.el, cc-engine.el Use
+	* cc-align.el, cc-cmds.el, cc-compat.el, cc-engine.el: Use
  	c-{forward,backward}-sexp instead of {forward,backward}-sexp.
 	
 Mon Apr 20 1998  Barry Warsaw  <cc-mode-help@python.org>
@@ -47,10 +47,10 @@ Mon Apr 13 1998  Martin Stjernholm  <cc-mode-help@python.org>
  	inclass and related symbols in one place.  The anchor position of
  	inclass has changed in some situations.
 
-	* cc-mode.texi Documented the Pike mode, the c-lineup-inexpr-block
- 	lineup function and the inlambda, lambda-intro-cont,
- 	inexpr-statement and inexpr-class syntactic symbols.  Updated the
- 	doc on c-fill-paragraph.
+	* cc-mode.texi: Documented the Pike mode, the
+	c-lineup-inexpr-block lineup function and the inlambda,
+	lambda-intro-cont, inexpr-statement and inexpr-class syntactic
+	symbols.  Updated the doc on c-fill-paragraph.
 
 Sun Apr 12 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
@@ -74,20 +74,17 @@ Mon Apr 06 1998  Martin Stjernholm  <cc-mode-help@python.org>
  	c-guess-basic-syntax): Support for Java anonymous classes.  New
  	case 6D in c-guess-basic-syntax.
 
-	* cc-langs.el, cc-mode.el, cc-styles.el Support for Java anonymous
- 	classes.  New syntactic element inexpr-class.
+	* cc-langs.el, cc-mode.el, cc-styles.el: Support for Java
+ 	anonymous classes.  New syntactic element inexpr-class.
 
 Sun Apr 05 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 	* cc-align.el (c-lineup-inexpr-stat): Added lineup of statements
- 	inside expressions.  Do not use langelem, because it's nil now for
- 	`inlambda' and `inexpr-statement'.
+ 	inside expressions.
 
 	* cc-engine.el (c-inside-bracelist-p, c-looking-at-inexpr-stat,
- 	c-guess-basic-syntax): Changed the anchoring of the syntactic
- 	symbols `inlambda' and `inexpr-statement' to be able to remove
- 	three of the new symbols. Added recognition of the gcc extension
- 	for statements inside expressions.  They're handled as
+ 	c-guess-basic-syntax): Added recognition of the gcc extension for
+ 	statements inside expressions.  They're handled as
  	`inexpr-statement' now.  Changed cases: 6, 10, 15A, 16E.  New case
  	7B; old 7B-F renumbered.
 
@@ -117,12 +114,18 @@ Thu Apr 02 1998  Martin Stjernholm  <cc-mode-help@python.org>
 	* cc-align.el (c-lineup-inexpr-stat): New lineup function used in
  	Pike mode.
 
-	* cc-engine.el, cc-langs.el, cc-styles.el Support for the Pike
- 	language.  Handle Pike-style brace lists ('({ })', '([ ])', '(<
- 	>)') and in-expression statements.  New case 6 in
- 	c-guess-basic-syntax; CASES >= 6 ARE RENAMED because of this.  New
- 	functions: c-looking-at-special-brace-list,
- 	c-looking-at-inexpr-stat, c-looking-at-inexpr-stat-backward.
+	* cc-langs.el: New variables c-lambda-key and
+	c-special-brace-lists for Pike.
+
+	* cc-styles.el: New syntactic symbols inlambda, lambda-intro-cont,
+	and inexpr-statement for Pike.
+
+	* cc-engine.el: Support for the Pike language.  Handle Pike-style
+ 	brace lists ('({ })', '([ ])', '(< >)') and in-expression
+ 	statements.  New case 6 in c-guess-basic-syntax; CASES >= 6 ARE
+ 	RENAMED because of this.  New functions:
+ 	c-looking-at-special-brace-list, c-looking-at-inexpr-stat,
+ 	c-looking-at-inexpr-stat-backward.
 
 	* cc-mode.el (pike-mode): New function; support for the Pike language. 
 
