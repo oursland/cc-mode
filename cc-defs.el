@@ -319,9 +319,9 @@ This function does not do any hidden buffer changes."
   "Bind variables according to VARLIST (in `let*' style) and eval BODY,
 then restore the buffer state under the assumption that no significant
 modification has been made.  A change is considered significant if it
-affected the buffer text in any way that wasn't completely restored
+affects the buffer text in any way that isn't completely restored
 again.  Changes in text properties like `face' or `syntax-table' are
-considered insignificant.  This macro allows text-properties to be
+considered insignificant.  This macro allows text properties to be
 changed, even in a read-only buffer.
 
 The return value is the value of the last form in BODY."
@@ -1228,7 +1228,11 @@ This macro does not do any hidden buffer changes."
 	     (c-lang-constants-under-evaluation
 	      (cons source-pos c-lang-constants-under-evaluation))
 	     (fallback (get mode 'c-fallback-mode))
-	     value)
+	     value
+	     ;; Make sure the recursion limits aren't very low
+	     ;; since the `c-lang-const' dependencies can go deep.
+	     (max-specpdl-size (max max-specpdl-size 3000))
+	     (max-lisp-eval-depth (max max-lisp-eval-depth 1000)))
 
 	(if (if fallback
 		(let ((backup-source-pos (copy-sequence (cdr source-pos))))
