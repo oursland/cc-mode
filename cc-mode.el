@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-05 19:36:07 $
-;; Version:         $Revision: 2.177 $
+;; Last Modified:   $Date: 1992-08-05 20:48:00 $
+;; Version:         $Revision: 2.178 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-05 19:36:07 $|$Revision: 2.177 $|
+;; |$Date: 1992-08-05 20:48:00 $|$Revision: 2.178 $|
 
 
 ;; ======================================================================
@@ -291,9 +291,12 @@ Setting this variable to nil will defeat this feature, but be
 forewarned!  Un-escaped characters in comment regions will break many
 things such as some indenting and blinking of parenthesis.
 
-Note further that only the default set of characters can be
-automatically escaped when typed in, but entering
-\\[c++-tame-comments] will escape all character in the set.")
+Note further that only the default set of characters will be escaped
+automatically as they are typed. But entering \\[c++-tame-comments]
+(c++-tame-comments) will escape all characters which are members of
+this set, found in comments throughout the file.
+
+This (mis-)feature will not be necessary in emacs 19.")
 
 (defvar c++-default-macroize-column 78
   "*Column to insert backslashes.")
@@ -330,7 +333,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.177 $
+  "Major mode for editing C++ code.  $Revision: 2.178 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -531,7 +534,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.177 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.178 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2116,7 +2119,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.177 $"
+(defconst c++-version "$Revision: 2.178 $"
   "c++-mode version number.")
 
 (defun c++-version ()
