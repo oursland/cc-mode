@@ -97,21 +97,26 @@
 ;; (require 'cc-mode)
 ;; (c-initialize-cc-mode)
 
+;;;###autoload
 (defun c-initialize-cc-mode ()
   ;; make sure all necessary components of CC Mode are loaded in.
-  (require 'cc-vars)
-  (require 'cc-engine)
-  (require 'cc-langs)
-  (require 'cc-menus)
-  (require 'cc-align)
-  (require 'cc-styles)
-  (require 'cc-cmds)
-  ;; run the initialization hook, but only once
-  (or (get 'c-initialize-cc-mode 'cc-mode-is-initialized)
-      (progn
-	(run-hooks 'c-initialization-hook)
-	(put 'c-initialize-cc-mode 'cc-mode-is-initialized t))))
-
+  (let ((initprop 'cc-mode-is-initialized))
+    (require 'cc-vars)
+    (require 'cc-engine)
+    (require 'cc-langs)
+    (require 'cc-menus)
+    (require 'cc-align)
+    (require 'cc-styles)
+    (require 'cc-cmds)
+    ;; run the initialization hook, but only once
+    (or (get 'c-initialize-cc-mode initprop)
+	(progn
+	  (c-initialize-builtin-style)
+	  (if c-style-variables-are-local-p
+	      (c-make-styles-buffer-local))
+	  (run-hooks 'c-initialization-hook)
+	  (put 'c-initialize-cc-mode initprop t)))
+    ))
 
 
 ;;;###autoload
