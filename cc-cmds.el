@@ -183,8 +183,8 @@ the brace is inserted inside a literal."
     ;; if we're in a literal, or we're not at the end of the line, or
     ;; a numeric arg is provided, or auto-newlining is turned off,
     ;; then just insert the character.
-    (if (or literal arg
-;	    (not c-auto-newline)
+    (if (or literal
+	    arg
 	    (not (looking-at "[ \t]*$")))
 	(self-insert-command (prefix-numeric-value arg))
       (let* ((syms
@@ -438,9 +438,10 @@ non-whitespace characters on the line following the semicolon."
 	(self-insert-command (prefix-numeric-value arg))
       ;; do some special stuff with the character
       (self-insert-command (prefix-numeric-value arg))
-      ;; do all cleanups, reindentations, and newline insertions, but
-      ;; only if c-auto-newline is turned on
-      (if (not c-auto-newline) nil
+      ;; do all cleanups and newline insertions if c-auto-newline is
+      ;; turned on
+      (if (not c-auto-newline)
+	  (c-indent-line)
 	;; clean ups
 	(let ((pos (- (point-max) (point))))
 	  (if (and (or (and
@@ -573,6 +574,29 @@ supplied, or point is inside a literal."
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
 	(c-indent-line))))
+
+(defun c-electric-paren (arg)
+  "Insert a parenthesis.
+
+Also, the line is re-indented unless a numeric ARG is supplied, there
+are non-whitespace characters present on the line after the colon, or
+the colon is inserted inside a literal."
+  (interactive "*P")
+  (let (;; shut this up
+	(c-echo-syntactic-information-p nil))
+    (if (or arg
+	    (not (looking-at "[ \t]*$"))
+	    (c-in-literal (c-point 'bod)))
+	(self-insert-command (prefix-numeric-value arg))
+      ;; do some special stuff with the character
+      (let* (;; We want to inhibit blinking the paren since this will
+	     ;; be most disruptive.  We'll blink it ourselves
+	     ;; afterwards.
+	     (old-blink-paren blink-paren-function)
+	     blink-paren-function)
+	(self-insert-command (prefix-numeric-value arg))
+	(c-indent-line)
+	(funcall old-blink-paren)))))
 
 
 
