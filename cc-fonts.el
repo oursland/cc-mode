@@ -582,26 +582,30 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (goto-char id-start)
       (unless (c-skip-comments-and-strings limit)
 	(setq kwd-sym nil)
-	(when (or (not (eq (get-text-property id-start 'face)
-			   'font-lock-keyword-face))
-		  (when (looking-at c-opt-<>-sexp-key)
-		    (setq kwd-sym (c-keyword-sym (match-string 1)))))
-	  (goto-char (1- pos))
-	  ;; Check for comment/string both at the identifier and at the "<".
-	  (unless (c-skip-comments-and-strings limit)
+	(if (or (not (eq (get-text-property id-start 'face)
+			 'font-lock-keyword-face))
+		(when (looking-at c-opt-<>-sexp-key)
+		  (setq kwd-sym (c-keyword-sym (match-string 1)))))
+	    (progn
+	      (goto-char (1- pos))
+	      ;; Check for comment/string both at the identifier and
+	      ;; at the "<".
+	      (unless (c-skip-comments-and-strings limit)
 
-	    (c-fontify-types-and-refs ()
-	      (when (c-forward-<>-arglist
-		     (c-keyword-member kwd-sym 'c-<>-type-kwds))
-		(when (and c-opt-identifier-concat-key
-			   (not (get-text-property id-start 'face)))
-		  (c-forward-syntactic-ws)
-		  (if (looking-at c-opt-identifier-concat-key)
-		      (c-put-font-lock-face id-start id-end
-					    font-lock-reference-face)
-		    (c-put-font-lock-face id-start id-end
-					  'font-lock-type-face))))))))
+		(c-fontify-types-and-refs ()
+		  (if (c-forward-<>-arglist
+		       (c-keyword-member kwd-sym 'c-<>-type-kwds))
+		      (when (and c-opt-identifier-concat-key
+				 (not (get-text-property id-start 'face)))
+			(c-forward-syntactic-ws)
+			(if (looking-at c-opt-identifier-concat-key)
+			    (c-put-font-lock-face id-start id-end
+						  font-lock-reference-face)
+			  (c-put-font-lock-face id-start id-end
+						'font-lock-type-face)))
+		    (goto-char pos)))))
 
+	  (goto-char pos)))
       ))
   nil)
 
