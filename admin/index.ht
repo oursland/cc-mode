@@ -1,15 +1,21 @@
 Title: CC Mode
 Author: cc-mode-help@python.org
+Other-links:
+    <h3>Related Links</h3>
+    <li><a href="/mailman/listinfo/cc-mode-announce">
+	CC Mode Announce mailing list</a>
 
 <h2>CC Mode Version 5</h2>
 
 The <a href="release.html">current release</a> is version 5.21.  A
-list of <a href="changes.html">recent changes</a> are given in detail, 
+list of <a href="changes-521.html">recent changes</a> are given in detail, 
 as well as some <a href="installation.html">installation notes</a> and 
 Emacs/XEmacs <a href="compat.html">compatibility details</a>.
 
-<p>You can also <a href="cc-mode.html/Top.html">browse the
-documentation on-line</a>.
+<p>You can <a href="cc-mode.html/Top.html">browse the
+documentation on-line</a>.  There is also an
+<a href="/mailman/listinfo/cc-mode-announce">announcement-only
+mailing list</a> which you can join.
 
 <p>Martin Stjernholm now joins Barry Warsaw as members of the
 <a href="mailto:cc-mode-help@python.org">CC Mode maintainers
