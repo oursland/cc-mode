@@ -249,107 +249,111 @@
 (defun do-one-test (filename &optional no-error)
   (interactive "fFile to test: ")
   (let ((default-directory cc-test-dir))
-    (if (or (when (member filename cc-test-finished-tests)
-	      (message "Skipping %s - already tested" filename)
-	      t)
-	    (when (not (file-exists-p
-			(concat (file-name-sans-extension filename) ".res")))
-	      (cc-test-log "Skipping %s - no .res file" filename)
-	      t))
-	t
-      (if noninteractive
-	  (send-string-to-terminal (format "Testing %s        \r" filename))
-	(message "Testing %s" filename))
-      (let* ((baw:c-testing-p t)
-	     (buflist (make-test-buffers filename))
-	     (testbuf (car buflist))
-	     (resultsbuf (nth 1 buflist))
-	     (expectedbuf (nth 2 buflist))
-	     (pop-up-windows t)
-	     (linenum 1)
-	     (style "TESTSTYLE")
-	     error-found-p
-	     expectedindent
-	     c-echo-syntactic-information-p)
-	(set-buffer testbuf)
-	(goto-char (point-min))
-	;; Collect the analysis of all lines.
-	(while (not (eobp))
-	  (let ((syntax (c-guess-basic-syntax)))
-	    (set-buffer resultsbuf)
-	    (insert (format "%s" syntax) "\n")
-	    (set-buffer testbuf))
-	  (forward-line 1))
-	;; Record the expected indentation and reindent.  This is done
-	;; in backward direction to avoid cascading errors.
-	(while (= (forward-line -1) 0)
-	  (back-to-indentation)
-	  (setq expectedindent (cons (current-column) expectedindent))
-	  (unless (eolp)
-	    ;; Do not reindent empty lines; the test cases might have
-	    ;; whitespace at eol trimmed away, so that could produce
-	    ;; false alarms.
-	    (c-indent-line)))
-	;; Compare and report.
-	(set-buffer resultsbuf)
-	(goto-char (point-min))
-	(set-buffer expectedbuf)
-	(goto-char (point-min))
-	(set-buffer testbuf)
-	(goto-char (point-min))
-	(while (not (eobp))
-	  (let* ((currentindent (progn
-				  (back-to-indentation)
-				  (current-column)))
-		 (results (prog2
-			      (set-buffer resultsbuf)
-			      (buffer-substring (c-point 'bol) (c-point 'eol))
-			    (forward-line 1)))
-		 (expected (prog2
-			       (set-buffer expectedbuf)
-			       (buffer-substring (c-point 'bol) (c-point 'eol))
-			     (forward-line 1)))
-		 regression-comment)
-	    (set-buffer testbuf)
-	    (unless (string= results expected)
-	      (let ((msg (format "Expected analysis %s, got %s"
-				 expected results)))
-		(cc-test-log "%s:%d: %s" filename linenum msg)
-		(indent-for-comment)
-		(unless (eolp) (end-of-line) (insert "  "))
-		(insert "!!! " msg ".")
-		(setq error-found-p t
-		      regression-comment t)))
-	    (unless (= (car expectedindent) currentindent)
-	      (let ((msg (format "Expected indentation %d, got %d"
-				 (car expectedindent) currentindent)))
-		(cc-test-log "%s:%d: %s" filename linenum msg)
-		(if regression-comment
-		    (insert "  ")
+    (save-excursion
+      (if (or (when (member filename cc-test-finished-tests)
+		(message "Skipping %s - already tested" filename)
+		t)
+	      (when (not (file-exists-p
+			  (concat (file-name-sans-extension filename) ".res")))
+		(cc-test-log "Skipping %s - no .res file" filename)
+		t))
+	  t
+	(if noninteractive
+	    (send-string-to-terminal (format "Testing %s        \r" filename))
+	  (message "Testing %s" filename))
+	(let* ((baw:c-testing-p t)
+	       (buflist (make-test-buffers filename))
+	       (testbuf (car buflist))
+	       (resultsbuf (nth 1 buflist))
+	       (expectedbuf (nth 2 buflist))
+	       (pop-up-windows t)
+	       (linenum 1)
+	       (style "TESTSTYLE")
+	       error-found-p
+	       expectedindent
+	       c-echo-syntactic-information-p)
+	  (set-buffer testbuf)
+	  (goto-char (point-min))
+	  ;; Collect the analysis of all lines.
+	  (while (not (eobp))
+	    (let ((syntax (c-guess-basic-syntax)))
+	      (set-buffer resultsbuf)
+	      (insert (format "%s" syntax) "\n")
+	      (set-buffer testbuf))
+	    (forward-line 1))
+	  ;; Record the expected indentation and reindent.  This is done
+	  ;; in backward direction to avoid cascading errors.
+	  (while (= (forward-line -1) 0)
+	    (back-to-indentation)
+	    (setq expectedindent (cons (current-column) expectedindent))
+	    (unless (eolp)
+	      ;; Do not reindent empty lines; the test cases might have
+	      ;; whitespace at eol trimmed away, so that could produce
+	      ;; false alarms.
+	      (c-indent-line)))
+	  ;; Compare and report.
+	  (set-buffer resultsbuf)
+	  (goto-char (point-min))
+	  (set-buffer expectedbuf)
+	  (goto-char (point-min))
+	  (set-buffer testbuf)
+	  (goto-char (point-min))
+	  (while (not (eobp))
+	    (let* ((currentindent (progn
+				    (back-to-indentation)
+				    (current-column)))
+		   (results (prog2
+				(set-buffer resultsbuf)
+				(buffer-substring (c-point 'bol)
+						  (c-point 'eol))
+			      (forward-line 1)))
+		   (expected (prog2
+				 (set-buffer expectedbuf)
+				 (buffer-substring (c-point 'bol)
+						   (c-point 'eol))
+			       (forward-line 1)))
+		   regression-comment)
+	      (set-buffer testbuf)
+	      (unless (string= results expected)
+		(let ((msg (format "Expected analysis %s, got %s"
+				   expected results)))
+		  (cc-test-log "%s:%d: %s" filename linenum msg)
 		  (indent-for-comment)
 		  (unless (eolp) (end-of-line) (insert "  "))
-		  (insert "!!! "))
-		(insert msg ".")
-		(setq error-found-p t))))
-	  (forward-line 1)
-	  (setq expectedindent (cdr expectedindent)
-		linenum (1+ linenum)))
-	(unless error-found-p
-	  (setq cc-test-finished-tests (cons filename cc-test-finished-tests)))
-	(when (and error-found-p (not no-error))
-	  (set-buffer testbuf)
-	  (buffer-enable-undo testbuf)
-	  (set-buffer-modified-p nil)
-	  (set-buffer resultsbuf)
-	  (buffer-enable-undo resultsbuf)
-	  (set-buffer-modified-p nil)
-	  (set-buffer expectedbuf)
-	  (buffer-enable-undo expectedbuf)
-	  (set-buffer-modified-p nil)
-	  (pop-to-buffer testbuf)
-	  (error "Indentation regression found in file %s" filename))
-	(not error-found-p)
-	))))
+		  (insert "!!! " msg ".")
+		  (setq error-found-p t
+			regression-comment t)))
+	      (unless (= (car expectedindent) currentindent)
+		(let ((msg (format "Expected indentation %d, got %d"
+				   (car expectedindent) currentindent)))
+		  (cc-test-log "%s:%d: %s" filename linenum msg)
+		  (if regression-comment
+		      (insert "  ")
+		    (indent-for-comment)
+		    (unless (eolp) (end-of-line) (insert "  "))
+		    (insert "!!! "))
+		  (insert msg ".")
+		  (setq error-found-p t))))
+	    (forward-line 1)
+	    (setq expectedindent (cdr expectedindent)
+		  linenum (1+ linenum)))
+	  (unless error-found-p
+	    (setq cc-test-finished-tests
+		  (cons filename cc-test-finished-tests)))
+	  (when (and error-found-p (not no-error))
+	    (set-buffer testbuf)
+	    (buffer-enable-undo testbuf)
+	    (set-buffer-modified-p nil)
+	    (set-buffer resultsbuf)
+	    (buffer-enable-undo resultsbuf)
+	    (set-buffer-modified-p nil)
+	    (set-buffer expectedbuf)
+	    (buffer-enable-undo expectedbuf)
+	    (set-buffer-modified-p nil)
+	    (pop-to-buffer testbuf)
+	    (error "Indentation regression found in file %s" filename))
+	  (not error-found-p)
+	  )))))
 
 (defun do-all-tests (&optional resetp)
   (interactive "P")
