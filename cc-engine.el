@@ -3851,11 +3851,11 @@ Keywords are recognized and not considered identifiers."
 	;; are we looking at a comment only line?
 	(when (and (looking-at c-comment-start-regexp)
 		   (/= (c-forward-token-1 0 nil (c-point 'eol)) 0))
-	  (c-add-syntax 'comment-intro))
+	  (c-append-syntax 'comment-intro))
 	;; we might want to give additional offset to friends (in C++).
 	(when (and c-opt-friend-key
 		   (looking-at c-opt-friend-key))
-	  (c-add-syntax 'friend))
+	  (c-append-syntax 'friend))
 
 	;; Set syntactic-relpos.
 	(let ((p c-syntactic-context))
@@ -3872,7 +3872,7 @@ Keywords are recognized and not considered identifiers."
 		 (eq macro-start (c-point 'boi))
 		 (not (and (c-major-mode-is 'pike-mode)
 			   (eq (char-after (1+ macro-start)) ?\"))))
-	    (c-add-syntax 'cpp-macro)
+	    (c-append-syntax 'cpp-macro)
 	  (when (and c-syntactic-indentation-in-macros macro-start)
 	    (if in-macro-expr
 		(when (or
@@ -3980,24 +3980,37 @@ Keywords are recognized and not considered identifiers."
   ;; found relpos, we rely on that these other symbols always precede
   ;; topmost-intro in the LANGELEMS list.
   (let ((indent 0) anchor)
-    (catch 'done
-      (while langelems
-	(let* ((c-syntactic-element (car langelems))
-	       (res (c-calc-offset c-syntactic-element)))
-	  (if (vectorp res)
-	      (throw 'done (elt res 0))
-	    (unless anchor
-	      (let ((relpos (car-safe (cdr (car langelems)))))
-		(if relpos
-		    (setq anchor relpos))))
-	    (setq indent (+ indent res)
-		  langelems (cdr langelems)))))
-      (+ indent
-	 (if anchor
-	     (save-excursion
-	       (goto-char anchor)
-	       (current-column))
-	   0)))))
+
+    (while langelems
+      (let* ((c-syntactic-element (car langelems))
+	     (res (c-calc-offset c-syntactic-element)))
+
+	(if (vectorp res)
+	    ;; Got an absolute column that overrides any indentation
+	    ;; we've collected so far, but not the relative
+	    ;; indentation we might get for the nested structures
+	    ;; further down the langelems list.
+	    (setq indent (elt res 0)
+		  anchor (point-min))	; A position at column 0.
+
+	  ;; Got a relative change of the current calculated
+	  ;; indentation.
+	  (setq indent (+ indent res))
+
+	  ;; Use the anchor position from the first syntactic
+	  ;; element with one.
+	  (unless anchor
+	    (let ((relpos (car-safe (cdr (car langelems)))))
+	      (if relpos
+		  (setq anchor relpos)))))
+
+	(setq langelems (cdr langelems))))
+
+    (if anchor
+	(+ indent (save-excursion
+		    (goto-char anchor)
+		    (current-column)))
+      indent)))
 
 
 (cc-provide 'cc-engine)
