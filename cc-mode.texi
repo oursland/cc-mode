@@ -313,8 +313,6 @@ your personal coding style.
 @cindex syntactic analysis
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@vindex c-offsets-alist
-@vindex offsets-alist (c-)
 @cindex relative buffer position
 @cindex syntactic symbol
 @cindex syntactic component
@@ -456,8 +454,6 @@ components.  Also notice that the first component,
 @cindex indentation calculation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@vindex c-offsets-alist
-@vindex offsets-alist (c-)
 Indentation for a line is calculated using the syntactic
 component list derived in step 1 above (@pxref{Syntactic Analysis}).
 Each component contributes to the final total indentation of the line in
@@ -2145,49 +2141,42 @@ The variables that the style system affect are called @dfn{style
 variables}.  They are handled specially in several ways:
 
 @itemize @bullet
-@findex c-make-styles-buffer-local
-@findex make-styles-buffer-local (c-)
 @item
 Style variables are by default global variables, i.e. they have the same
 value in all Emacs buffers.  However, they can instead be made always
 buffer local by setting @code{c-style-variables-are-local-p} to
-non-@code{nil} before @ccmode{} is initialized.  They can also be made
-local to specific buffers by executing
-@example
-
-(c-make-styles-buffer-local t)
-
-@end example
-@noindent
-in e.g. a language hook function (@pxref{Hooks}).
+non-@code{nil} before @ccmode{} is initialized.
 
 @vindex c-old-style-variable-behavior
 @vindex old-style-variable-behavior (c-)
 @item
-The default value of any style variable is the special symbol
-@code{set-from-style}.  Variables that are still set to that symbol when
-a @ccmode{} buffer is initialized will be set according to the current
-style, otherwise they will keep their current value.@footnote{This is a
-big change from versions of @ccmode{} earlier than 5.26, where such
-settings would get overridden by the style system unless special
-precautions were taken.  That was changed since it was counterintuitive
-and confusing, especially to novice users.  If your configuration
-depends on the old overriding behavior, you can set the variable
-@code{c-old-style-variable-behavior} to non-@code{nil}.}
-
-@vindex c-offsets-alist
-@vindex offsets-alist (c-)
-The style variable @code{c-offsets-alist} is handled a little specially,
-though.  It's an association list, and is thus by default set to the
-empty list, @code{nil}.  When the style system is initialized, any
-syntactic symbols already on it are kept - only the missing ones are
-filled in from the chosen style.
+The default value of any style variable (with two exceptions --- see
+below) is the special symbol @code{set-from-style}.  Variables that are
+still set to that symbol when a @ccmode{} buffer is initialized will be
+set according to the current style, otherwise they will keep their
+current value@footnote{This is a big change from versions of @ccmode{}
+earlier than 5.26, where such settings would get overridden by the style
+system unless special precautions were taken.  That was changed since it
+was counterintuitive and confusing, especially to novice users.  If your
+configuration depends on the old overriding behavior, you can set the
+variable @code{c-old-style-variable-behavior} to non-@code{nil}.}.
 
 Note that when we talk about the ``default value'' for a style variable,
 we don't mean the @code{set-from-style} symbol that all style variables
 are set to initially, but instead the value it will get at mode
 initialization when neither a style nor a global setting has set its
 value.
+
+The style variable @code{c-offsets-alist} is handled a little
+differently from the other style variables.  It's an association list,
+and is thus by default set to the empty list, @code{nil}.  When the
+style system is initialized, any syntactic symbols already on it are
+kept --- only the missing ones are filled in from the chosen style.
+
+The style variable @code{c-special-indent-hook} is also handled in a
+special way.  Styles may only add more functions on this hook, so the
+global settings on it are always preserved@footnote{This did not change
+in version 5.26.}.
 
 @item
 The global settings of style variables get captured in the special
