@@ -468,7 +468,10 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			  (eq (char-syntax (char-before)) ?\()
                           (and (c-mode-is-new-awk-p)
                                (c-awk-after-logical-semicolon))))) ; ACM 2002/6/22
-          ;; ACM, 2002/7/20:  What about giving a limit to the above function?
+          ;; ACM, 2002/7/20: What about giving a limit to the above function?
+          ;; ACM, 2003/6/16: The above two lines (checking for
+          ;; awk-logical-semicolon) are probably redundant after rewriting
+          ;; c-awk-backward-syntactic-ws.
 	  (setq ret 'previous
 		pos saved)
 
@@ -4170,7 +4173,9 @@ brace."
   ;; Note: This test is easily fooled.  It only works reasonably well
   ;; in the situations where `c-guess-basic-syntax' uses it.
   (save-excursion
-    (c-backward-syntactic-ws lim)
+    (if (c-mode-is-new-awk-p)
+        (c-awk-backward-syntactic-ws lim)
+      (c-backward-syntactic-ws lim))
     (let ((checkpoint (point)))
       ;; could be looking at const specifier
       (if (and (eq (char-before) ?t)
@@ -5963,6 +5968,17 @@ brace."
 		 (looking-at c-opt-method-key))
 	    (c-beginning-of-statement-1 lim)
 	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
+           ;; CASE 5P: AWK pattern or function or continuation
+           ;; thereof.
+           ((c-mode-is-new-awk-p)
+            (setq placeholder (point))
+            (c-add-stmt-syntax
+             (if (and (eq (c-beginning-of-statement-1) 'same)
+                      (/= (point) placeholder))
+                 'topmost-intro-cont
+               'topmost-intro)
+             nil nil nil
+             containing-sexp paren-state))
 	   ;; CASE 5N: At a variable declaration that follows a class
 	   ;; definition or some other block declaration that doesn't
 	   ;; end at the closing '}'.  C.f. case 5D.5.
@@ -5996,7 +6012,9 @@ brace."
 		(c-backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
-		  (memq (char-before) '(?\; ?}))
+                  (if (c-mode-is-new-awk-p)
+                      (not (c-awk-prev-line-incomplete-p))
+                    (memq (char-before) '(?\; ?})))
 		  (and (c-major-mode-is 'objc-mode)
 		       (progn
 			 (c-beginning-of-statement-1 lim)

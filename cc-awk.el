@@ -341,17 +341,32 @@
 
 (defun c-awk-backward-syntactic-ws (&optional lim) 
 ;; Skip backwards over awk-syntactic whitespace.  This is whitespace
-;; characters, comments, and NEWLINES WHICH AREN'T "VIRTUAL SEMICOLONS".
+;; characters, comments, and NEWLINES WHICH AREN'T "VIRTUAL SEMICOLONS".  For
+;; this function, a newline isn't a "virtual semicolon" if that line ends with
+;; a real semicolon (or closing brace).
 ;; However if point starts inside a comment or preprocessor directive, the
-;; content of it is not treated as whitespace.
-;; LIM (optional) sets a limit on the backward movement.
-  (let ((lim (or lim (point-min))))
-    (while
-        (and (> (point) lim)
-             (progn (c-backward-syntactic-ws (max lim (c-point 'bol)))
-                    (bolp))
-             (/= (c-awk-get-NL-prop-prev-line) ?\;))
-      (backward-char))))
+;; content of it is not treated as whitespace.  LIM (optional) sets a limit on
+;; the backward movement.
+  (let ((lim (or lim (point-min)))
+        after-real-br)
+    (c-backward-syntactic-ws (max lim (c-point 'bol)))
+    (while                    ; go back one WS line each time round this loop.
+        (and (bolp)
+             (> (point) lim)
+             (/= (c-awk-get-NL-prop-prev-line) ?\;)
+             (/= (point)
+                 ;; The following function requires point at BONL [not EOL] to
+                 ;; recognise a preceding comment,.
+                 (progn (c-backward-syntactic-ws (max lim (c-point 'bopl)))
+                        (point)))))
+    ;; Does the previous line end with a real ; or }?  If so, go back to it.
+    (if (and (bolp)
+             (eq (c-awk-get-NL-prop-prev-line) ?\;)
+             (save-excursion
+               (c-backward-syntactic-ws (max lim (c-point 'bopl)))
+               (setq after-real-br (point))
+               (c-awk-after-rbrace-or-statement-semicolon)))
+        (goto-char after-real-br))))
 
 (defun c-awk-NL-prop-not-set ()
   ;; Is the NL-prop on the current line either nil or unset?
