@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.47 $
+@comment manual version: $Revision: 2.48 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-06-03 15:39:57 $
+@comment Last modification: $Date: 1996-06-03 17:27:08 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.47 $)
+@center (manual revision: $Revision: 2.48 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -84,7 +84,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 * Getting Connected::           
 * New Indentation Engine::
 * Minor Modes::
-* Indentation Commands::
+* Commands::
 * Customizing Indentation::
 * Syntactic Symbols::
 * Performance Issues::
@@ -341,18 +341,11 @@ Where @var{xxx} is the latest release minor number.
 @end example
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@menu
-* Syntactic Analysis::
-* Indentation Calculation::
-@end menu
-
 @node     New Indentation Engine, Minor Modes, Getting Connected, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  New Indentation Engine
 @cindex   New Indentation Engine
-
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @code{cc-mode} has a new indentation engine, providing a simplified, yet
@@ -367,12 +360,11 @@ This section will briefly cover how indentation is calculated in
 being used so that you will know how to customize @code{cc-mode} for
 your personal coding style.
 
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @menu
 * Syntactic Analysis::
 * Indentation Calculation::
 @end menu
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Syntactic Analysis, Indentation Calculation, , New Indentation Engine
@@ -628,7 +620,7 @@ the minibuffer when you hit @kbd{TAB}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Minor Modes, Indentation Commands, New Indentation Engine, Top
+@node  Minor Modes, Commands, New Indentation Engine, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Minor Modes
@@ -1112,17 +1104,30 @@ so-called electric commands.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Indentation Commands, Customizing Indentation, Minor Modes, Top
+@node  Commands, Customizing Indentation, Minor Modes, Top
 @comment  node-name,              next,                    previous,up
 
-@chapter  Indentation Commands
+@chapter  Commands
+@cindex   Commands
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@menu
+* Indentation Commands::
+* Other Commands::
+@end menu
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Indentation Commands, Other Commands, , Commands
+@comment  node-name,              next,                    previous,up
+
+@section  Indentation Commands
 @cindex   Indentation Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @findex c-set-style
 @findex set-style (c-)
 Various commands are provided which allow you to conveniently re-indent
-C constructs, and these are outlined below.  There are several things to
+C constructs.  There are several things to
 note about these indentation commands.  First, when you
 change your programming style, either though @code{c-set-style} or some
 other means, your file does @emph{not} automatically get re-indented.
@@ -1209,9 +1214,108 @@ While not strictly an indentation function, @kbd{M-C-h}
 (@code{c-mark-function}) is useful for marking the current top-level
 function or class definition as the current region.
 
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Other Commands, , Indentation Commands, Commands
+@comment  node-name,              next,                    previous,up
+
+@section  Other Commands
+@cindex   Other Commands
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@code{cc-mode} also contains other useful command for moving around in C
+code.
+
+@table @code
+@item C-c C-u
+@kindex C-c C-u
+@findex c-up-conditional
+@findex up-conditional (c-)
+Move point back to the containing preprocessor conditional, leaving the
+Mark behind.  A prefix argument acts as a repeat count.  With a negative
+argument, move the point forward to the end of the containing
+preprocessor conditional.  When going backwards, @code{#elif} is treated
+like @code{#else} followed by @code{#if}.  When going forwards,
+@code{#elif} is ignored.@refill
+
+@item C-c C-p
+@kindex C-c C-p
+@findex c-backward-conditional
+@findex backward-conditional (c-)
+Move point back over a preprocessor conditional, leaving the mark
+behind.  A prefix argument acts as a repeat count.  With a negative
+argument, move forward.
+
+@item C-c C-n
+@kindex C-c C-n
+@findex c-forward-conditional
+@findex forward-conditional (c-)
+Move point forward across a preprocessor conditional, leaving the mark
+behind.  A prefix argument acts as a repeat count.  With a negative
+argument, move backward.
+
+@item M-a
+@kindex ESC a
+@findex c-beginning-of-statement
+@findex beginning-of-statement (c-)
+Move point to the beginning of the innermost C statement.  If point is
+already at the beginning of a statement, it moves to the beginning of
+the preceding statement.  With prefix argument @var{n}, move back
+@var{n} @minus{} 1 statements.
+
+If point is within a string or comment, or next to a comment (only
+whitespace between them), this command moves by sentences instead of
+statements.
+
+When called from a program, this function takes two optional arguments:
+the numeric prefix argument, and a buffer position limit (don't move
+back before that place).
+
+@item M-e
+@kindex ESC e
+@findex c-end-of-statement
+@findex end-of-statement (c-)
+Move point to the end of the innermost C statement.  If point is at the
+end of a statement, move to the end of the next statement.  With prefix
+argument @var{n}, move forward @var{n} @minus{} 1 statements.
+
+If point is within a string or comment, or next to a comment (only
+whitespace between them), this command moves by sentences instead of
+statements.
+
+When called from a program, this function takes two optional arguments:
+the numeric prefix argument, and a buffer position limit (don't move
+past that place).
+
+@item M-x c-forward-into-nomenclature
+@findex c-forward-into-nomenclature
+@findex forward-into-nomenclature (c-)
+A popular programming style, especially for object-oriented languages
+such as C++ is to write symbols in a mixed case format, where words are
+not separated by underscores, and the first letter of each word is
+capitalized, e.g. @samp{NamingSymbolsWithMixedCaseAndNoUnderlines}.
+
+This command moves the point forward to end of a C++ nomenclature
+section or word.  With prefix argument @var{n}, move @var{n} times.
+
+@item M-x c-backward-into-nomenclature
+@findex c-backward-into-nomenclature
+@findex backward-into-nomenclature (c-)
+Move the point backward to beginning of a C++ nomenclature
+section or word.  With prefix argument @var{n}, move @var{n} times.  If
+@var{n} is negative, move forward.
+
+@kindex C-c :
+@findex c-scope-operator
+@findex scope-operator (c-)
+@item C-c :
+Also, in C++, it is sometimes desirable to insert the double-colon scope
+operator without performing the electric behavior of colon insertion.
+@kbd{C-c :} (@code{c-scope-operator}) does just this.
+
+@end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node     Customizing Indentation, Syntactic Symbols, Indentation Commands, Top
+@node     Customizing Indentation, Syntactic Symbols, Commands, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Customizing Indentation
@@ -1580,7 +1684,7 @@ Note that all style names are case insensitive, even the ones you define.
 
 Setting a style in this way does @emph{not} automatically re-indent your
 file.  For commands that you can use to view the effect of your changes,
-see @ref{Indentation Commands}.
+see @ref{Commands}.
 
 Once you find a built-in style you like, you can make the change
 permanent by adding a call to your @file{.emacs} file.  Let's say for
