@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.290 $
-;; Last Modified:   $Date: 1996-05-24 15:30:27 $
+;; Version:         $Revision: 4.291 $
+;; Last Modified:   $Date: 1996-05-24 15:55:55 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -279,13 +279,16 @@ Here is the current list of valid syntactic element symbols:
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil,
 hitting TAB indents the current line if point is at the left margin or
-in the line's indentation, otherwise it insert a real tab character.
-If other than nil or t, then tab is inserted only within literals
--- defined as comments and strings -- and inside preprocessor
+in the line's indentation, otherwise it insert a `real' tab character
+(see note).  If other than nil or t, then tab is inserted only within
+literals -- defined as comments and strings -- and inside preprocessor
 directives, but line is always reindented.
 
-Note that indentation of lines containing only comments is also
-controlled by the `c-comment-only-line-offset' variable.")
+Note: The value of `indent-tabs-mode' will determine whether a real
+tab character will be inserted, or the equivalent number of space.
+
+Note: indentation of lines containing only comments is also controlled
+by the `c-comment-only-line-offset' variable.")
 
 (defvar c-comment-only-line-offset 0
   "*Extra offset for line which contains only the start of a comment.
@@ -4832,7 +4835,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.290 $"
+(defconst c-version "$Revision: 4.291 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
