@@ -5,11 +5,10 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.180 $
-;; Last Modified:   $Date: 1994-01-11 22:26:45 $
+;; Version:         $Revision: 3.181 $
+;; Last Modified:   $Date: 1994-01-11 22:57:29 $
 ;; Keywords: C++ C editing major-mode
 
-;; Copyright (C) 1993, 1994 Barry A. Warsaw
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
 
 ;; This file is part of GNU Emacs.
@@ -83,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-11 22:26:45 $|$Revision: 3.180 $|
+;; |$Date: 1994-01-11 22:57:29 $|$Revision: 3.181 $|
 
 ;;; Code:
 
@@ -300,17 +299,6 @@ element that it defines is looked up in this list, and if found, the
 NL-LIST is used to determine where newlines are inserted.  If the
 language element for the colon is not found in this list, the default
 behavior is to not insert any newlines.")
-
-(defvar c-auto-hungry-initial-state 'none
-  "*Initial state of auto/hungry features when buffer is first visited.
-Valid symbol values are:
-
- none         -- no auto-newline or hungry-delete-key feature
- auto-only    -- auto-newline, but not hungry-delete-key
- hungry-only  -- hungry-delete-key, but not auto-hungry
- auto-hungry  -- both auto-newline and hungry-delete-key enabled
-
-Nil is synonymous for `none' and t is synonymous for `auto-hungry'.")
 
 (defvar c-untame-characters '(?\')
   "*Utilize a backslashing workaround of an Emacs18 syntax deficiency.
@@ -656,7 +644,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.180 $
+CC-MODE REVISION: $Revision: 3.181 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -682,15 +670,12 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end "")
-  (run-hooks 'c++-mode-hook)
-  (c-set-auto-hungry-state
-   (memq c-auto-hungry-initial-state '(auto-only   auto-hungry t))
-   (memq c-auto-hungry-initial-state '(hungry-only auto-hungry t))))
+  (run-hooks 'c++-mode-hook))
 
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.180 $
+CC-MODE REVISION: $Revision: 3.181 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -715,10 +700,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "/* "
 	comment-end   " */")
-  (run-hooks 'c-mode-hook)
-  (c-set-auto-hungry-state
-   (memq c-auto-hungry-initial-state '(auto-only   auto-hungry t))
-   (memq c-auto-hungry-initial-state '(hungry-only auto-hungry t))))
+  (run-hooks 'c-mode-hook))
 
 (defun c-common-init ()
   ;; Common initializations for c++-mode and c-mode.
@@ -773,12 +755,6 @@ Key bindings:
 
 
 ;; macros must be defined before first use
-(defmacro c-keep-region-active ()
-  ;; cut down on bytecompiler warnings
-  (` (and (interactive-p)
-	  (c-make-region-active))))
-
-;; macro definitions
 (defmacro c-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
   ;; POSITION can be one of the following symbols:
@@ -892,8 +868,8 @@ Key bindings:
 	 )))))
 
 
-;; auto-newline/hungry delete key
-(defun c-make-region-active ()
+;; active regions, and auto-newline/hungry delete key
+(defun c-keep-region-active ()
   ;; do whatever is necessary to keep the region active. ignore
   ;; byte-compiler warnings you might see
   (if (boundp 'zmacs-region-stays)
@@ -902,74 +878,59 @@ Key bindings:
 	(setq deactivate-mark (not mark-active))
       )))
 
-(defun c-set-auto-hungry-state (auto-p hungry-p)
-  ;; Set auto/hungry to state indicated by AUTO-P and HUNGRY-P, and
-  ;; update the mode line accordingly
-  (setq c-auto-newline auto-p
-	c-hungry-delete-key hungry-p)
-  ;; update mode-line.  The Emacs18 solution works in 19, but I want
-  ;; to be a good citizen
+(defun c-update-modeline ()
+  ;; updates the modeline for all Emacsen
   (if (memq 'v19 c-emacs-features)
       (force-mode-line-update)
     (set-buffer-modified-p (buffer-modified-p))))
 
+(defun c-calculate-state (arg prevstate)
+  ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
+  ;; arg is nil or zero, toggle the state. If arg is negative, turn
+  ;; the state off, and if arg is positive, turn the state on
+  (if (or (not arg)
+	  (zerop (setq arg (prefix-numeric-value arg))))
+      (not prevstate)
+    (> arg 0)))
+
 (defun c-toggle-auto-state (arg)
   "Toggle auto-newline feature.
 Optional numeric ARG, if supplied turns on auto-newline when positive,
-turns it off when negative, and just toggles it when zero."
+turns it off when negative, and just toggles it when zero.
+
+When the auto-newline feature is enabled, you will see a `/a' or `/ah'
+on the modeline after the mode name, and newlines are automatically
+inserted after special characters such as brace, comma, semi-colon,
+and colon."
   (interactive "P")
-  (c-set-auto-hungry-state
-   ;; calculate the auto-newline state
-   (if (or (not arg)
-	   (zerop (setq arg (prefix-numeric-value arg))))
-       (not c-auto-newline)
-     (> arg 0))
-   c-hungry-delete-key)
+  (setq c-auto-newline (c-calculate-state arg c-auto-newline))
+  (c-update-modeline)
   (c-keep-region-active))
 
 (defun c-toggle-hungry-state (arg)
   "Toggle hungry-delete-key feature.
 Optional numeric ARG, if supplied turns on hungry-delete when positive,
-turns it off when negative, and just toggles it when zero."
+turns it off when negative, and just toggles it when zero.
+
+When the hungry-delete-key feature is enabled, you will see a `/h' or
+`/ah' on the modeline after the mode name, and hitting the delete key
+gobbles all preceding whitespace in one fell swoop."
   (interactive "P")
-  (c-set-auto-hungry-state
-   c-auto-newline
-   ;; calculate hungry delete state
-   (if (or (not arg)
-	   (zerop (setq arg (prefix-numeric-value arg))))
-       (not c-hungry-delete-key)
-     (> arg 0)))
+  (setq c-hungry-delete-key (c-calculate-state arg c-hungry-delete-key))
+  (c-update-modeline)
   (c-keep-region-active))
 
 (defun c-toggle-auto-hungry-state (arg)
   "Toggle auto-newline and hungry-delete-key features.
-Optional argument has the following meanings when supplied:
-  \\[universal-argument]
-        resets features to c-auto-hungry-initial-state.
-  negative number
-        turn off both auto-newline and hungry-delete-key features.
-  positive number
-        turn on both auto-newline and hungry-delete-key features.
-  zero
-        toggle both features."
+Optional numeric ARG, if supplied turns on auto-newline and
+hungry-delete when positive, turns them off when negative, and just
+toggles them when zero.
+
+See `c-toggle-auto-state' and `c-toggle-hungry-state' for details."
   (interactive "P")
-  (let ((numarg (prefix-numeric-value arg)))
-    (c-set-auto-hungry-state
-     ;; calculate auto newline state
-     (if (or (not arg)
-	     (zerop numarg))
-	 (not c-auto-newline)
-       (if (consp arg)
-	   (memq c-auto-hungry-initial-state '(auto-only auto-hungry t))
-	 (> arg 0)))
-     ;; calculate hungry delete state
-     (if (or (not arg)
-	     (zerop numarg))
-	 (not c-hungry-delete-key)
-       (if (consp arg)
-	   (memq c-auto-hungry-initial-state '(hungry-only auto-hungry t))
-	 (> arg 0)))
-     ))
+  (setq c-auto-newline (c-calculate-state arg c-auto-newline))
+  (setq c-hungry-delete-key (c-calculate-state arg c-hungry-delete-key))
+  (c-update-modeline)
   (c-keep-region-active))
 
 
@@ -2978,7 +2939,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.180 $"
+(defconst c-version "$Revision: 3.181 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3045,6 +3006,11 @@ region."
 (fset 'c-backslash-region    'c-macroize-region)
 ;; lemacs 19.9 + font-lock + cc-mode - c++-mode lossage
 (fset 'c++-beginning-of-defun 'beginning-of-defun)
+
+;; set up bc warnings for obsolete variables
+(make-obsolete-variable
+ 'c-auto-hungry-initial-state
+ "Use `c-auto-newline' and `c-hungry-delete-key' instead.")
 
 (provide 'cc-mode)
 ;;; cc-mode.el ends here
