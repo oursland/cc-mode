@@ -72,11 +72,25 @@
     (require 'cc-bytecomp)))
 
 (cc-require 'cc-defs)
+(cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
-(cc-require 'cc-langs)
 
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
+
+
+;; Make declarations for all the `c-lang-defvar' variables in cc-langs.
+
+(cc-eval-when-compile
+  (defmacro c-declare-lang-variables ()
+    `(progn
+       ,@(mapcan (lambda (init)
+		   `(,(if (elt init 2)
+			  `(defvar ,(car init) nil ,(elt init 2))
+			`(defvar ,(car init) nil))
+		     (make-variable-buffer-local ',(car init))))
+		 (cdr c-lang-variable-inits)))))
+(c-declare-lang-variables)
 
 
 ;;; Internal state variables.
@@ -2658,6 +2672,7 @@ brace."
       (setcdr tail (list (buffer-substring-no-properties from to)))
       (apply 'concat (cdr parts)))))
 
+
 ;; Buffer local variable that contains an obarray with the types we've
 ;; found.  If a declaration is recognized somewhere we record the
 ;; fully qualified identifier in it to recognize it as a type
@@ -2921,7 +2936,7 @@ brace."
 			  (looking-at
 			   (cc-eval-when-compile
 			     (concat "\\(operator\\|\\(template\\)\\)"
-				     "\\(" (c-lang-var c-nonsymbol-key c++)
+				     "\\(" (c-lang-const c-nonsymbol-key c++)
 				     "\\|$\\)")))
 			  (if (match-beginning 2)
 			      ;; "template" is only valid inside an
