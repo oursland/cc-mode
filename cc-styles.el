@@ -156,7 +156,7 @@
 			 (statement-block-intro . +)
  			 (knr-argdecl-intro     . 5)
  			 (substatement-open     . +)
- 			 (label                 . 0)
+ 			 (label                 . +)
  			 (statement-case-open   . +)
  			 (statement-cont        . +)
  			 (arglist-intro  . c-lineup-arglist-intro-after-paren)
