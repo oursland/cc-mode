@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.214 $
-;; Last Modified:   $Date: 1995-05-19 22:33:18 $
+;; Version:         $Revision: 4.215 $
+;; Last Modified:   $Date: 1995-05-19 23:07:13 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-19 22:33:18 $|$Revision: 4.214 $|
+;; |$Date: 1995-05-19 23:07:13 $|$Revision: 4.215 $|
 
 ;;; Code:
 
@@ -389,7 +389,6 @@ currently not supported for this variable.")
 
 (defvar c-hanging-semi&comma-criteria '(c-semi&comma-inside-parenlist)
   "*List of functions that decide whether to insert a newline or not.
-
 The functions in this list are called, in order, whenever the
 auto-newline minor mode is activated (as evidenced by a `/a' or `/ah'
 string in the mode line), and a semicolon or comma is typed (see
@@ -4603,7 +4602,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.214 $"
+(defconst c-version "$Revision: 4.215 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
