@@ -31,4 +31,5 @@ int main() {
     v14 *;
     (v15 * id);
     x (a*b, c*d);
+    v16 (*id);
 }
