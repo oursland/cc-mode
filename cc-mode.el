@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-20 21:32:55 $
-;; Version:         $Revision: 2.65 $
+;; Last Modified:   $Date: 1992-05-20 22:29:32 $
+;; Version:         $Revision: 2.66 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-20 21:32:55 $|$Revision: 2.65 $|
+;; |$Date: 1992-05-20 22:29:32 $|$Revision: 2.66 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -201,7 +201,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.65 $
+  "Major mode for editing C++ code.  $Revision: 2.66 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1322,14 +1322,14 @@ Returns nil if line starts inside a string, t if in a comment."
 		(setcar indent-stack
 			(setq this-indent val))))
 	    ;; Adjust line indentation according to its contents
-	    (if (looking-at "\\(public\\|private\\|protected\\):")
-		(setq this-indent (- this-indent c-indent-level)))
-	    (if (or (looking-at "case[ \t]")
-		    (and (looking-at "[A-Za-z]")
-			 (save-excursion
-			   (forward-sexp 1)
-			   (looking-at ":[^:]"))))
-		(setq this-indent (max 0 (+ this-indent c-label-offset))))
+ 	    (if (looking-at "\\(public\\|private\\|protected\\):")
+ 		(setq this-indent (- this-indent c-indent-level)))
+ 	    (if (or (looking-at "case[ \t]")
+ 		    (and (looking-at "[A-Za-z]")
+ 			 (save-excursion
+ 			   (forward-sexp 1)
+ 			   (looking-at ":[^:]"))))
+ 		(setq this-indent (max 0 (+ this-indent c-label-offset))))
 	    (if (looking-at "friend[ \t]\\(class\\|struct\\)[ \t]")
 		(setq this-indent (+ this-indent c++-friend-offset)))
 	    (if (= (following-char) ?})
@@ -1648,7 +1648,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.65 $"
+(defconst c++-version "$Revision: 2.66 $"
   "c++-mode version number.")
 
 (defun c++-version ()
