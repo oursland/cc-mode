@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.71 $
-;; Last Modified:   $Date: 1994-08-30 21:57:37 $
+;; Version:         $Revision: 4.72 $
+;; Last Modified:   $Date: 1994-08-31 21:43:41 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-30 21:57:37 $|$Revision: 4.71 $|
+;; |$Date: 1994-08-31 21:43:41 $|$Revision: 4.72 $|
 
 ;;; Code:
 
@@ -399,6 +399,12 @@ recognition of certain constructs.
 
 This variable is nil by default in `c++-mode', and t by default in
 `c-mode' and `objc-mode'.  This variable is buffer-local.")
+
+(defvar c-progress-interval 5
+  "*Interval used to update progress status during long re-indentation.
+If a number, percentage complete gets updated after each interval of
+that many seconds.   Set to nil to inhibit updating.  This is only
+useful for Emacs 19.")
 
 (defvar c-style-alist
   '(("GNU"
@@ -950,7 +956,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.71 $
+cc-mode Revision: $Revision: 4.72 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -989,7 +995,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.71 $
+cc-mode Revision: $Revision: 4.72 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1026,7 +1032,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.71 $
+cc-mode Revision: $Revision: 4.72 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2345,20 +2351,20 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (error "Cannot find start of balanced expression to indent."))
 	  (and (not end)
 	       (not shutup-p)
-	       (error "Cannot find end of balanced expression to indent."))
-	  (or shutup-p
-	      (message "indenting expression... (this may take a while)"))
+	       (error "Cannot find end of balanced expression to
+	       indent."))
+	  (c-progress-init start end 'c-indent-exp)
 	  (goto-char start)
 	  (beginning-of-line)
 	  (while (< (point) end)
 	    (if (not (looking-at "[ \t]*$"))
 		(c-indent-line))
+	    (c-progress-update)
 	    (forward-line 1)))
       ;; make sure marker is deleted
       (and end
 	   (set-marker end nil))
-      (or shutup-p
-	  (message "indenting expression... done."))
+      (c-progress-fini 'c-indent-exp)
       (goto-char here))))
 
 (defun c-indent-defun ()
@@ -2385,7 +2391,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 
 (defun c-indent-region (start end)
   ;; Indent every line whose first char is between START and END inclusive.
-  (message "indenting region... (this may take a while)")
   (save-excursion
     (goto-char start)
     ;; Advance to first nonblank line.
@@ -2396,10 +2401,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (let ((c-tab-always-indent t)
 		;; shut up any echo msgs on indiv lines
 		(c-echo-syntactic-information-p nil))
+	    (c-progress-init start end 'c-indent-region)
 	    (setq endmark (copy-marker end))
 	    (while (and (bolp)
 			(not (eobp))
 			(< (point) endmark))
+	      ;; update progress
+	      (c-progress-update)
+	      (setq laststart (point))
 	      ;; Indent one line as with TAB.
 	      (let (nextline sexpend sexpbeg)
 		;; skip blank lines
@@ -2449,6 +2458,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			  (progn
 			    (goto-char sexpbeg)
 			    (c-indent-exp 'shutup)
+			    (c-progress-update)
 			    (goto-char sexpend)))
 		    (error
 		     (goto-char sexpbeg)
@@ -2458,8 +2468,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (markerp sexpend)
 		       (set-marker sexpend nil))
 		  (forward-line 1)))))
-	(set-marker endmark nil))))
-  (message "indenting region... done."))
+	(set-marker endmark nil)
+	(c-progress-fini 'c-indent-region)
+	))))
 
 (defun c-mark-function ()
   "Put mark at end of a C, C++, or Objective-C defun, point at beginning."
@@ -2485,6 +2496,51 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (skip-chars-forward " \t\n"))
     (push-mark here)
     (push-mark eod nil t)))
+
+
+;; for progress reporting
+(defvar c-progress-info nil)
+
+(defun c-progress-init (start end context)
+  ;; start the progress update messages.  if this emacs doesn't have a
+  ;; built-in timer, just be dumb about it
+  (if (not (fboundp 'current-time))
+      (message "indenting region... (this may take a while)")
+    ;; if progress has already been initialized, do nothing. otherwise
+    ;; initialize the counter with a vector of:
+    ;; [charcnt pntstart lastsec context]
+    (if c-progress-info
+	()
+      (setq c-progress-info (vector (- end start)
+				    start
+				    (nth 1 (current-time))
+				    context))
+      (message "indenting region..."))))
+
+(defun c-progress-update ()
+  ;; update progress
+  (if (not (and c-progress-info c-progress-interval))
+      nil
+    (let ((now (nth 1 (current-time)))
+	  (charcnt (aref c-progress-info 0))
+	  (pntstart (aref c-progress-info 1))
+	  (lastsecs (aref c-progress-info 2)))
+      ;; should we update?  currently, update happens every 2 seconds,
+      ;; what's the right value?
+      (if (< c-progress-interval (- now lastsecs))
+	  (progn
+	    (message "indenting region... (%d%% complete)"
+		     (/ (* 100 (- (point) pntstart)) charcnt))
+	    (aset c-progress-info 2 now)))
+      )))
+
+(defun c-progress-fini (context)
+  ;; finished
+  (if (or (eq context (aref c-progress-info 3))
+	  (eq context t))
+      (progn
+	(setq c-progress-info nil)
+	(message "indenting region... done."))))
 
 
 ;; Skipping of "syntactic whitespace" for Emacs 19.  Syntactic
@@ -4031,7 +4087,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.71 $"
+(defconst c-version "$Revision: 4.72 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
