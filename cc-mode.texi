@@ -4471,7 +4471,7 @@ In the first case the indentation is kept unchanged, in the second
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Font Locking, Performance Issues, Indentation Functions, Top
+@node    Font Locking, AWK mode, Indentation Functions, Top
 @comment node-name, next, previous, up
 @chapter Font Locking
 @cindex font locking
@@ -4587,7 +4587,7 @@ FIXME
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node AWK mode, Concept Index, Sample .emacs File, Top
+@node AWK mode, Performance Issues, Font Locking, Top
 @comment  node-name,  next,  previous,  up
 @chapter Status of AWK mode
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -4828,7 +4828,7 @@ This works fine with AWK defuns.  @xref{Indentation Commands}.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Performance Issues, Limitations and Known Bugs, Font Locking, Top
+@node    Performance Issues, Limitations and Known Bugs, AWK mode, Top
 @comment node-name, next, previous, up
 @chapter Performance Issues
 @cindex performance
@@ -5112,7 +5112,7 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Sample .emacs File, AWK mode, Mailing Lists and Submitting Bug Reports, Top
+@node    Sample .emacs File, Concept Index, Mailing Lists and Submitting Bug Reports, Top
 @comment node-name, next, previous, up
 @appendix Sample .emacs file
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5167,7 +5167,7 @@ to the Usenet newsgroups @code{gnu.emacs.sources}, @code{comp.emacs} and
 @end example
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Concept Index, Command and Function Index, AWK mode, Top
+@node    Concept Index, Command and Function Index, Sample .emacs File, Top
 @comment node-name, next, previous, up
 @unnumbered Concept Index
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
