@@ -1,3 +1,6 @@
+// Note: The search for the beginning of the previous decl is very
+// inefficient here.
+
 @interface Foo
 @end
 
