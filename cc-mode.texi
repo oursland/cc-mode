@@ -1606,9 +1606,33 @@ compatibility reasons, the default binding remains in effect.
 Move point back to the containing preprocessor conditional, leaving the
 mark behind.  A prefix argument acts as a repeat count.  With a negative
 argument, move point forward to the end of the containing
-preprocessor conditional.  When going backwards, @code{#elif} is treated
-like @code{#else} followed by @code{#if}.  When going forwards,
-@code{#elif} is ignored.
+preprocessor conditional.
+
+@samp{#elif} is treated like @samp{#else} followed by @samp{#if}, so the
+function stops at them when going backward, but not when going forward.
+
+@findex c-up-conditional-with-else
+@findex up-conditional-with-else (c-)
+@item @kbd{M-x c-up-conditional-with-else}
+A variety of @code{c-up-conditional} that also stops at @samp{#else}
+lines.  Normally those lines are ignored.
+
+@findex c-down-conditional
+@findex down-conditional (c-)
+@item @kbd{M-x c-down-conditional}
+Move point forward into the next nested preprocessor conditional,
+leaving the mark behind.  A prefix argument acts as a repeat count.
+With a negative argument, move point backward into the previous
+nested preprocessor conditional.
+
+@samp{#elif} is treated like @samp{#else} followed by @samp{#if}, so the
+function stops at them when going forward, but not when going backward.
+
+@findex c-down-conditional-with-else
+@findex down-conditional-with-else (c-)
+@item @kbd{M-x c-down-conditional-with-else}
+A variety of @code{c-down-conditional} that also stops at @samp{#else}
+lines.  Normally those lines are ignored.
 
 @kindex C-c C-p
 @findex c-backward-conditional
