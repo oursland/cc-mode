@@ -979,16 +979,54 @@ Notably, null elements in LIST are ignored."
 Duplicates and nil elements in the list are removed.  The resulting
 regexp may contain zero or more submatch expressions.
 
-If ADORN is non-nil there will be at least one submatch and the first
-matches the whole keyword, and the regexp will also not match a prefix
-of any identifier.  Adorned regexps cannot be appended.  The language
-variable `c-nonsymbol-key' is used to make the adornment.  The
-optional MODE specifies the language to get it in.  The default is the
-current language (taken from `c-buffer-is-cc-mode')."
+If ADORN is t there will be at least one submatch and the first
+surrounds the matched alternative, and the regexp will also not match
+a prefix of any identifier.  Adorned regexps cannot be appended.  The
+language variable `c-nonsymbol-key' is used to make the adornment.
+
+A value 'appendable for ADORN is like above, but all alternatives in
+the list that end with a word constituent char will have \\> appended
+instead, so that the regexp remains appendable.  Note that this
+variant doesn't always guarantee that an identifier prefix isn't
+matched since the symbol constituent '_' is normally considered a
+nonword token by \\>.
+
+The optional MODE specifies the language to get `c-nonsymbol-key' from
+when it's needed.  The default is the current language taken from
+`c-buffer-is-cc-mode'."
 
   (setq list (delete nil (delete-duplicates list :test 'string-equal)))
   (if list
-      (let ((re (regexp-opt list)))
+      (let (re)
+
+	(if (eq adorn 'appendable)
+	    ;; This is kludgy but it works: Search for a string that
+	    ;; doesn't occur in any word in LIST.  Append it to all
+	    ;; the alternatives where we want to add \>.  Run through
+	    ;; `regexp-opt' and the replace it with \>.
+	    (let ((unique "") pos)
+	      (while (let (found)
+		       (setq unique (concat unique "@")
+			     pos list)
+		       (while (and pos
+				   (if (string-match unique (car pos))
+				       (progn (setq found t)
+					      nil)
+				     t))
+			 (setq pos (cdr pos)))
+		       found))
+	      (setq pos list)
+	      (while pos
+		(if (string-match "\\w\\'" (car pos))
+		    (setcar pos (concat (car pos) unique)))
+		(setq pos (cdr pos)))
+	      (setq re (regexp-opt list))
+	      (setq pos 0)
+	      (while (string-match unique re pos)
+		(setq pos (+ (match-beginning 0) 2)
+		      re (replace-match "\\>" t t re))))
+
+	  (setq re (regexp-opt list)))
 
 	;; Emacs 20 and XEmacs (all versions so far) has a buggy
 	;; regexp-opt that doesn't always cope with strings containing
@@ -1004,21 +1042,31 @@ current language (taken from `c-buffer-is-cc-mode')."
 	  (when fail-list
 	    (setq re (concat re
 			     "\\|"
-			     (mapconcat 'regexp-quote
-					(sort fail-list
-					      (lambda (a b)
-						(> (length a) (length b))))
-					"\\|")))))
+			     (mapconcat
+			      (if (eq adorn 'appendable)
+				  (lambda (str)
+				    (if (string-match "\\w\\'" str)
+					(concat (regexp-quote str)
+						"\\>")
+				      (regexp-quote str)))
+				'regexp-quote)
+			      (sort fail-list
+				    (lambda (a b)
+				      (> (length a) (length b))))
+			      "\\|")))))
 
 	;; Add our own grouping parenthesis around re instead of
 	;; passing adorn to `regexp-opt', since in XEmacs it makes the
 	;; top level grouping "shy".
-	(if adorn
-	    (concat "\\(" re "\\)"
-		    "\\("
-		    (c-get-lang-constant 'c-nonsymbol-key nil mode)
-		    "\\|$\\)")
-	  re))
+	(cond ((eq adorn 'appendable)
+	       (concat "\\(" re "\\)"))
+	      (adorn
+	       (concat "\\(" re "\\)"
+		       "\\("
+		       (c-get-lang-constant 'c-nonsymbol-key nil mode)
+		       "\\|$\\)"))
+	      (t
+	       re)))
 
     ;; Produce a regexp that matches nothing.
     (if adorn
