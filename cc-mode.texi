@@ -3954,7 +3954,7 @@ suggestion to get a consistent style):
 (c-set-offset 'arglist-close '(c-lineup-arglist-close-under-paren))
 
 @end group
-@end exampe
+@end example
 
 @workswith @code{arglist-cont}, @code{arglist-cont-nonempty}.
 
