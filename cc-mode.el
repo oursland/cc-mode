@@ -112,8 +112,6 @@
     (or (get 'c-initialize-cc-mode initprop)
 	(progn
 	  (c-initialize-builtin-style)
-	  (if c-style-variables-are-local-p
-	      (c-make-styles-buffer-local))
 	  (run-hooks 'c-initialization-hook)
 	  (put 'c-initialize-cc-mode initprop t)))
     ))
