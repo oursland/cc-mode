@@ -1,13 +1,16 @@
 ;; -*- Mode: Emacs-Lisp -*-
-;; File:            c++-mode.el
-;; Description:     Mode for editing C++ code
-;; Authors:         1992 Barry A. Warsaw, Century Computing Inc.
-;;                  1987 Dave Detlefs  (dld@cs.cmu.edu)
-;;                   and Stewart Clamen (clamen@cs.cmu.edu)
-;;                  Done by fairly faithful modification of:
-;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-26 23:40:46 $
-;; Version:         $Revision: 2.192 $
+;;; c++-mode.el --- major mode for editing C++ (and C) code
+
+;; Copyright (C) 1992 Free Software Foundation, Inc.
+
+;; Author: 1992 Barry A. Warsaw, Century Computing Inc. <baw@cen.com>
+;;         1987 Dave Detlefs and Stewart Clamen
+;;         1985 Richard M. Stallman
+;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
+;; Created: a long, long, time ago. adapted from the original c-mode.el
+;; Version:         $Revision: 2.193 $
+;; Last Modified:   $Date: 1992-08-27 15:31:38 $
+;; Keywords: C++ C editing major-mode
 
 ;; Introduction
 ;; ============
@@ -15,7 +18,9 @@
 ;; c++-mode.
 ;;
 ;; If you have problems or questions, you can contact me at the
-;; following address: c++-mode-help@anthem.nlm.nih.gov
+;; following address: c++-mode-help@anthem.nlm.nih.gov. Please don't
+;; send bug reports to my personal account, I may not get it for a
+;; long time.
 ;;
 ;; To submit bug reports hit "C-c C-b" in a c++-mode buffer. This runs
 ;; the command c++-submit-bug-report and automatically sets up the
@@ -42,9 +47,11 @@
 ;;
 ;; To use c++-mode you need to do two things: get this file loaded
 ;; into your emacs sessions at the right time; and tell emacs what
-;; type of files are C++ files.  To the the former, add the following
-;; line to your .emacs file:
-;; (autoload 'c++-mode "c++-mode" "C++ Editing Mode" t)
+;; type of files are C++ files.  To the the former, make sure that
+;; c++-mode.el{c} is on your load-path, and add the following lines to
+;; your .emacs file:
+;; (autoload 'c++-mode   "c++-mode" "C++ Editing Mode" t)
+;; (autoload 'c++-c-mode "c++-mode" "C Editing Mode" t)
 ;; 
 ;; To do the latter, set up your auto-mode-alist file to recognize C++
 ;; file extensions. For example, if you use .C and .cc as C++ source
@@ -81,7 +88,7 @@
 ;; The latest public release version of this file should always be
 ;; available for anon-ftp on ftp.cme.nist.gov:pub/gnu/c++-mode.el. It
 ;; will also most likely be available on the elisp archive machine:
-;; archive.cis.ohio-state.edu.
+;; archive.cis.ohio-state.edu.  Look around.
 ;; 
 ;; For those of you without aftp access, try sending a message to the
 ;; mail-server at library@cme.nist.gov.  Put this message in the body
@@ -92,13 +99,15 @@
 ;; available to send to you. The mail-server should get it to you
 ;; pretty quickly.  Remember that if you want advanced access to beta
 ;; releases, get on the victims list -- but be forewarned, you should
-;; be elisp-fluent to be a beta tester.
+;; be elisp and C++ fluent to be a beta tester.
 
 ;; LCD Archive Entry
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-26 23:40:46 $|$Revision: 2.192 $|
+;; |$Date: 1992-08-27 15:31:38 $|$Revision: 2.193 $|
+
+;;; Code:
 
 
 ;; ======================================================================
@@ -348,7 +357,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.192 $
+  "Major mode for editing C++ code.  $Revision: 2.193 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -555,7 +564,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.192 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.193 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2145,7 +2154,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.192 $"
+(defconst c++-version "$Revision: 2.193 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2244,3 +2253,5 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 
 ;; this is sometimes useful
 (provide 'c++-mode)
+
+;;; c++-mode.el ends here
