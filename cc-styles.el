@@ -334,7 +334,6 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
     (do-while-closure      . 0)
     (else-clause           . 0)
     (catch-clause          . 0)
-    (finally-clause        . 0)
     (comment-intro         . c-lineup-comment)
     (arglist-intro         . +)
     (arglist-cont          . 0)
@@ -447,8 +446,7 @@ Here is the current list of valid syntactic element symbols:
  label                  -- any ordinary label
  do-while-closure       -- the `while' that ends a do/while construct
  else-clause            -- the `else' of an if/else construct
- catch-clause           -- the `catch' of a try/catch construct
- finally-clause         -- the `finally' of a try/catch/finally construct
+ catch-clause           -- the `catch' or `finally' of a try/catch construct
  comment-intro          -- a line containing only a comment introduction
  arglist-intro          -- the first line in an argument list
  arglist-cont           -- subsequent argument list lines when no

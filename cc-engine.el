@@ -2077,9 +2077,7 @@
 		   t)
 		 (looking-at "\\<\\(try\\|catch\\)\\>[^_]")
 		 (setq placeholder (c-point 'boi))))
-	  (if (looking-at "catch")
-	      (c-add-syntax 'catch-clause placeholder)
-	    (c-add-syntax 'finally-clause placeholder)))
+	  (c-add-syntax 'catch-clause placeholder))
 	 ;; CASE 14: A case or default label
 	 ((looking-at c-switch-label-key)
 	  (goto-char containing-sexp)

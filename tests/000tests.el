@@ -124,7 +124,6 @@
 	(do-while-closure      . 0)
 	(else-clause           . 0)
 	(catch-clause          . 0)
-	(finally-clause        . 0)
 	(comment-intro         . c-lineup-comment)
 	(arglist-intro         . +)
 	(arglist-cont          . 0)

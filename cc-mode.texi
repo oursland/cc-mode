@@ -1996,7 +1996,7 @@ is always used exactly as specified.
 @item
 If @code{c-default-style} is an association list, but the current major
 mode isn't found, then @samp{gnu} style is used for all modes except
-@code{java-mode}, where @sampe{java} style is used.
+@code{java-mode}, where @samp{java} style is used.
 
 @item
 In all cases, the style described in @code{c-default-style} is installed 
@@ -2703,6 +2703,9 @@ with brace
 @code{else-clause} --- the @code{else} line of an @code{if}-@code{else}
 construct
 @item
+@code{catch-clause} --- the @code{catch} or @code{finally} (in Java)
+line of a @code{try}-@code{catch} construct
+@item
 @code{comment-intro} --- a line containing only a comment introduction
 @item
 @code{arglist-intro} --- the first line in an argument list
@@ -3029,18 +3032,23 @@ substatement block.  It is given the syntax @code{block-close},
 as are lines 11 and 14.
 
 @cindex else-clause syntactic symbol
-@cindex substatement syntactic symbol
+@cindex catch-clause syntactic symbol
 Line 9 is a little different --- since it contains the keyword
 @code{else} matching the @code{if} statement introduced on line 5, it is
-given the @code{else-clause} syntax.  Note also that line 10 is slightly
-different too.  Because @code{else} is considered a conditional
-introducing keyword @footnote{The list of conditional keywords are (in
-C, C++, Objective-C, Java, and Pike): @code{for}, @code{if}, @code{do},
-@code{else}, @code{while}, and @code{switch}.  C++ and Java have two
-additional conditional keywords: @code{try} and @code{catch}.  Java also
-has the @code{finally} and @code{synchronized} keywords.}, and because
-the following substatement is not a brace block, line 10 is assigned the
-@code{substatement} syntax.
+given the @code{else-clause} syntax.  The @code{try}-@code{catch}
+constructs in C++ and Java are treated this way too, with the only
+difference that the @code{catch}, and in Java also @code{finally}, is
+marked with @code{catch-clause}.
+
+@cindex substatement syntactic symbol
+Line 10 is also slightly different.  Because @code{else} is considered a
+conditional introducing keyword @footnote{The list of conditional
+keywords are (in C, C++, Objective-C, Java, and Pike): @code{for},
+@code{if}, @code{do}, @code{else}, @code{while}, and @code{switch}.  C++
+and Java have two additional conditional keywords: @code{try} and
+@code{catch}.  Java also has the @code{finally} and @code{synchronized}
+keywords.}, and because the following substatement is not a brace block,
+line 10 is assigned the @code{substatement} syntax.
 
 @cindex do-while-closure syntactic symbol
 One other difference is seen on line 15.  The @code{while} construct
