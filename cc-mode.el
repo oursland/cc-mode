@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.93 $
-;; Last Modified:   $Date: 1994-10-12 23:36:46 $
+;; Version:         $Revision: 4.94 $
+;; Last Modified:   $Date: 1994-10-14 14:27:42 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -101,7 +101,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-10-12 23:36:46 $|$Revision: 4.93 $|
+;; |$Date: 1994-10-14 14:27:42 $|$Revision: 4.94 $|
 
 ;;; Code:
 
@@ -971,7 +971,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.93 $
+cc-mode Revision: $Revision: 4.94 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1005,12 +1005,13 @@ Key bindings:
 	c-comment-start-regexp "//\\|/\\*"
 	c-class-key c-C++-class-key
 	c-access-key c-C++-access-key)
+  (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook))
 
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.93 $
+cc-mode Revision: $Revision: 4.94 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1042,12 +1043,13 @@ Key bindings:
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C++-class-key
 	c-comment-start-regexp "/\\*")
+  (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook))
 
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.93 $
+cc-mode Revision: $Revision: 4.94 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1081,6 +1083,7 @@ Key bindings:
 	c-comment-start-regexp "//\\|/\\*"
  	c-class-key c-ObjC-class-key
 	c-access-key c-ObjC-access-key)
+  (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook))
 
 (defun c-common-init ()
@@ -1130,8 +1133,7 @@ Key bindings:
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
-		  minor-mode-alist)))
-  (run-hooks 'c-mode-common-hook))
+		  minor-mode-alist))))
 
 
 ;; macros must be defined before first use
@@ -4139,7 +4141,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.93 $"
+(defconst c-version "$Revision: 4.94 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
