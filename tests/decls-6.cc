@@ -9,8 +9,7 @@ __INLINE__ FOO Type var (peq);
 __INLINE__ FOO Type var = init, x = Type();
 __INLINE__ FOO Type (*var) = init;
 __INLINE__ FOO Type var[3 * peq] = init;
-__INLINE__ FOO Type (var) = init;
-__INLINE__ FOO Type int = "int"; // int
+__INLINE__ FOO Type var int = "int"; // int
 
 Type var = init, x = Type();
 Type (*var) = init;
