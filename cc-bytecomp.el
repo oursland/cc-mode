@@ -44,14 +44,16 @@
 (defvar cc-bytecomp-unbound-variables nil)
 (defvar cc-bytecomp-original-functions nil)
 (defvar cc-bytecomp-original-properties nil)
-(defvar cc-bytecomp-load-depth 0)
 (defvar cc-bytecomp-loaded-files nil)
 (defvar cc-bytecomp-environment-set nil)
 
 (defun cc-bytecomp-setup-environment ()
   ;; Eval'ed during compilation to setup variables, functions etc
   ;; declared with `cc-bytecomp-defvar' et al.
-  (if (= cc-bytecomp-load-depth 0)
+  (if (not load-in-progress)
+      ;; Look at `load-in-progress' to tell whether we're called
+      ;; directly in the file being compiled or just from some file
+      ;; being loaded during compilation.
       (let (p)
 	(if cc-bytecomp-environment-set
 	    (error "Byte compilation environment already set - \
@@ -85,7 +87,7 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 (defun cc-bytecomp-restore-environment ()
   ;; Eval'ed during compilation to restore variables, functions etc
   ;; declared with `cc-bytecomp-defvar' et al.
-  (if (= cc-bytecomp-load-depth 0)
+  (if (not load-in-progress)
       (let (p)
 	(setq p cc-bytecomp-unbound-variables)
 	(while p
@@ -127,8 +129,7 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	   (stringp byte-compile-dest-file))
       (progn
 	(cc-bytecomp-restore-environment)
-	(let ((cc-bytecomp-load-depth (1+ cc-bytecomp-load-depth))
-	      (load-path
+	(let ((load-path
 	       (cons (file-name-directory byte-compile-dest-file)
 		     load-path))
 	      (cc-file (concat cc-part ".el")))
@@ -185,7 +186,7 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 	   (setq cc-bytecomp-unbound-variables
 		 (cons ',var cc-bytecomp-unbound-variables)))
        (if (and (cc-bytecomp-is-compiling)
-		(= cc-bytecomp-load-depth 0))
+		(not load-in-progress))
 	   (progn
 	     (defvar ,var)
 	     (set ',var (intern (concat "cc-bytecomp-ignore-var:"
@@ -204,7 +205,7 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
 			     'unbound))
 		     cc-bytecomp-original-functions)))
      (if (and (cc-bytecomp-is-compiling)
-	      (= cc-bytecomp-load-depth 0)
+	      (not load-in-progress)
 	      (not (fboundp ',fun)))
 	 (fset ',fun (intern (concat "cc-bytecomp-ignore-fun:"
 				     (symbol-name ',fun)))))))
@@ -282,10 +283,9 @@ exclude any functions that have been bound during compilation with
 ;; Override ourselves with a version loaded from source if we're
 ;; compiling, like cc-require does for all the other files.
 (if (and (cc-bytecomp-is-compiling)
-	 (= cc-bytecomp-load-depth 0))
+	 (not load-in-progress))
     (let ((load-path
-	   (cons (file-name-directory byte-compile-dest-file) load-path))
-	  (cc-bytecomp-load-depth 1))
+	   (cons (file-name-directory byte-compile-dest-file) load-path)))
       (load "cc-bytecomp.el" nil t t)))
 
 
