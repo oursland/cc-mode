@@ -149,7 +149,7 @@
 	      ;; Move over the block of an in-expression statement
 	      ;; before checking the barrier
 	      (if (and (eq (char-after) ?{)
-		       (c-looking-at-inexpr-stat lim))
+		       (c-looking-at-inexpr-block lim))
 		  (forward-sexp 1))
 	      (c-crosses-statement-barrier-p (point) last-begin))
 	    (setq donep t))
@@ -976,8 +976,10 @@
    (save-excursion
      (let ((tokenlist "[={;]")
 	   bufpos okp)
-       (if c-lambda-key (setq tokenlist (concat tokenlist "\\|" c-lambda-key)))
-       (if c-statarg-key (setq tokenlist (concat tokenlist "\\|" c-statarg-key)))
+       (if c-lambda-key
+	   (setq tokenlist (concat tokenlist "\\|" c-lambda-key)))
+       (if c-inexpr-block-key
+	   (setq tokenlist (concat tokenlist "\\|" c-inexpr-block-key)))
        (while (and (not bufpos)
 		   containing-sexp)
 	 (if (consp containing-sexp)
@@ -1043,32 +1045,29 @@
 		    (cons pos type)))))
 	(error nil))))
 
-(defun c-looking-at-inexpr-stat (&optional lim)
-  ;; Returns non-nil if we're looking at the beginning of a statement
-  ;; that is the body of a lambda function or a statement argument to
-  ;; a function taking one.  The value returned is actually a cons of
-  ;; either 'lambda or 'statarg and the position of the beginning of
-  ;; the construct.  LIM limits the backward search.
+(defun c-looking-at-inexpr-block (&optional lim)
+  ;; Returns non-nil if we're looking at the beginning of a block
+  ;; inside an expression.  The value returned is actually a cons of
+  ;; either 'lambda or 'inexpr-block and the position of the beginning
+  ;; of the construct.  LIM limits the backward search.
   (save-excursion
-    (let ((lim (or lim (c-point 'bod))))
-      (or (and (progn (c-backward-syntactic-ws) t)
-	       (> (point) lim)
-	       (= (char-before) ?\()
-	       (cons 'statarg (point)))
-	  (and (c-safe (progn (forward-sexp -1) t))
-	       (>= (point) lim)
-	       c-statarg-key
-	       (looking-at c-statarg-key)
-	       (cons 'statarg (point)))
-	  (and (c-safe (progn (forward-sexp -1) t))
-	       (>= (point) lim)
-	       c-lambda-key
-	       (looking-at c-lambda-key)
-	       (cons 'lambda (point)))))))
+    (or lim (setq lim (point-min)))
+    (c-backward-syntactic-ws)
+    (if (and (> (point) lim) (eq (char-before) ?\())
+	(cons 'inexpr-block (point))
+      (while (and (= (c-backward-token-1 1 t lim) 0)
+		  (looking-at "[({[]")))
+      (if (>= (point) lim)
+	  (cond ((and c-inexpr-block-key
+		      (looking-at c-inexpr-block-key))
+		 (cons 'inexpr-block (point)))
+		((and c-lambda-key
+		      (looking-at c-lambda-key))
+		 (cons 'lambda (point))))))))
 
-(defun c-looking-at-inexpr-stat-backward (&optional lim)
+(defun c-looking-at-inexpr-block-backward (&optional lim)
   ;; Returns non-nil if we're looking at the end of an in-expression
-  ;; statement, otherwise the same as `c-looking-at-inexpr-stat'.
+  ;; block, otherwise the same as `c-looking-at-inexpr-block'.
   (save-excursion
     (let ((lim (or lim (c-point 'bod))))
       (c-safe
@@ -1077,7 +1076,7 @@
 	   (progn
 	     (forward-sexp -1)
 	     (if (>= (point) lim)
-		 (c-looking-at-inexpr-stat lim))))))))
+		 (c-looking-at-inexpr-block lim))))))))
 
 
 (defun c-most-enclosing-brace (state)
@@ -1622,8 +1621,8 @@
 		  (c-add-syntax 'inlambda)) ; returns non-nil
 		 ;; CASE 6B: At the beginning of the arg to a
 		 ;; function taking a statement argument
-		 ((and c-statarg-key
-		       (looking-at c-statarg-key))
+		 ((and c-inexpr-block-key
+		       (looking-at c-inexpr-block-key))
 		  (c-add-syntax 'block-open (c-point 'boi))
 		  (c-add-syntax 'inexpr-statement))
 		 ;; CASE 6C: At the beginning of the lambda statement
@@ -1785,7 +1784,7 @@
 	 ;; CASE 10: A continued statement
 	 ((and (not (memq char-before-ip '(?\; ?:)))
 	       (or (not (eq char-before-ip ?}))
-		   (c-looking-at-inexpr-stat-backward containing-sexp))
+		   (c-looking-at-inexpr-block-backward containing-sexp))
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
@@ -1916,7 +1915,7 @@
 	     ;; block?
 	     ((save-excursion
 		(goto-char containing-sexp)
-		(setq placeholder (c-looking-at-inexpr-stat)))
+		(setq placeholder (c-looking-at-inexpr-block)))
 	      (goto-char containing-sexp)
 	      (c-add-syntax 'block-close (c-point 'boi))
 	      (c-add-syntax (if (eq (car placeholder) 'lambda)
@@ -2032,7 +2031,7 @@
 	   ((setq placeholder
 		  (save-excursion
 		    (goto-char containing-sexp)
-		    (c-looking-at-inexpr-stat)))
+		    (c-looking-at-inexpr-block)))
 	    (goto-char (cdr placeholder))
 	    (c-add-syntax 'statement-block-intro (c-point 'boi))
 	    (c-add-syntax (if (eq (car placeholder) 'lambda)
