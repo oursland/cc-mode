@@ -379,7 +379,7 @@ indentation amount."
 
 ;; Useful for c-hanging-semi&comma-criteria
 (defun c-semi&comma-inside-parenlist ()
-  "Determine if a newline should be added after a semicolon.
+  "Controls newline insertion after semicolons in parenthesis lists.
 If a comma was inserted, no determination is made.  If a semicolon was
 inserted inside a parenthesis list, no newline is added otherwise a
 newline is added.  In either case, checking is stopped.  This supports
@@ -395,6 +395,39 @@ exactly the old newline insertion behavior."
 	  (error t))
 	t
       'stop)))
+
+;; Suppresses newlines before non-blank lines
+(defun c-semi&comma-no-newlines-before-nonblanks ()
+  "Controls newline insertion after semicolons.
+If a comma was inserted, no determination is made.  If a semicolon was
+inserted, and the following line is not blank, no newline is inserted.
+Otherwise, no determination is made."
+  (save-excursion
+    (if (and (= last-command-char ?\;)
+	     ;;(/= (point-max)
+	     ;;    (save-excursion (skip-syntax-forward " ") (point))
+	     (zerop (forward-line 1))
+	     (not (looking-at "^[ \t]*$")))
+	'stop
+      nil)))
+
+;; Suppresses new lines after semicolons in one-liners methods
+(defun c-semi&comma-no-newlines-for-oneline-inliners ()
+  "Controls newline insertion after semicolons for some one-line methods.
+If a comma was inserted, no determination is made.  Newlines are
+suppressed in one-liners, if the line is an in-class inline function.
+For other semicolon contexts, no determination is made."
+  (let ((syntax (c-guess-basic-syntax))
+        (bol (save-excursion
+               (if (c-safe (up-list -1) t)
+                   (c-point 'bol)
+                 -1))))
+    (if (and (eq last-command-char ?\;)
+             (eq (car (car syntax)) 'inclass)
+             (eq (car (car (cdr syntax))) 'topmost-intro)
+             (= (c-point 'bol) bol))
+        'stop
+      nil)))
 
 
 (provide 'cc-align)
