@@ -325,11 +325,11 @@ considered insignificant.  This macro allows text-properties to be
 changed, even in a read-only buffer.
 
 The return value is the value of the last form in BODY."
-  `(let* (,@(append '((modified (buffer-modified-p)) (buffer-undo-list t)
-		      (inhibit-read-only t) (inhibit-point-motion-hooks t)
-		      before-change-functions after-change-functions
-		      deactivate-mark)
-		    varlist))
+  `(let* ((modified (buffer-modified-p)) (buffer-undo-list t)
+	  (inhibit-read-only t) (inhibit-point-motion-hooks t)
+	  before-change-functions after-change-functions
+	  deactivate-mark
+	  ,@varlist)
      (prog1 (progn ,@body)
        (and (not modified)
 	    (buffer-modified-p)
@@ -570,40 +570,12 @@ This function does not do any hidden buffer changes."
 				   (cons 'syntax-table prop)))))))
 
 
-;; Some fontification stuff.  It's necessary to put it here and not in
-;; cc-fonts where it belongs, since it's also used in some functions
-;; in cc-engine, and we don't want to require cc-fonts there.
-;;
-;; These things will be called in cc-engine only when
-;; `c-fontify-types-and-refs' is set, and that will only happen when
-;; called from cc-fonts.  Thus it's safe even though the code in
-;; cc-engine might get references to the font-lock package, which it
-;; doesn't require at run time.
-
-(cc-eval-when-compile
-  ;; Used at compile time to get the right definition in
-  ;; `c-put-font-lock-face'.
-  (require 'font-lock))
-
-(defmacro c-put-font-lock-face (from to face)
-  ;; Put a face on a region (overriding any existing face) in the way
-  ;; font-lock would do it.  In XEmacs that means putting an
-  ;; additional font-lock property, or else the font-lock package
-  ;; won't recognize it as fontified and might override it
-  ;; incorrectly.
-  (if (fboundp 'font-lock-set-face)
-      ;; Note: This function has no docstring in XEmacs so it might be
-      ;; considered internal.
-      `(font-lock-set-face ,from ,to ,face)
-    `(put-text-property ,from ,to 'face ,face)))
-
-
 ;; Make edebug understand the macros.
 (eval-after-load "edebug"
   '(progn
      (def-edebug-spec c-point t)
      (def-edebug-spec c-safe t)
-     (def-edebug-spec c-save-buffer-state let)
+     (def-edebug-spec c-save-buffer-state let*)
      (def-edebug-spec c-forward-syntactic-ws t)
      (def-edebug-spec c-backward-syntactic-ws t)
      (def-edebug-spec c-forward-sexp t)
@@ -621,8 +593,7 @@ This function does not do any hidden buffer changes."
      (def-edebug-spec c-major-mode-is t)
      (def-edebug-spec c-clear-char-syntax t)
      (def-edebug-spec c-put-char-syntax t)
-     (def-edebug-spec cc-eval-when-compile t)
-     (def-edebug-spec c-put-font-lock-face t)))
+     (def-edebug-spec cc-eval-when-compile t)))
 
 
 ;;; Functions.
@@ -804,17 +775,6 @@ This function does not do any hidden buffer changes."
   ;; This function does not do any hidden buffer changes.
   (memq facename (face-list)))
 
-(defsubst c-put-type-face (from to)
-  ;; Put the face `font-lock-type-face' on the given region.  Does not
-  ;; clobber match-data.
-  (c-put-font-lock-face from to 'font-lock-type-face))
-
-(defsubst c-put-reference-face (from to)
-  ;; Put the face `font-lock-reference-face' on the given region.
-  ;; Does not clobber match-data.  Note that the face is a variable
-  ;; that is dereferenced, since it's an alias in Emacs.
-  (c-put-font-lock-face from to font-lock-reference-face))
-
 (defun c-make-keywords-re (adorn list)
   "Make a regexp that matches all the strings the list.
 Duplicates in the list are removed.  The regexp may contain zero or
@@ -884,8 +844,8 @@ system."
 ;; symbols hold the evaluated values for the constant as alists where
 ;; the car is the mode name symbol and the cdr is the value in that
 ;; mode.  The property lists hold the source values and other
-;; miscellaneous data.  Might also contain miscellaneous other
-;; symbols, but those doesn't have any variable bindings.
+;; miscellaneous data.  Might also contain various other symbols, but
+;; those don't have any variable bindings.
 
 (defvar c-lang-const-expansion nil)
 (defvar c-langs-are-parametric nil)
