@@ -464,8 +464,10 @@ variables."
 	  adaptive-fill-mode t
 	  adaptive-fill-regexp
 	  (concat comment-line-prefix
-		  (if adaptive-fill-regexp
-		      (concat "\\(" adaptive-fill-regexp "\\)")
+		  (if (default-value 'adaptive-fill-regexp)
+		      (concat "\\("
+			      (default-value 'adaptive-fill-regexp)
+			      "\\)")
 		    "")))
     (when (boundp 'adaptive-fill-first-line-regexp)
       ;; XEmacs (20.x) adaptive fill mode doesn't have this.
