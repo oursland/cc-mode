@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.247 $
-;; Last Modified:   $Date: 1995-11-17 22:18:47 $
+;; Version:         $Revision: 4.248 $
+;; Last Modified:   $Date: 1995-11-20 16:08:39 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-11-17 22:18:47 $|$Revision: 4.247 $|
+;; |$Date: 1995-11-20 16:08:39 $|$Revision: 4.248 $|
 
 ;;; Code:
 
@@ -1150,6 +1150,7 @@ Key bindings:
   (make-local-variable 'comment-start-skip)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
+  (make-local-variable 'adaptive-fill-regexp)
   ;; now set their values
   (setq paragraph-start (concat "^$\\|" page-delimiter)
 	paragraph-separate paragraph-start
@@ -1161,7 +1162,8 @@ Key bindings:
 	outline-regexp "[^#\n\^M]"
 	outline-level 'c-outline-level
 	comment-column 32
-	comment-start-skip "/\\*+ *\\|// *")
+	comment-start-skip "/\\*+ *\\|// *"
+	adaptive-fill-regexp nil)
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
@@ -4555,7 +4557,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.247 $"
+(defconst c-version "$Revision: 4.248 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
