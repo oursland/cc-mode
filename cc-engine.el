@@ -3111,7 +3111,8 @@ This function does not do any hidden buffer changes."
   ;; All variables in this function begin with `cfd-' to avoid name
   ;; collision with the (dynamically bound) variables used in CFD-FUN.
 
-  (let ((cfd-buffer-end (point-max))
+  (let ((cfd-start-pos (point))
+	(cfd-buffer-end (point-max))
 	;; The last regexp match found by `c-find-decl-prefix-search'.
 	cfd-re-match
 	;; The last `c-decl-end' found by `c-find-decl-prefix-search'.
@@ -3138,123 +3139,214 @@ This function does not do any hidden buffer changes."
     ;; before the point, and do the first `c-decl-prefix-re' search
     ;; unless we're at bob.
 
-    (let ((start-pos (point)) syntactic-pos)
+    (let (start-in-literal start-in-macro syntactic-pos)
       ;; Must back up a bit since we look for the end of the previous
       ;; statement or declaration, which is earlier than the first
       ;; returned match.
 
-      (when (c-got-face-at (point) c-literal-faces)
-	;; But first we need to move to a syntactically relevant
-	;; position.  Use the faces to back up to the start of the
-	;; comment or string literal.
-	(when (and (not (bobp))
-		   (c-got-face-at (1- (point)) c-literal-faces))
-	  (while (progn
-		   (goto-char (previous-single-property-change
-			       (point) 'face nil (point-min)))
-		   (and (> (point) (point-min))
-			(c-got-face-at (point) c-literal-faces)))))
+      (cond
+       ;; First we need to move to a syntactically relevant position.
+       ;; Begin by backing out of comment or string literals.
+       ((and
+	 (when (c-got-face-at (point) c-literal-faces)
+	   ;; Try to use the faces to back up to the start of the
+	   ;; literal.  FIXME: What if the point is on a declaration
+	   ;; inside a comment?
+	   (while (progn
+		    (goto-char (previous-single-property-change
+				(point) 'face nil (point-min)))
+		    (and (not (bobp))
+			 (c-got-face-at (1- (point)) c-literal-faces))))
 
-	;; XEmacs doesn't fontify the quotes surrounding string
-	;; literals.
-	(and (featurep 'xemacs)
-	     (eq (get-text-property (point) 'face)
-		 'font-lock-string-face)
-	     (not (bobp))
-	     (progn (backward-char)
-		    (not (looking-at c-string-limit-regexp)))
-	     (forward-char))
+	   ;; XEmacs doesn't fontify the quotes surrounding string
+	   ;; literals.
+	   (and (featurep 'xemacs)
+		(eq (get-text-property (point) 'face)
+		    'font-lock-string-face)
+		(not (bobp))
+		(progn (backward-char)
+		       (not (looking-at c-string-limit-regexp)))
+		(forward-char))
 
-	;; The font lock package might not have fontified the start of
-	;; the literal at all so check that we have arrived at
-	;; something that looks like a start or else resort to
-	;; `c-literal-limits'.
-	(unless (looking-at c-literal-start-regexp)
-	  (let ((range (c-literal-limits)))
-	    (if range (goto-char (car range))))))
+	   ;; Don't trust the literal to contain only literal faces
+	   ;; (the font lock package might not have fontified the
+	   ;; start of it at all, for instance) so check that we have
+	   ;; arrived at something that looks like a start or else
+	   ;; resort to `c-literal-limits'.
+	   (unless (looking-at c-literal-start-regexp)
+	     (let ((range (c-literal-limits)))
+	       (if range (goto-char (car range)))))
 
-      ;; Must back out of any macro so that we don't miss any
-      ;; declaration that could follow after it, unless the limit is
-      ;; inside the macro.  We only check that for the current line to
-      ;; save some time; it's enough for the by far most common case
-      ;; when font-lock refontifies the current line only.
-      (when (save-excursion
-	      (and (= (forward-line 1) 0)
-		   (or (< (c-point 'eol) cfd-limit)
-		       (progn (backward-char)
-			      (not (eq (char-before) ?\\))))))
-	(c-beginning-of-macro))
+	   (setq start-in-literal (point)))
 
-      ;; Clear the cache if it applied further down.
-      (c-invalidate-find-decl-cache start-pos)
+	 ;; The start is in a literal.  If the limit is in the same
+	 ;; one we don't have to find a syntactic position etc.  We
+	 ;; only check that if the limit is at or before bonl to save
+	 ;; time; it covers the by far most common case when font-lock
+	 ;; refontifies the current line only.
+	 (<= cfd-limit (c-point 'bonl cfd-start-pos))
+	 (save-excursion
+	   (goto-char cfd-start-pos)
+	   (while (progn
+		    (goto-char (next-single-property-change
+				(point) 'face nil cfd-limit))
+		    (and (< (point) cfd-limit)
+			 (c-got-face-at (point) c-literal-faces))))
+	   (= (point) cfd-limit)))
 
-      (setq syntactic-pos (point))
-      (c-backward-syntactic-ws c-find-decl-syntactic-pos)
+	;; Completely inside a literal.  Set up variables to trig the
+	;; (< cfd-continue-pos cfd-start-pos) case below and it'll
+	;; find a suitable start position.
+	(setq cfd-continue-pos start-in-literal))
 
-      ;; If we hit `c-find-decl-syntactic-pos' and
-      ;; `c-find-decl-match-pos' is set then we install the cached
-      ;; values.  If we hit `c-find-decl-syntactic-pos' and
-      ;; `c-find-decl-match-pos' is nil then we know there's no decl
-      ;; prefix in the whitespace before `c-find-decl-syntactic-pos'
-      ;; and so we can continue the search from this point.  If we
-      ;; didn't hit `c-find-decl-syntactic-pos' then we're now in the
-      ;; right spot to begin searching anyway.
-      (if (and (eq (point) c-find-decl-syntactic-pos)
-	       c-find-decl-match-pos)
+       ;; Check if the region might be completely inside a macro, to
+       ;; optimize that like the completely-inside-literal above.
+       ((save-excursion
+	  (and (= (forward-line 1) 0)
+	       (>= (point) cfd-limit)
+	       (progn (backward-char)
+		      (eq (char-before) ?\\))))
+	;; (Maybe) completely inside a macro.  Only need to trig the
+	;; (< cfd-continue-pos cfd-start-pos) case below to make it
+	;; set things up.
+	(setq cfd-continue-pos (1- cfd-start-pos)
+	      start-in-macro t))
 
-	  (progn
-	    ;; The match is always outside macros and comments so we
-	    ;; start at the next token.  The loop below will later go
-	    ;; back using `cfd-continue-pos' to fix declarations inside
-	    ;; the syntactic ws.
-	    (goto-char syntactic-pos)
-	    (c-forward-syntactic-ws)
+       (t
+	;; Back out of any macro so we don't miss any declaration
+	;; that could follow after it.
+	(when (c-beginning-of-macro)
+	  (setq start-in-macro t))
+
+	;; Now we're at a proper syntactically relevant position so we
+	;; can use the cache.  But first clear it if it applied
+	;; further down.
+	(c-invalidate-find-decl-cache cfd-start-pos)
+
+	(setq syntactic-pos (point))
+	(unless (eq syntactic-pos c-find-decl-syntactic-pos)
+	  ;; Don't have to do this if the cache is relevant here,
+	  ;; typically if the same line is refontified again.  If
+	  ;; we're just some syntactic whitespace further down we can
+	  ;; still use the cache to limit the skipping.
+	  (c-backward-syntactic-ws c-find-decl-syntactic-pos))
+
+	;; If we hit `c-find-decl-syntactic-pos' and
+	;; `c-find-decl-match-pos' is set then we install the cached
+	;; values.  If we hit `c-find-decl-syntactic-pos' and
+	;; `c-find-decl-match-pos' is nil then we know there's no decl
+	;; prefix in the whitespace before `c-find-decl-syntactic-pos'
+	;; and so we can continue the search from this point.  If we
+	;; didn't hit `c-find-decl-syntactic-pos' then we're now in
+	;; the right spot to begin searching anyway.
+	(if (and (eq (point) c-find-decl-syntactic-pos)
+		 c-find-decl-match-pos)
 	    (setq cfd-match-pos c-find-decl-match-pos
 		  cfd-continue-pos syntactic-pos)
-	    (if (< cfd-continue-pos (point))
-		(setq cfd-token-pos (point))))
 
-	(setq c-find-decl-syntactic-pos syntactic-pos)
+	  (setq c-find-decl-syntactic-pos syntactic-pos)
 
-	(when (if (bobp)
-		  ;; Always consider bob a match to get the first declaration
-		  ;; in the file.  Do this separately instead of letting
-		  ;; `c-decl-prefix-re' match bob, so that it always can
-		  ;; consume at least one character to ensure that we won't
-		  ;; get stuck in an infinite loop.
-		  (setq cfd-re-match 0)
-		(backward-char)
-		(c-beginning-of-current-token)
-		(< (point) cfd-limit))
-	  ;; Do an initial search now.  In the bob case above it's only done
-	  ;; to search for the `c-type' property.
-	  (c-find-decl-prefix-search))
+	  (when (if (bobp)
+		    ;; Always consider bob a match to get the first
+		    ;; declaration in the file.  Do this separately instead of
+		    ;; letting `c-decl-prefix-re' match bob, so that regexp
+		    ;; always can consume at least one character to ensure
+		    ;; that we won't get stuck in an infinite loop.
+		    (setq cfd-re-match 0)
+		  (backward-char)
+		  (c-beginning-of-current-token)
+		  (< (point) cfd-limit))
+	    ;; Do an initial search now.  In the bob case above it's
+	    ;; only done to search for a `c-decl-end' spot.
+	    (c-find-decl-prefix-search))
 
-	;; Advance `cfd-continue-pos' if we got a hit before the start
-	;; position.  The earliest position that could affect after
-	;; the start position is the char before the preceding
-	;; comments.
-	(when (and cfd-continue-pos (< cfd-continue-pos start-pos))
-	  (goto-char syntactic-pos)
+	  (setq c-find-decl-match-pos (and (< cfd-match-pos cfd-start-pos)
+					   cfd-match-pos)))))
+
+      ;; Advance `cfd-continue-pos' if it's before the start position.
+      ;; The closest continue position that might have effect at or
+      ;; after the start depends on what we started in.  This also
+      ;; finds a suitable start position in the special cases when the
+      ;; region is completely within a literal or macro.
+      (when (and cfd-continue-pos (< cfd-continue-pos cfd-start-pos))
+
+	(cond
+	 (start-in-macro
+	  ;; If we're in a macro then it's the closest preceding token
+	  ;; in the macro.  Check this before `start-in-literal',
+	  ;; since if we're inside a literal in a macro, the preceding
+	  ;; token is earlier than any `c-decl-end' spot inside the
+	  ;; literal (comment).
+	  (goto-char (or start-in-literal cfd-start-pos))
+	  ;; The only syntactic ws in macros are comments.
 	  (c-backward-comments)
-	  (unless (bobp)
-	    (backward-char)
-	    (c-beginning-of-current-token))
-	  (setq cfd-continue-pos (max cfd-continue-pos (point))))
+	  (backward-char)
+	  (c-beginning-of-current-token))
 
-	;; If we got a match it's always outside macros and comments so
-	;; advance to the next token and set `cfd-token-pos'.  The loop
-	;; below will later go back using `cfd-continue-pos' to fix
-	;; declarations inside the syntactic ws.
-	(when (and (< cfd-match-pos cfd-limit) (< (point) syntactic-pos))
-	  (goto-char syntactic-pos)
-	  (c-forward-syntactic-ws)
-	  (and cfd-continue-pos
-	       (< cfd-continue-pos (point))
-	       (setq cfd-token-pos (point))))
+	 (start-in-literal
+	  ;; If we're in a comment it can only be the closest
+	  ;; preceding `c-decl-end' position within that comment, if
+	  ;; any.  Go back to the beginning of such a property so that
+	  ;; `c-find-decl-prefix-search' will find the end of it.
+	  ;; (Can't stop at the end and install it directly on
+	  ;; `cfd-prop-match' since that variable might be cleared
+	  ;; after `cfd-fun' below.)
+	  ;;
+	  ;; Note that if the literal is a string then the property
+	  ;; search will simply skip to the beginning of it right
+	  ;; away.
+	  (if (not c-type-decl-end-used)
+	      (goto-char start-in-literal)
+	    (goto-char cfd-start-pos)
+	    (while (progn
+		     (goto-char (previous-single-property-change
+				 (point) 'c-type nil start-in-literal))
+		     (and (> (point) start-in-literal)
+			  (not (eq (c-get-char-property (point) 'c-type)
+				   'c-decl-end))))))
 
-	(setq c-find-decl-match-pos (and (< cfd-match-pos start-pos)
-					 cfd-match-pos))))
+	  (when (= (point) start-in-literal)
+	    ;; Didn't find any property inside the comment, so we can
+	    ;; skip it entirely.  (This won't skip past a string, but
+	    ;; that'll be handled quickly by the next
+	    ;; `c-find-decl-prefix-search' anyway.)
+	    (c-forward-single-comment)))
+
+	 (t
+	  ;; If we started in normal code, the only match that might
+	  ;; apply before the start is what we already got in
+	  ;; `cfd-match-pos' so we can continue at the start position.
+	  ;; (Note that we don't get here if the first match is below
+	  ;; it.)
+	  (goto-char cfd-start-pos)))
+
+	;; Delete found matches if they are before our new continue
+	;; position, so that `c-find-decl-prefix-search' won't back up
+	;; to them later on.
+	(setq cfd-continue-pos (point))
+	(when (and cfd-re-match (< cfd-re-match cfd-continue-pos))
+	  (setq cfd-re-match nil))
+	(when (and cfd-prop-match (< cfd-prop-match cfd-continue-pos))
+	  (setq cfd-prop-match nil)))
+
+      (if syntactic-pos
+	  ;; This is the normal case and we got a proper syntactic
+	  ;; position.  If there's a match then it's always outside
+	  ;; macros and comments, so advance to the next token and set
+	  ;; `cfd-token-pos'.  The loop below will later go back using
+	  ;; `cfd-continue-pos' to fix declarations inside the
+	  ;; syntactic ws.
+	  (when (and cfd-match-pos (< cfd-match-pos syntactic-pos))
+	    (goto-char syntactic-pos)
+	    (c-forward-syntactic-ws)
+	    (and cfd-continue-pos
+		 (< cfd-continue-pos (point))
+		 (setq cfd-token-pos (point))))
+
+	;; Have one of the special cases when the region is completely
+	;; within a literal or macro.  `cfd-continue-pos' is set to a
+	;; good start position for the search, so do it.
+	(c-find-decl-prefix-search)))
 
     ;; Now loop.  We already got the first match.
 
@@ -3304,30 +3396,33 @@ This function does not do any hidden buffer changes."
 
 	     (< (point) cfd-limit))
 
-      (when (progn
-	      ;; Narrow to the end of the macro if we got a hit inside
-	      ;; one, to avoid recognizing things that start inside
-	      ;; the macro and end outside it.
-	      (when (> cfd-match-pos cfd-macro-end)
-		;; Not in the same macro as in the previous round.
-		(save-excursion
-		  (goto-char cfd-match-pos)
-		  (setq cfd-macro-end
-			(if (save-excursion (and (c-beginning-of-macro)
-						 (< (point) cfd-match-pos)))
-			    (progn (c-end-of-macro)
-				   (point))
-			  0))))
+      (when (and
+	     (>= (point) cfd-start-pos)
 
-	      (if (zerop cfd-macro-end)
-		  t
-		(if (> cfd-macro-end (point))
-		    (progn (narrow-to-region (point-min) cfd-macro-end)
-			   t)
-		  ;; The matched token was the last thing in the
-		  ;; macro, so the whole match is bogus.
-		  (setq cfd-macro-end 0)
-		  nil)))
+	     (progn
+	       ;; Narrow to the end of the macro if we got a hit inside
+	       ;; one, to avoid recognizing things that start inside the
+	       ;; macro and end outside it.
+	       (when (> cfd-match-pos cfd-macro-end)
+		 ;; Not in the same macro as in the previous round.
+		 (save-excursion
+		   (goto-char cfd-match-pos)
+		   (setq cfd-macro-end
+			 (if (save-excursion (and (c-beginning-of-macro)
+						  (< (point) cfd-match-pos)))
+			     (progn (c-end-of-macro)
+				    (point))
+			   0))))
+
+	       (if (zerop cfd-macro-end)
+		   t
+		 (if (> cfd-macro-end (point))
+		     (progn (narrow-to-region (point-min) cfd-macro-end)
+			    t)
+		   ;; The matched token was the last thing in the macro,
+		   ;; so the whole match is bogus.
+		   (setq cfd-macro-end 0)
+		   nil))))
 
 	(c-debug-put-decl-spot-faces cfd-match-pos (point))
 	(funcall cfd-fun cfd-match-pos (/= cfd-macro-end 0))
