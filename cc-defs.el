@@ -364,19 +364,19 @@ completely restored again.  Changes in text properties like `face' or
 `syntax-table' are considered insignificant.  This macro allows text
 properties to be changed, even in a read-only buffer.
 
-This macro should be placed around all calculations which set text
-properties in a buffer, even when the buffer is known to be writeable.
-That way, these text properties remain set even if the user undoes the
-command which set them.
+This macro should be placed around all calculations which set
+\"insignificant\" text properties in a buffer, even when the buffer is
+known to be writeable.  That way, these text properties remain set
+even if the user undoes the command which set them.
 
 This macro should ALWAYS be placed around \"temporary\" internal buffer
 changes \(like adding a newline to calculate a text-property then
 deleting it again\), so that the user never sees them on his
-buffer-undo-list.
+`buffer-undo-list'.  See also `c-tentative-buffer-changes'.
 
 However, any user-visible changes to the buffer \(like auto-newlines\)
-must not be within a c-save-buffer-state, since the user could not then
-undo them.
+must not be within a `c-save-buffer-state', since the user then
+wouldn't be able to undo them.
 
 The return value is the value of the last form in BODY."
   `(let* ((modified (buffer-modified-p)) (buffer-undo-list t)
@@ -398,12 +398,14 @@ returns non-nil.  Otherwise it's undone using the undo facility, and
 various other buffer state that might be affected by the changes is
 restored.  That includes the current buffer, point, mark, mark
 activation \(similar to `save-excursion'), and the modified state.
-The state is also restored if BODY exits nonlocally.  BODY may change
-the buffer even if it's read-only, but it is assumed to always return
-nil in that case."
+The state is also restored if BODY exits nonlocally.
+
+If BODY makes a change that unconditionally is undone then wrap this
+macro inside `c-save-buffer-state'.  That way the change can be done
+even when the buffer is read-only, and without interference from
+various buffer change hooks."
   `(let (-tnt-chng-keep
-	 -tnt-chng-state
-	 (inhibit-read-only t))
+	 -tnt-chng-state)
      (unwind-protect
 	 ;; Insert an undo boundary for use with `undo-more'.  We
 	 ;; don't use `undo-boundary' since it doesn't insert one
