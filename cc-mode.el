@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.51 $
-;; Last Modified:   $Date: 1993-11-17 15:06:11 $
+;; Version:         $Revision: 3.52 $
+;; Last Modified:   $Date: 1993-11-17 15:31:07 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-17 15:06:11 $|$Revision: 3.51 $|
+;; |$Date: 1993-11-17 15:31:07 $|$Revision: 3.52 $|
 
 ;;; Code:
 
@@ -431,7 +431,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.51 $
+  "Major mode for editing C++ code.  $Revision: 3.52 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -462,7 +462,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.51 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.52 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -887,26 +887,39 @@ Will also cleanup double colon scope operators."
       (setq semantics (progn
 			(self-insert-command (prefix-numeric-value arg))
 			(cc-guess-basic-semantics bod))
-	    newlines (assq (car (or (assq 'member-init-intro semantics)
-				    (assq 'inher-intro semantics)
-				    (assq 'case-label semantics)
-				    (assq 'label semantics)
-				    (assq 'access-key semantics)))
-			   cc-hanging-colons-alist))
+      ;; some language elements can only be determined by checking the
+      ;; following line.  Lets first look for ones that can be found
+      ;; when looking on the line with the colon
+	    newlines (or
+		      (let ((langelem (or (assq 'case-label semantics)
+					  (assq 'label semantics)
+					  (assq 'access-key semantics))))
+			(and langelem
+			     (assq (car langelem) cc-hanging-colons-alist)))
+		      (prog2
+			(insert "\n")
+			(let* ((semantics (cc-guess-basic-semantics bod))
+			       (langelem
+				(or (assq 'member-init-intro semantics)
+				    (assq 'inher-intro semantics))))
+			  (and langelem
+			       (assq (car langelem) cc-hanging-colons-alist)))
+			(delete-char -1))
+		      ))
+      ;; indent the current line
+      (cc-indent-via-language-element bod semantics)
       ;; does a newline go before the colon?
       (if (memq 'before newlines)
 	  (let ((pos (- (point-max) (point))))
 	    (forward-char -1)
 	    (newline)
-	    (cc-indent-via-language-element bod semantics)
+	    (cc-indent-via-language-element bod)
 	    (goto-char (- (point-max) pos))))
-      ;; now adjust the line's indentation
-      (cc-indent-via-language-element bod semantics)
       ;; does a newline go after the colon?
       (if (memq 'after (cdr-safe newlines))
 	  (progn
 	    (newline)
-	    (cc-indent-via-language-element)))
+	    (cc-indent-via-language-element bod)))
       ;; we may have to clean up double colons
       (let ((pos (- (point-max) (point)))
 	    (here (point)))
@@ -2302,7 +2315,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.51 $"
+(defconst cc-version "$Revision: 3.52 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
