@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.98 $
-;; Last Modified:   $Date: 1993-11-26 16:11:18 $
+;; Version:         $Revision: 3.99 $
+;; Last Modified:   $Date: 1993-11-26 16:20:05 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-26 16:11:18 $|$Revision: 3.98 $|
+;; |$Date: 1993-11-26 16:20:05 $|$Revision: 3.99 $|
 
 ;;; Code:
 
@@ -493,7 +493,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.98 $
+  "Major mode for editing C++ code.  $Revision: 3.99 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -523,7 +523,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.98 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.99 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2123,14 +2123,16 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	     ((= char-before-ip ?,)
 	      (cc-add-semantics 'statement-cont (cc-point 'boi)))
 	     ;; CASE 13.D: a question/colon construct?  But make sure
-	     ;; what came before was not a label!
+	     ;; what came before was not a label, and what comes after
+	     ;; is not a globally scoped function call!
 	     ((or (and (memq char-before-ip '(?: ??))
 		       (save-excursion
 			 (goto-char indent-point)
 			 (cc-backward-syntactic-ws lim)
 			 (back-to-indentation)
 			 (not (looking-at cc-label-key))))
-		  (memq char-after-ip '(?: ??)))
+		  (and (memq char-after-ip '(?: ??))
+		       (not (looking-at "[ \t]*::"))))
 	      (cc-add-semantics 'statement-cont (cc-point 'boi)))
 	     ;; CASE 13.E: any old statement
 	     ((< (point) indent-point)
@@ -2388,7 +2390,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.98 $"
+(defconst cc-version "$Revision: 3.99 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
