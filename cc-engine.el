@@ -105,7 +105,8 @@
 		   (elt saved-pos 2)
 		   (1+ (count-lines 1 (c-point 'bol (elt saved-pos 0))))))))
 
-(defun c-beginning-of-statement-1 (&optional lim ignore-labels noerror)
+(defun c-beginning-of-statement-1 (&optional lim ignore-labels
+					     noerror comma-delim)
   "Move to the start of the current statement or declaration, or to
 the previous one if already at the beginning of one.  Only
 statements/declarations on the same level are considered, i.e. don't
@@ -142,7 +143,10 @@ LIM may be given to limit the search.  If the search hits the limit,
 point will be left at the closest following token, or at the start
 position if that is less ('same is returned in this case).
 
-NOERROR turns off error logging to `c-parsing-error'."
+NOERROR turns off error logging to `c-parsing-error'.
+
+Normally only ';' is considered to delimit statements, but if
+COMMA-DELIM is non-nil then ',' is treated likewise."
 
   ;; The bulk of this function is a pushdown automaton that looks at
   ;; statement boundaries and the tokens in c-conditional-key.
@@ -179,6 +183,10 @@ NOERROR turns off error logging to `c-parsing-error'."
 
   (let ((case-fold-search nil)
 	(start (point))
+	(delims (if comma-delim '(?\; ?,) '(?\;)))
+	(c-stmt-delim-chars (if comma-delim
+				c-stmt-delim-chars-with-comma
+			      c-stmt-delim-chars))
 	pos				; Current position.
 	boundary-pos			; Position of last boundary.
 	after-labels-pos		; Value of tok after first found colon.
@@ -207,11 +215,12 @@ NOERROR turns off error logging to `c-parsing-error'."
       ;; boundaries for statements that doesn't contain any sexp.
       ;; The only thing that is affected is that the error checking
       ;; is a little less strict, and we really don't bother.
-      (if (and (eq (char-before) ?\;)
+      (if (and (memq (char-before) delims)
 	       (progn (forward-char -1)
 		      (setq saved (point))
 		      (c-backward-syntactic-ws)
-		      (or (memq (char-before) '(?\; ?: nil))
+		      (or (memq (char-before) delims)
+			  (memq (char-before) '(?: nil))
 			  (eq (char-syntax (char-before)) ?\())))
 	  (setq ret 'previous
 		pos saved)
@@ -317,7 +326,8 @@ NOERROR turns off error logging to `c-parsing-error'."
 			   (c-bos-save-error-info 'if 'else)
 			   (setq state 'else))
 			  ((eq sym 'while)
-			   (when (or (not pptok) (eq (char-after pptok) ?\;))
+			   (when (or (not pptok)
+				     (memq (char-after pptok) delims))
 			     ;; Since this can cause backtracking we do a
 			     ;; little more careful analysis to avoid it: If
 			     ;; the while isn't followed by a semicolon it
@@ -2174,12 +2184,14 @@ isn't moved."
 	(c-beginning-of-statement-1 lim)
 	(c-add-stmt-syntax 'statement-cont nil containing-sexp state))
        ;; CASE B.3: The body of a function declared inside a normal
-       ;; block.  This can only occur in Pike.  C.f. cases 16F and 17G.
-       ((and (c-major-mode-is 'pike-mode)
-	     (progn
-	       (goto-char indent-point)
-	       (and (not (c-looking-at-bos))
-		    (eq (c-beginning-of-statement-1 lim) 'same))))
+       ;; block.  Can occur e.g. in Pike and when using gcc
+       ;; extensions.  Might also trigger it with some macros followed
+       ;; by blocks, and this gives sane indentation then too.
+       ;; C.f. cases 16F and 17G.
+       ((progn
+	  (goto-char indent-point)
+	  (and (not (c-looking-at-bos))
+	       (eq (c-beginning-of-statement-1 lim nil nil t) 'same)))
 	(c-add-stmt-syntax 'defun-open t containing-sexp state))
        ;; CASE B.4: Continued statement with block open.
        (t
@@ -3133,15 +3145,17 @@ isn't moved."
 		    (looking-at (concat c-extra-toplevel-key "[^_]")))
 		  (c-add-syntax 'defun-close (point))
 		(c-add-syntax 'inline-close (point))))
-	     ;; CASE 16F: In Pike it can be a defun-close of a function
-	     ;; declared in a statement block.  Let it through
-	     ;; to be handled below.  C.f. cases B.3 and 17G.
-	     ((and (c-major-mode-is 'pike-mode)
-		   (not inenclosing-p)
+	     ;; CASE 16F: Can be a defun-close of a function declared
+	     ;; in a statement block, e.g. in Pike or when using gcc
+	     ;; extensions.  Might also trigger it with some macros
+	     ;; followed by blocks, and this gives sane indentation
+	     ;; then too.  Let it through to be handled below.
+	     ;; C.f. cases B.3 and 17G.
+	     ((and (not inenclosing-p)
 		   lim
 		   (save-excursion
 		     (and (not (c-looking-at-bos))
-			  (eq (c-beginning-of-statement-1 lim) 'same)
+			  (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
 			  (setq placeholder (point)))))
 	      (back-to-indentation)
 	      (if (/= (point) containing-sexp)
@@ -3264,14 +3278,15 @@ isn't moved."
 	    (c-backward-to-decl-anchor lim)
 	    (back-to-indentation)
 	    (c-add-syntax 'defun-block-intro (point)))
-	   ;; CASE 17G: First statement in a function declared inside a
-	   ;; normal block.  This can only occur in Pike.  C.f. cases
-	   ;; B.3 and 16F.
-	   ((and (c-major-mode-is 'pike-mode)
-		 (save-excursion
-		   (and (not (c-looking-at-bos))
-			(eq (c-beginning-of-statement-1 lim) 'same)
-			(setq placeholder (point)))))
+	   ;; CASE 17G: First statement in a function declared inside
+	   ;; a normal block.  This can occur in Pike and with
+	   ;; e.g. the gcc extensions.  Might also trigger it with
+	   ;; some macros followed by blocks, and this gives sane
+	   ;; indentation then too.  C.f. cases B.3 and 16F.
+	   ((save-excursion
+	      (and (not (c-looking-at-bos))
+		   (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
+		   (setq placeholder (point))))
 	    (back-to-indentation)
 	    (if (/= (point) containing-sexp)
 		(goto-char placeholder))
