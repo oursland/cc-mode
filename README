@@ -11,13 +11,13 @@ INTRODUCTION
     Please read the cc-mode.texi manual for details on using CC Mode.
     This is available on-line from:
 
-        <http://cc-mode.sourceforge.net/cc-mode-html/Top.html>
+        <http://cc-mode.sourceforge.net/cc-mode.html>
 
-    As of this writing (22-Nov-1999), CC Mode version 5 currently
-    works out of the box with XEmacs versions 19.15, 19.16, 20.3,
-    20.4, 21.0, 21.1, and 21.2, and with Emacs versions 19.34, 20.2,
-    20.3, and 20.4.  (It very likely works with later versions too,
-    when they become available.)
+    As of this writing (February 25, 2001), CC Mode currently works
+    out of the box with XEmacs versions 19.15, 19.16, 20.3, 20.4,
+    21.0, 21.1, and 21.2, and with Emacs versions 19.34, 20.x, and
+    21.0.  (It very likely works with later versions too, when they
+    become available.)
 
 MORE INFORMATION
 
