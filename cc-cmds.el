@@ -2061,7 +2061,7 @@ command to conveniently insert and align the necessary backslashes."
 	    ;; Back up the to line if line-mode is set, since the line
 	    ;; after the newly inserted line break should not be
 	    ;; touched in c-newline-and-indent.
-	    (setq to (max from (c-point 'eopl)))
+	    (setq to (max from (or (c-safe (c-point 'eopl)) from)))
 	    (unless bs-col-after-end
 	      ;; Set bs-col-after-end to non-nil in any case, since we
 	      ;; do not want to delete the backslash at the last line.
