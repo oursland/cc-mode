@@ -1,13 +1,40 @@
-Wed May 14 18:08:07 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+Fri May 23 14:58:30 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
-	* First alpha release 5.05
+	* cc-vars.el: Added a require of the custom library, for Emacs
+	19.34 compatibility.
+
+Thu May 22 22:53:25 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi:
+	Document the new default for c-style-variables-are-local-p.  This
+	variable is now nil by default.
+
+	* cc-styles.el (c-make-styles-buffer-local):
+	New function.  By default all style
+	variables are now global in value.  Call this function to make them
+	buffer local.  This function is called automatically at load time if
+	c-style-variables-are-local-p is non-nil.
+
+	* cc-vars.el (c-style-variables-are-local-p): Default value is now nil.
+
+Tue May 20 23:59:19 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-menus.el (c-popup-menu): Obsolete.
+
+	(c-mode-menu): Optional argument to add " Mode Commands" to the
+	title, in XEmacs only.
+
+	* cc-langs.el (c-common-init):
+	Get rid of the pre-XEmacs-19.10 way of doing popup
+	menus.  Make sure that in XEmacs, the menubar title is just the
+	modename, but the popup has "MODENAME Mode Commands".
 
 Tue May 13 22:57:24 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-align.el (c-lineup-C-comments):
 	Fixes to handle all situations where the first line of a block
 	comment has more stars on it than subsequent lines.  This not only
-	picks up the most comment Javadoc styles, but also
+	picks up the Javadoc style, but also
 
 	/*********************************************************************
 	 * Routines formerly in objectPalette.c
@@ -16,7 +43,7 @@ Tue May 13 22:57:24 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 	* cc-engine.el (c-guess-basic-syntax):
 	CASE 6A: Removed tests for ObjC & Java method
 	closing parens since none of the test cases touched this code, and it
-	broke close-paren on a separate line being recoginzied as
+	broke close-paren on a separate line being recognized as
 	arglist-close.
 
 	* cc-langs.el:
