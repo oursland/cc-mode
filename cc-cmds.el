@@ -795,15 +795,20 @@ value of `c-cleanup-list'."
 	      (setq is-scope-op t)))
 	(goto-char (- (point-max) pos)))
       ;; lets do some special stuff with the colon character
-      (let ((c-syntactic-indentation-in-macros t))
+      (let ((c-syntactic-indentation-in-macros t) elem)
 	;; Turn on syntactic macro analysis to help with auto newlines
 	;; only.
 	(setq syntax (c-guess-basic-syntax)
-	      ;; some language elements can only be determined by
-	      ;; checking the following line.  Lets first look for ones
-	      ;; that can be found when looking on the line with the
-	      ;; colon
-	      newlines
+	      elem syntax)
+	;; Translate substatement-label to label for this operation.
+	(while elem
+	  (if (eq (car (car elem)) 'substatement-label)
+	      (setcar (car elem) 'label))
+	  (setq elem (cdr elem)))
+	;; some language elements can only be determined by checking
+	;; the following line.  Lets first look for ones that can be
+	;; found when looking on the line with the colon
+	(setq newlines
 	      (and c-auto-newline
 		   (or (c-lookup-lists '(case-label label access-label)
 				       syntax c-hanging-colons-alist)
@@ -1804,7 +1809,7 @@ definition syntactically.  In the macro case this also has the effect
 of realigning any line continuation backslashes, unless
 `c-auto-align-backslashes' is nil."
   (interactive "*")
-  (let ((here (point-marker)) start end)
+  (let ((here (point-marker)) start)
     (unwind-protect
 	(progn
 	  ;; Find and skip past the closest following open paren that
