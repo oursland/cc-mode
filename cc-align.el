@@ -970,13 +970,13 @@ const char msg[] =             if (!running)
 } while (0)             <->    } while (0)           <- c-lineup-cpp-define
 
 The relative indentation returned by `c-lineup-cpp-define' is zero and
-two, respectively, in these two examples. They are then added to the
+two, respectively, in these two examples.  They are then added to the
 two column indentation that statement-block-intro gives in both cases
 here.
 
 If the relative indentation is zero, then nil is returned instead.
-This useful in a list expression to specify the default indentation on
-the top level.
+That is useful in a list expression to specify the default indentation
+on the top level.
 
 If `c-syntactic-indentation-in-macros' is nil then this function keeps
 the current indentation, except for empty lines \(ignoring the ending
