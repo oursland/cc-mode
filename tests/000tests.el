@@ -238,6 +238,7 @@
     "if-3.cc"
     "if-4.cc"
     "if-5.cc"
+    "if-6.c"
     "inexprstat-1.pike"
     "inexprstat-2.cc"
     "inher-1.cc"
