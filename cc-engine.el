@@ -7982,7 +7982,15 @@ comment at the start of cc-engine.el for more info."
 	   ;; CASE 5I: ObjC method definition.
 	   ((and c-opt-method-key
 		 (looking-at c-opt-method-key))
-	    (c-beginning-of-statement-1 lim)
+	    (c-beginning-of-statement-1 nil t)
+	    (if (= (point) indent-point)
+		;; Handle the case when it's the first (non-comment)
+		;; thing in the buffer.  Can't look for a 'same return
+		;; value from cbos1 since ObjC directives currently
+		;; aren't recognized fully, so that we get 'same
+		;; instead of 'previous if it moved over a preceding
+		;; directive.
+		(goto-char (point-min)))
 	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
 
            ;; CASE 5P: AWK pattern or function or continuation
@@ -8018,6 +8026,8 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char placeholder)
 	    (c-add-syntax 'topmost-intro-cont nil)
 	    (c-anchor-stmt nil containing-sexp paren-state))
+
+	   ;; NOTE: The point is at the end of the previous token here.
 
 	   ;; CASE 5J: we are at the topmost level, make
 	   ;; sure we skip back past any access specifiers
@@ -8078,11 +8088,12 @@ comment at the start of cc-engine.el for more info."
 	   ;; CASE 5K: we are at an ObjC method definition
 	   ;; continuation line.
 	   ((and c-opt-method-key
-		 (progn
+		 (save-excursion
 		   (c-beginning-of-statement-1 lim)
 		   (beginning-of-line)
-		   (looking-at c-opt-method-key)))
-	    (c-add-syntax 'objc-method-args-cont (point)))
+		   (when (looking-at c-opt-method-key)
+		     (setq placeholder (point)))))
+	    (c-add-syntax 'objc-method-args-cont placeholder))
 
 	   ;; CASE 5L: we are at the first argument of a template
 	   ;; arglist that begins on the previous line.
