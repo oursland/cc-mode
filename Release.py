@@ -233,7 +233,7 @@ def main():
 	    tag = 1
 	    package = 1
 	    docs = 1
-	if opt in ('-b', '--bump'):
+	elif opt in ('-b', '--bump'):
 	    bump = 1
 	elif opt in ('-t', '--tag'):
 	    tag = 1
