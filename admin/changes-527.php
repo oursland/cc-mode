@@ -14,12 +14,13 @@ experimental in 5.26 remain and are now considered permanent.
 <ul>
 
   <p><li><code>c-style-variables-are-local-p</code> now defaults to
-  <code>t</code>.  This is an incompatible change that has been made
-  to make the behavior of the style system wrt global variable
-  settings less confusing for non-advanced users.  If you know what
-  this variable does you might want to set it to <code>nil</code> in
-  your <code>.emacs</code>, otherwise you probably don't have to
-  bother.
+  <code>t</code>.
+
+  <p>This is an incompatible change that has been made to make the
+  behavior of the style system wrt global variable settings less
+  confusing for non-advanced users.  If you know what this variable
+  does you might want to set it to <code>nil</code> in your
+  <code>.emacs</code>, otherwise you probably don't have to bother.
 
   <p>Defaulting <code>c-style-variables-are-local-p</code> to
   <code>t</code> avoids the confusing situation that occurs when a

@@ -12,9 +12,10 @@ the list of <a href="changes-519.php">user visible changes for version
 <ul>
 
   <p><li>Multiline macros are now handled, both as they affect
-  indentation, and as recognized syntax.  New syntactic symbol
-  <code>cpp-macro-cont</code> is assigned to second and subsequent
-  lines of a multiline macro definition.
+  indentation, and as recognized syntax.
+
+  <p>New syntactic symbol <code>cpp-macro-cont</code> is assigned to
+  second and subsequent lines of a multiline macro definition.
 
   <p><li>A new style <code>"user"</code> which captures all
   non-hook-ified (i.e. top-level) <code>.emacs</code> file variable
@@ -52,9 +53,10 @@ the list of <a href="changes-519.php">user visible changes for version
   Emacs or only XEmacs (see the variable
   <code>c-enable-xemacs-performance-kludge-p</code>).
 
-  <p><li>Improvements (hopefully!) to the way CC Mode is loaded.  You
-  should now be able to do a <code>(require 'cc-mode)</code> to get
-  the entire package loaded properly for customization in your
+  <p><li>Improvements (hopefully!) to the way CC Mode is loaded.
+
+  <p>You should now be able to do a <code>(require 'cc-mode)</code> to
+  get the entire package loaded properly for customization in your
   <code>.emacs</code> file.  A new variable
   <code>c-initialize-on-load</code> controls this and is set to
   <code>t</code> by default.

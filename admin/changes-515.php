@@ -24,18 +24,21 @@ version 5.14</a>.
   per the ANSI 9X C draft standard).  Thus the function
   <code>c-enable-//-in-c-mode</code> has been removed.
 
-  <p><li>Auto-filling of comments has been improved.  CC Mode will now
-  properly auto-fill both line and block oriented comments, and allows
-  you to choose the leader string on block oriented continued
-  comments, via the variable
+  <p><li>Auto-filling of comments has been improved.
+
+  <p>CC Mode will now properly auto-fill both line and block oriented
+  comments, and allows you to choose the leader string on block
+  oriented continued comments, via the variable
   <code>c-comment-continuation-stars</code>.  See the CC Mode manual
   for details.
 
   <p><li><code>c-electric-slash</code> is electric in all modes.
 
   <p><li>The need for <code>c-mode-19.el</code> is automatically
-  detected now.  You do not need to <code>load</code> or
-  <code>require</code> it in your <code>.emacs</code> file.
+  detected now.
+
+  <p>You do not need to <code>load</code> or <code>require</code> it
+  in your <code>.emacs</code> file.
 
 </ul>
 

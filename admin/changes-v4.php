@@ -15,8 +15,10 @@ visible changes in CC Mode 5.
   with the latest Emacs and XEmacs releases.
 
   <p><li><code>c-mode-map</code> is no longer the base keymap for all
-  modes.  This was incompatible with the way Emacs 19 supports menus,
-  so now <code>c-mode-base-map</code> is the base map for all modes
+  modes.
+
+  <p>This was incompatible with the way Emacs 19 supports menus, so
+  now <code>c-mode-base-map</code> is the base map for all modes
   (including <code>c-mode-map</code>).  If you are installing custom
   keybindings into <code>c-mode-map</code> and expecting them to be
   present in all other modes, this will break.  Put your keybindings
@@ -34,8 +36,10 @@ visible changes in CC Mode 5.
   manual</a> for details.
 
   <p><li>The single <code>cc-mode.el</code> file was simply too
-  unwieldy so I have split the file up.  See the <a
-  href="ftp://cc-mode.sourceforge.net/pub/cc-mode/cc-mode/MANIFEST"><code>MANIFEST</code></a>
+  unwieldy so I have split the file up.
+
+  <p>See the <a
+  href="ftp://cc-mode.sourceforge.net/pub/cc-mode/src/MANIFEST"><code>MANIFEST</code></a>
   file for details.
 
   <p><li>Also, all user variables have been converted to Per
@@ -44,10 +48,12 @@ visible changes in CC Mode 5.
   notes</a> below for details of running CC Mode 5 in your version of
   Emacs.
 
-  <p><li>All style variables are now global by default.  Specifically,
-  the default value for <code>c-style-variables-are-local-p</code> is
-  <code>nil</code>.  The same rules apply as before, only reversed: if
-  you want the style variables to be buffer local, you should set
+  <p><li>All style variables are now global by default.
+
+  <p>Specifically, the default value for
+  <code>c-style-variables-are-local-p</code> is <code>nil</code>.  The
+  same rules apply as before, only reversed: if you want the style
+  variables to be buffer local, you should set
   <code>c-style-variables-are-local-p</code> to <code>t</code> before
   you load CC Mode.
 

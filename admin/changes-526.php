@@ -18,15 +18,16 @@ release.
 
 <ul>
 
-  <p><li>New initialization procedure for the style system.  When the
-  initial style for a buffer is determined by CC Mode (from the
-  variable <code>c-default-style</code>), the global values of style
-  variables now take precedence over the values specified by the
-  chosen style.  This is different from the old behavior: previously,
-  the style-specific settings would override the global settings.
-  This change makes it possible to do simple configuration in the
-  intuitive way with Customize or with <code>setq</code> lines in
-  one's <code>.emacs</code> file.
+  <p><li>New initialization procedure for the style system.
+
+  <p>When the initial style for a buffer is determined by CC Mode
+  (from the variable <code>c-default-style</code>), the global values
+  of style variables now take precedence over the values specified by
+  the chosen style.  This is different from the old behavior:
+  previously, the style-specific settings would override the global
+  settings.  This change makes it possible to do simple configuration
+  in the intuitive way with Customize or with <code>setq</code> lines
+  in one's <code>.emacs</code> file.
 
   <p>By default, the global value of every style variable is the new
   special symbol <code>set-from-style</code>, which causes the value
@@ -60,8 +61,10 @@ release.
   <ul>
 
     <p><li><code>c-offsets-alist</code> is now a customizable
-    variable.  This became possible as a result of the new
-    initialization behavior.
+    variable.
+
+    <p>This became possible as a result of the new initialization
+    behavior.
 
     <p>This variable is treated slightly differently from the other
     style variables; instead of using the symbol
@@ -71,34 +74,40 @@ release.
     to make all syntactic elements get their values from the style
     system.
 
-    <p><li>Compatibility variable to restore the old behavior.  In
-    case your configuration doesn't work with this change, you can set
-    <code>c-old-style-variable-behavior</code> to non-nil to get the
-    old behavior back as far as possible.
+    <p><li>Compatibility variable to restore the old behavior.
+
+    <p>In case your configuration doesn't work with this change, you
+    can set <code>c-old-style-variable-behavior</code> to non-nil to
+    get the old behavior back as far as possible.
 
   </ul>
 
-  <p><li>Improvements to line breaking and text filling.  CC Mode now
-  handles this more intelligently and seamlessly wrt the surrounding
-  code, especially inside comments.  For details see the new chapter
-  about this in the manual.
+  <p><li>Improvements to line breaking and text filling.
+
+  <p>CC Mode now handles this more intelligently and seamlessly wrt
+  the surrounding code, especially inside comments.  For details see
+  the new chapter about this in the manual.
 
   <ul>
 
     <p><li>New variable to recognize comment line prefix decorations.
-    The variable <code>c-comment-prefix-regexp</code> has been added
-    to properly recognize the line prefix in both block and line
+
+    <p>The variable <code>c-comment-prefix-regexp</code> has been
+    added to properly recognize the line prefix in both block and line
     comments.  It's primarily used to initialize the various paragraph
     recognition and adaptive filling variables that the text handling
     functions uses.
 
-    <p><li>New variable <code>c-block-comment-prefix</code>.  This is
-    a generalization of the now obsolete variable
+    <p><li>New variable <code>c-block-comment-prefix</code>.
+
+    <p>This is a generalization of the now obsolete variable
     <code>c-comment-continuation-stars</code> to handle arbitrary
     strings.
 
-    <p><li>CC Mode now uses adaptive fill mode.  This to make it adapt
-    better to the paragraph style inside comments.
+    <p><li>CC Mode now uses adaptive fill mode.
+
+    <p>This to make it adapt better to the paragraph style inside
+    comments.
 
     <p>It's also possible to use other adaptive filling packages
     inside CC Mode, notably Kyle E. Jones' Filladapt mode (<a
@@ -113,29 +122,33 @@ release.
     for that is available from the CC Mode web site.
 
     <p><li>It's now possible to selectively turn off auto filling.
-    The variable <code>c-ignore-auto-fill</code> is used to ignore
+
+    <p>The variable <code>c-ignore-auto-fill</code> is used to ignore
     auto fill mode in specific contexts, e.g. in preprocessor
     directives and in string literals.
 
     <p><li>New context sensitive line break function
-    <code>c-context-line-break</code>.  It works like
-    <code>newline-and-indent</code> in normal code, and adapts the
-    line prefix according to the comment style when used inside
-    comments.  If you're normally using
+    <code>c-context-line-break</code>.
+
+    <p>It works like <code>newline-and-indent</code> in normal code,
+    and adapts the line prefix according to the comment style when
+    used inside comments.  If you're normally using
     <code>newline-and-indent</code>, you might want to switch to this
     function.
 
   </ul>
 
-  <p><li>Fixes to IDL mode.  It now does a better job in recognizing
-  only the constructs relevant to IDL.  E.g. it no longer matches
-  <code>class</code> as the beginning of a struct block, but it does
-  match the CORBA 2.3 <code>valuetype</code> keyword.  Thanks to Eric
-  Eide.
+  <p><li>Fixes to IDL mode.
 
-  <p><li>Improvements to the Whitesmith style.  It now keeps the style
-  consistently on all levels and both when opening braces hangs and
-  when they don't.
+  <p>It now does a better job in recognizing only the constructs
+  relevant to IDL.  E.g. it no longer matches <code>class</code> as
+  the beginning of a struct block, but it does match the CORBA 2.3
+  <code>valuetype</code> keyword.  Thanks to Eric Eide.
+
+  <p><li>Improvements to the Whitesmith style.
+
+  <p>It now keeps the style consistently on all levels and both when
+  opening braces hangs and when they don't.
 
   <ul>
 
@@ -145,17 +158,23 @@ release.
   </ul>
 
   <p><li>New lineup functions <code>c-lineup-template-args</code> and
-  <code>c-indent-multi-line-block</code>.  See their docstrings for
-  details.  <code>c-lineup-template-args</code> does a better job of
-  tracking the brackets used as parens in C++ templates, and is used
-  by default to line up continued template arguments.
+  <code>c-indent-multi-line-block</code>.
+
+  <p>See their docstrings for details.
+  <code>c-lineup-template-args</code> does a better job of tracking
+  the brackets used as parens in C++ templates, and is used by default
+  to line up continued template arguments.
 
   <p><li><code>c-lineup-comment</code> now preserves alignment with a
-  comment on the previous line.  It used to instead preserve comments
-  that started in the column specified by <code>comment-column</code>.
+  comment on the previous line.
+
+  <p>It used to instead preserve comments that started in the column
+  specified by <code>comment-column</code>.
 
   <p><li><code>c-lineup-C-comments</code> handles "free form" text
-  comments.  In comments with a long delimiter line at the start, the
+  comments.
+
+  <p>In comments with a long delimiter line at the start, the
   indentation is kept unchanged for lines that start with an empty
   comment line prefix.  This is intended for the type of large block
   comments that contain documentation with its own formatting.  In
@@ -168,7 +187,8 @@ release.
   <p><li>All lineup functions have gotten docstrings.
 
   <p><li>More preprocessor directive movement functions.
-  <code>c-down-conditional</code> does the reverse of
+
+  <p><code>c-down-conditional</code> does the reverse of
   <code>c-up-conditional</code>.
   <code>c-up-conditional-with-else</code> and
   <code>c-down-conditional-with-else</code> are variants of these that

@@ -12,14 +12,18 @@ the list of <a href="changes-518.php">user visible changes for version
 <ul>
 
   <p><li><code>extern-lang-close</code> relative buffer positions have
-  changed.  The used to point to the extern's open brace, but they now
-  point to the first non-whitespace character on the line with the
-  open brace.
+  changed.
+
+  <p>The used to point to the extern's open brace, but they now point
+  to the first non-whitespace character on the line with the open
+  brace.
 
   <p><li><code>c-progress-interval</code>'s semantics have changed
-  slightly.  When set to <code>nil</code>, indentation proceeds
-  silently.  Previously, even when <code>nil</code>, the start and end
-  messages were printed.
+  slightly.
+
+  <p>When set to <code>nil</code>, indentation proceeds silently.
+  Previously, even when <code>nil</code>, the start and end messages
+  were printed.
 
   <p><li>The usual assortment of bug fixes.
 

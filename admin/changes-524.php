@@ -55,11 +55,13 @@ changes in that version:
   set to zero.
 
   <p><li>Uniform handling of the <code>inclass</code> syntactic
-  symbol.  The indentation associated with it is now always relative
-  to the class opening brace.  This means that the indentation
-  behavior has changed in some circumstances, but only if you've put
-  anything besides 0 on the <code>class-open</code> syntactic symbol
-  (none of the default styles do that).
+  symbol.
+
+  <p>The indentation associated with it is now always relative to the
+  class opening brace.  This means that the indentation behavior has
+  changed in some circumstances, but only if you've put anything
+  besides 0 on the <code>class-open</code> syntactic symbol (none of
+  the default styles do that).
 
   <p><li><code>c-enable-xemacs-performance-kludge-p</code> is set to
   nil by default, since for Emacs-friendly styles (i.e. where the
@@ -73,12 +75,16 @@ changes in that version:
 <ul>
 
   <p><li><code>c-default-style</code> can now take an association list
-  that maps major modes to style names.  When this variable is an
-  alist, Java mode no longer hardcodes a setting to <em>java</em>
-  style.  See the variable's docstring for details.
+  that maps major modes to style names.
+
+  <p>When this variable is an alist, Java mode no longer hardcodes a
+  setting to <em>java</em> style.  See the variable's docstring for
+  details.
 
   <p><li>It's now possible to put a list as the offset on a syntactic
-  symbol.  The list is evaluated recursively until a non-nil offset is
+  symbol.
+
+  <p>The list is evaluated recursively until a non-nil offset is
   found.  This is useful to combine several lineup functions to act in
   a prioritized order on a single line.  However, none of the supplied
   lineup functions use this feature currently.
@@ -93,14 +99,16 @@ changes in that version:
 
   <p><li>The braces of Java anonymous inner classes are treated
   separately from the braces of other classes in auto-newline mode.
-  Two new symbols <code>inexpr-class-open</code> and
+
+  <p>Two new symbols <code>inexpr-class-open</code> and
   <code>inexpr-class-close</code> may be used on
   <code>c-hanging-braces-alist</code> to control the automatic
   newlines used for anonymous classes.
 
   <p><li><a href="mailto:bug-cc-mode@gnu.org">bug-cc-mode@gnu.org</a>
-  is now the primary bug reporting address.  This is an alias for
-  cc-mode-help@lists.sourceforge.net.
+  is now the primary bug reporting address.
+
+  <p>This is an alias for cc-mode-help@lists.sourceforge.net.
 
 </ul>
 

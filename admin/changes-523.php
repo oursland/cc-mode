@@ -52,11 +52,13 @@ we're not making it public until we get some wider feedback.
   zero.
 
   <p><li>Uniform handling of the <code>inclass</code> syntactic
-  symbol.  The indentation associated with it is now always relative
-  to the class opening brace.  This means that the indentation
-  behavior has changed in some circumstances, but only if you've put
-  anything besides 0 on the <code>class-open</code> syntactic symbol
-  (none of the default styles do that).
+  symbol.
+
+  <p>The indentation associated with it is now always relative to the
+  class opening brace.  This means that the indentation behavior has
+  changed in some circumstances, but only if you've put anything
+  besides 0 on the <code>class-open</code> syntactic symbol (none of
+  the default styles do that).
 
   <p><li><code>c-enable-xemacs-performance-kludge-p</code> is set to
   <code>nil</code> by default, since for Emacs-friendly styles
