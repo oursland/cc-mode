@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.90 $
-;; Last Modified:   $Date: 1994-10-11 22:28:03 $
+;; Version:         $Revision: 4.91 $
+;; Last Modified:   $Date: 1994-10-12 15:14:58 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -101,7 +101,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-10-11 22:28:03 $|$Revision: 4.90 $|
+;; |$Date: 1994-10-12 15:14:58 $|$Revision: 4.91 $|
 
 ;;; Code:
 
@@ -971,7 +971,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.90 $
+cc-mode Revision: $Revision: 4.91 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1010,7 +1010,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.90 $
+cc-mode Revision: $Revision: 4.91 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1047,7 +1047,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.90 $
+cc-mode Revision: $Revision: 4.91 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2980,34 +2980,38 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (or
    ;; this will pick up enum lists
    (save-excursion
-     (goto-char containing-sexp)
-     (c-beginning-of-statement)
-     ;; c-b-o-s could have left us at point-min
-     (and (bobp)
-	  (c-forward-syntactic-ws))
-     (if (and (< (point) containing-sexp)
-	      (looking-at "\\(typedef[ \t]+\\)?enum[ \t\n]+")
-	      (save-excursion
-		(skip-chars-forward "^;(" containing-sexp)
-		(= (point) containing-sexp)))
-	 (point)))
+     (let ((safepos (c-most-enclosing-brace brace-state))
+	   (here (point)))
+       (goto-char containing-sexp)
+       (c-beginning-of-statement nil safepos)
+       ;; c-b-o-s could have left us at point-min
+       (and (bobp)
+	    (c-forward-syntactic-ws here))
+       (if (and (< (point) containing-sexp)
+		(looking-at "\\(typedef[ \t]+\\)?enum[ \t\n]+")
+		(save-excursion
+		  (skip-chars-forward "^;(" containing-sexp)
+		  (= (point) containing-sexp)))
+	   (point))))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
-     (let (bufpos)
+     (let (safepos bufpos)
        (while (and (not bufpos)
 		   containing-sexp)
 	 (if (consp containing-sexp)
 	     (setq containing-sexp (car brace-state)
 		   brace-state (cdr brace-state))
 	   (goto-char containing-sexp)
-	   (c-backward-syntactic-ws)
+	   ;; calculate scanning limit
+	   (setq safepos (c-most-enclosing-brace brace-state))
+	   (c-backward-syntactic-ws safepos)
 	   (if (/= (preceding-char) ?=)
 	       ;; lets see if we're nested. find the most nested
 	       ;; containing brace
 	       (setq containing-sexp (car brace-state)
 		     brace-state (cdr brace-state))
 	     ;; we've hit the beginning of the aggregate list
-	     (c-beginning-of-statement)
+	     (c-beginning-of-statement nil safepos)
 	     (setq bufpos (point)))
 	   ))
        bufpos))
@@ -4131,7 +4135,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.90 $"
+(defconst c-version "$Revision: 4.91 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
