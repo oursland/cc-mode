@@ -1174,6 +1174,17 @@ ACTION associated with `block-close' syntax."
 	  '(before)
 	'(before after)))))
 
+(defun c-snug-1line-defun-close (syntax pos)
+  "Determine the brace hanginess for an AWK defun-close.
+If the action/function being closed is a one-liner, keep it so.  Otherwise put
+the closing brace on its own line."
+  (save-excursion
+    (goto-char pos)
+    (if (> (c-point 'bol)
+	   (progn (up-list -1) (point)))
+	'(before after)
+      '(after))))
+
 (defun c-gnu-impose-minimum ()
   "Imposes a minimum indentation for lines inside code blocks.
 The variable `c-label-minimum-indentation' specifies the minimum

@@ -226,6 +226,22 @@
 			 (func-decl-cont . c-lineup-java-throws)
 			 ))
      )
+    ;; awk style exists primarily for auto-newline settings.  Otherwise it's
+    ;; pretty much like k&r.
+    ("awk"
+     (c-basic-offset . 4)
+     (c-comment-only-line-offset . 0)
+     (c-hanging-braces-alist . ((defun-open after)
+				(defun-close . c-snug-1line-defun-close)
+				(substatement-open after)
+				(block-close . c-snug-do-while)))
+     (c-hanging-semi&comma-criteria . nil)
+     (c-cleanup-list . nil)		; You might want one-liner-defun here.
+     (c-offsets-alist . ((statement-block-intro . +)
+			 (substatement-open . 0)
+			 (statement-cont . +)
+			 ))
+     )
     )
   "Styles of indentation.
 Elements of this alist are of the form:
@@ -613,7 +629,7 @@ CC Mode by making sure the proper entries are present on
   "Make all CC Mode style variables buffer local.
 If `this-buf-only-p' is non-nil, the style variables will be made
 buffer local only in the current buffer.  Otherwise they'll be made
-permanently buffer local in any buffer that change their values.
+permanently buffer local in any buffer that changes their values.
 
 The buffer localness of the style variables are normally controlled
 with the variable `c-style-variables-are-local-p', so there's seldom

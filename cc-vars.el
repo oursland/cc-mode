@@ -613,6 +613,11 @@ mode name:
  empty-defun-braces  -- Clean up empty defun braces by placing the
                         braces on the same line.  Clean up occurs when
 			the defun closing brace is typed.
+ one-liner-defun     -- Clean up AWK \"<pattern> { <line of code> }\"
+                        constructs by compacting it onto a single line.
+                        c-max-one-liner-length gives the maximum line
+                        length allowed.  Clean up occurs when the
+                        closing brace is typed.
  defun-close-semi    -- Clean up the terminating semi-colon on defuns
 			by placing the semi-colon on the same line as
 			the closing brace.  Clean up occurs when the
@@ -732,6 +737,12 @@ syntactic context for the brace line."
 	      composition-open composition-close
 	      inexpr-class-open inexpr-class-close)))
     :group 'c)
+
+(defcustom c-max-one-liner-length 80
+  "Maximum length of line that clean-up \"one-liner-defun\" will compact to.
+Zero or nil means no limit."
+  :type 'integer
+  :group 'c)
 
 (defcustom-c-stylevar c-hanging-colons-alist nil
   "*Controls the insertion of newlines before and after certain colons.
@@ -876,7 +887,8 @@ this variable to nil."
   :type 'integer
   :group 'c)
 
-(defcustom c-default-style '((java-mode . "java") (other . "gnu"))
+(defcustom c-default-style '((java-mode . "java") (awk-mode . "awk")
+			     (other . "gnu"))
   "*Style which gets installed by default when a file is visited.
 
 The value of this variable can be any style defined in

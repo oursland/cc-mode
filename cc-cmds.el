@@ -561,7 +561,48 @@ This function does various newline cleanups based on the value of
 		     (not (c-in-literal))))
 	      (delete-region (point) (1- here)))
 
-	  ;; clean up brace-else-brace and brace-elseif-brace
+	  ;; compact to a one-liner defun?  Mainly for AWK.
+	  (save-match-data
+	    (when
+		(c-save-buffer-state ()
+		  (and c-auto-newline
+		       (eq last-command-char ?\})
+		       (memq 'one-liner-defun c-cleanup-list)
+		       (c-intersect-lists '(defun-close) syntax)
+		       (save-excursion
+			 (save-restriction
+			   (backward-list) (forward-char)
+			   (narrow-to-region (point) (1- here))	; innards of {.}
+			   (and (looking-at
+				 (concat
+				  "\\(" ; (match-beginning 1)
+				  "[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
+				  "\\)" ; (match-end 1)
+				  "[^ \t\r\n]+\\([ \t]+[^ \t\r\n]+\\)*"	; non-WS
+				  "\\(" ; (match-beginning 4)
+				  "[ \t]*\\([\r\n][ \t]*\\)?" ; WS with opt. NL
+				  "\\)\\'")) ; (match-end 4) at EOB.
+				(or (null c-max-one-liner-length)
+				    (zerop c-max-one-liner-length)
+				    (< (- (point-max)
+					  (cadr (assq 'defun-close syntax)) ; AWK pattern
+					  (- (match-end 4) (match-beginning 4))
+					  (- (match-end 1) (match-beginning 1)))
+				       c-max-one-liner-length)))))))
+	      (backward-char)		; back over the }
+	      (let* ((reg1-beg (match-beginning 1)) (reg1-end (match-end 1))
+		     (reg4-beg (match-beginning 4)) (reg4-end (match-end 4))
+		     (comment-pos (save-excursion
+				    (and (c-backward-single-comment) (point)))))
+		(delete-region reg4-beg reg4-end)
+		(delete-region reg1-beg reg1-end)
+		(when comment-pos
+		  (delete-char 1)	; the '}' has blundered into a comment
+		  (goto-char (- comment-pos (- reg1-end reg1-beg)))
+		  (c-skip-ws-backward)
+		  (self-insert-command 1)))))
+
+	    ;; clean up brace-else-brace and brace-elseif-brace
 	  (when (and c-auto-newline
 		     (eq last-command-char ?\{))
 	    (cond
