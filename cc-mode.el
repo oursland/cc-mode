@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.37 $
-;; Last Modified:   $Date: 1994-07-22 14:28:54 $
+;; Version:         $Revision: 4.38 $
+;; Last Modified:   $Date: 1994-07-22 18:14:28 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-07-22 14:28:54 $|$Revision: 4.37 $|
+;; |$Date: 1994-07-22 18:14:28 $|$Revision: 4.38 $|
 
 ;;; Code:
 
@@ -897,7 +897,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.37 $
+cc-mode Revision: $Revision: 4.38 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -932,7 +932,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.37 $
+cc-mode Revision: $Revision: 4.38 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -966,7 +966,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.37 $
+cc-mode Revision: $Revision: 4.38 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1433,9 +1433,11 @@ is inhibited."
   (if (and (not arg)
 	   (memq (c-in-literal) '(c))
 	   (= (preceding-char) ?*)
-	   (= (char-after (- (point) 2)) ?/)
 	   (save-excursion
-	     (forward-char -2)
+	     (forward-char -1)
+	     (skip-chars-backward "*")
+	     (if (= (preceding-char) ?/)
+		 (forward-char -1))
 	     (skip-chars-backward " \t")
 	     (bolp)))
       ;; shut this up
@@ -3826,7 +3828,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.37 $"
+(defconst c-version "$Revision: 4.38 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
