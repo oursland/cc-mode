@@ -1762,6 +1762,11 @@ This function does not do any hidden buffer changes."
 ;; change of narrowing is likely to affect the parens that are visible
 ;; before the point.
 
+(defvar c-state-cache-end 1)
+(make-variable-buffer-local 'c-state-cache-end)
+;; This is the last position at which the complete `c-state-cache' is
+;; known to be correct.
+
 (defsubst c-invalidate-state-cache (pos)
   ;; Invalidate all info on `c-state-cache' that applies to the buffer
   ;; at POS or higher.  This is much like `c-whack-state-after', but
@@ -1770,13 +1775,20 @@ This function does not do any hidden buffer changes."
   ;; required preceding paren pair element.
   ;;
   ;; This function does not do any hidden buffer changes.
-  (while (and c-state-cache
-	      (let ((elem (car c-state-cache)))
-		(if (consp elem)
-		    (or (<= pos (car elem))
-			(< pos (cdr elem)))
-		  (<= pos elem))))
-    (setq c-state-cache (cdr c-state-cache))))
+  (when (< pos c-state-cache-end)
+    (setq c-state-cache-end 1)
+    (while (and c-state-cache
+		(let ((elem (car c-state-cache)))
+		  (if (consp elem)
+		      (if (< pos (cdr elem))
+			  t
+			(setq c-state-cache-end (cdr elem))
+			nil)
+		    (if (<= pos elem)
+			t
+		      (setq c-state-cache-end (1+ elem))
+		      nil))))
+      (setq c-state-cache (cdr c-state-cache)))))
 
 (defun c-get-fallback-start-pos (here)
   ;; Return the start position for building `c-state-cache' from
@@ -1804,9 +1816,9 @@ This function does not do any hidden buffer changes."
   ;; the point.  If an element is a cons, it gives the position of a
   ;; closed brace paren pair; the car is the start paren position and
   ;; the cdr is the position following the closing paren.  Only the
-  ;; last closed brace paren pair before each open paren is recorded,
-  ;; and thus the state never contains two cons elements in
-  ;; succession.
+  ;; last closed brace paren pair before each open paren and before
+  ;; the point is recorded, and thus the state never contains two cons
+  ;; elements in succession.
   ;;
   ;; Currently no characters which are given paren syntax with the
   ;; syntax-table property are recorded, i.e. angle bracket arglist
@@ -1844,14 +1856,11 @@ This function does not do any hidden buffer changes."
 
       ;; Get the latest position we know are directly inside the
       ;; closest containing paren of the cached state.
-      (setq last-pos (and c-state-cache
-			  (if (consp (car c-state-cache))
-			      (cdr (car c-state-cache))
-			    (1+ (car c-state-cache)))))
+      (setq last-pos c-state-cache-end)
 
-      ;; Check if the found last-pos is in a macro.  If it is, and
-      ;; we're not in the same macro, we must discard everything on
-      ;; c-state-cache that is inside the macro before using it.
+      ;; Check if last-pos is in a macro.  If it is, and we're not in
+      ;; the same macro, we must discard everything on c-state-cache
+      ;; that is inside the macro before using it.
       (when last-pos
 	(save-excursion
 	  (goto-char last-pos)
@@ -2000,6 +2009,7 @@ This function does not do any hidden buffer changes."
 						 (c-point 'bol last-pos)))))))
 	    (setq pos nil))))
 
+      (setq c-state-cache-end here)
       c-state-cache)))
 
 ;; Debug tool to catch cache inconsistencies.
@@ -2009,7 +2019,9 @@ This function does not do any hidden buffer changes."
 (cc-bytecomp-defun c-real-parse-state)
 (defun c-debug-parse-state ()
   (let ((res1 (c-real-parse-state)) res2)
-    (let ((c-state-cache nil))
+    (let ((c-state-cache nil)
+	  (c-state-cache-start 1)
+	  (c-state-cache-end 1))
       (setq res2 (c-real-parse-state)))
     (unless (equal res1 res2)
       (error "c-parse-state inconsistency: using cache: %s, from scratch: %s"
@@ -2022,6 +2034,8 @@ This function does not do any hidden buffer changes."
 					    'c-debug-parse-state
 					  'c-real-parse-state)))
   (c-keep-region-active))
+(when c-debug-parse-state
+  (c-toggle-parse-state-debug 1))
 
 (defun c-whack-state-before (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies
@@ -5594,6 +5608,7 @@ This function does not do any hidden buffer changes."
 			      (c-whack-state-before (point-min) paren-state)
 			    paren-state))
 	   (c-state-cache-start (point-min))
+	   (c-state-cache-end c-state-cache-end)
 	   inenclosing-p macro-start in-macro-expr
 	   ;; There's always at most one syntactic element which got
 	   ;; a relpos.  It's stored in syntactic-relpos.
