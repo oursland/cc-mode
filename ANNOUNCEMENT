@@ -1,7 +1,6 @@
 Release Announcement
 CC Mode Version 5.31
-Martin Stjernholm
-Alan Mackenzie (AWK support)
+Martin Stjernholm, Alan Mackenzie
 
 This message announces the availability of a new version of CC Mode,
 an Emacs and XEmacs mode for editing C (ANSI and K&R), C++,

@@ -8,11 +8,11 @@ languages with similar syntax; currently C++, Objective-C, Java,
 CORBA's IDL, Pike, and AWK. It's a standard package in both Emacs and
 XEmacs.</strong>
 
-<p>CC Mode is brought to you by Martin Stjernholm, the current CC Mode
-maintainer.  Several people before him have helped make CC Mode what
-it is today, notably Barry Warsaw who took over of BOCM (Boring Old C
-Mode) back in 1992 and revamped it to CC Mode.  The AWK support is
-written and maintained by Alan Mackenzie.
+<p>CC Mode is maintained by Martin Stjernholm and Alan Mackenzie, with
+numerous contributions from other people. Several people before them
+have helped make CC Mode what it is today, notably Barry Warsaw who
+took over of BOCM (Boring Old C Mode) back in 1992 and revamped it to
+CC Mode.
 
 <p>The current release available for <a
 href="release.php">download</a> is 5.30.9.  There is a detailed list
