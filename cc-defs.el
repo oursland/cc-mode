@@ -58,6 +58,7 @@
 (cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
 (cc-bytecomp-defvar zmacs-regions)	; XEmacs
 (cc-bytecomp-defvar mark-active)	; Emacs
+(cc-bytecomp-defun scan-lists)		; 5 args in XEmacs, 3 in Emacs
 (require 'derived)			; Only necessary in Emacs
 
 
