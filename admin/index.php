@@ -5,7 +5,7 @@
 
 <p><strong>CC Mode is an Emacs and XEmacs mode for editing C and other
 languages with similar syntax; currently C++, Objective-C, Java,
-CORBA's IDL, and Pike. It's a standard package in both FSF Emacs and
+CORBA's IDL, and Pike. It's a standard package in both Emacs and
 XEmacs.</strong>
 
 <p>CC Mode is brought to you by Martin Stjernholm, the current CC Mode
