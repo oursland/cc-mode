@@ -25,16 +25,17 @@
 ;; Boston, MA 02111-1307, USA.
 
 (defconst cc-path-to-the-custom-library
-      ;; In Emacs 19.34, change the following line to the directory
-      ;; that contains Per Abrahamsen's new Custom library, which you
-      ;; must download first.  You can get Custom from:
-      ;;
-      ;; <http://www.dina.kvl.dk/~abraham/custom/>
-      ;;
-      ;; See CC Mode's README file for details (also available at
-      ;; <ftp://ftp.python.org/pub/emacs/cc-mode/README>)
-      nil
-      )
+  ;; In Emacs 19.34, change the following line to the directory that
+  ;; contains Per Abrahamsen's new Custom library, which you must
+  ;; download first.  You can get Custom from:
+  ;;
+  ;; http://www.dina.kvl.dk/~abraham/custom/
+  ;;
+  ;; See the CC Mode homepage for installation details:
+  ;;
+  ;; http://www.python.org/emacs/cc-mode/
+  nil
+  )
 
 (if cc-path-to-the-custom-library
     (setq load-path (cons cc-path-to-the-custom-library load-path)))
