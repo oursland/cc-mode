@@ -47,6 +47,6 @@
 ((arglist-cont-nonempty 397 416) (block-close 397))
 ((arglist-cont-nonempty 397 416))
 ((topmost-intro 433))
-((arglist-cont-nonempty 441 460) (defun-block-intro 441))
-((arglist-cont-nonempty 441 460) (defun-close 441))
+((arglist-cont-nonempty 441 460) (statement-block-intro 441))
+((arglist-cont-nonempty 441 460) (block-close 441))
 ((arglist-cont-nonempty 441 460))
