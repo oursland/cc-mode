@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.58 $
+@comment manual version: $Revision: 2.59 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-12-23 21:33:55 $
+@comment Last modification: $Date: 1997-01-06 23:03:21 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.58 $)
+@center (manual revision: $Revision: 2.59 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1696,6 +1696,17 @@ Whitesmiths C, an early commercial C compiler.
 ``Programming in C++, Rules and Recommendations'', Erik Nyquist and Mats
 Henricson, Ellemtel @footnote{This document is ftp'able from
 @code{euagate.eua.ericsson.se}}.
+
+@item
+@cindex Linux style
+@code{linux} --- C coding standard for Linux development.
+
+@item
+@cindex Python style
+@code{python} --- C coding standard for Python extension
+modules@footnote{Python is a high level scripting language with a C/C++
+foreign function interface.  For more information, see
+@code{<http://www.python.org/>}.}.
 
 @item
 @cindex Java style
