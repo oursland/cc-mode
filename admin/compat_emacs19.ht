@@ -4,9 +4,17 @@ Links: links.h compatlinks.h
 
 <h2>Emacs 19 Compatibility</h2>
 
-    <p> To use CC Mode 5 with Emacs 19.34, you will need to load the
-    file <code>cc-mode-19.el</code> <em>before</em> you load any of
-    the other CC Mode files.  CC Mode <em>should</em> do this
+    <p>First of all, I <em>highly</em> recommend that you upgrade to
+    Emacs 20.3 or XEmacs 20.4 or later, if at all possible.  Both of
+    the latest releases of either flavor are very stable and much
+    better than Emacs 19.34.  Windows versions of both flavors should
+    also be available, if you look around a bit.  It's getting harder
+    for us to guarantee CC Mode compatibility with Emacs 19.34, so it
+    would be better if you do upgrade your Emacs.
+
+    <p>If you must use CC Mode 5 with Emacs 19.34, you will need to
+    load the file <code>cc-mode-19.el</code> <em>before</em> you load
+    any of the other CC Mode files.  CC Mode <em>should</em> do this
     automatically.
 
     <p>You will also need to download and
