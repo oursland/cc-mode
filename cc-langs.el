@@ -1799,6 +1799,12 @@ identifiers that follows the type in a normal declaration."
   t (c-make-keywords-re t (c-lang-const c-block-stmt-2-kwds)))
 (c-lang-defvar c-block-stmt-2-key (c-lang-const c-block-stmt-2-key))
 
+(c-lang-defconst c-block-stmt-kwds
+  ;; Union of `c-block-stmt-1-kwds' and `c-block-stmt-2-kwds'.
+  t (delete-duplicates (append (c-lang-const c-block-stmt-1-kwds)
+			       (c-lang-const c-block-stmt-2-kwds))
+		       :test 'string-equal))
+
 (c-lang-defconst c-opt-block-stmt-key
   ;; Regexp matching the start of any statement that has a
   ;; substatement (except a bare block).  Nil in languages that
@@ -1900,13 +1906,6 @@ expressions."
   t    nil
   pike '("lambda"))
 
-(c-lang-defconst c-opt-lambda-key
-  ;; Adorned regexp matching the start of lambda constructs, or nil in
-  ;; languages that don't have such things.
-  t (and (c-lang-const c-lambda-kwds)
-	 (c-make-keywords-re t (c-lang-const c-lambda-kwds))))
-(c-lang-defvar c-opt-lambda-key (c-lang-const c-opt-lambda-key))
-
 (c-lang-defconst c-inexpr-block-kwds
   "Keywords that start constructs followed by statement blocks which can
 be used in expressions \(the gcc extension for this in C and C++ is
@@ -1914,25 +1913,11 @@ handled separately by `c-recognize-paren-inexpr-blocks')."
   t    nil
   pike '("catch" "gauge"))
 
-(c-lang-defconst c-opt-inexpr-block-key
-  ;; Regexp matching the start of in-expression statements, or nil in
-  ;; languages that don't have such things.
-  t    nil
-  pike (c-make-keywords-re t (c-lang-const c-inexpr-block-kwds)))
-(c-lang-defvar c-opt-inexpr-block-key (c-lang-const c-opt-inexpr-block-key))
-
 (c-lang-defconst c-inexpr-class-kwds
   "Keywords that can start classes inside expressions."
   t    nil
   java '("new")
   pike '("class"))
-
-(c-lang-defconst c-opt-inexpr-class-key
-  ;; Regexp matching the start of a class in an expression, or nil in
-  ;; languages that don't have such things.
-  t (and (c-lang-const c-inexpr-class-kwds)
-	 (c-make-keywords-re t (c-lang-const c-inexpr-class-kwds))))
-(c-lang-defvar c-opt-inexpr-class-key (c-lang-const c-opt-inexpr-class-key))
 
 (c-lang-defconst c-inexpr-brace-list-kwds
   "Keywords that can start brace list blocks inside expressions.

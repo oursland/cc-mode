@@ -6595,59 +6595,63 @@ comment at the start of cc-engine.el for more info."
   ;; back.
   ;;
   ;; This function might do hidden buffer changes.
+
   (save-excursion
     (let ((res 'maybe) passed-bracket
 	  (closest-lim (or containing-sexp lim (point-min)))
 	  ;; Look at the character after point only as a last resort
 	  ;; when we can't disambiguate.
 	  (block-follows (and (eq (char-after) ?{) (point))))
+
       (while (and (eq res 'maybe)
 		  (progn (c-backward-syntactic-ws)
 			 (> (point) closest-lim))
 		  (not (bobp))
 		  (progn (backward-char)
 			 (looking-at "[\]\).]\\|\\w\\|\\s_"))
-		  (progn (forward-char)
-			 (goto-char (scan-sexps (point) -1))))
+		  (c-safe (forward-char)
+			  (goto-char (scan-sexps (point) -1))))
+
 	(setq res
-	      (cond
-	       ((and block-follows
-		     c-opt-inexpr-class-key
-		     (looking-at c-opt-inexpr-class-key))
-		(and (not passed-bracket)
-		     (or (not (looking-at c-class-key))
-			 ;; If the class definition is at the start of
-			 ;; a statement, we don't consider it an
-			 ;; in-expression class.
-			 (let ((prev (point)))
-			   (while (and
-				   (= (c-backward-token-2 1 nil closest-lim) 0)
-				   (eq (char-syntax (char-after)) ?w))
-			     (setq prev (point)))
-			   (goto-char prev)
-			   (not (c-looking-at-bos)))
-			 ;; Also, in Pike we treat it as an
-			 ;; in-expression class if it's used in an
-			 ;; object clone expression.
-			 (save-excursion
-			   (and (c-major-mode-is 'pike-mode)
-				(progn (goto-char block-follows)
-				       (zerop (c-forward-token-2 1 t)))
-				(eq (char-after) ?\())))
-		     (cons 'inexpr-class (point))))
-	       ((and c-opt-inexpr-block-key
-		     (looking-at c-opt-inexpr-block-key))
-		(cons 'inexpr-statement (point)))
-	       ((and c-opt-lambda-key
-		     (looking-at c-opt-lambda-key))
-		(cons 'inlambda (point)))
-	       ((and c-opt-block-stmt-key
-		     (looking-at c-opt-block-stmt-key))
-		nil)
-	       (t
-		(if (eq (char-after) ?\[)
-		    (setq passed-bracket t))
-		'maybe))))
+	      (if (looking-at c-keywords-regexp)
+		  (let ((kw-sym (c-keyword-sym (match-string 1))))
+		    (cond
+		     ((and block-follows
+			   (c-keyword-member kw-sym 'c-inexpr-class-kwds))
+		      (and (not passed-bracket)
+			   (or (not (looking-at c-class-key))
+			       ;; If the class definition is at the start of
+			       ;; a statement, we don't consider it an
+			       ;; in-expression class.
+			       (let ((prev (point)))
+				 (while (and
+					 (= (c-backward-token-2 1 nil closest-lim) 0)
+					 (eq (char-syntax (char-after)) ?w))
+				   (setq prev (point)))
+				 (goto-char prev)
+				 (not (c-looking-at-bos)))
+			       ;; Also, in Pike we treat it as an
+			       ;; in-expression class if it's used in an
+			       ;; object clone expression.
+			       (save-excursion
+				 (and (c-major-mode-is 'pike-mode)
+				      (progn (goto-char block-follows)
+					     (zerop (c-forward-token-2 1 t)))
+				      (eq (char-after) ?\())))
+			   (cons 'inexpr-class (point))))
+		     ((c-keyword-member kw-sym 'c-inexpr-block-kwds)
+		      (cons 'inexpr-statement (point)))
+		     ((c-keyword-member kw-sym 'c-lambda-kwds)
+		      (cons 'inlambda (point)))
+		     ((c-keyword-member kw-sym 'c-block-stmt-kwds)
+		      nil)
+		     (t
+		      'maybe)))
+
+		(when (eq (char-after) ?\[)
+		  (setq passed-bracket t))
+		'maybe)))
+
       (if (eq res 'maybe)
 	  (when (and c-recognize-paren-inexpr-blocks
 		     block-follows
@@ -6662,6 +6666,7 @@ comment at the start of cc-engine.el for more info."
 			 (c-looking-at-special-brace-list)))
 		nil
 	      (cons 'inexpr-statement (point))))
+
 	res))))
 
 (defun c-looking-at-inexpr-block-backward (paren-state)
@@ -7367,12 +7372,9 @@ comment at the start of cc-engine.el for more info."
 
 	 ;; CASE 4: In-expression statement.  C.f. cases 7B, 16A and
 	 ;; 17E.
-	 ((and (or c-opt-inexpr-class-key
-		   c-opt-inexpr-block-key
-		   c-opt-lambda-key)
-	       (setq placeholder (c-looking-at-inexpr-block
-				  (c-safe-position containing-sexp paren-state)
-				  containing-sexp)))
+	 ((setq placeholder (c-looking-at-inexpr-block
+			     (c-safe-position containing-sexp paren-state)
+			     containing-sexp))
 	  (setq tmpsymbol (assq (car placeholder)
 				'((inexpr-class . class-open)
 				  (inexpr-statement . block-open))))
