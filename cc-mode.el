@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-10 17:10:19 $
-;; Version:         $Revision: 2.146 $
+;; Last Modified:   $Date: 1992-07-10 19:34:05 $
+;; Version:         $Revision: 2.147 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -19,12 +19,42 @@
 ;; the command c++-submit-bug-report and automatically sets up the
 ;; mail buffer with all the necessary information.
 ;;
+;; Notes for Novice Emacs Users
+;; ============================
+;; c++-mode facilitates editing of C++ code by automatically handling
+;; the indentation of lines of code in a manner very similar to c-mode
+;; as distributed with GNU emacs. Refer to the GNU Emacs manual,
+;; chapter 21 for more information on "Editing Programs".
+;;
+;; To use c++-mode you need to do two things: get this file loaded
+;; into your emacs sessions at the right time; and tell emacs what
+;; type of files are C++ files.  To the the former, add the following
+;; line to your .emacs file:
+;; (autoload 'c++-mode "c++-mode" "C++ Editing Mode" t)
+;; 
+;; To do the latter, set up your auto-mode-alist file to recognize C++
+;; file extensions. For example, if you use .C and .cc as C++ source
+;; code files, add this to your .emacs file:
+;; (setq auto-mode-alist
+;;   (append '(("\\.C$"  . c++-mode)
+;;             ("\\.cc$" . c++-mode))
+;;           auto-mode-alist))
+;;
+;; This retains the original value of auto-mode-alist.  Finally, you
+;; may want to customize certain c++-mode variables.  The best place
+;; to do this is in the mode hook variable called c++-mode-hook.
+;; Again, see the Emacs manual, chapter 21 for more information.
+;;
+;; Beta Testers Mailing List
+;; =========================
 ;; Want to be a c++-mode victim, er, beta-tester?  Send add/drop
 ;; requests to c++-mode-victims-request@anthem.nlm.nih.gov.
 ;; Discussions go to c++-mode-victims@anthem.nlm.nih.gov, but bug
 ;; reports and such should still be sent to c++-mode-help only.
 ;;
-;; The latest release (non-beta) version of this file should always be
+;; Getting c++-mode.el
+;; ===================
+;; The latest public release version of this file should always be
 ;; available for anon-ftp on ftp.cme.nist.gov:pub/gnu/c++-mode.el. It
 ;; will also most likely be available on the elisp archive machine:
 ;; archive.cis.ohio-state.edu.
@@ -40,10 +70,11 @@
 ;; releases, get on the victims list -- but be forewarned, you should
 ;; be elisp-fluent to be a beta tester.
 ;;
-;; LCD Archive Entry:
+;; LCD Archive Entry
+;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-10 17:10:19 $|$Revision: 2.146 $|
+;; |$Date: 1992-07-10 19:34:05 $|$Revision: 2.147 $|
 
 
 ;; ======================================================================
@@ -251,7 +282,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.146 $
+  "Major mode for editing C++ code.  $Revision: 2.147 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1443,16 +1474,11 @@ BOD is the beginning of the C++ definition."
 				      ;; looking at a blank line, indent
 				      ;; next line to zero
 				      0
-				    ;; are we looking at a member init
-				    ;; continuation line?
-				    (if (save-excursion
-					  (end-of-line)
-					  (c++-backward-over-syntactic-ws)
-					  (= (preceding-char) ?,))
-					(current-indentation)
-				      (- (current-indentation)
-					 c++-class-member-indent)
-				      ))))))))
+				    ;; subtract inclass-shift since
+				    ;; its already incorporated by
+				    ;; defaultin current-indentation
+				    (- (current-indentation) inclass-shift)
+				    )))))))
 		      ))))))
 	    ((/= (char-after containing-sexp) ?{)
 	     ;; line is expression, not statement:
@@ -1949,7 +1975,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.146 $"
+(defconst c++-version "$Revision: 2.147 $"
   "c++-mode version number.")
 
 (defun c++-version ()
