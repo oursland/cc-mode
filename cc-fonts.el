@@ -452,13 +452,23 @@ tools (e.g. Javadoc).")
 
   all `(;; Fontify keyword constants.
 	,@(when (c-lang-var c-constant-kwds)
-	    `((,(concat "\\<\\(" (c-make-keywords-re nil
-				   (c-lang-var c-constant-kwds)) "\\)\\>")
-	       0 font-lock-constant-face)))
+	    (let ((re (c-make-keywords-re nil (c-lang-var c-constant-kwds))))
+	      (if (c-major-mode-is 'pike-mode)
+		  ;; No symbol is a keyword after "->" in Pike.
+		  `((,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
+			      "\\<\\(" re "\\)\\>")
+		     3 font-lock-constant-face))
+		`((,(concat "\\<\\(" re "\\)\\>")
+		   1 font-lock-constant-face)))))
 
 	;; Fontify all keywords except the primitive types.
-	(,(concat "\\<" (c-lang-var c-nontype-keywords-regexp))
-	 1 font-lock-keyword-face)
+	,(if (c-major-mode-is 'pike-mode)
+	     ;; No symbol is a keyword after "->" in Pike.
+	     `(,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
+			"\\<" (c-lang-var c-regular-keywords-regexp))
+	       3 font-lock-keyword-face)
+	   `(,(concat "\\<" (c-lang-var c-regular-keywords-regexp))
+	     1 font-lock-keyword-face))
 
 	;; Fontify leading identifiers in fully qualified names like
 	;; "foo::bar" in languages that supports such things.
@@ -1439,10 +1449,14 @@ tools (e.g. Javadoc).")
 	;; identifier.
 
 	;; Fontify basic types.
-	(,(concat "\\<\\("
-		  (c-make-keywords-re nil (c-lang-var c-type-kwds))
-		  "\\)\\>")
-	 1 'font-lock-type-face)
+	,(let ((re (c-make-keywords-re nil (c-lang-var c-type-kwds))))
+	   (if (c-major-mode-is 'pike-mode)
+	       ;; No symbol is a keyword after "->" in Pike.
+	       `(,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
+			  "\\<\\(" re "\\)\\>")
+		 3 font-lock-keyword-face)
+	     `(,(concat "\\<\\(" re "\\)\\>")
+	       1 'font-lock-type-face)))
 
 	;; Fontify types preceded by `c-type-prefix-kwds'.
 	,@(when (c-lang-var c-type-prefix-kwds)
