@@ -540,7 +540,7 @@
 			   ;; up-list here since it might be slow.)
 			   (save-excursion
 			     (c-backward-syntactic-ws)
-			     (/= (char-before) ?\()))
+			     (not (eq (char-before) ?\())))
 			  (setq cnt (1- cnt)))
 		      (if (bobp)
 			  (setq at-bob t))))
