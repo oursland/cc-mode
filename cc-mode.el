@@ -80,6 +80,15 @@
 ;;; Code:
 
 
+(defvar c-buffer-is-cc-mode nil
+  "Non-nil for all buffers with a `major-mode' derived from CC Mode.
+Otherwise, this variable is nil. I.e. this variable is non-nil for
+`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode',
+`pike-mode', and any other non-CC Mode mode that calls
+`c-initialize-cc-mode' (e.g. `awk-mode').")
+(make-variable-buffer-local 'c-buffer-is-cc-mode)
+(put 'c-buffer-is-cc-mode 'permanent-local t)
+
 (eval-and-compile
   (require 'cc-defs))
 (require 'cc-menus)
@@ -89,15 +98,6 @@
 (require 'cc-align)
 (require 'cc-styles)
 (require 'cc-cmds)
-
-(defvar c-buffer-is-cc-mode nil
-  "Non-nil for all buffers with a `major-mode' derived from CC Mode.
-Otherwise, this variable is nil. I.e. this variable is non-nil for
-`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode',
-`pike-mode', and any other non-CC Mode mode that calls
-`c-initialize-cc-mode' (e.g. `awk-mode').")
-(make-variable-buffer-local 'c-buffer-is-cc-mode)
-(put 'c-buffer-is-cc-mode 'permanent-local t)
 
 
 
