@@ -129,7 +129,7 @@ other packages for that.
 * Commands::
 * Customizing Indentation::
 * Syntactic Symbols::
-* Indentation Functions::
+* Line-Up Functions::
 * AWK Mode::
 * Odds and Ends::
 * Performance Issues::
@@ -195,7 +195,7 @@ Styles
 
 Advanced Customizations
 
-* Custom Indentation Functions::
+* Custom Line-Up Functions::
 * Custom Brace and Colon Hanging::
 * Customizing Semicolons and Commas::
 * Other Special Indentations::
@@ -347,26 +347,28 @@ the indentation associated variables, e.g. @code{c-special-indent-hook}.
 @cindex syntactic analysis
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@cindex relative buffer position
-@cindex syntactic symbols
-@cindex syntactic component
-@cindex syntactic component list
+@cindex syntactic element
+@cindex syntactic context
 The first thing @ccmode{} does when indenting a line of code, is to
-analyze the line, determining the @dfn{syntactic component list} of the
-construct on that line.  A syntactic component consists of a pair of
-elements (in lisp parlance, a @emph{cons cell}), the first being
-a @dfn{syntactic symbol}, the second being a @dfn{relative
-buffer position}.  Syntactic symbols describe elements of C code
-@footnote{Unless otherwise noted, the term ``C code'' refers to all
-the C-like languages.}, e.g. @code{statement}, @code{substatement},
-@code{class-open}, @code{class-close}, etc.  @xref{Syntactic Symbols},
-for a complete list of currently recognized syntactic symbols and their
-semantics.  The style variable @code{c-offsets-alist} also contains the
-list of currently supported syntactic symbols.
+analyze the line, determining the @dfn{syntactic context} of the
+construct on that line.  It's a list of @dfn{syntactic elements}, where
+each syntactic element in turn is a list.
 
-Conceptually, a line of C code is always indented relative to the
-indentation of some line higher up in the buffer.  This is represented
-by the relative buffer position in the syntactic component.
+@cindex syntactic symbol
+The first entry inside a syntactic element is always a @dfn{syntactic
+symbol}.  It describes the kind of construct that was recognized,
+e.g. @code{statement}, @code{substatement}, @code{class-open},
+@code{class-close}, etc.  @xref{Syntactic Symbols}, for a complete list
+of currently recognized syntactic symbols and their semantics.  The
+remaining entries are various data associated with the recognized
+construct - there might be zero or more.
+
+@cindex anchor position
+Conceptually, a line of code is always indented relative to some
+position higher up in the buffer (typically the indentation of the
+previous line).  That position is the @dfn{anchor position} in the
+syntactic element.  If there is an entry after the syntactic symbol in
+the syntactic element list then it's either nil or that anchor position.
 
 Here is an example.  Suppose we had the following code as the only thing
 in a C++ buffer @footnote{The line numbers in this and future examples
@@ -438,10 +440,9 @@ conditional statement, such as @code{if}, @code{else}, @code{while},
 block} is a brace block following one of these conditional statements.}
 
 @cindex comment-only line
-Syntactic component lists can contain more than one component, and
-individual syntactic components need not have relative buffer positions.
-The most common example of this is a line that contains a @dfn{comment
-only line}.
+Syntactic contexts can contain more than one element, and syntactic
+elements need not have anchor positions.  The most common example of
+this is a @dfn{comment-only line}:
 
 @example
  1: void draw_list( List<Drawables>& drawables )
@@ -462,9 +463,9 @@ Hitting @kbd{C-c C-s} on line 3 of this example gives:
 @end example
 
 @noindent
-and you can see that the syntactic component list contains two syntactic
-components.  Also notice that the first component,
-@samp{(comment-intro)} has no relative buffer position.
+and you can see that the syntactic context contains two syntactic
+elements.  Notice that the first element, @samp{(comment-intro)}, has no
+anchor position.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -474,20 +475,19 @@ components.  Also notice that the first component,
 @cindex indentation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Indentation for a line is calculated using the syntactic
-component list derived in step 1 above (@pxref{Syntactic Analysis}).
-Each component contributes to the final total indentation of the line in
-two ways.
+Indentation for a line is calculated from the syntactic context
+(@pxref{Syntactic Analysis}).
 
-First, the syntactic symbols are looked up in the @code{c-offsets-alist}
-style variable, which is an association list of syntactic symbols and
-the offsets to apply for those symbols.  These offsets are added to a
-running total.
+First, a buffer position is found whose column will be the base for the
+indentation calculation.  It's the anchor position in the first
+syntactic element that provides one that is used.  If no syntactic
+element has an anchor position then column zero is used.
 
-Second, if the component has a relative buffer position, @ccmode{}
-adds the column number of that position to the running total.  By adding
-up the offsets and columns for every syntactic component on the list,
-the final total indentation for the current line is computed.
+Second, the syntactic symbols in each syntactic element are looked up in
+the @code{c-offsets-alist} style variable, which is an association list
+of syntactic symbols and the offsets to apply for those symbols.  These
+offsets are added together with the base column to produce the new
+indentation column.
 
 Let's use our two code examples above to see how this works.  Here is
 our first example again:
@@ -502,25 +502,25 @@ our first example again:
 @end example
 
 Let's say point is on line 3 and we hit the @kbd{TAB} key to reindent
-the line.  Remember that the syntactic component list for that
-line is:
+the line.  The syntactic context for that line is:
 
 @example
 ((defun-block-intro 29))
 @end example
 
 @noindent
-@ccmode{} looks up @code{defun-block-intro} in the
-@code{c-offsets-alist} style variable.  Let's say it finds the value
-@samp{4}; it adds this to the running total (initialized to zero),
-yielding a running total indentation of 4 spaces.
+Since buffer position 29 is the first and only anchor position in the
+list, @ccmode{} goes there and asks for the current column.  This brace
+is in column zero, so @ccmode{} uses @samp{0} as the base column.
 
-Next @ccmode{} goes to buffer position 29 and asks for the current
-column.  This brace is in column zero, so @ccmode{}
-adds @samp{0} to the running total.  Since there is only one syntactic
-component on the list for this line, indentation calculation is
-complete, and the total indentation for the line
-is 4 spaces.
+Next, @ccmode{} looks up @code{defun-block-intro} in the
+@code{c-offsets-alist} style variable.  Let's say it finds the value
+@samp{4}; it adds this to the base column @samp{0}, yielding a running
+total indentation of 4 spaces.
+
+Since there is only one syntactic element on the list for this line,
+indentation calculation is complete, and the total indentation for the
+line is 4 spaces.
 
 Here's another example:
 
@@ -537,30 +537,33 @@ Here's another example:
 
 If we were to hit @kbd{TAB} on line 4 in the above example, the same
 basic process is performed, despite the differences in the syntactic
-component list.  Remember that the list for this line is:
+context.  The context for this line is:
 
 @example
 ((substatement-open 46))
 @end example
 
-Here, @ccmode{} first looks up the @code{substatement-open} symbol
-in @code{c-offsets-alist}. Let's say it finds the value @samp{4}.  This
-yields a running total of 4.  @ccmode{} then goes to
-buffer position 46, which is the @samp{i} in @code{if} on line 3.  This
-character is in the fourth column on that line so adding this to the
-running total yields an indentation for the line of 8 spaces.
+Here, @ccmode{} goes to buffer position 46, which is the @samp{i} in
+@code{if} on line 3.  This character is in the fourth column on that
+line so the base column is @samp{4}.  Then @ccmode{} looks up the
+@code{substatement-open} symbol in @code{c-offsets-alist}.  Let's say it
+finds the value @samp{4}.  It's added with the base column and yields an
+indentation for the line of 8 spaces.
 
 Simple, huh?
 
-Actually, the mode usually just does The Right Thing without you having
-to think about it in this much detail.  But when customizing
-indentation, it's helpful to understand the general indentation model
-being used.
+Actually, it's a bit more complicated than that since the entries on
+@code{c-offsets-alist} can be much more than plain offsets.
+@xref{Customizing Indentation}, for the full story.
+
+Anyway, the mode usually just does The Right Thing without you having to
+think about it in this much detail.  But when customizing indentation,
+it's helpful to understand the general indentation model being used.
 
 As you configure @ccmode{}, you might want to set the variable
 @code{c-echo-syntactic-information-p} to non-@code{nil} so that the
-syntactic component list and calculated offset will always be echoed in
-the minibuffer when you hit @kbd{TAB}.
+syntactic context and calculated offset always is echoed in the
+minibuffer when you hit @kbd{TAB}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1418,7 +1421,7 @@ spaces in @code{c-block-comment-prefix}, since @ccmode{} still uses the
 normal indentation engine to indent the line.  Thus, the right way to
 fix the indentation is by customizing the @code{c} syntactic symbol.  It
 defaults to @code{c-lineup-C-comments}, which handles the indentation of
-most common comment styles, see @ref{Indentation Functions}.
+most common comment styles, see @ref{Line-Up Functions}.
 @end defopt
 
 @defopt c-ignore-auto-fill
@@ -2288,8 +2291,8 @@ list, or one of the following special symbols: @code{+}, @code{-},
 values are described in detail below.
 @end defopt
 
-The special symbols describe an offset in multiples of the value of
-@code{c-basic-offset}:
+The special symbols describe a relative offset in multiples of the value
+of @code{c-basic-offset}:
 
 @defopt c-basic-offset
 @vindex basic-offset (c-)
@@ -2316,16 +2319,15 @@ values that the special symbols correspond to:
 @code{c-basic-offset} times -0.5
 @end table
 
-@cindex indentation functions
-
-When a function is used as offset, it's called an @dfn{indentation
-function}.  Such functions are useful when more context than just the
-syntactic symbol is needed to get the desired indentation.
-@xref{Indentation Functions}, and @ref{Custom Indentation Functions},
-for details about them.
+@cindex line-up functions
+When a function is used as offset, it's called a @dfn{line-up function}.
+Such functions are useful when more context than just the syntactic
+symbol is needed to get the desired indentation.  @xref{Line-Up
+Functions}, and @ref{Custom Line-Up Functions}, for details about
+them.
 
 If the offset is a vector, its first element sets the absolute
-indentation column, which will override any previous relative
+indentation column, which will override any previously calculated
 indentation.  It won't override additional relative indentation for
 nested constructs, though.
 
@@ -2447,7 +2449,7 @@ In other words, we want to change the indentation of braces that open a
 block following a condition so that the braces line up under the
 conditional, instead of being indented.  Notice that the construct we
 want to change starts on line 4.  To change the indentation of a line,
-we need to see which syntactic components affect the offset calculations
+we need to see which syntactic symbols affect the offset calculations
 for that line.  Hitting @kbd{C-c C-s} on line 4 yields:
 
 @example
@@ -2897,7 +2899,9 @@ Two variables are treated specially in the dotted pair list:
 @item c-offsets-alist
 The value is in turn a dotted list on the form
 
-(@var{syntactic-symbol} . @var{offset})
+@example
+(@r{@var{syntactic-symbol}} . @r{@var{offset}})
+@end example
 
 as described in @ref{Customizing Indentation}.  These are passed to
 @code{c-set-offset} so there is no need to set every syntactic symbol in
@@ -2989,24 +2993,24 @@ you to implement custom indentation calculations for situations not
 handled by the mode directly.
 
 @menu
-* Custom Indentation Functions::
+* Custom Line-Up Functions::
 * Custom Brace and Colon Hanging::
 * Customizing Semicolons and Commas::
 * Other Special Indentations::
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Indentation Functions, Custom Brace and Colon Hanging, , Advanced Customizations
+@node    Custom Line-Up Functions, Custom Brace and Colon Hanging, , Advanced Customizations
 @comment node-name, next, previous, up
-@subsection Custom Indentation Functions
+@subsection Custom Line-Up Functions
 @cindex customization, indentation functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The most flexible way to customize @ccmode{} is by writing custom
-indentation functions, and associating them with specific syntactic
-symbols (@pxref{Syntactic Symbols}).  @ccmode{} itself uses indentation
-functions to provide more sophisticated indentation, for example when
-lining up C++ stream operator blocks:
+line-up functions, and associating them with specific syntactic symbols
+(@pxref{Syntactic Symbols}).  @ccmode{} itself uses line-up functions to
+provide more sophisticated indentation, for example when lining up C++
+stream operator blocks:
 
 @example
 @group
@@ -3024,11 +3028,11 @@ In this example, lines 4 through 6 are assigned the @code{stream-op}
 syntactic symbol.  Here, @code{stream-op} has an offset of @code{+}, and
 with a @code{c-basic-offset} of 2, you can see that lines 4 through 6
 are simply indented two spaces to the right of line 3.  But perhaps we'd
-like @ccmode{} to be a little more intelligent so that it aligns
-all the @samp{<<} symbols in lines 3 through 6.  To do this, we have
-to write a custom indentation function which finds the column of the first
-stream operator on the first line of the statement.  Here is sample 
-lisp code implementing this:
+like @ccmode{} to be a little more intelligent so that it aligns all the
+@samp{<<} symbols in lines 3 through 6.  To do this, we have to write a
+custom line-up function which finds the column of the first stream
+operator on the first line of the statement.  Here is sample lisp code
+implementing this:
 
 @example
 (defun c-lineup-streamop (langelem)
@@ -3039,23 +3043,88 @@ lisp code implementing this:
     (vector (current-column))))
 @end example
 
-Indentation functions take a single argument, which is a syntactic
-component cons cell (@pxref{Syntactic Analysis}).  The function can
-return an integer which is added to the running total indentation for
-the line, or a vector containing an integer which is an absolute
-column to align to.  Usually an absolute column is wanted when
-aligning to existing text, as in this example.
+Line-up functions are passed a single argument - a cons cell on the form
 
-The function should return @code{nil} if it's used in a situation where
-it doesn't want to make any decision.  If the function is used in a list
-expression (@pxref{Customizing Indentation}), that will cause @ccmode{}
-to go on and check the next entry in the list.
+@example
+(@r{@var{syntactic-symbol}} . @r{@var{anchor-position}})
+@end example
 
-Now, to associate the function @code{c-lineup-streamop} with the
-@code{stream-op} syntactic symbol, we can add something like the
-following to our @code{c++-mode-hook}@footnote{It probably makes more
-sense to add this to @code{c++-mode-hook} than @code{c-mode-common-hook}
-since stream operators are only relevant for C++.}:
+where @var{syntactic-symbol} is the symbol that the function was called
+for, and @var{anchor-position} is the anchor position (if any) for the
+construct that trigged the syntactic symbol (@pxref{Syntactic
+Analysis}).
+
+@vindex c-syntactic-element
+@vindex syntactic-element (c-)
+@vindex c-syntactic-context
+@vindex syntactic-context (c-)
+Some syntactic symbols, e.g. @code{arglist-cont-nonempty}, have more
+info in the syntactic element - typically other positions that can be
+interesting besides the anchor position.  That info can't be accessed
+through the passed argument, which is a cons cell for compatibility
+reasons.  Instead, you can get it from the dynamically bound
+@code{c-syntactic-element} variable.  The variable
+@code{c-syntactic-context} might also be interesting - it holds the
+complete syntactic context.
+
+A few functions are provided to access parts of syntactic elements in a
+more abstract way.  Besides making the code easier to read, they also
+hide the difference between the old cons cell form used in the line-up
+function argument and the new form used in @code{c-syntactic-element}
+and everywhere else.  The functions are:
+
+@defun c-langelem-sym langelem
+@findex langelem-sym (c-)
+Return the syntactic symbol in @var{langelem}.
+@end defun
+
+@defun c-langelem-pos langelem
+@findex langelem-pos (c-)
+Return the anchor position in @var{langelem}, or nil if there is none.
+@end defun
+
+@defun c-langelem-col langelem &optional preserve-point
+@findex langelem-col (c-)
+Return the column of the anchor position in @var{langelem}.  Also move
+the point to that position unless @var{preserve-point} is
+non-@code{nil}.
+@end defun
+
+@defun c-langelem-2nd-pos langelem
+@findex langelem-2nd-pos (c-)
+Return the secondary position in @var{langelem}, or @code{nil} if there
+is none.
+
+Note that the return value always is @code{nil} if @var{langelem} is on
+the old cons cell form.  Thus this function is only meaningful to use on
+syntactic elements taken from @code{c-syntactic-element} or
+@code{c-syntactic-context}.
+@end defun
+
+The return value from a line-up function is in turn evaluated as an
+@code{c-offsets-alist} offset specification (@pxref{Customizing
+Indentation}).  The most interesting types of values to return are: An
+integer which is added to the relative indentation for the line, a
+vector containing an integer which is an absolute column to align to
+(usually an absolute column is wanted when aligning to existing text, as
+in the example above), and @code{nil}.
+
+A line-up function should return @code{nil} if it's used in a context
+where it doesn't want to make a decision.  When the function is used in
+a list expression, that will cause @ccmode{} to go on and check the next
+entry in the list.
+
+Line-up functions must not change the content of the buffer unless it's
+completely reversed again.  They are however allowed to do hidden buffer
+changes, i.e. setting text properties for caching purposes etc.  Buffer
+undo recording is disabled while they run.
+
+Now, to return to the example, we want to associate the function
+@code{c-lineup-streamop} with the @code{stream-op} syntactic symbol.  We
+can do that by adding something like the following to our
+@code{c++-mode-hook}@footnote{It probably makes more sense to add this
+to @code{c++-mode-hook} than @code{c-mode-common-hook} since stream
+operators are only relevant for C++.}:
 
 @example
 (c-set-offset 'stream-op 'c-lineup-streamop)
@@ -3076,20 +3145,20 @@ C-q}):
 @end group
 @end example
 
-Custom indentation functions can be as simple or as complex as you like,
-and any syntactic symbol that appears in @code{c-offsets-alist} can have
-a custom indentation function associated with it.
+Custom line-up functions can be as simple or as complex as you like, and
+any syntactic symbol that appears in @code{c-offsets-alist} can have a
+custom line-up function associated with it.
 
-@ccmode{} comes with an extensive set of predefined indentation
-functions, not all of which are used by the default styles.  So there's
-a good chance the function you want already exists.  @xref{Indentation
-Functions}, for a list of them.  If you have written an indentation
-function that you think is generally useful, you're very welcome to
-contribute it; please contact @email{bug-cc-mode@@gnu.org}.
+@ccmode{} comes with an extensive set of predefined line-up functions,
+not all of which are used by the default styles.  So there's a good
+chance the function you want already exists.  @xref{Line-Up Functions},
+for a list of them.  If you have written a line-up function that you
+think is generally useful, you're very welcome to contribute it; please
+contact @email{bug-cc-mode@@gnu.org}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Brace and Colon Hanging, Customizing Semicolons and Commas, Custom Indentation Functions, Advanced Customizations
+@node    Custom Brace and Colon Hanging, Customizing Semicolons and Commas, Custom Line-Up Functions, Advanced Customizations
 @comment node-name, next, previous, up
 @subsection Custom Brace and Colon Hanging
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3286,7 +3355,7 @@ current setting for the buffer local value of
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Syntactic Symbols, Indentation Functions, Customizing Indentation, Top
+@node    Syntactic Symbols, Line-Up Functions, Customizing Indentation, Top
 @comment node-name, next, previous, up
 @chapter Syntactic Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3637,7 +3706,7 @@ elements:
 @end example
 
 The @code{friend} syntactic symbol is a modifier that typically does not
-have a relative buffer position.
+have an anchor position.
 
 Template definitions introduce yet another syntactic symbol:
 
@@ -4003,10 +4072,9 @@ on line 5.
 
 The syntactic analysis inside macros can be turned off with
 @code{c-syntactic-indentation-in-macros}.  In that case, lines 2 through
-5 would all be given @code{cpp-macro-cont} with a relative buffer
-position pointing to the @code{#} which starts the cpp
-directive@footnote{This is how @ccmode{} 5.28 and earlier analyzed
-macros.}.
+5 would all be given @code{cpp-macro-cont} with an anchor position
+pointing to the @code{#} which starts the cpp directive@footnote{This is
+how @ccmode{} 5.28 and earlier analyzed macros.}.
 
 @xref{Macro Handling}, for more info about the treatment of macros.
 
@@ -4130,21 +4198,21 @@ syntax.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Functions, AWK Mode, Syntactic Symbols, Top
+@node    Line-Up Functions, AWK Mode, Syntactic Symbols, Top
 @comment node-name, next, previous, up
-@chapter Indentation Functions
+@chapter Line-Up Functions
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@cindex indentation function
 @cindex line-up function
-Often there are cases when a simple offset setting on a syntactic
-symbol isn't enough to get the desired indentation.  Therefore, it's
-also possible to use an @dfn{indentation function} (a.k.a. @dfn{line-up
+@cindex indentation function
+Often there are cases when a simple offset setting on a syntactic symbol
+isn't enough to get the desired indentation.  Therefore, it's also
+possible to use a @dfn{line-up function} (a.k.a. @dfn{indentation
 function}) for a syntactic symbol.
 
-@ccmode{} comes with many predefined indentation functions for common
+@ccmode{} comes with many predefined line-up functions for common
 situations.  If none of these does what you want, you can write your
-own, see @ref{Custom Indentation Functions}.  If you do, it's probably a
+own, see @ref{Custom Line-Up Functions}.  If you do, it's probably a
 good idea to start working from one of these predefined functions, they
 can be found in the file @file{cc-align.el}.
 
@@ -4340,7 +4408,7 @@ discussion of this ``DWIM'' measure.
 @findex lineup-arglist-operators (c-)
 Line up lines starting with an infix operator under the open paren.
 Return @code{nil} on lines that don't start with an operator, to leave
-those cases to other lineup functions.  Example:
+those cases to other line-up functions.  Example:
 
 @example
 @group
@@ -4372,11 +4440,10 @@ suggestion to get a consistent style):
 
 @defun c-lineup-assignments
 @findex lineup-assignments (c-)
-Line up the current line after the assignment operator on the first
-line in the statement.  If there isn't any, return nil to allow
-stacking with other indentation functions.  If the current line
-contains an assignment operator too, try to align it with the first
-one.
+Line up the current line after the assignment operator on the first line
+in the statement.  If there isn't any, return nil to allow stacking with
+other line-up functions.  If the current line contains an assignment
+operator too, try to align it with the first one.
 
 @workswith @code{topmost-intro-cont}, @code{statement-cont},
 @code{arglist-cont}, @code{arglist-cont-nonempty}.
@@ -4852,7 +4919,7 @@ the current line with the colon on the previous line.
 Line up statements for coding standards which place the first statement
 in a block on the same line as the block opening brace@footnote{Run-in
 style doesn't really work too well.  You might need to write your own
-custom indentation functions to better support this style.}.  E.g:
+custom line-up functions to better support this style.}.  E.g:
 
 @example
 @group
@@ -5007,7 +5074,7 @@ e.g. @code{inclass} and @code{inextern-lang}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node AWK Mode, Odds and Ends, Indentation Functions, Top
+@node AWK Mode, Odds and Ends, Line-Up Functions, Top
 @comment  node-name,  next,  previous,  up
 @chapter Status of AWK Mode
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5055,10 +5122,10 @@ respective pattern, function definition, or structured statement.
 @c Add in a bit about the @samp{@}} being on the same line when the
 @c contents are short.
 
-The predefined indentation functions (@pxref{Indentation Functions})
-haven't yet been adapted for AWK mode, though some of them may work
-serendipitously.  There shouldn't be any problems writing custom
-indentation functions for AWK mode.
+The predefined line-up functions (@pxref{Line-Up Functions}) haven't yet
+been adapted for AWK mode, though some of them may work serendipitously.
+There shouldn't be any problems writing custom line-up functions for AWK
+mode.
 
 The command @kbd{C-c C-q} (@code{c-indent-defun}) hasn't yet been
 adapted for AWK, though in practice it works properly nearly all the
