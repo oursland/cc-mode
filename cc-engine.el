@@ -2825,9 +2825,9 @@ This function does not do any hidden buffer changes."
       (save-excursion
 	(goto-char (car range))
 	(cond ((looking-at c-string-limit-regexp) 'string)
-	      ((and (looking-at "\\s<") ; comment starter
-                    (or (looking-at "//") ; c++ line comment
-                        (looking-at "#"))) ; awk comment.
+	      ((or (looking-at "//") ; c++ line comment
+		   (and (looking-at "\\s<") ; comment starter
+			(looking-at "#"))) ; awk comment.
                'c++)
 	      (t 'c)))			; Assuming the range is valid.
     range))
