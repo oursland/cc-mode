@@ -536,8 +536,8 @@ macro definition, otherwise return nil and leave point unchanged."
 
 (defun c-end-of-macro ()
   "Go to the end of a cpp macro definition.
-More accurately, move point at the end of the next line that doesn't
-end with a line continuation backslash."
+More accurately, move point to the end of the closest following line
+that doesn't end with a line continuation backslash."
   (while (progn
 	   (end-of-line)
 	   (when (and (eq (char-before) ?\\)
@@ -822,21 +822,45 @@ See `c-forward-token-1' for details."
   (or count (setq count 1))
   (let ((start (point))
 	(pos (point))
-	state)
+	match-pos state)
     (condition-case err
 	(while (and (> count 0)
 		    (re-search-forward regexp bound noerror))
-	  (setq state (parse-partial-sexp pos (point) nil nil state)
-		pos (point))
-	  (and (null (nth 3 state))
-	       (null (nth 4 state))
-	       (not (save-excursion (c-beginning-of-macro start)))
-	       (setq count (1- count))))
+	  (setq match-pos (point)
+		state (parse-partial-sexp pos (match-beginning 0)
+					  nil nil state)
+		pos (match-beginning 0))
+	  (cond ((nth 3 state)
+		 ;; Match inside a string.  Skip to the end of it
+		 ;; before continuing.
+		 (let ((ender (make-string 1 (nth 3 state))))
+		   (while (progn
+			    (search-forward ender bound noerror)
+			    (setq state (parse-partial-sexp pos (point)
+							    nil nil state)
+				  pos (point))
+			    (nth 3 state)))))
+		((nth 7 state)
+		 ;; Match inside a line comment.  Skip to eol.  Use
+		 ;; re-search-forward for it to get the right bound
+		 ;; behavior.
+		 (re-search-forward "[\n\r]" bound noerror))
+		((nth 4 state)
+		 ;; Match inside a block comment.  Skip to the '*/'.
+		 (re-search-forward "\\*/" bound noerror))
+		((save-excursion (c-beginning-of-macro start))
+		 ;; Match inside a macro.  Skip to the end of it.
+		 (c-end-of-macro))
+		(t
+		 ;; A real match.
+		 (setq count (1- count)))))
       (error
        (goto-char start)
        (signal (car err) (cdr err))))
     (if (= count 0)
-	(point)
+	(progn
+	  (goto-char match-pos)
+	  match-pos)
       (goto-char (if (eq noerror t)
 		     start
 		   (or bound (point-max))))
@@ -1483,67 +1507,44 @@ brace."
   ;; to not be inside a code block.  Point won't be moved out of the
   ;; surrounding paren.  Return point, unless we've jumped over K&R
   ;; style argument declarations in which case the position of the
-  ;; first such argument declaration is returned instead.
-  (let ((here (point)) fallback-pos char-before)
+  ;; first such argument declaration is returned instead.  If LIM is
+  ;; non-nil, it's a position that bounds the backward search.
+  (let ((start (point)))
     (c-beginning-of-statement-1 lim)
-    (if (and (eq (char-after) ?{)
-	     (save-excursion
-	       (c-backward-syntactic-ws lim)
-	       (not (memq (setq char-before (char-before)) '(?\; ?})))))
-	;; c-beginning-of-statement-1 stops at a block start, but we
-	;; want to continue if the block doesn't begin a top level
-	;; construct, i.e. if it isn't preceded by ';' or '}'.
-	(c-beginning-of-statement-1 lim))
+    (when (and (eq (char-after) ?{)
+	       (save-excursion
+		 (c-backward-syntactic-ws lim)
+		 (not (memq (char-before) '(?\; ?})))))
+      ;; c-beginning-of-statement-1 stops at a block start, but we
+      ;; want to continue if the block doesn't begin a top level
+      ;; construct, i.e. if it isn't preceded by ';' or '}'.
+      (setq start (point))
+      (c-beginning-of-statement-1 lim))
     (if c-recognize-knr-p
 	;; It's K&R argdecls that makes this difficult.
-	(progn
-	  ;; Go back by "statements", as defined by
-	  ;; c-beginning-of-statement-1.  If the current statement
-	  ;; doesn't contain a '=' or paren of any sort, and if the
-	  ;; preceding one ends with a ';' then this might be a K&R
-	  ;; argument declaration, so back up another one and check
-	  ;; again.  If we've done that at least once, we must
-	  ;; eventually arrive at a statement which contains a '('
-	  ;; that isn't preceded by a '=' and where the corresponding
-	  ;; ')' is followed by some symbol before the next ';' or
-	  ;; '{'.  If we don't then none of those that was jumped over
-	  ;; were really K&R arguments, so we go back to the first
-	  ;; one.
-	  (setq fallback-pos (point))
-	  (if (and (eq (char-after) ?{)
-		   (eq char-before ?\;))
-	      ;; If we're accepting K&R argdecls then we shouldn't
-	      ;; consider a preceding ';' as a declaration delimiter
-	      ;; before '{' like we do above, so repeat it with a more
-	      ;; lax check.  In this case it's however only a
-	      ;; potential continuation of the declaration, so we must
-	      ;; do it after saving fallback-pos.
-	      (c-beginning-of-statement-1 lim))
-	  (while (and (< (point) here)
-		      (save-excursion
-			(setq here (point))
-			(not (and (c-syntactic-re-search-forward
-				   "[\]}\);=\({\[]" nil t)
-				  (memq (char-before) '(?= ?\( ?{ ?\[)))))
-		      (progn
-			(c-backward-syntactic-ws lim)
-			(eq (char-before) ?\;)))
-	    (c-beginning-of-statement-1 lim))
-	  (goto-char here)
-	  (if (and (c-syntactic-re-search-forward "[\]}\);=\({\[]" nil t)
-		   (eq (char-before) ?\()
-		   (c-safe (goto-char (c-up-list-forward (point))) t)
-		   (progn
-		     ;; The following is a bit overkill, but it makes
-		     ;; inconveniently placed macros to be handled a
-		     ;; little better.
-		     (while (and (not (looking-at "\\(\\w\\|[_;{]\\)"))
-				 (= (c-forward-token-1 1 t) 0)))
-		     (not (memq (char-after) '(?\; ?{)))))
-	      (prog1 (point)
-		(goto-char here))
-	    (goto-char fallback-pos)
-	    (point)))
+	(let ((fallback-pos (point)) paren-start paren-end)
+	  ;; Go back to the closest preceding normal parenthesis sexp.
+	  ;; We take that as the argument list in the function header.
+	  ;; Then check that it's followed by some symbol before the
+	  ;; next ';' or '{'.  If it does, it's the header of the K&R
+	  ;; argdecl we're in.
+	  (save-restriction
+	    (if lim (narrow-to-region lim (point-max)))
+	    (if (and (c-safe (setq paren-end (c-down-list-backward start)))
+		     (eq (char-after paren-end) ?\))
+		     (progn
+		       (goto-char (1+ paren-end))
+		       (c-forward-syntactic-ws start)
+		       (< (point) start))
+		     (memq (char-syntax (or (char-after) ?x)) '(?w ?_))
+		     (c-safe (setq paren-start (c-up-list-backward paren-end)))
+		     (or (not lim) (>= paren-start lim))
+		     (progn
+		       (setq paren-end (point))
+		       (not (eq (c-beginning-of-statement-1) 'macro))))
+		paren-end
+	      (goto-char fallback-pos)
+	      (point))))
       (point))))
 
 (defun c-beginning-of-member-init-list (&optional limit)
@@ -2406,10 +2407,15 @@ Keywords are recognized and not considered identifiers."
 	  (setq containing-sexp (car paren-state)
 		paren-state (cdr paren-state))
 	  (if (consp containing-sexp)
-	      ;; Ignore balanced paren.  The next entry can't be
-	      ;; another one.
-	      (setq containing-sexp (car-safe paren-state)
-		    paren-state (cdr-safe paren-state)))
+	      (if paren-state
+		  ;; Ignore balanced paren.  The next entry can't be
+		  ;; another one.
+		  (setq containing-sexp (car paren-state)
+			paren-state (cdr paren-state))
+		;; If there is no surrounding open paren then put the
+		;; last balanced pair back on paren-state.
+		(setq paren-state (list containing-sexp)
+		      containing-sexp nil)))
 	  ;; Ignore the bufpos if it has been narrowed out by the
 	  ;; containing class.
 	  (if (and containing-sexp
