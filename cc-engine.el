@@ -1380,6 +1380,23 @@ you need both the type of a literal and its limits."
 	 (point))
     ))
 
+;; Contributed by Kevin Ryde <user42@zip.com.au>.
+(defun c-in-gcc-asm-p ()
+  ;; Return non-nil if point is within a gcc \"asm\" block.
+  ;;
+  ;; This should be called with point inside an argument list.
+  ;;
+  ;; Only one level of enclosing parentheses is considered, so for
+  ;; instance `nil' is returned when in a function call within an asm
+  ;; operand.
+
+  (and c-opt-asm-stmt-key
+       (save-excursion
+	 (beginning-of-line)
+	 (backward-up-list 1)
+	 (c-beginning-of-statement-1 (point-min) nil t)
+	 (looking-at c-opt-asm-stmt-key))))
+
 (defun c-at-toplevel-p ()
   "Return a determination as to whether point is at the `top-level'.
 Being at the top-level means that point is either outside any
@@ -2995,6 +3012,8 @@ Keywords are recognized and not considered identifiers."
 				     c++-template-syntax-table
 				   (syntax-table))
 	      (save-excursion
+		;; Note: We use the fact that lim is always after any
+		;; preceding brace sexp.
 		(while (and (= (c-backward-token-1 1 t lim) 0)
 			    (not (looking-at "[;<,=]"))))
 		(or (memq (char-after) '(?, ?=))
