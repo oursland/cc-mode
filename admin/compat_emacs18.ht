@@ -1,0 +1,19 @@
+Title: Compatibility Notes
+Author: python-mode@python.org
+Other-links:
+    <h3>Emacsen</h3>
+    <li><a href="compat_xemacs.html">XEmacs and Emacs 20</a>
+    <li><a href="compat_emacs19.html">Emacs 19</a>
+    <li><a href="compat_ntemacs.html">NTEmacs 19</a>
+    <li><a href="compat_emacs18.html">Emacs 18</a>
+
+<h2>Emacs 18 Compatibility</h2>
+
+"F'getaboutit"
+
+<p>"It ain't gonna happen"
+
+<p><code>:-)</code>
+
+<p>In otherwords, you should upgrade at least to Emacs or XEmacs 19,
+and preferrably to Emacs or XEmacs 20.
