@@ -423,24 +423,30 @@
   ;; If the argument is a cons of two buffer positions (such as
   ;; returned by c-literal-limits), and that range contains a C++
   ;; style line comment, then an extended range is returned that
-  ;; contains all adjacent line comments (i.e. all comments with no
-  ;; empty lines or non-whitespace characters between them).
-  ;; Otherwise the argument is returned.
+  ;; contains all adjacent line comments (i.e. all comments that
+  ;; starts in the same column with no empty lines or non-whitespace
+  ;; characters between them).  Otherwise the argument is returned.
   (save-excursion
     (condition-case nil
 	(if (and (consp range) (progn
 				 (goto-char (car range))
 				 (looking-at "//")))
-	    (let ((beg (point)))
+	    (let ((col (current-column))
+		  (beg (point))
+		  (end (cdr range)))
 	      (while (and (not (bobp))
 			  (forward-comment -1)
-			  (looking-at "//"))
+			  (looking-at "//")
+			  (= col (current-column)))
 		(setq beg (point)))
-	      (cons beg (progn
-			  (goto-char (cdr range))
-			  (while (looking-at "[ \t]*//")
-			    (forward-comment 1))
-			  (point))))
+	      (goto-char end)
+	      (while (progn
+		       (skip-chars-forward " \t")
+		       (and (looking-at "//")
+			    (= col (current-column))))
+		(forward-comment 1)
+		(setq end (point)))
+	      (cons beg end))
 	  range)
       (error range))))
 
