@@ -2838,7 +2838,8 @@ This function does not do any hidden buffer changes."
 	  (while (progn
 		   (goto-char (previous-single-property-change
 			       (point) 'face nil (point-min)))
-		   (c-got-face-at (point) c-literal-faces))))
+		   (and (> (point) (point-min))
+			(c-got-face-at (point) c-literal-faces)))))
 
 	;; XEmacs doesn't fontify the quotes surrounding string
 	;; literals.
