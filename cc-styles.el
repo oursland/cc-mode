@@ -27,13 +27,13 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(require 'cc-vars)
-(require 'cc-align)
-(eval-when-compile
-  ;; I have no idea why the following line is necessary in XEmacs!
-  (require 'cc-align)
-  (require 'cc-mode)
-  (require 'cl))
+;(require 'cc-vars)
+;(require 'cc-align)
+;(eval-when-compile
+;  ;; I have no idea why the following line is necessary in XEmacs!
+;  (require 'cc-align)
+;  (require 'cc-mode)
+;  (require 'cl))
 
 
 (defconst c-style-alist
@@ -555,39 +555,36 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 
 
 
-;; cl is not loaded by default in Emacs 19 or 20, but this definition.
-(or (boundp 'copy-tree)
-    (require 'cl))
-
-;; Dynamically append the default value of most variables. This is
-;; crucial because future c-set-style calls will always reset the
-;; variables first to the `cc-mode' style before instituting the new
-;; style.  Only do this once!
-(or (assoc "cc-mode" c-style-alist)
-    (progn
-      (c-add-style "cc-mode"
-		   (mapcar
-		    (function
-		     (lambda (var)
-		       (let ((val (symbol-value var)))
-			 (cons var (if (atom val) val
-				     (copy-tree val)
-				     ))
-			 )))
-		    '(c-backslash-column
-		      c-basic-offset
-		      c-cleanup-list
-		      c-comment-only-line-offset
-		      c-electric-pound-behavior
-		      c-hanging-braces-alist
-		      c-hanging-colons-alist
-		      c-hanging-comment-starter-p
-		      c-hanging-comment-ender-p
-		      c-offsets-alist
-		      )))
-      ;; the default style is now GNU.  This can be overridden in
-      ;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
-      (c-set-style c-site-default-style)))
+(defun c-initialize-builtin-style ()
+  ;; Dynamically append the default value of most variables. This is
+  ;; crucial because future c-set-style calls will always reset the
+  ;; variables first to the `cc-mode' style before instituting the new
+  ;; style.  Only do this once!
+  (or (assoc "cc-mode" c-style-alist)
+      (progn
+	(c-add-style "cc-mode"
+		     (mapcar
+		      (function
+		       (lambda (var)
+			 (let ((val (symbol-value var)))
+			   (cons var (if (atom val) val
+				       (copy-tree val)
+				       ))
+			   )))
+		      '(c-backslash-column
+			c-basic-offset
+			c-cleanup-list
+			c-comment-only-line-offset
+			c-electric-pound-behavior
+			c-hanging-braces-alist
+			c-hanging-colons-alist
+			c-hanging-comment-starter-p
+			c-hanging-comment-ender-p
+			c-offsets-alist
+			)))
+	;; the default style is now GNU.  This can be overridden in
+	;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
+	(c-set-style c-site-default-style))))
 
 (defun c-make-styles-buffer-local ()
   "Make all CC Mode style variables buffer local.
@@ -621,8 +618,12 @@ automatically called when CC Mode is loaded."
   (make-variable-buffer-local 'c-special-indent-hook)
   (make-variable-buffer-local 'c-indentation-style))
 
-(if c-style-variables-are-local-p
-    (c-make-styles-buffer-local))
+;; Don't do this when compiling!
+(require 'cl)
+(eval-when '(load)
+  (c-initialize-builtin-style)
+  (if c-style-variables-are-local-p
+      (c-make-styles-buffer-local)))
 
 
 

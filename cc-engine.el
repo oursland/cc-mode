@@ -27,85 +27,6 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(eval-when-compile
-  (require 'cc-langs))
-
-
-;; utilities
-;; important macros and subroutines
-(defsubst c-point (position)
-  ;; Returns the value of point at certain commonly referenced POSITIONs.
-  ;; POSITION can be one of the following symbols:
-  ;; 
-  ;; bol  -- beginning of line
-  ;; eol  -- end of line
-  ;; bod  -- beginning of defun
-  ;; boi  -- back to indentation
-  ;; ionl -- indentation of next line
-  ;; iopl -- indentation of previous line
-  ;; bonl -- beginning of next line
-  ;; bopl -- beginning of previous line
-  ;; 
-  ;; This function does not modify point or mark.
-  (let ((here (point)))
-    (cond
-     ((eq position 'bol)  (beginning-of-line))
-     ((eq position 'eol)  (end-of-line))
-     ((eq position 'bod)
-      (beginning-of-defun)
-      ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at
-      ;; the open brace.
-      (and defun-prompt-regexp
-	   (looking-at defun-prompt-regexp)
-	   (goto-char (match-end 0)))
-      )
-     ((eq position 'boi)  (back-to-indentation))
-     ((eq position 'bonl) (forward-line 1))
-     ((eq position 'bopl) (forward-line -1))
-     ((eq position 'iopl)
-      (forward-line -1)
-      (back-to-indentation))
-     ((eq position 'ionl)
-      (forward-line 1)
-      (back-to-indentation))
-     (t (error "unknown buffer position requested: %s" position))
-     )
-    (prog1
-	(point)
-      (goto-char here))))
-
-(defmacro c-safe (&rest body)
-  ;; safely execute BODY, return nil if an error occurred
-  (` (condition-case nil
-	 (progn (,@ body))
-       (error nil))))
-
-(defmacro c-add-syntax (symbol &optional relpos)
-  ;; a simple macro to append the syntax in symbol to the syntax list.
-  ;; try to increase performance by using this macro
-  (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
-
-(defsubst c-auto-newline ()
-  ;; if auto-newline feature is turned on, insert a newline character
-  ;; and return t, otherwise return nil.
-  (and c-auto-newline
-       (not (c-in-literal))
-       (not (newline))))
-
-(defsubst c-intersect-lists (list alist)
-  ;; return the element of ALIST that matches the first element found
-  ;; in LIST.  Uses assq.
-  (let (match)
-    (while (and list
-		(not (setq match (assq (car list) alist))))
-      (setq list (cdr list)))
-    match))
-
-(defsubst c-lookup-lists (list alist1 alist2)
-  ;; first, find the first entry from LIST that is present in ALIST1,
-  ;; then find the entry in ALIST2 for that entry.
-  (assq (car (c-intersect-lists list alist1)) alist2))
-
 
 ;; WARNING: Be *exceptionally* careful about modifications to this
 ;; function!  Much of CC Mode depends on this Doing The Right Thing.

@@ -40,7 +40,8 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cc-styles))
+  (require 'cc-styles)
+  (require 'cc-engine))
 
 
 ;; In case c-mode.el isn't loaded
