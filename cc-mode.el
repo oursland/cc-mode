@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.204 $
-;; Last Modified:   $Date: 1992-11-03 20:01:50 $
+;; Version:         $Revision: 2.205 $
+;; Last Modified:   $Date: 1992-11-03 20:46:19 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-03 20:01:50 $|$Revision: 2.204 $|
+;; |$Date: 1992-11-03 20:46:19 $|$Revision: 2.205 $|
 
 ;;; Code:
 
@@ -228,11 +228,6 @@ preprocessor directives, but line is always reindented.")
 When non-nil, arglists continued on subsequent lines will always
 indent c++-empty-arglist-indent spaces, otherwise, they will indent to
 just under previous line's argument indentation.")
-(defvar c++-class-member-indent c-indent-level
-  "*Extra indentation given to each member of a class, relative to the
-enclosing class's indentation.  Note that if you change c-indent-level
-in your c++-mode-hook, you will probably want to set this variable to
-the same value.")
 (defvar c++-block-close-brace-offset 0
   "*Extra indentation given to close braces which close a block. This
 does not affect braces which close a top-level construct (e.g. function).")
@@ -376,7 +371,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.204 $
+  "Major mode for editing C++ code.  $Revision: 2.205 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -583,7 +578,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.204 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.205 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1581,7 +1576,7 @@ BOD is the beginning of the C++ definition."
 	      ;; add an offset if we are inside a class defun body,
 	      ;; i.e. we are at the top level, but only wrt a
 	      ;; containing class
-	      (setq inclass-shift (* c++-class-member-indent inclass-depth))
+	      (setq inclass-shift (* c-indent-level inclass-depth))
 	      (progn
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
@@ -1619,7 +1614,7 @@ BOD is the beginning of the C++ definition."
 			      0
 			    ;; member init, so add offset, but
 			    ;; subtract inclass-shift
-			    (- c++-member-init-indent c++-class-member-indent))
+			    (- c++-member-init-indent c-indent-level))
 			(if (or (= (preceding-char) ?})
 				(= (preceding-char) ?\))
 				(save-excursion
@@ -1653,7 +1648,7 @@ BOD is the beginning of the C++ definition."
 				;; we might be looking at the opening
 				;; brace of a class defun
 				(if (= (following-char) ?\{)
-				    (- c-indent-level c++-class-member-indent)
+				    0
 				  (if (eolp)
 				      ;; looking at a blank line, indent
 				      ;; next line to zero
@@ -2201,7 +2196,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.204 $"
+(defconst c++-version "$Revision: 2.205 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2217,7 +2212,6 @@ c++-c-mode.
 Use \\[c++-submit-bug-report] to submit a bug report."
   (let ((buffer (current-buffer))
 	(varlist (list 'c++-continued-member-init-offset
-		       'c++-class-member-indent
 		       'c++-member-init-indent
 		       'c++-friend-offset
 		       'c++-access-specifier-offset
