@@ -5215,11 +5215,13 @@ brace."
 			(throw 'back-up-block t))
 
 		       ((and (eq step-type 'up)
-			     (>= (point) old-boi))
+			     (>= (point) old-boi)
+			     (looking-at "else\\>[^_]")
+			     (save-excursion
+			       (goto-char old-pos)
+			       (looking-at "if\\>[^_]")))
 			;; Special case to avoid deeper and deeper indentation
-			;; of "else if" clauses.  (This also kicks in for odd
-			;; things like "else while".  I'm not sure if that's
-			;; good or bad.)
+			;; of "else if" clauses.
 			)
 
 		       ((and (not stop-at-boi-only)
