@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.334 $
-;; Last Modified:   $Date: 1996-12-19 17:32:18 $
+;; Version:         $Revision: 4.335 $
+;; Last Modified:   $Date: 1996-12-19 21:00:24 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -705,7 +705,7 @@ re-dump Emacs.")
 	(minor (and (boundp 'emacs-minor-version)
 		    emacs-minor-version))
 	(re-suite 'old-re)
-	flavor comments)
+	flavor comments infodock-p)
     ;; figure out version numbers if not already discovered
     (and (or (not major) (not minor))
 	 (string-match "\\([0-9]+\\).\\([0-9]+\\)" emacs-version)
@@ -724,7 +724,8 @@ re-dump Emacs.")
      ((= major 19) (setq major 'v19	;Emacs 19
 			 flavor (if (or (string-match "Lucid" emacs-version)
 					(string-match "XEmacs" emacs-version))
-				    'XEmacs 'FSF)))
+				    'XEmacs 'FSF)
+			 infodock-p (boundp 'infodock-version)))
      ((= major 20) (setq major 'v20	;XEmacs 20
 			 flavor 'XEmacs))
      ;; I don't know
@@ -802,7 +803,9 @@ the main release."
 work for you, you may want to consider upgrading to Emacs 19.  The
 syntax patches are no longer supported either for syntax.c or
 cc-mode."))))
-    (list major comments re-suite))
+    (if infodock-p
+	(list major comments re-suite 'infodock)
+      (list major comments re-suite)))
   "A list of features extant in the Emacs you are using.
 There are many flavors of Emacs out there, each with different
 features supporting those needed by cc-mode.  Here's the current
@@ -816,7 +819,10 @@ supported list, along with the values for this variable:
 
 RS is the regular expression suite to use.  XEmacs versions after
 19.13, and Emacs versions after 19.29 use the `new-re' regex suite.
-All other Emacsen use the `old-re' suite.")
+All other Emacsen use the `old-re' suite.
+
+Infodock (based on XEmacs) has an additional symbol on this list:
+'infodock")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in c++-mode buffers.")
@@ -929,16 +935,19 @@ All other Emacsen use the `old-re' suite.")
   ;; conflicts with OOBR
   ;;(define-key c-mode-map "\C-c\C-v"  'c-version)
   ;;
-  ;; Emacs 19 defines menus in the mode map. This call will return
-  ;; t on Emacs 19, otherwise no-op and return nil.
-  (if (and (not (c-mode-fsf-menu "CC-Mode" c-mode-map))
-	   ;; in XEmacs 19, we want the menu to popup when the 3rd
-	   ;; button is hit.  In Lucid Emacs 19.10 and beyond this is
-	   ;; done automatically if we put the menu on mode-popup-menu
-	   ;; variable, see c-common-init. Emacs 19 uses C-Mouse-3 for
-	   ;; this, and it works with no special effort.
-	   (boundp 'current-menubar)
-	   (not (boundp 'mode-popup-menu)))
+  (if (and
+       ;; Infodock has it's own menu
+       (not (memq 'infodock c-emacs-features))
+       ;; Emacs 19 defines menus in the mode map. This call will
+       ;; return t on Emacs 19, otherwise no-op and return nil.
+       (not (c-mode-fsf-menu "CC-Mode" c-mode-map))
+       ;; In XEmacs 19, we want the menu to popup when the 3rd button
+       ;; is hit.  In Lucid Emacs 19.10 and beyond this is done
+       ;; automatically if we put the menu on mode-popup-menu
+       ;; variable, see c-common-init. Emacs 19 uses C-Mouse-3 for
+       ;; this, and it works with no special effort.
+       (boundp 'current-menubar)
+       (not (boundp 'mode-popup-menu)))
       (define-key c-mode-map 'button3 'c-popup-menu)))
 
 (defvar c++-mode-map ()
@@ -1487,8 +1496,9 @@ For use with the variable `java-mode-hook'."
     (make-local-variable 'comment-indent-hook)
     (setq comment-indent-hook 'c-comment-indent))
   ;; Put C menu into menubar and on popup menu for XEmacs 19. I think
-  ;; this happens automatically for Emacs 19.
-  (if (and (boundp 'current-menubar)
+  ;; this happens automatically for Emacs 19.  Skip it for Infodock.
+  (if (and (not (memq 'infodock c-emacs-features))
+	   (boundp 'current-menubar)
 	   current-menubar
 	   (not (assoc mode-name current-menubar)))
       ;; its possible that this buffer has changed modes from one of
@@ -5041,7 +5051,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.334 $"
+(defconst c-version "$Revision: 4.335 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
