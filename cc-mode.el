@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.163 $
-;; Last Modified:   $Date: 1995-03-09 16:57:43 $
+;; Version:         $Revision: 4.164 $
+;; Last Modified:   $Date: 1995-03-09 16:59:43 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-09 16:57:43 $|$Revision: 4.163 $|
+;; |$Date: 1995-03-09 16:59:43 $|$Revision: 4.164 $|
 
 ;;; Code:
 
@@ -496,7 +496,10 @@ case, the VALUE is a list containing elements of the form:
 
 as described in `c-offsets-alist'.  These are passed directly to
 `c-set-offset' so there is no need to set every syntactic symbol in
-your style, only those that are different from the default.")
+your style, only those that are different from the default.
+
+Note that all styles inherit from the \"Default\" style, which is
+computed at the time the mode is loaded.")
 
 (defvar c-file-style nil
   "*Variable interface for setting style via File Local Variables.
@@ -4486,7 +4489,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.163 $"
+(defconst c-version "$Revision: 4.164 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
