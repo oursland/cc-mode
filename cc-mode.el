@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.63 $
-;; Last Modified:   $Date: 1994-08-26 14:23:56 $
+;; Version:         $Revision: 4.64 $
+;; Last Modified:   $Date: 1994-08-26 14:46:36 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-26 14:23:56 $|$Revision: 4.63 $|
+;; |$Date: 1994-08-26 14:46:36 $|$Revision: 4.64 $|
 
 ;;; Code:
 
@@ -950,7 +950,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.63 $
+cc-mode Revision: $Revision: 4.64 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -989,7 +989,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.63 $
+cc-mode Revision: $Revision: 4.64 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1026,7 +1026,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.63 $
+cc-mode Revision: $Revision: 4.64 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -3517,8 +3517,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-syntax 'statement-cont (c-point 'boi)))
 	     ;; CASE 15D: any old statement
 	     ((< (point) indent-point)
-	      (goto-char indent-point)
-	      (c-beginning-of-statement 1)
+	      ;; calculate relpos relative to beginning of previous
+	      ;; statement, unless we're looking at a conditional key,
+	      ;; possible nested
+	      (if (looking-at c-conditional-key)
+		  nil
+		(goto-char indent-point)
+		(c-beginning-of-statement 1))
 	      (c-add-syntax 'statement (c-point 'boi))
 	      (if (= char-after-ip ?{)
 		  (c-add-syntax 'block-open)))
@@ -3991,7 +3996,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.63 $"
+(defconst c-version "$Revision: 4.64 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
