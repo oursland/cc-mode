@@ -322,21 +322,23 @@
 	  ;; following token beginning.
 	  (setq count 1))
       ;; Avoid having the limit tests inside the loop.
-      (if (or (eobp) (and lim (> (point) lim)))
-	  (goto-char last)
-	(condition-case nil
-	    (while (> count 0)
-	      (setq prev last
-		    last (point))
-	      (if (memq (char-syntax (char-after)) jump-syntax)
-		  (goto-char (scan-sexps (point) 1))
-		(forward-char))
-	      (c-forward-syntactic-ws lim)
-	      (setq count (1- count)))
-	  (error (goto-char last)))
-	(when (or (eobp) (and lim (> (point) lim)))
-	  (goto-char prev)
-	  (setq count (1+ count))))
+      (save-restriction
+	(if lim (narrow-to-region (point-min) lim))
+	(if (eobp)
+	    (goto-char last)
+	  (condition-case nil
+	      (while (> count 0)
+		(setq prev last
+		      last (point))
+		(if (memq (char-syntax (char-after)) jump-syntax)
+		    (goto-char (scan-sexps (point) 1))
+		  (forward-char))
+		(c-forward-syntactic-ws lim)
+		(setq count (1- count)))
+	    (error (goto-char last)))
+	  (when (eobp)
+	    (goto-char prev)
+	    (setq count (1+ count)))))
       count)))
 
 (defun c-backward-token-1 (&optional count balanced lim)
@@ -358,21 +360,21 @@
 	  ;; following token beginning.
 	  (setq count 1))
       ;; Avoid having the limit tests inside the loop.
-      (or (bobp)
-	  (and lim (< (point) lim))
-	  (progn
-	    (condition-case nil
-		(while (progn
-			 (setq last (point))
-			 (> count 0))
-		  (c-backward-syntactic-ws lim)
-		  (if (memq (char-syntax (char-before)) jump-syntax)
-		      (goto-char (scan-sexps (point) -1))
-		    (backward-char))
-		  (setq count (1- count)))
-	      (error (goto-char last)))
-	    (if (or (bobp) (and lim (< (point) lim)))
-		(goto-char last))))
+      (save-restriction
+	(if lim (narrow-to-region lim (point-max)))
+	(or (bobp)
+	    (progn
+	      (condition-case nil
+		  (while (progn
+			   (setq last (point))
+			   (> count 0))
+		    (c-backward-syntactic-ws lim)
+		    (if (memq (char-syntax (char-before)) jump-syntax)
+			(goto-char (scan-sexps (point) -1))
+		      (backward-char))
+		    (setq count (1- count)))
+		(error (goto-char last)))
+	      (if (bobp) (goto-char last)))))
       count)))
 
 
@@ -1003,7 +1005,7 @@
 	    (point)))))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
-     (let (bufpos okp)
+     (let (bufpos lim braceassignp)
        (while (and (not bufpos)
 		   containing-sexp)
 	 (if (consp containing-sexp)
@@ -1016,22 +1018,36 @@
 	       (setq containing-sexp nil)
 	     ;; see if the open brace is preceded by a = in this
 	     ;; statement, but watch out for operator=
-	     (setq okp t)
-	     (while (and (setq okp (zerop (c-backward-token-1 1 t)))
-			 (not (memq (char-after) '(?{ ?\;)))
-			 (or (not (eq (char-after) ?=))
-			     (memq (char-before) '(?= ?`))
-			     (save-excursion
-			       (forward-word -1)
-			       (looking-at "operator[ \t]*=")))
-			 ))
-	     (if (not (and okp
-			   (eq (char-after) ?=)
-			   (eq (char-after containing-sexp) ?{)))
-		 ;; lets see if we're nested. find the most nested
-		 ;; containing brace
-		 (setq containing-sexp (car brace-state)
-		       brace-state (cdr brace-state))
+	     (setq lim (if (consp (car brace-state))
+			   (cdr (car brace-state))
+			 (car brace-state))
+		   braceassignp 'dontknow)
+	     (while (and (eq braceassignp 'dontknow)
+			 (zerop (c-backward-token-1 1 t lim)))
+	       (cond ((eq (char-after) ?\;)
+		      (setq braceassignp nil))
+		     ((eq (char-after) ?=)
+		      ;; We've seen a =, but must check earlier tokens so
+		      ;; that it isn't something that should be ignored.
+		      (setq braceassignp 'maybe)
+		      (while (and (eq braceassignp 'maybe)
+				  (zerop (c-backward-token-1 1 t lim)))
+			(setq braceassignp
+			      (cond
+			       ;; Check for operator =
+			       ((looking-at "operator\\>") nil)
+			       ;; Check for `<opchar>= (Pike)
+			       ((eq (char-after) ?`) nil)
+			       ((looking-at "\\s.") 'maybe)
+			       (t t)))))))
+	     (if (memq braceassignp '(nil dontknow))
+		 (if (eq (char-after) ?\;)
+		     ;; Brace lists can't contain a semicolon, so we're done.
+		     (setq containing-sexp nil)
+		   ;; lets see if we're nested. find the most nested
+		   ;; containing brace
+		   (setq containing-sexp (car brace-state)
+			 brace-state (cdr brace-state)))
 	       ;; we've hit the beginning of the aggregate list
 	       (c-beginning-of-statement-1
 		(c-most-enclosing-brace brace-state))
@@ -1849,9 +1865,10 @@
 	    (if (consp special-brace-list)
 		(progn
 		  (goto-char (car (car special-brace-list)))
-		  (c-forward-token-1 2 nil indent-point))
-	      (goto-char containing-sexp)
-	      (c-forward-token-1 1 nil indent-point))
+		  (c-forward-token-1 1 nil indent-point))
+	      (goto-char containing-sexp))
+	    (forward-char)
+	    (c-forward-syntactic-ws indent-point)
 	    (cond
 	     ;; CASE 9C: we're looking at the first line in a brace-list
 	     ((= (point) indent-point)
