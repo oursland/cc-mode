@@ -3083,15 +3083,29 @@ brace."
   `(setq c-record-found-types (cons (cons ,from ,to)
 				    c-record-found-types)))
 
+(cc-eval-when-compile
+  (defsubst c-forward-keyword-prefixed-type ()
+    ;; Used internally in `c-forward-keyword-clause' to move forward
+    ;; over a type which possibly is prefixed by keywords and their
+    ;; associated clauses.  Try with a type first to not trip up on
+    ;; types that begin with a keyword.  Return t if a known or found
+    ;; type is moved over.  The point is clobbered if nil is returned.
+    (let (res)
+      (while (if (setq res (c-forward-type))
+		 nil
+	       (and (looking-at c-keywords-regexp)
+		    (c-forward-keyword-clause))))
+      (memq res '(t found prefix)))))
+
 (defun c-forward-keyword-clause ()
-  ;; The point is assumed to be at the start of a token that is
-  ;; matched by the first submatch in the current match data.  If the
-  ;; token is a keyword, move over it and any following clauses
-  ;; associated with it, stopping at the next following token.  t is
-  ;; returned in that case, otherwise the point stays and nil is
-  ;; returned.  The kind of clauses that are recognized are those
-  ;; specified by `c-type-list-kwds', `c-colon-type-list-kwds',
-  ;; `c-paren-type-kwds' and `c-<>-arglist-kwds'.
+  ;; The first submatch in the current match data is assumed to
+  ;; surround a token.  If it's a keyword, move over it and any
+  ;; following clauses associated with it, stopping at the next
+  ;; following token.  t is returned in that case, otherwise the point
+  ;; stays and nil is returned.  The kind of clauses that are
+  ;; recognized are those specified by `c-type-list-kwds',
+  ;; `c-colon-type-list-kwds', `c-paren-type-kwds' and
+  ;; `c-<>-arglist-kwds'.
 
   (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos)
     (when kwd-sym
@@ -3101,7 +3115,7 @@ brace."
 
       (cond
        ((cond ((and (c-keyword-member kwd-sym 'c-type-list-kwds)
-		    (memq (c-forward-type) '(t found prefix)))
+		    (c-forward-keyword-prefixed-type))
 	       ;; There's a type directly after a keyword in
 	       ;; `c-type-list-kwds'.
 	       t)
@@ -3110,14 +3124,13 @@ brace."
 		    (progn
 		      (goto-char (match-end 0))
 		      (c-forward-syntactic-ws)
-		      (memq (c-forward-type) '(t found prefix))))
+		      (c-forward-keyword-prefixed-type)))
 	       ;; There's a type after the `c-colon-type-list-re'
 	       ;; match after a keyword in `c-colon-type-list-kwds'.
 	       t))
 
 	;; Move over a comma separated list of types, where each may
-	;; be prefixed by keywords.  Try to move over a type first to
-	;; not trip up on types that begin with a keyword.
+	;; be prefixed by keywords.
 	(while (and (progn
 		      (c-forward-syntactic-ws)
 		      (setq safe-pos (point))
@@ -3125,9 +3138,7 @@ brace."
 		    (progn
 		      (forward-char)
 		      (c-forward-syntactic-ws)
-		      (or (memq (c-forward-type) '(t found prefix))
-			  (and (looking-at c-keywords-regexp)
-			       (c-forward-keyword-clause)))))))
+		      (c-forward-keyword-prefixed-type)))))
 
        ((and (c-keyword-member kwd-sym 'c-paren-type-kwds)
 	     (eq (char-after) ?\())
