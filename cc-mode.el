@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.262 $
-;; Last Modified:   $Date: 1996-01-15 23:56:06 $
+;; Version:         $Revision: 4.263 $
+;; Last Modified:   $Date: 1996-01-16 00:09:41 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-15 23:56:06 $|$Revision: 4.262 $|
+;; |$Date: 1996-01-16 00:09:41 $|$Revision: 4.263 $|
 
 ;;; Code:
 
@@ -1184,6 +1184,7 @@ Key bindings:
   (make-local-variable 'comment-end)
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
+  (make-local-variable 'comment-multi-line)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
   (make-local-variable 'adaptive-fill-regexp)
@@ -4636,7 +4637,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.262 $"
+(defconst c-version "$Revision: 4.263 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
