@@ -1,14 +1,14 @@
 ;;; cc-mode.el --- major mode for editing C, C++, and Objective-C code
 
-;; Copyright (C) 1985, 87, 92, 93, 94, 95 96 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 87, 92, 93, 94, 95, 96 Free Software Foundation, Inc.
 
 ;; Authors: 1992-1996 Barry A. Warsaw
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.268 $
-;; Last Modified:   $Date: 1996-01-19 04:17:11 $
+;; Version:         $Revision: 4.269 $
+;; Last Modified:   $Date: 1996-01-19 04:25:14 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -72,24 +72,38 @@
 ;; (fmakunbound 'c++-mode)
 ;; (makunbound 'c++-mode-map)
 ;; (makunbound 'c-style-alist)
+;;
+;; If your Emacs comes with cc-mode already (and as of 18-Jan-1996,
+;; XEmacs 19.13 and Emacs 19.30 both do), you only need to add the
+;; following to use the latest version of cc-mode:
+;;
+;; (load "cc-mode")
+;;
+;; Make sure the new version is earlier on your load-path.
 
-;; There are three major mode entry points provided by this package,
+;; There are four major mode entry points provided by this package,
 ;; one for editing C++ code, one for editing C code (both K&R and
-;; ANSI), and one for editing Objective-C code.  To use cc-mode, add
-;; the following to your .emacs file.  This assumes you will use .cc
-;; or .C extensions for your C++ source, .c for your C code, and .m
-;; for your Objective-C code:
+;; ANSI), one for editing Objective-C code, and one for editing Java
+;; code..  To use cc-mode, add the following to your .emacs file.
+;; This assumes you will use .cc or .C extensions for your C++ source,
+;; .c for your C code, .m for your Objective-C code, and .java for
+;; your Java code:
 ;;
 ;; (autoload 'c++-mode  "cc-mode" "C++ Editing Mode" t)
 ;; (autoload 'c-mode    "cc-mode" "C Editing Mode" t)
 ;; (autoload 'objc-mode "cc-mode" "Objective-C Editing Mode" t)
+;; (autoload 'java-mode "cc-mode" "Java Editing Mode" t)
 ;; (setq auto-mode-alist
-;;   (append '(("\\.C$"  . c++-mode)
-;;             ("\\.cc$" . c++-mode)
-;;             ("\\.c$"  . c-mode)
-;;             ("\\.h$"  . c-mode)
-;;             ("\\.m$"  . objc-mode)
+;;   (append '(("\\.C$"    . c++-mode)
+;;             ("\\.cc$"   . c++-mode)
+;;             ("\\.c$"    . c-mode)
+;;             ("\\.h$"    . c-mode)
+;;             ("\\.m$"    . objc-mode)
+;;             ("\\.java$" . java-mode)
 ;;            ) auto-mode-alist))
+;;
+;; You do not need the autoload calls if your Emacs comes with cc-mode
+;; automatically.
 
 ;; Several Majordomo mailing lists exist for those of you who are
 ;; interested in beta testing new versions: cc-mode-announce for
@@ -111,7 +125,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-19 04:17:11 $|$Revision: 4.268 $|
+;; |$Date: 1996-01-19 04:25:14 $|$Revision: 4.269 $|
 
 ;;; Code:
 
@@ -4794,7 +4808,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.268 $"
+(defconst c-version "$Revision: 4.269 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
