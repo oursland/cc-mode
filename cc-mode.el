@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.261.1.1 $
-;; Last Modified:   $Date: 1993-01-25 23:34:52 $
+;; Version:         $Revision: 2.261.1.2 $
+;; Last Modified:   $Date: 1993-01-29 22:25:39 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-25 23:34:52 $|$Revision: 2.261.1.1 $|
+;; |$Date: 1993-01-29 22:25:39 $|$Revision: 2.261.1.2 $|
 
 ;;; Code:
 
@@ -452,7 +452,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.261.1.1 $
+  "Major mode for editing C++ code.  $Revision: 2.261.1.2 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -673,7 +673,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.261.1.1 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.261.1.2 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1357,12 +1357,12 @@ c++-untame-characters."
 
 (defun c++-forward-sexp (&optional arg)
   (interactive "p")
-  (let ((parse-sexp-ignore-comments t))
+  (let ((parse-sexp-ignore-comments c++-emacs-is-fixed-p))
     (forward-sexp arg)))
 
 (defun c++-backward-sexp (&optional arg)
   (interactive "p")
-  (let ((parse-sexp-ignore-comments t))
+  (let ((parse-sexp-ignore-comments c++-emacs-is-fixed-p))
     (backward-sexp arg)))
 
 
@@ -2415,7 +2415,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.261.1.1 $"
+(defconst c++-version "$Revision: 2.261.1.2 $"
   "c++-mode version number.")
 
 (defun c++-version ()
