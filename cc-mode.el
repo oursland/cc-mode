@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-11 15:32:30 $
-;; Version:         $Revision: 2.42 $
+;; Last Modified:   $Date: 1992-05-11 21:35:45 $
+;; Version:         $Revision: 2.43 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-11 15:32:30 $|$Revision: 2.42 $|
+;; |$Date: 1992-05-11 21:35:45 $|$Revision: 2.43 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -175,7 +175,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
   "Address accepting submission of bug reports.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.42 $
+  "Major mode for editing C++ code.  $Revision: 2.43 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -775,9 +775,17 @@ if it is embedded in an expression."
 (defun c++-in-comment-p ()
   "Return t if in a C or C++ style comment as defined by mode's syntax."
   (save-excursion
-    (let ((here (point)))
-      (beginning-of-defun)
-      (nth 4 (parse-partial-sexp (point) here 0)))))
+    (let ((here (point))
+	  (bod (save-excursion (beginning-of-defun) (point))))
+      (or
+       ;; in a c++ style comment?
+       (nth 4 (parse-partial-sexp bod here 0))
+       ;; special case for checking c style comment
+       (let ((in-c-comment-p
+	      (progn (modify-syntax-entry ?\n " " c++-mode-syntax-table)
+		     (nth 4 (parse-partial-sexp bod here 0)))))
+	 (modify-syntax-entry ?\n ">" c++-mode-syntax-table)
+	 in-c-comment-p)))))
 
 (defun c++-in-open-string-p ()
   "Return non-nil if in an open string as defined by mode's syntax."
@@ -1509,7 +1517,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.42 $"
+(defconst c++-version "$Revision: 2.43 $"
   "c++-mode version number.")
 
 (defun c++-dump-state ()
