@@ -1,5 +1,7 @@
 Fri May 23 14:58:30 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
+	* Beta Release 5.07
+
 	* cc-vars.el: Added a require of the custom library, for Emacs
 	19.34 compatibility.
 
