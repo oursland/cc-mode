@@ -332,6 +332,7 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
     (stream-op             . c-lineup-streamop)
     (inclass               . +)
     (cpp-macro             . -1000)
+    (cpp-macro-cont        . c-lineup-dont-change)
     (friend                . 0)
     (objc-method-intro     . -1000)
     (objc-method-args-cont . c-lineup-ObjC-method-args)
