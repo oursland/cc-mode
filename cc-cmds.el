@@ -1777,17 +1777,16 @@ balanced expression is found."
 	end)
     (set-marker-insertion-type here t)
     (unwind-protect
-	(let ((start (save-excursion
+	(let ((start (save-restriction
 		       ;; Find the closest following open paren that
 		       ;; ends on another line.
-		       (save-restriction
-			 (narrow-to-region (point-min) (c-point 'eol))
-			 (let (next)
-			   (while (setq next (c-safe (scan-sexps (point) 1)))
-			     (goto-char next)))
-			 (c-forward-syntactic-ws)
-			 (when (eq (char-syntax (or (char-after) ?\ )) ?\()
-			   (point))))))
+		       (narrow-to-region (point-min) (c-point 'eol))
+		       (let (beg (end (point)))
+			 (while (and (setq beg (c-down-list-forward end))
+				     (setq end (c-up-list-forward beg))))
+			 (and beg
+			      (eq (char-syntax (char-before beg)) ?\()
+			      (1- beg))))))
 	  ;; sanity check
 	  (if (not start)
 	     (unless shutup-p
@@ -1817,12 +1816,11 @@ of realigning any line continuation backslashes, unless
 	  ;; on the line that opens the construct.
 	  (save-restriction
 	    (narrow-to-region (point-min) (c-point 'eol))
-	    (let (next)
-	      (while (setq next (c-safe (scan-sexps (point) 1)))
-		(goto-char next)))
-	    (c-forward-syntactic-ws)
-	    (when (eq (char-syntax (or (char-after) ?\ )) ?\()
-	      (forward-char)))
+	    (let (beg (end (point)))
+	      (while (and (setq beg (c-down-list-forward end))
+			  (setq end (c-up-list-forward beg))))
+	      (when (and beg (eq (char-syntax (char-before beg)) ?\())
+		(goto-char beg))))
 	  (setq start (c-least-enclosing-brace (c-parse-state)))
 	  (cond ((and start
 		      (progn (goto-char start)
