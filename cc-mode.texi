@@ -713,6 +713,8 @@ on, then that line is also re-indented.
 @cindex extern-lang-close syntactic symbol
 @cindex namespace-open symbol
 @cindex namespace-close symbol
+@cindex inexpr-class-open symbol
+@cindex inexpr-class-close symbol
 
 The insertion of newlines is controlled by the
 @code{c-hanging-braces-alist} variable.  This variable contains a
@@ -724,14 +726,23 @@ this list are: @code{class-open}, @code{class-close}, @code{defun-open},
 @code{brace-list-intro}, @code{brace-entry-open}, @code{block-open},
 @code{block-close}, @code{substatement-open},
 @code{statement-case-open}, @code{extern-lang-open},
-@code{extern-lang-close}, @code{namespace-open}, and
-@code{namespace-close}@footnote{Note that the aggregate constructs in
-Pike mode, @samp{(@{}, @samp{@})}, @samp{([},
-@samp{])}, and @samp{(<}, @samp{>)}, do not count
-as brace lists in this regard, even though they do for normal
-indentation purposes.  It's currently not possible to set automatic
-newlines on these constructs.}.  @xref{Syntactic Symbols} for a more
-detailed description of these syntactic symbols.
+@code{extern-lang-close}, @code{namespace-open}, @code{namespace-close},
+@code{inexpr-class-open}, and @code{inexpr-class-close}@footnote{Note
+that the aggregate constructs in Pike mode, @samp{(@{}, @samp{@})},
+@samp{([}, @samp{])}, and @samp{(<}, @samp{>)}, do not count as brace
+lists in this regard, even though they do for normal indentation
+purposes.  It's currently not possible to set automatic newlines on
+these constructs.}.  @xref{Syntactic Symbols} for a more detailed
+description of these syntactic symbols, except for
+@code{inexpr-class-open} and @code{inexpr-class-close}, which aren't
+actual syntactic symbols.
+
+The braces of anonymous inner classes in Java are given the special
+symbols @code{inexpr-class-open} and @code{inexpr-class-close}, so that
+they can be distinguished from the braces of normal classes@footnote{The
+braces of anonymous classes produces a combination of
+@code{inexpr-class}, and @code{class-open} or @code{class-close} in
+normal indentation analysis.}.
 
 @cindex Custom Indentation Functions
 The value associated with each syntactic symbol in this association list
@@ -771,19 +782,22 @@ For example, the default value of @code{c-hanging-braces-alist} is:
    (brace-entry-open)
    (substatement-open after)
    (block-close . c-snug-do-while)
-   (extern-lang-open after))
+   (extern-lang-open after)
+   (inexpr-class-open after)
+   (inexpr-class-close before))
 
 @end group
 @end example
 
-@noindent
-which says that @code{brace-list-open} and @code{brace-entry-open}
-braces should both hang on the
-right side, and allow subsequent text to follow on the same line as the
-brace.  Also, @code{substatement-open} and @code{extern-lang-open}
-braces should hang on the right side, but subsequent text should follow
-on the next line.  Here, in the @code{block-close} entry, you also see
-an example of using a function as an @var{ACTION}.
+@noindent which says that @code{brace-list-open} and
+@code{brace-entry-open} braces should both hang on the right side, and
+allow subsequent text to follow on the same line as the brace.  Also,
+@code{substatement-open}, @code{extern-lang-open}, and
+@code{inexpr-class-open} braces should hang on the right side, but
+subsequent text should follow on the next line.  The opposite holds for
+@code{inexpr-class-close} braces; they won't hang, but the following
+text continues on the same line.  Here, in the @code{block-close} entry,
+you also see an example of using a function as an @var{ACTION}.
 
 A word of caution: it is not a good idea to hang top-level construct
 introducing braces, such as @code{class-open} or @code{defun-open}.
