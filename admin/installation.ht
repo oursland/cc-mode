@@ -1,7 +1,7 @@
-Title: CC Mode
+Title: Installation Notes
 Author: cc-mode-help@python.org
 
-<h1>Installation notes</h1>
+<h2>Installation Notes</h2>
 
 <h3>Setting <code>load-path</code></h3>
 
