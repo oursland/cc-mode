@@ -1683,18 +1683,18 @@ argument, move backward.
 @findex beginning-of-statement (c-)
 @item @kbd{M-a} (@code{c-beginning-of-statement})
 Move point to the beginning of the innermost C statement.  If point is
-already at the beginning of a statement, it moves to the beginning of
-the closest preceding statement, even if that means moving into a block
-(you can use @kbd{M-C-b} to move over a balanced block).  With prefix
+already at the beginning of a statement, move to the beginning of the
+closest preceding statement, even if that means moving into a block (you
+can use @kbd{M-C-b} to move over a balanced block).  With prefix
 argument @var{n}, move back @var{n} @minus{} 1 statements.
 
-If point is within a comment, or next to a comment, this command moves
-by sentences instead of statements.
+If point is within or next to a comment or a string which spans more
+than one line, this command moves by sentences instead of statements.
 
 When called from a program, this function takes three optional
-arguments: the numeric prefix argument, a buffer position limit which is
-the farthest back to search, and a flag to enable moving by sentence
-inside comments.
+arguments: the repetition count, a buffer position limit which is the
+farthest back to search for the syntactic context, and a flag saying
+whether to do sentence motion in or near comments and multiline strings.
 
 @kindex M-e
 @findex c-end-of-statement
@@ -1706,13 +1706,13 @@ inside a nested block (use @kbd{M-C-f} to move to the other side of the
 block).  With prefix argument @var{n}, move forward @var{n} @minus{} 1
 statements.
 
-If point is within a comment, or next to a comment, this command moves
-by sentences instead of statements.
+If point is within or next to a comment or a string which spans more
+than one line, this command moves by sentences instead of statements.
 
 When called from a program, this function takes three optional
-arguments: the numeric prefix argument, a buffer position limit which is
-the farthest back to search, and a flag to enable moving by sentence
-inside comments.
+arguments: the repetition count, a buffer position limit which is the
+farthest back to search for the syntactic context, and a flag saying
+whether to do sentence motion in or near comments and multiline strings.
 
 @findex c-forward-into-nomenclature
 @findex forward-into-nomenclature (c-)
