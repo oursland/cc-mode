@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.76 $
-;; Last Modified:   $Date: 1994-09-01 14:52:47 $
+;; Version:         $Revision: 4.77 $
+;; Last Modified:   $Date: 1994-09-01 15:02:14 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-09-01 14:52:47 $|$Revision: 4.76 $|
+;; |$Date: 1994-09-01 15:02:14 $|$Revision: 4.77 $|
 
 ;;; Code:
 
@@ -956,7 +956,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.76 $
+cc-mode Revision: $Revision: 4.77 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -995,7 +995,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.76 $
+cc-mode Revision: $Revision: 4.77 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1032,7 +1032,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.76 $
+cc-mode Revision: $Revision: 4.77 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2911,7 +2911,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (while (and (not foundp)
 			  (progn
 			    (c-forward-syntactic-ws)
-			    (re-search-forward c-class-key search-end t)))
+			    (> search-end (point)))
+			  (re-search-forward c-class-key search-end t))
 		(setq class (match-beginning 0))
 		(if (c-in-literal search-start)
 		    nil			; its in a comment or string, ignore
@@ -4094,7 +4095,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.76 $"
+(defconst c-version "$Revision: 4.77 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
