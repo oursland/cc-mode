@@ -3043,6 +3043,7 @@ C++-style line comment doesn't count as inside it."
 	 (c-macro-start c-macro-start))
     (if (or (eq c-lit-type 'c)
 	    (and (eq c-lit-type 'c++)
+		 (not (looking-at "\\s *$"))
 		 (< (point)
 		    (1- (cdr (setq c-lit-limits
 				   (c-collect-line-comments c-lit-limits))))))
