@@ -326,8 +326,9 @@
 
 (defun c-lineup-dont-change (langelem)
   ;; Do not change the indentation of the current line
-  (back-to-indentation)
-  (current-column))
+  (save-excursion
+    (back-to-indentation)
+    (current-column)))
 
 
 
