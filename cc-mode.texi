@@ -154,6 +154,7 @@ packages for that.
 * Key Index::
 * Syntactic Symbol Index::
 
+@detailmenu
  --- The Detailed Node Listing ---
 
 Indentation Engine
@@ -201,6 +202,7 @@ Advanced Customizations
 * Custom Brace and Colon Hanging::
 * Customizing Semicolons and Commas::
 * Other Special Indentations::
+@end detailmenu
 @end menu
 
 
@@ -584,11 +586,11 @@ are turned off.
 
 The state of the minor modes is always reflected in the minor mode list
 on the modeline of the @ccmode{} buffer.  When auto-newline mode is
-enabled, you will see @samp{C/a} on the mode line @footnote{The @samp{C}
-would be replaced with @samp{C++}, @samp{ObjC}, @samp{Java}, @samp{IDL},
-or @samp{Pike} for the respective languages.}.  When hungry delete mode
-is enabled you would see @samp{C/h} and when both modes are enabled,
-you'd see @samp{C/ah}.
+enabled, you will see @samp{C/a} on the mode line@footnote{The @samp{C}
+would be replaced with the name of the language in question for the
+other languages @ccmode{} supports.}.  When hungry delete mode is
+enabled you would see @samp{C/h} and when both modes are enabled, you'd
+see @samp{C/ah}.
 
 @kindex C-c C-a
 @kindex C-c C-d
