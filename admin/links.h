@@ -7,4 +7,4 @@
 <a href="compat.php">Compatibility notes</a><br />
 <a href="lists.php">Mailing lists</a><br />
 <a href="anoncvs.php">Anonymous CVS</a><br />
-<a href="contrib.php">Contributed stuff</a><br />
+<a href="contrib.php">Contributions and links</a><br />

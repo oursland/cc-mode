@@ -1,6 +1,6 @@
 <!-- -*- html -*- -->
 <?php
-  $title = "Links and Contributions";
+  $title = "Contributions and Links";
   include ("header.h");
 ?>
 
