@@ -1011,7 +1011,7 @@ Key bindings:
 
 ;;; Autoload directives must be on the top level, so we construct an
 ;;; autoload form instead.
-;;;###autoload (autoload 'awk-mode "cc-mode" "Major mode for editing AWK code.")
+;;;###autoload (autoload 'awk-mode "cc-mode" "Major mode for editing AWK code." t)
 
 (defvar awk-mode-abbrev-table nil
   "Abbreviation table used in awk-mode buffers.")
