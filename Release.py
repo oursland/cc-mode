@@ -2,41 +2,37 @@
 
 """Manage releases of CC Mode.
 
-Usage: %(program)s [-b] [-t|-T] [-p] [-d] [-a] [-E] [-h]
+Usage: %(program)s [-b] [-t] [-p] [-d] [-h] revnum
 
 Where:
 
     --bump
-    -b      - increment the next minor rev number and bump
+    -b
+            set version number of versioned files to minor revision number
 
-    --tag
-    -t      - tag all releaseable files with new version number
-
-    --TAG
-    -T      - first untag the current version number then, retag
-              all releaseable files with new version number
+    --tag 
+    -t
+            tag all release files with minor revision number
 
     --package
-    -p      - create the distribution packages
+    -p
+            create the distribution packages
 
     --docs
     -d      - create the documentation packages
 
-    --all
-    -a      - do all of the above, except bump
-
-    --EMACS
-    -E      - package up for standard XEmacs/Emacs release
-
     --help
     -h      - this help message
+
+    revnum is required and is the minor revision number of this release
+    (e.g. for release 5.20, revnum would be `20').
 
 """
 
 import sys
 import os
 import string
-import regex
+import re
 import getopt
 
 program = sys.argv[0]
@@ -49,289 +45,240 @@ def usage(status):
 RELEASE = None
 RELEASE_NAME = ''
 
-version_cre = regex.compile(';*[ \t]+Version:[ \t]+\(5.[0-9]+\)')
-version_format = ';; Version:    %s\n'
+# for bumping
+VERSIONED_FILES = [
+    # file, prefix -- not grouped! trailing space is significant
+    ('ANNOUNCEMENT', 'CC Mode Version '),
+    ('MANIFEST', 'Manifest for CC Mode '),
+    ('README', 'README for CC Mode '),
+    ('cc-mode.el', r'\(defconst c-version "'),
+    ('cc-mode.texi', r'@center @titlefont\{CC Mode '),
+    ]
 
-extra_cre = regex.compile('(defconst c-version "\(5.[0-9]+\)"')
-extra_format = '(defconst c-version "%s"\n'
-
-ALL_FILES = [
-    ('cc-align.el',    version_cre, version_format),
-    ('cc-cmds.el',     version_cre, version_format),
-    ('cc-compat.el',   version_cre, version_format),
-    ('cc-defs.el',     version_cre, version_format),
-    ('cc-engine.el',   version_cre, version_format),
-    ('cc-langs.el',    version_cre, version_format),
-    ('cc-menus.el',    version_cre, version_format),
-    ('cc-mode.el',     version_cre, version_format),
-    ('cc-styles.el',   version_cre, version_format),
-    ('cc-vars.el',     version_cre, version_format),
-    ('cc-mode.texi',
-     regex.compile('@center @titlefont{CC Mode \(5.[0-9]+\)}'),
-     '@center @titlefont{CC Mode %s}\n'),
-    ('ChangeLog', None, None),
+# list of files to go to X/Emacs maintainers
+FILES = [
+    'cc-align.el',
+    'cc-cmds.el',
+    'cc-compat.el',
+    'cc-defs.el',
+    'cc-engine.el',
+    'cc-langs.el',
+    'cc-menus.el',
+    'cc-mode.el',
+    'cc-styles.el',
+    'cc-vars.el',
+    'cc-mode.texi',
     ]
 
 FATRELEASE_FILES = [
-    ('cc-guess.el',    version_cre, version_format),
-    ('cc-lobotomy.el', version_cre, version_format),
-    ('cc-mode-19.el',  version_cre, version_format),
-    ('cc-make.el',     version_cre, version_format),
-    ('ANNOUNCEMENT',
-     regex.compile('CC Mode Version \(5.[0-9]+\)'),
-     'CC Mode Version %s\n'),
-    ('MANIFEST',
-     regex.compile('Manifest for CC Mode \(5.[0-9]+\)'),
-     'Manifest for CC Mode %s\n'),
-    ('README',
-     regex.compile('README for CC Mode \(5.[0-9]+\)'),
-     'README for CC Mode %s\n'),
+    # should not contain ChangeLog.  That's packaged separately due to its
+    # size.  ChangeLog differences go to RMS, but those must be handcrafted.
+    'cc-guess.el',
+    'cc-lobotomy.el',
+    'cc-mode-19.el',
+    'cc-make.el',
+    'ANNOUNCEMENT',
+    'MANIFEST',
+    'README',
     ]
 
-FILES = ALL_FILES + FATRELEASE_FILES
-    
-
-WriteableError = 'WriteableError'
+ALL_FILES = FILES + FATRELEASE_FILES
 
 
-def bump_release():
-    # make sure there are no readable (i.e. checked out) files
-    for f, cre, format in FILES:
-	mode = os.stat(f)[0]
-	if mode & 0200:			# S_IWUSR
-	    raise WriteableError, f
-    bump = []
-    for f, cre, format in FILES:
-	if not cre or not format:
-	    bump.append((f, cre, format))
-	    continue
+
+def tag_release(revnum):
+    # first verify that the ChangeLog is up-to-date
+    fp = open("ChangeLog")
+    cre = re.compile('^[ \t]*[*] Release ' + revre)
+    while 1:
+	line = fp.readline()
+	if line == '':
+	    print '*****WARNING*****'
+	    print 'Could not find a Release tag in the ChangeLog!'
+	    sys.exit(1)
+	mo = cre.match(line)
+	if mo:
+	    docorev = mo.group('rev')
+	    if docorev <> revnum:
+		print '*****WARNING*****'
+		print 'ChangeLog has not been updated... exiting!'
+		sys.exit(1)
+	    break
+    fp.close()
+    os.system('cvs tag "Release_5_' + revnum + '"')
+
+
+
+def pkg_release(revnum):
+    dir = 'cc-mode-5.' + revnum
+    os.mkdir(dir)
+    # rwxrwsr-x
+    os.chmod(dir, 02775)
+    # first, make the X/Emacs maintainers' release
+    for f in FILES:
+	os.system('cp %s %s' % (f, dir))
+	# force permissions, though umask ought to cover this
+	os.chmod(os.path.join(dir, f), 0664)
+    # rmslb == RMS + SLB :-)
+    os.system('tar cvf - %s | gzip -c > Distrib/%s.rmslb.tar.gz' % (dir, dir))
+    # now make the general distribuition release
+    for f in FATRELEASE_FILES:
+	os.system('cp %s %s' % (f, dir))
+	# force permissions, though umask ought to cover this
+	os.chmod(os.path.join(dir, f), 0664)
+    os.system('tar cvf - %s | gzip -c > Distrib/%s.tar.gz' % (dir, dir))
+    # Now do the ChangeLog
+    os.system('cp ChangeLog ' + dir)
+    os.system('cd %s ; gzip -c ChangeLog > ../Distrib/ChangeLog.gz' % dir)
+    # clean up temporary directory
+    for f in ALL_FILES + ['ChangeLog']:
+	os.unlink(os.path.join(dir, f))
+    os.rmdir(dir)
+
+
+
+def make_docs():
+    dir = 'TeX'
+    os.mkdir(dir)
+    for f in ['texinfo.tex', 'cc-mode.texi', 'texi2html.py']:
+	os.system('cp %s %s' % (f, dir))
+	# force permissions, though umask ought to cover this
+	os.chmod(os.path.join(dir, f), 0664)
+
+    # now create the files
+    os.chdir(dir)
+    try:
+	#
+	# build the DVI file from which much else is derived.
+	#
+	os.system('texi2dvi cc-mode.texi')
+	os.system('gzip -c cc-mode.dvi > ../Distrib/cc-mode.dvi.gz')
+	#
+	# build the PS files, both forward and reverse
+	#
+	os.system('dvips -o cc-mode.ps cc-mode.dvi')
+	os.system('dvips -r -o cc-mode.rev.ps cc-mode.dvi')
+	os.system('gzip -c cc-mode.ps > ../Distrib/cc-mode.ps.gz')
+	os.system('gzip -c cc-mode.rev.ps > ../Distrib/cc-mode.rev.ps.gz')
+	#
+	# make the info files
+	#
+	os.system('makeinfo cc-mode.texi')
+	os.system('tar cf - cc-mode.info* | '
+		  'gzip -c > ../Distrib/cc-mode.info.tar.gz')
+	
+	#
+	# make the html files
+	#
+	os.mkdir('cc-mode.html')
+	os.system('makeinfo -E tmpfile cc-mode.texi')
+	os.system('python texi2html.py tmpfile cc-mode.html')
+	os.system('tar cf - cc-mode.html | '
+		  'gzip -c > ../Distrib/cc-mode.html.tar.gz')
+    finally:
+	#
+	# cleanup
+	#
+	os.chdir('..')
+	os.system('rm -rf %s' % dir)
+
+
+def bump_release(revnum):
+    compiled = {}
+    for f, prefix in VERSIONED_FILES:
+	cre = re.compile('^(?P<prefix>' +
+			 prefix +
+			 ')5.(?P<rev>[0-9]{2})(?P<suffix>.*)$')
+	compiled[f] = cre
 	print 'checking:', f
 	fp = open(f, 'r')
 	while 1:
 	    line = fp.readline()
 	    if not line:
 		print 'file has no matching version line:', f
-		break
-	    if cre.match(line) >= 0:
-		version = cre.group(1)
-		if version <> RELEASE:
-		    bump.append((f, cre, format))
-		break
+		sys.exit(1)
+	    mo = cre.match(line)
+	    if mo:
+		if int(mo.group('rev')) <> int(revnum) - 1:
+		    print 'file revision mismatch:', f
+		    sys.exit(1)
+		else:
+		    break
 	fp.close()
     # now bump them
-    for f, cre, format in bump:
+    for f, prefix in VERSIONED_FILES:
+	cre = compiled[f]
 	print 'bumping:', f
-	os.system('co -l ' + f)
-	if cre and format:
-	    fp_in = open(f, 'r')
-	    fp_out = open(f + '.new', 'w')
-	    matched = None
-	    while 1:
-		line = fp_in.readline()
-		if not line:
-		    break
-		# TBD: hackery since cc-mode.el is special
-		if f == 'cc-mode.el' and extra_cre.match(line) >= 0:
-		    fp_out.write(extra_format % RELEASE)
+	fp_in = open(f, 'r')
+	fp_out = open(f + '.new', 'w')
+	matched = 0
+	while 1:
+	    line = fp_in.readline()
+	    if not line:
+		break
+	    if not matched:
+		mo = cre.match(line)
+		if mo:
+		    prefix, suffix = mo.group('prefix', 'suffix')
+		    line = '%s5.%s%s\n' % (prefix, revnum, suffix)
 		    matched = 1
-		elif matched or cre.match(line) < 0:
-		    fp_out.write(line)
-		else:
-		    fp_out.write(format % RELEASE)
-		    if f <> 'cc-mode.el':
-			matched = 1
-	    fp_in.close()
-	    fp_out.close()
-	    os.rename(f + '.new', f)
-	os.system('ci -f -m"#Bumping to release revision %s" %s' %
-		  (RELEASE, f))
-	os.system('co -kv -u ' + f)
+	    fp_out.write(line)
+	fp_in.close()
+	fp_out.close()
+#	os.rename(f + '.new', f)
 
-
-def tag_release(untag_first):
-    # first verify that the ChangeLog is up-to-date
-    fp = open("ChangeLog")
-    cre = regex.compile('[ \t]*[*] Release \(5.[0-9]+\)')
-    while 1:
-	line = fp.readline()
-	if line == '':
-	    print '*****WARNING*****'
-	    print 'Could not find a Release tag in the ChangeLog'
-	    sys.exit(1)
-	if cre.match(line) >= 0:
-	    docorel = cre.group(1)
-	    if docorel <> RELEASE:
-		print '*****WARNING*****'
-		print 'ChangeLog has not been updated... exiting!'
-		sys.exit(1)
-	    break
-    fp.close()
-    for f, cre, format in FILES:
-	if untag_first:
-	    os.system('rcs -n%s %s' % (RELEASE_NAME, f))
-	os.system('rcs -n%s: %s' % (RELEASE_NAME, f))
-
-
-def get_release():
-    # file VERSION contains the next release's version number
-    global RELEASE, RELEASE_NAME
-    fp = open('VERSION', 'r')
-    [majnum, minnum] = map(string.atoi,
-			   string.split(string.strip(fp.read()), '.'))
-    fp.close()
-    version = `majnum` + '.' + `(minnum - 1)`
-    RELEASE = version
-    RELEASE_NAME = 'Release_' + string.translate(RELEASE,
-						 string.maketrans('.', '_'))
-    print 'This RELEASE     :', RELEASE
-    print 'This RELEASE_NAME:', RELEASE_NAME
-
-
-def incr_release():
-    fp = open('VERSION', 'r')
-    [major_rev, minor_rev] = string.split(fp.read(), '.')
-    fp.close()
-    fp = open('VERSION', 'w')
-    next_rev = string.atoi(minor_rev) + 1
-    if next_rev < 100:
-	format = '%s.%02d\n'
-    else:
-	format = '%s.%03d\n'
-    fp.write(format % (major_rev, next_rev))
-    fp.close()
-    get_release()
-
-
-def pkg_release(fat):
-#    dir = 'cc-mode-' + RELEASE
-    dir = 'cc-mode'
-    os.mkdir(dir)
-    os.chmod(dir, 02755)
-    #
-    if fat:
-	files = FILES
-    else:
-	files = ALL_FILES
-    for f, cre, format in files:
-	if f == 'ChangeLog':
-	    # package this up separately
-	    continue
-	os.system('cp %s %s' % (f, dir))
-	os.chmod(os.path.join(dir, f), 0644)
-    os.system('tar cvf - %s | gzip -c > %s.tar.gz' % (dir, dir))
-    os.system('cp ChangeLog ' + dir)
-    os.system('cd %s ; gzip -c ChangeLog > ../ChangeLog.gz' % dir)
-    for f, cre, format in files:
-	os.unlink(os.path.join(dir, f))
-    os.rmdir(dir)
-    
-
-
-def make_docs():
-    curdir = os.getcwd()
-    dir = os.path.join('..', 'Docs')
-    try:
-	os.chdir('TeX')
-	#
-	# build the DVI file from which much else is derived.  Don't
-	# compress this yet
-	#
-	os.system('texi2dvi cc-mode.texi')
-	os.system('cp cc-mode.dvi ' + dir)
-	#
-	# build the PS files, both forward and reverse, compress them later
-	#
-	os.system('dvips -o %s cc-mode.dvi' %
-		  os.path.join(dir, 'cc-mode.ps'))
-	os.system('dvips -r -o %s cc-mode.dvi' %
-		  os.path.join(dir, 'cc-mode.rev.ps'))
-	#
-	# make the info files
-	#
-	os.system('makeinfo cc-mode.texi')
-	os.system('tar cvf - cc-mode.info* | gzip -c > %s' %
-		  os.path.join(dir, 'cc-mode.info.tar.gz'))
-	#
-	# make the html files
-	#
-	os.system('makeinfo -E tmpfile cc-mode.texi')
-	os.system('python texi2html.py tmpfile cc-mode.html')
-	os.unlink('tmpfile')
-	os.system('tar cvf - cc-mode.html | gzip -c > %s' %
-		  os.path.join(dir, 'cc-mode.html.tar.gz'))
-	#
-	# now go back and compress those that weren't compressed yet
-	#
-	os.chdir(os.path.join(curdir, 'Docs'))
-	for f in ('cc-mode.ps', 'cc-mode.rev.ps', 'cc-mode.dvi'):
-	    os.system('gzip -f ' + f)
-    finally:
-	os.chdir(curdir)
-
+
 def main():
     try:
 	opts, args = getopt.getopt(
-	    sys.argv[1:], 'abtpdhET',
-	    ['all', 'bump', 'tag', 'TAG', 'package', 'docs', 'help', 'EMACS'])
+	    sys.argv[1:],
+	    'btpdh',
+	    ['bump', 'tag', 'package', 'docs', 'help'])
     except getopt.error, msg:
 	print msg
 	usage(1)
 
-    if args:
+    # required minor rev number
+    if len(args) <> 1:
 	usage(1)
+    revnum = args[0]
 
-    tag = None
-    untag_first = None
-    package = None
-    docs = None
-    fat = 1
-    help = None
-    bump = None
-    incr = None
+    # default options
+    tag = 0
+    package = 0
+    docs = 0
+    help = 0
+    bump = 0
 
     for opt, arg in opts:
 	if opt in ('-h', '--help'):
 	    help = 1
-	elif opt in ('-a', '--all'):
-	    tag = 1
-	    package = 1
-	    docs = 1
 	elif opt in ('-b', '--bump'):
 	    bump = 1
-	    incr = 1
-	elif opt in ('-t', '--tag', '-T', '--TAG'):
+	elif opt in ('-t', '--tag'):
 	    tag = 1
-	    if (opt[1] == '-' and opt[2] == 'T') or opt[1] == 'T':
-		untag_first = 1
-	elif opt in ('-p', '--package'):
+	elif opt in ('-p', '--package', '-P', '--PACKAGE'):
 	    package = 1
 	elif opt in ('-d', '--docs'):
 	    docs = 1
-	elif opt in ('-E', '--EMACS'):
-	    fat = None
 
     if help:
 	usage(0)
 
+    # very important!!!
     os.umask(002)
-    get_release()
     if tag:
-	tag_release(untag_first)
+	tag_release(revnum)
 
     if package:
-	pkg_release(fat)
+	pkg_release(revnum)
 
     if docs:
 	make_docs()
 
-    if incr:
-	incr_release()
-
     if bump:
-	try:
-	    bump_release()
-	except WriteableError, file:
-	    print 'Cannot bump because writeable file found:', file
+	bump_release(revnum)
 
+
 if __name__ == '__main__':
     main()
