@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-30 20:43:35 $
-;; Version:         $Revision: 2.125 $
+;; Last Modified:   $Date: 1992-06-30 20:52:33 $
+;; Version:         $Revision: 2.126 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-30 20:43:35 $|$Revision: 2.125 $|
+;; |$Date: 1992-06-30 20:52:33 $|$Revision: 2.126 $|
 
 
 ;; ======================================================================
@@ -231,7 +231,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.125 $
+  "Major mode for editing C++ code.  $Revision: 2.126 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -580,7 +580,8 @@ backward-delete-char-untabify."
     (let ((here (point-marker))
 	  (bolp (bolp)))
       (if (memq 'alignleft c++-electric-pound-behavior)
-	  (beginning-of-line))
+	  (progn (beginning-of-line)
+		 (delete-horizontal-space)))
       (insert-before-markers (make-string arg last-command-char))
       (if (not bolp)
 	  (goto-char here))
@@ -1918,7 +1919,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.125 $"
+(defconst c++-version "$Revision: 2.126 $"
   "c++-mode version number.")
 
 (defun c++-version ()
