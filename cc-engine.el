@@ -3922,10 +3922,9 @@ Keywords are recognized and not considered identifiers."
    ((eq offset '/)         (/ (- c-basic-offset) 2))
    ((numberp offset)       offset)
    ((functionp offset)     (c-evaluate-offset
-			    (apply offset
-				   (cons (car langelem)
-					 (car-safe (cdr langelem)))
-				   (cdr-safe (cdr langelem)))
+			    (funcall offset
+				     (cons (car langelem)
+					   (car-safe (cdr langelem))))
 			    langelem symbol))
    ((vectorp offset)       offset)
    ((null offset)          nil)
@@ -3983,7 +3982,8 @@ Keywords are recognized and not considered identifiers."
   (let ((indent 0) anchor)
     (catch 'done
       (while langelems
-	(let ((res (c-calc-offset (car langelems))))
+	(let* ((c-syntactic-element (car langelems))
+	       (res (c-calc-offset c-syntactic-element)))
 	  (if (vectorp res)
 	      (throw 'done (elt res 0))
 	    (unless anchor

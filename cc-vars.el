@@ -1369,6 +1369,14 @@ detailed info about the data each syntactic symbol provides.
 This is always bound dynamically.  It should never be set statically
 \(e.g. with `setq').")
 
+(defvar c-syntactic-element nil
+  "Variable containing the info regarding the current syntactic element
+during calls to the lineup functions.  The value is one of the
+elements in the list in `c-syntactic-context'.
+
+This is always bound dynamically.  It should never be set statically
+\(e.g. with `setq').")
+
 (defvar c-indentation-style nil
   "Name of the currently installed style.
 Don't change this directly; call `c-set-style' instead.")

@@ -51,13 +51,15 @@
 
 ;; Calling convention:
 ;;
-;; The calling convention for line-up functions is a bit complicated
-;; for historical reasons.  The first argument is a cons cell
-;; containing the syntactic symbol in the car, and the relpos
-;; (a.k.a. anchor position) in the cdr.  The cdr may be nil for
-;; syntactic symbols which doesn't have an associated relpos.  The
-;; rest of the arguments are any extra info the syntactic symbol might
-;; provide (see the comments in `c-offsets-alist' in cc-vars.el).
+;; The single argument is a cons cell containing the syntactic symbol
+;; in the car, and the relpos (a.k.a. anchor position) in the cdr.
+;; The cdr may be nil for syntactic symbols which doesn't have an
+;; associated relpos.
+;;
+;; Some syntactic symbols provide more information, usually more
+;; interesting positions.  The complete list for the syntactic element
+;; (beginning with the symbol itself) is available in
+;; `c-syntactic-element'.
 
 (defun c-lineup-topmost-intro-cont (langelem)
   "Line up declaration continuation lines zero or one indentation step.
