@@ -405,7 +405,10 @@
 			(progn
 			  (forward-sexp -1)
 			  (looking-at c-lambda-key))))))))
-	(- (current-column) (c-langelem-col langelem))
+	(- (current-column)
+	   (save-excursion
+	     (back-to-indentation)
+	     (current-column)))
       0)))
 
 (defun c-lineup-dont-change (langelem)
