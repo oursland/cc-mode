@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.27 $
-;; Last Modified:   $Date: 1993-09-28 23:11:04 $
+;; Version:         $Revision: 3.28 $
+;; Last Modified:   $Date: 1993-09-29 15:42:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-28 23:11:04 $|$Revision: 3.27 $|
+;; |$Date: 1993-09-29 15:42:00 $|$Revision: 3.28 $|
 
 ;;; Code:
 
@@ -542,7 +542,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.27 $
+  "Major mode for editing C++ code.  $Revision: 3.28 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -734,7 +734,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.27 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.28 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'.  Only real
 difference is that this sets up the buffer for editing C code, and it
@@ -2196,7 +2196,8 @@ BOD is the beginning of the C++ definition."
 		 (- (current-column)
 		    inclass-shift))))
 	    ;; CASE 3H: else first check to see if its a multiple
-	    ;; inheritance continuation line, but not a K&R C arg decl
+	    ;; inheritance continuation line, or continued member init
+	    ;; list, but not a K&R C arg decl
 	    ((and (not (eq major-mode 'c++-c-mode))
 		  (or (looking-at c++-inher-key)
 		      (looking-at c++-baseclass-key)))
@@ -2211,7 +2212,7 @@ BOD is the beginning of the C++ definition."
 		     (goto-char boi)
 		     (forward-char 1)
 		     (skip-chars-forward " \t"))
-		   (current-column))
+		   (- (current-column) inclass-shift))
 	       ;; nope, its probably a nested class
 	       0))
 	    ;; CASE 3I: we might be looking at the opening brace of a
@@ -2658,7 +2659,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.27 $"
+(defconst c++-version "$Revision: 3.28 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
