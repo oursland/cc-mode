@@ -116,6 +116,14 @@ indent such cases this way.
 Works with: arglist-cont-nonempty, arglist-close."
   (save-excursion
     (goto-char (1+ (elt c-syntactic-element 2)))
+
+    ;; Don't stop in the middle of a special brace list opener
+    ;; like "({".
+    (when c-special-brace-lists
+      (let ((special-list (c-looking-at-special-brace-list)))
+	(when special-list
+	  (goto-char (+ (car (car special-list)) 2)))))
+
     (let ((savepos (point))
 	  (eol (c-point 'eol)))
 
@@ -230,15 +238,25 @@ open parenthesis of the argument list, the indentation is
 of this \"DWIM\" measure.
 
 Works with: Almost all symbols, but are typically most useful on
-arglist-close, arglist-cont and arglist-cont-nonempty."
+arglist-close, brace-list-close, arglist-cont and arglist-cont-nonempty."
   (save-excursion
-    (if (memq (car langelem) '(arglist-cont-nonempty arglist-close))
-	(goto-char (elt c-syntactic-element 2))
-      (beginning-of-line)
-      (c-go-up-list-backward))
-    (forward-char 1)
+    (let (special-list paren-start savepos)
+      (if (memq (car langelem) '(arglist-cont-nonempty arglist-close))
+	  (goto-char (elt c-syntactic-element 2))
+	(beginning-of-line)
+	(c-go-up-list-backward))
 
-    (let ((savepos (point)))
+      (if (and c-special-brace-lists
+	       (setq special-list (c-looking-at-special-brace-list)))
+	  ;; Don't stop in the middle of a special brace list opener
+	  ;; like "({".
+	  (progn
+	    (setq paren-start (car (car special-list)))
+	    (goto-char (+ paren-start 2)))
+	(setq paren-start (point))
+	(forward-char 1))
+
+      (setq savepos (point))
       ;; Find out if an argument on the same line starts with an
       ;; unclosed open brace paren.  Note similar code in
       ;; `c-lineup-arglist' and `c-lineup-close-paren'.
@@ -252,7 +270,7 @@ arglist-close, arglist-cont and arglist-cont-nonempty."
 	  c-basic-offset
 
 	;; Normal case.  Indent to the arglist open paren.
-	(goto-char (1- savepos))
+	(goto-char paren-start)
 	(vector (current-column))))))
 
 (defun c-lineup-arglist-operators (langelem)
