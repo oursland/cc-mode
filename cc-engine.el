@@ -5063,7 +5063,8 @@ brace."
 		    (setq passed-bracket t))
 		'maybe))))
       (if (eq res 'maybe)
-	  (when (and block-follows
+	  (when (and c-recognize-paren-inexpr-blocks
+		     block-follows
 		     containing-sexp
 		     (eq (char-after containing-sexp) ?\())
 	    (goto-char containing-sexp)
@@ -5174,7 +5175,6 @@ brace."
 
     (let ((syntax-last c-syntactic-context)
 	  (boi (c-point 'boi))
-	  special-list
 	  ;; Set when we're on a label, so that we don't stop there.
 	  ;; FIXME: To be complete we should check if we're on a label
 	  ;; now at the start.
@@ -5253,11 +5253,12 @@ brace."
 
 	;; Don't stop in the middle of a special brace list opener
 	;; like "({".
-	(when (and c-special-brace-lists
-		   (setq special-list (c-looking-at-special-brace-list))
-		   (< (car (car special-list)) (point)))
-	  (setq containing-sexp (car (car special-list)))
-	  (goto-char containing-sexp))
+	(when c-special-brace-lists
+	  (let ((special-list (c-looking-at-special-brace-list)))
+	    (when (and special-list
+		       (< (car (car special-list)) (point)))
+	      (setq containing-sexp (car (car special-list)))
+	      (goto-char containing-sexp))))
 
 	(setq paren-state (c-whack-state-after containing-sexp paren-state)
 	      containing-sexp (c-most-enclosing-brace paren-state)
@@ -5274,13 +5275,13 @@ brace."
 	      ;; expression now.
 	      (progn
 		(when (/= paren-pos boi)
-		  (c-backward-syntactic-ws containing-sexp)
-		  (if (and (or (not (looking-at "\\>"))
-			       (not (c-on-identifier)))
-			   (not special-list)
+		  (if (and c-recognize-paren-inexpr-blocks
+			   (progn
+			     (c-backward-syntactic-ws containing-sexp)
+			     (or (not (looking-at "\\>"))
+				 (not (c-on-identifier))))
 			   (save-excursion
-			     (c-forward-syntactic-ws)
-			     (forward-char)
+			     (goto-char (1+ paren-pos))
 			     (c-forward-syntactic-ws)
 			     (eq (char-after) ?{)))
 		      ;; Stepped out of an in-expression statement.  This
