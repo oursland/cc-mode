@@ -339,7 +339,10 @@
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
 		  minor-mode-alist)))
-  )
+  ;; Install the function that ensures `c-state-cache' doesn't become
+  ;; invalid.
+  (make-local-variable 'after-change-functions)
+  (add-hook 'after-change-functions 'c-check-state-cache))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables.
