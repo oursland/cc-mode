@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-04 14:37:55 $
-;; Version:         $Revision: 2.27 $
+;; Last Modified:   $Date: 1992-05-04 19:18:59 $
+;; Version:         $Revision: 2.28 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-04 14:37:55 $|$Revision: 2.27 $|
+;; |$Date: 1992-05-04 19:18:59 $|$Revision: 2.28 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -77,6 +77,15 @@
   (modify-syntax-entry ?\n ">" c++-mode-syntax-table)
   (modify-syntax-entry ?\' "." c++-mode-syntax-table))
 
+(defvar c++-tab-always-indent
+  (if (boundp 'c-tab-always-indent) c-tab-always-indent t)
+  "*Controls the operation of the TAB key.
+t means always just reindent the current line.  nil means indent the
+current line only if point is at the left margin or in the line's
+indentation; otherwise insert a tab.  If not-nil-or-t, then the line
+is first reindented, then if the indentation hasn't changed, a tab is
+inserted. This last mode is useful if you like to add tabs after the #
+of preprocessor commands.")
 (defvar c++-block-close-brace-offset 0
   "*Extra indentation given to close braces which close a block. This
 does not affect braces which close a top-level construct (e.g. function).")
@@ -143,7 +152,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.27 $
+  "Major mode for editing C++ code.  $Revision: 2.28 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -159,12 +168,9 @@ Key bindings:
 
 These variables control indentation style. Those with names like
 c-<thing> are inherited from c-mode.  Those with names like
-c++-<thing> are unique for this mode.
+c++-<thing> are unique for this mode, or have extended functionality
+from their c-mode cousins.
 
- c-tab-always-indent
-    Non-nil means TAB in C mode should always reindent the current line,
-    regardless of where in the line point is when the TAB command is used.
-    Default is t.
  c-indent-level
     Indentation of C statements within surrounding block.
     The surrounding block's indentation is the indentation
@@ -186,6 +192,15 @@ c++-<thing> are unique for this mode.
     Extra indentation for line that is a label, or case or ``default:'', or
     ``public:'' or ``private:'', or ``protected:''.
 
+ c++-tab-always-indent
+    Controls the operation of the TAB key.  t means always just
+    reindent the current line.  nil means indent the current line only
+    if point is at the left margin or in the line's indentation;
+    otherwise insert a tab.  If not-nil-or-t, then the line is first
+    reindented, then if the indentation hasn't changed, a tab is
+    inserted. This last mode is useful if you like to add tabs after
+    the # of preprocessor commands. Default is value for
+    c-tab-always-indent.
  c++-block-close-brace-offset
     Extra indentation give to braces which close a block. This does
     not affect braces which close top-level constructs (e.g. functions).
@@ -566,14 +581,16 @@ for member initialization list."
 
 (defun c++-indent-command (&optional whole-exp)
   "Indent current line as C++ code, or in some cases insert a tab character.
-If c-tab-always-indent is non-nil (the default), always indent current line.
-Otherwise, indent the current line only if point is at the left margin
-or in the line's indentation; otherwise insert a tab.
+If c++-tab-always-indent is t (the default), always just indent the
+current line.  If nil, indent the current line only if point is at the
+left margin or in the line's indentation; otherwise insert a tab.  If
+not-nil-or-t, then tab is inserted only within literals (comments and
+strings) and inside preprocessor directives, but line is always reindented.
 
-A numeric argument, regardless of its value,
-means indent rigidly all the lines of the expression starting after point
-so that this line becomes properly indented.
-The relative indentation among the lines of the expression are preserved."
+A numeric argument, regardless of its value, means indent rigidly all
+the lines of the expression starting after point so that this line
+becomes properly indented.  The relative indentation among the lines
+of the expression are preserved."
   (interactive "P")
   (if whole-exp
       ;; If arg, always indent this line as C
@@ -581,7 +598,7 @@ The relative indentation among the lines of the expression are preserved."
       (let ((shift-amt (c++-indent-line))
 	    beg end)
 	(save-excursion
-	  (if c-tab-always-indent
+	  (if (eq c++-tab-always-indent t)
 	      (beginning-of-line))
 	  (setq beg (point))
 	  (forward-sexp 1)
@@ -591,12 +608,28 @@ The relative indentation among the lines of the expression are preserved."
 	  (setq beg (point)))
 	(if (> end beg)
 	    (indent-code-rigidly beg end shift-amt "#")))
-    (if (and (not c-tab-always-indent)
+    (cond ((and (eq c++-tab-always-indent nil)
+		(save-excursion
+		  (skip-chars-backward " \t")
+		  (not (bolp))))
+	   (insert-tab))
+	  ((eq c++-tab-always-indent t)
+	   (c++-indent-line))
+	  ((or (c++-in-open-string-p)
+	       (c++-in-comment-p)
+	       (save-excursion
+		 (back-to-indentation)
+		 (eq (char-after (point)) ?#)))
+	   (let ((boi (save-excursion
+		       (back-to-indentation)
+		       (point)))
+		 (indent-p nil))
+	     (c++-indent-line)
 	     (save-excursion
-	       (skip-chars-backward " \t")
-	       (not (bolp))))
-	(insert-tab)
-      (c++-indent-line))))
+	       (back-to-indentation)
+	       (setq indent-p (= (point) boi)))
+	     (if indent-p (insert-tab))))
+	  (t (c++-indent-line)))))
 
 (defun c++-indent-line ()
   "Indent current line as C++ code.
@@ -1400,7 +1433,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.27 $"
+(defconst c++-version "$Revision: 2.28 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
@@ -1435,7 +1468,7 @@ Send bug reports to c++-mode-help@anthem.nlm.nih.gov"
 		       'c++-default-macroize-column
 		       'c++-match-header-strongly
 		       'c++-defun-header-strong-struct-equivs
-		       'c-tab-always-indent
+		       'c++-tab-always-indent
 		       'c-indent-level
 		       'c-continued-statement-offset
 		       'c-continued-brace-offset
