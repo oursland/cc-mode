@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.358 $
-;; Last Modified:   $Date: 1997-02-06 00:39:55 $
+;; Version:         $Revision: 4.359 $
+;; Last Modified:   $Date: 1997-02-06 01:15:28 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -32,7 +32,7 @@
 
 ;;; Commentary:
 
-;; This package provides modes in GNU Emacs for editing C, C++, 
+;; This package provides modes in GNU Emacs for editing C, C++,
 ;; Objective-C, and Java code. It is intended to be a replacement for
 ;; c-mode.el (a.k.a. BOCM -- Boring Old C-Mode), and c++-mode.el
 ;; (a.k.a cplus-md.el and cplus-md1.el), both of which are ancestors
@@ -46,16 +46,17 @@
 ;; details are contained in an accompanying texinfo manual.
 
 ;; NOTE: This mode does not perform font-locking (a.k.a syntactic
-;; coloring, keyword highlighting, etc.).  Typically this is done by a
-;; package called font-lock.el which I do *not* maintain.  You should
-;; contact the Emacs maintainer for questions about coloring or
-;; highlighting in any language mode.
+;; coloring, keyword highlighting, etc.) for any of the supported
+;; modes.  Typically this is done by a package called font-lock.el
+;; which I do *not* maintain.  You should contact the Emacs
+;; maintainers for questions about coloring or highlighting in any
+;; language mode.
 
 ;; To submit bug reports, type "C-c C-b".  These will be sent to
 ;; bug-gnu-emacs@prep.ai.mit.edu as well as cc-mode-help@python.org,
 ;; and I'll read about them there (the former is mirrored as the
 ;; Usenet newsgroup gnu.emacs.bug).  Questions can sent to
-;; help-gnu-emacs@prep.ai.mit.edu (mirrored as gnu.emacs.help) or
+;; help-gnu-emacs@prep.ai.mit.edu (mirrored as gnu.emacs.help) and/or
 ;; cc-mode-help@python.org.  Please do not send bugs or questions to
 ;; my personal account.
 
@@ -196,8 +197,8 @@ point.  The sum of this calculation for each element in the syntactic
 list is the absolute offset for line being indented.
 
 If the syntactic element does not match any in the `c-offsets-alist',
-an error is generated if `c-strict-syntax-p' is non-nil, otherwise
-the element is ignored.
+an error is generated if `c-strict-syntax-p' is non-nil, otherwise the
+element is ignored.
 
 Actually, OFFSET can be an integer, a function, a variable, or one of
 the following symbols: `+', `-', `++', `--', `*', or `/'.  These
@@ -272,9 +273,9 @@ Here is the current list of valid syntactic element symbols:
 If t, hitting TAB always just indents the current line.  If nil,
 hitting TAB indents the current line if point is at the left margin or
 in the line's indentation, otherwise it insert a `real' tab character
-\(see note\).  If other than nil or t, then tab is inserted only within
-literals -- defined as comments and strings -- and inside preprocessor
-directives, but line is always reindented.
+\(see note\).  If other than nil or t, then tab is inserted only
+within literals -- defined as comments and strings -- and inside
+preprocessor directives, but line is always reindented.
 
 Note: The value of `indent-tabs-mode' will determine whether a real
 tab character will be inserted, or the equivalent number of space.
@@ -308,16 +309,16 @@ according to syntactic analysis via `c-offsets-alist', even when
 
 (defvar c-cleanup-list '(scope-operator)
   "*List of various C/C++/ObjC constructs to \"clean up\".
-These clean ups only take place when the auto-newline feature is turned
-on, as evidenced by the `/a' or `/ah' appearing next to the mode name.
-Valid symbols are:
+These clean ups only take place when the auto-newline feature is
+turned on, as evidenced by the `/a' or `/ah' appearing next to the
+mode name.  Valid symbols are:
 
  brace-else-brace    -- cleans up `} else {' constructs by placing entire
-                        construct on a single line.  This clean up only
-                        takes place when there is nothing but white
-                        space between the braces and the `else'.  Clean
-			up occurs when the open-brace after the `else'
-			is typed.
+                        construct on a single line.  This clean up
+                        only takes place when there is nothing but
+                        white space between the braces and the `else'.
+                        Clean up occurs when the open-brace after the
+                        `else' is typed.
  brace-elseif-brace  -- similar to brace-else-brace, but cleans up
                         `} else if {' constructs.
  empty-defun-braces  -- cleans up empty defun braces by placing the
@@ -424,7 +425,7 @@ Only currently supported behavior is `alignleft'.")
 (defvar c-progress-interval 5
   "*Interval used to update progress status during long re-indentation.
 If a number, percentage complete gets updated after each interval of
-that many seconds.   Set to nil to inhibit updating.  This is only
+that many seconds.  Set to nil to inhibit updating.  This is only
 useful for Emacs 19.")
 
 (defconst c-style-alist
@@ -639,6 +640,11 @@ The list of variables to buffer localize are:
     )
   "Basic XEmacs 19 menu for C/C++/ObjC/Java modes.")
 
+
+;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
+
+;; imenu integration
 (defvar cc-imenu-c++-generic-expression
   (` 
    ((nil
@@ -685,6 +691,10 @@ The list of variables to buffer localize are:
   cc-imenu-c++-generic-expression
   "Imenu generic expression for C mode.  See `imenu-generic-expression'.")
 
+;(defvar cc-imenu-objc-generic-expression
+;  ())
+; Please contribute one!
+
 (defvar cc-imenu-java-generic-expression
   (`
    ((nil
@@ -706,9 +716,6 @@ The list of variables to buffer localize are:
 
 
 
-;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
-
 ;; Shut the byte-compiler up. Requires Emacs 19 or JWZ's improved
 ;; byte-compiler. Otherwise, comment this line out and ignore
 ;; any warnings.
@@ -5094,7 +5101,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.358 $"
+(defconst c-version "$Revision: 4.359 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
