@@ -310,7 +310,8 @@ Works with: inher-cont, member-init-cont."
       (if (or (eolp)
 	      (looking-at c-comment-start-regexp))
 	  (c-forward-syntactic-ws here))
-      (vector (current-column))
+      (if (< (point) here)
+	  (vector (current-column)))
       )))
 
 (defun c-lineup-java-inher (langelem)
