@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.267 $
-;; Last Modified:   $Date: 1993-01-25 23:30:38 $
+;; Version:         $Revision: 2.267.1.1 $
+;; Last Modified:   $Date: 1993-01-27 22:21:08 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-25 23:30:38 $|$Revision: 2.267 $|
+;; |$Date: 1993-01-27 22:21:08 $|$Revision: 2.267.1.1 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.267 $
+  "Major mode for editing C++ code.  $Revision: 2.267.1.1 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.267 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.267.1.1 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1812,6 +1812,7 @@ BOD is the beginning of the C++ definition."
 		       (progn (goto-char (or containing-sexp bod))
 			      (current-indentation))
 		     ;; member init, so add offset
+		     ;; TBD: we should check for 1st line after in MI
 		     c++-member-init-indent)
 		 (if (or (= (preceding-char) ?})
 			 (= (preceding-char) ?\))
@@ -1848,7 +1849,10 @@ BOD is the beginning of the C++ definition."
 			 (if (looking-at
 			      (concat c++-class-key
 				      "[ \t]+"
-				      "\\(\\w+[ \t]*:[ \t]*\\)?"))
+				      "\\(\\w+[ \t]*:[ \t]*\\)?"
+				      (if (eq major-mode 'c++-c-mode)
+					  ".*[^;]\\s *$"
+					"")))
 			     (if (= char-before-ip ?,)
 				 (progn (goto-char (match-end 0))
 					(current-column))
@@ -1888,14 +1892,14 @@ BOD is the beginning of the C++ definition."
 				 ;; its already incorporated by
 				 ;; default in current-column
 				 (- (cond
-				     ((save-excursion
-					(c++-cont-indent
-					 indent-point char-before-ip
-					 (or containing-sexp bod))))
-				     ((= char-before-ip ?\;)
-				      (goto-char (or containing-sexp bod))
-				      (+ (current-indentation)
-					 inclass-shift))
+				     ;;((save-excursion
+				     ;;(c++-cont-indent
+				     ;;indent-point char-before-ip
+				     ;;(or containing-sexp bod))))
+				     ;;((= char-before-ip ?\;)
+				     ;;(goto-char (or containing-sexp bod))
+				     ;;(+ (current-indentation)
+				     ;;inclass-shift))
 				     (t (current-column)))
 				    inclass-shift)
 				 )))))))))
@@ -2432,7 +2436,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.267 $"
+(defconst c++-version "$Revision: 2.267.1.1 $"
   "c++-mode version number.")
 
 (defun c++-version ()
