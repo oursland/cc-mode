@@ -91,6 +91,9 @@
 
 ;;;###autoload
 (defun c-initialize-cc-mode ()
+  ;; sigh.  give in to the pressure
+  (or (fboundp 'functionp)
+      (require 'cc-mode-19))
   ;; make sure all necessary components of CC Mode are loaded in.
   (let ((initprop 'cc-mode-is-initialized))
     (require 'cc-vars)
