@@ -136,7 +136,6 @@ Key bindings:
   (c-common-init)
   (setq comment-start "/* "
 	comment-end   " */"
-	comment-multi-line nil
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C-class-key
 	c-baseclass-key nil
@@ -175,7 +174,6 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
-	comment-multi-line nil
 	c-conditional-key c-C++-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
 	c-class-key c-C++-class-key
@@ -216,7 +214,6 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end   ""
-	comment-multi-line nil
 	c-conditional-key c-C-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
  	c-class-key c-ObjC-class-key
@@ -259,7 +256,6 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
  	comment-end   ""
- 	comment-multi-line nil
  	c-conditional-key c-Java-conditional-key
  	c-comment-start-regexp c-Java-comment-start-regexp
   	c-class-key c-Java-class-key
@@ -305,7 +301,6 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
-	comment-multi-line nil
 	c-conditional-key c-C++-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
 	c-class-key c-C++-class-key
