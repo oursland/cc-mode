@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 1988,94,96,2000,01,02,03  Free Software Foundation, Inc.
 
-;; Author: Alan Mackenzie (originally based on awk-mode.el)
+;; Author: Alan Mackenzie <acm@muc.de> (originally based on awk-mode.el)
 ;; Maintainer: FSF
 ;; Keywords: AWK, cc-mode, unix, languages
 
@@ -599,20 +599,20 @@
 
   ;; First put the properties on the delimiters.
   (cond ((eq end (point-max))           ; string/regexp terminated by EOB
-         (put-text-property beg (1+ beg) 'syntax-table '(15))) ; (15) = "string fence"
+         (c-put-char-property beg 'syntax-table '(15))) ; (15) = "string fence"
         ((/= (char-after beg) (char-after end)) ; missing end delimiter
-         (put-text-property beg (1+ beg) 'syntax-table '(15))
-         (put-text-property end (1+ end) 'syntax-table '(15)))
+         (c-put-char-property beg 'syntax-table '(15))
+         (c-put-char-property end 'syntax-table '(15)))
         ((eq (char-after beg) ?/)       ; Properly bracketed regexp
-         (put-text-property beg (1+ beg) 'syntax-table '(7)) ; (7) = "string"
-         (put-text-property end (1+ end) 'syntax-table '(7)))
+         (c-put-char-property beg 'syntax-table '(7)) ; (7) = "string"
+         (c-put-char-property end 'syntax-table '(7)))
         (t))                       ; Properly bracketed string: Nothing to do.
   ;; Now change the properties of any escaped "s in the string to punctuation.
   (save-excursion
     (goto-char (1+ beg))
     (or (eobp)
         (while (search-forward "\"" end t)
-          (put-text-property (1- (point)) (point) 'syntax-table '(1))))))
+          (c-put-char-property (1- (point)) 'syntax-table '(1))))))
 
 (defun c-awk-syntax-tablify-string ()
   ;; Point is at the opening " or _" of a string.  Set the syntax-table
@@ -691,7 +691,7 @@
   (let (anchor
 	(anchor-state-/div nil)) ; t means a following / would be a div sign.
     (c-awk-beginning-of-logical-line) ; ACM 2002/7/21.  This is probably redundant.
-    (put-text-property (point) lim 'syntax-table nil)
+    (c-clear-char-properties (point) lim 'syntax-table)
     (search-forward-regexp c-awk-harmless-lines+-here-re nil t) ; skip harmless lines.
 
     ;; Once round the next loop for each string, regexp, or div sign
