@@ -393,10 +393,10 @@
 	  (set-buffer-modified-p nil)
 	  (switch-to-buffer testbuf)
 	  (error "Indentation regression found in file %s" filename))
+	(set-buffer save-buf)
+	(goto-char save-point)
 	(not error-found-p)
-	))
-    (set-buffer save-buf)
-    (goto-char save-point)))
+	))))
 
 (defun do-all-tests (&optional resetp)
   (interactive "P")
