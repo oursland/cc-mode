@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.386 $
-;; Last Modified:   $Date: 1997-03-20 17:00:31 $
+;; Version:         $Revision: 4.387 $
+;; Last Modified:   $Date: 1997-03-21 20:25:33 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -32,18 +32,19 @@
 
 ;;; Commentary:
 
-;; This package provides modes in GNU Emacs for editing C, C++,
-;; Objective-C, and Java code. It is intended to be a replacement for
-;; c-mode.el (a.k.a. BOCM -- Boring Old C-Mode), c++-mode.el,
-;; cplus-md.el, and cplus-md1.el, all of which are in some way
-;; ancestors of this file.  A number of important improvements have
-;; been made, briefly: complete K&R C, ANSI C, `ARM' C++, Objective-C,
-;; and Java support with consistent indentation across all modes, more
-;; intuitive indentation controlling variables, compatibility across
-;; all known Emacsen, nice new features, and tons of bug fixes.  This
-;; package is called "CC Mode" to distinguish it from its ancestors,
-;; but there is no cc-mode command.  Usage and programming details are
-;; contained in an accompanying texinfo manual.
+;; This package provides GNU Emacs major modes for editing C, C++,
+;; Objective-C, and Java code.  As of the latest Emacs and XEmacs
+;; releases, it is the default package for editing these languages.
+;; This package is called "CC Mode", and should be spelled exactly
+;; this way.  It supports K&R and ANSI C, ANSI C++, Objective-C, and
+;; Java, with a consistent indentation model across all modes.  This
+;; indentation model is intuitive and very flexible, so that almost
+;; any desired style of indentation can be supported.  Installation,
+;; usage, and programming details are contained in an accompanying
+;; texinfo manual.
+
+;; CC Mode's immediate ancestors were, c++-mode.el, cplus-md.el, and
+;; cplus-md1.el..
 
 ;; NOTE: This mode does not perform font-locking (a.k.a syntactic
 ;; coloring, keyword highlighting, etc.) for any of the supported
@@ -67,22 +68,6 @@
 ;; necessary granularity.  Let me say this again: YOU CAN IGNORE ALL
 ;; BYTE-COMPILER WARNINGS (you'd be surprised at how many people don't
 ;; follow this advice :-).
-
-;; As of this writing (24-Feb-1997), CC Mode comes with the latest
-;; Emacs and XEmacs distributions (19.34 and 19.14 respectively), but
-;; is no longer pre-loaded by default.  To use the latest version of
-;; CC Mode, you need only make sure that this copy of cc-mode.el is
-;; found first on your load-path.
-
-;; If your Emacs is pre-loaded with any version of cc-mode.el,
-;; c-mode.el, or c++-mode.el, you will need to consult the
-;; cc-mode.texinfo manual for details on upgrading your Emacs.
-
-;; There are four major mode entry points provided by this package,
-;; one for editing C++ code, one for editing C code (both K&R and
-;; ANSI), one for editing Objective-C code, and one for editing Java
-;; code.  The commands are M-x c-mode, M-x c++-mode, M-x objc-mode,
-;; and M-x java-mode.
 
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
@@ -5218,7 +5203,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.386 $"
+(defconst c-version "$Revision: 4.387 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
