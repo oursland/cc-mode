@@ -1182,7 +1182,9 @@ isn't moved."
 	      ;; check for else if... skip over
 	      (let ((here (point)))
 		(c-safe (c-forward-sexp -1))
-		(if (looking-at "\\<else\\>[ \t]+\\<if\\>[^_]")
+		(if (looking-at (concat "\\<else"
+					"\\([ \t\n]\\|\\\\\n\\)+"
+					"if\\>[^_]"))
 		    nil
 		  (setq if-level (1- if-level))
 		  (goto-char here))))
@@ -1208,15 +1210,20 @@ isn't moved."
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
   ;; statements in parentheses. No error checking is performed.
-  (c-forward-sexp (cond
-		   ;; else if()
-		   ((looking-at "\\<else\\>[ \t]+\\<if\\>\\([^_]\\|$\\)") 3)
-		   ;; do, else, try, finally
-		   ((looking-at
-		     "\\<\\(do\\|else\\|try\\|finally\\)\\>\\([^_]\\|$\\)")
-		    1)
-		   ;; for, if, while, switch, catch, synchronized, foreach
-		   (t 2))))
+  (c-with-syntax-table c-no-escape-syntax-table
+    (c-forward-sexp (cond
+		     ;; else if()
+		     ((looking-at (concat "\\<else"
+					  "\\([ \t\n]\\|\\\\\n\\)+"
+					  "if\\>\\([^_]\\|$\\)"))
+		      3)
+		     ;; do, else, try, finally
+		     ((looking-at (concat "\\<\\("
+					  "do\\|else\\|try\\|finally"
+					  "\\)\\>\\([^_]\\|$\\)"))
+		      1)
+		     ;; for, if, while, switch, catch, synchronized, foreach
+		     (t 2)))))
 
 (defun c-beginning-of-closest-statement (&optional lim)
   ;; Go back to the closest preceding statement start.
@@ -1773,6 +1780,99 @@ isn't moved."
     inclass-p))
 
 
+(defvar syntax)
+(defvar syntactic-relpos)
+
+(defun c-guess-continued-construct (indent-point
+				    char-after-ip
+				    placeholder
+				    after-cond-placeholder
+				    containing-sexp
+				    lim)
+  ;; This function contains the decision tree reached through both
+  ;; CASE 18 and CASE 10.  It's a continued statement or top level
+  ;; construct of some kind.
+  (let (special-brace-list)
+    (goto-char indent-point)
+    (skip-chars-forward " \t")
+    (cond
+     ;; (CASE A removed.)
+     ;; CASE B: open braces for class or brace-lists
+     ((setq special-brace-list
+	    (or (and c-special-brace-lists
+		     (c-looking-at-special-brace-list))
+		(eq char-after-ip ?{)))
+      (cond
+       ;; CASE B.1: class-open
+       ((save-excursion
+	  (goto-char indent-point)
+	  (skip-chars-forward " \t{")
+	  (let ((decl (c-search-uplist-for-classkey (c-parse-state))))
+	    (and decl
+		 (setq placeholder (aref decl 0)))
+	    ))
+	(c-add-syntax 'class-open placeholder))
+       ;; CASE B.2: brace-list-open
+       ((or (consp special-brace-list)
+	    (save-excursion
+	      (goto-char placeholder)
+	      (looking-at "enum\\>[^_]"))
+	    (save-excursion
+	      (goto-char indent-point)
+	      (while (and (> (point) placeholder)
+			  (= (c-backward-token-1 1 t) 0)
+			  (/= (char-after) ?=)))
+	      (eq (char-after) ?=)))
+	;; The most semantically accurate symbol here is
+	;; brace-list-open, but we report it simply as a statement-cont.
+	;; The reason is that one normally adjusts brace-list-open for
+	;; brace lists as top-level constructs, and brace lists inside
+	;; statements is a completely different context.
+	(goto-char indent-point)
+	(c-beginning-of-closest-statement)
+	(c-add-syntax 'statement-cont (c-point 'boi)))
+       ;; CASE B.3: The body of a function declared inside a normal
+       ;; block.  This can only occur in Pike.
+       ((and (c-major-mode-is 'pike-mode)
+	     (progn
+	       (goto-char indent-point)
+	       (not (c-looking-at-bos))))
+	(c-beginning-of-closest-statement)
+	(c-add-syntax 'defun-open (c-point 'boi)))
+       ;; CASE B.4: catch-all for unknown construct.
+       (t
+	;; Can and should I add an extensibility hook here?  Something
+	;; like c-recognize-hook so support for unknown constructs could
+	;; be added.  It's probably a losing proposition, so I dunno.
+	(goto-char placeholder)
+	(c-add-syntax 'statement-cont (c-point 'boi))
+	(c-add-syntax 'block-open))
+       ))
+     ;; CASE C: iostream insertion or extraction operator
+     ((looking-at "<<\\|>>")
+      (goto-char (or after-cond-placeholder placeholder))
+      (while (and (re-search-forward "<<\\|>>" indent-point 'move)
+		  (c-in-literal placeholder)))
+      ;; if we ended up at indent-point, then the first streamop is on a
+      ;; separate line. Indent the line like a statement-cont instead
+      (if (/= (point) indent-point)
+	  (c-add-syntax 'stream-op (c-point 'boi))
+	(c-backward-syntactic-ws lim)
+	(c-add-syntax 'statement-cont (c-point 'boi))))
+     ;; CASE D: continued statement. find the accurate beginning of
+     ;; statement or substatement
+     (t
+      (c-beginning-of-statement-1 after-cond-placeholder)
+      ;; KLUDGE ALERT!  c-beginning-of-statement-1 can leave
+      ;; us before the lim we're passing in.  It should be
+      ;; fixed, but I'm worried about side-effects at this
+      ;; late date.  Fix for v5.
+      (goto-char (or (and after-cond-placeholder
+			  (max after-cond-placeholder (point)))
+		     (point)))
+      (c-add-syntax 'statement-cont (point)))
+     )))
+
 ;; This function implements the main decision tree for determining the
 ;; syntactic analysis of the current line of code.  Yes, it's huge and
 ;; bloated!
@@ -1895,6 +1995,80 @@ isn't moved."
 	  (c-add-syntax tmpsymbol (point))
 	  (unless (eq (point) (cdr placeholder))
 	    (c-add-syntax (car placeholder))))
+	 ;; CASE 11: an else clause?
+	 ((looking-at "else\\>[^_]")
+	  (c-backward-to-start-of-if lim)
+	  (c-add-syntax 'else-clause (c-point 'boi)))
+	 ;; CASE 12: while closure of a do/while construct?
+	 ((and (looking-at "while\\>[^_]")
+	       (save-excursion
+		 (c-backward-to-start-of-do lim)
+		 (setq placeholder (point))
+		 (looking-at "do\\>[^_]")))
+	  (goto-char placeholder)
+	  (c-add-syntax 'do-while-closure (c-point 'boi)))
+	 ;; CASE 13: A catch or finally clause?  This case is simpler
+	 ;; than if-else and do-while, because a block is required
+	 ;; after every try, catch and finally.
+	 ((save-excursion
+	    (and (cond ((c-major-mode-is 'c++-mode)
+			(looking-at "catch\\>[^_]"))
+		       ((c-major-mode-is 'java-mode)
+			(looking-at "\\(catch\\|finally\\)\\>[^_]")))
+		 (c-safe (c-backward-sexp) t)
+		 (eq (char-after) ?{)
+		 (c-safe (c-backward-sexp) t)
+		 (if (eq (char-after) ?\()
+		     (c-safe (c-backward-sexp) t)
+		   t)
+		 (looking-at "\\(try\\|catch\\)\\>[^_]")
+		 (setq placeholder (c-point 'boi))))
+	  (c-add-syntax 'catch-clause placeholder))
+	 ;; CASE 18: A substatement we can recognize by keyword.
+	 ((save-excursion
+	    (and c-conditional-key
+		 (not (memq char-before-ip '(?\; ?:)))
+		 (or (not (eq char-before-ip ?}))
+		     (c-looking-at-inexpr-block-backward containing-sexp))
+		 (> (point)
+		    (progn
+		      ;; Ought to cache the result here.
+		      (c-beginning-of-statement-1 lim)
+		      ;;(c-forward-syntactic-ws)
+		      (setq placeholder (point))))
+		 (if (looking-at c-block-stmt-2-kwds)
+		     ;; Require a parenthesis after these keywords.
+		     ;; Necessary to catch e.g. synchronized in Java,
+		     ;; which can be used both as statement and
+		     ;; modifier.
+		     (and (= (c-forward-token-1 1 nil) 0)
+			  (eq (char-after) ?\())
+		   (looking-at c-conditional-key))))
+	  (let ((after-cond-placeholder
+		 (save-excursion
+		   (goto-char placeholder)
+		   (c-safe (c-skip-conditional))
+		   (c-forward-syntactic-ws)
+		   (if (eq (char-after) ?\;)
+		       (progn
+			 (forward-char 1)
+			 (c-forward-syntactic-ws)))
+		   (point))))
+	    (if (>= after-cond-placeholder indent-point)
+		;; CASE 18A: Simple substatement.
+		(progn
+		  (goto-char placeholder)
+		  (if (eq char-after-ip ?{)
+		      (c-add-syntax 'substatement-open (c-point 'boi))
+		    (c-add-syntax 'substatement (c-point 'boi))))
+	      ;; CASE 18B: Some other substatement.  This is shared
+	      ;; with CASE 10.
+	      (c-guess-continued-construct indent-point
+					   char-after-ip
+					   placeholder
+					   after-cond-placeholder
+					   lim
+					   lim))))
 	 ;; CASE 5: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
@@ -2516,18 +2690,16 @@ isn't moved."
 		  (c-add-syntax 'brace-list-entry (point))
 		  ))			; end CASE 9D
 	     ))))			; end CASE 9
-	 ;; CASE 10: A continued statement
+	 ;; CASE 10: A continued statement or top level construct.
 	 ((and (not (memq char-before-ip '(?\; ?:)))
 	       (or (not (eq char-before-ip ?}))
 		   (c-looking-at-inexpr-block-backward containing-sexp))
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
-		    (c-forward-syntactic-ws)
+		    ;(c-forward-syntactic-ws)
 		    (setq placeholder (point))))
 	       (/= placeholder containing-sexp))
-	  (goto-char indent-point)
-	  (skip-chars-forward " \t")
 	  (let ((after-cond-placeholder
 		 (save-excursion
 		   (goto-char placeholder)
@@ -2541,127 +2713,15 @@ isn't moved."
 			       (c-forward-syntactic-ws)))
 			 (point))
 		     nil))))
-	    (cond
-	     ;; CASE 10A: substatement
-	     ((and after-cond-placeholder
-		   (>= after-cond-placeholder indent-point))
-	      (goto-char placeholder)
-	      (if (eq char-after-ip ?{)
-		  (c-add-syntax 'substatement-open (c-point 'boi))
-		(c-add-syntax 'substatement (c-point 'boi))))
-	     ;; CASE 10B: open braces for class or brace-lists
-	     ((setq special-brace-list
-		    (or (and c-special-brace-lists
-			     (c-looking-at-special-brace-list))
-			(eq char-after-ip ?{)))
-	      (cond
-	       ;; CASE 10B.1: class-open
-	       ((save-excursion
-		  (goto-char indent-point)
-		  (skip-chars-forward " \t{")
-		  (let ((decl (c-search-uplist-for-classkey (c-parse-state))))
-		    (and decl
-			 (setq placeholder (aref decl 0)))
-		    ))
-		(c-add-syntax 'class-open placeholder))
-	       ;; CASE 10B.2: brace-list-open
-	       ((or (consp special-brace-list)
-		    (save-excursion
-		      (goto-char placeholder)
-		      (looking-at "\\<enum\\>"))
-		    (save-excursion
-		      (goto-char indent-point)
-		      (while (and (> (point) placeholder)
-				  (= (c-backward-token-1 1 t) 0)
-				  (/= (char-after) ?=)))
-		      (eq (char-after) ?=)))
-		;; The most semantically accurate symbol here is
-		;; brace-list-open, but we report it simply as a
-		;; statement-cont.  The reason is that one normally
-		;; adjusts brace-list-open for brace lists as
-		;; top-level constructs, and brace lists inside
-		;; statements is a completely different context.
-		(goto-char indent-point)
-		(c-beginning-of-closest-statement)
-		(c-add-syntax 'statement-cont (c-point 'boi)))
-	       ;; CASE 10B.3: The body of a function declared inside a
-	       ;; normal block.  This can only occur in Pike.
-	       ((and (c-major-mode-is 'pike-mode)
-		     (progn
-		       (goto-char indent-point)
-		       (not (c-looking-at-bos))))
-		(c-beginning-of-closest-statement)
-		(c-add-syntax 'defun-open (c-point 'boi)))
-	       ;; CASE 10B.4: catch-all for unknown construct.
-	       (t
-		;; Can and should I add an extensibility hook here?
-		;; Something like c-recognize-hook so support for
-		;; unknown constructs could be added.  It's probably a
-		;; losing proposition, so I dunno.
-		(goto-char placeholder)
-		(c-add-syntax 'statement-cont (c-point 'boi))
-		(c-add-syntax 'block-open))
-	       ))
-	     ;; CASE 10C: iostream insertion or extraction operator
-	     ((looking-at "<<\\|>>")
-	      (goto-char placeholder)
-	      (and after-cond-placeholder
-		   (goto-char after-cond-placeholder))
-	      (while (and (re-search-forward "<<\\|>>" indent-point 'move)
-			  (c-in-literal placeholder)))
-	      ;; if we ended up at indent-point, then the first
-	      ;; streamop is on a separate line. Indent the line like
-	      ;; a statement-cont instead
-	      (if (/= (point) indent-point)
-		  (c-add-syntax 'stream-op (c-point 'boi))
-		(c-backward-syntactic-ws lim)
-		(c-add-syntax 'statement-cont (c-point 'boi))))
-	     ;; CASE 10D: continued statement. find the accurate
-	     ;; beginning of statement or substatement
-	     (t
-	      (c-beginning-of-statement-1 after-cond-placeholder)
-	      ;; KLUDGE ALERT!  c-beginning-of-statement-1 can leave
-	      ;; us before the lim we're passing in.  It should be
-	      ;; fixed, but I'm worried about side-effects at this
-	      ;; late date.  Fix for v5.
-	      (goto-char (or (and after-cond-placeholder
-				  (max after-cond-placeholder (point)))
-			     (point)))
-	      (c-add-syntax 'statement-cont (point)))
-	     )))
-	 ;; CASE 11: an else clause?
-	 ((looking-at "\\<else\\>[^_]")
-	  (c-backward-to-start-of-if containing-sexp)
-	  (c-add-syntax 'else-clause (c-point 'boi)))
-	 ;; CASE 12: while closure of a do/while construct?
-	 ((progn
-	    (goto-char indent-point)
-	    (skip-chars-forward " \t")
-	    (and (looking-at "while\\b[^_]")
-		 (save-excursion
-		   (c-backward-to-start-of-do containing-sexp)
-		   (setq placeholder (point))
-		   (looking-at "do\\b[^_]"))
-		 ))
-	  (goto-char placeholder)
-	  (c-add-syntax 'do-while-closure (c-point 'boi)))
-	 ;; CASE 13: A catch or finally clause?  This case is simpler
-	 ;; than if-else and do-while, because a block is required
-	 ;; after every try, catch and finally.
-	 ((save-excursion
-	    (and (cond ((c-major-mode-is 'c++-mode)
-			(looking-at "\\<catch\\>[^_]"))
-		       ((c-major-mode-is 'java-mode)
-			(looking-at "\\<\\(catch\\|finally\\)\\>[^_]")))
-		 (c-safe (c-backward-sexp) t)
-		 (eq (char-after) ?{)
-		 (c-safe (c-backward-sexp) t)
-		 (if (eq (char-after) ?\()
-		     (c-safe (c-backward-sexp) t)
-		   t)
-		 (looking-at "\\<\\(try\\|catch\\)\\>[^_]")
-		 (setq placeholder (c-point 'boi))))
-	  (c-add-syntax 'catch-clause placeholder))
+	    (when after-cond-placeholder
+	      (error "after-cond-placeholder not nil")))
+	  ;; This is shared with CASE 18.
+	  (c-guess-continued-construct indent-point
+				       char-after-ip
+				       placeholder
+				       nil
+				       containing-sexp
+				       lim))
 	 ;; CASE 14: A case or default label
 	 ((looking-at c-switch-label-key)
 	  (goto-char containing-sexp)
