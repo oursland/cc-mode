@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.66 $
-;; Last Modified:   $Date: 1993-11-19 18:44:54 $
+;; Version:         $Revision: 3.67 $
+;; Last Modified:   $Date: 1993-11-20 17:11:23 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-19 18:44:54 $|$Revision: 3.66 $|
+;; |$Date: 1993-11-20 17:11:23 $|$Revision: 3.67 $|
 
 ;;; Code:
 
@@ -489,7 +489,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.66 $
+  "Major mode for editing C++ code.  $Revision: 3.67 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -519,7 +519,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.66 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.67 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -710,7 +710,43 @@ Optional argument has the following meanings when supplied:
   (cc-keep-region-active))
 
 
-;; COMMANDS
+;; macro definitions
+(defmacro cc-point (position)
+  ;; Returns the value of point at certain commonly referenced POSITIONs.
+  ;; POSITION can be one of the following symbols:
+  ;; 
+  ;; bol  -- beginning of line
+  ;; eol  -- end of line
+  ;; bod  -- beginning of defun
+  ;; boi  -- back to indentation
+  ;; ionl -- indentation of next line
+  ;; iopl -- indentation of previous line
+  ;; bonl -- beginning of next line
+  ;; bopl -- beginning of previous line
+  ;; 
+  ;; This function does not modify point or mark.
+  (` (let ((here (point)))
+       (,@ (let ((position (eval position)))
+	     (cond
+	      ((eq position 'bol)  '((beginning-of-line)))
+	      ((eq position 'eol)  '((end-of-line)))
+	      ((eq position 'bod)  '((beginning-of-defun)))
+	      ((eq position 'boi)  '((back-to-indentation)))
+	      ((eq position 'bonl) '((forward-line 1)))
+	      ((eq position 'bopl) '((forward-line -1)))
+	      ((eq position 'iopl)
+	       '((forward-line -1)
+		 (back-to-indentation)))
+	      ((eq position 'ionl)
+	       '((forward-line 1)
+		 (back-to-indentation)))
+	      (t (error "unknown buffer position requested: %s" position))
+	      )))
+       (prog1
+	   (point)
+	 (goto-char here))
+       )))
+
 (defmacro cc-auto-newline ()
   ;; if auto-newline feature is turned on, insert a newline character
   ;; and return t, otherwise return nil.
@@ -718,6 +754,8 @@ Optional argument has the following meanings when supplied:
 	  (not (cc-in-literal))
 	  (not (newline)))))
 
+
+;; COMMANDS
 (defun cc-electric-delete (arg)
   "Deletes preceding character or whitespace.
 If `cc-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
@@ -1430,42 +1468,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
     (while (< (point) lim)
       (setq state (parse-partial-sexp (point) lim 0)))
     state))
-
-(defmacro cc-point (position)
-  ;; Returns the value of point at certain commonly referenced POSITIONs.
-  ;; POSITION can be one of the following symbols:
-  ;; 
-  ;; bol  -- beginning of line
-  ;; eol  -- end of line
-  ;; bod  -- beginning of defun
-  ;; boi  -- back to indentation
-  ;; ionl -- indentation of next line
-  ;; iopl -- indentation of previous line
-  ;; bonl -- beginning of next line
-  ;; bopl -- beginning of previous line
-  ;; 
-  ;; This function does not modify point or mark.
-  (` (let ((here (point)))
-       (,@ (let ((position (eval position)))
-	     (cond
-	      ((eq position 'bol)  '((beginning-of-line)))
-	      ((eq position 'eol)  '((end-of-line)))
-	      ((eq position 'bod)  '((beginning-of-defun)))
-	      ((eq position 'boi)  '((back-to-indentation)))
-	      ((eq position 'bonl) '((forward-line 1)))
-	      ((eq position 'bopl) '((forward-line -1)))
-	      ((eq position 'iopl)
-	       '((forward-line -1)
-		 (back-to-indentation)))
-	      ((eq position 'ionl)
-	       '((forward-line 1)
-		 (back-to-indentation)))
-	      (t (error "unknown buffer position requested: %s" position))
-	      )))
-       (prog1
-	   (point)
-	 (goto-char here))
-       )))
 
 (defmacro cc-back-block ()
   ;; move up one block, returning t if successful, otherwise returning
@@ -2309,7 +2311,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.66 $"
+(defconst cc-version "$Revision: 3.67 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
