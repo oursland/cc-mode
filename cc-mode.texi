@@ -2364,11 +2364,11 @@ offsets from the remaining elements:
 @item first
 Use the first offset (that doesn't evaluate to @code{nil}).
 @item min
-Use the minimum of all evaluated offsets.  All the offsets may be either
-relative or absolute, but they can't be mixed.
+Use the minimum of all the offsets.  All must be either relative or
+absolute - they can't be mixed.
 @item max
-Use the maximum of all evaluated offsets.  All the offsets may be either
-relative or absolute, but they can't be mixed.
+Use the maximum of all the offsets.  All must be either relative or
+absolute - they can't be mixed.
 @item add
 Add all the evaluated offsets together.  Exactly one of them may be
 absolute, in which case the result is absolute.  Any relative offsets
@@ -4367,6 +4367,51 @@ block, which makes the function usable in list expressions.
 
 @comment ------------------------------------------------------------
 
+@defun c-lineup-after-whitesmith-blocks
+@findex lineup-after-whitesmith-blocks (c-)
+Compensate for Whitesmith style indentation of blocks.  Due to the way
+@ccmode{} calculates anchor positions for normal lines inside blocks,
+this function is necessary for those lines to get correct Whitesmith
+style indentation.  Consider the following examples:
+
+@example
+@group
+int foo()
+    @{
+    a;
+    x;                 @hereFn{c-lineup-after-whitesmith-blocks}
+@end group
+@end example
+
+@example
+@group
+int foo()
+    @{
+        @{
+        a;
+        @}
+    x;                 @hereFn{c-lineup-after-whitesmith-blocks}
+@end group
+@end example
+
+The fact that the line with @code{x} is preceded by a Whitesmith style
+indented block in the latter case and not the first should not affect
+its indentation.  But since CC Mode in cases like this uses the
+indentation of the preceding statement as anchor position, the @code{x}
+would in the second case be indented too much if the offset for
+@code{statement} was set simply to zero.
+
+This lineup function corrects for this situation by detecting if the
+anchor position is at an open paren character.  In that case, it instead
+indents relative to the surrounding block just like
+@code{c-lineup-whitesmith-in-block}.
+
+@workswith @code{brace-list-entry}, @code{brace-entry-open},
+@code{statement}, @code{arglist-cont}.
+@end defun
+
+@comment ------------------------------------------------------------
+
 @defun c-lineup-argcont
 @findex lineup-argcont (c-)
 Line up a continued argument.  E.g:
@@ -5113,9 +5158,11 @@ In the first case the indentation is kept unchanged, in the second
 @code{c-basic-offset} is added.
 
 @workswith @code{defun-close}, @code{defun-block-intro},
-@code{block-close}, @code{brace-list-close}, @code{brace-list-intro},
-@code{statement-block-intro} and all @code{in*} symbols,
-e.g. @code{inclass} and @code{inextern-lang}.
+@code{inline-close}, @code{block-close}, @code{brace-list-close},
+@code{brace-list-intro}, @code{statement-block-intro},
+@code{arglist-intro}, @code{arglist-cont-nonempty},
+@code{arglist-close}, and all @code{in*} symbols, e.g. @code{inclass}
+and @code{inextern-lang}.
 @end defun
 
 
