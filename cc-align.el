@@ -208,36 +208,56 @@
   ;; line up C block comment continuation lines
   (save-excursion
     (let ((here (point))
-	  (stars (progn (back-to-indentation)
-			(skip-chars-forward "*")))
-	  (langelem-col (c-langelem-col langelem)))
+	  (prefixlen (progn (back-to-indentation)
+			    (if (looking-at c-comment-prefix-regexp)
+				(- (match-end 0) (point))
+			      0)))
+	  (langelem-col (save-excursion (c-langelem-col langelem))))
+      (forward-line -1)
       (back-to-indentation)
       (if (not (re-search-forward "/\\([*]+\\)" (c-point 'eol) t))
+	  ;; Not on the second line in the comment.  Align with the
+	  ;; previous nonempty line, but align the comment ender with
+	  ;; the starter if the previous line don't match the prefix
+	  ;; regexp.
 	  (progn
-	    (if (not (looking-at "[*]+"))
+	    (if (or (not (looking-at c-comment-prefix-regexp))
+		    (eq (match-beginning 0) (match-end 0)))
 		(progn
 		  ;; we now have to figure out where this comment begins.
 		  (goto-char here)
 		  (back-to-indentation)
 		  (if (looking-at "[*]+/")
 		      (progn (goto-char (match-end 0))
-			     (forward-comment -1))
-		    (goto-char (cdr langelem))
-		    (back-to-indentation))))
+			     (c-forward-comment -1))
+		    (while (and (zerop (forward-line -1))
+				(looking-at "^[ \t]*$")))
+		    (back-to-indentation)
+		    (if (< (point) (cdr langelem))
+			;; Align with the comment starter rather than
+			;; with the code before it.
+			(goto-char (cdr langelem)))
+		    )))
 	    (- (current-column) langelem-col))
-	(if (zerop stars)
+	;; On the second line in the comment.
+	(if (zerop prefixlen)
 	    (progn
-	      (skip-chars-forward " \t")
+	      (if (> (length (match-string 1)) 10)
+		  ;; If there's many stars after the comment opener,
+		  ;; it's probably better to not to align at the end
+		  ;; of them.
+		  (goto-char (match-beginning 0))
+		(skip-chars-forward " \t"))
 	      (- (current-column) langelem-col))
 	  ;; how many stars on comment opening line?  if greater than
-	  ;; on current line, align left.  if less than or equal,
-	  ;; align right.  this should also pick up Javadoc style
-	  ;; comments.
-	  (if (> (length (match-string 1)) stars)
+	  ;; the length of the comment prefix, align left.  if less
+	  ;; than or equal, align right.  this should also pick up
+	  ;; Javadoc style comments.
+	  (if (> (length (match-string 1)) prefixlen)
 	      (progn
-		(back-to-indentation)
+		(goto-char (match-beginning 0))
 		(- (current-column) -1 langelem-col))
-	    (- (current-column) stars langelem-col))
+	    (- (current-column) prefixlen langelem-col))
 	  )))))
 
 (defun c-lineup-comment (langelem)
