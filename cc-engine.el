@@ -49,7 +49,6 @@
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
 
 
-(defvar c-state-cache nil)
 (defvar c-in-literal-cache t)
 
 ;; KLUDGE ALERT: c-maybe-labelp is used to pass information between
@@ -689,7 +688,19 @@
 
 
 ;; utilities for moving and querying around syntactic elements
+
 (defvar c-parsing-error nil)
+
+(defvar c-state-cache nil)
+(make-variable-buffer-local 'c-state-cache)
+;; The state cache used by `c-parse-state' to cut down the amount of
+;; searching.  It's the result from some earlier `c-parse-state' call.
+;; The use of the cached info is more effective if the next
+;; `c-parse-state' call is on a line close by the one the cached state
+;; was made at; the cache can actually slow down a little if the
+;; cached state was made very far back in the buffer.  The cache is
+;; most effective if `c-parse-state' is used on each line while moving
+;; forward.
 
 (defun c-parse-state ()
   ;; Finds and records all noteworthy parens between some good point
@@ -706,14 +717,6 @@
   ;; last closed brace paren pair before each open paren is recorded,
   ;; and thus the state never contains two cons elements in
   ;; succession.
-  ;;
-  ;; If c-state-cache contains state info, it's used to cut down the
-  ;; amount of searching.  This cached info is used in a way that only
-  ;; makes it effective if c-parse-state is called for a line close by
-  ;; the previous call.  The cache actually slows down the search if
-  ;; the previous call was made very far back in the buffer.  The
-  ;; cache is most effective if c-parse-state is used on each line
-  ;; while moving forward.
   (save-restriction
     (let* ((here (point))
 	   (in-macro-start ; Will be set to point if not inside a macro.
@@ -859,6 +862,10 @@
 		      t)))))
 	;; Search backward for the closest containing open paren.
 	(when (and pos (setq pos (c-up-list-backward pos)))
+	  ;; NB: We don't check if the paren is in a macro here;
+	  ;; macros containing unbalanced parens will confuse CC Mode.
+	  ;; Could perhaps handle it here, but there are still
+	  ;; countless other places that trip up.
 	  (setcdr state-ptr (list pos))
 	  (setq state-ptr (cdr state-ptr))))
       (setcdr state-ptr (if (and (consp (car state-ptr))
@@ -867,6 +874,16 @@
 			    (cdr state-foot)
 			  state-foot))
       (cdr state-head))))
+
+(defun c-check-state-cache (beg end old-length)
+  ;; Used on `after-change-functions' to adjust `c-state-cache'.
+  ;; Prefer speed to finesse here, since there will be many more calls
+  ;; to this function than times `c-state-cache' is used.
+  (and c-state-cache
+       (if (consp (car c-state-cache))
+	   (< beg (cdr (car c-state-cache)))
+	 (<= beg (car c-state-cache)))
+       (setq c-state-cache (c-whack-state-after beg c-state-cache))))
 
 (defun c-whack-state-before (bufpos state)
   ;; Whack off any state information from STATE which lies before
@@ -886,38 +903,33 @@
 (defun c-whack-state-after (bufpos state)
   ;; Whack off any state information from STATE which lies at or after
   ;; BUFPOS.
-  (let* ((newstate (list nil))
-	 (ptr newstate)
-	 car)
+  (catch 'done
     (while state
-      (setq car (car state)
-	    state (cdr state))
-      (if (consp car)
-	  ;; just check the car, because in a balanced brace
-	  ;; expression, it must be impossible for the corresponding
-	  ;; close brace to be before point, but the open brace to be
-	  ;; after.
-	  (if (<= bufpos (car car))
+      (let ((car (car state)))
+	(if (consp car)
+	    ;; just check the car, because in a balanced brace
+	    ;; expression, it must be impossible for the corresponding
+	    ;; close brace to be before point, but the open brace to
+	    ;; be after.
+	    (if (<= bufpos (car car))
+		nil			; whack it off
+	      (if (< bufpos (cdr car))
+		  ;; its possible that the open brace is before
+		  ;; bufpos, but the close brace is after.  In that
+		  ;; case, convert this to a non-cons element.  The
+		  ;; rest of the state is before bufpos, so we're
+		  ;; done.
+		  (throw 'done (cons (car car) (cdr state)))
+		;; we know that both the open and close braces are
+		;; before bufpos, so we also know that everything else
+		;; on state is before bufpos.
+		(throw 'done state)))
+	  (if (<= bufpos car)
 	      nil			; whack it off
-	    ;; its possible that the open brace is before bufpos, but
-	    ;; the close brace is after.  In that case, convert this
-	    ;; to a non-cons element.
-	    (if (< bufpos (cdr car))
-		(progn
-		  (setcdr ptr (list (car car)))
-		  (setq ptr (cdr ptr)))
-	      ;; we know that both the open and close braces are
-	      ;; before bufpos, so we also know that everything else
-	      ;; on state is before bufpos, so we can glom up the
-	      ;; whole thing and exit.
-	      (setcdr ptr (cons car state))
-	      (setq state nil)))
-	(if (<= bufpos car)
-	    nil				; whack it off
-	  ;; it's before bufpos, so everything else should too
-	  (setcdr ptr (cons car state))
-	  (setq state nil))))
-    (cdr newstate)))
+	    ;; it's before bufpos, so everything else should too.
+	    (throw 'done state)))
+	(setq state (cdr state)))
+      nil)))
 
 (defun c-whack-state (bufpos state)
   (c-whack-state-after bufpos state))
@@ -1747,6 +1759,11 @@ isn't moved."
 	     tmpsymbol keyword injava-inher special-brace-list
 	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
+	     ;; c-state-cache is shadowed here.  That means we must
+	     ;; not do any changes during the execution of this
+	     ;; function, since c-check-state-cache then would change
+	     ;; this local variable and leave a bogus value in the
+	     ;; global one.
 	     (c-state-cache (if inclass-p
 				(c-whack-state-before (point-min) fullstate)
 			      fullstate))
