@@ -828,7 +828,7 @@ space."
   :group 'c)
 
 (defcustom c-delete-function 'delete-char
-  "*Function called by `c-electric-delete' when deleting forwards."
+  "*Function called by `c-electric-delete-forward' when deleting forwards."
   :type 'function
   :group 'c)
 
@@ -1282,9 +1282,10 @@ localized, they cannot be made global again.
 This variable must be set appropriately before CC Mode is loaded.
 
 The list of variables to buffer localize are:
-    c-offsets-alist
     c-basic-offset
     c-comment-only-line-offset
+    c-indent-comment-alist
+    c-indent-comments-syntactically-p
     c-block-comment-prefix
     c-comment-prefix-regexp
     c-doc-comment-style
@@ -1293,7 +1294,9 @@ The list of variables to buffer localize are:
     c-hanging-colons-alist
     c-hanging-semi&comma-criteria
     c-backslash-column
+    c-backslash-max-column
     c-label-minimum-indentation
+    c-offsets-alist
     c-special-indent-hook
     c-indentation-style"
   :type 'boolean
