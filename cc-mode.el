@@ -287,15 +287,12 @@ Key bindings:
   (set-syntax-table java-mode-syntax-table)
   (setq major-mode 'java-mode
  	mode-name "Java"
- 	local-abbrev-table java-mode-abbrev-table)
+ 	local-abbrev-table java-mode-abbrev-table
+	c-append-paragraph-start c-Java-javadoc-paragraph-start)
   (use-local-map java-mode-map)
   (c-common-init)
   (setq comment-start "// "
  	comment-end   ""
-	paragraph-start (concat paragraph-start
-				"\\("
-				c-Java-javadoc-paragraph-start
-				"\\|$\\)")
  	c-conditional-key c-Java-conditional-key
  	c-comment-start-regexp c-Java-comment-start-regexp
   	c-class-key c-Java-class-key
