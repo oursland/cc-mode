@@ -857,11 +857,11 @@ tools (e.g. Javadoc).")
       ;; the by far most common case when font-lock refontifies the current
       ;; line only.
       (when (save-excursion
-	      (forward-line)
-	      (or (< (point) limit)
-		  (progn
-		    (backward-char)
-		    (not (eq (char-before) ?\\)))))
+	      (and (= (forward-line 1) 0)
+		   (or (< (point) limit)
+		       (progn
+			 (backward-char)
+			 (not (eq (char-before) ?\\))))))
 	(c-beginning-of-macro))
 
       ;; Clear the c-fl-decl- cache if it applied further down.
@@ -903,7 +903,7 @@ tools (e.g. Javadoc).")
 	  ;; position.  The earliest position that could affect after
 	  ;; the start position is the char before the preceding
 	  ;; comments.
-	  (when (< continue-pos start-pos)
+	  (when (and continue-pos (< continue-pos start-pos))
 	    (goto-char syntactic-pos)
 	    (c-backward-comments)
 	    (or (bobp) (backward-char))
@@ -916,7 +916,9 @@ tools (e.g. Javadoc).")
 	  (when match
 	    (goto-char syntactic-pos)
 	    (c-forward-syntactic-ws)
-	    (setq token-pos (point)))
+	    (and continue-pos
+		 (< continue-pos (point))
+		 (setq token-pos (point))))
 
 	  (setq c-fl-decl-match-pos (and match-pos
 					 (< match-pos start-pos)
