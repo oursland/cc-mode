@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.199 $
-;; Last Modified:   $Date: 1995-04-19 01:08:20 $
+;; Version:         $Revision: 4.200 $
+;; Last Modified:   $Date: 1995-04-29 00:46:53 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-04-19 01:08:20 $|$Revision: 4.199 $|
+;; |$Date: 1995-04-29 00:46:53 $|$Revision: 4.200 $|
 
 ;;; Code:
 
@@ -765,7 +765,8 @@ supported list, along with the values for this variable:
   (define-key c-mode-map "\C-c\C-o"  'c-set-offset)
   (define-key c-mode-map "\C-c\C-s"  'c-show-syntactic-information)
   (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
-  (define-key c-mode-map "\C-c\C-v"  'c-version)
+  ;; conflicts with OOBR
+  ;;(define-key c-mode-map "\C-c\C-v"  'c-version)
   ;; FSF Emacs 19 defines menus in the mode map. This call will return
   ;; t on FSF Emacs 19, otherwise no-op and return nil.
   (if (and (not (c-mode-fsf-menu "C" c-mode-map))
@@ -4568,7 +4569,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.199 $"
+(defconst c-version "$Revision: 4.200 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
