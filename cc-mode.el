@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.12 $
-;; Last Modified:   $Date: 1993-09-27 15:52:25 $
+;; Version:         $Revision: 3.13 $
+;; Last Modified:   $Date: 1993-09-27 15:56:37 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-27 15:52:25 $|$Revision: 3.12 $|
+;; |$Date: 1993-09-27 15:56:37 $|$Revision: 3.13 $|
 
 ;;; Code:
 
@@ -479,7 +479,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.12 $
+  "Major mode for editing C++ code.  $Revision: 3.13 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -677,7 +677,10 @@ no args, if that value is non-nil."
   (make-local-variable 'comment-end)
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
-  (make-local-variable 'comment-indent-hook)
+  (make-local-variable
+   (if (memq 'v19 c++-emacs-features)
+       'comment-indent-function
+     'comment-indent-hook))
   ;; now set their values
   (setq paragraph-start (concat "^$\\|" page-delimiter)
 	paragraph-separate paragraph-start
@@ -689,8 +692,10 @@ no args, if that value is non-nil."
 	comment-start "// "
 	comment-end ""
 	comment-column 32
-	comment-start-skip "/\\*+ *\\|// *"
-	comment-indent-hook 'c++-comment-indent)
+	comment-start-skip "/\\*+ *\\|// *")
+  (if (memq 'v19 c++-emacs-features)
+      (setq comment-indent-function 'c++-comment-indent)
+    (setq comment-indent-hook 'c++-comment-indent))
   ;; hack auto-hungry designators into mode-line-format
   (if (listp mode-line-format)
       (setq mode-line-format
@@ -713,7 +718,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.12 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.13 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -2637,7 +2642,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.12 $"
+(defconst c++-version "$Revision: 3.13 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
