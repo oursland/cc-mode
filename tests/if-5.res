@@ -19,7 +19,7 @@
 ((block-close 70))
 ((statement 70))
 ((statement 70))
-((arglist-cont-nonempty 478))
+((arglist-cont-nonempty 478 481))
 ((statement-block-intro 478))
 ((statement 594))
 ((statement 635))

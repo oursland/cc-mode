@@ -1,6 +1,6 @@
 ((topmost-intro 1))
 ((topmost-intro 1))
-((arglist-cont-nonempty 2))
+((arglist-cont-nonempty 2 8))
 ((c 79))
 ((knr-argdecl-intro 2))
 ((knr-argdecl-intro 2))

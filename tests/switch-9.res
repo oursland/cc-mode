@@ -2,7 +2,7 @@
 ((defun-open 1))
 ((defun-block-intro 16))
 ((case-label 22))
-((arglist-cont-nonempty 41))
+((arglist-cont-nonempty 41 55))
 ((statement-case-intro 41))
 ((statement 105))
 ((case-label 22))

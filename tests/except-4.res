@@ -7,7 +7,7 @@
 ((defun-block-intro 221) (comment-intro))
 ((inline-close 221))
 ((inclass 1) (topmost-intro 289))
-((arglist-cont-nonempty 299))
+((arglist-cont-nonempty 299 309))
 ((func-decl-cont 299))
 ((defun-block-intro 299))
 ((inline-close 299))
