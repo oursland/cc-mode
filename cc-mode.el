@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.342 $
-;; Last Modified:   $Date: 1993-06-15 22:04:43 $
+;; Version:         $Revision: 2.343 $
+;; Last Modified:   $Date: 1993-06-16 14:38:26 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-15 22:04:43 $|$Revision: 2.342 $|
+;; |$Date: 1993-06-16 14:38:26 $|$Revision: 2.343 $|
 
 ;;; Code:
 
@@ -305,8 +305,14 @@ indent `c++-empty-arglist-indent' spaces, otherwise, they will indent to
 just under previous line's argument indentation.")
 (defvar c++-block-close-brace-offset 0
   "*Extra indentation given to close braces which close a block.
-This does not affect braces which close a top-level construct (e.g.
-function).")
+This variable can be either an integer or a list.  If an integer, it
+describes the extra offset given a block closing brace (and a closing
+paren if `c++-paren-as-block-close-p' is non-nil), treating all
+closing parens the same.  If a list of the form (OTHERS . TOPLEVEL),
+OTHERS is an integer describing the offset given to all but top-level
+(e.g. function) closing braces, while TOPLEVEL is an integer
+describing offset given only to braces which close top-level
+constructs.")
 (defvar c++-paren-as-block-close-p nil
   "*Treat a parenthesis which is the first non-whitespace on a line as
 a paren which closes a block.  When non-nil, `c-indent-level' is
@@ -481,7 +487,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.342 $
+  "Major mode for editing C++ code.  $Revision: 2.343 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -549,8 +555,7 @@ from their c-mode cousins.
     help improve performance at the expense of some accuracy.  Patched
     Emacses are both fast and accurate.
  c++-block-close-brace-offset
-    Extra indentation give to braces which close a block.  This does
-    not affect braces which close top-level constructs (e.g. functions).
+    Extra indentation give to braces which close a block.
  c++-cleanup-list
     A list of construct ``clean ups'' which c++-mode will perform when
     auto-newline feature is on.  Current legal values are:
@@ -699,7 +704,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.342 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.343 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1808,8 +1813,16 @@ point of the beginning of the C++ definition."
   (let* ((bod (or bod (c++-point 'bod)))
 	 (indent (c++-calculate-indent nil bod))
 	 beg shift-amt
+	 close-paren top-close-paren
 	 (case-fold-search nil)
 	 (pos (- (point-max) (point))))
+    ;; calculate block close paren offset
+    (if (listp c++-block-close-brace-offset)
+	(setq close-paren (car c++-block-close-brace-offset)
+	      top-close-paren (cdr c++-block-close-brace-offset))
+      (setq close-paren c++-block-close-brace-offset
+	    top-close-paren c++-block-close-brace-offset))
+    ;; now start cleanup
     (beginning-of-line)
     (setq beg (point))
     (cond
@@ -1860,15 +1873,15 @@ point of the beginning of the C++ definition."
 			(if (save-excursion
 			      (forward-char 1)
 			      (c++-at-top-level-p nil bod))
-			    (- c++-block-close-brace-offset)
-			  c++-block-close-brace-offset))))
+			    top-close-paren
+			  close-paren))))
        ((= (following-char) ?})
 	(setq indent (+ (- indent c-indent-level)
 			(if (save-excursion
 			      (forward-char 1)
 			      (c++-at-top-level-p nil bod))
-			    (- c++-block-close-brace-offset)
-			  c++-block-close-brace-offset))))
+			    top-close-paren
+			  close-paren))))
        ((= (following-char) ?{)
 	(setq indent (+ indent c-brace-offset))))))
     (skip-chars-forward " \t")
@@ -2712,7 +2725,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.342 $"
+(defconst c++-version "$Revision: 2.343 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
