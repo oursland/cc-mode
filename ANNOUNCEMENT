@@ -63,7 +63,10 @@ own your own with this route.
 Changes since 5.20
 ==================
 
-- This is a bug fix release only.
+- This is mainly a bug fix release.
+
+- Javadoc markup tags (e.g. @param) are handled as paragraph starters
+  in block comments in Java mode.
 
 Changes since 5.19
 ==================
