@@ -1500,7 +1500,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (progn
 		      (when (and got-prefix-before-parens
 				 at-type
-				 at-decl-end
+				 (or at-decl-end (looking-at "=[^=]"))
 				 (not arglist-type)
 				 (not got-suffix))
 			;; Got something like "foo * bar;".  Since we're not
@@ -1512,9 +1512,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			(throw 'at-decl-or-cast t))
 
 		      (when (and (or got-suffix-after-parens
-				     ;; Due to test above this is equivalent
-				     ;; to (looking-at "=[^=]").
-				     (not at-decl-end))
+				     (looking-at "=[^=]"))
 				 (eq at-type 'found)
 				 (not (eq arglist-type 'other)))
 			;; Got something like "a (*b) (c);" or "a (b) = c;".
