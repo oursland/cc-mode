@@ -1,0 +1,14 @@
+Checklist for doing a release:
+
+    - Run regression tests in as many Emacsen as possible.  Make sure
+      there are no failures.
+
+    - Proofread and update ANNOUNCEMENT, MANIFEST, README for the new
+      release.
+
+    - Update ChangeLog.  Since C-x v a no longer works, use the new
+      Python Update.py script, which sadly still needs to be manually
+      hacked.
+
+    - Add `Release 5.xx' tag to ChangeLog.  Release script looks for
+      this.
