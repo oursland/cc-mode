@@ -119,8 +119,8 @@ open paren is followed by code.  If the open paren ends its line, no
 indentation is added.  E.g:
 
 main (int,              main (
-      char **             int, char **
-     )           <->    )               <- c-lineup-close-paren
+      char **               int, char **
+     )           <->    )                 <- c-lineup-close-paren
 
 Works with: defun-close, class-close, inline-close, block-close,
 brace-list-close, arglist-close, extern-lang-close, namespace-close."
@@ -222,10 +222,10 @@ Works with: func-decl-cont."
   "Indent a one line block `c-basic-offset' extra.
 E.g:
 
-if (n)                   if (n)
-  {m+=n; n=0;}    <->    {             <- c-indent-one-line-block
-                           m+=n; n=0;
-                         }
+if (n > 0)                 if (n > 0)
+    {m+=n; n=0;}    <->    {               <- c-indent-one-line-block
+<--> c-basic-offset            m+=n; n=0;
+                           }
 
 The block may be surrounded by any kind of parenthesis characters.
 nil is returned if the line doesn't start with a one line block, which
@@ -246,10 +246,11 @@ Work with: Almost all syntactic symbols, but most useful on *-open."
 E.g:
 
 int *foo[] = {           int *foo[] = {
-  NULL,                    NULL,
-  {17},           <->        {        <- c-indent-multi-line-block
-                             17
-                             }
+    NULL,                    NULL,
+    {17},         <->            {       <- c-indent-multi-line-block
+                                 17
+                                 }
+                             <--> c-basic-offset
 
 The block may be surrounded by any kind of parenthesis characters.
 nil is returned if the line doesn't start with a multi line block,
