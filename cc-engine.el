@@ -1807,7 +1807,13 @@ brace."
 		   (beginning-of-line)
 		   (looking-at c-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
-	   ;; CASE 5K: we are at a topmost continuation line
+	   ;; CASE 5K: we are at the first argument of a template
+	   ;; arglist that begins on the previous line.
+	   ((eq (char-before) ?<)
+	    (c-beginning-of-statement-1 lim)
+	    (c-forward-syntactic-ws)
+	    (c-add-syntax 'template-args-cont (c-point 'boi)))
+	   ;; CASE 5L: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement-1 lim)
 	    (c-forward-syntactic-ws)
