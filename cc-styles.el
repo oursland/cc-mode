@@ -29,6 +29,7 @@
 (eval-when-compile
   (require 'cc-mode)			;for c-safe
   (require 'cc-vars)			;for calculating "cc-mode" style
+  (require 'cc-align)			;for lineup functions
   )
 
 
