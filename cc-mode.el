@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-04 23:33:51 $
-;; Version:         $Revision: 2.30 $
+;; Last Modified:   $Date: 1992-05-06 17:29:16 $
+;; Version:         $Revision: 2.31 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-04 23:33:51 $|$Revision: 2.30 $|
+;; |$Date: 1992-05-06 17:29:16 $|$Revision: 2.31 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -152,7 +152,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.30 $
+  "Major mode for editing C++ code.  $Revision: 2.31 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -636,6 +636,7 @@ of the expression are preserved."
 Return the amount the indentation changed by."
   (let ((indent (c++-calculate-indent nil))
 	beg shift-amt
+	(comcol nil)
 	(case-fold-search nil)
 	(pos (- (point-max) (point))))
     (beginning-of-line)
@@ -649,8 +650,20 @@ Return the amount the indentation changed by."
 	  ((save-excursion
 	     (and (not (back-to-indentation))
 		  (looking-at "//\\|/\\*")
-		  (/= (current-column) 0)))
-	   (setq indent (+ indent c++-comment-only-line-offset)))
+		  (/= (setq comcol (current-column)) 0)))
+	   ;; we've found a comment-only line. we now must try to
+	   ;; determine if the line is a continuation from a comment
+	   ;; on the previous line.  if so, we don't change its
+	   ;; indentation.
+	   (save-excursion
+	     (forward-line -1)
+	     (let* ((eol (save-excursion (end-of-line) (point)))
+		    (com-p (re-search-forward "/[/*]" eol 'move)))
+	       (if (and com-p (= (progn
+				   (goto-char (match-beginning 0))
+				   (current-column)) comcol))
+		   (setq indent comcol)
+		 (setq indent (+ indent c++-comment-only-line-offset))))))
 	  (t
 	   (skip-chars-forward " \t")
 	   (if (listp indent) (setq indent (car indent)))
@@ -1420,7 +1433,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.30 $"
+(defconst c++-version "$Revision: 2.31 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
