@@ -170,16 +170,6 @@
                                     "\\s\"\\|\\s|"
                                   "\\s\""))
 
-;; String syntax chars, suitable for skip-syntax-(forward|backward).
-(defconst c-string-syntax (if (memq 'gen-string-delim c-emacs-features)
-			      "\"|"
-			    "\""))
-
-;; Regexp matching string start syntax.
-(defconst c-string-limit-regexp (if (memq 'gen-string-delim c-emacs-features)
-				    "\\s\"\\|\\s|"
-				  "\\s\""))
-
 
 (defvar c-in-literal-cache t)
 (defvar c-parsing-error nil)
