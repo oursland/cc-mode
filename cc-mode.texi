@@ -48,7 +48,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 
 @center @titlefont{CC Mode 5.14}
 @sp 2
-@center @subtitlefont{A GNU Emacs mode for editing C, C++, Objective-C, and Java code}
+@center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
 @center Barry A. Warsaw
 
@@ -111,8 +111,8 @@ CC Mode
 @cindex BOCM
 
 Welcome to @ccmode{}.  This is a GNU Emacs mode for editing files
-containing C, C++, Objective-C, and Java code.  This incarnation of the
-mode is descendant from @file{c-mode.el} (also called "Boring Old C
+containing C, C++, Objective-C, Java, and IDL code.  This incarnation of
+the mode is descendant from @file{c-mode.el} (also called "Boring Old C
 Mode" or BOCM @code{:-)}, and @file{c++-mode.el} version 2, which I have
 been maintaining since 1992.  @ccmode{} represents a significant
 milestone in the mode's life.  It has been fully merged back with Emacs
@@ -121,9 +121,10 @@ for controlling indentation has been developed.
 
 @ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
 @footnote{``The Annotated C++ Reference Manual'', by Ellis and
-Stroustrup.} C++, Objective-C, and Java files.  In this way, you can
+Stroustrup.} C++, Objective-C, Java and IDL@footnote{CORBA's Interface
+Definition Language} files.  In this way, you can
 easily set up consistent coding styles for use in editing all C, C++,
-Objective-C, and Java programs. @ccmode{} does @emph{not} handle
+Objective-C, Java and IDL programs. @ccmode{} does @emph{not} handle
 font-locking (a.k.a. syntax coloring, keyword highlighting) or anything
 of that nature, for any of the 4 modes.  Those are handled by other
 Emacs packages.
@@ -142,14 +143,17 @@ How to customize the new indentation engine.
 
 @end itemize
 
-Note that the name of this package is ``@ccmode{}''.  The main file for
-@ccmode{} is @file{cc-mode.el}, but other files are included in the
-@ccmode{} distribution.  There is no top level @code{cc-mode} entry
-point.  All of the variables, commands, and functions in @ccmode{} are
-prefixed with @code{c-@var{<thing>}}, and @code{c-mode},
-@code{c++-mode}, @code{objc-mode}, and @code{java-mode} entry points are
-provided.  This file is intended to be a replacement for
-@file{c-mode.el} and @file{c++-mode.el}.
+@findex c-mode
+@findex c++-mode
+@findex objc-mode
+@findex java-mode
+@findex idl-mode
+Note that the name of this package is ``@ccmode{}'', but there is no top
+level @code{cc-mode} entry point.  All of the variables, commands, and
+functions in @ccmode{} are prefixed with @code{c-@var{<thing>}}, and
+@code{c-mode}, @code{c++-mode}, @code{objc-mode}, @code{java-mode}, and
+@code{idl-mode} entry points are provided.  This file is intended to be
+a replacement for @file{c-mode.el} and @file{c++-mode.el}.
 
 @cindex @file{cc-compat.el} file
 This distribution also contains a file called @file{cc-compat.el} which
@@ -624,12 +628,12 @@ normal, with no @kbd{C-u} prefix).
 @findex enable-//-in-c-mode (c-)
 Some characters are electric in some languages, and not in others.  For
 example, the second slash (@kbd{/}) of a C++ style line comment is
-electric in @code{c++-mode}, @code{objc-mode}, and @code{java-mode}, but
-not in @code{c-mode}@footnote{Ordinarily, @samp{//} does not introduce a
-comment in @code{c-mode}.  However, if you call the function
-@code{c-enable-//-in-c-mode}, @code{c-mode} will recognize C++ style
-line comments.  Note however that this is a global change which will
-affect all your @code{c-mode} buffers.}.
+electric in @code{c++-mode}, @code{objc-mode}, @code{java-mode}, and
+@code{idl-mode}, but not in @code{c-mode}@footnote{Ordinarily, @samp{//}
+does not introduce a comment in @code{c-mode}.  However, if you call the
+function @code{c-enable-//-in-c-mode}, @code{c-mode} will recognize C++
+style line comments.  Note however that this is a global change which
+will affect all your @code{c-mode} buffers.}.
 
 
 @menu
@@ -1572,6 +1576,7 @@ adjustments.
 @vindex c++-mode-hook
 @vindex objc-mode-hook
 @vindex java-mode-hook
+@vindex idl-mode-hook
 @vindex c-initialization-hook
 @vindex initialization-hook (c-)
 @cindex hooks
@@ -1615,6 +1620,8 @@ initialization hook:
 @item
 @code{java-mode-hook} --- for Java buffers only
 @item
+@code{idl-mode-hook} --- for IDL buffers only
+@item
 @code{c-mode-common-hook} --- common across all languages
 @item
 @code{c-initialization-hook} --- hook run only once per Emacs session,
@@ -1643,7 +1650,7 @@ for more information on customizing Emacs via hooks.  @xref{Sample
 @group
 
 (defun my-c-mode-common-hook ()
-  ;; my customizations for all of c-mode, c++-mode, objc-mode, java-mode
+  ;; my customizations for all of c-mode and related modes
   (c-set-offset 'substatement-open 0)
   ;; other customizations can go here
   )
@@ -3247,9 +3254,9 @@ about its availability!
   ;; we like auto-newline and hungry-delete
   (c-toggle-auto-hungry-state 1)
   ;; keybindings for all supported languages.  We can put these in
-  ;; c-mode-map because c++-mode-map, objc-mode-map, and java-mode-map
-  ;; inherit from it.
-  (define-key c-mode-map "\C-m" 'newline-and-indent)
+  ;; c-mode-base-map because c-mode-map, c++-mode-map, objc-mode-map,
+  ;; java-mode-map, and idl-mode-map inherit from it.
+  (define-key c-mode-base-map "\C-m" 'newline-and-indent)
   )
 
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
