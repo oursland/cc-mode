@@ -139,6 +139,16 @@
 	(extern-lang-open      . 0)
 	(extern-lang-close     . 0)
 	(inextern-lang         . +)
+	(namespace-open        . 0)
+	(namespace-close       . 0)
+	(innamespace           . +)
+	(template-args-cont    . +)
+	(inlambda              . c-lineup-inexpr-stat)
+	(lambda-intro-cont     . +)
+	(inexpr-statement      . 0)
+	(inexpr-block-open     . 0)
+	(inexpr-block-intro    . +)
+	(inexpr-block-close    . 0)
 	))
     (c-echo-syntactic-information-p . t)
     )
@@ -162,6 +172,7 @@
     "bos-2.cc"
     "bos-3.cc"
     "bracelist-1.java"
+    "bracelist-2.pike"
     "class-1.cc"
     "class-2.cc"
     "class-3.cc"
@@ -196,12 +207,14 @@
     "if-3.cc"
     "if-4.cc"
     "if-5.cc"
+    "inexprstat-1.pike"
     "inher-1.cc"
     "inher-2.cc"
     "inher-3.cc"
     "interface-1.m"
     "ivar.java"
     "label-1.c"
+    "lambda-1.pike"
     "macro-1.c"
     "member-1.cc"
     "member-2.cc"
@@ -266,6 +279,7 @@
        ((string-match "\\.java$" filename)
 	(java-mode)
 	(setq style "java"))
+       ((string-match "\\.pike$" filename) (pike-mode))
        (t (c-mode)))
       (c-set-style style))
     (set-buffer expectedbuf)
@@ -332,6 +346,7 @@
        ((string-match "\\.java$" filename)
 	(java-mode)
 	(setq style "java"))
+       ((string-match "\\.pike$" filename) (pike-mode))
        (t (c-mode)))
       (c-set-style style)
       (let ((c-progress-interval nil))
