@@ -57,6 +57,8 @@
 ;; c-label-face-name		Label identifiers.
 ;; c-preprocessor-face-name	Preprocessor directives.
 ;; c-doc-face-name		Documentation comments (like Javadoc).
+;; c-doc-markup-face-name	Markup inside documentation comments.  The face
+;;				is prepended to the one in `c-doc-face-name'.
 ;; c-invalid-face-name		Invalid syntax.  Note that CC Mode normally
 ;;				doesn't try to fontify syntax errors.  Instead
 ;;				it's as picky as possible about only
@@ -78,6 +80,8 @@
 ;;    documentation are actually comments in these languages, as opposed
 ;;    to elisp).
 ;;
+;; o  `c-doc-markup-face-name' is set up like `c-label-face-name'.
+;;
 ;; o  `c-invalid-face-name' is `font-lock-warning-face' in Emacs.  In
 ;;    XEmacs there's no corresponding standard face, so there it's
 ;;    mapped to a face that stands out sharply.
@@ -88,6 +92,20 @@
 ;;    face either.
 
 ;;; Code:
+
+;; The faces that already have been put onto the text is tested in
+;; various places to direct further fontifications.  For this to work,
+;; the following assumptions regarding the faces must hold (apart from
+;; the dependencies on the font locking order):
+;;
+;; o  `font-lock-comment-face' and the face in `c-doc-face-name' is
+;;    not used in anything but comments.
+;; o  If any face (e.g. `c-doc-markup-face-name') but those above is
+;;    used in comments, it doesn't replace them.
+;; o  `font-lock-string-face' is not used in anything but string
+;;    literals (single or double quoted).
+;; o  `font-lock-keyword-face' and the face in `c-label-face-name' are
+;;    never overlaid with other faces.
 
 (eval-when-compile
   (let ((load-path
@@ -157,11 +175,13 @@
 	      (eq font-lock-constant-face 'font-lock-constant-face))
 	 ;; Test both if font-lock-constant-face exists and that it's
 	 ;; not an alias for something else.  This is important since
-	 ;; we compares already set faces in various places.
+	 ;; we compare already set faces in various places.
 	 'font-lock-constant-face)
 	(t
 	 'font-lock-reference-face)))
 
+;; This should not mapped to a face that also is used to fontify things
+;; that aren't comments or string literals.
 (defconst c-doc-face-name
   (cond ((c-face-name-p 'font-lock-doc-string-face)
 	 ;; XEmacs.
@@ -171,6 +191,8 @@
 	 'font-lock-doc-face)
 	(t
 	 'font-lock-comment-face)))
+
+(defconst c-doc-markup-face-name c-label-face-name)
 
 (defconst c-invalid-face-name
   (if (c-face-name-p 'font-lock-warning-face)
@@ -253,9 +275,12 @@
     ;; string literal skip to the end of it or to LIMIT, whichever
     ;; comes first, and return t.  Otherwise return nil.  The match
     ;; data is not clobbered.
-    (when (memq (get-text-property (point) 'face)
-		'(font-lock-comment-face font-lock-string-face))
-      (goto-char (next-single-property-change (point) 'face nil limit))
+    (when (c-got-face-at (point) c-literal-faces)
+      (while (progn
+	       (goto-char (next-single-property-change
+			   (point) 'face nil limit))
+	       (and (< (point) limit)
+		    (c-got-face-at (point) c-literal-faces))))
       t))
 
   (defun c-make-font-lock-search-function (regexp &rest highlights)
@@ -1983,6 +2008,10 @@ higher."
   ;; This is used in the function bindings of the
   ;; `*-font-lock-keywords-*' symbols since we have to build the list
   ;; when font-lock is initialized.
+
+  (unless (memq c-doc-face-name c-literal-faces)
+    (setq c-literal-faces (cons c-doc-face-name c-literal-faces)))
+
   (let* ((doc-keywords
 	  (if (consp (car-safe c-doc-comment-style))
 	      (cdr-safe (or (assq c-buffer-is-cc-mode c-doc-comment-style)
@@ -2487,29 +2516,134 @@ need for `pike-font-lock-extra-types'.")
 
 ;;; Doc comments.
 
-(defun c-font-lock-doc-comments (prefix limit)
-  ;; Fontify all comments whose start matches PREFIX from the point to
-  ;; LIMIT with `c-doc-face-name'.  Assumes comments have been fontified
-  ;; with `font-lock-comment-face' already.  Nil is always returned.
+(defun c-font-lock-doc-comments (prefix limit keywords)
+  ;; Fontify the comments between the point and LIMIT whose start
+  ;; matches PREFIX with `c-doc-face-name'.  Assumes comments have been
+  ;; fontified with `font-lock-comment-face' already.  nil is always
+  ;; returned.
+  ;;
+  ;; After the fontification of a matching comment, fontification
+  ;; according to KEYWORDS is applied to it.  It's a list like
+  ;; `font-lock-keywords' except that anchored matches and eval
+  ;; clauses aren't supported and that some abbreviated forms can't be
+  ;; used.
+  ;;
+  ;; Note that faces added through KEYWORDS should never replace the
+  ;; existing `c-doc-face-name' face since the existence of that face
+  ;; is used as a flag in other code to skip comments.
 
-  (while (re-search-forward prefix limit t)
-    (let ((start (match-beginning 0)))
-      (when (eq (get-text-property start 'face)
-		'font-lock-comment-face)
-	(goto-char (next-single-property-change start 'face nil limit))
-	(when (or (= start (point-min))
-		  (not (eq (get-text-property (1- start) 'face)
-			   'font-lock-comment-face)))
-	  (c-put-font-lock-face start (point) c-doc-face-name)))))
+  (let (comment-beg region-beg)
+    (if (eq (get-text-property (point) 'face)
+	    'font-lock-comment-face)
+	;; Handle the case when the fontified region starts inside a
+	;; comment.
+	(let ((range (c-literal-limits)))
+	  (setq region-beg (point))
+	  (when range
+	    (goto-char (car range)))
+	  (when (looking-at prefix)
+	    (setq comment-beg (point)))))
+
+    (while (or
+	    comment-beg
+
+	    ;; Search for the prefix until a match is found at the start
+	    ;; of a comment.
+	    (while (when (re-search-forward prefix limit t)
+		     (setq comment-beg (match-beginning 0))
+		     (or (not (c-got-face-at comment-beg
+					     c-literal-faces))
+			 (and (/= comment-beg (point-min))
+			      (c-got-face-at (1- comment-beg)
+					     c-literal-faces))))
+	      (setq comment-beg nil))
+	    (setq region-beg comment-beg))
+
+      (if (eq (elt (parse-partial-sexp comment-beg (+ comment-beg 2)) 7) t)
+	  ;; Collect a sequence of doc style line comments.
+	  (progn
+	    (goto-char comment-beg)
+	    (while (and (progn
+			  (c-forward-single-comment)
+			  (skip-syntax-forward " ")
+			  (< (point) limit))
+			(looking-at prefix))))
+	(goto-char comment-beg)
+	(c-forward-single-comment))
+      (if (> (point) limit) (goto-char limit))
+      (setq comment-beg nil)
+
+      (let ((region-end (point))
+	    (keylist keywords) keyword matcher highlights)
+	(c-put-font-lock-face region-beg region-end c-doc-face-name)
+
+	(while keylist
+	  (setq keyword (car keylist)
+		keylist (cdr keylist)
+		matcher (car keyword))
+	  (goto-char region-beg)
+	  (while (if (stringp matcher)
+		     (re-search-forward matcher region-end t)
+		   (funcall matcher region-end))
+	    (setq highlights (cdr keyword))
+	    (if (consp (car highlights))
+		(while highlights
+		  (font-lock-apply-highlight (car highlights))
+		  (setq highlights (cdr highlights)))
+	      (font-lock-apply-highlight highlights))))
+
+	(goto-char region-end))))
   nil)
+(put 'c-font-lock-doc-comments 'lisp-indent-function 2)
+
+(defun c-find-invalid-doc-markup (regexp limit)
+  ;; Used to fontify invalid markup in doc comments after the correct
+  ;; ones have been fontified: Find the first occurence of REGEXP
+  ;; between the point and LIMIT that only is fontified with
+  ;; `c-doc-face-name'.  If a match is found then submatch 0 surrounds
+  ;; the first char and t is returned, otherwise nil is returned.
+  (let (start)
+    (while (if (re-search-forward regexp limit t)
+	       (not (eq (get-text-property
+			 (setq start (match-beginning 0)) 'face)
+			c-doc-face-name))
+	     (setq start nil)))
+    (when start
+      (store-match-data (list (copy-marker start)
+			      (copy-marker (1+ start))))
+      t)))
 
 (defconst javadoc-font-lock-keywords
-  `(,(byte-compile
-      `(lambda (limit) (c-font-lock-doc-comments "/\\*\\*" limit)))))
+  `((,(byte-compile
+       `(lambda (limit)
+	  (c-font-lock-doc-comments "/\\*\\*" limit
+	    '(("{@[a-z]+[^}\n\r]*}"	; "{@foo ...}" markup.
+	       0 ,c-doc-markup-face-name prepend nil)
+	      ("^[ \t*]*\\(@[a-z]+\\)"	; "@foo ..." markup.
+	       1 ,c-doc-markup-face-name prepend nil)
+	      (,(concat "</?\\sw"	; HTML tags.
+			"\\("
+			(concat "\\sw\\|\\s \\|[=\n\r*.:]\\|"
+				"\"[^\"]*\"\\|'[^']*'")
+			"\\)*>")
+	       0 ,c-doc-markup-face-name prepend nil)
+	      ("&\\(\\sw\\|[.:]\\)+;"	; HTML entities.
+	       0 ,c-doc-markup-face-name prepend nil)
+	      ;; Fontify remaining markup characters as invalid.  Note
+	      ;; that the Javadoc spec is hazy about when "@" is
+	      ;; allowed in non-markup use.
+	      (,(byte-compile
+		 `(lambda (limit)
+		    (c-find-invalid-doc-markup "[<>&]\\|{@" limit)))
+	       0 ,c-invalid-face-name prepend nil)
+	      )))))))
 
 (defconst autodoc-font-lock-keywords
   `(,(byte-compile
-      `(lambda (limit) (c-font-lock-doc-comments "/[*/]!" limit)))))
+      `(lambda (limit)
+	 (c-font-lock-doc-comments "/[*/]!" limit
+	   '(
+	     ))))))
 
 
 (cc-provide 'cc-fonts)
