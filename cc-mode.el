@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.279 $
-;; Last Modified:   $Date: 1993-02-05 22:01:35 $
+;; Version:         $Revision: 2.280 $
+;; Last Modified:   $Date: 1993-02-05 23:18:07 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-05 22:01:35 $|$Revision: 2.279 $|
+;; |$Date: 1993-02-05 23:18:07 $|$Revision: 2.280 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.279 $
+  "Major mode for editing C++ code.  $Revision: 2.280 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.279 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.280 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2464,7 +2464,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.279 $"
+(defconst c++-version "$Revision: 2.280 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2519,7 +2519,7 @@ Use \\[c++-submit-bug-report] to submit a bug report."
     (if c++-special-indent-hook
 	(insert "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
 		"c++-special-indent-hook is set to '"
-		(symbol-name c++-special-indent-hook)
+		(format "%s" c++-special-indent-hook)
 		".\nPerhaps this is your problem?\n"
 		"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n"))
     (insert (emacs-version) "\n")
