@@ -1824,19 +1824,28 @@ of realigning any line continuation backslashes, unless
 	    (when (eq (char-syntax (or (char-after) ?\ )) ?\()
 	      (forward-char)))
 	  (setq start (c-least-enclosing-brace (c-parse-state)))
-	  (if start (goto-char start))
-	  (if (c-beginning-of-macro)
-	      ;; If the found start brace is inside a macro, or if we
-	      ;; didn't find a brace and point is inside a macro, then
-	      ;; indent the macro.
-	      (progn
-		(setq start (point))
-		(c-end-of-macro)
-		(c-indent-region start (point)))
-	    (when start
-	      ;; Inside some brace construct (and outside a macro).
-	      (goto-char start)
-	      (c-indent-exp))))
+	  (cond ((and start
+		      (progn (goto-char start)
+			     (c-beginning-of-macro))
+		      (progn (setq start (point))
+			     (c-end-of-macro)
+			     (if (>= (point) here)
+				 t
+			       (setq start nil))))
+		 ;; If the found open brace is inside a macro that
+		 ;; extends to the point then the macro is larger than
+		 ;; the top-level brace pair, so indent the macro.
+		 (c-indent-region start (point)))
+		(start
+		 ;; Inside some brace construct.
+		 (goto-char start)
+		 (c-indent-exp))
+		((progn (goto-char here)
+			(c-beginning-of-macro))
+		 ;; Inside a macro.
+		 (setq start (point))
+		 (c-end-of-macro)
+		 (c-indent-region start (point)))))
       (goto-char here)
       (set-marker here nil))))
 
