@@ -3,7 +3,7 @@ Author: cc-mode-help@python.org
 
 <h1>CC Mode Version 5</h1>
 
-The <a href="index.html">current release</a> is version 5.18.  The
+The <a href="index.html">current release</a> is version 5.19.  The
 important recent changes are outlined below.  Be sure to see the list of 
 <a href="#compat">compatibility notes</a> for special notes about
 X/Emacs versions and package interactions.
