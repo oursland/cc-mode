@@ -3221,8 +3221,8 @@ brace."
 			  (goto-char (match-end 0))
 			  t)
 		      ;; The template list is finished.
-		      (c-mark-paren-open start)
-		      (c-mark-paren-close (1- (point)))
+		      (c-mark-<-as-paren start)
+		      (c-mark->-as-paren (1- (point)))
 		      (setq res t)
 		      nil)))
 
