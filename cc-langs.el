@@ -257,46 +257,64 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
   ;; Common initializations for all modes.
   ;; these variables should always be buffer local; they do not affect
   ;; indentation style.
-  (make-local-variable 'paragraph-start)
-  (make-local-variable 'paragraph-separate)
-  (make-local-variable 'paragraph-ignore-fill-prefix)
   (make-local-variable 'require-final-newline)
   (make-local-variable 'parse-sexp-ignore-comments)
   (make-local-variable 'indent-line-function)
   (make-local-variable 'indent-region-function)
+  (make-local-variable 'outline-regexp)
+  (make-local-variable 'outline-level)
+  (make-local-variable 'normal-auto-fill-function)
   (make-local-variable 'comment-start)
   (make-local-variable 'comment-end)
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
   (make-local-variable 'comment-multi-line)
-  (make-local-variable 'outline-regexp)
-  (make-local-variable 'outline-level)
-  (make-local-variable 'adaptive-fill-regexp)
+  (make-local-variable 'paragraph-start)
+  (make-local-variable 'paragraph-separate)
+  (make-local-variable 'paragraph-ignore-fill-prefix)
   (make-local-variable 'adaptive-fill-mode)
+  (make-local-variable 'adaptive-fill-regexp)
+  (make-local-variable 'adaptive-fill-first-line-regexp)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
   ;; X/Emacs 20 only
   (and (boundp 'comment-line-break-function)
        (progn
 	 (make-local-variable 'comment-line-break-function)
 	 (setq comment-line-break-function
-	       'c-comment-line-break-function)))
-  (make-local-variable 'fill-paragraph-function)
-  (setq fill-paragraph-function 'c-fill-paragraph)
+	       'c-indent-new-comment-line)))
   ;; now set their values
-  (setq paragraph-start (concat page-delimiter "\\|$")
-	paragraph-separate paragraph-start
-	paragraph-ignore-fill-prefix t
-	require-final-newline t
+  (setq require-final-newline t
 	parse-sexp-ignore-comments t
 	indent-line-function 'c-indent-line
 	indent-region-function 'c-indent-region
 	outline-regexp "[^#\n\^M]"
 	outline-level 'c-outline-level
+	normal-auto-fill-function 'c-do-auto-fill
 	comment-column 32
-	comment-start-skip "/\\*+ *\\|// *"
-	comment-multi-line nil
-	adaptive-fill-regexp nil
-	adaptive-fill-mode nil)
+	comment-start-skip "/\\*+ *\\|//+ *"
+	comment-multi-line t)
+  ;; Fix things up for paragraph recognition and filling inside
+  ;; comments by using c-comment-prefix-regexp in the relevant places.
+  ;; We use adaptive filling for this to make it possible to use
+  ;; filladapt or some other fancy package.
+  (let ((comment-line-prefix
+	 (concat "[ \t]*\\(" c-comment-prefix-regexp "\\)?[ \t]*")))
+    (setq paragraph-start (concat comment-line-prefix "$\\|"
+				  page-delimiter)
+	  paragraph-separate paragraph-start
+	  paragraph-ignore-fill-prefix t
+	  adaptive-fill-mode t
+	  adaptive-fill-regexp
+	  (concat comment-line-prefix
+		  (if adaptive-fill-regexp
+		      (concat "\\(" adaptive-fill-regexp "\\)")
+		    ""))
+	  adaptive-fill-first-line-regexp
+	  (concat "\\`" comment-line-prefix
+		  ;; Maybe we should incorporate the old value here,
+		  ;; but then we have to do all sorts of kludges to
+		  ;; deal with the \` and \' it probably contains.
+		  "\\'")))
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
@@ -319,6 +337,9 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 		 (or (cdr (assq major-mode c-default-style))
 		     (cdr (assq 'other c-default-style))
 		     "gnu")))
+  ;; Fix obsolete variables.
+  (if (boundp 'c-comment-continuation-stars)
+      (setq c-block-comment-prefix c-comment-continuation-stars))
   )
 
 
@@ -417,15 +438,28 @@ Note that the style variables are always made local to the buffer."
   ;; backward-kill-word.
   (define-key c-mode-base-map [(control meta h)] 'c-mark-function)
   (define-key c-mode-base-map "\e\C-q"    'c-indent-exp)
-  (define-key c-mode-base-map "\ea"       'c-beginning-of-statement)
-  (define-key c-mode-base-map "\ee"       'c-end-of-statement)
+  (substitute-key-definition 'backward-sentence
+			     'c-beginning-of-statement
+			     c-mode-base-map global-map)
+  (substitute-key-definition 'forward-sentence
+			     'c-end-of-statement
+			     c-mode-base-map global-map)
+  (substitute-key-definition 'indent-new-comment-line
+			     'c-indent-new-comment-line
+			     c-mode-base-map global-map)
   ;; RMS says don't make these the default.
 ;;  (define-key c-mode-base-map "\e\C-a"    'c-beginning-of-defun)
 ;;  (define-key c-mode-base-map "\e\C-e"    'c-end-of-defun)
   (define-key c-mode-base-map "\C-c\C-n"  'c-forward-conditional)
   (define-key c-mode-base-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-base-map "\C-c\C-u"  'c-up-conditional)
-  (define-key c-mode-base-map "\t"        'c-indent-command)
+  (substitute-key-definition 'indent-for-tab-command
+			     'c-indent-command
+			     c-mode-base-map global-map)
+  ;; It doesn't suffice to put c-fill-paragraph on
+  ;; fill-paragraph-function due to the way it works.
+  (substitute-key-definition 'fill-paragraph 'c-fill-paragraph
+			     c-mode-base-map global-map)
   ;; Caution!  Enter here at your own risk.  We are trying to support
   ;; several behaviors and it gets disgusting. :-(
   ;;
