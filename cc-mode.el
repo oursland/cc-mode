@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.182 $
-;; Last Modified:   $Date: 1994-01-11 23:13:09 $
+;; Version:         $Revision: 3.183 $
+;; Last Modified:   $Date: 1994-01-11 23:16:33 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -82,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-11 23:13:09 $|$Revision: 3.182 $|
+;; |$Date: 1994-01-11 23:16:33 $|$Revision: 3.183 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.182 $
+CC-MODE REVISION: $Revision: 3.183 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -680,7 +680,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.182 $
+CC-MODE REVISION: $Revision: 3.183 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1144,7 +1144,7 @@ non-whitespace characters on the line following the semicolon."
       ;; do some special stuff with the character
       (self-insert-command (prefix-numeric-value arg))
       (let ((pos (- (point-max) (point))))
-	;; possibly do some cleanups
+	;; possibly do some clean ups
 	(if (and c-auto-newline
 		 (or (and
 		      (= last-command-char ?,)
@@ -1192,7 +1192,7 @@ Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the colon, or
 the colon is inserted inside a literal.
 
-This function will also cleanup double colon scope operators based on
+This function will also clean up double colon scope operators based on
 the value of `c-cleanup-list'."
   (interactive "P")
   (let* ((bod (c-point 'bod))
@@ -2944,7 +2944,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.182 $"
+(defconst c-version "$Revision: 3.183 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -2969,7 +2969,6 @@ region."
     (list
      ;; report only the vars that affect indentation
      'c-emacs-features
-     'c-auto-hungry-initial-state
      'c-backscan-limit
      'c-basic-offset
      'c-offsets-alist
