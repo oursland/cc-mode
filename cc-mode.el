@@ -1,12 +1,12 @@
 ;;; cc-mode.el --- major mode for editing C++ and C code
 
-;; Author: 1992 Barry A. Warsaw, Century Computing Inc. <bwarsaw@cen.com>
-;;         1987 Dave Detlefs and Stewart Clamen
-;;         1985 Richard M. Stallman
+;; Authors: 1992 Barry A. Warsaw, Century Computing Inc. <bwarsaw@cen.com>
+;;          1987 Dave Detlefs and Stewart Clamen
+;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.41 $
-;; Last Modified:   $Date: 1993-11-11 21:08:24 $
+;; Version:         $Revision: 3.42 $
+;; Last Modified:   $Date: 1993-11-11 21:24:06 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-11 21:08:24 $|$Revision: 3.41 $|
+;; |$Date: 1993-11-11 21:24:06 $|$Revision: 3.42 $|
 
 ;;; Code:
 
@@ -169,7 +169,7 @@ Current valid values are:
  `list-close-comma    -- cleans up commas following braces in array
                          and aggregate initializers.")
 
-(defvar cc-hanging-braces-list
+(defvar cc-hanging-braces-list nil
   "*Controls the insertion of newlines before open (left) braces.
 This variable only has effect when auto-newline is on, as evidenced by
 the `/a' or `/ah' appearing next to the mode name.  It contains a list
@@ -179,13 +179,12 @@ the previous line.  Valid values for this list are:
   'defun-open   -- opens any top level function
   'class-open   -- opens any class definition
   'inline-open  -- opens any inline, in-class member function
-  'block-open   -- opens any statement block")
+  'block-open   -- opens any statement block
 
-  If nil, open
-braces do not hang (i.e. a newline is inserted before all open
-braces).  If t, all open braces hang -- no newline is inserted before
-open braces.  If not nil or t, newlines are only inserted before
-top-level open braces; all other braces hang.")
+If nil, open braces do not hang (i.e. a newline is inserted before all
+open braces).  If t, all open braces hang -- no newline is inserted
+before open braces.  If not nil or t, newlines are only inserted
+before top-level open braces; all other braces hang.")
 
 (defvar cc-hanging-member-init-colon 'before
   "*Controls the insertion of newlines before and after member-init colons.
@@ -204,7 +203,7 @@ Valid values are:
   `auto-hungry'  -- both auto-newline and hungry-delete-key enabled.
 Nil is synonymous for `none' and t is synonymous for `auto-hungry'.")
 
-(defvar cc-untame-characters (and (memq 'v18 cc-emacs-features) '(?\'))
+(defvar cc-untame-characters '(?\')
   "*Utilize a backslashing workaround of an Emacs18 syntax deficiency.
 If non-nil, this variable should contain a list of characters which
 will be prepended by a backslash in comment regions.  By default, the
@@ -338,7 +337,7 @@ you should upgrade your Emacs.")
     (modify-syntax-entry ?/  ". 1456" cc-c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   cc-c++-mode-syntax-table)
     (modify-syntax-entry ?\n "> b"    cc-c++-mode-syntax-table))
-   ((memq '1-bit cc-c++-emacs-features)
+   ((memq '1-bit cc-emacs-features)
     ;; FSF19 does things differently, but we can work with it
     (modify-syntax-entry ?/  ". 124" cc-c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23b" cc-c++-mode-syntax-table)
@@ -416,7 +415,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.41 $
+  "Major mode for editing C++ code.  $Revision: 3.42 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -445,7 +444,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.41 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.42 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -473,7 +472,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-common-init ()
-  ;; Common initializations for cc-c++-mode and c++-c-mode.
+  ;; Common initializations for cc-c++-mode and cc-c-mode.
   (kill-all-local-variables)
   (use-local-map cc-mode-map)
   ;; make local variables
@@ -561,8 +560,8 @@ Key bindings:
 (defun cc-set-auto-hungry-state (auto-p hungry-p)
   ;; Set auto/hungry to state indicated by AUTO-P and HUNGRY-P, and
   ;; update the mode line accordingly
-  (setq c++-auto-newline auto-p
-	c++-hungry-delete-key hungry-p)
+  (setq cc-auto-newline auto-p
+	cc-hungry-delete-key hungry-p)
   ;; hack to get mode line updated
   (set-buffer-modified-p (buffer-modified-p)))
 
@@ -598,7 +597,7 @@ turns it off when negative, and just toggles it when zero."
   "Toggle auto-newline and hungry-delete-key features.
 Optional argument has the following meanings when supplied:
   \\[universal-argument]
-        resets features to c++-auto-hungry-initial-state.
+        resets features to cc-auto-hungry-initial-state.
   negative number
         turn off both auto-newline and hungry-delete-key features.
   positive number
@@ -644,13 +643,13 @@ then the function in the variable `cc-delete-function' is called."
   (interactive "P")
   (if (or (not cc-hungry-delete-key)
 	  arg
-	  (c++-in-literal))
+	  (cc-in-literal))
       (funcall cc-delete-function (prefix-numeric-value arg))
     (let ((here (point)))
       (skip-chars-backward "\\s ")
       (if (/= (point) here)
 	  (delete-region (point) here)
-	(funcall c++-delete-function 1)
+	(funcall cc-delete-function 1)
 	))))
 
 (defun c++-electric-pound (arg)
@@ -946,8 +945,8 @@ to the accompanying texinfo manual.
 
 See also the variable `cc-untame-characters'."
   (interactive "p")
-  (if (and (memq last-command-char c++-untame-characters)
-	   (memq (c++-in-literal) '(c c++)))
+  (if (and (memq last-command-char cc-untame-characters)
+	   (memq (cc-in-literal) '(c c++)))
       (insert-char ?\\ 1))
   (self-insert-command arg))
 
@@ -965,13 +964,13 @@ See also the variable `cc-untame-characters'."
 				 (if (memq char '(?\\ ?^ ?-))
 				     (concat "\\" (char-to-string char))
 				   (char-to-string char))))
-			      c++-untame-characters ""))))
+			      cc-untame-characters ""))))
     (save-excursion
       (beginning-of-buffer)
       (while (not (eobp))
 	(skip-chars-forward charset)
 	(if (and (not (zerop (following-char)))
-		 (memq (c++-in-literal) '(c c++))
+		 (memq (cc-in-literal) '(c c++))
 		 (/= (preceding-char) ?\\ ))
 	    (insert-char  ?\\ 1))
 	(if (not (eobp))
@@ -1436,7 +1435,7 @@ of the expression are preserved."
       state)))
 
 ;; This is for all Emacsen supporting 8-bit syntax (Lucid 19, patched GNU18)
-(defun c++-8bit-il (&optional lim)
+(defun cc-8bit-il (&optional lim)
   ;; Determine if point is in a C++ literal
   (save-excursion
     (let* ((lim (or lim (cc-point 'bod)))
@@ -1453,7 +1452,7 @@ of the expression are preserved."
        (t nil)))))
 
 ;; This is for all 1-bit emacsen (FSFmacs 19)
-(defun c++-1bit-il (&optional lim)
+(defun cc-1bit-il (&optional lim)
   ;; Determine if point is in a C++ literal
   (save-excursion
     (let* ((lim  (or lim (cc-point 'bod)))
@@ -1493,7 +1492,7 @@ of the expression are preserved."
        ((memq 'no-dual-comments cc-emacs-features) 'cc-emacs18-il)
        ((memq '8-bit cc-emacs-features)            'cc-8bit-il)
        ((memq '1-bit cc-emacs-features)            'cc-1bit-il)
-       (t (error "Bad cc-emacs-features: %s" cc-emacs-features;))
+       (t (error "Bad cc-emacs-features: %s" cc-emacs-features))
        ))
 
 
@@ -1717,12 +1716,12 @@ of the expression are preserved."
   ;; an error is thrown.
   (let ((if-level 1)
 	(case-fold-search nil)
-	(lim (or lim (c++-point 'bod)))
+	(lim (or lim (cc-point 'bod)))
 	(at-if (looking-at "if\\b")))
     (catch 'orphan-if
       (while (and (not (bobp))
 		  (not (zerop if-level)))
-	(c++-backward-syntactic-ws)
+	(cc-backward-syntactic-ws)
 	(condition-case errcond
 	    (backward-sexp 1)
 	  (error
@@ -2137,12 +2136,12 @@ of the expression are preserved."
   ;; indent the curent line as C/C++ code. Optional LIM is the
   ;; farthest point back to search. returns the amount of indentation
   ;; change
-  (let* ((lim (or lim (c++-point 'bod)))
+  (let* ((lim (or lim (cc-point 'bod)))
 	 (semantics (cc-guess-basic-semantics lim))
 	 (pos (- (point-max) (point)))
 	 (indent (apply '+ (mapcar 'cc-get-offset semantics)))
 	 (shift-amt  (- (current-indentation) indent)))
-    (and cc-echo-semantic-knowledge-p
+    (and cc-echo-semantic-information-p
 	 (message "langelem: %s, indent= %d" semantics indent))
     (if (zerop shift-amt)
 	nil
@@ -2206,7 +2205,7 @@ it will remove trailing backslashes."
 	(setq line (1+ line)))))
   (cc-keep-region-active))
 
-(defun c++-comment-region (beg end)
+(defun cc-comment-region (beg end)
   "Comment out all lines in a region between mark and current point by
 inserting `comment-start' in front of each line."
   (interactive "*r")
@@ -2219,10 +2218,10 @@ inserting `comment-start' in front of each line."
       (while (not (eobp))
 	(insert comment-start)
 	(forward-line 1))
-      (if (eq major-mode 'c++-c-mode)
+      (if (eq major-mode 'cc-c-mode)
 	  (insert comment-end)))))
 
-(defun c++-uncomment-region (beg end)
+(defun cc-uncomment-region (beg end)
   "Uncomment all lines in region between mark and current point by deleting
 the leading `// ' from each line, if any."
   (interactive "*r")
@@ -2233,7 +2232,7 @@ the leading `// ' from each line, if any."
        (progn (goto-char end) (forward-line 1) (point)))
       (goto-char (point-min))
       (let ((comment-regexp
-	     (if (eq major-mode 'c++-c-mode)
+	     (if (eq major-mode 'cc-c-mode)
 		 (concat "\\s *\\(" (regexp-quote comment-start)
 			 "\\|"      (regexp-quote comment-end)
 			 "\\)")
@@ -2246,7 +2245,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.41 $"
+(defconst cc-version "$Revision: 3.42 $"
   "CC-Mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -2301,6 +2300,6 @@ the leading `// ' from each line, if any."
 
 
 ;; this is sometimes useful
-(provide 'c++-mode)
+(provide 'cc-mode)
 
-;;; c++-mode.el ends here
+;;; cc-mode.el ends here
