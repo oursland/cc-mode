@@ -573,7 +573,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
       (let (copyfunc)
 	;; use built-in copy-tree if its there.
 	(if (fboundp 'copy-tree)
-	    (setq copyfunc (symbol-function 'copy-tree))
+	    (setq copyfunc 'copy-tree)
 	  (setq copyfunc (lambda (tree)
 			    (if (consp tree)
 				(cons (funcall copyfunc (car tree))
