@@ -1247,7 +1247,7 @@ brace."
 	       (while (eq braceassignp 'dontknow)
 		 (setq braceassignp
 		       (cond ((/= (c-backward-token-1 1 t lim) 0) nil)
-			     ((looking-at "new\\>") t)
+			     ((looking-at "new\\>[^_]") t)
 			     ((looking-at "\\sw\\|\\s_\\|[.[]")
 			      ;; Carry on looking if this is an
 			      ;; identifier (may contain "." in Java)
@@ -1684,20 +1684,38 @@ brace."
 			   (c-forward-syntactic-ws indent-point)))
 		(setq placeholder (c-point 'boi))
 		(or (consp special-brace-list)
-		    (and (or (looking-at "enum[ \t\n]+")
-			     (save-excursion
+		    (and (or (save-excursion
 			       (goto-char indent-point)
+			       (setq tmpsymbol nil)
 			       (while (and (> (point) placeholder)
 					   (= (c-backward-token-1 1 t) 0)
-					   (/= (char-after) ?=)))
-			       (eq (char-after) ?=)))
+					   (/= (char-after) ?=))
+				 (if (and (not tmpsymbol)
+					  (looking-at "new\\>[^_]"))
+				     (setq tmpsymbol 'topmost-intro-cont)))
+			       (eq (char-after) ?=))
+			     (looking-at "enum[ \t\n]+"))
 			 (save-excursion
 			   (while (and (< (point) indent-point)
 				       (= (c-forward-token-1 1 t) 0)
 				       (not (memq (char-after) '(?\; ?\()))))
 			   (not (memq (char-after) '(?\; ?\()))
 			   ))))
-	      (c-add-syntax 'brace-list-open placeholder))
+	      (if (and (c-major-mode-is 'java-mode)
+		       (eq tmpsymbol 'topmost-intro-cont))
+		  ;; We're in Java and have found that the open brace
+		  ;; belongs to a "new Foo[]" initialization list,
+		  ;; which means the brace list is part of an
+		  ;; expression and not a top level definition.  We
+		  ;; therefore treat it as any topmost continuation
+		  ;; even though the semantically correct symbol still
+		  ;; is brace-list-open, on the same grounds as in
+		  ;; case 10B.2.
+		  (progn
+		    (c-beginning-of-statement-1 lim)
+		    (c-forward-syntactic-ws)
+		    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
+		(c-add-syntax 'brace-list-open placeholder)))
 	     ;; CASE 5A.4: inline defun open
 	     ((and inclass-p (not inenclosing-p))
 	      (c-add-syntax 'inline-open)
