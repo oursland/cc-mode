@@ -474,13 +474,17 @@ variables."
   ;;
   ;; This function does not do any hidden buffer changes.
 
+  (interactive)
+
   (setq c-current-comment-prefix
 	(if (listp c-comment-prefix-regexp)
 	    (cdr-safe (or (assoc major-mode c-comment-prefix-regexp)
 			  (assoc 'other c-comment-prefix-regexp)))
 	  c-comment-prefix-regexp))
+
   (let ((comment-line-prefix
 	 (concat "[ \t]*\\(" c-current-comment-prefix "\\)[ \t]*")))
+
     (setq paragraph-start (concat comment-line-prefix
 				  c-paragraph-start
 				  "\\|"
@@ -498,6 +502,7 @@ variables."
 			      (default-value 'adaptive-fill-regexp)
 			      "\\)")
 		    "")))
+
     (when (boundp 'adaptive-fill-first-line-regexp)
       ;; XEmacs adaptive fill mode doesn't have this.
       (make-local-variable 'adaptive-fill-first-line-regexp)
