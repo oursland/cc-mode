@@ -1830,9 +1830,9 @@ of realigning any line continuation backslashes, unless
 	      ;; didn't find a brace and point is inside a macro, then
 	      ;; indent the macro.
 	      (progn
-	       (setq start (point))
-	       (c-end-of-macro)
-	       (c-indent-region start (point)))
+		(setq start (point))
+		(c-end-of-macro)
+		(c-indent-region start (point)))
 	    (when start
 	      ;; Inside some brace construct (and outside a macro).
 	      (goto-char start)
@@ -2154,8 +2154,9 @@ command to conveniently insert and align the necessary backslashes."
 	    ;; remove any on the last line.
 	    (if (save-excursion
 		  (goto-char to)
-		  (and (= (forward-line -1) 0)
-		       (set-marker endmark (point))))
+		  (beginning-of-line)
+		  (if (not (bobp))
+		      (set-marker endmark (1- (point)))))
 		(progn
 		  (c-append-backslashes-forward endmark column point-pos)
 		  ;; The function above leaves point on the line
