@@ -67,6 +67,18 @@
     (if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
    (t nil)))
 
+;; Emacs 19.34 doesn't have a when macro.  Here's it's Emacs 20
+;; definition.
+(defmacro when (cond &rest body)
+  "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
+  (list 'if cond (cons 'progn body)))
+
+;; Emacs 19.34 doesn't have an unless macro.  Here's it's Emacs 20
+;; definition.
+(defmacro unless (cond &rest body)
+  "(unless COND BODY...): if COND yields nil, do BODY, else return nil."
+  (cons 'if (cons cond (cons nil body))))
+
 
 (provide 'cc-mode-19)
 ;;; cc-mode-19.el ends here
