@@ -56,6 +56,7 @@
 ;; above.
 
 (require 'compile)
+(require 'cl)
 
 (defvar cc-test-dir nil)
 (setq cc-test-dir
@@ -66,9 +67,6 @@
 (let ((srcdir (expand-file-name (concat cc-test-dir ".."))))
   (setq load-path (cons srcdir load-path)))
 (require 'cc-mode)
-
-;; This is bogus and should eventually go away
-(c-initialize-cc-mode)
 
 (defconst cc-test-teststyle
   '((c-tab-always-indent           . t)
@@ -189,6 +187,11 @@
 (defvar cc-test-comp-buf nil)
 (defvar cc-test-comp-win nil)
 
+(defun cc-test-message (msg &rest args)
+  (if noninteractive
+      (send-string-to-terminal (concat (apply 'format msg args) "\n"))
+    (apply 'message msg args)))
+
 (defun cc-test-log (msg &rest args)
   (if cc-test-comp-buf
       (save-excursion
@@ -198,7 +201,7 @@
 	  (recenter -1)
 	  (sit-for 0)
 	  (insert "\n")))
-    (apply 'message msg args)))
+    (apply 'cc-test-message msg args)))
 
 (defun make-test-buffers (filename)
   (let ((testbuf (get-buffer-create "*cc-test*"))
@@ -251,7 +254,7 @@
   (let ((default-directory cc-test-dir))
     (save-excursion
       (if (or (when (member filename cc-test-finished-tests)
-		(message "Skipping %s - already tested" filename)
+		(cc-test-message "Skipping %s - already tested" filename)
 		t)
 	      (when (not (file-exists-p
 			  (concat (file-name-sans-extension filename) ".res")))
@@ -282,7 +285,8 @@
 		     (error
 		      (setq error-found-p t)
 		      (cc-test-log "%s:%d: c-guess-basic-syntax error: %s"
-				   filename (1+ (count-lines (point-min) (point)))
+				   filename
+				   (1+ (count-lines (point-min) (point)))
 				   (error-message-string err))
 		      ""))
 		   ))
@@ -310,7 +314,8 @@
 		     (unless (looking-at "^$")
 		       ;; Don't report lines caused that caused an error above.
 		       (cc-test-log "%s:%d: c-indent-line error: %s"
-				    filename linenum (error-message-string err))))
+				    filename linenum
+				    (error-message-string err))))
 		   (set-buffer testbuf)
 		   )))))
 	  ;; Compare and report.
@@ -407,17 +412,20 @@
 			(unless (do-one-test test t)
 			  (setq broken-files (cons test broken-files)))
 		      (error
-		       (message "%s: Eval error: %s" test (error-message-string err))
+		       (cc-test-log "%s: Eval error: %s"
+				    test (error-message-string err))
 		       (setq broken-files (cons test broken-files)))
 		      ))
 		  (directory-files
 		   cc-test-dir nil
 		   "\\.\\(c\\|cc\\|java\\|pike\\|idl\\|m\\)\\'")))
       (fset 'c-echo-parsing-error old-c-echo-parsing-error))
+    (if noninteractive
+	(send-string-to-terminal "                              \r"))
     (kill-test-buffers)
     (when broken-files
-      (message "Broken file(s): %s"
-	       (mapconcat 'identity broken-files ", ")))
+      (cc-test-message "Broken file(s): %s"
+		       (mapconcat 'identity broken-files ", ")))
     (unless noninteractive
       (if broken-files
 	  (first-error)
