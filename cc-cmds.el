@@ -1184,7 +1184,7 @@ Optional prefix ARG means justify paragraph as well."
 	     (save-excursion
 	       (beginning-of-line)
 	       (looking-at ".*//")))
-	(let (fill-prefix
+	(let ((fill-prefix fill-prefix)
 	       ;; Lines containing just a comment start or just an end
 	       ;; should not be filled into paragraphs they are next
 	       ;; to.
@@ -1201,9 +1201,10 @@ Optional prefix ARG means justify paragraph as well."
 	    ;; Find the comment start in this line.
 	    (re-search-forward "[ \t]*//[ \t]*")
 	    ;; Set the fill-prefix to be what all lines except the first
-	    ;; should start with.
-	    (setq fill-prefix (buffer-substring (match-beginning 0)
-						(match-end 0)))
+	    ;; should start with.  But do not alter a user set fill-prefix.
+	    (if (null fill-prefix)
+		(setq fill-prefix (buffer-substring (match-beginning 0)
+						    (match-end 0))))
 	    (save-restriction
 	      ;; Narrow down to just the lines of this comment.
 	      (narrow-to-region (c-point 'bol)
