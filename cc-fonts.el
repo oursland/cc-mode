@@ -1218,7 +1218,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 			  (c-forward-syntactic-ws)
 			  ;; Handle prefix declaration specifiers.
 			  (when (looking-at c-prefix-spec-kwds-re)
-			    (c-forward-keyword-clause))
+			    (c-forward-keyword-clause 1))
 			  ,(if (c-major-mode-is 'c++-mode)
 			       `(when (and (c-forward-type)
 					   (eq (char-after) ?=))
@@ -1383,7 +1383,7 @@ higher."
 				 (c-lang-const c-paren-type-kwds)))
 		       "\\)\\>")
 	       '((c-fontify-types-and-refs ((c-promote-possible-types t))
-		   (c-forward-keyword-clause)
+		   (c-forward-keyword-clause 1)
 		   (if (> (point) limit) (goto-char limit))))))))
       ))
 

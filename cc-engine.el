@@ -3991,7 +3991,7 @@ comment at the start of cc-engine.el for more info."
 			     `(c-forward-name)))
 		nil
 	      (and (looking-at c-keywords-regexp)
-		   (c-forward-keyword-clause))))
+		   (c-forward-keyword-clause 1))))
      (when (memq res '(t known found prefix))
        ,(when (eq type 'ref)
 	  `(when c-record-type-identifiers
@@ -4013,13 +4013,13 @@ comment at the start of cc-engine.el for more info."
 		 (c-forward-syntactic-ws)
 		 (c-forward-keyword-prefixed-id ,type)))))
 
-(defun c-forward-keyword-clause ()
-  ;; The first submatch in the current match data is assumed to
-  ;; surround a token.  If it's a keyword, move over it and any
-  ;; immediately following clauses associated with it, stopping at the
-  ;; start of the next token.  t is returned in that case, otherwise
-  ;; the point stays and nil is returned.  The kind of clauses that
-  ;; are recognized are those specified by `c-type-list-kwds',
+(defun c-forward-keyword-clause (match)
+  ;; Submatch MATCH in the current match data is assumed to surround a
+  ;; token.  If it's a keyword, move over it and any immediately
+  ;; following clauses associated with it, stopping at the start of
+  ;; the next token.  t is returned in that case, otherwise the point
+  ;; stays and nil is returned.  The kind of clauses that are
+  ;; recognized are those specified by `c-type-list-kwds',
   ;; `c-ref-list-kwds', `c-colon-type-list-kwds',
   ;; `c-paren-nontype-kwds', `c-paren-type-kwds', `c-<>-type-kwds',
   ;; and `c-<>-arglist-kwds'.
@@ -4037,7 +4037,7 @@ comment at the start of cc-engine.el for more info."
   ;;
   ;; This function might do hidden buffer changes.
 
-  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos pos
+  (let ((kwd-sym (c-keyword-sym (match-string match))) safe-pos pos
 	;; The call to `c-forward-<>-arglist' below is made after
 	;; `c-<>-sexp-kwds' keywords, so we're certain they actually
 	;; are angle bracket arglists and `c-restricted-<>-arglists'
@@ -4046,7 +4046,7 @@ comment at the start of cc-engine.el for more info."
 	c-restricted-<>-arglists)
 
     (when kwd-sym
-      (goto-char (match-end 1))
+      (goto-char (match-end match))
       (c-forward-syntactic-ws)
       (setq safe-pos (point))
 
@@ -4605,7 +4605,7 @@ comment at the start of cc-engine.el for more info."
 		 (looking-at c-opt-type-component-key)))
 	  ;; There might be more keywords for the type.
 	  (let (safe-pos)
-	    (c-forward-keyword-clause)
+	    (c-forward-keyword-clause 1)
 	    (while (progn
 		     (setq safe-pos (point))
 		     (looking-at c-opt-type-component-key))
@@ -4613,17 +4613,17 @@ comment at the start of cc-engine.el for more info."
 			 (looking-at c-primitive-type-key))
 		(c-record-type-id (cons (match-beginning 1)
 					(match-end 1))))
-	      (c-forward-keyword-clause))
+	      (c-forward-keyword-clause 1))
 	    (if (looking-at c-primitive-type-key)
 		(progn
 		  (when c-record-type-identifiers
 		    (c-record-type-id (cons (match-beginning 1)
 					    (match-end 1))))
-		  (c-forward-keyword-clause)
+		  (c-forward-keyword-clause 1)
 		  (setq res t))
 	      (goto-char safe-pos)
 	      (setq res 'prefix)))
-	(unless (save-match-data (c-forward-keyword-clause))
+	(unless (save-match-data (c-forward-keyword-clause 1))
 	  (if pos
 	      (goto-char pos)
 	    (goto-char (match-end 1))
@@ -4894,7 +4894,7 @@ comment at the start of cc-engine.el for more info."
 	  (when (looking-at c-prefix-spec-kwds-re)
 	    (setq kwd-sym (c-keyword-sym (match-string 1)))
 	    (save-excursion
-	      (c-forward-keyword-clause)
+	      (c-forward-keyword-clause 1)
 	      (setq kwd-clause-end (point))))
 
 	  (when (setq found-type (c-forward-type))
@@ -4985,7 +4985,7 @@ comment at the start of cc-engine.el for more info."
       ;; hangon keyword clauses after it.  Otherwise it has already
       ;; been done in the loop above.
       (while (looking-at c-decl-hangon-key)
-	(c-forward-keyword-clause))
+	(c-forward-keyword-clause 1))
       (setq id-start (point)))
 
      ((eq at-type 'prefix)
