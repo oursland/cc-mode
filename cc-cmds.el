@@ -2111,20 +2111,15 @@ Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
 (defun c-do-auto-fill ()
   ;; Do automatic filling if not inside a context where it should be
   ;; ignored.
-  (let ((c-ignore-fill-prefix
-	 ;; Kludge to detect whether fill-prefix is user set or
-	 ;; generated automatically by do-auto-fill.
-	 (null fill-prefix))
-	(lit-type (c-in-literal)))
-    (setq lit-type (cond ((eq lit-type 'pound)
-			  ;; Come to think about it, "pound" is a bit
-			  ;; of a misnomer, so call it "cpp" instead
-			  ;; in user interaction.
-			  'cpp)
-			 ((null lit-type) 'code)
-			 (t lit-type)))
-    (unless (memq lit-type c-ignore-auto-fill)
-      (do-auto-fill))))
+  (let ((c-auto-fill-prefix
+	 ;; The decision of whether the line should be broken is
+	 ;; actually done in c-indent-new-comment-line, which
+	 ;; do-auto-fill calls to break lines.  We just set this
+	 ;; special variable so that we'll know where we're called
+	 ;; from there.  It's also used to detect whether fill-prefix
+	 ;; is user set or generated automatically by do-auto-fill.
+	 fill-prefix))
+    (do-auto-fill)))
 
 (defun c-indent-new-comment-line (&optional soft)
   "Break line at point and indent, continuing comment if within one.
@@ -2137,9 +2132,7 @@ appropriate for comments.
 
 If a fill prefix is specified, it overrides all the above."
   (interactive)
-  (let ((fill-prefix (unless (and (boundp 'c-ignore-fill-prefix)
-				  c-ignore-fill-prefix)
-		       fill-prefix))
+  (let ((fill-prefix fill-prefix)
 	(do-line-break
 	 (lambda ()
 	   (delete-region (progn (skip-chars-backward " \t") (point))
@@ -2149,8 +2142,28 @@ If a fill prefix is specified, it overrides all the above."
 	;; c-line-break-reindent.
 	(c-lit-limits (if (boundp 'c-lit-limits) c-lit-limits))
 	(c-lit-type (if (boundp 'c-lit-type) c-lit-type))
-	 col)
-    (cond (fill-prefix
+	col)
+    (when (boundp 'c-auto-fill-prefix)
+      ;; Called from do-auto-fill.
+      (unless c-lit-limits
+	(setq c-lit-limits (c-literal-limits nil nil t)))
+      (unless c-lit-type
+	(setq c-lit-type (c-literal-type c-lit-limits)))
+      (if (memq (cond ((eq c-lit-type 'pound)
+		       ;; Come to think about it, "pound" is a bit
+		       ;; of a misnomer, so call it "cpp" instead
+		       ;; in user interaction.
+		       'cpp)
+		      ((null c-lit-type) 'code)
+		      (t c-lit-type))
+		c-ignore-auto-fill)
+	  (setq fill-prefix t)		; Used as flag in the cond.
+	(if (null c-auto-fill-prefix)
+	    (setq fill-prefix nil))))
+    (cond ((eq fill-prefix t)
+	   ;; A call from do-auto-fill which should be ignored.
+	   )
+	  (fill-prefix
 	   ;; A fill-prefix overrides anything.
 	   (funcall do-line-break)
 	   (insert-and-inherit fill-prefix))
