@@ -174,7 +174,9 @@ def get_release():
 
 
 def incr_release():
-    [major_rev, minor_rev] = string.split(RELEASE, '.')
+    fp = open('VERSION', 'r')
+    [major_rev, minor_rev] = string.split(fp.read(), '.')
+    fp.close()
     fp = open('VERSION', 'w')
     next_rev = string.atoi(minor_rev) + 1
     if next_rev < 100:
