@@ -229,6 +229,7 @@
     "class-13.cc"
     "class-14.pike"
     "class-15.java"
+    "class-16.pike"
     "comments.c"
     "comments-1.java"
     "comments-2.c"
