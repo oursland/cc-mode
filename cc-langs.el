@@ -27,6 +27,9 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
+(eval-when-compile
+  (load-file "./cc-styles.el"))
+
 
 ;; Regular expressions and other values which must be parameterized on
 ;; a per-language basis.
@@ -232,12 +235,8 @@ For use with the variable `java-mode-hook'."
   (setq c-offsets-alist (copy-alist c-offsets-alist))
   ;; setup the comment indent variable in a Emacs version portable way
   ;; ignore any byte compiler warnings you might get here
-  (if (boundp 'comment-indent-function)
-      (progn
-	   (make-local-variable 'comment-indent-function)
-	   (setq comment-indent-function 'c-comment-indent))
-    (make-local-variable 'comment-indent-hook)
-    (setq comment-indent-hook 'c-comment-indent))
+  (make-local-variable 'comment-indent-function)
+  (setq comment-indent-function 'c-comment-indent)
   ;; Put C menu into menubar and on popup menu for XEmacs 19. I think
   ;; this happens automatically for Emacs 19.  Skip it for Infodock.
   (if (and (not (memq 'infodock c-emacs-features))
@@ -259,10 +258,8 @@ For use with the variable `java-mode-hook'."
 	(if (not changed-p)
 	    (progn
 	      (set-buffer-menubar (copy-sequence current-menubar))
-	      (if (fboundp 'add-submenu)
-		  (add-submenu nil (c-mode-menu))
-		(add-menu nil mode-name c-mode-menu)
-		)))))
+	      (add-submenu nil (c-mode-menu))
+	      ))))
   (if (boundp 'mode-popup-menu)
       (setq mode-popup-menu (c-mode-menu)))
   ;; put auto-hungry designators onto minor-mode-alist, but only once
