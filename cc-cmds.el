@@ -2283,7 +2283,7 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 	    (save-excursion
 	      (goto-char (car lit-limits))
 	      (if (looking-at (if (eq lit-type 'c++)
-				  c-comment-prefix-regexp
+				  c-current-comment-prefix
 				comment-start-skip))
 		  (goto-char (match-end 0))
 		(forward-char 2)
