@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.181 $
-;; Last Modified:   $Date: 1994-01-11 22:57:29 $
+;; Version:         $Revision: 3.182 $
+;; Last Modified:   $Date: 1994-01-11 23:13:09 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -82,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-11 22:57:29 $|$Revision: 3.181 $|
+;; |$Date: 1994-01-11 23:13:09 $|$Revision: 3.182 $|
 
 ;;; Code:
 
@@ -117,7 +117,7 @@ reported and the semantic symbol is ignored.")
     (member-init-cont      . 0)
     (inher-intro           . +)
     (inher-cont            . c-lineup-multi-inher)
-    ;;some people might like this behavior instead
+    ;;some people like this behavior instead
     ;;(block-open            . c-adaptive-block-open)
     (block-open            . 0)
     (block-close           . 0)
@@ -131,8 +131,8 @@ reported and the semantic symbol is ignored.")
     (statement-case-intro  . +)
     (substatement          . +)
     (case-label            . 0)
-    (label                 . 2)
     (access-label          . -)
+    (label                 . 2)
     (do-while-closure      . 0)
     (else-clause           . 0)
     (comment-intro         . c-indent-for-comment)
@@ -173,6 +173,7 @@ Here is the current list of valid semantic symbols:
  c++-funcdecl-cont      -- the nether region between a C++ function
                            declaration and the defun opening brace
  knr-argdecl-intro      -- first line of a K&R C argument declaration
+ knr-argdecl            -- subsequent lines in a K&R C argument declaration
  topmost-intro          -- the first line in a topmost construct definition
  topmost-intro-cont     -- topmost definition continuation lines
  member-init-intro      -- first line in a member initialization list
@@ -181,14 +182,18 @@ Here is the current list of valid semantic symbols:
  inher-cont             -- subsequent multiple inheritance lines
  block-open             -- statement block open brace
  block-close            -- statement block close brace
+ brace-list-open        -- open brace of an enum or static array list
+ brace-list-close       -- close brace of an enum or static array list
+ brace-list-intro       -- first line in an enum or static array list
+ brace-list-entry       -- subsequent lines in an enum or static array list
  statement              -- a C/C++ statement
  statement-cont         -- a continuation of a C/C++ statement
  statement-block-intro  -- the first line in a new statement block
  statement-case-intro   -- the first line in a case `block'
- substatement           -- the first line after an if/while/for/do intro
+ substatement           -- the first line after an if/while/for/do/else
  case-label             -- a case or default label
- label                  -- any non-special C/C++ label
  access-label           -- C++ private/protected/public access label
+ label                  -- any non-special C/C++ label
  do-while-closure       -- the `while' that ends a do/while construct
  else-clause            -- the `else' of an if/else construct
  comment-intro          -- a line containing only a comment introduction
@@ -644,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.181 $
+CC-MODE REVISION: $Revision: 3.182 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -675,7 +680,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.181 $
+CC-MODE REVISION: $Revision: 3.182 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2939,7 +2944,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.181 $"
+(defconst c-version "$Revision: 3.182 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
