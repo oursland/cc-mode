@@ -91,14 +91,26 @@
 (cc-require 'cc-cmds)
 (cc-require 'cc-align)
 (cc-require 'cc-menus)
-(cc-require 'cc-awk) ; FIXME!! Add a check for the (X)Emacs version
-		     ; here, and load cc-awk only with a good-enough
-		     ; Emacs.  Otherwise, the old awk-mode.el should
-		     ; prevail, and dummy functions for things like
-		     ; c-awk-after-logical-semicolon should be
-		     ; provided.  ACM, 2002/10/27.
 
-;; Silence the compiler.
+(defvar c-emacs-with-sttp-p
+;; Are syntax-table text properties supported by the current Emacs version?
+  (and (boundp 'emacs-major-version)
+       (if (featurep 'xemacs)
+           (or (> emacs-major-version 21)
+               (and (= emacs-major-version 21)
+                    (>= emacs-minor-version 4)))
+         (>= emacs-major-version 20))))
+
+(defun c-mode-is-new-awk-p ()
+  (and (c-major-mode-is 'awk-mode) c-emacs-with-sttp-p))
+;; Is the current mode the "new" awk mode?  It is important for (e.g.) the
+;; cc-engine functions do distinguish between the old and new awk-modes.
+
+;; On older versions of Emacs, invoking awk-mode will cause the old
+;; awk-mode.el to get loaded.
+(if c-emacs-with-sttp-p (cc-require 'cc-awk))
+
+;; SILENCE the compiler.
 (cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs 20+
 (cc-bytecomp-defun set-keymap-parents)	; XEmacs
@@ -907,27 +919,29 @@ Key bindings:
   (c-update-modeline))
 
 
-;; Support for awk
+;; Support for awk.  This is purposely disabled for older (X)Emacsen which
+;; don't support syntax-table properties.
 
-(defvar awk-mode-abbrev-table nil
-  "Abbreviation table used in awk-mode buffers.")
-(c-define-abbrev-table 'awk-mode-abbrev-table
-  '(("else" "else" c-electric-continued-statement 0)
-    ("while" "while" c-electric-continued-statement 0)))
+(if (not c-emacs-with-sttp-p)
+    (autoload 'awk-mode "awk-mode.el" "awk-mode doc string FIXME!!!" t)
+  (defvar awk-mode-abbrev-table nil
+    "Abbreviation table used in awk-mode buffers.")
+  (c-define-abbrev-table 'awk-mode-abbrev-table
+    '(("else" "else" c-electric-continued-statement 0)
+      ("while" "while" c-electric-continued-statement 0)))
 
-(defvar awk-mode-map ()
-  "Keymap used in awk-mode buffers.")
-(if awk-mode-map
-    nil
-  (setq awk-mode-map (c-make-inherited-keymap))
-  ;; add bindings which are only useful for awk.
-  (define-key awk-mode-map "#" 'self-insert-command)
-  (define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
-  (define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun)
-  )
+  (defvar awk-mode-map ()
+    "Keymap used in awk-mode buffers.")
+  (if awk-mode-map
+      nil
+    (setq awk-mode-map (c-make-inherited-keymap))
+    ;; add bindings which are only useful for awk.
+    (define-key awk-mode-map "#" 'self-insert-command)
+    (define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
+    (define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun))
 
-(easy-menu-define c-awk-menu awk-mode-map "AWK Mode Commands"
-		  (cons "AWK" (c-lang-const c-mode-menu awk)))
+  (easy-menu-define c-awk-menu awk-mode-map "AWK Mode Commands"
+    (cons "AWK" (c-lang-const c-mode-menu awk)))
 
 ;; In XEmacs >= 21.5 modes should add their own entries to
 ;; `auto-mode-alist' and `interpreter-mode-alist'.
@@ -935,8 +949,8 @@ Key bindings:
 ;;;###autoload (add-to-list 'interpreter-mode-alist '(("awk" . awk-mode) ("mawk" . awk-mode) ("nawk" . awk-mode) ("gawk" . awk-mode)))
 
 ;;;###autoload
-(defun awk-mode ()
-  "Major mode for editing AWK code.
+  (defun awk-mode ()
+    "Major mode for editing AWK code.
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 awk-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -949,32 +963,32 @@ initialization, then `awk-mode-hook'.
 
 Key bindings:
 \\{awk-mode-map}"
-  (interactive)
-  (kill-all-local-variables)
-  (c-initialize-cc-mode)
-  (set-syntax-table awk-mode-syntax-table)
-  (setq major-mode 'awk-mode
-	mode-name "AWK"
-	local-abbrev-table awk-mode-abbrev-table
-	abbrev-mode t)
-  (use-local-map awk-mode-map)
-  (c-init-language-vars awk-mode)
-  ;; The rest of CC Mode does not (yet) use `font-lock-syntactic-keywords',
-  ;; so it's not set by `c-font-lock-init'.
-  (make-local-variable 'font-lock-syntactic-keywords)
-  (setq font-lock-syntactic-keywords
-        '((c-awk-set-syntax-table-properties
-           0 (0) ; Everything on this line is a dummy.
-           nil t)))
-  (c-common-init 'awk-mode)
-  (add-hook 'before-change-functions 'c-awk-before-change nil t)
-  (add-hook 'after-change-functions 'c-awk-after-change nil t)
-  (c-save-buffer-state nil
+    (interactive)
+    (kill-all-local-variables)
+    (c-initialize-cc-mode)
+    (set-syntax-table awk-mode-syntax-table)
+    (setq major-mode 'awk-mode
+          mode-name "AWK"
+          local-abbrev-table awk-mode-abbrev-table
+          abbrev-mode t)
+    (use-local-map awk-mode-map)
+    (c-init-language-vars awk-mode)
+    ;; The rest of CC Mode does not (yet) use `font-lock-syntactic-keywords',
+    ;; so it's not set by `c-font-lock-init'.
+    (make-local-variable 'font-lock-syntactic-keywords)
+    (setq font-lock-syntactic-keywords
+          '((c-awk-set-syntax-table-properties
+             0 (0)                      ; Everything on this line is a dummy.
+             nil t)))
+    (c-common-init 'awk-mode)
+    (add-hook 'before-change-functions 'c-awk-before-change nil t)
+    (add-hook 'after-change-functions 'c-awk-after-change nil t)
+    (c-save-buffer-state nil
       (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max))))
-  (run-hooks 'c-mode-common-hook)
-  (run-hooks 'awk-mode-hook)
-  (c-update-modeline))
-
+    (run-hooks 'c-mode-common-hook)
+    (run-hooks 'awk-mode-hook)
+    (c-update-modeline))
+)                                   ; closes the (if (not c-emacs-with-sttp-p)
 
 ;; bug reporting
 

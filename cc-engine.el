@@ -393,13 +393,13 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       (if (and (memq (char-before) delims)
 	       (progn (forward-char -1)
 		      (setq saved (point))
-		      (if (c-major-mode-is 'awk-mode)
+		      (if (c-mode-is-new-awk-p)
                           (c-awk-backward-syntactic-ws)
                         (c-backward-syntactic-ws))
 		      (or (memq (char-before) delims)
 			  (memq (char-before) '(?: nil))
 			  (eq (char-syntax (char-before)) ?\()
-                          (and (c-major-mode-is 'awk-mode)
+                          (and (c-mode-is-new-awk-p)
                                (c-awk-after-logical-semicolon))))) ; ACM 2002/6/22
           ;; ACM, 2002/7/20:  What about giving a limit to the above function?
 	  (setq ret 'previous
@@ -531,7 +531,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			  ((eq sym 'while)
 			   (when (or (not pptok)
 				     (memq (char-after pptok) delims)
-                                     (and (c-major-mode-is 'awk-mode)
+                                     (and (c-mode-is-new-awk-p)
                                           (or
                                         ;; might we be calling this from
                                         ;; c-awk-after-if-do-for-while-condition-p?
@@ -583,7 +583,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			     ;; If we started inside a macro then this
 			     ;; sexp is always interesting.
 			     nil)
-			    ((not (c-major-mode-is 'awk-mode)) ; Changed from t, ACM 2002/6/25
+			    ((not (c-mode-is-new-awk-p)) ; Changed from t, ACM 2002/6/25
 			     ;; Otherwise check that we didn't step
 			     ;; into a macro from the end.
 			     (let ((macro-start
@@ -689,7 +689,7 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 		      (< (point) to))
 	  (if (setq lit-range (c-literal-limits from)) ; Have we landed in a string/comment?
 	      (progn (goto-char (setq from (cdr lit-range)))
-                     (if (and (c-major-mode-is 'awk-mode) (bolp)) ; ACM 2002/7/17. Make sure we
+                     (if (and (c-mode-is-new-awk-p) (bolp)) ; ACM 2002/7/17. Make sure we
                          (backward-char))) ; don't skip over a virtual semi-colon after an awk comment.  :-(
 	    (cond ((eq (char-after) ?:)
 		   (forward-char)
@@ -706,7 +706,7 @@ single `?' is found, then `c-maybe-labelp' is cleared."
                   ((and (eolp)  ; Can only happen in awk-mode
                         (not (c-awk-completed-stmt-ws-ends-line-p)))
                    (forward-char))
-                  ((and (c-major-mode-is 'awk-mode)
+                  ((and (c-mode-is-new-awk-p)
                         (bolp) lit-range ; awk: comment/string ended prev line.
                         (not (c-awk-completed-stmt-ws-ends-prev-line-p))))
 		  (t (throw 'done (point))))))
@@ -879,7 +879,7 @@ Leave point at the beginning of the directive and return t if in one,
 otherwise return nil and leave point unchanged.
 
 This function does not do any hidden buffer changes."
-  (if (not (c-major-mode-is 'awk-mode)) ; ACM 2001/10/19.  Not sure if this is needed, 2002/3/29.
+  (if (not (c-mode-is-new-awk-p)) ; ACM 2001/10/19.  Not sure if this is needed, 2002/3/29.
                                         ; Yes it is!  2002/6/23.
       (let ((here (point)))
 	(save-restriction
@@ -4951,7 +4951,7 @@ brace."
 	 ;; CASE 18: A substatement we can recognize by keyword.
 	 ((save-excursion
 	    (and c-opt-block-stmt-key
-		 (if (c-major-mode-is 'awk-mode)
+		 (if (c-mode-is-new-awk-p)
                      (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
                    (not (eq char-before-ip ?\;)))
 		 (not (memq char-after-ip '(?\) ?\] ?,)))
@@ -5614,7 +5614,7 @@ brace."
 	    (c-add-syntax 'inher-cont (point))
 	    )))
 	 ;; CASE 9: we are inside a brace-list
-	 ((and (not (c-major-mode-is 'awk-mode))  ; Maybe this isn't needed (ACM, 2002/3/29)
+	 ((and (not (c-mode-is-new-awk-p))  ; Maybe this isn't needed (ACM, 2002/3/29)
                (setq special-brace-list
                      (or (and c-special-brace-lists
                               (save-excursion

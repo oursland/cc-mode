@@ -87,6 +87,14 @@ INSTALLATION
     (X)Emacs.  A directory have higher precendence than all
     directories after it in the load-path list.
 
+    Insert the following line into your .emacs or init file:
+
+        (autoload 'awk-mode "cc-mode" nil t)
+
+    This will cause (X)Emacs to use the new awk-mode for awk files,
+    rather than the older mode contained in the file awk-mode.elc.
+    (But see the note below under "Compatibility Issues".)
+
     To test that you have things set up correctly, visit a C file and
     then type:
 
@@ -104,6 +112,16 @@ INSTALLATION
     Mode, so the customizable variables support won't be compiled in
     there.  You need to get a later Custom library and make sure it's
     loaded when CC Mode is compiled to enable it.
+
+    The new awk-mode requires a feature (syntax-table text properties)
+    which first appeared in Emacs 20.1 and XEmacs 21.4.  If you are
+    still using an older version of (X)Emacs, cc-mode will use the
+    older awk-mode (from file awk-mode.elc) for awk files, even when
+    the autoload form (see above) appears in your .emacs/init file.
+    You can check which awk-mode you are running by displaying the
+    mode documentation string with C-h m from an awk buffer.  The
+    older function's doc string contains "This is much like C mode
+    except ....".
 
     For more details about interactions with different packages, see
     the CC Mode web page.
