@@ -2374,10 +2374,12 @@ brace."
 	   ((and inswitch-p
 		 (progn
 		   (goto-char indent-point)
-		   (c-backward-syntactic-ws containing-sexp)
-		   (back-to-indentation)
+		   (c-beginning-of-statement-1 containing-sexp)
 		   (setq placeholder (point))
-		   (looking-at c-switch-label-key)))
+		   (beginning-of-line)
+		   (when (re-search-forward c-switch-label-key
+					    (max placeholder (c-point 'eol)) t)
+		     (setq placeholder (match-beginning 0)))))
 	    (goto-char indent-point)
 	    (skip-chars-forward " \t")
 	    (if (eq (char-after) ?{)
@@ -2422,9 +2424,8 @@ brace."
 	      (if (and inswitch-p
 		       (looking-at c-switch-label-key))
 		  (progn
-		    (goto-char placeholder)
-		    (end-of-line)
-		    (c-forward-sexp -1)))
+		    (goto-char (match-end 0))
+		    (c-forward-syntactic-ws)))
 	      (setq relpos (c-point 'boi))
 	      (while (and (not done)
 			  (<= safepos (point))
