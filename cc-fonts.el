@@ -569,6 +569,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
   (when (bobp)
     (c-clear-found-types))
 
+  ;; Clear the c-type char properties in the region to recalculate
+  ;; them properly. This is necessary e.g. to handle constructs that
+  ;; might been required as declarations temporarily during editing.
+  ;; The interesting properties are anyway those put on the closest
+  ;; token before the region.
+  (c-clear-char-properties (point) limit 'c-type)
+
   nil)
 
 (defun c-font-lock-<>-arglists (limit)
