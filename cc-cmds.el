@@ -1446,57 +1446,39 @@ relative indentation among the lines of the expression is preserved.
 	)))))
 
 (defun c-indent-exp (&optional shutup-p)
-  "Indent each line in balanced expression following point syntactically.
-Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
+  "Indent each line in the balanced expression following point syntactically.
+If optional SHUTUP-P is non-nil, no errors are signalled if no
+balanced expression is found."
   (interactive "*P")
   (let ((here (point-marker))
-	end progress-p)
+	end)
     (set-marker-insertion-type here t)
     (unwind-protect
-	(let ((c-echo-syntactic-information-p nil) ;keep quiet for speed
-	      (start (progn
+	(let ((start (progn
 		       ;; try to be smarter about finding the range of
 		       ;; lines to indent. skip all following
-		       ;; whitespace. failing that, try to find any
-		       ;; opening brace on the current line
+		       ;; whitespace, then try to find any
+		       ;; opening paren on the current line
 		       (skip-chars-forward " \t\n")
-		       (if (memq (char-after) '(?\( ?\[ ?\{))
-			   (point)
-			 (let ((state (parse-partial-sexp (point)
-							  (c-point 'eol))))
-			   (and (nth 1 state)
-				(goto-char (nth 1 state))
-				(memq (char-after) '(?\( ?\[ ?\{))
-				(point)))))))
+		       (save-restriction
+			 (narrow-to-region (point-min) (c-point 'eol))
+			 (c-safe (1- (scan-lists (point) 1 -1)))))))
 	  ;; find balanced expression end
 	  (setq end (and (c-safe (progn (c-forward-sexp 1) t))
-			 (point-marker)))
+			 (point)))
 	  ;; sanity check
-	  (and (not start)
-	       (not shutup-p)
-	       (error "Cannot find start of balanced expression to indent."))
-	  (and (not end)
-	       (not shutup-p)
-	       (error "Cannot find end of balanced expression to indent."))
-	  (c-progress-init start end 'c-indent-exp)
-	  (setq progress-p t)
-	  (goto-char start)
-	  (beginning-of-line)
-	  (while (< (point) end)
-	    (if (not (looking-at "[ \t]*$"))
-		(indent-according-to-mode))
-	    (c-progress-update)
-	    (forward-line 1)))
-      ;; make sure marker is deleted
-      (and end
-	   (set-marker end nil))
-      (and progress-p
-	   (c-progress-fini 'c-indent-exp))
+	  (if (not start)
+	     (unless shutup-p
+	       (error "Cannot find start of balanced expression to indent"))
+	    (if (not end)
+		(unless shutup-p
+		  (error "Cannot find end of balanced expression to indent"))
+	      (c-indent-region start end))))
       (goto-char here)
       (set-marker here nil))))
 
 (defun c-indent-defun ()
-  "Re-indents the current top-level function def, struct or class declaration
+  "Indent the current top-level function def, struct or class declaration
 syntactically."
   (interactive "*")
   (let ((here (point-marker))
@@ -1521,96 +1503,37 @@ syntactically."
       (goto-char here)
       (set-marker here nil))))
 
-(defun c-indent-region (start end)
-  ;; Indent every line whose first char is between START and END inclusive.
+(defun c-indent-region (start end &optional quiet)
+  "Indent every line whose first char is between START and END inclusive.
+Be silent about syntactic errors if the optional argument QUIET is non-nil."
   (save-excursion
     (goto-char start)
     ;; Advance to first nonblank line.
     (skip-chars-forward " \t\n")
     (beginning-of-line)
-    (let (endmark)
-      (unwind-protect
-	  (let ((c-tab-always-indent t)
-		;; shut up any echo msgs on indiv lines
-		(c-echo-syntactic-information-p nil)
-		fence)
-	    (c-progress-init start end 'c-indent-region)
-	    (setq endmark (copy-marker end))
-	    (while (and (bolp)
-			(not (eobp))
-			(< (point) endmark))
-	      ;; update progress
-	      (c-progress-update)
-	      ;; Indent one line as with TAB.
-	      (let (nextline sexpend sexpbeg)
-		;; skip blank lines
-		(skip-chars-forward " \t\n")
-		(beginning-of-line)
-		;; indent the current line
-		(indent-according-to-mode)
-		(setq fence (point))
-		(if (save-excursion
-		      (beginning-of-line)
-		      (looking-at "[ \t]*#"))
-		    (forward-line 1)
-		  (save-excursion
-		    ;; Find beginning of following line.
-		    (setq nextline (c-point 'bonl))
-		    ;; Find first beginning-of-sexp for sexp extending past
-		    ;; this line.
-		    (beginning-of-line)
-		    (while (< (point) nextline)
-		      (condition-case nil
-			  (progn
-			    (c-forward-sexp 1)
-			    (setq sexpend (point)))
-			(error (setq sexpend nil)
-			       (goto-char nextline)))
-		      (c-forward-syntactic-ws))
-		    (if sexpend
-			(progn
-			  ;; make sure the sexp we found really starts on the
-			  ;; current line and extends past it
-			  (goto-char sexpend)
-			  (setq sexpend (point-marker))
-			  (c-safe (c-backward-sexp 1))
-			  (setq sexpbeg (point))))
-		    (if (and sexpbeg (< sexpbeg fence))
-			(setq sexpbeg fence)))
-		  ;; Since we move by sexps we might have missed
-		  ;; comment-only lines.
-		  (if sexpbeg
-		      (save-excursion
-			(while (progn
-				 (forward-line 1)
-				 (skip-chars-forward " \t")
-				 (< (point) sexpbeg))
-			  (if (looking-at c-comment-start-regexp)
-			      (setq sexpbeg (c-point 'bol))))))
-		  ;; If that sexp ends within the region, indent it all at
-		  ;; once, fast.
-		  (condition-case nil
-		      (if (and sexpend
-			       (> sexpend nextline)
-			       (<= sexpend endmark))
-			  (progn
-			    (goto-char sexpbeg)
-			    (c-indent-exp 'shutup)
-			    (c-progress-update)
-			    (goto-char sexpend)))
-		    (error
-		     (goto-char sexpbeg)
-		     (indent-according-to-mode)))
-		  ;; Move to following line and try again.
-		  (and sexpend
-		       (markerp sexpend)
-		       (set-marker sexpend nil))
-		  (forward-line 1)
-		  (setq fence (point))))))
-	(set-marker endmark nil)
-	(c-progress-fini 'c-indent-region)
-	(c-echo-parsing-error)
-	))))
+    (setq c-parsing-error
+	  (or (let ((endmark (copy-marker end))
+		    (c-parsing-error nil)
+		    ;; shut up any echo msgs on indiv lines
+		    (c-echo-syntactic-information-p nil))
+		(unwind-protect
+		    (progn
+		      (c-progress-init start end 'c-indent-region)
+		      (while (and (bolp)
+				  (not (eobp))
+				  (< (point) endmark))
+			;; update progress
+			(c-progress-update)
+			;; skip blank lines
+			(skip-chars-forward " \t\n")
+			(beginning-of-line)
+			;; indent the current line
+			(c-indent-line nil t)
+			(forward-line)))
+		  (set-marker endmark nil)
+		  (c-progress-fini 'c-indent-region))
+		(c-echo-parsing-error quiet))
+	      c-parsing-error))))
 
 (defun c-mark-function ()
   "Put mark at end of current top-level defun, point at beginning."
@@ -1691,7 +1614,7 @@ syntactically."
    ;; Start the progress update messages.  If this Emacs doesn't have
    ;; a built-in timer, just be dumb about it.
    ((not (fboundp 'current-time))
-    (message "indenting region... (this may take a while)"))
+    (message "Indenting region... (this may take a while)"))
    ;; If progress has already been initialized, do nothing. otherwise
    ;; initialize the counter with a vector of:
    ;;     [start end lastsec context]
@@ -1702,7 +1625,7 @@ syntactically."
 				      (point-marker))
 				    (nth 1 (current-time))
 				    context))
-      (message "indenting region..."))
+      (message "Indenting region..."))
    ))
 
 (defun c-progress-update ()
@@ -1717,7 +1640,7 @@ syntactically."
       ;; what's the right value?
       (if (< c-progress-interval (- now lastsecs))
 	  (progn
-	    (message "indenting region... (%d%% complete)"
+	    (message "Indenting region... (%d%% complete)"
 		     (/ (* 100 (- (point) start)) (- end start)))
 	    (aset c-progress-info 2 now)))
       )))
@@ -1731,7 +1654,7 @@ syntactically."
 	(progn
 	  (set-marker (aref c-progress-info 1) nil)
 	  (setq c-progress-info nil)
-	  (message "indenting region...done")))))
+	  (message "Indenting region... done")))))
 
 
 
