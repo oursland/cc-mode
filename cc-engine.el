@@ -2102,6 +2102,9 @@
 	 ;; CASE 15: any other label
 	 ((looking-at c-label-key)
 	  (goto-char containing-sexp)
+	  ;; check for hanging braces
+	  (if (/= (point) (c-point 'boi))
+	      (c-forward-sexp -1))
 	  (c-add-syntax 'label (c-point 'boi)))
 	 ;; CASE 16: block close brace, possibly closing the defun or
 	 ;; the class
