@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.355 $
-;; Last Modified:   $Date: 1997-02-03 16:12:46 $
+;; Version:         $Revision: 4.356 $
+;; Last Modified:   $Date: 1997-02-05 23:50:52 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -396,9 +396,17 @@ If every function in the list is called with no determination made,
 then no newline is inserted.")
 
 (defvar c-hanging-comment-ender-p t
-  "*If nil, `c-fill-paragraph' leaves C block comment enders on their own line.
-Default value is t, which inhibits leaving block comment ending string
-`*/' on a line by itself.  This is BOCM's sole behavior.")
+  "*Controls what \\[fill-paragraph] does to C block comment enders.
+When set to nil, C block comment enders are left on their own line.
+When set to t, block comment enders will be placed at the end of the
+previous line (i.e. they `hang' on that line).")
+
+(defvar c-hanging-comment-starter-p nil
+  "*Controls what \\[fill-paragraph] does to C block comment starters.
+When set to nil, C block comment starters are left on their own line.
+When set to t, text that follows a block comment starter will be
+placed on the same line as the block comment starter (i.e. the text
+`hangs' on that line).")
 
 (defvar c-backslash-column 48
   "*Column to insert backslashes when macroizing a region.")
@@ -595,6 +603,7 @@ The list of variables to buffer localize are:
     c-cleanup-list
     c-hanging-braces-alist
     c-hanging-colons-alist
+    c-hanging-comment-starter-p
     c-hanging-comment-ender-p
     c-backslash-column
     c-label-minimum-indentation
@@ -2538,7 +2547,8 @@ Optional prefix ARG means justify paragraph as well."
 		;; to.
 		(paragraph-start (concat paragraph-start re1))
 		(paragraph-separate (concat paragraph-separate re1))
-		(chars-to-delete 0))
+		(chars-to-delete 0)
+		)
 	    (save-restriction
 	      ;; Don't fill the comment together with the code
 	      ;; following it.  So temporarily exclude everything
@@ -2550,6 +2560,9 @@ Optional prefix ARG means justify paragraph as well."
 				  (if comment-start-place
 				      (goto-char comment-start-place)
 				    (search-backward "/*"))
+				  (if (and (not c-hanging-comment-starter-p)
+					   (looking-at "/\\*[ \t]*$"))
+				      (forward-line 1))
 				  ;; Protect text before the comment
 				  ;; start by excluding it.  Add
 				  ;; spaces to bring back proper
@@ -5057,7 +5070,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.355 $"
+(defconst c-version "$Revision: 4.356 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5103,6 +5116,7 @@ command to conveniently insert and align the necessary backslashes."
 		   'c-electric-pound-behavior
 		   'c-hanging-braces-alist
 		   'c-hanging-colons-alist
+		   'c-hanging-comment-starter-p
 		   'c-hanging-comment-ender-p
 		   'c-tab-always-indent
 		   'c-recognize-knr-p
@@ -5197,6 +5211,7 @@ command to conveniently insert and align the necessary backslashes."
 			     c-electric-pound-behavior
 			     c-hanging-braces-alist
 			     c-hanging-colons-alist
+			     c-hanging-comment-starter-p
 			     c-hanging-comment-ender-p
 			     c-offsets-alist
 			     )))
@@ -5215,6 +5230,7 @@ command to conveniently insert and align the necessary backslashes."
       (make-variable-buffer-local 'c-cleanup-list)
       (make-variable-buffer-local 'c-hanging-braces-alist)
       (make-variable-buffer-local 'c-hanging-colons-alist)
+      (make-variable-buffer-local 'c-hanging-comment-starter-p)
       (make-variable-buffer-local 'c-hanging-comment-ender-p)
       (make-variable-buffer-local 'c-backslash-column)
       (make-variable-buffer-local 'c-label-minimum-indentation)
