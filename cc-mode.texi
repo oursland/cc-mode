@@ -20,7 +20,8 @@
 @comment Generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
-@comment Maintained by Barry A. Warsaw <cc-mode-help@python.org>
+@comment Maintained by Barry A. Warsaw and Martin Stjernholm
+@comment <bug-cc-mode@gnu.org> (or <cc-mode-help@python.org>)
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3856,12 +3857,13 @@ expose the bug.  Be especially sure to include any code that appears
 to reproduce it.
 
 Bug reports are now sent to the following email addresses:
-@email{cc-mode-help@@python.org} and
-@email{bug-gnu-emacs@@gnu.org}; the latter is mirrored on the
-Usenet newsgroup @code{gnu.emacs.bug}.  You can send other questions and
-suggestions (kudos? @t{;-)} to @email{cc-mode-help@@python.org}, or
-@email{help-gnu-emacs@@gnu.org} which is mirrored on newsgroup
-@code{gnu.emacs.help}.
+@email{bug-cc-mode@gnu.org} and @email{bug-gnu-emacs@@gnu.org}; the
+latter is mirrored on the Usenet newsgroup @code{gnu.emacs.bug}.  You
+can send other questions and suggestions (kudos? @t{;-)} to
+@email{bug-cc-mode@gnu.org}, or @email{help-gnu-emacs@@gnu.org} which is
+mirrored on newsgroup @code{gnu.emacs.help}.  The old contact address
+@email{cc-mode-help@python.org} is still active, but its use is
+discouraged.
 
 If you want to get announcements of new CC Mode releases, send the word
 @emph{subscribe} in the body of a message to
