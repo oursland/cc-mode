@@ -659,6 +659,56 @@ inextern-lang, innamespace."
 	0
       c-basic-offset)))
 
+(defun c-lineup-macro-cont (langelem)
+  "Line up macro continuation lines according to the indentation of
+the construct preceding the macro.  E.g:
+
+v beg of preceding constr      v beg of preceding constr
+                             int dribble() {
+const char msg[] =             if (!running)
+  \"Some text.\";	         error(\"Not running!\");
+
+#define X(A, B)  \           #define X(A, B)    \
+do {             \    <->      do {             \    <- c-lineup-macro-cont
+  printf (A, B); \               printf (A, B); \
+} while (0)                    } while (0)
+
+The function returns the relative indentation to the macro start line,
+to allow accumulation with other offsets.  E.g. in the following
+cases, cpp-macro-cont is combined with the statement-block-intro that
+comes from the \"do {\" that hangs on the \"#define\" line:
+
+                             int dribble() {
+const char msg[] =             if (!running)
+  \"Some text.\";	         error(\"Not running!\");
+
+#define X(A, B) do { \       #define X(A, B) do { \
+  printf (A, B);     \  <->      printf (A, B);   \  <- c-lineup-macro-cont
+  this->refs++;      \           this->refs++;    \
+} while (0)             <->    } while (0)           <- c-lineup-macro-cont
+
+The relative indentation returned by c-lineup-macro-cont is zero and
+two, respectively, in these two examples. They are then added to the
+two column indentation that statement-block-intro gives in both cases
+here.
+
+Works with: cpp-macro-cont if `c-syntactic-analysis-in-macro' is
+non-nil."
+  (if (not c-syntactic-analysis-in-macro)
+      ;; Temporary measure, to be able to use this function by default.
+      (c-lineup-dont-change langelem)
+    (save-excursion
+      ;; Go to the macro start and do a syntactic analysis of it.
+      ;; Then remove the cpp-macro element it should contain and
+      ;; calculate the indentation it then would get.
+      (c-beginning-of-macro)
+      (let* ((indent-base (save-excursion
+			    (back-to-indentation)
+			    (current-column)))
+	     (syntax (delete '(cpp-macro) (c-guess-basic-syntax))))
+	(- (c-get-syntactic-indentation syntax)
+	   indent-base)))))
+
 (defun c-lineup-dont-change (langelem)
   "Do not change the indentation of the current line.
 
