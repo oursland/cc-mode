@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.309 $
-;; Last Modified:   $Date: 1993-04-02 15:35:10 $
+;; Version:         $Revision: 2.310 $
+;; Last Modified:   $Date: 1993-04-16 15:03:12 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -113,25 +113,23 @@
 ;; Getting c++-mode.el
 ;; ===================
 ;; The latest public release version of this file should always be
-;; available for anon-ftp on ftp.cme.nist.gov:pub/gnu/c++-mode.el. It
-;; will also most likely be available on the elisp archive machine:
-;; archive.cis.ohio-state.edu.  Look around.
+;; available for anonymous ftp on the elisp archive machine. The path
+;; to the file is:
+;;
+;; archive.cis.ohio-state.edu:pub/gnu/emacs/elisp-archive/modes/c++-mode.el.Z 
 ;; 
-;; For those of you without aftp access, try sending a message to the
-;; mail-server at library@cme.nist.gov.  Put this message in the body
-;; of your email: "send pub/gnu/c++-mode.el" (without the quotes) to
-;; get the file in uuencoded format, or send the message "help" to get
-;; more information about using the mail-server.  Please don't email
-;; me asking for the latest version, I may not have it readily
-;; available to send to you. The mail-server should get it to you
-;; pretty quickly.  Remember that if you want advanced access to beta
-;; releases, get on the victims list -- but be forewarned, you should
-;; be elisp and C++ fluent, and should have anon-ftp access.
+;; c++-mode.el is no longer available through the mail-server at
+;; cme.nist.gov. For those of you without anon-ftp access, I'm sorry I
+;; can't help much, because I won't always have the latest version
+;; handy to send you. I will always post the source to the
+;; gnu.emacs.sources and comp.emacs newsgroups so look their or ask
+;; your fellow netters.  It would be great if someone who owns a
+;; mail-server would volunteer their services.
 
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-04-02 15:35:10 $|$Revision: 2.309 $|
+;; |$Date: 1993-04-16 15:03:12 $|$Revision: 2.310 $|
 
 ;;; Code:
 
@@ -458,7 +456,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.309 $
+  "Major mode for editing C++ code.  $Revision: 2.310 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -681,7 +679,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.309 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.310 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2545,7 +2543,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.309 $"
+(defconst c++-version "$Revision: 2.310 $"
   "c++-mode version number.")
 
 (defun c++-version ()
