@@ -523,7 +523,10 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	      (cond ((> start saved) (setq pos saved))
 		    ((= start saved) (setq ret 'up)))))
 
-	(when (and c-maybe-labelp (not ignore-labels) after-labels-pos)
+	(when (and c-maybe-labelp
+		   (not ignore-labels)
+		   (not (eq ret 'beginning))
+		   after-labels-pos)
 	  ;; We're in a label.  Maybe we should step to the statement
 	  ;; after it.
 	  (if (< after-labels-pos start)
