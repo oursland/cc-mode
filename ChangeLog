@@ -1,3 +1,65 @@
+Tue Sep 16 19:23:24 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.18
+
+Tue Sep 16 23:17:15 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-menus.el (cc-imenu-c-prototype-macro-regexp): New variable.
+
+	(cc-imenu-c++-generic-expression): Patches to better match C++ code.
+	Given by jan.dubois@ibm.net (Jan Dubois)
+
+	* cc-menus.el (cc-imenu-java-generic-expression):
+	Removed test for declaration
+	statements.  Patch given by Ake Stenhoff <etxaksf@aom.ericsson.se>, as
+	forwarded to me by RMS.
+
+	* cc-menus.el:
+	Imenu support for Objective-C given by Masatake (jet) YAMATO.
+
+	* cc-mode.el (objc-mode): Bind imenu-create-index-function to
+	cc-imenu-objc-function to enable Imenu support for Objective-C.
+	Contributed by Masatake (jet) YAMATO.
+
+Mon Sep 15 23:21:51 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-initialize-builtin-style):
+	Use existing copy-tree if it's defined.
+
+	copy-sequence doesn't work; the
+	c-offsets-alist must be copied recursively.  Use copy-tree solution
+	given by Simon Marshall.
+
+Fri Sep  5 04:47:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-beginning-of-statement):
+	Fixes in sentence movement to properly
+	handle M-e moving forward into a comment when looking at preceding
+	whitespace, and M-a moving backward into comment when looking at
+	following whitespace.
+
+	Uncommented the looking-at call in the
+	sentence-flag clause so that moving by forward-sentence when looking
+	at the beginning of a comment works again.  A previous log message in
+	cc-mode.el indicates this was commented out "because
+	c-beginning-of-statement-1 should do the right thing", but clearly it
+	doesn't.
+
+	I don't know if this breaks something else, because I can't figure out
+	why it was commented out in the first place.
+	
+	* cc-langs.el:
+	Define `/' in c-mode-base-map since all modes now support
+	c-electric-slash.
+
+	Define C-c C-e in mode-specific maps instead of c-mode-base-map since
+	c-expand-macro is meaningless in Java and IDL.
+
+	* cc-engine.el (c-end-of-statement-1):
+	Wrap backward-up-list in a c-safe call so no
+	error results when buffer contains only a comment and point is at
+	eob.
+
 Fri Sep  5 00:50:41 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.17
