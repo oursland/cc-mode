@@ -111,9 +111,9 @@
 	  (cond
 	   ;; CASE 0: did we hit the error condition above?
 	   (donep)
-	   ;; CASE 1: are we in a literal?
+	   ;; CASE 1: are we in a macro?
 	   ((eq (c-in-literal lim) 'pound)
-	    (beginning-of-line))
+	    (c-beginning-of-macro lim))
 	   ;; CASE 2: some other kind of literal?
 	   ((c-in-literal lim))
 	   ;; CASE 3: are we looking at a conditional keyword?
@@ -274,17 +274,18 @@
   ;; Go to the beginning of a cpp macro definition.  Leaves point at
   ;; the beginning of the macro and returns t if in a cpp macro
   ;; definition, otherwise returns nil and leaves point unchanged.
-  ;; `lim' is currently ignored, but the interface requires it.
   (let ((here (point)))
-    (beginning-of-line)
-    (while (eq (char-before (1- (point))) ?\\)
-      (forward-line -1))
-    (back-to-indentation)
-    (if (and (<= (point) here)
-	     (looking-at "#[ \t]*[a-zA-Z0-9!]"))
-	t
-      (goto-char here)
-      nil)))
+    (save-restriction
+      (if lim (narrow-to-region lim (point-max)))
+      (beginning-of-line)
+      (while (eq (char-before (1- (point))) ?\\)
+	(forward-line -1))
+      (back-to-indentation)
+      (if (and (<= (point) here)
+	       (looking-at "#[ \t]*[a-zA-Z0-9!]"))
+	  t
+	(goto-char here)
+	nil))))
 
 ;; Skipping of "syntactic whitespace", defined as lexical whitespace,
 ;; C and C++ style comments, and preprocessor directives.  Search no
