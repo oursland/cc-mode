@@ -1,27 +1,14 @@
-Thu Oct 08 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
+Wed Oct 14 22:34:50 1998  Barry A. Warsaw  <bug-cc-mode@gnu.org>
 
 	* Release 5.24
 
 Thu Oct 08 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-cmds.el (c-electric-brace): Added inexpr-class-open and
-	inexpr-class-close handling.
+ 	inexpr-class-close handling.
 
 	* cc-vars.el (c-hanging-braces-alist): Added inexpr-class-open and
-	inexpr-class-close and changed the default setting for those two.
-
-	* cc-mode.texi Added inexpr-class-open and inexpr-class-close to
-	the Hanging Braces doc.
-
-Wed Oct 07 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
-
-	* cc-engine.el (c-search-uplist-for-classkey): Avoid getting
- 	confused by comments in the search. Append "[^_]" to
- 	c-extra-toplevel-key where needed.
-
-	* cc-langs.el Do not include trailing "[^_]" in
- 	c-extra-toplevel-key regexps, since that'll mess up the (match-end
- 	0) position.
+ 	inexpr-class-close and changed the default setting for those two.
 
 Wed Oct 07 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 
@@ -37,17 +24,6 @@ Wed Sep 16 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 Tue Sep 08 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 
 	* Bug reporting address is now bug-cc-mode@gnu.org
-
-Thu Sep 03 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
-
-	* cc-engine.el (c-inside-bracelist-p): New test for whether we are
- 	inside a template argument assignment.
-
-Wed Sep 02 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
-
-	* cc-engine.el (c-inside-bracelist-p): When we've found an `=',
- 	and we're in C++ mode, be sure we are not inside a template
- 	argument assignment clause.
 
 Mon Aug 31 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
 
@@ -77,8 +53,6 @@ Fri Aug 28 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
  	"java" style. This is now all handled by the new semantics for
  	c-default-style.
 
-	* cc-mode.texi Describe the new semantics for c-default-style. 
-
 	* cc-styles.el (c-initialize-builtin-style): No longer call
  	c-set-style to set the default style.  This is all handled by the
  	new semantics for c-default-style.
@@ -89,10 +63,6 @@ Fri Aug 28 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
  	and elaborate the Custom widget to accept either type.
 
 Thu Aug 27 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
-
-	* cc-mode.texi Add description of new legal value for a syntatic
- 	symbols offset (it can now also be a list), and the added
- 	responsibilities of c-strict-syntax-p in that case.
 
 	* cc-styles.el (c-offsets-alist): The offset for a syntactic
  	symbol can now also be a list, which is recursively evaluated
@@ -115,38 +85,6 @@ Mon Aug 24 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
  	them as in-expression statements.  Case 7B changed in
  	c-guess-basic-syntax.
 
-Wed Aug 12 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
-
-	* cc-engine.el (c-guess-basic-syntax): Changes to fix broken
- 	member-init recognition when colon is embedded in the middle of a
- 	line.  Also fixes to cascading problems caused by this fix,
- 	including a bug that has existed for a while in calculating the
- 	relpos of multiline class instance variable declarations.  CASE
- 	5D: Don't go to the beginning of the line.  Instead cruise
- 	backwards by measured sexps.  CASE 5D.1: Placehold the location
- 	discovered before the colon, for use in 2nd half of the and.  In
- 	the 2nd half of the and, watch out for c-class-key which could
- 	indicate we're looking at an inheritance specification instead of
- 	a member init spec.  CASE 5D.2: We're left at a different buffer
- 	position when we get to this test, so we need to find the location
- 	of the c-inher-key first before we see if we're looking at
- 	it. CASE 5D.4: We need to placehold the location of the `<'
- 	character that starts the template since later, we're left at a
- 	different buffer location than we used to be.
-
-Fri Jun 26 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
-
-	* cc-cmds.el (c-comment-line-break-function): When filling a
- 	comment on the last line of a buffer, add a temporary newline to
- 	the end of the line so the forward-comment -1 works.
-
-Mon Jun 08 1998  Barry Warsaw  <bug-cc-mode@gnu.org>
-
-	* cc-vars.el (c-tab-always-indent): Change docstring to
- 	specifically use the symbol `other' instead of the more general
- 	"other than t or nil".  Custom won't let us specify such a
- 	constant.
-
 Sun Jun 07 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-engine.el (c-beginning-of-statement-1, c-guess-basic-syntax):
@@ -161,13 +99,6 @@ Sun Jun 07 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 Sat Jun 06 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-langs.el Added recognition of IDL specific top-level keywords. 
-
-Fri Jun 05 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
-
-	* cc-cmds.el (c-electric-brace, c-electric-paren): Moved
- 	brace-elseif-brace cleanup from c-electric-brace to
- 	c-electric-paren so it's performed earlier. Added
- 	brace-catch-brace.
 
 Tue May 19 1998  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
