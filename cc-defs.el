@@ -87,10 +87,18 @@
             (let (font-lock-keywords)
               (font-lock-compile-keywords '("\\<\\>"))
 	      font-lock-keywords))     ; did the previous call foul this up?
-       ;; Buglet: This only works if the CC Mode directory is in the
-       ;; load path.  No need to bother; it only affects odd people
-       ;; such as the developers.. ;)
        (load "cc-fix")))
+
+;; The above takes care of the delayed loading, but this is necessary
+;; to ensure correct byte compilation.
+(eval-when-compile
+  (if (and (not (featurep 'cc-fix))
+	   (progn
+	     (require 'font-lock)
+	     (let (font-lock-keywords)
+	       (font-lock-compile-keywords '("\\<\\>"))
+	       font-lock-keywords)))
+      (cc-load "cc-fix")))
 
 (cc-external-require 'cl)
 
