@@ -105,7 +105,7 @@ Works with: arglist-cont-nonempty, arglist-close."
   "Line up a continued argument.
 
 foo (xyz, aaa + bbb + ccc
-	  + ddd + eee + fff);    <- c-lineup-argcont
+          + ddd + eee + fff);    <- c-lineup-argcont
 
 Only continuation lines like this are touched, `nil' is returned on lines
 which are the start of an argument.
