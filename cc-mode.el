@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-13 14:43:21 $
-;; Version:         $Revision: 2.150 $
+;; Last Modified:   $Date: 1992-07-13 16:28:39 $
+;; Version:         $Revision: 2.151 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -74,7 +74,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-13 14:43:21 $|$Revision: 2.150 $|
+;; |$Date: 1992-07-13 16:28:39 $|$Revision: 2.151 $|
 
 
 ;; ======================================================================
@@ -282,7 +282,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.150 $
+  "Major mode for editing C++ code.  $Revision: 2.151 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1152,6 +1152,7 @@ enclosing class, or the depth of class nesting at point."
     (let ((indent-point (point))
 	  (case-fold-search nil)
 	  state containing-sexp paren-depth
+	  (bod (c++-point 'bod))
 	  foundp)
       (c++-beginning-of-defun)
       (setq state (c++-parse-state indent-point)
@@ -1164,16 +1165,25 @@ enclosing class, or the depth of class nesting at point."
 	    nil
 	  ;; calculate depth wrt containing (possibly nested) classes
 	  (goto-char containing-sexp)
-	  (while (and (setq foundp (re-search-backward
-				    "\\<\\(class\\|struct\\)\\>"
-				    (point-min) t))
-		      (c++-in-literal)))
-	  (setq state (c++-parse-state containing-sexp))
-	  (and foundp
-	       (not (nth 1 state))
-	       (nth 2 state)
-	       paren-depth))
-	))))
+	  (let* ((here (point))
+		 (backlim (save-excursion
+			    (c++-beginning-of-defun)
+			    (condition-case eoderr
+				(c++-end-of-defun 1)
+			      (error (goto-char here)))
+			    (if (< indent-point (point))
+				(point-min)
+			      (point)))))
+	    (while (and (setq foundp (re-search-backward
+				      "\\<\\(class\\|struct\\)\\>"
+				      backlim t))
+			(c++-in-literal)))
+	    (setq state (c++-parse-state containing-sexp))
+	    (and foundp
+		 (not (nth 1 state))
+		 (nth 2 state)
+		 paren-depth))
+	  )))))
 
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
@@ -1974,7 +1984,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.150 $"
+(defconst c++-version "$Revision: 2.151 $"
   "c++-mode version number.")
 
 (defun c++-version ()
