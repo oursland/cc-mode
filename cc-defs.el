@@ -391,10 +391,7 @@ certain situations.
 
 This function does not do any hidden buffer changes."
   (or count (setq count 1))
-  `(goto-char (or (scan-sexps (point) ,count)
-		  ,(if (numberp count)
-		       (if (> count 0) `(point-max) `(point-min))
-		     `(if (> ,count 0) (point-max) (point-min))))))
+  `(goto-char (scan-sexps (point) ,count)))
 
 (defmacro c-backward-sexp (&optional count)
   "See `c-forward-sexp' and reverse directions."
