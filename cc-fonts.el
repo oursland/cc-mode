@@ -239,7 +239,6 @@
        (prog1 (progn ,@body)
 	 (c-fontify-recorded-types-and-refs))))
   (put 'c-fontify-types-and-refs 'lisp-indent-function 1)
-  (eval-after-load "edebug" '(def-edebug-spec c-fontify-types-and-refs let*))
 
   (defun c-skip-comments-and-strings (limit)
     ;; If the point is within a region fontified as a comment or
@@ -323,7 +322,16 @@
 			(save-match-data ,(car highlight))
 			,(nth 2 highlight))))
 		 highlights))))
-	nil))))
+	nil)))
+
+  (eval-after-load "edebug"
+    '(progn
+       (def-edebug-spec c-fontify-types-and-refs let*)
+       ;; If there are literal quoted or backquoted highlight specs in
+       ;; the call to `c-make-font-lock-search-function' then let's
+       ;; instrument the forms in them.
+       (def-edebug-spec c-make-font-lock-search-function
+	 (form &rest &or ("quote" (&rest form)) ("`" (&rest form)) form)))))
 
 (defun c-fontify-recorded-types-and-refs ()
   ;; Convert the ranges recorded on `c-record-type-identifiers' and
