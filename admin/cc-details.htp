@@ -96,7 +96,9 @@ essentially a bug fix release.
     file <code>cc-mode-19.el</code> <em>before</em> you load any of
     the other CC Mode files.  You will also need to download and
     install <a href="http://www.dina.kvl.dk/~abraham/custom/">
-    Per's Custom library</a>.
+    Per's Custom library</a>, and edit the <code>cc-make.el</code>
+    file to include the path to the Custom library.  See the comment
+    in <code>cc-make.el</code> for details.
 
     <p> After you do this, read the <code><a href="cc-mode/README">
     README</a></code> file that comes with the CC Mode distribution
