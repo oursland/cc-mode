@@ -700,7 +700,10 @@
 			   ;; of this sexp, but we only want to record
 			   ;; the last-most of any of them before here
 			   (progn
-			     (if (eq (char-after (1- pos)) ?\{)
+			     (if (and (eq (char-after (1- pos)) ?\{)
+				      (not (save-excursion
+					     (goto-char pos)
+					     (c-beginning-of-macro))))
 				 (setq state (cons (cons (1- pos) sexp-end)
 						   (if (consp (car state))
 						       (cdr state)
