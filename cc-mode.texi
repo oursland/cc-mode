@@ -919,13 +919,15 @@ automatically.
 @cindex clean-ups
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@dfn{Clean-ups} are a mechanism complementary to colon and brace
-hanging.  On the surface, it would seem that clean-ups overlap the
-functionality provided by the @code{c-hanging-*-alist} variables, and
-similarly, clean-ups are only enabled when auto-newline minor mode is
-enabled.  Clean-ups are used however to adjust code ``after-the-fact'',
-i.e. to eliminate some whitespace that is inserted by electric
-commands, or whitespace that contains intervening constructs.
+@dfn{Clean-ups} are mechanisms complementary to colon and brace hanging.
+On the surface, it would seem that clean-ups overlap the functionality
+provided by the @code{c-hanging-*-alist} variables.  Clean-ups are
+however used to adjust code ``after-the-fact'', i.e. to adjust the
+whitespace in constructs after they are typed.
+
+Most of the clean-ups are only applicable to counteract automatically
+inserted newlines, and will therefore only have any effect if the
+auto-newline minor mode is turned on.  Others will work all the time.
 
 @vindex c-cleanup-list
 @vindex cleanup-list (c-)
@@ -938,12 +940,12 @@ performed when the construct does not occur within a literal
 (@pxref{Auto-newline Insertion}), and when there is nothing but
 whitespace appearing between the individual components of the construct.
 
-There are currently only five specific constructs that @ccmode{}
-can clean up, as indicated by these symbols:
+These are the clean-ups that only are active in the auto-newline minor
+mode:
 
 @itemize @bullet
 @item
-@code{brace-else-brace} --- cleans up @samp{@} else @{} constructs by
+@code{brace-else-brace} --- Clean up @samp{@} else @{} constructs by
 placing the entire construct on a single line.  Clean-up occurs when the
 open brace after the @samp{else} is typed.  So for example, this:
 @example
@@ -975,7 +977,7 @@ void spam(int i)
 @end example
 
 @item
-@code{brace-elseif-brace} --- similar to the @code{brace-else-brace}
+@code{brace-elseif-brace} --- Similar to the @code{brace-else-brace}
 clean-up, but this cleans up @samp{@} else if (...) @{} constructs.  For
 example:
 @example
@@ -1021,11 +1023,11 @@ void spam(int i)
 @end example
 
 @item
-@code{brace-catch-brace} --- analogous to @code{brace-elseif-brace}, but
+@code{brace-catch-brace} --- Analogous to @code{brace-elseif-brace}, but
 cleans up @samp{@} catch (...) @{} in C++ and Java mode.
 
 @item
-@code{empty-defun-braces} --- cleans up braces following a top-level
+@code{empty-defun-braces} --- Clean up braces following a top-level
 function or class definition that contains no body.  Clean up occurs
 when the closing brace is typed.  Thus the following:
 @example
@@ -1049,9 +1051,9 @@ class Spam
 @end example
 
 @item
-@code{defun-close-semi} --- cleans up the terminating semi-colon on
+@code{defun-close-semi} --- Clean up the terminating semi-colon on
 top-level function or class definitions when they follow a close
-brace. Clean up occurs when the semi-colon is typed.
+brace.  Clean up occurs when the semi-colon is typed.
 So for example, the following:
 @example
 @group
@@ -1077,17 +1079,41 @@ class Spam
 @end example
 
 @item
-@code{list-close-comma} --- cleans up commas following braces in array
+@code{list-close-comma} --- Clean up commas following braces in array
 and aggregate initializers.  Clean up occurs when the comma is typed.
 
 @item
-@code{scope-operator} --- cleans up double colons which may designate a
+@code{scope-operator} --- Clean up double colons which may designate a
 C++ scope operator split across multiple lines@footnote{Certain C++
 constructs introduce ambiguous situations, so @code{scope-operator}
 clean-ups may not always be correct.  This usually only occurs when
 scoped identifiers appear in switch label tags.}.  Clean up occurs when
 the second colon is typed.  You will always want @code{scope-operator}
 in the @code{c-cleanup-list} when you are editing C++ code.
+
+@end itemize
+
+The following clean-ups are always active when they occur on
+@code{c-cleanup-list}, and are thus not affected by the auto-newline
+minor mode:
+
+@itemize @bullet
+@item
+@code{space-before-funcall} --- Insert a space between the function name
+and the opening parenthesis of a function call.  This produces function
+calls in the style mandated by the GNU coding standards,
+e.g. @samp{signal (SIGINT, SIG_IGN)} and @samp{abort ()}.  Clean up
+occurs when the opening parenthesis is typed.
+
+@item
+@code{compact-empty-funcall} --- Clean up any space between the function
+name and the opening parenthesis of a function call that have no
+arguments.  This is typically used together with
+@code{space-before-funcall} if you prefer the GNU function call style
+for functions with arguments but think it looks ugly when it's only an
+empty parenthesis pair.  I.e. you will get @samp{signal (SIGINT,
+SIG_IGN)}, but @samp{abort()}.  Clean up occurs when the closing
+parenthesis is typed.
 
 @end itemize
 
