@@ -924,9 +924,13 @@ electric.
 @kindex >
 @findex c-electric-lt-gt
 @findex electric-lt-gt (c-)
-Less-than and greater-than signs (bound to @code{c-electric-lt-gt}) are
-electric, but only in C++ mode.  Hitting the second of two @kbd{<} or
-@kbd{>} keys reindents the line if it is a C++ style stream operator.
+A less-than or greater-than sign (bound to @code{c-electric-lt-gt}) is
+electric in two circumstances: when it is an angle bracket in a C++
+@samp{template} declaration (and similar constructs in other
+languages) and when it is the second of two @kbd{<} or @kbd{>}
+characters in a C++ style stream operator.  In either case, the line
+is reindented.  Angle brackets in C @samp{#include} directives are not
+electric.
 
 @item (
 @kindex (
@@ -1282,6 +1286,16 @@ Delete,,,emacs}, might be helpful if you're having trouble with this.
 Here are the various other commands that didn't fit anywhere else:
 
 @table @asis
+@item @kbd{C-c C-c} (@code{comment-region})
+@kindex C-c C-c
+@findex comment-region
+This command comments out the lines that start in the region.  With a
+negative argument, it does the opposite - it deletes the comment
+delimiters from these lines.  @xref{Multi-Line Comments,,, emacs, GNU
+Emacs Manual}, for fuller details.  @code{comment-region} isn't
+actually part of @ccmode{} - it is given a @ccmode{} binding for
+convenience.
+
 @item @kbd{C-c :} (@code{c-scope-operator})
 @kindex C-c :
 @findex c-scope-operator
@@ -2322,12 +2336,13 @@ block comments.
 @findex c-setup-paragraph-variables
 @findex setup-paragraph-variables (c-)
 Also note that since @ccmode{} uses the value of
-@code{c-comment-prefix-regexp} to set up several other variables at mode
-initialization, there won't be any effect if you just change it inside a
-@ccmode{} buffer.  You need to call the command
-@code{c-setup-paragraph-variables} too, to update those other variables with
-the new value.  That's also the case if you modify this variable in a
-mode hook, since @ccmode{} sets up all variables before calling them.
+@code{c-comment-prefix-regexp} to set up several other variables at
+mode initialization, there won't be any effect if you just change it
+inside a @ccmode{} buffer.  You need to call the command
+@code{c-setup-paragraph-variables} too, to update those other
+variables.  That's also the case if you modify
+@code{c-comment-prefix-regexp} in a mode hook, since @ccmode{} will
+already have set up these variables before calling the hook.
 @end defopt
 
 In comments, @ccmode{} uses @code{c-comment-prefix-regexp} to adapt
@@ -3039,9 +3054,9 @@ Clean up a single line of code enclosed by defun braces by removing
 the whitespace before and after the code.  The clean-up happens when
 the closing brace is typed.  If the variable
 @code{c-max-one-liner-length} is set, the cleanup is only done if the
-resulting line would be no longer the value of that variable.  This
-clean-up is intended mainly for short AWK pattern/action pairs.  For
-example, this:
+resulting line would be no longer than the value of that variable.
+This clean-up is intended mainly for short AWK pattern/action pairs.
+For example, this:
 
 @example
 @group
