@@ -130,6 +130,7 @@
 				))
      (c-comment-continuation-stars . "")
      (c-hanging-comment-ender-p . nil)
+     (fill-column . 78)
      )
     ("java"
      (c-basic-offset . 2)
