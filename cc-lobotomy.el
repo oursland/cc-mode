@@ -5,8 +5,8 @@
 ;; Author: 1995 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
 ;; Maintainer:    cc-mode-help@anthem.nlm.nih.gov
 ;; Created:       March 1995
-;; Version:       $Revision: 1.1 $
-;; Last Modified: $Date: 1995-03-29 19:48:54 $
+;; Version:       $Revision: 1.2 $
+;; Last Modified: $Date: 1995-03-29 23:11:57 $
 ;; Keywords: C++ C Objective-C cc-mode
 
 ;; This file is not part of GNU Emacs.
@@ -42,10 +42,11 @@
 ;; some circumstances so you'll have to live with it.
 
 ;; LCD Archive Entry:
-;; cc-guess|Barry A. Warsaw|bwarsaw@cen.com
-;; |guess cc-mode indentation variable values
-;; |1995/02/28 22:53:42|1.2|
+;; cc-lobotomy|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
+;; |excise portions of cc-mode in the name of speed
+;; |$Date: 1995-03-29 23:11:57 $|$Revision: 1.2 $|
 
+
 ;;; Code:
 
 (require 'cc-mode)
