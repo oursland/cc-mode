@@ -322,19 +322,6 @@ Key bindings:
 
 
 
-;; This comment was here before me:
-;;
-;;     cmacexp is lame because it uses no preprocessor symbols.  It
-;;     isn't very extensible either -- hardcodes /lib/cpp.
-;;
-;; I add it here only because c-mode had it -- BAW
-;;
-(autoload 'c-macro-expand "cmacexp"
-  "Display the result of expanding all C macros occurring in the region.
-The expansion is entirely correct because it uses the C preprocessor."
-  t)
-
-
 ;; defuns for submitting bug reports
 (defconst c-version "5.00"
   "CC Mode version number.")
