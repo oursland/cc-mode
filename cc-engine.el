@@ -2374,10 +2374,11 @@ This function does not do any hidden buffer changes."
 				   (> (car safe-pos-list) (point)))
 			 (setq safe-pos-list (cdr safe-pos-list)))
 		       (unless (setq safe-pos (car-safe safe-pos-list))
-			 (setq safe-pos (or (c-safe-position
-					     (point) (or c-state-cache
-							 (c-parse-state)))
-					    (point-min))
+			 (setq safe-pos (max (or (c-safe-position
+						  (point) (or c-state-cache
+							      (c-parse-state)))
+						 0)
+					     (point-min))
 			       safe-pos-list (list safe-pos)))
 
 		       (while (progn
