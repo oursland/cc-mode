@@ -122,12 +122,13 @@ The behavior of this function depends on the variable
 exist, as in older Emacsen), then this function behaves identical to
 \\[c-electric-backspace].
 
-If `delete-key-deletes-forward' is non-nil, then deletion occurs in
-the forward direction.  So if `c-hungry-delete-key' is non-nil, as
-evidenced by the \"/h\" or \"/ah\" string on the mode line, then all
-following whitespace is consumed.  If however an ARG is supplied, or
-`c-hungry-delete-key' is nil, or point is inside a literal then the
-function in the variable `c-delete-function' is called."
+If `delete-key-deletes-forward' is non-nil and is supported in your
+Emacs, then deletion occurs in the forward direction.  So if
+`c-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
+\"/ah\" string on the mode line, then all following whitespace is
+consumed.  If however an ARG is supplied, or `c-hungry-delete-key' is
+nil, or point is inside a literal then the function in the variable
+`c-delete-function' is called."
   (interactive "P")
   (if (and (boundp 'delete-key-deletes-forward)
 	   delete-key-deletes-forward)
