@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.358 $
-;; Last Modified:   $Date: 1993-07-02 21:52:02 $
+;; Version:         $Revision: 3.0 $
+;; Last Modified:   $Date: 1993-07-02 21:54:15 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-07-02 21:52:02 $|$Revision: 2.358 $|
+;; |$Date: 1993-07-02 21:54:15 $|$Revision: 3.0 $|
 
 ;;; Code:
 
@@ -481,7 +481,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.358 $
+  "Major mode for editing C++ code.  $Revision: 3.0 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -713,7 +713,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.358 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.0 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -981,10 +981,10 @@ If `c++-hungry-delete-key' is nil, just call `backward-delete-char-untabify'."
 		(save-excursion
 		  (let ((here (point-marker)))
 		    (goto-char (- (point) 2))
-		    (c++-indent-line)
+		    (c++-indent-line bod)
 		    (setq insertpos (- (goto-char here) 2))
 		    (set-marker here nil)))
-		(c++-indent-line)))
+		(c++-indent-line bod)))
 	  (save-excursion
 	    (if insertpos (goto-char (1+ insertpos)))
 	    (delete-char -1))))
@@ -2783,7 +2783,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.358 $"
+(defconst c++-version "$Revision: 3.0 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
