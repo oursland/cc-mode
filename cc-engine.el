@@ -4323,8 +4323,7 @@ brace."
   ;; position that bounds the backward search for the argument list.
   ;;
   ;; Note: A declaration level context is assumed; the test can return
-  ;; false positives for statements.  This test is even more easily
-  ;; fooled than `c-just-after-func-arglist-p'.
+  ;; false positives for statements.
 
   (save-excursion
     (save-restriction
@@ -4334,13 +4333,12 @@ brace."
       ;; check that it's followed by some symbol before the next ';'
       ;; or '{'.  If it does, it's the header of the K&R argdecl we're
       ;; in.
-      (if lim (narrow-to-region lim (point)))
+      (if lim (narrow-to-region lim (c-point 'eol)))
       (let ((outside-macro (not (c-query-macro-start)))
 	    paren-end)
 
 	(catch 'done
-	  (while (if (and (c-safe (setq paren-end
-					(c-down-list-backward (point))))
+	  (while (if (and (setq paren-end (c-down-list-backward (point)))
 			  (eq (char-after paren-end) ?\)))
 		     (progn
 		       (goto-char (1+ paren-end))
@@ -4351,7 +4349,26 @@ brace."
 	(and (progn
 	       (c-forward-syntactic-ws)
 	       (looking-at "\\w\\|\\s_"))
-	     (c-safe (c-up-list-backward paren-end))
+
+	     (save-excursion
+	       ;; The function header in a K&R declaration should only
+	       ;; contain identifiers separated by comma.  It should
+	       ;; also contain at least one identifier since there
+	       ;; wouldn't be anything to declare in the K&R region
+	       ;; otherwise.
+	       (when (c-go-up-list-backward paren-end)
+		 (forward-char)
+		 (catch 'knr-ok
+		   (while t
+		     (c-forward-syntactic-ws)
+		     (if (or (looking-at c-known-type-key)
+			     (looking-at c-keywords-regexp))
+			 (throw 'knr-ok nil))
+		     (c-forward-token-1)
+		     (if (eq (char-after) ?,)
+			 (forward-char)
+		       (throw 'knr-ok (and (eq (char-after) ?\))
+					   (= (point) paren-end))))))))
 
 	     (save-excursion
 	       ;; If it's a K&R declaration then we're now at the
@@ -5849,7 +5866,8 @@ This function does not do any hidden buffer changes."
 	      ;; should be relative to the ctor's indentation
 	      )
 	     ;; CASE 5B.2: K&R arg decl intro
-	     (c-recognize-knr-p
+	     ((and c-recognize-knr-p
+		   (c-in-knr-argdecl lim))
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
 	      (if inclass-p
