@@ -2115,26 +2115,28 @@ Optional prefix ARG means justify paragraph as well."
 		  (setq tmp-pre t)))
 	      ))
 	   ((eq lit-type 'c)		; Block comment.
-	    (save-excursion
-	      (when (>= end (cdr lit-limits))
-		;; The region to be filled includes the comment ender.
-		(goto-char (cdr lit-limits))
-		(beginning-of-line)
-		(if (and (looking-at (concat "[ \t]*\\("
+	    (when (>= end (cdr lit-limits))
+	      ;; The region to be filled includes the comment ender.
+	      (if (save-excursion
+		    (goto-char (cdr lit-limits))
+		    (beginning-of-line)
+		    (and (looking-at (concat "[ \t]*\\("
 					     c-current-comment-prefix
 					     "\\)\\*/"))
-			 (eq (cdr lit-limits) (match-end 0)))
-		    ;; Leave the comment ender on its own line.
-		    (set-marker end (point))
-		  ;; The comment ender should hang.  Replace all
-		  ;; cruft between it and the last word with a 'x'
-		  ;; and include it in the fill.  We'll change it
-		  ;; back to a space afterwards.
-		  (let ((ender-start (progn
-				       (goto-char (cdr lit-limits))
-				       (skip-syntax-backward "^w ")
-				       (point)))
-			spaces)
+			 (eq (cdr lit-limits) (match-end 0))))
+		  ;; Leave the comment ender on its own line.
+		  (set-marker end (point))
+		;; The comment ender should hang.  Replace all cruft
+		;; between it and the last word with one or two 'x'
+		;; and include it in the fill.  We'll change them back
+		;; spaces afterwards.
+		(let* ((ender-start (save-excursion
+				      (goto-char (cdr lit-limits))
+				      (skip-syntax-backward "^w ")
+				      (point)))
+		       (point-rel (- ender-start here))
+		       spaces)
+		  (save-excursion
 		    (goto-char (cdr lit-limits))
 		    (setq tmp-post (point-marker))
 		    (insert ?\n)
@@ -2150,24 +2152,39 @@ Optional prefix ARG means justify paragraph as well."
 			(setq spaces (- (match-end 1) (match-end 2)))
 		      (goto-char ender-start))
 		    (skip-chars-backward " \t\r\n")
-		    (when (/= (point) ender-start)
-		      ;; Keep one or two spaces between the text and
-		      ;; the ender, depending on how many there are now.
-		      (unless spaces (setq spaces (- ender-start (point))))
-		      (setq spaces (max (min spaces 2) 1))
-					; Insert the filler first to keep marks right.
-		      (insert (make-string spaces ?x))
-		      (delete-region (point) (+ ender-start spaces))
-		      (setq hang-ender-stuck spaces)))))
-	      (when (<= beg (car lit-limits))
-		;; The region to be filled includes the comment starter.
+		    (if (/= (point) ender-start)
+			(progn
+			  (if (<= here (point))
+			      ;; Don't adjust point below if it's
+			      ;; before the string we replace.
+			      (setq point-rel -1))
+			  ;; Keep one or two spaces between the text and
+			  ;; the ender, depending on how many there are now.
+			  (unless spaces (setq spaces (- ender-start (point))))
+			  (setq spaces (max (min spaces 2) 1))
+			  ;; Insert the filler first to keep marks right.
+			  (insert (make-string spaces ?x))
+			  (delete-region (point) (+ ender-start spaces))
+			  (setq hang-ender-stuck spaces)
+			  (setq point-rel
+				(and (>= point-rel 0)
+				     (- (point) (min point-rel spaces)))))
+		      (setq point-rel nil)))
+		  (if point-rel
+		      ;; Point was in the middle of the string we
+		      ;; replaced above, so put it back in the same
+		      ;; relative position, counting from the end.
+		      (goto-char point-rel))
+		  )))
+	    (when (<= beg (car lit-limits))
+	      ;; The region to be filled includes the comment starter.
+	      (save-excursion
 		(goto-char (car lit-limits))
 		(if (looking-at (concat "\\(" comment-start-skip "\\)$"))
 		    ;; Begin filling with the next line.
 		    (setq beg (c-point 'bonl))
 		  ;; Fake the fill prefix in the first line.
-		  (setq tmp-pre t)))
-	      ))
+		  (setq tmp-pre t)))))
 	   ((eq lit-type 'string)	; String.
 	    (save-excursion
 	      (when (>= end (cdr lit-limits))
@@ -2244,24 +2261,37 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 					(or (fill-context-prefix beg end)
 					    ""))))
 			 (car (or fill (c-guess-fill-prefix
-					lit-limits lit-type)))))))
+					lit-limits lit-type))))))
+		  (point-rel (cond ((< here beg) (- here beg))
+				   ((> here end) (- here end)))))
 	      ;; Preparations finally done!  Now we can call the
 	      ;; real fill function.
 	      (save-restriction
 		(narrow-to-region beg end)
-		(fill-paragraph arg)))))
+		(fill-paragraph arg))
+	      (if point-rel
+		  ;; Restore point if it was outside the region.
+		  (if (< point-rel 0)
+		      (goto-char (+ beg point-rel))
+		    (goto-char (+ end point-rel))))
+	      )))
       (when (consp tmp-pre)
 	(delete-region (car tmp-pre) (cdr tmp-pre)))
       (when tmp-post
 	(save-excursion
 	  (goto-char tmp-post)
-	  (delete-char 1)
-	  (when hang-ender-stuck
-	    (skip-syntax-backward "^w ")
-	    (forward-char (- hang-ender-stuck))
-	    (insert (make-string hang-ender-stuck ?\ ))
-	    (delete-char hang-ender-stuck))
-	  (set-marker tmp-post nil)))
+	  (delete-char 1))
+	(when hang-ender-stuck
+	  ;; Preserve point even if it's in the middle of the string
+	  ;; we replace; save-excursion doesn't work in that case.
+	  (setq here (point))
+	  (goto-char tmp-post)
+	  (skip-syntax-backward "^w ")
+	  (forward-char (- hang-ender-stuck))
+	  (insert (make-string hang-ender-stuck ?\ ))
+	  (delete-char hang-ender-stuck)
+	  (goto-char here))
+	(set-marker tmp-post nil))
       (set-marker end nil)))
   ;; Always return t.  This has the effect that if filling isn't done
   ;; above, it isn't done at all, and it's therefore effectively
