@@ -1038,7 +1038,6 @@ comment."
 		(if (bolp)
 		    (forward-comment -1)
 		  (back-to-indentation))
-		(forward-comment -1)
 		(setq at-comment-col (= (current-column) comment-column))))
 	  ;; are we looking at a block or lines style comment?
 	  (if (and (looking-at (concat "\\(" c-comment-start-regexp
