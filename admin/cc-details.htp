@@ -3,10 +3,39 @@ Author: cc-mode-help@python.org
 
 <h1>CC Mode Version 5</h1>
 
-The <a href="index.html">current release</a> is version 5.14.  The big 
-changes since 5.13 are outlined below.  Be sure to see  the list of 
+The <a href="index.html">current release</a> is version 5.15.  The
+important recent changes are outlined below.  Be sure to see the list of 
 <a href="#compat">compatibility notes</a> for special notes about
 X/Emacs versions and package interactions.
+
+<h2> Changes since CC Mode 5.14</h2>
+
+<ul><li>A new syntactic symbol: <code>template-args-cont</code>, used
+	in C++ template declarations where the argument list spans
+	multiple lines.
+
+    <p><li>In <code>"java"</code> style,
+	<code>c-hanging-comment-starter-p</code> defaults to
+	<code>nil</code> to preserve Javadoc starter lines.
+
+    <p><li>Line oriented comments (i.e. C++ style comments) are now
+	recognized by default in all modes, <em>including</em> C mode
+	(as per the ANSI 9X C draft standard).  Thus the function
+	<code>c-enable-//-in-c-mode</code> has been removed.
+
+    <p><li>Auto-filling of comments has been improved.  CC Mode will
+	now properly auto-fill both line and block oriented comments,
+	and allows you to choose the leader string on block oriented
+	continued comments, via the variable
+	<code>c-comment-continuation-stars</code>.  See the CC Mode
+	manual for details.
+
+    <p><li><code>c-electric-slash</code> is electric in all modes.
+
+    <p><li>The need for <code>c-mode-19.el</code> is automatically
+	detected now.  You do not need to <code>load</code> or
+	<code>require</code> it in your <code>.emacs</code> file.
+</ul>
 
 <h2>Changes since CC Mode 5.13</h2>
 
@@ -85,7 +114,7 @@ X/Emacs versions and package interactions.
 
     If you are using XEmacs 19.15 or XEmacs 20.2 or beyond, you should
     be able to use this new version right out of the box.  This stuff
-    unpacks in it's own subdirectory now and contains a number of
+    unpacks in its own subdirectory now and contains a number of
     files.  Just make sure this subdirectory is on your
     <code>load-path</code> before the XEmacs distribution's lisp
     directories.  You need to byte compile all the <code>.el</code>
@@ -100,7 +129,7 @@ X/Emacs versions and package interactions.
 
     <blockquote><pre>
     M-x c-version RET
-    => Using CC Mode version 5.13
+    => Using CC Mode version 5.15
     </pre></blockquote>
 
     I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
@@ -159,3 +188,4 @@ X/Emacs versions and package interactions.
 
 	    in the <code>awk-mode</code> defun.  This will be fixed in
 	    the next version of XEmacs and Emacs.
+    </ul>
