@@ -77,11 +77,11 @@ appended."
     "\\<\\>"))				; Matches nothing.
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 
-;; Regexp describing a `symbol' in all languages.  We cannot use just
-;; `word' syntax class since `_' cannot be in word class.  Putting
-;; underscore in word class breaks forward word movement behavior that
-;; users are familiar with.  Besides, this runs counter to Emacs
-;; convention.
+;; Regexp describing a `symbol' in all languages, not excluding
+;; keywords.  We cannot use just `word' syntax class since `_' cannot
+;; be in word class.  Putting underscore in word class breaks forward
+;; word movement behavior that users are familiar with.  Besides, this
+;; runs counter to Emacs convention.
 ;;
 ;; This definition isn't correct for the first character in the
 ;; languages that accept the full range of word constituents in
@@ -95,8 +95,11 @@ appended."
 (defconst c-IDL-symbol-key c-C-symbol-key)
 (defconst c-Pike-symbol-key
   (concat "\\(" c-C-symbol-key "\\|"
-	  "`->=?\\|`\\+=?\\|`==\\|`\\[\\]=?\\|`()\\|`[!<>~]\\|"
-	  "``?<<\\|``?>>\\|``?[%&*+/^|-]\\)"))
+	  (c-make-keywords-re nil
+	    '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~" "`=="
+	      "`<" "`>" "`!" "`[]" "`[]=" "`->" "`->=" "`()" "``+" "``-" "``&"
+	      "``|" "``^" "``<<" "``>>" "``*" "``/" "``%" "`+="))
+	  "\\)"))
 (defvar c-symbol-key nil)		; Set by c-init-language-vars.
 (make-variable-buffer-local 'c-symbol-key)
 
@@ -111,9 +114,10 @@ appended."
 
 ;; HELPME: Many of the following keyword lists are more or less bogus
 ;; for some languages (notably ObjC and IDL).  The effects of the
-;; erroneous values in the language handling is miniscule since these
-;; constants are not used very much (yet, anyway) in the actual syntax
-;; detection code, but I'd still appreciate help to get them correct.
+;; erroneous values in the language handling are mostly negligible
+;; since the constants that actually matter in the syntax detection
+;; code are mostly correct in the situations they are used, but I'd
+;; still appreciate help to get them correct for other uses.
 
 ;; Primitive type keywords.
 (defconst c-C-primitive-type-kwds
