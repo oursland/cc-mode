@@ -478,7 +478,8 @@ This function does various newline cleanups based on the value of
 	  ;; end up before it.
 	  (setq delete-temp-newline
 		(cons (save-excursion
-			(c-backward-syntactic-ws)
+			(end-of-line 0)
+			(skip-chars-backward " \t")
 			(copy-marker (point) t))
 		      (point-marker))))
 	(unwind-protect
