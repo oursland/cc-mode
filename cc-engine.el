@@ -34,6 +34,14 @@
   ;; try to increase performance by using this macro
   (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
 
+(defsubst mem= (elt list)
+  "Return non-nil if ELT is an element of LIST.  Comparison done with `='.
+The value is actually the tail of LIST whose car is ELT."
+  ;; I really hate to have to do this, but...
+  (while (and list (/= elt (car list)))
+    (setq list (cdr list)))
+  list)
+
 (defsubst c-auto-newline ()
   ;; if auto-newline feature is turned on, insert a newline character
   ;; and return t, otherwise return nil.
@@ -79,7 +87,7 @@
 			    (setq saved (point))
 			    t))
 	     (progn (c-backward-syntactic-ws lim)
-		    (memq (preceding-char) '(?\; ?{ ?} ?:)))
+		    (mem= (preceding-char) '(?\; ?{ ?} ?:)))
 	     )
 	(setq last-begin saved)
       (goto-char last-begin)
@@ -226,7 +234,7 @@
 	    (skip-chars-forward "^;{}:" to)
 	    (if (not (c-in-literal lim))
 		(progn
-		  (if (memq (char-after (point)) '(?\; ?{ ?}))
+		  (if (mem= (char-after (point)) '(?\; ?{ ?}))
 		      (setq crossedp t)
 		    (if (= (following-char) ?:)
 			(setq maybe-labelp t))
@@ -476,7 +484,7 @@
 		       (point))))
     (c-backward-syntactic-ws lim)
     (while (and (> (point) lim)
-		(memq (preceding-char) '(?, ?:))
+		(mem= (preceding-char) '(?, ?:))
 		(progn
 		  (beginning-of-line)
 		  (setq placeholder (point))
@@ -921,9 +929,9 @@
 	;; the most likely position to perform the majority of tests
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
-	(setq char-after-ip (char-after (point)))
+	(setq char-after-ip (following-char))
 	(c-backward-syntactic-ws lim)
-	(setq char-before-ip (char-after (1- (point))))
+	(setq char-before-ip (preceding-char))
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
 
@@ -1003,7 +1011,7 @@
 			 (= char-before-ip ?=))
 		     (save-excursion
 		       (skip-chars-forward "^;(" indent-point)
-		       (not (memq (char-after (point)) '(?\; ?\()))
+		       (not (mem= (following-char) '(?\; ?\()))
 		       )))
 	      (c-add-syntax 'brace-list-open placeholder))
 	     ;; CASE 5A.4: inline defun open
@@ -1227,7 +1235,7 @@
 		   (save-excursion
 		     (c-backward-syntactic-ws limit)
 		     (setq placeholder (point))
-		     (while (and (memq (char-after (1- placeholder)) '(?\; ?,))
+		     (while (and (mem= (preceding-char) '(?\; ?,))
 				 (> (point) limit))
 		       (beginning-of-line)
 		       (setq placeholder (point))
@@ -1264,7 +1272,7 @@
 		(backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
-		  (memq (char-after (1- (point))) '(?\; ?\}))))
+		  (mem= (preceding-char) '(?\; ?\}))))
 	    ;; real beginning-of-line could be narrowed out due to
 	    ;; enclosure in a class block
 	    (save-restriction
@@ -1299,13 +1307,13 @@
 	  (cond
 	   ;; CASE 6A: we are looking at the arglist closing paren
 	   ((and (/= char-before-ip ?,)
-		 (memq char-after-ip '(?\) ?\])))
+		 (mem= char-after-ip '(?\) ?\])))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-close (c-point 'boi)))
 	   ;; CASE 6B: we are looking at the first argument in an empty
 	   ;; argument list. Use arglist-close if we're actually
 	   ;; looking at a close paren or bracket.
-	   ((memq char-before-ip '(?\( ?\[))
+	   ((mem= char-before-ip '(?\( ?\[))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-intro (c-point 'boi)))
 	   ;; CASE 6C: we are inside a conditional test clause. treat
@@ -1405,7 +1413,7 @@
 		))			; end CASE 8C
 	   ))				; end CASE 8
 	 ;; CASE 9: A continued statement
-	 ((and (not (memq char-before-ip '(?\; ?} ?:)))
+	 ((and (not (mem= char-before-ip '(?\; ?} ?:)))
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
@@ -1591,13 +1599,13 @@
 	   ;; CASE 15C: a question/colon construct?  But make sure
 	   ;; what came before was not a label, and what comes after
 	   ;; is not a globally scoped function call!
-	   ((or (and (memq char-before-ip '(?: ??))
+	   ((or (and (mem= char-before-ip '(?: ??))
 		     (save-excursion
 		       (goto-char indent-point)
 		       (c-backward-syntactic-ws lim)
 		       (back-to-indentation)
 		       (not (looking-at c-label-key))))
-		(and (memq char-after-ip '(?: ??))
+		(and (mem= char-after-ip '(?: ??))
 		     (save-excursion
 		       (goto-char indent-point)
 		       (skip-chars-forward " \t")
