@@ -4,7 +4,11 @@ Author: cc-mode-help@python.org
 <h1>CC Mode Version 5</h1>
 
 The <a href="index.html">current release</a> is version 5.14.  The big 
-changes since 5.13 are:
+changes since 5.13 are outlined below.  Be sure to see  the list of 
+<a href="#compat">compatibility notes</a> for special notes about
+X/Emacs versions and package interactions.
+
+<h2>Changes since CC Mode 5.13</h2>
 
 <ul><li>Support for CORBA's IDL language.  There is now a new mode
         called <code>idl-mode</code>, with all the expected hooks,
@@ -27,8 +31,7 @@ changes since 5.13 are:
 <h2>User visible changes between CC Mode 4 and CC Mode 5</h2>
     
 <ul><li>CC Mode 5 will not work with Emacs 18, and will only work with
-        the latest Emacs and XEmacs releases.  See the
-	<a href="#compat">compatibility notes</a> for details.
+        the latest Emacs and XEmacs releases.
 
     <p><li><code>c-mode-map</code> is no longer the base keymap for all
 	modes.  This was incompatible with the way Emacs 19 supports
@@ -127,3 +130,30 @@ changes since 5.13 are:
     do not plan to actively support any earlier Emacs version.  CC
     Mode 5 will be released with the next version of Emacs, whenever
     that happens (I have no idea).
+
+<h3><code>delbackspace.el</code> and <code>awk-mode</code></h3>
+
+    You will encounter problems if you use either the
+    <code>delbackspace</code> package or <code>awk-mode</code>, since
+    neither package has been ported to CC Mode 5.  Workarounds are as
+    follows:
+
+    <ul><li>If you use <code>delbackspace</code>, put the following in 
+	    your <code>.emacs</code> file <em>before</em> you load
+	    <code>delbackspace.el</code>:
+
+<blockquote><pre>
+(setcar (assoc "cc-mode" after-load-alist) "cc-langs")
+</pre></blockquote>
+
+	<p><li>If you use <code>awk-mode</code> you need to make a
+	    change to the source code for <code>awk-mode.el</code>
+	    to look like:
+
+<blockquote><pre>
+(require 'cc-mode)
+(c-initialize-cc-mode)
+</pre></blockquote>
+
+	    in the <code>awk-mode</code> defun.  This will be fixed in
+	    the next version of XEmacs and Emacs.
