@@ -1103,7 +1103,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      ;; style declarations.  That isn't applicable in an
 		      ;; arglist context, though.
 		      (when (and (= paren-depth 1)
-				 (not got-prefix)
+				 (not got-prefix-before-parens)
 				 (not (eq at-type t))
 				 (or prev-at-type
 				     (not arglist-type))
