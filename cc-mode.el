@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.97 $
-;; Last Modified:   $Date: 1993-11-26 16:05:08 $
+;; Version:         $Revision: 3.98 $
+;; Last Modified:   $Date: 1993-11-26 16:11:18 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-26 16:05:08 $|$Revision: 3.97 $|
+;; |$Date: 1993-11-26 16:11:18 $|$Revision: 3.98 $|
 
 ;;; Code:
 
@@ -117,7 +117,7 @@ reported and the semantic symbol is ignored.")
     (arglist-intro         . +)
     (arglist-cont          . 0)
     (arglist-cont-nonempty . cc-lineup-arglist)
-    (arglist-close         . 0)
+    (arglist-close         . +)
     (stream-op             . cc-lineup-streamop)
     (inclass               . +)
     (cpp-macro             . -1000)
@@ -493,7 +493,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.97 $
+  "Major mode for editing C++ code.  $Revision: 3.98 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -523,7 +523,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.97 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.98 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1101,7 +1101,7 @@ the value of `cc-cleanup-list'."
   (interactive "SSemantic symbol: \nnOffset: \nP")
   (let ((langelem (assq symbol cc-offsets-alist)))
     (if langelem
-	(setqcdr langelem offset)
+	(setcdr langelem offset)
       ;; can we add the langelem?
       (or add-p
 	  (error "%s is not a valid semantic symbol." symbol))
@@ -1970,6 +1970,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	   ;; CASE 5B: we are looking at the arglist closing paren
 	   ((and (/= char-before-ip ?,)
 		 (= char-after-ip ?\)))
+	    (goto-char containing-sexp)
 	    (cc-add-semantics 'arglist-close (cc-point 'boi)))
 	   ;; CASE 5C: we are looking at an arglist continuation line,
 	   ;; but the preceding argument is on the same line as the
@@ -2387,7 +2388,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.97 $"
+(defconst cc-version "$Revision: 3.98 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
