@@ -448,6 +448,7 @@ Key bindings:
 		   'defun-prompt-regexp
 		   'tab-width
 		   'comment-column
+		   'parse-sexp-ignore-comments
 		   ;; A brain-damaged XEmacs only variable that, if
 		   ;; set to nil can cause all kinds of chaos.
 		   'signal-error-on-buffer-boundary
