@@ -2919,10 +2919,12 @@ brace."
 		     cfd-match
 
 		     (or
-		      ;; Kludge to filter out matches on "[" in C++ (see
-		      ;; comment in `c-decl-prefix-re').
-		      (and (c-major-mode-is 'c++-mode)
-			   (eq (char-before cfd-match-pos) ?\[))
+		      ;; Kludge to filter out matches on the "<" that
+		      ;; aren't open parens, for the sake of languages
+		      ;; that got `c-recognize-<>-arglists' set.
+		      (and (eq (char-before cfd-match-pos) ?<)
+			   (not (c-get-char-property (1- cfd-match-pos)
+						     'syntax-table)))
 
 		      ;; If `cfd-continue-pos' is less or equal to
 		      ;; `cfd-token-pos', we've got a hit inside a macro
@@ -3044,15 +3046,16 @@ brace."
 	      c-found-types)
     (sort type-list 'string-lessp)))
 
-(defsubst c-remove-<>-arglist-properties (from to)
-  ;; Remove all `c-<>-arg-start' properties and the syntax-table
-  ;; properties from all '<' and '>' in the specified region.  Point
-  ;; is clobbered.
-  (c-clear-char-properties from to 'c-<>-arg-start)
+(defun c-remove-<>-arglist-properties (from to)
+  ;; Remove all the properties put by `c-forward-<>-arglist' in the
+  ;; specified region.  Point is clobbered.
   (goto-char from)
-  (while (progn (skip-chars-forward "^<>" to)
+  (while (progn (skip-chars-forward "^<>," to)
 		(< (point) to))
-    (c-clear-char-property (point) 'syntax-table)
+    (if (eq (char-after) ?,)
+	(when (eq (c-get-char-property (point) 'c-type) 'c-<>-arg-sep)
+	  (c-clear-char-property (point) 'c-type))
+      (c-clear-char-property (point) 'syntax-table))
     (forward-char)))
 
 ;; Dynamically bound variable that instructs `c-forward-type' to also
@@ -3203,15 +3206,17 @@ brace."
 
        ((and (c-keyword-member kwd-sym 'c-<>-sexp-kwds)
 	     (eq (char-after) ?<)
-	     (c-forward-<>-arglist (c-keyword-member kwd-sym 'c-<>-type-kwds)))
+	     (c-forward-<>-arglist (c-keyword-member kwd-sym 'c-<>-type-kwds)
+				   (or c-record-type-identifiers
+				       c-disallow-comma-in-<>-arglists)))
 	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
 
       (when (and (c-keyword-member kwd-sym 'c-colon-type-list-kwds)
 		 (progn
-		   ;; If a keyword matched both one of the types above
-		   ;; and this one, we match `c-colon-type-list-re'
-		   ;; after the clause matched above.
+		   ;; If a keyword matched both one of the types above and
+		   ;; this one, we match `c-colon-type-list-re' after the
+		   ;; clause matched above.
 		   (goto-char safe-pos)
 		   (looking-at c-colon-type-list-re))
 		 (progn
@@ -3225,19 +3230,28 @@ brace."
       (goto-char safe-pos)
       t)))
 
-(defun c-forward-<>-arglist (all-types)
+(defun c-forward-<>-arglist (all-types reparse)
   ;; The point is assumed to be at a '<'.  Try to treat it as the open
   ;; paren of an angle bracket arglist and move forward to the the
   ;; corresponding '>'.  If successful, the point is left after the
   ;; '>' and t is returned, otherwise the point isn't moved and nil is
-  ;; returned.  If ALL-TYPES is t, then all encountered arguments in
+  ;; returned.  If ALL-TYPES is t then all encountered arguments in
   ;; the arglist that might be types are treated as found types.
   ;;
   ;; The surrounding '<' and '>' are given syntax-table properties to
   ;; make them behave like parentheses.  Each argument separating ','
-  ;; is also given the `c-<>-arg-start' property.  These properties
-  ;; are also cleared in a relevant region forward from the point if
-  ;; they seems to be set and it turns out to not be an arglist.
+  ;; is also set to `c-<>-arg-sep' in the `c-type' property.  These
+  ;; properties are also cleared in a relevant region forward from the
+  ;; point if they seems to be set and it turns out to not be an
+  ;; arglist.
+  ;;
+  ;; If the arglist has been successfully parsed before then paren
+  ;; syntax properties will be exploited to quickly jump to the end,
+  ;; but that can be disabled by setting REPARSE to t.  That is
+  ;; necessary if the various side effects, e.g. recording of type
+  ;; ranges, are important.  Setting REPARSE to t only applies
+  ;; recursively to nested angle bracket arglists if
+  ;; `c-disallow-comma-in-<>-arglists' is set.
   ;;
   ;; This is primarily used in C++ to mark up template arglists.  C++
   ;; disambiguates them by checking whether the preceding name is a
@@ -3246,8 +3260,7 @@ brace."
   ;; comparison expressions on the forms "a < b > c" or "a < b, c > d"
   ;; in almost all cases would be pointless.  Cases like function
   ;; calls on the form "foo (a < b, c > d)" needs to be handled
-  ;; specially through the `c-disallow-comma-in-<>-arglists' variable;
-  ;; see `c-font-lock-c++-templates'.
+  ;; specially through the `c-disallow-comma-in-<>-arglists' variable.
 
   (let ((start (point))
 	;; If `c-record-type-identifiers' is set then activate
@@ -3256,7 +3269,7 @@ brace."
 	(c-record-found-types (if c-record-type-identifiers t)))
     (if (catch 'angle-bracket-arglist-escape
 	  (setq c-record-found-types
-		(c-forward-<>-arglist-recur all-types)))
+		(c-forward-<>-arglist-recur all-types reparse)))
 	(progn
 	  (when (consp c-record-found-types)
 	    (setq c-record-type-identifiers
@@ -3268,7 +3281,7 @@ brace."
       (goto-char start)
       nil)))
 
-(defun c-forward-<>-arglist-recur (all-types)
+(defun c-forward-<>-arglist-recur (all-types reparse)
   ;; Recursive part of `c-forward-<>-arglist'.
 
   (let ((start (point)) res pos tmp
@@ -3282,38 +3295,57 @@ brace."
 	arg-start-pos)
 
     ;; If the '<' has paren open syntax then we've marked it as an
-    ;; angle bracket arglist before, so unless there's range recording
-    ;; work to do, or if we should be restrictive about commas, try to
-    ;; skip an sexp and see that the close paren matches.
-    (if (and (not c-record-type-identifiers)
-	     (not c-disallow-comma-in-<>-arglists)
-	     (looking-at "\\s\(")
+    ;; angle bracket arglist before, so try to skip to the end and see
+    ;; that the close paren matches.
+    (if (and (c-get-char-property (point) 'syntax-table)
 	     (progn
 	       (forward-char)
 	       (if (and (not (looking-at c-<-op-cont-regexp))
-			(c-go-up-list-forward)
+			(if (c-parse-sexp-lookup-properties)
+			    (c-go-up-list-forward)
+			  (catch 'at-end
+			    (let ((depth 1))
+			      (while (c-syntactic-re-search-forward
+				      "[<>]" nil t t)
+				(when (c-get-char-property (1- (point))
+							   'syntax-table)
+				  (if (eq (char-before) ?<)
+				      (setq depth (1+ depth))
+				    (setq depth (1- depth))
+				    (when (= depth 0) (throw 'at-end t)))))
+			      nil)))
 			(not (looking-at c->-op-cont-regexp))
 			(save-excursion
 			  (backward-char)
 			  (= (point)
 			     (progn (c-beginning-of-current-token)
 				    (point)))))
-		   t
+
+		   ;; Got an arglist that appears to be valid.
+		   (if reparse
+		       ;; Reparsing is requested, so zap the properties in the
+		       ;; region and go on to redo it.  It's done here to
+		       ;; avoid leaving it behind if we exit through
+		       ;; `angle-bracket-arglist-escape' below.
+		       (progn
+			 (c-remove-<>-arglist-properties start (point))
+			 (goto-char start)
+			 nil)
+		     t)
 
 		 ;; Got unmatched paren brackets or either paren was
 		 ;; actually some other token.  Recover by clearing the
 		 ;; syntax properties on all the '<' and '>' in the
 		 ;; range where we'll search for the arglist below.
 		 (goto-char start)
-		 (while (progn (skip-chars-forward "^<>;{")
-			       (looking-at "[<>]"))
-		   (c-clear-char-property (point) 'syntax-table)
+		 (while (progn (skip-chars-forward "^<>,;{}")
+			       (looking-at "[<>,]"))
+		   (if (eq (char-after) ?,)
+		       (when (eq (c-get-char-property (point) 'c-type)
+				 'c-<>-arg-sep)
+			 (c-clear-char-property (point) 'c-type))
+		     (c-clear-char-property (point) 'syntax-table))
 		   (forward-char))
-		 ;; The following can leave garbage in the
-		 ;; `rear-nonsticky' properties in some emacsen but
-		 ;; that doesn't matter since this property is
-		 ;; internal.
-		 (c-clear-char-properties start (point) 'c-<>-arg-start)
 		 (goto-char start)
 		 nil)))
 	t
@@ -3343,7 +3375,7 @@ brace."
 		      (when (memq (char-before) '(?, ?<))
 			(let ((orig-record-found-types c-record-found-types))
 			  (c-forward-syntactic-ws)
-			  (and (eq (c-forward-type) 'found)
+			  (and (memq (c-forward-type) '(known found))
 			       (not (looking-at "[,>]"))
 			       ;; A found type was recorded but it's not the
 			       ;; only thing in the arglist argument, so reset
@@ -3360,7 +3392,7 @@ brace."
 			t)
 
 		      (c-syntactic-re-search-forward
-		       "\\([^>]>\\)\\|[<;{,]" nil 'move t t 1)
+		       "\\([^>]>\\)\\|[<;{},]" nil 'move t t 1)
 
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
@@ -3409,7 +3441,7 @@ brace."
 		      ;; The angle bracket arglist is finished.
 		      (while arg-start-pos
 			(c-put-char-property (1- (car arg-start-pos))
-					     'c-<>-arg-start t)
+					     'c-type 'c-<>-arg-sep)
 			(setq arg-start-pos (cdr arg-start-pos)))
 		      (c-mark-<-as-paren start)
 		      (c-mark->-as-paren (1- (point)))
@@ -3447,7 +3479,10 @@ brace."
 				     (and keyword-match
 					  (c-keyword-member
 					   (c-keyword-sym (match-string 1))
-					   'c-<>-type-kwds))))))))
+					   'c-<>-type-kwds))
+				     (and reparse
+					  c-disallow-comma-in-<>-arglists))))
+			    )))
 
 			;; It was not an angle bracket arglist.
 			(progn
@@ -3628,7 +3663,8 @@ brace."
 	       ;; Maybe an angle bracket arglist.
 	       (when (let ((c-record-type-identifiers nil)
 			   (c-record-found-types nil))
-		       (c-forward-<>-arglist nil))
+		       (c-forward-<>-arglist
+			nil c-disallow-comma-in-<>-arglists))
 		 (c-forward-syntactic-ws)
 		 (setq pos (point))
 		 (if (and c-opt-identifier-concat-key
@@ -3814,8 +3850,10 @@ brace."
 		   (setq res2 (c-forward-type))))
 	    ;; If either operand certainly is a type then both are,
 	    ;; but we don't let the existence of the operator itself
-	    ;; promote two uncertain types to a more certain one.
-	    (cond ((memq res '(t known)))
+	    ;; promote two uncertain types to a certain one.
+	    (cond ((eq res t))
+		  ((eq res 'known)
+		   (setq res t))
 		  ((memq res2 '(t known))
 		   (c-add-type id-start id-end)
 		   (when c-record-type-identifiers
@@ -3828,7 +3866,7 @@ brace."
 		   (setq res 'maybe)))
 	  (goto-char pos)))
 
-      (when (and c-record-found-types (eq res 'found) id-range)
+      (when (and c-record-found-types (memq res '(known found)) id-range)
 	(setq c-record-found-types
 	      (cons id-range c-record-found-types)))
 
