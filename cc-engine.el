@@ -273,8 +273,8 @@
       ;; skip preprocessor directives
       (when (and (eq (char-after) ?#)
 		 (= (c-point 'boi) (point)))
-	(while (eq (char-before (c-point 'eol)) ?\\)
-	  (forward-line 1))
+	(while (and (eq (char-before (c-point 'eol)) ?\\)
+		    (= (forward-line 1) 0)))
 	(end-of-line))
       )
     (if lim (goto-char (min (point) lim)))))
@@ -2217,7 +2217,15 @@ brace."
 		(goto-char indent-point)
 		(c-beginning-of-closest-statement)
 		(c-add-syntax 'statement-cont (c-point 'boi)))
-	       ;; CASE 10B.3: catch-all for unknown construct.
+	       ;; CASE 10B.3: The body of a function declared inside a
+	       ;; normal block.  This can only occur in Pike.
+	       ((and (c-major-mode-is 'pike-mode)
+		     (progn
+		       (goto-char indent-point)
+		       (not (c-looking-at-bos))))
+		(c-beginning-of-closest-statement)
+		(c-add-syntax 'defun-open (c-point 'boi)))
+	       ;; CASE 10B.4: catch-all for unknown construct.
 	       (t
 		;; Can and should I add an extensibility hook here?
 		;; Something like c-recognize-hook so support for
@@ -2340,7 +2348,15 @@ brace."
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close
 	     ((and (not inenclosing-p)
-		   (c-most-enclosing-brace state))
+		   (c-most-enclosing-brace state)
+		   (or (not (c-major-mode-is 'pike-mode))
+		       ;; In Pike it can be a defun-close of a
+		       ;; function declared in a statement block.  Let
+		       ;; it through to be handled below.
+		       (or (c-looking-at-bos)
+			   (progn
+			     (c-beginning-of-statement-1)
+			     (looking-at c-conditional-key)))))
 	      (c-add-syntax 'block-close relpos))
 	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
@@ -2445,11 +2461,14 @@ brace."
 		    (c-looking-at-inexpr-block)))
 	    (goto-char containing-sexp)
 	    (back-to-indentation)
-	    (if (= containing-sexp (point))
-		(c-add-syntax 'statement-block-intro (point))
-	      (goto-char (cdr placeholder))
-	      (c-add-syntax 'statement-block-intro (c-point 'boi))
-	      (c-add-syntax (car placeholder)))
+	    (let ((block-intro (if (eq (car placeholder) 'inlambda)
+				   'defun-block-intro
+				 'statement-block-intro)))
+	      (if (= containing-sexp (point))
+		  (c-add-syntax block-intro (point))
+		(goto-char (cdr placeholder))
+		(c-add-syntax block-intro (c-point 'boi))
+		(c-add-syntax (car placeholder))))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ;; CASE 17F: first statement in an inline, or first
@@ -2475,7 +2494,17 @@ brace."
 		  (c-beginning-of-statement-1)
 		  ))
 	    (c-add-syntax 'defun-block-intro (c-point 'boi)))
-	   ;; CASE 17G: first statement in a block
+	   ;; CASE 17G: First statement in a function declared inside
+	   ;; a normal block.  This can only occur in Pike.
+	   ((and (c-major-mode-is 'pike-mode)
+		 (progn
+		   (goto-char containing-sexp)
+		   (and (not (c-looking-at-bos))
+			(progn
+			  (c-beginning-of-statement-1)
+			  (not (looking-at c-conditional-key))))))
+	    (c-add-syntax 'defun-block-intro (c-point 'boi)))
+	   ;; CASE 17H: first statement in a block
 	   (t (goto-char containing-sexp)
 	      (if (/= (point) (c-point 'boi))
 		  (c-beginning-of-statement-1
