@@ -144,11 +144,11 @@ mode name.  Valid symbols are:
                         construct on a single line.  This clean up
                         only takes place when there is nothing but
                         white space between the braces and the `else'.
-                        Clean up occurs when the open-brace after the
+                        Clean up occurs when the open brace after the
                         `else' is typed.
  brace-elseif-brace  -- similar to brace-else-brace, but cleans up
                         `} else if (...) {' constructs.  Clean up occurs
-                        after the open parenthesis.
+                        after the open parenthesis and the open brace.
  brace-catch-brace   -- similar to brace-elseif-brace, but cleans up
                         `} catch (...) {' constructs.
  empty-defun-braces  -- cleans up empty defun braces by placing the

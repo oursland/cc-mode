@@ -996,12 +996,27 @@ void spam(int i)
     @{
         dosomething();
     @}
-    else if( i==3 ) @{
+    else if( i==3 )
+    @{
 
 @end group
 @end example
 @noindent
 appears like this after the open parenthesis is typed:
+@example
+@group
+
+void spam(int i)
+@{
+    if( i==7 ) @{
+        dosomething();
+    @} else if( i==3 )
+    @{
+
+@end group
+@end example
+@noindent
+and like this after the open brace is typed:
 @example
 @group
 
