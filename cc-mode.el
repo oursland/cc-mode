@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.58 $
-;; Last Modified:   $Date: 1993-11-17 21:09:09 $
+;; Version:         $Revision: 3.59 $
+;; Last Modified:   $Date: 1993-11-17 23:29:41 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -29,7 +29,7 @@
 
 ;;; Commentary:
 
-;; All information about CC-Mode is now contained in an accompanying
+;; All information about cc-mode is now contained in an accompanying
 ;; texinfo manual.  To submit bug reports, hit "C-c C-b" in a cc-mode
 ;; buffer, and please try to include a code sample so I can reproduce
 ;; your problem.  If you have other questions contact me at the
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-17 21:09:09 $|$Revision: 3.58 $|
+;; |$Date: 1993-11-17 23:29:41 $|$Revision: 3.59 $|
 
 ;;; Code:
 
@@ -93,31 +93,32 @@ reported and the semantic symbol is ignored.")
     (class-close           . 0)
     (inline-open           . +)
     (inline-close          . 0)
-    (member-init-intro     . +)
     (c++-funcdecl-cont     . -)
-    (member-init-cont      . 0)
+    (knr-argdecl-intro     . +)
     (topmost-intro         . 0)
     (topmost-intro-cont    . 0)
+    (member-init-intro     . +)
+    (member-init-cont      . 0)
     (inher-intro           . +)
     (inher-cont            . cc-lineup-multi-inher)
     (block-open            . +)
     (block-close           . 0)
-    (statement-cont        . +)
-    (do-while-closure      . 0)
-    (else-clause           . 0)
-    (case-label            . 0)
-    (label                 . 2)
     (statement             . 0)
+    (statement-cont        . +)
     (statement-block-intro . +)
     (statement-case-intro  . +)
+    (case-label            . 0)
+    (label                 . 2)
+    (access-label          . -)
+    (do-while-closure      . 0)
+    (else-clause           . 0)
     (comment-intro         . cc-indent-for-comment)
     (arglist-intro         . +)
-    (arglist-close         . 0)
-    (arglist-cont-nonempty . cc-lineup-arglist)
     (arglist-cont          . 0)
+    (arglist-cont-nonempty . cc-lineup-arglist)
+    (arglist-close         . 0)
     (stream-op             . cc-lineup-streamop)
     (inclass               . +)
-    (access-key            . -)
     )
   "*Association list of semantic symbols and indentation offsets.
 Each element in this list is a cons cell of the form:
@@ -125,7 +126,49 @@ Each element in this list is a cons cell of the form:
     (SEMSYM . OFFSET)
 
 Where SEMSYM is a semantic symbol and OFFSET is the additional offset
-applied to a line containing the semantic symbol.")
+applied to a line containing the semantic symbol.  Here is the current
+list of valid semantic symbols:
+
+ string                 -- inside multi-line string
+ c                      -- inside a multi-line C style block comment
+ defun-open             -- brace that opens a function definition
+ defun-close            -- brace that closes a function definition
+ class-open             -- brace that opens a class definition
+ class-close            -- brace that closes a class definition
+ inline-open            -- brace that opens an in-class inline method
+ inline-close           -- brace that closes an in-class inline method
+ c++-funcdecl-cont      -- the nether region between a C++ function
+                           declaration and the defun opening brace
+ knr-argdecl-intro      -- first line of a K&R C argument declaration
+ topmost-intro          -- the first line in a topmost construct definition
+ topmost-intro-cont     -- topmost definition continuation lines
+ member-init-intro      -- first line in a member initialization list
+ member-init-cont       -- subsequent member initialization list lines
+ inher-intro            -- first line of a multiple inheritance list
+ inher-cont             -- subsequent multiple inheritance lines
+ block-open             -- statement block open brace
+ block-close            -- statement block close brace
+ statement              -- a C/C++ statement
+ statement-cont         -- a continuation of a C/C++ statement
+ statement-block-intro  -- the first line in a new statement block
+ statement-case-intro   -- the first line in a case `block'
+ case-label             -- a case or default label
+ label                  -- any non-special C/C++ label
+ access-label           -- C++ private/protected/public access label
+ do-while-closure       -- the `while' that ends a do/while construct
+ else-clause            -- the `else' of an if/else construct
+ comment-intro          -- a line containing only a comment introduction
+ arglist-intro          -- the first line in an argument list
+ arglist-cont           -- subsequent argument list lines when no
+                           arguments follow on the same line as the
+		    the arglist opening paren
+ arglist-cont-nonempty  -- subsequent argument list lines when at
+                           least one argument follows on the same
+		    line as the arglist opening paren
+ arglist-close          -- the solo close paren of an argument list
+ stream-op              -- lines continuing a stream operator construct
+ inclass                -- the construct is nested inside a class definition
+")
 
 (defvar cc-tab-always-indent t
   "*Controls the operation of the TAB key.
@@ -139,49 +182,56 @@ always reindented.")
   "*Extra offset for line which contains only the start of a comment.
 Can contain an integer or a cons cell of the form:
 
-    (NON-ANCHORED-OFFSET . ANCHORED-OFFSET)
+ (NON-ANCHORED-OFFSET . ANCHORED-OFFSET)
 
-See the texinfo manual for details.")
+Where NON-ANCHORED-OFFSET is the amount of offset given to
+non-column-zero anchored comment-only lines, and ANCHORED-OFFSET is
+the amount of offset to give column-zero anchored comment-only lines.
+Just an integer as value is equivalent to (<val> . 0)")
 (defvar cc-C-block-comments-indent-p nil
-  "*4 styles of C block comments are supported.  If this variable is nil,
-then styles 1-3 are supported.  If this variable is non-nil, style 4 is
-supported.
-style 1:       style 2:       style 3:       style 4:
-/*             /*             /*             /*
-   blah         * blah        ** blah        blah
-   blah         * blah        ** blah        blah
-   */           */            */             */
+  "*Specifies how to re-indent C style block comments.
+
+4 styles of C block comments are supported.  If this variable is nil,
+then styles 1-3 are supported.  If this variable is non-nil, style 4
+only is supported.  Note that this currently has *no* effect on how
+comments are lined up or whether stars are inserted when C comments
+are auto-filled.
+
+ style 1:       style 2:       style 3:       style 4:
+ /*             /*             /*             /*
+    blah         * blah        ** blah        blah
+    blah         * blah        ** blah        blah
+    */           */            */             */
 ")
 (defvar cc-cleanup-list '(scope-operator)
   "*List of various C/C++ constructs to \"clean up\".
 These cleanups only take place when the auto-newline feature is turned
 on, as evidenced by the `/a' or `/ah' appearing next to the mode name.
+Valid symbols are:
 
-Valid values are:
- `brace-else-brace'   -- clean up `} else {' constructs by placing entire
-                         construct on a single line.  This cleanup only
-                         takes place when there is nothing but white
-                         space between the braces and the else.  
- `empty-defun-braces' -- cleans up empty C++ function braces by
-                         placing them on the same line.
- `defun-close-semi'   -- cleans up the terminating semi-colon on class
-                         definitions and functions by placing the semi
-                         on the same line as the closing brace.
- `list-close-comma'   -- cleans up commas following braces in array
-                         and aggregate initializers.
- `scope-operator'     -- cleans up double colon scope operator which may be
-                         split across multiple lines.")
+ brace-else-brace    -- clean up `} else {' constructs by placing entire
+                        construct on a single line.  This cleanup only
+                        takes place when there is nothing but white
+                        space between the braces and the else.  
+ empty-defun-braces  -- cleans up empty defun braces by placing the
+                        braces on the same line.
+ defun-close-semi    -- cleans up the terminating semi-colon on defuns
+			by placing the semi-colon on the same line as
+			the closing brace.
+ list-close-comma    -- cleans up commas following braces in array
+                        and aggregate initializers.
+ scope-operator      -- cleans up double colons which may be designate
+                        a C++ scope operator split across multiple
+			lines. Note that certain C++ constructs can
+			generate ambiguous situations.")
 
 (defvar cc-hanging-braces-alist nil
   "*Controls the insertion of newlines before and after open braces.
 This variable contains an association list with elements of the
-following form: (LANGSYM . (NL-LIST)).  LANGSYSM is one of these
-semantic symbols:
+following form: (LANGSYM . (NL-LIST)).
 
-  `defun-open'   -- opens any top level function
-  `class-open'   -- opens any class definition
-  `inline-open'  -- opens any inline, in-class member function
-  `block-open'   -- opens any statement block.
+LANGSYSM can be any of: defun-open, class-open, inline-open, and
+block-open (as defined by the `cc-offset-alist' variable).
 
 NL-LIST can contain any combination of the symbols `before' or
 `after'. It also be nil.  When an open brace is inserted, the language
@@ -193,29 +243,27 @@ behavior is to insert a newline both before and after the brace.")
 (defvar cc-hanging-colons-alist nil
   "*Controls the insertion of newlines before and after certain colons.
 This variable contains an association list with elements of the
-following form: (LANGSYM . (NL-LIST)).  LANGSYSM is one of these
-semantic symbols:
+following form: (LANGSYM . (NL-LIST)).
 
-  `member-init-intro'  -- introduces a member init list
-  `inher-intro'        -- introduces an inheritance list
-  `case-label'         -- colon at the end of a case/default label
-  `label'              -- colon at the end of an ordinary label
-  `access-key'         -- colon at the end of an access protection label
+LANGSYSM can be any of: member-init-intro, inher-intro, case-label,
+label, and access-label (as defined by the `cc-offset-alist' variable).
 
 NL-LIST can contain any combination of the symbols `before' or
-`after'. It also be nil.  When an open brace is inserted, the language
+`after'. It also be nil.  When a colon is inserted, the language
 element that it defines is looked up in this list, and if found, the
 NL-LIST is used to determine where newlines are inserted.  If the
-language element for this brace is not found in this list, the default
-behavior is to insert a newline both before and after the brace.")
+language element for the colon is not found in this list, the default
+behavior is to not insert any newlines.")
 
 (defvar cc-auto-hungry-initial-state 'none
   "*Initial state of auto/hungry features when buffer is first visited.
-Valid values are:
-  `none'         -- no auto-newline and no hungry-delete-key.
-  `auto-only'    -- auto-newline, but no hungry-delete-key.
-  `hungry-only'  -- no auto-newline, but hungry-delete-key.
-  `auto-hungry'  -- both auto-newline and hungry-delete-key enabled.
+Valid symbol values are:
+
+ none         -- no auto-newline or hungry-delete-key feature
+ auto-only    -- auto-newline, but not hungry-delete-key
+ hungry-only  -- hungry-delete-key, but not auto-hungry
+ auto-hungry  -- both auto-newline and hungry-delete-key enabled
+
 Nil is synonymous for `none' and t is synonymous for `auto-hungry'.")
 
 (defvar cc-untame-characters '(?\')
@@ -228,7 +276,7 @@ To be completely safe, set this variable to:
     '(?\( ?\) ?\' ?\{ ?\} ?\[ ?\])
 
 This variable has no effect under Emacs 19. For details on why this is
-necessary in GNU Emacs 18, please refer to the texinfo manual.")
+necessary in GNU Emacs 18, please refer to the cc-mode texinfo manual.")
 
 (defvar cc-default-macroize-column 78
   "*Column to insert backslashes when macroizing a region.")
@@ -270,7 +318,7 @@ is necessary under GNU Emacs 18, please refer to the texinfo manual.")
 	  (if (fboundp 'forward-comment)
 	      (setq scanner 'v19)
 	    ;; we no longer support older Lemacsen
-	    (error "CC-Mode no longer supports pre 19.8 Lemacsen. Upgrade!")
+	    (error "cc-mode no longer supports pre 19.8 Lemacsen. Upgrade!")
 	    )))
     ;; now cobble up the necessary list
     (list mse-spec scanner))
@@ -279,22 +327,25 @@ There are many flavors of Emacs out on the net, each with different
 features supporting those needed by cc-mode.  Here's the current
 known list, along with the values for this variable:
 
-Vanilla GNU 18/Epoch 4:  (no-dual-comments v18)
-GNU 18/Epoch 4 (patch2): (8-bit v19)
-Lemacs 19.8 and over:    (8-bit v19)
-FSF 19:                  (1-bit v19)
-FSF 19 (patched):        (8-bit v19)
+ Vanilla GNU 18/Epoch 4:   (no-dual-comments v18)
+ GNU 18/Epoch 4 (patch2):  (8-bit v19)
+ Lemacs 19.8 and beyond:   (8-bit v19)
+ FSFmacs 19:               (1-bit v19)
 
 Note that older, pre-19.8 Lemacsen, and version 1 patches for
-GNU18/Epoch4 are no longer supported.  If cc-mode generates an error,
-you should upgrade your Emacs.")
+GNU18/Epoch4 are no longer supported.  If cc-mode generates an error
+when loaded, you should upgrade your Emacs.")
 
 (defvar cc-c++-mode-abbrev-table nil
   "Abbrev table in use in cc-mode C++ buffers.")
 (define-abbrev-table 'cc-c++-mode-abbrev-table ())
 
+(defvar cc-c-mode-abbrev-table nil
+  "Abbrev table in use in cc-mode C buffers.")
+(define-abbrev-table 'cc-c-mode-abbrev-table ())
+
 (defvar cc-mode-map ()
-  "Keymap used in cc-mode C++ buffers.")
+  "Keymap used in cc-mode buffers.")
 (if cc-mode-map
     ()
   (setq cc-mode-map (make-sparse-keymap))
@@ -303,7 +354,7 @@ you should upgrade your Emacs.")
   (define-key cc-mode-map ";"         'cc-electric-semi&comma)
   (define-key cc-mode-map ","         'cc-electric-semi&comma)
   (define-key cc-mode-map "#"         'cc-electric-pound)
-  (define-key cc-mode-map "\e\C-h"    'mark-c-function)
+  (define-key cc-mode-map "\e\C-h"    'cc-mark-function)
   (define-key cc-mode-map "\e\C-q"    'cc-indent-exp)
   (define-key cc-mode-map "\t"        'cc-indent-command)
   (define-key cc-mode-map "\C-c\C-\\" 'cc-macroize-region)
@@ -315,6 +366,7 @@ you should upgrade your Emacs.")
   (define-key cc-mode-map "*"         'cc-electric-star)
   (define-key cc-mode-map ":"         'cc-electric-colon)
   (define-key cc-mode-map "\C-c\C-;"  'cc-scope-operator)
+  (define-key cc-mode-map "\C-c\C-/"  'cc-show-semantic-information)
   (define-key cc-mode-map "\177"      'cc-electric-delete)
   (define-key cc-mode-map "\C-c\C-t"  'cc-toggle-auto-hungry-state)
   (define-key cc-mode-map "\C-c\C-h"  'cc-toggle-hungry-state)
@@ -336,6 +388,7 @@ you should upgrade your Emacs.")
 (if cc-c++-mode-syntax-table
     ()
   (setq cc-c++-mode-syntax-table (make-syntax-table))
+  ;; DO NOT TRY TO SET _ (UNDERSCORE) TO WORD CLASS!
   (modify-syntax-entry ?\\ "\\"    cc-c++-mode-syntax-table)
   (modify-syntax-entry ?+  "."     cc-c++-mode-syntax-table)
   (modify-syntax-entry ?-  "."     cc-c++-mode-syntax-table)
@@ -372,6 +425,7 @@ you should upgrade your Emacs.")
 (if cc-c-mode-syntax-table
     ()
   (setq cc-c-mode-syntax-table (make-syntax-table))
+  ;; DO NOT TRY TO SET _ (UNDERSCORE) TO WORD CLASS!
   (modify-syntax-entry ?\\ "\\"    cc-c-mode-syntax-table)
   (modify-syntax-entry ?+  "."     cc-c-mode-syntax-table)
   (modify-syntax-entry ?-  "."     cc-c-mode-syntax-table)
@@ -431,11 +485,11 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.58 $
+  "Major mode for editing C++ code.  $Revision: 3.59 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
-of the problem and send the message.
+of the problem, including a reproducable test case and send the message.
 
 Note that the details of configuring cc-c++-mode have been moved to
 the accompanying texinfo manual.
@@ -462,11 +516,11 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.58 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.59 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
-of the problem and send the message.
+of the problem, including a reproducable test case and send the message.
 
 Note that the details of configuring cc-c-mode have been moved to
 the accompanying texinfo manual.
@@ -482,7 +536,7 @@ Key bindings:
   (set-syntax-table cc-c-mode-syntax-table)
   (setq major-mode 'cc-c-mode
 	mode-name "C"
-	local-abbrev-table c-mode-abbrev-table)
+	local-abbrev-table cc-c-mode-abbrev-table)
   (setq comment-start "/* "
 	comment-end   " */")
   (cc-common-init)
@@ -506,6 +560,7 @@ Key bindings:
   (make-local-variable 'comment-end)
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
+  ;; don't worry about byte-compiler complaints on the following
   (make-local-variable
    (if (boundp 'comment-indent-function)
        'comment-indent-function
@@ -520,6 +575,7 @@ Key bindings:
 	indent-region-function 'cc-indent-region
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *")
+  ;; don't worry about byte-compiler complaints on the following
   (if (boundp 'comment-indent-function)
       (setq comment-indent-function 'cc-comment-indent)
     (setq comment-indent-hook 'cc-comment-indent))
@@ -581,15 +637,16 @@ Key bindings:
   ;; then, I don't now of a way to keep the region active in FSFmacs.
   (` (if (interactive-p) (setq zmacs-region-stays t))))
 
-(defun cc-set-auto-hungry-state (auto-p hungry-p)
+(defmacro cc-set-auto-hungry-state (auto-p hungry-p)
   ;; Set auto/hungry to state indicated by AUTO-P and HUNGRY-P, and
   ;; update the mode line accordingly
-  (setq cc-auto-newline auto-p
-	cc-hungry-delete-key hungry-p)
-  ;; hack to get mode line updated. Emacs19 should use
-  ;; force-mode-line-update, but that isn't portable to Emacs18 and
-  ;; this at least works for both
-  (set-buffer-modified-p (buffer-modified-p)))
+  (` (progn
+       (setq cc-auto-newline (, auto-p)
+	     cc-hungry-delete-key (, hungry-p))
+       ;; hack to get mode line updated. Emacs19 should use
+       ;; force-mode-line-update, but that isn't portable to Emacs18
+       ;; and this at least works for both
+       (set-buffer-modified-p (buffer-modified-p)))))
 
 (defun cc-toggle-auto-state (arg)
   "Toggle auto-newline feature.
@@ -664,8 +721,8 @@ Optional argument has the following meanings when supplied:
 If `cc-hungry-delete-key' is non-nil, as evidenced by the \"/h\" or
 \"/ah\" string on the mode line, then all preceding whitespace is
 consumed.  If however an ARG is supplied, or `cc-hungry-delete-key' is
-nil, or point is inside a literal (comment, string, or cpp macro),
-then the function in the variable `cc-delete-function' is called."
+nil, or point is inside a literal then the function in the variable
+`cc-delete-function' is called."
   (interactive "P")
   (if (or (not cc-hungry-delete-key)
 	  arg
@@ -755,7 +812,8 @@ literal, nothing special happens."
       (cc-indent-via-language-element bod semantics)
       ;; Do all appropriate clean ups
       (let ((here (point))
-	    (pos (- (point-max) (point))))
+	    (pos (- (point-max) (point)))
+	    mbeg mend)
 	;; clean up empty defun braces
 	(if (and (memq 'empty-defun-braces cc-cleanup-list)
 		 (= last-command-char ?\})
@@ -794,7 +852,6 @@ literal, nothing special happens."
 	     (funcall old-blink-paren-function)))
       )))
       
-
 (defun cc-electric-slash (arg)
   "Insert slash, possibly indenting line as a comment.
 If slash is second of a double-slash comment introducing construct,
@@ -895,7 +952,7 @@ Will also cleanup double colon scope operators."
 	    newlines (or
 		      (let ((langelem (or (assq 'case-label semantics)
 					  (assq 'label semantics)
-					  (assq 'access-key semantics))))
+					  (assq 'access-label semantics))))
 			(and langelem
 			     (assq (car langelem) cc-hanging-colons-alist)))
 		      (prog2
@@ -946,11 +1003,9 @@ This function is only necessary in GNU Emacs 18.  For details, refer
 to the accompanying texinfo manual.
 
 See also the variable `cc-untame-characters'."
-  (interactive "p")
-  (if (and (memq last-command-char cc-untame-characters)
-	   (memq (cc-in-literal) '(c c++)))
-      (insert-char ?\\ 1))
-  (self-insert-command arg))
+  (interactive "P")
+  (let ((literal (cc-in-literal)))
+    (cc-insert-and-tame arg)))
 
 (defun cc-tame-comments ()
   "Backslashifies all untamed in comment regions found in the buffer.
@@ -1044,7 +1099,7 @@ of the expression are preserved."
 	(bod (cc-point 'bod))
 	;; keep quiet for speed
 	(cc-echo-semantic-information-p nil))
-    (message "indenting expression...")
+    (message "indenting expression... (this may take a while)")
     (goto-char start)
     (while (< (point) end)
       (cc-indent-via-language-element bod)
@@ -1286,6 +1341,15 @@ of the expression are preserved."
     (set-marker here nil))
   (cc-keep-region-active))
 
+(defun cc-mark-function ()
+  "Put mark at end of a C/C++ defun, point at beginning."
+  (interactive)
+  (push-mark (point))
+  (end-of-defun)
+  (push-mark (point) nil t)
+  (beginning-of-defun)
+  (backward-paragraph))
+
 
 ;; Skipping of "syntactic whitespace" for all known Emacsen.
 ;; Syntactic whitespace is defined as lexical whitespace, C and C++
@@ -1520,16 +1584,16 @@ of the expression are preserved."
 
 
 ;; utilities for moving and querying around semantic elements
-(defun cc-parse-state (&optional lim)
+(defmacro cc-parse-state (&optional lim)
   ;; Determinate the syntactic state of the code at point.
   ;; Iteratively uses `parse-partial-sexp' from point to LIM and
   ;; returns the result of `parse-partial-sexp' at point.  LIM is
   ;; optional and defaults to `point-max'."
-  (let ((lim (or lim (point-max)))
-	state)
-    (while (< (point) lim)
-      (setq state (parse-partial-sexp (point) lim 0)))
-    state))
+  (` (let ((lim (or lim (point-max)))
+	   state)
+       (while (< (point) lim)
+	 (setq state (parse-partial-sexp (point) lim 0)))
+       state)))
 
 (defmacro cc-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
@@ -1567,16 +1631,16 @@ of the expression are preserved."
 	 (goto-char here))
        )))
 
-(defun cc-back-block ()
+(defmacro cc-back-block ()
   ;; move up one block, returning t if successful, otherwise returning
   ;; nil
-  (or (condition-case nil
-	  (progn (up-list -1) t)
-	(error nil))
-      (condition-case nil
-	  (progn (down-list -1) t)
-	(error nil))
-      ))
+  (` (or (condition-case nil
+	     (progn (up-list -1) t)
+	   (error nil))
+	 (condition-case nil
+	     (progn (down-list -1) t)
+	   (error nil))
+	 )))
 
 (defun cc-beginning-of-inheritance-list (&optional lim)
   ;; Go to the first non-whitespace after the colon that starts a
@@ -1937,7 +2001,7 @@ of the expression are preserved."
 	   ;; CASE 3E: we are looking at a access specifier
 	   ((and inclass-p
 		 (looking-at cc-access-key))
-	    (cc-add-semantics 'access-key (cc-point 'bonl))
+	    (cc-add-semantics 'access-label (cc-point 'bonl))
 	    (cc-add-semantics 'inclass (cdr inclass-p)))
 	   ;; CASE 3F: we are looking at the brace which closes the
 	   ;; enclosing class decl
@@ -2179,7 +2243,7 @@ of the expression are preserved."
 	 (indent (apply '+ (mapcar 'cc-get-offset semantics)))
 	 (shift-amt  (- (current-indentation) indent)))
     (and cc-echo-semantic-information-p
-	 (message "langelem: %s, indent= %d" semantics indent))
+	 (message "semantics: %s, indent= %d" semantics indent))
     (if (zerop shift-amt)
 	nil
       (delete-region (cc-point 'bol) (cc-point 'boi))
@@ -2195,6 +2259,14 @@ of the expression are preserved."
     (run-hooks 'cc-special-indent-hook)
     shift-amt))
 
+(defun cc-show-semantic-information ()
+  "Show semantic information for current line."
+  (interactive)
+  (message "semantics: %s" (cc-guess-basic-semantics))
+  (cc-keep-region-active))
+
+
+;; Standard indentation line-ups
 (defun cc-lineup-arglist (langelem)
   ;; lineup the current arglist line with the arglist appearing just
   ;; after the containing paren which starts the arglist.
@@ -2341,15 +2413,15 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.58 $"
-  "CC-Mode version number.")
+(defconst cc-version "$Revision: 3.59 $"
+  "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
 
 (defun cc-version ()
-  "Echo the current version of CC-Mode in the minibuffer."
+  "Echo the current version of cc-mode in the minibuffer."
   (interactive)
-  (message "Using CC-Mode version %s" cc-version)
+  (message "Using cc-mode version %s" cc-version)
   (cc-keep-region-active))
 
 (defun cc-submit-bug-report ()
@@ -2357,10 +2429,10 @@ the leading `// ' from each line, if any."
   (interactive)
   (require 'reporter)
   (and
-   (y-or-n-p "Do you want to submit a report on CC-Mode? ")
+   (y-or-n-p "Do you want to submit a report on cc-mode? ")
    (reporter-submit-bug-report
     cc-mode-help-address
-    (concat "CC-Mode version " cc-version " (editing "
+    (concat "cc-mode version " cc-version " (editing "
 	    (if (eq major-mode 'cc-c++-mode) "C++" "C")
 	    " code)")
     (list
