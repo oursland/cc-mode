@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.329 $
-;; Last Modified:   $Date: 1996-12-10 20:34:45 $
+;; Version:         $Revision: 4.330 $
+;; Last Modified:   $Date: 1996-12-10 20:46:37 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2348,7 +2348,10 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
   "Set cc-mode variables to use one of several different indentation styles.
 STYLENAME is a string representing the desired style from the list of
 styles described in the variable `c-style-alist'.  See that variable
-for details of setting up styles."
+for details of setting up styles.
+
+The variable `c-buffer-style' always contains the buffer's current
+style name."
   (interactive (list (let ((completion-ignore-case t)
 			   (prompt (format "Which %s indentation style? "
 					   mode-name)))
@@ -5026,7 +5029,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.329 $"
+(defconst c-version "$Revision: 4.330 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
