@@ -638,7 +638,6 @@
   ;; earlier in the file and point.
   ;;
   ;; if there's a state cache, return it
-  (setq c-parsing-error nil)
   (if c-state-cache c-state-cache
     (let* (at-bob
 	   (pos (save-excursion
@@ -668,7 +667,7 @@
 	   (here (save-excursion
 		   ;;(skip-chars-forward " \t}")
 		   (point)))
-	   (last-bod pos) (last-pos pos)
+	   (last-bod here) (last-pos pos)
 	   placeholder state sexp-end)
       ;; cache last bod position
       (while (catch 'backup-bod
@@ -707,9 +706,13 @@
 		       (while t
 			 (setq last-bod (c-safe (scan-lists last-bod -1 1)))
 			 (if (not last-bod)
-			     (progn
+			     (save-excursion
 			       ;; bogus, but what can we do here?
-			       (setq c-parsing-error (1- placeholder))
+			       (goto-char placeholder)
+			       (beginning-of-line)
+			       (setq c-parsing-error
+				     (format "\
+Unbalanced close brace at line %d" (1+ (count-lines 1 (point)))))
 			       (throw 'backup-bod nil))
 			   (setq at-bob (= last-bod (point-min))
 				 pos last-bod)
@@ -937,8 +940,7 @@ brace."
 (defun c-backward-to-start-of-if (&optional lim)
   ;; Move to the start of the last "unbalanced" if and return t.  If
   ;; none is found, and we are looking at an if clause, nil is
-  ;; returned.  If none is found and we are looking at an else clause,
-  ;; an error is thrown.
+  ;; returned.
   (let ((if-level 1)
 	(here (c-point 'bol))
 	(case-fold-search nil)
@@ -952,10 +954,13 @@ brace."
 	(condition-case nil
 	    (c-backward-sexp 1)
 	  (error
-	   (if at-if
-	       (throw 'orphan-if nil)
-	     (error "No matching `if' found for `else' on line %d."
-		    (1+ (count-lines 1 here))))))
+	   (unless at-if
+	     (goto-char here)
+	     (c-beginning-of-statement-1)
+	     (setq c-parsing-error
+		   (format "No matching `if' found for `else' on line %d"
+			   (1+ (count-lines 1 here))))
+	     (throw 'orphan-if nil))))
 	(cond
 	 ((looking-at "else\\b[^_]")
 	  (setq if-level (1+ if-level)))
@@ -963,10 +968,11 @@ brace."
 	  ;; check for else if... skip over
 	  (let ((here (point)))
 	    (c-safe (c-forward-sexp -1))
-	    (if (looking-at "\\<else\\>[ \t]+\\<if\\>")
+	    (if (looking-at "\\<else\\>[ \t]+\\<if\\>[^_]")
 		nil
 	      (setq if-level (1- if-level))
-	      (goto-char here))))
+	      (goto-char here))
+	    (setq last-if-pos (point))))
 	 ((< (point) lim)
 	  (setq if-level 0)
 	  (goto-char lim))
@@ -978,9 +984,11 @@ brace."
   ;; statements in parentheses. No error checking is performed.
   (c-forward-sexp (cond
 		   ;; else if()
-		   ((looking-at "\\<else\\>[ \t]+\\<if\\>") 3)
+		   ((looking-at "\\<else\\>[ \t]+\\<if\\>\\([^_]\\|$\\)") 3)
 		   ;; do, else, try, finally
-		   ((looking-at "\\<\\(do\\|else\\|try\\|finally\\)\\>") 1)
+		   ((looking-at
+		     "\\<\\(do\\|else\\|try\\|finally\\)\\>\\([^_]\\|$\\)")
+		    1)
 		   ;; for, if, while, switch, catch, synchronized, foreach
 		   (t 2))))
 
@@ -2611,11 +2619,9 @@ brace."
 	syntax))))
 
 
-(defun c-echo-parsing-error ()
-  (if (not c-parsing-error)
-      nil
-    (message "unbalanced close brace at bufpos %d -- INDENTATION IS SUSPECT!"
-	     c-parsing-error)
+(defun c-echo-parsing-error (&optional quiet)
+  (when (and c-parsing-error (not quiet))
+    (message "%s" c-parsing-error)
     (ding))
   c-parsing-error)
 
@@ -2690,33 +2696,39 @@ brace."
 	     0)))
     ))
 
-(defun c-indent-line (&optional syntax)
+(defun c-indent-line (&optional syntax quiet)
   ;; Indent the current line according to the syntactic context, if
   ;; c-syntactic-indentation is non-nil.  Optional SYNTAX is the
-  ;; syntactic information for the current line.  Returns the amount
-  ;; of indentation change (in columns).
+  ;; syntactic information for the current line.  Be silent about
+  ;; syntactic errors if the optional argument QUIET is non-nil.
+  ;; Returns the amount of indentation change (in columns).
   (let (shift-amt)
     (if c-syntactic-indentation
-	(let* ((c-syntactic-context (or syntax
-					c-syntactic-context
-					(c-guess-basic-syntax)))
-	       (langelemptr c-syntactic-context)
-	       (indent 0))
-	  (setq indent
-		(catch 'done
-		  (while langelemptr
-		    (let ((res (c-get-offset (car langelemptr))))
-		      (if (vectorp res)
-			  (throw 'done (elt res 0))
-			(setq indent (+ indent res)
-			      langelemptr (cdr langelemptr)))))
-		  indent))
-	  (and c-echo-syntactic-information-p
-	       (not (c-echo-parsing-error))
-	       (message "syntax: %s, indent: %d" c-syntactic-context indent))
-	  (setq shift-amt (- indent (current-indentation)))
-	  (c-shift-line-indentation shift-amt)
-	  (run-hooks 'c-special-indent-hook))
+	(setq c-parsing-error
+	      (or (let* ((c-parsing-error nil)
+			 (c-syntactic-context (or syntax
+						  c-syntactic-context
+						  (c-guess-basic-syntax)))
+			 (langelemptr c-syntactic-context)
+			 (indent 0))
+		    (setq indent
+			  (catch 'done
+			    (while langelemptr
+			      (let ((res (c-get-offset (car langelemptr))))
+				(if (vectorp res)
+				    (throw 'done (elt res 0))
+				  (setq indent (+ indent res)
+					langelemptr (cdr langelemptr)))))
+			    indent))
+		    (and (not (c-echo-parsing-error quiet))
+			 c-echo-syntactic-information-p
+			 (message "syntax: %s, indent: %d"
+				  c-syntactic-context indent))
+		    (setq shift-amt (- indent (current-indentation)))
+		    (c-shift-line-indentation shift-amt)
+		    (run-hooks 'c-special-indent-hook)
+		    c-parsing-error)
+		  c-parsing-error))
       (let ((indent 0))
 	(save-excursion
 	  (while (and (= (forward-line -1) 0)
@@ -2735,8 +2747,7 @@ With universal argument, inserts the analysis as a comment on that line."
   (interactive "P")
   (let ((syntax (c-guess-basic-syntax)))
     (if (not (consp arg))
-	(if (not (c-echo-parsing-error))
-	    (message "syntactic analysis: %s" syntax))
+	(message "syntactic analysis: %s" syntax)
       (indent-for-comment)
       (insert (format "%s" syntax))
       ))
