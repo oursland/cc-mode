@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-16 16:23:15 $
-;; Version:         $Revision: 2.158 $
+;; Last Modified:   $Date: 1992-07-16 19:24:10 $
+;; Version:         $Revision: 2.159 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-16 16:23:15 $|$Revision: 2.158 $|
+;; |$Date: 1992-07-16 19:24:10 $|$Revision: 2.159 $|
 
 
 ;; ======================================================================
@@ -293,7 +293,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.158 $
+  "Major mode for editing C++ code.  $Revision: 2.159 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -494,7 +494,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.158 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.159 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1024,7 +1024,8 @@ of the expression are preserved."
 		     (>= (car indent-stack) 0))
 		;; Line is on an existing nesting level.
 		;; Lines inside parens are handled specially.
-		(if (/= (char-after (car contain-stack)) ?{)
+		(if (or (/= (char-after (car contain-stack)) ?{)
+			(c++-at-top-level-p t))
 		    (setq this-indent (car indent-stack))
 		  ;; Line is at statement level.
 		  ;; Is it a new statement?  Is it an else?
@@ -2018,7 +2019,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.158 $"
+(defconst c++-version "$Revision: 2.159 $"
   "c++-mode version number.")
 
 (defun c++-version ()
