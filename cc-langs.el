@@ -454,6 +454,8 @@ global and affect all future `c-mode' buffers."
   "Abbrev table in use in c++-mode buffers.")
 (define-abbrev-table 'c++-mode-abbrev-table ())
 
+(defvar c++-mode-map ()
+  "Keymap used in c++-mode buffers.")
 (if c++-mode-map
     nil
   (setq c++-mode-map (c-make-inherited-keymap))
@@ -490,6 +492,8 @@ global and affect all future `c-mode' buffers."
   "Abbrev table in use in objc-mode buffers.")
 (define-abbrev-table 'objc-mode-abbrev-table ())
 
+(defvar objc-mode-map ()
+  "Keymap used in objc-mode buffers.")
 (if objc-mode-map
     nil
   (setq objc-mode-map (c-make-inherited-keymap))
@@ -518,6 +522,8 @@ global and affect all future `c-mode' buffers."
   "Abbrev table in use in java-mode buffers.")
 (define-abbrev-table 'java-mode-abbrev-table ())
 
+(defvar java-mode-map ()
+  "Keymap used in java-mode buffers.")
 (if java-mode-map
     nil
   (setq java-mode-map (c-make-inherited-keymap))

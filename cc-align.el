@@ -28,7 +28,9 @@
 ;; Boston, MA 02111-1307, USA.
 
 (eval-when-compile
+  (require 'cc-mode)
   (require 'cc-langs)
+  (require 'cc-engine)
   (require 'cc-vars))
 
 

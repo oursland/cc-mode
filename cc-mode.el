@@ -191,9 +191,6 @@ Key bindings:
   (c-update-modeline))
 
 
-(defvar c++-mode-map ()
-  "Keymap used in c++-mode buffers.")
-
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
@@ -235,9 +232,6 @@ Key bindings:
   (c-update-modeline))
 
 
-(defvar objc-mode-map ()
-  "Keymap used in objc-mode buffers.")
-
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
@@ -279,9 +273,6 @@ Key bindings:
   (c-update-modeline))
 
 
-(defvar java-mode-map ()
-  "Keymap used in java-mode buffers.")
-
 ;;;###autoload
 (defun java-mode ()
   "Major mode for editing Java code.
