@@ -21,7 +21,7 @@ experimental in 5.26 remain and are now considered permanent.
   your <code>.emacs</code>, otherwise you probably don't have to
   bother.
 
-  Defaulting <code>c-style-variables-are-local-p</code> to
+  <p>Defaulting <code>c-style-variables-are-local-p</code> to
   <code>t</code> avoids the confusing situation that occurs when a
   user sets some style variables globally and edit both a Java and a
   non-Java file in the same Emacs session.  If the style variables
