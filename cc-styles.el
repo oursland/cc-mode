@@ -241,6 +241,7 @@ style name."
 		       (completing-read prompt c-style-alist nil t
 					(cons c-indentation-style 0)
 					'c-set-style-history))))
+  (c-initialize-builtin-style)
   (c-set-style-2 stylename nil)
   (setq c-indentation-style stylename)
   (c-keep-region-active))
@@ -579,7 +580,10 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 			)))
 	;; the default style is now GNU.  This can be overridden in
 	;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
-	(c-set-style c-site-default-style))))
+	(c-set-style c-site-default-style)))
+  (if c-style-variables-are-local-p
+      (c-make-styles-buffer-local)))
+
 
 (defun c-make-styles-buffer-local ()
   "Make all CC Mode style variables buffer local.
