@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.309 $
-;; Last Modified:   $Date: 1994-04-15 18:47:41 $
+;; Version:         $Revision: 3.310 $
+;; Last Modified:   $Date: 1994-04-15 21:58:28 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-15 18:47:41 $|$Revision: 3.309 $|
+;; |$Date: 1994-04-15 21:58:28 $|$Revision: 3.310 $|
 
 ;;; Code:
 
@@ -790,7 +790,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.309 $
+cc-mode Revision: $Revision: 3.310 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -821,7 +821,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.309 $
+cc-mode Revision: $Revision: 3.310 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2165,7 +2165,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 ;; is used as the backward limit of the search.  If omitted, or nil,
 ;; `beginning-of-defun' is used."
 
-;; This is for all Emacsen supporting 8-bit syntax (Lucid 19, patched Emacs 18)
+;; This is for all v19 Emacsen supporting either 1-bit or 8-bit syntax
 (defun c-in-literal (&optional lim)
   ;; Determine if point is in a C++ literal
   (save-excursion
@@ -2181,27 +2181,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (looking-at "[ \t]*#"))
 	'pound)
        (t nil)))))
-
-;; This is for all 1-bit emacsen (FSF Emacs 19)
-(defun c-1bit-il (&optional lim)
-  ;; Determine if point is in a C++ literal
-  (save-excursion
-    (let* ((lim  (or lim (c-point 'bod)))
-	   (here (point))
-	   (state (parse-partial-sexp lim (point))))
-      (cond
-       ((nth 3 state) 'string)
-       ((nth 4 state) (if (nth 7 state) 'c++ 'c))
-       ((progn
-	  (goto-char here)
-	  (beginning-of-line)
-	  (looking-at "[ \t]*#"))
-	'pound)
-       (t nil)))))
-
-;; FSF Emacs 19 does this differently than Lucid 19
-(if (memq '1-bit c-emacs-features)
-    (fset 'c-in-literal 'c-1bit-il))
 
 
 ;; utilities for moving and querying around semantic elements
@@ -3432,7 +3411,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.309 $"
+(defconst c-version "$Revision: 3.310 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
