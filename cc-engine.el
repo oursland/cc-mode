@@ -3067,6 +3067,13 @@ brace."
 (defvar c-record-type-identifiers nil)
 (defvar c-record-ref-identifiers nil)
 
+;; If `c-record-type-identifiers' is set, this will receive a cons
+;; cell of the range of the last single identifier symbol stepped over
+;; by `c-forward-name' if it's successful.  This is the range that
+;; should be put on one of the record lists by the caller.  It's
+;; assigned nil if there's no such symbol in the name.
+(defvar c-last-identifier-range nil)
+
 (defmacro c-record-type-id (from to)
   `(setq c-record-type-identifiers (cons (cons ,from ,to)
 					 c-record-type-identifiers)))
@@ -3078,10 +3085,6 @@ brace."
 ;; record the ranges of types that only are found.  Behaves otherwise
 ;; like `c-record-type-identifiers'.
 (defvar c-record-found-types nil)
-
-(defmacro c-record-found-type (from to)
-  `(setq c-record-found-types (cons (cons ,from ,to)
-				    c-record-found-types)))
 
 (cc-eval-when-compile
   (defsubst c-forward-keyword-prefixed-type ()
@@ -3132,7 +3135,6 @@ brace."
 	;; Move over a comma separated list of types, where each may
 	;; be prefixed by keywords.
 	(while (and (progn
-		      (c-forward-syntactic-ws)
 		      (setq safe-pos (point))
 		      (eq (char-after) ?,))
 		    (progn
@@ -3144,21 +3146,23 @@ brace."
 	     (eq (char-after) ?\())
 	;; There's an open paren after a keyword in `c-paren-type-kwds'.
 
+	(forward-char)
 	(when c-record-type-identifiers
 	  ;; Use `c-forward-type' on every identifier we can find
 	  ;; inside the paren, to record the types.
-	  (forward-char)
 	  (while (c-syntactic-re-search-forward
 		  c-symbol-start nil 'move t)
 	    (goto-char (match-beginning 0))
 	    (c-forward-type)))
 
 	(when (c-go-up-list-forward)
+	  (c-forward-syntactic-ws)
 	  (setq safe-pos (point))))
 
        ((and (c-keyword-member kwd-sym 'c-<>-arglist-kwds)
 	     (eq (char-after) ?<)
 	     (c-forward-<>-arglist))
+	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
 
       (goto-char safe-pos)
@@ -3220,7 +3224,7 @@ brace."
 	     (progn
 	       (forward-char)
 	       (if (and (not (looking-at c-<-op-cont-regexp))
-			(c-safe (c-forward-sexp) t)
+			(c-go-up-list-forward)
 			(not (looking-at c->-op-cont-regexp))
 			(save-excursion
 			  (backward-char)
@@ -3257,8 +3261,7 @@ brace."
 		    (let ((orig-record-found-types c-record-found-types))
 		      (c-forward-syntactic-ws)
 		      (and (eq (c-forward-type) 'found)
-			   (progn (c-forward-syntactic-ws)
-				  (not (looking-at "[,>]")))
+			   (not (looking-at "[,>]"))
 			   ;; A found type was recorded but it's not the only
 			   ;; thing in the arglist argument, so reset
 			   ;; `c-record-found-types'.
@@ -3402,17 +3405,18 @@ brace."
 	  (or c-record-found-types t)))))
 
 (defun c-forward-name ()
-  ;; Move forward over a complete name if at the beginning of one.
-  ;; Otherwise the point stays put.  A name could be something as
-  ;; simple as "foo" in C or something as complex as "X<Y<class
-  ;; A<int>::B, BIT_MAX >> b>, ::operator<> :: Z<(a>b)> :: operator
-  ;; const X<&foo>::T Q::G<unsigned short int>::*volatile const" in
-  ;; C++ (this function is actually little more than a `looking-at'
-  ;; call in all modes except those that, like C++, have
-  ;; `c-recognize-<>-arglists' set).  Return nil if no name is found,
-  ;; 'template if it's an identifier ending with an angle bracket
-  ;; arglist, 'operator of it's an operator identifier, or t if it's
-  ;; some other kind of name.
+  ;; Move forward over a complete name if at the beginning of one,
+  ;; stopping at the next following token.  If the point is not at
+  ;; something that are recognized as name then it stays put.  A name
+  ;; could be something as simple as "foo" in C or something as
+  ;; complex as "X<Y<class A<int>::B, BIT_MAX >> b>, ::operator<> ::
+  ;; Z<(a>b)> :: operator const X<&foo>::T Q::G<unsigned short
+  ;; int>::*volatile const" in C++ (this function is actually little
+  ;; more than a `looking-at' call in all modes except those that,
+  ;; like C++, have `c-recognize-<>-arglists' set).  Return nil if no
+  ;; name is found, 'template if it's an identifier ending with an
+  ;; angle bracket arglist, 'operator of it's an operator identifier,
+  ;; or t if it's some other kind of name.
 
   (let ((pos (point)) res id-start id-end
 	;; Turn off `c-promote-possible-types' here since we might
@@ -3430,7 +3434,7 @@ brace."
 	   ;; Check for keyword.  We go to the last symbol in
 	   ;; `c-identifier-key' first.
 	   (if (eq c-identifier-key c-symbol-key)
-	       (setq id-start pos
+	       (setq id-start (point)
 		     id-end (match-end 0))
 	     (goto-char (setq id-end (match-end 0)))
 	     (c-simple-skip-symbol-backward)
@@ -3471,43 +3475,49 @@ brace."
 			  ;; '*', '&' or a name followed by ":: *",
 			  ;; where each can be followed by a sequence
 			  ;; of `c-opt-type-modifier-key'.
-			  (while (progn
-				   (c-forward-syntactic-ws)
-				   (cond ((looking-at "[*&]")
-					  (goto-char (match-end 0))
-					  t)
-					 ((looking-at c-identifier-start)
-					  (and (c-forward-name)
-					       (progn
-						 (c-forward-syntactic-ws)
-						 (looking-at "::"))
-					       (progn
-						 (goto-char (match-end 0))
-						 (c-forward-syntactic-ws)
-						 (eq (char-after) ?*))
-					       (progn
-						 (forward-char)
-						 t)))))
+			  (while (cond ((looking-at "[*&]")
+					(goto-char (match-end 0))
+					t)
+				       ((looking-at c-identifier-start)
+					(and (c-forward-name)
+					     (looking-at "::")
+					     (progn
+					       (goto-char (match-end 0))
+					       (c-forward-syntactic-ws)
+					       (eq (char-after) ?*))
+					     (progn
+					       (forward-char)
+					       t))))
 			    (while (progn
-				     (setq pos (point))
 				     (c-forward-syntactic-ws)
+				     (setq pos (point))
 				     (looking-at c-opt-type-modifier-key))
 			      (goto-char (match-end 1))))))
 
 		       ((looking-at c-overloadable-operators-regexp)
 			;; Got some other operator.
-			(setq pos (match-end 0)
+			(when c-record-type-identifiers
+			  (setq c-last-identifier-range
+				(cons (point) (match-end 0))))
+			(goto-char (match-end 0))
+			(c-forward-syntactic-ws)
+			(setq pos (point)
 			      res 'operator)))
 
 		 nil)
-	     (setq pos id-end
+
+	     (when c-record-type-identifiers
+	       (setq c-last-identifier-range
+		     (cons id-start id-end)))
+	     (goto-char id-end)
+	     (c-forward-syntactic-ws)
+	     (setq pos (point)
 		   res t)))
 
 	 (progn
 	   (goto-char pos)
 	   (when (or c-opt-identifier-concat-key
 		     c-recognize-<>-arglists)
-	     (c-forward-syntactic-ws)
 
 	     (cond
 	      ((and c-opt-identifier-concat-key
@@ -3523,43 +3533,45 @@ brace."
 		    (eq (char-after) ?<))
 	       ;; Maybe an angle bracket arglist.
 	       (when (c-forward-<>-arglist)
+		 (c-forward-syntactic-ws)
 		 (setq pos (point))
-		 (when c-opt-identifier-concat-key
-		   ;; Continue if there's an identifier concatenation
-		   ;; operator after the template argument.
-		   (c-forward-syntactic-ws)
-		   (if (looking-at c-opt-identifier-concat-key)
-		       (progn
-			 (when c-record-type-identifiers
-			   (c-record-ref-id id-start id-end))
-			 (forward-char 2)
-			 (c-forward-syntactic-ws)
-			 t)
-		     ;; `c-add-type' isn't called here since we don't
-		     ;; want to add types containing angle bracket
-		     ;; arglists.
-		     (when c-record-type-identifiers
-		       (c-record-type-id id-start id-end))
-		     (setq res 'template)
-		     nil))))
+		 (if (and c-opt-identifier-concat-key
+			  (looking-at c-opt-identifier-concat-key))
+		     ;; Continue if there's an identifier concatenation
+		     ;; operator after the template argument.
+		     (progn
+		       (when c-record-type-identifiers
+			 (c-record-ref-id id-start id-end)
+			 (setq c-last-identifier-range nil))
+		       (forward-char 2)
+		       (c-forward-syntactic-ws)
+		       t)
+		   ;; `c-add-type' isn't called here since we don't
+		   ;; want to add types containing angle bracket
+		   ;; arglists.
+		   (when c-record-type-identifiers
+		     (c-record-type-id id-start id-end)
+		     (setq c-last-identifier-range nil))
+		   (setq res 'template)
+		   nil)))
 	      )))))
 
     (goto-char pos)
     res))
 
 (defun c-forward-type ()
-  ;; If the point is at the beginning of a type spec, move to the end
-  ;; of it.  Return t if it is a known type, nil if it isn't (the
-  ;; point isn't moved), 'prefix if it is a known prefix of a type
-  ;; (according to `c-primitive-type-prefix-kwds'), 'found if it's a
-  ;; type that matches one in `c-found-types', or 'maybe if it's an
-  ;; identfier that might be a type.  The point is assumed to be at
-  ;; the beginning of a token.
+  ;; Move forward over a type spec i at the beginning of one, stopping
+  ;; at the next following token.  Return t if it is a known type, nil
+  ;; if it isn't (the point isn't moved then), 'prefix if it is a
+  ;; known prefix of a type (according to `c-known-type-key'), 'found
+  ;; if it's a type that matches one in `c-found-types', or 'maybe if
+  ;; it's an identfier that might be a type.  The point is assumed to
+  ;; be at the beginning of a token.
   ;;
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
   ;; "enum {a, b, c} foo".
-  (let ((start (point)) pos res res2 id-start id-end)
+  (let ((start (point)) pos res res2 id-start id-end id-range)
 
     ;; Skip leading type modifiers.  If any are found we know it's a
     ;; prefix of a type.
@@ -3582,25 +3594,34 @@ brace."
 	      ;; In many languages the name can be used without the
 	      ;; prefix, so we add it to `c-found-types'.
 	      (c-add-type pos (point))
-	      (when c-record-type-identifiers
-		(c-record-type-id (save-excursion
-				    (c-simple-skip-symbol-backward)
-				    (point))
-				  (point))))
+	      (when (and c-record-type-identifiers
+			 c-last-identifier-range)
+		(setq c-record-type-identifiers
+		      (cons c-last-identifier-range
+			    c-record-type-identifiers))))
 	    (setq res t))
 	;; Invalid syntax.
 	(goto-char start)
 	(setq res nil)))
 
      ((progn
+	(setq pos nil)
 	(if (looking-at c-identifier-start)
 	    (save-excursion
 	      (setq id-start (point)
-		    res2 (c-forward-name)
-		    id-end (point))))
+		    res2 (c-forward-name))
+	      (when res2
+		(setq id-end (point)
+		      id-range c-last-identifier-range))))
 	(and (c-with-syntax-table c-identifier-syntax-table
 	       (looking-at c-known-type-key))
-	     (or (not id-end) (>= (match-end 1) id-end))))
+	     (or (not id-end)
+		 (>= (save-excursion
+		       (save-match-data
+			 (goto-char (match-end 1))
+			 (c-forward-syntactic-ws)
+			 (setq pos (point))))
+		     id-end))))
       ;; Looking at a known type identifier.  We've checked for a name
       ;; first so that we don't go here if the known type match only
       ;; is a prefix of another name.
@@ -3612,10 +3633,10 @@ brace."
 	       (save-match-data
 		 (looking-at c-opt-type-component-key)))
 	  ;; There might be more keywords for the type.
-	  (let (pos)
+	  (let (safe-pos)
 	    (c-forward-keyword-clause)
 	    (while (progn
-		     (setq pos (point))
+		     (setq safe-pos (point))
 		     (looking-at c-opt-type-component-key))
 	      (when c-record-type-identifiers
 		(c-record-type-id (match-beginning 1) (match-end 1)))
@@ -3626,12 +3647,14 @@ brace."
 		    (c-record-type-id (match-beginning 1) (match-end 1)))
 		  (c-forward-keyword-clause)
 		  (setq res t))
-	      (goto-char pos)
+	      (goto-char safe-pos)
 	      (setq res 'prefix)))
 	(unless (save-match-data (c-forward-keyword-clause))
-	  (goto-char (match-end 1)))
-	(setq res t))
-      (c-backward-syntactic-ws))
+	  (if pos
+	      (goto-char pos)
+	    (goto-char (match-end 1))
+	    (c-forward-syntactic-ws)))
+	(setq res t)))
 
      (res2
       (cond ((eq res2 t)
@@ -3640,11 +3663,9 @@ brace."
 	     (if (or res c-promote-possible-types)
 		 (progn
 		   (c-add-type id-start id-end)
-		   (when c-record-type-identifiers
-		     (c-record-type-id (save-excursion
-					 (c-simple-skip-symbol-backward)
-					 (point))
-				       id-end))
+		   (when (and c-record-type-identifiers id-range)
+		     (setq c-record-type-identifiers
+			   (cons id-range c-record-type-identifiers)))
 		   (unless res
 		     (setq res 'found)))
 	       (setq res (if (c-check-type id-start id-end)
@@ -3666,32 +3687,25 @@ brace."
       ;; Skip trailing type modifiers.  If any are found we know it's
       ;; a type.
       (when c-opt-type-modifier-key
-	(while (progn
-		 (setq pos (point))
-		 (c-forward-syntactic-ws)
-		 (looking-at c-opt-type-modifier-key))
+	(while (looking-at c-opt-type-modifier-key)
 	  (goto-char (match-end 1))
-	  (setq res t))
-	(goto-char pos))
+	  (c-forward-syntactic-ws)
+	  (setq res t)))
 
       ;; Step over any type suffix operator.  Do not let the existence
       ;; of these alter the classification of the found type, since
       ;; these operators typically are allowed in normal expressions
       ;; too.
       (when c-opt-type-suffix-key
-	(while (progn
-		 (setq pos (point))
-		 (c-forward-syntactic-ws)
-		 (looking-at c-opt-type-suffix-key))
-	  (goto-char (match-end 1)))
-	(goto-char pos))
+	(while (looking-at c-opt-type-suffix-key)
+	  (goto-char (match-end 1))
+	  (c-forward-syntactic-ws)))
 
       (when c-opt-type-concat-key
 	;; Look for a trailing operator that concatenate the type with
 	;; a following one, and if so step past that one through a
 	;; recursive call.
 	(setq pos (point))
-	(c-forward-syntactic-ws)
 	(if (and (looking-at c-opt-type-concat-key)
 		 (let ((c-promote-possible-types
 			(or (eq res t) c-promote-possible-types)))
@@ -3704,12 +3718,9 @@ brace."
 	    (cond ((eq res t))
 		  ((eq res2 t)
 		   (c-add-type id-start id-end)
-		   (when c-record-type-identifiers
-		     (c-record-type-id (save-excursion
-					 (goto-char id-end)
-					 (c-simple-skip-symbol-backward)
-					 (point))
-				       id-end))
+		   (when (and c-record-type-identifiers id-range)
+		     (setq c-record-type-identifiers
+			   (cons id-range c-record-type-identifiers)))
 		   (setq res t))
 		  ((eq res 'found))
 		  ((eq res2 'found)
@@ -3718,12 +3729,9 @@ brace."
 		   (setq res 'maybe)))
 	  (goto-char pos)))
 
-      (when (and c-record-found-types (eq res 'found))
-	(c-record-found-type (save-excursion
-			       (goto-char id-end)
-			       (c-simple-skip-symbol-backward)
-			       (point))
-			     id-end))
+      (when (and c-record-found-types (eq res 'found) id-range)
+	(setq c-record-found-types
+	      (cons id-range c-record-found-types)))
 
       res)))
 

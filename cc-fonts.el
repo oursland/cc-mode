@@ -601,6 +601,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ((pos (point)) next-pos id-start id-end
        paren-depth
        id-face got-init
+       c-last-identifier-range
        ;; The font-lock package in Emacs is known to clobber
        ;; `parse-sexp-lookup-properties' (when it exists).
        (parse-sexp-lookup-properties
@@ -670,11 +671,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  (let ((c-promote-possible-types t))
 	    (goto-char id-start)
 	    (c-forward-type))
-	;; Fontify the last symbol in the identifier.
-	(goto-char id-end)
-	(when (and (c-simple-skip-symbol-backward)
-		   (not (get-text-property (point) 'face)))
-	  (c-put-font-lock-face (point) id-end id-face)))
+	;; Fontify the last symbol in the identifier if it isn't fontified
+	;; already.  The check is necessary only in certain cases where this
+	;; function is used "sloppily", e.g. in `c-simple-decl-matchers'.
+	(when (and c-last-identifier-range
+		   (not (get-text-property (car c-last-identifier-range)
+					   'face)))
+	  (c-put-font-lock-face (car c-last-identifier-range)
+				(cdr c-last-identifier-range)
+				id-face)))
 
       (goto-char next-pos)
       (setq pos nil)
@@ -771,7 +776,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; Set to the result of `c-forward-type'.
 	  at-type
 	  ;; These record the start and end of the type or possible type found
-	  ;; by `c-forward-type'.
+	  ;; by `c-forward-type'.  `type-start' is at the start of the first
+	  ;; type token, and `type-end' is at the start of the first token
+	  ;; after the type.
 	  type-start type-end
 	  ;; These store `at-type', `type-start' and `type-end' of the
 	  ;; identifier before the one in those variables.  The previous
@@ -931,9 +938,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			     (when (looking-at c-typeless-decl-key)
 			       (setq maybe-typeless t)))
 			   (c-forward-keyword-clause)
-			   (setq start-pos (point)))))
-
-	     (c-forward-syntactic-ws))
+			   (setq start-pos (point))))))
 
 	   (cond ((eq at-type 'prefix)
 		  ;; A prefix type is itself a known type when it's not
@@ -965,7 +970,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	     (if (catch 'at-decl-or-cast
 		   (goto-char type-end)
-		   (c-forward-syntactic-ws)
 		   (let ((start (point)) (paren-depth 0) pos
 			 ;; True if there's a non-open-paren match of
 			 ;; `c-type-decl-prefix-key'.
@@ -1019,10 +1023,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		     (setq got-parens (> paren-depth 0))
 
 		     ;; Skip over an identifier.
-		     (when (or got-identifier
-			       (and (looking-at c-identifier-start)
-				    (setq got-identifier (c-forward-name))))
-		       (c-forward-syntactic-ws))
+		     (or got-identifier
+			 (and (looking-at c-identifier-start)
+			      (setq got-identifier (c-forward-name))))
 
 		     ;; Skip over type decl suffix operators.
 		     (while (if (looking-at c-type-decl-suffix-key)
@@ -1498,8 +1501,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 			  (c-forward-syntactic-ws)
 			  ,(if (c-major-mode-is 'c++-mode)
 			       `(when (and (c-forward-type)
-					   (progn (c-forward-syntactic-ws)
-						  (eq (char-after) ?=)))
+					   (eq (char-after) ?=))
 				  ;; In C++ we additionally check for a "class
 				  ;; X = Y" construct which is used in
 				  ;; templates, to fontify Y as a type.
@@ -1661,10 +1663,9 @@ higher."
 		      "\\)\\>"
 		      "\\s *"
 		      "\\("
-		      ;; Match a (simple) qualified identifier,
-		      ;; i.e. we don't bother with `c-forward-name'.
-		      ;; We highlight the last symbol in it as a
-		      ;; label.
+		      ;; Match a (simple) qualified identifier, i.e. we don't
+		      ;; bother with `c-forward-name'.  We highlight the last
+		      ;; symbol in it as a label.
 		      "\\(" (c-lang-const ; identifier-offset
 			     c-identifier-key) "\\)"
 		      "\\|"
@@ -1859,7 +1860,6 @@ need for `c-font-lock-extra-types'.")
 
 		(goto-char expr1-pos)
 		(when (setq expr1-res (c-forward-type))
-		  (c-forward-syntactic-ws)
 		  (unless (looking-at
 			   (cc-eval-when-compile
 			     (concat (c-lang-const c-symbol-start c++)
@@ -1870,7 +1870,6 @@ need for `c-font-lock-extra-types'.")
 
 		(goto-char expr2-pos)
 		(when (setq expr2-res (c-forward-type))
-		  (c-forward-syntactic-ws)
 		  (unless (looking-at
 			   (cc-eval-when-compile
 			     (concat (c-lang-const c-symbol-start c++)
@@ -1962,13 +1961,11 @@ need for `c++-font-lock-extra-types'.")
       (unless (c-forward-type) (throw 'break nil))
 
       ;; Look for ": superclass-name" or "( category-name )".
-      (c-forward-syntactic-ws)
       (when (looking-at "[:\(]")
 	(setq start-char (char-after))
 	(forward-char)
 	(c-forward-syntactic-ws)
 	(unless (c-forward-type) (throw 'break nil))
-	(c-forward-syntactic-ws)
 	(when (eq start-char ?\()
 	  (unless (eq (char-after) ?\)) (throw 'break nil))
 	  (forward-char)
