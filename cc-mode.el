@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.245 $
-;; Last Modified:   $Date: 1995-11-17 20:05:55 $
+;; Version:         $Revision: 4.246 $
+;; Last Modified:   $Date: 1995-11-17 22:01:36 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-11-17 20:05:55 $|$Revision: 4.245 $|
+;; |$Date: 1995-11-17 22:01:36 $|$Revision: 4.246 $|
 
 ;;; Code:
 
@@ -2361,7 +2361,8 @@ search."
 				   (and lim
 					(<= lim (point))
 					(not (c-in-literal lim))
-					(looking-at c-conditional-key)))))
+;					(looking-at c-conditional-key)))))
+					t))))
 		     ;; did we find a conditional?
 		     (if (not foundp)
 			 (goto-char here))
@@ -3966,7 +3967,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		;; after the next release, I may call a recognition
 		;; hook like so: (run-hooks 'c-recognize-hook), but I
 		;; dunno.
-		(c-add-syntax 'statement-cont placeholder)
+		(goto-char placeholder)
+		(c-add-syntax 'statement-cont (c-point 'boi))
 		(c-add-syntax 'block-open))
 	       ))
 	     ;; CASE 9C: iostream insertion or extraction operator
@@ -4549,7 +4551,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.245 $"
+(defconst c-version "$Revision: 4.246 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
