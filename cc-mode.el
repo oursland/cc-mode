@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.16 $
-;; Last Modified:   $Date: 1993-09-28 00:49:03 $
+;; Version:         $Revision: 3.17 $
+;; Last Modified:   $Date: 1993-09-28 14:10:43 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-28 00:49:03 $|$Revision: 3.16 $|
+;; |$Date: 1993-09-28 14:10:43 $|$Revision: 3.17 $|
 
 ;;; Code:
 
@@ -461,25 +461,31 @@ this variable to nil defeats backscan limits.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defconst c++-access-key "\\<\\(public\\|protected\\|private\\)\\>:"
-  "Regexp which describes access specification keywords.")
+  "Regexp describing access specification keywords.")
 (defconst c++-class-key
   (concat
    "\\(\\(extern\\|typedef\\)\\s +\\)?"
    "\\(template\\s *<[^>]*>\\s *\\)?"
    "\\<\\(class\\|struct\\|union\\)\\>")
-  "Regexp which describes a class declaration, including templates.")
+  "Regexp describing a class declaration, including templates.")
 (defconst c++-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
 	  c++-class-key
 	  "[ \t]+\\(\\(\\w\\|_\\)+[ \t]*:[ \t]*\\)?")
-  "Regexp which describes a class inheritance declaration.")
+  "Regexp describing a class inheritance declaration.")
+(defconst c++-baseclass-key
+  (concat
+   ":?[ \t]*\\(virtual[ \t]+\\)?"
+   "\\(\\(public\\|private\\|protected\\)[ \t]+\\)?"
+   "\\(\\w\\|_\\)+")
+  "Regexp describing base classes in a derived class definition.")
 
 
 ;; ======================================================================
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.16 $
+  "Major mode for editing C++ code.  $Revision: 3.17 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -718,7 +724,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.16 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.17 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -2194,19 +2200,15 @@ BOD is the beginning of the C++ definition."
 	    ;; inheritance continuation line, but not a K&R C arg decl
 	    ((and (not (eq major-mode 'c++-c-mode))
 		  (or (looking-at c++-inher-key)
-		      (looking-at
-		       (concat ":?[ \t]*\\(public\\|private\\|protected\\)?"
-			       "\\(\\w\\|_\\)+"))))
+		      (looking-at c++-baseclass-key)))
 	     (if (= char-before-ip ?,)
 		 (let ((pnt (match-end 0))
 		       (boi (c++-point 'boi)))
 		   ;; check to see if inheritance is on same line as
 		   ;; class decl, or on next line
-		   ;; TBD: HERE'S A BUG
 		   (if (/= (char-after boi) ?:)
 		       (if (looking-at c++-inher-key)
-			   (goto-char pnt)
-			 (goto-char pnt))
+			   (goto-char pnt))
 		     (goto-char boi)
 		     (forward-char 1)
 		     (skip-chars-forward " \t"))
@@ -2664,7 +2666,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.16 $"
+(defconst c++-version "$Revision: 3.17 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
