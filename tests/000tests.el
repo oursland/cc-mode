@@ -181,156 +181,6 @@
 (c-add-style "TESTSTYLE" TESTSTYLE)
 (c-add-style "JAVATESTSTYLE" JAVATESTSTYLE)
 
-(defconst list-of-tests
-  '("arglist-1.cc"
-    "arglist-2.cc"
-    "arglist-3.cc"
-    "arglist-4.cc"
-    "arglist-5.cc"
-    "arglist-6.cc"
-    "arglist-7.java"
-    "arglist-8.java"
-    "arglist-9.pike"
-    "arglist-10.pike"
-    "arglist-11.pike"
-    "bod-1.cc"
-    "bos-1.cc"
-    "bos-2.cc"
-    "bos-3.cc"
-    "bos-4.c"
-    "bos-5.pike"
-    "bracelist-1.java"
-    "bracelist-2.pike"
-    "bracelist-3.cc"
-    "bracelist-4.cc"
-    "bracelist-5.cc"
-    "bracelist-6.pike"
-    "bracelist-7.cc"
-    "bracelist-8.pike"
-    "bracelist-9.c"
-    "bracelist-10.java"
-    "bracelist-11.cc"
-    "bracelist-12.cc"
-    "bracelist-13.c"
-    "bracelist-14.java"
-    "bracelist-15.cc"
-    "class-1.cc"
-    "class-2.cc"
-    "class-3.cc"
-    "class-4.cc"
-    "class-5.cc"
-    "class-6.c"
-    "class-7.cc"
-    "class-8.cc"
-    "class-9.cc"
-    "class-10.java"
-    "class-11.cc"
-    "class-12.java"
-    "class-13.cc"
-    "class-14.pike"
-    "class-15.java"
-    "class-16.pike"
-    "comments.c"
-    "comments-1.java"
-    "comments-2.c"
-    "comments-3.cc"
-    "cond-1.c"
-    "decls-1.java"
-    "decls-2.java"
-    "decls-3.java"
-    "decls-4.idl"
-    "decls-5.pike"
-    "enum-1.cc"
-    "enum-2.c"
-    "enum-3.c"
-    "except-1.cc"
-    "except-2.cc"
-    "except-3.cc"
-    "except-4.java"
-    "except-5.java"
-    "externs-1.cc"
-    "externs-2.cc"
-    "forloop.cc"
-    "funcs-1.cc"
-    "if-1.cc"
-    "if-2.cc"
-    "if-3.cc"
-    "if-4.cc"
-    "if-5.cc"
-    "if-6.c"
-    "inexprstat-1.pike"
-    "inexprstat-2.cc"
-    "inher-1.cc"
-    "inher-2.cc"
-    "inher-3.cc"
-    "inher-4.cc"
-    "interface-1.m"
-    "ivar.java"
-    "label-1.c"
-    "label-2.c"
-    "lambda-1.pike"
-    "macro-1.c"
-    "member-1.cc"
-    "member-2.cc"
-    "member-3.cc"
-    "member-4.cc"
-    "member-5.cc"
-    "member-6.cc"
-    "member-7.cc"
-    "member-8.cc"
-    "methods-1.java"
-    "methods-2.m"
-    "namespace-1.cc"
-    "namespace-2.cc"
-    "namespace-3.cc"
-    "nested-1.cc"
-    "nested-2.c"
-    "nometh.m"
-    "statement-1.cc"
-    "statement-2.cc"
-    "statement-3.cc"
-    "statement-4.cc"
-    "statement-5.cc"
-    "statement-6.cc"
-    "statement-7.c"
-    "statement-8.c"
-    "statement-9.c"
-    "statement-10.c"
-    "statement-11.java"
-    "statement-12.pike"
-    "statement-13.pike"
-    "stream-1.cc"
-    "stream-2.cc"
-    "struct-1.c"
-    "struct-2.cc"
-    "struct-3.cc"
-    "switch-1.cc"
-    "switch-2.cc"
-    "switch-3.cc"
-    "switch-4.cc"
-    "switch-5.cc"
-    "switch-6.c"
-    "switch-7.c"
-    "switch-8.java"
-    "switch-9.c"
-    "synch.java"
-    "templates-1.cc"
-    "templates-2.cc"
-    "templates-3.cc"
-    "templates-4.cc"
-    "templates-5.cc"
-    "templates-6.cc"
-    "templates-7.cc"
-    "templates-8.cc"
-    "top-1.cc"
-    "top-2.cc"
-    "top-3.cc"
-    "typedef-1.c"
-    "typedef-2.pike"
-    "unbal.c"
-    "union.cc"
-    ))
-
 (defvar finished-tests nil)
 
 (defun make-test-buffers (filename)
@@ -367,9 +217,15 @@
 
 (defun do-one-test (filename)
   (interactive "fFile to test: ")
-  (if (member filename finished-tests)
+  (if (or (when (member filename finished-tests)
+	    (message "Already tested %s" filename)
+	    t)
+	  (when (not (file-exists-p
+		      (concat (file-name-sans-extension filename) ".res")))
+	    (message "Skipping %s - no .res file" filename)
+	    t))
       nil
-    (message "Testing %s..." filename)
+    (message "Testing %s" filename)
     (let* ((baw:c-testing-p t)
 	   (buflist (make-test-buffers filename))
 	   (testbuf (car buflist))
@@ -457,7 +313,6 @@
 	    (pop-to-buffer testbuf)
 	    (error "Indentation regression found in file: %s!" filename))))
     (setq finished-tests (cons filename finished-tests))
-;    (message "Testing %s... done." filename)
     ))
 
 (defun do-all-tests (&optional resetp)
@@ -477,7 +332,8 @@
 			       (message "%s" (error-message-string err))
 			       (setq broken-files (cons test broken-files)))
 			      )))
-		list-of-tests)
+		(directory-files default-directory
+				 nil "\\.\\(c\\|cc\\|java\\|pike\\|idl\\|m\\)\\'"))
       (fset 'c-echo-parsing-error old-c-echo-parsing-error))
     (if (zerop (length broken-files))
 	(message "All tests passed!")
