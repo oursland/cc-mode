@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.65 $
-;; Last Modified:   $Date: 1994-08-26 14:59:27 $
+;; Version:         $Revision: 4.66 $
+;; Last Modified:   $Date: 1994-08-26 17:42:24 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-26 14:59:27 $|$Revision: 4.65 $|
+;; |$Date: 1994-08-26 17:42:24 $|$Revision: 4.66 $|
 
 ;;; Code:
 
@@ -950,7 +950,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.65 $
+cc-mode Revision: $Revision: 4.66 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -989,7 +989,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.65 $
+cc-mode Revision: $Revision: 4.66 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1026,7 +1026,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.65 $
+cc-mode Revision: $Revision: 4.66 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -3148,6 +3148,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ))
 	   ;; CASE 5E: we are looking at a access specifier
 	   ((and inclass-p
+		 c-access-key
 		 (looking-at c-access-key))
 	    (c-add-syntax 'access-label (c-point 'bonl))
 	    (c-add-syntax 'inclass (aref inclass-p 0)))
@@ -3201,6 +3202,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ((progn
 	      (c-backward-syntactic-ws lim)
 	      (while (and inclass-p
+			  c-access-key
 			  (= (preceding-char) ?:)
 			  (not (and (eq major-mode 'objc-mode)
 				    (bobp)))
@@ -3996,7 +3998,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.65 $"
+(defconst c-version "$Revision: 4.66 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
