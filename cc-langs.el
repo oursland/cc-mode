@@ -775,7 +775,8 @@ operators."
 
 (c-lang-defconst c-nonsymbol-token-regexp
   ;; Regexp matching all tokens in the punctuation and parenthesis
-  ;; syntax classes.
+  ;; syntax classes.  Note that this also matches ".", which can start
+  ;; a float.
   t (c-make-keywords-re nil
       (c-with-syntax-table (c-lang-const c-mode-syntax-table)
 	(mapcan (lambda (op)
@@ -1842,13 +1843,15 @@ Note that Java specific rules are currently applied to tell this from
 	 (c-lang-const c-symbol-start)
 
 	 "\\|"
-	 ;; Handle the chars that can start integer and floating point
-	 ;; constants, and the nonambiguous operators from
-	 ;; `prefix-ops'.
+	 ;; The chars that can start integer and floating point
+	 ;; constants.
+	 "\\.?[0-9]"
+
+	 "\\|"
+	 ;; The nonambiguous operators from `prefix-ops'.
 	 (c-make-keywords-re nil
-	   (append '("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" ".")
-		   (set-difference nonkeyword-prefix-ops in-or-postfix-ops
-				   :test 'string-equal)))
+	   (set-difference nonkeyword-prefix-ops in-or-postfix-ops
+			   :test 'string-equal))
 
 	 "\\|"
 	 ;; Match string and character literals.
