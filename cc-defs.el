@@ -91,19 +91,6 @@ Infodock (based on XEmacs) has an additional symbol on this list:
     (cond
      ((eq position 'bol)  (beginning-of-line))
      ((eq position 'eol)  (end-of-line))
-     ((eq position 'bod)
-      ;; NOTE: This should be the only explicit use of
-      ;; beginning-of-defun in CC Mode.  Eventually something better
-      ;; than b-o-d will be available and this should be the only
-      ;; place the code needs to change.  Everything else should use
-      ;; (goto-char (c-point 'bod))
-      (beginning-of-defun)
-      ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at
-      ;; the open brace.
-      (and defun-prompt-regexp
-	   (looking-at defun-prompt-regexp)
-	   (goto-char (match-end 0)))
-      )
      ((eq position 'boi)  (back-to-indentation))
      ((eq position 'bonl) (forward-line 1))
      ((eq position 'bopl) (forward-line -1))
@@ -113,6 +100,42 @@ Infodock (based on XEmacs) has an additional symbol on this list:
      ((eq position 'ionl)
       (forward-line 1)
       (back-to-indentation))
+     ((eq position 'bod)
+      (if (and (fboundp 'buffer-syntactic-context-depth)
+	       c-enable-xemacs-performance-kludge-p)
+	  ;; XEmacs only.  This can improve the performance of
+	  ;; c-parse-state to between 3 and 60 times faster when
+	  ;; braces are hung.  It can cause c-parse-state to be
+	  ;; slightly slower when braces are not hung, but general
+	  ;; editing appears to be still about as fast.
+	  (let (pos)
+	    (while (not pos)
+	      (setq pos (scan-lists (point) -1
+				    (buffer-syntactic-context-depth)
+				    nil t))
+	      (cond
+	       ((bobp) (setq pos (point-min)))
+	       ((not pos) (skip-chars-backward "^{"))
+	       ((= pos 0))
+	       ((not (eq (char-after pos) ?{))
+		(goto-char pos)
+		(setq pos nil))
+	       ))
+	    (goto-char pos))
+	;; Emacs, which doesn't have buffer-syntactic-context-depth
+	;;
+	;; NOTE: This should be the only explicit use of
+	;; beginning-of-defun in CC Mode.  Eventually something better
+	;; than b-o-d will be available and this should be the only
+	;; place the code needs to change.  Everything else should use
+	;; (goto-char (c-point 'bod))
+	(beginning-of-defun)
+	;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at
+	;; the open brace.
+	(and defun-prompt-regexp
+	     (looking-at defun-prompt-regexp)
+	     (goto-char (match-end 0)))
+	))
      (t (error "unknown buffer position requested: %s" position))
      )
     (prog1
