@@ -1,3 +1,72 @@
+Fri Jun 20 19:55:55 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Public Release 5.10
+
+	* cc-mode.texi:
+	Describe changes to support separation of Backspace and Delete in
+	XEmacs 20.
+
+	* cc-vars.el (c-delete-function): renamed to c-backspace-function.
+
+	(c-backspace-function): New variable.
+
+	* cc-cmds.el (c-electric-backspace, c-electric-delete):
+	Old X/Emacs 19 behavior
+	typically bound to the backspace keysym is renamed to
+	c-electric-backspace (which consults c-backspace-function).
+	c-electric-delete (c-delete-function) is now bound to the delete
+	keysym, which in XEmacs 20 is separated.
+
+	* cc-langs.el (c-mode-base-map):
+	No longer bind "\177" as a way to spell [delete]
+	and [backspace].  Bind these two keys separate to support XEmacs 20's
+	separation of forward deletion and backward deleteion.  This means
+	that in Emacs 19 and XEmacs 19, the backspace keysym is now bound to
+	c-electric-backspace, but the functionality is the same (although the
+	variable this consults is now called c-backspace-function).
+
+	* cc-engine.el (c-show-syntactic-information): Minor optimization.
+
+Tue Jun 17 03:21:50 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-align.el (c-lineup-multi-inher): Fixed small order dependency
+
+	* cc-align.el (c-langelem-col):
+	New defsubst.  Convert all appropriate calls
+	calculating the column of the langelem's relpos to use this function.
+
+	* cc-align.el (c-lineup-java-throws): New function
+
+	* cc-styles.el (c-style-alist):
+	"java" style's func-decl-cont is associated with
+	c-lineup-java-throws so long throws lines line up exceptions.
+
+	* cc-styles.el (c-offsets-alist):
+	Substituted RMS's description of func-decl-cont,
+	with a minor change.
+
+	* cc-mode.texi:
+	Substituted RMS's description of func-decl-cont, with a minor change.
+
+Thu Jun 12 13:57:35 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-styles-alist):
+	Changed topmost-intro-cont offset to + in Java
+	style.  This is closer to what people expect for default instance
+	variable initializations.
+
+Wed Jun 11 18:20:59 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi: LFD => C-j
+
+	RMS> I've decided to mostly stop using LFD as the name of an input
+	RMS> character because PCs do not have a linefeed key.  So please
+	RMS> change the cc-mode manual to use @kbd{C-j} rather than @key{LFD}.
+
+Mon Jun  9 15:20:10 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-offsets-alist): A few minor changes to the docstring.
+
 Mon Jun  2 23:37:51 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Beta Release 5.09
