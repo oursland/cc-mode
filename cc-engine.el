@@ -4760,6 +4760,10 @@ brace."
 ;; implements the main decision tree for determining the syntactic
 ;; analysis of the current line of code.
 
+;; Dynamically bound to t when `c-guess-basic-syntax' is called during
+;; auto newline analysis.
+(defvar c-auto-newline-analysis nil)
+
 (defsubst c-add-syntax (symbol &rest args)
   ;; A simple function to prepend a new syntax element to
   ;; `c-syntactic-context'.  Using `setq' on it is unsafe since it
@@ -5020,12 +5024,19 @@ brace."
 	      (c-syntactic-re-search-forward "=\\([^=]\\|$\\)"
 					     indent-point t t t)))
 	;; The most semantically accurate symbol here is
-	;; brace-list-open, but we report it simply as a statement-cont.
-	;; The reason is that one normally adjusts brace-list-open for
-	;; brace lists as top-level constructs, and brace lists inside
-	;; statements is a completely different context.
+	;; brace-list-open, but we normally report it simply as a
+	;; statement-cont.  The reason is that one normally adjusts
+	;; brace-list-open for brace lists as top-level constructs,
+	;; and brace lists inside statements is a completely different
+	;; context.  C.f. case 5A.3.
 	(c-beginning-of-statement-1 containing-sexp)
-	(c-add-stmt-syntax 'statement-cont nil nil nil
+	(c-add-stmt-syntax (if c-auto-newline-analysis
+			       ;; Turn off the dwim above when we're
+			       ;; analyzing the nature of the brace
+			       ;; for the auto newline feature.
+			       'brace-list-open
+			     'statement-cont)
+			   nil nil nil
 			   containing-sexp paren-state))
 
        ;; CASE B.3: The body of a function declared inside a normal
@@ -5425,7 +5436,8 @@ brace."
 				       (not (memq (char-after) '(?\; ?\()))))
 			   (not (memq (char-after) '(?\; ?\()))
 			   ))))
-	      (if (and (c-major-mode-is 'java-mode)
+	      (if (and (not c-auto-newline-analysis)
+		       (c-major-mode-is 'java-mode)
 		       (eq tmpsymbol 'topmost-intro-cont))
 		  ;; We're in Java and have found that the open brace
 		  ;; belongs to a "new Foo[]" initialization list,
@@ -5434,7 +5446,7 @@ brace."
 		  ;; therefore treat it as any topmost continuation
 		  ;; even though the semantically correct symbol still
 		  ;; is brace-list-open, on the same grounds as in
-		  ;; case 10B.2.
+		  ;; case B.2.
 		  (progn
 		    (c-beginning-of-statement-1 lim)
 		    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))

@@ -507,7 +507,8 @@ This function does various newline cleanups based on the value of
 	      (if (eq last-command-char ?{)
 		  (setq c-state-cache (cons (point) c-state-cache)))
 	      (self-insert-command (prefix-numeric-value arg))
-	      (c-save-buffer-state ((c-syntactic-indentation-in-macros t))
+	      (c-save-buffer-state ((c-syntactic-indentation-in-macros t)
+				    (c-auto-newline-analysis t))
 		;; Turn on syntactic macro analysis to help with auto
 		;; newlines only.
 		(setq syntax (c-guess-basic-syntax)))
@@ -566,7 +567,8 @@ This function does various newline cleanups based on the value of
 		    ;; the current line.
 		    (if (/= (point) here)
 			(c-save-buffer-state
-			    ((c-syntactic-indentation-in-macros t))
+			    ((c-syntactic-indentation-in-macros t)
+			     (c-auto-newline-analysis t))
 			  ;; Turn on syntactic macro analysis to help
 			  ;; with auto newlines only.
 			  (setq syntax (c-guess-basic-syntax))))))))
@@ -586,7 +588,8 @@ This function does various newline cleanups based on the value of
 	(if (not (memq 'before newlines))
 	    ;; since we're hanging the brace, we need to recalculate
 	    ;; syntax.
-	    (c-save-buffer-state ((c-syntactic-indentation-in-macros t))
+	    (c-save-buffer-state ((c-syntactic-indentation-in-macros t)
+				  (c-auto-newline-analysis t))
 	      ;; Turn on syntactic macro analysis to help with auto
 	      ;; newlines only.
 	      (setq syntax (c-guess-basic-syntax))))
@@ -840,6 +843,7 @@ value of `c-cleanup-list'."
 	  (indent-according-to-mode))
       (c-save-buffer-state
 	    ((c-syntactic-indentation-in-macros t)
+	     (c-auto-newline-analysis t)
 	     ;; Turn on syntactic macro analysis to help with auto newlines
 	     ;; only.
 	     (syntax (c-guess-basic-syntax))
