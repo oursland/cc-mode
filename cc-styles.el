@@ -66,11 +66,10 @@
 			 (arglist-intro . c-lineup-arglist-intro-after-paren)
 			 (arglist-close . c-lineup-arglist)
 			 (inline-open . 0)
-			 (brace-list-open . +)
-			 ))
+			 (brace-list-open . +)))
      (c-special-indent-hook . c-gnu-impose-minimum)
-     (c-block-comment-prefix . "")
-     )
+     (c-block-comment-prefix . ""))
+
     ("k&r"
      (c-basic-offset . 5)
      (c-comment-only-line-offset . 0)
@@ -79,9 +78,8 @@
 			 (substatement-open . 0)
 			 (substatement-label . 0)
 			 (label . 0)
-			 (statement-cont . +)
-			 ))
-     )
+			 (statement-cont . +))))
+
     ("bsd"
      (c-basic-offset . 8)
      (c-comment-only-line-offset . 0)
@@ -92,9 +90,8 @@
 			 (label . 0)
 			 (statement-cont . +)
 			 (inline-open . 0)
-			 (inexpr-class . 0)
-			 ))
-     )
+			 (inexpr-class . 0))))
+
     ("stroustrup"
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
@@ -102,9 +99,8 @@
 			 (substatement-open . 0)
 			 (substatement-label . 0)
 			 (label . 0)
-			 (statement-cont . +)
-			 ))
-     )
+			 (statement-cont . +))))
+
     ("whitesmith"
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
@@ -156,9 +152,8 @@
 			 (innamespace . c-lineup-whitesmith-in-block)
 			 (inmodule . c-lineup-whitesmith-in-block)
 			 (incomposition . c-lineup-whitesmith-in-block)
-			 (inexpr-class . 0)
-			 ))
-     )
+			 (inexpr-class . 0))))
+
     ("ellemtel"
      (c-basic-offset . 3)
      (c-comment-only-line-offset . 0)
@@ -169,9 +164,8 @@
                          (case-label           . +)
                          (access-label         . -)
                          (inclass              . ++)
-                         (inline-open          . 0)
-                         ))
-     )
+			 (inline-open          . 0))))
+
     ("linux"
      (c-basic-offset  . 8)
      (c-comment-only-line-offset . 0)
@@ -185,9 +179,8 @@
 			 (substatement-open     . 0)
 			 (substatement-label    . 0)
 			 (label                 . 0)
-			 (statement-cont        . +)
-			 ))
-     )
+			 (statement-cont        . +))))
+
     ("python"
      (indent-tabs-mode . t)
      (fill-column      . 78)
@@ -195,17 +188,15 @@
      (c-offsets-alist  . ((substatement-open . 0)
 			  (inextern-lang . 0)
 			  (arglist-intro . +)
-			  (knr-argdecl-intro . +)
-			  ))
+			  (knr-argdecl-intro . +)))
      (c-hanging-braces-alist . ((brace-list-open)
 				(brace-list-intro)
 				(brace-list-close)
 				(brace-entry-open)
 				(substatement-open after)
-				(block-close . c-snug-do-while)
-				))
-     (c-block-comment-prefix . "")
-     )
+				(block-close . c-snug-do-while)))
+     (c-block-comment-prefix . ""))
+
     ("java"
      (c-basic-offset . 4)
      (c-comment-only-line-offset . (0 . 0))
@@ -223,9 +214,8 @@
  			 (arglist-close  . c-lineup-arglist)
  			 (access-label   . 0)
 			 (inher-cont     . c-lineup-java-inher)
-			 (func-decl-cont . c-lineup-java-throws)
-			 ))
-     )
+			 (func-decl-cont . c-lineup-java-throws))))
+
     ;; awk style exists primarily for auto-newline settings.  Otherwise it's
     ;; pretty much like k&r.
     ("awk"
@@ -239,9 +229,8 @@
      (c-cleanup-list . nil)		; You might want one-liner-defun here.
      (c-offsets-alist . ((statement-block-intro . +)
 			 (substatement-open . 0)
-			 (statement-cont . +)
-			 ))
-     )
+			 (statement-cont . +))))
+
     )
   "Styles of indentation.
 Elements of this alist are of the form:
