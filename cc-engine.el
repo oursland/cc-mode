@@ -2893,7 +2893,8 @@ This function does not do any hidden buffer changes."
 	cfd-continue-pos
 	;; The position of the last "real" token we've stopped at.
 	;; This can be greater than `cfd-continue-pos' when we get
-	;; hits inside macros.
+	;; hits inside macros or at `c-decl-end' positions inside
+	;; comments.
 	(cfd-token-pos 0)
 	;; The end position of the last entered macro.
 	(cfd-macro-end 0))
@@ -2960,13 +2961,23 @@ This function does not do any hidden buffer changes."
       ;; values.  If we hit `c-find-decl-syntactic-pos' and
       ;; `c-find-decl-match-pos' is nil then we know there's no decl
       ;; prefix in the whitespace before `c-find-decl-syntactic-pos'
-      ;; and so we can continue the search from this point. If we
+      ;; and so we can continue the search from this point.  If we
       ;; didn't hit `c-find-decl-syntactic-pos' then we're now in the
       ;; right spot to begin searching anyway.
       (if (and (eq (point) c-find-decl-syntactic-pos)
 	       c-find-decl-match-pos)
-	  (setq cfd-match-pos c-find-decl-match-pos
-		cfd-continue-pos syntactic-pos)
+
+	  (progn
+	    ;; The match is always outside macros and comments so we
+	    ;; start at the next token.  The loop below will later go
+	    ;; back using `cfd-continue-pos' to fix declarations inside
+	    ;; the syntactic ws.
+	    (goto-char syntactic-pos)
+	    (c-forward-syntactic-ws)
+	    (setq cfd-match-pos c-find-decl-match-pos
+		  cfd-continue-pos syntactic-pos
+		  cfd-token-pos (point)))
+
 	(setq c-find-decl-syntactic-pos syntactic-pos)
 
 	(when (if (bobp)
@@ -2995,10 +3006,10 @@ This function does not do any hidden buffer changes."
 	    (c-beginning-of-current-token))
 	  (setq cfd-continue-pos (max cfd-continue-pos (point))))
 
-	;; If we got a match it's always outside macros so advance to
-	;; the next token and set `cfd-token-pos'.  The loop below
-	;; will later go back using `cfd-continue-pos' to fix macros
-	;; inside the syntactic ws.
+	;; If we got a match it's always outside macros and comments so
+	;; advance to the next token and set `cfd-token-pos'.  The loop
+	;; below will later go back using `cfd-continue-pos' to fix
+	;; declarations inside the syntactic ws.
 	(when (and (< cfd-match-pos cfd-limit) (< (point) syntactic-pos))
 	  (goto-char syntactic-pos)
 	  (c-forward-syntactic-ws)
@@ -3033,16 +3044,18 @@ This function does not do any hidden buffer changes."
 
 		      (progn
 			;; If `cfd-continue-pos' is less than `cfd-token-pos'
-			;; we're still searching macros in the syntactic
-			;; whitespace, so we need only to skip comments and
-			;; not macros, since they can't be nested.
+			;; we're still searching for declarations embedded in
+			;; the syntactic whitespace.  In that case we need
+			;; only to skip comments and not macros, since they
+			;; can't be nested, and that's already been done in
+			;; `c-find-decl-prefix-search'.
 			(when (> cfd-continue-pos cfd-token-pos)
 			  (c-forward-syntactic-ws)
 			  (setq cfd-token-pos (point)))
 
 			;; Continue if the following token fails the
 			;; CFD-DECL-RE and CFD-FACE-CHECKLIST checks.
-			(when (or (eobp)
+			(when (or (>= (point) cfd-limit)
 				  (not (looking-at cfd-decl-re))
 				  (and cfd-face-checklist
 				       (not (c-got-face-at
