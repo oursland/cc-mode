@@ -1375,7 +1375,6 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 
 
 ;; Figure out what features this Emacs has
-;;;###autoload
 (defconst c-emacs-features
   (let (list)
 
@@ -1410,7 +1409,7 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 	;; Find out if generic string delimiters work.
 	(c-safe
 	  (modify-syntax-entry ?x "|")
-	  (if  (string-match "\\s|" "x")
+	  (if (string-match "\\s|" "x")
 	      (setq list (cons 'gen-string-delim list))))
 
 	(set-buffer-modified-p nil))
