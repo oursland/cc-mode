@@ -1380,6 +1380,20 @@ you need both the type of a literal and its limits."
 ;; change of narrowing is likely to affect the parens that are visible
 ;; before the point.
 
+(defsubst c-invalidate-state-cache (pos)
+  ;; Invalidate all info on `c-state-cache' that applies to the buffer
+  ;; at POS or higher.  This is much like `c-whack-state-after', but
+  ;; it never changes a paren pair element into an open paren element.
+  ;; Doing that would mean that the new open paren wouldn't have the
+  ;; required preceding paren pair element.
+  (while (and c-state-cache
+	      (let ((elem (car c-state-cache)))
+		(if (consp elem)
+		    (or (<= pos (car elem))
+			(< pos (cdr elem)))
+		  (<= pos elem))))
+    (setq c-state-cache (cdr c-state-cache))))
+
 (defun c-parse-state ()
   ;; Finds and records all noteworthy parens between some good point
   ;; earlier in the file and point.  That good point is at least the
@@ -1404,11 +1418,7 @@ you need both the type of a literal and its limits."
 	   (in-macro-start (or c-macro-start (point)))
 	   parse-sexp-lookup-properties
 	   old-state last-pos pairs pos)
-
-      ;; Somewhat ugly use of c-check-state-cache to get rid of the
-      ;; part of the state cache that is after point.  Can't use
-      ;; c-whack-state-after for the same reasons as in that function.
-      (c-check-state-cache (point) nil nil)
+      (c-invalidate-state-cache (point))
 
       ;; If the minimum position has changed due to narrowing then we
       ;; have to fix the tail of `c-state-cache' accordingly.
@@ -1446,7 +1456,7 @@ you need both the type of a literal and its limits."
 	  (goto-char last-pos)
 	  (when (and (c-beginning-of-macro)
 		     (/= (point) in-macro-start))
-	    (c-check-state-cache (point) nil nil)
+	    (c-invalidate-state-cache (point))
 	    ;; Set last-pos again, just like above.
 	    (setq last-pos (and c-state-cache
 				(if (consp (car c-state-cache))
@@ -1604,18 +1614,7 @@ you need both the type of a literal and its limits."
   ;; Used on `after-change-functions' to adjust `c-state-cache'.
   ;; Prefer speed to finesse here, since there will be many more calls
   ;; to this function than times `c-state-cache' is used.
-  ;;
-  ;; This is much like `c-whack-state-after', but it never changes a
-  ;; paren pair element into an open paren element.  Doing that would
-  ;; mean that the new open paren wouldn't have the required preceding
-  ;; paren pair element.
-  (while (and c-state-cache
-	      (let ((elem (car c-state-cache)))
-		(if (consp elem)
-		    (or (<= beg (car elem))
-			(< beg (cdr elem)))
-		  (<= beg elem))))
-    (setq c-state-cache (cdr c-state-cache))))
+  (c-invalidate-state-cache beg))
 
 (defun c-whack-state-before (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies
@@ -3549,7 +3548,7 @@ in Pike) then the point for the preceding one is returned."
 	     ;; throw it away due to the narrowing that might be done
 	     ;; by the function above.  That means we must not do any
 	     ;; changes during the execution of this function, since
-	     ;; `c-check-state-cache' then would change this local
+	     ;; `c-invalidate-state-cache' then would change this local
 	     ;; variable and leave a bogus value in the global one.
 	     (c-state-cache (if inclass-p
 				(c-whack-state-before (point-min) paren-state)
