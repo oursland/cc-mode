@@ -475,26 +475,21 @@ stuff.  Used on level 1 and higher."
 (defun c-font-lock-invalid-string ()
   ;; Assuming the point is after the opening character of a string,
   ;; fontify that char with `font-lock-warning-face' if the string
-  ;; decidedly isn't terminated properly.  Assumes the string already
-  ;; is syntactically fontified.
-  (let ((end (1+ (c-point 'eol))))
-    (and (eq (get-text-property (point) 'face) 'font-lock-string-face)
-	 (= (next-single-property-change (point) 'face nil end) end)
-	 ;; We're at eol inside a string.  The first check above is
-	 ;; necessary in XEmacs since it doesn't fontify the string
-	 ;; delimiters themselves.  Thus an empty string won't have
-	 ;; the string face anywhere.
-	 (if (c-major-mode-is '(c-mode c++-mode objc-mode pike-mode))
-	     ;; There's no \ before the newline.
-	     (not (eq (char-before (1- end)) ?\\))
-	   ;; Quoted newlines aren't supported.
-	   t)
-	 (if (c-major-mode-is 'pike-mode)
-	     ;; There's no # before the string, so newlines
-	     ;; aren't allowed.
-	     (not (eq (char-before (1- (point))) ?#))
-	   t)
-	 (c-put-font-lock-face (1- (point)) (point) 'font-lock-warning-face))))
+  ;; decidedly isn't terminated properly.
+  (let ((start (1- (point))))
+    (save-excursion
+      (and (nth 3 (parse-partial-sexp start (c-point 'eol)))
+	   (if (c-major-mode-is '(c-mode c++-mode objc-mode pike-mode))
+	       ;; There's no \ before the newline.
+	       (not (eq (char-before (point)) ?\\))
+	     ;; Quoted newlines aren't supported.
+	     t)
+	   (if (c-major-mode-is 'pike-mode)
+	       ;; There's no # before the string, so newlines
+	       ;; aren't allowed.
+	       (not (eq (char-before start) ?#))
+	     t)
+	   (c-put-font-lock-face start (1+ start) 'font-lock-warning-face)))))
 
 (c-lang-defconst c-basic-matchers-before
   "Font lock matchers for basic keywords, labels, references and various
