@@ -1423,6 +1423,28 @@ brace."
 	     (if (>= (point) lim)
 		 (c-looking-at-inexpr-block lim))))))))
 
+(defun c-on-identifier ()
+  ;; Returns non-nil if we're on or directly after an identifier.
+  (if (or (memq (char-syntax (or (char-after) ? )) '(?w ?_))
+	  (memq (char-syntax (or (char-before) ? )) '(?w ?_)))
+      (save-excursion
+	(skip-syntax-backward "w_")
+	(not (looking-at c-keywords)))
+    (if (c-major-mode-is 'pike-mode)
+	;; Handle the `<operator> syntax in Pike.
+	(if (eq (char-after) ?\`)
+	    t
+	  (save-excursion
+	    (skip-chars-backward "!%&*+\\-/<=>^|~")
+	    (let ((pos (point)))
+	      (cond ((memq (char-before) '(?\) ?\]))
+		     (c-safe (backward-char 2)))
+		    ((memq (char-before) '(?\( ?\[))
+		     (c-safe (backward-char 1))))
+	      (if (not (looking-at "()\\|\\[]"))
+		  (goto-char pos)))
+	    (eq (char-before) ?\`))))))
+
 
 (defun c-most-enclosing-brace (state)
   ;; return the bufpos of the most enclosing brace that hasn't been
