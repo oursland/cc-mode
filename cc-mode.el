@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.327 $
-;; Last Modified:   $Date: 1994-05-06 21:09:58 $
+;; Version:         $Revision: 3.328 $
+;; Last Modified:   $Date: 1994-05-10 16:06:51 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-06 21:09:58 $|$Revision: 3.327 $|
+;; |$Date: 1994-05-10 16:06:51 $|$Revision: 3.328 $|
 
 ;;; Code:
 
@@ -478,56 +478,62 @@ your style, only those that are different from the default.")
 ;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
 
 (defconst c-emacs-features
-  (let (major minor flavor comments)
-    ;; figure out if we're in Emacs 18 or 19
-    (if (not (string-match "\\([0-9]+\\).\\([0-9]+\\)" emacs-version))
-	(error "Cannot figure out the major and minor version numbers.")
-      (setq major (string-to-int (substring emacs-version
-					    (match-beginning 1)
-					    (match-end 1)))
-	    minor (string-to-int (substring emacs-version
-					    (match-beginning 2)
-					    (match-end 2))))
-      ;; calculate the major version
-      (cond
-       ((= major 18) (setq major 'v18))	;Emacs 18
-       ((= major 4)  (setq major 'v18))	;Epoch 4
-       ((= major 19) (setq major 'v19	;Emacs 19
-			   flavor (if (string-match "Lucid" emacs-version)
-				      'Lucid 'FSF)))
-       ;; I don't know
-       (t (error "Cannot recognize major version number: %s" major)))
-      ;; All Lucid 19's use 8-bit modify-syntax-entry flags, as do all
-      ;; patched (obsolete) FSF Emacs 19, Emacs 18, Epoch 4's.  Only
-      ;; vanilla FSF Emacs 19 uses 1-bit flag.  Lets be as smart as we
-      ;; can about figuring this out.
-      (if (eq major 'v19)
-	  (let ((table (copy-syntax-table)))
-	    (modify-syntax-entry ?a ". 12345678" table)
-	    (if (= (logand (lsh (aref table ?a) -16) 255) 255)
-		(setq comments '8-bit)
-	      (setq comments '1-bit)))
-	(setq comments 'no-dual-comments))
-      ;; lets do some minimal sanity checking.
-      (if (and (or
-		;; Lemacs before 19.6 had bugs
-		(and (eq major 'v19) (eq flavor 'Lucid) (< minor 6))
-		;; FSF 19 before 19.21 has known bugs
-		(and (eq major 'v19) (eq flavor 'FSF) (< minor 21)))
-	       (not c-inhibit-startup-warnings-p))
-	  (with-output-to-temp-buffer "*cc-mode warnings*"
-	    (print (format
+  (let ((major (and (boundp 'emacs-major-version)
+		    emacs-major-version))
+	(minor (and (boundp 'emacs-minor-version)
+		    emacs-minor-version))
+	flavor comments)
+    ;; figure out version numbers if not already discovered
+    (and (or (not major) (not minor))
+	 (string-match "\\([0-9]+\\).\\([0-9]+\\)" emacs-version)
+	 (setq major (string-to-int (substring emacs-version
+					       (match-beginning 1)
+					       (match-end 1)))
+	       minor (string-to-int (substring emacs-version
+					       (match-beginning 2)
+					       (match-end 2)))))
+    (if (not (and major minor))
+	(error "Cannot figure out the major and minor version numbers."))
+    ;; calculate the major version
+    (cond
+     ((= major 18) (setq major 'v18))	;Emacs 18
+     ((= major 4)  (setq major 'v18))	;Epoch 4
+     ((= major 19) (setq major 'v19	;Emacs 19
+			 flavor (if (string-match "Lucid" emacs-version)
+				    'Lucid 'FSF)))
+     ;; I don't know
+     (t (error "Cannot recognize major version number: %s" major)))
+    ;; All Lucid 19's use 8-bit modify-syntax-entry flags, as do all
+    ;; patched (obsolete) FSF Emacs 19, Emacs 18, Epoch 4's.  Only
+    ;; vanilla FSF Emacs 19 uses 1-bit flag.  Lets be as smart as we
+    ;; can about figuring this out.
+    (if (eq major 'v19)
+	(let ((table (copy-syntax-table)))
+	  (modify-syntax-entry ?a ". 12345678" table)
+	  (if (= (logand (lsh (aref table ?a) -16) 255) 255)
+	      (setq comments '8-bit)
+	    (setq comments '1-bit)))
+      (setq comments 'no-dual-comments))
+    ;; lets do some minimal sanity checking.
+    (if (and (or
+	      ;; Lemacs before 19.6 had bugs
+	      (and (eq major 'v19) (eq flavor 'Lucid) (< minor 6))
+	      ;; FSF 19 before 19.21 has known bugs
+	      (and (eq major 'v19) (eq flavor 'FSF) (< minor 21)))
+	     (not c-inhibit-startup-warnings-p))
+	(with-output-to-temp-buffer "*cc-mode warnings*"
+	  (print (format
 "The version of Emacs that you are running, %s,
 has known bugs in its syntax.c parsing routines which will affect the
 performance of cc-mode. You should strongly consider upgrading to the
 latest available version.  cc-mode may continue to work, after a
 fashion, but strange indentation errors could be encountered."
 		     emacs-version))))
-      ;; Emacs 18, with no patch is not too good
-      (if (and (eq major 'v18) (eq comments 'no-dual-comments)
-	       (not c-inhibit-startup-warnings-p))
-	  (with-output-to-temp-buffer "*cc-mode warnings*"
-	    (print (format
+    ;; Emacs 18, with no patch is not too good
+    (if (and (eq major 'v18) (eq comments 'no-dual-comments)
+	     (not c-inhibit-startup-warnings-p))
+	(with-output-to-temp-buffer "*cc-mode warnings*"
+	  (print (format
 "The version of Emacs 18 you are running, %s,
 has known deficiencies in its ability to handle dual C++ comments,
 i.e. C++ line style comments and C block style comments.  This will
@@ -541,16 +547,15 @@ Because of these inherent problems, cc-mode is no longer being
 actively maintained for Emacs 18, although patch contributions will be
 folded into the main release. "
 			    emacs-version))))
-      ;; Emacs 18 with the syntax patches are no longer supported
-      (if (and (eq major 'v18) (not (eq comments 'no-dual-comments))
-	       (not c-inhibit-startup-warnings-p))
-	  (with-output-to-temp-buffer "*cc-mode warnings*"
-	    (print (format
+    ;; Emacs 18 with the syntax patches are no longer supported
+    (if (and (eq major 'v18) (not (eq comments 'no-dual-comments))
+	     (not c-inhibit-startup-warnings-p))
+	(with-output-to-temp-buffer "*cc-mode warnings*"
+	  (print (format
 "You are running a syntax patched Emacs 18 variant.  While this should
 work for you, you may want to consider upgrading to one of the latest
 Emacs 19's (FSF or Lucid).  The syntax patches are no longer supported
 either for syntax.c or cc-mode."))))
-      )
     (list major flavor comments))
   "A list of features extant in the Emacs you are using.
 There are many flavors of Emacs out there, each with different
@@ -797,7 +802,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.327 $
+cc-mode Revision: $Revision: 3.328 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -829,7 +834,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.327 $
+cc-mode Revision: $Revision: 3.328 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3467,7 +3472,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.327 $"
+(defconst c-version "$Revision: 3.328 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
