@@ -645,7 +645,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	 (cc-eval-when-compile
 	   (boundp 'parse-sexp-lookup-properties)))
 	(c-parse-and-markup-<>-arglists t)
-	c-disallow-comma-in-<>-arglists
+	c-restricted-<>-arglists
 	id-start id-end id-face pos kwd-sym)
 
     (while (and (< (point) limit)
@@ -658,7 +658,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
       (goto-char id-start)
       (unless (c-skip-comments-and-strings limit)
 	(setq kwd-sym nil
-	      c-disallow-comma-in-<>-arglists nil
+	      c-restricted-<>-arglists nil
 	      id-face (get-text-property id-start 'face))
 
 	(if (cond
@@ -674,15 +674,15 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		(setq kwd-sym (c-keyword-sym (match-string 1)))))
 
 	     (t
-	      ;; There's a normal identifier before the "<".  If we're
-	      ;; not in a declaration context then we set
-	      ;; `c-disallow-comma-in-<>-arglists' to avoid recognizing
-	      ;; templates in function calls like "foo (a < b, c > d)".
+	      ;; There's a normal identifier before the "<".  If we're not in
+	      ;; a declaration context then we set `c-restricted-<>-arglists'
+	      ;; to avoid recognizing templates in function calls like "foo (a
+	      ;; < b, c > d)".
 	      (c-backward-syntactic-ws)
 	      (when (and (memq (char-before) '(?\( ?,))
 			 (not (eq (get-text-property (1- (point)) 'c-type)
 				  'c-decl-arg-start)))
-		(setq c-disallow-comma-in-<>-arglists t))
+		(setq c-restricted-<>-arglists t))
 	      t))
 
 	    (progn
@@ -879,7 +879,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
   (save-restriction
     (let (start-pos
-	  c-disallow-comma-in-<>-arglists
+	  c-restricted-<>-arglists
 	  ;; Nonzero if the `c-decl-prefix-re' match is in an arglist context,
 	  ;; as opposed to a statement-level context.  The major difference is
 	  ;; that "," works as declaration delimiter in an arglist context,
@@ -1035,7 +1035,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		 ;; If we're in a normal arglist context we don't want to
 		 ;; recognize commas in nested angle bracket arglists since
 		 ;; those commas could be part of our own arglist.
-		 c-disallow-comma-in-<>-arglists
+		 c-restricted-<>-arglists
 		 (and c-recognize-<>-arglists
 		      (eq arglist-type 'other)))
 
@@ -2303,7 +2303,7 @@ need for `c++-font-lock-extra-types'.")
       (when (if (eq (char-after) ?<)
 		(let ((c-recognize-<>-arglists t)
 		      (c-parse-and-markup-<>-arglists t)
-		      c-disallow-comma-in-<>-arglists)
+		      c-restricted-<>-arglists)
 		  (c-forward-<>-arglist t))
 	      t)
 	(c-put-char-property (1- (point)) 'c-type 'c-decl-end)

@@ -874,7 +874,7 @@ when a numeric argument is supplied, the point is inside a literal, or
   (interactive "*P")
   (let ((c-echo-syntactic-information-p nil)
 	c-parse-and-markup-<>-arglists
-	c-disallow-comma-in-<>-arglists
+	c-restricted-<>-arglists
 	final-pos <-pos close-paren-inserted)
 
     (combine-after-change-calls
@@ -929,7 +929,7 @@ when a numeric argument is supplied, the point is inside a literal, or
 			(not (looking-at c-keywords-regexp)))
 
 		    (let ((c-parse-and-markup-<>-arglists t)
-			  c-disallow-comma-in-<>-arglists
+			  c-restricted-<>-arglists
 			  (containing-sexp
 			   (c-most-enclosing-brace (c-parse-state))))
 		      (when (and containing-sexp
@@ -937,7 +937,7 @@ when a numeric argument is supplied, the point is inside a literal, or
 					(eq (char-after) ?\())
 				 (not (eq (get-text-property (point) 'c-type)
 					  'c-decl-arg-start)))
-			(setq c-disallow-comma-in-<>-arglists t))
+			(setq c-restricted-<>-arglists t))
 		      (goto-char <-pos)
 		      (c-forward-<>-arglist nil))
 

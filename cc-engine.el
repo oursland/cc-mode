@@ -3628,13 +3628,24 @@ This function does not do any hidden buffer changes."
 ;; end of already parsed arglists.
 ;;
 ;; Marking up the arglists is not the default since doing that correctly
-;; depends on a proper value for `c-disallow-comma-in-<>-arglists'.
+;; depends on a proper value for `c-restricted-<>-arglists'.
 (defvar c-parse-and-markup-<>-arglists nil)
 
 ;; Dynamically bound variable that instructs `c-forward-<>-arglist' to
-;; not accept arglists that contain more than one argument.  It's used
-;; to handle ambiguous cases like "foo (a < b, c > d)" better.
-(defvar c-disallow-comma-in-<>-arglists nil)
+;; not accept arglists that contain binary operators.
+;;
+;; This is primarily used to handle C++ template arglists.  C++
+;; disambiguates them by checking whether the preceding name is a
+;; template or not.  We can't do that, so we assume it is a template
+;; if it can be parsed as one.  That usually works well since
+;; comparison expressions on the forms "a < b > c" or "a < b, c > d"
+;; in almost all cases would be pointless.
+;;
+;; However, in function arglists, e.g. in "foo (a < b, c > d)", we
+;; should let the comma separate the function arguments instead.  And
+;; in a context where the value of the expression is taken, e.g. in
+;; "if (a < b || c > d)", it's probably not a template.
+(defvar c-restricted-<>-arglists nil)
 
 ;; Dynamically bound variables that instructs `c-forward-name',
 ;; `c-forward-type' and `c-forward-<>-arglist' to record the ranges of
@@ -3735,11 +3746,11 @@ This function does not do any hidden buffer changes."
 
   (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos pos
 	;; The call to `c-forward-<>-arglist' below is made after
-	;; `c-<>-sexp-kwds' keywords, so we're certain they actually are
-	;; angle bracket arglists and `c-disallow-comma-in-<>-arglists'
+	;; `c-<>-sexp-kwds' keywords, so we're certain they actually
+	;; are angle bracket arglists and `c-restricted-<>-arglists'
 	;; should therefore be nil.
 	(c-parse-and-markup-<>-arglists t)
-	c-disallow-comma-in-<>-arglists)
+	c-restricted-<>-arglists)
 
     (when kwd-sym
       (goto-char (match-end 1))
@@ -3820,14 +3831,8 @@ This function does not do any hidden buffer changes."
   ;; function handles text properties on the angle brackets and argument
   ;; separating commas.
   ;;
-  ;; This function is primarily used in C++ to mark up template
-  ;; arglists.  C++ disambiguates them by checking whether the preceding
-  ;; name is a template or not.  We can't do that, so we assume it is a
-  ;; template if it can be parsed as one.  This usually works well since
-  ;; comparison expressions on the forms "a < b > c" or "a < b, c > d"
-  ;; in almost all cases would be pointless.  Cases like function calls
-  ;; on the form "foo (a < b, c > d)" needs to be handled specially
-  ;; through the `c-disallow-comma-in-<>-arglists' variable.
+  ;; `c-restricted-<>-arglists' controls how lenient the template
+  ;; arglist recognition should be.
 
   (let ((start (point))
 	;; If `c-record-type-identifiers' is set then activate
@@ -3921,11 +3926,18 @@ This function does not do any hidden buffer changes."
 			(forward-char)
 			t)
 
-		      ;; Note: This regexp exploits the match order in
-		      ;; \| so that "<>" is matched by "<" rather than
-		      ;; "[^>:-]>".
+		      ;; Note: These regexps exploit the match order in \| so
+		      ;; that "<>" is matched by "<" rather than "[^>:-]>".
 		      (c-syntactic-re-search-forward
-		       "[<;{},]\\|\\([^>:-]>\\)" nil 'move t t 1)
+		       (if c-restricted-<>-arglists
+			   ;; Stop on ',', '|', '&', '+' and '-' to catch
+			   ;; common binary operators that could be between
+			   ;; two comparison expressions "a<b" and "c>d".
+			   "[<;{},|&+-]\\|\\([^>:-]>\\)"
+			 ;; Otherwise we still stop on ',' to find the
+			 ;; argument start positions.
+			 "[<;{},]\\|\\([^>:-]>\\)")
+		       nil 'move t t 1)
 
 		      ;; If the arglist starter has lost its open paren
 		      ;; syntax but not the closer, we won't find the
@@ -4011,7 +4023,7 @@ This function does not do any hidden buffer changes."
 		  t)
 
 		 ((and (eq (char-before) ?,)
-		       (not c-disallow-comma-in-<>-arglists))
+		       (not c-restricted-<>-arglists))
 		  ;; Just another argument.  Record the position.  The
 		  ;; type check stuff that made us stop at it is at
 		  ;; the top of the loop.
