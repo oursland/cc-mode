@@ -184,9 +184,10 @@
 	   (t (setq last-begin (point)))
 	   ))))
     (goto-char last-begin)
-    ;; we always do want to skip over non-whitespace modifier
-    ;; characters that didn't get skipped above
-    (skip-chars-backward "-+!*&:.~" (c-point 'boi))))
+    ;; We always want to skip over the non-whitespace modifier
+    ;; characters that can start a statement.
+    (skip-chars-backward "-+!*&~ \t\n" (c-point 'boi))
+    (skip-chars-forward " \t\n")))
 
 (defun c-end-of-statement-1 ()
   (condition-case nil
