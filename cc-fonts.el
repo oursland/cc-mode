@@ -1375,13 +1375,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (c-forward-syntactic-ws)
 		  (looking-at "\\s\)"))
 
-		;; There should be a symbol, an expression open paren
-		;; or another cast start after it.
+		;; There should be a symbol, a literal, an expression
+		;; open paren or another cast start after it.
 		(progn
 		  (forward-char)
 		  (c-forward-syntactic-ws)
 		  (setq cast-end (point))
-		  (or (and (looking-at c-identifier-start)
+		  (or (and (looking-at "\\w\\|\\s_\\|[\"']")
 			   (not (looking-at c-keywords-regexp)))
 		      (looking-at "\(")
 		      (memq (char-after) c-cast-parens)))
