@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.382 $
-;; Last Modified:   $Date: 1997-03-20 04:02:40 $
+;; Version:         $Revision: 4.383 $
+;; Last Modified:   $Date: 1997-03-20 04:17:06 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1597,6 +1597,11 @@ global and affect all future `c-mode' buffers."
 
 
 ;; macros must be defined before first use
+(defmacro c-add-syntax (symbol &optional relpos)
+  ;; a simple macro to append the syntax in symbol to the syntax list.
+  ;; try to increase performance by using this macro
+  (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
+
 (defmacro c-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
   ;; POSITION can be one of the following symbols:
@@ -3857,11 +3862,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 
 ;; defuns for calculating the syntactic state and indenting a single
 ;; line of C/C++/ObjC code
-(defmacro c-add-syntax (symbol &optional relpos)
-  ;; a simple macro to append the syntax in symbol to the syntax list.
-  ;; try to increase performance by using this macro
-  (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
-
 (defun c-most-enclosing-brace (state)
   ;; return the bufpos of the most enclosing brace that hasn't been
   ;; narrowed out by any enclosing class, or nil if none was found
@@ -5205,7 +5205,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.382 $"
+(defconst c-version "$Revision: 4.383 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5256,6 +5256,7 @@ command to conveniently insert and align the necessary backslashes."
 		   'c-hanging-colons-alist
 		   'c-hanging-comment-starter-p
 		   'c-hanging-comment-ender-p
+		   'c-indent-comments-syntactically-p
 		   'c-tab-always-indent
 		   'c-recognize-knr-p
 		   'c-label-minimum-indentation
