@@ -2119,6 +2119,13 @@ colons that separate arguments by aligning colons vertically.
 @code{c-lineup-ObjC-method-args} but lines up the colon on the current
 line with the colon on the previous line.
 
+@item
+@findex c-lineup-dont-change
+@findex lineup-dont-change (c-)
+@code{c-lineup-dont-change} --- this lineup function returns the
+indentation of the current line.  Think of it as an identity function
+for lineups; it is used for @code{cpp-macro-cont} lines.
+
 @end itemize
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2441,7 +2448,10 @@ least one argument follows on the same line as the arglist opening paren
 @item
 @code{inclass} --- the line is nested inside a class definition
 @item
-@code{cpp-macro} --- the start of a cpp macro
+@code{cpp-macro} --- the start of a C preprocessor macro definition
+@item
+@code{cpp-macro-cont} --- subsequent lines of a multi-line C
+preprocessor macro definition
 @item
 @code{friend} --- a C++ friend declaration
 @item
@@ -2949,8 +2959,12 @@ line 10, assigned @code{label} syntax;
 line 11, assigned @code{block-open} syntax;
 
 @cindex cpp-macro syntactic symbol
+@cindex cpp-macro-cont syntactic symbol
 @item
-lines 12 and 14, assigned @code{cpp-macro} syntax;
+lines 12 and 14, assigned @code{cpp-macro} syntax@footnote{Not shown
+here are multi-line macros.  They are now (somewhat) supported; the
+first line of a multi-line macro is given the @code{cpp-macro} syntax,
+while subsequent lines are give the @code{cpp-macro-cont} syntax.};
 
 @cindex stream-op syntactic symbol
 @item
@@ -3299,9 +3313,6 @@ about its availability!
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @itemize @bullet
-@item
-Multi-line macros are not handled properly.
-
 @item
 Re-indenting large regions or expressions can be slow.
 
