@@ -72,13 +72,24 @@ Copyright @copyright{} 1995,96,97,98 Free Software Foundation, Inc.
 @node    Top,       Introduction, (dir),    (dir)
 @comment node-name, next,          previous, up
 
+@macro ccmode
+CC Mode
+@end macro
+
+@top @ccmode{}
+
+@ccmode{} is a GNU Emacs mode for editing files containing C, C++,
+Objective-C, Java, CORBA IDL, and Pike code.  It provides syntax-based
+indentation and has several handy commands and some minor modes to make
+the editing easier.  Note that @ccmode{} does @emph{not} provide
+font-locking; there are other Emacs packages for that.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @menu
-* Introduction::                
-* Getting Connected::           
+* Introduction::
+* Getting Connected::
 * New Indentation Engine::
 * Minor Modes::
 * Commands::
@@ -88,12 +99,61 @@ Copyright @copyright{} 1995,96,97,98 Free Software Foundation, Inc.
 * Frequently Asked Questions::
 * Getting the latest CC Mode release::
 * Sample .emacs File::
-* Limitations and Known Bugs::  
-* Mailing Lists and Submitting Bug Reports::  
-* Concept Index::               
-* Command Index::               Command Index
-* Key Index::                   Key Index
-* Variable Index::              Variable Index
+* Limitations and Known Bugs::
+* Mailing Lists and Submitting Bug Reports::
+
+ --- Indices ---
+
+* Concept Index::
+* Command Index::
+* Key Index::
+* Variable Index::
+
+ --- The Detailed Node Listing ---
+
+New Indentation Engine
+
+* Syntactic Analysis::
+* Indentation Calculation::
+
+Minor Modes
+
+* Auto-newline insertion::
+* Hungry-deletion of whitespace::
+* Auto-fill mode interaction::
+
+Commands
+
+* Indentation Commands::
+* Other Commands::
+
+Customizing Indentation
+
+* Interactive Customization::
+* Permanent Customization::
+* Styles::
+* Advanced Customizations::
+
+Auto-newline insertion
+
+* Hanging Braces::
+* Hanging Colons::
+* Hanging Semi-colons and commas::
+* Other electric commands::
+* Clean-ups::
+
+Styles
+
+* Built-in Styles::
+* Adding Styles::
+* File Styles::
+
+Advanced Customizations
+
+* Custom Indentation Functions::
+* Custom Brace and Colon Hanging::
+* Customizing Semi-colons and Commas::
+* Other Special Indentations::
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -104,28 +164,24 @@ Copyright @copyright{} 1995,96,97,98 Free Software Foundation, Inc.
 @chapter  Introduction
 @cindex   Introduction
 
-@macro ccmode
-CC Mode
-@end macro
-
 @cindex BOCM
 
 Welcome to @ccmode{}.  This is a GNU Emacs mode for editing files
 containing C, C++, Objective-C, Java, CORBA IDL, and Pike code.  This
 incarnation of the mode is descendant from @file{c-mode.el} (also called
-"Boring Old C Mode" or BOCM @code{:-)}, and @file{c++-mode.el} version
-2, which I have been maintaining since 1992.  @ccmode{} represents a
+"Boring Old C Mode" or BOCM @t{:-)}, and @file{c++-mode.el} version 2,
+which I have been maintaining since 1992.  @ccmode{} represents a
 significant milestone in the mode's life.  It has been fully merged back
 with Emacs 19's @file{c-mode.el}. Also a new, more intuitive and
 flexible mechanism for controlling indentation has been developed.
 
 @ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
-@footnote{``The Annotated C++ Reference Manual'', by Ellis and
+@footnote{@cite{The Annotated C++ Reference Manual}, by Ellis and
 Stroustrup.} C++, Objective-C, Java, CORBA's Interface Definition
-Language and @dfn{Pike}@footnote{A C-like scripting language with its
-roots in the LPC language used in some MUD engines.  See
-<http://pike.idonex.se/>.} files.  In this way, you can easily set up
-consistent coding styles for use in editing all C, C++, Objective-C,
+Language and Pike@footnote{A C-like scripting language with its roots in
+the LPC language used in some MUD engines.  See
+@url{http://pike.idonex.se/}.} files.  In this way, you can easily set
+up consistent coding styles for use in editing all C, C++, Objective-C,
 Java, IDL and Pike programs. @ccmode{} does @emph{not} handle
 font-locking (a.k.a. syntax coloring, keyword highlighting) or anything
 of that nature, for any of these modes.  Font-locking is handled by
@@ -3460,7 +3516,7 @@ and that @kbd{C-j} adds a newline and indents it.  You can make
 @end example
 
 This is a very common question.  If you want this to be the default
-behavior, don't lobby me, lobby RMS!  @code{:-)}
+behavior, don't lobby me, lobby RMS!  @t{:-)}
 @sp 1
 
 @strong{Q.} @emph{I put @code{(c-set-offset 'substatement-open 0)}
