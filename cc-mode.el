@@ -698,7 +698,7 @@ Key bindings:
   (c-init-language-vars objc-mode)
   (c-common-init 'objc-mode)
   (easy-menu-add c-objc-menu)
-  (cc-imenu-init cc-imenu-objc-generic-expression)
+  (cc-imenu-init nil 'cc-imenu-objc-function)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook)
   (c-update-modeline))
