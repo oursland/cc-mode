@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-06 21:25:17 $
-;; Version:         $Revision: 2.132 $
+;; Last Modified:   $Date: 1992-07-07 21:58:42 $
+;; Version:         $Revision: 2.133 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-06 21:25:17 $|$Revision: 2.132 $|
+;; |$Date: 1992-07-07 21:58:42 $|$Revision: 2.133 $|
 
 
 ;; ======================================================================
@@ -246,7 +246,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.132 $
+  "Major mode for editing C++ code.  $Revision: 2.133 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -750,7 +750,7 @@ for member initialization list."
 		 (condition-case premature-end
 		     (backward-sexp 1)
 		   (error nil))
-		 (c++-backward-to-noncomment bod)
+		 (c++-backward-over-syntactic-ws bod)
 		 (= (preceding-char) ?\?))
 	  (setq c++-auto-newline nil))
 	 ;; check for being at top level or top with respect to the
@@ -759,7 +759,7 @@ for member initialization list."
 		 (not (c++-at-top-level-p t))))
 	 ;; if at top level, check to see if we are introducing a member
 	 ;; init list. if not, continue
-	 ((progn (c++-backward-to-noncomment bod)
+	 ((progn (c++-backward-over-syntactic-ws bod)
 		 (= (preceding-char) ?\)))
 	  (goto-char insertion-point)
 	  ;; at a member init list, figure out about auto newlining. if
@@ -974,7 +974,7 @@ of the expression are preserved."
 		  (save-excursion
 		    (setq at-else (looking-at "else\\W"))
 		    (setq at-brace (= (following-char) ?{))
-		    (c++-backward-to-noncomment opoint)
+		    (c++-backward-over-syntactic-ws opoint)
 		    (if (not (memq (preceding-char) '(nil ?\, ?\; ?} ?: ?{)))
 			;; Preceding line did not end in comma or semi;
 			;; indent this line  c-continued-statement-offset
@@ -1139,9 +1139,10 @@ containing class definition (useful for inline functions)."
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
 Return 'c if in a C-style comment, 'c++ if in a C++ style comment,
-'string if in a string literal or nil if not in a comment at all.
-Optional LIM is used as the backward limit of the search.  If omitted,
-or nil, c++-beginning-of-defun is used."
+'string if in a string literal, 'pound if on a preprocessor line, or
+nil if not in a comment at all.  Optional LIM is used as the backward
+limit of the search.  If omitted, or nil, c++-beginning-of-defun is
+used."
   (save-excursion
     (let* ((here (point))
 	   (state nil)
@@ -1150,10 +1151,13 @@ or nil, c++-beginning-of-defun is used."
       (goto-char backlim)
       (while (< (point) here)
 	(setq match
-	      (and (re-search-forward "\\(/[/*]\\)\\|[\"']" here 'move)
+	      (and (re-search-forward "\\(/[/*]\\)\\|[\"']\\|\\(^[ \t]*#\\)"
+				      here 'move)
 		   (buffer-substring (match-beginning 0) (match-end 0))))
 	(setq state
 	      (cond
+	       ;; no match
+	       ((null match) nil)
 	       ;; looking at the opening of a C++ style comment
 	       ((string= "//" match)
 		(if (<= here (progn (end-of-line) (point))) 'c++))
@@ -1173,6 +1177,8 @@ or nil, c++-beginning-of-defun is used."
 	       ;; looking at the opening of a single quote string
 	       ((string= "'" match)
 		(if (not (re-search-forward "[^\\]'" here 'move)) 'string))
+	       ((string-match "[ \t]*#" match)
+		(if (<= here (progn (end-of-line) (point))) 'pound))
 	       (t nil)))
 	) ; end-while
       state)))
@@ -1370,14 +1376,7 @@ BOD is the beginning of the C++ definition."
 		    0
 		  (if (= (following-char) ?{)
 		      0
-		    (c++-backward-to-noncomment (or parse-start (point-min)))
-		    (if (not (bobp))
-			(progn (forward-char -1)
-			       (skip-chars-backward " \t")
-			       (c++-skip-backwards-over-cpp-directives)
-			       ;; skip any comments that may be at
-			       ;; the end of the line
-			       (c++-backward-to-noncomment bod)))
+		    (c++-backward-over-syntactic-ws parse-start)
 		    (if (or (= (preceding-char) ?\))
 			    (and (= (preceding-char) ?t)
 				 (save-excursion
@@ -1487,8 +1486,7 @@ BOD is the beginning of the C++ definition."
 	    (t
 	     ;; Statement.  Find previous non-comment character.
 	     (goto-char indent-point)
-	     (c++-backward-to-noncomment containing-sexp)
-	     (c++-skip-backwards-over-cpp-directives)
+	     (c++-backward-over-syntactic-ws containing-sexp)
 	     (if (not (memq (preceding-char) '(nil ?\, ?\; ?} ?: ?\{)))
 		 ;; This line is continuation of preceding line's statement;
 		 ;; indent  c-continued-statement-offset  more than the
@@ -1512,7 +1510,7 @@ BOD is the beginning of the C++ definition."
 			;; indentation:
 			(if (save-excursion
 			      (beginning-of-line 1)
-			      (c++-backward-to-noncomment containing-sexp)
+			      (c++-backward-over-syntactic-ws containing-sexp)
 			      (memq (preceding-char)
 				    '(nil ?\, ?\; ?} ?: ?\{)))
 			    c-continued-statement-offset
@@ -1630,10 +1628,13 @@ BOD is the beginning of the C++ definition."
 ;; ======================================================================
 ;; defuns to look backwards for things
 ;; ======================================================================
-(defun c++-backward-to-noncomment (lim)
-  "Skip backwards to first preceding non-comment character.
-Search no farther back than LIM."
+(defun c++-backward-over-syntactic-ws (&optional lim)
+  "Skip backwards over syntactic whitespace.
+Syntactic whitespace is defined as lexical whitespace, C and C++ style
+comments, and preprocessor directives. Search no farther back than
+optional LIM.  If LIM is ommitted, point-min is used."
   (let (literal stop)
+    (setq lim (or lim (point-min)))
     (while (not stop)
       (skip-chars-backward " \t\n\r\f" lim)
       (setq literal (c++-in-literal))
@@ -1652,6 +1653,9 @@ Search no farther back than LIM."
 		  (progn (forward-char -1)
 			 (= (preceding-char) ?*)))
 	     (forward-char -1))
+	    ((and (eq literal 'pound)
+		  (> (c++-point-bol) lim))
+	     (beginning-of-line))
 	    (t (setq stop t))
 	    ))))
 
@@ -1677,14 +1681,6 @@ Search no farther back than LIM."
 	(error
 	 (goto-char limit)
 	 (setq do-level 0))))))
-
-(defun c++-skip-backwards-over-cpp-directives ()
-  "Position point to the end of the first line after a # directive."
-  (while (and (save-excursion
-		(beginning-of-line)
-		(looking-at "[ \t]*#"))
-	      (<= 0 (forward-line -1)))
-    (end-of-line)))
 
 (defun c++-auto-newline ()
   "Insert a newline iff we're not in a literal.
@@ -1955,7 +1951,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.132 $"
+(defconst c++-version "$Revision: 2.133 $"
   "c++-mode version number.")
 
 (defun c++-version ()
