@@ -649,14 +649,6 @@ to be set as a file local variable.")
 	      (cc-test-log "Skipping %s - no .res or .face file" filename)
 	      t)
 
-	  ;; Collect the face changes.
-	  (when check-faces
-	    (cc-test-tmp-message "Testing %s (fonts)" filename)
-
-	    (cc-test-force-font-lock-buffer)
-	    (goto-char (point-min))
-	    (cc-test-record-faces testbuf res-faces-buf nil))
-
 	  (when check-syntax
 	    (cc-test-tmp-message "Testing %s (syntax)" filename)
 
@@ -710,6 +702,16 @@ to be set as a file local variable.")
 			   (cc-test-log "%s" cc-test-last-backtrace)
 			   (setq cc-test-last-backtrace nil)))
 		     (signal (car err) (cdr err))))))))
+
+	  ;; Collect the face changes.  Do this after the indentation
+	  ;; test so that we check that it doesn't depend on the
+	  ;; properties added by the font locking.
+	  (when check-faces
+	    (cc-test-tmp-message "Testing %s (fonts)" filename)
+
+	    (cc-test-force-font-lock-buffer)
+	    (goto-char (point-min))
+	    (cc-test-record-faces testbuf res-faces-buf nil))
 
 	  (cc-test-tmp-message "Testing %s" filename)
 
