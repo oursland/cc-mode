@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.189 $
-;; Last Modified:   $Date: 1994-01-12 00:31:24 $
+;; Version:         $Revision: 3.190 $
+;; Last Modified:   $Date: 1994-01-12 00:50:43 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -85,7 +85,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-12 00:31:24 $|$Revision: 3.189 $|
+;; |$Date: 1994-01-12 00:50:43 $|$Revision: 3.190 $|
 
 ;;; Code:
 
@@ -685,7 +685,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.189 $
+cc-mode Revision: $Revision: 3.190 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -716,7 +716,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.189 $
+cc-mode Revision: $Revision: 3.190 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2598,7 +2598,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (= char-before-ip ?=))
 	      (c-add-semantics 'brace-list-open placeholder))
 	     (t
-	      (error "CASE 8B.3? Please report this error."))
+	      ;; some other type of block open. one example I know of
+	      ;; is a try block open but as exceptions aren't
+	      ;; supported yet, I'll just this until further notice
+	      (c-add-semantics 'try-block-open placeholder))
 	     ))
 	   ;; CASE 8C: iostream insertion or extraction operator
 	   ((looking-at "<<\\|>>")
@@ -2974,7 +2977,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.189 $"
+(defconst c-version "$Revision: 3.190 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
