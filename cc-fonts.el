@@ -1135,6 +1135,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		 ;; outermost paren pair that surrounds the declarator.
 		 got-prefix-before-parens
 		 got-suffix-after-parens
+		 ;; True if we've parsed the type decl to a token that
+		 ;; is known to end declarations in this context.
+		 at-decl-end
 		 ;; The earlier values of `at-type', `type-start' and
 		 ;; `type-end' if we've shifted the type backwards.
 		 identifier-type identifier-start identifier-end)
@@ -1224,11 +1227,6 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	       ;; preceding type must be the identifier instead.
 	       (c-fl-shift-type-backward))
 
-	     ;; Now we've collected info about various characteristics of the
-	     ;; construct we're looking at.  Below follows a decision tree
-	     ;; based on that.  It's ordered to check more certain signs
-	     ;; before less certain ones.
-
 	     (setq
 	      at-decl-or-cast
 	      (catch 'at-decl-or-cast
@@ -1241,24 +1239,27 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (c-safe (goto-char (scan-lists (point) 1 paren-depth)))
 		  (throw 'at-decl-or-cast nil))
 
+		(setq at-decl-end
+		      (looking-at (cond ((eq arglist-type '<>) "[,>]")
+					(arglist-type "[,\)]")
+					(t "[,;]"))))
+
+		;; Now we've collected info about various characteristics of
+		;; the construct we're looking at.  Below follows a decision
+		;; tree based on that.  It's ordered to check more certain
+		;; signs before less certain ones.
+
 		(if got-identifier
 		    (progn
 
-		      (when (or at-type maybe-typeless)
-			(when (not (or got-prefix got-parens))
-			  ;; Got another identifier directly after the type, so
-			  ;; it's a declaration.
-			  (throw 'at-decl-or-cast t))
-
-			(when (looking-at "=[^=]")
-			  ;; There's an initializer after the type decl
-			  ;; expression so we know it's a declaration.  Don't
-			  ;; check for a C++ style initializer using parens
-			  ;; since that already has been matched as a suffix,
-			  ;; and if it hasn't then the paren is unbalanced.
-			  (throw 'at-decl-or-cast t)))
+		      (when (and (or at-type maybe-typeless)
+				 (not (or got-prefix got-parens)))
+			;; Got another identifier directly after the type, so
+			;; it's a declaration.
+			(throw 'at-decl-or-cast t))
 
 		      (when (and got-parens
+				 at-decl-end
 				 (not got-prefix-before-parens)
 				 (not got-suffix-after-parens)
 				 (or prev-at-type maybe-typeless))
@@ -1298,7 +1299,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      (if (and
 			   ;; Check that the identifier isn't at the start of
 			   ;; an expression.
-			   (looking-at "[,;]\\|\\s\)")
+			   at-decl-end
 			   (cond
 			    ((eq arglist-type 'decl)
 			     ;; Inside an arglist that contains declarations.
@@ -1407,12 +1408,14 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		;; placements of "const" in C++) it's not worth the effort to
 		;; look for them.)
 
-		(unless (looking-at (cond ((eq arglist-type '<>) "[,>]")
-					  (arglist-type "[,\)]")
-					  (t "[,;]")))
-		  ;; If this is a declaration it should end here, so check for
-		  ;; allowed separation tokens.  Note that this rule doesn't
-		  ;; work e.g. with a K&R arglist after a function header.
+		(unless (or at-decl-end (looking-at "=[^=]"))
+		  ;; If this is a declaration it should end here or its
+		  ;; initializer(*) should start here, so check for allowed
+		  ;; separation tokens.  Note that this rule doesn't work
+		  ;; e.g. with a K&R arglist after a function header.
+		  ;;
+		  ;; *) Don't check for C++ style initializers using parens
+		  ;; since those already have been matched as suffixes.
 		  (throw 'at-decl-or-cast nil))
 
 		;; Below are tests that only should be applied when we're
@@ -1444,6 +1447,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		(if got-identifier
 		    (progn
 		      (when (and got-prefix-before-parens
+				 at-type
+				 at-decl-end
 				 (not arglist-type)
 				 (not got-suffix))
 			;; Got something like "foo * bar;".  Since we're not
@@ -1454,14 +1459,17 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			;; function call.
 			(throw 'at-decl-or-cast t))
 
-		      (when (and got-suffix-after-parens
+		      (when (and (or got-suffix-after-parens
+				     ;; Due to test above this is equivalent
+				     ;; to (looking-at "=[^=]").
+				     (not at-decl-end))
 				 (eq at-type 'found)
 				 (not (eq arglist-type 'other)))
-			;; Got something like "a (*b) (c);".  It could be an
-			;; odd expression or it could be a declaration.  Treat
-			;; it as a declaration if "a" has been used as a type
-			;; somewhere else (if it's a known type we won't get
-			;; here).
+			;; Got something like "a (*b) (c);" or "a (b) = c;".
+			;; It could be an odd expression or it could be a
+			;; declaration.  Treat it as a declaration if "a" has
+			;; been used as a type somewhere else (if it's a known
+			;; type we won't get here).
 			(throw 'at-decl-or-cast t)))
 
 		  (when (and arglist-type
