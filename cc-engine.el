@@ -2123,7 +2123,7 @@ This function does not do any hidden buffer changes."
 	(when (c-major-mode-is 'pike-mode)
 	  ;; Handle the `<operator> syntax in Pike.
 	  (let ((pos (point)))
-	    (skip-chars-backward "!%&*+\\-/<=>^|~[]()")
+	    (skip-chars-backward "-!%&*+/<=>^|~[]()")
 	    (and (if (< (skip-chars-backward "`") 0)
 		     t
 		   (goto-char pos)
@@ -2143,7 +2143,7 @@ This function does not do any hidden buffer changes."
       (and (c-major-mode-is 'pike-mode)
 	   ;; Handle the `<operator> syntax in Pike.
 	   (let ((pos (point)))
-	     (if (and (< (skip-chars-backward "!%&*+\\-/<=>^|~[]()") 0)
+	     (if (and (< (skip-chars-backward "-!%&*+/<=>^|~[]()") 0)
 		      (< (skip-chars-backward "`") 0)
 		      (looking-at c-symbol-key)
 		      (>= (match-end 0) pos))
