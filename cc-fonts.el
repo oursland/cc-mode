@@ -461,6 +461,58 @@ stuff.  Used on level 1 and higher."
 		 (c-put-font-lock-face (match-beginning 0) (match-end 0)
 				       c-label-face))))))))
 
+(defun c-font-lock-identifier-list (limit face)
+  ;; Fontify a comma separated list of identifiers with FACE.  Any
+  ;; highlighted keywords in front of each identifier are skipped over.
+  ;; The list is taken to end when an identifier isn't followed by a
+  ;; comma.
+
+  (save-restriction
+    (narrow-to-region (point-min) limit)
+
+    (let (id-end
+	  ;; Turn on fontification in `c-forward-name' and `c-forward-type'.
+	  (c-fontify-types-and-refs t)
+	  ;; If FACE is `font-lock-type-face' then all things we encounter
+	  ;; in the list are types.
+	  (c-promote-possible-types t)
+	  ;; The font-lock package in Emacs is known to clobber this.
+	  (parse-sexp-lookup-properties t))
+
+      (while (and
+	      (progn
+		(c-forward-syntactic-ws)
+		(not (eobp)))
+
+	      ;; Try to move forward over a type or name and fontify it.
+	      (if (save-restriction
+		    ;; Widen temporarily so that we don't trip up
+		    ;; on a limit set in an odd place.
+		    (widen)
+		    (if (eq face 'font-lock-type-face)
+			(c-forward-type)
+		      (when (c-forward-name)
+			(setq id-end (point))
+			(when (c-simple-skip-symbol-backward)
+			  (c-put-font-lock-face (point) id-end face))
+			(goto-char id-end)
+			t)))
+		  ;; If it worked, check for and skip over a following comma.
+		  (progn
+		    (c-forward-syntactic-ws)
+		    (when (eq (char-after) ?,)
+		      (forward-char)
+		      t))
+
+		;; If it failed, check if we're on a keyword and skip
+		;; over it in that case.  It's this way to handle that
+		;; a name might start with a keyword.
+		(when (eq (get-text-property (point) 'face)
+			  'font-lock-keyword-face)
+		  (goto-char (next-single-property-change
+			      (point) 'face nil limit))
+		  t)))))))
+
 (c-lang-defconst c-basic-matchers
   "Font lock matchers for basic keywords, labels, references and various
 other easily recognizable things.  Used on level 2 and higher."
@@ -659,10 +711,25 @@ other easily recognizable things.  Used on level 2 and higher."
       ;; Fontify the list of exceptions after Java style "throws" etc.
       ,@(when (c-lang-const c-decl-spec-kwds)
 	  `((,(c-make-font-lock-search-function
-	       (concat "\\<\\("
-		       (c-make-keywords-re nil (c-lang-const c-decl-spec-kwds))
-		       "\\)\\>")
-	       '((c-font-lock-declarators limit t t))))))
+	       (concat
+		"\\<\\("
+		(c-make-keywords-re nil (c-lang-const c-decl-spec-kwds))
+		"\\)\\>")
+	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
+
+      ;; Fontify class inherit lists in C++.
+      ,@(when (c-major-mode-is 'c++-mode)
+	  `((,(c-make-font-lock-search-function
+	       (concat
+		"\\<\\("
+		(c-make-keywords-re nil (c-lang-const c-class-kwds))
+		"\\)\\>"
+		;; Disallow various common punctuation chars that can't come
+		;; before the ':' that starts the inherit list, to avoid
+		;; searching too far.
+		"[^\]\[{}();,/#=:]*"
+		":")
+	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
       ))
 
 (defun c-font-lock-declarators (limit list types)
@@ -675,10 +742,10 @@ other easily recognizable things.  Used on level 2 and higher."
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-forward-syntactic-ws limit)
-  (let ((pos (point)) id-start id-end
+  (let ((pos (point)) next-pos id-start id-end
 	paren-depth
 	id-face got-init
-	;; Turn on fontification on `c-forward-name' and `c-forward-type'.
+	;; Turn on fontification in `c-forward-name' and `c-forward-type'.
 	(c-fontify-types-and-refs t)
 	;; The font-lock package in Emacs is known to clobber this.
 	(parse-sexp-lookup-properties t))
@@ -735,7 +802,7 @@ other easily recognizable things.  Used on level 2 and higher."
 	    (c-syntactic-re-search-forward
 	     "[;,\{\[\)]\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)" limit t))
 
-      (setq pos (match-beginning 0)
+      (setq next-pos (match-beginning 0)
 	    id-face (if (match-beginning 2)
 			'font-lock-function-name-face
 		      'font-lock-variable-name-face)
@@ -752,7 +819,7 @@ other easily recognizable things.  Used on level 2 and higher."
 		   (not (get-text-property (point) 'face)))
 	  (c-put-font-lock-face (point) id-end id-face)))
 
-      (goto-char pos)
+      (goto-char next-pos)
       (setq pos nil)
       (when list
 	;; Jump past any initializer or function prototype to see if
@@ -920,7 +987,7 @@ other easily recognizable things.  Used on level 2 and higher."
 	  (max-type-decl-end-before-token 0)
 	  ;; The end position of the last entered macro.
 	  (macro-end -1)
-	  ;; Turn on fontification on `c-forward-name' and `c-forward-type'.
+	  ;; Turn on fontification in `c-forward-name' and `c-forward-type'.
 	  (c-fontify-types-and-refs t)
 	  ;; The font-lock package in Emacs is known to clobber this.
 	  (parse-sexp-lookup-properties t))
@@ -1582,7 +1649,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ;; `*-font-lock-extra-types' on mode init.
       (eval . (list ,(c-make-font-lock-search-function
 		      'c-known-type-key
-		      '(1 font-lock-type-face t)
+		      '(1 'font-lock-type-face t)
 		      '((c-font-lock-declarators limit t nil)
 			(save-match-data
 			  (goto-char (match-end 1))
@@ -1598,7 +1665,8 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		 (concat "\\<\\(" prefix-re "\\)"
 			 "[ \t\n\r\f\v]+"
 			 "\\(" (c-lang-const c-symbol-key) "\\)")
-		 `(,(+ (c-regexp-opt-depth prefix-re) 2) font-lock-type-face t)
+		 `(,(+ (c-regexp-opt-depth prefix-re) 2)
+		   'font-lock-type-face t)
 		 '((c-font-lock-declarators limit t nil)
 		   (save-match-data
 		     (goto-char (match-end 2))
