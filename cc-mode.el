@@ -104,20 +104,10 @@
 ;; with your version of Emacs, you are incompatible!
 (require 'easymenu)
 
-;; Load cc-fonts first after font-lock is loaded, since cc-fonts
-;; should override the settings for c-font-lock-keywords etc that
-;; font-lock managed in earlier versions.
+;; Load cc-fonts first after font-lock is loaded, since it isn't
+;; necessary until font locking is requested.
 (eval-after-load "font-lock"
-  '(progn
-     (require 'cc-fonts)
-     (unless (boundp 'font-lock-syntactic-face-function)
-       ;; Older versions of font-lock doesn't have this variable, but
-       ;; we set it from `font-lock-defaults' anyway.  If we don't
-       ;; ensure that it's declared as a variable then some of the
-       ;; older versions (e.g. the one in Emacs 19.34) might give
-       ;; errors.
-       (defvar font-lock-syntactic-face-function nil))))
-(autoload 'c-font-lock-syntactic-face-function "cc-fonts")
+  '(require 'cc-fonts))
 
 
 ;; Other modes and packages which depend on CC Mode should do the
@@ -440,9 +430,6 @@ This does not load the font-lock package.  Use after
 	  nil nil
 	  ,c-identifier-syntax-modifications
 	  c-beginning-of-syntax
-	  (font-lock-syntactic-face-function
-	   ;; This variable doesn't exist in older (X)Emacsen.
-	   . c-font-lock-syntactic-face-function)
 	  (font-lock-mark-block-function
 	   . c-mark-function)))
 
