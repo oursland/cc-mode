@@ -415,164 +415,144 @@ It's assumed to not contain any submatchers."
   ;; `c-symbol-key'.
   t (concat "[" (c-lang-const c-nonsymbol-chars) "]"))
 
-(c-lang-defconst c-opt-identifier-concat-key
-  "Regexp matching the operators that join symbols to fully qualified
-identifiers, or nil in languages that don't have such things.  Does
-not contain a \\| operator at the top level."
+(c-lang-defconst c-identifier-ops
+  "The operators that make up fully qualified identifiers.  nil in
+languages that don't have such things.  See `c-operators' for a
+description of the format.  Binary operators can concatenate symbols,
+e.g. \"::\" in \"A::B::C\".  Prefix operators can precede identifiers,
+e.g. \"~\" in \"~A::B\".  Other types of operators aren't supported.
+
+This value is by default merged into `c-operators'."
   t    nil
-  c++  "::"
-  java "\\."
-  idl  "::"
-  pike "\\(::\\|\\.\\)")
+  c++  '((prefix "~" "??-" "compl")
+	 (right-assoc "::")
+	 (prefix "::"))
+  java '((left-assoc "."))
+  idl  '((left-assoc "::")
+	 (prefix "::"))
+  pike '((left-assoc "::")
+	 (prefix "::")
+	 (left-assoc ".")))
+
+(c-lang-defconst c-opt-identifier-concat-key
+  ;; Appendable adorned regexp matching the operators that join
+  ;; symbols to fully qualified identifiers, or nil in languages that
+  ;; don't have such things.
+  ;;
+  ;; This was a docstring constant in 5.30.  It still works but is now
+  ;; considered internal - change `c-identifier-ops' instead.
+  t (let ((ops (c-filter-ops (c-lang-const c-identifier-ops)
+			     '(left-assoc right-assoc)
+			     t)))
+      (when ops
+	(c-make-keywords-re 'appendable ops))))
 (c-lang-defvar c-opt-identifier-concat-key
   (c-lang-const c-opt-identifier-concat-key)
   'dont-doc)
 
+(c-lang-defconst c-opt-identifier-prefix-key
+  ;; Appendable adorned regexp matching operators that might precede
+  ;; an identifier and that are part of the identifier in that case.
+  ;; nil in languages without such things.
+  t (let ((ops (c-filter-ops (c-lang-const c-identifier-ops)
+			     '(prefix)
+			     t)))
+      (when ops
+	(c-make-keywords-re 'appendable ops))))
+
+(c-lang-defconst c-after-id-concat-ops
+  "Operators that can occur after a binary operator on `c-identifier-ops'
+in identifiers.  nil in languages that don't have such things.
+
+Operators here should also have appropriate entries in `c-operators' -
+it's not taken care of by default."
+  t    nil
+  ;; '~' for destructors in C++, '*' for member pointers.
+  c++  '("~" "*")
+  ;; In Java we recognize '*' to deal with "foo.bar.*" that can occur
+  ;; in import declarations.  (This will also match bogus things like
+  ;; "foo.*bar" but we don't bother.)
+  java '("*"))
+
 (c-lang-defconst c-opt-after-id-concat-key
-  "Regexp that must match the token after `c-opt-identifier-concat-key'
-for it to be considered an identifier concatenation operator (which
-e.g. causes the preceding identifier to be fontified as a reference).
-Assumed to be a string if `c-opt-identifier-concat-key' is."
-  t    (if (c-lang-const c-opt-identifier-concat-key)
-	   (c-lang-const c-symbol-start))
-  c++  (concat (c-lang-const c-symbol-start)
-	       "\\|[~*]")
-  java (concat (c-lang-const c-symbol-start)
-	       "\\|\\*"))
+  ;; Regexp that must match the token after
+  ;; `c-opt-identifier-concat-key' for it to be considered an
+  ;; identifier concatenation operator (which e.g. causes the
+  ;; preceding identifier to be fontified as a reference).  Assumed to
+  ;; be a string if `c-opt-identifier-concat-key' is.
+  ;;
+  ;; This was a docstring constant in 5.30.  It still works but is now
+  ;; considered internal - change `c-after-id-concat-ops' instead.
+  t (concat (c-lang-const c-symbol-start)
+	    (if (c-lang-const c-after-id-concat-ops)
+		(concat "\\|" (c-make-keywords-re 'appendable
+				(c-lang-const c-after-id-concat-ops)))
+	      "")))
 
 (c-lang-defconst c-identifier-start
-  "Regexp that matches the start of an \(optionally qualified)
-identifier.  It should also match all keywords.  It's unspecified how
-far it matches."
-  t    (concat (c-lang-const c-symbol-start)
-	       (if (c-lang-const c-opt-identifier-concat-key)
-		   (concat "\\|" (c-lang-const c-opt-identifier-concat-key))
-		 ""))
-  c++  (concat (c-lang-const c-identifier-start)
-	       "\\|"
-	       (concat "[~*]"
-		       (c-lang-const c-simple-ws) "*"
-		       (c-lang-const c-symbol-start)))
-  ;; Java does not allow a leading qualifier operator.
-  java (c-lang-const c-symbol-start))
+  "Regexp that matches the start of an (optionally qualified) identifier.
+It should also match all keywords.  It's unspecified how far it
+matches."
+  t (concat (c-lang-const c-symbol-start)
+	    (if (c-lang-const c-opt-identifier-prefix-key)
+		(concat "\\|"
+			(c-lang-const c-opt-identifier-prefix-key))
+	      "")))
 (c-lang-defvar c-identifier-start (c-lang-const c-identifier-start))
 
 (c-lang-defconst c-identifier-key
   "Regexp matching a fully qualified identifier, like \"A::B::c\" in
 C++.  It does not recognize the full range of syntactic whitespace
 between the tokens; `c-forward-name' has to be used for that."
-
-  t    (c-lang-const c-symbol-key)	; Default to `c-symbol-key'.
-
-  ;; C++ allows a leading qualifier operator and a `~' before the last
-  ;; symbol.  This regexp is more complex than strictly necessary to
-  ;; ensure that it can be matched with a minimum of backtracking.
-  c++  (concat
-	"\\("
-	(c-lang-const c-opt-identifier-concat-key)
-	(c-lang-const c-simple-ws) "*"
-	"\\)?"
-	(concat
-	 "\\("
-	 ;; The submatch below is depth of `c-opt-identifier-concat-key' + 3.
-	 "\\(" (c-lang-const c-symbol-key) "\\)"
-	 (concat "\\("
+  ;; This regexp is more complex than strictly necessary to ensure
+  ;; that it can be matched with a minimum of backtracking.
+  t (concat (if (c-lang-const c-opt-identifier-prefix-key)
+		(concat
+		 "\\("
+		 (c-lang-const c-opt-identifier-prefix-key)
 		 (c-lang-const c-simple-ws) "*"
-		 (c-lang-const c-opt-identifier-concat-key)
-		 (c-lang-const c-simple-ws) "*"
-		 ;; The submatch below is: `c-symbol-key-depth' +
-		 ;; 2 * depth of `c-opt-identifier-concat-key' + 5.
-		 "\\(" (c-lang-const c-symbol-key) "\\)"
-		 "\\)*")
-	 (concat "\\("
-		 (c-lang-const c-simple-ws) "*"
-		 (c-lang-const c-opt-identifier-concat-key)
-		 (c-lang-const c-simple-ws) "*"
-		 "[~*]"
-		 (c-lang-const c-simple-ws) "*"
-		 ;; The submatch below is: 2 * `c-symbol-key-depth' +
-		 ;; 3 * depth of `c-opt-identifier-concat-key' + 7.
-		 "\\(" (c-lang-const c-symbol-key) "\\)"
 		 "\\)?")
-	 "\\|"
-	 "~" (c-lang-const c-simple-ws) "*"
-	 ;; The submatch below is: 3 * `c-symbol-key-depth' +
-	 ;; 3 * depth of `c-opt-identifier-concat-key' + 8.
-	 "\\(" (c-lang-const c-symbol-key) "\\)"
-	 "\\)"))
-
-  ;; IDL and Pike allows a leading qualifier operator.
-  (idl pike) (concat
-	      "\\("
-	      (c-lang-const c-opt-identifier-concat-key)
-	      (c-lang-const c-simple-ws) "*"
-	      "\\)?"
-	      ;; The submatch below is depth of
-	      ;; `c-opt-identifier-concat-key' + 2.
-	      "\\(" (c-lang-const c-symbol-key) "\\)"
-	      (concat "\\("
-		      (c-lang-const c-simple-ws) "*"
-		      (c-lang-const c-opt-identifier-concat-key)
-		      (c-lang-const c-simple-ws) "*"
-		      ;; The submatch below is: `c-symbol-key-depth' +
-		      ;; 2 * depth of `c-opt-identifier-concat-key' + 4.
+	      "")
+	    "\\(" (c-lang-const c-symbol-key) "\\)"
+	    (if (c-lang-const c-opt-identifier-concat-key)
+		(concat
+		 "\\("
+		 (c-lang-const c-simple-ws) "*"
+		 (c-lang-const c-opt-identifier-concat-key)
+		 (c-lang-const c-simple-ws) "*"
+		 (if (c-lang-const c-after-id-concat-ops)
+		     (concat
+		      "\\("
+		       (c-make-keywords-re 'appendable
+			 (c-lang-const c-after-id-concat-ops))
+		      (concat
+		       ;; For flexibility, consider the symbol match
+		       ;; optional if we've hit a
+		       ;; `c-after-id-concat-ops' operator.  This is
+		       ;; also necessary to handle the "*" that can
+		       ;; end import declaration identifiers in Java.
+		       "\\("
+		       (c-lang-const c-simple-ws) "*"
+		       "\\(" (c-lang-const c-symbol-key) "\\)"
+		       "\\)?")
+		      "\\|"
 		      "\\(" (c-lang-const c-symbol-key) "\\)"
-		      "\\)*"))
-
-  ;; Java does not allow a leading qualifier operator.  If it ends
-  ;; with ".*" (used in import declarations) we also consider that as
-  ;; part of the name.  ("*" is actually recognized in any position
-  ;; except the first by this regexp, but we don't bother.)
-  java (concat "\\(" (c-lang-const c-symbol-key) "\\)" ; 1
-	       (concat "\\("
-		       (c-lang-const c-simple-ws) "*"
-		       (c-lang-const c-opt-identifier-concat-key)
-		       (c-lang-const c-simple-ws) "*"
-		       (concat "\\("
-			       ;; The submatch below is `c-symbol-key-depth' +
-			       ;; depth of `c-opt-identifier-concat-key' + 4.
-			       "\\(" (c-lang-const c-symbol-key) "\\)"
-			       "\\|\\*\\)")
-		       "\\)*")))
-
+		      "\\)")
+		   (concat "\\(" (c-lang-const c-symbol-key) "\\)"))
+		 "\\)*")
+	      "")))
 (c-lang-defvar c-identifier-key (c-lang-const c-identifier-key))
 
 (c-lang-defconst c-identifier-last-sym-match
-  "Used to identify the submatch in `c-identifier-key' that surrounds
-the last symbol in the qualified identifier.  It's a list of submatch
-numbers, of which the first that has a match is taken.  It's assumed
-that at least one does when the regexp has matched."
-  t    '(0)
-  c++  (list (+ (* 3 (c-lang-const c-symbol-key-depth))
-		(* 3 (regexp-opt-depth
-		      (c-lang-const c-opt-identifier-concat-key)))
-		8)
-	     (+ (* 2 (c-lang-const c-symbol-key-depth))
-		(* 3 (regexp-opt-depth
-		      (c-lang-const c-opt-identifier-concat-key)))
-		7)
-	     (+ (c-lang-const c-symbol-key-depth)
-		(* 2 (regexp-opt-depth
-		      (c-lang-const c-opt-identifier-concat-key)))
-		5)
-	     (+ (regexp-opt-depth
-		 (c-lang-const c-opt-identifier-concat-key))
-		3))
-  (idl pike) (list (+ (c-lang-const c-symbol-key-depth)
-		      (* 2 (regexp-opt-depth
-			    (c-lang-const c-opt-identifier-concat-key)))
-		      4)
-		   (+ (regexp-opt-depth
-		       (c-lang-const c-opt-identifier-concat-key))
-		      2))
-  java (list (+ (c-lang-const c-symbol-key-depth)
-		(regexp-opt-depth
-		 (c-lang-const c-opt-identifier-concat-key))
-		4)
-	     1))
-(c-lang-defvar c-identifier-last-sym-match
-  (c-lang-const c-identifier-last-sym-match)
-  'dont-doc)
+  ;; This was a docstring constant in 5.30 but it's no longer used.
+  ;; It's only kept to avoid breaking third party code.
+  ;;
+  ;; Used to identify the submatch in `c-identifier-key' that
+  ;; surrounds the last symbol in the qualified identifier.  It's a
+  ;; list of submatch numbers, of which the first that has a match is
+  ;; taken.  It's assumed that at least one does when the regexp has
+  ;; matched.
+  t nil)
 
 (c-lang-defconst c-opt-cpp-prefix
   "Regexp matching the prefix of a cpp directive in the languages that
@@ -621,6 +601,9 @@ it.  The operator group types are:
 
 'prefix         Unary prefix operators.
 'postfix        Unary postfix operators.
+'postfix-if-paren
+		Unary postfix operators if and only if the chars have
+		parenthesis syntax.
 'left-assoc     Binary left associative operators (i.e. a+b+c means (a+b)+c).
 'right-assoc    Binary right associative operators (i.e. a=b=c means a=(b=c)).
 'right-assoc-sequence
@@ -653,20 +636,14 @@ since CC Mode treats every identifier as an expression."
 			,@(when (c-major-mode-is '(c-mode c++-mode))
 			    '("%:%:" "??=??=")))))
 
-      ;; Primary.  Info duplicated in `c-opt-identifier-concat-key'
-      ;; and `c-identifier-key'.
+      ;; Primary.
+      ,@(c-lang-const c-identifier-ops)
       ,@(cond ((c-major-mode-is 'c++-mode)
-	       `((postfix-if-paren "<" ">") ; Templates.
-		 (prefix "~" "??-" "compl")
-		 (right-assoc "::")
-		 (prefix "::")))
+	       `((postfix-if-paren "<" ">"))) ; Templates.
 	      ((c-major-mode-is 'pike-mode)
-	       `((left-assoc "::")
-		 (prefix "::" "global" "predef")))
+	       `((prefix "global" "predef")))
 	      ((c-major-mode-is 'java-mode)
-	       `(;; Not necessary since it's also in the postfix group below.
-		 ;;(left-assoc ".")
-		 (prefix "super"))))
+	       `((prefix "super"))))
 
       ;; Postfix.
       ,@(when (c-major-mode-is 'c++-mode)
@@ -766,10 +743,8 @@ since CC Mode treats every identifier as an expression."
   idl `(;; Preprocessor.
 	(prefix "#")
 	(left-assoc "##")
-	;; Primary.  Info duplicated in `c-opt-identifier-concat-key'
-	;; and `c-identifier-key'.
-	(left-assoc "::")
-	(prefix "::")
+	;; Primary.
+	,@(c-lang-const c-identifier-ops)
 	;; Unary.
 	(prefix  "+" "-" "~")
 	;; Multiplicative.
@@ -2120,6 +2095,7 @@ Note that Java specific rules are currently applied to tell this from
 	   (in-or-postfix-ops
 	    (c-filter-ops (c-lang-const c-operators)
 			  '(postfix
+			    postfix-if-paren
 			    left-assoc
 			    right-assoc
 			    right-assoc-sequence)
