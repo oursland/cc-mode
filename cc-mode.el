@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-07 15:28:54 $
-;; Version:         $Revision: 2.33 $
+;; Last Modified:   $Date: 1992-05-07 19:56:40 $
+;; Version:         $Revision: 2.34 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-07 15:28:54 $|$Revision: 2.33 $|
+;; |$Date: 1992-05-07 19:56:40 $|$Revision: 2.34 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -152,7 +152,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.33 $
+  "Major mode for editing C++ code.  $Revision: 2.34 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -457,12 +457,10 @@ backward-delete-char-untabify."
 		     (not (c++-in-comment-p)))
 		(progn
 		  ;; we should clean up brace-else-brace syntax
-		  (message "cleaning up } else {...")
 		  (delete-region mbeg mend)
 		  (insert-before-markers "} else {")
 		  (goto-char here)
-		  (set-marker here nil)
-		  (message "cleaning up } else {... done."))
+		  (set-marker here nil))
 	      (goto-char here)
 	      (set-marker here nil)))
 	  (c++-indent-line)
@@ -789,11 +787,17 @@ Returns nil if line starts inside a string, t if in a comment."
 	    ((c++-in-comment-p)
 	     ;; in a C comment.
 	     t)
-	    ;; is this a comment-only line in the first column?
+	    ;; is this a comment-only line in the first column or
+	    ;; comment-column?  if so we don't change the indentation,
+	    ;; otherwise, we indent relative to surrounding code
+	    ;; (later on).
 	    ((progn (goto-char indent-point)
 		    (beginning-of-line)
-		    (looking-at "^/[/*]"))
-	     0)
+		    (skip-chars-forward " \t")
+		    (and (looking-at comment-start-skip)
+			 (or (zerop (current-column))
+			     (= (current-column) comment-column))))
+	     (current-column))
 	    ((null containing-sexp)
 	     ;; Line is at top level.  May be comment-only line, data
 	     ;; or function definition, or may be function argument
@@ -1434,7 +1438,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.33 $"
+(defconst c++-version "$Revision: 2.34 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
