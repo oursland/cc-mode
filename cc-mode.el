@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.254 $
-;; Last Modified:   $Date: 1994-02-17 23:46:01 $
+;; Version:         $Revision: 3.255 $
+;; Last Modified:   $Date: 1994-02-17 23:53:16 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-17 23:46:01 $|$Revision: 3.254 $|
+;; |$Date: 1994-02-17 23:53:16 $|$Revision: 3.255 $|
 
 ;;; Code:
 
@@ -723,7 +723,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.254 $
+cc-mode Revision: $Revision: 3.255 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -754,7 +754,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.254 $
+cc-mode Revision: $Revision: 3.255 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1370,13 +1370,13 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 	(error "%s is not a valid syntactic symbol." symbol))))
   (c-keep-region-active))
 
-(defun c-set-style (style &optional global)
+(defun c-set-style (style &optional local)
   "Set cc-mode variables to use one of several different indentation styles.
-The arguments are a string representing the desired style and a flag
-which, if non-nil, means to set the style globally, instead of the
-default, which is to set buffer-local variables.  Interactively, the
-flag comes from the prefix argument.  The styles are chosen from the
-`c-style-alist' variable."
+STYLE is a string representing the desired style and optional LOCAL is
+a flag which, if non-nil, means to make the style variables being
+changed buffer local, instead of the default, which is to set the
+global variables.  Interactively, the flag comes from the prefix
+argument.  The styles are chosen from the `c-style-alist' variable."
   (interactive (list (completing-read "Use which C indentation style? "
                                       c-style-alist nil t)
 		     current-prefix-arg))
@@ -1389,8 +1389,8 @@ flag comes from the prefix argument.  The styles are chosen from the
       (lambda (varentry)
 	(let ((var (car varentry))
 	      (val (cdr varentry)))
-	  (or global
-	      (make-local-variable var))
+	  (and local
+	       (make-local-variable var))
 	  ;; special case for c-offsets-alist
 	  (if (not (eq var 'c-offsets-alist))
 	      (set var val)
@@ -3166,7 +3166,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.254 $"
+(defconst c-version "$Revision: 3.255 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
