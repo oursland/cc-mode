@@ -2098,8 +2098,8 @@ This function does not do any hidden buffer changes."
   "Return non-nil if the point is on or directly after an identifier.
 Keywords are recognized and not considered identifiers.  If an
 identifier is detected, the returned value is its starting position.
-If an identifier both starts and stops at the point \(can only happen
-in Pike) then the point for the preceding one is returned.
+If an identifier ends at the point and another begins at it \(can only
+happen in Pike) then the point for the preceding one is returned.
 
 This function does not do any hidden buffer changes."
 
