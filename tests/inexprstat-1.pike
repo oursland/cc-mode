@@ -3,15 +3,18 @@ void|int foo (mapping(int:string) test)
     int a = catch
     {
 	write (foo);
+	yeti();
     };
     write (1 + sin(7),
 	   foo, gauge {
 	       innit();
+	       yeti();
 	   },
 	   gluu
 	);
     write (1 + sin(7),
-	   foo, gauge {
+	   foo, gauge
+	   {
 	       innit();
 	   }
 	);
@@ -22,7 +25,8 @@ void|int foo (mapping(int:string) test)
 	gluu
 	);
     write (
-	foo, gauge {
+	foo, gauge
+	{
 	    innit();
 	}
 	);
