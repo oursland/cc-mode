@@ -184,8 +184,9 @@ or \"/ah\" string on the mode line, newlines are inserted before and
 after braces based on the value of `c-hanging-braces-alist'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
-are non-whitespace characters present on the line after the brace, or
-the brace is inserted inside a literal.
+are non-whitespace characters present on the line after the brace, the
+brace is inserted inside a literal, or `c-syntactic-indentation' is
+nil.
 
 This function does various newline cleanups based on the value of
 `c-cleanup-list'."
@@ -291,7 +292,8 @@ This function does various newline cleanups based on the value of
 						   t))))
 			(setq c-state-cache
 			      (c-hack-state (point) 'open c-state-cache)))))
-		(c-indent-line))
+		(if c-syntactic-indentation
+		    (c-indent-line)))
 	      (setq c-state-cache (c-adjust-state (c-point 'bol) here
 						  (- (point) (c-point 'bol))
 						  c-state-cache))
@@ -411,11 +413,12 @@ Indent the line as a comment, if:
   2. The slash is part of a `*/' token that closes a block oriented
      comment.
 
-If numeric ARG is supplied or point is inside a literal, indentation
-is inhibited."
+If a numeric ARG is supplied, point is inside a literal, or
+`c-syntactic-indentation' is nil, indentation is inhibited."
   (interactive "*P")
   (let* ((ch (char-before))
-	 (indentp (and (not arg)
+	 (indentp (and c-syntactic-indentation
+		       (not arg)
 		       (eq last-command-char ?/)
 		       (or (and (eq ch ?/)
 				(not (c-in-literal)))
@@ -432,13 +435,14 @@ is inhibited."
   "Insert a star character.
 If the star is the second character of a C style comment introducing
 construct, and we are on a comment-only-line, indent line as comment.
-If numeric ARG is supplied or point is inside a literal, indentation
-is inhibited."
+If a numeric ARG is supplied, point is inside a literal, or
+`c-syntactic-indentation' is nil, indentation is inhibited."
   (interactive "*P")
   (self-insert-command (prefix-numeric-value arg))
   ;; if we are in a literal, or if arg is given do not re-indent the
   ;; current line, unless this star introduces a comment-only line.
-  (if (and (not arg)
+  (if (and c-syntactic-indentation
+	   (not arg)
 	   (memq (c-in-literal) '(c))
 	   (eq (char-before) ?*)
 	   (save-excursion
@@ -462,7 +466,8 @@ is determined.
 
 When semicolon is inserted, the line is re-indented unless a numeric
 arg is supplied, point is inside a literal, or there are
-non-whitespace characters on the line following the semicolon.
+non-whitespace characters on the line following the semicolon, or
+`c-syntactic-indentation' is nil.
 
 Based on the value of `c-cleanup-list', this function cleans up commas
 following brace lists and semicolons following defuns."
@@ -481,7 +486,8 @@ following brace lists and semicolons following defuns."
       ;; do all cleanups and newline insertions if c-auto-newline is
       ;; turned on
       (if (not c-auto-newline)
-	  (c-indent-line)
+	  (if c-syntactic-indentation
+	      (c-indent-line))
 	;; clean ups
 	(let ((pos (- (point-max) (point))))
 	  (if (and (or (and
@@ -499,7 +505,8 @@ following brace lists and semicolons following defuns."
 	      (delete-region (point) here))
 	  (goto-char (- (point-max) pos)))
 	;; re-indent line
-	(c-indent-line)
+	(if c-syntactic-indentation
+	    (c-indent-line))
 	;; check to see if a newline should be added
 	(let ((criteria c-hanging-semi&comma-criteria)
 	      answer add-newline-p)
@@ -525,8 +532,9 @@ or \"/ah\" string on the mode line, newlines are inserted before and
 after colons based on the value of `c-hanging-colons-alist'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
-are non-whitespace characters present on the line after the colon, or
-the colon is inserted inside a literal.
+are non-whitespace characters present on the line after the colon, the
+colon is inserted inside a literal, or `c-syntactic-indentation' is
+nil.
 
 This function cleans up double colon scope operators based on the
 value of `c-cleanup-list'."
@@ -574,8 +582,9 @@ value of `c-cleanup-list'."
 					   (c-guess-basic-syntax)
 					 (delete-char -1)))
 				     c-hanging-colons-alist))))
-      ;; indent the current line
-      (c-indent-line syntax)
+      ;; indent the current line if it's done syntactically.
+      (if c-syntactic-indentation
+	  (c-indent-line syntax))
       ;; does a newline go before the colon?  Watch out for already
       ;; non-hung colons.  However, we don't unhang them because that
       ;; would be a cleanup (and anti-social).
@@ -601,10 +610,12 @@ value of `c-cleanup-list'."
   "Insert a less-than, or greater-than character.
 The line will be re-indented if the character inserted is the second
 of a C++ style stream operator and the buffer is in C++ mode.
-Exceptions are when a numeric argument is supplied, or point is inside
-a literal, in which case the line will not be re-indented."
+Exceptions are when a numeric argument is supplied, point is inside a
+literal, or `c-syntactic-indentation' is nil, in which case the line
+will not be re-indented."
   (interactive "*P")
-  (let ((indentp (and (not arg)
+  (let ((indentp (and c-syntactic-indentation
+		      (not arg)
 		      (eq (char-before) last-command-char)
 		      (not (c-in-literal))))
 	;; shut this up
@@ -622,7 +633,8 @@ appropriate; see the variable `c-cleanup-list'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the
-parenthesis, or the parenthesis is inserted inside a literal."
+parenthesis, the parenthesis is inserted inside a literal, or
+`c-syntactic-indentation' is nil."
   (interactive "*P")
   (let (;; shut this up
 	(c-echo-syntactic-information-p nil))
@@ -637,7 +649,8 @@ parenthesis, or the parenthesis is inserted inside a literal."
 	     (old-blink-paren blink-paren-function)
 	     blink-paren-function)
 	(self-insert-command (prefix-numeric-value arg))
-	(c-indent-line)
+	(if c-syntactic-indentation
+	    (c-indent-line))
 	(when c-auto-newline
 	  ;; Do all appropriate clean ups
 	  (let ((here (point))
@@ -1299,7 +1312,7 @@ treated as conditional clause limits.  Normally they are ignored."
 
 
 ;; commands to indent lines, regions, defuns, and expressions
-(defun c-indent-command (&optional whole-exp)
+(defun c-indent-command (&optional arg)
   "Indent current line as C code, and/or insert some whitespace.
 
 If `c-tab-always-indent' is t, always just indent the current line.
@@ -1309,10 +1322,16 @@ other than nil or t, then some whitespace[*] is inserted only within
 literals (comments and strings) and inside preprocessor directives,
 but the line is always reindented.
 
-A numeric argument, regardless of its value, means indent rigidly all
-the lines of the expression starting after point so that this line
-becomes properly indented.  The relative indentation among the lines
-of the expression is preserved.
+If `c-syntactic-indentation' is t, indentation is done according to
+the syntactic context.  If it's nil, the line is just indented one
+step according to `c-basic-offset'.  In this mode, a numeric argument
+indents a number of such steps, positive or negative, and an empty
+prefix argument is equivalent to -1.
+
+If `c-syntactic-indentation' is t, then a numeric argument, regardless
+of its value, means indent rigidly all the lines of the expression
+starting after point so that this line becomes properly indented.  The
+relative indentation among the lines of the expression is preserved.
 
   [*] The amount and kind of whitespace inserted is controlled by the
   variable `c-insert-tab-function', which is called to do the actual
@@ -1320,11 +1339,21 @@ of the expression is preserved.
   just inserts a tab character, or the equivalent number of spaces,
   depending on the variable `indent-tabs-mode'."
 
-  (interactive "P")
-  (let ((bod (c-point 'bod)))
-    (if whole-exp
-	;; If arg, always indent this line as C
-	;; and shift remaining lines of expression the same amount.
+  (interactive "p")
+  (let ((bod (c-point 'bod))
+	(indent-function
+	 (if c-syntactic-indentation
+	     (symbol-function 'c-indent-line)
+	   (lambda ()
+	     (let ((steps (cond ((not current-prefix-arg) 1)
+				((equal current-prefix-arg '(4)) -1)
+				(t arg))))
+	       (c-shift-line-indentation (* steps c-basic-offset)))
+	     ))))
+    (if (and c-syntactic-indentation current-prefix-arg)
+	;; If c-syntactic-indentation and got arg, always indent this
+	;; line as C and shift remaining lines of expression the same
+	;; amount.
 	(let ((shift-amt (c-indent-line))
 	      beg end)
 	  (save-excursion
@@ -1338,8 +1367,7 @@ of the expression is preserved.
 	    (setq beg (point)))
 	  (if (> end beg)
 	      (indent-code-rigidly beg end (- shift-amt) "#")))
-      ;; No arg supplied, use c-tab-always-indent to determine
-      ;; behavior
+      ;; Else use c-tab-always-indent to determine behavior.
       (cond
        ;; CASE 1: indent when at column zero or in lines indentation,
        ;; otherwise insert a tab
@@ -1348,20 +1376,20 @@ of the expression is preserved.
 	      (skip-chars-backward " \t")
 	      (not (bolp)))
 	    (funcall c-insert-tab-function)
-	  (c-indent-line)))
+	  (funcall indent-function)))
        ;; CASE 2: just indent the line
        ((eq c-tab-always-indent t)
-	(c-indent-line))
+	(funcall indent-function))
        ;; CASE 3: if in a literal, insert a tab, but always indent the
        ;; line
        (t
 	(if (c-in-literal bod)
 	    (funcall c-insert-tab-function))
-	(c-indent-line)
+	(funcall indent-function)
 	)))))
 
 (defun c-indent-exp (&optional shutup-p)
-  "Indent each line in balanced expression following point.
+  "Indent each line in balanced expression following point syntactically.
 Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (interactive "*P")
   (let ((here (point-marker))
@@ -1411,7 +1439,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (set-marker here nil))))
 
 (defun c-indent-defun ()
-  "Re-indents the current top-level function def, struct or class declaration."
+  "Re-indents the current top-level function def, struct or class declaration
+syntactically."
   (interactive "*")
   (let ((here (point-marker))
 	(c-echo-syntactic-information-p nil)
