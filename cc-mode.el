@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.154 $
-;; Last Modified:   $Date: 1993-12-28 14:29:41 $
+;; Version:         $Revision: 3.155 $
+;; Last Modified:   $Date: 1993-12-28 14:36:34 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-28 14:29:41 $|$Revision: 3.154 $|
+;; |$Date: 1993-12-28 14:36:34 $|$Revision: 3.155 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.154 $
+CC-MODE REVISION: $Revision: 3.155 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.154 $
+CC-MODE REVISION: $Revision: 3.155 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1025,7 +1025,9 @@ the brace is inserted inside a literal."
 			    blink-paren-hook))
 	 blink-paren-function		; emacs19
 	 blink-paren-hook		; emacs18
-	 semantics newlines)
+	 semantics newlines
+	 ;; shut this up
+	 (c-echo-semantic-information-p nil))
     (if (or literal
 	    arg
 	    (not (looking-at "[ \t]*$")))
@@ -1119,7 +1121,9 @@ is inhibited."
 		      (not arg)
 		      (= (preceding-char) ?/)
 		      (= last-command-char ?/)
-		      (not (c-in-literal)))))
+		      (not (c-in-literal))))
+	;; shut this up
+	(c-echo-semantic-information-p nil))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
 	(c-indent-via-language-element))))
@@ -1136,7 +1140,9 @@ is inhibited."
 			       (save-excursion
 				 (skip-chars-backward "* \t")
 				 (bolp)))
-			  (= (preceding-char) ?/)))))
+			  (= (preceding-char) ?/))))
+	;; shut this up
+	(c-echo-semantic-information-p nil))
     (self-insert-command (prefix-numeric-value arg))
     (if indentp
 	(c-indent-via-language-element))))
@@ -1153,7 +1159,9 @@ non-whitespace characters on the line following the semicolon."
   (interactive "P")
   (let* ((bod (c-point 'bod))
 	 (literal (c-in-literal bod))
-	 (here (point)))
+	 (here (point))
+	 ;; shut this up
+	 (c-echo-semantic-information-p nil))
     (if (or literal
 	    arg
 	    (not (looking-at "[ \t]*$")))
@@ -1214,7 +1222,9 @@ the value of `c-cleanup-list'."
   (interactive "P")
   (let* ((bod (c-point 'bod))
 	 (literal (c-in-literal bod))
-	 semantics newlines)
+	 semantics newlines
+	 ;; shut this up
+	 (c-echo-semantic-information-p nil))
     (if (or literal
 	    arg
 	    (not (looking-at "[ \t]*$")))
@@ -1223,9 +1233,10 @@ the value of `c-cleanup-list'."
       (setq semantics (progn
 			(self-insert-command (prefix-numeric-value arg))
 			(c-guess-basic-semantics bod))
-      ;; some language elements can only be determined by checking the
-      ;; following line.  Lets first look for ones that can be found
-      ;; when looking on the line with the colon
+	    ;; some language elements can only be determined by
+	    ;; checking the following line.  Lets first look for ones
+	    ;; that can be found when looking on the line with the
+	    ;; colon
 	    newlines
 	    (and c-auto-newline
 		 (or
@@ -2924,7 +2935,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.154 $"
+(defconst c-version "$Revision: 3.155 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
