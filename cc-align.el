@@ -724,6 +724,55 @@ Works with: cpp-macro-cont."
 	      nil
 	    (vector offset)))))))
 
+;; Contributed by Kevin Ryde <user42@zip.com.au>.
+(defun c-lineup-gcc-asm-reg (elem)
+  "Line up a gcc asm register under one on a previous line.
+
+    asm (\"foo %1, %0\\n\"
+         \"bar %0, %1\"
+         : \"=r\" (w),
+           \"=r\" (x)
+         :  \"0\" (y),
+            \"1\" (z));
+
+The \"x\" line is aligned to the text after the \":\" on the \"w\" line, and
+similarly \"z\" under \"y\".
+
+This is done only in an \"asm\" or \"__asm__\" block, and only to those
+lines mentioned.  Anywhere else `nil' is returned.  The usual arrangement is
+to have this routine as an extra feature at the start of arglist lineups, eg.
+
+    (c-lineup-gcc-asm-reg c-lineup-arglist)
+
+Works with: arglist-cont, arglist-cont-nonempty."
+
+  (let ((orig-pos (point))
+	alignto)
+    (save-excursion
+      (and
+       ;; Find the ":" to align to.  Look for this first so as to quickly
+       ;; eliminate pretty much all cases which are not for us.
+       (re-search-backward "^[ \t]*:[ \t]*\\(.\\)?" (cdr elem) t)
+
+       ;; Must have something after the ":".
+       (setq alignto (match-beginning 1))
+
+       ;; Don't touch ":" lines themselves.
+       (progn (goto-char orig-pos)
+	      (beginning-of-line)
+	      (not (looking-at "^[ \t]*:")))
+
+       ;; Only operate in an "asm" or "__asm__".  Note the use of "[^...]"
+       ;; rather than "\\>", because "_" is not normally a word character.
+       (progn (goto-char orig-pos)
+	      (beginning-of-line)
+	      (backward-up-list 1)
+	      (c-beginning-of-statement-1 (point-min) nil t)
+	      (looking-at "\\(asm\\|__asm__\\)[^a-zA-Z0-9_$]"))
+
+       (- (progn (goto-char alignto)    (current-column))
+	  (progn (goto-char (cdr elem)) (current-column)))))))
+
 (defun c-lineup-dont-change (langelem)
   "Do not change the indentation of the current line.
 

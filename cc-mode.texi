@@ -2,6 +2,7 @@
 
 @comment FIXME: Document c-indent-comment-alist.
 @comment FIXME: Tune docs for the statement anchor fixes, if necessary.
+@comment FIXME: Document c-report-syntactic-errors.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment %**start of header (This is for running Texinfo on a region)
@@ -4027,6 +4028,38 @@ used for @code{cpp-macro-cont} lines.
 @comment FIXME: Update for c-syntactic-analysis-in-macro.
 
 @workswith Any syntactic symbol.
+
+@comment ------------------------------------------------------------
+
+@findex c-lineup-gcc-asm-reg
+@findex lineup-gcc-asm-reg (c-)
+@item c-lineup-gcc-asm-reg
+Line up a gcc asm register under one on a previous line.
+@example
+
+    asm ("foo %1, %0\n"
+	 "bar %0, %1"
+	 : "=r" (w),
+	   "=r" (x)
+	 :  "0" (y),
+	    "1" (z));
+
+@end example
+
+The "x" line is aligned to the text after the ":" on the "w" line, and
+similarly "z" under "y".
+
+This is done only in an "asm" or "__asm__" block, and only to those
+lines mentioned.  Anywhere else `nil' is returned.  The usual
+arrangement is to have this routine as an extra feature at the start of
+arglist lineups, eg.
+@example
+
+    (c-lineup-gcc-asm-reg c-lineup-arglist)
+
+@end example
+
+@workswith @code{arglist-cont}, @code{arglist-cont-nonempty}.
 
 @comment ------------------------------------------------------------
 
