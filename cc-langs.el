@@ -55,8 +55,10 @@
 ;; keywords introducing class definitions.  language specific
 (defconst c-C-class-key "\\(struct\\|union\\)")
 (defconst c-C++-class-key "\\(class\\|struct\\|union\\)")
+(defconst c-IDL-class-key "\\(class\\|struct\\|union\\|interface\\)")
 (defconst c-C-extra-toplevel-key "\\(extern\\)[^_]")
 (defconst c-C++-extra-toplevel-key "\\(extern\\|namespace\\)[^_]")
+(defconst c-IDL-extra-toplevel-key "\\(module\\)[^_]")
 
 (defconst c-ObjC-class-key
   (concat
