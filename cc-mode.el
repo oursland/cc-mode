@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-27 23:30:43 $
-;; Version:         $Revision: 2.74 $
+;; Last Modified:   $Date: 1992-05-28 13:58:44 $
+;; Version:         $Revision: 2.75 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-27 23:30:43 $|$Revision: 2.74 $|
+;; |$Date: 1992-05-28 13:58:44 $|$Revision: 2.75 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -197,7 +197,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.74 $
+  "Major mode for editing C++ code.  $Revision: 2.75 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -931,7 +931,7 @@ Returns nil if line starts inside a string, t if in a comment."
 	      (setq parse-start (point)
 		    state pps
 		    containing-sexp (car (cdr pps))))))
-      (cond ((nth 3 state)
+      (cond ((c++-in-open-string-p)
 	     ;; in a string.
 	     nil)
 	    ((c++-in-comment-p)
@@ -1000,7 +1000,8 @@ Returns nil if line starts inside a string, t if in a comment."
 			 0
 		       (beginning-of-line) ; cont arg decls or member inits
 		       (skip-chars-forward " \t")
-		       (if (looking-at "/[/*]")
+		       (if (or (c++-in-comment-p)
+			       (looking-at "/[/*]"))
 			   0
 			 (if (= (following-char) ?:)
 			     (if c++-continued-member-init-offset
@@ -1668,7 +1669,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.74 $"
+(defconst c++-version "$Revision: 2.75 $"
   "c++-mode version number.")
 
 (defun c++-version ()
