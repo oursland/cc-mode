@@ -221,6 +221,14 @@ Getting Started
     more information (see below).
 
 
+Frequently Asked Questions
+
+    Q. How do I re-indent the whole file?
+    A. Visit the file and hit "C-x h" to mark the whole buffer. Then
+       hit "ESC C-\" to indent the entire region (which you've just
+       marked as the whole buffer).
+
+
 User level differences between cc-mode.el and c-mode.el (as
 distributed with FSF Emacs 19.22).
 
