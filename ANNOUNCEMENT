@@ -1,12 +1,13 @@
-Release announcement for cc-mode 4.222
-Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-$Date: 1995-06-11 21:48:42 $
+Release announcement for cc-mode 4.241
+Barry A. Warsaw <cc-mode-help@merlin.cnri.reston.va.us>
+$Date: 1995-08-29 15:44:41 $
 
-This message announces the availability of cc-mode version 4.222.
+This message announces the availability of cc-mode version 4.241.
 cc-mode is a GNU Emacs mode for editing C (ANSI and K&R), C++, and
-Objective-C code.  The last full release was of version 4.85.  A list
-of user visible changes is outlined below.  See the MANIFEST file for
-a description of other files included in this release.
+Objective-C code.  The last full release was of version 4.222.  This
+is primarily a bug fix release; a list of user visible changes is
+outlined below.  See the MANIFEST file for a description of other
+files included in this release.
 
 Since the distribution is fairly large and since it is readily
 available both via anonymous ftp and email, the source code is not
@@ -18,13 +19,8 @@ cc-mode-victims-request@merlin.cnri.reston.va.us.  Other mailing list
 addresses are outlined in the README file.  Note that all old
 addresses which refer to anthem.nlm.nih.gov are no longer valid!  They
 may be forwarded to the new addreseses for some limited amount of
-time.
-
-This release was timed to coincide with a number of external events.
-One of these is the release of both Emacs 19.29 from the FSF, and
-XEmacs 19.12 from UIUC.  Both of these Emacsen should be released with
-cc-mode already integrated.  The other external event is the movement
-of the mailing list and help addresses to merlin.cnri.reston.va.us.
+time.  These mailing lists are maintained by the Majordomo automated
+mailing list software.
 
 As always a huge thank you goes out to all the cc-mode-victims beta
 testers!  Without their help and suggestions, it would have been
@@ -33,73 +29,47 @@ Padmasola for generating a texinfo file from the 4.85 README.  It's
 because of Krishna's efforts that there is now a texinfo manual.
 
 
-User visible changes since 4.85
-===============================
+User visible changes since 4.222
+================================
 
-Compatibility with outline-minor-mode added.
+* A better version of c-lineup-ObjC-method-call which does a better
+  job of handling: 1. indentation of arguments to keyword parameters,
+  2. multiline method calls.
 
-c-offsets-alist recognizes two new offset shortcuts: '* and '/.  These
-stand for 1 times 0.5 and -0.5 respectively (rounded to the nearest
-integer of course).
+* A better version of c-backslash-region, which does a better job of
+  handling the right-align of backslashes.
 
-c-recognize-knr-p is by default nil in all modes.
-
-Major rewrite of the style feature.  All style variables should be
-buffer local now, and the default style is "GNU".  There is a
-"CC-MODE" style which represents the baseline old cc-mode style.  You
-may need to install this style if you use c-set-offset or setq
-directly in your mode hooks.  Note that all styles implicitly derive
-from "CC-MODE" so if you set your own style, you should be okay.
-There is no style named "Default".
-
-New variable c-indent-comments-syntactically-p.
-
-New function c-add-style.  Greatly simplifies the addition of new styles.
-
-New variables c-file-style and c-file-offset for File Local Variable
-support of style setting.  May only work in Emacs 19.29 and XEmacs
-19.12.
-
-More flexibility added to c-hanging-braces-alist which allow you to
-add custom ACTION functions for determining brace hanginess.
-
-New variable c-hanging-semi&comma-criteria opens up the calculation
-and insertion of newlines after commas and semicolons.
-
-New option for c-cleanup-list: snug-do-while.
-
-New function to optionally enable recognition of // as a comment
-delimiter in c-mode.  See the function c-enable-//-in-c-mode.
-
-C-c C-v is no longer bound to c-version.  This binding conflicted with
-OOBR.  Use M-x c-version RET.
-
-Texinfo manual!  Yay!
-
-The usual assortment of bug fixes and performance enhancements.
-
+* Bug fixes!
 
 Getting cc-mode.el
 ===================
-The latest public release version of this file should always be
-available for anonymous ftp on the Emacs Lisp Archive machine.  The
-path to the file is:
 
-archive.cis.ohio-state.edu:pub/gnu/emacs/elisp-archive/modes/cc-mode.tar.Z
+NOTE: THIS SECTION HAS CHANGED.
 
-This file contains .el source, README and ancillary files.
+It appears as though the Emacs Lisp Archive no longer has an active
+maintainer, so I am not recommending that machine as the canonical ftp
+site anymore.  The last time I checked the cc-mode on that machine had
+not been updated in a long time.
+
+There is now a new canonical ftp site which you can use.  Here is the
+ftp URL for the tar distribution:
+
+	ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz
+
+This is a gzip'd tar file containing the .el source code and
+documentation, along with sundry other useful files.  See the MANIFEST
+a complete list of the contained files.
 
 For those of you without anon-ftp access, you can use the DEC
-ftpmail'er at the address ftpmail@decwrl.dec.com.  Send the
-following message in the body of your mail to that address to get
-cc-mode:
+ftpmail'er at the address ftpmail@decwrl.dec.com.  Send the following
+message in the body of your mail to that address to get cc-mode:
 
 reply <a valid net address back to you>
-connect archive.cis.ohio-state.edu
+connect ftp.python.org
 binary
 uuencode
-chdir pub/gnu/emacs/elisp-archive/modes
-get cc-mode.tar.Z
+chdir pub/emacs
+get cc-mode.tar.gz
 
 or just send the message "help" for more information on ftpmail.
 Response times will vary with the number of requests in the queue.
