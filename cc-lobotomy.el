@@ -65,9 +65,6 @@
 (cc-require 'cc-engine)
 (cc-require 'cc-cmds)
 
-;; Declare variables used dynamically.
-(defvar c-in-literal-cache)
-
 
 (defvar cc-lobotomy-pith-list ()
   "*List of things to dumb-ify to speed up cc-mode.  Note that each
@@ -120,8 +117,7 @@ Possible values to put on this list:
 ;; cannot be the first non-whitespace on a line.
 (defun cc-in-literal-lobotomized (&optional lim)
   ;; first check the cache
-  (if (and (boundp 'c-in-literal-cache)
-	   c-in-literal-cache
+  (if (and (vectorp c-in-literal-cache)
 	   (= (point) (aref c-in-literal-cache 0)))
       (aref c-in-literal-cache 1)
     ;; quickly check for cpp macro. this breaks if the `#' character
@@ -140,8 +136,8 @@ Possible values to put on this list:
 		 ((nth 4 state) (if (nth 7 state) 'c++ 'c))
 		 (t nil))))
       ;; cache this result if the cache is enabled
-      (and (boundp 'c-in-literal-cache)
-	   (setq c-in-literal-cache (vector (point) rtn)))
+      (if (not c-in-literal-cache)
+	  (setq c-in-literal-cache (vector (point) rtn)))
       rtn)))
 
 (defun cc-narrow-out-enclosing-class-lobotomized (dummy1 dummy2) nil)

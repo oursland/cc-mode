@@ -42,12 +42,6 @@
 (cc-require 'cc-langs)
 (cc-require 'cc-engine)
 
-;; Define variables used dynamically.
-(defvar c-auto-fill-prefix)
-(defvar c-lit-type)
-(defvar c-lit-limits)
-(defvar c-state-cache)
-
 ;; Silence the compiler.
 (cc-bytecomp-defvar delete-key-deletes-forward) ; XEmacs 20+
 (cc-bytecomp-defun delete-forward-p)	; XEmacs 21+
@@ -340,8 +334,8 @@ This function does various newline cleanups based on the value of
 		  (setq syntax (c-guess-basic-syntax))
 		;; gotta punt. this requires some horrible kludgery
 		(beginning-of-line)
-		(makunbound 'c-state-cache)
-		(setq c-state-cache (c-parse-state)
+		(setq c-state-cache nil
+		      c-state-cache (c-parse-state)
 		      syntax nil))))
 	  )
 	;; Now adjust the line's indentation.  Don't update the state
@@ -1813,6 +1807,10 @@ command to conveniently insert and align the necessary backslashes."
 
 ;;; Line breaking and paragraph filling.
 
+(defvar c-auto-fill-prefix t)
+(defvar c-lit-limits nil)
+(defvar c-lit-type nil)
+
 ;; The filling code is based on a simple theory; leave the intricacies
 ;; of the text handling to the currently active mode for that
 ;; (e.g. adaptive-fill-mode or filladapt-mode) and do as little as
@@ -2336,9 +2334,9 @@ If a fill prefix is specified, it overrides all the above."
 	   (if soft (insert-and-inherit ?\n) (newline 1))))
 	;; Already know the literal type and limits when called from
 	;; c-context-line-break.
-	(c-lit-limits (if (boundp 'c-lit-limits) c-lit-limits))
-	(c-lit-type (if (boundp 'c-lit-type) c-lit-type)))
-    (when (boundp 'c-auto-fill-prefix)
+	(c-lit-limits c-lit-limits)
+	(c-lit-type c-lit-type))
+    (when (not (eq c-auto-fill-prefix t))
       ;; Called from do-auto-fill.
       (unless c-lit-limits
 	(setq c-lit-limits (c-literal-limits nil nil t)))

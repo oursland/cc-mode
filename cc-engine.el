@@ -44,11 +44,10 @@
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
 
-;; Declare variables used dynamically.
-(defvar c-in-literal-cache)
-(defvar c-state-cache)
-
 
+(defvar c-state-cache nil)
+(defvar c-in-literal-cache t)
+
 ;; KLUDGE ALERT: c-maybe-labelp is used to pass information between
 ;; c-crosses-statement-barrier-p and c-beginning-of-statement-1.  A
 ;; better way should be implemented, but this will at least shut up
@@ -422,8 +421,7 @@
 (defun c-in-literal (&optional lim)
   ;; Determine if point is in a C++ literal. we cache the last point
   ;; calculated if the cache is enabled
-  (if (and (boundp 'c-in-literal-cache)
-	   c-in-literal-cache
+  (if (and (vectorp c-in-literal-cache)
 	   (= (point) (aref c-in-literal-cache 0)))
       (aref c-in-literal-cache 1)
     (let ((rtn (save-excursion
@@ -435,8 +433,8 @@
 		    ((c-beginning-of-macro lim) 'pound)
 		    (t nil))))))
       ;; cache this result if the cache is enabled
-      (and (boundp 'c-in-literal-cache)
-	   (setq c-in-literal-cache (vector (point) rtn)))
+      (if (not c-in-literal-cache)
+	  (setq c-in-literal-cache (vector (point) rtn)))
       rtn)))
 
 ;; XEmacs has a built-in function that should make this much quicker.
@@ -641,7 +639,7 @@
   ;;
   ;; if there's a state cache, return it
   (setq c-parsing-error nil)
-  (if (boundp 'c-state-cache) c-state-cache
+  (if c-state-cache c-state-cache
     (let* (at-bob
 	   (pos (save-excursion
 		  ;; go back 2 bods, but ignore any bogus positions
@@ -1661,12 +1659,7 @@ brace."
 		;; to go through much chicanery to ignore the cache.
 		;; But of course, there may not be!  BLECH!  BOGUS!
 		(let ((decl
-		       (if (boundp 'c-state-cache)
-			   (let ((old-cache c-state-cache))
-			     (prog2
-				 (makunbound 'c-state-cache)
-				 (c-search-uplist-for-classkey (c-parse-state))
-			       (setq c-state-cache old-cache)))
+		       (let ((c-state-cache nil))
 			 (c-search-uplist-for-classkey (c-parse-state))
 			 )))
 		  (and decl
