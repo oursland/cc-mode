@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-24 14:53:36 $
-;; Version:         $Revision: 2.122 $
+;; Last Modified:   $Date: 1992-06-24 20:07:00 $
+;; Version:         $Revision: 2.123 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-24 14:53:36 $|$Revision: 2.122 $|
+;; |$Date: 1992-06-24 20:07:00 $|$Revision: 2.123 $|
 
 
 ;; ======================================================================
@@ -231,7 +231,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.122 $
+  "Major mode for editing C++ code.  $Revision: 2.123 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -627,6 +627,10 @@ backward-delete-char-untabify."
 		 (delete-region (point) here))
 	    (goto-char here)
 	    (set-marker here nil))
+	  ;; must do this before inserting brace since otherwise,
+	  ;; c++-beginning-of-defun will not be able to correctly find
+	  ;; the bod when c++-match-headers-strongly is nil.
+	  (c++-indent-line)
 	  (insert last-command-char)
 	  (let ((here (point-marker))
 		mbeg mend)
@@ -1911,7 +1915,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.122 $"
+(defconst c++-version "$Revision: 2.123 $"
   "c++-mode version number.")
 
 (defun c++-version ()
