@@ -480,7 +480,7 @@ Here is the current list of valid syntactic element symbols:
  inexpr-class           -- the class is inside an expression
 ")
 
-(defun c-evaluate-offset (offset)
+(defun c-evaluate-offset (offset langelem symbol)
   ;; offset can be a number, a function, a variable, a list, or one of
   ;; the symbols + or -
   (cond
@@ -495,7 +495,7 @@ Here is the current list of valid syntactic element symbols:
     (setq offset
 	  (let (done)
 	    (while (and (not done) offset)
-	      (setq done (c-evaluate-offset (car offset))
+	      (setq done (c-evaluate-offset (car offset) langelem symbol)
 		    offset (cdr offset)))
 	    (if (not done)
 		(if c-strict-syntax-p
@@ -521,7 +521,7 @@ Here is the current list of valid syntactic element symbols:
 	    (error "No offset found for syntactic symbol %s" symbol)
 	  (setq offset 0
 		relpos 0))
-      (setq offset (c-evaluate-offset offset)))
+      (setq offset (c-evaluate-offset offset langelem symbol)))
     (+ (if (and relpos
 		(< relpos (c-point 'bol)))
 	   (save-excursion
