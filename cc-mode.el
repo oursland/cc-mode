@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.203 $
-;; Last Modified:   $Date: 1994-01-25 14:10:35 $
+;; Version:         $Revision: 3.204 $
+;; Last Modified:   $Date: 1994-01-25 18:01:01 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-25 14:10:35 $|$Revision: 3.203 $|
+;; |$Date: 1994-01-25 18:01:01 $|$Revision: 3.204 $|
 
 ;;; Code:
 
@@ -736,7 +736,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.203 $
+cc-mode Revision: $Revision: 3.204 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -767,7 +767,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.203 $
+cc-mode Revision: $Revision: 3.204 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1471,125 +1471,126 @@ preserving the comment indentation or line-starting decorations."
 	      (insert fill-prefix)
 	      (fill-paragraph arg)
 	      (delete-region (point-min)
-			     (+ (point-min) (length fill-prefix)))))))
-    (if (or first-line
-	    ;; t if we enter a comment between start of function and this line.
-	    (eq (calculate-c-indent) t)
-	    ;; t if this line contains a comment starter.
-	    (setq first-line
-		  (save-excursion
-		    (beginning-of-line)
-		    (prog1
-			(re-search-forward comment-start-skip
-					   (save-excursion (end-of-line)
-							   (point))
-					   t)
-		      (setq comment-start-place (point))))))
-	;; Inside a comment: fill one comment paragraph.
-	(let ((fill-prefix
-	       ;; The prefix for each line of this paragraph
-	       ;; is the appropriate part of the start of this line,
-	       ;; up to the column at which text should be indented.
-	       (save-excursion
-		 (beginning-of-line)
-		 (if (looking-at "[ \t]*/\\*.*\\*/")
-		     (progn (re-search-forward comment-start-skip)
-			    (make-string (current-column) ?\ ))
-		   (if first-line (forward-line 1))
+			     (+ (point-min) (length fill-prefix))))))
+      ;; else C style comments
+      (if (or first-line
+	      ;; t if we enter a comment between start of function and this line.
+	      (eq (calculate-c-indent) t)
+	      ;; t if this line contains a comment starter.
+	      (setq first-line
+		    (save-excursion
+		      (beginning-of-line)
+		      (prog1
+			  (re-search-forward comment-start-skip
+					     (save-excursion (end-of-line)
+							     (point))
+					     t)
+			(setq comment-start-place (point))))))
+	  ;; Inside a comment: fill one comment paragraph.
+	  (let ((fill-prefix
+		 ;; The prefix for each line of this paragraph
+		 ;; is the appropriate part of the start of this line,
+		 ;; up to the column at which text should be indented.
+		 (save-excursion
+		   (beginning-of-line)
+		   (if (looking-at "[ \t]*/\\*.*\\*/")
+		       (progn (re-search-forward comment-start-skip)
+			      (make-string (current-column) ?\ ))
+		     (if first-line (forward-line 1))
 
-		   (let ((line-width (progn (end-of-line) (current-column))))
-		     (beginning-of-line)
-		     (prog1
-			 (buffer-substring
-			  (point)
+		     (let ((line-width (progn (end-of-line) (current-column))))
+		       (beginning-of-line)
+		       (prog1
+			   (buffer-substring
+			    (point)
 
-			  ;; How shall we decide where the end of the
-			  ;; fill-prefix is?
-			  ;; calculate-c-indent-within-comment bases its value
-			  ;; on the indentation of previous lines; if they're
-			  ;; indented specially, it could return a column
-			  ;; that's well into the current line's text.  So
-			  ;; we'll take at most that many space, tab, or *
-			  ;; characters, and use that as our fill prefix.
-			  (let ((max-prefix-end
-				 (progn
-				   (move-to-column
-				    (calculate-c-indent-within-comment t)
-				    t)
-				   (point))))
-			    (beginning-of-line)
-			    (skip-chars-forward " \t*" max-prefix-end)
-			    (point)))
+			    ;; How shall we decide where the end of the
+			    ;; fill-prefix is?
+			    ;; calculate-c-indent-within-comment bases its value
+			    ;; on the indentation of previous lines; if they're
+			    ;; indented specially, it could return a column
+			    ;; that's well into the current line's text.  So
+			    ;; we'll take at most that many space, tab, or *
+			    ;; characters, and use that as our fill prefix.
+			    (let ((max-prefix-end
+				   (progn
+				     (move-to-column
+				      (calculate-c-indent-within-comment t)
+				      t)
+				     (point))))
+			      (beginning-of-line)
+			      (skip-chars-forward " \t*" max-prefix-end)
+			      (point)))
 
-		       ;; If the comment is only one line followed by a blank
-		       ;; line, calling move-to-column above may have added
-		       ;; some spaces and tabs to the end of the line; the
-		       ;; fill-paragraph function will then delete it and the
-		       ;; newline following it, so we'll lose a blank line
-		       ;; when we shouldn't.  So delete anything
-		       ;; move-to-column added to the end of the line.  We
-		       ;; record the line width instead of the position of the
-		       ;; old line end because move-to-column might break a
-		       ;; tab into spaces, and the new characters introduced
-		       ;; there shouldn't be deleted.
+			 ;; If the comment is only one line followed by a blank
+			 ;; line, calling move-to-column above may have added
+			 ;; some spaces and tabs to the end of the line; the
+			 ;; fill-paragraph function will then delete it and the
+			 ;; newline following it, so we'll lose a blank line
+			 ;; when we shouldn't.  So delete anything
+			 ;; move-to-column added to the end of the line.  We
+			 ;; record the line width instead of the position of the
+			 ;; old line end because move-to-column might break a
+			 ;; tab into spaces, and the new characters introduced
+			 ;; there shouldn't be deleted.
 
-		       ;; If you can see a better way to do this, please make
-		       ;; the change.  This seems very messy to me.
-		       (delete-region (progn (move-to-column line-width)
-					     (point))
-				      (progn (end-of-line) (point))))))))
+			 ;; If you can see a better way to do this, please make
+			 ;; the change.  This seems very messy to me.
+			 (delete-region (progn (move-to-column line-width)
+					       (point))
+					(progn (end-of-line) (point))))))))
 
-	      (paragraph-start
-	       ;; Lines containing just a comment start or just an end
-	       ;; should not be filled into paragraphs they are next to.
-	       (concat 
-		paragraph-start
-		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
-	      (paragraph-separate
-	       (concat
-		paragraph-separate
-		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
-	      (chars-to-delete 0))
-	  (save-restriction
-	    ;; Don't fill the comment together with the code following it.
-	    ;; So temporarily exclude everything before the comment start,
-	    ;; and everything after the line where the comment ends.
-	    ;; If comment-start-place is non-nil, the comment starter is there.
-	    ;; Otherwise, point is inside the comment.
-	    (narrow-to-region (save-excursion
-				(if comment-start-place
-				    (goto-char comment-start-place)
-				  (search-backward "/*"))
-				;; Protect text before the comment start 
-				;; by excluding it.  Add spaces to bring back 
-				;; proper indentation of that point.
-				(let ((column (current-column)))
-				  (prog1 (point)
-				    (setq chars-to-delete column)
-				    (insert-char ?\  column))))
-			      (save-excursion
-				(if comment-start-place
-				    (goto-char (+ comment-start-place 2)))
-				(search-forward "*/" nil 'move)
-				(forward-line 1)
-				(point)))
-	    (fill-paragraph arg)
-	    (save-excursion
-	      ;; Delete the chars we inserted to avoid clobbering
-	      ;; the stuff before the comment start.
-	      (goto-char (point-min))
-	      (if (> chars-to-delete 0)
-		  (delete-region (point) (+ (point) chars-to-delete)))
-	      ;; Find the comment ender (should be on last line of buffer,
-	      ;; given the narrowing) and don't leave it on its own line.
-	      (goto-char (point-max))
-	      (forward-line -1)
-	      (search-forward "*/" nil 'move)
-	      (beginning-of-line)
-	      (if (looking-at "[ \t]*\\*/")
-		  (delete-indentation)))))
-      ;; Outside of comments: do ordinary filling.
-      (fill-paragraph arg))))
+		(paragraph-start
+		 ;; Lines containing just a comment start or just an end
+		 ;; should not be filled into paragraphs they are next to.
+		 (concat 
+		  paragraph-start
+		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+		(paragraph-separate
+		 (concat
+		  paragraph-separate
+		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+		(chars-to-delete 0))
+	    (save-restriction
+	      ;; Don't fill the comment together with the code following it.
+	      ;; So temporarily exclude everything before the comment start,
+	      ;; and everything after the line where the comment ends.
+	      ;; If comment-start-place is non-nil, the comment starter is there.
+	      ;; Otherwise, point is inside the comment.
+	      (narrow-to-region (save-excursion
+				  (if comment-start-place
+				      (goto-char comment-start-place)
+				    (search-backward "/*"))
+				  ;; Protect text before the comment start 
+				  ;; by excluding it.  Add spaces to bring back 
+				  ;; proper indentation of that point.
+				  (let ((column (current-column)))
+				    (prog1 (point)
+				      (setq chars-to-delete column)
+				      (insert-char ?\  column))))
+				(save-excursion
+				  (if comment-start-place
+				      (goto-char (+ comment-start-place 2)))
+				  (search-forward "*/" nil 'move)
+				  (forward-line 1)
+				  (point)))
+	      (fill-paragraph arg)
+	      (save-excursion
+		;; Delete the chars we inserted to avoid clobbering
+		;; the stuff before the comment start.
+		(goto-char (point-min))
+		(if (> chars-to-delete 0)
+		    (delete-region (point) (+ (point) chars-to-delete)))
+		;; Find the comment ender (should be on last line of buffer,
+		;; given the narrowing) and don't leave it on its own line.
+		(goto-char (point-max))
+		(forward-line -1)
+		(search-forward "*/" nil 'move)
+		(beginning-of-line)
+		(if (looking-at "[ \t]*\\*/")
+		    (delete-indentation)))))
+	;; Outside of comments: do ordinary filling.
+	(fill-paragraph arg)))))
 
 ;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
 ;; originally contributed by Terry_Glanfield.Southern@rxuk.xerox.com
@@ -3209,7 +3210,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.203 $"
+(defconst c-version "$Revision: 3.204 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
