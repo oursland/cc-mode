@@ -91,6 +91,7 @@
 
 ;;;###autoload
 (defun c-initialize-cc-mode ()
+  (setq c-buffer-is-cc-mode t)
   ;; sigh.  give in to the pressure
   (or (fboundp 'functionp)
       (require 'cc-mode-19))
