@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.212 $
-;; Last Modified:   $Date: 1992-11-13 20:36:03 $
+;; Version:         $Revision: 2.213 $
+;; Last Modified:   $Date: 1992-11-13 21:03:36 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-13 20:36:03 $|$Revision: 2.212 $|
+;; |$Date: 1992-11-13 21:03:36 $|$Revision: 2.213 $|
 
 ;;; Code:
 
@@ -400,7 +400,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.212 $
+  "Major mode for editing C++ code.  $Revision: 2.213 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -608,7 +608,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.212 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.213 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2272,7 +2272,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.212 $"
+(defconst c++-version "$Revision: 2.213 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2287,40 +2287,41 @@ c++-c-mode.
 
 Use \\[c++-submit-bug-report] to submit a bug report."
   (let ((buffer (current-buffer))
-	(varlist (list 'c++-continued-member-init-offset
-		       'c++-member-init-indent
-		       'c++-friend-offset
-		       'c++-access-specifier-offset
-		       'c++-empty-arglist-indent
-		       'c++-always-arglist-indent-p
-		       'c++-comment-only-line-offset
-		       'c++-C-block-comments-indent-p
-		       'c++-cleanup-list
-		       'c++-hanging-braces
-		       'c++-hanging-member-init-colon
-		       'c++-auto-hungry-initial-state
-		       'c++-auto-hungry-toggle
-		       'c++-hungry-delete-key
-		       'c++-auto-newline
-		       'c++-default-macroize-column
-		       'c++-match-header-strongly
-		       'c++-defun-header-strong-struct-equivs
-		       'c++-tab-always-indent
-		       'c++-untame-characters
-		       'c++-relative-offset-p
-		       'c++-electric-pound-behavior
-		       'c++-delete-function
-		       'c++-paren-as-block-close-p
-		       'c++-block-close-brace-offset
-		       'c-indent-level
-		       'c-continued-statement-offset
-		       'c-continued-brace-offset
-		       'c-brace-offset
-		       'c-brace-imaginary-offset
-		       'c-argdecl-indent
-		       'c-label-offset
-		       'tab-width
-		       )))
+	(varlist (list
+		  'c++-C-block-comments-indent-p
+		  'c++-access-specifier-offset
+		  'c++-always-arglist-indent-p
+		  'c++-auto-hungry-initial-state
+		  'c++-auto-hungry-toggle
+		  'c++-auto-newline
+		  'c++-block-close-brace-offset
+		  'c++-cleanup-list
+		  'c++-comment-only-line-offset
+		  'c++-continued-member-init-offset
+		  'c++-default-macroize-column
+		  'c++-defun-header-strong-struct-equivs
+		  'c++-delete-function
+		  'c++-electric-pound-behavior
+		  'c++-empty-arglist-indent
+		  'c++-friend-offset
+		  'c++-hanging-braces
+		  'c++-hanging-member-init-colon
+		  'c++-hungry-delete-key
+		  'c++-match-header-strongly
+		  'c++-member-init-indent
+		  'c++-paren-as-block-close-p
+		  'c++-relative-offset-p
+		  'c++-tab-always-indent
+		  'c++-untame-characters
+		  'c-argdecl-indent
+		  'c-brace-imaginary-offset
+		  'c-brace-offset
+		  'c-continued-brace-offset
+		  'c-continued-statement-offset
+		  'c-indent-level
+		  'c-label-offset
+		  'tab-width
+		  )))
     (set-buffer buffer)
     (if c++-special-indent-hook
 	(insert "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
@@ -2350,13 +2351,15 @@ Use \\[c++-submit-bug-report] to submit a bug report."
   (interactive)
   (let ((curbuf (current-buffer))
 	(mode   major-mode)
-	(mailbuf (progn (funcall c++-mailer)
+	(mailbuf (progn (call-interactively c++-mailer)
 			(current-buffer))))
+    (require 'sendmail)
     (pop-to-buffer curbuf)
     (pop-to-buffer mailbuf)
+    (mail-position-on-field "to")
     (insert c++-mode-help-address)
-    (if (re-search-forward "^subject:[ \t]+" (point-max) 'move)
-	(insert "Bug in c++-mode.el " c++-version))
+    (mail-position-on-field "subject")
+    (insert "Bug in c++-mode.el " c++-version)
     (if (not (re-search-forward mail-header-separator (point-max) 'move))
 	(progn (goto-char (point-max))
 	       (insert "\n" mail-header-separator "\n")
