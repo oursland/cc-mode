@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.354 $
-;; Last Modified:   $Date: 1993-06-28 15:47:13 $
+;; Version:         $Revision: 2.355 $
+;; Last Modified:   $Date: 1993-06-30 17:03:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-28 15:47:13 $|$Revision: 2.354 $|
+;; |$Date: 1993-06-30 17:03:00 $|$Revision: 2.355 $|
 
 ;;; Code:
 
@@ -226,12 +226,6 @@ FSF 19 (patched):        (8-bit v19)")
 	(define-key c++-mode-map ")"         'c++-tame-insert)))
   (define-key c++-mode-map "\C-c\C-b"  'c++-submit-bug-report)
   (define-key c++-mode-map "\C-c\C-v"  'c++-version)
-  ;; these are necessary because default forward-sexp and
-  ;; backward-sexp don't automatically let-bind
-  ;; parse-sexp-ignore-comments, which is needed for them to work
-  ;; properly in a C++ buffer.
-  (define-key c++-mode-map "\e\C-f"    'c++-forward-sexp)
-  (define-key c++-mode-map "\e\C-b"    'c++-backward-sexp)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -487,7 +481,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.354 $
+  "Major mode for editing C++ code.  $Revision: 2.355 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -670,18 +664,32 @@ no args, if that value is non-nil."
   (setq major-mode 'c++-mode
 	mode-name "C++"
 	local-abbrev-table c++-mode-abbrev-table)
-  (set (make-local-variable 'paragraph-start) (concat "^$\\|" page-delimiter))
-  (set (make-local-variable 'paragraph-separate) paragraph-start)
-  (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
-  (set (make-local-variable 'require-final-newline) t)
-  (set (make-local-variable 'parse-sexp-ignore-comments) nil)
-  ;; 
-  (set (make-local-variable 'indent-line-function) 'c++-indent-line)
-  (set (make-local-variable 'comment-start) "// ")
-  (set (make-local-variable 'comment-end) "")
-  (set (make-local-variable 'comment-column) 32)
-  (set (make-local-variable 'comment-start-skip) "/\\*+ *\\|// *")
-  (set (make-local-variable 'comment-indent-hook) 'c++-comment-indent)
+  ;; make local variables
+  (make-local-variable 'paragraph-start)
+  (make-local-variable 'paragraph-separate)
+  (make-local-variable 'paragraph-ignore-fill-prefix)
+  (make-local-variable 'require-final-newline)
+  (make-local-variable 'parse-sexp-ignore-comments)
+  (make-local-variable 'indent-line-function)
+  (make-local-variable 'indent-region-function)
+  (make-local-variable 'comment-start)
+  (make-local-variable 'comment-end)
+  (make-local-variable 'comment-column)
+  (make-local-variable 'comment-start-skip)
+  (make-local-variable 'comment-indent-hook)
+  ;; now set their values
+  (setq paragraph-start (concat "^$\\|" page-delimiter)
+	paragraph-separate paragraph-start
+	paragraph-ignore-fill-prefix t
+	require-final-newline t
+	parse-sexp-ignore-comments (not (memq 'v18 c++-emacs-features))
+	indent-line-function 'c++-indent-line
+	indent-region-function 'c-indent-region
+	comment-start "// "
+	comment-end ""
+	comment-column 32
+	comment-start-skip "/\\*+ *\\|// *"
+	comment-indent-hook 'c++-comment-indent)
   ;; hack auto-hungry designators into mode-line-format
   (if (listp mode-line-format)
       (setq mode-line-format
@@ -704,7 +712,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.354 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.355 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1490,18 +1498,6 @@ Emacs.  Untamed characters to escape are defined in the variable
       (forward-char)
       (backward-sexp 1))
      (t (message "Could not find matching paren.")))))
-
-(defun c++-forward-sexp (&optional arg)
-  "Safe forward-sexp call."
-  (interactive "p")
-  (let ((parse-sexp-ignore-comments (memq 'v19 c++-emacs-features)))
-    (forward-sexp arg)))
-
-(defun c++-backward-sexp (&optional arg)
-  "Safe backward-sexp call."
-  (interactive "p")
-  (let ((parse-sexp-ignore-comments (memq 'v19 c++-emacs-features)))
-    (backward-sexp arg)))
 
 
 ;; ======================================================================
@@ -2785,7 +2781,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.354 $"
+(defconst c++-version "$Revision: 2.355 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
