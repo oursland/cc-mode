@@ -33,8 +33,8 @@
 
 ;; HACKERS NOTE: There's heavy macro magic here.  If you need to make
 ;; changes in this or other files containing `c-lang-defconst' but
-;; don't want to read through the complete explanations below then
-;; read this:
+;; don't want to read through the longer discussion below then read
+;; this:
 ;;
 ;; o  A change in a `c-lang-defconst' or `c-lang-defvar' will not take
 ;;    effect if the file containing the mode init function (typically
@@ -45,6 +45,8 @@
 ;; o  In either case it's necessary to reinitialize the mode to make
 ;;    the changes show in an existing buffer.
 
+;;; Introduction to the language dependent variable system:
+;;
 ;; This file contains all the language dependent variables, except
 ;; those specific for font locking which reside in cc-fonts.el.  As
 ;; far as possible, all the differences between the languages that CC
@@ -83,11 +85,11 @@
 ;; Separate packages will also benefit from the compile time
 ;; evaluation; the byte compiled file(s) for them will contain the
 ;; compiled runtime constants ready for use by (the byte compiled) CC
-;; Mode, and the source values in this file don't have to be loaded
-;; then.  However, if a byte compiled package is loaded that has been
-;; compiled with a different version of CC Mode than the one currently
-;; loaded, then the compiled-in values will be discarded and new ones
-;; will be built when the mode is initialized.  That will
+;; Mode, and the source definitions in this file don't have to be
+;; loaded then.  However, if a byte compiled package is loaded that
+;; has been compiled with a different version of CC Mode than the one
+;; currently loaded, then the compiled-in values will be discarded and
+;; new ones will be built when the mode is initialized.  That will
 ;; automatically trig a load of the file(s) containing the source
 ;; definitions (i.e. this file and/or cc-fonts.el) if necessary.
 ;;
@@ -95,8 +97,19 @@
 ;; <http://cc-mode.sourceforge.net/derived-mode-ex.el>.  It also
 ;; contains some useful hints for derived mode developers.
 
+;;; Using language variables:
+;;
+;; The `c-lang-defvar' forms in this file comprise the language
+;; variables that CC Mode uses.  It does not work to use
+;; `c-lang-defvar' anywhere else (which isn't much of a limitation
+;; since these variables sole purpose is to interface with the CC Mode
+;; core functions).  The values in these `c-lang-defvar's are not
+;; evaluated right away but instead collected to a single large `setq'
+;; that can be inserted for a particular language with the
+;; `c-init-language-vars' macro.
+
 ;; This file is only required at compile time, or when not running
-;; from byte compiled files, or when the source values for the
+;; from byte compiled files, or when the source definitions for the
 ;; language constants are requested.
 
 ;;; Code:
@@ -125,13 +138,16 @@
   (defconst c-lang-variable-inits-tail c-lang-variable-inits)
 
   (defmacro c-lang-defvar (var val &optional doc)
-    ;; Declares the buffer local variable VAR to get the value VAL at
-    ;; mode initialization, at which point VAL is evaluated.
-    ;; `c-lang-const' is typically used in VAL to get the right value
-    ;; for the language being initialized, and such calls will be
-    ;; macro expanded to the evaluated constant value at compile time.
-    ;;
-    ;; This macro does not do any hidden buffer changes.
+    "Declares the buffer local variable VAR to get the value VAL at mode
+initialization, at which point VAL is evaluated.  More accurately, VAL
+is evaluated and bound to VAR when the result from the macro
+`c-init-language-vars' is evaluated.
+
+`c-lang-const' is typically used in VAL to get the right value for the
+language being initialized, and such calls will be macro expanded to
+the evaluated constant value at compile time.
+
+This macro does not do any hidden buffer changes."
 
     (when (and (not doc)
 	       (eq (car-safe val) 'c-lang-const)
@@ -2048,7 +2064,7 @@ This macro is expanded at compile time to a form tailored for the mode
 in question, so MODE must be a constant.  Therefore MODE is not
 evaluated and should not be quoted.
 
-This function does not do any hidden buffer changes."
+This macro does not do any hidden buffer changes."
   `(funcall ,(c-make-init-lang-vars-fun mode)))
 
 
