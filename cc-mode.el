@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.145 $
-;; Last Modified:   $Date: 1993-12-27 17:51:34 $
+;; Version:         $Revision: 3.146 $
+;; Last Modified:   $Date: 1993-12-27 18:18:50 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-27 17:51:34 $|$Revision: 3.145 $|
+;; |$Date: 1993-12-27 18:18:50 $|$Revision: 3.146 $|
 
 ;;; Code:
 
@@ -591,9 +591,12 @@ Emacs.")
   "Internal state of auto newline feature.")
 (defvar c-semantics nil
   "Variable containing semantics list during indentation.")
+(defvar c-style-name nil
+  "The style name for a cc-mode indentation style.")
 
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
+(make-variable-buffer-local 'c-style-name)
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
@@ -646,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.145 $
+CC-MODE REVISION: $Revision: 3.146 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -680,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.145 $
+CC-MODE REVISION: $Revision: 3.146 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -754,6 +757,10 @@ Key bindings:
 	 (setcdr name (append hack (cdr name)))
 	 (put 'mode-line-format 'c-hacked-mode-line t)
 	 ))
+  (and (listp minor-mode-alist)
+       (setq minor-mode-alist
+	     (append minor-mode-alist '((c-style-name c-style-name)))
+	     ))
   (run-hooks 'c-mode-common-hook))
 
 
@@ -1338,6 +1345,9 @@ GNU, K&R, BSD and Whitesmith."
   (let ((vars (cdr (assoc style c-style-alist))))
     (or vars
 	(error "Invalid C indentation style `%s'" style))
+    ;; set the c-style-name variable
+    (setq c-style-name style)
+    ;; set all the variables
     (mapcar
      (function
       (lambda (varentry)
@@ -1345,7 +1355,7 @@ GNU, K&R, BSD and Whitesmith."
 	      (val (cdr varentry)))
 	  (or global
 	      (make-local-variable var))
-	  ;; special case c-offsets-alist
+	  ;; special case for c-offsets-alist
 	  (if (not (eq var 'c-offsets-alist))
 	      (set var val)
 	    (mapcar
@@ -2927,7 +2937,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.145 $"
+(defconst c-version "$Revision: 3.146 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
