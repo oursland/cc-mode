@@ -8089,36 +8089,34 @@ comment at the start of cc-engine.el for more info."
 	     ;; extensions, but watch out for macros followed by
 	     ;; blocks.  Let it through to be handled below.
 	     ;; C.f. cases B.3 and 17G.
-	     ((and (not inenclosing-p)
-		   lim
-		   (save-excursion
-		     (and (not (c-looking-at-bos))
-			  (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
-			  (setq placeholder (point))
-			  ;; Look for a type or identifier followed by a
-			  ;; symbol, i.e. the start of a function declaration.
-			  ;; Doesn't work for declarations like "int *foo()
-			  ;; ..."; we'd need to refactor the more competent
-			  ;; analysis in `c-font-lock-declarations' for that.
-			  (c-forward-type)
-			  (progn
-			    (c-forward-syntactic-ws)
-			    (looking-at c-symbol-start)))))
+	     ((save-excursion
+		(and (not (c-looking-at-bos))
+		     (eq (c-beginning-of-statement-1 lim nil nil t) 'same)
+		     (setq placeholder (point))
+		     ;; Look for a type or identifier followed by a
+		     ;; symbol, i.e. the start of a function declaration.
+		     ;; Doesn't work for declarations like "int *foo()
+		     ;; ..."; we'd need to refactor the more competent
+		     ;; analysis in `c-font-lock-declarations' for that.
+		     (c-forward-type)
+		     (progn
+		       (c-forward-syntactic-ws)
+		       (looking-at c-symbol-start))))
 	      (back-to-indentation)
 	      (if (/= (point) containing-sexp)
 		  (goto-char placeholder))
 	      (c-add-stmt-syntax 'defun-close nil t lim paren-state))
 
-	     ;; CASE 16C: if there an enclosing brace that hasn't
-	     ;; been narrowed out by a class, then this is a
-	     ;; block-close.  C.f. case 17H.
-	     ((and (not inenclosing-p) lim)
+	     ;; CASE 16C: If there is an enclosing brace then this is
+	     ;; a block close since defun closes inside declaration
+	     ;; level blocks have been handled above.
+	     (lim
 	      ;; If the block is preceded by a case/switch label on
 	      ;; the same line, we anchor at the first preceding label
 	      ;; at boi.  The default handling in c-add-stmt-syntax
 	      ;; really fixes it better, but we do like this to keep
 	      ;; the indentation compatible with version 5.28 and
-	      ;; earlier.
+	      ;; earlier.  C.f. case 17H.
 	      (while (and (/= (setq placeholder (point)) (c-point 'boi))
 			  (eq (c-beginning-of-statement-1 lim) 'label)))
 	      (goto-char placeholder)
@@ -8129,7 +8127,7 @@ comment at the start of cc-engine.el for more info."
 		;; situations are handled in case 16E above.
 		(c-add-stmt-syntax 'block-close nil t lim paren-state)))
 
-	     ;; CASE 16D: Only defun close left.
+	     ;; CASE 16D: Only top level defun close left.
 	     (t
 	      (goto-char containing-sexp)
 	      (c-backward-to-decl-anchor lim)
@@ -8247,13 +8245,14 @@ comment at the start of cc-engine.el for more info."
 	    (c-add-stmt-syntax 'defun-block-intro nil t
 			       lim paren-state))
 
-	   ;; CASE 17H: First statement in a block.  C.f. case 16C.
+	   ;; CASE 17H: First statement in a block.
 	   (t
 	    ;; If the block is preceded by a case/switch label on the
 	    ;; same line, we anchor at the first preceding label at
 	    ;; boi.  The default handling in c-add-stmt-syntax is
 	    ;; really fixes it better, but we do like this to keep the
 	    ;; indentation compatible with version 5.28 and earlier.
+	    ;; C.f. case 16C.
 	    (while (and (/= (setq placeholder (point)) (c-point 'boi))
 			(eq (c-beginning-of-statement-1 lim) 'label)))
 	    (goto-char placeholder)
