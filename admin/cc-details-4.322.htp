@@ -1,10 +1,10 @@
-Title: CC Mode Changes
+Title: CC Mode Changes 4.282 to 4.322
 Author: bwarsaw@python.org
 
-<h1>CC Mode Changes</h1>
+<h1>CC Mode Changes 4.282 to 4.322</h1>
 
-The <a href="../index.html">current release</a> is version 4.322.
-Here's what's changed since the version 4.282, last public release:
+See also <a href="index.html">information</a> on the current
+version of <tt>cc-mode</tt>.
 
 <UL>
 
