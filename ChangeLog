@@ -1,3 +1,23 @@
+2003-06-19  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el, cc-align.el (c-add-stmt-syntax, c-lineup-arglist,
+	c-lineup-arglist-close-under-paren): Fixes to cope with special
+	brace lists in Pike.
+
+2003-06-19  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-mode.el: awk-mode: Call c-awk-after-change to ensure
+	syntax-table props at loading.
+
+	* cc-fonts.el: Put (cc-require-when-compile 'cc-awk) to eliminate
+	compile-time errors.
+
+2003-06-18  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-awk.el, cc-engine.el: Added code to analyze AWK top-level
+	forms properly (c-guess-basic-syntax CASE 5P),
+	c-awk-backward-syntactic-ws.
+
 2003-06-17  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-fix.el: cc-mode-19.el has been renamed to cc-fix.el since it
@@ -1152,6 +1172,12 @@
 	`c-do-auto-fill' and point is at or near the limit of the comment.
 	Fixed bug when the prefix from `c-guess-fill-prefix' is longer
 	than the text on the first line of the comment when it's masked.
+
+2002-04-23  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-mask-comment): Fixed bug where point was moved to
+	the following line when it was at the first line of a block
+	comment where comment-start-skip matched to eol.
 
 Mon Apr 22 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
@@ -3457,12 +3483,12 @@ Thu Feb 19 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 Tue Feb 17 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
-	* cc-mode-19.el Only define the functions if they aren't defined
+	* cc-mode-19.el: Only define the functions if they aren't defined
 	already.
 
 Tue Feb 10 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
-	* cc-make.el Require cc-mode-19 if needed before batch compile,
+	* cc-make.el: Require cc-mode-19 if needed before batch compile,
 	because it contains macro definitions that must be defined during
 	compilation.
 
@@ -3580,7 +3606,7 @@ Sun Jan 18 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
 Thu Jan 15 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
-	* cc-mode-19.el Added `when' and `unless'.
+	* cc-mode-19.el: Added `when' and `unless'.
 
 Thu Jan 15 1998  Barry Warsaw  <cc-mode-help@python.org>
 
