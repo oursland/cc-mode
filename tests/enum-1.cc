@@ -1,15 +1,15 @@
 enum non_nested_type
 {
     correct_indentation
-}
+};
 
 class wrapper
 {
     enum nested_type
     {
         correct_indentation
-    }
-}
+    };
+};
 
 class wrapper
 {
@@ -17,5 +17,5 @@ class wrapper
     enum nested_type
     {
         incorrect_indentation
-    }
-}
+    };
+};

@@ -1,7 +1,7 @@
 struct blah
 {
     int i[3];
-}
+};
 
 
 static struct blah wibble = 

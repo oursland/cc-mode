@@ -5,6 +5,6 @@
 ((inclass . 22) (topmost-intro . 33))
 ((class-close . 22))
 ((inclass . 16) (topmost-intro . 48))
-((inclass . 58) (topmost-intro . 69))
-((class-close . 58))
+((inclass . 59) (topmost-intro . 70))
+((class-close . 59))
 ((class-close . 8))
