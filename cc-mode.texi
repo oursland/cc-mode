@@ -1,4 +1,5 @@
 \input texinfo
+@c $Id: cc-mode.texi,v 5.208 2005-04-03 13:59:46 acmacm Exp $
 @c Notes to self regarding line handling:
 @c
 @c Empty lines are often significant before @end directives; avoid them.
@@ -67,6 +68,11 @@ elisp
 @end macro
 @end ifclear
 
+
+@macro ccmode
+CC Mode
+@end macro
+
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment @setchapternewpage odd !! we don't want blank pages !!
 @comment %**end of header (This is for running Texinfo on a region)
@@ -98,6 +104,22 @@ elisp
 @copying
 Copyright @copyright{} 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
 2003, 2004, 2005 Free Software Foundation, Inc.
+
+This manual is free documentation; you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation; either version 2, or (at
+your option) any later version.
+
+This manual is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License, the
+file @file{COPYING}, along with @ccmode{}.  If not, see
+@url{http://www.gnu.org/licenses/gpl} or write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+USA.
 @end copying
 
 @comment Info directory entry for use by install-info. The indentation
@@ -124,6 +146,10 @@ Copyright @copyright{} 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
 @page
 @vskip 0pt plus 1filll
 @insertcopying
+
+This manual was generated from $Revision: 5.208 $ of $RCSfile: cc-mode.texi,v $, which can be
+downloaded from
+@url{http://cc-mode.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -133,10 +159,6 @@ Copyright @copyright{} 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
 
 @node    Top, Introduction, (dir), (dir)
 @comment node-name, next, previous, up
-
-@macro ccmode
-CC Mode
-@end macro
 
 @ifinfo
 @top @ccmode{}
