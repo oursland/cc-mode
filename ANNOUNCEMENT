@@ -4,16 +4,15 @@ Barry A. Warsaw and Martin Stjernholm
 <mailto:cc-mode-help@python.org>
 
 This message announces the availablity of a new version of CC Mode, a
-GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, Java
-and CORBA's IDL code.  A list of user visible changes is summarized
-below, and is also available from
+GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, Java,
+CORBA's IDL, and now Pike code.  A list of user visible changes is
+summarized below, and is also available from
 
-	<http://www.python.org/ftp/emacs/cc-details.html>
+	<http://www.python.org/emacs/cc-mode/changes-523.html>
 
 Since the distribution is fairly large and since it is readily
-available via the Web, anonymous ftp, and email, the source code is
-not being posted here.  Downloading instructions are provided further
-down in this message.
+available via the Web, the source code is not being posted here.
+Downloading instructions are provided further down in this message.
 
 If you want to get announcements of new CC Mode releases, send the
 word `subscribe' in the body of a message to
@@ -29,36 +28,12 @@ decommissioned.  Send all CC Mode correspondence to
 Getting CC Mode
 ===============
 
-The canonical ftp site for the full CC Mode tar distribution is:
+The canonical site for the full CC Mode distribution, along with
+compatibility notes, installation instructions, the online browseable
+manual and more, is available at:
 
-	<ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz>
+        <http://www.python.org/emacs/cc-mode/>
 
-This is a gzip'd tar file containing the .el source code and
-documentation, along with sundry other useful files.  See the MANIFEST
-a complete list of the contained files.  You can get individual files
-from the directory:
-
-	<ftp://ftp.python.org/pub/emacs/cc-mode/>
-
-Find out more about CC Mode on the Web:
-
-	<http://www.python.org/ftp/emacs/>
-
-For those of you without anon-ftp access, you can use the DEC
-ftpmail'er at the address ftpmail@decwrl.dec.com.  Send the following
-message in the body of your mail to that address to get CC Mode:
-
-reply <a valid net address back to you>
-connect ftp.python.org
-binary
-uuencode
-chdir pub/emacs
-get cc-mode.tar.gz
-
-or just send the message "help" for more information on ftpmail.
-Response times will vary with the number of requests in the queue.
-Note that I am in no way connected with the DEC ftpmail'er so you are
-own your own with this route.
 
 Changes since 5.21
 ==================
@@ -66,57 +41,27 @@ Changes since 5.21
 - Note: there was no net release of 5.22!  This version went only to
   the XEmacs developers and was primarily a bug fix release.
 
-Changes since 5.20
-==================
+- Support for the Pike language added, along with new Pike specific
+  syntactic symbols: inlambda, lambda-intro-cont
 
-- This is mainly a bug fix release.
+- Support for Java anonymous classes via new syntactic symbol
+  inexpr-class.  New syntactic symbol inexpr-statement for Pike
+  support and gcc-style statements inside expressions.  New lineup
+  function c-lineup-inexpr-stat.
 
-- Javadoc markup tags (e.g. @param) are handled as paragraph starters
-  in block comments in Java mode.
+- New syntactic symbol brace-entry-open which is used in brace lists
+  (i.e. static initializers) when a list entry starts with an open
+  brace.  These used to be recognized as brace-list-entry's.
+  c-electric-brace also recognizes brace-entry-open braces
+  (brace-list-entry's can no longer be electrified).
 
-Changes since 5.19
-==================
+- New command c-indent-line-or-region, not bound by default.
 
-- Martin Stjernholm has joined the cc-mode-help@python.org
-  maintainers!
+- Improvements to M-C-h (c-mark-function).
 
-- Multiline macros are now handled, both as they affect indentation,
-  and as recognized syntax.  New syntactic symbol cpp-macro-cont is
-  assigned to second and subsequent lines of a multiline macro
-  definition. 
+- Parenthesis are now electric (via c-electric-paren) for
+  auto-reindenting lines when parens are typed.
 
-- A new style "user" which captures all non-hook-ified
-  (i.e. top-level) .emacs file variable setings and customizations.
-  Style "cc-mode" is an alias for "user" and is deprecated.  "gnu"
-  style is still the default however.
+- In "gnu" style, inline-open offset is now set to zero.
 
-- "java" style now conforms to Sun's JDK coding style.
-
-- New commands c-beginning-of-defun, c-end-of-defun which are not
-  bound by default to C-M-a and C-M-e.
-
-- New and improved implementations of M-a (c-beginning-of-statement)
-  and M-e (c-end-of-statement).
-
-- C++ namespace blocks are supported, with new syntactic symbols
-  namespace-open, namespace-close, and innamespace.
-
-- File local variable settings of c-file-style and c-file-offsets
-  makes the style variables local to that buffer only.
-
-- New indentation functions c-lineup-close-paren,
-  c-indent-one-line-block, c-lineup-dont-change.
-
-- Various Imenu patches (thanks to Masatake Yamato, Jan Dubois, and
-  Peter Pilgrim).
-
-- Performance improvements.  Some improvements affect only Emacs or
-  only XEmacs (see the variable c-enable-xemacs-performance-kludge-p).
-
-- Improvements (hopefully!) to the way CC Mode is loaded.  You should
-  now be able to do a (require 'cc-mode) to get the entire package
-  loaded properly for customization in your .emacs file.  A new
-  variable c-initialize-on-load controls this and is set to t by
-  default.
-
-- Usual assortment of bug fixes.
+- The usual bug fixes.
