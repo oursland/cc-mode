@@ -580,9 +580,8 @@ This function does not do any hidden buffer changes."
 	      (fboundp 'extent-property)
 	      (fboundp 'delete-extent)
 	      (fboundp 'map-extents))
-	 ;; XEmacs.  Check all the extent functions we'll use since
-	 ;; some packages might do compatibility aliases for some of
-	 ;; them in Emacs.
+	 ;; XEmacs.  Check all the extent functions we'll use since some
+	 ;; packages might do compatibility aliases for some of them in Emacs.
 	 `(let ((pos ,pos))
 	    (set-extent-properties (make-extent pos (1+ pos))
 				   (list ',property ,value
@@ -617,10 +616,10 @@ This function does not do any hidden buffer changes."
 	   (fboundp 'delete-extent)
 	   (fboundp 'map-extents))
       ;; XEmacs.  Check all the extent functions we'll use since some
-      ;; packages might do compatibility aliases for some of them in
-      ;; Emacs.
+      ;; packages might do compatibility aliases for some of them in Emacs.
       `(let ((ext (extent-at ,pos nil ',property)))
 	 (if ext (extent-property ext ',property)))
+    ;; Emacs.
     `(get-text-property ,pos ',property)))
 
 (defmacro c-clear-char-property (pos property)
@@ -635,8 +634,7 @@ This function does not do any hidden buffer changes."
 	   (fboundp 'delete-extent)
 	   (fboundp 'map-extents))
       ;; XEmacs.  Check all the extent functions we'll use since some
-      ;; packages might do compatibility aliases for some of them in
-      ;; Emacs.
+      ;; packages might do compatibility aliases for some of them in Emacs.
       `(let ((ext (extent-at ,pos nil ',property)))
 	 (if ext (delete-extent ext)))
     ;; Emacs.
@@ -671,11 +669,10 @@ This function does not do any hidden buffer changes."
 	   (fboundp 'delete-extent)
 	   (fboundp 'map-extents))
       ;; XEmacs.  Check all the extent functions we'll use since some
-      ;; packages might do compatibility aliases for some of them in
-      ;; Emacs.
+      ;; packages might do compatibility aliases for some of them in Emacs.
       `(map-extents 'delete-extent nil ,from ,to nil nil ',property)
     ;; Emacs.
-    `(remove-text-properties from to '(,property nil))))
+    `(remove-text-properties ,from ,to '(,property nil))))
 
 
 ;; Make edebug understand the macros.
