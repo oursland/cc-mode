@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.242 $
-;; Last Modified:   $Date: 1994-02-10 23:30:11 $
+;; Version:         $Revision: 3.243 $
+;; Last Modified:   $Date: 1994-02-11 18:37:49 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-10 23:30:11 $|$Revision: 3.242 $|
+;; |$Date: 1994-02-11 18:37:49 $|$Revision: 3.243 $|
 
 ;;; Code:
 
@@ -713,7 +713,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.242 $
+cc-mode Revision: $Revision: 3.243 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -744,7 +744,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.242 $
+cc-mode Revision: $Revision: 3.243 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2139,9 +2139,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (backward-sexp 1)
 	    (cond
 	     ((memq (c-in-literal lim) '(c c++)))
-	     ((looking-at "while\\b")
+	     ((looking-at "while\\b[^_]")
 	      (setq do-level (1+ do-level)))
-	     ((looking-at "do\\b")
+	     ((looking-at "do\\b[^_]")
 	      (setq do-level (1- do-level)))
 	     ((< (point) lim)
 	      (setq do-level 0)
@@ -2158,7 +2158,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (let ((if-level 1)
 	(case-fold-search nil)
 	(lim (or lim (c-point 'bod)))
-	(at-if (looking-at "if\\b")))
+	(at-if (looking-at "if\\b[^_]")))
     (catch 'orphan-if
       (while (and (not (bobp))
 		  (not (zerop if-level)))
@@ -2170,9 +2170,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	       (throw 'orphan-if nil)
 	     (error "Orphaned `else' clause encountered."))))
 	(cond
-	 ((looking-at "else\\b")
+	 ((looking-at "else\\b[^_]")
 	  (setq if-level (1+ if-level)))
-	 ((looking-at "if\\b")
+	 ((looking-at "if\\b[^_]")
 	  (setq if-level (1- if-level)))
 	 ((< (point) lim)
 	  (setq if-level 0)
@@ -2677,11 +2677,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 ((progn
 	    (goto-char indent-point)
 	    (skip-chars-forward " \t")
-	    (and (looking-at "while\\b")
+	    (and (looking-at "while\\b[^_]")
 		 (save-excursion
 		   (c-backward-to-start-of-do containing-sexp)
 		   (setq placeholder (point))
-		   (looking-at "do\\b"))
+		   (looking-at "do\\b[^_]"))
 		 ))
 	  (c-add-semantics 'do-while-closure placeholder))
 	 ;; CASE 11: A case or default label
@@ -3105,7 +3105,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.242 $"
+(defconst c-version "$Revision: 3.243 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
