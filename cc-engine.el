@@ -3498,8 +3498,8 @@ This function does not do any hidden buffer changes."
 	(setq safe-pos (point)))
 
        ((and (c-keyword-member kwd-sym 'c-nonsymbol-sexp-kwds)
-	     (not (looking-at c-symbol-start)))
-	(c-forward-sexp)
+	     (not (looking-at c-symbol-start))
+	     (c-safe (c-forward-sexp) t))
 	(c-forward-syntactic-ws)
 	(setq safe-pos (point))))
 
