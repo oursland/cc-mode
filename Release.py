@@ -89,7 +89,6 @@ FATRELEASE_FILES = [
     ('README',
      regex.compile('README for CC Mode \(5.[0-9]+\)'),
      'README for CC Mode %s\n'),
-    ('Makefile', None, None),
     ]
 
 FILES = ALL_FILES + FATRELEASE_FILES
@@ -190,6 +189,7 @@ def pkg_release(fat):
 #    dir = 'cc-mode-' + RELEASE
     dir = 'cc-mode'
     os.mkdir(dir)
+    os.chmod(dir, 02775)
     #
     if fat:
 	files = FILES
@@ -301,9 +301,6 @@ def main():
 
     os.umask(002)
     get_release()
-    if bump:
-	bump_release()
-
     if tag:
 	tag_release(untag_first)
 
@@ -315,6 +312,9 @@ def main():
 
     if incr:
 	incr_release()
+
+    if bump:
+	bump_release()
 
 if __name__ == '__main__':
     main()
