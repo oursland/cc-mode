@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.78 $
-;; Last Modified:   $Date: 1993-11-22 16:26:48 $
+;; Version:         $Revision: 3.79 $
+;; Last Modified:   $Date: 1993-11-22 18:42:29 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-22 16:26:48 $|$Revision: 3.78 $|
+;; |$Date: 1993-11-22 18:42:29 $|$Revision: 3.79 $|
 
 ;;; Code:
 
@@ -488,7 +488,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.78 $
+  "Major mode for editing C++ code.  $Revision: 3.79 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -518,7 +518,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.78 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.79 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1549,17 +1549,23 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	(lim (or lim (cc-point 'bod)))
 	(here (point))
 	stop)
-    (beginning-of-line)
+    (goto-char
+     (max
+      (save-excursion
+	(condition-case nil
+	    (forward-sexp -1)
+	  (error nil))
+	(point))
+      (cc-point 'bol)))
     (cc-backward-syntactic-ws lim)
     (while (not stop)
       (if (or (memq (preceding-char) charlist)
 	      (<= (point) lim))
 	  (setq stop t)
 	;; catch multi-line function calls
-	(if (= (preceding-char) ?\))
-	    (forward-sexp -1))
-	;; check for compound statements
-	(back-to-indentation)
+	(condition-case nil
+	    (forward-sexp -1)
+	  (error (goto-char lim)))
 	(setq here (point))
 	(if (looking-at "\\<\\(for\\|if\\|do\\|else\\|while\\)\\>")
 	    (setq stop t)
@@ -1958,21 +1964,29 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	    (cc-add-semantics 'arglist-close (cc-point 'boi)))
 	   ;; CASE 5C: we are looking at an arglist continuation line,
 	   ;; but the preceding argument is on the same line as the
-	   ;; opening paren.
-	   ((= (cc-point 'bol)
-	       (save-excursion
-		 (goto-char containing-sexp)
-		 (cc-point 'bol)))
+	   ;; opening paren.  This case includes multi-line
+	   ;; mathematical paren groupings
+	   ((or (= (cc-point 'bol)
+		   (save-excursion
+		     (goto-char containing-sexp)
+		     (cc-point 'bol)))
+		(= containing-sexp
+		   (save-excursion
+		     (cc-beginning-of-statement containing-sexp)
+		     (point))))
 	    (cc-add-semantics 'arglist-cont-nonempty containing-sexp))
-	   ;; CASE 5D: it is possible that the arglist is really a
-	   ;; forloop expression, and thus maybe broken across
-	   ;; multiple lines
+	   ;; CASE 5D: two possibilities here. First, its possible
+	   ;; that the arglist we're in is really a forloop expression
+	   ;; and we are looking at one of the clauses broken up
+	   ;; across multiple lines.  ==> statement-cont
 	   ((not (memq char-before-ip '(?\; ?,)))
 	    (cc-beginning-of-statement containing-sexp)
 	    (cc-add-semantics 'statement-cont (point)))
 	   ;; CASE 5E: we are looking at just a normal arglist
 	   ;; continuation line
-	   (t (cc-add-semantics 'arglist-cont (cc-point 'boi)))
+	   (t
+	    (cc-beginning-of-statement containing-sexp)
+	    (cc-add-semantics 'arglist-cont (cc-point 'boi)))
 	   ))
 	 ;; CASE 6: func-local multi-inheritance line
 	 ((save-excursion
@@ -2350,7 +2364,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.78 $"
+(defconst cc-version "$Revision: 3.79 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
