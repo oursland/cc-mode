@@ -125,9 +125,11 @@ indentation change \(in columns)."
     (if c-syntactic-indentation
 	(setq c-parsing-error
 	      (or (let* ((c-parsing-error nil)
-			 (c-syntactic-context (or syntax
-						  c-syntactic-context
-						  (c-guess-basic-syntax)))
+			 (c-syntactic-context
+			  (or syntax
+			      (if (boundp 'c-syntactic-context)
+				  c-syntactic-context
+				(c-guess-basic-syntax))))
 			 indent)
 		    (setq indent (c-get-syntactic-indentation
 				  c-syntactic-context))
@@ -236,7 +238,11 @@ and takes care to set the indentation before calling
 With universal argument, inserts the analysis as a comment on that line."
   (interactive "P")
   (let* ((c-parsing-error nil)
-	 (syntax (c-guess-basic-syntax)))
+	 (syntax (if (boundp 'c-syntactic-context)
+		     ;; Use `c-syntactic-context' in the same way as
+		     ;; `c-indent-line', to be consistent.
+		     c-syntactic-context
+		   (c-guess-basic-syntax))))
     (if (not (consp arg))
 	(message "syntactic analysis: %s" syntax)
       (indent-for-comment)

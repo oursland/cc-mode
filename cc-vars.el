@@ -1353,26 +1353,35 @@ Note that file offset settings are applied after file style settings
 as designated in the variable `c-file-style'.")
 (make-variable-buffer-local 'c-file-offsets)
 
-(defvar c-syntactic-context nil
-  "Variable containing the syntactic analysis list during indentation.
-It is a list with one element for each found syntactic symbol.  Each
-element is a list with the symbol name in the first position, followed
-by zero or more elements containing any additional info associated
-with the syntactic symbol.  Specifically, the second element is the
-relpos \(a.k.a. anchor position), or nil if there isn't any.  See the
-comments in the `c-offsets-alist' variable in \"cc-vars.el\" for more
-detailed info about the data each syntactic symbol provides.
+;; It isn't possible to specify a docstring without specifying an
+;; initial value with `defvar', so the following two variables have
+;; only doc comments even though they are part of the API.  It's
+;; really good not to have an initial value for variables like these
+;; that always should be dynamically bound, so it's worth the
+;; inconvenience.
 
-This is always bound dynamically.  It should never be set statically
-\(e.g. with `setq').")
+(cc-bytecomp-defvar c-syntactic-context)
+(defvar c-syntactic-context)
+;; Variable containing the syntactic analysis list during indentation.
+;; It is a list with one element for each found syntactic symbol.
+;; Each element is a list with the symbol name in the first position,
+;; followed by zero or more elements containing any additional info
+;; associated with the syntactic symbol.  Specifically, the second
+;; element is the relpos (a.k.a. anchor position), or nil if there
+;; isn't any.  See the comments in the `c-offsets-alist' variable for
+;; more detailed info about the data each syntactic symbol provides.
+;; 
+;; This is always bound dynamically.  It should never be set
+;; statically (e.g. with `setq').
 
-(defvar c-syntactic-element nil
-  "Variable containing the info regarding the current syntactic element
-during calls to the lineup functions.  The value is one of the
-elements in the list in `c-syntactic-context'.
-
-This is always bound dynamically.  It should never be set statically
-\(e.g. with `setq').")
+(cc-bytecomp-defvar c-syntactic-element)
+(defvar c-syntactic-element)
+;; Variable containing the info regarding the current syntactic
+;; element during calls to the lineup functions.  The value is one of
+;; the elements in the list in `c-syntactic-context'.
+;; 
+;; This is always bound dynamically.  It should never be set
+;; statically (e.g. with `setq').
 
 (defvar c-indentation-style nil
   "Name of the currently installed style.

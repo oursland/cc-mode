@@ -2738,7 +2738,9 @@ in Pike) then the point for the preceding one is returned."
 
 (defsubst c-add-syntax (symbol &rest args)
   ;; A simple function to prepend a new syntax element to
-  ;; c-syntactic-context.
+  ;; `c-syntactic-context'.  Using `setq' on it is unsafe since it
+  ;; should always be dynamically bound but since we read it first
+  ;; we'll fail properly anyway if this function is misused.
   (setq c-syntactic-context (cons (cons symbol args)
 				  c-syntactic-context)))
 
