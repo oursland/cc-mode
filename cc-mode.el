@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.154 $
-;; Last Modified:   $Date: 1995-02-15 15:38:37 $
+;; Version:         $Revision: 4.155 $
+;; Last Modified:   $Date: 1995-02-16 01:38:27 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-02-15 15:38:37 $|$Revision: 4.154 $|
+;; |$Date: 1995-02-16 01:38:27 $|$Revision: 4.155 $|
 
 ;;; Code:
 
@@ -2934,7 +2934,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (if (consp car)
 	  (setq car (car cdr)
 		cdr (cdr cdr)))
-      (if (or (null cdr) (consp car))
+      ;; TBD: is this test relevent???
+      (if (consp car)
 	  state				;on error, don't change
 	;; watch out for balanced expr already on cdr of list
 	(cons (cons car bufpos)
@@ -3620,11 +3621,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-backward-syntactic-ws lim)
 	      (while (and inclass-p
 			  c-access-key
-			  (= (preceding-char) ?:)
-			  (not (and (eq major-mode 'objc-mode)
-				    (bobp)))
+			  (not (bobp))
 			  (save-excursion
-			    (backward-sexp 1)
+			    (c-safe (progn (backward-sexp 1) t))
 			    (looking-at c-access-key)))
 		(backward-sexp 1)
 		(c-backward-syntactic-ws lim))
@@ -4461,7 +4460,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.154 $"
+(defconst c-version "$Revision: 4.155 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
