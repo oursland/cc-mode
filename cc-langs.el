@@ -833,6 +833,7 @@ appended."
 ;; languages that doesn't have such operators.  The end of the first
 ;; submatch is taken as the end of the operator.
 (c-lang-defconst c-type-suffix-key
+  (c c++ pike) "\\(\\.\\.\\.\\)"
   java "\\(\\[[ \t\n\r]*\\]\\)")
 (c-lang-defvar c-type-suffix-key (c-lang-var c-type-suffix-key))
 
