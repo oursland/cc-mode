@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.321 $
-;; Last Modified:   $Date: 1996-10-04 20:17:44 $
+;; Version:         $Revision: 4.322 $
+;; Last Modified:   $Date: 1996-10-04 20:28:14 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4943,10 +4943,12 @@ indentation amount."
 With no argument, inserts backslashes and aligns existing backslashes.
 With an argument, deletes the backslashes.
 
-This function does not modify the last line of the region if the region ends 
-right at the start of the following line; it does not modify blank lines
-at the start of the region.  So you can put the region around an entire macro
-definition and conveniently use this command."
+This function does not modify blank lines at the start of the region.
+If the region ends at the start of a line, it always deletes the
+backslash (if any) at the end of the previous line.
+ 
+You can put the region around an entire macro definition and use this
+command to conveniently insert and align the necessary backslashes."
   (interactive "r\nP")
   (save-excursion
     (goto-char from)
@@ -4972,17 +4974,18 @@ definition and conveniently use this command."
       (while (and (< (point) endmark) (eolp))
         (forward-line 1))
       ;; Add or remove backslashes on all the lines.
-      (while (and (< (point) endmark)
-                  ;; Don't backslashify the last line
-                  ;; if the region ends right at the start of the next line.
-                  (save-excursion
-                    (forward-line 1)
-                    (< (point) endmark)))
-        (if (not delete-flag)
+      (while (< (point) endmark)
+	(if (and (not delete-flag)
+ 		 ;; Un-backslashify the last line
+ 		 ;; if the region ends right at the start of the next line.
+ 		 (save-excursion
+ 		   (forward-line 1)
+ 		   (< (point) endmark)))
             (c-append-backslash column)
           (c-delete-backslash))
         (forward-line 1))
-      (move-marker endmark nil))))
+      (move-marker endmark nil)))
+  (c-keep-region-active))
 
 (defun c-append-backslash (column)
   (end-of-line)
@@ -5006,7 +5009,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.321 $"
+(defconst c-version "$Revision: 4.322 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
