@@ -27,3 +27,4 @@ void g (
 /* Local Variables: */
 /* c-file-offsets: ((arglist-cont . c-lineup-argcont) (arglist-cont-nonempty . (c-lineup-argcont +))) */
 /* End: */
+
