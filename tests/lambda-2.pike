@@ -37,5 +37,5 @@ int one = lambda
     } (1);
 
 // Local Variables:
-// c-file-offsets: ((topmost-intro-cont . +) (inlambda . +))
+// c-file-offsets: ((inlambda . +))
 // End:
