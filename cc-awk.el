@@ -662,8 +662,8 @@
 ;;   given the property "punctuation".  This will later allow other routines
 ;;   to use the regexp "\\S\"*" to skip over the string innards.
 ;; (iv) Inside a comment, all syntax-table properties are cleared.
-  (let (anchor /point
-               (anchor-state-/div nil)) ; t means a following / would be a div sign.
+  (let (anchor
+	(anchor-state-/div nil)) ; t means a following / would be a div sign.
     (c-awk-beginning-of-logical-line) ; ACM 2002/7/21.  This is probably redundant.
     (put-text-property (point) lim 'syntax-table nil)
     (search-forward-regexp c-awk-harmless-lines+-here-re nil t) ; skip harmless lines.
