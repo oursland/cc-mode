@@ -1492,15 +1492,21 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   ;; identifier as a type and then backed up again in
 			   ;; this case.
 			   identifier-type
-			   (or (eq identifier-type 'found)
+			   (or (memq identifier-type '(found known))
 			       (and (eq (char-after identifier-start) ?~)
 				    ;; `at-type' probably won't be 'found for
 				    ;; destructors since the "~" is then part
 				    ;; of the type name being checked against
 				    ;; the list of known types, so do a check
 				    ;; without that operator.
-				    (c-check-type (1+ identifier-start)
-						  identifier-end))))
+				    (or (save-excursion
+					  (goto-char (1+ identifier-start))
+					  (c-forward-syntactic-ws)
+					  (c-with-syntax-table
+					      c-identifier-syntax-table
+					    (looking-at c-known-type-key)))
+					(c-check-type (1+ identifier-start)
+						      identifier-end)))))
 		  (throw 'at-decl-or-cast t))
 
 		(if got-identifier
