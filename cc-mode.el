@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.292 $
-;; Last Modified:   $Date: 1996-05-24 16:12:11 $
+;; Version:         $Revision: 4.293 $
+;; Last Modified:   $Date: 1996-05-29 20:13:34 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -3482,13 +3482,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-skip-conditional ()
   ;; skip forward over conditional at point, including any predicate
   ;; statements in parentheses. No error checking is performed.
-  (forward-sexp
-   ;; else if()
-   (if (looking-at "\\<else\\>[ \t]+\\<if\\>")
-       3
-     ;; do and else aren't followed by parens
-     (if (looking-at "\\<\\(do\\|else\\)\\>")
-	 1 2))))
+  (forward-sexp (cond
+		 ;; else if()
+		 ((looking-at "\\<else\\>[ \t]+\\<if\\>") 3)
+		 ;; do, else, try
+		 ((looking-at "\\<\\(do\\|else\\|try\\)\\>") 1)
+		 ;; for, if, while, switch, catch
+		 (t 2))))
 
 (defun c-skip-case-statement-forward (state &optional lim)
   ;; skip forward over case/default bodies, with optional maximal
@@ -4844,7 +4844,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.292 $"
+(defconst c-version "$Revision: 4.293 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
