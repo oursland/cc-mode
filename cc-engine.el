@@ -311,12 +311,14 @@
 
 
 ;; utilities for moving and querying around syntactic elements
+(defvar c-parsing-error nil)
 
 (defun c-parse-state ()
   ;; Finds and records all open parens between some important point
   ;; earlier in the file and point.
   ;;
   ;; if there's a state cache, return it
+  (setq c-parsing-error nil)
   (if (boundp 'c-state-cache) c-state-cache
     (let* (at-bob
 	   (pos (save-excursion
@@ -335,6 +337,8 @@
 		   ;;(skip-chars-forward " \t}")
 		   (point)))
 	   (last-bod pos) (last-pos pos)
+	   (errmsg
+	    "unbalanced close brace at bufpos %d -- INDENTATION IS SUSPECT!")
 	   placeholder state sexp-end)
       ;; cache last bod position
       (while (catch 'backup-bod
@@ -373,8 +377,12 @@
 		       (while t
 			 (setq last-bod (c-safe (scan-lists last-bod -1 1)))
 			 (if (not last-bod)
-			     (error "unbalanced close brace at position %d"
-				    (1- placeholder))
+			     (progn
+			       ;; bogus, but what can we do here?
+			       (message errmsg (1- placeholder))
+			       (setq c-parsing-error t)
+			       (ding)
+			       (throw 'backup-bod nil))
 			   (setq at-bob (= last-bod (point-min))
 				 pos last-bod)
 			   (if (= (char-after last-bod) ?\{)
@@ -1689,6 +1697,7 @@
 	 (indent (apply '+ (mapcar 'c-get-offset c-syntactic-context)))
 	 (shift-amt  (- (current-indentation) indent)))
     (and c-echo-syntactic-information-p
+	 (not c-parsing-error)
 	 (message "syntax: %s, indent= %d" c-syntactic-context indent))
     (if (zerop shift-amt)
 	nil
@@ -1711,7 +1720,8 @@ With universal argument, inserts the analysis as a comment on that line."
   (interactive "P")
   (let ((syntax (c-guess-basic-syntax)))
     (if (not (consp arg))
-	(message "syntactic analysis: %s" syntax)
+	(if (not c-parsing-error)
+	    (message "syntactic analysis: %s" syntax))
       (indent-for-comment)
       (insert (format "%s" syntax))
       ))
