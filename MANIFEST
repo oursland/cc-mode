@@ -1,18 +1,29 @@
+MANIFEST for tar distribution of cc-mode.el 4.85
+Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
+$Date: 1994-09-10 17:34:36 $
+
 You should have received the following files in the distribution tar
-file for cc-mode 4.35:
+file for cc-mode 4.85:
 
     MANIFEST: This file
 
-    cc-mode.el: Version 4.35 of the mode
+    cc-mode.el: Version 4.85 of the mode.
 
-    cc-mode-18.el: Emacs 18 compatibility file
+    cc-compat.el: version 1.2.  Helps ease the transition from
+    c-mode.el to cc-mode style indentation control.  This is provided
+    for your convenience only, and is completely unguaranteed and
+    unsupported.
 
-    README: manual on how to use cc-mode to edit C and C++
-    files. Eventually this will be replaced by a texinfo manual.
+    cc-mode-18.el: Emacs 18 compatibility file.  This is provided for
+    your convenience only, and is completely unguaranteed and
+    unsupported.  Emacs 18 support will probably be completely dropped
+    in cc-mode version 5.
 
-    DUMPING: A guide to ditching c-mode.el in favor of cc-mode.el.
+    README: manual on how to use cc-mode to edit C, C++, and
+    Objective-C files. Eventually this will be replaced by a texinfo
+    manual.  VOLUNTEERS ARE SOUGHT to help complete the manual.
+
+    DUMPING: A guide to ditching c-mode.el and c++-mode.el in favor of
+    cc-mode.el.
 
     ChangeLog: Extremely verbose history of changes.
-
-    lemacs.patch: fix to obscure C++ comment bug for Lucid Emacs 19
-    only.  See comments in file re: FSF Emacs 19.
