@@ -821,7 +821,8 @@ See `c-forward-token-1' for details."
 		 (while paren-state
 		   (when (and (integerp (car paren-state))
 			      (eq (char-after (car paren-state)) ?{))
-		     (throw 'done (car paren-state))))
+		     (throw 'done (car paren-state)))
+		   (setq paren-state (cdr paren-state)))
 		 (point-min)))))
 
 (defun c-syntactic-re-search-forward (regexp &optional bound noerror count
