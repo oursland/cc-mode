@@ -1778,7 +1778,7 @@ expressions."
 (c-lang-defconst c-inexpr-block-kwds
   "Keywords that start constructs followed by statement blocks which can
 be used in expressions \(the gcc extension for this in C and C++ is
-handled separately)."
+handled separately by `c-recognize-paren-inexpr-blocks')."
   t    nil
   pike '("catch" "gauge"))
 
@@ -2334,6 +2334,14 @@ Foo bar = gnu;"
   t nil
   c++ t)
 (c-lang-defvar c-recognize-paren-inits (c-lang-const c-recognize-paren-inits))
+
+(c-lang-defconst c-recognize-paren-inexpr-blocks
+  "Non-nil to recognize gcc style in-expression blocks,
+i.e. compound statements surrounded by parentheses inside expressions."
+  t nil
+  (c c++) t)
+(c-lang-defvar c-recognize-paren-inexpr-blocks
+  (c-lang-const c-recognize-paren-inexpr-blocks))
 
 (c-lang-defconst c-opt-<>-arglist-start
   ;; Regexp matching the start of angle bracket arglists in languages
