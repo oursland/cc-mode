@@ -1,7 +1,5 @@
 README for cc-mode.el 3.229
 Barry A. Warsaw
-bwarsaw@cen.com
-warsaw@nlm.nih.gov
 03-Feb-1994
 
 
@@ -125,12 +123,12 @@ Getting Started
 
 New indentation engine
 
-    cc-mode has a new indentation engine, providing a flexible and
-    general mechanism for customizing indentation. It breaks
-    indentation calculation into two steps. First it tries to figure
-    out what kind of C/C++ construct its looking at, then it applies a
-    user defined offset to the current line based on the type of
-    construct it finds.
+    cc-mode has a new indentation engine, providing a simplified, yet
+    flexible and general mechanism for customizing indentation. It
+    breaks indentation calculation into two steps. First it tries to
+    figure out what kind of C/C++ construct its looking at, then it
+    applies a user defined offset to the current line based on the
+    type of construct it finds.
 
     This section will briefly cover how indentation is calculated in
     cc-mode. Only enough detail will be given so that you will know
@@ -149,7 +147,8 @@ New indentation engine
     describe elements of C/C++ code such as `statement',
     `substatement', `class-open', `class-close', `knr-argdecl', etc.
     You can do a "C-h v c-offsets-alist" to see the entire list of
-    support syntactic symbols.
+    support syntactic symbols along with a description of the
+    constructs they represent.
 
     Conceptually, a line of C/C++ code is always indented relative to
     the indentation of some line higher up in the buffer.  This is
@@ -220,12 +219,12 @@ New indentation engine
     the running total.
 
     Second, if the component has a relative buffer position, cc-mode
-    adds the current column of that position to the running total.  By
+    adds the column number of that position to the running total.  By
     adding up the offsets and columns for every syntactic component on
     the list, the final total indentation for the current line is
     computed.
 
-    Lets us our two code examples above to see how this works.  Just
+    Lets use our two code examples above to see how this works.  Just
     as a reminder and a convenience the code is presented again here.
 
   Example 1:
@@ -250,9 +249,9 @@ New indentation engine
 
     Next cc-mode goes to buffer position 30 and asks for the current
     column.  Since the brace at buffer position 30 is in column zero,
-    it adds 0 to the running total.  Since there is only one syntactic
-    component on the list for this line, the total indentation for the
-    line is 4 spaces.
+    it adds 0 to the running total, and since there is only one
+    syntactic component on the list for this line, the total
+    indentation for the line is 4 spaces.
 
   Example 2:
 
@@ -265,19 +264,18 @@ New indentation engine
     7:     return( val );
     8: }
 
-    If we were to hit TAB on line 4 in example 2 above, the same
-    process is performed, taking into account the 2 differences we
-    have here.  Remember that the syntactic component list for this
-    line is:
+    If we were to hit TAB on line 4 in example 2 above, the same basic
+    process is performed, despite the differences in the syntactic
+    component list.  Remember that the list for this line is:
 
         ((block-open) (substatement . 46))
     
-    First cc-mode looks up the `block-open' symbol in c-offsets-alist,
-    for which it might find `0'.  At this point the running total is
-    still zero (0 + 0 = 0).  And since the block-open component has no
-    buffer relative position, cc-mode is done processing this
-    syntactic component, so it just moves on to the next component on
-    the list.
+    Here, cc-mode first looks up the `block-open' symbol in
+    c-offsets-alist, for which it finds `0'.  At this point the
+    running total is still zero (0 + 0 = 0).  And since the block-open
+    component has no buffer relative position, cc-mode is done
+    processing this syntactic component, so it just moves on to the
+    next component on the list.
 
     It then looks up `substatement', for which it might find `4'.
     Adding this to the running total yields a total indentation of 4
@@ -288,21 +286,34 @@ New indentation engine
 
     Simple, huh?
 
+    Actually, the mode usually just does The Right Thing without you
+    having to think about it in this much detail.  But when
+    customizing indentation, its good to have a general idea of the
+    indentation model being used.
+
 
 Customizing Indentation
 
     The c-offsets-alist variable is where you customize all your
-    indentations.  You simply need to decide what addition offset you
-    want to add for every syntactic symbol.  You can use the command
-    C-c C-o (c-set-offset) as the way to set offsets, both
+    indentations.  You simply need to decide what additional offset
+    you want to add for every syntactic symbol.  You can use the
+    command C-c C-o (c-set-offset) as the way to set offsets, both
     interactively and from your mode hook.  Also, you can set up
-    "styles" of indentation just like in standard c-mode.el.
+    "styles" of indentation just like in standard c-mode.el.  But
+    you'll probably find that most of the offsets are right for your
+    style.
 
     In fact, the offset values in c-offsets-alist can be an integer,
     or it can be one of the symbols `+' or `-' indicating positive or
-    negative multiples of the variable c-basic-offset.  The value can
-    also be a function, which can really give power users a lot of
-    flexibility in customizing indentation.
+    negative multiples of the variable c-basic-offset.  Thus if you
+    like the general indentation levels, but you use 3 spaces instead
+    of 4 spaces per level, you can probably achieve your style by just
+    changing c-basic-offset like so (in your .emacs file):
+
+    	(setq c-basic-offset 3)
+
+    The offset value can also be a function, and this can really give
+    power users a lot of flexibility in customizing indentation.
 
     As an example of how to customize indentation, lets change the
     style of example 2 above from:
@@ -333,7 +344,7 @@ Customizing Indentation
     	((block-open) (substatement . 46))
 
     So we know either want to change the indentation for `block-open',
-    or for `substatement'.  Since `substatement' syntactic symbol
+    or for `substatement'.  Since the `substatement' syntactic symbol
     controls all indentation after if, while, else, switch, for, and
     do statements, and since we still want to indented non-block
     substatements like this:
@@ -341,13 +352,15 @@ Customizing Indentation
 	if( doit_again )
 	    just_do_it();
 
-    we decide to change the offset for `block-open'.  To do check this
+    we decide to change the offset for `block-open'.  To do this
     interactively, just hit C-c C-o.  This prompts you for the
-    syntactic symbol to change.  Enter "block-open" and hit return. It
-    will then prompt you for the new offset value, with the old value
-    as the default.  Hit "-" (the minus sign) and then return.  This
-    changes the offset to (-1 * c-basic-offset), essentially moving
-    the construct one level of indentation to the left.
+    syntactic symbol to change.  Enter "block-open" (without the
+    double quotes) and hit return. It will then prompt you for the new
+    offset value, with the old value as the default.  Hit backspace to
+    delete the old value, then hit "-" (the minus sign) and then
+    return.  This changes the offset to (-1 * c-basic-offset),
+    essentially moving the construct one level of indentation to the
+    left.
 
     To check your changes quickly, just hit ESC C-x to reindent the
     entire function.  If this does what you want, you can put the
@@ -357,15 +370,16 @@ Customizing Indentation
 
     You could also set up a "style" that sets this and all your
     customizations in a convenient manner.  See the variable
-    c-style-alist and the command c-set-style for more information.
+    c-style-alist and the command c-set-style for more information, or
+    take a look at the sample .emacs file below.
     
 
 Frequently Asked Questions
 
     Q. How do I re-indent the whole file?
     A. Visit the file and hit "C-x h" to mark the whole buffer. Then
-       hit "ESC C-\" to indent the entire region (which you've just
-       marked as the whole buffer).
+       hit "ESC C-\" to re-indent the entire region which you've just
+       marked.
 
     Q. How do I re-indent the entire function?
     A. Hit ESC C-x
@@ -375,12 +389,14 @@ Frequently Asked Questions
        then re-indent that expression with "ESC C-q".
 
     Q. Why doesn't the RET key indent the line to where the new text
-       should go?
+       should go after inserting the newline?
     A. Emacs' convention is that RET just add a new line, and that LFD
        adds a newline and indents.  You can make RET do this too by
        adding this to your .emacs file:
 
        (define-key c-mode-map "C-m" 'newline-and-indent)
+
+       This is a very common question. :-)
 
 
 ;; Sample .emacs file
@@ -389,7 +405,8 @@ Frequently Asked Questions
 ;; haven't touched on here.  Until the texinfo is complete, you're
 ;; going to have to explore these on your own.  Here's a sample .emacs
 ;; file that might help you along the way.  Just hit "C-x C-p", then
-;; "ESC w" to copy this region, then paste it into your .emacs file.
+;; "ESC w" to copy this region, then paste it into your .emacs file
+;; with "C-y".  You may want to change some of the actual values.
 
 (defconst my-c-style
   '("PERSONAL"
@@ -591,7 +608,17 @@ Limitations and Known Bugs
 
     c++-mode does not recognize exception constructs.
 
-    c++-mode does not recognize friends.
+    c++-mode does not recognize friend constructs.
+
+    re-indenting large regions or expressions can be slow.
+
+    Use with Emacs 18 can be slow and annoying. You should seriously
+    consider upgrading to Emacs 19.
+
+    If you don't put top-level function and class opening braces in
+    column zero, you could notice severe degradations in performance.
+    Consider changing your coding style or defining the variable
+    defun-prompt-regexp to something suitable (Emacs 19 only).
 
 
 Electronic Mail
@@ -600,7 +627,8 @@ Electronic Mail
     This provides vital information I need to reproduce your problem.
     Make sure you include a stripped down code example.
 
-    For other help, send a message to cc-mode-help@anthem.nlm.nih.gov.
+    For other help or suggestions, send a message to
+    cc-mode-help@anthem.nlm.nih.gov.
 
     To get on the beta testers list, send an add message to
     cc-mode-victims-request@anthem.nlm.nih.gov.  Note that this is a
@@ -613,6 +641,9 @@ Electronic Mail
     expect beta releases to be as stable as public releases.  Send an
     add message to cc-mode-announce-request@anthem.nlm.nih.gov to be
     added to this list.
+
+    Please use these addresses instead of my personal address so I can
+    keep track of all the incoming mail!
 
 
 Here's the Emacs Lisp Archive information for reporter.el:
