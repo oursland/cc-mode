@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.335 $
-;; Last Modified:   $Date: 1993-06-03 22:42:44 $
+;; Version:         $Revision: 2.336 $
+;; Last Modified:   $Date: 1993-06-14 21:54:38 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-06-03 22:42:44 $|$Revision: 2.335 $|
+;; |$Date: 1993-06-14 21:54:38 $|$Revision: 2.336 $|
 
 ;;; Code:
 
@@ -480,7 +480,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.335 $
+  "Major mode for editing C++ code.  $Revision: 2.336 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -698,7 +698,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 2.335 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 2.336 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1572,7 +1572,10 @@ comments, and preprocessor directives.  Search no farther back than
 optional LIM.  If LIM is ommitted, `beginning-of-defun' is used."
   (save-restriction
     (let ((lim (or lim (c++-point 'bod)))
-	  donep boi char)
+	  donep boi char
+	  (skipre (concat "#\\|/\\*\\|//\\|\n"
+			  (if (memq '1-bit c++-emacs-features)
+			      "\\|\\'" ""))))
       (if (< lim (point))
 	  (unwind-protect
 	      (progn
@@ -1580,7 +1583,7 @@ optional LIM.  If LIM is ommitted, `beginning-of-defun' is used."
 		(modify-syntax-entry ?# "< b" c++-mode-syntax-table)
 		(while (not donep)
 		  (forward-comment -1)
-		  (if (not (looking-at "#\\|/\\*\\|//\\|\n"))
+		  (if (not (looking-at skipre))
 		      (forward-char 1))
 		  (setq boi (c++-point 'boi)
 			char (char-after boi))
@@ -2661,7 +2664,7 @@ definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.335 $"
+(defconst c++-version "$Revision: 2.336 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
