@@ -18,12 +18,12 @@
 
 (4 ref) (9 reg) (11 ref) (18 reg)
 
-(8 ref) (13 reg) (15 typ) (26 reg)
+(8 ref) (13 reg)
 (10 typ) (13 reg)
 
 (3 key) (11 reg) (12 ref) (16 reg)
 
-(4 ref) (9 reg) (11 typ) (27 reg)
+(4 ref) (9 reg)
 (4 cmt)
 (0 reg)
 (3 typ) (7 reg) (8 typ) (18 reg)
