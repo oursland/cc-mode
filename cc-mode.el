@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.170 $
-;; Last Modified:   $Date: 1995-03-09 17:49:51 $
+;; Version:         $Revision: 4.171 $
+;; Last Modified:   $Date: 1995-03-09 21:08:24 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-09 17:49:51 $|$Revision: 4.170 $|
+;; |$Date: 1995-03-09 21:08:24 $|$Revision: 4.171 $|
 
 ;;; Code:
 
@@ -1320,7 +1320,12 @@ it finds in `c-file-offsets'."
 	 ((or (looking-at "^#[ \t]*endif[ \t]*")
 	      (looking-at "^#[ \t]*else[ \t]*"))
 	  7)
-	 ;; CASE 3: use comment-column if previous line is a
+	 ;; CASE 3: when comment-column is nil, calculate the offset
+	 ;; according to c-offsets-alist.  E.g. identical to hitting
+	 ;; TAB.
+	 ((not comment-column)
+	  (apply '+ (mapcar 'c-get-offset (c-guess-basic-syntax))))
+	 ;; CASE 4: use comment-column if previous line is a
 	 ;; comment-only line indented to the left of comment-column
 	 ((save-excursion
 	    (beginning-of-line)
@@ -1334,14 +1339,14 @@ it finds in `c-file-offsets'."
 	  (if (< (current-column) comment-column)
 	      comment-column
 	    (current-column)))
-	 ;; CASE 4: If comment-column is 0, and nothing but space
+	 ;; CASE 5: If comment-column is 0, and nothing but space
 	 ;; before the comment, align it at 0 rather than 1.
 	 ((progn
 	    (goto-char opoint)
 	    (skip-chars-backward " \t")
 	    (and (= comment-column 0) (bolp)))
 	  0)
-	 ;; CASE 5: indent at comment column except leave at least one
+	 ;; CASE 6: indent at comment column except leave at least one
 	 ;; space.
 	 (t (max (1+ (current-column))
 		 comment-column))
@@ -4489,7 +4494,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.170 $"
+(defconst c-version "$Revision: 4.171 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
