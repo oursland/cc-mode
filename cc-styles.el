@@ -271,13 +271,12 @@ the existing style.")
 		       (assoc (upcase style) c-style-alist)
 		       (assoc style c-style-alist)
 		       (error "Undefined style: %s" style)))))
-    (if (string-equal style "user")
-	(copy-alist vars)
-      (let ((base (if (stringp (car vars))
-		      (prog1
-			  (downcase (car vars))
-			(setq vars (cdr vars)))
-		    "user")))
+    (let ((base (and (stringp (car vars))
+		     (prog1
+			 (downcase (car vars))
+		       (setq vars (cdr vars))))))
+      (if (not base)
+	  (copy-alist c-fallback-style)
 	(if (memq base basestyles)
 	    (error "Style loop detected: %s in %s" base basestyles))
 	(nconc (c-get-style-variables base (cons base basestyles))
@@ -526,31 +525,22 @@ CC Mode by making sure the proper entries are present on
   (unless (get 'c-initialize-builtin-style 'is-run)
     (put 'c-initialize-builtin-style 'is-run t)
     ;;(c-initialize-cc-mode)
-    (or (assoc "cc-mode" c-style-alist)
-	(assoc "user" c-style-alist)
-	(progn
-	  (c-add-style
-	   "user"
-	   (mapcar
-	    (lambda (var)
-	      (let ((val (symbol-value var)))
-		(cons var
-		      (cond ((eq var 'c-offsets-alist)
-			     (mapcar
-			      (lambda (langentry)
-				(setq langentry (or (assq (car langentry) val)
-						    langentry))
-				(cons (car langentry)
-				      (cdr langentry)))
-			      (get var 'c-stylevar-fallback)))
-			    ((eq var 'c-special-indent-hook)
-			     val)
-			    (t
-			     (if (eq val 'set-from-style)
-				 (get var 'c-stylevar-fallback)
-			       val))))))
-	    c-style-variables))
-	  (c-add-style "cc-mode" '("user"))))
+    (unless (assoc "user" c-style-alist)
+      (let ((vars c-style-variables) var val uservars)
+	(while vars
+	  (setq var (car vars)
+		val (symbol-value var)
+		vars (cdr vars))
+	  (cond ((eq var 'c-offsets-alist)
+		 (or (null val)
+		     (setq uservars (cons (cons 'c-offsets-alist val)
+					  uservars))))
+		((not (eq val 'set-from-style))
+		 (setq uservars (cons (cons var val)
+				      uservars)))))
+	(c-add-style "user" uservars)))
+    (unless (assoc "cc-mode" c-style-alist)
+      (c-add-style "cc-mode" '("user")))
     (if c-style-variables-are-local-p
 	(c-make-styles-buffer-local))))
 

@@ -117,10 +117,16 @@ Useful as last item in a `choice' widget."
     c-special-indent-hook c-label-minimum-indentation c-offsets-alist)
   "List of the style variables.")
 
+(defvar c-fallback-style nil)
+
+(defsubst c-set-stylevar-fallback (name val)
+  (put name 'c-stylevar-fallback val)
+  (setq c-fallback-style (cons (cons name val) c-fallback-style)))
+
 (defmacro defcustom-c-stylevar (name val doc &rest args)
   "Defines a style variable."
   `(progn
-     (put ',name 'c-stylevar-fallback ,val)
+     (c-set-stylevar-fallback ',name ,val)
      (defcustom ,name 'set-from-style
        ,(concat doc "
 
@@ -719,7 +725,7 @@ can always override the use of `c-default-style' by making calls to
 		  (const :format "Other " other) (string :format "%v"))))
   :group 'c)
 
-(put 'c-offsets-alist 'c-stylevar-fallback
+(c-set-stylevar-fallback 'c-offsets-alist
      '((string                . c-lineup-dont-change)
        ;; Relpos: Beg of previous line.
        (c                     . c-lineup-C-comments)
