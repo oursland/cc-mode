@@ -88,7 +88,7 @@
               (font-lock-compile-keywords '("\\<\\>"))
 	      font-lock-keywords))     ; did the previous call foul this up?
        ;; Buglet: This only works if the CC Mode directory is in the
-       ;; load path.  No need to bother; it'd only affect odd people
+       ;; load path.  No need to bother; it only affects odd people
        ;; such as the developers.. ;)
        (load "cc-fix")))
 
