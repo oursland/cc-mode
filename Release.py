@@ -73,6 +73,7 @@ def tag_release(revnum, retag):
 	    if docorev <> revnum:
 		print '*****WARNING*****'
 		print 'ChangeLog has not been updated... exiting!'
+		print 'Found tag ' + docorev
 		sys.exit(1)
 	    break
     fp.close()
