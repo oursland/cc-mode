@@ -348,13 +348,6 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 ;; Regexp describing any label.
 (defconst c-label-key (concat c-symbol-key ":\\([^:]\\|$\\)"))
 
-;; Regexp describing class inheritance declarations.  TBD: this should
-;; be language specific, and only makes sense for C++
-(defconst c-inher-key
-  (concat "\\(\\<static\\>\\s +\\)?"
-	  c-C++-class-key "[ \t]+" c-symbol-key
-	  "\\([ \t]*:[ \t]*\\)\\s *[^;]"))
-
 ;; Regexp describing C++ base classes in a derived class definition.
 ;; TBD: this should be language specific, and only makes sense for C++
 (defvar c-baseclass-key
