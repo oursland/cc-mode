@@ -66,6 +66,9 @@
 ;; positions, e.g. to improve speed and to eliminate glitches in
 ;; interactive refontification.
 ;;
+;; Note: This doc is for internal use only.  Other packages should not
+;; assume that these text properties are used as described here.
+;;
 ;; 'syntax-table
 ;;   Used to modify the syntax of some characters.  Currently used to
 ;;   mark the "<" and ">" of angle bracket parens with paren syntax.
@@ -2664,7 +2667,7 @@ This function does not do any hidden buffer changes."
 
 (defalias 'c-in-literal
   (if (fboundp 'buffer-syntactic-context)
-    'c-fast-in-literal                  ; Xemacs
+    'c-fast-in-literal                  ; XEmacs
     'c-slow-in-literal))                ; GNU Emacs
 
 ;; The defalias above isn't enough to shut up the byte compiler.
@@ -5423,34 +5426,36 @@ brace."
      )))
 
 (defun c-guess-basic-syntax ()
-  "Return the syntactic context of the current line."
+  "Return the syntactic context of the current line.
+This function does not do any hidden buffer changes."
   (save-excursion
     (save-restriction
       (beginning-of-line)
-      (let* ((indent-point (point))
-	     (case-fold-search nil)
-	     (paren-state (c-parse-state))
-	     literal containing-sexp char-before-ip char-after-ip lim
-	     c-syntactic-context placeholder c-in-literal-cache step-type
-	     tmpsymbol keyword injava-inher special-brace-list
-	     ;; narrow out any enclosing class or extern "C" block
-	     (inclass-p (c-narrow-out-enclosing-class paren-state
-						      indent-point))
-	     ;; `c-state-cache' is shadowed here so that we don't
-	     ;; throw it away due to the narrowing that might be done
-	     ;; by the function above.  That means we must not do any
-	     ;; changes during the execution of this function, since
-	     ;; `c-invalidate-state-cache' then would change this local
-	     ;; variable and leave a bogus value in the global one.
-	     (c-state-cache (if inclass-p
-				(c-whack-state-before (point-min) paren-state)
-			      paren-state))
-	     (c-state-cache-start (point-min))
-	     inenclosing-p macro-start in-macro-expr
-	     ;; There's always at most one syntactic element which got
-	     ;; a relpos.  It's stored in syntactic-relpos.
-	     syntactic-relpos
-	     (c-stmt-delim-chars c-stmt-delim-chars))
+      (c-save-buffer-state
+	  ((indent-point (point))
+	   (case-fold-search nil)
+	   (paren-state (c-parse-state))
+	   literal containing-sexp char-before-ip char-after-ip lim
+	   c-syntactic-context placeholder c-in-literal-cache step-type
+	   tmpsymbol keyword injava-inher special-brace-list
+	   ;; narrow out any enclosing class or extern "C" block
+	   (inclass-p (c-narrow-out-enclosing-class paren-state
+						    indent-point))
+	   ;; `c-state-cache' is shadowed here so that we don't
+	   ;; throw it away due to the narrowing that might be done
+	   ;; by the function above.  That means we must not do any
+	   ;; changes during the execution of this function, since
+	   ;; `c-invalidate-state-cache' then would change this local
+	   ;; variable and leave a bogus value in the global one.
+	   (c-state-cache (if inclass-p
+			      (c-whack-state-before (point-min) paren-state)
+			    paren-state))
+	   (c-state-cache-start (point-min))
+	   inenclosing-p macro-start in-macro-expr
+	   ;; There's always at most one syntactic element which got
+	   ;; a relpos.  It's stored in syntactic-relpos.
+	   syntactic-relpos
+	   (c-stmt-delim-chars c-stmt-delim-chars))
 	;; Check for meta top-level enclosing constructs such as
 	;; extern language definitions.
 	(save-excursion
