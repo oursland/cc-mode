@@ -537,8 +537,10 @@ to be set as a file local variable.")
     (set-buffer testbuf)
     (kill-all-local-variables)
     (buffer-disable-undo testbuf)
+    (setq buffer-read-only nil)
     (erase-buffer)
     (insert-file-contents filename)
+    (setq buffer-read-only t) ; Test that we make no (hidden) changes.
     (goto-char (point-min))
     (let ((c-default-style "TESTSTYLE")
 	  c-mode-hook c++-mode-hook objc-mode-hook c-mode-common-hook)
@@ -665,7 +667,7 @@ to be set as a file local variable.")
 	    (while (not (eobp))
 	      (let ((syntax
 		     (condition-case err
-			 (c-save-buffer-state nil (c-guess-basic-syntax))
+			 (c-guess-basic-syntax)
 		       (error
 			(if no-error
 			    (unless error-found-p
@@ -692,7 +694,8 @@ to be set as a file local variable.")
 		;; whitespace at eol trimmed away, so that could produce
 		;; false alarms.
 		(condition-case err
-		    (c-indent-line)
+		    (let ((buffer-read-only nil))
+		      (c-indent-line))
 		  (error
 		   (if no-error
 		       (unless error-found-p
@@ -730,19 +733,20 @@ to be set as a file local variable.")
 			    (setq msg (apply 'format msg args))
 			    (cc-test-log "%s:%d: %s" filename linenum msg)
 			    (set-buffer testbuf)
-			    (beginning-of-line)
-			    (unless (re-search-forward
-				     (concat "\\s *" c-comment-start-regexp)
-				     (c-point 'eol) t)
-			      (indent-for-comment))
-			    (when (re-search-forward
-				   "\\*/" (c-point 'eol) 'move)
-			      (goto-char (match-beginning 0)))
-			    (unless regression-comment
-			      (setq regression-comment t)
-			      (delete-horizontal-space)
-			      (insert " !!! "))
-			    (insert msg ". ")
+			    (let ((buffer-read-only nil))
+			      (beginning-of-line)
+			      (unless (re-search-forward
+				       (concat "\\s *" c-comment-start-regexp)
+				       (c-point 'eol) t)
+				(indent-for-comment))
+			      (when (re-search-forward
+				     "\\*/" (c-point 'eol) 'move)
+				(goto-char (match-beginning 0)))
+			      (unless regression-comment
+				(setq regression-comment t)
+				(delete-horizontal-space)
+				(insert " !!! "))
+			      (insert msg ". "))
 			    (setq error-found-p t))
 			  (setq test-error-found t)))
 
