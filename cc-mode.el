@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.270 $
-;; Last Modified:   $Date: 1996-01-19 18:48:16 $
+;; Version:         $Revision: 4.271 $
+;; Last Modified:   $Date: 1996-01-19 18:51:50 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -104,28 +104,6 @@
 ;;
 ;; You do not need the autoload calls if your Emacs comes with cc-mode
 ;; automatically.
-
-;; Several Majordomo mailing lists exist for those of you who are
-;; interested in beta testing new versions: cc-mode-announce for
-;; announcements of new beta versions only, and cc-mode-victims for
-;; more technical discussions of the mode.  For more information, send
-;; the word `help' in a message to one of the following addresses:
-;;
-;;       cc-mode-victims-request@merlin.cnri.reston.va.us
-;;       cc-mode-announce-request@merlin.cnri.reston.va.us
-
-;; Many, many thanks go out to all the folks on the beta test list.
-;; Without their patience, testing, insight, code contributions, and
-;; encouragement cc-mode.el would be a far inferior package.
-
-;; Anonymous ftp URL:
-;;
-;;    ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz
-
-;; LCD Archive Entry:
-;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
-;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-19 18:48:16 $|$Revision: 4.270 $|
 
 ;;; Code:
 
@@ -4809,7 +4787,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.270 $"
+(defconst c-version "$Revision: 4.271 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
