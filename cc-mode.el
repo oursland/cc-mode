@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.50 $
-;; Last Modified:   $Date: 1994-08-16 20:05:49 $
+;; Version:         $Revision: 4.51 $
+;; Last Modified:   $Date: 1994-08-17 22:51:55 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -31,7 +31,7 @@
 ;;; Commentary:
 
 ;; This package provides modes in GNU Emacs for editing C, C++, and
-;; Objective C code. It is intended to be a replacement for c-mode.el
+;; Objective-C code. It is intended to be a replacement for c-mode.el
 ;; (a.k.a. BOCM -- Boring Old C-Mode), and c++-mode.el, both of which
 ;; are ancestors of this file.  A number of important improvements
 ;; have been made, briefly: complete K&R C, ANSI C, and C++ support
@@ -72,18 +72,18 @@
 ;; one for editing C++ code, one for editing C code (both K&R and
 ;; ANSI), and one for editing Objective-C code.  To use cc-mode, add
 ;; the following to your .emacs file.  This assumes you will use .cc
-;; or .C extensions for your C++ source, .c for your C code, and .objc
+;; or .C extensions for your C++ source, .c for your C code, and .m
 ;; for your Objective-C code:
 ;;
 ;; (autoload 'c++-mode  "cc-mode" "C++ Editing Mode" t)
 ;; (autoload 'c-mode    "cc-mode" "C Editing Mode" t)
 ;; (autoload 'objc-mode "cc-mode" "Objective-C Editing Mode" t)
 ;; (setq auto-mode-alist
-;;   (append '(("\\.C$"    . c++-mode)
-;;             ("\\.cc$"   . c++-mode)
-;;             ("\\.c$"    . c-mode)
-;;             ("\\.h$"    . c-mode)
-;;             ("\\.objc$" . objc-mode)
+;;   (append '(("\\.C$"  . c++-mode)
+;;             ("\\.cc$" . c++-mode)
+;;             ("\\.c$"  . c-mode)
+;;             ("\\.h$"  . c-mode)
+;;             ("\\.m$"  . objc-mode)
 ;;            ) auto-mode-alist))
 ;;
 ;; If you would like to join the beta testers list, send add/drop
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-16 20:05:49 $|$Revision: 4.50 $|
+;; |$Date: 1994-08-17 22:51:55 $|$Revision: 4.51 $|
 
 ;;; Code:
 
@@ -839,6 +839,8 @@ supported list, along with the values for this variable:
     ;; Give CR the same syntax as newline, for selective-display
     (modify-syntax-entry ?\^m "> b"   objc-mode-syntax-table))
    )
+  ;; everyone gets these
+  (modify-syntax-entry ?@ "_" objc-mode-syntax-table)
   )
 
 (defvar c-hungry-delete-key nil
@@ -852,13 +854,19 @@ supported list, along with the values for this variable:
 (defvar c-comment-start-regexp nil
   "Buffer local variable describing how comment are introduced.")
 (defvar c-conditional-key nil
-  "Buffer-local language-specific conditional keyword regexp.")
+  "Buffer local language-specific conditional keyword regexp.")
+(defvar c-access-key nil
+  "Buffer local language-specific access key regexp.")
+(defvar c-class-key nil
+  "Buffer local language-specific class key regexp.")
 
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
 (make-variable-buffer-local 'c-auto-hungry-string)
 (make-variable-buffer-local 'c-comment-start-regexp)
 (make-variable-buffer-local 'c-conditional-key)
+(make-variable-buffer-local 'c-access-key)
+(make-variable-buffer-local 'c-class-key)
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
@@ -875,11 +883,11 @@ The expansion is entirely correct because it uses the C preprocessor."
 We cannot use just `word' syntax class since `_' cannot be in word
 class.  Putting underscore in word class breaks forward word movement
 behavior that users are familiar with.")
-(defconst c-class-key "\\(class\\|struct\\|union\\)"
-  "Regexp describing a class declaration, including templates.")
+(defconst c-C++-class-key "\\(class\\|struct\\|union\\)"
+  "Regexp describing a C++ class declaration, including templates.")
 (defconst c-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
-	  c-class-key "[ \t]+" c-symbol-key
+	  c-C++-class-key "[ \t]+" c-symbol-key
 	  "\\([ \t]*:[ \t]*\\)?\\s *[^;]")
   "Regexp describing a class inheritance declaration.")
 (defconst c-protection-key
@@ -893,9 +901,9 @@ behavior that users are familiar with.")
 (defconst c-switch-label-key
   "\\(\\(case[( \t]+\\S .*\\)\\|default[ \t]*\\):"
   "Regexp describing a switch's case or default label")
-(defconst c-access-key
+(defconst c-C++-access-key
   (concat c-protection-key ":")
-  "Regexp describing access specification keywords.")
+  "Regexp describing C++ access specification keywords.")
 (defconst c-label-key
   (concat c-symbol-key ":\\([^:]\\|$\\)")
   "Regexp describing any label.")
@@ -906,21 +914,32 @@ behavior that users are familiar with.")
   "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\|try\\|catch\\)\\b[^_]"
   "Regexp describing a conditional control for C++.")
 
-(defconst c-objc-method-key
+(defconst c-ObjC-method-key
   (concat
    "^\\s *[+-]\\s *"
-   "\\((\\s *" c-symbol-key "\\s *)\\)?" ; return type
+   "\\(([^)]*)\\)?"			; return type
    ;; \\s- in objc syntax table does not include \n
    ;; since it is considered the end of //-comments.
    "[ \t\n]*" c-symbol-key)
   "Regexp describing an Objective-C method intro.")
+(defconst c-ObjC-access-key
+  (concat "@" c-protection-key)
+  "Regexp describing access specification keywords for Objective-C.")
+(defconst c-ObjC-class-key
+  (concat
+   "@\\(interface\\|implementation\\)\\s +"
+   c-symbol-key				;name of the class
+   "\\(\\s *:\\s *" c-symbol-key "\\)?"	;maybe followed by the superclass
+   "\\(\\s *<[^>]+>\\)?"		;and maybe the adopted protocols list
+   )
+  "Regexp describing a class or protocol declaration for Objective-C.")
 
 
 ;; main entry points for the modes
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.50 $
+cc-mode Revision: $Revision: 4.51 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -951,13 +970,15 @@ Key bindings:
   (setq comment-start "// "
 	comment-end ""
 	c-conditional-key c-C++-conditional-key
-	c-comment-start-regexp "//\\|/\\*")
+	c-comment-start-regexp "//\\|/\\*"
+	c-class-key c-C++-class-key
+	c-access-key c-C++-access-key)
   (run-hooks 'c++-mode-hook))
 
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.50 $
+cc-mode Revision: $Revision: 4.51 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -987,13 +1008,14 @@ Key bindings:
   (setq comment-start "/* "
 	comment-end   " */"
 	c-conditional-key c-C-conditional-key
+	c-class-key c-C++-class-key
 	c-comment-start-regexp "/\\*")
   (run-hooks 'c-mode-hook))
 
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.50 $
+cc-mode Revision: $Revision: 4.51 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1024,7 +1046,9 @@ Key bindings:
   (setq comment-start "// "
 	comment-end   ""
 	c-conditional-key c-C-conditional-key
-	c-comment-start-regexp "//\\|/\\*")
+	c-comment-start-regexp "//\\|/\\*"
+ 	c-class-key c-ObjC-class-key
+	c-access-key c-ObjC-access-key)
   (run-hooks 'objc-mode-hook))
 
 (defun c-common-init ()
@@ -2060,7 +2084,7 @@ search."
 		  (forward-char 1))))
 	    crossedp))
 	 ;; CASE 6: ignore labels
-	 ((or (looking-at c-access-key)
+	 ((or (and c-access-key (looking-at c-access-key))
 	      (looking-at c-label-key)
 	      (looking-at c-switch-label-key)))
 	 ;; CASE 7: ObjC method def
@@ -2402,7 +2426,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (message "indenting region... done."))
 
 (defun c-mark-function ()
-  "Put mark at end of a C/C++ defun, point at beginning."
+  "Put mark at end of a C, C++, or Objective-C defun, point at beginning."
   (interactive)
   (let ((here (point))
 	;; there should be a c-point position for 'eod
@@ -2604,7 +2628,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (= (preceding-char) ?+))
 	(let ((initial-pos (1- (point))))
 	  (beginning-of-line)
-	  (if (looking-at c-objc-method-key)
+	  (if (looking-at c-ObjC-method-key)
 	      initial-pos))
       nil)))
 
@@ -2773,20 +2797,22 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (goto-char class)
 		  (skip-chars-forward " \t\n")
 		  (setq foundp (vector (c-point 'boi) search-end))
-		  ;; make sure we're really looking at the start of a
-		  ;; class definition, and not a forward decl, return
-		  ;; arg, or template arg list. Its impossible to
-		  ;; define a regexp for this, and nearly so to do it
-		  ;; programmatically.
-		  ;;
-		  ;; ; picks up forward decls
-		  ;; = picks up init lists
-		  ;; ) picks up return types
-		  ;; > picks up arg lists
-		  (skip-chars-forward "^;=)>" search-end)
-		  (if (/= (point) search-end)
-		      (setq foundp nil))
-		  ))
+		  (if (eq major-mode 'objc-mode)
+		      nil		;this is enough for Objective-C
+		    ;; make sure we're really looking at the start of
+		    ;; a class definition, and not a forward decl,
+		    ;; return arg, or template arg list. Its
+		    ;; impossible to define a regexp for this, and
+		    ;; nearly so to do it programmatically.
+		    ;;
+		    ;; ; picks up forward decls
+		    ;; = picks up init lists
+		    ;; ) picks up return types
+		    ;; > picks up templates
+		    (skip-chars-forward "^;=)>" search-end)
+		    (if (/= (point) search-end)
+			(setq foundp nil))
+		    )))
 	      foundp))
 	  )))))
 
@@ -2885,7 +2911,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     (case-fold-search nil)
 	     (state (c-parse-state))
 	     (in-method-intro-p (and (eq major-mode 'objc-mode)
-				     (looking-at c-objc-method-key)))
+				     (looking-at c-ObjC-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder c-in-literal-cache
 	     ;; narrow out any enclosing class
@@ -3137,6 +3163,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-backward-syntactic-ws lim)
 	      (while (and inclass-p
 			  (= (preceding-char) ?:)
+			  (not (and (eq major-mode 'objc-mode)
+				    (bobp)))
 			  (save-excursion
 			    (backward-sexp 1)
 			    (looking-at c-access-key)))
@@ -3151,7 +3179,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		 (progn
 		   (c-beginning-of-statement 1 lim)
 		   (beginning-of-line)
-		   (looking-at c-objc-method-key)))
+		   (looking-at c-ObjC-method-key)))
 	    (c-add-syntax 'objc-method-args-cont (point)))
 	   ;; CASE 5J: we are at a topmost continuation line
 	   (t
@@ -3737,25 +3765,45 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (- (1+ (current-column)) curcol))))
 
 (defun c-lineup-objc-method-args (langelem)
-  ;; Line up the colons that separate args
+  ;; Line up the colons that separate args. This is done trying to
+  ;; align colons vertically.
   (save-excursion
     (let* ((here (c-point 'boi))
 	   (curcol (progn (goto-char here) (current-column)))
 	   (eol (c-point 'eol))
 	   (relpos (cdr langelem))
-	   (colpos (progn
-		     (goto-char relpos)
-		     (skip-chars-forward "^:" eol)
-		     (and (= (following-char) ?:)
-			  (- (point) relpos)))))
-      ;; We are now on the opening [-+]
-      (if (not colpos)
+	   (first-col-column (progn
+			       (goto-char relpos)
+			       (skip-chars-forward "^:" eol)
+			       (and (= (following-char) ?:)
+				    (current-column)))))
+      (if (not first-col-column)
+	  c-basic-offset
+	(goto-char here)
+	(skip-chars-forward "^:" eol)
+	(if (= (following-char) ?:)
+	    (+ curcol (- first-col-column (current-column)))
+	  c-basic-offset)))))
+
+(defun c-lineup-objc-method-args-2 (langelem)
+  ;; Line up the colons that separate args. This is done trying to
+  ;; align the colon on the current line with the previous one.
+  (save-excursion
+    (let* ((here (c-point 'boi))
+	   (curcol (progn (goto-char here) (current-column)))
+	   (eol (c-point 'eol))
+	   (relpos (cdr langelem))
+	   (prev-col-column (progn
+			      (skip-chars-backward "^:" relpos)
+			      (and (= (preceding-char) ?:)
+				   (- (current-column) 1)))))
+      (if (not prev-col-column)
 	  c-basic-offset
 	;; calculate offset of
 	(goto-char here)
 	(skip-chars-forward "^:" eol)
 	(if (= (following-char) ?:)
-	    (+ curcol (- colpos (current-column)))
+	    (+ curcol (- prev-col-column (current-column)))
 	  c-basic-offset)))))
 
 
@@ -3888,7 +3936,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.50 $"
+(defconst c-version "$Revision: 4.51 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
