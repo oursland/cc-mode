@@ -711,9 +711,9 @@ of the same line to move over a line comment."
     c-macro-start))
 
 (defun c-beginning-of-macro (&optional lim)
-  "Go to the beginning of a cpp macro definition.
-Leave point at the beginning of the macro and return t if in a cpp
-macro definition, otherwise return nil and leave point unchanged."
+  "Go to the beginning of a preprocessor directive.
+Leave point at the beginning of the directive and return t if in one,
+otherwise return nil and leave point unchanged."
   (let ((here (point)))
     (save-restriction
       (if lim (narrow-to-region lim (point-max)))
@@ -728,7 +728,7 @@ macro definition, otherwise return nil and leave point unchanged."
 	nil))))
 
 (defun c-end-of-macro ()
-  "Go to the end of a cpp macro definition.
+  "Go to the end of a preprocessor directive.
 More accurately, move point to the end of the closest following line
 that doesn't end with a line continuation backslash."
   (while (progn
@@ -1592,15 +1592,23 @@ you need both the type of a literal and its limits."
 	 (looking-at c-opt-asm-stmt-key))))
 
 (defun c-beginning-of-syntax ()
-  ;; This is used for font-lock-beginning-of-syntax-function.  It goes
-  ;; to the closest previous point that is known to be outside any
-  ;; string literal or comment, using c-state-cache.
-  (let ((paren-state (or c-state-cache (c-parse-state))))
-    (if paren-state
-	(if (consp (car paren-state))
-	    (goto-char (cdr (car paren-state)))
-	  (goto-char (car paren-state)))
-      (goto-char (point-min)))))
+  ;; This is used for `font-lock-beginning-of-syntax-function'.  It
+  ;; goes to the closest previous point that is known to be outside
+  ;; any string literal or comment, using `c-state-cache'.
+  (let ((paren-state (or c-state-cache (c-parse-state))) elem)
+    (goto-char
+     (catch 'done
+       (while paren-state
+	 (setq elem (car paren-state)
+	       paren-state (cdr paren-state))
+	 (if (consp elem)
+	     (cond ((<= (cdr elem) (point))
+		    (throw 'done (cdr elem)))
+		   ((<= (car elem) (point))
+		    (throw 'done (car elem))))
+	   (if (<= elem (point))
+	       (throw 'done elem))))
+       (point-min)))))
 
 (defun c-at-toplevel-p ()
   "Return a determination as to whether point is at the `top-level'.
