@@ -275,50 +275,98 @@
 
 
 ;; Moving by tokens, where a token is defined as all symbols and
-;; identifiers which aren't syntactic whitespace.  COUNT specifies the
-;; number of tokens to move forward; a negative COUNT moves backward.
-;; If BALANCED is true, move over balanced parens, otherwise move into
-;; them.  Also, if BALANCED is true, never move out of an enclosing
-;; paren.  LIM sets the limit for the movement.  Point is always left
-;; at the beginning of a token or at LIM.  Returns the number of
-;; tokens left to move (positive or negative).  If BALANCED is true, a
-;; move over a balanced paren counts as one.
+;; identifiers which aren't syntactic whitespace.  Point is always
+;; either left at the beginning of a token or not moved at all.  COUNT
+;; specifies the number of tokens to move; a negative COUNT moves in
+;; the opposite direction.  A COUNT of 0 moves to the next token
+;; beginning only if not already at one.  If BALANCED is true, move
+;; over balanced parens, otherwise move into them.  Also, if BALANCED
+;; is true, never move out of an enclosing paren.  LIM sets the limit
+;; for the movement and defaults to the point limit.  Returns the
+;; number of tokens left to move (positive or negative).  If BALANCED
+;; is true, a move over a balanced paren counts as one.  Note that if
+;; COUNT is 0 and no appropriate token beginning is found, 1 will be
+;; returned.  Thus, a return value of 0 guarantees that point is at
+;; the requested position and a return value less (without signs) than
+;; COUNT guarantees that point is at the beginning of some token.
 
 (defun c-forward-token-1 (&optional count balanced lim)
-  (let* ((jump-syntax (if balanced
-			  '(?w ?_ ?\" ?\\ ?/ ?$ ?' ?\( ?\))
-			'(?w ?_ ?\" ?\\ ?/ ?$ ?'))))
-    (or count (setq count 1))
-    (condition-case nil
-	(while (progn
-		 (c-forward-syntactic-ws lim)
-		 (> count 0))
-	  (if (memq (char-syntax (char-after)) jump-syntax)
-	      (goto-char (scan-sexps (point) 1))
-	    (forward-char))
-	  (setq count (1- count)))
-      (error
-       (and lim (> (point) lim) (goto-char lim))))
-    count))
+  (or count (setq count 1))
+  (if (< count 0)
+      (- (c-backward-token-1 (- count) balanced lim))
+    (let ((jump-syntax (if balanced
+			   '(?w ?_ ?\( ?\) ?\" ?\\ ?/ ?$ ?')
+			 '(?w ?_ ?\" ?\\ ?/ ?')))
+	  (last (point))
+	  (prev (point)))
+      (if (/= (point)
+	      (progn (c-forward-syntactic-ws) (point)))
+	  ;; Skip whitespace.  Count this as a move if we did in fact
+	  ;; move and aren't out of bounds.
+	  (or (eobp)
+	      (and lim (> (point) lim))
+	      (setq count (max (1- count) 0))))
+      (if (and (= count 0)
+	       (or (and (memq (char-syntax (or (char-after) ? )) '(?w ?_))
+			(memq (char-syntax (or (char-before) ? )) '(?w ?_)))
+		   (eobp)))
+	  ;; If count is zero we should jump if in the middle of a
+	  ;; token or if there is whitespace between point and the
+	  ;; following token beginning.
+	  (setq count 1))
+      ;; Avoid having the limit tests inside the loop.
+      (if (or (eobp) (and lim (> (point) lim)))
+	  (goto-char last)
+	(condition-case nil
+	    (while (> count 0)
+	      (setq prev last
+		    last (point))
+	      (if (memq (char-syntax (char-after)) jump-syntax)
+		  (goto-char (scan-sexps (point) 1))
+		(forward-char))
+	      (c-forward-syntactic-ws lim)
+	      (setq count (1- count)))
+	  (error (goto-char last)))
+	(when (or (eobp) (and lim (> (point) lim)))
+	  (goto-char prev)
+	  (setq count (1+ count))))
+      count)))
 
 (defun c-backward-token-1 (&optional count balanced lim)
-  (let* ((jump-syntax (if balanced
-			  '(?w ?_ ?\" ?\\ ?/ ?$ ?' ?\( ?\))
-			'(?w ?_ ?\" ?\\ ?/ ?$ ?')))
-	 last)
-    (or count (setq count 1))
-    (condition-case nil
-	(while (> count 0)
-	  (setq last (point))
-	  (c-backward-syntactic-ws lim)
-	  (if (memq (char-syntax (char-before)) jump-syntax)
-	      (goto-char (scan-sexps (point) -1))
-	    (backward-char))
-	  (setq count (1- count)))
-      (error
-       (goto-char last)
-       (and lim (< (point) lim) (goto-char lim))))
-    count))
+  (or count (setq count 1))
+  (if (< count 0)
+      (- (c-forward-token-1 (- count) balanced lim))
+    (let ((jump-syntax (if balanced
+			   '(?w ?_ ?\( ?\) ?\" ?\\ ?/ ?$ ?')
+			 '(?w ?_ ?\" ?\\ ?/ ?')))
+	  last)
+      (if (and (= count 0)
+	       (or (and (memq (char-syntax (or (char-after) ? )) '(?w ?_))
+			(memq (char-syntax (or (char-before) ? )) '(?w ?_)))
+		   (/= (point)
+		       (save-excursion (c-forward-syntactic-ws) (point)))
+		   (eobp)))
+	  ;; If count is zero we should jump if in the middle of a
+	  ;; token or if there is whitespace between point and the
+	  ;; following token beginning.
+	  (setq count 1))
+      ;; Avoid having the limit tests inside the loop.
+      (or (bobp)
+	  (and lim (< (point) lim))
+	  (progn
+	    (condition-case nil
+		(while (progn
+			 (setq last (point))
+			 (> count 0))
+		  (c-backward-syntactic-ws lim)
+		  (if (memq (char-syntax (char-before)) jump-syntax)
+		      (goto-char (scan-sexps (point) -1))
+		    (backward-char))
+		  (setq count (1- count)))
+	      (error (goto-char last)))
+	    (if (or (bobp) (and lim (< (point) lim)))
+		(goto-char last))))
+      count)))
 
 
 ;; Return `c' if in a C-style comment, `c++' if in a C++ style
