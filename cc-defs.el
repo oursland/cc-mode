@@ -207,8 +207,9 @@
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
-  (message ,format ,@args)
-  (ding))
+  `(progn
+     (message ,format ,@args)
+     (ding)))
 
 (defmacro c-update-modeline ()
   ;; set the c-auto-hungry-string for the correct designation on the modeline
