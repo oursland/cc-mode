@@ -83,13 +83,13 @@
     (require 'cc-bytecomp)))
 
 (cc-require 'cc-defs)
-(cc-require 'cc-menus)
+(cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
-(cc-require 'cc-langs)
-(cc-require 'cc-styles)
 (cc-require 'cc-engine)
+(cc-require 'cc-styles)
 (cc-require 'cc-cmds)
 (cc-require 'cc-align)
+(cc-require 'cc-menus)
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
@@ -268,41 +268,6 @@
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   )
 
-(defvar c-c-menu nil)
-(defvar c-c++-menu nil)
-(defvar c-objc-menu nil)
-(defvar c-java-menu nil)
-(defvar c-pike-menu nil)
-
-(defun c-mode-menu (modestr)
-  ;; This function does not do any hidden buffer changes.
-  (let ((m
-	 '(["Comment Out Region"     comment-region (c-fn-region-is-active-p)]
-	   ["Uncomment Region"
-	    (comment-region (region-beginning) (region-end) '(4))
-	    (c-fn-region-is-active-p)]
-	   ["Fill Comment Paragraph" c-fill-paragraph t]
-	   "----"
-	   ["Indent Expression"      c-indent-exp
-	    (memq (char-after) '(?\( ?\[ ?\{))]
-	   ["Indent Line or Region"  c-indent-line-or-region t]
-	   ["Up Conditional"         c-up-conditional t]
-	   ["Backward Conditional"   c-backward-conditional t]
-	   ["Forward Conditional"    c-forward-conditional t]
-	   ["Backward Statement"     c-beginning-of-statement t]
-	   ["Forward Statement"      c-end-of-statement t]
-	   "----"
-	   ["Macro Expand Region"    c-macro-expand (c-fn-region-is-active-p)]
-	   ["Backslashify"	     c-backslash-region
-	    (c-fn-region-is-active-p)]
-	   "----"
-	   ("Toggle..."
-	    ["Syntactic indentation" c-toggle-syntactic-indentation t]
-	    ["Auto newline"          c-toggle-auto-state t]
-	    ["Hungry delete"         c-toggle-hungry-state t])
-	   )))
-    (cons modestr m)))
-
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
 
@@ -329,7 +294,11 @@ packages that embed CC Mode.
 
 MODE is the CC Mode flavor to set up, e.g. 'c-mode or 'java-mode.
 DEFAULT-STYLE tells which indentation style to install.  It has the
-same format as `c-default-style'."
+same format as `c-default-style'.
+
+Note that `c-init-language-vars' must be called before this function.
+This function cannot do that since `c-init-language-vars' is a macro
+that requires a literal mode spec at compile time."
   ;;
   ;; This function does not do any hidden buffer changes.
 
@@ -386,7 +355,6 @@ same format as `c-default-style'."
 	      (cons (cons 'syntax-table t)
 		    text-property-default-nonsticky)))))
 
-  (c-init-language-vars)
   (c-clear-found-types)
 
   ;; now set the mode style based on default-style
@@ -428,25 +396,15 @@ same format as `c-default-style'."
   (make-local-hook 'after-change-functions)
   (add-hook 'after-change-functions 'c-after-change nil t))
 
-(defun c-font-lock-init ()
+(defun c-after-font-lock-init ()
   ;; Put on `font-lock-mode-hook'.
   (remove-hook 'after-change-functions 'c-after-change t)
   (add-hook 'after-change-functions 'c-after-change nil t))
 
-(defun c-common-init (mode)
-  ;; Common initializations for all modes.
-  ;;
-  ;; This function does not do any hidden buffer changes.
-
-  (c-basic-common-init mode c-default-style)
-
-  (make-local-variable 'require-final-newline)
-  (make-local-variable 'outline-regexp)
-  (make-local-variable 'outline-level)
-
-  (setq require-final-newline t
-	outline-regexp "[^#\n\^M]"
-	outline-level 'c-outline-level)
+(defun c-font-lock-init ()
+  "Set up the font-lock variables for using the font-lock support in CC Mode.
+This does not load the font-lock package.  Use after
+`c-basic-common-init'."
 
   ;; This is not the recommended way to initialize font-lock in
   ;; XEmacs, but it works.
@@ -468,7 +426,27 @@ same format as `c-default-style'."
 	   . c-mark-function)))
 
   (make-local-hook 'font-lock-mode-hook)
-  (add-hook 'font-lock-mode-hook 'c-font-lock-init))
+  (add-hook 'font-lock-mode-hook 'c-after-font-lock-init))
+
+(defun c-common-init (mode)
+  "Common initialization for all CC Mode modes.
+In addition to the work done by `c-basic-common-init' and
+`c-font-lock-init', this function sets up various other things as
+customary in CC Mode modes but which aren't strictly necessary for CC
+Mode to operate correctly.
+  
+This function does not do any hidden buffer changes."
+
+  (c-basic-common-init mode c-default-style)
+  (c-font-lock-init)
+
+  (make-local-variable 'require-final-newline)
+  (make-local-variable 'outline-regexp)
+  (make-local-variable 'outline-level)
+
+  (setq require-final-newline t
+	outline-regexp "[^#\n\^M]"
+	outline-level 'c-outline-level))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables in CC Mode.
@@ -500,6 +478,13 @@ Note that the style variables are always made local to the buffer."
 
 ;; Support for C
 
+;;;###autoload
+(defvar c-mode-syntax-table nil
+  "Syntax table used in c-mode buffers.")
+(or c-mode-syntax-table
+    (setq c-mode-syntax-table
+	  (funcall (c-lang-const c-make-mode-syntax-table c))))
+
 (defvar c-mode-abbrev-table nil
   "Abbreviation table used in c-mode buffers.")
 (c-define-abbrev-table 'c-mode-abbrev-table
@@ -516,7 +501,7 @@ Note that the style variables are always made local to the buffer."
   )
 
 (easy-menu-define c-c-menu c-mode-map "C Mode Commands"
-		  (c-mode-menu "C"))
+		  (cons "C" (c-lang-const c-mode-menu c)))
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
@@ -553,6 +538,7 @@ Key bindings:
 	local-abbrev-table c-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map c-mode-map)
+  (c-init-language-vars c-mode)
   (c-common-init 'c-mode)
   (easy-menu-add c-c-menu)
   (cc-imenu-init cc-imenu-c-generic-expression)
@@ -562,6 +548,13 @@ Key bindings:
 
 
 ;; Support for C++
+
+;;;###autoload
+(defvar c++-mode-syntax-table nil
+  "Syntax table used in c++-mode buffers.")
+(or c++-mode-syntax-table
+    (setq c++-mode-syntax-table
+	  (funcall (c-lang-const c-make-mode-syntax-table c++))))
 
 (defvar c++-mode-abbrev-table nil
   "Abbreviation table used in c++-mode buffers.")
@@ -582,7 +575,7 @@ Key bindings:
   (define-key c++-mode-map ">"        'c-electric-lt-gt))
 
 (easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
-		  (c-mode-menu "C++"))
+		  (cons "C++" (c-lang-const c-mode-menu c++)))
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
@@ -617,6 +610,7 @@ Key bindings:
 	local-abbrev-table c++-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map c++-mode-map)
+  (c-init-language-vars c++-mode)
   (c-common-init 'c++-mode)
   (easy-menu-add c-c++-menu)
   (cc-imenu-init cc-imenu-c++-generic-expression)
@@ -626,6 +620,13 @@ Key bindings:
 
 
 ;; Support for Objective-C
+
+;;;###autoload
+(defvar objc-mode-syntax-table nil
+  "Syntax table used in objc-mode buffers.")
+(or objc-mode-syntax-table
+    (setq objc-mode-syntax-table
+	  (funcall (c-lang-const c-make-mode-syntax-table objc))))
 
 (defvar objc-mode-abbrev-table nil
   "Abbreviation table used in objc-mode buffers.")
@@ -642,7 +643,7 @@ Key bindings:
   (define-key objc-mode-map "\C-c\C-e" 'c-macro-expand))
 
 (easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
-		  (c-mode-menu "ObjC"))
+		  (cons "ObjC" (c-lang-const c-mode-menu objc)))
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
@@ -673,6 +674,7 @@ Key bindings:
 	local-abbrev-table objc-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map objc-mode-map)
+  (c-init-language-vars objc-mode)
   (c-common-init 'objc-mode)
   (easy-menu-add c-objc-menu)
   (cc-imenu-init cc-imenu-objc-generic-expression)
@@ -682,6 +684,13 @@ Key bindings:
 
 
 ;; Support for Java
+
+;;;###autoload
+(defvar java-mode-syntax-table nil
+  "Syntax table used in java-mode buffers.")
+(or java-mode-syntax-table
+    (setq java-mode-syntax-table
+	  (funcall (c-lang-const c-make-mode-syntax-table java))))
 
 (defvar java-mode-abbrev-table nil
   "Abbreviation table used in java-mode buffers.")
@@ -707,7 +716,7 @@ Key bindings:
   "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f\v]*\\)+\\)?\\s-*")
 
 (easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
-		  (c-mode-menu "Java"))
+		  (cons "Java" (c-lang-const c-mode-menu java)))
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
@@ -738,6 +747,7 @@ Key bindings:
  	local-abbrev-table java-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map java-mode-map)
+  (c-init-language-vars java-mode)
   (c-common-init 'java-mode)
   (easy-menu-add c-java-menu)
   (cc-imenu-init cc-imenu-java-generic-expression)
@@ -747,6 +757,13 @@ Key bindings:
 
 
 ;; Support for CORBA's IDL language
+
+;;;###autoload
+(defvar idl-mode-syntax-table nil
+  "Syntax table used in idl-mode buffers.")
+(or idl-mode-syntax-table
+    (setq idl-mode-syntax-table
+	  (funcall (c-lang-const c-make-mode-syntax-table idl))))
 
 (defvar idl-mode-abbrev-table nil
   "Abbreviation table used in idl-mode buffers.")
@@ -761,7 +778,7 @@ Key bindings:
   )
 
 (easy-menu-define c-idl-menu idl-mode-map "IDL Mode Commands"
-		  (c-mode-menu "IDL"))
+		  (cons "IDL" (c-lang-const c-mode-menu idl)))
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
@@ -791,6 +808,7 @@ Key bindings:
 	mode-name "IDL"
 	local-abbrev-table idl-mode-abbrev-table)
   (use-local-map idl-mode-map)
+  (c-init-language-vars idl-mode)
   (c-common-init 'idl-mode)
   (easy-menu-add c-idl-menu)
   ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;TODO
@@ -800,6 +818,13 @@ Key bindings:
 
 
 ;; Support for Pike
+
+;;;###autoload
+(defvar pike-mode-syntax-table nil
+  "Syntax table used in pike-mode buffers.")
+(or pike-mode-syntax-table
+    (setq pike-mode-syntax-table
+	  (funcall (c-lang-const c-make-mode-syntax-table pike))))
 
 (defvar pike-mode-abbrev-table nil
   "Abbreviation table used in pike-mode buffers.")
@@ -816,7 +841,7 @@ Key bindings:
   (define-key pike-mode-map "\C-c\C-e" 'c-macro-expand))
 
 (easy-menu-define c-pike-menu pike-mode-map "Pike Mode Commands"
-		  (c-mode-menu "Pike"))
+		  (cons "Pike" (c-lang-const c-mode-menu pike)))
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
@@ -848,6 +873,7 @@ Key bindings:
  	local-abbrev-table pike-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map pike-mode-map)
+  (c-init-language-vars pike-mode)
   (c-common-init 'pike-mode)
   (easy-menu-add c-pike-menu)
   ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;TODO
@@ -896,7 +922,7 @@ Key bindings:
 		    ((eq major-mode 'java-mode) "Java")
 		    ((eq major-mode 'idl-mode)  "IDL")
 		    ((eq major-mode 'pike-mode) "Pike")
-		    )
+		    (t (symbol-name major-mode)))
 	      ")")
       (let ((vars (append
 		   c-style-variables
