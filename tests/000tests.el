@@ -237,6 +237,7 @@
     "decls-1.java"
     "decls-2.java"
     "decls-3.java"
+    "decls-4.idl"
     "enum-1.cc"
     "enum-2.c"
     "enum-3.c"
@@ -341,6 +342,7 @@
 	(java-mode)
 	(setq style "JAVATESTSTYLE"))
        ((string-match "\\.pike$" filename) (pike-mode))
+       ((string-match "\\.idl$" filename) (idl-mode))
        (t (c-mode)))
       (c-set-style style))
     (set-buffer expectedbuf)
@@ -409,6 +411,7 @@
 	(java-mode)
 	(setq style "JAVATESTSTYLE"))
        ((string-match "\\.pike$" filename) (pike-mode))
+       ((string-match "\\.idl$" filename) (idl-mode))
        (t (c-mode)))
       (c-set-style style)
       (goto-char (point-max))
