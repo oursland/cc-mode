@@ -262,7 +262,7 @@
 	 (hugenum (point-max)))
     (while (/= here (point))
       (setq here (point))
-      (forward-comment hugenum)
+      (forward-comment hugenum)		; Don't need c-forward-comment here.
       ;; skip preprocessor directives
       (when (and (eq (char-after) ?#)
 		 (= (c-point 'boi) (point)))
@@ -278,7 +278,7 @@
 	 (hugenum (- (point-max))))
     (while (/= here (point))
       (setq here (point))
-      (forward-comment hugenum)
+      (forward-comment hugenum)		; Don't need c-forward-comment here.
       (c-beginning-of-macro))
     (if lim (goto-char (max (point) lim)))))
 
@@ -421,14 +421,18 @@
 (if (fboundp 'buffer-syntactic-context)
     (defalias 'c-in-literal 'c-fast-in-literal))
 
-(defun c-literal-limits (&optional lim near)
+(defun c-literal-limits (&optional lim near not-in-delimiter)
   ;; Returns a cons of the beginning and end positions of the comment
   ;; or string surrounding point (including both delimiters), or nil
   ;; if point isn't in one.  If LIM is non-nil, it's used as the
   ;; "safe" position to start parsing from.  If NEAR is non-nil, then
   ;; the limits of any literal next to point is returned.  "Next to"
   ;; means there's only [ \t] between point and the literal.  The
-  ;; search for such a literal is done first in forward direction.
+  ;; search for such a literal is done first in forward direction.  If
+  ;; NOT-IN-DELIMITER is non-nil, the case when point is inside a
+  ;; starting delimiter won't be recognized.  This only has effect for
+  ;; comments, which have starting delimiters with more than one
+  ;; character.
   ;;
   ;; This is the Emacs 19 version.
   (save-excursion
@@ -453,18 +457,20 @@
 			    lim (point) nil nil state)
 		     lim (point)))
 	     (backward-char 2)
-	     (cons (point) (progn (forward-comment 1) (point))))
+	     (cons (point) (progn (c-forward-comment 1) (point))))
 	    ((nth 4 state)
 	     ;; Block comment.  Search backward for the comment starter.
 	     (while (nth 4 state)
 	       (search-backward "/*")	; Should never fail.
 	       (setq state (parse-partial-sexp lim (point))))
-	     (cons (point) (progn (forward-comment 1) (point))))
-	    ((c-safe (nth 4 (parse-partial-sexp ; Can't use prev state due
-			     lim (1+ (point))))) ; to bug in Emacs 19.34.
+	     (cons (point) (progn (c-forward-comment 1) (point))))
+	    ((and (not not-in-delimiter)
+		  (not (nth 5 state))
+		  (eq (char-before) ?/)
+		  (looking-at "[/*]"))
 	     ;; We're standing in a comment starter.
-	     (backward-char 2)
-	     (cons (point) (progn (forward-comment 1) (point))))
+	     (backward-char 1)
+	     (cons (point) (progn (c-forward-comment 1) (point))))
 	    (near
 	     (goto-char pos)
 	     ;; Search forward for a literal.
@@ -474,7 +480,7 @@
 	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 				 (point-max))))
 	      ((looking-at "/[/*]")	; Line or block comment.
-	       (cons (point) (progn (forward-comment 1) (point))))
+	       (cons (point) (progn (c-forward-comment 1) (point))))
 	      (t
 	       ;; Search backward.
 	       (skip-chars-backward " \t")
@@ -488,15 +494,15 @@
 		   ;; comments, they will always be covered by the
 		   ;; normal case above.
 		   (goto-char end)
-		   (forward-comment -1)
+		   (c-forward-comment -1)
 		   ;; If LIM is bogus, beg will be bogus.
 		   (setq beg (point))))
 		 (if beg (cons beg end))))))
 	    ))))
 
-(defun c-literal-limits-fast (&optional lim)
+(defun c-literal-limits-fast (&optional lim near not-in-delimiter)
   ;; Like c-literal-limits, but for emacsen whose `parse-partial-sexp'
-  ;; returns the pos of the comment start.  FIXME: Add NEAR.
+  ;; returns the pos of the comment start.
   (save-excursion
     (let ((state (parse-partial-sexp lim (point))))
       (cond ((nth 3 state)		; String.
@@ -505,14 +511,45 @@
 			       (point-max))))
 	    ((nth 4 state)		; Comment.
 	     (goto-char (nth 8 state))
-	     (cons (point) (progn (forward-comment 1) (point))))
-	    ((c-safe
-	      (nth 4 (parse-partial-sexp ; Works?
-		      (point) (1+ (point)) nil nil state)))
-	     ;; We're in a comment starter.
-	     (backward-char 2)
-	     (cons (point) (progn (forward-comment 1) (point))))
+	     (cons (point) (progn (c-forward-comment 1) (point))))
+	    ((and (not not-in-delimiter)
+		  (not (nth 5 state))
+		  (eq (char-before) ?/)
+		  (looking-at "[/*]"))
+	     ;; We're standing in a comment starter.
+	     (backward-char 1)
+	     (cons (point) (progn (c-forward-comment 1) (point))))
+	    (near
+	     (goto-char pos)
+	     ;; Search forward for a literal.
+	     (skip-chars-forward " \t")
+	     (cond
+	      ((eq (char-syntax (or (char-after) ?\ )) ?\") ; String.
+	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
+				 (point-max))))
+	      ((looking-at "/[/*]")	; Line or block comment.
+	       (cons (point) (progn (c-forward-comment 1) (point))))
+	      (t
+	       ;; Search backward.
+	       (skip-chars-backward " \t")
+	       (let ((end (point)) beg)
+		 (cond
+		  ((eq (char-syntax (or (char-before) ?\ )) ?\") ; String.
+		   (setq beg (c-safe (c-backward-sexp 1) (point))))
+		  ((and (c-safe (forward-char -2) t)
+			(looking-at "*/"))
+		   ;; Block comment.  Due to the nature of line
+		   ;; comments, they will always be covered by the
+		   ;; normal case above.
+		   (goto-char end)
+		   (c-forward-comment -1)
+		   ;; If LIM is bogus, beg will be bogus.
+		   (setq beg (point))))
+		 (if beg (cons beg end))))))
 	    ))))
+
+(if (c-safe (> (length (save-excursion (parse-partial-sexp 1 1))) 8))
+    (defalias 'c-literal-limits 'c-literal-limits-fast))
 
 (defun c-collect-line-comments (range)
   ;; If the argument is a cons of two buffer positions (such as
@@ -530,7 +567,7 @@
 		  (beg (point))
 		  (end (cdr range)))
 	      (while (and (not (bobp))
-			  (forward-comment -1)
+			  (c-forward-comment -1)
 			  (looking-at "//")
 			  (= col (current-column)))
 		(setq beg (point)))
@@ -539,7 +576,7 @@
 		       (skip-chars-forward " \t")
 		       (and (looking-at "//")
 			    (= col (current-column))))
-		(forward-comment 1)
+		(c-forward-comment 1)
 		(setq end (point)))
 	      (cons beg end))
 	  range)
@@ -551,11 +588,11 @@
   ;; It's much faster than using c-in-literal and is intended to be
   ;; used when you need both the type of a literal and its limits.
   (if (consp range)
-    (save-excursion
-      (goto-char (car range))
-      (cond ((eq (char-syntax (or (char-after) ?\ )) ?\") 'string)
-	    ((looking-at "//") 'c++)
-	    (t 'c)))			; Assuming the range is valid.
+      (save-excursion
+	(goto-char (car range))
+	(cond ((eq (char-syntax (or (char-after) ?\ )) ?\") 'string)
+	      ((looking-at "//") 'c++)
+	      (t 'c)))			; Assuming the range is valid.
     range))
 
 
@@ -1409,10 +1446,7 @@ brace."
 	  (c-add-syntax 'string (c-point 'bopl)))
 	 ;; CASE 2: in a C or C++ style comment.
 	 ((memq literal '(c c++))
-	  ;; we need to catch multi-paragraph C comments
-	  (while (and (zerop (forward-line -1))
-		      (looking-at "^[ \t]*$")))
-	  (c-add-syntax literal (c-point 'boi)))
+	  (c-add-syntax literal (car (c-literal-limits lim))))
 	 ;; CASE 3: in a cpp preprocessor macro
 	 ((eq literal 'pound)
 	  (let ((boi (c-point 'boi))
