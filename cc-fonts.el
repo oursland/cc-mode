@@ -997,11 +997,8 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   (not (eq res t)))
 
 			  ((looking-at c-specifier-key)
-			   ;; Found a known specifier keyword.  Can occur in
-			   ;; both declarations and casts, but we don't set
-			   ;; `at-decl-or-cast' here to avoid flashing types
-			   ;; prematurely in declarations as they're being
-			   ;; written.
+			   ;; Found a known specifier keyword.
+			   (setq at-decl-or-cast t)
 			   (let ((kwd-sym (c-keyword-sym (match-string 1))))
 			     (when (c-keyword-member
 				    kwd-sym 'c-typedef-decl-kwds)
