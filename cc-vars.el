@@ -236,9 +236,10 @@ mode name.  Valid symbols are:
 				    (inexpr-class-open after)
 				    (inexpr-class-close before)
 				    )
-  "*Controls the insertion of newlines before and after braces.
-This variable contains an association list with elements of the
-following form: (SYNTACTIC-SYMBOL . ACTION).
+  "*Controls the insertion of newlines before and after braces
+when the auto-newline feature is active.  This variable contains an
+association list with elements of the following form:
+\(SYNTACTIC-SYMBOL . ACTION).
 
 When a brace (either opening or closing) is inserted, the syntactic
 context it defines is looked up in this list, and if found, the
@@ -250,12 +251,12 @@ SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
 class-close, inline-open, inline-close, block-open, block-close,
 substatement-open, statement-case-open, extern-lang-open,
 extern-lang-close, brace-list-open, brace-list-close,
-brace-list-intro, brace-entry-open, inexpr-class-open, or
-inexpr-class-close.  See `c-offsets-alist' for details, except for
-inexpr-class-open and inexpr-class-close, which doesn't have any
-corresponding symbols there.  Those two symbols are used for the
-opening and closing braces, respectively, of anonymous inner classes
-in Java.
+brace-list-intro, brace-entry-open, namespace-open, namespace-close,
+inexpr-class-open, or inexpr-class-close.  See `c-offsets-alist' for
+details, except for inexpr-class-open and inexpr-class-close, which
+doesn't have any corresponding symbols there.  Those two symbols are
+used for the opening and closing braces, respectively, of anonymous
+inner classes in Java.
 
 ACTION can be either a function symbol or a list containing any
 combination of the symbols `before' or `after'.  If the list is empty,
@@ -278,6 +279,7 @@ syntactic context for the brace line."
 			(const extern-lang-open) (const extern-lang-close)
 			(const brace-list-open) (const brace-list-close)
 			(const brace-list-intro) (const brace-entry-open)
+			(const namespace-open) (const namespace-close)
 			(const inexpr-class-open) (const inexpr-class-close))
 		(choice :tag "Action"
 			(set :format "Insert a newline %v"
@@ -413,7 +415,8 @@ Note that if you set any CC Mode variables in the top-level of your
   (setq c-default-style '((other . \"user\")))
 
 to see your customizations.  This is also true if you use the Custom
-interface -- be sure to set the default style to `user'.
+interface -- be sure to switch to a value list, make an entry for the
+mode `other' and set the default style to \"user\".
 
 Finally, the default style gets installed before your mode hooks run,
 so you can always override the use of `c-default-style' by making
