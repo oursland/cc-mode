@@ -522,6 +522,17 @@ Note that the style variables are always made local to the buffer."
 (easy-menu-define c-c-menu c-mode-map "C Mode Commands"
 		  (c-mode-menu "C"))
 
+;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.[ch]\\'" . c-mode))
+;; NB: The following two associate yacc and lex files to C Mode, which
+;; is not really suitable for those formats.  Anyway, afaik there's
+;; currently no better mode for them, and besides it's legacy.
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.y\\'" . c-mode))
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.lex\\'" . c-mode))
+
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
@@ -577,6 +588,14 @@ Key bindings:
 (easy-menu-define c-c++-menu c++-mode-map "C++ Mode Commands"
 		  (c-mode-menu "C++"))
 
+;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . c++-mode))
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode))
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . c++-mode))
+
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
@@ -628,6 +647,10 @@ Key bindings:
 
 (easy-menu-define c-objc-menu objc-mode-map "ObjC Mode Commands"
 		  (c-mode-menu "ObjC"))
+
+;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode))
 
 ;;;###autoload
 (defun objc-mode ()
@@ -683,6 +706,10 @@ Key bindings:
 (easy-menu-define c-java-menu java-mode-map "Java Mode Commands"
 		  (c-mode-menu "Java"))
 
+;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.java\\'" . java-mode))
+
 ;;;###autoload
 (defun java-mode ()
   "Major mode for editing Java code.
@@ -735,6 +762,10 @@ Key bindings:
 (easy-menu-define c-idl-menu idl-mode-map "IDL Mode Commands"
 		  (c-mode-menu "IDL"))
 
+;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.idl\\'" . idl-mode))
+
 ;;;###autoload
 (defun idl-mode ()
   "Major mode for editing CORBA's IDL code.
@@ -785,6 +816,11 @@ Key bindings:
 
 (easy-menu-define c-pike-menu pike-mode-map "Pike Mode Commands"
 		  (c-mode-menu "Pike"))
+
+;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
+;;;###autoload
+(add-to-list 'auto-mode-alist
+	     '("\\.\\(pike\\|pmod\\(.in\\)?\\)\\'" . pike-mode))
 
 ;;;###autoload
 (defun pike-mode ()
