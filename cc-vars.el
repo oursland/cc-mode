@@ -263,8 +263,13 @@ This hook gets called after a line is indented by the mode."
   :type 'hook
   :group 'c)
 
-(defcustom c-delete-function 'backward-delete-char-untabify
-  "*Function called by `c-electric-delete' when deleting characters."
+(defcustom c-backspace-function 'backward-delete-char-untabify
+  "*Function called by `c-electric-backspace' when deleting backwards."
+  :type 'function
+  :group 'c)
+
+(defcustom c-delete-function 'delete-char
+  "*Function called by `c-electric-delete' when deleting forwards."
   :type 'function
   :group 'c)
 
