@@ -107,6 +107,7 @@
 				     (and lim
 					  (<= lim (point))
 					  (not (c-in-literal lim))
+					  (/= (char-before) ?_)
 					  (looking-at c-conditional-key)
 					  ))))
 		       ;; did we find a conditional?
