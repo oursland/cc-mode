@@ -657,7 +657,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      "\\s *"
 		      "\\("
 		      ;; Match a (simple) qualified identifier,
-		      ;; i.e. we don't bother with `c-forward-name'.
+		      ;; i.e. we don't bother with `c-forward-name'.
 		      ;; We highlight the last symbol in it as a
 		      ;; label.
 		      "\\(" (c-lang-const ; identifier-offset
@@ -1732,6 +1732,121 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	(c-fl-decl-prefix-search)))
     nil))
 
+(defun c-font-lock-c++-new (limit)
+  ;; Assuming point is after a "new" keyword, fontify the type in the
+  ;; allocation expression.  As usual, C++ takes the prize in coming
+  ;; up with a hard to parse syntax. :P
+
+  (save-excursion
+    (catch 'false-alarm
+      ;; A "new" keyword is followed by one to three expressions, where
+      ;; the type is the middle one, and the only required part.
+      (let (expr1-pos expr2-pos
+	    ;; Enable recording of identifier ranges in `c-forward-type'
+	    ;; etc for later fontification.  Not using
+	    ;; `c-fontify-types-and-refs' here since the ranges should
+	    ;; be fontified selectively only when an allocation
+	    ;; expression is successfully recognized.
+	    (c-record-type-identifiers t)
+	    c-record-ref-identifiers)
+	(c-forward-syntactic-ws)
+
+	;; The first placement arglist is always parenthesized, if it
+	;; exists.
+	(when (eq (char-after) ?\()
+	  (setq expr1-pos (1+ (point)))
+	  (condition-case nil
+	      (c-forward-sexp)
+	    (scan-error (throw 'false-alarm t)))
+	  (c-forward-syntactic-ws))
+
+	;; The second expression is either a type followed by some "*" or
+	;; "[...]" or similar, or a parenthesized type followed by a full
+	;; identifierless declarator.
+	(setq expr2-pos (1+ (point)))
+	(cond ((eq (char-after) ?\())
+	      ((let ((c-promote-possible-types t))
+		 (c-forward-type)))
+	      (t (setq expr2-pos nil)))
+
+	(when expr1-pos
+	  (cond
+	   ((not expr2-pos)
+	    ;; No second expression, so the first has to be a
+	    ;; parenthesized type.
+	    (goto-char expr1-pos)
+	    (let ((c-promote-possible-types t))
+	      (c-forward-type)))
+
+	   ((eq (char-before expr2-pos) ?\()
+	    ;; Got two parenthesized expressions, so we have to look
+	    ;; closer at them to decide which is the type.  No need to
+	    ;; handle `c-record-ref-identifiers' since all references
+	    ;; has already been handled by other fontification rules.
+	    (let (expr1-res expr2-res expr1-rec expr2-rec)
+
+	      (goto-char expr1-pos)
+	      (setq expr1-res (c-forward-type)
+		    expr1-rec c-record-type-identifiers
+		    c-record-type-identifiers t)
+	      (c-forward-syntactic-ws)
+	      (unless (looking-at
+		       (cc-eval-when-compile
+			 (concat (c-lang-const c-symbol-start c++)
+				 "\\|[*:\)\[]")))
+		;; There's something after the would-be type that can't
+		;; be there, so this is a placement arglist.
+		(setq expr1-res nil))
+
+	      (goto-char expr2-pos)
+	      (setq expr2-res (c-forward-type)
+		    expr2-rec c-record-type-identifiers)
+	      (c-forward-syntactic-ws)
+	      (unless (looking-at
+		       (cc-eval-when-compile
+			 (concat (c-lang-const c-symbol-start c++)
+				 "\\|[*:\)\[]")))
+		;; There's something after the would-be type that can't
+		;; be there, so this is an initialization expression.
+		(setq expr2-res nil))
+	      (when (and (eq (car (parse-partial-sexp (point) (point-max) -1))
+			     -1)
+			 (progn (c-forward-syntactic-ws)
+				(eq (char-after) ?\()))
+		;; If there's a third paren expression then the second
+		;; one is the type, so demote the first match.
+		(setq expr1-res nil))
+
+	      ;; We fontify the most likely type, with a preference for
+	      ;; the first argument since a placement arglist is more
+	      ;; unusual than an initializer.
+	      (cond ((memq expr1-res '(t prefix))
+		     (setq c-record-type-identifiers expr1-rec))
+		    ((memq expr2-res '(t prefix))
+		     (setq c-record-type-identifiers expr2-rec))
+		    ((eq expr1-res 'found)
+		     (let ((c-promote-possible-types t))
+		       (goto-char expr1-pos)
+		       (c-forward-type)))
+		    ((eq expr2-res 'found)
+		     (let ((c-promote-possible-types t))
+		       (goto-char expr2-pos)
+		       (c-forward-type)))
+		    ((and (eq expr1-res 'maybe) (not expr2-res))
+		     (let ((c-promote-possible-types t))
+		       (goto-char expr1-pos)
+		       (c-forward-type)))
+		    ((and (not expr1-res) (eq expr2-res 'maybe))
+		     (let ((c-promote-possible-types t))
+		       (goto-char expr2-pos)
+		       (c-forward-type)))
+		    ;; If both types are 'maybe then we're too uncertain.
+		    )))))
+
+	;; Fontify the type that now is recorded in
+	;; `c-record-type-identifiers', if any.
+	(c-fontify-recorded-types-and-refs)))))
+
 (c-lang-defconst c-simple-decl-matchers
   "Simple font lock matchers for types and declarations.  These are used
 on level 2 only and so aren't combined with `c-complex-decl-matchers'."
@@ -1847,6 +1962,11 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		 (goto-char
 		  (match-beginning
 		   ,(1+ (c-lang-const c-single-line-syntactic-ws-depth)))))))))
+
+      ;; Fontify the type in C++ "new" expressions.
+      ,@(when (c-major-mode-is 'c++-mode)
+	  `(("\\<new\\>"
+	     (c-font-lock-c++-new))))
       ))
 
 (c-lang-defconst c-basic-matchers-after
