@@ -144,7 +144,7 @@
 				 (feature &optional file-name noerror)
 				 activate preactivate)
 	"If the optional third argument NOERROR is non-nil,
-then return nil if the file is not found.  Otherwise FEATURE is returned."
+then return nil if the file is not found.  Signal an error otherwise."
 	(condition-case err
 	    (progn ad-do-it feature)
 	  (file-error (if noerror
