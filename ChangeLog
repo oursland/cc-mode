@@ -1,3 +1,73 @@
+Sat Mar 29 20:01:42 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Public Release 4.389.
+
+Fri Mar 28 16:48:31 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-guess-basic-syntax):
+	CASE 5C: watch out for Java abstract method
+	definitions.  These are distinguished from normal throws clauses since
+	they cross statement boundaries.
+
+Tue Mar 25 03:19:17 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-guess-basic-syntax): CASE 5A.3: use boi instead of bol.
+
+Thu Mar 20 16:46:13 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-Java-comment-start-regexp):
+	Recognize the three Java styles of
+	comments: 1) traditional C block; 2) javadoc style /** ...; 3) C++
+	style.
+
+	(java-mode): Set buffer local variable c-comment-start-regexp to
+	c-Java-comment-start-regexp.
+
+	(c-fill-paragraph): Use c-comment-start-regexp derived regular
+	expression when checking for c-hanging-comment-starter-p, so javadoc
+	styles are handled correctly in Java mode.
+
+	* cc-mode.el (c-lineup-C-comments):
+	Change the re-search-forward to a looking-at in
+	the innermost test.  This catches these styles of comments:
+
+	/* Test for garbage collection. If the pool's free size is greater thaasds asdf
+	   asdf asdf asdf asdf asd fas fa asdf asf asdf asdf adf asdf asdf asdf asdf
+	   asdf glob chob stillp nasty toes winko stagilly frankly sut sut hoey */
+	  =!=
+
+	* cc-mode.el (c-add-syntax):
+	Move macro definition to before it's first use.
+
+	* cc-mode.el (c-submit-bug-report):
+	capture buffer local variable values which are
+	printed in the post-hook, while the current buffer is the CC Mode
+	buffer we're interested in.  reporter-submit-bug-report leaves the
+	current buffer as the mail buffer, so buffer local variables will not
+	get the proper value.
+
+Tue Mar 18 16:43:13 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-inher-key):
+	Require the regexp group that contains the `:'.
+	Previously it was optional, but that broke other code.
+
+Sun Mar 16 16:17:57 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-fill-paragraph):
+	Do not set fill-prefix to "*" when looking-at
+	"*/", otherwise the following example does not fill properly (the last
+	start gets deleted).
+
+	/* this is a comment
+	 */
+
+Mon Mar 10 16:25:49 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-lineup-C-comments):
+	Handle more cases, especially when comment
+	lines aren't prefixed with stars.
+
 Sun Mar  9 20:09:16 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Public Release 4.379.
