@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-08 16:03:15 $
-;; Version:         $Revision: 2.90 $
+;; Last Modified:   $Date: 1992-06-08 16:06:23 $
+;; Version:         $Revision: 2.91 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-08 16:03:15 $|$Revision: 2.90 $|
+;; |$Date: 1992-06-08 16:06:23 $|$Revision: 2.91 $|
 
 
 ;; ======================================================================
@@ -207,7 +207,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.90 $
+  "Major mode for editing C++ code.  $Revision: 2.91 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -529,7 +529,7 @@ backward-delete-char-untabify."
       (not (or (c++-in-comment-p bod)
 	       (c++-in-open-string-p bod))))
     (let ((here (point)))
-      (skip-chars-backward "[ \t\n]")
+      (skip-chars-backward " \t\n")
       (if (/= (point) here)
 	  (delete-region (point) here)
 	(backward-delete-char-untabify 1))))
@@ -1742,7 +1742,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.90 $"
+(defconst c++-version "$Revision: 2.91 $"
   "c++-mode version number.")
 
 (defun c++-version ()
