@@ -575,43 +575,24 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ;; "foo::bar" in languages that supports such things.
       ,@(when (c-lang-const c-opt-identifier-concat-key)
 	  (if (c-major-mode-is 'java-mode)
-	      ;; Java needs special treatment since "." is used both for fully
-	      ;; qualified names and for normal indexing.  Here we look for
+	      ;; Java needs special treatment since "." is used both to
+	      ;; qualify names and in normal indexing.  Here we look for
 	      ;; capital characters at the beginning of an identifier to
 	      ;; recognize the class.  "*" is also recognized to cover
-	      ;; wildcard import declarations.  If the identifier is followed
-	      ;; by a dot then it's taken as a reference.  All preceding dot
-	      ;; separated identifiers are taken as package names and hence
-	      ;; also fontified as references.
+	      ;; wildcard import declarations.  All preceding dot separated
+	      ;; identifiers are taken as package names and therefore
+	      ;; fontified as references.
 	      `(,(c-make-font-lock-search-function
-		  ;; Search for class identifiers preceded and/or followed by
-		  ;; ".".  The anchored matcher takes it from there.
-		  (let ((id (concat
-			     "\\("
-			     "[" c-upper "][" (c-lang-const c-symbol-chars) "]*"
-			     "\\|"
-			     "\\*"
-			     "\\)")))
-		    (concat
-		     (concat (c-lang-const c-opt-identifier-concat-key)
-			     "[ \t\n\r\f\v]*"
-			     id		; 1
-			     "\\([ \t\n\r\f\v]*"
-			     (c-lang-const c-opt-identifier-concat-key)
-			     "\\)?")
-		     "\\|"
-		     (concat id		; 3
-			     "[ \t\n\r\f\v]*"
-			     (c-lang-const c-opt-identifier-concat-key))))
+		  ;; Search for class identifiers preceded by ".".  The
+		  ;; anchored matcher takes it from there.
+		  (concat (c-lang-const c-opt-identifier-concat-key)
+			  "[ \t\n\r\f\v]*"
+			  (concat "\\("
+				  "[" c-upper "][" (c-lang-const c-symbol-chars) "]*"
+				  "\\|"
+				  "\\*"
+				  "\\)"))
 		  `((let (id-end)
-		      (if (= (char-before (match-end 0)) ?.)
-			  (if (match-beginning 1)
-			      (c-put-font-lock-face (match-beginning 1)
-						    (match-end 1)
-						    c-reference-face-name)
-			    (c-put-font-lock-face (match-beginning 3)
-						  (match-end 3)
-						  c-reference-face-name)))
 		      (goto-char (1+ (match-beginning 0)))
 		      (while (and (eq (char-before) ?.)
 				  (progn
