@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.226 $
-;; Last Modified:   $Date: 1994-02-01 16:19:39 $
+;; Version:         $Revision: 3.227 $
+;; Last Modified:   $Date: 1994-02-01 22:01:31 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-01 16:19:39 $|$Revision: 3.226 $|
+;; |$Date: 1994-02-01 22:01:31 $|$Revision: 3.227 $|
 
 ;;; Code:
 
@@ -542,7 +542,7 @@ supported list, along with the values for this variable:
   ;; TBD: where if anywhere, to put c-backward|forward-into-nomenclature
   (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
   (define-key c-mode-map "\C-c\C-b"  'c-submit-bug-report)
-  (define-key c-mode-map "\C-c\C-c"  'c-comment-region)
+  (define-key c-mode-map "\C-c\C-c"  'comment-region)
   (define-key c-mode-map "\C-c\C-d"  'c-toggle-hungry-state)
   (define-key c-mode-map "\C-c\C-o"  'c-set-offset)
   (define-key c-mode-map "\C-c\C-s"  'c-show-semantic-information)
@@ -730,7 +730,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.226 $
+cc-mode Revision: $Revision: 3.227 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -761,7 +761,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.226 $
+cc-mode Revision: $Revision: 3.227 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3213,39 +3213,84 @@ it trailing backslashes are removed."
 		  (c-backslashify-current-line (null arg))))
       )))
 
-(defun c-comment-region (beg end arg)
-  "Comment out all lines in a region between mark and current point.
-This is done by inserting `comment-start' in front of each line.  With
-optional universal arg (\\[universal-argument]), uncomment the
-region."
-  (interactive "*r\nP")
-  (save-excursion
-    (save-restriction
-      (narrow-to-region beg end)
-      (goto-char (point-min))
-      (if (not arg)
-	  (progn
-	    (while (not (eobp))
-	      (insert comment-start)
-	      (forward-line 1))
-	    (if (eq major-mode 'c-mode)
-		(insert comment-end)))
-	(let ((comment-regexp
-	       (if (eq major-mode 'c-mode)
-		   (concat "\\s *\\(" (regexp-quote comment-start)
-			   "\\|"      (regexp-quote comment-end)
-			   "\\)")
-		 (concat "\\s *" (regexp-quote comment-start)))))
-	  (while (not (eobp))
-	    (if (looking-at comment-regexp)
-		(delete-region (match-beginning 0) (match-end 0)))
-	    (forward-line 1)))
-	))))
+;;(defun comment-region (beg end &optional arg)
+;;  "Comment or uncomment each line in the region.
+;;With just C-u prefix arg, uncomment each line in region.
+;;Numeric prefix arg ARG means use ARG comment characters.
+;;If ARG is negative, delete that many comment characters instead.
+;;Comments are terminated on each line, even for syntax in which newline does
+;;not end the comment.  Blank lines do not get comments."
+;;  ;; if someone wants it to only put a comment-start at the beginning and
+;;  ;; comment-end at the end then typing it, C-x C-x, closing it, C-x C-x
+;;  ;; is easy enough.  No option is made here for other than commenting
+;;  ;; every line.
+;;  (interactive "r\nP")
+;;  (or comment-start (error "No comment syntax is defined"))
+;;  (if (> beg end) (let (mid) (setq mid beg beg end end mid)))
+;;  (save-excursion
+;;    (save-restriction
+;;      (let ((cs comment-start) (ce comment-end)
+;;	    numarg)
+;;        (if (consp arg) (setq numarg t)
+;;	  (setq numarg (prefix-numeric-value arg))
+;;	  ;; For positive arg > 1, replicate the comment delims now,
+;;	  ;; then insert the replicated strings just once.
+;;	  (while (> numarg 1)
+;;	    (setq cs (concat cs comment-start)
+;;		  ce (concat ce comment-end))
+;;	    (setq numarg (1- numarg))))
+;;	;; Loop over all lines from BEG to END.
+;;        (narrow-to-region beg end)
+;;        (goto-char beg)
+;;        (while (not (eobp))
+;;          (if (or (eq numarg t) (< numarg 0))
+;;	      (progn
+;;		;; Delete comment start from beginning of line.
+;;		(if (eq numarg t)
+;;		    (while (looking-at (regexp-quote cs))
+;;		      (delete-char (length cs)))
+;;		  (let ((count numarg))
+;;		    (while (and (> 1 (setq count (1+ count)))
+;;				(looking-at (regexp-quote cs)))
+;;		      (delete-char (length cs)))))
+;;		;; Delete comment end from end of line.
+;;                (if (string= "" ce)
+;;		    nil
+;;		  (if (eq numarg t)
+;;		      (progn
+;;			(end-of-line)
+;;			;; This is questionable if comment-end ends in
+;;			;; whitespace.  That is pretty brain-damaged,
+;;			;; though.
+;;			(skip-chars-backward " \t")
+;;			(if (and (>= (- (point) (point-min)) (length ce))
+;;				 (save-excursion
+;;				   (backward-char (length ce))
+;;				   (looking-at (regexp-quote ce))))
+;;			    (delete-char (- (length ce)))))
+;;		    (setq count numarg)
+;;		    (while (> 1 (setq count (1+ count)))
+;;		      (end-of-line)
+;;		      ;; this is questionable if comment-end ends in whitespace
+;;		      ;; that is pretty brain-damaged though
+;;		      (skip-chars-backward " \t")
+;;		      (save-excursion
+;;			(backward-char (length ce))
+;;			(if (looking-at (regexp-quote ce))
+;;			    (delete-char (length ce)))))))
+;;		(forward-line 1))
+;;	    ;; Insert at beginning and at end.
+;;            (if (looking-at "[ \t]*$") ()
+;;              (insert cs)
+;;              (if (string= "" ce) ()
+;;                (end-of-line)
+;;                (insert ce)))
+;;            (search-forward "\n" nil 'move)))))))
 
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.226 $"
+(defconst c-version "$Revision: 3.227 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
