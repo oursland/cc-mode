@@ -202,6 +202,7 @@
     'c-invalid-face))
 
 (unless (c-face-name-p c-invalid-face-name)
+  (defconst c-invalid-face 'c-invalid-face) ; Necessary in Emacs 19.
   (defface c-invalid-face
     '((((class color) (background light)) (:foreground "red"))
       (((class color)) (:foreground "hotpink"))
@@ -2729,14 +2730,6 @@ need for `pike-font-lock-extra-types'.")
 (defun autodoc-font-lock-keywords ()
   ;; Note that we depend on that `c-current-comment-prefix' has got
   ;; its proper value here.
-
-  (setq c-extra-line-cont-regexp (concat "@[\n\r]\\s *\\("
-					 c-current-comment-prefix
-					 "\\)")
-	c-syntactic-ws-start (concat c-syntactic-ws-start
-				     "\\|"
-				     c-extra-line-cont-regexp)
-	c-syntactic-ws-end (concat c-syntactic-ws-end "\\|!"))
 
   (list
    (byte-compile
