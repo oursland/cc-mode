@@ -1260,7 +1260,7 @@ It's overlaid over `font-lock-reference-face'."
   ;; XEmacs 19 evaluates this at compile time below, while most other
   ;; versions delays the evaluation until the package is loaded.
   (defun c-make-font-lock-extra-types-blurb (mode1 mode2 example)
-    (concat "
+    (concat "\
 *List of extra types (aside from the type keywords) to recognize in "
 mode1 " mode.
 Each list item should be a regexp matching a single identifier.
@@ -1269,7 +1269,7 @@ Each list item should be a regexp matching a single identifier.
 On decoration level 3 (and higher, where applicable), a method is used
 that finds most types and declarations by syntax alone.  This variable
 is then consulted only as a last resort when there's no other way to
-tell a declaration from an expression.
+tell a type from another kind of identifier.
 
 Note that this variable is only consulted when the major mode is
 initialized.  If you change it later you have to reinitialize CC Mode
@@ -1305,10 +1305,10 @@ as a type name.")
   :type 'c-extra-types-widget
   :group 'c-fonts)
 
-(defcustom objc-font-lock-extra-types '("Class" "BOOL" "IMP" "SEL")
+(defcustom objc-font-lock-extra-types '("[A-Z]\\sw*")
   (c-make-font-lock-extra-types-blurb "ObjC" "objc-mode"
-"For example, a value of (\"Class\" \"BOOL\" \"IMP\" \"SEL\") means
-the words Class, BOOL, IMP and SEL are treated as type names.")
+"For example, a value of (\"[A-Z]\\\\sw*\") means capitalized words
+are treated as type names.")
   :type 'c-extra-types-widget
   :group 'c-fonts)
 
