@@ -1,95 +1,144 @@
-README for cc-mode.el 3.349
+README for cc-mode.el 4.35
 Barry A. Warsaw
-$Date: 1994-05-30 14:46:28 $
+$Date: 1994-07-19 13:30:59 $
+
+Note, you can browse this file either as a flat, multiple page file,
+or as an Emacs outline.  As a flat file, just use "C-x ]" to move
+forward one page, or "C-x [" to move backward one page.  To read this
+as an outline, hit "M-x outline-mode RET".  outline-mode is described
+in your Emacs documentation.
 
 
-User-visible Changes Since 3.304
+* User visible changes since 3.349
 
-* You can now specify `hanginess' of close braces (c-hanging-braces-alist).
+** New major-mode: objc-mode for Objective-C editing. Also added,
+   objc-mode-hook, objc-mode-abbrev-table, objc-mode-map, and
+   objc-mode-syntax-table.
 
-* New syntactic symbol `substatement-open' to control indentation of
-  braces which open a substatement block (i.e. if, for, ...).  C-c C-s
-  used to call these ((block-open . ??) (substatement . ??)), but now
-  they are just ((substatement-open . ??)).  WARNING: THIS CHANGE MAY
-  AFFECT YOUR CURRENT INDENTATION SETTINGS.
+** New syntactic symbols objc-method-intro, objc-method-args, and
+   objc-method-call-cont have been added, with appropriate offsets in
+   c-offsets-alist.
 
-* c-adaptive-block-open lineup function is removed. Obsoleted by
-  substatement-open change above.
+** Ellemtel style puts substatement-open braces on their own line.
 
-* New "Default" style returns indentation variables to their default
-  values.
+** Better conformance to GNU coding style. New line up function set on
+   arglist-close for GNU style: c-lineup-arglist-intro-after-paren.
 
-* Support for Lucid Emacs 19.10's mode-popup-menu convention.
+** bracket lists are treated like paren lists (i.e. they are given the
+   appropriate arglist-* syntax).
 
-* c-macro-expand command put on C-c C-e.
+** some changes to recognition of brace-lists. When an otherwise
+   brace-list-entry or brace-list-intro is found to start with an open
+   brace, the line is given brace-list-open syntax instead.
 
-* New buffer-local variable c-comment-start-regexp. Useful for using
-  cc-mode as a basis for other C-like languages.
+** brace-list-intro and brace-list-entry are hangable via
+   c-hanging-braces-alist.
 
-* c++-mode handles try/catch blocks.  Assigns them `substatement'
-  syntax similar to if/for/while/...
+** c-set-offset provides a reasonable default in the prompt.
 
-* c-indent-via-language-element renamed to c-indent-line for awk-mode,
-  BOCM compatibility.
+** various name changes to commands and variables for consistency of
+   terminology.  The changes are:
 
-* Usual gobs of bug fixes.
+   Cmd/Var   Old Name                       New Name
+   -------   --------                       --------
+   [var]     c-strict-semantics-p           c-strict-syntax-p
+   [var]     c-echo-semantic-information-p  c-echo-syntactic-information-p
+   [var]     c-semantics                    c-syntactic-context
+   [cmd]     c-show-syntactic-information   c-show-syntactic-information
 
-
-User-visible Changes Since 3.229
+   some other, non-user-level name changes were effected as well
 
-* Tons 'o performance enhancements.
-
-* Tons 'o bug fixes.
-
-* Improved support for nested structs in C.
-
-* Emacs 18 support has been split out into a separate file,
-  cc-mode-18.el. Emacs 18 support is a losing battle, so after this
-  release, I am not going to actively maintain cc-mode for Emacs 18,
-  although I will incorporate contributed patches to cc-mode-18.el.
-
-* The last of the dependencies on c-mode.el should be removed.
-
-* New syntactic symbol, defun-block-intro, which controls the
-  indentation for the first line in a top-level function or class.
-
-* c-indent-defun moved to C-c C-q
-
-* c-scope-operator moved to C-c :
-
-* New coding style added to c-style-alist: Ellemtel.  This supports
-  the C++ coding style defined in "Programming in C++, Rules and
-  Recommendations", Erik Nyquist and Mats Henricson, Ellemtel,
-  ftp'able from euagate.eua.ericsson.se.
-
-* c-set-style now modifies the global values by default. Buffer local
-  versions are made when optional universal argument is given. 
-
-* New variable: c-inhibit-startup-warnings-p
-
-* New custom indentation functions, which are not used by default:
-  c-lineup-math and c-lineup-runin-statements.  The former lines up
-  math statement-cont lines after the equals sign.  The latter lines
-  up statement lines when the first statement in a block appears on
-  the same line as the block opening brace.
+** Usual gobs of bug fixes.
 
 
-Introduction
+* User-visible Changes Since 3.304
 
-    Welcome to cc-mode, version 3.  This is a C and C++ editing mode
-    for GNU Emacs.  This mode has its heritage from standard c-mode.el
-    (also called "Boring Old C Mode" or bocm :-), and c++-mode.el,
-    version 2, which I have been maintaining since 1992.  cc-mode
-    represents a significant milestone in the mode's life.  It has
-    been fully merged back with Emacs 19's c-mode.el. Also a new, more
-    intuitive and flexible mechanism for controlling indentation has
-    been developed.  More on this below.
+** You can now specify `hanginess' of close braces. See
+   c-hanging-braces-alist.
 
-    You can now use cc-mode to edit K&R and ANSI C, and most ARM C++
-    programs.  See below for limitations.
+** New syntactic symbol `substatement-open' to control indentation of
+   braces which open a substatement block (i.e. if, for, ...).  C-c
+   C-s used to call these ((block-open . ??) (substatement . ??)), but
+   now they are just ((substatement-open . ??)).  WARNING: THIS CHANGE
+   MAY AFFECT YOUR CURRENT INDENTATION SETTINGS.
 
-    In lieu of a texinfo manual (which is in the works), this file
-    will describe the following:
+** c-adaptive-block-open lineup function is removed. Obsoleted by
+   substatement-open change above.
+
+** New "Default" style returns indentation variables to their default
+   values.
+
+** Support for Lucid Emacs 19.10's mode-popup-menu convention.
+
+** c-macro-expand command put on C-c C-e.
+
+** New buffer-local variable c-comment-start-regexp. Useful for using
+   cc-mode as a basis for other C-like languages.
+
+** c++-mode handles try/catch blocks.  Assigns them `substatement'
+   syntax similar to if/for/while/...
+
+** c-indent-via-language-element renamed to c-indent-line for
+   awk-mode, BOCM compatibility.
+
+** Usual gobs of bug fixes.
+
+
+* User-visible Changes Since 3.229
+
+** Tons 'o performance enhancements.
+
+** Tons 'o bug fixes.
+
+** Improved support for nested structs in C.
+
+** Emacs 18 support has been split out into a separate file,
+   cc-mode-18.el. Emacs 18 support is a losing battle, so after this
+   release, I am not going to actively maintain cc-mode for Emacs 18,
+   although I will incorporate contributed patches to cc-mode-18.el.
+
+** The last of the dependencies on c-mode.el should be removed.
+
+** New syntactic symbol, defun-block-intro, which controls the
+   indentation for the first line in a top-level function or class.
+
+** c-indent-defun moved to C-c C-q
+
+** c-scope-operator moved to C-c :
+
+** New coding style added to c-style-alist: Ellemtel.  This supports
+   the C++ coding style defined in "Programming in C++, Rules and
+   Recommendations", Erik Nyquist and Mats Henricson, Ellemtel,
+   ftp'able from euagate.eua.ericsson.se.
+
+** c-set-style now modifies the global values by default. Buffer local
+   versions are made when optional universal argument is given.
+
+** New variable: c-inhibit-startup-warnings-p
+
+** New custom indentation functions, which are not used by default:
+   c-lineup-math and c-lineup-runin-statements.  The former lines up
+   math statement-cont lines after the equals sign.  The latter lines
+   up statement lines when the first statement in a block appears on
+   the same line as the block opening brace.
+
+
+* Introduction
+
+    Welcome to cc-mode, version 4.  This is a GNU Emacs mode for
+    editing C, C++, and Objective-C.  This mode has its heritage from
+    c-mode.el (also called "Boring Old C Mode" or bocm :-), and
+    c++-mode.el, version 2, which I have been maintaining since 1992.
+    cc-mode represents a significant milestone in the mode's life.  It
+    has been fully merged back with Emacs 19's c-mode.el. Also a new,
+    more intuitive and flexible mechanism for controlling indentation
+    has been developed.  More on this below.
+
+    You can now use cc-mode to edit K&R and ANSI C, most ARM C++, and
+    Objective-C programs.  See below for limitations.
+
+    In lieu of a texinfo manual (which is in the works -- volunteers
+    are desperately sought!), this file will describe the following:
 
     	* how to get started using cc-mode
 	* how to customize the new indentation engine
@@ -100,20 +149,28 @@ Introduction
     to the mode as cc-mode, but there really is no top level cc-mode
     entry point.  I call it cc-mode simply to differentiate it from
     c-mode.el.  All of the variables, commands, and functions in
-    cc-mode are prefixed with c-<thing>, and both c-mode and c++-mode
-    entry points are provided.  This file is intended to be a drop-in
-    replacement for c-mode.el -- you should be able to remove
-    c-mode.el and dump Emacs with cc-mode.el instead.
+    cc-mode are prefixed with c-<thing>, and c-mode, c++-mode, and
+    objc-mode entry points are provided.  This file is intended to be
+    a replacement for c-mode.el and c++-mode.el -- you should be able
+    to remove them and dump Emacs with cc-mode.el instead.  See the
+    file DUMPING for details on how to do this.
 
-    Its called version 3 because of its direct lineage from
-    c++-mode.el, version 2.353.
+    The major version number was incremented to 4 with the addition of
+    objc-mode.
 
 
-Getting Started
+* Getting Started
 
-    cc-mode.el works with the 3 major releases of Emacs in use: Emacs
-    18, FSF Emacs 19, and Lucid Emacs 19.  FSF 19 users will want
-    version 19.21 or better, Lucid users will want 19.6 or better.
+    cc-mode.el works well with the 2 main branches of Emacs 19, the
+    one maintained by the FSF, and the one maintained by Lucid
+    (a.k.a. XEmacs).  FSF's Emacs 19 users will want version 19.21 or
+    better, Lucid's Emacs users will want 19.6 or better.  cc-mode.el
+    works moderately well with Emacs 18, if you use the cc-mode-18.el
+    compatibility file.  A word of warning though, Emacs 18 lacks some
+    fundamental functionality that makes Emacs 18 support a losing
+    battle.  Hence it is no longer supported and it is highly
+    recommended that you upgrade to Emacs 19.  If you use cc-mode
+    under Emacs 18, you're on your own.
 
     The first thing you want to do is put cc-mode.el somewhere on your
     load-path where Emacs can find it.  Do a "C-h v load-path" to see
@@ -156,74 +213,71 @@ Getting Started
     After those lines you will want to add the following autoloads to
     your .emacs file so that cc-mode gets loaded at the right time:
 
-    	(autoload 'c++-mode "cc-mode" "C++ Editing Mode" t)
-    	(autoload 'c-mode   "cc-mode" "C Editing Mode" t)
+    	(autoload 'c++-mode  "cc-mode" "C++ Editing Mode" t)
+    	(autoload 'c-mode    "cc-mode" "C Editing Mode" t)
+    	(autoload 'objc-mode "cc-mode" "Objective-C Editing Mode" t)
 
     Next, you will want to set up Emacs so that it edits C files in
     c-mode and C++ files in c++-mode (as defined from cc-mode.el). Add
     the following to your .emacs file after the autoload lines above.
-    Note that this assumes you'll be editing .h and .c files as C, and
-    .hh, .C, and .cc files as C++. Your mileage may vary:
+    Note that this assumes you'll be editing .h and .c files as C,
+    .hh, .C, and .cc files as C++, and .objc files as
+    Objective-C. Your mileage may vary:
 
 	(setq auto-mode-alist
-	  (append '(("\\.C$"  . c++-mode)
-		    ("\\.cc$" . c++-mode)
-		    ("\\.hh$" . c++-mode)
-		    ("\\.c$"  . c-mode)
-		    ("\\.h$"  . c-mode)
+	  (append '(("\\.C$"     . c++-mode)
+		    ("\\.cc$"    . c++-mode)
+		    ("\\.hh$"    . c++-mode)
+		    ("\\.c$"     . c-mode)
+		    ("\\.h$"     . c-mode)
+		    ("\\.objc$"  . objc-mode)
 		   ) auto-mode-alist))
 
     You may already have some or all of these settings on your
     auto-mode-alist, but it won't hurt to put them on there again.
 
-    I will also briefly mention that if you have the ability to
-    re-compile Emacs, you can trash c-mode.el altogether and dump
-    Emacs with cc-mode.el.  If you know what this means, you probably
-    already know how to do it.  If not you can contact the help
-    address for more information (see below).
-
     That's all you need. After you've done all this, you should quit
-    and restart Emacs.  The next time you visit a C or C++ file you
-    should be using cc-mode.  You can check this easily by hitting
-    "C-c C-v" in the c-mode or c++-mode buffer.  You should see this
-    message in the echo area:
+    and restart Emacs.  The next time you visit a C, C++, or
+    Objective-C file you should be using cc-mode.  You can check this
+    easily by hitting "C-c C-v" in the c-mode, c++-mode, or objc-mode
+    buffer.  You should see this message in the echo area:
 
-    	Using cc-mode version 3.304
+    	Using cc-mode version 4.35
 
 
-New indentation engine
+* New indentation engine
 
     cc-mode has a new indentation engine, providing a simplified, yet
     flexible and general mechanism for customizing indentation. It
     breaks indentation calculation into two steps. First it tries to
-    figure out what kind of C/C++ construct its looking at, then it
+    figure out what kind of language construct its looking at, then it
     applies a user defined offset to the current line based on the
     type of construct it finds.
 
     This section will briefly cover how indentation is calculated in
     cc-mode. Only enough detail will be given so that you will know
     how to customize indentation.  Plenty of examples will be given to
-    help you stylize your C/C++ code, but more detailed examples will
-    be left to the texinfo manual (when it is complete) and your own
+    help you stylize your code, but more detailed examples will be
+    left to the texinfo manual (when it is complete) and your own
     exploration.  You can also contact the help address given below.
 
-  Step 1: Syntactic Analysis
+** Step 1: Syntactic Analysis
 
     In the first step, cc-mode looks at the line you are currently
     indenting and tries to determine the syntactic components of the
     construct on that line.  cc-mode builds a list of these syntactic
     components, where each component on the list contains a "syntactic
     symbol" and a relative buffer position.  Syntactic symbols
-    describe elements of C/C++ code such as `statement',
+    describe elements of C/C++/Objc code such as `statement',
     `substatement', `class-open', `class-close', `knr-argdecl', etc.
     You can do a "C-h v c-offsets-alist" to see the entire list of
     support syntactic symbols along with a description of the
     constructs they represent.
 
-    Conceptually, a line of C/C++ code is always indented relative to
-    the indentation of some line higher up in the buffer.  This is
-    represented by the relative buffer positions in the syntactic
-    component list.
+    Conceptually, a line of C/C++/Objc code is always indented
+    relative to the indentation of some line higher up in the buffer.
+    This is represented by the relative buffer positions in the
+    syntactic component list.
 
     Here's an example. Suppose we had the following code in a c++-mode
     buffer (the line numbers don't actually appear in the buffer):
@@ -237,7 +291,7 @@ New indentation engine
     5:     b = tmp;
     6: }
 
-    We can use the command C-c C-s (c-show-semantic-information) to
+    We can use the command C-c C-s (c-show-syntactic-information) to
     simply report what syntactic analysis is for a line.  If we hit
     C-c C-s on line 4, we'd see in the echo area:
 
@@ -269,18 +323,19 @@ New indentation engine
 
     Hitting C-c C-s on line 4 gives us:
 
-        ((block-open) (substatement . 46))
+        ((substatement-open . 46))
 
-    which tells us 2 important things.  First, that there can be more
-    than one syntactic component on the list, and second, that a
-    syntactic component need not have a relative buffer position
-    (e.g. block-open).  By the way, a `substatement' indicates the
-    line after an if, else, while, do, switch, and for statements, and
-    a `block-open' indicates a line containing an compound statement's
-    block opening brace.  See the variable c-offsets-alist for a full
-    description of the available syntactic symbols.
+    which tells us that this is a brace that `opens' a substatement
+    block. By the way, a `substatement' indicates the line after an
+    if, else, while, do, switch, and for statements.  See the variable
+    c-offsets-alist for a full description of the available syntactic
+    symbols.
 
-  Step 2: Indentation Calculation
+    Syntactic analysis lists can contain more than one element
+    (i.e. cons cell), and syntactic symbols need not have relative
+    buffer positions.
+
+** Step 2: Indentation Calculation
 
     Indentation for the current line is calculated using the list of
     syntactic components derived in step 1 above.  Each component
@@ -342,21 +397,14 @@ New indentation engine
     process is performed, despite the differences in the syntactic
     component list.  Remember that the list for this line is:
 
-        ((block-open) (substatement . 46))
-    
-    Here, cc-mode first looks up the `block-open' symbol in
-    c-offsets-alist, for which it finds `0'.  At this point the
-    running total is still zero (0 + 0 = 0).  And since the block-open
-    component has no buffer relative position, cc-mode is done
-    processing this syntactic component, so it just moves on to the
-    next component on the list.
+        ((substatement-open . 46))
 
-    It then looks up `substatement', for which it might find `4'.
-    Adding this to the running total yields a total indentation of 4
-    spaces.  cc-mode then goes to buffer position 46, which is the `i'
-    in "if" on line 3.  This character is in the fourth column on that
-    line so adding this to the running total, yields an indentation
-    for the line of 8 spaces.
+    Here, cc-mode first looks up the `substatement-open' symbol in
+    c-offsets-alist, for which it might find `4'.  At this point the
+    running total is 4 (0 + 4 = 4).  cc-mode then goes to buffer
+    position 46, which is the `i' in "if" on line 3.  This character
+    is in the fourth column on that line so adding this to the running
+    total, yields an indentation for the line of 8 spaces.
 
     Simple, huh?
 
@@ -366,7 +414,7 @@ New indentation engine
     indentation model being used.
 
 
-Customizing Indentation
+* Customizing Indentation
 
     The c-offsets-alist variable is where you customize all your
     indentations.  You simply need to decide what additional offset
@@ -415,33 +463,25 @@ Customizing Indentation
     Since line 4 is the start of the construct we want to re-indent,
     we first move to that line and hit C-c C-s:
 
-    	((block-open) (substatement . 46))
+    	((substatement-open . 46))
 
-    So we know either want to change the indentation for `block-open',
-    or for `substatement'.  Since the `substatement' syntactic symbol
-    controls all indentation after if, else, while, do, switch, and
-    for statements, and since we still want to indented non-block
-    substatements like this:
+    So we know want to change the `substatement-open' indentation.  To
+    do this interactively, just hit C-c C-o.  This prompts you for the
+    syntactic symbol to change, giving you a reasonable default, in
+    this case, substatement-open, which is just the syntactic symbol
+    we want to change!
 
-	if( doit_again )
-	    just_do_it();
-
-    we decide to change the offset for `block-open'.  To do this
-    interactively, just hit C-c C-o.  This prompts you for the
-    syntactic symbol to change.  Enter "block-open" (without the
-    double quotes) and hit return. It will then prompt you for the new
+    After you hit return cc-mode will then prompt you for the new
     offset value, with the old value as the default.  Hit backspace to
-    delete the old value, then hit "-" (the minus sign) and then
-    return.  This changes the offset to (-1 * c-basic-offset),
-    essentially moving the construct one level of indentation to the
-    left.
+    delete the old value, then hit "0" and then return.  This moves
+    the construct one level of indentation to the left.
 
     To check your changes quickly, just hit C-c C-q to reindent the
     entire function.  If this does what you want, you can put the
     following lisp in your c-mode-common-hook (see below for an
     example):
 
-    	(c-set-offset 'block-open 0)
+    	(c-set-offset 'substatement-open 0)
 
     You could also set up a "style" that sets this and all your
     customizations in a convenient manner.  See the variable
@@ -449,7 +489,7 @@ Customizing Indentation
     take a look at the sample .emacs file below.
     
 
-Frequently Asked Questions
+* Frequently Asked Questions
 
     Q. How do I re-indent the whole file?
     A. Visit the file and hit "C-x h" to mark the whole buffer. Then
@@ -473,10 +513,11 @@ Frequently Asked Questions
 
        (define-key c-mode-map "\C-m" 'newline-and-indent)
 
-       This is a very common question. :-)
+       This is a very common question. :-) If you want this to be the
+       default behavior, don't lobby me, lobby RMS!
 
-    Q. I put (c-set-offset 'block-open 0) in my .emacs file and I get
-       an error saying that c-set-offset's function definition is
+    Q. I put (c-set-offset 'substatement-open 0) in my .emacs file and
+       I get an error saying that c-set-offset's function definition is
        void.
     A. Since cc-mode is autoloaded, it is typically not loaded into
        your Emacs session by the time of the c-set-offset call.
@@ -498,7 +539,7 @@ Frequently Asked Questions
   '("PERSONAL"
     (c-tab-always-indent           . t)
     (c-comment-only-line-offset    . 4)
-    (c-hanging-braces-alist        . ((block-open after)
+    (c-hanging-braces-alist        . ((substatement-open after)
 				      (brace-list-open)))
     (c-hanging-colons-alist        . ((member-init-intro before)
 				      (inher-intro)
@@ -512,7 +553,7 @@ Frequently Asked Questions
 				      (case-label        . 4)
 				      (block-open        . 0)
 				      (knr-argdecl-intro . -)))
-    (c-echo-semantic-information-p . t)
+    (c-echo-syntactic-information-p . t)
     )
   "My C Programming Style")
 
@@ -524,7 +565,6 @@ Frequently Asked Questions
 	(setq c-style-alist (cons my-c-style c-style-alist)))
     (c-set-style my-style))
   ;; offset customizations not in my-style
-  (c-set-offset 'block-open 'c-adaptive-block-open)
   (c-set-offset 'member-init-intro (* 2 c-basic-offset))
   ;; other customizations
   (setq tab-width 8
@@ -532,8 +572,8 @@ Frequently Asked Questions
 	indent-tabs-mode nil)
   ;; we like auto-newline and hungry-delete
   (c-toggle-auto-hungry-state 1)
-  ;; keybindings for both C and C++.  We can put these in c-mode-map
-  ;; because c++-mode-map inherits it
+  ;; keybindings for C, C++, and Objective-C.  We can put these in
+  ;; c-mode-map because c++-mode-map and objc-mode-map inherit it
   (define-key c-mode-map "\C-m" 'newline-and-indent)
   )
 
@@ -542,8 +582,8 @@ Frequently Asked Questions
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 
 
-User level differences between cc-mode.el and c-mode.el (as
-distributed with FSF Emacs 19.22).
+* User level differences between cc-mode.el and c-mode.el (as
+  distributed with FSF Emacs 19.22).
 
     New indentation engine (described above).
 
@@ -614,8 +654,8 @@ distributed with FSF Emacs 19.22).
 	c-continued-brace-offset
 
 
-User level differences between cc-mode.el and c++-mode.el 2.353 (a.k.a
-cplus-md1.el in FSF 19):
+* User level differences between cc-mode.el and c++-mode.el 2.353
+  (a.k.a cplus-md1.el in FSF 19):
 
     New Indentation Engine (described above).
 
@@ -681,14 +721,15 @@ cplus-md1.el in FSF 19):
 	c++-uncomment-region
 
 
-For more information
+* For more information
 
     The best thing to do at this point is poke around the source code.
     Eventually there will be an extensive texinfo manual describing
-    the mode in greater detail.
+    the mode in greater detail.  Can I say this again?  Volunteers to
+    help finish the manual are desperately sought!
 
 
-Requirements
+* Requirements
 
     cc-mode.el requires reporter.el for submission of bug reports.
     reporter.el is distributed with the latest FSF and Lucid Emacs
@@ -696,32 +737,17 @@ Requirements
     instructions for those of you who are using older Emacsen.
 
 
-Limitations and Known Bugs
+* Limitations and Known Bugs
 
-    c++-mode does not recognize exception constructs (will be fixed in
-    next release).
+    multi-line macros are not handled properly.
 
-    c++-mode does not recognize friend constructs (will be fixed in
-    next release).
-
-    there should be some way to indent the first statement in a block
-    differently than the first statement in a defun (will be fixed in
-    next release).
-
-    re-indenting large regions or expressions can be slow (will be
-    addressed in next release).
+    re-indenting large regions or expressions can be slow.
 
     Use with Emacs 18 can be slow and annoying. You should seriously
     consider upgrading to Emacs 19.
 
-    If you don't put top-level function and class opening braces in
-    column zero, you could notice severe degradations in performance.
-    Consider changing your coding style or defining the variable
-    defun-prompt-regexp to something suitable (Emacs 19 only).
-
-
 
-Electronic Mail
+* Electronic Mail
 
     To report bugs, use the C-c C-b (c-submit-bug-report) command.
     This provides vital information I need to reproduce your problem.
@@ -746,7 +772,7 @@ Electronic Mail
     keep track of all the incoming mail!
 
 
-Here's the Emacs Lisp Archive information for reporter.el:
+* Here's the Emacs Lisp Archive information for reporter.el:
 
 	 GNU Emacs Lisp Code Directory Apropos -- "reporter"
 "~/" refers to archive.cis.ohio-state.edu:/pub/gnu/emacs/elisp-archive/
