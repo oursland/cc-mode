@@ -403,77 +403,136 @@ This function does not do any hidden buffer changes."
   (or count (setq count 1))
   `(c-forward-sexp ,(if (numberp count) (- count) `(- ,count))))
 
-(defmacro c-safe-scan-lists (from count depth)
-  "Like `scan-lists' but returns nil instead of signalling errors.
+(defmacro c-safe-scan-lists (from count depth &optional limit)
+  "Like `scan-lists' but returns nil instead of signalling errors
+for unbalanced parens.
+
+A limit for the search may be given.  FROM is assumed to be on the
+right side of it.
 
 This function does not do any hidden buffer changes."
-  (if (featurep 'xemacs)
-      `(scan-lists ,from ,count ,depth nil t)
-    `(c-safe (scan-lists ,from ,count ,depth))))
+  (let ((res (if (featurep 'xemacs)
+		 `(scan-lists ,from ,count ,depth nil t)
+	       `(c-safe (scan-lists ,from ,count ,depth)))))
+    (if limit
+	`(save-restriction
+	   ,(if (numberp count)
+		(if (< count 0)
+		    `(narrow-to-region ,limit (point-max))
+		  `(narrow-to-region (point-min) ,limit))
+	      `(if (< ,count 0)
+		   (narrow-to-region ,limit (point-max))
+		 (narrow-to-region (point-min) ,limit)))
+	   ,res)
+      res)))
 
 
 ;; Wrappers for common scan-lists cases, mainly because it's almost
 ;; impossible to get a feel for how that function works.
 
-(defmacro c-up-list-forward (&optional pos)
+(defmacro c-up-list-forward (&optional pos limit)
   "Return the first position after the list sexp containing POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
-This function does not do any hidden buffer changes."
-  `(c-safe-scan-lists ,(or pos `(point)) 1 1))
+A limit for the search may be given.  The start position is assumed to
+be before it.
 
-(defmacro c-up-list-backward (&optional pos)
+This function does not do any hidden buffer changes."
+  `(c-safe-scan-lists ,(or pos `(point)) 1 1 ,limit))
+
+(defmacro c-up-list-backward (&optional pos limit)
   "Return the position of the start of the list sexp containing POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
-This function does not do any hidden buffer changes."
-  `(c-safe-scan-lists ,(or pos `(point)) -1 1))
+A limit for the search may be given.  The start position is assumed to
+be after it.
 
-(defmacro c-down-list-forward (&optional pos)
+This function does not do any hidden buffer changes."
+  `(c-safe-scan-lists ,(or pos `(point)) -1 1 ,limit))
+
+(defmacro c-down-list-forward (&optional pos limit)
   "Return the first position inside the first list sexp after POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
-This function does not do any hidden buffer changes."
-  `(c-safe-scan-lists ,(or pos `(point)) 1 -1))
+A limit for the search may be given.  The start position is assumed to
+be before it.
 
-(defmacro c-down-list-backward (&optional pos)
+This function does not do any hidden buffer changes."
+  `(c-safe-scan-lists ,(or pos `(point)) 1 -1 ,limit))
+
+(defmacro c-down-list-backward (&optional pos limit)
   "Return the last position inside the last list sexp before POS,
 or nil if no such position exists.  The point is used if POS is left out.
 
-This function does not do any hidden buffer changes."
-  `(c-safe-scan-lists ,(or pos `(point)) -1 -1))
+A limit for the search may be given.  The start position is assumed to
+be after it.
 
-(defmacro c-go-up-list-forward (&optional pos)
+This function does not do any hidden buffer changes."
+  `(c-safe-scan-lists ,(or pos `(point)) -1 -1 ,limit))
+
+(defmacro c-go-up-list-forward (&optional pos limit)
   "Move the point to the first position after the list sexp containing POS,
 or the point if POS is left out.  Return t if such a position exists,
 otherwise nil is returned and the point isn't moved.
 
-This function does not do any hidden buffer changes."
-  `(c-safe (goto-char (scan-lists ,(or pos `(point)) 1 1)) t))
+A limit for the search may be given.  The start position is assumed to
+be before it.
 
-(defmacro c-go-up-list-backward (&optional pos)
+This function does not do any hidden buffer changes."
+  (let ((res `(c-safe (goto-char (scan-lists ,(or pos `(point)) 1 1)) t)))
+    (if limit
+	`(save-restriction
+	   (narrow-to-region (point-min) ,limit)
+	   ,res)
+      res)))
+
+(defmacro c-go-up-list-backward (&optional pos limit)
   "Move the point to the position of the start of the list sexp containing POS,
 or the point if POS is left out.  Return t if such a position exists,
 otherwise nil is returned and the point isn't moved.
 
-This function does not do any hidden buffer changes."
-  `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 1)) t))
+A limit for the search may be given.  The start position is assumed to
+be after it.
 
-(defmacro c-go-down-list-forward (&optional pos)
+This function does not do any hidden buffer changes."
+  (let ((res `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 1)) t)))
+    (if limit
+	`(save-restriction
+	   (narrow-to-region ,limit (point-max))
+	   ,res)
+      res)))
+
+(defmacro c-go-down-list-forward (&optional pos limit)
   "Move the point to the first position inside the first list sexp after POS,
 or the point if POS is left out.  Return t if such a position exists,
 otherwise nil is returned and the point isn't moved.
 
-This function does not do any hidden buffer changes."
-  `(c-safe (goto-char (scan-lists ,(or pos `(point)) 1 -1)) t))
+A limit for the search may be given.  The start position is assumed to
+be before it.
 
-(defmacro c-go-down-list-backward (&optional pos)
+This function does not do any hidden buffer changes."
+  (let ((res `(c-safe (goto-char (scan-lists ,(or pos `(point)) 1 -1)) t)))
+    (if limit
+	`(save-restriction
+	   (narrow-to-region (point-min) ,limit)
+	   ,res)
+      res)))
+
+(defmacro c-go-down-list-backward (&optional pos limit)
   "Move the point to the last position inside the last list sexp before POS,
 or the point if POS is left out.  Return t if such a position exists,
 otherwise nil is returned and the point isn't moved.
 
+A limit for the search may be given.  The start position is assumed to
+be after it.
+
 This function does not do any hidden buffer changes."
-  `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 -1)) t))
+  (let ((res `(c-safe (goto-char (scan-lists ,(or pos `(point)) -1 -1)) t)))
+    (if limit
+	`(save-restriction
+	   (narrow-to-region ,limit (point-max))
+	   ,res)
+      res)))
 
 
 (defmacro c-beginning-of-defun-1 ()
