@@ -3903,9 +3903,9 @@ cases like macros that contains statement blocks, e.g:
 @example
 @group
 
-A_VERY_LONG_MACRO_NAME ({
+A_VERY_LONG_MACRO_NAME (@{
         some (code, with + long, lines * in[it]);
-    });
+    @});
 
 <--> c-basic-offset
 
