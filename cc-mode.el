@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.216 $
-;; Last Modified:   $Date: 1994-01-27 17:03:31 $
+;; Version:         $Revision: 3.217 $
+;; Last Modified:   $Date: 1994-01-27 20:49:18 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-27 17:03:31 $|$Revision: 3.216 $|
+;; |$Date: 1994-01-27 20:49:18 $|$Revision: 3.217 $|
 
 ;;; Code:
 
@@ -437,6 +437,21 @@ as described in `c-offsets-alist'.  These are passed directly to
 `c-set-offset' so there is no need to set every syntactic symbol in
 your style, only those that are different from the default.")
 
+(defvar c-mode-menu
+  '(["Comment Out Region"     comment-region (mark)]
+    ["Macro Expand Region"    c-macro-expand (mark)]
+    ["Backslashify"           c-macroize-region (mark)]
+    ["Indent Expression"      c-indent-exp
+     (memq (following-char) '(?\( ?\[ ?\{))]
+    ["Indent Line"            c-indent-command t]
+    ["Fill Comment Paragraph" c-fill-paragraph t]
+    ["Up Conditional"         c-up-conditional t]
+    ["Backward Conditional"   c-backward-conditional t]
+    ["Forward Conditional"    c-forward-conditional t]
+    ["Backward Statement"     c-beginning-of-statement t]
+    ["Forward Statement"      c-end-of-statement t]
+    )
+  "Lucid Emacs menu for C/C++ modes.")
 
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -716,7 +731,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.216 $
+cc-mode Revision: $Revision: 3.217 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -747,7 +762,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.216 $
+cc-mode Revision: $Revision: 3.217 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3232,7 +3247,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.216 $"
+(defconst c-version "$Revision: 3.217 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3288,22 +3303,6 @@ region."
 
 
 ;; menus for Lucid
-(defvar c-mode-menu
-  '(["Comment Out Region"     comment-region (mark)]
-    ["Macro Expand Region"    c-macro-expand (mark)]
-    ["Backslashify"           c-macroize-region (mark)]
-    ["Indent Expression"      c-indent-exp
-     (memq (following-char) '(?\( ?\[ ?\{))]
-    ["Indent Line"            c-indent-command t]
-    ["Fill Comment Paragraph" c-fill-paragraph t]
-    ["Up Conditional"         c-up-conditional t]
-    ["Backward Conditional"   c-backward-conditional t]
-    ["Forward Conditional"    c-forward-conditional t]
-    ["Backward Statement"     c-beginning-of-statement t]
-    ["Forward Statement"      c-end-of-statement t]
-    )
-  "Menu for C/C++ modes.")
-
 (defun c-popup-menu (e)
   "Pops up the C/C++ menu."
   (interactive "@e")
