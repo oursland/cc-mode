@@ -2,6 +2,7 @@ EMACS=emacs
 VERSION=5.29
 
 COREFILES=\
+ NEWS \
  cc-align.el \
  cc-bytecomp.el \
  cc-cmds.el \
@@ -19,7 +20,6 @@ EXTRAFILES=\
  ANNOUNCEMENT \
  MANIFEST \
  README \
- NEWS \
  COPYING \
  cc-guess.el \
  cc-lobotomy.el \
