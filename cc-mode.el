@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.177 $
-;; Last Modified:   $Date: 1995-03-20 23:58:32 $
+;; Version:         $Revision: 4.178 $
+;; Last Modified:   $Date: 1995-03-21 00:01:02 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-20 23:58:32 $|$Revision: 4.177 $|
+;; |$Date: 1995-03-21 00:01:02 $|$Revision: 4.178 $|
 
 ;;; Code:
 
@@ -4510,7 +4510,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.177 $"
+(defconst c-version "$Revision: 4.178 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4591,29 +4591,30 @@ it trailing backslashes are removed."
 ;; crucial because future c-set-style calls will always reset the
 ;; variables first to the "CC-MODE" style before instituting the new
 ;; style.  Only do this once!
-(if (featurep 'cc-mode) nil
-  (c-add-style "CC-MODE"
-	       (mapcar
-		(function
-		 (lambda (var)
-		   (cons var (symbol-value var))))
-		'(c-inhibit-startup-warnings-p
-		  c-strict-syntax-p
-		  c-echo-syntactic-information-p
-		  c-basic-offset
-		  c-offsets-alist
-		  c-tab-always-indent
-		  c-comment-only-line-offset
-		  c-block-comments-indent-p
-		  c-cleanup-list
-		  c-hanging-braces-alist
-		  c-hanging-colons-alist
-		  c-backslash-column
-		  c-electric-pound-behavior)))
+(or (assoc "CC-MODE" c-style-alist)
+    (c-add-style "CC-MODE"
+		 (mapcar
+		  (function
+		   (lambda (var)
+		     (cons var (symbol-value var))))
+		  '(c-inhibit-startup-warnings-p
+		    c-strict-syntax-p
+		    c-echo-syntactic-information-p
+		    c-basic-offset
+		    c-offsets-alist
+		    c-tab-always-indent
+		    c-comment-only-line-offset
+		    c-block-comments-indent-p
+		    c-cleanup-list
+		    c-hanging-braces-alist
+		    c-hanging-colons-alist
+		    c-backslash-column
+		    c-electric-pound-behavior))))
 
-  ;; the default style is now GNU.  This can be overridden in
-  ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
-  (c-set-style "GNU"))
+(or (featurep 'cc-mode)
+    ;; the default style is now GNU.  This can be overridden in
+    ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
+    (c-set-style "GNU"))
 
 ;; style variables
 (make-variable-buffer-local 'c-offsets-alist)
