@@ -1699,7 +1699,7 @@ function does not require the declaration to contain a brace block."
 	     (not (and c-special-brace-lists ; PIKE special brace lists.
 		       (eq (char-after) ?{)
 		       (c-looking-at-special-brace-list))))
-	(save-excursion (c-beginning-of-macro)))))
+	(c-beginning-of-macro))))
 
 (defun c-back-over-illiterals (macro-start)
   ;; Move backwards over code which isn't a literal (i.e. comment or string),
