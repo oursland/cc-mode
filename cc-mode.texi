@@ -33,14 +33,33 @@
 @settitle     CC Mode Manual
 @footnotestyle end
 
-@ifset XEMACS
-@set EMACS xemacs
-@set LISPREF Lispref
+@c @ifset XEMACS
+@c @set EMACS xemacs
+@c @set LISPREF Lispref
+@c @end ifset
+@c @ifclear XEMACS
+@c @set EMACS emacs
+@c @set LISPREF elisp
+@c @end ifclear
+@c The above was replaced by the following, 2004/10/5
+@ifset X
+@macro emacsman
+xemacs
+@end macro
+@macro lispref
+lispref
+@end macro
 @end ifset
-@ifclear XEMACS
-@set EMACS emacs
-@set LISPREF elisp
+
+@ifclear X
+@macro emacsman
+emacs
+@end macro
+@macro lispref
+elisp
+@end macro
 @end ifclear
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment @setchapternewpage odd !! we don't want blank pages !!
@@ -71,7 +90,7 @@
 @syncodeindex ky cp
 
 @copying
-Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03 Free Software Foundation, Inc.
+Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03, 04 Free Software Foundation, Inc.
 @end copying
 
 @comment Info directory entry for use by install-info. The indentation
@@ -193,6 +212,10 @@ Customizing Auto-newlines
 * Hanging Semicolons and Commas::  
 * Clean-ups::                   
 
+Hanging Braces
+
+* Custom Braces::               
+
 Indentation Engine
 
 * Syntactic Analysis::          
@@ -207,11 +230,6 @@ Customizing Indentation
 * Line-Up Functions::           
 * Custom Line-Up::              
 * Other Indentation::           
-
-Advanced Customizations
-
-* Custom Braces and Colons::    
-* Custom Semis and Commas::     
 
 Status of AWK Mode
 
@@ -744,6 +762,7 @@ line break.
 @section Electric Keys and Keywords
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@cindex electric characters
 Most punctuation keys provide @dfn{electric} behavior - as well as
 inserting themselves they perform some other action, such as
 reindenting the line.  A few keywords, such as @code{else}, also
@@ -909,10 +928,10 @@ modes except IDL mode, since CORBA IDL doesn't have any statements.
 useful while entering new C code.  The first is called
 @dfn{auto-newline} mode, and automatically inserts newlines where
 you'd probably want to type them yourself.  The second is called
-@dfn{hungry-delete} mode, and deletes a contiguous block of whitespace
-in a single operation - for example, the newline and indentation just
-inserted by auto-newline when you want to back up and write a comment
-after the last statement.
+@dfn{hungry-delete} mode, and lets you delete a contiguous block of
+whitespace in a single operation - for example, the newline and
+indentation just inserted by auto-newline when you want to back up and
+write a comment after the last statement.
 
 Full details on how these minor modes work are at @ref{Auto-newlines}
 and @ref{Hungry WS Deletion}.
@@ -970,17 +989,26 @@ modes and a negative value will turn them off.
 @cindex auto-newline
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-When you have @dfn{Auto-newline minor mode} enabled, @ccmode{} can
-insert newlines for you automatically when you type certain
-characters, namely a left or right brace, a colon, a semicolon, or a
-comma.
+When you have @dfn{Auto-newline minor mode} enabled, @ccmode{} inserts
+newlines for you automatically (in certain syntactic contexts) when
+you type a left or right brace, a colon, a semicolon, or a comma.
+Sometimes a newline appears before the character you type, sometimes
+after it, sometimes both.
 
-Auto-newline only works when the following conditions hold:
+Auto-newline only triggers when the following conditions hold:
 
 @itemize @bullet
 @item
 Auto-newline minor mode is enabled, as evidenced by a @samp{C/a} or
 @samp{C/ah} indicator on the modeline.
+
+@item
+The character was typed at the end of a line, or with only whitespace
+after it, and possibly a @samp{\} escaping the newline.
+
+@item
+The character is not on its own line already.  (This applies only to
+insertiion of a newline @emph{before} the character.)
 
 @item
 @cindex literal
@@ -995,24 +1023,18 @@ No numeric argument was supplied to the command (i.e. it was typed as
 normal, with no @kbd{C-u} prefix).
 @end itemize
 
-The precise circumstances in which newlines are inserted can be
-configured (see @pxref{Custom Auto-newlines}).  By default, newlines
-are inserted:
+You can configure the precise circumstances in which newlines get
+inserted (see @pxref{Custom Auto-newlines}).  Typically, the style
+system (@pxref{Styles}) will set this up for you, so you probably
+won't have to bother.
 
-@itemize @bullet
-@item
-both before and after a @samp{@{} which begins a substatement;
-@item
-after a @samp{;} which terminates a statement.
-@end itemize
-
-Sometimes, @ccmode{} inserts an auto-newline where you don't want one,
+Sometimes @ccmode{} inserts an auto-newline where you don't want one,
 such as after a @samp{@}} when you're about to type a @samp{;}.
 Hungry deletion can help here (@pxref{Hungry WS Deletion}), or you can
 activate an appropriate @dfn{clean-up}, which will remove the excess
-whitespace after you've typed the @samp{;}.  See @ref{Clean-ups} for
-a full description of clean-ups.  See also @ref{Electric Keys} for a
-summary of clean-ups listed by key.
+whitespace after you've typed the @samp{;}.  See @ref{Clean-ups} for a
+full description.  See also @ref{Electric Keys} for a summary of
+clean-ups listed by key.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Hungry WS Deletion,  , Auto-newlines, Minor Modes
@@ -1102,7 +1124,6 @@ For example, to bind @kbd{C-c C-d} and @kbd{C-c DEL} (matching plain
 file:
 
 @example
-
 (add-hook
 @c 'c-mode-common-hook  (Changed 2004/9/19)
  'c-mode-initialization-hook
@@ -1158,7 +1179,7 @@ LISPREF is set to @value{LISPREF}
 
 Getting your @key{Backspace} and @key{Delete} keys properly set up can
 sometimes be tricky.  The information in @ref{DEL Does Not
-Delete,,,@value{EMACS}}, might be helpful if you're having trouble with this.
+Delete,,,@emacsman{}}, might be helpful if you're having trouble with this.
 
 Getting your @key{Backspace} and @key{Delete} keys properly set up can
 sometimes be tricky.  The information in @ref{DEL Does Not
@@ -1199,7 +1220,7 @@ with the rest of @ccmode{}, so this section does not apply there.
 patterns for use with Font Lock mode.  This means that you get distinct
 faces on the various syntactic parts such as comments, strings, keywords
 and types, which is very helpful in telling them apart at a glance and
-discovering syntactic errors.  @xref{Font Lock,,, emacs, The Emacs
+discovering syntactic errors.  @xref{Font Lock,,, @emacsman{}, The Emacs
 Editor}, for ways to enable font locking in @ccmode{} buffers.
 
 @menu
@@ -1512,7 +1533,7 @@ facilities, hooks and styles.
 @item Hooks
 An Emacs @dfn{hook} is a place to put Lisp functions that you want
 Emacs to execute later in specific circumstances.
-@xref{Hooks,,,@value{LISPREF}}.  @ccmode{} supplies an @dfn{initialization hook}
+@xref{Hooks,,,@lispref{}}.  @ccmode{} supplies an @dfn{initialization hook}
 for each language it supports - any functions you supply to this hook
 are executed as the last part of a buffer's initialization.  Typically
 you use this flexibility to vary the customization settings between
@@ -1562,7 +1583,7 @@ could achieve this with code like this in your @file{.emacs}:
 (defun my-c-mode-hook ()
   (c-set-style
    (if (and (buffer-file-name)
-	    (string-match "/usr/src/linux" (buffer-file-name)))
+            (string-match "/usr/src/linux" (buffer-file-name)))
        "linux"
      "free-group-style")))
 (add-hook 'c-mode-hook 'my-c-mode-hook)
@@ -2336,34 +2357,51 @@ line break.
 @node    Custom Auto-newlines, Indentation Engine, Custom Filling and Breaking, Top
 @comment node-name, next, previous, up
 @chapter Customizing Auto-newlines
-@cindex auto-newline
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@cindex electric characters
-Auto-newline minor mode works by enabling certain @dfn{electric
-characters}.  Special characters such as the left and right braces,
-colons, semicolons, etc., have been made electric to perform some
-magic formatting in addition to inserting the typed character.  As a
-general rule, electric characters are only electric when the following
-conditions apply:
+@ccmode{} determines whether to insert auto-newlines in two basically
+different ways, depending on the character just typed:
 
-@itemize @bullet
-@item
-Auto-newline minor mode is enabled, as evidenced by a @samp{C/a} or
-@samp{C/ah} indicator on the modeline.
+@table @asis
+@item Braces and Colons
+@ccmode{} first determines the syntactic context of the brace or colon
+(@pxref{Syntactic Symbols}), then looks for a corresponding element in
+either the alist @code{c-hanging-braces-alist} or the alist
+@code{c-hanging-colons-alist}.  This alist element specifies where to
+put newlines - this is any combination of before and after the brace
+or colon.  If no alist element is found, newlines are inserted both
+before and after a brace, but none are inserted around a colon.  See
+@ref{Hanging Braces} and @ref{Hanging Colons}.
 
-@item
-@cindex literal
-@cindex syntactic whitespace
-The character was not typed inside of a literal @footnote{A
-@dfn{literal} is defined as any comment, string, or preprocessor macro
-definition.  These constructs are also known as @dfn{syntactic
-whitespace} since they are usually ignored when scanning C code.}.
+@item Semicolons and Commas
+The variable @code{c-hanging-semi&comma-criteria} contains a list of
+functions which determine whether to insert a newline after a newly
+typed semicolon or comma.  @xref{Hanging Semicolons and Commas}.
+@end table
 
-@item
-No numeric argument was supplied to the command (i.e. it was typed as
-normal, with no @kbd{C-u} prefix).
-@end itemize
+The names of these configuration variables contain @samp{hanging}
+because they let you @dfn{hang} the pertinent characters.  A character
+which introduces a C construct is said to @dfn{hang on the right} when
+it appears at the end of a line after other code, being separated by a
+line break from the construct it introduces, like the opening brace in:
+
+@example
+@group
+while (i < MAX) @{
+    total += entry[i];
+    entry [i++] = 0;
+@}
+@end group
+@end example
+
+@noindent
+A character @dfn{hangs on the left} when it appears at the start of
+the line after the construct it closes off, like the above closing
+brace.
+
+The final section of this chapter, ``Clean-ups'', describes how to
+configure @ccmode{} to remove these automatically added newlines in
+certain specific circumstances.  @xref{Clean-ups}.
 
 @menu
 * Hanging Braces::              
@@ -2385,30 +2423,54 @@ normal, with no @kbd{C-u} prefix).
 @kindex @{
 @kindex @}
 
-When you type either an open or close brace (i.e. @kbd{@{} or @kbd{@}}),
-the electric command @code{c-electric-brace} gets run.  This command has
-two electric formatting behaviors.  First, it will perform some
-reindentation of the line the brace was typed on, and second, it will
-add various newlines before and/or after the typed brace.
-Reindentation occurs automatically whenever the electric behavior is
-enabled.  If the brace ends up on a line other than the one it was typed
-on, then that line is also reindented.
+When the conditions for auto-newline hold (@pxref{Auto-newlines}) and
+you type an open or close brace at the end of a line, @ccmode{}
+proceeds as follows to decide where, if anywhere, to put
+auto-newlines:
 
-The default in auto-newline mode is to insert newlines both before and
-after a brace, but that can be controlled by the
-@code{c-hanging-braces-alist} style variable.
+@enumerate
+@item
+It determines the @dfn{syntactic context} of the brace - i.e. what the
+context of a line would be, were the brace to stand alone on the line.
+@xref{Syntactic Analysis}.  This might be
+@samp{((substatement-open@tie{}6180))}, for example.
+
+It determines the @dfn{syntactic context} of the brace - i.e. if the
+brace were to stand alone on a line, what the context of this line
+would be.  @xref{Syntactic Analysis}.  This might be
+@samp{((substatement-open@tie{}6180))}, for example.
+
+@item
+As a sanity check, if this syntactic context is not relevant to
+braces, the analysis is aborted and no auto-newlines are inserted;
+
+@item
+It looks up the syntactic symbol (say, @samp{substatement-open}) in
+the association list @code{c-hanging-braces-alist}.  If it finds a
+matching entry, it inserts newlines accordingly (which might be no
+newlines anywhere).  If it fails to find a matching entry, it performs
+the default action, inserting a newline both before and after the
+brace.
+@end enumerate
 
 @defopt c-hanging-braces-alist
 @vindex hanging-braces-alist (c-)
 
-This variable contains a mapping between syntactic symbols related to
-braces, and a list of places to insert a newline.  The syntactic symbols
-that are useful for this list are @code{brace-list-intro},
-@code{statement-cont}, @code{inexpr-class-open},
-@code{inexpr-class-close}, and all the @code{*-open} and @code{*-close}
-symbols.  @xref{Syntactic Symbols}, for a more detailed description of
-these syntactic symbols, except for @code{inexpr-class-open} and
-@code{inexpr-class-close}, which aren't actual syntactic symbols.
+This variable is an association list which maps syntactic symbols to
+lists of places to insert a newline.  @xref{Association
+Lists,,,@lispref{}}.  The key of each element is the syntactic symbol, the
+associated value is either nil, a list, or a function.
+
+@table @asis
+@item The Key - the syntactic symbol
+The syntactic symbols that are useful as keys in this list are
+@code{brace-list-intro}, @code{statement-cont},
+@code{inexpr-class-open}, @code{inexpr-class-close}, and all the
+@code{*-open} and @code{*-close} symbols.  @xref{Syntactic Symbols},
+for a more detailed description of these syntactic symbols, except for
+@code{inexpr-class-open} and @code{inexpr-class-close}, which aren't
+actual syntactic symbols.  Elements with any other value as a key get
+ignored.
 
 The braces of anonymous inner classes in Java are given the special
 symbols @code{inexpr-class-open} and @code{inexpr-class-close}, so that
@@ -2423,16 +2485,18 @@ lists in this regard, even though they do for normal indentation
 purposes.  It's currently not possible to set automatic newlines on
 these constructs.
 
+@item The associated value - the ``ACTION'' list or function
 The value associated with each syntactic symbol in this association
-list is called an @var{action}, which can be either a function or a
-list.  @xref{Custom Braces and Colons}, for a more detailed discussion
-of using a function as a brace hanging @var{action}.
+list is called an @var{action}, which can be either a list or a
+function which returns a list.  @xref{Custom Braces}, for how to use
+a function as a brace hanging @var{action}.
 
-When the @var{action} is a list, it can contain any combination of the
-symbols @code{before} and @code{after}, directing @ccmode{} where to
-put newlines in relationship to the brace being inserted.  Thus, if the
-list contains only the symbol @code{after}, then the brace is said to
-@dfn{hang} on the right side of the line, as in:
+The list @var{action} (or the list returned by @var{action} when it's
+a function) contains some combination of the symbols @code{before} and
+@code{after}, directing @ccmode{} where to put newlines in
+relationship to the brace being inserted.  Thus, if the list contains
+only the symbol @code{after}, then the brace hangs on the right side
+of the line, as in:
 
 @example
 // here, open braces always `hang'
@@ -2444,9 +2508,10 @@ void spam( int i ) @{
 @end example
 
 When the list contains both @code{after} and @code{before}, the braces
-will appear on a line by themselves, as shown by the close braces in the
-above example.  The list can also be empty, in which case no newlines
-are added either before or after the brace.
+will appear on a line by themselves, as shown by the close braces in
+the above example.  The list can also be empty, in which case newlines
+are added neither before nor after the brace.
+@end table
 
 If a syntactic symbol is missing entirely from
 @code{c-hanging-braces-alist}, it's treated in the same way as an
@@ -2462,6 +2527,9 @@ For example, the default value of @code{c-hanging-braces-alist} is:
  (substatement-open after)
  (block-close . c-snug-do-while)
  (extern-lang-open after)
+ (namespace-open after)
+ (module-open after)
+ (composition-open after)
  (inexpr-class-open after)
  (inexpr-class-close before))
 @end example
@@ -2482,6 +2550,96 @@ an @var{action}.  In all other cases, braces are put on a line by
 themselves.
 @end defopt
 
+@menu
+* Custom Braces::               
+@end menu
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node    Custom Braces,  , Hanging Braces, Hanging Braces
+@comment node-name, next, previous, up
+@subsection Custom Brace Hanging
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@vindex c-hanging-braces-alist
+@vindex hanging-braces-alist (c-)
+Syntactic symbols aren't the only place where you can customize
+@ccmode{} with the lisp equivalent of callback functions.  Brace
+``hanginess'' can also be determined by custom functions associated with
+syntactic symbols on the @code{c-hanging-braces-alist} style variable.
+Remember that @var{action}'s are typically a list containing some
+combination of the symbols @code{before} and @code{after}
+(@pxref{Hanging Braces}).  However, an @var{action} can also be a
+function which gets called when a brace matching that syntactic symbol
+is entered.
+
+@cindex customization, brace hanging
+These @var{action} functions are called with two arguments: the
+syntactic symbol for the brace, and the buffer position at which the
+brace was inserted.  The @var{action} function is expected to return a
+list containing some combination of @code{before} and @code{after},
+including neither of them (i.e. @code{nil}).  This return value has the
+normal brace hanging semantics.
+
+As an example, @ccmode{} itself uses this feature to dynamically
+determine the hanginess of braces which close ``do-while''
+constructs:
+
+@example
+void do_list( int count, char** atleast_one_string )
+@{
+    int i=0;
+    do @{
+        handle_string( atleast_one_string[i] );
+        i++;
+    @} while( i < count );
+@}
+@end example
+
+@ccmode{} assigns the @code{block-close} syntactic symbol to the
+brace that closes the @code{do} construct, and normally we'd like the
+line that follows a @code{block-close} brace to begin on a separate
+line.  However, with ``do-while'' constructs, we want the
+@code{while} clause to follow the closing brace.  To do this, we
+associate the @code{block-close} symbol with the @var{action} function
+@code{c-snug-do-while}:
+
+@example
+(defun c-snug-do-while (syntax pos)
+  "Dynamically calculate brace hanginess for do-while statements."
+  (save-excursion
+    (let (langelem)
+      (if (and (eq syntax 'block-close)
+               (setq langelem (assq 'block-close c-syntactic-context))
+               (progn (goto-char (cdr langelem))
+                      (if (= (following-char) ?@{)
+                          (forward-sexp -1))
+                      (looking-at "\\<do\\>[^_]")))
+          '(before)
+        '(before after)))))
+@end example
+
+@findex c-snug-do-while
+@findex snug-do-while (c-)
+This function simply looks to see if the brace closes a ``do-while''
+clause and if so, returns the list @samp{(before)} indicating
+that a newline should be inserted before the brace, but not after it.
+In all other cases, it returns the list @samp{(before after)} so
+that the brace appears on a line by itself.
+
+@defvar c-syntactic-context
+@vindex syntactic-context (c-)
+During the call to the indentation or brace hanging @var{action}
+function, this variable is bound to the full syntactic analysis list.
+@end defvar
+
+@cindex customization, colon hanging
+@vindex c-hanging-colons-alist
+@vindex hanging-colons-alist (c-)
+Note that for symmetry, colon hanginess should be customizable by
+allowing function symbols as @var{action}s on the
+@code{c-hanging-colons-alist} style variable.  Since no use has actually
+been found for this feature, it isn't currently implemented!
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Hanging Colons, Hanging Semicolons and Commas, Hanging Braces, Custom Auto-newlines
@@ -2492,22 +2650,35 @@ themselves.
 
 Using a mechanism similar to brace hanging (@pxref{Hanging Braces}),
 colons can also be made to hang using the style variable
-@code{c-hanging-colons-alist}.
+@code{c-hanging-colons-alist} - When a colon is typed, @ccmode
+determines its syntactic context, looks this up in the alist
+@code{c-changing-colons-alist} and inserts up to two newlines
+accordingly.  Here, however, If @ccmode fails to find an entry for a
+syntactic symbol in the alist, no newlines are inserted around the
+newly typed colon.
 
 @defopt c-hanging-colons-alist
 @vindex hanging-colons-alist (c-)
 
-The syntactic symbols appropriate for this association list are:
-@code{case-label}, @code{label}, @code{access-label},
-@code{member-init-intro}, and @code{inher-intro}.  Note however that
-for @code{c-hanging-colons-alist}, @var{action}s as functions are not
-supported. See also @ref{Custom Braces and Colons} for details.
+@table @asis
+@item The Key - the syntactic symbol
+The syntactic symbols appropriate as keys in this association list
+are: @code{case-label}, @code{label}, @code{access-label},
+@code{member-init-intro}, and @code{inher-intro}.  @xref{Syntactic
+Symbols}.  Elements with any other value as a key get ignored.
+
+@item The associate value - the ``ACTION'' list
+The @var{action} here is simply a list containing a combination of the
+symbols @code{before} and @code{after}.  Unlike in
+@code{c-hanging-colons-alist}, functions as @var{actions} are not
+supported - there doesn't seem to be any need for them.
+@end table
+@end defopt
 
 In C++, double-colons are used as a scope operator but because these
 colons always appear right next to each other, newlines before and after
 them are controlled by a different mechanism, called @dfn{clean-ups} in
 @ccmode{}.  @xref{Clean-ups}, for details.
-@end defopt
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2516,13 +2687,70 @@ them are controlled by a different mechanism, called @dfn{clean-ups} in
 @section Hanging Semicolons and Commas
 @cindex hanging semicolons
 @cindex hanging commas
+@cindex customization, semicolon newlines
+@cindex customization, comma newlines
+@c FIXME!!! Do I want all of these concept index entries??? 2004/10/15
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Semicolons and commas are also electric in @ccmode{}, but since these
-characters do not correspond directly to syntactic symbols, a
-different mechanism is used to determine whether newlines should be
-automatically inserted after these characters.  @xref{Custom Semis and
-Commas}, for details.
+@defopt c-hanging-semi&comma-criteria
+@vindex hanging-semi&comma-criteria (c-)
+This style variable takes a list of functions that get called when a
+semicolon or comma is inserted.  The functions are called in order
+without arguments.  They don't insert newlines themselves, rather they
+direct @ccmode{} whether or not to do so.  They are expected to return
+one of the following values:
+
+@table @code
+@item t
+A newline is inserted after the @samp{;} or @samp{,}, and no more
+functions from the list are called.
+@item stop
+No more functions from the list are called, and no newline is
+inserted.
+@item nil
+No determination is made, and the next function in the list is called.
+@end table
+
+Note that auto-newlines are never inserted @emph{before} a semicolon
+or comma.  If every function in the list is called without a
+determination being made, then no newline is added. The default value
+for this variable is a list containing a single function which inserts
+newlines only after semicolons which do not appear inside parenthesis
+lists (i.e. those that separate @code{for}-clause statements).
+@end defopt
+
+@defun c-semi&comma-no-newlines-before-nonblanks
+@findex semi&comma-no-newlines-before-nonblanks (c-)
+This is an example of a criteria function, provided by @ccmode{}.  It
+prevents newlines from being inserted after semicolons when there is a
+non-blank following line.  Otherwise, it makes no determination.  To
+use, add this function to the front of the
+@code{c-hanging-semi&comma-criteria} list.
+
+@example
+(defun c-semi&comma-no-newlines-before-nonblanks ()
+  (save-excursion
+    (if (and (eq last-command-char ?\;)
+             (zerop (forward-line 1))
+             (not (looking-at "^[ \t]*$")))
+        'stop
+      nil)))
+@end example
+@end defun
+
+@defun c-semi&comma-inside-parenlist
+@findex semi&comma-inside-parenlist (c-)
+@defunx c-semi&comma-no-newlines-for-oneline-inliners
+@findex semi&comma-no-newlines-for-oneline-inliners (c-)
+The function @code{c-semi&comma-inside-parenlist} is what prevents
+newlines from being inserted inside the parenthesis list of @code{for}
+statements.  In addition to
+@code{c-semi&comma-no-newlines-before-nonblanks} described above,
+@ccmode{} also comes with the criteria function
+@code{c-semi&comma-no-newlines-for-oneline-inliners}, which suppresses
+newlines after semicolons inside one-line inline method definitions
+(e.g. in C++ or Java).
+@end defun
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2532,15 +2760,17 @@ Commas}, for details.
 @cindex clean-ups
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@dfn{Clean-ups} are mechanisms complementary to colon and brace hanging.
-On the surface, it would seem that clean-ups overlap the functionality
-provided by the @code{c-hanging-*-alist} variables.  Clean-ups are
-however used to adjust code ``after-the-fact,'' i.e. to adjust the
-whitespace in constructs after they are typed.
+@dfn{Clean-ups} are mechanisms which remove (or exceptionally, add)
+whitespace in specific circumstances and are complementary to colon
+and brace hanging.  On the surface, it would seem that clean-ups
+overlap the functionality provided by the @code{c-hanging-*-alist}
+variables.  Clean-ups, however, are used to adjust code
+``after-the-fact'', i.e. to adjust the whitespace in constructs later
+than when they were typed.
 
-Most of the clean-ups are only applicable to counteract automatically
-inserted newlines, and will therefore only have any effect if the
-auto-newline minor mode is turned on.  Others will work all the time.
+Most of the clean-ups remove automatically inserted newlines, and are
+only active whilst auto-newline minor mode is turned on.  Others will
+work all the time.
 
 @defopt c-cleanup-list
 @vindex cleanup-list (c-)
@@ -5381,167 +5611,10 @@ syntactic analysis model provides just such a framework. This allows
 you to implement custom indentation calculations for situations not
 handled by the mode directly.
 
-@menu
-* Custom Braces and Colons::    
-* Custom Semis and Commas::     
-@end menu
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Braces and Colons, Custom Semis and Commas, Advanced Customizations, Advanced Customizations
-@comment node-name, next, previous, up
-@section Custom Brace and Colon Hanging
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@vindex c-hanging-braces-alist
-@vindex hanging-braces-alist (c-)
-Syntactic symbols aren't the only place where you can customize
-@ccmode{} with the lisp equivalent of callback functions.  Brace
-``hanginess'' can also be determined by custom functions associated with
-syntactic symbols on the @code{c-hanging-braces-alist} style variable.
-Remember that @var{action}'s are typically a list containing some
-combination of the symbols @code{before} and @code{after}
-(@pxref{Hanging Braces}).  However, an @var{action} can also be a
-function which gets called when a brace matching that syntactic symbol
-is entered.
-
-@cindex customization, brace hanging
-These @var{action} functions are called with two arguments: the
-syntactic symbol for the brace, and the buffer position at which the
-brace was inserted.  The @var{action} function is expected to return a
-list containing some combination of @code{before} and @code{after},
-including neither of them (i.e. @code{nil}).  This return value has the
-normal brace hanging semantics.
-
-As an example, @ccmode{} itself uses this feature to dynamically
-determine the hanginess of braces which close ``do-while''
-constructs:
-
-@example
-void do_list( int count, char** atleast_one_string )
-@{
-    int i=0;
-    do @{
-        handle_string( atleast_one_string[i] );
-        i++;
-    @} while( i < count );
-@}
-@end example
-
-@ccmode{} assigns the @code{block-close} syntactic symbol to the
-brace that closes the @code{do} construct, and normally we'd like the
-line that follows a @code{block-close} brace to begin on a separate
-line.  However, with ``do-while'' constructs, we want the
-@code{while} clause to follow the closing brace.  To do this, we
-associate the @code{block-close} symbol with the @var{action} function
-@code{c-snug-do-while}:
-
-@example
-(defun c-snug-do-while (syntax pos)
-  "Dynamically calculate brace hanginess for do-while statements."
-  (save-excursion
-    (let (langelem)
-      (if (and (eq syntax 'block-close)
-               (setq langelem (assq 'block-close c-syntactic-context))
-               (progn (goto-char (cdr langelem))
-                      (if (= (following-char) ?@{)
-                          (forward-sexp -1))
-                      (looking-at "\\<do\\>[^_]")))
-          '(before)
-        '(before after)))))
-@end example
-
-@findex c-snug-do-while
-@findex snug-do-while (c-)
-This function simply looks to see if the brace closes a ``do-while''
-clause and if so, returns the list @samp{(before)} indicating
-that a newline should be inserted before the brace, but not after it.
-In all other cases, it returns the list @samp{(before after)} so
-that the brace appears on a line by itself.
-
-@defvar c-syntactic-context
-@vindex syntactic-context (c-)
-During the call to the indentation or brace hanging @var{action}
-function, this variable is bound to the full syntactic analysis list.
-@end defvar
-
-@cindex customization, colon hanging
-@vindex c-hanging-colons-alist
-@vindex hanging-colons-alist (c-)
-Note that for symmetry, colon hanginess should be customizable by
-allowing function symbols as @var{action}s on the
-@code{c-hanging-colons-alist} style variable.  Since no use has actually
-been found for this feature, it isn't currently implemented!
-
-
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Semis and Commas,  , Custom Braces and Colons, Advanced Customizations
-@comment node-name, next, previous, up
-@section Customizing Semicolons and Commas
-@cindex customization, semicolon newlines
-@cindex customization, comma newlines
-@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-You can also customize the insertion of newlines after semicolons and
-commas when the auto-newline minor mode is enabled (@pxref{Custom
-Auto-newlines}).
-
-@defopt c-hanging-semi&comma-criteria
-@vindex hanging-semi&comma-criteria (c-)
-This style variable takes a list of hooks that get called when a
-semicolon or comma is inserted.  The hooks are called in order without
-arguments, and are expected to return one of the following values:
-
-@table @code
-@item t
-A newline is inserted, and no more functions from the list are called.
-@item stop
-No more functions from the list are called, but no newline is
-inserted.
-@item nil
-No determination is made, and the next function in the list is called.
-@end table
-
-If every function in the list is called without a determination being
-made, then no newline is added. The default value for this variable is a
-list containing a single function which inserts newlines only after
-semicolons which do not appear inside parenthesis lists (i.e. those
-that separate @code{for}-clause statements).
-@end defopt
-
-@defun c-semi&comma-no-newlines-before-nonblanks
-@findex semi&comma-no-newlines-before-nonblanks (c-)
-This is an example of a criteria function, provided by @ccmode{}.  It
-prevents newlines from being inserted after semicolons when there is a
-non-blank following line.  Otherwise, it makes no determination.  To
-use, add this function to the front of the
-@code{c-hanging-semi&comma-criteria} list.
-
-@example
-(defun c-semi&comma-no-newlines-before-nonblanks ()
-  (save-excursion
-    (if (and (eq last-command-char ?\;)
-             (zerop (forward-line 1))
-             (not (looking-at "^[ \t]*$")))
-        'stop
-      nil)))
-@end example
-@end defun
-
-@defun c-semi&comma-inside-parenlist
-@findex semi&comma-inside-parenlist (c-)
-@defunx c-semi&comma-no-newlines-for-oneline-inliners
-@findex semi&comma-no-newlines-for-oneline-inliners (c-)
-The function @code{c-semi&comma-inside-parenlist} is what prevents
-newlines from being inserted inside the parenthesis list of @code{for}
-statements.  In addition to
-@code{c-semi&comma-no-newlines-before-nonblanks} described above,
-@ccmode{} also comes with the criteria function
-@code{c-semi&comma-no-newlines-for-oneline-inliners}, which suppresses
-newlines after semicolons inside one-line inline method definitions
-(e.g. in C++ or Java).
-@end defun
-
-
+FIXME!!! The above blurb may still be wanted somewhere, but not really
+here, now that the last of the ``advanced'' menu items has reverted to
+its logical position.  2004/10/15.
+        
 @c @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @c @node    Syntactic Symbols, Line-Up Functions, Customizing Indentation, Top
 @c @comment node-name, next, previous, up
@@ -5694,7 +5767,7 @@ function.  @xref{Hooks}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The general appearance of font-locking in AWK mode is much like in any
-other programming mode.  @xref{Faces For Font Lock,,,elisp}.
+other programming mode.  @xref{Faces For Font Lock,,,@lispref{}}.
 
 The following faces are, however, used in a non-standard fashion in
 AWK mode:
@@ -5784,7 +5857,7 @@ there.
 Move point back to the beginning or forward to the end of the current
 AWK defun.  These functions can take prefix-arguments, their
 functionality being entirely equivalent to @code{beginning-of-defun}
-and @code{end-of-defun}.  @xref{Moving by Defuns,,,emacs}.
+and @code{end-of-defun}.  @xref{Moving by Defuns,,,@emacsman{}}.
 
 @item @kbd{C-M-h} @code{c-mark-function}
 This works fine with AWK defuns.  @xref{Indentation Commands}.
@@ -6047,8 +6120,8 @@ indentation to go haywire.  What gives?}
 It's due to the ad-hoc rule in (X)Emacs that such open parens always
 start defuns (which translates to functions, classes, namespaces or any
 other top-level block constructs in the @ccmode{} languages).
-@xref{Left Margin Paren,,, emacs, The Emacs Editor}, for details
-(@xref{Defuns,,, emacs, The Emacs Editor}, in the Emacs 20 manual).
+@xref{Left Margin Paren,,, @emacsman{}, The Emacs Editor}, for details
+(@xref{Defuns,,, @emacsman{}, The Emacs Editor}, in the Emacs 20 manual).
 
 This heuristic is built into the core syntax analysis routines in
 (X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs 21.4
