@@ -1322,10 +1322,15 @@ this variable, please make sure it still matches the comment starter
 (i.e. @code{//}) of line comments @emph{and} the line prefix inside
 block comments.
 
+@findex c-setup-paragraph-variables
+@findex setup-paragraph-variables (c-)
 Also note that since @ccmode{} uses the value of
-@code{c-comment-prefix-regexp} to set up several other variables at
-mode initialization, you need to reinitialize the language mode if you
-change it inside a @ccmode{} buffer.
+@code{c-comment-prefix-regexp} to set up several other variables at mode
+initialization, there won't have any effect if you change it inside a
+@ccmode{} buffer.  You need to call the command
+@code{c-setup-paragraph-variables} to update those other variables with
+the new value.  That's also the case if you modify this variable in a
+mode hook, since @ccmode{} sets up all variables before calling them.
 @end defopt
 
 @findex auto-fill-mode
