@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.72 $
-;; Last Modified:   $Date: 1994-08-31 21:43:41 $
+;; Version:         $Revision: 4.73 $
+;; Last Modified:   $Date: 1994-08-31 21:51:01 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-31 21:43:41 $|$Revision: 4.72 $|
+;; |$Date: 1994-08-31 21:51:01 $|$Revision: 4.73 $|
 
 ;;; Code:
 
@@ -698,7 +698,7 @@ supported list, along with the values for this variable:
   (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
   (define-key c-mode-map "\C-c\C-v"  'c-version)
   ;; FSF Emacs 19 defines menus in the mode map
-  (if (not (fboundp 'set-keymap-parent))
+  (if (not (fboundp 'add-menu))
       (progn
 	(define-key c-mode-map [menu-bar] (make-sparse-keymap))
 
@@ -956,7 +956,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.72 $
+cc-mode Revision: $Revision: 4.73 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -995,7 +995,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.72 $
+cc-mode Revision: $Revision: 4.73 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1032,7 +1032,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.72 $
+cc-mode Revision: $Revision: 4.73 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -4087,7 +4087,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.72 $"
+(defconst c-version "$Revision: 4.73 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
