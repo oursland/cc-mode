@@ -2714,7 +2714,8 @@ gcc C extension of this is recognized.  It's also used for the special
 functions that takes a statement block as an argument in Pike.
 @item
 @code{inexpr-class} --- a class definition inside an expression.  This
-is used for anonymous classes in Java.
+is used for anonymous classes in Java.  It's also used for anonymous
+array initializers in Java.
 @end itemize
 
 @cindex -open syntactic symbols
