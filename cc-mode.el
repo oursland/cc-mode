@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.176 $
-;; Last Modified:   $Date: 1995-03-20 23:27:56 $
+;; Version:         $Revision: 4.177 $
+;; Last Modified:   $Date: 1995-03-20 23:58:32 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-20 23:27:56 $|$Revision: 4.176 $|
+;; |$Date: 1995-03-20 23:58:32 $|$Revision: 4.177 $|
 
 ;;; Code:
 
@@ -3977,15 +3977,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char containing-sexp)
 	  (forward-char 1)
 	  (c-forward-syntactic-ws indent-point)
-	  ;; we want to ignore non-case labels when skipping forward
-	  (while (and (looking-at c-label-key)
-		      (goto-char (match-end 0)))
-	    (c-forward-syntactic-ws indent-point))
 	  ;; now skip forward past any case/default clauses we might find.
 	  (while (or (c-skip-case-statement-forward fullstate indent-point)
 		     (and (looking-at c-switch-label-key)
 			  (not inswitch-p)))
 	    (setq inswitch-p t))
+	  ;; we want to ignore non-case labels when skipping forward
+	  (while (and (looking-at c-label-key)
+		      (goto-char (match-end 0)))
+	    (c-forward-syntactic-ws indent-point))
 	  (cond
 	   ;; CASE 15A: we are inside a case/default clause inside a
 	   ;; switch statement.  find out if we are at the statement
@@ -4510,7 +4510,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.176 $"
+(defconst c-version "$Revision: 4.177 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -4590,29 +4590,30 @@ it trailing backslashes are removed."
 ;; dynamically append the default value of most variables. This is
 ;; crucial because future c-set-style calls will always reset the
 ;; variables first to the "CC-MODE" style before instituting the new
-;; style.
-(c-add-style "CC-MODE"
-	     (mapcar
-	      (function
-	       (lambda (var)
-		 (cons var (symbol-value var))))
-	      '(c-inhibit-startup-warnings-p
-		c-strict-syntax-p
-		c-echo-syntactic-information-p
-		c-basic-offset
-		c-offsets-alist
-		c-tab-always-indent
-		c-comment-only-line-offset
-		c-block-comments-indent-p
-		c-cleanup-list
-		c-hanging-braces-alist
-		c-hanging-colons-alist
-		c-backslash-column
-		c-electric-pound-behavior)))
+;; style.  Only do this once!
+(if (featurep 'cc-mode) nil
+  (c-add-style "CC-MODE"
+	       (mapcar
+		(function
+		 (lambda (var)
+		   (cons var (symbol-value var))))
+		'(c-inhibit-startup-warnings-p
+		  c-strict-syntax-p
+		  c-echo-syntactic-information-p
+		  c-basic-offset
+		  c-offsets-alist
+		  c-tab-always-indent
+		  c-comment-only-line-offset
+		  c-block-comments-indent-p
+		  c-cleanup-list
+		  c-hanging-braces-alist
+		  c-hanging-colons-alist
+		  c-backslash-column
+		  c-electric-pound-behavior)))
 
-;; the default style is now GNU.  This can be overridden in
-;; c-mode-common-hook or {c,c++,objc}-mode-hook.
-(c-set-style "GNU")
+  ;; the default style is now GNU.  This can be overridden in
+  ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
+  (c-set-style "GNU"))
 
 ;; style variables
 (make-variable-buffer-local 'c-offsets-alist)
