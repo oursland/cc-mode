@@ -934,11 +934,15 @@
 		   ;; should be exactly 3 sexps before the open brace
 		   ;; then.
 		   ((and c-inexpr-class-key
-			 (looking-at c-inexpr-class-key)
-			 (eq (if (= (c-forward-token-1 3 t) 0) (point))
-			     search-end))
-		    ;; We're done.  Just trap this case.
-		    nil)
+			 (looking-at c-inexpr-class-key))
+		    (if (and (= (c-forward-token-1 2 t) 0)
+			     (eq (char-after) ?\()
+			     (eq (if (= (c-forward-token-1 1 t) 0) (point))
+				 search-end))
+			;; We're done.  Just trap this case in the cond.
+			nil
+		      ;; False alarm; all conditions aren't satisfied.
+		      (setq foundp nil)))
 		   ;; Its impossible to define a regexp for this, and
 		   ;; nearly so to do it programmatically.
 		   ;;
@@ -986,38 +990,32 @@
 	    (point)))))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
-     (let ((tokenlist "[={;]")
-	   bufpos okp)
-       (if c-lambda-key
-	   (setq tokenlist (concat tokenlist "\\|" c-lambda-key)))
-       (if c-inexpr-block-key
-	   (setq tokenlist (concat tokenlist "\\|" c-inexpr-block-key)))
-       (if c-inexpr-class-key
-	   (setq tokenlist (concat tokenlist "\\|" c-inexpr-class-key)))
+     (let (bufpos okp)
        (while (and (not bufpos)
 		   containing-sexp)
 	 (if (consp containing-sexp)
 	     (setq containing-sexp (car brace-state)
 		   brace-state (cdr brace-state))
-	   ;; see if the open brace is preceded by a = in this statement
 	   (goto-char containing-sexp)
-	   (setq okp t)
-	   (while (and (setq okp (= (c-backward-token-1 1 t) 0))
-		       (not (looking-at tokenlist))))
-	   (if (not (and okp
-			 (eq (char-after) ?=)
-			 (eq (char-after containing-sexp) ?{)))
-	       (if (and okp (not (looking-at "[{;]")))
-		   ;; We're in a lambda or statement argument.  Do not
-		   ;; check nesting.
-		   (setq containing-sexp nil)
+	   (if (c-looking-at-inexpr-block)
+	       ;; We're in an in-expression block of some kind.  Do
+	       ;; not check nesting.
+	       (setq containing-sexp nil)
+	     ;; see if the open brace is preceded by a = in this statement
+	     (setq okp t)
+	     (while (and (setq okp (= (c-backward-token-1 1 t) 0))
+			 (not (memq (char-after) '(?= ?{ ?\;)))))
+	     (if (not (and okp
+			   (eq (char-after) ?=)
+			   (eq (char-after containing-sexp) ?{)))
 		 ;; lets see if we're nested. find the most nested
 		 ;; containing brace
 		 (setq containing-sexp (car brace-state)
-		       brace-state (cdr brace-state)))
-	     ;; we've hit the beginning of the aggregate list
-	     (c-beginning-of-statement-1 (c-most-enclosing-brace brace-state))
-	     (setq bufpos (point)))
+		       brace-state (cdr brace-state))
+	       ;; we've hit the beginning of the aggregate list
+	       (c-beginning-of-statement-1
+		(c-most-enclosing-brace brace-state))
+	       (setq bufpos (point))))
 	   ))
        bufpos))
    ))
@@ -1069,19 +1067,25 @@
     (or lim (setq lim (point-min)))
     (c-backward-syntactic-ws)
     (if (and (> (point) lim) (eq (char-before) ?\())
-	(cons 'inexpr-block (point))
-      (while (and (= (c-backward-token-1 1 t lim) 0)
-		  (looking-at "[({[]\\|\\w\\|\\s_")))
-      (if (>= (point) lim)
-	  (cond ((and c-inexpr-class-key
-		      (looking-at c-inexpr-class-key))
-		 (cons 'inexpr-class (point)))
-		((and c-inexpr-block-key
-		      (looking-at c-inexpr-block-key))
-		 (cons 'inexpr-statement (point)))
-		((and c-lambda-key
-		      (looking-at c-lambda-key))
-		 (cons 'inlambda (point))))))))
+	(cons 'inexpr-statement (point))
+      (let ((count 3) res)
+	(while (and (not res)
+		    (> count 0)
+		    (= (c-backward-token-1 1 t lim) 0)
+		    (>= (point) lim)
+		    (looking-at "(\\|\\w\\|\\s_"))
+	  (setq res
+		(cond ((and c-inexpr-class-key
+			    (looking-at c-inexpr-class-key))
+		       (cons 'inexpr-class (point)))
+		      ((and c-inexpr-block-key
+			    (looking-at c-inexpr-block-key))
+		       (cons 'inexpr-statement (point)))
+		      ((and c-lambda-key
+			    (looking-at c-lambda-key))
+		       (cons 'inlambda (point))))
+		count (1- count)))
+	res))))
 
 (defun c-looking-at-inexpr-block-backward (&optional lim)
   ;; Returns non-nil if we're looking at the end of an in-expression
@@ -1630,7 +1634,9 @@
 	   ))				; end CASE 5
 	 ;; CASE 6: In-expression statement.
 	 ((save-excursion
-	    (if (c-safe (progn (forward-sexp -1) t))
+	    (if (c-safe (forward-sexp -1)
+			(setq placeholder (point))
+			t)
 		(cond
 		 ;; CASE 6A: Immediately after the lambda keyword.
 		 ((and c-lambda-key
@@ -1653,6 +1659,7 @@
 		 ;; CASE 6D: At the beginning of an anonymous class.
 		 ((and (c-safe (progn (forward-sexp -1) t))
 		       (eq char-after-ip ?{)
+		       (eq (char-after placeholder) ?\()
 		       c-inexpr-class-key
 		       (looking-at c-inexpr-class-key))
 		  (c-add-syntax 'class-open (c-point 'boi))
