@@ -954,11 +954,12 @@ tools (e.g. Javadoc).")
 	  ;; will later go back using `continue-pos' to fix macros
 	  ;; inside the syntactic ws.
 	  (when match
-	    (goto-char syntactic-pos)
-	    (c-forward-syntactic-ws)
-	    (and continue-pos
-		 (< continue-pos (point))
-		 (setq token-pos (point))))
+	    (save-excursion
+	      (goto-char syntactic-pos)
+	      (c-forward-syntactic-ws)
+	      (and continue-pos
+		   (< continue-pos (point))
+		   (setq token-pos (point)))))
 
 	  (setq c-fl-decl-match-pos (and match-pos
 					 (< match-pos start-pos)
@@ -1457,7 +1458,7 @@ tools (e.g. Javadoc).")
 	       ;; No symbol is a keyword after "->" in Pike.
 	       `(,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
 			  "\\<\\(" re "\\)\\>")
-		 3 font-lock-keyword-face)
+		 3 font-lock-type-face)
 	     `(,(concat "\\<\\(" re "\\)\\>")
 	       1 'font-lock-type-face)))
 
