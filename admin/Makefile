@@ -1,5 +1,7 @@
 include /projects/python/python.org/ftp/pub/www.python.org/scripts/make.rules
 ROOT_OFFSET =	emacs/cc-mode
+HT2HTML = $(SCRIPTDIR)/ht2html/ht2html.py
+HTFLAGS = -f -r ../.. -s PDOGenerator
 
 SUBDIRS = 
 
