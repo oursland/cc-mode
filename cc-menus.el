@@ -150,18 +150,21 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 (defvar cc-imenu-java-generic-expression
   `((nil
      ,(concat
-       "^\\([ \t]\\)*"
-       "\\([.A-Za-z0-9_-]+[ \t]+\\)?"	      ; type specs; there can be
-       "\\([.A-Za-z0-9_-]+[ \t]+\\)?"	      ; more than 3 tokens, right?
-       "\\([.A-Za-z0-9_-]+[ \t]*[[]?[]]?\\)"
-       "\\([ \t]\\)"
-       "\\([A-Za-z0-9_-]+\\)"		      ; the string we want to get
-       "\\([ \t]*\\)+("
-       "[][a-zA-Z,_1-9\n \t]*"		      ; arguments
-       ")[ \t]*"
-;       "[^;(]"
-       "[,a-zA-Z_1-9\n \t]*{"               
-       ) 6))
+       "[A-Za-z][\]\[.A-Za-z0-9_]+[ \t\n]+" ; type spec
+       "\\([A-Za-z][A-Za-z0-9_]+\\)"	; method name
+       "[ \t\n\r]*"
+       ;; An argument list that is either empty or contains at least
+       ;; two identifiers with only space between them.  This avoids
+       ;; matching e.g. "else if (foo)".
+       (concat "([ \t\n\r]*"
+	       "\\([\]\[.,A-Za-z0-9_]+"
+	       "[ \t\n\r]+"
+	       "[\]\[.,A-Za-z0-9_]"
+	       "[^\)]*"
+	       "\\)?)")
+       "[.,A-Za-z0-9_ \t\n\r]*"
+       "{"
+       ) 1))
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
 
 ;;                        *Warning for cc-mode developers* 
