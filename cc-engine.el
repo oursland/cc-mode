@@ -2995,7 +2995,7 @@ This function does not do any hidden buffer changes."
 					(c-simple-skip-symbol-backward)
 					(point))
 				      (point)))
-		   'found)
+		   (setq res (or res c-promote-possible-types 'found)))
 	       (setq id-start pos
 		     id-end (point)
 		     res (if (c-check-type id-start id-end)
@@ -3044,7 +3044,8 @@ This function does not do any hidden buffer changes."
 	    (setq pos (point))
 	    (c-forward-syntactic-ws)
 	    (if (and (looking-at c-opt-type-concat-key)
-		     (progn
+		     (let ((c-promote-possible-types (or c-promote-possible-types
+							 (eq res t))))
 		       (goto-char (match-end 1))
 		       (c-forward-syntactic-ws)
 		       (setq res2 (c-forward-type))))
