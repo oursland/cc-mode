@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.116 $
-;; Last Modified:   $Date: 1993-12-09 19:02:25 $
+;; Version:         $Revision: 3.117 $
+;; Last Modified:   $Date: 1993-12-13 15:29:26 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-09 19:02:25 $|$Revision: 3.116 $|
+;; |$Date: 1993-12-13 15:29:26 $|$Revision: 3.117 $|
 
 ;;; Code:
 
@@ -623,7 +623,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.116 $
+CC-MODE REVISION: $Revision: 3.117 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -656,7 +656,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.116 $
+CC-MODE REVISION: $Revision: 3.117 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2044,36 +2044,34 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; if a classkey was found, return a cons cell containing the point
   ;; of the class's opening brace in the car, and the class's
   ;; declaration start in the cdr, otherwise return nil.
-  (and (eq major-mode 'c++-mode)
-       (condition-case nil
-	   (save-excursion
-	     (let ((search-end (or search-end (point)))
-		   (lim (save-excursion
-			  (beginning-of-defun)
-			  (c-point 'bod)))
-		   donep foundp)
-	       (goto-char search-end)
-	       (while (not donep)
-		 (setq foundp (re-search-backward c-class-key lim t))
-		 (save-excursion
-		   (let* ((cop (c-safe (scan-lists foundp 1 -1)))
-			  (state (c-safe (parse-partial-sexp cop search-end)))
-			  )
-		     (if (and foundp
-			      cop
-			      (not (c-in-literal))
-			      (<= cop search-end)
-			      (<= 0 (nth 6 state))
-			      (<= 0 (nth 0 state)))
-			 (progn
-			   (goto-char foundp)
-			   (setq donep t
-				 foundp (cons (1- cop) (c-point 'boi)))
-			   )
-		       (setq donep (not foundp))) ;end if
-		     )))		;end while
-	       foundp))			;end s-e
-	 (error nil))))
+  (condition-case nil
+      (save-excursion
+	(let ((search-end (or search-end (point)))
+	      (lim (save-excursion
+		     (beginning-of-defun)
+		     (c-point 'bod)))
+	      donep foundp cop state)
+	  (goto-char search-end)
+	  (while (not donep)
+	    (setq foundp (re-search-backward c-class-key lim t))
+	    (save-excursion
+	      (if (and
+		   foundp
+		   (not (c-in-literal))
+		   (setq cop (c-safe (scan-lists foundp 1 -1)))
+		   (setq state (c-safe (parse-partial-sexp cop search-end)))
+		   (<= cop search-end)
+		   (<= 0 (nth 6 state))
+		   (<= 0 (nth 0 state)))
+		  (progn
+		    (goto-char foundp)
+		    (setq donep t
+			  foundp (cons (1- cop) (c-point 'boi)))
+		    )
+		(setq donep (not foundp))) ;end if
+	      ))			;end while
+	  foundp))			;end s-e
+    (error nil)))
 
 
 ;; defuns for calculating the semantic state and indenting a single
@@ -2097,7 +2095,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  )				;end-let
       ;; narrow out the enclosing class
       (save-restriction
-	(if (setq inclass-p (c-search-uplist-for-classkey))
+	(if (and (eq major-mode 'c++-mode)
+		 (setq inclass-p (c-search-uplist-for-classkey)))
 	    (progn
 	      (narrow-to-region
 	       (progn
@@ -2741,7 +2740,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.116 $"
+(defconst c-version "$Revision: 3.117 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
