@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.261 $
-;; Last Modified:   $Date: 1996-01-12 02:07:54 $
+;; Version:         $Revision: 4.262 $
+;; Last Modified:   $Date: 1996-01-15 23:56:06 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-12 02:07:54 $|$Revision: 4.261 $|
+;; |$Date: 1996-01-15 23:56:06 $|$Revision: 4.262 $|
 
 ;;; Code:
 
@@ -2076,7 +2076,10 @@ for details of setting up styles."
 			   (prompt (format "Which %s indentation style? "
 					   mode-name)))
 		       (completing-read prompt c-style-alist nil t))))
-  (let ((vars (cdr (assoc (downcase stylename) c-style-alist)))
+  (let ((vars (cdr (or (assoc (downcase stylename) c-style-alist)
+		       ;; backwards compatibility
+		       (assoc (upcase stylename) c-style-alist)
+		       )))
 	(default (cdr (assoc "cc-mode" c-style-alist))))
     (or vars (error "Invalid indentation style `%s'" stylename))
     (or default (error "No `cc-mode' style found!"))
@@ -4633,7 +4636,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.261 $"
+(defconst c-version "$Revision: 4.262 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
