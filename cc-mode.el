@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-15 21:07:29 $
-;; Version:         $Revision: 2.110 $
+;; Last Modified:   $Date: 1992-06-17 21:46:57 $
+;; Version:         $Revision: 2.111 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-15 21:07:29 $|$Revision: 2.110 $|
+;; |$Date: 1992-06-17 21:46:57 $|$Revision: 2.111 $|
 
 
 ;; ======================================================================
@@ -69,6 +69,7 @@
   (define-key c++-mode-map "\C-c\C-\\" 'c++-macroize-region)
   (define-key c++-mode-map "\C-c\C-c"  'c++-comment-region)
   (define-key c++-mode-map "\C-c\C-u"  'c++-uncomment-region)
+  (define-key c++-mode-map "\C-c\C-x"  'c++-match-paren)
   (define-key c++-mode-map "\e\C-a"    'c++-beginning-of-defun)
   (define-key c++-mode-map "\e\C-e"    'c++-end-of-defun)
   (define-key c++-mode-map "\e\C-x"    'c++-indent-defun)
@@ -212,7 +213,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.110 $
+  "Major mode for editing C++ code.  $Revision: 2.111 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1015,6 +1016,18 @@ characters to escape are defined in the variable c++-untame-characters."
 	    (insert "\\"))
 	(if (not (eobp))
 	    (forward-char 1))))))
+
+;; taken from match-paren.el. Author: unknown
+(defun c++-match-paren ()
+  "Jumps to the paren matching the one under point, if there is one."
+  (interactive)
+  (cond ((looking-at "[\(\[{]")
+	 (forward-sexp 1)
+	 (backward-char))
+	((looking-at "[])}]")
+	 (forward-char)
+	 (backward-sexp 1))
+	(t (message "Could not find matching paren."))))
 
 
 ;; ======================================================================
@@ -1826,7 +1839,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.110 $"
+(defconst c++-version "$Revision: 2.111 $"
   "c++-mode version number.")
 
 (defun c++-version ()
