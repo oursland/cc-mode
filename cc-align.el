@@ -372,50 +372,30 @@
 	    (+ curcol (- prev-col-column (current-column)))
 	  c-basic-offset)))))
 
-(defun c-lineup-inexpr-stat (langelem)
-  ;; This function lines up the arguments to lambdas and functions
-  ;; that take a statement as argument by adding indentation to the
-  ;; column of the beginning of the lambda or function name.  It also
-  ;; lines up statements inside expressions to the column of the
-  ;; opening brace.
+(defun c-lineup-inexpr-block (langelem)
+  ;; This function lines up the block for the various constructs that
+  ;; uses a block inside an expression.  For constructs matching
+  ;; c-lambda-key and c-inexpr-block-key, indentation to the column of
+  ;; the beginning of the match is added.  For standalone statement
+  ;; blocks, indentation to the column of the opening brace is added.
   (save-excursion
-    (beginning-of-line)
-    (if (or (c-safe
-	     ;; Test one and two sexps back.
-	     (forward-sexp -1)
-	     (or (and c-statarg-key (looking-at c-statarg-key))
-		 (and c-lambda-key
-		      (or (looking-at c-lambda-key)
-			  (and (memq (char-after) '(?\( ?\[))
-			       (progn
-				 (forward-sexp -1)
-				 (looking-at c-lambda-key)))))))
-	    (c-safe
-	     ;; Test zero, one and two sexps back from the surrounding sexp.
-	     (backward-up-list 1)
-	     (cond
-	      ((save-excursion
-		 (beginning-of-line)
-		 (looking-at "[ \t]*{"))
-	       (beginning-of-line)
-	       (skip-chars-forward " \t"))
-	      ((eq (char-after) ?{)
-	       (if (c-safe (progn (forward-sexp -1) t))
-		   (or (and c-statarg-key (looking-at c-statarg-key))
-		       (and c-lambda-key
-			    (memq (char-after) '(?\( ?\[))
-			    (progn
-			      (forward-sexp -1)
-			      (looking-at c-lambda-key))))
-		 ;; Check for an immediately preceding `(', in which
-		 ;; case we have a statement inside an expression.
-		 (c-backward-syntactic-ws)
-		 (eq (char-before) ?\())))))
+    (back-to-indentation)
+    (let ((res (or (c-looking-at-inexpr-block)
+		   (if (c-safe (backward-up-list 1)
+			       (eq (char-after) ?{)
+			       ;; Do not add anything if we're looking
+			       ;; at the block open brace and it's at
+			       ;; boi, because then this pos will be
+			       ;; the anchor already.
+			       (/= (point) (c-point 'boi)))
+		       (c-looking-at-inexpr-block)))))
+      (if (not res)
+	  0
+	(goto-char (cdr res))
 	(- (current-column)
-	   (save-excursion
+	   (progn
 	     (back-to-indentation)
-	     (current-column)))
-      0)))
+	     (current-column)))))))
 
 (defun c-lineup-dont-change (langelem)
   ;; Do not change the indentation of the current line
