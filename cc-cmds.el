@@ -2156,12 +2156,12 @@ command to conveniently insert and align the necessary backslashes."
 		  '("" . 0))))))
     ))
 
-(defun c-mask-comment (fun &rest args)
+(defun c-mask-comment (dont-ignore-ender fun &rest args)
   ;; Calls FUN with ARGS ar arguments.  If point is inside a comment,
   ;; the comment starter and ender are masked and the buffer is
   ;; narrowed to make it look like a normal paragraph during the call.
   (let (fill
-	;; beg and end limits the region to be filled.  end is a marker.
+	;; beg and end limits the region to narrow.  end is a marker.
 	beg end
 	;; tmp-pre and tmp-post mark strings that are temporarily
 	;; inserted at the start and end of the region.  tmp-pre is a
@@ -2208,24 +2208,26 @@ command to conveniently insert and align the necessary backslashes."
 	  (cond
 	   ((eq c-lit-type 'c++)	; Line comment.
 	    (save-excursion
-	      ;; Fill to the comment or paragraph end, whichever
+	      ;; Limit to the comment or paragraph end, whichever
 	      ;; comes first.
 	      (set-marker end (min end (cdr c-lit-limits)))
 	      (when (<= beg (car c-lit-limits))
-		;; The region to be filled includes the comment
-		;; starter, so we must check it.
+		;; The region includes the comment starter, so we must
+		;; check it.
 		(goto-char (car c-lit-limits))
 		(back-to-indentation)
 		(if (eq (point) (car c-lit-limits))
-		    ;; Include the first line in the fill.
+		    ;; Include the first line in the region.
 		    (setq beg (c-point 'bol))
 		  ;; The first line contains code before the
 		  ;; comment.  We must fake a line that doesn't.
 		  (setq tmp-pre t)))
 	      ))
 	   ((eq c-lit-type 'c)		; Block comment.
-	    (when (>= end (cdr c-lit-limits))
-	      ;; The region to be filled includes the comment ender.
+	    (when (and dont-ignore-ender
+		       (>= end (cdr c-lit-limits)))
+	      ;; The region includes the comment ender which we might
+	      ;; want to keep together with the last word.
 	      (unless (save-excursion
 			(goto-char (cdr c-lit-limits))
 			(beginning-of-line)
@@ -2237,8 +2239,8 @@ command to conveniently insert and align the necessary backslashes."
 			     (set-marker end (point))))
 		;; The comment ender should hang.  Replace all cruft
 		;; between it and the last word with one or two 'x'
-		;; and include it in the fill.  We'll change them back
-		;; spaces afterwards.
+		;; and include it in the region.  We'll change them
+		;; back spaces afterwards.
 		(let* ((ender-start (save-excursion
 				      (goto-char (cdr c-lit-limits))
 				      (skip-syntax-backward "^w ")
@@ -2270,7 +2272,10 @@ command to conveniently insert and align the necessary backslashes."
 			  ;; Keep one or two spaces between the text and
 			  ;; the ender, depending on how many there are now.
 			  (unless spaces (setq spaces (- ender-start (point))))
-			  (setq spaces (max (min spaces 2) 1))
+			  (setq spaces
+				(max (min spaces
+					  (if sentence-end-double-space 2 1))
+				     1))
 			  ;; Insert the filler first to keep marks right.
 			  (insert (make-string spaces ?x))
 			  (delete-region (point) (+ ender-start spaces))
@@ -2286,11 +2291,11 @@ command to conveniently insert and align the necessary backslashes."
 		      (goto-char point-rel))
 		  )))
 	    (when (<= beg (car c-lit-limits))
-	      ;; The region to be filled includes the comment starter.
+	      ;; The region includes the comment starter.
 	      (save-excursion
 		(goto-char (car c-lit-limits))
 		(if (looking-at (concat "\\(" comment-start-skip "\\)$"))
-		    ;; Begin filling with the next line.
+		    ;; Begin with the next line.
 		    (setq beg (c-point 'bonl))
 		  ;; Fake the fill prefix in the first line.
 		  (setq tmp-pre t)))))
@@ -2348,39 +2353,46 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 		      (insert ?\n (car fill))
 		      (insert (make-string (- col (current-column)) ?x)))
 		  (setcdr tmp-pre (point))))))
-	  (when beg
-	    (let ((fill-prefix
-		   (or fill-prefix
-		       ;; Kludge: If the function that adapts the fill prefix
-		       ;; doesn't produce the required comment starter for line
-		       ;; comments, then force it by setting fill-prefix.
-		       (when (and (eq c-lit-type 'c++)
-				  ;; Kludge the kludge: filladapt-mode doesn't
-				  ;; have this problem, but it doesn't override
-				  ;; fill-context-prefix currently (version
-				  ;; 2.12).
-				  (not (and (boundp 'filladapt-mode)
-					    filladapt-mode))
-				  (not (string-match
-					"\\`[ \t]*//"
-					(or (fill-context-prefix beg end)
-					    ""))))
-			 (car (or fill (c-guess-fill-prefix
-					c-lit-limits c-lit-type))))))
-		  (point-rel (cond ((< here beg) (- here beg))
-				   ((> here end) (- here end)))))
-	      ;; Preparations finally done!  Now we can call the
-	      ;; real fill function.
-	      (prog1
-		  (save-restriction
-		    (narrow-to-region beg end)
-		    (apply fun args))
-		(if point-rel
-		    ;; Restore point if it was outside the region.
-		    (if (< point-rel 0)
-			(goto-char (+ beg point-rel))
-		      (goto-char (+ end point-rel)))))
-	      )))
+	  (if beg
+	      (let ((fill-prefix
+		     (or fill-prefix
+			 ;; Kludge: If the function that adapts the
+			 ;; fill prefix doesn't produce the required
+			 ;; comment starter for line comments, then
+			 ;; force it by setting fill-prefix.
+			 (when (and (eq c-lit-type 'c++)
+				    ;; Kludge the kludge:
+				    ;; filladapt-mode doesn't have
+				    ;; this problem, but it doesn't
+				    ;; override fill-context-prefix
+				    ;; currently (version 2.12).
+				    (not (and (boundp 'filladapt-mode)
+					      filladapt-mode))
+				    (not (string-match
+					  "\\`[ \t]*//"
+					  (or (fill-context-prefix beg end)
+					      ""))))
+			   (car (or fill (c-guess-fill-prefix
+					  c-lit-limits c-lit-type))))))
+		    ;; Don't remember why I added this, but it doesn't
+		    ;; work correctly since `here' can point anywhere
+		    ;; after the deletes and inserts above.
+		    ;(point-rel (cond ((< here beg) (- here beg))
+		    ;		       ((> here end) (- here end))))
+		    )
+		;; Preparations finally done! Now we can call the
+		;; actual function.
+		(prog1
+		    (save-restriction
+		      (narrow-to-region beg end)
+		      (apply fun args))
+		  ;(if point-rel
+		  ;    ;; Restore point if it was outside the region.
+		  ;    (if (< point-rel 0)
+		  ;	  (goto-char (+ beg point-rel))
+		  ;	(goto-char (+ end point-rel))))
+		  ))
+	    (apply fun args)))
       (when (consp tmp-pre)
 	(delete-region (car tmp-pre) (cdr tmp-pre)))
       (when tmp-post
@@ -2425,7 +2437,7 @@ Optional prefix ARG means justify paragraph as well."
 	 ;; Avoid infinite recursion.
 	 (if (not (eq fill-paragraph-function 'c-fill-paragraph))
 	     fill-paragraph-function)))
-    (c-mask-comment 'fill-paragraph arg))
+    (c-mask-comment t 'fill-paragraph arg))
   ;; Always return t.  This has the effect that if filling isn't done
   ;; above, it isn't done at all, and it's therefore effectively
   ;; disabled in normal code.
@@ -2442,7 +2454,7 @@ Optional prefix ARG means justify paragraph as well."
 	 ;; also used to detect whether fill-prefix is user set or
 	 ;; generated automatically by do-auto-fill.
 	 fill-prefix))
-    (c-mask-comment 'do-auto-fill)))
+    (c-mask-comment nil 'do-auto-fill)))
 
 (defun c-indent-new-comment-line (&optional soft)
   "Break line at point and indent, continuing comment if within one.
