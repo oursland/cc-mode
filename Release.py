@@ -1,17 +1,38 @@
 #! /usr/bin/env python
 
 """Bump version number and tag for next release.
+
+Usage: %(program)s [-b] [-t] [-h]
+
+Where:
+
+    --bump
+    -b      - bump to the next minor rev number
+
+    --tag
+    -t      - tag all releaseable files with new version number
+
+    --help
+    -h      - this help message
+
 """
 
+import sys
 import os
 import string
 import regex
+import getopt
+
+program = sys.argv[0]
+
+def usage(status):
+    print __doc__ % globals()
+    sys.exit(status)
 
 
-RELEASE = '5.04'
-RELEASE_NAME = 'Release_' + string.translate(RELEASE,
-					     string.maketrans('.', '_'))
-						       
+RELEASE = None
+RELEASE_NAME = ''
+
 version_cre = regex.compile(';*[ \t]+Version:[ \t]+\(5.[0-9]+\)')
 version_format = ';; Version:    %s\n'
 
@@ -46,7 +67,7 @@ FILES = [
      '@center @titlefont{CC Mode %s}\n'),
     ]
 
-def bump_els():
+def tag_release():
     bump = []
     for f, cre, format in FILES:
 	if not cre or not format:
@@ -94,5 +115,128 @@ def bump_els():
 	os.system('co -kv -u ' + f)
 	os.system('rcs -n%s: %s' % (RELEASE_NAME, f))
 
+
+def get_release():
+    global RELEASE, RELEASE_NAME
+    fp = open('VERSION', 'r')
+    version = string.strip(fp.read())
+    fp.close()
+    RELEASE = version
+    RELEASE_NAME = 'Release_' + string.translate(RELEASE,
+						 string.maketrans('.', '_'))
+    print 'This RELEASE     :', RELEASE
+    print 'This RELEASE_NAME:', RELEASE_NAME
+
+
+def new_release():
+    [major_rev, minor_rev] = string.split(RELEASE, '.')
+    fp = open('VERSION', 'w')
+    next_rev = string.atoi(minor_rev) + 1
+    if next_rev < 100:
+	format = '%s.%02d\n'
+    else:
+	format = '%s.%03d\n'
+    fp.write(format % (major_rev, next_rev))
+    fp.close()
+
+
+def pkg_release():
+    dir = 'cc-mode-' + RELEASE
+    os.mkdir(dir)
+    for f, cre, format in FILES:
+	os.system('cp %s %s' % (f, dir))
+    os.system('tar cvf - %s | gzip -c > %s.tar.gz' % (dir, dir))
+    for f, cre, format in FILES:
+	os.unlink(os.path.join(dir, f))
+    os.rmdir(dir)
+
+
+def make_docs():
+    curdir = os.getcwd()
+    dir = os.path.join('..', 'Docs')
+    try:
+	os.chdir('TeX')
+	#
+	# build the DVI file from which much else is derived.  Don't
+	# compress this yet
+	#
+	os.system('texi2dvi cc-mode.texi')
+	os.system('cp cc-mode.dvi ' + dir)
+	#
+	# build the PS files, both forward and reverse, compress them later
+	#
+	os.system('dvips -o %s cc-mode.dvi' %
+		  os.path.join(dir, 'cc-mode.ps'))
+	os.system('dvips -r -o %s cc-mode.dvi' %
+		  os.path.join(dir, 'cc-mode.rev.ps'))
+	#
+	# make the info files
+	#
+	os.system('makeinfo cc-mode.texi')
+	os.system('tar cvf - cc-mode.info* | gzip -c > %s' %
+		  os.path.join(dir, 'cc-mode.info.tar.gz'))
+	#
+	# make the html files
+	#
+	os.system('makeinfo -E tmpfile cc-mode.texi')
+	os.system('python texi2html.py tmpfile cc-mode.html')
+	os.unlink('tmpfile')
+	os.system('tar cvf - cc-mode.html | gzip -c > %s' %
+		  os.path.join(dir, 'cc-mode.html.tar.gz'))
+	#
+	# now go back and compress those that weren't compressed yet
+	#
+	os.chdir(os.path.join(curdir, 'Docs'))
+	for f in ('cc-mode.ps', 'cc-mode.rev.ps', 'cc-mode.dvi'):
+	    os.system('gzip -f ' + f)
+    finally:
+	os.chdir(curdir)
+
+def main():
+    try:
+	opts, args = getopt.getopt(sys.argv[1:], 'btpdh',
+				   ['bump', 'tag', 'package', 'docs', 'help'])
+    except getopt.error, msg:
+	print msg
+	usage(1)
+
+    if args:
+	usage(1)
+
+    bump = None
+    tag = None
+    package = None
+    docs = None
+    help = None
+
+    for opt, arg in opts:
+	if opt in ('-b', '--bump'):
+	    bump = 1
+	elif opt in ('-t', '--tag'):
+	    tag = 1
+	elif opt in ('-p', '--package'):
+	    package = 1
+	elif opt in ('-d', '--docs'):
+	    docs = 1
+	elif opt in ('-h', '--help'):
+	    help = 1
+
+    if help:
+	usage(0)
+
+    os.umask(002)
+    get_release()
+    if bump:
+	new_release()
+
+    if tag:
+	tag_release()
+
+    if package:
+	pkg_release()
+
+    if docs:
+	make_docs()
+
 if __name__ == '__main__':
-    bump_els()
+    main()
