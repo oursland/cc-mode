@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.232 $
-;; Last Modified:   $Date: 1994-02-08 21:09:06 $
+;; Version:         $Revision: 3.233 $
+;; Last Modified:   $Date: 1994-02-08 21:15:31 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -51,9 +51,9 @@
 ;; a long time.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
-;; the multi-Emacsen support. FSF 19, Lucid 19, and GNU 18 all do
-;; things differently and there's no way to shut the byte-compiler up
-;; at the necessary granularity.
+;; the multi-Emacsen support. FSF Emacs 19, Lucid Emacs 19, and Emacs
+;; 18 all do things differently and there's no way to shut the
+;; byte-compiler up at the necessary granularity.
 
 ;; If your Emacs is dumped with either c-mode.el or c++-mode.el, you
 ;; will need to add the following to your .emacs file before any other
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-08 21:09:06 $|$Revision: 3.232 $|
+;; |$Date: 1994-02-08 21:15:31 $|$Revision: 3.233 $|
 
 ;;; Code:
 
@@ -444,13 +444,13 @@ your style, only those that are different from the default.")
   (let ((mse-spec 'no-dual-comments)
 	(scanner 'v18)
 	flavor)
-    ;; vanilla GNU18/Epoch 4 uses default values
+    ;; vanilla Emacs 18/Epoch 4 uses default values
     (if (= 8 (length (parse-partial-sexp (point) (point))))
 	;; we know we're using v19 style dual-comment specifications.
-	;; All Lemacsen use 8-bit modify-syntax-entry flags, as do all
-	;; patched FSF19 (obsolete), GNU18, Epoch4's.  Only vanilla
-	;; FSF19 uses 1-bit flag.  Lets be as smart as we can about
-	;; figuring this out.
+	;; All Lucid 19's use 8-bit modify-syntax-entry flags, as do
+	;; all patched (obsolete) FSF Emacs 19, Emacs 18, Epoch 4's.
+	;; Only vanilla FSF Emacs 19 uses 1-bit flag.  Lets be as
+	;; smart as we can about figuring this out.
 	(let ((table (copy-syntax-table)))
 	  (modify-syntax-entry ?a ". 12345678" table)
 	  (if (= (logand (lsh (aref table ?a) -16) 255) 255)
@@ -475,10 +475,10 @@ There are many flavors of Emacs out there, each with different
 features supporting those needed by cc-mode.  Here's the current
 supported list, along with the values for this variable:
 
- Vanilla GNU 18/Epoch 4:   (no-dual-comments v18)
- GNU 18/Epoch 4 (patch2):  (8-bit v19 FSF)
- Lucid Emacs 19:           (8-bit v19 Lucid)
- FSF Emacs 19:             (1-bit v19 FSF).")
+ Vanilla Emacs 18/Epoch 4:  (no-dual-comments v18)
+ Emacs 18/Epoch 4 (patch2): (8-bit v19 FSF)
+ Lucid Emacs 19:            (8-bit v19 Lucid)
+ FSF Emacs 19:              (1-bit v19 FSF).")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in c++-mode buffers.")
@@ -563,8 +563,10 @@ supported list, along with the values for this variable:
 	(define-key c-mode-map [menu-bar c forward-stmt]
 	  '("Forward Statement" . c-end-of-statement))
 
-	;; I do not know how to make FSF Emacs pop up a menu on 3rd
-	;; button down.
+ 	;; RMS: mouse-3 should not select this menu.  mouse-3's global
+ 	;; definition is useful in C mode and we should not interfere
+ 	;; with that.  The menu is mainly for beginners, and for them,
+ 	;; the menubar requires less memory than a special click.
 	)
     ;; in Lucid 19, we want the menu to popup when the 3rd button is
     ;; hit
@@ -578,12 +580,12 @@ supported list, along with the values for this variable:
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
   (if (memq 'v19 c-emacs-features)
-      ;; Lucid and FSF 19 do this differently
+      ;; Lucid and FSF Emacs 19 do this differently
       (if (memq 'FSF c-emacs-features)
 	  (setq c++-mode-map (cons 'keymap c-mode-map))
 	(setq c++-mode-map (make-sparse-keymap))
 	(set-keymap-parent c++-mode-map c-mode-map))
-    ;; Do it the hard way for GNU18 -- given by JWZ
+    ;; Do it the hard way for Emacs 18 -- given by JWZ
     (setq c++-mode-map (nconc (make-sparse-keymap) c-mode-map)))
   ;; add bindings which are only useful for C++
   (define-key c++-mode-map "\C-c\C-;"  'c-scope-operator)
@@ -614,7 +616,7 @@ supported list, along with the values for this variable:
     (modify-syntax-entry ?*  ". 23"   table)
     (modify-syntax-entry ?\n "> b"    table))
    ((memq '1-bit c-emacs-features)
-    ;; FSF19 does things differently, but we can work with it
+    ;; FSF Emacs 19 does things differently, but we can work with it
     (modify-syntax-entry ?/  ". 124b" table)
     (modify-syntax-entry ?*  ". 23"   table)
     (modify-syntax-entry ?\n "> b"    table))
@@ -698,7 +700,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.232 $
+cc-mode Revision: $Revision: 3.233 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -729,7 +731,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.232 $
+cc-mode Revision: $Revision: 3.233 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -789,7 +791,7 @@ Key bindings:
     (make-local-variable 'comment-indent-hook)
     (setq comment-indent-hook 'c-comment-indent))
   ;; put C menu into menubar for Lucid 19. I think this happens
-  ;; automatically for FSF 19.
+  ;; automatically for FSF Emacs 19.
   (if (and (memq 'Lucid c-emacs-features)
 	   current-menubar
 	   (not (assoc mode-name current-menubar)))
@@ -1999,7 +2001,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 ;; is used as the backward limit of the search.  If omitted, or nil,
 ;; `beginning-of-defun' is used."
 
-;; This is for all Emacsen supporting 8-bit syntax (Lucid 19, patched GNU18)
+;; This is for all Emacsen supporting 8-bit syntax (Lucid 19, patched Emacs 18)
 (defun c-in-literal (&optional lim)
   ;; Determine if point is in a C++ literal
   (save-excursion
@@ -2033,7 +2035,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	'pound)
        (t nil)))))
 
-;; FSF 19 does this differently than Lucid 19
+;; FSF Emacs 19 does this differently than Lucid 19
 (if (memq '1-bit c-emacs-features)
     (fset 'c-in-literal 'c-1bit-il))
 
@@ -3080,7 +3082,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.232 $"
+(defconst c-version "$Revision: 3.233 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
