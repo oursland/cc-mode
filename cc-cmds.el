@@ -326,7 +326,8 @@ This function does various newline cleanups based on the value of
 		  (here (point)))
 	      (forward-line -1)
 	      (setq old-ind (c-point 'boi))
-	      (let ((c-state-cache (c-whack-state (point) c-state-cache)))
+	      (let ((c-state-cache
+		     (c-whack-state-after (point) c-state-cache)))
 		;; we may need to update the cache. this should
 		;; still be faster than recalculating the state
 		;; in many cases
@@ -357,7 +358,8 @@ This function does various newline cleanups based on the value of
 		 ;; at least one space.
 		 (delete-indentation)
 		 (just-one-space)
-		 (setq c-state-cache (c-whack-state (point) c-state-cache))
+		 (setq c-state-cache
+		       (c-whack-state-after (point) c-state-cache))
 		 (if (not preserve-p)
 		     (delete-char -1))))
 	  ;; since we're hanging the brace, we need to recalculate
@@ -1635,6 +1637,7 @@ argument QUIET is non-nil."
     (setq c-parsing-error
 	  (or (let ((endmark (copy-marker end))
 		    (c-parsing-error nil)
+		    (c-state-cache c-state-cache)
 		    ;; shut up any echo msgs on indiv lines
 		    (c-echo-syntactic-information-p nil))
 		(unwind-protect
@@ -1649,6 +1652,7 @@ argument QUIET is non-nil."
 			(skip-chars-forward " \t\n")
 			(beginning-of-line)
 			;; indent the current line
+			(setq c-state-cache (c-parse-state))
 			(c-indent-line nil t)
 			(forward-line)))
 		  (set-marker endmark nil)
