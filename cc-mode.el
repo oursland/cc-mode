@@ -291,7 +291,6 @@ Key bindings:
 	imenu-generic-expression cc-imenu-java-generic-expression
 	imenu-case-fold-search nil
 	)
-  (c-set-style "java")
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook)
   (c-update-modeline))
