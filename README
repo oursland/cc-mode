@@ -59,10 +59,9 @@ INSTALLATION
 
   Byte Compiling
 
-    It is highly recommended that you byte-compile CC Mode, for both
-    performance and compatibility reasons.  Running CC Mode
-    un-bytecompiled is not supported and may not work at all depending
-    on the flavor of (X)Emacs you are using.
+    It is highly recommended that you byte-compile CC Mode for
+    performance reasons.  Running CC Mode non-byte-compiled is not
+    supported.
 
     You can compile CC Mode in the same way as any other package.  To
     compile it from a running (X)Emacs session:
