@@ -3066,7 +3066,8 @@ brace."
 			 cfd-continue-pos (point)))
 	  (backward-char)
 	  (c-beginning-of-current-token)
-	  (c-find-decl-prefix-search))
+	  (when (< (point) cfd-limit)
+	    (c-find-decl-prefix-search)))
 
 	;; Advance `cfd-continue-pos' if we got a hit before the start
 	;; position.  The earliest position that could affect after
@@ -3092,8 +3093,8 @@ brace."
 	       (setq cfd-token-pos (point))))
 
 	(setq c-find-decl-match-pos (and cfd-match-pos
-				       (< cfd-match-pos start-pos)
-				       cfd-match-pos))))
+					 (< cfd-match-pos start-pos)
+					 cfd-match-pos))))
 
     ;; Now loop.  We already got the first match.
 
@@ -3176,7 +3177,8 @@ brace."
 	  (narrow-to-region (point-min) cfd-buffer-end)))
 
       (goto-char cfd-continue-pos)
-      (c-find-decl-prefix-search))))
+      (when (< cfd-continue-pos cfd-limit)
+	(c-find-decl-prefix-search)))))
 
 
 ;; Buffer local variable that contains an obarray with the types we've
