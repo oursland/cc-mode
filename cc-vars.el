@@ -52,6 +52,15 @@ and the syntactic symbol is ignored."
   :type 'integer
   :group 'c)
 
+;; This widget will show up in newer versions of the Custom library
+(or (get 'other 'widget-type)
+    (define-widget 'other 'sexp
+      "Matches everything, but doesn't let the user edit the value.
+Useful as last item in a `choice' widget."
+      :tag "Other"
+      :format "%t%n"
+      :value 'other))
+
 (defcustom c-tab-always-indent t
   "*Controls the operation of the TAB key.
 If t, hitting TAB always just indents the current line.  If nil,
@@ -73,7 +82,7 @@ by the `c-comment-only-line-offset' variable."
 	  :format "%{C Tab Always Indent%}:\n   The TAB key:\n%v"
 	  (const :tag "always indents, never inserts TAB" t)
 	  (const :tag "indents in left margin, otherwise inserts TAB" nil)
-	  (const :tag "inserts TAB in literals, otherwise indent" other))
+	  (other :tag "inserts TAB in literals, otherwise indent" other))
   :group 'c)
 
 (defcustom c-insert-tab-function 'insert-tab
