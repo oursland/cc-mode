@@ -2869,7 +2869,7 @@ function @code{c-add-style}:
 
 @cindex style definition
 @defvr {List} style definition
-([@var{BASE-STYLE}] [(@var{VARIABLE} . @var{VALUE}) @dots{}])
+([@var{base-style}] [(@var{variable} . @var{value}) @dots{}])
 
 Optional @var{base-style}, if present, must be a string which is the
 name of the @dfn{base style} from which this style inherits.  At most
@@ -2891,6 +2891,24 @@ style variable or an arbitrary Emacs variable.  In the latter case, it
 is @emph{not} made buffer local by the @ccmode{} style system.
 @end defvr
 
+Two variables are treated specially in the dotted pair list:
+
+@table @code
+@item c-offsets-alist
+The value is in turn a dotted list on the form
+
+(@var{syntactic-symbol} . @var{offset})
+
+as described in @ref{Customizing Indentation}.  These are passed to
+@code{c-set-offset} so there is no need to set every syntactic symbol in
+your style, only those that are different from the inherited style.
+
+@item c-special-indent-hook
+The value is added to @code{c-special-indent-hook} using
+@code{add-hook}, so any functions already on it are kept.  If the value
+is a list, each element of the list is added with @code{add-hook}.
+@end table
+
 Styles are kept in the @code{c-style-alist} variable, but you
 should never modify this variable directly.  Instead, @ccmode{}
 provides the function @code{c-add-style} for this purpose.
@@ -2905,11 +2923,6 @@ total.  The old style is @emph{not} merged into the new one.)
 Otherwise, a new style is added.  If the optional @var{set-p} is
 non-@code{nil} then the new style is applied to the current buffer as
 well.
-
-@comment TBD: The next paragraph is bogus.  I really need to better
-@comment document adding styles, including setting up inherited styles.
-@c ACM, 2004/3/7:  The style documentation has been considerably
-@c enhanced.
 
 The sample @file{.emacs} file provides a concrete example of how a new
 style can be added and automatically set.  @xref{Sample .emacs File}.
