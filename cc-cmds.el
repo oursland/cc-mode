@@ -1241,8 +1241,7 @@ command to conveniently insert and align the necessary backslashes."
             (c-append-backslash column)
           (c-delete-backslash))
         (forward-line 1))
-      (move-marker endmark nil)))
-  (c-keep-region-active))
+      (move-marker endmark nil))))
 
 (defun c-append-backslash (column)
   (end-of-line)
