@@ -659,9 +659,7 @@ can always override the use of `c-default-style' by making calls to
        (member-init-cont      . c-lineup-multi-inher)
        ;; Relpos: Beg of the first member init.
        (inher-intro           . +)
-       ;; Relpos: Java: Boi at the class decl start.  Otherwise: Boi
-       ;; of current line (a bug?), unless it begins with an inher
-       ;; start colon, in which case boi of previous line is used.
+       ;; Relpos: Boi at the class decl start.
        (inher-cont            . c-lineup-multi-inher)
        ;; Relpos: Java: At the implements/extends keyword start.
        ;; Otherwise: At the inher start colon, or boi at the class
@@ -771,7 +769,8 @@ can always override the use of `c-default-style' by making calls to
        ;; Relpos: At the namespace block open brace if it's at boi,
        ;; otherwise boi at the namespace keyword.
        (template-args-cont    . (c-lineup-template-args +))
-       ;; Relpos: Boi at the decl start.
+       ;; Relpos: Boi at the decl start.  This might be changed; the
+       ;; logical position is clearly the opening '<'.
        (inlambda              . c-lineup-inexpr-block)
        ;; Relpos: None.
        (lambda-intro-cont     . +)
