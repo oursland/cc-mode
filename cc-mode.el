@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.108 $
-;; Last Modified:   $Date: 1994-12-01 23:36:43 $
+;; Version:         $Revision: 4.109 $
+;; Last Modified:   $Date: 1994-12-08 19:03:47 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-01 23:36:43 $|$Revision: 4.108 $|
+;; |$Date: 1994-12-08 19:03:47 $|$Revision: 4.109 $|
 
 ;;; Code:
 
@@ -521,6 +521,25 @@ your style, only those that are different from the default.")
 			   varlist))))
       (setq c-style-alist (cons default c-style-alist))))
 
+(defvar c-file-style nil
+  "*Variable interface for setting style via File Local Variables.
+In a file's Local Variable section, you can set this variable to a
+string suitable for `c-set-style'.  When the file is visited, cc-mode
+will set the style of the file to this value automatically.
+
+Note that file style settings are applied before file offset settings
+as designated in the variable `c-file-offsets'.")
+
+(defvar c-file-offsets nil
+  "*Variable interface for setting offsets via File Local Variables.
+In a file's Local Variable section, you can set this variable to an
+association list similiar to the values allowed in `c-offsets-alist'.
+When the file is visited, cc-mode will institute these offset settings
+automatically.
+
+Note that file offset settings are applied after file style settings
+as designated in the variable `c-file-style'.")
+
 (defvar c-mode-hook nil
   "*Hook called by `c-mode'.")
 (defvar c++-mode-hook nil
@@ -909,6 +928,8 @@ supported list, along with the values for this variable:
 (make-variable-buffer-local 'c-access-key)
 (make-variable-buffer-local 'c-class-key)
 (make-variable-buffer-local 'c-recognize-knr-p)
+(make-variable-buffer-local 'c-file-style)
+(make-variable-buffer-local 'c-file-offsets)
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
@@ -1167,6 +1188,32 @@ Key bindings:
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
 		  minor-mode-alist))))
+
+(defun c-find-file-hook ()
+  "Hook that runs whenever a cc-mode buffer is visited.
+Currently, this function simply applies any style and offset settings
+found in the file's Local Variable list.  It first applies any style
+setting found in `c-file-style', then it applies any offset settings
+it finds in `c-file-offsets'."
+  ;; apply file styles and offsets
+  (and c-file-style
+       (c-set-style c-file-style))
+  (and c-file-offsets
+       (mapcar
+	(function
+	 (lambda (langentry)
+	   (let ((langelem (car langentry))
+		 (offset (cdr langentry)))
+	     (c-set-offset langelem offset)
+	     )))
+	c-file-offsets)))
+
+;; now add the hook to file-file-hook, if both it and add-hook are
+;; defined.  This won't work for Emacs 18, but then you shouldn't be
+;; using Emacs 18 anymore anyway.
+(and (fboundp 'add-hook)
+     (boundp 'find-file-hooks)
+     (add-hook 'find-file-hooks 'c-find-file-hook))
 
 
 ;; macros must be defined before first use
@@ -4185,7 +4232,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.108 $"
+(defconst c-version "$Revision: 4.109 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
