@@ -613,7 +613,9 @@ tools (e.g. Javadoc).")
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-forward-syntactic-ws limit)
-  (let ((pos (point)) id-start id-end id-face got-init
+  (let ((pos (point)) id-start id-end
+	paren-depth
+	id-face got-init
 	;; The font-lock package in Emacs is known to clobber this.
 	(parse-sexp-lookup-properties t))
 
@@ -622,6 +624,7 @@ tools (e.g. Javadoc).")
 	    (< (point) limit)
 
 	    (let (got-identifier)
+	      (setq paren-depth 0)
 	      ;; Skip over type decl prefix operators.  (Note similar
 	      ;; code in `c-font-lock-declarations'.)
 	      (while (and (looking-at c-type-decl-prefix-key)
@@ -643,7 +646,11 @@ tools (e.g. Javadoc).")
 				  (setq got-identifier t)
 				  nil))
 			    t))
-		(goto-char (match-end 1))
+		(if (eq (char-after) ?\()
+		    (progn
+		      (setq paren-depth (1+ paren-depth))
+		      (forward-char))
+		  (goto-char (match-end 1)))
 		(c-forward-syntactic-ws))
 
 	      ;; If we didn't pass the identifier above already, do it now.
@@ -654,11 +661,15 @@ tools (e.g. Javadoc).")
 
 	      (/= id-end pos))
 
+	    ;; Skip out of the parens surrounding the identifier.
+	    (or (= paren-depth 0)
+		(c-safe (goto-char (scan-lists (point) 1 paren-depth))))
+
 	    ;; Search syntactically to the end of the declarator
-	    ;; (";", ",", eob etc) or to the beginning of an
+	    ;; (";", ",", ")", eob etc) or to the beginning of an
 	    ;; initializer or function prototype ("=" or "\\s\(").
 	    (c-syntactic-re-search-forward
-	     "[;,\{\[]\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)" limit t))
+	     "[;,\{\[\)]\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)" limit t))
 
       (setq pos (match-beginning 0)
 	    id-face (if (match-beginning 2)
