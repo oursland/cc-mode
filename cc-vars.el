@@ -1402,7 +1402,7 @@ also elsewhere in CC Mode to tell types from other identifiers.")))
 ;; in older versions in Emacs, so depending on the load order we might
 ;; not install the values below.  There's no kludge to cope with this
 ;; (as opposed to the *-font-lock-keywords-* variables) since the old
-;; values works fairly well anyway.
+;; values work fairly well anyway.
 
 (defcustom c-font-lock-extra-types
   '("FILE" "\\sw+_t"
