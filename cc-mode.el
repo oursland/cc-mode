@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-01 14:33:33 $
-;; Version:         $Revision: 2.84 $
+;; Last Modified:   $Date: 1992-06-01 14:41:58 $
+;; Version:         $Revision: 2.85 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-01 14:33:33 $|$Revision: 2.84 $|
+;; |$Date: 1992-06-01 14:41:58 $|$Revision: 2.85 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -197,7 +197,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.84 $
+  "Major mode for editing C++ code.  $Revision: 2.85 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -875,10 +875,14 @@ if it is embedded in an expression."
 		(if (not (re-search-forward "*/" here 'move)) 'c))
 	       ;; looking at the opening of a double quote string
 	       ((string= "\"" match)
-		(if (not (save-restriction
-			   (narrow-to-region (point) here)
-			   (re-search-forward "\`\"\\|[^\\]\"" here 'move)))
-		    'string))
+		;; first try to match empty string
+		(if (= (following-char) ?\")
+		    (progn (forward-char 1)
+			   (if (<= (point) here) nil 'string))
+		  (if (not (save-restriction
+			     (narrow-to-region (point) here)
+			     (re-search-forward "[^\\]\"" here 'move)))
+		      'string)))
 	       ;; looking at the opening of a single quote string
 	       ((string= "'" match)
 		(if (not (re-search-forward "[^\\]'" here 'move)) 'string))
@@ -1677,7 +1681,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.84 $"
+(defconst c++-version "$Revision: 2.85 $"
   "c++-mode version number.")
 
 (defun c++-version ()
