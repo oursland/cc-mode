@@ -6,7 +6,7 @@ Author: cc-mode-help@python.org
 The <a href="index.html">current release</a> is version 5.11.  This is
 the first v5 release, and there have been some significant user
 visible changes since version 4.379, as outlined below.  For more
-details, see the <a href="cc-mode/ChangeLog.gz">ChangeLog</a> file.
+details, see the <a href="cc-mode/ChangeLog">ChangeLog</a> file.
 See also the list of <a href="cc-details-4.379.html">previous
 changes</a>.
 
