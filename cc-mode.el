@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.210 $
-;; Last Modified:   $Date: 1995-05-17 15:44:21 $
+;; Version:         $Revision: 4.211 $
+;; Last Modified:   $Date: 1995-05-17 22:51:46 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-17 15:44:21 $|$Revision: 4.210 $|
+;; |$Date: 1995-05-17 22:51:46 $|$Revision: 4.211 $|
 
 ;;; Code:
 
@@ -3612,7 +3612,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ))
 	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
-	   ((and c-baseclass-key (looking-at c-baseclass-key))
+	   ((or (and c-baseclass-key (looking-at c-baseclass-key))
+		(and (or (= char-before-ip ?:)
+			 (= char-after-ip ?:))
+		     (save-excursion
+		       (c-backward-syntactic-ws lim)
+		       (if (= char-before-ip ?:)
+			   (progn
+			     (forward-char -1)
+			     (c-backward-syntactic-ws lim)))
+		       (back-to-indentation)
+		       (looking-at c-class-key))))
 	    (cond
 	     ;; CASE 5C.1: non-hanging colon on an inher intro
 	     ((= char-after-ip ?:)
@@ -4586,7 +4596,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.210 $"
+(defconst c-version "$Revision: 4.211 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
