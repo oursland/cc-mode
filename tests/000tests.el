@@ -724,10 +724,9 @@ to be set as a file local variable.")
 			(set-buffer exp-syntax-buf)
 			(forward-line 1)))
 
-		    ;; Compare faces, but don't bother if the
-		    ;; indentation is different.  Only report the
-		    ;; first inconsistency on the line.
-		    (when (and check-faces (not indent-err))
+		    ;; Compare faces.  Only report the first inconsistency on
+		    ;; the line.
+		    (when check-faces
 		      (set-buffer exp-faces-buf)
 		      (if (eobp)
 			  ;; Check for premature end of the .face file here
@@ -739,54 +738,57 @@ to be set as a file local variable.")
 			    (setq error-found-p t
 				  check-faces nil))
 
-			(while (progn
-				 (set-buffer res-faces-buf)
-				 (skip-chars-forward " \t")
-				 (setq result (and (not (eolp))
-						   (read res-faces-buf)))
-				 (set-buffer exp-faces-buf)
-				 (skip-chars-forward " \t")
-				 (setq expected (and (not (eolp))
-						     (read exp-faces-buf)))
-				 (and (or result expected)
-				      (equal result expected))))
+			;; Don't report fontification errors if there already
+			;; are indentation errors on this line.
+			(unless indent-err
+			  (while (progn
+				   (set-buffer res-faces-buf)
+				   (skip-chars-forward " \t")
+				   (setq result (and (not (eolp))
+						     (read res-faces-buf)))
+				   (set-buffer exp-faces-buf)
+				   (skip-chars-forward " \t")
+				   (setq expected (and (not (eolp))
+						       (read exp-faces-buf)))
+				   (and (or result expected)
+					(equal result expected))))
 
-			(cond
-			 ((not (or result expected)))
-			 ((not result)
-			  (regression-msg
-			   "Expected %s face at column %d"
-			   (cadr expected) (car expected)))
-			 ((not expected)
-			  (regression-msg
-			   "Got unexpected %s face at column %d"
-			   (cadr result) (car result)))
-			 ((eq (car result) (car expected))
-			  (if (and (featurep 'xemacs)
-				   (<= emacs-major-version 20)
-				   (eq (cadr result) 'doc)
-				   (eq (cadr expected) 'str))
-			      ;; `font-lock-fontify-syntactically-region'
-			      ;; in XEmacs <= 20 contains Lisp
-			      ;; specific crud that affects all modes:
-			      ;; Any string at nesting level 1 is
-			      ;; fontified with the doc face.  Argh!  Yuck!
-			      nil
+			  (cond
+			   ((not (or result expected)))
+			   ((not result)
 			    (regression-msg
-			     "Expected %s face at column %d, got %s face"
+			     "Expected %s face at column %d"
+			     (cadr expected) (car expected)))
+			   ((not expected)
+			    (regression-msg
+			     "Got unexpected %s face at column %d"
+			     (cadr result) (car result)))
+			   ((eq (car result) (car expected))
+			    (if (and (featurep 'xemacs)
+				     (<= emacs-major-version 20)
+				     (eq (cadr result) 'doc)
+				     (eq (cadr expected) 'str))
+				;; `font-lock-fontify-syntactically-region'
+				;; in XEmacs <= 20 contains Lisp
+				;; specific crud that affects all modes:
+				;; Any string at nesting level 1 is
+				;; fontified with the doc face.  Argh!  Yuck!
+				nil
+			      (regression-msg
+			       "Expected %s face at column %d, got %s face"
+			       (cadr expected) (car expected)
+			       (cadr result))))
+			   ((eq (cadr result) (cadr expected))
+			    (regression-msg
+			     "Expected %s face at column %d, got it at %d"
 			     (cadr expected) (car expected)
-			     (cadr result))))
-			 ((eq (cadr result) (cadr expected))
-			  (regression-msg
-			   "Expected %s face at column %d, got it at %d"
-			   (cadr expected) (car expected)
-			   (car result)))
-			 (t
-			  (regression-msg
-			   (concat "Expected %s face at column %d, "
-				   "got %s face at %d")
-			   (cadr expected) (car expected)
-			   (cadr result) (car result))))
+			     (car result)))
+			   (t
+			    (regression-msg
+			     (concat "Expected %s face at column %d, "
+				     "got %s face at %d")
+			     (cadr expected) (car expected)
+			     (cadr result) (car result)))))
 
 			(set-buffer res-faces-buf)
 			(forward-line 1)
