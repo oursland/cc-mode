@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.239 $
-;; Last Modified:   $Date: 1995-08-21 16:08:59 $
+;; Version:         $Revision: 4.240 $
+;; Last Modified:   $Date: 1995-08-21 23:41:21 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-08-21 16:08:59 $|$Revision: 4.239 $|
+;; |$Date: 1995-08-21 23:41:21 $|$Revision: 4.240 $|
 
 ;;; Code:
 
@@ -4477,62 +4477,75 @@ ACTION associated with `block-close' syntax."
 	'(before after)))))
 
 
-;; commands for "macroizations" -- making C++ parameterized types via
-;; macros. Also commands for commentifying regions
+;;; This page handles insertion and removal of backslashes for C macros.
 
-(defun c-backslashify-current-line (doit)
-  ;; Backslashifies current line if DOIT is non-nil, otherwise
-  ;; unbackslashifies the current line.
-  (end-of-line)
-  (if doit
-      ;; Note that "\\\\" is needed to get one backslash.
-      (if (not (save-excursion
-		 (forward-char -1)
-		 (looking-at "\\\\")))
-	  (progn
-	    (if (>= (current-column) c-backslash-column)
-		(insert " \\")
-	      (while (<= (current-column) c-backslash-column)
-		(insert "\t")
-		(end-of-line))
-	      (delete-char -1)
-	      (while (< (current-column) c-backslash-column)
-		(insert " ")
-		(end-of-line))
-	      (insert "\\"))))
-    (if (not (bolp))
-	(progn
-	  (forward-char -1)
-	  (if (looking-at "\\\\")
-	      (progn
-		(skip-chars-backward " \t")
-		(delete-region (point) (c-point 'eol))))
-	  ))))
+(defun c-backslash-region (from to delete-flag)
+  "Insert, align, or delete end-of-line backslashes on the lines in the region.
+With no argument, inserts backslashes and aligns existing backslashes.
+With an argument, deletes the backslashes.
 
-(defun c-backslash-region (beg end arg)
-  "Insert backslashes at end of every line in region.
-Useful for defining cpp macros.  If called with a prefix argument,
-it trailing backslashes are removed."
+This function does not modify the last line of the region if the region ends 
+right at the start of the following line; it does not modify blank lines
+at the start of the region.  So you can put the region around an entire macro
+definition and conveniently use this command."
   (interactive "r\nP")
   (save-excursion
-    (let ((do-lastline-p (progn (goto-char end) (not (bolp)))))
-      (save-restriction
-	(narrow-to-region beg end)
-	(goto-char (point-min))
-	(while (not (save-excursion
-		      (forward-line 1)
-		      (eobp)))
-	  (c-backslashify-current-line (null arg))
-	  (forward-line 1)))
-      (and do-lastline-p
-	   (progn (goto-char end)
-		  (c-backslashify-current-line (null arg))))
-      )))
+    (goto-char from)
+    (let ((column c-backslash-column)
+          (endmark (make-marker)))
+      (move-marker endmark to)
+      ;; Compute the smallest column number past the ends of all the lines.
+      (if (not delete-flag)
+          (while (< (point) to)
+            (end-of-line)
+            (if (= (preceding-char) ?\\)
+                (progn (forward-char -1)
+                       (skip-chars-backward " \t")))
+            (setq column (max column (1+ (current-column))))
+            (forward-line 1)))
+      ;; Adjust upward to a tab column, if that doesn't push past the margin.
+      (if (> (% column tab-width) 0)
+          (let ((adjusted (* (/ (+ column tab-width -1) tab-width) tab-width)))
+            (if (< adjusted (window-width))
+                (setq column adjusted))))
+      ;; Don't modify blank lines at start of region.
+      (goto-char from)
+      (while (and (< (point) endmark) (eolp))
+        (forward-line 1))
+      ;; Add or remove backslashes on all the lines.
+      (while (and (< (point) endmark)
+                  ;; Don't backslashify the last line
+                  ;; if the region ends right at the start of the next line.
+                  (save-excursion
+                    (forward-line 1)
+                    (< (point) endmark)))
+        (if (not delete-flag)
+            (c-append-backslash column)
+          (c-delete-backslash))
+        (forward-line 1))
+      (move-marker endmark nil))))
+
+(defun c-append-backslash (column)
+  (end-of-line)
+  ;; Note that "\\\\" is needed to get one backslash.
+  (if (= (preceding-char) ?\\)
+      (progn (forward-char -1)
+             (delete-horizontal-space)
+             (indent-to column))
+    (indent-to column)
+    (insert "\\")))
+
+(defun c-delete-backslash ()
+  (end-of-line)
+  (forward-char -1)
+  (if (looking-at "\\\\")
+      (delete-region (1+ (point))
+                     (progn (skip-chars-backward " \t") (point)))))
 
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.239 $"
+(defconst c-version "$Revision: 4.240 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
