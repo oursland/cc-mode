@@ -673,10 +673,11 @@ do {             \    <->      do {             \    <- c-lineup-macro-cont
   printf (A, B); \               printf (A, B); \
 } while (0)                    } while (0)
 
-The function returns the relative indentation to the macro start line,
-to allow accumulation with other offsets.  E.g. in the following
-cases, cpp-macro-cont is combined with the statement-block-intro that
-comes from the \"do {\" that hangs on the \"#define\" line:
+If `c-syntactic-indentation-in-macros' is non-nil, the function
+returns the relative indentation to the macro start line to allow
+accumulation with other offsets.  E.g. in the following cases,
+cpp-macro-cont is combined with the statement-block-intro that comes
+from the \"do {\" that hangs on the \"#define\" line:
 
                              int dribble() {
 const char msg[] =             if (!running)
@@ -687,31 +688,58 @@ const char msg[] =             if (!running)
   this->refs++;      \           this->refs++;    \
 } while (0)             <->    } while (0)           <- c-lineup-macro-cont
 
-The relative indentation returned by c-lineup-macro-cont is zero and
+The relative indentation returned by `c-lineup-macro-cont' is zero and
 two, respectively, in these two examples. They are then added to the
 two column indentation that statement-block-intro gives in both cases
 here.
 
 If the relative indentation is zero, then nil is returned instead.
+This useful in a list expression to specify the default indentation on
+the top level.
 
-Works with: cpp-macro-cont if `c-syntactic-analysis-in-macro' is
-non-nil."
-  (if (not c-syntactic-analysis-in-macro)
-      ;; Temporary measure, to be able to use this function by default.
-      (c-lineup-dont-change langelem)
-    (save-excursion
-      ;; Go to the macro start and do a syntactic analysis of it.
-      ;; Then remove the cpp-macro element it should contain and
-      ;; calculate the indentation it then would get.
-      (c-beginning-of-macro)
-      (let ((offset (- (c-get-syntactic-indentation
-			(delete '(cpp-macro) (c-guess-basic-syntax)))
-		       (save-excursion
-			 (back-to-indentation)
-			 (current-column)))))
-	(if (zerop offset)
-	    nil
-	  offset)))))
+If `c-syntactic-indentation-in-macros' is nil then this function keeps
+the current indentation, except for empty lines \(ignoring the ending
+backslash) where it takes the indentation from the closest preceding
+nonempty line in the macro.  If there's no such line in the macro then
+the indentation is taken from the construct preceding it, as described
+above.
+
+Works with: cpp-macro-cont."
+  (let (offset)
+    (if c-syntactic-indentation-in-macros
+	;; Go to the macro start and do a syntactic analysis of it.
+	;; Then remove the cpp-macro element it should contain and
+	;; calculate the indentation it then would get.
+	(save-excursion
+	  (c-beginning-of-macro)
+	  (setq offset (- (c-get-syntactic-indentation
+			   (delete '(cpp-macro) (c-guess-basic-syntax)))
+			  (save-excursion
+			    (back-to-indentation)
+			    (current-column))))
+	  (if (zerop offset)
+	      nil
+	    offset))
+      ;; Do not indent syntactically inside the macro.
+      (save-excursion
+	(let ((macro-start-line (save-excursion
+				  (goto-char (c-query-macro-start))
+				  (beginning-of-line)
+				  (point))))
+	  (beginning-of-line)
+	  ;; Check every line while inside the macro.
+	  (while (and (> (point) macro-start-line)
+		      (looking-at "[ \t]*\\\\?$")
+		      (= (forward-line -1) 0)))
+	  (if (<= (point) macro-start-line)
+	      ;; If we've stepped out of the macro we take the
+	      ;; syntactic offset.
+	      (setq offset (c-get-syntactic-indentation
+			    (delete '(cpp-macro) (c-guess-basic-syntax))))
+	    (setq offset (current-indentation)))
+	  (if (zerop offset)
+	      nil
+	    (vector offset)))))))
 
 (defun c-lineup-dont-change (langelem)
   "Do not change the indentation of the current line.
