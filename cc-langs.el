@@ -337,8 +337,8 @@ This is on the form that fits inside [ ] in a regexp."
   objc (concat c-alnum "_$@"))
 
 (c-lang-defconst c-symbol-key
-  "Regexp matching identifiers and keywords.  Assumed to match if
-`c-symbol-start' matches on the same position."
+  "Regexp matching identifiers and keywords (with submatch 0).  Assumed
+to match if `c-symbol-start' matches on the same position."
   t    (concat (c-lang-const c-symbol-start)
 	       "[" (c-lang-const c-symbol-chars) "]*")
   pike (concat
@@ -1716,9 +1716,14 @@ nevertheless contains a list separated with ';' and not ','."
 (c-lang-defvar c-opt-asm-stmt-key (c-lang-const c-opt-asm-stmt-key))
 
 (c-lang-defconst c-label-kwds
-  "Keywords introducing labels in blocks."
+  "Keywords introducing colon terminated labels in blocks."
   t '("case" "default")
   awk nil)
+
+(c-lang-defconst c-label-kwds-regexp
+  ;; Adorned regexp matching any keyword that introduces a label.
+  t (c-make-keywords-re t (c-lang-const c-label-kwds)))
+(c-lang-defvar c-label-kwds-regexp (c-lang-const c-label-kwds-regexp))
 
 (c-lang-defconst c-before-label-kwds
   "Keywords that might be followed by a label identifier."
@@ -1727,11 +1732,6 @@ nevertheless contains a list separated with ';' and not ','."
 		      (c-lang-const c-before-label-kwds))
   idl  nil
   awk  nil)
-
-(c-lang-defconst c-label-kwds-regexp
-  ;; Regexp matching any keyword that introduces a label.
-  t (c-make-keywords-re t (c-lang-const c-label-kwds)))
-(c-lang-defvar c-label-kwds-regexp (c-lang-const c-label-kwds-regexp))
 
 (c-lang-defconst c-constant-kwds
   "Keywords for constants."
@@ -1957,8 +1957,8 @@ Note that Java specific rules are currently applied to tell this from
     obarray))
 
 (c-lang-defconst c-regular-keywords-regexp
-  ;; Adorned regexp matching all keywords that aren't types or
-  ;; constants.
+  ;; Adorned regexp matching all keywords that should be fontified
+  ;; with the keywords face.  I.e. that aren't types or constants.
   t (c-make-keywords-re t
       (set-difference (c-lang-const c-keywords)
 		      (append (c-lang-const c-primitive-type-kwds)
@@ -2074,13 +2074,14 @@ Note that Java specific rules are currently applied to tell this from
 ;;; Additional constants for parser-level constructs.
 
 (c-lang-defconst c-decl-prefix-re
-  "Regexp matching something that might precede a declaration or a cast,
-such as the last token of a preceding statement or declaration.  It
-should not match bob, though.  It can't require a match longer than
+  "Regexp matching something that might precede a declaration, cast or
+label, such as the last token of a preceding statement or declaration.
+It should not match bob, though.  It can't require a match longer than
 one token.  The end of the token is taken to be at the end of the
 first submatch.  It must not include any following whitespace.  It's
 undefined whether identifier syntax (see `c-identifier-syntax-table')
-is in effect or not."
+is in effect or not.  This regexp is assumed to be a superset of
+`c-label-prefix-re' if `c-recognize-colon-labels' is set."
   ;; We match a sequence of characters to skip over things like \"};\"
   ;; more quickly.  We match ")" in C for K&R region declarations, and
   ;; in all languages except Java for when a cpp macro definition
@@ -2090,14 +2091,7 @@ is in effect or not."
   ;; Match "<" in C++ to get the first argument in a template arglist.
   ;; In that case there's an additional check in `c-find-decl-spots'
   ;; that it got open paren syntax.
-  ;;
-  ;; Also match a single ":" for protection labels.  We cheat a little
-  ;; and require a symbol immediately before to avoid false matches
-  ;; when starting directly on a single ":", which can be the start of
-  ;; the base class initializer list in a constructor.  FIXME: That
-  ;; check breaks the assumption above with max one token, and
-  ;; `c-find-decl-spots' doesn't seem to cope with it either.
-  c++ "\\([\{\}\(\);,<]+\\|\\(\\w\\|\\s_\\):\\)\\([^:]\\|\\'\\)"
+  c++ "\\([\{\}\(\);,<]+\\)"
   ;; Additionally match the protection directives in Objective-C.
   ;; Note that this doesn't cope with the longer directives, which we
   ;; would have to match from start to end since they don't end with
@@ -2105,13 +2099,23 @@ is in effect or not."
   objc (concat "\\([\{\}\(\);,]+\\|"
 	       (c-make-keywords-re nil (c-lang-const c-protection-kwds))
 	       "\\)")
-  ;; Match ":" for switch labels inside union declarations in IDL.
-  idl "\\([\{\}\(\);:,]+\\)\\([^:]\\|\\'\\)"
   ;; Pike is like C but we also match "[" for multiple value
   ;; assignments and type casts.
   pike "\\([\{\}\(\)\[;,]+\\)")
 (c-lang-defvar c-decl-prefix-re (c-lang-const c-decl-prefix-re)
   'dont-doc)
+
+(c-lang-defconst c-decl-start-re
+  "Regexp matching the start of any declaration, cast or label.
+It's used on the token after the one `c-decl-prefix-re' matched.  This
+regexp should not try to match those constructs accurately as it's
+only used as a sieve to avoid spending more time checking other
+constructs."
+  t    (c-lang-const c-identifier-start)
+  ;; Also match the '@' that starts the protection label keywords in
+  ;; Objective-C.
+  objc "[@a-zA-Z]")
+(c-lang-defvar c-decl-start-re (c-lang-const c-decl-start-re))
 
 (c-lang-defconst c-cast-parens
   ;; List containing the paren characters that can open a cast, or nil in
@@ -2368,17 +2372,6 @@ i.e. compound statements surrounded by parentheses inside expressions."
 (c-lang-defvar c-opt-<>-arglist-start-in-paren
   (c-lang-const c-opt-<>-arglist-start-in-paren))
 
-(c-lang-defconst c-label-key
-  "Regexp matching a normal label, i.e. a label that doesn't begin with
-a keyword like switch labels.  It's only used at the beginning of a
-statement."
-  t "\\<\\>"
-  (c c++ objc java pike) (concat "\\(" (c-lang-const c-symbol-key) "\\)"
-				 (c-lang-const c-simple-ws) "*"
-				 ":\\([^:]\\|$\\)"))
-(c-lang-defvar c-label-key (c-lang-const c-label-key)
-  'dont-doc)
-
 (c-lang-defconst c-opt-postfix-decl-spec-key
   ;; Regexp matching the beginning of a declaration specifier in the
   ;; region between the header and the body of a declaration.
@@ -2396,28 +2389,50 @@ statement."
 (c-lang-defvar c-opt-postfix-decl-spec-key
   (c-lang-const c-opt-postfix-decl-spec-key))
 
+(c-lang-defconst c-recognize-colon-labels
+  "Non-nil if generic labels ending with \":\" should be recognized.
+That includes labels in code and access keys in classes.  This does
+not apply to labels recognized by `c-label-kwds' and
+`c-opt-extra-label-key'."
+  t nil
+  (c c++ objc java pike) t)
+(c-lang-defvar c-recognize-colon-labels
+  (c-lang-const c-recognize-colon-labels))
+
+(c-lang-defconst c-label-prefix-re
+  "Regexp like `c-decl-prefix-re' that matches any token that can precede
+a generic colon label.  Not used if `c-recognize-colon-labels' is
+nil."
+  t "\\([{};]+\\)")
+(c-lang-defvar c-label-prefix-re
+  (c-lang-const c-label-prefix-re))
+
 (c-lang-defconst c-nonlabel-token-key
-  "Regexp matching things that can't occur in labels,
+  "Regexp matching things that can't occur in generic colon labels,
 neither in a statement nor in a declaration context.  The regexp is
 tested at the beginning of every sexp in a suspected label,
-i.e. before \":\".  Aside from this, it's also checked that the colon
-isn't part of a ? : operator."
-  ;; Bitfields use colons.
-  t (c-make-keywords-re t (c-lang-const c-bitfield-kwds))
-  ;; These languages use colons to start class inherit lists.
-  (c++ objc idl) (c-make-keywords-re t
-		   (append (c-lang-const c-class-decl-kwds)
-			   (c-lang-const c-bitfield-kwds)))
+i.e. before \":\".  Only used if `c-recognize-colon-labels' is set."
+  t (concat
+     ;; Don't allow string literals.
+     "[\"']\\|"
+     ;; All keywords except `c-label-kwds' and `c-protection-kwds'.
+     (c-make-keywords-re t
+       (set-difference (c-lang-const c-keywords)
+		       (append (c-lang-const c-label-kwds)
+			       (c-lang-const c-protection-kwds))
+		       :test 'string-equal)))
   ;; Also check for open parens in C++, to catch member init lists in
-  ;; constructors.
+  ;; constructors.  We normally allow it so that macros with arguments
+  ;; work in labels.
   c++ (concat "\\s\(\\|" (c-lang-const c-nonlabel-token-key)))
 (c-lang-defvar c-nonlabel-token-key (c-lang-const c-nonlabel-token-key))
 
 (c-lang-defconst c-opt-extra-label-key
-  "Optional regexp matching an access protection label in a class.
-Anything in a class that is followed by a colon (and that isn't
-detected by `c-nonlabel-token-key') is taken as a label.  This regexp
-can be used if there are labels that aren't recognized that way."
+  "Optional regexp matching labels.
+Normally, labels are detected according to `c-nonlabel-token-key',
+`c-decl-prefix-re' and `c-nonlabel-decl-prefix-re'.  This regexp can
+be used if there are additional labels that aren't recognized that
+way."
   t    nil
   objc (c-make-keywords-re t (c-lang-const c-protection-kwds)))
 (c-lang-defvar c-opt-extra-label-key (c-lang-const c-opt-extra-label-key))
@@ -2458,10 +2473,11 @@ can be used if there are labels that aren't recognized that way."
 (c-lang-defconst c-type-decl-end-used
   ;; Must be set in buffers where the `c-type' text property might be
   ;; used with the value `c-decl-end'.
-  t    (when (c-lang-const c-protection-kwds)
-	 ;; `c-decl-end' is used to mark the ends of access keys to
-	 ;; make interactive refontification work better.
-	 t)
+  ;;
+  ;; `c-decl-end' is used to mark the ends of labels and access keys
+  ;; to make interactive refontification work better.
+  t (or (c-lang-const c-recognize-colon-labels)
+	(and (c-lang-const c-label-kwds) t))
   ;; `c-decl-end' is used to mark the end of the @-style directives in
   ;; Objective-C.
   objc t)

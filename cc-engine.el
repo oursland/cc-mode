@@ -489,8 +489,9 @@ corresponding statement start.  If at the beginning of a statement,
 move to the closest containing statement if there is any.  This might
 also stop at a continuation clause.
 
-Labels are treated as part of the following statements if IGNORE-LABELS
-is non-nil.
+Labels are treated as part of the following statements if
+IGNORE-LABELS is non-nil.  (FIXME: Doesn't work if we stop at a known
+statement start keyword.)
 
 Macros are ignored unless point is within one, in which case the
 content of the macro is treated as normal code.  Aside from any normal
@@ -609,11 +610,21 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	;; Position of last stmt boundary character (e.g. ;).
 	boundary-pos
 	;; The position of the last sexp or bound that follows the
-	;; first found colon.  It's `start' if a colon is found just
-	;; after the start.
+	;; first found colon, i.e. the start of the nonlabel part of
+	;; the statement.  It's `start' if a colon is found just after
+	;; the start.
 	after-labels-pos
-	;; Like `after-labels-pos', but for the last found colon.
+	;; Like `after-labels-pos', but the first such position inside
+	;; a label, i.e. the start of the last label before the start
+	;; of the nonlabel part of the statement.
 	last-label-pos
+	;; The last position where a label is possible provided the
+	;; statement started there.  It's nil as long as no invalid
+	;; label content has been found (according to
+	;; `c-nonlabel-token-key'.  It's `start' if no valid label
+	;; content was found in the label.  Note that we might still
+	;; regard it a label if it starts with `c-label-kwds'.
+	label-good-pos
 	;; Symbol just scanned back over (e.g. 'while or 'boundary).
 	;; See above.
 	sym
@@ -907,27 +918,25 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		(throw 'loop nil))
 
 	      ;; Handle labels.
-	      (cond ((eq ignore-labels t)
-		     ;; Labels should be ignored - nothing to do.
-		     )
+	      (unless (eq ignore-labels t)
+		(when (numberp c-maybe-labelp)
+		  ;; `c-crosses-statement-barrier-p' has found a
+		  ;; colon, so we might be in a label now.
+		  (if after-labels-pos
+		      (if (not last-label-pos)
+			  (setq last-label-pos (or tok start)))
+		    (setq after-labels-pos (or tok start)))
+		  (setq c-maybe-labelp t
+			label-good-pos nil))
 
-		    ((and c-maybe-labelp
-			  (looking-at c-nonlabel-token-key))
-		     ;; We're in a potential label but found something
-		     ;; that isn't allowed in a label.
-		     (setq after-labels-pos nil
-			   last-label-pos nil
-			   c-maybe-labelp nil))
+		(when (and (not label-good-pos)
+			   (looking-at c-nonlabel-token-key))
+		  ;; We're in a potential label and it's the first
+		  ;; time we've found something that isn't allowed in
+		  ;; one.
+		  (setq label-good-pos (or tok start))))
 
-		    ((numberp c-maybe-labelp)
-		     ;; c-crosses-statement-barrier-p has found a colon,
-		     ;; so we might be in a label now.
-		     (if (not after-labels-pos)
-			 (setq after-labels-pos (or tok start)))
-		     (setq last-label-pos (or tok start)
-			   c-maybe-labelp t)))
-
-              ;; We've moved back by a sexp, so update the token positions. 
+	      ;; We've moved back by a sexp, so update the token positions.
 	      (setq sym nil
 		    pptok ptok
 		    ptok tok
@@ -951,16 +960,25 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	      (cond ((> start saved) (setq pos saved))
 		    ((= start saved) (setq ret 'up)))))
 
-	(when (and c-maybe-labelp
-		   (not ignore-labels)
+	(when (and (not ignore-labels)
+		   (eq c-maybe-labelp t)
 		   (not (eq ret 'beginning))
-		   after-labels-pos)
+		   after-labels-pos
+		   (or (not label-good-pos)
+		       (<= label-good-pos pos)
+		       (progn
+			 (goto-char (if (and last-label-pos
+					     (< last-label-pos start))
+					last-label-pos
+				      pos))
+			 (looking-at c-label-kwds-regexp))))
 	  ;; We're in a label.  Maybe we should step to the statement
 	  ;; after it.
 	  (if (< after-labels-pos start)
 	      (setq pos after-labels-pos)
 	    (setq ret 'label)
-	    (if (< last-label-pos start)
+	    (if (and last-label-pos (< last-label-pos start))
+		;; Might have jumped over several labels.  Go to the last one.
 		(setq pos last-label-pos)))))
 
       ;; Skip over the unary operators that can start the statement.
@@ -3172,7 +3190,9 @@ This function does not do any hidden buffer changes."
   ;; passed two arguments: The first is the end position of the token
   ;; that `c-decl-prefix-re' matched, or 0 for the implicit match at
   ;; bob.  The second is a flag that is t when the match is inside a
-  ;; macro.
+  ;; macro.  If CFD-FUN adds `c-decl-end' properties somewhere below
+  ;; the current spot, it should return non-nil so that the next
+  ;; search will find them.
   ;;
   ;; It's assumed that comment and strings are fontified in the
   ;; searched range.
@@ -3499,7 +3519,8 @@ This function does not do any hidden buffer changes."
 		   nil))))
 
 	(c-debug-put-decl-spot-faces cfd-match-pos (point))
-	(funcall cfd-fun cfd-match-pos (/= cfd-macro-end 0))
+	(if (funcall cfd-fun cfd-match-pos (/= cfd-macro-end 0))
+	    (setq cfd-prop-match nil))
 
 	(when (/= cfd-macro-end 0)
 	  ;; Restore limits if we did macro narrowment above.
@@ -3520,7 +3541,7 @@ This function does not do any hidden buffer changes."
 ;; bother with the scoping rules of the languages, but in practice the
 ;; same name is seldom used as both a type and something else in a
 ;; file, and we only use this as a last resort in ambiguous cases (see
-;; `c-forward-decl-or-cast').
+;; `c-forward-decl-or-cast-1').
 ;;
 ;; Template types in C++ are added here too but with the template
 ;; arglist replaced with "<>" in references or "<" for the one in the
@@ -3648,11 +3669,13 @@ This function does not do any hidden buffer changes."
 (defvar c-restricted-<>-arglists nil)
 
 ;; Dynamically bound variables that instructs `c-forward-name',
-;; `c-forward-type' and `c-forward-<>-arglist' to record the ranges of
-;; all the type and reference identifiers they encounter.  They will
-;; build lists on these variables where each element is a cons of the
-;; buffer positions surrounding each identifier.  This recording is
-;; only activated when `c-record-type-identifiers' is non-nil.
+;; `c-forward-type', `c-forward-<>-arglist',
+;; `c-forward-decl-or-cast-1', and `c-forward-label' to record the
+;; ranges of all the type and reference identifiers they encounter.
+;; They will build lists on these variables where each element is a
+;; cons of the buffer positions surrounding each identifier.  This
+;; recording is only activated when `c-record-type-identifiers' is
+;; non-nil.
 ;;
 ;; All known types that can't be identifiers are recorded, and also
 ;; other possible types if `c-promote-possible-types' is set.
@@ -3664,6 +3687,9 @@ This function does not do any hidden buffer changes."
 ;; Only the names in C++ template style references (e.g. "tmpl" in
 ;; "tmpl<a,b>::foo") are recorded as references, other references
 ;; aren't handled here.
+;;
+;; `c-forward-label' records the label identifier(s) on
+;; `c-record-ref-identifiers'.
 (defvar c-record-type-identifiers nil)
 (defvar c-record-ref-identifiers nil)
 
@@ -3833,6 +3859,10 @@ This function does not do any hidden buffer changes."
   ;;
   ;; `c-restricted-<>-arglists' controls how lenient the template
   ;; arglist recognition should be.
+  ;;
+  ;; This function records identifier ranges on
+  ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
+  ;; `c-record-type-identifiers' is non-nil.
 
   (let ((start (point))
 	;; If `c-record-type-identifiers' is set then activate
@@ -4052,6 +4082,10 @@ This function does not do any hidden buffer changes."
   ;; name is found, 'template if it's an identifier ending with an
   ;; angle bracket arglist, 'operator of it's an operator identifier,
   ;; or t if it's some other kind of name.
+  ;;
+  ;; This function records identifier ranges on
+  ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
+  ;; `c-record-type-identifiers' is non-nil.
 
   (let ((pos (point)) (start (point)) res id-start id-end
 	;; Turn off `c-promote-possible-types' here since we might
@@ -4210,6 +4244,11 @@ This function does not do any hidden buffer changes."
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
   ;; "enum {a, b, c} foo".
+  ;;
+  ;; This function records identifier ranges on
+  ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
+  ;; `c-record-type-identifiers' is non-nil.
+
   (let ((start (point)) pos res name-res id-start id-end id-range)
 
     ;; Skip leading type modifiers.  If any are found we know it's a
@@ -4405,6 +4444,9 @@ This function does not do any hidden buffer changes."
 
     res))
 
+
+;; Handling of large scale constructs like statements and declarations.
+
 ;; Macro used inside `c-forward-decl-or-cast-1'.  It ought to be a
 ;; defsubst or perhaps even a defun, but it contains lots of free
 ;; variables that refer to things inside `c-forward-decl-or-cast-1'.
@@ -4459,8 +4501,8 @@ This function does not do any hidden buffer changes."
   ;;
   ;; PRECEDING-TOKEN-END is the first position after the preceding
   ;; token, i.e. on the other side of the syntactic ws from the point.
-  ;; It's 0 if the point is at the first token in (the visible part
-  ;; of) the buffer.
+  ;; Use 0 if the point is at the first token in (the visible part of)
+  ;; the buffer.
   ;;
   ;; CONTEXT is a symbol that describes the context at the point:
   ;; 'decl     In a declaration context (perhaps inside a function
@@ -4474,6 +4516,10 @@ This function does not do any hidden buffer changes."
   ;; succession, it should be the position after the closest preceding
   ;; call where a cast was match.  In that case it's used to discover
   ;; chains of casts like "(a) (b) c".
+  ;;
+  ;; This function records identifier ranges on
+  ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
+  ;; `c-record-type-identifiers' is non-nil.
 
   (let (;; `start-pos' is used below to point to the start of the
 	;; first type, i.e. after any leading specifiers.  It might
@@ -4785,15 +4831,27 @@ This function does not do any hidden buffer changes."
 	  ;; Found no identifier.
 
 	  (if prev-at-type
-	      (when (or (= (point) start)
-			(and got-suffix
-			     (not got-prefix)
-			     (not got-parens)))
-		;; Got two types after each other, so if this isn't a cast
-		;; then the latter probably is the identifier and we should
-		;; back up to the previous type.
-		(setq backup-if-not-cast t)
-		(throw 'at-decl-or-cast t))
+	      (progn
+
+		(when (= (point) start)
+		  ;; Got a plain list of identifiers.  If a colon follows it's
+		  ;; a valid label.  Otherwise the last one probably is the
+		  ;; declared identifier and we should back up to the previous
+		  ;; type, providing it isn't a cast.
+		  (if (eq (char-after) ?:)
+		      (throw 'at-decl-or-cast nil)
+		    (setq backup-if-not-cast t)
+		    (throw 'at-decl-or-cast t)))
+
+		(when (and got-suffix
+			   (not got-prefix)
+			   (not got-parens))
+		  ;; Got a plain list of identifiers followed by some suffix.
+		  ;; If this isn't a cast then the last identifier probably is
+		  ;; the declared one and we should back up to the previous
+		  ;; type.
+		  (setq backup-if-not-cast t)
+		  (throw 'at-decl-or-cast t)))
 
 	    (when (eq at-type t)
 	      ;; If the type is known we know that there can't be any
@@ -5084,8 +5142,173 @@ This function does not do any hidden buffer changes."
 
       (cons type-end at-typedef)))))
 
-
-;; Handling of large scale constructs like statements and declarations.
+(defun c-forward-label (&optional assume-markup preceding-token-end limit)
+  ;; Assuming the point is at the beginning of a token, check if it
+  ;; starts a label and if so move over it and return t, otherwise
+  ;; don't move and return nil.  The end of the label is taken to be
+  ;; the end of the first submatch in `c-opt-extra-label-key' if it
+  ;; matched, otherwise it's the colon.  The point is directly after
+  ;; the end on return.  The terminating char is marked with
+  ;; `c-decl-end' to improve recognition of the following declaration
+  ;; or statement.
+  ;;
+  ;; If ASSUME-MARKUP is non-nil, it's assumed that the preceding
+  ;; label, if any, has been marked up like that.
+  ;;
+  ;; If PRECEDING-TOKEN-END is given, it should be the first position
+  ;; after the preceding token, i.e. on the other side of the
+  ;; syntactic ws from the point.  Use 0 if the point is at the first
+  ;; token in (the visible part of) the buffer.
+  ;;
+  ;; The optional LIMIT limits the forward scan for the colon.
+  ;;
+  ;; This function records the ranges of the label symbols on
+  ;; `c-record-ref-identifiers' if `c-record-type-identifiers' (!) is
+  ;; non-nil.
+
+  (let ((start (point)))
+    (cond
+     ((looking-at c-label-kwds-regexp)
+      (let ((kwd-end (match-end 1)))
+	;; Record only the keyword itself for fontification, since in
+	;; case labels the following is a constant expression and not
+	;; a label.
+	(when c-record-type-identifiers
+	  (c-record-ref-id (cons (match-beginning 1) kwd-end)))
+
+	;; Find the label end.
+	(goto-char kwd-end)
+	(if (and (c-syntactic-re-search-forward
+		  ;; Stop on chars that aren't allowed in expressions,
+		  ;; and on operator chars that would be meaningless
+		  ;; there.  FIXME: This doesn't cope with ?: operators.
+		  "[;{=,@]\\|\\(\\=\\|[^:]\\):\\([^:]\\|\\'\\)"
+		  limit t t nil 1)
+		 (match-beginning 2))
+
+	    (progn
+	      (goto-char (match-beginning 2))
+	      (c-put-char-property (1- (point)) 'c-type 'c-decl-end)
+	      t)
+
+	  ;; It's an unfinished label.  We consider the keyword enough
+	  ;; to recognize it as a label, so that it gets fontified.
+	  ;; Leave the point at the end of it, but don't put any
+	  ;; `c-decl-end' marker.
+	  (goto-char kwd-end)
+	  t)))
+
+     ((and c-opt-extra-label-key
+	   (looking-at c-opt-extra-label-key))
+      ;; For a `c-opt-extra-label-key' match, we record the whole
+      ;; thing for fontification.  That's to get the leading '@' in
+      ;; Objective-C protection labels fontified.
+      (goto-char (match-end 1))
+      (when c-record-type-identifiers
+	(c-record-ref-id (cons (match-beginning 1) (point))))
+      (c-put-char-property (1- (point)) 'c-type 'c-decl-end)
+      t)
+
+     ((and c-recognize-colon-labels
+
+	   ;; A colon label must have something before the colon.
+	   (not (eq (char-after) ?:))
+
+	   ;; Check that we're not after a token that can't precede a label.
+	   (or
+	    ;; Trivially succeeds when there's no preceding token.
+	    (if preceding-token-end
+		(<= preceding-token-end (point-min))
+	      (save-excursion
+		(c-backward-syntactic-ws)
+		(setq preceding-token-end (point))
+		(bobp)))
+
+	    ;; Check if we're after a label, if we're after a closing
+	    ;; paren that belong to statement, and with
+	    ;; `c-label-prefix-re'.  It's done in different order
+	    ;; depending on `assume-markup' since the checks have
+	    ;; different expensiveness.
+	    (if assume-markup
+		(or
+		 (eq (c-get-char-property (1- preceding-token-end) 'c-type)
+		     'c-decl-end)
+
+		 (save-excursion
+		   (goto-char (1- preceding-token-end))
+		   (c-beginning-of-current-token)
+		   (looking-at c-label-prefix-re))
+
+		 (and (eq (char-before preceding-token-end) ?\))
+		      (c-after-conditional)))
+
+	      (or
+	       (save-excursion
+		 (goto-char (1- preceding-token-end))
+		 (c-beginning-of-current-token)
+		 (looking-at c-label-prefix-re))
+
+	       (cond
+		((eq (char-before preceding-token-end) ?\))
+		 (c-after-conditional))
+
+		((eq (char-before preceding-token-end) ?:)
+		 ;; Might be after another label, so check it recursively.
+		 (save-excursion
+		   (goto-char (1- preceding-token-end))
+		   ;; Essentially the same as the
+		   ;; `c-syntactic-re-search-forward' regexp below.
+		   (c-syntactic-skip-backward "^]:?;}=*/%&|,<>!@+-" nil t)
+		   (let ((pte (point))
+			 ;; If the caller turned on recording for us,
+			 ;; it shouldn't apply when we check the
+			 ;; preceding label.
+			 c-record-type-identifiers)
+		     (c-forward-syntactic-ws)
+		     (c-forward-label nil pte start))))))))
+
+	   ;; Check that the next nonsymbol token is ":".  Allow '('
+	   ;; for the sake of macro arguments.  FIXME: Should build
+	   ;; this regexp from the language constants.
+	   (c-syntactic-re-search-forward
+	    "[[:?;{=*/%&|,<>!@+-]" limit t t)
+	   (eq (char-before) ?:)
+	   (not (eq (char-after) ?:)))
+
+      (save-restriction
+	(narrow-to-region start (point))
+
+	;; Check that `c-nonlabel-token-key' doesn't match anywhere.
+	(catch 'check-label
+	  (goto-char start)
+	  (while (progn
+		   (when (looking-at c-nonlabel-token-key)
+		     (goto-char start)
+		     (throw 'check-label nil))
+		   (and (c-safe (c-forward-sexp)
+				(c-forward-syntactic-ws)
+				t)
+			(not (eobp)))))
+
+	  ;; Record the identifiers in the label for fontification, unless
+	  ;; it begins with `c-label-kwds' in which case the following
+	  ;; identifiers are part of a (constant) expression that
+	  ;; shouldn't be fontified.
+	  (when (and c-record-type-identifiers
+		     (progn (goto-char start)
+			    (not (looking-at c-label-kwds-regexp))))
+	    (while (re-search-forward c-symbol-key nil t)
+	      (c-record-ref-id (cons (match-beginning 0)
+				     (match-end 0)))))
+
+	  (c-put-char-property (1- (point-max)) 'c-type 'c-decl-end)
+	  (goto-char (point-max))
+	  t)))
+
+     (t
+      ;; Not a label.
+      (goto-char start)
+      nil))))
 
 (defun c-beginning-of-inheritance-list (&optional lim)
   ;; Go to the first non-whitespace after the colon that starts a
@@ -6599,7 +6822,7 @@ This function does not do any hidden buffer changes."
 		 ((save-excursion
 		    (goto-char indent-point)
 		    (back-to-indentation)
-		    (looking-at c-label-key))
+		    (c-forward-label))
 		  (c-add-stmt-syntax 'substatement-label nil nil
 				     containing-sexp paren-state))
 		 (t
@@ -6613,6 +6836,53 @@ This function does not do any hidden buffer changes."
 					 placeholder
 					 lim
 					 paren-state)))
+
+	 ;; CASE 14: A case or default label
+	 ((looking-at c-label-kwds-regexp)
+	  (if containing-sexp
+	      (progn
+		(goto-char containing-sexp)
+		(setq lim (c-most-enclosing-brace c-state-cache
+						  containing-sexp))
+		(c-backward-to-block-anchor lim)
+		(c-add-stmt-syntax 'case-label nil t lim paren-state))
+	    ;; Got a bogus label at the top level.  In lack of better
+	    ;; alternatives, anchor it on (point-min).
+	    (c-add-syntax 'case-label (point-min))))
+
+	 ;; CASE 15: any other label
+	 ((save-excursion
+	    (back-to-indentation)
+	    (and (not (looking-at c-syntactic-ws-start))
+		 (c-forward-label)))
+	  (cond (containing-sexp
+		 (goto-char containing-sexp)
+		 (setq lim (c-most-enclosing-brace c-state-cache
+						   containing-sexp))
+		 (save-excursion
+		   (setq tmpsymbol
+			 (if (and (eq (c-beginning-of-statement-1 lim) 'up)
+				  (looking-at "switch\\>[^_]"))
+			     ;; If the surrounding statement is a switch then
+			     ;; let's analyze all labels as switch labels, so
+			     ;; that they get lined up consistently.
+			     'case-label
+			   'label)))
+		 (c-backward-to-block-anchor lim)
+		 (c-add-stmt-syntax tmpsymbol nil t lim paren-state))
+
+		(inclass-p
+		 (setq placeholder (c-add-class-syntax 'inclass inclass-p
+						       paren-state))
+		 ;; Append access-label with the same anchor point as
+		 ;; inclass gets.
+		 (c-append-syntax 'access-label placeholder))
+
+		(t
+		 ;; A label on the top level.  Treat it as a class
+		 ;; context.  (point-min) is the closest we get to the
+		 ;; class open brace.
+		 (c-add-syntax 'access-label (point-min)))))
 
 	 ;; CASE 4: In-expression statement.  C.f. cases 7B, 16A and
 	 ;; 17E.
@@ -6791,22 +7061,6 @@ This function does not do any hidden buffer changes."
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'func-decl-cont (c-point 'boi))
 	      )))
-
-	   ;; CASE 5E: A class-level label.
-	   ((and inclass-p
-		 (or (and c-opt-extra-label-key
-			  (looking-at c-opt-extra-label-key))
-		     (save-excursion
-		       (and
-			(c-syntactic-re-search-forward
-			 "\\s.\\|\\s\(\\|\\s\"" nil t)
-			(eq (char-before) ?:)
-			(not (eq (char-after) ?:)) ; Check for "::" operator.
-			(eq (c-beginning-of-statement-1 lim) 'label)))))
-	    (setq placeholder (c-add-class-syntax 'inclass inclass-p
-						  paren-state))
-	    ;; Append access-label with the same anchor point as inclass gets.
-	    (c-append-syntax 'access-label placeholder))
 
 	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
@@ -7385,29 +7639,6 @@ This function does not do any hidden buffer changes."
 				       placeholder
 				       containing-sexp
 				       paren-state))
-
-	 ;; CASE 14: A case or default label
-	 ((looking-at c-label-kwds-regexp)
-	  (goto-char containing-sexp)
-	  (setq lim (c-most-enclosing-brace c-state-cache containing-sexp))
-	  (c-backward-to-block-anchor lim)
-	  (c-add-stmt-syntax 'case-label nil t lim paren-state))
-
-	 ;; CASE 15: any other label
-	 ((looking-at c-label-key)
-	  (goto-char containing-sexp)
-	  (setq lim (c-most-enclosing-brace c-state-cache containing-sexp))
-	  (save-excursion
-	    (setq tmpsymbol
-		  (if (and (eq (c-beginning-of-statement-1 lim) 'up)
-			   (looking-at "switch\\>[^_]"))
-		      ;; If the surrounding statement is a switch then
-		      ;; let's analyze all labels as switch labels, so
-		      ;; that they get lined up consistently.
-		      'case-label
-		    'label)))
-	  (c-backward-to-block-anchor lim)
-	  (c-add-stmt-syntax tmpsymbol nil t lim paren-state))
 
 	 ;; CASE 16: block close brace, possibly closing the defun or
 	 ;; the class
