@@ -1249,7 +1249,7 @@ will be handled."
 
 (c-lang-defconst c-modifier-kwds
   "Keywords that can prefix normal declarations of identifiers
-\(and typically acts as flags).  Things like argument declarations
+\(and typically act as flags).  Things like argument declarations
 inside function headers are also considered declarations in this
 sense.
 
@@ -1940,7 +1940,9 @@ is in effect or not."
   ;; Also match a single ":" for protection labels.  We cheat a little
   ;; and require a symbol immediately before to avoid false matches
   ;; when starting directly on a single ":", which can be the start of
-  ;; the base class initializer list in a constructor.
+  ;; the base class initializer list in a constructor.  FIXME: That
+  ;; check breaks the assumption above with max one token, and
+  ;; `c-find-decl-spots' doesn't seem to cope with it either.
   c++ "\\([\{\}\(\);,<]+\\|\\(\\w\\|\\s_\\):\\)\\([^:]\\|\\'\\)"
   ;; Additionally match the protection directives in Objective-C.
   ;; Note that this doesn't cope with the longer directives, which we
@@ -2022,11 +2024,15 @@ is in effect when this is matched (see `c-identifier-syntax-table')."
   (c c++ objc) (concat
 		"\\("
 		"[\)\[\(]"
-		"\\|"
-		;; "throw" in `c-type-modifier-kwds' is followed by a
-		;; parenthesis list, but no extra measures are
-		;; necessary to handle that.
-		(regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>"
+		(if (c-lang-const c-type-modifier-kwds)
+		    (concat
+		     "\\|"
+		     ;; "throw" in `c-type-modifier-kwds' is followed
+		     ;; by a parenthesis list, but no extra measures
+		     ;; are necessary to handle that.
+		     (regexp-opt (c-lang-const c-type-modifier-kwds) t)
+		     "\\>")
+		  "")
 		"\\)")
   (java idl) "\\([\[\(]\\)")
 (c-lang-defvar c-type-decl-suffix-key (c-lang-const c-type-decl-suffix-key)
