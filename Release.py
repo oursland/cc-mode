@@ -2,15 +2,12 @@
 
 """Manage releases of CC Mode.
 
-Usage: %(program)s [-b] [-t|-T] [-p] [-d] [-a] [-E] [-i] [-h]
+Usage: %(program)s [-b] [-t|-T] [-p] [-d] [-a] [-E] [-h]
 
 Where:
 
     --bump
-    -b      - bump to the next minor rev number
-
-    --incr
-    -i      - increment the release version number
+    -b      - increment the next minor rev number and bump
 
     --tag
     -t      - tag all releaseable files with new version number
@@ -26,7 +23,7 @@ Where:
     -d      - create the documentation packages
 
     --all
-    -a      - do all of the above
+    -a      - do all of the above, except bump
 
     --EMACS
     -E      - package up for standard XEmacs/Emacs release
@@ -273,9 +270,8 @@ def make_docs():
 def main():
     try:
 	opts, args = getopt.getopt(
-	    sys.argv[1:], 'abtpdhETi',
-	    ['all', 'bump', 'tag', 'TAG', 'package', 'docs', 'help',
-	     'incr', 'EMACS'])
+	    sys.argv[1:], 'abtpdhET',
+	    ['all', 'bump', 'tag', 'TAG', 'package', 'docs', 'help', 'EMACS'])
     except getopt.error, msg:
 	print msg
 	usage(1)
@@ -283,26 +279,25 @@ def main():
     if args:
 	usage(1)
 
-    bump = None
     tag = None
     untag_first = None
     package = None
     docs = None
     fat = 1
     help = None
+    bump = None
     incr = None
 
     for opt, arg in opts:
 	if opt in ('-h', '--help'):
 	    help = 1
 	elif opt in ('-a', '--all'):
-	    bump = 1
 	    tag = 1
 	    package = 1
 	    docs = 1
-	    incr = 1
 	elif opt in ('-b', '--bump'):
 	    bump = 1
+	    incr = 1
 	elif opt in ('-t', '--tag', '-T', '--TAG'):
 	    tag = 1
 	    if (opt[1] == '-' and opt[2] == 'T') or opt[1] == 'T':
@@ -313,8 +308,6 @@ def main():
 	    docs = 1
 	elif opt in ('-E', '--EMACS'):
 	    fat = None
-	elif opt in ('-i', '--incr'):
-	    incr = 1
 
     if help:
 	usage(0)
