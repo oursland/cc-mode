@@ -34,8 +34,9 @@ changes</a>.
 	<code>c-delete-function</code>), and the
 	<code>BackSpace</code> keysym to
 	<code>c-electric-backspace</code> (which runs
-	<code>c-backspace-function</code>).  See the CC Mode manual
-	for details.
+	<code>c-backspace-function</code>).  See the
+	<a href="cc-mode.html/Hungry-deletion-of-whitespace.html">
+	CC Mode manual</a> for details.
 
     <p><li>The single <code>cc-mode.el</code> file was simply too
 	unwieldy so I have split the file up.  See the
@@ -43,7 +44,8 @@ changes</a>.
 
     <p><li>Also, all user variables have been converted to Per
 	Abrahamsen's <dfn>Custom</dfn> library, and all support for
-	older Emacsen have been ripped out.  See the release notes
+	older Emacsen have been ripped out.  See the
+	<a href="#compat">release notes</a>
 	below for details of running CC Mode 5 in your version of
 	Emacs.
 
