@@ -3,15 +3,15 @@
   include ("header.h");
 ?>
 
-<p><strong>CC Mode is a GNU Emacs and XEmacs mode for editing C and other
-languages with similar syntax; currently C++, Objective-C, Java, CORBA's
-IDL, and Pike. It's a standard package in both GNU Emacs and
+<p><strong>CC Mode is an Emacs and XEmacs mode for editing C and other
+languages with similar syntax; currently C++, Objective-C, Java,
+CORBA's IDL, and Pike. It's a standard package in both FSF Emacs and
 XEmacs.</strong>
 
-<p>CC Mode is brought to you by the current CC Mode maintainer Martin
-Stjernholm.  Several people before him have helped make CC Mode what
-it is today, notably Barry Warsaw who took care of BOCM (Boring Old C
-Mode) in 1992 and revamped it to CC Mode.
+<p>CC Mode is brought to you by Martin Stjernholm, the current CC Mode
+maintainer.  Several people before him have helped make CC Mode what
+it is today, notably Barry Warsaw who took over of BOCM (Boring Old C
+Mode) back in 1992 and revamped it to CC Mode.
 
 <p>The <a href="release.php">current release</a> is version
 5.28.  A list of <a href="changes-latest.php">recent changes</a> are
