@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.60 $
+@comment manual version: $Revision: 2.61 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1997-01-21 21:52:42 $
+@comment Last modification: $Date: 1997-02-03 16:36:03 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.60 $)
+@center (manual revision: $Revision: 2.61 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -2967,11 +2967,6 @@ can cause @code{cc-mode} to perform fairly badly.
 This section identifies some of the coding styles to watch out for, and
 suggests some workarounds that you can use to improve performance.
 
-Note that this is an area that will get a lot of attention in
-@code{cc-mode} version 5.  The mode should end up being much faster, at
-the expense of dropping Emacs 18 support, owing to the implementation of
-syntactic analysis caching.
-
 Because @code{cc-mode} has to scan the buffer backwards from the current
 insertion point, and because C's syntax is fairly difficult to parse in
 the backwards direction, @code{cc-mode} often tries to find the nearest
@@ -2993,6 +2988,19 @@ this variable is only defined in Emacs 19.}, however that ``something
 reasonable'' is difficult to define, so @code{cc-mode} doesn't do it
 for you.
 
+@vindex c-Java-defun-prompt-regexp
+@vindex Java-defun-prompt-regexp (c-)
+A special note about @code{defun-prompt-regexp} in Java mode: while much
+of the early sample Java code seems to encourage a style where the brace
+that opens a class is hung on the right side of the line, this is not a
+good style to pursue in Emacs.  @code{cc-mode} comes with a variable
+@code{c-Java-defun-prompt-regexp} which tries to define a regular
+expression usable for this style, but there are problems with it.  In
+some cases it can cause @code{beginning-of-defun} to hang@footnote{This
+has been observed in Emacs 19.34 and XEmacs 19.15.}.  For this reason,
+it is not used by default, but if you feel adventurous, you can set
+@code{defun-prompt-regexp} to it in your mode hook.
+
 You will probably notice pathological behavior from @code{cc-mode} when
 working in files containing large amounts of cpp macros.  This is
 because @code{cc-mode} cannot quickly skip backwards over these lines.
@@ -3002,11 +3010,11 @@ because @code{cc-mode} cannot quickly skip backwards over these lines.
 Previous versions of @code{cc-mode} had potential performance problems
 when recognizing ``K&R'' style function argument declarations.  This was
 because there are ambiguities in the C syntax when K&R style argument
-lists are used (it is hard to distinguish them from top-level
-declarations).  @code{cc-mode} has adopted BOCM's convention for
+lists are used@footnote{It is hard to distinguish them from top-level
+declarations.}.  @code{cc-mode} has adopted BOCM's convention for
 limiting the search: it assumes that argdecls are indented at least one
 space, and that the function headers are not indented at all.  With
-current versions of @code{cc-mode},
+current versions of @code{cc-mode}, user customization of
 @code{c-recognize-knr-p} is deprecated.
 
 @cindex @file{cc-lobotomy.el} file
