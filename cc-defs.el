@@ -460,6 +460,19 @@ continuations."
    ;; fallback; shouldn't get here
    (t (mark t))))
 
+(put 'c-mode    'c-mode-prefix "c-")
+(put 'c++-mode  'c-mode-prefix "c++-")
+(put 'objc-mode 'c-mode-prefix "objc-")
+(put 'java-mode 'c-mode-prefix "java-")
+(put 'idl-mode  'c-mode-prefix "idl-")
+(put 'pike-mode 'c-mode-prefix "pike-")
+
+(defsubst c-mode-var (suffix)
+  ;; Prefix the current mode prefix (e.g. "c-") to SUFFIX and return
+  ;; the value of the variable with that name.
+  (symbol-value (intern (concat (get c-buffer-is-cc-mode 'c-mode-prefix)
+				suffix))))
+
 (defsubst c-face-name-p (facename)
   ;; Return t if FACENAME is the name of a face.  This method is
   ;; necessary since facep in XEmacs only returns t for the actual
