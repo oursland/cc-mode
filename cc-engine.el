@@ -512,7 +512,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       ;; that we've moved.
       (while (progn
 	       (setq pos (point))
-               (if (c-mode-is-new-awk-p)
+               (if (c-major-mode-is 'awk-mode)
                    (c-awk-backward-syntactic-ws)
                  (c-backward-syntactic-ws))
 	       (/= (skip-chars-backward "-+!*&~@`#") 0))) ; ACM, 2002/5/31;
@@ -526,13 +526,13 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       (if (and (memq (char-before) delims)
 	       (progn (forward-char -1)
 		      (setq saved (point))
-		      (if (c-mode-is-new-awk-p)
+		      (if (c-major-mode-is 'awk-mode)
                           (c-awk-backward-syntactic-ws)
                         (c-backward-syntactic-ws))
 		      (or (memq (char-before) delims)
 			  (memq (char-before) '(?: nil))
 			  (eq (char-syntax (char-before)) ?\()
-                          (and (c-mode-is-new-awk-p)
+                          (and (c-major-mode-is 'awk-mode)
                                (c-awk-after-logical-semicolon))))) ; ACM 2002/6/22
           ;; ACM, 2002/7/20: What about giving a limit to the above function?
           ;; ACM, 2003/6/16: The above two lines (checking for
@@ -667,7 +667,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			  ((eq sym 'while)
 			   (when (or (not pptok)
 				     (memq (char-after pptok) delims)
-                                     (and (c-mode-is-new-awk-p)
+                                     (and (c-major-mode-is 'awk-mode)
                                           (or
                                         ;; might we be calling this from
                                         ;; c-awk-after-if-do-for-while-condition-p?
@@ -720,7 +720,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			     ;; If we started inside a macro then this
 			     ;; sexp is always interesting.
 			     nil)
-			    ((not (c-mode-is-new-awk-p)) ; Changed from t, ACM 2002/6/25
+			    ((not (c-major-mode-is 'awk-mode)) ; Changed from t, ACM 2002/6/25
 			     ;; Otherwise check that we didn't step
 			     ;; into a macro from the end.
 			     (let ((macro-start
@@ -822,7 +822,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       ;; Skip over the unary operators that can start the statement.
       (goto-char pos)
       (while (progn
-	       (if (c-mode-is-new-awk-p)
+	       (if (c-major-mode-is 'awk-mode)
                    (c-awk-backward-syntactic-ws)
                  (c-backward-syntactic-ws))
 	       (/= (skip-chars-backward "-+!*&~@`#") 0)) ; Hopefully the # won't hurt awk.
@@ -848,7 +848,7 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 		      (< (point) to))
 	  (if (setq lit-range (c-literal-limits from)) ; Have we landed in a string/comment?
 	      (progn (goto-char (setq from (cdr lit-range)))
-                     (if (and (c-mode-is-new-awk-p) (bolp)) ; ACM 2002/7/17. Make sure we
+                     (if (and (c-major-mode-is 'awk-mode) (bolp)) ; ACM 2002/7/17. Make sure we
                          (backward-char))) ; don't skip over a virtual semi-colon after an awk comment.  :-(
 	    (cond ((eq (char-after) ?:)
 		   (forward-char)
@@ -865,7 +865,7 @@ single `?' is found, then `c-maybe-labelp' is cleared."
                   ((and (eolp)  ; Can only happen in AWK Mode
                         (not (c-awk-completed-stmt-ws-ends-line-p)))
                    (forward-char))
-                  ((and (c-mode-is-new-awk-p)
+                  ((and (c-major-mode-is 'awk-mode)
                         (bolp) lit-range ; awk: comment/string ended prev line.
                         (not (c-awk-completed-stmt-ws-ends-prev-line-p))))
 		  (t (throw 'done (point))))))
@@ -4258,7 +4258,7 @@ brace."
   ;; Note: This test is easily fooled.  It only works reasonably well
   ;; in the situations where `c-guess-basic-syntax' uses it.
   (save-excursion
-    (if (c-mode-is-new-awk-p)
+    (if (c-major-mode-is 'awk-mode)
         (c-awk-backward-syntactic-ws lim)
       (c-backward-syntactic-ws lim))
     (let ((checkpoint (point)))
@@ -5612,7 +5612,7 @@ This function does not do any hidden buffer changes."
 	 ;; CASE 18: A substatement we can recognize by keyword.
 	 ((save-excursion
 	    (and c-opt-block-stmt-key
-		 (if (c-mode-is-new-awk-p)
+		 (if (c-major-mode-is 'awk-mode)
                      (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
                    (not (eq char-before-ip ?\;)))
 		 (not (memq char-after-ip '(?\) ?\] ?,)))
@@ -6067,7 +6067,7 @@ This function does not do any hidden buffer changes."
 	    (c-add-syntax 'objc-method-intro (c-point 'boi)))
            ;; CASE 5P: AWK pattern or function or continuation
            ;; thereof.
-           ((c-mode-is-new-awk-p)
+           ((c-major-mode-is 'awk-mode)
             (setq placeholder (point))
             (c-add-stmt-syntax
              (if (and (eq (c-beginning-of-statement-1) 'same)
@@ -6109,7 +6109,7 @@ This function does not do any hidden buffer changes."
 		(c-backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
-                  (if (c-mode-is-new-awk-p)
+                  (if (c-major-mode-is 'awk-mode)
                       (not (c-awk-prev-line-incomplete-p))
                     (memq (char-before) '(?\; ?})))
 		  (and (c-major-mode-is 'objc-mode)
@@ -6291,7 +6291,7 @@ This function does not do any hidden buffer changes."
 	    (c-add-syntax 'inher-cont (point))
 	    )))
 	 ;; CASE 9: we are inside a brace-list
-	 ((and (not (c-mode-is-new-awk-p))  ; Maybe this isn't needed (ACM, 2002/3/29)
+	 ((and (not (c-major-mode-is 'awk-mode))  ; Maybe this isn't needed (ACM, 2002/3/29)
                (setq special-brace-list
                      (or (and c-special-brace-lists
                               (save-excursion
@@ -6382,7 +6382,7 @@ This function does not do any hidden buffer changes."
 		  ))
 	     ))))
 	 ;; CASE 10: A continued statement or top level construct.
-	 ((and (if (c-mode-is-new-awk-p)
+	 ((and (if (c-major-mode-is 'awk-mode)
                    (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
                  (and (not (memq char-before-ip '(?\; ?:)))
                       (or (not (eq char-before-ip ?}))
