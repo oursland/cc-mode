@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.304 $
-;; Last Modified:   $Date: 1996-06-07 00:14:24 $
+;; Version:         $Revision: 4.305 $
+;; Last Modified:   $Date: 1996-06-07 14:31:47 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1385,7 +1385,7 @@ Key bindings:
  	c-baseclass-key nil
 	c-recognize-knr-p nil
  	c-access-key c-Java-access-key)
-  (c-set-style "Java")
+  (c-set-style "java")
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook))
 (setq c-list-of-mode-names (cons "Java" c-list-of-mode-names))
@@ -4942,7 +4942,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.304 $"
+(defconst c-version "$Revision: 4.305 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
