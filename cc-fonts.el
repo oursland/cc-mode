@@ -930,16 +930,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ;; "some_other_variable" as an identifier, and the latter will not
       ;; correct itself until the second line is changed.  To avoid that we
       ;; narrow to the limit if the region to fontify is a single line.
-      (when (<= limit (c-point 'bonl))
-	(narrow-to-region
-	 (point-min)
-	 (save-excursion
-	   ;; Narrow after any operator chars following the limit though, since
-	   ;; those characters can be useful in recognizing a declaration (in
-	   ;; particular the '{' that opens a function body after the header).
-	   (goto-char limit)
-	   (skip-chars-forward c-nonsymbol-chars)
-	   (point))))
+      (narrow-to-region
+       (point-min)
+       (if (<= limit (c-point 'bonl))
+	   (save-excursion
+	     ;; Narrow after any operator chars following the limit though,
+	     ;; since those characters can be useful in recognizing a
+	     ;; declaration (in particular the '{' that opens a function body
+	     ;; after the header).
+	     (goto-char limit)
+	     (skip-chars-forward c-nonsymbol-chars)
+	     (point))
+	 limit))
 
       (c-find-decl-spots
        limit
