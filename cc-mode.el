@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.250 $
-;; Last Modified:   $Date: 1992-12-31 22:17:36 $
+;; Version:         $Revision: 2.251 $
+;; Last Modified:   $Date: 1993-01-07 22:22:53 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-31 22:17:36 $|$Revision: 2.250 $|
+;; |$Date: 1993-01-07 22:22:53 $|$Revision: 2.251 $|
 
 ;;; Code:
 
@@ -193,6 +193,12 @@ styles in a single mode.")
   (define-key c++-mode-map ")"         'c++-tame-insert)
   (define-key c++-mode-map "\C-c\C-b"  'c++-submit-bug-report)
   (define-key c++-mode-map "\C-c\C-v"  'c++-version)
+  ;; these are necessary because default forward-sexp and
+  ;; backward-sexp don't automatically let-bind
+  ;; parse-sexp-ignore-comments, which is needed for them to work
+  ;; properly in a C++ buffer.
+  (define-key c++-mode-map "\e\C-f"    'c++-forward-sexp)
+  (define-key c++-mode-map "\e\C-b"    'c++-backward-sexp)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -422,7 +428,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.250 $
+  "Major mode for editing C++ code.  $Revision: 2.251 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -630,7 +636,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.250 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.251 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1302,6 +1308,16 @@ characters to escape are defined in the variable c++-untame-characters."
 	   (forward-char)
 	   (backward-sexp 1))
 	  (t (message "Could not find matching paren.")))))
+
+(defun c++-forward-sexp (&optional arg)
+  (interactive "p")
+  (let ((parse-sexp-ignore-comments t))
+    (forward-sexp arg)))
+
+(defun c++-backward-sexp (&optional arg)
+  (interactive "p")
+  (let ((parse-sexp-ignore-comments t))
+    (backward-sexp arg)))
 
 
 ;; ======================================================================
@@ -2340,7 +2356,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.250 $"
+(defconst c++-version "$Revision: 2.251 $"
   "c++-mode version number.")
 
 (defun c++-version ()
