@@ -168,26 +168,38 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
   ;; position has been moved.
   ;;
   ;; Common state:
-  ;;   "else": Push state, goto state `else':
-  ;;     boundary: Goto state `else-boundary':
-  ;;       "if": Pop state.
-  ;;       boundary: Error, pop state.
-  ;;       other: See common state.
-  ;;     other: Error, pop state, retry token.
-  ;;   "while": Push state, goto state `while':
-  ;;     boundary: Save position, goto state `while-boundary':
-  ;;       "do": Pop state.
-  ;;       boundary: Restore position if it's not at start, pop state.
-  ;;       other: See common state.
-  ;;     other: Pop state, retry token.
-  ;;   "catch" or "finally": Push state, goto state `catch':
-  ;;     boundary: Goto state `catch-boundary':
-  ;;       "try": Pop state.
-  ;;       "catch": Goto state `catch'.
-  ;;       boundary: Error, pop state.
-  ;;       other: See common state.
-  ;;     other: Error, pop state, retry token.
+  ;;   "else": Push state, goto state `else'.
+  ;;   "while": Push state, goto state `while'.
+  ;;   "catch" or "finally": Push state, goto state `catch'.
   ;;   other: Do nothing special.
+  ;;
+  ;; State `else':
+  ;;   boundary: Goto state `else-boundary'.
+  ;;   other: Error, pop state, retry token.
+  ;;
+  ;; State `else-boundary':
+  ;;   "if": Pop state.
+  ;;   boundary: Error, pop state.
+  ;;   other: See common state.
+  ;;
+  ;; State `while':
+  ;;   boundary: Save position, goto state `while-boundary'.
+  ;;   other: Pop state, retry token.
+  ;;
+  ;; State `while-boundary':
+  ;;   "do": Pop state.
+  ;;   boundary: Restore position if it's not at start, pop state.
+  ;;   other: See common state.
+  ;;
+  ;; State `catch':
+  ;;   boundary: Goto state `catch-boundary'.
+  ;;   other: Error, pop state, retry token.
+  ;;
+  ;; State `catch-boundary':
+  ;;   "try": Pop state.
+  ;;   "catch": Goto state `catch'.
+  ;;   boundary: Error, pop state.
+  ;;   other: See common state.
   ;;
   ;; In addition to the above there is some special handling of labels
   ;; and macros.
