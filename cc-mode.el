@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.203 $
-;; Last Modified:   $Date: 1995-05-01 20:31:13 $
+;; Version:         $Revision: 4.204 $
+;; Last Modified:   $Date: 1995-05-03 22:52:32 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-01 20:31:13 $|$Revision: 4.203 $|
+;; |$Date: 1995-05-03 22:52:32 $|$Revision: 4.204 $|
 
 ;;; Code:
 
@@ -1879,13 +1879,17 @@ value of `c-cleanup-list'."
 (defun c-read-offset (langelem)
   ;; read new offset value for LANGELEM from minibuffer. return a
   ;; legal value only
-  (let ((oldoff (format "%s" (cdr-safe (assq langelem c-offsets-alist))))
-	(errmsg "Offset must be int, func, var, or in [+,-,++,--,*,/]: ")
-	(prompt "Offset: ")
-	offset input interned)
+  (let* ((oldoff (cdr-safe (assq langelem c-offsets-alist)))
+	 (defstr (format "(default %s): " oldoff))
+	 (errmsg (concat "Offset must be int, func, var, "
+			 "or in [+,-,++,--,*,/] "
+			 defstr))
+	 (prompt (concat "Offset " defstr))
+	 offset input interned)
     (while (not offset)
-      (setq input (read-string prompt oldoff)
-	    offset (cond ((string-equal "+" input) '+)
+      (setq input (read-string prompt)
+	    offset (cond ((string-equal "" input) oldoff)  ; default
+			 ((string-equal "+" input) '+)
 			 ((string-equal "-" input) '-)
 			 ((string-equal "++" input) '++)
 			 ((string-equal "--" input) '--)
@@ -4570,7 +4574,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.203 $"
+(defconst c-version "$Revision: 4.204 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
