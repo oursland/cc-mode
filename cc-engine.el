@@ -4849,34 +4849,47 @@ comment at the start of cc-engine.el for more info."
 
 (defun c-forward-decl-or-cast-1 (preceding-token-end context last-cast-end)
   ;; Move forward over a declaration or a cast if at the start of one.
-  ;; The point is assumed to be at the start of some token.
+  ;; The point is assumed to be at the start of some token.  The point
+  ;; is clobbered on return if no declaration or cast is recognized.
   ;;
-  ;; If a declaration is parsed: The point is left at the first token
-  ;; after the first complete declarator, if there is one.  The return
-  ;; value is a cons where the car is the position of the first token
-  ;; in the declarator.  Some examples:
-  ;;    void foo (int a, char *b) stuff ...
-  ;;     car ^                    ^ point
-  ;;    float (*a)[], b;
-  ;;      car ^     ^ point
-  ;;    unsigned int a = c_style_initializer, b;
-  ;;             car ^ ^ point
-  ;;    unsigned int a (cplusplus_style_initializer), b;
-  ;;             car ^                              ^ point (might change)
-  ;;    class Foo : public Bar {}
-  ;;      car ^   ^ point
-  ;;    class PikeClass (int a, string b) stuff ...
-  ;;      car ^                           ^ point
-  ;;    enum bool;
-  ;;     car ^   ^ point
-  ;;    enum bool flag;
-  ;;          car ^   ^ point
-  ;; The cdr of the return value is non-nil iff a
-  ;; `c-typedef-decl-kwds' specifier is found in the declaration,
-  ;; i.e. the declared identifier(s) are types.
+  ;; If a declaration is parsed:
   ;;
-  ;; If a cast is parsed: The point is left at the first token after
-  ;; the closing paren of the cast.  The return value is `cast'.
+  ;;   If a declaration is parsed: The point is left at the first
+  ;;   token after the first complete declarator, if there is one.
+  ;;   The return value is a cons where the car is the position of the
+  ;;   first token in the declarator.  Some examples:
+  ;;
+  ;; 	 void foo (int a, char *b) stuff ...
+  ;; 	  car ^                    ^ point
+  ;; 	 float (*a)[], b;
+  ;; 	   car ^     ^ point
+  ;; 	 unsigned int a = c_style_initializer, b;
+  ;; 		  car ^ ^ point
+  ;; 	 unsigned int a (cplusplus_style_initializer), b;
+  ;; 		  car ^                              ^ point (might change)
+  ;; 	 class Foo : public Bar {}
+  ;; 	   car ^   ^ point
+  ;; 	 class PikeClass (int a, string b) stuff ...
+  ;; 	   car ^                           ^ point
+  ;; 	 enum bool;
+  ;; 	  car ^   ^ point
+  ;; 	 enum bool flag;
+  ;; 	       car ^   ^ point
+  ;;     void cplusplus_function (int x) throw (Bad);
+  ;;      car ^                                     ^ point
+  ;;     Foo::Foo (int b) : Base (b) {}
+  ;; car ^                ^ point
+  ;;
+  ;;   The cdr of the return value is non-nil iff a
+  ;;   `c-typedef-decl-kwds' specifier is found in the declaration,
+  ;;   i.e. the declared identifier(s) are types.
+  ;;
+  ;; If a cast is parsed:
+  ;;
+  ;;   The point is left at the first token after the closing paren of
+  ;;   the cast.  The return value is `cast'.  Note that the start
+  ;;   position must be at the first token inside the cast parenthesis
+  ;;   to recognize it.
   ;;
   ;; PRECEDING-TOKEN-END is the first position after the preceding
   ;; token, i.e. on the other side of the syntactic ws from the point.
@@ -4884,17 +4897,18 @@ comment at the start of cc-engine.el for more info."
   ;; the first token in (the visible part of) the buffer.
   ;;
   ;; CONTEXT is a symbol that describes the context at the point:
-  ;; 'decl     In a declaration context (perhaps inside a function
-  ;;           declaration arglist).
+  ;; 'decl     In a comma-separatded declaration context (typically
+  ;;           inside a function declaration arglist).
   ;; '<>       In an angle bracket arglist.
   ;; 'arglist  Some other type of arglist.
   ;; nil       Some other context or unknown context.
   ;;
   ;; LAST-CAST-END is the first token after the closing paren of a
-  ;; preceding cast.  If `c-forward-decl-or-cast-1' is used in
-  ;; succession, it should be the position after the closest preceding
-  ;; call where a cast was match.  In that case it's used to discover
-  ;; chains of casts like "(a) (b) c".
+  ;; preceding cast, or nil if none is known.  If
+  ;; `c-forward-decl-or-cast-1' is used in succession, it should be
+  ;; the position after the closest preceding call where a cast was
+  ;; matched.  In that case it's used to discover chains of casts like
+  ;; "(a) (b) c".
   ;;
   ;; This function records identifier ranges on
   ;; `c-record-type-identifiers' and `c-record-ref-identifiers' if
@@ -5840,75 +5854,45 @@ comment at the start of cc-engine.el for more info."
 	(c-search-uplist-for-classkey paren-state))))
 
 (defun c-just-after-func-arglist-p (&optional lim)
-  ;; Return non-nil if we are between a function's argument list closing
-  ;; paren and its opening brace.  Note that the list close brace
-  ;; could be followed by a "const" specifier or a member init hanging
-  ;; colon.  LIM is used as bound for some backward buffer searches;
-  ;; the search might continue past it.
+  ;; Return non-nil if the point is in the region after the argument
+  ;; list of a function and its opening brace (or semicolon in case it
+  ;; got no body).  If there are K&R style argument declarations in
+  ;; that region, the point has to be inside the first one for this
+  ;; function to recognize it.
   ;;
-  ;; Note: This test is easily fooled.  It only works reasonably well
-  ;; in the situations where `c-guess-basic-syntax' uses it.
+  ;; If successful, the point is moved to the first token after the
+  ;; function header (see `c-forward-decl-or-cast-1' for details) and
+  ;; the position of the opening paren of the function arglist is
+  ;; returned.
+  ;;
+  ;; The point is clobbered if not successful.
+  ;;
+  ;; LIM is used as bound for backward buffer searches.
   ;;
   ;; This function might do hidden buffer changes.
-  (save-excursion
-    (if (c-major-mode-is 'awk-mode)
-        (c-awk-backward-syntactic-ws lim)
-      (c-backward-syntactic-ws lim))
-    (let ((checkpoint (point)))
-      ;; could be looking at const specifier
-      (if (and (eq (char-before) ?t)
-	       (forward-word -1)
-	       (looking-at "\\<const\\>[^_]"))
-	  (c-backward-syntactic-ws lim)
-	;; otherwise, we could be looking at a hanging member init
-	;; colon
-	(goto-char checkpoint)
-	(while (and
-		(eq (char-before) ?,)
-		;; this will catch member inits with multiple
-		;; line arglists
-		(progn
-		  (forward-char -1)
-		  (c-backward-syntactic-ws (c-point 'bol))
-		  (c-safe (c-backward-sexp 1) t))
-		(or (not (looking-at "\\s\("))
-		    (c-safe (c-backward-sexp 1) t)))
-	  (c-backward-syntactic-ws lim))
-	(if (and (eq (char-before) ?:)
-		 (progn
-		   (forward-char -1)
-		   (c-backward-syntactic-ws lim)
-		   (looking-at "\\([ \t\n]\\|\\\\\n\\)*:\\([^:]+\\|$\\)")))
-	    nil
-	  (goto-char checkpoint))
-	)
-      (setq checkpoint (point))
-      (and (eq (char-before) ?\))
-	   ;; Check that it isn't a cpp expression, e.g. the
-	   ;; expression of an #if directive or the "function header"
-	   ;; of a #define.
-	   (or (not (c-beginning-of-macro))
-	       (and (c-forward-to-cpp-define-body)
-		    (< (point) checkpoint)))
-	   ;; Check if we are looking at an ObjC method def or a class
-	   ;; category.
-	   (not (and c-opt-method-key
-		     (progn
-		       (goto-char checkpoint)
-		       (c-safe (c-backward-sexp) t))
-		     (progn
-		       (c-backward-syntactic-ws lim)
-		       (or (memq (char-before) '(?- ?+))
-			   (and (c-safe (c-forward-sexp -2) t)
-				(looking-at c-class-key))))))
-	   ;; Pike has compound types that include parens,
-	   ;; e.g. "array(string)".  Check that we aren't after one.
-	   (not (and (c-major-mode-is 'pike-mode)
-		     (progn
-		       (goto-char checkpoint)
-		       (c-safe (c-backward-sexp 2) t))
-		     (looking-at c-primitive-type-key)))
-	   ))))
+
+  (let ((beg (point)) id-start)
+    (and (eq (c-beginning-of-statement-1 lim) 'same)
+	 (setq id-start
+	       (car-safe (c-forward-decl-or-cast-1 (c-point 'bosws) nil nil)))
+	 (< id-start beg)
+	 ;; There should not be a '=' or ',' between beg and the
+	 ;; start of the declaration since that means we were in the
+	 ;; "expression part" of the declaration.
+	 (or (> (point) beg)
+	     (not (looking-at "[=,]")))
+	 (save-excursion
+	   ;; Check that there's an arglist paren in the
+	   ;; declaration.
+	   (goto-char id-start)
+	   (when (eq (char-after) ?\()
+	     ;; The declarator is a paren expression, so skip past
+	     ;; it so that we don't get stuck on that instead of the
+	     ;; function arglist.
+	     (c-forward-sexp))
+	   (and (< (point) beg)
+		(c-syntactic-re-search-forward "(" beg t t)
+		(1- (point)))))))
 
 (defun c-in-knr-argdecl (&optional lim)
   ;; Return the position of the first argument declaration if point is
@@ -6222,62 +6206,6 @@ comment at the start of cc-engine.el for more info."
 		     (throw 'return t))
 		 (c-syntactic-re-search-forward ";" nil 'move t))))
       nil)))
-
-(defun c-beginning-of-member-init-list (&optional limit)
-  ;; Go to the beginning of a member init list (i.e. just after the ":")
-  ;; if inside one.  Returns t in that case, nil otherwise.
-  ;;
-  ;; This function might do hidden buffer changes.
-  (or limit
-      (setq limit (point-min)))
-  (skip-chars-forward " \t")
-
-  (if (eq (char-after) ?,)
-      (forward-char 1)
-    (c-backward-syntactic-ws limit))
-
-  (catch 'exit
-    (while (and (< limit (point))
-		(eq (char-before) ?,))
-      (forward-char -1)
-      (c-backward-syntactic-ws limit)
-
-      ;; this will catch member inits with multiple
-      ;; line arglists
-      (when (eq (char-before) ?\))
-	(unless (c-safe (c-backward-sexp 1))
-	  (throw 'exit nil))
-	(c-backward-syntactic-ws limit))
-
-      ;; Skip over any template arg to the class.  This way with a
-      ;; syntax table is bogus but it'll have to do for now.
-      (if (and (eq (char-before) ?>)
-	       (c-major-mode-is 'c++-mode))
-	  (c-with-syntax-table c++-template-syntax-table
-	    (unless (c-safe (c-backward-sexp 1))
-	      (throw 'exit nil))))
-
-      ;; The identifier.
-      (c-safe (c-backward-sexp 1))
-
-      ;; If we've stepped over a number then this is a bitfield.
-      (when (and c-opt-bitfield-key
-		 (looking-at "[0-9]"))
-	(throw 'exit nil))
-
-      ;; Skip backwards over a fully::qualified::name.
-      (c-backward-syntactic-ws limit)
-      (while (and (eq (char-before) ?:)
-		  (save-excursion
-		    (forward-char -1)
-		    (eq (char-before) ?:)))
-	(c-safe (c-backward-sexp 1)))
-
-      ;; now continue checking
-      (c-backward-syntactic-ws limit))
-
-    (and (< limit (point))
-	 (eq (char-before) ?:))))
 
 (defun c-looking-at-decl-block (containing-sexp goto-start &optional limit)
   ;; Assuming the point is at an open brace, check if it starts a
@@ -7117,9 +7045,14 @@ comment at the start of cc-engine.el for more info."
       (c-save-buffer-state
 	  ((indent-point (point))
 	   (case-fold-search nil)
+	   ;; A whole ugly bunch of various temporary variables.  Have
+	   ;; to declare them here since it's not possible to declare
+	   ;; a variable with only the scope of a cond test and the
+	   ;; following result clauses, and most of this function is a
+	   ;; single gigantic cond. :P
 	   literal char-before-ip char-after-ip macro-start in-macro-expr
 	   c-syntactic-context placeholder c-in-literal-cache step-type
-	   tmpsymbol keyword injava-inher special-brace-list
+	   tmpsymbol keyword injava-inher special-brace-list tmp-pos
 	   ;; The following record some positions for the containing
 	   ;; declaration block if we're directly within one:
 	   ;; `containing-decl-open' is the position of the open
@@ -7542,37 +7475,28 @@ comment at the start of cc-engine.el for more info."
 		(c-add-syntax 'defun-open (c-point 'bol)))
 	      )))
 
-	   ;; CASE 5B: first K&R arg decl or member init
-	   ((c-just-after-func-arglist-p lim)
+	   ;; CASE 5B: After a function header but before the body (or
+	   ;; the ending semicolon if there's no body).
+	   ((save-excursion
+	      (when (setq placeholder (c-just-after-func-arglist-p lim))
+		(setq tmp-pos (point))))
 	    (cond
 
-	     ;; CASE 5B.1: a member init
-	     ((or (eq char-before-ip ?:)
-		  (eq char-after-ip ?:))
-	      ;; this line should be indented relative to the beginning
-	      ;; of indentation for the topmost-intro line that contains
-	      ;; the prototype's open paren
-	      ;; TBD: is the following redundant?
-	      (if (eq char-before-ip ?:)
-		  (forward-char -1))
-	      (c-backward-syntactic-ws lim)
-	      ;; TBD: is the preceding redundant?
-	      (if (eq (char-before) ?:)
-		  (progn (forward-char -1)
-			 (c-backward-syntactic-ws lim)))
-	      (if (eq (char-before) ?\))
-		  (c-backward-sexp 1))
-	      (setq placeholder (point))
-	      (save-excursion
-		(and (c-safe (c-backward-sexp 1) t)
-		     (looking-at "throw[^_]")
-		     (c-safe (c-backward-sexp 1) t)
-		     (setq placeholder (point))))
-	      (goto-char placeholder)
-	      (c-add-syntax 'member-init-intro (c-point 'boi))
-	      ;; we don't need to add any class offset since this
-	      ;; should be relative to the ctor's indentation
-	      )
+	     ;; CASE 5B.1: Member init list.
+	     ((eq (char-after tmp-pos) ?:)
+	      (if (or (> tmp-pos indent-point)
+		      (= (c-point 'bosws) (1+ tmp-pos)))
+		  (progn
+		    ;; There is no preceding member init clause.
+		    ;; Indent relative to the beginning of indentation
+		    ;; for the topmost-intro line that contains the
+		    ;; prototype's open paren.
+		    (goto-char placeholder)
+		    (c-add-syntax 'member-init-intro (c-point 'boi)))
+		;; Indent relative to the first member init clause.
+		(goto-char (1+ tmp-pos))
+		(c-forward-syntactic-ws)
+		(c-add-syntax 'member-init-cont (point))))
 
 	     ;; CASE 5B.2: K&R arg decl intro
 	     ((and c-recognize-knr-p
@@ -7585,11 +7509,6 @@ comment at the start of cc-engine.el for more info."
 				      containing-decl-start
 				      containing-decl-kwd
 				      paren-state)))
-
-	     ;; CASE 5B.3: Inside a member init list.
-	     ((c-beginning-of-member-init-list lim)
-	      (c-forward-syntactic-ws)
-	      (c-add-syntax 'member-init-cont (point)))
 
 	     ;; CASE 5B.4: Nether region after a C++ or Java func
 	     ;; decl, which could include a `throws' declaration.
@@ -7693,7 +7612,7 @@ comment at the start of cc-engine.el for more info."
 				     c++-template-syntax-table
 				   (syntax-table))
 	      (save-excursion
-		;; Note: We use the fact that lim is always after any
+		;; Note: We use the fact that lim always is after any
 		;; preceding brace sexp.
 		(c-syntactic-skip-backward "^;,=" lim t)
 		(or (memq (char-before) '(?, ?=))
@@ -7702,25 +7621,6 @@ comment at the start of cc-engine.el for more info."
 			   (c-backward-syntactic-ws)
 			   (eq (char-before) ?<))))))
 	    (cond
-
-	     ;; CASE 5D.1: hanging member init colon, but watch out
-	     ;; for bogus matches on access specifiers inside classes.
-	     ((and (c-beginning-of-member-init-list lim)
-		   (save-excursion
-		     (not (or (eq (c-beginning-of-statement-1 lim) 'label)
-			      (looking-at c-class-key)))))
-	      (c-forward-syntactic-ws)
-	      (c-add-syntax 'member-init-cont (point))
-	      ;; we do not need to add class offset since relative
-	      ;; point is the member init above us
-	      )
-
-	     ;; CASE 5D.2: non-hanging member init colon
-	     ((progn
-		(c-forward-syntactic-ws indent-point)
-		(eq (char-after) ?:))
-	      (skip-chars-forward " \t:")
-	      (c-add-syntax 'member-init-cont (point)))
 
 	     ;; CASE 5D.3: perhaps a template list continuation?
 	     ((and (c-major-mode-is 'c++-mode)
