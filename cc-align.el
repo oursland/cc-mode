@@ -28,21 +28,10 @@
 ;; Boston, MA 02111-1307, USA.
 
 (eval-when-compile
-  (require 'cc-mode)
-  (require 'cc-langs)
+  (require 'cc-defs)
+  (require 'cc-vars)
   (require 'cc-engine)
-  (require 'cc-vars))
-
-
-(defsubst c-langelem-col (langelem &optional preserve-point)
-  ;; convenience routine to return the column of langelem's relpos.
-  ;; Leaves point at the relpos unless preserve-point is non-nil.
-  (let ((here (point)))
-    (goto-char (cdr langelem))
-    (prog1 (current-column)
-      (if preserve-point
-	  (goto-char here))
-      )))
+  (require 'cc-langs))
 
 
 ;; Standard indentation line-ups

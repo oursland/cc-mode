@@ -27,22 +27,7 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(eval-when-compile
-  (require 'cc-engine)
-  (require 'cc-mode)
-  (require 'cc-langs)
-  (require 'cc-vars))
-
 
-;; Utilities
-(defsubst c-update-modeline ()
-  ;; set the c-auto-hungry-string for the correct designation on the modeline
-  (setq c-auto-hungry-string
-	(if c-auto-newline
-	    (if c-hungry-delete-key "/ah" "/a")
-	  (if c-hungry-delete-key "/h" nil)))
-  (force-mode-line-update))
-
 (defun c-calculate-state (arg prevstate)
   ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
   ;; arg is nil or zero, toggle the state. If arg is negative, turn
@@ -52,7 +37,6 @@
       (not prevstate)
     (> arg 0)))
 
-
 ;; Auto-newline and hungry-delete
 (defun c-toggle-auto-state (arg)
   "Toggle auto-newline feature.
