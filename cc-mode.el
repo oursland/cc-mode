@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.63 $
-;; Last Modified:   $Date: 1993-11-18 22:02:22 $
+;; Version:         $Revision: 3.64 $
+;; Last Modified:   $Date: 1993-11-18 23:06:37 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-18 22:02:22 $|$Revision: 3.63 $|
+;; |$Date: 1993-11-18 23:06:37 $|$Revision: 3.64 $|
 
 ;;; Code:
 
@@ -370,6 +370,7 @@ when loaded, you should upgrade your Emacs.")
   (define-key cc-mode-map ":"         'cc-electric-colon)
   (define-key cc-mode-map "\C-c\C-;"  'cc-scope-operator)
   (define-key cc-mode-map "\C-c\C-s"  'cc-show-semantic-information)
+  (define-key cc-mode-map "\C-c\C-o"  'cc-change-semantic-symbol-offset)
   (define-key cc-mode-map "\177"      'cc-electric-delete)
   (define-key cc-mode-map "\C-c\C-t"  'cc-toggle-auto-hungry-state)
   (define-key cc-mode-map "\C-c\C-h"  'cc-toggle-hungry-state)
@@ -488,7 +489,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.63 $
+  "Major mode for editing C++ code.  $Revision: 3.64 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -519,7 +520,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.63 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.64 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -996,6 +997,12 @@ Will also cleanup double colon scope operators."
 	(goto-char (- (point-max) pos)))
       )))
 
+(defun cc-change-semantic-symbol-offset (symbol offset)
+  (interactive "SSemantic symbol: \nnOffset: ")
+  (setcdr (or (assq symbol cc-offsets-alist)
+	      (error "%s is not a valid semantic symbol." symbol))
+	  offset)
+  (cc-keep-region-active))
 
 
 ;; Workarounds for GNU Emacs 18 scanning deficiencies
@@ -2457,7 +2464,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.63 $"
+(defconst cc-version "$Revision: 3.64 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
