@@ -682,7 +682,7 @@ Returns nil if line starts inside a string, t if in a comment."
 	     (search-backward "/*" lim 'move))
 	    ((and
 	      (search-backward "//" (max (point-bol) lim) 'move)
-	      (not (within-string-p (point) opoint))))
+	      (not (c++-in-open-string-p))))
 	  (t (beginning-of-line)
 	     (skip-chars-forward " \t")
 	     (if (looking-at "#")
@@ -812,7 +812,9 @@ Returns nil if line starts inside a string, t if in a comment."
 		  (indent-to this-indent)))
 	    ;; Indent any comment following the text.
 	    (or (looking-at comment-start-skip)
-		(if (re-search-forward comment-start-skip (save-excursion (end-of-line) (point)) t)
+		(if (re-search-forward
+		     comment-start-skip
+		     (save-excursion (end-of-line) (point)) t)
 		    (progn (indent-for-comment) (beginning-of-line))))))))))
 
 (defun fill-C-comment ()
@@ -850,11 +852,6 @@ line."
 	    "This may look like C code, but it is really "
 	    "-*- C++ -*-"
 	    "\n\n")))
-
-(defun within-string-p (point1 point2)
-  "Returns true if number of double quotes between two points is odd."
-  (let ((s (buffer-substring point1 point2)))
-    (not (zerop (mod (count-char-in-string ?\" s) 2)))))
 
 (defun count-char-in-string (c s)
   (let ((count 0)
