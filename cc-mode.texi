@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.26 $
+@comment manual version: $Revision: 2.27 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-06-19 18:28:48 $
+@comment Last modification: $Date: 1995-06-19 20:27:42 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.26 $)
+@center (manual revision: $Revision: 2.27 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -343,8 +343,8 @@ Using @code{cc-mode} version 4.222.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @menu
-* Step 1 -- Syntactic Analysis::  Step 1 -- Syntactic Analysis
-* Step 2 -- Indentation Calculation::  Step 2 -- Indentation Calculation
+* Syntactic Analysis::
+* Indentation Calculation::
 @end menu
 
 @node     New Indentation Engine, Minor Modes, Getting Connected, Top
@@ -369,16 +369,16 @@ your personal coding style.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @menu
-* Step 1 -- Syntactic Analysis::
-* Step 2 -- Indentation Calculation::
+* Syntactic Analysis::
+* Indentation Calculation::
 @end menu
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Step 1 -- Syntactic Analysis, Step 2 -- Indentation Calculation, , New Indentation Engine
+@node  Syntactic Analysis, Indentation Calculation, , New Indentation Engine
 @comment  node-name,              next,                    previous,up
-@section  Step 1 -- Syntactic Analysis
-@cindex   Step 1 -- Syntactic Analysis
+@section  Syntactic Analysis
+@cindex   Syntactic Analysis
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @vindex c-offsets-alist
@@ -517,18 +517,18 @@ components.  Also notice that the first component,
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Step 2 -- Indentation Calculation, , Step 1 -- Syntactic Analysis, New Indentation Engine
+@node  Indentation Calculation, , Syntactic Analysis, New Indentation Engine
 @comment  node-name,              next,                    previous,up
-@section  Step 2 -- Indentation Calculation
-@cindex   Step 2 -- Indentation Calculation
+@section  Indentation Calculation
+@cindex   Indentation Calculation
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @vindex c-offsets-alist
 @vindex offsets-alist (c-)
 Indentation for the current line is calculated using the syntactic
-component list derived in step 1 above (see @ref{Step 1 -- Syntactic
-Analysis}).  Each component contributes to the final total indentation
-of the line in two ways.
+component list derived in step 1 above (see @ref{Syntactic Analysis}).
+Each component contributes to the final total indentation of the line in
+two ways.
 
 First, the syntactic symbols are looked up in the @code{c-offsets-alist}
 variable, which is an association list of syntactic symbols and the
@@ -1745,7 +1745,7 @@ the first line of the statement.  Here is the lisp code (from the
 @end example
 @noindent
 Custom indent functions take a single argument, which is a syntactic
-component cons cell (see @ref{Step 1 -- Syntactic Analysis}).  The
+component cons cell (see @ref{Syntactic Analysis}).  The
 function returns an integer offset value that will be added to the
 running total indentation for the lne.  Note that what actually gets
 returned is the difference between the column that the first stream
