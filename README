@@ -87,8 +87,7 @@ INSTALLATION
     un-bytecompiled is not supported and may not work at all depending
     on the flavor of X/Emacs you are using.
 
-    You can byte compile CC Mode by doing the following from your
-    shell:
+    To compile CC Mode, do the following from your shell:
 
         % cd /path/to/cc-mode
         % $(EMACS) -batch -no-site-file -q -l cc-make.el cc-*.el
@@ -98,6 +97,11 @@ INSTALLATION
 
     You can safely ignore any byte compiler warnings; they are due to
     the cross X/Emacsen support.
+
+    Note: It is important that CC Mode is byte compiled in the correct
+    way.  Avoid compiling from inside an X/Emacs session, since that
+    can produce incorrect byte code files that will generate strange
+    errors later during normal use.
 
     Be sure to see the list of compatibility issues (in the CC Mode
     canonical Web pages -- see above), for special notes about X/Emacs
