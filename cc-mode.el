@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.320 $
-;; Last Modified:   $Date: 1996-10-04 15:58:53 $
+;; Version:         $Revision: 4.321 $
+;; Last Modified:   $Date: 1996-10-04 20:17:44 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -637,7 +637,7 @@ re-dump Emacs.")
     ["Backward Statement"     c-beginning-of-statement t]
     ["Forward Statement"      c-end-of-statement t]
     )
-  "XEmacs 19 menu for C/C++/ObjC modes.")
+  "XEmacs 19 menu for C/C++/ObjC/Java modes.")
 
 ;; Sadly we need this for a macro in Emacs 19.
 (eval-when-compile
@@ -925,7 +925,7 @@ All other Emacsen use the `old-re' suite.")
   ;;
   ;; Emacs 19 defines menus in the mode map. This call will return
   ;; t on Emacs 19, otherwise no-op and return nil.
-  (if (and (not (c-mode-fsf-menu "C" c-mode-map))
+  (if (and (not (c-mode-fsf-menu "CC-Mode" c-mode-map))
 	   ;; in XEmacs 19, we want the menu to popup when the 3rd
 	   ;; button is hit.  In Lucid Emacs 19.10 and beyond this is
 	   ;; done automatically if we put the menu on mode-popup-menu
@@ -962,7 +962,8 @@ All other Emacsen use the `old-re' suite.")
   (define-key c++-mode-map ">"      'c-electric-lt-gt)
   ;; Emacs 19 defines menus in the mode map. This call will return
   ;; t on Emacs 19, otherwise no-op and return nil.
-  (c-mode-fsf-menu "C++" c++-mode-map))
+;  (c-mode-fsf-menu "C++" c++-mode-map)
+  )
 
 (defvar objc-mode-map ()
   "Keymap used in objc-mode buffers.")
@@ -986,7 +987,8 @@ All other Emacsen use the `old-re' suite.")
   (define-key objc-mode-map "/"      'c-electric-slash)
   ;; Emacs 19 defines menus in the mode map. This call will return
   ;; t on Emacs 19, otherwise no-op and return nil.
-  (c-mode-fsf-menu "ObjC" objc-mode-map))
+;  (c-mode-fsf-menu "ObjC" objc-mode-map)
+  )
 
 (defvar java-mode-map ()
   "Keymap used in java-mode buffers.")
@@ -1011,7 +1013,8 @@ All other Emacsen use the `old-re' suite.")
   (define-key java-mode-map "/"      'c-electric-slash)
   ;; Emacs 19 defines menus in the mode map. This call will return t
   ;; on Emacs 19, otherwise no-op and return nil.
-  (c-mode-fsf-menu "Java" java-mode-map))
+;  (c-mode-fsf-menu "Java" java-mode-map)
+  )
 
 (defun c-populate-syntax-table (table)
   ;; Populate the syntax TABLE
@@ -5003,7 +5006,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.320 $"
+(defconst c-version "$Revision: 4.321 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
