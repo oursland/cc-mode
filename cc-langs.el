@@ -343,16 +343,30 @@ not contain a \\| operator at the top level."
   (c-lang-const c-opt-identifier-concat-key)
   'dont-doc)
 
+(c-lang-defconst c-opt-after-id-concat-key
+  "Regexp that must match the token after `c-opt-identifier-concat-key'
+for it to be considered an identifier concatenation operator (which
+e.g. causes the preceding identifier to be fontified as a reference).
+Assumed to be a string if `c-opt-identifier-concat-key' is."
+  t    (if (c-lang-const c-opt-identifier-concat-key)
+	   (c-lang-const c-symbol-start))
+  c++  (concat (c-lang-const c-symbol-start)
+	       "\\|[~*]")
+  java (concat (c-lang-const c-symbol-start)
+	       "\\|\\*"))
+
 (c-lang-defconst c-identifier-start
   "Regexp that matches the start of an \(optionally qualified)
 identifier.  It's unspecified how far it matches."
-  t   (concat (c-lang-const c-symbol-start)
-	      (if (c-lang-const c-opt-identifier-concat-key)
-		  (concat "\\|" (c-lang-const c-opt-identifier-concat-key))
-		""))
-  c++ (concat (c-lang-const c-identifier-start)
-	      "\\|"
-	      "~[ \t\n\r\f\v]*" (c-lang-const c-symbol-start)))
+  t    (concat (c-lang-const c-symbol-start)
+	       (if (c-lang-const c-opt-identifier-concat-key)
+		   (concat "\\|" (c-lang-const c-opt-identifier-concat-key))
+		 ""))
+  c++  (concat (c-lang-const c-identifier-start)
+	       "\\|"
+	       "[~*][ \t\n\r\f\v]*" (c-lang-const c-symbol-start))
+  ;; Java does not allow a leading qualifier operator.
+  java (c-lang-const c-symbol-start))
 (c-lang-defvar c-identifier-start (c-lang-const c-identifier-start))
 
 (c-lang-defconst c-identifier-key
@@ -381,7 +395,7 @@ between the tokens; `c-forward-name' has to be used for that."
 		 "[ \t\n\r\f\v]*"
 		 (c-lang-const c-opt-identifier-concat-key)
 		 "[ \t\n\r\f\v]*"
-		 "~"
+		 "[~*]"
 		 "[ \t\n\r\f\v]*"
 		 ;; The submatch below is: 2 * `c-symbol-key-depth' +
 		 ;; 3 * depth of `c-opt-identifier-concat-key' + 7.
@@ -406,15 +420,20 @@ between the tokens; `c-forward-name' has to be used for that."
 		;; 2 * depth of `c-opt-identifier-concat-key' + 4.
 		"\\(" (c-lang-const c-symbol-key) "\\)"
 		"\\)*"))
-  ;; Java does not allow a leading qualifier operator.
+  ;; Java does not allow a leading qualifier operator.  If it ends
+  ;; with ".*" (used in import declarations) we also consider that as
+  ;; part of the name.  ("*" is actually recognized in any position
+  ;; except the first by this regexp, but we don't bother.)
   java (concat "\\(" (c-lang-const c-symbol-key) "\\)" ; 1
 	       (concat "\\("
 		       "[ \t\n\r\f\v]*"
 		       (c-lang-const c-opt-identifier-concat-key)
 		       "[ \t\n\r\f\v]*"
-		       ;; The submatch below is `c-symbol-key-depth' +
-		       ;; depth of `c-opt-identifier-concat-key' + 3.
-		       "\\(" (c-lang-const c-symbol-key) "\\)"
+		       (concat "\\("
+			       ;; The submatch below is `c-symbol-key-depth' +
+			       ;; depth of `c-opt-identifier-concat-key' + 4.
+			       "\\(" (c-lang-const c-symbol-key) "\\)"
+			       "\\|\\*\\)")
 		       "\\)*")))
 (c-lang-defvar c-identifier-key (c-lang-const c-identifier-key))
 
@@ -449,7 +468,7 @@ that at least one does when the regexp has matched."
   java (list (+ (c-lang-const c-symbol-key-depth)
 		(c-regexp-opt-depth
 		 (c-lang-const c-opt-identifier-concat-key))
-		3)
+		4)
 	     1))
 (c-lang-defvar c-identifier-last-sym-match
   (c-lang-const c-identifier-last-sym-match)
@@ -1119,7 +1138,8 @@ also be used for the special case when the list can contain only one
 element.)  Assumed to be mutually exclusive with `c-ref-list-kwds'."
   t    nil
   objc '("@class" "@interface" "@implementation" "@protocol")
-  java (c-lang-const c-decl-spec-kwds)
+  java (append '("import")
+	       (c-lang-const c-decl-spec-kwds))
   pike '("inherit"))
 
 (c-lang-defconst c-ref-list-kwds
@@ -1130,6 +1150,7 @@ special case when the list can contain only one element.)  Assumed to
 be mutually exclusive with `c-type-list-kwds'."
   t    nil
   c++  '("namespace")
+  java '("package")
   pike '("import"))
 
 (c-lang-defconst c-colon-type-list-kwds
