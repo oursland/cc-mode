@@ -42,7 +42,11 @@
     (require 'cc-bytecomp)))
 
 (cc-require 'cc-defs)
+(cc-require 'cc-langs)
 (cc-require 'cc-vars)
+
+;; Silence the compiler.
+(cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs
 
 
 ;; Warning: don't eval-defun this constant or you'll break style inheritance.
