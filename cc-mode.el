@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-09 18:36:20 $
-;; Version:         $Revision: 2.140 $
+;; Last Modified:   $Date: 1992-07-09 21:08:56 $
+;; Version:         $Revision: 2.141 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-09 18:36:20 $|$Revision: 2.140 $|
+;; |$Date: 1992-07-09 21:08:56 $|$Revision: 2.141 $|
 
 
 ;; ======================================================================
@@ -246,7 +246,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.140 $
+  "Major mode for editing C++ code.  $Revision: 2.141 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1116,31 +1116,24 @@ containing class definition (useful for inline functions)."
   (save-excursion
     (let ((indent-point (point))
 	  (case-fold-search nil)
-	  state containing-sexp parse-start
-	  (here (point)))
+	  state containing-sexp paren-depth
+	  foundp)
       (c++-beginning-of-defun)
       (setq state (c++-parse-state indent-point)
-	    containing-sexp (nth 1 state))
-      (or (null containing-sexp)
-	  (and wrt
-	       ;; check to see if we're at the top level with respect
-	       ;; to the containing class definition
-	       (= (car state) 1)
-	       (progn (goto-char containing-sexp)
-		      (= (following-char) ?\{))
-	       (let* ((scanback (condition-case scanlist-err
-				    (scan-lists (point) -1 -1)
-				  (error (point-min))))
-		      (regexp "\\<\\(class\\|struct\\)\\>")
-		      (lim (progn (goto-char scanback)
-				  (re-search-forward regexp here 'move)))
-		      (pos (point))
-		      state)
-		 (and lim
-		      (progn (goto-char scanback)
-			     (setq state (c++-parse-state pos)))
-		      (> 0 (nth 0 state)))))
-	  ))))
+	    containing-sexp (nth 1 state)
+	    paren-depth (nth 0 state))
+      (if (or (not wrt)
+	      (null containing-sexp))
+	  (null containing-sexp)
+	;; calculate depth wrt containing (possibly nested) classes
+	(goto-char containing-sexp)
+	(while (and (setq foundp (re-search-backward
+				  "\\<\\(class\\|struct\\)\\>" (point-min) t))
+		    (c++-in-literal)))
+	(and foundp
+	     (nth 2 (c++-parse-state containing-sexp))
+	     paren-depth))
+      )))
 
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
@@ -1941,7 +1934,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.140 $"
+(defconst c++-version "$Revision: 2.141 $"
   "c++-mode version number.")
 
 (defun c++-version ()
