@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.4 $
-;; Last Modified:   $Date: 1994-06-07 14:48:29 $
+;; Version:         $Revision: 4.5 $
+;; Last Modified:   $Date: 1994-06-09 14:08:57 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-07 14:48:29 $|$Revision: 4.4 $|
+;; |$Date: 1994-06-09 14:08:57 $|$Revision: 4.5 $|
 
 ;;; Code:
 
@@ -162,6 +162,9 @@ reported and the syntactic symbol is ignored.")
     (inclass               . +)
     (cpp-macro             . -1000)
     (friend                . 0)
+    (objc-method-intro     . -1000)
+    (objc-method-args-cont . c-lineup-objc-method-args)
+    (objc-method-call-cont . c-lineup-objc-method-call)
     )
   "Default settings for offsets of syntactic elements.
 Do not change this constant!  See the variable `c-offsets-alist' for
@@ -252,6 +255,9 @@ Here is the current list of valid syntactic element symbols:
  inclass                -- the construct is nested inside a class definition
  cpp-macro              -- the start of a cpp macro
  friend                 -- a C++ friend declaration
+ objc-method-intro      -- the first line of an Objective-C method definition
+ objc-method-args-cont  -- lines continuing an Objective-C method definition
+ objc-method-call-cont  -- lines continuing an Objective-C method call
 ")
 
 (defvar c-tab-always-indent t
@@ -480,8 +486,11 @@ your style, only those that are different from the default.")
   "*Hook called by `c-mode'.")
 (defvar c++-mode-hook nil
   "*Hook called by `c++-mode'.")
+(defvar objc-mode-hook nil
+  "*Hook called by `objc-mode'.")
+
 (defvar c-mode-common-hook nil
-  "*Hook called by both `c-mode' and `c++-mode' during common init path.")
+  "*Hook called by `c-mode', `c++-mode', and 'objc-mode' during common init.")
 
 (defvar c-mode-menu
   '(["Comment Out Region"     comment-region (mark)]
@@ -601,6 +610,10 @@ supported list, along with the values for this variable:
   "Abbrev table in use in c-mode buffers.")
 (define-abbrev-table 'c-mode-abbrev-table ())
 
+(defvar objc-mode-abbrev-table nil
+  "Abbrev table in use in objc-mode buffers.")
+(define-abbrev-table 'objc-mode-abbrev-table ())
+
 (defvar c-mode-map ()
   "Keymap used in c-mode buffers.")
 (if c-mode-map
@@ -707,6 +720,22 @@ supported list, along with the values for this variable:
   (define-key c++-mode-map "\C-c:"  'c-scope-operator)
   )
 
+(defvar objc-mode-map ()
+  "Keymap used in objc-mode buffers.")
+(if objc-mode-map
+    ()
+  ;; In Emacs 19, it makes more sense to inherit c-mode-map
+  (if (memq 'v19 c-emacs-features)
+      ;; Lucid and FSF Emacs 19 do this differently
+      (if (memq 'FSF c-emacs-features)
+	  (setq objc-mode-map (cons 'keymap c-mode-map))
+	(setq objc-mode-map (make-sparse-keymap))
+	(set-keymap-parent objc-mode-map c-mode-map))
+    ;; Do it the hard way for Emacs 18 -- given by JWZ
+    (setq objc-mode-map (nconc (make-sparse-keymap) c-mode-map)))
+  ;; add bindings which are only useful for Objective-C
+  )
+
 (defun c-populate-syntax-table (table)
   ;; Populate the syntax TABLE
   ;; DO NOT TRY TO SET _ (UNDERSCORE) TO WORD CLASS!
@@ -758,6 +787,27 @@ supported list, along with the values for this variable:
   ;; and not C.
   ;;(modify-syntax-entry ?: "_" c++-mode-syntax-table)
   )
+
+(defvar objc-mode-syntax-table nil
+  "Syntax table used in objc-mode buffers.")
+(if objc-mode-syntax-table
+    ()
+  (setq objc-mode-syntax-table (make-syntax-table))
+  (c-populate-syntax-table objc-mode-syntax-table)
+  ;; add extra comment syntax
+  (cond
+   ((memq '8-bit c-emacs-features)
+    ;; Lucid emacs has the best implementation
+    (modify-syntax-entry ?/  ". 1456" objc-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"   objc-mode-syntax-table)
+    (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table))
+   ((memq '1-bit c-emacs-features)
+    ;; FSF Emacs 19 does things differently, but we can work with it
+    (modify-syntax-entry ?/  ". 124b" objc-mode-syntax-table)
+    (modify-syntax-entry ?*  ". 23"   objc-mode-syntax-table)
+    (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table))
+   )
+)
 
 (defvar c-hungry-delete-key nil
   "Internal state of hungry delete key feature.")
@@ -830,12 +880,22 @@ behavior that users are familiar with.")
 (defconst c-C++-conditional-key
   "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\|try\\|catch\\)\\b[^_]"
   "Regexp describing a conditional control for C++.")
+
+(defconst c-objc-method-key
+  (concat
+   "^\\s *[+-]\\s *"
+   "\\((\\s *" c-symbol-key "\\s *)\\)?" ; return type
+   ;; \\s- in objc syntax table does not include \n
+   ;; since it is considered the end of //-comments.
+   "[ \t\n]*" c-symbol-key)
+  "Regexp describing an Objective-C method intro.")
+
 
 ;; main entry points for the modes
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.4 $
+cc-mode Revision: $Revision: 4.5 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -847,7 +907,7 @@ the accompanying texinfo manual.
 
 The hook variable `c++-mode-hook' is run with no args, if that
 variable is bound and has a non-nil value.  Also the common hook
-c-mode-common-hook is run first,  both by this defun, and `c-mode'.
+c-mode-common-hook is run first, by this defun, `c-mode', and `objc-mode'.
 
 Key bindings:
 \\{c++-mode-map}"
@@ -868,7 +928,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.4 $
+cc-mode Revision: $Revision: 4.5 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -880,7 +940,7 @@ that came with the cc-mode distribution.
 
 The hook variable `c-mode-hook' is run with no args, if that value is
 bound and has a non-nil value.  Also the common hook
-c-mode-common-hook is run first, both by this defun and `c++-mode'.
+c-mode-common-hook is run first, by this defun, `c++-mode', and `objc-mode'.
 
 Key bindings:
 \\{c-mode-map}"
@@ -897,6 +957,39 @@ Key bindings:
 	c-conditional-key c-C-conditional-key
 	c-comment-start-regexp "/\\*")
   (run-hooks 'c-mode-hook))
+
+;;;###autoload
+(defun objc-mode ()
+  "Major mode for editing Objective C code.
+cc-mode $Revision: 4.5 $
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+objc-mode buffer.  This automatically sets up a mail buffer with
+version information already added.  You just need to add a description
+of the problem, including a reproducable test case and send the
+message.
+
+Note that the details of configuring objc-mode will soon be moved to the
+accompanying texinfo manual.
+
+The hook variable `objc-mode-hook' is run with no args, if that value
+is bound and has a non-nil value.  Also the common hook
+c-mode-common-hook is run first, by this defun, `c-mode', and `c++-mode'.
+
+Key bindings:
+\\{objc-mode-map}"
+  (interactive)
+  (kill-all-local-variables)
+  (set-syntax-table objc-mode-syntax-table)
+  (setq major-mode 'objc-mode
+	mode-name "ObjC"
+	local-abbrev-table objc-mode-abbrev-table)
+  (use-local-map objc-mode-map)
+  (c-common-init)
+  (setq comment-start "// "
+	comment-end   ""
+	c-conditional-key c-C-conditional-key
+	c-comment-start-regexp "//\\|/\\*")
+  (run-hooks 'objc-mode-hook))
 
 (defun c-common-init ()
   ;; Common initializations for c++-mode and c-mode.
@@ -1307,7 +1400,7 @@ construct, and we are on a comment-only-line, indent line as comment.
 If numeric ARG is supplied or point is inside a literal, indentation
 is inhibited."
   (interactive "P")
-  (let ((indentp (and (eq major-mode 'c++-mode)
+  (let ((indentp (and (memq major-mode '(c++-mode objc-mode))
 		      (not arg)
 		      (= (preceding-char) ?/)
 		      (= last-command-char ?/)
@@ -1577,7 +1670,7 @@ preserving the comment indentation or line-starting decorations."
 	    (skip-chars-forward " \t\n")
 	    (and (looking-at comment-start-skip)
 		 (setq comment-start-place (point))))))
-    (if (and (eq major-mode 'c++-mode)
+    (if (and (memq major-mode '(c++-mode objc-mode))
 	     (save-excursion
 	       (beginning-of-line)
 	       (looking-at ".*//")))
@@ -1897,7 +1990,12 @@ search."
 	 ;; CASE 6: ignore labels
 	 ((or (looking-at c-access-key)
 	      (looking-at c-label-key)))
-	 ;; CASE 7: nothing special
+	 ;; CASE 7: ObjC method def
+	 ((and (eq major-mode 'objc-mode)
+	       (c-in-objc-method-def-p))
+	  (setq last-begin (point)
+		donep t))
+	 ;; CASE 8: nothing special
 	 (t (setq last-begin (point)))
 	 )))
     (goto-char last-begin)))
@@ -2404,6 +2502,19 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; multi-line macros too well
   (back-to-indentation))
 
+(defun c-in-objc-method-def-p ()
+  ;; Return nil if we aren't in a method definition, otherwise the
+  ;; position of the initial [+-].
+  (save-excursion
+    (c-backward-syntactic-ws)
+    (if (or (= (preceding-char) ?-)
+	    (= (preceding-char) ?+))
+	(let ((initial-pos (1- (point))))
+	  (beginning-of-line)
+	  (if (looking-at c-objc-method-key)
+	      initial-pos))
+      nil)))
+
 (defun c-just-after-func-arglist-p (&optional containing)
   ;; Return t if we are between a function's argument list closing
   ;; paren and its opening brace.  Note that the list close brace
@@ -2430,7 +2541,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    nil
 	  (goto-char checkpoint))
 	)
-      (= (preceding-char) ?\))
+      (and (= (preceding-char) ?\))
+	   ;; check if we are looking at a method def
+	   (or (not (eq major-mode 'objc-mode))
+	       (progn
+		 (forward-sexp -1)
+		 (backward-char)
+		 (c-backward-syntactic-ws)
+		 (not (or (= (preceding-char) ?-)
+			  (= (preceding-char) ?+))))))
       )))
 
 ;; defuns to look backwards for things
@@ -2699,6 +2818,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (let* ((indent-point (point))
 	     (case-fold-search nil)
 	     (state (c-parse-state))
+	     (in-method-intro-p (and (eq major-mode 'objc-mode)
+				     (looking-at c-objc-method-key)))
 	     literal containing-sexp char-before-ip char-after-ip lim
 	     syntax placeholder
 	     ;; narrow out any enclosing class
@@ -2711,7 +2832,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t}")
 	  (skip-chars-backward " \t")
-	  (while (and state (not containing-sexp))
+	  (while (and state
+		      (not in-method-intro-p)
+		      (not containing-sexp))
 	    (setq containing-sexp (car state)
 		  state (cdr state))
 	    (if (consp containing-sexp)
@@ -2757,6 +2880,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 ((eq literal 'pound)
 	  (c-beginning-of-macro lim)
 	  (c-add-syntax 'cpp-macro (c-point 'boi)))
+	 ;; CASE 3.5: in an objective-c method intro
+	 (in-method-intro-p
+	  (c-add-syntax 'objc-method-intro (c-point 'boi)))
 	 ;; CASE 4: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
@@ -2918,14 +3044,22 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (goto-char (aref inclass-p 0))
 	      (c-add-syntax 'class-close (c-point 'boi))))
 	   ;; CASE 4G: we could be looking at subsequent knr-argdecls
-	   ((and (eq major-mode 'c-mode)
+	   ((and (memq major-mode '(c-mode objc-mode))
 		 (save-excursion
 		   (c-backward-syntactic-ws lim)
 		   (while (memq (preceding-char) '(?\; ?,))
 		     (beginning-of-line)
 		     (setq placeholder (point))
 		     (c-backward-syntactic-ws lim))
-		   (= (preceding-char) ?\)))
+		   (and (= (preceding-char) ?\))
+			(or (not (eq major-mode 'objc-mode))
+			    (progn
+			      (forward-sexp -1)
+			      (backward-char)
+			      (c-backward-syntactic-ws)
+			      (not (or (= (preceding-char) ?-)
+				       (= (preceding-char) ?+))))))
+		   )
 		 (save-excursion
 		   (c-beginning-of-statement)
 		   (not (looking-at "typedef[ \t\n]+"))))
@@ -2946,7 +3080,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (memq (preceding-char) '(?\; ?\}))))
 	    (c-add-syntax 'topmost-intro (c-point 'bol))
 	    (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	   ;; CASE 4I: we are at a topmost continuation line
+	   ;; CASE 4I: we are at a method definition continuation line
+	   ((and (eq major-mode 'objc-mode)
+		 (progn
+		   (c-beginning-of-statement 1 lim)
+		   (beginning-of-line)
+		   (looking-at c-objc-method-key)))
+	    (c-add-syntax 'objc-method-args-cont (point)))
+	   ;; CASE 4J: we are at a topmost continuation line
 	   (t
 	    (c-beginning-of-statement 1 lim)
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
@@ -2993,7 +3134,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (<= (point) containing-sexp)))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-cont-nonempty (c-point 'boi)))
-	   ;; CASE 5E: we are looking at just a normal arglist
+	   ;; CASE 5E: maybe a continued method call
+	   ((and (eq major-mode 'objc-mode)
+		 (save-excursion
+		   (goto-char (1- containing-sexp))
+		   (c-backward-syntactic-ws (c-point 'bod))
+		   (if (not (looking-at c-symbol-key))
+		       (c-add-syntax 'objc-method-call-cont containing-sexp))
+		   )))
+	   ;; CASE 5F: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (c-beginning-of-statement 1 containing-sexp)
 	      (c-add-syntax 'arglist-cont (c-point 'boi)))
@@ -3314,7 +3463,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
        offset)))
 
 (defun c-indent-line (&optional syntax)
-  ;; indent the curent line as C/C++ code. Optional SYNTAX is the
+  ;; indent the current line as C/C++ code. Optional SYNTAX is the
   ;; syntactic information for the current line. Returns the amount of
   ;; indentation change
   (let* ((c-syntactic-context (or syntax (c-guess-basic-syntax)))
@@ -3487,6 +3636,39 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	(- (current-column) equalp curcol))
       )))
 
+(defun c-lineup-objc-method-call (langelem)
+  ;; Line up methods args as elisp-mode does with function args
+  (save-excursion
+    (let* ((relpos (cdr langelem))
+	   (curcol (progn (goto-char relpos)
+			  (current-column))))
+      ;; We are now on the opening square bracket
+      (forward-char)		   
+      (forward-sexp)
+      (- (1+ (current-column)) curcol))))
+
+(defun c-lineup-objc-method-args (langelem)
+  ;; Line up the colons that separate args
+  (save-excursion
+    (let* ((here (c-point 'boi))
+	   (curcol (progn (goto-char here) (current-column)))
+	   (eol (c-point 'eol))
+	   (relpos (cdr langelem))
+	   (colpos (progn
+		     (goto-char relpos)
+		     (skip-chars-forward "^:" eol)
+		     (and (= (following-char) ?:)
+			  (- (point) relpos)))))
+      ;; We are now on the opening [-+]
+      (if (not colpos)
+	  c-basic-offset
+	;; calculate offset of
+	(goto-char here)
+	(skip-chars-forward "^:" eol)
+	(if (= (following-char) ?:)
+	    (+ curcol (- colpos (current-column)))
+	  c-basic-offset)))))
+
 
 ;; commands for "macroizations" -- making C++ parameterized types via
 ;; macros. Also commands for commentifying regions
@@ -3617,7 +3799,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.4 $"
+(defconst c-version "$Revision: 4.5 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3642,7 +3824,9 @@ it trailing backslashes are removed."
    (reporter-submit-bug-report
     c-mode-help-address
     (concat "cc-mode " c-version " ("
-	    (if (eq major-mode 'c++-mode) "C++" "C")
+	    (cond ((eq major-mode 'c++-mode)  "C++")
+		  ((eq major-mode 'c-mode)    "C")
+		  ((eq major-mode 'objc-mode) "ObjC"))
 	    ")")
     (list
      ;; report only the vars that affect indentation
