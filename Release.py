@@ -61,6 +61,7 @@ FILES = [
     ('cc-mode.el',     version_cre, version_format),
     ('cc-styles.el',   version_cre, version_format),
     ('cc-vars.el',     version_cre, version_format),
+    ('cc-mode-19.el',  version_cre, version_format),
     ('ANNOUNCEMENT',
      regex.compile('CC Mode Version \(5.[0-9]+\)'),
      'CC Mode Version %s\n'),
