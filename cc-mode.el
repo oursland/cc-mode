@@ -136,7 +136,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "/* "
 	comment-end   " */"
-	comment-multi-line t
+	comment-multi-line nil
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C-class-key
 	c-baseclass-key nil
