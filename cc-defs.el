@@ -189,7 +189,8 @@
     (while (eq (char-before (1- (point))) ?\\)
       (forward-line -1))
     (back-to-indentation)
-    (if (eq (char-after) ?#)
+    (if (and (<= (point) here)
+	     (eq (char-after) ?#))
 	t
       (goto-char here)
       nil)))
