@@ -347,6 +347,10 @@ to be set as a file local variable.")
 (c-add-style "teststyle" cc-test-teststyle)
 (c-add-style "javateststyle" cc-test-javateststyle)
 
+(defconst cc-test-empty-string-regexp
+  (concat "\\(" c-string-limit-regexp "\\)"
+	  "\\(" c-string-limit-regexp "\\)"))
+
 (defun cc-test-record-faces (testbuf facebuf check-unknown-faces)
   (set-buffer testbuf)
   (let (face prev-face (pos (point)) facename lines col preceding-entry
@@ -376,16 +380,18 @@ to be set as a file local variable.")
 		   (if in-string
 		       (progn
 			 (backward-char)
-			 (setq in-string nil))
+			 (unless (looking-at c-string-limit-regexp)
+			   (forward-char)))
 		     (when (and (eq facename 'str)
-				(looking-at "\\s\""))
-		       (when (looking-at "\"\"\\|''")
+				(looking-at c-string-limit-regexp))
+		       (when (looking-at cc-test-empty-string-regexp)
 			 ;; Ignore empty strings altogether.
-			 (while (progn (goto-char (match-end 0))
-				       (looking-at "\"\"\\|''")))
+			 (while (progn
+				  (goto-char (match-end 0))
+				  (looking-at cc-test-empty-string-regexp)))
 			 (throw 'record-face nil))
-		       (forward-char)
-		       (setq in-string t))))
+		       (forward-char)))
+		   (setq in-string (eq facename 'str)))
 
 		 (when (prog1 (and col (>= col (current-column)))
 			 (setq col (current-column))
