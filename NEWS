@@ -2,6 +2,14 @@ CC Mode NEWS -- user visible changes.  -*- outline -*-
 
 * Changes in 5.26
 
+Note: This release contains changes that might not be compatible with
+current user setups (although it's believed that these
+incompatibilities will only show in very uncommon circumstances).
+However, since the impact is uncertain, these changes may be rolled
+back depending on user feedback.  Therefore there's no forward
+compatibility guarantee wrt the new features introduced in this
+release.
+
 ** New initialization procedure for the style system.
 Changes made globally to the style variables now takes precedence over
 the style settings on c-style-alist, instead of the other way around.
@@ -19,7 +27,8 @@ settings.
 
 *** Compatibility variable to restore the old behavior.
 In case your configuration doesn't work with this change, you can set
-c-old-style-variable-behavior to non-nil to get the old behavior back.
+c-old-style-variable-behavior to non-nil to get the old behavior back
+as far as possible.
 
 ** Improvements to line breaking and text filling.
 CC Mode now handles this more intelligently and seamlessly wrt the
@@ -336,3 +345,193 @@ default value for c-style-variables-are-local-p is nil.  The same
 rules apply as before, only reversed: if you want the style variables
 to be buffer local, you should set c-style-variables-are-local-p to t
 before you load CC Mode.
+
+* Changes from 4.322 to 4.353
+
+** Better control over the buffer localness of the indentation variables.
+
+In previous version of cc-mode the variables that control indentation
+were always buffer local.  This was applauded by those who edited
+files in many different styles, but reviled by those who usually edit
+files of only one style.
+
+You can now control whether these variables are buffer local or not,
+by setting the variable c-style-variables-are-local-p.  This variable
+only has effect at the time cc-mode.el is loaded.  If this variable is
+non-nil, then all indentation style related variables will be made
+buffer local.  Otherwise, they will remain global, so that users can
+actually use setq in their top-level .emacs file without having to use
+a mode hook.
+
+Note that once the variables are made buffer local, they cannot be
+made global again; they will remain buffer local for the rest of the
+current Emacs session.  The list of variables that are buffer
+localizable are:
+
+  c-offsets-alist
+  c-basic-offset
+  c-file-style
+  c-file-offsets
+  c-comment-only-line-offset
+  c-cleanup-list
+  c-hanging-braces-alist
+  c-hanging-colons-alist
+  c-hanging-comment-ender-p
+  c-backslash-column
+  c-label-minimum-indentation
+  c-special-indent-hook
+  c-indentation-style
+
+For backwards compatibility, the default value of
+c-style-variables-are-local-p is non-nil, meaning the variables are
+buffer local by default.  This may change in the future.
+
+** New variable c-indentation-style which holds the current style name
+of the buffer.
+
+** Menus are not installed when running in Infodock.
+
+** Improvements to the alignment of C block comments.
+The variable c-block-comments-indent-p has been removed.
+
+I have improved the c-lineup-C-comments function, which is responsible
+for lining up subsequent lines in C block comments.  It should now do
+the Right Thing for most comment styles that use some combination of
+stars at the beginning of comment lines (including zero stars! :-).
+For example, the following styles are aligned correctly by default:
+
+int main()
+{
+    /*
+     *
+     */
+
+    /*
+    **
+    **
+    */
+
+    /**
+     **
+     **
+     **/
+
+    /***
+     ***
+     ***
+     ***
+     ***/
+
+    /**
+    ***
+    ***
+    **/
+}
+
+For this reason, the variable c-block-comments-indent-p has been
+removed.
+
+** New indentation style python.
+The blessed standard for writing Python extension modules in C.
+
+** New c-cleanup-list option: brace-elseif-brace
+
+* Changes from 4.282 to 4.322
+
+** A new style linux has been added.
+
+**The following variables have been removed from the default cc-mode
+style:
+   c-echo-syntactic-information-p
+   c-strict-syntax-p
+   c-tab-always-indent
+   c-inhibit-startup-warnings-p
+
+** External language declaration blocks are now handled properly.
+Three new syntactic symbols have been added:
+
+*** extern-lang-open
+The brace that opens an extern block.  Hangable via
+c-hanging-braces-alist.
+
+*** extern-lang-close
+The brace that closes an extern block.  Hangable via
+c-hanging-braces-alist.
+
+*** inextern-lang
+A modifier (with no relative buffer position) which is added to
+topmost-intro syntax lines that occur within an extern block.  See the
+texinfo manual for details.
+
+** New variable: c-label-minimum-indentation which defines the minimum
+indentation a label can have in gnu style.  This variable has no
+effect in other styles.
+
+** c-special-indent-hook is handled slightly differently when it
+appears in a style definition; the functions in the style defintion
+are appended to the global value of c-special-indent-hook.
+
+** c-style-alist is defconst'd now.
+This should eliminate problems people had with Java mode.
+
+** Lambda expressions (anonymous functions) can now be used as custom
+indentation functions.
+
+** Whitespace is allowed between the protection keyword (public,
+private, protected) and the trailing colon in C++.
+
+** Java mode now recognizes the finally and synchronized keywords.
+
+** New lineup function: c-lineup-arglist-close-under-paren.
+Try setting arglist-close to this function.
+
+** The variable c-recognize-knr-p is deprecated.
+Now by default, c-mode will always recognize K&R argument declarations
+with no performance penalty.  cc-mode has adopted BOCM's approach
+which assumes that argdecls will always be indented at least one
+space, while the function headers they are associated with will not be
+indented at all.  If your programming style differs from this, you may
+have trouble.  You should remove any setting of this variable from
+your cc-mode configurations!
+
+** New variable c-insert-tab-function, normally just inserts a tab
+character when indicated by c-tab-always-indent and indent-tabs-mode.
+You could set this to run tab-to-tab-stop instead.
+
+** C-s C-s (c-show-syntactic-information) now takes an optional
+universal argument, which inserts the analysis into the buffer on the
+current line, as a comment.
+
+** c-mark-function has been moved to C-c C-m.
+
+** In addition, I have made a change to the way braces which are given
+inline-open syntax are handled.
+
+In the following sample:
+
+  1: class Outer
+  2: {
+  3:     void a_function( int a )
+  4:     {
+  5:         do_something( a );
+  6:     }
+  7:     class Inner
+  8:     {
+  9:         void b_function( int b )
+ 10:         {
+ 11:             do_something( b );
+ 12:         }
+ 13:     }
+ 14: }
+
+cc-mode 4.282 would have analyzed line 4 as ((inline-open . 1)), and
+line 10 as ((inline-open . 87)).  So the fact that this brace opened
+an inclass-inline method which should be given extra indentation, was
+implicit in the syntactic symbol.
+
+Some people have argued that the inclass modifier should be added to
+the analysis of such lines.  This release implements this change so
+that line 4 is now analyzed as ((inclass . 1) (inline-open)) and line
+10 as ((inclass . 87) (inline-open)).  The inline-open symbol has no
+relative buffer position so that braces in nested classes would not be
+indented too much.
