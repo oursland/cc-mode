@@ -1113,6 +1113,16 @@
 					 (eq (char-before) ?<)
 					 (not (c-crosses-statement-barrier-p
 					       here pos<))
+					 ;; make sure we're not in a
+					 ;; #include <thing.h>.  Note
+					 ;; *cannot* use
+					 ;; c-backward-token-1 here!
+					 (save-excursion
+					   (forward-sexp -1)
+					   (or (not (eq (char-before) ?#))
+					       (not
+						(looking-at "include[ \t]*"))
+					       ))
 					 )))
 				nil)
 			       (t t)))))
