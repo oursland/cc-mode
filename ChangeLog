@@ -1,6 +1,9 @@
-Mon Apr 27 14:37:45 1998  Barry A. Warsaw  <cc-mode-help@python.org>
+Mon Apr 27 14:54:33 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.23
+
+	* (c-electric-pound): Do electric stuff only if # is hit at the
+ 	beginning of the line.
 
 Mon Apr 27 1998  Martin Stjernholm  <cc-mode-help@python.org>
 
