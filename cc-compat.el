@@ -40,6 +40,7 @@
 ;;; Code:
 
 (eval-when-compile
+  (require 'cc-make)
   (require 'cc-styles)
   (require 'cc-engine))
 

@@ -29,6 +29,9 @@
 
 
 
+(eval-when-compile
+  (require 'cc-make))
+
 ;; Regular expressions and other values which must be parameterized on
 ;; a per-language basis.
 

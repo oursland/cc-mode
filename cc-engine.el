@@ -28,6 +28,9 @@
 ;; Boston, MA 02111-1307, USA.
 
 
+(eval-when-compile
+  (require 'cc-make))
+
 ;; KLUDGE ALERT: c-maybe-labelp is used to pass information between
 ;; c-crosses-statement-barrier-p and c-beginning-of-statement-1.  A
 ;; better way should be implemented, but this will at least shut up

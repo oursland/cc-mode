@@ -29,6 +29,9 @@
 
 
 
+(eval-when-compile
+  (require 'cc-make))
+
 (defun c-calculate-state (arg prevstate)
   ;; Calculate the new state of PREVSTATE, t or nil, based on arg. If
   ;; arg is nil or zero, toggle the state. If arg is negative, turn

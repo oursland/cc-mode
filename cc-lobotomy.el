@@ -53,6 +53,10 @@
 
 
 ;;; Code:
+
+(eval-when-compile
+  (require 'cc-make))
+
 (require 'cc-mode)
 
 (defvar cc-lobotomy-pith-list ()

@@ -40,6 +40,9 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'cc-make))
+
 (defvar cc-guessed-style nil
   "Currently guessed style.")
 
