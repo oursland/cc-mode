@@ -810,10 +810,10 @@ to be set as a file local variable.")
 				(setq result (and (not (eolp))
 						  (read res-faces-buf)))
 				(set-buffer exp-faces-buf)
-				;; If face aliasing is done we might
-				;; have entries in the expected buffer
-				;; where a face is changed to itself,
-				;; so we got to check and ignore that.
+				;; If face aliasing is done we might have
+				;; entries in the expected buffer where a face
+				;; is changed to itself, so we got to check
+				;; and ignore that.
 				(while (progn
 					 (skip-chars-forward " \t")
 					 (setq expected
@@ -874,6 +874,10 @@ to be set as a file local variable.")
 			     (cdr result) (car result)))))
 
 			(set-buffer res-faces-buf)
+			(while (progn
+				 (skip-chars-forward " \t")
+				 (not (eolp)))
+			  (setq last-result (read res-faces-buf)))
 			(forward-line 1)
 			(set-buffer exp-faces-buf)
 			(forward-line 1)))
