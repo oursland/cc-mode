@@ -1010,10 +1010,18 @@ comment."
 	  (back-to-indentation)
 	  ;; comment could be hanging
 	  (if (not (c-in-literal))
-	      (progn
+	      ;; add a bogus newline if we're at the last line of a buffer
+	      (let ((nl (= (c-point 'eol) (point-max))))
+		(when nl
+		  (save-excursion
+		    (end-of-line)
+		    (insert "\n")))
 		(forward-line 1)
 		(forward-comment -1)
-		(setq at-comment-col (= (current-column) comment-column))))
+		(setq at-comment-col (= (current-column) comment-column))
+		(when nl
+		  (delete-region (c-point 'eol) (point-max)))
+		))
 	  ;; are we looking at a block or lines style comment?
 	  (if (and (looking-at (concat "\\(" c-comment-start-regexp
 				       "\\)[ \t]+"))
