@@ -70,6 +70,7 @@
   '((c-tab-always-indent           . t)
     (c-basic-offset                . 4)
     (c-comment-only-line-offset    . 0)
+    (c-comment-prefix-regexp       . "//+\\|\\**")
     (c-hanging-braces-alist        . ((block-open after)
 				      (brace-list-open)
 				      (substatement-open after)
@@ -230,6 +231,7 @@
     "comments.c"
     "comments-1.java"
     "comments-2.c"
+    "comments-3.cc"
     "cond-1.c"
     "decls-1.java"
     "decls-2.java"
