@@ -1358,7 +1358,7 @@ non-nil, a caret is prepended to invert the set."
 	  (setq list (cons 'posix-char-classes list)))
 
 	;; See if `open-paren-in-column-0-is-defun-start' exists and
-	;; isn't buggy.
+	;; isn't buggy (Emacs >= 21.4).
 	(when (boundp 'open-paren-in-column-0-is-defun-start)
 	  (let ((open-paren-in-column-0-is-defun-start nil)
 		(parse-sexp-ignore-comments t))
