@@ -651,7 +651,7 @@ Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
   "Line up \"cascaded calls\" under each other.
 If the line begins with \"->\" and the preceding line ends with one or
 more function calls preceded by \"->\", then the arrow is lined up with
-the first of those \"->\". E.g:
+the first of those \"->\".  E.g:
 
 result = proc->add(17)->add(18)
              ->add(19) +           <- c-lineup-cascaded-calls
@@ -688,6 +688,27 @@ Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
 	    (setq col (current-column)))
 
 	  (vector col))))))
+
+(defun c-lineup-string-cont (langelem)
+  "Line up a continued string under the one it continues.
+A continued string in this sense is where a string literal follows
+directly after another one.  E.g:
+
+result = prefix + \"A message \"
+                  \"string.\";      <- c-lineup-string-cont
+
+Nil is returned in other situations, to allow stacking with other
+lineup functions.
+
+Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
+  (save-excursion
+    (back-to-indentation)
+    (and (looking-at "\\s\"")
+	 (let ((quote (char-after)))
+	   (c-backward-syntactic-ws)
+	   (eq (char-before) quote))
+	 (c-safe (c-backward-sexp) t)
+	 (vector (current-column)))))
 
 (defun c-lineup-template-args (langelem)
   "Line up template argument lines under the first argument.

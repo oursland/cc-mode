@@ -4358,6 +4358,29 @@ Line up C++ stream operators (i.e. @samp{<<} and @samp{>>}).
 
 @comment ------------------------------------------------------------
 
+@findex c-lineup-string-cont
+@findex lineup-string-cont (c-)
+@item c-lineup-string-cont
+Line up a continued string under the one it continues.  A continued
+string in this sense is where a string literal follows directly after
+another one.  E.g:
+@example
+@group
+
+result = prefix + \"A message \"
+                  \"string.\";    // c-lineup-string-cont
+
+@end group
+@end example
+
+@code{nil} is returned in other situations, to allow stacking with other
+lineup functions.
+
+@workswith @code{statement-cont}, @code{arglist-cont},
+@code{arglist-cont-nonempty}.
+
+@comment ------------------------------------------------------------
+
 @findex c-lineup-template-args
 @findex lineup-template-args (c-)
 @item c-lineup-template-args
