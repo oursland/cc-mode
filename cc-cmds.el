@@ -736,7 +736,8 @@ comment."
 	 )))))
 
 ;; for proposed new variable comment-line-break-function
-(defun c-comment-line-break-function ()
+(defun c-comment-line-break-function (&optional soft)
+  ;; we currently don't do anything with soft line breaks
   (let ((here (point))
 	(leader c-comment-continuation-stars))
     (back-to-indentation)
