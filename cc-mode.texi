@@ -1039,23 +1039,29 @@ argument (the number of characters to delete).  This variable is set to
 @vindex delete-key-deletes-forward
 @findex delete-char
 
-Similarly, hitting the @key{Delete} key runs the command
-@code{c-electric-delete}.  Some versions of Emacs@footnote{As of this
-writing, 20-Jun-1997, only XEmacs 20.3 supports this.} support
-separation of the @key{Backspace} and @key{Delete} keys, so that
-@key{Delete} will delete in the forward direction when
-@code{delete-key-deletes-forward} is non-@code{nil}.  If your Emacs
-supports this, and @code{delete-key-deletes-forward} is non-@code{nil},
-and hungry-delete mode is enabled, then @key{Delete} will consume all
-whitespace following point.  When deleting a single character, or when
-@key{Delete} is hit in a literal, or when hungry-delete mode is disabled,
-the function contained in the @code{c-delete-function} variable is
-called with one argument (the number of characters to delete).  This
-variable is set to @code{delete-char} by default.
+The default behavior of the @key{Delete} key depends on the flavor of
+Emacs you are using.  By default in XEmacs 20.3 and beyond, the
+@key{Delete} key is bound to @code{c-electric-delete}.  You control the
+direction that the @key{Delete} key deletes by setting the variable
+@code{delete-key-deletes-forward}, a standard XEmacs variable.  When
+this variable is non-@code{nil} and hungry-delete mode is enabled,
+@code{c-electric-delete} will consume all whitespace @emph{following}
+point.  When @code{delete-key-deletes-forward} is @code{nil}, it deletes
+all whitespace @emph{preceding} point@footnote{i.e. it literally calls
+@code{c-electric-backspace}.}  When deleting a single character, or if
+@key{Delete} is hit in a literal, or hungry-delete mode is disabled, the
+function contained in @code{c-delete-function} is called with one
+argument: the number of characters to delete.  This variable is set to
+@code{delete-char} by default.
 
-However, if @code{delete-key-deletes-forward} is @code{nil}, or your
-Emacs does not support separation of @key{Backspace} and @key{DEL}, then 
-@code{c-electric-delete} simply calls @code{c-electric-backspace}.
+In Emacs 19 or Emacs 20, both the @key{Delete} and @key{Backspace} keys
+are bound to @code{c-electric-backspace}, however you can change this by
+explicitly binding @code{[delete]}@footnote{e.g. to
+@code{c-electric-delete} in your @file{.emacs} file.  Note however, that
+Emacs 20 does not have a standard variable such as
+@code{delete-key-deletes-forward}.}.
+
+XEmacsen older than 20.3 behave similar to Emacs 19 and Emacs 20.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
