@@ -2788,14 +2788,18 @@ command to conveniently insert and align the necessary backslashes."
 		  '("" . 0))))))
     ))
 
-(defun c-mask-comment (fill-paragraph apply-outside-literal fun &rest args)
-  ;; Calls FUN with ARGS ar arguments.  If point is inside a comment,
-  ;; the comment starter and ender are masked and the buffer is
-  ;; narrowed to make it look like a normal paragraph during the call.
+(defun c-mask-paragraph (fill-paragraph apply-outside-literal fun &rest args)
+  ;; Calls FUN with ARGS ar arguments while the current paragraph is
+  ;; masked to allow adaptive filling to work correctly.  That
+  ;; includes narrowing the buffer and, if point is inside a comment,
+  ;; masking the comment starter and ender appropriately.
   ;;
-  ;; FILL-PARAGRAPH is non-nil if called for paragraph filling.  The
-  ;; position of point is then less significant when doing masking and
-  ;; narrowing.
+  ;; FILL-PARAGRAPH is non-nil if called for whole paragraph filling.
+  ;; The position of point is then less significant when doing masking
+  ;; and narrowing.
+  ;;
+  ;; If APPLY-OUTSIDE-LITERAL is nil then the function will be called
+  ;; only if the point turns out to be inside a comment or a string.
   ;;
   ;; This function does not do any hidden buffer changes.
 
@@ -2866,8 +2870,9 @@ command to conveniently insert and align the necessary backslashes."
 		    (setq beg (c-point 'bol))
 		  ;; The first line contains code before the
 		  ;; comment.  We must fake a line that doesn't.
-		  (setq tmp-pre t)))
-	      ))
+		  (setq tmp-pre t))))
+
+	    (setq apply-outside-literal t))
 
 	   ((eq c-lit-type 'c)		; Block comment.
 	    (when (>= end (cdr c-lit-limits))
@@ -2960,7 +2965,9 @@ command to conveniently insert and align the necessary backslashes."
 		    ;; Begin with the next line.
 		    (setq beg (c-point 'bonl))
 		  ;; Fake the fill prefix in the first line.
-		  (setq tmp-pre t)))))
+		  (setq tmp-pre t))))
+
+	    (setq apply-outside-literal t))
 
 	   ((eq c-lit-type 'string)	; String.
 	    (save-excursion
@@ -2975,9 +2982,39 @@ command to conveniently insert and align the necessary backslashes."
 			      ;; Leave the start line if it's
 			      ;; nothing but an escaped newline.
 			      (1+ (match-end 0))
-			    (point))))))
+			    (point)))))
+	    (setq apply-outside-literal t))
 
-	   (t (setq beg nil)))
+	   ((eq c-lit-type 'pound)	; Macro
+	    ;; Narrow to the macro limits if they are nearer than the
+	    ;; paragraph limits.  Don't know if this is necessary but
+	    ;; do it for completeness sake (doing auto filling at all
+	    ;; inside macros is bogus to begin with since the line
+	    ;; continuation backslashes aren't handled).
+	    (save-excursion
+	      (c-beginning-of-macro)
+	      (beginning-of-line)
+	      (if (> (point) beg)
+		  (setq beg (point)))
+	      (c-end-of-macro)
+	      (forward-line)
+	      (if (< (point) end)
+		  (set-marker end (point)))))
+
+	   (t				; Other code.
+	    ;; Try to avoid comments and macros in the paragraph to
+	    ;; avoid that the adaptive fill mode gets the prefix from
+	    ;; them.
+	    (c-save-buffer-state nil
+	      (save-excursion
+		(goto-char beg)
+		(c-forward-syntactic-ws end)
+		(beginning-of-line)
+		(setq beg (point))
+		(goto-char end)
+		(c-backward-syntactic-ws beg)
+		(forward-line)
+		(set-marker end (point))))))
 
 	  (when tmp-pre
 	    ;; Temporarily insert the fill prefix after the comment
@@ -3022,51 +3059,48 @@ Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix 
 		      (insert-char ?x (- col (current-column)) t))
 		  (setcdr tmp-pre (point))))))
 
-	  (if beg
-	      (let ((fill-prefix
-		     (or fill-prefix
-			 ;; Kludge: If the function that adapts the
-			 ;; fill prefix doesn't produce the required
-			 ;; comment starter for line comments, then
-			 ;; force it by setting fill-prefix.
-			 (when (and (eq c-lit-type 'c++)
-				    ;; Kludge the kludge:
-				    ;; filladapt-mode doesn't have
-				    ;; this problem, but it doesn't
-				    ;; override fill-context-prefix
-				    ;; currently (version 2.12).
-				    (not (and (boundp 'filladapt-mode)
-					      filladapt-mode))
-				    (not (string-match
-					  "\\`[ \t]*//"
-					  (or (fill-context-prefix beg end)
-					      ""))))
-			   (c-save-buffer-state nil
-			     (car (or fill (c-guess-fill-prefix
-					    c-lit-limits c-lit-type)))))))
+	  (when apply-outside-literal
+	    ;; `apply-outside-literal' is always set to t here if
+	    ;; we're inside a literal.
 
-		    ;; Save the relative position of point if it's
-		    ;; outside the region we're going to narrow.  Want
-		    ;; to restore it in that case, but otherwise it
-		    ;; should be moved according to the called
-		    ;; function.
-		    (point-rel (cond ((< (point) beg) (- (point) beg))
-				     ((> (point) end) (- (point) end)))))
+	    (let ((fill-prefix
+		   (or fill-prefix
+		       ;; Kludge: If the function that adapts the fill prefix
+		       ;; doesn't produce the required comment starter for
+		       ;; line comments, then force it by setting fill-prefix.
+		       (when (and (eq c-lit-type 'c++)
+				  ;; Kludge the kludge: filladapt-mode doesn't
+				  ;; have this problem, but it currently
+				  ;; doesn't override fill-context-prefix
+				  ;; (version 2.12).
+				  (not (and (boundp 'filladapt-mode)
+					    filladapt-mode))
+				  (not (string-match
+					"\\`[ \t]*//"
+					(or (fill-context-prefix beg end)
+					    ""))))
+			 (c-save-buffer-state nil
+			   (car (or fill (c-guess-fill-prefix
+					  c-lit-limits c-lit-type)))))))
 
-		;; Preparations finally done! Now we can call the
-		;; actual function.
-		(prog1
-		    (save-restriction
-		      (narrow-to-region beg end)
-		      (apply fun args))
-		  (if point-rel
-		      ;; Restore point if it was outside the region.
-		      (if (< point-rel 0)
-			  (goto-char (+ beg point-rel))
-			(goto-char (+ end point-rel))))))
+		  ;; Save the relative position of point if it's outside the
+		  ;; region we're going to narrow.  Want to restore it in that
+		  ;; case, but otherwise it should be moved according to the
+		  ;; called function.
+		  (point-rel (cond ((< (point) beg) (- (point) beg))
+				   ((> (point) end) (- (point) end)))))
 
-	    (when apply-outside-literal
-	      (apply fun args))))
+	      ;; Preparations finally done!  Now we can call the
+	      ;; actual function.
+	      (prog1
+		  (save-restriction
+		    (narrow-to-region beg end)
+		    (apply fun args))
+		(if point-rel
+		    ;; Restore point if it was outside the region.
+		    (if (< point-rel 0)
+			(goto-char (+ beg point-rel))
+		      (goto-char (+ end point-rel))))))))
 
       (when (consp tmp-pre)
 	(delete-region (car tmp-pre) (cdr tmp-pre)))
@@ -3114,7 +3148,7 @@ Optional prefix ARG means justify paragraph as well."
 	 ;; Avoid infinite recursion.
 	 (if (not (eq fill-paragraph-function 'c-fill-paragraph))
 	     fill-paragraph-function)))
-    (c-mask-comment t nil 'fill-paragraph arg))
+    (c-mask-paragraph t nil 'fill-paragraph arg))
   ;; Always return t.  This has the effect that if filling isn't done
   ;; above, it isn't done at all, and it's therefore effectively
   ;; disabled in normal code.
@@ -3133,7 +3167,7 @@ Optional prefix ARG means justify paragraph as well."
 	 ;; also used to detect whether fill-prefix is user set or
 	 ;; generated automatically by do-auto-fill.
 	 fill-prefix))
-    (c-mask-comment nil t 'do-auto-fill)))
+    (c-mask-paragraph nil t 'do-auto-fill)))
 
 (defun c-indent-new-comment-line (&optional soft allow-auto-fill)
   "Break line at point and indent, continuing comment or macro if within one.
