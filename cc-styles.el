@@ -357,7 +357,7 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
     (template-args-cont    . +)
     (inlambda              . c-lineup-inexpr-block)
     (lambda-intro-cont     . +)
-    (inexpr-statement      . +)
+    (inexpr-statement      . 0)
     (inexpr-class          . +)
     )
   "Association list of syntactic element symbols and indentation offsets.

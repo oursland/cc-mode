@@ -424,12 +424,19 @@
 (if (fboundp 'buffer-syntactic-context)
     (defalias 'c-in-literal 'c-fast-in-literal))
 
-(defun c-literal-limits (&optional lim)
+(defun c-literal-limits (&optional lim near)
   ;; Returns a cons of the beginning and end positions of the comment
   ;; or string surrounding point (including both delimiters), or nil
-  ;; if point isn't in one.  This is the Emacs 19 version.
+  ;; if point isn't in one.  If LIM is non-nil, it's used as the
+  ;; "safe" position to start parsing from.  If NEAR is non-nil, then
+  ;; the limits of any literal next to point is returned.  "Next to"
+  ;; means there's only [ \t] between point and the literal.  The
+  ;; search for such a literal is done first in forward direction.
+  ;;
+  ;; This is the Emacs 19 version.
   (save-excursion
-    (let* ((lim (or lim (c-point 'bod)))
+    (let* ((pos (point))
+	   (lim (or lim (c-point 'bod)))
 	   (state (parse-partial-sexp lim (point))))
       (cond ((nth 3 state)
 	     ;; String.  Search backward for the start.
@@ -439,7 +446,7 @@
 	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 			       (point-max))))
 	    ((nth 7 state)
-	     ;; C++ comment.  Search from bol for the comment starter.
+	     ;; Line comment.  Search from bol for the comment starter.
 	     (beginning-of-line)
 	     (setq state (parse-partial-sexp lim (point))
 		   lim (point))
@@ -451,7 +458,7 @@
 	     (backward-char 2)
 	     (cons (point) (progn (forward-comment 1) (point))))
 	    ((nth 4 state)
-	     ;; C comment.  Search backward for the comment starter.
+	     ;; Block comment.  Search backward for the comment starter.
 	     (while (nth 4 state)
 	       (search-backward "/*")	; Should never fail.
 	       (setq state (parse-partial-sexp lim (point))))
@@ -461,13 +468,38 @@
 	     ;; We're standing in a comment starter.
 	     (backward-char 2)
 	     (cons (point) (progn (forward-comment 1) (point))))
+	    (near
+	     (goto-char pos)
+	     ;; Search forward for a literal.
+	     (skip-chars-forward " \t")
+	     (cond
+	      ((eq (char-syntax (or (char-after) ?\ )) ?\") ; String.
+	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
+				 (point-max))))
+	      ((looking-at "/[/*]")	; Line or block comment.
+	       (cons (point) (progn (forward-comment 1) (point))))
+	      (t
+	       ;; Search backward.
+	       (skip-chars-backward " \t")
+	       (let ((end (point)) beg)
+		 (cond
+		  ((eq (char-syntax (or (char-before) ?\ )) ?\") ; String.
+		   (setq beg (c-safe (c-backward-sexp 1) (point))))
+		  ((and (c-safe (forward-char -2) t)
+			(looking-at "*/"))
+		   ;; Block comment.  Due to the nature of line
+		   ;; comments, they will always be covered by the
+		   ;; normal case above.
+		   (goto-char end)
+		   (forward-comment -1)
+		   ;; If LIM is bogus, beg will be bogus.
+		   (setq beg (point))))
+		 (if beg (cons beg end))))))
 	    ))))
 
 (defun c-literal-limits-fast (&optional lim)
-  ;; Returns a cons of the beginning and end positions of the comment
-  ;; or string surrounding point (including both delimiters), or nil
-  ;; if point isn't in one.  This is for emacsen whose
-  ;; `parse-partial-sexp' returns the pos of the comment start.
+  ;; Like c-literal-limits, but for emacsen whose `parse-partial-sexp'
+  ;; returns the pos of the comment start.  FIXME: Add NEAR.
   (save-excursion
     (let ((state (parse-partial-sexp lim (point))))
       (cond ((nth 3 state)		; String.
@@ -515,6 +547,19 @@
 	      (cons beg end))
 	  range)
       (error range))))
+
+(defun c-literal-type (range)
+  ;; Convenience function that given the result of c-literal-limits,
+  ;; returns nil or the type of literal that the range surrounds.
+  ;; It's much faster than using c-in-literal and is intended to be
+  ;; used when you need both the type of a literal and its limits.
+  (if (consp range)
+    (save-excursion
+      (goto-char (car range))
+      (cond ((eq (char-syntax (or (char-after) ?\ )) ?\") 'string)
+	    ((looking-at "//") 'c++)
+	    (t 'c)))			; Assuming the range is valid.
+    range))
 
 
 

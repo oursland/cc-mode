@@ -137,6 +137,12 @@
 (defvar c-comment-start-regexp c-C++-comment-start-regexp)
 (make-variable-buffer-local 'c-comment-start-regexp)
 
+;; Regexp that matches the non-whitespace fill prefix of lines inside
+;; comments.  It's not used for lines that start or end block
+;; comments, but it should match the comment starter for line comments
+;; (typically "//").  Maybe this should be a user variable?
+(defvar c-comment-prefix "[/*]*")
+
 
 
 ;; Regexp describing a switch's case or default label for all languages
@@ -243,6 +249,7 @@ For use with the variable `java-mode-hook'."
   (make-local-variable 'comment-multi-line)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
+  (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'adaptive-fill-regexp)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
   ;; X/Emacs 20 only
@@ -254,10 +261,7 @@ For use with the variable `java-mode-hook'."
 	(make-local-variable 'fill-paragraph-function)
 	(setq fill-paragraph-function 'c-fill-paragraph)))
   ;; now set their values
-  (setq paragraph-start (concat page-delimiter "\\|$")
-	paragraph-separate paragraph-start
-	paragraph-ignore-fill-prefix t
-	require-final-newline t
+  (setq require-final-newline t
 	parse-sexp-ignore-comments t
 	indent-line-function 'c-indent-line
 	indent-region-function 'c-indent-region
@@ -266,8 +270,34 @@ For use with the variable `java-mode-hook'."
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *"
 	comment-multi-line nil
-	comment-line-break-function 'c-comment-line-break-function
-	adaptive-fill-regexp nil)
+	comment-line-break-function 'c-comment-line-break-function)
+  ;; Make sure c-comment-prefix matches c-comment-continuation-stars.
+  (if (not (string-match (concat "\\`\\(" c-comment-prefix "\\)[ \t]*\\'")
+			 c-comment-continuation-stars))
+      (string-match "\\`[^ \t]*" c-comment-continuation-stars)
+      (setq c-comment-prefix
+	    (concat "\\(" c-comment-prefix "\\)\\|"
+		    (regexp-quote (substring c-comment-continuation-stars
+					     0 (match-end 0))))))
+  ;; Fix things up for paragraph recognition and filling inside
+  ;; comments by using c-comment-prefix in the relevant places.  We
+  ;; use adaptive filling for this.  It's possible to use filladapt or
+  ;; some other fancy package, but then the user might have to fix
+  ;; some settings herself.
+  (let ((comment-line-prefix
+	 (concat "[ \t]*\\(" c-comment-prefix "\\)?[ \t]*")))
+    (setq paragraph-start (concat comment-line-prefix "$\\|"
+				  page-delimiter)
+	  paragraph-separate paragraph-start
+	  paragraph-ignore-fill-prefix t
+	  adaptive-fill-mode t
+	  adaptive-fill-regexp
+	  (concat comment-line-prefix
+		  (if adaptive-fill-regexp
+		      (concat "\\(" adaptive-fill-regexp "\\)")
+		    ""))
+	  adaptive-fill-regexp-first-line
+	  (concat "\\`" comment-line-prefix "\\'")))
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
