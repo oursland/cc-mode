@@ -954,13 +954,13 @@ comment."
 	 ((or (looking-at "^#[ \t]*endif[ \t]*")
 	      (looking-at "^#[ \t]*else[ \t]*"))
 	  7)
-	 ;; CASE 3: when comment-column is nil, calculate the offset
-	 ;; according to c-offsets-alist.  E.g. identical to hitting
-	 ;; TAB.
+	 ;; CASE 3: when c-indent-comments-syntactically-p is t,
+	 ;; calculate the offset according to c-offsets-alist.
+	 ;; E.g. identical to hitting TAB.
 	 ((and c-indent-comments-syntactically-p
 	       (save-excursion
 		 (skip-chars-forward " \t")
-		 (or (looking-at comment-start)
+		 (or (looking-at c-comment-start-regexp)
 		     (eolp))))
 	  (let ((syntax (c-guess-basic-syntax)))
 	    ;; BOGOSITY ALERT: if we're looking at the eol, its
