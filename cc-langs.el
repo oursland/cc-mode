@@ -337,8 +337,9 @@ it finds in `c-file-offsets'."
   (define-key c-mode-base-map "\e\C-q"    'c-indent-exp)
   (define-key c-mode-base-map "\ea"       'c-beginning-of-statement)
   (define-key c-mode-base-map "\ee"       'c-end-of-statement)
-  (define-key c-mode-base-map "\e\C-a"    'c-beginning-of-defun)
-  (define-key c-mode-base-map "\e\C-e"    'c-end-of-defun)
+  ;; RMS says don't make these the default.
+;;  (define-key c-mode-base-map "\e\C-a"    'c-beginning-of-defun)
+;;  (define-key c-mode-base-map "\e\C-e"    'c-end-of-defun)
   (define-key c-mode-base-map "\C-c\C-n"  'c-forward-conditional)
   (define-key c-mode-base-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-base-map "\C-c\C-u"  'c-up-conditional)
