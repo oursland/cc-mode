@@ -110,12 +110,21 @@ Infodock (based on XEmacs) has an additional symbol on this list:
 	  ;; editing appears to be still about as fast.
 	  (let (pos)
 	    (while (not pos)
-	      (setq pos (scan-lists (point) -1
-				    (buffer-syntactic-context-depth)
-				    nil t))
+	      (save-restriction
+		(widen)
+		(setq pos (scan-lists (point) -1
+				      (buffer-syntactic-context-depth)
+				      nil t)))
 	      (cond
 	       ((bobp) (setq pos (point-min)))
-	       ((not pos) (skip-chars-backward "^{"))
+	       ((not pos)
+		(let ((distance (skip-chars-backward "^{")))
+		  ;; unbalanced parenthesis, while illegal C code,
+		  ;; shouldn't cause an infloop!  See unbal.c
+		  (when (zerop distance)
+		    ;; Punt!
+		    (beginning-of-defun)
+		    (setq pos (point)))))
 	       ((= pos 0))
 	       ((not (eq (char-after pos) ?{))
 		(goto-char pos)
