@@ -50,7 +50,7 @@ VERSIONED_FILES = [
     ('ANNOUNCEMENT', 'CC Mode Version '),
     ('MANIFEST', 'Manifest for CC Mode '),
     ('README', 'README for CC Mode '),
-    ('cc-mode.el', r'\(defconst c-version "'),
+    ('cc-vars.el', r'\(defconst c-version "'),
     ('cc-mode.texi', r'(@center @titlefont\{CC Mode|version) '),
     ('Makefile', r'VERSION='),
     ]

@@ -28,13 +28,10 @@
 ;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-(defconst c-version "5.30"
-  "CC Mode version number.")
+;;; Commentary:
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 ;; NOTE: See the accompanying texinfo manual for details on using this mode!
-
-;;; Commentary:
 
 ;; This package provides GNU Emacs major modes for editing C, C++,
 ;; Objective-C, Java, IDL and Pike code.  As of the latest Emacs and
