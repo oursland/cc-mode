@@ -1,6 +1,6 @@
 ;;; cc-lobotomy.el --- excise portions of cc-mode's brain... for speed
 
-;; Copyright (C) 1985,1987,1992-2000 Free Software Foundation, Inc.
+;; Copyright (C) 1985,1987,1992-2001 Free Software Foundation, Inc.
 
 ;; Author:     1995 Barry A. Warsaw
 ;; Maintainer: Unmaintained
@@ -21,8 +21,8 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to the
-;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; along with this program; see the file COPYING.  If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
@@ -48,8 +48,9 @@
 ;; This will redefine certain cc-mode functions and affect all cc-mode
 ;; buffers globally.
 ;;
-;; This file is completely unsupported!  I have no idea whether this
-;; will work with such things as cc-mode-18.el.
+;; This file is completely unsupported!  Although it has been patched
+;; superficially to keep pace with the rest of CC Mode, it hasn't been
+;; tested for a long time.
 
 ;;; Code:
 
