@@ -277,6 +277,17 @@
 (defsubst c-major-mode-is (mode)
   (eq (derived-mode-class major-mode) mode))
 
+(defmacro c-with-syntax-table (table &rest code)
+  ;; Temporarily switches to the specified syntax table in a failsafe
+  ;; way to execute code.
+  `(let ((c-with-syntax-table-orig-table (syntax-table)))
+     (unwind-protect
+	 (progn
+	   (set-syntax-table ,table)
+	   ,@code)
+       (set-syntax-table c-with-syntax-table-orig-table))))
+(put 'c-with-syntax-table 'lisp-indent-function 1)
+
 
 (provide 'cc-defs)
 ;;; cc-defs.el ends here
