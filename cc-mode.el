@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-08 15:56:40 $
-;; Version:         $Revision: 2.89 $
+;; Last Modified:   $Date: 1992-06-08 16:03:15 $
+;; Version:         $Revision: 2.90 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-08 15:56:40 $|$Revision: 2.89 $|
+;; |$Date: 1992-06-08 16:03:15 $|$Revision: 2.90 $|
 
 
 ;; ======================================================================
@@ -131,7 +131,7 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 4
   "*Indentation offset for line which contains only C or C++ style comments.")
-(defvar c++-cleanup-brace-else-brace-p t
+(defvar c++-cleanup-brace-else-brace-p nil
   "*Controls whether } else { style should remain on a single line.
 When t, cleans up this style (when only whitespace intervenes).")
 (defvar c++-hanging-braces t
@@ -207,7 +207,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.89 $
+  "Major mode for editing C++ code.  $Revision: 2.90 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1742,7 +1742,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.89 $"
+(defconst c++-version "$Revision: 2.90 $"
   "c++-mode version number.")
 
 (defun c++-version ()
