@@ -399,33 +399,29 @@ stuff.  Used on level 1 and higher."
 	       (,(+ 3 ncle-depth (c-lang-const c-symbol-key-depth))
 		font-lock-variable-name-face nil t))
 
-	      ;; Fontify symbol names in #elif or #if ... defined preprocessor
-	      ;; directives.
-	      (eval . (list
-		       ,(concat noncontinued-line-end
-				(c-lang-const c-opt-cpp-prefix)
-				"\\(if\\|elif\\)\\>")
-		       (list
-			,(concat "\\<\\(" ; 1
-				 ;; Don't use regexp-opt here to avoid the
-				 ;; depth hazzle.  As it happens, it currently
-				 ;; wouldn't have any effect anyway.
-				 (mapconcat 'regexp-quote
-					    (c-lang-const c-cpp-defined-fns)
-					    "\\|")
-				 "\\)\\>"
-				 "\\s *\(?"
-				 "\\(" (c-lang-const c-symbol-key) "\\)?") ; 2
-			nil nil
-			(list 1 c-preprocessor-face)
-			'(,(+ 2 ncle-depth)
-			  font-lock-variable-name-face nil t))))
-
-	      ;; Fontify symbols after #ifdef and #ifndef.
-	      (,(concat noncontinued-line-end
-			(c-lang-const c-opt-cpp-prefix)
-			"ifn?def\\s +\\(" (c-lang-const c-symbol-key) "\\)")
-	       ,(1+ ncle-depth) font-lock-variable-name-face)
+	      ;; Fontify cpp function names in preprocessor
+	      ;; expressions in #if and #elif.
+	      ,(when (c-lang-const c-cpp-defined-fns)
+		 `(,(c-make-font-lock-search-function
+		     (concat noncontinued-line-end
+			     (c-lang-const c-opt-cpp-prefix)
+			     "\\(if\\|elif\\)\\>" ; 1 + ncle-depth
+			     ;; Make a submatch for the whole logical
+			     ;; line to look for the functions in.
+			     "\\(\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*\\)")
+		     `((let ((limit (match-end 0)))
+			 (while (re-search-forward
+				 ,(concat "\\<\\("
+					  (c-regexp-opt
+					   (c-lang-const c-cpp-defined-fns)
+					   nil)
+					  "\\)\\>"
+					  "\\s *\(")
+				 limit 'move)
+			   (c-put-font-lock-face (match-beginning 1)
+						 (match-end 1)
+						 c-preprocessor-face)))
+		       (goto-char ,(1+ ncle-depth))))))
 
 	      ;; Fontify the directive names.
 	      (,(c-make-font-lock-search-function
