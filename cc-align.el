@@ -116,9 +116,9 @@
 (defun c-lineup-multi-inher (langelem)
   ;; line up multiple inheritance lines
   (save-excursion
-    (let ((langelem-col (c-langelem-col langelem))
-	  (eol (c-point 'eol))
-	  (here (point)))
+    (let ((eol (c-point 'eol))
+	  (here (point))
+	  (langelem-col (c-langelem-col langelem)))
       (skip-chars-forward "^:" eol)
       (skip-chars-forward " \t:" eol)
       (if (or (eolp)
