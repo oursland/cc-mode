@@ -65,7 +65,6 @@ Getting Started
     result of the multi-Emacs support and none of the warnings have
     any effect on operation.  Here are the steps to do this [in emacs]:
 
-    	C-x C-f RET ~/mylisp/cc-mode.el RET
 	M-x byte-compile-file RET ~/mylisp/cc-mode.el RET
 
     Most users will probably be running an Emacs that already has bocm
