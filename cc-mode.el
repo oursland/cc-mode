@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.350 $
-;; Last Modified:   $Date: 1997-01-21 22:02:26 $
+;; Version:         $Revision: 4.351 $
+;; Last Modified:   $Date: 1997-01-22 23:42:59 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -656,13 +656,6 @@ The list of variables to buffer localize are:
     ["Forward Statement"      c-end-of-statement t]
     )
   "Basic XEmacs 19 menu for C/C++/ObjC/Java modes.")
-
-;; Sadly we need this for a macro in Emacs 19.
-(eval-when-compile
-  ;; Imenu isn't used in XEmacs, so just ignore load errors.
-  (condition-case ()
-      (require 'imenu)
-    (error nil)))
 
 (defvar cc-imenu-c++-generic-expression
   (` 
@@ -5084,7 +5077,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.350 $"
+(defconst c-version "$Revision: 4.351 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
