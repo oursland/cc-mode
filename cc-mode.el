@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.144 $
-;; Last Modified:   $Date: 1995-01-18 15:41:38 $
+;; Version:         $Revision: 4.145 $
+;; Last Modified:   $Date: 1995-01-18 15:47:11 $
 ;; Keywords: C++ C Objective-C editing major-mode
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-18 15:41:38 $|$Revision: 4.144 $|
+;; |$Date: 1995-01-18 15:47:11 $|$Revision: 4.145 $|
 
 ;;; Code:
 
@@ -1481,8 +1481,10 @@ the brace is inserted inside a literal."
 	 (safepos (c-safe-position c-state-cache))
 	 (literal (c-in-literal safepos)))
     ;; if we're in a literal, or we're not at the end of the line, or
-    ;; a numeric arg is provided, then just insert the character
+    ;; a numeric arg is provided, or auto-newlining is turned off,
+    ;; then just insert the character.
     (if (or literal arg
+	    (not c-auto-newline)
 	    (not (looking-at "[ \t]*$")))
 	(c-insert-special-chars arg)	
       (let* ((syms '(class-open class-close defun-open defun-close 
@@ -4380,7 +4382,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.144 $"
+(defconst c-version "$Revision: 4.145 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
