@@ -326,22 +326,6 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
       (setq c-style-alist (cons (cons style descrip) c-style-alist))))
   (and set-p (c-set-style style)))
 
-(defun c-complete-stylevars ()
-  "Fills in the still not set style variables from their
-`c-stylevar-fallback' properties."
-  (mapcar (lambda (var)
-	    (cond ((eq var 'c-offsets-alist)
-		   (mapcar (lambda (langentry)
-			     (let ((langelem (car langentry))
-				   (offset (cdr langentry)))
-			       (unless (assq langelem c-offsets-alist)
-				 (c-set-offset langelem offset))))
-			   (get var 'c-stylevar-fallback)))
-		  (t (if (eq (symbol-value var) 'set-from-style)
-			 (set var (c-copy-tree
-				   (get var 'c-stylevar-fallback)))))))
-	  c-style-variables))
-
 
 
 (defun c-evaluate-offset (offset langelem symbol)
@@ -496,26 +480,31 @@ and exists only for compatibility reasons."
   (unless (get 'c-initialize-builtin-style 'is-run)
     (put 'c-initialize-builtin-style 'is-run t)
     (c-initialize-cc-mode)
-    (if c-old-style-variable-behavior
-	(c-complete-stylevars))
     (or (assoc "cc-mode" c-style-alist)
 	(assoc "user" c-style-alist)
-	(let ((vars c-style-variables)
-	      list var val)
-	  (while vars
-	    (setq var (car vars)
-		  vars (cdr vars)
-		  val (symbol-value var))
-	    (if (if c-old-style-variable-behavior
-		    (not (eq var 'c-offsets-alist))
-		  (if (eq var 'c-offsets-alist)
-		      c-offsets-alist
-		    (not (eq val 'set-from-style))))
-		(setq list (nconc list (list (cons var (c-copy-tree val)))))))
-	  (c-add-style "user" list)
-	(c-add-style "cc-mode" '("user"))
-	))
-  (if c-style-variables-are-local-p
+	(progn
+	  (c-add-style "user"
+		       (mapcar
+			(lambda (var)
+			  (let ((val (symbol-value var)))
+			    (cons var
+				  (if (eq var 'c-offsets-alist)
+				      (mapcar
+				       (lambda (langentry)
+					 (setq langentry
+					       (or (assq (car langentry) val)
+						   langentry))
+					 (cons (car langentry)
+					       (cdr langentry)))
+				       (get var 'c-stylevar-fallback))
+				    (c-copy-tree
+				     (if (eq val 'set-from-style)
+					 (get var 'c-stylevar-fallback)
+				       val))))))
+			c-style-variables))
+	  (c-add-style "cc-mode" '("user"))
+	  ))
+    (if c-style-variables-are-local-p
 	(c-make-styles-buffer-local))))
 
 (defun c-make-styles-buffer-local (&optional this-buf-only-p)
