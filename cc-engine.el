@@ -2755,6 +2755,8 @@ brace."
 ;; Dynamically bound variable that instructs `c-forward-type' to also
 ;; treat possible types (i.e. those that it normally returns 'maybe or
 ;; 'found for) as actual types (and always return 'found for them).
+;; This means that it records them in `c-record-type-identifiers' if
+;; that is set, and that it adds them to `c-found-types'.
 (defvar c-promote-possible-types nil)
 
 ;; Dynamically bound variable that instructs
@@ -2785,9 +2787,9 @@ brace."
   `(setq c-record-ref-identifiers (cons (cons ,from ,to)
 					c-record-ref-identifiers)))
 
-;; Dynamically bound variable that instructs `c-forward-type' to record
-;; the ranges types that only are found.  Behaves otherwise like
-;; `c-record-type-identifiers'.
+;; Dynamically bound variable that instructs `c-forward-type' to
+;; record the ranges of types that only are found.  Behaves otherwise
+;; like `c-record-type-identifiers'.
 (defvar c-record-found-types nil)
 
 (defmacro c-record-found-type (from to)
