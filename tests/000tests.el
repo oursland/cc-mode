@@ -93,6 +93,18 @@
 (defvar inhibit-point-motion-hooks)
 (defvar font-lock-global-modes)
 
+;; `font-lock-make-faces' is used in Emacs 19.34 to initialize the
+;; faces and it uses some X functions.  If we're running
+;; noninteractively we don't have any X connection, so provide some
+;; dummies.
+(when (and (fboundp 'font-lock-make-faces)
+	   (not window-system))
+  (flet ((x-get-resource (&rest ignored))
+	 (x-display-color-p (&rest ignored))
+	 (x-display-grayscale-p (&rest ignored))
+	 (x-color-values (&rest ignored) '(0 0 0)))
+    (font-lock-make-faces)))
+
 (when cc-test-extend-faces
   ;; Make sure all used faces are unique before loading cc-fonts.  We
   ;; might be screwed if it's already loaded - the check for ambiguous
@@ -225,10 +237,7 @@ to be set as a file local variable.")
   ;; Try to forcibly font lock the current buffer, even in batch mode.
   ;; We're doing really dirty things to trick font-lock into action in
   ;; batch mode in the different emacsen.
-  (let ((orig-font-lock-make-faces
-	 (and (fboundp 'font-lock-make-faces)
-	      (symbol-function 'font-lock-make-faces)))
-	(orig-noninteractive-function
+  (let ((orig-noninteractive-function
 	 (and (fboundp 'noninteractive)
 	      (symbol-function 'noninteractive)))
 	(orig-noninteractive-variable
@@ -238,11 +247,6 @@ to be set as a file local variable.")
 	(noninteractive nil))
     (unwind-protect
 	(progn
-	  (when (and orig-noninteractive-variable orig-font-lock-make-faces)
-	    ;; `font-lock-make-faces' is used in Emacs 19.34 and
-	    ;; requires a window system.  Since we never actually
-	    ;; display the faces we can skip it.
-	    (fset 'font-lock-make-faces (lambda (&rest args))))
 	  (when orig-noninteractive-function
 	    ;; XEmacs (at least 21.4) calls `noninteractive' to check
 	    ;; for batch mode, so we let it lie.
@@ -257,8 +261,6 @@ to be set as a file local variable.")
 		  (font-lock-fontify-buffer-function
 		   'font-lock-default-fontify-buffer))
 	      (font-lock-fontify-buffer))))
-      (when (and noninteractive orig-font-lock-make-faces)
-	(fset 'font-lock-make-faces orig-font-lock-make-faces))
       (when orig-noninteractive-function
 	(fset 'noninteractive orig-noninteractive-function)))))
 
