@@ -1,18 +1,18 @@
-MANIFEST for tar distribution of cc-mode.el 4.282
-Barry A. Warsaw <cc-mode-help@merlin.cnri.reston.va.us>
-$Date: 1996-02-21 23:07:55 $
+MANIFEST for tar distribution of cc-mode.el 4.315
+Barry A. Warsaw <cc-mode-help@python.org>
+$Date: 1996-08-21 20:45:30 $
 
 You should have received the following files in the distribution tar
-file for cc-mode 4.282:
+file for cc-mode 4.315:
 
     ANNOUNCEMENT: Release announcement as it appeared on various
     forums.
 
     MANIFEST: This file.
 
-    cc-mode.el: Version 4.282 of the mode.
+    cc-mode.el: Version 4.315 of the mode.
 
-    cc-mode.texi: The CC-MODE Texinfo manual.
+    cc-mode.texi: Version 2.55 of the CC-MODE Texinfo manual.
 
     cc-compat.el: Helps ease the transition from c-mode.el to cc-mode
     style indentation control.  This is provided for your convenience
