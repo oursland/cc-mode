@@ -256,7 +256,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		       (progn (skip-chars-forward " \t")
 			      (eq (point) saved))))
 		(goto-char saved)
-		(if (and (c-forward-to-cpp-expression)
+		(if (and (c-forward-to-cpp-define-body)
 			 (progn (c-forward-syntactic-ws start)
 				(< (point) start)))
 		    ;; Stop at the first token in the content of the macro.
@@ -1263,19 +1263,15 @@ brace."
     (or (not (c-most-enclosing-brace state))
 	(c-search-uplist-for-classkey state))))
 
-(defun c-forward-to-cpp-expression ()
+(defun c-forward-to-cpp-define-body ()
   ;; Assuming point is at the "#" that introduces a preprocessor
-  ;; directive, it's moved forward to the start of the expression it
-  ;; may contain, i.e. the definition of a "#define", or the test
-  ;; expression of an "#if", or the macro argument of an "#ifdef",
-  ;; etc.  Non-nil is returned in this case, in all other cases nil is
-  ;; returned and point isn't moved.
+  ;; directive, it's moved forward to the start of the definition body
+  ;; if it's a "#define".  Non-nil is returned in this case, in all
+  ;; other cases nil is returned and point isn't moved.
   (when (and (looking-at
-	      (concat "#[ \t]*\\("
+	      (concat "#[ \t]*"
 		      "define[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
-		      "\\|"
-		      "\\(if\\|elif\\|ifdef\\|undef\\)[ \t]"
-		      "\\)\\([ \t]\\|\\\\\n\\)*"))
+		      "\\([ \t]\\|\\\\\n\\)*"))
 	     (not (= (match-end 0) (c-point 'eol))))
     (goto-char (match-end 0))))
 
@@ -1287,6 +1283,9 @@ brace."
   ;; brace.  If not supplied, point is used as search start.  LIM is
   ;; used as bound for some backward buffer searches; the search might
   ;; continue past it.
+  ;;
+  ;; Note: This test is easily fooled.  It only works reasonably well
+  ;; in the situations where `c-guess-basic-syntax' uses it.
   (save-excursion
     (c-backward-syntactic-ws lim)
     (let ((checkpoint (or containing (point))))
@@ -1316,10 +1315,18 @@ brace."
 	    nil
 	  (goto-char checkpoint))
 	)
+      (setq checkpoint (point))
       (and (eq (char-before) ?\))
+	   ;; Check that it isn't a cpp expression, e.g. the
+	   ;; expression of an #if directive or the "function header"
+	   ;; of a #define.
+	   (or (not (c-beginning-of-macro))
+	       (and (c-forward-to-cpp-define-body)
+		    (< (point) checkpoint)))
 	   ;; check if we are looking at an ObjC method def
 	   (or (not c-opt-method-key)
 	       (progn
+		 (goto-char checkpoint)
 		 (c-forward-sexp -1)
 		 (forward-char -1)
 		 (c-backward-syntactic-ws lim)
@@ -2216,7 +2223,7 @@ Keywords are recognized and not considered identifiers."
 	     (c-state-cache (if inclass-p
 				(c-whack-state-before (point-min) fullstate)
 			      fullstate))
-	     inenclosing-p macro-start
+	     inenclosing-p macro-start in-macro-expr
 	     ;; There's always at most one syntactic element which got
 	     ;; a relpos.  It's stored in syntactic-relpos.
 	     syntactic-relpos
@@ -2294,12 +2301,25 @@ Keywords are recognized and not considered identifiers."
 		 (when (c-beginning-of-macro)
 		   (setq macro-start (point))))
 	       (/= macro-start (c-point 'boi))
-	       (or (not c-syntactic-indentation-in-macros)
-		   (save-excursion
-		     (goto-char macro-start)
-		     (and (c-forward-to-cpp-expression)
-			  (= (point) (c-point 'boi indent-point))))))
-	  (c-add-syntax 'cpp-macro-cont macro-start)
+	       (progn
+		 (setq tmpsymbol 'cpp-macro-cont)
+		 (or (not c-syntactic-indentation-in-macros)
+		     (save-excursion
+		       (goto-char macro-start)
+		       ;; If at the beginning of the body of a #define
+		       ;; directive then analyze as cpp-define-intro
+		       ;; only.  Go on with the syntactic analysis
+		       ;; otherwise.  in-macro-expr is set if we're in a
+		       ;; cpp expression, i.e. before the #define body
+		       ;; or anywhere in a non-#define directive.
+		       (if (c-forward-to-cpp-define-body)
+			   (let ((indent-boi (c-point 'boi indent-point)))
+			     (setq in-macro-expr (> (point) indent-boi)
+				   tmpsymbol 'cpp-define-intro)
+			     (= (point) indent-boi))
+			 (setq in-macro-expr t)
+			 nil)))))
+	  (c-add-syntax tmpsymbol macro-start)
 	  (setq macro-start nil))
 	 ;; CASE 11: an else clause?
 	 ((looking-at "else\\>[^_]")
@@ -2511,8 +2531,9 @@ Keywords are recognized and not considered identifiers."
 	     ;; CASE 5A.5: ordinary defun open
 	     (t
 	      (goto-char placeholder)
-	      (if inclass-p
+	      (if (or inclass-p macro-start)
 		  (c-add-syntax 'defun-open (c-point 'boi))
+		;; Bogus to use bol here, but it's the legacy.
 		(c-add-syntax 'defun-open (c-point 'bol)))
 	      )))
 	   ;; CASE 5B: first K&R arg decl or member init
@@ -2764,27 +2785,7 @@ Keywords are recognized and not considered identifiers."
 		       (beginning-of-line)
 		       (setq placeholder (point))
 		       (c-backward-syntactic-ws limit))
-		     (and (eq (char-before) ?\))
-			  (or (not macro-start)
-			      ;; Ignore closing paren of a #define
-			      ;; argument list.
-			      (> (point)
-				 (save-excursion
-				   (goto-char macro-start)
-				   (c-forward-to-cpp-expression)
-				   (point))))
-			  (or (not c-opt-method-key)
-			      (progn
-				(c-forward-sexp -1)
-				(forward-char -1)
-				(c-backward-syntactic-ws)
-				(not (or (memq (char-before) '(?- ?+))
-					 ;; or a class category
-					 (progn
-					   (c-forward-sexp -2)
-					   (looking-at c-class-key))
-					 )))))
-		     ))
+		     (c-just-after-func-arglist-p nil lim)))
 		 (save-excursion
 		   (c-beginning-of-statement-1)
 		   (not (looking-at "typedef\\>[^_]"))))
@@ -2835,7 +2836,7 @@ Keywords are recognized and not considered identifiers."
 	      (when (and c-syntactic-indentation-in-macros
 			 macro-start
 			 (/= macro-start (c-point 'boi indent-point)))
-		(c-add-syntax 'cpp-macro-cont)
+		(c-add-syntax 'cpp-define-intro)
 		(setq macro-start nil))
 	      ))
 	   ;; CASE 5K: we are at an ObjC method definition
@@ -3330,14 +3331,31 @@ Keywords are recognized and not considered identifiers."
 		 (not (and (c-major-mode-is 'pike-mode)
 			   (eq (char-after (1+ macro-start)) ?\"))))
 	    (c-add-syntax 'cpp-macro)
-	  (when (and c-syntactic-indentation-in-macros
-		     macro-start
-		     (eq macro-start syntactic-relpos)
-		     (save-excursion
-		       (goto-char macro-start)
-		       (or (not (c-forward-to-cpp-expression))
-			   (<= (point) (c-point 'boi indent-point)))))
-	    (c-add-syntax 'cpp-macro-cont)))
+	  (when (and c-syntactic-indentation-in-macros macro-start)
+	    (if in-macro-expr
+		(when (or (< syntactic-relpos macro-start)
+			  (not (or (assq 'arglist-intro syntax)
+				   (assq 'arglist-cont syntax)
+				   (assq 'arglist-cont-nonempty syntax)
+				   (assq 'arglist-close syntax))))
+		  ;; If inside a cpp expression, i.e. anywhere in a
+		  ;; cpp directive except a #define body, we only let
+		  ;; through the syntactic analysis that is internal
+		  ;; in the expression.  That means the arglist
+		  ;; elements, if they are anchored inside the cpp
+		  ;; expression.
+		  (setq syntax `((cpp-macro-cont . ,macro-start))))
+	      (when (and (eq macro-start syntactic-relpos)
+			 (not (assq 'cpp-define-intro syntax))
+			 (save-excursion
+			   (goto-char macro-start)
+			   (or (not (c-forward-to-cpp-define-body))
+			       (<= (point) (c-point 'boi indent-point)))))
+		;; Inside a #define body and the syntactic analysis is
+		;; anchored on the start of the #define.  In this case
+		;; we add cpp-define-intro to get the extra
+		;; indentation of the #define body.
+		(c-add-syntax 'cpp-define-intro)))))
 	;; return the syntax
 	syntax))))
 

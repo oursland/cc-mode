@@ -213,7 +213,7 @@ and takes care to set the indentation before calling
       (let ((c-syntactic-context (c-guess-basic-syntax)))
 	;; We temporarily insert another line break, so that the
 	;; lineup functions will see the line as empty.  That makes
-	;; e.g. c-lineup-macro-cont more intuitive since it then
+	;; e.g. c-lineup-cpp-define more intuitive since it then
 	;; proceeds to the preceding line in this case.
 	(insert ?\n)
 	(delete-horizontal-space)

@@ -276,9 +276,9 @@ e.g. `c-special-indent-hook'."
 (defcustom c-syntactic-indentation-in-macros t
   "*Enable syntactic analysis inside macros.
 If this is nil, all lines inside macro definitions are analyzed as
-`cpp-macro-cont'.  Otherwise they are analyzed syntactically according
-to the preceding lines, just like normal code, and `cpp-macro-cont' is
-only used for the first line.
+`cpp-macro-cont'.  Otherwise they are analyzed syntactically, just
+like normal code, and `cpp-define-intro' is used to create the
+additional indentation of the bodies of \"#define\" macros.
 
 Having this enabled simplifies editing of large multiline macros, but
 it might complicate editing if CC Mode doesn't recognize the context
@@ -923,9 +923,10 @@ can always override the use of `c-default-style' by making calls to
        ;; boi at the class decl start.
        (cpp-macro             . [0])
        ;; Relpos: None.
-       (cpp-macro-cont        . (c-lineup-macro-cont +))
-       ;; Relpos: At the macro start (always at boi) if not combined
-       ;; with some other syntactic symbol, otherwise none.
+       (cpp-macro-cont        . +)
+       ;; Relpos: At the macro start (always at boi).
+       (cpp-define-intro      . (c-lineup-cpp-define +))
+       ;; Relpos: None.
        (friend                . 0)
        ;; Relpos: None.
        (objc-method-intro     . [0])

@@ -666,7 +666,7 @@ inextern-lang, innamespace."
 	0
       c-basic-offset)))
 
-(defun c-lineup-macro-cont (langelem)
+(defun c-lineup-cpp-define (langelem)
   "Line up macro continuation lines according to the indentation of
 the construct preceding the macro.  E.g:
 
@@ -676,14 +676,14 @@ const char msg[] =             if (!running)
   \"Some text.\";	         error(\"Not running!\");
 
 #define X(A, B)  \           #define X(A, B)    \
-do {             \    <->      do {             \    <- c-lineup-macro-cont
+do {             \    <->      do {             \    <- c-lineup-cpp-define
   printf (A, B); \               printf (A, B); \
 } while (0)                    } while (0)
 
 If `c-syntactic-indentation-in-macros' is non-nil, the function
 returns the relative indentation to the macro start line to allow
 accumulation with other offsets.  E.g. in the following cases,
-cpp-macro-cont is combined with the statement-block-intro that comes
+cpp-define-intro is combined with the statement-block-intro that comes
 from the \"do {\" that hangs on the \"#define\" line:
 
                              int dribble() {
@@ -691,11 +691,11 @@ const char msg[] =             if (!running)
   \"Some text.\";	         error(\"Not running!\");
 
 #define X(A, B) do { \       #define X(A, B) do { \
-  printf (A, B);     \  <->      printf (A, B);   \  <- c-lineup-macro-cont
+  printf (A, B);     \  <->      printf (A, B);   \  <- c-lineup-cpp-define
   this->refs++;      \           this->refs++;    \
-} while (0)             <->    } while (0)           <- c-lineup-macro-cont
+} while (0)             <->    } while (0)           <- c-lineup-cpp-define
 
-The relative indentation returned by `c-lineup-macro-cont' is zero and
+The relative indentation returned by `c-lineup-cpp-define' is zero and
 two, respectively, in these two examples. They are then added to the
 two column indentation that statement-block-intro gives in both cases
 here.
@@ -711,7 +711,7 @@ nonempty line in the macro.  If there's no such line in the macro then
 the indentation is taken from the construct preceding it, as described
 above.
 
-Works with: cpp-macro-cont."
+Works with: cpp-define-intro."
   (let (offset)
     (if c-syntactic-indentation-in-macros
 	;; Go to the macro start and do a syntactic analysis of it.
