@@ -20,6 +20,8 @@
 ;;   made c++-auto-newline and c++-hungry-delete-key-p buffer local
 ;;         variables. also change slightly hungry key mechanism
 ;;   removed c++-electric-colon variable
+;;   use mode line to indicate auto-hungry state mode
+;;         added c++-mode-line-format
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -156,9 +158,21 @@ correctly.")
   "*Put a newline after member initialization colon.")
 (defvar c++-hungry-delete-key-p t
   "*Use hungry delete key which consumes all trailing whitespace.")
+(defvar c++-auto-hungry-string ""
+  "For mode-line indication of auto/hungry state.")
+(defvar c++-mode-line-format
+  '("" mode-line-modified
+    mode-line-buffer-identification
+    "   " global-mode-string "   %[("
+    mode-name c++-auto-hungry-string
+    minor-mode-alist "%n"
+    mode-line-process
+    ")%]----" (-3 . "%p") "-%-")
+  "*Mode line format for c++-mode.")
 
 (make-variable-buffer-local 'c++-auto-newline)
 (make-variable-buffer-local 'c++-hungry-delete-key-p)
+(make-variable-buffer-local 'c++-auto-hungry-string)
 
 
 (defun c++-mode ()
@@ -245,6 +259,7 @@ no args,if that value is non-nil."
   (set (make-local-variable 'paragraph-ignore-fill-prefix) t)
   (set (make-local-variable 'require-final-newline) t)
   (set (make-local-variable 'parse-sexp-ignore-comments) nil)
+  (setq mode-line-format c++-mode-line-format)
   (run-hooks 'c++-mode-hook)
   (c++-toggle-auto-newline (if c++-auto-newline 1 0)))
 
@@ -281,7 +296,7 @@ if zero."
 		(not (zerop (prefix-numeric-value arg))))))
   (let ((auto (if c++-auto-newline "/a" nil))
 	(hungry (if c++-hungry-delete-key-p "h" nil)))
-    (setq mode-name (concat "C++" auto hungry))
+    (setq c++-auto-hungry-string (concat auto hungry))
     ;; force mode line update
     (set-buffer-modified-p (buffer-modified-p))))
 
