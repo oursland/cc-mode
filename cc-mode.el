@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.293 $
-;; Last Modified:   $Date: 1994-03-21 16:34:47 $
+;; Version:         $Revision: 3.294 $
+;; Last Modified:   $Date: 1994-03-21 21:19:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-21 16:34:47 $|$Revision: 3.293 $|
+;; |$Date: 1994-03-21 21:19:27 $|$Revision: 3.294 $|
 
 ;;; Code:
 
@@ -786,7 +786,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.293 $
+cc-mode Revision: $Revision: 3.294 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -817,7 +817,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.293 $
+cc-mode Revision: $Revision: 3.294 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2335,6 +2335,11 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(>= start here))
 	    (setq start bod2))
 	(narrow-to-region start end)
+	;; try to narrow the region even farther. skip over any
+	;; balanced lists between start and end.  Could be ill-formed
+	;; top-level constructs that b-o-d didn't pick up
+	(c-safe (while t (setq start (scan-lists start 1 0))))
+	;; now parse from the point we're at to end
 	(setq state (parse-partial-sexp start end))
 	(if (and (setq brace (nth 1 state))
 		 (setq start (or (c-safe (scan-lists brace -1 1))
@@ -3296,7 +3301,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.293 $"
+(defconst c-version "$Revision: 3.294 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
