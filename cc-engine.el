@@ -1739,10 +1739,10 @@ This function does not do any hidden buffer changes."
 	    ;; If point-min has moved forward then we just need to cut
 	    ;; off a bit of the tail.
 	    (let ((ptr (cons nil c-state-cache)) elem)
-	      (while (and (setq elem (cdr ptr))
+	      (while (and (setq elem (car-safe (cdr ptr)))
 			  (>= (if (consp elem) (car elem) elem)
 			      (point-min)))
-		(setq ptr elem))
+		(setq ptr (cdr ptr)))
 	      (when (consp ptr)
 		(if (eq (cdr ptr) c-state-cache)
 		    (setq c-state-cache nil)
