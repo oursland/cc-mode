@@ -397,6 +397,109 @@ to be set as a file local variable.")
   (concat "\\(" c-string-limit-regexp "\\)"
 	  "\\(" c-string-limit-regexp "\\)"))
 
+(defun cc-test-record-syntax (testbuf resultbuf no-error error-fn)
+  (set-buffer testbuf)
+  (goto-char (point-min))
+  (while (not (eobp))
+    (let* ((buffer-read-only nil)
+	   (syntax
+	    (if no-error
+		(condition-case err
+		    (c-guess-basic-syntax)
+		  (error
+		   (funcall error-fn err)
+		   ""))
+	      (c-guess-basic-syntax))))
+      (set-buffer resultbuf)
+      (insert (format "%s" syntax) "\n")
+      (set-buffer testbuf))
+    (forward-line 1)))
+
+(defun cc-test-convert-to-rel-offsets (resbuf testbuf)
+  ;; resbuf is a buffer assumed to contain recorded syntax.  All
+  ;; absolute positions in it are converted to relative with the
+  ;; syntax "<l,c>" where "l" is the number of lines back from the
+  ;; current line, and "c" is the column.  Positions already on the
+  ;; relative form aren't touched.  TESTBUF is used to convert to
+  ;; lines and columns.
+
+  (set-buffer resbuf)
+  (goto-char (point-min))
+  (save-excursion
+    (set-buffer testbuf)
+    (goto-char (point-min)))
+
+  (let ((last-pos (point)))
+    (while (re-search-forward "\\(\\=\\|[^<]\\)\\([0-9]+\\)" nil t)
+      (let ((anchor-pos (string-to-int (match-string 2)))
+	    moved-lines anchor-rel-line anchor-col)
+
+	;; Why is count-lines a bloody mess? :P
+	(setq moved-lines (count-lines (c-point 'bol last-pos)
+				       (c-point 'bol)))
+
+	(delete-region (match-beginning 2) (match-end 2))
+
+	(save-excursion
+	  (set-buffer testbuf)
+	  (if (> moved-lines 0)
+	      (forward-line moved-lines))
+	  (setq anchor-rel-line (count-lines anchor-pos (point))
+		anchor-col (save-excursion
+			     (goto-char anchor-pos)
+			     (current-column))))
+
+	(insert (format "<%d,%d>" anchor-rel-line anchor-col))
+	(setq last-pos (point))))))
+
+(defun cc-test-convert-to-abs-offsets (resbuf testbuf)
+  ;; resbuf is a buffer assumed to contain recorded syntax.  All
+  ;; relative positions in it are converted to absolute.  Positions
+  ;; already on the absolute form aren't touched.  TESTBUF is used to
+  ;; convert from lines and columns.
+
+  (set-buffer resbuf)
+  (goto-char (point-min))
+  (save-excursion
+    (set-buffer testbuf)
+    (goto-char (point-min)))
+
+  (let ((last-pos (point)))
+    (while (re-search-forward
+	    ;; A relative line should never be negative, but if it is
+	    ;; then we don't want it to break here.
+	    "<\\(-?[0-9]+\\),\\([0-9]+\\)>" nil t)
+      (let ((anchor-rel-line (string-to-int (match-string 1)))
+	    (anchor-col (string-to-int (match-string 2)))
+	    moved-lines anchor-pos)
+
+	;; Why is count-lines a bloody mess? :P
+	(setq moved-lines (count-lines (c-point 'bol last-pos)
+				       (c-point 'bol)))
+
+	(delete-region (match-beginning 0) (match-end 0))
+
+	(save-excursion
+	  (set-buffer testbuf)
+	  (if (> moved-lines 0)
+	      (forward-line moved-lines))
+	  (setq anchor-pos
+		(save-excursion
+		  (forward-line (- anchor-rel-line))
+		  (let (last-col)
+		    (while (and (< (setq last-col (current-column))
+				   anchor-col)
+				(not (eolp)))
+		      (forward-char))
+		    (if (/= last-col anchor-col)
+			(error "Line %d doesn't contain any position at column %d"
+			       (1+ (count-lines (point-min) (c-point 'bol)))
+			       anchor-col))
+		    (point)))))
+
+	(insert (format "%d" anchor-pos))
+	(setq last-pos (point))))))
+
 (defun cc-test-record-faces (testbuf facebuf check-unknown-faces)
   (set-buffer testbuf)
   (let (faces prev-faces (pos (point)) facenames lines col preceding-entry
@@ -573,6 +676,7 @@ to be set as a file local variable.")
       (buffer-disable-undo exp-syntax-buf)
       (erase-buffer)
       (insert-file-contents resfile)
+      (cc-test-convert-to-abs-offsets exp-syntax-buf testbuf)
       (goto-char (point-min))
 
       (setq res-syntax-buf (get-buffer-create "*cc-resulting-syntax*"))
@@ -667,30 +771,18 @@ to be set as a file local variable.")
 
 	    ;; Collect the syntactic analysis of all lines.
 	    (unless cc-test-benchmark-mode
-	      (goto-char (point-min))
-	      (while (not (eobp))
-		(let* ((buffer-read-only nil)
-		       (syntax
-			(if no-error
-			    (condition-case err
-				(c-guess-basic-syntax)
-			      (error
-			       (unless error-found-p
-				 (setq error-found-p t)
-				 (cc-test-log
-				  "%s:%d: c-guess-basic-syntax error: %s"
-				  filename
-				  (1+ (count-lines (point-min) (point)))
-				  (error-message-string err))
-				 (when cc-test-last-backtrace
-				   (cc-test-log "%s" cc-test-last-backtrace)
-				   (setq cc-test-last-backtrace nil)))
-			       ""))
-			  (c-guess-basic-syntax))))
-		  (set-buffer res-syntax-buf)
-		  (insert (format "%s" syntax) "\n")
-		  (set-buffer testbuf))
-		(forward-line 1)))
+	      (cc-test-record-syntax testbuf res-syntax-buf no-error
+				     (lambda (err)
+				       (unless error-found-p
+					 (setq error-found-p t)
+					 (cc-test-log
+					  "%s:%d: c-guess-basic-syntax error: %s"
+					  filename
+					  (1+ (count-lines (point-min) (point)))
+					  (error-message-string err))
+					 (when cc-test-last-backtrace
+					   (cc-test-log "%s" cc-test-last-backtrace)
+					   (setq cc-test-last-backtrace nil))))))
 	    
 	    ;; Record the expected indentation and reindent.  This is done
 	    ;; in backward direction to avoid cascading errors.
@@ -1104,15 +1196,10 @@ It records the syntactic analysis of each line in the test file."
 	(switch-to-buffer-other-window resbuf)
 	(set-buffer resbuf)
 	(erase-buffer)
-	(set-buffer testbuf)
-
-	(goto-char (point-min))
-	(while (not (eobp))
-	  (let ((syntax (c-save-buffer-state nil (c-guess-basic-syntax))))
-	    (set-buffer resbuf)
-	    (insert (format "%s\n" syntax)))
-	  (set-buffer testbuf)
-	  (forward-line 1))))))
+	(cc-test-record-syntax testbuf resbuf nil nil)
+	(cc-test-convert-to-rel-offsets resbuf testbuf)
+	(set-buffer resbuf)
+	(goto-char (point-min))))))
 
 (defun shift-res-offsets (offset)
   ;; Shifts the offsets in the corresponding .res files by the
