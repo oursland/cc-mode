@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.273 $
-;; Last Modified:   $Date: 1996-01-19 19:02:45 $
+;; Version:         $Revision: 4.274 $
+;; Last Modified:   $Date: 1996-01-22 17:17:02 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -865,11 +865,11 @@ supported list, along with the values for this variable:
   ;; Emacs 19 defines menus in the mode map. This call will return
   ;; t on Emacs 19, otherwise no-op and return nil.
   (if (and (not (c-mode-fsf-menu "C" c-mode-map))
-	   ;; in XEmacs 19, we want the menu to popup
-	   ;; when the 3rd button is hit.  In Lucid Emacs 19.10 and
-	   ;; beyond this is done automatically if we put the menu on
-	   ;; mode-popup-menu variable, see c-common-init. RMS decided
-	   ;; that this feature should not be included for Emacs 19.
+	   ;; in XEmacs 19, we want the menu to popup when the 3rd
+	   ;; button is hit.  In Lucid Emacs 19.10 and beyond this is
+	   ;; done automatically if we put the menu on mode-popup-menu
+	   ;; variable, see c-common-init. RMS decided that Emacs 19
+	   ;; should use C-Mouse-3.
 	   (boundp 'current-menubar)
 	   (not (boundp 'mode-popup-menu)))
       (define-key c-mode-map 'button3 'c-popup-menu)))
@@ -4794,7 +4794,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.273 $"
+(defconst c-version "$Revision: 4.274 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
