@@ -1,6 +1,6 @@
 README for CC Mode 5.24
 Current maintainers: Barry A. Warsaw and Martin Stjernholm
-Contact address    : cc-mode-help@python.org
+Contact address    : bug-cc-mode@gnu.org (or cc-mode-help@python.org)
 
 INTRODUCTION
 
@@ -13,7 +13,8 @@ INTRODUCTION
 MORE INFORMATION
 
     NOTE: Since there are now multiple maintainers of CC Mode, you
-    MUST address all correspondence to cc-mode-help@python.org.
+    MUST address all correspondence to bug-cc-mode@gnu.org (or
+    cc-mode-help@python.org, is address is being phased out).
 
     The canonical Web site for CC Mode is
 
