@@ -444,19 +444,20 @@
 (defconst c-awk-nl-or-eob "\\(\n\\|\r\\|\\'\\)")
 ;; Matches a newline, or the end of buffer.
 
-;; "Space" regular expressions.  These were commented out, 2003/4/26
-;(defconst c-awk-escaped-nl "\\\\[\n\r]") 
+;; "Space" regular expressions.
+(defconst c-awk-escaped-nl "\\\\[\n\r]") 
 ;; Matches an escaped newline.
-;(defconst c-awk-escaped-nls* (concat "\\(" c-awk-escaped-nl "\\)*"))
-;; Matches a possibly empty sequence of escaped newlines.
+(defconst c-awk-escaped-nls* (concat "\\(" c-awk-escaped-nl "\\)*"))
+;; Matches a possibly empty sequence of escaped newlines.  Used in
+;; awk-font-lock-keywords.
 ;; (defconst c-awk-escaped-nls*-with-space*
 ;;   (concat "\\(" c-awk-escaped-nls* "\\|" "[ \t]+" "\\)*"))
 ;; The above RE was very slow.  It's runtime was doubling with each additional
 ;; space :-(  Reformulate it as below:
-;(defconst c-awk-escaped-nls*-with-space*
-;  (concat "\\(" c-awk-escaped-nl "\\|" "[ \t]" "\\)*"))
+(defconst c-awk-escaped-nls*-with-space*
+  (concat "\\(" c-awk-escaped-nl "\\|" "[ \t]" "\\)*"))
 ;; Matches a possibly empty sequence of escaped newlines with optional
-;; interspersed spaces and tabs.
+;; interspersed spaces and tabs.  Used in awk-font-lock-keywords.
 
 ;; REGEXPS FOR "HARMLESS" STRINGS/LINES.
 (defconst c-awk-harmless-char-re "[^_#/\"\\\\\n\r]")
