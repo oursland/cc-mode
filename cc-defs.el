@@ -51,9 +51,60 @@
 (condition-case nil (require 'regexp-opt) (file-error nil))
 
 
+;; cc-mode-19.el contains compatibility macros that should be used if
+;; needed.
 (eval-and-compile
-  ;; The following is used below during compilation.
+  (if (or (not (fboundp 'functionp))
+	  (not (condition-case nil
+		   (progn (eval '(char-before)) t)
+		 (error nil)))
+	  (not (condition-case nil
+		   (progn (eval '(char-after)) t)
+		 (error nil)))
+	  (not (fboundp 'when))
+	  (not (fboundp 'unless))
+	  (not (fboundp 'regexp-opt))
+	  (not (fboundp 'regexp-opt-depth)))
+      (cc-load "cc-mode-19")
+    (defalias 'c-regexp-opt 'regexp-opt)
+    (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
 
+(require 'cl)
+
+;; Silence the compiler.
+(cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
+(cc-bytecomp-defvar c-buffer-is-cc-mode) ; In cc-vars.el
+(cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
+(cc-bytecomp-defun region-active-p)	; XEmacs
+(cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
+(cc-bytecomp-defvar zmacs-regions)	; XEmacs
+(cc-bytecomp-defvar mark-active)	; Emacs
+(cc-bytecomp-defvar deactivate-mark)	; Emacs
+(cc-bytecomp-defvar inhibit-point-motion-hooks) ; Emacs
+(cc-bytecomp-defun scan-lists)		; 5 args in XEmacs, 3 in Emacs
+(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
+(cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
+(cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
+
+
+;; Defined here since it's dynamically bound at compile time.
+(defvar c-buffer-is-cc-mode nil
+  "Non-nil for all buffers with a major mode derived from CC Mode.
+Otherwise, this variable is nil.  I.e. this variable is non-nil for
+`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode',
+`pike-mode', and any other non-CC Mode mode that calls
+`c-initialize-cc-mode' (e.g. `awk-mode').  The value is the mode
+symbol itself (i.e. `c-mode' etc) of the original CC Mode mode, or
+just t if it's not known.")
+(make-variable-buffer-local 'c-buffer-is-cc-mode)
+
+;; Have to make `c-buffer-is-cc-mode' permanently local so that it
+;; survives the initialization of the derived mode.
+(put 'c-buffer-is-cc-mode 'permanent-local t)
+
+
+;; The following is used below during compilation.
+(eval-and-compile
   (defvar c-inside-eval-when-compile nil)
 
   (defmacro cc-eval-when-compile (&rest body)
@@ -108,42 +159,6 @@ This variant works around bugs in `eval-when-compile' in various
 	 (eval '(let ((c-inside-eval-when-compile t)) ,@body)))))
 
   (put 'cc-eval-when-compile 'lisp-indent-hook 0))
-
-
-;; cc-mode-19.el contains compatibility macros that should be used if
-;; needed.
-(eval-and-compile
-  (if (or (not (fboundp 'functionp))
-	  (not (condition-case nil
-		   (progn (eval '(char-before)) t)
-		 (error nil)))
-	  (not (condition-case nil
-		   (progn (eval '(char-after)) t)
-		 (error nil)))
-	  (not (fboundp 'when))
-	  (not (fboundp 'unless))
-	  (not (fboundp 'regexp-opt))
-	  (not (fboundp 'regexp-opt-depth)))
-      (cc-load "cc-mode-19")
-    (defalias 'c-regexp-opt 'regexp-opt)
-    (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
-
-(require 'cl)
-
-;; Silence the compiler.
-(cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
-(cc-bytecomp-defvar c-buffer-is-cc-mode) ; In cc-vars.el
-(cc-bytecomp-defun buffer-syntactic-context-depth) ; XEmacs
-(cc-bytecomp-defun region-active-p)	; XEmacs
-(cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
-(cc-bytecomp-defvar zmacs-regions)	; XEmacs
-(cc-bytecomp-defvar mark-active)	; Emacs
-(cc-bytecomp-defvar deactivate-mark)	; Emacs
-(cc-bytecomp-defvar inhibit-point-motion-hooks) ; Emacs
-(cc-bytecomp-defun scan-lists)		; 5 args in XEmacs, 3 in Emacs
-(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
-(cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
-(cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
 
 
 ;;; Macros.
