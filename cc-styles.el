@@ -542,7 +542,8 @@ instead of `make-variable-buffer-local'."
     ;; Hooks must be handled specially
     (if this-buf-only-p
 	(make-local-hook 'c-special-indent-hook)
-      (make-variable-buffer-local 'c-special-indent-hook))
+      (make-variable-buffer-local 'c-special-indent-hook)
+      (setq c-style-variables-are-local-p t))
     ))
 
 
