@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.115 $
-;; Last Modified:   $Date: 1993-12-09 18:29:44 $
+;; Version:         $Revision: 3.116 $
+;; Last Modified:   $Date: 1993-12-09 19:02:25 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-09 18:29:44 $|$Revision: 3.115 $|
+;; |$Date: 1993-12-09 19:02:25 $|$Revision: 3.116 $|
 
 ;;; Code:
 
@@ -505,9 +505,10 @@ Emacs.")
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
   (if (memq 'v19 c-emacs-features)
       ;; Lucid and FSF 19 do this differently
-      (if (memq 'Lucid c-emacs-features)
-	  (set-keymap-parent c++-mode-map c-mode-map)
-	(setq c++-mode-map (cons 'keymap c-mode-map)))
+      (if (memq 'FSF c-emacs-features)
+	  (setq c++-mode-map (cons 'keymap c-mode-map))
+	(setq c++-mode-map (make-sparse-keymap))
+	(set-keymap-parent c++-mode-map c-mode-map))
     ;; Do it the hard way for GNU18 -- given by JWZ
     (setq c++-mode-map (nconc (make-sparse-keymap) c-mode-map)))
   ;; add bindings which are only useful for C++
@@ -622,7 +623,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.115 $
+CC-MODE REVISION: $Revision: 3.116 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -655,7 +656,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.115 $
+CC-MODE REVISION: $Revision: 3.116 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2740,7 +2741,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.115 $"
+(defconst c-version "$Revision: 3.116 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
