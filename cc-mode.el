@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.262 $
-;; Last Modified:   $Date: 1993-01-20 23:39:40 $
+;; Version:         $Revision: 2.263 $
+;; Last Modified:   $Date: 1993-01-21 23:05:46 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-20 23:39:40 $|$Revision: 2.262 $|
+;; |$Date: 1993-01-21 23:05:46 $|$Revision: 2.263 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.262 $
+  "Major mode for editing C++ code.  $Revision: 2.263 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.262 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.263 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1630,6 +1630,62 @@ point of the beginning of the C++ definition."
       (run-hooks 'c++-special-indent-hook))
     shift-amt))
 
+(defun c++-cont-indent (ipnt char lim)
+  "Calculate the indentation for a continued statement.
+IPNT is the indentation point; CHAR is the character before the
+indentation point, excluding any intervenine whitespace; LIM is the
+minimum point to search backwards to"
+  (let ((charlist '(nil ?\000 ?\, ?\; ?\} ?\: ?\{))
+	streamop-pos here)
+    (goto-char ipnt)
+    (c++-backward-syntactic-ws lim)
+    (if (not (memq char charlist))
+	;; This line is continuation of preceding line's statement
+	(progn
+	  (c-backward-to-start-of-continued-exp lim)
+	  ;; take care of << and >> while in streams
+	  (setq here (point))
+	  (if (save-excursion
+		(and (progn (goto-char ipnt)
+			    (looking-at "[ \t]*\\(<<\\|>>\\)"))
+		     (progn (goto-char here)
+			    (skip-chars-forward "^><\n")
+			    (setq streamop-pos (current-column))
+			    (looking-at "\\(<<\\|>>\\)"))))
+	      streamop-pos
+	    (+ (current-column)
+	       ;; prevent repeated continued indentation
+	       (if (save-excursion
+		     (beginning-of-line 1)
+		     (c++-backward-syntactic-ws lim)
+		     (memq (preceding-char) charlist))
+		   c-continued-statement-offset
+		 ;; the following statements *do* indent even
+		 ;; for single statements (are there others?)
+		 (if (looking-at "\\(do\\|else\\|for\\|if\\|while\\)\\b")
+		     c-continued-statement-offset
+		   ;; else may be a continued statement inside
+		   ;; a simple for/else/while/if/do loop
+		   (beginning-of-line 1)
+		   (forward-char -1)
+		   (c++-backward-syntactic-ws lim)
+		   (c-backward-to-start-of-continued-exp lim)
+		   (if (looking-at "\\(do\\|else\\|for\\|if\\|while\\)\\b")
+		       c-continued-statement-offset
+		     0)))
+	       (save-excursion
+		 (goto-char ipnt)
+		 (skip-chars-forward " \t")
+		 (cond
+		  ((= (following-char) ?\{)
+		   c-continued-brace-offset)
+		  ((and (= (following-char) ?\})
+			(progn (forward-char 1)
+			       (c++-at-top-level-p nil bod)))
+		   (- c-continued-statement-offset))
+		  (t 0))))))
+      nil)))
+
 (defun c++-calculate-indent (&optional parse-start bod)
   "Return appropriate indentation for current line as C++ code.
 In usual case returns an integer: the column to indent to.
@@ -1821,7 +1877,17 @@ BOD is the beginning of the C++ definition."
 				 ;; subtract inclass-shift since
 				 ;; its already incorporated by
 				 ;; default in current-column
-				 (- (current-column) inclass-shift)
+				 (- (cond
+				     ((save-excursion
+					(c++-cont-indent
+					 indent-point char-before-ip
+					 (or containing-sexp bod))))
+				     ((= char-before-ip ?\;)
+				      (goto-char (or containing-sexp bod))
+				      (+ (current-indentation)
+					 inclass-shift))
+				     (t (current-column)))
+				    inclass-shift)
 				 )))))))))
 	       )))))
        ;; CASE 4: line is expression, not statement. indent to just
@@ -1857,66 +1923,7 @@ BOD is the beginning of the C++ definition."
 	  (current-column)))
        ;; CASE 5: Statement.  Find previous non-comment character.
        (t
-	(goto-char indent-point)
-	(c++-backward-syntactic-ws containing-sexp)
-	(if (not (memq char-before-ip '(nil ?\, ?\; ?} ?: ?\{)))
-	    ;; This line is continuation of preceding line's statement;
-	    ;; indent  c-continued-statement-offset  more than the
-	    ;; previous line of the statement.
-	    (progn
-	      (c-backward-to-start-of-continued-exp containing-sexp)
-	      ;; take care of << and >> while in streams
-	      (if (let ((here (point)))
-		    (save-excursion
-		      (and (progn
-			     (goto-char indent-point)
-			     (looking-at "[ \t]*\\(<<\\|>>\\)"))
-			   (progn
-			     (goto-char here)
-			     (skip-chars-forward "^><\n")
-			     (setq streamop-pos (current-column))
-			     (looking-at "\\(<<\\|>>\\)")))))
-		  streamop-pos
-		(+ (current-column)
-		   ;; j.peck hack to prevent repeated continued
-		   ;; indentation:
-		   (if (save-excursion
-			 (beginning-of-line 1)
-			 (c++-backward-syntactic-ws containing-sexp)
-			 (memq (preceding-char)
-			       '(nil ?\, ?\; ?} ?: ?\{)))
-		       c-continued-statement-offset
-		     ;; the following statements *do* indent even
-		     ;; for single statements (are there others?)
-		     (if (looking-at
-			  "\\(do\\|else\\|for\\|if\\|while\\)\\b")
-			 c-continued-statement-offset
-		       ;; else may be a continued statement inside
-		       ;; a simple for/else/while/if/do loop
-		       (beginning-of-line 1)
-		       (forward-char -1)
-		       (c++-backward-syntactic-ws containing-sexp)
-		       (c-backward-to-start-of-continued-exp
-			containing-sexp)
-		       (if (looking-at
-			    "\\(do\\|else\\|for\\|if\\|while\\)\\b")
-			   c-continued-statement-offset
-			 0)))
-		   ;; j.peck  [8/13/91]
-		   ;; j.peck hack replaced this line:
-		   ;; \(+ c-continued-statement-offset (current-column)
-		   ;; Add continued-brace-offset? [weikart]
-		   (save-excursion
-		     (goto-char indent-point)
-		     (skip-chars-forward " \t")
-		     (cond
-		      ((= (following-char) ?\{)
-		       c-continued-brace-offset)
-		      ((and (= (following-char) ?\})
-			    (progn (forward-char 1)
-				   (c++-at-top-level-p nil bod)))
-		       (- c-continued-statement-offset))
-		      (t 0))))))
+	(or (c++-cont-indent indent-point char-before-ip containing-sexp)
 	  ;; This line may start a new statement, or it could
 	  ;; represent the while closure of a do/while construct
 	  (if (save-excursion
@@ -2005,7 +2012,8 @@ BOD is the beginning of the C++ definition."
 		    (if (eq (preceding-char) ?\))
 			(forward-sexp -1))
 		    ;; Get initial indentation of the line we are on.
-		    (current-indentation))))))))))))
+		    (current-indentation)))))))) ; end t outer cond
+       ))))
 
 (defun c++-calculate-c-indent-within-comment ()
   "Return the indentation amount for line, assuming that
@@ -2414,7 +2422,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.262 $"
+(defconst c++-version "$Revision: 2.263 $"
   "c++-mode version number.")
 
 (defun c++-version ()
