@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-10 21:53:23 $
-;; Version:         $Revision: 2.148 $
+;; Last Modified:   $Date: 1992-07-10 22:02:26 $
+;; Version:         $Revision: 2.149 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -74,7 +74,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-10 21:53:23 $|$Revision: 2.148 $|
+;; |$Date: 1992-07-10 22:02:26 $|$Revision: 2.149 $|
 
 
 ;; ======================================================================
@@ -282,7 +282,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.148 $
+  "Major mode for editing C++ code.  $Revision: 2.149 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1066,7 +1066,7 @@ of the expression are preserved."
   "Fill a C style comment."
   (interactive)
   (save-excursion
-    (let ((save fill-prefix))
+    (let ((fill-prefix fill-prefix))
       (beginning-of-line 1)
       (save-excursion
 	(re-search-forward comment-start-skip
@@ -1079,8 +1079,7 @@ of the expression are preserved."
       (forward-line 1)
       (insert-string "\n")
       (fill-paragraph nil)
-      (delete-char -1)
-      (setq fill-prefix save))))
+      (delete-char -1))))
 
 (defun c++-insert-header ()
   "Insert header denoting C++ code at top of buffer."
@@ -1978,7 +1977,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.148 $"
+(defconst c++-version "$Revision: 2.149 $"
   "c++-mode version number.")
 
 (defun c++-version ()
