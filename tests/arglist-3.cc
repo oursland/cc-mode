@@ -3,7 +3,7 @@ class Frog
 private:
 
     int a 
-    (                   // this parend should line up with 'int a'
+    (                   // this paren should line up with 'int a'
         int arg1,
         int arg2
         );
