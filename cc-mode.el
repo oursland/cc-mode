@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-28 00:00:14 $
-;; Version:         $Revision: 2.5 $
+;; Last Modified:   $Date: 1992-04-28 00:20:47 $
+;; Version:         $Revision: 2.6 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-28 00:00:14 $|$Revision: 2.5 $|
+;; |$Date: 1992-04-28 00:20:47 $|$Revision: 2.6 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -135,7 +135,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.5 $
+  "Major mode for editing C++ code.  $Revision: 2.6 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -675,43 +675,50 @@ Returns nil if line starts inside a string, t if in a comment."
 		    (looking-at "^/[/*]"))
 	     0)
 	    ((null containing-sexp)
-	     ;; Line is at top level.  May be data or function definition, or
-	     ;; may be function argument declaration or member initialization.
-	     ;; Indent like the previous top level line unless
-	     ;; (1) the previous line ends in a closeparen without semicolon,
-	     ;; in which case this line is the first argument declaration or
-	     ;; member initialization, or
-	     ;; (2) the previous line begins with a colon,
-	     ;; in which case this is the second line of member inits.
-	     ;; It is assumed that arg decls and member inits are not mixed.
+	     ;; Line is at top level.  May be comment-only line, data
+	     ;; or function definition, or may be function argument
+	     ;; declaration or member initialization.  Indent like the
+	     ;; previous top level line unless (1) the previous line
+	     ;; ends in a closeparen without semicolon, in which case
+	     ;; this line is the first argument declaration or member
+	     ;; initialization, or (2) the previous line begins with a
+	     ;; colon, in which case this is the second line of member
+	     ;; inits.  It is assumed that arg decls and member inits
+	     ;; are not mixed.
 	     (goto-char indent-point)
 	     (skip-chars-forward " \t")
-	     (if (= (following-char) ?{)
-		 0   ; Unless it starts a function body
-	       (c++-backward-to-noncomment (or parse-start (point-min)))
-	       (if (= (preceding-char) ?\))
-		   (progn		; first arg decl or member init
-		     (goto-char indent-point)
+	     (if (looking-at "/[/*]")
+		 ;; comment only line, but must not be in the first
+		 ;; column since cond case above would have caught it
+		 0
+	       (if (= (following-char) ?{)
+		   0   ; Unless it starts a function body
+		 (c++-backward-to-noncomment (or parse-start (point-min)))
+		 (if (= (preceding-char) ?\))
+		     (progn		; first arg decl or member init
+		       (goto-char indent-point)
+		       (skip-chars-forward " \t")
+		       (if (= (following-char) ?:)
+			   c++-member-init-indent
+			 c-argdecl-indent))
+		   (if (= (preceding-char) ?\;)
+		       (backward-char 1))
+		   (if (= (preceding-char) ?})
+		       0
+		     (beginning-of-line) ; continued arg decls or member inits
 		     (skip-chars-forward " \t")
-		     (if (= (following-char) ?:)
-			 c++-member-init-indent
-		       c-argdecl-indent))
-		 (if (= (preceding-char) ?\;)
-		     (backward-char 1))
-		 (if (= (preceding-char) ?})
-		     0
-		   (beginning-of-line)	; continued arg decls or member inits
-		   (skip-chars-forward " \t")
-		   (if (= (following-char) ?:)
-		       (if c++-continued-member-init-offset
-			   (+ (current-indentation)
-			      c++-continued-member-init-offset)
-			 (progn
-			   (forward-char 1)
-			   (skip-chars-forward " \t")
-			   (current-column)))
-		     (current-indentation)))
-		 )))
+		     (if (looking-at "/[/*]")
+			 0
+		       (if (= (following-char) ?:)
+			   (if c++-continued-member-init-offset
+			       (+ (current-indentation)
+				  c++-continued-member-init-offset)
+			     (progn
+			       (forward-char 1)
+			       (skip-chars-forward " \t")
+			       (current-column)))
+			 (current-indentation))))
+		   ))))
 	    ((/= (char-after containing-sexp) ?{)
 	     ;; line is expression, not statement:
 	     ;; indent to just after the surrounding open -- unless
@@ -1249,7 +1256,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.5 $"
+(defconst c++-version "$Revision: 2.6 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
