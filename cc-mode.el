@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.353 $
-;; Last Modified:   $Date: 1997-01-27 23:45:58 $
+;; Version:         $Revision: 4.354 $
+;; Last Modified:   $Date: 1997-02-02 18:11:17 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -3919,7 +3919,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  ;; we need to catch multi-paragraph C comments
 	  (while (and (zerop (forward-line -1))
 		      (looking-at "^[ \t]*$")))
-	  (c-add-syntax literal (c-point 'bol)))
+	  (c-add-syntax literal (c-point 'boi)))
 	 ;; CASE 3: in a cpp preprocessor
 	 ((eq literal 'pound)
 	  (c-beginning-of-macro lim)
@@ -5056,7 +5056,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.353 $"
+(defconst c-version "$Revision: 4.354 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
