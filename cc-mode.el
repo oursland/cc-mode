@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.374 $
-;; Last Modified:   $Date: 1997-02-20 21:23:01 $
+;; Version:         $Revision: 4.375 $
+;; Last Modified:   $Date: 1997-02-24 22:49:43 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4083,6 +4083,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			 (c-backward-syntactic-ws lim)))
 	      (if (= (preceding-char) ?\))
 		  (backward-sexp 1))
+	      (setq placeholder (point))
+	      (save-excursion
+		(and (c-safe (backward-sexp 1) t)
+		     (looking-at "throw[^_]")
+		     (c-safe (backward-sexp 1) t)
+		     (setq placeholder (point))))
+	      (goto-char placeholder)
 	      (c-add-syntax 'member-init-intro (c-point 'boi))
 	      ;; we don't need to add any class offset since this
 	      ;; should be relative to the ctor's indentation
@@ -5181,7 +5188,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.374 $"
+(defconst c-version "$Revision: 4.375 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
