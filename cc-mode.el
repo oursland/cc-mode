@@ -5,7 +5,7 @@
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; $Revision: 1.22 $
+;; $Revision: 1.23 $
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -47,8 +47,8 @@
     ()
   (setq c++-mode-syntax-table (copy-syntax-table c-mode-syntax-table))
   (modify-syntax-entry ?/ ". 12" c++-mode-syntax-table)
-  (modify-syntax-entry ?\n ">" c++-mode-syntax-table)
-  (modify-syntax-entry ?\' "." c++-mode-syntax-table))
+  (modify-syntax-entry ?\n ">" c++-mode-syntax-table))
+;;  (modify-syntax-entry ?\' "." c++-mode-syntax-table))
 
 (defvar c++-continued-member-init-offset nil
   "*Extra indent for continuation lines of member inits; NIL means to align
@@ -1175,7 +1175,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.22 $"
+(defconst c++-version "$Revision: 1.23 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
