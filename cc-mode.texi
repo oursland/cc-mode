@@ -635,7 +635,7 @@ on, then that line is also re-indented.
 @cindex brace-list-open syntactic symbol
 @cindex brace-list-close syntactic symbol
 @cindex brace-list-intro syntactic symbol
-@cindex brace-list-entry syntactic symbol
+@cindex brace-entry-open syntactic symbol
 @cindex block-open syntactic symbol
 @cindex block-close syntactic symbol
 @cindex substatement-open syntactic symbol
@@ -652,7 +652,8 @@ places to insert a newline.  The syntactic symbols that are useful for
 this list are: @code{class-open}, @code{class-close}, @code{defun-open},
 @code{defun-close}, @code{inline-open}, @code{inline-close},
 @code{brace-list-open}, @code{brace-list-close},
-@code{brace-list-intro}, @code{brace-list-entry}, @code{block-open},
+@code{brace-list-intro},
+@code{brace-entry-open}, @code{block-open},
 @code{block-close}, @code{substatement-open}, 
 @code{statement-case-open},
 @code{extern-lang-open}, @code{extern-lang-close},
@@ -695,6 +696,7 @@ For example, the default value of @code{c-hanging-braces-alist} is:
 @group
 
 (defvar c-hanging-braces-alist '((brace-list-open)
+                                 (brace-entry-open)
                                  (substatement-open after)
                                  (block-close . c-snug-do-while)
                                  (extern-lang-open after)))
@@ -703,7 +705,8 @@ For example, the default value of @code{c-hanging-braces-alist} is:
 @end example
 
 @noindent
-which says that @code{brace-list-open} braces should both hang on the
+which says that @code{brace-list-open} and @code{brace-entry-open}
+braces should both hang on the
 right side, and allow subsequent text to follow on the same line as the
 brace.  Also, @code{substatement-open} and @code{extern-lang-open}
 braces should hang on the right side, but subsequent text should follow
@@ -2489,6 +2492,9 @@ things can appear in this context.
 @item
 @code{brace-list-entry} --- subsequent lines in an enum or static array list
 @item
+@code{brace-entry-open} --- subsequent lines in an enum or static array
+list where the line begins with an open brace
+@item
 @code{statement} --- a C statement
 @item
 @code{statement-cont} --- a continuation of a C statement
@@ -2906,6 +2912,35 @@ Following convention, line 2 in this example is assigned
 @code{brace-list-close} syntax.  Lines 4 and 5 however, are assigned
 @code{brace-list-entry} syntax, as would all subsequent lines in this
 initializer list.
+
+@cindex brace-entry-open syntactic symbol
+Your static initializer might be initializing nested structures, for
+example:
+@example
+@group
+
+  1: struct intpairs[] =
+  2: @{
+  3:     @{ 1, 2 @},
+  4:     @{
+  5:         3,
+  6:         4
+  7:     @}
+  8:     @{ 1,
+  9:       2 @},
+ 10:     @{ 3, 4 @}
+ 11: @}
+
+@end group
+@end example
+
+Here, you've already seen the analysis of lines 1, 2, 3, and 11.  On
+line 4, things get interesting; this line is assigned
+@code{brace-entry-open} syntactic symbol because is a bracelist entry
+line that starts with an open brace.  Lines 5 and 6 (and line 9) are
+pretty standard, and line 7 is a @code{brace-list-close} as you'd
+expect.  Once again, line 8 is assigned as @code{brace-entry-open} as is
+line 10.
 
 External language definition blocks also have their own syntactic
 symbols.  In this example:
