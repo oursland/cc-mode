@@ -56,9 +56,9 @@ COMPATIBILITY
 
     1. XEmacs
     
-    If you are using XEmacs 19.15 or XEmacs 20.2 or beyond, you should
-    be able to use this new version right out of the box. This stuff
-    unpacks in its own subdirectory now and contains a number of
+    If you are using XEmacs 19.15, 19.16 or any XEmacs 20 version, you
+    should be able to use this new version right out of the box. This
+    stuff unpacks in its own subdirectory now and contains a number of
     files. Just make sure this subdirectory is on your load-path
     before the XEmacs distribution's lisp directories. You need to
     byte compile all the .el files by doing the following:
