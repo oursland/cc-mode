@@ -434,6 +434,12 @@ This value is by default merged into `c-operators'."
   c++  '((prefix "~" "??-" "compl")
 	 (right-assoc "::")
 	 (prefix "::"))
+  ;; Java has "." to concatenate identifiers but it's also used for
+  ;; normal indexing.  There's special code in the Java font lock
+  ;; rules to fontify qualified identifiers based on the standard
+  ;; naming conventions.  We still define "." here to make
+  ;; `c-forward-name' move over as long names as possible which is
+  ;; necessary to e.g. handle throws clauses correctly.
   java '((left-assoc "."))
   idl  '((left-assoc "::")
 	 (prefix "::"))
@@ -456,6 +462,10 @@ This value is by default merged into `c-operators'."
 (c-lang-defvar c-opt-identifier-concat-key
   (c-lang-const c-opt-identifier-concat-key)
   'dont-doc)
+
+(c-lang-defconst c-opt-identifier-concat-key-depth
+  ;; Number of regexp grouping parens in `c-opt-identifier-concat-key'.
+  t (regexp-opt-depth (c-lang-const c-opt-identifier-concat-key)))
 
 (c-lang-defconst c-opt-identifier-prefix-key
   ;; Appendable adorned regexp matching operators that might precede
