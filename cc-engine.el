@@ -2675,18 +2675,17 @@ brace."
 	  (setq offset 0
 		relpos 0))
       (setq offset (c-evaluate-offset offset langelem symbol)))
-    (cond ((null offset) 0)
-	  ((vectorp offset) offset)
-	  (t
-	   (+ (if (and relpos
-		       (< relpos (c-point 'bol)))
-		  (save-excursion
-		    (goto-char relpos)
-		    (current-column))
-		0)
-	      (or (and (numberp offset) offset)
-		  (and (symbolp offset) (symbol-value offset))
-		  0))))
+    (if (vectorp offset)
+	offset
+      (+ (if (and relpos
+		  (< relpos (c-point 'bol)))
+	     (save-excursion
+	       (goto-char relpos)
+	       (current-column))
+	   0)
+	 (or (and (numberp offset) offset)
+	     (and (symbolp offset) (symbol-value offset))
+	     0)))
     ))
 
 (defun c-indent-line (&optional syntax)
