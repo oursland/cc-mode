@@ -696,6 +696,45 @@ tools (e.g. Javadoc).")
   ;; `font-lock-constant-face').
   (list nil font-lock-type-face font-lock-reference-face))
 
+(defvar c-fl-decl-syntactic-pos nil)
+(make-variable-buffer-local 'c-fl-decl-syntactic-pos)
+(defvar c-fl-decl-match-pos nil)
+(make-variable-buffer-local 'c-fl-decl-match-pos)
+;; Used in `c-font-lock-declarations' to cache the search done for the
+;; first declaration in the last call.  When that function starts, it
+;; needs to back up over syntactic whitespace to find the last place
+;; `c-decl-prefix-re' matches before the region being fontified.  That
+;; can sometimes cause a search back and forth over a quite large
+;; region of comments and macros, which would be repeated for each
+;; changed character since font-lock refontifies the current line for
+;; each change.  Thus it's worthwhile to cache the first such search.
+;;
+;; Note that we exploit the fact that the start position to
+;; `c-font-lock-declarations' will always be less or equal to the
+;; lowest position where the buffer has changed, so we know any cached
+;; positions less than that are still valid.
+;;
+;; `c-fl-decl-syntactic-pos' is a syntactically relevant position in
+;; the syntactic whitespace less or equal to some start position.
+;;
+;; `c-fl-decl-match-pos' is the match position if `c-decl-prefix-re'
+;; matched before the syntactic whitespace at
+;; `c-fl-decl-syntactic-pos', or nil if there's no such match.
+
+(defmacro c-fl-decl-prefix-search ()
+  (while (and (setq match (re-search-forward c-decl-prefix-re limit 'move))
+	      (if (memq (get-text-property (setq match-pos (1- (point))) 'face)
+			'(font-lock-comment-face font-lock-string-face))
+		  t
+		;; Skip forward past only comments to set the position
+		;; to continue at, so we don't skip macros.
+		(c-forward-comments)
+		(setq continue-pos (point))
+		nil))
+    ;; Search again if the match is within a comment or a string
+    ;; literal.
+    (goto-char (next-single-property-change match-pos 'face nil limit))))
+
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
   ;; Assumes that strings, comments and nontype keywords have been
@@ -710,51 +749,17 @@ tools (e.g. Javadoc).")
     (c-clear-found-types))
 
   (save-restriction
-    ;; Narrow to the limit to deliberately fail to fontify
-    ;; declarations that crosses it.  E.g. the following is a common
-    ;; situation while the first line is being written:
-    ;;
-    ;;     my_variable
-    ;;     some_other_variable = 0;
-    ;;
-    ;; font-lock will put the limit at the end of the first line here,
-    ;; and we use that to avoid recognizing my_variable as a type in a
-    ;; declaration that spans to the next line.  This way the
-    ;; statement isn't annoyingly flashed as a type while it's being
-    ;; entered.
-    (narrow-to-region (point-min) limit)
-
-    ;; Must back up a bit since we look for the end of the previous
-    ;; statement or declaration, which is earlier than the first
-    ;; returned match.
-    (when (memq (get-text-property (point) 'face)
-		'(font-lock-comment-face font-lock-string-face))
-      ;; But first we need to move to a syntactically relevant
-      ;; position.  Can't use backward movement since the font-lock
-      ;; package might not have fontified the comment or string all
-      ;; the way to the start.
-      (goto-char (next-single-property-change (point) 'face nil limit)))
-    (c-beginning-of-macro)		; Must start outside any macro too.
-    (c-backward-syntactic-ws)
-    (c-safe (backward-char))
-
-    (let ((match (if (bobp)
-		     ;; We always consider bob as a match to get the first
-		     ;; declaration in the file, but we have to step past
-		     ;; initial comments to avoid that the
-		     ;; match-inside-comment-or-string-literal code kicks in.
-		     (progn (c-forward-comments)
-			    ;; Setup the match data since we'll do a
-			    ;; (match-beginning 0) below.
-			    (looking-at "")
-			    t)
-		   (re-search-forward c-decl-prefix-re limit 'move)))
+    (let ((start-pos (point))
+	  ;; The result of the last search for `c-decl-prefix-re'.
+	  match
+	  ;; The position of the last token matched by the last
+	  ;; `c-decl-prefix-re' match.
 	  match-pos
 	  ;; The position to continue searching at.
 	  continue-pos
 	  ;; The position of the last "real" token we've stopped at.  This can
 	  ;; be greater than `continue-pos' when we get hits inside macros.
-	  (token-pos -1)
+	  (token-pos 0)
 	  ;; Nonzero if `c-decl-prefix-re' matches inside a function arglist,
 	  ;; i.e. if it matches '(', '[', or ','.  If it's nonzero then the
 	  ;; car of the value is the matched char.
@@ -785,10 +790,10 @@ tools (e.g. Javadoc).")
 	  ;; expressions in the successfully identified declarations.  The
 	  ;; position might be either before or after the syntactic whitespace
 	  ;; following the last token in the type decl expression.
-	  (max-type-decl-end -1)
+	  (max-type-decl-end 0)
 	  ;; Same as `max-type-decl-end', but used when we're before
 	  ;; `token-pos'.
-	  (max-type-decl-end-before-token -1)
+	  (max-type-decl-end-before-token 0)
 	  ;; The end position of the last entered macro.
 	  (macro-end -1)
 	  ;; Turn on fontification on `c-forward-name' and `c-forward-type'.
@@ -796,30 +801,105 @@ tools (e.g. Javadoc).")
 	  ;; The font-lock package might clobber this.
 	  (parse-sexp-lookup-properties t))
 
+      ;; Narrow to the limit to deliberately fail to fontify
+      ;; declarations that crosses it.  E.g. the following is a common
+      ;; situation while the first line is being written:
+      ;;
+      ;;     my_variable
+      ;;     some_other_variable = 0;
+      ;;
+      ;; font-lock will put the limit at the end of the first line here,
+      ;; and we use that to avoid recognizing my_variable as a type in a
+      ;; declaration that spans to the next line.  This way the
+      ;; statement isn't annoyingly flashed as a type while it's being
+      ;; entered.
+      (narrow-to-region (point-min) limit)
+
+      ;; Must back up a bit since we look for the end of the previous
+      ;; statement or declaration, which is earlier than the first
+      ;; returned match.
+      (let ((prop (get-text-property (point) 'face)))
+	(when (memq prop '(font-lock-comment-face font-lock-string-face))
+	  ;; But first we need to move to a syntactically relevant
+	  ;; position.  Can't use backward movement on the face property
+	  ;; since the font-lock package might not have fontified the
+	  ;; comment or string all the way to the start.
+	  (goto-char (next-single-property-change (point) 'face nil limit))
+	  (when (eq prop 'font-lock-comment-face)
+	    ;; Back up over the comment to compare to
+	    ;; `c-fl-decl-syntactic-pos'.  There's no use in doing
+	    ;; something similar for string literals since even if
+	    ;; `c-decl-prefix-re' matches directly before it, it
+	    ;; couldn't be the start of a declaration.
+	    (c-backward-single-comment))))
+
+      ;; Must back out of any macro so that we don't miss any declaration that
+      ;; could follow after it, unless the limit is inside the macro.  We only
+      ;; check that for the current line to save some time; it's enough for
+      ;; the by far most common case when font-lock refontifies the current
+      ;; line only.
+      (when (save-excursion
+	      (forward-line)
+	      (or (< (point) limit)
+		  (progn
+		    (backward-char)
+		    (not (eq (char-before) ?\\)))))
+	(c-beginning-of-macro))
+
+      ;; Clear the c-fl-decl- cache if it applied further down.
+      (and c-fl-decl-syntactic-pos
+	   (< start-pos c-fl-decl-syntactic-pos)
+	   (setq c-fl-decl-syntactic-pos nil))
+
+      (let ((syntactic-pos (point)))
+	(c-backward-syntactic-ws c-fl-decl-syntactic-pos)
+
+	;; If we hit `c-fl-decl-syntactic-pos' and `c-fl-decl-match-pos' is
+	;; set then we install the cached values.  If we hit
+	;; `c-fl-decl-syntactic-pos' and `c-fl-decl-match-pos' is nil then we
+	;; know there's no decl prefix in the whitespace before
+	;; `c-fl-decl-syntactic-pos' and so we can continue the search from
+	;; this point. If we didn't hit `c-fl-decl-syntactic-pos' then we're
+	;; now in the right spot to begin searching anyway.
+	(if (and (eq (point) c-fl-decl-syntactic-pos)
+		 c-fl-decl-match-pos)
+	    (setq match t
+		  match-pos c-fl-decl-match-pos
+		  continue-pos syntactic-pos)
+	  (setq c-fl-decl-syntactic-pos syntactic-pos)
+
+	  (if (bobp)
+	      ;; Always consider bob a match to get the first declaration in
+	      ;; the file.  Do this separately instead of letting
+	      ;; `c-decl-prefix-re' match bob, so that it always can consume
+	      ;; at least one character to ensure that we won't get stuck in
+	      ;; an infinite loop.
+	      (progn (c-forward-comments)
+		     (setq match t
+			   match-pos (point-min)
+			   continue-pos (point)))
+	    (backward-char)
+	    (c-fl-decl-prefix-search))
+
+	  ;; Search until we get within the fontification range.  First go
+	  ;; forward over syntactic whitespace to get test the first hit
+	  ;; outside macros.  Later searches might go back to check hits
+	  ;; inside macros.
+	  (c-forward-syntactic-ws)
+	  (while (and match (< (point) start-pos))
+	    (goto-char continue-pos)
+	    (c-fl-decl-prefix-search))
+	  (setq c-fl-decl-match-pos (and (< match-pos start-pos)
+					 match-pos))))
+
       (while (progn
 	       (while (and
 		       match
 
 		       (or
-			;; Continue if the match is within a comment or a
-			;; string literal.
-			(when (memq (get-text-property (point) 'face)
-				    '(font-lock-comment-face
-				      font-lock-string-face))
-			  ;; Go to the end of the highlighted region before
-			  ;; continuing the search above.
-			  (goto-char (next-single-property-change
-				      (point) 'face nil limit))
-			  t)
-
 			(progn
-			  (setq match-pos (match-beginning 0)
-				arglist-match (memq (char-before)
+			  (setq arglist-match (memq (char-after match-pos)
 						    '(?\( ?\[ ?,)))
-			  ;; Skip forward past comments only to set the
-			  ;; position to continue at, so we don't skip macros.
-			  (c-forward-comments)
-			  (setq continue-pos (point))
 			  ;; If `continue-pos' is less or equal to
 			  ;; `token-pos', we've got a hit inside a macro
 			  ;; that's in the syntactic whitespace before the
@@ -844,7 +924,7 @@ tools (e.g. Javadoc).")
 			    (setq token-pos (point)))
 
 			  ;; Continue if the following token isn't some kind
-			  ;; of symbol or keyword that can't start a
+			  ;; of symbol or keyword that can start a
 			  ;; declaration, or if it's fontified as something
 			  ;; else besides a type or reference (which might
 			  ;; lead a type) already.
@@ -861,12 +941,7 @@ tools (e.g. Javadoc).")
 			    t))
 			))
 
-		 ;; We only want to match at bob the first time, to avoid
-		 ;; looping forever there.  That's not a problem anywhere else
-		 ;; since `re-search-forward' will move forward at least one
-		 ;; char (except at the limit).
-		 (setq match (re-search-forward c-decl-prefix-re limit 'move)))
-
+		 (c-fl-decl-prefix-search))
 	       (< (point) limit))
 
 	(catch 'continue
@@ -1053,7 +1128,7 @@ tools (e.g. Javadoc).")
 			    ;; after the type decl expression.
 			    (throw 'at-decl-or-cast t))
 
-			  (when (looking-at "[=\(]")
+			  (when (looking-at "=[^=]\\|\(")
 			    ;; There's an initializer after the type decl
 			    ;; expression so we know it's a declaration.
 			    ;; (Checking for `(' here normally has no effect
@@ -1254,9 +1329,7 @@ tools (e.g. Javadoc).")
 	  ;; Restore limits if we did macro narrowment above.
 	  (narrow-to-region (point-min) limit))
 	(goto-char continue-pos)
-
-	;; We search here to allow the first match at bob.  See note above.
-	(setq match (re-search-forward c-decl-prefix-re limit 'move))))
+	(c-fl-decl-prefix-search)))
     nil))
 
 (c-lang-defconst c-simple-decl-matchers
