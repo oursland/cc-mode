@@ -1129,13 +1129,13 @@
 			       (t t)))))
 		     ((eq (char-after) ?\[)
 		      ;; In Java, an initialization brace list may
-		      ;; follow "new Foo[]", so check for []. Got to
+		      ;; follow "new Foo[]", so check for [].  Got to
 		      ;; watch out for the C++ "operator[]" defun,
 		      ;; though.
 		      (setq braceassignp
 			    (save-excursion
 			      (c-backward-token-1)
-			      (not (looking-at "operator")))))
+			      (not (looking-at "operator\\>")))))
 		     ))
 	     (if (memq braceassignp '(nil dontknow))
 		 (if (eq (char-after) ?\;)
@@ -1490,7 +1490,9 @@
 					   (/= (char-after) ?=)))
 			       (eq (char-after) ?=)))
 			 (save-excursion
-			   (skip-chars-forward "^;(" indent-point)
+			   (while (and (< (point) indent-point)
+				       (= (c-forward-token-1 1 t) 0)
+				       (not (memq (char-after) '(?\; ?\()))))
 			   (not (memq (char-after) '(?\; ?\()))
 			   ))))
 	      (c-add-syntax 'brace-list-open placeholder))
@@ -1976,6 +1978,9 @@
 		  (c-forward-token-1 1 nil indent-point))
 	      (goto-char containing-sexp))
 	    (forward-char)
+	    (let ((start (point)))
+	      (c-forward-syntactic-ws indent-point)
+	      (goto-char (max start (c-point 'bol))))
 	    (skip-chars-forward " \t\n\r" indent-point)
 	    (cond
 	     ;; CASE 9C: we're looking at the first line in a brace-list
