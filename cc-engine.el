@@ -5781,10 +5781,8 @@ This function does not do any hidden buffer changes."
 
 	     ;; CASE 5A.1: Non-class declaration block open.
 	     ((save-excursion
-		(goto-char indent-point)
-		(skip-chars-forward " \t")
-		(and (c-safe (c-backward-sexp 2) t)
-		     (looking-at c-other-decl-block-key)
+		(c-beginning-of-statement-1 lim)
+		(and (looking-at c-other-decl-block-key)
 		     (setq keyword (match-string 1)
 			   placeholder (point))
 		     (if (string-equal keyword "extern")
