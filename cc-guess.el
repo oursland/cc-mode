@@ -1,13 +1,13 @@
 ;;; cc-guess.el --- guess indentation values by scanning existing code
 
-;; Author: 1994 Barry A. Warsaw, Century Computing, Inc. <bwarsaw@cen.com>
-;; Maintainer:    bwarsaw@cen.com
-;; Created:       August 1994
-;; Version:       $Revision: 1.1 $
-;; Last Modified: $Date: 1994-08-09 21:35:38 $
-;; Keywords: C++ C Objective-C cc-mode
+;; Copyright (C) 1994-1995 Free Software Foundation, Inc.
 
-;; Copyright (C) 1994 Barry A. Warsaw
+;; Author: 1994 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
+;; Maintainer:    cc-mode-help@anthem.nlm.nih.gov
+;; Created:       August 1994
+;; Version:       $Revision: 1.2 $
+;; Last Modified: $Date: 1995-02-28 22:53:42 $
+;; Keywords: C++ C Objective-C cc-mode
 
 ;; This file is not part of GNU Emacs.
 
@@ -25,12 +25,19 @@
 ;; along with this program; if not, write to the Free Software
 ;; Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
+;;; Commentary:
+;;
+;; This file contains routines that help guess the cc-mode style in a
+;; particular region of C, C++, or Objective-C code.  This file is
+;; completely unsupported.  Guessing styles is lossy.  Feel free to
+;; improve upon this stuff if you want.
+
 ;; LCD Archive Entry:
 ;; cc-guess|Barry A. Warsaw|bwarsaw@cen.com
 ;; |guess cc-mode indentation variable values
-;; |$Date: 1994-08-09 21:35:38 $|$Revision: 1.1 $|
+;; |$Date: 1995-02-28 22:53:42 $|$Revision: 1.2 $|
 
-;; Code:
+;;; Code:
 
 (defvar cc-guessed-style nil
   "Currently guessed style.")
