@@ -1308,7 +1308,8 @@ Optional prefix ARG means justify paragraph as well."
 	      (narrow-to-region (c-point 'bol)
 				(save-excursion
 				  (forward-line 1)
-				  (while (looking-at fill-prefix)
+				  (while
+				      (looking-at (regexp-quote fill-prefix))
 				    (forward-line 1))
 				  (point)))
 	      (fill-paragraph arg)
