@@ -2528,16 +2528,20 @@ This function does not do any hidden buffer changes."
 
   (let ((start (point))
 	state
-	safe-pos
 	;; A list of syntactically relevant positions in descending
 	;; order.  It's used to avoid scanning repeatedly over
 	;; potentially large regions with `parse-partial-sexp' to verify
 	;; each position.
 	safe-pos-list
+	;; The position at the beginning of `safe-pos-list'.
+	safe-pos
 	;; The result from `c-beginning-of-macro' at the start position or the
 	;; start position itself if it isn't within a macro.  Evaluated on
 	;; demand.
-	start-macro-beg)
+	start-macro-beg
+	;; The earliest position after the current one with the same paren
+	;; level.  Used only when `paren-level' is set.
+	(paren-level-pos (point)))
 
     (while (progn
 	     (while (and
@@ -2589,13 +2593,14 @@ This function does not do any hidden buffer changes."
 			   (goto-char (car (c-literal-limits safe-pos))))
 			 t)
 
-			((and
-			  paren-level
-			  (save-excursion
-			    (setq state-2 (parse-partial-sexp pos start -1)
-				  pps-end-pos (point))
-			    (/= (car state-2) 0)))
+			((and paren-level
+			      (save-excursion
+				(setq state-2 (parse-partial-sexp
+					       pos paren-level-pos -1)
+				      pps-end-pos (point))
+				(/= (car state-2) 0)))
 			 ;; Not at the right level.
+
 			 (if (and (< (car state-2) 0)
 				  ;; We stop above if we go out of a paren.
 				  ;; Now check whether it precedes or is
@@ -2603,15 +2608,19 @@ This function does not do any hidden buffer changes."
 				  (save-excursion
 				    (setq state-2
 					  (parse-partial-sexp
-					   pps-end-pos start nil nil state-2))
+					   pps-end-pos paren-level-pos
+					   nil nil state-2))
 				    (< (car state-2) 0)))
+
 			     ;; We've stopped short of the starting position
 			     ;; so the hit was inside a nested list.  Go up
 			     ;; until we are at the right level.
 			     (condition-case nil
 				 (progn
-				   (goto-char (scan-lists pos -1 1))
-				   (if (and limit (>= limit (point)))
+				   (goto-char (scan-lists pos -1
+							  (- (car state-2))))
+				   (setq paren-level-pos (point))
+				   (if (and limit (>= limit paren-level-pos))
 				       (progn
 					 (goto-char limit)
 					 nil)
@@ -2619,6 +2628,7 @@ This function does not do any hidden buffer changes."
 			       (error
 				(goto-char (or limit (point-min)))
 				nil))
+
 			   ;; The hit was outside the list at the start
 			   ;; position.  Go to the start of the list and exit.
 			   (goto-char (1+ (elt state-2 1)))
@@ -2634,6 +2644,7 @@ This function does not do any hidden buffer changes."
 					    (c-beginning-of-macro limit)
 					    (point)))))
 			     t
+
 			   ;; It's inside the same macro we started in so it's
 			   ;; a relevant match.
 			   (goto-char pos)
