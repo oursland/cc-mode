@@ -2,6 +2,11 @@ CC Mode NEWS -- user visible changes.  -*- outline -*-
 
 * Changes in 5.30
 
+There is a lot of change in this version, so it's considered
+experimental.  It is however fairly well tested already since the
+developers have an extensive test suite to ensure correct syntactic
+analysis and font locking.
+
 ** Font lock support.
 CC Mode now provides font lock support for all its languages.  This
 supersedes the font lock patterns that have been in the core font lock

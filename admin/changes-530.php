@@ -12,6 +12,11 @@
 href="http://download.sourceforge.net/cc-mode/cc-mode-5.30.tar.gz">Download</a>
 this CC Mode version.</p>
 
+<p>There is a lot of change in this version, so it's considered
+experimental.  It is however fairly well tested already since the
+developers have an extensive test suite to ensure correct syntactic
+analysis and font locking.
+
 <ul>
 
   <p><li>Font lock support.
