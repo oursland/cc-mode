@@ -424,6 +424,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "/* "
 	comment-end   " */"
+	c-symbol-key c-C-symbol-key
 	c-block-stmt-1-kwds (concat "\\(" c-C-block-stmt-1-kwds "\\)\\>[^_]")
 	c-block-stmt-2-kwds (concat "\\(" c-C-block-stmt-2-kwds "\\)\\>[^_]")
 	c-label-kwds c-C-label-kwds
@@ -492,6 +493,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
+	c-symbol-key c-C++-symbol-key
 	c-block-stmt-1-kwds (concat "\\(" c-C++-block-stmt-1-kwds "\\)\\>[^_]")
 	c-block-stmt-2-kwds (concat "\\(" c-C++-block-stmt-2-kwds "\\)\\>[^_]")
 	c-label-kwds c-C++-label-kwds
@@ -558,6 +560,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end   ""
+	c-symbol-key c-ObjC-symbol-key
 	c-block-stmt-1-kwds (concat "\\(" c-ObjC-block-stmt-1-kwds
 				    "\\)\\>[^_]")
 	c-block-stmt-2-kwds (concat "\\(" c-ObjC-block-stmt-2-kwds
@@ -630,6 +633,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
  	comment-end   ""
+	c-symbol-key c-Java-symbol-key
 	c-block-stmt-1-kwds (concat "\\(" c-Java-block-stmt-1-kwds
 				    "\\)\\>[^_]")
 	c-block-stmt-2-kwds (concat "\\(" c-Java-block-stmt-2-kwds
@@ -640,7 +644,7 @@ Key bindings:
  	c-comment-start-regexp c-Java-comment-start-regexp
   	c-class-key c-Java-class-key
 	c-method-key nil
- 	c-baseclass-key nil
+	c-baseclass-key nil
 	c-recognize-knr-p nil
 	c-inexpr-class-key c-Java-inexpr-class-key
 	;defun-prompt-regexp c-Java-defun-prompt-regexp
@@ -696,6 +700,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
+	c-symbol-key c-IDL-symbol-key
 	c-keywords (c-identifier-re c-IDL-keywords)
 	c-conditional-key c-IDL-conditional-key
 	c-comment-start-regexp c-IDL-comment-start-regexp
@@ -761,6 +766,7 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
  	comment-end   ""
+	c-symbol-key c-Pike-symbol-key
 	c-block-stmt-1-kwds (concat "\\(" c-Pike-block-stmt-1-kwds
 				    "\\)\\>[^_]")
 	c-block-stmt-2-kwds (concat "\\(" c-Pike-block-stmt-2-kwds
@@ -771,7 +777,7 @@ Key bindings:
 	c-comment-start-regexp c-Pike-comment-start-regexp
   	c-class-key c-Pike-class-key
 	c-method-key nil
- 	c-baseclass-key nil
+	c-baseclass-key nil
 	c-recognize-knr-p nil
 	c-lambda-key c-Pike-lambda-key
 	c-inexpr-block-key c-Pike-inexpr-block-key

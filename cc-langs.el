@@ -68,7 +68,17 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 ;; definition of a symbol as being Unicode.  I know so little about
 ;; I18N (except how to sound cool and say I18N :-) that I'm willing to
 ;; punt on this for now.
-(defconst c-symbol-key "[_a-zA-Z]\\(\\w\\|\\s_\\)*")
+(defconst c-C-symbol-key "[_a-zA-Z]\\(\\w\\|\\s_\\)*")
+(defconst c-C++-symbol-key c-C-symbol-key)
+(defconst c-ObjC-symbol-key c-C-symbol-key)
+(defconst c-Java-symbol-key c-C-symbol-key)
+(defconst c-IDL-symbol-key c-C-symbol-key)
+(defconst c-Pike-symbol-key
+  (concat c-C-symbol-key "\\|"
+	  "`->=?\\|`\\+=?\\|`==\\|`\\[\\]=?\\|`()\\|`[!<>~]\\|"
+          "``?<<\\|``?>>\\|``?[%&*+/^|-]"))
+(defvar c-symbol-key nil)
+(make-variable-buffer-local 'c-symbol-key)
 
 (defvar c-stmt-delim-chars "^;{}?:")
 ;; The characters that should be considered to bound statements.  To
@@ -275,16 +285,16 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (defconst c-ObjC-class-key
   (concat
    "@\\(" c-ObjC-class-kwds "\\)\\s +"
-   c-symbol-key				;name of the class
-   "\\(\\s *:\\s *" c-symbol-key "\\)?"	;maybe followed by the superclass
+   c-ObjC-symbol-key			;name of the class
+   "\\(\\s *:\\s *" c-ObjC-symbol-key "\\)?" ;maybe followed by the superclass
    "\\(\\s *<[^>]+>\\)?"		;and maybe the adopted protocols list
    ))
 (defconst c-Java-class-key
   (concat
    "\\(" c-protection-key "\\s +\\)?"
    "\\(" c-Java-class-kwds "\\)\\s +"
-   c-symbol-key				      ;name of the class
-   "\\(\\s *extends\\s *" c-symbol-key "\\)?" ;maybe followed by superclass
+   c-Java-symbol-key			      ;name of the class
+   "\\(\\s *extends\\s *" c-Java-symbol-key "\\)?" ;maybe followed by superclass
    ;;"\\(\\s *implements *[^{]+{\\)?"	      ;maybe the adopted protocols list
    ))
 (defconst c-Pike-class-key (c-paren-re c-Pike-class-kwds))
@@ -349,7 +359,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
    "\\(([^)]*)\\)?"			; return type
    ;; \\s- in objc syntax table does not include \n
    ;; since it is considered the end of //-comments.
-   "[ \t\n]*" c-symbol-key))
+   "[ \t\n]*" c-ObjC-symbol-key))
 
 ;; comment starter definitions for various languages.  language specific
 (defconst c-C++-comment-start-regexp "/[/*]")
@@ -366,14 +376,13 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 ;; Regexp describing a switch's case or default label for all languages
 (defconst c-switch-label-key "\\(\\(case[\( \t\n\r]+[^:]+\\)\\|default[ \t\n\r]*\\):")
 ;; Regexp describing any label.
-(defconst c-label-key (concat c-symbol-key ":\\([^:]\\|$\\)"))
+(defconst c-label-key (concat c-C-symbol-key ":\\([^:]\\|$\\)"))
 
 ;; Regexp describing C++ base classes in a derived class definition.
-;; TBD: this should be language specific, and only makes sense for C++
 (defvar c-baseclass-key
   (concat
    ":?[ \t]*\\(virtual[ \t]+\\)?\\("
-   c-protection-key "[ \t]+\\)" c-symbol-key))
+   c-protection-key "[ \t]+\\)" c-C++-symbol-key))
 (make-variable-buffer-local 'c-baseclass-key)
 
 ;; Regexp describing friend declarations in C++ classes.
