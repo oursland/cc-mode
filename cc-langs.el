@@ -1151,12 +1151,11 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 	 "executor" "facet" "manages" "segment")
   pike '("constant"))
 
-(c-lang-defconst c-other-decl-kwds
-  "Keywords that can start or prefix declarations, besides those on
-`c-class-decl-kwds', `c-brace-list-decl-kwds',`c-other-block-decl-kwds',
-`c-typedef-decl-kwds' and `c-typeless-decl-kwds'.  Things like
-argument declarations inside function headers are also considered
-declarations in this sense.
+(c-lang-defconst c-modifier-kwds
+  "Keywords that can prefix normal declarations of identifiers
+\(and typically acts as flags).  Things like argument declarations
+inside function headers are also considered declarations in this
+sense.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
@@ -1164,9 +1163,9 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
   t    nil
   (c c++) '("auto" "extern" "inline" "register" "static")
   c++  (append '("explicit" "friend" "mutable" "template" "using" "virtual")
-	       (c-lang-const c-other-decl-kwds))
-  objc '("auto" "bycopy" "byref" "extern" "in" "inout" "oneway" "out" "static"
-	 "@class" "@end" "@defs")
+	       (c-lang-const c-modifier-kwds))
+  objc '("auto" "bycopy" "byref" "extern" "in" "inout" "oneway" "out" "static")
+  ;; FIXME: Some of those below ought to be on `c-other-decl-kwds' instead.
   idl  '("abstract" "attribute" "const" "consumes" "custom" "emits" "import"
 	 "in" "inout" "local" "multiple" "oneway" "out" "private" "provides"
 	 "public" "publishes" "readonly" "typeid" "typeprefix" "uses"
@@ -1175,11 +1174,24 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 	 ;; In CORBA CIDL:
 	 "bindsTo" "delegatesTo" "implements" "proxy" "storedOn")
   ;; Note: "const" is not used in Java, but it's still a reserved keyword.
-  java '("abstract" "const" "final" "import" "native" "package" "private"
-	 "protected" "public" "static" "strictfp" "synchronized" "transient"
-	 "volatile")
-  pike '("final" "import" "inherit" "inline" "local" "nomask" "optional"
-	 "private" "protected" "public" "static" "variant"))
+  java '("abstract" "const" "final" "native" "private" "protected" "public"
+	 "static" "strictfp" "synchronized" "transient" "volatile")
+  pike '("final" "inline" "local" "nomask" "optional" "private" "protected"
+	 "public" "static" "variant"))
+
+(c-lang-defconst c-other-decl-kwds
+  "Keywords that can start or prefix any declaration level constructs,
+besides those on `c-class-decl-kwds', `c-brace-list-decl-kwds',
+`c-other-block-decl-kwds', `c-typedef-decl-kwds',
+`c-typeless-decl-kwds' and `c-modifier-kwds'.
+
+If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled."
+  t    nil
+  objc '("@class" "@end" "@defs")
+  java '("import" "package")
+  pike '("import" "inherit"))
 
 (c-lang-defconst c-specifier-key
   ;; Adorned regexp matching keywords that can start a declaration but
@@ -1190,6 +1202,7 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 			      (c-lang-const c-other-block-decl-kwds)
 			      (c-lang-const c-typedef-decl-kwds)
 			      (c-lang-const c-typeless-decl-kwds)
+			      (c-lang-const c-modifier-kwds)
 			      (c-lang-const c-other-decl-kwds))
 		      (append (c-lang-const c-primitive-type-kwds)
 			      (c-lang-const c-type-prefix-kwds)
@@ -1260,7 +1273,7 @@ Assumed to be mutually exclusive with `c-ref-list-kwds'.  There's no
 reason to put keywords on this list if they are on `c-type-prefix-kwds'.
 There's also no reason to add keywords that prefixes a normal
 declaration consisting of a type followed by a declarator (list), so
-the keywords on `c-other-decl-kwds' should normally not be listed here
+the keywords on `c-modifier-kwds' should normally not be listed here
 too.
 
 Note: Use `c-typeless-decl-kwds' for keywords followed by a function
@@ -1558,7 +1571,11 @@ Note that Java specific rules are currently applied to tell this from
   t (c-make-keywords-re t
       (append (c-lang-const c-class-decl-kwds)
 	      (c-lang-const c-other-block-decl-kwds)
-	      (c-lang-const c-inexpr-class-kwds))))
+	      (c-lang-const c-inexpr-class-kwds)
+	      (and (c-major-mode-is 'pike-mode)
+		   ;; In Pike modifiers might be followed by a block
+		   ;; to apply to several declarations.
+		   (c-lang-const c-modifier-kwds)))))
 (c-lang-defvar c-decl-block-key (c-lang-const c-decl-block-key))
 
 (c-lang-defconst c-bitfield-kwds
@@ -1697,6 +1714,7 @@ Note that Java specific rules are currently applied to tell this from
 			      (c-lang-const c-other-block-decl-kwds)
 			      (c-lang-const c-typedef-decl-kwds)
 			      (c-lang-const c-typeless-decl-kwds)
+			      (c-lang-const c-modifier-kwds)
 			      (c-lang-const c-other-decl-kwds))
 		      :test 'string-equal)))
 (c-lang-defvar c-not-decl-init-keywords
