@@ -42,15 +42,22 @@
 ;;    appended with .res.  Split the current window so that you have
 ;;    two buffers visible, the new test file buffer on top, and the
 ;;    .res file on bottom.  Put point at the top of the new test file
-;;    and type `M-x resfile'.  This will populate the .res file, now
-;;    save them both, and check both into CVS.
+;;    and type `M-x resfile'.  This will populate the .res file.
+;;    Verify that the results are what you expect, then save both
+;;    files, and check then into CVS.
 
 ;; Some times the tests will fail without an actual regression being
 ;; introduced.  This might happen if, e.g. the default Java style
 ;; changes.  In this case, you can modify the corresponding .res file
 ;; instead of fixing the regression, but be VERY careful when doing
 ;; this.  Make sure you know this is what you want to do!
+;;
+;; To do this, you want to make sure the test source is indented
+;; properly, then clear the .res file and regenerate it using step #3
+;; above.
 
+(let ((srcdir (expand-file-name (concat default-directory ".."))))
+  (setq load-path (cons srcdir load-path)))
 (require 'cc-mode)
 
 ;; This is bogus and should eventually go away
