@@ -1655,7 +1655,7 @@
 		 ((and (c-safe (progn (forward-sexp -1) t))
 		       c-lambda-key
 		       (looking-at c-lambda-key))
-		  (c-add-syntax 'block-open (c-point 'boi))
+		  (c-add-syntax 'inline-open (c-point 'boi))
 		  (c-add-syntax 'inlambda))
 		 ;; CASE 6D: At the beginning of an anonymous class.
 		 ((and (c-safe (progn (forward-sexp -1) t))
@@ -1945,14 +1945,21 @@
 			       (c-beginning-of-statement-1 lim))
 			   (c-point 'boi))))
 	    (cond
-	     ;; CASE 15A: closing a lambda block or an in-expression
+	     ;; CASE 15A: closing a lambda defun or an in-expression
 	     ;; block?
 	     ((save-excursion
 		(goto-char containing-sexp)
 		(setq placeholder (c-looking-at-inexpr-block)))
+	      (setq tmpsymbol (if (eq (car placeholder) 'inlambda)
+				  'inline-close
+				'block-close))
 	      (goto-char containing-sexp)
-	      (c-add-syntax 'block-close (c-point 'boi))
-	      (c-add-syntax (car placeholder)))
+	      (back-to-indentation)
+	      (if (= containing-sexp (point))
+		  (c-add-syntax tmpsymbol (point))
+		(goto-char (cdr placeholder))
+		(c-add-syntax tmpsymbol (c-point 'boi))
+		(c-add-syntax (car placeholder))))
 	     ;; CASE 15B: does this close an inline or a function in
 	     ;; an extern block or namespace?
 	     ((progn
@@ -2064,9 +2071,13 @@
 		  (save-excursion
 		    (goto-char containing-sexp)
 		    (c-looking-at-inexpr-block)))
-	    (goto-char (cdr placeholder))
-	    (c-add-syntax 'statement-block-intro (c-point 'boi))
-	    (c-add-syntax (car placeholder))
+	    (goto-char containing-sexp)
+	    (back-to-indentation)
+	    (if (= containing-sexp (point))
+		(c-add-syntax 'statement-block-intro (point))
+	      (goto-char (cdr placeholder))
+	      (c-add-syntax 'statement-block-intro (c-point 'boi))
+	      (c-add-syntax (car placeholder)))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ;; CASE 16F: first statement in an inline, or first
