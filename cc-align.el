@@ -86,13 +86,61 @@ Works with: topmost-intro-cont."
     (if (memq (char-before) '(?} ?,))
 	c-basic-offset)))
 
+(defun c-block-in-arglist-dwim (arglist-start)
+  ;; This function implements the DWIM to avoid far indentation of
+  ;; brace block constructs in arguments in `c-lineup-arglist' etc.
+  ;; Return non-nil if a brace block construct is detected within the
+  ;; arglist starting at ARGLIST-START.
+
+  (or
+   ;; Check if the syntactic context contains any of the symbols for
+   ;; in-expression constructs.  This can both save the work that we
+   ;; have to do below, and it also detect the brace list constructs
+   ;; that `c-looking-at-inexpr-block' currently misses (they are
+   ;; recognized by `c-inside-bracelist-p' instead).
+   (assq 'inexpr-class c-syntactic-context)
+   (assq 'inexpr-statement c-syntactic-context)
+   (assq 'inlambda c-syntactic-context)
+
+   (save-restriction
+     ;; Search for open braces from the arglist start to the end of the
+     ;; line.
+     (narrow-to-region arglist-start (c-point 'eol arglist-start))
+
+     (goto-char arglist-start)
+     (while (and (c-syntactic-re-search-forward "{" nil t)
+		 (progn
+		   (backward-char)
+		   (or
+		    ;; Ignore starts of special brace lists.
+		    (and c-special-brace-lists
+			 (save-restriction
+			   (widen)
+			   (c-looking-at-special-brace-list)))
+		    ;; Ignore complete blocks.
+		    (c-safe (c-forward-sexp) t))))
+       (forward-char))
+
+     (looking-at "{"))
+
+   (let (containing-sexp)
+     (goto-char arglist-start)
+     ;; `c-syntactic-eol' always matches somewhere on the line.
+     (re-search-forward c-syntactic-eol)
+     (goto-char (match-beginning 0))
+     (c-forward-syntactic-ws)
+     (setq containing-sexp (c-most-enclosing-brace (c-parse-state)))
+     (c-looking-at-inexpr-block
+      (c-safe-position (or containing-sexp (point)) c-state-cache)
+      containing-sexp))))
+
 (defun c-lineup-arglist (langelem)
   "Line up the current argument line under the first argument.
 
-As a special case, if an argument on the same line as the open
-parenthesis starts with a brace block opener, the indentation is
-`c-basic-offset' only.  This is intended as a \"DWIM\" measure in
-cases like macros that contains statement blocks, e.g:
+As a special case, if the indented line is inside a brace block
+construct, the indentation is `c-basic-offset' only.  This is intended
+as a \"DWIM\" measure in cases like macros that contains statement
+blocks, e.g:
 
 A_VERY_LONG_MACRO_NAME ({
         some (code, with + long, lines * in[it]);
@@ -106,38 +154,25 @@ indent such cases this way.
 
 Works with: arglist-cont-nonempty, arglist-close."
   (save-excursion
-    (goto-char (1+ (c-langelem-2nd-pos c-syntactic-element)))
+    (let ((indent-pos (point)))
 
-    ;; Don't stop in the middle of a special brace list opener
-    ;; like "({".
-    (when c-special-brace-lists
-      (let ((special-list (c-looking-at-special-brace-list)))
-	(when (and special-list (< (car (car special-list)) (point)))
-	  (goto-char (+ (car (car special-list)) 2)))))
-
-    (let ((savepos (point))
-	  (eol (c-point 'eol)))
-
-      ;; Find out if an argument on the same line starts with an
-      ;; unclosed open brace paren.  Note similar code in
-      ;; `c-lineup-close-paren' and
-      ;; `c-lineup-arglist-close-under-paren'.
-      (if (and (c-syntactic-re-search-forward "{" eol t t)
-	       (looking-at c-syntactic-eol)
-	       (progn (backward-char)
-		      (not (c-looking-at-special-brace-list)))
-	       (progn (c-backward-syntactic-ws)
-		      (or (= (point) savepos)
-			  (eq (char-before) ?,))))
-	  c-basic-offset
+      (if (c-block-in-arglist-dwim (c-langelem-2nd-pos c-syntactic-element))
+	  c-basic-offset		; DWIM case.
 
 	;; Normal case.  Indent to the token after the arglist open paren.
-	(goto-char savepos)
-	(c-forward-syntactic-ws)
-	(when (< (point) eol)
-	  (goto-char savepos)
-	  (skip-chars-forward " \t"))
-	(vector (current-column))))))
+	(goto-char (c-langelem-2nd-pos c-syntactic-element))
+	(if (and c-special-brace-lists
+		 (c-looking-at-special-brace-list))
+	    ;; Skip a special brace list opener like "({".
+	    (progn (c-forward-token-2)
+		   (forward-char))
+	  (forward-char))
+	(let ((arglist-content-start (point)))
+	  (c-forward-syntactic-ws)
+	  (when (< (point) indent-pos)
+	    (goto-char arglist-content-start)
+	    (skip-chars-forward " \t"))
+	  (vector (current-column)))))))
 
 ;; Contributed by Kevin Ryde <user42@zip.com.au>.
 (defun c-lineup-argcont (elem)
@@ -223,46 +258,30 @@ corresponding open paren, but can also be used with arglist-cont and
 arglist-cont-nonempty to line up all lines inside a parenthesis under
 the open paren.
 
-As a special case, if a brace block is opened at the same line as the
-open parenthesis of the argument list, the indentation is
+As a special case, if a brace block construct starts at the same line
+as the open parenthesis of the argument list, the indentation is
 `c-basic-offset' only.  See `c-lineup-arglist' for further discussion
 of this \"DWIM\" measure.
 
 Works with: Almost all symbols, but are typically most useful on
 arglist-close, brace-list-close, arglist-cont and arglist-cont-nonempty."
   (save-excursion
-    (let (special-list paren-start savepos)
-      (if (memq (c-langelem-sym langelem)
-		'(arglist-cont-nonempty arglist-close))
-	  (goto-char (c-langelem-2nd-pos c-syntactic-element))
-	(beginning-of-line)
-	(c-go-up-list-backward))
+    (if (memq (c-langelem-sym langelem)
+	      '(arglist-cont-nonempty arglist-close))
+	(goto-char (c-langelem-2nd-pos c-syntactic-element))
+      (beginning-of-line)
+      (c-go-up-list-backward))
 
-      (if (and c-special-brace-lists
-	       (setq special-list (c-looking-at-special-brace-list)))
-	  ;; Don't stop in the middle of a special brace list opener
-	  ;; like "({".
-	  (progn
-	    (setq paren-start (car (car special-list)))
-	    (goto-char (+ paren-start 2)))
-	(setq paren-start (point))
-	(forward-char 1))
+    (if (save-excursion (c-block-in-arglist-dwim (point)))
+	c-basic-offset			; DWIM case.
 
-      (setq savepos (point))
-      ;; Find out if an argument on the same line starts with an
-      ;; unclosed open brace paren.  Note similar code in
-      ;; `c-lineup-arglist' and `c-lineup-close-paren'.
-      (if (and (c-syntactic-re-search-forward "{" (c-point 'eol) t t)
-	       (looking-at c-syntactic-eol)
-	       (progn (backward-char)
-		      (not (c-looking-at-special-brace-list)))
-	       (progn (c-backward-syntactic-ws)
-		      (or (= (point) savepos)
-			  (eq (char-before) ?,))))
-	  c-basic-offset
-
-	;; Normal case.  Indent to the arglist open paren.
-	(goto-char paren-start)
+      ;; Normal case.  Indent to the arglist open paren.
+      (let (special-list)
+	(if (and c-special-brace-lists
+		 (setq special-list (c-looking-at-special-brace-list)))
+	    ;; Cope if we're in the middle of a special brace list
+	    ;; opener like "({".
+	    (goto-char (car (car special-list))))
 	(vector (current-column))))))
 
 (defun c-lineup-arglist-operators (langelem)
@@ -301,45 +320,41 @@ main (int,              main (
       char **               int, char **
      )           <->    )                 <- c-lineup-close-paren
 
-As a special case, if a brace block is opened at the same line as the
-open parenthesis of the argument list, the indentation is
+As a special case, if a brace block construct starts at the same line
+as the open parenthesis of the argument list, the indentation is
 `c-basic-offset' instead of the open paren column.  See
 `c-lineup-arglist' for further discussion of this \"DWIM\" measure.
 
 Works with: All *-close symbols."
   (save-excursion
-    (beginning-of-line)
-    (c-go-up-list-backward)
+    (if (memq (c-langelem-sym langelem)
+	      '(arglist-cont-nonempty arglist-close))
+	(goto-char (c-langelem-2nd-pos c-syntactic-element))
+      (beginning-of-line)
+      (c-go-up-list-backward))
 
-    (let ((spec (c-looking-at-special-brace-list)) savepos argstart)
-      (if spec (goto-char (car (car spec))))
-      (setq savepos (point))
-      (forward-char 1)
-      (when spec
-	(c-forward-syntactic-ws)
-	(forward-char 1))
+    (let (special-list arglist-start)
+      (if (and c-special-brace-lists
+	       (setq special-list (c-looking-at-special-brace-list)))
+	  ;; Cope if we're in the middle of a special brace list
+	  ;; opener like "({".
+	  (progn
+	    (goto-char (setq arglist-start (car (car special-list))))
+	    (c-forward-token-2)
+	    (forward-char))
+	(setq arglist-start (point))
+	(forward-char))
 
-      (if (looking-at c-syntactic-eol)
-	  ;; The arglist is "empty".
-	  0
+      (cond ((looking-at c-syntactic-eol)
+	     0)				; The arglist is "empty".
 
-	;; Find out if an argument on the same line starts with an
-	;; unclosed open brace paren.  Note similar code in
-	;; `c-lineup-arglist' and
-	;; `c-lineup-arglist-close-under-paren'.
-	(setq argstart (point))
-	(if (and (c-syntactic-re-search-forward "{" (c-point 'eol) t t)
-		 (looking-at c-syntactic-eol)
-		 (progn (backward-char)
-			(not (c-looking-at-special-brace-list)))
-		 (progn (c-backward-syntactic-ws)
-			(or (= (point) argstart)
-			    (eq (char-before) ?,))))
-	    c-basic-offset
+	    ((c-block-in-arglist-dwim (point))
+	     c-basic-offset)		; DWIM case.
 
-	  ;; Normal case.  Indent to the arglist open paren.
-	  (goto-char savepos)
-	  (vector (current-column)))))))
+	    (t
+	     ;; Normal case.  Indent to the arglist open paren.
+	     (goto-char arglist-start)
+	     (vector (current-column)))))))
 
 (defun c-lineup-streamop (langelem)
   "Line up C++ stream operators under each other.
@@ -931,10 +946,7 @@ Works with: inlambda, inexpr-statement, inexpr-class."
 				 containing-sexp))))))
       (when res
 	(goto-char (cdr res))
-	(- (current-column)
-	   (progn
-	     (back-to-indentation)
-	     (current-column)))))))
+	(vector (current-column))))))
 
 (defun c-lineup-whitesmith-in-block (langelem)
   "Line up lines inside a block in Whitesmith style.
