@@ -3924,14 +3924,15 @@ line inside a comment.
 @findex lineup-cascaded-calls (c-)
 @item c-lineup-cascaded-calls
 Line up ``cascaded calls'' under each other.  If the line begins with
-@code{->} and the preceding line ends with a function call preceded by
-@code{->}, then the arrow is lined up with the preceding one.  E.g:
+@code{->} and the preceding line ends with one or more function calls
+preceded by @code{->}, then the arrow is lined up with the first of
+those @code{->}.  E.g:
 @example
 @group
 
-result = proc->add(17)
-             ->add(19) +    // c-lineup-cascaded-calls
-  offset;                   // c-lineup-cascaded-calls (inactive)
+result = proc->add(17)->add(18)
+             ->add(19) +        // c-lineup-cascaded-calls
+  offset;                       // c-lineup-cascaded-calls (inactive)
 
 @end group
 @end example

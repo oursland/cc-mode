@@ -476,26 +476,33 @@ Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
 
 (defun c-lineup-cascaded-calls (langelem)
   "Line up \"cascaded calls\" under each other.
-If the line begins with \"->\" and the preceding line ends with a
-function call preceded by \"->\", then the arrow is lined up with the
-preceding one.  E.g:
+If the line begins with \"->\" and the preceding line ends with one or
+more function calls preceded by \"->\", then the arrow is lined up with
+the first of those \"->\". E.g:
 
-result = proc->add(17)
-             ->add(19) +    <- c-lineup-cascaded-calls
-  offset;                   <- c-lineup-cascaded-calls (inactive)
+result = proc->add(17)->add(18)
+             ->add(19) +           <- c-lineup-cascaded-calls
+  offset;                          <- c-lineup-cascaded-calls (inactive)
 
 In any other situation nil is returned to allow use in list
 expressions.
 
 Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
   (save-excursion
-    (back-to-indentation)
-    (if (and (looking-at "->")
-	     (= (c-backward-token-1 1 t) 0)
-	     (eq (char-after) ?\()
-	     (= (c-backward-token-1 3 t) 0)
-	     (looking-at "->"))
-	(vector (current-column)))))
+    (let ((bopl (c-point 'bopl)) col)
+      (back-to-indentation)
+      (when (and (looking-at "->")
+		 (= (c-backward-token-1 1 t bopl) 0)
+		 (eq (char-after) ?\()
+		 (= (c-backward-token-1 3 t bopl) 0)
+		 (looking-at "->"))
+	(setq col (current-column))
+	(while (and (= (c-backward-token-1 1 t bopl) 0)
+		    (eq (char-after) ?\()
+		    (= (c-backward-token-1 3 t bopl) 0)
+		    (looking-at "->"))
+	  (setq col (current-column)))
+	(vector col)))))
 
 (defun c-lineup-template-args (langelem)
   "Line up template argument lines under the first argument.
