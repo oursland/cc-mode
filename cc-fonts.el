@@ -243,14 +243,25 @@ tools (e.g. Javadoc).")
   ;; We need the following function during compilation since it's
   ;; called when the `c-lang-defconst' initializers are evaluated.
 
+  (defsubst c-skip-comments-and-strings (limit)
+    ;; If the point is within a region fontified as a comment or
+    ;; string literal skip to the end of it or to LIMIT, whichever
+    ;; comes first, and return t.  Otherwise return nil.  The match
+    ;; data is not clobbered.
+    (when (memq (get-text-property (point) 'face)
+		'(font-lock-comment-face font-lock-string-face))
+      (goto-char (next-single-property-change (point) 'face nil limit))
+      t))
+
   (defun c-make-simple-font-lock-decl-function (regexp type-submatch pre post)
     ;; This function makes a byte compiled function that searches for
-    ;; REGEXP and fontifies each match as a declaration.  It works much
-    ;; like an anchored font-lock matcher but cuts out a little bit of
-    ;; the overhead.  However, the main reason is to pass the real
-    ;; search limit to `c-font-lock-declarators' since most (if not all)
-    ;; font-lock implementations arbitrarily limits anchored matchers to
-    ;; the same line.
+    ;; REGEXP and fontifies each match outside font locked comments
+    ;; and string literals as a declaration.  It works much like an
+    ;; anchored font-lock matcher but cuts out a little bit of the
+    ;; overhead.  However, the main reason is to pass the real search
+    ;; limit to `c-font-lock-declarators' since most (if not all)
+    ;; font-lock implementations arbitrarily limits anchored matchers
+    ;; to the same line.
     ;;
     ;; TYPE-SUBMATCH is the submatch in REGEXP that surrounds the
     ;; type.  It can be nil if there's no type to fontify.  PRE is run
@@ -262,14 +273,17 @@ tools (e.g. Javadoc).")
     (byte-compile
      `(lambda (limit)
 	(while (re-search-forward ,regexp limit t)
-	  ,(when type-submatch
-	     `(save-match-data
-		(c-font-lock-type (match-beginning ,type-submatch)
-				  (match-end ,type-submatch))))
-	  ,pre
-	  (save-match-data
-	    (c-font-lock-declarators limit t))
-	  ,post)
+	  (unless (save-excursion
+		    (goto-char (match-beginning 0))
+		    (c-skip-comments-and-strings limit))
+	    ,(when type-submatch
+	       `(save-match-data
+		  (c-font-lock-type (match-beginning ,type-submatch)
+				    (match-end ,type-submatch))))
+	    ,pre
+	    (save-match-data
+	      (c-font-lock-declarators limit t))
+	    ,post))
 	nil))))
 
 (c-lang-defconst c-cpp-matchers
@@ -328,9 +342,23 @@ tools (e.g. Javadoc).")
 	   1 font-lock-variable-name-face)
 
 	  ;; Fontify the directive names.
-	  (eval . (list
-		   ,(concat (c-lang-var c-cpp-prefix) "[a-z]+")
-		   0 c-preprocessor-face))
+	  (,(byte-compile
+	     `(lambda (limit)
+		(while (re-search-forward ,(concat (c-lang-var c-cpp-prefix)
+						   "[a-z]+")
+					  limit t)
+		  (or (c-skip-comments-and-strings limit)
+		      (save-match-data
+			(when (> (match-beginning 0)
+				 (save-excursion
+				   (c-beginning-of-macro)
+				   (point)))
+			  (c-end-of-macro)
+			  (if (> (point) limit) (goto-char limit))
+			  t))
+		      (put-text-property (match-beginning 0) (match-end 0)
+					 'face c-preprocessor-face)))
+		nil)))
 	  ))
 
       ;; Make hard spaces visible through an inverted `c-invalid-face'.
@@ -411,17 +439,21 @@ tools (e.g. Javadoc).")
 		 ;; highlighted submatch (something that causes
 		 ;; problems in other places).
 		 `(lambda (limit)
-		    (when (re-search-forward
-			   ,(concat "\\(\\<" ; 1
-				    "\\(" (c-lang-var c-symbol-key) "\\)" ; 2
-				    "[ \t\n\r]*"
-				    (c-lang-var c-identifier-concat-key)
-				    "[ \t\n\r]*"
-				    "\\)"
-				    (c-lang-var c-symbol-start))
-			   limit t)
-		      (goto-char (match-end 1)))))
-	       2 font-lock-reference-face)))
+		    (while (re-search-forward
+			    ,(concat "\\(\\<" ; 1
+				     "\\(" (c-lang-var c-symbol-key) "\\)" ; 2
+				     "[ \t\n\r]*"
+				     (c-lang-var c-identifier-concat-key)
+				     "[ \t\n\r]*"
+				     "\\)"
+				     (c-lang-var c-symbol-start))
+			    limit t)
+		      (unless (save-excursion
+				(goto-char (match-beginning 0))
+				(c-skip-comments-and-strings limit))
+			(put-text-property (match-beginning 2) (match-end 2)
+					   'face font-lock-reference-face)
+			(goto-char (match-end 1)))))))))
 
 	;; Fontify labels in languages that supports them.
 	,@(when (c-lang-var c-label-key)
