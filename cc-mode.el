@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.224 $
-;; Last Modified:   $Date: 1995-06-30 21:42:23 $
+;; Version:         $Revision: 4.225 $
+;; Last Modified:   $Date: 1995-07-03 14:48:09 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-06-30 21:42:23 $|$Revision: 4.224 $|
+;; |$Date: 1995-07-03 14:48:09 $|$Revision: 4.225 $|
 
 ;;; Code:
 
@@ -4427,7 +4427,7 @@ ACTION associated with `block-close' syntax."
 	       (setq langelem (assq 'block-close c-syntactic-context))
 	       (progn (goto-char (cdr langelem))
 		      (if (= (following-char) ?{)
-			  (forward-sexp -1))
+			  (c-safe (forward-sexp -1)))
 		      (looking-at "\\<do\\>[^_]")))
 	  '(before)
 	'(before after)))))
@@ -4488,7 +4488,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.224 $"
+(defconst c-version "$Revision: 4.225 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
