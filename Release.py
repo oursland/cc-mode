@@ -102,7 +102,7 @@ def bump_release():
     for f, cre, format in FILES:
 	mode = os.stat(f)[0]
 	if mode & 0200:			# S_IWUSR
-	    raise WritableError, f
+	    raise WriteableError, f
     bump = []
     for f, cre, format in FILES:
 	if not cre or not format:
@@ -333,7 +333,10 @@ def main():
 	incr_release()
 
     if bump:
-	bump_release()
+	try:
+	    bump_release()
+	except WriteableError, file:
+	    print 'Cannot bump because writeable file found:', file
 
 if __name__ == '__main__':
     main()
