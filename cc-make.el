@@ -1,3 +1,5 @@
+;; Version:    See cc-mode.el
+
 (setq path-to-the-custom-library
       ;; In Emacs 19.34, change the following line to the directory
       ;; that contains Per Abrahamsen's new Custom library, which you
