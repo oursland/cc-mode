@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-16 19:35:21 $
-;; Version:         $Revision: 2.160 $
+;; Last Modified:   $Date: 1992-07-17 20:14:30 $
+;; Version:         $Revision: 2.161 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-16 19:35:21 $|$Revision: 2.160 $|
+;; |$Date: 1992-07-17 20:14:30 $|$Revision: 2.161 $|
 
 
 ;; ======================================================================
@@ -142,7 +142,7 @@
   (setq c++-mode-syntax-table (make-syntax-table))
   (modify-syntax-entry ?\\ "\\"    c++-mode-syntax-table)
   (modify-syntax-entry ?/  ". 124" c++-mode-syntax-table)
-  (modify-syntax-entry ?*  ". 23"  c++-mode-syntax-table)
+  (modify-syntax-entry ?*  ". 23b" c++-mode-syntax-table)
   (modify-syntax-entry ?+  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?-  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?=  "."     c++-mode-syntax-table)
@@ -293,7 +293,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.160 $
+  "Major mode for editing C++ code.  $Revision: 2.161 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -494,7 +494,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.160 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.161 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2023,7 +2023,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.160 $"
+(defconst c++-version "$Revision: 2.161 $"
   "c++-mode version number.")
 
 (defun c++-version ()
