@@ -172,6 +172,55 @@ the evaluated constant value at compile time."
   '(def-edebug-spec c-lang-defvar
      (&define name def-form &optional stringp)))
 
+(eval-when-compile
+  ;; Some helper functions used when building the language constants.
+
+  (defun c-filter-ops (ops opgroup-filter op-filter &optional post)
+    ;; Used to filter operators from the list OPS in a DWIM:ey way:
+    ;; OPS either has the structure of `c-operators', as a single
+    ;; group in `c-operators', or is a plain list of operators.
+    ;; OPGROUP-FILTER is used filter out the operator groups.  It can
+    ;; be t to choose all groups, a list of group type symbols, or a
+    ;; function which will be called with the group symbol for each
+    ;; group and should return non-nil for those to include.
+    ;; OP-FILTER filters the individual operators in each group.  It
+    ;; can be t to choose all operators, a regexp to test against each
+    ;; operator, or a function which will be called for each operator
+    ;; and should return non-nil for those to include.  If POST is
+    ;; given, it's a function which is called for each matching
+    ;; operators and its result is collected instead.  All matches are
+    ;; returned in a list with duplicates removed.
+    ;; `c-mode-syntax-table' for the current mode is in effect during
+    ;; the whole procedure.
+    (cond ((eq opgroup-filter t)
+	   (setq opgroup-filter (lambda (opgroup) t)))
+	  ((not (functionp opgroup-filter))
+	   (setq opgroup-filter `(lambda (opgroup)
+				   (memq opgroup ',opgroup-filter)))))
+    (cond ((eq op-filter t)
+	   (setq op-filter (lambda (op) t)))
+	  ((stringp op-filter)
+	   (setq op-filter `(lambda (op)
+			      (string-match ,op-filter op)))))
+    (unless post
+      (setq post 'identity))
+    (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+      (delete-duplicates
+       (mapcan (lambda (opgroup)
+		 (unless (listp opgroup)
+		   (setq opgroup (list opgroup)))
+		 (when (if (symbolp (car opgroup))
+			   (when (funcall opgroup-filter (car opgroup))
+			     (setq opgroup (cdr opgroup))
+			     t)
+			 t)
+		   (mapcan (lambda (op)
+			     (when (funcall op-filter op)
+			       (list (funcall post op))))
+			   opgroup)))
+	       ops)
+       :test 'equal))))
+
 
 ;;; Various mode specific values that aren't language related.
 
@@ -738,9 +787,7 @@ since CC Mode treats every identifier as an expression."
 
 (c-lang-defconst c-operator-list
   ;; The operators as a flat list (without duplicates).
-  t (delete-duplicates (mapcan (lambda (elem) (append (cdr elem) nil))
-			       (c-lang-const c-operators))
-		       :test 'string-equal))
+  t (c-filter-ops (c-lang-const c-operators) t t))
 
 (c-lang-defconst c-overloadable-operators
   "List of the operators that are overloadable, in their \"identifier form\"."
@@ -787,17 +834,21 @@ operators."
 	       (c-lang-const c-overloadable-operators))
   awk '("{" "}" "(" ")" "[" "]" ";" "," "=" "/"))
 
+(c-lang-defconst c-all-op-syntax-tokens
+  ;; List of all tokens in the punctuation and parenthesis syntax
+  ;; classes.
+  t (delete-duplicates (append (c-lang-const c-other-op-syntax-tokens)
+			       (c-lang-const c-operator-list))
+		       :test 'string-equal))
+
 (c-lang-defconst c-nonsymbol-token-regexp
   ;; Regexp matching all tokens in the punctuation and parenthesis
   ;; syntax classes.  Note that this also matches ".", which can start
   ;; a float.
   t (c-make-keywords-re nil
-      (c-with-syntax-table (c-lang-const c-mode-syntax-table)
-	(mapcan (lambda (op)
-		  (if (string-match "\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'" op)
-		      (list op)))
-		(append (c-lang-const c-other-op-syntax-tokens)
-			(c-lang-const c-operator-list))))))
+      (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
+		    t
+		    "\\`\\(\\s.\\|\\s\(\\|\\s\)\\)+\\'")))
 (c-lang-defvar c-nonsymbol-token-regexp
   (c-lang-const c-nonsymbol-token-regexp))
 
@@ -822,12 +873,9 @@ operators."
   ;; Regexp matching all tokens containing "<" or ">" which are longer
   ;; than one char.
   t (c-make-keywords-re nil
-      (mapcan (lambda (op)
-		(and (> (length op) 1)
-		     (string-match "[<>]" op)
-		     (list op)))
-	      (append (c-lang-const c-other-op-syntax-tokens)
-		      (c-lang-const c-operator-list)))))
+      (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
+		    t
+		    ".[<>]\\|[<>].")))
 (c-lang-defvar c-<>-multichar-token-regexp
   (c-lang-const c-<>-multichar-token-regexp))
 
@@ -835,22 +883,20 @@ operators."
   ;; Regexp matching the second and subsequent characters of all
   ;; multicharacter tokens that begin with "<".
   t (c-make-keywords-re nil
-      (mapcan (lambda (op)
-		(if (string-match "\\`<." op)
-		    (list (substring op 1))))
-	      (append (c-lang-const c-other-op-syntax-tokens)
-		      (c-lang-const c-operator-list)))))
+      (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
+		    t
+		    "\\`<."
+		    (lambda (op) (substring op 1)))))
 (c-lang-defvar c-<-op-cont-regexp (c-lang-const c-<-op-cont-regexp))
 
 (c-lang-defconst c->-op-cont-regexp
   ;; Regexp matching the second and subsequent characters of all
   ;; multicharacter tokens that begin with ">".
   t (c-make-keywords-re nil
-      (mapcan (lambda (op)
-		(if (string-match "\\`>." op)
-		    (list (substring op 1))))
-	      (append (c-lang-const c-other-op-syntax-tokens)
-		      (c-lang-const c-operator-list)))))
+      (c-filter-ops (c-lang-const c-all-op-syntax-tokens)
+		    t
+		    "\\`>."
+		    (lambda (op) (substring op 1)))))
 (c-lang-defvar c->-op-cont-regexp (c-lang-const c->-op-cont-regexp))
 
 (c-lang-defconst c-stmt-delim-chars
@@ -1847,11 +1893,9 @@ nevertheless contains a list separated with ';' and not ','."
   ;; `c-primary-expr-kwds' and all keyword operators in `c-operators'.
   t (delete-duplicates
      (append (c-lang-const c-primary-expr-kwds)
-	     (c-with-syntax-table (c-lang-const c-mode-syntax-table)
-	       (mapcan (lambda (op)
-			 (and (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
-			      (list op)))
-		       (c-lang-const c-operator-list))))
+	     (c-filter-ops (c-lang-const c-operator-list)
+			   t
+			   "\\`\\(\\w\\|\\s_\\)+\\'"))
      :test 'string-equal))
 
 (c-lang-defconst c-lambda-kwds
@@ -2060,79 +2104,71 @@ Note that Java specific rules are currently applied to tell this from
   ;; be a match of e.g. an infix operator. (The case with ambiguous
   ;; keyword operators isn't handled.)
 
-  t (c-with-syntax-table (c-lang-const c-mode-syntax-table)
-      (let* ((prefix-ops
-	      (mapcan (lambda (op)
-			;; Filter out the special case prefix
-			;; operators that are close parens.
-			(unless (string-match "\\s\)" op)
-			  (list op)))
-		      (mapcan
-		       (lambda (opclass)
-			 (when (eq (car opclass) 'prefix)
-			   (append (cdr opclass) nil)))
-		       (c-lang-const c-operators))))
+  t (let* ((prefix-ops
+	    (c-filter-ops (c-lang-const c-operators)
+			  '(prefix)
+			  (lambda (op)
+			    ;; Filter out the special case prefix
+			    ;; operators that are close parens.
+			    (not (string-match "\\s)" op)))))
 
-	     (nonkeyword-prefix-ops
-	      (mapcan (lambda (op)
-			(unless (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
-			  (list op)))
-		      prefix-ops))
+	   (nonkeyword-prefix-ops
+	    (c-filter-ops prefix-ops
+			  t
+			  "\\`\\(\\s.\\|\\s(\\|\\s)\\)+\\'"))
 
-	     (in-or-postfix-ops
-	      (mapcan (lambda (opclass)
-			(when (memq (car opclass)
-				    '(postfix
-				      left-assoc
-				      right-assoc
-				      right-assoc-sequence))
-			  (append (cdr opclass) nil)))
-		      (c-lang-const c-operators)))
+	   (in-or-postfix-ops
+	    (c-filter-ops (c-lang-const c-operators)
+			  '(postfix
+			    left-assoc
+			    right-assoc
+			    right-assoc-sequence)
+			  t))
 
-	     (unambiguous-prefix-ops (set-difference nonkeyword-prefix-ops
-						     in-or-postfix-ops
-						     :test 'string-equal))
-	     (ambiguous-prefix-ops (intersection nonkeyword-prefix-ops
-						 in-or-postfix-ops
-						 :test 'string-equal)))
+	   (unambiguous-prefix-ops (set-difference nonkeyword-prefix-ops
+						   in-or-postfix-ops
+						   :test 'string-equal))
+	   (ambiguous-prefix-ops (intersection nonkeyword-prefix-ops
+					       in-or-postfix-ops
+					       :test 'string-equal)))
 
-	(concat
-	 "\\("
-	 ;; Take out all symbol class operators from `prefix-ops' and make the
-	 ;; first submatch from them together with `c-primary-expr-kwds'.
-	 (c-make-keywords-re t
-	   (append (c-lang-const c-primary-expr-kwds)
-		   (set-difference prefix-ops nonkeyword-prefix-ops
-				   :test 'string-equal)))
+      (concat
+       "\\("
+       ;; Take out all symbol class operators from `prefix-ops' and make the
+       ;; first submatch from them together with `c-primary-expr-kwds'.
+       (c-make-keywords-re t
+	 (append (c-lang-const c-primary-expr-kwds)
+		 (set-difference prefix-ops nonkeyword-prefix-ops
+				 :test 'string-equal)))
 
-	 "\\|"
-	 ;; Match all ambiguous operators.
-	 (c-make-keywords-re nil
-	   (intersection nonkeyword-prefix-ops in-or-postfix-ops
+       "\\|"
+       ;; Match all ambiguous operators.
+       (c-make-keywords-re nil
+	 (intersection nonkeyword-prefix-ops in-or-postfix-ops
+		       :test 'string-equal))
+       "\\)"
+
+       "\\|"
+       ;; Now match all other symbols.
+       (c-lang-const c-symbol-start)
+
+       "\\|"
+       ;; The chars that can start integer and floating point
+       ;; constants.
+       "\\.?[0-9]"
+
+       "\\|"
+       ;; The nonambiguous operators from `prefix-ops'.
+       (c-make-keywords-re nil
+	 (set-difference nonkeyword-prefix-ops in-or-postfix-ops
 			 :test 'string-equal))
-	 "\\)"
 
-	 "\\|"
-	 ;; Now match all other symbols.
-	 (c-lang-const c-symbol-start)
-
-	 "\\|"
-	 ;; The chars that can start integer and floating point
-	 ;; constants.
-	 "\\.?[0-9]"
-
-	 "\\|"
-	 ;; The nonambiguous operators from `prefix-ops'.
-	 (c-make-keywords-re nil
-	   (set-difference nonkeyword-prefix-ops in-or-postfix-ops
-			   :test 'string-equal))
-
-	 "\\|"
-	 ;; Match string and character literals.
-	 "\\s\""
-	 (if (memq 'gen-string-delim c-emacs-features)
-	     "\\|\\s|"
-	   "")))))
+       "\\|"
+       ;; Match string and character literals.
+       "\\s\""
+       (if (memq 'gen-string-delim c-emacs-features)
+	   "\\|\\s|"
+	 ""))))
 (c-lang-defvar c-primary-expr-regexp (c-lang-const c-primary-expr-regexp))
 
 
@@ -2234,14 +2270,10 @@ constructs."
 (c-lang-defconst c-cast-parens
   ;; List containing the paren characters that can open a cast, or nil in
   ;; languages without casts.
-  t (c-with-syntax-table (c-lang-const c-mode-syntax-table)
-      (mapcan (lambda (opclass)
-		(when (eq (car opclass) 'prefix)
-		  (mapcan (lambda (op)
-			    (when (string-match "\\`\\s\(\\'" op)
-			      (list (elt op 0))))
-			  (cdr opclass))))
-	      (c-lang-const c-operators))))
+  t (c-filter-ops (c-lang-const c-operators)
+		  '(prefix)
+		  "\\`\\s\(\\'"
+		  (lambda (op) (elt op 0))))
 (c-lang-defvar c-cast-parens (c-lang-const c-cast-parens))
 
 (c-lang-defconst c-type-decl-prefix-key
