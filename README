@@ -6,10 +6,9 @@ INTRODUCTION
 
     Please read the cc-mode.texi manual for details on using CC Mode.
 
-    As of this writing (27-Apr-1998), CC Mode version 5 currently
-    works out of the box with XEmacs 19.15, 19.16, XEmacs 20.3, and
-    Emacs 20.2.  CC Mode will be distributed with the next version of
-    Emacs and XEmacs.
+    As of this writing (31-Aug-1998), CC Mode version 5 currently
+    works out of the box with XEmacs versions 19.15, 19.16, 20.3,
+    20.4, and 21.0, and with Emacs versions 19.34, 20.2, 20.3.
 
 MORE INFORMATION
 
