@@ -118,8 +118,10 @@ X/Emacs versions and package interactions.
     the other CC Mode files.  You will also need to download and
     install <a href="http://www.dina.kvl.dk/~abraham/custom/">
     Per's Custom library</a>, and edit the <code>cc-make.el</code>
-    file to include the path to the Custom library.  <!-- See the comment
-    in <code>cc-make.el</code> for details. -->
+    file to include the path to the Custom library when you
+    byte-compile CC Mode.  You <em>must</em> also added the path to
+    the Custom to your <code>load-path</code> variable in your
+    <code>.emacs</code> file for your run-time Emacs environment.
 
     <p> After you do this, read the <code><a href="cc-mode/README">
     README</a></code> file that comes with the CC Mode distribution
