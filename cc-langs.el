@@ -919,12 +919,12 @@ this is assumed to be a subset of `c-primitive-type-kwds'."
 (c-lang-defconst c-type-prefix-kwds
   "Keywords where the following name - if any - is a type name, and
 where the keyword together with the symbol works as a type in
-declarations."
+declarations.  (An alternative if the second part doesn't hold is
+`c-type-list-kwds'.)"
   t    nil
   c    '("struct" "union" "enum")
   c++  '("class" "struct" "typename" "union" "enum")
-  objc '("struct" "union" "enum"
-	 "@interface" "@implementation" "@protocol")
+  objc '("struct" "union" "enum")
   java '("class")
   pike '("class" "enum"))
 
@@ -1118,7 +1118,7 @@ identifiers, where each optionally can be prefixed by keywords.  (Can
 also be used for the special case when the list can contain only one
 element.)"
   t    (c-lang-const c-decl-spec-kwds)
-  objc '("@class")
+  objc '("@class" "@interface" "@implementation" "@protocol")
   pike '("inherit"))
 
 (c-lang-defconst c-colon-type-list-kwds
