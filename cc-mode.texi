@@ -84,7 +84,7 @@ elisp
 @comment Martin Stjernholm
 @comment Alan Mackenzie
 @comment
-@comment Maintained by Martin Stjernholm <bug-cc-mode@gnu.org>
+@comment Maintained by Martin Stjernholm and Alan Mackenzie <bug-cc-mode@gnu.org>
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -96,7 +96,8 @@ elisp
 @syncodeindex ky cp
 
 @copying
-Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01, 02, 03, 04 Free Software Foundation, Inc.
+Copyright @copyright{} 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
+2003, 2004, 2005 Free Software Foundation, Inc.
 @end copying
 
 @comment Info directory entry for use by install-info. The indentation
@@ -336,10 +337,6 @@ how to customize these features.
 ``Font Locking'' describes how ``syntax highlighting'' is applied to
 your buffers.  It is mainly background information and can be skipped
 over at a first reading.
-
-@item
-``AWK Mode'' supplements the information in the previous two chapters
-and should be perused if you are going to be writing in AWK.
 @end itemize
 
 @noindent
@@ -3034,11 +3031,12 @@ when you are editing C++ code.
 
 @item one-liner-defun
 Clean up a single line of code enclosed by defun braces by removing
-the space before and after the code.  The clean-up happens when the
-closing brace is typed.  If the variable @code{c-max-one-liner-length}
-is set, the cleanup is only done if the resulting line would be no
-longer the value of that variable.  This clean-up is intended mainly
-for short AWK pattern/action pairs.  For example, this:
+the whitespace before and after the code.  The clean-up happens when
+the closing brace is typed.  If the variable
+@code{c-max-one-liner-length} is set, the cleanup is only done if the
+resulting line would be no longer the value of that variable.  This
+clean-up is intended mainly for short AWK pattern/action pairs.  For
+example, this:
 
 @example
 @group
@@ -6104,10 +6102,10 @@ you think it might affect our ability to reproduce it.
 
 Please try to produce the problem in an Emacs instance without any
 customizations loaded (i.e. start it with the @code{-q -no-site-file}
-arguments).  If it works correctly there, the problem might be caused by
-faulty customizations in either your own or your site configuration.  In
-that case, we'd appreciate if you isolate the Emacs Lisp code that trigs
-the bug and include it in your report.
+arguments).  If it works correctly there, the problem might be caused
+by faulty customizations in either your own or your site
+configuration.  In that case, we'd appreciate if you isolate the Emacs
+Lisp code that triggers the bug and include it in your report.
 
 @cindex bug report mailing list
 Bug reports are sent to @email{bug-cc-mode@@gnu.org}.  You can also send
