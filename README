@@ -4,9 +4,16 @@ Contact address    : bug-cc-mode@gnu.org (or cc-mode-help@python.org)
 
 INTRODUCTION
 
-    Please read the cc-mode.texi manual for details on using CC Mode.
+    The canonical Web location for all knowledge CC Mode is:
 
-    As of this writing (31-Aug-1998), CC Mode version 5 currently
+	<http://www.python.org/emacs/cc-mode/>
+
+    Please read the cc-mode.texi manual for details on using CC Mode.
+    This is available on-line from:
+
+        <http://www.python.org/emacs/cc-mode/cc-mode-html/Top.html>
+
+    As of this writing (23-Oct-1998), CC Mode version 5 currently
     works out of the box with XEmacs versions 19.15, 19.16, 20.3,
     20.4, and 21.0, and with Emacs versions 19.34, 20.2, 20.3.
 
@@ -16,12 +23,12 @@ MORE INFORMATION
     MUST address all correspondence to bug-cc-mode@gnu.org (or
     cc-mode-help@python.org, is address is being phased out).
 
-    The canonical Web site for CC Mode is
-
-	<http://www.python.org/emacs/cc-mode/>
-
-    Check this for the latest information, updates, tips, installation
-    and compatibility notes, etc. on using CC Mode 5.
+    Check out the CC Mode Web site for the latest information,
+    updates, tips, installation and compatibility notes, etc. on using
+    CC Mode.  The installation instructions given below are an excerpt
+    of the on-line instructions.  If you have problems installing CC
+    Mode, please check out the URL above before submitting a bug
+    report.  Thanks!
 
     The MANIFEST file contains a description of all the files you
     should have gotten with this distribution.
@@ -51,8 +58,8 @@ INSTALLATION
 
     Here is a quick guide for installing CC Mode.  For the latest
     information on installing CC Mode, including compatibility notes
-    for the various flavors of Emacs, please see the canonical CC Mode 
-    Web site given above.
+    for the various flavors of Emacs, please see the CC Mode Web site
+    given above.
 
   Setting load-path
 
