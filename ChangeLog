@@ -62,8 +62,8 @@ Wed Apr 08 1998  Barry Warsaw  <cc-mode-help@python.org>
 	* cc-cmds.el (c-mark-function): Much better implementation which
  	catches all the expected cases.
 
-	* cc-cmds.el (c-end-of-defun): When called programmatically with
- 	no arguments, arg is nil, so set it to 1.
+	(c-end-of-defun): When called programmatically with no arguments,
+ 	arg is nil, so set it to 1.
 
 	* cc-defs.el (c-point): Added 'eod. 
 
@@ -92,10 +92,8 @@ Fri Apr 03 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 	* cc-cmds.el (c-electric-brace): Removed brace-list-entry from the
  	list of symbols that can be electrified because all cases where
- 	brace-list-entry was used should now be brace-entry-open's.
-
-	* cc-cmds.el (c-electric-brace): Add new brace-entry-open to list
- 	of braces which can be electrified.
+ 	brace-list-entry was used should now be brace-entry-open's.  Add
+ 	new brace-entry-open to list of braces which can be electrified.
 
 	* cc-engine.el (c-guess-basic-syntax): CASE 9C: brace-list-open =>
  	brace-entry-open.
@@ -145,9 +143,8 @@ Fri Mar 27 1998  Barry Warsaw  <cc-mode-help@python.org>
 
 Wed Mar 18 1998  Barry Warsaw  <cc-mode-help@python.org>
 
-	* cc-cmds.el (c-indent-line-or-region): New command. 
-
-	* cc-cmds.el (c-indent-command): Remove `*' from interactive spec. 
+	* cc-cmds.el (c-indent-line-or-region): New command. Remove `*'
+ 	from interactive spec.
 
 	* cc-langs.el (c-mode-menu): Change "Indent Line" to "Indent Line
  	or Region".
