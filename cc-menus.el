@@ -142,7 +142,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
          "[a-zA-Z0-9_]+"                      ; class name
          "\\(<[^>]+>\\)?"                     ; possibly explicitely specialized
          "\\)"
-         "[ \t]*[:{]"
+         "[ \t\n]*[:{]"
          )) 2)))
   "Imenu generic expression for C++ mode.  See `imenu-generic-expression'.")
  
