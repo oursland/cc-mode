@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.341 $
-;; Last Modified:   $Date: 1997-01-02 20:20:21 $
+;; Version:         $Revision: 4.342 $
+;; Last Modified:   $Date: 1997-01-02 21:13:52 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4764,18 +4764,14 @@ With universal argument, inserts the analysis as a comment on that line."
 (defun c-lineup-C-comments (langelem)
   ;; line up C block comment continuation lines
   (save-excursion
-    (let ((stars-on-line (progn (back-to-indentation)
-				(skip-chars-forward "*")))
-	  (line-col (current-column))
-	  (relpos-col (progn (goto-char (cdr langelem))
-			     (current-column)))
-	  (relpos-indent (back-to-indentation)))
-      (if (re-search-forward "/\\([*]+\\)" (c-point 'eol) t)
-	  (+ relpos-indent (if (= stars-on-line
-				  (- (match-end 1) (match-beginning 1)))
-			       1 0)
-	     (- (current-column) line-col relpos-col))
-	(- (current-column) relpos-col))
+    (let ((stars (progn (back-to-indentation)
+			(skip-chars-forward "*")))
+	  (cs-curcol (progn (goto-char (cdr langelem))
+			    (current-column))))
+      (back-to-indentation)
+      (if (re-search-forward "/[*]+" (c-point 'eol) t)
+	  (- (current-column) stars cs-curcol)
+	(- (current-column) cs-curcol))
       )))
 
 (defun c-lineup-comment (langelem)
@@ -5036,7 +5032,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.341 $"
+(defconst c-version "$Revision: 4.342 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
