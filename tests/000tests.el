@@ -329,49 +329,55 @@
 	  (goto-char (point-min))
 	  (set-buffer testbuf)
 	  (goto-char (point-min))
-	  (while (not (eobp))
-	    (let* ((currentindent (progn
-				    (back-to-indentation)
-				    (current-column)))
-		   (results (prog2
-				(set-buffer resultsbuf)
-				(buffer-substring (c-point 'bol)
-						  (c-point 'eol))
-			      (forward-line 1)))
-		   (expected (prog2
-				 (set-buffer expectedbuf)
-				 (buffer-substring (c-point 'bol)
-						   (c-point 'eol))
-			       (forward-line 1)))
-		   regression-comment)
-	      (set-buffer testbuf)
-	      (unless (or (= (length results) 0)
-			  (string= results expected))
-		(let ((msg (format "Expected analysis %s, got %s"
-				   expected results)))
-		  (cc-test-log "%s:%d: %s" filename linenum msg)
-		  (indent-for-comment)
-		  (if (re-search-forward "\\*/" (c-point 'eol) 'move)
-		      (goto-char (match-beginning 0)))
-		  (delete-horizontal-space)
-		  (insert " !!! " msg ". ")
-		  (setq error-found-p t
-			regression-comment t)))
-	      (unless (= (car expectedindent) currentindent)
-		(let ((msg (format "Expected indentation %d, got %d"
-				   (car expectedindent) currentindent)))
-		  (cc-test-log "%s:%d: %s" filename linenum msg)
-		  (unless regression-comment
+	  (catch 'break-loop
+	    (while (not (eobp))
+	      (let* ((currentindent
+		      (progn (back-to-indentation)
+			     (current-column)))
+		     (results
+		      (prog2
+			  (set-buffer resultsbuf)
+			  (buffer-substring (c-point 'bol)
+					    (c-point 'eol))
+			(forward-line 1)))
+		     (expected
+		      (prog2
+			  (set-buffer expectedbuf)
+			  (buffer-substring (c-point 'bol)
+					    (c-point 'eol))
+			(when (/= (forward-line 1) 0)
+			  (setq error-found-p t)
+			  (cc-test-log "%s:%d: Unexpected end of .res file"
+				       filename linenum)
+			  (throw 'break-loop t))))
+		     regression-comment)
+		(set-buffer testbuf)
+		(unless (string= results expected)
+		  (let ((msg (format "Expected analysis %s, got %s"
+				     expected results)))
+		    (cc-test-log "%s:%d: %s" filename linenum msg)
 		    (indent-for-comment)
 		    (if (re-search-forward "\\*/" (c-point 'eol) 'move)
 			(goto-char (match-beginning 0)))
 		    (delete-horizontal-space)
-		    (insert " !!! "))
-		  (insert msg ". ")
-		  (setq error-found-p t))))
-	    (forward-line 1)
-	    (setq expectedindent (cdr expectedindent)
-		  linenum (1+ linenum))))
+		    (insert " !!! " msg ". ")
+		    (setq error-found-p t
+			  regression-comment t)))
+		(unless (= (car expectedindent) currentindent)
+		  (let ((msg (format "Expected indentation %d, got %d"
+				     (car expectedindent) currentindent)))
+		    (cc-test-log "%s:%d: %s" filename linenum msg)
+		    (unless regression-comment
+		      (indent-for-comment)
+		      (if (re-search-forward "\\*/" (c-point 'eol) 'move)
+			  (goto-char (match-beginning 0)))
+		      (delete-horizontal-space)
+		      (insert " !!! "))
+		    (insert msg ". ")
+		    (setq error-found-p t))))
+	      (forward-line 1)
+	      (setq expectedindent (cdr expectedindent)
+		    linenum (1+ linenum)))))
 	(unless (or error-found-p (not collect-tests))
 	  (setq cc-test-finished-tests
 		(cons filename cc-test-finished-tests)))
