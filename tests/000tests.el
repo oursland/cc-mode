@@ -12,9 +12,9 @@
 ;;
 ;;    M-x do-all-tests RET
 ;;
-;; This regression tests all the files listed in the variable
-;; list-of-tests.  Note that this form of testing takes over X/Emacs
-;; until the test completes, and the tests can take a while!
+;; This regression tests all the files in the current directory.  Note
+;; that this form of testing takes over X/Emacs until the test
+;; completes, and the tests can take a while!
 
 ;; To run in batch mode, make sure all the changed .el files are byte
 ;; compiled and make sure they will be found first on your load-path,
@@ -37,14 +37,13 @@
 ;; 1) creating a small, but complete test case in a file with the
 ;;    proper extension.  This file must have a unique name within the
 ;;    tests directory (sans the extension).
-;; 2) add the file to the variable list-of-tests
-;; 3) Create a `results' (.res) file with the base name of the file,
+;; 2) Create a `results' (.res) file with the base name of the file,
 ;;    appended with .res.  Split the current window so that you have
 ;;    two buffers visible, the new test file buffer on top, and the
 ;;    .res file on bottom.  Put point at the top of the new test file
 ;;    and type `M-x resfile'.  This will populate the .res file.
 ;;    Verify that the results are what you expect, then save both
-;;    files, and check then into CVS.
+;;    files, and check them into CVS.
 
 ;; Some times the tests will fail without an actual regression being
 ;; introduced.  This might happen if, e.g. the default Java style
@@ -56,17 +55,22 @@
 ;; properly, then clear the .res file and regenerate it using step #3
 ;; above.
 
-;; The eval depth can be rather deep when CC Mode isn't compiled.
-(setq max-lisp-eval-depth 1000)
+(require 'compile)
 
-(let ((srcdir (expand-file-name (concat default-directory ".."))))
+(defvar cc-test-dir nil)
+(setq cc-test-dir
+      (if load-file-name
+	  (file-name-directory load-file-name)
+	default-directory))
+
+(let ((srcdir (expand-file-name (concat cc-test-dir ".."))))
   (setq load-path (cons srcdir load-path)))
 (require 'cc-mode)
 
 ;; This is bogus and should eventually go away
 (c-initialize-cc-mode)
 
-(defconst TESTSTYLE
+(defconst cc-test-teststyle
   '((c-tab-always-indent           . t)
     (c-basic-offset                . 4)
     (c-comment-only-line-offset    . 0)
@@ -156,8 +160,8 @@
     )
   "Style for testing.")
 
-(defconst JAVATESTSTYLE
-  '("TESTSTYLE"
+(defconst cc-test-javateststyle
+  '("teststyle"
     (c-basic-offset . 4)
     (c-comment-only-line-offset . (0 . 0))
     ;; the following preserves Javadoc starter lines
@@ -178,17 +182,32 @@
     )
   "Style for testing Java code.")
 
-(c-add-style "TESTSTYLE" TESTSTYLE)
-(c-add-style "JAVATESTSTYLE" JAVATESTSTYLE)
+(c-add-style "teststyle" cc-test-teststyle)
+(c-add-style "javateststyle" cc-test-javateststyle)
 
-(defvar finished-tests nil)
+(defvar cc-test-finished-tests nil)
+(defvar cc-test-comp-buf nil)
+(defvar cc-test-comp-win nil)
+
+(defun cc-test-log (msg &rest args)
+  (if cc-test-comp-buf
+      (save-excursion
+	(save-selected-window
+	  (select-window cc-test-comp-win)
+	  (insert (apply 'format msg args))
+	  (recenter -1)
+	  (sit-for 0)
+	  (insert "\n")))
+    (apply 'message msg args)))
 
 (defun make-test-buffers (filename)
   (let ((testbuf (get-buffer-create "*cc-test*"))
 	(resultsbuf (get-buffer-create "*cc-results*"))
 	(expectedbuf (get-buffer-create "*cc-expected*"))
 	(resfile (concat (file-name-sans-extension filename) ".res")))
+    ;; Setup the test file buffer.
     (set-buffer testbuf)
+    (buffer-disable-undo testbuf)
     (erase-buffer)
     (insert-file-contents filename)
     (goto-char (point-min))
@@ -204,144 +223,181 @@
        ((string-match "\\.idl$" filename) (idl-mode))
        (t (c-mode)))
       (c-set-style style))
+    (hack-local-variables)
+    ;; Setup the expected analysis buffer.
     (set-buffer expectedbuf)
+    (buffer-disable-undo expectedbuf)
     (erase-buffer)
     (insert-file-contents resfile)
     (text-mode)
     (goto-char (point-min))
+    ;; Setup the resulting analysis buffer.
     (set-buffer resultsbuf)
+    (buffer-disable-undo resultsbuf)
     (erase-buffer)
     (list testbuf resultsbuf expectedbuf)))
 
-(defun shutup-parsing-error ())
+(defun kill-test-buffers ()
+  (let (buf)
+    (if (setq buf (get-buffer "*cc-test*"))
+	(kill-buffer buf))
+    (if (setq buf (get-buffer "*cc-results*"))
+	(kill-buffer buf))
+    (if (setq buf (get-buffer "*cc-expected*"))
+	(kill-buffer buf))))
 
-(defun do-one-test (filename)
+(defun do-one-test (filename &optional no-error)
   (interactive "fFile to test: ")
-  (if (or (when (member filename finished-tests)
-	    (message "Already tested %s" filename)
-	    t)
-	  (when (not (file-exists-p
-		      (concat (file-name-sans-extension filename) ".res")))
-	    (message "Skipping %s - no .res file" filename)
-	    t))
-      nil
-    (message "Testing %s" filename)
-    (let* ((baw:c-testing-p t)
-	   (buflist (make-test-buffers filename))
-	   (testbuf (car buflist))
-	   (resultsbuf (nth 1 buflist))
-	   (expectedbuf (nth 2 buflist))
-	   (pop-up-windows t)
-	   (linenum 1)
-	   (style "TESTSTYLE")
-	   error-found-p
-	   expectedindent
-	   )
-      (set-buffer testbuf)
-      (goto-char (point-min))
-      (while (not (eobp))
-	(let ((syntax (c-guess-basic-syntax)))
+  (let ((default-directory cc-test-dir))
+    (if (or (when (member filename cc-test-finished-tests)
+	      (message "Skipping %s - already tested" filename)
+	      t)
+	    (when (not (file-exists-p
+			(concat (file-name-sans-extension filename) ".res")))
+	      (cc-test-log "Skipping %s - no .res file" filename)
+	      t))
+	t
+      (if noninteractive
+	  (send-string-to-terminal (format "Testing %s        \r" filename))
+	(message "Testing %s" filename))
+      (let* ((baw:c-testing-p t)
+	     (buflist (make-test-buffers filename))
+	     (testbuf (car buflist))
+	     (resultsbuf (nth 1 buflist))
+	     (expectedbuf (nth 2 buflist))
+	     (pop-up-windows t)
+	     (linenum 1)
+	     (style "TESTSTYLE")
+	     error-found-p
+	     expectedindent
+	     c-echo-syntactic-information-p)
+	(set-buffer testbuf)
+	(goto-char (point-min))
+	;; Collect the analysis of all lines.
+	(while (not (eobp))
+	  (let ((syntax (c-guess-basic-syntax)))
+	    (set-buffer resultsbuf)
+	    (insert (format "%s" syntax) "\n")
+	    (set-buffer testbuf))
+	  (forward-line 1))
+	;; Record the expected indentation and reindent.  This is done
+	;; in backward direction to avoid cascading errors.
+	(while (= (forward-line -1) 0)
+	  (back-to-indentation)
+	  (setq expectedindent (cons (current-column) expectedindent))
+	  (unless (eolp)
+	    ;; Do not reindent empty lines; the test cases might have
+	    ;; whitespace at eol trimmed away, so that could produce
+	    ;; false alarms.
+	    (c-indent-line)))
+	;; Compare and report.
+	(set-buffer resultsbuf)
+	(goto-char (point-min))
+	(set-buffer expectedbuf)
+	(goto-char (point-min))
+	(set-buffer testbuf)
+	(goto-char (point-min))
+	(while (not (eobp))
+	  (let* ((currentindent (progn
+				  (back-to-indentation)
+				  (current-column)))
+		 (results (prog2
+			      (set-buffer resultsbuf)
+			      (buffer-substring (c-point 'bol) (c-point 'eol))
+			    (forward-line 1)))
+		 (expected (prog2
+			       (set-buffer expectedbuf)
+			       (buffer-substring (c-point 'bol) (c-point 'eol))
+			     (forward-line 1)))
+		 regression-comment)
+	    (set-buffer testbuf)
+	    (unless (string= results expected)
+	      (let ((msg (format "Expected analysis %s, got %s"
+				 expected results)))
+		(cc-test-log "%s:%d: %s" filename linenum msg)
+		(indent-for-comment)
+		(unless (eolp) (end-of-line) (insert "  "))
+		(insert "!!! " msg ".")
+		(setq error-found-p t
+		      regression-comment t)))
+	    (unless (= (car expectedindent) currentindent)
+	      (let ((msg (format "Expected indentation %d, got %d"
+				 (car expectedindent) currentindent)))
+		(cc-test-log "%s:%d: %s" filename linenum msg)
+		(if regression-comment
+		    (insert "  ")
+		  (indent-for-comment)
+		  (unless (eolp) (end-of-line) (insert "  "))
+		  (insert "!!! "))
+		(insert msg ".")
+		(setq error-found-p t))))
+	  (forward-line 1)
+	  (setq expectedindent (cdr expectedindent)
+		linenum (1+ linenum)))
+	(unless error-found-p
+	  (setq cc-test-finished-tests (cons filename cc-test-finished-tests)))
+	(when (and error-found-p (not no-error))
+	  (set-buffer testbuf)
+	  (buffer-enable-undo testbuf)
+	  (set-buffer-modified-p nil)
 	  (set-buffer resultsbuf)
-	  (insert (format "%s" syntax) "\n")
-	  (set-buffer testbuf))
-	(forward-line 1))
-      (set-buffer resultsbuf)
-      (goto-char (point-min))
-      (set-buffer expectedbuf)
-      (goto-char (point-min))
-      (while (not (eobp))
-	(let ((results (prog2
-			   (set-buffer resultsbuf)
-			   (buffer-substring (c-point 'bol) (c-point 'eol))
-			 (forward-line 1)))
-	      (expected (prog2
-			    (set-buffer expectedbuf)
-			    (buffer-substring (c-point 'bol) (c-point 'eol))
-			  (forward-line 1))))
-	  (if (string= results expected)
-	      nil
-	    (set-buffer testbuf)
-	    (goto-line linenum)
-	    (message "error found on line: %d" linenum)
-	    (message "expected: %s, results: %s" expected results)
-	    (indent-for-comment)
-	    (insert "!TBD: Regression!")
-	    (setq error-found-p t)))
-	(setq linenum (1+ linenum)))
-      (find-file filename)
-      (cond
-       ((string-match "\\.cc$" filename) (c++-mode))
-       ((string-match "\\.m$" filename) (objc-mode))
-       ((string-match "\\.java$" filename)
-	(java-mode)
-	(setq style "JAVATESTSTYLE"))
-       ((string-match "\\.pike$" filename) (pike-mode))
-       ((string-match "\\.idl$" filename) (idl-mode))
-       (t (c-mode)))
-      (c-set-style style)
-      (goto-char (point-max))
-      (while (= (forward-line -1) 0)
-	(setq expectedindent (cons (progn
-				     (back-to-indentation)
-				     (current-column))
-				   expectedindent)))
-      (let ((c-progress-interval nil))
-	(indent-region (point-min) (point-max) nil))
-      (goto-char (point-min))
-      (setq linenum 1)
-      (while expectedindent
-	(let ((currentindent (progn
-			       (back-to-indentation)
-			       (current-column))))
-	  (if (= (car expectedindent) currentindent)
-	      nil
-	    (set-buffer testbuf)
-	    (goto-line linenum)
-	    (message "error found on line: %d" linenum)
-	    (message "expected indentation: %d, result: %d"
-		     (car expectedindent) currentindent)
-	    (indent-for-comment)
-	    (insert "!TBD: Regression!")
-	    (setq error-found-p t)))
-	(forward-line)
-	(setq expectedindent (cdr expectedindent)
-	      linenum (1+ linenum)))
-      (and (buffer-modified-p)
-	   (setq error-found-p t))
-      (if error-found-p
-	  (progn
-	    (pop-to-buffer testbuf)
-	    (error "Indentation regression found in file: %s!" filename))))
-    (setq finished-tests (cons filename finished-tests))
-    ))
+	  (buffer-enable-undo resultsbuf)
+	  (set-buffer-modified-p nil)
+	  (set-buffer expectedbuf)
+	  (buffer-enable-undo expectedbuf)
+	  (set-buffer-modified-p nil)
+	  (pop-to-buffer testbuf)
+	  (error "Indentation regression found in file %s" filename))
+	(not error-found-p)
+	))))
 
 (defun do-all-tests (&optional resetp)
   (interactive "P")
-  (c-version)
-  (if (consp resetp)
-      (setq finished-tests nil))
-  ;; TBD: HACK HACK HACK
   (let ((old-c-echo-parsing-error (symbol-function 'c-echo-parsing-error))
-	broken-files)
-    (fset 'c-echo-parsing-error 'shutup-parsing-error)
+	broken-files cc-test-comp-buf cc-test-comp-win)
     (unwind-protect
-	(mapcar (function (lambda (test)
-			    (condition-case err
-				(do-one-test test)
-			      (error
-			       (message "%s" (error-message-string err))
-			       (setq broken-files (cons test broken-files)))
-			      )))
-		(directory-files default-directory
-				 nil "\\.\\(c\\|cc\\|java\\|pike\\|idl\\|m\\)\\'"))
+	(progn
+	  (unless noninteractive
+	    ;; Log to a buffer like M-x compile does.
+	    (save-some-buffers)
+	    (setq cc-test-comp-buf (get-buffer-create "*cc-test-log*"))
+	    (save-excursion
+	      (set-buffer cc-test-comp-buf)
+	      (buffer-disable-undo cc-test-comp-buf)
+	      (erase-buffer)
+	      (buffer-enable-undo cc-test-comp-buf)
+	      (set-buffer-modified-p nil)
+	      (compilation-mode)
+	      (setq cc-test-comp-win (display-buffer cc-test-comp-buf))
+	      (set-window-start cc-test-comp-win (point-min))
+	      (compilation-set-window-height cc-test-comp-win)))
+	  (when (consp resetp)
+	    (setq cc-test-finished-tests nil))
+	  (cc-test-log "Using CC Mode version %s" c-version)
+	  (fset 'c-echo-parsing-error (lambda ()))
+	  (mapcar (lambda (test)
+		    (condition-case err
+			(unless (do-one-test test t)
+			  (setq broken-files (cons test broken-files)))
+		      (error
+		       (message "%s" (error-message-string err))
+		       (setq broken-files (cons test broken-files)))
+		      ))
+		  (directory-files
+		   cc-test-dir nil
+		   "\\.\\(c\\|cc\\|java\\|pike\\|idl\\|m\\)\\'")))
       (fset 'c-echo-parsing-error old-c-echo-parsing-error))
-    (if (zerop (length broken-files))
-	(message "All tests passed!")
-      (message "Broken files encountered: %d" (length broken-files))
-      (mapcar (function (lambda (file)
-			  (message "    %s" file)))
-	      broken-files)))
-  (setq finished-tests nil))
+    (kill-test-buffers)
+    (when broken-files
+      (message "Broken file(s): %s"
+	       (mapconcat 'identity broken-files ", ")))
+    (unless noninteractive
+      (if broken-files
+	  (first-error)
+	(message "All tests successful")
+	(delete-window cc-test-comp-win)
+	(kill-buffer cc-test-comp-buf)
+	(setq cc-test-finished-tests nil)))))
 
 (defun resfile ()
   (interactive)
