@@ -70,6 +70,10 @@
 (defun c-beginning-of-statement-1 (&optional lim)
   ;; move to the start of the current statement, or the previous
   ;; statement if already at the beginning of one.
+  ;;
+  ;; Note: This function might skip past lim.  Several calls in
+  ;; c-guess-basic-syntax calls it with a too narrow limit, so they
+  ;; depend on that. :P
   (let ((firstp t)
 	(substmt-p t)
 	donep c-in-literal-cache saved
@@ -91,7 +95,7 @@
 	    (setq donep t)
 	  ;; go backwards one balanced expression, but be careful of
 	  ;; unbalanced paren being reached
-	  (c-backward-syntactic-ws lim)	; To skip any macros.
+	  (c-backward-syntactic-ws)	; To skip any macros.
 	  (if (not (c-safe (progn (c-backward-sexp 1) t)))
 	      (progn
 		(if firstp
