@@ -17,12 +17,12 @@ X/Emacs versions and package interactions.
 	they now point to the first non-whitespace character on the
 	line with the open brace.
 
-    <li><code>c-progress-interval</code>'s semantics have changed
+    <p><li><code>c-progress-interval</code>'s semantics have changed
 	slightly.  When set to <code>nil</code>, indentation proceeds
 	silently.  Previously, even when <code>nil</code>, the start
 	and end messages were printed.
 
-    <li>The usual assortment of bug fixes.
+    <p><li>The usual assortment of bug fixes.
 </ul>
 
 <h2>Changes since CC Mode 5.17</h2>
