@@ -151,6 +151,7 @@
   `(condition-case nil
        (progn ,@body)
      (error nil)))
+(put 'c-safe 'lisp-indent-function 0)
 
 (defmacro c-forward-sexp (&optional arg)
   ;; like forward-sexp except
