@@ -17,7 +17,7 @@ check out the patch branch, which is called <i>Branch_5_30</i>:
 <pre>
 cvs -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode login</pre>
 
-<p>Just press Enter at the password prompt.
+<p>Just press Enter at the password prompt. Then:
 
 <pre>
 cvs -z3 -d:pserver:anonymous@cvs.cc-mode.sf.net:/cvsroot/cc-mode co -rBranch_5_30 cc-mode</pre>
@@ -47,7 +47,9 @@ are that we have found it ourselves already.
 <h3>The source tree</h3>
 
 <p>The CC Mode source will be in the root of the checked out tree.
-You'll find the regression test suite in the <code>tests</code>
+It's the same thing you'll find in a dist tarball (with a couple of
+extra files around it), so it can be byte compiled and used straight
+away.  You'll find the regression test suite in the <code>tests</code>
 directory; take a look in <code>000tests.el</code> to figure out how
 to use it.  The <code>admin</code> directory probably isn't very
 interesting; it just contains the source for this web site.
