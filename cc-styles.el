@@ -462,12 +462,14 @@ and exists only for compatibility reasons."
 
 
 (defun c-setup-paragraph-variables ()
-  "Fix things up for paragraph recognition and filling inside comments by
-incorporating the value of `c-comment-prefix-regexp' in the relevant
+  "Fix things up for paragraph recognition and filling inside comments and
+strings by incorporating the values of `c-comment-prefix-regexp',
+`sentence-end', `paragraph-start' and `paragraph-separate' in the relevant
 variables."
 
   (interactive)
 
+  ;; Set up the values for use in comments.
   (setq c-current-comment-prefix
 	(if (listp c-comment-prefix-regexp)
 	    (cdr-safe (or (assoc major-mode c-comment-prefix-regexp)
@@ -503,7 +505,20 @@ variables."
 		    ;; Maybe we should incorporate the old value here,
 		    ;; but then we have to do all sorts of kludges to
 		    ;; deal with the \` and \' it probably contains.
-		    "\\'")))))
+		    "\\'"))))
+
+  ;; Set up the values for use in strings.  These are the default
+  ;; paragraph-start/separate values, enhanced to accept escaped EOLs as
+  ;; whitespace.  Used in c-beginning/end-of-sentence-in-string in cc-cmds.
+  (setq c-string-par-start
+	(concat "\\(" (default-value paragraph-start) "\\)\\|[ \t]*\\\\$"))
+  (setq c-string-par-separate
+	(concat "\\(" (default-value paragraph-separate) "\\)\\|[ \t]*\\\\$"))
+  (setq c-sentence-end-with-esc-eol
+	(concat "\\(\\(" (default-value sentence-end) "\\)"
+		;; N.B.:  "$" would be illegal when not enclosed like "\\($\\)".
+		"\\|" "[.?!][]\"')}]* ?\\\\\\($\\)[ \t\n]*"
+		"\\)")))
 
 
 ;; Helper for setting up Filladapt mode.  It's not used by CC Mode itself.

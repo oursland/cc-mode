@@ -1662,16 +1662,8 @@ function does not require the declaration to contain a brace block."
 	   ;; Enhance paragraph-start and paragraph-separate also to recognise
 	   ;; blank lines terminated by escaped EOLs.  IT MAY WELL BE that
 	   ;; these values should be customizable user options, or something.
-	   (paragraph-start
-	    (concat "\\(" paragraph-start "\\)\\|[ \t]*\\\\$"))
-	   (paragraph-separate
-	    (concat "\\(" paragraph-separate "\\)\\|[ \t]*\\\\$"))
-
-	   (sentence-end-with-esc-eol
-	    (concat "\\(" sentence-end
-	      ;; N.B.:  "$" would be illegal when not enclosed like "\\($\\)".
-		    "\\|" "[.?!][]\"')}]* ?\\\\\\($\\)[ \t\n]*"
-		    "\\)"))
+	   (paragraph-start c-string-par-start)
+	   (paragraph-separate c-string-par-separate)
 
 	   (par-beg	       ; beginning of current (or previous) paragraph.
 	    (save-excursion
@@ -1687,7 +1679,7 @@ function does not require the declaration to contain a brace block."
 		      (goto-char here)))
 		(point)))))
       ;; Now see if we can find a sentence end after PAR-BEG.
-      (while (and (re-search-backward sentence-end-with-esc-eol par-beg 'limit)
+      (while (and (re-search-backward c-sentence-end-with-esc-eol par-beg 'limit)
 		  (setq last (point))
 		  (goto-char (match-end 0))
 		  (or (> (point) end)
@@ -1725,16 +1717,8 @@ function does not require the declaration to contain a brace block."
 	   last
 	   ;; Enhance paragraph-start and paragraph-separate to recognise
 	   ;; blank lines terminated by escaped EOLs.
-	   (paragraph-start
-	    (concat "\\(" paragraph-start "\\)\\|[ \t]*\\\\$"))
-	   (paragraph-separate
-	    (concat "\\(" paragraph-separate "\\)\\|[ \t]*\\\\$"))
-
-	   (sentence-end-with-esc-eol
-	    (concat "\\(" sentence-end
-		    ;; N.B.:  "\\($\\)" is in the following to make the $ legal.
-		    "\\|" "[.?!][]\"')}]* ?\\\\\\($\\)[ \t\n]*"
-		    "\\)"))
+	   (paragraph-start c-string-par-start)
+	   (paragraph-separate c-string-par-separate)
 
 	   (par-end	; EOL position of last text in current/next paragraph.
 	    (save-excursion
@@ -1755,7 +1739,7 @@ function does not require the declaration to contain a brace block."
 			     (re-search-backward "\\\\\\($\\)\\=" nil t))))
 		(point)))))
       ;; Try to go forward a sentence.
-      (when (re-search-forward sentence-end-with-esc-eol par-end 'limit)
+      (when (re-search-forward c-sentence-end-with-esc-eol par-end 'limit)
 	(setq last (point))
 	(while (or (/= (skip-chars-backward " \t\n") 0)
 		   (re-search-backward "\\\\\\($\\)\\=" nil t))))
