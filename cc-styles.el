@@ -340,6 +340,9 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
     (extern-lang-open      . 0)
     (extern-lang-close     . 0)
     (inextern-lang         . +)
+    (namespace-open        . 0)
+    (namespace-close       . 0)
+    (innamespace           . +)
     (template-args-cont    . +)
     )
   "Association list of syntactic element symbols and indentation offsets.
@@ -431,14 +434,21 @@ Here is the current list of valid syntactic element symbols:
  arglist-close          -- the solo close paren of an argument list
  stream-op              -- lines continuing a stream operator construct
  inclass                -- the construct is nested inside a class definition
- cpp-macro              -- the start of a cpp macro
+ cpp-macro              -- the start of a C preprocessor macro definition
+ cpp-macro-cont         -- the second and subsequent lines in a
+                           multi-line C preprocessor macro definition
  friend                 -- a C++ friend declaration
  objc-method-intro      -- the first line of an Objective-C method definition
  objc-method-args-cont  -- lines continuing an Objective-C method definition
  objc-method-call-cont  -- lines continuing an Objective-C method call
  extern-lang-open       -- brace that opens an external language block
  extern-lang-close      -- brace that closes an external language block
- inextern-lang          -- analogous to `inclass' syntactic symbol
+ inextern-lang          -- analogous to `inclass' syntactic symbol,
+                           but used inside, e.g. extern \"C\" constructs
+ namespace-open         -- brace that opens a C++ namespace block
+ namespace-close        -- brace that closes a C++ namespace block
+ innamespace            -- analogous to `inextern-lang' syntactic
+                           symbol, but used inside C++ namespace constructs
  template-args-cont     -- C++ template argument list continuations
 ")
 
