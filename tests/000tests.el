@@ -439,8 +439,6 @@ to be set as a file local variable.")
 	(setq moved-lines (count-lines (c-point 'bol last-pos)
 				       (c-point 'bol)))
 
-	(delete-region (match-beginning 2) (match-end 2))
-
 	(save-excursion
 	  (set-buffer testbuf)
 	  (if (> moved-lines 0)
@@ -450,7 +448,9 @@ to be set as a file local variable.")
 			     (goto-char anchor-pos)
 			     (current-column))))
 
+	(delete-region (match-beginning 2) (match-end 2))
 	(insert (format "<%d,%d>" anchor-rel-line anchor-col))
+
 	(setq last-pos (point))))))
 
 (defun cc-test-convert-to-abs-offsets (resbuf testbuf)
