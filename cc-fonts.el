@@ -1354,25 +1354,26 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	    ;; Check for a cast.
 	    ((save-excursion
 	       (and
-		c-opt-cast-close-paren-key
+		c-cast-parens
 
-		;; Should be the first type/identifier in a paren.
-		(memq arglist-match '(?\( ?\[))
+		;; Should be the first type/identifier in a cast paren.
+		(memq arglist-match c-cast-parens)
 
-		;; The closing paren should match `c-opt-cast-close-paren-key'.
+		;; The closing paren should follow.
 		(progn
 		  (c-forward-syntactic-ws)
-		  (looking-at c-opt-cast-close-paren-key))
+		  (looking-at "\\s\)"))
 
-		;; There should be a symbol or an expression open paren after
-		;; it.
+		;; There should be a symbol, an expression open paren
+		;; or another cast start after it.
 		(progn
 		  (forward-char)
 		  (c-forward-syntactic-ws)
 		  (setq cast-end (point))
 		  (or (and (looking-at c-identifier-start)
 			   (not (looking-at c-keywords-regexp)))
-		      (looking-at "[\(\[]")))
+		      (looking-at "\(")
+		      (memq (char-after) c-cast-parens)))
 
 		;; There should either be a cast before it or something that
 		;; isn't an identifier or close paren.

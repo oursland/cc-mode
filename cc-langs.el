@@ -131,7 +131,7 @@
     ;; for the language being initialized, and such calls will be
     ;; macro expanded to the evaluated constant value at compile time.
     ;;
-    ;; This function does not do any hidden buffer changes.
+    ;; This macro does not do any hidden buffer changes.
 
     (when (and (not doc)
 	       (eq (car-safe val) 'c-lang-const)
@@ -1713,16 +1713,14 @@ is in effect or not."
 (c-lang-defvar c-decl-prefix-re (c-lang-const c-decl-prefix-re)
   'dont-doc)
 
-(c-lang-defconst c-opt-cast-close-paren-key
-  "Regexp matching the close paren(s) of a cast, or nil in languages
-without casts.  Note that the corresponding open paren(s) should be
-matched by `c-decl-prefix-re'.  Identifier syntax is in effect when
-this is matched (see `c-identifier-syntax-table')."
+(c-lang-defconst c-cast-parens
+  "List containing the paren characters that can open a cast, or nil in
+languages without casts.  Identifier syntax is in effect when this is
+matched \(see `c-identifier-syntax-table')."
   t    nil
-  (c c++ objc java) "\)"
-  pike "[\]\)]")
-(c-lang-defvar c-opt-cast-close-paren-key
-  (c-lang-const c-opt-cast-close-paren-key)
+  (c c++ objc java) '(?\()
+  pike '(?\( ?\[))
+(c-lang-defvar c-cast-parens (c-lang-const c-cast-parens)
   'dont-doc)
 
 (c-lang-defconst c-type-decl-prefix-key
