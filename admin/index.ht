@@ -1,0 +1,17 @@
+Title: CC Mode
+Author: cc-mode-help@python.org
+Other-links:
+
+<h1>CC Mode Version 5</h1>
+
+The <a href="release.html">current release</a> is version 5.21.  A
+list of <a href="changes.html">recent changes</a> are given in detail, 
+as well as some <a href="installation.html">installation notes</a> and 
+Emacs/XEmacs <a href="compat.html">compatibility details</a>.
+
+<p>Martin Stjernholm now joins Barry Warsaw as members of the
+<a href="mailto:cc-mode-help@python.org">CC Mode maintainers
+team</a>.  Martin's already been doing lots of cool stuff to CC Mode,
+and will be doing a lot more in the 
+coming months, including adding
+<a href="http://pike.idonex.se/">Pike</a> support.
