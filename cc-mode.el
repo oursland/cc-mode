@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.272 $
-;; Last Modified:   $Date: 1994-02-28 18:23:36 $
+;; Version:         $Revision: 3.273 $
+;; Last Modified:   $Date: 1994-03-07 17:39:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-28 18:23:36 $|$Revision: 3.272 $|
+;; |$Date: 1994-03-07 17:39:45 $|$Revision: 3.273 $|
 
 ;;; Code:
 
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.272 $
+cc-mode Revision: $Revision: 3.273 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.272 $
+cc-mode Revision: $Revision: 3.273 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2270,6 +2270,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 ))
       t)))
 
+(defun c-skip-conditional ()
+  ;; skip forward over conditional at point, including any predicate
+  ;; statements in parentheses. No error checking is performed.
+  (forward-sexp
+   ;; else if()
+   (if (looking-at "\\<else\\>[ \t]+\\<if\\>")
+       3
+     ;; do and else aren't followed by parens
+     (if (looking-at "\\<\\(do\\|else\\)\\>")
+	 1 2))))
+
 (defun c-search-uplist-for-classkey (&optional search-end)
   ;; search upwards for a classkey, but only as far as we need to.
   ;; this should properly find the inner class in a nested class
@@ -2704,14 +2715,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ((save-excursion
 	      (goto-char placeholder)
 	      (and (looking-at c-conditional-key)
-		   (c-safe (progn (forward-sexp
-				   ;; else if()
-				   (if (looking-at "\\<else\\>[ \t]+\\<if\\>")
-				       3
-				     ;; do and else aren't followed by parens
-				     (if (looking-at "\\<\\(do\\|else\\)\\>")
-					 1 2)))
-				  t))
+		   (c-safe (progn (c-skip-conditional) t))
 		   (progn (c-forward-syntactic-ws)
 			  (>= (point) indent-point))))
 	    (goto-char placeholder)
@@ -2766,7 +2770,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     (save-excursion
 	       (goto-char placeholder)
 	       (and (looking-at c-conditional-key)
-		    (c-safe (progn (forward-sexp 2) t))
+		    (c-safe (progn (c-skip-conditional) t))
 		    (c-forward-syntactic-ws))
 	       (point)))
 	    (c-add-semantics 'statement-cont (point)))
@@ -3243,7 +3247,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.272 $"
+(defconst c-version "$Revision: 3.273 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
