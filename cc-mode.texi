@@ -1524,11 +1524,7 @@ among other things.
 
 Re-indenting large sections of code can take a long time.  When
 @ccmode{} reindents a region of code, it is essentially equivalent to
-hitting @kbd{TAB} on every line of the region.  Especially vulnerable is 
-code generator output@footnote{In particular, I have had people
-complain about the speed with which @code{lex(1)} output is re-indented.
-Lex, yacc, and other code generators usually output some pretty
-perversely formatted code.  Re-indenting such code will be slow.}.
+hitting @kbd{TAB} on every line of the region.
 
 These commands are useful when indenting code:
 
