@@ -1,39 +1,134 @@
-Title: CC Mode Changes 4.353 to 4.379
+Title: CC Mode Version 5
 Author: cc-mode-help@python.org
 
-<h1>CC Mode Changes 4.353 to 4.379</h1>
+<h1>CC Mode Version 5</h1>
 
-The <a href="index.html">current release</a> is version 4.379.  Below
-is the list of changes since version 4.353.  See also the list of
-<a href="cc-details-4.353.html">previous changes</a>.
+The <a href="index.html">current release</a> is version 5.11.  This is
+the first v5 release, and there have been some significant user
+visible changes since version 4.379, as outlined below.  For more
+details, see the <a href="cc-mode/ChangeLog.gz">ChangeLog</a> file.
+See also the list of <a href="cc-details-4.379.html">previous
+changes</a>.
 
-<ul>
-    <li>The syntactic symbol <tt>ansi-funcdecl-cont</tt> is
-	changed to <tt>func-decl-cont</tt>.  <b>You may need to update
-	your personal styles.</b>
-	
-    <li>Slight change to the relative buffer position for 'c
-	and 'c++ syntactic symbols.
+<h2>User Visible Changes</h2>
 
-    <li>In <tt>java-mode</tt>, <tt>defun-prompt-regexp</tt> is
-	no longer set to <tt>c-Java-defun-prompt-regexp</tt> by
-	default.  Doing so caused occasional infinite loop and
-	performance problems in both Emacs 19.34 and XEmacs 19.14.
+<ul><li>CC Mode 5 will not work with Emacs 18, and will only work with
+        the latest Emacs and XEmacs releases.  See the
+	<a href="#compat">compatibility notes</a> for details.
 
-    <li>Better recognition of Java <em>implements</em>,
-	<em>extends</em>, and <em>throws</em> clauses.
+    <p><li><code>c-mode-map</code> is no longer the base keymap for all
+	modes.  This was incompatible with the way Emacs 19 supports
+	menus, so now <code>c-mode-base-map</code> is the base map for
+	all modes (including <code>c-mode-map</code>).  If you are
+	installing custom keybindings into <code>c-mode-map</code> and
+	expecting them to be present in all other modes, this will
+	break.  Put your keybindings in <code>c-mode-base-map</code>
+	instead.
 
-    <li>New variable <tt>c-hanging-comment-starter-p</tt>.
+    <p><li>The function <code>c-electric-delete</code> and variable
+	<code>c-delete-function</code> are handled differently now, in
+	order to accomodate the separation of the
+	<code>BackSpace</code> and <code>Delete</code> keysyms.  CC
+	Mode now binds only the <code>Delete</code> keysym to
+	<code>c-electric-delete</code> (which runs
+	<code>c-delete-function</code>), and the
+	<code>BackSpace</code> keysym to
+	<code>c-electric-backspace</code> (which runs
+	<code>c-backspace-function</code>).  See the CC Mode manual
+	for details.
 
-    <li>Integration of <tt>java-mode</tt> and <tt>imenu</tt>.
+    <p><li>The single <code>cc-mode.el</code> file was simply too
+	unwieldy so I have split the file up.  See the
+	<code>MANIFEST</code> file for details.
 
-    <li><tt>c-set-style</tt> bound to <tt>C-c .</tt>
+    <p><li>Also, all user variables have been converted to Per
+	Abrahamsen's <dfn>Custom</dfn> library, and all support for
+	older Emacsen have been ripped out.  See the release notes
+	below for details of running CC Mode 5 in your version of
+	Emacs.
 
-    <li><tt>c-set-offset</tt> does completion on function
-	names.
+    <p><li>All style variables are now global by default.
+        Specifically, the default value for
+        <code>c-style-variables-are-local-p</code> is
+        <code>nil</code>.  The same rules apply as before, only
+        reversed: if you want the style variables to be buffer local,
+        you should set <code>c-style-variables-are-local-p</code> to
+        <code>t</code> before you load CC Mode.
 
-    <li>Changes to <em>ellemtel</em> style given by Colin
-	Rafferty &lt;craffert@spspme.ml.com&gt;
+    <p><li>The usual assortment of bug fixes, most notably for Java
+	support.
 
-    <li>The usual assortment of bug fixes.
-</ul>
+    </ul>
+
+<h2><a name="compat">Compatibility notes</a></h2>
+
+<h3>XEmacs</h3>
+
+    If you are using XEmacs 19.15 or XEmacs 20.2 or beyond, you should
+    be able to use this new version right out of the box.  This stuff
+    unpacks in it's own subdirectory now and contains a number of
+    files.  Just make sure this subdirectory is on your
+    <code>load-path</code> before the XEmacs distribution's lisp
+    directories.  Run <code>make</code> in this subdirectory to build
+    the <code>.elc</code> files.  That's it.  Everything should
+    autoload as appropriate.  To test, visit a C file and then type:<br>
+
+    <blockquote><pre>
+    M-x c-version RET
+    => Using CC Mode version 5.11
+    </pre></blockquote>
+
+    I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
+    earlier.  You might try pulling down the Custom library (see
+    below) and seeing if that gets you going.  I do not plan to
+    actively support any earlier XEmacs version.
+
+<h3>Emacs</h3>
+
+    First of all, forget Emacs 18.
+
+    <p> CC Mode 5 will not work with Emacs 19.34 out of the
+    box.  You are missing three things. I have been able to get CC
+    Mode 5 working with Emacs 19.34 by:
+
+    <ul><li>Downloading
+	    <a href="http://www.dina.kvl.dk/~abraham/custom/">
+	    Per's Custom library</a>, and installing it as described in its
+	    documentation.
+
+	<p><li>Adding the definition for
+	    <code>copy-tree</code> by putting this in your .emacs
+	    file:
+
+<blockquote><pre>
+(if (not (fboundp 'copy-tree))
+    (require 'cl))
+</pre></blockquote>
+
+	<p><li>Adding the definition of <code>functionp</code> by putting
+	    this in your .emacs file:
+	    
+<blockquote><pre>
+(defun my-functionp (obj)
+  "Returns t if OBJ is a function, nil otherwise."
+  (cond
+   ((symbolp obj) (fboundp obj))
+   ((subrp obj))
+   ((compiled-function-p obj))
+   ((consp obj)
+    (if (eq (car obj) 'lambda) (listp (car (cdr obj)))))
+   (t nil)))
+(if (not (fboundp 'functionp))
+    (defalias 'functionp 'my-functionp))
+</pre></blockquote>
+
+    </ul>
+
+    <p> After you do this, follow the directions for XEmacs above.
+
+    <p> I have no idea whether CC Mode 5 will work with Emacs versions
+    before 19.34.  You might try following the directions above, but I
+    do not plan to actively support any earlier Emacs version.  I have
+    tested CC Mode 5 with what may eventually be Emacs 19.35 (or Emacs
+    20.1, who knows?) and it works like a charm.  No, I have no idea
+    when that will be released, so don't ask!
