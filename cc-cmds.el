@@ -756,7 +756,8 @@ comment."
 ;; for proposed new variable comment-line-break-function
 (defun c-comment-line-break-function (&optional soft)
   ;; we currently don't do anything with soft line breaks
-  (let ((literal (c-in-literal)))
+  (let ((literal (c-in-literal))
+	at-comment-col)
     (cond
      ((eq literal 'string))
      ((or (not c-comment-continuation-stars)
@@ -765,6 +766,12 @@ comment."
      (t (let ((here (point))
 	      (leader c-comment-continuation-stars))
 	  (back-to-indentation)
+	  ;; comment could be hanging
+	  (if (not (c-in-literal))
+	      (progn
+		(forward-line 1)
+		(forward-comment -1)
+		(setq at-comment-col (= (current-column) comment-column))))
 	  ;; are we looking at a block or lines style comment?
 	  (if (and (looking-at (concat "\\(" c-comment-start-regexp
 				       "\\)[ \t]+"))
@@ -778,6 +785,8 @@ comment."
 	  ;; to avoid having an anchored comment that c-indent-line will
 	  ;; trip up on
 	  (insert " " leader)
+	  (if at-comment-col
+	      (indent-for-comment))
 	  (c-indent-line))))))
 
 ;; advice for indent-new-comment-line for older Emacsen
