@@ -205,6 +205,7 @@
     "macro-1.c"
     "member-1.cc"
     "member-2.cc"
+    "member-3.cc"
     "methods-1.java"
     "namespace-1.cc"
     "namespace-2.cc"
