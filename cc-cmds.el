@@ -2144,12 +2144,12 @@ Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
   ;; Do automatic filling if not inside a context where it should be
   ;; ignored.
   (let ((c-auto-fill-prefix
-	 ;; The decision of whether the line should be broken is
-	 ;; actually done in c-indent-new-comment-line, which
-	 ;; do-auto-fill calls to break lines.  We just set this
-	 ;; special variable so that we'll know where we're called
-	 ;; from there.  It's also used to detect whether fill-prefix
-	 ;; is user set or generated automatically by do-auto-fill.
+	 ;; The decision whether the line should be broken is actually
+	 ;; done in c-indent-new-comment-line, which do-auto-fill
+	 ;; calls to break lines.  We just set this special variable
+	 ;; so that we'll know when we're called from there.  It's
+	 ;; also used to detect whether fill-prefix is user set or
+	 ;; generated automatically by do-auto-fill.
 	 fill-prefix))
     (do-auto-fill)))
 
@@ -2224,9 +2224,13 @@ If a fill prefix is specified, it overrides all the above."
 		       (while (and (< (current-column) (cdr fill))
 				   (not (eolp)))
 			 (forward-char 1))
-		       (if (> (point) (if (eq c-lit-type 'c)
-					  (- (cdr c-lit-limits) 2)
-					(cdr c-lit-limits)))
+		       (if (and (> (c-point 'bol) (car c-lit-limits))
+				(> (point) (if (and (eq c-lit-type 'c)
+						    (save-excursion
+						      (forward-char -2)
+						      (looking-at "\\*/")))
+					       (- (cdr c-lit-limits) 2)
+					     (cdr c-lit-limits))))
 			   (progn
 			     ;; The skip takes us out of the comment;
 			     ;; insert the fill prefix at bol instead
