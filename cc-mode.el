@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.70 $
-;; Last Modified:   $Date: 1993-11-20 18:30:29 $
+;; Version:         $Revision: 3.71 $
+;; Last Modified:   $Date: 1993-11-20 18:55:38 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-20 18:30:29 $|$Revision: 3.70 $|
+;; |$Date: 1993-11-20 18:55:38 $|$Revision: 3.71 $|
 
 ;;; Code:
 
@@ -83,9 +83,9 @@ reported and the semantic symbol is ignored.")
 (defvar cc-echo-semantic-information-p nil
   "*If non-nil, semantic info is echoed when the line is indented.")
 (defvar cc-basic-offset 4
-  "*Amount of basic offset used by + and - symbols in `cc-offset-alist'.")
+  "*Amount of basic offset used by + and - symbols in `cc-offsets-alist'.")
 (defvar cc-offsets-alist
-  '((string                . +)
+  '((string                . -1000)
     (c                     . cc-lineup-C-comments)
     (defun-open            . 0)
     (defun-close           . 0)
@@ -234,7 +234,7 @@ This variable contains an association list with elements of the
 following form: (LANGSYM . (NL-LIST)).
 
 LANGSYSM can be any of: defun-open, class-open, inline-open, and
-block-open (as defined by the `cc-offset-alist' variable).
+block-open (as defined by the `cc-offsets-alist' variable).
 
 NL-LIST can contain any combination of the symbols `before' or
 `after'. It also be nil.  When an open brace is inserted, the language
@@ -249,7 +249,7 @@ This variable contains an association list with elements of the
 following form: (LANGSYM . (NL-LIST)).
 
 LANGSYSM can be any of: member-init-intro, inher-intro, case-label,
-label, and access-label (as defined by the `cc-offset-alist' variable).
+label, and access-label (as defined by the `cc-offsets-alist' variable).
 
 NL-LIST can contain any combination of the symbols `before' or
 `after'. It also be nil.  When a colon is inserted, the language
@@ -488,7 +488,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.70 $
+  "Major mode for editing C++ code.  $Revision: 3.71 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -518,7 +518,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.70 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.71 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2316,7 +2316,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.70 $"
+(defconst cc-version "$Revision: 3.71 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
