@@ -173,6 +173,7 @@
     "bos-3.cc"
     "bracelist-1.java"
     "bracelist-2.pike"
+    "bracelist-3.cc"
     "class-1.cc"
     "class-2.cc"
     "class-3.cc"
@@ -356,6 +357,7 @@
       (if error-found-p
 	  (progn
 	    (pop-to-buffer testbuf)
+	    (message "Indentation regression found in file: %s!" filename)
 	    (error "Indentation regression found in file: %s!" filename))))
     (setq finished-tests (cons filename finished-tests))
 ;    (message "Testing %s... done." filename)
@@ -368,20 +370,23 @@
       (setq finished-tests nil))
   ;; TBD: HACK HACK HACK
   (let ((old-c-echo-parsing-error (symbol-function 'c-echo-parsing-error))
-	(total-errors 0))
+	broken-files)
     (fset 'c-echo-parsing-error 'shutup-parsing-error)
     (unwind-protect
 	(mapcar (function (lambda (test)
 			    (condition-case nil
 				(do-one-test test)
 			      (error
-			       (setq total-errors (1+ total-errors)))
+			       (setq broken-files (cons test broken-files)))
 			      )))
 		list-of-tests)
       (fset 'c-echo-parsing-error old-c-echo-parsing-error))
-    (if (zerop total-errors)
+    (if (zerop (length broken-files))
 	(message "All tests passed!")
-      (message "Broken files encountered: %d" total-errors)))
+      (message "Broken files encountered: %d" (length broken-files))
+      (mapcar (function (lambda (file)
+			  (message "    %s" file)))
+	      broken-files)))
   (setq finished-tests nil))
 
 (defun resfile ()
