@@ -32,6 +32,7 @@
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 ;; NOTE: See the accompanying texinfo manual for details on using this mode!
+;; Note: The version string is in cc-defs.
 
 ;; This package provides GNU Emacs major modes for editing C, C++,
 ;; Objective-C, Java, IDL and Pike code.  As of the latest Emacs and
@@ -416,9 +417,6 @@ same format as `c-default-style'."
   (make-local-variable 'comment-indent-function)
   (setq comment-indent-function 'c-comment-indent)
 
-  ;; add menus to menubar
-  (easy-menu-add (c-mode-menu mode-name))
-
   ;; put auto-hungry designators onto minor-mode-alist, but only once
   (or (assq 'c-auto-hungry-string minor-mode-alist)
       (setq minor-mode-alist
@@ -525,7 +523,7 @@ Note that the style variables are always made local to the buffer."
 (add-to-list 'auto-mode-alist '("\\.[ch]\\'" . c-mode))
 ;; NB: The following two associate yacc and lex files to C Mode, which
 ;; is not really suitable for those formats.  Anyway, afaik there's
-;; currently no better mode for them, and besides it's legacy.
+;; currently no better mode for them, and besides this is legacy.
 ;;;###autoload
 (add-to-list 'auto-mode-alist '("\\.y\\'" . c-mode))
 ;;;###autoload
@@ -541,9 +539,8 @@ problem, including a reproducible test case and send the message.
 
 To see what version of CC Mode you are running, enter `\\[c-version]'.
 
-The hook variable `c-mode-hook' is run with no args, if that value is
-bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
-run first.
+The hook `c-mode-common-hook' is run with no args at mode
+initialization, then `c-mode-hook'.
 
 Key bindings:
 \\{c-mode-map}"
@@ -557,6 +554,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map c-mode-map)
   (c-common-init 'c-mode)
+  (easy-menu-add c-c-menu)
   (cc-imenu-init cc-imenu-c-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook)
@@ -605,9 +603,8 @@ message.
 
 To see what version of CC Mode you are running, enter `\\[c-version]'.
 
-The hook variable `c++-mode-hook' is run with no args, if that
-variable is bound and has a non-nil value.  Also the hook
-`c-mode-common-hook' is run first.
+The hook `c-mode-common-hook' is run with no args at mode
+initialization, then `c++-mode-hook'.
 
 Key bindings:
 \\{c++-mode-map}"
@@ -621,6 +618,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map c++-mode-map)
   (c-common-init 'c++-mode)
+  (easy-menu-add c-c++-menu)
   (cc-imenu-init cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook)
@@ -661,9 +659,8 @@ message.
 
 To see what version of CC Mode you are running, enter `\\[c-version]'.
 
-The hook variable `objc-mode-hook' is run with no args, if that value
-is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
-is run first.
+The hook `c-mode-common-hook' is run with no args at mode
+initialization, then `objc-mode-hook'.
 
 Key bindings:
 \\{objc-mode-map}"
@@ -677,6 +674,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map objc-mode-map)
   (c-common-init 'objc-mode)
+  (easy-menu-add c-objc-menu)
   (cc-imenu-init cc-imenu-objc-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'objc-mode-hook)
@@ -726,11 +724,8 @@ message.
 
 To see what version of CC Mode you are running, enter `\\[c-version]'.
 
-The hook variable `java-mode-hook' is run with no args, if that value
-is bound and has a non-nil value.  Also the common hook
-`c-mode-common-hook' is run first.  Note that this mode automatically
-sets the \"java\" style before calling any hooks so be careful if you
-set styles in `c-mode-common-hook'.
+The hook `c-mode-common-hook' is run with no args at mode
+initialization, then `java-mode-hook'.
 
 Key bindings:
 \\{java-mode-map}"
@@ -744,6 +739,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map java-mode-map)
   (c-common-init 'java-mode)
+  (easy-menu-add c-java-menu)
   (cc-imenu-init cc-imenu-java-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'java-mode-hook)
@@ -782,9 +778,8 @@ message.
 
 To see what version of CC Mode you are running, enter `\\[c-version]'.
 
-The hook variable `idl-mode-hook' is run with no args, if that
-variable is bound and has a non-nil value.  Also the hook
-`c-mode-common-hook' is run first.
+The hook `c-mode-common-hook' is run with no args at mode
+initialization, then `idl-mode-hook'.
 
 Key bindings:
 \\{idl-mode-map}"
@@ -797,6 +792,7 @@ Key bindings:
 	local-abbrev-table idl-mode-abbrev-table)
   (use-local-map idl-mode-map)
   (c-common-init 'idl-mode)
+  (easy-menu-add c-idl-menu)
   ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;TODO
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'idl-mode-hook)
@@ -838,9 +834,8 @@ message.
 
 To see what version of CC Mode you are running, enter `\\[c-version]'.
 
-The hook variable `pike-mode-hook' is run with no args, if that value
-is bound and has a non-nil value.  Also the common hook
-`c-mode-common-hook' is run first.
+The hook `c-mode-common-hook' is run with no args at mode
+initialization, then `pike-mode-hook'.
 
 Key bindings:
 \\{pike-mode-map}"
@@ -854,6 +849,7 @@ Key bindings:
 	abbrev-mode t)
   (use-local-map pike-mode-map)
   (c-common-init 'pike-mode)
+  (easy-menu-add c-pike-menu)
   ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;TODO
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'pike-mode-hook)
