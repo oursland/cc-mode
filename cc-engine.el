@@ -1188,7 +1188,8 @@ brace."
   ;; return the buffer position of the beginning of the brace list
   ;; statement if we're inside a brace list, otherwise return nil.
   ;; CONTAINING-SEXP is the buffer pos of the innermost containing
-  ;; paren. BRACE-STATE is the remainder of the state of enclosing braces
+  ;; paren.  BRACE-STATE is the remainder of the state of enclosing
+  ;; braces
   ;;
   ;; N.B.: This algorithm can potentially get confused by cpp macros
   ;; places in inconvenient locations.  Its a trade-off we make for
@@ -1618,8 +1619,10 @@ brace."
 				'inline-open
 			      'lambda-intro-cont)))
 	  (goto-char (cdr placeholder))
-	  (c-add-syntax tmpsymbol (c-point 'boi))
-	  (c-add-syntax (car placeholder)))
+	  (back-to-indentation)
+	  (c-add-syntax tmpsymbol (point))
+	  (unless (eq (point) (cdr placeholder))
+	    (c-add-syntax (car placeholder))))
 	 ;; CASE 5: Line is at top level.
 	 ((null containing-sexp)
 	  (cond
@@ -2402,8 +2405,10 @@ brace."
 	      (if (= containing-sexp (point))
 		  (c-add-syntax tmpsymbol (point))
 		(goto-char (cdr placeholder))
-		(c-add-syntax tmpsymbol (c-point 'boi))
-		(c-add-syntax (car placeholder))))
+		(back-to-indentation)
+		(c-add-syntax tmpsymbol (point))
+		(if (/= (point) (cdr placeholder))
+		    (c-add-syntax (car placeholder)))))
 	     ;; CASE 16B: does this close an inline or a function in
 	     ;; an extern block or namespace?
 	     ((progn
@@ -2536,8 +2541,10 @@ brace."
 	      (if (= containing-sexp (point))
 		  (c-add-syntax block-intro (point))
 		(goto-char (cdr placeholder))
-		(c-add-syntax block-intro (c-point 'boi))
-		(c-add-syntax (car placeholder))))
+		(back-to-indentation)
+		(c-add-syntax block-intro (point))
+		(if (/= (point) (cdr placeholder))
+		    (c-add-syntax (car placeholder)))))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ;; CASE 17F: first statement in an inline, or first
