@@ -3,10 +3,8 @@ Author: cc-mode-help@python.org
 
 <h1>CC Mode Version 5</h1>
 
-The <a href="index.html">current release</a> is version 5.12.  This is
-essentially a bug fix release.  There were significant changes between
-version 4.379 and 5.11, as detailed below.  Here are the
-<a href="cc-details-5.11.html">release notes for version 5.11</a>.
+The <a href="index.html">current release</a> is version 5.13.  This is
+essentially a bug fix release.
 
 <h2>User visible changes between CC Mode 4 and CC Mode 5</h2>
     
@@ -74,20 +72,20 @@ version 4.379 and 5.11, as detailed below.  Here are the
 
     <blockquote><pre>
     % cd /path/to/cc-mode
-    % xemacs -batch -no-site-file -q -f batch-byte-compile cc-*.el
+    % xemacs -batch -no-site-file -q -l cc-make.el cc-*.el
     </pre></blockquote>
 
     To test, visit a C file and then type:<br>
 
     <blockquote><pre>
     M-x c-version RET
-    => Using CC Mode version 5.12
+    => Using CC Mode version 5.13
     </pre></blockquote>
 
     I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
-    earlier.  You might try pulling down the Custom library (see
-    below) and seeing if that gets you going.  I do not plan to
-    actively support any earlier XEmacs version.
+    earlier.  You might try following the directions for Emacs 19.34
+    below.  I do not plan to actively support any earlier XEmacs
+    version.
 
 <h3>Emacs</h3>
 
@@ -99,9 +97,9 @@ version 4.379 and 5.11, as detailed below.  Here are the
     install <a href="http://www.dina.kvl.dk/~abraham/custom/">
     Per's Custom library</a>.
 
-    <p> After you do this, follow the directions for XEmacs above.  Of
-    course, when you byte compile the directory, use
-    <code>emacs</code> instead of <code>xemacs</code>!
+    <p> After you do this, read the <code><a href="cc-mode/README">
+    README</a></code> file that comes with the CC Mode distribution
+    for mor details.
 
     <p> I have no idea whether CC Mode 5 will work with Emacs versions
     before 19.34.  You might try following the directions above, but I
