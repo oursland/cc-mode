@@ -1,5 +1,6 @@
 int main() {
     t1 id;
+    t2 id = 1;
 
     t1 (id) = 1;
     t1 (*id) = NULL;
@@ -39,6 +40,7 @@ int main() {
     v8 [n] = 1;
 
     t8 * id;
+    t9 * id = 1;
     v14 *;
     (v15 * id);
     x (a*b, c*d);

@@ -1,5 +1,6 @@
 (0 typ) (3 reg) (4 fun) (8 reg)
 (4 typ) (6 reg) (7 var) (9 reg)
+(4 typ) (6 reg) (7 var) (9 reg)
 
 (4 typ) (6 reg) (8 var) (10 reg)
 (4 typ) (6 reg) (9 var) (11 reg) (15 con) (19 reg)
@@ -38,6 +39,7 @@
 
 
 
+(4 typ) (6 reg) (9 var) (11 reg)
 (4 typ) (6 reg) (9 var) (11 reg)
 
 
