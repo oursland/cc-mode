@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.340 $
-;; Last Modified:   $Date: 1994-05-17 22:46:22 $
+;; Version:         $Revision: 3.341 $
+;; Last Modified:   $Date: 1994-05-17 23:02:21 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-17 22:46:22 $|$Revision: 3.340 $|
+;; |$Date: 1994-05-17 23:02:21 $|$Revision: 3.341 $|
 
 ;;; Code:
 
@@ -809,7 +809,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.340 $
+cc-mode Revision: $Revision: 3.341 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -842,7 +842,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.340 $
+cc-mode Revision: $Revision: 3.341 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1848,7 +1848,7 @@ search."
 	  (setq last-begin (point)
 		donep t))
 	 ;; CASE 5: have we crossed a statement barrier?
-	 ((let (crossedp (here (point)))
+	 ((let (crossedp)
 	    (save-excursion
 	      (while (and (not crossedp)
 			  (< (point) last-begin))
@@ -3547,7 +3547,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.340 $"
+(defconst c-version "$Revision: 3.341 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
