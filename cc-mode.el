@@ -380,7 +380,6 @@ Key bindings:
 
 ;; Get reporter-submit-bug-report when byte-compiling
 (eval-when-compile
-  (require 'cc-vars)
   (require 'reporter))
 
 (defun c-submit-bug-report ()
