@@ -121,6 +121,7 @@
 	(statement-case-open   . 0)
 	(substatement          . +)
 	(substatement-open     . +)
+	(substatement-label    . *)
 	(case-label            . 0)
 	(access-label          . -)
 	(label                 . *)
