@@ -14,6 +14,7 @@ ELISPFILES=\
  cc-menus.el \
  cc-mode.el \
  cc-styles.el \
+ cc-subword.el \
  cc-vars.el
 
 COREFILES=\
