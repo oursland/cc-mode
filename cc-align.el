@@ -707,11 +707,14 @@ arglist-cont-nonempty."
   (save-excursion
     (back-to-indentation)
     (and (looking-at "\\s\"")
-	 (let ((quote (char-after)))
-	   (c-backward-syntactic-ws)
-	   (eq (char-before) quote))
-	 (c-safe (c-backward-sexp) t)
-	 (vector (current-column)))))
+	 (let ((quote (char-after)) pos)
+	   (while (and (progn (c-backward-syntactic-ws)
+			      (eq (char-before) quote))
+		       (c-safe (c-backward-sexp) t)
+		       (/= (setq pos (point)) (c-point 'boi))))
+	   (when pos
+	     (goto-char pos)
+	     (vector (current-column)))))))
 
 (defun c-lineup-template-args (langelem)
   "Line up template argument lines under the first argument.
