@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.23 $
-;; Last Modified:   $Date: 1994-06-29 00:41:52 $
+;; Version:         $Revision: 4.24 $
+;; Last Modified:   $Date: 1994-06-29 00:48:56 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-29 00:41:52 $|$Revision: 4.23 $|
+;; |$Date: 1994-06-29 00:48:56 $|$Revision: 4.24 $|
 
 ;;; Code:
 
@@ -895,7 +895,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.23 $
+cc-mode Revision: $Revision: 4.24 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -928,7 +928,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.23 $
+cc-mode Revision: $Revision: 4.24 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -961,7 +961,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.23 $
+cc-mode Revision: $Revision: 4.24 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -3141,7 +3141,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(c-add-syntax 'statement (point))
 	      (c-add-syntax 'statement-cont (point))
 	      ))
-	   ;; CASE 6D: we are looking at an arglist continuation line,
+	   ;; CASE 6D: maybe a continued method call
+	   ((and (eq major-mode 'objc-mode)
+		 (save-excursion
+		   (goto-char (1- containing-sexp))
+		   (c-backward-syntactic-ws (c-point 'bod))
+		   (if (not (looking-at c-symbol-key))
+		       (c-add-syntax 'objc-method-call-cont containing-sexp))
+		   )))
+	   ;; CASE 6E: we are looking at an arglist continuation line,
 	   ;; but the preceding argument is on the same line as the
 	   ;; opening paren.  This case includes multi-line
 	   ;; mathematical paren groupings, but we could be on a
@@ -3156,14 +3164,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		   (<= (point) containing-sexp)))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-cont-nonempty (c-point 'boi)))
-	   ;; CASE 6E: maybe a continued method call
-	   ((and (eq major-mode 'objc-mode)
-		 (save-excursion
-		   (goto-char (1- containing-sexp))
-		   (c-backward-syntactic-ws (c-point 'bod))
-		   (if (not (looking-at c-symbol-key))
-		       (c-add-syntax 'objc-method-call-cont containing-sexp))
-		   )))
 	   ;; CASE 6F: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (c-beginning-of-statement 1 containing-sexp)
@@ -3824,7 +3824,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.23 $"
+(defconst c-version "$Revision: 4.24 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
