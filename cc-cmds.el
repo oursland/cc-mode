@@ -217,7 +217,7 @@ With universal argument, inserts the analysis as a comment on that line."
 		     (c-guess-basic-syntax)))))
     (if (not (consp arg))
 	(let (elem pos ol ols)
-	  (message "syntactic analysis: %s" syntax)
+	  (message "Syntactic analysis: %s" syntax)
 	  (unwind-protect
 	      (progn
 		(while syntax
