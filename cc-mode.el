@@ -420,7 +420,7 @@ Key bindings:
 	  (format "c-emacs-features: %s\n" c-features)
 	  )))
       nil
-      "Dear Barry,"
+      "Dear Barry and Martin,"
       ))))
 
 
