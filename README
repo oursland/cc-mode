@@ -1,6 +1,6 @@
 README for cc-mode.el 3.229
 Barry A. Warsaw
-$Date: 1994-03-14 15:18:08 $
+$Date: 1994-03-30 19:31:08 $
 
 
 Introduction
@@ -397,7 +397,8 @@ Frequently Asked Questions
        should go after inserting the newline?
     A. Emacs' convention is that RET just add a new line, and that LFD
        adds a newline and indents.  You can make RET do this too by
-       adding this to your .emacs file:
+       adding this to your c-mode-common-hook (see the sample .emacs
+       file below):
 
        (define-key c-mode-map "\C-m" 'newline-and-indent)
 
