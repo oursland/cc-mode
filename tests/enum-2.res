@@ -11,6 +11,6 @@
 ((knr-argdecl-intro . 100))
 ((knr-argdecl . 155))
 ((knr-argdecl . 155))
-((defun-open . 185))
+((defun-open . 100))
 ((defun-block-intro . 205))
 ((defun-close . 205))

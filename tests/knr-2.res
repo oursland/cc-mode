@@ -6,5 +6,5 @@
 ((knr-argdecl-intro . 2))
 ((knr-argdecl . 127))
 ((knr-argdecl . 127))
-((defun-open . 177))
+((defun-open . 2))
 ((defun-close . 198))
