@@ -74,11 +74,17 @@
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
 
-;; Some functions in cc-awk.el that are called here.  (Can't use
-;; cc-require due to cyclicity.)
+;; Some functions/constants in cc-awk.el that are called/referenced here.
+;; (Can't use cc-require due to cyclicity.)
 (cc-bytecomp-defun c-awk-unstick-NL-prop)
 (cc-bytecomp-defun c-awk-clear-NL-props)
 (cc-bytecomp-defvar awk-mode-syntax-table)
+(cc-bytecomp-defun c-awk-backward-syntactic-ws)
+(cc-bytecomp-defun c-awk-after-logical-semicolon)
+(cc-bytecomp-defun c-awk-NL-prop-not-set)
+(cc-bytecomp-defun c-awk-completed-stmt-ws-ends-line-p)
+(cc-bytecomp-defun c-awk-completed-stmt-ws-ends-prev-line-p)
+(cc-bytecomp-defun c-awk-prev-line-incomplete-p)
 
 ;; Silence the compiler.
 (cc-bytecomp-defun buffer-syntactic-context) ; XEmacs
