@@ -2560,37 +2560,31 @@ with a @code{c-basic-offset} of 2, you can see that lines 4 through 6
 are simply indented two spaces to the right of line 3.  But perhaps we'd
 like @ccmode{} to be a little more intelligent so that it aligns
 all the @samp{<<} symbols in lines 3 through 6.  To do this, we have
-to write a custom indentation function which finds the column of first
+to write a custom indentation function which finds the column of the first
 stream operator on the first line of the statement.  Here is sample 
 lisp code implementing this:
 @example
 @group
 
 (defun c-lineup-streamop (langelem)
-  ;; lineup stream operators
   (save-excursion
-    (let* ((relpos (cdr langelem))
-           (curcol (progn (goto-char relpos)
-                          (current-column))))
-      (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
-      (goto-char (match-beginning 0))
-      (- (current-column) curcol))))
+    (goto-char (cdr langelem))
+    (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
+    (goto-char (match-beginning 0))
+    (vector (current-column))))
 
 @end group
 @end example
 @noindent
 Indentation functions take a single argument, which is a syntactic
-component cons cell (@pxref{Syntactic Analysis}).  The function returns
-an integer offset value that will be added to the running total
-indentation for the line.  Note that what actually gets returned is the
-difference between the column that the first stream operator is on, and
-the column of the buffer relative position passed in the function's
-argument.  Remember that @ccmode{} automatically adds in the column of
-the component's relative buffer position and we don't the column offset
-added in twice.
+component cons cell (@pxref{Syntactic Analysis}).  The function can
+return an integer which is added to the running total indentation for
+the line, or a vector containing an integer which is an absolute
+column to align to.  Usually an absolute column is wanted when
+aligning to existing text, as in this example.
 
 The function should return @code{nil} if it's used in a situation where
-it doesn't want to do any decision.  If the function is used in a list
+it doesn't want to make any decision.  If the function is used in a list
 expression (@pxref{Customizing Indentation}), that will cause @ccmode{}
 to go on and check the next entry in the list.
 
@@ -3854,7 +3848,7 @@ Line up a continued argument.  E.g:
 @group
 
 foo (xyz, aaa + bbb + ccc
-	  + ddd + eee + fff); // c-lineup-argcont
+          + ddd + eee + fff); // c-lineup-argcont
 
 @end group
 @end example
