@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.116 $
-;; Last Modified:   $Date: 1994-12-13 23:33:35 $
+;; Version:         $Revision: 4.117 $
+;; Last Modified:   $Date: 1994-12-13 23:58:48 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-13 23:33:35 $|$Revision: 4.116 $|
+;; |$Date: 1994-12-13 23:58:48 $|$Revision: 4.117 $|
 
 ;;; Code:
 
@@ -2192,7 +2192,9 @@ search."
 			 (foundp (progn
 				   (c-backward-syntactic-ws lim)
 				   (forward-word -1)
-				   (and (not (c-in-literal lim))
+				   (and lim
+					(<= lim (point))
+					(not (c-in-literal lim))
 					(looking-at c-conditional-key)))))
 		     ;; did we find a conditional?
 		     (if (not foundp)
@@ -4311,7 +4313,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.116 $"
+(defconst c-version "$Revision: 4.117 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
