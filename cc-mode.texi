@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.19 $
+@comment manual version: $Revision: 2.20 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-04-21 21:36:53 $
+@comment Last modification: $Date: 1995-05-01 16:34:42 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.19 $)
+@center (manual revision: $Revision: 2.20 $)
 @sp 2
 @center Barry A. Warsaw
 @center @code{bwarsaw@@cnri.reston.va.us}
@@ -150,13 +150,12 @@ provided.  This file is intended to be a replacement for
 them and dump Emacs with @file{cc-mode.el} instead. @xref{Dumping
 cc-mode 4} for details on how to do this.
 
-@kindex C-c C-v
 @findex c-version
 The major version number was incremented to 4 with the addition of
 @code{objc-mode}. To find the minor revision number of this release, use
-@kbd{C-c C-v} (@code{c-version}).  This release will be the last for
-major release version 4, and work has already begun on version 5, which
-will not support use of Emacs 18.
+@kbd{M-x c-version RET}.  This release will be the last for major
+release version 4, and work has already begun on version 5, which will
+not support use of Emacs 18.
 
 XEmacs 19.11 (formerly Lucid Emacs) is distributed with
 @file{cc-mode.el} 4.85 dumped in the executable.  It has completely
@@ -329,12 +328,12 @@ and @code{.c} files as C, @code{.hh}, @code{.cc}, @code{.H}, and
 You may already have some or all of these settings on your
 @code{auto-mode-alist}, but it won't hurt to put them on there again.
 
-@kindex C-c C-v
 That's all you need -- I know, I know, it sounds like a lot @code{:-)},
 but after you've done all this, you should only need to quit and restart
 Emacs.  The next time you visit a C, C++, or Objective-C file you should
-be using @code{cc-mode}.  You can check this easily by hitting @kbd{C-c
-C-v} in the @code{c-mode}, @code{c++-mode}, or @code{objc-mode} buffer.
+be using @code{cc-mode}.  You can check this easily by hitting
+@kbd{M-x c-version RET}
+in the @code{c-mode}, @code{c++-mode}, or @code{objc-mode} buffer.
 You should see this message in the echo area:
 @example
 
@@ -648,7 +647,57 @@ the minibuffer when you hit @kbd{TAB}.
 @cindex   Minor Modes
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD> talk about auto-newline and hungry-delete}
+@code{cc-mode} contains two minor-mode-like features that you should
+find useful while you enter new C code.  The first is called
+@dfn{auto-newline} mode, and he second is called @dfn{hungry-delete}
+mode.  These minor modes can be toggled on and off independently, and
+@code{cc-mode} can be configured so that it comes up with any
+combination of these minor modes.  By default, both of these minor modes
+are turned off.
+
+The state of the minor modes is always reflected in the minor mode list
+on the modeline of the @code{cc-mode} buffer.  When auto-newline mode is
+enabled, you will see this string on the mode line
+@footnote{Remember that the @samp{C} would be replaced with
+@samp{C++} or @samp{ObjC} if you were editing C++ or Objective-C code}:
+@samp{C/a}.  When hungry delete mode is enabled you would see @samp{C/h}
+and when mode modes are enabled, you'd see @samp{C/ah}.
+
+@kindex C-c C-a
+@kindex C-c C-d
+@kindex C-c C-t
+@findex c-toggle-hungry-state
+@findex c-toggle-auto-state
+@findex c-toggle-auto-hungry-state
+@findex toggle-hungry-state (c-)
+@findex toggle-auto-state (c-)
+@findex toggle-auto-hungry-state (c-)
+@code{cc-mode} provides keybindings which allow you to toggle the minor
+modes while editing code on the fly.  To toggle just the auto-newline
+state, hit @kbd{C-c C-a} (@code{c-toggle-auto-state}).  When you do
+this, you should see the @samp{a} indicator either appear or disappear
+on the modeline.  Similarly, to toggle just the hungry-delete state, use
+@kbd{C-c C-d} (@code{c-toggle-hungry-state}), and to toggle both states
+together, use @kbd{C-c C-t} (@code{c-toggle-auto-hungry-state}).
+
+To set up the auto-newline and hungry-delete states to your preferred
+values, you would need to add some lisp to your @file{.emacs} file that
+called one of the @code{c-toggle-*-state} functions directly.  When
+called programmatically, each function takes a numeric value, where
+a positive number enables the minor mode, a negative number disables the
+mode, and zero toggles the current state of the mode.
+
+So for example, if you wanted to enable both auto-newline and
+hungry-delete for all your C file editing, you could add the following
+to your @file{.emacs} file:
+@example
+
+(add-hook 'c-mode-common-hook '(lambda () (c-toggle-auto-hungry-state 1)))
+
+@end example
+
+
+@cindex electric characters
 
 @menu
 * Auto-newline insertion::
@@ -663,12 +712,43 @@ the minibuffer when you hit @kbd{TAB}.
 @cindex   Auto-newline insertion
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD>}
+@cindex electric commands
+Auto-newline minor mode works by enabling certain @dfn{electric
+commands}.  Electric commands are typically bound to special characters
+such as the left and right braces, colons, semi-colons, etc., which when
+typed, perform some magic formatting in addition to inserting the typed
+character.  As a general rule, electric commands are only electric when
+the following conditions apply:
+
+@itemize @bullet
+@item
+Auto-newline minor mode is enabled, as evidenced by a @samp{C/a} or
+@samp{C/ah} indicator on the modeline.
+
+@cindex literal
+@item
+The character was not typed inside of a literal, defined as any comment,
+string, or cpp macro definition.
+
+@item
+@kindex C-u
+No numeric argument was supplied to the command (i.e. it was typed as
+normal, with no @kbd{C-u} prefix).
+
+@end itemize
+
+Certain other conditions may apply on a language specific basis.  For
+example, the second slash (@kbd{/}) of a C++ style line comment is
+electric in @code{c++-mode} and @code{objc-mode}, but not in
+@code{c-mode}.
+
 
 @menu
 * Hanging Braces::
 * Hanging Colons::
 * Hanging Semi-colons and commas::
+* Other electric commands::
+* Clean-ups::
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -679,7 +759,103 @@ the minibuffer when you hit @kbd{TAB}.
 @cindex   Hanging Braces
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD>}
+@findex c-electric-brace
+@findex electric-brace (c-)
+@vindex c-hanging-braces-alist
+@vindex hanging-braces-alist (c-)
+@vindex c-offsets-alist
+@vindex offsets-alist (c-)
+When you type either an open or close brace (i.e. @kbd{@{} or @kbd{@}}),
+the electric command @code{c-electric-brace} gets run.  This command has
+two electric formatting behaviors.  First, it will perform some
+re-indentation of the line the brace was typed on, and second, it will
+add various newlines before and/or after the typed brace.
+Re-indentation occurs automatically whenever the electric behavior is
+enabled (see @ref{Auto-newline insertion}).  Here, the line the brace
+was typed on is indented according to @code{c-offsets-alist} (@ref{New
+Indentation Engine}).  If the brace ends up on a line other than the one
+it was typed on, perhaps because a newline was inserted before the
+brace, then the line the brace is on is also indented according to
+@code{c-offsets-alist}.
+
+@cindex class-open syntactic symbol
+@cindex class-close syntactic symbol
+@cindex defun-open syntactic symbol
+@cindex defun-close syntactic symbol
+@cindex inline-open syntactic symbol
+@cindex inline-close syntactic symbol
+@cindex brace-list-open syntactic symbol
+@cindex brace-list-close syntactic symbol
+@cindex brace-list-intro syntactic symbol
+@cindex brace-list-entry syntactic symbol
+@cindex block-open syntactic symbol
+@cindex block-close syntactic symbol
+@cindex substatement-open syntactic symbol
+@cindex statement-case-open syntactic symbol
+
+The insertion of newlines is controlled by the
+@code{c-hanging-braces-alist} variable.  This variable contains a
+mapping between syntactic symbols related to braces, and a list of
+places to insert a newline.  The syntactic symbols that are useful for
+this list are: @code{class-open}, @code{class-close}, @code{defun-open},
+@code{defun-close}, @code{inline-open}, @code{inline-close},
+@code{brace-list-open}, @code{brace-list-close},
+@code{brace-list-intro}, @code{brace-list-entry}, @code{block-open},
+@code{block-close}, @code{substatement-open}, and
+@code{statement-case-open}.  @xref{Syntactic Symbols} for a more
+detailed description of these syntactic symbols.j
+
+@cindex custom indentation function
+The value associated with each syntactic symbol in this association list
+is called an @var{ACTION}.  An @var{ACTION} can be either a function
+symbol or a list.  When @var{ACTION} is a function symbol, this is
+called a @dfn{custom indentation function}.  @xref{Custom Brace and
+Colon Hanging} for a more detailed discussion of custom indentation
+functions.
+
+When @var{ACTION} is a list, it can contain any combination of the
+symbols @code{before} or @code{after}, which indicate to @code{cc-mode}
+where to put newlines in relationship to the brace being inserted.
+Thus, if the list contains only the symbol @code{after}, then the brace
+is said to @dfn{hang} on the right side of the line, as in:
+@example
+@group
+
+// here, open braces always `hang'
+void spam( int i ) @{
+    if( i == 7 ) @{
+        dosomething(i);
+    @}
+@}
+
+
+@end group
+@end example
+
+When the list contains both @code{after} and @code{before}, the braces
+will appear on a line by themselves, as shown by the close braces in the
+above example.  The list can also be empty, in which case no newlines
+are added either before or after the brace.
+
+For example, the default value of @code{c-hanging-braces-alist} is:
+@example
+@group
+
+(defvar c-hanging-braces-alist '((brace-list-open)
+				 (substatement-open after)
+				 (block-close . c-snug-do-while)))
+
+@end group
+@end example
+
+@noindent
+which says that @code{brace-list-open} braces should both hang on the
+right side, and allow subsequent text to follow on the same line as the
+brace.  Also, @code{substatement-open} braces should hang on the right
+side, but subsequent text should follow on the next line.  Note that the
+semantics of the @code{block-close} entry is explained in @ref{Custom
+Brace and Colon Hanging}.
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Hanging Colons, Hanging Semi-colons and commas, Hanging Braces, Auto-newline insertion
@@ -689,17 +865,106 @@ the minibuffer when you hit @kbd{TAB}.
 @cindex   Hanging Colons
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD>}
+@vindex hanging-colons-alist (c-)
+@vindex c-hanging-colons-alist
+Using a mechanism similar to brace hanging (see @ref{Hanging Braces}),
+colons can also be made to hang using the variable
+@code{c-hanging-colons-alist}.  The syntactic symbols appropriate for
+this assocation list are: @code{case-label}, @code{label}, and
+@code{access-label}.  @xref{Hanging Braces} and @ref{Custom Brace and
+Colon Hanging} for details.  Note however, that
+@code{c-hanging-colons-alist} does not implement @var{ACTION}'s that are
+function symbols.
+
+@cindex clean-ups
+In C++, double-colons are used as a scope operator but because these
+colons always appear right next to each other, newlines before and after
+them are controlled by a different mechanism, called @dfn{clean-ups} in
+@code{cc-mode}.  @xref{Clean-ups} for details.
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Hanging Semi-colons and commas, , Hanging Colons, Auto-newline insertion
+@node  Hanging Semi-colons and commas, Other electric commands, Hanging Colons, Auto-newline insertion
 @comment  node-name,              next,                    previous,up
 
 @subsection  Hanging Semi-colons and commas
 @cindex   Hanging Semi-colons and commas
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+Semicolons and commas are also electric in @code{cc-mode}, but since
+these characters are not used during the syntactic analysis phase, a
+different mechanism is used to determine whether newlines should be
+automatically inserted after these characters.  @xref{Customizing
+Semi-colons and Commas} for details.
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Other electric commands, Clean-ups, Hanging Semi-colons and commas, Auto-newline insertion
+@comment  node-name,              next,                    previous,up
+
+@subsection  Other electric commands
+@cindex   Other electric commands
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@kindex #
+@findex c-electric-pound
+@vindex c-electric-pound-behavior
+@findex electric-pound (c-)
+@vindex electric-pound-behavior (c-)
+@vindex c-offsets-alist
+@vindex offsets-alist (c-)
+A few other keys also provide electric behavior.  For example the
+@kbd{#} key (@code{c-electric-pound}) is electric when it is typed as
+the first non-whitespace character on a line.  In this case, the
+variable @code{c-electric-pound-behavior} is consulted for the electric
+behavior.  This variable takes a list value, although the only element
+currently defined is @code{alignleft}, which tells this command to force
+the @samp{#} character into column zero.  This is useful for entering
+cpp macro definitions.
+
+@findex c-electric-star
+@findex c-electric-slash
+@findex electric-star (c-)
+@findex electric-slash (c-)
+@cindex comment-only line
+Stars and slashes (i.e. @kbd{*} and @kbd{/}) are also electric under
+certain circumstances.  If a star is inserted as the second character of
+a C style block comment on a @dfn{comment-only} line, then the comment
+delimiter is indented as defined by @code{c-offsets-alist}.  A
+comment-only line is defined as a line which contains only a comment, as
+in:
+@example
+@group
+
+void spam( int i ) 
+@{
+        // this is a comment-only line...
+    if( i == 7 )                             // but this is not
+    @{
+        dosomething(i);
+    @}
+@}
+
+@end group
+@end example
+
+Likewise, if a slash is inserted as the second slash in a C++ style line
+comment (also only on a comment-only line), then the line is indeted as
+defined by @code{c-offsets-alist}.
+
+@xref{New Indentation Engine} for details on comment indentation via
+@code{c-offsets-alist}.
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Clean-ups, , Other electric commands, Auto-newline insertion
+@comment  node-name,              next,                    previous,up
+
+@subsection  Clean-ups
+@cindex   Clean-ups
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 @strong{<TBD>}
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Hungry-deletion of whitespace, , Auto-newline insertion, Minor Modes
@@ -709,7 +974,33 @@ the minibuffer when you hit @kbd{TAB}.
 @cindex   Hungry-deletion of whitespace
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD>}
+Hungry deletion of whitespace, or as it more commonly called,
+@dfn{hungry-delete mode}, is a simple feature that some people find
+extremely useful.  In fact, you might find yourself wanting
+hungry-delete in @strong{all} your editing modes!
+
+@kindex DEL
+In a nutshell, when hungry-delete mode is enabled, hitting the @kbd{DEL}
+character will consume all preceding whitespace, including newlines and
+tabs.  This can really cut down on the number of @kbd{DEL}'s you have to
+type if, for example you made a mistake on the preceding line.
+
+@findex c-electric-delete
+@findex electric-delete (c-)
+@vindex c-delete-function
+@vindex delete-function (c-)
+@cindex literal
+By default, @code{cc-mode} actually runs the command
+@code{c-electric-delete} when you hit @kbd{DEL}.  When this command is
+used to delete a single character (i.e. when it is called interactively
+with no numeric argument), it really runs the function contained in the
+variable @code{c-delete-function}.  This function is called with a
+single argument, which is the number of characters to delete.
+@code{c-delete-function} is also called when the @kbd{DEL} key is typed
+inside a @dfn{literal}, defined as a comment, string, or cpp macro
+definition.  Inside a literal, @code{c-electric-delete} is not electric,
+which is typical of all the so-called electric commands.
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Indentation Commands, Customizing Indentation, Minor Modes, Top
@@ -750,7 +1041,7 @@ function or variable name, or one of the following symbols: @code{+},
 @code{-}, @code{++}, @code{--}, @code{*}, or @code{/}.  The symbol
 values have the following meanings:
 
-@itemize bullet
+@itemize @bullet
 
 @item
 @code{+}  --  1 x @code{c-basic-offset}
@@ -1198,13 +1489,13 @@ not handled by the mode directly.
 
 @menu
 * Custom Indentation Functions::
-* Custom Brace Hanging::
+* Custom Brace and Colon Hanging::
 * Customizing Semi-colons and Commas::
 * Other Special Indentations::
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node     Custom Indentation Functions, Custom Brace Hanging, , Advanced Customizations
+@node     Custom Indentation Functions, Custom Brace and Colon Hanging, , Advanced Customizations
 @comment  node-name,              next,                    previous,up
 
 @subsection  Custom Indentation Functions
@@ -1305,11 +1596,11 @@ using many custom indentation functions may have a performance impact on
 @code{cc-mode}.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node     Custom Brace Hanging, Customizing Semi-colons and Commas, Custom Indentation Functions, Advanced Customizations
+@node     Custom Brace and Colon Hanging, Customizing Semi-colons and Commas, Custom Indentation Functions, Advanced Customizations
 @comment  node-name,              next,                    previous,up
 
-@subsection  Custom Brace Hanging
-@cindex   Custom Brace Hanging
+@subsection  Custom Brace and Colon Hanging
+@cindex   Custom Brace and Colon Hanging
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @vindex c-hanging-braces-alist
@@ -1401,7 +1692,7 @@ allowing function symbols as @var{ACTION}s on the
 found for this feature, it isn't currently implemented.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node     Customizing Semi-colons and Commas, Other Special Indentations, Custom Brace Hanging, Advanced Customizations
+@node     Customizing Semi-colons and Commas, Other Special Indentations, Custom Brace and Colon Hanging, Advanced Customizations
 @comment  node-name,              next,                    previous,up
 
 @subsection  Customizing Semi-colons and Commas
