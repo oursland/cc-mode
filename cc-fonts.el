@@ -2369,8 +2369,7 @@ need for `c++-font-lock-extra-types'.")
     (c-find-decl-spots
      limit
      "[-+]"
-     '(nil font-lock-keyword-face)
-
+     nil
      (lambda (match-pos inside-macro)
        (forward-char)
        (c-font-lock-objc-method))))
