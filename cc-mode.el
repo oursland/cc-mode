@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.226 $
-;; Last Modified:   $Date: 1995-07-03 18:05:33 $
+;; Version:         $Revision: 4.227 $
+;; Last Modified:   $Date: 1995-07-03 18:09:51 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-03 18:05:33 $|$Revision: 4.226 $|
+;; |$Date: 1995-07-03 18:09:51 $|$Revision: 4.227 $|
 
 ;;; Code:
 
@@ -1157,7 +1157,7 @@ Key bindings:
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *")
   ;; we have to do something special for c-offsets-alist so that the
-  ;; buffer local value is a deep copy of the global value
+  ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
   ;; setup the comment indent variable in a Emacs version portable way
   ;; ignore any byte compiler warnings you might get here
@@ -4491,7 +4491,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.226 $"
+(defconst c-version "$Revision: 4.227 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
