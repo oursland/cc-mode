@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-11 22:28:30 $
-;; Version:         $Revision: 2.44 $
+;; Last Modified:   $Date: 1992-05-12 14:36:03 $
+;; Version:         $Revision: 2.45 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-11 22:28:30 $|$Revision: 2.44 $|
+;; |$Date: 1992-05-12 14:36:03 $|$Revision: 2.45 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -186,7 +186,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.44 $
+  "Major mode for editing C++ code.  $Revision: 2.45 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -690,14 +690,13 @@ of the expression are preserved."
 	       (save-excursion
 		 (back-to-indentation)
 		 (eq (char-after (point)) ?#)))
-	   (let ((boi (save-excursion
-		       (back-to-indentation)
-		       (point)))
+	   (let ((here (point))
+		 (boi (save-excursion (back-to-indentation) (point)))
 		 (indent-p nil))
 	     (c++-indent-line)
 	     (save-excursion
 	       (back-to-indentation)
-	       (setq indent-p (= (point) boi)))
+	       (setq indent-p (and (> here boi) (= (point) boi))))
 	     (if indent-p (insert-tab))))
 	  (t (c++-indent-line)))))
 
@@ -1536,7 +1535,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.44 $"
+(defconst c++-version "$Revision: 2.45 $"
   "c++-mode version number.")
 
 (defun c++-dump-state ()
