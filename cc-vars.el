@@ -309,11 +309,19 @@ this variable to nil."
   :type 'integer
   :group 'c)
 
-(defcustom c-default-style "user"
+(defcustom c-default-style "gnu"
   "*Style which gets installed by default.
+
 The value of this variable can be any style defined in
 `c-style-alist', including styles you add, if you add them before CC
-Mode gets initialized."
+Mode gets initialized.  Note that if you set any CC Mode variables in
+the top-level of your .emacs file (i.e. *not* in a hook), these get
+incorporated into the `user' style so you would need to add:
+
+  (setq c-default-style \"user\")
+
+to see your customizations.  This is also true if you use the Custom
+interface -- be sure to set the default style to `user'."
   :type 'string
   :group 'c)
 
