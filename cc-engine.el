@@ -2042,6 +2042,9 @@ brace."
 	  (cond
 	   ;; CASE 9A: In the middle of a special brace list opener.
 	   ((and (consp special-brace-list)
+		 (save-excursion
+		   (goto-char containing-sexp)
+		   (eq (char-after) ?\())
 		 (eq char-after-ip (car (cdr special-brace-list))))
 	    (goto-char (car (car special-brace-list)))
 	    (skip-chars-backward " \t")
