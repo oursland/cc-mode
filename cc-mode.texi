@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.62 $
+@comment manual version: $Revision: 2.63 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1997-02-06 00:10:53 $
+@comment Last modification: $Date: 1997-02-06 19:07:09 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.62 $)
+@center (manual revision: $Revision: 2.63 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1173,8 +1173,6 @@ so-called electric commands.
 @cindex   Indentation Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@findex c-set-style
-@findex set-style (c-)
 Various commands are provided which allow you to conveniently re-indent
 C constructs.  There are several things to
 note about these indentation commands.  First, when you
@@ -1778,17 +1776,19 @@ automatically installed when you enter @code{java-mode}.
 
 @findex c-set-style
 @findex set-style (c-)
+@kindex C-c .
 If you'd like to experiment with these built-in styles you can simply
 type the following in a @code{cc-mode} buffer:
 @example
 @group
 
-@kbd{M-x c-set-style RET @var{STYLE-NAME} RET}
+@kbd{C-c . @var{STYLE-NAME} RET}
 
 @end group
 @end example
 @noindent
-Note that all style names are case insensitive, even the ones you define.
+@kbd{C-c .} runs the command @code{c-set-style}.  Note that all style
+names are case insensitive, even the ones you define.
 
 Setting a style in this way does @emph{not} automatically re-indent your
 file.  For commands that you can use to view the effect of your changes,
