@@ -68,7 +68,7 @@
 		 (- (current-column) langelem-col))
 	(goto-char containing-sexp)
 	(or (eolp)
-	    (not (memq (char-after) '(?{ ?\( )))
+	    (not (memq (char-after) '(?{ ?\( ?\[)))
 	    (let ((eol (c-point 'eol))
 		  (here (progn
 			  (forward-char 1)
