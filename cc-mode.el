@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.152 $
-;; Last Modified:   $Date: 1993-12-27 23:25:17 $
+;; Version:         $Revision: 3.153 $
+;; Last Modified:   $Date: 1993-12-28 14:20:55 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-27 23:25:17 $|$Revision: 3.152 $|
+;; |$Date: 1993-12-28 14:20:55 $|$Revision: 3.153 $|
 
 ;;; Code:
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.152 $
+CC-MODE REVISION: $Revision: 3.153 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -683,7 +683,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.152 $
+CC-MODE REVISION: $Revision: 3.153 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1414,18 +1414,21 @@ search."
     (save-excursion
       (goto-char lim)
       (setq state (parse-partial-sexp (point) here nil nil)))
-    (if (or (nth 3 state) (nth 4 state)
+    (if (or (nth 3 state)
+	    (nth 4 state)
 	    (looking-at (concat "[ \t]*" comment-start-skip))
-	    (save-excursion (skip-chars-backward " \t")
-			    (goto-char (- (point) 2))
-			    (looking-at "\\*/")))
+	    (save-excursion
+	      (skip-chars-backward " \t")
+	      (goto-char (- (point) 2))
+	      (looking-at "\\*/")))
 	(forward-sentence (- count))
       (while (> count 0)
 	(c-beginning-of-statement-1)
 	(setq count (1- count)))
       (while (< count 0)
 	(c-end-of-statement-1)
-	(setq count (1+ count))))))
+	(setq count (1+ count)))
+      )))
 
 (defun c-end-of-statement (&optional count lim)
   "Go to the end of the innermost C statement.
@@ -1452,7 +1455,11 @@ search."
 			    (not (re-search-forward "[;{}]" last-begin t)))))
 	    (setq last-begin (point) first nil))
 	  (goto-char last-begin))
-      (error (if first (backward-up-list 1) (goto-char last-begin))))))
+      ;; error for condition-case
+      (error (if first
+		 (backward-up-list 1)
+	       (goto-char last-begin)))
+      )))
 
 (defun c-end-of-statement-1 ()
   (condition-case ()
@@ -2007,39 +2014,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (c-backward-syntactic-ws lim))
     (goto-char placeholder)
     (skip-chars-forward "^:" (c-point 'eol))))
-
-;;(defun c-beginning-of-statement (&optional lim)
-;;  ;; Go to the beginning of the innermost C/C++ statement.  Optional
-;;  ;; LIM is the farthest back to search; if not provided,
-;;  ;; beginning-of-defun is used.
-;;  (let ((charlist '(nil ?\000 ?\, ?\; ?\} ?\: ?\{))
-;;	(lim (or lim (c-point 'bod)))
-;;	(here (point))
-;;	stop)
-;;    ;; if we are already at the beginning of indentation for the
-;;    ;; current line, do not skip a sexp backwards
-;;    (if (/= (point) (c-point 'boi))
-;;	(or (c-safe (progn (forward-sexp -1) t))
-;;	    (beginning-of-line)))
-;;    ;; skip whitespace
-;;    (c-backward-syntactic-ws lim)
-;;    (while (not stop)
-;;      (if (or (memq (preceding-char) charlist)
-;;	      (<= (point) lim))
-;;	  (setq stop t)
-;;	;; catch multi-line function calls
-;;	(or (c-safe (progn (forward-sexp -1) t))
-;;	    (forward-char -1))
-;;	(setq here (point))
-;;	(if (looking-at c-conditional-key)
-;;	    (setq stop t)
-;;	  (c-backward-syntactic-ws lim)
-;;	  )))
-;;    (if (<= (point) lim)
-;;	(goto-char lim)
-;;      (goto-char here)
-;;      (back-to-indentation))
-;;    ))
 
 (defun c-beginning-of-macro (&optional lim)
   ;; Go to the beginning of the macro. Right now we don't support
@@ -2949,7 +2923,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.152 $"
+(defconst c-version "$Revision: 3.153 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
