@@ -2243,6 +2243,18 @@ statement."
 	"\\(" (c-lang-const c-symbol-key) "\\)"))
 (c-lang-defvar c-opt-method-key (c-lang-const c-opt-method-key))
 
+(c-lang-defconst c-type-decl-end-used
+  ;; Must be set in buffers where the `c-type' text property might be
+  ;; used with the value `c-decl-end'.
+  t    (when (c-lang-const c-protection-kwds)
+	 ;; `c-decl-end' is used to mark the ends of access keys to
+	 ;; make interactive refontification work better.
+	 t)
+  ;; `c-decl-end' is used to mark the end of the @-style directives in
+  ;; Objective-C.
+  objc t)
+(c-lang-defvar c-type-decl-end-used (c-lang-const c-type-decl-end-used))
+
 
 ;;; Wrap up the `c-lang-defvar' system.
 

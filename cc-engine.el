@@ -190,11 +190,6 @@
 ;; Dynamically bound cache for `c-in-literal'.
 (defvar c-in-literal-cache t)
 
-;; Must be set in buffers where the `c-type' text property might be used
-;; with the value `c-decl-end'.
-(defvar c-type-decl-end-used nil)
-(make-variable-buffer-local 'c-type-decl-end-used)
-
 
 ;;; Basic utility functions.
 

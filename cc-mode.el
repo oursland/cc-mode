@@ -469,12 +469,6 @@ that requires a literal mode spec at compile time."
     (make-local-variable 'open-paren-in-column-0-is-defun-start)
     (setq open-paren-in-column-0-is-defun-start nil))
 
-  ;; The `c-type' text property with `c-decl-end' is used to mark the
-  ;; ends of access keys to make interactive refontification work
-  ;; better.
-  (when c-opt-access-key
-    (setq c-type-decl-end-used t))
-
   (c-clear-found-types)
 
   ;; now set the mode style based on default-style
@@ -812,9 +806,6 @@ Key bindings:
 	mode-name "ObjC"
 	local-abbrev-table objc-mode-abbrev-table
 	abbrev-mode t)
-  ;; The `c-type' text property with `c-decl-end' is used to mark the
-  ;; end of the @-style directives.
-  (setq c-type-decl-end-used t)
   (use-local-map objc-mode-map)
   (c-init-language-vars-for 'objc-mode)
   (c-common-init 'objc-mode)
