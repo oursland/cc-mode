@@ -682,8 +682,8 @@ Key bindings:
 ;;;###autoload
 (defun pike-mode ()
   "Major mode for editing Pike code.
-To submit a problem report, enter `\\[c-submit-bug-report]' from an
-idl-mode buffer.  This automatically sets up a mail buffer with
+To submit a problem report, enter `\\[c-submit-bug-report]' from a
+pike-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
 of the problem, including a reproducible test case, and send the
 message.
