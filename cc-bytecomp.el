@@ -48,8 +48,8 @@
 ;;           (load "cc-bytecomp" nil t)))
 ;;
 ;; This (unfortunately rather clumsy) form will ensure that the
-;; cc-bytecomp.el in the same directory as foo.el is loaded during
-;; byte compilation of the latter, and that cc-bytecomp.el isn't
+;; cc-bytecomp.el(c) file in the same directory as foo.el is loaded
+;; during byte compilation of the latter, and that cc-bytecomp isn't
 ;; loaded again in nested file loads (which is known to cause bugs in
 ;; some versions of XEmacs).
 ;;
@@ -61,15 +61,18 @@
 ;;
 ;;   (eval-when-compile (cc-bytecomp-restore-environment))
 ;;
-;; Now everything is set to use the various function and macros in
-;; this package.  If your package is split into several files, you
-;; should use `cc-require', `cc-require-when-compile' or `cc-load' to
-;; load them; they ensure that the files in the same directory always
-;; are loaded.
+;; Now everything is set to use the various functions and macros in
+;; this package.
+;;
+;; If your package is split into several files, you should use
+;; `cc-require', `cc-require-when-compile' or `cc-load' to load them.
+;; That ensures that the files in the same directory always are
+;; loaded, to avoid mixup with other versions of them that might exist
+;; elsewhere in the load path.
 ;;
 ;; To suppress byte compiler warnings, use the macros
-;; `cc-bytecomp-defun', `cc-bytecomp-defvar' and
-;; `cc-bytecomp-obsolete-var'.
+;; `cc-bytecomp-defun', `cc-bytecomp-defvar',
+;; `cc-bytecomp-obsolete-fun', and `cc-bytecomp-obsolete-var'.
 ;;
 ;; This file is not used at all after the package has been byte
 ;; compiled.  It is however necessary when running uncompiled.
@@ -291,7 +294,7 @@ the file.  Don't use outside `eval-when-compile'."
      (put ,symbol ,propname ,value)))
 
 (defmacro cc-bytecomp-obsolete-var (symbol)
-  "Suppress warnings about that the given symbol is an obsolete variable.
+  "Suppress warnings that the given symbol is an obsolete variable.
 Don't use within `eval-when-compile'."
   `(eval-when-compile
      (if (get ',symbol 'byte-obsolete-variable)
@@ -304,7 +307,7 @@ Don't use within `eval-when-compile'."
     (byte-compile-obsolete form)))
 
 (defmacro cc-bytecomp-obsolete-fun (symbol)
-  "Suppress warnings about that the given symbol is an obsolete function.
+  "Suppress warnings that the given symbol is an obsolete function.
 Don't use within `eval-when-compile'."
   `(eval-when-compile
      (if (eq (get ',symbol 'byte-compile) 'byte-compile-obsolete)
