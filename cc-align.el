@@ -439,7 +439,7 @@ the statement.  If there isn't any, indent with `c-basic-offset'.  If
 the current line contains an equal sign too, try to align it with the
 first one.
 
-Works with: statement-cont."
+Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
   (save-excursion
     (let ((equalp (save-excursion
 		    (goto-char (c-point 'boi))
@@ -473,6 +473,29 @@ Works with: statement-cont."
 	      (setq equalp 0)))
 	(- (current-column) equalp langelem-col))
       )))
+
+(defun c-lineup-cascaded-calls (langelem)
+  "Line up \"cascaded calls\" under each other.
+If the line begins with \"->\" and the preceding line ends with a
+function call preceded by \"->\", then the arrow is lined up with the
+preceding one.  E.g:
+
+result = proc->add(17)
+             ->add(19) +    <- c-lineup-cascaded-calls
+  offset;                   <- c-lineup-cascaded-calls (inactive)
+
+In any other situation nil is returned to allow use in list
+expressions.
+
+Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
+  (save-excursion
+    (back-to-indentation)
+    (if (and (looking-at "->")
+	     (= (c-backward-token-1 1 t) 0)
+	     (eq (char-after) ?\()
+	     (= (c-backward-token-1 3 t) 0)
+	     (looking-at "->"))
+	(vector (current-column)))))
 
 (defun c-lineup-template-args (langelem)
   "Line up template argument lines under the first argument.
