@@ -774,17 +774,20 @@
   ;; Go to the first non-whitespace after the colon that starts a
   ;; multiple inheritance introduction.  Optional LIM is the farthest
   ;; back we should search.
-  (let ((lim (or lim (c-point 'bod)))
-	(placeholder (progn
-		       (back-to-indentation)
-		       (point))))
+  (let* ((lim (or lim (c-point 'bod)))
+	 (placeholder (progn
+			(back-to-indentation)
+			(point)))
+	 (chr (char-after)))
     (c-backward-syntactic-ws lim)
     (while (and (> (point) lim)
-		(memq (char-before) '(?, ?:))
+		(or (eq chr ?,)
+		    (memq (char-before) '(?, ?:)))
 		(progn
 		  (beginning-of-line)
 		  (setq placeholder (point))
 		  (skip-chars-forward " \t")
+		  (setq chr (char-after))
 		  (not (looking-at c-class-key))
 		  ))
       (c-backward-syntactic-ws lim))
@@ -1676,7 +1679,12 @@ brace."
 	      )))
 	   ;; CASE 5C: inheritance line. could be first inheritance
 	   ;; line, or continuation of a multiple inheritance
-	   ((or (and c-baseclass-key (looking-at c-baseclass-key))
+	   ((or (and c-baseclass-key
+		     (progn
+		       (when (eq char-after-ip ?,)
+			 (skip-chars-forward " \t")
+			 (forward-char))
+		       (looking-at c-baseclass-key)))
 		(and (or (eq char-before-ip ?:)
 			 ;; watch out for scope operator
 			 (save-excursion
