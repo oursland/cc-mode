@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-08 21:50:48 $
-;; Version:         $Revision: 2.100 $
+;; Last Modified:   $Date: 1992-06-09 18:37:58 $
+;; Version:         $Revision: 2.101 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-08 21:50:48 $|$Revision: 2.100 $|
+;; |$Date: 1992-06-09 18:37:58 $|$Revision: 2.101 $|
 
 
 ;; ======================================================================
@@ -212,7 +212,7 @@ automatically escaped when typed in, but entering
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.100 $
+  "Major mode for editing C++ code.  $Revision: 2.101 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1037,12 +1037,14 @@ containing class definition (useful for inline functions)."
 	       (= (car state) 1)
 	       (let ((here (point)))
 		 (goto-char containing-sexp)
-		 (goto-char
-		  (condition-case scanlist-err
-		      (scan-lists (point) -1 -1)
-		    (error (point-min))))
-		 (re-search-forward "\\<\\(class\\|struct\\)\\>" here 'move)
-		 ))))))
+		 (if (c++-at-top-level-p nil)
+		     nil
+		   (goto-char
+		    (condition-case scanlist-err
+			(scan-lists (point) -1 -1)
+		      (error (point-min))))
+		   (re-search-forward "\\<\\(class\\|struct\\)\\>" here 'move)
+		   )))))))
 
 (defun c++-in-literal (&optional lim)
   "Determine if point is in a C++ `literal'.
@@ -1163,11 +1165,13 @@ point of the beginning of the C++ definition."
 		  (setq indent (+ indent c++-friend-offset)))
 		 ((= (following-char) ?\))
 		  (setq indent (+ (- indent c-indent-level)
-				  (if (save-excursion
-					(forward-char 1)
-					(c++-at-top-level-p))
-				      (- c++-block-close-brace-offset)
-				    c++-block-close-brace-offset))))
+				  (save-excursion
+				    (forward-char 1)
+				    (cond ((c++-at-top-level-p)
+					   (- c++-block-close-brace-offset))
+					  ((c++-at-top-level-p t)
+					   c-indent-level)
+					  (t c++-block-close-brace-offset))))))
 		 ((= (following-char) ?})
 		  (setq indent (+ (- indent c-indent-level)
 				  (if (save-excursion
@@ -1809,7 +1813,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.100 $"
+(defconst c++-version "$Revision: 2.101 $"
   "c++-mode version number.")
 
 (defun c++-version ()
