@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.285 $
-;; Last Modified:   $Date: 1996-03-23 01:21:34 $
+;; Version:         $Revision: 4.286 $
+;; Last Modified:   $Date: 1996-04-03 21:45:34 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1794,7 +1794,7 @@ the brace is inserted inside a literal."
 	;; If syntax is a function symbol, then call it using the
 	;; defined semantics.
 	(if (and (not (consp (cdr newlines)))
-		 (fboundp (cdr newlines)))
+		 (functionp (cdr newlines)))
 	    (let ((c-syntactic-context syntax))
 	      (setq newlines
 		    (funcall (cdr newlines) (car newlines) insertion-point))))
@@ -2158,7 +2158,7 @@ supplied, or point is inside a literal."
 			 "or in [+,-,++,--,*,/] "
 			 defstr))
 	 (prompt (concat "Offset " defstr))
-	 offset input interned)
+	 offset input interned raw)
     (while (not offset)
       (setq input (read-string prompt)
 	    offset (cond ((string-equal "" input) oldoff)  ; default
@@ -2170,8 +2170,15 @@ supplied, or point is inside a literal."
 			 ((string-equal "/" input) '/)
 			 ((string-match "^-?[0-9]+$" input)
 			  (string-to-int input))
+			 ;; a symbol with a function binding
 			 ((fboundp (setq interned (intern input)))
 			  interned)
+			 ;; a lambda function
+			 ((condition-case nil
+			      (functionp (setq raw (read input)))
+			    (error nil))
+			  raw)
+			 ;; a symbol with variable binding
 			 ((boundp interned) interned)
 			 ;; error, but don't signal one, keep trying
 			 ;; to read an input value
@@ -2218,7 +2225,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
       (eq offset '*)
       (eq offset '/)
       (integerp offset)
-      (fboundp offset)
+      (functionp offset)
       (boundp offset)
       (error "Offset must be int, func, var, or in [+,-,++,--,*,/]: %s"
 	     offset))
@@ -4438,17 +4445,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (error "don't know how to indent a %s" symbol)
 	(setq offset 0
 	      relpos 0)))
-     ((eq offset '+)  (setq offset c-basic-offset))
-     ((eq offset '-)  (setq offset (- c-basic-offset)))
-     ((eq offset '++) (setq offset (* 2 c-basic-offset)))
-     ((eq offset '--) (setq offset (* 2 (- c-basic-offset))))
-     ((eq offset '*)  (setq offset (/ c-basic-offset 2)))
-     ((eq offset '/)  (setq offset (/ (- c-basic-offset) 2)))
-     ((and (not (numberp offset))
-	   (fboundp offset))
-      (setq offset (funcall offset langelem)))
-     ((not (numberp offset))
-      (setq offset (eval offset)))
+     ((eq offset '+)         (setq offset c-basic-offset))
+     ((eq offset '-)         (setq offset (- c-basic-offset)))
+     ((eq offset '++)        (setq offset (* 2 c-basic-offset)))
+     ((eq offset '--)        (setq offset (* 2 (- c-basic-offset))))
+     ((eq offset '*)         (setq offset (/ c-basic-offset 2)))
+     ((eq offset '/)         (setq offset (/ (- c-basic-offset) 2)))
+     ((functionp offset)     (setq offset (funcall offset langelem)))
+     ((not (numberp offset)) (setq offset (symbol-value offset)))
      )
     (+ (if (and relpos
 		(< relpos (c-point 'bol)))
@@ -4812,7 +4816,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.285 $"
+(defconst c-version "$Revision: 4.286 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
