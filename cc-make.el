@@ -1,4 +1,4 @@
-;; Version:    5.15
+;; Version:    5.16
 
 (setq path-to-the-custom-library
       ;; In Emacs 19.34, change the following line to the directory
