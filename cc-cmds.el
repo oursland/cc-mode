@@ -336,7 +336,7 @@ This function does various newline cleanups based on the value of
 	;; Do all appropriate clean ups
 	(let ((here (point))
 	      (pos (- (point-max) (point)))
-	      mbeg mend)
+	      mbeg mend tmp)
 	  ;; clean up empty defun braces
 	  (if (and c-auto-newline
 		   (memq 'empty-defun-braces c-cleanup-list)
@@ -350,19 +350,36 @@ This function does various newline cleanups based on the value of
 		   ;; make sure matching open brace isn't in a comment
 		   (not (c-in-literal)))
 	      (delete-region (point) (1- here)))
-	  ;; clean up brace-else-brace
-	  (if (and c-auto-newline
-		   (memq 'brace-else-brace c-cleanup-list)
-		   (eq last-command-char ?\{)
+	  ;; clean up brace-else-brace and brace-elseif-brace
+	  (when (and c-auto-newline
+		     (eq last-command-char ?\{)
+		     (not (c-in-literal)))
+	    (cond
+	     ((and (memq 'brace-else-brace c-cleanup-list)
 		   (re-search-backward "}[ \t\n]*else[ \t\n]*{" nil t)
 		   (progn
 		     (setq mbeg (match-beginning 0)
 			   mend (match-end 0))
-		     (= mend here))
-		   (not (c-in-literal)))
-	      (progn
-		(delete-region mbeg mend)
-		(insert "} else {")))
+		     (eq (match-end 0) here)))
+	      (delete-region mbeg mend)
+	      (insert "} else {"))
+	     ((and (memq 'brace-elseif-brace c-cleanup-list)
+		   (progn
+		     (goto-char (1- here))
+		     (setq mend (point))
+		     (skip-chars-backward " \t\n")
+		     (setq mbeg (point))
+		     (eq (char-before) ?\)))
+		   (= (c-backward-token-1 1 t) 0)
+		   (eq (char-after) ?\()
+		   (progn
+		     (setq tmp (point))
+		     (re-search-backward "}[ \t\n]*else[ \t\n]+if[ \t\n]*"
+					 nil t))
+		   (eq (match-end 0) tmp))
+	      (delete-region mbeg mend)
+	      (goto-char mbeg)
+	      (insert " "))))
 	  (goto-char (- (point-max) pos))
 	  )
 	;; does a newline go after the brace?
