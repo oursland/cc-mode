@@ -1476,11 +1476,11 @@ nevertheless contains a list separated with ';' and not ','."
   t '("case" "default"))
 
 (c-lang-defconst c-before-label-kwds
-  "Keywords that may be followed by a label or a label reference."
-  t    '("case" "goto")
+  "Keywords that might be followed by a label identifier."
+  t    '("goto")
   (java pike) (append '("break" "continue")
 		      (c-lang-const c-before-label-kwds))
-  idl  '("case"))
+  idl  nil)
 
 (c-lang-defconst c-label-kwds-regexp
   ;; Regexp matching any keyword that introduces a label.

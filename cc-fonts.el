@@ -1926,12 +1926,7 @@ higher."
       ;; Fontify labels in languages that supports them.
       ,@(when (c-lang-const c-label-key)
 
-	  `(;; Fontify goto targets and case labels.  This
-	    ;; deliberately fontifies only a single identifier or a
-	    ;; signed integer as a label; all other forms are
-	    ;; considered to be expressions and thus fontified as
-	    ;; such (i.e. not at all).
-
+	  `(;; Fontify labels after goto etc.
 	    ;; (Got three different interpretation levels here,
 	    ;; which makes it a bit complicated: 1) The backquote
 	    ;; stuff is expanded when compiled or loaded, 2) the
@@ -1942,53 +1937,15 @@ higher."
 	    (eval
 	     . ,(let* ((c-before-label-re
 			(c-make-keywords-re nil
-			  (c-lang-const c-before-label-kwds)))
-		       (identifier-offset
-			(+ (c-regexp-opt-depth c-before-label-re)
-			   3))
-		       (integer-offset
-			(+ identifier-offset
-			   (c-regexp-opt-depth (c-lang-const c-identifier-key))
-			   1)))
-
+			  (c-lang-const c-before-label-kwds))))
 		  `(list
-		    ,(concat
-		      "\\<\\("
-		      c-before-label-re
-		      "\\)\\>"
-		      "\\s *"
-		      "\\("
-		      ;; Match a (simple) qualified identifier, i.e. we don't
-		      ;; bother with `c-forward-name'.  We highlight the last
-		      ;; symbol in it as a label.
-		      "\\(" (c-lang-const ; identifier-offset
-			     c-identifier-key) "\\)"
-		      "\\|"
-		      ;; Match an integer.
-		      "\\(-?[0-9]+\\)"	; integer-offset
-		      (if (c-major-mode-is 'pike-mode)
-			  ;; Pike allows integer ranges.
-			  (concat
-			   "\\s *\\(\\.\\.\\s *\\(-?[0-9]+\\)?\\)?"
-			   "\\|\\.\\.\\s *\\(-?[0-9]+\\)")
-			"")
-		      "\\)"
-		      "\\s *[:;]")
-
-		    ,@(mapcar
-		       (lambda (submatch)
-			 `(list ,(+ identifier-offset submatch)
-				c-label-face-name nil t))
-		       (c-lang-const c-identifier-last-sym-match))
-
-		    (list ,integer-offset c-label-face-name nil t)
-
-		    ,@(when (c-major-mode-is 'pike-mode)
-			`((list ,(+ integer-offset 2)
-				c-label-face-name nil t)
-			  (list ,(+ integer-offset 3)
-				c-label-face-name nil t)))
-		    )))
+		    ,(concat "\\<\\(" c-before-label-re "\\)\\>"
+			     "\\s *"
+			     "\\("	; identifier-offset
+			     (c-lang-const c-symbol-key)
+			     "\\)")
+		    (list ,(+ (c-regexp-opt-depth c-before-label-re) 2)
+			  c-label-face-name nil t))))
 
 	    ;; Fontify normal labels.
 	    c-font-lock-labels))
