@@ -670,61 +670,69 @@ comment."
   (interactive (list (prefix-numeric-value current-prefix-arg)
 		     nil t))
   (let* ((count (or count 1))
-	here range)
-    (while (and (/= count 0) (or (not lim) (> (point) lim)))
+	 here
+	 (range (c-collect-line-comments (c-literal-limits lim))))
+    (while (and (/= count 0)
+		(or (not lim) (> (point) lim)))
       (setq here (point))
-      ;; Find the literal around or next to point.
-      (if (> count 0)
-	  (skip-chars-backward " \t\n")
-	(skip-chars-forward " \t\n"))
-      (setq range (c-literal-limits lim))
-      (when (not range)
-	(setq range (if (> count 0)
-			(cons (save-excursion
-				(forward-comment -1)
-				(point))
-			      (point))
-		      (cons (point)
-			    (save-excursion
-			      (forward-comment 1)
-			      (point)))))
-	(if (= (car range) (cdr range))
-	    (setq range nil)))
+      (if (and (not range) sentence-flag)
+	  (save-excursion
+	    ;; Find the string or comment next to point if we're not
+	    ;; in one.
+	    (if (> count 0)
+		;; Finding a comment backwards is a bit cumbersome
+		;; because `forward-comment' regards every newline as
+		;; a comment when searching backwards (Emacs 19.34).
+		(while (and (progn (skip-chars-backward " \t")
+				   (setq range (point))
+				   (setq range (if (forward-comment -1)
+						   (cons (point) range)
+						 nil)))
+			    (= (char-after) ?\n)))
+	      (skip-chars-forward " \t\n")
+	      (setq range (point))
+	      (setq range (if (forward-comment 1)
+			      (cons range (point))
+			    nil)))
+	    (setq range (c-collect-line-comments range))))
       (if (and (< count 0) (= here (point-max)))
-	  ;; Special case when we have no point between the range and
-	  ;; eob.  This can't happen at bob.
+	  ;; Special case because eob might be in a literal.
 	  (setq range nil))
       (if range
-	  (progn
-	    (setq range (c-collect-line-comments range))
-	    (if sentence-flag
-		(progn
-		  ;; move by sentence, but not past the limit of the literal
-		  (save-restriction
-		    (narrow-to-region (save-excursion
-					(goto-char (car range))
-					(if (= (char-syntax (char-after)) ?\")
-					    (forward-char)
-					  (looking-at comment-start-skip)
-					  (goto-char (match-end 0)))
-					(point))
-				      (save-excursion
-					(goto-char (cdr range))
-					(if (= (char-syntax (char-before)) ?\")
-					    (backward-char)
-					  (if (save-excursion
-						(goto-char (car range))
-						(looking-at "/\\*"))
-					      (backward-char 2))
-					  (skip-chars-backward " \t\n"))
-					(point)))
-		    (c-safe (forward-sentence (if (> count 0) -1 1))))
-		  ;; See if we should escape the literal.
-		  (if (= (point) here)
-		      (goto-char (if (> count 0) (car range) (cdr range)))
-		    (setq count (if (> count 0) (1- count) (1+ count)))))
-	      ;; Just move past it.
-	      (goto-char (if (> count 0) (car range) (cdr range)))))
+	  (if sentence-flag
+	      (progn
+		;; move by sentence, but not past the limit of the literal
+		(save-restriction
+		  (narrow-to-region (save-excursion
+				      (goto-char (car range))
+				      (if (= (char-syntax (char-after)) ?\")
+					  (forward-char)
+					(looking-at comment-start-skip)
+					(goto-char (match-end 0)))
+				      (point))
+				    (save-excursion
+				      (goto-char (cdr range))
+				      (if (= (char-syntax (char-before)) ?\")
+					  (backward-char)
+					(if (save-excursion
+					      (goto-char (car range))
+					      (looking-at "/\\*"))
+					    (backward-char 2))
+					(skip-chars-backward " \t\n"))
+				      (point)))
+		  (c-safe (forward-sentence (if (> count 0) -1 1))))
+		;; See if we should escape the literal.
+		(if (> count 0)
+		    (if (< (point) here)
+			(setq count (1- count))
+		      (goto-char (car range))
+		      (setq range nil))
+		  (if (> (point) here)
+		      (setq count (1+ count))
+		    (goto-char (cdr range))
+		    (setq range nil))))
+	    (goto-char (if (> count 0) (car range) (cdr range)))
+	    (setq range nil))
 	;; Below we do approximately the same as
 	;; c-beginning-of-statement-1 and c-end-of-statement-1 and
 	;; perhaps they should be changed, but that'd likely break a
@@ -743,7 +751,7 @@ comment."
 		    ;; side of the syntactic ws.  Also stop before
 		    ;; `}', but only to catch comments.  Move by sexps
 		    ;; and move into `{ }', but not into any other
-		    ;; other type of parens.
+		    ;; other type of paren.
 		    (catch 'done
 		      (let (last)
 			(while t
@@ -780,9 +788,9 @@ comment."
 		(setq count (1- count)))
 	  (if (condition-case nil
 		  ;; Stop before `{' and `}' and after `;', `}' and
-		  ;; `};'.  Also stop after '{', but only to catch
+		  ;; `};'.  Also stop after `{', but only to catch
 		  ;; comments.  Move by sexps and move into `{ }', but
-		  ;; not into any other other type of parens.
+		  ;; not into any other other type of paren.
 		  (catch 'done
 		    (let (last)
 		      (while t
@@ -810,15 +818,13 @@ comment."
 		(error
 		 (goto-char (point-max))
 		 t))
-	      (setq count (1+ count))))
-	;; Check buffer limits here.
-	(if (> count 0)
-	    (if (bobp) (setq count 0))
-	  (if (eobp) (setq count 0)))
-	))
+	      (setq count (1+ count)))))
+      ;; If we haven't moved we're near a buffer limit.
+      (when (= (point) here)
+	(goto-char (if (> count 0) (point-min) (point-max)))
+	(setq count 0)))
     ;; its possible we've been left up-buf of lim
-    (if lim (goto-char (max (point) lim)))
-    )
+    (if lim (goto-char (max (point) lim))))
   (c-keep-region-active))
 
 (defun c-end-of-statement (&optional count lim sentence-flag)
