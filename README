@@ -13,11 +13,10 @@ INTRODUCTION
 
         <http://cc-mode.sourceforge.net/cc-mode.html>
 
-    As of this writing (June 10, 2003), CC Mode currently works
-    out of the box with XEmacs versions 19.15, 19.16, 20.3, 20.4,
-    21.0, 21.1, and 21.2, and with Emacs versions 19.34, 20.x, and
-    21.x.  (It will very likely work with later versions too, when
-    they become available.)
+    As of this writing (June 10, 2003), CC Mode currently works out of
+    the box with XEmacs versions 19.15, 19.16, 20.3, 20.4, and 21.x,
+    and with Emacs versions 19.34, 20.x, and 21.x.  (It will very
+    likely work with later versions too, when they become available.)
 
 MORE INFORMATION
 
@@ -36,8 +35,9 @@ MANUALS
     Preformatted versions of the manual in DVI, PostScript, and Info,
     are all available at the CC Mode web page.
 
-    To build the manual yourself, you will need the latest Texinfo
-    release (as of this writing, Texinfo 4.0).  To build the Info
+    To build the manual yourself, you will need a recent Texinfo
+    release (as of this writing, it's known to work with Texinfo 4.3
+    but somewhat older releases might be ok too).  To build the Info
     manual, simply type:
 
         % makeinfo cc-mode.texi
@@ -45,11 +45,6 @@ MANUALS
     To make the DVI version, simply type:
 
         % texi2dvi cc-mode.texi
-
-    Note that I've heard of other package releases that purport to
-    include a texinfo.tex file newer than 2.185, but these don't
-    support the @macro{} command.  If you have problems building the
-    manuals, pick up a pre-built version.
 
 INSTALLATION
 
@@ -117,14 +112,15 @@ INSTALLATION
     The new AWK Mode requires a feature (syntax-table text properties)
     which first appeared in Emacs 20.1 and XEmacs 21.4.  If you are
     still using an older version of (X)Emacs, CC Mode will revert to
-    using the older AWK Mode (from file awk-mode.elc) for AWK files,
-    even when the autoload form (see above) appears in your .emacs or
-    init.el file.  Upgrading your (X)Emacs is strongly recommended if
-    this is the case.  You can check which AWK Mode you are running by
-    displaying the mode documentation string with C-h m from an AWK
-    buffer.  The newer mode's doc string contains "to submit a problem
-    report, enter `C-c C-b'" near the top of the doc string where the
-    older mode has "This is much like C mode except ....".
+    using the older AWK Mode which is distributed with (X)Emacs (from
+    file awk-mode.elc) for AWK files, even when the autoload form (see
+    above) appears in your .emacs or init.el file.  Upgrading your
+    (X)Emacs is strongly recommended if this is the case.  You can
+    check which AWK Mode you are running by displaying the mode
+    documentation string with C-h m from an AWK buffer.  The newer
+    mode's doc string contains "to submit a problem report, enter `C-c
+    C-b'" near the top of the doc string where the older mode has
+    "This is much like C mode except ....".
 
     For more details about interactions with different packages, see
     the CC Mode web page.
