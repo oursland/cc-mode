@@ -9,14 +9,7 @@ IDL, and Pike. It's a standard package in both GNU Emacs and
 XEmacs.</strong>
 
 <p>CC Mode is brought to you by the current CC Mode maintainer Martin
-Stjernholm, who has now taken over from <a
-href="http://www.python.org/~bwarsaw/">Barry Warsaw</a>.
-
-<p>As of the 5.26 release, Barry Warsaw steps down as the primary CC
-Mode maintainer to be able to spend more time with family, other
-projects, and his basses. <tt>;)</tt> There will be no changes in the
-agenda for CC Mode as a whole.  Many thanks to Barry for his commitment
-during the past years that made CC Mode the indispensable tool it is.
+Stjernholm.
 
 <p>The <a href="release.php">current release</a> is version
 5.26.  A list of <a href="changes-latest.php">recent changes</a> are

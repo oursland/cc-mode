@@ -59,7 +59,6 @@ Copyright @copyright{} 1995-1999 Free Software Foundation, Inc.
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
-@center Barry A. Warsaw
 @center Martin Stjernholm
 
 
@@ -189,6 +188,7 @@ milestone in the mode's life.  It has been fully merged back with Emacs
 19's @file{c-mode.el}. Also a new, more intuitive and flexible mechanism
 for controlling indentation has been developed.  Late in 1997, Martin
 joined the @ccmode{} Maintainers Team, and implemented the Pike support.
+As of 2000 Martin has taken over as the sole maintainer.
 
 This manual describes @ccmode{}
 @comment The following line must appear on its own, so that the automated

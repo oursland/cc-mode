@@ -2,8 +2,10 @@
 
 ;; Copyright (C) 1985,1987,1992-1999 Free Software Foundation, Inc.
 
-;; Author:     1994-1997 Barry A. Warsaw
-;; Maintainer: Unmaintained
+;; Authors:    2000- Martin Stjernholm
+;;	       1998-1999 Barry A. Warsaw and Martin Stjernholm
+;;	       1994-1997 Barry A. Warsaw
+;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    August 1994, split from cc-mode.el
 ;; Version:    See cc-mode.el
 ;; Keywords:   c languages oop
