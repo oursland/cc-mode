@@ -1,36 +1,67 @@
 README for CC Mode 5.12
 Barry A. Warsaw <cc-mode-help@python.org>
 
-Please read the cc-mode.texi manual for details on using CC Mode.
+INTRODUCTION
 
-As of this writing (08-Jul-1997), CC Mode version 5 currently works
-out of the box only with XEmacs 19.15 and XEmacs 20.0, and will work
-with the next version of Emacs.  CC Mode will be distributed with the
-next version of Emacs and XEmacs.
+    Please read the cc-mode.texi manual for details on using CC Mode.
 
-Emacs 19.34 is missing some stuff that CC Mode requires, but you can
-make CC Mode 5 work with it by loading the file cc-mode-19.el.  See
-that file for details.
+    As of this writing (08-Jul-1997), CC Mode version 5 currently
+    works out of the box only with XEmacs 19.15 and XEmacs 20.0, and
+    will work with the next version of Emacs.  CC Mode will be
+    distributed with the next version of Emacs and XEmacs.
 
-Check the CC Mode web pages
+    Emacs 19.34 is missing some stuff that CC Mode requires, but you
+    can make CC Mode 5 work with it by loading the file cc-mode-19.el.
+    See that file for details.
 
-    <http://www.python.org/ftp/emacs/cc-details.html>
+BYTE COMPILING
 
-for more information.
+    You must byte compile the CC Mode .el files.  For XEmacs 19.15 and 
+    Emacs 19.34, you should have a file called XXX.el in the CC Mode
+    distribution.  cd to the cc-mode directory that you just unpacked
+    and run:
 
-Preformatted versions of the manual in DVI, PostScript, and Info, are
-all available at <http://www.python.org/ftp/emacs/>.
+    % $EMACS -batch -no-site-file -q -l XXX.el cc-*.el
 
-To build the manual yourself, you will need the latest Texinfo release
-(currently Texinfo 3.9).  Specifically, you must make sure that your
-are using at least version 2.185 of the texinfo.tex file.  To build
-the Info manual, simply type:
+    where $EMACS is either `emacs' or `xemacs'.
 
-    % makeinfo cc-mode.texi
+    If you're upgrading the CC Mode 5 distribution in either XEmacs
+    20.3 or Emacs 20.0 or beyond, be sure to unpack the tarball in the 
+    same proper directory:
 
-To make the DVI version, simply type:
+    XEmacs: $EMACSDIR/lisp/cc-mode
 
-    % texi2dvi cc-mode.texi
+    Emacs:  $EMACSDIR/lisp/progmodes
 
-The MANIFEST file contains a description of all the files you should
-have gotten with this distribution.
+    then cd to that directory and run:
+
+    % $EMACS -batch -no-site-file -q cc-*.el
+
+    where $EMACS is either `emacs' or `xemacs'.
+
+MORE INFORMATION
+
+    Check the CC Mode web pages
+
+	<http://www.python.org/ftp/emacs/cc-details.html>
+
+    for more information.
+
+    The MANIFEST file contains a description of all the files you
+    should have gotten with this distribution.
+
+MANUALS
+
+    Preformatted versions of the manual in DVI, PostScript, and Info,
+    are all available at <http://www.python.org/ftp/emacs/>.
+
+    To build the manual yourself, you will need the latest Texinfo
+    release (currently Texinfo 3.9).  Specifically, you must make sure
+    that your are using at least version 2.185 of the texinfo.tex
+    file.  To build the Info manual, simply type:
+
+        % makeinfo cc-mode.texi
+
+    To make the DVI version, simply type:
+
+        % texi2dvi cc-mode.texi
