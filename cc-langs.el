@@ -490,7 +490,7 @@ that at least one does when the regexp has matched."
 (c-lang-defconst c-opt-cpp-prefix
   "Regexp matching the prefix of a cpp directive in the languages that
 normally use that macro preprocessor.  Tested at bol.  Assumed to not
-contain any submatches."
+contain any submatches or \\| operators."
   t "\\s *#\\s *"
   java nil)
 (c-lang-defvar c-opt-cpp-prefix (c-lang-const c-opt-cpp-prefix))
@@ -893,12 +893,15 @@ operators."
 		   "\\*/")
 	   "\\)*")
 	  (concat
-	   ;; Match eol (possibly inside a block comment), or the
-	   ;; beginning of a line comment.  Note: This has to be
-	   ;; modified for awk where line comments start with '#'.
+	   ;; Match eol (possibly inside a block comment or preceded
+	   ;; by a line continuation backslash), or the beginning of a
+	   ;; line comment.  Note: This has to be modified for awk
+	   ;; where line comments start with '#'.
 	   "\\("
 	   (concat "\\("
 		   "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
+		   "\\|"
+		   "\\\\"
 		   "\\)?"
 		   "$")
 	   "\\|//\\)")))
