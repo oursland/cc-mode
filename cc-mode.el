@@ -98,15 +98,20 @@
 (cc-bytecomp-defvar adaptive-fill-first-line-regexp) ; Emacs 20+
 (cc-bytecomp-defun set-keymap-parents)	; XEmacs
 
+;; We set this variable during mode init, yet we don't require
+;; font-lock.
+(cc-bytecomp-defvar font-lock-defaults)
+
 ;; Menu support for both XEmacs and Emacs.  If you don't have easymenu
 ;; with your version of Emacs, you are incompatible!
 (require 'easymenu)
 
-;; Uncomment this to use CC Modes own font locking instead of the one
-;; in font-lock.el.  This will be the default as soon as all the
-;; settings in font-lock.el has been ported to CC Mode.
-; (eval-after-load "font-lock"
-;   '(require 'cc-fonts))
+;; Load cc-fonts first after font-lock is loaded, since cc-fonts
+;; should override the settings for c-font-lock-keywords etc that
+;; font-lock managed in earlier versions.
+(eval-after-load "font-lock"
+  '(require 'cc-fonts))
+(autoload 'c-font-lock-syntactic-face-function "cc-fonts")
 
 
 ;; Other modes and packages which depend on CC Mode should do the
@@ -395,6 +400,8 @@ same format as `c-default-style'."
 
   (let ((mode-prefix (and (string-match "^[^-]*-" (symbol-name mode))
 			  (match-string 0 (symbol-name mode)))))
+    ;; This is not the recommended way to initialize font-lock in
+    ;; XEmacs, but it works.
     (setq font-lock-defaults
 	  `(,(mapcan
 	      (lambda (keywords-name)
