@@ -272,8 +272,8 @@ def make_docs():
 def main():
     try:
 	opts, args = getopt.getopt(
-	    sys.argv[1:], 'abtpdhEi',
-	    ['all', 'bump', 'tag', 'package', 'docs', 'help',
+	    sys.argv[1:], 'abtpdhETi',
+	    ['all', 'bump', 'tag', 'TAG', 'package', 'docs', 'help',
 	     'incr', 'EMACS'])
     except getopt.error, msg:
 	print msg
@@ -304,7 +304,7 @@ def main():
 	    bump = 1
 	elif opt in ('-t', '--tag', '-T', '--TAG'):
 	    tag = 1
-	    if opt[0] == 'T':
+	    if (opt[1] == '-' and opt[2] == 'T') or opt[1] == 'T':
 		untag_first = 1
 	elif opt in ('-p', '--package'):
 	    package = 1
