@@ -933,13 +933,17 @@ This function does not do any hidden buffer changes."
   ;; This function does not do any hidden buffer changes.
   (memq facename (face-list)))
 
-(defun c-make-keywords-re (adorn list)
+(defun c-make-keywords-re (adorn list &optional mode)
   "Make a regexp that matches all the strings the list.
 Duplicates in the list are removed.  The regexp may contain zero or
-more submatch expressions.  If ADORN is non-nil there will be at least
-one submatch which matches the whole keyword, and the regexp will also
-not match a prefix of any identifier.  Adorned regexps cannot be
-appended."
+more submatch expressions.
+
+If ADORN is non-nil there will be at least one submatch which matches
+the whole keyword, and the regexp will also not match a prefix of any
+identifier.  Adorned regexps cannot be appended.  The language
+variable `c-nonsymbol-key' is used to make the adornment.  The
+optional MODE specifies the language to get it in.  The default is the
+current language (taken from `c-buffer-is-cc-mode')."
   (setq list (delete-duplicates list :test 'string-equal))
   (if list
       (let ((re (c-regexp-opt list)))
@@ -949,7 +953,7 @@ appended."
 	(if adorn
 	    (concat "\\(" re "\\)"
 		    "\\("
-		    (c-get-lang-constant 'c-nonsymbol-key)
+		    (c-get-lang-constant 'c-nonsymbol-key nil mode)
 		    "\\|$\\)")
 	  re))
     ;; Produce a regexp that matches nothing.
