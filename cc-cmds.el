@@ -1281,7 +1281,10 @@ sentence motion in or near comments and multiline strings."
 				   (not (eq last-below-line here)))
 			      (goto-char last-below-line))
 			  (throw 'done t)))
-		      (c-skip-ws-backward)
+		      ;; Don't know why I added the following, but it
+		      ;; doesn't work when point is preceded by a line
+		      ;; style comment. /mast
+		      ;;(c-skip-ws-backward)
 		      (if literal-pos
 			  (c-forward-comment large-enough)
 			(when (c-forward-comment -1)
