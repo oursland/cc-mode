@@ -183,7 +183,7 @@ def main():
 	    if not longname:
 		longname = pwd.getpwnam(name)[4]
 		usernames[name] = longname
-	    print '\n%s  %s  <cc-mode-help@python.org>' % (timestr, longname)
+	    print '\n%s  %s  <bug-cc-mode@gnu.org>' % (timestr, longname)
 	    for filename, logmsg in changes_byuser[name]:
 		print '\n\t*', filename, logmsg
 
