@@ -788,6 +788,19 @@ operators."
 (c-lang-defvar c-nonsymbol-token-regexp
   (c-lang-const c-nonsymbol-token-regexp))
 
+(c-lang-defconst c-<>-multichar-token-regexp
+  ;; Regexp matching all tokens containing "<" or ">" which are longer
+  ;; than one char.
+  t (c-make-keywords-re nil
+      (mapcan (lambda (op)
+		(and (> (length op) 1)
+		     (string-match "[<>]" op)
+		     (list op)))
+	      (append (c-lang-const c-other-op-syntax-tokens)
+		      (c-lang-const c-operator-list)))))
+(c-lang-defvar c-<>-multichar-token-regexp
+  (c-lang-const c-<>-multichar-token-regexp))
+
 (c-lang-defconst c-<-op-cont-regexp
   ;; Regexp matching the second and subsequent characters of all
   ;; multicharacter tokens that begin with "<".

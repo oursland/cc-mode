@@ -336,9 +336,9 @@ preferably use the `c-mode-menu' language constant directly."
       (if (byte-code-function-p f) f (byte-compile f)))))
 
 (defun c-after-change (beg end len)
-  ;; Function put on `after-change-functions' to adjust various
-  ;; caches.  Prefer speed to finesse here, since there will be an
-  ;; order of magnitude more calls to this function than any of the
+  ;; Function put on `after-change-functions' to adjust various caches
+  ;; etc.  Prefer speed to finesse here, since there will be an order
+  ;; of magnitude more calls to this function than any of the
   ;; functions that use the caches.
   ;;
   ;; Note that care must be taken so that this is called before any
@@ -360,7 +360,10 @@ preferably use the `c-mode-menu' language constant directly."
 
     (c-invalidate-sws-region-after beg end)
     (c-invalidate-state-cache beg)
-    (c-invalidate-find-decl-cache beg)))
+    (c-invalidate-find-decl-cache beg)
+
+    (when c-recognize-<>-arglists
+      (c-after-change-check-<>-operators beg end))))
 
 (defun c-basic-common-init (mode default-style)
   "Do the necessary initialization for the syntax handling routines

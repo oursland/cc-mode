@@ -640,17 +640,18 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 (defun c-font-lock-<>-arglists (limit)
   ;; Fontify types and references in names containing angle bracket
-  ;; arglists from the point to LIMIT.  This will also fontify cases
-  ;; like normal function calls on the form "foo (a < b, c > d)", but
-  ;; `c-font-lock-declarations' will undo that later.  Nil is always
-  ;; returned.
+  ;; arglists from the point to LIMIT.  Note that
+  ;; `c-font-lock-declarations' already has handled many of them.  Nil
+  ;; is always returned.
 
   (let (;; The font-lock package in Emacs is known to clobber
 	;; `parse-sexp-lookup-properties' (when it exists).
 	(parse-sexp-lookup-properties
 	 (cc-eval-when-compile
 	   (boundp 'parse-sexp-lookup-properties)))
-	id-start id-end pos kwd-sym)
+	(c-parse-and-markup-<>-arglists t)
+	c-disallow-comma-in-<>-arglists
+	id-start id-end id-face pos kwd-sym)
 
     (while (and (< (point) limit)
 		(re-search-forward c-opt-<>-arglist-start limit t))
@@ -661,28 +662,51 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
       (goto-char id-start)
       (unless (c-skip-comments-and-strings limit)
-	(setq kwd-sym nil)
-	(if (or (not (eq (get-text-property id-start 'face)
-			 'font-lock-keyword-face))
-		(when (looking-at c-opt-<>-sexp-key)
-		  (setq kwd-sym (c-keyword-sym (match-string 1)))))
+	(setq kwd-sym nil
+	      c-disallow-comma-in-<>-arglists nil
+	      id-face (get-text-property id-start 'face))
+
+	(if (cond
+	     ((eq id-face 'font-lock-type-face)
+	      ;; The identifier got the type face so it has already been
+	      ;; handled in `c-font-lock-declarations'.
+	      nil)
+
+	     ((eq id-face 'font-lock-keyword-face)
+	      (when (looking-at c-opt-<>-sexp-key)
+		;; There's a special keyword before the "<" that tells
+		;; that it's an angle bracket arglist.
+		(setq kwd-sym (c-keyword-sym (match-string 1)))))
+
+	     (t
+	      ;; There's a normal identifier before the "<".  If we're
+	      ;; not in a declaration context then we set
+	      ;; `c-disallow-comma-in-<>-arglists' to avoid recognizing
+	      ;; templates in function calls like "foo (a < b, c > d)".
+	      (c-backward-syntactic-ws)
+	      (when (and (memq (char-before) '(?\( ?,))
+			 (not (eq (get-text-property (1- (point)) 'c-type)
+				  'c-decl-arg-start)))
+		(setq c-disallow-comma-in-<>-arglists t))
+	      t))
+
 	    (progn
 	      (goto-char (1- pos))
 	      ;; Check for comment/string both at the identifier and
 	      ;; at the "<".
 	      (unless (c-skip-comments-and-strings limit)
 
-		(when (c-forward-<>-arglist (c-keyword-member kwd-sym
-							      'c-<>-type-kwds)
-					    t)
-		  (when (and c-opt-identifier-concat-key
-			     (not (get-text-property id-start 'face)))
-		    (c-forward-syntactic-ws)
-		    (if (looking-at c-opt-identifier-concat-key)
+		(c-fontify-types-and-refs ()
+		  (when (c-forward-<>-arglist (c-keyword-member
+					       kwd-sym 'c-<>-type-kwds))
+		    (when (and c-opt-identifier-concat-key
+			       (not (get-text-property id-start 'face)))
+		      (c-forward-syntactic-ws)
+		      (if (looking-at c-opt-identifier-concat-key)
+			  (c-put-font-lock-face id-start id-end
+						c-reference-face-name)
 			(c-put-font-lock-face id-start id-end
-					      c-reference-face-name)
-		      (c-put-font-lock-face id-start id-end
-					    'font-lock-type-face))))
+					      'font-lock-type-face)))))
 
 		(goto-char pos)))
 	  (goto-char pos)))))
@@ -1020,33 +1044,22 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		 (and c-recognize-<>-arglists
 		      (eq arglist-type 'other)))
 
-	   (when (and c-disallow-comma-in-<>-arglists
-		      (/= arglist-match ?,))
-	     ;; We're standing at the start of a normal arglist so remove any
-	     ;; angle bracket arglists containing commas that's been
-	     ;; recognized inside it by the preceding slightly opportunistic
-	     ;; scan in `c-font-lock-<>-arglists'.
-	     (while (and (c-syntactic-re-search-forward
-			  c-opt-<>-arglist-start-in-paren nil t t)
-			 (match-beginning 1))
-	       (backward-char)
-	       (when (save-match-data
-		       (and (c-get-char-property (point) 'syntax-table)
-			    (not (c-forward-<>-arglist nil t))))
-		 (c-remove-font-lock-face (match-beginning 2) (match-end 2))))
-	     (goto-char start-pos))
-
 	   ;; Check for a type, but be prepared to skip over leading
 	   ;; specifiers like "static".  Unknown symbols are treated as
 	   ;; possible types, but they could also be specifiers disguised
 	   ;; through macros like __INLINE__, so we recognize both types and
 	   ;; known specifiers after them too.
-	   (while (let ((start (point))
-			(res (unless (eq at-type t)
-			       ;; Don't look for a type if we already found a
-			       ;; positive one; we only loop for the
-			       ;; `c-specifier-key' check then.
-			       (c-forward-type))))
+	   (while (let* ((start (point))
+			 ;; Make the `c-forward-type' call below mark up
+			 ;; template arglists if it finds any.  That's
+			 ;; necessary so that we later will stop inside them
+			 ;; to fontify types there.
+			 (c-parse-and-markup-<>-arglists t)
+			 (res (unless (eq at-type t)
+				;; Don't look for a type if we already found a
+				;; positive one; we only loop for the
+				;; `c-specifier-key' check then.
+				(c-forward-type))))
 
 		    (when res
 		      ;; Found a known or possible type or a prefix of a known
@@ -1734,10 +1747,6 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   t `(;; Initialize some things before the search functions below.
       c-font-lock-complex-decl-prepare
 
-      ;; Fontify angle bracket arglists like templates in C++.
-      ,@(when (c-lang-const c-recognize-<>-arglists)
-	  `(c-font-lock-<>-arglists))
-
       ,@(if (c-major-mode-is 'objc-mode)
 	    ;; Fontify method declarations in Objective-C, but first
 	    ;; we have to put the `c-decl-end' `c-type' property on
@@ -1764,6 +1773,10 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 
       ;; Fontify all declarations and casts.
       c-font-lock-declarations
+
+      ;; Fontify angle bracket arglists like templates in C++.
+      ,@(when (c-lang-const c-recognize-<>-arglists)
+	  `(c-font-lock-<>-arglists))
 
       ;; The first two rules here mostly find occurences that
       ;; `c-font-lock-declarations' has found already, but not
@@ -2276,9 +2289,10 @@ need for `c++-font-lock-extra-types'.")
 
       ;; Look for a protocol reference list.
       (when (if (eq (char-after) ?<)
-		(progn
-		  (setq c-recognize-<>-arglists t)
-		  (c-forward-<>-arglist t t))
+		(let ((c-recognize-<>-arglists t)
+		      (c-parse-and-markup-<>-arglists t)
+		      c-disallow-comma-in-<>-arglists)
+		  (c-forward-<>-arglist t))
 	      t)
 	(c-put-char-property (1- (point)) 'c-type 'c-decl-end)
 	t))))

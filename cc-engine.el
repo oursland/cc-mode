@@ -2118,7 +2118,7 @@ This function does not do any hidden buffer changes."
 	       (goto-char pos)
 	       nil)))))
 
-(defsubst c-beginning-of-current-token (&optional back-limit)
+(defun c-beginning-of-current-token (&optional back-limit)
   ;; Move to the beginning of the current token.  Do not move if not
   ;; in the middle of one.  BACK-LIMIT may be used to bound the
   ;; backward search; if given it's assumed to be at the boundary
@@ -2528,6 +2528,7 @@ This function does not do any hidden buffer changes."
 
   (let ((start (point))
 	state
+	safe-pos
 	;; A list of syntactically relevant positions in descending
 	;; order.  It's used to avoid scanning repeatedly over
 	;; potentially large regions with `parse-partial-sexp' to verify
@@ -2545,7 +2546,7 @@ This function does not do any hidden buffer changes."
 		     ;; Use `parse-partial-sexp' from a safe position down to
 		     ;; the point to check if it's outside comments and
 		     ;; strings.
-		     (let ((pos (point)) safe-pos state-2)
+		     (let ((pos (point)) state-2)
 		       ;; Pick a safe position as close to the point as
 		       ;; possible.
 		       ;;
@@ -3381,17 +3382,41 @@ This function does not do any hidden buffer changes."
 
 ;; Handling of small scale constructs like types and names.
 
-(defun c-remove-<>-arglist-properties (from to)
-  ;; Remove all the properties put by `c-forward-<>-arglist' in the
-  ;; specified region.  Point is clobbered.
-  (goto-char from)
-  (while (progn (skip-chars-forward "^<>," to)
-		(< (point) to))
-    (if (eq (char-after) ?,)
-	(when (eq (c-get-char-property (point) 'c-type) 'c-<>-arg-sep)
-	  (c-clear-char-property (point) 'c-type))
-      (c-clear-char-property (point) 'syntax-table))
-    (forward-char)))
+(defun c-after-change-check-<>-operators (beg end)
+  ;; This is called from `after-change-functions' when
+  ;; c-recognize-<>-arglists' is set.  It ensures that no "<" or ">"
+  ;; chars with paren syntax become part of another operator like "<<"
+  ;; or ">=".
+
+  (save-excursion
+    (goto-char beg)
+    (when (or (looking-at "[<>]")
+	      (< (skip-chars-backward "<>") 0))
+
+      (goto-char beg)
+      (c-beginning-of-current-token)
+      (when (and (< (point) beg)
+		 (looking-at c-<>-multichar-token-regexp)
+		 (< beg (setq beg (match-end 0))))
+	(while (progn (skip-chars-forward "^<>" beg)
+		      (< (point) beg))
+	  (c-clear-char-property (point) 'syntax-table)
+	  (forward-char))))
+
+    (when (< beg end)
+      (goto-char end)
+      (when (or (looking-at "[<>]")
+		(< (skip-chars-backward "<>") 0))
+
+	(goto-char end)
+	(c-beginning-of-current-token)
+	(when (and (< (point) end)
+		   (looking-at c-<>-multichar-token-regexp)
+		   (< end (setq end (match-end 0))))
+	  (while (progn (skip-chars-forward "^<>" end)
+			(< (point) end))
+	    (c-clear-char-property (point) 'syntax-table)
+	    (forward-char)))))))
 
 ;; Dynamically bound variable that instructs `c-forward-type' to also
 ;; treat possible types (i.e. those that it normally returns 'maybe or
@@ -3399,6 +3424,20 @@ This function does not do any hidden buffer changes."
 ;; This means that it records them in `c-record-type-identifiers' if
 ;; that is set, and that it adds them to `c-found-types'.
 (defvar c-promote-possible-types nil)
+
+;; Dynamically bound variable that instructs `c-forward-<>-arglist' to
+;; mark up successfully parsed arglists with paren syntax properties on
+;; the surrounding angle brackets and with `c-<>-arg-sep' in the
+;; `c-type' property of each argument separating comma.
+;;
+;; Setting this variable also makes `c-forward-<>-arglist' recurse into
+;; all arglists for side effects (i.e. recording types), otherwise it
+;; exploits any existing paren syntax properties to quickly jump to the
+;; end of already parsed arglists.
+;;
+;; Marking up the arglists is not the default since doing that correctly
+;; depends on a proper value for `c-disallow-comma-in-<>-arglists'.
+(defvar c-parse-and-markup-<>-arglists nil)
 
 ;; Dynamically bound variable that instructs `c-forward-<>-arglist' to
 ;; not accept arglists that contain more than one argument.  It's used
@@ -3502,7 +3541,14 @@ This function does not do any hidden buffer changes."
   ;; `c-paren-nontype-kwds', `c-paren-type-kwds', `c-<>-type-kwds',
   ;; and `c-<>-arglist-kwds'.
 
-  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos pos)
+  (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos pos
+	;; The call to `c-forward-<>-arglist' below is made after
+	;; `c-<>-sexp-kwds' keywords, so we're certain they actually are
+	;; angle bracket arglists and `c-disallow-comma-in-<>-arglists'
+	;; should therefore be nil.
+	(c-parse-and-markup-<>-arglists t)
+	c-disallow-comma-in-<>-arglists)
+
     (when kwd-sym
       (goto-char (match-end 1))
       (c-forward-syntactic-ws)
@@ -3542,9 +3588,7 @@ This function does not do any hidden buffer changes."
 
        ((and (c-keyword-member kwd-sym 'c-<>-sexp-kwds)
 	     (eq (char-after) ?<)
-	     (c-forward-<>-arglist (c-keyword-member kwd-sym 'c-<>-type-kwds)
-				   (or c-record-type-identifiers
-				       c-disallow-comma-in-<>-arglists)))
+	     (c-forward-<>-arglist (c-keyword-member kwd-sym 'c-<>-type-kwds)))
 	(c-forward-syntactic-ws)
 	(setq safe-pos (point)))
 
@@ -3572,37 +3616,26 @@ This function does not do any hidden buffer changes."
       (goto-char safe-pos)
       t)))
 
-(defun c-forward-<>-arglist (all-types reparse)
-  ;; The point is assumed to be at a '<'.  Try to treat it as the open
+(defun c-forward-<>-arglist (all-types)
+  ;; The point is assumed to be at a "<".  Try to treat it as the open
   ;; paren of an angle bracket arglist and move forward to the the
-  ;; corresponding '>'.  If successful, the point is left after the
-  ;; '>' and t is returned, otherwise the point isn't moved and nil is
+  ;; corresponding ">".  If successful, the point is left after the
+  ;; ">" and t is returned, otherwise the point isn't moved and nil is
   ;; returned.  If ALL-TYPES is t then all encountered arguments in
   ;; the arglist that might be types are treated as found types.
   ;;
-  ;; The surrounding '<' and '>' are given syntax-table properties to
-  ;; make them behave like parentheses.  Each argument separating ','
-  ;; is also set to `c-<>-arg-sep' in the `c-type' property.  These
-  ;; properties are also cleared in a relevant region forward from the
-  ;; point if they seems to be set and it turns out to not be an
-  ;; arglist.
+  ;; The variable `c-parse-and-markup-<>-arglists' controls how this
+  ;; function handles text properties on the angle brackets and argument
+  ;; separating commas.
   ;;
-  ;; If the arglist has been successfully parsed before then paren
-  ;; syntax properties will be exploited to quickly jump to the end,
-  ;; but that can be disabled by setting REPARSE to t.  That is
-  ;; necessary if the various side effects, e.g. recording of type
-  ;; ranges, are important.  Setting REPARSE to t only applies
-  ;; recursively to nested angle bracket arglists if
-  ;; `c-disallow-comma-in-<>-arglists' is set.
-  ;;
-  ;; This is primarily used in C++ to mark up template arglists.  C++
-  ;; disambiguates them by checking whether the preceding name is a
-  ;; template or not.  We can't do that, so we assume it is a template
-  ;; if it can be parsed as one.  This usually works well since
+  ;; This function is primarily used in C++ to mark up template
+  ;; arglists.  C++ disambiguates them by checking whether the preceding
+  ;; name is a template or not.  We can't do that, so we assume it is a
+  ;; template if it can be parsed as one.  This usually works well since
   ;; comparison expressions on the forms "a < b > c" or "a < b, c > d"
-  ;; in almost all cases would be pointless.  Cases like function
-  ;; calls on the form "foo (a < b, c > d)" needs to be handled
-  ;; specially through the `c-disallow-comma-in-<>-arglists' variable.
+  ;; in almost all cases would be pointless.  Cases like function calls
+  ;; on the form "foo (a < b, c > d)" needs to be handled specially
+  ;; through the `c-disallow-comma-in-<>-arglists' variable.
 
   (let ((start (point))
 	;; If `c-record-type-identifiers' is set then activate
@@ -3611,7 +3644,7 @@ This function does not do any hidden buffer changes."
 	(c-record-found-types (if c-record-type-identifiers t)))
     (if (catch 'angle-bracket-arglist-escape
 	  (setq c-record-found-types
-		(c-forward-<>-arglist-recur all-types reparse)))
+		(c-forward-<>-arglist-recur all-types)))
 	(progn
 	  (when (consp c-record-found-types)
 	    (setq c-record-type-identifiers
@@ -3623,7 +3656,7 @@ This function does not do any hidden buffer changes."
       (goto-char start)
       nil)))
 
-(defun c-forward-<>-arglist-recur (all-types reparse)
+(defun c-forward-<>-arglist-recur (all-types)
   ;; Recursive part of `c-forward-<>-arglist'.
 
   (let ((start (point)) res pos tmp
@@ -3636,61 +3669,24 @@ This function does not do any hidden buffer changes."
 	;; separating ',' in the arglist.
 	arg-start-pos)
 
-    ;; If the '<' has paren open syntax then we've marked it as an
-    ;; angle bracket arglist before, so try to skip to the end and see
-    ;; that the close paren matches.
-    (if (and (c-get-char-property (point) 'syntax-table)
-	     (progn
-	       (forward-char)
-	       (if (and (not (looking-at c-<-op-cont-regexp))
-			(if (c-parse-sexp-lookup-properties)
-			    (c-go-up-list-forward)
-			  (catch 'at-end
-			    (let ((depth 1))
-			      (while (c-syntactic-re-search-forward
-				      "[<>]" nil t t)
-				(when (c-get-char-property (1- (point))
-							   'syntax-table)
-				  (if (eq (char-before) ?<)
-				      (setq depth (1+ depth))
-				    (setq depth (1- depth))
-				    (when (= depth 0) (throw 'at-end t)))))
-			      nil)))
-			(not (looking-at c->-op-cont-regexp))
-			(save-excursion
-			  (backward-char)
-			  (= (point)
-			     (progn (c-beginning-of-current-token)
-				    (point)))))
+    ;; If the '<' has paren open syntax then we've marked it as an angle
+    ;; bracket arglist before, so skip to the end.
+    (if (and (not c-parse-and-markup-<>-arglists)
+	     (c-get-char-property (point) 'syntax-table))
 
-		   ;; Got an arglist that appears to be valid.
-		   (if reparse
-		       ;; Reparsing is requested, so zap the properties in the
-		       ;; region and go on to redo it.  It's done here to
-		       ;; avoid leaving it behind if we exit through
-		       ;; `angle-bracket-arglist-escape' below.
-		       (progn
-			 (c-remove-<>-arglist-properties start (point))
-			 (goto-char start)
-			 nil)
-		     t)
+	(progn
+	  (forward-char)
+	  (if (and (c-go-up-list-forward)
+		   (eq (char-before) ?>))
+	      t
 
-		 ;; Got unmatched paren brackets or either paren was
-		 ;; actually some other token.  Recover by clearing the
-		 ;; syntax properties on all the '<' and '>' in the
-		 ;; range where we'll search for the arglist below.
-		 (goto-char start)
-		 (while (progn (skip-chars-forward "^<>,;{}")
-			       (looking-at "[<>,]"))
-		   (if (eq (char-after) ?,)
-		       (when (eq (c-get-char-property (point) 'c-type)
-				 'c-<>-arg-sep)
-			 (c-clear-char-property (point) 'c-type))
-		     (c-clear-char-property (point) 'syntax-table))
-		   (forward-char))
-		 (goto-char start)
-		 nil)))
-	t
+	    ;; Got unmatched paren angle brackets.  We don't clear the paren
+	    ;; syntax properties and retry, on the basis that it's very
+	    ;; unlikely that paren angle brackets become operators by code
+	    ;; manipulation.  It's far more likely that it doesn't match due
+	    ;; to narrowing or some temporary change.
+	    (goto-char start)
+	    nil))
 
       (forward-char)
       (unless (looking-at c-<-op-cont-regexp)
@@ -3745,11 +3741,6 @@ This function does not do any hidden buffer changes."
 		      ;; balanced sexp.  In that case we stop just short
 		      ;; of it so check if the following char is the closer.
 		      (when (eq (char-after) ?>)
-			;; Remove its syntax so that we don't enter the
-			;; recovery code below.  That's not necessary
-			;; since there's no real reason to suspect that
-			;; things inside the arglist are unbalanced.
-			(c-clear-char-property (point) 'syntax-table)
 			(forward-char)
 			t)))
 
@@ -3758,40 +3749,21 @@ This function does not do any hidden buffer changes."
 		  ;; Either an operator starting with '>' or the end of
 		  ;; the angle bracket arglist.
 
-		  (if (and (/= (1- (point)) pos)
-			   (c-get-char-property (1- (point)) 'syntax-table)
-			   (progn
-			     (c-clear-char-property (1- (point)) 'syntax-table)
-			     (c-parse-sexp-lookup-properties)))
-
-		      ;; We've skipped past a list that ended with '>'.  It
-		      ;; must be unbalanced since nested arglists are handled
-		      ;; in the case below.  Recover by removing all paren
-		      ;; properties on '<' and '>' in the searched region and
-		      ;; redo the search.
+		  (if (looking-at c->-op-cont-regexp)
 		      (progn
-			(c-remove-<>-arglist-properties pos (point))
-			(goto-char pos)
-			t)
+			(goto-char (match-end 0))
+			t)		; Continue the loop.
 
-		    (if (looking-at c->-op-cont-regexp)
-			(progn
-			  (when (text-property-not-all
-				 (1- (point)) (match-end 0) 'syntax-table nil)
-			    (c-remove-<>-arglist-properties (1- (point))
-							    (match-end 0)))
-			  (goto-char (match-end 0))
-			  t)
-
-		      ;; The angle bracket arglist is finished.
+		    ;; The angle bracket arglist is finished.
+		    (when c-parse-and-markup-<>-arglists
 		      (while arg-start-pos
 			(c-put-char-property (1- (car arg-start-pos))
 					     'c-type 'c-<>-arg-sep)
 			(setq arg-start-pos (cdr arg-start-pos)))
 		      (c-mark-<-as-paren start)
-		      (c-mark->-as-paren (1- (point)))
-		      (setq res t)
-		      nil)))
+		      (c-mark->-as-paren (1- (point))))
+		    (setq res t)
+		    nil))		; Exit the loop.
 
 		 ((eq (char-before) ?<)
 		  ;; Either an operator starting with '<' or a nested arglist.
@@ -3806,7 +3778,7 @@ This function does not do any hidden buffer changes."
 			   (and
 
 			    (save-excursion
-			      ;; There's always an identifier before a angle
+			      ;; There's always an identifier before an angle
 			      ;; bracket arglist, or a keyword in
 			      ;; `c-<>-type-kwds' or `c-<>-arglist-kwds'.
 			      (c-backward-syntactic-ws)
@@ -3824,26 +3796,11 @@ This function does not do any hidden buffer changes."
 				     (and keyword-match
 					  (c-keyword-member
 					   (c-keyword-sym (match-string 1))
-					   'c-<>-type-kwds))
-				     (and reparse
-					  c-disallow-comma-in-<>-arglists))))
+					   'c-<>-type-kwds)))))
 			    )))
 
 			;; It was not an angle bracket arglist.
-			(progn
-			  (when (text-property-not-all
-				 (1- pos) tmp 'syntax-table nil)
-			    (if (c-parse-sexp-lookup-properties)
-				;; Got an invalid open paren syntax on this
-				;; '<'.  We'll probably get an unbalanced '>'
-				;; further ahead if we just remove the syntax
-				;; here, so recover by removing all paren
-				;; properties up to and including the
-				;; balancing close paren.
-				(parse-partial-sexp pos (point-max) -1)
-			      (goto-char tmp))
-			    (c-remove-<>-arglist-properties pos (point)))
-			  (goto-char tmp))
+			(goto-char tmp)
 
 		      ;; It was an angle bracket arglist.
 		      (setq c-record-found-types subres)
@@ -4008,8 +3965,7 @@ This function does not do any hidden buffer changes."
 	       ;; Maybe an angle bracket arglist.
 	       (when (let ((c-record-type-identifiers nil)
 			   (c-record-found-types nil))
-		       (c-forward-<>-arglist
-			nil c-disallow-comma-in-<>-arglists))
+		       (c-forward-<>-arglist nil))
 		 (c-forward-syntactic-ws)
 		 (setq pos (point))
 		 (if (and c-opt-identifier-concat-key
