@@ -716,7 +716,8 @@ on, then that line is also re-indented.
 @cindex inexpr-class-open symbol
 @cindex inexpr-class-close symbol
 
-The insertion of newlines is controlled by the
+The default in auto-newline mode is to insert newlines both before and
+after a brace, but that can be controlled by the
 @code{c-hanging-braces-alist} variable.  This variable contains a
 mapping between syntactic symbols related to braces, and a list of
 places to insert a newline.  The syntactic symbols that are useful for
@@ -774,6 +775,11 @@ will appear on a line by themselves, as shown by the close braces in the
 above example.  The list can also be empty, in which case no newlines
 are added either before or after the brace.
 
+If a syntactic symbol is missing entirely from
+@code{c-hanging-braces-alist}, it's treated in the same way as an
+@var{ACTION} with a list containing @code{before} and @code{after}, so
+that braces by default end up on their own line.
+
 For example, the default value of @code{c-hanging-braces-alist} is:
 @example
 @group
@@ -797,12 +803,13 @@ allow subsequent text to follow on the same line as the brace.  Also,
 subsequent text should follow on the next line.  The opposite holds for
 @code{inexpr-class-close} braces; they won't hang, but the following
 text continues on the same line.  Here, in the @code{block-close} entry,
-you also see an example of using a function as an @var{ACTION}.
+you also see an example of using a function as an @var{ACTION}.  In all
+other cases, braces are put on a line by themselves.
 
 A word of caution: it is not a good idea to hang top-level construct
 introducing braces, such as @code{class-open} or @code{defun-open}.
 Emacs makes an assumption that such braces will always appear in column
-zero, hanging such braces can introduce performance problems.
+zero, hanging them can introduce performance problems.
 @xref{Performance Issues}, for more information.
 
 
@@ -1994,8 +2001,8 @@ Note however that @code{user} style is @emph{not} the default style.
 can change this by setting variable @code{c-default-style}.  Be careful
 if you customize @ccmode{} as described above; since your changes will
 be captured in the @code{user} style, you will also have to change
-@code{c-default-style} to "user" to see the effect of your
-customizations.
+@code{c-default-style} to @code{'((other . "user"))} to see the effect
+of your customizations.
 
 @end itemize
 
