@@ -84,8 +84,9 @@ essentially a bug fix release.
 
     I have no idea whether CC Mode 5 will work with XEmacs 19.14 or
     earlier.  You might try following the directions for Emacs 19.34
-    below.  I do not plan to actively support any earlier XEmacs
-    version.
+    below (although you will <em>not</em> need the
+    <code>cc-mode-19.el</code> file).  I do not plan to actively
+    support any earlier XEmacs version.
 
 <h3>Emacs</h3>
 
@@ -99,7 +100,7 @@ essentially a bug fix release.
 
     <p> After you do this, read the <code><a href="cc-mode/README">
     README</a></code> file that comes with the CC Mode distribution
-    for mor details.
+    for more details.
 
     <p> I have no idea whether CC Mode 5 will work with Emacs versions
     before 19.34.  You might try following the directions above, but I
