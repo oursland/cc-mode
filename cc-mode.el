@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.261 $
-;; Last Modified:   $Date: 1994-02-21 16:40:05 $
+;; Version:         $Revision: 3.262 $
+;; Last Modified:   $Date: 1994-02-21 18:13:53 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-21 16:40:05 $|$Revision: 3.261 $|
+;; |$Date: 1994-02-21 18:13:53 $|$Revision: 3.262 $|
 
 ;;; Code:
 
@@ -723,7 +723,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.261 $
+cc-mode Revision: $Revision: 3.262 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -754,7 +754,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.261 $
+cc-mode Revision: $Revision: 3.262 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2363,16 +2363,16 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		       (setq placeholder (cdr decl)))
 		  ))
 	      (c-add-semantics 'class-open placeholder))
-	     ;; CASE 4A.2: inline defun open
-	     (inclass-p
-	      (c-add-semantics 'inline-open (cdr inclass-p)))
-	     ;; CASE 4A.3: brace list open
+	     ;; CASE 4A.2: brace list open
 	     ((save-excursion
 		(c-beginning-of-statement nil lim)
 		(setq placeholder (point))
 		(or (looking-at "\\<enum\\>")
 		    (= char-before-ip ?=)))
 	      (c-add-semantics 'brace-list-open placeholder))
+	     ;; CASE 4A.3: inline defun open
+	     (inclass-p
+	      (c-add-semantics 'inline-open (cdr inclass-p)))
 	     ;; CASE 4A.4: ordinary defun open
 	     (t
 	      (c-add-semantics 'defun-open (c-point 'bol))
@@ -3171,7 +3171,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.261 $"
+(defconst c-version "$Revision: 3.262 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
