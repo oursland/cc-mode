@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.307 $
-;; Last Modified:   $Date: 1994-04-14 03:57:19 $
+;; Version:         $Revision: 3.308 $
+;; Last Modified:   $Date: 1994-04-14 18:42:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-14 03:57:19 $|$Revision: 3.307 $|
+;; |$Date: 1994-04-14 18:42:00 $|$Revision: 3.308 $|
 
 ;;; Code:
 
@@ -790,7 +790,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.307 $
+cc-mode Revision: $Revision: 3.308 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -821,7 +821,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.307 $
+cc-mode Revision: $Revision: 3.308 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2208,39 +2208,34 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-parse-state ()
   ;; Find all open parens between BOD and point. BOD is optional and
   ;; defaults to `beginning-of-defun'
-  (unwind-protect
-      ;; we're only interested in brace levels, so we're going to
-      ;; temporarily make parens not have paren class
-      (let ((pos (save-excursion
-		   (beginning-of-defun 2)
-		   (point)))
-	    (here (save-excursion
-		    ;;(skip-chars-forward " \t}")
-		    (point)))
-	    state sexp-end)
-	(modify-syntax-entry ?\( ".")
-	(modify-syntax-entry ?\) ".")
-	(while (and pos (< pos here))
-	  (if (and (setq pos (c-safe (scan-lists pos 1 -1)))
-		   (<= pos here))
-	      (progn
-		(setq sexp-end (c-safe (scan-sexps (1- pos) 1)))
-		(if (and sexp-end
-			 (<= sexp-end here))
-		    ;; we want to record both the start and end of
-		    ;; this sexp, but we only want to record the
-		    ;; last-most of any of them before here
-		    (setq state (cons (cons (1- pos) sexp-end)
-				      (if (consp (car state))
-					  (cdr state)
-					state))
-			  pos sexp-end)
-		  ;; otherwise just put pos on front of list
-		  (setq state (cons (1- pos) state)))
-		)))
-	state)
-    (modify-syntax-entry ?\( "()")
-    (modify-syntax-entry ?\) ")(")))
+  (let ((pos (save-excursion
+	       (beginning-of-defun 2)
+	       (point)))
+	(here (save-excursion
+		;;(skip-chars-forward " \t}")
+		(point)))
+	state sexp-end)
+    (while (and pos (< pos here))
+      (if (and (setq pos (c-safe (scan-lists pos 1 -1)))
+	       (<= pos here))
+	  (progn
+	    (setq sexp-end (c-safe (scan-sexps (1- pos) 1)))
+	    (if (and sexp-end
+		     (<= sexp-end here))
+		;; we want to record both the start and end of this
+		;; sexp, but we only want to record the last-most of
+		;; any of them before here
+		(progn
+		  (if (= (char-after (1- pos)) ?\{)
+		      (setq state (cons (cons (1- pos) sexp-end)
+					(if (consp (car state))
+					    (cdr state)
+					  state))))
+		  (setq pos sexp-end))
+	      ;; we're contained in this sexp so put pos on front of list
+	      (setq state (cons (1- pos) state)))
+	    )))
+    state))
 
 (defun c-beginning-of-inheritance-list (&optional lim)
   ;; Go to the first non-whitespace after the colon that starts a
@@ -3402,7 +3397,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.307 $"
+(defconst c-version "$Revision: 3.308 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
