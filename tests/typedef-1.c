@@ -10,3 +10,5 @@ typedef enum
 {
     RED, GREEN, BLUE
 } COLORS;
+
+typedef unsigned int *foo;
