@@ -1,0 +1,121 @@
+Title: CC Mode Changes
+Author: bwarsaw@python.org
+
+<h1>CC Mode Changes</h1>
+
+The <a href="../index.html">current release</a> is version 4.322.
+Here's what's changed since the version 4.282, last public release:
+
+<UL>
+
+<li> A new style <em>linux</em> has been added.
+
+<li>The following variables have been removed from the default
+<em>cc-mode</em> style:
+    <ul><li><tt>c-echo-syntactic-information-p</tt>
+	<li><tt>c-strict-syntax-p</tt>
+	<li><tt>c-tab-always-indent</tt>
+	<li><tt>c-inhibit-startup-warnings-p</tt>
+    </ul>
+
+<LI> External language declaration blocks are now handled properly.
+Three new syntactic symbols have been added:
+    <DL>
+    <DT> <tt>extern-lang-open</tt>
+    <DD> The brace that opens an extern block.  Hangable via
+    <tt>c-hanging-braces-alist</tt>.
+    <DT> <tt>extern-lang-close</tt>
+    <DD> The brace that closes an extern block.  Hangable via
+    <tt>c-hanging-braces-alist</tt>.
+    <DT> <tt>inextern-lang</tt>
+    <DD> A modifier (with no relative buffer position) which is added
+    to <tt>topmost-intro</tt> syntax lines that occur within an extern
+    block.  See the
+    <A HREF="ftp://ftp.python.org/pub/emacs/cc-mode/cc-mode.texi.gz">
+    texinfo manual</A> for details.
+    </DL>
+
+<LI> New variable: <tt>c-label-minimum-indentation</tt> which defines
+the minimum indentation a label can have in <em>gnu</em> style.  This
+variable has no effect in other styles.
+
+<LI> <tt>c-special-indent-hook</tt> is handled slightly differently
+when it appears in a style definition; the functions in the style
+defintion are appended to the global value of
+<tt>c-special-indent-hook</tt>.
+
+<LI> <tt>c-style-alist</tt> is <tt>defconst</tt>'d now.  This should
+eliminate problems people had with Java mode.
+
+<LI> Lambda expressions (anonymous functions) can now be used as
+custom indentation functions.
+
+<LI> Whitespace is allowed between the protection keyword (public,
+private, protected) and the trailing colon in C++.
+
+<LI> Java mode now recognizes the <tt>finally</tt> and
+<tt>synchronized</tt> keywords.
+
+<LI> New lineup function: <tt>c-lineup-arglist-close-under-paren</tt>.
+Try setting <tt>arglist-close</tt> to this function.
+
+<LI> The variable <tt>c-recognize-knr-p</tt> is deprecated.  Now by
+default, c-mode will always recognize K&amp;R argument declarations
+with no performance penalty.  cc-mode has adopted BOCM's approach
+which assumes that argdecls will always be indented at least one
+space, while the function headers they are associated with will not be
+indented at all.  If your programming style differs from this, you may
+have trouble.  <b>You should remove any setting of this variable from
+your cc-mode configurations!</b>
+
+<li> New variable <tt>c-insert-tab-function</tt>, normally just
+inserts a <em>tab</em> character when indicated by
+<tt>c-tab-always-indent</tt> and <tt>indent-tabs-mode</tt>.  You could
+set this to run <tt>tab-to-tab-stop</tt> instead.
+
+<li><tt>C-s C-s</tt> (<tt>c-show-syntactic-information</tt>) now takes
+an optional universal argument, which inserts the analysis into the
+buffer on the current line, as a comment.
+
+<li><tt>c-mark-function</tt> has been moved to <tt>C-c C-m</tt>.
+
+<LI> The usual assortment of bug fixes.
+</UL>
+
+In addition, I have made a change to the way braces which are given
+<tt>inline-open</tt> syntax are handled.
+
+In the following sample:
+<PRE>
+  1: class Outer
+  2: {
+  3:     void a_function( int a )
+  4:     {
+  5:         do_something( a );
+  6:     }
+  7:     class Inner
+  8:     {
+  9:         void b_function( int b )
+ 10:         {
+ 11:             do_something( b );
+ 12:         }
+ 13:     }
+ 14: }
+</PRE>
+
+cc-mode 4.282 would have analyzed line 4 as
+<tt>((inline-open . 1))</tt>, and line 10 as
+<tt>((inline-open . 87))</tt>.
+So the fact that this brace opened an inclass-inline
+method which should be given extra indentation, was implicit in the
+syntactic symbol.
+
+ <P>
+Some people have argued that the <tt>inclass</tt>
+modifier should be added to the analysis of such lines.  This release
+implements this change so that line 4 is now analyzed as
+<tt>((inclass . 1) (inline-open))</tt> and line 10 as
+<tt>((inclass . 87) (inline-open))</tt>.  The <tt>inline-open</tt>
+symbol has no relative buffer position so that braces in nested
+classes would not be indented too much.
+
