@@ -1,3 +1,76 @@
+Fri Mar  6 00:25:29 1998  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.21
+
+Sat Feb 28 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-initialize-on-load): Variable removed.
+
+Sat Feb 28 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-inside-bracelist-p): Fix for enum test.
+
+Fri Feb 27 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-initialize-cc-mode): Moved require's to top level.
+
+Wed Feb 25 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-fill-paragraph): Always keep point in the same
+ 	relative position.  Fill comment before point if there's nothing
+ 	else on the same line.  Fill block comments after code a little
+ 	better.  Try harder to find a good fill-prefix when point is on a
+ 	block comment ender line.  Use c-Java-javadoc-paragraph-start in
+ 	block comments in Java mode.  Leave block comment ender alone when
+ 	c-hanging-comment-ender-p is nil and point is on that line.
+  	Detect paragraph-separate in multiparagraph comments.  Fix for bug
+ 	that may strip the `*' off `*/' if fill-prefix ends with `*' and
+ 	c-hanging-comment-ender-p is t.  Added filling of multiline string
+ 	literals.  Always return t to disable filling in any unhandled
+ 	area, i.e. actual code where fill-paragraph only mess things up.
+
+Tue Feb 24 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-collect-line-comments): Require same comment
+ 	start column.
+
+	* cc-langs.el Added c-Java-javadoc-paragraph-start for use in
+ 	c-fill-paragraph.
+
+Tue Feb 24 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-fill-paragraph): Bind fill-paragraph-function to
+ 	nil when calling fill-paragraph to avoid bogus recursion which
+ 	will signal an error.
+
+Sat Feb 21 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixes for nesting of and
+ 	repeated defun-open's inside extern and namespace clauses.  This
+ 	is done by passing a relpos to 'inextern-lang and 'innamespace.
+  	Also, the relpos in 'defun-open is no longer always bol.  It's
+ 	always bol when on the top level, however.  Changed cases: 5A.5,
+ 	5I, 14A.
+
+Thu Feb 19 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-forward-token-1, c-backward-token-1): New
+ 	functions to move by tokens.
+
+	(c-guess-basic-syntax): Fixes for Java 1.1 array initialization
+ 	brace lists.
+
+Tue Feb 17 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-mode-19.el Only define the functions if they aren't defined
+ 	already.
+
+Tue Feb 10 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-make.el Require cc-mode-19 if needed before batch compile,
+ 	because it contains macro definitions that must be defined during
+ 	compilation.
+
 Sun Feb  8 15:30:43 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.20
