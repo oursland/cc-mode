@@ -1358,7 +1358,7 @@
 	   ((save-excursion
 	     (goto-char containing-sexp)
 	     (and (c-safe (progn (forward-sexp -1) t))
-		  (looking-at "\\<for\\>")))
+		  (looking-at "\\<for\\>[^_]")))
 	    (goto-char (1+ containing-sexp))
 	    (c-forward-syntactic-ws indent-point)
 	    (c-beginning-of-statement-1 containing-sexp)
