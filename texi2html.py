@@ -688,6 +688,11 @@ class TexinfoParser:
         text = self.collectsavings()
         self.write('<A HREF="', text, '">', text, '</A>')
 
+    def open_uref(self): self.startsaving()
+    def close_uref(self):
+        text = self.collectsavings()
+        self.write('<A HREF="', text, '">', text, '</A>')
+
     def open_email(self): self.startsaving()
     def close_email(self):
         text = self.collectsavings()
