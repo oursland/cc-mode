@@ -9,6 +9,10 @@
 
 @setfilename  cc-mode.info
 @settitle     CC Mode Version 5 Documentation
+@dircategory Editors
+@direntry
+@CC Mode: (cc-mode).
+@end direntry
 @footnotestyle end
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -30,8 +34,8 @@
 @comment Info directory entry for use by install-info
 @dircategory Emacs
 @direntry
-* CC mode: (cc-mode).      Emacs mode for editing C, C++, Objective-C,
-                           Java, Pike, and IDL code.
+* CC Mode: (cc-mode).      Emacs mode for editing C, C++, Objective-C,
+                             Java, Pike, and IDL code.
 @end direntry
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
