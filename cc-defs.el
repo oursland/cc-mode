@@ -78,9 +78,8 @@
 	       c-enable-xemacs-performance-kludge-p)
 	  ;; XEmacs only.  This can improve the performance of
 	  ;; c-parse-state to between 3 and 60 times faster when
-	  ;; braces are hung.  It can cause c-parse-state to be
-	  ;; slightly slower when braces are not hung, but general
-	  ;; editing appears to be still about as fast.
+	  ;; braces are hung.  It can also degrade performance by
+	  ;; about as much when braces are not hung.
 	  (let (pos)
 	    (while (not pos)
 	      (save-restriction
