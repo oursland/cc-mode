@@ -115,31 +115,6 @@
 ;; the previous line, EXCEPT for where a "while" might be the closing
 ;; statement of a do-while.
 
-
-;; (defun c-awk-after-if-for-while-condition-p (&optional do-lim)
-;;   ;; Are we just after the ) in "if/for/while (<condition>)"?
-;;   ;;
-;;   ;; Note that the end of the ) in a do .... while (<condition>) doesn't
-;;   ;; count, since the purpose of this routine is essentially to decide
-;;   ;; whether to indent the next line.
-;;   ;;
-;;   ;; DO-LIM sets a limit on how far back we search for the "do" of a possible
-;;   ;; do-while.
-;;   (and
-;;    (eq (char-before) ?\))
-;;    (save-excursion
-;;      ;; FIXME!!  What happens if the following scan-lists fails?  (2002/10/19).
-;
-;  Answer:  We get an error message.  Function rewritten below.
-;
-;;      (goto-char (c-safe (scan-lists (point) -1 0))) ; back over "(...)"
-;;      (c-backward-token-1)
-;;      (or (looking-at "\\(if\\|for\\)\\>\\([^_]\\|$\\)")
-;;          (and (looking-at "while\\>\\([^_]\\|$\\)") ; Ensure this isn't a do-while.
-;;               (not (eq (c-beginning-of-statement-1 do-lim)
-;;                        'beginning)))))))
-
-
 (defun c-awk-after-if-for-while-condition-p (&optional do-lim)
   ;; Are we just after the ) in "if/for/while (<condition>)"?
   ;;
@@ -220,8 +195,8 @@
                 (or (/= (c-backward-syntactic-ws bol-pos) bsws-pos)
                     (progn (setq nl-prop ?\;)
                            nil)))
-           ;; If we had a backslash at EOL, c-backward-syntactic-ws will
-           ;; have gone backwards over it.  Check the backslash was "real".
+         ;; If we had a backslash at EOL, c-backward-syntactic-ws will
+         ;; have gone backwards over it.  Check the backslash was "real".
          (progn
            (if (looking-at "[ \t]*\\\\+$")
                (if (progn
@@ -332,7 +307,9 @@
   ;; Same as previous function, but for the line containing position POS (or
   ;; the current line if POS is omitted).
   ;; See c-awk-after-if-for-while-condition-p for a description of DO-LIM.
-  (eq (c-awk-get-NL-prop-cur-line do-lim) ?\;))
+  (save-excursion
+    (if pos (goto-char pos))
+    (eq (c-awk-get-NL-prop-cur-line do-lim) ?\;)))
 
 (defun c-awk-after-logical-semicolon (&optional do-lim)
 ;; Are we at BOL, the preceding EOL being a "logical semicolon"?
@@ -534,9 +511,9 @@
 (defconst c-awk-neutral-re
   "\\([{}@` \t]\\|\\+\\+\\|--\\|\\\\.\\)+")
 ;;   A "neutral" char(pair).  Doesn't change the "state" of a subsequent /.
-;; This is space/tab, any shape of bracket, an auto-increment/decrement
-;; operator or an escaped character.  Or one of the (illegal) characters @ or
-;; `.  But NOT an end of line.
+;; This is space/tab, braces, an auto-increment/decrement operator or an
+;; escaped character.  Or one of the (illegal) characters @ or `.  But NOT an
+;; end of line (even if escpaed).
 (defconst c-awk-neutrals*-re
   (concat "\\(" c-awk-neutral-re "\\)*"))
 ;;   A (possibly empty) string of neutral characters (or character pairs).
@@ -549,17 +526,20 @@
 ;;   Will match a string ending in / which is a division sign, in a context
 ;; where an immediate / would be a regexp bracket.  It follows a variable or
 ;; number (with optional intervening "neutral" characters).  This will only
-;; work when there won't be a preceding " or / to foul things up.
+;; work when there won't be a preceding " or / before the sought / to foul
+;; things up.
 (defconst c-awk-non-arith-op-bra-re
   "[[\(&=:!><,?;'~|]")
-;;   Matches any operator character apart from +,-,/,*,%.  For the purpose at
-;; hand (detecting a / which is a regexp bracket) these arith ops are
-;; unnecessary and a pain, because of "++" and "--".
+;;   Matches an openeing BRAket ,round or square, or any operator character
+;; apart from +,-,/,*,%.  For the purpose at hand (detecting a / which is a
+;; regexp bracket) these arith ops are unnecessary and a pain, because of "++"
+;; and "--".
 (defconst c-awk-regexp-sign-re
   (concat c-awk-non-arith-op-bra-re c-awk-neutrals*-re "/"))
 ;;   Will match a string ending in / which is an opening regexp bracket, in a
 ;; context where an immediate / would be a division sign.  This will only work
-;; when there won't be a preceding " or / to foul things up.
+;; when there won't be a preceding " or / before the sought / to foul things
+;; up.
 
 ;; ACM, 2002/02/15: The idea of the next function is to put the "Error font"
 ;; on strings/regexps which are missing their closing delimiter.
@@ -599,6 +579,58 @@
           (put-text-property (1- (point)) (point) 'syntax-table '(1))))))
 
 ;; New version (2002/10/26)
+(defun c-awk-syntax-tablify-string ()
+  ;; Point is at the opening " or _" of a string.  Set the syntax-table
+  ;; properties on this string, leaving point just after the string.
+  ;;
+  ;; The result is nil if a / immediately after the string would be a regexp
+  ;; opener, t if it would be a division sign.
+
+  (search-forward-regexp c-awk-string-without-end-here-re nil t) ; a (possibly unterminated) string
+  (c-awk-set-string-regexp-syntax-table-properties
+   (match-beginning 0) (match-end 0))
+  (cond ((looking-at "\"")
+         (forward-char)
+         t)                             ; In awk, ("15" / 5) gives 3 ;-)
+        ((looking-at "[\n\r]")          ; Unterminated string with EOL.
+         (forward-char)
+         nil)                           ; / on next line would start a regexp
+        (t nil)))                       ; Unterminated string at EOB
+
+(defun c-awk-syntax-tablify-/ (anchor anchor-state-/div)
+  ;; Point is at a /.  Determine whether this is a division sign or a regexp
+  ;; opener, and if the latter, apply syntax-table properties to the entire
+  ;; regexp.  Point is left immediately after the division sign or regexp, as
+  ;; the case may be.
+  ;;
+  ;; ANCHOR-STATE-/DIV identifies whether a / at ANCHOR would have been a
+  ;; division sign (value t) or a regexp opener (value nil).  The idea is that
+  ;; we analyse the line from ANCHOR up till point to determine what the / at
+  ;; point is.
+  ;;
+  ;; The result is what ANCHOR-STATE-/DIV (see above) is where point is left.
+  (let ((/point (point)))
+    (goto-char anchor)
+    ;; Analyse the line to find out what the / is.
+    (if (if anchor-state-/div
+            (not (search-forward-regexp c-awk-regexp-sign-re (1+ /point) t))
+          (search-forward-regexp c-awk-div-sign-re (1+ /point) t))
+        ;; A division sign.
+      (progn (goto-char (1+ /point)) nil)
+      ;; A regexp opener
+      ;; Jump over the regexp innards, setting the match data.
+      (goto-char /point)
+      (search-forward-regexp c-awk-regexp-without-end-re)
+      (c-awk-set-string-regexp-syntax-table-properties
+       (match-beginning 0) (match-end 0))
+      (cond ((looking-at "/")           ; Terminating /
+             (forward-char)
+             t)
+            ((looking-at "[\n\r]")      ; Incomplete regexp terminated by EOL
+             (forward-char)
+             nil)                  ; / on next line would start another regexp
+            (t nil)))))                 ; Unterminated regexp at EOB
+
 (defun c-awk-set-syntax-table-properties (lim)
 ;;     Scan the buffer text between point and LIM, setting (and clearing) the
 ;; syntax-table property where necessary.
@@ -621,50 +653,27 @@
 ;;   given the property "punctuation".  This will later allow other routines
 ;;   to use the regexp "\\S\"*" to skip over the string innards.
 ;; (iv) Inside a comment, all syntax-table properties are cleared.
-    (let (anchor /point
-          (anchor-state-/div nil)) ; t means a following / would be a div sign.
-      (c-awk-beginning-of-logical-line) ; ACM 2002/7/21.  This is probably redundant.
-      (put-text-property (point) lim 'syntax-table nil)
-      (search-forward-regexp c-awk-harmless-lines+-here-re nil t) ; skip harmless lines.
+  (let (anchor /point
+               (anchor-state-/div nil)) ; t means a following / would be a div sign.
+    (c-awk-beginning-of-logical-line) ; ACM 2002/7/21.  This is probably redundant.
+    (put-text-property (point) lim 'syntax-table nil)
+    (search-forward-regexp c-awk-harmless-lines+-here-re nil t) ; skip harmless lines.
 
-      ;; Once round the next loop for each string, regexp, or div sign
-      (while (< (point) lim)
-        (setq anchor (point))
-        (search-forward-regexp c-awk-harmless-string*-here-re nil t)
-        ;; We are now looking at either a " or a /.
-        (if (search-forward-regexp c-awk-string-without-end-here-re nil t) ; a (possibly unterminated) string
-            (progn (c-awk-set-string-regexp-syntax-table-properties
-                    (match-beginning 0) (match-end 0))
-                   (if (looking-at "\"") (forward-char)) ; go to end of string but not over an EOL.
-                   (setq anchor-state-/div t)) ; ("15" / 5) gives 3 in awk ;-)
-                   
-          ;; We've got a '/'.  Is it a division sign or the start of a regexp?
-          ;; We need to go back to anchor, where the state is known, then scan
-          ;; forward.  Between anchor and point, there is exactly one /.
-          (setq /point (point))
-          (goto-char anchor)
-          (if (or
-               (and (not anchor-state-/div) (search-forward-regexp c-awk-div-sign-re (1+ /point) t))
-               (and anchor-state-/div
-                    (not (search-forward-regexp c-awk-regexp-sign-re (1+ /point) t))))
-              ;; We've got a '/' which is a division sign.
-              (progn
-                (setq anchor-state-/div nil)
-                (goto-char (1+ /point)))
-            ;; We've got a '/' which opens a regexp.  Currently, Point may be
-            ;; at either ANCHOR or (1+ /POINT).  The latter's no good, so....
-            (goto-char /point)
-            (search-forward-regexp c-awk-regexp-without-end-re) ; Jump over the regexp, setting the match data.
-            (c-awk-set-string-regexp-syntax-table-properties
-             (match-beginning 0) (match-end 0))
-            (setq anchor-state-/div t)
-            (if (looking-at "/") (forward-char)))) ; go to end of regexp, but not past an EOL.
+    ;; Once round the next loop for each string, regexp, or div sign
+    (while (< (point) lim)
+      (setq anchor (point))
+      (search-forward-regexp c-awk-harmless-string*-here-re nil t)
+      ;; We are now looking at either a " or a /.
+      ;; Do our thing on the string, regexp or divsion sign.
+      (setq anchor-state-/div
+            (if (looking-at "_?\"")
+                (c-awk-syntax-tablify-string)
+              (c-awk-syntax-tablify-/ anchor anchor-state-/div)))
 
-        ;; Skip any further "harmless" lines before the next tricky line. 
-        (if (search-forward-regexp c-awk-harmless-lines+-here-re nil t)
-            (setq anchor-state-/div nil)))
-      nil))
-
+      ;; Skip any further "harmless" lines before the next tricky one. 
+      (if (search-forward-regexp c-awk-harmless-lines+-here-re nil t)
+          (setq anchor-state-/div nil)))
+    nil))
 
 ;; FIXME!! Temporary definition, pending integration with cc-fonts.el.  ACM
 ;; 2002/9/24.
