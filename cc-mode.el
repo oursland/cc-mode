@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.248 $
-;; Last Modified:   $Date: 1994-02-14 19:38:11 $
+;; Version:         $Revision: 3.249 $
+;; Last Modified:   $Date: 1994-02-16 20:35:05 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-14 19:38:11 $|$Revision: 3.248 $|
+;; |$Date: 1994-02-16 20:35:05 $|$Revision: 3.249 $|
 
 ;;; Code:
 
@@ -130,7 +130,7 @@ reported and the semantic symbol is ignored.")
     (member-init-cont      . 0)
     (inher-intro           . +)
     (inher-cont            . c-lineup-multi-inher)
-    ;;some people like this behavior instead
+    ;; some people might prefer
     ;;(block-open            . c-adaptive-block-open)
     (block-open            . 0)
     (block-close           . 0)
@@ -139,6 +139,8 @@ reported and the semantic symbol is ignored.")
     (brace-list-intro      . +)
     (brace-list-entry      . 0)
     (statement             . 0)
+    ;; some people might prefer
+    ;;(statement             . c-lineup-runin-statements)
     (statement-cont        . +)
     (statement-block-intro . +)
     (statement-case-intro  . +)
@@ -713,7 +715,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.248 $
+cc-mode Revision: $Revision: 3.249 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -744,7 +746,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.248 $
+cc-mode Revision: $Revision: 3.249 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2997,6 +2999,19 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    -1000			;jam it against the left side
 	    )))))
 
+(defun c-lineup-runin-statements (langelem)
+  ;; line up statements in coding standards which place the first
+  ;; statement on the same line as the block opening brace.
+  (if (= (char-after (cdr langelem)) ?{)
+      (save-excursion
+	(let ((curcol (progn
+			(goto-char (cdr langelem))
+			(current-column))))
+	  (forward-char 1)
+	  (skip-chars-forward " \t")
+	  (- (current-column) curcol)))
+    0))
+
 
 ;; commands for "macroizations" -- making C++ parameterized types via
 ;; macros. Also commands for commentifying regions
@@ -3127,7 +3142,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.248 $"
+(defconst c-version "$Revision: 3.249 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
