@@ -1,6 +1,6 @@
 <!-- -*- html -*- -->
 <?php
-  $title = "Anonymous CVS access";
+  $title = "Anonymous CVS";
   include ("header.h");
 ?>
 
@@ -18,17 +18,18 @@ by unanswered, however.
 
 <ol>
 
-  <li><code>cvs&nbsp;-d:pserver:anonymous@cvs.cc-mode.sourceforge.net:/cvsroot/cc-mode&nbsp;login</code><br />
-  Just press Enter at the password prompt.
+  <p><li><i>cvs&nbsp;-d:pserver:anonymous@cvs.cc-mode.sourceforge.net:/cvsroot/cc-mode&nbsp;login</i>
 
-  <li><code>cvs&nbsp;-z3&nbsp;-d:pserver:anonymous@cvs.cc-mode.sourceforge.net:/cvsroot/cc-mode&nbsp;co&nbsp;cc-mode</code>
+  <p>Just press Enter at the password prompt.
+
+  <p><li><i>cvs&nbsp;-z3&nbsp;-d:pserver:anonymous@cvs.cc-mode.sourceforge.net:/cvsroot/cc-mode&nbsp;co&nbsp;cc-mode</i>
 
 </ol>
 
 <p>The CC Mode source will be in the root of the checked out tree.
 You'll find the regression test suite in the <code>tests</code>
 directory; take a look in <code>000tests.el</code> to figure out how
-to use it.  The <code>admin</code> directory contains the source for
-this web site, which probably isn't very interesting.
+to use it.  The <code>admin</code> directory probably isn't very
+interesting; it contains the source for this web site.
 
 <?php include ("footer.h"); ?>
