@@ -24,9 +24,9 @@ a = {
 	 b
     }},
     foo ({
-	a; // Ok, it's not valid Pike; just checking.. ;)
-	b;
-    },
+	    a; // Ok, it's not valid Pike; just checking.. ;)
+	    b;
+	},
 	 c), ([a,
 	       b,
 	       (<
