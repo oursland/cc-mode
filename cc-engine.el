@@ -212,7 +212,7 @@
     ;; We always want to skip over the non-whitespace modifier
     ;; characters that can start a statement.
     (let ((lim (point)))
-      (skip-chars-backward "-+!*&~@` \t\n" (c-point 'boi))
+      (skip-chars-backward "-+!*&~@`# \t\n" (c-point 'boi))
       (skip-chars-forward " \t\n" lim))))
 
 (defun c-end-of-statement-1 ()
