@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.105 $
-;; Last Modified:   $Date: 1994-11-29 22:41:24 $
+;; Version:         $Revision: 4.106 $
+;; Last Modified:   $Date: 1994-11-29 23:57:35 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -41,11 +41,12 @@
 ;; This package is called "cc-mode" to distinguish it from its
 ;; ancestors, but there really is no top-level cc-mode.
 
-;; Details on how to use cc-mode will some day be contained in an
+;; Details on how to use cc-mode will eventually be contained in an
 ;; accompanying texinfo manual.  Volunteers to help finish this manual
-;; would be greatly appreciated!  Contact me at the address above if
-;; you'd like to volunteer. Until the manual is finished, an
-;; accompanying README is the only documentation available.
+;; would be greatly appreciated!  Contact me or the FSF if you'd like
+;; to volunteer.  Until the manual is finished, an accompanying README
+;; is the only documentation available.  If you did not get the README
+;; with your copy of cc-mode, contact the help address above.
 
 ;; To submit bug reports, hit "C-c C-b", and please try to include a
 ;; code sample and exact recipe so I can reproduce your problem.  If
@@ -101,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-11-29 22:41:24 $|$Revision: 4.105 $|
+;; |$Date: 1994-11-29 23:57:35 $|$Revision: 4.106 $|
 
 ;;; Code:
 
@@ -4181,7 +4182,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.105 $"
+(defconst c-version "$Revision: 4.106 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
