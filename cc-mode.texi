@@ -2273,15 +2273,18 @@ list containing a single function which inserts newlines only after
 semi-colons which do not appear inside parenthesis lists (i.e. those
 that separate @code{for}-clause statements).
 
-Here's an example of a criteria function that will prevent newlines from
-being inserted after semicolons when there is a non-blank following
-line.  Otherwise, it makes no determination.  To use, add this to the
-front of the @code{c-hanging-semi&comma-criteria} list.
+@findex c-semi&comma-no-newlines-before-nonblanks
+@findex semi&comma-no-newlines-before-nonblanks (c-)
+Here's an example of a criteria function, provided by @ccmode{}, that
+will prevent newlines from being inserted after semicolons when there is
+a non-blank following line.  Otherwise, it makes no determination.  To
+use, add this to the front of the @code{c-hanging-semi&comma-criteria}
+list.
 
 @example
 @group
 
-(defun my-semicolon-criteria ()
+(defun c-semi&comma-no-newlines-before-nonblanks ()
   (save-excursion
     (if (and (eq last-command-char ?\;)
              (zerop (forward-line 1))
@@ -2292,6 +2295,19 @@ front of the @code{c-hanging-semi&comma-criteria} list.
 @end group
 @end example
 
+@findex c-semi&comma-inside-parenlist
+@findex c-semi&comma-no-newlines-for-oneline-inliners
+@findex semi&comma-inside-parenlist (c-)
+@findex semi&comma-no-newlines-for-oneline-inliners (c-)
+The default value of @code{c-hanging-semi&comma-criteria} is a list
+containing just the function @code{c-semi&comma-inside-parenlist}, which 
+suppresses newlines after semicolons inside parenthesis lists
+(e.g. @code{for}-loops).  In addition to
+@code{c-semi&comma-no-newlines-before-nonblanks} described above,
+@ccmode{} also comes with the criteria function
+@code{c-semi&comma-no-newlines-for-oneline-inliners}, which suppresses
+newlines after semicolons inside one-line inline method definitions
+(i.e. in C++ or Java).
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node     Other Special Indentations, , Customizing Semi-colons and Commas, Advanced Customizations
