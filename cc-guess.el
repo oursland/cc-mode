@@ -5,8 +5,8 @@
 ;; Author:        1994-1995 Barry A. Warsaw
 ;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
 ;; Created:       August 1994, split from cc-mode.el
-;; Version:       $Revision: 1.5 $
-;; Last Modified: $Date: 1995-06-11 21:39:57 $
+;; Version:       $Revision: 1.6 $
+;; Last Modified: $Date: 1995-06-20 15:05:22 $
 ;; Keywords: c languages oop
 
 ;; This file is not part of GNU Emacs.
@@ -49,7 +49,7 @@
     (string . -1000)
     (comment-intro . c-lineup-comment)
     (arglist-cont-nonempty . c-lineup-arglist)
-    (cpp-macro . -1000))
+    (cpp-macro . -1000)))
   
 
 (defun cc-guess-region (start end &optional reset)
@@ -95,3 +95,5 @@ and `cc-guess-view-style' for viewing the guessed style."
 		      cc-guessed-style))
 	  ))
       (forward-line 1))))
+
+;;; cc-guess.el ends here
