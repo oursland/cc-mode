@@ -29,6 +29,9 @@ int more() {
 	({
 	    z;
 	});
+    int a3 = 3 + ({
+	    z;
+	});
     return (3 + ({ int y = foo (); int z; y;
 	    y;
 	}));
