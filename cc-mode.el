@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.174 $
-;; Last Modified:   $Date: 1994-01-10 20:21:20 $
+;; Version:         $Revision: 3.175 $
+;; Last Modified:   $Date: 1994-01-10 22:10:11 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -82,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-10 20:21:20 $|$Revision: 3.174 $|
+;; |$Date: 1994-01-10 22:10:11 $|$Revision: 3.175 $|
 
 ;;; Code:
 
@@ -652,7 +652,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.174 $
+CC-MODE REVISION: $Revision: 3.175 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -686,7 +686,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.174 $
+CC-MODE REVISION: $Revision: 3.175 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1314,7 +1314,7 @@ exist."
      (list langelem (cond
 		     ((string-equal "+" offset) '+)
 		     ((string-equal "-" offset) '-)
-		     ((string-match "^[0-9]+$" offset)
+		     ((string-match "^-?[0-9]+$" offset)
 		      (string-to-int offset))
 		     ;; must be a function symbol
 		     (t (intern offset))
@@ -2974,7 +2974,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.174 $"
+(defconst c-version "$Revision: 3.175 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
