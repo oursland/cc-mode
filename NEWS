@@ -247,9 +247,9 @@ backslash) in the macro.
 
 ** indent-for-comment is more customizable.
 The behavior of M-; (indent-for-comment) is now configurable through
-the variable c-indent-comment-alist.  The indentation behavior based
-on the preceding code on the line, e.g. to get two spaces after #else
-and #endif but indentation to comment-column in most other cases
+the variable c-indent-comment-alist.  The indentation behavior is
+based on the preceding code on the line, e.g. to get two spaces after
+#else and #endif but indentation to comment-column in most other cases
 (something which was hardcoded earlier).
 
 ** New function c-context-open-line.

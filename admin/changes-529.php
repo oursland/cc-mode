@@ -84,7 +84,7 @@ if (x)
   <p><li>The behavior of <code>M-;</code>
   (<code>indent-for-comment</code>) is now configurable through the
   variable <code>c-indent-comment-alist</code>.  The indentation
-  behavior based on the preceding code on the line, e.g. to get two
+  behavior is based on the preceding code on the line, e.g. to get two
   spaces after <code>#else</code> and <code>#endif</code> but
   indentation to <code>comment-column</code> in most other cases
   (something which was hardcoded earlier).
