@@ -380,9 +380,7 @@ Works with: inher-cont, member-init-cont."
     (back-to-indentation)
     (let* ((eol (c-point 'eol))
 	   (here (point))
-	   (char-after-ip (progn
-			    (skip-chars-forward " \t")
-			    (char-after))))
+	   (char-after-ip (char-after)))
       (if (cdr langelem) (goto-char (cdr langelem)))
 
       ;; This kludge is necessary to support both inher-cont and
@@ -392,13 +390,12 @@ Works with: inher-cont, member-init-cont."
 	(backward-char)
 	(c-backward-syntactic-ws))
 
-      (skip-chars-forward "^:" eol)
-      (if (eq char-after-ip ?,)
-	  (skip-chars-forward " \t" eol)
-	(skip-chars-forward " \t:" eol))
-      (if (or (eolp)
-	      (looking-at c-comment-start-regexp))
-	  (c-forward-syntactic-ws here))
+      (c-syntactic-re-search-forward ":" eol 'move)
+      (if (looking-at c-syntactic-eol)
+	  (c-forward-syntactic-ws here)
+	(if (eq char-after-ip ?,)
+	    (backward-char)
+	  (skip-chars-forward " \t" eol)))
       (if (< (point) here)
 	  (vector (current-column)))
       )))
