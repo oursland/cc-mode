@@ -523,7 +523,8 @@ to be set as a file local variable.")
   (let ((testbuf (get-buffer-create "*cc-test*"))
 	(resfile (concat (file-name-sans-extension filename) ".res"))
 	(facefile (concat (file-name-sans-extension filename) ".face"))
-	exp-syntax-buf res-syntax-buf exp-faces-buf res-faces-buf)
+	exp-syntax-buf res-syntax-buf exp-faces-buf res-faces-buf
+	(enable-local-eval t))
 
     ;; Old emacsen displays eight bit chars as octal escapes, which
     ;; makes (current-column) misbehave in `cc-test-record-faces'.
