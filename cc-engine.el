@@ -244,7 +244,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
   (let ((case-fold-search nil)
 	(start (point))
 	macro-start
-	(delims (if comma-delim '(?\; ?,) '(?\;))) ; What about \n, \r for Awk (ACM, 2002/5/31)
+	(delims (if comma-delim '(?\; ?,) '(?\;)))
 	(c-stmt-delim-chars (if comma-delim
 				c-stmt-delim-chars-with-comma
 			      c-stmt-delim-chars))
@@ -287,7 +287,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       ;; done.  Later on we ignore the boundaries for statements that doesn't
       ;; contain any sexp.  The only thing that is affected is that the error
       ;; checking is a little less strict, and we really don't bother.
-      (if (and (memq (char-before) delims) ; ACM, 2002/5/31 - do something for awk-mode here.
+      (if (and (memq (char-before) delims)
 	       (progn (forward-char -1)
 		      (setq saved (point))
 		      (if (c-major-mode-is 'awk-mode)
@@ -3471,7 +3471,7 @@ Keywords are recognized and not considered identifiers."
                    (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
                  (and (not (memq char-before-ip '(?\; ?:)))
                       (or (not (eq char-before-ip ?}))
-                          (c-looking-at-inexpr-block-backward c-state-cache)))) ; might this work for awk, too? ACM 2002/3/29
+                          (c-looking-at-inexpr-block-backward c-state-cache))))
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
