@@ -2,6 +2,10 @@
 
 	* Patch release 5.30.2.
 
+	* cc-langs.el, cc-styles.el (c-style-alist, c-lang-variable-inits,
+	c-lang-variable-inits-tail): The values of these are changed, so
+	declare them as variables and not constants.
+
 	* cc-mode.el: Fixed some autoload problems: Try to ensure that the
 	entry for ".c" extension comes before the one for ".C" on
 	`auto-mode-alist', to behave better on case insensitive OS:es.
