@@ -2652,12 +2652,14 @@ accomplish that conveniently."
 						(elt init 1))))
 			      (cdr c-lang-variable-inits))))
 
-		 (unless (get ',mode 'c-has-warned-lang-consts)
-		   (message ,(concat "%s compiled with CC Mode %s "
-				     "but loaded with %s - evaluating "
-				     "language constants from source")
-			    ',mode ,c-version c-version)
-		   (put ',mode 'c-has-warned-lang-consts t))
+		 ;; This diagnostic message isn't useful for end
+		 ;; users, so it's disabled.
+		 ;;(unless (get ',mode 'c-has-warned-lang-consts)
+		 ;;  (message ,(concat "%s compiled with CC Mode %s "
+		 ;;		       "but loaded with %s - evaluating "
+		 ;;		       "language constants from source")
+		 ;;	      ',mode ,c-version c-version)
+		 ;;  (put ',mode 'c-has-warned-lang-consts t))
 
 		 (require 'cc-langs)
 		 (let ((init (cdr c-lang-variable-inits)))
