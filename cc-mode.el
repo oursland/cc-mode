@@ -437,7 +437,9 @@ This does not load the font-lock package.  Use after
 	    '("font-lock-keywords" "font-lock-keywords-1"
 	      "font-lock-keywords-2" "font-lock-keywords-3"
 	      "font-lock-keywords-4"))
-	  nil nil ((?_ . "w") (?$ . "w")) c-beginning-of-syntax
+	  nil nil
+	  ,c-identifier-syntax-modifications
+	  c-beginning-of-syntax
 	  (font-lock-syntactic-face-function
 	   ;; This variable doesn't exist in older (X)Emacsen.
 	   . c-font-lock-syntactic-face-function)
