@@ -5,10 +5,7 @@ Checklist for doing a release:
 
     - Proofread manual.
 
-    - Update ChangeLog.  Since C-x v a no longer works, use the new
-      Python Update.py script to generate the raw text to stdout.
-      Manually paste this into ChangeLog, then proofread.  Update.py
-      could definitely be improved.
+    - Update ChangeLog.
 
     - Add `Release 5.xx' tag to ChangeLog using C-x 4 a.  Release.py
       script looks for this.
@@ -22,7 +19,6 @@ Checklist for doing a release:
     - Update the web files in the admin directory:
 
       o  Create a new changes-5xx.php file from the new items i NEWS.
-      o  Copy this new changes file to changes-latest.php.
       o  Add a new entry for the changes file in changelinks.h.
       o  Update the version number in index.php and release.php.
       o  Check at least release.php for correctness.
@@ -39,7 +35,7 @@ Checklist for doing a release:
           cc-mode.ps.gz
           cc-mode.rev.ps.gz
           cc-mode.info.tar.gz
-          cc-mode.html.gz
+	  cc-mode.html.tar.gz
 
       The first two tarballs is to be sent to Emacs and XEmacs
       respectively.  They contain only the files that are necessary
@@ -47,18 +43,14 @@ Checklist for doing a release:
       until they see the Net announcements and ask for the files.
       This lets them sync our releases up to their own release cycle.
 
-    - Update the ftp site:
+    - Update the SourceForge site:
 
       o  Do a new release in the SourceForge pages.
       o  Copy the manual files to the manual subdir.
-      o  Copy cc-mode-5.XX.tar.gz to the ftp root dir.
-      o  Unpack it and name the subdir "src".
-      o  Copy src/README to the ftp root dir.
-      o  Update the cc-mode.tar.gz symlink.
-
-    - Update the web pages:
-
-      o  Unpack cc-mode.html.gz into the web root dir.
+      o  Unpack the standalone tarball into the web root dir and name
+	 the subdir "src".
+      o  Unpack cc-mode.html.tar.gz into the web root dir and name the
+	 subdir "html-manual".
       o  Update the web files with cvs update.
       o  Check that the links work.
 
