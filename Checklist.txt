@@ -21,7 +21,8 @@ Checklist for doing a release
 
       o  Create a new changes-5xx.php file from the new items i NEWS.
       o  Add a new entry for the changes file in changelinks.h.
-      o  Update the version number in index.php and release.php.
+      o  Update the version number in index.php, release.php and
+	 anoncvs.php.
       o  Check at least release.php for correctness.
 
     - Run "make release" to make all the tarballs and documentation.
@@ -91,8 +92,9 @@ Patch releases
     -  A patch release is made as follows:
 
        1.  Update the ChangeLog file with any changes that aren't
-	   there already.  (I use "make rcs2log", paste in the output
-	   at the top of ChangeLog, and then edit it as necessary.)
+	   there already.  (You can e.g. use "make rcs2log", paste in
+	   the output at the top of ChangeLog, and then edit it as
+	   necessary.)
        2.  Add an entry "* Patch release 5.30.NN" to the top of the
 	   ChangeLog.  NN is the patch count that's last in the
 	   version string in cc-defs.el.
@@ -167,7 +169,8 @@ SourceForge file release
 	See the <a href="http://cc-mode.sourceforge.net/changes-530.php">CC Mode web site</a> for details about this release.
       Patch release:
 	This release contains only bugfixes since <a href="http://cc-mode.sourceforge.net/changes-530.php">5.30</a>. See the ChangeLog for details.
-    (I don't bother with more; change logs etc are elsewhere.)
+    (It's not necessary to bother with more; change logs etc are
+    elsewhere.)
 3.  Add the the file.
 4.  "Edit Files In This Release":
     Processor Type: Platform-Independent
@@ -178,7 +181,8 @@ SourceForge file release
 Installing CC Mode in (X)Emacs
 ==============================
 
-This is how I currently do it (cvs write access is required for both):
+This is how I (Martin) currently do it (cvs write access is required
+for both):
 
 1.  Do cvs update where CC Mode resides in the (X)Emacs tree.
 
@@ -259,12 +263,12 @@ since it isn't formally a part of Emacs.  Therefore some cl functions
 have been more or less duplicated where they are used in the Emacs
 cvs.
 
-I otoh refuse to comply with this "ban" against the cl functions;
-Emacs provide no alternatives and it's insane to have to duplicate
-this trivial functionality in every package that need it.  I won't
-spend one minute maintaining such duplicate code just because RMS
-doesn't like Common Lisp.  Afaik he has given no better grounds for
-the "ban" of the cl package (at least not the simpler parts of it,
+I (Martin) otoh refuse to comply with this "ban" against the cl
+functions; Emacs provide no alternatives and it's insane to have to
+duplicate this trivial functionality in every package that need it.  I
+won't spend one minute maintaining such duplicate code just because
+RMS doesn't like Common Lisp.  Afaik he has given no better grounds
+for the "ban" of the cl package (at least not the simpler parts of it,
 such as set manipulation and list search functions, which are what
 this is about).
 
