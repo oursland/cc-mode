@@ -14,7 +14,7 @@
 ((statement-cont 483))
 ((arglist-cont-nonempty 529 532))
 ((arglist-cont-nonempty 580 586))
-((arglist-close 580 586))
+((arglist-cont-nonempty 529 532) (arglist-close 529 586))
 ((arglist-cont-nonempty 529 532))
 ((statement 440))
 ((substatement 772))

@@ -3,7 +3,7 @@
 ((arglist-cont-nonempty 18 21) (arglist-cont-nonempty 18 33))
 ((arglist-intro 44 51))
 ((arglist-cont 56))
-((arglist-close 44 51))
+((arglist-cont-nonempty 18 21) (arglist-cont-nonempty 18 33) (arglist-close 18 51))
 ((arglist-cont-nonempty 18 21) (arglist-close 18 33))
 ((arglist-close 18 21))
 ((defun-close 1))

@@ -20,7 +20,7 @@ void|int foo (mapping(int:string) test)
 	     {
 		 innit();
 	     }
-	    ); // Hmm..
+	);
     write (
 	foo, gauge {
 		innit();
@@ -33,5 +33,5 @@ void|int foo (mapping(int:string) test)
 		{
 		    innit();
 		}
-	    ); // Hmm..
+	);
 }

@@ -6,7 +6,7 @@
 ((topmost-intro-cont 28))
 ((arglist-intro 39 39))
 ((arglist-cont 109))
-((arglist-close 39 39))
+((arglist-close 28 39))
 ((inclass 12) (topmost-intro 136))
 ((inclass 12) (topmost-intro 136))
 ((arglist-intro 152 158))
