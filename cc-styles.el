@@ -497,12 +497,13 @@ Here is the current list of valid syntactic element symbols:
 (defun c-read-offset (langelem)
   ;; read new offset value for LANGELEM from minibuffer. return a
   ;; legal value only
-  (let* ((oldoff (cdr-safe (assq langelem c-offsets-alist)))
-	 (defstr (format "(default %s): " oldoff))
-	 (errmsg (concat "Offset must be int, func, var, "
-			 "or in [+,-,++,--,*,/] "
-			 defstr))
-	 (prompt (concat "Offset " defstr))
+  (let* ((oldoff  (cdr-safe (assq langelem c-offsets-alist)))
+	 (symname (symbol-name langelem))
+	 (defstr  (format "(default %s): " oldoff))
+	 (errmsg  (concat "Offset must be int, func, var, "
+			  "or [+,-,++,--,*,/] "
+			  defstr))
+	 (prompt (concat symname " offset " defstr))
 	 offset input interned raw)
     (while (not offset)
       (setq input (completing-read prompt obarray 'fboundp nil nil
