@@ -131,6 +131,12 @@
 	    (if (and (not substmt-p)
 		     (looking-at "\\<else\\>[^_]"))
 		(c-backward-to-start-of-if lim))
+	    ;; a finally or a series of catches?
+	    (if (not substmt-p)
+		(while (looking-at "\\<\\(catch\\|finally\\)\\>[^_]")
+		  (c-safe (c-backward-sexp 2))
+		  (if (eq (char-after) ?\()
+		      (c-safe (c-backward-sexp)))))
 	    ;; are we sitting at the while of a do-while?
 	    (if (and (looking-at "\\<while\\>[^_]")
 		     (c-backward-to-start-of-do lim))
@@ -1988,18 +1994,34 @@
 		   (looking-at "do\\b[^_]"))
 		 ))
 	  (c-add-syntax 'do-while-closure placeholder))
-	 ;; CASE 13: A case or default label
+	 ;; CASE 13: A catch or finally clause?  This case is simpler
+	 ;; than if-else and do-while, because a block is required
+	 ;; after every try, catch and finally.
+	 ((save-excursion
+	    (and (looking-at "\\<\\(catch\\|finally\\)\\>[^_]")
+		 (c-safe (c-backward-sexp) t)
+		 (eq (char-after) ?{)
+		 (c-safe (c-backward-sexp) t)
+		 (if (eq (char-after) ?\()
+		     (c-safe (c-backward-sexp) t)
+		   t)
+		 (looking-at "\\<\\(try\\|catch\\)\\>[^_]")
+		 (setq placeholder (c-point 'boi))))
+	  (if (looking-at "catch")
+	      (c-add-syntax 'catch-clause placeholder)
+	    (c-add-syntax 'finally-clause placeholder)))
+	 ;; CASE 14: A case or default label
 	 ((looking-at c-switch-label-key)
 	  (goto-char containing-sexp)
 	  ;; check for hanging braces
 	  (if (/= (point) (c-point 'boi))
 	      (c-forward-sexp -1))
 	  (c-add-syntax 'case-label (c-point 'boi)))
-	 ;; CASE 14: any other label
+	 ;; CASE 15: any other label
 	 ((looking-at c-label-key)
 	  (goto-char containing-sexp)
 	  (c-add-syntax 'label (c-point 'boi)))
-	 ;; CASE 15: block close brace, possibly closing the defun or
+	 ;; CASE 16: block close brace, possibly closing the defun or
 	 ;; the class
 	 ((eq char-after-ip ?})
 	  (let* ((lim (c-safe-position containing-sexp fullstate))
@@ -2009,7 +2031,7 @@
 			       (c-beginning-of-statement-1 lim))
 			   (c-point 'boi))))
 	    (cond
-	     ;; CASE 15A: closing a lambda defun or an in-expression
+	     ;; CASE 16A: closing a lambda defun or an in-expression
 	     ;; block?
 	     ((save-excursion
 		(goto-char containing-sexp)
@@ -2024,7 +2046,7 @@
 		(goto-char (cdr placeholder))
 		(c-add-syntax tmpsymbol (c-point 'boi))
 		(c-add-syntax (car placeholder))))
-	     ;; CASE 15B: does this close an inline or a function in
+	     ;; CASE 16B: does this close an inline or a function in
 	     ;; an extern block or namespace?
 	     ((progn
 		(goto-char containing-sexp)
@@ -2033,13 +2055,13 @@
 	      (if (looking-at c-extra-toplevel-key)
 		  (c-add-syntax 'defun-close relpos)
 		(c-add-syntax 'inline-close relpos)))
-	     ;; CASE 15C: if there an enclosing brace that hasn't
+	     ;; CASE 16C: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close
 	     ((and (not inenclosing-p)
 		   (c-most-enclosing-brace state))
 	      (c-add-syntax 'block-close relpos))
-	     ;; CASE 15D: find out whether we're closing a top-level
+	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
 	      (save-restriction
@@ -2049,7 +2071,7 @@
 		      (c-add-class-syntax 'class-close decl)
 		    (c-add-syntax 'defun-close relpos)))))
 	     )))
-	 ;; CASE 16: statement catchall
+	 ;; CASE 17: statement catchall
 	 (t
 	  ;; we know its a statement, but we need to find out if it is
 	  ;; the first statement in a block
@@ -2066,7 +2088,7 @@
 		      (goto-char (match-end 0)))
 	    (c-forward-syntactic-ws indent-point))
 	  (cond
-	   ;; CASE 16A: we are inside a case/default clause inside a
+	   ;; CASE 17A: we are inside a case/default clause inside a
 	   ;; switch statement.  find out if we are at the statement
 	   ;; just after the case/default label.
 	   ((and inswitch-p
@@ -2081,10 +2103,10 @@
 	    (if (eq (char-after) ?{)
 		(c-add-syntax 'statement-case-open placeholder)
 	      (c-add-syntax 'statement-case-intro placeholder)))
-	   ;; CASE 16B: continued statement
+	   ;; CASE 17B: continued statement
 	   ((eq char-before-ip ?,)
 	    (c-add-syntax 'statement-cont (c-point 'boi)))
-	   ;; CASE 16C: a question/colon construct?  But make sure
+	   ;; CASE 17C: a question/colon construct?  But make sure
 	   ;; what came before was not a label, and what comes after
 	   ;; is not a globally scoped function call!
 	   ((or (and (memq char-before-ip '(?: ??))
@@ -2100,7 +2122,7 @@
 		       ;; watch out for scope operator
 		       (not (looking-at "::")))))
 	    (c-add-syntax 'statement-cont (c-point 'boi)))
-	   ;; CASE 16D: any old statement
+	   ;; CASE 17D: any old statement
 	   ((< (point) indent-point)
 	    (let ((safepos (c-most-enclosing-brace fullstate))
 		  relpos done)
@@ -2130,7 +2152,7 @@
 	      (c-add-syntax 'statement relpos)
 	      (if (eq char-after-ip ?{)
 		  (c-add-syntax 'block-open))))
-	   ;; CASE 16E: first statement in an in-expression block
+	   ;; CASE 17E: first statement in an in-expression block
 	   ((setq placeholder
 		  (save-excursion
 		    (goto-char containing-sexp)
@@ -2144,7 +2166,7 @@
 	      (c-add-syntax (car placeholder)))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
-	   ;; CASE 16F: first statement in an inline, or first
+	   ;; CASE 17F: first statement in an inline, or first
 	   ;; statement in a top-level defun. we can tell this is it
 	   ;; if there are no enclosing braces that haven't been
 	   ;; narrowed out by a class (i.e. don't use bod here!)
@@ -2167,7 +2189,7 @@
 		  (c-beginning-of-statement-1)
 		  ))
 	    (c-add-syntax 'defun-block-intro (c-point 'boi)))
-	   ;; CASE 16G: first statement in a block
+	   ;; CASE 17G: first statement in a block
 	   (t (goto-char containing-sexp)
 	      (if (/= (point) (c-point 'boi))
 		  (c-beginning-of-statement-1
