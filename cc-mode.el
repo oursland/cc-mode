@@ -124,14 +124,29 @@
 ;; And in the major mode function:
 ;;
 ;; (c-initialize-cc-mode)
+;; (c-init-language-vars some-mode)
+;; (c-common-init 'some-mode) ; Or perhaps (c-basic-common-init 'some-mode)
+;;
+;; See cc-langs.el for furher info.  A small example of a derived mode
+;; is also available at <http://cc-mode.sourceforge.net/
+;; derived-mode-ex.el>.
 
 (defun c-leave-cc-mode-mode ()
   (setq c-buffer-is-cc-mode nil))
 
 ;;;###autoload
-(defun c-initialize-cc-mode ()
+(defun c-initialize-cc-mode (&optional new-style-init)
+  "Initialize CC Mode for use in the current buffer.
+If the optional NEW-STYLE-INIT is nil or left out then all necessary
+initialization to run CC Mode for the C language is done.  Otherwise
+only some basic setup is done, and a call to `c-init-language-vars',
+is necessary too (which gives more control).  See \"cc-mode.el\" for
+more info."
+  ;;
   ;; This function does not do any hidden buffer changes.
+
   (setq c-buffer-is-cc-mode t)
+
   (let ((initprop 'cc-mode-is-initialized)
 	c-initialization-ok)
     (unless (get 'c-initialize-cc-mode initprop)
@@ -146,8 +161,10 @@
 	    (add-hook 'change-major-mode-hook 'c-leave-cc-mode-mode)
 	    (setq c-initialization-ok t))
 	;; Will try initialization hooks again if they failed.
-	(put 'c-initialize-cc-mode initprop c-initialization-ok)))
-    ))
+	(put 'c-initialize-cc-mode initprop c-initialization-ok))))
+
+  (unless new-style-init
+    (c-init-c-language-vars)))
 
 
 ;;; Common routines.
@@ -598,7 +615,7 @@ Key bindings:
 \\{c-mode-map}"
   (interactive)
   (kill-all-local-variables)
-  (c-initialize-cc-mode)
+  (c-initialize-cc-mode t)
   (set-syntax-table c-mode-syntax-table)
   (setq major-mode 'c-mode
 	mode-name "C"
@@ -666,7 +683,7 @@ Key bindings:
 \\{c++-mode-map}"
   (interactive)
   (kill-all-local-variables)
-  (c-initialize-cc-mode)
+  (c-initialize-cc-mode t)
   (set-syntax-table c++-mode-syntax-table)
   (setq major-mode 'c++-mode
 	mode-name "C++"
@@ -728,7 +745,7 @@ Key bindings:
 \\{objc-mode-map}"
   (interactive)
   (kill-all-local-variables)
-  (c-initialize-cc-mode)
+  (c-initialize-cc-mode t)
   (set-syntax-table objc-mode-syntax-table)
   (setq major-mode 'objc-mode
 	mode-name "ObjC"
@@ -802,7 +819,7 @@ Key bindings:
 \\{java-mode-map}"
   (interactive)
   (kill-all-local-variables)
-  (c-initialize-cc-mode)
+  (c-initialize-cc-mode t)
   (set-syntax-table java-mode-syntax-table)
   (setq major-mode 'java-mode
  	mode-name "Java"
@@ -862,7 +879,7 @@ Key bindings:
 \\{idl-mode-map}"
   (interactive)
   (kill-all-local-variables)
-  (c-initialize-cc-mode)
+  (c-initialize-cc-mode t)
   (set-syntax-table idl-mode-syntax-table)
   (setq major-mode 'idl-mode
 	mode-name "IDL"
@@ -924,7 +941,7 @@ Key bindings:
 \\{pike-mode-map}"
   (interactive)
   (kill-all-local-variables)
-  (c-initialize-cc-mode)
+  (c-initialize-cc-mode t)
   (set-syntax-table pike-mode-syntax-table)
   (setq major-mode 'pike-mode
  	mode-name "Pike"
