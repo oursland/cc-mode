@@ -366,6 +366,7 @@ it finds in `c-file-offsets'."
   ;; these are new keybindings, with no counterpart to BOCM
   (define-key c-mode-base-map ","         'c-electric-semi&comma)
   (define-key c-mode-base-map "*"         'c-electric-star)
+  (define-key c-mode-base-map "/"         'c-electric-slash)
   (define-key c-mode-base-map "\C-c\C-q"  'c-indent-defun)
   (define-key c-mode-base-map "\C-c\C-\\" 'c-backslash-region)
   ;; TBD: where if anywhere, to put c-backward|forward-into-nomenclature
@@ -454,7 +455,6 @@ it finds in `c-file-offsets'."
   (setq c++-mode-map (c-make-inherited-keymap))
   ;; add bindings which are only useful for C++
   (define-key c++-mode-map "\C-c:"  'c-scope-operator)
-  (define-key c++-mode-map "/"      'c-electric-slash)
   (define-key c++-mode-map "<"      'c-electric-lt-gt)
   (define-key c++-mode-map ">"      'c-electric-lt-gt))
 
