@@ -293,22 +293,25 @@
 ;; We don't require the outline package, but we configure it a bit anyway.
 (cc-bytecomp-defvar outline-level)
 
-(defun c-common-init (mode)
-  ;; Common initializations for all modes.
+(defun c-basic-common-init (mode default-style)
+  "Do the necessary initialization for the syntax handling routines
+and the line breaking/filling code.  Intended to be used by other
+packages that embed CC Mode.
+
+MODE is the CC Mode flavor to set up, e.g. 'c-mode or 'java-mode.
+DEFAULT-STYLE tells which indentation style to install.  It has the
+same format as `c-default-style'."
+
   (setq c-buffer-is-cc-mode mode)
 
   ;; these variables should always be buffer local; they do not affect
   ;; indentation style.
-  (make-local-variable 'require-final-newline)
   (make-local-variable 'parse-sexp-ignore-comments)
   (make-local-variable 'indent-line-function)
   (make-local-variable 'indent-region-function)
-  (make-local-variable 'outline-regexp)
-  (make-local-variable 'outline-level)
   (make-local-variable 'normal-auto-fill-function)
   (make-local-variable 'comment-start)
   (make-local-variable 'comment-end)
-  (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
   (make-local-variable 'comment-multi-line)
   (make-local-variable 'paragraph-start)
@@ -316,7 +319,6 @@
   (make-local-variable 'paragraph-ignore-fill-prefix)
   (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'adaptive-fill-regexp)
-  (make-local-variable 'imenu-generic-expression) ;set in the mode functions
 
   ;; X/Emacs 20 only
   (and (boundp 'comment-line-break-function)
@@ -326,25 +328,21 @@
 	       'c-indent-new-comment-line)))
 
   ;; now set their values
-  (setq require-final-newline t
-	parse-sexp-ignore-comments t
+  (setq parse-sexp-ignore-comments t
 	indent-line-function 'c-indent-line
 	indent-region-function 'c-indent-region
-	outline-regexp "[^#\n\^M]"
-	outline-level 'c-outline-level
 	normal-auto-fill-function 'c-do-auto-fill
-	comment-column 32
 	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
 
   ;; Fix keyword regexps.
   (c-init-language-vars)
 
-  ;; now set the mode style based on c-default-style
-  (let ((style (if (stringp c-default-style)
-		   c-default-style
-		 (or (cdr (assq mode c-default-style))
-		     (cdr (assq 'other c-default-style))
+  ;; now set the mode style based on default-style
+  (let ((style (if (stringp default-style)
+		   default-style
+		 (or (cdr (assq mode default-style))
+		     (cdr (assq 'other default-style))
 		     "gnu"))))
     ;; Override style variables if `c-old-style-variable-behavior' is
     ;; set.  Also override if we are using global style variables,
@@ -381,6 +379,22 @@
   ;; invalid.
   (make-local-variable 'after-change-functions)
   (add-hook 'after-change-functions 'c-check-state-cache))
+
+(defun c-common-init (mode)
+  ;; Common initializations for all modes.
+
+  (c-basic-common-init mode c-default-style)
+
+  (make-local-variable 'require-final-newline)
+  (make-local-variable 'outline-regexp)
+  (make-local-variable 'outline-level)
+  (make-local-variable 'comment-column)
+  (make-local-variable 'imenu-generic-expression) ;set in the mode functions
+
+  (setq require-final-newline t
+	outline-regexp "[^#\n\^M]"
+	outline-level 'c-outline-level
+	comment-column 32))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables.
