@@ -3332,6 +3332,15 @@ constructs appear in different colors, or in bold face, etc.?}
 @strong{A.} ``Syntax Colorization'' is a standard Emacs feature,
 controlled by @code{font-lock-mode}.  It is not part of @ccmode{}.
 
+@sp 1
+@strong{Q.} @emph{@kbd{M-a} and @kbd{M-e} used to move over entire
+balanced brace lists, but now they move into blocks.  How do I get the
+old behavior back?}
+
+@strong{A.} Use @kbd{C-M-a} and @kbd{C-M-e} to move over balanced brace
+blocks.  Use @kbd{M-a} and @kbd{M-e} to move by statements, which will
+move into blocks.
+
 @end quotation
 
 
