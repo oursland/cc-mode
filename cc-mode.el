@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.119 $
-;; Last Modified:   $Date: 1993-12-16 18:03:53 $
+;; Version:         $Revision: 3.120 $
+;; Last Modified:   $Date: 1993-12-16 20:49:34 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-16 18:03:53 $|$Revision: 3.119 $|
+;; |$Date: 1993-12-16 20:49:34 $|$Revision: 3.120 $|
 
 ;;; Code:
 
@@ -426,7 +426,7 @@ is necessary under GNU Emacs 18, please refer to the texinfo manual.")
     ;; now cobble up the necessary list
     (list mse-spec scanner flavor))
   "A list of features extant in the Emacs you are using.
-There are many flavors of Emacs out on the net, each with different
+There are many flavors of Emacs out there, each with different
 features supporting those needed by cc-mode.  Here's the current
 supported list, along with the values for this variable:
 
@@ -627,7 +627,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.119 $
+CC-MODE REVISION: $Revision: 3.120 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -660,7 +660,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.119 $
+CC-MODE REVISION: $Revision: 3.120 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2767,7 +2767,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.119 $"
+(defconst c-version "$Revision: 3.120 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
