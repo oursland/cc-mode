@@ -2289,7 +2289,13 @@ If a fill prefix is specified, it overrides all the above."
 	    ;; The adaptive fill function has generated a prefix, but
 	    ;; we're on the first line in a block comment so it'll be
 	    ;; wrong.  Ignore it to guess a better one below.
-	    (setq fill-prefix nil))
+	    (setq fill-prefix nil)
+	  (when (and (eq c-lit-type 'c++)
+		     (not (string-match "\\`[ \t]*//" (or fill-prefix ""))))
+	    ;; Kludge: If the function that adapted the fill prefix
+	    ;; doesn't produce the required comment starter for line
+	    ;; comments, then we ignore it.
+	    (setq fill-prefix nil)))
 	))
     (cond ((eq fill-prefix t)
 	   ;; A call from do-auto-fill which should be ignored.
