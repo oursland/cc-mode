@@ -1,7 +1,7 @@
 ((topmost-intro 1))
 ((class-open 1))
 ((inclass 12) (access-label 12))
-((inclass 12) (topmost-intro 14))
+((inclass 12) (topmost-intro 12))
 ((inclass 12) (access-label 12))
 ((inclass 12) (topmost-intro 23))
 ((inclass 12) (access-label 12))

@@ -2,7 +2,7 @@
 ((inher-intro 1))
 ((inher-cont 23))
 ((class-open 1))
-((inclass 62) (topmost-intro 64))
+((inclass 62) (topmost-intro 62))
 ((func-decl-cont 68))
 ((func-decl-cont 68))
 ((inclass 62) (inline-open))

@@ -1,5 +1,5 @@
 ((topmost-intro 1))
-((inclass 1) (topmost-intro 21))
+((inclass 1) (topmost-intro 1))
 ((inclass 1) (inline-open))
 ((defun-block-intro 74))
 ((substatement 77))

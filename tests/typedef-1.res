@@ -2,7 +2,7 @@
 ((topmost-intro 1))
 ((topmost-intro 1))
 ((class-open 13))
-((inclass 28) (topmost-intro 30))
+((inclass 28) (topmost-intro 28))
 ((inclass 28) (topmost-intro 30))
 ((class-close 13))
 ((topmost-intro 62))

@@ -4,7 +4,7 @@
 ((topmost-intro 79))
 ((topmost-intro 79))
 ((class-open 83))
-((inclass 96) (topmost-intro 98))
+((inclass 96) (topmost-intro 96))
 ((member-init-cont 117))
 ((inclass 96) (inline-open))
 ((class-close 83))

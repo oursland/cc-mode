@@ -1,6 +1,6 @@
 ((topmost-intro 1))
 ((class-open 1))
-((inclass 18) (topmost-intro 20))
+((inclass 18) (topmost-intro 18))
 ((inclass 18) (inline-open))
 ((defun-block-intro 52))
 ((substatement-open 55))

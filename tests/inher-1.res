@@ -3,7 +3,7 @@
 ((inher-cont 11))
 ((class-open 1))
 ((inclass 41) (access-label 41))
-((inclass 41) (topmost-intro 43))
+((inclass 41) (topmost-intro 41))
 ((inclass 41) (topmost-intro 51))
 ((inclass 41) (topmost-intro 67))
 ((class-close 1))

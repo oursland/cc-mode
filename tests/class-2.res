@@ -6,7 +6,7 @@
 ((topmost-intro 24))
 ((class-open 27))
 ((inclass 37) (access-label 37))
-((inclass 37) (topmost-intro 39))
+((inclass 37) (topmost-intro 37))
 ((inclass 37) (inline-open))
 ((defun-block-intro 61))
 ((statement-block-intro 71))

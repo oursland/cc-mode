@@ -1,5 +1,5 @@
 ((topmost-intro 1))
-((inclass 1) (topmost-intro 20))
+((inclass 1) (topmost-intro 1))
 ((brace-list-open 24))
 ((brace-list-intro 53))
 ((brace-entry-open 56))

@@ -1,6 +1,6 @@
 ((topmost-intro 1) (comment-intro))
 ((topmost-intro 1))
-((inclass 12) (topmost-intro 25))
+((inclass 12) (topmost-intro 12))
 ((defun-block-intro 29))
 ((arglist-intro 44))
 ((arglist-close 44 60))

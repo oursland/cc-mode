@@ -1,6 +1,6 @@
 ((topmost-intro 1))
 ((class-open 1))
-((inclass 9) (topmost-intro 11))
+((inclass 9) (topmost-intro 9))
 ((class-open 15))
 ((class-close 15))
 ((class-close 1))

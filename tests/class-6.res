@@ -7,5 +7,5 @@
 ((topmost-intro 71))
 ((topmost-intro 71))
 ((class-open 75))
-((inclass 98) (topmost-intro 100))
+((inclass 98) (topmost-intro 98))
 ((class-close 75))
