@@ -240,6 +240,7 @@
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
   (make-local-variable 'adaptive-fill-regexp)
+  (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
   ;; X/Emacs 20 only
   (and (boundp 'comment-line-break-function)
@@ -263,7 +264,8 @@
 	comment-start-skip "/\\*+ *\\|// *"
 	comment-multi-line nil
 	comment-line-break-function 'c-comment-line-break-function
-	adaptive-fill-regexp nil)
+	adaptive-fill-regexp nil
+	adaptive-fill-mode nil)
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
