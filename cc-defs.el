@@ -51,6 +51,7 @@
   ;; bol  -- beginning of line
   ;; eol  -- end of line
   ;; bod  -- beginning of defun
+  ;; eod  -- end of defun
   ;; boi  -- back to indentation
   ;; ionl -- indentation of next line
   ;; iopl -- indentation of previous line
@@ -71,6 +72,7 @@
      ((eq position 'ionl)
       (forward-line 1)
       (back-to-indentation))
+     ((eq position 'eod)  (c-end-of-defun))
      ((eq position 'bod)
       (if (and (fboundp 'buffer-syntactic-context-depth)
 	       c-enable-xemacs-performance-kludge-p)
