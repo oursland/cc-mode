@@ -1,5 +1,5 @@
 \input texinfo
-@c $Id: cc-mode.texi,v 5.208 2005-04-03 13:59:46 acmacm Exp $
+@c $Id: cc-mode.texi,v 5.209 2005-04-03 14:10:20 acmacm Exp $
 @c Notes to self regarding line handling:
 @c
 @c Empty lines are often significant before @end directives; avoid them.
@@ -147,9 +147,9 @@ USA.
 @vskip 0pt plus 1filll
 @insertcopying
 
-This manual was generated from $Revision: 5.208 $ of $RCSfile: cc-mode.texi,v $, which can be
+This manual was generated from $Revision: 5.209 $ of $RCSfile: cc-mode.texi,v $, which can be
 downloaded from
-@url{http://cc-mode.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
+@url{http://cvs.sf.net/viewcvs.py/cc-mode/cc-mode/cc-mode.texi}.
 @end titlepage
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
