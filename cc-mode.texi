@@ -126,7 +126,7 @@ Definition Language} files.  In this way, you can
 easily set up consistent coding styles for use in editing all C, C++,
 Objective-C, Java and IDL programs. @ccmode{} does @emph{not} handle
 font-locking (a.k.a. syntax coloring, keyword highlighting) or anything
-of that nature, for any of the 4 modes.  Those are handled by other
+of that nature, for any of these modes.  Font-locking is handled by other
 Emacs packages.
 
 This manual will describe the following:
@@ -156,16 +156,19 @@ functions in @ccmode{} are prefixed with @code{c-@var{<thing>}}, and
 a replacement for @file{c-mode.el} and @file{c++-mode.el}.
 
 @cindex @file{cc-compat.el} file
-This distribution also contains a file called @file{cc-compat.el} which
-should ease your transition from BOCM to @ccmode{}.  It currently
-comes unguaranteed and unsupported, but this may change for future
-versions.  If you have a BOCM configuration you are really happy with,
-and want to postpone learning how to configure @ccmode{}, take a
-look at that file.  It maps BOCM configuration variables to
-@ccmode{}'s new indentation model.
+This distribution also contains a file
+called @file{cc-compat.el} which should ease your transition from BOCM
+to @ccmode{}.  If you have a BOCM configuration you are really happy
+with, and want to postpone learning how to configure @ccmode{}, take a
+look at that file.  It maps BOCM configuration variables to @ccmode{}'s
+new indentation model.  It is not actively supported so for the long
+run, you should learn how to customize @ccmode{} to support your coding
+style.
 
 A special word of thanks goes to Krishna Padmasola for his work in
-converting the original @file{README} file to Texinfo format.
+converting the original @file{README} file to Texinfo format.  I'd also
+like to thank all the @ccmode{} victims who help enormously during the
+early beta stages of @ccmode{}'s development.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -283,11 +286,11 @@ your personal coding style.
 @cindex relative buffer position
 The first thing @ccmode{} does when indenting a line of code, is to
 analyze the line, determining the @dfn{syntactic component list} of the
-construct on that line.  A @dfn{syntactic component} consists of a pair
+construct on that line.  A syntactic component consists of a pair
 of information (in lisp parlance, a @emph{cons cell}), where the first
 part is a @dfn{syntactic symbol}, and the second part is a @dfn{relative
 buffer position}.  Syntactic symbols describe elements of C code
-@footnote{or C++, Objective-C, or Java code.  In general, for the rest
+@footnote{or C++, Objective-C, Java or IDL code.  In general, for the rest
 of this manual I'll use the term ``C code'' to refer to all the C-like
 dialects, unless otherwise noted.}, e.g. @code{statement},
 @code{substatement}, @code{class-open}, @code{class-close}, etc.
@@ -322,7 +325,7 @@ future examples don't actually appear in the buffer, of course!}:
 We can use the command @kbd{C-c C-s}
 (@code{c-show-syntactic-information}) to simply report what the
 syntactic analysis is for the current line.  Running this command on
-line 4 this example, we'd see in the echo area@footnote{With a universal
+line 4 of this example, we'd see in the echo area@footnote{With a universal
 argument (i.e. @kbd{C-u C-c C-s}) the analysis is inserted into the
 buffer as a comment
 on the current line.}:
@@ -542,9 +545,10 @@ are turned off.
 The state of the minor modes is always reflected in the minor mode list
 on the modeline of the @ccmode{} buffer.  When auto-newline mode is
 enabled, you will see @samp{C/a} on the mode line @footnote{Remember
-that the @samp{C} could be replaced with @samp{C++}, @samp{ObjC}, or
-@samp{Java}.}.  When hungry delete mode is enabled you would see
-@samp{C/h} and when both modes are enabled, you'd see @samp{C/ah}.
+that the @samp{C} could be replaced with @samp{C++}, @samp{ObjC},
+@samp{Java} or @samp{IDL}.}.  When hungry delete mode is enabled you
+would see @samp{C/h} and when both modes are enabled, you'd see
+@samp{C/ah}.
 
 @kindex C-c C-a
 @kindex C-c C-d
@@ -771,7 +775,7 @@ colons can also be made to hang using the variable
 @code{c-hanging-colons-alist}.  The syntactic symbols appropriate for
 this assocation list are: @code{case-label}, @code{label},
 @code{access-label}, @code{member-init-intro}, and @code{inher-intro}.
-Note however, that for @code{c-hanging-colons-alist} @var{ACTION}s as
+Note however that for @code{c-hanging-colons-alist}, @var{ACTION}s as
 functions are not supported. See also @ref{Custom Brace and Colon
 Hanging} for details.
 
@@ -874,7 +878,7 @@ hanging.  On the surface, it would seem that clean-ups overlap the
 functionality provided by the @code{c-hanging-*-alist} variables, and
 similarly, clean-ups are only enabled when auto-newline minor mode is
 enabled.  Clean-ups are used however to adjust code ``after-the-fact'',
-i.e. to eliminate some whitespace that isn't inserted by electric
+i.e. to eliminate some whitespace that is inserted by electric
 commands, or whitespace that contains intervening constructs.
 
 @cindex literal
@@ -1079,7 +1083,7 @@ argument (the number of characters to delete).  This variable is set to
 
 Similarly, hitting the @kbd{DEL} key runs the command
 @code{c-electric-delete}.  Some versions of Emacs@footnote{As of this
-writing, 20-Jun-1997, only XEmacs 20 supports this.} support separation
+writing, 20-Jun-1997, only XEmacs 20.3 supports this.} support separation
 of the @kbd{Backspace} and @kbd{DEL} keys, so that @kbd{DEL} will delete
 in the forward direction when @code{delete-key-deletes-forward} is
 non-@code{nil}.  If your Emacs supports this, and
@@ -1146,8 +1150,7 @@ perversely formatted code.  @emph{Don't} try to indent this stuff!}.
 Some provision has been made to at least inform you as to the progress
 of the re-indentation.  The variable @code{c-progress-interval} controls
 how often a progress message is displayed.  Set this variable to
-@code{nil} to inhibit progress messages.  Note that this feature only
-works with Emacs 19 and beyond.
+@code{nil} to inhibit progress messages.
 
 Also, except as noted below, re-indentation is always driven by the
 same mechanisms that control on-the-fly indentation of code.  @xref{New
@@ -1194,7 +1197,7 @@ the opening brace or parenthesis of the expression you want to indent.
 @findex indent-defun (c-)
 Another very convenient keystroke is @kbd{C-c C-q}
 (@code{c-indent-defun}) when re-indents the entire top-level function or
-class definition that encompases point.  It leaves point at the
+class definition that encompasses point.  It leaves point at the
 same position within the buffer.
 
 @kindex M-C-\
@@ -1292,14 +1295,14 @@ such as C++ is to write symbols in a mixed case format, where the first
 letter of each word is capitalized, and not separated by underscores.
 E.g. @samp{SymbolsWithMixedCaseAndNoUnderlines}.
 
-This command moves point forward to end of a C++ nomenclature
-section or word.  With prefix argument @var{n}, move @var{n} times.
+This command moves point forward to next capitalized word.  With prefix
+argument @var{n}, move @var{n} times.
 
 @item M-x c-backward-into-nomenclature
 @findex c-backward-into-nomenclature
 @findex backward-into-nomenclature (c-)
-Move point backward to beginning of a C++ nomenclature
-section or word.  With prefix argument @var{n}, move @var{n} times.  If
+Move point backward to beginning of the next capitalized
+word.  With prefix argument @var{n}, move @var{n} times.  If
 @var{n} is negative, move forward.
 
 @kindex C-c :
@@ -1317,12 +1320,15 @@ operator without performing the electric behavior of colon insertion.
 @vindex c-hanging-comment-ender-p
 @vindex hanging-comment-starter-p (c-)
 @vindex hanging-comment-ender-p (c-)
+
 The command is used to fill a block style (C) or line style (C++)
 comment, in much the same way that text in the various text modes can be
-filled.  You should never attempt to fill non-comment code sections;
-you'll end up with garbage!  Two variables control how C style block
-comments are filled, specifically how the comment start and end
-delimiters are handled.
+filled@footnote{You should not use specialized filling packages such as
+@code{filladapt} with CC Mode.  They don't work as well for filling as
+@code{c-fill-paragraph}}.  You should never attempt to fill non-comment
+code sections; you'll end up with garbage!  Two variables control how C
+style block comments are filled, specifically how the comment start and
+end delimiters are handled.
 
 The variable @code{c-hanging-comment-starter-p} controls whether comment
 start delimiters which appear on a line by themselves, end up on a line
@@ -1331,7 +1337,9 @@ starter will remain on its own line@footnote{It will not be placed on a
 separate line if it is not already on a separate line.}.  Otherwise,
 text on the next line will be put on the same line as the comment
 starter.  This is called @dfn{hanging} because the following text hangs
-on the line with the comment starter.
+on the line with the comment starter@footnote{This variable is @code{t}
+by default, except in @code{java-mode}.  Hanging comment starters mess
+up Javadoc style comments.}
 
 The variable @code{c-hanging-comment-ender-p} controls the analogous
 behavior for the block comment end delimiter.  When the value is
@@ -1363,7 +1371,7 @@ indentations.  You simply need to decide what additional offset you want
 to add for every syntactic symbol.  You can use the command @kbd{C-c
 C-o} (@code{c-set-offset}) as the way to set offsets, both interactively
 and from your mode hook.  Also, you can set up @emph{styles} of
-indentation just like in BOCM.  Most likely, you'll
+indentatio.  Most likely, you'll
 find one of the pre-defined styles will suit your needs, but if not,
 this section will describe how to set up basic editing configurations.
 @xref{Styles} for an explanation of how to set up named styles.
@@ -1584,18 +1592,18 @@ To make your changes permanent, you need to add some lisp code to your
 @file{.emacs} file, but first you need to decide whether your styles
 should be global in every buffer, or local to each specific buffer.
 
-If you edit primarily one style of C (or C++, Objective-C, Java) code,
-you may want to make the @ccmode{} style variables have global values so
-that every buffer will share the style settings.  This will allow you to
-set the @ccmode{} variables at the top level of your @file{.emacs}
-file.  This is the default way @ccmode{} works.
+If you edit primarily one style of code, you may want to make the
+@ccmode{} style variables have global values so that every buffer will
+share the style settings.  This will allow you to set the @ccmode{}
+variables at the top level of your @file{.emacs} file, and is the
+way @ccmode{} works by default.
 
 @vindex c-mode-common-hook
 @vindex mode-common-hook (c-)
 @vindex c-style-variables-are-local-p
 @vindex style-variables-are-local-p (c-)
-If you edit many different styles of C (or C++, Objective-C, Java) at
-the same time, you probably want to make the @ccmode{} style variables
+If you edit many different styles of code at
+the same time, you might want to make the @ccmode{} style variables
 have buffer local values.  If you do this, then you will need to set any
 @ccmode{} style variables in a hook function (e.g. off of
 @code{c-mode-common-hook} instead of at the top level of your
@@ -1630,7 +1638,7 @@ when @ccmode{} is initialized.
 @end itemize
 
 The language hooks get run as the last thing when you enter that
-language-specific mode.  The @code{c-mode-common-hook} is run by all
+language mode.  The @code{c-mode-common-hook} is run by all
 supported modes @emph{before} the language specific hook, and thus can
 contain customizations that are common across all languages.  Most of
 the examples in this section will assume you are using the common
@@ -1638,8 +1646,8 @@ hook@footnote{The interaction between @code{java-mode} and the hook
 variables is slightly different than for the other modes.
 @code{java-mode} sets the style (see @ref{Styles}) of the buffer to
 @samp{java} @emph{before} running the @code{c-mode-common-hook} or
-@code{java-mode-hook}.  You need to be aware of this so any style
-settings in @code{c-mode-common-hook} doesn't clobber your Java style.}.
+@code{java-mode-hook}.  You need to be aware of this so that style
+settings in @code{c-mode-common-hook} don't clobber your Java style.}.
 
 Here's a simplified example of what you can add to your @file{.emacs}
 file to make the changes described in the previous section
@@ -1675,7 +1683,7 @@ Most people only need to edit code formatted in just a few well-defined
 and consistent styles.  For example, their organization might impose a
 ``blessed'' style that all its programmers must conform to.  Similarly,
 people who work on GNU software will have to use the GNU coding style on
-C code.  Some shops are more lenient, allowing some variety of coding
+C code.  Some shops are more lenient, allowing a variety of coding
 styles, and as programmers come and go, there could be a number of
 styles in use.  For this reason, @ccmode{} makes it convenient for
 you to set up logical groupings of customizations called @dfn{styles},
@@ -1837,6 +1845,9 @@ This function also takes an optional third argument, which if
 non-@code{nil}, automatically applies the new style to the current
 buffer.
 
+@comment TBD: The next paragraph is bogus.  I really need to better
+@comment document adding styles, including setting up inherited styles.
+
 The sample @file{.emacs} file provides a concrete example of how a new
 style can be added and automatically set.  @xref{Sample .emacs File}.
 
@@ -1849,12 +1860,16 @@ style can be added and automatically set.  @xref{Sample .emacs File}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @cindex local variables
+
 The Emacs manual describes how you can customize certain variables on a
 per-file basis by including a @dfn{Local Variable} block at the end of
-the file.  So far, you've only seen a functional interface to
-@ccmode{}, which is highly inconvenient for use in a Local Variable
-block.  @ccmode{} provides two variables that make it easier for
-you to customize your style on a per-file basis.
+the file.  So far, you've only seen a functional interface to @ccmode{}
+customization, which is highly inconvenient for use in a Local Variable
+block.  @ccmode{} provides two variables that make it easier for you to
+customize your style on a per-file basis@footnote{Note that file styles
+don't work with Emacs versions before XEmacs 19.12 and Emacs 19.29.
+File styles work via the standard Emacs hook variable
+@code{hack-local-variables-hook}.}.
 
 @vindex c-file-style
 @vindex file-style (c-)
@@ -1875,11 +1890,7 @@ visited, @ccmode{} will automatically institute these offets using
 @code{c-set-offset}.
 
 Note that file style settings (i.e. @code{c-file-style}) are applied
-before file offset settings (i.e. @code{c-file-offsets})@footnote{File
-styles have only been supported since XEmacs 19.12 and Emacs 19.29.
-They work via the standard Emacs hook variable
-@code{hack-local-variables-hook}.  Older Emacsen lack this hook, so file
-styles can't be used with them.}.
+before file offset settings (i.e. @code{c-file-offsets}).
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1961,11 +1972,11 @@ In this example, lines 4 through 6 are assigned the @code{stream-op}
 syntactic symbol.  Here, @code{stream-op} has an offset of @code{+}, and
 with a @code{c-basic-offset} of 2, you can see that lines 4 through 6
 are simply indented two spaces to the right of line 3.  But perhaps we'd
-like @ccmode{} to be a little more intelligent so that it lines up
+like @ccmode{} to be a little more intelligent so that it aligns
 all the @samp{<<} symbols in lines 3 through 6.  To do this, we have
 to write a custom indentation function which finds the column of first
-stream operator on the first line of the statement.  Here is the lisp
-code (from the @file{cc-mode.el} source file) that implements this:
+stream operator on the first line of the statement.  Here is sample 
+lisp code implementing this:
 @example
 @group
 
@@ -1990,7 +2001,7 @@ returned is the difference between the column that the first stream
 operator is on, and the column of the buffer relative position passed in
 the function's argument.  Remember that @ccmode{} automatically
 adds in the column of the component's relative buffer position and we
-don't want that value added into the final total twice.
+don't the column offset added in twice.
 
 @cindex stream-op syntactic symbol
 @findex c-lineup-streamop
@@ -2075,15 +2086,17 @@ lines.
 @findex lineup-comment (c-)
 @vindex c-comment-only-line-offset
 @vindex comment-only-line-offset (c-)
-@code{c-lineup-comment} --- implements the old comment line up behavior
-specified by the variable @code{c-comment-only-line-offset}.
+@code{c-lineup-comment} --- lines up comment only lines according to
+the variable @code{c-comment-only-line-offset}.
 
 @item
 @findex c-lineup-runin-statements
 @findex lineup-runin-statements (c-)
 @code{c-lineup-runin-statements} --- lines up @code{statement}s for coding
 standards which place the first statement in a block on the same line as
-the block opening brace.
+the block opening brace@footnote{Run-in style doesn't really work too
+well.  You might need to write your own custom indentation functions to
+better support this style.}.
 
 @item
 @findex c-lineup-math
@@ -2129,8 +2142,8 @@ syntactic symbols on the @code{c-hanging-braces-alist} variable.
 Remember that @var{ACTION}'s are typically a list containing some
 combination of the symbols @code{before} and @code{after} (see
 @ref{Hanging Braces}).  However, an @var{ACTION} can also be a function
-symbol which gets called when a brace matching that syntactic symbol is
-typed.
+which gets called when a brace matching that syntactic symbol is
+entered.
 
 @cindex customizing brace hanging
 These @var{ACTION} functions are called with two arguments: the
@@ -2257,7 +2270,7 @@ front of the @code{c-hanging-semi&comma-criteria} list.
 
 (defun my-semicolon-criteria ()
   (save-excursion
-    (if (and (= last-command-char ?\;)
+    (if (and (eq last-command-char ?\;)
              (zerop (forward-line 1))
              (not (looking-at "^[ \t]*$")))
         'stop
@@ -2498,7 +2511,7 @@ top-level construct introduction so it has the syntax
 the brace that opens a top-level function definition.  Line 9 is a
 @code{defun-close} since it contains the brace that closes the top-level
 function definition.  Line 4 is a @code{defun-block-intro}, i.e. it is
-the first line of a brace-block, which happens to be enclosed in a
+the first line of a brace-block, enclosed in a
 top-level function definition.
 
 @cindex statement syntactic symbol
@@ -2596,7 +2609,7 @@ list started on line 7.
 @cindex in-class inline methods
 @cindex inline-open syntactic symbol
 @cindex inline-close syntactic symbol
-But the line 11's analysis is a bit more complicated:
+Line 11's analysis is a bit more complicated:
 
 @example
 @group
@@ -2611,8 +2624,8 @@ This line is assigned a syntax of both @code{inline-open} and
 definition.  This is distinct from, but related to, the C++ notion of an
 inline function in that its definition occurs inside an enclosing class
 definition, which in C++ implies that the function should be inlined.
-For example, if the definition of the @code{Bass} constructor appeared
-outside the class definition, line 11 would be given the
+If though, the definition of the @code{Bass} constructor appeared
+outside the class definition, the construct would be given the
 @code{defun-open} syntax, even if the keyword @code{inline} appeared
 before the method name, as in:
 @example
@@ -3001,7 +3014,7 @@ the backwards direction, @ccmode{} often tries to find the nearest
 position higher up in the buffer from which to begin a forward scan.
 The farther this position is from the current insertion point, the
 slower the mode gets.  Some coding styles can even force @ccmode{}
-to scan from the beginning of the buffer!
+to scan from the beginning of the buffer for every line of code!
 
 @findex beginning-of-defun
 @findex defun-prompt-regexp
@@ -3033,7 +3046,7 @@ things down!
 
 You will probably notice pathological behavior from @ccmode{} when
 working in files containing large amounts of cpp macros.  This is
-because @ccmode{} cannot quickly skip backwards over these lines.
+because Emacs cannot be made to quickly skip backwards over these lines.
 
 @vindex c-recognize-knr-p
 @vindex recognize-knr-p (c-)
@@ -3143,8 +3156,8 @@ details.
 @strong{Q.} @emph{How do I make strings, comments, keywords, and other
 constructs appear in different colors, or in bold face, etc.?}
 
-@strong{A.} ``Syntax Colorization'' is an Emacs 19 feature, controlled
-by @code{font-lock-mode}.  It is not part of @ccmode{}.
+@strong{A.} ``Syntax Colorization'' is a standard Emacs feature,
+controlled by @code{font-lock-mode}.  It is not part of @ccmode{}.
 
 @end quotation
 
@@ -3157,10 +3170,12 @@ by @code{font-lock-mode}.  It is not part of @ccmode{}.
 @cindex   Getting the latest CC Mode release
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@ccmode{} is now distributed with Emacs 19, XEmacs 19, and XEmacs 20, so
-you would typically just use the version that comes with your Emacs.
-These may be slightly out of date due to release schedule skew, so you
-should always check the canonical site for the latest version.
+@ccmode{} is now standard with later versions Emacs 19 and XEmacs 19.
+It is also the standard for XEmacs 20, and will be the standard for
+Emacs 20 (unreleased as of this writing).  You would typically just use
+the version that comes with your X/Emacs.  These may be slightly out of
+date due to release schedule skew, so you should always check the
+canonical site for the latest version.
 
 @example
 @group
@@ -3316,8 +3331,8 @@ to reproduce it.
 Bug reports are now sent to the following email addresses:
 @code{cc-mode-help@@python.org} and
 @code{bug-gnu-emacs@@prep.ai.mit.edu}; the latter is mirrored on the
-Usenet newsgroup @code{gnu.emacs.bug}.  You can send other questions,
-suggestions, and kudos to @code{cc-mode-help@@python.org}, or
+Usenet newsgroup @code{gnu.emacs.bug}.  You can send other questions and
+suggestions (kudos? @code{;-)} to @code{cc-mode-help@@python.org}, or
 @code{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on newsgroup
 @code{gnu.emacs.help}.
 
