@@ -97,8 +97,7 @@
   ;; mark.
   `(save-excursion
      ,(if point `(goto-char ,point))
-     ,(if (and (eq (car-safe position) 'quote)
-	       (symbolp (eval position)))
+     ,(if (eq (car-safe position) 'quote)
 	  (let ((position (eval position)))
 	    (cond
 	     ((eq position 'bol)  `(beginning-of-line))
@@ -120,7 +119,7 @@
 	     ((eq position 'ionl) `(progn
 				     (forward-line 1)
 				     (back-to-indentation)))
-	     (t (error "unknown buffer position requested: %s" position))))
+	     (t (error "Unknown buffer position requested: %s" position))))
 	;;(message "c-point long expansion")
 	`(let ((position ,position))
 	   (cond
@@ -143,7 +142,7 @@
 	    ((eq position 'ionl) (progn
 				   (forward-line 1)
 				   (back-to-indentation)))
-	    (t (error "unknown buffer position requested: %s" position)))))
+	    (t (error "Unknown buffer position requested: %s" position)))))
      (point)))
 
 (defmacro c-safe (&rest body)
@@ -256,15 +255,28 @@ continuations."
 		   (eq (char-before) ?\\)))
        (backward-char))))
 
+(defmacro c-major-mode-is (mode)
+  ;; Return non-nil if the current CC Mode major mode is MODE.  MODE
+  ;; is either a mode symbol or a list of mode symbols.
+  (if (eq (car-safe mode) 'quote)
+      (let ((mode (eval mode)))
+	(if (listp mode)
+	    `(memq c-buffer-is-cc-mode ,mode)
+	  `(eq c-buffer-is-cc-mode ,mode)))
+    `(let ((mode ,mode))
+       (if (listp mode)
+	   (memq c-buffer-is-cc-mode mode)
+	 (eq c-buffer-is-cc-mode mode)))))
+
 ;; Make edebug understand the macros.
 (eval-after-load "edebug"
   '(progn
      (def-edebug-spec c-paren-re t)
      (def-edebug-spec c-identifier-re t)
-     (def-edebug-spec c-point ([&or symbolp form] &optional form))
+     (def-edebug-spec c-point t)
      (def-edebug-spec c-safe t)
-     (def-edebug-spec c-forward-sexp (&optional [&or numberp form]))
-     (def-edebug-spec c-backward-sexp (&optional [&or numberp form]))
+     (def-edebug-spec c-forward-sexp t)
+     (def-edebug-spec c-backward-sexp t)
      (def-edebug-spec c-up-list-forward t)
      (def-edebug-spec c-up-list-backward t)
      (def-edebug-spec c-down-list-forward t)
@@ -274,8 +286,10 @@ continuations."
      (def-edebug-spec c-benign-error t)
      (def-edebug-spec c-with-syntax-table t)
      (def-edebug-spec c-skip-ws-forward t)
-     (def-edebug-spec c-skip-ws-backward t)))
+     (def-edebug-spec c-skip-ws-backward t)
+     (def-edebug-spec c-major-mode-is t)))
 
+
 ;;; Inline functions.
 
 ;; Note: All these after the macros, to be on safe side in avoiding
@@ -386,9 +400,6 @@ continuations."
    ((boundp 'mark-active) mark-active)
    ;; fallback; shouldn't get here
    (t (mark t))))
-
-(defsubst c-major-mode-is (mode)
-  (eq c-buffer-is-cc-mode mode))
 
 
 (cc-provide 'cc-defs)
