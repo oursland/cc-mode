@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.352 $
-;; Last Modified:   $Date: 1997-01-27 16:25:57 $
+;; Version:         $Revision: 4.353 $
+;; Last Modified:   $Date: 1997-01-27 23:45:58 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -60,30 +60,22 @@
 ;; my personal account.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
-;; the multi-Emacsen support.  Emacs 19 (from the FSF), XEmacs 19
-;; (formerly Lucid Emacs), and GNU Emacs 18 all do things differently
-;; and there's no way to shut the byte-compiler up at the necessary
-;; granularity.  Let me say this again: YOU CAN IGNORE ALL
+;; the cross-Emacsen support.  GNU Emacs 19 (from the FSF), GNU XEmacs
+;; 19 (formerly Lucid Emacs), and GNU Emacs 18 all do things
+;; differently and there's no way to shut the byte-compiler up at the
+;; necessary granularity.  Let me say this again: YOU CAN IGNORE ALL
 ;; BYTE-COMPILER WARNINGS (you'd be surprised at how many people don't
 ;; follow this advice :-).
 
-;; If your Emacs is dumped with c-mode.el and/or c++-mode.el, you will
-;; need to add the following to your .emacs file before any other
-;; reference to c-mode or c++-mode:
-;;
-;; (fmakunbound 'c-mode)
-;; (makunbound 'c-mode-map)
-;; (fmakunbound 'c++-mode)
-;; (makunbound 'c++-mode-map)
-;; (makunbound 'c-style-alist)
+;; As of this writing (27-Jan-1997), cc-mode comes with the latest
+;; Emacs and XEmacs distributions (19.34 and 19.14 respectively), but
+;; is no longer pre-loaded by default.  To use the latest version of
+;; cc-mode, you need only make sure that this copy of cc-mode.el is
+;; found first on your load-path.
 
-;; If your Emacs comes with cc-mode already (and as of 5-Jul-1996
-;; XEmacs 19.14 and Emacs 19.31 both do), you only need to add the
-;; following to use the latest version of cc-mode:
-;;
-;; (load "cc-mode")
-;;
-;; Make sure the new version is earlier on your load-path.
+;; If your Emacs is pre-loaded with any version of cc-mode.el,
+;; c-mode.el, or c++-mode.el, you will need to consult the
+;; cc-mode.texinfo manual for details on upgrading your Emacs.
 
 ;; There are four major mode entry points provided by this package,
 ;; one for editing C++ code, one for editing C code (both K&R and
@@ -91,28 +83,9 @@
 ;; code.  The commands are M-x c-mode, M-x c++-mode, M-x objc-mode,
 ;; and M-x java-mode.
 
-;; If you are using an old version of Emacs which does not come
-;; with cc-mode.el, you will need to do these things
-;; to use it:
-;;
-;; (autoload 'c++-mode  "cc-mode" "C++ Editing Mode" t)
-;; (autoload 'c-mode    "cc-mode" "C Editing Mode" t)
-;; (autoload 'objc-mode "cc-mode" "Objective-C Editing Mode" t)
-;; (autoload 'java-mode "cc-mode" "Java Editing Mode" t)
-;; (setq auto-mode-alist
-;;   (append '(("\\.C$"    . c++-mode)
-;;             ("\\.cc$"   . c++-mode)
-;;             ("\\.c$"    . c-mode)
-;;             ("\\.h$"    . c-mode)
-;;             ("\\.m$"    . objc-mode)
-;;             ("\\.java$" . java-mode)
-;;            ) auto-mode-alist))
-;;
-;; You do not need these changes in Emacs versions that come with cc-mode.
-
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
-;; encouragement cc-mode.el would be a far inferior package.
+;; encouragement cc-mode would be a far inferior package.
 
 ;; You can get the latest version of cc-mode, including PostScript
 ;; documentation and separate individual files from:
@@ -5083,7 +5056,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.352 $"
+(defconst c-version "$Revision: 4.353 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
