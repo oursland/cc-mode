@@ -66,7 +66,19 @@ since a (good enough) custom library wasn't found")
       (cc-bytecomp-defmacro define-widget (name class doc &rest args))
       (cc-bytecomp-defmacro defcustom (symbol value doc &rest args)
 	`(defvar ,symbol ,value ,doc))
+      (cc-bytecomp-defmacro custom-declare-variable (symbol value doc
+						     &rest args)
+	`(defvar ,(eval symbol) ,(eval value) ,doc))
       nil))))
+
+(cc-eval-when-compile
+  ;; Need the function form of `backquote', which isn't standardized
+  ;; between Emacsen.  It's called `bq-process' in XEmacs, and
+  ;; `backquote-process' in Emacs.  `backquote-process' returns a
+  ;; slightly more convoluted form, so let `bq-process' be the norm.
+  (if (fboundp 'backquote-process)
+      (cc-bytecomp-defmacro bq-process (form)
+	`(cdr (backquote-process ,form)))))
 
 
 ;;; Helpers
@@ -152,7 +164,7 @@ the value set here overrides the style system (there is a variable
 		    (unless (c-safe (plist-get (cdr type) ':tag))
 		      (setcdr type (append '(:tag "Override style settings")
 					   (cdr type))))
-		    (cdr (backquote-process type))))))))))
+		    (bq-process type)))))))))
 
 (defun c-valid-offset (offset)
   "Return non-nil iff OFFSET is a valid offset for a syntactic symbol.
