@@ -130,13 +130,13 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
      ,(concat
          "^"                                  ; beginning of line is required
          "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a `template <...>'
-         "class[ \t]+"
+         "\\(class\\|struct\\)[ \t]+"
          "\\("                                ; the string we want to get
          "[a-zA-Z0-9_]+"                      ; class name
          "\\(<[^>]+>\\)?"                     ; possibly explicitly specialized
          "\\)"
          "[ \t\n]*[:{]"
-         ) 2))
+         ) 3))
   "Imenu generic expression for C++ mode.  See `imenu-generic-expression'.")
  
 (defvar cc-imenu-c-generic-expression
