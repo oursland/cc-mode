@@ -955,6 +955,8 @@ Key bindings:
 		     tab-width
 		     comment-column
 		     parse-sexp-ignore-comments
+		     parse-sexp-lookup-properties
+		     lookup-syntax-properties
 		     ;; A brain-damaged XEmacs only variable that, if
 		     ;; set to nil can cause all kinds of chaos.
 		     signal-error-on-buffer-boundary
@@ -970,12 +972,15 @@ Key bindings:
 		     adaptive-fill-mode
 		     adaptive-fill-regexp)
 		   nil)))
-	(mapcar (lambda (var) (unless (boundp var) (delq var vars)))
+	(mapcar (lambda (var) (unless (boundp var)
+				(setq vars (delq var vars))))
 		'(signal-error-on-buffer-boundary
 		  filladapt-mode
 		  defun-prompt-regexp
 		  font-lock-mode
-		  font-lock-maximum-decoration))
+		  font-lock-maximum-decoration
+		  parse-sexp-lookup-properties
+		  lookup-syntax-properties))
 	vars)
       (lambda ()
 	(run-hooks 'c-prepare-bug-report-hooks)
