@@ -436,7 +436,7 @@ to be set as a file local variable.")
 (defvar cc-test-comp-buf nil)
 (defvar cc-test-comp-win nil)
 
-(defconst cc-test-clear-line-string (concat (make-string 60 ?\ ) "\r"))
+(defconst cc-test-clear-line-string (concat (make-string 40 ?\ ) "\r"))
 
 (defun cc-test-message (msg &rest args)
   (if noninteractive
@@ -529,7 +529,8 @@ to be set as a file local variable.")
   (let ((default-directory cc-test-dir)
 	(save-buf (current-buffer))
 	(save-point (point))
-	(font-lock-maximum-decoration t))
+	(font-lock-maximum-decoration t)
+	(font-lock-global-modes nil))
 
     (if (and collect-tests
 	     (member filename cc-test-finished-tests))
@@ -554,7 +555,7 @@ to be set as a file local variable.")
 	     c-echo-syntactic-information-p
 	     font-lock-verbose)
 
-	(set-buffer testbuf)
+	(switch-to-buffer testbuf)
 	(setq ignore-errs (intersection cc-test-emacs-features
 					cc-test-skip))
 
@@ -587,7 +588,7 @@ to be set as a file local variable.")
 	    (while (not (eobp))
 	      (let ((syntax
 		     (condition-case err
-			 (c-guess-basic-syntax)
+			 (c-save-buffer-state nil (c-guess-basic-syntax))
 		       (error
 			(if no-error
 			    (unless error-found-p
@@ -596,7 +597,6 @@ to be set as a file local variable.")
 			       "%s:%d: c-guess-basic-syntax error: %s"
 			       filename (1+ (count-lines (point-min) (point)))
 			       (error-message-string err)))
-			  (switch-to-buffer testbuf)
 			  (signal (car err) (cdr err)))
 			""))
 		     ))
@@ -625,7 +625,6 @@ to be set as a file local variable.")
 			  filename (1+ (count-lines (point-min)
 						    (c-point 'bol)))
 			  (error-message-string err)))
-		     (switch-to-buffer testbuf)
 		     (signal (car err) (cdr err))))))))
 
 	  (if noninteractive
@@ -658,12 +657,12 @@ to be set as a file local variable.")
 			    (setq msg (apply 'format msg args))
 			    (cc-test-log "%s:%d: %s" filename linenum msg)
 			    (set-buffer testbuf)
+			    (indent-for-comment)
+			    (when (re-search-forward
+				   "\\*/" (c-point 'eol) 'move)
+			      (goto-char (match-beginning 0)))
 			    (unless regression-comment
 			      (setq regression-comment t)
-			      (indent-for-comment)
-			      (when (re-search-forward
-				     "\\*/" (c-point 'eol) 'move)
-				(goto-char (match-beginning 0)))
 			      (delete-horizontal-space)
 			      (insert " !!! "))
 			    (insert msg ". ")
@@ -827,7 +826,6 @@ to be set as a file local variable.")
 	      (buffer-enable-undo exp-faces-buf)
 	      (set-buffer-modified-p nil))
 
-	    (switch-to-buffer testbuf)
 	    (error "Regression found in file %s" filename))
 
 	  (unless noninteractive
@@ -957,7 +955,7 @@ It records the syntactic analysis of each line in the test file."
 
 	(goto-char (point-min))
 	(while (not (eobp))
-	  (let ((syntax (c-guess-basic-syntax)))
+	  (let ((syntax (c-save-buffer-state nil (c-guess-basic-syntax))))
 	    (set-buffer resbuf)
 	    (insert (format "%s\n" syntax)))
 	  (set-buffer testbuf)
