@@ -1771,7 +1771,7 @@ See `c-indent-comment-alist' for a description."
 		   'other))))
       (if (and (memq line-type '(anchored-comment empty-line))
 	       c-indent-comments-syntactically-p)
-	  (let ((syntax (c-guess-basic-syntax)))
+	  (let ((c-syntactic-context (c-guess-basic-syntax)))
 	    ;; BOGOSITY ALERT: if we're looking at the eol, its
 	    ;; because indent-for-comment hasn't put the comment-start
 	    ;; in the buffer yet.  this will screw up the syntactic
@@ -1786,7 +1786,7 @@ See `c-indent-comment-alist' for a description."
 		       c-comment-only-line-offset
 		     (cons c-comment-only-line-offset
 			   c-comment-only-line-offset))))
-	      (c-get-syntactic-indentation syntax)))
+	      (c-get-syntactic-indentation c-syntactic-context)))
 	(goto-char eot)
 	(c-calc-comment-indent line-type)))))
 
