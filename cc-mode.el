@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.309 $
-;; Last Modified:   $Date: 1996-07-05 23:57:19 $
+;; Version:         $Revision: 4.310 $
+;; Last Modified:   $Date: 1996-07-06 00:39:00 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -52,11 +52,12 @@
 ;; highlighting in any language mode.
 
 ;; To submit bug reports, type "C-c C-b".  These will be sent to
-;; bug-gnu-emacs@prep.ai.mit.edu and I'll read about them there (this
-;; is mirrored as the Usenet newsgroup gnu.emacs.bug).  Questions can
-;; sent to help-gnu-emacs@prep.ai.mit.edu (mirrored as
-;; gnu.emacs.help).  Please do not send bugs or questions to my
-;; personal account.
+;; bug-gnu-emacs@prep.ai.mit.edu as well as cc-mode-help@python.org,
+;; and I'll read about them there (the former is mirrored as the
+;; Usenet newsgroup gnu.emacs.bug).  Questions can sent to
+;; help-gnu-emacs@prep.ai.mit.edu (mirrored as gnu.emacs.help) or
+;; cc-mode-help@python.org.  Please do not send bugs or questions to
+;; my personal account.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
 ;; the multi-Emacsen support.  Emacs 19 (from the FSF), XEmacs 19
@@ -76,8 +77,8 @@
 ;; (makunbound 'c++-mode-map)
 ;; (makunbound 'c-style-alist)
 
-;; If your Emacs comes with cc-mode already (and as of 18-Jan-1996,
-;; XEmacs 19.13 and Emacs 19.30 both do), you only need to add the
+;; If your Emacs comes with cc-mode already (and as of 5-Jul-1996
+;; XEmacs 19.14 and Emacs 19.31 both do), you only need to add the
 ;; following to use the latest version of cc-mode:
 ;;
 ;; (load "cc-mode")
@@ -4956,7 +4957,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.309 $"
+(defconst c-version "$Revision: 4.310 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
