@@ -358,7 +358,7 @@ function in the variable `c-delete-function' is called."
 	  (c-in-literal))
       (funcall c-delete-function (prefix-numeric-value arg))
     (let ((here (point)))
-      (c-skip-ws-backward)
+      (c-skip-ws-forward)
       (if (/= (point) here)
 	  (delete-region (point) here)
 	(funcall c-delete-function 1)))))
@@ -1045,8 +1045,8 @@ defun."
 
     (catch 'exit
       (while (> arg 0)
-	;; Note: Some code duplication in `c-end-of-defun' and
-	;; `c-mark-function'.
+	;; Note: Partial code duplication in `c-end-of-defun' and
+	;; `c-declaration-limits'.
 
 	(let ((paren-state (c-parse-state)) lim pos)
 	  (unless (c-safe
@@ -1130,8 +1130,8 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 
     (catch 'exit
       (while (> arg 0)
-	;; Note: Some code duplication in `c-beginning-of-defun' and
-	;; `c-mark-function'.
+	;; Note: Partial code duplication in `c-beginning-of-defun'
+	;; and `c-declaration-limits'.
 
 	(let ((paren-state (c-parse-state)) lim pos)
 	  (unless (c-safe
@@ -1156,7 +1156,9 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 		      '(previous macro))
 	    ;; We moved back over the previous defun or a macro.  Move
 	    ;; to the next token; it's the start of the next
-	    ;; declaration.
+	    ;; declaration.  We can also be directly after the block
+	    ;; in a `c-opt-block-decls-with-vars-key' declaration, but
+	    ;; then we won't move significantly far here.
 	    (goto-char pos)
 	    (c-forward-token-1 0))
 
@@ -1195,99 +1197,123 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
     (c-keep-region-active)
     (= arg 0)))
 
+(defun c-declaration-limits (near)
+  ;; Return a cons of the beginning and end positions of the current
+  ;; top level declaration or macro.  If point is not inside any then
+  ;; nil is returned, unless NEAR is non-nil in which case the closest
+  ;; following one is chosen instead (if there is any).  The end
+  ;; position is at the next line, providing there is one before the
+  ;; declaration.
+  (save-excursion
+
+    ;; Note: Some code duplication in `c-beginning-of-defun' and
+    ;; `c-end-of-defun'.
+    (catch 'exit
+      (let ((start (point))
+	    (paren-state (c-parse-state))
+	    lim pos end-pos)
+	(unless (c-safe
+		  (goto-char (c-least-enclosing-brace paren-state))
+		  ;; If we moved to the outermost enclosing paren then we
+		  ;; can use c-safe-position to set the limit.  Can't do
+		  ;; that otherwise since the earlier paren pair on
+		  ;; paren-state might very well be part of the
+		  ;; declaration we should go to.
+		  (setq lim (c-safe-position (point) paren-state))
+		  t)
+	  ;; At top level.  Make sure we aren't inside a literal.
+	  (setq pos (c-literal-limits
+		     (c-safe-position (point) paren-state)))
+	  (if pos (goto-char (car pos))))
+
+	(when (c-beginning-of-macro)
+	  (throw 'exit
+		 (cons (point)
+		       (save-excursion
+			 (c-end-of-macro)
+			 (forward-line 1)
+			 (point)))))
+
+	(setq pos (point))
+	(when (or (eq (car (c-beginning-of-decl-1 lim)) 'previous)
+		  (= pos (point)))
+	  ;; We moved back over the previous defun.  Skip to the next
+	  ;; one.  Not using c-forward-syntactic-ws here since we
+	  ;; should not skip a macro.  We can also be directly after
+	  ;; the block in a `c-opt-block-decls-with-vars-key'
+	  ;; declaration, but then we won't move significantly far
+	  ;; here.
+	  (goto-char pos)
+	  (while (c-forward-comment 10))
+
+	  (when (and near (c-beginning-of-macro))
+	    (throw 'exit
+		   (cons (point)
+			 (save-excursion
+			   (c-end-of-macro)
+			   (forward-line 1)
+			   (point))))))
+
+	(if (eobp) (throw 'exit nil))
+
+	;; Check if `c-beginning-of-decl-1' put us after the block in a
+	;; declaration that doesn't end there.  We're searching back and
+	;; forth over the block here, which can be expensive.
+	(setq pos (point))
+	(if (and c-opt-block-decls-with-vars-key
+		 (progn
+		   (c-backward-syntactic-ws)
+		   (eq (char-before) ?}))
+		 (eq (car (c-beginning-of-decl-1))
+		     'previous)
+		 (save-excursion
+		   (c-end-of-decl-1)
+		   (and (> (point) pos)
+			(setq end-pos (point)))))
+	    nil
+	  (goto-char pos))
+
+	(if (and (not near) (> (point) start))
+	    nil
+	  (cons (point)
+		(save-excursion
+		  (if end-pos
+		      (goto-char end-pos)
+		    (c-end-of-decl-1))
+		  (setq pos (point))
+		  ;; Try to be line oriented; find the next newline that
+		  ;; isn't inside a comment, but if we hit the next
+		  ;; declaration then we use the current point instead.
+		  (while (and (not (bolp))
+			      (not (looking-at "\\s *$"))
+			      (c-forward-comment 1)))
+		  (cond ((bolp)
+			 (point))
+			((looking-at "\\s *$")
+			 (forward-line 1)
+			 (point))
+			(t
+			 pos)))))
+	))))
+
 (defun c-mark-function ()
   "Put mark at end of the current top-level declaration or macro, point at beginning.
-If point is between two declarations then the following one is chosen.
+If point is not inside any then the closest following one is chosen.
 
 As opposed to \\[c-beginning-of-defun] and \\[c-end-of-defun], this
 function does not require the declaration to contain a brace block."
-
   (interactive)
 
-  ;; Note: Some code duplication in `c-beginning-of-defun' and
-  ;; `c-end-of-defun'.
-  (catch 'exit
-    (let ((paren-state (c-parse-state)) lim pos end-pos end-res)
-      (unless (c-safe
-		(goto-char (c-least-enclosing-brace paren-state))
-		;; If we moved to the outermost enclosing paren then we
-		;; can use c-safe-position to set the limit.  Can't do
-		;; that otherwise since the earlier paren pair on
-		;; paren-state might very well be part of the
-		;; declaration we should go to.
-		(setq lim (c-safe-position (point) paren-state))
-		t)
-	;; At top level.  Make sure we aren't inside a literal.
-	(setq pos (c-literal-limits
-		   (c-safe-position (point) paren-state)))
-	(if pos (goto-char (car pos)))
+  ;; We try to be line oriented, unless there are several
+  ;; declarations on the same line.
+  (if (looking-at c-syntactic-eol)
+      (c-backward-token-1 1 nil (c-point 'bol)))
 
-	(when (c-beginning-of-macro)
-	  (push-mark (save-excursion
-		       (c-end-of-macro)
-		       (forward-line 1)
-		       (point))
-		     nil t)
-	  (throw 'exit nil)))
-
-      ;; We try to be line oriented, unless there are several
-      ;; declarations on the same line.
-      (if (looking-at c-syntactic-eol)
-	  (c-backward-token-1 0 nil (c-point 'bol)))
-
-      (setq pos (point))
-      (when (or (eq (car (c-beginning-of-decl-1 lim)) 'previous)
-		(= pos (point)))
-	;; We moved back over the previous defun.  Skip to the next
-	;; one.  Not using c-forward-syntactic-ws here since we should
-	;; not skip a macro.
-	(goto-char pos)
-	(while (c-forward-comment 10))
-
-	(when (c-beginning-of-macro)
-	  (push-mark (save-excursion
-		       (c-end-of-macro)
-		       (forward-line 1)
-		       (point))
-		     nil t)
-	  (throw 'exit nil)))
-
-      ;; Check if `c-beginning-of-decl-1' put us after the block in a
-      ;; declaration that doesn't end there.  We're searching back and
-      ;; forth over the block here, which can be expensive.
-      (setq pos (point))
-      (if (and c-opt-block-decls-with-vars-key
-	       (progn
-		 (c-backward-syntactic-ws)
-		 (eq (char-before) ?}))
-	       (eq (car (c-beginning-of-decl-1))
-		   'previous)
-	       (save-excursion
-		 (setq end-res (c-end-of-decl-1))
-		 (and (> (point) pos)
-		      (setq end-pos (point)))))
-	  nil
-	(goto-char pos))
-
-      (save-excursion
-	(if (if end-pos
-		(progn (goto-char end-pos) end-res)
-	      (c-end-of-decl-1))
-	    (progn
-	      (setq pos (point))
-	      ;; Try to be line oriented; find the next newline that
-	      ;; isn't inside a comment, but if we hit the next
-	      ;; declaration then we use the current point instead.
-	      (while (and (not (bolp))
-			  (not (looking-at "\\s *$"))
-			  (c-forward-comment 1)))
-	      (cond ((bolp)
-		     (setq pos (point)))
-		    ((looking-at "\\s *$")
-		     (forward-line 1)
-		     (setq pos (point)))))
-	  (error "Cannot find end of declaration")))
-      (push-mark pos nil t))))
+  (let ((decl-limits (c-declaration-limits t)))
+    (if (not decl-limits)
+	(error "Cannot find any declaration")
+      (goto-char (car decl-limits))
+      (push-mark (cdr decl-limits) nil t))))
 
 
 (defun c-beginning-of-statement (&optional count lim sentence-flag)
@@ -2021,47 +2047,20 @@ balanced expression is found."
       (set-marker here nil))))
 
 (defun c-indent-defun ()
-  "Indent the current top-level function, struct, class or macro
-definition syntactically.  In the macro case this also has the effect
-of realigning any line continuation backslashes, unless
-`c-auto-align-backslashes' is nil."
+  "Indent the current top-level declaration or macro syntactically.
+In the macro case this also has the effect of realigning any line
+continuation backslashes, unless `c-auto-align-backslashes' is nil."
   (interactive "*")
-  (let ((here (point-marker)) start)
+  (let ((here (point-marker)) decl-limits)
+    ;; We try to be line oriented, unless there are several
+    ;; declarations on the same line.
+    (if (looking-at c-syntactic-eol)
+	(c-backward-token-1 1 nil (c-point 'bol))
+      (c-forward-token-1 0 nil (c-point 'eol)))
     (unwind-protect
-	(progn
-	  ;; Find and skip past the closest following open paren that
-	  ;; ends on another line, so that it works if we're standing
-	  ;; on the line that opens the construct.
-	  (save-restriction
-	    (narrow-to-region (point-min) (c-point 'eol))
-	    (let (beg (end (point)))
-	      (while (and (setq beg (c-down-list-forward end))
-			  (setq end (c-up-list-forward beg))))
-	      (when (and beg (eq (char-syntax (char-before beg)) ?\())
-		(goto-char beg))))
-	  (setq start (c-least-enclosing-brace (c-parse-state)))
-	  (cond ((and start
-		      (progn (goto-char start)
-			     (c-beginning-of-macro))
-		      (progn (setq start (point))
-			     (c-end-of-macro)
-			     (if (>= (point) here)
-				 t
-			       (setq start nil))))
-		 ;; If the found open brace is inside a macro that
-		 ;; extends to the point then the macro is larger than
-		 ;; the top-level brace pair, so indent the macro.
-		 (c-indent-region start (point)))
-		(start
-		 ;; Inside some brace construct.
-		 (goto-char start)
-		 (c-indent-exp))
-		((progn (goto-char here)
-			(c-beginning-of-macro))
-		 ;; Inside a macro.
-		 (setq start (point))
-		 (c-end-of-macro)
-		 (c-indent-region start (point)))))
+	(if (setq decl-limits (c-declaration-limits nil))
+	    (c-indent-region (car decl-limits)
+			     (cdr decl-limits)))
       (goto-char here)
       (set-marker here nil))))
 
