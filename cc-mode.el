@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.152 $
-;; Last Modified:   $Date: 1995-02-13 23:14:51 $
+;; Version:         $Revision: 4.153 $
+;; Last Modified:   $Date: 1995-02-14 19:54:50 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-02-13 23:14:51 $|$Revision: 4.152 $|
+;; |$Date: 1995-02-14 19:54:50 $|$Revision: 4.153 $|
 
 ;;; Code:
 
@@ -2252,10 +2252,11 @@ search."
 			 (goto-char here))
 		     foundp)))
 	  ;; are we in the middle of an else-if clause?
-	  (if (and (not substmt-p)
-		   (save-excursion
-		     (c-safe (forward-sexp -1))
-		     (looking-at "\\<else\\>[ \t\n]+\\<if\\>")))
+	  (if (save-excursion
+		(and (not substmt-p)
+		     (c-safe (progn (forward-sexp -1) t))
+		     (looking-at "\\<else\\>[ \t\n]+\\<if\\>")
+		     (not (c-in-literal lim))))
 	      (progn
 		(forward-sexp -1)
 		(c-backward-to-start-of-if lim)))
@@ -4459,7 +4460,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.152 $"
+(defconst c-version "$Revision: 4.153 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
