@@ -3,3 +3,15 @@ Author: cc-mode-help@python.org
 
 <h2>CC Mode Version 5.23</h2>
 
+CC Mode version 5.23 should be considered experimental since it
+contains many new features, and has only been tested by the
+<a href="mailto:cc-mode-help@python.org">CC Mode Maintainers</a>.
+We're pretty confident about this release, but we don't want to go
+public with it until a wider audience has given us some feedback.
+
+<p>If you'd like a known stable version, please use
+<a href="./">version 5.21</a>.
+
+<p>5.23 is being made available in a more bare-bones source
+distribution.  Please see <a href="beta/">for the tarballs</a> and
+other gzip'd files.
