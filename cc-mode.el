@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.249 $
-;; Last Modified:   $Date: 1992-12-29 01:22:19 $
+;; Version:         $Revision: 2.250 $
+;; Last Modified:   $Date: 1992-12-31 22:17:36 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-29 01:22:19 $|$Revision: 2.249 $|
+;; |$Date: 1992-12-31 22:17:36 $|$Revision: 2.250 $|
 
 ;;; Code:
 
@@ -141,7 +141,7 @@
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
 ;; Note that there is a patch available to fix the syntax bug in both
-;; emacs 18.59 and Lemacs 19.2. When fixed, emacs will allows 2
+;; emacs 18.59 and Lemacs 19.4. When fixed, emacs will allows 2
 ;; orthogonal comment styles in a single mode.  In this case, some
 ;; lispy ugliness can be ignored.  Also no characters need be tamed.
 
@@ -149,6 +149,9 @@
   (= 8 (length (parse-partial-sexp (point) (point))))
   "True if you've patched your emacs to handle 2 orthogonal comment
 styles in a single mode.")
+(defconst c++-emacs-is-really-fixed-p
+  (fboundp 'backward-syntactic-ws)
+  "True if you've patched emacs to add the really fast back-parser.")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -213,6 +216,8 @@ styles in a single mode.")
   (modify-syntax-entry ?|  "."     c++-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-mode-syntax-table)
   (modify-syntax-entry ?\n ">"     c++-mode-syntax-table)
+  (if c++-emacs-is-really-fixed-p
+      (modify-syntax-entry ?# "<"  c++-mode-syntax-table))
   )
 
 (if c++-c-mode-syntax-table
@@ -230,6 +235,8 @@ styles in a single mode.")
   (modify-syntax-entry ?&  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?|  "."     c++-c-mode-syntax-table)
   (modify-syntax-entry ?\' "\""    c++-c-mode-syntax-table)
+  (if c++-emacs-is-really-fixed-p
+      (modify-syntax-entry ?# "<"  c++-mode-syntax-table))
   )
 
 (defvar c++-tab-always-indent
@@ -415,7 +422,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.249 $
+  "Major mode for editing C++ code.  $Revision: 2.250 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -623,7 +630,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.249 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.250 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2035,6 +2042,17 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 	      ;; none of the above
 	      (setq stop t))))))))
 
+(defun c++-fast-backward-over-syntactic-ws (&optional lim)
+  ;; we can throw away lim since its not really necessary
+  (let ((parse-sexp-ignore-comments t))
+    (backward-syntactic-ws)
+    (if (not (bobp))
+	(forward-char 1))))
+
+(if c++-emacs-is-really-fixed-p
+    (fset 'c++-backward-over-syntactic-ws
+	  'c++-fast-backward-over-syntactic-ws))
+
 (defun c++-backward-to-start-of-do (&optional limit)
   "Move to the start of the last ``unbalanced'' do."
   (setq limit (or limit (c++-point 'bod)))
@@ -2322,7 +2340,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.249 $"
+(defconst c++-version "$Revision: 2.250 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -2386,6 +2404,8 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 	    " code) \n"
 	    (if c++-emacs-is-fixed-p
 		"You've applied the (hopefully most recent) syntax patch!\n")
+	    (if c++-emacs-is-really-fixed-p
+		"Looks like you've also got the parse-back patch. Good!\n")
 	    "\ncurrent state:\n==============\n(setq\n")
     (mapcar
      (function
