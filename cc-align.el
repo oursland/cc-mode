@@ -146,9 +146,10 @@
 	     (looking-at "throws[ \t\n]"))
 	(forward-word 1)
 	(skip-chars-forward " \t")
-	(when (eolp)
-	  (back-to-indentation)
-	  (setq extra c-basic-offset)))
+	(if (eolp)
+	    (progn
+	      (back-to-indentation)
+	      (setq extra c-basic-offset))))
        (t (goto-char iopl)))
       (+ (- (current-column) langelem-col) extra))))
 
