@@ -123,15 +123,65 @@ according to syntactic analysis via `c-offsets-alist', even when
   :type 'boolean
   :group 'c)
 
-(defcustom c-comment-continuation-stars "* "
-  "*Specifies the leader of continued block comments.
+(defcustom c-block-comment-prefix
+  (if (boundp 'c-comment-continuation-stars)
+      c-comment-continuation-stars
+    "* ")
+  "*Specifies the line prefix of continued C-style block comments.
 You should set this variable to the literal string that gets inserted
 at the front of continued block style comment lines.  This should
-either be the empty string, or some number of stars followed by a
-single space.  Note that for line style comments, this variable is not
-used."
-  :type '(choice (const :tag "Use old semantics" nil)
-		 string)
+either be the empty string, or some characters without preceding
+spaces.  To adjust the alignment under the comment starter, put an
+appropriate value on the `c' syntactic symbol (see the
+`c-offsets-alist' variable).
+
+It's only used when a one-line block comment is broken into two or
+more lines for the first time; otherwise the appropriate prefix is
+adapted from the comment.  This variable is not used for C++ line
+style comments."
+  :type 'string
+  :group 'c)
+
+(make-obsolete-variable 'c-comment-continuation-stars
+			'c-block-comment-prefix)
+
+(defcustom c-comment-prefix-regexp "//+\\|\\**"
+  "*Regexp to match the line prefix inside comments.
+This regexp is used to recognize the fill prefix inside comments for
+correct paragraph filling and other things.
+
+It should match the prefix used in both C++ style line comments and C
+style block comments, but it does not need to match a block comment
+starter.  In other words, it should at least match \"//\" for line
+comments and the string in `c-block-comment-prefix', which is
+sometimes inserted by CC Mode inside block comments.  It should not
+match any surrounding whitespace.
+
+Note that CC Mode modifies other variables from this one at mode
+initialization, so you might need to do \\[c-mode] (or whatever mode
+you're currently using) if you change it in a CC Mode buffer."
+  :type 'string
+  :group 'c)
+
+(defcustom c-ignore-auto-fill '(string cpp code)
+  "*List of contexts in which automatic filling never occurs.
+If Auto Fill mode is active, it will be temporarily disabled if point
+is in any context on this list.  It's e.g. useful to enable Auto Fill
+in comments only, but not in strings or normal code.  The valid
+contexts are:
+
+ string  -- inside a string or character literal
+ c       -- inside a C style block comment
+ c++     -- inside a C++ style line comment
+ cpp     -- inside a preprocessor directive
+ code    -- anywhere else, i.e. in normal code"
+  :type '(set
+	  :extra-offset 8
+	  (const :tag "String literals" string)
+	  (const :tag "C style block comments" c)
+	  (const :tag "C++ style line comments" c++)
+	  (const :tag "Preprocessor directives" cpp)
+	  (const :tag "Normal code" code))
   :group 'c)
 
 (defcustom c-cleanup-list '(scope-operator)
