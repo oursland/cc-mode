@@ -2068,6 +2068,9 @@ Optional prefix ARG means justify paragraph as well."
 	;; a marker pointing to the single character of the appended
 	;; string.
 	tmp-pre tmp-post
+	;; If hang-ender-stuck isn't nil, the comment ender is
+	;; hanging.  In that case it's set to the number of spaces
+	;; that should be between the text and the ender.
 	hang-ender-stuck
 	(here (point)))
     ;; Restore point on undo.  It's necessary since we do a lot of
