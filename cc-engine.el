@@ -7918,7 +7918,7 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
 	    (if (and (c-safe (backward-up-list 1) t)
-		     (> (point) placeholder))
+		     (>= (point) placeholder))
 		(progn
 		  (forward-char)
 		  (skip-chars-forward " \t"))
@@ -8005,7 +8005,7 @@ comment at the start of cc-engine.el for more info."
 	    (goto-char containing-sexp)
 	    (setq placeholder (c-point 'boi))
 	    (if (and (c-safe (backward-up-list 1) t)
-		     (> (point) placeholder))
+		     (>= (point) placeholder))
 		(progn
 		  (forward-char)
 		  (skip-chars-forward " \t"))
