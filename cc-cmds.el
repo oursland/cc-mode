@@ -149,7 +149,7 @@ nil, or point is inside a literal then the function in the variable
 Inserts a `#' character specially depending on the variable
 `c-electric-pound-behavior'.  If a numeric ARG is supplied, or if
 point is inside a literal, nothing special happens."
-  (interactive "P")
+  (interactive "*P")
   (if (or (c-in-literal)
 	  arg
 	  (not (memq 'alignleft c-electric-pound-behavior)))
@@ -175,7 +175,7 @@ after braces based on the value of `c-hanging-braces-alist'.
 Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the brace, or
 the brace is inserted inside a literal."
-  (interactive "P")
+  (interactive "*P")
   (let* ((c-state-cache (c-parse-state))
 	 (safepos (c-safe-position (point) c-state-cache))
 	 (literal (c-in-literal safepos)))
@@ -367,7 +367,7 @@ Indent the line as a comment, if:
 
 If numeric ARG is supplied or point is inside a literal, indentation
 is inhibited."
-  (interactive "P")
+  (interactive "*P")
   (let* ((ch (char-before))
 	 (indentp (and (not arg)
 		       (eq last-command-char ?/)
@@ -388,7 +388,7 @@ If the star is the second character of a C style comment introducing
 construct, and we are on a comment-only-line, indent line as comment.
 If numeric ARG is supplied or point is inside a literal, indentation
 is inhibited."
-  (interactive "P")
+  (interactive "*P")
   (self-insert-command (prefix-numeric-value arg))
   ;; if we are in a literal, or if arg is given do not re-indent the
   ;; current line, unless this star introduces a comment-only line.
@@ -417,7 +417,7 @@ is determined.
 When semicolon is inserted, the line is re-indented unless a numeric
 arg is supplied, point is inside a literal, or there are
 non-whitespace characters on the line following the semicolon."
-  (interactive "P")
+  (interactive "*P")
   (let* ((lim (c-most-enclosing-brace (c-parse-state)))
 	 (literal (c-in-literal lim))
 	 (here (point))
@@ -480,7 +480,7 @@ the colon is inserted inside a literal.
 
 This function cleans up double colon scope operators based on the
 value of `c-cleanup-list'."
-  (interactive "P")
+  (interactive "*P")
   (let* ((bod (c-point 'bod))
 	 (literal (c-in-literal bod))
 	 syntax newlines
@@ -551,7 +551,7 @@ and the buffer is in C++ mode.
 
 The line will also not be re-indented if a numeric argument is
 supplied, or point is inside a literal."
-  (interactive "P")
+  (interactive "*P")
   (let ((indentp (and (not arg)
 		      (eq (char-before) last-command-char)
 		      (not (c-in-literal))))
@@ -591,7 +591,7 @@ forward."
 (defun c-scope-operator ()
   "Insert a double colon scope operator at point.
 No indentation or other \"electric\" behavior is performed."
-  (interactive)
+  (interactive "*")
   (insert "::"))
 
 
@@ -910,7 +910,7 @@ of the expression are preserved.
   just inserts a tab character, or the equivalent number of spaces,
   depending on the variable `indent-tabs-mode'."
 
-  (interactive "P")
+  (interactive "*P")
   (let ((bod (c-point 'bod)))
     (if whole-exp
 	;; If arg, always indent this line as C
@@ -953,7 +953,7 @@ of the expression are preserved.
 (defun c-indent-exp (&optional shutup-p)
   "Indent each line in balanced expression following point.
 Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
-  (interactive "P")
+  (interactive "*P")
   (let ((here (point))
 	end progress-p)
     (unwind-protect
@@ -1000,7 +1000,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 
 (defun c-indent-defun ()
   "Re-indents the current top-level function def, struct or class declaration."
-  (interactive)
+  (interactive "*")
   (let ((here (point-marker))
 	(c-echo-syntactic-information-p nil)
 	(brace (c-least-enclosing-brace (c-parse-state))))
@@ -1206,7 +1206,7 @@ backslash (if any) at the end of the previous line.
  
 You can put the region around an entire macro definition and use this
 command to conveniently insert and align the necessary backslashes."
-  (interactive "r\nP")
+  (interactive "*r\nP")
   (save-excursion
     (goto-char from)
     (let ((column c-backslash-column)
@@ -1269,7 +1269,7 @@ fill the comment or the paragraph of it that point is in,
 preserving the comment indentation or line-starting decorations.
 
 Optional prefix ARG means justify paragraph as well."
-  (interactive "P")
+  (interactive "*P")
   (let* (comment-start-place
 	 (first-line
 	  ;; Check for obvious entry to comment.
