@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-11 14:06:02 $
-;; Version:         $Revision: 2.185 $
+;; Last Modified:   $Date: 1992-08-20 17:24:06 $
+;; Version:         $Revision: 2.186 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-11 14:06:02 $|$Revision: 2.185 $|
+;; |$Date: 1992-08-20 17:24:06 $|$Revision: 2.186 $|
 
 
 ;; ======================================================================
@@ -331,7 +331,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.185 $
+  "Major mode for editing C++ code.  $Revision: 2.186 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -532,7 +532,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.185 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.186 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1244,8 +1244,12 @@ the \"real\" top level.  Optional BOD is the beginning of defun."
 	(while (and (setq foundp (re-search-backward
 				  (concat "[;}]\\|" c++-class-key)
 				  (point-min) t))
-		    (or (c++-in-literal)
-			(c++-in-parens-p))))
+		    (let ((bod (c++-point 'bod)))
+		      (or (c++-in-literal bod)
+			  (c++-in-parens-p bod)
+			  ;; see if class key is inside a template spec
+			  (skip-chars-backward " \t")
+			  (memq (preceding-char) '(?, ?<))))))
 	(if (memq (following-char) '(?} ?\;))
 	    nil
 	  (setq state (c++-parse-state containing-sexp))
@@ -1315,15 +1319,15 @@ used."
 (defun c++-in-parens-p (&optional lim)
   "Return t if inside a paren expression.
 Optional LIM is used as the backward limit of the search."
-  ;; hack to work around emacs comment bug
-  (let ((backlim (or lim (c++-point 'bod))))
+  (let ((lim (or lim (c++-point 'bod))))
     (condition-case ()
 	(save-excursion
 	  (save-restriction
-	    (narrow-to-region (point) backlim)
+	    (narrow-to-region (point) lim)
 	    (goto-char (point-max))
 	    (= (char-after (or (scan-lists (point) -1 1) (point-min))) ?\()))
       (error nil))))
+
 
 ;; ======================================================================
 ;; defuns for calculating indentation
@@ -2117,7 +2121,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.185 $"
+(defconst c++-version "$Revision: 2.186 $"
   "c++-mode version number.")
 
 (defun c++-version ()
