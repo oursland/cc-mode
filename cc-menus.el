@@ -29,46 +29,91 @@
 
 
 ;; imenu integration
+(defvar cc-imenu-c-prototype-macro-regexp nil
+  "RE matching macro names used to conditionally specify function prototypes.
+
+For example:
+
+    #ifdef __STDC__
+      #define _P(x) x
+    #else
+      #define _P(x) /*nothing*/
+    #endif
+
+    int main _P( (int argc, char *argv[]) )
+
+A sample value might look like: `\\(_P\\|_PROTO\\)'.")
+
 (defvar cc-imenu-c++-generic-expression
   (` 
-   ((nil
+   (
+    ;; Try to match ::operator definitions first. Otherwise `X::operator new ()'
+    ;; will be incorrectly recognised as function `new ()' because the regexps
+    ;; work by backtracking from the end of the definition.
+    (nil
      (, 
       (concat
-       "^"				      ; beginning of line is required
-       "\\(template[ \t]*<[^>]+>[ \t]*\\)?"   ; there may be a "template <...>"
-       "\\([a-zA-Z0-9_:]+[ \t]+\\)?"	      ; type specs; there can be no
-       "\\([a-zA-Z0-9_:]+[ \t]+\\)?"	      ; more than 3 tokens, right?
-        
-       "\\("				      ; last type spec including */&
-       "[a-zA-Z0-9_:]+"
-       "\\([ \t]*[*&]+[ \t]*\\|[ \t]+\\)"     ; either ptr/ref sign or ws
-       "\\)?"				      ; if there is a last type spec
-       "\\("				      ; name, take into the imenu entry
-       "[a-zA-Z0-9_:~]+"		      ; member func, ctor or dtor...
- 					      ; (may not contain * because then
- 					      ; "a::operator char*" would
-					      ; become "char*"!)
-       "\\|"
-       "\\([a-zA-Z0-9_:~]*::\\)?operator"
-       "[^a-zA-Z1-9_][^(]*"		      ; ...or operator
-       " \\)"
-       "[ \t]*([^)]*)[ \t\n]*[^		;]"   ; require something other than
-					      ; a `;' after the (...) to
-					      ; avoid prototypes.  Can't
-					      ; catch cases with () inside
-					      ; the parentheses surrounding
-					      ; the parameters.  e.g.:
-					      ; "int foo(int a=bar()) {...}"
-        
-       )) 6)    
+       "^\\<.*"
+       "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
+                                              ; (note: this can be `\n')
+       "\\("
+          "\\([a-zA-Z0-9_:<>~]*::\\)?"        ; match an operator
+          "operator\\>[ \t]*"
+          "\\(()\\|[^(]*\\)"                  ; special case for `()' operator
+       "\\)"
+
+       "[ \t]*([^)]*)[ \t]*[^ \t;]"           ; followed by ws, arg list,
+                                              ; require something other than
+                                              ; a `;' after the (...) to
+                                              ; avoid prototypes.  Can't
+                                              ; catch cases with () inside
+                                              ; the parentheses surrounding
+                                              ; the parameters.  e.g.:
+                                              ; `int foo(int a=bar()) {...}'
+       )) 1)
+    ;; Special case to match a line like `main() {}'
+    ;; e.g. no return type, not even on the previous line.
+    (nil
+     (, 
+      (concat
+       "^"
+       "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
+       "[ \t]*([^)]*)[ \t]*[^ \t;]"           ; see above
+       )) 1)
+    ;; Special case for definitions using phony prototype macros like:
+    ;; `int main _PROTO( (int argc,char *argv[]) )'.
+    ;; This case is only included if cc-imenu-c-prototype-macro-regexp is set.
+    ;; Only supported in c-code, so no `:<>~' chars in function name!
+    (,@ (if cc-imenu-c-prototype-macro-regexp
+            (` ((nil
+                 (,
+                  (concat
+                   "^\\<.*"                   ; line MUST start with word char
+                   "[^a-zA-Z0-9_]"            ; match any non-identifier char
+                   "\\([a-zA-Z_][a-zA-Z0-9_]*\\)"       ; match function name
+                   "[ \t]*"                   ; whitespace before macro name
+                   cc-imenu-c-prototype-macro-regexp
+                   "[ \t]*("                  ; ws followed by first paren.
+                   "[ \t]*([^)]*)[ \t]*[^ \t;]" ; see above
+                   )) 1)))))
+    ;; General function name regexp
+    (nil
+     (, 
+      (concat
+       "^\\<.*"                               ; line MUST start with word char
+       "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
+       "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
+       "[ \t]*([^)]*)[ \t]*[^ \t;]"           ; see above
+       )) 1)
+    ;; Class definitions
     ("Class" 
      (, (concat 
- 	 "^"				      ; beginning of line is required
- 	 "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a "template <...>"
- 	 "class[ \t]+"
- 	 "\\([a-zA-Z0-9_]+\\)"		      ; the string we want to get
- 	 "[ \t]*[:{]"
- 	 )) 2)))
+         "^"                                  ; beginning of line is required
+         "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a `template <...>'
+         "class[ \t]+"
+         "\\([a-zA-Z0-9_]+\\)"                ; the string we want to get
+         "[ \t]*[:{]"
+         )) 2)))
   "Imenu generic expression for C++ mode.  See `imenu-generic-expression'.")
  
 (defvar cc-imenu-c-generic-expression
