@@ -369,6 +369,17 @@ same format as `c-default-style'."
     (make-local-variable 'lookup-syntax-properties)
     (setq lookup-syntax-properties t))
 
+  ;; Use this in Emacs 21 to avoid meddling with the rear-nonsticky
+  ;; property on each character.
+  (when (boundp 'text-property-default-nonsticky)
+    (make-local-variable 'text-property-default-nonsticky)
+    (let ((elem (assq 'syntax-table text-property-default-nonsticky)))
+      (if elem
+	  (setcdr elem t)
+	(setq text-property-default-nonsticky
+	      (cons (cons 'syntax-table t)
+		    text-property-default-nonsticky)))))
+
   (c-init-language-vars)
   (c-clear-found-types)
 
