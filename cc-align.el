@@ -198,7 +198,7 @@ the open paren.
 Works with: Almost all symbols, but are typically most useful on
 arglist-close, arglist-cont and arglist-cont-nonempty."
   (save-excursion
-    (if (memq (car elem) '(arglist-cont-nonempty arglist-close))
+    (if (memq (car langelem) '(arglist-cont-nonempty arglist-close))
 	(goto-char (elt c-syntactic-element 2))
       (beginning-of-line)
       (backward-up-list 1))
@@ -211,13 +211,24 @@ those cases to other lineup functions.  Example:
 
 if (  x < 10
    || at_limit (x,       <- c-lineup-arglist-operators
-		list)    <- c-lineup-arglist-operators returns nil
+                list)    <- c-lineup-arglist-operators returns nil
    )
+
+Since this function doesn't do anything for lines without an infix
+operator you typically want to use it together with some other lineup
+settings, e.g. as follows \(the arglist-close setting is just a
+suggestion to get a consistent style):
+
+\(c-set-offset 'arglist-cont '(c-lineup-arglist-operators 0))
+\(c-set-offset 'arglist-cont-nonempty '(c-lineup-arglist-operators
+                                        c-lineup-arglist))
+\(c-set-offset 'arglist-close '(c-lineup-arglist-close-under-paren))
 
 Works with: arglist-cont, arglist-cont-nonempty."
   (save-excursion
     (back-to-indentation)
     (when (looking-at "[-+|&*%<>]\\|\\(/[^/*]\\)")
+      ;; '-' can be both an infix and a prefix operator, but I'm lazy now..
       (c-lineup-arglist-close-under-paren langelem))))
 
 (defun c-lineup-close-paren (langelem)
