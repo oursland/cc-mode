@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-28 20:04:52 $
-;; Version:         $Revision: 2.8 $
+;; Last Modified:   $Date: 1992-04-28 20:52:09 $
+;; Version:         $Revision: 2.9 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-28 20:04:52 $|$Revision: 2.8 $|
+;; |$Date: 1992-04-28 20:52:09 $|$Revision: 2.9 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -126,6 +126,12 @@ Legal values are:
      'auto-hungry  -- both auto-newline and hungry-delete-key can be toggled.
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
+(defvar c++-delete-is-hungry-in-literals-p nil
+  "*Control whether hungry delete (if enabled) works in literals.
+Literals are defined as C and C++ style comments, and strings. If nil,
+hungry-delete will not consume inside literals.  If non-nil, it will
+act hungry even inside literals.")
+
 (defvar c++-auto-hungry-string ""
   "For mode-line indication of auto/hungry state.")
 (defvar c++-hungry-delete-key nil
@@ -138,7 +144,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.8 $
+  "Major mode for editing C++ code.  $Revision: 2.9 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -209,6 +215,9 @@ c++-<thing> are unique for this mode.
     Initial state of auto/hungry mode when a C++ buffer is first visited.
  c++-auto-hungry-toggle
     Enable/disable toggling of auto/hungry states.
+ c++-delete-is-hungry-in-literals-p
+    Is the delete key hungry even in literals (defined as C and C++
+    style comments and strings)?
 
 Auto-newlining is no longer an all or nothing proposition. In
 particular its not possible to implement a perfect auto-newline
@@ -386,15 +395,22 @@ Optional argument has the following meanings when supplied:
 whitespace unless ARG is supplied, in which case it just calls
 backward-delete-char-untabify passing along ARG.
 
-If c++-hungry-delete-key is nil, just call backward-delete-char-untabify."
+If c++-hungry-delete-key is nil, just call
+backward-delete-char-untabify. c++-delete-is-hungry-in-literals-p
+controls whether whitespace is consumed inside of C and C++ style
+comments, and strings."
   (interactive "P")
   (if (or (not c++-hungry-delete-key) arg)
       (backward-delete-char-untabify (prefix-numeric-value arg))
-    (let ((here (point)))
-      (skip-chars-backward "[ \t\n]")
-      (if (/= (point) here)
-	  (delete-region (point) here)
-	(backward-delete-char-untabify 1)))))
+    (if (or c++-delete-is-hungry-in-literals-p
+	    (and (not (c++-in-comment-p))
+		 (not (c++-in-open-string-p))))
+	(let ((here (point)))
+	  (skip-chars-backward "[ \t\n]")
+	  (if (/= (point) here)
+	      (delete-region (point) here)
+	    (backward-delete-char-untabify 1)))
+      (backward-delete-char-untabify 1))))
 
 (defun electric-c++-brace (arg)
   "Insert character and correct line's indentation."
@@ -1278,7 +1294,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.8 $"
+(defconst c++-version "$Revision: 2.9 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
