@@ -505,7 +505,7 @@ stuff.  Used on level 1 and higher."
 		 (concat noncontinued-line-end
 			 "\\("
 			 (c-lang-const c-opt-cpp-prefix)
-			 "[a-z]+"
+			 "[" (c-lang-const c-symbol-chars) "]+"
 			 "\\)")
 		 `(,(1+ ncle-depth) c-preprocessor-face-name t)))
 	      )))
