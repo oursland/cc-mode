@@ -1044,7 +1044,10 @@ Key bindings:
     (add-hook 'before-change-functions 'c-awk-before-change nil t)
     (add-hook 'after-change-functions 'c-awk-after-change nil t)
     (c-save-buffer-state nil
-      (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max))))
+      (save-restriction
+        (widen)
+        (c-awk-clear-NL-props (point-min) (point-max))
+        (c-awk-after-change (point-min) (point-max) 0))) ; Set syntax-table props.
 
     ;; Prevent Xemacs's buffer-syntactic-context being used.  See the comment
     ;; in cc-engine.el, just before (defun c-fast-in-literal ...
