@@ -836,6 +836,15 @@ brace."
 	;; otherwise, we could be looking at a hanging member init
 	;; colon
 	(goto-char checkpoint)
+	(while (eq (char-before) ?,)
+	  ;; this will catch member inits with multiple
+	  ;; line arglists
+	  (forward-char -1)
+	  (c-backward-syntactic-ws (c-point 'bol))
+	  (if (eq (char-before) ?\))
+	      (c-backward-sexp 2)
+	    (c-backward-sexp 1))
+	  (c-backward-syntactic-ws))
 	(if (and (eq (char-before) ?:)
 		 (progn
 		   (forward-char -1)
@@ -968,6 +977,37 @@ brace."
       (c-forward-syntactic-ws start))
     (if stmtbeg
 	(goto-char stmtbeg))))
+
+(defun c-beginning-of-member-init-list (&optional limit)
+  ;; Goes to the beginning of a member init list (i.e. just after the
+  ;; ':') if inside one. Returns t in that case, nil otherwise.
+  (or limit
+      (setq limit (point-min)))
+  (skip-chars-forward " \t")
+  (if (eq (char-after) ?,)
+      (forward-char 1)
+    (c-backward-syntactic-ws limit))
+  (while (and (< limit (point))
+	      (eq (char-before) ?,))
+    ;; this will catch member inits with multiple
+    ;; line arglists
+    (forward-char -1)
+    (c-backward-syntactic-ws)
+    (if (eq (char-before) ?\))
+	(c-backward-sexp 2)
+      (c-backward-sexp 1))
+    ;; Skip backwards over a fully::qualified::name.
+    (c-backward-syntactic-ws limit)
+    (while (and (eq (char-before) ?:)
+		(save-excursion
+		  (forward-char -1)
+		  (eq (char-before) ?:)))
+      (backward-char 2)
+      (c-backward-sexp 1))
+    ;; now continue checking
+    (c-backward-syntactic-ws limit))
+  (and (< limit (point))
+       (eq (char-before) ?:)))
 
 (defun c-skip-case-statement-forward (state &optional lim)
   ;; skip forward over case/default bodies, with optional maximal
@@ -1622,7 +1662,11 @@ brace."
 	     (c-recognize-knr-p
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
 	      (if inclass-p (c-add-class-syntax 'inclass inclass-p)))
-	     ;; CASE 5B.3: Nether region after a C++ or Java func
+	     ;; CASE 5B.3: Inside a member init list.
+	     ((c-beginning-of-member-init-list lim)
+	      (c-forward-syntactic-ws)
+	      (c-add-syntax 'member-init-cont (point)))
+	     ;; CASE 5B.4: Nether region after a C++ or Java func
 	     ;; decl, which could include a `throws' declaration.
 	     (t
 	      (c-beginning-of-statement-1 lim)
@@ -1711,26 +1755,7 @@ brace."
 			    (not (looking-at "[;{<,]"))))
 		(eq (char-after) ?,)))
 	    (goto-char indent-point)
-	    (c-backward-syntactic-ws lim)
-	    (while (and (< lim (point))
-			(eq (char-before) ?,))
-	      ;; this will catch member inits with multiple
-	      ;; line arglists
-	      (forward-char -1)
-	      (c-backward-syntactic-ws (c-point 'bol))
-	      (if (eq (char-before) ?\))
-		  (c-backward-sexp 2)
-		(c-backward-sexp 1))
-	      ;; Skip backwards over a fully::qualified::name.
-	      (c-backward-syntactic-ws lim)
-	      (while (and (eq (char-before) ?:)
-			  (save-excursion
-			    (forward-char -1)
-			    (eq (char-before) ?:)))
-		(backward-char 2)
-		(c-backward-sexp 1))
-	      ;; now continue checking
-	      (c-backward-syntactic-ws lim))
+	    (c-beginning-of-member-init-list lim)
 	    (cond
 	     ;; CASE 5D.1: hanging member init colon, but watch out
 	     ;; for bogus matches on access specifiers inside classes.
