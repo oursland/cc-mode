@@ -794,12 +794,17 @@ value of `c-cleanup-list'."
 	      (delete-region (point) (1- here))
 	      (setq is-scope-op t)))
 	(goto-char (- (point-max) pos)))
-      ;; lets do some special stuff with the colon character
-      (let ((c-syntactic-indentation-in-macros t) elem)
-	;; Turn on syntactic macro analysis to help with auto newlines
-	;; only.
-	(setq syntax (c-guess-basic-syntax)
-	      elem syntax)
+      ;; indent the current line if it's done syntactically.
+      (if c-syntactic-indentation
+	  ;; Cannot use the same syntax analysis as we find below,
+	  ;; since that's made with c-syntactic-indentation-in-macros
+	  ;; always set to t.
+	  (indent-according-to-mode))
+      (let* ((c-syntactic-indentation-in-macros t)
+	     ;; Turn on syntactic macro analysis to help with auto newlines
+	     ;; only.
+	     (syntax (c-guess-basic-syntax))
+	     (elem syntax))
 	;; Translate substatement-label to label for this operation.
 	(while elem
 	  (if (eq (car (car elem)) 'substatement-label)
@@ -819,10 +824,6 @@ value of `c-cleanup-list'."
 					     (c-guess-basic-syntax)
 					   (delete-char -1)))
 				       c-hanging-colons-alist)))))
-      ;; indent the current line if it's done syntactically.
-      (if c-syntactic-indentation
-	  (let ((c-syntactic-context syntax))
-	    (indent-according-to-mode)))
       ;; does a newline go before the colon?  Watch out for already
       ;; non-hung colons.  However, we don't unhang them because that
       ;; would be a cleanup (and anti-social).
