@@ -864,31 +864,46 @@ comment."
 	  (if (and sentence-flag
 		   (/= (char-syntax (char-after (car range))) ?\"))
 	      (let* ((lit-type (c-literal-type range))
+		     (line-prefix (concat "\\("
+					  c-current-comment-prefix
+					  "\\)[ \t]*"))
 		     (beg (save-excursion
 			    (goto-char (car range))
-			    (looking-at (if (eq lit-type 'c)
-					    comment-start-skip
-					  (concat "\\("
-						  c-comment-prefix-regexp
-						  "\\)[ \t]*")))
-			    (goto-char (match-end 0))
-			    (point)))
-		     (end (save-excursion
-			    (goto-char (- (cdr range)
-					  (if (eq lit-type 'c) 2 1)))
-			    (point))))
-		;; move by sentence, but not past the limit of the literal
+			    (max (progn
+				   (looking-at comment-start-skip)
+				   (match-end 0))
+				 (progn
+				   (looking-at line-prefix)
+				   (match-end 0)))))
+		     (end (- (cdr range) (if (eq lit-type 'c) 2 1)))
+		     (beg-of-para
+		      (lambda ()
+			(beginning-of-line)
+			(if (looking-at line-prefix)
+			    (goto-char (match-end 0))))))
 		(save-restriction
-		  (narrow-to-region beg end)
+		  ;; Move by sentence, but not past the limit of the
+		  ;; literal, narrowed to the appropriate
+		  ;; paragraph(s).
+		  (narrow-to-region (save-excursion
+				      (goto-char (min (point) end))
+				      (forward-paragraph -1)
+				      (when (> (point) beg)
+					(funcall beg-of-para)
+					(when (eq (point) here)
+					  (forward-paragraph -2)
+					  (funcall beg-of-para)))
+				      (max (point) beg))
+				    end)
 		  (c-safe (forward-sentence (if (< count 0) 1 -1)))
 		  (if (and (memq lit-type '(c c++))
 			   ;; Check if we stopped due to a comment
 			   ;; prefix and not a sentence end.
-			   (/= (point) beg)
+			   (/= (point) (point-min))
 			   (save-excursion
 			     (beginning-of-line)
 			     (looking-at (concat "[ \t]*\\("
-						 c-comment-prefix-regexp
+						 c-current-comment-prefix
 						 "\\)[ \t]*")))
 			   (>= (point) (match-beginning 0))
 			   (/= (match-beginning 1) (match-end 1))
@@ -919,12 +934,14 @@ comment."
 			  ;; comment ender, stop before it.  Stop after
 			  ;; the ender if there's either nothing or
 			  ;; newlines between.
-			  (when (and (eq lit-type 'c) (eq (point) end))
+			  (when (and (eq lit-type 'c)
+				     (eq (point) (point-max)))
 			    (widen)
 			    (skip-chars-backward " \t")
-			    (when (or (eq (point) end) (bolp))
+			    (when (or (eq (point) (point-max)) (bolp))
 			      (goto-char (cdr range)))))
-		      (when (and (eq (point) beg) (looking-at "[ \t]*$"))
+		      (when (and (eq (point) (point-min))
+				 (looking-at "[ \t]*$"))
 			;; Stop before instead of after the comment
 			;; starter if nothing follows it.
 			(widen)
@@ -1820,7 +1837,7 @@ command to conveniently insert and align the necessary backslashes."
   ;; function also uses the value of point in some heuristics.
   (let* ((here (point))
 	 (prefix-regexp (concat "[ \t]*\\("
-				c-comment-prefix-regexp
+				c-current-comment-prefix
 				"\\)[ \t]*"))
 	 (comment-start-regexp (if (eq lit-type 'c++)
 				   prefix-regexp
@@ -1918,7 +1935,7 @@ command to conveniently insert and align the necessary backslashes."
 	      ;; The comment is either one line or the next line
 	      ;; contains just the comment ender.  Also, if point is
 	      ;; on the comment opener line and the following line is
-	      ;; empty or doesn't match c-comment-prefix-regexp we
+	      ;; empty or doesn't match c-current-comment-prefix we
 	      ;; assume that this is in fact a not yet closed one line
 	      ;; comment, so we shouldn't look for the comment prefix
 	      ;; on the next line.  In these cases we have no
@@ -2145,7 +2162,7 @@ Optional prefix ARG means justify paragraph as well."
 		  (goto-char (cdr lit-limits))
 		  (beginning-of-line)
 		  (if (and (looking-at (concat "[ \t]*\\("
-					       c-comment-prefix-regexp
+					       c-current-comment-prefix
 					       "\\)\\*/"))
 			   (eq (cdr lit-limits) (match-end 0)))
 		      ;; Leave the comment ender on its own line.
@@ -2165,7 +2182,7 @@ Optional prefix ARG means justify paragraph as well."
 		      (set-marker end (point))
 		      (forward-line -1)
 		      (if (and (looking-at (concat "[ \t]*\\(\\("
-						   c-comment-prefix-regexp
+						   c-current-comment-prefix
 						   "\\)[ \t]*\\)"))
 			       (eq ender-start (match-end 0)))
 			  ;; The comment ender is prefixed by nothing
@@ -2213,7 +2230,7 @@ Optional prefix ARG means justify paragraph as well."
 	      ;; comment line in the narrowed region.
 	      (setq fill (c-guess-fill-prefix lit-limits lit-type))
 	      (unless (string-match (concat "\\`[ \t]*\\("
-					    c-comment-prefix-regexp
+					    c-current-comment-prefix
 					    "\\)[ \t]*\\'")
 				    (car fill))
 		;; Oops, the prefix doesn't match the comment prefix
@@ -2223,7 +2240,7 @@ Optional prefix ARG means justify paragraph as well."
 		;; often doesn't appear at all.  So let's warn about
 		;; it.
 		(message "\
-Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
+Warning: Regexp from `c-comment-prefix-regexp' doesn't match the comment prefix %S"
 			 (car fill)))
 	      ;; Find the right spot on the line, break it, insert
 	      ;; the fill prefix and make sure we're back in the
@@ -2377,7 +2394,7 @@ If a fill prefix is specified, it overrides all the above."
 		 (if (save-excursion
 		       (back-to-indentation)
 		       (> (point) (car c-lit-limits))
-		       (looking-at c-comment-prefix-regexp))
+		       (looking-at c-current-comment-prefix))
 		     (progn
 		       ;; Skip forward past the fill prefix in case
 		       ;; we're standing in it.
