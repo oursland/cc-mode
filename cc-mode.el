@@ -82,7 +82,7 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
-(cc-require 'cc-fix)
+;(cc-require 'cc-fix)
 (cc-require 'cc-defs)
 (cc-require-when-compile 'cc-langs)
 (cc-require 'cc-vars)
@@ -132,7 +132,7 @@
 ;;;###autoload
 (defun c-initialize-cc-mode ()
   ;; This function does not do any hidden buffer changes.
-  (c-fix)                          ; repair any (X)Emacs version specific bugs
+;;  (c-fix) ; repair any (X)Emacs version specific bugs; commented out by ACM, 2003/5/26
   (setq c-buffer-is-cc-mode t)
   (let ((initprop 'cc-mode-is-initialized)
 	c-initialization-ok)
@@ -454,7 +454,7 @@ that requires a literal mode spec at compile time."
 (defun c-font-lock-init ()
   "Set up the font-lock variables for using the font-lock support in CC Mode.
 This does not load the font-lock package.  Use after
-`c-basic-common-init'."
+`c-basic-common-init' and after cc-fonts has been loaded."
 
   (make-local-variable 'font-lock-defaults)
   (setq font-lock-defaults
@@ -962,6 +962,13 @@ Key bindings:
     (setq awk-mode-map (c-make-inherited-keymap))
     ;; add bindings which are only useful for awk.
     (define-key awk-mode-map "#" 'self-insert-command)
+    (define-key awk-mode-map "/" 'self-insert-command)
+    (define-key awk-mode-map "*" 'self-insert-command)
+    (define-key awk-mode-map "\C-c\C-n" 'undefined) ; #if doesn't exist in awk.
+    (define-key awk-mode-map "\C-c\C-p" 'undefined)
+    (define-key awk-mode-map "\C-c\C-u" 'undefined)
+    (define-key awk-mode-map "\M-a" 'undefined) ; c-awk-beginning-of-statement isn't yet implemented.
+    (define-key awk-mode-map "\M-e" 'undefined) ; c-awk-end-of-statement isn't yet implemented.
     (define-key awk-mode-map "\C-\M-a" 'c-awk-beginning-of-defun)
     (define-key awk-mode-map "\C-\M-e" 'c-awk-end-of-defun))
 
