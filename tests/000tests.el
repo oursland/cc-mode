@@ -99,7 +99,7 @@
 	(knr-argdecl-intro     . +)
 	(knr-argdecl           . 0)
 	(topmost-intro         . 0)
-	(topmost-intro-cont    . 0)
+	(topmost-intro-cont    . c-lineup-topmost-intro-cont)
 	(member-init-intro     . +)
 	(member-init-cont      . c-lineup-multi-inher)
 	(inher-intro           . +)
