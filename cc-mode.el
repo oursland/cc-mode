@@ -332,13 +332,6 @@ same format as `c-default-style'."
   (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'adaptive-fill-regexp)
 
-  ;; X/Emacs 20 only
-  (and (boundp 'comment-line-break-function)
-       (progn
-	 (make-local-variable 'comment-line-break-function)
-	 (setq comment-line-break-function
-	       'c-indent-new-comment-line)))
-
   ;; now set their values
   (setq parse-sexp-ignore-comments t
 	indent-line-function 'c-indent-line
@@ -346,6 +339,19 @@ same format as `c-default-style'."
 	normal-auto-fill-function 'c-do-auto-fill
 	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
+
+  ;; (X)Emacs 20 and later.
+  (when (boundp 'comment-line-break-function)
+    (make-local-variable 'comment-line-break-function)
+    (setq comment-line-break-function
+	  'c-indent-new-comment-line))
+
+  ;; Emacs 20 and later, and XEmacs 21 (although currently
+  ;; undocumented).  This variable is always set since it's tested at
+  ;; runtime.
+  (make-local-variable 'parse-sexp-lookup-properties)
+  (setq parse-sexp-lookup-properties
+	(not (not (memq 'syntax-properties c-emacs-features))))
 
   (c-init-language-vars)
   (c-clear-found-types)
