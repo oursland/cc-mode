@@ -1250,88 +1250,86 @@ It's overlaid over `font-lock-reference-face'."
   :args '((const :tag "none" nil)
 	  (repeat :tag "types" regexp)))
 
-;; The following provide a means to fontify types not defined by the
-;; language.  Those types might be the user's own or they might be
-;; generally accepted and used.  Generally accepted types are used to
-;; provide default variable values.
+;; The following is a by now mostly obsolete method to fontify types
+;; not defined by the language.  Those types might be the user's own
+;; or they might be generally accepted and used.  Generally accepted
+;; types are used to provide default variable values.
 
-;; I do not appreciate the very Emacs-specific luggage on this default
-;; value, but otoh it can hardly get in the way for other users, and
-;; removing it would cause unnecessary grief for the old timers that
-;; are used to have Lisp_Object there. /mast
-(defcustom c-font-lock-extra-types '("FILE" "\\sw+_t" "Lisp_Object")
-  "*List of extra types to fontify in C mode.
+(let ((common-blurb "
+This variable is not used by default, since it's consulted only when
+the decoration level is 2 \(see `font-lock-maximum-decoration').  On
+higher levels another more accurate method to detect declarations is
+used which in almost all cases can detect user defined types without
+this variable.  However, it can still be useful if you think that the
+other method is too slow \(`lazy-lock-mode' is recommended)."))
+
+  ;; I do not appreciate the very Emacs-specific luggage on this
+  ;; default value, but otoh it can hardly get in the way for other
+  ;; users, and removing it would cause unnecessary grief for the old
+  ;; timers that are used to have Lisp_Object there. /mast
+  (defcustom c-font-lock-extra-types '("FILE" "\\sw+_t" "Lisp_Object")
+    (concat "*List of extra types to fontify in C mode.
 Each list item should be a regexp not containing word-delimiters.  For
 example, a value of (\"FILE\" \"\\\\sw+_t\") means the word FILE and
 words ending in _t are treated as type names.
+" common-blurb)
+    :type 'c-extra-types-widget
+    :group 'c-fonts)
 
-This variable is used when the decoration level is 2 and higher \(see
-`font-lock-maximum-decoration').
-
-The value is used by `c-font-lock-setup' when Font Lock mode is turned
-on.  If it's changed later on it's necessary to do \\[c-font-lock-setup]
-for the changes to take effect."
-  :type 'c-extra-types-widget
-  :group 'c-fonts)
-
-(defcustom c++-font-lock-extra-types
-  '("\\sw+_t"
-    "\\([iof]\\|str\\)+stream\\(buf\\)?" "ios"
-    "string" "rope"
-    "list" "slist"
-    "deque" "vector" "bit_vector"
-    "set" "multiset"
-    "map" "multimap"
-    "hash\\(_\\(m\\(ap\\|ulti\\(map\\|set\\)\\)\\|set\\)\\)?"
-    "stack" "queue" "priority_queue"
-    "type_info"
-    "iterator" "const_iterator" "reverse_iterator" "const_reverse_iterator"
-    "reference" "const_reference")
-  "*List of extra types to fontify in C++ mode.
+  (defcustom c++-font-lock-extra-types
+    '("\\sw+_t"
+      "\\([iof]\\|str\\)+stream\\(buf\\)?" "ios"
+      "string" "rope"
+      "list" "slist"
+      "deque" "vector" "bit_vector"
+      "set" "multiset"
+      "map" "multimap"
+      "hash\\(_\\(m\\(ap\\|ulti\\(map\\|set\\)\\)\\|set\\)\\)?"
+      "stack" "queue" "priority_queue"
+      "type_info"
+      "iterator" "const_iterator" "reverse_iterator" "const_reverse_iterator"
+      "reference" "const_reference")
+    (concat "*List of extra types to fontify in C++ mode.
 Each list item should be a regexp not containing word-delimiters.  For
 example, a value of (\"string\") means the word string is treated as a
 type name.
+" common-blurb)
+    :type 'c-extra-types-widget
+    :group 'c-fonts)
 
-This variable is used when the decoration level is 2 and higher \(see
-`font-lock-maximum-decoration').
-
-The value is used by `c++-font-lock-setup' when Font Lock mode is turned
-on.  If it's changed later on it's necessary to do \\[c++-font-lock-setup]
-for the changes to take effect."
-  :type 'c-extra-types-widget
-  :group 'c-fonts)
-
-(defcustom objc-font-lock-extra-types '("Class" "BOOL" "IMP" "SEL")
-  "*List of extra types to fontify in ObjC mode.
+  (defcustom objc-font-lock-extra-types '("Class" "BOOL" "IMP" "SEL")
+    (concat "*List of extra types to fontify in ObjC mode.
 Each list item should be a regexp not containing word-delimiters.  For
 example, a value of (\"Class\" \"BOOL\" \"IMP\" \"SEL\") means the
 words Class, BOOL, IMP and SEL are treated as type names.
+" common-blurb)
+    :type 'c-extra-types-widget
+    :group 'c-fonts)
 
-This variable is used when the decoration level is 2 and higher \(see
-`font-lock-maximum-decoration').
-
-The value is used by `objc-font-lock-setup' when Font Lock mode is turned
-on.  If it's changed later on it's necessary to do \\[objc-font-lock-setup]
-for the changes to take effect."
-  :type 'c-extra-types-widget
-  :group 'c-fonts)
-
-(defcustom java-font-lock-extra-types
-  '("[A-Z\300-\326\330-\337]\\sw*[a-z]\\sw*")
-  "*List of extra types to fontify in Java mode.
+  (defcustom java-font-lock-extra-types
+    '("[A-Z\300-\326\330-\337]\\sw*[a-z]\\sw*")
+    (concat "*List of extra types to fontify in Java mode.
 Each list item should be a regexp not containing word-delimiters.  For
 example, a value of (\"[A-Z\300-\326\330-\337]\\\\sw*[a-z]\\\\sw*\")
 means capitalised words (and words conforming to the Java id spec) are
 treated as type names.
+" common-blurb)
+    :type 'c-extra-types-widget
+    :group 'c-fonts)
 
-This variable is used when the decoration level is 2 and higher \(see
-`font-lock-maximum-decoration').
+  (defcustom idl-font-lock-extra-types nil
+    (concat "*List of extra types to fontify in IDL mode.
+Each list item should be a regexp not containing word-delimiters.
+" common-blurb)
+    :type 'c-extra-types-widget
+    :group 'c-fonts)
 
-The value is used by `java-font-lock-setup' when Font Lock mode is turned
-on.  If it's changed later on it's necessary to do \\[java-font-lock-setup]
-for the changes to take effect."
-  :type 'c-extra-types-widget
-  :group 'c-fonts)
+  (defcustom pike-font-lock-extra-types nil
+    (concat "*List of extra types to fontify in Pike mode.
+Each list item should be a regexp not containing word-delimiters.
+" common-blurb)
+    :type 'c-extra-types-widget
+    :group 'c-fonts))
 
 
 ;; Non-customizable variables, still part of the interface to CC Mode

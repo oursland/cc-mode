@@ -47,6 +47,81 @@
 (require 'cl)
 
 
+;; Helpers for building of constants that are parameterized on a
+;; per-language basis.
+
+(eval-and-compile
+  (defvar c-macroexpand-mode nil
+    ;; Dynamically set to the mode symbol during `c-lang-defconst' so
+    ;; that `c-lang-var' can do the right expansion.
+    )
+
+  (defmacro c-lang-defconst (var &rest args)
+    ;; Sets the mode specific values of the constant VAR.  The rest of
+    ;; the arguments are one or more repetitions of MODE VAL.  MODE is
+    ;; the mode name without the "-mode" suffix, or a list of such
+    ;; mode names, or `all' as a shortcut for a list of all modes.
+    ;; VAL is evaluated (during compilation) for each mode with
+    ;; `c-macroexpand-mode' temporarily bound, so `c-lang-var' without
+    ;; an explicit mode may be used within it.  The assignments in
+    ;; ARGS are processed in sequence, similar to `setq'.
+    (let* ((res (list 'progn))
+	   (res-tail res))
+      (while args
+	(let ((mode (car args)))
+	  (cond ((eq mode 'all)
+		 (setq mode '(c c++ objc java idl pike)))
+		((symbolp mode)
+		 (setq mode (list mode))))
+	  (while mode
+	    (let* ((c-macroexpand-mode
+		    (intern (concat (symbol-name (car mode)) "-mode")))
+		   (val (eval (car (cdr args)))))
+	      ;; Need to install the value also during compilation,
+	      ;; since val might refer to earlier mode specific
+	      ;; values.
+	      (put var c-macroexpand-mode val)
+	      (setcdr res-tail (list `(put ',var ',c-macroexpand-mode ',val)))
+	      (setq res-tail (cdr res-tail)))
+	    (setq mode (cdr mode))))
+	(setq args (cdr (cdr args))))
+      res))
+  (put 'c-lang-defconst 'lisp-indent-function 1)
+
+  (defmacro c-lang-var (var &optional mode)
+    ;; Get the mode specific value of the variable VAR in mode MODE.
+    ;; MODE is the mode name without the "-mode" suffix.  It may also
+    ;; be nil to use the current value of `c-macroexpand-mode' (which
+    ;; is useful inside `c-lang-defconst') or `c-buffer-is-cc-mode'
+    ;; (which is useful inside `c-lang-defvar').
+    `(get ',var ,(if (eq mode 'nil)
+		     (if c-macroexpand-mode
+			 ;; In the macro expansion of `c-lang-defconst'.
+			 `(quote ,c-macroexpand-mode)
+		       `c-buffer-is-cc-mode)
+		   `(quote ,(intern (concat (symbol-name mode) "-mode"))))))
+
+  ;; These are used to collect the init forms from the subsequent
+  ;; `c-lang-defvar'.  They become a big setq in the
+  ;; `c-init-lang-defvars' lambda below.
+  (defconst c-lang-defvar-init-form (list 'setq))
+  (defconst c-lang-defvar-init-form-tail c-lang-defvar-init-form)
+
+  (defmacro c-lang-defvar (var val)
+    ;; Declares the buffer local variable VAR to get the value VAL at
+    ;; mode initialization, at which point VAL is evaluated.
+    ;; `c-lang-var' is typically used in VAL to get the right value
+    ;; according to `c-buffer-is-cc-mode'.
+    (setcdr c-lang-defvar-init-form-tail (list var val))
+    (setq c-lang-defvar-init-form-tail
+	  (cdr (cdr c-lang-defvar-init-form-tail)))
+    `(progn
+       (defvar ,var nil)
+       (make-variable-buffer-local ',var)))
+  (put 'c-lang-defvar 'lisp-indent-function 1)
+  )
+
+
 ;; Some support functions that are used when the language specific
 ;; constants are built.  Since the constants are built during compile
 ;; time, these need to be defined then too.
@@ -93,7 +168,8 @@ appended."
 	  ;; passing adorn to regexp-opt, since it in XEmacs makes the
 	  ;; top level grouping "shy".
 	  (if adorn
-	      (concat "\\(" re "\\)\\([^_a-zA-Z0-9$]\\|$\\)")
+	      (concat "\\(" re "\\)"
+		      "\\(" (c-lang-var c-nonsymbol-key) "\\|$\\)")
 	    re))
       "\\<\\>"				; Matches nothing.
       ))
@@ -101,93 +177,36 @@ appended."
   )
 
 
-;; Building of constants that are parameterized on a per-language
-;; basis.
+;; Constants and variables that are language dependent.
 
-(eval-and-compile
-  (defvar c-macroexpand-mode nil
-    ;; Dynamically bound to the mode symbol during `c-lang-defconst'
-    ;; so that `c-lang-var' can do the right expansion.
-    )
+;; Regexp that matches any character that can't be part of a symbol.
+;; It's usually appended to other regexps to avoid matching a prefix.
+;; The same thing regarding Unicode identifiers applies here as to
+;; `c-symbol-key' below.
+(c-lang-defconst c-nonsymbol-key
+  all "[^_a-zA-Z0-9$]")
 
-  (defmacro c-lang-defconst (var &rest args)
-    ;; Sets the mode specific values of the constant VAR.  The rest of
-    ;; the arguments are one or more repetitions of MODE VAL.  MODE is
-    ;; the mode name without the "-mode" suffix, or a list of such
-    ;; mode names, or `all' as a shortcut for a list of all modes.
-    ;; VAL is evaluated (during compilation) for each mode with
-    ;; `c-macroexpand-mode' temporarily bound, so `c-lang-var' without
-    ;; an explicit mode may be used within it.  The assignments in
-    ;; ARGS are processed in sequence, similar to `setq'.
-    (let* ((res (list 'progn))
-	   (res-tail res))
-      (while args
-	(let ((mode (car args)))
-	  (cond ((eq mode 'all)
-		 (setq mode '(c c++ objc java idl pike)))
-		((symbolp mode)
-		 (setq mode (list mode))))
-	  (while mode
-	    (let* ((c-macroexpand-mode
-		    (intern (concat (symbol-name (car mode)) "-mode")))
-		   (val (eval (car (cdr args)))))
-	      ;; Need to install the value also during compilation,
-	      ;; since val might refer to earlier mode specific
-	      ;; values.
-	      (put var c-macroexpand-mode val)
-	      (setcdr res-tail (list `(put ',var ',c-macroexpand-mode ',val)))
-	      (setq res-tail (cdr res-tail)))
-	    (setq mode (cdr mode))))
-	(setq args (cdr (cdr args))))
-      res))
-  (put 'c-lang-defconst 'lisp-indent-function 1)
-
-  (defmacro c-lang-var (var &optional mode)
-    ;; Get the mode specific value of the variable VAR in mode MODE.
-    ;; MODE is the mode name without the "-mode" suffix.  It may also
-    ;; be nil to use the current value of `c-macroexpand-mode' (which
-    ;; is useful inside `c-lang-defconst') or `c-buffer-is-cc-mode'
-    ;; (which is useful inside `c-lang-defvar').
-    `(get ',var ,(if (eq mode 'nil)
-		     (if c-macroexpand-mode
-			 ;; In the macro expansion of c-lang-defconst.
-			 `(quote ,c-macroexpand-mode)
-		       `c-buffer-is-cc-mode)
-		   `(quote ,(intern (concat (symbol-name mode) "-mode"))))))
-
-  ;; These are used to collect the init forms from the subsequent
-  ;; `c-lang-defvar'.  They become a big setq in the
-  ;; `c-init-lang-defvars' lambda below.
-  (defconst c-lang-defvar-init-form (list 'setq))
-  (defconst c-lang-defvar-init-form-tail c-lang-defvar-init-form)
-
-  (defmacro c-lang-defvar (var val)
-    ;; Declares the buffer local variable VAR to get the value VAL at
-    ;; mode initialization, at which point VAL is evaluated.
-    ;; `c-lang-var' is typically used in VAL to get the right value
-    ;; according to `c-buffer-is-cc-mode'.
-    (setcdr c-lang-defvar-init-form-tail (list var val))
-    (setq c-lang-defvar-init-form-tail
-	  (cdr (cdr c-lang-defvar-init-form-tail)))
-    `(progn
-       (defvar ,var nil)
-       (make-variable-buffer-local ',var)))
-  (put 'c-lang-defvar 'lisp-indent-function 1)
-  )
-
-;; Regexp describing a `symbol' in all languages, not excluding
-;; keywords.  We cannot use just `word' syntax class since `_' cannot
-;; be in word class.  Putting underscore in word class breaks forward
-;; word movement behavior that users are familiar with.  Besides, it
-;; runs counter to Emacs convention.
+;; Regexp that matches the start of a symbol.
 ;;
 ;; This definition isn't correct for the first character in the
 ;; languages that accept the full range of Unicode word constituents
 ;; in identifiers (e.g. Java and Pike).  For that we'd need to make a
 ;; regexp that matches all characters in the word constituent class
 ;; except 0-9, and the regexp engine currently can't do that.
+(c-lang-defconst c-symbol-start
+   (c c++ objc java idl) "[_a-zA-Z]"
+   pike "[_a-zA-Z`]")
+(c-lang-defvar c-symbol-start (c-lang-var c-symbol-start))
+
+;; Regexp describing a `symbol' in all languages, not excluding
+;; keywords.  The first submatch surrounds the whole symbol.
+;;
+;; We cannot use just `word' syntax class since `_' cannot be in word
+;; class.  Putting underscore in word class breaks forward word
+;; movement behavior that users are familiar with.  Besides, it runs
+;; counter to Emacs convention.
 (c-lang-defconst c-symbol-key
-  (c c++ objc java idl) "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
+  (c c++ objc java idl)  "\\([_a-zA-Z]\\(\\w\\|\\s_\\)*\\)"
   pike (concat "\\(" (c-lang-var c-symbol-key c) "\\|"
 	       (c-make-keywords-re nil
 		 '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~"
@@ -197,19 +216,75 @@ appended."
 	       "\\)"))
 (c-lang-defvar c-symbol-key (c-lang-var c-symbol-key))
 
-;; Number of regexp grouping parens in c-symbol-key.
+;; Number of regexp grouping parens in `c-symbol-key'.
 (c-lang-defconst c-symbol-key-depth
   all (c-regexp-opt-depth (c-lang-var c-symbol-key)))
 (c-lang-defvar c-symbol-key-depth (c-lang-var c-symbol-key-depth))
 
 (defvar c-stmt-delim-chars "^;{}?:")
 ;; The characters that should be considered to bound statements.  To
-;; optimize c-crosses-statement-barrier-p somewhat, it's assumed to
+;; optimize `c-crosses-statement-barrier-p' somewhat, it's assumed to
 ;; begin with "^" to negate the set.  If ? : operators should be
 ;; detected then the string must end with "?:".
 
 (defvar c-stmt-delim-chars-with-comma "^;,{}?:")
-;; Variant of c-stmt-delim-chars that additionally contains ','.
+;; Variant of `c-stmt-delim-chars' that additionally contains ','.
+
+;; Regexp matching a piece of syntactic whitespace that isn't a
+;; sequence of simple whitespace characters.  As opposed to
+;; `c-(forward|backward)-syntactic-ws', this doesn't regard cpp
+;; directives as syntactic whitespace.
+(c-lang-defconst c-nonwhite-syntactic-ws
+  all (concat "/" (concat
+		   "\\("
+		   "/[^\n\r]*[\n\r]"	; Line comment.
+		   "\\|"
+		   ;; Block comment. We intentionally don't allow line
+		   ;; breaks in them to avoid going very far and risk
+		   ;; running out of regexp stack; this regexp is
+		   ;; intended to handle only short comments that
+		   ;; might be put in the middle of limited constructs
+		   ;; like declarations.
+		   "\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/"
+		   "\\)")
+	      "\\|"
+	      "\\\\[\n\r]"))		; Line continuations.
+
+;; Regexp matching syntactic whitespace, including possibly the empty
+;; string.  As opposed to `c-(forward|backward)-syntactic-ws', this
+;; doesn't regard cpp directives as syntactic whitespace.
+(c-lang-defconst c-syntactic-ws
+  all (concat "[ \t\n\r]*\\("
+	      "\\(" (c-lang-var c-nonwhite-syntactic-ws) "\\)"
+	      "[ \t\n\r]*\\)*"))
+
+;; Number of regexp grouping parens in `c-syntactic-ws'.
+(c-lang-defconst c-syntactic-ws-depth
+  all (c-regexp-opt-depth (c-lang-var c-syntactic-ws)))
+
+;; Regexp matching syntactic whitespace, which is at least one
+;; character long.  As opposed to `c-(forward|backward)-syntactic-ws',
+;; this doesn't regard cpp directives as syntactic whitespace.
+(c-lang-defconst c-nonempty-syntactic-ws
+  all (concat "\\([ \t\n\r]\\|"
+	      (c-lang-var c-nonwhite-syntactic-ws)
+	      "\\)+"))
+
+;; Number of regexp grouping parens in `c-nonempty-syntactic-ws'.
+(c-lang-defconst c-nonempty-syntactic-ws-depth
+  all (c-regexp-opt-depth (c-lang-var c-nonempty-syntactic-ws)))
+
+;; Regexp matching syntactic whitespace without any line breaks.  As
+;; opposed to `c-(forward|backward)-syntactic-ws', this doesn't regard
+;; cpp directives as syntactic whitespace.
+(c-lang-defconst c-single-line-syntactic-ws
+  all (concat "[ \t]*\\("
+	      "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/" ; Block comment
+	      "[ \t]*\\)*"))
+
+;; Number of regexp grouping parens in `c-single-line-syntactic-ws'.
+(c-lang-defconst c-single-line-syntactic-ws-depth
+  all (c-regexp-opt-depth (c-lang-var c-single-line-syntactic-ws)))
 
 ;; HELPME: Many of the following keyword lists are more or less bogus
 ;; for some languages (notably ObjC and IDL).  The effects of the
@@ -218,38 +293,76 @@ appended."
 ;; code are mostly correct in the situations they are used, but I'd
 ;; still appreciate help to get them correct for other uses.
 
-;; Primitive type keywords.
+;; Primitive type keywords, excluding those on `c-complex-type-kwds'.
 (c-lang-defconst c-primitive-type-kwds
   (c c++ idl) '("char" "double" "float" "int" "long" "short" "signed"
 		"unsigned" "void"
 		;; "complex" is not a builtin type afaik, but it was
 		;; treated like one by font-lock.el when CC Mode took
-		;; over the settings.
-		"complex")
+		;; over the settings.  FIXME: Check it in the standard.
+		)
   c (append (c-lang-var c-primitive-type-kwds)
-	    ;; From font-lock.el: Henrik Enberg <henrik@enberg.org>
-	    ;; says these are new.
-	    '("_Complex" "_Imaginary" "_Bool"))
+	    '(
+	      ;; From font-lock.el: Henrik Enberg <henrik@enberg.org>
+	      ;; says these are new, but i'm very sceptical that they
+	      ;; are actually keywords.  FIXME: Check it in the standard.
+	      ;;"_Complex" "_Imaginary" "_Bool"
+	      ))
   objc '("char" "double" "float" "id" "int" "long" "short" "signed" "unsigned"
 	 "void")
   java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
-  pike '("float" "int" "mapping" "multiset" "object" "program" "string"
-	 "void"))
+  pike '("float" "int" "string" "void"))
 
-;; Regexp matching the primitive type keywords.
-(c-lang-defvar c-primitive-type-key
-  (c-make-keywords-re t (c-lang-var c-primitive-type-kwds)))
+;; An adorned regexp that matches `c-primitive-type-kwds'.
+(c-lang-defconst c-primitive-type-key
+  all (c-make-keywords-re t (c-lang-var c-primitive-type-kwds)))
+(c-lang-defvar c-primitive-type-key (c-lang-var c-primitive-type-key))
 
-;; Declaration specifier keywords.
+;; Keywords that can precede a parenthesis that contains a complex
+;; type, e.g. "mapping(int:string)" in Pike.
+(c-lang-defconst c-complex-type-kwds
+  pike '("array" "function" "mapping" "multiset" "object" "program"))
+
+;; An adorned regexp that matches `c-complex-type-kwds', or nil in
+;; languages without such things.
+(c-lang-defconst c-complex-type-key
+  all (and (c-lang-var c-complex-type-kwds)
+	   (c-make-keywords-re t (c-lang-var c-complex-type-kwds))))
+(c-lang-defvar c-complex-type-key (c-lang-var c-complex-type-key))
+
+;; All type keywords, i.e. the union of `c-primitive-type-kwds' and
+;; `c-complex-type-kwds'.
+(c-lang-defconst c-type-kwds
+  all (if (c-lang-var c-complex-type-kwds)
+	  ;; Don't need `delete-duplicates' since these two are
+	  ;; defined to be exclusive.
+	  (append (c-lang-var c-primitive-type-kwds)
+		  (c-lang-var c-complex-type-kwds))
+	(c-lang-var c-primitive-type-kwds)))
+
+;; Declaration specifier keywords.  These are keywords that may
+;; precede declarations but that aren't part of a type, e.g. "struct"
+;; in C isn't a specifier since the whole "struct foo" is a type, but
+;; "typedef" is since it precedes the declaration that defines the
+;; type.
 (c-lang-defconst c-specifier-kwds
-  c '("auto" "const" "extern" "register" "static" "volatile")
-  (c++ objc idl) (append '("friend" "inline" "virtual")
+  c '("auto" "const" "extern" "register" "typedef" "static" "volatile"
+      ;; From font-lock.el: Dan Nicolaescu <done@gnu.org> says this is new.
+      "restrict"			; FIXME: How is this used?
+      ;; From font-lock.el: Henrik Enberg <henrik@enberg.org> says this is new.
+      "inline")
+  (c++ objc idl) (append '("friend" "virtual")
 			 (c-lang-var c-specifier-kwds c))
   ;; Note: `const' is not used in Java, but it's still a reserved keyword.
   java '("abstract" "const" "final" "native" "private" "protected"
 	 "public" "static" "synchronized" "transient" "volatile")
-  pike '("final" "inline" "local" "nomask" "optional" "private"
-	 "protected" "static" "variant"))
+  pike '("constant" "final" "inline" "local" "nomask" "optional"
+	 "private" "protected" "static" "typedef" "variant"))
+
+;; Declaration specifier keywords.
+(c-lang-defconst c-specifier-key
+  all (c-make-keywords-re t (c-lang-var c-specifier-kwds)))
+(c-lang-defvar c-specifier-key (c-lang-var c-specifier-key))
 
 ;; Class/struct declaration keywords.
 (c-lang-defconst c-class-kwds
@@ -257,7 +370,7 @@ appended."
   c++ '("class" "struct" "union")
   objc '("interface" "implementation")
   java '("class" "interface")
-  idl '("interface" "valuetype" "class" "struct" "union")
+  idl '("class" "interface" "struct" "union" "valuetype")
   pike '("class"))
 
 ;; Regexp matching the start of a class.
@@ -296,13 +409,25 @@ appended."
 (c-lang-defvar c-opt-block-decls-with-vars-key
   (c-lang-var c-opt-block-decls-with-vars-key))
 
+;; Keywords where the following symbol - if any - is a type name.
+(c-lang-defconst c-type-prefix-kwds
+  c '("struct" "union" "enum")
+  c++ '("class" "struct" "union" "enum")
+  java '("class")
+  pike '("class" "enum"))
+
+;; Adorned regexp matching `c-type-prefix-kwds'.
+(c-lang-defconst c-type-prefix-key
+  all (c-make-keywords-re t (c-lang-var c-type-prefix-kwds)))
+(c-lang-defvar c-type-prefix-key (c-lang-var c-type-prefix-key))
+
 ;; Keywords introducing declarations that has not been accounted for
 ;; by any of the above.
 (c-lang-defconst c-other-decl-kwds
-  ;; FIXME: Shouldn't "template" be moved to c-specifier-kwds for C++?
+  ;; FIXME: Shouldn't "template" be moved to `c-specifier-kwds' for C++?
   c++ '("template")
   java '("import" "package")
-  pike '("constant" "import" "inherit"))
+  pike '("import" "inherit"))
 
 ;; Keywords introducing extra declaration specifiers in the region
 ;; between the header and the body (i.e. the "K&R-region") in
@@ -368,7 +493,10 @@ appended."
 (c-lang-defvar c-opt-asm-stmt-key (c-lang-var c-opt-asm-stmt-key))
 
 ;; Keywords introducing labels in blocks.
-(c-lang-defconst c-label-kwds (c c++ objc java pike) '("case" "default"))
+(c-lang-defconst c-label-kwds (c c++ java pike) '("case" "default"))
+
+;; Keywords followed by a label or a label reference.
+(c-lang-defconst c-before-label-kwds (c c++ java pike) '("case" "goto"))
 
 ;; Regexp matching any keyword that introduces a label.
 (c-lang-defconst c-label-kwds-regexp
@@ -431,8 +559,8 @@ appended."
   all (c-make-keywords-re t
 	(c-lang-var c-class-kwds)
 	(c-lang-var c-other-decl-block-kwds)
-	(c-lang-var c-inexpr-class-kwds)))
-(c-lang-defconst c-decl-block-key	; ObjC needs some tuning of the regexp.
+	(c-lang-var c-inexpr-class-kwds))
+  ;; ObjC needs some tuning of the regexp.
   objc (concat "@" (c-lang-var c-decl-block-key)))
 (c-lang-defvar c-decl-block-key (c-lang-var c-decl-block-key))
 
@@ -448,11 +576,12 @@ appended."
 
 ;; All keywords as a list.
 (c-lang-defconst c-keywords
-  all (delete-duplicates (append (c-lang-var c-primitive-type-kwds)
+  all (delete-duplicates (append (c-lang-var c-type-kwds)
 				 (c-lang-var c-specifier-kwds)
 				 (c-lang-var c-class-kwds)
 				 (c-lang-var c-other-decl-block-kwds)
 				 (c-lang-var c-block-decls-with-vars)
+				 (c-lang-var c-type-prefix-kwds)
 				 (c-lang-var c-other-decl-kwds)
 				 (c-lang-var c-decl-spec-kwds)
 				 (c-lang-var c-protection-kwds)
@@ -475,6 +604,28 @@ appended."
   all (c-make-keywords-re t (c-lang-var c-keywords)))
 (c-lang-defvar c-keywords-regexp (c-lang-var c-keywords-regexp))
 
+;; All nontype keywords as an adorned regexp.
+(c-lang-defconst c-nontype-keywords-regexp
+  all (c-make-keywords-re t
+	(set-difference (c-lang-var c-keywords) (c-lang-var c-type-kwds)
+			:test 'string-equal)))
+(c-lang-defvar c-nontype-keywords-regexp
+  (c-lang-var c-nontype-keywords-regexp))
+
+;; Adorned regexp matching all keywords that can't appear at the start
+;; of a declaration.
+(c-lang-defconst c-not-decl-init-keywords
+  all (c-make-keywords-re t
+	(set-difference (c-lang-var c-keywords)
+			(append (c-lang-var c-type-kwds)
+				(c-lang-var c-specifier-kwds)
+				(c-lang-var c-class-kwds)
+				(c-lang-var c-other-decl-block-kwds)
+				(c-lang-var c-block-decls-with-vars)
+				(c-lang-var c-type-prefix-kwds))
+			:test 'string-equal)))
+(c-lang-defvar c-not-decl-init-keywords (c-lang-var c-not-decl-init-keywords))
+
 ;; Regexp matching an access protection label in a class, or nil in
 ;; languages that doesn't have such things.
 (c-lang-defconst c-opt-access-key
@@ -489,14 +640,16 @@ appended."
 ;; with a keyword, like switch labels.  It's only used at the
 ;; beginning of a statement.
 (c-lang-defconst c-label-key
-  all (concat (c-lang-var c-symbol-key) "[ \t\n\r]*:\\([^:]\\|$\\)"))
+  all "\\<\\>"
+  (c c++ java pike) (concat (c-lang-var c-symbol-key)
+			    "[ \t\n\r]*:\\([^:]\\|$\\)"))
 (c-lang-defvar c-label-key (c-lang-var c-label-key))
 
 ;; Regexp matching the beginning of a declaration specifier in the
 ;; region between the header and the body of a declaration.
 ;;
-;; FIXME: This is currently not used in a uniformly; c++-mode and
-;; java-mode each have their own ways of using it.
+;; FIXME: This is currently not used uniformly; c++-mode and java-mode
+;; each have their own ways of using it.
 (c-lang-defconst c-opt-decl-spec-key
   c++ (concat ":?[ \t\n\r]*\\(virtual[ \t\n\r]+\\)?\\("
 	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
@@ -508,8 +661,8 @@ appended."
 ;; Regexp describing friend declarations classes, or nil in languages
 ;; that doesn't have such things.
 (c-lang-defconst c-opt-friend-key
-  ;; FIXME: Ought to use c-specifier-kwds or similar, and the template
-  ;; skipping isn't done properly.
+  ;; FIXME: Ought to use `c-specifier-kwds' or similar, and the
+  ;; template skipping isn't done properly.
   c++ "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+")
 (c-lang-defvar c-opt-friend-key (c-lang-var c-opt-friend-key))
 
@@ -523,9 +676,53 @@ appended."
 	"[ \t\n]*" (c-lang-var c-symbol-key)))
 (c-lang-defvar c-opt-method-key (c-lang-var c-opt-method-key))
 
-;; Regexp matching the prefix of a cpp directive.
+;; Regexp matching something that might precede a declaration,
+;; e.g. the last token of a preceding statement or declaration.  It
+;; should not match bob, though.
+(c-lang-defconst c-decl-prefix-re
+  (java idl objc) "[\{\}\(;,]"
+  ;; We additionally match ")" in C for K&R region declarations, and
+  ;; in C and C++ for when a cpp macro definition begins with a
+  ;; declaration.
+  (c c++) "[\{\}\(\);,]"
+  pike "[\{\}\(\)\[;,]") ;; Also match "[" for multiple value assignments.
+(c-lang-defvar c-decl-prefix-re (c-lang-var c-decl-prefix-re))
+
+;; Regexp matching the operators that might precede the identifier in
+;; a declaration, e.g. the "*" in "char *argv".  This regexp should
+;; match "(" if parentheses are valid in type declarations.  The end
+;; of the first submatch is taken as the end of the operator.
+(c-lang-defconst c-type-decl-prefix-key
+  all  "\\<\\>" ;; Default to a regexp that never matches.
+  c    "\\(\(\\|*\\)\\($\\|[^=]\\)"
+  c++  "\\(\(\\|[*&]\\)\\($\\|[^=]\\)"
+  pike "\\(\(\\|[*!~]\\)\\($\\|[^=]\\)"
+  java "\\(\(\\)")			; FIXME: Correct?
+(c-lang-defvar c-type-decl-prefix-key (c-lang-var c-type-decl-prefix-key))
+
+;; Regexp matching the operators that might follow after the
+;; identifier in a declaration, e.g. the "[" in "char argv[]".  This
+;; regexp should match ")" if parentheses are valid in type
+;; declarations.  If it matches an open paren of some kind, the type
+;; declaration check continues at the corresponding close paren,
+;; otherwise the end of the first submatch is taken as the end of the
+;; operator.
+(c-lang-defconst c-type-decl-suffix-key
+  all "\\<\\>" ;; Default to a regexp that never matches.
+  (c c++) "\\([\)\[\(]\\)"
+  java "\\(\\[\\)")			; FIXME: Correct?
+(c-lang-defvar c-type-decl-suffix-key (c-lang-var c-type-decl-suffix-key))
+
+;; Regexp matching operators that concatenate types, e.g. "|" in
+;; "int|string" in Pike.  The end of the first submatch is taken as
+;; the end of the operator.  nil in languages without such operators.
+(c-lang-defconst c-type-concat-key
+  pike "\\([|.&]\\)\\($\\|[^|.&]\\)")
+(c-lang-defvar c-type-concat-key (c-lang-var c-type-concat-key))
+
+;; Regexp matching the prefix of a cpp directive in the languages that
+;; normally uses that macro preprocessor.
 (c-lang-defconst c-cpp-prefix
-  all "\\<\\>"				; Default to no preprocessor support.
   (c c++) "^\\s *#\\s *"
   ;; The preprocessor in Pike recognizes cpp directives anywhere,
   ;; not just at boi.
@@ -551,8 +748,8 @@ appended."
 
 ;; Regexp to match the start of any type of comment.
 ;;
-;; FIXME: Ought to use c-comment-prefix-regexp with some modifications
-;; instead of this.
+;; FIXME: Ought to use `c-comment-prefix-regexp' with some
+;; modifications instead of this.
 (c-lang-defconst c-comment-start-regexp
   ;; Might seem like overkill to make this a language dependent
   ;; constant, but awk-mode is on its way..
@@ -621,8 +818,8 @@ appended."
 ;; Regexp to match in-comment line continuations, or nil in languages
 ;; where that isn't applicable.  It's assumed that it only might match
 ;; from and including the last character on a line.  Built from
-;; *-in-comment-lc-prefix and the current value of
-;; c-current-comment-prefix.
+;; `*-in-comment-lc-prefix' and the current value of
+;; `c-current-comment-prefix'.
 (c-lang-defvar c-opt-in-comment-lc
   (if (c-lang-var c-in-comment-lc-prefix)
       (concat (c-lang-var c-in-comment-lc-prefix)
@@ -630,8 +827,15 @@ appended."
 
 (defconst c-init-lang-defvars
   ;; Make a lambda of the collected `c-lang-defvar' initializations.
+  ;; We need to do it this way to make sure that the lambda is
+  ;; compiled during compilation when `c-lang-defvar-init-form' has a
+  ;; value.
   (cc-eval-when-compile
     (if (cc-bytecomp-is-compiling)
+	;; `byte-compile-lambda' is an undocumented function in
+	;; bytecomp.el.  We use it instead of `byte-compile' since
+	;; that one resets the environment so we get warnings about
+	;; all the variables in `c-lang-defvar-init-form'.
 	(byte-compile-lambda `(lambda () ,c-lang-defvar-init-form))
       `(lambda () ,c-lang-defvar-init-form))))
 
