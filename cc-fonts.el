@@ -251,6 +251,14 @@
 	`(font-lock-remove-face ,from ,to)
       `(remove-text-properties ,from ,to '(face nil))))
 
+  (defmacro c-put-font-lock-string-face (from to)
+    ;; Put `font-lock-string-face' on a string.  The surrounding
+    ;; quotes are included in Emacs but not in XEmacs.  The passed
+    ;; region should include them.
+    (if (featurep 'xemacs)
+	`(c-put-font-lock-face (1+ ,from) (1- ,to) 'font-lock-string-face)
+      `(c-put-font-lock-face ,from ,to 'font-lock-string-face)))
+
   (defmacro c-fontify-types-and-refs (varlist &rest body)
     ;; Like `let', but additionally activates `c-record-type-identifiers'
     ;; and `c-record-ref-identifiers', and fontifies the recorded ranges
@@ -2646,16 +2654,20 @@ need for `pike-font-lock-extra-types'.")
 	      (c-remove-font-lock-face pos (1- end))
 	      (c-put-font-lock-face (1- end) end markup-faces)
 	      (setq pos (point)))
-	    (c-remove-font-lock-face pos (point))
+
+	    ;; Include the final newline in the removed area.  This
+	    ;; has no visual effect but it avoids some tricky special
+	    ;; cases in the testsuite wrt the differences in string
+	    ;; fontification in Emacs vs XEmacs.
+	    (c-remove-font-lock-face pos (min (1+ (point)) (point-max)))
 
 	    ;; Must handle string literals explicitly inside the declaration.
 	    (goto-char start)
 	    (while (re-search-forward
 		    "\"\\([^\\\"]\\|\\\\.\\)*\"\\|'\\([^\\']\\|\\\\.\\)*'"
 		    end 'move)
-	      (c-put-font-lock-face (match-beginning 0)
-				    (point)
-				    'font-lock-string-face))
+	      (c-put-font-lock-string-face (match-beginning 0)
+					   (point)))
 
 	    ;; Fontify types after keywords that always are followed
 	    ;; by them.
