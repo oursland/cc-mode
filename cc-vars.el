@@ -132,7 +132,9 @@ mode name.  Valid symbols are:
                         Clean up occurs when the open-brace after the
                         `else' is typed.
  brace-elseif-brace  -- similar to brace-else-brace, but cleans up
-                        `} else if {' constructs.
+                        `} else if (...) {' constructs.
+ brace-catch-brace   -- similar to brace-elseif-brace, but cleans up
+                        `} catch (...) {' constructs in Java mode.
  empty-defun-braces  -- cleans up empty defun braces by placing the
                         braces on the same line.  Clean up occurs when
 			the defun closing brace is typed.
@@ -153,7 +155,8 @@ mode name.  Valid symbols are:
   :type '(set
 	  :extra-offset 8
 	  (const :tag "Put `} else {' on one line" brace-else-brace)
-	  (const :tag "Put `} else if {' on one line" brace-elseif-brace)
+	  (const :tag "Put `} else if (...) {' on one line" brace-elseif-brace)
+	  (const :tag "Put `} catch (...) {' on one line" brace-catch-brace)
 	  (const :tag "Put empty defun braces on one line" empty-defun-braces)
 	  (const :tag "Put `},' in aggregates on one line" list-close-comma)
 	  (const :tag "Put C++ style `::' on one line" scope-operator))

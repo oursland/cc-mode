@@ -986,7 +986,7 @@ void spam(int i)
 @end group
 @end example
 @noindent
-appears like this after the open brace is typed:
+appears like this after the open parenthesis is typed:
 @example
 @group
 
@@ -998,6 +998,10 @@ void spam(int i)
 
 @end group
 @end example
+
+@item
+@code{brace-catch-brace} --- analogous to @code{brace-elseif-brace}, but
+cleans up @samp{@} catch (...) @{} in Java mode.
 
 @item
 @code{empty-defun-braces} --- cleans up braces following a top-level
