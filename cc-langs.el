@@ -319,7 +319,9 @@ appended."
   (c c++ pike) (append '("##"	; Used by cpp.
 			 "->" "::" "...")
 		       (c-lang-var c-multichar-tokens))
-  c++  (append '(".*" "->*" "<%" "%>" "%:" "%:%:")
+  (c c++) (append '("<:" ":>" "<%" "%>" "%:" "%:%:")
+		  (c-lang-var c-multichar-tokens))
+  c++  (append '(".*" "->*")
 	       (c-lang-var c-multichar-tokens))
   java (append '(">>>" ">>>=")
 	       (c-lang-var c-multichar-tokens))
@@ -345,17 +347,8 @@ appended."
 ;; Primitive type keywords, excluding those on `c-complex-type-kwds'.
 (c-lang-defconst c-primitive-type-kwds
   (c c++ idl) '("char" "double" "float" "int" "long" "short" "signed"
-		"unsigned" "void"
-		;; "complex" is not a builtin type afaik, but it was
-		;; treated like one by font-lock.el when CC Mode took
-		;; over the settings.  FIXME: Check it in the standard.
-		)
-  c (append '(
-	      ;; From font-lock.el: Henrik Enberg <henrik@enberg.org>
-	      ;; says these are new, but i'm very sceptical that they
-	      ;; are actually keywords.  FIXME: Check it in the standard.
-	      ;;"_Complex" "_Imaginary" "_Bool"
-	      )
+		"unsigned" "void")
+  c (append '("complex" "imaginary")	; Conditionally defined in C99.
 	    (c-lang-var c-primitive-type-kwds))
   c++ (append '("bool" "wchar_t")
 	      (c-lang-var c-primitive-type-kwds))
@@ -414,10 +407,7 @@ appended."
 (c-lang-defconst c-specifier-kwds
   (c c++) '("auto" "const" "extern" "inline" "register" "typedef"
 	    "static" "volatile")
-  c   (append '(;; From font-lock.el: Dan Nicolaescu <done@gnu.org> says
-		;; this is new.
-		"restrict"		; FIXME: How is this used?
-		)
+  c   (append '("restrict")
 	      (c-lang-var c-specifier-kwds))
   c++ (append '("explicit" "friend" "mutable" "virtual")
 	      (c-lang-var c-specifier-kwds))
