@@ -5,8 +5,8 @@
 ;; Author:        1995 Barry A. Warsaw
 ;; Maintainer:    cc-mode-help@merlin.cnri.reston.va.us
 ;; Created:       March 1995, split from cc-mode.el
-;; Version:       $Revision: 1.7 $
-;; Last Modified: $Date: 1995-06-11 20:42:38 $
+;; Version:       $Revision: 1.8 $
+;; Last Modified: $Date: 1995-06-11 21:42:31 $
 ;; Keywords: c languages oop
 
 ;; This file is not part of GNU Emacs.
@@ -79,32 +79,32 @@ Possible values to put on this list:
 	      elements inside these lists may not indent correctly.")
 
 (defun cc-lobotomize ()
-  "Perform lobotomies on cc-mode as described in `c-lobotomy-pith-list'."
+  "Perform lobotomies on cc-mode as described in `cc-lobotomy-pith-list'."
   (let (pithedp)
-    (if (memq 'literal c-lobotomy-pith-list)
+    (if (memq 'literal cc-lobotomy-pith-list)
 	(progn
-	  (fset 'c-in-literal 'c-in-literal-lobotomized)
+	  (fset 'c-in-literal 'cc-in-literal-lobotomized)
 	  (setq pithedp t)))
-    (if (memq 'class c-lobotomy-pith-list)
+    (if (memq 'class cc-lobotomy-pith-list)
 	(progn
 	  (fset 'c-narrow-out-enclosing-class
-		'c-narrow-out-enclosing-class-lobotomized)
+		'cc-narrow-out-enclosing-class-lobotomized)
 	  (fset 'c-search-uplist-for-classkey
-		'c-search-uplist-for-classkey-lobotomized)
+		'cc-search-uplist-for-classkey-lobotomized)
 	  (setq pithedp t)))
-    (if (memq 'lists c-lobotomy-pith-list)
+    (if (memq 'lists cc-lobotomy-pith-list)
 	(progn
-	  (fset 'c-inside-bracelist-p 'c-inside-bracelist-p-lobotomized)
+	  (fset 'c-inside-bracelist-p 'cc-inside-bracelist-p-lobotomized)
 	  (setq pithedp t)))
     (if pithedp
-	(fset 'c-submit-bug-report 'c-submit-bug-report-lobotomized))
+	(fset 'c-submit-bug-report 'cc-submit-bug-report-lobotomized))
     ))
 
 
 ;; This is a faster version of c-in-literal.  It trades speed for one
 ;; approximation, namely that within other literals, the `#' character
 ;; cannot be the first non-whitespace on a line.
-(defun c-in-literal-lobotomized (&optional lim)
+(defun cc-in-literal-lobotomized (&optional lim)
   ;; first check the cache
   (if (and (boundp 'c-in-literal-cache)
 	   c-in-literal-cache
@@ -130,13 +130,13 @@ Possible values to put on this list:
 	   (setq c-in-literal-cache (vector (point) rtn)))
       rtn)))
 
-(defun c-narrow-out-enclosing-class-lobotomized (dummy1 dummy2) nil)
+(defun cc-narrow-out-enclosing-class-lobotomized (dummy1 dummy2) nil)
 
-(defun c-search-uplist-for-classkey-lobotomized (dummy) nil)
+(defun cc-search-uplist-for-classkey-lobotomized (dummy) nil)
 
-(defun c-inside-bracelist-p-lobotomized (dummy1 dummy2) nil)
+(defun cc-inside-bracelist-p-lobotomized (dummy1 dummy2) nil)
 
-(defun c-submit-bug-report-lobotomized ()
+(defun cc-submit-bug-report-lobotomized ()
   "Submit via mail a bug report on cc-mode."
   (interactive)
   ;; load in reporter
