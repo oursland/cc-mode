@@ -9,7 +9,7 @@ class Foo
 	    public void foo()
 	    {}
 	}
-			      );
+	);
     public addWindowListener
 	( new WindowAdapter() {
 		public void windowClosed(WindowEvent we)
@@ -19,7 +19,7 @@ class Foo
 		public void foo()
 		{}
 	    }
-	  );
+	    );
     button.setActionListener(
 			     new java.awt.event.ActionAdaptor()
 			     {

@@ -47,6 +47,6 @@ long_function_name (x, {
     },
     b);
 long_function_name (x, y {
-			a;
-		    },
-		    b);
+	a;
+    },
+    b);

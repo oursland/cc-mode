@@ -27,8 +27,8 @@ int foo() {
 	},
 	b);
     NIFTY_LITTLE_KANGAS (a, { x;
-			     y;
-			     z;
-			 },
-			 b);
+	    y;
+	    z;
+	},
+	b);
 }
