@@ -3,9 +3,9 @@ CC Mode Version 5.14
 Barry A. Warsaw <cc-mode-help@python.org>
 
 This message announces the availablity of a new version of CC Mode, a
-GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, and
-Java code.  A list of user visible changes is available from
-<http://www.python.org/ftp/emacs/cc-details.html>.
+GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, Java
+and CORBA's IDL code.  A list of user visible changes is available
+from <http://www.python.org/ftp/emacs/cc-details.html>.
 
 Since the distribution is fairly large and since it is readily
 available via the Web, anonymous ftp, and email, the source code is
