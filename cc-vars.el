@@ -443,7 +443,7 @@ then no newline is inserted."
   :type 'integer
   :group 'c)
 
-(defcustom-c-stylevar c-special-indent-hook nil
+(defcustom c-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
 This hook gets called after a line is indented by the mode."
   :type 'hook
