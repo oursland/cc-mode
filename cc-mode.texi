@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.49 $
+@comment manual version: $Revision: 2.50 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-07-05 23:30:14 $
+@comment Last modification: $Date: 1996-07-05 23:40:29 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.49 $)
+@center (manual revision: $Revision: 2.50 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -940,6 +940,14 @@ void spam( int i )
 Likewise, if a slash is inserted as the second slash in a C++ style line
 comment (also only on a comment-only line), then the line is indented as
 defined by @code{c-offsets-alist}.
+
+@findex c-electric-lt-gt
+@findex electric-lt-gt (c-)
+@kindex <
+@kindex >
+Less-than and greater-than signs are also electric, but only in C++
+mode.  Hitting the second of two @kbd{<} or @kbd{>} keys re-indents the
+line if it is a C++ style stream operator.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
