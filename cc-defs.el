@@ -131,7 +131,7 @@
 	 (progn (,@ body))
        (error nil))))
 
-(defsubst c-forward-sexp (&optional arg)
+(defmacro c-forward-sexp (&optional arg)
   ;; like forward-sexp except
   ;;   1. this is much stripped down from the XEmacs version
   ;;   2. this cannot be used as a command, so we're insulated from
@@ -139,13 +139,17 @@
   ;;      friendly
   ;;   3. Preserves the semantics most of CC Mode is based on
   (or arg (setq arg 1))
-  (goto-char (or (scan-sexps (point) arg) (buffer-end arg)))
-  (if (< arg 0) (backward-prefix-chars)))
+  `(goto-char (or (scan-sexps (point) ,arg)
+		  ,(if (numberp arg)
+		       (if (> arg 0) `(point-max) `(point-min))
+		     `(if (> arg 0) (point-max) (point-min)))))
+  ;;(if (< arg 0) (backward-prefix-chars))
+  )
 
-(defsubst c-backward-sexp (&optional arg)
+(defmacro c-backward-sexp (&optional arg)
   ;; See c-forward-sexp and reverse directions
   (or arg (setq arg 1))
-  (c-forward-sexp (- arg)))
+  `(c-forward-sexp ,(if (numberp arg) (- arg) `(- ,arg))))
 
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
