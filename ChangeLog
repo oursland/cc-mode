@@ -1,3 +1,55 @@
+Wed Jul 16 23:56:58 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.13.
+
+Thu Jul 17 03:36:22 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-symbol-key):
+	first character must be a letter or underscore
+
+Tue Jul 15 04:18:38 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi:
+	Describe the variable c-indent-comments-syntactically-p.
+
+Mon Jul 14 23:43:33 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-langs.el (c-make-inherited-keymap): Change to a defun
+
+	* cc-langs.el:
+	Added (require 'cc-defs) to pick up the definition of c-emacs-features.
+
+	* README: Simplified instructions
+
+	* cc-make.el: New file to aid in byte-compiling in older Emacsen.
+
+Sun Jul 13 21:24:37 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el: cc-defs is required to pick up the c-add-syntax macro
+
+	* cc-langs.el (c-mode-menu):
+	Added uncomment region and slight rearrangement of
+	items
+
+	* cc-cmds.el (c-electric-backspace):
+	Must get 'supercede property values to work
+	with delsel and pending-del.
+
+Thu Jul 10 20:46:09 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-maybe-labelp):
+	defvar this to shut up the byte compiler
+
+Wed Jul  9 22:08:58 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-initialize-builtin-style):
+	use copy-sequence instead of copy-tree
+	so the cl module isn't necessary.
+
+	* cc-cmds.el (c-electric-brace):
+	fix ebola eradication consequence in the
+	preserve-p test.
+
 Tue Jul  8 23:47:47 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.12
