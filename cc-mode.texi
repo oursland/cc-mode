@@ -5006,13 +5006,6 @@ three distinct levels the other modes have.  There are several
 idiosyncrasies in AWK mode's font-locking due to the peculiarities of
 the AWK language itself.  @xref{AWK Mode Font Locking}.
 
-@comment 2003/7/21 OLD VERSION
-@c @item Comment Commands
-@c @kbd{M-;} (@code{indent-for-comment}) works fine.  None of the other
-@c @ccmode{} comment formatting commands have yet been adapted for AWK
-@c mode.  @xref{Text Filling and Line Breaking}.
-@comment END OF OLD VERSION
-
 @item String and Comment Commands
 The String and Comment formatting commands described in @ref{Text
 Filling and Line Breaking} all work in AWK mode.
