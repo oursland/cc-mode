@@ -132,8 +132,15 @@
 
   (if (fboundp 'regexp-opt)
       (fset 'c-regexp-opt (symbol-function 'regexp-opt))
-    ;; Emacs 19.34 doesn't have the regexp-opt package.
+    ;; (X)Emacs 19 doesn't have the regexp-opt package.
     (defun c-regexp-opt (strings &optional paren)
+      ;; The regexp engine (in at least (X)Emacs 19) matches the
+      ;; alternatives in order and fails to be greedy if a longer
+      ;; alternative comes after a shorter one, so we sort the the
+      ;; list with the longest alternatives first to get greediness
+      ;; properly.
+      (setq strings (sort (append strings nil)
+			  (lambda (a b) (> (length a) (length b)))))
       (if paren
 	  (concat "\\(" (mapconcat 'regexp-quote strings "\\|") "\\)")
 	(mapconcat 'regexp-quote strings "\\|"))))
