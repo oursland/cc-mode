@@ -380,7 +380,7 @@ comment at the start of cc-engine.el for more info."
                               "\"|"
                             "\""))
 
-;; Regexp matching string start syntax.
+;; Regexp matching string limit syntax.
 (defconst c-string-limit-regexp (if (memq 'gen-string-delim c-emacs-features)
                                     "\\s\"\\|\\s|"
                                   "\\s\""))
@@ -4360,6 +4360,70 @@ comment at the start of cc-engine.el for more info."
 
       (if res
 	  (or c-record-found-types t)))))
+
+(defun c-backward-<>-arglist (all-types &optional limit)
+  ;; The point is assumed to be directly after a ">".  Try to treat it
+  ;; as the close paren of an angle bracket arglist and move back to
+  ;; the corresponding "<".  If successful, the point is left after
+  ;; the ">" and t is returned, otherwise the point isn't moved and
+  ;; nil is returned.  ALL-TYPES is passed on to
+  ;; `c-forward-<>-arglist'.
+  ;;
+  ;; If the optional LIMIT is given, it bounds the backward search.
+  ;; It's then assumed to be at a syntactically relevant position.
+  ;;
+  ;; This is a wrapper around `c-forward-<>-arglist'.  See that
+  ;; function for more details.
+
+  (let ((start (point)))
+    (backward-char)
+    (if (and (not c-parse-and-markup-<>-arglists)
+	     (c-get-char-property (point) 'syntax-table))
+
+	(if (and (c-go-up-list-backward)
+		 (eq (char-after) ?<))
+	    t
+	  ;; See corresponding note in `c-forward-<>-arglist'.
+	  (goto-char start)
+	  nil)
+
+      (while (and
+	      (c-syntactic-skip-backward "^<;{}" limit t)
+
+	      (if (eq (char-before) ?<)
+		  t
+		;; Stopped at bob or a char that isn't allowed in an
+		;; arglist, so we've failed.
+		(goto-char start)
+		nil)
+
+	      (if (> (point)
+		     (progn (c-beginning-of-current-token)
+			    (point)))
+		  ;; If we moved then the "<" was part of some
+		  ;; multicharacter token.
+		  t
+
+		(backward-char)
+		(let ((beg-pos (point)))
+		  (if (c-forward-<>-arglist all-types)
+		      (cond ((= (point) start)
+			     ;; Matched the arglist.  Break the while.
+			     (goto-char beg-pos)
+			     nil)
+			    ((> (point) start)
+			     ;; We started from a non-paren ">" inside an
+			     ;; arglist.
+			     (goto-char start)
+			     nil)
+			    (t
+			     ;; Matched a shorter arglist.  Can be a nested
+			     ;; one so continue looking.
+			     (goto-char beg-pos)
+			     t))
+		    t)))))
+
+      (/= (point) start))))
 
 (defun c-forward-name ()
   ;; Move forward over a complete name if at the beginning of one,
