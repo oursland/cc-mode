@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.295 $
-;; Last Modified:   $Date: 1996-05-30 14:42:07 $
+;; Version:         $Revision: 4.296 $
+;; Last Modified:   $Date: 1996-05-30 15:07:02 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4845,9 +4845,10 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.295 $"
+(defconst c-version "$Revision: 4.296 $"
   "cc-mode version number.")
-(defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
+(defconst c-mode-help-address
+  "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
   "Address for cc-mode bug reports.")
 
 (defun c-version ()
