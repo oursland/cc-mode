@@ -546,9 +546,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		  (while (re-search-forward
 			  ,(concat "\\(\\<" ; 1
 				   "\\(" (c-lang-const c-symbol-key) "\\)" ; 2
-				   "[ \t\n\r\f\v]*"
+				   (c-lang-const c-simple-ws) "*"
 				   (c-lang-const c-opt-identifier-concat-key)
-				   "[ \t\n\r\f\v]*"
+				   (c-lang-const c-simple-ws) "*"
 				   "\\)"
 				   "\\("
 				   (c-lang-const c-opt-after-id-concat-key)
@@ -1714,19 +1714,24 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ;; Fontify types preceded by `c-type-prefix-kwds' and the
       ;; identifiers in the declarations they might start.
       ,@(when (c-lang-const c-type-prefix-kwds)
-	  (let ((prefix-re (c-make-keywords-re nil
-			     (c-lang-const c-type-prefix-kwds))))
+	  (let* ((prefix-re (c-make-keywords-re nil
+			      (c-lang-const c-type-prefix-kwds)))
+		 (type-match (+ 2
+				(regexp-opt-depth prefix-re)
+				(c-lang-const c-simple-ws-depth))))
 	    `((,(c-make-font-lock-search-function
-		 (concat "\\<\\(" prefix-re "\\)"
-			 "[ \t\n\r\f\v]+"
-			 "\\(" (c-lang-const c-symbol-key) "\\)")
-		 `(,(+ (regexp-opt-depth prefix-re) 2)
+		 (concat "\\<\\(" prefix-re "\\)" ; 1
+			 (c-lang-const c-simple-ws) "+"
+			 (concat "\\("	; 2 + prefix-re + c-simple-ws
+				 (c-lang-const c-symbol-key)
+				 "\\)"))
+		 `(,type-match
 		   'font-lock-type-face t)
-		 '((c-font-lock-declarators limit t nil)
+		 `((c-font-lock-declarators limit t nil)
 		   (save-match-data
-		     (goto-char (match-end 2))
+		     (goto-char (match-end ,type-match))
 		     (c-forward-syntactic-ws))
-		   (goto-char (match-end 2))))))))
+		   (goto-char (match-end ,type-match))))))))
 
       ;; Fontify special declarations that lacks a type.
       ,@(when (c-lang-const c-typeless-decl-kwds)
@@ -1772,7 +1777,9 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		(concat "\\("
 			(c-make-keywords-re nil
 			  (c-lang-const c-protection-kwds))
-			"\\)[ \t\n\r\f\v]*:")
+			"\\)"
+			(c-lang-const c-simple-ws) "*"
+			":")
 		'((c-put-char-property (1- (match-end 0))
 				       'c-type 'c-decl-end))))))
 
@@ -2625,8 +2632,8 @@ need for `pike-font-lock-extra-types'.")
 (defconst javadoc-font-lock-doc-comments
   `(("{@[a-z]+[^}\n\r]*}"		; "{@foo ...}" markup.
      0 ,c-doc-markup-face-name prepend nil)
-    ("^\\(/\\*\\)?[ \t*]*\\(@[a-z]+\\)" ; "@foo ..." markup.
-     2 ,c-doc-markup-face-name prepend nil)
+    ("^\\(/\\*\\)?\\(\\s \\|\\*\\)*\\(@[a-z]+\\)" ; "@foo ..." markup.
+     3 ,c-doc-markup-face-name prepend nil)
     (,(concat "</?\\sw"			; HTML tags.
 	      "\\("
 	      (concat "\\sw\\|\\s \\|[=\n\r*.:]\\|"
@@ -2690,7 +2697,7 @@ need for `pike-font-lock-extra-types'.")
 		     (and (eq (char-before) ?@)
 			  (not (eobp))
 			  (progn (forward-char)
-				 (skip-chars-forward " \t")
+				 (skip-syntax-forward " ")
 				 (looking-at c-current-comment-prefix))))
 	      (goto-char (match-end 0))
 	      (c-remove-font-lock-face pos (1- end))
@@ -2729,7 +2736,7 @@ need for `pike-font-lock-extra-types'.")
 		 (and (eq (char-before) ?@)
 		      (not (eobp))
 		      (progn (forward-char)
-			     (skip-chars-forward " \t")
+			     (skip-syntax-forward " ")
 			     (looking-at c-current-comment-prefix))))
 	  (goto-char (match-end 0))))))
 
@@ -2771,7 +2778,7 @@ need for `pike-font-lock-extra-types'.")
      ',(eval-when-compile               ; Evaluate while compiling cc-fonts
 	 (list
 	  ;; Function names.
-	  '("^[ \t]*\\(func\\(tion\\)?\\)\\>[ \t]*\\(\\sw+\\)?"
+	  '("^\\s *\\(func\\(tion\\)?\\)\\>\\s *\\(\\sw+\\)?"
 	    (1 font-lock-keyword-face) (3 font-lock-function-name-face nil t))
 	  ;;
 	  ;; Variable names.
@@ -2839,12 +2846,12 @@ std\\(err\\|in\\|out\\)\\|user\\)\\)\\>\
 
 	  ;; User defined functions with an apparent spurious space before the
 	  ;; opening parenthesis.  acm, 2002/5/30.
-	  `(,(concat "\\(\\w\\|_\\)" c-awk-escaped-nls* "[ \t]"
+	  `(,(concat "\\(\\w\\|_\\)" c-awk-escaped-nls* "\\s "
 		     c-awk-escaped-nls*-with-space* "(")
 	    (0 'font-lock-warning-face))
 
 	  ;; Space after \ in what looks like an escaped newline.  2002/5/31
-	  '("\\\\[ \t]+$" 0 font-lock-warning-face t)
+	  '("\\\\\\s +$" 0 font-lock-warning-face t)
 
 	  ;; Unbalanced string (") or regexp (/) delimiters.  2002/02/16.
 	  '("\\s|" 0 font-lock-warning-face t nil)

@@ -403,7 +403,9 @@ far it matches."
 		 ""))
   c++  (concat (c-lang-const c-identifier-start)
 	       "\\|"
-	       "[~*][ \t\n\r\f\v]*" (c-lang-const c-symbol-start))
+	       (concat "[~*]"
+		       (c-lang-const c-simple-ws) "*"
+		       (c-lang-const c-symbol-start)))
   ;; Java does not allow a leading qualifier operator.
   java (c-lang-const c-symbol-start))
 (c-lang-defvar c-identifier-start (c-lang-const c-identifier-start))
@@ -412,72 +414,80 @@ far it matches."
   "Regexp matching a fully qualified identifier, like \"A::B::c\" in
 C++.  It does not recognize the full range of syntactic whitespace
 between the tokens; `c-forward-name' has to be used for that."
+
   t    (c-lang-const c-symbol-key)	; Default to `c-symbol-key'.
+
   ;; C++ allows a leading qualifier operator and a `~' before the last
   ;; symbol.  This regexp is more complex than strictly necessary to
   ;; ensure that it can be matched with a minimum of backtracking.
   c++  (concat
-	"\\(" (c-lang-const c-opt-identifier-concat-key) "[ \t\n\r\f\v]*\\)?"
+	"\\("
+	(c-lang-const c-opt-identifier-concat-key)
+	(c-lang-const c-simple-ws) "*"
+	"\\)?"
 	(concat
 	 "\\("
 	 ;; The submatch below is depth of `c-opt-identifier-concat-key' + 3.
 	 "\\(" (c-lang-const c-symbol-key) "\\)"
 	 (concat "\\("
-		 "[ \t\n\r\f\v]*"
+		 (c-lang-const c-simple-ws) "*"
 		 (c-lang-const c-opt-identifier-concat-key)
-		 "[ \t\n\r\f\v]*"
+		 (c-lang-const c-simple-ws) "*"
 		 ;; The submatch below is: `c-symbol-key-depth' +
 		 ;; 2 * depth of `c-opt-identifier-concat-key' + 5.
 		 "\\(" (c-lang-const c-symbol-key) "\\)"
 		 "\\)*")
 	 (concat "\\("
-		 "[ \t\n\r\f\v]*"
+		 (c-lang-const c-simple-ws) "*"
 		 (c-lang-const c-opt-identifier-concat-key)
-		 "[ \t\n\r\f\v]*"
+		 (c-lang-const c-simple-ws) "*"
 		 "[~*]"
-		 "[ \t\n\r\f\v]*"
+		 (c-lang-const c-simple-ws) "*"
 		 ;; The submatch below is: 2 * `c-symbol-key-depth' +
 		 ;; 3 * depth of `c-opt-identifier-concat-key' + 7.
 		 "\\(" (c-lang-const c-symbol-key) "\\)"
 		 "\\)?")
 	 "\\|"
-	 "~[ \t\n\r\f\v]*"
+	 "~" (c-lang-const c-simple-ws) "*"
 	 ;; The submatch below is: 3 * `c-symbol-key-depth' +
 	 ;; 3 * depth of `c-opt-identifier-concat-key' + 8.
 	 "\\(" (c-lang-const c-symbol-key) "\\)"
 	 "\\)"))
+
   ;; IDL and Pike allows a leading qualifier operator.
   (idl pike) (concat
 	      "\\("
 	      (c-lang-const c-opt-identifier-concat-key)
-	      "[ \t\n\r\f\v]*"
+	      (c-lang-const c-simple-ws) "*"
 	      "\\)?"
 	      ;; The submatch below is depth of
 	      ;; `c-opt-identifier-concat-key' + 2.
 	      "\\(" (c-lang-const c-symbol-key) "\\)"
 	      (concat "\\("
-		      "[ \t\n\r\f\v]*"
+		      (c-lang-const c-simple-ws) "*"
 		      (c-lang-const c-opt-identifier-concat-key)
-		      "[ \t\n\r\f\v]*"
+		      (c-lang-const c-simple-ws) "*"
 		      ;; The submatch below is: `c-symbol-key-depth' +
 		      ;; 2 * depth of `c-opt-identifier-concat-key' + 4.
 		      "\\(" (c-lang-const c-symbol-key) "\\)"
 		      "\\)*"))
+
   ;; Java does not allow a leading qualifier operator.  If it ends
   ;; with ".*" (used in import declarations) we also consider that as
   ;; part of the name.  ("*" is actually recognized in any position
   ;; except the first by this regexp, but we don't bother.)
   java (concat "\\(" (c-lang-const c-symbol-key) "\\)" ; 1
 	       (concat "\\("
-		       "[ \t\n\r\f\v]*"
+		       (c-lang-const c-simple-ws) "*"
 		       (c-lang-const c-opt-identifier-concat-key)
-		       "[ \t\n\r\f\v]*"
+		       (c-lang-const c-simple-ws) "*"
 		       (concat "\\("
 			       ;; The submatch below is `c-symbol-key-depth' +
 			       ;; depth of `c-opt-identifier-concat-key' + 4.
 			       "\\(" (c-lang-const c-symbol-key) "\\)"
 			       "\\|\\*\\)")
 		       "\\)*")))
+
 (c-lang-defvar c-identifier-key (c-lang-const c-identifier-key))
 
 (c-lang-defconst c-identifier-last-sym-match
@@ -869,6 +879,10 @@ operators."
 Does not contain a \\| operator at the top level."
   ;; "\\s " is not enough since it doesn't match line breaks.
   t "\\(\\s \\|[\n\r]\\)")
+
+(c-lang-defconst c-simple-ws-depth
+  ;; Number of regexp grouping parens in `c-simple-ws'.
+  t (regexp-opt-depth (c-lang-const c-simple-ws)))
 
 (c-lang-defconst c-line-comment-starter
   "String that starts line comments, or nil if such don't exist.
@@ -2241,7 +2255,7 @@ It's undefined whether identifier syntax (see `c-identifier-syntax-table')
 is in effect or not."
   t nil
   (c c++ objc pike) "\\(\\.\\.\\.\\)"
-  java "\\(\\[[ \t\n\r\f\v]*\\]\\)")
+  java (concat "\\(\\[" (c-lang-const c-simple-ws) "*\\]\\)"))
 (c-lang-defvar c-opt-type-suffix-key (c-lang-const c-opt-type-suffix-key))
 
 (c-lang-defvar c-known-type-key
@@ -2352,7 +2366,8 @@ a keyword like switch labels.  It's only used at the beginning of a
 statement."
   t "\\<\\>"
   (c c++ objc java pike) (concat "\\(" (c-lang-const c-symbol-key) "\\)"
-				 "[ \t\n\r\f\v]*:\\([^:]\\|$\\)"))
+				 (c-lang-const c-simple-ws) "*"
+				 ":\\([^:]\\|$\\)"))
 (c-lang-defvar c-label-key (c-lang-const c-label-key)
   'dont-doc)
 
@@ -2362,11 +2377,13 @@ statement."
   ;;
   ;; TODO: This is currently not used uniformly; c++-mode and
   ;; java-mode each have their own ways of using it.
-  t nil
-  c++ (concat ":?[ \t\n\r\f\v]*\\(virtual[ \t\n\r\f\v]+\\)?\\("
-	      (c-make-keywords-re nil (c-lang-const c-protection-kwds))
-	      "\\)[ \t\n\r\f\v]+"
-	      "\\(" (c-lang-const c-symbol-key) "\\)")
+  t    nil
+  c++  (concat ":?"
+	       (c-lang-const c-simple-ws) "*"
+	       "\\(virtual" (c-lang-const c-simple-ws) "+\\)?\\("
+	       (c-make-keywords-re nil (c-lang-const c-protection-kwds))
+	       "\\)" (c-lang-const c-simple-ws) "+"
+	       "\\(" (c-lang-const c-symbol-key) "\\)")
   java (c-make-keywords-re t (c-lang-const c-postfix-decl-spec-kwds)))
 (c-lang-defvar c-opt-postfix-decl-spec-key
   (c-lang-const c-opt-postfix-decl-spec-key))
@@ -2403,18 +2420,30 @@ can be used if there are labels that aren't recognized that way."
   ;;
   ;; TODO: Ought to use `c-specifier-key' or similar, and the template
   ;; skipping isn't done properly.  This will disappear soon.
-  t nil
-  c++ "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+")
+  t    nil
+  c++  (concat "friend" (c-lang-const c-simple-ws) "+"
+	       "\\|"
+	       (concat "template"
+		       (c-lang-const c-simple-ws) "*"
+		       "<.+>"
+		       (c-lang-const c-simple-ws) "*"
+		       "friend"
+		       (c-lang-const c-simple-ws) "+")))
 (c-lang-defvar c-opt-friend-key (c-lang-const c-opt-friend-key))
 
 (c-lang-defconst c-opt-method-key
   ;; Special regexp to match the start of Objective-C methods.  The
   ;; first submatch is assumed to end after the + or - key.
-  t nil
+  t    nil
   objc (concat
 	;; TODO: Ought to use a better method than anchoring on bol.
-	"^[ \t]*\\([+-]\\)[ \t\n\r\f\v]*"
-	"\\(([^)]*)[ \t\n\r\f\v]*\\)?"	; return type
+	"^\\s *"
+	"\\([+-]\\)"
+	(c-lang-const c-simple-ws) "*"
+	(concat "\\("			; Return type.
+		"([^\)]*)"
+		(c-lang-const c-simple-ws) "*"
+		"\\)?")
 	"\\(" (c-lang-const c-symbol-key) "\\)"))
 (c-lang-defvar c-opt-method-key (c-lang-const c-opt-method-key))
 
