@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.8 $
+@comment manual version: $Revision: 2.9 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-03-10 22:39:17 $
+@comment Last modification: $Date: 1995-03-15 01:34:30 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -828,7 +828,170 @@ Customizations}.
 @cindex   Styles
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-[blah blah about styles]
+Most people use only edit code formatted in just a few well-defined and
+consistent styles.  For example, an organization might impose a
+``blessed'' style that all its programmers must conform to.  Similarly,
+people who work on GNU software will have to use the GNU coding style on
+C code.  Some shops are more lenient, allow some variety of coding
+styles, and as programmers come and go, there could be a number of
+styles in use.  For this reason, @code{cc-mode} makes it convenient for
+you to set up logical groupings of customizations called @dfn{styles},
+associating a single name for any particular style.  This chapter
+describes how to set up styles and how to edit your C code using these
+styles.
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node     Built-in Styles, Adding Styles, , Styles
+@comment  node-name,              next,                    previous,up
+
+@subsection  Built-in Styles
+@cindex   Built-in Styles
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+If you're lucky, one of @code{cc-mode}'s built-in styles might be just
+what you're looking for.  Some of the most common C and C++ styles are
+already built-in.  These include:
+
+@itemize @bullet
+@item
+@cindex GNU style
+@code{GNU} -- coding style ``blessed'' by the Free Software Foundation
+for C code in GNU programs.
+
+@item
+@cindex K&R style
+@code{K&R} -- The classic Kernighan and Ritchie style for C code.
+
+@item
+@cindex BSD style
+@code{BSD} -- <TBD: same something intelligent about BSD style>
+
+@item
+@cindex Stroustrup style
+@code{Stroustrup} -- The classic Stroustrup style for C++ code.
+
+@item
+@cindex Whitesmith style
+@code{Whitesmith} -- <TBD: same something intelligent about Whitesmith
+style>
+
+@item
+@cindex Ellemtel style
+@code{Ellemtel} -- Popular C++ coding standards as defined by
+``Programming in C++, Rules and Recommendations'', Erik Nyquist and Mats
+Henricson, Ellemtel @footnote{This document is ftp'able from
+@code{euagate.eua.ericsson.se}}.
+
+@end itemize
+
+@findex c-set-style
+@findex set-style (c-)
+If you'd like to experiment with these built-in styles you can simply
+type the following: @kbd{M-x c-set-style RET}.  You will be prompted for
+one of the above styles (with completion).  Enter one of the styles and
+hit @kbd{RET}.  Note however that setting a style in this way does
+@emph{not} automatically re-indent your file.  For commands that you can
+use to view the effect of your changes, see @xref{Indenting Commands}.
+
+Once you find a built-in style you like, you can make the change
+permanent by adding a call to your @file{.emacs} file.  Let's say for
+example that you want to use the @code{Ellemtel} style in all your
+files.  You would add this:
+
+@example
+@group
+(defun my-c-mode-common-hook ()
+  ;; use Ellemtel style for all of c-mode, c++-mode, and objc-mode
+  (c-set-style "Ellemtel")
+  ;; other customizations can go here
+  )
+(add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+@end group
+@end example
+
+See also {Permanent Customization}.
+
+@cindex Default styles
+There is one other special style you can use, called @code{Default}.
+This is a style that is calculated by @code{cc-mode} when it loads up.
+The @code{Default} style is special because all other styles
+implicitly inherit from it; in other words, whenever you set a style,
+@code{cc-mode} first re-instates the @code{Default} style, then
+applies the new style configurations.
+
+The @code{Default} style exists because once @code{cc-mode} loads up, it
+institutes the @code{GNU} style for compatibility with BOCM's defaults.
+Any customizations you make in mode hooks will be based on the
+@code{GNU} style, unless you first do a @code{c-set-style} to
+@code{Default} or some other built-in style.
+
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node     Adding Styles, File Styles, Built-in Styles, Styles
+@comment  node-name,              next,                    previous,up
+
+@subsection  Adding Styles
+@cindex   Adding Styles
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@vindex c-style-alist
+@vindex style-alist (c-)
+@findex c-add-style
+@findex add-style (c-)
+If none of the built-in styles is appropriate, you'll probably want to
+add a new style definition.  Styles are kept in the @code{c-style-alist}
+variable, but you probably won't want to modify this variable directly.
+@code{cc-mode} provides a function that you can use to easily add new
+styles or update existing styles, called @code{c-add-style}.  This
+function takes two arguments, a @var{stylename} string, and an
+association list @var{description} of style customizations.  If
+@var{stylename} is not already in @code{c-style-alist}, the new style is
+added, otherwise the style already associated with @var{stylename} is
+changed to the new @var{description}.  This function also takes an
+optional third argument, which if non-@code{nil}, automatically calls
+@code{c-set-style} using the newly added @var{stylename}.
+
+The sample @file{.emacs} file provides a concrete example of how a new
+style can be added and automatically set.  See @xref{Sample .emacs
+File}.
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node     File Styles, ,  Adding Styles, Styles
+@comment  node-name,              next,                    previous,up
+
+@subsection  File Styles
+@cindex   File Styles
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+@cindex local variables
+The Emacs manual describes how you can customize certain variables on a
+per-file basis by including a @dfn{Local Variable} block at the end of
+the file.  So far, you've only seen a functional interface to
+@code{cc-mode}, which is highly inconvenient for use in a Local Variable
+block.  @code{cc-mode} provides two variables that make it easier for
+you to customize your style on a per-file basis.
+
+@vindex c-file-style
+@vindex file-style (c-)
+@vindex c-file-offsets
+@vindex file-offsets (c-)
+
+The variable @code{c-file-style} can be set to a style name string as
+described in @xref{Built-in Styles}.  When the file is visited,
+@code{cc-mode} will automatically set the file's style to this style
+using @code{c-set-style}.
+
+@vindex c-offsets-alist
+@vindex offsets-alist (c-)
+@findex c-set-offset
+@findex set-offset (c-)
+Another variable @code{c-file-offsets}, takes an association list
+similar to what is allowed in @code{c-offsets-alist}.  When the file is
+visited, @code{cc-mode} will automatically institute these offets using
+@code{c-set-offset}.  See @xref{Customizing Indentation}.
+
+Note that file style settings (i.e. @code{c-file-style}) are applied
+before file offset settings (i.e. @code{c-file-offsets}).
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
