@@ -279,17 +279,13 @@
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
 		  minor-mode-alist)))
   ;; now set the mode style based on c-default-style
-  (if (stringp c-default-style)
-      (if (eq major-mode 'java-mode)
-	  (c-set-style "java")
-	(c-set-style c-default-style))
-    (let ((style (cdr (assq major-mode c-default-style))))
-      (if (stringp style)
-	  (c-set-style style)
-	(if (eq major-mode 'java-mode)
-	    (c-set-style "java")
-	  (c-set-style "gnu")
-	  ))))
+  (c-set-style (if (stringp c-default-style)
+		   (if (eq major-mode 'java-mode)
+		       "java"
+		     c-default-style)
+		 (or (cdr (assq major-mode c-default-style))
+		     (cdr (assq 'other c-default-style))
+		     "gnu")))
   )
 
 
