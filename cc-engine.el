@@ -2757,13 +2757,27 @@ brace."
 ;; 'found for) as actual types (and always return 'found for them).
 (defvar c-promote-possible-types nil)
 
-;; Dynamically bound variable that instructs `c-forward-name' and
-;; `c-forward-type' to put reference and type faces on the constructs
-;; they identify.  All known types are fontified, and also possible
-;; types if `c-promote-possible-types' is set.  Only the names in C++
-;; template style references (e.g. "tmpl" in "tmpl<a,b>::foo") are
-;; fontified as references, other references aren't handled.
-(defvar c-fontify-types-and-refs nil)
+;; Dynamically bound variables that instructs `c-forward-name',
+;; `c-forward-type' and `c-forward-c++-template-arglist' to record the
+;; ranges of all the type and reference identifiers they encounter.
+;; They will build lists on these variables where each element is a
+;; cons of the buffer positions surrounding each identifier.  This
+;; recording is only activated when `c-record-type-identifiers' is
+;; non-nil.
+;;
+;; All known types are recorded, and also possible types if
+;; `c-promote-possible-types' is set.  Only the names in C++ template
+;; style references (e.g. "tmpl" in "tmpl<a,b>::foo") are recorded as
+;; references, other references aren't handled.
+(defvar c-record-type-identifiers nil)
+(defvar c-record-ref-identifiers nil)
+
+(defmacro c-record-type-id (from to)
+  `(setq c-record-type-identifiers (cons (cons ,from ,to)
+					 c-record-type-identifiers)))
+(defmacro c-record-ref-id (from to)
+  `(setq c-record-ref-identifiers (cons (cons ,from ,to)
+					c-record-ref-identifiers)))
 
 (defun c-forward-c++-template-arglist ()
   ;; The point is assumed to be at a '<'.  Try to treat it as a C++
@@ -2777,12 +2791,22 @@ brace."
   ;; works well since comparison expressions on the forms "a < b > c"
   ;; or "a < b, c > d" in almost all cases would be pointless.
 
+  (let ((start (point)))
+    (if (catch 'template-escape
+	  (c-forward-c++-template-arglist-recur))
+	t
+      (goto-char start)
+      nil)))
+
+(defun c-forward-c++-template-arglist-recur ()
+  ;; Recursive part of `c-forward-c++-template-arglist'.
+
   (let ((start (point)) res pos tmp)
 
     ;; If the '<' has paren open syntax then we've marked it as a
     ;; template arglist before, so unless there's fontification work
     ;; to do try to skip an sexp and see that the close paren matches.
-    (if (and (not c-fontify-types-and-refs)
+    (if (and (not c-record-type-identifiers)
 	     (looking-at "\\s\(")
 	     (if (and (not (looking-at "<[<=:%]"))
 		      (c-safe (c-forward-sexp) t)
@@ -2882,7 +2906,7 @@ brace."
 				      (c-backward-syntactic-ws)
 				      (setq id-end (point))
 				      (setq id-start (c-on-identifier)))
-				    (c-forward-c++-template-arglist))))
+				    (c-forward-c++-template-arglist-recur))))
 
 			;; It was not a template.
 			(progn
@@ -2900,24 +2924,30 @@ brace."
 			    (c-remove-template-arg-properties pos (point)))
 			  (goto-char tmp))
 
-		      ;; It was a template.  If we should fontify then
-		      ;; fontify the identifier before the template as
-		      ;; a reference if a scope operator follows.
-		      (when c-fontify-types-and-refs
+		      ;; It was a template.  Record the identifier
+		      ;; before the template as a type or reference
+		      ;; depending on whether the template is last in
+		      ;; a qualified identifier.
+		      (when c-record-type-identifiers
 			(c-forward-syntactic-ws)
 			(when (looking-at "::")
-			  (c-put-reference-face id-start id-end)))))
+			  (c-record-ref-id id-start id-end)))))
+		  t)
+
+		 ((eq (char-before) ?,)
+		  ;; Just another template argument.  The
+		  ;; fontification stuff that made us stop at it is at
+		  ;; the top of the loop.
 		  t)
 
 		 (t
 		  ;; Got a character that can't be in a template
-		  ;; argument, so abort.
-		  nil)))))
+		  ;; argument.  Abort using `throw', since it's
+		  ;; useless to try to find a surrounding template
+		  ;; arglist if we're nested.
+		  (throw 'template-escape nil))))))
 
-      (if res
-	  t
-	(goto-char start)
-	nil))))
+      res)))
 
 (defun c-forward-name ()
   ;; Move forward over a complete name if at the beginning of one.
@@ -3038,16 +3068,16 @@ brace."
 		 (c-forward-syntactic-ws)
 		 (if (looking-at "::")
 		     (progn
-		       (when c-fontify-types-and-refs
-			 (c-put-reference-face id-start id-end))
+		       (when c-record-type-identifiers
+			 (c-record-ref-id id-start id-end))
 		       (forward-char 2)
 		       (c-forward-syntactic-ws)
 		       t)
 		   ;; `c-add-type' isn't called here since we don't
 		   ;; want to add types containing template
 		   ;; references.
-		   (when c-fontify-types-and-refs
-		     (c-put-type-face id-start id-end))
+		   (when c-record-type-identifiers
+		     (c-record-type-id id-start id-end))
 		   (setq res 'template)
 		   nil)))
 	      )))))
@@ -3088,10 +3118,10 @@ brace."
 		  (setq pos (point)))))
       ;; It's a complex type where the type name is followed by a
       ;; parenthesis expression containing a type spec.
-      (if c-fontify-types-and-refs
-	  ;; Fontify all the symbols within the complex type.
+      (if c-record-type-identifiers
+	  ;; Record all the symbols within the complex type.
 	  (while (c-syntactic-re-search-forward c-symbol-key pos 'move)
-	    (c-put-type-face (match-beginning 0) (match-end 0))
+	    (c-record-type-id (match-beginning 0) (match-end 0))
 	    (goto-char (match-end 0)))
 	(goto-char pos))
       (setq res t))
@@ -3108,11 +3138,11 @@ brace."
 	      ;; In many languages the name can be used without the
 	      ;; prefix, so we add it to `c-found-types'.
 	      (c-add-type pos (point))
-	      (when c-fontify-types-and-refs
-		(c-put-type-face (save-excursion
-				   (c-simple-skip-symbol-backward)
-				   (point))
-				 (point))))
+	      (when c-record-type-identifiers
+		(c-record-type-id (save-excursion
+				    (c-simple-skip-symbol-backward)
+				    (point))
+				  (point))))
 	    (setq res t))
 	;; Invalid syntax.
 	(goto-char start)
@@ -3130,8 +3160,8 @@ brace."
       ;; Looking at a known type identifier.  We check for a name
       ;; first so that we don't go here if the known type match only
       ;; is a prefix of another name.
-      (when c-fontify-types-and-refs
-	(c-put-type-face (match-beginning 1) (match-end 1)))
+      (when c-record-type-identifiers
+	(c-record-type-id (match-beginning 1) (match-end 1)))
       (if (and c-opt-type-component-key
 	       (save-match-data
 		 (looking-at c-opt-type-component-key)))
@@ -3142,13 +3172,13 @@ brace."
 		     (setq pos (point))
 		     (c-forward-syntactic-ws)
 		     (looking-at c-opt-type-component-key))
-	      (when c-fontify-types-and-refs
-		(c-put-type-face (match-beginning 1) (match-end 1)))
+	      (when c-record-type-identifiers
+		(c-record-type-id (match-beginning 1) (match-end 1)))
 	      (goto-char (match-end 1)))
 	    (if (looking-at c-primitive-type-key)
 		(progn
-		  (when c-fontify-types-and-refs
-		    (c-put-type-face (match-beginning 1) (match-end 1)))
+		  (when c-record-type-identifiers
+		    (c-record-type-id (match-beginning 1) (match-end 1)))
 		  (goto-char (match-end 1))
 		  (setq res t))
 	      (goto-char pos)
@@ -3163,11 +3193,11 @@ brace."
 	     (if (or res c-promote-possible-types)
 		 (progn
 		   (c-add-type id-start id-end)
-		   (when c-fontify-types-and-refs
-		     (c-put-type-face (save-excursion
-					(c-simple-skip-symbol-backward)
-					(point))
-				      id-end))
+		   (when c-record-type-identifiers
+		     (c-record-type-id (save-excursion
+					 (c-simple-skip-symbol-backward)
+					 (point))
+				       id-end))
 		   (setq res (or res c-promote-possible-types 'found)))
 	       (setq res (if (c-check-type id-start id-end)
 			     ;; It's an identifier that has been used as
@@ -3227,12 +3257,12 @@ brace."
 		(cond ((eq res t) t)
 		      ((eq res2 t)
 		       (c-add-type id-start id-end)
-		       (when c-fontify-types-and-refs
-			 (c-put-type-face (save-excursion
-					    (goto-char id-end)
-					    (c-simple-skip-symbol-backward)
-					    (point))
-					  id-end))
+		       (when c-record-type-identifiers
+			 (c-record-type-id (save-excursion
+					     (goto-char id-end)
+					     (c-simple-skip-symbol-backward)
+					     (point))
+					   id-end))
 		       t)
 		      ((eq res 'found) 'found)
 		      ((eq res2 'found) 'found)
