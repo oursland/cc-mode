@@ -1,16 +1,16 @@
 ;;; cc-mode.el --- major mode for editing C++ and C code
 
-;; Authors: 1992 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
+;; Copyright (C) 1985-1995 Free Software Foundation, Inc.
+
+;; Authors: 1992-1995 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.137 $
-;; Last Modified:   $Date: 1995-01-06 16:48:56 $
+;; Version:         $Revision: 4.138 $
+;; Last Modified:   $Date: 1995-01-12 01:17:13 $
 ;; Keywords: C++ C Objective-C editing major-mode
-
-;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
-;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
+;; NOTE: Read the commentary below for the right way to submit bug reports!
 
 ;; This file is part of GNU Emacs.
 
@@ -47,7 +47,8 @@
 ;; would be greatly appreciated!  Contact me or the FSF if you'd like
 ;; to volunteer.  Until the manual is finished, an accompanying README
 ;; is the only documentation available.  If you did not get the README
-;; with your copy of cc-mode, contact the help address above.
+;; with your copy of cc-mode, contact the Maintainer address given
+;; above.
 
 ;; To submit bug reports, hit "C-c C-b", and please try to include a
 ;; code sample and exact recipe so I can reproduce your problem.  If
@@ -103,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-06 16:48:56 $|$Revision: 4.137 $|
+;; |$Date: 1995-01-12 01:17:13 $|$Revision: 4.138 $|
 
 ;;; Code:
 
@@ -4369,7 +4370,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.137 $"
+(defconst c-version "$Revision: 4.138 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
