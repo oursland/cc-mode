@@ -746,6 +746,9 @@ continuations."
 		   (eq (char-before) ?\\)))
        (backward-char))))
 
+(eval-and-compile
+  (defvar c-langs-are-parametric nil))
+
 (defmacro c-major-mode-is (mode)
   "Return non-nil if the current CC Mode major mode is MODE.
 MODE is either a mode symbol or a list of mode symbols."
@@ -1303,7 +1306,6 @@ system."
 ;; various other symbols, but those don't have any variable bindings.
 
 (defvar c-lang-const-expansion nil)
-(defvar c-langs-are-parametric nil)
 
 (defsubst c-get-current-file ()
   ;; Return the base name of the current file.
