@@ -127,6 +127,16 @@
 ;; (c-init-language-vars some-mode)
 ;; (c-common-init 'some-mode) ; Or perhaps (c-basic-common-init 'some-mode)
 ;;
+;; If you're not writing a derived mode using the language variable
+;; system, then some-mode is one of the language modes directly
+;; supported by CC Mode.  You can then use (c-init-language-vars-for
+;; 'some-mode) instead of `c-init-language-vars'.
+;; `c-init-language-vars-for' is a function that avoids the rather
+;; large expansion of `c-init-language-vars'.
+;;
+;; If you use `c-basic-common-init' then you might want to call
+;; `c-font-lock-init' too to set up CC Mode's font lock support.
+;;
 ;; See cc-langs.el for further info.  A small example of a derived mode
 ;; is also available at <http://cc-mode.sourceforge.net/
 ;; derived-mode-ex.el>.
@@ -134,14 +144,30 @@
 (defun c-leave-cc-mode-mode ()
   (setq c-buffer-is-cc-mode nil))
 
+(defun c-init-language-vars-for (mode)
+  "Initialize the language variables for one of the language modes
+directly supported by CC Mode.  This can be used instead of the
+`c-init-language-vars' macro if the language you want to use is one of
+those, rather than a derived language defined through the language
+variable system (see \"cc-langs.el\")."
+  ;; This function does not do any hidden buffer changes.
+  (cond ((eq mode 'c-mode)    (c-init-language-vars c-mode))
+	((eq mode 'c++-mode)  (c-init-language-vars c++-mode))
+	((eq mode 'objc-mode) (c-init-language-vars objc-mode))
+	((eq mode 'java-mode) (c-init-language-vars java-mode))
+	((eq mode 'idl-mode)  (c-init-language-vars idl-mode))
+	((eq mode 'pike-mode) (c-init-language-vars pike-mode))
+	((eq mode 'awk-mode)  (c-init-language-vars awk-mode))
+	(t (error "Unsupported mode %s" mode))))
+
 ;;;###autoload
 (defun c-initialize-cc-mode (&optional new-style-init)
   "Initialize CC Mode for use in the current buffer.
 If the optional NEW-STYLE-INIT is nil or left out then all necessary
 initialization to run CC Mode for the C language is done.  Otherwise
-only some basic setup is done, and a call to `c-init-language-vars',
-is necessary too (which gives more control).  See \"cc-mode.el\" for
-more info."
+only some basic setup is done, and a call to `c-init-language-vars' or
+`c-init-language-vars-for' is necessary too (which gives more
+control).  See \"cc-mode.el\" for more info."
   ;;
   ;; This function does not do any hidden buffer changes.
 
@@ -164,7 +190,7 @@ more info."
 	(put 'c-initialize-cc-mode initprop c-initialization-ok))))
 
   (unless new-style-init
-    (c-init-c-language-vars)))
+    (c-init-language-vars-for 'c-mode)))
 
 
 ;;; Common routines.
@@ -514,7 +540,7 @@ This function does not do any hidden buffer changes."
   (unless mode
     ;; Called from an old third party package.  The fallback is to
     ;; initialize for C.
-    (c-init-c-language-vars))
+    (c-init-language-vars-for 'c-mode))
 
   (c-basic-common-init mode c-default-style)
   (when mode
@@ -610,9 +636,6 @@ Note that the style variables are always made local to the buffer."
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.y\\(acc\\)?\\'" . c-mode))
 ;;;###autoload (add-to-list 'auto-mode-alist '("\\.lex\\'" . c-mode))
 
-(defun c-init-c-language-vars ()
-  (c-init-language-vars c-mode))
-
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
@@ -637,7 +660,7 @@ Key bindings:
 	local-abbrev-table c-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map c-mode-map)
-  (c-init-c-language-vars)
+  (c-init-language-vars-for 'c-mode)
   (c-common-init 'c-mode)
   (easy-menu-add c-c-menu)
   (cc-imenu-init cc-imenu-c-generic-expression)
@@ -701,7 +724,7 @@ Key bindings:
 	local-abbrev-table c++-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map c++-mode-map)
-  (c-init-language-vars c++-mode)
+  (c-init-language-vars-for 'c++-mode)
   (c-common-init 'c++-mode)
   (easy-menu-add c-c++-menu)
   (cc-imenu-init cc-imenu-c++-generic-expression)
@@ -766,7 +789,7 @@ Key bindings:
   ;; end of the @-style directives.
   (setq c-type-decl-end-used t)
   (use-local-map objc-mode-map)
-  (c-init-language-vars objc-mode)
+  (c-init-language-vars-for 'objc-mode)
   (c-common-init 'objc-mode)
   (easy-menu-add c-objc-menu)
   (cc-imenu-init nil 'cc-imenu-objc-function)
@@ -837,7 +860,7 @@ Key bindings:
  	local-abbrev-table java-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map java-mode-map)
-  (c-init-language-vars java-mode)
+  (c-init-language-vars-for 'java-mode)
   (c-common-init 'java-mode)
   (easy-menu-add c-java-menu)
   (cc-imenu-init cc-imenu-java-generic-expression)
@@ -896,7 +919,7 @@ Key bindings:
 	mode-name "IDL"
 	local-abbrev-table idl-mode-abbrev-table)
   (use-local-map idl-mode-map)
-  (c-init-language-vars idl-mode)
+  (c-init-language-vars-for 'idl-mode)
   (c-common-init 'idl-mode)
   (easy-menu-add c-idl-menu)
   ;;(cc-imenu-init cc-imenu-idl-generic-expression) ;TODO
@@ -959,7 +982,7 @@ Key bindings:
  	local-abbrev-table pike-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map pike-mode-map)
-  (c-init-language-vars pike-mode)
+  (c-init-language-vars-for 'pike-mode)
   (c-common-init 'pike-mode)
   (easy-menu-add c-pike-menu)
   ;;(cc-imenu-init cc-imenu-pike-generic-expression) ;TODO
@@ -1030,7 +1053,7 @@ Key bindings:
 	local-abbrev-table awk-mode-abbrev-table
 	abbrev-mode t)
   (use-local-map awk-mode-map)
-  (c-init-language-vars awk-mode)
+  (c-init-language-vars-for 'awk-mode)
   (c-common-init 'awk-mode)
   ;; The rest of CC Mode does not (yet) use `font-lock-syntactic-keywords',
   ;; so it's not set by `c-font-lock-init'.
