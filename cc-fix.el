@@ -51,18 +51,19 @@
 
 ;; Emacs 19.34 requires the POS argument to char-after.  Emacs 20
 ;; makes it optional, as it has long been in XEmacs.
-(condition-case nil
-    (eval '(char-after))		; `eval' avoids argcount warnings
-  (error
-   (ad-define-subr-args 'char-after '(pos))
-   (defadvice char-after (before c-char-after-advice
-				 (&optional pos)
-				 activate)
-     "POS is optional and defaults to the position of point."
-     (if (not pos)
-	 (setq pos (point))))
-   (eval-when-compile
-     (if (cc-bytecomp-is-compiling)
+(eval-and-compile
+  (condition-case nil
+      (eval '(char-after))		; `eval' avoids argcount warnings
+    (error
+     (ad-define-subr-args 'char-after '(pos))
+     (defadvice char-after (before c-char-after-advice
+				   (&optional pos)
+				   activate preactivate)
+       "POS is optional and defaults to the position of point."
+       (if (not pos)
+	   (setq pos (point))))
+     (if (and (featurep 'cc-bytecomp)
+	      (cc-bytecomp-is-compiling))
 	 (progn
 	   ;; Since char-after is handled specially by the byte
 	   ;; compiler, we need some black magic to make the compiler
@@ -83,7 +84,7 @@
     ;; of this is that the advice below may be activated in those
     ;; versions, which is unnecessary but won't break anything.  It
     ;; only occurs when this file is explicitly loaded; in normal use
-    ;; the test in cc-mode.el will skip it altogether.
+    ;; the test in cc-defs.el will skip it altogether.
 
     ;; MULE based on Emacs 19.34 has a char-before function, but
     ;; it requires a position.  It also has a second optional
@@ -92,16 +93,16 @@
       (ad-define-subr-args 'char-before '(pos &optional byte-unit))
       (defadvice char-before (before c-char-before-advice
 				     (&optional pos byte-unit)
-				     activate)
+				     activate preactivate)
 	"POS is optional and defaults to the position of point."
 	(if (not pos)
-	    (setq pos (point)))))
-  ;; Emacs 19.34 doesn't have a char-before function.  Here's its
-  ;; Emacs 20 definition.
-  (defsubst char-before (&optional pos)
-    (if (not pos)
-	(setq pos (point)))
-    (char-after (1- pos))))
+	    (setq pos (point))))))
+
+(cc-eval-when-compile
+  (or (fboundp 'char-before)
+      ;; Emacs 19.34 doesn't have a char-before function.
+      (defsubst char-before (&optional pos)
+	(char-after (1- (or pos (point)))))))
 
 ;; Emacs 19.34 doesn't have a functionp function.  Here's its Emacs
 ;; 20 definition.
@@ -114,17 +115,21 @@
 
 ;; Emacs 19.34 doesn't have a when macro.  Here's its Emacs 20
 ;; definition.
-(or (fboundp 'when)
-    (defmacro when (cond &rest body)
-      "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
-      (list 'if cond (cons 'progn body))))
+(cc-eval-when-compile
+  (or (fboundp 'when)
+      (defmacro when (cond &rest body)
+	"(when COND BODY...): if COND yields non-nil, "
+	"do BODY, else return nil."
+	(list 'if cond (cons 'progn body)))))
 
 ;; Emacs 19.34 doesn't have an unless macro.  Here's its Emacs 20
 ;; definition.
-(or (fboundp 'unless)
-    (defmacro unless (cond &rest body)
-      "(unless COND BODY...): if COND yields nil, do BODY, else return nil."
-      (cons 'if (cons cond (cons nil body)))))
+(cc-eval-when-compile
+  (or (fboundp 'unless)
+      (defmacro unless (cond &rest body)
+	"(unless COND BODY...): if COND yields nil, "
+	"do BODY, else return nil."
+	(cons 'if (cons cond (cons nil body))))))
 
 
 (cc-provide 'cc-mode-19)
