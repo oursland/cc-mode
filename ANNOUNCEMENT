@@ -1,39 +1,28 @@
 Release Announcement
 CC Mode Version 5.24
 Barry A. Warsaw and Martin Stjernholm
-<mailto:cc-mode-help@python.org>
+<mailto:bug-cc-mode@gnu.org>
 
 This message announces the availablity of a new version of CC Mode, a
 GNU Emacs mode for editing C (ANSI and K&R), C++, Objective-C, Java,
-CORBA's IDL, and now Pike code.  A list of user visible changes is
-summarized below, and is also available from
+CORBA's IDL, and Pike code.  A list of user visible changes is
+summarized below.  This, and more information about CC Mode, including
+links to download the source, are available on the CC Mode Web page:
 
-	<http://www.python.org/emacs/cc-mode/changes-523.html>
+    <http://www.python.org/emacs/cc-mode/>
 
-Since the distribution is fairly large and since it is readily
-available via the Web, the source code is not being posted here.
-Downloading instructions are provided further down in this message.
+There is also a link to the CC Mode announcement mailing list, a
+moderated list that you can join to get future release announcements.
+Please see this page for more information on this mailing list:
 
-If you want to get announcements of new CC Mode releases, send the
-word `subscribe' in the body of a message to
+    <http://www.python.org/mailman/listinfo/cc-mode-announce>
 
-	cc-mode-announce-request@python.org
+Send email correspondence to
 
-Note that the cc-mode-victims mailing list was recently
-decommissioned.  Send all CC Mode correspondence to
+    bug-cc-mode@gnu.org
 
-	cc-mode-help@python.org
-
-
-Getting CC Mode
-===============
-
-The canonical site for the full CC Mode distribution, along with
-compatibility notes, installation instructions, the online browseable
-manual and more, is available at:
-
-        <http://www.python.org/emacs/cc-mode/>
-
+Note that the old address, cc-mode-help@python.org is still active,
+but it's use is discouraged.
 
 Changes since 5.21
 ==================
