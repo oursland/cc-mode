@@ -170,6 +170,44 @@
                                   "\\s\""))
 
 
+;; Some debug tools to visualize various special positions.  This
+;; debug code isn't as portable as the rest of CC Mode.
+
+(cc-bytecomp-defun overlays-in)
+(cc-bytecomp-defun overlay-get)
+(cc-bytecomp-defun overlay-start)
+(cc-bytecomp-defun overlay-end)
+(cc-bytecomp-defun delete-overlay)
+(cc-bytecomp-defun overlay-put)
+(cc-bytecomp-defun make-overlay)
+
+(defun c-debug-add-face (beg end face)
+  (let ((overlays (overlays-in beg end)) overlay)
+    (while overlays
+      (setq overlay (car overlays)
+	    overlays (cdr overlays))
+      (when (eq (overlay-get overlay 'face) face)
+	(setq beg (min beg (overlay-start overlay))
+	      end (max end (overlay-end overlay)))
+	(delete-overlay overlay)))
+    (overlay-put (make-overlay beg end) 'face face)))
+
+(defun c-debug-remove-face (beg end face)
+  (let ((overlays (overlays-in beg end)) overlay
+	(ol-beg beg) (ol-end end))
+    (while overlays
+      (setq overlay (car overlays)
+	    overlays (cdr overlays))
+      (when (eq (overlay-get overlay 'face) face)
+	(setq ol-beg (min ol-beg (overlay-start overlay))
+	      ol-end (max ol-end (overlay-end overlay)))
+	(delete-overlay overlay)))
+    (when (< ol-beg beg)
+      (overlay-put (make-overlay ol-beg beg) 'face face))
+    (when (> ol-end end)
+      (overlay-put (make-overlay end ol-end) 'face face))))
+
+
 (defvar c-in-literal-cache t)
 (defvar c-parsing-error nil)
 
@@ -931,70 +969,54 @@ This function does not do any hidden buffer changes."
 ;; slower than using `forward-comment' straightforwardly, but speed is
 ;; not a significant factor there anyway.
 
-;; Some debug tools to see where the special properties are put.  This
-;; debug code isn't as portable as the rest of CC Mode.
 ; (defface c-debug-is-sws-face
 ;   '((t (:background "GreenYellow")))
 ;   "Debug face to mark the `c-is-sws' property.")
 ; (defface c-debug-in-sws-face
 ;   '((t (:underline t)))
 ;   "Debug face to mark the `c-in-sws' property.")
-; (defun c-debug-add-face (beg end face)
-;   (let ((overlays (overlays-in beg end)) overlay)
-;     (while overlays
-;       (setq overlay (car overlays)
-; 	    overlays (cdr overlays))
-;       (when (eq (overlay-get overlay 'face) face)
-; 	(setq beg (min beg (overlay-start overlay))
-; 	      end (max end (overlay-end overlay)))
-; 	(delete-overlay overlay)))
-;     (overlay-put (make-overlay beg end) 'face face)))
-; (defun c-debug-remove-face (beg end face)
-;   (let ((overlays (overlays-in beg end)) overlay
-; 	(ol-beg beg) (ol-end end))
-;     (while overlays
-;       (setq overlay (car overlays)
-; 	    overlays (cdr overlays))
-;       (when (eq (overlay-get overlay 'face) face)
-; 	(setq ol-beg (min ol-beg (overlay-start overlay))
-; 	      ol-end (max ol-end (overlay-end overlay)))
-; 	(delete-overlay overlay)))
-;     (when (< ol-beg beg)
-;       (overlay-put (make-overlay ol-beg beg) 'face face))
-;     (when (> ol-end end)
-;       (overlay-put (make-overlay end ol-end) 'face face))))
-(defmacro c-debug-add-face (beg end face))
-(defmacro c-debug-remove-face (beg end face))
 
 (defmacro c-debug-sws-msg (&rest args)
   ;;`(message ,@args)
   )
 
-(defsubst c-put-is-sws (beg end)
-  (put-text-property beg end 'c-is-sws t)
-  (c-debug-add-face beg end 'c-debug-is-sws-face))
+(defmacro c-put-is-sws (beg end)
+  `(let ((beg ,beg) (end ,end))
+     (put-text-property beg end 'c-is-sws t)
+     ,@(when (facep 'c-debug-is-sws-face)
+	 `((c-debug-add-face beg end 'c-debug-is-sws-face)))))
 
-(defsubst c-put-in-sws (beg end)
-  (put-text-property beg end 'c-in-sws t)
-  (c-debug-add-face beg end 'c-debug-in-sws-face))
+(defmacro c-put-in-sws (beg end)
+  `(let ((beg ,beg) (end ,end))
+     (put-text-property beg end 'c-in-sws t)
+     ,@(when (facep 'c-debug-is-sws-face)
+	 `((c-debug-add-face beg end 'c-debug-in-sws-face)))))
 
-(defsubst c-put-is-and-in-sws (beg end)
-  (add-text-properties beg end '(c-is-sws t c-in-sws t))
-  (c-debug-add-face beg end 'c-debug-is-sws-face)
-  (c-debug-add-face beg end 'c-debug-in-sws-face))
+(defmacro c-put-is-and-in-sws (beg end)
+  `(let ((beg ,beg) (end ,end))
+     (add-text-properties beg end '(c-is-sws t c-in-sws t))
+     ,@(when (facep 'c-debug-is-sws-face)
+	 `((c-debug-add-face beg end 'c-debug-is-sws-face)
+	   (c-debug-add-face beg end 'c-debug-in-sws-face)))))
 
-(defsubst c-remove-is-sws (beg end)
-  (remove-text-properties beg end '(c-is-sws nil))
-  (c-debug-remove-face beg end 'c-debug-is-sws-face))
+(defmacro c-remove-is-sws (beg end)
+  `(let ((beg ,beg) (end ,end))
+     (remove-text-properties beg end '(c-is-sws nil))
+     ,@(when (facep 'c-debug-is-sws-face)
+	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)))))
 
-(defsubst c-remove-in-sws (beg end)
-  (remove-text-properties beg end '(c-in-sws nil))
-  (c-debug-remove-face beg end 'c-debug-in-sws-face))
+(defmacro c-remove-in-sws (beg end)
+  `(let ((beg ,beg) (end ,end))
+     (remove-text-properties beg end '(c-in-sws nil))
+     ,@(when (facep 'c-debug-is-sws-face)
+	 `((c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
-(defsubst c-remove-is-and-in-sws (beg end)
-  (remove-text-properties beg end '(c-is-sws nil c-in-sws nil))
-  (c-debug-remove-face beg end 'c-debug-is-sws-face)
-  (c-debug-remove-face beg end 'c-debug-in-sws-face))
+(defmacro c-remove-is-and-in-sws (beg end)
+  `(let ((beg ,beg) (end ,end))
+     (remove-text-properties beg end '(c-is-sws nil c-in-sws nil))
+     ,@(when (facep 'c-debug-is-sws-face)
+	 `((c-debug-remove-face beg end 'c-debug-is-sws-face)
+	   (c-debug-remove-face beg end 'c-debug-in-sws-face)))))
 
 (defvar c-sws-separation nil)
 ;; This variable is used to signal that a changed region wasn't
@@ -1738,6 +1760,8 @@ syntactic whitespace."
   (or bound (setq bound (point-max)))
   (if paren-level (setq paren-level -1))
 
+  ;;(message "c-syntactic-re-search-forward %s %s %S" (point) bound regexp)
+
   (let ((start (point))
 	(pos (point))
 	(last-token-end-pos (point-min))
@@ -1852,6 +1876,8 @@ syntactic whitespace."
       (error
        (goto-char start)
        (signal (car err) (cdr err))))
+
+    ;;(message "c-syntactic-re-search-forward done %s" (or match-pos (point)))
 
     (if found
 	(progn
@@ -2879,12 +2905,35 @@ brace."
        (< change-min-pos c-find-decl-syntactic-pos)
        (setq c-find-decl-syntactic-pos nil)))
 
+; (defface c-debug-decl-spot-face
+;   '((t (:background "Turquoise")))
+;   "Debug face to mark the spots where `c-find-decl-spots' stopped.")
+; (defface c-debug-decl-sws-face
+;   '((t (:background "Khaki")))
+;   "Debug face to mark the syntactic whitespace between the declaration
+; spots and the preceding token end.")
+
+(defmacro c-debug-put-decl-spot-faces (match-pos decl-pos)
+  (when (facep 'c-debug-decl-spot-face)
+    `(let ((match-pos ,match-pos) (decl-pos ,decl-pos))
+       (c-debug-add-face (max match-pos (point-min)) decl-pos
+			 'c-debug-decl-sws-face)
+       (c-debug-add-face decl-pos (min (1+ decl-pos) (point-max))
+			 'c-debug-decl-spot-face))))
+(defmacro c-debug-remove-decl-spot-faces (beg end)
+  (when (facep 'c-debug-decl-spot-face)
+    `(progn
+       (c-debug-remove-face ,beg ,end 'c-debug-decl-spot-face)
+       (c-debug-remove-face ,beg ,end 'c-debug-decl-sws-face))))
+
 (defmacro c-find-decl-prefix-search ()
   ;; Macro used inside `c-find-decl-spots'.  It ought to be a defsubst
   ;; or perhaps even a defun, but it contains lots of free variables
-  ;; that refer to things inside `c-find-decl-spots'.
+  ;; that refer to things inside `c-find-decl-spots'.  Note that point
+  ;; can be past `cfd-limit' on return.
   '(while (and
-	   (setq cfd-match (re-search-forward c-decl-prefix-re nil 'move))
+	   (setq cfd-match
+		 (re-search-forward c-decl-prefix-re cfd-limit 'move))
 	   (if (memq (get-text-property (1- (setq cfd-match-pos
 						  (match-end 1)))
 					'face)
@@ -2899,12 +2948,12 @@ brace."
      ;; Search again if the match is within a comment or a string
      ;; literal.
      (goto-char (next-single-property-change
-		 cfd-match-pos 'face nil (point-max)))))
+		 cfd-match-pos 'face nil cfd-limit))))
 
-(defun c-find-decl-spots (cfd-decl-re cfd-face-checklist cfd-fun)
+(defun c-find-decl-spots (cfd-limit cfd-decl-re cfd-face-checklist cfd-fun)
   ;; Call CFD-FUN for each possible spot for a declaration from the
-  ;; point to (point-max).  A spot for a declaration is the first
-  ;; token in the buffer, and each token after the ones matched by
+  ;; point to CFD-LIMIT.  A spot for a declaration is the first token
+  ;; in the buffer and each token after the ones matched by
   ;; `c-decl-prefix-re'.  Only a spot that match CFD-DECL-RE and whose
   ;; face is in the CFD-FACE-CHECKLIST list causes CFD-FUN to be
   ;; called.  The face check is disabled if CFD-FACE-CHECKLIST is nil.
@@ -2979,7 +3028,7 @@ brace."
       ;; when font-lock refontifies the current line only.
       (when (save-excursion
 	      (and (= (forward-line 1) 0)
-		   (or (< (c-point 'eol) (point-max))
+		   (or (< (c-point 'eol) cfd-limit)
 		       (progn (backward-char)
 			      (not (eq (char-before) ?\\))))))
 	(c-beginning-of-macro))
@@ -3087,10 +3136,12 @@ brace."
 				(not (memq (get-text-property (point) 'face)
 					   cfd-face-checklist))))
 			  (goto-char cfd-continue-pos)
-			  t))))
+			  t)))
 
+		     (< (point) cfd-limit))
 	       (c-find-decl-prefix-search))
-	     (not (eobp)))
+
+	     (< (point) cfd-limit))
 
       (when (progn
 	      ;; Narrow to the end of the macro if we got a hit inside
@@ -3117,6 +3168,7 @@ brace."
 		  (setq cfd-macro-end 0)
 		  nil)))
 
+	(c-debug-put-decl-spot-faces cfd-match-pos (point))
 	(funcall cfd-fun cfd-match-pos (/= cfd-macro-end 0))
 
 	(when (/= cfd-macro-end 0)
@@ -4001,9 +4053,11 @@ brace."
 
       (when (and c-record-found-types (memq res '(known found)) id-range)
 	(setq c-record-found-types
-	      (cons id-range c-record-found-types)))
+	      (cons id-range c-record-found-types))))
 
-      res)))
+    ;;(message "c-forward-type %s -> %s: %s" start (point) res)
+
+    res))
 
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
