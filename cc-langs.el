@@ -1765,13 +1765,18 @@ first submatch is taken as the end of the operator."
 `c-type-decl-suffix-key' has matched.  If it matches then the
 construct is taken as a declaration.  It's typically used to match the
 beginning of a function body or whatever might occur after the
-function header in a function declaration or definition."
+function header in a function declaration or definition.
+
+Note that it's used in cases like after \"foo (bar)\" so it should
+only match when it's certain that it's a declaration, e.g \"{\" but
+not \",\" or \";\"."
   t "{"
   ;; If K&R style declarations should be recognized then one could
   ;; consider to match the start of any symbol since we want to match
   ;; the start of the first declaration in the "K&R region".  That
   ;; could however produce false matches on code like "FOO(bar) x"
-  ;; where FOO is a cpp macro.
+  ;; where FOO is a cpp macro, so it's better to leave it out and rely
+  ;; on the other heuristics in that case.
   t (if (c-lang-const c-decl-spec-kwds)
 	;; Add on the keywords in `c-decl-spec-kwds'.
 	(concat (c-lang-const c-after-suffixed-type-decl-key)
@@ -1787,6 +1792,14 @@ function header in a function declaration or definition."
 (c-lang-defvar c-after-suffixed-type-decl-key
   (c-lang-const c-after-suffixed-type-decl-key)
   'dont-doc)
+
+(c-lang-defconst c-after-suffixed-type-maybe-decl-key
+  ;; Regexp that in addition to `c-after-suffixed-type-decl-key'
+  ;; matches ";" and ",".
+  t (concat "\\(" (c-lang-const c-after-suffixed-type-decl-key) "\\)"
+	    "\\|[;,]"))
+(c-lang-defvar c-after-suffixed-type-maybe-decl-key
+  (c-lang-const c-after-suffixed-type-maybe-decl-key))
 
 (c-lang-defconst c-opt-type-concat-key
   "Regexp matching operators that concatenate types, e.g. the \"|\" in
