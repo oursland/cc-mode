@@ -636,7 +636,7 @@ This function does not do any hidden buffer changes."
 
 	t))))
 
-(defun c-forward-comments ()
+(defsubst c-forward-comments ()
   "Move forward past all following whitespace and comments.
 Line continuations, i.e. a backslashes followed by line breaks, are
 treated as whitespace.
@@ -700,7 +700,7 @@ This function does not do any hidden buffer changes."
 	      (forward-comment -1)
 	    t)))))
 
-(defun c-backward-comments ()
+(defsubst c-backward-comments ()
   "Move backward past all preceding whitespace and comments.
 Line continuations, i.e. a backslashes followed by line breaks, are
 treated as whitespace.  The line breaks that end line comments are
@@ -782,149 +782,427 @@ This function does not do any hidden buffer changes."
 	     (forward-char)
 	     t))))
 
-(defvar c-last-large-sws-start nil)
-(make-variable-buffer-local 'c-last-large-sws-start)
-(defvar c-last-large-sws-end nil)
-(make-variable-buffer-local 'c-last-large-sws-end)
-(defmacro c-large-sws-size () 200)
-;; Cache for the limits of the last large syntactic whitespace skipped
-;; over by `c-forward-sws' and `c-backward-sws'.
-;; `c-last-large-sws-start' and `c-last-large-sws-end' are set to the
-;; limits.  `c-large-sws-size' gives the minimum size of the syntactic
-;; whitespace that's recorded in the cache.
+
+;; The following functions use text properties to cache searches over
+;; large regions of syntactic whitespace.  It works as follows:
+;;
+;; o  If a syntactic whitespace region contains anything but simple
+;;    whitespace (i.e. space, tab and line breaks), the text property
+;;    c-in-sws is put over it.  At places where we have stopped within
+;;    that region there's also a c-is-sws text property.  That since
+;;    there typically are nested whitespace inside that must be
+;;    handled separately, e.g. whitespace inside a comment or cpp
+;;    directive.  Thus, from one point with c-is-sws it's safe to jump
+;;    to another point with that property within the same c-in-sws
+;;    region.  It can be likened to a ladder where c-in-sws marks the
+;;    bars and c-is-sws the rungs.
+;;
+;; o  The c-is-sws property is put on the simple whitespace chars at a
+;;    "rung position" and also maybe on the first following char.  As
+;;    many characters as can be conveniently found in this range are
+;;    marked, but no assumption can be made that the whole range is
+;;    marked (it could be clobbered by later changes, for instance).
+;;
+;;    Note that some part of the beginning of a sequence of simple
+;;    whitespace might be part of the end of a preceding line comment
+;;    or cpp directive and must not be considered part of the "rung".
+;;    Such whitespace is some amount of horizontal whitespace followed
+;;    by a newline.  In the case of cpp directives it could also be
+;;    two newlines with horizontal whitespace between them.
+;;
+;;    The reason to include the first following char is to cope with
+;;    "rung positions" that doesn't have any ordinary whitespace.  If
+;;    c-is-sws is put on a token character it does not have c-in-sws
+;;    set simultaneously.  That's the only case when that can occur,
+;;    and the reason for not extending the c-in-sws region to cover it
+;;    is that the c-in-sws region could then be accidentally merged
+;;    with a following one if the token is only one character long.
+;;
+;; o  On buffer changes the c-in-sws and c-is-sws properties are
+;;    removed in the changed region.  If the change was inside
+;;    syntactic whitespace that means that the "ladder" is broken, but
+;;    a later call to `c-forward-sws' or `c-backward-sws' will use the
+;;    parts on either side and use an ordinary search only to "repair"
+;;    the gap.
+;;
+;; The main motivation for this system is to increase the speed in
+;; skipping over the large whitespace regions that can occur at the
+;; top level in e.g. header files that contain a lot of comments and
+;; cpp directives.  For small comments inside code it's probably
+;; slower than using `forward-comment' straightforwardly, but speed is
+;; not a significant factor there anyway.
 
-(defsubst c-invalidate-large-sws-region (pos)
-  ;; Invalidate `c-last-large-sws-start' and `c-last-large-sws-end' if
-  ;; POS is less than the end position.  Since CC Mode almost always
-  ;; act on the text at or before where the buffer is changed it's no
-  ;; use trying to be clever here and offset the region if some change
-  ;; happened strictly before it; that region won't be used anyway.
-  (and c-last-large-sws-end
-       (< pos c-last-large-sws-end)
-       (setq c-last-large-sws-start nil
-	     c-last-large-sws-end nil)))
+(defsubst c-invalidate-sws-region (beg end)
+  ;; Called from `after-change-functions'.  Note that if
+  ;; `c-forward-sws' or `c-backward-sws' are used outside
+  ;; `c-save-buffer-state' or similar then this will remove the cache
+  ;; properties right after they're added.
+  (remove-text-properties beg end '(c-in-sws nil c-is-sws nil)))
+
+(defmacro c-debug-sws-msg (&rest args)
+  ;`(message ,@args)
+  )
 
 (defun c-forward-sws ()
   ;; Used by `c-forward-syntactic-ws' to implement the unbounded search.
-  (let ((here (point-max)) (start (point)) search-start)
 
-    (when (eq start c-last-large-sws-start)
-      ;; Even if we get a cache hit we continue the search below since
-      ;; the cache might have been created in the other direction from
-      ;; a point in the middle of the syntactic whitespace.
-      ;;(message "c-forward-sws hit")
-      (goto-char c-last-large-sws-end))
-    (setq search-start (point))
+  (let (;; `rung-pos' is set to a position as early as possible in the
+	;; unmarked part of the simple ws region.
+	(rung-pos (point)) next-rung-pos rung-end-pos
+	rung-is-marked next-rung-is-marked simple-ws-end
+	;; `safe-start' is set when it's safe to cache the start position.
+	;; It's not set if we've initially skipped over comments and line
+	;; continuations since we might have gone out through the end of a
+	;; macro then.  This provision makes `c-forward-sws' not populate the
+	;; cache in the majority of cases, but otoh is `c-backward-sws' by far
+	;; more common.
+	safe-start)
 
-    (while (/= here (point))
-      (c-forward-comments)
-      (setq here (point))
+    ;; Skip simple ws and do a quick check on the following character to see
+    ;; if it's anything that can't start syntactic ws, so we can bail out
+    ;; early in the majority of cases when there just are a few ws chars.
+    (skip-chars-forward " \t\n\r\f\v")
+    (unless (looking-at "[^/#\\]\\|\\'")
 
-      (cond
-       ;; Skip preprocessor directives.
-       ((and (looking-at "#[ \t]*[a-zA-Z0-9!]")
-	     (save-excursion
-	       (skip-chars-backward " \t")
-	       (bolp)))
-	(end-of-line)
-	(while (and (eq (char-before) ?\\)
-		    (= (forward-line 1) 0))
-	  (end-of-line)))
+      (setq rung-end-pos (min (1+ (point)) (point-max)))
+      (if (setq rung-is-marked (text-property-any rung-pos rung-end-pos
+						  'c-is-sws t))
+	  ;; Find the last rung position to avoid setting properties in all
+	  ;; the cases when the marked rung is complete.
+	  ;; (`next-single-property-change' is certain to move at least one
+	  ;; step forward.)
+	  (setq rung-pos (1- (next-single-property-change
+			      rung-is-marked 'c-is-sws nil rung-end-pos)))
+	;; Got no marked rung here.  Since the simple ws might have started
+	;; inside a line comment or cpp directive we must set `rung-pos' as
+	;; high as possible.
+	(setq rung-pos (point)))
 
-       ;; Skip in-comment line continuations (used for Pike refdoc).
-       ((and c-opt-in-comment-lc (looking-at c-opt-in-comment-lc))
-	(goto-char (match-end 0)))))
+      (while
+	  (progn
+	    (while
+		(when (and rung-is-marked
+			   (get-text-property (point) 'c-in-sws))
 
-    (when (and
-	   ;; Only record the range if the search itself was long.
-	   ;; This avoids extending an existing cached region by a
-	   ;; small increment since that could overextend it in the
-	   ;; not too uncommon case that an earlier search is repeated.
-	   (>= (- (point) search-start) (c-large-sws-size))
-	   ;; Don't record in the cache if we moved to the limit since
-	   ;; it might not be a correct syntactic ws range then.
-	   (< (point) (point-max)))
-      ;;(message "c-forward-sws cache ws region %s-%s (was %s-%s) %s"
-      ;;	 start (point) c-last-large-sws-start c-last-large-sws-end
-      ;;	 search-start)
-      (setq c-last-large-sws-start start
-	    c-last-large-sws-end (point)))))
+		  ;; The following search is the main reason that c-in-sws and
+		  ;; c-is-sws aren't combined to one property.
+		  (goto-char (next-single-property-change
+			      (point) 'c-in-sws nil (point-max)))
+		  (unless (get-text-property (point) 'c-is-sws)
+		    ;; If the c-in-sws region extended past the last c-is-sws
+		    ;; char we have to go back a bit.
+		    (or (get-text-property (1- (point)) 'c-is-sws)
+			(goto-char (previous-single-property-change
+				    (point) 'c-is-sws)))
+		    (backward-char))
+
+		  (c-debug-sws-msg
+		   "c-forward-sws cached move %s -> %s (max %s)"
+		   rung-pos (point) (point-max))
+
+		  (setq rung-pos (point))
+		  (and (> (skip-chars-forward " \t\n\r\f\v") 0)
+		       (not (eobp))))
+
+	      ;; We'll loop here if there is simple ws after the last rung.
+	      ;; That means that there's been some change in it and it's
+	      ;; possible that we've stepped into another ladder, so extend
+	      ;; the previous one to join with it if there is one, and try to
+	      ;; use the cache again.
+	      (c-debug-sws-msg
+	       "c-forward-sws extended rung with [%s..%s] (max %s)"
+	       (1+ rung-pos) (min (1+ (point)) (point-max)) (point-max))
+	      (put-text-property (1+ rung-pos)
+				 (min (1+ (point)) (point-max))
+				 'c-is-sws t)
+	      (put-text-property rung-pos
+				 (setq rung-pos (point))
+				 'c-in-sws t))
+
+	    (setq simple-ws-end (point))
+	    (c-forward-comments)
+
+	    (cond
+	     ((/= (point) simple-ws-end)
+	      ;; Skipped over comments.  Don't cache at eob in case the buffer
+	      ;; is narrowed.
+	      (not (eobp)))
+
+	     ((save-excursion
+		(and (looking-at "#[ \t]*[a-zA-Z0-9!]")
+		     (progn (skip-chars-backward " \t")
+			    (bolp))
+		     (or (bobp)
+			 (progn (backward-char)
+				(not (eq (char-before) ?\\))))))
+	      ;; Skip a preprocessor directive.
+	      (end-of-line)
+	      (while (and (eq (char-before) ?\\)
+			  (= (forward-line 1) 0))
+		(end-of-line))
+	      (forward-line 1)
+	      (setq safe-start t)
+	      ;; Don't cache at eob in case the buffer is narrowed.
+	      (not (eobp)))
+
+	     ((and c-opt-in-comment-lc
+		   (looking-at c-opt-in-comment-lc))
+	      ;; Skip an in-comment line continuation.
+	      (goto-char (match-end 0))
+	      ;; Don't cache at eob in case the buffer is narrowed.
+	      (not (eobp)))))
+
+	;; We've searched over a piece of non-white syntactic ws.  See if this
+	;; can be cached.
+	(setq next-rung-pos (point))
+	(skip-chars-forward " \t\n\r\f\v")
+	(setq rung-end-pos (min (1+ (point)) (point-max)))
+
+	(if (or
+	     ;; Cache if we haven't skipped comments only, and if we started
+	     ;; either from a marked rung or from a completely uncached
+	     ;; position.
+	     (and safe-start
+		  (or rung-is-marked
+		      (not (get-text-property simple-ws-end 'c-in-sws))))
+
+	     ;; See if there's a marked rung in the encountered simple ws.  If
+	     ;; so then we can cache, unless `safe-start' is nil.  Even then
+	     ;; we need to do this to check if the cache can be used for the
+	     ;; next step.
+	     (and (setq next-rung-is-marked
+			(text-property-any next-rung-pos rung-end-pos
+					   'c-is-sws t))
+		  safe-start))
+
+	    (progn
+	      (c-debug-sws-msg
+	       "c-forward-sws caching [%s..%s] - [%s..%s] (max %s)"
+	       rung-pos (1+ simple-ws-end) next-rung-pos rung-end-pos
+	       (point-max))
+
+	      ;; Remove the properties for any nested ws that might be cached.
+	      ;; Only necessary for c-is-sws since c-in-sws will be set anyway.
+	      (remove-text-properties (1+ simple-ws-end)
+				      next-rung-pos
+				      '(c-is-sws nil))
+	      (unless (and rung-is-marked (= rung-pos simple-ws-end))
+		(put-text-property rung-pos
+				   (1+ simple-ws-end)
+				   'c-is-sws t)
+		(setq rung-is-marked t))
+	      (put-text-property rung-pos
+				 (setq rung-pos (point))
+				 'c-in-sws t)
+	      (put-text-property next-rung-pos
+				 rung-end-pos
+				 'c-is-sws t))
+
+	  (c-debug-sws-msg
+	   "c-forward-sws not caching [%s..%s] - [%s..%s] (max %s)"
+	   rung-pos (1+ simple-ws-end) next-rung-pos rung-end-pos
+	   (point-max))
+
+	  ;; Set `rung-pos' for the next rung.  It's the same thing here as
+	  ;; initially, except that the rung position is set as early as
+	  ;; possible since we can't be in the ending ws of a line comment or
+	  ;; cpp directive now.
+	  (if (setq rung-is-marked next-rung-is-marked)
+	      (setq rung-pos (1- (next-single-property-change
+				  rung-is-marked 'c-is-sws nil rung-end-pos)))
+	    (setq rung-pos next-rung-pos))
+	  (setq safe-start t)
+	  )))))
 
 (defun c-backward-sws ()
   ;; Used by `c-backward-syntactic-ws' to implement the unbounded search.
-  (let ((here (point-min)) prev-pos (start (point)) search-start)
 
-    (when c-last-large-sws-end
-      ;; If the start position only is a short distance after the end
-      ;; of the cached region then see if we can get to it by skipping
-      ;; simple whitespace.  This turns out to be worthwhile due to
-      ;; how CC Mode uses `c-backward-syntactic-ws'.
-      (if (and (>= start c-last-large-sws-end)
-	       (< start (+ c-last-large-sws-end 20))
-	       (progn (skip-chars-backward " \t\n\r\f\v" c-last-large-sws-end)
-		      (= (point) c-last-large-sws-end)))
+  (let (;; `rung-pos' is set to a position as late as possible in the unmarked
+	;; part of the simple ws region.
+	(rung-pos (point)) next-rung-pos
+	rung-is-marked simple-ws-beg cmt-skip-pos)
 
-	  ;; Even if we get a cache hit we continue the search below since
-	  ;; the cache might have been created in the other direction from
-	  ;; a point in the middle of the syntactic whitespace.
+    ;; Skip simple horizontal ws and do a quick check on the preceding
+    ;; character to see if it's anying that can't end syntactic ws, so we can
+    ;; bail out early in the majority of cases when there just are a few ws
+    ;; chars.  Newlines are complicated in the backward direction, so we can't
+    ;; skip over them.
+    (skip-chars-backward " \t\f")
+    (unless (or (bobp)
+		(save-excursion
+		  (backward-char)
+		  (looking-at "[^/\n\r]")))
+
+      ;; Try to find a rung position in the simple ws preceding point, so that
+      ;; we can get a cache hit even if the last bit of the simple ws has
+      ;; changed recently.
+      (skip-chars-backward " \t\n\r\f\v")
+      (if (setq rung-is-marked (text-property-any
+				(point) (min (1+ rung-pos) (point-max))
+				'c-is-sws t))
+	  ;; `rung-pos' will be the earliest marked position, which means that
+	  ;; there might be later unmarked parts in the simple ws region.
+	  ;; It's not worth the effort to fix that; the last part of the
+	  ;; simple ws is also typically edited often, so it could be wasted.
+	  (setq rung-pos rung-is-marked)
+	(goto-char rung-pos))
+
+      (while
 	  (progn
-	    ;;(message "c-backward-sws hit")
-	    (goto-char c-last-large-sws-start))
+	    (while
+		(when (and rung-is-marked
+			   (not (bobp))
+			   (get-text-property (1- (point)) 'c-in-sws))
 
-	;; Can't use this position as the start of the search since we
-	;; might have backed over a linefeed into a line comment or
-	;; cpp directive.  There's no use being smart about checking
-	;; up on that; just go back again.
-	(goto-char start)))
-    (setq search-start (point))
+		  ;; The following search is the main reason that c-in-sws and
+		  ;; c-is-sws aren't combined to one property.
+		  (goto-char (previous-single-property-change
+			      (point) 'c-in-sws nil (point-min)))
+		  (unless (get-text-property (point) 'c-is-sws)
+		    ;; If the c-in-sws region extended past the first c-is-sws
+		    ;; char we have to go forward a bit.
+		    (goto-char (next-single-property-change
+				(point) 'c-is-sws)))
 
-    (while (/= here (point))
-      (setq prev-pos (point))
-      (c-backward-comments)
-      (setq here (point))
+		  (c-debug-sws-msg
+		   "c-backward-sws cached move %s <- %s (min %s)"
+		   (point) rung-pos (point-min))
 
-      (cond
-       ((c-beginning-of-macro)
-	(let ((macro-beg (point)))
-	  (if (or (progn (goto-char prev-pos)
-			 (beginning-of-line)
-			 (and (c-safe (backward-char) t)
-			      (eq (char-before) ?\\)))
-		  (<= (point) macro-beg))
-	      ;; Don't move past the macro if we began inside it.  We
-	      ;; detect the inside of the macro by checking that the
-	      ;; previous line doesn't end with "\" or that the macro
-	      ;; begins on this line.  That means that the position at
-	      ;; the end of the last line of the macro is also
-	      ;; considered to be within it.
-	      (goto-char here)
-	    (goto-char macro-beg))))
+		  (setq rung-pos (point))
+		  (if (and (< (skip-chars-backward " \t\n\r\f\v") 0)
+			   (setq rung-is-marked
+				 (text-property-any (point) rung-pos
+						    'c-is-sws t)))
+		      t
+		    (goto-char rung-pos)
+		    nil))
 
-       ;; Skip in-comment line continuations (used for Pike refdoc).
-       ((and c-opt-in-comment-lc
+	      ;; We'll loop here if there is simple ws before the first rung.
+	      ;; That means that there's been some change in it and it's
+	      ;; possible that we've stepped into another ladder, so extend
+	      ;; the previous one to join with it if there is one, and try to
+	      ;; use the cache again.
+	      (c-debug-sws-msg
+	       "c-backward-sws extended rung with [%s..%s] (min %s)"
+	       rung-is-marked rung-pos (point-min))
+	      (add-text-properties rung-is-marked
+				   rung-pos
+				   '(c-is-sws t c-in-sws t))
+	      (setq rung-pos rung-is-marked))
+
+	    (setq simple-ws-beg (point))
+	    (c-backward-comments)
+	    (setq cmt-skip-pos (point))
+
+	    (cond
+	     ((c-beginning-of-macro)
+	      ;; Inside a cpp directive.  See if it should be skipped over.
+	      (let ((cpp-beg (point)))
+		(if (or (progn (goto-char simple-ws-beg)
+			       (beginning-of-line)
+			       (<= (point) cpp-beg))
+			(and (not (bobp))
+			     (progn (backward-char)
+				    (eq (char-before) ?\\))))
+
+		    ;; Don't move past the cpp directive if we began inside
+		    ;; it.  We detect the inside of it by checking that it
+		    ;; doesn't start on the same line we begun searching from,
+		    ;; and that the line before that one doesn't end with "\".
+		    ;; That means that the position at the end of the last
+		    ;; line of the macro is also considered to be within it.
+		    (progn (goto-char cmt-skip-pos)
+			   nil)
+
+		  ;; It's worthwhile to spend a little bit of effort on finding
+		  ;; the end of the macro, to get a good `simple-ws-beg'
+		  ;; position for the cache.  Note that `c-backward-comments'
+		  ;; could have stepped over some comments before going into
+		  ;; the macro, and then `simple-ws-beg' must be kept on the
+		  ;; same side of those comments.
+		  (goto-char simple-ws-beg)
+		  (skip-chars-backward " \t\n\r\f\v")
+		  (if (eq (char-before) ?\\)
+		      (forward-char))
+		  (forward-line 1)
+		  (if (< (point) simple-ws-beg)
+		      ;; Might happen if comments after the macro were skipped
+		      ;; over.
+		      (setq simple-ws-beg (point)))
+
+		  (goto-char cpp-beg)
+		  ;; Don't cache at bob in case the buffer is narrowed.
+		  (not (bobp)))))
+
+	     ((/= (save-excursion
+		    (skip-chars-forward " \t\n\r\f\v" simple-ws-beg)
+		    (point))
+		  simple-ws-beg)
+	      ;; Skipped over comments.  Don't cache at bob in case
+	      ;; the buffer is narrowed.
+	      (not (bobp)))
+
+	     ((and c-opt-in-comment-lc
+		   (save-excursion
+		     (and (c-safe (beginning-of-line)
+				  (backward-char 2)
+				  t)
+			  (looking-at c-opt-in-comment-lc)
+			  (= (match-end 0) simple-ws-beg))))
+	      ;; Skip an in-comment line continuation.
+	      (goto-char (match-beginning 0))
+	      ;; Don't cache at bob in case the buffer is narrowed.
+	      (not (bobp)))))
+
+	;; We've searched over a piece of non-white syntactic ws.  See if this
+	;; can be cached.
+	(setq next-rung-pos (point))
+
+	(if (or
+	     ;; Cache if we started either from a marked rung or from a
+	     ;; completely uncached position.
+	     rung-is-marked
+	     (not (get-text-property (1- simple-ws-beg) 'c-in-sws))
+
+	     ;; Cache if there's a marked rung in the encountered simple ws.
 	     (save-excursion
-	       (and (c-safe (beginning-of-line)
-			    (backward-char 2)
-			    t)
-		    (looking-at c-opt-in-comment-lc)
-		    (eq (match-end 0) here))))
-	(goto-char (match-beginning 0)))))
+	       (skip-chars-backward " \t\n\r\f\v")
+	       (text-property-any (point) (min (1+ next-rung-pos) (point-max))
+				  'c-is-sws t)))
 
-    (when (and
-	   ;; Only record the range if the search itself was long.
-	   ;; This avoids extending an existing cached region by a
-	   ;; small increment since that could overextend it in the
-	   ;; not too uncommon case that an earlier search is repeated.
-	   (>= (- search-start (point)) (c-large-sws-size))
-	   ;; Don't record in the cache if we moved to the limit since
-	   ;; it might not be a correct syntactic ws range then.
-	   (> (point) (point-min)))
-      ;;(message "c-backward-sws cache ws region %s-%s (was %s-%s) %s"
-      ;;	 (point) start c-last-large-sws-start c-last-large-sws-end
-      ;;	 search-start)
-      (setq c-last-large-sws-start (point)
-	    c-last-large-sws-end start))))
+	    (progn
+	      (c-debug-sws-msg
+	       "c-backward-sws caching [%s..%s] - [%s..%s] (min %s)"
+	       next-rung-pos (1+ next-rung-pos)
+	       simple-ws-beg (min (1+ rung-pos) (point-max))
+	       (point-min))
 
+	      ;; Remove the properties for any nested ws that might be cached.
+	      ;; Only necessary for c-is-sws since c-in-sws will be set anyway.
+	      (remove-text-properties (1+ next-rung-pos)
+				      simple-ws-beg
+				      '(c-is-sws nil))
+	      (unless (and rung-is-marked (= rung-pos simple-ws-beg))
+		(put-text-property simple-ws-beg
+				   (min (1+ rung-pos) (point-max))
+				   'c-is-sws t)
+		(setq rung-is-marked t))
+	      (put-text-property next-rung-pos
+				 rung-pos
+				 'c-in-sws t)
+	      (put-text-property (setq rung-pos next-rung-pos)
+				 (1+ rung-pos)
+				 'c-is-sws t))
+
+	  (c-debug-sws-msg
+	   "c-backward-sws not caching [%s..%s] - [%s..%s] (min %s)"
+	   next-rung-pos (1+ next-rung-pos)
+	   simple-ws-beg (min (1+ rung-pos) (point-max))
+	   (point-min))
+	  (setq rung-pos next-rung-pos)
+	  )))))
+
+
 (defun c-forward-token-1 (&optional count balanced lim)
   "Move forward by tokens.
 A token is defined as all symbols and identifiers which aren't
