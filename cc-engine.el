@@ -485,20 +485,33 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	(c-stmt-delim-chars (if comma-delim
 				c-stmt-delim-chars-with-comma
 			      c-stmt-delim-chars))
-	pos				; Current position.
-	boundary-pos      ; Position of last stmt boundary character (e.g. ;).
-	after-labels-pos		; Value of tok after first found colon.
-	last-label-pos			; Value of tok after last found colon.
-	sym         ; Symbol just scanned back over (e.g. 'while or
-		    ; 'boundary). See above
-	state                     ; Current state in the automaton. See above.
-	saved-pos			; Current saved positions. See above
-	stack				; Stack of conses (state . saved-pos).
-	(cond-key (or c-opt-block-stmt-key ; regexp which matches "for", "if", etc.
+	c-in-literal-cache c-maybe-labelp saved
+	;; Current position.
+	pos
+	;; Position of last stmt boundary character (e.g. ;).
+	boundary-pos
+	;; The position of the last sexp or bound that follows the
+	;; first found colon.  It's `start' if a colon is found just
+	;; after the start.
+	after-labels-pos
+	;; Like `after-labels-pos', but for the last found colon.
+	last-label-pos
+	;; Symbol just scanned back over (e.g. 'while or 'boundary).
+	;; See above.
+	sym
+	;; Current state in the automaton.  See above.
+	state
+	;; Current saved positions.  See above.
+	saved-pos
+	;; Stack of conses (state . saved-pos).
+	stack
+	;; Regexp which matches "for", "if", etc.
+	(cond-key (or c-opt-block-stmt-key
 		      "\\<\\>"))	; Matches nothing.
-	(ret 'same)                     ; Return value.
-	tok ptok pptok			; Pos of last three sexps or bounds.
-	c-in-literal-cache c-maybe-labelp saved)
+	;; Return value.
+	(ret 'same)
+	;; Positions of the last three sexps or bounds we've stopped at.
+	tok ptok pptok)
 
     (save-restriction
       (if lim (narrow-to-region lim (point-max)))
@@ -772,8 +785,8 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		;; c-crosses-statement-barrier-p has found a colon, so
 		;; we might be in a label now.
 		(if (not after-labels-pos)
-		    (setq after-labels-pos tok))
-		(setq last-label-pos tok
+		    (setq after-labels-pos (or tok start)))
+		(setq last-label-pos (or tok start)
 		      c-maybe-labelp t))
 
 	      ;; ObjC method def?
