@@ -1,14 +1,14 @@
 ;;; cc-mode.el --- major mode for editing C, C++, and Objective-C code
 
-;; Copyright (C) 1985-1995 Free Software Foundation, Inc.
+;; Copyright (C) 1985, 87, 92, 93, 94, 95 96 Free Software Foundation, Inc.
 
 ;; Authors: 1992-1996 Barry A. Warsaw
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.263 $
-;; Last Modified:   $Date: 1996-01-16 00:09:41 $
+;; Version:         $Revision: 4.264 $
+;; Last Modified:   $Date: 1996-01-17 23:31:08 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -27,8 +27,9 @@
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with GNU Emacs; see the file COPYING.  If not, write to
-;; the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+;; along with GNU Emacs; see the file COPYING.  If not, write to the
+;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
 
 ;;; Commentary:
 
@@ -52,11 +53,12 @@
 ;; reports to my personal account, I may not get it for a long time.
 
 ;; YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS. They are the result of
-;; the multi-Emacsen support.  FSF's Emacs 19, XEmacs 19 (formerly
-;; Lucid), and GNU Emacs 18 all do things differently and there's no
-;; way to shut the byte-compiler up at the necessary granularity.  Let
-;; me say this again: YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS (you'd
-;; be surprised at how many people don't follow this advice :-).
+;; the multi-Emacsen support.  Emacs 19 (from the FSF), XEmacs 19
+;; (formerly Lucid Emacs), and GNU Emacs 18 all do things differently
+;; and there's no way to shut the byte-compiler up at the necessary
+;; granularity.  Let me say this again: YOU CAN IGNORE ALL
+;; BYTE-COMPILER WARNINGS (you'd be surprised at how many people don't
+;; follow this advice :-).
 
 ;; If your Emacs is dumped with c-mode.el and/or c++-mode.el, you will
 ;; need to add the following to your .emacs file before any other
@@ -106,7 +108,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-16 00:09:41 $|$Revision: 4.263 $|
+;; |$Date: 1996-01-17 23:31:08 $|$Revision: 4.264 $|
 
 ;;; Code:
 
@@ -191,7 +193,7 @@ elements.  This list can contain more than one syntactic element and
 the global variable `c-syntactic-context' contains the context list
 for the line being indented.  Each element in this list is actually a
 cons cell of the syntactic symbol and a buffer position.  This buffer
-position is call the relative indent point for the line.  Some
+position is called the relative indent point for the line.  Some
 syntactic symbols may not have a relative indent point associated with
 them.
 
@@ -420,7 +422,7 @@ This hook gets called after a line is indented by the mode.")
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
 
-(defvar c-recognize-knr-p nil
+(defvar c-recognize-knr-p nil		;RMS version uses t
   "*If non-nil, `c-mode' and `objc-mode' will recognize K&R constructs.
 This variable is needed because of ambiguities in C syntax that make
 fast recognition of K&R constructs problematic, and slow.  If you are
@@ -567,7 +569,7 @@ as designated in the variable `c-file-style'.")
     ["Backward Statement"     c-beginning-of-statement t]
     ["Forward Statement"      c-end-of-statement t]
     )
-  "XEmacs 19 (formerly Lucid) menu for C/C++/ObjC modes.")
+  "XEmacs 19 menu for C/C++/ObjC modes.")
 
 (defvar cc-imenu-c++-generic-expression
   (` 
@@ -650,22 +652,23 @@ as designated in the variable `c-file-style'.")
 				    'XEmacs 'FSF)))
      ;; I don't know
      (t (error "Cannot recognize major version number: %s" major)))
-    ;; All XEmacs 19's (formerly Lucid) use 8-bit modify-syntax-entry
-    ;; flags, as do all patched (obsolete) FSF Emacs 19, Emacs 18,
-    ;; Epoch 4's.  Only vanilla FSF Emacs 19 uses 1-bit flag.  Lets be
-    ;; as smart as we can about figuring this out.
+    ;; XEmacs 19 uses 8-bit modify-syntax-entry flags, as do all
+    ;; patched Emacs 19, Emacs 18, Epoch 4's.  Only Emacs 19 uses a
+    ;; 1-bit flag.  Let's be as smart as we can about figuring this
+    ;; out.
     (if (eq major 'v19)
 	(let ((table (copy-syntax-table)))
 	  (modify-syntax-entry ?a ". 12345678" table)
-	  (if (= (logand (lsh (aref table ?a) -16) 255) 255)
+	  (if (and (vectorp table)
+		   (= (logand (lsh (aref table ?a) -16) 255) 255))
 	      (setq comments '8-bit)
 	    (setq comments '1-bit)))
       (setq comments 'no-dual-comments))
     ;; lets do some minimal sanity checking.
     (if (and (or
-	      ;; Lemacs before 19.6 had bugs
+	      ;; Lucid Emacs before 19.6 had bugs
 	      (and (eq major 'v19) (eq flavor 'XEmacs) (< minor 6))
-	      ;; FSF 19 before 19.21 has known bugs
+	      ;; Emacs 19 before 19.21 has known bugs
 	      (and (eq major 'v19) (eq flavor 'FSF) (< minor 21)))
 	     (not c-inhibit-startup-warnings-p))
 	(with-output-to-temp-buffer "*cc-mode warnings*"
@@ -704,18 +707,18 @@ the main release."
 	  (print (format
 "You are running a syntax patched Emacs 18 variant.  While this should
 work for you, you may want to consider upgrading to one of the latest
-Emacs 19's (FSF or XEmacs -- formerly Lucid).  The syntax patches are
-no longer supported either for syntax.c or cc-mode."))))
+Emacs 19's.  The syntax patches are no longer supported either for
+syntax.c or cc-mode."))))
     (list major comments))
   "A list of features extant in the Emacs you are using.
 There are many flavors of Emacs out there, each with different
 features supporting those needed by cc-mode.  Here's the current
 supported list, along with the values for this variable:
 
- Vanilla Emacs 18/Epoch 4:   (v18 no-dual-comments)
+ Emacs 18/Epoch 4:           (v18 no-dual-comments)
  Emacs 18/Epoch 4 (patch2):  (v18 8-bit)
- XEmacs (formerly Lucid) 19: (v19 8-bit)
- FSF Emacs 19:               (v19 1-bit).")
+ XEmacs 19:                  (v19 8-bit)
+ Emacs 19:                   (v19 1-bit).")
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in c++-mode buffers.")
@@ -730,8 +733,8 @@ supported list, along with the values for this variable:
 (define-abbrev-table 'objc-mode-abbrev-table ())
 
 (defun c-mode-fsf-menu (name map)
-  ;; Add FSF menu to a keymap.  FSF menus suck.  Don't add them for
-  ;; XEmacs. This feature test will fail on other than FSF's Emacs 19.
+  ;; Add menu to a keymap.  FSF menus suck.  Don't add them for
+  ;; XEmacs. This feature test will fail on other than Emacs 19.
   (condition-case nil
       (progn
 	(define-key map [menu-bar] (make-sparse-keymap))
@@ -772,7 +775,7 @@ supported list, along with the values for this variable:
 (if c-mode-map
     ()
   ;; TBD: should we even worry about naming this keymap. My vote: no,
-  ;; because FSF and XEmacs (formerly Lucid) do it differently.
+  ;; because Emacs and XEmacs do it differently.
   (setq c-mode-map (make-sparse-keymap))
   ;; put standard keybindings into MAP
   ;; the following mappings correspond more or less directly to BOCM
@@ -783,7 +786,8 @@ supported list, along with the values for this variable:
   (define-key c-mode-map ":"         'c-electric-colon)
   (define-key c-mode-map "<"         'c-electric-lt-gt)
   (define-key c-mode-map ">"         'c-electric-lt-gt)
-  ;; Lemacs 19.9 defines these two, the second of which is commented out
+  ;; Lucid Emacs 19.9 defined these two, the second of which was
+  ;; commented out...
   ;; (define-key c-mode-map "\e{" 'c-insert-braces)
   ;; Commented out electric square brackets because nobody likes them.
   ;; (define-key c-mode-map "[" 'c-insert-brackets)
@@ -818,14 +822,15 @@ supported list, along with the values for this variable:
   (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
   ;; conflicts with OOBR
   ;;(define-key c-mode-map "\C-c\C-v"  'c-version)
-  ;; FSF Emacs 19 defines menus in the mode map. This call will return
-  ;; t on FSF Emacs 19, otherwise no-op and return nil.
+  ;;
+  ;; Emacs 19 defines menus in the mode map. This call will return
+  ;; t on Emacs 19, otherwise no-op and return nil.
   (if (and (not (c-mode-fsf-menu "C" c-mode-map))
-	   ;; in XEmacs (formerly Lucid) 19, we want the menu to popup
-	   ;; when the 3rd button is hit.  In 19.10 and beyond this is
-	   ;; done automatically if we put the menu on mode-popup-menu
-	   ;; variable, see c-common-init. RMS decided that this
-	   ;; feature should not be included for FSF's Emacs.
+	   ;; in XEmacs 19, we want the menu to popup
+	   ;; when the 3rd button is hit.  In Lucid Emacs 19.10 and
+	   ;; beyond this is done automatically if we put the menu on
+	   ;; mode-popup-menu variable, see c-common-init. RMS decided
+	   ;; that this feature should not be included for Emacs 19.
 	   (boundp 'current-menubar)
 	   (not (boundp 'mode-popup-menu)))
       (define-key c-mode-map 'button3 'c-popup-menu)))
@@ -836,7 +841,7 @@ supported list, along with the values for this variable:
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
   (if (memq 'v19 c-emacs-features)
-      ;; XEmacs (formerly Lucid) and FSF Emacs 19 do this differently
+      ;; XEmacs and Emacs 19 do this differently
       (if (not (fboundp 'set-keymap-parent))
 	  (setq c++-mode-map (cons 'keymap c-mode-map))
 	(setq c++-mode-map (make-sparse-keymap))
@@ -845,8 +850,8 @@ supported list, along with the values for this variable:
     (setq c++-mode-map (nconc (make-sparse-keymap) c-mode-map)))
   ;; add bindings which are only useful for C++
   (define-key c++-mode-map "\C-c:"  'c-scope-operator)
-  ;; FSF Emacs 19 defines menus in the mode map. This call will return
-  ;; t on FSF Emacs 19, otherwise no-op and return nil.
+  ;; Emacs 19 defines menus in the mode map. This call will return
+  ;; t on Emacs 19, otherwise no-op and return nil.
   (c-mode-fsf-menu "C++" c++-mode-map))
 
 (defvar objc-mode-map ()
@@ -855,7 +860,7 @@ supported list, along with the values for this variable:
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
   (if (memq 'v19 c-emacs-features)
-      ;; XEmacs (formerly Lucid) and FSF Emacs 19 do this differently
+      ;; XEmacs and Emacs 19 do this differently
       (if (not (fboundp 'set-keymap-parent))
 	  (setq objc-mode-map (cons 'keymap c-mode-map))
 	(setq objc-mode-map (make-sparse-keymap))
@@ -866,8 +871,8 @@ supported list, along with the values for this variable:
   ;;
   ;; no additional bindings
   ;;
-  ;; FSF Emacs 19 defines menus in the mode map. This call will return
-  ;; t on FSF Emacs 19, otherwise no-op and return nil.
+  ;; Emacs 19 defines menus in the mode map. This call will return
+  ;; t on Emacs 19, otherwise no-op and return nil.
   (c-mode-fsf-menu "ObjC" objc-mode-map))
 
 (defun c-populate-syntax-table (table)
@@ -889,14 +894,14 @@ supported list, along with the values for this variable:
   ;; Set up TABLE to handle block and line style comments
   (cond
    ((memq '8-bit c-emacs-features)
-    ;; XEmacs (formerly Lucid) has the best implementation
+    ;; XEmacs 19 has the best implementation
     (modify-syntax-entry ?/  ". 1456" table)
     (modify-syntax-entry ?*  ". 23"   table)
     (modify-syntax-entry ?\n "> b"    table)
     ;; Give CR the same syntax as newline, for selective-display
     (modify-syntax-entry ?\^m "> b"    table))
    ((memq '1-bit c-emacs-features)
-    ;; FSF Emacs 19 does things differently, but we can work with it
+    ;; Emacs 19 does things differently, but we can work with it
     (modify-syntax-entry ?/  ". 124b" table)
     (modify-syntax-entry ?*  ". 23"   table)
     (modify-syntax-entry ?\n "> b"    table)
@@ -988,7 +993,7 @@ behavior that users are familiar with.")
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
-;; [I add it here only because c-mode has it -- BAW]]
+;; [I add it here only because c-mode has it -- BAW]
 (autoload 'c-macro-expand "cmacexp"
   "Display the result of expanding all C macros occurring in the region.
 The expansion is entirely correct because it uses the C preprocessor."
@@ -1196,6 +1201,11 @@ Key bindings:
 	(setq fill-paragraph-function 'c-fill-paragraph)))
   ;; now set their values
   (setq paragraph-start (concat "^$\\|" page-delimiter)
+	;; TBD:
+	;; Emacs 19.31 pretest uses (concat page-delimiter "\\|$")
+	;; in the line above, but I have no idea how to feature test
+	;; this, or whether making this change will break other
+	;; Emacsen. -- BAW 17-Jan-1996
 	paragraph-separate paragraph-start
 	paragraph-ignore-fill-prefix t
 	require-final-newline t
@@ -1218,8 +1228,8 @@ Key bindings:
 	   (setq comment-indent-function 'c-comment-indent))
     (make-local-variable 'comment-indent-hook)
     (setq comment-indent-hook 'c-comment-indent))
-  ;; put C menu into menubar and on popup menu for XEmacs (formerly
-  ;; Lucid) 19. I think this happens automatically for FSF Emacs 19.
+  ;; Put C menu into menubar and on popup menu for XEmacs 19. I think
+  ;; this happens automatically for Emacs 19.
   (if (and (boundp 'current-menubar)
 	   current-menubar
 	   (not (assoc mode-name current-menubar)))
@@ -1448,8 +1458,8 @@ global and affect all future `c-mode' buffers."
 
 ;; active regions, and auto-newline/hungry delete key
 (defun c-keep-region-active ()
-  ;; do whatever is necessary to keep the region active in Xemacs
-  ;; (formerly Lucid). ignore byte-compiler warnings you might see
+  ;; Do whatever is necessary to keep the region active in
+  ;; XEmacs 19. ignore byte-compiler warnings you might see
   (and (boundp 'zmacs-region-stays)
        (setq zmacs-region-stays t)))
 
@@ -1731,6 +1741,24 @@ the brace is inserted inside a literal."
 		 (run-hooks old-blink-paren))))
 	))))
       
+(defun c-electric-slash (arg)
+  "Insert a slash character.
+If slash is second of a double-slash C++ style comment introducing
+construct, and we are on a comment-only-line, indent line as comment.
+If numeric ARG is supplied or point is inside a literal, indentation
+is inhibited."
+  (interactive "P")
+  (let ((indentp (and (memq major-mode '(c++-mode objc-mode))
+		      (not arg)
+		      (= (preceding-char) ?/)
+		      (= last-command-char ?/)
+		      (not (c-in-literal))))
+	;; shut this up
+	(c-echo-syntactic-information-p nil))
+    (self-insert-command (prefix-numeric-value arg))
+    (if indentp
+	(c-indent-line))))
+
 (defun c-electric-star (arg)
   "Insert a star character.
 If the star is the second character of a C style comment introducing
@@ -1909,24 +1937,6 @@ value of `c-cleanup-list'."
 	    (c-indent-line)))
       )))
 
-(defun c-electric-slash (arg)
-  "Insert a slash character.
-If slash is second of a double-slash C++ style comment introducing
-construct, and we are on a comment-only-line, indent line as comment.
-If numeric ARG is supplied or point is inside a literal, indentation
-is inhibited."
-  (interactive "P")
-  (let ((indentp (and (memq major-mode '(c++-mode objc-mode))
-		      (not arg)
-		      (= (preceding-char) ?/)
-		      (= last-command-char ?/)
-		      (not (c-in-literal))))
-	;; shut this up
-	(c-echo-syntactic-information-p nil))
-    (self-insert-command (prefix-numeric-value arg))
-    (if indentp
-	(c-indent-line))))
-
 (defun c-electric-lt-gt (arg)
   "Insert a less-than, or greater-than character.
 When the auto-newline feature is turned on, as evidenced by the \"/a\"
@@ -1953,7 +1963,7 @@ supplied, or point is inside a literal."
 (mapcar
  (function
   (lambda (sym)
-    (put sym 'delete-selection t)	; for delsel (FSF)
+    (put sym 'delete-selection t)	; for delsel (Emacs)
     (put sym 'pending-delete t)))	; for pending-del (XEmacs)
  '(c-electric-pound
    c-electric-brace
@@ -2139,10 +2149,18 @@ Optional prefix ARG means justify paragraph as well."
 	       ;; should not be filled into paragraphs they are next to.
 	       (concat 
 		paragraph-start
+		;; TBD: Emacs 19.31 pretest uses the following:
+		;;"\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
+		;; instead of what you see here.  I have no idea about
+		;; potential compatibility problems with other
+		;; Emacsen. -- BAW 17-Jan-1996
 		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
 	      (paragraph-separate
 	       (concat
 		paragraph-separate
+		;; TBD: Emacs 19.31 pretest uses the following:
+		;; "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$")))
+		;; The same note applies
 		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$")))
 	  (save-excursion
 	    (beginning-of-line)
@@ -2234,10 +2252,14 @@ Optional prefix ARG means justify paragraph as well."
 		 ;; should not be filled into paragraphs they are next to.
 		 (concat 
 		  paragraph-start
+		  ;; TBD: See my earlier notes about the Emacs 19.31 pretest
+		  ;; "\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
 		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
 		(paragraph-separate
 		 (concat
 		  paragraph-separate
+		  ;; TBD: See my earlier notes about the Emacs 19.31 pretest
+		  ;;"\\|[ \t]*/\\*[ \t]*$\\|[ \t]*\\*/[ \t]*$\\|[ \t/*]*$"))
 		  "\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
 		(chars-to-delete 0))
 	    (save-restriction
@@ -2435,11 +2457,6 @@ comment."
 					(<= lim (point))
 					(not (c-in-literal lim))
 					(looking-at c-conditional-key)
-;					(save-excursion
-;					  (if (c-safe
-;					       (progn (backward-up-list 1) t))
-;					      (/= (following-char) ?\()
-;					    t))
 					))))
 		     ;; did we find a conditional?
 		     (if (not foundp)
@@ -2907,7 +2924,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (progn
 	(set-marker (aref c-progress-info 1) nil)
 	(setq c-progress-info nil)
-	(message "indenting region... done"))))
+	(message "indenting region...done"))))
 
 
 ;; Skipping of "syntactic whitespace" for Emacs 19.  Syntactic
@@ -3687,8 +3704,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     (c-recognize-knr-p
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
 	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	     ;; CASE 5B.3: nether region after a C++ func decl.  could
-	     ;; include a `throw' declaration.
+	     ;; CASE 5B.3: Nether region after a C++ func decl, which
+	     ;; could include a `throw' declaration.
 	     (t
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'ansi-funcdecl-cont (c-point 'boi))
@@ -3777,9 +3794,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     (t
 	      (c-beginning-of-statement-1 lim)
 	      ;; skip over any access-specifiers
-	      (if inclass-p
-		  (while (and c-access-key (looking-at c-access-key))
-		    (forward-line 1)))
+	      (and inclass-p c-access-key
+		   (while (looking-at c-access-key)
+		     (forward-line 1)))
 	      ;; skip over comments, whitespace
 	      (c-forward-syntactic-ws indent-point)
 	      (c-add-syntax 'statement-cont (c-point 'boi)))
@@ -4191,7 +4208,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (let ((safepos (c-most-enclosing-brace fullstate)))
 	      (goto-char indent-point)
 	      (c-beginning-of-statement-1 safepos)
-	      ;; it is possible we're on the brace that opens a nested function
+	      ;; It is possible we're on the brace that opens a nested
+	      ;; function.
 	      (if (and (= (following-char) ?{)
 		       (save-excursion
 			 (c-backward-syntactic-ws safepos)
@@ -4637,10 +4655,10 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.263 $"
+(defconst c-version "$Revision: 4.264 $"
   "cc-mode version number.")
-(defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
-  "Address accepting submission of bug reports.")
+(defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
+  "Address for cc-mode bug reports.")
 
 (defun c-version ()
   "Echo the current version of cc-mode in the minibuffer."
@@ -4707,7 +4725,7 @@ definition and conveniently use this command."
       ))))
 
 
-;; menus for XEmacs (formerly Lucid)
+;; menus for XEmacs 19
 (defun c-popup-menu (e)
   "Pops up the C/C++/ObjC menu."
   (interactive "@e")
@@ -4716,7 +4734,7 @@ definition and conveniently use this command."
     
 
 (defun c-copy-tree (tree)
-  ;; Line XEmacs 19.12's copy-tree
+  ;; Lift XEmacs 19.12's copy-tree
   (if (consp tree)
       (cons (c-copy-tree (car tree))
 	    (c-copy-tree (cdr tree)))
@@ -4740,9 +4758,9 @@ definition and conveniently use this command."
 		  )))
     ))
 
-;; dynamically append the default value of most variables. This is
+;; Dynamically append the default value of most variables. This is
 ;; crucial because future c-set-style calls will always reset the
-;; variables first to the "CC-MODE" style before instituting the new
+;; variables first to the `cc-mode' style before instituting the new
 ;; style.  Only do this once!
 (or (assoc "cc-mode" c-style-alist)
     (progn
@@ -4791,7 +4809,7 @@ definition and conveniently use this command."
 (fset 'mark-c-function       'c-mark-function)
 (fset 'indent-c-exp          'c-indent-exp)
 (fset 'set-c-style           'c-set-style)
-;; lemacs 19.9 + font-lock + cc-mode - c++-mode lossage
+;; Lucid Emacs 19.9 + font-lock + cc-mode - c++-mode lossage
 (fset 'c++-beginning-of-defun 'beginning-of-defun)
 (fset 'c++-end-of-defun 'end-of-defun)
 
