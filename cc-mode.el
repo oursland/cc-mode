@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.284 $
-;; Last Modified:   $Date: 1996-03-14 21:37:45 $
+;; Version:         $Revision: 4.285 $
+;; Last Modified:   $Date: 1996-03-23 01:21:34 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -684,18 +684,21 @@ re-dump Emacs.")
 			 flavor (if (or (string-match "Lucid" emacs-version)
 					(string-match "XEmacs" emacs-version))
 				    'XEmacs 'FSF)))
+     ((= major 20) (setq major 'v20	;XEmacs 20
+			 flavor 'XEmacs))
      ;; I don't know
      (t (error "Cannot recognize major version number: %s" major)))
     ;; Regular expression suites...
-    (if (and (eq major 'v19)
-	     (or (and (eq flavor 'XEmacs) (>= minor 14))
-		 (and (eq flavor 'FSF) (>= minor 30))))
+    (if (or (eq major 'v20)
+	    (and (eq major 'v19)
+		 (or (and (eq flavor 'XEmacs) (>= minor 14))
+		     (and (eq flavor 'FSF) (>= minor 30)))))
 	(setq re-suite 'new-re))
     ;; XEmacs 19 uses 8-bit modify-syntax-entry flags, as do all
     ;; patched Emacs 19, Emacs 18, Epoch 4's.  Only Emacs 19 uses a
     ;; 1-bit flag.  Let's be as smart as we can about figuring this
     ;; out.
-    (if (eq major 'v19)
+    (if (or (eq major 'v20) (eq major 'v19))
 	(let ((table (copy-syntax-table)))
 	  (modify-syntax-entry ?a ". 12345678" table)
 	  (cond
@@ -767,6 +770,7 @@ supported list, along with the values for this variable:
  Emacs 18/Epoch 4:           (v18 no-dual-comments RS)
  Emacs 18/Epoch 4 (patch2):  (v18 8-bit RS)
  XEmacs 19:                  (v19 8-bit RS)
+ XEmacs 20:                  (v20 8-bit RS)
  Emacs 19:                   (v19 1-bit RS)
 
 RS is the regular expression suite to use.  XEmacs versions after
@@ -894,7 +898,9 @@ All other Emacsen use the `old-re' suite.")
 (if c++-mode-map
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (memq 'v19 c-emacs-features)
+  (if (or
+       (memq 'v19 c-emacs-features)
+       (memq 'v20 c-emacs-features))
       ;; XEmacs and Emacs 19 do this differently
       (cond
        ;; XEmacs 19.13
@@ -921,7 +927,7 @@ All other Emacsen use the `old-re' suite.")
 (if objc-mode-map
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (memq 'v19 c-emacs-features)
+  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
       ;; XEmacs and Emacs 19 do this differently
       (cond
        ;; XEmacs 19.13
@@ -945,7 +951,7 @@ All other Emacsen use the `old-re' suite.")
 (if java-mode-map
     ()
   ;; In Emacs 19, it makes more sense to inherit c-mode-map
-  (if (memq 'v19 c-emacs-features)
+  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
       ;; XEmacs and Emacs 19 do this differently
       (cond
        ;; XEmacs 19.13
@@ -1638,7 +1644,7 @@ global and affect all future `c-mode' buffers."
 	    (if c-hungry-delete-key "/ah" "/a")
 	  (if c-hungry-delete-key "/h" nil)))
   ;; updates the modeline for all Emacsen
-  (if (memq 'v19 c-emacs-features)
+  (if (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
       (force-mode-line-update)
     (set-buffer-modified-p (buffer-modified-p))))
 
@@ -2197,7 +2203,8 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 		    (let* ((syntax (c-guess-basic-syntax))
 			   (len (length syntax))
 			   (ic (format "%s" (car (nth (1- len) syntax)))))
-		      (if (memq 'v19 c-emacs-features)
+		      (if (or (memq 'v19 c-emacs-features)
+			      (memq 'v20 c-emacs-features))
 			  (cons ic 0)
 			ic))
 		    )))
@@ -4805,7 +4812,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.284 $"
+(defconst c-version "$Revision: 4.285 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
@@ -4968,7 +4975,7 @@ definition and conveniently use this command."
 ;; set up bc warnings for obsolete variables, but for now lets not
 ;; worry about obsolete functions.  maybe later some will be important
 ;; to flag
-(and (memq 'v19 c-emacs-features)
+(and (or (memq 'v19 c-emacs-features) (memq 'v20 c-emacs-features))
      (let* ((na "Nothing appropriate.")
 	    (vars
 	     (list
