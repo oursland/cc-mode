@@ -20,7 +20,15 @@
 	   (error nil))
 	 ;; Stock Emacs 19.34 doesn't have this
 	 (fboundp 'defcustom))
-    (batch-byte-compile)
+    (progn
+      (if (or (not (fboundp 'functionp))
+	      (not (fboundp 'char-before))
+	      (not (c-safe (char-after) t))
+	      (not (fboundp 'when))
+	      (not (fboundp 'unless)))
+	  ;; cc-mode-19.el contains macros that should be compiled in.
+	  (require 'cc-mode-19))
+      (batch-byte-compile))
   (error "STOP! STOP! STOP! STOP!
 
 The Custom library was not found or is out of date.  A more current
