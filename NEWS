@@ -1,4 +1,4 @@
-CC Mode NEWS -- user visible changes. -*- mode:outline -*-
+CC Mode NEWS -- user visible changes.  -*- mode:outline -*-
 
 * Changes in 5.24
 
@@ -83,9 +83,6 @@ This is a bug fix release only.
 
 * Changes in 5.20
 
-** Martin Stjernholm has joined the cc-mode-help@python.org
-maintainers!
-
 ** Multiline macros are now handled, both as they affect indentation,
 and as recognized syntax.  New syntactic symbol cpp-macro-cont is
 assigned to second and subsequent lines of a multiline macro
@@ -123,3 +120,112 @@ only XEmacs (see the variable c-enable-xemacs-performance-kludge-p).
 now be able to do a (require 'cc-mode) to get the entire package
 loaded properly for customization in your .emacs file.  A new variable
 c-initialize-on-load controls this and is set to t by default.
+
+* Changes in 5.19
+
+** extern-lang-close relative buffer positions have changed.  The used
+to point to the extern's open brace, but they now point to the first
+non-whitespace character on the line with the open brace.
+
+** c-progress-interval's semantics have changed slightly.  When set to
+nil, indentation proceeds silently.  Previously, even when nil, the
+start and end messages were printed.
+
+* Changes in 5.18
+
+** M-a and M-e should now properly move into comments when point is
+before or after a comment, and move by sentences when inside a
+comment.
+
+** c-electric-slash should be bound in all modes now.  Also,
+c-expand-macro is not bound in Java or IDL modes.
+
+** Imenu enhancements: Objective-C support donated by Masatake (jet)
+YAMATO; a fix to Java support given by Ake Stenhoff; and improvements
+to C++ support given by Jan Dubois.
+
+* Changes in 5.17
+
+** Recognition of enum declarations in K&R argdecls.
+
+** Changes to "python" style to more closely match Python C API coding
+standards.
+
+** / is bound to c-electric-slash in all modes, and C-c C-e is bound
+to c-expand-macro in all languages except Java and IDL.
+
+* Changes in 5.16
+
+This is primarily a bug fix release.  Users of XEmacs 19.15 and Emacs
+19.34 are highly encouraged to pick up this release.
+
+* Changes in 5.15
+
+** A new syntactic symbol: template-args-cont, used in C++ template
+declarations where the argument list spans multiple lines.
+
+** In "java" style, c-hanging-comment-starter-p defaults to nil to
+preserve Javadoc starter lines.
+
+** Line oriented comments (i.e. C++ style comments) are now recognized
+by default in all modes, including C mode (as per the ANSI 9X C draft
+standard).  Thus the function c-enable-//-in-c-mode has been removed.
+
+** Auto-filling of comments has been improved.  CC Mode will now
+properly auto-fill both line and block oriented comments, and allows
+you to choose the leader string on block oriented continued comments,
+via the variable c-comment-continuation-stars.  See the CC Mode manual
+for details.
+
+** c-electric-slash is electric in all modes.
+
+** The need for c-mode-19.el is automatically detected now.  You do
+not need to load or require it in your .emacs file.
+
+* Changes in 5.14
+
+** Support for CORBA's IDL language.  There is now a new mode called
+idl-mode, with all the expected hooks, abbreviation tables, etc.
+
+** In "java" style, c-hanging-comment-starter-p is set to nil by
+default to preserve Javadoc comments.
+
+** A new hook variable: c-initialization-hook. This is called only
+once an X/Emacs session, when the CC Mode package is initialized.
+
+* Changes in version 5
+
+CC Mode version 5 was a major upgrade, as evidenced by the change in
+major revision number.  Here is a list of the important user visible
+changes in CC Mode 5.
+
+** CC Mode 5 will not work with Emacs 18, and will only work with the
+latest Emacs and XEmacs releases.
+
+** c-mode-map is no longer the base keymap for all modes.  This was
+incompatible with the way Emacs 19 supports menus, so now
+c-mode-base-map is the base map for all modes (including c-mode-map).
+If you are installing custom keybindings into c-mode-map and expecting
+them to be present in all other modes, this will break.  Put your
+keybindings in c-mode-base-map instead.
+
+** The function c-electric-delete and variable c-delete-function are
+handled differently now, in order to accomodate the separation of the
+BackSpace and Delete keysyms.  CC Mode now binds only the Delete
+keysym to c-electric-delete (which runs c-delete-function), and the
+BackSpace keysym to c-electric-backspace (which runs
+c-backspace-function).  See the CC Mode manual for details.
+
+** The single cc-mode.el file was simply too unwieldy so I have split
+the file up.  See the MANIFEST file for details.
+
+** Also, all user variables have been converted to Per Abrahamsen's
+Custom library, and all support for older Emacsen have been ripped
+out.  See the release notes for details of running CC Mode 5 in your
+version of Emacs.
+
+** All style variables are now global by default.  Specifically, the
+default value for c-style-variables-are-local-p is nil.  The same
+rules apply as before, only reversed: if you want the style variables
+to be buffer local, you should set c-style-variables-are-local-p to t
+before you load CC Mode.
