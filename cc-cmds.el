@@ -1096,7 +1096,7 @@ of the expression are preserved.
   just inserts a tab character, or the equivalent number of spaces,
   depending on the variable `indent-tabs-mode'."
 
-  (interactive "*P")
+  (interactive "P")
   (let ((bod (c-point 'bod)))
     (if whole-exp
 	;; If arg, always indent this line as C
