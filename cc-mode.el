@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.274 $
-;; Last Modified:   $Date: 1993-02-05 19:51:49 $
+;; Version:         $Revision: 2.275 $
+;; Last Modified:   $Date: 1993-02-05 20:06:58 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-05 19:51:49 $|$Revision: 2.274 $|
+;; |$Date: 1993-02-05 20:06:58 $|$Revision: 2.275 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.274 $
+  "Major mode for editing C++ code.  $Revision: 2.275 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.274 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.275 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1290,8 +1290,12 @@ of the expression are preserved."
 	    ;; check for continued statements
 	    (if (save-excursion
 		  (c++-backward-syntactic-ws (car contain-stack))
-		  (not (memq (preceding-char)
-			     '(nil ?\000 ?\, ?\; ?\} ?\: ?\{))))
+		  (and (not (memq (preceding-char)
+				  '(nil ?\000 ?\, ?\; ?\} ?\: ?\{)))
+		       (progn
+			 (beginning-of-line)
+			 (skip-chars-forward " \t")
+			 (not (looking-at c++-class-key)))))
 		(setq this-indent (+ this-indent c-continued-statement-offset))
 	      )
 	    ;; check for stream operator
@@ -2448,7 +2452,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.274 $"
+(defconst c++-version "$Revision: 2.275 $"
   "c++-mode version number.")
 
 (defun c++-version ()
