@@ -73,6 +73,8 @@
     (c-hanging-braces-alist        . ((block-open after)
 				      (brace-list-open)
 				      (substatement-open after)
+				      (inexpr-class-open after)
+				      (inexpr-class-close before)
 				      ))
     (c-hanging-colons-alist        . ((member-init-intro before)
 				      (inher-intro)
