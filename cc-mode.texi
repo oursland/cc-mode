@@ -23,7 +23,6 @@
 
 @comment FIXME: Tune docs for the statement anchor fixes, if necessary.
 @comment FIXME: Document c-report-syntactic-errors.
-@comment FIXME: Document macro indentation and movement.
 @comment FIXME: Look over the performance issues chapter.
 @comment FIXME: Document c-require-final-newline.
 
@@ -328,9 +327,20 @@ at, then it applies user defined offsets to the current line based on
 this analysis.
 
 This section will briefly cover how indentation is calculated in
-@ccmode{}. It is important to understand the indentation model
-being used so that you will know how to customize @ccmode{} for
-your personal coding style.
+@ccmode{}. It is important to understand the indentation model being
+used so that you will know how to customize @ccmode{} for your personal
+coding style.  All the details are in @ref{Customizing Indentation}, and
+later chapters.
+
+@defopt c-syntactic-indentation
+@vindex syntactic-indentation (c-)
+Syntactic analysis for indentation is done when this is non-@code{nil}
+(which is the default).  When it's @code{nil} every line is just
+indented to the same level as the previous one, and @kbd{TAB}
+(@code{c-indent-command}) adjusts the indentation in steps of
+@code{c-basic-offset}.  The indentation style has no effect, nor any of
+the indentation associated variables, e.g. @code{c-special-indent-hook}.
+@end defopt
 
 @menu
 * Syntactic Analysis::
@@ -650,7 +660,7 @@ Auto-newline minor mode is enabled, as evidenced by a @samp{C/a} or
 @cindex literal
 @cindex syntactic whitespace
 The character was not typed inside of a literal @footnote{A
-@dfn{literal} is defined as any comment, string, or C preprocessor macro
+@dfn{literal} is defined as any comment, string, or preprocessor macro
 definition.  These constructs are also known as @dfn{syntactic
 whitespace} since they are usually ignored when scanning C code.}.
 
@@ -877,7 +887,7 @@ definition.  In this case, the variable @code{c-electric-pound-behavior}
 is consulted for the electric behavior.  This variable takes a list
 value, although the only element currently defined is @code{alignleft},
 which tells this command to force the @samp{#} character into column
-zero.  This is useful for entering C preprocessor macro definitions.
+zero.  This is useful for entering preprocessor macro definitions.
 
 @item *
 @kindex *
@@ -1409,7 +1419,7 @@ something like this in your @file{.emacs}:
 @vindex comment-continuation-stars (c-)
 Normally the comment line prefix inserted for a new line inside a
 comment is deduced from other lines in it.  However there's one
-situation when there's no clue about how the prefix should look,
+situation when there's no hint about how the prefix should look,
 namely when a block comment is broken for the first time.  This style
 variable@footnote{In versions before 5.26, this variable was called
 @code{c-comment-continuation-stars}.  As a compatibility measure,
@@ -1550,9 +1560,49 @@ line break.
 @node    Macro Handling, Font Locking, Text Filling and Line Breaking, Top
 @comment node-name, next, previous, up
 @chapter Macro Handling
+@cindex macros
+@cindex preprocessor directives
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@comment FIXME: More about this.
+Preprocessor directives are handled as syntactic whitespace from other
+code, i.e. they can be interspersed anywhere without affecting the
+syntactic analysis, just like comments.
+
+The code inside macro definitions is still analyzed syntactically so
+that you get relative indentation there just as you'd get if the same
+code was outside a macro.  However, since there is no hint about the
+syntactic context, i.e. whether the macro expands to an expression, some
+statements, or perhaps whole functions, the syntactic recognition can be
+wrong.  @ccmode{} manages to figure it out correctly most of the time,
+though.  @xref{Syntactic Symbols}, for details about the indentation.
+
+@defopt c-syntactic-indentation-in-macros
+@vindex syntactic-indentation-in-macros (c-)
+Enable syntactic analysis inside macros, which is the default.  If this
+is @code{nil}, all lines inside macro definitions are analyzed as
+@code{cpp-macro-cont}.
+@end defopt
+
+@ccmode{} provides some tools to help keeping the line continuation
+backslashes in macros neat and tidy:
+
+@table @asis
+@item @kbd{C-c C-\} (@code{c-backslash-region})
+@kindex C-c C-\
+@findex c-backslash-region
+@findex backslash-region (c-)
+This function inserts and aligns or deletes the end-of-line backslashes
+in the current region.
+
+With no prefix argument, it inserts any missing backslashes and aligns
+them according to the @code{c-backslash-column} and
+@code{c-backslash-max-column} variables.  With a prefix argument, it
+deletes any backslashes.
+
+The function does not modify blank lines at the start of the region.  If
+the region ends at the start of a line, it always deletes the backslash
+(if any) at the end of the previous line.
+@end table
 
 @defopt c-backslash-column
 @vindex backslash-column (c-)
@@ -1571,6 +1621,15 @@ lines exceed @code{c-backslash-max-column} then the backslashes in the
 rest of the macro will be kept at that column, so that the too long
 lines ``stick out'' instead.
 @end defopt
+
+The recommended line breaking function, @code{c-context-line-break}
+(@pxref{Text Filling and Line Breaking}), is especially nice if you edit
+multiline macros frequently.  When used inside a macro, it automatically
+inserts and adjusts the mandatory backslash at the end of the line to
+keep the macro together, and it leaves the point at the right
+indentation column for the code.  Thus you can write code inside macros
+almost exactly as you can elsewhere, without having to bother with the
+trailing backslashes.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1599,7 +1658,7 @@ Editor}, for ways to enable font locking in @ccmode{} buffers.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Font Locking Preliminaries, Faces, , Font Locking
 @comment node-name, next, previous, up
-@subsection Font Locking Preliminaries
+@section Font Locking Preliminaries
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The font locking for most of the @ccmode{} languages were provided
@@ -1694,7 +1753,7 @@ recognize types.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Faces, Documentation Comments, Font Locking Preliminaries, Font Locking
 @comment node-name, next, previous, up
-@subsection Faces
+@section Faces
 @cindex faces
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1777,9 +1836,10 @@ or @code{font-lock-reference-face}, in lack of a closer equivalent.
 @vindex c-invalid-face
 @vindex invalid-face (c-)
 Some kinds of syntactic errors are fontified with
-@code{font-lock-warning-face} in Emacs.  In XEmacs there's no
-corresponding standard face, so there a special @code{c-invalid-face} is
-used, which is defined to stand out sharply by default.
+@code{font-lock-warning-face} in Emacs.  In older XEmacs versions
+there's no corresponding standard face, so there a special
+@code{c-invalid-face} is used, which is defined to stand out sharply by
+default.
 
 Note that it's not used for @samp{#error} or @samp{#warning} directives,
 since those aren't syntactic errors in themselves.
@@ -1789,7 +1849,7 @@ since those aren't syntactic errors in themselves.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Documentation Comments, , Faces, Font Locking
 @comment node-name, next, previous, up
-@subsection Documentation Comments
+@section Documentation Comments
 @cindex documentation comments
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -1854,7 +1914,7 @@ it's called and the result is prepended.  For an example, see
 @code{javadoc-font-lock-keywords} in @file{cc-fonts.el}.
 
 If you add support for another doc comment style, please consider
-contributing it; send a message to @email{bug-cc-mode@@gnu.org}.
+contributing it --- send a note to @email{bug-cc-mode@@gnu.org}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1869,8 +1929,8 @@ contributing it; send a message to @email{bug-cc-mode@@gnu.org}.
 * Other Commands::
 @end menu
 
-See also @ref{Text Filling and Line Breaking}, for commands concerning
-that bit.
+See also @ref{Text Filling and Line Breaking} and @ref{Macro Handling},
+for commands concerning those parts.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1922,11 +1982,12 @@ want to indent.
 @kindex C-c C-q
 @findex c-indent-defun
 @findex indent-defun (c-)
-Indents the entire top-level function or class definition encompassing
-point.  It leaves point unchanged.  This function can't be used to
-reindent a nested brace construct, such as a nested class or function,
-or a Java method.  The top-level construct being reindented must be
-complete, i.e. it must have both a beginning brace and an ending brace.
+Indents the entire top-level function, class or macro definition
+encompassing point.  It leaves point unchanged.  This function can't be
+used to reindent a nested brace construct, such as a nested class or
+function, or a Java method.  The top-level construct being reindented
+must be complete, i.e. it must have both a beginning brace and an ending
+brace.
 
 @item @kbd{C-M-\} (@code{indent-region})
 @kindex C-M-\
@@ -2179,7 +2240,7 @@ word.  With prefix argument @var{n}, move @var{n} times.  If
 @section Other Commands
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@ccmode{} contains a few other useful commands:
+Here are the various other commands that didn't fit anywhere else:
 
 @table @asis
 @item @kbd{C-c :} (@code{c-scope-operator})
@@ -2189,23 +2250,6 @@ word.  With prefix argument @var{n}, move @var{n} times.  If
 In C++, it is also sometimes desirable to insert the double-colon scope
 operator without performing the electric behavior of colon insertion.
 @kbd{C-c :} does just this.
-
-@item @kbd{C-c C-\} (@code{c-backslash-region})
-@kindex C-c C-\
-@findex c-backslash-region
-@findex backslash-region (c-)
-This function is handy when editing macros split over several lines by
-ending each line with a backslash.  It inserts and aligns, or deletes
-these end-of-line backslashes in the current region.
-
-With no prefix argument, it inserts any missing backslashes and aligns
-them according to the @code{c-backslash-column} and
-@code{c-backslash-max-column} variables (@pxref{Macro Handling}).
-With a prefix argument, it deletes any backslashes.
-
-The function does not modify blank lines at the start of the region.  If
-the region ends at the start of a line, it always deletes the backslash
-(if any) at the end of the previous line.
 @end table
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3210,9 +3254,9 @@ description.  More detailed descriptions follow.
 
 @table @code
 @item string
-Inside a multi-line string.
+Inside a multiline string.
 @item c
-Inside a multi-line C style block comment.
+Inside a multiline C style block comment.
 @item defun-open
 Brace that opens a top-level function definition.
 @item defun-close
@@ -3312,10 +3356,13 @@ Lines continuing a stream operator (C++ only).
 @item inclass
 The line is nested inside a class definition.
 @item cpp-macro
-The start of a C preprocessor macro definition.
+The start of a preprocessor macro definition.
+@item cpp-define-intro
+The first line inside a multiline preproprocessor macro if
+@code{c-syntactic-indentation-in-macros} is set.
 @item cpp-macro-cont
-@comment FIXME: Update for c-syntactic-indentation-in-macros and cpp-define-intro.
-Subsequent lines of a multi-line C preprocessor macro definition.
+All lines inside multiline preprocessor macros if
+@code{c-syntactic-indentation-in-macros} is @code{nil}.
 @item friend
 A C++ friend declaration.
 @item objc-method-intro
@@ -3790,10 +3837,10 @@ covered are illustrated by this C++ example:
  1: void Bass::play( int volume )
  2: const
  3: @{
- 4:     /* this line starts a multi-line
+ 4:     /* this line starts a multiline
  5:      * comment.  This line should get `c' syntax */
  6: 
- 7:     char* a_multiline_string = "This line starts a multi-line \
+ 7:     char* a_multiline_string = "This line starts a multiline \
  8: string.  This line should get `string' syntax.";
  9: 
 10:   note:
@@ -3862,30 +3909,39 @@ of the code.
 Line 17 is assigned @code{stream-op} syntax.
 @end itemize
 
-@comment FIXME: Update for c-syntactic-indentation-in-macros and cpp-define-intro.
-
-@cindex multi-line macros
+@cindex multiline macros
 @cindex syntactic whitespace
-@ssindex cpp-macro-cont
-Multi-line C preprocessor macros are now (somewhat) supported.  At least
-@ccmode{} now recognizes the fact that it is inside a multi-line macro,
-and it properly skips such macros as syntactic whitespace.  In this
-example:
+@ssindex cpp-define-intro
+Multiline preprocessor macro definitions are normally handled just like
+other code, i.e. the lines inside them are indented according to the
+syntactic analysis of the preceding lines inside the macro.  The first
+line inside a macro definition (i.e. the line after the starting line of
+the cpp directive itself) get @code{cpp-define-intro}.  In this example:
 
 @example
- 1: #define LIST_LOOP(cons, listp)                           \
- 2:   for (cons = listp; !NILP (cons); cons = XCDR (cons))   \
- 3:      if (!CONSP (cons))                                  \
- 4:        signal_error ("Invalid list format", listp);      \
- 5:      else
+ 1: #define LIST_LOOP(cons, listp)                         \
+ 2:   for (cons = listp; !NILP (cons); cons = XCDR (cons)) \
+ 3:     if (!CONSP (cons))                                 \
+ 4:       signal_error ("Invalid list format", listp);     \
+ 5:     else
 @end example
 
 @noindent
-line 1 is given the syntactic symbol @code{cpp-macro}.  This first line
-of a macro is always given this symbol.  The second and subsequent lines 
-(e.g. lines 2 through 5) are given the @code{cpp-macro-cont} syntactic
-symbol, with a relative buffer position pointing to the @code{#} which
-starts the macro definition.
+line 1 is given the syntactic symbol @code{cpp-macro}.  The first line
+of a cpp directive is always given that symbol.  Line 2 is given
+@code{cpp-define-intro}, so that you can give the macro body as a whole
+some extra indentation.  Lines 3 through 5 are then analyzed as normal
+code, i.e. @code{substatement} on lines 3 and 4, and @code{else-clause}
+on line 5.
+
+The syntactic analysis inside macros can be turned off with
+@code{c-syntactic-indentation-in-macros}.  In that case, lines 2 through
+5 would all be given @code{cpp-macro-cont} with a relative buffer
+position pointing to the @code{#} which starts the cpp
+directive@footnote{This is how @ccmode{} 5.28 and earlier analyzed
+macros.}.
+
+@xref{Macro Handling}, for more info about the treatment of macros.
 
 In Objective-C buffers, there are three additional syntactic symbols
 assigned to various message calling constructs.  Here's an example
@@ -4095,7 +4151,7 @@ which makes the function usable in list expressions.
 
 @defun c-indent-multi-line-block
 @findex indent-multi-line-block (c-)
-Indent a multi line block @code{c-basic-offset} extra.  E.g:
+Indent a multiline block @code{c-basic-offset} extra.  E.g:
 
 @example
 @group
@@ -4120,7 +4176,7 @@ int *foo[] = @{
 @end example
 
 The block may be surrounded by any kind of parenthesis characters.
-@code{nil} is returned if the line doesn't start with a multi line
+@code{nil} is returned if the line doesn't start with a multiline
 block, which makes the function usable in list expressions.
 
 @workswith Almost all syntactic symbols, but most useful on the
@@ -4312,7 +4368,7 @@ r = proc->add(17)->add(18)
 @end group
 @end example
 
-In any other situation nil is returned to allow use in list
+In any other situation @code{nil} is returned to allow use in list
 expressions.
 
 @workswith @code{topmost-intro-cont}, @code{statement-cont},
@@ -4385,13 +4441,99 @@ is equivalent to @code{(@r{@var{value}} . -1000)}.
 
 @comment ------------------------------------------------------------
 
+@defun c-lineup-cpp-define
+@findex lineup-cpp-define (c-)
+Line up macro continuation lines according to the indentation of the
+construct preceding the macro.  E.g:
+
+@example
+@group
+const char msg[] =    @hereFn{@r{The beginning of the preceding construct.}}
+  \"Some text.\";
+
+#define X(A, B)  \
+do @{             \    @hereFn{c-lineup-cpp-define}
+  printf (A, B); \
+@} while (0)
+@end group
+@end example
+
+@noindent
+and:
+
+@example
+@group
+int dribble() @{
+  if (!running)       @hereFn{@r{The beginning of the preceding construct.}}
+    error(\"Not running!\");
+
+#define X(A, B)    \
+  do @{             \  @hereFn{c-lineup-cpp-define}
+    printf (A, B); \
+  @} while (0)
+@end group
+@end example
+
+If @code{c-syntactic-indentation-in-macros} is non-@code{nil}, the
+function returns the relative indentation to the macro start line to
+allow accumulation with other offsets.  E.g. in the following cases,
+@code{cpp-define-intro} is combined with the
+@code{statement-block-intro} that comes from the @samp{do @{} that hangs
+on the @samp{#define} line:
+
+@example
+@group
+const char msg[] =
+  \"Some text.\";
+
+#define X(A, B) do @{ \
+  printf (A, B);     \  @hereFn{c-lineup-cpp-define}
+  this->refs++;      \
+@} while (0)             @hereFn{c-lineup-cpp-define}
+@end group
+@end example
+
+@noindent
+and:
+
+@example
+@group
+int dribble() @{
+  if (!running)
+    error(\"Not running!\");
+
+#define X(A, B) do @{ \
+    printf (A, B);   \  @hereFn{c-lineup-cpp-define}
+    this->refs++;    \
+  @} while (0)           @hereFn{c-lineup-cpp-define}
+@end group
+@end example
+
+The relative indentation returned by @code{c-lineup-cpp-define} is zero
+and two, respectively, on the two lines in each of these examples.  They
+are then added to the two column indentation that
+@code{statement-block-intro} gives in both cases here.
+
+If the relative indentation is zero, then @code{nil} is returned
+instead.  That is useful in a list expression to specify the default
+indentation on the top level.
+
+If @code{c-syntactic-indentation-in-macros} is @code{nil} then this
+function keeps the current indentation, except for empty lines (ignoring
+the ending backslash) where it takes the indentation from the closest
+preceding nonempty line in the macro.  If there's no such line in the
+macro then the indentation is taken from the construct preceding it, as
+described above.
+
+@workswith @code{cpp-define-intro}.
+@end defun
+
+@comment ------------------------------------------------------------
+
 @defun c-lineup-dont-change
 @findex lineup-dont-change (c-)
 This lineup function makes the line stay at whatever indentation it
-already has; think of it as an identity function for lineups.  It is
-used for @code{cpp-macro-cont} lines.
-
-@comment FIXME: Update for c-syntactic-indentation-in-macros.
+already has; think of it as an identity function for lineups.
 
 @workswith Any syntactic symbol.
 @end defun
@@ -4528,15 +4670,11 @@ int main()
 @end group
 @end example
 
-Return nil if called in any other situation, to be useful in list
+Return @code{nil} if called in any other situation, to be useful in list
 expressions.
 
 @workswith @code{comment-intro}.
 @end defun
-
-@comment ------------------------------------------------------------
-
-@comment FIXME: Add c-lineup-cpp-define
 
 @comment ------------------------------------------------------------
 
@@ -4856,9 +4994,9 @@ effect in Emacs since the necessary built-in functions don't exist (in
 Emacs 21.3 as of this writing in May 2003).
 
 You will probably notice pathological behavior from @ccmode{} when
-working in files containing large amounts of C preprocessor macros.
-This is because Emacs cannot skip backwards over these lines as quickly
-as it can comments.
+working in files containing large amounts of preprocessor macros.  This
+is because Emacs cannot skip backwards over these lines as quickly as it
+can comments.
 
 @vindex c-recognize-knr-p
 @vindex recognize-knr-p (c-)
