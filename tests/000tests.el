@@ -194,6 +194,7 @@
     "bos-1.cc"
     "bos-2.cc"
     "bos-3.cc"
+    "bos-4.c"
     "bracelist-1.java"
     "bracelist-2.pike"
     "bracelist-3.cc"
