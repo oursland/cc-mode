@@ -391,15 +391,14 @@ This hook is only run once per Emacs session and can be used as a
   :type 'hook
   :group 'c)
 
-(defcustom c-enable-xemacs-performance-kludge-p t
+(defcustom c-enable-xemacs-performance-kludge-p nil
   "*Enables a XEmacs only hack that may improve speed for some coding styles.
 For styles that hang top-level opening braces (as is common with JDK
 Java coding styles) this can improve performance between 3 and 60
 times for core indentation functions (e.g. `c-parse-state').  For
 styles that conform to the Emacs recommendation of putting these
-braces in column zero, this may slightly degrade performance in some
-situations, but only by a few percentage points.  This variable only
-has effect in XEmacs.")
+braces in column zero, this can degrade performance about as much.
+This variable only has effect in XEmacs.")
 
 
 ;; Non-customizable variables, still part of the interface to CC Mode
