@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.264 $
-;; Last Modified:   $Date: 1993-01-21 23:08:10 $
+;; Version:         $Revision: 2.265 $
+;; Last Modified:   $Date: 1993-01-21 23:35:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-01-21 23:08:10 $|$Revision: 2.264 $|
+;; |$Date: 1993-01-21 23:35:00 $|$Revision: 2.265 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.264 $
+  "Major mode for editing C++ code.  $Revision: 2.265 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.264 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.265 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1229,7 +1229,10 @@ of the expression are preserved."
 		;; Line is on an existing nesting level.
 		;; Lines inside parens are handled specially.
 		(if (or (/= (char-after (car contain-stack)) ?{)
-			(c++-at-top-level-p t))
+			;;(c++-at-top-level-p t))
+			;; baw hack for continued statement offsets
+			;; repercussions???
+			t)
 		    (setq this-indent (car indent-stack))
 		  ;; Line is at statement level.
 		  ;; Is it a new statement?  Is it an else?
@@ -1287,6 +1290,13 @@ of the expression are preserved."
 	    ;; check for stream operator
 	    (if (looking-at "\\(<<\\|>>\\)")
 		(setq this-indent (c++-calculate-indent)))
+	    ;; check for continued statements
+	    (if (save-excursion
+		  (c++-backward-syntactic-ws (car contain-stack))
+		  (not (memq (preceding-char)
+			     '(nil ?\000 ?\, ?\; ?\} ?\: ?\{))))
+		(setq this-indent (+ this-indent c-continued-statement-offset))
+	      )
 	    ;; Put chosen indentation into effect.
 	    (or (= (current-column) this-indent)
 		(= (following-char) ?\#)
@@ -2422,7 +2432,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.264 $"
+(defconst c++-version "$Revision: 2.265 $"
   "c++-mode version number.")
 
 (defun c++-version ()
