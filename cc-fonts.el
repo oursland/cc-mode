@@ -596,58 +596,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 						font-lock-reference-face))
 		      (goto-char (match-end 1)))))))))
 
-      ,@(when (c-major-mode-is 'pike-mode)
-	  `(;; Constant declarations in Pike lacks a type, so special
-	    ;; treatment is necessary before the normal declaration
-	    ;; fontification is done.
-	    (,(concat "\\<constant\\>"
-		      (c-lang-const c-syntactic-ws)
-		      "\\(" (c-lang-const c-symbol-key) "\\)"
-		      (c-lang-const c-syntactic-ws)
-		      "=")
-	     ,(+ (c-lang-const c-syntactic-ws-depth)
-		 1)
-	     font-lock-variable-name-face)
-
-	    ;; Handle the identifier after "inherit" as a type.
-	    ,(let ((identifier-offset
-		    (1+ (c-lang-const c-syntactic-ws-depth))))
-	       `(,(byte-compile
-		   `(lambda (limit)
-		      (when (re-search-forward
-			     ,(concat "\\<inherit\\>"
-				      (c-lang-const c-syntactic-ws)
-				      "\\(" ; identifier-offset
-				      (c-lang-const c-identifier-key)
-				      "\\)")
-			     limit t)
-			;; Register the type.
-			(save-match-data
-			  (c-add-type (match-beginning ,identifier-offset)
-				      (match-end ,identifier-offset)))
-			t)))
-		 ,@(mapcar
-		    (lambda (submatch)
-		      `(,(+ identifier-offset submatch)
-			font-lock-type-face nil t))
-		    (c-lang-const c-identifier-last-sym-match))))
-	    ))
-
+      ;; Fontify class names in the beginning of message expressions
+      ;; in Objective-C.
       ,@(when (c-major-mode-is 'objc-mode)
-	  `(;; Fontify class names in the beginning of message expressions.
-	    ,(c-make-font-lock-search-function
+	  `(,(c-make-font-lock-search-function
 	      "\\["
 	      '((c-fontify-types-and-refs ()
-		  (c-forward-syntactic-ws limit)
-		  (c-forward-type)
-		  (if (> (point) limit) (goto-char limit)))))
-
-	    ;; Fontify the class name in "@defs(Foo)".
-	    ,(c-make-font-lock-search-function
-	      (concat "\\<@defs\\>"
-		      (c-lang-const c-syntactic-ws)
-		      "(")
-	      '((c-fontify-types-and-refs ((c-promote-possible-types t))
 		  (c-forward-syntactic-ws limit)
 		  (c-forward-type)
 		  (if (> (point) limit) (goto-char limit)))))))
@@ -839,6 +793,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	   type-end (if prev-at-type
 			prev-type-end
 		      start-pos)
+	   start type-end
 	   prev-at-type nil
 	   got-parens nil
 	   got-identifier t
@@ -888,6 +843,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; Set if we've found a "typedef" specifier.  The identifiers in the
 	  ;; declaration are then fontified as types.
 	  at-typedef
+	  ;; Set if we've found a specifier that can start a declaration where
+	  ;; there's no type.
+	  maybe-typeless
 	  ;; The position of the next token after the closing paren of the
 	  ;; last fontified cast.
 	  last-cast-end
@@ -959,6 +917,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	   (setq at-type nil
 		 at-decl-or-cast nil
 		 at-typedef nil
+		 maybe-typeless nil
 		 c-record-type-identifiers t
 		 c-record-ref-identifiers nil
 		 ;; `start-pos' is used below to point to the start of the
@@ -1024,23 +983,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   ;; `at-decl-or-cast' here to avoid flashing types
 			   ;; prematurely in declarations as they're being
 			   ;; written.
-			   (setq start (match-end 1))
-			   (when (looking-at c-typedef-specifier-key)
-			     (setq at-typedef t))
-
-			   (if (and (looking-at c-<>-arglist-key)
-				    (progn
-				      (goto-char start)
-				      (c-forward-syntactic-ws)
-				      (setq start (point)) ; Optimize a little.
-				      (eq (char-after) ?<)))
-			       ;; Handle keywords followed by angle bracket
-			       ;; arglists, typically template prefixes in C++.
-			       (progn
-				 (unless (c-forward-<>-arglist)
-				   (throw 'false-alarm t))
-				 (c-forward-syntactic-ws))
-			     (goto-char start))
+			   (save-match-data
+			     (when (looking-at c-typedef-decl-key)
+			       (setq at-typedef t))
+			     (when (looking-at c-typeless-decl-key)
+			       (setq maybe-typeless t)))
+			   (c-forward-keyword-clause)
 			   (setq start-pos (point)))))
 
 	     (c-forward-syntactic-ws))
@@ -1156,8 +1104,9 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			      ;;
 			      ;; Do this even if there's no preceding type, to
 			      ;; cope with old style function declarations in
-			      ;; K&R C and (con|de)structors in C++.  That
-			      ;; isn't applicable in an arglist context,
+			      ;; K&R C, (con|de)structors in C++ and
+			      ;; `c-typeless-decl-kwds' style declarations.
+			      ;; That isn't applicable in an arglist context,
 			      ;; though.
 			      (when (and (= paren-depth 1)
 					 (not got-prefix)
@@ -1170,6 +1119,16 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				(goto-char pos)
 				t))
 		       (c-forward-syntactic-ws))
+
+		     (when (and maybe-typeless
+				(not got-identifier)
+				(not got-prefix)
+				at-type
+				(not (eq at-type t)))
+		       ;; Have found no identifier but `c-typeless-decl-key'
+		       ;; has matched so we know we're inside a declaration.
+		       ;; The preceding type must be the identifier instead.
+		       (c-fl-shift-type-backward))
 
 		     ;; Now we've collected info about various characteristics
 		     ;; of the construct we're looking at.  Below follows a
@@ -1532,6 +1491,18 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		     (goto-char (match-end 2))
 		     (c-forward-syntactic-ws))
 		   (goto-char (match-end 2))))))))
+
+      ;; Fontify special declarations that lacks a type.
+      ,@(when (c-lang-const c-typeless-decl-kwds)
+	  `((,(c-make-font-lock-search-function
+	       (concat "\\<"
+		       (c-regexp-opt (c-lang-const c-typeless-decl-kwds) t)
+		       "\\>")
+	       '((c-font-lock-declarators limit t nil)
+		 (save-match-data
+		   (goto-char (match-end 1))
+		   (c-forward-syntactic-ws))
+		 (goto-char (match-end 1)))))))
       ))
 
 (c-lang-defconst c-complex-decl-matchers
@@ -1556,7 +1527,8 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ;; a type keyword is accidentally used as an identifier.
 
       ;; Fontify basic types.
-      ,(let ((re (c-make-keywords-re nil (c-lang-const c-type-kwds))))
+      ,(let ((re (c-make-keywords-re nil
+		   (c-lang-const c-primitive-type-kwds))))
 	 (if (c-major-mode-is 'pike-mode)
 	     ;; No symbol is a keyword after "->" in Pike.
 	     `(,(concat "\\(\\=\\|\\(\\=\\|[^-]\\)[^>]\\)"
@@ -1781,34 +1753,34 @@ higher."
 	    ;; Fontify normal labels.
 	    c-font-lock-labels))
 
-      ;; Fontify the list of exceptions after Java style "throws" etc.
-      ,@(when (c-lang-const c-decl-spec-kwds)
+      ;; Fontify type lists after Java style "throws" etc.
+      ,@(when (c-lang-const c-type-list-kwds)
 	  `((,(c-make-font-lock-search-function
 	       (concat
-		"\\<\\("
-		(c-make-keywords-re nil (c-lang-const c-decl-spec-kwds))
-		"\\)\\>")
+		"\\<"
+		(c-regexp-opt (c-lang-const c-type-list-kwds) t)
+		"\\>")
 	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
 
-      ,@(when (c-major-mode-is 'c++-mode)
-	  `(;; Fontify class inherit lists in C++.
-	    (,(c-make-font-lock-search-function
+      ;; Fontify type lists in C++ style inherits.
+      ,@(when (c-lang-const c-colon-type-list-kwds)
+	  `((,(c-make-font-lock-search-function
 	       (concat
-		"\\<\\("
-		(c-make-keywords-re nil (c-lang-const c-class-kwds))
-		"\\)\\>"
-		;; Disallow various common punctuation chars that can't come
-		;; before the ':' that starts the inherit list, to avoid
-		;; searching too far.
-		"[^\]\[{}();,/#=:]*"
-		":")
-	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))
+		"\\<"
+		(c-regexp-opt (c-lang-const c-colon-type-list-kwds) t)
+		"\\>"
+		(c-lang-const c-colon-type-list-re))
+	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
 
-	    ;; Fontify throw specifications.
-	    (,(c-make-font-lock-search-function
-	       (concat "\\<throw\\>"
-		       (c-lang-const c-syntactic-ws)
-		       "(")
+      ;; Fontify type lists in C++ style throw specifications.
+      ,@(when (c-lang-const c-paren-type-kwds)
+	  `((,(c-make-font-lock-search-function
+	       (concat
+		"\\<"
+		(c-regexp-opt (c-lang-const c-paren-type-kwds) t)
+		"\\>"
+		(c-lang-const c-syntactic-ws)
+		"(")
 	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
       ))
 
@@ -1882,8 +1854,8 @@ need for `c-font-lock-extra-types'.")
 
 (defun c-font-lock-c++-new (limit)
   ;; Assuming point is after a "new" word, check that it isn't inside
-  ;; a string or comment, and if so fontify the type in the allocation
-  ;; expression.  Nil is always returned.
+  ;; a string or comment, and if so try to fontify the type in the
+  ;; allocation expression.  Nil is always returned.
   ;;
   ;; As usual, C++ takes the prize in coming up with a hard to parse
   ;; syntax. :P
@@ -2069,7 +2041,6 @@ need for `c++-font-lock-extra-types'.")
 
   (c-fontify-types-and-refs
       ((first t)
-       (pos (match-end 1))
        (c-promote-possible-types t))
 
     (while (and
