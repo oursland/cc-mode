@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-20 14:37:51 $
-;; Version:         $Revision: 2.61 $
+;; Last Modified:   $Date: 1992-05-20 15:37:00 $
+;; Version:         $Revision: 2.62 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-20 14:37:51 $|$Revision: 2.61 $|
+;; |$Date: 1992-05-20 15:37:00 $|$Revision: 2.62 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -180,19 +180,23 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
 
-(defvar c++-tame-comments-p t
+(defvar c++-untame-characters '(?\( ?\) ?\' ?\{ ?\} ?\[ ?\])
   "*Utilize a backslashing workaround of an emacs scan-lists bug.
-If non-nil, any of the following characters typed in a comment region
-will be prepended with a backslash: ' ( ) { } [ ]
+If non-nil, this variable should contain a list of characters which
+will be prepended by a backslash in comment regions.  By default, the
+list contains all characters which can potentially cause problems if
+they exist unbalanced within comments.
 
 Setting this variable to nil will defeat this feature, but be
 forewarned!  Un-escaped characters in comment regions will break many
 things such as some indenting and blinking of parenthesis.
 
-See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
+Note further that only the default set of characters can be
+automatically escaped when typed in, but entering
+\\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.61 $
+  "Major mode for editing C++ code.  $Revision: 2.62 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -284,10 +288,11 @@ from their c-mode cousins.
     Address to send bug report via email.
  c++-default-macroize-column
     Column to insert backslashes when macroizing a region.
- c++-tame-comments-p
+ c++-untame-characters
     When non-nil, inserts backslash escapes before certain untamed
     characters in comment regions. It is recommended that you keep the
-    default setting to workaround a nasty emacs bug.
+    default setting to workaround a nasty emacs bug.  Otherwise, this
+    variable contains a list of characters to escape.
 
 Auto-newlining is no longer an all or nothing proposition. To be
 specific I don't believe it is possible to implement a perfect
@@ -463,9 +468,9 @@ string or parenthesis syntax must be escaped with a backslash or lots
 of things get messed up. Unfortunately, setting
 parse-sexp-ignore-comments to non-nil does not fix the problem.
 
-To turn this feature off, set c++-tame-comments-p to nil."
+See also the variable c++-untame-characters."
   (interactive "p")
-  (if (and c++-tame-comments-p
+  (if (and (memq last-command-char c++-untame-characters)
 	   (c++-in-comment-p))
       (insert "\\"))
   (self-insert-command arg))
@@ -515,7 +520,7 @@ backward-delete-char-untabify."
 		     (c++-indent-line))
 		   t)))
 	(progn
-	  (if (and c++-tame-comments-p
+	  (if (and (memq last-command-char c++-untame-characters)
 		   (c++-in-comment-p))
 	      (insert "\\"))
 	  (insert last-command-char)
@@ -1371,16 +1376,29 @@ line."
 ;;; comment regions
 
 (defun c++-tame-comments ()
-  "Backslashifies all single quotes in comment regions found in the buffer.
+  "Backslashifies all untamed in comment regions found in the buffer.
 This is the best available workaround for an emacs syntax bug in
-scan-lists which exists at least as recently as v18.58"
+scan-lists which exists at least as recently as v18.58.  Untamed
+characters to escape are defined in the variable c++-untame-characters."
   (interactive)
-  (save-excursion
-    (beginning-of-buffer)
-    (while (re-search-forward "[^\\][][{}()']" (point-max) 'move)
-      (if (c++-in-comment-p)
-	  (progn (forward-char -1)
-		 (insert "\\"))))))
+  ;; make the list into a valid charset, escaping where necessary
+  (let ((charset (concat "^" (mapconcat
+			      (function
+			       (lambda (char)
+				 (if (memq char '(?\\ ?^ ?-))
+				     (concat "\\" (char-to-string char))
+				   (char-to-string char))))
+			      c++-untame-characters ""))))
+    (save-excursion
+      (beginning-of-buffer)
+      (while (not (eobp))
+	(skip-chars-forward charset)
+	(if (and (not (zerop (following-char)))
+		 (c++-in-comment-p)
+		 (/= (preceding-char) ?\\ ))
+	    (insert "\\"))
+	(if (not (eobp))
+	    (forward-char 1))))))
 
 
 ;;; This page covers "macroization;" making C++ parameterized types
@@ -1615,7 +1633,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.61 $"
+(defconst c++-version "$Revision: 2.62 $"
   "c++-mode version number.")
 
 (defun c++-version ()
@@ -1646,7 +1664,7 @@ Use \\[c++-submit-bug-report] to submit a bug report."
 		       'c++-match-header-strongly
 		       'c++-defun-header-strong-struct-equivs
 		       'c++-tab-always-indent
-		       'c++-tame-comments-p
+		       'c++-untame-characters
 		       'c-indent-level
 		       'c-continued-statement-offset
 		       'c-continued-brace-offset
