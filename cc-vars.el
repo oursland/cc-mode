@@ -571,7 +571,7 @@ want to set `c-style-variables-are-local-p'."
        ;; Relpos: Boi at the topmost intro line.
        (member-init-intro     . +)
        ;; Relpos: Boi at the func decl arglist open.
-       (member-init-cont      . 0)
+       (member-init-cont      . c-lineup-multi-inher)
        ;; Relpos: Beg of the first member init.
        (inher-intro           . +)
        ;; Relpos: Java: Boi at the class decl start.  Otherwise: Boi
@@ -660,7 +660,7 @@ want to set `c-style-variables-are-local-p'."
        ;; Relpos: At the class open brace if it's at boi, otherwise
        ;; boi at the class decl start.
        (cpp-macro             . -1000)
-       ;; Relpos: Boi.
+       ;; Relpos: None.
        (cpp-macro-cont        . c-lineup-dont-change)
        ;; Relpos: At the macro start (always at boi).
        (friend                . 0)
