@@ -9,10 +9,6 @@
 
 @setfilename  cc-mode.info
 @settitle     CC Mode Version 5 Documentation
-@dircategory Editors
-@direntry
-@CC Mode: (cc-mode).
-@end direntry
 @footnotestyle end
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -44,7 +40,7 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ifinfo
-Copyright @copyright{} 1995-1999 Free Software Foundation, Inc.
+Copyright @copyright{} 1995-2000 Free Software Foundation, Inc.
 @end ifinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -63,6 +59,7 @@ Copyright @copyright{} 1995-1999 Free Software Foundation, Inc.
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C and C-like languages}
 @sp 2
+@center Current maintainer:
 @center Martin Stjernholm
 
 
@@ -73,7 +70,7 @@ Copyright @copyright{} 1995-1999 Free Software Foundation, Inc.
 
 @page
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1995-1999 Free Software Foundation, Inc.
+Copyright @copyright{} 1995-2000 Free Software Foundation, Inc.
 @end titlepage
 
 
