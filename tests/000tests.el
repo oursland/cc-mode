@@ -526,6 +526,11 @@ to be set as a file local variable.")
 	(facefile (concat (file-name-sans-extension filename) ".face"))
 	exp-syntax-buf res-syntax-buf exp-faces-buf res-faces-buf)
 
+    ;; Old emacsen displays eight bit chars as octal escapes, which
+    ;; makes (current-column) misbehave in `cc-test-record-faces'.
+    (when (= emacs-major-version 19)
+      (standard-display-european 1))
+
     ;; Setup the test file buffer.
     (set-buffer testbuf)
     (kill-all-local-variables)
@@ -619,7 +624,8 @@ to be set as a file local variable.")
 	     error-found-p
 	     expectedindent
 	     c-echo-syntactic-information-p
-	     font-lock-verbose)
+	     font-lock-verbose
+	     last-result)
 
 	;; This shouldn't happen if CC Mode is byte compiled properly.
 	(when (and (featurep 'cc-langs)
@@ -714,7 +720,7 @@ to be set as a file local variable.")
 
 	    (catch 'break-loop
 	      (while (not (eobp))
-		(let* (result expected regression-comment indent-err)
+		(let (result expected regression-comment indent-err)
 
 		  (flet ((regression-msg (msg &rest args)
 			  (unless ignore-errs
@@ -794,23 +800,38 @@ to be set as a file local variable.")
 			;; Don't report fontification errors if there already
 			;; are indentation errors on this line.
 			(unless indent-err
-			  (while (progn
-				   (set-buffer res-faces-buf)
-				   (skip-chars-forward " \t")
-				   (setq result (and (not (eolp))
-						     (read res-faces-buf)))
-				   (set-buffer exp-faces-buf)
-				   (skip-chars-forward " \t")
-				   (setq expected (and (not (eolp))
-						       (read exp-faces-buf)))
-				   (when expected
-				     (setcdr expected
+			  (while
+			      (progn
+				(set-buffer res-faces-buf)
+				(skip-chars-forward " \t")
+				(setq result (and (not (eolp))
+						  (read res-faces-buf)))
+				(set-buffer exp-faces-buf)
+				;; If face aliasing is done we might
+				;; have entries in the expected buffer
+				;; where a face is changed to itself,
+				;; so we got to check and ignore that.
+				(while (progn
+					 (skip-chars-forward " \t")
+					 (setq expected
+					       (and (not (eolp))
+						    (read exp-faces-buf)))
+					 (when expected
+					   (setcdr
+					    expected
+					    (delete-duplicates
 					     (mapcar
 					      (lambda (face)
 						(get face 'cc-test-face-alias))
-					      (cdr expected))))
-				   (and (or result expected)
-					(equal result expected))))
+					      (cdr expected)))))
+					 (and last-result
+					      expected
+					      (equal (cdr last-result)
+						     (cdr expected)))))
+				(prog1 (and (or result expected)
+					    (equal result expected))
+				  (when result
+				    (setq last-result result)))))
 
 			  (cond
 			   ((not (or result expected)))
