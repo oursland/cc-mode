@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.311 $
-;; Last Modified:   $Date: 1994-04-15 22:52:51 $
+;; Version:         $Revision: 3.312 $
+;; Last Modified:   $Date: 1994-04-15 22:58:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-15 22:52:51 $|$Revision: 3.311 $|
+;; |$Date: 1994-04-15 22:58:45 $|$Revision: 3.312 $|
 
 ;;; Code:
 
@@ -790,7 +790,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.311 $
+cc-mode Revision: $Revision: 3.312 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -821,7 +821,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.311 $
+cc-mode Revision: $Revision: 3.312 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3271,16 +3271,20 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-lineup-math (langelem)
   ;; line up math statement-cont after the equals
   (save-excursion
-    (let ((curcol (progn
+    (let ((equalp (= (char-after (c-point 'boi)) ?=))
+	  (curcol (progn
 		    (goto-char (cdr langelem))
 		    (current-column))))
       (skip-chars-forward "^=" (c-point 'eol))
       (if (/= (following-char) ?=)
 	  ;; there's no equal sign on the line
 	  c-basic-offset
-	;; calculate indentation column after equals and ws
-	(forward-char 1)
-	(skip-chars-forward " \t")
+	;; calculate indentation column after equals and ws, unless
+	;; our line starts with an equal sign
+	(if (not equalp)
+	    (progn
+	      (forward-char 1)
+	      (skip-chars-forward " \t")))
 	(- (current-column) curcol))
       )))
 
@@ -3414,7 +3418,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.311 $"
+(defconst c-version "$Revision: 3.312 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
