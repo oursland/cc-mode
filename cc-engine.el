@@ -840,7 +840,7 @@ This function does not do any hidden buffer changes."
   (remove-text-properties beg end '(c-in-sws nil c-is-sws nil)))
 
 (defmacro c-debug-sws-msg (&rest args)
-  ;`(message ,@args)
+  ;;`(message ,@args)
   )
 
 (defun c-forward-sws ()
@@ -1036,6 +1036,7 @@ This function does not do any hidden buffer changes."
       ;; Try to find a rung position in the simple ws preceding point, so that
       ;; we can get a cache hit even if the last bit of the simple ws has
       ;; changed recently.
+      (setq simple-ws-beg (point))
       (skip-chars-backward " \t\n\r\f\v")
       (if (setq rung-is-marked (text-property-any
 				(point) (min (1+ rung-pos) (point-max))
@@ -1045,7 +1046,7 @@ This function does not do any hidden buffer changes."
 	  ;; It's not worth the effort to fix that; the last part of the
 	  ;; simple ws is also typically edited often, so it could be wasted.
 	  (setq rung-pos rung-is-marked)
-	(goto-char rung-pos))
+	(goto-char simple-ws-beg))
 
       (while
 	  (progn
@@ -1069,12 +1070,16 @@ This function does not do any hidden buffer changes."
 		   (point) rung-pos (point-min))
 
 		  (setq rung-pos (point))
-		  (if (and (< (skip-chars-backward " \t\n\r\f\v") 0)
+		  (if (and (< (min (skip-chars-backward " \t\f\v")
+				   (progn
+				     (setq simple-ws-beg (point))
+				     (skip-chars-backward " \t\n\r\f\v")))
+			      0)
 			   (setq rung-is-marked
 				 (text-property-any (point) rung-pos
 						    'c-is-sws t)))
 		      t
-		    (goto-char rung-pos)
+		    (goto-char simple-ws-beg)
 		    nil))
 
 	      ;; We'll loop here if there is simple ws before the first rung.
@@ -1090,7 +1095,6 @@ This function does not do any hidden buffer changes."
 				   '(c-is-sws t c-in-sws t))
 	      (setq rung-pos rung-is-marked))
 
-	    (setq simple-ws-beg (point))
 	    (c-backward-comments)
 	    (setq cmt-skip-pos (point))
 
@@ -1157,6 +1161,7 @@ This function does not do any hidden buffer changes."
 	;; We've searched over a piece of non-white syntactic ws.  See if this
 	;; can be cached.
 	(setq next-rung-pos (point))
+	(skip-chars-backward " \t\f\v")
 
 	(if (or
 	     ;; Cache if we started either from a marked rung or from a
@@ -1173,7 +1178,7 @@ This function does not do any hidden buffer changes."
 	    (progn
 	      (c-debug-sws-msg
 	       "c-backward-sws caching [%s..%s] - [%s..%s] (min %s)"
-	       next-rung-pos (1+ next-rung-pos)
+	       (point) (1+ next-rung-pos)
 	       simple-ws-beg (min (1+ rung-pos) (point-max))
 	       (point-min))
 
@@ -1182,24 +1187,25 @@ This function does not do any hidden buffer changes."
 	      (remove-text-properties (1+ next-rung-pos)
 				      simple-ws-beg
 				      '(c-is-sws nil))
-	      (unless (and rung-is-marked (= rung-pos simple-ws-beg))
+	      (unless (and rung-is-marked (= simple-ws-beg rung-pos))
 		(put-text-property simple-ws-beg
 				   (min (1+ rung-pos) (point-max))
 				   'c-is-sws t)
 		(setq rung-is-marked t))
-	      (put-text-property next-rung-pos
+	      (put-text-property (setq simple-ws-beg (point))
 				 rung-pos
 				 'c-in-sws t)
-	      (put-text-property (setq rung-pos next-rung-pos)
-				 (1+ rung-pos)
+	      (put-text-property (setq rung-pos simple-ws-beg)
+				 (1+ next-rung-pos)
 				 'c-is-sws t))
 
 	  (c-debug-sws-msg
 	   "c-backward-sws not caching [%s..%s] - [%s..%s] (min %s)"
-	   next-rung-pos (1+ next-rung-pos)
+	   (point) (1+ next-rung-pos)
 	   simple-ws-beg (min (1+ rung-pos) (point-max))
 	   (point-min))
-	  (setq rung-pos next-rung-pos)
+	  (setq rung-pos next-rung-pos
+		simple-ws-beg (point))
 	  )))))
 
 
