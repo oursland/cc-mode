@@ -29,9 +29,7 @@
 
 
 (eval-when-compile
-  ;; When compiling via Makefile
-  (setq load-path (cons "." load-path))
-  (require 'cc-engine))
+  (load-file "./cc-engine.el"))
 
 ;; Standard indentation line-ups
 (defun c-lineup-arglist (langelem)
