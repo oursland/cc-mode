@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.304 $
-;; Last Modified:   $Date: 1994-03-31 15:10:09 $
+;; Version:         $Revision: 3.305 $
+;; Last Modified:   $Date: 1994-04-07 14:34:28 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-31 15:10:09 $|$Revision: 3.304 $|
+;; |$Date: 1994-04-07 14:34:28 $|$Revision: 3.305 $|
 
 ;;; Code:
 
@@ -172,7 +172,7 @@ more information.")
   "*Association list of syntactic element symbols and indentation offsets.
 As described below, each cons cell in this list has the form:
 
-    (SYNTACTIC-ELEMENT . OFFSET)
+    (SYNTACTIC-SYMBOL . OFFSET)
 
 When a line is indented, cc-mode first determines the syntactic
 context of the line by generating a list of symbols called syntactic
@@ -187,7 +187,7 @@ them.
 After the syntactic context list for a line is generated, cc-mode
 calculates the absolute indentation for the line by looking at each
 syntactic element in the list.  First, it compares the syntactic
-element against the SYNTACTIC-ELEMENT's in `c-offsets-alist'.  When it
+element against the SYNTACTIC-SYMBOL's in `c-offsets-alist'.  When it
 finds a match, it adds the OFFSET to the column of the relative indent
 point.  The sum of this calculation for each element in the syntactic
 list is the absolute offset for line being indented.
@@ -324,26 +324,28 @@ Valid symbols are:
 			when the second colon is typed.")
 
 (defvar c-hanging-braces-alist '((brace-list-open))
-  "*Controls the insertion of newlines before and after open braces.
+  "*Controls the insertion of newlines before and after braces.
 This variable contains an association list with elements of the
-following form: (SYNTACTIC-ELEMENT . (NL-LIST)).
+following form: (SYNTACTIC-SYMBOL . (NL-LIST)).
 
-SYNTACTIC-ELEMENT can be any of: defun-open, class-open, inline-open,
-block-open, or brace-list-open. See `c-offsets-alist' for details.
+SYNTACTIC-SYMBOL can be any of: defun-open, defun-cloase, class-open,
+class-close, inline-open, inline-close, block-open, block-close,
+brace-list-open, or brace-list-close. See `c-offsets-alist' for
+details.
 
 NL-LIST can contain any combination of the symbols `before' or
-`after'. It also be nil.  When an open brace is inserted, the
-syntactic context it defines is looked up in this list, and if found, the
-NL-LIST is used to determine where newlines are inserted.  If the
-language element for this brace is not found in this list, the default
-behavior is to insert a newline both before and after the brace.")
+`after'. It also be nil.  When a brace is inserted, the syntactic
+context it defines is looked up in this list, and if found, the
+NL-LIST is used to determine where newlines are inserted.  If not
+found, the default is to insert a newline both before and after
+braces.")
 
 (defvar c-hanging-colons-alist nil
   "*Controls the insertion of newlines before and after certain colons.
 This variable contains an association list with elements of the
-following form: (SYNTACTIC-ELEMENT . (NL-LIST)).
+following form: (SYNTACTIC-SYMBOL . (NL-LIST)).
 
-SYNTACTIC-ELEMENT can be any of: member-init-intro, inher-intro,
+SYNTACTIC-SYMBOL can be any of: member-init-intro, inher-intro,
 case-label, label, and access-label. See `c-offsets-alist' for
 details.
 
@@ -441,7 +443,7 @@ value for that variable when using the selected style.
 There is one special case when VARIABLE is `c-offsets-alist'.  In this
 case, the VALUE is a list containing elements of the form:
 
-  (SYNTACTIC-ELEMENT . VALUE)
+  (SYNTACTIC-SYMBOL . VALUE)
 
 as described in `c-offsets-alist'.  These are passed directly to
 `c-set-offset' so there is no need to set every syntactic symbol in
@@ -788,7 +790,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.304 $
+cc-mode Revision: $Revision: 3.305 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -819,7 +821,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.304 $
+cc-mode Revision: $Revision: 3.305 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1125,7 +1127,7 @@ point is inside a literal, nothing special happens."
 
 If the auto-newline feature is turned on, as evidenced by the \"/a\"
 or \"/ah\" string on the mode line, newlines are inserted before and
-after open braces based on the value of `c-hanging-braces-alist'.
+after braces based on the value of `c-hanging-braces-alist'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the brace, or
@@ -1161,14 +1163,18 @@ the brace is inserted inside a literal."
 	    newlines (and
 		      c-auto-newline
 		      (or (assq (car (or (assq 'defun-open semantics)
+					 (assq 'defun-close semantics)
 					 (assq 'class-open semantics)
+					 (assq 'class-close semantics)
 					 (assq 'inline-open semantics)
+					 (assq 'inline-close semantics)
 					 (assq 'brace-list-open semantics)
-					 (assq 'block-open semantics)))
+					 (assq 'brace-list-close semantics)
+					 (assq 'block-open semantics)
+					 (assq 'block-close semantics)
+					 ))
 				c-hanging-braces-alist)
-			  (if (= last-command-char ?{)
-			      '(ignore before after)
-			    '(ignore after)))))
+			  '(ignore before after))))
       ;; does a newline go before the open brace?
       (if (memq 'before newlines)
 	  ;; we leave the newline we've put in there before,
@@ -3335,7 +3341,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.304 $"
+(defconst c-version "$Revision: 3.305 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
