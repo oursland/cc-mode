@@ -7,22 +7,20 @@ Other-links:
 
 <h2>CC Mode Version 5</h2>
 
-The <a href="release.html">current release</a> is version 5.24.  A
-list of <a href="changes-524.html">recent changes</a> are given in detail, 
-as well as some <a href="installation.html">installation notes</a> and 
-Emacs/XEmacs <a href="compat.html">compatibility details</a>.
+CC Mode is brought to you by the CC Mode Maintainers Team of <a
+href="http://www.python.org/~bwarsaw/">Barry Warsaw</a> and Martin
+Stjernholm.
+
+<p>The <a href="release.html">current release</a> is version
+5.24.  A list of <a href="changes-524.html">recent changes</a> are
+given in detail, as well as some <a
+href="installation.html">installation notes</a> and Emacs/XEmacs <a
+href="compat.html">compatibility details</a>.
 
 <p>You can <a href="cc-mode-html/Top.html">browse the
 documentation on-line</a>.  There is also an
 <a href="/mailman/listinfo/cc-mode-announce">announcement-only
 mailing list</a> which you can join.
-
-<p>Martin Stjernholm now joins Barry Warsaw as members of the
-<a href="mailto:cc-mode-help@python.org">CC Mode maintainers
-team</a>.  Martin's already been doing lots of cool stuff to CC Mode,
-and will be doing a lot more in the 
-coming months, including adding
-<a href="http://pike.idonex.se/">Pike</a> support.
 
 <p>See also <a href="contrib.html">some related Emacs packages</a>
 that have been contributed by CC Mode users.
