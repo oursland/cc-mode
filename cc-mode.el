@@ -6,11 +6,22 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-22 22:30:31 $
-;; Version:         $Revision: 2.1 $
+;; Last Modified:   $Date: 1992-04-24 20:36:57 $
+;; Version:         $Revision: 2.2 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
+;;
+;; The latest version of this file should always be available for
+;; anonymous ftp on the elisp archive machine:
+;; archive.cis.ohio-state.edu.  For those of you without aftp access,
+;; try sending a message to the mail-server at library@cme.nist.gov.
+;; Put "send pub/gnu/c++-mode.el" in the body of the message (without
+;; the quotes) to get the file in uuencoded format, or send the
+;; message "help" to get more information from the mail-server.
+;; Please don't email me asking for the latest version, I may not have
+;; it readily available to send to you. The mail-server should get it
+;; to you pretty quickly.
 ;;
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -21,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-22 22:30:31 $|$Revision: 2.1 $|
+;; |$Date: 1992-04-24 20:36:57 $|$Revision: 2.2 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -124,7 +135,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.1 $
+  "Major mode for editing C++ code.  $Revision: 2.2 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1220,7 +1231,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.1 $"
+(defconst c++-version "$Revision: 2.2 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
