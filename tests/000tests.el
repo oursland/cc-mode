@@ -56,6 +56,9 @@
 ;; properly, then clear the .res file and regenerate it using step #3
 ;; above.
 
+;; The eval depth can be rather deep when CC Mode isn't compiled.
+(setq max-lisp-eval-depth 1000)
+
 (let ((srcdir (expand-file-name (concat default-directory ".."))))
   (setq load-path (cons srcdir load-path)))
 (require 'cc-mode)
