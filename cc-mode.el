@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.246 $
-;; Last Modified:   $Date: 1992-12-29 00:08:32 $
+;; Version:         $Revision: 2.247 $
+;; Last Modified:   $Date: 1992-12-29 00:57:38 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-29 00:08:32 $|$Revision: 2.246 $|
+;; |$Date: 1992-12-29 00:57:38 $|$Revision: 2.247 $|
 
 ;;; Code:
 
@@ -408,7 +408,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.246 $
+  "Major mode for editing C++ code.  $Revision: 2.247 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -616,7 +616,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.246 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.247 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1741,10 +1741,17 @@ BOD is the beginning of the C++ definition."
 						      (< bod (point)))
 					    (forward-line -1)
 					    (skip-chars-forward " \t")))
+				      ;; check to be sure that we're
+				      ;; not on the first line of the
+				      ;; member init list
+				      (if (= (following-char) ?:)
+					  (progn
+					    (forward-char 1)
+					    (skip-chars-forward " \t")))
 				      ;; subtract inclass-shift since
 				      ;; its already incorporated by
-				      ;; default in current-indentation
-				      (- (current-indentation) inclass-shift)
+				      ;; default in current-column
+				      (- (current-column) inclass-shift)
 				      )))))))))
 		    )))))
 	    ((/= (char-after containing-sexp) ?{)
@@ -2317,7 +2324,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.246 $"
+(defconst c++-version "$Revision: 2.247 $"
   "c++-mode version number.")
 
 (defun c++-version ()
