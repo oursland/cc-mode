@@ -199,7 +199,7 @@ to it is returned.  This function does not modify the point or the mark."
 	(cond
 
 	 ((eq position 'bol)
-	  (if (and (fboundp 'line-beginning-position) (not point))
+	  (if (and (cc-bytecomp-fboundp 'line-beginning-position) (not point))
 	      `(line-beginning-position)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
@@ -207,7 +207,7 @@ to it is returned.  This function does not modify the point or the mark."
 	       (point))))
 
 	 ((eq position 'eol)
-	  (if (and (fboundp 'line-end-position) (not point))
+	  (if (and (cc-bytecomp-fboundp 'line-end-position) (not point))
 	      `(line-end-position)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
@@ -233,7 +233,7 @@ to it is returned.  This function does not modify the point or the mark."
 	     (point)))
 
 	 ((eq position 'bopl)
-	  (if (and (fboundp 'line-beginning-position) (not point))
+	  (if (and (cc-bytecomp-fboundp 'line-beginning-position) (not point))
 	      `(line-beginning-position 0)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
@@ -241,7 +241,7 @@ to it is returned.  This function does not modify the point or the mark."
 	       (point))))
 
 	 ((eq position 'bonl)
-	  (if (and (fboundp 'line-beginning-position) (not point))
+	  (if (and (cc-bytecomp-fboundp 'line-beginning-position) (not point))
 	      `(line-beginning-position 2)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
@@ -249,7 +249,7 @@ to it is returned.  This function does not modify the point or the mark."
 	       (point))))
 
 	 ((eq position 'eopl)
-	  (if (and (fboundp 'line-end-position) (not point))
+	  (if (and (cc-bytecomp-fboundp 'line-end-position) (not point))
 	      `(line-end-position 0)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
@@ -258,7 +258,7 @@ to it is returned.  This function does not modify the point or the mark."
 	       (point))))
 
 	 ((eq position 'eonl)
-	  (if (and (fboundp 'line-end-position) (not point))
+	  (if (and (cc-bytecomp-fboundp 'line-end-position) (not point))
 	      `(line-end-position 2)
 	    `(save-excursion
 	       ,@(if point `((goto-char ,point)))
@@ -330,7 +330,7 @@ to it is returned.  This function does not modify the point or the mark."
 (defmacro c-region-is-active-p ()
   ;; Return t when the region is active.  The determination of region
   ;; activeness is different in both Emacs and XEmacs.
-  (if (fboundp 'region-active-p)
+  (if (cc-bytecomp-fboundp 'region-active-p)
       ;; XEmacs.
       '(region-active-p)
     ;; Emacs.
@@ -339,7 +339,7 @@ to it is returned.  This function does not modify the point or the mark."
 (defmacro c-set-region-active (activate)
   ;; Activate the region if ACTIVE is non-nil, deactivate it
   ;; otherwise.  Covers the differences between Emacs and XEmacs.
-  (if (fboundp 'zmacs-activate-region)
+  (if (cc-bytecomp-fboundp 'zmacs-activate-region)
       ;; XEmacs.
       `(if ,activate
 	   (zmacs-activate-region)
