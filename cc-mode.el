@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-30 21:31:28 $
-;; Version:         $Revision: 2.127 $
+;; Last Modified:   $Date: 1992-06-30 21:39:23 $
+;; Version:         $Revision: 2.128 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-30 21:31:28 $|$Revision: 2.127 $|
+;; |$Date: 1992-06-30 21:39:23 $|$Revision: 2.128 $|
 
 
 ;; ======================================================================
@@ -235,7 +235,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.127 $
+  "Major mode for editing C++ code.  $Revision: 2.128 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -639,11 +639,13 @@ backward-delete-char-untabify."
 		mbeg mend)
 	    (if (and (memq 'brace-else-brace c++-cleanup-list)
 		     (= last-command-char ?\{)
-		     (let ((status (re-search-backward "}[ \t\n]*else[ \t\n]*{"
-						       nil t)))
+		     (let ((status
+			    (re-search-backward "}[ \t\n]*else[ \t\n]*{"
+						nil t)))
 		       (setq mbeg (match-beginning 0)
 			     mend (match-end 0))
 		       status)
+		     (= mend here)
 		     (not (c++-in-open-string-p bod))
 		     (not (c++-in-comment-p bod)))
 		(progn
@@ -1922,7 +1924,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.127 $"
+(defconst c++-version "$Revision: 2.128 $"
   "c++-mode version number.")
 
 (defun c++-version ()
