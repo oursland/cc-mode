@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.229 $
-;; Last Modified:   $Date: 1995-07-10 18:23:10 $
+;; Version:         $Revision: 4.230 $
+;; Last Modified:   $Date: 1995-07-20 19:57:39 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-10 18:23:10 $|$Revision: 4.229 $|
+;; |$Date: 1995-07-20 19:57:39 $|$Revision: 4.230 $|
 
 ;;; Code:
 
@@ -1846,7 +1846,7 @@ value of `c-cleanup-list'."
 	    ;; colon
 	    newlines
 	    (and c-auto-newline
-		 (or (c-lookup-lists '(case-label 'label 'access-label)
+		 (or (c-lookup-lists '(case-label label access-label)
 				     syntax c-hanging-colons-alist)
 		     (c-lookup-lists '(member-init-intro inher-intro)
 				     (prog2
@@ -4499,7 +4499,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.229 $"
+(defconst c-version "$Revision: 4.230 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
