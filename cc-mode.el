@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.284 $
-;; Last Modified:   $Date: 1993-02-11 18:33:50 $
+;; Version:         $Revision: 2.285 $
+;; Last Modified:   $Date: 1993-02-12 16:40:35 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-02-11 18:33:50 $|$Revision: 2.284 $|
+;; |$Date: 1993-02-12 16:40:35 $|$Revision: 2.285 $|
 
 ;;; Code:
 
@@ -448,7 +448,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.284 $
+  "Major mode for editing C++ code.  $Revision: 2.285 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -669,7 +669,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.284 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.285 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1274,7 +1274,7 @@ of the expression are preserved."
 		      ;; Preceding line ended in comma or semi;
 		      ;; use the standard indent for this level.
 		      (if at-else
-			  (progn (c-backward-to-start-of-if opoint)
+			  (progn (c++-backward-to-start-of-if opoint)
 				 (back-to-indentation)
 				 (skip-chars-forward "{ \t")
 				 (setq this-indent (current-column)))
@@ -1555,13 +1555,16 @@ used."
   "Return t if inside a paren expression.
 Optional LIM is used as the backward limit of the search."
   (let ((lim (or lim (c++-point 'bod))))
-    (condition-case ()
+    (condition-case var
 	(save-excursion
 	  (save-restriction
 	    (narrow-to-region (point) lim)
 	    (goto-char (point-max))
-	    (= (char-after (or (scan-lists (point) -1 1) (point-min))) ?\()))
-      (error nil))))
+	    (= (char-after (or (scan-lists (point) -1 1)
+			       (point-min)))
+	       ?\()))
+      (error nil)
+      )))
 
 (defun c++-in-function-p (&optional containing)
   "Return t if inside a C++ function definition.
@@ -1631,7 +1634,7 @@ point of the beginning of the C++ definition."
        ((and (looking-at "else\\b")
 	     (not (looking-at "else\\s_")))
 	(setq indent (save-excursion
-		       (c-backward-to-start-of-if)
+		       (c++-backward-to-start-of-if)
 		       (back-to-indentation)
 		       (skip-chars-forward "{ \t")
 		       (current-column))))
@@ -2196,9 +2199,9 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 
 (defun c++-backward-to-start-of-do (&optional limit)
   "Move to the start of the last ``unbalanced'' do."
-  (setq limit (or limit (c++-point 'bod)))
   (let ((do-level 1)
-	(case-fold-search nil))
+	(case-fold-search nil)
+	(limit (or limit (c++-point 'bod))))
     (while (not (zerop do-level))
       ;; we protect this call because trying to execute this when the
       ;; while is not associated with a do will throw an error
@@ -2217,6 +2220,22 @@ optional LIM.  If LIM is ommitted, beginning-of-defun is used."
 	(error
 	 (goto-char limit)
 	 (setq do-level 0))))))
+
+(defun c++-backward-to-start-of-if (&optional limit)
+  "Move to the start of the last ``unbalanced'' if."
+  (let ((if-level 1)
+	(case-fold-search nil)
+	(limit (or limit (c++-point 'bod))))
+    (while (and (not (bobp))
+		(not (zerop if-level)))
+      (c++-backward-sexp 1)
+      (cond ((looking-at "else\\b")
+	     (setq if-level (1+ if-level)))
+	    ((looking-at "if\\b")
+	     (setq if-level (1- if-level)))
+	    ((< (point) limit)
+	     (setq if-level 0)
+	     (goto-char limit))))))
 
 (defun c++-auto-newline ()
   "Insert a newline iff we're not in a literal.
@@ -2485,7 +2504,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.284 $"
+(defconst c++-version "$Revision: 2.285 $"
   "c++-mode version number.")
 
 (defun c++-version ()
