@@ -18,7 +18,7 @@ You should have received the following files in this distribution:
     the new indentation engine.  This is provided for your convenience
     only, and is unguaranteed and unsupported.
 
-    cc-fixes.el: (previously named cc-mode-19.el) Compatibility for
+    cc-fix.el: (previously named cc-mode-19.el) Compatibility for
     Emacs 19.34.  Detects and corrects bugs in various other (X)Emacs
     versions.
 

@@ -83,14 +83,14 @@
     (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
 
 (eval-after-load "font-lock"
-  '(if (and (not (featurep 'cc-fixes)) ; only load the file once.
+  '(if (and (not (featurep 'cc-fix)) ; only load the file once.
             (let (font-lock-keywords)
               (font-lock-compile-keywords '("\\<\\>"))
 	      font-lock-keywords))     ; did the previous call foul this up?
        ;; Buglet: This only works if the CC Mode directory is in the
        ;; load path.  No need to bother; it'd only affect odd people
        ;; such as the developers.. ;)
-       (load "cc-fixes")))
+       (load "cc-fix")))
 
 (cc-external-require 'cl)
 
