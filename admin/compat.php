@@ -5,16 +5,14 @@
   include ("header.h");
 ?>
 
-<p>Setting up CC Mode is a little different for each version of XEmacs
-and Emacs.  Users of Emacs 19.34 or NTEmacs 19.34, especially will
-want to read the compatibility note for their version.
+<p>CC Mode should work out of the box with Emacs &gt;= 19.34, and
+XEmacs &gt;= 19.15.
 
 <ul>
 
-  <li><a href="compat_xemacs.php">XEmacs and Emacs 20</a>
+  <li><a href="compat_xemacs.php">XEmacs and Emacs 20 or later</a>
 
-  <li><a href="compat_emacs19.php">Emacs 19</a>, specifically Emacs
-  19.34.
+  <li><a href="compat_emacs19.php">Emacs 19</a>
 
   <li><a href="compat_emacs18.php">Emacs 18</a>
 

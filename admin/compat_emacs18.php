@@ -11,7 +11,8 @@
 
 <p><code>:-)</code>
 
-<p>Are you really still using Emacs 18?!  You should upgrade,
-preferrably to Emacs 20.3, XEmacs 20.4 or later.
+<p>Are you really still using Emacs 18?! You should upgrade, you know.
+If you really like the retro feeling, then I guess you just have to
+like the retro C support too. <code>;)</code>
 
 <?php include ("footer.h"); ?>
