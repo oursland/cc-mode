@@ -1,3 +1,7 @@
+Mon Jun  2 23:37:51 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Beta Release 5.09
+
 Sun Jun  1 16:23:11 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-load-all): cc-menus depends on cc-langs.
