@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.167 $
-;; Last Modified:   $Date: 1994-01-07 14:18:03 $
+;; Version:         $Revision: 3.168 $
+;; Last Modified:   $Date: 1994-01-07 14:24:36 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -82,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-07 14:18:03 $|$Revision: 3.167 $|
+;; |$Date: 1994-01-07 14:24:36 $|$Revision: 3.168 $|
 
 ;;; Code:
 
@@ -652,7 +652,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.167 $
+CC-MODE REVISION: $Revision: 3.168 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -686,7 +686,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.167 $
+CC-MODE REVISION: $Revision: 3.168 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1537,7 +1537,6 @@ move backward across a preprocessor conditional."
   (let* ((forward (> count 0))
 	 (increment (if forward -1 1))
 	 (search-function (if forward 're-search-forward 're-search-backward))
-	 (opoint (point))
 	 (new))
     (save-excursion
       (while (/= count 0)
@@ -1733,8 +1732,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (lim (c-point 'bod)))
       (while (< (point) endmark)
 	;; Indent one line as with TAB.
-	(let ((shift-amt (c-indent-via-language-element lim))
-	      nextline sexpend sexpstart)
+	(let (nextline sexpend sexpstart)
+	  ;; indent the current line
+	  (c-indent-via-language-element lim)
 	  ;; Find beginning of following line.
 	  (setq nextline (c-point 'bonl))
 	  ;; Find first beginning-of-sexp for sexp extending past this line.
@@ -2030,7 +2030,6 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; multiple inheritance introduction.  Optional LIM is the farthest
   ;; back we should search.
   (let ((lim (or lim (c-point 'bod)))
-	(here (point))
 	(placeholder (progn
 		       (back-to-indentation)
 		       (point))))
@@ -2091,7 +2090,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
     (while (not (zerop do-level))
       ;; we protect this call because trying to execute this when the
       ;; while is not associated with a do will throw an error
-      (condition-case err
+      (condition-case nil
 	  (progn
 	    (backward-sexp 1)
 	    (cond
@@ -2120,7 +2119,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (while (and (not (bobp))
 		  (not (zerop if-level)))
 	(c-backward-syntactic-ws)
-	(condition-case errcond
+	(condition-case nil
 	    (backward-sexp 1)
 	  (error
 	   (if at-if
@@ -2967,7 +2966,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.167 $"
+(defconst c-version "$Revision: 3.168 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
