@@ -9,10 +9,12 @@
 
 <p>Brad Merrill has <a
 href="http://www.cybercom.net/~zbrad/DotNet/Emacs/">patched</a> CC
-Mode 5.25 to support C#.  Scott Hofmann has contributed an <a
-href="csharp-mode.tar.gz">update</a> of it to CC Mode 5.28.  CC Mode
-will hopefully get built-in support for C#.</p>
+Mode 5.28 to support C#.  Dennis Haney has another <a
+href="http://davh.dk/script/">alternative</a> in the form of a derived
+mode for CC Mode 5.28.  CC Mode will hopefully get built-in support
+for C#.</p>
 
+<!-- Font locking is now part of CC Mode.
 
 <h3>Font lock for IDL mode</h3>
 
@@ -45,6 +47,8 @@ you'll just get them automatically.
 font-lock definitions for Pike mode.  <a href="pike.el">This
 package</a> written by Per Hedbor and others provides that.
 
+-->
+
 
 <h3>Embedded SQL</h3>
 
@@ -55,11 +59,16 @@ embedded SQL, where Kevin Ruland has contributed an <a
 href="plsql.txt">indentation for Oracle ProC embedded SQL</a>.
 
 
+<!-- The site no longer responds, and Google can't find it anywhere
+     else on the net.
+
 <h3>Other stuff</h3>
 
 <p>There's a <a
 href="http://apache.bsilabs.com/~tim/cc-mode/description.html">patch</a>
 by Timothy M. Schaeffer that tries to achieve tab-size independent
 indentation.</p>
+
+-->
 
 <?php include ("footer.h"); ?>
