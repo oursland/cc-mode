@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.31 $
-;; Last Modified:   $Date: 1993-10-11 16:32:02 $
+;; Version:         $Revision: 3.32 $
+;; Last Modified:   $Date: 1993-10-20 18:46:53 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-10-11 16:32:02 $|$Revision: 3.31 $|
+;; |$Date: 1993-10-20 18:46:53 $|$Revision: 3.32 $|
 
 ;;; Code:
 
@@ -193,8 +193,6 @@ FSF 19 (patched):        (8-bit v19)")
 (if c++-mode-map
     ()
   (setq c++-mode-map (make-sparse-keymap))
-  (define-key c++-mode-map "\C-j"      'reindent-then-newline-and-indent)
-  (define-key c++-mode-map "\C-m"      'newline-and-indent)
   (define-key c++-mode-map "{"         'c++-electric-brace)
   (define-key c++-mode-map "}"         'c++-electric-brace)
   (define-key c++-mode-map ";"         'c++-electric-semi&comma)
@@ -541,7 +539,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.31 $
+  "Major mode for editing C++ code.  $Revision: 3.32 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -733,7 +731,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.31 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.32 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'.  Only real
 difference is that this sets up the buffer for editing C code, and it
@@ -2660,7 +2658,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 
-(defconst c++-version "$Revision: 3.31 $"
+(defconst c++-version "$Revision: 3.32 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
