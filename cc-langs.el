@@ -995,6 +995,18 @@ declare the identifiers in it as types.  Assumed to be a subset of
   objc (concat "@" (c-lang-const c-class-key)))  ; ObjC needs some tuning.
 (c-lang-defvar c-class-key (c-lang-const c-class-key))
 
+(c-lang-defconst c-brace-list-kwds
+  "Keywords introducing declarations where the following block is a
+brace list."
+  t nil
+  (c c++ pike) '("enum"))
+
+(c-lang-defconst c-brace-list-key
+  ;; Regexp matching the start of declarations where the following
+  ;; block is a brace list.
+  t (c-make-keywords-re t (c-lang-const c-brace-list-kwds)))
+(c-lang-defvar c-brace-list-key (c-lang-const c-brace-list-key))
+
 (c-lang-defconst c-other-decl-block-kwds
   "Keywords introducing blocks that contain another declaration level,
 besides classes."
@@ -1195,6 +1207,22 @@ handled separately)."
 	 (c-make-keywords-re t (c-lang-const c-inexpr-class-kwds))))
 (c-lang-defvar c-opt-inexpr-class-key (c-lang-const c-opt-inexpr-class-key))
 
+(c-lang-defconst c-inexpr-brace-list-kwds
+  "Keywords that can start brace list blocks inside expressions.
+Note that Java specific rules are currently applied to tell this from
+`c-inexpr-class-kwds'."
+  t    nil
+  java '("new"))
+
+(c-lang-defconst c-opt-inexpr-brace-list-key
+  ;; Regexp matching the start of a brace list in an expression, or
+  ;; nil in languages that doesn't have such things.  This should not
+  ;; match brace lists recognized through `c-special-brace-lists'.
+  t (and (c-lang-const c-inexpr-brace-list-kwds)
+	 (c-make-keywords-re t (c-lang-const c-inexpr-brace-list-kwds))))
+(c-lang-defvar c-opt-inexpr-brace-list-key
+  (c-lang-const c-opt-inexpr-brace-list-key))
+
 (c-lang-defconst c-any-class-key
   ;; Regexp matching the start of any class, both at top level and in
   ;; expressions.
@@ -1208,7 +1236,7 @@ handled separately)."
 (c-lang-defconst c-decl-block-key
   ;; Regexp matching the start of any declaration-level block that
   ;; contain another declaration level, i.e. that isn't a function
-  ;; block.
+  ;; block or brace list.
   t (c-make-keywords-re t
       (append (c-lang-const c-class-kwds)
 	      (c-lang-const c-other-decl-block-kwds)
@@ -1236,6 +1264,7 @@ handled separately)."
 			       (c-lang-const c-specifier-kwds)
 			       (c-lang-const c-protection-kwds)
 			       (c-lang-const c-class-kwds)
+			       (c-lang-const c-brace-list-kwds)
 			       (c-lang-const c-other-decl-block-kwds)
 			       (c-lang-const c-block-decls-with-vars)
 			       (c-lang-const c-type-prefix-kwds)
@@ -1252,6 +1281,7 @@ handled separately)."
 			       (c-lang-const c-lambda-kwds)
 			       (c-lang-const c-inexpr-block-kwds)
 			       (c-lang-const c-inexpr-class-kwds)
+			       (c-lang-const c-inexpr-brace-list-kwds)
 			       (c-lang-const c-bitfield-kwds)
 			       nil)
 		       :test 'string-equal))
