@@ -105,7 +105,7 @@
 	   ;; CASE 2: some other kind of literal?
 	   ((c-in-literal lim))
 	   ;; CASE 3: are we looking at a conditional keyword?
-	   ((or (looking-at c-conditional-key)
+	   ((or (and c-conditional-key (looking-at c-conditional-key))
 		(and (eq (char-after) ?\()
 		     (save-excursion
 		       (c-forward-sexp 1)
@@ -119,6 +119,7 @@
 					  (<= lim (point))
 					  (not (c-in-literal lim))
 					  (not (eq (char-before) ?_))
+					  c-conditional-key
 					  (looking-at c-conditional-key)
 					  ))))
 		       ;; did we find a conditional?
@@ -2068,7 +2069,7 @@ brace."
 	  (let ((after-cond-placeholder
 		 (save-excursion
 		   (goto-char placeholder)
-		   (if (looking-at c-conditional-key)
+		   (if (and c-conditional-key (looking-at c-conditional-key))
 		       (progn
 			 (c-safe (c-skip-conditional))
 			 (c-forward-syntactic-ws)
