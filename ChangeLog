@@ -767,20 +767,13 @@
 	number of regexp language variables to conform to the nomenclature
 	and shortened some names.
 
-	* cc-align.el, cc-cmds.el, cc-fonts.el
+	* cc-align.el, cc-cmds.el, cc-fonts.el, cc-engine.el
 	(c-syntactic-re-search-forward): Removed the COUNT argument since
 	it's never used.  Added an argument to tell which subexpression
 	whose end should be tested for syntactic relevance.  Using this
 	also removes some optimizations, so that it's possible to use a
 	look behind subexpression that matches the end of a literal or a
 	close paren when PAREN-LEVEL is used.
-
-	* cc-engine.el (c-syntactic-re-search-forward): Removed the COUNT
-	argument since it's never used.  Added an argument to tell which
-	subexpression whose end should be tested for syntactic relevance.
-	Using this also removes some optimizations, so that it's possible
-	to use a look behind subexpression that matches the end of a
-	literal or a close paren when PAREN-LEVEL is used.
 
 	(c-guess-continued-construct): Don't match <<= or >>= for the
 	stream-op syntactic element.
@@ -1079,7 +1072,7 @@ Mon Apr 22 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	support it.
 
 	(c-mode-abbrev-table, c++-mode-abbrev-table,
-	objc-mode-abbrev-table) (java-mode-abbrev-table,
+	objc-mode-abbrev-table, java-mode-abbrev-table,
 	pike-mode-abbrev-table): Mark all the predefined abbrevs as
 	"system" abbrevs.
 
@@ -1233,7 +1226,7 @@ Sun Mar 17 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
 Sat Mar 16 2002  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-engine.el (c-add-stmt-syntax, c-guess-basic-syntax):
-	Anchor `brace-list-intro' and `bracec-list-close' better for
+	Anchor `brace-list-intro' and `brace-list-close' better for
 	brace lists nested inside expressions.
 
 	* cc-engine.el, cc-langs.el, cc-mode.el, cc-styles.el: Cleaned
@@ -1941,6 +1934,10 @@ Wed Mar 14 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 Sun Feb 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
+	* Release 5.28
+
+Sun Feb 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
 	* cc-mode.el, cc-vars.el (c-common-init, c-default-style):
 	Removed the hardcoded switch to "java" style in Java mode.
 	It's instead taken care of by the default value for
@@ -1954,10 +1951,6 @@ Sat Feb 24 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-align.el (c-lineup-math): Fix bug where lineup was
 	triggered by equal signs in string literals.
-
-Sun Feb 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
-
-	* Release 5.28
 
 Sun Feb 25 2001  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
