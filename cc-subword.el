@@ -73,7 +73,7 @@
 ;; the old `c-forward-into-nomenclature' originally contributed by
 ;; Terry_Glanfield dot Southern at rxuk dot xerox dot com.
 
-;; TODO: Subword oriented C-w in isearch, dabbrev and ispell-word.
+;; TODO: ispell-word and subword oriented C-w in isearch.
 
 ;;; Code:
 
