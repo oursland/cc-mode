@@ -983,7 +983,8 @@ Key bindings:
   (c-common-init 'awk-mode)
   (add-hook 'before-change-functions 'c-awk-before-change nil t)
   (add-hook 'after-change-functions 'c-awk-after-change nil t)
-  (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max)))
+  (c-save-buffer-state nil
+      (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max))))
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'awk-mode-hook)
   (c-update-modeline))
