@@ -31,6 +31,17 @@
 (eval-when-compile
   (load-file "./cc-engine.el"))
 
+(defsubst c-langelem-col (langelem &optional preserve-point)
+  ;; convenience routine to return the column of langelem's relpos.
+  ;; Leaves point at the relpos unless preserve-point is non-nil.
+  (let ((here (point)))
+    (goto-char (cdr langelem))
+    (prog1 (current-column)
+      (if preserve-point
+	  (goto-char here))
+      )))
+
+
 ;; Standard indentation line-ups
 (defun c-lineup-arglist (langelem)
   ;; lineup the current arglist line with the arglist appearing just
@@ -50,9 +61,7 @@
 		    (skip-chars-forward " \t" (c-point 'eol)))
 		(goto-char (cdr langelem)))
 	      (point)))
-	   (cs-curcol (save-excursion
-			(goto-char (cdr langelem))
-			(current-column))))
+	   (langelem-col (c-langelem-col langelem t)))
       (if (save-excursion
 	    (beginning-of-line)
 	    (looking-at "[ \t]*)"))
@@ -60,7 +69,7 @@
 		 (forward-sexp -1)
 		 (forward-char 1)
 		 (c-forward-syntactic-ws)
-		 (- (current-column) cs-curcol))
+		 (- (current-column) langelem-col))
 	(goto-char containing-sexp)
 	(or (eolp)
 	    (not (memq (following-char) '(?{ ?\( )))
@@ -72,80 +81,69 @@
 	      (c-forward-syntactic-ws)
 	      (if (< (point) eol)
 		  (goto-char here))))
-	(- (current-column) cs-curcol)
+	(- (current-column) langelem-col)
 	))))
 
 (defun c-lineup-arglist-intro-after-paren (langelem)
   ;; lineup an arglist-intro line to just after the open paren
   (save-excursion
-    (let ((cs-curcol (save-excursion
-		       (goto-char (cdr langelem))
-		       (current-column)))
+    (let ((langelem-col (c-langelem-col langelem t))
 	  (ce-curcol (save-excursion
 		       (beginning-of-line)
 		       (backward-up-list 1)
 		       (skip-chars-forward " \t" (c-point 'eol))
 		       (current-column))))
-      (- ce-curcol cs-curcol -1))))
+      (- ce-curcol langelem-col -1))))
 
 (defun c-lineup-arglist-close-under-paren (langelem)
   ;; lineup an arglist-intro line to just after the open paren
   (save-excursion
-    (let ((cs-curcol (save-excursion
-		       (goto-char (cdr langelem))
-		       (current-column)))
+    (let ((langelem-col (c-langelem-col langelem t))
 	  (ce-curcol (save-excursion
 		       (beginning-of-line)
 		       (backward-up-list 1)
 		       (current-column))))
-      (- ce-curcol cs-curcol))))
+      (- ce-curcol langelem-col))))
 
 (defun c-lineup-streamop (langelem)
   ;; lineup stream operators
   (save-excursion
-    (let* ((relpos (cdr langelem))
-	   (curcol (progn (goto-char relpos)
-			  (current-column))))
+    (let ((langelem-col (c-langelem-col langelem)))
       (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
       (goto-char (match-beginning 0))
-      (- (current-column) curcol))))
+      (- (current-column) langelem-col))))
 
 (defun c-lineup-multi-inher (langelem)
   ;; line up multiple inheritance lines
   (save-excursion
-    (let (cs-curcol
+    (let ((langelem-col (c-langelem-col langelem))
 	  (eol (c-point 'eol))
 	  (here (point)))
-      (goto-char (cdr langelem))
-      (setq cs-curcol (current-column))
       (skip-chars-forward "^:" eol)
       (skip-chars-forward " \t:" eol)
       (if (or (eolp)
 	      (looking-at c-comment-start-regexp))
 	  (c-forward-syntactic-ws here))
-      (- (current-column) cs-curcol)
+      (- (current-column) langelem-col)
       )))
 
 (defun c-lineup-java-inher (langelem)
   ;; line up Java implements and extends continuations
   (save-excursion
-    (let ((cs-curcol (progn (goto-char (cdr langelem))
-			    (current-column))))
+    (let ((langelem-col (c-langelem-col langelem)))
       (forward-word 1)
       (if (looking-at "[ \t]*$")
-	  cs-curcol
+	  langelem-col
 	(c-forward-syntactic-ws)
-	(- (current-column) cs-curcol)))))
+	(- (current-column) langelem-col)))))
 
 (defun c-lineup-java-throws (langelem)
   ;; lineup func-decl-cont's in Java which are continuations of throws
   ;; declarations.  If `throws' starts the previous line, line up to
   ;; just after that keyword.  If not, lineup under the previous line.
   (save-excursion
-    (let ((here (point))
-	  (iopl (c-point 'iopl))
-	  (cs-curcol (progn (goto-char (cdr langelem))
-			    (current-column))))
+    (let ((iopl (c-point 'iopl))
+	  (langelem-col (c-langelem-col langelem)))
       (goto-char iopl)
       (cond
        ((= (point) (cdr langelem)) c-basic-offset)
@@ -153,9 +151,9 @@
 	       (progn (forward-word 1)
 		      (skip-chars-forward " \t")
 		      (not (eolp))))
-	(- (current-column) cs-curcol))
+	(- (current-column) langelem-col))
        (t (goto-char iopl)
-	  (- (current-column) cs-curcol))
+	  (- (current-column) langelem-col))
        ))))
 
 (defun c-lineup-C-comments (langelem)
@@ -164,8 +162,7 @@
     (let ((here (point))
 	  (stars (progn (back-to-indentation)
 			(skip-chars-forward "*")))
-	  (cs-curcol (progn (goto-char (cdr langelem))
-			    (current-column))))
+	  (langelem-col (c-langelem-col langelem)))
       (back-to-indentation)
       (if (not (re-search-forward "/\\([*]+\\)" (c-point 'eol) t))
 	  (progn
@@ -179,11 +176,11 @@
 			     (forward-comment -1))
 		    (goto-char (cdr langelem))
 		    (back-to-indentation))))
-	    (- (current-column) cs-curcol))
+	    (- (current-column) langelem-col))
 	(if (zerop stars)
 	    (progn
 	      (skip-chars-forward " \t")
-	      (- (current-column) cs-curcol))
+	      (- (current-column) langelem-col))
 	  ;; how many stars on comment opening line?  if greater than
 	  ;; on current line, align left.  if less than or equal,
 	  ;; align right.  this should also pick up Javadoc style
@@ -191,8 +188,8 @@
 	  (if (> (length (match-string 1)) stars)
 	      (progn
 		(back-to-indentation)
-		(- (current-column) -1 cs-curcol))
-	    (- (current-column) stars cs-curcol))
+		(- (current-column) -1 langelem-col))
+	    (- (current-column) stars langelem-col))
 	  )))))
 
 (defun c-lineup-comment (langelem)
@@ -226,27 +223,22 @@
   ;; statement on the same line as the block opening brace.
   (if (= (char-after (cdr langelem)) ?{)
       (save-excursion
-	(let ((curcol (progn
-			(goto-char (cdr langelem))
-			(current-column))))
+	(let ((langelem-col (c-langelem-col langelem)))
 	  (forward-char 1)
 	  (skip-chars-forward " \t")
-	  (- (current-column) curcol)))
+	  (- (current-column) langelem-col)))
     0))
 
 (defun c-lineup-math (langelem)
   ;; line up math statement-cont after the equals
   (save-excursion
-    (let* ((relpos (cdr langelem))
-	   (equalp (save-excursion
-		     (goto-char (c-point 'boi))
-		     (skip-chars-forward "^=" (c-point 'eol))
-		     (and (= (following-char) ?=)
-			  (- (point) (c-point 'boi)))))
-	   (curcol (progn
-		     (goto-char relpos)
-		     (current-column)))
-	   donep)
+    (let ((equalp (save-excursion
+		    (goto-char (c-point 'boi))
+		    (skip-chars-forward "^=" (c-point 'eol))
+		    (and (= (following-char) ?=)
+			 (- (point) (c-point 'boi)))))
+	  (langelem-col (c-langelem-col langelem))
+	  donep)
       (while (and (not donep)
 		  (< (point) (c-point 'eol)))
 	(skip-chars-forward "^=" (c-point 'eol))
@@ -263,7 +255,7 @@
 	      (forward-char 1)
 	      (skip-chars-forward " \t")
 	      (setq equalp 0)))
-	(- (current-column) equalp curcol))
+	(- (current-column) equalp langelem-col))
       )))
 
 (defun c-lineup-ObjC-method-call (langelem)
