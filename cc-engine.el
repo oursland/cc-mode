@@ -2509,7 +2509,7 @@ This function does not do any hidden buffer changes."
 
 ;; Tools for handling comments and string literals.
 
-(defun c-in-literal (&optional lim detect-cpp)
+(defun c-slow-in-literal (&optional lim detect-cpp)
   "Return the type of literal point is in, if any.
 The return value is `c' if in a C-style comment, `c++' if in a C++
 style comment, `string' if in a string literal, `pound' if DETECT-CPP
@@ -2544,6 +2544,27 @@ This function does not do any hidden buffer changes."
 ;; I don't think we even need the cache, which makes our lives more
 ;; complicated anyway.  In this case, lim is only used to detect
 ;; cpp directives.
+;;
+;; Note that there is a bug in Xemacs's buffer-syntactic-context when used in
+;; conjunction with syntax-table-properties.  The bug is present in, e.g.,
+;; Xemacs 21.4.4.  It manifested itself thus:
+;;
+;; Starting with an empty awk-mode buffer, type
+;; /regexp/ {<C-j>
+;; Point is left at column 0, rather than being indented to tab-width.
+;;
+;; awk-mode is designed such that when the first / is typed, it gets the
+;; syntax-table property "string fence".  When the second / is typed, BOTH /s
+;; are given the s-t property "string".  However, buffer-syntactic-context
+;; fails to take account of the change of the s-t property on the opening / to
+;; "string", and reports that the { is within a string started by the second /.
+;;
+;; The workaround for this is for the awk-mode initialisation to switch the
+;; defalias for c-in-literal to c-slow-in-literal.  This will slow down other
+;; cc-modes in Xemacs whenever an awk-buffer has been initialised.
+;; 
+;; (Alan Mackenzie, 2003/4/30).
+
 (defun c-fast-in-literal (&optional lim detect-cpp)
   (let ((context (buffer-syntactic-context)))
     (cond
@@ -2552,8 +2573,10 @@ This function does not do any hidden buffer changes."
      ((eq context 'block-comment) 'c)
      ((and detect-cpp (save-excursion (c-beginning-of-macro lim))) 'pound))))
 
-(if (fboundp 'buffer-syntactic-context)
-    (defalias 'c-in-literal 'c-fast-in-literal))
+(defalias 'c-in-literal
+  (if (fboundp 'buffer-syntactic-context)
+    'c-fast-in-literal                  ; Xemacs
+    'c-slow-in-literal))                ; GNU Emacs
 
 (defun c-literal-limits (&optional lim near not-in-delimiter)
   "Return a cons of the beginning and end positions of the comment or

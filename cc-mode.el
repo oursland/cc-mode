@@ -1014,6 +1014,11 @@ Key bindings:
     (add-hook 'after-change-functions 'c-awk-after-change nil t)
     (c-save-buffer-state nil
       (save-restriction (widen) (c-awk-clear-NL-props (point-min) (point-max))))
+
+    ;; Prevent Xemacs's buffer-syntactic-context being used.  See the comment
+    ;; in cc-engine.el, just before (defun c-fast-in-literal ...
+    (defalias 'c-in-literal 'c-slow-in-literal)
+
     (run-hooks 'c-mode-common-hook)
     (run-hooks 'awk-mode-hook)
     (c-update-modeline))
