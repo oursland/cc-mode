@@ -1,7 +1,10 @@
 __INLINE__ FOO Type var, x;
 __INLINE__ FOO Type (*var);
 __INLINE__ FOO Type var[3 * peq];
-__INLINE__ FOO Type (var);
+
+// This is an init paren that currently incorrectly causes the
+// variable to be recognized as a function.
+__INLINE__ FOO Type var (peq);
 
 __INLINE__ FOO Type var = init, x = Type();
 __INLINE__ FOO Type (*var) = init;

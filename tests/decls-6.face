@@ -1,7 +1,10 @@
 (15 typ) (19 reg) (20 var) (23 reg) (25 var) (26 reg)
 (15 typ) (19 reg) (22 var) (25 reg)
 (15 typ) (19 reg) (20 var) (23 reg)
-(15 typ) (19 reg) (21 var) (24 reg)
+
+(0 cmt)
+
+(0 reg) (15 typ) (19 reg) (20 fun) (23 reg)
 
 (15 typ) (19 reg) (20 var) (23 reg) (32 var) (33 reg)
 (15 typ) (19 reg) (22 var) (25 reg)
