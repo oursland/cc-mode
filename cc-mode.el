@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.40 $
-;; Last Modified:   $Date: 1994-07-26 14:49:49 $
+;; Version:         $Revision: 4.41 $
+;; Last Modified:   $Date: 1994-07-26 15:55:21 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-07-26 14:49:49 $|$Revision: 4.40 $|
+;; |$Date: 1994-07-26 15:55:21 $|$Revision: 4.41 $|
 
 ;;; Code:
 
@@ -784,12 +784,16 @@ supported list, along with the values for this variable:
     ;; Lucid emacs has the best implementation
     (modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
+    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
+    ;; Give CR the same syntax as newline, for selective-display
+    (modify-syntax-entry ?\^m "> b"    c++-mode-syntax-table))
    ((memq '1-bit c-emacs-features)
     ;; FSF Emacs 19 does things differently, but we can work with it
     (modify-syntax-entry ?/  ". 124b" c++-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table))
+    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
+    ;; Give CR the same syntax as newline, for selective-display
+    (modify-syntax-entry ?\^m "> b"    c++-mode-syntax-table))
    )
   ;; TBD: does it make sense for colon to be symbol class in C++?
   ;; I'm not so sure, since c-label-key is busted on lines like:
@@ -812,14 +816,18 @@ supported list, along with the values for this variable:
     ;; Lucid emacs has the best implementation
     (modify-syntax-entry ?/  ". 1456" objc-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   objc-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table))
+    (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table)
+    ;; Give CR the same syntax as newline, for selective-display
+    (modify-syntax-entry ?\^m "> b"   objc-mode-syntax-table))
    ((memq '1-bit c-emacs-features)
     ;; FSF Emacs 19 does things differently, but we can work with it
     (modify-syntax-entry ?/  ". 124b" objc-mode-syntax-table)
     (modify-syntax-entry ?*  ". 23"   objc-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table))
+    (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table)
+    ;; Give CR the same syntax as newline, for selective-display
+    (modify-syntax-entry ?\^m "> b"   objc-mode-syntax-table))
    )
-)
+  )
 
 (defvar c-hungry-delete-key nil
   "Internal state of hungry delete key feature.")
@@ -900,7 +908,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.40 $
+cc-mode Revision: $Revision: 4.41 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -935,7 +943,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.40 $
+cc-mode Revision: $Revision: 4.41 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -969,7 +977,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.40 $
+cc-mode Revision: $Revision: 4.41 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -3831,7 +3839,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.40 $"
+(defconst c-version "$Revision: 4.41 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
