@@ -11,4 +11,5 @@ void f() {
     e = *new (E1) (y);
     e = *new (x) (E1);
     e = *new (x) (y);		// Now we give up...
+    // e = *new E1(*ee,*this); e = *new (17) E2;
 }
