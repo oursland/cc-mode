@@ -78,7 +78,9 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
       (concat
        "^"
        "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
-       "[ \t]*([^)]*)[ \t]*[^ \t;]"           ; see above
+       "[ \t]*("			      ; see above, BUT
+       "[ \t]*\\([^ \t(*][^)]*\\)?)"          ; the arg list must not start
+       "[ \t]*[^ \t;(]"                       ; with an asterisk or parentheses
        )) 1)
     ;; General function name regexp
     (nil
@@ -88,8 +90,8 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
        "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
        "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
        "[ \t]*("			      ; see above, BUT
-       "[ \t]*[^ \t(][^)]*)[ \t]*[^ \t;]"     ; the argument list must not start
-					      ; with a parentheses
+       "[ \t]*\\([^ \t(*][^)]*\\)?)"          ; the arg list must not start
+       "[ \t]*[^ \t;(]"                       ; with an asterisk or parentheses
        )) 1)
     ;; Special case for definitions using phony prototype macros like:
     ;; `int main _PROTO( (int argc,char *argv[]) )'.
@@ -141,32 +143,56 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
        )) 6)))
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
 
+;;                        *Warning for cc-mode developers* 
+;;
+;; `cc-imenu-objc-generic-expression' elements depend on
+;; `cc-imenu-c++-generic-expression'. So if you change this
+;; expression, you need to change following variables,
+;; `cc-imenu-objc-generic-expression-*-index',
+;; too. `cc-imenu-objc-function' uses these *-index variables, in
+;; order to know where the each regexp *group \\(foobar\\)* elements
+;; are started.
+;;
+;; *-index variables are initialized during `cc-imenu-objc-generic-expression' 
+;; being initialized. 
+;;
+
+;; Internal variables
+(defvar cc-imenu-objc-generic-expression-noreturn-index nil)
+(defvar cc-imenu-objc-generic-expression-general-func-index nil)
+(defvar cc-imenu-objc-generic-expression-proto-index nil)
+(defvar cc-imenu-objc-generic-expression-objc-base-index nil)
+
 (defvar cc-imenu-objc-generic-expression 
   (concat 
    ;;
    ;; For C 
-   ;;                     *Warning for developers* 
-   ;; This expression elements depend on `cc-imenu-c++-generic-expression'.
    ;;
    ;; > Special case to match a line like `main() {}'
    ;; > e.g. no return type, not even on the previous line.
    ;; Pick a token by (match-string 1)
-   (car (cdr (nth 1 cc-imenu-c++-generic-expression))) ; 
+   (car (cdr (nth 1 cc-imenu-c++-generic-expression))) ; -> index += 2
+   (prog2 (setq cc-imenu-objc-generic-expression-noreturn-index 1) "")
    "\\|"
    ;; > General function name regexp
-   ;; Pick a token by  (match-string 2)
-   (car (cdr (nth 2 cc-imenu-c++-generic-expression)))
+   ;; Pick a token by  (match-string 3)
+   (car (cdr (nth 2 cc-imenu-c++-generic-expression))) ; -> index += 2
+   (prog2 (setq cc-imenu-objc-generic-expression-general-func-index 3) "")
    ;; > Special case for definitions using phony prototype macros like:
    ;; > `int main _PROTO( (int argc,char *argv[]) )'.
-   ;; Pick a token by  (match-string 3)
+   ;; Pick a token by  (match-string 5)
    (if cc-imenu-c-prototype-macro-regexp
        (concat    
 	"\\|"
-	(car (cdr (nth 3 cc-imenu-c++-generic-expression))))
-     "")
+	(car (cdr (nth 3 cc-imenu-c++-generic-expression))) ; -> index += 1
+	(prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 6) "")
+	)
+     (prog2 (setq cc-imenu-objc-generic-expression-objc-base-index 5) "")
+     "")				; -> index += 0
+   (prog2 (setq cc-imenu-objc-generic-expression-proto-index 5) "")
    ;;
    ;; For Objective-C
-   ;; Pick a token by (match-string 3 or 4)
+   ;; Pick a token by (match-string 5 or 6)
    ;;
    "\\|\\("					     
    "^[-+][:a-zA-Z0-9()*_<>\n\t ]*[;{]"        ; Methods
@@ -250,19 +276,18 @@ Example:
   (let (methodlist
 	clist
 	;;
-	;; OBJC, C1, C2, C3 are constants.
+	;; OBJC, Cnoreturn, Cgeneralfunc, Cproto are constants.
 	;;
 	;;                  *Warning for developers* 
 	;; These constants depend on `cc-imenu-c++-generic-expression'.
 	;;
-	(OBJC 
-	 (if cc-imenu-c-prototype-macro-regexp 4 3))
-	(C1 ; > Special case to match a line like `main() {}'
-	 1) 
-	(C2 ; > General function name regexp
-	 2) 
-	(C3 ; > Special case for definitions using phony prototype macros like:
-	 3)
+	(OBJC cc-imenu-objc-generic-expression-objc-base-index)
+	;; Special case to match a line like `main() {}'
+	(Cnoreturn cc-imenu-objc-generic-expression-noreturn-index)
+	;; General function name regexp
+	(Cgeneralfunc cc-imenu-objc-generic-expression-general-func-index)
+	;; Special case for definitions using phony prototype macros like:
+	(Cproto cc-imenu-objc-generic-expression-proto-index)
 	langnum
 	;;
 	(classcount 0)
@@ -273,14 +298,14 @@ Example:
 	(intflen (length "@interface"))
 	(implen  (length "@implementation"))
 	(prtlen  (length "@protocol"))
-	bufsubst-fun)
-    ;;
-    ;; Does this emacs has buffer-substring-no-properties? 
-    ;;
-    (fset 'bufsubst-fun (if (fboundp 'buffer-substring-no-properties)
-			    (symbol-function 'buffer-substring-no-properties)
-			  (symbol-function 'buffer-substring)))
-    (goto-char (point-max)) 
+	(func
+	 ;;
+	 ;; Does this emacs has buffer-substring-no-properties? 
+	 ;;
+	 (if (fboundp 'buffer-substring-no-properties)
+	     'buffer-substring-no-properties
+	   'buffer-substring)))
+    (goto-char (point-max))
     (imenu-progress-message stupid 0)
     ;;
     (while (re-search-backward cc-imenu-objc-generic-expression nil t)
@@ -288,10 +313,10 @@ Example:
       (setq langnum (if (match-beginning OBJC) 
 			OBJC
 		      (cond
-		       ((match-beginning C3) C3)
-		       ((match-beginning C2) C2)
-		       ((match-beginning C1) C1))))
-      (setq str (bufsubst-fun (match-beginning langnum) (match-end langnum)))
+		       ((match-beginning Cproto) Cproto)
+		       ((match-beginning Cgeneralfunc) Cgeneralfunc)
+		       ((match-beginning Cnoreturn) Cnoreturn))))
+      (setq str (funcall func (match-beginning langnum) (match-end langnum)))
       ;;
       (cond 
        ;;
