@@ -193,16 +193,15 @@ release.
 
 The first thing you will want to do is put the @ccmode{} source files in
 a subdirectory somewhere on your @code{load-path} so Emacs can find it.
-The distribution tarball unpacks into its own subdirectory tagged with
-the version number of the release.  E.g. @ccmode{} release 5.00 will
-unpack into the @file{cc-mode-5.00} directory.  Assuming you unpacked
-the distribution in your home directory, you should add the following to
-your @file{.emacs} file in order to pick up the latest version of
-@ccmode{} over the one distributed with your Emacs:
+The distribution tarball unpacks into its own subdirectory,
+e.g. @file{cc-mode/}.  Assuming you unpacked the distribution in your
+home directory, you should add the following to your @file{.emacs} file
+in order to pick up the latest version of @ccmode{} over the one
+distributed with your Emacs:
 
 @example
 
-(setq load-path (cons "~/cc-mode-5.00" load-path))
+(setq load-path (cons "~/cc-mode" load-path))
 
 @end example
 
@@ -215,37 +214,28 @@ warnings!}  They are the result of the supporting different versions of
 Emacs, and none of the warnings have any effect on operation. Let me say
 this again: @strong{You really can ignore all byte-compiler warnings!}
 
-To byte-compile the source files, be sure you have access to the
-@code{make(1)} program.  In a shell, execute the following commands
-(again, assuming you unpacked @ccmode{} version 5.00 in your home
-directory@footnote{Of course, the version numbers will probably be
-different.}):
+To byte-compile the source files, first @code{cd} to the directory you
+unpacked the tarball into.  Then run the following command at your shell 
+prompt:
 
 @example
 
-% cd ~/cc-mode-5.00
-% make
+% $EMACS -batch -no-site-file -q -l cc-make.el cc-*.el
 
 @end example
 
-By default, the @file{Makefile} assumes you are using XEmacs.  If you
-are using Emacs, execute this instead:
-
-@example
-
-% make EMACS=emacs
-
-@end example
+@noindent
+where $EMACS is either @code{emacs} or @code{xemacs} depending on the
+version you use.
 
 Next time you start up Emacs you should be using the latest @ccmode{}.
 You can test this by visiting a C file and hitting @kbd{M-x c-version
 RET}; you should see this message in the echo area:
 @example
 
-Using CC Mode version 5.00
+Using CC Mode version 5.XX
 
 @end example
-
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node     New Indentation Engine, Minor Modes, Getting Connected, Top
@@ -1582,6 +1572,8 @@ adjustments.
 @vindex c++-mode-hook
 @vindex objc-mode-hook
 @vindex java-mode-hook
+@vindex c-initialization-hook
+@vindex initialization-hook (c-)
 @cindex hooks
 To make your changes permanent, you need to add some lisp code to your
 @file{.emacs} file, but first you need to decide whether your styles
@@ -1609,7 +1601,8 @@ variable @code{c-style-variables-are-local-p} to @code{t}
 @ccmode{} provides several hooks that you can
 use to customize the mode according to your coding style.  Each language
 mode has its own hook, adhering to standard Emacs major mode
-conventions.  There is also one general hook:
+conventions.  There is also one general hook and one package
+initialization hook:
 
 @itemize @bullet
 
@@ -1623,6 +1616,9 @@ conventions.  There is also one general hook:
 @code{java-mode-hook} --- for Java buffers only
 @item
 @code{c-mode-common-hook} --- common across all languages
+@item
+@code{c-initialization-hook} --- hook run only once per Emacs session,
+when @ccmode{} is initialized.
 
 @end itemize
 
