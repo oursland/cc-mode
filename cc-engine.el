@@ -2161,8 +2161,10 @@ brace."
 		 (eq char-after-ip (car (cdr special-brace-list))))
 	    (goto-char (car (car special-brace-list)))
 	    (skip-chars-backward " \t")
-	    (if (bolp)
-		(setq syntax (c-guess-basic-syntax))
+	    (if (and (bolp)
+		     (not (assoc 'statement
+				 (setq placeholder (c-guess-basic-syntax)))))
+		(setq syntax placeholder)
 	      (c-beginning-of-statement-1 lim)
 	      (c-forward-token-1 0)
 	      (if (looking-at "typedef\\>") (c-forward-token-1 1))
