@@ -90,8 +90,7 @@
 		  (if (eq (char-before) ?\()
 		      (setq last-begin (point))))
 		(goto-char last-begin)
-		(setq last-begin (point)
-		      donep t)))
+		(setq donep t)))
 
 	  (setq c-maybe-labelp nil)
 	  ;; see if we're in a literal. if not, then this bufpos may be
@@ -1234,7 +1233,7 @@ brace."
 
 (defun c-looking-at-special-brace-list (&optional lim)
   ;; If we're looking at the start of a pike-style list, ie `({ })',
-  ;; `([ ])', `(< >)' etc, a cons of a cons its starting and ending
+  ;; `([ ])', `(< >)' etc, a cons of a cons of its starting and ending
   ;; positions and its entry in c-special-brace-lists is returned, nil
   ;; otherwise.  The ending position is nil if the list is still open.
   ;; LIM is the limit for forward search.  The point may either be at
@@ -1282,6 +1281,17 @@ brace."
 		    (cons (list beg) type)))))
 	(error nil))))
 
+(defun c-looking-at-bos ()
+  ;; Returns nil if inside a statement or declaration.
+  (save-excursion
+    (c-backward-syntactic-ws)
+    (or (bobp)
+	(memq (char-before) '(?\; ?}))
+	(and (eq (char-before) ?{)
+	     (not (and c-special-brace-lists
+		       (progn (backward-char)
+			      (c-looking-at-special-brace-list))))))))
+
 (defun c-looking-at-inexpr-block (&optional lim)
   ;; Returns non-nil if we're looking at the beginning of a block
   ;; inside an expression.  The value returned is actually a cons of
@@ -1307,7 +1317,12 @@ brace."
 	    (setq res
 		  (cond ((and block-follows
 			      c-inexpr-class-key
-			      (looking-at c-inexpr-class-key))
+			      (looking-at c-inexpr-class-key)
+			      (or (not (looking-at c-class-key))
+				  (progn
+				    (forward-char)
+				    (c-beginning-of-statement-1 lim)
+				    (not (c-looking-at-bos)))))
 			 (cons 'inexpr-class (point)))
 			((and c-inexpr-block-key
 			      (looking-at c-inexpr-block-key))
