@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.196 $
-;; Last Modified:   $Date: 1994-01-21 22:19:27 $
+;; Version:         $Revision: 3.197 $
+;; Last Modified:   $Date: 1994-01-21 22:36:03 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-21 22:19:27 $|$Revision: 3.196 $|
+;; |$Date: 1994-01-21 22:36:03 $|$Revision: 3.197 $|
 
 ;;; Code:
 
@@ -552,13 +552,10 @@ supported list, along with the values for this variable:
   (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
   (define-key c-mode-map "\C-c\C-b"  'c-submit-bug-report)
   (define-key c-mode-map "\C-c\C-c"  'c-comment-region)
-  (define-key c-mode-map "\C-c\C-d"  'c-down-block)
   (define-key c-mode-map "\C-c\C-h"  'c-toggle-hungry-state)
   (define-key c-mode-map "\C-c\C-o"  'c-set-offset)
   (define-key c-mode-map "\C-c\C-s"  'c-show-semantic-information)
   (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
-  ;; TBD: this keybinding will conflict with c-up-conditional
-  ;(define-key c-mode-map "\C-c\C-u"  'c-up-block)
   (define-key c-mode-map "\C-c\C-v"  'c-version)
   ;; old Emacsen need to tame certain characters
   (if (memq 'v18 c-emacs-features)
@@ -701,7 +698,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.196 $
+cc-mode Revision: $Revision: 3.197 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -732,7 +729,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.196 $
+cc-mode Revision: $Revision: 3.197 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1343,28 +1340,6 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
       (if add-p
 	  (setq c-offsets-alist (cons (cons symbol offset) c-offsets-alist))
 	(error "%s is not a valid syntactic symbol." symbol))))
-  (c-keep-region-active))
-
-(defun c-up-block (arg)
-  "Go up ARG enclosing block levels.
-With a negative ARG, go down ARG block levels."
-  (interactive "p")
-  (while (and (c-safe (progn (up-list (- arg)) t))
-	      (or (and (< 0 arg)
-		       (/= (following-char) ?{))
-		  (and (> 0 arg)
-		       (/= (preceding-char) ?}))
-		  )))
-  (c-keep-region-active))
-
-(defun c-down-block (arg)
-  "Go down ARG enclosing block levels.
-With a negative ARG, go up ARG block levels."
-  (interactive "p")
-  (c-up-block arg)
-  (if (< 0 arg)
-      (c-safe (forward-sexp 1))
-    (c-safe (backward-sexp 1)))
   (c-keep-region-active))
 
 (defun c-set-style (style &optional global)
@@ -3013,7 +2988,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.196 $"
+(defconst c-version "$Revision: 3.197 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
