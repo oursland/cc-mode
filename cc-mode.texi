@@ -21,7 +21,6 @@
 @c o  Check line lengths in TeX output; they can typically be no longer
 @c    than 70 chars, 60 if the paragraph is indented.
 
-@comment FIXME: Document the generalization of extern-lang and namespace.
 @comment FIXME: Document c-report-syntactic-errors.
 @comment FIXME: Look over the performance issues chapter.
 @comment FIXME: Document c-require-final-newline.
@@ -708,45 +707,12 @@ after a brace, but that can be controlled by the
 @defopt c-hanging-braces-alist
 @vindex hanging-braces-alist (c-)
 
-@ssindex class-open
-@ssindex class-close
-@ssindex defun-open
-@ssindex defun-close
-@ssindex inline-open
-@ssindex inline-close
-@ssindex brace-list-open
-@ssindex brace-list-close
-@ssindex brace-list-intro
-@ssindex brace-entry-open
-@ssindex block-open
-@ssindex block-close
-@ssindex statement-cont
-@ssindex substatement-open
-@ssindex statement-case-open
-@ssindex extern-lang-open
-@ssindex extern-lang-close
-@ssindex namespace-open
-@ssindex namespace-close
-@ssindex inexpr-class-open
-@ssindex inexpr-class-close
-
 This variable contains a mapping between syntactic symbols related to
 braces, and a list of places to insert a newline.  The syntactic symbols
-that are useful for this list are: @code{class-open},
-@code{class-close}, @code{defun-open}, @code{defun-close},
-@code{inline-open}, @code{inline-close}, @code{brace-list-open},
-@code{brace-list-close}, @code{brace-list-intro},
-@code{brace-entry-open}, @code{block-open}, @code{block-close},
-@code{statement-cont}, @code{substatement-open},
-@code{statement-case-open}, @code{extern-lang-open},
-@code{extern-lang-close}, @code{namespace-open}, @code{namespace-close},
-@code{inexpr-class-open}, and @code{inexpr-class-close}@footnote{Note
-that the aggregate constructs in Pike mode, @samp{(@{}, @samp{@})},
-@samp{([}, @samp{])}, and @samp{(<}, @samp{>)}, do not count as brace
-lists in this regard, even though they do for normal indentation
-purposes.  It's currently not possible to set automatic newlines on
-these constructs.}.  @xref{Syntactic Symbols}, for a more detailed
-description of these syntactic symbols, except for
+that are useful for this list are all the @code{*-open} and
+@code{*-close} symbols, and also @code{brace-list-intro} and
+@code{statement-cont}.  @xref{Syntactic Symbols}, for
+a more detailed description of these syntactic symbols, except for
 @code{inexpr-class-open} and @code{inexpr-class-close}, which aren't
 actual syntactic symbols.
 
@@ -756,6 +722,12 @@ they can be distinguished from the braces of normal classes@footnote{The
 braces of anonymous classes produce a combination of
 @code{inexpr-class}, and @code{class-open} or @code{class-close} in
 normal indentation analysis.}.
+
+Note that the aggregate constructs in Pike mode, @samp{(@{}, @samp{@})},
+@samp{([}, @samp{])}, and @samp{(<}, @samp{>)}, do not count as brace
+lists in this regard, even though they do for normal indentation
+purposes.  It's currently not possible to set automatic newlines on
+these constructs.
 
 The value associated with each syntactic symbol in this association list
 is called an @var{action}, which can be either a function or a list.
@@ -1910,7 +1882,7 @@ Submitting Bug Reports}).
 
 You can also write your own doc comment fontification support to use
 with @code{c-doc-comment-style}: Supply a variable or function
-@samp{*-font-lock-keywords} where @samp{*} is the name you want to use
+@code{*-font-lock-keywords} where @samp{*} is the name you want to use
 in @code{c-doc-comment-style}.  If it's a variable, it's prepended to
 @code{font-lock-keywords}.  If it's a function, it's called at mode
 initialization and the result is prepended.  For an example, see
@@ -3375,19 +3347,25 @@ Lines continuing an Objective-C method definition.
 @item objc-method-call-cont
 Lines continuing an Objective-C method call.
 @item extern-lang-open
-Brace that opens an external language block.
+Brace that opens an @code{extern} block (e.g. @code{extern "C" @{...@}}).
 @item extern-lang-close
-Brace that closes an external language block.
+Brace that closes an @code{extern} block.
 @item inextern-lang
-Analogous to @code{inclass} syntactic symbol, but used inside external
-language blocks (e.g. @code{extern "C" @{}).
+Analogous to @code{inclass} syntactic symbol, but used inside
+@code{extern} blocks.
 @item namespace-open
-Brace that opens a C++ namespace block.
-@item namespace-close
-Brace that closes a C++ namespace block.
-@item innamespace
-Analogous to @code{inextern-lang} syntactic symbol, but used inside C++
-namespace blocks.
+@itemx namespace-close
+@itemx innamespace
+These are analogous to the three @code{extern-lang} symbols above, but
+are returned for C++ namespace blocks.
+@item module-open
+@itemx module-close
+@itemx inmodule
+Analogous to the above, but for CORBA IDL @code{module} blocks.
+@item composition-open
+@itemx composition-close
+@itemx incomposition
+Analogous to the above, but for CORBA CIDL @code{composition} blocks.
 @item template-args-cont
 C++ template argument list continuations.
 @item inlambda
@@ -3773,30 +3751,36 @@ the @code{extern-lang-close} syntax.  The analysis for line 3 yields:
 where @code{inextern-lang} is a modifier similar in purpose to
 @code{inclass}.
 
-Similarly, C++ namespace constructs have their own associated syntactic
-symbols.  In this example:
+There are various other top level blocks like @code{extern}, and they
+are all treated in the same way except that the symbols are named after
+the keyword that introduces the block.  E.g. C++ namespace blocks get
+the three symbols @code{namespace-open}, @code{namespace-close} and
+@code{innamespace}.  The currently recognized top level blocks are:
 
-@example
- 1: namespace foo
- 2: @{
- 3:     void xxx() @{@}
- 4: @}
-@end example
+@table @asis
+@item @code{extern-lang-open}, @code{extern-lang-close}, @code{inextern-lang}
+@code{extern} blocks in C and C++.@footnote{These should logically be
+named @code{extern-open}, @code{extern-close} and @code{inextern}, but
+that isn't the case for historical reasons.}
 
+@item @code{namespace-open}, @code{namespace-close}, @code{innamespace}
 @ssindex namespace-open
 @ssindex namespace-close
 @ssindex innamespace
-@noindent
-line 2 is given the @code{namespace-open} syntax, while line 4 is given
-the @code{namespace-close} syntax.  The analysis for line 3 yields:
+@code{namespace} blocks in C++.
 
-@example
-((innamespace) (topmost-intro . 17))
-@end example
+@item @code{module-open}, @code{module-close}, @code{inmodule}
+@ssindex module-open
+@ssindex module-close
+@ssindex inmodule
+@code{module} blocks in CORBA IDL.
 
-@noindent
-where @code{innamespace} is a modifier similar in purpose to
-@code{inextern-lang} and @code{inclass}.
+@item @code{composition-open}, @code{composition-close}, @code{incomposition}
+@ssindex composition-open
+@ssindex composition-close
+@ssindex incomposition
+@code{composition} blocks in CORBA CIDL.
+@end table
 
 A number of syntactic symbols are associated with parenthesis lists,
 a.k.a argument lists, as found in function declarations and function
@@ -4422,9 +4406,7 @@ open parenthesis of the argument list, the indentation is
 @code{c-basic-offset} instead of the open paren column.  See
 @code{c-lineup-arglist} for further discussion of this ``DWIM'' measure.
 
-@workswith @code{defun-close}, @code{class-close}, @code{inline-close},
-@code{block-close}, @code{brace-list-close}, @code{arglist-close},
-@code{extern-lang-close}, @code{namespace-close}.
+@workswith All @code{*-close} symbols.
 @end defun
 
 @comment ------------------------------------------------------------
@@ -4934,8 +4916,8 @@ In the first case the indentation is kept unchanged, in the second
 
 @workswith @code{defun-close}, @code{defun-block-intro},
 @code{block-close}, @code{brace-list-close}, @code{brace-list-intro},
-@code{statement-block-intro}, @code{inclass}, @code{inextern-lang},
-@code{innamespace}.
+@code{statement-block-intro} and all @code{in*} symbols,
+e.g. @code{inclass} and @code{inextern-lang}.
 @end defun
 
 
