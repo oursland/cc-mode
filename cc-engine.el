@@ -160,6 +160,16 @@
   ;; nil then the result is nil.
   (get keyword-sym lang-constant))
 
+;; String syntax chars, suitable for skip-syntax-(forward|backward).
+(defconst c-string-syntax (if (memq 'gen-string-delim c-emacs-features)
+			      "\"|"
+			    "\""))
+
+;; Regexp matching string start syntax.
+(defconst c-string-limit-regexp (if (memq 'gen-string-delim c-emacs-features)
+				    "\\s\"\\|\\s|"
+				  "\\s\""))
+
 
 (defvar c-in-literal-cache t)
 (defvar c-parsing-error nil)
@@ -170,8 +180,8 @@
 ;; the byte compiler.
 (defvar c-maybe-labelp nil)
 
-;; 
 ;; New awk-compatible version of c-beginning-of-statement-1, ACM 2002/6/22
+
 ;; Macros used internally in c-beginning-of-statement-1 for the
 ;; automaton actions.
 (defmacro c-bos-push-state ()
@@ -1877,11 +1887,11 @@ This function does not do any hidden buffer changes."
 	     (skip-chars-forward " \t")
 
 	     (cond
-	      ((eq (char-syntax (or (char-after) ?\ )) ?\") ; String.
+	      ((looking-at c-string-limit-regexp) ; String.
 	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 				 (point-max))))
 
-	      ((looking-at "/[/*]")	; Line or block comment.
+	      ((looking-at c-comment-start-regexp) ; Line or block comment.
 	       (cons (point) (progn (c-forward-single-comment) (point))))
 
 	      (t
@@ -1890,7 +1900,8 @@ This function does not do any hidden buffer changes."
 
 	       (let ((end (point)) beg)
 		 (cond
-		  ((eq (char-syntax (or (char-before) ?\ )) ?\") ; String.
+		  ((save-excursion
+		     (< (skip-syntax-backward c-string-syntax) 0)) ; String.
 		   (setq beg (c-safe (c-backward-sexp 1) (point))))
 
 		  ((and (c-safe (forward-char -2) t)
@@ -1940,11 +1951,11 @@ This function does not do any hidden buffer changes."
 	     (skip-chars-forward " \t")
 
 	     (cond
-	      ((eq (char-syntax (or (char-after) ?\ )) ?\") ; String.
+	      ((looking-at c-string-limit-regexp) ; String.
 	       (cons (point) (or (c-safe (c-forward-sexp 1) (point))
 				 (point-max))))
 
-	      ((looking-at "/[/*]")	; Line or block comment.
+	      ((looking-at c-comment-start-regexp) ; Line or block comment.
 	       (cons (point) (progn (c-forward-single-comment) (point))))
 
 	      (t
@@ -1953,7 +1964,8 @@ This function does not do any hidden buffer changes."
 
 	       (let ((end (point)) beg)
 		 (cond
-		  ((eq (char-syntax (or (char-before) ?\ )) ?\") ; String.
+		  ((save-excursion
+		     (< (skip-syntax-backward c-string-syntax) 0)) ; String.
 		   (setq beg (c-safe (c-backward-sexp 1) (point))))
 
 		  ((and (c-safe (forward-char -2) t)
@@ -2018,7 +2030,7 @@ This function does not do any hidden buffer changes."
   (if (consp range)
       (save-excursion
 	(goto-char (car range))
-        (cond ((looking-at "\\s\"\\s|") 'string)
+	(cond ((looking-at c-string-limit-regexp) 'string)
 	      ((and (looking-at "\\s<") ; comment starter
                     (or (looking-at "//") ; c++ line comment
                         (looking-at "#"))) ; awk comment.
