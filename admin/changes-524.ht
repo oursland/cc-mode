@@ -94,6 +94,6 @@ changes in that version:
     newlines used for anonymous classes.
 
     <p><li><a href="mailto:bug-cc-mode@gnu.org">
-    mailto:bug-cc-mode@gnu.org</a> is now the primary bug reporting address.
+    bug-cc-mode@gnu.org</a> is now the primary bug reporting address.
     This is an alias for cc-mode-help@python.org.
 </ul>

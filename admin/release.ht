@@ -19,7 +19,7 @@ previous version of CC Mode (sorry no diffs are available between 5.21
 and 5.24).
 
 <p>The documentation is also available in several forms.  You can
-either <a href="cc-mode.html/Top.html">browse the on-line
+either <a href="cc-mode-html/Top.html">browse the on-line
 documentation</a> or grab one of the several
 <a href="cc-mode-manual/">pre-formatted</a> documents generated from
 the texinfo source, including PostScript, Emacs Info, and HTML
