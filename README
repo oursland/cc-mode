@@ -58,9 +58,8 @@ New indentation engine
     the construct on the line.  Each element on this list is a cons
     cell where the car is a "syntactic element symbol" such as
     `statement', and the cdr is a relative buffer position (or
-    relpos).  This relpos is the position higher up in the buffer
-    which the current line will be indented relative to.  More on this
-    below.
+    relpos).  The current line will be indented relative to this
+    position, which is higher up in the buffer. More on this below.
 
     Here's an example. Suppose we had the following code in a c++-mode
     buffer (the line numbers don't actually appear in the buffer):
@@ -113,7 +112,7 @@ New indentation engine
     algorithm.  For each cons cell in the list, the variable
     c-offsets-alist is consulted to find a matching syntactic
     symbol. c-offset-alist is an association list of all possible
-    syntactic symbols and the offsets to apply for that symbol.  That
+    syntactic symbols and the offsets to apply for that symbol.  This
     offset is added to the column of the relpos to produce the total
     indentation for the line.
 
@@ -157,8 +156,8 @@ Customizing Indentation
     want to add for every syntactic language element.  You can use the
     command C-c C-o (c-set-offset) as the way to set offsets, both
     interactively and from your mode hook.  Also, you can set up
-    "styles" of indentation.  See the c-style-alist and c-set-style
-    command for more informaton.
+    "styles" of indentation just like in standard c-mode.el.  See the
+    c-style-alist and c-set-style command for more informaton.
 
     In fact, the offset value in c-offsets-alist can be an integer, or
     it can be one of the symbols `+' or `-' indicating positive or
@@ -170,10 +169,9 @@ Customizing Indentation
 
 Getting Started
 
-    cc-mode.el works with the 3 major releases of Emacs in use: GNU
-    Emacs 18, FSF Emacs 19, and Lucid Emacs 19.  FSF 19 users will
-    want version 19.21 or better, Lucid users will want 19.6 or
-    better.
+    cc-mode.el works with the 3 major releases of Emacs in use: Emacs
+    18, FSF Emacs 19, and Lucid Emacs 19.  FSF 19 users will want
+    version 19.21 or better, Lucid users will want 19.6 or better.
 
     First thing you want to do is to byte-compile cc-mode.el.  The
     mode uses a lot of macros so if you don't byte-compile it, things
@@ -181,8 +179,8 @@ Getting Started
     WARNINGS!  They are the result of the multi-Emacs support and none
     of the warnings have any effect on operation.
 
-    Most users will probably be running an Emacs that already has
-    c-mode.el dumped, and you will not want to use c-mode.el, or older
+    Most users will probably be running an Emacs that already has bocm
+    c-mode.el dumped.  You will not want to use this, or older
     releases of c++-mode.el if you use cc-mode.el.  If your Emacs is
     dumped with either of these files you first need to make Emacs
     "forget" about those older modes by adding this to your .emacs
@@ -213,6 +211,9 @@ Getting Started
                 ("\\.h$"  . c-mode)
                ) auto-mode-alist))
 
+    You may already have some or all of these settings on your
+    auto-mode-alist.
+
     I will mention also that if you have the ability to re-compile
     Emacs, you can trash c-mode.el altogether and dump Emacs with
     cc-mode.el.  If you know what this means, you probably already
@@ -242,11 +243,11 @@ distributed with FSF Emacs 19.22).
     	c-cleanup-list
     	c-hanging-braces-alist
     	c-hanging-colons-alist
-    	c-untame-characters (GNU Emacs 18 users only)
+    	c-untame-characters (Emacs 18 users only)
     	c-special-indent-hook
     	c-delete-function
     	c-electric-pound-behavior
-    	c-backscan-limit (GNU Emacs 18 users only)
+    	c-backscan-limit (Emacs 18 users only)
 
     Expanded semantics for variables:
     	c-tab-always-indent
@@ -366,6 +367,14 @@ For more information
     the mode in greater detail.
 
 
+Requirements
+
+    cc-mode.el requires reporter.el for submission of bug reports.
+    reporter.el is distributed with the latest FSF and Lucid Emacs
+    19's.  See below for Emacs Lisp Archive anonymous ftp'ing
+    instructions for those of you who are using older Emacsen.
+
+
 Limitations and Known Bugs
 
     c++-mode does not recognize exception constructs.
@@ -377,24 +386,29 @@ Electronic Mail
 
     To report bugs, use the C-c C-b (c-submit-bug-report) command.
     This provides vital information I need to reproduce your problem.
-    Make sure you include a stripped down code example.  If you are
-    running GNU Emacs 18 you will need to pick up the reporter.el
-    package to send bug reports.  See below for Emacs Lisp Archive
-    ftp'ing information.  reporter.el comes with the latest FSF and
-    Lucid Emacs 19's.
+    Make sure you include a stripped down code example.
 
     For other help, send a message to cc-mode-help@anthem.nlm.nih.gov.
 
     To get on the beta testers list, send an add message to
     cc-mode-victims-request@anthem.nlm.nih.gov.  Note that this is a
-    fairly technical discussion list so you should be moderately emacs
+    fairly technical discussion list so you should be moderately Emacs
     lisp fluent and have anonymous ftp access.
 
     There is also an announce only list where you will get beta
     version update diffs, but will not join in the technical
-    discussions.  Still, you should have anon-ftp.  Send an add
-    message to cc-mode-announce-request@anthem.nlm.nih.gov to be added
-    to this list.
+    discussions.  You should still have anon-ftp, and you shouldn't
+    expect beta releases to be as stable as public releases.  Send an
+    add message to cc-mode-announce-request@anthem.nlm.nih.gov to be
+    added to this list.
 
 
 Here's the Emacs Lisp Archive information for reporter.el:
+
+	 GNU Emacs Lisp Code Directory Apropos -- "reporter"
+"~/" refers to archive.cis.ohio-state.edu:/pub/gnu/emacs/elisp-archive/
+
+reporter (1.23)	      02-Feb-1993
+     Barry A. Warsaw, <bwarsaw@cen.com>
+     ~/misc/reporter.el.Z
+     Customizable bug reporting of lisp programs.
