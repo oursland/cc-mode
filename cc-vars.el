@@ -837,8 +837,9 @@ can always override the use of `c-default-style' by making calls to
        ;; for statement: At the first token after the starting paren.
        ;; On the first line in a continued expression that starts with
        ;; a stream op and there's no stream op on the previous line:
-       ;; Boi of previous line.  Otherwise: Boi at the beginning of
-       ;; the statement, but after any type of label.
+       ;; Boi of previous line.  Otherwise: At the containing
+       ;; statement, after backing up over any preceding labels and
+       ;; the "else" of an "else if" that are on the same line.
        (statement-block-intro . +)
        ;; Relpos: At the block start if it's at boi, otherwise boi at
        ;; the start of the statement the open brace hangs on, or boi
@@ -848,9 +849,13 @@ can always override the use of `c-default-style' by making calls to
        (statement-case-open   . 0)
        ;; Relpos: At the label keyword (always at boi).
        (substatement          . +)
-       ;; Relpos: Boi at the containing statement or else clause.
+       ;; Relpos: At the containing statement, after backing up over
+       ;; any preceding labels and the "else" of an "else if" that are
+       ;; on the same line.
        (substatement-open     . +)
-       ;; Relpos: Boi at the containing statement or else clause.
+       ;; Relpos: At the containing statement, after backing up over
+       ;; any preceding labels and the "else" of an "else if" that are
+       ;; on the same line.
        (case-label            . 0)
        ;; Relpos: At the switch block start if it's at boi, otherwise
        ;; boi at the start of the switch condition clause.
