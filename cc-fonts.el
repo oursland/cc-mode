@@ -586,14 +586,14 @@ tools (e.g. Javadoc).")
 	    ;; beginning of an initializer or function prototype ("="
 	    ;; or "\\s\(").
 	    (c-syntactic-re-search-forward
-	     "\\(\\)\\([;,\{\[]\\|\\s\)\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)\\)"
-	     limit t 1 t t))
+	     "[;,\{\[]\\|\\s\)\\|\\'\\|\\(=\\|\\(\\s\(\\)\\)"
+	     limit t t t))
 
       (setq id-end (match-beginning 0)
-	    id-face (if (match-beginning 4)
+	    id-face (if (match-beginning 2)
 			'font-lock-function-name-face
 		      'font-lock-variable-name-face)
-	    got-init (match-beginning 3))
+	    got-init (match-beginning 1))
 
       ;; Fontify the qualified identifier within the type decl
       ;; expression.
@@ -624,7 +624,7 @@ tools (e.g. Javadoc).")
 
 	    (got-init
 	     ;; Skip an initializer expression.
-	     (if (c-syntactic-re-search-forward "[;,]" limit 'move 1 t)
+	     (if (c-syntactic-re-search-forward "[;,]" limit 'move t)
 		 (backward-char)))
 
 	    (t (c-forward-syntactic-ws limit)))

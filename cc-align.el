@@ -618,14 +618,14 @@ Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
 	(when (c-syntactic-re-search-forward
 	       ;; This regexp avoids matches on ==.
 	       "\\(\\=\\|[^=]\\)=\\([^=]\\|$\\)"
-	       (c-point 'eol) t 1 t)
+	       (c-point 'eol) t t)
 	  (setq equalp (- (match-beginning 2) (c-point 'boi))))))
 
     (save-excursion
       (goto-char startpos)
       (if (or (if (c-syntactic-re-search-forward
 		   "\\(\\=\\|[^=]\\)=\\([^=]\\|$\\)"
-		   (min endpos (c-point 'eol)) t 1 t)
+		   (min endpos (c-point 'eol)) t t)
 		  (progn
 		    (goto-char (match-beginning 2))
 		    nil)

@@ -1085,8 +1085,7 @@ defun."
 		     ;; Check if the declaration contains a brace
 		     ;; block.  If not, we try another one.
 		     (setq pos (point))
-		     (not (and (c-syntactic-re-search-forward
-				"[;{]" nil t 1 t)
+		     (not (and (c-syntactic-re-search-forward "[;{]" nil t t)
 			       (or (eq (char-before) ?{)
 				   (and c-recognize-knr-p
 					;; Might have stopped on the
@@ -1194,7 +1193,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 		       ;; block.  If not, we try another one.
 		       (setq pos (point))
 		       (goto-char start)
-		       (not (c-syntactic-re-search-forward "{" pos t 1 t))))))
+		       (not (c-syntactic-re-search-forward "{" pos t t))))))
 
 	  (setq pos (point))
 	  ;; Try to be line oriented; position point after the next
