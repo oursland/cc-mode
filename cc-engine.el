@@ -1330,9 +1330,11 @@ you need both the type of a literal and its limits."
 ;; most effective if `c-parse-state' is used on each line while moving
 ;; forward.
 
-(defvar c-state-cache-start nil)
-;; This (point-min) when `c-state-cache' was calculated, to detect
-;; that the start point hasn't changed due to narrowing.
+(defvar c-state-cache-start 1)
+(make-variable-buffer-local 'c-state-cache-start)
+;; This is (point-min) when `c-state-cache' was calculated, since a
+;; change of narrowing is likely to affect the parens that are visible
+;; before the point.
 
 (defun c-parse-state ()
   ;; Finds and records all noteworthy parens between some good point
@@ -1360,6 +1362,27 @@ you need both the type of a literal and its limits."
       ;; part of the state cache that is after point.  Can't use
       ;; c-whack-state-after for the same reasons as in that function.
       (c-check-state-cache (point) nil nil)
+
+      ;; If the minimum position has changed due to narrowing then we
+      ;; have to fix the tail of `c-state-cache' accordingly.
+      (unless (= c-state-cache-start (point-min))
+	(if (> (point-min) c-state-cache-start)
+	    ;; If point-min has moved forward then we just need to cut
+	    ;; off a bit of the tail.
+	    (let ((ptr (cons nil c-state-cache)) elem)
+	      (while (and (setq elem (cdr ptr))
+			  (>= (if (consp elem) (car elem) elem)
+			      (point-min)))
+		(setq ptr elem))
+	      (when (consp ptr)
+		(if (eq (cdr ptr) c-state-cache)
+		    (setq c-state-cache nil)
+		  (setcdr ptr nil))))
+	  ;; If point-min has moved backward then we drop the state
+	  ;; completely.  It's possible to do a better job here and
+	  ;; recalculate the top only.
+	  (setq c-state-cache nil))
+	(setq c-state-cache-start (point-min)))
 
       ;; Get the latest position we know are directly inside the
       ;; closest containing paren of the cached state.
@@ -1534,16 +1557,13 @@ you need both the type of a literal and its limits."
   ;; paren pair element into an open paren element.  Doing that would
   ;; mean that the new open paren wouldn't have the required preceding
   ;; paren pair element.
-  (if (not (eq c-state-cache-start (point-min)))
-      (setq c-state-cache-start (point-min)
-	    c-state-cache nil)
-    (while (and c-state-cache
-		(let ((elem (car c-state-cache)))
-		  (if (consp elem)
-		      (or (<= beg (car elem))
-			  (< beg (cdr elem)))
-		    (<= beg elem))))
-      (setq c-state-cache (cdr c-state-cache)))))
+  (while (and c-state-cache
+	      (let ((elem (car c-state-cache)))
+		(if (consp elem)
+		    (or (<= beg (car elem))
+			(< beg (cdr elem)))
+		  (<= beg elem))))
+    (setq c-state-cache (cdr c-state-cache))))
 
 (defun c-whack-state-before (bufpos paren-state)
   ;; Whack off any state information from PAREN-STATE which lies
@@ -3056,11 +3076,12 @@ in Pike) then the point for the preceding one is returned."
 	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class paren-state
 						      indent-point))
-	     ;; c-state-cache is shadowed here.  That means we must
-	     ;; not do any changes during the execution of this
-	     ;; function, since c-check-state-cache then would change
-	     ;; this local variable and leave a bogus value in the
-	     ;; global one.
+	     ;; `c-state-cache' is shadowed here so that we don't
+	     ;; throw it away due to the narrowing that might be done
+	     ;; by the function above.  That means we must not do any
+	     ;; changes during the execution of this function, since
+	     ;; `c-check-state-cache' then would change this local
+	     ;; variable and leave a bogus value in the global one.
 	     (c-state-cache (if inclass-p
 				(c-whack-state-before (point-min) paren-state)
 			      paren-state))
