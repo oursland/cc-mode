@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.172 $
-;; Last Modified:   $Date: 1994-01-08 03:15:06 $
+;; Version:         $Revision: 3.173 $
+;; Last Modified:   $Date: 1994-01-08 03:20:49 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -82,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-08 03:15:06 $|$Revision: 3.172 $|
+;; |$Date: 1994-01-08 03:20:49 $|$Revision: 3.173 $|
 
 ;;; Code:
 
@@ -652,7 +652,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.172 $
+CC-MODE REVISION: $Revision: 3.173 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -686,7 +686,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.172 $
+CC-MODE REVISION: $Revision: 3.173 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1001,11 +1001,13 @@ point is inside a literal, nothing special happens."
       ;; do nothing special
       (self-insert-command (prefix-numeric-value arg))
     ;; place the pound character at the left edge
-    (let ((pos (- (point-max) (point))))
+    (let ((pos (- (point-max) (point)))
+	  (bolp (bolp)))
       (beginning-of-line)
       (delete-horizontal-space)
       (insert-char last-command-char 1)
-      (goto-char (- (point-max) pos))
+      (and (not bolp)
+	   (goto-char (- (point-max) pos)))
       )))
 
 (defun c-electric-brace (arg)
@@ -2972,7 +2974,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.172 $"
+(defconst c-version "$Revision: 3.173 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
