@@ -771,8 +771,7 @@ comment."
 ;; advice for indent-new-comment-line for older Emacsen
 (if (not (boundp 'comment-line-break-function))
     (defadvice indent-new-comment-line (around c-line-break-advice activate)
-      (if (or (not (memq major-mode '(c-mode c++-mode objc-mode
-					     java-mode idl-mode)))
+      (if (or (not c-buffer-is-cc-mode)
 	      (not c-comment-continuation-stars))
 	  ad-do-it
 	(c-comment-line-break-function (ad-get-arg 0)))))
