@@ -1,3 +1,114 @@
+Mon Jan 27 18:55:02 1997  Barry A. Warsaw  <bwarsaw@cnri.reston.va.us>
+
+	* Public Release 4.353
+
+Mon Jan 27 16:25:57 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-guess-basic-syntax):
+	CASE 15D: do not assume that boi of previous
+	statement is the beginning of a statement.
+
+Wed Jan 22 23:42:59 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el:
+	Removed the require of imenu.  This currently breaks in XEmacs if you
+	have imenu around (which hasn't been completely ported yet), and I
+	think it's no longer necessary for Emacs.
+
+Tue Jan 21 20:47:23 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-cleanup-list, c-electric-brace):
+	New clean-up option: brace-elseif-brace.
+
+	* cc-mode.el (c-style-variables-are-local-p):
+	New variable which controls whether
+	indentation style variable are buffer local are not.  By default, for
+	backwards compatibility, this variable is t.
+
+Tue Jan  7 23:53:43 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-Java-access-key):
+	set to nil since Java doesn't have C++-like
+	access labels.
+
+Mon Jan  6 23:03:21 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.texi: Document new built-in styles.
+
+	* cc-mode.el (c-style-alist): Added "python" style.
+
+Thu Jan  2 21:13:52 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-mode-menu): New function
+
+	(c-popup-menu, c-common-init): use new function to handle XEmacs menus
+	better (uses add-submenu where appropriate).
+
+Tue Dec 24 18:55:10 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-lineup-C-comments):
+	A much better implementation that handles all
+	common star-prefixed block comment styles (see below).
+
+	(c-block-comments-indent-p): obsolete and removed.
+
+	int main()
+	{
+	    /*
+	     *
+	     */
+
+	    /*
+	    **
+	    **
+	    */
+
+	    /**
+	     **
+	     **
+	     **/
+
+	    /***
+	     ***
+	     ***
+	     ***
+	     ***/
+
+	    /**
+	    ***
+	    ***
+	    **/
+	}
+
+	* cc-mode.el (c-indentation-style):
+	take default value from c-site-default-style.
+
+Mon Dec 23 23:48:26 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (adaptive-fill-regexp):
+	For all but XEmacs 19.13, the default should
+	be nil.
+
+Thu Dec 19 21:10:35 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-emacs-features): detect Infodock.
+
+	(c-common-init, c-mode-map): Don't install menus for Infodock.
+
+	* cc-mode.el (c-indent-exp):
+	fixed infinite loop when multi-line C comment is last
+	thing in buffer.
+
+	(c-guess-basic-offset): fixed error when K&R C-like macro is first
+	non-syntactic whitespace in file.
+
+	* cc-mode.el (c-C++-comment-start-regexp):
+	use a more efficient representation.
+
+Tue Dec 10 20:32:21 1996  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-buffer-style): New variable.
+
 Fri Oct  4 19:10:15 1996  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Public Release 4.322
