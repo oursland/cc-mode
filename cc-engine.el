@@ -932,62 +932,60 @@ This function does not do any hidden buffer changes."
   '((t (:underline t)))
   "Debug face to mark the `c-in-sws' property.")
 
-(defun c-debug-add-face (beg end face)
-  (let ((overlays (overlays-in beg end)) overlay)
-    (while overlays
-      (setq overlay (car overlays)
-	    overlays (cdr overlays))
-      (when (eq (overlay-get overlay 'face) face)
-	(setq beg (min beg (overlay-start overlay))
-	      end (max end (overlay-end overlay)))
-	(delete-overlay overlay)))
-    (overlay-put (make-overlay beg end) 'face face)))
+; (defun c-debug-add-face (beg end face)
+;   (let ((overlays (overlays-in beg end)) overlay)
+;     (while overlays
+;       (setq overlay (car overlays)
+; 	    overlays (cdr overlays))
+;       (when (eq (overlay-get overlay 'face) face)
+; 	(setq beg (min beg (overlay-start overlay))
+; 	      end (max end (overlay-end overlay)))
+; 	(delete-overlay overlay)))
+;     (overlay-put (make-overlay beg end) 'face face)))
 
-(defun c-debug-remove-face (beg end face)
-  (let ((overlays (overlays-in beg end)) overlay
-	(ol-beg beg) (ol-end end))
-    (while overlays
-      (setq overlay (car overlays)
-	    overlays (cdr overlays))
-      (when (eq (overlay-get overlay 'face) face)
-	(setq ol-beg (min ol-beg (overlay-start overlay))
-	      ol-end (max ol-end (overlay-end overlay)))
-	(delete-overlay overlay)))
-    (when (< ol-beg beg)
-      (overlay-put (make-overlay ol-beg beg) 'face face))
-    (when (> ol-end end)
-      (overlay-put (make-overlay end ol-end) 'face face))))
+; (defun c-debug-remove-face (beg end face)
+;   (let ((overlays (overlays-in beg end)) overlay
+; 	(ol-beg beg) (ol-end end))
+;     (while overlays
+;       (setq overlay (car overlays)
+; 	    overlays (cdr overlays))
+;       (when (eq (overlay-get overlay 'face) face)
+; 	(setq ol-beg (min ol-beg (overlay-start overlay))
+; 	      ol-end (max ol-end (overlay-end overlay)))
+; 	(delete-overlay overlay)))
+;     (when (< ol-beg beg)
+;       (overlay-put (make-overlay ol-beg beg) 'face face))
+;     (when (> ol-end end)
+;       (overlay-put (make-overlay end ol-end) 'face face))))
 
-(defsubst c-put-is-sws (beg end)
-  (put-text-property beg end 'c-is-sws t)
-  ;;(c-debug-add-face beg end 'c-debug-is-sws-face)
-  )
-
-(defsubst c-put-in-sws (beg end)
-  (put-text-property beg end 'c-in-sws t)
-  ;;(c-debug-add-face beg end 'c-debug-in-sws-face)
-  )
-
-(defsubst c-put-is-and-in-sws (beg end)
-  (add-text-properties beg end '(c-is-sws t c-in-sws t))
-  ;;(c-debug-add-face beg end 'c-debug-is-sws-face)
-  ;;(c-debug-add-face beg end 'c-debug-in-sws-face)
-  )
-
-(defsubst c-remove-is-sws (beg end)
-  (remove-text-properties beg end '(c-is-sws nil))
-  ;;(c-debug-remove-face beg end 'c-debug-is-sws-face)
-  )
-
-(defsubst c-remove-is-and-in-sws (beg end)
-  (remove-text-properties beg end '(c-is-sws nil c-in-sws nil))
-  ;;(c-debug-remove-face beg end 'c-debug-is-sws-face)
-  ;;(c-debug-remove-face beg end 'c-debug-in-sws-face)
-  )
+(defmacro c-debug-add-face (beg end face))
+(defmacro c-debug-remove-face (beg end face))
 
 (defmacro c-debug-sws-msg (&rest args)
   ;;`(message ,@args)
   )
+
+(defsubst c-put-is-sws (beg end)
+  (put-text-property beg end 'c-is-sws t)
+  (c-debug-add-face beg end 'c-debug-is-sws-face))
+
+(defsubst c-put-in-sws (beg end)
+  (put-text-property beg end 'c-in-sws t)
+  (c-debug-add-face beg end 'c-debug-in-sws-face))
+
+(defsubst c-put-is-and-in-sws (beg end)
+  (add-text-properties beg end '(c-is-sws t c-in-sws t))
+  (c-debug-add-face beg end 'c-debug-is-sws-face)
+  (c-debug-add-face beg end 'c-debug-in-sws-face))
+
+(defsubst c-remove-is-sws (beg end)
+  (remove-text-properties beg end '(c-is-sws nil))
+  (c-debug-remove-face beg end 'c-debug-is-sws-face))
+
+(defsubst c-remove-is-and-in-sws (beg end)
+  (remove-text-properties beg end '(c-is-sws nil c-in-sws nil))
+  (c-debug-remove-face beg end 'c-debug-is-sws-face)
+  (c-debug-remove-face beg end 'c-debug-in-sws-face))
 
 (defsubst c-invalidate-sws-region (beg end)
   ;; Called from `after-change-functions'.  Note that if
