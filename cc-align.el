@@ -29,10 +29,13 @@
 ;; Boston, MA 02111-1307, USA.
 
 (eval-when-compile
-  (require 'cc-defs)
-  (require 'cc-vars)
-  (require 'cc-engine)
-  (require 'cc-langs))
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+(require 'cc-engine)
 
 
 ;; Standard indentation line-ups

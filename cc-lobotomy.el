@@ -54,10 +54,15 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cc-defs))
-
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
 (require 'cc-mode)
 
+
 (defvar cc-lobotomy-pith-list ()
   "*List of things to dumb-ify to speed up cc-mode.  Note that each
 incurs a penalty in correct identification of certain code constructs.

@@ -41,8 +41,15 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cc-defs))
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+(require 'cc-engine)
 
+
 (defvar cc-guessed-style nil
   "Currently guessed style.")
 

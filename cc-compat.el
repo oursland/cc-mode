@@ -40,9 +40,14 @@
 ;;; Code:
 
 (eval-when-compile
-  (require 'cc-defs)
-  (require 'cc-styles)
-  (require 'cc-engine))
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+(require 'cc-styles)
+(require 'cc-engine)
 
 
 ;; In case c-mode.el isn't loaded

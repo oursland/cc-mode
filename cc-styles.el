@@ -28,10 +28,14 @@
 ;; Free Software Foundation, Inc., 59 Temple Place - Suite 330,
 ;; Boston, MA 02111-1307, USA.
 
-
-;; explicit compile-time dependencies
 (eval-when-compile
-  (require 'cc-defs))
+  (let ((load-path
+	 (if (boundp 'byte-compile-current-file)
+	     (cons (file-name-directory byte-compile-current-file)
+		   load-path)
+	   load-path)))
+    (load "cc-defs" nil t)))
+(require 'cc-vars)
 
 
 ;; Warning: don't eval-defun this constant or you'll break style inheritance.
