@@ -105,7 +105,9 @@
 (require 'font-lock)
 
 
-;;; Common things between the languages.
+;; Note that XEmacs doesn't expand face names as variables, so we have
+;; to use the (eval . FORM) in the font lock matchers wherever we use
+;; these alias variables.
 
 (defvar c-doc-face
   (cond ((c-face-name-p 'font-lock-doc-string-face)
@@ -166,22 +168,22 @@
 	(let ((nstate (parse-partial-sexp (point) (c-point 'eol)
                                           nil nil state 'syntax-table)))
 	  (if (and (eolp)
-		   (nth 3 nstate)
+		   (elt nstate 3)
 		   ;; We're at eol inside a string.
 		   (if (c-major-mode-is '(c-mode c++-mode objc-mode pike-mode))
 		       ;; There's no \ before the newline.
-		       (not (nth 5 nstate))
+		       (not (elt nstate 5))
 		     ;; Quoted newlines aren't supported.
 		     t)
 		   (if (c-major-mode-is 'pike-mode)
 		       ;; There's no # before the string, so newlines
 		       ;; aren't allowed.
-		       (not (eq (char-before (nth 8 state)) ?#))
+		       (not (eq (char-before (elt state 8)) ?#))
 		     t))
               ;; We're inside a string, at EOL and there was no \.
 	      c-invalid-face
             font-lock-string-face))
-      (goto-char (nth 8 state))
+      (goto-char (elt state 8))
       (if (looking-at c-doc-comment-start-regexp)
 	  c-doc-face
 	font-lock-comment-face))))
@@ -219,18 +221,20 @@
 
       ;; Fontify symbol names in #elif or #if ... defined preprocessor
       ;; directives.
-      (,(concat (c-lang-var c-cpp-prefix) "\\(if\\|elif\\)\\>")
-       (,(concat "\\<\\("		; 1
-		 ;; Don't use regexp-opt here to avoid the depth hazzle.
-		 ;; As it happens, it wouldn't currently have any effect
-		 ;; anyway.
-		 (mapconcat 'regexp-quote
-			    (c-lang-var c-cpp-defined-fns) "\\|")
-		 "\\)\\>"
-		 "\\s *\(?\\(" (c-lang-var c-symbol-key) "\\)?") ; 2
-	nil nil
-	(1 c-preprocessor-face)
-	(2 font-lock-variable-name-face nil t)))
+      (eval . (list
+	       ,(concat (c-lang-var c-cpp-prefix) "\\(if\\|elif\\)\\>")
+	       (list
+		,(concat "\\<\\("	; 1
+			 ;; Don't use regexp-opt here to avoid the
+			 ;; depth hazzle.  As it happens, it currently
+			 ;; wouldn't have any effect anyway.
+			 (mapconcat 'regexp-quote
+				    (c-lang-var c-cpp-defined-fns) "\\|")
+			 "\\)\\>"
+			 "\\s *\(?\\(" (c-lang-var c-symbol-key) "\\)?") ; 2
+		nil nil
+		(list 1 c-preprocessor-face)
+		'(2 font-lock-variable-name-face nil t))))
 
       ;; Fontify symbols after #ifdef and #ifndef.
       (,(concat (c-lang-var c-cpp-prefix)
@@ -238,75 +242,58 @@
        1 font-lock-variable-name-face)
 
       ;; Fontify the directive names.
-      (,(concat (c-lang-var c-cpp-prefix) "[a-z]+")
-       0 c-preprocessor-face)
+      (eval . (list
+	       ,(concat (c-lang-var c-cpp-prefix) "[a-z]+")
+	       0 c-preprocessor-face))
       )))
 
-(defvar c-primitive-types-depth nil)
-;; `c-get-primitive-types' sets this to the parenthesis count of the
-;; regexp it returns.
+(defun c-font-lock-labels (limit)
+  ;; Fontify all the declarations from the point to LIMIT.  Assumes
+  ;; that strings and comments have been fontified already.  This
+  ;; function does both the search and the fontification itself to
+  ;; avoid differences between the (X)Emacs flavors in where they
+  ;; continue the search after a match.
 
-(defun c-get-primitive-types ()
-  ;; Returns the union of `c-primitive-type-kwds',
-  ;; `c-complex-type-kwds' and the appropriate *-font-lock-extra-types
-  ;; variable.  The first submatch is the one that matches the type.
-  (let* ((extra-types (cond ((c-major-mode-is 'c-mode)
-			     c-font-lock-extra-types)
-			    ((c-major-mode-is 'c++-mode)
-			     c++-font-lock-extra-types)
-			    ((c-major-mode-is 'objc-mode)
-			     objc-font-lock-extra-types)
-			    ((c-major-mode-is 'java-mode)
-			     java-font-lock-extra-types)
-			    ((c-major-mode-is 'idl-mode)
-			     idl-font-lock-extra-types)
-			    ((c-major-mode-is 'pike-mode)
-			     pike-font-lock-extra-types)))
-	 (re (concat
-	      "\\<\\("
-	      (c-make-keywords-re nil (c-lang-var c-type-kwds))
-	      (if (consp extra-types)
-		  (concat "\\|" (mapconcat 'identity extra-types "\\|"))
-		"")
-	      "\\)\\>")))
-    (setq c-primitive-types-depth (c-regexp-opt-depth re))
-    re))
+  (while (re-search-forward ":[^:]" limit t)
 
-(defun c-font-lock-find-label (limit)
-  ;; Find the next normal label.  This uses earlier font locking.
-  (catch 'found
-    (while (re-search-forward ":[^:]" limit t)
-      (unless
-	  ;; Ignore hits inside highlighted stuff.
-	  (get-text-property (match-beginning 0) 'face)
-	(save-excursion
-	  (let (id-start)
-	    (goto-char (match-beginning 0))
-	    (c-backward-syntactic-ws)
-	    (and (setq id-start (c-on-identifier))
-		 (progn
-		   (goto-char id-start)
-		   (c-backward-syntactic-ws)
-		   (or
-		    ;; Check for a char that precedes a statement.
-		    (memq (char-before) '(?\} ?\{ ?\) ?\;))
-		    ;; Check for a preceding label.  We exploit the
-		    ;; font locking made by a previous call to this
-		    ;; function.
-		    (and (eq (char-before) ?:)
-			 (progn
-			   (backward-char)
-			   (c-backward-syntactic-ws)
-			   (not (bobp)))
-			 (eq (get-text-property (1- (point)) 'face)
-			     c-label-face))
-		    ;; Check for a keyword that precedes a statement.
-		    (c-after-conditional)))
-		 (progn
-		   ;; Got a label.  Set up match data.
-		   (goto-char id-start)
-		   (looking-at c-symbol-key)
-		   (throw 'found t)))))))))
+    (if (get-text-property (match-beginning 0) 'face)
+	;; Ignore hits inside highlighted stuff.
+	(goto-char (next-single-property-change (point) 'face nil limit))
+
+      (save-excursion
+	(let (id-start)
+	  (goto-char (match-beginning 0))
+	  (c-backward-syntactic-ws)
+	  (and (setq id-start (c-on-identifier))
+
+	       (progn
+		 (goto-char id-start)
+		 (c-backward-syntactic-ws)
+		 (or
+		  ;; Check for a char that precedes a statement.
+		  (memq (char-before) '(?\} ?\{ ?\) ?\;))
+		  ;; Check for a preceding label.  We exploit the font
+		  ;; locking made earlier by this function.
+		  (and (eq (char-before) ?:)
+		       (progn
+			 (backward-char)
+			 (c-backward-syntactic-ws)
+			 (not (bobp)))
+		       (eq (get-text-property (1- (point)) 'face)
+			   c-label-face))
+		  ;; Check for a keyword that precedes a statement.
+		  (c-after-conditional)))
+
+	       (progn
+		 ;; Got a label.
+		 (goto-char id-start)
+		 (looking-at c-symbol-key)
+		 (put-text-property (match-beginning 1) (match-end 1)
+				    'face c-label-face))))))))
+
+;; The compiler might complain about this variable when the lambda
+;; below is byte compiled.
+(cc-bytecomp-defvar c-label-face)
 
 (c-lang-defconst c-basic-matchers
   ;; Font lock matchers for basic keywords, labels, references and
@@ -319,29 +306,55 @@
 	;; Fontify labels in languages that supports them.
 	,@(when (c-lang-var c-label-key)
 	    `(;; Fontify goto targets and case labels.
-	      (,(concat "\\<\\("
-			(c-make-keywords-re nil
-			  (c-lang-var c-before-label-kwds))
-			"\\)\\>")
-	       (,(concat "\\(-[0-9]+\\)\\|" (c-lang-var c-symbol-key))
-		;; Return limit of search.
-		(save-excursion (skip-chars-forward "^:\n") (point))
-		nil
-		(1 c-label-face nil t)
-		(2 c-label-face nil t)))
+	      (eval . (list
+		       ,(concat "\\<\\("
+				(c-make-keywords-re nil
+				  (c-lang-var c-before-label-kwds))
+				"\\)\\>[^:\n\r]*")
+		       (list
+			;; Fontify all integers and symbols between
+			;; (match-end 1) and (match-end 0) as labels.
+			;; (This is possible to do with a normal
+			;; anchored matcher in Emacs >= 20 and XEmacs
+			;; >= 21 where the PRE-MATCH-FORM can override
+			;; the limit.)
+			,(byte-compile
+			  `(lambda (limit)
+			     (setq limit (match-end 0))
+			     (goto-char (match-end 1))
+			     (while (re-search-forward
+				     ,(concat "\\(-?[0-9]+\\)\\|\\("
+					      (c-lang-var c-symbol-key)
+					      "\\)")
+				     limit 'move)
+			       (if (match-beginning 1)
+				   (put-text-property (match-beginning 1)
+						      (match-end 1)
+						      'face c-label-face)
+				 (put-text-property (match-beginning 3)
+						    (match-end 3)
+						    'face c-label-face))))))))
 
 	      ;; Fontify normal labels.
-	      (c-font-lock-find-label
-	       1 c-label-face)))
+	      c-font-lock-labels))
 
-	;; FIXME: References like "foo::bar".
+	;; Fontify leading identifiers in fully qualified names like
+	;; "foo::bar" in languages that supports such things.
+	,@(when (c-lang-var c-identifier-concat-key)
+	    `((,(concat "\\<"
+			(c-lang-var c-symbol-key)
+			"[ \t\n\r]*"
+			(c-lang-var c-identifier-concat-key))
+	       1 font-lock-reference-face)))
 	))
 
-(defun c-font-lock-declarators (limit)
+(defun c-font-lock-declarators (limit list)
   ;; Assuming the point is at the first declarator in a declaration,
-  ;; fontify it and all following declarators in the declaration
-  ;; (e.g. "foo" and "bar" in "int foo = 17, bar;") up to LIMIT.
+  ;; fontify it.  If LIST is non-nil, fontify also all following
+  ;; declarators in a comma separated list (e.g.  "foo" and "bar" in
+  ;; "int foo = 17, bar;").  Stop at LIMIT.
 
+  ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (let ((id-start (point)) id-end id-face got-init)
     (while (and
 	    id-start
@@ -383,7 +396,7 @@
 	     ;; Skip a parenthesized initializer (C++) or a function
 	     ;; prototype.
 	     (if (c-safe (c-forward-sexp 1) t)
-		 (c-forward-syntactic-ws)
+		 (c-forward-syntactic-ws limit)
 	       (goto-char limit)))
 
 	    (got-init
@@ -391,45 +404,47 @@
 	     (if (c-syntactic-re-search-forward "[;,]" limit 'move 1 t)
 		 (backward-char)))
 
-	    (t (c-forward-syntactic-ws)))
+	    (t (c-forward-syntactic-ws limit)))
 
-      ;; If we've arrived at a comma we assume that it continues a
-      ;; declaration list so we set id-start to the next declarator
-      ;; and iterate.
-      ;;
-      ;; In e.g. function prototypes comma separates declarations
-      ;; instead, so we might fontify the type in the following
-      ;; declaration as an identifier.  `c-font-lock-declarations'
-      ;; will correct that later, though.  We could look at the
-      ;; surrounding paren to avoid this, but it's too expensive to
-      ;; find it.
-      (if (looking-at ",")
+      ;; Check for a comma if LIST is set.  If one is found we set
+      ;; id-start to the next declarator and iterate.
+      (if (and list (< (point) limit) (looking-at ","))
 	  (progn
 	    (forward-char)
-	    (c-forward-syntactic-ws)
+	    (c-forward-syntactic-ws limit)
 	    (setq id-start (point)))
 	(setq id-start nil)))))
 
 (defun c-font-lock-type (start end)
   ;; Fontify the individual identifiers within the given region with
   ;; the type face.  They're taken as all symbols that aren't
-  ;; fontified as keywords.  Note that we want to override function or
-  ;; variable name faces here, since those might be put on by an
-  ;; earlier `c-font-lock-declarators' call which got confused by a
-  ;; comma.  Point is left at the end of the region on return.
+  ;; fontified as keywords or references.  Note that we want to
+  ;; override function or variable name faces here, since those might
+  ;; be put on by an earlier `c-font-lock-declarators' call which got
+  ;; confused by a comma.  Point is left at the end of the region on
+  ;; return.
+
+  ;;(message "c-font-lock-type from %s to %s" start end)
   (goto-char start)
   (while (c-syntactic-re-search-forward c-symbol-key end 'move)
-    (unless (eq (get-text-property (match-beginning 1) 'face)
-		'font-lock-keyword-face)
+    (unless (get-text-property (match-beginning 1) 'face)
       (put-text-property (match-beginning 1) (match-end 1)
 			 'face 'font-lock-type-face))))
 
 (defun c-font-lock-declarations (limit)
-  ;; Font lock all the declarations from the point to LIMIT.  Assumes
-  ;; strings, comments and nontype keywords have been fontified
+  ;; Fontify all the declarations from the point to LIMIT.  Assumes
+  ;; that strings, comments and nontype keywords have been fontified
   ;; already.  This function does both the search and the
   ;; fontification itself, since it's cumbersome to generate the
   ;; proper sequence of match limits that font-lock normally acts on.
+
+  ;;(message "c-font-lock-declarations search from %s to %s" (point) limit)
+
+  ;; Clear the list of found types if we start from the start of the
+  ;; buffer, to make it easier to get rid of misspelled types and
+  ;; variables that has gotten recognized as types in malformed code.
+  (when (= (point) (point-min))
+    (c-clear-found-types))
 
   (save-restriction
     ;; Narrow to the limit to deliberately fail to fontify
@@ -449,12 +464,43 @@
     ;; Must back up a bit since we look for the end of the previous
     ;; statement or declaration, which is earlier than the first
     ;; returned match.
+    (when (memq (get-text-property (point) 'face)
+		'(font-lock-comment-face font-lock-string-face))
+      ;; But first we need to move to a syntactically relevant
+      ;; position.
+      (goto-char (previous-single-property-change (min (1+ (point)) limit)
+						  'face nil (point-min))))
     (c-backward-syntactic-ws)
     (c-safe (backward-char))
 
     (let ((match (or (bobp)
-		     (re-search-forward c-decl-prefix-re limit 'move)))
-	  type-start type-end at-type)
+		     ;; We always consider bob as a match to get the
+		     ;; first declaration in the file, but we have to
+		     ;; step past initial comments to avoid that the
+		     ;; match-inside-comment-or-string-literal code
+		     ;; kicks in.
+		     (progn (c-forward-comments)
+			    t)
+		   (re-search-forward c-decl-prefix-re limit 'move)))
+	  continue-pos
+	  ;; Nonzero if `c-decl-prefix-re' matches inside a function
+	  ;; arglist, i.e. if it matches '(' or ','.
+	  arglist-match
+	  ;; Set to the result of `c-forward-type'.
+	  at-type
+	  ;; These record the start and end of the type or possible
+	  ;; type found by `c-forward-type'.
+	  type-start type-end
+	  ;; These store `at-type', `type-start' and `type-end' of the
+	  ;; identifier before the one in those variables.  The
+	  ;; previous identifier might turn out to be the real type in
+	  ;; a declaration if the last one has to be the declarator in
+	  ;; it.  If `prev-at-type' is nil then the other variables
+	  ;; have undefined values.
+	  prev-at-type prev-type-start prev-type-end
+	  ;; Whether we've found a declaration.  We might know this
+	  ;; before we've found the type in it.
+	  at-decl)
 
       (while (progn
 	       (while (and
@@ -473,17 +519,25 @@
 			  t)
 
 			;; Continue if the following token isn't some
-			;; kind of symbol or keyword that can't start a
-			;; declaration, or if it's fontified as a type
-			;; already.
-			(progn
+			;; kind of symbol or keyword that can't start
+			;; a declaration, or if it's fontified as
+			;; something else besides a type already.
+			(let (prop)
+			  (setq arglist-match (memq (char-before) '(?\( ?,)))
+			  (c-forward-comments)
+			  (setq continue-pos (point))
 			  (c-forward-syntactic-ws)
-			  (and
-			   (< (point) limit)
-			   (or (not (looking-at c-symbol-start))
-			       (and (eq (get-text-property (point) 'face)
-					'font-lock-keyword-face)
-				    (looking-at c-not-decl-init-keywords)))))
+			  (when (or
+				 (= (point) limit)
+				 (not (looking-at c-symbol-start))
+				 (unless (memq (setq prop (get-text-property
+							   (point) 'face))
+					       '(nil font-lock-type-face))
+				   (and
+				    (eq prop 'font-lock-keyword-face)
+				    (looking-at c-not-decl-init-keywords))))
+			    (goto-char continue-pos)
+			    t))
 			))
 
 		 ;; We only want to match at bob the first time, to
@@ -495,108 +549,185 @@
 	       (< (point) limit))
 
 	(catch 'continue
+	  (setq at-type nil
+		at-decl nil)
 
-	  ;; Skip over leading specifiers like "static".
-	  (setq at-type nil)
-	  (while (looking-at c-specifier-key)
-	    (setq at-type t)		; We're sure this is a declaration.
-	    (goto-char (match-end 1))
+	  ;; Check for a type, but be prepared to skip over leading
+	  ;; specifiers like "static".  We treat any symbols as
+	  ;; specifiers here, to cope with macros like __INLINE__ or
+	  ;; anything else that might be in front of declarations.
+	  (while (let ((start (point))
+		       (res (c-forward-type t)))
+		   (cond ((eq res t)
+			  ;; Found a positive type, so stop searching.
+			  (setq at-type t
+				type-start start
+				type-end (point))
+			  nil)
+			 (res
+			  ;; Found a possible type.  Record this, but
+			  ;; continue so that we'll jump over any
+			  ;; leading unknown specifiers.
+			  (when at-type
+			    ;; Got two identifiers with nothing but
+			    ;; whitespace between them.  That can only
+			    ;; happen in declarations.
+			    (setq at-decl t))
+			  (setq prev-at-type at-type
+				prev-type-start type-start
+				prev-type-end type-end
+				at-type res
+				type-start start
+				type-end (point)))
+			 ((looking-at c-specifier-key)
+			  ;; Found a known specifier keyword.
+			  (setq at-decl t)
+			  (goto-char (match-end 1)))))
 	    (c-forward-syntactic-ws))
-
-	  (setq type-start (point))
-	  (if at-type
-	      (c-forward-type)
-	    (unless (setq at-type (c-forward-type t))
-	      ;; Set the position to continue at.
-	      (setq type-end (if (= type-start (point)) (1+ (point)) (point)))
-	      (throw 'continue t)))
-	  (setq type-end (point))
+	  (unless at-type
+	    (throw 'continue t))
 
 	  ;; Check for and step over a type decl expression after the
-	  ;; thing that is or might be a type.  If parentheses are
-	  ;; allowed we balance them and require that none of them
-	  ;; contains nothing but allowed type declaration operators.
-	  (c-forward-syntactic-ws)
-	  (let ((start (point)) (paren-depth 0) (maybe-fun-call t))
+	  ;; thing that is or might be a type.  We can skip this if we
+	  ;; know we're in a declaration and don't have several
+	  ;; possible positions for the type.
+	  (unless (and at-decl (or (eq at-type t) (not prev-at-type)))
 	    (if (catch 'at-decl
-
-		  ;; Skip over type decl prefix operators.
-		  (while (looking-at c-type-decl-prefix-key)
-		    (if (eq (char-after) ?\()
-			(progn
-			  (setq paren-depth (1+ paren-depth))
-			  (forward-char))
-		      (setq maybe-fun-call nil)
-		      (goto-char (match-end 1)))
-		    (c-forward-syntactic-ws))
-
-		  ;; Skip over an identifier, but don't require it since
-		  ;; it's optional in some cases in (at least) C.
-		  (if (looking-at c-symbol-key)
-		      (progn
-			(when (= paren-depth 0)
-			  ;; We're not inside parentheses so it can't be a
-			  ;; function call.
-			  (throw 'at-decl t))
-			(goto-char (match-end 1))
-			(c-forward-syntactic-ws))
-		    (when (and (eq (char-after) ?\[)
-			       (= paren-depth 0))
-		      ;; We're looking at nothing but a [] argument
-		      ;; and that's typically not a declaration, so
-		      ;; only treat it as one if there's a known type
-		      ;; before.
-		      (throw 'at-decl (eq at-type t))))
-
-		  ;; Skip over type decl suffix operators.
-		  (while (and (looking-at c-type-decl-suffix-key)
-			      (if (eq (char-after) ?\))
-				  (when (> paren-depth 0)
-				    (setq paren-depth (1- paren-depth))
-				    (forward-char)
-				    t)
-				(if (eq (char-syntax (char-after)) ?\[)
-				    (unless (c-safe (c-forward-sexp 1) t)
-				      (throw 'at-decl nil))
-				  (goto-char (match-end 1)))
-				(setq maybe-fun-call nil)
-				t))
-		    (c-forward-syntactic-ws))
-
-		  (when (> paren-depth 0)
-		    ;; We're at a token that isn't valid in a type decl
-		    ;; inside a parenthesis.
-		    (throw 'at-decl nil))
-
-		  (when maybe-fun-call
-		    ;; `maybe-fun-call' is cleared if we've found a
-		    ;; type decl operator that isn't a parenthesis.
-		    ;; So we get here if we've passed at least one
-		    ;; parenthesis (due to the check above) with an
-		    ;; identifier or nothing in it.  That's more
-		    ;; likely to be a function call than a declaration
-		    ;; (even if there's a known type before it).
-		    (throw 'at-decl nil))
-
-		  ;; There's a declaration here only if we've moved.
-		  (/= (point) start))
-
-		;; We're at a declaration.  Highlight the type and the
-		;; following declarators.
-		(progn
-		  (c-font-lock-type type-start type-end)
+		  (goto-char type-end)
 		  (c-forward-syntactic-ws)
-		  (c-font-lock-declarators limit))
+		  (let ((start (point)) (paren-depth 0)
+			got-prefix no-identifier got-suffix)
 
-	      ;; Not at a declaration, but if we know that we passed a
-	      ;; type we should still highlight it.
-	      (when (eq at-type t)
-		(c-font-lock-type type-start type-end)))))
+		    ;; Skip over type decl prefix operators.
+		    (while (looking-at c-type-decl-prefix-key)
+		      (if (eq (char-after) ?\()
+			  (progn
+			    (unless got-prefix (setq got-prefix ?\())
+			    (setq paren-depth (1+ paren-depth))
+			    (forward-char))
+			(setq got-prefix t)
+			(goto-char (match-end 1)))
+		      (c-forward-syntactic-ws))
 
-	;; Continue the search at the end of the type, since the
-	;; declaration list might contain nested blocks with
-	;; declarations.
-	(goto-char type-end)
+		    ;; Skip over an identifier.
+		    (if (looking-at c-symbol-key)
+			(progn
+			  (goto-char (match-end 1))
+			  (c-forward-syntactic-ws)
+			  (when (= paren-depth 0)
+			    ;; We're not inside parentheses so it can't be a
+			    ;; function call.
+			    (throw 'at-decl t)))
+		      ;; The identifier seems to be missing.
+		      (setq no-identifier t))
+
+		    ;; Skip over type decl suffix operators.
+		    (while (and (looking-at c-type-decl-suffix-key)
+				(if (eq (char-after) ?\))
+				    (when (> paren-depth 0)
+				      (setq paren-depth (1- paren-depth))
+				      (forward-char)
+				      t)
+				  (setq got-suffix t)
+				  (if (save-match-data (looking-at "\\s\("))
+				      (unless (c-safe (c-forward-sexp 1) t)
+					(throw 'at-decl nil))
+				    (goto-char (match-end 1)))
+				  t))
+		      (c-forward-syntactic-ws))
+
+		    (when (or (= (point) start) (> paren-depth 0))
+		      ;; We haven't found anything or we're at a
+		      ;; token that isn't valid in a type decl
+		      ;; inside a parenthesis.
+		      (throw 'at-decl nil))
+
+		    (when no-identifier
+		      (when (or (eq got-prefix t)
+				(eq at-type t)
+				(and (eq got-prefix ?\() got-suffix))
+			;; Found no identifier.  If we got a prefix or if
+			;; the type is positive, we know that the type
+			;; really wasn't the identifier.  It's only in
+			;; declarations in e.g. function prototypes that
+			;; the identifier may be left out.
+			(throw 'at-decl t))
+
+		      (when (and got-suffix
+				 (not got-prefix)
+				 (not (eq at-type t))
+				 prev-at-type)
+			;; Got only a suffix and there are two
+			;; identifiers before.  The second one is not
+			;; the type afterall, so return nil to let the
+			;; conditional below shift to the type in
+			;; `prev-*'.
+			(throw 'at-decl nil)))
+
+		    (when (looking-at "[=\(]")
+		      ;; There's an initializer after the type decl
+		      ;; expression so we know it's a declaration.
+		      ;; (Checking for `(' here normally has no effect
+		      ;; since it's probably matched as a suffix.
+		      ;; That's often not a problem, however.)
+		      (throw 'at-decl t))
+
+		    (unless (looking-at (if arglist-match "[,\)]" "[,;]"))
+		      ;; If this is a declaration it should end here,
+		      ;; so check for allowed separation tokens.
+		      (throw 'at-decl nil))
+
+		    ;; If we get here we can't tell if this is a type
+		    ;; decl or a normal expression by looking at it
+		    ;; alone.  (That's under the assumption that
+		    ;; normal expressions always can look like type
+		    ;; decl expressions, which isn't really true but
+		    ;; the cases where it doesn't hold are so uncommon
+		    ;; (e.g. some placements of "const" in C++) it's
+		    ;; not worth the effort to look for them.)
+
+		    ;; It's a type decl expression if we know we're in
+		    ;; a declaration, or if the preceding identifier
+		    ;; is a positive type.
+		    (when (or at-decl (memq at-type '(t found)))
+		      (throw 'at-decl t))
+
+		    ;; If we had a complete symbol table here (which
+		    ;; rules out `c-found-types') we should return t
+		    ;; due to the disambiguation rule (in at least
+		    ;; C++) that anything that can be parsed as a
+		    ;; declaration is a declaration.  Now we're being
+		    ;; more defensive and prefer to not highlight
+		    ;; things like "foo (bar);" as a declaration.
+		    nil))
+		(setq at-decl t)
+
+	      (when prev-at-type
+		;; Didn't find a type decl expression, but if we've
+		;; passed two consecutive identifiers it's still a
+		;; declaration - we only went a bit too far.
+		(goto-char type-end)
+		(c-forward-syntactic-ws)
+		(setq at-type prev-at-type
+		      type-start prev-type-start
+		      type-end prev-type-end))))
+
+	  (if at-decl
+	      ;; We're at a declaration.  Highlight the type and the
+	      ;; following declarators.
+	      (progn
+		(c-add-complex-type type-start type-end)
+		(c-font-lock-type type-start type-end)
+		(c-forward-syntactic-ws)
+		(c-font-lock-declarators limit (not arglist-match)))
+
+	    ;; Not at a declaration, but if we know that we passed a
+	    ;; type we should still highlight it.
+	    (when (eq at-type t)
+	      (c-add-complex-type type-start type-end)
+	      (c-font-lock-type type-start type-end))))
+
+	(goto-char continue-pos)
 
 	;; We search here to allow the first match at bob.  See note above.
 	(setq match (re-search-forward c-decl-prefix-re limit 'move))))
@@ -639,7 +770,7 @@
 				  (match-end ,type-submatch))))
 	  ,pre
 	  (save-match-data
-	    (c-font-lock-declarators limit))
+	    (c-font-lock-declarators limit t))
 	  ,post)
 	nil))))
 
@@ -651,7 +782,7 @@
   all `(;; Fontify all type names and the identifiers in the
 	;; declarations they might start.
 	(eval . (list (c-make-simple-font-lock-decl-function
-		       (c-get-primitive-types)
+		       c-known-type-key
 		       1
 		       '(progn (goto-char (match-end 1))
 			       (c-forward-syntactic-ws))
@@ -675,10 +806,12 @@
 (c-lang-defconst c-complex-decl-matchers
   ;; Complex font lock matchers for types and declarations.
 
-  all `(;; `c-font-lock-declarations' should normally nail all
-	;; syntactically correct uses of types, but we fontify the
-	;; basic ones everywhere.  That's useful to e.g. show when a
-	;; type keyword is inadvertently used as a variable name.
+  all `(;; The first two rules here mostly find occurences that
+	;; `c-font-lock-declarations' will find later anyway, but not
+	;; declarations containing blocks in the type (see note
+	;; below).  It's also useful to fontify these everywhere to
+	;; show e.g. when a type keyword is accidentally used as an
+	;; identifier.
 
 	;; Fontify basic types.
 	(,(concat "\\<\\("
