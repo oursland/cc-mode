@@ -79,10 +79,10 @@ Changes since 5.19
 - "java" style now conforms to Sun's JDK coding style.
 
 - New commands c-beginning-of-defun, c-end-of-defun which are not
-  bound by default to M-C-a and M-C-a.
+  bound by default to C-M-a and C-M-e.
 
-- New implementations of M-a (c-beginning-of-statement) and M-e
-  (c-end-of-statement).
+- New and improved implementations of M-a (c-beginning-of-statement)
+  and M-e (c-end-of-statement).
 
 - C++ namespace blocks are supported, with new syntactic symbols
   namespace-open, namespace-close, and innamespace.
