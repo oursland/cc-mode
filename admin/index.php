@@ -35,6 +35,10 @@ href="mailto:bug-cc-mode@gnu.org">bug-cc-mode@gnu.org</a>.  There is
 also an announcement only <a href="lists.php">mailing list</a> you can
 join to get notified of new CC Mode releases.
 
+<p>If you feel adventurous or want to contribute (don't hesitate! ;),
+you can check out the current development sources through the <a
+href="anoncvs.php">anonymous CVS</a>.
+
 <p>See also <a href="contrib.php">some related Emacs packages</a> that
 have been contributed by CC Mode users.
 

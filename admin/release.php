@@ -14,9 +14,9 @@ href="installation.php">on-line</a>.
 <p>You can also browse the <a href="src/">individual files</a>.
 
 <p>The documentation is also available in several forms.  You can
-either <a href="html-manual/index.html">browse it on-line</a> or grab
-one of the several <a href="manual/">pre-formatted</a> documents
-generated from the texinfo source.
+either <a href="html-manual/index.html">browse</a> it on-line or grab
+one of the <a href="manual/">pre-formatted</a> documents generated
+from the texinfo source.
 
 <p>See the list of <a href="changes-530.php">user visible changes</a>
 since 5.29 and earlier versions, and the <a

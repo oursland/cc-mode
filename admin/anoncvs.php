@@ -11,8 +11,7 @@ works well, often even better than the last release since bug fixes
 get there first.
 
 <p>You're very welcome to report bugs, opinions and patches regarding
-the development version.  However, it's even more likely that pilot
-error issues regarding it will go by unanswered.
+the development version.
 
 <h3>Checking out the CVS tree</h3>
 
