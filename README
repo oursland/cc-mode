@@ -1,6 +1,45 @@
-README for cc-mode.el 3.229
+README for cc-mode.el 3.304
 Barry A. Warsaw
-$Date: 1994-03-30 19:31:08 $
+$Date: 1994-04-05 16:54:15 $
+
+
+User-visible Changes Since 3.229
+
+* Tons 'o performance enhancements.
+
+* Tons 'o bug fixes.
+
+* Improved support for nested structs in C.
+
+* Emacs 18 support has been split out into a separate file,
+  cc-mode-18.el. Emacs 18 support is a losing battle, so after this
+  release, I am not going to actively maintain cc-mode for Emacs 18,
+  although I will incorporate contributed patches to cc-mode-18.el.
+
+* The last of the dependencies on c-mode.el should be removed.
+
+* New syntactic symbol, defun-block-intro, which controls the
+  indentation for the first line in a top-level function or class.
+
+* c-indent-defun moved to C-c C-q
+
+* c-scope-operator moved to C-c :
+
+* New coding style added to c-style-alist: Ellemtel.  This supports
+  the C++ coding style defined in "Programming in C++, Rules and
+  Recommendations", Erik Nyquist and Mats Henricson, Ellemtel,
+  ftp'able from euagate.eua.ericsson.se.
+
+* c-set-style now modifies the global values by default. Buffer local
+  versions are made when optional universal argument is given. 
+
+* New variable: c-inhibit-startup-warnings-p
+
+* New custom indentation functions, which are not used by default:
+  c-lineup-math and c-lineup-runin-statements.  The former lines up
+  math statement-cont lines after the equals sign.  The latter lines
+  up statement lines when the first statement in a block appears on
+  the same line as the block opening brace.
 
 
 Introduction
@@ -117,7 +156,7 @@ Getting Started
     "C-c C-v" in the c-mode or c++-mode buffer.  You should see this
     message in the echo area:
 
-    	Using cc-mode version 3.229
+    	Using cc-mode version 3.304
 
 
 New indentation engine
@@ -177,7 +216,7 @@ New indentation engine
     "int" on line 3.  If you were to move point to line 3 and hit C-c
     C-s, you would see:
 
-    	((statement-block-intro . 30))
+    	((defun-block-intro . 30))
 
     This indicates that the `int' line is the first statement in a
     block, and is indented relative to buffer position 30, which is
@@ -243,12 +282,12 @@ New indentation engine
     the line.  Remember that the syntactic component list for that
     line is:
 
-    	((statement-block-intro . 30))
+    	((defun-block-intro . 30))
 
-    So first cc-mode is going to look up `statement-block-intro' in
-    the c-offsets-alist variable.  Lets say it find the integer `4';
-    it adds this to the running total (initialized to zero), yielding
-    a running total indentation of 4 spaces.
+    So first cc-mode is going to look up `defun-block-intro' in the
+    c-offsets-alist variable.  Lets say it find the integer `4'; it
+    adds this to the running total (initialized to zero), yielding a
+    running total indentation of 4 spaces.
 
     Next cc-mode goes to buffer position 30 and asks for the current
     column.  Since the brace at buffer position 30 is in column zero,
