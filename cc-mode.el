@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.387 $
-;; Last Modified:   $Date: 1997-03-21 20:25:33 $
+;; Version:         $Revision: 4.388 $
+;; Last Modified:   $Date: 1997-03-25 03:19:17 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -4050,7 +4050,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(if (looking-at "typedef[^_]")
 		    (progn (forward-sexp 1)
 			   (c-forward-syntactic-ws indent-point)))
-		(setq placeholder (c-point 'bol))
+		(setq placeholder (c-point 'boi))
 		(and (or (looking-at "enum[ \t\n]+")
 			 (= char-before-ip ?=))
 		     (save-excursion
@@ -5203,7 +5203,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.387 $"
+(defconst c-version "$Revision: 4.388 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
