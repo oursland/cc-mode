@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.336 $
-;; Last Modified:   $Date: 1996-12-23 21:30:28 $
+;; Version:         $Revision: 4.337 $
+;; Last Modified:   $Date: 1996-12-23 23:48:26 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1483,7 +1483,11 @@ For use with the variable `java-mode-hook'."
 	outline-level 'c-outline-level
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *"
-	adaptive-fill-regexp nil)
+	;; For all but XEmacs 19.13, the default should be nil
+	adaptive-fill-regexp (and (memq 'v19 c-emacs-features)
+				  (= emacs-minor-version 13)
+				  "[ \t]*\\([#;>*]+ +\\)?")
+	)
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
@@ -5051,7 +5055,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.336 $"
+(defconst c-version "$Revision: 4.337 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
