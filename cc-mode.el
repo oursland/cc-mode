@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.274 $
-;; Last Modified:   $Date: 1994-03-09 01:17:40 $
+;; Version:         $Revision: 3.275 $
+;; Last Modified:   $Date: 1994-03-09 17:02:00 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-09 01:17:40 $|$Revision: 3.274 $|
+;; |$Date: 1994-03-09 17:02:00 $|$Revision: 3.275 $|
 
 ;;; Code:
 
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.274 $
+cc-mode Revision: $Revision: 3.275 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.274 $
+cc-mode Revision: $Revision: 3.275 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1941,33 +1941,47 @@ of the expression are preserved."
 	)))))
 
 (defun c-indent-exp (&optional shutup-p)
-  "Indent each line in block following pont.
+  "Indent each line in balanced expression following point.
 Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (interactive "P")
-  (or (memq (following-char) '(?\( ?\[ ?\{))
-      shutup-p
-      (error "Character under point does not start an expression."))
-  (let ((start (point))
+  (let ((here (point))
 	(bod (c-point 'bod))
-	(end (progn
-	       (condition-case nil
-		   (forward-sexp 1)
-		 (error (error "Cannot indent an unclosed expression.")))
-	       (point-marker)))
-	;; keep quiet for speed
-	(c-echo-semantic-information-p nil))
+	(c-echo-semantic-information-p nil) ;keep quiet for speed
+	(start (progn
+		 ;; try to be smarter about finding the range of lines
+		 ;; to indent
+		 (skip-chars-forward " \t")
+		 (if (memq (following-char) '(?\( ?\[ ?\{))
+		     (point)
+		   (let ((state (parse-partial-sexp (point) (c-point 'eol))))
+		     (and (nth 1 state)
+			  (goto-char (nth 1 state))
+			  (memq (following-char) '(?\( ?\[ ?\{))
+			  (point))))))
+	;; find balanced expression end
+	(end (and (c-safe (progn (forward-sexp 1) t))
+		  (point-marker))))
+    ;; sanity check
+    (and (not start)
+	 (not shutup-p)
+	 (error "Cannot find start of balanced expression to indent."))
+    (and (not end)
+	 (not shutup-p)
+	 (error "Cannot find end of balanced expression to indent."))
     (or shutup-p
 	(message "indenting expression... (this may take a while)"))
     (goto-char start)
     (beginning-of-line)
-    (while (< (point) end)
-      (if (not (looking-at "[ \t]*$"))
-	  (c-indent-via-language-element bod))
-      (forward-line 1))
+    (unwind-protect
+	(while (< (point) end)
+	  (if (not (looking-at "[ \t]*$"))
+	      (c-indent-via-language-element bod))
+	  (forward-line 1))
+      ;; make sure marker is deleted
+      (set-marker end nil))
     (or shutup-p
 	(message "indenting expression... done."))
-    (goto-char start)
-    (set-marker end nil)))
+    (goto-char here)))
 
 (defun c-indent-defun ()
   "Re-indents the current top-level function def, struct or class declaration."
@@ -3247,7 +3261,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.274 $"
+(defconst c-version "$Revision: 3.275 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
