@@ -8477,35 +8477,105 @@ comment at the start of cc-engine.el for more info."
   ;; the symbols + or -
   ;;
   ;; This function might do hidden buffer changes.
-  (cond
-   ((eq offset '+)         c-basic-offset)
-   ((eq offset '-)         (- c-basic-offset))
-   ((eq offset '++)        (* 2 c-basic-offset))
-   ((eq offset '--)        (* 2 (- c-basic-offset)))
-   ((eq offset '*)         (/ c-basic-offset 2))
-   ((eq offset '/)         (/ (- c-basic-offset) 2))
-   ((numberp offset)       offset)
-   ((functionp offset)     (c-evaluate-offset
-			    (funcall offset
-				     (cons (c-langelem-sym langelem)
-					   (c-langelem-pos langelem)))
-			    langelem symbol))
-   ((vectorp offset)       offset)
-   ((null offset)          nil)
-   ((listp offset)
-    (if (eq (car offset) 'quote)
-	(error
-"Setting in c-offsets-alist element \"(%s . '%s)\" was mistakenly quoted"
-         symbol (cadr offset)))
-    (let (done)
-      (while (and (not done) offset)
-	(setq done (c-evaluate-offset (car offset) langelem symbol)
-	      offset (cdr offset)))
-      (if (and c-strict-syntax-p (not done))
-	  (c-benign-error "No offset found for syntactic symbol %s" symbol))
-      done))
-   (t (symbol-value offset))
-   ))
+  (let ((res
+	 (cond
+	  ((numberp offset) offset)
+	  ((vectorp offset) offset)
+	  ((null offset)    nil)
+
+	  ((eq offset '+)   c-basic-offset)
+	  ((eq offset '-)   (- c-basic-offset))
+	  ((eq offset '++)  (* 2 c-basic-offset))
+	  ((eq offset '--)  (* 2 (- c-basic-offset)))
+	  ((eq offset '*)   (/ c-basic-offset 2))
+	  ((eq offset '/)   (/ (- c-basic-offset) 2))
+
+	  ((functionp offset)
+	   (c-evaluate-offset
+	    (funcall offset
+		     (cons (c-langelem-sym langelem)
+			   (c-langelem-pos langelem)))
+	    langelem symbol))
+
+	  ((listp offset)
+	   (cond
+	    ((eq (car offset) 'quote)
+	     (c-benign-error "The offset %S for %s was mistakenly quoted"
+			     offset symbol)
+	     nil)
+
+	    ((memq (car offset) '(min max))
+	     (let (res val (method (car offset)))
+	       (setq offset (cdr offset))
+	       (while offset
+		 (setq val (c-evaluate-offset (car offset) langelem symbol))
+		 (cond
+		  ((not val))
+		  ((not res)
+		   (setq res val))
+		  ((integerp val)
+		   (if (vectorp res)
+		       (c-benign-error "\
+Error evaluating offset %S for %s: \
+Cannot combine absolute offset %S with relative %S in `%s' method"
+				       (car offset) symbol res val method)
+		     (setq res (funcall method res val))))
+		  (t
+		   (if (integerp res)
+		       (c-benign-error "\
+Error evaluating offset %S for %s: \
+Cannot combine relative offset %S with absolute %S in `%s' method"
+				       (car offset) symbol res val method)
+		     (setq res (vector (funcall method (aref res 0)
+						(aref val 0)))))))
+		 (setq offset (cdr offset)))
+	       res))
+
+	    ((eq (car offset) 'add)
+	     (let (res val)
+	       (setq offset (cdr offset))
+	       (while offset
+		 (setq val (c-evaluate-offset (car offset) langelem symbol))
+		 (cond
+		  ((not val))
+		  ((not res)
+		   (setq res val))
+		  ((integerp val)
+		   (if (vectorp res)
+		       (setq res (vector (+ (aref res 0) val)))
+		     (setq res (+ res val))))
+		  (t
+		   (if (vectorp res)
+		       (c-benign-error "\
+Error evaluating offset %S for %s: \
+Cannot combine absolute offsets %S and %S in `add' method"
+				       (car offset) symbol res val)
+		     (setq res val))))	; Override.
+		 (setq offset (cdr offset)))
+	       res))
+
+	    (t
+	     (let (res)
+	       (when (eq (car offset) 'first)
+		 (setq offset (cdr offset)))
+	       (while (and (not res) offset)
+		 (setq res (c-evaluate-offset (car offset) langelem symbol)
+		       offset (cdr offset)))
+	       res))))
+
+	  ((and (symbolp offset) (boundp offset))
+	   (symbol-value offset))
+
+	  (t
+	   (c-benign-error "Unknown offset format %S for %s" offset symbol)
+	   nil))))
+
+    (if (or (null res) (integerp res)
+	    (and (vectorp res) (= (length res) 1) (integerp (aref res 0))))
+	res
+      (c-benign-error "Error evaluating offset %S for %s: Got invalid value %S"
+		      offset symbol res)
+      nil)))
 
 (defun c-calc-offset (langelem)
   ;; Get offset from LANGELEM which is a list beginning with the
