@@ -10,6 +10,6 @@
 ((defun-block-intro . 93))
 ((inline-close . 93))
 ((class-close . 60))
-((statement-cont . 122))
+((statement-cont . 60))
 ((inline-close . 38))
 ((inexpr-class) (class-close . 1))

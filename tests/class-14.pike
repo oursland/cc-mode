@@ -10,6 +10,6 @@ object foo = class
 		    return 17;
 		}
 	    }()->gurka
-		 ();		// TBD: This is anchored wrongly.
+		();
 	}
     }();
