@@ -2806,8 +2806,7 @@ This function does not do any hidden buffer changes."
 		  (goto-char (next-single-property-change
 			      (point) 'c-type nil cfd-limit))
 		  (and (< (point) cfd-limit)
-		       (not (eq (c-get-char-property (1- (point))
-						     'c-type)
+		       (not (eq (c-get-char-property (1- (point)) 'c-type)
 				'c-decl-end)))))
 	 (setq cfd-prop-match (point))))
 
@@ -2969,19 +2968,19 @@ This function does not do any hidden buffer changes."
 		cfd-continue-pos syntactic-pos)
 	(setq c-find-decl-syntactic-pos syntactic-pos)
 
-	(if (bobp)
-	    ;; Always consider bob a match to get the first
-	    ;; declaration in the file.  Do this separately instead of
-	    ;; letting `c-decl-prefix-re' match bob, so that it always
-	    ;; can consume at least one character to ensure that we
-	    ;; won't get stuck in an infinite loop.
-	    (progn (c-forward-comments)
-		   (setq cfd-match-pos 0
-			 cfd-continue-pos (point)))
-	  (backward-char)
-	  (c-beginning-of-current-token)
-	  (when (< (point) cfd-limit)
-	    (c-find-decl-prefix-search)))
+	(when (if (bobp)
+		  ;; Always consider bob a match to get the first declaration
+		  ;; in the file.  Do this separately instead of letting
+		  ;; `c-decl-prefix-re' match bob, so that it always can
+		  ;; consume at least one character to ensure that we won't
+		  ;; get stuck in an infinite loop.
+		  (setq cfd-re-match 0)
+		(backward-char)
+		(c-beginning-of-current-token)
+		(< (point) cfd-limit))
+	  ;; Do an initial search now.  In the bob case above it's only done
+	  ;; to search for the `c-type' property.
+	  (c-find-decl-prefix-search))
 
 	;; Advance `cfd-continue-pos' if we got a hit before the start
 	;; position.  The earliest position that could affect after
