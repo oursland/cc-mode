@@ -201,8 +201,7 @@
   ;; Bind the electric deletion functions to C-d and DEL.  Emacs 21
   ;; automatically maps the [delete] and [backspace] keys to these two
   ;; depending on window system and user preferences.  (In earlier
-  ;; versions it's possible to do the same with some calls to
-  ;; `keyboard-translate'.)
+  ;; versions it's possible to do the same by using `function-key-map'.)
   (define-key c-mode-base-map "\C-d" 'c-electric-delete-forward)
   (define-key c-mode-base-map "\177" 'c-electric-backspace)
   (when (boundp 'delete-key-deletes-forward)
