@@ -1141,7 +1141,7 @@ brace."
 				    (and (c-major-mode-is 'c++-mode)
 					 (eq (char-before) ?<)
 					 (not (c-crosses-statement-barrier-p
-					       here pos<))
+					       pos< here))
 					 (not (c-in-literal))
 					 )))
 				nil)
