@@ -40,7 +40,7 @@ Tue Oct 26 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 Sun Sep 26 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
-	* Fixes to IDL mode contributed by Eric Eide
+	* Fixes to IDL mode after input from Eric Eide
 	<eeide@cs.utah.edu>:
 	* cc-engine.el (c-beginning-of-statement-1): Allow
 	`c-conditional-key' to be nil, for the benefit of IDL mode.
@@ -59,7 +59,7 @@ Sun Sep 26 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 Wed Aug 25 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-menus.el (cc-imenu-c++-generic-expression): Match classes
-	with nonhanging open braces.  Thanks to andy.ling@quantel.com.
+	with nonhanging open braces.
 
 Sun Aug 15 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
@@ -68,7 +68,7 @@ Sun Aug 15 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	* cc-align.el (c-lineup-java-throws): Handle a hanging throws
 	keyword.
 
- 	* cc-align.el (c-lineup-C-comments): Handle free form text
+	* cc-align.el (c-lineup-C-comments): Handle free form text
 	comments.  Use c-comment-prefix-regexp and comment-start-skip
 	instead of hardcoded regexps.
 
@@ -131,14 +131,12 @@ Mon Jul 05 1999  Martin Stjernholm  <bug-cc-mode@gnu.org>
 	when adaptive-fill-mode doesn't manage to get it correct.
 
 	* cc-menus.el (cc-imenu-java-generic-expression): Handle types
-	with dotted notation, e.g. foo.bar.Gnu.  Thanks to Philip
-	Lijnzaad <lijnzaad@ebi.ac.uk>.
+	with dotted notation, e.g. foo.bar.Gnu.
 
 	* cc-mode.el (c-initialize-cc-mode): Wrap all function calls
 	within unwind-protect (previously only some were wrapped so it
 	would be possible to register mode initialization when full
-	initialization did not finish).  Patch by Bob Weiner
-	<weiner@beopen.com>.
+	initialization did not finish).
 
 	* cc-styles.el (c-style-alist): Corrected the brace placement
 	in the whitesmith style.  Thanks to Sean Luke
