@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.273 $
-;; Last Modified:   $Date: 1994-03-07 17:39:45 $
+;; Version:         $Revision: 3.274 $
+;; Last Modified:   $Date: 1994-03-09 01:17:40 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-03-07 17:39:45 $|$Revision: 3.273 $|
+;; |$Date: 1994-03-09 01:17:40 $|$Revision: 3.274 $|
 
 ;;; Code:
 
@@ -783,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.273 $
+cc-mode Revision: $Revision: 3.274 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -814,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.273 $
+cc-mode Revision: $Revision: 3.274 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3247,7 +3247,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.273 $"
+(defconst c-version "$Revision: 3.274 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3261,14 +3261,14 @@ it trailing backslashes are removed."
 (defun c-submit-bug-report ()
   "Submit via mail a bug report on cc-mode."
   (interactive)
-  (require 'reporter)
   (and
    (y-or-n-p "Do you want to submit a report on cc-mode? ")
+   (require 'reporter)
    (reporter-submit-bug-report
     c-mode-help-address
-    (concat "cc-mode version " c-version " (editing "
+    (concat "cc-mode " c-version " ("
 	    (if (eq major-mode 'c++-mode) "C++" "C")
-	    " code)")
+	    ")")
     (list
      ;; report only the vars that affect indentation
      'c-emacs-features
