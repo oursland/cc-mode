@@ -555,12 +555,13 @@ reinitialize.
 
 Note also that when CC Mode starts up, the other variables are
 modified before the mode hooks are run.  If you change this variable
-in a mode hook, you can call `c-setup-doc-comment-style' afterwards to
-redo it."
+in a mode hook, you have to call `c-setup-doc-comment-style'
+afterwards to redo that work."
   ;; Symbols other than those documented above may be used on this
   ;; variable.  If a variable exists that has that name with
   ;; "-font-lock-keywords" appended, it's value is prepended to the
-  ;; font lock keywords list.
+  ;; font lock keywords list.  If it's a function then it's called and
+  ;; the result is prepended.
   :type '(radio
 	  (c-symbol-list :tag "Doc style(s) in all modes")
 	  (list
@@ -687,6 +688,9 @@ involve auto-newline inserted newlines:
 					       (substatement-open after)
 					       (block-close . c-snug-do-while)
 					       (extern-lang-open after)
+					       (namespace-open after)
+					       (module-open after)
+					       (composition-open after)
 					       (inexpr-class-open after)
 					       (inexpr-class-close before))
   "*Controls the insertion of newlines before and after braces
@@ -700,16 +704,13 @@ associated ACTION is used to determine where newlines are inserted.
 If the context is not found, the default is to insert a newline both
 before and after the brace.
 
-SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
-class-close, inline-open, inline-close, block-open, block-close,
-statement-cont, substatement-open, statement-case-open,
-extern-lang-open, extern-lang-close, brace-list-open,
-brace-list-close, brace-list-intro, brace-entry-open, namespace-open,
-namespace-close, inexpr-class-open, or inexpr-class-close.  See
-`c-offsets-alist' for details, except for inexpr-class-open and
-inexpr-class-close, which doesn't have any corresponding symbols
-there.  Those two symbols are used for the opening and closing braces,
-respectively, of anonymous inner classes in Java.
+SYNTACTIC-SYMBOL can be statement-cont, brace-list-intro,
+inexpr-class-open, inexpr-class-close, and any of the *-open and
+*-close symbols.  See `c-offsets-alist' for details, except for
+inexpr-class-open and inexpr-class-close, which doesn't have any
+corresponding symbols there.  Those two symbols are used for the
+opening and closing braces, respectively, of anonymous inner classes
+in Java.
 
 ACTION can be either a function symbol or a list containing any
 combination of the symbols `before' or `after'.  If the list is empty,
@@ -742,10 +743,12 @@ syntactic context for the brace line."
 	      inline-open inline-close
 	      block-open block-close
 	      statement-cont substatement-open statement-case-open
-	      extern-lang-open extern-lang-close
 	      brace-list-open brace-list-close
 	      brace-list-intro brace-entry-open
+	      extern-lang-open extern-lang-close
 	      namespace-open namespace-close
+	      module-open module-close
+	      composition-open composition-close
 	      inexpr-class-open inexpr-class-close)))
     :group 'c)
 
@@ -825,7 +828,7 @@ space."
   :group 'c)
 
 (defcustom c-delete-function 'delete-char
-  "*Function called by `c-electric-delete' when deleting forwards."
+  "*Function called by `c-electric-delete-forward' when deleting forwards."
   :type 'function
   :group 'c)
 
@@ -1078,19 +1081,21 @@ can always override the use of `c-default-style' by making calls to
        (objc-method-call-cont . c-lineup-ObjC-method-call)
        ;; Relpos: At the open bracket.
        (extern-lang-open      . 0)
-       ;; Relpos: Boi at the extern keyword.
-       (extern-lang-close     . 0)
-       ;; Relpos: Boi at the corresponding extern keyword.
-       (inextern-lang         . +)
-       ;; Relpos: At the extern block open brace if it's at boi,
-       ;; otherwise boi at the extern keyword.
        (namespace-open        . 0)
-       ;; Relpos: Boi at the namespace keyword.
+       (module-open           . 0)
+       (composition-open      . 0)
+       ;; Relpos: Boi at the extern/namespace/etc keyword.
+       (extern-lang-close     . 0)
        (namespace-close       . 0)
-       ;; Relpos: Boi at the corresponding namespace keyword.
+       (module-close          . 0)
+       (composition-close     . 0)
+       ;; Relpos: Boi at the corresponding extern/namespace/etc keyword.
+       (inextern-lang         . +)
        (innamespace           . +)
-       ;; Relpos: At the namespace block open brace if it's at boi,
-       ;; otherwise boi at the namespace keyword.
+       (inmodule              . +)
+       (incomposition         . +)
+       ;; Relpos: At the extern/namespace/etc block open brace if it's
+       ;; at boi, otherwise boi at the keyword.
        (template-args-cont    . (c-lineup-template-args +))
        ;; Relpos: Boi at the decl start.  This might be changed; the
        ;; logical position is clearly the opening '<'.
@@ -1228,14 +1233,19 @@ Here is the current list of valid syntactic element symbols:
  objc-method-intro      -- The first line of an Objective-C method definition.
  objc-method-args-cont  -- Lines continuing an Objective-C method definition.
  objc-method-call-cont  -- Lines continuing an Objective-C method call.
- extern-lang-open       -- Brace that opens an external language block.
- extern-lang-close      -- Brace that closes an external language block.
+ extern-lang-open       -- Brace that opens an \"extern\" block.
+ extern-lang-close      -- Brace that closes an \"extern\" block.
  inextern-lang          -- Analogous to the `inclass' syntactic symbol,
-                           but used inside extern constructs.
- namespace-open         -- Brace that opens a C++ namespace block.
- namespace-close        -- Brace that closes a C++ namespace block.
- innamespace            -- Analogous to the `inextern-lang' syntactic
-                           symbol, but used inside C++ namespace constructs.
+                           but used inside \"extern\" blocks.
+ namespace-open, namespace-close, innamespace
+                        -- Similar to the three `extern-lang' symbols, but for
+                           C++ \"namespace\" blocks.
+ module-open, module-close, inmodule
+                        -- Similar to the three `extern-lang' symbols, but for
+                           CORBA IDL \"module\" blocks.
+ composition-open, composition-close, incomposition
+                        -- Similar to the three `extern-lang' symbols, but for
+                           CORBA CIDL \"composition\" blocks.
  template-args-cont     -- C++ template argument list continuations.
  inlambda               -- In the header or body of a lambda function.
  lambda-intro-cont      -- Continuation of the header of a lambda function.
@@ -1272,9 +1282,10 @@ localized, they cannot be made global again.
 This variable must be set appropriately before CC Mode is loaded.
 
 The list of variables to buffer localize are:
-    c-offsets-alist
     c-basic-offset
     c-comment-only-line-offset
+    c-indent-comment-alist
+    c-indent-comments-syntactically-p
     c-block-comment-prefix
     c-comment-prefix-regexp
     c-doc-comment-style
@@ -1283,7 +1294,9 @@ The list of variables to buffer localize are:
     c-hanging-colons-alist
     c-hanging-semi&comma-criteria
     c-backslash-column
+    c-backslash-max-column
     c-label-minimum-indentation
+    c-offsets-alist
     c-special-indent-hook
     c-indentation-style"
   :type 'boolean
@@ -1527,45 +1540,15 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 
 
 ;; Figure out what features this Emacs has
+
+(cc-bytecomp-defvar open-paren-in-column-0-is-defun-start)
+
 (defconst c-emacs-features
   (let (list)
 
     (if (boundp 'infodock-version)
 	;; I've no idea what this actually is, but it's legacy. /mast
 	(setq list (cons 'infodock list)))
-
-    (let ((buf (generate-new-buffer "test"))
-	  (parse-sexp-lookup-properties t)
-	  (lookup-syntax-properties t))
-      (save-excursion
-	(set-buffer buf)
-	(set-syntax-table (make-syntax-table))
-
-	;; Find out if the `syntax-table' text property works.
-	(modify-syntax-entry ?< ".")
-	(modify-syntax-entry ?> ".")
-	(insert "<()>")
-	(c-mark-<-as-paren 1)
-	(c-mark->-as-paren 4)
-	(goto-char 1)
-	(c-forward-sexp)
-	(if (= (point) 5)
-	    (setq list (cons 'syntax-properties list)))
-
-	;; Find out if generic comment delimiters work.
-	(c-safe
-	  (modify-syntax-entry ?x "!")
-	  (if (string-match "\\s!" "x")
-	      (setq list (cons 'gen-comment-delim list))))
-
-	;; Find out if generic string delimiters work.
-	(c-safe
-	  (modify-syntax-entry ?x "|")
-	  (if (string-match "\\s|" "x")
-	      (setq list (cons 'gen-string-delim list))))
-
-	(set-buffer-modified-p nil))
-      (kill-buffer buf))
 
     ;; XEmacs 19 and beyond use 8-bit modify-syntax-entry flags.
     ;; Emacs 19 uses a 1-bit flag.  We will have to set up our
@@ -1591,6 +1574,71 @@ Set from `c-comment-prefix-regexp' at mode initialization.")
 			   '8-bit
 			 '1-bit)
 		       list)))
+
+    (let ((buf (generate-new-buffer "test"))
+	  parse-sexp-lookup-properties
+	  parse-sexp-ignore-comments
+	  lookup-syntax-properties)
+      (save-excursion
+	(set-buffer buf)
+	(set-syntax-table (make-syntax-table))
+
+	;; For some reason we have to set some of these after the
+	;; buffer has been made current.  (Specifically,
+	;; `parse-sexp-ignore-comments' in Emacs 21.)
+	(setq parse-sexp-lookup-properties t
+	      parse-sexp-ignore-comments t
+	      lookup-syntax-properties t)
+
+	;; Find out if the `syntax-table' text property works.
+	(modify-syntax-entry ?< ".")
+	(modify-syntax-entry ?> ".")
+	(insert "<()>")
+	(c-mark-<-as-paren 1)
+	(c-mark->-as-paren 4)
+	(goto-char 1)
+	(c-forward-sexp)
+	(if (= (point) 5)
+	    (setq list (cons 'syntax-properties list)))
+
+	;; Find out if generic comment delimiters work.
+	(c-safe
+	  (modify-syntax-entry ?x "!")
+	  (if (string-match "\\s!" "x")
+	      (setq list (cons 'gen-comment-delim list))))
+
+	;; Find out if generic string delimiters work.
+	(c-safe
+	  (modify-syntax-entry ?x "|")
+	  (if (string-match "\\s|" "x")
+	      (setq list (cons 'gen-string-delim list))))
+
+	;; See if `open-paren-in-column-0-is-defun-start' exists and
+	;; isn't buggy.
+	(when (boundp 'open-paren-in-column-0-is-defun-start)
+	  (let ((open-paren-in-column-0-is-defun-start nil)
+		(parse-sexp-ignore-comments t))
+	    (set-syntax-table (make-syntax-table))
+	    (modify-syntax-entry ?\' "\"")
+	    (cond
+	     ;; XEmacs.  Afaik this is currently an Emacs-only
+	     ;; feature, but it's good to be prepared.
+	     ((memq '8-bit list)
+	      (modify-syntax-entry ?/ ". 1456")
+	      (modify-syntax-entry ?* ". 23"))
+	     ;; Emacs
+	     ((memq '1-bit list)
+	      (modify-syntax-entry ?/ ". 124b")
+	      (modify-syntax-entry ?* ". 23")))
+	    (modify-syntax-entry ?\n "> b")
+	    (insert "/* '\n   () */")
+	    (backward-sexp)
+	    (if (bobp)
+		(setq list (cons 'col-0-paren list))))
+	  (kill-buffer buf))
+
+	(set-buffer-modified-p nil))
+      (kill-buffer buf))
 
     ;; See if `parse-partial-sexp' returns the eighth element.
     (when (c-safe (>= (length (save-excursion (parse-partial-sexp 1 1))) 10))
@@ -1618,6 +1666,8 @@ might be present:
 		    elements, i.e. it contains the position of the
 		    start of the last comment or string.
 'posix-char-classes The regexp engine understands POSIX character classes.
+'col-0-paren        It's possible to turn off the ad-hoc rule that a paren
+		    in column zero is the start of a defun.
 'infodock           This is Infodock (based on XEmacs).
 
 '8-bit and '1-bit are mutually exclusive.")

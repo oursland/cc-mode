@@ -3911,9 +3911,9 @@ This function does not do any hidden buffer changes."
     res))
 
 (defun c-forward-type ()
-  ;; Move forward over a type spec i at the beginning of one, stopping
-  ;; at the next following token.  Return t if it's a known type that
-  ;; can't be a name, 'known if it's an otherwise known type
+  ;; Move forward over a type spec if at the beginning of one,
+  ;; stopping at the next following token.  Return t if it's a known
+  ;; type that can't be a name, 'known if it's an otherwise known type
   ;; (according to `*-font-lock-extra-types'), 'prefix if it's a known
   ;; prefix of a type, 'found if it's a type that matches one in
   ;; `c-found-types', 'maybe if it's an identfier that might be a
@@ -4063,7 +4063,8 @@ This function does not do any hidden buffer changes."
 	(setq pos (point))
 	(if (and (looking-at c-opt-type-concat-key)
 		 (let ((c-promote-possible-types
-			(or (eq res t) c-promote-possible-types)))
+			(or (memq res '(t known))
+			    c-promote-possible-types)))
 		   (goto-char (match-end 1))
 		   (c-forward-syntactic-ws)
 		   (setq res2 (c-forward-type))))
@@ -4071,12 +4072,12 @@ This function does not do any hidden buffer changes."
 	    ;; but we don't let the existence of the operator itself
 	    ;; promote two uncertain types to a certain one.
 	    (cond ((eq res t))
-		  ((eq res 'known)
-		   (setq res t))
 		  ((memq res2 '(t known))
 		   (c-add-type id-start id-end)
 		   (when c-record-type-identifiers
 		     (c-record-type-id id-range))
+		   (setq res t))
+		  ((eq res 'known)
 		   (setq res t))
 		  ((eq res 'found))
 		  ((eq res2 'found)
@@ -4507,46 +4508,42 @@ brace."
       (forward-char 1)
     (c-backward-syntactic-ws limit))
 
-  (condition-case nil
-      (progn
-	(while (and (< limit (point))
-		    (eq (char-before) ?,))
+  (catch 'exit
+    (while (and (< limit (point))
+		(eq (char-before) ?,))
 
-	  ;; this will catch member inits with multiple
-	  ;; line arglists
-	  (forward-char -1)
-	  (c-backward-syntactic-ws limit)
-	  (if (eq (char-before) ?\))
-	      (c-backward-sexp 1))
-	  (c-backward-syntactic-ws limit)
+      ;; this will catch member inits with multiple
+      ;; line arglists
+      (forward-char -1)
+      (c-backward-syntactic-ws limit)
+      (if (eq (char-before) ?\))
+	  (unless (c-safe (c-backward-sexp 1))
+	    (throw 'exit nil)))
+      (c-backward-syntactic-ws limit)
 
-	  ;; Skip over any template arg to the class.  This way with a
-	  ;; syntax table is bogus but it'll have to do for now.
-	  (if (and (eq (char-before) ?>)
-		   (c-major-mode-is 'c++-mode))
-	      (c-with-syntax-table c++-template-syntax-table
-		(c-backward-sexp 1)))
-	  (c-backward-sexp 1)
-	  (c-backward-syntactic-ws limit)
+      ;; Skip over any template arg to the class.  This way with a
+      ;; syntax table is bogus but it'll have to do for now.
+      (if (and (eq (char-before) ?>)
+	       (c-major-mode-is 'c++-mode))
+	  (c-with-syntax-table c++-template-syntax-table
+	    (unless (c-safe (c-backward-sexp 1))
+	      (throw 'exit nil))))
+      (c-safe (c-backward-sexp 1))
+      (c-backward-syntactic-ws limit)
 
-	  ;; Skip backwards over a fully::qualified::name.
-	  (while (and (eq (char-before) ?:)
-		      (save-excursion
-			(forward-char -1)
-			(eq (char-before) ?:)))
-	    (backward-char 2)
-	    (c-backward-sexp 1))
+      ;; Skip backwards over a fully::qualified::name.
+      (while (and (eq (char-before) ?:)
+		  (save-excursion
+		    (forward-char -1)
+		    (eq (char-before) ?:)))
+	(backward-char 2)
+	(c-safe (c-backward-sexp 1)))
 
-	  ;; now continue checking
-	  (c-backward-syntactic-ws limit))
+      ;; now continue checking
+      (c-backward-syntactic-ws limit))
 
-	(and (< limit (point))
-	     (eq (char-before) ?:)))
-
-    (scan-error
-     ;; An unbalanced paren was found that caused one of the sexp
-     ;; routines above to fail.
-     nil)))
+    (and (< limit (point))
+	 (eq (char-before) ?:))))
 
 (defun c-search-uplist-for-classkey (paren-state)
   ;; search for the containing class, returning a 2 element vector if

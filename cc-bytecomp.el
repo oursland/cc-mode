@@ -394,7 +394,10 @@ Don't use within `eval-when-compile'."
   `(eval-when-compile
      (if (eq (get ',symbol 'byte-compile) 'byte-compile-obsolete)
 	 (cc-bytecomp-put ',symbol 'byte-compile
-			  'cc-bytecomp-ignore-obsolete))))
+			  'cc-bytecomp-ignore-obsolete)
+       ;; This avoids a superfluous compiler warning
+       ;; about calling `get' for effect.
+       t)))
 
 (defmacro cc-bytecomp-boundp (symbol)
   "Return non-nil if the given symbol is bound as a variable outside

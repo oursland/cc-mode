@@ -5,8 +5,7 @@
 Rather than try to fix the brokenness in rcs2log and vc-update-change-log,
 this Python script will get you 90%% of the way toward converting the CVS logs
 to ChangeLog format.  I took a few liberties with the ChangeLog format, namely
-eliminating the time field, but I still like my format better than the ISO8106
-format that VC uses by default.
+eliminating the time field.
 
 The output of this script will still have to be munged somewhat by hand.
 Paragraphs will have to be wrapped manually, and similar file changes will
@@ -49,11 +48,9 @@ def usage(status):
 
 date_re = re.compile(
     '^'
-    '(?P<dow>Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+'
-    '(?P<mon>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+'
-    '(?P<day>\d{1,2})\s+'
-    '(?:(?P<time>\d{2}:\d{2}:\d{2})\s+)?'
-    '(?P<year>\d{4})\s+'
+    '(?P<year>\d{2,4})-'
+    '(?P<mon>\d{1,2})-'
+    '(?P<day>\d{1,2})'
     )
 
 
@@ -66,7 +63,7 @@ def get_last_date(filename):
 	mo = date_re.match(line)
 	if mo:
 	    fp.close()
-	    return mo.group('dow', 'mon', 'day', 'time', 'year')
+	    return mo.group('year', 'mon', 'day')
     return None
 
 
@@ -110,11 +107,8 @@ def read_revision(fp):
     return (endof_file, logmsg, date, mo.group('name'))
 
 
-def get_log_entries(dow, mon, day, time, year):
-    if time is None:
-	cvscmd = 'cvs log -l -d">%s-%s-%s"' % (day, mon, year)
-    else:
-	cvscmd = 'cvs log -l -d">%s-%s-%s %s"' % (day, mon, year, time)
+def get_log_entries(year, mon, day):
+    cvscmd = 'cvs log -l -b -d">%s-%s-%s"' % (year, mon, day)
     fp = os.popen(cvscmd, 'r')
 
     changes = {}
@@ -223,6 +217,6 @@ if __name__ == '__main__':
 	    print "Couldn't find a date stamp in ChangeLog"
 	else:
 	    print 'Generating entries since:', \
-		  string.join(filter(None, datetuple), ' ')
+		  string.join(datetuple, '-')
     else:
 	main()

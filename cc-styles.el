@@ -134,6 +134,12 @@
 			 (namespace-open . +)
 			 (innamespace . c-lineup-whitesmith-in-block)
 			 (namespace-close . +)
+			 (module-open . +)
+			 (inmodule . c-lineup-whitesmith-in-block)
+			 (module-close . +)
+			 (composition-open . +)
+			 (incomposition . c-lineup-whitesmith-in-block)
+			 (composition-close . +)
 			 ))
      )
     ("ellemtel"
@@ -370,10 +376,10 @@ when used elsewhere."
   (c-keep-region-active))
 
 ;;;###autoload
-(defun c-add-style (style descrip &optional set-p)
+(defun c-add-style (style description &optional set-p)
   "Adds a style to `c-style-alist', or updates an existing one.
-STYLE is a string identifying the style to add or update.  DESCRIP is
-an association list describing the style and must be of the form:
+STYLE is a string identifying the style to add or update.  DESCRIPTION
+is an association list describing the style and must be of the form:
 
   ([BASESTYLE] (VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
 
@@ -383,14 +389,14 @@ STYLE using `c-set-style' if the optional SET-P flag is non-nil."
   (interactive
    (let ((stylename (completing-read "Style to add: " c-style-alist
 				     nil nil nil 'c-set-style-history))
-	 (description (eval-minibuffer "Style description: ")))
-     (list stylename description
+         (descr (eval-minibuffer "Style description: ")))
+     (list stylename descr
 	   (y-or-n-p "Set the style too? "))))
   (setq style (downcase style))
   (let ((s (assoc style c-style-alist)))
     (if s
-	(setcdr s (copy-alist descrip))	; replace
-      (setq c-style-alist (cons (cons style descrip) c-style-alist))))
+        (setcdr s (copy-alist description)) ; replace
+      (setq c-style-alist (cons (cons style description) c-style-alist))))
   (and set-p (c-set-style style)))
 
 

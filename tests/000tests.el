@@ -82,66 +82,84 @@
 (defconst cc-test-verbose nil)
 (defconst cc-test-dump-backtraces nil)
 
+;; Set to t to extend the set of faces so that all syntactic parts are
+;; tested accurately.  This does otoh hide problems with missing
+;; faces.
+(defconst cc-test-extend-faces t)
+
 ;; Silence the compiler.
 (defvar font-lock-fontify-buffer-function)
 (defvar deactivate-mark)
 (defvar inhibit-point-motion-hooks)
 (defvar font-lock-global-modes)
 
-;; Make sure all used faces are unique before loading cc-fonts.  We
-;; might be screwed if it's already loaded - the check for ambiguous
-;; faces below will complain in that case.
-(unless (c-face-name-p 'font-lock-doc-face)
-  (if (c-face-name-p 'font-lock-comment-face)
-      (copy-face 'font-lock-comment-face 'font-lock-doc-face)
-    (make-face 'font-lock-doc-face)))
-(unless (c-face-name-p 'font-lock-preprocessor-face)
-  (cond ((c-face-name-p 'font-lock-builtin-face)
-	 (copy-face 'font-lock-builtin-face 'font-lock-preprocessor-face))
-	((c-face-name-p 'font-lock-reference-face)
-	 (copy-face 'font-lock-reference-face 'font-lock-preprocessor-face))
-	(t (make-face 'font-lock-preprocessor-face)))
-  (defvar font-lock-preprocessor-face nil)
-  (setq font-lock-preprocessor-face 'font-lock-preprocessor-face))
-(unless (c-face-name-p 'font-lock-constant-face)
-  (if (c-face-name-p 'font-lock-reference-face)
-      (copy-face 'font-lock-reference-face 'font-lock-constant-face)
-    (make-face 'font-lock-constant-face))
-  (defvar font-lock-constant-face nil)
-  (setq font-lock-constant-face 'font-lock-constant-face))
-(unless (c-face-name-p 'font-lock-label-face)
-  (if (c-face-name-p 'font-lock-reference-face)
-      (copy-face 'font-lock-reference-face 'font-lock-label-face)
-    (copy-face 'font-lock-constant-face 'font-lock-label-face))
-  (defvar font-lock-label-face nil)
-  (setq font-lock-label-face 'font-lock-label-face))
-(unless (c-face-name-p 'font-lock-doc-markup-face)
-  (if (c-face-name-p 'font-lock-reference-face)
-      (copy-face 'font-lock-reference-face 'font-lock-doc-markup-face)
-    (copy-face 'font-lock-constant-face 'font-lock-doc-markup-face))
-  (defvar font-lock-doc-markup-face nil)
-  (setq font-lock-doc-markup-face 'font-lock-doc-markup-face))
+;; `font-lock-make-faces' is used in Emacs 19.34 to initialize the
+;; faces and it uses some X functions.  If we're running
+;; noninteractively we don't have any X connection, so provide some
+;; dummies.
+(when (and (fboundp 'font-lock-make-faces)
+	   (not window-system))
+  (flet ((x-get-resource (&rest ignored))
+	 (x-display-color-p (&rest ignored))
+	 (x-display-grayscale-p (&rest ignored))
+	 (x-color-values (&rest ignored) '(0 0 0)))
+    (font-lock-make-faces)))
 
-;; In Emacs face names are resolved as variables which can point to
-;; another face.  Make sure we don't have such indirections when we
-;; create or check against .face files.
-(mapcar (lambda (face)
-	  (when (and (boundp face)
-		     (not (eq (symbol-value face) face)))
-	    (copy-face (symbol-value face) face)
-	    (set face face)))
-	'(font-lock-comment-face
-	  font-lock-string-face
-	  font-lock-keyword-face
-	  font-lock-function-name-face
-	  font-lock-variable-name-face
-	  font-lock-type-face
-	  font-lock-reference-face
-	  font-lock-doc-string-face
-	  font-lock-constant-face
-	  font-lock-preprocessor-face
-	  font-lock-builtin-face
-	  font-lock-warning-face))
+(when cc-test-extend-faces
+  ;; Make sure all used faces are unique before loading cc-fonts.  We
+  ;; might be screwed if it's already loaded - the check for ambiguous
+  ;; faces below will complain in that case.
+  (unless (c-face-name-p 'font-lock-doc-face)
+    (if (c-face-name-p 'font-lock-comment-face)
+	(copy-face 'font-lock-comment-face 'font-lock-doc-face)
+      (make-face 'font-lock-doc-face)))
+  (unless (c-face-name-p 'font-lock-preprocessor-face)
+    (cond ((c-face-name-p 'font-lock-builtin-face)
+	   (copy-face 'font-lock-builtin-face 'font-lock-preprocessor-face))
+	  ((c-face-name-p 'font-lock-reference-face)
+	   (copy-face 'font-lock-reference-face 'font-lock-preprocessor-face))
+	  (t (make-face 'font-lock-preprocessor-face)))
+    (defvar font-lock-preprocessor-face nil)
+    (setq font-lock-preprocessor-face 'font-lock-preprocessor-face))
+  (unless (c-face-name-p 'font-lock-constant-face)
+    (if (c-face-name-p 'font-lock-reference-face)
+	(copy-face 'font-lock-reference-face 'font-lock-constant-face)
+      (make-face 'font-lock-constant-face))
+    (defvar font-lock-constant-face nil)
+    (setq font-lock-constant-face 'font-lock-constant-face))
+  (unless (c-face-name-p 'font-lock-label-face)
+    (if (c-face-name-p 'font-lock-reference-face)
+	(copy-face 'font-lock-reference-face 'font-lock-label-face)
+      (copy-face 'font-lock-constant-face 'font-lock-label-face))
+    (defvar font-lock-label-face nil)
+    (setq font-lock-label-face 'font-lock-label-face))
+  (unless (c-face-name-p 'font-lock-doc-markup-face)
+    (if (c-face-name-p 'font-lock-reference-face)
+	(copy-face 'font-lock-reference-face 'font-lock-doc-markup-face)
+      (copy-face 'font-lock-constant-face 'font-lock-doc-markup-face))
+    (defvar font-lock-doc-markup-face nil)
+    (setq font-lock-doc-markup-face 'font-lock-doc-markup-face))
+
+  ;; In Emacs face names are resolved as variables which can point to
+  ;; another face.  Make sure we don't have such indirections when we
+  ;; create or check against .face files.
+  (mapcar (lambda (face)
+	    (when (and (boundp face)
+		       (not (eq (symbol-value face) face)))
+	      (copy-face (symbol-value face) face)
+	      (set face face)))
+	  '(font-lock-comment-face
+	    font-lock-string-face
+	    font-lock-keyword-face
+	    font-lock-function-name-face
+	    font-lock-variable-name-face
+	    font-lock-type-face
+	    font-lock-reference-face
+	    font-lock-doc-string-face
+	    font-lock-constant-face
+	    font-lock-preprocessor-face
+	    font-lock-builtin-face
+	    font-lock-warning-face)))
 
 (require 'cc-mode)
 
@@ -154,8 +172,8 @@
     (key . font-lock-keyword-face)
     (fun . font-lock-function-name-face)
     (var . font-lock-variable-name-face)
-    (con . font-lock-constant-face)
     (typ . font-lock-type-face)
+    (con . ,c-constant-face-name)
     (ref . ,c-reference-face-name)
     (doc . ,c-doc-face-name)
     (dmk . ,c-doc-markup-face-name)
@@ -164,18 +182,32 @@
     (err . ,c-invalid-face-name)
     (nbs . c-nonbreakable-space-face)))
 
-;; Check that we don't have duplicates.
-(let ((alist cc-test-face-alist) elem facename)
-  (while alist
-    (setq elem (car alist)
-	  alist (cdr alist))
-    (unless (eq (car elem) 'reg)
-      (when (and (setq facename (get (cdr elem) 'cc-test-face-name))
+(if cc-test-extend-faces
+    ;; Check that we don't have duplicates.
+    (let ((alist cc-test-face-alist) elem facename)
+      (while alist
+	(setq elem (car alist)
+	      alist (cdr alist))
+	(put (car elem) 'cc-test-face-alias (car elem))
+	(unless (eq (car elem) 'reg)
+	  (when (and (setq facename (get (cdr elem) 'cc-test-face-name))
+		     (not (eq facename (car elem))))
+	    (error (concat "Ambiguous face %s - can be both %s and %s"
+			   " (cc-fonts loaded too early?)")
+		   (cdr elem) facename (car elem)))
+	  (put (cdr elem) 'cc-test-face-name (car elem)))))
+
+  ;; Fix aliases.
+  (let ((alist cc-test-face-alist) elem facename)
+    (while alist
+      (setq elem (car alist)
+	    alist (cdr alist))
+      (put (car elem) 'cc-test-face-alias (car elem))
+      (unless (eq (car elem) 'reg)
+	(if (and (setq facename (get (cdr elem) 'cc-test-face-name))
 		 (not (eq facename (car elem))))
-	(error (concat "Ambiguous face %s - can be both %s and %s"
-		       " (cc-fonts loaded too early?)")
-	       (cdr elem) facename (car elem)))
-      (put (cdr elem) 'cc-test-face-name (car elem)))))
+	    (put (car elem) 'cc-test-face-alias facename)
+	  (put (cdr elem) 'cc-test-face-name (car elem)))))))
 
 (defconst cc-test-emacs-features
   (let ((features c-emacs-features))
@@ -205,10 +237,7 @@ to be set as a file local variable.")
   ;; Try to forcibly font lock the current buffer, even in batch mode.
   ;; We're doing really dirty things to trick font-lock into action in
   ;; batch mode in the different emacsen.
-  (let ((orig-font-lock-make-faces
-	 (and (fboundp 'font-lock-make-faces)
-	      (symbol-function 'font-lock-make-faces)))
-	(orig-noninteractive-function
+  (let ((orig-noninteractive-function
 	 (and (fboundp 'noninteractive)
 	      (symbol-function 'noninteractive)))
 	(orig-noninteractive-variable
@@ -218,11 +247,6 @@ to be set as a file local variable.")
 	(noninteractive nil))
     (unwind-protect
 	(progn
-	  (when (and orig-noninteractive-variable orig-font-lock-make-faces)
-	    ;; `font-lock-make-faces' is used in Emacs 19.34 and
-	    ;; requires a window system.  Since we never actually
-	    ;; display the faces we can skip it.
-	    (fset 'font-lock-make-faces (lambda (&rest args))))
 	  (when orig-noninteractive-function
 	    ;; XEmacs (at least 21.4) calls `noninteractive' to check
 	    ;; for batch mode, so we let it lie.
@@ -237,8 +261,6 @@ to be set as a file local variable.")
 		  (font-lock-fontify-buffer-function
 		   'font-lock-default-fontify-buffer))
 	      (font-lock-fontify-buffer))))
-      (when (and noninteractive orig-font-lock-make-faces)
-	(fset 'font-lock-make-faces orig-font-lock-make-faces))
       (when orig-noninteractive-function
 	(fset 'noninteractive orig-noninteractive-function)))))
 
@@ -287,11 +309,7 @@ to be set as a file local variable.")
 	(brace-list-intro      . +)
 	(brace-list-entry      . 0)
 	(statement             . 0)
-	;; some people might prefer
-	;;(statement             . c-lineup-runin-statements)
 	(statement-cont        . +)
-	;; some people might prefer
-	;;(statement-cont        . c-lineup-math)
 	(statement-block-intro . +)
 	(statement-case-intro  . +)
 	(statement-case-open   . 0)
@@ -324,6 +342,12 @@ to be set as a file local variable.")
 	(namespace-open        . 0)
 	(namespace-close       . 0)
 	(innamespace           . +)
+	(module-open           . 0)
+	(module-close          . 0)
+	(inmodule              . 0)
+	(composition-open      . 0)
+	(composition-close     . 0)
+	(incomposition         . 0)
 	(template-args-cont    . (c-lineup-template-args +))
 	(inlambda              . c-lineup-inexpr-block)
 	(lambda-intro-cont     . +)
@@ -504,6 +528,11 @@ to be set as a file local variable.")
 	(facefile (concat (file-name-sans-extension filename) ".face"))
 	exp-syntax-buf res-syntax-buf exp-faces-buf res-faces-buf)
 
+    ;; Old emacsen displays eight bit chars as octal escapes, which
+    ;; makes (current-column) misbehave in `cc-test-record-faces'.
+    (when (= emacs-major-version 19)
+      (standard-display-european 1))
+
     ;; Setup the test file buffer.
     (set-buffer testbuf)
     (kill-all-local-variables)
@@ -598,7 +627,8 @@ to be set as a file local variable.")
 	     error-found-p
 	     expectedindent
 	     c-echo-syntactic-information-p
-	     font-lock-verbose)
+	     font-lock-verbose
+	     last-result)
 
 	;; This shouldn't happen if CC Mode is byte compiled properly.
 	(when (and (featurep 'cc-langs)
@@ -693,7 +723,7 @@ to be set as a file local variable.")
 
 	    (catch 'break-loop
 	      (while (not (eobp))
-		(let* (result expected regression-comment indent-err)
+		(let (result expected regression-comment indent-err)
 
 		  (flet ((regression-msg (msg &rest args)
 			  (unless ignore-errs
@@ -773,17 +803,38 @@ to be set as a file local variable.")
 			;; Don't report fontification errors if there already
 			;; are indentation errors on this line.
 			(unless indent-err
-			  (while (progn
-				   (set-buffer res-faces-buf)
-				   (skip-chars-forward " \t")
-				   (setq result (and (not (eolp))
-						     (read res-faces-buf)))
-				   (set-buffer exp-faces-buf)
-				   (skip-chars-forward " \t")
-				   (setq expected (and (not (eolp))
-						       (read exp-faces-buf)))
-				   (and (or result expected)
-					(equal result expected))))
+			  (while
+			      (progn
+				(set-buffer res-faces-buf)
+				(skip-chars-forward " \t")
+				(setq result (and (not (eolp))
+						  (read res-faces-buf)))
+				(set-buffer exp-faces-buf)
+				;; If face aliasing is done we might
+				;; have entries in the expected buffer
+				;; where a face is changed to itself,
+				;; so we got to check and ignore that.
+				(while (progn
+					 (skip-chars-forward " \t")
+					 (setq expected
+					       (and (not (eolp))
+						    (read exp-faces-buf)))
+					 (when expected
+					   (setcdr
+					    expected
+					    (delete-duplicates
+					     (mapcar
+					      (lambda (face)
+						(get face 'cc-test-face-alias))
+					      (cdr expected)))))
+					 (and last-result
+					      expected
+					      (equal (cdr last-result)
+						     (cdr expected)))))
+				(prog1 (and (or result expected)
+					    (equal result expected))
+				  (when result
+				    (setq last-result result)))))
 
 			  (cond
 			   ((not (or result expected)))

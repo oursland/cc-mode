@@ -207,8 +207,8 @@ Works with: arglist-cont, arglist-cont-nonempty."
 	(c-lineup-argcont-scan other-match)))))
 
 (defun c-lineup-arglist-intro-after-paren (langelem)
-  "Line up a line just after the open paren of the surrounding paren or
-brace block.
+  "Line up a line to just after the open paren of the surrounding paren
+or brace block.
 
 Works with: defun-block-intro, brace-list-intro,
 statement-block-intro, statement-case-intro, arglist-intro."
@@ -258,8 +258,8 @@ arglist-close, arglist-cont and arglist-cont-nonempty."
 
 (defun c-lineup-arglist-operators (langelem)
   "Line up lines starting with an infix operator under the open paren.
-Return nil on lines that doesn't start with an operator, to leave
-those cases to other lineup functions.  Example:
+Return nil on lines that don't start with an operator, to leave those
+cases to other lineup functions.  Example:
 
 if (  x < 10
    || at_limit (x,       <- c-lineup-arglist-operators
@@ -297,8 +297,7 @@ open parenthesis of the argument list, the indentation is
 `c-basic-offset' instead of the open paren column.  See
 `c-lineup-arglist' for further discussion of this \"DWIM\" measure.
 
-Works with: defun-close, class-close, inline-close, block-close,
-brace-list-close, arglist-close, extern-lang-close, namespace-close."
+Works with: All *-close symbols."
   (save-excursion
     (beginning-of-line)
     (c-go-up-list-backward)
@@ -389,7 +388,7 @@ Works with: inher-cont, member-init-cont."
 
 (defun c-lineup-java-inher (langelem)
   "Line up Java implements and extends declarations.
-If class names follows on the same line as the implements/extends
+If class names follow on the same line as the implements/extends
 keyword, they are lined up under each other.  Otherwise, they are
 indented by adding `c-basic-offset' to the column of the keyword.
 E.g:
@@ -410,7 +409,7 @@ Works with: inher-cont."
 
 (defun c-lineup-java-throws (langelem)
   "Line up Java throws declarations.
-If exception names follows on the same line as the throws keyword,
+If exception names follow on the same line as the throws keyword,
 they are lined up under each other.  Otherwise, they are indented by
 adding `c-basic-offset' to the column of the throws keyword.  The
 throws keyword itself is also indented by `c-basic-offset' from the
@@ -809,7 +808,7 @@ Works with: template-args-cont."
 	  (vector (current-column))))))
 
 (defun c-lineup-ObjC-method-call (langelem)
-  "Line up selector args as elisp-mode does with function args:
+  "Line up selector args as Emacs Lisp mode does with function args:
 Go to the position right after the message receiver, and if you are at
 the end of the line, indent the current line c-basic-offset columns
 from the opening bracket; otherwise you are looking at the first
@@ -931,8 +930,8 @@ In the first case the indentation is kept unchanged, in the
 second `c-basic-offset' is added.
 
 Works with: defun-close, defun-block-intro, block-close,
-brace-list-close, brace-list-intro, statement-block-intro, inclass,
-inextern-lang, innamespace."
+brace-list-close, brace-list-intro, statement-block-intro and all in*
+symbols, e.g. inclass and inextern-lang."
   (save-excursion
     (goto-char (cdr langelem))
     (back-to-indentation)
@@ -970,13 +969,13 @@ const char msg[] =             if (!running)
 } while (0)             <->    } while (0)           <- c-lineup-cpp-define
 
 The relative indentation returned by `c-lineup-cpp-define' is zero and
-two, respectively, in these two examples. They are then added to the
+two, respectively, in these two examples.  They are then added to the
 two column indentation that statement-block-intro gives in both cases
 here.
 
 If the relative indentation is zero, then nil is returned instead.
-This useful in a list expression to specify the default indentation on
-the top level.
+That is useful in a list expression to specify the default indentation
+on the top level.
 
 If `c-syntactic-indentation-in-macros' is nil then this function keeps
 the current indentation, except for empty lines \(ignoring the ending
