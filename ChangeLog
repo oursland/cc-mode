@@ -1,3 +1,98 @@
+2003-06-17  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-fix.el: cc-mode-19.el has been renamed to cc-fix.el since it
+	now contains compatibility stuff for later versions than (X)Emacs
+	19.
+
+2003-06-17  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-langs.el (c-paren-nontype-kwds): New language constant.
+
+	(c-other-decl-kwds, c-postfix-decl-spec-kwds): Added compiler
+	specific declspec keywords: __attribute__ for gcc and __declspec
+	for msvc.
+
+	* cc-fonts.el (c-font-lock-declarations, c-complex-decl-matchers):
+	Support specifiers in a couple more contexts to cope with msvc
+	'__declspec'.
+
+	* cc-engine.el (c-forward-keyword-clause): Support
+	`c-paren-nontype-kwds'.
+
+2003-06-16  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-langs.el (c-primary-expr-regexp): Don't match a bare period
+	as a float.
+
+2003-06-16  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-bytecomp.el (cc-bytecomp-setup-environment): Do not cover
+	functions that have been bound.
+
+	(cc-external-require): New macro to use for requiring external
+	packages, to handle the environment correctly.
+
+	* cc-defs.el, cc-fix.el, cc-fonts.el, cc-mode.el: Replaced
+	external require's with `cc-external-require'.
+
+2003-06-15  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-member-init-list,
+	c-guess-basic-syntax): Fixes in handling of bitfields.
+
+2003-06-13  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-langs.el (comment-end): Put a space in front of the comment
+	ender in C, as it was before the move from cc-mode.el.
+
+2003-06-11  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-fonts.el: Do not load cc-awk.elc or awk-font-lock-keywords
+	unless there is an AWK Mode buffer.
+
+2003-06-10  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-awk.el: New file that implements AWK support, superseding the
+	old separate derived mode in awk-mode.el.
+
+	* cc-vars.el, cc-mode-19.el, cc-langs.el, cc-mode.el, cc-defs.el,
+	cc-engine.el, cc-fonts.el: Changes for the new AWK support.
+
+2003-06-05  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el, cc-langs.el (c-decl-block-key,
+	c-search-uplist-for-classkey): Check that the modifier is followed
+	by "{" in Pike before considering it to start a class-like block.
+
+2003-05-30  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-mode.el (c-initialize-cc-mode): Added some compatibility to
+	make this function behave somewhat more as documented for derived
+	modes.  It's still not enough to make the old AWK mode behave
+	reasonably, but it's been like this a long time now so fixing it
+	more might cause trouble elsewhere. :P
+
+2003-05-29  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-fonts.el (c-remove-font-lock-face): New macro to remove a
+	font lock face properly (especially in XEmacs).
+
+	* cc-bytecomp.el (cc-bytecomp-obsolete-fun): Added the same kludge
+	as in `cc-bytecomp-obsolete-var' to avoid a confused compiler
+	warning.
+
+	* cc-engine.el (c-forward-type): Fixed a bug in the handling of
+	concatenated types when the component types are known.
+
+	* cc-fonts.el (c-constant-face-name): Added face name variable to
+	avoid the use of `font-lock-constant-face' for constants in
+	emacsen that doesn't have it.
+
+2003-05-25  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-styles.el, cc-vars.el, cc-cmds.el: Fixes for the syntactic
+	symbols for module and composition blocks.
+
 2003-05-17  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* cc-mode.el (c-basic-common-init): Use
@@ -32,7 +127,7 @@
 
 	* cc-defs.el (c-alpha, c-alnum, c-digit, c-upper, c-lower): New
 	constants to make it easier to create regexps that use POSIX char
-	classes in emacsen that supports them.
+	classes in emacsen that support them.
 
 2003-04-07  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
