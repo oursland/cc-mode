@@ -1609,13 +1609,16 @@ brace."
     ;; so we avoid this extra pass which potentially can search over a
     ;; large amount of text.)
     (if (and (eq move 'previous)
-	     (save-excursion
-	       (and (c-syntactic-re-search-forward "[;={]" start t 1 t)
-		    (eq (char-before) ?=)
-		    (c-syntactic-re-search-forward "[;{]" start t 1 t)
-		    (eq (char-before) ?{)
-		    (c-safe (goto-char (c-up-list-forward (point))) t)
-		    (not (c-syntactic-re-search-forward ";" start t 1 t)))))
+	     (c-with-syntax-table (if (c-major-mode-is 'c++-mode)
+				      c++-template-syntax-table
+				    (syntax-table))
+	       (save-excursion
+		 (and (c-syntactic-re-search-forward "[;={]" start t 1 t)
+		      (eq (char-before) ?=)
+		      (c-syntactic-re-search-forward "[;{]" start t 1 t)
+		      (eq (char-before) ?{)
+		      (c-safe (goto-char (c-up-list-forward (point))) t)
+		      (not (c-syntactic-re-search-forward ";" start t 1 t))))))
 	(cons 'same nil)
       (cons move nil)))))
 
@@ -1628,13 +1631,22 @@ brace."
   ;; point is moved as far as possible within the current sexp and nil
   ;; is returned.  This function doesn't handle macros; use
   ;; `c-end-of-macro' instead in those cases.
-  (let ((start (point)))
+  (let ((start (point))
+	(decl-syntax-table (if (c-major-mode-is 'c++-mode)
+			       c++-template-syntax-table
+			     (syntax-table))))
     (catch 'return
 
       ;; Search forward to the closest ';', '=' or '{'.  We look for
       ;; '=' since any block after it is part of a variable
       ;; initialization and not the declaration itself.
-      (c-syntactic-re-search-forward "[;={]" nil 'move 1 t)
+      (c-with-syntax-table decl-syntax-table
+	(while (and (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t)
+		    ;; In Pike it can be an operator identifier
+		    ;; containing '='.
+		    (c-major-mode-is 'pike-mode)
+		    (eq (char-before) ?=)
+		    (c-on-identifier))))
 
       (when (and c-recognize-knr-p
 		 (eq (char-before) ?\;)
@@ -1653,23 +1665,26 @@ brace."
 	  (throw 'return nil))
 	(if (or (not c-opt-block-decls-with-vars-key)
 		(save-excursion
-		  (let ((lim (point)))
-		    (goto-char start)
-		    (not (and (c-syntactic-re-search-forward
-			       (concat "[;=\(\[{]\\|\\(\\=\\|[^_]\\)\\<\\("
-				       c-opt-block-decls-with-vars-key
-				       "\\)")
-			       lim t)
-			      (match-beginning 2))))))
+		  (c-with-syntax-table decl-syntax-table
+		    (let ((lim (point)))
+		      (goto-char start)
+		      (not (and (c-syntactic-re-search-forward
+				 (concat "[;=\(\[{]\\|\\<\\("
+					 c-opt-block-decls-with-vars-key
+					 "\\)")
+				 lim t 1 t)
+				(match-beginning 1)
+				(not (eq (char-before) ?_))))))))
 	    ;; The declaration doesn't have any of the
 	    ;; `c-opt-block-decls-with-vars' keywords in the
 	    ;; beginning, so it ends here at the end of the block.
 	    (throw 'return t)))
 
-      (while (progn
-	       (if (eq (char-before) ?\;)
-		   (throw 'return t))
-	       (c-syntactic-re-search-forward ";" nil 'move 1 t)))
+      (c-with-syntax-table decl-syntax-table
+	(while (progn
+		 (if (eq (char-before) ?\;)
+		     (throw 'return t))
+		 (c-syntactic-re-search-forward ";" nil 'move 1 t))))
       nil)))
 
 (defun c-beginning-of-member-init-list (&optional limit)
@@ -3090,7 +3105,22 @@ Keywords are recognized and not considered identifiers."
 		(c-backward-sexp 1)
 		(c-backward-syntactic-ws lim))
 	      (or (bobp)
-		  (memq (char-before) '(?\; ?\}))
+		  (eq (char-before) ?\;)
+		  (and (eq (char-before) ?\})
+		       ;; Check that we aren't after a declaration
+		       ;; that doesn't end at the '}'.
+		       (save-excursion
+			 (if paren-state
+			     ;; Speed up the backward search a bit.
+			     (goto-char (car (car paren-state))))
+			 (if (eq (car (c-beginning-of-decl-1
+				       (c-safe-position (point) paren-state)))
+				 'same)
+			     ;; The '}' is unbalanced; say topmost-intro
+			     ;; instead of topmost-intro-cont.
+			     t
+			   (c-end-of-decl-1)
+			   (< (point) indent-point))))
 		  (and (c-major-mode-is 'objc-mode)
 		       (progn
 			 (c-beginning-of-statement-1 lim)
@@ -3131,11 +3161,11 @@ Keywords are recognized and not considered identifiers."
 	   ;; CASE 5L: we are at the first argument of a template
 	   ;; arglist that begins on the previous line.
 	   ((eq (char-before) ?<)
-	    (c-beginning-of-statement-1 lim)
+	    (c-beginning-of-statement-1 (c-safe-position (point) paren-state))
 	    (c-add-syntax 'template-args-cont (c-point 'boi)))
 	   ;; CASE 5M: we are at a topmost continuation line
 	   (t
-	    (c-beginning-of-statement-1 lim)
+	    (c-beginning-of-statement-1 (c-safe-position (point) paren-state))
 	    (c-add-syntax 'topmost-intro-cont (c-point 'boi)))
 	   ))
 	 ;; (CASE 6 has been removed.)
