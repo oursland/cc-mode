@@ -12,6 +12,15 @@ Where:
     --tag
     -t      - tag all releaseable files with new version number
 
+    --package
+    -p      - create the distribution packages
+
+    --docs
+    -d      - create the documentation packages
+
+    --all
+    -       - do all of the above
+
     --help
     -h      - this help message
 
