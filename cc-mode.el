@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.311 $
-;; Last Modified:   $Date: 1996-08-06 21:11:39 $
+;; Version:         $Revision: 4.312 $
+;; Last Modified:   $Date: 1996-08-19 22:16:16 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2398,9 +2398,9 @@ Optional prefix ARG means justify paragraph as well."
 	    (beginning-of-line)
 	    ;; Move up to first line of this comment.
 	    (while (and (not (bobp))
-			(looking-at "[ \t]*//"))
+ 			(looking-at "[ \t]*//[ \t]*[^ \t\n]"))
 	      (forward-line -1))
-	    (if (not (looking-at ".*//"))
+ 	    (if (not (looking-at ".*//[ \t]*[^ \t\n]"))
 		(forward-line 1))
 	    ;; Find the comment start in this line.
 	    (re-search-forward "[ \t]*//[ \t]*")
@@ -4964,7 +4964,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.311 $"
+(defconst c-version "$Revision: 4.312 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
