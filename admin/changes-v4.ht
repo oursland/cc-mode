@@ -22,7 +22,7 @@ changes in CC Mode 5.
 
     <p><li>The function <code>c-electric-delete</code> and variable
 	<code>c-delete-function</code> are handled differently now, in
-	order to accomodate the separation of the
+	order to accommodate the separation of the
 	<code>BackSpace</code> and <code>Delete</code> keysyms.  CC
 	Mode now binds only the <code>Delete</code> keysym to
 	<code>c-electric-delete</code> (which runs
