@@ -1134,6 +1134,16 @@ all style variables are per default set in a special non-override
 state.  Set this variable only if your configuration has stopped
 working due to this change.")
 
+(defvar c-syntactic-analysis-in-macro nil
+  "*Enable syntactic analysis inside macros.
+Normally all lines inside macro definitions are analyzed as
+`cpp-macro-cont'.  If this is defined, they are instead analyzed as if
+not part of a macro, and then `cpp-macro-cont' is added without an
+anchor point to the analysis.  That mode of operation is currently
+considered experimental and can misbehave.  Therefore it's only turned
+on when this variable is set.  When it's more well tested this
+variable will probably go away.")
+
 
 
 ;; Non-customizable variables, still part of the interface to CC Mode
