@@ -5053,7 +5053,7 @@ brace."
 	  (syntax-last c-syntactic-context)
 	  (boi (c-point 'boi))
 	  (prev-paren (if at-block-start ?{ (char-after)))
-	  step-type step-tmp at-comment)
+	  step-type step-tmp at-comment special-list)
       (apply 'c-add-syntax syntax-symbol nil syntax-extra-args)
 
       ;; Begin by skipping any labels and containing statements that
@@ -5132,6 +5132,15 @@ brace."
 	      (when (and (eq step-type 'same)
 			 containing-sexp)
 		(goto-char containing-sexp)
+
+		;; Don't stop in the middle of a special brace list opener
+		;; like "({".
+		(when (and c-special-brace-lists
+			   (setq special-list
+				 (c-looking-at-special-brace-list)))
+		  (setq containing-sexp (car (car special-list)))
+		  (goto-char containing-sexp))
+
 		(setq paren-state (c-whack-state-after containing-sexp
 						       paren-state)
 		      containing-sexp (c-most-enclosing-brace paren-state)
@@ -5144,6 +5153,7 @@ brace."
 		      (when (/= savepos boi)
 			(if (and (or (not (looking-at "\\>"))
 				     (not (c-on-identifier)))
+				 (not special-list)
 				 (save-excursion
 				   (c-forward-syntactic-ws)
 				   (forward-char)
