@@ -165,6 +165,7 @@ def datecmp(date1, date2):
 
 
 def main():
+    zeros = (0, 0, 0, 0, 0, 0)
     usernames = {}
 
     lastchange = get_last_date('ChangeLog')
@@ -174,7 +175,7 @@ def main():
     dates = changes.keys()
     dates.sort(datecmp)
     for date in dates:
-	timetuple = tuple(date) + (0, 0, 0, 0, 0, 0)
+	timetuple = time.localtime(time.mktime(tuple(date) + zeros))
 	timestr = time.strftime('%a %b %d %Y', timetuple)
 
 	changes_byuser = changes[date]
