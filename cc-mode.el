@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-04 20:59:29 $
-;; Version:         $Revision: 2.174 $
+;; Last Modified:   $Date: 1992-08-05 18:27:51 $
+;; Version:         $Revision: 2.175 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-04 20:59:29 $|$Revision: 2.174 $|
+;; |$Date: 1992-08-05 18:27:51 $|$Revision: 2.175 $|
 
 
 ;; ======================================================================
@@ -326,7 +326,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.174 $
+  "Major mode for editing C++ code.  $Revision: 2.175 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -527,7 +527,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.174 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.175 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1237,11 +1237,11 @@ enclosing class, or the depth of class nesting at point."
 	;; calculate depth wrt containing (possibly nested) classes
 	(goto-char containing-sexp)
 	(while (and (setq foundp (re-search-backward
-				  "}\\|\\<\\(class\\|struct\\)\\>"
+				  "[;}]\\|\\<\\(class\\|struct\\)\\>"
 				  (point-min) t))
 		    (or (c++-in-literal)
 			(c++-in-parens-p))))
-	(if (= (following-char) ?})
+	(if (memq (following-char) '(?} ?\;))
 	    nil
 	  (setq state (c++-parse-state containing-sexp))
 	  (and foundp
@@ -2110,7 +2110,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.174 $"
+(defconst c++-version "$Revision: 2.175 $"
   "c++-mode version number.")
 
 (defun c++-version ()
