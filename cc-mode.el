@@ -505,16 +505,6 @@ CC Mode by making sure the proper entries are present on
        (lambda ()
 	 (insert
 	  "Buffer Style: " style "\n\n"
-	  (if (and hook
-		   (or (/= (length hook) 1)
-		       (not (eq (car hook) 'c-gnu-impose-minimum))
-		       ))
-	      (concat "\n@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n"
-		      "c-special-indent-hook is set to '"
-		      (format "%s" hook)
-		      ".\nPerhaps this is your problem?\n"
-		      "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\n\n")
-	    "\n")
 	  (format "c-emacs-features: %s\n" c-features)
 	  )))
       nil))))
