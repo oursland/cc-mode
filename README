@@ -365,7 +365,7 @@ Customizing Indentation
     essentially moving the construct one level of indentation to the
     left.
 
-    To check your changes quickly, just hit ESC C-x to reindent the
+    To check your changes quickly, just hit C-c C-q to reindent the
     entire function.  If this does what you want, you can put the
     following lisp in your c-mode-common-hook (see below for an
     example):
@@ -385,8 +385,9 @@ Frequently Asked Questions
        hit "ESC C-\" to re-indent the entire region which you've just
        marked.
 
-    Q. How do I re-indent the entire function?
-    A. Hit ESC C-x
+    Q. How do I re-indent the entire function? ESC C-x doesn't work
+    A. ESC C-x is reserved for future Emacs use.  To re-indent the
+       entire function hit C-c C-q.
 
     Q. How do I re-indent the current block?
     A. First move to the brace which opens the block with "ESC C-u",
@@ -517,7 +518,7 @@ distributed with FSF Emacs 19.22).
 	c-scope-operator
 	c-tame-insert               (Emacs 18 only)
 	c-tame-comments             (Emacs 18 only)
-	c-indent-defun              (M-C-x)
+	c-indent-defun              (C-c C-q)
 	c-show-semantic-information (C-c C-s)
 	c-version                   (C-c C-v)
 	c-submit-bug-report         (C-c C-b)
