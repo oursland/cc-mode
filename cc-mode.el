@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.221 $
-;; Last Modified:   $Date: 1995-06-01 00:05:31 $
+;; Version:         $Revision: 4.222 $
+;; Last Modified:   $Date: 1995-06-01 16:51:16 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -100,7 +100,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-06-01 00:05:31 $|$Revision: 4.221 $|
+;; |$Date: 1995-06-01 16:51:16 $|$Revision: 4.222 $|
 
 ;;; Code:
 
@@ -2996,10 +2996,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; Using BUFPOS buffer position, and WHICH (must be 'open or
   ;; 'close), hack the c-parse-state STATE and return the results.
   (if (eq which 'open)
-      (if (or (consp (car state))
-	      (/= bufpos (car state)))
-	  (cons bufpos state)
-	state)
+      (let ((car (car state)))
+	(if (or (null car)
+		(consp car)
+		(/= bufpos car))
+	    (cons bufpos state)
+	  state))
     (if (not (eq which 'close))
 	(error "c-hack-state, bad argument: %s" which))
     ;; 'close brace
@@ -4484,7 +4486,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.221 $"
+(defconst c-version "$Revision: 4.222 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
