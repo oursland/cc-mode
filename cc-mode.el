@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-21 21:59:27 $
-;; Version:         $Revision: 2.167 $
+;; Last Modified:   $Date: 1992-07-22 13:26:54 $
+;; Version:         $Revision: 2.168 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-21 21:59:27 $|$Revision: 2.167 $|
+;; |$Date: 1992-07-22 13:26:54 $|$Revision: 2.168 $|
 
 
 ;; ======================================================================
@@ -326,7 +326,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.167 $
+  "Major mode for editing C++ code.  $Revision: 2.168 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -527,7 +527,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.167 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.168 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1563,11 +1563,18 @@ BOD is the beginning of the C++ definition."
 				      ;; looking at a blank line, indent
 				      ;; next line to zero
 				      0
-				    ;; subtract inclass-shift since
-				    ;; its already incorporated by
-				    ;; defaultin current-indentation
-				    (- (current-indentation) inclass-shift)
-				    )))))))
+				    (if (save-excursion
+					  (goto-char indent-point)
+					  (beginning-of-line)
+					  (bobp))
+					;; at beginning of buffer, if
+					;; nothing else, indent to zero 
+					0
+				      ;; subtract inclass-shift since
+				      ;; its already incorporated by
+				      ;; defaultin current-indentation
+				      (- (current-indentation) inclass-shift)
+				      ))))))))
 		      ))))))
 	    ((/= (char-after containing-sexp) ?{)
 	     ;; line is expression, not statement:
@@ -2087,7 +2094,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.167 $"
+(defconst c++-version "$Revision: 2.168 $"
   "c++-mode version number.")
 
 (defun c++-version ()
