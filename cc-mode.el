@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.225 $
-;; Last Modified:   $Date: 1994-01-31 22:57:05 $
+;; Version:         $Revision: 3.226 $
+;; Last Modified:   $Date: 1994-02-01 16:19:39 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-31 22:57:05 $|$Revision: 3.225 $|
+;; |$Date: 1994-02-01 16:19:39 $|$Revision: 3.226 $|
 
 ;;; Code:
 
@@ -352,8 +352,7 @@ completely safe, set this variable to:
 This variable has no effect under Emacs 19. For details on why this is
 necessary in GNU Emacs 18, please refer to the cc-mode texinfo manual.")
 
-;; c-mode defines c-backslash-column as 48.
-(defvar c-default-macroize-column 78
+(defvar c-backslash-column 48
   "*Column to insert backslashes when macroizing a region.")
 (defvar c-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
@@ -440,7 +439,7 @@ your style, only those that are different from the default.")
 (defvar c-mode-menu
   '(["Comment Out Region"     comment-region (mark)]
     ["Macro Expand Region"    c-macro-expand (mark)]
-    ["Backslashify"           c-macroize-region (mark)]
+    ["Backslashify"           c-backslash-region (mark)]
     ["Indent Expression"      c-indent-exp
      (memq (following-char) '(?\( ?\[ ?\{))]
     ["Indent Line"            c-indent-command t]
@@ -539,7 +538,7 @@ supported list, along with the values for this variable:
   (define-key c-mode-map "/"         'c-electric-slash)
   (define-key c-mode-map "*"         'c-electric-star)
   (define-key c-mode-map "\e\C-x"    'c-indent-defun)
-  (define-key c-mode-map "\C-c\C-\\" 'c-macroize-region)
+  (define-key c-mode-map "\C-c\C-\\" 'c-backslash-region)
   ;; TBD: where if anywhere, to put c-backward|forward-into-nomenclature
   (define-key c-mode-map "\C-c\C-a"  'c-toggle-auto-state)
   (define-key c-mode-map "\C-c\C-b"  'c-submit-bug-report)
@@ -571,7 +570,7 @@ supported list, along with the values for this variable:
 	(define-key c-mode-map [menu-bar c c-macro-expand]
 	  '("Macro Expand Region" . c-macro-expand))
 	(define-key c-mode-map [menu-bar c c-backslash-region]
-	  '("Backslashify" . c-macroize-region))
+	  '("Backslashify" . c-backslash-region))
 	(define-key c-mode-map [menu-bar c indent-exp]
 	  '("Indent Expression" . c-indent-exp))
 	(define-key c-mode-map [menu-bar c indent-line]
@@ -731,7 +730,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.225 $
+cc-mode Revision: $Revision: 3.226 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -762,7 +761,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.225 $
+cc-mode Revision: $Revision: 3.226 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3175,13 +3174,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		 (forward-char -1)
 		 (looking-at "\\\\")))
 	  (progn
-	    (if (>= (current-column) c-default-macroize-column)
+	    (if (>= (current-column) c-backslash-column)
 		(insert " \\")
-	      (while (<= (current-column) c-default-macroize-column)
+	      (while (<= (current-column) c-backslash-column)
 		(insert "\t")
 		(end-of-line))
 	      (delete-char -1)
-	      (while (< (current-column) c-default-macroize-column)
+	      (while (< (current-column) c-backslash-column)
 		(insert " ")
 		(end-of-line))
 	      (insert "\\"))))
@@ -3194,7 +3193,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(kill-line)))))
       ))
 
-(defun c-macroize-region (beg end arg)
+(defun c-backslash-region (beg end arg)
   "Insert backslashes at end of every line in region.
 Useful for defining cpp macros.  If called with a prefix argument,
 it trailing backslashes are removed."
@@ -3246,7 +3245,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.225 $"
+(defconst c-version "$Revision: 3.226 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3277,7 +3276,7 @@ region."
      'c-block-comments-indent-p
      'c-cleanup-list
      'c-comment-only-line-offset
-     'c-default-macroize-column
+     'c-backslash-column
      'c-delete-function
      'c-electric-pound-behavior
      'c-hanging-braces-alist
@@ -3316,7 +3315,6 @@ region."
 (fset 'mark-c-function       'c-mark-function)
 (fset 'indent-c-exp          'c-indent-exp)
 (fset 'set-c-style           'c-set-style)
-(fset 'c-backslash-region    'c-macroize-region)
 ;; lemacs 19.9 + font-lock + cc-mode - c++-mode lossage
 (fset 'c++-beginning-of-defun 'beginning-of-defun)
 
@@ -3347,7 +3345,6 @@ region."
 	      (cons 'c++-auto-hungry-toggle na)
 	      (cons 'c++-relative-offset-p na)
 	      (cons 'c++-untame-characters 'c-untame-characters)
-	      (cons 'c++-default-macroize-column 'c-default-macroize-column)
 	      (cons 'c++-special-indent-hook 'c-special-indent-hook)
 	      (cons 'c++-delete-function 'c-delete-function)
 	      (cons 'c++-electric-pound-behavior 'c-electric-pound-behavior)
@@ -3358,7 +3355,6 @@ region."
 	      (cons 'c++-defun-header-strong-struct-equivs na)
 	      (cons 'c++-version 'c-version)
 	      (cons 'c++-mode-help-address 'c-mode-help-address)
-	      (cons 'c-backslash-column 'c-default-macroize-column)
 	      (cons 'c-indent-level 'c-basic-offset)
 	      (cons 'c-brace-imaginary-offset na)
 	      (cons 'c-brace-offset 'c-offsets-alist)
@@ -3366,6 +3362,8 @@ region."
 	      (cons 'c-label-offset 'c-offsets-alist)
 	      (cons 'c-continued-statement-offset 'c-offsets-alist)
 	      (cons 'c-continued-brace-offset 'c-offsets-alist)
+	      (cons 'c-default-macroize-column 'c-backslash-column)
+	      (cons 'c++-default-macroize-column 'c-backslash-column)
 	      )))
        (mapcar
 	(function
