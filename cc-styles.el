@@ -423,6 +423,41 @@ Here is the current list of valid syntactic element symbols:
  inextern-lang          -- analogous to `inclass' syntactic symbol
 ")
 
+(defun c-get-offset (langelem)
+  ;; Get offset from LANGELEM which is a cons cell of the form:
+  ;; (SYMBOL . RELPOS).  The symbol is matched against
+  ;; c-offsets-alist and the offset found there is either returned,
+  ;; or added to the indentation at RELPOS.  If RELPOS is nil, then
+  ;; the offset is simply returned.
+  (let* ((symbol (car langelem))
+	 (relpos (cdr langelem))
+	 (match  (assq symbol c-offsets-alist))
+	 (offset (cdr-safe match)))
+    ;; offset can be a number, a function, a variable, or one of the
+    ;; symbols + or -
+    (cond
+     ((not match)
+      (if c-strict-syntax-p
+	  (error "don't know how to indent a %s" symbol)
+	(setq offset 0
+	      relpos 0)))
+     ((eq offset '+)         (setq offset c-basic-offset))
+     ((eq offset '-)         (setq offset (- c-basic-offset)))
+     ((eq offset '++)        (setq offset (* 2 c-basic-offset)))
+     ((eq offset '--)        (setq offset (* 2 (- c-basic-offset))))
+     ((eq offset '*)         (setq offset (/ c-basic-offset 2)))
+     ((eq offset '/)         (setq offset (/ (- c-basic-offset) 2)))
+     ((functionp offset)     (setq offset (funcall offset langelem)))
+     ((not (numberp offset)) (setq offset (symbol-value offset)))
+     )
+    (+ (if (and relpos
+		(< relpos (c-point 'bol)))
+	   (save-excursion
+	     (goto-char relpos)
+	     (current-column))
+	 0)
+       offset)))
+
 
 (defvar c-read-offset-history nil)
 
