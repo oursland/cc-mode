@@ -22,14 +22,14 @@ class Foo
 	  );
     button.setActionListener(
 			     new java.awt.event.ActionAdaptor()
+			     {
+				 public void actionPerformed(ActionEvent e)
 				 {
-				     public void actionPerformed(ActionEvent e)
-				     {
-					 //Code
-				     }
-				     public void foo()
-				     {}
+				     //Code
 				 }
+				 public void foo()
+				 {}
+			     }
 			     );
     void foo()
     { // method body
