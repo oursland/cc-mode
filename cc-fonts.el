@@ -48,7 +48,8 @@
 ;; font-lock-type-face		Types (both pre- and user defined) and classes
 ;;				in type contexts.
 ;; font-lock-reference-face	Name qualifiers and identifiers for
-;;				scope constructs like namespaces and modules.
+;;				scope constructs like namespaces and modules
+;;				that are not types at the same time.
 ;; font-lock-builtin-face	Not used directly.
 ;;
 ;; Face aliases, mapped to different faces depending on (X)Emacs flavor:
@@ -285,7 +286,12 @@ tools (e.g. Javadoc).")
     ;; lambda easier.
     (byte-compile
      `(lambda (limit)
-	(let (-match-end-pos-)
+	(let (-match-end-pos-
+	      ;; The font-lock package in Emacs is known to clobber
+	      ;; `parse-sexp-lookup-properties' (when it exists).
+	      (parse-sexp-lookup-properties
+	       (cc-eval-when-compile
+		 (boundp 'parse-sexp-lookup-properties))))
 	  (while (re-search-forward ,regexp limit t)
 	    (setq -match-end-pos- (point))
 	    (unless (progn
@@ -549,7 +555,13 @@ casts and declarations are fontified.  Used on level 2 and higher."
   ;; `c-font-lock-declarations' will undo that later.  Nil is always
   ;; returned.
 
-  (let (id-start id-end pos)
+  (let (;; The font-lock package in Emacs is known to clobber
+	;; `parse-sexp-lookup-properties' (when it exists).
+	(parse-sexp-lookup-properties
+	 (cc-eval-when-compile
+	   (boundp 'parse-sexp-lookup-properties)))
+	id-start id-end pos)
+
     (while (and (< (point) limit)
 		(re-search-forward c-opt-<>-arglist-start limit t))
 
@@ -581,25 +593,19 @@ casts and declarations are fontified.  Used on level 2 and higher."
   nil)
 
 (defun c-font-lock-declarators (limit list types)
-  ;; Assuming the point is in the syntactic whitespace before the
-  ;; first declarator in a declaration, fontify it.  If LIST is
-  ;; non-nil, fontify also all following declarators in a comma
-  ;; separated list (e.g.  "foo" and "bar" in "int foo = 17, bar;").
-  ;; Stop at LIMIT.  If TYPES is non-nil, fontify all identifiers as
-  ;; types.  Nil is always returned.
+  ;; Assuming the point is in the start of a declarator in a
+  ;; declaration, fontify it.  If LIST is non-nil, fontify also all
+  ;; following declarators in a comma separated list (e.g.  "foo" and
+  ;; "bar" in "int foo = 17, bar;").  Stop at LIMIT.  If TYPES is
+  ;; non-nil, fontify all identifiers as types.  Nil is always
+  ;; returned.
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
-  (c-forward-syntactic-ws limit)
   (c-fontify-types-and-refs
       ((pos (point)) next-pos id-start id-end
        paren-depth
        id-face got-init
-       c-last-identifier-range
-       ;; The font-lock package in Emacs is known to clobber
-       ;; `parse-sexp-lookup-properties' (when it exists).
-       (parse-sexp-lookup-properties
-	(cc-eval-when-compile
-	  (boundp 'parse-sexp-lookup-properties))))
+       c-last-identifier-range)
 
     (while (and
 	    pos
@@ -1385,19 +1391,29 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 		      "\\>")
 	     (,(byte-compile
 		(lambda (limit)
-		  (save-restriction
-		    (narrow-to-region (point-min) limit)
-		    (c-font-lock-objc-iip-decl))
+		  (let (;; The font-lock package in Emacs is known to clobber
+			;; `parse-sexp-lookup-properties' (when it exists).
+			(parse-sexp-lookup-properties
+			 (cc-eval-when-compile
+			   (boundp 'parse-sexp-lookup-properties))))
+		    (save-restriction
+		      (narrow-to-region (point-min) limit)
+		      (c-font-lock-objc-iip-decl)))
 		  nil))))
 
 	    ;; Methods.
 	    (,(c-lang-const c-opt-method-key)
 	     (,(byte-compile
 		(lambda (limit)
-		  (save-restriction
-		    (goto-char (match-end 1))
-		    (narrow-to-region (point-min) limit)
-		    (c-font-lock-objc-method))
+		  (let (;; The font-lock package in Emacs is known to clobber
+			;; `parse-sexp-lookup-properties' (when it exists).
+			(parse-sexp-lookup-properties
+			 (cc-eval-when-compile
+			   (boundp 'parse-sexp-lookup-properties))))
+		    (save-restriction
+		      (goto-char (match-end 1))
+		      (narrow-to-region (point-min) limit)
+		      (c-font-lock-objc-method)))
 		  nil))))))
 
       ;; Fontify all type names and the identifiers in the
@@ -1479,7 +1495,13 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ,@(when (c-lang-const c-type-prefix-kwds)
 	  `((,(byte-compile
 	       `(lambda (limit)
-		  (c-fontify-types-and-refs ((c-promote-possible-types t))
+		  (c-fontify-types-and-refs
+		      ((c-promote-possible-types t)
+		       ;; The font-lock package in Emacs is known to clobber
+		       ;; `parse-sexp-lookup-properties' (when it exists).
+		       (parse-sexp-lookup-properties
+			(cc-eval-when-compile
+			  (boundp 'parse-sexp-lookup-properties))))
 		    (save-restriction
 		      ;; Narrow to avoid going past the limit in
 		      ;; `c-forward-type'.
@@ -1542,8 +1564,15 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
   ;; This function can make hidden buffer changes, but the font-lock
   ;; context covers that.
 
-  (while (re-search-forward ":[^:]" limit t)
-    (let ((continue-pos (point)) id-start)
+  (let (continue-pos id-start
+	;; The font-lock package in Emacs is known to clobber
+	;; `parse-sexp-lookup-properties' (when it exists).
+	(parse-sexp-lookup-properties
+	 (cc-eval-when-compile
+	   (boundp 'parse-sexp-lookup-properties))))
+
+    (while (re-search-forward ":[^:]" limit t)
+      (setq continue-pos (point))
       (goto-char (match-beginning 0))
       (unless (c-skip-comments-and-strings limit)
 
@@ -1585,26 +1614,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
 generic casts and declarations are fontified.  Used on level 2 and
 higher."
 
-  t `(;; Fontify the type after "new" in Java.
-      ,@(when (c-lang-const c-inexpr-class-kwds)
-	  (let* ((re (c-make-keywords-re nil
-		       (c-lang-const c-inexpr-class-kwds)))
-		 (identifier-offset (+ (c-regexp-opt-depth re)
-				       (c-lang-const c-syntactic-ws-depth)
-				       2)))
-	    `((,(concat
-		 "\\<\\(" re "\\)\\>"
-		 (c-lang-const c-syntactic-ws)
-		 "\\("			; identifier-offset
-		 (c-lang-const c-identifier-key)
-		 "\\)")
-	       ,@(mapcar
-		  (lambda (submatch)
-		    `(,(+ identifier-offset submatch)
-		      font-lock-type-face nil t))
-		  (c-lang-const c-identifier-last-sym-match))))))
-
-      ;; Fontify the identifiers inside enum lists.  (The enum type
+  t `(;; Fontify the identifiers inside enum lists.  (The enum type
       ;; name is handled by `c-simple-decl-matchers' or
       ;; `c-complex-decl-matchers' below.
       ,@(when (c-lang-const c-brace-list-kwds)
@@ -1618,7 +1628,9 @@ higher."
 		"[^\]\[{}();,/#=]*"
 		"{")
 	       '((c-font-lock-declarators limit t nil)
-		 (goto-char (match-end 0))
+		 (save-match-data
+		   (goto-char (match-end 0))
+		   (c-forward-syntactic-ws))
 		 (goto-char (match-end 0)))))))
 
       ;; Fontify labels in languages that supports them.
@@ -1795,7 +1807,12 @@ need for `c-font-lock-extra-types'.")
 	      ;; be fontified selectively only when an allocation
 	      ;; expression is successfully recognized.
 	      (c-record-type-identifiers t)
-	      c-record-ref-identifiers)
+	      c-record-ref-identifiers
+	      ;; The font-lock package in Emacs is known to clobber
+	      ;; `parse-sexp-lookup-properties' (when it exists).
+	      (parse-sexp-lookup-properties
+	       (cc-eval-when-compile
+		 (boundp 'parse-sexp-lookup-properties))))
 	  (c-forward-syntactic-ws)
 
 	  ;; The first placement arglist is always parenthesized, if it
@@ -2014,35 +2031,41 @@ need for `c++-font-lock-extra-types'.")
 
   (save-restriction
     (narrow-to-region (point-min) limit)
+    (let (;; The font-lock package in Emacs is known to clobber
+	  ;; `parse-sexp-lookup-properties' (when it exists).
+	  (parse-sexp-lookup-properties
+	   (cc-eval-when-compile
+	     (boundp 'parse-sexp-lookup-properties))))
 
-    (c-find-decl-spots
-     "[-+@]"
-     '(nil font-lock-keyword-face)
+      (c-find-decl-spots
+       "[-+@]"
+       '(nil font-lock-keyword-face)
 
-     (lambda (match-pos inside-macro)
-       ;; Fontify a sequence of compiler directives.
-       (while (eq (char-after) ?@)
-	 (unless (cond
-		  ;; Handle an @interface/@implementation/@protocol directive.
-		  ((looking-at c-class-key)
-		   (goto-char (match-end 1))
-		   (c-font-lock-objc-iip-decl))
-		  ;; Handle a @class directive.  Fontification is done
-		  ;; through `c-type-list-kwds', so we only need to
-		  ;; skip to the end.
-		  ((looking-at "@class\\>")
-		   (c-syntactic-re-search-forward ";" nil t))
-		  ;; Otherwise we assume it's a protection directive.
-		  (t (skip-syntax-forward "w_")))
-	   ;; Failed to parse the directive.  Try to recover by
-	   ;; skipping to eol.
-	   (when (re-search-forward c-syntactic-eol (c-point 'eol) 'move)
-	     (goto-char (match-beginning 0))))
-	 (c-forward-syntactic-ws))
+       (lambda (match-pos inside-macro)
+	 ;; Fontify a sequence of compiler directives.
+	 (while (eq (char-after) ?@)
+	   (unless (cond
+		    ;; Handle an @interface/@implementation/@protocol
+		    ;; directive.
+		    ((looking-at c-class-key)
+		     (goto-char (match-end 1))
+		     (c-font-lock-objc-iip-decl))
+		    ;; Handle a @class directive.  Fontification is done
+		    ;; through `c-type-list-kwds', so we only need to
+		    ;; skip to the end.
+		    ((looking-at "@class\\>")
+		     (c-syntactic-re-search-forward ";" nil t))
+		    ;; Otherwise we assume it's a protection directive.
+		    (t (skip-syntax-forward "w_")))
+	     ;; Failed to parse the directive.  Try to recover by
+	     ;; skipping to eol.
+	     (when (re-search-forward c-syntactic-eol (c-point 'eol) 'move)
+	       (goto-char (match-beginning 0))))
+	   (c-forward-syntactic-ws))
 
-       (when (looking-at "[-+]")
-	 (forward-char)
-	 (c-font-lock-objc-method)))))
+	 (when (looking-at "[-+]")
+	   (forward-char)
+	   (c-font-lock-objc-method))))))
   nil)
 
 (defconst objc-font-lock-keywords-1 (c-lang-const c-matchers-1 objc)
