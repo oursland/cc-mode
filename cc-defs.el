@@ -460,6 +460,14 @@ continuations."
    ;; fallback; shouldn't get here
    (t (mark t))))
 
+(defsubst c-face-name-p (facename)
+  ;; Return t if FACENAME is the name of a face.  This method is
+  ;; necessary since facep in XEmacs only returns t for the actual
+  ;; face objects (while it's only their names that are used just
+  ;; about anywhere else) without providing a predicate that tests
+  ;; face names.
+  (memq facename (face-list)))
+
 
 (cc-provide 'cc-defs)
 
