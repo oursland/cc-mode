@@ -1,5 +1,5 @@
 EMACS=emacs
-VERSION=5.31
+VERSION=`sed -ne 's/^(defconst c-version "\(.*\)"/\1/p' < cc-defs.el`
 
 COREFILES=\
  NEWS \
@@ -44,13 +44,14 @@ distdir:
 
 docs: distdir info html dvi ps
 	tar cf - cc-mode.info* | gzip -c > dist/cc-mode.info.tar.gz
+	version=$(VERSION) && \
 	cd html && \
-	$(RM) -r cc-mode-$(VERSION) && \
-	mkdir cc-mode-$(VERSION) && \
-	chmod 755 cc-mode-$(VERSION) && \
-	cp *.html cc-mode-$(VERSION) && \
-	chmod 644 cc-mode-$(VERSION)/* && \
-	tar cf - cc-mode-$(VERSION) | gzip -c > ../dist/cc-mode.html.tar.gz
+	$(RM) -r cc-mode-$$version && \
+	mkdir cc-mode-$$version && \
+	chmod 755 cc-mode-$$version && \
+	cp *.html cc-mode-$$version && \
+	chmod 644 cc-mode-$$version/* && \
+	tar cf - cc-mode-$$version | gzip -c > ../dist/cc-mode.html.tar.gz
 	gzip -c cc-mode.dvi > dist/cc-mode.dvi.gz
 	gzip -c cc-mode.ps > dist/cc-mode.ps.gz
 	gzip -c cc-mode.rev.ps > dist/cc-mode.rev.ps.gz
@@ -90,12 +91,13 @@ dist: force
 
 # Used internally with FILES and TARGZFILE.
 distcommon: distdir
-	$(RM) -r cc-mode-$(VERSION)
-	mkdir cc-mode-$(VERSION)
-	chmod 755 cc-mode-$(VERSION)
-	cp $(FILES) cc-mode-$(VERSION)
-	chmod 644 cc-mode-$(VERSION)/*
-	tar cf - cc-mode-$(VERSION) | gzip -c > dist/$(TARGZFILE)
+	version=$(VERSION) && \
+	$(RM) -r cc-mode-$$version && \
+	mkdir cc-mode-$$version && \
+	chmod 755 cc-mode-$$version && \
+	cp $(FILES) cc-mode-$$version && \
+	chmod 644 cc-mode-$$version/* && \
+	( tar cf - cc-mode-$$version | gzip -c -9 > dist/$(TARGZFILE) )
 
 test:
 	$(EMACS) -q -batch -no-site-file -l tests/000tests.el -f do-all-tests
