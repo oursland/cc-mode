@@ -1,3 +1,5 @@
+(require 'cc-mode)
+
 (defconst test-dir "~/src/elisp/cc-mode/tests/")
 
 (defconst TESTSTYLE
@@ -87,6 +89,7 @@
     "arglist-4.cc"
     "arglist-5.cc"
     "arglist-6.cc"
+    "arglist-7.java"
     "bl-1.cc"
     "bl-2.cc"
     "bod-1.cc"
@@ -102,8 +105,12 @@
     "class-7.cc"
     "class-8.cc"
     "class-9.cc"
+    "class-10.java"
     "comments.c"
-    "decls.java"
+    "decls-1.java"
+    "decls-2.java"
+    "decls-3.java"
+    "enum-1.cc"
     "except-1.cc"
     "except-2.cc"
     "except-3.cc"
@@ -120,6 +127,8 @@
     "inher-2.cc"
     "inher-3.cc"
     "interface-1.m"
+    "member-1.cc"
+    "member-2.cc"
     "nested-1.cc"
     "nested-2.c"
     "statement-1.cc"
@@ -133,6 +142,8 @@
     "statement-9.c"
     "stream-1.cc"
     "stream-2.cc"
+    "struct-1.c"
+    "struct-2.cc"
     "switch-1.cc"
     "switch-2.cc"
     "switch-3.cc"
