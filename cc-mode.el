@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.259 $
-;; Last Modified:   $Date: 1996-01-06 01:08:45 $
+;; Version:         $Revision: 4.260 $
+;; Last Modified:   $Date: 1996-01-12 01:36:47 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-06 01:08:45 $|$Revision: 4.259 $|
+;; |$Date: 1996-01-12 01:36:47 $|$Revision: 4.260 $|
 
 ;;; Code:
 
@@ -435,7 +435,7 @@ that many seconds.   Set to nil to inhibit updating.  This is only
 useful for Emacs 19.")
 
 (defvar c-style-alist
-  '(("GNU"
+  '(("gnu"
      (c-basic-offset . 2)
      (c-comment-only-line-offset . (0 . 0))
      (c-offsets-alist . ((statement-block-intro . +)
@@ -448,7 +448,7 @@ useful for Emacs 19.")
 			 (arglist-close . c-lineup-arglist)
 			 ))
      )
-    ("K&R"
+    ("k&r"
      (c-basic-offset . 5)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -458,7 +458,7 @@ useful for Emacs 19.")
 			 (statement-cont . +)
 			 ))
      )
-    ("BSD"
+    ("bsd"
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -468,7 +468,7 @@ useful for Emacs 19.")
 			 (statement-cont . +)
 			 ))
      )
-    ("Stroustrup"
+    ("stroustrup"
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -477,7 +477,7 @@ useful for Emacs 19.")
 			 (statement-cont . +)
 			 ))
      )
-    ("Whitesmith"
+    ("whitesmith"
      (c-basic-offset . 4)
      (c-comment-only-line-offset . 0)
      (c-offsets-alist . ((statement-block-intro . +)
@@ -488,7 +488,7 @@ useful for Emacs 19.")
 			 ))
 
      )
-    ("Ellemtel"
+    ("ellemtel"
      (c-basic-offset . 3)
      (c-comment-only-line-offset . 0)
      (c-hanging-braces-alist     . ((substatement-open before after)))
@@ -521,7 +521,7 @@ as described in `c-offsets-alist'.  These are passed directly to
 `c-set-offset' so there is no need to set every syntactic symbol in
 your style, only those that are different from the default.
 
-Note that all styles inherit from the \"CC-MODE\" style, which is
+Note that all styles inherit from the `cc-mode' style, which is
 computed at the time the mode is loaded.")
 
 (defvar c-file-style nil
@@ -2076,14 +2076,14 @@ for details of setting up styles."
 			   (prompt (format "Which %s indentation style? "
 					   mode-name)))
 		       (completing-read prompt c-style-alist nil t))))
-  (let ((vars (cdr (assoc stylename c-style-alist)))
-	(default (cdr (assoc "CC-MODE" c-style-alist))))
+  (let ((vars (cdr (assoc (downcase stylename) c-style-alist)))
+	(default (cdr (assoc "cc-mode" c-style-alist))))
     (or vars (error "Invalid indentation style `%s'" stylename))
-    (or default (error "No \"CC-MODE\" style found!"))
-    ;; first reset the style to CC-MODE to give every style a common
+    (or default (error "No `cc-mode' style found!"))
+    ;; first reset the style to `cc-mode' to give every style a common
     ;; base. Then institute the new style.
     (c-set-style-1 default)
-    (if (not (string= stylename "CC-MODE"))
+    (if (not (string= stylename "cc-mode"))
 	(c-set-style-1 vars)))
   (c-keep-region-active))
 
@@ -2102,6 +2102,7 @@ VALUE.  This function also sets the current style to STYLE using
 	 (description (eval-minibuffer "Style description: ")))
      (list stylename description
 	   (y-or-n-p "Set the style too? "))))
+  (setq style (downcase style))
   (let ((s (assoc style c-style-alist)))
     (if s
 	(setcdr s (copy-alist descrip))	; replace
@@ -4632,7 +4633,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.259 $"
+(defconst c-version "$Revision: 4.260 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
@@ -4739,9 +4740,9 @@ definition and conveniently use this command."
 ;; crucial because future c-set-style calls will always reset the
 ;; variables first to the "CC-MODE" style before instituting the new
 ;; style.  Only do this once!
-(or (assoc "CC-MODE" c-style-alist)
+(or (assoc "cc-mode" c-style-alist)
     (progn
-      (c-add-style "CC-MODE"
+      (c-add-style "cc-mode"
 		   (mapcar 'c-mapcar-defun
 			   '(c-backslash-column
 			     c-basic-offset
@@ -4761,7 +4762,7 @@ definition and conveniently use this command."
 			     )))
       ;; the default style is now GNU.  This can be overridden in
       ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
-      (c-set-style "GNU")))
+      (c-set-style "gnu")))
 
 ;; style variables
 (make-variable-buffer-local 'c-offsets-alist)
