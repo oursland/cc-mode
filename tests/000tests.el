@@ -468,3 +468,23 @@
 	    (insert (format "%s\n" syntax)))
 	  (set-buffer testbuf)
 	  (forward-line 1))))))
+
+(defun shift-res-offsets (offset)
+  ;; Shifts the offsets in the corresponding .res files by the
+  ;; specified amount from the current point forward.
+  (interactive "nShift offsets at or after point with: ")
+  (let ((save-buf (current-buffer))
+	(save-point (point))
+	(resfile (concat (file-name-sans-extension buffer-file-name) ".res"))
+	(count 0))
+    (unless (file-exists-p resfile)
+      (error "Cannot open result file %s" resfile))
+    (find-file resfile)
+    (goto-char (point-min))
+    (while (re-search-forward "\\<[0-9]+\\>" nil t)
+      (let ((pos (string-to-number (match-string-no-properties 0))))
+	(when (>= pos save-point)
+	  (delete-region (match-beginning 0) (match-end 0))
+	  (insert-and-inherit (format "%d" (+ pos offset)))
+	  (setq count (1+ count)))))
+    (message "Shifted %d offsets" count)))
