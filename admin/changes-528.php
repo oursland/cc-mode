@@ -10,9 +10,7 @@
 
 <p><a
 href="http://download.sourceforge.net/cc-mode/cc-mode-5.28.tar.gz">Download</a>
-this CC Mode version (<a
-href="ftp://ftp.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.28.tar.gz">via
-FTP</a>).</p>
+this CC Mode version.</p>
 
 <ul>
 
