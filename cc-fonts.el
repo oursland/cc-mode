@@ -1207,20 +1207,24 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (when (= (point) start)
 		      ;; Only got a single identifier (parsed as a type so
 		      ;; far).
-		      (if (cond
-			   ((eq arglist-type 'decl)
-			    ;; Inside an arglist that contains declarations.
-			    ;; If K&R style declarations aren't allowed then
-			    ;; the single identifier must be a type, else we
-			    ;; require that it's known or found (primitive
-			    ;; types are handled above).
-			    (or (not c-recognize-knr-p)
-				(memq at-type '(known found))))
-			   ((eq arglist-type '<>)
-			    ;; Inside a template arglist.  Accept known and
-			    ;; found types; other identifiers could just as
-			    ;; well be constants in C++.
-			    (memq at-type '(known found))))
+		      (if (and
+			   ;; Check that the identifier isn't at the start of
+			   ;; an expression.
+			   (looking-at "[,;]\\|\\s\)")
+			   (cond
+			    ((eq arglist-type 'decl)
+			     ;; Inside an arglist that contains declarations.
+			     ;; If K&R style declarations aren't allowed then
+			     ;; the single identifier must be a type, else we
+			     ;; require that it's known or found (primitive
+			     ;; types are handled above).
+			     (or (not c-recognize-knr-p)
+				 (memq at-type '(known found))))
+			    ((eq arglist-type '<>)
+			     ;; Inside a template arglist.  Accept known and
+			     ;; found types; other identifiers could just as
+			     ;; well be constants in C++.
+			     (memq at-type '(known found)))))
 			  (throw 'at-decl-or-cast t)
 			(throw 'at-decl-or-cast nil))))
 
