@@ -29,6 +29,10 @@
 ;; compiled regardless the environment (e.g. if an older CC Mode with
 ;; outdated macros are loaded during compilation).  It also provides
 ;; features to defeat the compiler warnings for selected symbols.
+;;
+;; There's really nothing CC Mode specific here; this functionality
+;; ought to be provided by the byte compilers or some accompanying
+;; library.
 
 
 ;;; Code:
