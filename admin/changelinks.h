@@ -1,5 +1,6 @@
 <!-- -*- html -*- -->
 <h4>Version History</h4>
+<a href="changes-527.php">Changes for 5.27</a><br />
 <a href="changes-526.php">Changes for 5.26</a><br />
 <a href="changes-525.php">Changes for 5.25</a><br />
 <a href="changes-524.php">Changes for 5.24</a><br />
