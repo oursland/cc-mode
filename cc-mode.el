@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-15 18:07:13 $
-;; Version:         $Revision: 2.157 $
+;; Last Modified:   $Date: 1992-07-16 16:23:15 $
+;; Version:         $Revision: 2.158 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-15 18:07:13 $|$Revision: 2.157 $|
+;; |$Date: 1992-07-16 16:23:15 $|$Revision: 2.158 $|
 
 
 ;; ======================================================================
@@ -293,7 +293,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.157 $
+  "Major mode for editing C++ code.  $Revision: 2.158 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -494,7 +494,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.157 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.158 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1827,44 +1827,43 @@ so that indentation will work right."
 ;; ======================================================================
 ;; defuns for  commenting out multiple lines.
 ;; ======================================================================
-(defun c++-comment-region ()
+(defun c++-comment-region (beg end)
   "Comment out all lines in a region between mark and current point by
 inserting comment-start in front of each line."
-  (interactive)
-  (let* ((m      (if (eq (mark) nil) (error "Mark is not set!") (mark)))
-	 (start  (if (< (point) m) (point) m))
-	 (end    (if (> (point) m) (point) m))
-	 (mymark (copy-marker end)))
-    (save-excursion
-	(goto-char start)
-	(while (< (point) (marker-position mymark))
-	    (beginning-of-line)
-	    (insert comment-start)
-	    (beginning-of-line)
-	    (forward-line 1))
-	(if (eq major-mode 'c++-c-mode)
-	    (insert comment-end)))))
+  (interactive "*r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region
+       (progn (goto-char beg) (beginning-of-line) (point))
+       (progn (goto-char end) (or (bolp) (forward-line 1)) (point)))
+      (goto-char (point-min))
+      (while (not (eobp))
+	(insert comment-start)
+	(forward-line 1))
+      (if (eq major-mode 'c++-c-mode)
+	  (insert comment-end)))))
 
-(defun c++-uncomment-region ()
+(defun c++-uncomment-region (beg end)
   "Uncomment all lines in region between mark and current point by deleting
-the leading comment-start from each line, if any."
-  (interactive)
-  (let* ((m      (if (eq (mark) nil) (error "Mark is not set!") (mark)))
-	 (start  (if (< (point) m) (point) m))
-	 (end    (if (> (point) m) (point) m))
-	 (mymark (copy-marker end)))
-    (save-excursion
-	(goto-char start)
-	(while (< (point) (marker-position mymark))
-	    (beginning-of-line)
-	    (if (looking-at (concat "[\t ]*" (regexp-quote comment-start)))
-		  (delete-char (- (match-end 0) (match-beginning 0)))
-	      )
-	    (beginning-of-line)
-	    (forward-line 1))
-	(beginning-of-line)
-	(if (looking-at (concat "[\t ]*" (regexp-quote comment-end)))
-	    (delete-char (- (match-end 0) (match-beginning 0)))))))
+the leading \"// \" from each line, if any."
+  (interactive "*r")
+  (save-excursion
+    (save-restriction
+      (narrow-to-region
+       (progn (goto-char beg) (beginning-of-line) (point))
+       (progn (goto-char end) (forward-line 1) (point)))
+      (goto-char (point-min))
+      (let ((comment-regexp
+	     (if (eq major-mode 'c++-c-mode)
+		 (concat "\\s *\\(" (regexp-quote comment-start)
+			 "\\|"      (regexp-quote comment-end)
+			 "\\)")
+	       (concat "\\s *" (regexp-quote comment-start)))))
+	(while (not (eobp))
+	  (if (looking-at comment-regexp)
+	      (delete-region (match-beginning 0) (match-end 0)))
+	  (forward-line 1))))))
+
 
 ;; ======================================================================
 ;; grammar parsing
@@ -2019,7 +2018,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.157 $"
+(defconst c++-version "$Revision: 2.158 $"
   "c++-mode version number.")
 
 (defun c++-version ()
