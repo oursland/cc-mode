@@ -1,3 +1,54 @@
+Fri Aug 15 17:26:05 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.16
+
+Fri Aug 15 18:39:10 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-style-alist):
+	"python" style requires c-comment-continuation-stars
+	to be "".
+
+	* cc-engine.el (c-end-of-statement-1):
+	Eliminate false hits on important characters
+	inside literals (strings, comments).
+
+Tue Aug 12 21:47:18 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-comment-line-break-function):
+	In this function, and the defadvice,
+	call indent-new-comment-line if not in a comment.
+
+	* cc-vars.el (c-buffer-is-cc-mode): Definition moved to cc-mode.el
+
+	* cc-mode.el (c-buffer-is-cc-mode):
+	Definition moved here from cc-vars.el.  Also,
+	put permanent-local property on variable so it's value won't get
+	killed by kill-all-local-variables.  This makes it easier for non-CC
+	Mode derived modes to be initialized correctly.
+
+	* cc-cmds.el (c-electric-brace):
+	In preserve-p test, don't test char-before when at
+	bobp.  Open brace at bobp is illegal in most modes, but not awk-mode,
+	which depends on CC Mode.
+
+Mon Aug 11 15:37:04 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c++-mode, java-mode, objc-mode, idl-mode):
+	Remove obsolete variable c-double-slash-is-comments-p.
+
+	* cc-langs.el (c-double-slash-is-comments-p): Remove obsolete variable.
+
+	* cc-cmds.el (c-fill-paragraph):
+	Remove conditional on obsolete variable
+	c-double-slash-is-comments-p.
+
+	* cc-styles.el (c-style-alist):
+	Conform comment settings to RMS's preferences.
+
+Thu Aug  7 19:21:32 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-set-offset): Added autoload cookie.
+
 Thu Aug  7 18:13:12 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.15
