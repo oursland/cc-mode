@@ -1613,6 +1613,11 @@ syntactically."
     (push-mark here)
     (push-mark eod nil t)))
 
+(defun c-fn-region-is-active-p ()
+  ;; Function version of the macro for use in places that aren't
+  ;; compiled, e.g. in the menus.
+  (c-region-is-active-p))
+
 (defun c-indent-line-or-region ()
   "When the region is active, indent it.  Otherwise indent the current line."
   ;; Emacs has a variable called mark-active, XEmacs uses region-active-p
