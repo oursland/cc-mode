@@ -19,7 +19,6 @@
     (c-cleanup-list                . (scope-operator
 				      empty-defun-braces
 				      defun-close-semi))
-    (c-recognize-knr-p         . nil)
     (c-offsets-alist
      . ((string                . -1000)
 	(c                     . c-lineup-C-comments)
@@ -116,6 +115,7 @@
     "decls-2.java"
     "decls-3.java"
     "enum-1.cc"
+    "enum-2.c"
     "except-1.cc"
     "except-2.cc"
     "except-3.cc"
