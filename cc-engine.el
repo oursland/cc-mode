@@ -2515,9 +2515,7 @@ syntactic whitespace."
 i.e. don't stop at positions inside syntactic whitespace or string
 literals.  Preprocessor directives are also ignored, with the exception
 of the one that the point starts within, if any.  If LIMIT is given,
-it's assumed to be at a syntactically relevant position.
-
-This function does not do any hidden buffer changes."
+it's assumed to be at a syntactically relevant position."
 
   (let ((start (point))
 	;; A list of syntactically relevant positions in descending
