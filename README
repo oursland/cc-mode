@@ -398,7 +398,7 @@ Frequently Asked Questions
        adds a newline and indents.  You can make RET do this too by
        adding this to your .emacs file:
 
-       (define-key c-mode-map "C-m" 'newline-and-indent)
+       (define-key c-mode-map "\C-m" 'newline-and-indent)
 
        This is a very common question. :-)
 
@@ -449,7 +449,7 @@ Frequently Asked Questions
   (c-toggle-auto-hungry-state 1)
   ;; keybindings for both C and C++.  We can put these in c-mode-map
   ;; because c++-mode-map inherits it
-  (define-key c-mode-map "C-m" 'newline-and-indent)
+  (define-key c-mode-map "\C-m" 'newline-and-indent)
   )
 
 ;; the following only works in Emacs 19
