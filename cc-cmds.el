@@ -2958,6 +2958,14 @@ If a fill prefix is specified, it overrides all the above."
 			  (cdr c-lit-limits))))
 		 ;; Skip forward past the fill prefix in case
 		 ;; we're standing in it.
+		 ;;
+		 ;; FIXME: This doesn't work well in cases like
+		 ;;
+		 ;; /* Bla bla bla bla bla
+		 ;;         bla bla
+		 ;;
+		 ;; If point is on the 'B' then the line will be
+		 ;; broken after "Bla b".
 		 (while (and (< (current-column) (cdr fill))
 			     (not (eolp)))
 		   (forward-char 1))
