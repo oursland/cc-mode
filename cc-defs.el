@@ -749,15 +749,21 @@ continuations."
 (defmacro c-major-mode-is (mode)
   "Return non-nil if the current CC Mode major mode is MODE.
 MODE is either a mode symbol or a list of mode symbols."
-  (if (eq (car-safe mode) 'quote)
-      (let ((mode (eval mode)))
-	(if (listp mode)
-	    `(memq c-buffer-is-cc-mode ',mode)
-	  `(eq c-buffer-is-cc-mode ',mode)))
-    `(let ((mode ,mode))
-       (if (listp mode)
-	   (memq c-buffer-is-cc-mode mode)
-	 (eq c-buffer-is-cc-mode mode)))))
+
+  (if c-langs-are-parametric
+      ;; Inside a `c-lang-defconst'.
+      `(c-lang-major-mode-is ,mode)
+
+    (if (eq (car-safe mode) 'quote)
+	(let ((mode (eval mode)))
+	  (if (listp mode)
+	      `(memq c-buffer-is-cc-mode ',mode)
+	    `(eq c-buffer-is-cc-mode ',mode)))
+
+      `(let ((mode ,mode))
+	 (if (listp mode)
+	     (memq c-buffer-is-cc-mode mode)
+	   (eq c-buffer-is-cc-mode mode))))))
 
 
 ;; Macros/functions to handle so-called "char properties", which are
@@ -1727,6 +1733,22 @@ quoted."
 	  (throw 'found (cdr assignment))))
 
       c-lang-constants)))
+
+(defun c-lang-major-mode-is (mode)
+  ;; `c-major-mode-is' expands to a call to this function inside
+  ;; `c-lang-defconst'.  Here we also match the mode(s) against any
+  ;; fallback modes for the one in `c-buffer-is-cc-mode', so that
+  ;; e.g. (c-major-mode-is 'c++-mode) is true in a derived language
+  ;; that has c++-mode as base mode.
+  (unless (listp mode)
+    (setq mode (list mode)))
+  (let (match (buf-mode c-buffer-is-cc-mode))
+    (while (if (memq buf-mode mode)
+	       (progn
+		 (setq match t)
+		 nil)
+	     (setq buf-mode (get buf-mode 'c-fallback-mode))))
+    match))
 
 
 (cc-provide 'cc-defs)
