@@ -156,7 +156,9 @@
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
   ;; try to increase performance by using this macro
-  `(setq syntax (cons (cons ,symbol ,relpos) syntax)))
+  `(let ((relpos-tmp ,relpos))
+     (if relpos-tmp (setq syntactic-relpos relpos-tmp))
+     (setq syntax (cons (cons ,symbol relpos-tmp) syntax))))
 
 (defmacro c-add-class-syntax (symbol classkey)
   ;; The inclass and class-close syntactic symbols are added in

@@ -72,8 +72,8 @@
   ;; statement if already at the beginning of one.
   ;;
   ;; Note: This function might skip past lim.  Several calls in
-  ;; c-guess-basic-syntax calls it with a too narrow limit, so they
-  ;; depend on that. :P
+  ;; c-guess-basic-syntax gives it a too narrow limit, so they depend
+  ;; on that. :P
   (let ((firstp t)
 	(substmt-p t)
 	donep c-in-literal-cache saved
@@ -1002,6 +1002,22 @@ brace."
     (or (not (c-most-enclosing-brace state))
 	(c-search-uplist-for-classkey state))))
 
+(defun c-forward-to-cpp-expression ()
+  "Assuming point is at the \"#\" that introduces a preprocessor
+directive, it's moved forward to the start of the expression it may
+contain, i.e. the definition of a \"#define\", or the test expression
+of an \"#if\", or the macro argument of an \"#ifdef\", etc. Non-nil is
+returned in this case, in all other cases nil is returned and point
+isn't moved."
+  (when (and (looking-at
+	      (concat "#[ \t]*\\("
+		      "define[ \t]+\\(\\sw\\|_\\)+\\(\([^\)]*\)\\)?"
+		      "\\|"
+		      "\\(if\\|elif\\|ifdef\\)[ \t]"
+		      "\\)\\([ \t]\\|\\\\\n\\)*"))
+	     (not (= (match-end 0) (c-point 'eol))))
+    (goto-char (match-end 0))))
+
 (defun c-just-after-func-arglist-p (&optional containing)
   ;; Return t if we are between a function's argument list closing
   ;; paren and its opening brace.  Note that the list close brace
@@ -1715,7 +1731,10 @@ brace."
 	     (c-state-cache (if inclass-p
 				(c-whack-state-before (point-min) fullstate)
 			      fullstate))
-	     inenclosing-p macro-start)
+	     inenclosing-p macro-start
+	     ;; There's always at most one syntactic element which got
+	     ;; a relpos.  It's stored in syntactic-relpos.
+	     syntactic-relpos)
 	;; check for meta top-level enclosing constructs, possible
 	;; extern language definitions, possibly (in C++) namespace
 	;; definitions.
@@ -1789,8 +1808,13 @@ brace."
 		 (when (c-beginning-of-macro)
 		   (setq macro-start (point))))
 	       (/= macro-start (c-point 'boi))
-	       (not c-syntactic-analysis-in-macro))
-	  (c-add-syntax 'cpp-macro-cont macro-start))
+	       (or (not c-syntactic-analysis-in-macro)
+		   (save-excursion
+		     (goto-char macro-start)
+		     (and (c-forward-to-cpp-expression)
+			  (= (point) (c-point 'boi indent-point))))))
+	  (c-add-syntax 'cpp-macro-cont macro-start)
+	  (setq macro-start nil))
 	 ;; CASE 4: In-expression statement.
 	 ((and (or c-inexpr-class-key c-inexpr-block-key c-lambda-key)
 	       (setq placeholder (c-looking-at-inexpr-block)))
@@ -2542,8 +2566,7 @@ brace."
 	 ((looking-at "\\<else\\>[^_]")
 	  (c-backward-to-start-of-if containing-sexp)
 	  (c-add-syntax 'else-clause (c-point 'boi)))
-	 ;; CASE 12: Statement. But what kind?  Lets see if its a
-	 ;; while closure of a do/while construct
+	 ;; CASE 12: while closure of a do/while construct?
 	 ((progn
 	    (goto-char indent-point)
 	    (skip-chars-forward " \t")
@@ -2646,10 +2669,9 @@ brace."
 		      (c-add-class-syntax 'class-close decl)
 		    (c-add-syntax 'defun-close relpos)))))
 	     )))
-	 ;; CASE 17: statement catchall
+	 ;; CASE 17: Statement or defun catchall.
 	 (t
-	  ;; we know its a statement, but we need to find out if it is
-	  ;; the first statement in a block
+	  ;; First statement in a block?
 	  (goto-char containing-sexp)
 	  (forward-char 1)
 	  (c-forward-syntactic-ws indent-point)
@@ -2709,16 +2731,6 @@ brace."
 		  relpos done)
 	      (goto-char indent-point)
 	      (c-beginning-of-statement-1 safepos)
-	      (when (and (>= (point) indent-point)
-			 (eq macro-start (c-point 'iopl)))
-		;; If we're on the first continued line of a macro
-		;; then c-beginning-of-statement-1 won't leave it.
-		;; Let's do that, to make the macro content "inherit"
-		;; the preceding indentation.  (This rule is a bit
-		;; dubious; maybe something better should be thought
-		;; out.)
-		(goto-char macro-start)
-		(c-beginning-of-statement-1 safepos))
 	      ;; It is possible we're on the brace that opens a nested
 	      ;; function.
 	      (if (and (eq (char-after) ?{)
@@ -2743,11 +2755,10 @@ brace."
 	      (if (eq char-after-ip ?{)
 		  (c-add-syntax 'block-open))))
 	   ;; CASE 17E: first statement in an in-expression block
-	   ((setq placeholder
-		  (save-excursion
-		    (goto-char containing-sexp)
-		    (c-looking-at-inexpr-block)))
-	    (goto-char containing-sexp)
+	   ((progn
+	      ;; The following tests are all based on containing-sexp.
+	      (goto-char containing-sexp)
+	      (setq placeholder (c-looking-at-inexpr-block)))
 	    (back-to-indentation)
 	    (let ((block-intro (if (eq (car placeholder) 'inlambda)
 				   'defun-block-intro
@@ -2764,14 +2775,22 @@ brace."
 	   ;; CASE 17F: first statement in an inline, or first
 	   ;; statement in a top-level defun. we can tell this is it
 	   ;; if there are no enclosing braces that haven't been
-	   ;; narrowed out by a class (i.e. don't use bod here!)
-	   ((save-excursion
-	      (save-restriction
-		(widen)
-		(goto-char containing-sexp)
-		(c-narrow-out-enclosing-class state containing-sexp)
-		(not (c-most-enclosing-brace state))))
-	    (goto-char containing-sexp)
+	   ;; narrowed out by a class (i.e. don't use bod here).
+	   ;; However, we first check for statements that we can
+	   ;; recognize by keywords.  That increases the robustness in
+	   ;; cases where statements are used on the top level,
+	   ;; e.g. in macro definitions.
+	   ((and (not (save-excursion
+			(and (= (c-backward-token-1 1 t) 0)
+			     (or (looking-at c-block-stmt-1-kwds)
+				 (and (eq (char-after) ?\()
+				      (= (c-backward-token-1 1 nil) 0)
+				      (looking-at c-block-stmt-2-kwds))))))
+		 (save-excursion
+		   (save-restriction
+		     (widen)
+		     (c-narrow-out-enclosing-class state containing-sexp)
+		     (not (c-most-enclosing-brace state)))))
 	    ;; if not at boi, then defun-opening braces are hung on
 	    ;; right side, so we need a different relpos
 	    (if (/= (point) (c-point 'boi))
@@ -2787,22 +2806,22 @@ brace."
 	   ;; CASE 17G: First statement in a function declared inside
 	   ;; a normal block.  This can only occur in Pike.
 	   ((and (c-major-mode-is 'pike-mode)
-		 (progn
-		   (goto-char containing-sexp)
+		 (save-excursion
 		   (and (not (c-looking-at-bos))
 			(progn
 			  (c-beginning-of-statement-1)
-			  (not (looking-at c-conditional-key))))))
-	    (c-add-syntax 'defun-block-intro (c-point 'boi)))
+			  (not (looking-at c-conditional-key)))
+			(setq placeholder (point)))))
+	    (c-add-syntax 'defun-block-intro (c-point 'boi placeholder)))
 	   ;; CASE 17H: first statement in a block
-	   (t (goto-char containing-sexp)
-	      (if (/= (point) (c-point 'boi))
-		  (c-beginning-of-statement-1
-		   (if (= (point) lim)
-		       (c-safe-position (point) state) lim)))
-	      (c-add-syntax 'statement-block-intro (c-point 'boi))
-	      (if (eq char-after-ip ?{)
-		  (c-add-syntax 'block-open)))
+	   (t
+	    (if (/= (point) (c-point 'boi))
+		(c-beginning-of-statement-1
+		 (if (= (point) lim)
+		     (c-safe-position (point) state) lim)))
+	    (c-add-syntax 'statement-block-intro (c-point 'boi))
+	    (if (eq char-after-ip ?{)
+		(c-add-syntax 'block-open)))
 	   ))
 	 )
 	;; now we need to look at any modifiers
@@ -2818,7 +2837,7 @@ brace."
 	  (c-add-syntax 'friend))
 	;; Start of or a continuation of a preprocessor directive?
 	(if (and (eq literal 'pound)
-		 (= macro-start (c-point 'boi))
+		 (eq macro-start (c-point 'boi))
 		 (not (and (c-major-mode-is 'pike-mode)
 			   (eq (char-after (1+ placeholder)) ?\"))))
 	    (c-add-syntax 'cpp-macro)
