@@ -995,7 +995,8 @@
 		   ;; class definition, and not a forward decl, return
 		   ;; arg, template arg list, or an ObjC or Java method.
 		   ((and c-method-key
-			 (re-search-forward c-method-key search-end t))
+			 (re-search-forward c-method-key search-end t)
+			 (not (c-in-literal class)))
 		    (setq foundp nil))
 		   ;; Check if this is an anonymous inner class.
 		   ((and c-inexpr-class-key
@@ -1022,7 +1023,10 @@
 			(skip-chars-backward "^<>" search-start)
 			(if (eq (char-before) ?<)
 			    (setq skipchars (concat skipchars ">"))))
-		      (skip-chars-forward skipchars search-end)
+		      (while (progn
+			       (skip-chars-forward skipchars search-end)
+			       (c-in-literal class))
+			(forward-char))
 		      (/= (point) search-end))
 		    (setq foundp nil))
 		   )))
@@ -1316,7 +1320,7 @@
 	    (if (and inclass-p
 		     (progn
 		       (goto-char (aref inclass-p 0))
-		       (looking-at c-extra-toplevel-key)))
+		       (looking-at (concat c-extra-toplevel-key "[^_]"))))
 		(let ((enclosing (match-string 1)))
 		  (cond
 		   ((string-equal enclosing "extern")
@@ -1404,7 +1408,7 @@
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
 		(and (c-safe (progn (c-backward-sexp 2) t))
-		     (looking-at c-extra-toplevel-key)
+		     (looking-at (concat c-extra-toplevel-key "[^_]"))
 		     (setq keyword (match-string 1)
 			   placeholder (point))
 		     (or (and (string-equal keyword "namespace")
@@ -2137,7 +2141,7 @@
 		(goto-char containing-sexp)
 		(setq placeholder (c-search-uplist-for-classkey state)))
 	      (goto-char (aref placeholder 0))
-	      (if (looking-at c-extra-toplevel-key)
+	      (if (looking-at (concat c-extra-toplevel-key "[^_]"))
 		  (c-add-syntax 'defun-close relpos)
 		(c-add-syntax 'inline-close relpos)))
 	     ;; CASE 16C: if there an enclosing brace that hasn't
