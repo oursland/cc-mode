@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-07 20:03:32 $
-;; Version:         $Revision: 2.35 $
+;; Last Modified:   $Date: 1992-05-08 15:36:35 $
+;; Version:         $Revision: 2.36 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-07 20:03:32 $|$Revision: 2.35 $|
+;; |$Date: 1992-05-08 15:36:35 $|$Revision: 2.36 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -43,28 +43,30 @@
 (if c++-mode-map
     ()
   (setq c++-mode-map (make-sparse-keymap))
-  (define-key c++-mode-map "\C-j" 'reindent-then-newline-and-indent)
-  (define-key c++-mode-map "{" 'c++-electric-brace)
-  (define-key c++-mode-map "}" 'c++-electric-brace)
-  (define-key c++-mode-map ";" 'c++-electric-semi)
-  (define-key c++-mode-map "\e\C-h" 'mark-c-function)
-  (define-key c++-mode-map "\e\C-q" 'c++-indent-exp)
-  (define-key c++-mode-map "\177" 'backward-delete-char-untabify)
-  (define-key c++-mode-map "\t" 'c++-indent-command)
-  (define-key c++-mode-map "\C-c\C-i" 'c++-insert-header)
+  (define-key c++-mode-map "\C-j"      'reindent-then-newline-and-indent)
+  (define-key c++-mode-map "{"         'c++-electric-brace)
+  (define-key c++-mode-map "}"         'c++-electric-brace)
+  (define-key c++-mode-map ";"         'c++-electric-semi)
+  (define-key c++-mode-map "\e\C-h"    'mark-c-function)
+  (define-key c++-mode-map "\e\C-q"    'c++-indent-exp)
+  (define-key c++-mode-map "\177"      'backward-delete-char-untabify)
+  (define-key c++-mode-map "\t"        'c++-indent-command)
+  (define-key c++-mode-map "\C-c\C-i"  'c++-insert-header)
   (define-key c++-mode-map "\C-c\C-\\" 'c++-macroize-region)
-  (define-key c++-mode-map "\C-c\C-c" 'c++-comment-region)
-  (define-key c++-mode-map "\C-c\C-u" 'c++-uncomment-region)
-  (define-key c++-mode-map "\e\C-a" 'c++-beginning-of-defun)
-  (define-key c++-mode-map "\e\C-e" 'c++-end-of-defun)
-  (define-key c++-mode-map "\e\C-x" 'c++-indent-defun)
-  (define-key c++-mode-map "/" 'c++-electric-slash)
-  (define-key c++-mode-map "*" 'c++-electric-star)
-  (define-key c++-mode-map ":" 'c++-electric-colon)
-  (define-key c++-mode-map "\177" 'c++-electric-delete)
-  (define-key c++-mode-map "\C-c\C-t" 'c++-toggle-auto-hungry-state)
-  (define-key c++-mode-map "\C-c\C-h" 'c++-toggle-hungry-state)
-  (define-key c++-mode-map "\C-c\C-a" 'c++-toggle-auto-state)
+  (define-key c++-mode-map "\C-c\C-c"  'c++-comment-region)
+  (define-key c++-mode-map "\C-c\C-u"  'c++-uncomment-region)
+  (define-key c++-mode-map "\e\C-a"    'c++-beginning-of-defun)
+  (define-key c++-mode-map "\e\C-e"    'c++-end-of-defun)
+  (define-key c++-mode-map "\e\C-x"    'c++-indent-defun)
+  (define-key c++-mode-map "/"         'c++-electric-slash)
+  (define-key c++-mode-map "*"         'c++-electric-star)
+  (define-key c++-mode-map ":"         'c++-electric-colon)
+  (define-key c++-mode-map "\177"      'c++-electric-delete)
+  (define-key c++-mode-map "\C-c\C-t"  'c++-toggle-auto-hungry-state)
+  (define-key c++-mode-map "\C-c\C-h"  'c++-toggle-hungry-state)
+  (define-key c++-mode-map "\C-c\C-a"  'c++-toggle-auto-state)
+  (define-key c++-mode-map "\C-c'"     'c++-tame-ticks)
+  (define-key c++-mode-map "'"         'c++-electric-tick)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -75,7 +77,7 @@
   (setq c++-mode-syntax-table (copy-syntax-table c-mode-syntax-table))
   (modify-syntax-entry ?/ ". 12" c++-mode-syntax-table)
   (modify-syntax-entry ?\n ">" c++-mode-syntax-table)
-  (modify-syntax-entry ?\' "." c++-mode-syntax-table))
+  (modify-syntax-entry ?\' "\"" c++-mode-syntax-table))
 
 (defvar c++-tab-always-indent
   (if (boundp 'c-tab-always-indent) c-tab-always-indent t)
@@ -152,7 +154,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.35 $
+  "Major mode for editing C++ code.  $Revision: 2.36 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -398,6 +400,15 @@ Optional argument has the following meanings when supplied:
 		       (t t))))
     (c++-set-auto-hungry-state auto hungry)))
 
+(defun c++-electric-tick (arg)
+  "Safely inserts single quote characters inside comment regions.
+This is necessary to work around a syntax bug in emacs' scan-lists
+function. This bug still exists in emacs v18.58."
+  (interactive "p")
+  (if (c++-in-comment-p)
+      (insert "\\"))
+  (self-insert-command arg))
+
 (defun c++-electric-delete (arg)
   "If c++-hungry-delete-key is non-nil, consumes all preceding
 whitespace unless ARG is supplied, or point is inside a C or C++ style
@@ -422,7 +433,7 @@ backward-delete-char-untabify."
 (defun c++-electric-brace (arg)
   "Insert character and correct line's indentation."
   (interactive "P")
-  (let (insertpos)
+  (let (insertpos (last-command-char last-command-char))
     (if (and (not arg)
 	     (eolp)
 	     (or (save-excursion
@@ -735,14 +746,10 @@ if it is embedded in an expression."
 (defun c++-in-open-string-p ()
   "Return non-nil if in an open string as defined by mode's syntax."
   ;; temporarily change tick to string syntax, just for this check
-  (modify-syntax-entry ?\' "\"" c++-mode-syntax-table)
   (save-excursion
-    (let* ((here (point))
-	   (string-p (progn (beginning-of-defun)
-			    (nth 3 (parse-partial-sexp (point) here 0)))))
-      ;; change tick back to punctuation syntax
-      (modify-syntax-entry ?\' "." c++-mode-syntax-table)
-      string-p)))
+    (let* ((here (point)))
+      (beginning-of-defun)
+      (nth 3 (parse-partial-sexp (point) here 0)))))
 
 (defun c++-in-parens-p ()
   ;; hack to work around emacs comment bug
@@ -1218,6 +1225,22 @@ line."
 	    "\n\n")))
 
 
+;;; this page contains functions which try to tame single quotes in
+;;; comment regions
+
+(defun c++-tame-ticks ()
+  "Backslashifies all single quotes in comment regions found in the buffer.
+This is the best available workaround for an emacs syntax bug in
+scan-lists which exists at least as recently as v18.58"
+  (interactive)
+  (save-excursion
+    (beginning-of-buffer)
+    (while (re-search-forward "[^\\]'" (point-max) 'move)
+      (if (c++-in-comment-p)
+	  (progn (forward-char -1)
+		 (insert "\\"))))))
+
+
 ;;; This page covers "macroization;" making C++ parameterized types
 ;;; via macros.
 
@@ -1450,7 +1473,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.35 $"
+(defconst c++-version "$Revision: 2.36 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
