@@ -1,29 +1,37 @@
-MANIFEST for tar distribution of cc-mode.el 4.85
+MANIFEST for tar distribution of cc-mode.el 4.222
 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-$Date: 1994-09-10 17:46:02 $
+$Date: 1995-06-11 21:45:34 $
 
 You should have received the following files in the distribution tar
-file for cc-mode 4.85:
+file for cc-mode 4.222:
 
-    MANIFEST: This file
+    ANNOUNCEMENT: Release announcement as it appeared on various newsgroups.
 
-    cc-mode.el: Version 4.85 of the mode.
+    MANIFEST: This file.
 
-    cc-compat.el: version 1.2.  Helps ease the transition from
-    c-mode.el to cc-mode style indentation control.  This is provided
-    for your convenience only, and is completely unguaranteed and
-    unsupported.
+    cc-mode.el: Version 4.222 of the mode.
+
+    cc-mode.texi: Texinfo manual.
+
+    cc-compat.el: Helps ease the transition from c-mode.el to cc-mode
+    style indentation control.  This is provided for your convenience
+    only, and is completely unguaranteed and unsupported.
 
     cc-mode-18.el: Emacs 18 compatibility file.  This is provided for
     your convenience only, and is completely unguaranteed and
-    unsupported.  Emacs 18 support will probably be completely dropped
-    in cc-mode version 5.
+    unsupported.  Emacs 18 support will be completely dropped in
+    cc-mode version 5.
 
-    README: manual on how to use cc-mode to edit C, C++, and
-    Objective-C files. Eventually this will be replaced by a texinfo
-    manual.  VOLUNTEERS ARE SOUGHT to help complete the manual.
+    cc-guess.el: Experiments in style guessing.  This is provided for
+    your convenience only, and is completely unguaranteed and
+    unsupported.
 
-    DUMPING: A guide to ditching c-mode.el and c++-mode.el in favor of
-    cc-mode.el.  Unnecessary for XEmacs 19.11!  Yay!
+    cc-lobotomy.el: Performance vs. accuracy trade-offs.
+
+    README: Quick intro into how to get cc-mode up and running.
+
+    DUMPING: An guide to ditching c-mode.el and c++-mode.el in favor
+    of cc-mode.el.  Probably out-of-date and unnecessary for the
+    newest Emacs and XEmacs releases.
 
     ChangeLog: Extremely verbose history of changes.
