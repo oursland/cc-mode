@@ -177,10 +177,15 @@
 (make-variable-buffer-local 'c-lambda-key)
 (defconst c-Pike-lambda-key "\\<lambda\\>")
 
-;; Regexp for expressions that are followed by a statement block.
+;; Regexp that are followed by a statement block in expressions.
 (defvar c-inexpr-block-key nil)
 (make-variable-buffer-local 'c-inexpr-block-key)
 (defconst c-Pike-inexpr-block-key "\\<\\(catch\\|gauge\\)\\>")
+
+;; Regexp that may be followed by an anonymous class in expressions.
+(defvar c-inexpr-class-key nil)
+(make-variable-buffer-local 'c-inexpr-class-key)
+(defconst c-Java-inexpr-class-key "\\<new\\>")
 
 ;; List of open- and close-chars that makes up a pike-style brace
 ;; list, ie for a `([ ])' list there should be a cons (?\[ . ?\]) in

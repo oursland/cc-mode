@@ -286,6 +286,7 @@ Key bindings:
  	c-baseclass-key nil
 	c-recognize-knr-p nil
  	c-access-key c-Java-access-key
+	c-inexpr-class-key c-Java-inexpr-class-key
 	;defun-prompt-regexp c-Java-defun-prompt-regexp
 	imenu-generic-expression cc-imenu-java-generic-expression
 	imenu-case-fold-search nil
