@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.73 $
-;; Last Modified:   $Date: 1994-08-31 21:51:01 $
+;; Version:         $Revision: 4.74 $
+;; Last Modified:   $Date: 1994-08-31 22:20:47 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-31 21:51:01 $|$Revision: 4.73 $|
+;; |$Date: 1994-08-31 22:20:47 $|$Revision: 4.74 $|
 
 ;;; Code:
 
@@ -956,7 +956,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.73 $
+cc-mode Revision: $Revision: 4.74 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -995,7 +995,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.73 $
+cc-mode Revision: $Revision: 4.74 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1032,7 +1032,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.73 $
+cc-mode Revision: $Revision: 4.74 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2508,11 +2508,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
       (message "indenting region... (this may take a while)")
     ;; if progress has already been initialized, do nothing. otherwise
     ;; initialize the counter with a vector of:
-    ;; [charcnt pntstart lastsec context]
+    ;; [start end lastsec context]
     (if c-progress-info
 	()
-      (setq c-progress-info (vector (- end start)
-				    start
+      (setq c-progress-info (vector start
+				    (save-excursion
+				      (goto-char end)
+				      (point-marker))
 				    (nth 1 (current-time))
 				    context))
       (message "indenting region..."))))
@@ -2522,15 +2524,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (if (not (and c-progress-info c-progress-interval))
       nil
     (let ((now (nth 1 (current-time)))
-	  (charcnt (aref c-progress-info 0))
-	  (pntstart (aref c-progress-info 1))
+	  (start (aref c-progress-info 0))
+	  (end (aref c-progress-info 1))
 	  (lastsecs (aref c-progress-info 2)))
       ;; should we update?  currently, update happens every 2 seconds,
       ;; what's the right value?
       (if (< c-progress-interval (- now lastsecs))
 	  (progn
 	    (message "indenting region... (%d%% complete)"
-		     (/ (* 100 (- (point) pntstart)) charcnt))
+		     (/ (* 100 (- (point) start)) (- end start)))
 	    (aset c-progress-info 2 now)))
       )))
 
@@ -2539,6 +2541,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (if (or (eq context (aref c-progress-info 3))
 	  (eq context t))
       (progn
+	(set-marker (aref c-progress-info 1) nil)
 	(setq c-progress-info nil)
 	(message "indenting region... done."))))
 
@@ -4087,7 +4090,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.73 $"
+(defconst c-version "$Revision: 4.74 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
