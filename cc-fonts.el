@@ -1617,11 +1617,11 @@ higher."
   t `(;; Fontify the identifiers inside enum lists.  (The enum type
       ;; name is handled by `c-simple-decl-matchers' or
       ;; `c-complex-decl-matchers' below.
-      ,@(when (c-lang-const c-brace-list-kwds)
+      ,@(when (c-lang-const c-brace-id-list-kwds)
 	  `((,(c-make-font-lock-search-function
 	       (concat
 		"\\<\\("
-		(c-make-keywords-re nil (c-lang-const c-brace-list-kwds))
+		(c-make-keywords-re nil (c-lang-const c-brace-id-list-kwds))
 		"\\)\\>"
 		;; Disallow various common punctuation chars that can't come
 		;; before the '{' of the enum list, to avoid searching too far.
