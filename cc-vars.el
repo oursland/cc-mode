@@ -309,13 +309,11 @@ this variable to nil."
   :type 'integer
   :group 'c)
 
-(defcustom c-site-default-style "gnu"
-  "Default style for your site.
-To change the default style at your site, you can set this variable to
-any style defined in `c-style-alist'.  However, if CC Mode is usually
-loaded into your Emacs at compile time, you will need to set this
-variable in the `site-init.el' file before CC Mode is loaded, then
-re-dump Emacs."
+(defcustom c-default-style "user"
+  "Style which gets installed by default.
+The value of this variable can be any style defined in
+`c-style-alist', including styles you add, if you add them before CC
+Mode gets initialized."
   :type 'string
   :group 'c)
 
@@ -406,7 +404,7 @@ as designated in the variable `c-file-style'.")
 (defvar c-syntactic-context nil
   "Variable containing syntactic analysis list during indentation.")
 
-(defvar c-indentation-style c-site-default-style
+(defvar c-indentation-style c-default-style
   "Name of style installed in the current buffer.")
 
 
