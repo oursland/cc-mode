@@ -628,18 +628,6 @@ normal, with no @kbd{C-u} prefix).
 
 @end itemize
 
-@findex c-enable-//-in-c-mode
-@findex enable-//-in-c-mode (c-)
-Some characters are electric in some languages, and not in others.  For
-example, the second slash (@kbd{/}) of a C++ style line comment is
-electric in @code{c++-mode}, @code{objc-mode}, @code{java-mode}, and
-@code{idl-mode}, but not in @code{c-mode}@footnote{Ordinarily, @samp{//}
-does not introduce a comment in @code{c-mode}.  However, if you call the
-function @code{c-enable-//-in-c-mode}, @code{c-mode} will recognize C++
-style line comments.  Note however that this is a global change which
-will affect all your @code{c-mode} buffers.}.
-
-
 @menu
 * Hanging Braces::
 * Hanging Colons::
