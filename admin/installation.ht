@@ -24,6 +24,10 @@ M-x locate-library RET cc-mode RET
 (setq load-path (cons "/dir/of/cc-mode/" load-path))
     </pre></blockquote>
 
+    The path you use should be an absolute path (starting with a
+    slash).  You cannot use a path beginning with "~" in the
+    <code>load-path</code> variable.
+
 <h3>Byte Compiling</h3>
 
     It is <em>highly</em> recommended that you byte-compile CC Mode,
