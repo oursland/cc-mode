@@ -811,6 +811,19 @@ See `c-forward-token-1' for details."
 	      (if (bobp) (goto-char last)))))
       count)))
 
+(defun c-beginning-of-syntax ()
+  ;; This is used for font-lock-beginning-of-syntax-function.  Even
+  ;; though it doesn't necessary go out of the function it goes to a
+  ;; point outside any comment and string literal, so it should do.
+  (beginning-of-line)
+  (let ((paren-state (or c-state-cache (c-parse-state))))
+    (goto-char (catch 'done
+		 (while paren-state
+		   (when (and (integerp (car paren-state))
+			      (eq (char-after (car paren-state)) ?{))
+		     (throw 'done (car paren-state))))
+		 (point-min)))))
+
 (defun c-syntactic-re-search-forward (regexp &optional bound noerror count
 					     paren-level)
   ;; Like `re-search-forward', but only report matches that are found
@@ -2223,8 +2236,8 @@ Keywords are recognized and not considered identifiers."
 
 
 (defun c-most-enclosing-brace (paren-state &optional bufpos)
-  ;; Return the bufpos of the innermost enclosing brace before bufpos
-  ;; that hasn't been narrowed out, or nil if none was found.
+  ;; Return the bufpos of the innermost enclosing open paren before
+  ;; bufpos that hasn't been narrowed out, or nil if none was found.
   (let (enclosingp)
     (or bufpos (setq bufpos 134217727))
     (while paren-state
@@ -2239,8 +2252,8 @@ Keywords are recognized and not considered identifiers."
     enclosingp))
 
 (defun c-least-enclosing-brace (paren-state &optional bufpos)
-  ;; Return the bufpos of the outermost enclosing brace before bufpos
-  ;; that hasn't been narrowed out, or nil if none was found.
+  ;; Return the bufpos of the outermost enclosing open paren before
+  ;; bufpos that hasn't been narrowed out, or nil if none was found.
   (let (pos elem)
     (or bufpos (setq bufpos 134217727))
     (while paren-state
