@@ -194,6 +194,32 @@
       (goto-char here)
       nil)))
 
+(defsubst c-forward-comment (count)
+  ;; Insulation from various idiosyncrasies in implementations of
+  ;; `forward-comment'.
+  (let ((here (point)))
+    (if (>= count 0)
+	(when (forward-comment count)
+	  ;; Emacs includes the ending newline in a b-style (c++)
+	  ;; comment, but XEmacs don't.  We depend on the Emacs
+	  ;; behavior (which also is symmetric).
+	  (if (and (eolp) (nth 7 (parse-partial-sexp here (point))))
+	      (condition-case nil (forward-char 1)))
+	  t))
+    ;; When we got newline terminated comments, forward-comment in
+    ;; all supported emacsen so far will stop at eol of each line
+    ;; not ending with a comment when moving backwards.  The
+    ;; following corrects for it when count is -1.  The other common
+    ;; case, when count is large and negative, works regardless.
+    ;; It's too much work to correct for the rest of the cases.
+    (skip-chars-backward " \t\n\r\f")
+    (if (bobp)
+	;; Some emacsen return t when moving backwards at bob.
+	nil
+      (re-search-forward "[\n\r]" here t)
+      (if (forward-comment count)
+	  (if (eolp) (forward-comment -1) t)))))
+
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
   ;; try to increase performance by using this macro
