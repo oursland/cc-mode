@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.291 $
-;; Last Modified:   $Date: 1996-05-24 15:55:55 $
+;; Version:         $Revision: 4.292 $
+;; Last Modified:   $Date: 1996-05-24 16:12:11 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1136,11 +1136,17 @@ The expansion is entirely correct because it uses the C preprocessor."
 (defconst c-label-key
   (concat c-symbol-key ":\\([^:]\\|$\\)")
   "Regexp describing any label.")
+(defconst c-C-conditionals '("for" "if" "do" "else" "while" "switch")
+  "Shared conditional keywords for C-like languages.")
 (defconst c-C-conditional-key
-  "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\)\\b[^_]"
-  "Regexp describing a conditional control.")
+  (concat "\\b\\("
+	  (mapconcat 'identity c-C-conditionals "\\|")
+	  "\\)\\b[^_]")
+  "Regexp describing a conditional control for C.")
 (defconst c-C++-conditional-key
-  "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\|try\\|catch\\)\\b[^_]"
+  (concat "\\b\\(" (mapconcat 'identity
+			      (append '("try" "catch") c-C-conditionals) "\\|")
+	  "\\)\\b[^_]")
   "Regexp describing a conditional control for C++.")
 (defconst c-C++-friend-key
   "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+"
@@ -1190,9 +1196,12 @@ The expansion is entirely correct because it uses the C preprocessor."
    )
   "Regexp describing a class or protocol declaration for Java.")
 (defconst c-Java-conditional-key
-  "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\|try\\|catch\\|finally\\)\\b[^_]"
-  "Regexp describing a conditional control for C++.")
-
+  (concat "\\b\\("
+	  (mapconcat 'identity
+		     (append '("try" "catch" "finally" "synchronized")
+			     c-C-conditionals) "\\|")
+	  "\\)\\b[^_]")
+  "Regexp describing a conditional control for Java.")
 
 ;; KLUDGE ALERT.  We default these variables to their `C' values so
 ;; that non-cc-mode-ized modes that depend on c-mode will still work
@@ -4835,7 +4844,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.291 $"
+(defconst c-version "$Revision: 4.292 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
