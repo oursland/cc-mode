@@ -967,7 +967,7 @@ comment."
 		;; Stop before `{' and after `;', `{', `}' and `};'
 		;; when not followed by `}' or `)', but on the other
 		;; side of the syntactic ws.  Move by sexps and move
-		;; into parens.  Also stop before `#' when it's first
+		;; into parens.  Also stop before `#' when it's at boi
 		;; on a line.
 		(let ((comment-pos (not sentence-flag))
 		      (large-enough (- (point-max)))
@@ -975,7 +975,11 @@ comment."
 		  (catch 'done
 		    (while t
 		      (setq last (point))
-		      (when (and (looking-at "{\\|^#") (/= here last))
+		      (when (and (or (eq (char-after) ?\{)
+				     (and (eq (char-after) ?#)
+					  (eq (point) (c-point 'boi)))
+				     )
+				 (/= here last))
 			(unless (and c-special-brace-lists
 				     (eq (char-after) ?{)
 				     (c-looking-at-special-brace-list))
@@ -1028,12 +1032,12 @@ comment."
 	       (goto-char (point-min))
 	       (setq count 0)))
 	  (condition-case nil
-	      ;; Stop before `{', `}', and `#' when it's first on a
+	      ;; Stop before `{', `}', and `#' when it's at boi on a
 	      ;; line, but on the other side of the syntactic ws, and
 	      ;; after `;', `}' and `};'.  Only stop before `{' if at
 	      ;; top level or inside braces, though.  Move by sexps
 	      ;; and move into parens.  Also stop at eol of lines
-	      ;; starting with `#'.
+	      ;; with `#' at the boi.
 	      (let ((comment-pos (not sentence-flag))
 		    (large-enough (point-max))
 		    last)
@@ -1069,7 +1073,8 @@ comment."
 				(/= here last))
 			   (goto-char last)
 			   (throw 'done t))
-			  ((looking-at "^#")
+			  ((and (eq (char-after) ?#)
+				(= (point) (c-point 'boi)))
 			   (if (= here last)
 			       (or (re-search-forward "\\(^\\|[^\\]\\)$" nil t)
 				   (goto-char (point-max)))
@@ -1159,8 +1164,8 @@ comment."
 	  (search-forward "}")
 	  (1+ (current-column)))
 	 ;; CASE 2: 2 spaces after #endif
-	 ((or (looking-at "^#[ \t]*endif[ \t]*")
-	      (looking-at "^#[ \t]*else[ \t]*"))
+	 ((or (looking-at "^[ \t]*#[ \t]*endif[ \t]*")
+	      (looking-at "^[ \t]*#[ \t]*else[ \t]*"))
 	  7)
 	 ;; CASE 3: when c-indent-comments-syntactically-p is t,
 	 ;; calculate the offset according to c-offsets-alist.
