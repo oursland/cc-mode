@@ -33,7 +33,6 @@
 ;; font-lock-comment-face	Comments.
 ;; font-lock-string-face	String and character literals.
 ;; font-lock-keyword-face	Keywords.
-;; font-lock-builtin-face	?
 ;; font-lock-function-name-face	Function names in declarations and definitions,
 ;;				and classes in those contexts.  Also used for
 ;;				preprocessor defines with arguments.
@@ -49,6 +48,7 @@
 ;; font-lock-type-face		Types (both pre- and user defined) and classes
 ;;				in type contexts.
 ;; font-lock-reference-face	Name qualifiers.
+;; font-lock-builtin-face	Not used directly.
 ;;
 ;; Face aliases, mapped to different faces depending on (X)Emacs flavor:
 ;;
@@ -1028,15 +1028,6 @@ other easily recognizable things.  Used on level 2 and higher."
 		at-decl-or-cast nil
 		at-typedef nil)
 
-	  ;; Handle a C++ template prefix.
-	  (when (and (c-major-mode-is 'c++-mode)
-		     (looking-at "template\\>"))
-	    (goto-char (match-end 0))
-	    (c-forward-syntactic-ws)
-	    (unless (c-forward-c++-template-arglist)
-	      (throw 'continue t))
-	    (c-forward-syntactic-ws))
-
 	  ;; Check for a type, but be prepared to skip over leading specifiers
 	  ;; like "static".  We treat any symbols as specifiers here, to cope
 	  ;; with macros like __INLINE__ or anything else that might be in
@@ -1085,7 +1076,16 @@ other easily recognizable things.  Used on level 2 and higher."
 			  (setq start (or (match-end 1) (match-end 0)))
 			  (when (looking-at c-typedef-specifier-key)
 			    (setq at-typedef t))
-			  (goto-char start))))
+			  (goto-char start)
+
+			  (when (and (c-major-mode-is 'c++-mode)
+				     (looking-at "template\\>"))
+			    ;; Special case for a C++ template prefix.
+			    (c-forward-syntactic-ws)
+			    (unless (c-forward-c++-template-arglist)
+			      (throw 'continue t))
+			    (c-forward-syntactic-ws))
+			  t)))
 
 	    (c-forward-syntactic-ws))
 
