@@ -1016,7 +1016,7 @@ void spam(int i)
 
 @item
 @code{brace-catch-brace} --- analogous to @code{brace-elseif-brace}, but
-cleans up @samp{@} catch (...) @{} in Java mode.
+cleans up @samp{@} catch (...) @{} in C++ and Java mode.
 
 @item
 @code{empty-defun-braces} --- cleans up braces following a top-level

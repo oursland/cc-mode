@@ -626,9 +626,8 @@ the colon is inserted inside a literal."
 		(progn
 		  (delete-region mbeg mend)
 		  (insert "} else if (")))
-	    ;; clean up brace-catch-brace in Java mode
-	    (if (and (eq major-mode 'java-mode)
-		     (memq 'brace-catch-brace c-cleanup-list)
+	    ;; clean up brace-catch-brace
+	    (if (and (memq 'brace-catch-brace c-cleanup-list)
 		     (eq last-command-char ?\()
 		     (re-search-backward "}[ \t\n]*catch[ \t\n]*(" nil t)
 		     (save-excursion

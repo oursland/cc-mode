@@ -145,7 +145,7 @@ mode name.  Valid symbols are:
  brace-elseif-brace  -- similar to brace-else-brace, but cleans up
                         `} else if (...) {' constructs.
  brace-catch-brace   -- similar to brace-elseif-brace, but cleans up
-                        `} catch (...) {' constructs in Java mode.
+                        `} catch (...) {' constructs.
  empty-defun-braces  -- cleans up empty defun braces by placing the
                         braces on the same line.  Clean up occurs when
 			the defun closing brace is typed.
