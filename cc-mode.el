@@ -1,12 +1,12 @@
 ;;; c++-mode.el --- major mode for editing C++ (and C) code
 
-;; Author: 1992 Barry A. Warsaw, Century Computing Inc. <baw@cen.com>
+;; Author: 1992 Barry A. Warsaw, Century Computing Inc. <bwarsaw@cen.com>
 ;;         1987 Dave Detlefs and Stewart Clamen
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.225 $
-;; Last Modified:   $Date: 1992-12-03 22:57:15 $
+;; Version:         $Revision: 2.226 $
+;; Last Modified:   $Date: 1992-12-03 23:38:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -38,6 +38,35 @@
 ;; send bug reports to my personal account, I may not get it for a
 ;; long time.
 
+;; Notes for Novice Users
+;; ======================
+;; c++-mode facilitates editing of C++ code by automatically handling
+;; the indentation of lines of code in a manner very similar to c-mode
+;; as distributed with GNU emacs. Refer to the GNU Emacs manual,
+;; chapter 21 for more information on "Editing Programs".  In fact,
+;; c++-mode (through its companion mode entry point c++-c-mode) can
+;; also be used to edit both K&R and ANSI C code!
+;;
+;; To use c++-mode, add the following to your .emacs file. This
+;; assumes you will use .cc or .C extensions for your C++ source:
+;;
+;; (autoload 'c++-mode   "c++-mode" "C++ Editing Mode" t)
+;; (autoload 'c++-c-mode "c++-mode" "C Editing Mode" t)
+;; (setq auto-mode-alist
+;;   (append '(("\\.C$"  . c++-mode)
+;;             ("\\.cc$" . c++-mode)
+;;             ("\\.c$"  . c++-c-mode)   ; to edit C code
+;;             ("\\.h$"  . c++-c-mode)   ; to edit C code
+;;            ) auto-mode-alist))
+;;
+;; If you want to use the default c-mode for editing C code, then just
+;; omit the lines marked "to edit C code".
+;;
+;; Finally, you may want to customize certain c++-mode variables.  The
+;; best place to do this is in the mode hook variable called
+;; c++-mode-hook.  Again, see the Emacs manual, chapter 21 for more
+;; information.
+
 ;; Important Note about Escapes in Comments, and Performance
 ;; =========================================================
 ;; You will notice that certain characters, when typed in comment
@@ -48,58 +77,20 @@
 ;; code will sometimes choke on unbalanced parentheses and single
 ;; quotes in comments.  Please do a "C-h v c++-untame-characters" for
 ;; more information. Also note that there are patches on the beta
-;; access site to fix this problem for GNU 18.58 and Lemacs 19.2. The
+;; access site to fix this problem for GNU 18.59 and Lemacs 19.2. The
 ;; patches aren't perfect, but they do eliminate many of the most
 ;; troublesome bugs.
 ;;
-;; Note further that workarounds for this bug require that some buffer
-;; parsing be performed in elisp where it would normally be more
-;; efficient to do via the C primitives. I've chosen accuracy over
-;; performance but have worked hard to give acceptable performance in
+;; This problem affects both the accuracy and performance of c++-mode
+;; because some parsing must be performed in elisp instead of relying
+;; on the C primitives.  In general I've chosen accuracy over
+;; performance, but have worked hard to give acceptable performance in
 ;; all but the most uncommon situations. You will most likely notice
 ;; c++-mode becoming slow when you're editing a file of preprocessor
 ;; commands, or inside long functions or class definitions.
-;; Optimization is an ongoing concern, but C++ is difficult to
-;; micro-parse! 
-
-;; Notes for Novice Users
-;; ======================
-;; c++-mode facilitates editing of C++ code by automatically handling
-;; the indentation of lines of code in a manner very similar to c-mode
-;; as distributed with GNU emacs. Refer to the GNU Emacs manual,
-;; chapter 21 for more information on "Editing Programs".  In fact,
-;; c++-mode can also be used to edit C code!
-;;
-;; To use c++-mode you need to do two things: get this file loaded
-;; into your emacs sessions at the right time; and tell emacs what
-;; type of files are C++ files.  To do the former, make sure that
-;; c++-mode.el{c} is on your load-path, and add the following lines to
-;; your .emacs file:
-;; (autoload 'c++-mode   "c++-mode" "C++ Editing Mode" t)
-;; (autoload 'c++-c-mode "c++-mode" "C Editing Mode" t)
-;; 
-;; To do the latter, set up your auto-mode-alist file to recognize C++
-;; file extensions. For example, if you use .C and .cc as C++ source
-;; code files, add this to your .emacs file:
-;; (setq auto-mode-alist
-;;   (append '(("\\.C$"  . c++-mode)
-;;             ("\\.cc$" . c++-mode))
-;;           auto-mode-alist))
-;;
-;; This retains the original value of auto-mode-alist.  Finally, you
-;; may want to customize certain c++-mode variables.  The best place
-;; to do this is in the mode hook variable called c++-mode-hook.
-;; Again, see the Emacs manual, chapter 21 for more information.
-;;
-;; If you want to use c++-mode to edit C code, use the entry point
-;; c++-c-mode. Change the above setq in your .emacs file with:
-;;
-;; (setq auto-mode-alist
-;;   (append '(("\\.c$"  . c++-c-mode)  ; use c++-mode to edit C code
-;;             ("\\.h$"  . c++-c-mode)  ; instead of built-in c-mode
-;;             ("\\.C$"  . c++-mode)
-;;             ("\\.cc$" . c++-mode))
-;;           auto-mode-alist))
+;; Optimization is an ongoing concern. If you install the patches to
+;; emacs, c++-mode will automatically use the faster and more accurate
+;; parsing algorithms.
 
 ;; Beta Testers Mailing List
 ;; =========================
@@ -129,7 +120,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-03 22:57:15 $|$Revision: 2.225 $|
+;; |$Date: 1992-12-03 23:38:27 $|$Revision: 2.226 $|
 
 ;;; Code:
 
@@ -143,7 +134,7 @@
 ;; orthogonal comment styles in a single mode.  In this case, some
 ;; lispy ugliness can be ignored.  Also no characters need be tamed.
 
-(defvar c++-emacs-is-fixed-p
+(defconst c++-emacs-is-fixed-p
   (= 8 (length (parse-partial-sexp (point) (point))))
   "True if you've patched your emacs to handle 2 orthogonal comment
 styles in a single mode.")
@@ -384,7 +375,10 @@ nil.")
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is '(alignleft).")
 (defvar c++-backscan-limit 2000
-  "*Limit in characters for looking back while skipping syntactic ws.")
+  "*Limit in characters for looking back while skipping syntactic ws.
+If you typically write really big methods, and start noticing
+incorrect indentations, try cranking this value up.  The larger this
+value is, though, the slower parts of c++-mode can become.")
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 ;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
@@ -407,7 +401,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.225 $
+  "Major mode for editing C++ code.  $Revision: 2.226 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -615,7 +609,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.225 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.226 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2277,7 +2271,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.225 $"
+(defconst c++-version "$Revision: 2.226 $"
   "c++-mode version number.")
 
 (defun c++-version ()
