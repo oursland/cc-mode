@@ -33,9 +33,6 @@
 
 ;;; Code:
 
-(defconst c-version "5.30"
-  "CC Mode version number.")
-
 (eval-when-compile
   (let ((load-path
 	 (if (and (boundp 'byte-compile-dest-file)
