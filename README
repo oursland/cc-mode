@@ -20,22 +20,98 @@ Introduction
     programs.  See below for limitations.
 
     In lieu of a texinfo manual (which is in the works), this file
-    will describe the following: how to use cc-mode to edit your code,
-    how to get the ball rolling, the differences between cc-mode.el
-    and c-mode.el, and the differences between cc-mode.el and
-    c++-mode.el.
+    will describe the following:
+
+    	* how to get started using cc-mode
+	* how to customize the new indentation engine
+	* the differences between cc-mode.el and bocm c-mode.el
+	* the differences between cc-mode.el and c++-mode.el.
 
     Note that the name of the file is cc-mode.el, and I'll often refer
     to the mode as cc-mode, but there really is no top level cc-mode
     entry point.  I call it cc-mode simply to differentiate it from
     c-mode.el.  All of the variables, commands, and functions in
     cc-mode are prefixed with c-<thing>, and both c-mode and c++-mode
-    top level entry points are provided.  This file is intended to be
-    a drop-in replacement for c-mode.el -- you should be able to
-    remove c-mode.el and dump Emacs with cc-mode.el instead.
+    entry points are provided.  This file is intended to be a drop-in
+    replacement for c-mode.el -- you should be able to remove
+    c-mode.el and dump Emacs with cc-mode.el instead.
 
     Its called version 3 because of its direct lineage from
     c++-mode.el, version 2.353.
+
+
+Getting Started
+
+    cc-mode.el works with the 3 major releases of Emacs in use: Emacs
+    18, FSF Emacs 19, and Lucid Emacs 19.  FSF 19 users will want
+    version 19.21 or better, Lucid users will want 19.6 or better.
+
+    The first thing you want to do is put cc-mode.el somewhere on your
+    load-path where Emacs can find it.  Do a "C-h v load-path" to see
+    all the directories Emacs looks at when loading a file.  If none
+    of these directories are appropriate, create a new directory and
+    add it to your load-path:
+
+    	[in the shell]
+	% cd
+	% mkdir mylisp
+	% mv cc-mode.el mylisp
+	% cd mylisp
+
+	[in your .emacs file add]
+	(setq load-path (cons "~/mylisp" load-path))
+
+    Next you want to byte-compile cc-mode.el.  The mode uses a lot of
+    macros so if you don't byte-compile it, things will be unbearably
+    slow.  YOU CAN IGNORE ALL BYTE-COMPILER WARNINGS!  They are the
+    result of the multi-Emacs support and none of the warnings have
+    any effect on operation.  Here are the steps to do this [in emacs]:
+
+    	C-x C-f RET ~/mylisp/cc-mode.el RET
+	M-x byte-compile-file RET ~/mylisp/cc-mode.el RET
+
+    Most users will probably be running an Emacs that already has bocm
+    c-mode.el dumped.  You will not want to use this, or any older
+    releases of c++-mode.el if you use cc-mode.el.  If your Emacs is
+    dumped with either of these files you first need to make Emacs
+    "forget" about those older modes.
+
+    If you can do a "C-h v c-mode-map" you probably need to add these
+    lines at the top of your .emacs file:
+
+        (fmakunbound 'c-mode)
+    	(makunbound 'c-mode-map)
+    	(fmakunbound 'c++-mode)
+    	(makunbound 'c++-mode-map)
+
+    After those lines you will want to add the following autoloads to
+    your .emacs file so that cc-mode gets loaded at the right time:
+
+    	(autoload 'c++-mode "cc-mode" "C++ Editing Mode" t)
+    	(autoload 'c-mode   "cc-mode" "C Editing Mode" t)
+
+    Next, you will want to set up Emacs so that it edits C files in
+    c-mode and C++ files in c++-mode (as defined from cc-mode.el). Add
+    the following to your .emacs file after the autoload lines above.
+    Note that this assumes you'll be editing .h and .c files as C, and
+    .hh, .C, and .cc files as C++. Your mileage may vary:
+
+	(setq auto-mode-alist
+	  (append '(("\\.C$"  . c++-mode)
+		    ("\\.cc$" . c++-mode)
+		    ("\\.hh$" . c++-mode)
+		    ("\\.c$"  . c-mode)
+		    ("\\.h$"  . c-mode)
+		   ) auto-mode-alist))
+
+    You may already have some or all of these settings on your
+    auto-mode-alist, but it won't hurt to put them on there again.
+
+    I will also briefly mention that if you have the ability to
+    re-compile Emacs, you can trash c-mode.el altogether and dump
+    Emacs with cc-mode.el.  If you know what this means, you probably
+    already know how to do it.  If not you can contact the help
+    address for more information (see below).
 
 
 New indentation engine
@@ -166,60 +242,6 @@ Customizing Indentation
     customizing indentation.  See the c-offsets-alist variable for
     more information.
     
-
-Getting Started
-
-    cc-mode.el works with the 3 major releases of Emacs in use: Emacs
-    18, FSF Emacs 19, and Lucid Emacs 19.  FSF 19 users will want
-    version 19.21 or better, Lucid users will want 19.6 or better.
-
-    First thing you want to do is to byte-compile cc-mode.el.  The
-    mode uses a lot of macros so if you don't byte-compile it, things
-    will be unbearably slow.  YOU CAN IGNORE ALL BYTE-COMPILER
-    WARNINGS!  They are the result of the multi-Emacs support and none
-    of the warnings have any effect on operation.
-
-    Most users will probably be running an Emacs that already has bocm
-    c-mode.el dumped.  You will not want to use this, or older
-    releases of c++-mode.el if you use cc-mode.el.  If your Emacs is
-    dumped with either of these files you first need to make Emacs
-    "forget" about those older modes by adding this to your .emacs
-    file:
-
-    (fmakunbound 'c-mode)
-    (makunbound 'c-mode-map)
-    (fmakunbound 'c++-mode)
-    (makunbound 'c++-mode-map)
-
-    Then you will want to add autoloads to your .emacs file so that
-    cc-mode gets loaded at the right time:
-
-    (autoload 'c++-mode "cc-mode" "C++ Editing Mode" t)
-    (autoload 'c-mode   "cc-mode" "C Editing Mode" t)
-
-    Next, you will want to set up Emacs so that it edits C files in
-    c-mode and C++ files in c++-mode (as defined from cc-mode.el). Add
-    the following to your .emacs file.  Note that this assumes you'll
-    be editing .h and .c files as C, and .hh, .C, and .cc files as
-    C++. Your mileage may vary:
-
-    (setq auto-mode-alist
-      (append '(("\\.C$"  . c++-mode)
-                ("\\.cc$" . c++-mode)
-                ("\\.hh$" . c++-mode)
-                ("\\.c$"  . c-mode)
-                ("\\.h$"  . c-mode)
-               ) auto-mode-alist))
-
-    You may already have some or all of these settings on your
-    auto-mode-alist.
-
-    I will mention also that if you have the ability to re-compile
-    Emacs, you can trash c-mode.el altogether and dump Emacs with
-    cc-mode.el.  If you know what this means, you probably already
-    know how to do it.  If not you can contact the help address for
-    more information (see below).
-
 
 Frequently Asked Questions
 
