@@ -553,6 +553,10 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 
 
 
+;; Emacs 19 does not give us copy-tree by default, nor autoloaded  :-(
+(or (boundp 'copy-tree)
+    (require 'cl))
+
 ;; Dynamically append the default value of most variables. This is
 ;; crucial because future c-set-style calls will always reset the
 ;; variables first to the `cc-mode' style before instituting the new
