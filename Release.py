@@ -83,6 +83,9 @@ def tag_release(revnum, retag):
     if retag:
 	option = '-F'
     os.system('%s %s %s' % (cvscmd, option, relname))
+    relname = '"Branch_5_' + revnum + '"'
+    cvscmd = 'cvs tag -b '
+    os.system('%s %s %s' % (cvscmd, option, relname))
 
 
 
