@@ -92,8 +92,11 @@
 ;;;###autoload
 (defun c-initialize-cc-mode ()
   (setq c-buffer-is-cc-mode t)
-  ;; sigh.  give in to the pressure
-  (or (fboundp 'functionp)
+  ;; sigh.  give in to the pressure, but make really sure all the
+  ;; definitions we need are here
+  (if (or (not (fboundp 'functionp))
+	  (not (fboundp 'char-before))
+	  (not (c-safe (char-after) t)))
       (require 'cc-mode-19))
   ;; make sure all necessary components of CC Mode are loaded in.
   (let ((initprop 'cc-mode-is-initialized))
