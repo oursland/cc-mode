@@ -1236,10 +1236,6 @@ sentence motion in or near comments and multiline strings."
 		    (setq range nil))))
 	    (goto-char (if (> count 0) (car range) (cdr range)))
 	    (setq range nil))
-	;; Below we do approximately the same as
-	;; c-beginning-of-statement-1 and c-end-of-statement-1, and
-	;; perhaps they should be changed, but that'd likely break a
-	;; lot in cc-engine.
 	(goto-char here)
 	(if (> count 0)
 	    (condition-case nil
@@ -2093,11 +2089,6 @@ command to conveniently insert and align the necessary backslashes."
 			  (beginning-of-line)
 			  (not (bobp))))
 	      (backward-char))
-	    ;; Adjust upward to a tab column.
-	    (if (> (% longest-line-col tab-width) 0)
-		(setq longest-line-col (* (/ (+ longest-line-col tab-width -1)
-					     tab-width)
-					  tab-width)))
 	    ;; Try to align with surrounding backslashes.
 	    (goto-char from)
 	    (beginning-of-line)
@@ -2121,10 +2112,20 @@ command to conveniently insert and align the necessary backslashes."
 	      (goto-char from)
 	      (while (and (< (point) to) (bolp) (eolp))
 		(forward-line 1)))
-	    ;; Impose minimum limit only if we shouldn't align with
-	    ;; surrounding backslashes.
-	    (setq column (max (or column c-backslash-column)
-			      longest-line-col))
+	    (if (< column longest-line-col)
+		;; Don't try to align with surrounding backslashes if
+		;; any line is too long.
+		(setq column nil))
+	    (unless column
+	      ;; Impose minimum limit and tab width alignment only if
+	      ;; we can't align with surrounding backslashes.
+	      (if (> (% longest-line-col tab-width) 0)
+		  (setq longest-line-col
+			(* (/ (+ longest-line-col tab-width -1)
+			      tab-width)
+			   tab-width)))
+	      (setq column (max c-backslash-column
+				longest-line-col)))
 	    ;; Always impose maximum limit.
 	    (setq column (min column c-backslash-max-column)))
 	  (if bs-col-after-end
@@ -2162,6 +2163,9 @@ command to conveniently insert and align the necessary backslashes."
 		 (setq col (current-column))
 		 ;; Avoid unnecessary changes of the buffer.
 		 (cond ((< col column)
+			(delete-region (point)
+				       (progn (skip-chars-backward " \t")
+					      (point)))
 			(indent-to column))
 		       ((and (= col column)
 			     (memq (char-before) '(?\  ?\t))))
