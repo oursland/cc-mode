@@ -600,7 +600,9 @@ since CC Mode treats every identifier as an expression."
 		       '("new"))
 		      ((c-major-mode-is 'pike-mode)
 		       '("class" "lambda" "catch" "throw" "gauge")))
-	      "(" ")")			; Cast.
+	      "(" ")"			; Cast.
+	      ,@(when (c-major-mode-is 'pike-mode)
+		  '("[" "]")))		; Type cast.
 
       ;; Member selection.
       ,@(when (c-major-mode-is 'c++-mode)
@@ -1454,23 +1456,25 @@ nevertheless contains a list separated with ';' and not ','."
   idl     '("TRUE" "FALSE")
   pike    '("UNDEFINED")) ;; Not a keyword, but practically works as one.
 
+(c-lang-defconst c-primary-expr-kwds
+  "Keywords besides constants and operators that start primary expressions."
+  t    nil
+  c++  '("operator" "this")
+  objc '("super" "self")
+  java '("this")
+  pike '("this")) ;; Not really a keyword, but practically works as one.
+
 (c-lang-defconst c-expr-kwds
-  "Keywords that can occur anywhere in expressions."
-  ;; Start out with all keyword operators in `c-operators'.
-  t    (c-with-syntax-table (c-lang-const c-mode-syntax-table)
-	 (mapcan (lambda (op)
-		   (and (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
-			(list op)))
-		 (c-lang-const c-operator-list)))
-  c++  (append '("operator" "this")
-	       (c-lang-const c-expr-kwds))
-  objc (append '("super" "self")
-	       (c-lang-const c-expr-kwds))
-  java (append '("this")
-	       (c-lang-const c-expr-kwds))
-  pike (append
-	'("this") ;; Not really a keyword, but practically works as one.
-	(c-lang-const c-expr-kwds)))
+  ;; Keywords that can occur anywhere in expressions.  Built from
+  ;; `c-primary-expr-kwds' and all keyword operators in `c-operators'.
+  t (delete-duplicates
+     (append (c-lang-const c-primary-expr-kwds)
+	     (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+	       (mapcan (lambda (op)
+			 (and (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
+			      (list op)))
+		       (c-lang-const c-operator-list))))
+     :test 'string-equal))
 
 (c-lang-defconst c-lambda-kwds
   "Keywords that start lambda constructs, i.e. function definitions in
@@ -1687,6 +1691,53 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defvar c-not-decl-init-keywords
   (c-lang-const c-not-decl-init-keywords))
 
+(c-lang-defconst c-primary-expr-regexp
+  ;; Regexp matching the start of any primary expression, i.e. any
+  ;; literal, symbol, prefix operator, and '('.  It doesn't need to
+  ;; exclude keywords; they are excluded afterwards unless the first
+  ;; submatch matches.
+  t (let ((prefix-ops (mapcan (lambda (opclass)
+				(when (eq (car opclass) 'prefix)
+				  (append (cdr opclass) nil)))
+			      (c-lang-const c-operators))))
+      (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+	(concat
+	 ;; Take out all symbol class operators from `prefix-ops' and make the
+	 ;; first submatch from them together with `c-primary-expr-kwds'.
+	 (c-make-keywords-re t
+	   (append (c-lang-const c-primary-expr-kwds)
+		   (mapcan
+		    (lambda (op)
+		      (if (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op)
+			  (list op)))
+		    prefix-ops)))
+	 "\\|"
+	 ;; Now match all other symbols.
+	 (c-lang-const c-symbol-start)
+	 "\\|"
+	 ;; Handle '(', the chars that can start integer and floating point
+	 ;; constants, and the remaining operators from `prefix-ops' but
+	 ;; exclude close parens which are special cases for prefix operators
+	 ;; such as casts.
+	 (c-make-keywords-re nil
+	   (append '("(" "0" "1" "2" "3" "4" "5" "6" "7" "8" "9" ".")
+		   (mapcan
+		    (lambda (op)
+		      ;; This filters out the special case prefix operators
+		      ;; that are close parens.
+		      (if (and
+			   (not (string-match "\\`\\(\\w\\|\\s_\\)+\\'" op))
+			   (not (string-match "\\s\)" op)))
+			  (list op)))
+		    prefix-ops)))
+	 "\\|"
+	 ;; Match string and character literals.
+	 "\\s\""
+	 (if (memq 'gen-string-delim c-emacs-features)
+	     "\\|\\s|"
+	   "")))))
+(c-lang-defvar c-primary-expr-regexp (c-lang-const c-primary-expr-regexp))
+
 
 ;;; Additional constants for parser-level constructs.
 
@@ -1729,14 +1780,17 @@ is in effect or not."
   'dont-doc)
 
 (c-lang-defconst c-cast-parens
-  "List containing the paren characters that can open a cast, or nil in
-languages without casts.  Identifier syntax is in effect when this is
-matched \(see `c-identifier-syntax-table')."
-  t    nil
-  (c c++ objc java) '(?\()
-  pike '(?\( ?\[))
-(c-lang-defvar c-cast-parens (c-lang-const c-cast-parens)
-  'dont-doc)
+  ;; List containing the paren characters that can open a cast, or nil in
+  ;; languages without casts.
+  t (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+      (mapcan (lambda (opclass)
+		(when (eq (car opclass) 'prefix)
+		  (mapcan (lambda (op)
+			    (when (string-match "\\`\\s\(\\'" op)
+			      (list (elt op 0))))
+			  (cdr opclass))))
+	      (c-lang-const c-operators))))
+(c-lang-defvar c-cast-parens (c-lang-const c-cast-parens))
 
 (c-lang-defconst c-type-decl-prefix-key
   "Regexp matching the operators that might precede the identifier in a
