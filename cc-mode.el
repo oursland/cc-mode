@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-10 22:02:26 $
-;; Version:         $Revision: 2.149 $
+;; Last Modified:   $Date: 1992-07-13 14:43:21 $
+;; Version:         $Revision: 2.150 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -74,7 +74,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-10 22:02:26 $|$Revision: 2.149 $|
+;; |$Date: 1992-07-13 14:43:21 $|$Revision: 2.150 $|
 
 
 ;; ======================================================================
@@ -282,7 +282,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.149 $
+  "Major mode for editing C++ code.  $Revision: 2.150 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1810,17 +1810,14 @@ the leading \"// \" from each line, if any."
   (let* ((m      (if (eq (mark) nil) (error "Mark is not set!") (mark)))
 	 (start  (if (< (point) m) (point) m))
 	 (end    (if (> (point) m) (point) m))
-	 (mymark (copy-marker end))
-	 (len    (length comment-start))
-	 (char   (string-to-char comment-start)))
+	 (mymark (copy-marker end)))
     (save-excursion
 	(goto-char start)
 	(while (< (point) (marker-position mymark))
 	    (beginning-of-line)
-	    (if (looking-at (concat " *" comment-start))
-		(progn
-		  (zap-to-char 1 char)
-		  (delete-char len)))
+	    (if (looking-at (concat "[\t ]*" comment-start))
+		  (delete-char (- (match-end 0) (match-beginning 0)))
+	      )
 	    (beginning-of-line)
 	    (forward-line 1)))))
 
@@ -1977,7 +1974,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.149 $"
+(defconst c++-version "$Revision: 2.150 $"
   "c++-mode version number.")
 
 (defun c++-version ()
