@@ -3193,7 +3193,7 @@ Keywords are recognized and not considered identifiers."
 	    (setq placeholder (c-add-class-syntax 'inclass inclass-p
 						  paren-state))
 	    ;; Append access-label with the same anchor point as inclass gets.
-	    (nconc syntax (list (cons 'access-label placeholder))))
+	    (c-append-syntax 'access-label placeholder))
 	   ;; CASE 5F: extern-lang-close or namespace-close?
 	   ((and inenclosing-p
 		 (eq char-after-ip ?}))
@@ -3791,9 +3791,9 @@ Keywords are recognized and not considered identifiers."
 	;; Set syntactic-relpos.
 	(let ((p syntax))
 	  (while (and p
-		      (if (integerp (cdr (car p)))
+		      (if (integerp (car-safe (cdr-safe (car p))))
 			  (progn
-			    (setq syntactic-relpos (cdr (car p)))
+			    (setq syntactic-relpos (car (cdr (car p))))
 			    nil)
 			t))
 	    (setq p (cdr p))))
@@ -3817,7 +3817,8 @@ Keywords are recognized and not considered identifiers."
 		  ;; in the expression.  That means the arglist
 		  ;; elements, if they are anchored inside the cpp
 		  ;; expression.
-		  (setq syntax `((cpp-macro-cont . ,macro-start))))
+		  (setq syntax nil)
+		  (c-add-syntax 'cpp-macro-cont macro-start))
 	      (when (and (eq macro-start syntactic-relpos)
 			 (not (assq 'cpp-define-intro syntax))
 			 (save-excursion
@@ -3850,7 +3851,11 @@ Keywords are recognized and not considered identifiers."
    ((eq offset '/)         (/ (- c-basic-offset) 2))
    ((numberp offset)       offset)
    ((functionp offset)     (c-evaluate-offset
-			    (funcall offset langelem) langelem symbol))
+			    (apply offset
+				   (cons (car langelem)
+					 (car-safe (cdr langelem)))
+				   (cdr-safe (cdr langelem)))
+			    langelem symbol))
    ((vectorp offset)       offset)
    ((null offset)          nil)
    ((listp offset)
@@ -3864,10 +3869,13 @@ Keywords are recognized and not considered identifiers."
    (t (symbol-value offset))
    ))
 
-(defun c-get-offset (langelem)
-  "Get offset from LANGELEM which is a cons cell of the form:
-\(SYMBOL . RELPOS).  The symbol is matched against `c-offsets-alist'
-and the offset found there is returned."
+(defun c-calc-offset (langelem)
+  ;; Get offset from LANGELEM which is a list beginning with the
+  ;; syntactic symbol and followed by any analysis data it provides.
+  ;; That data may be zero or more elements, but if at least one is
+  ;; given then the first is the relpos (or nil).  The symbol is
+  ;; matched against `c-offsets-alist' and the offset calculated from
+  ;; that is returned.
   (let* ((symbol (car langelem))
 	 (match  (assq symbol c-offsets-alist))
 	 (offset (cdr-safe match)))
@@ -3883,11 +3891,19 @@ and the offset found there is returned."
 	  0))
     ))
 
+(defun c-get-offset (langelem)
+  ;; This is a compatibility wrapper for `c-calc-offset' in case
+  ;; someone is calling it directly.  It takes an old style syntactic
+  ;; element on the form (SYMBOL . RELPOS) and converts it to the new
+  ;; list form.
+  (if (cdr langelem)
+      (c-calc-offset (list (car langelem) (cdr langelem)))
+    (c-calc-offset langelem)))
+
 (defun c-get-syntactic-indentation (langelems)
-  "Apply `c-get-offset' to a list of langelem cells to get the total
-syntactic indentation.  The anchor position, whose column is used as a
-base for all the collected offsets, is taken from the first element
-with a relpos."
+  ;; Calculate the syntactic indentation from a syntactic description
+  ;; as returned by `c-guess-syntax'.
+  ;;
   ;; Note that topmost-intro always has a relpos at bol, for
   ;; historical reasons.  It's often used together with other symbols
   ;; that has more sane positions.  Since we always use the first
@@ -3896,11 +3912,11 @@ with a relpos."
   (let ((indent 0) anchor)
     (catch 'done
       (while langelems
-	(let ((res (c-get-offset (car langelems))))
+	(let ((res (c-calc-offset (car langelems))))
 	  (if (vectorp res)
 	      (throw 'done (elt res 0))
 	    (unless anchor
-	      (let ((relpos (cdr (car langelems))))
+	      (let ((relpos (car-safe (cdr (car langelems)))))
 		(if relpos
 		    (setq anchor relpos))))
 	    (setq indent (+ indent res)

@@ -181,11 +181,17 @@
 (defmacro c-down-list-backward (pos)
   `(c-safe (scan-lists ,pos -1 -1)))
 
-(defmacro c-add-syntax (symbol &optional relpos)
+(defmacro c-add-syntax (symbol &rest relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
   ;; try to increase performance by using this macro
-  `(let ((relpos-tmp ,relpos))
+  `(let ((relpos-tmp (list ,@relpos)))
      (setq syntax (cons (cons ,symbol relpos-tmp) syntax))))
+
+(defmacro c-append-syntax (symbol &rest relpos)
+  ;; Like `c-add-syntax' but appends to the end of the syntax list.
+  ;; (Normally not necessary.)
+  `(let ((relpos-tmp (list ,@relpos)))
+     (nconc syntax (list (cons ,symbol relpos-tmp)))))
 
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like

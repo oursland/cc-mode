@@ -49,6 +49,16 @@
 
 ;; Standard indentation line-ups
 
+;; Calling convention:
+;;
+;; The calling convention for line-up functions is a bit complicated
+;; for historical reasons.  The first argument is a cons cell
+;; containing the syntactic symbol in the car, and the relpos
+;; (a.k.a. anchor position) in the cdr.  The cdr may be nil for
+;; syntactic symbols which doesn't have an associated relpos.  The
+;; rest of the arguments are any extra info the syntactic symbol might
+;; provide (see the comments in `c-offsets-alist' in cc-vars.el).
+
 (defun c-lineup-topmost-intro-cont (langelem)
   "Line up declaration continuation lines zero or one indentation step.
 For lines in the \"header\" of a definition, zero is used.  For other

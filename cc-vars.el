@@ -1357,7 +1357,15 @@ as designated in the variable `c-file-style'.")
 (make-variable-buffer-local 'c-file-offsets)
 
 (defvar c-syntactic-context nil
-  "Variable containing syntactic analysis list during indentation.
+  "Variable containing the syntactic analysis list during indentation.
+It is a list with one element for each found syntactic symbol.  Each
+element is a list with the symbol name in the first position, followed
+by zero or more elements containing any additional info associated
+with the syntactic symbol.  Specifically, the second element is the
+relpos \(a.k.a. anchor position), or nil if there isn't any.  See the
+comments in the `c-offsets-alist' variable in \"cc-vars.el\" for more
+detailed info about the data each syntactic symbol provides.
+
 This is always bound dynamically.  It should never be set statically
 \(e.g. with `setq').")
 
