@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.375 $
-;; Last Modified:   $Date: 1997-02-24 22:49:43 $
+;; Version:         $Revision: 4.376 $
+;; Last Modified:   $Date: 1997-02-25 23:52:54 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -34,16 +34,16 @@
 
 ;; This package provides modes in GNU Emacs for editing C, C++,
 ;; Objective-C, and Java code. It is intended to be a replacement for
-;; c-mode.el (a.k.a. BOCM -- Boring Old C-Mode), and c++-mode.el
-;; (a.k.a cplus-md.el and cplus-md1.el), both of which are ancestors
-;; of this file.  A number of important improvements have been made,
-;; briefly: complete K&R C, ANSI C, `ARM' C++, Objective-C, and Java
-;; support with consistent indentation across all modes, more
+;; c-mode.el (a.k.a. BOCM -- Boring Old C-Mode), c++-mode.el,
+;; cplus-md.el, and cplus-md1.el, all of which are in some way
+;; ancestors of this file.  A number of important improvements have
+;; been made, briefly: complete K&R C, ANSI C, `ARM' C++, Objective-C,
+;; and Java support with consistent indentation across all modes, more
 ;; intuitive indentation controlling variables, compatibility across
 ;; all known Emacsen, nice new features, and tons of bug fixes.  This
-;; package is called "cc-mode" to distinguish it from its ancestors,
-;; but there really is no top-level cc-mode.  Usage and programming
-;; details are contained in an accompanying texinfo manual.
+;; package is called "CC Mode" to distinguish it from its ancestors,
+;; but there is no cc-mode command.  Usage and programming details are
+;; contained in an accompanying texinfo manual.
 
 ;; NOTE: This mode does not perform font-locking (a.k.a syntactic
 ;; coloring, keyword highlighting, etc.) for any of the supported
@@ -68,10 +68,10 @@
 ;; BYTE-COMPILER WARNINGS (you'd be surprised at how many people don't
 ;; follow this advice :-).
 
-;; As of this writing (27-Jan-1997), cc-mode comes with the latest
+;; As of this writing (24-Feb-1997), CC Mode comes with the latest
 ;; Emacs and XEmacs distributions (19.34 and 19.14 respectively), but
 ;; is no longer pre-loaded by default.  To use the latest version of
-;; cc-mode, you need only make sure that this copy of cc-mode.el is
+;; CC Mode, you need only make sure that this copy of cc-mode.el is
 ;; found first on your load-path.
 
 ;; If your Emacs is pre-loaded with any version of cc-mode.el,
@@ -86,9 +86,9 @@
 
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
-;; encouragement cc-mode would be a far inferior package.
+;; encouragement CC Mode would be a far inferior package.
 
-;; You can get the latest version of cc-mode, including PostScript
+;; You can get the latest version of CC Mode, including PostScript
 ;; documentation and separate individual files from:
 ;;
 ;;     http://www.python.org/ftp/emacs/
@@ -178,7 +178,7 @@ As described below, each cons cell in this list has the form:
 
     (SYNTACTIC-SYMBOL . OFFSET)
 
-When a line is indented, cc-mode first determines the syntactic
+When a line is indented, CC Mode first determines the syntactic
 context of the line by generating a list of symbols called syntactic
 elements.  This list can contain more than one syntactic element and
 the global variable `c-syntactic-context' contains the context list
@@ -188,7 +188,7 @@ position is called the relative indent point for the line.  Some
 syntactic symbols may not have a relative indent point associated with
 them.
 
-After the syntactic context list for a line is generated, cc-mode
+After the syntactic context list for a line is generated, CC Mode
 calculates the absolute indentation for the line by looking at each
 syntactic element in the list.  First, it compares the syntactic
 element against the SYNTACTIC-SYMBOL's in `c-offsets-alist'.  When it
@@ -548,7 +548,7 @@ Elements of this alist are of the form:
   (STYLE-STRING (VARIABLE . VALUE) [(VARIABLE . VALUE) ...])
 
 where STYLE-STRING is a short descriptive string used to select a
-style, VARIABLE is any cc-mode variable, and VALUE is the intended
+style, VARIABLE is any CC Mode variable, and VALUE is the intended
 value for that variable when using the selected style.
 
 There is one special case when VARIABLE is `c-offsets-alist'.  In this
@@ -566,7 +566,7 @@ computed at the time the mode is loaded.")
 (defvar c-file-style nil
   "*Variable interface for setting style via File Local Variables.
 In a file's Local Variable section, you can set this variable to a
-string suitable for `c-set-style'.  When the file is visited, cc-mode
+string suitable for `c-set-style'.  When the file is visited, CC Mode
 will set the style of the file to this value automatically.
 
 Note that file style settings are applied before file offset settings
@@ -576,7 +576,7 @@ as designated in the variable `c-file-offsets'.")
   "*Variable interface for setting offsets via File Local Variables.
 In a file's Local Variable section, you can set this variable to an
 association list similar to the values allowed in `c-offsets-alist'.
-When the file is visited, cc-mode will institute these offset settings
+When the file is visited, CC Mode will institute these offset settings
 automatically.
 
 Note that file offset settings are applied after file style settings
@@ -585,9 +585,9 @@ as designated in the variable `c-file-style'.")
 (defvar c-site-default-style "gnu"
   "Default style for your site.
 To change the default style at your site, you can set this variable to
-any style defined in `c-style-alist'.  However, if cc-mode is usually
+any style defined in `c-style-alist'.  However, if CC Mode is usually
 loaded into your Emacs at compile time, you will need to set this
-variable in the `site-init.el' file before cc-mode is loaded, then
+variable in the `site-init.el' file before CC Mode is loaded, then
 re-dump Emacs.")
 
 (defvar c-style-variables-are-local-p t
@@ -624,7 +624,7 @@ The list of variables to buffer localize are:
   "*Hook called by `java-mode'.")
 
 (defvar c-mode-common-hook nil
-  "*Hook called by all cc-mode modes for common initializations.")
+  "*Hook called by all CC Mode modes for common initializations.")
 
 (defvar c-mode-menu
   '(["Comment Out Region"     comment-region (mark)]
@@ -794,8 +794,8 @@ The list of variables to buffer localize are:
 	  (print (format
 "The version of Emacs that you are running, %s,
 has known bugs in its syntax.c parsing routines which will affect the
-performance of cc-mode. You should strongly consider upgrading to the
-latest available version.  cc-mode may continue to work, after a
+performance of CC Mode. You should strongly consider upgrading to the
+latest available version.  CC Mode may continue to work, after a
 fashion, but strange indentation errors could be encountered."
 		     emacs-version))))
     ;; Emacs 18, with no patch is not too good
@@ -812,9 +812,9 @@ upgrading to one of the latest Emacs 19's.  In Emacs 18, you may also
 experience performance degradations. Emacs 19 has some new built-in
 routines which will speed things up for you.
 
-Because of these inherent problems, cc-mode is no longer being
+Because of these inherent problems, CC Mode is no longer being
 actively maintained for Emacs 18, however, until you can upgrade to
-Emacs 19, you may want to look at cc-mode-18.el in the cc-mode
+Emacs 19, you may want to look at cc-mode-18.el in the CC Mode
 distribution.  THIS FILE IS COMPLETELY UNSUPPORTED!  If you use it,
 you are on your own, although patch contributions will be folded into
 the main release."
@@ -827,13 +827,13 @@ the main release."
 "You are running a syntax patched Emacs 18 variant.  While this should
 work for you, you may want to consider upgrading to Emacs 19.  The
 syntax patches are no longer supported either for syntax.c or
-cc-mode."))))
+CC Mode."))))
     (if infodock-p
 	(list major comments re-suite 'infodock)
       (list major comments re-suite)))
   "A list of features extant in the Emacs you are using.
 There are many flavors of Emacs out there, each with different
-features supporting those needed by cc-mode.  Here's the current
+features supporting those needed by CC Mode.  Here's the current
 supported list, along with the values for this variable:
 
  Emacs 18/Epoch 4:           (v18 no-dual-comments RS)
@@ -930,7 +930,7 @@ Infodock (based on XEmacs) has an additional symbol on this list:
   (define-key c-mode-map "\ea"       'c-beginning-of-statement)
   (define-key c-mode-map "\ee"       'c-end-of-statement)
   ;; Emacs 19.30 introduces fill-paragraph-function, but it's not in
-  ;; every version of Emacs cc-mode supports.
+  ;; every version of Emacs CC Mode supports.
   (if (not (boundp 'fill-paragraph-function))
       ;; I'd rather use an adaptive fill program instead of this.
       (define-key c-mode-map "\eq"   'c-fill-paragraph))
@@ -962,7 +962,7 @@ Infodock (based on XEmacs) has an additional symbol on this list:
        (not (memq 'infodock c-emacs-features))
        ;; Emacs 19 defines menus in the mode map. This call will
        ;; return t on Emacs 19, otherwise no-op and return nil.
-       (not (c-mode-fsf-menu "CC-Mode" c-mode-map))
+       (not (c-mode-fsf-menu "CC Mode" c-mode-map))
        ;; In XEmacs 19, we want the menu to popup when the 3rd button
        ;; is hit.  In Lucid Emacs 19.10 and beyond this is done
        ;; automatically if we put the menu on mode-popup-menu
@@ -1316,7 +1316,7 @@ c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
 problem, including a reproducible test case and send the message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `c-mode-hook' is run with no args, if that value is
 bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
@@ -1353,7 +1353,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case, and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `c++-mode-hook' is run with no args, if that
 variable is bound and has a non-nil value.  Also the hook
@@ -1392,7 +1392,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case, and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `objc-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the hook `c-mode-common-hook'
@@ -1431,7 +1431,7 @@ version information already added.  You just need to add a description
 of the problem, including a reproducible test case and send the
 message.
 
-To see what version of cc-mode you are running, enter `\\[c-version]'.
+To see what version of CC Mode you are running, enter `\\[c-version]'.
 
 The hook variable `java-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the common hook
@@ -1536,7 +1536,7 @@ For use with the variable `java-mode-hook'."
 	   current-menubar
 	   (not (assoc mode-name current-menubar)))
       ;; its possible that this buffer has changed modes from one of
-      ;; the other cc-mode modes.  In that case, only the menubar
+      ;; the other CC Mode modes.  In that case, only the menubar
       ;; title of the menu changes.
       (let ((modes (copy-sequence c-list-of-mode-names))
 	    changed-p)
@@ -2420,7 +2420,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 
 ;;;###autoload
 (defun c-set-style (stylename)
-  "Set cc-mode variables to use one of several different indentation styles.
+  "Set CC Mode variables to use one of several different indentation styles.
 STYLENAME is a string representing the desired style from the list of
 styles described in the variable `c-style-alist'.  See that variable
 for details of setting up styles.
@@ -2733,7 +2733,7 @@ comment."
   (c-keep-region-active))
 
 ;; WARNING: Be *exceptionally* careful about modifications to this
-;; function!  Much of cc-mode depends on this Doing The Right Thing.
+;; function!  Much of CC Mode depends on this Doing The Right Thing.
 ;; If you break it you will be sorry.
 (defun c-beginning-of-statement-1 (&optional lim)
   ;; move to the start of the current statement, or the previous
@@ -5188,16 +5188,16 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.375 $"
-  "cc-mode version number.")
+(defconst c-version "$Revision: 4.376 $"
+  "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
-  "Address for cc-mode bug reports.")
+  "Address for CC Mode bug reports.")
 
 (defun c-version ()
-  "Echo the current version of cc-mode in the minibuffer."
+  "Echo the current version of CC Mode in the minibuffer."
   (interactive)
-  (message "Using cc-mode version %s" c-version)
+  (message "Using CC Mode version %s" c-version)
   (c-keep-region-active))
 
 ;; get reporter-submit-bug-report when byte-compiling
@@ -5205,18 +5205,18 @@ command to conveniently insert and align the necessary backslashes."
   (require 'reporter))
 
 (defun c-submit-bug-report ()
-  "Submit via mail a bug report on cc-mode."
+  "Submit via mail a bug report on CC Mode."
   (interactive)
   ;; load in reporter
   (let ((reporter-prompt-for-summary-p t)
 	(reporter-dont-compact-list '(c-offsets-alist)))
     (and
-     (if (y-or-n-p "Do you want to submit a report on cc-mode? ")
+     (if (y-or-n-p "Do you want to submit a report on CC Mode? ")
 	 t (message "") nil)
      (require 'reporter)
      (reporter-submit-bug-report
       c-mode-help-address
-      (concat "cc-mode " c-version " ("
+      (concat "CC Mode " c-version " ("
 	      (cond ((eq major-mode 'c++-mode)  "C++")
 		    ((eq major-mode 'c-mode)    "C")
 		    ((eq major-mode 'objc-mode) "ObjC")
@@ -5361,11 +5361,11 @@ command to conveniently insert and align the necessary backslashes."
 (fset 'electric-c-brace      'c-electric-brace)
 (fset 'electric-c-semi       'c-electric-semi&comma)
 (fset 'electric-c-sharp-sign 'c-electric-pound)
-;; there is no cc-mode equivalent for electric-c-terminator
+;; there is no CC Mode equivalent for electric-c-terminator
 (fset 'mark-c-function       'c-mark-function)
 (fset 'indent-c-exp          'c-indent-exp)
 ;;;###autoload (fset 'set-c-style           'c-set-style)
-;; Lucid Emacs 19.9 + font-lock + cc-mode - c++-mode lossage
+;; Lucid Emacs 19.9 + font-lock + CC Mode - c++-mode lossage
 (fset 'c++-beginning-of-defun 'beginning-of-defun)
 (fset 'c++-end-of-defun 'end-of-defun)
 
