@@ -2544,7 +2544,9 @@ brace."
 	       (= (save-excursion
 		    (c-beginning-of-macro lim)
 		    (setq placeholder (point)))
-		  (c-point 'boi)))
+		  (c-point 'boi))
+	       (not (and (c-major-mode-is 'pike-mode)
+			 (eq (char-after (1+ placeholder)) ?\"))))
 	  (c-add-syntax 'cpp-macro)))
 	;; return the syntax
 	syntax))))
