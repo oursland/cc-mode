@@ -151,10 +151,11 @@ Returns the amount of indentation change (in columns)."
     (when (and c-fix-backslashes line-cont-backslash)
       (if bs-col
 	  (save-excursion
-	    (indent-to bs-col 1)
+	    (indent-to bs-col)
 	    (insert ?\\))
-	;; Realign the line continuation backslash.
-	(c-backslash-region (point) (point) nil t)))
+	(when c-auto-align-backslashes
+	  ;; Realign the line continuation backslash.
+	  (c-backslash-region (point) (point) nil t))))
     shift-amt))
 
 (defun c-newline-and-indent (&optional newline-arg)
@@ -179,8 +180,6 @@ and takes care to set the indentation before calling
       (setq col (current-indentation)))
     (when c-macro-start
       (if (and (eolp) (eq (char-before) ?\\))
-	  ;; Ensure that the new line gets a backslash so that
-	  ;; bs-col-after-end in c-backslash-region works better.
 	  (setq insert-backslash t
 		has-backslash t)
 	(setq has-backslash (eq (char-before (c-point 'eol)) ?\\))))
@@ -189,9 +188,22 @@ and takes care to set the indentation before calling
     (when c-macro-start
       (if insert-backslash
 	  (progn
+	    ;; The backslash stayed on the previous line.  Insert one
+	    ;; before calling c-backslash-region, so that
+	    ;; bs-col-after-end in it works better.  Fixup the
+	    ;; backslashes on both lines if c-auto-align-backslashes
+	    ;; is set, otherwise only the newly inserted one.
 	    (insert ?\\)
 	    (backward-char)
-	    (c-backslash-region start (point) nil t))
+	    (c-backslash-region (if c-auto-align-backslashes start (point))
+				(point) nil t))
+	;; The backslash moved to the new line, if there was any.  Let
+	;; c-backslash-region fix a backslash on the previous line,
+	;; and the one that might be on the new line.
+	;; c-auto-align-backslashes is intentionally ignored here;
+	;; maybe the moved backslash should be left alone if it's set,
+	;; but we fix both lines on the grounds that the old backslash
+	;; has been moved anyway and is now in a different context.
 	(c-backslash-region start (if has-backslash (point) start) nil t)))
     (when c-syntactic-indentation
       ;; Reindent syntactically.  The indentation done above is not
@@ -1717,7 +1729,8 @@ prefix argument is equivalent to -1.
 				((equal current-prefix-arg '(4)) -1)
 				(t arg))))
 	       (c-shift-line-indentation (* steps c-basic-offset))
-	       (when (and (save-excursion
+	       (when (and c-auto-align-backslashes
+			  (save-excursion
 			    (end-of-line)
 			    (eq (char-before) ?\\))
 			  (c-query-and-set-macro-start))
@@ -1889,15 +1902,19 @@ argument QUIET is non-nil."
 				 (assq 'cpp-macro syntax))
 			    ;; Record macro start.
 			    (setq in-macro (point)))
-			(c-indent-line syntax t t)
-			(if (and in-macro
-				 (progn (end-of-line)
-					(not (eq (char-before) ?\\))))
-			    (progn
-			      ;; Fixup macro backslashes.
-			      (forward-line)
-			      (c-backslash-region in-macro (point) nil)
-			      (setq in-macro nil))
+			(if in-macro
+			    (if (looking-at "\\s *\\\\$")
+				(forward-line)
+			      (c-indent-line syntax t t)
+			      (if (progn (end-of-line)
+					 (not (eq (char-before) ?\\)))
+				  (progn
+				    ;; Fixup macro backslashes.
+				    (forward-line)
+				    (c-backslash-region in-macro (point) nil)
+				    (setq in-macro nil))
+				(forward-line)))
+			  (c-indent-line syntax t t)
 			  (forward-line)))
 		      (if in-macro
 			  (c-backslash-region in-macro (c-point 'bopl) nil t)))
