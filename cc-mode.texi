@@ -46,7 +46,7 @@ Copyright @copyright{} 1995, 96, 97, 98, 99, 2000, 01 Free Software Foundation, 
 @dircategory Emacs
 @direntry
 * CC Mode: (cc-mode).   Emacs mode for editing C, C++, Objective-C,
-                          Java, Pike, and IDL code.
+			  Java, Pike, and CORBA IDL code.
 @end direntry
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -92,10 +92,11 @@ CC Mode
 @top @ccmode{}
 
 @ccmode{} is a GNU Emacs mode for editing files containing C, C++,
-Objective-C, Java, CORBA IDL, and Pike code.  It provides syntax-based
-indentation and has several handy commands and some minor modes to make
-the editing easier.  Note that @ccmode{} does @emph{not} provide
-font-locking; there are other Emacs packages for that.
+Objective-C, Java, CORBA IDL (and the variants PSDL and CIDL), and Pike
+code.  It provides syntax-based indentation and has several handy
+commands and some minor modes to make the editing easier.  Note that
+@ccmode{} does @emph{not} provide font-locking; there are other Emacs
+packages for that.
 @end ifinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -183,15 +184,16 @@ Advanced Customizations
 @cindex BOCM
 
 Welcome to @ccmode{}, a GNU Emacs mode for editing files containing C,
-C++, Objective-C, Java, CORBA IDL, and Pike code.  This incarnation of
-the mode is descended from @file{c-mode.el} (also called "Boring Old C
-Mode" or BOCM @t{:-)}, and @file{c++-mode.el} version 2, which Barry has
-been maintaining since 1992.  @ccmode{} represents a significant
-milestone in the mode's life.  It has been fully merged back with Emacs
-19's @file{c-mode.el}. Also a new, more intuitive and flexible mechanism
-for controlling indentation has been developed.  Late in 1997, Martin
-joined the @ccmode{} Maintainers Team, and implemented the Pike support.
-As of 2000 Martin has taken over as the sole maintainer.
+C++, Objective-C, Java, CORBA IDL (and the variants CORBA PSDL and
+CIDL), and Pike code.  This incarnation of the mode is descended from
+@file{c-mode.el} (also called "Boring Old C Mode" or BOCM @t{:-)}, and
+@file{c++-mode.el} version 2, which Barry has been maintaining since
+1992.  @ccmode{} represents a significant milestone in the mode's life.
+It has been fully merged back with Emacs 19's @file{c-mode.el}. Also a
+new, more intuitive and flexible mechanism for controlling indentation
+has been developed.  Late in 1997, Martin joined the @ccmode{}
+Maintainers Team, and implemented the Pike support.  As of 2000 Martin
+has taken over as the sole maintainer.
 
 This manual describes @ccmode{}
 @comment The following line must appear on its own, so that the automated
