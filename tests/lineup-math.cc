@@ -14,6 +14,12 @@ void f() {
 	  += baz();
     foobar == bar
 	+= baz();
+    foobar != bar
+	+= baz();
+    foobar >= bar
+	+= baz();
+    foobar >>= bar
+	    += baz();
     foobar_x = bar
 	     = baz
 	     = squeek;
