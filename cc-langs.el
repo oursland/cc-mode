@@ -879,6 +879,15 @@ operators."
   awk  "#")
 (c-lang-defvar c-line-comment-starter (c-lang-const c-line-comment-starter))
 
+;;;; Added by ACM, 2003/9/18.
+(c-lang-defconst c-block-comment-start-regexp
+  ;; Regexp which matches the start of a block comment (if such exists in the
+  ;; language)
+  t       "\\<\\>"
+  (c c++) "/\\*")
+(c-lang-defvar c-block-comment-start-regexp
+  (c-lang-const c-block-comment-start-regexp))
+
 (c-lang-defconst c-literal-start-regexp
   ;; Regexp to match the start of comments and string literals.
   t (concat (c-lang-const c-comment-start-regexp)
