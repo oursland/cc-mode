@@ -15,23 +15,26 @@ Links: links.h compatlinks.h
 	    <code>delbackspace.el</code>, but <em>before</em> you load 
 	    CC Mode:
 
-<blockquote><pre>
-(setcar (assoc "cc-mode" after-load-alist) "cc-langs")
-</pre></blockquote>
+<pre>
+(setcar
+ (assoc "cc-mode" after-load-alist)
+ "cc-langs")
+</pre>
 
 	Note that <code>delbackspace.el</code> is obsolete as of
-	XEmacs 20.3 so if you've upgraded, and in fact is no longer
-	distributed with XEmacs.
+	XEmacs 20.3, and in fact is no longer distributed with XEmacs,
+	so if you've upgraded you should just remove the delbackspace
+	stuff anyway.
 
 	<p><li>If you use <code>awk-mode</code> in older X/Emacsen, you
 	    might need to make a
 	    change to the source code for <code>awk-mode.el</code>
 	    to look like:
 
-<blockquote><pre>
+<pre>
 (require 'cc-mode)
 (c-initialize-cc-mode)
-</pre></blockquote>
+</pre>
 
 	    in the <code>awk-mode</code> defun.  This is fixed in
 	    current versions of Emacs and XEmacs.
