@@ -51,143 +51,49 @@
 (cc-external-require 'advice)
 
 
-;; Emacs 19.34 requires the POS argument to char-after.  Emacs 20
-;; makes it optional, as it has long been in XEmacs.
-(eval-and-compile
-  (condition-case nil
-      (eval '(char-after))		; `eval' avoids argcount warnings
-    (error
-     (ad-define-subr-args 'char-after '(pos))
-     (defadvice char-after (before c-char-after-advice
-				   (&optional pos)
-				   activate preactivate)
-       "POS is optional and defaults to the position of point."
-       (if (not pos)
-	   (setq pos (point))))
-     (if (and (featurep 'cc-bytecomp)
-	      (cc-bytecomp-is-compiling))
-	 (progn
-	   ;; Since char-after is handled specially by the byte
-	   ;; compiler, we need some black magic to make the compiler
-	   ;; warnings go away.
-	   (defun byte-compile-char-after (form)
-	     (if (= (length form) 1)
-		 (byte-compile-one-arg (append form '((point))))
-	       (byte-compile-one-arg form)))
-	   (byte-defop-compiler char-after))))))
+(if (/= (regexp-opt-depth "\\(\\(\\)\\)") 2)
+    (progn
+      ;; Emacs 21.1 has a buggy regexp-opt-depth which prevents CC
+      ;; Mode building.  Those in Emacs 21.[23] are not entirely
+      ;; accurate.  The following definition comes from Emacs's
+      ;; regexp-opt.el CVS version 1.25 and is believed to be a
+      ;; rigorously correct implementation.
+      (defconst regexp-opt-not-groupie*-re
+	(let* ((harmless-ch "[^\\\\[]")
+	       (esc-pair-not-lp "\\\\[^(]")
+	       (class-harmless-ch "[^][]")
+	       (class-lb-harmless "[^]:]")
+	       (class-lb-colon-maybe-charclass ":\\([a-z]+:]\\)?")
+	       (class-lb (concat "\\[\\(" class-lb-harmless
+				 "\\|" class-lb-colon-maybe-charclass "\\)"))
+	       (class
+		(concat "\\[^?]?"
+			"\\(" class-harmless-ch
+			"\\|" class-lb "\\)*"
+			"\\[?]")) ; special handling for bare [ at end of re
+	       (shy-lp "\\\\(\\?:"))
+	  (concat "\\(" harmless-ch "\\|" esc-pair-not-lp
+		  "\\|" class "\\|" shy-lp "\\)*"))
+	"Matches any part of a regular expression EXCEPT for non-shy \"\\\\(\"s")
 
-(if (fboundp 'char-before)
-    (condition-case nil
-        (eval '(char-before))           ; `eval' avoids argcount warnings
-      (error                            ; too few parameters
-       ;; Will (probably) only trigger for Emacs 19.xx, which doesn't mind
-       ;; being given a superfluous parameter, and "MULE Emacs 19" (a forked
-       ;; version of Emacs) which must handle the extra paramter.  XEmacs will
-       ;; never trigger this.
-
-       ;; MULE based on Emacs 19.34 has a char-before function, but
-       ;; it requires a position.  It also has a second optional
-       ;; argument that we must pass on.
-       (ad-define-subr-args 'char-before '(pos &optional byte-unit))
-       (defadvice char-before (before c-char-before-advice
-                                      (&optional pos byte-unit)
-                                      activate preactivate)
-         "POS is optional and defaults to the position of point."
-         (if (not pos)
-             (setq pos (point)))))))
-  
-;; The `eval' construct is necessary since later versions complain at
-;; compile time on the defsubst for `char-before' since it has become
-;; a built-in primitive.
-(eval
- '(or (fboundp 'char-before)
-      ;; Emacs 19.34 doesn't have a char-before function.
-      (defsubst char-before (&optional pos)
-	(char-after (1- (or pos (point)))))))
-
-;; Emacs 19.34 doesn't have a functionp function.  Here's its Emacs
-;; 20 definition.
-(or (fboundp 'functionp)
-    (defun functionp (object)
-      "Non-nil if OBJECT is a type of object that can be called as a function."
-      (or (subrp object) (byte-code-function-p object)
-	  (eq (car-safe object) 'lambda)
-	  (and (symbolp object) (fboundp object)))))
-
-;; Emacs 19.34 doesn't have a when macro.  Here's its Emacs 20
-;; definition.
-(or (fboundp 'when)
-    (defmacro when (cond &rest body)
-      "(when COND BODY...): if COND yields non-nil, "
-      "do BODY, else return nil."
-      (list 'if cond (cons 'progn body))))
-
-;; Emacs 19.34 doesn't have an unless macro.  Here's its Emacs 20
-;; definition.
-(or (fboundp 'unless)
-    (defmacro unless (cond &rest body)
-      "(unless COND BODY...): if COND yields nil, "
-      "do BODY, else return nil."
-      (cons 'if (cons cond (cons nil body)))))
-
-(if (fboundp 'regexp-opt)
-    (defalias 'c-regexp-opt 'regexp-opt)
-  ;; (X)Emacs 19 doesn't have the regexp-opt package.
-  (defun c-regexp-opt (strings &optional paren)
-    ;; The regexp engine (in at least (X)Emacs 19) matches the
-    ;; alternatives in order and fails to be greedy if a longer
-    ;; alternative comes after a shorter one, so we sort the the
-    ;; list with the longest alternatives first to get greediness
-    ;; properly.
-    (setq strings (sort (append strings nil)
-			(lambda (a b) (> (length a) (length b)))))
-    (if paren
-	(concat "\\(" (mapconcat 'regexp-quote strings "\\|") "\\)")
-      (mapconcat 'regexp-quote strings "\\|"))))
-
-(if (and (fboundp 'regexp-opt-depth)
-         (eq (regexp-opt-depth "\\(\\(\\)\\)") 2))
-    (defalias 'c-regexp-opt-depth 'regexp-opt-depth)
-  ;; (X)Emacs 19 doesn't have the regexp-opt package.
-  ;; Emacs 21.1 has a buggy regexp-opt-depth which prevents CC Mode building.
-  ;; Those in Emacs 21.[23] are not entirely accurate.
-  ;; The following definition comes from Emacs's regexp-opt.el CVS version 1.25
-  ;; and is believed to be a rigorously correct implementation.
-  (defconst regexp-opt-not-groupie*-re
-    (let* ((harmless-ch "[^\\\\[]")
-           (esc-pair-not-lp "\\\\[^(]")
-           (class-harmless-ch "[^][]")
-           (class-lb-harmless "[^]:]")
-           (class-lb-colon-maybe-charclass ":\\([a-z]+:]\\)?")
-           (class-lb (concat "\\[\\(" class-lb-harmless
-                             "\\|" class-lb-colon-maybe-charclass "\\)"))
-           (class
-            (concat "\\[^?]?"
-                    "\\(" class-harmless-ch
-                    "\\|" class-lb "\\)*"
-                    "\\[?]"))       ; special handling for bare [ at end of re
-           (shy-lp "\\\\(\\?:"))
-      (concat "\\(" harmless-ch "\\|" esc-pair-not-lp
-              "\\|" class "\\|" shy-lp "\\)*"))
-    "Matches any part of a regular expression EXCEPT for non-shy \"\\\\(\"s")
-
-  (defun c-regexp-opt-depth (regexp)
-    "Return the depth of REGEXP.
+      (defun regexp-opt-depth (regexp)
+	"Return the depth of REGEXP.
 This means the number of regexp grouping constructs (parenthesised expressions)
 in REGEXP."
-    (save-match-data
-      ;; Hack to signal an error if REGEXP does not have balanced parentheses.
-      (string-match regexp "")
-      ;; Count the number of open parentheses in REGEXP.
-      (let ((count 0) start)
-        (while
-            (progn
-              (string-match regexp-opt-not-groupie*-re regexp start)
-              (setq start ( + (match-end 0) 2)) ; +2 for "\\(" after match-end.
-              (<= start (length regexp)))
-          (setq count (1+ count)))
-        count)))
-  )
+	(save-match-data
+	  ;; Hack to signal an error if REGEXP does not have balanced
+	  ;; parentheses.
+	  (string-match regexp "")
+	  ;; Count the number of open parentheses in REGEXP.
+	  (let ((count 0) start)
+	    (while
+		(progn
+		  (string-match regexp-opt-not-groupie*-re regexp start)
+		  (setq start ( + (match-end 0) 2)) ; +2 for "\\(" after match-end.
+		  (<= start (length regexp)))
+	      (setq count (1+ count)))
+	    count)))
+      ))
 
 ;; Some XEmacs versions have a bug in which font-lock-compile-keywords
 ;; overwrites the variable font-lock-keywords with its result.  This causes

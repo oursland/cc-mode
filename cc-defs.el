@@ -43,9 +43,6 @@
 	   load-path)))
     (load "cc-bytecomp" nil t)))
 
-;; `require' in XEmacs doesn't have the third NOERROR argument.
-(condition-case nil (require 'regexp-opt) (file-error nil))
-
 ;; Silence the compiler.
 (cc-bytecomp-defvar c-enable-xemacs-performance-kludge-p) ; In cc-vars.el
 (cc-bytecomp-defvar c-emacs-features)	; In cc-vars.el
@@ -60,27 +57,13 @@
 (cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
 (cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
 (cc-bytecomp-defun string-to-syntax)	; Emacs 21
-(cc-bytecomp-defun regexp-opt-depth)	; (X)Emacs 20+
 
 
 ;; cc-fix.el contains compatibility macros that should be used if
 ;; needed.
 (eval-and-compile
-  (if (or (not (fboundp 'functionp))
-	  (not (condition-case nil
-		   (progn (eval '(char-before)) t)
-		 (error nil)))
-	  (not (condition-case nil
-		   (progn (eval '(char-after)) t)
-		 (error nil)))
-	  (not (fboundp 'when))
-	  (not (fboundp 'unless))
-	  (not (fboundp 'regexp-opt))
-	  (not (cc-bytecomp-fboundp 'regexp-opt-depth))
-	  (/= (regexp-opt-depth "\\(\\(\\)\\)") 2))
-      (cc-load "cc-fix")
-    (defalias 'c-regexp-opt 'regexp-opt)
-    (defalias 'c-regexp-opt-depth 'regexp-opt-depth)))
+  (if (/= (regexp-opt-depth "\\(\\(\\)\\)") 2)
+      (cc-load "cc-fix")))
 
 (eval-after-load "font-lock"
   '(if (and (not (featurep 'cc-fix)) ; only load the file once.
@@ -101,6 +84,7 @@
       (cc-load "cc-fix")))
 
 (cc-external-require 'cl)
+(cc-external-require 'regexp-opt)
 
 
 ;;; Variables also used at compile time.
@@ -1012,7 +996,7 @@ optional MODE specifies the language to get it in.  The default is the
 current language (taken from `c-buffer-is-cc-mode')."
   (setq list (delete-duplicates list :test 'string-equal))
   (if list
-      (let ((re (c-regexp-opt list)))
+      (let ((re (regexp-opt list)))
 	;; Add our own grouping parenthesis around re instead of
 	;; passing adorn to `regexp-opt', since in XEmacs it makes the
 	;; top level grouping "shy".
@@ -1027,6 +1011,10 @@ current language (taken from `c-buffer-is-cc-mode')."
 	"\\(\\<\\>\\)"
       "\\<\\>")))
 (put 'c-make-keywords-re 'lisp-indent-function 1)
+
+;; Leftovers from (X)Emacs 19 compatibility.
+(defalias 'c-regexp-opt 'regexp-opt)
+(defalias 'c-regexp-opt-depth 'regexp-opt-depth)
 
 
 ;;; Some helper constants.
