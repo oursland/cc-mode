@@ -1,6 +1,6 @@
 README for cc-mode.el 4.85
 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-$Date: 1994-09-12 17:08:13 $
+$Date: 1994-10-12 23:40:21 $
 
 Note, you can browse this file either as a flat, multiple page file,
 or as an Emacs outline.  As a flat file, just use "C-x ]" to move
@@ -476,7 +476,7 @@ in your Emacs documentation.
 
 ;; Customizations for both c-mode and c++-mode
 (defun my-c-mode-common-hook ()
-  ;; set up for my perferred indentation style, but  only do it once
+  ;; set up for my preferred indentation style, but  only do it once
   (let ((my-style "PERSONAL"))
     (or (assoc my-style c-style-alist)
 	(setq c-style-alist (cons my-c-style c-style-alist)))
