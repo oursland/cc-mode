@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.159 $
-;; Last Modified:   $Date: 1995-03-04 00:01:52 $
+;; Version:         $Revision: 4.160 $
+;; Last Modified:   $Date: 1995-03-04 00:23:54 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-04 00:01:52 $|$Revision: 4.159 $|
+;; |$Date: 1995-03-04 00:23:54 $|$Revision: 4.160 $|
 
 ;;; Code:
 
@@ -1933,7 +1933,7 @@ argument.  The styles are chosen from the `c-style-alist' variable."
      vars))
   (c-keep-region-active))
 
-(defun c-add-style (style descrip)
+(defun c-add-style (style descrip &optional set-p)
   "Adds a style to `c-style-alist', or updates an existing one.
 STYLE is a string identifying the style to add or update.  DESCRIP is
 an association list describing the style and must be of the form:
@@ -1942,16 +1942,17 @@ an association list describing the style and must be of the form:
 
 See the variable `c-style-alist' for the semantics of VARIABLE and
 VALUE.  This function also sets the current style to STYLE using
-`c-set-style'."
+`c-set-style' if the optional SET-P flag is non-nil."
   (interactive
    (let ((stylename (completing-read "Style to add: " c-style-alist))
 	 (description (eval-minibuffer "Style description: ")))
-     (list stylename description)))
+     (list stylename description
+	   (y-or-n-p "Set the style too? "))))
   (let ((s (assoc style c-style-alist)))
     (if s
 	(setcdr s (copy-alist descrip))	; replace
       (setq c-style-alist (cons (cons style descrip) c-style-alist))))
-  (c-set-style style))
+  (and set-p (c-set-style style)))
 
 (defun c-fill-paragraph (&optional arg)
   "Like \\[fill-paragraph] but handles C and C++ style comments.
@@ -4502,7 +4503,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.159 $"
+(defconst c-version "$Revision: 4.160 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
