@@ -1280,7 +1280,7 @@ E. Jones' Filladapt package@footnote{It's available from
 lack a feature that makes it work suboptimally when
 @code{c-comment-prefix-regexp} matches the empty string (which it does
 by default).  A patch for that is available from
-@uref{http://www.python.org/emacs/cc-mode/,, the @ccmode{} site}.},
+@uref{http://www.python.org/emacs/cc-mode/,, the CC Mode site}.},
 which handles things like bulleted lists nicely.  There's a convenience
 function @code{c-setup-filladapt} that tunes the relevant variables in
 Filladapt for use in @ccmode{}.  Call it from a mode hook, e.g. with
