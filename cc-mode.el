@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.207 $
-;; Last Modified:   $Date: 1992-11-13 15:36:39 $
+;; Version:         $Revision: 2.208 $
+;; Last Modified:   $Date: 1992-11-13 18:21:51 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-11-13 15:36:39 $|$Revision: 2.207 $|
+;; |$Date: 1992-11-13 18:21:51 $|$Revision: 2.208 $|
 
 ;;; Code:
 
@@ -249,7 +249,22 @@ with previous initializations rather than with the colon on the first line.")
   "*Indicates how far to indent an line following an empty argument
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 0
-  "*Indentation offset for line which contains only C or C++ style comments.")
+  "*Indentation offset for line which contains only C or C++ style comments.
+This variable can take either a single integer or a list of integers.
+If a single integer this is the extra indentation offset to apply to
+all comment-only lines, except those which start in column zero. If a
+list is used, the first integer is for all non-zero-column
+comment-only lines and the second integer is for all zero-column
+lines. You can also use a list containing only 1 integer, in which
+case, this value is used for all comment-only lines.  For example:
+
+value     meaning
+=====     =======
+  0       no comment-only lines indent
+  4       non-col0 lines indent 4 spaces, col0 lines don't indent
+'(4)      all comment-only lines indent 4 spaces
+'(4 1)    non-col0 lines indent 4 spaces, col0 lines indent 1 space")
+
 (defvar c++-C-block-comments-indent-p nil
   "*4 styles of C block comments are supported. If this variable is nil,
 then styles 1-3 are supported. If this variable is non-nil, style 4 is
@@ -371,7 +386,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.207 $
+  "Major mode for editing C++ code.  $Revision: 2.208 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -449,7 +464,8 @@ from their c-mode cousins.
     c++-empty-arglist-indent spaces, otherwise, they will indent to
     just under previous line's argument indentation.
  c++-comment-only-line-offset
-    Extra indentation for a line containing only a C or C++ style comment.
+    Extra indentation for a line containing only a C or C++ style
+    comment. Can be an integer or list.
  c++-cleanup-list
     A list of construct \"clean ups\" which c++-mode will perform when
     auto-newline mode is on.  Current legal values are:
@@ -578,7 +594,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.207 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.208 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1161,8 +1177,9 @@ of the expression are preserved."
 		  (setq this-indent (max 0 (+ this-indent c-label-offset)))))
 	    ;; looking at a comment only line?
 	    (if (looking-at "//\\|/\\*")
-		(setq this-indent (+ this-indent
-				     c++-comment-only-line-offset)))
+		;; different indentation base on whether this is a
+		;; col0 comment only line or not
+		(setq this-indent (+ this-indent (c++-comment-offset (bolp)))))
 	    (if (looking-at "friend[ \t]")
 		(setq this-indent (+ this-indent c++-friend-offset)))
 	    (if (= (following-char) ?})
@@ -1431,16 +1448,16 @@ point of the beginning of the C++ definition."
 	   (setq indent 0))
 	  ((save-excursion
 	     (and (not (back-to-indentation))
-		  (looking-at "//\\|/\\*")
-		  (/= (setq comcol (current-column)) 0)))
+		  (looking-at "//\\|/\\*")))
 	   ;; we've found a comment-only line. we now must try to
 	   ;; determine if the line is a continuation from a comment
 	   ;; on the previous line.  we check to see if the comment
 	   ;; starts in comment-column and if so, we don't change its
 	   ;; indentation.
+	   (setq comcol (current-column))
 	   (if (= comcol comment-column)
 	       (setq indent comment-column)
-	     (setq indent (+ indent c++-comment-only-line-offset))))
+	     (setq indent (+ indent (c++-comment-offset (zerop comcol))))))
 	  (t
 	   (skip-chars-forward " \t")
 	   (if (listp indent) (setq indent (car indent)))
@@ -1546,13 +1563,13 @@ BOD is the beginning of the C++ definition."
 	    ;; comment-column?  if so we don't change the indentation,
 	    ;; otherwise, we indent relative to surrounding code
 	    ;; (later on).
-	    ((progn (goto-char indent-point)
-		    (beginning-of-line)
-		    (skip-chars-forward " \t")
-		    (and (looking-at comment-start-skip)
-			 (or (zerop (current-column))
-			     (= (current-column) comment-column))))
-	     (current-column))
+;;	    ((progn (goto-char indent-point)
+;;		    (beginning-of-line)
+;;		    (skip-chars-forward " \t")
+;;		    (and (looking-at comment-start-skip)
+;;			 (or (zerop (current-column))
+;;			     (= (current-column) comment-column))))
+;;	     (current-column))
 	    ((setq inclass-depth (c++-at-top-level-p t bod))
 	     ;; Line is at top level.  May be comment-only line, data
 	     ;; or function definition, or may be function argument
@@ -1581,9 +1598,8 @@ BOD is the beginning of the C++ definition."
 		(goto-char indent-point)
 		(skip-chars-forward " \t")
 		(if (looking-at "/[/*]")
-		    ;; comment only line, but must not be in the first
-		    ;; column since cond case above would have caught it
-		    0
+		    ;; comment only line
+		    (c++-comment-offset (bolp))
 		  (if (= (following-char) ?{)
 		      0
 		    (c++-backward-over-syntactic-ws parse-start)
@@ -1878,6 +1894,19 @@ the current line is to be regarded as part of a block comment."
 			      ((= stars 2) 0)
 			      (t (- (match-end 0) (match-beginning 0)))))))
       (current-column))))
+
+(defun c++-comment-offset (col0-line-p)
+  "Calculates and returns the comment-only line offset.
+Offset is based on the value of c++-comment-only-line-offset and the
+argument COL0-LINE-P."
+  (if col0-line-p
+      (if (listp c++-comment-only-line-offset)
+	  (let ((offset (car (cdr c++-comment-only-line-offset))))
+	    (setq offset (or offset (car c++-comment-only-line-offset))))
+	0)
+    (if (listp c++-comment-only-line-offset)
+	(car c++-comment-only-line-offset)
+      c++-comment-only-line-offset)))
 
 
 ;; ======================================================================
@@ -2248,7 +2277,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.207 $"
+(defconst c++-version "$Revision: 2.208 $"
   "c++-mode version number.")
 
 (defun c++-version ()
