@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.315 $
-;; Last Modified:   $Date: 1996-08-20 21:08:13 $
+;; Version:         $Revision: 4.316 $
+;; Last Modified:   $Date: 1996-09-19 18:13:13 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -533,6 +533,20 @@ useful for Emacs 19.")
                          (inline-open          . 0)
                          ))
      )
+    ("linux"
+     (c-basic-offset  . 8)
+     (c-comment-only-line-offset . 0)
+     (c-hanging-braces-alist . ((brace-list-open)
+				(substatement-open after)
+				(block-close . c-snug-do-while)))
+     (c-cleanup-list . (brace-else-brace))
+     (c-offsets-alist . ((statement-block-intro . +)
+			 (knr-argdecl-intro     . 0)
+			 (substatement-open     . 0)
+			 (label                 . 0)
+			 (statement-cont        . +)
+			 ))
+     )
     ("java"
      (c-basic-offset . 2)
      (c-comment-only-line-offset . (0 . 0))
@@ -851,10 +865,11 @@ All other Emacsen use the `old-re' suite.")
 	(define-key map [menu-bar c forward-stmt]
 	  '("Forward Statement" . c-end-of-statement))
 
-	;; RMS: mouse-3 should not select this menu.  mouse-3's global
-	;; definition is useful in C mode and we should not interfere
-	;; with that.  The menu is mainly for beginners, and for them,
-	;; the menubar requires less memory than a special click.
+	;; RMS says: mouse-3 should not select this menu.  mouse-3's
+	;; global definition is useful in C mode and we should not
+	;; interfere with that.  The menu is mainly for beginners, and
+	;; for them, the menubar requires less memory than a special
+	;; click.
 	t)
     (error nil)))
 
@@ -4979,7 +4994,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.315 $"
+(defconst c-version "$Revision: 4.316 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
