@@ -1394,11 +1394,13 @@ The commands that does the actual work follows.
 @findex c-fill-paragraph
 @findex fill-paragraph (c-)
 @cindex Javadoc markup
+@cindex Pike autodoc markup
 @item @kbd{M-q} (@code{c-fill-paragraph})
 This is the replacement for @code{fill-paragraph} in @ccmode{}
 buffers. It's used to fill multiline string literals and both block and
 line style comments.  In Java buffers, the Javadoc markup words are
-recognized as paragraph starters.
+recognized as paragraph starters.  The line oriented Pike autodoc markup
+words are recognized in the same way in Pike mode.
 
 The function keeps the comment starters and enders of block comments as
 they were before the filling.  This means that a comment ender on the
@@ -2124,15 +2126,14 @@ The language hooks get run as the last thing when you enter that
 language mode.  The @code{c-mode-common-hook} is run by all supported
 modes @emph{before} the language specific hook, and thus can contain
 customizations that are common across all languages.  Most of the
-examples in this section will assume you are using the common
-hook.@footnote{@code{java-mode} and the hook variables interact in a
-slightly different way than the other modes.  @code{java-mode} normally
-sets the style of the buffer to @samp{java} @emph{before} running the
-@code{c-mode-common-hook} or @code{java-mode-hook}.  You need to be
-aware of this so that style settings in @code{c-mode-common-hook} don't
-clobber your Java style.  This is arguably bogus, but it's kept for
-historical reasons.  @xref{Built-in Styles}, the documentation of
-@code{c-default-style}, for details.}
+examples in this section will assume you are using the common hook.
+
+Note that all the language-specific mode setup that CC Mode does is done
+prior to both @code{c-mode-common-hook} and the language specific hook.
+That includes installing the indentation style, which can be mode
+specific (and also is by default for Java mode).  Thus, any style
+settings done in @code{c-mode-common-hook} will override whatever
+language-specific style is chosen by @code{c-default-style}.
 
 Here's a simplified example of what you can add to your @file{.emacs}
 file to do things whenever any @ccmode{} language is edited.  See the
@@ -2295,8 +2296,9 @@ foreign function interface.  For more information, see
 @cindex Java style
 @findex java-mode
 @item
-@code{java} --- The style for editing Java code.  Note that this style is
-automatically installed when you enter @code{java-mode}.
+@code{java} --- The style for editing Java code.  Note that the default
+value for @code{c-default-style} installs this style when you enter
+@code{java-mode}.
 
 @cindex User style
 @item
@@ -2334,9 +2336,7 @@ mode.  Here are the rules:
 @item
 When @code{c-default-style} is a string, it must be an existing style
 name as found in @code{c-style-alist}.  This style is then used for all
-modes @emph{except} @code{java-mode}, where the style @samp{java} is
-used by default@footnote{This is for backwards compatibility reasons.
-The hard-coding of @code{java-mode} style is admittedly bogus!}.
+modes.
 
 @item
 When @code{c-default-style} is an association list, the current major
@@ -4379,23 +4379,6 @@ simply modify @code{c-offsets-alist} directly:
 (setq c-offsets-alist '((substatement-open . 0)))
 
 @end example
-
-@sp 1
-@strong{Q.} @emph{My style settings works in all the @ccmode{} language
-modes except for Java, where I still get e.g. 4 column indentation.}
-
-@strong{A.} Java mode switches to the @samp{java} style by default for
-historical reasons.  You can override it by putting an association list
-on @code{c-default-style}:
-@example
-
-(setq c-default-style '((other . "my-style")))
-
-@end example
-@noindent
-The @samp{other} symbol says that @ccmode{} should use "my-style" in all
-modes not explicitly listed.  Since there's nothing else on the list
-this causes "my-style" to be used in every mode.
 
 @sp 1
 @strong{Q.} @emph{How do I make strings, comments, keywords, and other
