@@ -245,6 +245,12 @@
 	`(font-lock-set-face ,from ,to ,face)
       `(put-text-property ,from ,to 'face ,face)))
 
+  (defmacro c-remove-font-lock-face (from to)
+    ;; This is the inverse of `c-put-font-lock-face'.
+    (if (fboundp 'font-lock-remove-face)
+	`(font-lock-remove-face ,from ,to)
+      `(remove-text-properties ,from ,to '(face nil))))
+
   (defmacro c-fontify-types-and-refs (varlist &rest body)
     ;; Like `let', but additionally activates `c-record-type-identifiers'
     ;; and `c-record-ref-identifiers', and fontifies the recorded ranges
@@ -441,9 +447,9 @@ stuff.  Used on level 1 and higher."
 
 		     ;; "Variable".
 		     (c-put-font-lock-face
-			  (match-beginning ,(+ 1 ncle-depth sws-depth))
-			  (match-end ,(+ 1 ncle-depth sws-depth))
-			  'font-lock-variable-name-face)))))
+		      (match-beginning ,(+ 1 ncle-depth sws-depth))
+		      (match-end ,(+ 1 ncle-depth sws-depth))
+		      'font-lock-variable-name-face)))))
 
 	      ;; Fontify cpp function names in preprocessor
 	      ;; expressions in #if and #elif.
@@ -1041,8 +1047,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	       (when (save-match-data
 		       (and (c-get-char-property (point) 'syntax-table)
 			    (not (c-forward-<>-arglist nil t))))
-		 (c-put-font-lock-face
-		  (match-beginning 2) (match-end 2) nil)))
+		 (c-remove-font-lock-face (match-beginning 2) (match-end 2))))
 	     (goto-char start-pos))
 
 	   ;; Check for a type, but be prepared to skip over leading
@@ -2638,10 +2643,10 @@ need for `pike-font-lock-extra-types'.")
 				 (skip-chars-forward " \t")
 				 (looking-at c-current-comment-prefix))))
 	      (goto-char (match-end 0))
-	      (c-put-font-lock-face pos (1- end) nil)
+	      (c-remove-font-lock-face pos (1- end))
 	      (c-put-font-lock-face (1- end) end markup-faces)
 	      (setq pos (point)))
-	    (c-put-font-lock-face pos (point) nil)
+	    (c-remove-font-lock-face pos (point))
 
 	    ;; Must handle string literals explicitly inside the declaration.
 	    (goto-char start)
