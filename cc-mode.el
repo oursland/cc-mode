@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-04-30 18:06:32 $
-;; Version:         $Revision: 2.19 $
+;; Last Modified:   $Date: 1992-04-30 20:26:09 $
+;; Version:         $Revision: 2.20 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-30 18:06:32 $|$Revision: 2.19 $|
+;; |$Date: 1992-04-30 20:26:09 $|$Revision: 2.20 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -140,7 +140,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.19 $
+  "Major mode for editing C++ code.  $Revision: 2.20 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -833,7 +833,13 @@ Returns nil if line starts inside a string, t if in a comment."
                             (beginning-of-line 1)
                             (c++-backward-to-noncomment containing-sexp)
                             (memq (preceding-char) '(nil ?\, ?\; ?} ?: ?\{)))
-                          c-continued-statement-offset 0)
+                          c-continued-statement-offset
+			;; the following statements *do* indent even
+			;; for single statements (are there others?)
+			(if (looking-at
+			     "\\(do\\|else\\|for\\|if\\|while\\)[^a-zA-Z0-9_]")
+			    c-continued-statement-offset
+			  0))
                       ;; j.peck  [8/13/91]
 		      ;; j.peck hack replaced this line:
 		      ;; \(+ c-continued-statement-offset (current-column)
@@ -1323,7 +1329,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.19 $"
+(defconst c++-version "$Revision: 2.20 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
