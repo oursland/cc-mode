@@ -47,7 +47,6 @@
 (cc-bytecomp-defun get-char-table)	; XEmacs 20+
 (cc-bytecomp-defun char-table-range)	; Emacs 19+
 (cc-bytecomp-defun char-table-p)	; Emacs 19+, XEmacs 20+
-(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
 
 ;; Pull in custom if it exists and is recent enough (the one in Emacs
 ;; 19.34 isn't).
@@ -1418,7 +1417,8 @@ just t if it's not known.")
 	(setq list (cons 'infodock list)))
 
     (let ((buf (generate-new-buffer "test"))
-	  (parse-sexp-lookup-properties t))
+	  (parse-sexp-lookup-properties t)
+	  (lookup-syntax-properties t))
       (save-excursion
 	(set-buffer buf)
 	(modify-syntax-entry ?< ".")

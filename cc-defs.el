@@ -64,6 +64,8 @@
 (cc-bytecomp-defvar zmacs-regions)	; XEmacs
 (cc-bytecomp-defvar mark-active)	; Emacs
 (cc-bytecomp-defun scan-lists)		; 5 args in XEmacs, 3 in Emacs
+(cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
+(cc-bytecomp-defvar lookup-syntax-properties) ; XEmacs 21
 (require 'derived)			; Only necessary in Emacs
 
 
@@ -354,6 +356,39 @@ continuations."
 	   (memq c-buffer-is-cc-mode mode)
 	 (eq c-buffer-is-cc-mode mode)))))
 
+(defmacro c-parse-sexp-lookup-properties ()
+  ;; Return the value of the variable that says whether the
+  ;; syntax-table property affects the sexp routines.  Always return
+  ;; nil in (X)Emacsen without support for that.
+  (cond ((boundp 'parse-sexp-lookup-properties)
+	 `parse-sexp-lookup-properties)
+	((boundp 'lookup-syntax-properties)
+	 `lookup-syntax-properties)
+	(t nil)))
+
+(eval-when-compile
+  ;; Used at compile time to get the right definition in
+  ;; `c-put-font-lock-face'.  Not required anywhere except in
+  ;; cc-fonts.el at runtime.
+  (require 'font-lock))
+
+(eval-and-compile
+  ;; Expand this during compilation; it's too expensive to make it a
+  ;; runtime check.  It's also defined at runtime since it's used in
+  ;; `c-make-simple-font-lock-decl-function'.
+
+  (defmacro c-put-font-lock-face (from to face)
+    ;; Put a face on a region (overriding any existing face) in the way
+    ;; font-lock would do it.  In XEmacs that means putting an
+    ;; additional font-lock property, or else the font-lock package
+    ;; won't recognize it as fontified and might override it
+    ;; incorrectly.
+    (if (fboundp 'font-lock-set-face)
+	;; Note: This function has no docstring in XEmacs so it might be
+	;; considered internal.
+	`(font-lock-set-face ,from ,to ,face)
+      `(put-text-property ,from ,to 'face ,face))))
+
 ;; Make edebug understand the macros.
 (eval-after-load "edebug"
   '(progn
@@ -545,29 +580,6 @@ continuations."
   ;; about anywhere else) without providing a predicate that tests
   ;; face names.
   (memq facename (face-list)))
-
-(eval-when-compile
-  ;; Used at compile time to get the right definition in
-  ;; `c-put-font-lock-face'.  Not required anywhere except in
-  ;; cc-fonts.el at runtime.
-  (require 'font-lock))
-
-(eval-and-compile
-  ;; Expand this during compilation; it's too expensive to make it a
-  ;; runtime check.  It's also defined at runtime since it's used in
-  ;; `c-make-simple-font-lock-decl-function'.
-
-  (defmacro c-put-font-lock-face (from to face)
-    ;; Put a face on a region (overriding any existing face) in the way
-    ;; font-lock would do it.  In XEmacs that means putting an
-    ;; additional font-lock property, or else the font-lock package
-    ;; won't recognize it as fontified and might override it
-    ;; incorrectly.
-    (if (fboundp 'font-lock-set-face)
-	;; Note: This function has no docstring in XEmacs so it might be
-	;; considered internal.
-	`(font-lock-set-face ,from ,to ,face)
-      `(put-text-property ,from ,to 'face ,face))))
 
 (defsubst c-put-type-face (from to)
   ;; Put the face `font-lock-type-face' on the given region.  Does not

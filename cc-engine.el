@@ -1469,7 +1469,8 @@ you need both the type of a literal and its limits."
     (let* ((here (point))
 	   (c-macro-start (c-query-macro-start))
 	   (in-macro-start (or c-macro-start (point)))
-	   parse-sexp-lookup-properties
+	   parse-sexp-lookup-properties	; Emacs
+	   lookup-syntax-properties	; XEmacs
 	   old-state last-pos pairs pos)
       (c-invalidate-state-cache (point))
 
@@ -1611,18 +1612,13 @@ you need both the type of a literal and its limits."
 
 	(if last-pos
 	    ;; Prepare to loop, but record the open paren only if it's
-	    ;; outside a macro or within the same macro as point.  In
-	    ;; XEmacs it doesn't work to disable the syntax-table
-	    ;; property with `parse-sexp-lookup-properties' so we must
-	    ;; also look at the type of open paren since we don't want
-	    ;; to record '<' chars with open paren syntax.
+	    ;; outside a macro or within the same macro as point.
 	    (progn
 	      (setq pos last-pos)
-	      (if (and (memq (char-before pos) '(?\( ?\[ ?{))
-		       (or (>= last-pos in-macro-start)
-			   (save-excursion
-			     (goto-char last-pos)
-			     (not (c-beginning-of-macro)))))
+	      (if (or (>= last-pos in-macro-start)
+		      (save-excursion
+			(goto-char last-pos)
+			(not (c-beginning-of-macro))))
 		  (setq c-state-cache (cons (1- pos) c-state-cache))))
 
 	  (if (setq last-pos (c-up-list-forward pos))
@@ -2342,7 +2338,7 @@ in Pike) then the point for the preceding one is returned."
 		  (if (and (get-text-property (1- (point)) 'syntax-table)
 			   (progn
 			     (c-clear-char-syntax (1- (point)))
-			     parse-sexp-lookup-properties))
+			     (c-parse-sexp-lookup-properties)))
 
 		      ;; We've skipped past a list that ended with '>'.
 		      ;; It must be unbalanced since template arglists
@@ -2390,7 +2386,7 @@ in Pike) then the point for the preceding one is returned."
 			(progn
 			  (when (text-property-not-all
 				 (1- pos) tmp 'syntax-table nil)
-			    (if parse-sexp-lookup-properties
+			    (if (c-parse-sexp-lookup-properties)
 				;; Got an invalid open paren syntax on this
 				;; '<'.  We'll probably get an unbalanced '>'
 				;; further ahead if we just remove the syntax

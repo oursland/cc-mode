@@ -359,12 +359,15 @@ same format as `c-default-style'."
     (setq comment-line-break-function
 	  'c-indent-new-comment-line))
 
-  ;; Emacs 20 and later, and XEmacs 21 (although currently
-  ;; undocumented).  This variable is always set since it's tested at
-  ;; runtime.
-  (make-local-variable 'parse-sexp-lookup-properties)
-  (setq parse-sexp-lookup-properties
-	(not (not (memq 'syntax-properties c-emacs-features))))
+  ;; Emacs 20 and later.
+  (when (boundp 'parse-sexp-lookup-properties)
+    (make-local-variable 'parse-sexp-lookup-properties)
+    (setq parse-sexp-lookup-properties t))
+
+  ;; Same as above for XEmacs 21 (although currently undocumented).
+  (when (boundp 'lookup-syntax-properties)
+    (make-local-variable 'lookup-syntax-properties)
+    (setq lookup-syntax-properties t))
 
   (c-init-language-vars)
   (c-clear-found-types)
