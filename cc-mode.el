@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.235 $
-;; Last Modified:   $Date: 1995-07-25 22:15:19 $
+;; Version:         $Revision: 4.236 $
+;; Last Modified:   $Date: 1995-07-25 22:27:37 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-25 22:15:19 $|$Revision: 4.235 $|
+;; |$Date: 1995-07-25 22:27:37 $|$Revision: 4.236 $|
 
 ;;; Code:
 
@@ -4392,16 +4392,25 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; of the first method call argument, so lineup the current line
   ;; with it.
   (save-excursion
-    (let* ((open-bracket-pos (cdr langelem))
-           (open-bracket-col (progn (goto-char open-bracket-pos)
-                                    (current-column)))
-           (target-col (progn (forward-char)
-                              (forward-sexp)
-			      (skip-chars-forward " \t")
-			      (if (eolp)
-                                  (+ open-bracket-col (* 2 c-basic-offset))
-                                (current-column)))))
-      (- target-col open-bracket-col))))
+    (let* ((extra (save-excursion
+		    (back-to-indentation)
+		    (c-backward-syntactic-ws (cdr langelem))
+		    (if (= (preceding-char) ?:)
+			(- c-basic-offset)
+		      0)))
+	   (open-bracket-pos (cdr langelem))
+           (open-bracket-col (progn
+			       (goto-char open-bracket-pos)
+			       (current-column)))
+           (target-col (progn
+			 (forward-char)
+			 (forward-sexp)
+			 (skip-chars-forward " \t")
+			 (if (eolp)
+			     (+ open-bracket-col c-basic-offset)
+			   (current-column))))
+	   )
+      (- target-col open-bracket-col extra))))
 
 (defun c-lineup-ObjC-method-args (langelem)
   ;; Line up the colons that separate args. This is done trying to
@@ -4518,7 +4527,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.235 $"
+(defconst c-version "$Revision: 4.236 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
