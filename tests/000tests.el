@@ -279,6 +279,7 @@
     "methods-1.java"
     "namespace-1.cc"
     "namespace-2.cc"
+    "namespace-3.cc"
     "nested-1.cc"
     "nested-2.c"
     "nometh.m"
