@@ -2284,15 +2284,27 @@ Customization interface to easily change indentation offsets without
 having to bother about styles.  Initially @code{c-offsets-alist} is
 empty, so that all syntactic symbols are set by the style system.
 
-The offset associated with any particular syntactic symbol can be an
-integer, a function or lambda expression, a variable name, a vector, a
-list, or one of the following special symbols: @code{+}, @code{-},
-@code{++}, @code{--}, @code{*}, or @code{/}.  The meaning of these
-values are described in detail below.
+The offset specification associated with any particular syntactic symbol
+can be an integer, a variable name, a vector, a function or lambda
+expression, a list, or one of the following special symbols: @code{+},
+@code{-}, @code{++}, @code{--}, @code{*}, or @code{/}.  The meaning of
+these values are described in detail below.
 @end defopt
 
-The special symbols describe a relative offset in multiples of the value
-of @code{c-basic-offset}:
+@cindex offset specification
+An @dfn{offset specification} in @code{c-offsets-alist} can be any of
+the following:
+
+@table @asis
+@item An integer
+The integer specifies a relative offset.  All relative offsets will be
+added together and used to calculate the indentation relative an anchor
+position earlier in the buffer.  @xref{Indentation Calculation}, for
+details.
+
+@item One of @code{+}, @code{-}, @code{++}, @code{--}, @code{*}, or @code{/}
+These special symbols describe a relative offset in multiples of the
+value of @code{c-basic-offset}:
 
 @defopt c-basic-offset
 @vindex basic-offset (c-)
@@ -2319,30 +2331,64 @@ values that the special symbols correspond to:
 @code{c-basic-offset} times -0.5
 @end table
 
-@cindex line-up functions
-When a function is used as offset, it's called a @dfn{line-up function}.
-Such functions are useful when more context than just the syntactic
-symbol is needed to get the desired indentation.  @xref{Line-Up
-Functions}, and @ref{Custom Line-Up Functions}, for details about
-them.
+@item A symbol with a variable binding
+The value of the variable must be an integer which is used as relative
+offset.
 
-If the offset is a vector, its first element sets the absolute
-indentation column, which will override any previously calculated
-indentation.  It won't override additional relative indentation for
-nested constructs, though.
+@item A vector
+The first element of the vector sets the absolute indentation column,
+which will override any previously calculated indentation.  It won't
+override additional relative indentation for nested constructs,
+i.e. those whose syntactic elements occur later on in the syntactic
+context.
+
+@item A function or lambda expression
+The function will be called and its return value will in turn be
+evaluated as an offset specification.  Functions are useful when more
+context than just the syntactic symbol is needed to get the desired
+indentation.  @xref{Line-Up Functions}, and @ref{Custom Line-Up
+Functions}, for details about them.
+
+@item A list
+The offset can also be a list containing several offset specifications
+which are evaluated recursively.  A list is typically only useful when
+some of the offsets are line-up functions whose return values you want
+to combine in different ways, especially when functions return
+@code{nil} if the context isn't one where they should apply.  @code{nil}
+values are always ignored when the offsets are combined.
+
+The first element of the list specifies the method to combine the
+offsets from the remaining elements:
+
+@table @code
+@item first
+Use the first offset (that doesn't evaluate to @code{nil}).
+@item min
+Use the minimum of all evaluated offsets.  All the offsets may be either
+relative or absolute, but they can't be mixed.
+@item max
+Use the maximum of all evaluated offsets.  All the offsets may be either
+relative or absolute, but they can't be mixed.
+@item add
+Add all the evaluated offsets together.  Exactly one of them may be
+absolute, in which case the result is absolute.  Any relative offsets
+that preceded the absolute one in the list will be ignored in that case.
+@end table
+
+As a compatibility measure, if the first element is none of the above
+then it too will be taken as an offset specification and the whole list
+will be combined according to the method @code{first}.
+@end table
 
 @vindex c-strict-syntax-p
 @vindex strict-syntax-p (c-)
-The offset can also be a list, in which case it is evaluated recursively
-using the semantics described above.  The first element of the list that
-returns a non-@code{nil} value succeeds and the evaluation stops.  If
-none of the list elements return a non-@code{nil} value, then an offset
-of 0 (zero) is used@footnote{There is however a variable
-@code{c-strict-syntax-p} that, when set to non-@code{nil}, will cause an
+If an offset specification evaluates to @code{nil}, then a relative
+offset of 0 (zero) is used@footnote{There is however a variable
+@code{c-strict-syntax-p} that when set to non-@code{nil} will cause an
 error to be signalled in that case.  It's now considered obsolete since
-it doesn't work well with some of the alignment functions that now
-returns @code{nil} instead of zero to be more usable in lists.  You
-should therefore leave @code{c-strict-syntax-p} set to @code{nil}.}.
+it doesn't work well with some of the alignment functions that returns
+@code{nil} instead of zero.  You should therefore leave
+@code{c-strict-syntax-p} set to @code{nil}.}.
 
 So, for example, because most of the default offsets are defined in
 terms of @code{+}, @code{-}, and @code{0}, if you like the general
