@@ -122,11 +122,28 @@
 	(point)
       (goto-char here))))
 
+
 (defmacro c-safe (&rest body)
   ;; safely execute BODY, return nil if an error occurred
   (` (condition-case nil
 	 (progn (,@ body))
        (error nil))))
+
+(defmacro c-forward-sexp (&optional arg)
+  ;; like forward-sexp except
+  ;;   1. this is much stripped down from the XEmacs version
+  ;;   2. this cannot be used as a command, so we're insulated from
+  ;;      XEmacs' losing efforts to make forward-sexp more user
+  ;;      friendly
+  ;;   3. Preserves the semantics most of CC Mode is based on
+  (or arg (setq arg 1))
+  (goto-char (or (scan-sexps (point) arg) (buffer-end arg)))
+  (if (< arg 0) (backward-prefix-chars)))
+
+(defmacro c-backward-sexp (&optional arg)
+  ;; See c-forward-sexp and reverse directions
+  (or arg (setq arg 1))
+  (c-forward-sexp (- arg)))
 
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
