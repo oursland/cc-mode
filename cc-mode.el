@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.110 $
-;; Last Modified:   $Date: 1993-12-06 15:46:30 $
+;; Version:         $Revision: 3.111 $
+;; Last Modified:   $Date: 1993-12-07 23:52:29 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -61,10 +61,11 @@
 ;;             ("\\.h$"  . c-mode)   ; to edit C code
 ;;            ) auto-mode-alist))
 ;;
-;; It doesn't make any sense to use CC-MODE for editing C++, but BOCM
-;; for C code.  Well, at least it doesn't make as much sense as using
-;; a single consistent package to edit all C-like code, so CC-MODE is
-;; not compatible with BOCM.
+;; CC-MODE is not compatible with BOCM.  If your Emacs is dumped with
+;; c-mode, you will need to add the following to your .emacs file:
+;;
+;; (fmakunbound 'c-mode)
+;; (makunbound 'c-mode-map)
 
 ;; If you would like to join the beta testers list, send add/drop
 ;; requests to cc-mode-victims-request@anthem.nlm.nih.gov.
@@ -78,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-06 15:46:30 $|$Revision: 3.110 $|
+;; |$Date: 1993-12-07 23:52:29 $|$Revision: 3.111 $|
 
 ;;; Code:
 
@@ -174,10 +175,10 @@ list of valid semantic symbols:
  arglist-intro          -- the first line in an argument list
  arglist-cont           -- subsequent argument list lines when no
                            arguments follow on the same line as the
-		    the arglist opening paren
+                           the arglist opening paren
  arglist-cont-nonempty  -- subsequent argument list lines when at
                            least one argument follows on the same
-		    line as the arglist opening paren
+                           line as the arglist opening paren
  arglist-close          -- the solo close paren of an argument list
  stream-op              -- lines continuing a stream operator construct
  inclass                -- the construct is nested inside a class definition
@@ -293,6 +294,7 @@ To be completely safe, set this variable to:
 This variable has no effect under Emacs 19. For details on why this is
 necessary in GNU Emacs 18, please refer to the cc-mode texinfo manual.")
 
+;; TBD: c-mode defins c-backslash-column as 48
 (defvar c-default-macroize-column 78
   "*Column to insert backslashes when macroizing a region.")
 (defvar c-special-indent-hook nil
@@ -307,6 +309,85 @@ Only currently supported behavior is `alignleft'.")
   "*Character limit for looking back while skipping syntactic whitespace.
 This variable has no effect under Emacs 19.  For details on why this
 is necessary under GNU Emacs 18, please refer to the texinfo manual.")
+
+(defconst c-style-alist
+  '(("GNU"
+     ;(c-indent-level               .  2)
+     ;(c-argdecl-indent             .  5)
+     ;(c-brace-offset               .  0)
+     ;(c-label-offset               . -2)
+     ;(c-continued-statement-offset .  2)
+     (c-basic-offset . 2)
+     (c-comment-only-line-offset . 0)
+     (c-offsets-alist . ((statement-block-intro . +)
+			 (knr-argdecl-intro . 5)
+			 (block-open . 0)
+			 (label . -)
+			 (statement-cont . +)
+			 ))
+     )
+    ("K&R"
+     ;(c-indent-level               .  5)
+     ;(c-argdecl-indent             .  0)
+     ;(c-brace-offset               . -5)
+     ;(c-label-offset               . -5)
+     ;(c-continued-statement-offset .  5)
+     (c-basic-offset . 5)
+     (c-comment-only-line-offset . 0)
+     (c-offsets-alist . ((statement-block-intro . +)
+			 (knr-argdecl-intro . 0)
+			 (block-open . -)
+			 (label . -)
+			 (statement-cont . +)
+			 ))
+     )
+    ("BSD"
+     ;(c-indent-level               .  4)
+     ;(c-argdecl-indent             .  4)
+     ;(c-brace-offset               . -4)
+     ;(c-label-offset               . -4)
+     ;(c-continued-statement-offset .  4)
+     (c-basic-offset . 4)
+     (c-comment-only-line-offset . 0)
+     (c-offsets-alist . ((statement-block-intro . +)
+			 (knr-argdecl-intro . +)
+			 (block-open . -)
+			 (label . -)
+			 (statement-cont . +)
+			 ))
+     )
+    ("Stroustrup"
+     ;(c-indent-level               . 4)
+     ;(c-continued-statement-offset . 4)
+     ;(c-brace-offset               . -4)
+     ;(c-argdecl-indent             . 0)
+     ;(c-label-offset               . -4)
+     ;(c-auto-newline               . t)
+     (c-basic-offset . 4)
+     (c-comment-only-line-offset . 0)
+     (c-offsets-alist . ((statement-block-intro . +)
+			 (block-open . -)
+			 (label . -)
+			 (statement-cont . +)
+			 ))
+     )
+    ("Whitesmith"
+     ;(c-indent-level               .  4)
+     ;(c-argdecl-indent             .  4)
+     ;(c-brace-offset               .  0)
+     ;(c-label-offset               . -4)
+     ;(c-continued-statement-offset .  4)
+     (c-basic-offset . 4)
+     (c-comment-only-line-offset . 0)
+     (c-offsets-alist . ((statement-block-intro . +)
+			 (knr-argdecl-intro . +)
+			 (block-open . 0)
+			 (label . -)
+			 (statement-cont . +)
+			 ))
+
+     ))
+  "Styles of Indentation.")
 
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -507,6 +588,14 @@ Emacs.")
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
 
+;; cmacexp is lame because it uses no preprocessor symbols.
+;; It isn't very extensible either -- hardcodes /lib/cpp.
+;; [I add it here only because c-mode has it -- BAW]]
+(autoload 'c-macro-expand "cmacexp"
+  "Display the result of expanding all C macros occurring in the region.
+The expansion is entirely correct because it uses the C preprocessor."
+  t)
+
 
 ;; constant regular expressions for looking at various constructs
 (defconst c-symbol-key "\\(\\w\\|_\\)+"
@@ -546,7 +635,8 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.110 $
+  "Major mode for editing C++ code.
+CC-MODE REVISION: $Revision: 3.111 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -578,7 +668,8 @@ Key bindings:
    (memq c-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.110 $
+  "Major mode for editing K&R and ANSI C code.
+CC-MODE REVISION: $Revision: 3.111 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1149,18 +1240,34 @@ the value of `c-cleanup-list'."
 	(goto-char (- (point-max) pos)))
       )))
 
-(defun c-set-offset (symbol offset &optional add-p)
-  "Change the value of a langelem symbol in `c-offsets-alist'."
-  (interactive "SSemantic symbol: \nnOffset: \nP")
-  (let ((langelem (assq symbol c-offsets-alist)))
-    (if langelem
-	(setcdr langelem offset)
-      ;; can we add the langelem?
-      (or add-p
-	  (error "%s is not a valid semantic symbol." symbol))
-      (setq c-offsets-alist (cons (cons symbol offset) c-offsets-alist))
-      (message "%s added to c-offsets-alist" symbol)
-      ))
+(defun c-set-offset (symbol offset)
+  "Change the value of a langelem symbol in `c-offsets-alist'.
+SYMBOL is the langelem symbol to change or add and OFFSET is the
+offset for that langelem."
+  (interactive
+   (let* ((langelem
+	   (intern (completing-read
+		    "Langelem symbol: "
+		    (mapcar
+		     (function
+		      (lambda (langelem)
+			(cons (format "%s" (car langelem)) nil)
+			))
+		     c-offsets-alist))))
+	  (oldoff (cdr-safe (assq langelem c-offsets-alist)))
+	  (offset (read-string "Offset: " (format "%s" oldoff))))
+     (list langelem (cond
+		     ((string-equal "+" offset) '+)
+		     ((string-equal "-" offset) '-)
+		     ((string-match "^[0-9]+$" offset)
+		      (string-to-int offset))
+		     ;; must be a function symbol
+		     (t (intern offset))
+		     ))))
+  (let ((entry (assq symbol c-offsets-alist)))
+    (or entry
+	(error "%s is not a valid langelem." symbol))
+    (setcdr entry offset))
   (c-keep-region-active))
 
 (defun c-up-block (arg)
@@ -1184,6 +1291,177 @@ With a negative ARG, go up ARG block levels."
       (c-safe (forward-sexp 1))
     (c-safe (backward-sexp 1)))
   (c-keep-region-active))
+
+(defun c-set-style (style &optional global)
+  "Set CC-MODE variables to use one of several different indentation styles.
+The arguments are a string representing the desired style and a flag
+which, if non-nil, means to set the style globally.  (Interactively,
+the flag comes from the prefix argument.)  Available styles include
+GNU, K&R, BSD and Whitesmith."
+  (interactive (list (completing-read "Use which C indentation style? "
+                                      c-style-alist nil t)
+		     current-prefix-arg))
+  (let ((vars (cdr (assoc style c-style-alist))))
+    (or vars
+	(error "Invalid C indentation style `%s'" style))
+    (mapcar
+     (function
+      (lambda (varentry)
+	(let ((var (car varentry))
+	      (val (cdr varentry)))
+	  (or global
+	      (make-local-variable var))
+	  ;; special case c-offsets-alist
+	  (if (not (eq var 'c-offsets-alist))
+	      (set var val)
+	    (mapcar
+	     (function
+	      (lambda (langentry)
+		(let ((langelem (car langentry))
+		      (offset (cdr langentry)))
+		  (c-set-offset langelem offset)
+		  )))
+	     val))
+	  )))
+     vars)))
+
+;; TBD: I haven't looked at this at all
+(defun c-fill-paragraph (&optional arg)
+  "Like \\[fill-paragraph] but handle C comments.
+If any of the current line is a comment or within a comment,
+fill the comment or the paragraph of it that point is in,
+preserving the comment indentation or line-starting decorations."
+  (interactive "P")
+  (let* (comment-start-place
+	 (first-line
+	  ;; Check for obvious entry to comment.
+	  (save-excursion
+	    (beginning-of-line)
+	    (skip-chars-forward " \t\n")
+	    (and (looking-at comment-start-skip)
+		 (setq comment-start-place (point))))))
+    (if (or first-line
+	    ;; t if we enter a comment between start of function and this line.
+	    (eq (calculate-c-indent) t)
+	    ;; t if this line contains a comment starter.
+	    (setq first-line
+		  (save-excursion
+		    (beginning-of-line)
+		    (prog1
+			(re-search-forward comment-start-skip
+					   (save-excursion (end-of-line)
+							   (point))
+					   t)
+		      (setq comment-start-place (point))))))
+	;; Inside a comment: fill one comment paragraph.
+	(let ((fill-prefix
+	       ;; The prefix for each line of this paragraph
+	       ;; is the appropriate part of the start of this line,
+	       ;; up to the column at which text should be indented.
+	       (save-excursion
+		 (beginning-of-line)
+		 (if (looking-at "[ \t]*/\\*.*\\*/")
+		     (progn (re-search-forward comment-start-skip)
+			    (make-string (current-column) ?\ ))
+		   (if first-line (forward-line 1))
+
+		   (let ((line-width (progn (end-of-line) (current-column))))
+		     (beginning-of-line)
+		     (prog1
+			 (buffer-substring
+			  (point)
+
+			  ;; How shall we decide where the end of the
+			  ;; fill-prefix is?
+			  ;; calculate-c-indent-within-comment bases its value
+			  ;; on the indentation of previous lines; if they're
+			  ;; indented specially, it could return a column
+			  ;; that's well into the current line's text.  So
+			  ;; we'll take at most that many space, tab, or *
+			  ;; characters, and use that as our fill prefix.
+			  (let ((max-prefix-end
+				 (progn
+				   (move-to-column
+				    (calculate-c-indent-within-comment t)
+				    t)
+				   (point))))
+			    (beginning-of-line)
+			    (skip-chars-forward " \t*" max-prefix-end)
+			    (point)))
+
+		       ;; If the comment is only one line followed by a blank
+		       ;; line, calling move-to-column above may have added
+		       ;; some spaces and tabs to the end of the line; the
+		       ;; fill-paragraph function will then delete it and the
+		       ;; newline following it, so we'll lose a blank line
+		       ;; when we shouldn't.  So delete anything
+		       ;; move-to-column added to the end of the line.  We
+		       ;; record the line width instead of the position of the
+		       ;; old line end because move-to-column might break a
+		       ;; tab into spaces, and the new characters introduced
+		       ;; there shouldn't be deleted.
+
+		       ;; If you can see a better way to do this, please make
+		       ;; the change.  This seems very messy to me.
+		       (delete-region (progn (move-to-column line-width)
+					     (point))
+				      (progn (end-of-line) (point))))))))
+
+	      (paragraph-start
+	       ;; Lines containing just a comment start or just an end
+	       ;; should not be filled into paragraphs they are next to.
+	       (concat 
+		paragraph-start
+		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+	      (paragraph-separate
+	       (concat
+		paragraph-separate
+		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+	      (chars-to-delete 0))
+	  (save-restriction
+	    ;; Don't fill the comment together with the code following it.
+	    ;; So temporarily exclude everything before the comment start,
+	    ;; and everything after the line where the comment ends.
+	    ;; If comment-start-place is non-nil, the comment starter is there.
+	    ;; Otherwise, point is inside the comment.
+	    (narrow-to-region (save-excursion
+				(if comment-start-place
+				    (goto-char comment-start-place)
+				  (search-backward "/*"))
+				;; Protect text before the comment start 
+				;; by excluding it.  Add spaces to bring back 
+				;; proper indentation of that point.
+				(let ((column (current-column)))
+				  (prog1 (point)
+				    (setq chars-to-delete column)
+				    (insert-char ?\  column))))
+			      (save-excursion
+				(if comment-start-place
+				    (goto-char (+ comment-start-place 2)))
+				(search-forward "*/" nil 'move)
+				(forward-line 1)
+				(point)))
+	    
+	    (fill-paragraph arg)
+	    (save-excursion
+	      ;; Delete the chars we inserted to avoid clobbering
+	      ;; the stuff before the comment start.
+	      (goto-char (point-min))
+	      (if (> chars-to-delete 0)
+		  (delete-region (point) (+ (point) chars-to-delete)))
+	      ;; Find the comment ender (should be on last line of buffer,
+	      ;; given the narrowing) and don't leave it on its own line.
+	      (goto-char (point-max))
+	      (forward-line -1)
+	      (search-forward "*/" nil 'move)
+	      (beginning-of-line)
+	      (if (looking-at "[ \t]*\\*/")
+		  (delete-indentation)))))
+      ;; Outside of comments: do ordinary filling.
+      (fill-paragraph arg))))
+
+;; TBD: c-mode's c-(beginning|end)-of-statement
+;; TBD: c-mode's c-(up|backward|forward)-conditional
 
 
 ;; Workarounds for GNU Emacs 18 scanning deficiencies
@@ -2424,6 +2702,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		(kill-line)))))
       ))
 
+;; TBD: Is c-mode's c-backslash-region smarter, more useful?
 (defun c-macroize-region (beg end arg)
   "Insert backslashes at end of every line in region.
 Useful for defining cpp macros.  If called with a prefix argument,
@@ -2475,7 +2754,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.110 $"
+(defconst c-version "$Revision: 3.111 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -2531,5 +2810,14 @@ region."
   (c-keep-region-active))
 
 
+;; fsets for compatibility with BOCM
+(fset 'electric-c-brace      'c-electric-brace)
+(fset 'electric-c-semi       'c-electric-semi&comma)
+(fset 'electric-c-sharp-sign 'c-electric-pound)
+;; there is no cc-mode equivalent for electric-c-terminator
+(fset 'mark-c-function       'c-mark-function)
+(fset 'indent-c-exp          'c-indent-exp)
+(fset 'set-c-style           'c-set-style)
+
 (provide 'c-mode)
 ;;; c-mode.el ends here
