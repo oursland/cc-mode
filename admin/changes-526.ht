@@ -7,6 +7,14 @@ Links: links.h changelinks.h
 See also the <a href="changes-525.html">user visible changes for
 5.25</a>.
 
+<p>Note: This release contains changes that might not be compatible
+with current user setups (although it's believed that these
+incompatibilities will only show in very uncommon circumstances).
+However, since the impact is uncertain, these changes may be rolled
+back depending on user feedback.  Therefore there's no forward
+compatibility guarantee wrt the new features introduced in this
+release.
+
 <ul>
 
   <p><li>New initialization procedure for the style system.  Changes
@@ -31,7 +39,7 @@ See also the <a href="changes-525.html">user visible changes for
     <p><li>Compatibility variable to restore the old behavior.  In
     case your configuration doesn't work with this change, you can set
     <code>c-old-style-variable-behavior</code> to non-nil to get the
-    old behavior back.
+    old behavior back as far as possible.
 
   </ul>
 
