@@ -30,6 +30,9 @@
 (eval-when-compile
   (load-file "./cc-align.el"))
 
+(require 'cc-vars)
+(require 'cc-align)
+
 
 (defconst c-style-alist
   '(("gnu"
