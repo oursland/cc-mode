@@ -2006,12 +2006,16 @@ The hard-coding of @code{java-mode} style is admittedly bogus!}.
 @item
 When @code{c-default-style} is an association list, the current major
 mode is looked up to find a style name string.  In this case, this style 
-is always used exactly as specified.
+is always used exactly as specified and an error will occur if the named 
+style does not exist.
 
 @item
 If @code{c-default-style} is an association list, but the current major
-mode isn't found, then @samp{gnu} style is used for all modes except
-@code{java-mode}, where @samp{java} style is used.
+mode isn't found, then the special symbol @samp{other} is looked up.  If 
+this value is found, the associated style is used.
+
+@item
+If @samp{other} is not found, then the @samp{gnu} style is used.
 
 @item
 In all cases, the style described in @code{c-default-style} is installed 
