@@ -118,6 +118,7 @@
     "except-1.cc"
     "except-2.cc"
     "except-3.cc"
+    "except-4.java"
     "externs-1.cc"
     "externs-2.cc"
     "funcs-1.cc"
