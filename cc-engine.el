@@ -577,6 +577,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	      ;; boundary, since that doesn't consume an sexp.
 	      (if (eq sym 'boundary)
 		  (setq ret 'previous)
+
                 ;; HERE IS THE SINGLE PLACE INSIDE THE PDA LOOP WHERE WE MOVE
                 ;; BACKWARDS THROUGH THE SOURCE. The following loop goes back
                 ;; one sexp and then only loops in special circumstances (line
@@ -610,13 +611,33 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		(when (save-excursion
 			(if (if (eq (char-after) ?{)
 				(c-looking-at-inexpr-block lim nil)
-			      (eq (char-syntax (char-after)) ?\())
-			    ;; Need to move over parens and
-			    ;; in-expression blocks to get a good start
-			    ;; position for the boundary check.
-			    (c-forward-sexp 1))
+			      (looking-at "\\s\("))
+
+			    ;; Should not include the paren sexp we've
+			    ;; passed over in the boundary check.
+			    (if (> (point) (- pos 100))
+				(c-forward-sexp 1)
+
+			      ;; Find its end position this way instead of
+			      ;; moving forward if the sexp is large.
+			      (goto-char pos)
+			      (while
+				  (progn
+				    (goto-char (1+ (c-down-list-backward)))
+				    (unless macro-start
+				      ;; Check that we didn't step into
+				      ;; a macro from the end.
+				      (let ((macro-start
+					     (save-excursion
+					       (and (c-beginning-of-macro)
+						    (point)))))
+					(when macro-start
+					  (goto-char macro-start)
+					  t)))))))
+
 			(setq boundary-pos (c-crosses-statement-barrier-p
 					    (point) pos)))
+
 		  (setq pptok ptok
 			ptok tok
 			tok boundary-pos
@@ -1893,6 +1914,91 @@ syntactic whitespace."
 	     (goto-char bound)))
       nil)))
 
+(defun c-syntactic-skip-backward (skip-chars &optional limit)
+  "Like `skip-chars-backward' but only look at syntactically relevant chars,
+i.e. don't stop at positions inside syntactic whitespace or string
+literals.  Preprocessor directives are also ignored, with the exception
+of the one that the point starts within, if any.  If LIMIT is given,
+it's assumed to be at a syntactically relevant position.
+
+This function does not do any hidden buffer changes."
+
+  (let ((start (point))
+	;; A list of syntactically relevant positions in descending
+	;; order.  It's used to avoid scanning repeatedly over
+	;; potentially large regions with `parse-partial-sexp' to verify
+	;; each position.
+	safe-pos-list
+	;; The result from `c-beginning-of-macro' at the start position or the
+	;; start position itself if it isn't within a macro.  Evaluated on
+	;; demand.
+	start-macro-beg)
+
+    (while (progn
+	     (while (and
+		     (< (skip-chars-backward skip-chars limit) 0)
+
+		     ;; Use `parse-partial-sexp' from a safe position down to
+		     ;; the point to check if it's outside comments and
+		     ;; strings.
+		     (let ((pos (point)) safe-pos state)
+		       ;; Pick a safe position as close to the point as
+		       ;; possible.
+		       (while (and safe-pos-list
+				   (> (car safe-pos-list) (point)))
+			 (setq safe-pos-list (cdr safe-pos-list)))
+		       (unless (setq safe-pos (car-safe safe-pos-list))
+			 (setq safe-pos (or (c-safe-position
+					     (point) (or c-state-cache
+							 (c-parse-state)))
+					    (point-min))
+			       safe-pos-list (list safe-pos)))
+
+		       (while (progn
+				(setq state (parse-partial-sexp
+					     safe-pos pos 0))
+				(< (point) pos))
+			 ;; Cache positions along the way to use if we have to
+			 ;; back up more.  Every closing paren on the same
+			 ;; level seems like fairly well spaced positions.
+			 (setq safe-pos (point)
+			       safe-pos-list (cons safe-pos safe-pos-list)))
+
+		       (cond
+			((or (elt state 3) (elt state 4))
+			 ;; Inside string or comment.  Continue search at the
+			 ;; beginning of it.
+			 (if (setq pos (nth 8 state))
+			     ;; It's an emacs where `parse-partial-sexp'
+			     ;; supplies the starting position.
+			     (goto-char pos)
+			   (goto-char (car (c-literal-limits safe-pos))))
+			 t)
+
+			((c-beginning-of-macro limit)
+			 ;; Inside a macro.
+			 (if (< (point)
+				(or start-macro-beg
+				    (setq start-macro-beg
+					  (save-excursion
+					    (goto-char start)
+					    (c-beginning-of-macro limit)
+					    (point)))))
+			     t
+			   ;; It's inside the same macro we started in so it's
+			   ;; a relevant match.
+			   (goto-char pos)
+			   nil))))))
+
+	     (> (point)
+		(progn
+		  ;; Skip syntactic ws afterwards so that we don't stop at the
+		  ;; end of a comment if `skip-chars' is something like "^/".
+		  (c-backward-syntactic-ws)
+		  (point)))))
+
+    (- (point) start)))
+
 
 (defun c-in-literal (&optional lim detect-cpp)
   "Return the type of literal point is in, if any.
@@ -2516,19 +2622,8 @@ This function does not do any hidden buffer changes."
   ;; goes to the closest previous point that is known to be outside
   ;; any string literal or comment, using `c-state-cache'.
   (let ((paren-state (or c-state-cache (c-parse-state))) elem)
-    (goto-char
-     (catch 'done
-       (while paren-state
-	 (setq elem (car paren-state)
-	       paren-state (cdr paren-state))
-	 (if (consp elem)
-	     (cond ((<= (cdr elem) (point))
-		    (throw 'done (cdr elem)))
-		   ((<= (car elem) (point))
-		    (throw 'done (car elem))))
-	   (if (<= elem (point))
-	       (throw 'done elem))))
-       (point-min)))))
+    (goto-char (or (c-safe-position (point) paren-state)
+		   (point-min)))))
 
 (defun c-at-toplevel-p ()
   "Return a determination as to whether point is at the `top-level'.
@@ -2661,12 +2756,7 @@ brace."
 	       ;; beginning of the function arglist.  Check that there
 	       ;; isn't a '=' before it in this statement since that
 	       ;; means it some kind of initialization instead.
-	       (while (let (res)
-			(skip-chars-backward "^;=}{")
-			(and (eq (char-before) ?=)
-			     (if (setq res (c-literal-limits lim))
-				 (progn (goto-char (car res)) t)
-			       (c-beginning-of-macro lim)))))
+	       (c-syntactic-skip-backward "^;=}{")
 	       (not (eq (char-before) ?=)))
 
 	     (point))))))
@@ -4168,7 +4258,9 @@ brace."
 	  ;; searching from the end of the balanced sexp just ahead of
 	  ;; us
 	  (if (consp search-start)
-	      (setq search-start (cdr search-start))))
+	      (setq search-start (cdr search-start))
+	    ;; Otherwise we start searching within the surrounding paren sexp.
+	    (setq search-start (1+ search-start))))
 	;; now we can do a quick regexp search from search-start to
 	;; search-end and see if we can find a class key.  watch for
 	;; class like strings in literals
@@ -4573,25 +4665,23 @@ brace."
   ;;
   ;; This function does not do any hidden buffer changes.
   (when bufpos
-    (let ((c-macro-start (c-query-macro-start)) safepos)
-      (if (and c-macro-start
-	       (< c-macro-start bufpos))
-	  ;; Make sure bufpos is outside the macro we might be in.
-	  (setq bufpos c-macro-start))
+    (let (elem)
       (catch 'done
 	(while paren-state
-	  (setq safepos
-		(if (consp (car paren-state))
-		    (cdr (car paren-state))
-		  (car paren-state)))
-	  (if (< safepos bufpos)
-	      (throw 'done safepos)
-	    (setq paren-state (cdr paren-state))))
-	(if (eq c-macro-start bufpos)
-	    ;; Backed up bufpos to the macro start and got outside the
-	    ;; state.  We know the macro is at the top level in this case,
-	    ;; so we can use the macro start as the safe position.
-	    c-macro-start)))))
+	  (setq elem (car paren-state))
+	  (if (consp elem)
+	      (cond ((<= (cdr elem) bufpos)
+		     (throw 'done (cdr elem)))
+		    ((<= (car elem) bufpos)
+		     ;; See below.
+		     (throw 'done (min (1+ (car elem)) bufpos))))
+	    (if (<= elem bufpos)
+		;; elem is the position at and not after the opening paren, so
+		;; we can go forward one more step unless it's equal to
+		;; bufpos.  This is useful in some cases avoid an extra paren
+		;; level between the safe position and bufpos.
+		(throw 'done (min (1+ elem) bufpos))))
+	  (setq paren-state (cdr paren-state)))))))
 
 (defun c-narrow-out-enclosing-class (paren-state lim)
   ;; Narrow the buffer so that the enclosing class is hidden.  Uses
@@ -6092,10 +6182,6 @@ brace."
 	   ;; statement in a top-level defun. we can tell this is it
 	   ;; if there are no enclosing braces that haven't been
 	   ;; narrowed out by a class (i.e. don't use bod here).
-	   ;; However, we first check for statements that we can
-	   ;; recognize by keywords.  That increases the robustness in
-	   ;; cases where statements are used on the top level,
-	   ;; e.g. in macro definitions.
 	   ((save-excursion
 	      (save-restriction
 		(widen)
