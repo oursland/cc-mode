@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.24 $
+@comment manual version: $Revision: 2.25 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-06-14 15:00:33 $
+@comment Last modification: $Date: 1995-06-16 00:21:12 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.24 $)
+@center (manual revision: $Revision: 2.25 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -94,7 +94,6 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 * Requirements::                
 * Limitations and Known Bugs::  
 * Mailing Lists and Submitting Bug Reports::  
-* Dumping cc-mode 4::
 * Concept Index::               
 * Command Index::               Command Index
 * Key Index::                   Key Index
@@ -147,8 +146,9 @@ and functions in @code{cc-mode} are prefixed with @code{c-<thing>}, and
 @code{c-mode}, @code{c++-mode}, and @code{objc-mode} entry points are
 provided.  This file is intended to be a replacement for
 @file{c-mode.el} and @file{c++-mode.el} -- you should be able to remove
-them and dump Emacs with @file{cc-mode.el} instead. @xref{Dumping
-cc-mode 4} for details on how to do this.
+them and dump Emacs with @file{cc-mode.el} instead.  See the file
+@file{DUMPING} in the full @code{cc-mode} release for details
+(@ref{Getting the latest cc-mode release}).
 
 @findex c-version
 The major version number was incremented to 4 with the addition of
@@ -1981,6 +1981,7 @@ not change @code{point} or @code{mark} inside your
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @vindex c-offsets-alist
+@vindex offsets-alist (c-)
 The complete list of recognized syntactic symbols is described in the
 @code{c-offsets-alist} variable.  This chapter will provide some
 examples to help clarify these symbols.
@@ -2013,7 +2014,9 @@ you can check the syntax of any line by using @kbd{C-c C-s}.
   4:     int tmp = a;
   5:     a = b;
   6:     b = tmp;
-  7: @}
+  7:     int ignored =
+  8:         a + b;
+  9: @}
 
 @end group
 @end example
@@ -2022,14 +2025,16 @@ Line 1 shows a @code{topmost-intro} since it is the first line that
 introduces a top-level construct.  Line 2 is a continuation of the
 top-level construct introduction so it has the syntax
 @code{topmost-intro-cont}.  Line 3 shows a @code{defun-open} since it is
-the brace that opens a top-level function definition.  Similar, line 7
+the brace that opens a top-level function definition.  Similar, line 9
 is a @code{defun-close} since it contains the brace that closes the
 top-level function definition.  Line 4 is a @code{defun-block-intro},
 i.e. it is the first line of a brace-block, which happens to be enclosed
 in a top-level function definition.
 
-Lines 5 and 6 are both of @code{statement} syntax since there isn't much
-special about them.
+Lines 5, 6, and 7 are all given @code{statement} syntax since there
+isn't much special about them.  Note however that line 8 is given
+@code{statement-cont} syntax since actual continues the statement begun
+on the previous line.
 
 Here's another example, which illustrates some C++ class syntactic
 symbols:
@@ -2230,8 +2235,55 @@ Following convention, line 2 in this example is assigned
 @code{brace-list-entry} syntax, as would all subsequent lines in this
 initializer list.
 
-@strong{<TBD: arglist-intro, arglist-cont, arglist-cont-nonempty,
-arglist-close}
+A number of syntactic symbols are associated with parenthesis lists,
+a.k.a argument lists, as found in function declarations and function
+calls.  This example illustrates these:
+@example
+@group
+
+   1: void a_function( int line1,
+   2:                  int line2 );
+   3: 
+   4: void a_longer_function(
+   5:     int line1,
+   6:     int line2
+   7:     );
+   8: 
+   9: void call_them( int line1, int line2 )
+  10: @{
+  11:     a_function(
+  12:         line1,
+  13:         line2
+  14:         );
+  15: 
+  16:     a_longer_function( line1,
+  17:                        line2 );
+  18: @}
+
+@end group
+@end example
+
+The lines with relevant syntactic symbols include lines 2 and 17 which
+are assigned @code{arglist-cont-nonempty} syntax.  What this means is
+that they continue an argument list, but that the line containing the
+parenthesis that opens the list is @emph{non-empty} following the open
+parenthesis.  Contrast this against lines 6 and 13 which are assigned
+@code{arglist-cont} syntax.  This is because the parenthesis that opens
+their argument lists is the last character on that line @footnote{The
+need for this somewhat confusing arrangement is that the typical
+indentation desired for these lines is calculated very differently.
+This should be simplified in version 5 of @code{cc-mode}, along with the
+added distinction between argument lists in function declarations, and
+argument lists in function calls.}.
+
+Lines 5 and 12 are assigned @code{arglist-intro} syntax since they are
+the first line following the open parenthesis, and lines 7 and 14 are
+assigned @code{arglist-close} syntax since they contain the parenthesis
+that closes the argument list.
+
+Note that there is no @code{arglist-open} syntax.  This is because any
+parenthesis that opens an argument list, appearing on a separate line,
+is assigned the @code{statement-cont} syntax instead (see above).
 
 A few miscellaneous syntactic symbols that haven't been previously
 covered are illustrated by this example:
@@ -2339,7 +2391,69 @@ include: @code{knr-argdecl-intro}, @code{knr-argdecl}, and the
 @cindex   Performance Issues
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD>}
+C and it's derivative languages are highly complex creatures.  Often,
+ambiguous code situations arise that require @code{cc-mode} to do a lot
+of scanning of the buffer to determine syntactic analysis.  Some
+pathological code can cause @code{cc-mode} to slow down considerably.
+This section tries to identify some of the coding styles to watch out
+for, and suggests some workarounds that you can use to improve
+performance.
+
+Note that this is one area that will get a lot of attention in
+@code{cc-mode} version 5.  The mode should end up being much faster, at
+the expense of dropping Emacs 18 support.  This is the last release of
+@code{cc-mode} will be compatible with Emacs 18.
+
+Because @code{cc-mode} has to scan the buffer backwards from the current
+insertion point, and because C's syntax is fairly difficult to parse in
+the backwards direction, @code{cc-mode} often tries to find the nearest
+position higher up in the buffer from which to begin a forward scan.
+The farther this position is from the current insertion point, the
+slower the mode gets.  Some coding styles can even force @code{cc-mode}
+to scan from the beginning of the buffer!
+
+@findex beginning-of-defun
+@findex defun-prompt-regexp
+One of the simplest things you can do to reduce scan time, is make sure
+any brace that opens a top-level block construct always appears in the
+leftmost column.  This is actually an Emacs constraint, as embodied in
+the @code{beginning-of-defun} function which @code{cc-mode} uses
+heavily.  If you insist on hanging top-level open braces on the right
+side of the line, then you should set the variable
+@code{defun-prompt-regexp} to something reasonable @footnote{Note that
+this variable is only defined in Emacs 19.}, however that ``something
+reasonable'' can be difficult to define, so @code{cc-mode} doesn't do it
+for you.
+
+@cindex cc-lobotomy.el file
+You will probably notice pathological behavior from @code{cc-mode} when
+working in files containing large amounts of cpp macros.  This is
+because @code{cc-mode} cannot quickly skip backwards over these lines,
+which do not contribute to the syntactic calculations.  You'll probably
+also have problems if you are editing ``K&R'' C code, i.e. C code that
+does not use function prototypes.  This is because there are ambiguities
+in the C syntax when K&R style argument lists are used, and
+@code{cc-mode} has to use a slower scan to determine what it's looking
+at.
+
+@vindex c-recognize-knr-p
+@vindex recognize-knr-p (c-)
+For the latter problem, I would suggest converting to ANSI style
+protocols, and turning the variable @code{c-recognize-knr-p} to
+@code{nil} (this is it's default value for all modes).
+
+@vindex cc-lobotomy-pith-list
+For the former problem, you might want to investigate some of the
+speed-ups in file @file{cc-lobotomy.el}, which should have been provided
+with your distribution.  As mentioned previous, @code{cc-mode} always
+trades accuracy for speed, however it is recognized that sometimes you
+need speed and can sacrifice some accuracy in indentation.  The file
+@file{cc-lobotomy.el} contains to hacks that will ``dumb down''
+@code{cc-mode} in some specific ways, making that trade-off of speed for
+accuracy.  I won't go into details of its use here; you should read the
+comments at the top of the file, and look at the variable
+@code{cc-lobotomy-pith-list} for details.
+
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Frequently Asked Questions, Getting the latest cc-mode release, Performance Issues, Top
@@ -2428,7 +2542,43 @@ details.
 @cindex   Getting the latest @code{cc-mode} release
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@strong{<TBD> add ftp'ing information}
+The canonical version of the latest @code{cc-mode} release will always
+be available for anonymous ftp from the Emacs Lisp Archive Server:
+@example
+
+@code{archive.cis.ohio.state.edu}
+
+@end example
+@noindent
+and the path to the file is:
+@example
+
+/pub/gnu/emacs/elisp-archive/modes/cc-mode.tar.gz
+
+@end example
+Note that this is a ``gzipped'' tar file.  There may be other anonymous
+ftp servers that mirror the full @code{cc-mode} release, including
+@code{cs.uiuc.edu} and @code{ftp.hackvan.com}.  These latter are not
+guaranteed, and you should always try the Emacs Lisp Archive Server
+first!
+
+If you do not have anonymous ftp access, you can get the distribution
+through an anonymous ftp-to-mail gateway, such as the one run by DEC at
+@code{ftpmail@@decwrl.dec.com}.  To get @code{cc-mode} via email, send
+the following message in the body of your mail to that address:
+@example
+
+reply <a valid net address back to you>
+connect archive.cis.ohio-state.edu
+binary
+uuencode
+chdir pub/gnu/emacs/elisp-archive/modes
+get cc-mode.tar.gz
+
+@end example
+@noindent
+or just send the message "help" for more information on ftpmail.
+Response times will vary with the number of requests in the queue.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Sample .emacs File, Requirements, Getting the latest cc-mode release, Top
@@ -2546,11 +2696,12 @@ line up correctly.  Hit @kbd{TAB} to reindent the line.
 
 @end itemize
 
-@node  Mailing Lists and Submitting Bug Reports, Dumping cc-mode 4, Limitations and Known Bugs, Top
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Mailing Lists and Submitting Bug Reports, Concept Index, Limitations and Known Bugs, Top
 @comment  node-name,              next,                    previous,up
 @chapter  Mailing Lists and Submitting Bug Reports
 @cindex   Mailing Lists and Submitting Bug Reports
-@comment * Mailing Lists and Submitting Bug Reports
+@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @kindex C-c C-b
 @findex c-submit-bug-report
@@ -2593,153 +2744,7 @@ and more on the next version of @code{cc-mode}!  Thanks!
 
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Dumping cc-mode 4, Concept Index, Mailing Lists and Submitting Bug Reports, Top
-@comment node-name,    next,  previous,      up
-@chapter  Dumping @code{cc-mode} 4
-@cindex   Dumping @code{cc-mode} 4
-@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-@strong{<TBD> possibly update this section -- is it still necessary?}
-
-For now, you're going to be kind of on your own, but here are my, and
-other, experiences in dumping Emacs with @code{cc-mode}.  @strong{Some
-of this information may be out of date!}  If you like @file{cc-mode.el},
-you should lobby RMS to adopt it as @emph{the} implementation of
-@code{c-mode}, @code{c++-mode}, and @code{objc-mode} for FSF's Emacs.
-Note that if you are using XEmacs 19.11, you do not need to do any of
-this.  XEmacs comes with @code{cc-mode} already dumped.  Yay!
-
-Do this:
-@example
-@group
-
-    % cd <wherever_c_mode.el_is>
-    % mv c-mode.el c-mode.el.bak
-    % mv cc-mode.el c-mode.el
-
-@end group
-@end example
-
-Then byte compile @file{c-mode.el} to produce @file{c-mode.elc}.
-
-In both FSF 19.22 and Lucid 19.9 @file{version.el} is loaded too late in
-the @file{loadup.el} file.  @file{cc-mode.el} depends on the value of
-@code{emacs-version} so you need to move the load of @file{version.el}
-higher up in the file. 
-
-You may need to crank up @code{PURESIZE} in @file{src/pursize.h}.  I
-found I had to add about 14k, others have reported an increase of about
-23k, but of course YMMV.
-
-Tell your users not to add the @code{f/makunbound}'s or @code{autoload}s to
-their @file{.emacs} files, since they'll now get @code{cc-mode} for free.
-
-In Lucid  19.9,   @file{loaddefs.el}  contains a  lot  of  automatically
-generated autoload  definitions which will cause  warnings when it finds
-pointers to  doc strings.  You  can either  ignore these  warnings (they
-won't hurt      you),  or you    can comment   out   the   autoloads for
-@code{c++-mode} and @code{c-style}.  Or you can regenerate the automatic
-autoloads  once  you've  moved @file{c++-mode.el}   and @file{c-mode.el}
-aside, but you'll have to figure this part out by yourself.
-
-I've also been told that under FSF Emacs 19, you  have to get rid of the
-autoloads   for  @file{cplus-md*.el} since  @file{c++-mode.el} has  been
-renamed. You should also do  an @code{update-directory-autoloads} on the
-lisp directory before you redump.
-
-
-Andrew Hall @code{<fmrco!ahall@@uunet.uu.net>} provides this diff which
-applies to FSF's Emacs 19.25.90 @file{loaddefs.el} file.  This zaps the
-autoloads for @file{cplus-md.el} and @file{c-mode.el} so you shouldn't
-need to do an @code{update-directory-autoloads}.
-@example
-
-*** loaddefs.el.orig	Sat Jul  2 15:39:30 1994
---- loaddefs.el	Thu Jul 21 12:23:22 1994
-***************
-*** 1959,2035 ****
-  
-  ;;;***
-  
-- ;;;### (autoloads (c++-mode) "cplus-md" "cplus-md.el" (11649 1462))
-- ;;; Generated autoloads from cplus-md.el
-- 
-- (autoload (quote c++-mode) "cplus-md" "\
-- Major mode for editing C++ code.  Very much like editing C code.
-- Expression and list commands understand all C++ brackets.
-- Tab at left margin indents for C++ code
-- Comments are delimited with /* ... */ @{or with // ... <newline>@}
-- Paragraphs are separated by blank lines only.
-- Delete converts tabs to spaces as it moves back.
-- \\@{c++-mode-map@}
-- Variables controlling indentation style:
--  c-tab-always-indent
--     Non-nil means TAB in C mode should always reindent the current line,
--     regardless of where in the line point is when the TAB command is used.
--     Default is t.
--  c-auto-newline
--     Non-nil means automatically newline before and after braces,
--     and after colons and semicolons, inserted in C code.
--  c-indent-level
--     Indentation of C statements within surrounding block.
--     The surrounding block's indentation is the indentation
--     of the line on which the open-brace appears.
--  c-continued-statement-offset
--     Extra indentation given to a substatement, such as the
--     then-clause of an if or body of a while.
--  c-continued-brace-offset
--     Extra indentation given to a brace that starts a substatement.
--     This is in addition to c-continued-statement-offset.
--  c-brace-offset
--     Extra indentation for line if it starts with an open brace.
--  c-brace-imaginary-offset
--     An open brace following other text is treated as if it were
--     this far to the right of the start of its line.
--  c-argdecl-indent
--     Indentation level of declarations of C function arguments.
--  c-label-offset
--     Extra indentation for line that is a label, or case or ``default:'', or
--     ``public:'' or ``private:'', or ``protected:''.
--  c++-electric-colon
--     If non-nil at invocation of c++-mode (t is the default) colon electricly
--     indents.
--  c++-empty-arglist-indent
--     If non-nil, a function declaration or invocation which ends a line with a
--     left paren is indented this many extra spaces, instead of flush with the
--     left paren.
--  c++-friend-offset
--     Offset of C++ friend declarations relative to member declarations.
--  c++-member-init-indent
--     Indentation level of member initializations in function declarations,
--     if they are on a separate line beginning with a colon.
--  c++-continued-member-init-offset
--     Extra indentation for continuation lines of member initializations; NIL
--     means to align with previous initializations rather than with the colon.
-- 
-- Settings for K&R, BSD, and Stroustrup indentation styles are
--   c-indent-level                5    8    4
--   c-continued-statement-offset  5    8    4
--   c-continued-brace-offset                0
--   c-brace-offset               -5   -8    0
--   c-brace-imaginary-offset                0
--   c-argdecl-indent              0    8    4
--   c-label-offset               -5   -8   -4
--   c++-empty-arglist-indent                4
--   c++-friend-offset                       0
-- 
-- Turning on C++ mode calls the value of the variable `c++-mode-hook' with
-- no args if that value is non-nil." t nil)
-- 
-- ;;;***
-- 
-  ;;;### (autoloads (dabbrev-expand) "dabbrev" "dabbrev.el" (11577 36858))
-  ;;; Generated autoloads from dabbrev.el
-  
---- 1959,1964 ----
-@end example
-
-@c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Concept Index, Command Index,  Dumping cc-mode 4, Top
+@node    Concept Index, Command Index,  Mailing Lists and Submitting Bug Reports, Top
 @comment node-name,    next,  previous,      up
 @unnumbered Concept Index
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
