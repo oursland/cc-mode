@@ -426,8 +426,8 @@ tools (e.g. Javadoc).")
 
   all `(;; Fontify keyword constants.
 	,@(when (c-lang-var c-constant-kwds)
-	    `((,(concat "\\<" (c-make-keywords-re nil
-				(c-lang-var c-constant-kwds)) "\\>")
+	    `((,(concat "\\<\\(" (c-make-keywords-re nil
+				   (c-lang-var c-constant-kwds)) "\\)\\>")
 	       0 font-lock-constant-face)))
 
 	;; Fontify all keywords except the primitive types.
