@@ -1,3 +1,76 @@
+Fri Sep  5 00:50:41 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.17
+
+Fri Sep  5 04:47:03 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-beginning-of-statement):
+	Fixes in sentence movement to properly
+	handle M-e moving forward into a comment when looking at preceding
+	whitespace, and M-a moving backward into comment when looking at
+	following whitespace.
+
+	* cc-langs.el:
+	Define `/' in c-mode-base-map since all modes now support
+	c-electric-slash.
+
+	Define C-c C-e in mode-specific maps instead of c-mode-base-map since
+	c-expand-macro is meaningless in Java and IDL.
+
+	* cc-engine.el (c-end-of-statement-1):
+	Wrap backward-up-list in a c-safe call so no error results when
+	buffer contains only a comment and point is at eob.
+
+	* cc-cmds.el (c-beginning-of-statement):
+	Uncommented the looking-at call in the
+	sentence-flag clause so that moving by forward-sentence when looking
+	at the beginning of a comment works again.  A previous log message in
+	cc-mode.el indicates this was commented out "because
+	c-beginning-of-statement-1 should do the right thing", but clearly it
+	doesn't.
+
+	I don't know if this breaks something else, because I can't figure out
+	why it was commented out in the first place.
+
+Tue Aug 26 22:31:55 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-style-alist): "python" style, knr-argdecl-intro == +
+
+Mon Aug 25 17:25:12 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-inside-bracelist-p):
+	Add a test to the enum list test so that the
+	following code won't erroneously recognize as inside a brace list:
+
+	static PyObject **
+	unpack_sequence(v, argcnt, why)
+	     PyObject **v;
+	     int argcnt;
+	     enum *why_code;
+	{
+		int i;
+
+	Otherwise, the `enum' in the K&R decl trips this code up.
+
+	* cc-styles.el (c-style-alist): "python" style, fill-column = 78
+
+Fri Aug 22 20:25:57 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-comment-line-break-function):
+	Don't break line in the middle of a string.
+
+Mon Aug 18 17:37:24 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-style-alist):
+	"python" style change: arglist-intro <= +
+	"python" style change: inextern-lang <= 0
+
+Fri Aug 15 18:39:10 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-style-alist):
+	"python" style requires c-comment-continuation-stars
+	to be "".
+
 Fri Aug 15 17:26:05 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.16
