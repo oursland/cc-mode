@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.293 $
-;; Last Modified:   $Date: 1996-05-29 20:13:34 $
+;; Version:         $Revision: 4.294 $
+;; Last Modified:   $Date: 1996-05-29 20:54:29 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -3485,9 +3485,9 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   (forward-sexp (cond
 		 ;; else if()
 		 ((looking-at "\\<else\\>[ \t]+\\<if\\>") 3)
-		 ;; do, else, try
-		 ((looking-at "\\<\\(do\\|else\\|try\\)\\>") 1)
-		 ;; for, if, while, switch, catch
+		 ;; do, else, try, finally
+		 ((looking-at "\\<\\(do\\|else\\|try\\|finally\\)\\>") 1)
+		 ;; for, if, while, switch, catch, synchronized
 		 (t 2))))
 
 (defun c-skip-case-statement-forward (state &optional lim)
@@ -4844,7 +4844,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.293 $"
+(defconst c-version "$Revision: 4.294 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
