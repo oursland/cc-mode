@@ -1575,7 +1575,7 @@ syntactic whitespace."
 	       (setq match-pos (point)
 		     state (parse-partial-sexp
 			    pos (match-beginning 0) paren-level nil state)
-		     pos (match-beginning 0))
+		     pos (point))
 	       (if (setq check-pos (and lookbehind-submatch
 					(match-end lookbehind-submatch)))
 		   (setq check-state (parse-partial-sexp
