@@ -461,6 +461,7 @@ it finds in `c-file-offsets'."
   (define-key c++-mode-map "<"      'c-electric-lt-gt)
   (define-key c++-mode-map ">"      'c-electric-lt-gt))
 
+;;;###autoload
 (defvar c++-mode-syntax-table nil
   "Syntax table used in c++-mode buffers.")
 (if c++-mode-syntax-table
@@ -494,6 +495,7 @@ it finds in `c-file-offsets'."
   ;; add bindings which are only useful for Objective-C
   (define-key objc-mode-map "/"      'c-electric-slash))
 
+;;;###autoload
 (defvar objc-mode-syntax-table nil
   "Syntax table used in objc-mode buffers.")
 (if objc-mode-syntax-table
@@ -521,6 +523,7 @@ it finds in `c-file-offsets'."
   ;; add bindings which are only useful for Java
   (define-key java-mode-map "/"      'c-electric-slash))
 
+;;;###autoload
 (defvar java-mode-syntax-table nil
   "Syntax table used in java-mode buffers.")
 (if java-mode-syntax-table
@@ -546,6 +549,7 @@ it finds in `c-file-offsets'."
   ;; additional bindings
   (define-key idl-mode-map "/" 'c-electric-slash))
 
+;;;###autoload
 (defvar idl-mode-syntax-table nil
   "Syntax table used in idl-mode buffers.")
 (if idl-mode-syntax-table
