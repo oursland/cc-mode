@@ -167,7 +167,7 @@ Works with: arglist-cont, arglist-cont-nonempty."
 
 (defun c-lineup-argcont-scan (&optional other-match)
   ;; Find the start of an argument, for `c-lineup-argcont'.
-  (when (zerop (c-backward-token-1 1 t))
+  (when (zerop (c-backward-token-2 1 t))
     (let ((c (char-after)))
       (if (or (eq c ?,) (eq c other-match))
 	  (progn
@@ -352,11 +352,11 @@ Works with: func-decl-cont."
     (let* ((lim (1- (c-point 'bol)))
 	   (throws (catch 'done
 		     (goto-char (cdr langelem))
-		     (while (zerop (c-forward-token-1 1 t lim))
+		     (while (zerop (c-forward-token-2 1 t lim))
 		       (if (looking-at "throws\\>[^_]")
 			   (throw 'done t))))))
       (if throws
-	  (if (zerop (c-forward-token-1 1 nil (c-point 'eol)))
+	  (if (zerop (c-forward-token-2 1 nil (c-point 'eol)))
 	      (vector (current-column))
 	    (back-to-indentation)
 	    (vector (+ (current-column) c-basic-offset)))
@@ -681,15 +681,15 @@ arglist-cont-nonempty."
 
 	(when (and operator
 		   (looking-at operator)
-		   (zerop (c-backward-token-1 1 t stmt-start))
+		   (zerop (c-backward-token-2 1 t stmt-start))
 		   (eq (char-after) ?\()
-		   (zerop (c-backward-token-1 2 t stmt-start))
+		   (zerop (c-backward-token-2 2 t stmt-start))
 		   (looking-at operator))
 	  (setq col (current-column))
 
-	  (while (and (zerop (c-backward-token-1 1 t stmt-start))
+	  (while (and (zerop (c-backward-token-2 1 t stmt-start))
 		      (eq (char-after) ?\()
-		      (zerop (c-backward-token-1 2 t stmt-start))
+		      (zerop (c-backward-token-2 2 t stmt-start))
 		      (looking-at operator))
 	    (setq col (current-column)))
 
@@ -731,7 +731,7 @@ Works with: template-args-cont."
       (beginning-of-line)
       (backward-up-list 1)
       (if (and (eq (char-after) ?<)
-	       (zerop (c-forward-token-1 1 nil (c-point 'eol))))
+	       (zerop (c-forward-token-2 1 nil (c-point 'eol))))
 	  (vector (current-column))))))
 
 (defun c-lineup-ObjC-method-call (langelem)

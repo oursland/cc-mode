@@ -635,7 +635,7 @@ This function does various newline cleanups based on the value of
 		     (c-skip-ws-backward)
 		     (setq mbeg (point))
 		     (eq (char-before) ?\)))
-		   (zerop (c-save-buffer-state nil (c-backward-token-1 1 t)))
+		   (zerop (c-save-buffer-state nil (c-backward-token-2 1 t)))
 		   (eq (char-after) ?\()
 		   (progn
 		     (setq tmp (point))
@@ -1203,7 +1203,7 @@ the open-parenthesis that starts a defun; see `beginning-of-defun'."
 	    ;; in a `c-opt-block-decls-with-vars-key' declaration, but
 	    ;; then we won't move significantly far here.
 	    (goto-char pos)
-	    (c-forward-token-1 0))
+	    (c-forward-token-2 0))
 
 	  (while (let ((start (point)))
 		   (c-end-of-decl-1)
@@ -1361,7 +1361,7 @@ function does not require the declaration to contain a brace block."
       ;; We try to be line oriented, unless there are several
       ;; declarations on the same line.
       (if (looking-at c-syntactic-eol)
-	  (c-backward-token-1 1 nil (c-point 'bol)))
+	  (c-backward-token-2 1 nil (c-point 'bol)))
       (set decl-limits (c-declaration-limits t)))
 
     (if (not decl-limits)
@@ -2107,8 +2107,8 @@ continuation backslashes, unless `c-auto-align-backslashes' is nil."
 	    ;; We try to be line oriented, unless there are several
 	    ;; declarations on the same line.
 	    (if (looking-at c-syntactic-eol)
-		(c-backward-token-1 1 nil (c-point 'bol))
-	      (c-forward-token-1 0 nil (c-point 'eol)))
+		(c-backward-token-2 1 nil (c-point 'bol))
+	      (c-forward-token-2 0 nil (c-point 'eol)))
 	    (setq decl-limits (c-declaration-limits nil)))
 	  (if decl-limits
 	      (c-indent-region (car decl-limits)
