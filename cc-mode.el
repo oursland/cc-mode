@@ -406,17 +406,15 @@ CC Mode by making sure the proper entries are present on
   ;; The default configuration already handles C++ comments, but we
   ;; need to add handling of C block comments.  A new filladapt token
   ;; `c-comment' is added for that.
-  (let ((re (concat "^[ \t]*\\(" c-comment-prefix-regexp "\\)"))
-	p)
+  (let (p)
     (setq p filladapt-token-table)
-    (while (and p
-		(not (eq (car-safe (cdr-safe (car-safe p))) 'c-comment)))
+    (while (and p (not (eq (car-safe (cdr-safe (car-safe p))) 'c-comment)))
       (setq p (cdr-safe p)))
     (if p
-	(setcar (car p) re)
+	(setcar (car p) c-comment-prefix-regexp)
       (setq filladapt-token-table
 	    (append (list (car filladapt-token-table)
-			  (list re 'c-comment))
+			  (list c-comment-prefix-regexp 'c-comment))
 		    (cdr filladapt-token-table)))))
   (unless (assq 'c-comment filladapt-token-match-table)
     (setq filladapt-token-match-table
@@ -493,6 +491,7 @@ CC Mode by making sure the proper entries are present on
 		   'signal-error-on-buffer-boundary
 		   ;; Variables that affect line breaking and comments.
 		   'auto-fill-mode
+		   'filladapt-mode
 		   'comment-multi-line
 		   'comment-start-skip
 		   'fill-prefix
@@ -502,9 +501,11 @@ CC Mode by making sure the proper entries are present on
 		   'c-comment-prefix-regexp
 		   'c-block-comment-prefix
 		   )))
-	(if (not (boundp 'defun-prompt-regexp))
-	    (delq 'defun-prompt-regexp vars)
-	  vars))
+	(unless (boundp 'defun-prompt-regexp)
+	  (delq 'defun-prompt-regexp vars))
+	(unless (boundp 'filladapt-mode)
+	  (delq 'filladapt-mode vars))
+	vars)
       (function
        (lambda ()
 	 (insert
