@@ -8,7 +8,7 @@
 ((topmost-intro . 96))
 ((topmost-intro . 96))
 ((topmost-intro-cont . 100))
-((knr-argdecl-intro . 155))
+((knr-argdecl-intro . 100))
 ((knr-argdecl . 155))
 ((knr-argdecl . 155))
 ((defun-open . 185))
