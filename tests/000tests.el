@@ -436,11 +436,12 @@ to be set as a file local variable.")
 (defvar cc-test-comp-buf nil)
 (defvar cc-test-comp-win nil)
 
-(defconst cc-test-clear-line-string (concat (make-string 40 ?\ ) "\r"))
+(defconst cc-test-clear-line-string (concat "\r" (make-string 40 ?\ ) "\r"))
 
 (defun cc-test-message (msg &rest args)
   (if noninteractive
-      (send-string-to-terminal (concat (apply 'format msg args) "\n"))
+      (send-string-to-terminal (concat cc-test-clear-line-string
+				       (apply 'format msg args) "\n"))
     (apply 'message msg args)))
 
 (defun cc-test-log (msg &rest args)
@@ -568,8 +569,8 @@ to be set as a file local variable.")
 	  (when check-faces
 	    (if noninteractive
 		(send-string-to-terminal
-		 (format "Testing %s (fonts)%s"
-			 filename cc-test-clear-line-string))
+		 (format "%sTesting %s (fonts)  "
+			 cc-test-clear-line-string filename))
 	      (message "Testing %s (fonts)" filename))
 
 	    (cc-test-force-font-lock-buffer)
@@ -579,8 +580,8 @@ to be set as a file local variable.")
 	  (when check-syntax
 	    (if noninteractive
 		(send-string-to-terminal
-		 (format "Testing %s (syntax)%s"
-			 filename cc-test-clear-line-string))
+		 (format "%sTesting %s (syntax)  "
+			 cc-test-clear-line-string filename))
 	      (message "Testing %s (syntax)" filename))
 
 	    ;; Collect the syntactic analysis of all lines.
@@ -629,8 +630,8 @@ to be set as a file local variable.")
 
 	  (if noninteractive
 	      (send-string-to-terminal
-	       (format "Testing %s%s"
-		       filename cc-test-clear-line-string))
+	       (format "%sTesting %s  "
+		       cc-test-clear-line-string filename))
 	    (message "Testing %s" filename))
 
 	  (unless error-found-p
