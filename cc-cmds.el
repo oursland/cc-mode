@@ -225,6 +225,18 @@ the brace is inserted inside a literal."
 		       c-auto-newline
 		       (or (c-lookup-lists syms syntax c-hanging-braces-alist)
 			   '(ignore before after)))))
+	;; Do not try to insert newlines around a special (Pike-style)
+	;; brace list.
+	(if (and c-special-brace-lists
+		 (c-intersect-lists '(brace-list-open brace-list-close
+				      brace-list-intro brace-entry-open)
+				    syntax)
+		 (save-excursion
+		   (c-safe (if (= (char-before) ?{)
+			       (forward-char -1)
+			     (forward-sexp -1))
+			   (c-looking-at-special-brace-list))))
+	    (setq newlines nil))
 	;; If syntax is a function symbol, then call it using the
 	;; defined semantics.
 	(if (and (not (consp (cdr newlines)))
@@ -558,13 +570,10 @@ value of `c-cleanup-list'."
 
 (defun c-electric-lt-gt (arg)
   "Insert a less-than, or greater-than character.
-When the auto-newline feature is turned on, as evidenced by the \"/a\"
-or \"/ah\" string on the mode line, the line will be re-indented if
-the character inserted is the second of a C++ style stream operator
-and the buffer is in C++ mode.
-
-The line will also not be re-indented if a numeric argument is
-supplied, or point is inside a literal."
+The line will be re-indented if the character inserted is the second
+of a C++ style stream operator and the buffer is in C++ mode.
+Exceptions are when a numeric argument is supplied, or point is inside
+a literal, in which case the line will not be re-indented."
   (interactive "*P")
   (let ((indentp (and (not arg)
 		      (eq (char-before) last-command-char)
@@ -577,7 +586,6 @@ supplied, or point is inside a literal."
 
 (defun c-electric-paren (arg)
   "Insert a parenthesis.
-
 Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the colon, or
 the colon is inserted inside a literal."
@@ -880,7 +888,8 @@ comment."
    c-electric-star
    c-electric-semi&comma
    c-electric-lt-gt
-   c-electric-colon))
+   c-electric-colon
+   c-electric-paren))
 (put 'c-electric-delete    'delete-selection 'supersede) ; delsel
 (put 'c-electric-delete    'pending-delete   'supersede) ; pending-del
 (put 'c-electric-backspace 'delete-selection 'supersede) ; delsel
