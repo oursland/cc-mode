@@ -6,38 +6,44 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-08 19:24:06 $
-;; Version:         $Revision: 2.39 $
+;; Last Modified:   $Date: 1992-05-08 20:47:38 $
+;; Version:         $Revision: 2.40 $
 
+;; Do a "C-h m" in a c++-mode buffer for more information on customizing
+;; c++-mode.
+;;
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
+;;
+;; To submit bug reports hit "C-c b" in a c++-mode buffer. This runs
+;; the command c++-submit-bug-report and automatically sets up the
+;; mail buffer with all the necessary information.
 ;;
 ;; Want to be a c++-mode victim, er, beta-tester?  Send add/drop
 ;; requests to c++-mode-victims-request@anthem.nlm.nih.gov.
 ;; Discussions go to c++-mode-victims@anthem.nlm.nih.gov, but bug
 ;; reports and such should still be sent to c++-mode-help only.
 ;;
-;; The latest version of this file should always be available for
-;; anonymous ftp on the elisp archive machine:
-;; archive.cis.ohio-state.edu.  For those of you without aftp access,
-;; try sending a message to the mail-server at library@cme.nist.gov.
-;; Put "send pub/gnu/c++-mode.el" in the body of the message (without
-;; the quotes) to get the file in uuencoded format, or send the
-;; message "help" to get more information from the mail-server.
-;; Please don't email me asking for the latest version, I may not have
-;; it readily available to send to you. The mail-server should get it
-;; to you pretty quickly.
-;;
-;; Do a "C-h m" in a c++-mode buffer for more information on customizing
-;; c++-mode.
-;;
-;; Do a "C-h f c++-dump-state" for more information on submitting bug
-;; reports.
+;; The latest release (non-beta) version of this file should always be
+;; available for anon-ftp on ftp.cme.nist.gov:pub/gnu/c++-mode.el. It
+;; will also most likely be available on the elisp archive machine:
+;; archive.cis.ohio-state.edu.
+;; 
+;; For those of you without aftp access, try sending a message to the
+;; mail-server at library@cme.nist.gov.  Put this message in the body
+;; of your email: "send pub/gnu/c++-mode.el" (without the quotes) to
+;; get the file in uuencoded format, or send the message "help" to get
+;; more information about using the mail-server.  Please don't email
+;; me asking for the latest version, I may not have it readily
+;; available to send to you. The mail-server should get it to you
+;; pretty quickly.  Remember that if you want advanced access to beta
+;; releases, get on the victims list -- but be forewarned, you should
+;; be elisp-fluent to be a beta tester.
 ;;
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-08 19:24:06 $|$Revision: 2.39 $|
+;; |$Date: 1992-05-08 20:47:38 $|$Revision: 2.40 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -76,6 +82,7 @@
   (define-key c++-mode-map "]"         'c++-tame-insert)
   (define-key c++-mode-map "("         'c++-tame-insert)
   (define-key c++-mode-map ")"         'c++-tame-insert)
+  (define-key c++-mode-map "\C-cb"     'c++-submit-bug-report)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -162,8 +169,13 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-newline)
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
+(defvar c++-mailer 'mail
+  "*Mail package to use to generate bug report mail buffer.")
+(defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
+  "Address accepting submission of bug reports.")
+
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.39 $
+  "Major mode for editing C++ code.  $Revision: 2.40 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1486,25 +1498,15 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.39 $"
+(defconst c++-version "$Revision: 2.40 $"
   "c++-mode version number.")
-
-(defconst c++-mode-state-buffer "*c++-mode-buffer*"
-  "Buffer name of c++-mode state dump.")
 
 (defun c++-dump-state ()
   "Inserts into the c++-mode-state-buffer the current state of
-c++-mode for a particular c++-mode buffer.
+c++-mode into the bug report mail buffer.
 
-For bug reports, please do the following:
-     <from a c++-mode buffer>
-     M-x c++-dump-state
-     <switch to the mail buffer>
-     M-x insert-buffer RET *c++-mode-state* RET
-
-Send bug reports to c++-mode-help@anthem.nlm.nih.gov"
-  (interactive)
-  (let ((buffer (get-buffer-create c++-mode-state-buffer))
+Use \\[c++-submit-bug-report] to submit a bug report."
+  (let ((buffer (current-buffer))
 	(varlist (list 'c++-continued-member-init-offset
 		       'c++-member-init-indent
 		       'c++-friend-offset
@@ -1532,22 +1534,34 @@ Send bug reports to c++-mode-help@anthem.nlm.nih.gov"
 		       'tab-width
 		       )))
     (set-buffer buffer)
-    (emacs-lisp-mode)
-    (erase-buffer)
-    (beginning-of-buffer)
     (insert (emacs-version) "\n")
     (insert "c++-mode.el " c++-version
 	    "\n\ncurrent state:\n==============\n(setq\n")
     (mapcar
-     (function (lambda (varsym)
-		 (insert "     "
-			 (symbol-name varsym) " "
-			 (prin1-to-string (eval varsym))
-			 "\n")))
+     (function
+      (lambda (varsym)
+	(let ((val (eval varsym))
+	      (sym (symbol-name varsym)))
+	  (insert "     " sym " "
+		  (if (or (listp val) (symbolp val)) "'" "")
+		  (prin1-to-string val)
+		  "\n"))))
      varlist)
-    (insert "     )\n")
-    (indent-region (point-min) (point-max) nil)
-    (goto-char (point-min))
-    (switch-to-buffer-other-window buffer)
-    (message "Please insert buffer %s into your mail message."
-	     c++-mode-state-buffer)))
+    (insert "     )\n")))
+
+(defun c++-submit-bug-report ()
+  "Submit via mail a bug report using the mailer in c++-mailer."
+  (interactive)
+  (funcall c++-mailer)
+  (insert c++-mode-help-address)
+  (if (re-search-forward "^subject:[ \t]+" (point-max) 'move)
+      (insert "Bug in c++-mode.el " c++-version))
+  (if (not (re-search-forward mail-header-separator (point-max) 'move))
+      (progn (goto-char (point-max))
+	     (insert "\n" mail-header-separator "\n")
+	     (goto-char (point-max)))
+    (forward-line 1))
+  (set-mark (point))			;user should see mark change
+  (insert "\n\n")
+  (c++-dump-state)
+  (exchange-point-and-mark))
