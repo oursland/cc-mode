@@ -24,7 +24,7 @@ EXTRAFILES=\
  COPYING \
  cc-guess.el \
  cc-lobotomy.el \
- cc-mode-19.el
+ cc-fix.el
 
 all: bytecomp
 
@@ -112,3 +112,8 @@ spotless: clean
 	$(RM) -r html
 	$(RM) cc-mode.dvi cc-mode*.ps
 	$(RM) -r dist
+
+rcs2log:
+	@rcs2log -u "mast	Martin Stjernholm	bug-cc-mode@gnu.org" \
+		-u "acmacm	Alan Mackenzie	bug-cc-mode@gnu.org" \
+		-l 74 cc-*.el
