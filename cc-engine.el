@@ -3376,8 +3376,9 @@ This function does not do any hidden buffer changes."
   ;; following token.  t is returned in that case, otherwise the point
   ;; stays and nil is returned.  The kind of clauses that are
   ;; recognized are those specified by `c-type-list-kwds',
-  ;; `c-ref-list-kwds', `c-colon-type-list-kwds', `c-paren-type-kwds',
-  ;; `c-<>-type-kwds', and `c-<>-arglist-kwds'.
+  ;; `c-ref-list-kwds', `c-colon-type-list-kwds',
+  ;; `c-paren-nontype-kwds', `c-paren-type-kwds', `c-<>-type-kwds',
+  ;; and `c-<>-arglist-kwds'.
 
   (let ((kwd-sym (c-keyword-sym (match-string 1))) safe-pos pos)
     (when kwd-sym
@@ -3396,14 +3397,15 @@ This function does not do any hidden buffer changes."
 	;; There's a name directly after a keyword in `c-ref-list-kwds'.
 	(c-forward-id-comma-list ref))
 
-       ((and (c-keyword-member kwd-sym 'c-paren-type-kwds)
+       ((and (c-keyword-member kwd-sym 'c-paren-any-kwds)
 	     (eq (char-after) ?\())
-	;; There's an open paren after a keyword in `c-paren-type-kwds'.
+	;; There's an open paren after a keyword in `c-paren-any-kwds'.
 
 	(forward-char)
 	(when (and (setq pos (c-up-list-forward))
 		   (eq (char-before pos) ?\)))
-	  (when c-record-type-identifiers
+	  (when (and c-record-type-identifiers
+		     (c-keyword-member kwd-sym 'c-paren-type-kwds))
 	    ;; Use `c-forward-type' on every identifier we can find
 	    ;; inside the paren, to record the types.
 	    (while (c-syntactic-re-search-forward c-symbol-start pos t)
@@ -5745,7 +5747,7 @@ brace."
 		       (when (eq char-after-ip ?,)
 			 (skip-chars-forward " \t")
 			 (forward-char))
-		       (looking-at c-opt-decl-spec-key)))
+		       (looking-at c-opt-postfix-decl-spec-key)))
 		(and (or (eq char-before-ip ?:)
 			 ;; watch out for scope operator
 			 (save-excursion
@@ -5769,7 +5771,7 @@ brace."
 			   cont done)
 		       (save-excursion
 			 (while (not done)
-			   (cond ((looking-at c-opt-decl-spec-key)
+			   (cond ((looking-at c-opt-postfix-decl-spec-key)
 				  (setq injava-inher (cons cont (point))
 					done t))
 				 ((or (not (c-safe (c-forward-sexp -1) t))
@@ -6158,7 +6160,7 @@ brace."
 	       (save-excursion
 		 (goto-char indent-point)
 		 (skip-chars-forward " \t")
-		 (looking-at c-opt-decl-spec-key)))
+		 (looking-at c-opt-postfix-decl-spec-key)))
 	  (goto-char indent-point)
 	  (skip-chars-forward " \t")
 	  (cond
