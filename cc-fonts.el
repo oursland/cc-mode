@@ -2644,7 +2644,7 @@ need for `pike-font-lock-extra-types'.")
 
 (defconst javadoc-font-lock-doc-comments
   `(("{@[a-z]+[^}\n\r]*}"		; "{@foo ...}" markup.
-     0 ,(progn (message "foo") c-doc-markup-face-name) prepend nil)
+     0 ,c-doc-markup-face-name prepend nil)
     ("^\\(/\\*\\)?[ \t*]*\\(@[a-z]+\\)" ; "@foo ..." markup.
      2 ,c-doc-markup-face-name prepend nil)
     (,(concat "</?\\sw"			; HTML tags.
