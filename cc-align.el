@@ -624,8 +624,8 @@ indentation amount."
     (while syntax
       (setq langelem (car (car syntax))
 	    syntax (cdr syntax))
-      ;; don't adjust comment-only lines
-      (cond ((eq langelem 'comment-intro)
+      ;; don't adjust macro or comment-only lines
+      (cond ((memq langelem '(cpp-macro comment-intro))
 	     (setq syntax nil))
 	    ((memq langelem non-top-levels)
 	     (save-excursion
