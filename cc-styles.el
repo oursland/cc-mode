@@ -30,7 +30,8 @@
 
 (eval-when-compile
   (let ((load-path
-	 (if (boundp 'byte-compile-current-file)
+	 (if (and (boundp 'byte-compile-current-file)
+		  (stringp byte-compile-current-file))
 	     (cons (file-name-directory byte-compile-current-file)
 		   load-path)
 	   load-path)))

@@ -89,7 +89,8 @@
   (let ((load-path
 	 ;; Try to make sure the source directory is at the front of
 	 ;; load-path when we load cc-defs.
-	 (if (boundp 'byte-compile-current-file)
+	 (if (and (boundp 'byte-compile-current-file)
+		  (stringp byte-compile-current-file))
 	     ;; byte-compile-current-file is set by the byte compiler
 	     ;; to the full path to this file.
 	     (cons (file-name-directory byte-compile-current-file)
