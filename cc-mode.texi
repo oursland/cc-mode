@@ -1,0 +1,116 @@
+\input texinfo  @comment -*-texinfo-*-
+@comment $Revision: 1.2 $
+@comment %**start of header (This is for running Texinfo on a region.)
+@setfilename cc-mode.info
+@settitle Combined C/C++ Mode User's Manual
+@iftex
+@finalout
+@end iftex
+@c @setchapternewpage odd		% For book style double sided manual.
+@comment %**end of header (This is for running Texinfo on a region.)
+@c      @smallbook
+@tex
+\overfullrule=0pt
+%\global\baselineskip 30pt      % For printing in double spaces
+@end tex
+@ifinfo
+This document describes CC-Mode, a combined C and C++ editing mode for
+the GNU Emacs editor.
+
+Copyright @copyright{} 1993 Barry A@. Warsaw
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@ignore
+Permission is granted to process this file through TeX and print the
+results, provided the printed document carries copying permission
+notice identical to this one except for the removal of this paragraph
+(this paragraph not being relevant to the printed manual).
+
+@end ignore
+@end ifinfo
+@c
+@titlepage
+@sp 6
+@center @titlefont{CC Mode User's Manual}
+@sp 2
+@center @titlefont{Combined C/C++ Editing Mode}
+@sp 4
+@center Manual Revision: $Revision: 1.2 $
+@center November 1993
+@sp 5
+@center Barry A@. Warsaw
+@center @t{bwarsaw@@cen.com}
+@center @t{@dots{}!uunet!cen.com!bwarsaw}
+@page
+@vskip 0pt plus 1filll
+Copyright @copyright{} 1993 Barry A@. Warsaw
+
+Permission is granted to make and distribute verbatim copies of
+this manual provided the copyright notice and this permission notice
+are preserved on all copies.
+
+@end titlepage
+@page
+@ifinfo
+@node Top, Introduction, (dir), (dir)
+@comment  node-name,  next,  previous,  up
+
+This document describes CC-Mode, a package for editing C and C++ code
+for the GNU Emacs editor.  The manual is divided into the following
+chapters.
+
+@menu
+* Introduction::
+* Thanks and History::
+* The CC-Mode Mailing List::
+
+* Concept Index::
+* Command Index::
+* Key Index::
+* Variable Index::
+@end menu
+@end ifinfo
+
+@node  Introduction, Usage Overview, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter Introduction
+@ifinfo
+
+@end ifinfo
+@cindex ARM, The
+CC-Mode is a GNU Emacs package written entirely in Emacs Lisp.  It is
+used to edit C and C++ code and provides customizable indentation
+styles and other conveniences for writing, using, and maintaining C
+and C++ programs.  CC-Mode supports both ANSI-C style prototyped
+headers and K&R style function declarations.  CC-Mode also supports
+C++ code, using the Annotated C++ Reference Manual (a.k.a. @dfn{The
+ARM}) as a standard. @xref{References}.
+
+@node  Customizing Indentation, Usage Overview, Top, Top
+@comment  node-name,  next,  previous,  up
+@chapter Customizing Indentation
+@ifinfo
+
+@end ifinfo
+@cindex semantics
+@cindex langelem
+Unlike BOCM and c++-mode, indentation customization in CC-Mode is much
+more intuitive and flexible.  This is because indentation for a
+particular line is split into two distinct steps.  First, CC-Mode tries
+to determine the @dfn{semantics} of the line.  In other words, what
+semantic role in the source code does the line play?  Is it a label?  Is
+it the first statement in a block?  CC-Mode will first analyze the line,
+generating a list of language elements (abbreviated here as
+@dfn{langelems}) describing the semantics of the line.
+
+@vindex{c-offsets-alist}
+@vindex{c-basic-offset}
+After the semantic list is generated, CC-Mode calculates the indentation
+offset of the line by added up the individual offset values for each
+langelem on the list.  The association list @var{c-offsets-alist}
+contains a customizable list associating langelems with offsets.  These
+offsets are usually described in terms of a basic indentation value, as
+described in the variable @var{c-basic-offset}.
