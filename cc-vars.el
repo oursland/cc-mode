@@ -763,18 +763,28 @@ can always override the use of `c-default-style' by making calls to
 		  (const :format "Other " other) (string :format "%v"))))
   :group 'c)
 
+;; *) At the start of a statement means in more detail: At the
+;; closest preceding statement that starts at boi and doesn't have a
+;; label or comment at that position.  If there's no such statement
+;; within the same block, then back up to surrounding block or
+;; statement, add the appropriate statement-block-intro,
+;; defun-block-intro or substatement syntax symbol and continue
+;; searching.
 (c-set-stylevar-fallback 'c-offsets-alist
      '((string                . c-lineup-dont-change)
        ;; Relpos: Beg of previous line.
        (c                     . c-lineup-C-comments)
        ;; Relpos: Beg of the comment.
        (defun-open            . 0)
-       ;; Relpos: Boi at the func decl start when inside classes, bol
-       ;; at the func decl start when at top level.
+       ;; Relpos: When inside a class: Boi at the func decl start.
+       ;; When at top level: Bol at the func decl start.  When inside
+       ;; a code block (only possible in Pike): At the func decl
+       ;; start(*).
        (defun-close           . 0)
-       ;; Relpos: Boi at the func decl start.
+       ;; Relpos: At the defun block open if it's at boi, otherwise
+       ;; boi at the func decl start.
        (defun-block-intro     . +)
-       ;; Relpos: Boi at the block open.
+       ;; Relpos: At the block open(*).
        (class-open            . 0)
        ;; Relpos: Boi at the class decl start.
        (class-close           . 0)
@@ -783,9 +793,10 @@ can always override the use of `c-default-style' by making calls to
        ;; Relpos: None for functions (inclass got the relpos then),
        ;; boi at the lambda start for lambdas.
        (inline-close          . 0)
-       ;; Relpos: For functions: Boi at the func decl start.  For
-       ;; lambdas: At the block open if it's at boi, at the boi of the
-       ;; lambda start otherwise.
+       ;; Relpos: Inexpr functions: At the lambda block open if it's
+       ;; at boi, else at the statement(*) at boi of the start of the
+       ;; lambda construct.  Otherwise: At the inline block open if
+       ;; it's at boi, otherwise boi at the func decl start.
        (func-decl-cont        . +)
        ;; Relpos: Boi at the func decl start.
        (knr-argdecl-intro     . +)
@@ -808,12 +819,12 @@ can always override the use of `c-default-style' by making calls to
        ;; decl start if the first inherit clause hangs and it's not a
        ;; func-local inherit clause (when does that occur?).
        (block-open            . 0)
-       ;; Relpos: Inexpr statement: Boi at the the preceding
-       ;; paren.  Otherwise: None.
+       ;; Relpos: Inexpr statement: At the statement(*) at boi of the
+       ;; start of the inexpr construct.  Otherwise: None.
        (block-close           . 0)
-       ;; Relpos: At the open brace if it's at boi.  Otherwise boi at
-       ;; the start of the statement the open brace hangs on, or boi
-       ;; at the preceding paren for inexpr statements.
+       ;; Relpos: Inexpr statement: At the inexpr block open if it's
+       ;; at boi, else at the statement(*) at boi of the start of the
+       ;; inexpr construct.  Otherwise: At the block open(*).
        (brace-list-open       . 0)
        ;; Relpos: Boi at the brace list decl start, but a starting
        ;; "typedef" token is ignored.
@@ -828,49 +839,40 @@ can always override the use of `c-default-style' by making calls to
        (brace-entry-open      . 0)
        ;; Relpos: Same as brace-list-entry.
        (statement             . 0)
-       ;; Relpos: After a ';' in the condition clause of a for
+       ;; Relpos: After a `;' in the condition clause of a for
        ;; statement: At the first token after the starting paren.
-       ;; Otherwise: Boi at the start of the closest non-hanging
-       ;; previous statement, but after any switch label.
+       ;; Otherwise: At the preceding statement(*).
        (statement-cont        . +)
        ;; Relpos: After the first token in the condition clause of a
        ;; for statement: At the first token after the starting paren.
-       ;; On the first line in a continued expression that starts with
-       ;; a stream op and there's no stream op on the previous line:
-       ;; Boi of previous line.  Otherwise: At the containing
-       ;; statement, after backing up over any preceding labels and
-       ;; the "else" of an "else if" that are on the same line.
+       ;; Otherwise: At the containing statement(*).
        (statement-block-intro . +)
-       ;; Relpos: At the block start if it's at boi, otherwise boi at
-       ;; the start of the statement the open brace hangs on, or boi
-       ;; at the preceding paren for inexpr statements.
+       ;; Relpos: In inexpr statement block: At the inexpr block open
+       ;; if it's at boi, else at the statement(*) at boi of the start
+       ;; of the inexpr construct.  Otherwise: At the start of the
+       ;; containing block(*).
        (statement-case-intro  . +)
-       ;; Relpos: At the label keyword (always at boi).
+       ;; Relpos: At the case/default label(*).
        (statement-case-open   . 0)
-       ;; Relpos: At the label keyword (always at boi).
+       ;; Relpos: At the case/default label(*).
        (substatement          . +)
-       ;; Relpos: At the containing statement, after backing up over
-       ;; any preceding labels and the "else" of an "else if" that are
-       ;; on the same line.
+       ;; Relpos: At the containing statement(*).
        (substatement-open     . +)
-       ;; Relpos: At the containing statement, after backing up over
-       ;; any preceding labels and the "else" of an "else if" that are
-       ;; on the same line.
+       ;; Relpos: At the containing statement(*).
+       (substatement-label    . *)
+       ;; Relpos: At the containing statement(*).
        (case-label            . 0)
-       ;; Relpos: At the switch block start if it's at boi, otherwise
-       ;; boi at the start of the switch condition clause.
+       ;; Relpos: At the start of the switch block(*).
        (access-label          . -)
-       ;; Relpos: Eol (a bug?).
+       ;; Relpos: None (always used in combination with inclass).
        (label                 . 2)
-       ;; Relpos: At the start of the containing block if it's at boi,
-       ;; otherwise boi at the start of the sexp before the block.
+       ;; Relpos: At the start of the containing block(*).
        (do-while-closure      . 0)
-       ;; Relpos: Boi at the corresponding while keyword.
+       ;; Relpos: At the corresponding while statement(*).
        (else-clause           . 0)
-       ;; Relpos: Boi at the corresponding if keyword.
+       ;; Relpos: At the corresponding if statement(*).
        (catch-clause          . 0)
-       ;; Relpos: Boi at the previous try or catch keyword in the try
-       ;; statement.
+       ;; Relpos: At the previous try or catch statement clause(*).
        (comment-intro         . c-lineup-comment)
        ;; Relpos: None.
        (arglist-intro         . +)
@@ -1028,12 +1030,13 @@ Here is the current list of valid syntactic element symbols:
  statement-case-open    -- The first line in a case block starting with brace.
  substatement           -- The first line after an if/while/for/do/else.
  substatement-open      -- The brace that opens a substatement block.
- case-label             -- A `case' or `default' label.
+ substatement-label     -- Labelled line after an if/while/for/do/else.
+ case-label             -- A \"case\" or \"default\" label.
  access-label           -- C++ private/protected/public access label.
  label                  -- Any ordinary label.
- do-while-closure       -- The `while' that ends a do/while construct.
- else-clause            -- The `else' of an if/else construct.
- catch-clause           -- The `catch' or `finally' of a try/catch construct.
+ do-while-closure       -- The \"while\" that ends a do/while construct.
+ else-clause            -- The \"else\" of an if/else construct.
+ catch-clause           -- The \"catch\" or \"finally\" of a try/catch construct.
  comment-intro          -- A line containing only a comment introduction.
  arglist-intro          -- The first line in an argument list.
  arglist-cont           -- Subsequent argument list lines when no
