@@ -37,7 +37,7 @@
 @c main (X)Emacs manual and the Elisp/Lispref manual.  Set the
 @c Texinfo variable `X' to generate an XEmacs version, leave it unset
 @c to generate a GNU Emacs version.
-@ifset X
+@ifset XEMACS
 @macro emacsman
 xemacs
 @end macro
@@ -52,7 +52,7 @@ lispref
 @end macro
 @end ifset
 
-@ifclear X
+@ifclear XEMACS
 @macro emacsman
 emacs
 @end macro
@@ -160,9 +160,9 @@ functions, classes etc - there are other packages for that.
 * Config Strategies::           
 * Custom Filling and Breaking::  
 * Custom Auto-newlines::        
-* Indentation Engine::          
+* Indentation Engine Basics::   
 * Customizing Indentation::     
-* Macro Handling::              
+* Custom Macros::               
 * Advanced Customizations::     
 * Odds and Ends::               
 * Sample .emacs File::          
@@ -223,7 +223,7 @@ Hanging Braces
 
 * Custom Braces::               
 
-Indentation Engine
+Indentation Engine Basics
 
 * Syntactic Analysis::          
 * Syntactic Symbols::           
@@ -439,10 +439,10 @@ such as @samp{;} which, as well as inserting themselves, also do other
 things.
 
 You might well want to review
-@ifset X
+@ifset XEMACS
 @ref{Lists,,,@emacsman{}, @emacsmantitle{}},
 @end ifset
-@ifclear X
+@ifclear XEMACS
 @ref{Moving by Parens,,,@emacsman{}, @emacsmantitle{}},
 @end ifclear
 which describes commands for moving around brace and parenthesis
@@ -473,11 +473,23 @@ your changes.
 
 @cindex GNU indent program
 Also, variables like @code{c-hanging-*} and @code{c-cleanup-list}
-only affect how on-the-fly code is formatted.  Changing the
-``hanginess'' of a brace and then reindenting, will not move the brace
-to a different line.  For this, you're better off getting an external
-program like GNU @code{indent}, which will rearrange brace location,
-amongst other things.
+(@pxref{Custom Auto-newlines}) only affect how on-the-fly code is
+formatted.  Changing the ``hanginess'' of a brace and then
+reindenting, will not move the brace to a different line.  For this,
+you're better off getting an external program like GNU @code{indent},
+which will rearrange brace location, amongst other things.
+
+Preprocessor directives are handled as syntactic whitespace from other
+code, i.e. they can be interspersed anywhere without affecting the
+indentation of the surrounding code, just like comments.
+
+The code inside macro definitions is, by default, still analyzed
+syntactically so that you get relative indentation there just as you'd
+get if the same code was outside a macro.  However, since there is no
+hint about the syntactic context, i.e. whether the macro expands to an
+expression, to some statements, or perhaps to whole functions, the
+syntactic recognition can be wrong.  @ccmode{} manages to figure it
+out correctly most of the time, though.
 
 Reindenting large sections of code can take a long time.  When
 @ccmode{} reindents a region of code, it is essentially equivalent to
@@ -826,7 +838,7 @@ the indentation engine.
 
 In macros it acts like @code{newline-and-indent} but additionally
 inserts and optionally aligns the line ending backslash so that the
-macro remains unbroken.  @xref{Macro Handling}, for details about the
+macro remains unbroken.  @xref{Custom Macros}, for details about the
 backslash alignment.
 
 It's not bound to a key by default, but it's intended to be used on the
@@ -1276,6 +1288,36 @@ In C++, it is also sometimes desirable to insert the double-colon scope
 operator without performing the electric behavior of colon insertion.
 @kbd{C-c :} does just this.
 
+@item @kbd{C-c C-\} (@code{c-backslash-region})
+@kindex C-c C-\
+@findex c-backslash-region
+@findex backslash-region (c-)
+This function inserts and aligns or deletes end-of-line backslashes in
+the current region.  These are typically used in multi-line macros.
+
+With no prefix argument, it inserts any missing backslashes and aligns
+them according to the @code{c-backslash-column} and
+@code{c-backslash-max-column} variables.  With a prefix argument, it
+deletes any backslashes.
+
+The function does not modify blank lines at the start of the region.  If
+the region ends at the start of a line, it always deletes the backslash
+(if any) at the end of the previous line.
+
+To customize the precise workings of this command, @ref{Custom Macros}.
+@end table
+
+@noindent
+The recommended line breaking function, @code{c-context-line-break}
+(@pxref{Filling and Breaking}), is especially nice if you edit
+multiline macros frequently.  When used inside a macro, it
+automatically inserts and adjusts the mandatory backslash at the end
+of the line to keep the macro together, and it leaves the point at the
+right indentation column for the code.  Thus you can write code inside
+macros almost exactly as you can elsewhere, without having to bother
+with the trailing backslashes.
+
+@table @asis
 @item @kbd{C-c C-e} (@code{c-macro-expand})
 @kindex C-c C-e
 @findex c-macro-expand
@@ -1657,7 +1699,7 @@ escaped newline.  The @samp{\} is highlighted.
 @chapter Configuration Strategies
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@ccmode{} is configured by setting Lisp variables and possibly writing
+@ccmode{} is configured by setting Lisp variables and perhaps writing
 Lisp functions, which you will usually do by adding code to your
 @file{.emacs} file.  There are several ways you can write this code,
 depending on the precise effect you want:
@@ -1685,7 +1727,7 @@ start by typing @kbd{M-x customize-group @key{RET} c @key{RET}}.
 normally writes the customizations at the end of your @file{.emacs}
 file.  If you use @code{desktop-read} (@pxref{Saving Emacs Sessions,,,
 emacs, GNU Emacs Manual}), you should edit your @file{.emacs} to place
-the call to @code{desktop-read} @emph{after} them.
+the call to @code{desktop-read} @emph{after} the customizations.
 
 For basic use of Emacs, either of these ways of configuring is
 adequate.  However, the settings are then the same in all @ccmode{}
@@ -1698,7 +1740,7 @@ An Emacs @dfn{hook} is a place to put Lisp functions that you want
 Emacs to execute later in specific circumstances.
 @xref{Hooks,,,@lispref{}, @lispreftitle{}}.  @ccmode{} supplies an
 @dfn{initialization hook} for each language it supports - any
-functions you supply to this hook are executed as the last part of a
+functions you put into this hook get executed as the last part of a
 buffer's initialization.  Typically you use this flexibility to vary
 the customization settings between language modes.  (There is also a
 ``common'' hook for initializations to be shared by all these modes.)
@@ -1806,8 +1848,8 @@ also one general hook and one package initialization hook:
 @defvar c-initialization-hook
 @vindex initialization-hook (c-)
 Hook run only once per Emacs session, when @ccmode{} is initialized.
-This is a good place to add to or change any @ccmode key bindings.
-FIXME!!! clumsy phraseology, 2004/11/7.
+This is a good place to change key bindings (or add new ones) in any
+of the @ccmode{} key maps.  @xref{Sample .emacs File}.
 @end defvar
 
 @defvar c-mode-common-hook
@@ -1832,12 +1874,13 @@ them values before @ccmode{}'s code is loaded - indeed, this is the
 only way to use @code{c-initialization-hook}.  Their values aren't
 overwritten when @ccmode{} gets loaded.
 
-Note that all the language-specific mode setup that CC Mode does is done
-prior to both @code{c-mode-common-hook} and the language specific hook.
-That includes installing the indentation style, which can be mode
-specific (and also is by default for Java mode).  Thus, any style
-settings done in @code{c-mode-common-hook} will override whatever
-language-specific style is chosen by @code{c-default-style}.
+Note that all the language-specific mode setup that CC Mode does is
+done prior to both @code{c-mode-common-hook} and the language specific
+hook.  That includes installing the indentation style, which can be
+mode specific (and is so by default for Awk mode and Java mode).
+Thus, any style settings done in @code{c-mode-common-hook} will
+override whatever language-specific style is chosen by
+@code{c-default-style}.
 
 Here's a simplified example of what you can add to your @file{.emacs}
 file to do things whenever any @ccmode{} language is edited.  See the
@@ -2420,7 +2463,7 @@ as one comment, and the rest of the paragraph handling code
 inconsistent behavior.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Custom Auto-newlines, Indentation Engine, Custom Filling and Breaking, Top
+@node    Custom Auto-newlines, Indentation Engine Basics, Custom Filling and Breaking, Top
 @comment node-name, next, previous, up
 @chapter Customizing Auto-newlines
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3050,9 +3093,9 @@ closing parenthesis is typed.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Engine, Customizing Indentation, Custom Auto-newlines, Top
+@node    Indentation Engine Basics, Customizing Indentation, Custom Auto-newlines, Top
 @comment node-name, next, previous, up
-@chapter Indentation Engine
+@chapter Indentation Engine Basics
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} has an indentation engine that provides a flexible and general
@@ -3086,7 +3129,7 @@ the indentation associated variables, e.g. @code{c-special-indent-hook}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Syntactic Analysis, Syntactic Symbols, Indentation Engine, Indentation Engine
+@node    Syntactic Analysis, Syntactic Symbols, Indentation Engine Basics, Indentation Engine Basics
 @comment node-name, next, previous, up
 @section Syntactic Analysis
 @cindex syntactic analysis
@@ -3214,7 +3257,7 @@ anchor position.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Syntactic Symbols, Indentation Calculation, Syntactic Analysis, Indentation Engine
+@node    Syntactic Symbols, Indentation Calculation, Syntactic Analysis, Indentation Engine Basics
 @comment node-name, next, previous, up
 @section Syntactic Symbols
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -3935,7 +3978,7 @@ The syntactic analysis inside macros can be turned off with
 pointing to the @code{#} which starts the cpp directive@footnote{This is
 how @ccmode{} 5.28 and earlier analyzed macros.}.
 
-@xref{Macro Handling}, for more info about the treatment of macros.
+@xref{Custom Macros}, for more info about the treatment of macros.
 
 In Objective-C buffers, there are three additional syntactic symbols
 assigned to various message calling constructs.  Here's an example
@@ -4057,7 +4100,7 @@ syntax.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Indentation Calculation,  , Syntactic Symbols, Indentation Engine
+@node    Indentation Calculation,  , Syntactic Symbols, Indentation Engine Basics
 @comment node-name, next, previous, up
 @section Indentation Calculation
 @cindex indentation
@@ -4155,7 +4198,7 @@ minibuffer when you hit @kbd{TAB}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Customizing Indentation, Macro Handling, Indentation Engine, Top
+@node    Customizing Indentation, Custom Macros, Indentation Engine Basics, Top
 @comment node-name, next, previous, up
 @chapter Customizing Indentation
 @cindex customization, indentation
@@ -5608,24 +5651,16 @@ current setting for the buffer local value of
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Macro Handling, Advanced Customizations, Customizing Indentation, Top
+@node    Custom Macros, Advanced Customizations, Customizing Indentation, Top
 @comment node-name, next, previous, up
-@chapter Macro Handling
+@chapter Customizing Macros
 @cindex macros
 @cindex preprocessor directives
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-Preprocessor directives are handled as syntactic whitespace from other
-code, i.e. they can be interspersed anywhere without affecting the
-syntactic analysis, just like comments.
-
-The code inside macro definitions is still analyzed syntactically so
-that you get relative indentation there just as you'd get if the same
-code was outside a macro.  However, since there is no hint about the
-syntactic context, i.e. whether the macro expands to an expression, to some
-statements, or perhaps to whole functions, the syntactic recognition can be
-wrong.  @ccmode{} manages to figure it out correctly most of the time,
-though.  @xref{Syntactic Symbols}, for details about the indentation.
+Normally, the lines in a multi-line macro are indented relative to
+eachother as though they were code.  You can suppress this behaviour
+by setting the following user option:
 
 @defopt c-syntactic-indentation-in-macros
 @vindex syntactic-indentation-in-macros (c-)
@@ -5635,25 +5670,8 @@ is @code{nil}, all lines inside macro definitions are analyzed as
 @end defopt
 
 @ccmode{} provides some tools to help keep the line continuation
-backslashes in macros neat and tidy:
-
-@table @asis
-@item @kbd{C-c C-\} (@code{c-backslash-region})
-@kindex C-c C-\
-@findex c-backslash-region
-@findex backslash-region (c-)
-This function inserts and aligns or deletes the end-of-line backslashes
-in the current region.
-
-With no prefix argument, it inserts any missing backslashes and aligns
-them according to the @code{c-backslash-column} and
-@code{c-backslash-max-column} variables.  With a prefix argument, it
-deletes any backslashes.
-
-The function does not modify blank lines at the start of the region.  If
-the region ends at the start of a line, it always deletes the backslash
-(if any) at the end of the previous line.
-@end table
+backslashes in macros neat and tidy.  Their precise action is
+customized with these variables:
 
 @defopt c-backslash-column
 @vindex backslash-column (c-)
@@ -5671,6 +5689,10 @@ backslashes, so that they remain in a single column.  However, if some
 lines exceed @code{c-backslash-max-column} then the backslashes in the
 rest of the macro will be kept at that column, so that the
 lines which are too long ``stick out'' instead.
+
+Don't ever set these variables to @code{nil}.  If you want to disable
+the automatic alignment of backslashes, use
+@code{c-auto-align-backslashes}.
 @end defopt
 
 @defopt c-auto-align-backslashes
@@ -5678,23 +5700,17 @@ lines which are too long ``stick out'' instead.
 Align automatically inserted line continuation backslashes if
 non-@code{nil}.  When line continuation backslashes are inserted
 automatically for line breaks in multiline macros, e.g. by
-@code{c-context-line-break}, they are aligned with the other backslashes
-in the same macro if this flag is set.  Otherwise the inserted
-backslashes are preceded by a single space.
+@code{c-context-line-break}, they are aligned with the other
+backslashes in the same macro if this flag is set.
+
+If @code{c-auto-align-backslashes} is @code{nil}, automatically
+inserted backslashes are preceded by a single space, and backslashes
+get aligned only when you explicitly invoke the command
+@code{c-backslash-region} (@kbd{C-c C-\}).
 @end defopt
 
-The recommended line breaking function, @code{c-context-line-break}
-(@pxref{Filling and Breaking}), is especially nice if you edit
-multiline macros frequently.  When used inside a macro, it
-automatically inserts and adjusts the mandatory backslash at the end
-of the line to keep the macro together, and it leaves the point at the
-right indentation column for the code.  Thus you can write code inside
-macros almost exactly as you can elsewhere, without having to bother
-with the trailing backslashes.
-
-
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node    Advanced Customizations, Odds and Ends, Macro Handling, Top
+@node    Advanced Customizations, Odds and Ends, Custom Macros, Top
 @comment node-name, next, previous, up
 @chapter Advanced Customizations
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -5769,7 +5785,7 @@ anchoring position to indent the line in that case.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Sample .emacs File, Performance Issues, Odds and Ends, Top
 @comment node-name, next, previous, up
-@appendix Sample .emacs file
+@appendix Sample .emacs File
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @example
@@ -6031,10 +6047,10 @@ indentation to go haywire.  What gives?}
 It's due to the ad-hoc rule in (X)Emacs that such open parens always
 start defuns (which translates to functions, classes, namespaces or any
 other top-level block constructs in the @ccmode{} languages).
-@ifset X
+@ifset XEMACS
 @xref{Defuns,,, xemacs, XEmacs User's Manual}, for details.
 @end ifset
-@ifclear X
+@ifclear XEMACS
 @xref{Left Margin Paren,,, emacs, GNU Emacs Manual}, for details
 (@xref{Defuns,,, emacs, GNU Emacs Manual}, in the Emacs 20 manual).
 @end ifclear
