@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.218 $
-;; Last Modified:   $Date: 1995-05-26 22:11:27 $
+;; Version:         $Revision: 4.219 $
+;; Last Modified:   $Date: 1995-05-30 23:11:57 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-26 22:11:27 $|$Revision: 4.218 $|
+;; |$Date: 1995-05-30 23:11:57 $|$Revision: 4.219 $|
 
 ;;; Code:
 
@@ -1142,6 +1142,8 @@ Key bindings:
   (make-local-variable 'comment-end)
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
+  (make-local-variable 'outline-regexp)
+  (make-local-variable 'outline-level)
   ;; now set their values
   (setq paragraph-start (concat "^$\\|" page-delimiter)
 	paragraph-separate paragraph-start
@@ -1150,6 +1152,8 @@ Key bindings:
 	parse-sexp-ignore-comments t
 	indent-line-function 'c-indent-line
 	indent-region-function 'c-indent-region
+	outline-regexp "[^#\n\^M]"
+	outline-level 'c-outline-level
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *")
   ;; setup the comment indent variable in a Emacs version portable way
@@ -1383,6 +1387,11 @@ global and affect all future `c-mode' buffers."
 		 comment-column))
 	 )))))
 
+;; used by outline-minor-mode
+(defun c-outline-level ()
+  (save-excursion
+    (skip-chars-forward "\t ")
+    (current-column)))
 
 ;; active regions, and auto-newline/hungry delete key
 (defun c-keep-region-active ()
@@ -4600,7 +4609,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.218 $"
+(defconst c-version "$Revision: 4.219 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
