@@ -35,8 +35,8 @@
 
 @c The following four macros generate the filenames and titles of the
 @c main (X)Emacs manual and the Elisp/Lispref manual.  Set the
-@c Texinfo variable `X' to generate an XEmacs version, leave it unset
-@c to generate a GNU Emacs version.
+@c Texinfo variable `XEMACS' to generate an XEmacs version, leave it
+@c unset to generate a GNU Emacs version.
 @ifset XEMACS
 @macro emacsman
 xemacs
@@ -432,8 +432,8 @@ This chapter specifies all of CC Mode's commands, and thus contains
 nearly everything you need to know to @emph{use} @ccmode{} (as
 contrasted with configuring it).  @dfn{Commands} here means both
 control key sequences and @dfn{electric keys}, these being characters
-such as @samp{;} which, as well as inserting themselves, also do other
-things.
+such as @samp{;} which, as well as inserting themselves into the
+buffer, also do other things.
 
 You might well want to review
 @ifset XEMACS
@@ -780,6 +780,11 @@ mode, sentence and paragraph movement, paragraph filling, adaptive
 filling etc. wherever there's a piece of normal text without having to
 think much about it.  @ccmode{} keeps the indentation, fixes the
 comment line decorations, and so on, for you.
+
+You can configure the exact way comments get filled and broken, and
+where Emacs does auto-filling (see @pxref{Custom Filling and
+Breaking}).  Typically, the style system (@pxref{Styles}) will set
+this up for you, so you probably won't have to bother.
 
 @findex auto-fill-mode
 @cindex Auto Fill mode
@@ -2153,7 +2158,7 @@ name of the @dfn{base style} from which this style inherits.  At most
 one @var{base-style} is allowed in a style definition.  If
 @var{base-style} is not specified, the style inherits from a table of
 default values@footnote{This table is stored internally in the
-variable c-fallback-style.  It is computed during the initialisation
+variable c-fallback-style.  It is computed during the initialization
 of @ccmode{} from the factory defaults of the style variables and any
 global values they may have been given since starting Emacs.} instead.
 All styles eventually inherit from this internal table.  Style loops
