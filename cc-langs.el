@@ -154,6 +154,8 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
   (concat c-C-block-stmt-1-kwds "\\|finally\\|try"))
 ;;(defconst c-IDL-block-stmt-1-kwds nil)
 (defconst c-Pike-block-stmt-1-kwds c-C-block-stmt-1-kwds)
+(defvar c-block-stmt-1-kwds "\\<\\>")	; Matches nothing.
+(make-variable-buffer-local 'c-block-stmt-1-kwds)
 
 ;; Statement keywords followed by a paren sexp and then by a block.
 (defconst c-C-block-stmt-2-kwds "for\\|if\\|switch\\|while")
@@ -163,6 +165,8 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
   (concat c-C++-block-stmt-2-kwds "\\|synchronized"))
 ;;(defconst c-IDL-block-stmt-2-kwds nil)
 (defconst c-Pike-block-stmt-2-kwds c-C-block-stmt-2-kwds)
+(defvar c-block-stmt-2-kwds "\\<\\>")	; Matches nothing.
+(make-variable-buffer-local 'c-block-stmt-2-kwds)
 
 ;; Statement keywords followed by an expression or nothing.
 (defconst c-C-simple-stmt-kwds "break\\|continue\\|goto\\|return")

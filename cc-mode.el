@@ -415,6 +415,8 @@ Key bindings:
   (c-common-init)
   (setq comment-start "/* "
 	comment-end   " */"
+	c-block-stmt-1-kwds (concat "\\(" c-C-block-stmt-1-kwds "\\)\\>[^_]")
+	c-block-stmt-2-kwds (concat "\\(" c-C-block-stmt-2-kwds "\\)\\>[^_]")
 	c-keywords (c-identifier-re c-C-keywords)
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C-class-key
@@ -480,6 +482,8 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end ""
+	c-block-stmt-1-kwds (concat "\\(" c-C++-block-stmt-1-kwds "\\)\\>[^_]")
+	c-block-stmt-2-kwds (concat "\\(" c-C++-block-stmt-2-kwds "\\)\\>[^_]")
 	c-keywords (c-identifier-re c-C++-keywords)
 	c-conditional-key c-C++-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
@@ -543,6 +547,8 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
 	comment-end   ""
+	c-block-stmt-1-kwds (concat "\\(" c-ObjC-block-stmt-1-kwds "\\)\\>[^_]")
+	c-block-stmt-2-kwds (concat "\\(" c-ObjC-block-stmt-2-kwds "\\)\\>[^_]")
 	c-keywords (c-identifier-re c-ObjC-keywords)
 	c-conditional-key c-ObjC-conditional-key
 	c-comment-start-regexp c-ObjC-comment-start-regexp
@@ -610,6 +616,8 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
  	comment-end   ""
+	c-block-stmt-1-kwds (concat "\\(" c-Java-block-stmt-1-kwds "\\)\\>[^_]")
+	c-block-stmt-2-kwds (concat "\\(" c-Java-block-stmt-2-kwds "\\)\\>[^_]")
 	c-keywords (c-identifier-re c-Java-keywords)
  	c-conditional-key c-Java-conditional-key
  	c-comment-start-regexp c-Java-comment-start-regexp
@@ -736,6 +744,8 @@ Key bindings:
   (c-common-init)
   (setq comment-start "// "
  	comment-end   ""
+	c-block-stmt-1-kwds (concat "\\(" c-Pike-block-stmt-1-kwds "\\)\\>[^_]")
+	c-block-stmt-2-kwds (concat "\\(" c-Pike-block-stmt-2-kwds "\\)\\>[^_]")
 	c-keywords (c-identifier-re c-Pike-keywords)
  	c-conditional-key c-Pike-conditional-key
 	c-comment-start-regexp c-Pike-comment-start-regexp
