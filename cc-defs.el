@@ -364,6 +364,20 @@ completely restored again.  Changes in text properties like `face' or
 `syntax-table' are considered insignificant.  This macro allows text
 properties to be changed, even in a read-only buffer.
 
+This macro should be placed around all calculations which set text
+properties in a buffer, even when the buffer is known to be writeable.
+That way, these text properties remain set even if the user undoes the
+command which set them.
+
+This macro should ALWAYS be placed around \"temporary\" internal buffer
+changes \(like adding a newline to calculate a text-property then
+deleting it again\), so that the user never sees them on his
+buffer-undo-list.
+
+However, any user-visible changes to the buffer \(like auto-newlines\)
+must not be within a c-save-buffer-state, since the user could not then
+undo them.
+
 The return value is the value of the last form in BODY."
   `(let* ((modified (buffer-modified-p)) (buffer-undo-list t)
 	  (inhibit-read-only t) (inhibit-point-motion-hooks t)

@@ -301,13 +301,14 @@ control).  See \"cc-mode.el\" for more info."
   (define-key c-mode-base-map "/"         'c-electric-slash)
   (define-key c-mode-base-map "\C-c\C-q"  'c-indent-defun)
   (define-key c-mode-base-map "\C-c\C-\\" 'c-backslash-region)
-  (define-key c-mode-base-map "\C-c\C-a"  'c-toggle-auto-state)
+  (define-key c-mode-base-map "\C-c\C-a"  'c-toggle-auto-newline)
   (define-key c-mode-base-map "\C-c\C-b"  'c-submit-bug-report)
   (define-key c-mode-base-map "\C-c\C-c"  'comment-region)
   (define-key c-mode-base-map "\C-c\C-d"  'c-toggle-hungry-state)
+  (define-key c-mode-base-map "\C-c\C-l"  'c-toggle-electric-state)
   (define-key c-mode-base-map "\C-c\C-o"  'c-set-offset)
   (define-key c-mode-base-map "\C-c\C-s"  'c-show-syntactic-information)
-  (define-key c-mode-base-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
+  ;; (define-key c-mode-base-map "\C-c\C-t"  'c-toggle-auto-hungry-state)  Commented out by ACM, 2005-03-05.
   (define-key c-mode-base-map "\C-c."     'c-set-style)
   ;; conflicts with OOBR
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)

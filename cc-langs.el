@@ -254,7 +254,7 @@ the evaluated constant value at compile time."
       "----"
       ("Toggle..."
        ["Syntactic indentation" c-toggle-syntactic-indentation t]
-       ["Auto newline"          c-toggle-auto-state t]
+       ["Auto newline"          c-toggle-auto-newline t]
        ["Hungry delete"         c-toggle-hungry-state t])))
 
 

@@ -165,6 +165,13 @@
 (defvar c-hungry-delete-key nil)
 (make-variable-buffer-local 'c-hungry-delete-key)
 
+;; The electric flag (toggled by `c-toggle-electric-state').
+;; If t, electric actions (like automatic reindentation, and (if
+;; c-auto-newline is also set) auto newlining) will happen when an electric
+;; key like `{' is pressed (or an electric keyword like `else').
+(defvar c-electric-flag t)
+(make-variable-buffer-local 'c-electric-flag)
+
 ;; Internal state of auto newline feature.
 (defvar c-auto-newline nil)
 (make-variable-buffer-local 'c-auto-newline)

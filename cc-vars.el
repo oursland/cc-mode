@@ -290,6 +290,7 @@ effect in this mode, nor any of the indentation associated variables,
 e.g. `c-special-indent-hook'."
   :type 'boolean
   :group 'c)
+(make-variable-buffer-local 'c-syntactic-indentation)
 
 (defcustom c-syntactic-indentation-in-macros t
   "*Enable syntactic analysis inside macros.
