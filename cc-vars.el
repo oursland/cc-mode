@@ -193,17 +193,19 @@ See `c-offsets-alist'."
       (eq offset '/)
       (integerp offset)
       (functionp offset)
-      (and (symbolp offset)
-	   (or (boundp offset)
-	       (fboundp offset)))
+      (and (symbolp offset) (boundp offset))
       (and (vectorp offset)
 	   (= (length offset) 1)
 	   (integerp (elt offset 0)))
-      (progn
-	(while (and (consp offset)
-		    (c-valid-offset (car offset)))
-	  (setq offset (cdr offset)))
-	(null offset))))
+      (and (consp offset)
+	   (not (eq (car offset) 'quote)) ; Detect misquoted lists.
+	   (progn
+	     (when (memq (car offset) '(first min max add))
+	       (setq offset (cdr offset)))
+	     (while (and (consp offset)
+			 (c-valid-offset (car offset)))
+	       (setq offset (cdr offset)))
+	     (null offset)))))
 
 
 
