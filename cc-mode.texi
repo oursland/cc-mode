@@ -293,7 +293,7 @@ where @samp{XX} is the minor release number.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Indentation Engine, Minor Modes, Getting Connected, Top
 @comment node-name, next, previous, up
-@chapter    New Indentation Engine
+@chapter    Indentation Engine
 @cindex indentation engine
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -3894,14 +3894,14 @@ brace block.
 @findex c-lineup-arglist-close-under-paren
 @findex lineup-arglist-close-under-paren (c-)
 @item c-lineup-arglist-close-under-paren
-Set e.g. your @code{arglist-close} syntactic symbol to this line-up
-function so that parentheses that close argument lists will line up
-under the parenthesis that opened the argument list.
+Set your @code{arglist-close} syntactic symbol to this line-up function
+so that parentheses that close argument lists will line up under the
+parenthesis that opened the argument list.  It can also be used with
+@code{arglist-cont} and @code{arglist-cont-nonempty} to line up all
+lines inside a parenthesis under the open paren.
 
-@workswith @code{defun-close}, @code{class-close}, @code{inline-close},
-@code{block-close}, @code{brace-list-close}, @code{arglist-close},
-@code{extern-lang-close}, @code{namespace-close} (for most of these, a
-zero offset will normally produce the same result, though).
+@workswith Almost all symbols, but are typically most useful on
+@code{arglist-close}, @code{arglist-cont} and @code{arglist-cont-nonempty}.
 
 @comment ------------------------------------------------------------
 

@@ -189,12 +189,14 @@ statement-block-intro, statement-case-intro, arglist-intro."
     (vector (1+ (current-column)))))
 
 (defun c-lineup-arglist-close-under-paren (langelem)
-  "Line up a closing paren line under the corresponding open paren.
+  "Line up a line under the enclosing open paren.
+Normally used to line up a closing paren in the same column as its
+corresponding open paren, but can also be used with arglist-cont and
+arglist-cont-nonempty to line up all lines inside a parenthesis under
+the open paren.
 
-Works with: defun-close, class-close, inline-close, block-close,
-brace-list-close, arglist-close, extern-lang-close, namespace-close
-\(for most of these, a zero offset will normally produce the same
-result, though)."
+Works with: Almost all symbols, but are typically most useful on
+arglist-close, arglist-cont and arglist-cont-nonempty."
   (save-excursion
     (beginning-of-line)
     (backward-up-list 1)
