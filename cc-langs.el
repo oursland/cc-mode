@@ -1618,9 +1618,14 @@ Note that Java specific rules are currently applied to tell this from
 	    lang-const-list (cdar alist)
 	    alist (cdr alist))
       (setplist (intern kwd obarray)
-		(mapcan (lambda (lang-const)
-			  (list lang-const t))
-			lang-const-list)))
+		;; Emacs has an odd bug that causes `mapcan' to fail
+		;; with unintelligible errors.  (XEmacs >= 20 works.)
+		;;(mapcan (lambda (lang-const)
+		;;	      (list lang-const t))
+		;;	    lang-const-list)
+		(apply 'nconc (mapcar (lambda (lang-const)
+					(list lang-const t))
+				      lang-const-list))))
     obarray))
 
 (c-lang-defconst c-regular-keywords-regexp
