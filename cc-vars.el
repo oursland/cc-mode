@@ -848,7 +848,7 @@ can always override the use of `c-default-style' by making calls to
        ;; boi at the class decl start.
        (cpp-macro             . [0])
        ;; Relpos: None.
-       (cpp-macro-cont        . c-lineup-macro-cont)
+       (cpp-macro-cont        . (c-lineup-macro-cont +))
        ;; Relpos: At the macro start (always at boi) if not combined
        ;; with some other syntactic symbol, otherwise none.
        (friend                . 0)

@@ -692,6 +692,8 @@ two, respectively, in these two examples. They are then added to the
 two column indentation that statement-block-intro gives in both cases
 here.
 
+If the relative indentation is zero, then nil is returned instead.
+
 Works with: cpp-macro-cont if `c-syntactic-analysis-in-macro' is
 non-nil."
   (if (not c-syntactic-analysis-in-macro)
@@ -702,12 +704,14 @@ non-nil."
       ;; Then remove the cpp-macro element it should contain and
       ;; calculate the indentation it then would get.
       (c-beginning-of-macro)
-      (let* ((indent-base (save-excursion
-			    (back-to-indentation)
-			    (current-column)))
-	     (syntax (delete '(cpp-macro) (c-guess-basic-syntax))))
-	(- (c-get-syntactic-indentation syntax)
-	   indent-base)))))
+      (let ((offset (- (c-get-syntactic-indentation
+			(delete '(cpp-macro) (c-guess-basic-syntax)))
+		       (save-excursion
+			 (back-to-indentation)
+			 (current-column)))))
+	(if (zerop offset)
+	    nil
+	  offset)))))
 
 (defun c-lineup-dont-change (langelem)
   "Do not change the indentation of the current line.
