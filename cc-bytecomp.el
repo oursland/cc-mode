@@ -38,20 +38,16 @@
 ;; the following blurb at the top of the file:
 ;;
 ;;   (eval-when-compile
-;;     (or load-in-progress
-;;         (let ((load-path
-;;                (if (and (boundp 'byte-compile-dest-file)
-;;                         (stringp byte-compile-dest-file))
-;;                    (cons (file-name-directory byte-compile-dest-file)
-;;                          load-path)
-;;                  load-path)))
-;;           (load "cc-bytecomp" nil t)))
+;;     (let ((load-path
+;;            (if (and (boundp 'byte-compile-dest-file)
+;;                     (stringp byte-compile-dest-file))
+;;                (cons (file-name-directory byte-compile-dest-file) load-path)
+;;              load-path)))
+;;       (load "cc-bytecomp" nil t))
 ;;
 ;; This (unfortunately rather clumsy) form will ensure that the
-;; cc-bytecomp.el(c) file in the same directory as foo.el is loaded
-;; during byte compilation of the latter, and that cc-bytecomp isn't
-;; loaded again in nested file loads (which is known to cause bugs in
-;; some versions of XEmacs).
+;; cc-bytecomp.el in the same directory as foo.el is loaded during
+;; byte compilation of the latter.
 ;;
 ;; At the end of foo.el there should normally be a "(provide 'foo)".
 ;; Replace it with "(cc-provide 'foo)"; that is necessary to restore
@@ -160,25 +156,33 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	  (setq p (cdr p)))
 	(setq cc-bytecomp-environment-set nil))))
 
-(defun cc-bytecomp-load (cc-part)
-  ;; Eval'ed during compilation to load a CC Mode file from the source
-  ;; directory (assuming it's the same as the compiled file
-  ;; destination dir).
-  (if (and (boundp 'byte-compile-dest-file)
-	   (stringp byte-compile-dest-file))
-      (progn
-	(cc-bytecomp-restore-environment)
-	(let ((load-path
-	       (cons (file-name-directory byte-compile-dest-file)
-		     load-path))
-	      (cc-file (concat cc-part ".el")))
-	  (if (member cc-file cc-bytecomp-loaded-files)
-	      ()
-	    (setq cc-bytecomp-loaded-files
-		  (cons cc-file cc-bytecomp-loaded-files))
-	    (load cc-file nil t t)))
-	(cc-bytecomp-setup-environment)
-	t)))
+(eval
+ ;; This eval is to avoid byte compilation of the function below.
+ ;; There's some bug in XEmacs 21.4.6 that can cause it to dump core
+ ;; here otherwise.  My theory is that `cc-bytecomp-load' might be
+ ;; redefined recursively during the `load' inside it, and if it in
+ ;; that case is byte compiled then the byte interpreter gets
+ ;; confused.  I haven't succeeded in isolating the bug, though. /mast
+
+ '(defun cc-bytecomp-load (cc-part)
+    ;; Eval'ed during compilation to load a CC Mode file from the source
+    ;; directory (assuming it's the same as the compiled file
+    ;; destination dir).
+    (if (and (boundp 'byte-compile-dest-file)
+	     (stringp byte-compile-dest-file))
+	(progn
+	  (cc-bytecomp-restore-environment)
+	  (let ((load-path
+		 (cons (file-name-directory byte-compile-dest-file)
+		       load-path))
+		(cc-file (concat cc-part ".el")))
+	    (if (member cc-file cc-bytecomp-loaded-files)
+		()
+	      (setq cc-bytecomp-loaded-files
+		    (cons cc-file cc-bytecomp-loaded-files))
+	      (load cc-file nil t t)))
+	  (cc-bytecomp-setup-environment)
+	  t))))
 
 (defmacro cc-require (cc-part)
   "Force loading of the corresponding .el file in the current directory
