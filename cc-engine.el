@@ -1035,17 +1035,19 @@
 
 (defun c-looking-at-special-brace-list (&optional lim)
   ;; If we're looking at the start of a pike-style list, ie `({ })',
-  ;; `([ ])', `(< >)' etc, a cons of its starting position and its
-  ;; entry in c-special-brace-lists is returned, nil otherwise. LIM is
-  ;; the limit for forward search. The point may either be at the `('
-  ;; or at the following paren character. Tries to check the matching
-  ;; closer, but assumes it's correct if no balanced paren is found
-  ;; (ie the case `({ ... } ...)' is detected).
+  ;; `([ ])', `(< >)' etc, a cons of a cons its starting and ending
+  ;; positions and its entry in c-special-brace-lists is returned, nil
+  ;; otherwise.  The ending position is nil if the list is still open.
+  ;; LIM is the limit for forward search.  The point may either be at
+  ;; the `(' or at the following paren character.  Tries to check the
+  ;; matching closer, but assumes it's correct if no balanced paren is
+  ;; found (i.e. the case `({ ... } ... )' is detected as _not_ being
+  ;; a special brace list).
   (if c-special-brace-lists
       (condition-case ()
 	  (save-excursion
-	    (let ((pos (point))
-		  type)
+	    (let ((beg (point))
+		  end type)
 	      (if (eq (char-after) ?\()
 		  (progn
 		    (forward-char 1)
@@ -1055,19 +1057,21 @@
 		    (progn
 		      (c-backward-syntactic-ws)
 		      (forward-char -1)
-		      (setq pos (if (eq (char-after) ?\()
+		      (setq beg (if (eq (char-after) ?\()
 				    (point)
 				  nil)))))
-	      (if (and pos type)
-		  (if (and (c-safe (goto-char pos)
-				   (forward-sexp 1)
-				   (forward-char -1)
-				   (= (char-after) ?\)))
-			   (progn
-			     (c-backward-syntactic-ws)
-			     (not (= (char-before) (cdr type)))))
-		      nil
-		    (cons pos type)))))
+	      (if (and beg type)
+		  (if (c-safe (goto-char beg)
+			      (forward-sexp 1)
+			      (setq end (point))
+			      (forward-char -1)
+			      (= (char-after) ?\)))
+		      (if (progn
+			    (c-backward-syntactic-ws)
+			    (/= (char-before) (cdr type)))
+			  nil
+			(cons (cons beg end) type))
+		    (cons (list beg) type)))))
 	(error nil))))
 
 (defun c-looking-at-inexpr-block (&optional lim)
@@ -1795,36 +1799,29 @@
 	  (cond
 	   ;; CASE 9A: In the middle of a special brace list opener.
 	   ((and (consp special-brace-list)
-		 (eq char-after-ip (car (cdr special-brace-list))))
-	    (goto-char (car special-brace-list))
+		 (= char-after-ip (car (cdr special-brace-list))))
+	    (goto-char (car (car special-brace-list)))
 	    (c-beginning-of-statement-1 lim)
-	    ;; c-b-o-s could have left us at point-min
-	    (and (bobp)
-		 (c-forward-syntactic-ws indent-point))
-	    (if (looking-at "typedef[^_]")
-		(progn (forward-sexp 1)
-		       (c-forward-syntactic-ws indent-point)))
+	    (c-forward-token-1 0)
+	    (if (looking-at "typedef\\>") (c-forward-token-1 1))
 	    (c-add-syntax 'brace-list-open (c-point 'boi)))
 	   ;; CASE 9B: brace-list-close brace
 	   ((if (consp special-brace-list)
-		;; check special brace list closer
-		(or (and (eq char-after-ip (cdr (cdr special-brace-list)))
-			 ;; check the following `)' if there is any
-			 (if (c-safe (forward-char 1)
-				     (c-forward-syntactic-ws)
-				     t)
-			     (and (eq (char-after) ?\))
-				  ;; check if the `)' closes the right list
-				  (c-safe (forward-char 1)
-					  (backward-sexp 1)
-					  t)
-				  (= (point) (car special-brace-list)))))
-		    ;; We might stand between the special closer and
-		    ;; the `)', but that is rare.
-		    (when (eq char-after-ip ?\))
-		      (goto-char (car special-brace-list))
-		      t))
-	      ;; normal brace list check
+		;; Check special brace list closer.
+		(progn
+		  (goto-char (car (car special-brace-list)))
+		  (save-excursion
+		    (goto-char indent-point)
+		    (back-to-indentation)
+		    (or
+		     ;; We were between the special close char and the `)'.
+		     (and (= (char-after) ?\))
+			  (eq (1+ (point)) (cdr (car special-brace-list))))
+		     ;; We were before the special close char.
+		     (and (= (char-after) (cdr (cdr special-brace-list)))
+			  (= (c-forward-token-1) 0)
+			  (eq (1+ (point)) (cdr (car special-brace-list)))))))
+	      ;; Normal brace list check.
 	      (and (eq char-after-ip ?})
 		   (c-safe (progn (forward-char 1)
 				  (backward-sexp 1)
@@ -1836,18 +1833,16 @@
 	    ;; token following the opening brace
 	    (if (consp special-brace-list)
 		(progn
-		  (goto-char (1+ (car special-brace-list)))
-		  (c-forward-syntactic-ws)
-		  (c-safe (forward-char 1)))
-	      (goto-char (1+ containing-sexp)))
-	    (c-forward-syntactic-ws indent-point)
+		  (goto-char (car (car special-brace-list)))
+		  (c-forward-token-1 2 nil indent-point))
+	      (goto-char containing-sexp)
+	      (c-forward-token-1 1 nil indent-point))
 	    (cond
 	     ;; CASE 9C: we're looking at the first line in a brace-list
 	     ((= (point) indent-point)
 	      (goto-char containing-sexp)
 	      (c-add-syntax 'brace-list-intro (c-point 'boi))
-	      )
-	     ;;))		; end CASE 9C
+	      )				; end CASE 9C
 	     ;; CASE 9D: this is just a later brace-list-entry or
 	     ;; brace-entry-open 
 	     (t (if (or (eq char-after-ip ?{)
