@@ -1,5 +1,5 @@
 __INLINE__ FOO Type var, x;
-__INLINE__ FOO Type (*var);
+__INLINE__ FOO Type *var;
 __INLINE__ FOO Type var[3 * peq];
 
 // This is an init paren that currently incorrectly causes the
