@@ -89,7 +89,7 @@
        "\\([ \t]*\\)+("
        "\\([a-zA-Z,_1-9\n \t]*[[]?[]]?\\)*"   ; arguments
        ")[ \t]*"
-       "[^;(]"
+;       "[^;(]"
        "[,a-zA-Z_1-9\n \t]*{"               
        )) 6)))
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
