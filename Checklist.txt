@@ -182,17 +182,17 @@ This is how I currently do it (cvs write access is required for both):
 
 1.  Do cvs update where CC Mode resides in the (X)Emacs tree.
 
-    Emacs: lisp/progmodes.
+    Emacs: lisp/progmodes/cc-*.el and man/cc-mode.texi.
     XEmacs: xemacs-packages/cc-mode in the package repository.
 
     Investigate the changes made by others in cc-*.el if there are
     any, and incorporate them in the CC Mode cvs if appropriate.
 
-2.  Update the cc-*.el files by patching from the last installed
-    version.  This is to keep the changes made by others and that
-    aren't wanted in the upstream CC Mode for some reason. (Such
-    differences should be avoided as far as possible though, so they
-    probably need to be discussed(*).)
+2.  Update the files by patching from the last installed version.
+    This is to keep the changes made by others and that aren't wanted
+    in the upstream CC Mode for some reason. (Such differences should
+    be avoided as far as possible though, so they probably need to be
+    discussed(*).)
 
     Upstream files that currently aren't included:
 
@@ -221,6 +221,9 @@ This is how I currently do it (cvs write access is required for both):
 
     o  If it's a real release, merge the new entries in NEWS into
        etc/NEWS.
+
+    o  If man/cc-mode.texi was updated, write a note about it in
+       man/ChangeLog.
 
     For XEmacs:
 
