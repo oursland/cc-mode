@@ -2074,7 +2074,11 @@ Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
 (defun c-do-auto-fill ()
   ;; Do automatic filling if not inside a context where it should be
   ;; ignored.
-  (let ((lit-type (c-in-literal)))
+  (let ((c-ignore-fill-prefix
+	 ;; Kludge to detect whether fill-prefix is user set or
+	 ;; generated automatically by do-auto-fill.
+	 (null fill-prefix))
+	(lit-type (c-in-literal)))
     (setq lit-type (cond ((eq lit-type 'pound)
 			  ;; Come to think about it, "pound" is a bit
 			  ;; of a misnomer, so call it "cpp" instead
@@ -2096,7 +2100,10 @@ appropriate for comments.
 
 If a fill prefix is specified, it overrides all the above."
   (interactive)
-  (let ((do-line-break
+  (let ((fill-prefix (unless (and (boundp 'c-ignore-fill-prefix)
+				  c-ignore-fill-prefix)
+		       fill-prefix))
+	(do-line-break
 	 (lambda ()
 	   (delete-region (progn (skip-chars-backward " \t") (point))
 			  (progn (skip-chars-forward " \t") (point)))
@@ -2198,8 +2205,8 @@ If a fill prefix is specified, it overrides all the above."
 	(c-indent-new-comment-line (ad-get-arg 0))))))
 
 (defun c-line-break-reindent ()
-  "Insert a newline, then indent both lines according to the major
-mode.  However, when point is inside a comment, continue it with the
+  "Insert a newline, then indent according to major mode.
+However, when point is inside a comment, continue it with the
 appropriate comment prefix (see the `c-comment-prefix-regexp' and
 `c-block-comment-prefix' variables for details).  The end of a
 C++-style line comment doesn't count as inside the comment, though."
@@ -2216,10 +2223,9 @@ C++-style line comment doesn't count as inside the comment, though."
 	  (c-indent-new-comment-line))
       (delete-region (point) (progn (skip-chars-backward " \t") (point)))
       (newline)
-      (forward-line -1)
-      (c-indent-line)
       ;; c-indent-line may look at the current indentation, so let's
       ;; start out with the same indentation as the previous line.
+      (forward-line -1)
       (back-to-indentation)
       (indent-to (prog1 (current-column) (forward-line 1)))
       (c-indent-line))))
