@@ -1,7 +1,10 @@
 ;;; cc-make.el --- Simplifies compilation.
 
-;; Authors:    1997 Barry A. Warsaw
-;; Maintainer: cc-mode-help@python.org
+;; Copyright (C) 1985,87,92,93,94,95,96,97,98 Free Software Foundation, Inc.
+
+;; Authors:    1998 Barry A. Warsaw and Martin Stjernholm
+;;             1997 Barry A. Warsaw
+;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
 ;; Version:    See cc-mode.el
 ;; Keywords:   c languages oop

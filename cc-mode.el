@@ -2,10 +2,11 @@
 
 ;; Copyright (C) 1985,87,92,93,94,95,96,97,98 Free Software Foundation, Inc.
 
-;; Authors:    1992-1997 Barry A. Warsaw
+;; Authors:    1998 Barry A. Warsaw and Martin Stjernholm
+;;             1992-1997 Barry A. Warsaw
 ;;             1987 Dave Detlefs and Stewart Clamen
 ;;             1985 Richard M. Stallman
-;; Maintainer: cc-mode-help@python.org
+;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    a long, long, time ago. adapted from the original c-mode.el
 ;; Keywords:   c languages oop
 
@@ -38,12 +39,14 @@
 ;; Objective-C, Java, IDL and Pike code.  As of the latest Emacs and
 ;; XEmacs releases, it is the default package for editing these
 ;; languages.  This package is called "CC Mode", and should be spelled
-;; exactly this way.  It supports K&R and ANSI C, ANSI C++,
-;; Objective-C, Java, CORBA's IDL, and Pike with a consistent
-;; indentation model across all modes.  This indentation model is
-;; intuitive and very flexible, so that almost any desired style of
-;; indentation can be supported.  Installation, usage, and programming
-;; details are contained in an accompanying texinfo manual.
+;; exactly this way.
+
+;; CC Mode supports K&R and ANSI C, ANSI C++, Objective-C, Java,
+;; CORBA's IDL, and Pike with a consistent indentation model across
+;; all modes.  This indentation model is intuitive and very flexible,
+;; so that almost any desired style of indentation can be supported.
+;; Installation, usage, and programming details are contained in an
+;; accompanying texinfo manual.
 
 ;; CC Mode's immediate ancestors were, c++-mode.el, cplus-md.el, and
 ;; cplus-md1.el..
@@ -51,17 +54,20 @@
 ;; NOTE: This mode does not perform font-locking (a.k.a syntactic
 ;; coloring, keyword highlighting, etc.) for any of the supported
 ;; modes.  Typically this is done by a package called font-lock.el
-;; which I do *not* maintain.  You should contact the Emacs
+;; which we do *not* maintain.  You should contact the Emacs or XEmacs
 ;; maintainers for questions about coloring or highlighting in any
 ;; language mode.
 
 ;; To submit bug reports, type "C-c C-b".  These will be sent to
-;; bug-gnu-emacs@gnu.org as well as cc-mode-help@python.org, and I'll
-;; read about them there (the former is mirrored as the Usenet
-;; newsgroup gnu.emacs.bug).  Questions can sent to
+;; bug-gnu-emacs@gnu.org (mirrored as the Usenet newsgroup
+;; gnu.emacs.bug) as well as bug-cc-mode@gnu.org, which directly
+;; contacts the CC Mode maintainers.  Questions can sent to
 ;; help-gnu-emacs@gnu.org (mirrored as gnu.emacs.help) and/or
-;; cc-mode-help@python.org.  Please do not send bugs or questions to
-;; my personal account.
+;; bug-cc-mode@gnu.org.  The old CC Mode contact address,
+;; cc-mode-help@python.org is currently still active, but its use is
+;; discouraged.  Please use bug-cc-mode@gnu.org instead.  Please do
+;; not send bugs or questions to our personal accounts; we reserve the
+;; right to ignore such email!
 
 ;; Many, many thanks go out to all the folks on the beta test list.
 ;; Without their patience, testing, insight, code contributions, and
@@ -70,12 +76,12 @@
 ;; You can get the latest version of CC Mode, including PostScript
 ;; documentation and separate individual files from:
 ;;
-;;     http://www.python.org/ftp/emacs/
-
-;; Or if you don't have access to the World Wide Web, through
-;; anonymous ftp from:
+;;     http://www.python.org/emacs/cc-mode/
 ;;
-;;    ftp://ftp.python.org/pub/emacs
+;; You can join a moderated CC Mode announcement-only mailing list by
+;; visiting
+;;
+;;    http://www.python.org/mailman/listinfo/cc-mode-announce
 
 ;;; Code:
 
@@ -386,8 +392,8 @@ Key bindings:
 ;; bug reporting
 
 (defconst c-mode-help-address
-  "bug-gnu-emacs@gnu.org, cc-mode-help@python.org"
-  "Address for CC Mode bug reports.")
+  "bug-gnu-emacs@gnu.org, bug-cc-mode@gnu.org"
+  "Addresses for CC Mode bug reports.")
 
 (defun c-version ()
   "Echo the current version of CC Mode in the minibuffer."

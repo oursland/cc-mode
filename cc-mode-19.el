@@ -1,9 +1,10 @@
 ;;; cc-mode-19.el --- compatibility library for Emacs and XEmacs 19
 
-;; Copyright (C) 1997 Free Software Foundation, Inc.
+;; Copyright (C) 1985,87,92,93,94,95,96,97,98 Free Software Foundation, Inc.
 
-;; Authors:    1997 Barry A. Warsaw
-;; Maintainer: cc-mode-help@python.org
+;; Authors:    1998 Barry A. Warsaw and Martin Stjernholm
+;;             1997 Barry A. Warsaw
+;; Maintainer: bug-cc-mode@gnu.org
 ;; Created:    03-Jul-1997
 ;; Version:    See cc-mode.el
 ;; Keywords:   c languages oop
