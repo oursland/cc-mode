@@ -2300,6 +2300,23 @@ will be appended to @code{c-special-indent-hook} using @code{add-hook}.
 That way, the current setting for the buffer local value of
 @code{c-special-indent-hook} won't be overridden.
 
+@kindex M-;
+@findex indent-for-comment
+@vindex c-indent-comments-syntactically-p
+@vindex indent-comments-syntactically-p (c-)
+@vindex comment-column
+
+Normally, the standard Emacs command @kbd{M-;}
+(@code{indent-for-comment}) will indent comment-only lines to
+@code{comment-column}.  Some users however, prefer that @kbd{M-;} act
+just like @kbd{TAB} for purposes of indenting comment-only lines;
+i.e. they want the comments to always indent as they would for normal
+code, regardless of whether @kbd{TAB} or @kbd{M-;} were used.  This
+behavior is controlled by the variable
+@code{c-indent-comments-syntactically-p}.  When @code{nil} (the
+default), @kbd{M-;} indents comment-only lines to @code{comment-column}, 
+otherwise, they are indented just as they would be if @kbd{TAB} were
+typed.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Syntactic Symbols, Performance Issues, Customizing Indentation, Top
