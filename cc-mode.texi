@@ -2071,7 +2071,7 @@ file's style to this style using @code{c-set-style}.
 @findex set-offset (c-)
 Another variable, @code{c-file-offsets}, takes an association list
 similar to what is allowed in @code{c-offsets-alist}.  When the file is
-visited, @ccmode{} will automatically institute these offets using
+visited, @ccmode{} will automatically institute these offsets using
 @code{c-set-offset}.
 
 Note that file style settings (i.e. @code{c-file-style}) are applied
