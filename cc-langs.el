@@ -57,9 +57,9 @@
 (defconst c-C-class-key "\\(struct\\|union\\)")
 (defconst c-C++-class-key "\\(class\\|struct\\|union\\)")
 (defconst c-IDL-class-key "\\(class\\|struct\\|union\\|interface\\)")
-(defconst c-C-extra-toplevel-key "\\(extern\\)[^_]")
-(defconst c-C++-extra-toplevel-key "\\(extern\\|namespace\\)[^_]")
-(defconst c-IDL-extra-toplevel-key "\\(module\\)[^_]")
+(defconst c-C-extra-toplevel-key "\\(extern\\)")
+(defconst c-C++-extra-toplevel-key "\\(extern\\|namespace\\)")
+(defconst c-IDL-extra-toplevel-key "\\(module\\)")
 
 (defconst c-ObjC-class-key
   (concat
