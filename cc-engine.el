@@ -1941,6 +1941,81 @@ brace."
 		 (c-syntactic-re-search-forward ";" nil 'move 1 t))))
       nil)))
 
+(defun c-forward-type (&optional use-font-property)
+  ;; If the point is at the beginning of a type spec, move to the end
+  ;; of it.  Return t if it is a type, nil if it isn't (the point
+  ;; isn't moved), or 'maybe if it's something that might be a type
+  ;; but also something else.  The point is assumed to be at the
+  ;; beginning of a token.  If USE-FONT-PROPERTY is non-nil then we
+  ;; use the 'font text property instead of some regexp matches, under
+  ;; the assumption that the font-lock package has fontified the
+  ;; nontype keywords.
+  ;;
+  ;; Note that this function doesn't skip past the brace definition
+  ;; that might be considered part of the type, e.g.
+  ;; "enum {a, b, c} foo".
+
+  (let* ((start (point))
+	 (res (cond
+	       ((looking-at c-primitive-type-key)
+		;; Looking at a primitive type such as "int".
+		(goto-char (match-end 1))
+		t)
+
+	       ((looking-at c-type-prefix-key)
+		;; Looking at a keyword that prefixes a type
+		;; identifier, e.g. "class".
+		(goto-char (match-end 1))
+		(c-forward-syntactic-ws)
+		(if (looking-at c-symbol-key)
+		    (progn (goto-char (match-end 1))
+			   t)
+		  (goto-char start)
+		  nil))
+
+	       ((and c-complex-type-key
+		     (looking-at c-complex-type-key))
+		;; It's a type, but it might also be a complex one if it's
+		;; followed by a parenthesis.  This only applies to Pike.
+		(goto-char (match-end 1))
+		(let ((end (point)))
+		  (c-forward-syntactic-ws)
+		  (unless (and (eq (char-after) ?\()
+			       (c-safe (c-forward-sexp 1) t))
+		    (goto-char end)))
+		t)
+
+	       ((and (looking-at c-symbol-key)
+		     (if use-font-property
+			 (not (eq (get-text-property (point) 'face)
+				  'font-lock-keyword-face))
+		       (save-match-data
+			 (not (looking-at c-nontype-keywords-regexp)))))
+		;; It's an identifier that might be a type.
+		(goto-char (match-end 1))
+		'maybe))))
+
+    (if (and res c-type-concat-key)
+	;; Look for a trailing operator that concatenate the type with
+	;; a following one, and if so step past that one through a
+	;; recursive call.
+	(let ((pos (point)) res2)
+	  (c-forward-syntactic-ws)
+	  (if (and (looking-at c-type-concat-key)
+		   (progn
+		     (goto-char (match-end 1))
+		     (c-forward-syntactic-ws)
+		     (setq res2 (c-forward-type))))
+	      ;; If either operand certainly is a type then both are,
+	      ;; but we don't let the existence of the operator itself
+	      ;; promote two uncertain types to a certain one.
+	      (cond ((eq res t) t)
+		    ((eq res2 t) t)
+		    (t 'maybe))
+	    (goto-char pos)
+	    res))
+      res)))
+
 (defun c-beginning-of-member-init-list (&optional limit)
   ;; Goes to the beginning of a member init list (i.e. just after the
   ;; ':') if inside one. Returns t in that case, nil otherwise.
@@ -2375,27 +2450,30 @@ brace."
 				   containing-sexp)))))
 
 (defun c-on-identifier ()
-  "Return non-nil if we're on or directly after an identifier.
-Keywords are recognized and not considered identifiers."
+  "Return non-nil if point is on or directly after an identifier.
+Keywords are recognized and not considered identifiers.  If an
+identifier is detected, the returned value is its starting position."
   (if (or (memq (char-syntax (or (char-after) ? )) '(?w ?_))
 	  (memq (char-syntax (or (char-before) ? )) '(?w ?_)))
       (save-excursion
 	(skip-syntax-backward "w_")
-	(not (looking-at c-keywords-regexp)))
+	(and (not (looking-at c-keywords-regexp))
+	     (point)))
     (if (c-major-mode-is 'pike-mode)
 	;; Handle the `<operator> syntax in Pike.
 	(save-excursion
 	  (if (eq (char-after) ?\`) (forward-char))
 	  (skip-chars-backward "!%&*+\\-/<=>^|~")
 	  (let ((pos (point)))
-	    (cond ((memq (char-before) '(?\) ?\]))
-		   (c-safe (backward-char 2)))
-		  ((memq (char-before) '(?\( ?\[))
-		   (c-safe (backward-char 1))))
-	    (if (not (looking-at "()\\|\\[]"))
-		(goto-char pos)))
+	    (if (cond ((memq (char-before) '(?\) ?\]))
+		       (c-safe (backward-char 2)))
+		      ((memq (char-before) '(?\( ?\[))
+		       (c-safe (backward-char 1))))
+		(if (not (looking-at "()\\|\\[]"))
+		    (goto-char pos))))
 	  (and (eq (char-before) ?\`)
-	       (looking-at "[-!%&*+/<=>^|~]\\|()\\|\\[]"))))))
+	       (looking-at "[-!%&*+/<=>^|~]\\|()\\|\\[]")
+	       (1- (point)))))))
 
 
 (defun c-most-enclosing-brace (paren-state &optional bufpos)
