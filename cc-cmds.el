@@ -1142,22 +1142,25 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defvar c-progress-info nil)
 
 (defun c-progress-init (start end context)
-  ;; start the progress update messages.  if this emacs doesn't have a
-  ;; built-in timer, just be dumb about it
-  (if (not (fboundp 'current-time))
-      (message "indenting region... (this may take a while)")
-    ;; if progress has already been initialized, do nothing. otherwise
-    ;; initialize the counter with a vector of:
-    ;; [start end lastsec context]
-    (if c-progress-info
-	()
-      (setq c-progress-info (vector start
+  (cond
+   ;; Be silent
+   ((not c-progress-interval))
+   ;; Start the progress update messages.  If this Emacs doesn't have
+   ;; a built-in timer, just be dumb about it.
+   ((not (fboundp 'current-time))
+    (message "indenting region... (this may take a while)"))
+   ;; If progress has already been initialized, do nothing. otherwise
+   ;; initialize the counter with a vector of:
+   ;;     [start end lastsec context]
+   (c-progress-info)
+   (t (setq c-progress-info (vector start
 				    (save-excursion
 				      (goto-char end)
 				      (point-marker))
 				    (nth 1 (current-time))
 				    context))
-      (message "indenting region..."))))
+      (message "indenting region..."))
+   ))
 
 (defun c-progress-update ()
   ;; update progress
@@ -1178,12 +1181,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 
 (defun c-progress-fini (context)
   ;; finished
-  (if (or (eq context (aref c-progress-info 3))
-	  (eq context t))
-      (progn
-	(set-marker (aref c-progress-info 1) nil)
-	(setq c-progress-info nil)
-	(message "indenting region...done"))))
+  (if (not c-progress-interval)
+      nil
+    (if (or (eq context (aref c-progress-info 3))
+	    (eq context t))
+	(progn
+	  (set-marker (aref c-progress-info 1) nil)
+	  (setq c-progress-info nil)
+	  (message "indenting region...done")))))
 
 
 
