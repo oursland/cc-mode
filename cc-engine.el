@@ -450,7 +450,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
       (while (progn
 	       (setq pos (point))
 	       (c-backward-syntactic-ws) ; might go back an awk-mode virtual semicolon, here.
-                                        ; How about using c-awk-NL-prop for awk-mode, here.
+                                        ; How about using c-awk-NL-prop for AWK Mode, here.
                                         ; Something like c-awk-backward-syntactic-ws.
                                         ; 2002/6/22.  Doesn't matter!  Leave it as it is.
 	       (/= (skip-chars-backward "-+!*&~@`#") 0))) ; ACM, 2002/5/31;
@@ -490,8 +490,8 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 	(while
 	    (catch 'loop ;; Throw nil to break, non-nil to continue.
 	      (cond
-	       ;; Check for macro start.  Take this out for awk-mode (ACM, 2002/5/31)
-               ;; NO!! just make sure macro-start is nil in awk-mode (ACM, 2002/6/22)
+	       ;; Check for macro start.  Take this out for AWK Mode (ACM, 2002/5/31)
+               ;; NO!! just make sure macro-start is nil in AWK Mode (ACM, 2002/6/22)
                ;; It always is (ACM, 2002/6/23)
 	       ((save-excursion
 		  (and macro-start
@@ -616,7 +616,7 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 			     ;; little more careful analysis to avoid it: If
 			     ;; the while isn't followed by a semicolon it
 			     ;; can't be a do-while.
-                             ;; ACM, 2002/5/31;  IT CAN IN awk-mode. ;-(
+                             ;; ACM, 2002/5/31;  IT CAN IN AWK Mode. ;-(
 			     (c-bos-push-state)
 			     (setq state 'while)))
 			  ((memq sym '(catch finally))
@@ -795,7 +795,7 @@ single `?' is found, then `c-maybe-labelp' is cleared."
 		   ;; looking for more : and ?.
 		   (setq c-maybe-labelp nil
 			 skip-chars (substring c-stmt-delim-chars 0 -2)))
-                  ((and (eolp)  ; Can only happen in awk-mode
+                  ((and (eolp)  ; Can only happen in AWK Mode
                         (not (c-awk-completed-stmt-ws-ends-line-p)))
                    (forward-char))
                   ((and (c-mode-is-new-awk-p)
@@ -2574,17 +2574,17 @@ This function does not do any hidden buffer changes."
 ;; conjunction with syntax-table-properties.  The bug is present in, e.g.,
 ;; Xemacs 21.4.4.  It manifested itself thus:
 ;;
-;; Starting with an empty awk-mode buffer, type
+;; Starting with an empty AWK Mode buffer, type
 ;; /regexp/ {<C-j>
-;; Point is left at column 0, rather than being indented to tab-width.
+;; Point gets wrongly left at column 0, rather than being indented to tab-width.
 ;;
-;; awk-mode is designed such that when the first / is typed, it gets the
+;; AWK Mode is designed such that when the first / is typed, it gets the
 ;; syntax-table property "string fence".  When the second / is typed, BOTH /s
 ;; are given the s-t property "string".  However, buffer-syntactic-context
 ;; fails to take account of the change of the s-t property on the opening / to
 ;; "string", and reports that the { is within a string started by the second /.
 ;;
-;; The workaround for this is for the awk-mode initialisation to switch the
+;; The workaround for this is for the AWK Mode initialisation to switch the
 ;; defalias for c-in-literal to c-slow-in-literal.  This will slow down other
 ;; cc-modes in Xemacs whenever an awk-buffer has been initialised.
 ;; 
