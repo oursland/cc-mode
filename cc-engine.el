@@ -5901,7 +5901,7 @@ y	  ;; True if there's a suffix match outside the outermost
 	  (when (and c-record-type-identifiers
 		     (progn (goto-char start)
 			    (not (looking-at c-label-kwds-regexp))))
-	    (while (re-search-forward c-symbol-key nil t)
+	    (while (c-syntactic-re-search-forward c-symbol-key nil t)
 	      (c-record-ref-id (cons (match-beginning 0)
 				     (match-end 0)))))
 
