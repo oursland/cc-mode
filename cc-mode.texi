@@ -3214,10 +3214,15 @@ Here are the remaining odds and ends regarding indentation:
 
 @defopt c-label-minimum-indentation
 @vindex label-minimum-indentation (c-)
-In @samp{gnu} style (@pxref{Built-in Styles}), a minimum indentation
-is imposed on lines inside top-level constructs.  This minimum
-indentation is controlled by this style variable.  The default value
-is 1.
+In @samp{gnu} style (@pxref{Built-in Styles}), a minimum indentation is
+imposed on lines inside code blocks.  This minimum indentation is
+controlled by this style variable.  The default value is 1.
+
+@findex c-gnu-impose-minimum
+@findex gnu-impose-minimum (c-)
+It's the function @code{c-gnu-impose-minimum} that enforces this minimum
+indentation.  It must be present on @code{c-special-indent-hook} to
+work.
 @end defopt
 
 @defopt c-special-indent-hook
