@@ -6,8 +6,8 @@
 ;;        		and  Stewart Clamen (clamen@cs.cmu.edu)
 ;;        		Done by fairly faithful modification of:
 ;;        		c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:	$Date: 1992-04-16 17:05:40 $
-;; Version:		$Revision: 1.102 $
+;; Last Modified:	$Date: 1992-04-22 22:17:07 $
+;; Version:		$Revision: 2.0 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -18,7 +18,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-16 17:05:40 $|$Revision: 1.102 $|
+;; |$Date: 1992-04-22 22:17:07 $|$Revision: 2.0 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -121,7 +121,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 1.102 $
+  "Major mode for editing C++ code.  $Revision: 2.0 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1215,7 +1215,7 @@ function definition.")
 ;; known state of c++-mode so that I know exactly how you've got it
 ;; set up.
 
-(defconst c++-version "$Revision: 1.102 $"
+(defconst c++-version "$Revision: 2.0 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
