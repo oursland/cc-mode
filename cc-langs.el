@@ -1029,11 +1029,10 @@ properly."
 	 (cond ((= (length end) 1)
 		(concat "[^" end "\n\r]*"))
 	       ((= (length end) 2)
-		(concat "\\("
-			"[^" (substring end 0 1) "\n\r]*"
-			"\\|"
-			(regexp-quote (substring end 0 1))
-			"+[^"
+		(concat "[^" (substring end 0 1) "\n\r]*"
+			"\\("
+			(regexp-quote (substring end 0 1)) "+"
+			"[^"
 			;; The quoting rules inside char classes are silly. :P
 			(cond ((= (elt end 0) (elt end 1))
 			       (concat (substring end 0 1) "\n\r"))
@@ -1044,6 +1043,7 @@ properly."
 			       (concat (substring end 0 1) "\n\r"
 				       (substring end 1 2))))
 			"]"
+			"[^" (substring end 0 1) "\n\r]*"
 			"\\)*"))
 	       (t
 		(error "Can't handle a block comment ender of length %s"
