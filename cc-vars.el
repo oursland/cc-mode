@@ -1287,7 +1287,7 @@ The list of variables to buffer localize are:
 
 (defcustom c-mode-common-hook nil
   "*Hook called by all CC Mode modes for common initializations."
-  :type '(hook :format "%{CC Mode Common Hook%}:\n%v")
+  :type 'hook
   :group 'c)
 
 (defcustom c-initialization-hook nil
