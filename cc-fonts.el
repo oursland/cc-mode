@@ -1973,6 +1973,29 @@ higher."
 (c-lang-defconst c-matchers-4
   t (c-lang-const c-matchers-3))
 
+(defun c-compose-keywords-list (base-list)
+  ;; Incorporate the font lock keyword lists according to
+  ;; `c-doc-comment-style' on the given keyword list and return it.
+  ;; This is used in the function bindings of the
+  ;; `*-font-lock-keywords-*' symbols since we have to build the list
+  ;; when font-lock is initialized.
+  (let* ((doc-keywords
+	  (if (consp (car-safe c-doc-comment-style))
+	      (cdr-safe (or (assq c-buffer-is-cc-mode c-doc-comment-style)
+			    (assq 'other c-doc-comment-style)))
+	    c-doc-comment-style))
+	 (list (apply 'nconc
+		      (mapcar
+		       (lambda (doc-style)
+			 (let ((sym (intern (concat (symbol-name doc-style)
+						    "-font-lock-keywords"))))
+			   (if (boundp sym)
+			       (append (symbol-value sym) nil))))
+		       (if (listp doc-keywords)
+			   doc-keywords
+			 (list doc-keywords))))))
+    (nconc list base-list)))
+
 (defun c-override-default-keywords (def-var)
   ;; This is used to override the value on a `*-font-lock-keywords'
   ;; variable only if it's nil or has the same value as one of the
@@ -1991,7 +2014,7 @@ higher."
 			    (let ((sym (intern (concat (symbol-name def-var)
 						       suffix))))
 			      (and (boundp sym) (symbol-value sym))))
-			  '("-1" "-2" "-3" "-4")))))
+			  '("-1" "-2" "-3")))))
     ;; The overriding is done by unbinding the variable so that the normal
     ;; defvar will install its default value later on.
     (makunbound def-var)))
@@ -2009,8 +2032,9 @@ fontification of strings and comments).")
 (defconst c-font-lock-keywords-2 (c-lang-const c-matchers-2 c)
   "Fast normal highlighting for C mode.
 In addition to `c-font-lock-keywords-1', this adds fontification of
-keywords, simple types, declarations that are easy to recognize, and
-the user defined types on `c-font-lock-extra-types'.")
+keywords, simple types, declarations that are easy to recognize, the
+user defined types on `c-font-lock-extra-types', and the doc comment
+styles specified by `c-doc-comment-style'.")
 
 (defconst c-font-lock-keywords-3 (c-lang-const c-matchers-3 c)
   "Accurate normal highlighting for C mode.
@@ -2020,6 +2044,13 @@ need for `c-font-lock-extra-types'.")
 
 (defvar c-font-lock-keywords c-font-lock-keywords-3
   "Default expressions to highlight in C mode.")
+
+(defun c-font-lock-keywords-2 ()
+  (c-compose-keywords-list c-font-lock-keywords-2))
+(defun c-font-lock-keywords-3 ()
+  (c-compose-keywords-list c-font-lock-keywords-3))
+(defun c-font-lock-keywords ()
+  (c-compose-keywords-list c-font-lock-keywords))
 
 
 ;;; C++.
@@ -2153,8 +2184,9 @@ fontification of strings and comments).")
 (defconst c++-font-lock-keywords-2 (c-lang-const c-matchers-2 c++)
   "Fast normal highlighting for C++ mode.
 In addition to `c++-font-lock-keywords-1', this adds fontification of
-keywords, simple types, declarations that are easy to recognize, and
-the user defined types on `c++-font-lock-extra-types'.")
+keywords, simple types, declarations that are easy to recognize, the
+user defined types on `c++-font-lock-extra-types', and the doc comment
+styles specified by `c-doc-comment-style'.")
 
 (defconst c++-font-lock-keywords-3 (c-lang-const c-matchers-3 c++)
   "Accurate normal highlighting for C++ mode.
@@ -2164,6 +2196,13 @@ need for `c++-font-lock-extra-types'.")
 
 (defvar c++-font-lock-keywords c++-font-lock-keywords-3
   "Default expressions to highlight in C++ mode.")
+
+(defun c++-font-lock-keywords-2 ()
+  (c-compose-keywords-list c++-font-lock-keywords-2))
+(defun c++-font-lock-keywords-3 ()
+  (c-compose-keywords-list c++-font-lock-keywords-3))
+(defun c++-font-lock-keywords ()
+  (c-compose-keywords-list c++-font-lock-keywords))
 
 
 ;;; Objective-C.
@@ -2313,8 +2352,9 @@ fontification of strings and comments).")
 (defconst objc-font-lock-keywords-2 (c-lang-const c-matchers-2 objc)
   "Fast normal highlighting for Objective-C mode.
 In addition to `objc-font-lock-keywords-1', this adds fontification of
-keywords, simple types, declarations that are easy to recognize, and
-the user defined types on `objc-font-lock-extra-types'.")
+keywords, simple types, declarations that are easy to recognize, the
+user defined types on `objc-font-lock-extra-types', and the doc
+comment styles specified by `c-doc-comment-style'.")
 
 (defconst objc-font-lock-keywords-3 (c-lang-const c-matchers-3 objc)
   "Accurate normal highlighting for Objective-C mode.
@@ -2324,6 +2364,13 @@ need for `objc-font-lock-extra-types'.")
 
 (defvar objc-font-lock-keywords objc-font-lock-keywords-3
   "Default expressions to highlight in Objective-C mode.")
+
+(defun objc-font-lock-keywords-2 ()
+  (c-compose-keywords-list objc-font-lock-keywords-2))
+(defun objc-font-lock-keywords-3 ()
+  (c-compose-keywords-list objc-font-lock-keywords-3))
+(defun objc-font-lock-keywords ()
+  (c-compose-keywords-list objc-font-lock-keywords))
 
 ;; Kludge to override the default value that
 ;; `objc-font-lock-extra-types' might have gotten from the font-lock
@@ -2347,8 +2394,9 @@ comments.")
 (defconst java-font-lock-keywords-2 (c-lang-const c-matchers-2 java)
   "Fast normal highlighting for Java mode.
 In addition to `java-font-lock-keywords-1', this adds fontification of
-keywords, simple types, declarations that are easy to recognize, and
-the user defined types on `java-font-lock-extra-types'.")
+keywords, simple types, declarations that are easy to recognize, the
+user defined types on `java-font-lock-extra-types', and the doc
+comment styles specified by `c-doc-comment-style'.")
 
 (defconst java-font-lock-keywords-3 (c-lang-const c-matchers-3 java)
   "Accurate normal highlighting for Java mode.
@@ -2358,6 +2406,13 @@ need for `java-font-lock-extra-types'.")
 
 (defvar java-font-lock-keywords java-font-lock-keywords-3
   "Default expressions to highlight in Java mode.")
+
+(defun java-font-lock-keywords-2 ()
+  (c-compose-keywords-list java-font-lock-keywords-2))
+(defun java-font-lock-keywords-3 ()
+  (c-compose-keywords-list java-font-lock-keywords-3))
+(defun java-font-lock-keywords ()
+  (c-compose-keywords-list java-font-lock-keywords))
 
 
 ;;; IDL.
@@ -2372,8 +2427,9 @@ comments.")
 (defconst idl-font-lock-keywords-2 (c-lang-const c-matchers-2 idl)
   "Fast normal highlighting for IDL mode.
 In addition to `idl-font-lock-keywords-1', this adds fontification of
-keywords, simple types, declarations that are easy to recognize, and
-the user defined types on `idl-font-lock-extra-types'.")
+keywords, simple types, declarations that are easy to recognize, the
+user defined types on `idl-font-lock-extra-types', and the doc comment
+styles specified by `c-doc-comment-style'.")
 
 (defconst idl-font-lock-keywords-3 (c-lang-const c-matchers-3 idl)
   "Accurate normal highlighting for IDL mode.
@@ -2383,6 +2439,13 @@ need for `idl-font-lock-extra-types'.")
 
 (defvar idl-font-lock-keywords idl-font-lock-keywords-3
   "Default expressions to highlight in IDL mode.")
+
+(defun idl-font-lock-keywords-2 ()
+  (c-compose-keywords-list idl-font-lock-keywords-2))
+(defun idl-font-lock-keywords-3 ()
+  (c-compose-keywords-list idl-font-lock-keywords-3))
+(defun idl-font-lock-keywords ()
+  (c-compose-keywords-list idl-font-lock-keywords))
 
 
 ;;; Pike.
@@ -2397,8 +2460,9 @@ fontification of strings and comments).")
 (defconst pike-font-lock-keywords-2 (c-lang-const c-matchers-2 pike)
   "Fast normal highlighting for Pike mode.
 In addition to `pike-font-lock-keywords-1', this adds fontification of
-keywords, simple types, declarations that are easy to recognize, and
-the user defined types on `pike-font-lock-extra-types'.")
+keywords, simple types, declarations that are easy to recognize, the
+user defined types on `pike-font-lock-extra-types', and the doc
+comment styles specified by `c-doc-comment-style'.")
 
 (defconst pike-font-lock-keywords-3 (c-lang-const c-matchers-3 pike)
   "Accurate normal highlighting for Pike mode.
@@ -2406,13 +2470,42 @@ Like `pike-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `pike-font-lock-extra-types'.")
 
-(defconst pike-font-lock-keywords-4 (c-lang-const c-matchers-4 pike)
-  "Accurate extra highlighting for Pike mode.
-In addition to `pike-font-lock-keywords-3', this adds fontification of
-refdoc comments and the markup inside them.")
-
-(defvar pike-font-lock-keywords pike-font-lock-keywords-4
+(defvar pike-font-lock-keywords pike-font-lock-keywords-3
   "Default expressions to highlight in Pike mode.")
+
+(defun pike-font-lock-keywords-2 ()
+  (c-compose-keywords-list pike-font-lock-keywords-2))
+(defun pike-font-lock-keywords-3 ()
+  (c-compose-keywords-list pike-font-lock-keywords-3))
+(defun pike-font-lock-keywords ()
+  (c-compose-keywords-list pike-font-lock-keywords))
+
+
+;;; Doc comments.
+
+(defun c-font-lock-doc-comments (prefix limit)
+  ;; Fontify all comments whose start matches PREFIX from the point to
+  ;; LIMIT with `c-doc-face'.  Assumes comments have been fontified
+  ;; with `font-lock-comment-face' already.  Nil is always returned.
+
+  (while (re-search-forward prefix limit t)
+    (let ((start (match-beginning 0)))
+      (when (eq (get-text-property start 'face)
+		'font-lock-comment-face)
+	(goto-char (next-single-property-change start 'face nil limit))
+	(when (or (= start (point-min))
+		  (not (eq (get-text-property (1- start) 'face)
+			   'font-lock-comment-face)))
+	  (c-put-font-lock-face start (point) c-doc-face)))))
+  nil)
+
+(defconst javadoc-font-lock-keywords
+  `(,(byte-compile
+      `(lambda (limit) (c-font-lock-doc-comments "/\\*\\*" limit)))))
+
+(defconst autodoc-font-lock-keywords
+  `(,(byte-compile
+      `(lambda (limit) (c-font-lock-doc-comments "/[*/]!" limit)))))
 
 
 (cc-provide 'cc-fonts)
