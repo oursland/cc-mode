@@ -1075,6 +1075,31 @@ when it's needed.  The default is the current language taken from
 
 (put 'c-make-keywords-re 'lisp-indent-function 1)
 
+(defun c-make-bare-char-alt (chars &optional inverted)
+  "Make a character alternative string from the list of characters CHARS.
+The returned string is of the type that can be used with
+`skip-chars-forward' and `skip-chars-backward'.  If INVERTED is
+non-nil, a caret is prepended to invert the set."
+  ;; This function ought to be in the elisp core somewhere.
+  (let ((str (if inverted "^" "")) char char2)
+    (setq chars (sort (append chars nil) `<))
+    (while chars
+      (setq char (pop chars))
+      (if (memq char '(?\\ ?^ ?-))
+	  ;; Quoting necessary (this method only works in the skip
+	  ;; functions).
+	  (setq str (format "%s\\%c" str char))
+	(setq str (format "%s%c" str char)))
+      ;; Check for range.
+      (setq char2 char)
+      (while (and chars (>= (1+ char2) (car chars)))
+	(setq char2 (pop chars)))
+      (unless (= char char2)
+	(if (< (1+ char) char2)
+	    (setq str (format "%s-%c" str char2))
+	  (push char2 chars))))
+    str))
+
 ;; Leftovers from (X)Emacs 19 compatibility.
 (defalias 'c-regexp-opt 'regexp-opt)
 (defalias 'c-regexp-opt-depth 'regexp-opt-depth)
