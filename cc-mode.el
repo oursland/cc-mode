@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.269 $
-;; Last Modified:   $Date: 1994-02-25 17:54:06 $
+;; Version:         $Revision: 3.270 $
+;; Last Modified:   $Date: 1994-02-25 22:10:50 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-25 17:54:06 $|$Revision: 3.269 $|
+;; |$Date: 1994-02-25 22:10:50 $|$Revision: 3.270 $|
 
 ;;; Code:
 
@@ -412,6 +412,19 @@ Only currently supported behavior is `alignleft'.")
 			 (statement-cont . +)
 			 ))
 
+     )
+    ("Ellemtel"
+     (c-basic-offset . 3)
+     (c-comment-only-line-offset . 0)
+     (c-hanging-braces-alist     . ((block-open before)))
+     (c-offsets-alist . ((topmost-intro      . 0)
+                         (topmost-intro-cont . -6)
+                         (substatement       . 0)
+                         (case-label         . +)
+                         (access-label       . -3)
+                         (inclass            . 6)
+                         (inline-open        . -6)
+                         ))
      ))
   "Styles of Indentation.
 Elements of this alist are of the form:
@@ -770,7 +783,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.269 $
+cc-mode Revision: $Revision: 3.270 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -801,7 +814,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.269 $
+cc-mode Revision: $Revision: 3.270 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -3230,7 +3243,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.269 $"
+(defconst c-version "$Revision: 3.270 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
