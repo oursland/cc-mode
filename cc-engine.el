@@ -6279,116 +6279,158 @@ comment at the start of cc-engine.el for more info."
     (and (< limit (point))
 	 (eq (char-before) ?:))))
 
-(defun c-search-uplist-for-classkey (paren-state)
-  ;; search for the containing class, returning a 2 element vector if
-  ;; found. aref 0 contains the bufpos of the boi of the class key
-  ;; line, and aref 1 contains the bufpos of the open brace.
+(defun c-looking-at-decl-block (containing-sexp goto-start &optional limit)
+  ;; Assuming the point is at an open brace, check if it starts a
+  ;; block that contains another declaration level, i.e. that isn't a
+  ;; statement block or a brace list, and if so return non-nil.
+  ;;
+  ;; If the check is successful, the return value is the start of the
+  ;; keyword that tells what kind of construct it is, i.e. typically
+  ;; what `c-decl-block-key' matched.  Also, if GOTO-START is set then
+  ;; the point will be at the start of the construct, before any
+  ;; leading specifiers, otherwise it's at the returned position.
+  ;;
+  ;; The point is clobbered if the check is unsuccessful.
+  ;;
+  ;; CONTAINING-SEXP is the position of the open of the surrounding
+  ;; paren, or nil if none.
+  ;;
+  ;; The optional LIMIT limits the backward search for the start of
+  ;; the construct.  It's assumed to be at a syntactically relevant
+  ;; position.
+  ;;
+  ;; If any template arglists are found in the searched region before
+  ;; the open brace, they get marked with paren syntax.
   ;;
   ;; This function might do hidden buffer changes.
-  (if (null paren-state)
-      ;; no paren-state means we cannot be inside a class
-      nil
-    (let ((carcache (car paren-state))
-	  search-start search-end)
-      (if (consp carcache)
-	  ;; a cons cell in the first element means that there is some
-	  ;; balanced sexp before the current bufpos. this we can
-	  ;; ignore. the nth 1 and nth 2 elements define for us the
-	  ;; search boundaries
-	  (setq search-start (nth 2 paren-state)
-		search-end (nth 1 paren-state))
-	;; if the car was not a cons cell then nth 0 and nth 1 define
-	;; for us the search boundaries
-	(setq search-start (nth 1 paren-state)
-	      search-end (nth 0 paren-state)))
-      ;; if search-end is nil, or if the search-end character isn't an
-      ;; open brace, we are definitely not in a class
-      (if (or (not search-end)
-	      (< search-end (point-min))
-	      (not (eq (char-after search-end) ?{)))
-	  nil
-	;; now, we need to look more closely at search-start.  if
-	;; search-start is nil, then our start boundary is really
-	;; point-min.
-	(if (not search-start)
-	    (setq search-start (point-min))
-	  ;; if search-start is a cons cell, then we can start
-	  ;; searching from the end of the balanced sexp just ahead of
-	  ;; us
-	  (if (consp search-start)
-	      (setq search-start (cdr search-start))
-	    ;; Otherwise we start searching within the surrounding paren sexp.
-	    (setq search-start (1+ search-start))))
-	;; now we can do a quick regexp search from search-start to
-	;; search-end and see if we can find a class key.  watch for
-	;; class like strings in literals
-	(save-excursion
-	  (save-restriction
-	    (goto-char search-start)
-	    (let (foundp class match-end)
-	      (while (and (not foundp)
-			  (progn
-			    (c-forward-syntactic-ws search-end)
-			    (> search-end (point)))
-			  ;; Add one to the search limit, to allow
-			  ;; matching of the "{" in the regexp.
-			  (re-search-forward c-decl-block-key
-					     (1+ search-end)
-					     t))
-		(setq class (match-beginning 0)
-		      match-end (match-end 0))
-		(goto-char class)
-		(if (c-in-literal search-start)
-		    (goto-char match-end) ; its in a comment or string, ignore
-		  (c-skip-ws-forward)
-		  (setq foundp (vector (c-point 'boi) search-end))
-		  (cond
-		   ;; check for embedded keywords
-		   ((let ((char (char-after (1- class))))
-		      (and char
-			   (memq (char-syntax char) '(?w ?_))))
-		    (goto-char match-end)
-		    (setq foundp nil))
-		   ;; make sure we're really looking at the start of a
-		   ;; class definition, and not an ObjC method.
-		   ((and c-opt-method-key
-			 (re-search-forward c-opt-method-key search-end t)
-			 (not (c-in-literal class)))
-		    (setq foundp nil))
-		   ;; Check if this is an anonymous inner class.
-		   ((and c-opt-inexpr-class-key
-			 (looking-at c-opt-inexpr-class-key))
-		    (while (and (zerop (c-forward-token-2 1 t))
-				(looking-at "(\\|\\w\\|\\s_\\|\\.")))
-		    (if (eq (point) search-end)
-			;; We're done.  Just trap this case in the cond.
-			nil
-		      ;; False alarm; all conditions aren't satisfied.
-		      (setq foundp nil)))
-		   ;; Its impossible to define a regexp for this, and
-		   ;; nearly so to do it programmatically.
-		   ;;
-		   ;; ; picks up forward decls
-		   ;; = picks up init lists
-		   ;; ) picks up return types
-		   ;; > picks up templates, but remember that we can
-		   ;;   inherit from templates!
-		   ((let ((skipchars "^;=)"))
-		      ;; try to see if we found the `class' keyword
-		      ;; inside a template arg list
-		      (save-excursion
-			(skip-chars-backward "^<>" search-start)
-			(if (eq (char-before) ?<)
-			    (setq skipchars (concat skipchars ">"))))
-		      (while (progn
-			       (skip-chars-forward skipchars search-end)
-			       (c-in-literal class))
-			(forward-char))
-		      (/= (point) search-end))
-		    (setq foundp nil))
-		   )))
-	      foundp))
-	  )))))
+
+  (let ((open-brace (point)) kwd-start first-specifier-pos)
+    (c-syntactic-skip-backward c-block-prefix-charset limit t)
+
+    (when (and c-recognize-<>-arglists
+	       (eq (char-before) ?>))
+      ;; Could be at the end of a template arglist.
+      (let ((c-parse-and-markup-<>-arglists t)
+	    (c-disallow-comma-in-<>-arglists
+	     (and containing-sexp
+		  (not (eq (char-after containing-sexp) ?{)))))
+	(while (and
+		(c-backward-<>-arglist nil limit)
+		(progn
+		  (c-syntactic-skip-backward c-block-prefix-charset limit t)
+		  (eq (char-before) ?>))))))
+
+    ;; Note: Can't get bogus hits inside template arglists below since they
+    ;; have gotten paren syntax above.
+    (when (and
+	   ;; If `goto-start' is set we begin by searching for the
+	   ;; first possible position of a leading specifier list.
+	   ;; The `c-decl-block-key' search continues from there since
+	   ;; we know it can't match earlier.
+	   (if goto-start
+	       (when (c-syntactic-re-search-forward c-symbol-start
+						    open-brace t t)
+		 (goto-char (setq first-specifier-pos (match-beginning 0)))
+		 t)
+	     t)
+
+	   (cond
+	    ((c-syntactic-re-search-forward c-decl-block-key open-brace t t t)
+	     (goto-char (setq kwd-start (match-beginning 0)))
+	     (or
+
+	      ;; Found a keyword that can't be a type?
+	      (match-beginning 1)
+
+	      ;; Can be a type too, in which case it's the return type of a
+	      ;; function (under the assumption that no declaration level
+	      ;; block construct starts with a type).
+	      (not (c-forward-type))
+
+	      ;; Jumped over a type, but it could be a declaration keyword
+	      ;; followed by the declared identifier that we've jumped over
+	      ;; instead (e.g. in "class Foo {").  If it indeed is a type
+	      ;; then we should be at the declarator now, so check for a
+	      ;; valid declarator start.
+	      ;;
+	      ;; Note: This doesn't cope with the case when a declared
+	      ;; identifier is followed by e.g. '(' in a language where '('
+	      ;; also might be part of a declarator expression.  Currently
+	      ;; there's no such language.
+	      (not (or (looking-at c-symbol-start)
+		       (looking-at c-type-decl-prefix-key)))))
+
+	    ;; In Pike a list of modifiers may be followed by a brace
+	    ;; to make them apply to many identifiers.  Note that the
+	    ;; match data will be empty on return in this case.
+	    ((and (c-major-mode-is 'pike-mode)
+		  (progn
+		    (goto-char open-brace)
+		    (= (c-backward-token-2) 0)
+		    (looking-at c-specifier-key))
+		  ;; Use this variant to avoid yet another special regexp.
+		  (c-keyword-member (c-keyword-sym (match-string 1))
+				    'c-modifier-kwds))
+	     (setq kwd-start (point))
+	     t)))
+
+      ;; Got a match.
+
+      (if goto-start
+	  ;; Back up over any preceding specifiers and their clauses
+	  ;; by going forward from `first-specifier-pos', which is the
+	  ;; earliest possible position where the specifier list can
+	  ;; start.
+	  (progn
+	    (goto-char first-specifier-pos)
+
+	    (while (< (point) kwd-start)
+	      (if (looking-at c-symbol-key)
+		  ;; Accept any plain symbol token on the ground that
+		  ;; it's a specifier masked through a macro (just
+		  ;; like `c-forward-decl-or-cast-1' skip forward over
+		  ;; such tokens).
+		  ;;
+		  ;; Could be more restrictive wrt invalid keywords,
+		  ;; but that'd only occur in invalid code so there's
+		  ;; no use spending effort on it.
+		  (let ((end (match-end 0)))
+		    (unless (c-forward-keyword-clause 0)
+		      (goto-char end)
+		      (c-forward-syntactic-ws)))
+
+		;; Can't parse a declaration preamble and is still
+		;; before `kwd-start'.  That means `first-specifier-pos'
+		;; was in some earlier construct.  Search again.
+		(if (c-syntactic-re-search-forward c-symbol-start
+						   kwd-start 'move t)
+		    (goto-char (setq first-specifier-pos (match-beginning 0)))
+		  ;; Got no preamble before the block declaration keyword.
+		  (setq first-specifier-pos kwd-start))))
+
+	    (goto-char first-specifier-pos))
+	(goto-char kwd-start))
+
+      kwd-start)))
+
+(defun c-search-uplist-for-classkey (paren-state)
+  ;; Check if the closest containing paren sexp is a declaration
+  ;; block, returning a 2 element vector in that case.  Aref 0
+  ;; contains the bufpos at boi of the class key line, and aref 1
+  ;; contains the bufpos of the open brace.  This function is an
+  ;; obsolete wrapper for `c-looking-at-decl-block'.
+  ;;
+  ;; This function might do hidden buffer changes.
+  (let ((open-paren-pos (c-most-enclosing-brace paren-state)))
+    (when open-paren-pos
+      (save-excursion
+	(goto-char open-paren-pos)
+	(when (and (eq (char-after) ?{)
+		   (c-looking-at-decl-block
+		    (c-safe-position open-paren-pos paren-state)
+		    nil))
+	  (back-to-indentation)
+	  (vector (point) open-paren-pos))))))
 
 (defun c-inside-bracelist-p (containing-sexp paren-state)
   ;; return the buffer position of the beginning of the brace list
@@ -6911,27 +6953,31 @@ comment at the start of cc-engine.el for more info."
 	  (setq p (cdr p))))
       )))
 
-(defun c-add-class-syntax (symbol classkey paren-state)
+(defun c-add-class-syntax (symbol
+			   containing-decl-open
+			   containing-decl-start
+			   containing-decl-kwd
+			   paren-state)
   ;; The inclass and class-close syntactic symbols are added in
   ;; several places and some work is needed to fix everything.
   ;; Therefore it's collected here.
   ;;
   ;; This function might do hidden buffer changes.
-  (let (inexpr anchor containing-sexp)
-    (goto-char (aref classkey 1))
-    (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
-	(c-add-syntax symbol (setq anchor (point)))
-      (c-add-syntax symbol (setq anchor (aref classkey 0)))
-      (if (and c-opt-inexpr-class-key
-	       (setq containing-sexp (c-most-enclosing-brace paren-state
-							     (point))
-		     inexpr (cdr (c-looking-at-inexpr-block
-				  (c-safe-position containing-sexp
-						   paren-state)
-				  containing-sexp)))
-	       (/= inexpr (c-point 'boi inexpr)))
-	  (c-add-syntax 'inexpr-class)))
-    anchor))
+  (goto-char containing-decl-open)
+  (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
+      (progn
+	(c-add-syntax symbol containing-decl-open)
+	containing-decl-open)
+    (goto-char containing-decl-start)
+    ;; Ought to use `c-add-stmt-syntax' instead of backing up to boi
+    ;; here, but we have to do like this for compatibility.
+    (back-to-indentation)
+    (c-add-syntax symbol (point))
+    (if (and (c-keyword-member containing-decl-kwd
+			       'c-inexpr-class-kwds)
+	     (/= containing-decl-start (c-point 'boi containing-decl-start)))
+	(c-add-syntax 'inexpr-class))
+    (point)))
 
 (defun c-guess-continued-construct (indent-point
 				    char-after-ip
@@ -6959,11 +7005,9 @@ comment at the start of cc-engine.el for more info."
       (cond
        ;; CASE B.1: class-open
        ((save-excursion
-	  (skip-chars-forward "{")
-	  (let ((decl (c-search-uplist-for-classkey (c-parse-state))))
-	    (and decl
-		 (setq beg-of-same-or-containing-stmt (aref decl 0)))
-	    ))
+	  (and (eq (char-after) ?{)
+	       (c-looking-at-decl-block containing-sexp t)
+	       (setq beg-of-same-or-containing-stmt (point))))
 	(c-add-syntax 'class-open beg-of-same-or-containing-stmt))
 
        ;; CASE B.2: brace-list-open
@@ -7073,43 +7117,55 @@ comment at the start of cc-engine.el for more info."
       (c-save-buffer-state
 	  ((indent-point (point))
 	   (case-fold-search nil)
-	   (paren-state (c-parse-state))
-	   literal containing-sexp char-before-ip char-after-ip lim
+	   literal char-before-ip char-after-ip macro-start in-macro-expr
 	   c-syntactic-context placeholder c-in-literal-cache step-type
 	   tmpsymbol keyword injava-inher special-brace-list
-	   (inclass-p (c-search-uplist-for-classkey paren-state))
-	   inenclosing-p macro-start in-macro-expr
+	   ;; The following record some positions for the containing
+	   ;; declaration block if we're directly within one:
+	   ;; `containing-decl-open' is the position of the open
+	   ;; brace.  `containing-decl-start' is the start of the
+	   ;; declaration.  `containing-decl-kwd' is the keyword
+	   ;; symbol of the keyword that tells what kind of block it
+	   ;; is.
+	   containing-decl-open
+	   containing-decl-start
+	   containing-decl-kwd
+	   ;; The open paren of the closest surrounding sexp or nil if
+	   ;; there is none.
+	   containing-sexp
+	   ;; The position after the closest preceding brace sexp
+	   ;; (nested sexps are ignored), or the position after
+	   ;; `containing-sexp' if there is none, or (point-min) if
+	   ;; `containing-sexp' is nil.
+	   lim
+	   ;; The paren state outside `containing-sexp', or at
+	   ;; `indent-point' if `containing-sexp' is nil.
+	   (paren-state (c-parse-state))
 	   ;; There's always at most one syntactic element which got
 	   ;; a relpos.  It's stored in syntactic-relpos.
 	   syntactic-relpos
 	   (c-stmt-delim-chars c-stmt-delim-chars))
 
-	;; Check for meta top-level enclosing constructs such as
-	;; extern language definitions.
-	(save-excursion
-	  (when (and inclass-p
-		     (progn
-		       (goto-char (aref inclass-p 0))
-		       (looking-at c-other-decl-block-key)))
-	    (setq inenclosing-p (match-string 1))
-	    (if (string-equal inenclosing-p "extern")
-		;; Compatibility with legacy choice of name for the
-		;; extern-lang syntactic symbols.
-		(setq inenclosing-p "extern-lang"))))
+	;; Check if we're directly inside an enclosing declaration
+	;; level block.
+	(when (and (setq containing-sexp
+			 (c-most-enclosing-brace paren-state))
+		   (progn
+		     (goto-char containing-sexp)
+		     (eq (char-after) ?{))
+		   (setq placeholder
+			 (c-looking-at-decl-block
+			  (c-most-enclosing-brace paren-state
+						  containing-sexp)
+			  t)))
+	  (setq containing-decl-open containing-sexp
+		containing-decl-start (point)
+		containing-sexp nil)
+	  (goto-char placeholder)
+	  (setq containing-decl-kwd (and (looking-at c-keywords-regexp)
+					 (c-keyword-sym (match-string 1)))))
 
-	;; Init some position variables:
-	;;
-	;; containing-sexp is the open paren of the closest
-	;; surrounding sexp or nil if there is none.
-	;;
-	;; lim is the position after the closest preceding brace sexp
-	;; (nested sexps are ignored), or the position after
-	;; containing-sexp if there is none, or (point-min) if
-	;; containing-sexp is nil.
-	;;
-	;; paren-state is the state from c-parse-state outside
-	;; containing-sexp, or at indent-point if containing-sexp is
-	;; nil.
+	;; Init some position variables.
 	(if c-state-cache
 	    (progn
 	      (setq containing-sexp (car paren-state)
@@ -7323,8 +7379,11 @@ comment at the start of cc-engine.el for more info."
 	    (back-to-indentation)
 	    (and (not (looking-at c-syntactic-ws-start))
 		 (c-forward-label)))
-	  (cond (inclass-p
-		 (setq placeholder (c-add-class-syntax 'inclass inclass-p
+	  (cond (containing-decl-open
+		 (setq placeholder (c-add-class-syntax 'inclass
+						       containing-decl-open
+						       containing-decl-start
+						       containing-decl-kwd
 						       paren-state))
 		 ;; Append access-label with the same anchor point as
 		 ;; inclass gets.
@@ -7381,7 +7440,7 @@ comment at the start of cc-engine.el for more info."
 	    (c-add-syntax (car placeholder))))
 
 	 ;; CASE 5: Line is inside a declaration level block or at top level.
-	 ((or inclass-p (null containing-sexp))
+	 ((or containing-decl-open (null containing-sexp))
 	  (cond
 
 	   ;; CASE 5A: we are looking at a defun, brace list, class,
@@ -7394,32 +7453,31 @@ comment at the start of cc-engine.el for more info."
 
 	     ;; CASE 5A.1: Non-class declaration block open.
 	     ((save-excursion
-		(c-beginning-of-statement-1 lim)
-		(and (looking-at c-other-decl-block-key)
-		     (setq keyword (match-string 1)
-			   placeholder (point))
-		     (if (string-equal keyword "extern")
-			 ;; Special case for extern-lang-open.  The
-			 ;; check for a following string is disabled
-			 ;; since it doesn't disambiguate anything.
-			 (and ;;(progn
-			      ;;  (c-forward-sexp 1)
-			      ;;  (c-forward-syntactic-ws)
-			      ;;  (eq (char-after) ?\"))
-			      (setq tmpsymbol 'extern-lang-open))
-		       (setq tmpsymbol (intern (concat keyword "-open"))))
-		     ))
+		(let (tmp)
+		  (and (eq char-after-ip ?{)
+		       (setq tmp (c-looking-at-decl-block containing-sexp t))
+		       (progn
+			 (setq placeholder (point))
+			 (goto-char tmp)
+			 (looking-at c-symbol-key))
+		       (c-keyword-member
+			(c-keyword-sym (setq keyword (match-string 0)))
+			'c-other-block-decl-kwds))))
 	      (goto-char placeholder)
-	      (c-add-syntax tmpsymbol (c-point 'boi)))
+	      (c-add-stmt-syntax
+	       (if (string-equal keyword "extern")
+		   ;; Special case for extern-lang-open.
+		   'extern-lang-open
+		 (intern (concat keyword "-open")))
+	       nil t containing-sexp paren-state))
 
 	     ;; CASE 5A.2: we are looking at a class opening brace
 	     ((save-excursion
 		(goto-char indent-point)
-		(skip-chars-forward " \t{")
-		(let ((decl (c-search-uplist-for-classkey (c-parse-state))))
-		  (and decl
-		       (setq placeholder (aref decl 0)))
-		  ))
+		(skip-chars-forward " \t")
+		(and (eq (char-after) ?{)
+		     (c-looking-at-decl-block containing-sexp t)
+		     (setq placeholder (point))))
 	      (c-add-syntax 'class-open placeholder))
 
 	     ;; CASE 5A.3: brace list open
@@ -7465,14 +7523,20 @@ comment at the start of cc-engine.el for more info."
 		(c-add-syntax 'brace-list-open placeholder)))
 
 	     ;; CASE 5A.4: inline defun open
-	     ((and inclass-p (not inenclosing-p))
+	     ((and containing-decl-open
+		   (not (c-keyword-member containing-decl-kwd
+					  'c-other-block-decl-kwds)))
 	      (c-add-syntax 'inline-open)
-	      (c-add-class-syntax 'inclass inclass-p paren-state))
+	      (c-add-class-syntax 'inclass
+				  containing-decl-open
+				  containing-decl-start
+				  containing-decl-kwd
+				  paren-state))
 
 	     ;; CASE 5A.5: ordinary defun open
 	     (t
 	      (goto-char placeholder)
-	      (if (or inclass-p macro-start)
+	      (if (or containing-decl-open macro-start)
 		  (c-add-syntax 'defun-open (c-point 'boi))
 		;; Bogus to use bol here, but it's the legacy.
 		(c-add-syntax 'defun-open (c-point 'bol)))
@@ -7515,8 +7579,12 @@ comment at the start of cc-engine.el for more info."
 		   (c-in-knr-argdecl lim))
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
-	      (if inclass-p
-		  (c-add-class-syntax 'inclass inclass-p paren-state)))
+	      (if containing-decl-open
+		  (c-add-class-syntax 'inclass
+				      containing-decl-open
+				      containing-decl-start
+				      containing-decl-kwd
+				      paren-state)))
 
 	     ;; CASE 5B.3: Inside a member init list.
 	     ((c-beginning-of-member-init-list lim)
@@ -7587,8 +7655,12 @@ comment at the start of cc-engine.el for more info."
 	     ((eq char-before-ip ?:)
 	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'inher-intro (c-point 'boi))
-	      (if inclass-p
-		  (c-add-class-syntax 'inclass inclass-p paren-state)))
+	      (if containing-decl-open
+		  (c-add-class-syntax 'inclass
+				      containing-decl-open
+				      containing-decl-start
+				      containing-decl-kwd
+				      paren-state)))
 
 	     ;; CASE 5C.3: in a Java implements/extends
 	     (injava-inher
@@ -7712,21 +7784,33 @@ comment at the start of cc-engine.el for more info."
 	     ))
 	   
 	   ;; CASE 5F: Close of a non-class declaration level block.
-	   ((and inenclosing-p
-		 (eq char-after-ip ?}))
-	    (c-add-syntax (intern (concat inenclosing-p "-close"))
-			  (aref inclass-p 0)))
+	   ((and (eq char-after-ip ?})
+		 (c-keyword-member containing-decl-kwd
+				   'c-other-block-decl-kwds))
+	    ;; This is inconsistent: Should use `containing-decl-open'
+	    ;; here if it's at boi, like in case 5J.
+	    (goto-char containing-decl-start)
+	    (c-add-stmt-syntax
+	      (if (string-equal (symbol-name containing-decl-kwd) "extern")
+		  ;; Special case for compatibility with the
+		  ;; extern-lang syntactic symbols.
+		  'extern-lang-close
+		(intern (concat (symbol-name containing-decl-kwd)
+				"-close")))
+	      nil t
+	      (c-most-enclosing-brace paren-state (point))
+	      paren-state))
 
 	   ;; CASE 5G: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
-	   ((and inclass-p
+	   ((and containing-sexp
 		 (eq char-after-ip ?})
-		 (save-excursion
-		   (forward-char 1)
-		   (and (c-safe (c-backward-sexp 1) t)
-			(= (point) (aref inclass-p 1))
-			)))
-	    (c-add-class-syntax 'class-close inclass-p paren-state))
+		 (eq containing-decl-open containing-sexp))
+	    (c-add-class-syntax 'class-close
+				containing-decl-open
+				containing-decl-start
+				containing-decl-kwd
+				paren-state))
 
 	   ;; CASE 5H: we could be looking at subsequent knr-argdecls
 	   ((and c-recognize-knr-p
@@ -7806,16 +7890,29 @@ comment at the start of cc-engine.el for more info."
 	    ;; to remain compatible.  :P
 	    (goto-char placeholder)
 	    (c-add-syntax 'topmost-intro (c-point 'bol))
-	    (if inclass-p
-		(progn
-		  (goto-char (aref inclass-p 1))
-		  (or (= (point) (c-point 'boi))
-		      (goto-char (aref inclass-p 0)))
-		  (if inenclosing-p
-		      (c-add-syntax (intern (concat "in" inenclosing-p))
-				    (c-point 'boi))
-		    (c-add-class-syntax 'inclass inclass-p paren-state))
-		  ))
+	    (if containing-decl-open
+		(if (c-keyword-member containing-decl-kwd
+				      'c-other-block-decl-kwds)
+		    (progn
+		      (goto-char containing-decl-open)
+		      (unless (= (point) (c-point 'boi))
+			(goto-char containing-decl-start))
+		      (c-add-stmt-syntax
+		       (if (string-equal (symbol-name containing-decl-kwd)
+					 "extern")
+			   ;; Special case for compatibility with the
+			   ;; extern-lang syntactic symbols.
+			   'inextern-lang
+			 (intern (concat "in"
+					 (symbol-name containing-decl-kwd))))
+		       nil t
+		       (c-most-enclosing-brace paren-state (point))
+		       paren-state))
+		  (c-add-class-syntax 'inclass
+				      containing-decl-open
+				      containing-decl-start
+				      containing-decl-kwd
+				      paren-state)))
 	    (when (and c-syntactic-indentation-in-macros
 		       macro-start
 		       (/= macro-start (c-point 'boi indent-point)))
@@ -8139,11 +8236,18 @@ comment at the start of cc-engine.el for more info."
 
 	     ;; CASE 16B: does this close an inline or a function in
 	     ;; a non-class declaration level block?
-	     ((setq placeholder (c-search-uplist-for-classkey paren-state))
+	     ((save-excursion
+		(and lim
+		     (progn
+		       (goto-char lim)
+		       (c-looking-at-decl-block
+			(c-most-enclosing-brace paren-state lim)
+			nil))
+		     (setq placeholder (point))))
 	      (c-backward-to-decl-anchor lim)
 	      (back-to-indentation)
 	      (if (save-excursion
-		    (goto-char (aref placeholder 0))
+		    (goto-char placeholder)
 		    (looking-at c-other-decl-block-key))
 		  (c-add-syntax 'defun-close (point))
 		(c-add-syntax 'inline-close (point))))
@@ -8278,10 +8382,19 @@ comment at the start of cc-engine.el for more info."
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 
-	   ;; CASE 17F: First statement in a defun at top level or in
-	   ;; a declaration level block.
-	   ((or (not (setq placeholder (c-most-enclosing-brace paren-state)))
-		(c-search-uplist-for-classkey paren-state))
+	   ;; CASE 17F: first statement in an inline, or first
+	   ;; statement in a top-level defun. we can tell this is it
+	   ;; if there are no enclosing braces that haven't been
+	   ;; narrowed out by a class (i.e. don't use bod here).
+	   ((save-excursion
+	      (or (not (setq placeholder (c-most-enclosing-brace
+					  paren-state)))
+		  (and (progn
+			 (goto-char placeholder)
+			 (eq (char-after) ?{))
+		       (c-looking-at-decl-block (c-most-enclosing-brace
+						 paren-state (point))
+						nil))))
 	    (c-backward-to-decl-anchor lim)
 	    (back-to-indentation)
 	    (c-add-syntax 'defun-block-intro (point)))

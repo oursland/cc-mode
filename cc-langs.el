@@ -823,6 +823,20 @@ operators."
 			       (c-lang-const c-operator-list))
 		       :test 'string-equal))
 
+(c-lang-defconst c-nonsymbol-token-char-list
+  ;; List containing all chars not in the word, symbol or
+  ;; syntactically irrelevant syntax classes, i.e. all punctuation,
+  ;; parenthesis and string delimiter chars.
+  t (c-with-syntax-table (c-lang-const c-mode-syntax-table)
+      ;; Only go through the chars in the printable ASCII range.  No
+      ;; language so far has 8-bit or widestring operators.
+      (let (list (char 32))
+	(while (< char 127)
+	  (or (memq (char-syntax char) '(?w ?_ ?< ?> ?\ ))
+	      (setq list (cons char list)))
+	  (setq char (1+ char)))
+	list)))
+
 (c-lang-defconst c-nonsymbol-token-regexp
   ;; Regexp matching all tokens in the punctuation and parenthesis
   ;; syntax classes.  Note that this also matches ".", which can start
@@ -1937,21 +1951,25 @@ Note that Java specific rules are currently applied to tell this from
   (c-lang-const c-opt-inexpr-brace-list-key))
 
 (c-lang-defconst c-decl-block-key
-  ;; Regexp matching the start of any declaration-level block that
-  ;; contain another declaration level, i.e. that isn't a function
-  ;; block or brace list.
-  t (c-make-keywords-re t
-      (append (c-lang-const c-class-decl-kwds)
-	      (c-lang-const c-other-block-decl-kwds)
-	      (c-lang-const c-inexpr-class-kwds)))
-  ;; In Pike modifiers might be followed by a block
-  ;; to apply to several declarations.
-  pike (concat (c-lang-const c-decl-block-key)
-	       "\\|"
-	       "\\(" (c-make-keywords-re nil
-		       (c-lang-const c-modifier-kwds)) "\\)"
-	       (c-lang-const c-syntactic-ws)
-	       "{"))
+  ;; Regexp matching keywords in any construct that contain another
+  ;; declaration level, i.e. that isn't followed by a function block
+  ;; or brace list.  When the first submatch matches, it's an
+  ;; unambiguous construct, otherwise it's an ambiguous match that
+  ;; might also be the return type of a function declaration.
+  t (let* ((decl-kwds (append (c-lang-const c-class-decl-kwds)
+			      (c-lang-const c-other-block-decl-kwds)
+			      (c-lang-const c-inexpr-class-kwds)))
+	   (unambiguous (set-difference decl-kwds
+					(c-lang-const c-type-start-kwds)
+					:test 'string-equal))
+	   (ambiguous (intersection decl-kwds
+				    (c-lang-const c-type-start-kwds)
+				    :test 'string-equal)))
+      (if ambiguous
+	  (concat (c-make-keywords-re t unambiguous)
+		  "\\|"
+		  (c-make-keywords-re t ambiguous))
+	(c-make-keywords-re t unambiguous))))
 (c-lang-defvar c-decl-block-key (c-lang-const c-decl-block-key))
 
 (c-lang-defconst c-bitfield-kwds
@@ -2255,6 +2273,71 @@ constructs."
 		  "\\`\\s\(\\'"
 		  (lambda (op) (elt op 0))))
 (c-lang-defvar c-cast-parens (c-lang-const c-cast-parens))
+
+(c-lang-defconst c-block-prefix-disallowed-chars
+  "List of syntactically relevant characters that never can occur before
+the open brace in any construct that contains a brace block, e.g. in
+the \"class Foo: public Bar\" part of:
+
+    class Foo: public Bar {int x();} a, *b;
+
+If parens can occur, the chars inside those aren't filtered with this
+list.
+
+'<' and '>' should be disallowed even if angle bracket arglists can
+occur.  That since the search function needs to stop at them anyway to
+ensure they are given paren syntax.
+
+This is used to skip backward from the open brace to find the region
+in which to look for a construct like \"class\", \"enum\",
+\"namespace\" or whatever.  That skipping should be as tight as
+possible for good performance."
+
+  ;; Default to all chars that only occurs in nonsymbol tokens outside
+  ;; identifiers.
+  t (set-difference
+     (c-lang-const c-nonsymbol-token-char-list)
+     (c-filter-ops (append (c-lang-const c-identifier-ops)
+			   (list (cons nil
+				       (c-lang-const c-after-id-concat-ops))))
+		   t
+		   t
+		   (lambda (op)
+		     (let ((pos 0) res)
+		       (while (string-match "\\(\\s.\\|\\s(\\|\\s)\\)"
+					    op pos)
+			 (setq res (cons (aref op (match-beginning 1)) res)
+			       pos (match-end 0)))
+		       res))))
+
+  ;; Allow cpp operatios (where applicable).
+  t (if (c-lang-const c-opt-cpp-prefix)
+	(set-difference (c-lang-const c-block-prefix-disallowed-chars)
+			'(?#))
+      (c-lang-const c-block-prefix-disallowed-chars))
+
+  ;; Allow ':' for inherit list starters.
+  (c++ objc idl) (set-difference (c-lang-const c-block-prefix-disallowed-chars)
+				 '(?:))
+
+  ;; Allow ',' for multiple inherits.
+  (c++ java) (set-difference (c-lang-const c-block-prefix-disallowed-chars)
+			     '(?,))
+
+  ;; Allow parentheses for anonymous inner classes in Java and class
+  ;; initializer lists in Pike.
+  (java pike) (set-difference (c-lang-const c-block-prefix-disallowed-chars)
+			      '(?\( ?\)))
+
+  ;; Allow '"' for extern clauses (e.g. extern "C" {...}).
+  (c c++ objc) (set-difference (c-lang-const c-block-prefix-disallowed-chars)
+			       '(?\" ?')))
+
+(c-lang-defconst c-block-prefix-charset
+  ;; `c-block-prefix-disallowed-chars' as an inverted charset suitable
+  ;; for `c-syntactic-skip-backward'.
+  t (c-make-bare-char-alt (c-lang-const c-block-prefix-disallowed-chars) t))
+(c-lang-defvar c-block-prefix-charset (c-lang-const c-block-prefix-charset))
 
 (c-lang-defconst c-type-decl-prefix-key
   "Regexp matching the declarator operators that might precede the
