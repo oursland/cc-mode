@@ -1633,6 +1633,7 @@
 		     (goto-char placeholder)
 		     (back-to-indentation)
 		     (and
+		      c-access-key
 		      (not (looking-at c-access-key))
 		      (not (looking-at c-class-key)))
 		     ))
