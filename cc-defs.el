@@ -868,16 +868,13 @@ is to be the template for the new mode.
 
 The exact effect of BASE-MODE is to make all language constants that
 haven't got a setting in the new language fall back to their values in
-BASE-MODE.  BASE-MODE may be nil to avoid this, in which case all
-language constants will take on their catch-all values, which in
-practice means some sort of greatest common subset of all the CC Mode
-languages."
+BASE-MODE.  It does not have any effect outside the language constant
+system."
   (unless (string-match "\\`\\(.*-\\)mode\\'" (symbol-name mode))
     (error "The mode name symbol `%s' must end with \"-mode\"" mode))
   (put mode 'c-mode-prefix (match-string 1 (symbol-name mode)))
-  (when base-mode
-    (unless (get base-mode 'c-mode-prefix)
-      (error "Unknown base mode `%s'" base-mode))
+  (unless (get base-mode 'c-mode-prefix)
+    (error "Unknown base mode `%s'" base-mode)
     (put mode 'c-fallback-mode base-mode)))
 
 (defvar c-lang-constants (make-vector 151 0))
