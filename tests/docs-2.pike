@@ -52,3 +52,7 @@ class X {
 //!
 //! If the first argument is other than @tt{"stdin"@} the arguments will
 //! be passed to @[bind()].
+
+/*! @class Ansgar */
+
+/*! @endclass Ansgar */
