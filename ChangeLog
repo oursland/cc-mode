@@ -1,3 +1,151 @@
+Mon Apr 27 14:37:45 1998  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.23
+
+Mon Apr 27 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-align.el (c-lineup-math): Indent with c-basic-offset if the
+ 	equal sign ends the first line.
+
+Thu Apr 23 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-align.el, cc-cmds.el, cc-compat.el, cc-engine.el Use
+ 	c-{forward,backward}-sexp instead of {forward,backward}-sexp.
+	
+Mon Apr 20 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-inside-bracelist-p): Don't recognize operator=()
+ 	method definitions as bracelists.
+
+Sun Apr 19 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-style-alist): In "gnu" style, set inline-open
+ 	offset to zero.
+
+Thu Apr 16 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-electric-brace): Check for and exclude Pike-style
+ 	brace lists from the auto-newline feature.
+
+Wed Apr 15 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-electric-paren): New function for electric
+ 	auto-indenting behavior for parenthesis.
+
+Tue Apr 14 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-mode.el (c-submit-bug-report): Don't include
+ 	c-special-indent-hook iff hook is of length 1 and contains only
+ 	c-gnu-impose-minimum.
+
+Mon Apr 13 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-add-class-syntax): New function that handles all
+ 	inclass and related symbols in one place.  The anchor position of
+ 	inclass has changed in some situations.
+
+	* cc-mode.texi Documented the Pike mode, the c-lineup-inexpr-block
+ 	lineup function and the inlambda, lambda-intro-cont,
+ 	inexpr-statement and inexpr-class syntactic symbols.  Updated the
+ 	doc on c-fill-paragraph.
+
+Sun Apr 12 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-beginning-of-statement): Handle blocks inside
+ 	expressions.
+
+Wed Apr 08 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-mark-function): Much better implementation which
+ 	catches all the expected cases.
+
+	* cc-cmds.el (c-end-of-defun): When called programmatically with
+ 	no arguments, arg is nil, so set it to 1.
+
+	* cc-defs.el (c-point): Added 'eod. 
+
+Mon Apr 06 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-search-uplist-for-classkey,
+ 	c-inside-bracelist-p, c-looking-at-inexpr-block,
+ 	c-guess-basic-syntax): Support for Java anonymous classes.  New
+ 	case 6D in c-guess-basic-syntax.
+
+	* cc-langs.el, cc-mode.el, cc-styles.el Support for Java anonymous
+ 	classes.  New syntactic element inexpr-class.
+
+Sun Apr 05 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-align.el (c-lineup-inexpr-stat): Added lineup of statements
+ 	inside expressions.  Do not use langelem, because it's nil now for
+ 	`inlambda' and `inexpr-statement'.
+
+	* cc-engine.el (c-inside-bracelist-p, c-looking-at-inexpr-stat,
+ 	c-guess-basic-syntax): Changed the anchoring of the syntactic
+ 	symbols `inlambda' and `inexpr-statement' to be able to remove
+ 	three of the new symbols. Added recognition of the gcc extension
+ 	for statements inside expressions.  They're handled as
+ 	`inexpr-statement' now.  Changed cases: 6, 10, 15A, 16E.  New case
+ 	7B; old 7B-F renumbered.
+
+Fri Apr 03 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-electric-brace): Removed brace-list-entry from the
+ 	list of symbols that can be electrified because all cases where
+ 	brace-list-entry was used should now be brace-entry-open's.
+
+	* cc-cmds.el (c-electric-brace): Add new brace-entry-open to list
+ 	of braces which can be electrified.
+
+	* cc-engine.el (c-guess-basic-syntax): CASE 9C: brace-list-open =>
+ 	brace-entry-open.
+
+	* cc-styles.el (c-style-alist): In "linux" and "python" styles,
+ 	add brace-entry-open to mimic brace-list-open.  Added description
+ 	and entry for brace-entry-open, a new syntactic symbol.
+
+	* cc-vars.el (c-hanging-braces-alist): Added brace-entry-open to
+ 	mimic brace-list-open in default value.  Updated docstring and
+ 	defcustom spec to describe brace-entry-open and remove
+ 	brace-list-entry.
+
+Thu Apr 02 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-align.el (c-lineup-inexpr-stat): New lineup function used in
+ 	Pike mode.
+
+	* cc-engine.el, cc-langs.el, cc-styles.el Support for the Pike
+ 	language.  Handle Pike-style brace lists ('({ })', '([ ])', '(<
+ 	>)') and in-expression statements.  New case 6 in
+ 	c-guess-basic-syntax; CASES >= 6 ARE RENAMED because of this.  New
+ 	functions: c-looking-at-special-brace-list,
+ 	c-looking-at-inexpr-stat, c-looking-at-inexpr-stat-backward.
+
+	* cc-mode.el (pike-mode): New function; support for the Pike language. 
+
+Tue Mar 31 1998  Martin Stjernholm  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-comment-line-break-function): Insert newline when
+ 	in a string literal.
+
+Fri Mar 27 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-defs.el (c-forward-sexp, c-backward-sexp): Implementations of
+ 	replacement defsubst to insulate ourselves from changes to
+ 	forward-sexp and backward-sexp user level command.
+
+	* cc-styles.el (c-read-offset): A better prompt which includes the
+ 	syntactic symbol being changed.
+
+Wed Mar 18 1998  Barry Warsaw  <cc-mode-help@python.org>
+
+	* cc-cmds.el (c-indent-line-or-region): New command. 
+
+	* cc-cmds.el (c-indent-command): Remove `*' from interactive spec. 
+
+	* cc-langs.el (c-mode-menu): Change "Indent Line" to "Indent Line
+ 	or Region".
+
 Mon Mar 16 19:13:24 1998  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.22
