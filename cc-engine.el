@@ -971,8 +971,7 @@ brace."
 	    (if (looking-at "\\<else\\>[ \t]+\\<if\\>[^_]")
 		nil
 	      (setq if-level (1- if-level))
-	      (goto-char here))
-	    (setq last-if-pos (point))))
+	      (goto-char here))))
 	 ((< (point) lim)
 	  (setq if-level 0)
 	  (goto-char lim))
