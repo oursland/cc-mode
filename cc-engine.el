@@ -2899,7 +2899,7 @@ isn't moved."
 	(if (and (eq literal 'pound)
 		 (eq macro-start (c-point 'boi))
 		 (not (and (c-major-mode-is 'pike-mode)
-			   (eq (char-after (1+ placeholder)) ?\"))))
+			   (eq (char-after (1+ macro-start)) ?\"))))
 	    (c-add-syntax 'cpp-macro)
 	  (when (and c-syntactic-analysis-in-macro
 		     macro-start
