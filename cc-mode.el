@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-19 16:42:49 $
-;; Version:         $Revision: 2.117 $
+;; Last Modified:   $Date: 1992-06-19 21:46:58 $
+;; Version:         $Revision: 2.118 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-19 16:42:49 $|$Revision: 2.117 $|
+;; |$Date: 1992-06-19 21:46:58 $|$Revision: 2.118 $|
 
 
 ;; ======================================================================
@@ -231,7 +231,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.117 $
+  "Major mode for editing C++ code.  $Revision: 2.118 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1328,7 +1328,10 @@ BOD is the beginning of the C++ definition."
 		    (c++-backward-to-noncomment (or parse-start (point-min)))
 		    (if (not (bobp))
 			(progn (forward-char -1)
-			       (skip-chars-backward " \t")))
+			       (skip-chars-backward " \t")
+			       ;; skip any comments that may be at
+			       ;; the end of the line
+			       (c++-backward-to-noncomment bod)))
 		    (if (or (= (preceding-char) ?\))
 			    (and (= (preceding-char) ?t)
 				 (save-excursion
@@ -1886,7 +1889,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.117 $"
+(defconst c++-version "$Revision: 2.118 $"
   "c++-mode version number.")
 
 (defun c++-version ()
