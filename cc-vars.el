@@ -126,10 +126,11 @@ Useful as last item in a `choice' widget."
 
 (defmacro defcustom-c-stylevar (name val doc &rest args)
   "Defines a style variable."
-  `(progn
-     (c-set-stylevar-fallback ',name ,val)
-     (defcustom ,name 'set-from-style
-       ,(concat doc "
+  `(let ((-value- ,val))
+     (c-set-stylevar-fallback ',name -value-)
+     (custom-declare-variable
+      ',name ''set-from-style
+      ,(concat doc "
 
 This is a style variable.  Apart from the valid values described
 above, it can be set to the symbol `set-from-style'.  In that case, it
@@ -137,21 +138,21 @@ takes its value from the style system (see `c-default-style' and
 `c-style-alist') when a CC Mode buffer is initialized.  Otherwise,
 the value set here overrides the style system (there is a variable
 `c-old-style-variable-behavior' that changes this, though).")
-       ,@(plist-put
-	  args ':type
-	  `'(radio
-	     (const :tag "Use style settings"
-		    set-from-style)
-	     ,(let ((type (eval (plist-get args ':type))))
-		(unless (consp type)
-		  (setq type (list type)))
-		(unless (c-safe (plist-get (cdr type) ':value))
-		  (setcdr type (append `(:value ,val)
-				       (cdr type))))
-		(unless (c-safe (plist-get (cdr type) ':tag))
-		  (setcdr type (append '(:tag "Override style settings")
-				       (cdr type))))
-		type))))))
+      ,@(plist-put
+	 args ':type
+	 `(` (radio
+	      (const :tag "Use style settings"
+		     set-from-style)
+	      ,(, (let ((type (eval (plist-get args ':type))))
+		    (unless (consp type)
+		      (setq type (list type)))
+		    (unless (c-safe (plist-get (cdr type) ':value))
+		      (setcdr type (append '(:value (, -value-))
+					   (cdr type))))
+		    (unless (c-safe (plist-get (cdr type) ':tag))
+		      (setcdr type (append '(:tag "Override style settings")
+					   (cdr type))))
+		    (cdr (backquote-process type))))))))))
 
 (defun c-valid-offset (offset)
   "Return non-nil iff OFFSET is a valid offset for a syntactic symbol.
@@ -220,11 +221,9 @@ When inserting a tab, actually the function stored in the variable
 Note: indentation of lines containing only comments is also controlled
 by the `c-comment-only-line-offset' variable."
   :type '(radio
-	  :extra-offset 8
-	  :format "%{C Tab Always Indent%}:\n   The TAB key:\n%v"
-	  (const :tag "always indents, never inserts TAB" t)
-	  (const :tag "indents in left margin, otherwise inserts TAB" nil)
-	  (other :tag "inserts TAB in literals, otherwise indent" other))
+	  (const :tag "TAB key always indents, never inserts TAB" t)
+	  (const :tag "TAB key indents in left margin, otherwise inserts TAB" nil)
+	  (other :tag "TAB key inserts TAB in literals, otherwise indents" other))
   :group 'c)
 
 (defcustom c-insert-tab-function 'insert-tab
@@ -283,7 +282,6 @@ default)."
   :type '(choice (integer :tag "Non-anchored offset" 0)
 		 (cons :tag "Non-anchored & anchored offset"
 		       :value (0 . 0)
-		       :extra-offset 8
 		       (integer :tag "Non-anchored offset")
 		       (integer :tag "Anchored offset")))
   :group 'c)
@@ -472,7 +470,6 @@ contexts are:
  cpp     -- inside a preprocessor directive
  code    -- anywhere else, i.e. in normal code"
   :type '(set
-	  :extra-offset 8
 	  (const :tag "String literals" string)
 	  (const :tag "C style block comments" c)
 	  (const :tag "C++ style line comments" c++)
@@ -531,7 +528,6 @@ involve auto-newline inserted newlines:
                         Clean up occurs when the closing parenthesis
                         is typed."
   :type '(set
-	  :extra-offset 8
 	  (const :tag "Put \"} else {\" on one line"
 		 brace-else-brace)
 	  (const :tag "Put \"} else if (...) {\" on one line"
@@ -702,7 +698,7 @@ space."
 (defcustom c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'."
-  :type '(set :extra-offset 8 (const alignleft))
+  :type '(set (const alignleft))
   :group 'c)
 
 (defcustom c-special-indent-hook nil
