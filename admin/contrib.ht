@@ -1,4 +1,4 @@
-Title: CC Mode
+Title: Contribute Stuff
 Author: cc-mode-help@python.org
 Other-links:
     <h3>IDL font-lockers</h3>
@@ -7,7 +7,7 @@ Other-links:
      <LI><a href="http://www.cs.utah.edu/~eeide/emacs/idl-font-lock.el.gz">
 	 Eric Eide</a> (gzip'd)
 
-<h1>Contributed Stuff</h1>
+<h2>Contributed Stuff</h2>
 
 Three people have contributed Emacs font-lock definitions for CORBA IDL
 code.  These are useful to IDL writers since CC Mode does not contain
