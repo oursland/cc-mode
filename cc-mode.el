@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.125 $
-;; Last Modified:   $Date: 1994-12-19 18:21:15 $
+;; Version:         $Revision: 4.126 $
+;; Last Modified:   $Date: 1994-12-19 23:30:47 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-19 18:21:15 $|$Revision: 4.125 $|
+;; |$Date: 1994-12-19 23:30:47 $|$Revision: 4.126 $|
 
 ;;; Code:
 
@@ -352,7 +352,13 @@ Valid symbols are:
 				 (substatement-open after))
   "*Controls the insertion of newlines before and after braces.
 This variable contains an association list with elements of the
-following form: (SYNTACTIC-SYMBOL . (NL-LIST)).
+following form: (SYNTACTIC-SYMBOL . ACTION).
+
+When a brace (either opening or closing) is inserted, the syntactic
+context it defines is looked up in this list, and if found, the
+associated ACTION is used to determine where newlines are inserted.
+If the context is not found, the defalt is to insert a newline both
+before and after the brace.
 
 SYNTACTIC-SYMBOL can be any of: defun-open, defun-close, class-open,
 class-close, inline-open, inline-close, block-open, block-close,
@@ -360,12 +366,16 @@ substatement-open, statement-case-open, brace-list-open,
 brace-list-close, brace-list-intro, or brace-list-entry. See
 `c-offsets-alist' for details.
 
-NL-LIST can contain any combination of the symbols `before' or
-`after'. It also be nil.  When a brace is inserted, the syntactic
-context it defines is looked up in this list, and if found, the
-NL-LIST is used to determine where newlines are inserted.  If not
-found, the default is to insert a newline both before and after
-braces.")
+ACTION can be either a function symbol or a list containing any
+combination of the symbols `before' or `after'.  If the list is empty,
+no newlines are inserted either before or after the brace.
+
+When ACTION is a function symbol, the function is called with a two
+arguments: the syntactic symbol and buffer position for this brace.
+The function must return a list as described in the preceding
+paragraph.  Note that during the call to the function, the variable
+`c-syntactic-context' is set to the entire syntactic context for the
+brace line.")
 
 (defvar c-hanging-colons-alist nil
   "*Controls the insertion of newlines before and after certain colons.
@@ -1287,6 +1297,20 @@ it finds in `c-file-offsets'."
   ;; simply call self-insert-command in Emacs 19
   (self-insert-command (prefix-numeric-value arg)))
 
+(defun c-intersect-lists (list alist)
+  ;; return the element of ALIST that matches the first element found
+  ;; in LIST.  Uses assq.
+  (let (match)
+    (while (and list
+		(not (setq match (assq (car list) alist))))
+      (setq list (cdr list)))
+    match))
+
+(defun c-lookup-lists (list alist1 alist2)
+  ;; first, find the first entry from LIST that is present in ALIST1,
+  ;; then find the entry in ALIST2 for that entry.
+  (assq (car (c-intersect-lists list alist1)) alist2))
+
 
 ;; This is used by indent-for-comment to decide how much to indent a
 ;; comment in C code based on its context.
@@ -1465,7 +1489,10 @@ the brace is inserted inside a literal."
     (if (or literal arg
 	    (not (looking-at "[ \t]*$")))
 	(c-insert-special-chars arg)	
-      (let (
+      (let* ((syms '(class-open class-close defun-open defun-close 
+		     inline-open inline-close brace-list-open brace-list-close
+		     brace-list-intro brace-list-entry block-open block-close
+		     substatement-open statement-case-open))
 	    ;; we want to inhibit blinking the paren since this will
 	    ;; be most disruptive. we'll blink it ourselves later on
 	    (old-blink-paren (if (boundp 'blink-paren-function)
@@ -1473,40 +1500,29 @@ the brace is inserted inside a literal."
 			       blink-paren-hook))
 	    blink-paren-function	; emacs19
 	    blink-paren-hook		; emacs18
-	    syntax newlines
 	    delete-temp-newline
 	    ;; shut this up too
-	    (c-echo-syntactic-information-p nil))
-	(setq syntax (progn
-		       ;; only insert a newline if there is
-		       ;; non-whitespace behind us
-		       (if (save-excursion
-			     (skip-chars-backward " \t")
-			     (not (bolp)))
-			   (progn (newline)
-				  (setq delete-temp-newline t)))
-		       (self-insert-command (prefix-numeric-value arg))
-		       ;; state cache doesn't change
-		       (c-guess-basic-syntax))
-	      newlines (and
-			c-auto-newline
-			(or (assq (car (or (assq 'defun-open syntax)
-					   (assq 'defun-close syntax)
-					   (assq 'class-open syntax)
-					   (assq 'class-close syntax)
-					   (assq 'inline-open syntax)
-					   (assq 'inline-close syntax)
-					   (assq 'brace-list-open syntax)
-					   (assq 'brace-list-close syntax)
-					   (assq 'brace-list-intro syntax)
-					   (assq 'brace-list-entry syntax)
-					   (assq 'block-open syntax)
-					   (assq 'block-close syntax)
-					   (assq 'substatement-open syntax)
-					   (assq 'statement-case-open syntax)
-					   ))
-				  c-hanging-braces-alist)
-			    '(ignore before after))))
+	    (c-echo-syntactic-information-p nil)
+	    syntax (progn
+		     ;; only insert a newline if there is
+		     ;; non-whitespace behind us
+		     (if (save-excursion
+			   (skip-chars-backward " \t")
+			   (not (bolp)))
+			 (progn (newline)
+				(setq delete-temp-newline t)))
+		     (self-insert-command (prefix-numeric-value arg))
+		     ;; state cache doesn't change
+		     (c-guess-basic-syntax))
+	    newlines (and
+		      c-auto-newline
+		      (or (c-lookup-lists syms syntax c-hanging-braces-alist)
+			  '(ignore before after))))
+	;; If syntax is a function symbol, then call it using the
+	;; defined semantics.
+;	(if (and (not (consp (cdr newlines)))
+;		 (fboundp (cdr newlines)))
+;	    (let ((c-syntactic-context syntax)
 	;; does a newline go before the open brace?
 	(if (memq 'before newlines)
 	    ;; we leave the newline we've put in there before,
@@ -1540,9 +1556,8 @@ the brace is inserted inside a literal."
 	  (if (and c-auto-newline
 		   (memq 'empty-defun-braces c-cleanup-list)
 		   (= last-command-char ?\})
-		   (or (assq 'defun-close syntax)
-		       (assq 'class-close syntax)
-		       (assq 'inline-close syntax))
+		   (c-intersect-lists '(defun-close class-close inline-close)
+				      syntax)
 		   (progn
 		     (forward-char -1)
 		     (skip-chars-backward " \t\n")
@@ -1745,22 +1760,14 @@ value of `c-cleanup-list'."
 	    ;; colon
 	    newlines
 	    (and c-auto-newline
-		 (or
-		  (let ((langelem (or (assq 'case-label syntax)
-				      (assq 'label syntax)
-				      (assq 'access-label syntax))))
-		    (and langelem
-			 (assq (car langelem) c-hanging-colons-alist)))
-		  (prog2
-		      (insert "\n")
-		      (let* ((syntax (c-guess-basic-syntax))
-			     (langelem
-			      (or (assq 'member-init-intro syntax)
-				  (assq 'inher-intro syntax))))
-			(and langelem
-			     (assq (car langelem) c-hanging-colons-alist)))
-		    (delete-char -1))
-		  )))
+		 (or (c-lookup-lists '(case-label 'label 'access-label)
+				     syntax c-hanging-colons-alist)
+		     (c-lookup-lists '(member-init-intro inher-intro)
+				     (prog2
+					 (insert "\n")
+					 (c-guess-basic-syntax)
+				       (delete-char -1))
+				     c-hanging-colons-alist))))
       ;; indent the current line
       (c-indent-line syntax)
       ;; does a newline go before the colon?
@@ -4347,7 +4354,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.125 $"
+(defconst c-version "$Revision: 4.126 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
