@@ -277,7 +277,7 @@
       (forward-line -1))
     (back-to-indentation)
     (if (and (<= (point) here)
-	     (eq (char-after) ?#))
+	     (looking-at "#[a-zA-Z0-9]"))
 	t
       (goto-char here)
       nil)))
@@ -296,7 +296,7 @@
       (setq here (point))
       (c-forward-comment hugenum)
       ;; skip preprocessor directives
-      (when (and (eq (char-after) ?#)
+      (when (and (looking-at "#[a-zA-Z0-9]")
 		 (= (c-point 'boi) (point)))
 	(while (and (eq (char-before (c-point 'eol)) ?\\)
 		    (= (forward-line 1) 0)))
