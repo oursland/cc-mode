@@ -828,6 +828,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
 
 	    (<= (point) limit)
 
+	    (progn
+	      (when (looking-at c-decl-hangon-key)
+		(c-forward-keyword-clause 1))
+	      (<= (point) limit))
+
 	    ;; Search syntactically to the end of the declarator (";",
 	    ;; ",", a closen paren, eob etc) or to the beginning of an
 	    ;; initializer or function prototype ("=" or "\\s\(").
