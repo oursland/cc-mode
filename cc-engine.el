@@ -1497,8 +1497,8 @@ brace."
   ;; position that bounds the backward search for the argument list.
   ;;
   ;; Note: A declaration level context is assumed; the test can return
-  ;; false positives for statements and #define headers.  This test is
-  ;; even more easily fooled than `c-just-after-func-arglist-p'.
+  ;; false positives for statements.  This test is even more easily
+  ;; fooled than `c-just-after-func-arglist-p'.
   (save-excursion
     (save-restriction
       ;; Go back to the closest preceding normal parenthesis sexp.  We
@@ -1507,11 +1507,18 @@ brace."
       ;; or '{'.  If it does, it's the header of the K&R argdecl we're
       ;; in.
       (if lim (narrow-to-region lim (point)))
-      (let (paren-end)
-	(and (c-safe (setq paren-end (c-down-list-backward (point))))
-	     (eq (char-after paren-end) ?\))
-	     (progn
-	       (goto-char (1+ paren-end))
+      (let ((outside-macro (not (c-query-macro-start)))
+	    paren-end)
+	(catch 'done
+	  (while (if (and (c-safe (setq paren-end
+					(c-down-list-backward (point))))
+			  (eq (char-after paren-end) ?\)))
+		     (progn
+		       (goto-char (1+ paren-end))
+		       (if outside-macro
+			   (c-beginning-of-macro)))
+		   (throw 'done nil))))
+	(and (progn
 	       (c-forward-syntactic-ws)
 	       (looking-at "\\w\\|\\s_"))
 	     (c-safe (c-up-list-backward paren-end))
@@ -1581,15 +1588,24 @@ brace."
   ;; semicolon.  I.e. search forward for the closest following
   ;; (syntactically relevant) '{', '=' or ';' token.  Point is left
   ;; _after_ the first found token, or at point-max if none is found.
-  (c-with-syntax-table (if (c-major-mode-is 'c++-mode)
-			   c++-template-syntax-table
-			 (syntax-table))
-    (while (and (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t)
-		;; In Pike it can be an operator identifier containing
-		;; '='.
-		(c-major-mode-is 'pike-mode)
-		(eq (char-before) ?=)
-		(c-on-identifier)))))
+  (cond ((c-major-mode-is 'c++-mode)
+	 ;; In C++ we need to take special care to handle those pesky
+	 ;; template brackets.
+	 (while (and (c-syntactic-re-search-forward "[;{=<]" nil 'move 1 t)
+		     (when (eq (char-before) ?<)
+		       (c-with-syntax-table c++-template-syntax-table
+			 (if (c-safe (goto-char (c-up-list-forward (point))))
+			     t
+			   (goto-char (point-max))
+			   nil))))))
+	((c-major-mode-is 'pike-mode)
+	 ;; In Pike there can be an operator identifiers containing '='.
+	 (while (and (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t)
+		     (eq (char-before) ?=)
+		     (c-on-identifier))))
+	(t
+	 ;; The other languages are trivial.
+	 (c-syntactic-re-search-forward "[;{=]" nil 'move 1 t))))
 
 (defun c-beginning-of-decl-1 (&optional lim)
   ;; Go to the beginning of the current declaration, or the beginning
@@ -1607,73 +1623,80 @@ brace."
   ;; declarations, e.g. "struct foo { ... }" and "bar;" in this case.
   (catch 'return
     (let* ((start (point))
-	 (last-stmt-start (point))
-	 (move (c-beginning-of-statement-1 lim t t)))
+	   (last-stmt-start (point))
+	   (move (c-beginning-of-statement-1 lim t t)))
 
-    (while (and (/= last-stmt-start (point))
-		(save-excursion
-		  (c-backward-syntactic-ws lim)
-		  (not (memq (char-before) '(?\; ?} ?: nil)))))
       ;; `c-beginning-of-statement-1' stops at a block start, but we
       ;; want to continue if the block doesn't begin a top level
       ;; construct, i.e. if it isn't preceded by ';', '}', ':', or bob.
-      (setq last-stmt-start (point)
-	    move (c-beginning-of-statement-1 lim t t)))
+      (let ((beg (point)) tentative-move)
+	(while (and (/= last-stmt-start (point))
+		    (progn
+		      (c-backward-syntactic-ws lim)
+		      (not (memq (char-before) '(?\; ?} ?: nil))))
+		    (not (eq (setq tentative-move
+				   (c-beginning-of-statement-1 lim t t))
+			     'macro)))
+	  (setq last-stmt-start beg
+		beg (point)
+		move tentative-move))
+	(goto-char beg))
 
-    (when c-recognize-knr-p
-      (let ((fallback-pos (point)) knr-argdecl-start)
-	;; Handle K&R argdecls.  Back up after the "statement" jumped
-	;; over by `c-beginning-of-statement-1', unless it was the
-	;; function body, in which case we're sitting on the opening
-	;; brace now.  Then test if we're in a K&R argdecl region and
-	;; that we started at the other side of the first argdecl in
-	;; it.
-	(unless (eq (char-after) ?{)
-	  (goto-char last-stmt-start))
-	(if (and (setq knr-argdecl-start (c-in-knr-argdecl lim))
-		 (< knr-argdecl-start start)
-		 (progn
-		   (goto-char knr-argdecl-start)
-		   (not (eq (c-beginning-of-statement-1 lim t t) 'macro))))
-	    (throw 'return
-		   (cons (if (eq (char-after fallback-pos) ?{)
-			     'previous
-			   'same)
-			 knr-argdecl-start))
-	  (goto-char fallback-pos))))
+      (when c-recognize-knr-p
+	(let ((fallback-pos (point)) knr-argdecl-start)
+	  ;; Handle K&R argdecls.  Back up after the "statement" jumped
+	  ;; over by `c-beginning-of-statement-1', unless it was the
+	  ;; function body, in which case we're sitting on the opening
+	  ;; brace now.  Then test if we're in a K&R argdecl region and
+	  ;; that we started at the other side of the first argdecl in
+	  ;; it.
+	  (unless (eq (char-after) ?{)
+	    (goto-char last-stmt-start))
+	  (if (and (setq knr-argdecl-start (c-in-knr-argdecl lim))
+		   (< knr-argdecl-start start)
+		   (progn
+		     (goto-char knr-argdecl-start)
+		     (not (eq (c-beginning-of-statement-1 lim t t) 'macro))))
+	      (throw 'return
+		     (cons (if (eq (char-after fallback-pos) ?{)
+			       'previous
+			     'same)
+			   knr-argdecl-start))
+	    (goto-char fallback-pos))))
 
-    (when c-opt-access-key
-      ;; Might have ended up before a protection label.  This should
-      ;; perhaps be checked before `c-recognize-knr-p' to be really
-      ;; accurate, but we know that no language has both.
-      (while (looking-at c-opt-access-key)
-	(goto-char (match-end 0))
-	(c-forward-syntactic-ws)
-	(when (>= (point) start)
-	  (goto-char start)
-	  (throw 'return (cons 'same nil)))))
+      (when c-opt-access-key
+	;; Might have ended up before a protection label.  This should
+	;; perhaps be checked before `c-recognize-knr-p' to be really
+	;; accurate, but we know that no language has both.
+	(while (looking-at c-opt-access-key)
+	  (goto-char (match-end 0))
+	  (c-forward-syntactic-ws)
+	  (when (>= (point) start)
+	    (goto-char start)
+	    (throw 'return (cons 'same nil)))))
 
-    ;; `c-beginning-of-statement-1' counts each brace block as a
-    ;; separate statement, so the result will be 'previous if we've
-    ;; moved over any.  If they were brace list initializers we might
-    ;; not have moved over a declaration boundary though, so change it
-    ;; to 'same if we've moved past a '=' before '{', but not ';'.
-    ;; (This ought to be integrated into `c-beginning-of-statement-1',
-    ;; so we avoid this extra pass which potentially can search over a
-    ;; large amount of text.)
-    (if (and (eq move 'previous)
-	     (c-with-syntax-table (if (c-major-mode-is 'c++-mode)
-				      c++-template-syntax-table
-				    (syntax-table))
-	       (save-excursion
-		 (and (c-syntactic-re-search-forward "[;={]" start t 1 t)
-		      (eq (char-before) ?=)
-		      (c-syntactic-re-search-forward "[;{]" start t 1 t)
-		      (eq (char-before) ?{)
-		      (c-safe (goto-char (c-up-list-forward (point))) t)
-		      (not (c-syntactic-re-search-forward ";" start t 1 t))))))
-	(cons 'same nil)
-      (cons move nil)))))
+      ;; `c-beginning-of-statement-1' counts each brace block as a
+      ;; separate statement, so the result will be 'previous if we've
+      ;; moved over any.  If they were brace list initializers we might
+      ;; not have moved over a declaration boundary though, so change it
+      ;; to 'same if we've moved past a '=' before '{', but not ';'.
+      ;; (This ought to be integrated into `c-beginning-of-statement-1',
+      ;; so we avoid this extra pass which potentially can search over a
+      ;; large amount of text.)
+      (if (and (eq move 'previous)
+	       (c-with-syntax-table (if (c-major-mode-is 'c++-mode)
+					c++-template-syntax-table
+				      (syntax-table))
+		 (save-excursion
+		   (and (c-syntactic-re-search-forward "[;={]" start t 1 t)
+			(eq (char-before) ?=)
+			(c-syntactic-re-search-forward "[;{]" start t 1 t)
+			(eq (char-before) ?{)
+			(c-safe (goto-char (c-up-list-forward (point))) t)
+			(not (c-syntactic-re-search-forward
+			      ";" start t 1 t))))))
+	  (cons 'same nil)
+	(cons move nil)))))
 
 (defun c-end-of-decl-1 ()
   ;; Assuming point is at the start of a declaration (as detected by
