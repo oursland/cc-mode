@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.18 $
-;; Last Modified:   $Date: 1993-09-28 21:44:07 $
+;; Version:         $Revision: 3.19 $
+;; Last Modified:   $Date: 1993-09-28 21:52:07 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -63,14 +63,14 @@
 ;; omit the lines marked "to edit C code".
 ;;
 ;; Finally, you may want to customize certain c++-mode variables.  The
-;; best place to do this is in the mode hook variable called
-;; c++-mode-hook.  Again, see the Emacs manual, chapter 21 for more
+;; best place to do this is in a hook you set to c++-mode-hook or
+;; c++-c-mode-hook. Again, see the Emacs manual, chapter 21 for more
 ;; information.
 
 ;; Important Note about Escapes in Comments, and Performance
 ;; =========================================================
-;; With the release of GNU Emacs 19, the syntax scanning algorithms
-;; have been greatly improved in two significant areas.  They now can
+;; With the release of Emacs 19, the syntax scanning algorithms have
+;; been greatly improved in two significant areas.  They now can
 ;; recognize up to 2 distinct comment styles per mode (as in C++), and
 ;; they also provide built-in routines to scan past comment regions,
 ;; improving performance for some key routines.  c++-mode takes
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-28 21:44:07 $|$Revision: 3.18 $|
+;; |$Date: 1993-09-28 21:52:07 $|$Revision: 3.19 $|
 
 ;;; Code:
 
@@ -486,8 +486,8 @@ this variable to nil defeats backscan limits.")
 
 (defun c++-common-init ()
   "Common initializations for c++-mode and c++-c-mode."
-  (use-local-map c++-mode-map)
   (kill-all-local-variables)
+  (use-local-map c++-mode-map)
   ;; make local variables
   (make-local-variable 'paragraph-start)
   (make-local-variable 'paragraph-separate)
@@ -539,7 +539,7 @@ this variable to nil defeats backscan limits.")
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.18 $
+  "Major mode for editing C++ code.  $Revision: 3.19 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -730,7 +730,7 @@ no args, if that value is non-nil."
   (run-hooks 'c++-mode-hook))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.18 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.19 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -778,7 +778,7 @@ in C++ code based on its context."
 
 ;; ======================================================================
 ;; most command level (interactive) and related
-;; ======================================================================
+
 (defun c++-set-auto-hungry-state (auto-p hungry-p)
   "Set auto/hungry to state indicated by AUTO-P and HUNGRY-P.
 Update mode line to indicate state to user."
@@ -1765,7 +1765,7 @@ used."
 
 ;; ======================================================================
 ;; defuns for parsing syntactic elements
-;; ======================================================================
+
 (defun c++-parse-state (&optional limit)
   "Determinate the syntactic state of the code at point.
 Iteratively uses `parse-partial-sexp' from point to LIMIT and returns
@@ -1858,7 +1858,7 @@ supplied, point is used as search start."
 
 ;; ======================================================================
 ;; defuns for calculating indentation
-;; ======================================================================
+
 (defun c++-indent-line (&optional bod)
   "Indent current line as C++ code.
 Return the amount the indentation changed by.  Optional BOD is the
@@ -2497,7 +2497,6 @@ BOD is the `beginning-of-defun' point."
 
 ;; ======================================================================
 ;; defuns to look backwards for things
-;; ======================================================================
 
 (defun c++-backward-to-start-of-do (&optional limit)
   "Move to the start of the last \"unbalanced\" do."
@@ -2573,7 +2572,7 @@ This function does not modify point or mark."
 
 ;; ======================================================================
 ;; defuns for "macroizations" -- making C++ parameterized types via macros
-;; ======================================================================
+
 (defun c++-macroize-region (from to arg)
   "Insert backslashes at end of every line in region.
 Useful for defining cpp macros.  If called with a prefix argument,
@@ -2614,7 +2613,7 @@ it will remove trailing backslashes."
 
 ;; ======================================================================
 ;; defuns for  commenting out multiple lines.
-;; ======================================================================
+
 (defun c++-comment-region (beg end)
   "Comment out all lines in a region between mark and current point by
 inserting `comment-start' in front of each line."
@@ -2670,8 +2669,8 @@ the leading `// ' from each line, if any."
 
 ;; ======================================================================
 ;; defuns for submitting bug reports
-;; ======================================================================
-(defconst c++-version "$Revision: 3.18 $"
+
+(defconst c++-version "$Revision: 3.19 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
