@@ -102,15 +102,14 @@ Works with: topmost-intro-cont."
 
 Works with: arglist-cont-nonempty, arglist-close."
   (save-excursion
-    (beginning-of-line)
-    (let ((containing-sexp (c-most-enclosing-brace (c-parse-state))))
-      (goto-char (1+ containing-sexp))
-      (let ((eol (c-point 'eol)))
-	(c-forward-syntactic-ws)
-	(when (< (point) eol)
-	  (goto-char (1+ containing-sexp))
-	  (skip-chars-forward " \t")))
-      (vector (current-column)))))
+    (goto-char (1+ (elt c-syntactic-element 2)))
+    (let ((savepos (point))
+	  (eol (c-point 'eol)))
+      (c-forward-syntactic-ws)
+      (when (< (point) eol)
+	(goto-char savepos)
+	(skip-chars-forward " \t")))
+    (vector (current-column))))
 
 ;; Contributed by Kevin Ryde <user42@zip.com.au>.
 (defun c-lineup-argcont (elem)
@@ -130,28 +129,42 @@ Works with: arglist-cont, arglist-cont-nonempty."
 
   (save-excursion
     (beginning-of-line)
-    (let ((bol (point)))
 
-      ;; Previous line ending in a comma means we're the start of an
-      ;; argument.  This should quickly catch most cases not for us.
-      (c-backward-syntactic-ws)
-      (let ((c (char-before)))
-	(unless (eq c ?,)
+    (when (eq (car elem) 'arglist-cont-nonempty)
+      ;; Our argument list might not be the innermost one.  If it
+      ;; isn't, go back to the last position in it.  We do this by
+      ;; stepping back over open parens until we get to the open paren
+      ;; of our argument list.
+      (let ((open-paren (elt c-syntactic-element 2))
+	    (paren-state (c-parse-state)))
+	(while (not (eq (car paren-state) open-paren))
+	  (goto-char (car paren-state))
+	  (setq paren-state (cdr paren-state)))))
 
-	  ;; In a gcc asm, ":" on the previous line means the start of an
-	  ;; argument.  And lines starting with ":" are not for us, don't
-	  ;; want them to indent to the preceding operand.
-	  (let ((gcc-asm (save-excursion
-			   (goto-char bol)
-			   (c-in-gcc-asm-p))))
-	    (unless (and gcc-asm
-			 (or (eq c ?:)
-			     (save-excursion
-			       (goto-char bol)
-			       (looking-at "[ \t]*:"))))
+    (let ((start (point)) c)
 
-	      (c-lineup-argcont-scan (if gcc-asm ?:))
-	      (vector (current-column)))))))))
+      (when (bolp)
+	;; Previous line ending in a comma means we're the start of an
+	;; argument.  This should quickly catch most cases not for us.
+	;; This case is only applicable if we're the innermost arglist.
+	(c-backward-syntactic-ws)
+	(setq c (char-before)))
+
+      (unless (eq c ?,)
+	;; In a gcc asm, ":" on the previous line means the start of an
+	;; argument.  And lines starting with ":" are not for us, don't
+	;; want them to indent to the preceding operand.
+	(let ((gcc-asm (save-excursion
+			 (goto-char start)
+			 (c-in-gcc-asm-p))))
+	  (unless (and gcc-asm
+		       (or (eq c ?:)
+			   (save-excursion
+			     (goto-char start)
+			     (looking-at "[ \t]*:"))))
+
+	    (c-lineup-argcont-scan (if gcc-asm ?:))
+	    (vector (current-column))))))))
 
 (defun c-lineup-argcont-scan (&optional other-match)
   ;; Find the start of an argument, for `c-lineup-argcont'.
@@ -547,37 +560,57 @@ the current line contains an equal sign too, try to align it with the
 first one.
 
 Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
-  (save-excursion
-    (let ((equalp (save-excursion
-		    (goto-char (c-point 'boi))
-		    (let ((eol (c-point 'eol)))
-		      (c-forward-token-1 0 t eol)
-		      (while (and (not (eq (char-after) ?=))
-				  (= (c-forward-token-1 1 t eol) 0))))
-		    (and (eq (char-after) ?=)
-			 (- (point) (c-point 'boi)))))
-	  donep)
-      (if (cdr langelem) (goto-char (cdr langelem)))
-      (while (and (not donep)
-		  (< (point) (c-point 'eol)))
-	(skip-chars-forward "^=" (c-point 'eol))
-	(if (c-in-literal (cdr langelem))
-	    (forward-char 1)
-	  (setq donep t)))
-      (if (or (not (eq (char-after) ?=))
+  (let (startpos endpos equalp)
+
+    (if (eq (car langelem) 'arglist-cont-nonempty)
+	;; If it's an arglist-cont-nonempty then we're only interested
+	;; in equal signs outside it.  We don't search for a "=" on
+	;; the current line since that'd have a different nesting
+	;; compared to the one we should align with.
+	(save-excursion
+	  (save-restriction
+	    (setq endpos (nth 2 c-syntactic-element))
+	    (narrow-to-region (cdr langelem) endpos)
+	    (if (setq startpos (c-up-list-backward endpos))
+		(setq startpos (1+ startpos))
+	      (setq startpos (cdr langelem)))))
+
+      (setq startpos (cdr langelem)
+	    endpos (point))
+
+      ;; Find a syntactically relevant and unnested "=" token on the
+      ;; current line.  equalp is in that case set to the number of
+      ;; columns to left shift the current line to align it with the
+      ;; goal column.
+      (save-excursion
+	(beginning-of-line)
+	(when (c-syntactic-re-search-forward
+	       ;; This regexp avoids matches on ==.
+	       "\\(\\=\\|[^=]\\)=\\([^=]\\|$\\)"
+	       (c-point 'eol) t 1 t)
+	  (setq equalp (- (match-beginning 2) (c-point 'boi))))))
+
+    (save-excursion
+      (goto-char startpos)
+      (if (or (not (c-syntactic-re-search-forward
+		    "\\(\\=\\|[^=]\\)=\\([^=]\\|$\\)"
+		    (min endpos (c-point 'eol)) t 1 t))
 	      (save-excursion
-		(forward-char 1)
+		(goto-char (match-beginning 2))
 		(c-forward-syntactic-ws (c-point 'eol))
 		(eolp)))
-	  ;; there's no equal sign on the line
+	  ;; There's no equal sign on the line, or there is one but
+	  ;; nothing follows it.
 	  c-basic-offset
+
 	;; calculate indentation column after equals and ws, unless
 	;; our line contains an equals sign
+	(goto-char (match-beginning 2))
 	(if (not equalp)
 	    (progn
-	      (forward-char 1)
 	      (skip-chars-forward " \t")
 	      (setq equalp 0)))
+
 	(vector (- (current-column) equalp)))
       )))
 
@@ -595,21 +628,33 @@ In any other situation nil is returned to allow use in list
 expressions.
 
 Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
-  (save-excursion
-    (let ((bopl (c-point 'bopl)) col)
-      (back-to-indentation)
-      (when (and (looking-at "->")
-		 (= (c-backward-token-1 1 t bopl) 0)
-		 (eq (char-after) ?\()
-		 (= (c-backward-token-1 3 t bopl) 0)
-		 (looking-at "->"))
-	(setq col (current-column))
-	(while (and (= (c-backward-token-1 1 t bopl) 0)
-		    (eq (char-after) ?\()
-		    (= (c-backward-token-1 3 t bopl) 0)
-		    (looking-at "->"))
-	  (setq col (current-column)))
-	(vector col)))))
+
+  (if (and (eq (car langelem) 'arglist-cont-nonempty)
+	   (/= (nth 2 c-syntactic-element)
+	       (c-most-enclosing-brace (c-parse-state))))
+      ;; The innermost open paren is not our one, so don't do
+      ;; anything.  This can occur for arglist-cont-nonempty with
+      ;; nested arglist starts on the same line.
+      nil
+
+    (let ((stmt-start (cdr langelem)) col)
+      (save-excursion
+	(back-to-indentation)
+
+	(when (and (looking-at "->")
+		   (= (c-backward-token-1 1 t stmt-start) 0)
+		   (eq (char-after) ?\()
+		   (= (c-backward-token-1 3 t stmt-start) 0)
+		   (looking-at "->"))
+	  (setq col (current-column))
+
+	  (while (and (= (c-backward-token-1 1 t stmt-start) 0)
+		      (eq (char-after) ?\()
+		      (= (c-backward-token-1 3 t stmt-start) 0)
+		      (looking-at "->"))
+	    (setq col (current-column)))
+
+	  (vector col))))))
 
 (defun c-lineup-template-args (langelem)
   "Line up template argument lines under the first argument.
@@ -866,6 +911,13 @@ Works with: arglist-cont, arglist-cont-nonempty."
     (save-excursion
       (and
        c-opt-asm-stmt-key
+
+       ;; Don't do anything if the innermost open paren isn't our one.
+       ;; This can occur for arglist-cont-nonempty with nested arglist
+       ;; starts on the same line.
+       (or (not (eq (car langelem) 'arglist-cont-nonempty))
+	   (= (elt c-syntactic-element 2)
+	      (c-most-enclosing-brace (c-parse-state))))
 
        ;; Find the ":" to align to.  Look for this first so as to quickly
        ;; eliminate pretty much all cases which are not for us.
