@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.308 $
-;; Last Modified:   $Date: 1994-04-14 18:42:00 $
+;; Version:         $Revision: 3.309 $
+;; Last Modified:   $Date: 1994-04-15 18:47:41 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-04-14 18:42:00 $|$Revision: 3.308 $|
+;; |$Date: 1994-04-15 18:47:41 $|$Revision: 3.309 $|
 
 ;;; Code:
 
@@ -790,7 +790,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.308 $
+cc-mode Revision: $Revision: 3.309 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -821,7 +821,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.308 $
+cc-mode Revision: $Revision: 3.309 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2421,7 +2421,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		      ;; declaration.
 		      (skip-chars-forward "^;" search-end)
 		      (if (= (following-char) ?\;)
-			  (setq foundp nil))
+			  (setq foundp nil)
+			;; make sure we aren't looking at the `class'
+			;; keyword inside a template arg list
+			(goto-char class)
+			(skip-chars-backward " \t\n")
+			(if (= (preceding-char) ?<)
+			    (progn
+			      (setq foundp nil)
+			      (skip-chars-forward "^>" search-end))))
 		      )))
 	      foundp))
 	  )))))
@@ -2478,36 +2486,56 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; list.  try to increase performance by using this macro
   (` (setq semantics (cons (cons (, symbol) (, relpos)) semantics))))
 
+(defun c-enclosing-brace (state)
+  ;; return the bufpos of the most enclosing brace that hasn't been
+  ;; narrowed out by any enclosing class, or nil if none was found
+  (let (enclosingp)
+    (while (and state (not enclosingp))
+      (setq enclosingp (car state)
+	    state (cdr state))
+      (if (consp enclosingp)
+	  (setq enclosingp nil)
+	(if (> (point-min) enclosingp)
+	    (setq enclosingp nil))
+	(setq state nil)))
+    enclosingp))
+
+(defun c-narrow-out-enclosing-class (state lim)
+  ;; narrow the buffer so that the enclosing class is hidden
+  (let (inclass-p)
+    (and state
+	 (setq inclass-p (c-search-uplist-for-classkey state))
+	 (narrow-to-region
+	  (progn
+	    (goto-char (1+ (aref inclass-p 1)))
+	    (skip-chars-forward " \t\n" lim)
+	    ;; if point is now left of the class opening brace, we're
+	    ;; hosed, so try a different tact
+	    (if (<= (c-point 'bol) (aref inclass-p 1))
+		(progn
+		  (goto-char (1+ (aref inclass-p 1)))
+		  (c-forward-syntactic-ws lim)))
+	    (c-point 'bol))
+	  ;; end point is the end of the current line
+	  (progn
+	    (goto-char lim)
+	    (c-point 'eol))))
+    ;; return the class vector
+    inclass-p))
+
 (defun c-guess-basic-semantics ()
   ;; guess the semantic description of the current line of C++ code.
   (save-excursion
     (save-restriction
       (beginning-of-line)
-      (let ((indent-point (point))
-	    (case-fold-search nil)
-	    (state (c-parse-state))
-	    literal containing-sexp char-before-ip char-after-ip lim
-	    semantics placeholder inclass-p
-	    )				;end-let
-
-	;; narrow out any enclosing class
-	(if (and state
-		 (setq inclass-p (c-search-uplist-for-classkey state)))
-	    (narrow-to-region
-	     (progn
-	       (goto-char (1+ (aref inclass-p 1)))
-	       (skip-chars-forward " \t\n" indent-point)
-	       ;; if point is now left of the class opening brace,
-	       ;; we're hosed, so try a different tact
-	       (if (<= (c-point 'bol) (aref inclass-p 1))
-		   (progn
-		     (goto-char (1+ (aref inclass-p 1)))
-		     (c-forward-syntactic-ws indent-point)))
-	       (c-point 'bol))
-	     ;; end point is the end of the current line
-	     (progn
-	       (goto-char indent-point)
-	       (c-point 'eol))))
+      (let* ((indent-point (point))
+	     (case-fold-search nil)
+	     (state (c-parse-state))
+	     literal containing-sexp char-before-ip char-after-ip lim
+	     semantics placeholder
+	     ;; narrow out any enclosing class
+	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
+	     )
 
 	;; get the buffer position of the most nested opening brace,
 	;; if there is one, and it hasn't been narrowed out
@@ -2589,6 +2617,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-semantics 'inline-open (aref inclass-p 0)))
 	     ;; CASE 4A.4: ordinary defun open
 	     (t
+	      (goto-char placeholder)
 	      (c-add-semantics 'defun-open (c-point 'bol))
 	      )))
 	   ;; CASE 4B: first K&R arg decl or member init
@@ -2947,18 +2976,18 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			  (goto-char containing-sexp)
 			  (if (/= (point) (c-point 'boi))
 			      (c-beginning-of-statement nil lim))
-			  (point))))
+			  (c-point 'boi))))
 	    (cond
 	     ;; CASE 13.A: does this close an inline?
 	     ((progn
 		(goto-char containing-sexp)
 		(c-search-uplist-for-classkey state))
-	      (goto-char relpos)
-	      (c-add-semantics 'inline-close (c-point 'boi)))
-	     ;; CASE 13.B: state means this is a block-close
-	     (state
-	      (goto-char relpos)
-	      (c-add-semantics 'block-close (c-point 'boi)))
+	      (c-add-semantics 'inline-close relpos))
+	     ;; CASE 13.B: if there an enclosing brace that hasn't
+	     ;; been narrowed out by a class, then this is a
+	     ;; block-close
+	     ((c-enclosing-brace state)
+	      (c-add-semantics 'block-close relpos))
 	     ;; CASE 13.C: find out whether we're closing a top-level
 	     ;; class or a defun
 	     (t
@@ -3021,9 +3050,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (if (= char-after-ip ?{)
 		  (c-add-semantics 'block-open)))
 	     ;; CASE 14.E: first statement in an inline, or first
-	     ;; statement in a top-level defun
-	     ((or (= containing-sexp (c-point 'bod))
-		  (c-search-uplist-for-classkey state))
+	     ;; statement in a top-level defun. we can tell this is it
+	     ;; if there are no enclosing braces that haven't been
+	     ;; narrowed out by a class (i.e. don't use bod here!)
+	     ((save-excursion
+		(save-restriction
+		  (widen)
+		  (goto-char containing-sexp)
+		  (c-narrow-out-enclosing-class state containing-sexp)
+		  (not (c-enclosing-brace state))))
 	      (goto-char containing-sexp)
 	      (c-add-semantics 'defun-block-intro (c-point 'boi)))
 	     ;; CASE 14.F: first statement in a block
@@ -3397,7 +3432,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.308 $"
+(defconst c-version "$Revision: 3.309 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
