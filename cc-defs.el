@@ -153,6 +153,17 @@
   (or arg (setq arg 1))
   `(c-forward-sexp ,(if (numberp arg) (- arg) `(- ,arg))))
 
+;; Wrappers for common scan-lists cases, mainly because it's almost
+;; impossible to get a feel for how that function works.
+(defmacro c-up-list-forward (pos)
+  `(c-safe (scan-lists ,pos 1 1)))
+(defmacro c-up-list-backward (pos)
+  `(c-safe (scan-lists ,pos -1 1)))
+(defmacro c-down-list-forward (pos)
+  `(c-safe (scan-lists ,pos 1 -1)))
+(defmacro c-down-list-backward (pos)
+  `(c-safe (scan-lists ,pos -1 -1)))
+
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
   ;; try to increase performance by using this macro

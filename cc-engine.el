@@ -713,8 +713,15 @@
     (narrow-to-region (point-min) (point))
     (let* ((here (point))
 	   (old-state (and c-state-cache
-			   ;; Try to use cached info before point.
-			   (c-whack-state-after here c-state-cache)))
+			   ;; Try to use cached info before point, but
+			   ;; back up before any macro first, since
+			   ;; the cached state might contain braces
+			   ;; inside macros which we should ignore if
+			   ;; we've exited the macro.
+			   (save-excursion
+			     (c-backward-syntactic-ws)
+			     (setq here (point))
+			     (c-whack-state-after here c-state-cache))))
 	   (state old-state)
 	   (pos (if state
 		    (if (consp (car state))
@@ -745,8 +752,8 @@
 	   last-pos placeholder sexp-pos inside)
       (while pos
 	(setq last-pos pos)
-	(if (setq pos (c-safe (scan-lists pos 1 -1)))
-	    (if (setq sexp-pos (c-safe (scan-lists pos 1 1)))
+	(if (setq pos (c-down-list-forward pos))
+	    (if (setq sexp-pos (c-up-list-forward pos))
 		;; we want to record both the start and end
 		;; of this sexp, but we only want to record
 		;; the last-most of any of them before here
@@ -775,8 +782,8 @@
 	  ;; backward to the beginning of the buffer every time we're
 	  ;; between top-level constructs.
 	  (when (and (not inside)
-		     (setq placeholder (c-safe (scan-lists last-pos 1 1))))
-	    (setq pos (c-safe (scan-lists here -1 1)))
+		     (setq placeholder (c-up-list-forward last-pos)))
+	    (setq pos (c-up-list-backward here))
 	    ;; Go over to plan B: Search and build state backwards.
 	    ;; First we must fix up state with any balanced brace sexp
 	    ;; before point.  We can't use one that might be found
@@ -844,7 +851,7 @@
 		      (setq pos nil)
 		    (setq prev-prev-pos prev-pos
 			  prev-pos pos
-			  pos (c-safe (scan-lists pos -1 1)))))))
+			  pos (c-up-list-backward pos))))))
 	    (setq pos nil
 		  state (cdr state)))))
       state)))
@@ -1388,7 +1395,7 @@ isn't moved."
 	(if (and (or (looking-at "enum[\t\n ]+")
 		     (progn (c-forward-sexp -1)
 			    (looking-at "enum[\t\n ]+")))
-		 (setq bracepos (c-safe (scan-lists (point) 1 -1)))
+		 (setq bracepos (c-down-list-forward (point)))
 		 (not (c-crosses-statement-barrier-p (point)
 						     (- bracepos 2))))
 	    (point)))))
@@ -2101,7 +2108,7 @@ isn't moved."
 		     (save-restriction
 		       (c-with-syntax-table c++-template-syntax-table
 			 (goto-char indent-point)
-			 (setq placeholder (c-safe (scan-lists (point) -1 1)))
+			 (setq placeholder (c-up-list-backward (point)))
 			 (and placeholder
 			      (eq (char-after placeholder) ?<))))))
 	      ;; we can probably indent it just like an arglist-cont
@@ -2890,10 +2897,9 @@ isn't moved."
       (while (and (not done) offset)
 	(setq done (c-evaluate-offset (car offset) langelem symbol)
 	      offset (cdr offset)))
-      (if (not done)
-	  (if c-strict-syntax-p
-	      (error "No offset found for syntactic symbol %s" symbol))
-	done)))
+      (if (and c-strict-syntax-p (not done))
+	  (error "No offset found for syntactic symbol %s" symbol))
+      done))
    (t (symbol-value offset))
    ))
 
