@@ -46,7 +46,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @comment The title is printed in a large font.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@center @titlefont{CC Mode 5.14}
+@center @titlefont{CC Mode 5.12}
 @sp 2
 @center @subtitlefont{A GNU Emacs mode for editing C, C++, Objective-C, and Java code}
 @sp 2
