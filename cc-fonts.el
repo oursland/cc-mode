@@ -469,9 +469,7 @@
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
   ;; Assumes that strings, comments and nontype keywords have been
-  ;; fontified already.  This function does both the search and the
-  ;; fontification itself, since it's cumbersome to generate the
-  ;; proper sequence of match limits that font-lock normally acts on.
+  ;; fontified already.
 
   ;;(message "c-font-lock-declarations search from %s to %s" (point) limit)
 
@@ -508,13 +506,12 @@
     (c-backward-syntactic-ws)
     (c-safe (backward-char))
 
-    (let ((match (or (bobp)
+    (let ((match (if (bobp)
 		     ;; We always consider bob as a match to get the first
 		     ;; declaration in the file, but we have to step past
 		     ;; initial comments to avoid that the
 		     ;; match-inside-comment-or-string-literal code kicks in.
-		     (progn (c-forward-comments)
-			    t)
+		     (progn (c-forward-comments) t)
 		   (re-search-forward c-decl-prefix-re limit 'move)))
 	  match-pos
 	  ;; The position to continue searching at.
@@ -549,7 +546,13 @@
 	  ;; expressions in the successfully identified declarations.  The
 	  ;; position might be either before or after the syntactic whitespace
 	  ;; following the last token in the type decl expression.
-	  (max-type-decl-end -1))
+	  (max-type-decl-end -1)
+	  ;; Same as `max-type-decl-end', but used when we're before
+	  ;; `token-pos'.
+	  (max-type-decl-end-before-token -1)
+	  ;; Start and end positions of the last entered macro.
+	  macro-start
+	  (macro-end -1))
 
       (while (progn
 	       (while (and
@@ -619,6 +622,21 @@
 	       (< (point) limit))
 
 	(catch 'continue
+	  ;; Narrow to the end of the macro if we got a hit inside one.
+	  (save-excursion
+	    (goto-char match-pos)
+	    (when (>= match-pos macro-end)
+	      (setq macro-end
+		    (if (save-excursion (c-beginning-of-macro))
+			(progn (c-end-of-macro)
+			       (point))
+		      -1))))
+	  (when (/= macro-end -1)
+	    (when (<= macro-end (point))
+	      (setq macro-end -1)
+	      (throw 'continue t))
+	    (narrow-to-region (point-min) macro-end))
+
 	  (setq at-type nil
 		at-decl-or-cast nil)
 
@@ -639,7 +657,9 @@
 			 (res
 			  ;; Found a possible type or a prefix of a known
 			  ;; type.  Record this, but continue so that we'll
-			  ;; jump over any leading prefixes.
+			  ;; jump over all specifiers and type identifiers.
+			  ;; The reason to do this for a known type prefix is
+			  ;; to make things like "unsigned INT16" work.
 			  (when at-type
 			    ;; Got two identifiers with nothing but whitespace
 			    ;; between them.  That can only happen in
@@ -699,7 +719,12 @@
 
 		    ;; Skip over an identifier.
 		    (if (looking-at c-symbol-key)
-			(progn
+			(if (eq (get-text-property (point) 'face)
+				'font-lock-keyword-face)
+			    ;; An invalid declaration.  Might be some macro
+			    ;; that isn't followed by a semicolon in front of
+			    ;; a statement.
+			    (throw 'at-decl-or-cast nil)
 			  (goto-char (match-end 1))
 			  (c-forward-syntactic-ws)
 			  (unless (or got-prefix got-parens)
@@ -758,7 +783,6 @@
 
 			  (when (and got-suffix
 				     (not got-prefix)
-				     (not (eq at-type t))
 				     prev-at-type)
 			    ;; Got only a suffix and there are two identifiers
 			    ;; before.  The second one is not the type
@@ -793,6 +817,16 @@
 		    (when (or at-decl-or-cast (memq at-type '(t found)))
 		      (throw 'at-decl-or-cast t))
 
+		    (when (and got-prefix
+			       (not no-identifier)
+			       (not got-suffix)
+			       (not arglist-match))
+		      ;; Got something like "foo * bar".  If we're not inside
+		      ;; an arglist then it would be a meaningless expression
+		      ;; since the result isn't used.  We therefore choose to
+		      ;; recognize it as a declaration.
+		      (throw 'at-decl-or-cast t))
+
 		    ;; If we had a complete symbol table here (which rules out
 		    ;; `c-found-types') we should return t due to the
 		    ;; disambiguation rule (in at least C++) that anything
@@ -801,7 +835,9 @@
 		    ;; things like "foo (bar);" as a declaration only if we're
 		    ;; inside the type decl expression of an earlier
 		    ;; recognized declaration.
-		    (< (point) max-type-decl-end)))
+		    (< (point) (if (< (point) token-pos)
+				   max-type-decl-end-before-token
+				 max-type-decl-end))))
 		(setq at-decl-or-cast t)
 
 	      (when prev-at-type
@@ -811,7 +847,8 @@
 		(goto-char type-end)
 		(setq at-type (if (eq prev-at-type 'prefix) t prev-at-type)
 		      type-start prev-type-start
-		      type-end prev-type-end)
+		      type-end prev-type-end
+		      prev-at-type nil)
 
 		;; We don't analyze a type decl expression as thoroughly at
 		;; this point as we do above, so just jump over any following
@@ -876,22 +913,27 @@
 		;; following declarators.
 
 		(progn
-		  ;; Set `max-type-decl-end' under the assumption that we're
-		  ;; after the first type decl expression in the declaration
-		  ;; now.  That's not really true; we could also be after a
-		  ;; parenthesized initializer expression in C++, but this is
-		  ;; only used as a last resort to slant ambiguous
+		  ;; Set `max-type-decl-end' or
+		  ;; `max-type-decl-end-before-token' under the assumption
+		  ;; that we're after the first type decl expression in the
+		  ;; declaration now.  That's not really true; we could also
+		  ;; be after a parenthesized initializer expression in C++,
+		  ;; but this is only used as a last resort to slant ambiguous
 		  ;; expression/declarations, and overall it's worth the risk
 		  ;; to occasionally fontify an expression as a declaration in
 		  ;; an initializer expression compared to getting ambiguous
 		  ;; things in normal function prototypes fontified as
 		  ;; expressions.
-		  (setq max-type-decl-end (max max-type-decl-end (point)))
+		  (if (< (point) token-pos)
+		      (setq max-type-decl-end-before-token
+			    (max max-type-decl-end-before-token (point)))
+		    (setq max-type-decl-end
+			  (max max-type-decl-end (point))))
 
 		  (c-add-complex-type type-start type-end)
 		  (c-font-lock-type type-start type-end)
 		  (c-forward-syntactic-ws)
-		  (c-font-lock-declarators limit (not arglist-match)))
+		  (c-font-lock-declarators (point-max) (not arglist-match)))
 
 	      ;; Not at a declaration, but if we know that we passed a
 	      ;; type we should still highlight it.
@@ -899,6 +941,9 @@
 		(c-add-complex-type type-start type-end)
 		(c-font-lock-type type-start type-end)))))
 
+	(when (/= macro-end -1)
+	  ;; Restore limits if we did macro narrowment above.
+	  (narrow-to-region (point-min) limit))
 	(goto-char continue-pos)
 
 	;; We search here to allow the first match at bob.  See note above.
