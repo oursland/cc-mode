@@ -448,9 +448,10 @@
     (fset 'c-echo-parsing-error 'shutup-parsing-error)
     (unwind-protect
 	(mapcar (function (lambda (test)
-			    (condition-case nil
+			    (condition-case err
 				(do-one-test test)
 			      (error
+			       (message "%s" (error-message-string err))
 			       (setq broken-files (cons test broken-files)))
 			      )))
 		list-of-tests)
