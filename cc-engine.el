@@ -671,32 +671,23 @@ comment at the start of cc-engine.el for more info."
       ;; that we've moved.
       (while (progn
 	       (setq pos (point))
-               (if (c-major-mode-is 'awk-mode)
-                   (c-awk-backward-syntactic-ws)
-                 (c-backward-syntactic-ws))
-	       (/= (skip-chars-backward "-+!*&~@`#") 0))) ; ACM, 2002/5/31;
-							  ; Make a variable in
-							  ; cc-langs.el, maybe
+	       (c-backward-syntactic-ws)
+	       ;; Protect post-++/-- operators just before a virtual semicolon.
+	       (and (not (c-at-vsemi-p))
+		    (/= (skip-chars-backward "-+!*&~@`#") 0))))
 
       ;; Skip back over any semicolon here.  If it was a bare semicolon, we're
-      ;; done.  Later on we ignore the boundaries for statements that doesn't
+      ;; done.  Later on we ignore the boundaries for statements that don't
       ;; contain any sexp.  The only thing that is affected is that the error
       ;; checking is a little less strict, and we really don't bother.
       (if (and (memq (char-before) delims)
 	       (progn (forward-char -1)
 		      (setq saved (point))
-		      (if (c-major-mode-is 'awk-mode)
-                          (c-awk-backward-syntactic-ws)
-                        (c-backward-syntactic-ws))
+		      (c-backward-syntactic-ws)
 		      (or (memq (char-before) delims)
 			  (memq (char-before) '(?: nil))
 			  (eq (char-syntax (char-before)) ?\()
-                          (and (c-major-mode-is 'awk-mode)
-                               (c-awk-after-logical-semicolon))))) ; ACM 2002/6/22
-          ;; ACM, 2002/7/20: What about giving a limit to the above function?
-          ;; ACM, 2003/6/16: The above two lines (checking for
-          ;; awk-logical-semicolon) are probably redundant after rewriting
-          ;; c-awk-backward-syntactic-ws.
+			  (c-at-vsemi-p))))
 	  (setq ret 'previous
 		pos saved)
 
@@ -714,11 +705,8 @@ comment at the start of cc-engine.el for more info."
 	(while
 	    (catch 'loop ;; Throw nil to break, non-nil to continue.
 	      (cond
-	       ;; Check for macro start.  Take this out for AWK Mode (ACM, 2002/5/31)
-               ;; NO!! just make sure macro-start is nil in AWK Mode (ACM, 2002/6/22)
-               ;; It always is (ACM, 2002/6/23)
 	       ((save-excursion
-		  (and macro-start
+		  (and macro-start	; Always NIL for AWK.
 		       (progn (skip-chars-backward " \t")
 			      (eq (char-before) ?#))
 		       (progn (setq saved (1- (point)))
@@ -824,23 +812,22 @@ comment at the start of cc-engine.el for more info."
 			   (c-bos-save-error-info 'if 'else)
 			   (setq state 'else))
 			  ((eq sym 'while)
+			   ;; Is this a real while, or a do-while?
+			   ;; The next `when' triggers unless we are SURE that
+			   ;; the `while' is not the tailend of a `do-while'.
 			   (when (or (not pptok)
 				     (memq (char-after pptok) delims)
-                                     (and (c-major-mode-is 'awk-mode)
-                                          (or
-                                        ;; might we be calling this from
-                                        ;; c-awk-after-if-do-for-while-condition-p?
-                                        ;; If so, avoid infinite recursion.
-                                           (and (eq (point) start)
-                                                (c-awk-NL-prop-not-set))
-                                           ;; The following may recursively
-                                           ;; call this function.
-                                           (c-awk-completed-stmt-ws-ends-line-p pptok))))
+				     ;; The following kludge is to prevent
+				     ;; infinite recursion when called from
+				     ;; c-awk-after-if-for-while-condition-p,
+				     ;; or the like.
+				     (and (eq (point) start)
+					  (c-vsemi-status-unknown-p))
+				     (c-at-vsemi-p pptok))
 			     ;; Since this can cause backtracking we do a
 			     ;; little more careful analysis to avoid it: If
-			     ;; the while isn't followed by a semicolon it
-			     ;; can't be a do-while.
-                             ;; ACM, 2002/5/31;  IT CAN IN AWK Mode. ;-(
+			     ;; the while isn't followed by a (possibly
+			     ;; virtual) semicolon it can't be a do-while.
 			     (c-bos-push-state)
 			     (setq state 'while)))
 			  ((memq sym '(catch finally))
@@ -995,10 +982,10 @@ comment at the start of cc-engine.el for more info."
       ;; Skip over the unary operators that can start the statement.
       (goto-char pos)
       (while (progn
-	       (if (c-major-mode-is 'awk-mode)
-                   (c-awk-backward-syntactic-ws)
-                 (c-backward-syntactic-ws))
-	       (/= (skip-chars-backward "-+!*&~@`#") 0)) ; Hopefully the # won't hurt awk.
+	       (c-backward-syntactic-ws)
+	       ;; protect AWK post-inc/decrement operators, etc.
+	       (and (not (c-at-vsemi-p (point)))
+		    (/= (skip-chars-backward "-+!*&~@`#") 0)))
 	(setq pos (point)))
       (goto-char pos)
       ret)))
@@ -1013,6 +1000,10 @@ The variable `c-maybe-labelp' is set to the position of the first `:' that
 might start a label (i.e. not part of `::' and not preceded by `?').  If a
 single `?' is found, then `c-maybe-labelp' is cleared.
 
+For AWK, a statement which is terminated by an EOL (not a \; or a }) is
+regarded as having a \"virtual semicolon\" immediately after the last token on
+the line.  If this virtual semicolon is _at_ from, the function recognises it.
+
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
   (let ((skip-chars c-stmt-delim-chars)
@@ -1022,30 +1013,35 @@ comment at the start of cc-engine.el for more info."
 	(goto-char from)
 	(while (progn (skip-chars-forward skip-chars to)
 		      (< (point) to))
-	  (if (setq lit-range (c-literal-limits from)) ; Have we landed in a string/comment?
-	      (progn (goto-char (setq from (cdr lit-range)))
-                     (if (and (c-major-mode-is 'awk-mode) (bolp)) ; ACM 2002/7/17. Make sure we
-                         (backward-char))) ; don't skip over a virtual semi-colon after an awk comment.  :-(
-	    (cond ((eq (char-after) ?:)
-		   (forward-char)
-		   (if (and (eq (char-after) ?:)
-			    (< (point) to))
-		       ;; Ignore scope operators.
-		       (forward-char)
-		     (setq c-maybe-labelp (1- (point)))))
-		  ((eq (char-after) ??)
-		   ;; A question mark.  Can't be a label, so stop
-		   ;; looking for more : and ?.
-		   (setq c-maybe-labelp nil
-			 skip-chars (substring c-stmt-delim-chars 0 -2)))
-                  ((and (eolp)  ; Can only happen in AWK Mode
-                        (not (c-awk-completed-stmt-ws-ends-line-p)))
-                   (forward-char))
-                  ((and (c-major-mode-is 'awk-mode)
-                        (bolp) lit-range ; awk: comment/string ended prev line.
-                        (not (c-awk-completed-stmt-ws-ends-prev-line-p))))
-		  (t (throw 'done (point))))))
-	nil))))
+	  (cond
+	   ((setq lit-range (c-literal-limits from)) ; Have we landed in a string/comment?
+	    (goto-char (cdr lit-range)))
+	   ((eq (char-after) ?:)
+	    (forward-char)
+	    (if (and (eq (char-after) ?:)
+		     (< (point) to))
+		;; Ignore scope operators.
+		(forward-char)
+	      (setq c-maybe-labelp (1- (point)))))
+	   ((eq (char-after) ??)
+	    ;; A question mark.  Can't be a label, so stop
+	    ;; looking for more : and ?.
+	    (setq c-maybe-labelp nil
+		  skip-chars (substring c-stmt-delim-chars 0 -2)))
+	   ((memq (char-after) '(?# ?\n ?\r)) ; A virtual semicolon?
+	    (if (and (eq (char-before) ?\\) (memq (char-after) '(?\n ?\r)))
+		(backward-char))
+	    (skip-chars-backward " \t" from)
+	    (if (c-at-vsemi-p)
+	        (throw 'done (point))
+	      (forward-line)))
+	   (t (throw 'done (point)))))
+	;; In trailing space after an as yet undetected virtual semicolon?
+	(c-backward-syntactic-ws from)
+	(if (and (< (point) to)
+		 (c-at-vsemi-p))
+	    (point)
+	  nil)))))
 
 
 ;; A set of functions that covers various idiosyncrasies in
@@ -1858,7 +1854,7 @@ comment at the start of cc-engine.el for more info."
 ;;
 ;; The exact position is chosen to try to be close to yet earlier than
 ;; the position where `c-state-cache' will be called next.  Right now
-;; the heurstic is to set it to the position after the last found
+;; the heuristic is to set it to the position after the last found
 ;; closing paren (of any type) before the line on which
 ;; `c-parse-state' was called.  That is chosen primarily to work well
 ;; with refontification of the current line.
@@ -7106,9 +7102,9 @@ comment at the start of cc-engine.el for more info."
 	   ;; a variable with only the scope of a cond test and the
 	   ;; following result clauses, and most of this function is a
 	   ;; single gigantic cond. :P
-	   literal char-before-ip char-after-ip macro-start in-macro-expr
-	   c-syntactic-context placeholder c-in-literal-cache step-type
-	   tmpsymbol keyword injava-inher special-brace-list tmp-pos
+	   literal char-before-ip before-ws-ip char-after-ip macro-start
+	   in-macro-expr c-syntactic-context placeholder c-in-literal-cache
+	   step-type tmpsymbol keyword injava-inher special-brace-list tmp-pos
 	   ;; The following record some positions for the containing
 	   ;; declaration block if we're directly within one:
 	   ;; `containing-decl-open' is the position of the open
@@ -7187,7 +7183,8 @@ comment at the start of cc-engine.el for more info."
 	;; the most likely position to perform the majority of tests
 	(goto-char indent-point)
 	(c-backward-syntactic-ws lim)
-	(setq char-before-ip (char-before))
+	(setq before-ws-ip (point)
+	      char-before-ip (char-before))
 	(goto-char indent-point)
 	(skip-chars-forward " \t")
 	(setq char-after-ip (char-after))
@@ -7284,9 +7281,8 @@ comment at the start of cc-engine.el for more info."
 	 ;; CASE 18: A substatement we can recognize by keyword.
 	 ((save-excursion
 	    (and c-opt-block-stmt-key
-		 (if (c-major-mode-is 'awk-mode)
-                     (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
-                   (not (eq char-before-ip ?\;)))
+		 (not (eq char-before-ip ?\;))
+		 (not (c-at-vsemi-p before-ws-ip))
 		 (not (memq char-after-ip '(?\) ?\] ?,)))
 		 (or (not (eq char-before-ip ?}))
 		     (c-looking-at-inexpr-block-backward c-state-cache))
@@ -7824,9 +7820,8 @@ comment at the start of cc-engine.el for more info."
 	   ;; CASE 5J: we are at the topmost level, make
 	   ;; sure we skip back past any access specifiers
 	   ((save-excursion
-	      (prog1 (or (if (c-major-mode-is 'awk-mode)
-			     (not (c-awk-prev-line-incomplete-p))
-			   (memq char-before-ip '(?\; ?{ ?} nil)))
+	      (prog1 (or (memq char-before-ip '(?\; ?{ ?} nil))
+			 (c-at-vsemi-p before-ws-ip)
 			 (when (and (eq char-before-ip ?:)
 				    (eq (c-beginning-of-statement-1 lim)
 					'label))
@@ -8041,7 +8036,7 @@ comment at the start of cc-engine.el for more info."
 	 ;; CASE 9: we are inside a brace-list
 	 ((and (not (c-major-mode-is 'awk-mode))  ; Maybe this isn't needed (ACM, 2002/3/29)
                (setq special-brace-list
-                     (or (and c-special-brace-lists
+                     (or (and c-special-brace-lists ;;;; ALWAYS NIL FOR AWK!!
                               (save-excursion
                                 (goto-char containing-sexp)
                                 (c-looking-at-special-brace-list)))
@@ -8134,11 +8129,10 @@ comment at the start of cc-engine.el for more info."
 	     ))))
 
 	 ;; CASE 10: A continued statement or top level construct.
-	 ((and (if (c-major-mode-is 'awk-mode)
-                   (c-awk-prev-line-incomplete-p containing-sexp) ; ACM 2002/3/29
-                 (and (not (memq char-before-ip '(?\; ?:)))
-                      (or (not (eq char-before-ip ?}))
-                          (c-looking-at-inexpr-block-backward c-state-cache))))
+	 ((and (not (memq char-before-ip '(?\; ?:)))
+	       (not (c-at-vsemi-p before-ws-ip))
+	       (or (not (eq char-before-ip ?}))
+		   (c-looking-at-inexpr-block-backward c-state-cache))
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)

@@ -901,7 +901,7 @@ operators."
   ;; begin with "^" to negate the set.  If ? : operators should be
   ;; detected then the string must end with "?:".
   t    "^;{}?:"
-  awk  "^;{}\n\r?:") ; The newline chars gets special treatment.
+  awk  "^;{}#\n\r?:") ; The newline chars gets special treatment.
 (c-lang-defvar c-stmt-delim-chars (c-lang-const c-stmt-delim-chars))
 
 (c-lang-defconst c-stmt-delim-chars-with-comma
@@ -1205,6 +1205,29 @@ properly."
 	     "\\|")
 	    "\\)"))
 (c-lang-defvar c-syntactic-eol (c-lang-const c-syntactic-eol))
+
+
+;;; Syntactic analysis ("virtual semicolons") for line-oriented languages (AWK).
+(c-lang-defconst c-at-vsemi-p-fn
+  "Contains a function \"Is there a virtual semicolon at POS or point?\".
+Such a function takes one optional parameter, a buffer position (defaults to
+point), and returns NIL or t.  This variable contains NIL for languages which
+don't have EOL terminated statements. "
+  t nil
+  awk 'c-awk-at-vsemi-p)
+(c-lang-defvar c-at-vsemi-p-fn (c-lang-const c-at-vsemi-p-fn))
+
+(c-lang-defconst c-vsemi-status-unknown-p-fn
+  "Contains a function \"are we unsure whether there is a virtual semicolon on this line?\".
+The (admittedly kludgey) purpose of such a function is to prevent an infinite
+recursion in c-beginning-of-statement-1 when point starts at a `while' token.
+The function MUST NOT UNDER ANY CIRCUMSTANCES call c-beginning-of-statement-1,
+even indirectly.  This variable contains NIL for languages which don't have
+EOL terminated statements."
+  t nil
+  awk 'c-awk-vsemi-status-unknown-p)
+(c-lang-defvar c-vsemi-status-unknown-p-fn
+  (c-lang-const c-vsemi-status-unknown-p-fn))
 
 
 ;;; In-comment text handling.

@@ -456,8 +456,8 @@ that requires a literal mode spec at compile time."
 
   ;; In Emacs 21 and later it's possible to turn off the ad-hoc
   ;; heuristic that open parens in column 0 are defun starters.  Since
-  ;; we have c-state-cache that isn't useful and only causes trouble
-  ;; so turn it off.
+  ;; we have c-state-cache, that heuristic isn't useful and only causes
+  ;; trouble, so turn it off.
   (when (memq 'col-0-paren c-emacs-features)
     (make-local-variable 'open-paren-in-column-0-is-defun-start)
     (setq open-paren-in-column-0-is-defun-start nil))

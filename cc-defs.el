@@ -662,6 +662,23 @@ be after it."
 	  (looking-at defun-prompt-regexp)
 	  (goto-char (match-end 0)))))
 
+(defmacro c-at-vsemi-p (&optional pos)
+  ;; Is there a virtual semicolon (not a real one or a }) at POS (defaults to
+  ;; point)?  Always returns nil for languages which don't have Virtual
+  ;; semicolons.
+  `(if c-at-vsemi-p-fn
+       (funcall c-at-vsemi-p-fn ,@(if pos `(,pos)))))
+
+(defmacro c-vsemi-status-unknown-p ()
+  ;; Is the presence or absence of a virtual semicolon on the current physical
+  ;; line unknown?  The (admittedly kludgey) purpose of this macro is to
+  ;; prevent an infinite recursion in c-beginning-of-statement-1 when point
+  ;; starts at a `while' token.  The function compiled by this macro MUST NOT
+  ;; UNDER ANY CIRCUMSTANCES call c-beginning-of-statement-1, even indirectly.
+  ;; Languages which don't have EOL terminated statements always return NIL
+  ;; (they _know_ there's no vsemi ;-).
+  `(if c-vsemi-status-unknown-p-fn (funcall c-vsemi-status-unknown-p-fn)))
+
 (defmacro c-benign-error (format &rest args)
   ;; Formats an error message for the echo area and dings, i.e. like
   ;; `error' but doesn't abort.
