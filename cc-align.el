@@ -55,15 +55,14 @@
 Works with: arglist-cont-nonempty, arglist-close."
   (save-excursion
     (beginning-of-line)
-    (let ((containing-sexp (c-most-enclosing-brace (c-parse-state)))
-	  (langelem-col (c-langelem-col langelem t)))
+    (let ((containing-sexp (c-most-enclosing-brace (c-parse-state))))
       (goto-char (1+ containing-sexp))
       (let ((eol (c-point 'eol)))
 	(c-forward-syntactic-ws)
 	(when (< (point) eol)
 	  (goto-char (1+ containing-sexp))
 	  (skip-chars-forward " \t")))
-      (- (current-column) langelem-col))))
+      (vector (current-column)))))
 
 (defun c-lineup-arglist-intro-after-paren (langelem)
   "Line up a line just after the open paren of the surrounding paren or
@@ -72,13 +71,10 @@ brace block.
 Works with: defun-block-intro, brace-list-intro,
 statement-block-intro, statement-case-intro, arglist-intro."
   (save-excursion
-    (let ((langelem-col (c-langelem-col langelem t))
-	  (ce-curcol (save-excursion
-		       (beginning-of-line)
-		       (backward-up-list 1)
-		       (skip-chars-forward " \t" (c-point 'eol))
-		       (current-column))))
-      (- ce-curcol langelem-col -1))))
+    (beginning-of-line)
+    (backward-up-list 1)
+    (skip-chars-forward " \t" (c-point 'eol))
+    (vector (1+ (current-column)))))
 
 (defun c-lineup-arglist-close-under-paren (langelem)
   "Line up a closing paren line under the corresponding open paren.
@@ -88,12 +84,9 @@ brace-list-close, arglist-close, extern-lang-close, namespace-close
 \(for most of these, a zero offset will normally produce the same
 result, though)."
   (save-excursion
-    (let ((langelem-col (c-langelem-col langelem t))
-	  (ce-curcol (save-excursion
-		       (beginning-of-line)
-		       (backward-up-list 1)
-		       (current-column))))
-      (- ce-curcol langelem-col))))
+    (beginning-of-line)
+    (backward-up-list 1)
+    (vector (current-column))))
 
 (defun c-lineup-close-paren (langelem)
   "Line up the closing paren under its corresponding open paren if the
@@ -121,7 +114,7 @@ brace-list-close, arglist-close, extern-lang-close, namespace-close."
 	  (c-forward-syntactic-ws (c-point 'eol))
 	  (if (eolp)
 	      0
-	    (- opencol (c-langelem-col langelem t))))
+	    (vector opencol)))
       (error nil))))
 
 (defun c-lineup-streamop (langelem)
@@ -129,10 +122,10 @@ brace-list-close, arglist-close, extern-lang-close, namespace-close."
 
 Works with: stream-op."
   (save-excursion
-    (let ((langelem-col (c-langelem-col langelem)))
-      (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
-      (goto-char (match-beginning 0))
-      (- (current-column) langelem-col))))
+    (goto-char (cdr langelem))
+    (re-search-forward "<<\\|>>" (c-point 'eol) 'move)
+    (goto-char (match-beginning 0))
+    (vector (current-column))))
 
 (defun c-lineup-multi-inher (langelem)
   "Line up the classes in C++ multiple inheritance clauses and member
@@ -156,8 +149,8 @@ Works with: inher-cont, member-init-cont."
 	   (here (point))
 	   (char-after-ip (progn
 			    (skip-chars-forward " \t")
-			    (char-after)))
-	   (langelem-col (c-langelem-col langelem)))
+			    (char-after))))
+      (if (cdr langelem) (goto-char (cdr langelem)))
 
       ;; This kludge is necessary to support both inher-cont and
       ;; member-init-cont, since they have different anchor positions.
@@ -173,7 +166,7 @@ Works with: inher-cont, member-init-cont."
       (if (or (eolp)
 	      (looking-at c-comment-start-regexp))
 	  (c-forward-syntactic-ws here))
-      (- (current-column) langelem-col)
+      (vector (current-column))
       )))
 
 (defun c-lineup-java-inher (langelem)
@@ -190,12 +183,12 @@ class Foo             class Foo
 
 Works with: inher-cont."
   (save-excursion
-    (let ((langelem-col (c-langelem-col langelem)))
-      (forward-word 1)
-      (if (looking-at "[ \t]*$")
-	  c-basic-offset
-	(c-forward-syntactic-ws)
-	(- (current-column) langelem-col)))))
+    (goto-char (cdr langelem))
+    (forward-word 1)
+    (if (looking-at "[ \t]*$")
+	c-basic-offset
+      (c-forward-syntactic-ws)
+      (vector (current-column)))))
 
 (defun c-lineup-java-throws (langelem)
   "Line up Java throws declarations.
@@ -220,10 +213,9 @@ Works with: func-decl-cont."
 			   (throw 'done t))))))
       (if throws
 	  (if (zerop (c-forward-token-1 1 nil (c-point 'eol)))
-	      (- (current-column) (c-langelem-col langelem))
+	      (vector (current-column))
 	    (back-to-indentation)
-	    (+ (- (current-column) (c-langelem-col langelem))
-	       c-basic-offset))
+	    (vector (+ (current-column) c-basic-offset)))
 	c-basic-offset))))
 
 (defun c-indent-one-line-block (langelem)
@@ -327,13 +319,12 @@ Works with: The `c' syntactic symbol."
 			    (skip-chars-backward " \t")
 			    (point)))
 		      (point)
-		      1))))
-	   (langelem-col (save-excursion (c-langelem-col langelem))))
+		      1)))))
       (if (and (> starterlen 10) (zerop prefixlen))
 	  ;; The comment has a long starter and the line doesn't have
 	  ;; a nonempty comment prefix.  Treat it as free form text
 	  ;; and don't change the indentation.
-	  (- (current-column) langelem-col)
+	  (vector (current-column))
 	(forward-line -1)
 	(back-to-indentation)
 	(if (>= (cdr langelem) (point))
@@ -350,7 +341,7 @@ Works with: The `c' syntactic symbol."
 		  ;;    ;; Align with the text that hangs after the
 		  ;;    ;; comment starter.
 		  ;;    (goto-char (match-end 1)))
-		  (- (current-column) langelem-col))
+		  (vector (current-column)))
 	      ;; How long is the comment starter?  if greater than the
 	      ;; length of the comment prefix, align left.  if less
 	      ;; than or equal, align right.  this should also pick up
@@ -358,9 +349,9 @@ Works with: The `c' syntactic symbol."
 	      (if (> starterlen prefixlen)
 		  (progn
 		    (goto-char (cdr langelem))
-		    (- (current-column) -1 langelem-col))
+		    (vector (1+ (current-column))))
 		(goto-char (+ (cdr langelem) starterlen 1))
-		(- (current-column) prefixlen langelem-col)))
+		(vector (- (current-column) prefixlen))))
 	  ;; Not on the second line in the comment.  If the previous
 	  ;; line has a nonempty comment prefix, align with it.
 	  ;; Otherwise, align with the previous nonempty line, but
@@ -378,7 +369,7 @@ Works with: The `c' syntactic symbol."
 		  ;; Align with the comment starter rather than
 		  ;; with the code before it.
 		  (goto-char (cdr langelem)))))
-	  (- (current-column) langelem-col))))))
+	  (vector (current-column)))))))
 
 (defun c-lineup-comment (langelem)
   "Line up a comment start according to `c-comment-only-line-offset'.
@@ -444,11 +435,11 @@ returned.  This makes the function usable in list expressions.
 Works with: The `statement' syntactic symbol."
   (if (eq (char-after (cdr langelem)) ?{)
       (save-excursion
-	(let ((langelem-col (c-langelem-col langelem)))
-	  (forward-char 1)
-	  (skip-chars-forward " \t")
-	  (unless (eolp)
-	    (- (current-column) langelem-col))))))
+	(if (cdr langelem) (goto-char (cdr langelem)))
+	(forward-char 1)
+	(skip-chars-forward " \t")
+	(unless (eolp)
+	  (vector (current-column))))))
 
 (defun c-lineup-math (langelem)
   "Line up the current line after the equal sign on the first line in
@@ -466,8 +457,8 @@ Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
 				  (= (c-forward-token-1 1 t eol) 0))))
 		    (and (eq (char-after) ?=)
 			 (- (point) (c-point 'boi)))))
-	  (langelem-col (c-langelem-col langelem))
 	  donep)
+      (if (cdr langelem) (goto-char (cdr langelem)))
       (while (and (not donep)
 		  (< (point) (c-point 'eol)))
 	(skip-chars-forward "^=" (c-point 'eol))
@@ -488,7 +479,7 @@ Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
 	      (forward-char 1)
 	      (skip-chars-forward " \t")
 	      (setq equalp 0)))
-	(- (current-column) equalp langelem-col))
+	(vector (- (current-column) equalp)))
       )))
 
 (defun c-lineup-cascaded-calls (langelem)
@@ -533,7 +524,7 @@ Works with: template-args-cont."
       (backward-up-list 1)
       (if (and (eq (char-after) ?<)
 	       (zerop (c-forward-token-1 1 nil (c-point 'eol))))
-	  (- (current-column) (c-langelem-col langelem))))))
+	  (vector (current-column))))))
 
 (defun c-lineup-ObjC-method-call (langelem)
   "Line up selector args as elisp-mode does with function args:
