@@ -160,7 +160,8 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	    (setq cc-bytecomp-loaded-files
 		  (cons cc-file cc-bytecomp-loaded-files))
 	    (load cc-file nil t t)))
-	(cc-bytecomp-setup-environment))))
+	(cc-bytecomp-setup-environment)
+	t)))
 
 (defmacro cc-require (cc-part)
   "Force loading of the corresponding .el file in the current
@@ -187,12 +188,9 @@ or `eval-and-compile'.
 
 Having cyclic cc-load's will result in infinite recursion.  That's
 somewhat intentional."
-  `(if (featurep 'cc-bytecomp)
-       (cc-bytecomp-load ,cc-part)
-     ;; This is a fallback for use inside `eval-and-compile', since
-     ;; this code will be compiled then and we don't want to require
-     ;; cc-bytecomp at runtime.
-     (load ,cc-part nil t nil)))
+  `(or (and (featurep 'cc-bytecomp)
+	    (cc-bytecomp-load ,cc-part))
+       (load ,cc-part nil t nil)))
 
 (defun cc-bytecomp-is-compiling ()
   "Return non-nil if eval'ed during compilation.  Don't use outside
