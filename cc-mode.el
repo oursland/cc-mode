@@ -488,13 +488,15 @@ This function does not do any hidden buffer changes."
     ;; Only initialize font locking if we aren't called from an old package.
     (c-font-lock-init))
 
-  (make-local-variable 'require-final-newline)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
+  (setq outline-regexp "[^#\n\^M]"
+	outline-level 'c-outline-level)
 
-  (setq require-final-newline c-require-final-newline
-	outline-regexp "[^#\n\^M]"
-	outline-level 'c-outline-level))
+  (let ((rfn (assq mode c-require-final-newline)))
+    (when rfn
+      (make-local-variable 'require-final-newline)
+      (setq require-final-newline (cdr rfn)))))
 
 (defun c-postprocess-file-styles ()
   "Function that post processes relevant file local variables in CC Mode.
