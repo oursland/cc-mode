@@ -750,9 +750,11 @@
        (save-excursion
 	 (goto-char containing-sexp)
 	 (forward-sexp -1)
-	 (if (or (looking-at "enum[\t\n ]+")
-		 (progn (forward-sexp -1)
-			(looking-at "enum[\t\n ]+")))
+	 (if (and (or (looking-at "enum[\t\n ]+")
+		      (progn (forward-sexp -1)
+			     (looking-at "enum[\t\n ]+")))
+		  (progn (c-end-of-statement-1)
+			 (> (point) containing-sexp)))
 	     (point)))
      (error nil))
    ;; this will pick up array/aggregate init lists, even if they are nested.
