@@ -267,8 +267,11 @@ no args,if that value is non-nil."
       (self-insert-command (prefix-numeric-value arg)))))
 
 (defun electric-c++-slash (arg)
-  "Slash as first non-whitespace character on line indents as comment.
-If we're inside a C style comment, or a string, does not do indentation."
+  "Slash as first non-whitespace character on line indents as comment
+unless we're inside a C style comment, or a string, does not do
+indentation. if first non-whitespace character on line is not a slash,
+then we just insert the slash.  in this case use indent-for-comment if
+you want to add a comment to the end of a line."
   (interactive "P")
   (let ((electrify-p (save-excursion
 		       (back-to-indentation)
