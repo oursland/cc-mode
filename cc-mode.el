@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.360 $
-;; Last Modified:   $Date: 1997-02-06 18:25:37 $
+;; Version:         $Revision: 4.361 $
+;; Last Modified:   $Date: 1997-02-06 18:38:07 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2292,6 +2292,8 @@ supplied, or point is inside a literal."
 
 
 
+(defvar c-read-offset-history nil)
+
 (defun c-read-offset (langelem)
   ;; read new offset value for LANGELEM from minibuffer. return a
   ;; legal value only
@@ -2303,7 +2305,8 @@ supplied, or point is inside a literal."
 	 (prompt (concat "Offset " defstr))
 	 offset input interned raw)
     (while (not offset)
-      (setq input (read-string prompt)
+      (setq input (completing-read prompt obarray nil nil nil
+				   c-read-offset-history)
 	    offset (cond ((string-equal "" input) oldoff)  ; default
 			 ((string-equal "+" input) '+)
 			 ((string-equal "-" input) '-)
@@ -5104,7 +5107,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.360 $"
+(defconst c-version "$Revision: 4.361 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
