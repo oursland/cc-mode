@@ -65,8 +65,3 @@
 ((arglist-close . 1122))
 ((cpp-define-intro . 1122))
 ((arglist-close . 809))
-((topmost-intro . 1176))
-((cpp-macro) (topmost-intro . 1176))
-((cpp-define-intro . 1184))
-((knr-argdecl-intro . 1213))
-((defun-open . 1213))

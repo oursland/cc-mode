@@ -65,8 +65,3 @@ int x (int x,
     )						\
        a b
     );
-
-#define decl(X,Y,Z)				\
-    int X(Y)					\
-	int Y;					\
-    {Z}
