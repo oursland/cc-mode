@@ -99,16 +99,45 @@ Works with: topmost-intro-cont."
 (defun c-lineup-arglist (langelem)
   "Line up the current argument line under the first argument.
 
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+`c-basic-offset' only.  This is intended as a \"DWIM\" measure in
+cases like macros that contains statement blocks, e.g:
+
+A_VERY_LONG_MACRO_NAME ({
+        some (code, with + long, lines * in[it]);
+    });
+<--> c-basic-offset
+
+This is motivated partly because it's more in line with how code
+blocks are handled, and partly since it approximates the behavior of
+earlier CC Mode versions, which due to inaccurate analysis tended to
+indent such cases this way.
+
 Works with: arglist-cont-nonempty, arglist-close."
   (save-excursion
-    (goto-char (1+ (elt c-syntactic-element 2)))
-    (let ((savepos (point))
+    (goto-char (elt c-syntactic-element 2))
+    (let ((savepos (1+ (point)))
 	  (eol (c-point 'eol)))
-      (c-forward-syntactic-ws)
-      (when (< (point) eol)
+
+      ;; Find out if there is an unclosed open brace paren on the same
+      ;; line.  Note similar code in `c-lineup-close-paren' and
+      ;; `c-lineup-arglist-close-under-paren'.
+      (goto-char (elt (parse-partial-sexp (point) eol) 1))
+      (while (and (>= (point) savepos)
+		  (/= (char-after) ?{)
+		  (c-go-up-list-backward)))
+
+      (if (= (char-after) ?{)
+	  ;; An open brace was found.  Do not indent so much.
+	  c-basic-offset
+	;; Normal case.  Indent to the token after the arglist open paren.
 	(goto-char savepos)
-	(skip-chars-forward " \t")))
-    (vector (current-column))))
+	(c-forward-syntactic-ws)
+	(when (< (point) eol)
+	  (goto-char savepos)
+	  (skip-chars-forward " \t"))
+	(vector (current-column))))))
 
 ;; Contributed by Kevin Ryde <user42@zip.com.au>.
 (defun c-lineup-argcont (elem)
@@ -194,14 +223,34 @@ corresponding open paren, but can also be used with arglist-cont and
 arglist-cont-nonempty to line up all lines inside a parenthesis under
 the open paren.
 
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+`c-basic-offset' only.  See `c-lineup-arglist' for further discussion
+of this \"DWIM\" measure.
+
 Works with: Almost all symbols, but are typically most useful on
 arglist-close, arglist-cont and arglist-cont-nonempty."
   (save-excursion
     (if (memq (car langelem) '(arglist-cont-nonempty arglist-close))
 	(goto-char (elt c-syntactic-element 2))
       (beginning-of-line)
-      (backward-up-list 1))
-    (vector (current-column))))
+      (c-go-up-list-backward))
+
+    (let ((savepos (point)))
+      ;; Find out if there is an unclosed open brace paren on the same
+      ;; line.  Note similar code in `c-lineup-arglist' and
+      ;; `c-lineup-close-paren'.
+      (goto-char (elt (parse-partial-sexp savepos (c-point 'eol)) 1))
+      (while (and (> (point) savepos)
+		  (/= (char-after) ?{)
+		  (c-go-up-list-backward)))
+
+      (if (= (char-after) ?{)
+	  ;; An open brace was found.  Do not indent so much.
+	  c-basic-offset
+	;; Normal case.  Indent to the arglist open paren.
+	(goto-char savepos)
+	(vector (current-column))))))
 
 (defun c-lineup-arglist-operators (langelem)
   "Line up lines starting with an infix operator under the open paren.
@@ -239,25 +288,44 @@ main (int,              main (
       char **               int, char **
      )           <->    )                 <- c-lineup-close-paren
 
+As a special case, if a brace block is opened at the same line as the
+open parenthesis of the argument list, the indentation is
+`c-basic-offset' instead of the open paren column.  See
+`c-lineup-arglist' for further discussion of this \"DWIM\" measure.
+
 Works with: defun-close, class-close, inline-close, block-close,
 brace-list-close, arglist-close, extern-lang-close, namespace-close."
   (save-excursion
-    (condition-case nil
-	(let (opencol spec)
-	  (beginning-of-line)
-	  (backward-up-list 1)
-	  (setq spec (c-looking-at-special-brace-list))
-	  (if spec (goto-char (car (car spec))))
-	  (setq opencol (current-column))
-	  (forward-char 1)
-	  (if spec (progn
-		     (c-forward-syntactic-ws)
-		     (forward-char 1)))
-	  (c-forward-syntactic-ws (c-point 'eol))
-	  (if (eolp)
-	      0
-	    (vector opencol)))
-      (error nil))))
+    (beginning-of-line)
+    (c-go-up-list-backward)
+
+    (let ((spec (c-looking-at-special-brace-list)) savepos)
+      (if spec (goto-char (car (car spec))))
+      (setq savepos (point))
+      (forward-char 1)
+      (when spec
+	(c-forward-syntactic-ws)
+	(forward-char 1))
+      (c-forward-syntactic-ws (c-point 'eol))
+
+      (if (eolp)
+	  ;; The arglist is "empty".
+	  0
+
+	;; Find out if there is an unclosed open brace paren on the
+	;; same line.  Note similar code in `c-lineup-arglist' and
+	;; `c-lineup-arglist-close-under-paren'.
+	(goto-char (elt (parse-partial-sexp savepos (c-point 'eol)) 1))
+	(while (and (> (point) savepos)
+		    (/= (char-after) ?{)
+		    (c-go-up-list-backward)))
+
+	(if (= (char-after) ?{)
+	    ;; An open brace was found.  Do not indent so much.
+	    c-basic-offset
+	  ;; Normal case.  Indent to the arglist open paren.
+	  (goto-char savepos)
+	  (vector (current-column)))))))
 
 (defun c-lineup-streamop (langelem)
   "Line up C++ stream operators under each other.
