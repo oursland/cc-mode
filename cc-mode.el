@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-06 19:47:36 $
-;; Version:         $Revision: 2.182 $
+;; Last Modified:   $Date: 1992-08-10 22:19:03 $
+;; Version:         $Revision: 2.183 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-06 19:47:36 $|$Revision: 2.182 $|
+;; |$Date: 1992-08-10 22:19:03 $|$Revision: 2.183 $|
 
 
 ;; ======================================================================
@@ -214,7 +214,7 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 0
   "*Indentation offset for line which contains only C or C++ style comments.")
-(defvar c++-C-block-comments-indent-p t
+(defvar c++-C-block-comments-indent-p nil
   "*4 styles of C block comments are supported. If this variable is nil,
 then styles 1-3 are supported. If this variable is non-nil, style 4 is
 supported.
@@ -331,7 +331,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.182 $
+  "Major mode for editing C++ code.  $Revision: 2.183 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -532,7 +532,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.182 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.183 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2116,7 +2116,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.182 $"
+(defconst c++-version "$Revision: 2.183 $"
   "c++-mode version number.")
 
 (defun c++-version ()
