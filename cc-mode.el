@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.301 $
-;; Last Modified:   $Date: 1993-03-05 20:00:17 $
+;; Version:         $Revision: 2.302 $
+;; Last Modified:   $Date: 1993-03-10 18:50:29 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -131,7 +131,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-03-05 20:00:17 $|$Revision: 2.301 $|
+;; |$Date: 1993-03-10 18:50:29 $|$Revision: 2.302 $|
 
 ;;; Code:
 
@@ -455,7 +455,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.301 $
+  "Major mode for editing C++ code.  $Revision: 2.302 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -676,7 +676,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code. $Revision: 2.301 $
+  "Major mode for editing K&R and ANSI C code. $Revision: 2.302 $
 This mode is based on c++-mode. Documentation for this mode is
 available by doing a \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1491,13 +1491,8 @@ used."
 	   (parse-sexp-ignore-comments t) ; may not be necessary
 	   (state (parse-partial-sexp backlim (point))))
       (cond
-       ;; we are in a comment region. in c++-c-mode, elt 7 will tell
-       ;; us if we're in a block comment (nil) or cpp directive (t).
-       ;; in c++-mode, elt 7 of t means we're in a c++ comment
-       ;; directive, nil means we're in a block comment, otherwise we
-       ;; need to test to see if we're in a cpp directive
-       ((nth 4 state)
-	(if (nth 7 state) 'c++ 'c))
+       ((nth 3 state) 'string)
+       ((nth 4 state) (if (nth 7 state) 'c++ 'c))
        ((progn
 	  (goto-char here)
 	  (beginning-of-line)
@@ -2537,7 +2532,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.301 $"
+(defconst c++-version "$Revision: 2.302 $"
   "c++-mode version number.")
 
 (defun c++-version ()
