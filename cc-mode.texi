@@ -16,13 +16,11 @@
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
-@comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.66 $
-@comment generated from the original README file by Krishna Padmasola
+@comment TeXinfo manual for CC Mode
+@comment Generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
-@comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1997-03-07 23:36:14 $
+@comment Maintained by Barry A. Warsaw <cc-mode-help@python.org>
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -48,10 +46,9 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @comment The title is printed in a large font.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@center @titlefont{CC Mode Version 4}
+@center @titlefont{CC Mode 5.00}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.66 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -112,17 +109,17 @@ CC Mode
 @end macro
 
 @cindex BOCM
-Welcome to @ccmode{}, version 4.  This is a GNU Emacs mode for
-editing files containing C, C++, Objective-C, and Java code.
-This incarnation of the mode is descendant from @file{c-mode.el} (also
-called "Boring Old C Mode" or BOCM @code{:-)}, and @file{c++-mode.el}
-version 2, which I have been maintaining since 1992.  @ccmode{}
-represents a significant milestone in the mode's life.  It has been
-fully merged back with Emacs 19's @file{c-mode.el}. Also a new, more
-intuitive and flexible mechanism for controlling indentation has been
-developed.
 
-@ccmode{} version 4 supports the editing of K&R and ANSI C, @dfn{ARM}
+Welcome to @ccmode{}.  This is a GNU Emacs mode for editing files
+containing C, C++, Objective-C, and Java code.  This incarnation of the
+mode is descendant from @file{c-mode.el} (also called "Boring Old C
+Mode" or BOCM @code{:-)}, and @file{c++-mode.el} version 2, which I have
+been maintaining since 1992.  @ccmode{} represents a significant
+milestone in the mode's life.  It has been fully merged back with Emacs
+19's @file{c-mode.el}. Also a new, more intuitive and flexible mechanism
+for controlling indentation has been developed.
+
+@ccmode{} supports the editing of K&R and ANSI C, @dfn{ARM}
 @footnote{``The Annotated C++ Reference Manual'', by Ellis and
 Stroustrup.} C++, Objective-C, and Java files.  In this way, you can
 easily set up consistent coding styles for use in editing all C, C++,
