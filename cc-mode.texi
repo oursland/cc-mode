@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.13 $
+@comment manual version: $Revision: 2.14 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-04-19 01:46:15 $
+@comment Last modification: $Date: 1995-04-19 16:52:41 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -85,12 +85,15 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 * New Indentation Engine::
 * Customizing Indentation::
 * Syntactic Symbols::
+* Minor Modes::
+* Indentation Commands::
 * Frequently Asked Questions::
+* Getting the latest cc-mode release::
 * Sample .emacs File::
 * Requirements::                
 * Limitations and Known Bugs::  
 * Mailing Lists and Submitting Bug Reports::  
-* Dumping cc-mode 4::       Dumping @code{cc-mode} 4
+* Dumping cc-mode 4::
 * Concept Index::               
 * Command Index::               Command Index
 * Key Index::                   Key Index
@@ -906,7 +909,7 @@ type the following: @kbd{M-x c-set-style RET}.  You will be prompted for
 one of the above styles (with completion).  Enter one of the styles and
 hit @kbd{RET}.  Note however that setting a style in this way does
 @emph{not} automatically re-indent your file.  For commands that you can
-use to view the effect of your changes, see @xref{Indenting Commands}.
+use to view the effect of your changes, see @xref{Indentation Commands}.
 
 Once you find a built-in style you like, you can make the change
 permanent by adding a call to your @file{.emacs} file.  Let's say for
@@ -1036,7 +1039,7 @@ not handled by the mode directly.
 * Custom Indentation Functions::
 * Custom Brace Hanging::
 * Customizing Semi-colons and Commas::
-* Other Special Indentation::
+* Other Special Indentations::
 @end menu
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1284,7 +1287,7 @@ not change @code{point} or @code{mark} inside your hook functions.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Syntactic Symbols, Frequently Asked Questions, Customizing Indentation, Top
+@node  Syntactic Symbols, Minor Modes, Customizing Indentation, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Syntactic Symbols
@@ -1315,7 +1318,88 @@ contain the suffix @code{-block-intro}.
 <TBD: fill this out>
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Frequently Asked Questions, Sample .emacs File, Syntactic Symbols, Top
+@node  Minor Modes, Indentation Commands, Syntactic Symbols, Top
+@comment  node-name,              next,                    previous,up
+
+@chapter  Minor Modes
+@cindex   Minor Modes
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<TBD> talk about auto-newline and hungry-delete...
+
+@menu
+* Auto-newline insertion::
+* Hungry-deletion of whitespace::
+@end menu
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Auto-newline insertion, Hungry-deletion of whitespace, , Minor Modes
+@comment  node-name,              next,                    previous,up
+
+@section  Auto-newline insertion
+@cindex   Auto-newline insertion
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<TBD>
+
+@menu
+* Hanging Braces::
+* Hanging Colons::
+* Hanging Semi-colons and commas::
+@end menu
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Hanging Braces, Hanging Colons, , Auto-newline insertion
+@comment  node-name,              next,                    previous,up
+
+@subsection  Hanging Braces
+@cindex   Hanging Braces
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<TBD>
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Hanging Colons, Hanging Semi-colons and commas, Hanging Braces, Auto-newline insertion
+@comment  node-name,              next,                    previous,up
+
+@subsection  Hanging Colons
+@cindex   Hanging Colons
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<TBD>
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Hanging Semi-colons and commas, , Hanging Colons, Auto-newline insertion
+@comment  node-name,              next,                    previous,up
+
+@subsection  Hanging Semi-colons and commas
+@cindex   Hanging Semi-colons and commas
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<TBD>
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Hungry-deletion of whitespace, , Auto-newline insertion, Minor Modes
+@comment  node-name,              next,                    previous,up
+
+@section  Hungry-deletion of whitespace
+@cindex   Hungry-deletion of whitespace
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<TBD>
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Indentation Commands, Frequently Asked Questions, Minor Modes, Top
+@comment  node-name,              next,                    previous,up
+
+@chapter  Indentation Commands
+@cindex   Indentation Commands
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<TBD>
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Frequently Asked Questions, Getting the latest cc-mode release, Indentation Commands, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Frequently Asked Questions
@@ -1392,7 +1476,17 @@ contain the suffix @code{-block-intro}.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Sample .emacs File, Requirements, Frequently Asked Questions, Top
+@node  Getting the latest cc-mode release, Sample .emacs File, Frequently Asked Questions, Top
+@comment  node-name,              next,                    previous,up
+
+@chapter  Getting the latest @code{cc-mode} release
+@cindex   Getting the latest @code{cc-mode} release
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<TBD>
+
+@comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+@node  Sample .emacs File, Requirements, Getting the latest cc-mode release, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Sample @file{.emacs} file
