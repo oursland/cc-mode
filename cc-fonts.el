@@ -547,33 +547,93 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ;; Fontify leading identifiers in fully qualified names like
       ;; "foo::bar" in languages that supports such things.
       ,@(when (c-lang-const c-opt-identifier-concat-key)
-	  `((,(byte-compile
-	       ;; Must use a function here since we match longer than
-	       ;; we want to move before doing a new search.  This is
-	       ;; not necessary for XEmacs since it restarts the
-	       ;; search from the end of the first highlighted
-	       ;; submatch (something that causes problems in other
-	       ;; places).
-	       `(lambda (limit)
-		  (while (re-search-forward
-			  ,(concat "\\(\\<" ; 1
-				   "\\(" (c-lang-const c-symbol-key) "\\)" ; 2
-				   (c-lang-const c-simple-ws) "*"
-				   (c-lang-const c-opt-identifier-concat-key)
-				   (c-lang-const c-simple-ws) "*"
-				   "\\)"
-				   "\\("
-				   (c-lang-const c-opt-after-id-concat-key)
-				   "\\)")
-			  limit t)
-		    (unless (progn
-			      (goto-char (match-beginning 0))
-			      (c-skip-comments-and-strings limit))
-		      (or (get-text-property (match-beginning 2) 'face)
-			  (c-put-font-lock-face (match-beginning 2)
-						(match-end 2)
-						c-reference-face-name))
-		      (goto-char (match-end 1)))))))))
+	  (if (c-major-mode-is 'java-mode)
+	      ;; Java needs special treatment since "." is used both for fully
+	      ;; qualified names and for normal indexing.  Here we look for
+	      ;; capital characters at the beginning of an identifier to
+	      ;; recognize the class.  "*" is also recognized to cover
+	      ;; wildcard import declarations.  If the identifier is followed
+	      ;; by a dot then it's taken as a reference.  All preceding dot
+	      ;; separated identifiers are taken as package names and hence
+	      ;; also fontified as references.
+	      `(,(let* ((id (concat
+			     "\\("
+			     "[" c-upper "][" (c-lang-const c-symbol-chars) "]*"
+			     "\\|"
+			     "\\*"
+			     "\\)"))
+			(id-1-pos (+ (c-lang-const c-opt-identifier-concat-key-depth)
+				     (c-lang-const c-simple-ws-depth)
+				     1))
+			(id-2-pos (+ id-1-pos
+				     (c-lang-const c-simple-ws-depth)
+				     (c-lang-const c-opt-identifier-concat-key-depth)
+				     2)))
+		   (c-make-font-lock-search-function
+		    ;; Search for class identifiers preceded and/or followed by
+		    ;; ".".  The anchored matcher takes it from there.
+		    (concat
+		     (concat (c-lang-const c-opt-identifier-concat-key)
+			     (c-lang-const c-simple-ws) "*"
+			     id ; id-1-pos = c-opt-id-c-k + c-s-ws + 1
+			     "\\("
+			     (c-lang-const c-simple-ws) "*"
+			     (c-lang-const c-opt-identifier-concat-key)
+			     "\\)?")
+		     "\\|"
+		     (concat id ; id-2-pos = id-1-pos + c-s-ws + c-opt-id-c-k + 2
+			     (c-lang-const c-simple-ws) "*"
+			     (c-lang-const c-opt-identifier-concat-key)))
+		    `((let (id-end)
+			(if (= (char-before (match-end 0)) ?.)
+			    (if (match-beginning ,id-1-pos)
+				(c-put-font-lock-face (match-beginning ,id-1-pos)
+						      (match-end ,id-1-pos)
+						      c-reference-face-name)
+			      (c-put-font-lock-face (match-beginning ,id-2-pos)
+						    (match-end ,id-2-pos)
+						    c-reference-face-name)))
+			(goto-char (1+ (match-beginning 0)))
+			(while (and (eq (char-before) ?.)
+				    (progn
+				      (backward-char)
+				      (c-backward-syntactic-ws)
+				      (setq id-end (point))
+				      (< (skip-chars-backward
+					  ,(c-lang-const c-symbol-chars)) 0))
+				    (not (get-text-property (point) 'face)))
+			  (c-put-font-lock-face (point) id-end c-reference-face-name)
+			  (c-backward-syntactic-ws)))
+		      nil
+		      (goto-char (match-end 0))))))
+
+	    `((,(byte-compile
+		 ;; Must use a function here since we match longer than
+		 ;; we want to move before doing a new search.  This is
+		 ;; not necessary for XEmacs since it restarts the
+		 ;; search from the end of the first highlighted
+		 ;; submatch (something that causes problems in other
+		 ;; places).
+		 `(lambda (limit)
+		    (while (re-search-forward
+			    ,(concat "\\(\\<" ; 1
+				     "\\(" (c-lang-const c-symbol-key) "\\)" ; 2
+				     (c-lang-const c-simple-ws) "*"
+				     (c-lang-const c-opt-identifier-concat-key)
+				     (c-lang-const c-simple-ws) "*"
+				     "\\)"
+				     "\\("
+				     (c-lang-const c-opt-after-id-concat-key)
+				     "\\)")
+			    limit t)
+		      (unless (progn
+				(goto-char (match-beginning 0))
+				(c-skip-comments-and-strings limit))
+			(or (get-text-property (match-beginning 2) 'face)
+			    (c-put-font-lock-face (match-beginning 2)
+						  (match-end 2)
+						  c-reference-face-name))
+			(goto-char (match-end 1))))))))))
 
       ;; Fontify the special declarations in Objective-C.
       ,@(when (c-major-mode-is 'objc-mode)
