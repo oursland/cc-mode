@@ -340,6 +340,17 @@ appended."
   java '("break" "continue" "goto" "return" "throw")
   pike '("break" "continue" "return"))
 
+;; Statement keywords followed by an assembler expression.
+(c-lang-defconst c-asm-stmt-kwds
+  (c c++) '("asm" "__asm__"))
+
+;; Regexp matching the start of an assembler statement.  Nil in
+;; languages that doesn't support that.
+(c-lang-defconst c-opt-asm-stmt-key
+  all (if (c-lang-var c-asm-stmt-kwds)
+	  (c-make-keywords-re t (c-lang-var c-asm-stmt-kwds))))
+(c-lang-defvar c-opt-asm-stmt-key (c-lang-var c-opt-asm-stmt-key))
+
 ;; Keywords introducing labels in blocks.
 (c-lang-defconst c-label-kwds (c c++ objc java pike) '("case" "default"))
 
@@ -432,6 +443,7 @@ appended."
 				 (c-lang-var c-block-stmt-1-kwds)
 				 (c-lang-var c-block-stmt-2-kwds)
 				 (c-lang-var c-simple-stmt-kwds)
+				 (c-lang-var c-asm-stmt-kwds)
 				 (c-lang-var c-label-kwds)
 				 (c-lang-var c-expr-kwds)
 				 (c-lang-var c-lambda-kwds)
