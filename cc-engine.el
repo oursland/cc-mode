@@ -433,8 +433,6 @@
   ;; starting delimiter won't be recognized.  This only has effect for
   ;; comments, which have starting delimiters with more than one
   ;; character.
-  ;;
-  ;; This is the Emacs 19 version.
   (save-excursion
     (let* ((pos (point))
 	   (lim (or lim (c-point 'bod)))
@@ -504,7 +502,9 @@
   ;; Like c-literal-limits, but for emacsen whose `parse-partial-sexp'
   ;; returns the pos of the comment start.
   (save-excursion
-    (let ((state (parse-partial-sexp lim (point))))
+    (let* ((pos (point))
+	   (lim (or lim (c-point 'bod)))
+	   (state (parse-partial-sexp lim (point))))
       (cond ((nth 3 state)		; String.
 	     (goto-char (nth 8 state))
 	     (cons (point) (or (c-safe (c-forward-sexp 1) (point))

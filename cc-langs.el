@@ -460,6 +460,10 @@ Note that the style variables are always made local to the buffer."
   ;; fill-paragraph-function due to the way it works.
   (substitute-key-definition 'fill-paragraph 'c-fill-paragraph
 			     c-mode-base-map global-map)
+  ;; In XEmacs the default fill function is called
+  ;; fill-paragraph-or-region.
+  (substitute-key-definition 'fill-paragraph-or-region 'c-fill-paragraph
+			     c-mode-base-map global-map)
   ;; Caution!  Enter here at your own risk.  We are trying to support
   ;; several behaviors and it gets disgusting. :-(
   ;;
