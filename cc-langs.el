@@ -1463,25 +1463,6 @@ combination of `c-decl-prefix-re' and `c-decl-start-re'."
   ;; Classes can be declared anywhere in a Pike expression.
   pike '("class"))
 
-(c-lang-defconst c-specifier-key
-  ;; Adorned regexp matching keywords that can start a declaration but
-  ;; not a type.  FIXME: This should be replaced with
-  ;; c-prefix-spec-kwds-re.
-  t (c-make-keywords-re t
-      (set-difference (append (c-lang-const c-class-decl-kwds)
-			      (c-lang-const c-brace-list-decl-kwds)
-			      (c-lang-const c-other-block-decl-kwds)
-			      (c-lang-const c-typedef-decl-kwds)
-			      (c-lang-const c-typeless-decl-kwds)
-			      (c-lang-const c-modifier-kwds)
-			      (c-lang-const c-other-decl-kwds)
-			      (c-lang-const c-decl-start-kwds))
-		      (append (c-lang-const c-primitive-type-kwds)
-			      (c-lang-const c-type-prefix-kwds)
-			      (c-lang-const c-type-modifier-kwds))
-		      :test 'string-equal)))
-(c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
-
 (c-lang-defconst c-decl-hangon-kwds
   "Keywords that can occur anywhere in a declaration level construct.
 This is used for self-contained things that can be tacked on anywhere
@@ -1633,7 +1614,10 @@ regexp if `c-colon-type-list-kwds' isn't nil."
   "Keywords that may be followed by a parenthesis expression that doesn't
 contain type identifiers."
   t       nil
-  (c c++) '("__declspec"))		; MSVC extension.
+  (c c++) '(;; GCC extension.
+	    "__attribute__"
+	    ;; MSVC extension.
+	    "__declspec"))
 
 (c-lang-defconst c-paren-type-kwds
   "Keywords that may be followed by a parenthesis expression containing
@@ -2018,23 +2002,45 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defvar c-regular-keywords-regexp
   (c-lang-const c-regular-keywords-regexp))
 
+(c-lang-defconst c-type-start-kwds
+  ;; All keywords that can start a type (i.e. are either a type prefix
+  ;; or a complete type).
+  t (delete-duplicates (append (c-lang-const c-primitive-type-kwds)
+			       (c-lang-const c-type-prefix-kwds)
+			       (c-lang-const c-type-modifier-kwds))
+		       :test 'string-equal))
+
+(c-lang-defconst c-prefix-spec-kwds
+  ;; All keywords that can occur in the preamble of a declaration.
+  ;; They typically occur before the type, but they are also matched
+  ;; after presumptive types since we often can't be sure that
+  ;; something is a type or just some sort of macro in front of the
+  ;; declaration.  They might be ambiguous with types or type
+  ;; prefixes.
+  t (delete-duplicates (append (c-lang-const c-class-decl-kwds)
+			       (c-lang-const c-brace-list-decl-kwds)
+			       (c-lang-const c-other-block-decl-kwds)
+			       (c-lang-const c-typedef-decl-kwds)
+			       (c-lang-const c-typeless-decl-kwds)
+			       (c-lang-const c-modifier-kwds)
+			       (c-lang-const c-other-decl-kwds)
+			       (c-lang-const c-decl-start-kwds)
+			       (c-lang-const c-decl-hangon-kwds))
+		       :test 'string-equal))
+
 (c-lang-defconst c-prefix-spec-kwds-re
-  ;; Adorned regexp matching all specifier keywords that only occurs
-  ;; in the preamble of a declaration.  They typically occur before
-  ;; the type, but they are also matched after presumptive types since
-  ;; we often can't be sure that something is a type or just some sort
-  ;; of macro in front of the declaration.
-  t (c-make-keywords-re t
-      (append (c-lang-const c-class-decl-kwds)
-	      (c-lang-const c-brace-list-decl-kwds)
-	      (c-lang-const c-other-block-decl-kwds)
-	      (c-lang-const c-typedef-decl-kwds)
-	      (c-lang-const c-typeless-decl-kwds)
-	      (c-lang-const c-modifier-kwds)
-	      (c-lang-const c-other-decl-kwds)
-	      (c-lang-const c-decl-start-kwds)
-	      (c-lang-const c-decl-hangon-kwds))))
+  ;; Adorned regexp of `c-prefix-spec-kwds'.
+  t (c-make-keywords-re t (c-lang-const c-prefix-spec-kwds)))
 (c-lang-defvar c-prefix-spec-kwds-re (c-lang-const c-prefix-spec-kwds-re))
+
+(c-lang-defconst c-specifier-key
+  ;; Adorned regexp of the keywords in `c-prefix-spec-kwds' that
+  ;; aren't ambiguous with types or type prefixes.
+  t (c-make-keywords-re t
+      (set-difference (c-lang-const c-prefix-spec-kwds)
+		      (c-lang-const c-type-start-kwds)
+		      :test 'string-equal)))
+(c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
 
 (c-lang-defconst c-postfix-spec-kwds
   ;; Keywords that can occur after argument list of a function header
@@ -2047,17 +2053,8 @@ Note that Java specific rules are currently applied to tell this from
   ;; start of a declaration.
   t (c-make-keywords-re t
       (set-difference (c-lang-const c-keywords)
-		      (append (c-lang-const c-primitive-type-kwds)
-			      (c-lang-const c-type-prefix-kwds)
-			      (c-lang-const c-type-modifier-kwds)
-			      (c-lang-const c-class-decl-kwds)
-			      (c-lang-const c-brace-list-decl-kwds)
-			      (c-lang-const c-other-block-decl-kwds)
-			      (c-lang-const c-typedef-decl-kwds)
-			      (c-lang-const c-typeless-decl-kwds)
-			      (c-lang-const c-modifier-kwds)
-			      (c-lang-const c-other-decl-kwds)
-			      (c-lang-const c-decl-start-kwds))
+		      (append (c-lang-const c-type-start-kwds)
+			      (c-lang-const c-prefix-spec-kwds))
 		      :test 'string-equal)))
 (c-lang-defvar c-not-decl-init-keywords
   (c-lang-const c-not-decl-init-keywords))
