@@ -113,6 +113,14 @@ Getting Started
     already know how to do it.  If not you can contact the help
     address for more information (see below).
 
+    That's all you need. After you've done all this, you should quit
+    and restart Emacs.  The next time you visit a C or C++ file you
+    should be using cc-mode.  You can check this easily by hitting
+    "C-c C-v" in the c-mode or c++-mode buffer.  You should see this
+    message in the echo area:
+
+    	Using cc-mode version 3.229
+
 
 New indentation engine
 
