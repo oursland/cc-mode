@@ -95,55 +95,121 @@
   ;; If the referenced position doesn't exist, the closest accessible
   ;; point to it is returned.  This function does not modify point or
   ;; mark.
-  `(save-excursion
-     ,(if point `(goto-char ,point))
-     ,(if (eq (car-safe position) 'quote)
-	  (let ((position (eval position)))
-	    (cond
-	     ((eq position 'bol)  `(beginning-of-line))
-	     ((eq position 'eol)  `(end-of-line))
-	     ((eq position 'boi)  `(back-to-indentation))
-	     ((eq position 'bod)  `(c-beginning-of-defun-1))
-	     ((eq position 'bonl) `(forward-line 1))
-	     ((eq position 'bopl) `(forward-line -1))
-	     ((eq position 'eod)  `(c-end-of-defun-1))
-	     ((eq position 'eopl) `(progn
-				     (beginning-of-line)
-				     (or (bobp) (backward-char))))
-	     ((eq position 'eonl) `(progn
-				     (forward-line 1)
-				     (end-of-line)))
-	     ((eq position 'iopl) `(progn
-				     (forward-line -1)
-				     (back-to-indentation)))
-	     ((eq position 'ionl) `(progn
-				     (forward-line 1)
-				     (back-to-indentation)))
-	     (t (error "Unknown buffer position requested: %s" position))))
-	;;(message "c-point long expansion")
-	`(let ((position ,position))
-	   (cond
-	    ((eq position 'bol)  (beginning-of-line))
-	    ((eq position 'eol)  (end-of-line))
-	    ((eq position 'boi)  (back-to-indentation))
-	    ((eq position 'bod)  (c-beginning-of-defun-1))
-	    ((eq position 'bonl) (forward-line 1))
-	    ((eq position 'bopl) (forward-line -1))
-	    ((eq position 'eod)  (c-end-of-defun-1))
-	    ((eq position 'eopl) (progn
-				   (beginning-of-line)
-				   (or (bobp) (backward-char))))
-	    ((eq position 'eonl) (progn
-				   (forward-line 1)
-				   (end-of-line)))
-	    ((eq position 'iopl) (progn
-				   (forward-line -1)
-				   (back-to-indentation)))
-	    ((eq position 'ionl) (progn
-				   (forward-line 1)
-				   (back-to-indentation)))
-	    (t (error "Unknown buffer position requested: %s" position)))))
-     (point)))
+
+  (if (eq (car-safe position) 'quote)
+      (let ((position (eval position)))
+	(cond
+
+	 ((eq position 'bol)
+	  (if (and (fboundp 'line-beginning-position) (not point))
+	      `(line-beginning-position)
+	    `(save-excursion
+	       ,@(if point `((goto-char ,point)))
+	       (beginning-of-line)
+	       (point))))
+
+	 ((eq position 'eol)
+	  (if (and (fboundp 'line-end-position) (not point))
+	      `(line-end-position)
+	    `(save-excursion
+	       ,@(if point `((goto-char ,point)))
+	       (end-of-line)
+	       (point))))
+
+	 ((eq position 'boi)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (back-to-indentation)
+	     (point)))
+
+	 ((eq position 'bod)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (c-beginning-of-defun-1)
+	     (point)))
+
+	 ((eq position 'eod)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (c-end-of-defun-1)
+	     (point)))
+
+	 ((eq position 'bopl)
+	  (if (and (fboundp 'line-beginning-position) (not point))
+	      `(line-beginning-position 0)
+	    `(save-excursion
+	       ,@(if point `((goto-char ,point)))
+	       (forward-line -1)
+	       (point))))
+
+	 ((eq position 'bonl)
+	  (if (and (fboundp 'line-beginning-position) (not point))
+	      `(line-beginning-position 2)
+	    `(save-excursion
+	       ,@(if point `((goto-char ,point)))
+	       (forward-line 1)
+	       (point))))
+
+	 ((eq position 'eopl)
+	  (if (and (fboundp 'line-end-position) (not point))
+	      `(line-end-position 0)
+	    `(save-excursion
+	       ,@(if point `((goto-char ,point)))
+	       (beginning-of-line)
+	       (or (bobp) (backward-char))
+	       (point))))
+
+	 ((eq position 'eonl)
+	  (if (and (fboundp 'line-end-position) (not point))
+	      `(line-end-position 2)
+	    `(save-excursion
+	       ,@(if point `((goto-char ,point)))
+	       (forward-line 1)
+	       (end-of-line)
+	       (point))))
+
+	 ((eq position 'iopl)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (forward-line -1)
+	     (back-to-indentation)
+	     (point)))
+
+	 ((eq position 'ionl)
+	  `(save-excursion
+	     ,@(if point `((goto-char ,point)))
+	     (forward-line 1)
+	     (back-to-indentation)
+	     (point)))
+
+	 (t (error "Unknown buffer position requested: %s" position))))
+
+    ;;(message "c-point long expansion")
+    `(save-excursion
+       ,@(if point `((goto-char ,point)))
+       (let ((position ,position))
+	 (cond
+	  ((eq position 'bol)  (beginning-of-line))
+	  ((eq position 'eol)  (end-of-line))
+	  ((eq position 'boi)  (back-to-indentation))
+	  ((eq position 'bod)  (c-beginning-of-defun-1))
+	  ((eq position 'eod)  (c-end-of-defun-1))
+	  ((eq position 'bopl) (forward-line -1))
+	  ((eq position 'bonl) (forward-line 1))
+	  ((eq position 'eopl) (progn
+				 (beginning-of-line)
+				 (or (bobp) (backward-char))))
+	  ((eq position 'eonl) (progn
+				 (forward-line 1)
+				 (end-of-line)))
+	  ((eq position 'iopl) (progn
+				 (forward-line -1)
+				 (back-to-indentation)))
+	  ((eq position 'ionl) (progn
+				 (forward-line 1)
+				 (back-to-indentation)))
+	  (t (error "Unknown buffer position requested: %s" position))))
+       (point))))
 
 (defmacro c-safe (&rest body)
   ;; safely execute BODY, return nil if an error occurred
