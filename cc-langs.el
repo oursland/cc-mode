@@ -1896,6 +1896,17 @@ list."
   c t)
 (c-lang-defvar c-recognize-knr-p (c-lang-const c-recognize-knr-p))
 
+(c-lang-defconst c-recognize-typeless-decls
+  "Non-nil means function declarations without return type should be
+recognized.  That can introduce an ambiguity with parenthesized macro
+calls before a brace block.  This setting does not affect declarations
+that are preceded by a declaration starting keyword, so
+e.g. `c-typeless-decl-kwds' may still be used when it's set to nil."
+  t nil
+  (c c++ objc) t)
+(c-lang-defvar c-recognize-typeless-decls
+  (c-lang-const c-recognize-typeless-decls))
+
 (c-lang-defconst c-recognize-<>-arglists
   "Non-nil means C++ style template arglists should be handled.  More
 specifically, this means a comma separated list of types or
