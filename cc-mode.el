@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.128 $
-;; Last Modified:   $Date: 1994-12-20 00:15:48 $
+;; Version:         $Revision: 4.129 $
+;; Last Modified:   $Date: 1994-12-20 23:51:52 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-20 00:15:48 $|$Revision: 4.128 $|
+;; |$Date: 1994-12-20 23:51:52 $|$Revision: 4.129 $|
 
 ;;; Code:
 
@@ -1537,7 +1537,8 @@ the brace is inserted inside a literal."
 				  (c-safe (progn (forward-sexp -1) t))))
 		      (setq c-state-cache
 			    (c-hack-state (point) 'open c-state-cache))
-		    (if (and (not (consp (car c-state-cache)))
+		    (if (and (car c-state-cache)
+			     (not (consp (car c-state-cache)))
 			     (< (point) (car c-state-cache)))
 			(setq c-state-cache (cdr c-state-cache))))
 		  ))
@@ -4364,7 +4365,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.128 $"
+(defconst c-version "$Revision: 4.129 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
