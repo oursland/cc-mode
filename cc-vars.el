@@ -1371,7 +1371,7 @@ state.  Set this variable only if your configuration has stopped
 working due to this change.")
 
 (define-widget 'c-extra-types-widget 'radio
-  ;; Widget for a list of regexps for the extra types.
+  "Internal CC Mode widget for the `*-font-lock-extra-types' variables."
   :args '((const :tag "none" nil)
 	  (repeat :tag "types" regexp)))
 
