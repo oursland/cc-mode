@@ -86,8 +86,8 @@
 ;;
 ;; 'c-type
 ;;   This property is used on single characters to mark positions with
-;;   special syntactic relevance of various sorts.  It's primary use
-;;   is to avoid glitches when multiline constructs are refontified
+;;   special syntactic relevance of various sorts.  Its primary use is
+;;   to avoid glitches when multiline constructs are refontified
 ;;   interactively (on font lock decoration level 3).  It's cleared in
 ;;   a region before it's fontified and is then put on relevant chars
 ;;   in that region as they are encountered during the fontification.
@@ -237,8 +237,9 @@ This function does not do any hidden buffer changes."
 
 (defun c-end-of-macro ()
   "Go to the end of a preprocessor directive.
-More accurately, move point to the end of the closest following line
-that doesn't end with a line continuation backslash.
+More accurately, move the point to the end of the closest following
+line that doesn't end with a line continuation backslash - no check is
+done that the point is inside a cpp directive to begin with.
 
 This function does not do any hidden buffer changes."
   (while (progn
@@ -846,70 +847,64 @@ COMMA-DELIM is non-nil then ',' is treated likewise."
 		  (setq ret 'previous)
 
                 ;; HERE IS THE SINGLE PLACE INSIDE THE PDA LOOP WHERE WE MOVE
-                ;; BACKWARDS THROUGH THE SOURCE. The following loop goes back
-                ;; one sexp and then only loops in special circumstances (line
-                ;; continuations and skipping past entire macros).
-		(while
-		    (progn
-		      (or (c-safe (goto-char (scan-sexps (point) -1)) t)
-			  ;; Give up if we hit an unbalanced block.
-			  ;; Since the stack won't be empty the code
-			  ;; below will report a suitable error.
-			  (throw 'loop nil))
-		      (cond ((looking-at "\\\\$")
-			     ;; Step again if we hit a line continuation.
-			     t)
-			    (macro-start
-			     ;; If we started inside a macro then this
-			     ;; sexp is always interesting.
-			     nil)
-			    ((not (c-major-mode-is 'awk-mode)) ; Changed from t, ACM 2002/6/25
-			     ;; Otherwise check that we didn't step
-			     ;; into a macro from the end.
-			     (let ((macro-start
-				    (save-excursion
-				      (and (c-beginning-of-macro)
-					   (point)))))
-			       (when macro-start
-				 (goto-char macro-start)
-				 t))))))
+		;; BACKWARDS THROUGH THE SOURCE.
 
-		;; Did the last movement by a sexp cross a statement boundary?
-		(when (save-excursion
-			(if (if (eq (char-after) ?{)
-				(c-looking-at-inexpr-block lim nil)
-			      (looking-at "\\s\("))
+		;; This is typically fast with the caching done by
+		;; c-(backward|forward)-sws.
+		(c-backward-syntactic-ws)
 
-			    ;; Should not include the paren sexp we've
-			    ;; passed over in the boundary check.
-			    (if (> (point) (- pos 100))
-				(c-forward-sexp 1)
+		(let ((before-sws-pos (point)))
+		  (unless (c-safe (c-backward-sexp) t)
+		    ;; Give up if we hit an unbalanced block.  Since the stack
+		    ;; won't be empty the code below will report a suitable
+		    ;; error.
+		    (throw 'loop nil))
 
-			      ;; Find its end position this way instead of
-			      ;; moving forward if the sexp is large.
-			      (goto-char pos)
-			      (while
-				  (progn
-				    (goto-char (1+ (c-down-list-backward)))
-				    (unless macro-start
-				      ;; Check that we didn't step into
-				      ;; a macro from the end.
-				      (let ((macro-start
-					     (save-excursion
-					       (and (c-beginning-of-macro)
-						    (point)))))
-					(when macro-start
-					  (goto-char macro-start)
-					  t)))))))
+		  ;; Check if the sexp movement crossed a statement or
+		  ;; declaration boundary.  But first modify the point so that
+		  ;; `c-crosses-statement-barrier-p' only looks at the
+		  ;; non-sexp chars following the sexp.
+		  (save-excursion
+		    (when (setq
+			   boundary-pos
+			   (cond
+			    ((if macro-start
+				 nil
+			       (save-excursion
+				 (c-beginning-of-macro)))
+			     ;; If the sexp movement took us into a macro then
+			     ;; there were only some non-sexp chars after it.
+			     ;; Skip out of the macro to analyze them but not
+			     ;; the non-sexp chars that might be inside the
+			     ;; macro.
+			     (c-end-of-macro)
+			     (c-crosses-statement-barrier-p (point) pos))
 
-			(setq boundary-pos (c-crosses-statement-barrier-p
-					    (point) pos)))
+			    ((and
+			      (eq (char-after) ?{)
+			      (not (c-looking-at-inexpr-block lim nil)))
+			     ;; Passed a block sexp.  That's a boundary
+			     ;; alright.
+			     (point))
 
-		  (setq pptok ptok
-			ptok tok
-			tok boundary-pos
-			sym 'boundary)
-		  (throw 'loop t))) ; like a C "continue".  Analyze the next sexp.
+			    ((looking-at "\\s\(")
+			     ;; Passed some other paren.  Only analyze the
+			     ;; non-sexp chars after it.
+			     (goto-char (1+ (c-down-list-backward
+					     before-sws-pos)))
+			     (c-crosses-statement-barrier-p (point) pos))
+
+			    (t
+			     ;; Passed a symbol sexp.  It doesn't matter that
+			     ;; it's included in the analyzed region.
+			     (c-crosses-statement-barrier-p (point) pos))))
+
+		      (setq pptok ptok
+			    ptok tok
+			    tok boundary-pos
+			    sym 'boundary)
+		      ;; Like a C "continue".  Analyze the next sexp.
+		      (throw 'loop t)))))
 
 	      ;; ObjC method def?
 	      (when (and c-opt-method-key
