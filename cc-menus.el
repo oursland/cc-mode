@@ -100,15 +100,15 @@
 
 
 ;; menus for XEmacs
-(defun c-mode-menu ()
-  (cons mode-name c-mode-menu))
+(defun c-mode-menu (&optional is-popup)
+  ;; create a named menu for XEmacs.  when is-popup is non-nil, extra
+  ;; words are added to the menu title.  TBD: this should all be
+  ;; converted to easymenu!
+  (let ((title (if is-popup
+		   (concat mode-name " Mode Commands")
+		 mode-name)))
+    (cons title c-mode-menu)))
 
-(defun c-popup-menu (e)
-  "Pops up the C/C++/ObjC menu."
-  (interactive "@e")
-  (popup-menu (c-mode-menu))
-  (c-keep-region-active))
-    
 (defconst c-mode-menu
   '(["Comment Out Region"     comment-region (mark)]
     ["Macro Expand Region"    c-macro-expand (mark)]
