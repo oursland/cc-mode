@@ -144,8 +144,7 @@ mode name.  Valid symbols are:
                         `else' is typed.
  brace-elseif-brace  -- similar to brace-else-brace, but cleans up
                         `} else if (...) {' constructs.  Clean up occurs
-                        both after the open parenthesis and after the
-                        open brace.
+                        after the open parenthesis.
  brace-catch-brace   -- similar to brace-elseif-brace, but cleans up
                         `} catch (...) {' constructs.
  empty-defun-braces  -- cleans up empty defun braces by placing the
@@ -347,10 +346,11 @@ When the value is a string, all CC Mode major modes will install this
 style by default, except `java-mode', which always installs the
 \"java\" style (this is for backwards compatibility).
 
-When the value is an alist, the named style is installed.  If the
-major mode is not listed in the alist, then the symbol `other' is
-looked up in the alist, and if found, the associated style is used.
-If `other' is not found in the alist, then \"gnu\" style is used.
+When the value is an alist, the major mode symbol is looked up in it
+and the associated style is installed.  If the major mode is not
+listed in the alist, then the symbol `other' is looked up in it, and
+if found, the style in that entry is used.  If `other' is not found in
+the alist, then \"gnu\" style is used.
 
 Note that if you set any CC Mode variables in the top-level of your
 .emacs file (i.e. *not* in a hook), these get incorporated into the

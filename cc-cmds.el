@@ -598,8 +598,8 @@ or \"/ah\" string on the mode line, some newline cleanups are done if
 appropriate; see the variable `c-cleanup-list'.
 
 Also, the line is re-indented unless a numeric ARG is supplied, there
-are non-whitespace characters present on the line after the colon, or
-the colon is inserted inside a literal."
+are non-whitespace characters present on the line after the
+parenthesis, or the parenthesis is inserted inside a literal."
   (interactive "*P")
   (let (;; shut this up
 	(c-echo-syntactic-information-p nil))
