@@ -1781,7 +1781,7 @@ balanced expression is found."
 			   (while (setq next (c-safe (scan-sexps (point) 1)))
 			     (goto-char next)))
 			 (c-forward-syntactic-ws)
-			 (when (eq (char-syntax (char-after)) ?\()
+			 (when (eq (char-syntax (or (char-after) ?\ )) ?\()
 			   (point))))))
 	  ;; sanity check
 	  (if (not start)
@@ -1799,28 +1799,37 @@ balanced expression is found."
       (set-marker here nil))))
 
 (defun c-indent-defun ()
-  "Indent the current top-level function def, struct or class declaration
-syntactically."
+  "Indent the current top-level function, struct, class or macro
+definition syntactically.  In the macro case this also has the effect
+of realigning any line continuation backslashes, unless
+`c-auto-align-backslashes' is nil."
   (interactive "*")
-  (let ((here (point-marker))
-	(c-echo-syntactic-information-p nil)
-	(brace (c-least-enclosing-brace (c-parse-state))))
-    (goto-char (or brace (c-point 'bod)))
-    ;; if we're sitting at b-o-b, it might be because there was no
-    ;; least enclosing brace and we were sitting on the defun's open
-    ;; brace.
-    (if (and (bobp) (not (eq (char-after) ?\{)))
-	(goto-char here))
-    ;; if defun-prompt-regexp is non-nil, b-o-d might not leave us at
-    ;; the open brace. I consider this an Emacs bug.
-    (and (boundp 'defun-prompt-regexp)
-	 defun-prompt-regexp
-	 (looking-at defun-prompt-regexp)
-	 (goto-char (match-end 0)))
-    ;; catch all errors in c-indent-exp so we can 1. give more
-    ;; meaningful error message, and 2. restore point
+  (let ((here (point-marker)) start end)
     (unwind-protect
-	(c-indent-exp)
+	(progn
+	  ;; Find and skip past the closest following open paren that
+	  ;; ends on another line, so that it works if we're standing
+	  ;; on the line that opens the construct.
+	  (save-restriction
+	    (narrow-to-region (point-min) (c-point 'eol))
+	    (let (next)
+	      (while (setq next (c-safe (scan-sexps (point) 1)))
+		(goto-char next)))
+	    (c-forward-syntactic-ws)
+	    (when (eq (char-syntax (or (char-after) ?\ )) ?\()
+	      (forward-char)))
+	  (setq start (c-least-enclosing-brace (c-parse-state)))
+	  (if start
+	      ;; Inside some brace construct.
+	      (progn
+		(goto-char start)
+		(c-indent-exp))
+	    ;; At the top level.  If we're inside a macro we operate
+	    ;; on that instead.
+	    (when (c-beginning-of-macro)
+	      (setq start (point))
+	      (c-end-of-macro)
+	      (c-indent-region start (point)))))
       (goto-char here)
       (set-marker here nil))))
 
@@ -2112,7 +2121,7 @@ command to conveniently insert and align the necessary backslashes."
 	      (goto-char from)
 	      (while (and (< (point) to) (bolp) (eolp))
 		(forward-line 1)))
-	    (if (< column longest-line-col)
+	    (if (and column (< column longest-line-col))
 		;; Don't try to align with surrounding backslashes if
 		;; any line is too long.
 		(setq column nil))
