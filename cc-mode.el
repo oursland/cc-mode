@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.339 $
-;; Last Modified:   $Date: 1994-05-17 21:51:43 $
+;; Version:         $Revision: 3.340 $
+;; Last Modified:   $Date: 1994-05-17 22:46:22 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-05-17 21:51:43 $|$Revision: 3.339 $|
+;; |$Date: 1994-05-17 22:46:22 $|$Revision: 3.340 $|
 
 ;;; Code:
 
@@ -773,7 +773,8 @@ behavior that users are familiar with.")
    "\\(template\\s *<[^>]*>\\s *\\)?"
    ;; I'd like to add \\= in the first grouping below, but 1. its not
    ;; defined in v18, and 2. doesn't seem to work in v19 anyway.
-   "\\([^<a-zA-Z0-9_]\\|\\`\\)[ \t]*class\\|struct\\|union")
+   "\\([^<a-zA-Z0-9_]\\|\\`\\)[ \t]*"
+   "\\(class\\|struct\\|union\\)\\([ \t\n]+\\|\\'\\)")
   "Regexp describing a class declaration, including templates.")
 (defconst c-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
@@ -808,7 +809,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.339 $
+cc-mode Revision: $Revision: 3.340 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -841,7 +842,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.339 $
+cc-mode Revision: $Revision: 3.340 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1819,6 +1820,7 @@ search."
 		(goto-char last-begin))
 	      ;; skip over any unary operators, or other special
 	      ;; characters appearing at front of identifier
+	      (c-backward-syntactic-ws)
 	      (skip-chars-backward "-+!*&:.~")
 	      (setq last-begin (point))
 	      (setq donep t)))
@@ -3545,7 +3547,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.339 $"
+(defconst c-version "$Revision: 3.340 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
