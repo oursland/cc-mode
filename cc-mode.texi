@@ -1707,7 +1707,9 @@ what you're looking for.  These include:
 @cindex GNU style
 @item
 @code{gnu} --- coding style blessed by the Free Software Foundation
-for C code in GNU programs.
+for C code in GNU programs.  This is the default style for all newly
+created buffers, but you can change this by setting the variable
+@code{c-default-style}.
 
 @cindex K&R style
 @item
@@ -1755,17 +1757,23 @@ automatically installed when you enter @code{java-mode}.
 @vindex c-default-style
 @vindex default-style (c-)
 @item
-@code{user} --- This is a special style for three reasons.  First, if you
-customize @ccmode{} by using either the new Custom
+@code{user} --- This is a special style for several reasons.  First, if
+you customize @ccmode{} by using either the new Custom
 interface@footnote{Available in Emacs 20, XEmacs 19.15 and XEmacs 20.}
 or by doing @code{setq}'s at the top level of your @file{.emacs} file,
-these settings will be captured in the @code{user} style.  @code{user}
-style is also the default style to get installed on newly created
-buffers, but you can change this via the variable
-@code{c-default-style}.  Finally, all other styles implicitly inherit
-their settings from @code{user} style.  This means that for any styles you
-add via @code{c-add-style} (@xref{Adding Styles}) you need only define
-the differences between your new style and @code{user} style.
+these settings will be captured in the @code{user} style.  Also, all
+other styles implicitly inherit their settings from @code{user} style.
+This means that for any styles you add via @code{c-add-style}
+(@xref{Adding Styles}) you need only define the differences between your
+new style and @code{user} style.
+
+Note however that @code{user} style is @emph{not} the default style.
+@code{gnu} is the default style for all newly created buffers, but you
+can change this by setting variable @code{c-default-style}.  Be careful
+if you customize @ccmode{} as described above; since your changes will
+be captured in the @code{user} style, you will also have to change
+@code{c-default-style} to "user" to see the effect of your
+customizations.
 
 @end itemize
 
