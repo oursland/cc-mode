@@ -15,7 +15,7 @@ Mode) back in 1992 and revamped it to CC Mode.  The AWK support is
 written and maintained by Alan Mackenzie.
 
 <p>The current release available for <a
-href="release.php">download</a> is 5.30.8.  There is a detailed list
+href="release.php">download</a> is 5.30.9.  There is a detailed list
 of <a href="changes-530.php">user visible changes</a>, as well as <a
 href="installation.php">installation instructions</a> and Emacs/XEmacs
 <a href="compat.php">compatibility details</a>.

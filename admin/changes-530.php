@@ -9,7 +9,7 @@
 5.29</a>.
 
 <p><a
-href="http://download.sourceforge.net/cc-mode/cc-mode-5.30.8.tar.gz">Download</a>
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.30.9.tar.gz">Download</a>
 this CC Mode version.</p>
 
 <p>There is a lot of change in this version, so it's considered
