@@ -247,7 +247,7 @@ this function.
 *** c-hanging-comment-starter-p and c-hanging-comment-ender-p are obsolete.
 The new comment handling code no longer consults these two variables.
 It instead detects how the "hangingness" of the comment delimiters
-looks like currently and simply keeps them that way.
+look like currently and simply keeps them that way.
 
 ** Fixes to IDL mode.
 It now does a better job in recognizing only the constructs relevant

@@ -147,7 +147,7 @@ release.
 
     <p>The new comment handling code no longer consults these two
     variables.  It instead detects how the "hangingness" of the
-    comment delimiters looks like currently and simply keeps them that
+    comment delimiters look like currently and simply keeps them that
     way.
   </ul>
 
