@@ -912,13 +912,6 @@ Key bindings:
 
 ;; Support for awk
 
-;;;###autoload
-(defvar awk-mode-syntax-table nil
-  "Syntax table used in awk-mode buffers.")
-(or awk-mode-syntax-table
-    (setq awk-mode-syntax-table
-	  (funcall (c-lang-const c-make-mode-syntax-table awk))))
-
 (defvar awk-mode-abbrev-table nil
   "Abbreviation table used in awk-mode buffers.")
 (c-define-abbrev-table 'awk-mode-abbrev-table
