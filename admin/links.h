@@ -6,4 +6,5 @@
 <a href="installation.php">Installation notes</a><br />
 <a href="compat.php">Compatibility notes</a><br />
 <a href="lists.php">Mailing lists</a><br />
+<a href="anoncvs.php">Anonymous CVS access</a><br />
 <a href="contrib.php">Contributed stuff</a><br />
