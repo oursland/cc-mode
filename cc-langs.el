@@ -1910,14 +1910,6 @@ Note that Java specific rules are currently applied to tell this from
 (c-lang-defvar c-opt-inexpr-brace-list-key
   (c-lang-const c-opt-inexpr-brace-list-key))
 
-(c-lang-defconst c-any-class-key
-  ;; Regexp matching the start of any class, both at top level and in
-  ;; expressions.
-  t (c-make-keywords-re t
-      (append (c-lang-const c-class-decl-kwds)
-	      (c-lang-const c-inexpr-class-kwds))))
-(c-lang-defvar c-any-class-key (c-lang-const c-any-class-key))
-
 (c-lang-defconst c-decl-block-key
   ;; Regexp matching the start of any declaration-level block that
   ;; contain another declaration level, i.e. that isn't a function
@@ -2257,12 +2249,14 @@ constructs."
 identifier in a declaration, e.g. the \"*\" in \"char *argv\".  This
 regexp should match \"(\" if parentheses are valid in declarators.
 The end of the first submatch is taken as the end of the operator.
-Identifier syntax is in effect when this is matched
-(see `c-identifier-syntax-table')."
+Identifier syntax is in effect when this is matched \(see
+`c-identifier-syntax-table')."
   t (if (c-lang-const c-type-modifier-kwds)
 	(concat (regexp-opt (c-lang-const c-type-modifier-kwds) t) "\\>")
       ;; Default to a regexp that never matches.
       "\\<\\>")
+  ;; Check that there's no "=" afterwards to avoid matching tokens
+  ;; like "*=".
   (c objc) (concat "\\("
 		   "[*\(]"
 		   "\\|"
@@ -2283,7 +2277,7 @@ Identifier syntax is in effect when this is matched
 	       (c-lang-const c-type-decl-prefix-key)
 	       "\\)"
 	       "\\([^=]\\|$\\)")
-  pike "\\([*\(!~]\\)\\([^=]\\|$\\)")
+  pike "\\(\\*\\)\\([^=]\\|$\\)")
 (c-lang-defvar c-type-decl-prefix-key (c-lang-const c-type-decl-prefix-key)
   'dont-doc)
 
