@@ -467,11 +467,15 @@ continuations."
 (put 'idl-mode  'c-mode-prefix "idl-")
 (put 'pike-mode 'c-mode-prefix "pike-")
 
+(defsubst c-mode-symbol (suffix)
+  ;; Prefix the current mode prefix (e.g. "c-") to SUFFIX and return
+  ;; the corresponding symbol.
+   (intern (concat (get c-buffer-is-cc-mode 'c-mode-prefix) suffix)))
+
 (defsubst c-mode-var (suffix)
   ;; Prefix the current mode prefix (e.g. "c-") to SUFFIX and return
   ;; the value of the variable with that name.
-  (symbol-value (intern (concat (get c-buffer-is-cc-mode 'c-mode-prefix)
-				suffix))))
+  (symbol-value (c-mode-symbol suffix)))
 
 (defsubst c-face-name-p (facename)
   ;; Return t if FACENAME is the name of a face.  This method is
