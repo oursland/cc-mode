@@ -123,7 +123,7 @@
 ;;
 ;; And in the major mode function:
 ;;
-;; (c-initialize-cc-mode)
+;; (c-initialize-cc-mode t)
 ;; (c-init-language-vars some-mode)
 ;; (c-common-init 'some-mode) ; Or perhaps (c-basic-common-init 'some-mode)
 ;;
