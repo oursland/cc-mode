@@ -2761,7 +2761,7 @@ command to conveniently insert and align the necessary backslashes."
 		  '("" . 0))))))
     ))
 
-(defun c-mask-comment (dont-ignore-ender apply-outside-literal fun &rest args)
+(defun c-mask-comment (fill-include-ender apply-outside-literal fun &rest args)
   ;; Calls FUN with ARGS ar arguments.  If point is inside a comment,
   ;; the comment starter and ender are masked and the buffer is
   ;; narrowed to make it look like a normal paragraph during the call.
@@ -2829,8 +2829,7 @@ command to conveniently insert and align the necessary backslashes."
 		  (setq tmp-pre t)))
 	      ))
 	   ((eq c-lit-type 'c)		; Block comment.
-	    (when (and dont-ignore-ender
-		       (>= end (cdr c-lit-limits)))
+	    (when (>= end (cdr c-lit-limits))
 	      ;; The region includes the comment ender which we might
 	      ;; want to keep together with the last word.
 	      (unless (save-excursion
@@ -2842,59 +2841,61 @@ command to conveniently insert and align the necessary backslashes."
 			     (eq (cdr c-lit-limits) (match-end 0))
 			     ;; Leave the comment ender on its own line.
 			     (set-marker end (point))))
-		;; The comment ender should hang.  Replace all cruft
-		;; between it and the last word with one or two 'x'
-		;; and include it in the region.  We'll change them
-		;; back spaces afterwards.
-		(let* ((ender-start (save-excursion
-				      (goto-char (cdr c-lit-limits))
-				      (skip-syntax-backward "^w ")
-				      (point)))
-		       (point-rel (- ender-start here))
-		       spaces)
-		  (save-excursion
-		    (goto-char (cdr c-lit-limits))
-		    (setq tmp-post (point-marker))
-		    (insert ?\n)
-		    (set-marker end (point))
-		    (forward-line -1)
-		    (if (and (looking-at (concat "[ \t]*\\(\\("
-						 c-current-comment-prefix
-						 "\\)[ \t]*\\)"))
-			     (eq ender-start (match-end 0)))
-			;; The comment ender is prefixed by nothing
-			;; but a comment line prefix.  Remove it
-			;; along with surrounding ws.
-			(setq spaces (- (match-end 1) (match-end 2)))
-		      (goto-char ender-start))
-		    (skip-chars-backward " \t\r\n")
-		    (if (/= (point) ender-start)
-			(progn
-			  (if (<= here (point))
-			      ;; Don't adjust point below if it's
-			      ;; before the string we replace.
-			      (setq point-rel -1))
-			  ;; Keep one or two spaces between the text and
-			  ;; the ender, depending on how many there are now.
-			  (unless spaces (setq spaces (- ender-start (point))))
-			  (setq spaces
-				(max (min spaces
-					  (if sentence-end-double-space 2 1))
-				     1))
-			  ;; Insert the filler first to keep marks right.
-			  (insert-char ?x spaces t)
-			  (delete-region (point) (+ ender-start spaces))
-			  (setq hang-ender-stuck spaces)
-			  (setq point-rel
-				(and (>= point-rel 0)
-				     (- (point) (min point-rel spaces)))))
-		      (setq point-rel nil)))
-		  (if point-rel
-		      ;; Point was in the middle of the string we
-		      ;; replaced above, so put it back in the same
-		      ;; relative position, counting from the end.
-		      (goto-char point-rel))
-		  )))
+		(when fill-include-ender
+		  ;; The comment ender should hang.  Replace all cruft
+		  ;; between it and the last word with one or two 'x'
+		  ;; and include it in the region.  We'll change them
+		  ;; back to spaces afterwards.
+		  (let* ((ender-start (save-excursion
+					(goto-char (cdr c-lit-limits))
+					(skip-syntax-backward "^w ")
+					(point)))
+			 (point-rel (- ender-start here))
+			 spaces)
+		    (save-excursion
+		      (goto-char (cdr c-lit-limits))
+		      (setq tmp-post (point-marker))
+		      (insert ?\n)
+		      (set-marker end (point))
+		      (forward-line -1)
+		      (if (and (looking-at (concat "[ \t]*\\(\\("
+						   c-current-comment-prefix
+						   "\\)[ \t]*\\)"))
+			       (eq ender-start (match-end 0)))
+			  ;; The comment ender is prefixed by nothing
+			  ;; but a comment line prefix.  Remove it
+			  ;; along with surrounding ws.
+			  (setq spaces (- (match-end 1) (match-end 2)))
+			(goto-char ender-start))
+		      (skip-chars-backward " \t\r\n")
+		      (if (/= (point) ender-start)
+			  (progn
+			    (if (<= here (point))
+				;; Don't adjust point below if it's
+				;; before the string we replace.
+				(setq point-rel -1))
+			    ;; Keep one or two spaces between the text and
+			    ;; the ender, depending on how many there are now.
+			    (unless spaces
+			      (setq spaces (- ender-start (point))))
+			    (setq spaces
+				  (max (min spaces
+					    (if sentence-end-double-space 2 1))
+				       1))
+			    ;; Insert the filler first to keep marks right.
+			    (insert-char ?x spaces t)
+			    (delete-region (point) (+ ender-start spaces))
+			    (setq hang-ender-stuck spaces)
+			    (setq point-rel
+				  (and (>= point-rel 0)
+				       (- (point) (min point-rel spaces)))))
+			(setq point-rel nil)))
+		    (if point-rel
+			;; Point was in the middle of the string we
+			;; replaced above, so put it back in the same
+			;; relative position, counting from the end.
+			(goto-char point-rel))
+		    ))))
 	    (when (<= beg (car c-lit-limits))
 	      ;; The region includes the comment starter.
 	      (save-excursion
