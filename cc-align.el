@@ -663,8 +663,8 @@ expressions.
 Works with: statement-cont, arglist-cont, arglist-cont-nonempty."
 
   (if (and (eq (car langelem) 'arglist-cont-nonempty)
-	   (/= (nth 2 c-syntactic-element)
-	       (c-most-enclosing-brace (c-parse-state))))
+	   (not (eq (nth 2 c-syntactic-element)
+		    (c-most-enclosing-brace (c-parse-state)))))
       ;; The innermost open paren is not our one, so don't do
       ;; anything.  This can occur for arglist-cont-nonempty with
       ;; nested arglist starts on the same line.
@@ -949,8 +949,8 @@ Works with: arglist-cont, arglist-cont-nonempty."
        ;; This can occur for arglist-cont-nonempty with nested arglist
        ;; starts on the same line.
        (or (not (eq (car elem) 'arglist-cont-nonempty))
-	   (= (elt c-syntactic-element 2)
-	      (c-most-enclosing-brace (c-parse-state))))
+	   (eq (elt c-syntactic-element 2)
+	       (c-most-enclosing-brace (c-parse-state))))
 
        ;; Find the ":" to align to.  Look for this first so as to quickly
        ;; eliminate pretty much all cases which are not for us.
