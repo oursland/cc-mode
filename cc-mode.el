@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.156 $
-;; Last Modified:   $Date: 1995-03-01 19:29:44 $
+;; Version:         $Revision: 4.157 $
+;; Last Modified:   $Date: 1995-03-01 19:43:28 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-03-01 19:29:44 $|$Revision: 4.156 $|
+;; |$Date: 1995-03-01 19:43:28 $|$Revision: 4.157 $|
 
 ;;; Code:
 
@@ -3090,6 +3090,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; returned.  If none is found and we are looking at an else clause,
   ;; an error is thrown.
   (let ((if-level 1)
+	(here (c-point 'bol))
 	(case-fold-search nil)
 	(lim (or lim (c-point 'bod)))
 	(at-if (looking-at "if\\b[^_]")))
@@ -3102,7 +3103,8 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	  (error
 	   (if at-if
 	       (throw 'orphan-if nil)
-	     (error "Orphaned `else' clause encountered."))))
+	     (error "No matching `if' found for `else' on line %d."
+		    (1+ (count-lines 1 here))))))
 	(cond
 	 ((looking-at "else\\b[^_]")
 	  (setq if-level (1+ if-level)))
@@ -4472,7 +4474,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.156 $"
+(defconst c-version "$Revision: 4.157 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
