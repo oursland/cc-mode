@@ -110,30 +110,35 @@ appended."
     ;; that c-lang-var can do the right expansion.
     )
 
-  (defmacro c-lang-defconst (var mode val)
-    ;; Like `defconst', but sets the mode specific value of the
-    ;; constant VAR in mode MODE.  MODE is the mode name without the
-    ;; "-mode" suffix, or a list of such mode names, or `all' as a
-    ;; shortcut for a list of all modes.  VAL is evaluated (during
-    ;; compilation) for each mode with c-buffer-is-cc-mode temporarily
-    ;; bound, so c-lang-var without an explicit mode may be used
-    ;; within it.
-    (cond ((eq mode 'all)
-	   (setq mode '(c c++ objc java idl pike)))
-	  ((symbolp mode)
-	   (setq mode (list mode))))
-    `(progn
-       ,@(mapcar
-	  (lambda (mode)
+  (defmacro c-lang-defconst (var &rest args)
+    ;; Sets the mode specific values of the constant VAR.  The rest of
+    ;; the arguments are one or more repetitions of MODE VAL.  MODE is
+    ;; the mode name without the "-mode" suffix, or a list of such
+    ;; mode names, or `all' as a shortcut for a list of all modes.
+    ;; VAL is evaluated (during compilation) for each mode with
+    ;; c-buffer-is-cc-mode temporarily bound, so c-lang-var without an
+    ;; explicit mode may be used within it.
+    (let* ((res (list 'progn))
+	   (res-tail res))
+      (while args
+	(let ((mode (car args)))
+	  (cond ((eq mode 'all)
+		 (setq mode '(c c++ objc java idl pike)))
+		((symbolp mode)
+		 (setq mode (list mode))))
+	  (while mode
 	    (let* ((c-macroexpand-mode
-		    (intern (concat (symbol-name mode) "-mode")))
-		   (val (eval val)))
+		    (intern (concat (symbol-name (car mode)) "-mode")))
+		   (val (eval (car (cdr args)))))
 	      ;; Need to install the value also during compilation,
 	      ;; since val might refer to earlier mode specific
 	      ;; values.
 	      (put var c-macroexpand-mode val)
-	      `(put ',var ',c-macroexpand-mode ',val)))
-	  mode)))
+	      (setcdr res-tail (list `(put ',var ',c-macroexpand-mode ',val)))
+	      (setq res-tail (cdr res-tail)))
+	    (setq mode (cdr mode))))
+	(setq args (cdr (cdr args))))
+      res))
 
   (defmacro c-lang-var (var &optional mode)
     ;; Get the mode specific value of the variable VAR in mode MODE.
@@ -163,7 +168,7 @@ appended."
        (defvar ,var nil)
        (make-variable-buffer-local ',var)))
   )
-(put 'c-lang-defconst 'lisp-indent-function 2)
+(put 'c-lang-defconst 'lisp-indent-function 1)
 (put 'c-lang-defvar 'lisp-indent-function 1)
 
 ;; Regexp describing a `symbol' in all languages, not excluding
@@ -177,15 +182,15 @@ appended."
 ;; in identifiers (e.g. Java and Pike).  For that we'd need to make a
 ;; regexp that matches all characters in the word constituent class
 ;; except 0-9, and the regexp engine currently can't do that.
-(c-lang-defconst c-symbol-key (c c++ objc java idl)
-  "[_a-zA-Z]\\(\\w\\|\\s_\\)*")
-(c-lang-defconst c-symbol-key pike
-  (concat "\\(" (c-lang-var c-symbol-key c) "\\|"
-	  (c-make-keywords-re nil
-	    '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~" "`=="
-	      "`<" "`>" "`!" "`[]" "`[]=" "`->" "`->=" "`()" "``+" "``-" "``&"
-	      "``|" "``^" "``<<" "``>>" "``*" "``/" "``%" "`+="))
-	  "\\)"))
+(c-lang-defconst c-symbol-key
+  (c c++ objc java idl) "[_a-zA-Z]\\(\\w\\|\\s_\\)*"
+  pike (concat "\\(" (c-lang-var c-symbol-key c) "\\|"
+	       (c-make-keywords-re nil
+		 '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~"
+		   "`==" "`<" "`>" "`!" "`[]" "`[]=" "`->" "`->=" "`()" "``+"
+		   "``-" "``&" "``|" "``^" "``<<" "``>>" "``*" "``/" "``%"
+		   "`+="))
+	       "\\)"))
 (c-lang-defvar c-symbol-key (c-lang-var c-symbol-key))
 
 ;; Number of regexp grouping parens in c-symbol-key.
@@ -208,35 +213,32 @@ appended."
 ;; still appreciate help to get them correct for other uses.
 
 ;; Primitive type keywords.
-(c-lang-defconst c-primitive-type-kwds (c c++ objc idl)
-  '("char" "double" "float" "int" "long" "short" "signed" "unsigned" "void"))
-(c-lang-defconst c-primitive-type-kwds java
-  '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void"))
-(c-lang-defconst c-primitive-type-kwds pike
-  '("constant" "float" "int" "mapping" "multiset" "object" "program"
-    "string" "void"))
+(c-lang-defconst c-primitive-type-kwds
+  (c c++ objc idl) '("char" "double" "float" "int" "long" "short"
+		     "signed" "unsigned" "void")
+  java '("boolean" "byte" "char" "double" "float" "int" "long" "short" "void")
+  pike '("constant" "float" "int" "mapping" "multiset" "object" "program"
+	 "string" "void"))
 
 ;; Declaration specifier keywords.
-(c-lang-defconst c-specifier-kwds c
-  '("auto" "const" "extern" "register" "static" "volatile"))
-(c-lang-defconst c-specifier-kwds (c++ objc idl)
-  (append '("friend" "inline" "virtual") (c-lang-var c-specifier-kwds c)))
-(c-lang-defconst c-specifier-kwds java
-  ;; Note: `const' is not used, but it's still a reserved keyword.
-  '("abstract" "const" "final" "native" "private" "protected"
-    "public" "static" "synchronized" "transient" "volatile"))
-(c-lang-defconst c-specifier-kwds pike
-  '("final" "inline" "local" "nomask" "optional" "private"
-    "protected" "static" "variant"))
+(c-lang-defconst c-specifier-kwds
+  c '("auto" "const" "extern" "register" "static" "volatile")
+  (c++ objc idl) (append '("friend" "inline" "virtual")
+			 (c-lang-var c-specifier-kwds c))
+  ;; Note: `const' is not used in Java, but it's still a reserved keyword.
+  java '("abstract" "const" "final" "native" "private" "protected"
+	 "public" "static" "synchronized" "transient" "volatile")
+  pike '("final" "inline" "local" "nomask" "optional" "private"
+	 "protected" "static" "variant"))
 
 ;; Class/struct declaration keywords.
-(c-lang-defconst c-class-kwds c '("struct" "union"))
-(c-lang-defconst c-class-kwds c++ '("class" "struct" "union"))
-(c-lang-defconst c-class-kwds objc '("interface" "implementation"))
-(c-lang-defconst c-class-kwds java '("class" "interface"))
-(c-lang-defconst c-class-kwds idl
-  '("interface" "valuetype" "class" "struct" "union"))
-(c-lang-defconst c-class-kwds pike '("class"))
+(c-lang-defconst c-class-kwds
+  c '("struct" "union")
+  c++ '("class" "struct" "union")
+  objc '("interface" "implementation")
+  java '("class" "interface")
+  idl '("interface" "valuetype" "class" "struct" "union")
+  pike '("class"))
 
 ;; Regexp matching the start of a class.
 (c-lang-defconst c-class-key all
@@ -247,9 +249,10 @@ appended."
 
 ;; Keywords introducing blocks besides classes that contain another
 ;; declaration level.
-(c-lang-defconst c-other-decl-block-kwds c '("extern"))
-(c-lang-defconst c-other-decl-block-kwds c++ '("namespace" "extern"))
-(c-lang-defconst c-other-decl-block-kwds idl '("module"))
+(c-lang-defconst c-other-decl-block-kwds
+  c '("extern")
+  c++ '("namespace" "extern")
+  idl '("module"))
 
 ;; Regexp matching the start of blocks besides classes that contain
 ;; another declaration level.
@@ -258,11 +261,12 @@ appended."
 (c-lang-defvar c-other-decl-block-key (c-lang-var c-other-decl-block-key))
 
 ;; Keywords introducing other declarations.
-(c-lang-defconst c-other-decl-kwds c '("enum" "typedef"))
-;; FIXME: Shouldn't "template" be moved to c-specifier-kwds for c++?
-(c-lang-defconst c-other-decl-kwds c++ '("enum" "typedef" "template"))
-(c-lang-defconst c-other-decl-kwds java '("import" "package"))
-(c-lang-defconst c-other-decl-kwds pike '("import" "inherit"))
+(c-lang-defconst c-other-decl-kwds
+  c '("enum" "typedef")
+  ;; FIXME: Shouldn't "template" be moved to c-specifier-kwds for C++?
+  c++ '("enum" "typedef" "template")
+  java '("import" "package")
+  pike '("import" "inherit"))
 
 ;; Keywords introducing extra declaration specifiers in the region
 ;; between the header and the body (i.e. the "K&R-region") in
@@ -270,13 +274,14 @@ appended."
 (c-lang-defconst c-decl-spec-kwds java '("extends" "implements" "throws"))
 
 ;; Protection label keywords in classes.
-(c-lang-defconst c-protection-kwds (c++ objc)
-  '("private" "protected" "public"))
+(c-lang-defconst c-protection-kwds
+  (c++ objc) '("private" "protected" "public"))
 
 ;; Statement keywords followed directly by a substatement.
-(c-lang-defconst c-block-stmt-1-kwds (c pike) '("do" "else"))
-(c-lang-defconst c-block-stmt-1-kwds (c++ objc) '("do" "else" "asm" "try"))
-(c-lang-defconst c-block-stmt-1-kwds java '("do" "else" "finally" "try"))
+(c-lang-defconst c-block-stmt-1-kwds
+  (c pike) '("do" "else")
+  (c++ objc) '("do" "else" "asm" "try")
+  java '("do" "else" "finally" "try"))
 
 ;; Regexp matching the start of any statement followed directly by a
 ;; substatement (doesn't match a bare block, however).
@@ -285,13 +290,11 @@ appended."
 (c-lang-defvar c-block-stmt-1-key (c-lang-var c-block-stmt-1-key))
 
 ;; Statement keywords followed by a paren sexp and then by a substatement.
-(c-lang-defconst c-block-stmt-2-kwds c '("for" "if" "switch" "while"))
-(c-lang-defconst c-block-stmt-2-kwds (c++ objc)
-  '("for" "if" "switch" "while" "catch"))
-(c-lang-defconst c-block-stmt-2-kwds java
-  '("for" "if" "switch" "while" "catch" "synchronized"))
-(c-lang-defconst c-block-stmt-2-kwds pike
-  '("for" "if" "switch" "while" "foreach"))
+(c-lang-defconst c-block-stmt-2-kwds
+  c '("for" "if" "switch" "while")
+  (c++ objc) '("for" "if" "switch" "while" "catch")
+  java '("for" "if" "switch" "while" "catch" "synchronized")
+  pike '("for" "if" "switch" "while" "foreach"))
 
 ;; Regexp matching the start of any statement followed by a paren sexp
 ;; and then by a substatement.
@@ -311,13 +314,11 @@ appended."
 (c-lang-defvar c-opt-block-stmt-key (c-lang-var c-opt-block-stmt-key))
 
 ;; Statement keywords followed by an expression or nothing.
-(c-lang-defconst c-simple-stmt-kwds (c c++ objc)
-  '("break" "continue" "goto" "return"))
-(c-lang-defconst c-simple-stmt-kwds java
-  ;; Note: `goto' is not a valid statement, but the keyword is still reserved.
-  '("break" "continue" "goto" "return" "throw"))
-(c-lang-defconst c-simple-stmt-kwds pike
-  '("break" "continue" "return"))
+(c-lang-defconst c-simple-stmt-kwds
+  (c c++ objc) '("break" "continue" "goto" "return")
+  ;; Note: `goto' is not valid in Java, but the keyword is still reserved.
+  java '("break" "continue" "goto" "return" "throw")
+  pike '("break" "continue" "return"))
 
 ;; Keywords introducing labels in blocks.
 (c-lang-defconst c-label-kwds (c c++ objc java pike) '("case" "default"))
@@ -328,14 +329,11 @@ appended."
 (c-lang-defvar c-label-kwds-regexp (c-lang-var c-label-kwds-regexp))
 
 ;; Keywords that can occur anywhere in expressions.
-(c-lang-defconst c-expr-kwds (c objc)
-  '("sizeof"))
-(c-lang-defconst c-expr-kwds c++
-  '("sizeof" "delete" "new" "operator" "this" "throw"))
-(c-lang-defconst c-expr-kwds java
-  '("instanceof" "new" "super" "this"))
-(c-lang-defconst c-expr-kwds pike
-  '("sizeof" "catch" "class" "gauge" "lambda" "predef"))
+(c-lang-defconst c-expr-kwds
+  (c objc) '("sizeof")
+  c++ '("sizeof" "delete" "new" "operator" "this" "throw")
+  java '("instanceof" "new" "super" "this")
+  pike '("sizeof" "catch" "class" "gauge" "lambda" "predef"))
 
 ;; Keywords that start lambda constructs, i.e. function definitions in
 ;; expressions.
@@ -359,8 +357,9 @@ appended."
 (c-lang-defvar c-opt-inexpr-block-key (c-lang-var c-opt-inexpr-block-key))
 
 ;; Keywords that start classes in expressions.
-(c-lang-defconst c-inexpr-class-kwds java '("new"))
-(c-lang-defconst c-inexpr-class-kwds pike '("class"))
+(c-lang-defconst c-inexpr-class-kwds
+  java '("new")
+  pike '("class"))
 
 ;; Regexp matching the start of a class in an expression, or nil in
 ;; languages that doesn't have such things.
@@ -449,13 +448,12 @@ appended."
 ;;
 ;; FIXME: This is currently not used in a uniformly; c++-mode and
 ;; java-mode each have their own ways of using it.
-(c-lang-defconst c-opt-decl-spec-key c++
-  (concat ":?[ \t\n\r]*\\(virtual[ \t\n\r]+\\)?\\("
-	  (c-make-keywords-re nil (c-lang-var c-protection-kwds))
-	  "\\)[ \t\n\r]+"
-	  (c-lang-var c-symbol-key)))
-(c-lang-defconst c-opt-decl-spec-key java
-  (c-make-keywords-re t (c-lang-var c-decl-spec-kwds)))
+(c-lang-defconst c-opt-decl-spec-key
+  c++ (concat ":?[ \t\n\r]*\\(virtual[ \t\n\r]+\\)?\\("
+	      (c-make-keywords-re nil (c-lang-var c-protection-kwds))
+	      "\\)[ \t\n\r]+"
+	      (c-lang-var c-symbol-key))
+  java (c-make-keywords-re t (c-lang-var c-decl-spec-kwds)))
 (c-lang-defvar c-opt-decl-spec-key (c-lang-var c-opt-decl-spec-key))
 
 ;; Regexp describing friend declarations classes, or nil in languages
@@ -467,19 +465,20 @@ appended."
 (c-lang-defvar c-opt-friend-key (c-lang-var c-opt-friend-key))
 
 ;; Special regexp to match the start of methods.
-(c-lang-defconst c-opt-method-key objc
-  (concat
-   "^\\s *[+-]\\s *"
-   "\\(([^)]*)\\)?"			; return type
-   ;; \\s- in objc syntax table does not include \n
-   ;; since it is considered the end of //-comments.
-   "[ \t\n]*" (c-lang-var c-symbol-key)))
+(c-lang-defconst c-opt-method-key
+  objc (concat
+	"^\\s *[+-]\\s *"
+	"\\(([^)]*)\\)?"		; return type
+	;; \\s- in objc syntax table does not include \n
+	;; since it is considered the end of //-comments.
+	"[ \t\n]*" (c-lang-var c-symbol-key)))
 (c-lang-defvar c-opt-method-key (c-lang-var c-opt-method-key))
 
 ;; Name of functions in cpp expressions that take an identifier as the
 ;; argument.
-(c-lang-defconst c-cpp-defined-fns (c c++) '("defined"))
-(c-lang-defconst c-cpp-defined-fns pike '("defined" "efun" "constant"))
+(c-lang-defconst c-cpp-defined-fns
+  (c c++) '("defined")
+  pike '("defined" "efun" "constant"))
 
 ;; List of open- and close-chars that makes up a pike-style brace
 ;; list, i.e. for a `([ ])' list there should be a cons (?\[ . ?\]) in
@@ -497,32 +496,34 @@ appended."
 ;;
 ;; FIXME: Ought to use c-comment-prefix-regexp with some modifications
 ;; instead of this.
-(c-lang-defconst c-comment-start-regexp (c c++ objc idl pike) "/[/*]")
-(c-lang-defconst c-comment-start-regexp java
+(c-lang-defconst c-comment-start-regexp
+  (c c++ objc idl pike) "/[/*]"
   ;; We need to match all 3 Java style comments
   ;; 1) Traditional C block; 2) javadoc /** ...; 3) C++ style
-  "/\\(/\\|[*][*]?\\)")
+  java "/\\(/\\|[*][*]?\\)")
 (c-lang-defvar c-comment-start-regexp (c-lang-var c-comment-start-regexp))
 
 ;; Strings that starts and ends comments inserted with M-; etc.
 ;; comment-start and comment-end are initialized from these.
-(c-lang-defconst comment-start c "/* ")
-(c-lang-defconst comment-end c "*/")
-(c-lang-defconst comment-start (c++ objc java idl pike) "// ")
-(c-lang-defconst comment-end (c++ objc java idl pike) "")
+(c-lang-defconst comment-start
+  c "/* "
+  (c++ objc java idl pike) "// ")
 (c-lang-defvar comment-start (c-lang-var comment-start))
+(c-lang-defconst comment-end
+  c "*/"
+  (c++ objc java idl pike) "")
 (c-lang-defvar comment-end (c-lang-var comment-end))
 
 ;; Regexp to append to paragraph-start.
-(c-lang-defconst paragraph-start (c c++ objc idl) "$")
-(c-lang-defconst paragraph-start java
-  "\\(@[a-zA-Z]+\\>\\|$\\)")		; For Javadoc.
-(c-lang-defconst paragraph-start pike
-  "\\(@[a-zA-Z]+\\>\\([^{]\\|$\\)\\|$\\)") ; For Pike refdoc.
+(c-lang-defconst paragraph-start
+  (c c++ objc idl) "$"
+  java "\\(@[a-zA-Z]+\\>\\|$\\)"	; For Javadoc.
+  pike "\\(@[a-zA-Z]+\\>\\([^{]\\|$\\)\\|$\\)") ; For Pike refdoc.
 
 ;; Regexp to append to paragraph-separate.
-(c-lang-defconst paragraph-separate (c c++ objc java idl) "$")
-(c-lang-defconst paragraph-separate pike (c-lang-var paragraph-start))
+(c-lang-defconst paragraph-separate
+  (c c++ objc java idl) "$"
+  pike (c-lang-var paragraph-start))
 
 ;; Prefix added to `c-current-comment-prefix' to set
 ;; `c-opt-in-comment-lc', or nil if it should be nil.
