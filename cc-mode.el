@@ -1,24 +1,27 @@
 ;; -*- Mode: Emacs-Lisp -*-
-;; File:		c++-mode.el
-;; Description: 	Mode for editing C++ code
-;; Author:		1992 Barry A. Warsaw, Century Computing Inc.
-;;        		1987 Dave Detlefs  (dld@cs.cmu.edu)
-;;        		and  Stewart Clamen (clamen@cs.cmu.edu)
-;;        		Done by fairly faithful modification of:
-;;        		c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:	$Date: 1992-04-22 22:17:07 $
-;; Version:		$Revision: 2.0 $
+;; File:            c++-mode.el
+;; Description:     Mode for editing C++ code
+;; Authors:         1992 Barry A. Warsaw, Century Computing Inc.
+;;                  1987 Dave Detlefs  (dld@cs.cmu.edu)
+;;                   and Stewart Clamen (clamen@cs.cmu.edu)
+;;                  Done by fairly faithful modification of:
+;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
+;; Last Modified:   $Date: 1992-04-22 22:30:31 $
+;; Version:         $Revision: 2.1 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
 ;;
-;; Do a C-h f c++-dump-state for more information on submitting bug
+;; Do a "C-h m" in a c++-mode buffer for more information on customizing
+;; c++-mode.
+;;
+;; Do a "C-h f c++-dump-state" for more information on submitting bug
 ;; reports.
 ;;
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-04-22 22:17:07 $|$Revision: 2.0 $|
+;; |$Date: 1992-04-22 22:30:31 $|$Revision: 2.1 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -121,7 +124,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.0 $
+  "Major mode for editing C++ code.  $Revision: 2.1 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -244,10 +247,9 @@ no args, if that value is non-nil."
        (eq c++-auto-hungry-initial-state 'auto-hungry)
        (eq c++-auto-hungry-initial-state t))))
 
-;; This is used by indent-for-comment
-;; to decide how much to indent a comment in C++ code
-;; based on its context.
 (defun c++-comment-indent ()
+  "Used by indent-for-comment to decide how much to indent a comment
+in C++ code based on its context."
   (if (looking-at "^\\(/\\*\\|//\\)")
       0					; Existing comment at bol stays there.
     (save-excursion
@@ -592,7 +594,7 @@ Return the amount the indentation changed by."
 
 
 (defun c++-in-comment-p ()
-  "Return t if in a C-style comment."
+  "Return t if in a C or C++ style comment as defined by mode's syntax."
   (save-excursion
     (let ((here (point))
 	  (bod (progn (beginning-of-defun) (point)))
@@ -601,7 +603,7 @@ Return the amount the indentation changed by."
       (nth 4 state))))
 
 (defun c++-in-open-string-p ()
-  "Return non-nil if in an open string."
+  "Return non-nil if in an open string as defined by mode's syntax."
   (save-excursion
     (let ((here (point))
 	  (bod (progn (beginning-of-defun) (point)))
@@ -612,7 +614,7 @@ Return the amount the indentation changed by."
 (defun c++-auto-newline ()
   "Insert a newline iff we're not in a literal.
 Literals are defined as being inside a C or C++ style comment or open
-string."
+string according to mode's syntax."
   (and c++-auto-newline
        (not (c++-in-comment-p))
        (not (c++-in-open-string-p))
@@ -795,6 +797,7 @@ Returns nil if line starts inside a string, t if in a comment."
 		      (current-indentation))))))))))
 
 (defun c++-backward-to-noncomment (lim)
+  "Skip backwards to first preceding non-comment character."
   (let (opoint stop)
     (while (not stop)
       (skip-chars-backward " \t\n\r\f" lim)
@@ -942,6 +945,7 @@ Returns nil if line starts inside a string, t if in a comment."
 		    (progn (indent-for-comment) (beginning-of-line))))))))))
 
 (defun fill-C-comment ()
+  "Fill a C style comment."
   (interactive)
   (save-excursion
     (let ((save fill-prefix))
@@ -978,6 +982,7 @@ line."
 	    "\n\n")))
 
 (defun count-char-in-string (c s)
+  "Count the number of chars C in string S."
   (let ((count 0)
 	(pos 0))
     (while (< pos (length s))
@@ -989,7 +994,7 @@ line."
 ;;; via macros.
 
 (defvar c++-default-macroize-column 78
-  "Place to insert backslashes.")
+  "*Place to insert backslashes.")
 
 (defun c++-macroize-region (from to arg)
   "Insert backslashes at end of every line in region.  Useful for defining cpp
@@ -1007,6 +1012,7 @@ so that indentation will work right."
 	(next-line 1) (setq line (1+ line))))))
 
 (defun backslashify-current-line (doit)
+  "Backslashifies current line."
   (end-of-line 1)
   (cond
    (doit
@@ -1211,11 +1217,10 @@ function definition.")
     (goto-char restore)))
 
 
-;; this function is provided for bug reports. it dumps the entire
-;; known state of c++-mode so that I know exactly how you've got it
-;; set up.
+;; this page is provided for bug reports. it dumps the entire known
+;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.0 $"
+(defconst c++-version "$Revision: 2.1 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
