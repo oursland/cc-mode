@@ -2281,8 +2281,14 @@ If a fill prefix is specified, it overrides all the above."
 		      (t c-lit-type))
 		c-ignore-auto-fill)
 	  (setq fill-prefix t)		; Used as flag in the cond.
-	(if (null c-auto-fill-prefix)
-	    (setq fill-prefix nil))))
+	(if (and (null c-auto-fill-prefix)
+		 (eq c-lit-type 'c)
+		 (<= (c-point 'bol) (car c-lit-limits)))
+	    ;; The adaptive fill function has generated a prefix, but
+	    ;; we're on the first line in a block comment so it'll be
+	    ;; wrong.  Ignore it to guess a better one below.
+	    (setq fill-prefix nil))
+	))
     (cond ((eq fill-prefix t)
 	   ;; A call from do-auto-fill which should be ignored.
 	   )
