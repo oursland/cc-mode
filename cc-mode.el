@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.82 $
-;; Last Modified:   $Date: 1994-09-07 13:33:03 $
+;; Version:         $Revision: 4.83 $
+;; Last Modified:   $Date: 1994-09-07 18:41:29 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-09-07 13:33:03 $|$Revision: 4.82 $|
+;; |$Date: 1994-09-07 18:41:29 $|$Revision: 4.83 $|
 
 ;;; Code:
 
@@ -653,40 +653,42 @@ supported list, along with the values for this variable:
 (define-abbrev-table 'objc-mode-abbrev-table ())
 
 (defun c-mode-fsf-menu (name map)
-  ;; Add FSF menu to a keymap.  FSF menus suck.
-  (define-key map [menu-bar] (make-sparse-keymap))
+  ;; Add FSF menu to a keymap.  FSF menus suck.  Don't add them for
+  ;; XEmacs. This feature test will fail on other than FSF's Emacs 19.
+  (condition-case nil
+      (progn
+	(define-key map [menu-bar] (make-sparse-keymap))
+	(define-key map [menu-bar c] (cons name (make-sparse-keymap name)))
 
-  (define-key map [menu-bar c]
-    (cons name (make-sparse-keymap name)))
+	(define-key map [menu-bar c comment-region]
+	  '("Comment Out Region" . comment-region))
+	(define-key map [menu-bar c c-macro-expand]
+	  '("Macro Expand Region" . c-macro-expand))
+	(define-key map [menu-bar c c-backslash-region]
+	  '("Backslashify" . c-backslash-region))
+	(define-key map [menu-bar c indent-exp]
+	  '("Indent Expression" . c-indent-exp))
+	(define-key map [menu-bar c indent-line]
+	  '("Indent Line" . c-indent-command))
+	(define-key map [menu-bar c fill]
+	  '("Fill Comment Paragraph" . c-fill-paragraph))
+	(define-key map [menu-bar c up]
+	  '("Up Conditional" . c-up-conditional))
+	(define-key map [menu-bar c backward]
+	  '("Backward Conditional" . c-backward-conditional))
+	(define-key map [menu-bar c forward]
+	  '("Forward Conditional" . c-forward-conditional))
+	(define-key map [menu-bar c backward-stmt]
+	  '("Backward Statement" . c-beginning-of-statement))
+	(define-key map [menu-bar c forward-stmt]
+	  '("Forward Statement" . c-end-of-statement))
 
-  (define-key map [menu-bar c comment-region]
-    '("Comment Out Region" . comment-region))
-  (define-key map [menu-bar c c-macro-expand]
-    '("Macro Expand Region" . c-macro-expand))
-  (define-key map [menu-bar c c-backslash-region]
-    '("Backslashify" . c-backslash-region))
-  (define-key map [menu-bar c indent-exp]
-    '("Indent Expression" . c-indent-exp))
-  (define-key map [menu-bar c indent-line]
-    '("Indent Line" . c-indent-command))
-  (define-key map [menu-bar c fill]
-    '("Fill Comment Paragraph" . c-fill-paragraph))
-  (define-key map [menu-bar c up]
-    '("Up Conditional" . c-up-conditional))
-  (define-key map [menu-bar c backward]
-    '("Backward Conditional" . c-backward-conditional))
-  (define-key map [menu-bar c forward]
-    '("Forward Conditional" . c-forward-conditional))
-  (define-key map [menu-bar c backward-stmt]
-    '("Backward Statement" . c-beginning-of-statement))
-  (define-key map [menu-bar c forward-stmt]
-    '("Forward Statement" . c-end-of-statement))
-
-  ;; RMS: mouse-3 should not select this menu.  mouse-3's global
-  ;; definition is useful in C mode and we should not interfere
-  ;; with that.  The menu is mainly for beginners, and for them,
-  ;; the menubar requires less memory than a special click.
-  )
+	;; RMS: mouse-3 should not select this menu.  mouse-3's global
+	;; definition is useful in C mode and we should not interfere
+	;; with that.  The menu is mainly for beginners, and for them,
+	;; the menubar requires less memory than a special click.
+	t)
+    (error nil)))
 
 (defvar c-mode-map ()
   "Keymap used in c-mode buffers.")
@@ -733,18 +735,17 @@ supported list, along with the values for this variable:
   (define-key c-mode-map "\C-c\C-s"  'c-show-syntactic-information)
   (define-key c-mode-map "\C-c\C-t"  'c-toggle-auto-hungry-state)
   (define-key c-mode-map "\C-c\C-v"  'c-version)
-  ;; FSF Emacs 19 defines menus in the mode map
-  (if (not (fboundp 'add-menu))
-      (c-mode-fsf-menu "C" c-mode-map)
-    ;; in XEmacs (formerly Lucid) 19, we want the menu to popup when
-    ;; the 3rd button is hit.  In 19.10 and beyond this is done
-    ;; automatically if we put the menu on mode-popup-menu variable,
-    ;; see c-common-init. RMS decided that this feature should not be
-    ;; included for FSF's Emacs.
-    (if (and (boundp 'current-menubar)
-	     (not (boundp 'mode-popup-menu)))
-	(define-key c-mode-map 'button3 'c-popup-menu))
-    ))
+  ;; FSF Emacs 19 defines menus in the mode map. This call will return
+  ;; t on FSF Emacs 19, otherwise no-op and return nil.
+  (if (and (not (c-mode-fsf-menu "C" c-mode-map))
+	   ;; in XEmacs (formerly Lucid) 19, we want the menu to popup
+	   ;; when the 3rd button is hit.  In 19.10 and beyond this is
+	   ;; done automatically if we put the menu on mode-popup-menu
+	   ;; variable, see c-common-init. RMS decided that this
+	   ;; feature should not be included for FSF's Emacs.
+	   (boundp 'current-menubar)
+	   (not (boundp 'mode-popup-menu)))
+      (define-key c-mode-map 'button3 'c-popup-menu)))
 
 (defvar c++-mode-map ()
   "Keymap used in c++-mode buffers.")
@@ -761,9 +762,9 @@ supported list, along with the values for this variable:
     (setq c++-mode-map (nconc (make-sparse-keymap) c-mode-map)))
   ;; add bindings which are only useful for C++
   (define-key c++-mode-map "\C-c:"  'c-scope-operator)
-  (if (not (fboundp 'set-keymap-parent))
-      (c-mode-fsf-menu "C++" c++-mode-map))
-  )
+  ;; FSF Emacs 19 defines menus in the mode map. This call will return
+  ;; t on FSF Emacs 19, otherwise no-op and return nil.
+  (c-mode-fsf-menu "C++" c++-mode-map))
 
 (defvar objc-mode-map ()
   "Keymap used in objc-mode buffers.")
@@ -779,9 +780,12 @@ supported list, along with the values for this variable:
     ;; Do it the hard way for Emacs 18 -- given by JWZ
     (setq objc-mode-map (nconc (make-sparse-keymap) c-mode-map)))
   ;; add bindings which are only useful for Objective-C
-  (if (not (fboundp 'set-keymap-parent))
-      (c-mode-fsf-menu "ObjC" objc-mode-map))
-  )
+  ;;
+  ;; no additional bindings
+  ;;
+  ;; FSF Emacs 19 defines menus in the mode map. This call will return
+  ;; t on FSF Emacs 19, otherwise no-op and return nil.
+  (c-mode-fsf-menu "ObjC" objc-mode-map))
 
 (defun c-populate-syntax-table (table)
   ;; Populate the syntax TABLE
@@ -963,7 +967,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.82 $
+cc-mode Revision: $Revision: 4.83 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1002,7 +1006,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.82 $
+cc-mode Revision: $Revision: 4.83 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1039,7 +1043,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.82 $
+cc-mode Revision: $Revision: 4.83 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -4111,7 +4115,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.82 $"
+(defconst c-version "$Revision: 4.83 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
