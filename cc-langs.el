@@ -374,15 +374,18 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (defconst c-Java-defun-prompt-regexp
   "^[ \t]*\\(\\(\\(public\\|protected\\|private\\|const\\|abstract\\|synchronized\\|final\\|static\\|threadsafe\\|transient\\|native\\|volatile\\)\\s-+\\)*\\(\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*[][_$.a-zA-Z0-9]+\\|[[a-zA-Z]\\)\\s-*\\)\\s-+\\)\\)?\\(\\([[a-zA-Z][][_$.a-zA-Z0-9]*\\s-+\\)\\s-*\\)?\\([_a-zA-Z][^][ \t:;.,{}()=]*\\|\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)\\)\\s-*\\(([^);{}]*)\\)?\\([] \t]*\\)\\(\\s-*\\<throws\\>\\s-*\\(\\([_$a-zA-Z][_$.a-zA-Z0-9]*\\)[, \t\n\r\f]*\\)+\\)?\\s-*")
 
-;; Regexp describing regexp to append to paragraph-start
+;; Regexp to append to paragraph-start.
 (defvar c-append-paragraph-start "$")
 (make-variable-buffer-local 'c-append-paragraph-start)
 (defconst c-Java-javadoc-paragraph-start
-  (concat "\\("
-	  "@\\(author\\|deprecated\\|exception\\|param\\|return\\|"
-	  "s\\(e\\(e\\|rial\\(\\|Data\\|Field\\)\\)\\|ince\\)\\|"
-	  "throws\\|version\\)"
-	  "\\|$\\)"))
+  "\\(@[a-zA-Z]+\\>\\|$\\)")
+(defconst c-Pike-pikedoc-paragraph-start
+  "\\(@[a-zA-Z]+\\>\\([^{]\\|$\\)\\|$\\)")
+
+;; Regexp to append to paragraph-separate.
+(defvar c-append-paragraph-separate "$")
+(make-variable-buffer-local 'c-append-paragraph-separate)
+(defconst c-Pike-pikedoc-paragraph-separate c-Pike-pikedoc-paragraph-start)
 
 ;; Regexp that starts lambda constructs.
 (defvar c-lambda-key nil)
