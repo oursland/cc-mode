@@ -902,6 +902,9 @@
 	    (goto-char search-start)
 	    (let ((search-key (concat c-class-key "\\|" c-extra-toplevel-key))
 		  foundp class match-end)
+	      (if c-inexpr-class-key
+		  (setq search-key (concat search-key "\\|"
+					   c-inexpr-class-key)))
 	      (while (and (not foundp)
 			  (progn
 			    (c-forward-syntactic-ws)
@@ -927,6 +930,15 @@
 		   ((and c-method-key
 			 (re-search-forward c-method-key search-end t))
 		    (setq foundp nil))
+		   ;; Check if this is an anonymous inner class.  We
+		   ;; should be exactly 3 sexps before the open brace
+		   ;; then.
+		   ((and c-inexpr-class-key
+			 (looking-at c-inexpr-class-key)
+			 (eq (if (= (c-forward-token-1 3 t) 0) (point))
+			     search-end))
+		    ;; We're done.  Just trap this case.
+		    nil)
 		   ;; Its impossible to define a regexp for this, and
 		   ;; nearly so to do it programmatically.
 		   ;;
@@ -980,6 +992,8 @@
 	   (setq tokenlist (concat tokenlist "\\|" c-lambda-key)))
        (if c-inexpr-block-key
 	   (setq tokenlist (concat tokenlist "\\|" c-inexpr-block-key)))
+       (if c-inexpr-class-key
+	   (setq tokenlist (concat tokenlist "\\|" c-inexpr-class-key)))
        (while (and (not bufpos)
 		   containing-sexp)
 	 (if (consp containing-sexp)
@@ -1048,22 +1062,26 @@
 (defun c-looking-at-inexpr-block (&optional lim)
   ;; Returns non-nil if we're looking at the beginning of a block
   ;; inside an expression.  The value returned is actually a cons of
-  ;; either 'lambda or 'inexpr-block and the position of the beginning
-  ;; of the construct.  LIM limits the backward search.
+  ;; either 'inlambda, 'inexpr-statement or 'inexpr-class and the
+  ;; position of the beginning of the construct.  LIM limits the
+  ;; backward search.
   (save-excursion
     (or lim (setq lim (point-min)))
     (c-backward-syntactic-ws)
     (if (and (> (point) lim) (eq (char-before) ?\())
 	(cons 'inexpr-block (point))
       (while (and (= (c-backward-token-1 1 t lim) 0)
-		  (looking-at "[({[]")))
+		  (looking-at "[({[]\\|\\w\\|\\s_")))
       (if (>= (point) lim)
-	  (cond ((and c-inexpr-block-key
+	  (cond ((and c-inexpr-class-key
+		      (looking-at c-inexpr-class-key))
+		 (cons 'inexpr-class (point)))
+		((and c-inexpr-block-key
 		      (looking-at c-inexpr-block-key))
-		 (cons 'inexpr-block (point)))
+		 (cons 'inexpr-statement (point)))
 		((and c-lambda-key
 		      (looking-at c-lambda-key))
-		 (cons 'lambda (point))))))))
+		 (cons 'inlambda (point))))))))
 
 (defun c-looking-at-inexpr-block-backward (&optional lim)
   ;; Returns non-nil if we're looking at the end of an in-expression
@@ -1614,23 +1632,31 @@
 	 ((save-excursion
 	    (if (c-safe (progn (forward-sexp -1) t))
 		(cond
-		 ;; CASE 6A: Immediately after the lambda keyword
+		 ;; CASE 6A: Immediately after the lambda keyword.
 		 ((and c-lambda-key
 		       (looking-at c-lambda-key))
 		  (c-add-syntax 'lambda-intro-cont (c-point 'boi))
 		  (c-add-syntax 'inlambda)) ; returns non-nil
-		 ;; CASE 6B: At the beginning of the arg to a
-		 ;; function taking a statement argument
+		 ;; CASE 6B: At the beginning of some other construct
+		 ;; followed by a statement.
 		 ((and c-inexpr-block-key
 		       (looking-at c-inexpr-block-key))
 		  (c-add-syntax 'block-open (c-point 'boi))
 		  (c-add-syntax 'inexpr-statement))
-		 ;; CASE 6C: At the beginning of the lambda statement
+		 ;; CASE 6C: At the beginning of a lambda function
+		 ;; body.
 		 ((and (c-safe (progn (forward-sexp -1) t))
 		       c-lambda-key
 		       (looking-at c-lambda-key))
 		  (c-add-syntax 'block-open (c-point 'boi))
-		  (c-add-syntax 'inlambda))))))
+		  (c-add-syntax 'inlambda))
+		 ;; CASE 6D: At the beginning of an anonymous class.
+		 ((and (c-safe (progn (forward-sexp -1) t))
+		       (eq char-after-ip ?{)
+		       c-inexpr-class-key
+		       (looking-at c-inexpr-class-key))
+		  (c-add-syntax 'class-open (c-point 'boi))
+		  (c-add-syntax 'inexpr-class))))))
 	 ;; CASE 7: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
 	 ;; call argument list
@@ -1918,9 +1944,7 @@
 		(setq placeholder (c-looking-at-inexpr-block)))
 	      (goto-char containing-sexp)
 	      (c-add-syntax 'block-close (c-point 'boi))
-	      (c-add-syntax (if (eq (car placeholder) 'lambda)
-				'inlambda
-			      'inexpr-statement)))
+	      (c-add-syntax (car placeholder)))
 	     ;; CASE 15B: does this close an inline or a function in
 	     ;; an extern block or namespace?
 	     ((progn
@@ -2034,9 +2058,7 @@
 		    (c-looking-at-inexpr-block)))
 	    (goto-char (cdr placeholder))
 	    (c-add-syntax 'statement-block-intro (c-point 'boi))
-	    (c-add-syntax (if (eq (car placeholder) 'lambda)
-			      'inlambda
-			    'inexpr-statement))
+	    (c-add-syntax (car placeholder))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ;; CASE 16F: first statement in an inline, or first
