@@ -1170,7 +1170,9 @@
 	     ;; CASE 5A.5: ordinary defun open
 	     (t
 	      (goto-char placeholder)
-	      (c-add-syntax 'defun-open (c-point 'bol))
+	      (if inclass-p
+		  (c-add-syntax 'defun-open (c-point 'boi))
+		(c-add-syntax 'defun-open (c-point 'bol)))
 	      )))
 	   ;; CASE 5B: first K&R arg decl or member init
 	   ((c-just-after-func-arglist-p)
@@ -1350,7 +1352,7 @@
 		 (looking-at c-access-key))
 	    (c-add-syntax 'access-label (c-point 'bonl))
 	    (c-add-syntax 'inclass (aref inclass-p 0)))
-	   ;; CASE 5F: extern-lang-close?
+	   ;; CASE 5F: extern-lang-close or namespace-close?
 	   ((and inenclosing-p
 		 (eq char-after-ip ?}))
 	    (setq tmpsymbol (if (eq inenclosing-p 'extern)
@@ -1437,9 +1439,9 @@
 			(goto-char (aref inclass-p 0)))
 		    (cond
 		     ((eq inenclosing-p 'extern)
-		      (c-add-syntax 'inextern-lang))
+		      (c-add-syntax 'inextern-lang (c-point 'boi)))
 		     ((eq inenclosing-p 'namespace)
-		      (c-add-syntax 'innamespace))
+		      (c-add-syntax 'innamespace (c-point 'boi)))
 		     (t (c-add-syntax 'inclass (c-point 'boi))))
 		    ))
 	      ))
@@ -1695,17 +1697,15 @@
 			       (c-beginning-of-statement-1 lim))
 			   (c-point 'boi))))
 	    (cond
-	     ;; CASE 14A: does this close an inline?
-	     ((let ((inclass-p (progn
-				 (goto-char containing-sexp)
-				 (c-search-uplist-for-classkey state))))
-		;; inenclosing-p in higher level let*
-		(setq inenclosing-p (and inclass-p
-					 (progn
-					   (goto-char (aref inclass-p 0))
-					   (looking-at c-extra-toplevel-key))))
-		(and inclass-p (not inenclosing-p)))
-	      (c-add-syntax 'inline-close relpos))
+	     ;; CASE 14A: does this close an inline or a function in
+	     ;; an extern block or namespace?
+	     ((progn
+		(goto-char containing-sexp)
+		(setq placeholder (c-search-uplist-for-classkey state)))
+	      (goto-char (aref placeholder 0))
+	      (if (looking-at c-extra-toplevel-key)
+		  (c-add-syntax 'defun-close relpos)
+		(c-add-syntax 'inline-close relpos)))
 	     ;; CASE 14B: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
 	     ;; block-close
