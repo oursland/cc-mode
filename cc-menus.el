@@ -1,4 +1,4 @@
-;;; cc-menus.el --- menu and imenu support for CC Mode
+;;; cc-menus.el --- imenu support for CC Mode
 
 ;; Copyright (C) 1985,87,92,93,94,95,96,97 Free Software Foundation, Inc.
 
