@@ -362,42 +362,42 @@ continuations."
   ;; Insulation from various idiosyncrasies in implementations of
   ;; `forward-comment'.
   ;;
-  ;; Note: Some emacsen considers incorrectly that any line comment
-  ;; ending with a backslash continues to the next line.  I can't
-  ;; think of any way to work around that in a reliable way without
-  ;; changing the buffer, though.  Suggestions welcome. ;)
-  ;;
   ;; Another note: When moving backwards over a block comment, there's
   ;; a bug in forward-comment that can make it stop at "/*" inside a
   ;; line comment.  Haven't yet found a reasonably cheap way to kludge
   ;; around that one either. :\
-  (let ((here (point)))
-    (if (>= count 0)
-	(when (forward-comment count)
-	  (if (eobp)
-	      ;; Some emacsen (e.g. XEmacs 21) return t when moving
-	      ;; forwards at eob.
-	      nil
-	    ;; Emacs includes the ending newline in a b-style (c++)
-	    ;; comment, but XEmacs doesn't.  We depend on the Emacs
-	    ;; behavior (which also is symmetric).
-	    (if (and (eolp) (nth 7 (parse-partial-sexp here (point))))
-		(condition-case nil (forward-char 1)))
-	    t))
-      ;; When we got newline terminated comments,
-      ;; forward-comment in all supported emacsen so far will
-      ;; stop at eol of each line not ending with a comment when
-      ;; moving backwards.  The following corrects for it when
-      ;; count is -1.  The other common case, when count is
-      ;; large and negative, works regardless.  It's too much
-      ;; work to correct for the rest of the cases.
-      (skip-chars-backward " \t\n\r\f")
-      (if (bobp)
-	  ;; Some emacsen return t when moving backwards at bob.
-	  nil
-	(re-search-forward "[\n\r]" here t)
-	(if (forward-comment count)
-	    (if (eolp) (forward-comment -1) t))))))
+  (c-with-syntax-table c-no-escape-syntax-table
+    ;; Switch to a syntax table where "\" doesn't have escape syntax.
+    ;; That avoids problems that most emacsens have when a line
+    ;; comment ends with "\" or when the character before the closing
+    ;; "*/" is a "\".
+    (let ((here (point)))
+      (if (>= count 0)
+	  (when (forward-comment count)
+	    (if (eobp)
+		;; Some emacsen (e.g. XEmacs 21) return t when moving
+		;; forwards at eob.
+		nil
+	      ;; Emacs includes the ending newline in a b-style (c++)
+	      ;; comment, but XEmacs doesn't.  We depend on the Emacs
+	      ;; behavior (which also is symmetric).
+	      (if (and (eolp) (nth 7 (parse-partial-sexp here (point))))
+		  (condition-case nil (forward-char 1)))
+	      t))
+	;; When we got newline terminated comments,
+	;; forward-comment in all supported emacsen so far will
+	;; stop at eol of each line not ending with a comment when
+	;; moving backwards.  The following corrects for it when
+	;; count is -1.  The other common case, when count is
+	;; large and negative, works regardless.  It's too much
+	;; work to correct for the rest of the cases.
+	(skip-chars-backward " \t\n\r\f")
+	(if (bobp)
+	    ;; Some emacsen return t when moving backwards at bob.
+	    nil
+	  (re-search-forward "[\n\r]" here t)
+	  (if (forward-comment count)
+	      (if (eolp) (forward-comment -1) t)))))))
 
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
