@@ -5167,6 +5167,9 @@ brace."
   ;;
   ;; If STOP-AT-BOI-ONLY is nil, we can stop in the middle of the line
   ;; if the current statement starts there.
+  ;;
+  ;; Note: It's not a problem if PAREN-STATE "overshoots"
+  ;; CONTAINING-SEXP, i.e. contains info about parens further down.
 
   (if (= (point) (c-point 'boi))
       ;; This is by far the most common case, so let's give it special
@@ -5751,7 +5754,7 @@ This function does not do any hidden buffer changes."
 	  (back-to-indentation)
 	  (c-add-stmt-syntax tmpsymbol nil t
 			     (c-most-enclosing-brace c-state-cache (point))
-			     (c-whack-state-after (point) paren-state))
+			     paren-state)
 	  (unless (eq (point) (cdr placeholder))
 	    (c-add-syntax (car placeholder))))
 
@@ -6266,7 +6269,7 @@ This function does not do any hidden buffer changes."
 	      (goto-char placeholder))
 	    (c-add-stmt-syntax 'arglist-close (list containing-sexp) t
 			       (c-most-enclosing-brace paren-state (point))
-			       (c-whack-state-after (point) paren-state)))
+			       paren-state))
 
 	   ;; CASE 7B: Looking at the opening brace of an
 	   ;; in-expression block or brace list.  C.f. cases 4, 16A
@@ -6291,7 +6294,7 @@ This function does not do any hidden buffer changes."
 	    (back-to-indentation)
 	    (c-add-stmt-syntax (car tmpsymbol) nil t
 			       (c-most-enclosing-brace paren-state (point))
-			       (c-whack-state-after (point) paren-state))
+			       paren-state)
 	    (if (/= (point) placeholder)
 		(c-add-syntax (cdr tmpsymbol))))
 
@@ -6353,7 +6356,7 @@ This function does not do any hidden buffer changes."
 	      (goto-char placeholder))
 	    (c-add-stmt-syntax 'arglist-cont-nonempty (list containing-sexp) t
 			       (c-most-enclosing-brace c-state-cache (point))
-			       (c-whack-state-after (point) paren-state)))
+			       paren-state))
 
 	   ;; CASE 7G: we are looking at just a normal arglist
 	   ;; continuation line
@@ -6440,8 +6443,7 @@ This function does not do any hidden buffer changes."
 		(c-add-syntax 'brace-list-close (point))
 	      (setq lim (c-most-enclosing-brace c-state-cache (point)))
 	      (c-beginning-of-statement-1 lim)
-	      (c-add-stmt-syntax 'brace-list-close nil t lim
-				 (c-whack-state-after (point) paren-state))))
+	      (c-add-stmt-syntax 'brace-list-close nil t lim paren-state)))
 
 	   (t
 	    ;; Prepare for the rest of the cases below by going to the
@@ -6467,8 +6469,7 @@ This function does not do any hidden buffer changes."
 		  (c-add-syntax 'brace-list-intro (point))
 		(setq lim (c-most-enclosing-brace c-state-cache (point)))
 		(c-beginning-of-statement-1 lim)
-		(c-add-stmt-syntax 'brace-list-intro nil t lim
-				   (c-whack-state-after (point) paren-state))))
+		(c-add-stmt-syntax 'brace-list-intro nil t lim paren-state)))
 
 	     ;; CASE 9D: this is just a later brace-list-entry or
 	     ;; brace-entry-open
@@ -6506,8 +6507,7 @@ This function does not do any hidden buffer changes."
 	  (goto-char containing-sexp)
 	  (setq lim (c-most-enclosing-brace c-state-cache containing-sexp))
 	  (c-backward-to-block-anchor lim)
-	  (c-add-stmt-syntax 'case-label nil t
-			     lim paren-state))
+	  (c-add-stmt-syntax 'case-label nil t lim paren-state))
 
 	 ;; CASE 15: any other label
 	 ((looking-at c-label-key)
@@ -6523,8 +6523,7 @@ This function does not do any hidden buffer changes."
 		      'case-label
 		    'label)))
 	  (c-backward-to-block-anchor lim)
-	  (c-add-stmt-syntax tmpsymbol nil t
-			     lim paren-state))
+	  (c-add-stmt-syntax tmpsymbol nil t lim paren-state))
 
 	 ;; CASE 16: block close brace, possibly closing the defun or
 	 ;; the class
@@ -6540,8 +6539,7 @@ This function does not do any hidden buffer changes."
 	     ;; e.g. a macro argument.
 	     ((c-after-conditional)
 	      (c-backward-to-block-anchor lim)
-	      (c-add-stmt-syntax 'block-close nil t
-				 lim paren-state))
+	      (c-add-stmt-syntax 'block-close nil t lim paren-state))
 
 	     ;; CASE 16A: closing a lambda defun or an in-expression
 	     ;; block?  C.f. cases 4, 7B and 17E.
@@ -6559,7 +6557,7 @@ This function does not do any hidden buffer changes."
 		(back-to-indentation)
 		(c-add-stmt-syntax tmpsymbol nil t
 				   (c-most-enclosing-brace paren-state (point))
-				   (c-whack-state-after (point) paren-state))
+				   paren-state)
 		(if (/= (point) (cdr placeholder))
 		    (c-add-syntax (car placeholder)))))
 
@@ -6589,8 +6587,7 @@ This function does not do any hidden buffer changes."
 	      (back-to-indentation)
 	      (if (/= (point) containing-sexp)
 		  (goto-char placeholder))
-	      (c-add-stmt-syntax 'defun-close nil t
-				 lim paren-state))
+	      (c-add-stmt-syntax 'defun-close nil t lim paren-state))
 
 	     ;; CASE 16C: if there an enclosing brace that hasn't
 	     ;; been narrowed out by a class, then this is a
@@ -6610,8 +6607,7 @@ This function does not do any hidden buffer changes."
 		(goto-char containing-sexp)
 		;; c-backward-to-block-anchor not necessary here; those
 		;; situations are handled in case 16E above.
-		(c-add-stmt-syntax 'block-close nil t
-				   lim paren-state)))
+		(c-add-stmt-syntax 'block-close nil t lim paren-state)))
 
 	     ;; CASE 16D: find out whether we're closing a top-level
 	     ;; class or a defun
@@ -6699,7 +6695,7 @@ This function does not do any hidden buffer changes."
 	      (back-to-indentation)
 	      (c-add-stmt-syntax tmpsymbol nil t
 				 (c-most-enclosing-brace c-state-cache (point))
-				 (c-whack-state-after (point) paren-state))
+				 paren-state)
 	      (if (/= (point) (cdr placeholder))
 		  (c-add-syntax (car placeholder))))
 	    (if (eq char-after-ip ?{)
