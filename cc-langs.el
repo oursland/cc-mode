@@ -382,6 +382,32 @@ it finds in `c-file-offsets'."
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   )
 
+;; menu support for both XEmacs and Emacs.  If you don't have easymenu
+;; with your version of Emacs, you are incompatible!
+(require 'easymenu)
+
+(defvar c-c-menu nil)
+(defvar c-c++-menu nil)
+(defvar c-objc-menu nil)
+(defvar c-java-menu nil)
+
+(defun c-mode-menu (modestr)
+  (let ((m
+	 '(["Comment Out Region"     comment-region (mark)]
+	   ["Macro Expand Region"    c-macro-expand (mark)]
+	   ["Backslashify"           c-backslash-region (mark)]
+	   ["Indent Expression"      c-indent-exp
+	    (memq (char-after) '(?\( ?\[ ?\{))]
+	   ["Indent Line"            c-indent-command t]
+	   ["Fill Comment Paragraph" c-fill-paragraph t]
+	   ["Up Conditional"         c-up-conditional t]
+	   ["Backward Conditional"   c-backward-conditional t]
+	   ["Forward Conditional"    c-forward-conditional t]
+	   ["Backward Statement"     c-beginning-of-statement t]
+	   ["Forward Statement"      c-end-of-statement t]
+	   )))
+    (cons modestr m)))
+
 
 
 ;; Support for C
@@ -390,6 +416,8 @@ it finds in `c-file-offsets'."
   "Abbrev table in use in c-mode buffers.")
 (define-abbrev-table 'c-mode-abbrev-table ())
 
+(defvar c-mode-map ()
+  "Keymap used in c-mode buffers.")
 (if c-mode-map
     nil
   (setq c-mode-map (c-make-inherited-keymap))
