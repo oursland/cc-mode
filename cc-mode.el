@@ -6,9 +6,11 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-26 15:35:18 $
-;; Version:         $Revision: 2.191 $
+;; Last Modified:   $Date: 1992-08-26 23:40:46 $
+;; Version:         $Revision: 2.192 $
 
+;; Introduction
+;; ============
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
 ;;
@@ -18,7 +20,7 @@
 ;; To submit bug reports hit "C-c C-b" in a c++-mode buffer. This runs
 ;; the command c++-submit-bug-report and automatically sets up the
 ;; mail buffer with all the necessary information.
-;;
+
 ;; Important Note about Escapes in Comments
 ;; ========================================
 ;; You will notice that certain characters, when typed in comment
@@ -30,8 +32,8 @@
 ;; quotes in comments.  Please do a "C-h v c++-untame-characters" for
 ;; more information.
 
-;; Notes for Novice Emacs Users
-;; ============================
+;; Notes for Novice Users
+;; ======================
 ;; c++-mode facilitates editing of C++ code by automatically handling
 ;; the indentation of lines of code in a manner very similar to c-mode
 ;; as distributed with GNU emacs. Refer to the GNU Emacs manual,
@@ -66,14 +68,14 @@
 ;;             ("\\.C$"  . c++-mode)
 ;;             ("\\.cc$" . c++-mode))
 ;;           auto-mode-alist))
-;;
+
 ;; Beta Testers Mailing List
 ;; =========================
 ;; Want to be a c++-mode victim, er, beta-tester?  Send add/drop
 ;; requests to c++-mode-victims-request@anthem.nlm.nih.gov.
 ;; Discussions go to c++-mode-victims@anthem.nlm.nih.gov, but bug
 ;; reports and such should still be sent to c++-mode-help only.
-;;
+
 ;; Getting c++-mode.el
 ;; ===================
 ;; The latest public release version of this file should always be
@@ -91,12 +93,12 @@
 ;; pretty quickly.  Remember that if you want advanced access to beta
 ;; releases, get on the victims list -- but be forewarned, you should
 ;; be elisp-fluent to be a beta tester.
-;;
+
 ;; LCD Archive Entry
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-26 15:35:18 $|$Revision: 2.191 $|
+;; |$Date: 1992-08-26 23:40:46 $|$Revision: 2.192 $|
 
 
 ;; ======================================================================
@@ -346,7 +348,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.191 $
+  "Major mode for editing C++ code.  $Revision: 2.192 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -553,7 +555,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.191 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.192 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2143,7 +2145,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.191 $"
+(defconst c++-version "$Revision: 2.192 $"
   "c++-mode version number.")
 
 (defun c++-version ()
