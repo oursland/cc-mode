@@ -39,6 +39,16 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (let ((load-path
+	 (if (and (boundp 'byte-compile-dest-file)
+		  (stringp byte-compile-dest-file))
+	     (cons (file-name-directory byte-compile-dest-file) load-path)
+	   load-path)))
+    (load "cc-bytecomp" nil t)))
+
+(cc-require 'cc-defs)
+
 ;; Kluge over a frivolous incompatibility on Xemacs's part.  :-(
 ;; FIXME:  For release, this can probably be removed (2002/10/19).
 (if (and (boundp 'lookup-syntax-properties)
@@ -972,7 +982,7 @@ there is no explicit action; see function `c-awk-beginning-of-defun'."
         
             
 
-(provide 'cc-awk)                       ; Changed from 'awk-mode, ACM 2002/5/21
+(cc-provide 'cc-awk)			; Changed from 'awk-mode, ACM 2002/5/21
 
 ;;; awk-mode.el ends here
 
