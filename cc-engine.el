@@ -4529,7 +4529,11 @@ brace."
 			  (progn
 			    (c-forward-syntactic-ws search-end)
 			    (> search-end (point)))
-			  (re-search-forward c-decl-block-key search-end t))
+			  ;; Add one to the search limit, to allow
+			  ;; matching of the "{" in the regexp.
+			  (re-search-forward c-decl-block-key
+					     (1+ search-end)
+					     t))
 		(setq class (match-beginning 0)
 		      match-end (match-end 0))
 		(goto-char class)

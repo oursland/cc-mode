@@ -1038,7 +1038,7 @@ where the keyword together with the symbol works as a type in
 declarations.
 
 Note that an alternative if the second part doesn't hold is
-`c-type-list-kwds'.  Keywords on this list is typically also present
+`c-type-list-kwds'.  Keywords on this list are typically also present
 on one of the `*-decl-kwds' lists."
   t    nil
   c    '("struct" "union" "enum")
@@ -1592,11 +1592,15 @@ Note that Java specific rules are currently applied to tell this from
   t (c-make-keywords-re t
       (append (c-lang-const c-class-decl-kwds)
 	      (c-lang-const c-other-block-decl-kwds)
-	      (c-lang-const c-inexpr-class-kwds)
-	      (and (c-major-mode-is 'pike-mode)
-		   ;; In Pike modifiers might be followed by a block
-		   ;; to apply to several declarations.
-		   (c-lang-const c-modifier-kwds)))))
+	      (c-lang-const c-inexpr-class-kwds)))
+  ;; In Pike modifiers might be followed by a block
+  ;; to apply to several declarations.
+  pike (concat (c-lang-const c-decl-block-key)
+	       "\\|"
+	       "\\(" (c-make-keywords-re nil
+		       (c-lang-const c-modifier-kwds)) "\\)"
+	       (c-lang-const c-syntactic-ws)
+	       "{"))
 (c-lang-defvar c-decl-block-key (c-lang-const c-decl-block-key))
 
 (c-lang-defconst c-bitfield-kwds
