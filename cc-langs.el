@@ -83,7 +83,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 ;; keywords introducing class definitions.  language specific
 (defconst c-C-class-key "\\(struct\\|union\\)")
 (defconst c-C++-class-key "\\(class\\|struct\\|union\\)")
-(defconst c-IDL-class-key "\\(class\\|struct\\|union\\|interface\\)")
+(defconst c-IDL-class-key "\\(interface\\|struct\\|union\\|valuetype\\)")
 (defconst c-C-extra-toplevel-key "\\(extern\\)")
 (defconst c-C++-extra-toplevel-key "\\(extern\\|namespace\\)")
 (defconst c-IDL-extra-toplevel-key "\\(module\\)")
@@ -124,6 +124,7 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 (defvar c-access-key nil)
 (make-variable-buffer-local 'c-access-key)
 (defconst c-C++-access-key (concat c-protection-key "[ \t]*:"))
+(defconst c-IDL-access-key nil)
 (defconst c-ObjC-access-key (concat "@" c-protection-key))
 (defconst c-Java-access-key nil)
 (defconst c-Pike-access-key nil)
@@ -132,6 +133,8 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 ;; keywords introducing conditional blocks
 (defconst c-C-conditional-key nil)
 (defconst c-C++-conditional-key nil)
+(defconst c-IDL-conditional-key nil)
+(defconst c-ObjC-conditional-key nil)
 (defconst c-Java-conditional-key nil)
 (defconst c-Pike-conditional-key nil)
 
@@ -142,6 +145,8 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
       (back    "\\)\\b[^_]"))
   (setq c-C-conditional-key (concat front all-kws back)
 	c-C++-conditional-key (concat front all-kws exc-kws back)
+	;; c-IDL-conditional-key is nil.
+	c-ObjC-conditional-key c-C-conditional-key
 	c-Java-conditional-key (concat front all-kws exc-kws thr-kws back)
 	c-Pike-conditional-key (concat front all-kws "\\|foreach" back)))
 
@@ -165,6 +170,10 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 
 ;; comment starter definitions for various languages.  language specific
 (defconst c-C++-comment-start-regexp "/[/*]")
+(defconst c-C-comment-start-regexp c-C++-comment-start-regexp)
+(defconst c-IDL-comment-start-regexp c-C++-comment-start-regexp)
+(defconst c-ObjC-comment-start-regexp c-C++-comment-start-regexp)
+(defconst c-Pike-comment-start-regexp c-C++-comment-start-regexp)
 ;; We need to match all 3 Java style comments
 ;; 1) Traditional C block; 2) javadoc /** ...; 3) C++ style
 (defconst c-Java-comment-start-regexp "/\\(/\\|[*][*]?\\)")
@@ -294,6 +303,9 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|//+ *"
 	comment-multi-line t)
+  ;; Fix obsolete variables.
+  (if (boundp 'c-comment-continuation-stars)
+      (setq c-block-comment-prefix c-comment-continuation-stars))
   ;; now set the mode style based on c-default-style
   (c-set-style (if (stringp c-default-style)
 		   (if (c-major-mode-is 'java-mode)
@@ -341,9 +353,6 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
       (setq minor-mode-alist
 	    (cons '(c-auto-hungry-string c-auto-hungry-string)
 		  minor-mode-alist)))
-  ;; Fix obsolete variables.
-  (if (boundp 'c-comment-continuation-stars)
-      (setq c-block-comment-prefix c-comment-continuation-stars))
   )
 
 
