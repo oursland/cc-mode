@@ -342,26 +342,25 @@
 			 '(?w ?_ ?\" ?\\ ?/ ?')))
 	  (last (point))
 	  (prev (point)))
-      (if (/= (point)
-	      (progn (c-forward-syntactic-ws) (point)))
-	  ;; Skip whitespace.  Count this as a move if we did in fact
-	  ;; move and aren't out of bounds.
-	  (or (eobp)
-	      (and lim (> (point) lim))
-	      (setq count (max (1- count) 0))))
-      (if (and (= count 0)
-	       (or (and (memq (char-syntax (or (char-after) ? )) '(?w ?_))
-			(memq (char-syntax (or (char-before) ? )) '(?w ?_)))
-		   (eobp)))
-	  ;; If count is zero we should jump if in the middle of a
-	  ;; token or if there is whitespace between point and the
-	  ;; following token beginning.
-	  (setq count 1))
-      ;; Avoid having the limit tests inside the loop.
       (save-restriction
 	(if lim (narrow-to-region (point-min) lim))
+	(if (/= (point)
+		(progn (c-forward-syntactic-ws) (point)))
+	    ;; Skip whitespace.  Count this as a move if we did in fact
+	    ;; move and aren't out of bounds.
+	    (or (eobp)
+		(setq count (max (1- count) 0))))
+	(if (and (= count 0)
+		 (or (and (memq (char-syntax (or (char-after) ? )) '(?w ?_))
+			  (memq (char-syntax (or (char-before) ? )) '(?w ?_)))
+		     (eobp)))
+	    ;; If count is zero we should jump if in the middle of a
+	    ;; token or if there is whitespace between point and the
+	    ;; following token beginning.
+	    (setq count 1))
 	(if (eobp)
 	    (goto-char last)
+	  ;; Avoid having the limit tests inside the loop.
 	  (condition-case nil
 	      (while (> count 0)
 		(setq prev last
@@ -395,11 +394,11 @@
 	  ;; token or if there is whitespace between point and the
 	  ;; following token beginning.
 	  (setq count 1))
-      ;; Avoid having the limit tests inside the loop.
       (save-restriction
 	(if lim (narrow-to-region lim (point-max)))
 	(or (bobp)
 	    (progn
+	      ;; Avoid having the limit tests inside the loop.
 	      (condition-case nil
 		  (while (progn
 			   (setq last (point))
@@ -2558,7 +2557,8 @@ brace."
 	(skip-chars-forward " \t")
 	(cond
 	 ;; are we looking at a comment only line?
-	 ((looking-at c-comment-start-regexp)
+	 ((and (looking-at c-comment-start-regexp)
+	       (/= (c-forward-token-1 0 nil (c-point 'eol)) 0))
 	  (c-add-syntax 'comment-intro))
 	 ;; we might want to give additional offset to friends (in C++).
 	 ((and (c-major-mode-is 'c++-mode)
