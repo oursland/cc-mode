@@ -1014,10 +1014,16 @@
 	       ;; We're in an in-expression block of some kind.  Do
 	       ;; not check nesting.
 	       (setq containing-sexp nil)
-	     ;; see if the open brace is preceded by a = in this statement
+	     ;; see if the open brace is preceded by a = in this
+	     ;; statement, but watch out for operator=
 	     (setq okp t)
-	     (while (and (setq okp (= (c-backward-token-1 1 t) 0))
-			 (not (memq (char-after) '(?= ?{ ?\;)))))
+	     (while (and (setq okp (zerop (c-backward-token-1 1 t)))
+			 (not (memq (char-after) '(?{ ?\;)))
+			 (or (not (eq (char-after) ?=))
+			     (save-excursion
+			       (forward-word -1)
+			       (looking-at "operator[ \t]*=")))
+			 ))
 	     (if (not (and okp
 			   (eq (char-after) ?=)
 			   (eq (char-after containing-sexp) ?{)))
