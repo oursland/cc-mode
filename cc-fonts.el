@@ -1943,7 +1943,7 @@ higher."
 (c-lang-defconst c-matchers-4
   t (c-lang-const c-matchers-3))
 
-(defun c-override-default-keywords (def-var new-def)
+(defun c-override-default-keywords (def-var)
   ;; This is used to override the value on a `*-font-lock-keywords'
   ;; variable only if it's nil or has the same value as one of the
   ;; `*-font-lock-keywords-*' variables.  Older font-lock packages
@@ -1962,10 +1962,14 @@ higher."
 						       suffix))))
 			      (and (boundp sym) (symbol-value sym))))
 			  '("-1" "-2" "-3" "-4")))))
-    (set def-var new-def)))
+    ;; The overriding is done by unbinding the variable so that the normal
+    ;; defvar will install its default value later on.
+    (makunbound def-var)))
 
 
 ;;; C.
+
+(c-override-default-keywords 'c-font-lock-keywords)
 
 (defconst c-font-lock-keywords-1 (c-lang-const c-matchers-1 c)
   "Minimal highlighting for C mode.
@@ -1983,9 +1987,6 @@ the user defined types on `c-font-lock-extra-types'.")
 Like `c-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c-font-lock-extra-types'.")
-
-(c-override-default-keywords 'c-font-lock-keywords
-			     c-font-lock-keywords-3)
 
 (defvar c-font-lock-keywords c-font-lock-keywords-3
   "Default expressions to highlight in C mode.")
@@ -2112,6 +2113,8 @@ need for `c-font-lock-extra-types'.")
 	  (c-fontify-recorded-types-and-refs)))))
   nil)
 
+(c-override-default-keywords 'c++-font-lock-keywords)
+
 (defconst c++-font-lock-keywords-1 (c-lang-const c-matchers-1 c++)
   "Minimal highlighting for C++ mode.
 Fontifies only preprocessor directives (in addition to the syntactic
@@ -2128,9 +2131,6 @@ the user defined types on `c++-font-lock-extra-types'.")
 Like `c++-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `c++-font-lock-extra-types'.")
-
-(c-override-default-keywords 'c++-font-lock-keywords
-			     c++-font-lock-keywords-3)
 
 (defvar c++-font-lock-keywords c++-font-lock-keywords-3
   "Default expressions to highlight in C++ mode.")
@@ -2273,6 +2273,8 @@ need for `c++-font-lock-extra-types'.")
 	 (c-font-lock-objc-method)))))
   nil)
 
+(c-override-default-keywords 'objc-font-lock-keywords)
+
 (defconst objc-font-lock-keywords-1 (c-lang-const c-matchers-1 objc)
   "Minimal highlighting for Objective-C mode.
 Fontifies only compiler directives (in addition to the syntactic
@@ -2290,9 +2292,6 @@ Like `objc-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `objc-font-lock-extra-types'.")
 
-(c-override-default-keywords 'objc-font-lock-keywords
-			     objc-font-lock-keywords-3)
-
 (defvar objc-font-lock-keywords objc-font-lock-keywords-3
   "Default expressions to highlight in Objective-C mode.")
 
@@ -2307,6 +2306,8 @@ need for `objc-font-lock-extra-types'.")
 
 
 ;;; Java.
+
+(c-override-default-keywords 'java-font-lock-keywords)
 
 (defconst java-font-lock-keywords-1 (c-lang-const c-matchers-1 java)
   "Minimal highlighting for Java mode.
@@ -2325,14 +2326,13 @@ Like `java-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `java-font-lock-extra-types'.")
 
-(c-override-default-keywords 'java-font-lock-keywords
-			     java-font-lock-keywords-3)
-
 (defvar java-font-lock-keywords java-font-lock-keywords-3
   "Default expressions to highlight in Java mode.")
 
 
 ;;; IDL.
+
+(c-override-default-keywords 'idl-font-lock-keywords)
 
 (defconst idl-font-lock-keywords-1 (c-lang-const c-matchers-1 idl)
   "Minimal highlighting for IDL mode.
@@ -2351,14 +2351,13 @@ Like `idl-font-lock-keywords-2' but detects declarations in a more
 accurate way that works in most cases for arbitrary types without the
 need for `idl-font-lock-extra-types'.")
 
-(c-override-default-keywords 'idl-font-lock-keywords
-			     idl-font-lock-keywords-3)
-
 (defvar idl-font-lock-keywords idl-font-lock-keywords-3
   "Default expressions to highlight in IDL mode.")
 
 
 ;;; Pike.
+
+(c-override-default-keywords 'pike-font-lock-keywords)
 
 (defconst pike-font-lock-keywords-1 (c-lang-const c-matchers-1 pike)
   "Minimal highlighting for Pike mode.
@@ -2381,9 +2380,6 @@ need for `pike-font-lock-extra-types'.")
   "Accurate extra highlighting for Pike mode.
 In addition to `pike-font-lock-keywords-3', this adds fontification of
 refdoc comments and the markup inside them.")
-
-(c-override-default-keywords 'pike-font-lock-keywords
-			     pike-font-lock-keywords-4)
 
 (defvar pike-font-lock-keywords pike-font-lock-keywords-4
   "Default expressions to highlight in Pike mode.")
