@@ -1197,7 +1197,19 @@ will be handled."
 
 (c-lang-defconst c-other-block-decl-kwds
   "Keywords where the following block (if any) contain another
-declaration level that should not be considered a class.
+declaration level that should not be considered a class.  For every
+keyword here, CC Mode will add a set of special syntactic symbols for
+those blocks.  E.g. if the keyword is \"foo\" then there will be
+`foo-open', `foo-close', and `infoo' symbols.
+
+The intention is that this category should be used for block
+constructs that aren't related to object orientation concepts like
+classes (which thus also include e.g. interfaces, templates,
+contracts, structs, etc).  The more pragmatic distinction is that
+while most want some indentation inside classes, it's fairly common
+that they don't want it in some of these constructs, so it should be
+simple to configure that differently from classes.  See also
+`c-class-decl-kwds'.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
