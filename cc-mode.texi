@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.6 $
+@comment manual version: $Revision: 2.7 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-03-10 00:39:16 $
+@comment Last modification: $Date: 1995-03-10 00:40:38 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -90,7 +90,6 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 * Requirements::                
 * Limitations and Known Bugs::  
 * Mailing Lists and Submitting Bug Reports::  
-* reporter.el Info::            
 * Dumping cc-mode 4.155::       Dumping @code{cc-mode} 4.155
 * Concept Index::               
 * Command Index::               Command Index
@@ -1013,7 +1012,7 @@ record for those of you who are using older Emacsen.
 "~/" refers to archive.cis.ohio-state.edu:/pub/gnu/emacs/elisp-archive/
 
 reporter (2.12)       06-Jul-1994
-     Barry A. Warsaw, <bwarsaw@cen.com>
+     Barry A. Warsaw, <bwarsaw@@cen.com>
      ~/misc/reporter.el.Z
      Customizable bug reporting of lisp programs.
 @end example
