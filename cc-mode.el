@@ -1,96 +1,11 @@
 ;; C++ code editing commands for Emacs
+;; 1992 Barry Warsaw (bwarsaw@cen.com)
 ;; 1987 Dave Detlefs  (dld@cs.cmu.edu) 
 ;; and  Stewart Clamen (clamen@cs.cmu.edu).
 ;; Done by fairly faithful modification of:
 ;; c-mode.el, Copyright (C) 1985 Richard M. Stallman.
 ;;
-;; Mar, 1992 (Barry Warsaw, bwarsaw@cen.com)
-;;   added feature to indent comment lines different from code lines
-;;   column zero comments don't indent however
-;;   fixed c++-auto-newline for double colons and }; syntax
-;;   made electric chars comment & open-string safe
-;;   made electric brace w/auto-fill work
-;;   made calculate-c++-indent work for while( foo ) style
-;;   added c++-hanging-braces-p for no auto-newline on left braces
-;;   changed c-auto-newline to c++-auto-newline
-;;   fixed auto-newline for member init list, new var:
-;;         c++-auto-newline-member-init-p should handle hanging :'s
-;;   added c++-hungry-delete-key-p
-;;   added c++-toggle-auto-newline function -- bound to C-cC-t
-;;   made c++-auto-newline and c++-hungry-delete-key-p buffer local
-;;         variables. also change slightly hungry key mechanism
-;;   removed c++-electric-colon variable
-;;   use mode line to indicate auto-hungry state mode
-;;         added c++-mode-line-format
-;;
-;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
-;;   Incorporated stylistic changes from David Lawrence at FSF;
-;;   I think I've finally fixed C-style comments.
-;;
-;; Feb, 1990 (Dave Detlefs, dld@cs.cmu.edu)
-;;   Fixed electric-c++-terminator to handle double colons, at the
-;;   request of John Hagerman.
-;; 
-;; Jan, 1990 (Doug Lea, dl@oswego.edu)
-;;   Replaced c++-comment-region and c++-uncomment-region with
-;;     versions from Igor Metz that avoid potential infinite loops.
-;;
-;; Oct, 1989 (Dave Detlefs, dld@cs.cmu.edu)
-;;   Added contribution from Igor Metz <metz@iam.unibe.ch>:
-;;     functions c++-comment-region and c++-uncomment-region and 
-;;     corresponding key-binding.
-;;   Also fixed bug in indentation of second line after an empty
-;;   arglist with empty-arglist non-null.
-;;   
-;; Sept, 1989 (Glen Ditchfield, gjditchfield@violet.uwaterloo.ca):
-;;   Textual changes to more closely imitate Emacs 18.55's c-mode.
-;;   Fixed handling of "default:", where ":" was the last character in the
-;;   buffer.  Fixed indentation of comments starting in column 0, and when
-;;   previous line contained more than one comment start string.  Fixed
-;;   handling of "friend class".
-;;
-;; Aug 7, 1989; John Hagerman (hagerman@ece.cmu.edu):
-;;   Changed calculate-c++-indent to handle member initializations
-;;   more flexibly. Two new variables are used to control behavior:
-;;   c++-member-init-indent and c++-continued-member-init-offset.
-;;   Note the assumption that member initializations and argument
-;;   declarations are not mixed in one function definition.
-;;
-;; June 1989 (Dave Detlefs, dld@cs.cmu.edu)
-;;   Fixed calculate-c++-indent to handle continued lines ending in
-;;   {'s.  (I wasn't following C-mode closely enough, or C-mode
-;;   changed.)  Made ' a quote character, at the behest of someone
-;;   whose mail I apparently deleted (if they send me mail I'll credit
-;;   them here in a future revision.)
-;;   Dan Weinreb (dlw@odi.com) pointed out that 'c++-mode successively
-;;   bound c++-indent-exp and c++-indent-defun to ESC-^q.  ESC-^q is
-;;   now bound to c++-indent-exp, while, c++-indent-defun is invoked
-;;   with ESC-^x.
-
-;; February 1989 (Dave Detlefs, dld@cs.cmu.edu)
-;;   Fixed some errors in c++-indent-defun, as pointed out by Sam
-;;   Haradhvala (odi!sam@talcott.harvard.edu).
-;; October 1988 (Dave Detlefs, dld@cs.cmu.edu)
-;;   It turns out I had only *thought* I had made
-;;   beginning(end)-of-defun work.  It should work better now -- you
-;;   can either attempt to match defun headers "strongly," using a
-;;   very complicated regexp, or "weakly," using a simple one.  This
-;;   is settable by a variable; the default is the cheaper weak
-;;   method.  (Stewart Clamen was intimately involved in this, too.)
-;;
-;;   I made "'" *not* be a string delimiter, because that was causing
-;;   comments containing contractions to ("// don't") to mess up paren
-;;   balancing.
-;;
-;;   I also incorporated another slight indentation fix from Glen
-;;   Ditchfield.
-;;
-;;   We hope this is will make into version 19 of gnu-emacs.
-;;
-;; September 1988: incorporated changes from Fred Calm at Schlumberger.
-;;   Also, made beginning(end)-of-defun, indent-defun work.
-;;
-;; August 1987: incorporated changes done by Glen Ditchfield of Waterloo.
+;; $Revision: 1.18 $
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -120,7 +35,7 @@
   (define-key c++-mode-map "*" 'electric-c++-star)
   (define-key c++-mode-map ":" 'electric-c++-colon)
   (define-key c++-mode-map "\177" 'electric-c++-delete)
-  (define-key c++-mode-map "\C-c\C-t" 'c++-toggle-auto-newline)
+  (define-key c++-mode-map "\C-c\C-t" 'c++-toggle-auto-hungry-state)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -149,17 +64,8 @@ list.  Nil indicates to just after the paren.")
   "*Indentation offset for line which contains only comments.")
 (defvar c++-hanging-braces-p t
   "*If t, override c++-auto-newline for left braces.")
-(defvar c++-auto-newline nil
-  "*Non-nil means automatically newline before and after braces,
-and after colons and semicolons, inserted in C++ code.  Unlike
-as with c-auto-newline, double colons and the like are handled
-correctly.")
-(defvar c++-auto-newline-member-init-p nil
-  "*Put a newline after member initialization colon.")
-(defvar c++-hungry-delete-key-p t
-  "*Use hungry delete key which consumes all trailing whitespace.")
-(defvar c++-auto-hungry-string ""
-  "For mode-line indication of auto/hungry state.")
+(defvar c++-hanging-member-init-colon t
+  "*If non-nil, don't put a newline after member initialization colon.")
 (defvar c++-mode-line-format
   '("" mode-line-modified
     mode-line-buffer-identification
@@ -170,8 +76,38 @@ correctly.")
     ")%]----" (-3 . "%p") "-%-")
   "*Mode line format for c++-mode.")
 
+(defvar c++-auto-hungry-initial-state 'none
+  "*Initial state of auto/hungry mode when buffer is first visited.
+Legal values are:
+     'none         -- no auto-newline and no hungry-delete-key.
+     'auto-only    -- auto-newline, but no hungry-delete-key.
+     'hungry-only  -- no auto-newline, but hungry-delete-key.
+     'auto-hungry  -- both auto-newline and hungry-delete-key enabled.
+Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
+
+(defvar c++-auto-hungry-toggle-p t
+  "*Enable/disable toggling of auto/hungry states.
+Legal values are:
+     'none         -- auto-newline and hungry-delete-key cannot be enabled.
+     'auto-only    -- only auto-newline state can be toggled.
+     'hungry-only  -- only hungry-delete-key state can be toggled.
+     'auto-hungry  -- both auto-newline and hungry-delete-key can be toggled.
+Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
+
+(defvar c++-auto-hungry-string ""
+  "For mode-line indication of auto/hungry state.")
+(defvar c++-hungry-delete-key nil
+  "Internal state of hungry delete key.")
+(defvar c++-auto-newline nil
+  "Internal state of auto newline feature.")
+
+  "Non-nil means automatically newline before and after braces,
+and after colons and semicolons, inserted in C++ code.  Unlike
+as with c-auto-newline, double colons and the like are handled
+correctly.")
+
 (make-variable-buffer-local 'c++-auto-newline)
-(make-variable-buffer-local 'c++-hungry-delete-key-p)
+(make-variable-buffer-local 'c++-hungry-delete-key)
 (make-variable-buffer-local 'c++-auto-hungry-string)
 
 
@@ -261,7 +197,13 @@ no args,if that value is non-nil."
   (set (make-local-variable 'parse-sexp-ignore-comments) nil)
   (setq mode-line-format c++-mode-line-format)
   (run-hooks 'c++-mode-hook)
-  (c++-toggle-auto-newline (if c++-auto-newline 1 0)))
+  (c++-set-auto-hungry-state
+   (or (eq c++-auto-hungry-initial-state 'auto-only)
+       (eq c++-auto-hungry-initial-state 'auto-hungry)
+       (eq c++-auto-hungry-initial-state t))
+   (or (eq c++-auto-hungry-initial-state 'hungry-only)
+       (eq c++-auto-hungry-initial-state 'auto-hungry)
+       (eq c++-auto-hungry-initial-state t))))
 
 ;; This is used by indent-for-comment
 ;; to decide how much to indent a comment in C++ code
@@ -283,32 +225,53 @@ no args,if that value is non-nil."
 	       (current-column))
 	   comment-column))))))		; otherwise indent at comment column.
 
-(defun c++-toggle-auto-newline (arg)
-  "Toggle c++-auto-newline variable and c++-hungry-delete-key-p.
-Numeric argument, if supplied sets the variable if non-zero, unsets it
-if zero."
-  (interactive "P")
-  (if (not arg)
-      (setq c++-auto-newline (not c++-auto-newline)
-	    c++-hungry-delete-key-p (not c++-hungry-delete-key-p))
-    (setq c++-auto-newline
-	  (setq c++-hungry-delete-key-p
-		(not (zerop (prefix-numeric-value arg))))))
-  (let ((auto (if c++-auto-newline "/a" nil))
-	(hungry (if c++-hungry-delete-key-p "h" nil)))
-    (setq c++-auto-hungry-string (concat auto hungry))
+(defun c++-set-auto-hungry-state (auto-p hungry-p)
+  "Set auto/hungry to state indicated by AUTO-P and HUNGRY-P.
+Update mode line to indicate state to user."
+  (setq c++-auto-newline auto-p
+	c++-hungry-delete-key hungry-p)
+  (let ((slash  (if (or auto-p hungry-p) "/" nil))
+	(auto   (if auto-p "a" nil))
+	(hungry (if hungry-p "h" nil)))
+    (setq c++-auto-hungry-string (concat slash auto hungry))
     ;; force mode line update
     (set-buffer-modified-p (buffer-modified-p))))
 
+(defun c++-toggle-auto-hungry-state (arg)
+  "Toggle auto-newline and hungry-delete-key state.
+Actual toggling of these states is controlled by
+c++-auto-hungry-toggle-p variable.  Universal argument
+\\[universal-argument] if supplied, resets state
+c++-auto-hungry-initial-state."
+  (interactive "P")
+  (let (auto hungry)
+    (if arg
+	(setq auto (or (eq c++-auto-hungry-initial-state 'auto-only)
+		       (eq c++-auto-hungry-initial-state 'auto-hungry)
+		       (eq c++-auto-hungry-initial-state t))
+	      hungry (or (eq c++-auto-hungry-initial-state 'hungry-only)
+			 (eq c++-auto-hungry-initial-state 'auto-hungry)
+			 (eq c++-auto-hungry-initial-state t)))
+      (setq auto (if (or (eq c++-auto-hungry-toggle-p 'auto-only)
+			 (eq c++-auto-hungry-toggle-p 'auto-hungry)
+			 (eq c++-auto-hungry-toggle-p t))
+		     (not c++-auto-newline)
+		   c++-auto-newline)
+	    hungry (if (or (eq c++-auto-hungry-toggle-p 'hungry-only)
+			   (eq c++-auto-hungry-toggle-p 'auto-hungry)
+			   (eq c++-auto-hungry-toggle-p t))
+		       (not c++-hungry-delete-key)
+		     c++-hungry-delete-key)))
+    (c++-set-auto-hungry-state auto hungry)))
+
 (defun electric-c++-delete (arg)
-  "If c++-hungry-delete-key-p is non-nil, consumes all preceding
+  "If c++-hungry-delete-key is non-nil, consumes all preceding
 whitespace unless ARG is supplied, in which case it just calls
 backward-delete-char-untabify passing along ARG.
 
-If c++-hungry-delete-key-p is nil, just call
-backward-delete-char-untabify."
+If c++-hungry-delete-key is nil, just call backward-delete-char-untabify."
   (interactive "P")
-  (if (or (not c++-hungry-delete-key-p) arg)
+  (if (or (not c++-hungry-delete-key) arg)
       (backward-delete-char-untabify (prefix-numeric-value arg))
     (let ((here (point)))
       (skip-chars-backward "[ \t\n]")
@@ -397,7 +360,7 @@ for member initialization list."
 	  (progn
 	    (delete-region insertion-point (point))
 	    (setq c++-auto-newline nil)))
-      (if (and (not c++-auto-newline-member-init-p)
+      (if (and c++-hanging-member-init-colon
 	       (progn (c++-backward-to-noncomment (point-min))
 		      (= (preceding-char) ?\))))
 	  (setq c++-auto-newline nil)))
