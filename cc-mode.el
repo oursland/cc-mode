@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.96 $
-;; Last Modified:   $Date: 1993-11-24 22:54:31 $
+;; Version:         $Revision: 3.97 $
+;; Last Modified:   $Date: 1993-11-26 16:05:08 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-24 22:54:31 $|$Revision: 3.96 $|
+;; |$Date: 1993-11-26 16:05:08 $|$Revision: 3.97 $|
 
 ;;; Code:
 
@@ -493,7 +493,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.96 $
+  "Major mode for editing C++ code.  $Revision: 3.97 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -523,7 +523,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.96 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.97 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1590,13 +1590,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	  (setq stop t)
 	;; catch multi-line function calls
 	(or (cc-safe (progn (forward-sexp -1) t))
-	    (goto-char lim))
+	    (forward-char -1))
 	(setq here (point))
 	(if (looking-at "\\<\\(for\\|if\\|do\\|else\\|while\\)\\>")
 	    (setq stop t)
 	  (cc-backward-syntactic-ws lim)
 	  )))
-    (if (< (point) lim)
+    (if (<= (point) lim)
 	(goto-char lim)
       (goto-char here)
       (back-to-indentation))
@@ -1975,14 +1975,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	   ;; but the preceding argument is on the same line as the
 	   ;; opening paren.  This case includes multi-line
 	   ;; mathematical paren groupings
-	   ((or (= (cc-point 'bol)
-		   (save-excursion
-		     (goto-char containing-sexp)
-		     (cc-point 'bol)))
-		(= containing-sexp
-		   (save-excursion
-		     (cc-beginning-of-statement containing-sexp)
-		     (point))))
+	   ((and (save-excursion
+		   (goto-char (1+ containing-sexp))
+		   (skip-chars-forward " \t")
+		   (not (eolp)))
+		 (save-excursion
+		   (cc-beginning-of-statement)
+		   (<= (point) containing-sexp)))
 	    (cc-add-semantics 'arglist-cont-nonempty containing-sexp))
 	   ;; CASE 5D: two possibilities here. First, its possible
 	   ;; that the arglist we're in is really a forloop expression
@@ -1993,9 +1992,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing."
 	    (cc-add-semantics 'statement-cont (point)))
 	   ;; CASE 5E: we are looking at just a normal arglist
 	   ;; continuation line
-	   (t
-	    (cc-beginning-of-statement containing-sexp)
-	    (cc-add-semantics 'arglist-cont (cc-point 'boi)))
+	   (t (cc-add-semantics 'arglist-cont (cc-point 'boi)))
 	   ))
 	 ;; CASE 6: func-local multi-inheritance line
 	 ((save-excursion
@@ -2390,7 +2387,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.96 $"
+(defconst cc-version "$Revision: 3.97 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
