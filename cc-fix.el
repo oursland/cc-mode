@@ -52,12 +52,12 @@
       (error nil))
     (defadvice char-after (before c-char-after-advice
 				  (&optional pos)
-				  activate preactivate)
+				  activate)
       "POS is optional and defaults to the position of point."
       (if (not pos)
 	  (setq pos (point)))))
 
-(c-if-fboundp char-before
+(if (fboundp 'char-before)
     ;; (or (condition-case nil
     ;;         (progn (char-before) t)
     ;;       (error nil))
@@ -74,7 +74,7 @@
     ;; argument that we must pass on.
     (defadvice char-before (before c-char-before-advice
 				   (&optional pos byte-unit)
-				   activate preactivate)
+				   activate)
       "POS is optional and defaults to the position of point."
       (if (not pos)
 	  (setq pos (point))))
@@ -88,9 +88,6 @@
 ;; Emacs 19.34 doesn't have a functionp function.  Here's it's Emacs
 ;; 20 definition.
 (or (fboundp 'functionp)
-    ;; Can't use c-if-fboundp here since this file will be evaled from
-    ;; cc-defs before it gets compiled, which results in no function
-    ;; definition in the compiled file.
     (defun functionp (object)
       "Non-nil if OBJECT is a type of object that can be called as a function."
       (or (subrp object) (byte-code-function-p object)
@@ -99,19 +96,17 @@
 
 ;; Emacs 19.34 doesn't have a when macro.  Here's it's Emacs 20
 ;; definition.
-(c-if-fboundp when
-    nil
-  (defmacro when (cond &rest body)
-    "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
-    (list 'if cond (cons 'progn body))))
+(or (fboundp 'when)
+    (defmacro when (cond &rest body)
+      "(when COND BODY...): if COND yields non-nil, do BODY, else return nil."
+      (list 'if cond (cons 'progn body))))
 
 ;; Emacs 19.34 doesn't have an unless macro.  Here's it's Emacs 20
 ;; definition.
-(c-if-fboundp unless
-    nil
-  (defmacro unless (cond &rest body)
-    "(unless COND BODY...): if COND yields nil, do BODY, else return nil."
-    (cons 'if (cons cond (cons nil body)))))
+(or (fboundp 'unless)
+    (defmacro unless (cond &rest body)
+      "(unless COND BODY...): if COND yields nil, do BODY, else return nil."
+      (cons 'if (cons cond (cons nil body)))))
 
 
 ;;; cc-mode-19.el ends here

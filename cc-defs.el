@@ -106,18 +106,6 @@
 	 (progn (,@ body))
        (error nil))))
 
-(defmacro c-if-boundp (sym then &rest else)
-  ;; Expands to THEN iff SYM is a symbol bound to a variable, to ELSE
-  ;; otherwise.  Note that the check is done at compile time.
-  (if (boundp sym) then `(progn ,@else)))
-(put 'c-if-boundp 'lisp-indent-function 2)
-
-(defmacro c-if-fboundp (sym then &rest else)
-  ;; Expands to THEN iff SYM is a symbol bound to a function, to ELSE
-  ;; otherwise.  Note that the check is done at compile time.
-  (if (fboundp sym) then `(progn ,@else)))
-(put 'c-if-fboundp 'lisp-indent-function 2)
-
 (defsubst c-beginning-of-defun-1 ()
   ;; Wrapper around beginning-of-defun.
   ;;
@@ -126,36 +114,35 @@
   ;; b-o-d will be available and this should be the only place the
   ;; code needs to change.  Everything else should use
   ;; (c-beginning-of-defun-1)
-  (c-if-fboundp buffer-syntactic-context-depth
-      (if c-enable-xemacs-performance-kludge-p
-	  ;; XEmacs only.  This can improve the performance of
-	  ;; c-parse-state to between 3 and 60 times faster when
-	  ;; braces are hung.  It can also degrade performance by
-	  ;; about as much when braces are not hung.
-	  (let (pos)
-	    (while (not pos)
-	      (save-restriction
-		(widen)
-		(setq pos (scan-lists (point) -1
-				      (buffer-syntactic-context-depth)
-				      nil t)))
-	      (cond
-	       ((bobp) (setq pos (point-min)))
-	       ((not pos)
-		(let ((distance (skip-chars-backward "^{")))
-		  ;; unbalanced parenthesis, while illegal C code,
-		  ;; shouldn't cause an infloop!  See unbal.c
-		  (when (zerop distance)
-		    ;; Punt!
-		    (beginning-of-defun)
-		    (setq pos (point)))))
-	       ((= pos 0))
-	       ((not (eq (char-after pos) ?{))
-		(goto-char pos)
-		(setq pos nil))
-	       ))
-	    (goto-char pos))
-	(beginning-of-defun))
+  (if (and (fboundp 'buffer-syntactic-context-depth)
+	   c-enable-xemacs-performance-kludge-p)
+      ;; XEmacs only.  This can improve the performance of
+      ;; c-parse-state to between 3 and 60 times faster when
+      ;; braces are hung.  It can also degrade performance by
+      ;; about as much when braces are not hung.
+      (let (pos)
+	(while (not pos)
+	  (save-restriction
+	    (widen)
+	    (setq pos (scan-lists (point) -1
+				  (buffer-syntactic-context-depth)
+				  nil t)))
+	  (cond
+	   ((bobp) (setq pos (point-min)))
+	   ((not pos)
+	    (let ((distance (skip-chars-backward "^{")))
+	      ;; unbalanced parenthesis, while illegal C code,
+	      ;; shouldn't cause an infloop!  See unbal.c
+	      (when (zerop distance)
+		;; Punt!
+		(beginning-of-defun)
+		(setq pos (point)))))
+	   ((= pos 0))
+	   ((not (eq (char-after pos) ?{))
+	    (goto-char pos)
+	    (setq pos nil))
+	   ))
+	(goto-char pos))
     ;; Emacs, which doesn't have buffer-syntactic-context-depth
     (beginning-of-defun))
   ;; if defun-prompt-regexp is non-nil, b-o-d won't leave us at the
@@ -271,21 +258,21 @@
   ;; Do whatever is necessary to keep the region active in XEmacs.
   ;; Ignore byte-compiler warnings you might see.  This is not needed
   ;; for Emacs.
-  (c-if-boundp zmacs-region-stays
-      (setq zmacs-region-stays t)))
+  (and (boundp 'zmacs-region-stays)
+       (setq zmacs-region-stays t)))
 
 (defsubst c-region-is-active-p ()
   ;; Return t when the region is active.  The determination of region
   ;; activeness is different in both Emacs and XEmacs.
-  (c-if-fboundp region-active-p
-      ;; XEmacs
-      (and zmacs-regions
-	   (region-active-p))
-    ;; Emacs
-    (c-if-boundp mark-active
-	`mark-active
-      ;; fallback; shouldn't get here
-      (mark t))))
+  (cond
+   ;; XEmacs
+   ((and (fboundp 'region-active-p)
+	 zmacs-regions)
+    (region-active-p))
+   ;; Emacs
+   ((boundp 'mark-active) mark-active)
+   ;; fallback; shouldn't get here
+   (t (mark t))))
 
 (defsubst c-major-mode-is (mode)
   (eq (derived-mode-class major-mode) mode))

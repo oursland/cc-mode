@@ -97,10 +97,10 @@
 	   load-path)))
     ;; Load our version of cc-defs unconditionally, since an older
     ;; version might very well be dumped in or already loaded.  This
-    ;; way we ensure that the code get compiled with the correct
-    ;; macros and defsubst.  The same problem affects the subpackages
-    ;; that's require'd below, but that doesn't harm the compiler; it
-    ;; can only cause some bogus warnings.
+    ;; way we ensure that the code is compiled with the correct macros
+    ;; and defsubsts.  The same problem affects the subpackages that's
+    ;; require'd below, but that doesn't harm the compiler; it can
+    ;; only cause some bogus warnings.
     (load "cc-defs" nil t)))
 
 (require 'cc-defs) ; Not meaningless; this passes on require's from cc-defs.

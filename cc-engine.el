@@ -411,16 +411,14 @@
 ;; I don't think we even need the cache, which makes our lives more
 ;; complicated anyway.  In this case, lim is ignored.
 (defun c-fast-in-literal (&optional lim)
-  (c-if-fboundp buffer-syntactic-context
-      (let ((context (buffer-syntactic-context)))
-	(cond
-	 ((eq context 'string) 'string)
-	 ((eq context 'comment) 'c++)
-	 ((eq context 'block-comment) 'c)
-	 ((save-excursion (c-beginning-of-macro lim)) 'pound)))
-    (error "This function requires XEmacs")))
+  (let ((context (buffer-syntactic-context)))
+    (cond
+     ((eq context 'string) 'string)
+     ((eq context 'comment) 'c++)
+     ((eq context 'block-comment) 'c)
+     ((save-excursion (c-beginning-of-macro lim)) 'pound))))
 
-(c-if-fboundp buffer-syntactic-context
+(if (fboundp 'buffer-syntactic-context)
     (defalias 'c-in-literal 'c-fast-in-literal))
 
 (defun c-literal-limits (&optional lim near)

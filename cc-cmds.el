@@ -137,10 +137,10 @@ consumed.  If however an ARG is supplied, or `c-hungry-delete-key' is
 nil, or point is inside a literal then the function in the variable
 `c-delete-function' is called."
   (interactive "*P")
-  (if (or (c-if-fboundp delete-forward-p ;XEmacs 21
-	      (delete-forward-p))
-	  (c-if-boundp delete-key-deletes-forward ;XEmacs 20
-	      delete-key-deletes-forward))
+  (if (or (and (fboundp 'delete-forward-p) ;XEmacs 21
+	       (delete-forward-p))
+	  (and (boundp 'delete-key-deletes-forward) ;XEmacs 20
+	       delete-key-deletes-forward))
       (if (or (not c-hungry-delete-key)
 	      arg
 	      (c-in-literal))
@@ -1056,16 +1056,15 @@ comment."
 	  (c-indent-line))))))
 
 ;; advice for indent-new-comment-line for older Emacsen
-(c-if-boundp comment-line-break-function
-    nil
-  (defadvice indent-new-comment-line (around c-line-break-advice
-					     activate preactivate)
-    "Calls c-comment-line-break-function if in a comment in CC Mode."
-    (if (or (not c-buffer-is-cc-mode)
-	    (not (c-in-literal))
-	    (not c-comment-continuation-stars))
-	ad-do-it
-      (c-comment-line-break-function (ad-get-arg 0)))))
+(or (boundp 'comment-line-break-function)
+    (defadvice indent-new-comment-line (around c-line-break-advice
+					       activate preactivate)
+      "Calls c-comment-line-break-function if in a comment in CC Mode."
+      (if (or (not c-buffer-is-cc-mode)
+	      (not (c-in-literal))
+	      (not c-comment-continuation-stars))
+	  ad-do-it
+	(c-comment-line-break-function (ad-get-arg 0)))))
 
 ;; used by outline-minor-mode
 (defun c-outline-level ()

@@ -39,7 +39,8 @@
 ;; Dummy definitions to shut up the compiler in case imenu doesn't exist.
 (defvar imenu-generic-expression)
 (defvar imenu-case-fold-search)
-(defun imenu-progress-message (&rest args) nil)
+(or (fboundp 'imenu-progress-message)
+    (defun imenu-progress-message (&rest args) nil))
 
 ;; Try to pull in imenu.
 (eval-and-compile
@@ -325,7 +326,7 @@ Example:
 	 ;;
 	 ;; Does this emacs has buffer-substring-no-properties? 
 	 ;;
-	 (c-if-fboundp buffer-substring-no-properties
+	 (if (fboundp 'buffer-substring-no-properties)
 	     'buffer-substring-no-properties
 	   'buffer-substring)))
     (goto-char (point-max))

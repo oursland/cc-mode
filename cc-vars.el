@@ -490,22 +490,20 @@ as designated in the variable `c-file-style'.")
 	 (let ((table (copy-syntax-table))
 	       entry)
 	   (modify-syntax-entry ?a ". 12345678" table)
-	   (if (arrayp table)
-	       (progn
-		 ;; XEmacs 19, and beyond Emacs 19.34
-		 (setq entry (aref table ?a))
-		 ;; In Emacs, table entries are cons cells
-		 (if (consp entry) (setq entry (car entry))))
-	     (c-if-fboundp get-char-table
-		 ;; XEmacs 20
-		 (setq entry (get-char-table ?a table))
-	       (c-if-fboundp char-table-p
-		   ;; before and including Emacs 19.34
-		   (if (char-table-p table)
-		       (setq entry (car (char-table-range table [?a]))))
-		 ;; incompatible
-		 (error "CC Mode is incompatible with this version of Emacs")
-		 )))
+	   (cond
+	    ;; XEmacs 19, and beyond Emacs 19.34
+	    ((arrayp table)
+	     (setq entry (aref table ?a))
+	     ;; In Emacs, table entries are cons cells
+	     (if (consp entry) (setq entry (car entry))))
+	    ;; XEmacs 20
+	    ((fboundp 'get-char-table) (setq entry (get-char-table ?a table)))
+	    ;; before and including Emacs 19.34
+	    ((and (fboundp 'char-table-p)
+		  (char-table-p table))
+	     (setq entry (car (char-table-range table [?a]))))
+	    ;; incompatible
+	    (t (error "CC Mode is incompatible with this version of Emacs")))
 	   (if (= (logand (lsh entry -16) 255) 255)
 	       '8-bit
 	     '1-bit))))

@@ -44,6 +44,8 @@
       ;; the compiler.
       (require 'outline)
     (error nil)))
+;; menu support for both XEmacs and Emacs.  If you don't have easymenu
+;; with your version of Emacs, you are incompatible!
 (require 'easymenu)
 
 
@@ -273,15 +275,13 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
   (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
   ;; X/Emacs 20 only
-  (c-if-boundp comment-line-break-function
-      (progn
-	(make-local-variable 'comment-line-break-function)
-	(setq comment-line-break-function 'c-comment-line-break-function)))
-  ;; Emacs 19.30 and beyond only, AFAIK
-  (c-if-boundp fill-paragraph-function
-      (progn
-	(make-local-variable 'fill-paragraph-function)
-	(setq fill-paragraph-function 'c-fill-paragraph)))
+  (and (boundp 'comment-line-break-function)
+       (progn
+	 (make-local-variable 'comment-line-break-function)
+	 (setq comment-line-break-function
+	       'c-comment-line-break-function)))
+  (make-local-variable 'fill-paragraph-function)
+  (setq fill-paragraph-function 'c-fill-paragraph)
   ;; now set their values
   (setq paragraph-start (concat page-delimiter "\\|$")
 	paragraph-separate paragraph-start
@@ -354,14 +354,15 @@ Note that the style variables are always made local to the buffer."
 ;; Common routines
 (defun c-make-inherited-keymap ()
   (let ((map (make-sparse-keymap)))
-    (c-if-fboundp set-keymap-parents
-	;; XEmacs 19 & 20
-	(set-keymap-parents map c-mode-base-map)
-      (c-if-fboundp set-keymap-parent
-	  ;; Emacs 19
-	  (set-keymap-parent map c-mode-base-map)
-	;; incompatible
-	(error "CC Mode is incompatible with this version of Emacs")))
+    (cond
+     ;; XEmacs 19 & 20
+     ((fboundp 'set-keymap-parents)
+      (set-keymap-parents map c-mode-base-map))
+     ;; Emacs 19
+     ((fboundp 'set-keymap-parent)
+      (set-keymap-parent map c-mode-base-map))
+     ;; incompatible
+     (t (error "CC Mode is incompatible with this version of Emacs")))
     map))
 
 (defun c-populate-syntax-table (table)
@@ -428,7 +429,7 @@ Note that the style variables are always made local to the buffer."
   ;; Caution!  Enter here at your own risk.  We are trying to support
   ;; several behaviors and it gets disgusting. :-(
   ;;
-  (c-if-boundp delete-key-deletes-forward
+  (if (boundp 'delete-key-deletes-forward)
       (progn
 	;; In XEmacs 20 it is possible to sanely define both backward
 	;; and forward deletion behavior under X separately (TTYs are
@@ -460,10 +461,6 @@ Note that the style variables are always made local to the buffer."
   ;; conflicts with OOBR
   ;;(define-key c-mode-base-map "\C-c\C-v"  'c-version)
   )
-
-;; menu support for both XEmacs and Emacs.  If you don't have easymenu
-;; with your version of Emacs, you are incompatible!
-(require 'easymenu)
 
 (defvar c-c-menu nil)
 (defvar c-c++-menu nil)
