@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.69 $
-;; Last Modified:   $Date: 1993-11-20 18:10:17 $
+;; Version:         $Revision: 3.70 $
+;; Last Modified:   $Date: 1993-11-20 18:30:29 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -67,7 +67,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-11-20 18:10:17 $|$Revision: 3.69 $|
+;; |$Date: 1993-11-20 18:30:29 $|$Revision: 3.70 $|
 
 ;;; Code:
 
@@ -488,7 +488,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun cc-c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.69 $
+  "Major mode for editing C++ code.  $Revision: 3.70 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -518,7 +518,7 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun cc-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.69 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.70 $
 To submit a problem report, enter `\\[cc-submit-bug-report]' from a
 cc-c-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -547,6 +547,17 @@ Key bindings:
    (memq cc-auto-hungry-initial-state '(auto-only   auto-hungry t))
    (memq cc-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
+(defmacro cc-setup-comment-indent-variable ()
+  ;; shut the byte compiler up
+  (if (boundp 'comment-indent-function)
+      (` (progn
+	   (make-local-variable 'comment-indent-function)
+	   (setq comment-indent-function 'cc-comment-indent)))
+    (` (progn
+	 (make-local-variable 'comment-indent-hook)
+	 (setq comment-indent-hook 'cc-comment-indent)))
+    ))
+
 (defun cc-common-init ()
   ;; Common initializations for cc-c++-mode and cc-c-mode.
   (use-local-map cc-mode-map)
@@ -562,11 +573,6 @@ Key bindings:
   (make-local-variable 'comment-end)
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
-  ;; don't worry about byte-compiler complaints on the following
-  (make-local-variable
-   (if (boundp 'comment-indent-function)
-       'comment-indent-function
-     'comment-indent-hook))
   ;; now set their values
   (setq paragraph-start (concat "^$\\|" page-delimiter)
 	paragraph-separate paragraph-start
@@ -577,10 +583,8 @@ Key bindings:
 	indent-region-function 'cc-indent-region
 	comment-column 32
 	comment-start-skip "/\\*+ *\\|// *")
-  ;; don't worry about byte-compiler complaints on the following
-  (if (boundp 'comment-indent-function)
-      (setq comment-indent-function 'cc-comment-indent)
-    (setq comment-indent-hook 'cc-comment-indent))
+  ;; setup the comment indent variable in a Emacs version portable way
+  (cc-setup-comment-indent-variable)
   ;; hack auto-hungry designators into mode-line-format, but do it
   ;; only once
   (and (listp mode-line-format)
@@ -2312,7 +2316,7 @@ the leading `// ' from each line, if any."
 
 ;; defuns for submitting bug reports
 
-(defconst cc-version "$Revision: 3.69 $"
+(defconst cc-version "$Revision: 3.70 $"
   "cc-mode version number.")
 (defconst cc-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
