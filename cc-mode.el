@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.183 $
-;; Last Modified:   $Date: 1994-01-11 23:16:33 $
+;; Version:         $Revision: 3.184 $
+;; Last Modified:   $Date: 1994-01-11 23:25:46 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -82,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-11 23:16:33 $|$Revision: 3.183 $|
+;; |$Date: 1994-01-11 23:25:46 $|$Revision: 3.184 $|
 
 ;;; Code:
 
@@ -154,11 +154,11 @@ additional offset applied to the line being indented.  OFFSET can be
 an integer, a function, or the symbol `+' or `-', designating
 positive or negative values of `c-basic-offset'.
 
-If OFFSET is a function, it will be called with a single argument
+If OFFSET is a function, it is called with a single argument
 containing a cons cell with a langelem symbol in the car, and the
 relative indentation position in the cdr.  Also, the global variable
-`c-semantics' will contain the entire list of language elements for
-the line being indented.  The function should return an integer.
+`c-semantics' contains the entire list of language elements for the
+line being indented.  The function should return an integer.
 
 Here is the current list of valid semantic symbols:
 
@@ -235,7 +235,7 @@ Just an integer as value is equivalent to (<val> . 0)")
 then styles 1-3 are supported.  If this variable is non-nil, style 4
 only is supported.  Note that this currently has *no* effect on how
 comments are lined up or whether stars are inserted when C comments
-are auto-filled.  In any case, you will still have to insert the stars
+are auto-filled.  In any case, you still have to insert the stars
 manually.
 
  style 1:       style 2:       style 3:       style 4:
@@ -308,9 +308,9 @@ behavior is to not insert any newlines.")
 (defvar c-untame-characters '(?\')
   "*Utilize a backslashing workaround of an Emacs18 syntax deficiency.
 If non-nil, this variable should contain a list of characters which
-will be prepended by a backslash in comment regions.  By default, the
-list contains only the most troublesome character, the single quote.
-To be completely safe, set this variable to:
+are prepended by a backslash in comment regions.  By default, the list
+contains only the most troublesome character, the single quote.  To be
+completely safe, set this variable to:
 
     '(?\( ?\) ?\' ?\{ ?\} ?\[ ?\])
 
@@ -649,7 +649,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.183 $
+CC-MODE REVISION: $Revision: 3.184 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -680,7 +680,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.183 $
+CC-MODE REVISION: $Revision: 3.184 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -903,8 +903,8 @@ Key bindings:
 Optional numeric ARG, if supplied turns on auto-newline when positive,
 turns it off when negative, and just toggles it when zero.
 
-When the auto-newline feature is enabled, you will see a `/a' or `/ah'
-on the modeline after the mode name, and newlines are automatically
+When the auto-newline feature is enabled (as evidenced by the `/a' or
+`/ah' on the modeline after the mode name) newlines are automatically
 inserted after special characters such as brace, comma, semi-colon,
 and colon."
   (interactive "P")
@@ -917,8 +917,8 @@ and colon."
 Optional numeric ARG, if supplied turns on hungry-delete when positive,
 turns it off when negative, and just toggles it when zero.
 
-When the hungry-delete-key feature is enabled, you will see a `/h' or
-`/ah' on the modeline after the mode name, and hitting the delete key
+When the hungry-delete-key feature is enabled (as evidenced by the
+`/h' or `/ah' on the modeline after the mode name) the delete key
 gobbles all preceding whitespace in one fell swoop."
   (interactive "P")
   (setq c-hungry-delete-key (c-calculate-state arg c-hungry-delete-key))
@@ -1192,8 +1192,8 @@ Also, the line is re-indented unless a numeric ARG is supplied, there
 are non-whitespace characters present on the line after the colon, or
 the colon is inserted inside a literal.
 
-This function will also clean up double colon scope operators based on
-the value of `c-cleanup-list'."
+This function cleans up double colon scope operators based on the
+value of `c-cleanup-list'."
   (interactive "P")
   (let* ((bod (c-point 'bod))
 	 (literal (c-in-literal bod))
@@ -2893,7 +2893,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 (defun c-macroize-region (beg end arg)
   "Insert backslashes at end of every line in region.
 Useful for defining cpp macros.  If called with a prefix argument,
-it will remove trailing backslashes."
+it trailing backslashes are removed."
   (interactive "r\nP")
   (save-excursion
     (let ((do-lastline-p (progn (goto-char end) (not (bolp)))))
@@ -2944,7 +2944,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.183 $"
+(defconst c-version "$Revision: 3.184 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
