@@ -9,10 +9,10 @@ int a_gcc_extension (void)
 	}
 	);
     if ( ({
-		 int y = foo (); int z;
-		 y;
-	     }
-	     ) )
+		int y = foo (); int z;
+		y;
+	    }
+	    ) )
 	a1 = 17;
     return ({ int y = foo (); int z; y;
 	    y;

@@ -24,12 +24,12 @@ a = {
 	    b
 	}},
     foo ({
-	     a; // Ok, it's not valid Pike; just checking.. ;)
-	     b;
-	 },
-	 c), ([a,
-	       b,
-	       (<
-		   a, b, c
-	       >)
+	    a; // Ok, it's not valid Pike; just checking.. ;)
+	    b;
+	},
+	c), ([a,
+	      b,
+	      (<
+		  a, b, c
+	      >)
     ])}
