@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.258 $
-;; Last Modified:   $Date: 1996-01-06 01:01:00 $
+;; Version:         $Revision: 4.259 $
+;; Last Modified:   $Date: 1996-01-06 01:08:45 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-06 01:01:00 $|$Revision: 4.258 $|
+;; |$Date: 1996-01-06 01:08:45 $|$Revision: 4.259 $|
 
 ;;; Code:
 
@@ -568,6 +568,50 @@ as designated in the variable `c-file-style'.")
     ["Forward Statement"      c-end-of-statement t]
     )
   "XEmacs 19 (formerly Lucid) menu for C/C++/ObjC modes.")
+
+(defvar cc-imenu-c++-generic-expression
+  (` 
+   ((nil
+     (, 
+      (concat
+       "^"				; beginning of line is required
+       "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a "template <...>"
+       "\\([a-zA-Z0-9_:]+[ \t]+\\)?"	; type specs; there can be no
+       "\\([a-zA-Z0-9_:]+[ \t]+\\)?"	; more than 3 tokens, right?
+        
+       "\\("				; last type spec including */&
+       "[a-zA-Z0-9_:]+"
+       "\\([ \t]*[*&]+[ \t]*\\|[ \t]+\\)" ; either pointer/ref sign or whitespace
+       "\\)?"				; if there is a last type spec
+       "\\("				; name; take that into the imenu entry
+       "[a-zA-Z0-9_:~]+"		; member function, ctor or dtor...
+ 					; (may not contain * because then 
+ 					; "a::operator char*" would become "char*"!)
+       "\\|"
+       "\\([a-zA-Z0-9_:~]*::\\)?operator"
+       "[^a-zA-Z1-9_][^(]*"		; ...or operator
+       " \\)"
+       "[ \t]*([^)]*)[ \t\n]*[^		;]" ; require something other than a ; after
+ 					; the (...) to avoid prototypes.  Can't
+ 					; catch cases with () inside the parentheses
+ 					; surrounding the parameters
+ 					; (like "int foo(int a=bar()) {...}"
+        
+       )) 6)    
+    ("Class" 
+     (, (concat 
+ 	 "^"				; beginning of line is required
+ 	 "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a "template <...>"
+ 	 "class[ \t]+"
+ 	 "\\([a-zA-Z0-9_]+\\)"		; this is the string we want to get
+ 	 "[ \t]*[:{]"
+ 	 )) 2)))
+  "Imenu generic expression for C++ mode.  See `imenu-generic-expression'.")
+ 
+(defvar cc-imenu-c-generic-expression
+  cc-imenu-c++-generic-expression
+  "Imenu generic expression for C mode.  See `imenu-generic-expression'.")
+
 
 
 ;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1047,7 +1091,8 @@ Key bindings:
 	c-conditional-key c-C++-conditional-key
 	c-comment-start-regexp c-C++-comment-start-regexp
 	c-class-key c-C++-class-key
-	c-access-key c-C++-access-key)
+	c-access-key c-C++-access-key
+	imenu-generic-expression cc-imenu-c++-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c++-mode-hook))
 (setq c-list-of-mode-names (cons "C++" c-list-of-mode-names))
@@ -1082,7 +1127,8 @@ Key bindings:
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C-class-key
 	c-baseclass-key nil
-	c-comment-start-regexp c-C-comment-start-regexp)
+	c-comment-start-regexp c-C-comment-start-regexp
+	imenu-generic-expression cc-imenu-c-generic-expression)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook))
 (setq c-list-of-mode-names (cons "C" c-list-of-mode-names))
@@ -1141,6 +1187,7 @@ Key bindings:
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
   (make-local-variable 'adaptive-fill-regexp)
+  (make-local-variable 'imenu-generic-expression) ;set in the mode functions
   ;; Emacs 19.30 and beyond only, AFAIK
   (if (boundp 'fill-paragraph-function)
       (progn
@@ -4585,7 +4632,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.258 $"
+(defconst c-version "$Revision: 4.259 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
