@@ -2033,15 +2033,16 @@ isn't moved."
   ;; Therefore it's collected here.
   (save-restriction
     (widen)
-    (let (inexpr)
+    (let (inexpr anchor)
       (goto-char (aref classkey 1))
       (if (and (eq symbol 'inclass) (= (point) (c-point 'boi)))
-	  (c-add-syntax symbol (point))
-	(c-add-syntax symbol (aref classkey 0))
+	  (c-add-syntax symbol (setq anchor (point)))
+	(c-add-syntax symbol (setq anchor (aref classkey 0)))
 	(if (and c-inexpr-class-key
-		 (setq inexpr (c-looking-at-inexpr-block))
-		 (/= (cdr inexpr) (c-point 'boi (cdr inexpr))))
-	    (c-add-syntax 'inexpr-class))))))
+		 (setq inexpr (cdr (c-looking-at-inexpr-block)))
+		 (/= inexpr (c-point 'boi inexpr)))
+	    (c-add-syntax 'inexpr-class)))
+      anchor)))
 
 (defun c-guess-continued-construct (indent-point
 				    char-after-ip
@@ -2458,6 +2459,7 @@ isn't moved."
 	      )
 	     ;; CASE 5B.2: K&R arg decl intro
 	     (c-recognize-knr-p
+	      (c-beginning-of-statement-1 lim)
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
 	      (if inclass-p (c-add-class-syntax 'inclass inclass-p)))
 	     ;; CASE 5B.3: Inside a member init list.
@@ -2632,9 +2634,9 @@ isn't moved."
 	   ((and inclass-p
 		 c-access-key
 		 (looking-at c-access-key))
-	    ;; FIXME: The anchor point here is completely bogus.
-	    (c-add-syntax 'access-label (c-point 'bonl))
-	    (c-add-class-syntax 'inclass inclass-p))
+	    (setq placeholder (c-add-class-syntax 'inclass inclass-p))
+	    ;; Append access-label with the same anchor point as inclass gets.
+	    (nconc syntax (list (cons 'access-label placeholder))))
 	   ;; CASE 5F: extern-lang-close or namespace-close?
 	   ((and inenclosing-p
 		 (eq char-after-ip ?}))
@@ -3244,9 +3246,9 @@ isn't moved."
    ))
 
 (defun c-get-offset (langelem)
-  ;; Get offset from LANGELEM which is a cons cell of the form:
-  ;; (SYMBOL . RELPOS).  The symbol is matched against
-  ;; c-offsets-alist and the offset found there is returned.
+  "Get offset from LANGELEM which is a cons cell of the form:
+\(SYMBOL . RELPOS).  The symbol is matched against `c-offsets-alist'
+and the offset found there is returned."
   (let* ((symbol (car langelem))
 	 (match  (assq symbol c-offsets-alist))
 	 (offset (cdr-safe match)))
@@ -3263,23 +3265,25 @@ isn't moved."
     ))
 
 (defun c-get-syntactic-indentation (langelems)
-  ;; Apply c-get-offset to a list of langelem cells to get the total
-  ;; syntactic indentation.  Special treatment is needed for vectors
-  ;; containing absolute columns.  The anchor position, which is used
-  ;; as a base for all the collected offsets, is taken from the first
-  ;; element with a relpos.
+  "Apply `c-get-offset' to a list of langelem cells to get the total
+syntactic indentation.  The anchor position, whose column is used as a
+base for all the collected offsets, is taken from the first element
+with a relpos."
+  ;; Note that topmost-intro always has a relpos at bol, for
+  ;; historical reasons.  It's often used together with other symbols
+  ;; that has more sane positions.  Since we always use the first
+  ;; found relpos, we rely on that these other symbols always precede
+  ;; topmost-intro in the LANGELEMS list.
   (let ((indent 0) anchor)
     (catch 'done
       (while langelems
-	(let ((res (c-get-offset (car langelems))) relpos)
+	(let ((res (c-get-offset (car langelems))))
 	  (if (vectorp res)
 	      (throw 'done (elt res 0))
-	    (and (not anchor)
-		 (setq relpos (cdr (car langelems)))
-		 ;; FIXME: The following is just so unbelievably bogus
-		 ;; and should be done away with pronto.
-		 (< relpos (c-point 'bol))
-		 (setq anchor relpos))
+	    (unless anchor
+	      (let ((relpos (cdr (car langelems))))
+		(if relpos
+		    (setq anchor relpos))))
 	    (setq indent (+ indent res)
 		  langelems (cdr langelems)))))
       (+ indent
