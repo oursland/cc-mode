@@ -123,11 +123,9 @@ according to syntactic analysis via `c-offsets-alist', even when
   "*Specifies the leader of continued block comments.
 You should set this variable to the literal string that gets inserted
 at the front of continued block style comment lines.  This should
-either be the empty string, or some characters without preceding
-spaces.  It's only used when a one-line block comment is broken into
-two or more lines for the first time; otherwise the appropriate leader
-is adapted from the comment.  Note that for line style comments, this
-variable is not used."
+either be the empty string, or some number of stars followed by a
+single space.  Note that for line style comments, this variable is not
+used."
   :type '(choice (const :tag "Use old semantics" nil)
 		 string)
   :group 'c)
