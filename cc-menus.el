@@ -67,14 +67,12 @@ For example:
 A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 
 (defvar cc-imenu-c++-generic-expression
-  (` 
-   (
+  `(
     ;; Try to match ::operator definitions first. Otherwise `X::operator new ()'
     ;; will be incorrectly recognised as function `new ()' because the regexps
     ;; work by backtracking from the end of the definition.
     (nil
-     (, 
-      (concat
+     ,(concat
        "^\\<.*"
        "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
                                               ; (note: this can be `\n')
@@ -92,22 +90,20 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
                                               ; the parentheses surrounding
                                               ; the parameters.  e.g.:
                                               ; `int foo(int a=bar()) {...}'
-       )) 1)
+       ) 1)
     ;; Special case to match a line like `main() {}'
     ;; e.g. no return type, not even on the previous line.
     (nil
-     (, 
-      (concat
+     ,(concat
        "^"
        "\\([a-zA-Z_][a-zA-Z0-9_:<>~]*\\)"     ; match function name
        "[ \t]*("			      ; see above, BUT
        "[ \t]*\\([^ \t(*][^)]*\\)?)"          ; the arg list must not start
        "[ \t]*[^ \t;(]"                       ; with an asterisk or parentheses
-       )) 1)
+       ) 1)
     ;; General function name regexp
     (nil
-     (, 
-      (concat
+     ,(concat
        "^\\<"                                 ; line MUST start with word char
        "[^()]*"                               ; no parentheses before
        "[^a-zA-Z0-9_:<>~]"                    ; match any non-identifier char
@@ -115,15 +111,14 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
        "[ \t]*("			      ; see above, BUT
        "[ \t]*\\([^ \t(*][^)]*\\)?)"          ; the arg list must not start
        "[ \t]*[^ \t;(]"                       ; with an asterisk or parentheses
-       )) 1)
+       ) 1)
     ;; Special case for definitions using phony prototype macros like:
     ;; `int main _PROTO( (int argc,char *argv[]) )'.
     ;; This case is only included if cc-imenu-c-prototype-macro-regexp is set.
     ;; Only supported in c-code, so no `:<>~' chars in function name!
-    (,@ (if cc-imenu-c-prototype-macro-regexp
-            (` ((nil
-                 (,
-                  (concat
+    ,@(if cc-imenu-c-prototype-macro-regexp
+            `((nil
+                 ,(concat
                    "^\\<.*"                   ; line MUST start with word char
                    "[^a-zA-Z0-9_]"            ; match any non-identifier char
                    "\\([a-zA-Z_][a-zA-Z0-9_]*\\)"       ; match function name
@@ -131,10 +126,10 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
                    cc-imenu-c-prototype-macro-regexp
                    "[ \t]*("                  ; ws followed by first paren.
                    "[ \t]*([^)]*)[ \t]*)[ \t]*[^ \t;]" ; see above
-                   )) 1)))))
+                   ) 1)))
     ;; Class definitions
     ("Class" 
-     (, (concat 
+     ,(concat
          "^"                                  ; beginning of line is required
          "\\(template[ \t]*<[^>]+>[ \t]*\\)?" ; there may be a `template <...>'
          "class[ \t]+"
@@ -143,7 +138,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
          "\\(<[^>]+>\\)?"                     ; possibly explicitely specialized
          "\\)"
          "[ \t\n]*[:{]"
-         )) 2)))
+         ) 2))
   "Imenu generic expression for C++ mode.  See `imenu-generic-expression'.")
  
 (defvar cc-imenu-c-generic-expression
@@ -151,10 +146,8 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
   "Imenu generic expression for C mode.  See `imenu-generic-expression'.")
 
 (defvar cc-imenu-java-generic-expression
-  (`
-   ((nil
-     (,
-      (concat
+  `((nil
+     ,(concat
        "^\\([ \t]\\)*"
        "\\([.A-Za-z0-9_-]+[ \t]+\\)?"	      ; type specs; there can be
        "\\([.A-Za-z0-9_-]+[ \t]+\\)?"	      ; more than 3 tokens, right?
@@ -166,7 +159,7 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
        ")[ \t]*"
 ;       "[^;(]"
        "[,a-zA-Z_1-9\n \t]*{"               
-       )) 6)))
+       ) 6))
   "Imenu generic expression for Java mode.  See `imenu-generic-expression'.")
 
 ;;                        *Warning for cc-mode developers* 

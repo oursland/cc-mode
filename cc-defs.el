@@ -102,9 +102,9 @@
 
 (defmacro c-safe (&rest body)
   ;; safely execute BODY, return nil if an error occurred
-  (` (condition-case nil
-	 (progn (,@ body))
-       (error nil))))
+  `(condition-case nil
+       (progn ,@body)
+     (error nil)))
 
 (defsubst c-beginning-of-defun-1 ()
   ;; Wrapper around beginning-of-defun.
@@ -232,7 +232,7 @@
 (defmacro c-add-syntax (symbol &optional relpos)
   ;; a simple macro to append the syntax in symbol to the syntax list.
   ;; try to increase performance by using this macro
-  (` (setq syntax (cons (cons (, symbol) (, relpos)) syntax))))
+  `(setq syntax (cons (cons ,symbol ,relpos) syntax)))
 
 (defmacro c-add-class-syntax (symbol classkey)
   ;; The inclass and class-close syntactic symbols are added in
