@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.41 $
+@comment manual version: $Revision: 2.42 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-30 22:12:41 $
+@comment Last modification: $Date: 1996-05-31 15:03:27 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.41 $)
+@center (manual revision: $Revision: 2.42 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1623,7 +1623,7 @@ the @code{gnu} style, unless you first do a @code{c-set-style} to
 @findex add-style (c-)
 If none of the built-in styles is appropriate, you'll probably want to
 add a new style definition.  Styles are kept in the @code{c-style-alist}
-variable, but you probably won't want to modify this variable directly.
+variable, but you don't want to modify this variable directly.
 @code{cc-mode} provides a function, called @code{c-add-style}, that you
 can use to easily add new styles or update existing styles.  This
 function takes two arguments, a @var{stylename} string, and an
@@ -2032,6 +2032,14 @@ that separate @code{for}-clause statements).
 @cindex   Customizing Semi-colons and Commas
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
+@vindex c-label-minimum-indentation
+@vindex label-minimum-indentation (c-)
+In @code{gnu} style (see @ref{Built-in Styles}), a minimum indentation
+is imposed on lines with @code{label} or @code{case-label} syntax.  This
+minimum indentation is controlled by the variable
+@code{c-label-minimum-indentation}.  The default value for this variable
+is 1.
+
 @vindex c-special-indent-hook
 @vindex special-indent-hook (c-)
 One other customization variable is available in @code{cc-mode}:
@@ -2043,6 +2051,14 @@ declarations in a class definition, etc.  Note however, that you should
 not change point or mark inside your @code{c-special-indent-hook}
 functions (i.e. you'll probably want to wrap your function in a
 @code{save-excursion}).
+
+Setting @code{c-special-indent-hook} in your style definition is handle
+slightly differently than other variables.  In your style definition,
+you should set the value of the association for
+@code{c-special-indent-hook} to a function or list of functions, which
+will be added to @code{c-special-indent-hook} using @code{add-hook}.
+That way, the current setting for the buffer local value of
+@code{c-special-indent-hook} won't be overridden.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
