@@ -686,18 +686,24 @@ This function does not do any hidden buffer changes."
 
       ;; Leave point after the closest following newline if we've
       ;; backed up over any above, since forward-comment won't move
-      ;; backward over a line comment if it starts at the end of that
-      ;; line.
+      ;; backward over a line comment if point is at the end of the
+      ;; same line.
       (if (and (looking-at "\\s *[\n\r]")
 	       (<= (match-end 0) start))
 	  (goto-char (match-end 0)))
 
-      (if (forward-comment -1)
-	  (if (eolp)
-	      ;; If forward-comment above succeeded and we're at eol
-	      ;; then the newline we moved over above didn't end a
-	      ;; line comment, so we give it another go.
-	      (forward-comment -1)
+      (if (if (forward-comment -1)
+	      (if (eolp)
+		  ;; If forward-comment above succeeded and we're at eol
+		  ;; then the newline we moved over above didn't end a
+		  ;; line comment, so we give it another go.
+		  (forward-comment -1)
+		t))
+
+	  ;; Emacs <= 20 and XEmacs move back over the closer of a
+	  ;; block comment that lacks an opener.
+	  (if (looking-at "\\*/")
+	      (progn (forward-char 2) nil)
 	    t)))))
 
 (defsubst c-backward-comments ()
@@ -710,23 +716,26 @@ of the same line to move over a line comment.
 This function does not do any hidden buffer changes."
 
   (let ((start (point)))
-    (while (or
-	    ;; If forward-comment in Emacs 19.34 is given a large
-	    ;; negative value, it'll loop all the way through if it
-	    ;; hits bob.
-	    (and (forward-comment -5)
-		 ;; Some emacsen (e.g. Emacs 19.34) return t when
-		 ;; moving backwards at bob.
-		 (not (bobp)))
+    (while (and
+	    ;; `forward-comment' in some emacsen (e.g. Emacs 19.34)
+	    ;; return t when moving backwards at bob.
+	    (not (bobp))
 
-	    ;; XEmacs treats line continuations as whitespace but only
-	    ;; in the backward direction, which seems a bit odd.
-	    ;; Anyway, this is necessary for Emacs.
-	    (when (and (looking-at "[\n\r]")
-		       (eq (char-before) ?\\)
-		       (< (point) start))
-	      (backward-char)
-	      t)))))
+	    (if (forward-comment -1)
+		(if (looking-at "\\*/")
+		    ;; Emacs <= 20 and XEmacs move back over the
+		    ;; closer of a block comment that lacks an opener.
+		    (progn (forward-char 2) nil)
+		  t)
+
+	      ;; XEmacs treats line continuations as whitespace but
+	      ;; only in the backward direction, which seems a bit
+	      ;; odd.  Anyway, this is necessary for Emacs.
+	      (when (and (looking-at "[\n\r]")
+			 (eq (char-before) ?\\)
+			 (< (point) start))
+		(backward-char)
+		t))))))
 
 
 ;; This is a dynamically bound cache used together with
@@ -1135,16 +1144,19 @@ This function does not do any hidden buffer changes."
 		      (setq simple-ws-beg (point)))
 
 		  (goto-char cpp-beg)
-		  ;; Don't cache at bob in case the buffer is narrowed.
-		  (not (bobp)))))
+		  t)))
 
 	     ((/= (save-excursion
 		    (skip-chars-forward " \t\n\r\f\v" simple-ws-beg)
-		    (point))
+		    (setq next-rung-pos (point)))
 		  simple-ws-beg)
-	      ;; Skipped over comments.  Don't cache at bob in case
-	      ;; the buffer is narrowed.
-	      (not (bobp)))
+	      ;; Skipped over comments.  Must put point at the end of
+	      ;; the simple ws at point since we might be after a line
+	      ;; comment or cpp directive that's been partially
+	      ;; narrowed out, and we can't risk marking the simple ws
+	      ;; at the end of it.
+	      (goto-char next-rung-pos)
+	      t)
 
 	     ((and c-opt-in-comment-lc
 		   (save-excursion
@@ -1152,11 +1164,10 @@ This function does not do any hidden buffer changes."
 				  (backward-char 2)
 				  t)
 			  (looking-at c-opt-in-comment-lc)
-			  (= (match-end 0) simple-ws-beg))))
+			  (= (match-end 0) cmt-skip-pos))))
 	      ;; Skip an in-comment line continuation.
 	      (goto-char (match-beginning 0))
-	      ;; Don't cache at bob in case the buffer is narrowed.
-	      (not (bobp)))))
+	      t)))
 
 	;; We've searched over a piece of non-white syntactic ws.  See if this
 	;; can be cached.

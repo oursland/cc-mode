@@ -270,9 +270,8 @@ or preprocessor directive, the content of it is not treated as
 whitespace.
 
 LIMIT sets a lower limit of the backward movement, if specified.  If
-LIMIT or the beginning of the buffer is reached inside a comment or
-preprocessor directive, the point might be left anywhere between the
-limit and the end of that comment or preprocessor directive.
+LIMIT is reached inside a line comment or preprocessor directive then
+the point is moved into it past the whitespace at the end.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
