@@ -4,6 +4,7 @@ VERSION=5.31
 COREFILES=\
  NEWS \
  cc-align.el \
+ cc-awk.el \
  cc-bytecomp.el \
  cc-cmds.el \
  cc-compat.el \
