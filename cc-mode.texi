@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.16 $
+@comment manual version: $Revision: 2.17 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-04-21 21:15:41 $
+@comment Last modification: $Date: 1995-04-21 21:16:43 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -777,7 +777,7 @@ you can probably achieve your style just by changing
 
 @end example
 
-@noident
+@noindent
 This would change
 @example
 @group
@@ -953,7 +953,7 @@ assume you are using the common hook.
 
 Here's a simplified example of what you can add to your @file{.emacs}
 file to make the changes described in the previous section
-(@ref{Interactive Customizations}) more permanent.  See the Emacs
+(@ref{Interactive Customization}) more permanent.  See the Emacs
 manuals for more information on customizing Emacs via hooks.
 @xref{Sample .emacs File} for a more complete sample @file{.emacs} file.
 @footnote{The use of @code{add-hook} in this example only works for
