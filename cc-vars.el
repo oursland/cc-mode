@@ -256,12 +256,13 @@ to the preceding lines, just like normal code, and `cpp-macro-cont' is
 only used for the first line.
 
 Having this enabled simplifies editing of large multiline macros, but
-it requires them to be written in a certain way: The default context
-inside the macro is the same as the top level, so if it contains
-\"bare\" statements they might be indented wrongly, although there are
-some special cases to recognize statements even here.  The problem is
-usually countered easily by surrounding the statements by a block \(or
-even better by using the \"do { ... } while (0)\" trick)."
+it might complicate editing if CC Mode doesn't recognize the context
+of the macro content.  The default context inside the macro is the
+same as the top level, so if it contains \"bare\" statements they
+might be indented wrongly, although there are special cases that
+handles this in most cases.  If this problem occurs, it's usually
+countered easily by surrounding the statements by a block \(or even
+better with the \"do { ... } while \(0)\" trick)."
   :type 'boolean
   :group 'c)
 
@@ -688,12 +689,6 @@ space."
   :type 'boolean
   :group 'c)
 
-(defcustom c-special-indent-hook nil
-  "*Hook for user defined special indentation adjustments.
-This hook gets called after a line is indented by the mode."
-  :type 'hook
-  :group 'c)
-
 (defcustom c-backspace-function 'backward-delete-char-untabify
   "*Function called by `c-electric-backspace' when deleting backwards."
   :type 'function
@@ -708,6 +703,12 @@ This hook gets called after a line is indented by the mode."
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'."
   :type '(set :extra-offset 8 (const alignleft))
+  :group 'c)
+
+(defcustom c-special-indent-hook nil
+  "*Hook for user defined special indentation adjustments.
+This hook gets called after a line is indented by the mode."
+  :type 'hook
   :group 'c)
 
 (defcustom-c-stylevar c-label-minimum-indentation 1
