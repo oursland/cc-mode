@@ -47,13 +47,13 @@
 ;; derived modes to customize the source constants for new language
 ;; variants, without having to keep up with the exact regexps etc that
 ;; are used in each CC Mode version.  It's possible from an external
-;; package to add a new language, optionally by copying an existing
-;; one, and then change specific constants as necessary for the new
-;; language.  The old values for those constants (and the values of
-;; all the other high-level constants) may be used to build the new
-;; ones, and those new values will in turn be used by the low-level
-;; definitions here to build the runtime constants appropriately for
-;; the new language in the current version of CC Mode.
+;; package to add a new language by inheriting an existing one, and
+;; then change specific constants as necessary for the new language.
+;; The old values for those constants (and the values of all the other
+;; high-level constants) may be used to build the new ones, and those
+;; new values will in turn be used by the low-level definitions here
+;; to build the runtime constants appropriately for the new language
+;; in the current version of CC Mode.
 ;;
 ;; Like elsewhere in CC Mode, the existence of a doc string signifies
 ;; that a language constant is part of the external API, and that it
@@ -72,7 +72,7 @@
 ;; Mode, and the source values in this file don't have to be loaded
 ;; then.  However, if a byte compiled package is loaded that has been
 ;; compiled with a different version of CC Mode than the one currently
-;; loaded then the compiled-in values will be discarded and new ones
+;; loaded, then the compiled-in values will be discarded and new ones
 ;; will be built when the mode is initialized.  That will
 ;; automatically trig a load of the file(s) containing the source
 ;; definitions (i.e. this file and/or cc-fonts.el) if necessary.
@@ -904,11 +904,17 @@ operators."
 ;; `c-kwds-lang-consts' list below and used to build `c-keywords' etc.
 
 (c-lang-defconst c-primitive-type-kwds
-  "Primitive type keywords.
+  "Primitive type keywords.  As opposed to the other keyword lists, the
+keywords listed here are fontified with the type face instead of the
+keyword face.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
-then the associated clauses will be handled."
+then the associated clauses will be handled.
+
+Do not try to modify this list for end user customizations; the
+`*-font-lock-extra-types' variable, where `*' is the mode prefix, is
+the appropriate place for that."
   t    '("char" "double" "float" "int" "long" "short" "signed"
 	 "unsigned" "void")
   c    (append '("complex" "imaginary")	; Conditionally defined in C99.
@@ -930,22 +936,23 @@ then the associated clauses will be handled."
 (c-lang-defvar c-primitive-type-key (c-lang-const c-primitive-type-key))
 
 (c-lang-defconst c-primitive-type-prefix-kwds
-  "Keywords that might act as prefixes for primitive types.  Note that
-this is assumed to be a subset of `c-primitive-type-kwds'."
+  "Keywords that might act as prefixes for primitive types.  Assumed to
+be a subset of `c-primitive-type-kwds'."
   t nil
   (c c++) '("long" "short" "signed" "unsigned"))
 
 (c-lang-defconst c-type-prefix-kwds
   "Keywords where the following name - if any - is a type name, and
 where the keyword together with the symbol works as a type in
-declarations.  (An alternative if the second part doesn't hold is
-`c-type-list-kwds'.)"
+declarations.
+
+Note that an alternative if the second part doesn't hold is
+`c-type-list-kwds'.  Keywords on this list is typically also present
+on one of the `*-decl-kwds' lists."
   t    nil
   c    '("struct" "union" "enum")
-  c++  '("class" "struct" "typename" "union" "enum")
-  objc '("struct" "union" "enum")
-  java '("class")
-  pike '("class" "enum"))
+  c++  (append '("class" "typename")
+	       (c-lang-const c-type-prefix-kwds c)))
 
 (c-lang-defconst c-type-prefix-key
   ;; Adorned regexp matching `c-type-prefix-kwds'.
@@ -954,8 +961,9 @@ declarations.  (An alternative if the second part doesn't hold is
 
 (c-lang-defconst c-type-modifier-kwds
   "Type modifier keywords.  These can occur almost anywhere in types
-but they don't build a type of themselves.  They are fontified like
-keywords, similar to `c-specifier-kwds'."
+but they don't build a type of themselves.  Unlike the keywords on
+`c-primitive-type-kwds', they are fontified with the keyword face and
+not the type face."
   t    nil
   c    '("const" "restrict" "volatile")
   c++  '("const" "volatile" "throw")
@@ -979,38 +987,72 @@ keywords, similar to `c-specifier-kwds'."
 (c-lang-defvar c-opt-type-component-key
   (c-lang-const c-opt-type-component-key))
 
-(c-lang-defconst c-specifier-kwds
-  "Declaration specifier keywords.  These are keywords that may
-prefix declarations but that aren't part of a type, e.g. \"struct\" in
-C isn't a specifier since the whole \"struct foo\" is a type, but
-\"typedef\" is since it precedes the declaration that defines the
-type.
+(c-lang-defconst c-class-decl-kwds
+  "Keywords introducing declarations where the following block (if any)
+contains another declaration level that should be considered a class.
+
+If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
+then the associated clauses will be handled.
+
+Note that presence on this list does not automatically treat the
+following identifier as a type; the keyword must also be present on
+`c-type-prefix-kwds' or `c-type-list-kwds' to accomplish that."
+  t    nil
+  c    '("struct" "union")
+  c++  '("class" "struct" "union")
+  objc '("struct" "union"
+	 "@interface" "@implementation" "@protocol")
+  java '("class" "interface")
+  idl  '("class" "interface" "struct" "union" "valuetype")
+  pike '("class"))
+
+(c-lang-defconst c-class-key
+  ;; Regexp matching the start of a class.
+  t (c-make-keywords-re t (c-lang-const c-class-decl-kwds)))
+(c-lang-defvar c-class-key (c-lang-const c-class-key))
+
+(c-lang-defconst c-brace-list-decl-kwds
+  "Keywords introducing declarations where the following block (if
+any) is a brace list.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 `c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
 then the associated clauses will be handled."
   t nil
-  (c c++) '("auto" "extern" "inline" "register" "typedef" "static")
-  c++  (append '("explicit" "friend" "mutable" "template" "virtual")
-	       (c-lang-const c-specifier-kwds))
-  objc '("auto" "extern" "typedef" "static"
-	 "bycopy" "byref" "in" "inout" "oneway" "out")
-  ;; I have no idea about IDL, so just use the specifiers in C.
-  idl  (c-lang-const c-specifier-kwds c)
-  ;; Note: "const" is not used in Java, but it's still a reserved keyword.
-  java '("abstract" "const" "final" "native" "private" "protected"
-	 "public" "static" "strictfp" "synchronized" "transient" "volatile")
-  pike '("constant" "final" "inline" "local" "nomask" "optional"
-	 "private" "protected" "public" "static" "typedef" "variant"))
+  (c c++ objc pike) '("enum"))
 
-(c-lang-defconst c-specifier-key
-  ;; `c-specifier-kwds' as an adorned regexp.
-  t (c-make-keywords-re t (c-lang-const c-specifier-kwds)))
-(c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
+(c-lang-defconst c-brace-list-key
+  ;; Regexp matching the start of declarations where the following
+  ;; block is a brace list.
+  t (c-make-keywords-re t (c-lang-const c-brace-list-decl-kwds)))
+(c-lang-defvar c-brace-list-key (c-lang-const c-brace-list-key))
+
+(c-lang-defconst c-other-block-decl-kwds
+  "Keywords where the following block (if any) contain another
+declaration level that should not be considered a class.
+
+If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
+then the associated clauses will be handled."
+  t   nil
+  c   '("extern")
+  c++ '("namespace" "extern")
+  idl '("module"))
+
+(c-lang-defconst c-other-decl-block-key
+  ;; Regexp matching the start of blocks besides classes that contain
+  ;; another declaration level.
+  t (c-make-keywords-re t (c-lang-const c-other-block-decl-kwds)))
+(c-lang-defvar c-other-decl-block-key (c-lang-const c-other-decl-block-key))
 
 (c-lang-defconst c-typedef-decl-kwds
   "Keywords introducing declarations where the identifiers are defined
-to be types.  Assumed to be a subset of `c-specifier-kwds'."
+to be types.
+
+If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
+then the associated clauses will be handled."
   t nil
   (c c++ objc pike) '("typedef"))
 
@@ -1021,8 +1063,11 @@ to be types.  Assumed to be a subset of `c-specifier-kwds'."
 
 (c-lang-defconst c-typeless-decl-kwds
   "Keywords introducing declarations where the identifier (declarator)
-list follows directly after the keyword, without any type.  Assumed to
-be a subset of `c-specifier-kwds'."
+list follows directly after the keyword, without any type.
+
+If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
+then the associated clauses will be handled."
   t    nil
   pike '("constant"))
 
@@ -1030,6 +1075,47 @@ be a subset of `c-specifier-kwds'."
   ;; `c-typeless-decl-kwds' as an adorned regexp.
   t (c-make-keywords-re t (c-lang-const c-typeless-decl-kwds)))
 (c-lang-defvar c-typeless-decl-key (c-lang-const c-typeless-decl-key))
+
+(c-lang-defconst c-other-decl-kwds
+  "Keywords that can start or prefix declarations, besides those on
+`c-class-decl-kwds', `c-brace-list-decl-kwds',`c-other-block-decl-kwds',
+`c-typedef-decl-kwds' and `c-typeless-decl-kwds'.  Things like
+argument declarations inside function headers are also considered
+declarations in this sense.
+
+If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
+then the associated clauses will be handled."
+  t    nil
+  (c c++) '("auto" "extern" "inline" "register" "static")
+  c++  (append '("explicit" "friend" "mutable" "template" "using" "virtual")
+	       (c-lang-const c-other-decl-kwds))
+  objc '("auto" "bycopy" "byref" "extern" "in" "inout" "oneway" "out" "static"
+	 "@class" "@end" "@defs")
+  ;; I have no idea about IDL, so just use the specifiers in C.
+  idl  (c-lang-const c-other-decl-kwds c)
+  ;; Note: "const" is not used in Java, but it's still a reserved keyword.
+  java '("abstract" "const" "final" "import" "native" "package" "private"
+	 "protected" "public" "static" "strictfp" "synchronized" "transient"
+	 "volatile")
+  pike '("final" "import" "inherit" "inline" "local" "nomask" "optional"
+	 "private" "protected" "public" "static" "variant"))
+
+(c-lang-defconst c-specifier-key
+  ;; Adorned regexp matching keywords that can start a declaration but
+  ;; not a type.
+  t (c-make-keywords-re t
+      (set-difference (append (c-lang-const c-class-decl-kwds)
+			      (c-lang-const c-brace-list-decl-kwds)
+			      (c-lang-const c-other-block-decl-kwds)
+			      (c-lang-const c-typedef-decl-kwds)
+			      (c-lang-const c-typeless-decl-kwds)
+			      (c-lang-const c-other-decl-kwds))
+		      (append (c-lang-const c-primitive-type-kwds)
+			      (c-lang-const c-type-prefix-kwds)
+			      (c-lang-const c-type-modifier-kwds))
+		      :test 'string-equal)))
+(c-lang-defvar c-specifier-key (c-lang-const c-specifier-key))
 
 (c-lang-defconst c-protection-kwds
   "Protection label keywords in classes."
@@ -1047,58 +1133,14 @@ be a subset of `c-specifier-kwds'."
 	       "\\)[ \t\n\r\f\v]*:"))
 (c-lang-defvar c-opt-access-key (c-lang-const c-opt-access-key))
 
-(c-lang-defconst c-class-kwds
-  "Keywords introducing declarations where the following block (if any)
-contain another declaration level that should be considered a class."
-  t    nil
-  c    '("struct" "union")
-  c++  '("class" "struct" "union")
-  objc '("struct" "union"
-	 "@interface" "@implementation" "@protocol")
-  java '("class" "interface")
-  idl  '("class" "interface" "struct" "union" "valuetype")
-  pike '("class"))
-
-(c-lang-defconst c-class-key
-  ;; Regexp matching the start of a class.
-  t (c-make-keywords-re t (c-lang-const c-class-kwds)))
-(c-lang-defvar c-class-key (c-lang-const c-class-key))
-
-(c-lang-defconst c-brace-list-kwds
-  "Keywords introducing declarations where the following block (if
-any) is a brace list."
-  t nil
-  (c c++ objc pike) '("enum"))
-
-(c-lang-defconst c-brace-list-key
-  ;; Regexp matching the start of declarations where the following
-  ;; block is a brace list.
-  t (c-make-keywords-re t (c-lang-const c-brace-list-kwds)))
-(c-lang-defvar c-brace-list-key (c-lang-const c-brace-list-key))
-
-(c-lang-defconst c-other-decl-block-kwds
-  "Keywords where the following block (if any) contain another
-declaration level that should not be considered a class."
-  t   nil
-  c   '("extern")
-  c++ '("namespace" "extern")
-  idl '("module"))
-
-(c-lang-defconst c-other-decl-block-key
-  ;; Regexp matching the start of blocks besides classes that contain
-  ;; another declaration level.
-  t (c-make-keywords-re t (c-lang-const c-other-decl-block-kwds)))
-(c-lang-defvar c-other-decl-block-key (c-lang-const c-other-decl-block-key))
-
 (c-lang-defconst c-block-decls-with-vars
   "Keywords introducing declarations that can contain a block which
 might be followed by variable declarations, e.g. like \"foo\" in
 \"class Foo { ... } foo;\".  So if there is a block in a declaration
 like that, it ends with the following ';' and not right away.
 
-These keywords are assumed to be a subset of the union of
-`c-class-kwds', `c-typedef-decl-kwds', `c-typeless-decl-kwds' and
-`c-other-decl-block-kwds'."
+The keywords on list are assumed to also be present on one of the
+`*-decl-kwds' lists."
   t        nil
   (c objc) '("struct" "union" "enum" "typedef")
   c++      '("class" "struct" "union" "enum" "typedef"))
@@ -1111,19 +1153,6 @@ These keywords are assumed to be a subset of the union of
 (c-lang-defvar c-opt-block-decls-with-vars-key
   (c-lang-const c-opt-block-decls-with-vars-key))
 
-(c-lang-defconst c-other-decl-kwds
-  "Keywords introducing declarations that has not been accounted for by
-any other keyword list that can be applied at the beginning of a
-declaration.  They are: `c-primitive-type-kwds',
-`c-primitive-type-prefix-kwds', `c-type-modifier-kwds',
-`c-specifier-kwds', `c-typedef-decl-kwds', `c-typeless-decl-kwds',
-`c-protection-kwds', `c-class-kwds', `c-other-decl-block-kwds'."
-  t    nil
-  c++  '("using")
-  objc '("@class" "@end" "@defs")
-  java '("import" "package")
-  pike '("import" "inherit"))
-
 (c-lang-defconst c-decl-spec-kwds
   "Keywords introducing extra declaration specifiers in the region
 between the header and the body \(i.e. the \"K&R-region\") in
@@ -1135,12 +1164,18 @@ declarations."
   "Keywords that may be followed by a comma separated list of type
 identifiers, where each optionally can be prefixed by keywords.  (Can
 also be used for the special case when the list can contain only one
-element.)  Assumed to be mutually exclusive with `c-ref-list-kwds'."
-  t    nil
-  objc '("@class" "@interface" "@implementation" "@protocol")
-  java (append '("import" "new")
+element.)
+
+Assumed to be mutually exclusive with `c-ref-list-kwds'.  There's no
+reason to put keywords on this list if they are on
+`c-type-prefix-kwds'."
+  t    '("struct" "union" "enum")
+  (c c++) nil
+  objc (append '("@class" "@interface" "@implementation" "@protocol")
+	       (c-lang-const c-type-list-kwds))
+  java (append '("class" "import" "interface" "new")
 	       (c-lang-const c-decl-spec-kwds))
-  pike '("inherit"))
+  pike '("class" "enum" "inherit"))
 
 (c-lang-defconst c-ref-list-kwds
   "Keywords that may be followed by a comma separated list of
@@ -1187,7 +1222,7 @@ type identifiers separated by arbitrary tokens."
   "Keywords that may be followed by a brace block containing a comma
 separated list of identifier definitions, i.e. like the list of
 identifiers that follows the type in a normal declaration."
-  t (c-lang-const c-brace-list-kwds))
+  t (c-lang-const c-brace-list-decl-kwds))
 
 (c-lang-defconst c-<>-arglist-kwds
   "Keywords that can be followed by a C++ style template arglist; see
@@ -1372,7 +1407,7 @@ Note that Java specific rules are currently applied to tell this from
   ;; Regexp matching the start of any class, both at top level and in
   ;; expressions.
   t (c-make-keywords-re t
-      (append (c-lang-const c-class-kwds)
+      (append (c-lang-const c-class-decl-kwds)
 	      (c-lang-const c-inexpr-class-kwds))))
 (c-lang-defvar c-any-class-key (c-lang-const c-any-class-key))
 
@@ -1381,8 +1416,8 @@ Note that Java specific rules are currently applied to tell this from
   ;; contain another declaration level, i.e. that isn't a function
   ;; block or brace list.
   t (c-make-keywords-re t
-      (append (c-lang-const c-class-kwds)
-	      (c-lang-const c-other-decl-block-kwds)
+      (append (c-lang-const c-class-decl-kwds)
+	      (c-lang-const c-other-block-decl-kwds)
 	      (c-lang-const c-inexpr-class-kwds))))
 (c-lang-defvar c-decl-block-key (c-lang-const c-decl-block-key))
 
@@ -1464,11 +1499,11 @@ Note that Java specific rules are currently applied to tell this from
   ;; lists it's a member of.
   ;;
   ;; E.g. to see whether the string str contains a keyword on
-  ;; `c-class-kwds', one can do like this:
-  ;;     (get (intern-soft str c-keyword-obarray) 'c-class-kwds)
+  ;; `c-class-decl-kwds', one can do like this:
+  ;;     (get (intern-soft str c-keyword-obarray) 'c-class-decl-kwds)
   ;; Which preferably is written using the associated functions in
   ;; cc-engine:
-  ;;     (c-keyword-member (c-keyword-sym str) 'c-class-kwds)
+  ;;     (c-keyword-member (c-keyword-sym str) 'c-class-decl-kwds)
 
   ;; The obarray is not stored directly as a language constant since
   ;; the printed representation for obarrays used in .elc files isn't
@@ -1506,11 +1541,12 @@ Note that Java specific rules are currently applied to tell this from
 		      (append (c-lang-const c-primitive-type-kwds)
 			      (c-lang-const c-type-prefix-kwds)
 			      (c-lang-const c-type-modifier-kwds)
-			      (c-lang-const c-specifier-kwds)
-			      (c-lang-const c-class-kwds)
-			      (c-lang-const c-other-decl-block-kwds)
-			      (c-lang-const c-block-decls-with-vars)
-			      (c-lang-const c-protection-kwds))
+			      (c-lang-const c-class-decl-kwds)
+			      (c-lang-const c-brace-list-decl-kwds)
+			      (c-lang-const c-other-block-decl-kwds)
+			      (c-lang-const c-typedef-decl-kwds)
+			      (c-lang-const c-typeless-decl-kwds)
+			      (c-lang-const c-other-decl-kwds))
 		      :test 'string-equal)))
 (c-lang-defvar c-not-decl-init-keywords
   (c-lang-const c-not-decl-init-keywords))
@@ -1742,8 +1778,8 @@ statement."
   ;; Regexp describing friend declarations classes, or nil in
   ;; languages that doesn't have such things.
   ;;
-  ;; TODO: Ought to use `c-specifier-kwds' or similar, and the
-  ;; template skipping isn't done properly.
+  ;; TODO: Ought to use `c-specifier-key' or similar, and the template
+  ;; skipping isn't done properly.  This will disappear soon.
   t nil
   c++ "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+")
 (c-lang-defvar c-opt-friend-key (c-lang-const c-opt-friend-key))
