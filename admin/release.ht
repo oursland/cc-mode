@@ -15,7 +15,8 @@ as an approximately <a href="cc-mode.tar.gz">116KB gzip'd
 tarball</a>.  You can also download the <a href="cc-mode/">individual
 files</a> of the current release, or <code>patch(1)</code> style
 <a href="patches/">context diffs</a> if you are upgrading from a
-previous version of CC Mode.
+previous version of CC Mode (sorry no diffs are available between 5.21 
+and 5.24).
 
 <p>The documentation is also available in several forms.  You can
 either <a href="cc-mode.html/Top.html">browse the on-line
