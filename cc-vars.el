@@ -836,7 +836,9 @@ can always override the use of `c-default-style' by making calls to
        (block-close           . 0)
        ;; Relpos: Inexpr statement: At the inexpr block open if it's
        ;; at boi, else at the statement(*) at boi of the start of the
-       ;; inexpr construct.  Otherwise: At the block open(*).
+       ;; inexpr construct.  Block hanging on a case/switch label: At
+       ;; the closest preceding label that starts at boi.  Otherwise:
+       ;; At the block open(*).
        (brace-list-open       . 0)
        ;; Relpos: Boi at the brace list decl start, but a starting
        ;; "typedef" token is ignored.
@@ -861,8 +863,10 @@ can always override the use of `c-default-style' by making calls to
        (statement-block-intro . +)
        ;; Relpos: In inexpr statement block: At the inexpr block open
        ;; if it's at boi, else at the statement(*) at boi of the start
-       ;; of the inexpr construct.  Otherwise: At the start of the
-       ;; containing block(*).
+       ;; of the inexpr construct.  In a block hanging on a
+       ;; case/switch label: At the closest preceding label that
+       ;; starts at boi.  Otherwise: At the start of the containing
+       ;; block(*).
        (statement-case-intro  . +)
        ;; Relpos: At the case/default label(*).
        (statement-case-open   . 0)
