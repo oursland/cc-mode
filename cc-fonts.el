@@ -1315,8 +1315,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			(throw 'at-decl-or-cast t))
 
 		      (when (and got-parens
-				 at-decl-end
-				 (not got-prefix-before-parens)
+				 (not got-prefix)
 				 (not got-suffix-after-parens)
 				 (or prev-at-type maybe-typeless))
 			;; Got a declaration of the form "foo bar (gnu);"
