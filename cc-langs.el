@@ -885,7 +885,11 @@ operators."
 ;; `c-kwds-lang-consts' list below and used to build `c-keywords' etc.
 
 (c-lang-defconst c-primitive-type-kwds
-  "Primitive type keywords."
+  "Primitive type keywords.
+
+If any of these also are on `c-type-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds' or `c-<>-arglist-kwds',
+the clauses associated with them will be handled."
   t    '("char" "double" "float" "int" "long" "short" "signed"
 	 "unsigned" "void")
   c    (append '("complex" "imaginary")	; Conditionally defined in C99.
@@ -961,7 +965,11 @@ keywords, similar to `c-specifier-kwds'."
 prefix declarations but that aren't part of a type, e.g. \"struct\" in
 C isn't a specifier since the whole \"struct foo\" is a type, but
 \"typedef\" is since it precedes the declaration that defines the
-type."
+type.
+
+If any of these also are on `c-type-list-kwds',
+`c-colon-type-list-kwds', `c-paren-type-kwds' or `c-<>-arglist-kwds',
+the clauses associated with them will be handled."
   t nil
   (c c++) '("auto" "extern" "inline" "register" "typedef" "static")
   c++  (append '("explicit" "friend" "mutable" "template" "virtual")
