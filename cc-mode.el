@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.288 $
-;; Last Modified:   $Date: 1996-05-02 21:18:56 $
+;; Version:         $Revision: 4.289 $
+;; Last Modified:   $Date: 1996-05-03 22:03:13 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1186,6 +1186,10 @@ The expansion is entirely correct because it uses the C preprocessor."
    ;;"\\(\\s *implements *[^{]+{\\)?"	;and maybe the adopted protocols list
    )
   "Regexp describing a class or protocol declaration for Java.")
+(defconst c-Java-conditional-key
+  "\\b\\(for\\|if\\|do\\|else\\|while\\|switch\\|try\\|catch\\|finally\\)\\b[^_]"
+  "Regexp describing a conditional control for C++.")
+
 
 ;; KLUDGE ALERT.  We default these variables to their `C' values so
 ;; that non-cc-mode-ized modes that depend on c-mode will still work
@@ -1340,7 +1344,7 @@ Key bindings:
   (setq comment-start "// "
  	comment-end   ""
  	comment-multi-line nil
- 	c-conditional-key c-C-conditional-key
+ 	c-conditional-key c-Java-conditional-key
  	c-comment-start-regexp c-C++-comment-start-regexp
   	c-class-key c-Java-class-key
 	c-method-key c-Java-method-key
@@ -4816,7 +4820,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.288 $"
+(defconst c-version "$Revision: 4.289 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
