@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-20 22:53:43 $
-;; Version:         $Revision: 2.68 $
+;; Last Modified:   $Date: 1992-05-21 19:18:31 $
+;; Version:         $Revision: 2.69 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-20 22:53:43 $|$Revision: 2.68 $|
+;; |$Date: 1992-05-21 19:18:31 $|$Revision: 2.69 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -189,7 +189,7 @@ automatically escaped when typed in, but entering
 \\[c++-tame-comments] will escape all character in the set.")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.68 $
+  "Major mode for editing C++ code.  $Revision: 2.69 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1086,15 +1086,13 @@ Returns nil if line starts inside a string, t if in a comment."
 	       ;; This line may start a new statement, or it could
 	       ;; represent the while closure of a do/while construct
 	       (if (save-excursion
-		     (and
-		      (progn
-			(goto-char indent-point)
-			(skip-chars-forward " \t\n")
-			(looking-at "while\\b"))
-		      (progn
-			(c++-backward-to-start-of-do containing-sexp)
-			(looking-at "do\\b"))
-		      (setq do-indentation (current-column))))
+		     (and (progn (goto-char indent-point)
+				 (skip-chars-forward " \t\n")
+				 (looking-at "while\\b"))
+			  (progn
+			    (c++-backward-to-start-of-do containing-sexp)
+			    (looking-at "do\\b"))
+			  (setq do-indentation (current-column))))
 		   do-indentation
 		 ;; this could be a case statement. if so we want to
 		 ;; indent it like the first case statement after a switch
@@ -1646,7 +1644,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.68 $"
+(defconst c++-version "$Revision: 2.69 $"
   "c++-mode version number.")
 
 (defun c++-version ()
