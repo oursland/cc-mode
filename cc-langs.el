@@ -181,8 +181,9 @@ appended."
 
 ;; Regexp that matches any character that can't be part of a symbol.
 ;; It's usually appended to other regexps to avoid matching a prefix.
-;; The same thing regarding Unicode identifiers applies here as to
-;; `c-symbol-key' below.
+;; It's assumed to not contain any submatchers.  The same thing
+;; regarding Unicode identifiers applies here as to `c-symbol-key'
+;; below.
 (c-lang-defconst c-nonsymbol-key
   all "[^_a-zA-Z0-9$]")
 
