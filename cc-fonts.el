@@ -778,7 +778,8 @@ other easily recognizable things.  Used on level 2 and higher."
 		 nil))
      ;; Search again if the match is within a comment or a string
      ;; literal.
-     (goto-char (next-single-property-change match-pos 'face nil (point-max)))))
+     (goto-char (next-single-property-change
+		 match-pos 'face nil (point-max)))))
 
 (defun c-font-lock-declarations (limit)
   ;; Fontify all the declarations and casts from the point to LIMIT.
@@ -1024,7 +1025,8 @@ other easily recognizable things.  Used on level 2 and higher."
 	      (throw 'continue t))
 	    (narrow-to-region (point-min) macro-end))
 
-	  (setq at-type nil
+	  (setq start-pos (point)
+		at-type nil
 		at-decl-or-cast nil
 		at-typedef nil)
 
@@ -1181,14 +1183,44 @@ other easily recognizable things.  Used on level 2 and higher."
 				    (setq got-suffix t))))
 		      (c-forward-syntactic-ws))
 
-		    (when (or (= (point) start) (> paren-depth 0))
-		      ;; We haven't found anything or we're at a token that
-		      ;; isn't valid in a type decl inside a parenthesis.
+		    (when (= (point) start)
+		      ;; We haven't found anything.
+		      (throw 'at-decl-or-cast nil))
+
+		    (when (> paren-depth 0)
+		      ;; We're at a token that isn't valid in a type decl
+		      ;; inside a parenthesis.
+		      (when (and (= paren-depth 1)
+				 (not got-identifier)
+				 (not got-prefix)
+				 (not got-suffix)
+				 (not (eq at-type t))
+				 (c-safe
+				   (goto-char (scan-lists (point) 1 1))
+				   (eq (char-before) ?\)))
+				 (or (progn (c-forward-syntactic-ws)
+					    (eq (char-after) ?{))
+				     (and (c-major-mode-is 'c++-mode)
+					  (or (eq at-type 'found)
+					      (eq (char-after) ?:)))))
+			;; (*) Got no identifier but a paren pair and a
+			;; preceding type that might not be a type.  If it's
+			;; followed by an open brace it's really a function
+			;; that lacks a return type, which can happen in K&R C
+			;; and for (con|de)structors in C++.  In C++ we also
+			;; check if the type is known, since (con|de)structors
+			;; use the class name as identifier, or if the colon
+			;; of a base class member initializer follows.  See
+			;; also (#) below.
+			(setq at-decl-or-cast t)
+			(unless prev-at-type
+			  (setq prev-at-type t
+				prev-type-end start-pos)))
 		      (throw 'at-decl-or-cast nil))
 
 		    (if got-identifier
 			(progn
-			  (unless (or got-prefix got-parens)
+			  (when (and at-type (not (or got-prefix got-parens)))
 			    ;; Got another identifier directly after the type,
 			    ;; so it's a declaration.
 			    (throw 'at-decl-or-cast t))
@@ -1240,6 +1272,29 @@ other easily recognizable things.  Used on level 2 and higher."
 			;; before.  The second one is not the type afterall,
 			;; so return nil to let the conditional below shift to
 			;; the type in `prev-*'.
+			(throw 'at-decl-or-cast nil))
+
+		      (when (and got-parens
+				 (not got-prefix)
+				 (not got-suffix)
+				 (not (eq at-type t))
+				 (or (eq (char-after) ?{)
+				     (and (c-major-mode-is 'c++-mode)
+					  (or (eq at-type 'found)
+					      (eq (char-after) ?:)))))
+			;; (#) Got an empty paren pair and a preceding type
+			;; that might not be a type.  If it's followed by an
+			;; open brace it's really a function that lacks a
+			;; return type, which can happen in K&R C and for
+			;; (con|de)structors in C++.  In C++ we also check if
+			;; the type is known, since (con|de)structors use the
+			;; class name as identifier, or if the colon of a base
+			;; class member initializer follows.  See also (*)
+			;; above.
+			(setq at-decl-or-cast t)
+			(unless prev-at-type
+			  (setq prev-at-type t
+				prev-type-end start-pos))
 			(throw 'at-decl-or-cast nil)))
 
 		    (unless (looking-at (if arglist-match "[,\)]" "[,;]"))
@@ -1351,7 +1406,7 @@ other easily recognizable things.  Used on level 2 and higher."
 
 	      (progn
 		(setq last-cast-end cast-end)
-		(unless (eq at-type t)
+		(when (and at-type (not (eq at-type t)))
 		  (let ((c-promote-possible-types t))
 		    (goto-char type-start)
 		    (c-forward-type))))
@@ -1376,7 +1431,7 @@ other easily recognizable things.  Used on level 2 and higher."
 		(setq max-type-decl-end
 		      (max max-type-decl-end (point))))
 
-	      (unless (eq at-type t)
+	      (when (and at-type (not (eq at-type t)))
 		(let ((c-promote-possible-types t))
 		  (goto-char type-start)
 		  (c-forward-type)))
