@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.237 $
-;; Last Modified:   $Date: 1995-07-27 22:12:34 $
+;; Version:         $Revision: 4.238 $
+;; Last Modified:   $Date: 1995-08-01 22:14:32 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-07-27 22:12:34 $|$Revision: 4.237 $|
+;; |$Date: 1995-08-01 22:14:32 $|$Revision: 4.238 $|
 
 ;;; Code:
 
@@ -4527,7 +4527,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.237 $"
+(defconst c-version "$Revision: 4.238 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
@@ -4605,6 +4605,31 @@ it trailing backslashes are removed."
   (c-keep-region-active))
     
 
+(defun c-copy-tree (tree)
+  ;; Line XEmacs 19.12's copy-tree
+  (if (consp tree)
+      (cons (c-copy-tree (car tree))
+	    (c-copy-tree (cdr tree)))
+    (if (vectorp tree)
+	(let* ((new (copy-sequence tree))
+	       (i (1- (length new))))
+	  (while (>= i 0)
+	    (aset new i (c-copy-tree (aref new i)))
+	    (setq i (1- i)))
+	  new)
+      tree)))
+
+(defun c-mapcar-defun (var)
+  (let ((val (symbol-value var)))
+    (cons var (if (atom val) val
+		;; XEmacs 19.12 and Emacs 19 + lucid.el have this
+		(if (fboundp 'copy-tree)
+		    (copy-tree val)
+		  ;; Emacs 19 and Emacs 18
+		  (c-copy-tree val)
+		  )))
+    ))
+
 ;; dynamically append the default value of most variables. This is
 ;; crucial because future c-set-style calls will always reset the
 ;; variables first to the "CC-MODE" style before instituting the new
@@ -4612,29 +4637,23 @@ it trailing backslashes are removed."
 (or (assoc "CC-MODE" c-style-alist)
     (progn
       (c-add-style "CC-MODE"
-		   (mapcar
-		    (function
-		     (lambda (var)
-		       (let ((val (symbol-value var)))
-			 (cons var (if (atom val) val
-				     (copy-tree val)))
-			 )))
-		    '(c-backslash-column
-		      c-basic-offset
-		      c-block-comments-indent-p
-		      c-cleanup-list
-		      c-comment-only-line-offset
-		      c-echo-syntactic-information-p
-		      c-electric-pound-behavior
-		      c-hanging-braces-alist
-		      c-hanging-colons-alist
-		      c-hanging-comment-ender-p
-		      c-offsets-alist
-		      c-recognize-knr-p
-		      c-strict-syntax-p
-		      c-tab-always-indent
-		      c-inhibit-startup-warnings-p
-		      ))))
+		   (mapcar 'c-mapcar-defun
+			   '(c-backslash-column
+			     c-basic-offset
+			     c-block-comments-indent-p
+			     c-cleanup-list
+			     c-comment-only-line-offset
+			     c-echo-syntactic-information-p
+			     c-electric-pound-behavior
+			     c-hanging-braces-alist
+			     c-hanging-colons-alist
+			     c-hanging-comment-ender-p
+			     c-offsets-alist
+			     c-recognize-knr-p
+			     c-strict-syntax-p
+			     c-tab-always-indent
+			     c-inhibit-startup-warnings-p
+			     ))))
     ;; the default style is now GNU.  This can be overridden in
     ;; c-mode-common-hook or {c,c++,objc}-mode-hook.
     (c-set-style "GNU"))
