@@ -120,7 +120,7 @@
   "Move to the start of the current statement or declaration, or to
 the previous one if already at the beginning of one.  Only
 statements/declarations on the same level are considered, i.e. don't
-move into or out of sexps.
+move into or out of sexps (not even normal expression parentheses).
 
 Stop at statement continuations like \"else\", \"catch\", \"finally\"
 and the \"while\" in \"do ... while\" if the start point is within
@@ -138,7 +138,7 @@ should be no such mistakes in a statement context, however.
 Macros are ignored unless point is within one, in which case the
 content of the macro is treated as normal code.  Aside from any normal
 statement starts found in it, stop at the first token of the content
-if the macro, i.e. the expression of an \"#if\" or the start of the
+in the macro, i.e. the expression of an \"#if\" or the start of the
 definition in a \"#define\".  Also stop at start of macros before
 leaving them.
 
