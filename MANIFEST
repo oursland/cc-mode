@@ -1,17 +1,17 @@
-MANIFEST for tar distribution of cc-mode.el 4.222
-Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-$Date: 1995-06-11 21:45:34 $
+MANIFEST for tar distribution of cc-mode.el 4.241
+Barry A. Warsaw <cc-mode-help@merlin.cnri.reston.va.us>
+$Date: 1995-08-29 15:29:18 $
 
 You should have received the following files in the distribution tar
-file for cc-mode 4.222:
+file for cc-mode 4.241:
 
     ANNOUNCEMENT: Release announcement as it appeared on various newsgroups.
 
     MANIFEST: This file.
 
-    cc-mode.el: Version 4.222 of the mode.
+    cc-mode.el: Version 4.241 of the mode.
 
-    cc-mode.texi: Texinfo manual.
+    cc-mode.texi: The CC-MODE Texinfo manual.
 
     cc-compat.el: Helps ease the transition from c-mode.el to cc-mode
     style indentation control.  This is provided for your convenience
@@ -31,7 +31,6 @@ file for cc-mode 4.222:
     README: Quick intro into how to get cc-mode up and running.
 
     DUMPING: An guide to ditching c-mode.el and c++-mode.el in favor
-    of cc-mode.el.  Probably out-of-date and unnecessary for the
-    newest Emacs and XEmacs releases.
+    of cc-mode.el.  Unnecessary for XEmacs 19.11 and 19.12.
 
     ChangeLog: Extremely verbose history of changes.
