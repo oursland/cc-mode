@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.335 $
-;; Last Modified:   $Date: 1996-12-19 21:00:24 $
+;; Version:         $Revision: 4.336 $
+;; Last Modified:   $Date: 1996-12-23 21:30:28 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -1153,7 +1153,7 @@ behavior that users are familiar with.")
 ;; defconst'd instead of defvar'd to override any old pre-loaded versions
 (defconst c-recognize-knr-p t
   "Non-nil means K&R style argument declarations are valid.")
-(defvar c-buffer-style "gnu"
+(defvar c-indentation-style "gnu"
   "Name of style installed in the current buffer.")
 
 ;; minor mode variables
@@ -1169,7 +1169,7 @@ behavior that users are familiar with.")
 (make-variable-buffer-local 'c-double-slash-is-comments-p)
 (make-variable-buffer-local 'c-baseclass-key)
 (make-variable-buffer-local 'c-recognize-knr-p)
-(make-variable-buffer-local 'c-buffer-style)
+(make-variable-buffer-local 'c-indentation-style)
 ;; style variables are made buffer local at tail end of this file.
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
@@ -2366,7 +2366,7 @@ STYLENAME is a string representing the desired style from the list of
 styles described in the variable `c-style-alist'.  See that variable
 for details of setting up styles.
 
-The variable `c-buffer-style' always contains the buffer's current
+The variable `c-indentation-style' always contains the buffer's current
 style name."
   (interactive (list (let ((completion-ignore-case t)
 			   (prompt (format "Which %s indentation style? "
@@ -2382,7 +2382,7 @@ style name."
     ;; first reset the style to `cc-mode' to give every style a common
     ;; base. Then institute the new style.
     (c-set-style-1 default)
-    (setq c-buffer-style stylename)
+    (setq c-indentation-style stylename)
     (if (not (string= stylename "cc-mode"))
 	(c-set-style-1 vars)))
   (c-keep-region-active))
@@ -5051,7 +5051,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.335 $"
+(defconst c-version "$Revision: 4.336 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
