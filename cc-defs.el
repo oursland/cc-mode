@@ -28,6 +28,22 @@
 ;; Boston, MA 02111-1307, USA.
 
 
+;; Get all the necessary compile time definitions.
+(require 'custom)
+(require 'cc-menus)
+
+;; cc-mode-19.el contains compatibility macros that should be compiled
+;; in if needed.
+(if (or (not (fboundp 'functionp))
+	(not (fboundp 'char-before))
+	(not (condition-case nil
+		 (progn (char-after) t)
+	       (error nil)))
+	(not (fboundp 'when))
+	(not (fboundp 'unless)))
+    (require 'cc-mode-19))
+
+
 (defsubst c-point (position)
   ;; Returns the value of point at certain commonly referenced POSITIONs.
   ;; POSITION can be one of the following symbols:

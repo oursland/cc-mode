@@ -1,14 +1,10 @@
-;;; cc-make.el --- Makes sure globally needed packages are loaded.
-
-;; Copyright (C) 1997 Free Software Foundation, Inc.
+;;; cc-make.el --- Simplifies compilation.
 
 ;; Authors:    1997 Barry A. Warsaw
 ;; Maintainer: cc-mode-help@python.org
 ;; Created:    22-Apr-1997 (split from cc-mode.el)
 ;; Version:    See cc-mode.el
 ;; Keywords:   c languages oop
-
-;; This file is part of GNU Emacs.
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -37,36 +33,22 @@
       nil
       )
 
-
-(or (member default-directory load-path)
-    (setq load-path (cons default-directory load-path)))
+(if cc-path-to-the-custom-library
+    (setq load-path (cons cc-path-to-the-custom-library load-path)))
 
-(let ((load-path (if cc-path-to-the-custom-library
-		     (cons cc-path-to-the-custom-library load-path)
-		   load-path)))
-  (if (not (and (condition-case nil
-		    (require 'custom)
-		  (error nil))
-		;; Stock Emacs 19.34 doesn't have this
-		(fboundp 'defcustom)))
-      (error "STOP! STOP! STOP! STOP!
+(if (not (and (condition-case nil
+		  (require 'custom)
+		(error nil))
+	      ;; Stock Emacs 19.34 doesn't have this
+	      (fboundp 'defcustom)))
+    (error "STOP! STOP! STOP! STOP!
 
 The Custom library was not found or is out of date.  A more current
 version is required to use CC Mode 5.  You MUST fix cc-make.el.  See
-that file or the CC Mode README for details.")))
+that file or the CC Mode README for details."))
 
-;; Always get the compile time definitions
-(require 'cc-defs)
-(require 'cc-menus)
+(setq load-path (cons default-directory load-path))
 
-;; cc-mode-19.el contains compatibility macros that should be compiled
-;; in if needed.
-(if (or (not (fboundp 'functionp))
-	(not (fboundp 'char-before))
-	(not (c-safe (char-after) t))
-	(not (fboundp 'when))
-	(not (fboundp 'unless)))
-    (require 'cc-mode-19))
+(batch-byte-compile)
 
-(provide 'cc-make)
 ;;; cc-make.el ends here
