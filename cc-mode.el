@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-19 18:53:35 $
-;; Version:         $Revision: 2.58 $
+;; Last Modified:   $Date: 1992-05-19 19:21:19 $
+;; Version:         $Revision: 2.59 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-19 18:53:35 $|$Revision: 2.58 $|
+;; |$Date: 1992-05-19 19:21:19 $|$Revision: 2.59 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -192,7 +192,7 @@ things such as some indenting and blinking of parenthesis.
 See also the function c++-tame-comments \"\\[c++-tame-comments]\".")
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.58 $
+  "Major mode for editing C++ code.  $Revision: 2.59 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -960,22 +960,25 @@ Returns nil if line starts inside a string, t if in a comment."
 		       (progn
 			 (backward-char 1)
 			 (skip-chars-backward " \t")))
-		   (if (or (= (preceding-char) ?})
-			   (= (preceding-char) ?\)))
-		       0
-		     (beginning-of-line) ; continued arg decls or member inits
-		     (skip-chars-forward " \t")
-		     (if (looking-at "/[/*]")
+		   ;; may be first line after a hanging member init colon
+		   (if (= (preceding-char) ?:)
+		       c++-member-init-indent
+		     (if (or (= (preceding-char) ?})
+			     (= (preceding-char) ?\)))
 			 0
-		       (if (= (following-char) ?:)
-			   (if c++-continued-member-init-offset
-			       (+ (current-indentation)
-				  c++-continued-member-init-offset)
-			     (progn
-			       (forward-char 1)
-			       (skip-chars-forward " \t")
-			       (current-column)))
-			 (current-indentation))))
+		       (beginning-of-line) ; cont arg decls or member inits
+		       (skip-chars-forward " \t")
+		       (if (looking-at "/[/*]")
+			   0
+			 (if (= (following-char) ?:)
+			     (if c++-continued-member-init-offset
+				 (+ (current-indentation)
+				    c++-continued-member-init-offset)
+			       (progn
+				 (forward-char 1)
+				 (skip-chars-forward " \t")
+				 (current-column)))
+			   (current-indentation)))))
 		   ))))
 	    ((/= (char-after containing-sexp) ?{)
 	     ;; line is expression, not statement:
@@ -1604,7 +1607,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.58 $"
+(defconst c++-version "$Revision: 2.59 $"
   "c++-mode version number.")
 
 (defun c++-version ()
