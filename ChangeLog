@@ -14,15 +14,6 @@ Sat Mar  8 00:36:55 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 	optional space after protection key should be
 	inside first paren group.
 
-	* README: Add a note about building the manuals.
-
-	* MANIFEST, ANNOUNCEMENT, ChangeLog: Updated for cc-mode 4.377
-
-Fri Mar  7 23:36:14 1997  Barry A. Warsaw  <cc-mode-help@python.org>
-
-	* cc-mode.texi:
-	Macro-ized @ccmode{}.  It's not perfect, but good enough for now.
-
 Fri Feb 28 18:12:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* cc-mode.el (c-functionp, c-copy-tree):
