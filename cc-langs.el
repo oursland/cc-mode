@@ -300,7 +300,8 @@ operator at the top level."
 (c-lang-defvar c-symbol-start (c-lang-const c-symbol-start))
 
 (c-lang-defconst c-symbol-key
-  "Regexp matching identifiers and keywords."
+  "Regexp matching identifiers and keywords.  Assumed to match if
+`c-symbol-start' matches on the same position."
   ;; We cannot use just `word' syntax class since `_' cannot be in
   ;; word class.  Putting underscore in word class breaks forward word
   ;; movement behavior that users are familiar with.  Besides, it runs
