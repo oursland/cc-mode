@@ -103,3 +103,7 @@ function foo()
 	    if (e) f
 	    else g
 }
+
+# Local Variables:
+# cc-test-skip: (no-syntax-properties)
+# End:
