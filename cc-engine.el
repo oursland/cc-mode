@@ -1061,13 +1061,13 @@ comment at the start of cc-engine.el for more info."
 (defun c-forward-single-comment ()
   "Move forward past whitespace and the closest following comment, if any.
 Return t if a comment was found, nil otherwise.  In either case, the
-point is moved past the following whitespace.  Line continuations,
-i.e. backslashes followed by line breaks, are treated as whitespace.
-In AWK Mode, an end of line which terminates a statement \(a \"virtual
-semicolon\") is NOT regarded as whitespace.  The line breaks that end
-line comments are considered to be the comment enders, so the point
-will be put on the beginning of the next line if it moved past a line
-comment.
+point is moved past any whitespace following the point.  Line
+continuations, i.e. backslashes followed by line breaks, are treated
+as whitespace.  In AWK Mode, an end of line which terminates a
+statement \(a \"virtual semicolon\") is NOT regarded as whitespace.
+The line breaks that end line comments are considered to be the
+comment enders, so the point will be put on the beginning of the next
+line if it moved past a line comment.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
@@ -1126,12 +1126,13 @@ comment at the start of cc-engine.el for more info."
 (defun c-backward-single-comment ()
   "Move backward past whitespace and the closest preceding comment, if any.
 Return t if a comment was found, nil otherwise.  In either case, the
-point is moved past the preceding whitespace.  Line continuations,
-i.e. backslashes followed by line breaks, are treated as whitespace.
-In AWK Mode, an end of line which terminates a statement \(a \"virtual
-semicolon\") is NOT regarded as whitespace.  The line breaks that end
-line comments are considered to be the comment enders, so the point
-cannot be at the end of the same line to move over a line comment.
+point is moved past any whitespace preceding the point.  Line
+continuations, i.e. backslashes followed by line breaks, are treated
+as whitespace.  In AWK Mode, an end of line which terminates a
+statement \(a \"virtual semicolon\") is NOT regarded as whitespace.
+The line breaks that end line comments are considered to be the
+comment enders, so the point cannot be at the end of the same line to
+move over a line comment.
 
 Note that this function might do hidden buffer changes.  See the
 comment at the start of cc-engine.el for more info."
