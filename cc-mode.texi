@@ -942,8 +942,11 @@ it after the @code{else} has been typed in full, since it's not until
 then it's possible to decide whether it's a new statement or a
 continuation of the preceding @code{if}.
 
+@vindex abbrev-mode
+@findex abbrev-mode
+@cindex Abbrev mode
 @ccmode{} uses Abbrev mode (@pxref{Abbrevs,,, emacs, The Emacs Editor})
-to achieve this. It's therefore turned on by default in all language
+to accomplish this. It's therefore turned on by default in all language
 modes except IDL mode, since IDL doesn't have any statements.
 
 @end itemize
@@ -1302,7 +1305,7 @@ initialization, you need to reinitialize the program mode if you change
 it inside a @ccmode{} buffer.
 
 @findex auto-fill-mode
-@cindex auto fill mode
+@cindex Auto Fill mode
 @cindex paragraph fill
 Line breaks are by default handled (almost) the same regardless whether
 they are made by auto fill mode (@pxref{Auto Fill,,, emacs, The Emacs
@@ -1314,7 +1317,7 @@ same indentation as the previous nonempty line (may be changed with the
 lines in the comment.
 
 @vindex adaptive-fill-mode
-@cindex adaptive fill mode
+@cindex Adaptive Fill mode
 @ccmode{} uses adaptive fill mode (@pxref{Adaptive Fill,,, emacs, The
 Emacs Editor}) to make Emacs correctly keep the line prefix when filling
 paragraphs.  That also makes Emacs preserve the text indentation
