@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.330 $
-;; Last Modified:   $Date: 1996-12-10 20:46:37 $
+;; Version:         $Revision: 4.331 $
+;; Last Modified:   $Date: 1996-12-11 00:34:43 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -842,6 +842,10 @@ All other Emacsen use the `old-re' suite.")
 	(define-key map [menu-bar] (make-sparse-keymap))
 	(define-key map [menu-bar c] (cons name (make-sparse-keymap name)))
 
+	(define-key map [menu-bar c compile]
+	  '("Compile" . compile)) 
+	(define-key map [menu-bar c separator1]
+	  '("----")) 
 	(define-key map [menu-bar c comment-region]
 	  '("Comment Out Region" . comment-region))
 	(define-key map [menu-bar c c-macro-expand]
@@ -854,6 +858,8 @@ All other Emacsen use the `old-re' suite.")
 	  '("Indent Line" . c-indent-command))
 	(define-key map [menu-bar c fill]
 	  '("Fill Comment Paragraph" . c-fill-paragraph))
+	(define-key map [menu-bar c separator2]
+	  '("----")) 
 	(define-key map [menu-bar c up]
 	  '("Up Conditional" . c-up-conditional))
 	(define-key map [menu-bar c backward]
@@ -5029,7 +5035,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.330 $"
+(defconst c-version "$Revision: 4.331 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
