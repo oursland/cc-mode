@@ -864,27 +864,62 @@ operators."
 
 ;;; Syntactic whitespace.
 
-(c-lang-defconst c-comment-start-regexp
-  ;; Regexp to match the start of any type of comment.
-  ;;
-  ;; TODO: Ought to use `c-comment-prefix-regexp' with some
-  ;; modifications instead of this.
-  t    "/[/*]"
-  awk  "#")
-(c-lang-defvar c-comment-start-regexp (c-lang-const c-comment-start-regexp))
+(c-lang-defconst c-simple-ws
+  "Regexp matching an ordinary whitespace character.
+Does not contain a \\| operator at the top level."
+  ;; "\\s " is not enough since it doesn't match line breaks.
+  t "\\(\\s \\|[\n\r]\\)")
 
 (c-lang-defconst c-line-comment-starter
-  ;; The TODO in c-comment-start-regexp (above) probably applies here too.
+  "String that starts line comments, or nil if such don't exist.
+Line comments are always terminated by newlines.  At least one of
+`c-block-comment-starter' and this one is assumed to be set.
+
+Note that it's currently not enough to set this to support a new
+comment style.  Other stuff like the syntax table must also be set up
+properly."
   t    "//"
   awk  "#")
 (c-lang-defvar c-line-comment-starter (c-lang-const c-line-comment-starter))
+
+(c-lang-defconst c-block-comment-starter
+  "String that starts block comments, or nil if such don't exist.
+Block comments are ended by `c-block-comment-ender', which is assumed
+to be set if this is.  At least one of `c-line-comment-starter' and
+this one is assumed to be set.
+
+Note that it's currently not enough to set this to support a new
+comment style.  Other stuff like the syntax table must also be set up
+properly."
+  t    "/*"
+  awk  nil)
+
+(c-lang-defconst c-block-comment-ender
+  "String that ends block comments, or nil if such don't exist.
+
+Note that it's currently not enough to set this to support a new
+comment style.  Other stuff like the syntax table must also be set up
+properly."
+  t    "*/"
+  awk  nil)
+
+(c-lang-defconst c-comment-start-regexp
+  ;; Regexp to match the start of any type of comment.
+  t (let ((re (c-make-keywords-re nil
+		(list (c-lang-const c-line-comment-starter)
+		      (c-lang-const c-block-comment-starter)))))
+      (if (memq 'gen-comment-delim c-emacs-features)
+	  (concat re "\\|\\s!")
+	re)))
+(c-lang-defvar c-comment-start-regexp (c-lang-const c-comment-start-regexp))
 
 ;;;; Added by ACM, 2003/9/18.
 (c-lang-defconst c-block-comment-start-regexp
   ;; Regexp which matches the start of a block comment (if such exists in the
   ;; language)
-  t       "\\<\\>"
-  (c c++) "/\\*")
+  t (if (c-lang-const c-block-comment-starter)
+	(regexp-quote (c-lang-const c-block-comment-starter))
+      "\\<\\>"))
 (c-lang-defvar c-block-comment-start-regexp
   (c-lang-const c-block-comment-start-regexp))
 
@@ -910,72 +945,156 @@ operators."
 (c-lang-defconst comment-start
   "String that starts comments inserted with M-; etc.
 `comment-start' is initialized from this."
-  t    "// "
-  c    "/* "
-  awk  "# ")
+  ;; Default: Prefer line comments to block comments, and pad with a space.
+  t (concat (or (c-lang-const c-line-comment-starter)
+		(c-lang-const c-block-comment-starter))
+	    " ")
+  ;; In C we still default to the block comment style since line
+  ;; comments aren't entirely portable.
+  c "/* ")
 (c-lang-defvar comment-start (c-lang-const comment-start)
   'dont-doc)
 
 (c-lang-defconst comment-end
   "String that ends comments inserted with M-; etc.
 `comment-end' is initialized from this."
-  t    ""
-  c    " */")
+  ;; Default: Use block comment style if comment-start uses block
+  ;; comments, and pad with a space in that case.
+  t (if (string-match (concat "\\`\\("
+			      (c-lang-const c-block-comment-start-regexp)
+			      "\\)")
+		      (c-lang-const comment-start))
+	(concat " " (c-lang-const c-block-comment-ender))
+      ""))
 (c-lang-defvar comment-end (c-lang-const comment-end)
   'dont-doc)
 
 (c-lang-defconst comment-start-skip
   "Regexp to match the start of a comment plus everything up to its body.
 `comment-start-skip' is initialized from this."
-  t    "/\\*+ *\\|//+ *"
-  awk  "#+ *")
+  ;; Default: Allow the last char of the comment starter(s) to be
+  ;; repeated, then allow any amount of horizontal whitespace.
+  t (concat "\\("
+	    (c-concat-separated
+	     (mapcar (lambda (cs)
+		       (when cs
+			 (concat (regexp-quote cs) "+")))
+		     (list (c-lang-const c-line-comment-starter)
+			   (c-lang-const c-block-comment-starter)))
+	     "\\|")
+	    "\\)\\s *"))
 (c-lang-defvar comment-start-skip (c-lang-const comment-start-skip)
   'dont-doc)
 
 (c-lang-defconst c-syntactic-ws-start
-  "Regexp matching any sequence that can start syntactic whitespace.
-The only uncertain case is '#' when there are cpp directives."
-  t     "[ \n\t\r\v\f#]\\|/[/*]\\|\\\\[\n\r]"
-  awk   "[ \n\t\r\v\f#]\\|\\\\[\n\r]")
-(c-lang-defvar c-syntactic-ws-start (c-lang-const c-syntactic-ws-start)
-  'dont-doc)
+  ;; Regexp matching any sequence that can start syntactic whitespace.
+  ;; The only uncertain case is '#' when there are cpp directives.
+  t (concat "\\s \\|"
+	    (c-make-keywords-re nil
+	      (append (list (c-lang-const c-line-comment-starter)
+			    (c-lang-const c-block-comment-starter)
+			    (when (c-lang-const c-opt-cpp-prefix)
+			      "#"))
+		      '("\n" "\r")))
+	    "\\|\\\\[\n\r]"
+	    (when (memq 'gen-comment-delim c-emacs-features)
+	      "\\|\\s!")))
+(c-lang-defvar c-syntactic-ws-start (c-lang-const c-syntactic-ws-start))
 
 (c-lang-defconst c-syntactic-ws-end
-  "Regexp matching any single character that might end syntactic whitespace."
-  t     "[ \n\t\r\v\f/]"
-  awk   "[ \n\t\r\v\f]")
-(c-lang-defvar c-syntactic-ws-end (c-lang-const c-syntactic-ws-end)
-  'dont-doc)
+  ;; Regexp matching any single character that might end syntactic whitespace.
+  t (concat "\\s \\|"
+	    (c-make-keywords-re nil
+	      (append (when (c-lang-const c-block-comment-ender)
+			(list
+			 (string
+			  (elt (c-lang-const c-block-comment-ender)
+			       (1- (length
+				    (c-lang-const c-block-comment-ender)))))))
+		      '("\n" "\r")))
+	    (when (memq 'gen-comment-delim c-emacs-features)
+	      "\\|\\s!")))
+(c-lang-defvar c-syntactic-ws-end (c-lang-const c-syntactic-ws-end))
+
+(c-lang-defconst c-unterminated-block-comment-regexp
+  ;; Regexp matching an unterminated block comment that doesn't
+  ;; contain line breaks, or nil in languages without block comments.
+  ;; Does not contain a \| operator at the top level.
+  t (when (c-lang-const c-block-comment-starter)
+      (concat
+       (regexp-quote (c-lang-const c-block-comment-starter))
+       ;; It's messy to cook together a regexp that matches anything
+       ;; but c-block-comment-ender.
+       (let ((end (c-lang-const c-block-comment-ender)))
+	 (cond ((= (length end) 1)
+		(concat "[^" end "\n\r]*"))
+	       ((= (length end) 2)
+		(concat "\\("
+			"[^" (substring end 0 1) "\n\r]*"
+			"\\|"
+			(regexp-quote (substring end 0 1))
+			"+[^"
+			;; The quoting rules inside char classes are silly. :P
+			(cond ((= (elt end 0) (elt end 1))
+			       (concat (substring end 0 1) "\n\r"))
+			      ((= (elt end 1) ?\])
+			       (concat (substring end 1 2) "\n\r"
+				       (substring end 0 1)))
+			      (t
+			       (concat (substring end 0 1) "\n\r"
+				       (substring end 1 2))))
+			"]"
+			"\\)*"))
+	       (t
+		(error "Can't handle a block comment ender of length %s"
+		       (length end))))))))
+
+(c-lang-defconst c-block-comment-regexp
+  ;; Regexp matching a block comment that doesn't contain line breaks,
+  ;; or nil in languages without block comments.  The reason we don't
+  ;; allow line breaks is to avoid going very far and risk running out
+  ;; of regexp stack; this regexp is intended to handle only short
+  ;; comments that might be put in the middle of limited constructs
+  ;; like declarations.  Does not contain a \| operator at the top
+  ;; level.
+  t (when (c-lang-const c-unterminated-block-comment-regexp)
+      (concat
+       (c-lang-const c-unterminated-block-comment-regexp)
+       (let ((end (c-lang-const c-block-comment-ender)))
+	 (cond ((= (length end) 1)
+		(regexp-quote end))
+	       ((= (length end) 2)
+		(concat (regexp-quote (substring end 0 1)) "+"
+			(regexp-quote (substring end 1 2))))
+	       (t
+		(error "Can't handle a block comment ender of length %s"
+		       (length end))))))))
 
 (c-lang-defconst c-nonwhite-syntactic-ws
   ;; Regexp matching a piece of syntactic whitespace that isn't a
   ;; sequence of simple whitespace characters.  As opposed to
   ;; `c-(forward|backward)-syntactic-ws', this doesn't regard cpp
   ;; directives as syntactic whitespace.
-  t (concat "/" (concat
-		 "\\("
-		 "/[^\n\r]*[\n\r]"	; Line comment.
-		 "\\|"
-		 ;; Block comment. We intentionally don't allow line
-		 ;; breaks in them to avoid going very far and risk
-		 ;; running out of regexp stack; this regexp is
-		 ;; intended to handle only short comments that
-		 ;; might be put in the middle of limited constructs
-		 ;; like declarations.
-		 "\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/"
-		 "\\)")
-	    "\\|"
-	    "\\\\[\n\r]")		; Line continuations.
-  awk ("#.*[\n\r]\\|\\\\[\n\r]"))
+  t (c-concat-separated
+     (list (when (c-lang-const c-line-comment-starter)
+	     (concat (regexp-quote (c-lang-const c-line-comment-starter))
+		     "[^\n\r]*[\n\r]"))
+	   (c-lang-const c-block-comment-regexp)
+	   "\\\\[\n\r]"
+	   (when (memq 'gen-comment-delim c-emacs-features)
+	     "\\s!\\S!*\\s!"))
+     "\\|"))
 
 (c-lang-defconst c-syntactic-ws
   ;; Regexp matching syntactic whitespace, including possibly the
   ;; empty string.  As opposed to `c-(forward|backward)-syntactic-ws',
   ;; this doesn't regard cpp directives as syntactic whitespace.  Does
   ;; not contain a \| operator at the top level.
-  t (concat "[ \t\n\r\f\v]*\\("
-	    "\\(" (c-lang-const c-nonwhite-syntactic-ws) "\\)"
-	    "[ \t\n\r\f\v]*\\)*"))
+  t (concat (c-lang-const c-simple-ws) "*"
+	    "\\("
+	    (concat "\\(" (c-lang-const c-nonwhite-syntactic-ws) "\\)"
+		    (c-lang-const c-simple-ws) "*")
+	    "\\)*"))
 
 (c-lang-defconst c-syntactic-ws-depth
   ;; Number of regexp grouping parens in `c-syntactic-ws'.
@@ -986,7 +1105,9 @@ The only uncertain case is '#' when there are cpp directives."
   ;; character long.  As opposed to `c-(forward|backward)-syntactic-ws',
   ;; this doesn't regard cpp directives as syntactic whitespace.  Does
   ;; not contain a \| operator at the top level.
-  t (concat "\\([ \t\n\r\f\v]\\|"
+  t (concat "\\("
+	    (c-lang-const c-simple-ws)
+	    "\\|"
 	    (c-lang-const c-nonwhite-syntactic-ws)
 	    "\\)+"))
 
@@ -999,40 +1120,37 @@ The only uncertain case is '#' when there are cpp directives."
   ;; opposed to `c-(forward|backward)-syntactic-ws', this doesn't
   ;; regard cpp directives as syntactic whitespace.  Does not contain
   ;; a \| operator at the top level.
-  t (concat "[ \t]*\\("
-	    "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*\\*/" ; Block comment
-	    "[ \t]*\\)*")
-  awk ("[ \t]*\\(#.*$\\)?"))
+  t (if (c-lang-const c-block-comment-regexp)
+	(concat "\\s *\\("
+		(c-lang-const c-block-comment-regexp)
+		"\\s *\\)*")
+      "\\s *"))
 
 (c-lang-defconst c-single-line-syntactic-ws-depth
   ;; Number of regexp grouping parens in `c-single-line-syntactic-ws'.
   t (regexp-opt-depth (c-lang-const c-single-line-syntactic-ws)))
 
-(c-lang-defvar c-syntactic-eol
+(c-lang-defconst c-syntactic-eol
   ;; Regexp that matches when there is no syntactically significant
   ;; text before eol.  Macros are regarded as syntactically
   ;; significant text here.
-  (concat (concat
-	   ;; Match horizontal whitespace and block comments that
-	   ;; don't contain newlines.
-	   "\\(\\s \\|"
-	   (concat "/\\*"
-		   "\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
-		   "\\*/")
-	   "\\)*")
-	  (concat
-	   ;; Match eol (possibly inside a block comment or preceded
-	   ;; by a line continuation backslash), or the beginning of a
-	   ;; line comment.  Note: This has to be modified for awk
-	   ;; where line comments start with '#'.
-	   "\\("
-	   (concat "\\("
-		   "/\\*\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
-		   "\\|"
-		   "\\\\"
-		   "\\)?"
+  t (concat (c-lang-const c-single-line-syntactic-ws)
+	    ;; Match eol (possibly inside a block comment or preceded
+	    ;; by a line continuation backslash), or the beginning of a
+	    ;; line comment.  Note: This has to be modified for awk
+	    ;; where line comments start with '#'.
+	    "\\("
+	    (c-concat-separated
+	     (list (when (c-lang-const c-line-comment-starter)
+		     (regexp-quote (c-lang-const c-line-comment-starter)))
+		   (when (c-lang-const c-unterminated-block-comment-regexp)
+		     (concat (c-lang-const c-unterminated-block-comment-regexp)
+			     "$"))
+		   "\\\\$"
 		   "$")
-	   "\\|//\\)")))
+	     "\\|")
+	    "\\)"))
+(c-lang-defvar c-syntactic-eol (c-lang-const c-syntactic-eol))
 
 
 ;;; In-comment text handling.
@@ -2146,12 +2264,12 @@ is in effect or not."
 		      (list re)))
 		  extra-types)))
     (concat "\\<\\("
-	    (c-make-keywords-re nil
-	      (append (c-lang-const c-primitive-type-kwds)
-		      plain-strings))
-	    (if (consp regexp-strings)
-		(concat "\\|" (mapconcat 'identity regexp-strings "\\|"))
-	      "")
+	    (c-concat-separated
+	     (append (list (c-make-keywords-re nil
+			     (append (c-lang-const c-primitive-type-kwds)
+				     plain-strings)))
+		     regexp-strings)
+	     "\\|")
 	    "\\)\\>")))
 
 (c-lang-defconst c-special-brace-lists
