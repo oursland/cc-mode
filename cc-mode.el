@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.265 $
-;; Last Modified:   $Date: 1994-02-24 15:24:07 $
+;; Version:         $Revision: 3.266 $
+;; Last Modified:   $Date: 1994-02-24 21:51:24 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-24 15:24:07 $|$Revision: 3.265 $|
+;; |$Date: 1994-02-24 21:51:24 $|$Revision: 3.266 $|
 
 ;;; Code:
 
@@ -770,7 +770,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.265 $
+cc-mode Revision: $Revision: 3.266 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -801,7 +801,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.265 $
+cc-mode Revision: $Revision: 3.266 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2433,9 +2433,14 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      ;; this line should be indented relative to the beginning
 	      ;; of indentation for the topmost-intro line that contains
 	      ;; the prototype's open paren
+	      ;; TBD: is the following redundant?
 	      (if (= char-before-ip ?:)
 		  (forward-char -1))
 	      (c-backward-syntactic-ws lim)
+	      ;; TBD: is the preceding redundant?
+	      (if (= (preceding-char) ?:)
+		  (progn (forward-char -1)
+			 (c-backward-syntactic-ws lim)))
 	      (if (= (preceding-char) ?\))
 		  (backward-sexp 1))
 	      (c-add-semantics 'member-init-intro (c-point 'boi))
@@ -2494,6 +2499,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	     ((= (preceding-char) ?:)
 	      (goto-char indent-point)
 	      (c-backward-syntactic-ws lim)
+	      (c-safe (backward-sexp 1))
 	      (c-add-semantics 'member-init-cont (c-point 'boi))
 	      ;; we do not need to add class offset since relative
 	      ;; point is the member init above us
@@ -3218,7 +3224,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.265 $"
+(defconst c-version "$Revision: 3.266 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
