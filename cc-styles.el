@@ -30,6 +30,8 @@
 (require 'cc-vars)
 (require 'cc-align)
 (eval-when-compile
+  ;; I have no idea why the following line is necessary in XEmacs!
+  (require 'cc-align)
   (require 'cc-mode)
   (require 'cl))
 
