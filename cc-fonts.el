@@ -492,8 +492,11 @@ stuff.  Used on level 1 and higher."
 	 ;; If FACE is `font-lock-type-face' then all things we encounter
 	 ;; in the list are types.
 	 (c-promote-possible-types t)
-	 ;; The font-lock package in Emacs is known to clobber this.
-	 (parse-sexp-lookup-properties t))
+	 ;; The font-lock package in Emacs is known to clobber
+	 ;; `parse-sexp-lookup-properties' (when it exists).
+	 (parse-sexp-lookup-properties
+	  (cc-eval-when-compile
+	    (boundp 'parse-sexp-lookup-properties))))
 
       (while (and
 	      (progn
@@ -672,8 +675,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
       ((pos (point)) next-pos id-start id-end
        paren-depth
        id-face got-init
-       ;; The font-lock package in Emacs is known to clobber this.
-       (parse-sexp-lookup-properties t))
+       ;; The font-lock package in Emacs is known to clobber
+       ;; `parse-sexp-lookup-properties' (when it exists).
+       (parse-sexp-lookup-properties
+	(cc-eval-when-compile
+	  (boundp 'parse-sexp-lookup-properties))))
 
     (while (and
 	    pos
@@ -871,8 +877,11 @@ casts and declarations are fontified.  Used on level 2 and higher."
 	  ;; declaration or cast has been successfully recognized.
 	  c-record-type-identifiers
 	  c-record-ref-identifiers
-	  ;; The font-lock package in Emacs is known to clobber this.
-	  (parse-sexp-lookup-properties t))
+	  ;; The font-lock package in Emacs is known to clobber
+	  ;; `parse-sexp-lookup-properties' (when it exists).
+	  (parse-sexp-lookup-properties
+	   (cc-eval-when-compile
+	     (boundp 'parse-sexp-lookup-properties))))
 
       ;; Narrow to the limit to deliberately fail to fontify
       ;; declarations that crosses it.  E.g. the following is a common
@@ -1417,12 +1426,14 @@ casts and declarations are fontified.  Used on level 2 and higher."
 					id-start 'face nil end)))
 	       (c-forward-syntactic-ws)
 	       (when (and (eq (char-after) ?<)
-			  (looking-at "\\s\(")
-			  (progn
-			    (setq tmpl-end
-				  (save-excursion
-				    (c-safe (c-forward-sexp) (1- (point)))))
-			    (not (c-forward-c++-template-arglist))))
+			  (if (c-parse-sexp-lookup-properties)
+			      (and (looking-at "\\s\(")
+				   (setq tmpl-end
+					 (save-excursion
+					   (c-safe (c-forward-sexp)
+						   (1- (point))))))
+			    t)
+			  (not (c-forward-c++-template-arglist)))
 		 (c-clear-char-syntax (point))
 		 (if tmpl-end (c-clear-char-syntax tmpl-end))
 		 (c-put-font-lock-face id-start id-end nil)))
