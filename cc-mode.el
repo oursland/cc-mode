@@ -99,6 +99,7 @@
 (cc-require 'cc-engine)
 (cc-require 'cc-cmds)
 (cc-require 'cc-align)
+(cc-require 'cc-awk)                    ; ACM 2002/4/21.
 
 ;; Silence the compiler.
 (cc-bytecomp-defvar comment-line-break-function) ; (X)Emacs 20+
@@ -154,7 +155,7 @@
      ;; XEmacs 19 & 20
      ((fboundp 'set-keymap-parents)
       (set-keymap-parents map c-mode-base-map))
-     ;; Emacs 19
+     ;; Emacs 19, 20, 21
      ((fboundp 'set-keymap-parent)
       (set-keymap-parent map c-mode-base-map))
      ;; incompatible
@@ -171,7 +172,7 @@
   (define-key c-mode-base-map "{"         'c-electric-brace)
   (define-key c-mode-base-map "}"         'c-electric-brace)
   (define-key c-mode-base-map ";"         'c-electric-semi&comma)
-  (define-key c-mode-base-map "#"         'c-electric-pound)
+  (define-key c-mode-base-map "#"         'c-electric-pound) ; Remove for awk-mode, ACM 2002/4/21
   (define-key c-mode-base-map ":"         'c-electric-colon)
   (define-key c-mode-base-map "("         'c-electric-paren)
   (define-key c-mode-base-map ")"         'c-electric-paren)
@@ -248,6 +249,7 @@
 (defvar c-objc-menu nil)
 (defvar c-java-menu nil)
 (defvar c-pike-menu nil)
+(defvar c-awk-menu nil)                 ; ACM 2002/4/21
 
 (defun c-mode-menu (modestr)
   (let ((m
@@ -321,7 +323,7 @@
 	outline-level 'c-outline-level
 	normal-auto-fill-function 'c-do-auto-fill
 	comment-column 32
-	comment-start-skip "/\\*+ *\\|//+ *"
+;	comment-start-skip "/\\*+ *\\|//+ *" Moved to individual functions, 2002/4/20
 	comment-multi-line t)
 
   ;; Fix keyword regexps.
@@ -434,6 +436,7 @@ Key bindings:
   (interactive)
   (kill-all-local-variables)
   (c-initialize-cc-mode)
+  (setq comment-start-skip "/\\*+ *\\|//+ *") ; ACM 2002/4/20
   (set-syntax-table c-mode-syntax-table)
   (setq major-mode 'c-mode
 	mode-name "C"
@@ -490,6 +493,7 @@ Key bindings:
   (interactive)
   (kill-all-local-variables)
   (c-initialize-cc-mode)
+  (setq comment-start-skip "/\\*+ *\\|//+ *") ; ACM 2002/4/20
   (set-syntax-table c++-mode-syntax-table)
   (setq major-mode 'c++-mode
 	mode-name "C++"
@@ -542,6 +546,7 @@ Key bindings:
   (interactive)
   (kill-all-local-variables)
   (c-initialize-cc-mode)
+  (setq comment-start-skip "/\\*+ *\\|//+ *") ; ACM 2002/4/20
   (set-syntax-table objc-mode-syntax-table)
   (setq major-mode 'objc-mode
 	mode-name "ObjC"
@@ -598,6 +603,7 @@ Key bindings:
   (interactive)
   (kill-all-local-variables)
   (c-initialize-cc-mode)
+  (setq comment-start-skip "/\\*+ *\\|//+ *") ; ACM 2002/4/20
   (set-syntax-table java-mode-syntax-table)
   (setq major-mode 'java-mode
  	mode-name "Java"
@@ -648,6 +654,7 @@ Key bindings:
   (interactive)
   (kill-all-local-variables)
   (c-initialize-cc-mode)
+  (setq comment-start-skip "/\\*+ *\\|//+ *") ; ACM 2002/4/20
   (set-syntax-table idl-mode-syntax-table)
   (setq major-mode 'idl-mode
 	mode-name "IDL"
@@ -699,6 +706,7 @@ Key bindings:
   (interactive)
   (kill-all-local-variables)
   (c-initialize-cc-mode)
+  (setq comment-start-skip "/\\*+ *\\|//+ *") ; ACM 2002/4/20
   (set-syntax-table pike-mode-syntax-table)
   (setq major-mode 'pike-mode
  	mode-name "Pike"
@@ -713,6 +721,94 @@ Key bindings:
 
 
 ;; bug reporting
+
+;; Support for awk
+
+(defvar awk-mode-abbrev-table nil
+  "Abbreviation table used in awk-mode buffers.")
+(define-abbrev-table 'awk-mode-abbrev-table
+  '(("else" "else" c-electric-continued-statement 0)
+    ("while" "while" c-electric-continued-statement 0)))
+
+(defvar awk-mode-map ()
+  "Keymap used in awk-mode buffers.")
+(if awk-mode-map
+    nil
+  (setq awk-mode-map (c-make-inherited-keymap))
+  ;; add bindings which are only useful for awk.
+  (define-key awk-mode-map "#" 'self-insert-command) ; ACM 2002/4/21; remove c-electric-pound.
+  )
+
+(easy-menu-define c-awk-menu awk-mode-map "Awk Mode Commands"
+		  (c-mode-menu "Awk"))
+
+;;;###autoload
+(defun awk-mode () ; c-mode "AWK"
+  "Major mode for editing AWK code.
+To submit a problem report, enter `\\[c-submit-bug-report]' from an
+awk-mode buffer.  This automatically sets up a mail buffer with version
+information already added.  You just need to add a description of the
+problem, including a reproducible test case and send the message.
+
+To see what version of CC Mode you are running, enter `\\[c-version]'.
+
+The hook variable `awk-mode-hook' is run with no args, if that value is
+bound and has a non-nil value.  Also the hook `c-mode-common-hook' is
+run first.
+
+Key bindings:
+\\{awk-mode-map}"                         ; OR \\{c-mode-map} ?? ACM 2002/4/13
+  (interactive)
+  (kill-all-local-variables)
+  (c-initialize-cc-mode)
+  (setq comment-start-skip "#+ *") ; ACM 2002/4/20
+  (set (make-local-variable 'c-stmt-delim-chars) "^;{}\n\r?:") ; ACM 2002/3/29
+  (set (make-local-variable 'parse-sexp-lookup-properties) t)
+  (set-syntax-table awk-mode-syntax-table) ; different file
+  (setq major-mode 'awk-mode
+	mode-name "AWK"
+	local-abbrev-table awk-mode-abbrev-table ; defined above
+	abbrev-mode t)
+  (use-local-map awk-mode-map)          ; defined above
+;;  (set (make-local-variable 'font-lock-support-mode) nil) ; ACM 2002/4/27, for debugging only.
+  (make-local-variable 'font-lock-defaults) ; ACM 2002/1/1
+  (setq font-lock-defaults '(awk-font-lock-keywords
+			     nil nil ((?_ . "w")) nil
+                             (font-lock-syntactic-keywords
+                              . ((c-awk-set-syntax-table-properties
+                                  0 (0) ; Everything on this line is a dummy.
+                                  nil t)))
+                             (font-lock-multiline . t) ; Switched on for experiments, ACM 2002/3/16
+                             ))
+  (c-common-init 'awk-mode)
+;  (cc-imenu-init cc-imenu-awk-generic-expression) ; cc-menus.el
+  (run-hooks 'c-mode-common-hook)
+  (run-hooks 'awk-mode-hook)
+  (c-update-modeline))
+
+;;;;; Old contents of awk-mode (ACM 2002/4/13)
+;  (set (make-local-variable 'paragraph-start) (concat "$\\|" page-delimiter)) ; A touch complicated
+                                        ; It is created in c-common-init, but not given a value there.
+;; We got rid of the silly page-delimiter, and gave it the standard "$", like most other cc-mode modes, in cc-langs.el
+;  (set (make-local-variable 'paragraph-separate) paragraph-start) ; created in c-common-init.  Value in cc-langs.el.
+;  (set (make-local-variable 'comment-start) "# ") Moved to cc-langs.el, 2002/4/20
+;  (set (make-local-variable 'comment-end) "") Moved to cc-langs.el, 2002/4/20
+;  (set (make-local-variable 'comment-start-skip) "#+ *") Moved into awk-mode, 2002/4/20
+;  (set (make-local-variable 'c-stmt-delim-chars) "^;{}\n\r?:") ; ACM 2002/3/29.  Moved into awk-mode, 2002/4/20
+;  (set (make-local-variable 'c-comment-start-regexp) "#")     ; ACM 2002/3/9.  Moved to cc-langs.el, 2002/4/20.
+;  (set (make-local-variable 'parse-sexp-lookup-properties) t) ; ACM 2002/4/20.  Move to awk-mode
+
+;  (set-syntax-table awk-mode-syntax-table) ; ACM 2001/12/23 ; Already in awk-mode, 2002/4/20
+;  (make-local-variable 'font-lock-defaults) ; ACM 2002/1/1 ; 2002/4/20, move to awk-mode.
+;;   (setq font-lock-defaults '(awk-font-lock-keywords ; Move to awk-mode, 2002/4/20
+;; 			     nil nil ((?_ . "w")) nil
+;;                              (font-lock-syntactic-keywords
+;;                               . ((c-awk-set-syntax-table-properties
+;;                                   0 (0)         ; Everything on this line is a dummy.
+;;                                   nil t)))
+;;                              (font-lock-multiline . t) ; Switched on for experiments, ACM 2002/3/16
+;;                              ))
+;)
 
 (defconst c-mode-help-address
   "bug-cc-mode@gnu.org"
