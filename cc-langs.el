@@ -414,7 +414,6 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 
 (defun c-populate-syntax-table (table)
   ;; Populate the syntax TABLE
-  ;; DO NOT TRY TO SET _ (UNDERSCORE) TO WORD CLASS!
   (modify-syntax-entry ?_  "_"     table)
   (modify-syntax-entry ?\\ "\\"    table)
   (modify-syntax-entry ?+  "."     table)
