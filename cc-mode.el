@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-26 15:25:37 $
-;; Version:         $Revision: 2.189 $
+;; Last Modified:   $Date: 1992-08-26 15:27:40 $
+;; Version:         $Revision: 2.190 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -96,7 +96,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-26 15:25:37 $|$Revision: 2.189 $|
+;; |$Date: 1992-08-26 15:27:40 $|$Revision: 2.190 $|
 
 
 ;; ======================================================================
@@ -301,14 +301,13 @@ To be completely safe, set this variable to:
     '(?\( ?\) ?\' ?\{ ?\} ?\[ ?\])
 
 This is the full list of characters which can potentially cause
-problems if they exist unbalanced within comments.
-
-Setting this variable to nil will defeat this feature, but be
-forewarned!  Un-escaped characters in comment regions will break many
+problems if they exist unbalanced within comments. Setting this
+variable to nil will defeat this feature, but be forewarned!  Such
+un-escaped characters in comment regions can potentially break many
 things such as some indenting and blinking of parenthesis.
 
 Note further that only the default set of characters will be escaped
-automatically as they are typed. But, entering c++-tame-comments
+automatically as they are typed. But, executing c++-tame-comments
 (\\[c++-tame-comments]) will escape all characters which are members
 of this set, and which are found in comments throughout the file.")
 
@@ -347,7 +346,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.189 $
+  "Major mode for editing C++ code.  $Revision: 2.190 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -548,7 +547,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.189 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.190 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -2138,7 +2137,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.189 $"
+(defconst c++-version "$Revision: 2.190 $"
   "c++-mode version number.")
 
 (defun c++-version ()
