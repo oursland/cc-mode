@@ -250,6 +250,7 @@ the existing style.")
 	(add-hook 'c-special-indent-hook val)))
      ;; all other variables
      (t (if (or (not dont-override)
+		(not (memq attr c-style-variables))
 		(eq (symbol-value attr) 'set-from-style))
 	    (set attr val))))
     ))
@@ -515,13 +516,14 @@ and exists only for compatibility reasons."
 
 (defun c-make-styles-buffer-local (&optional this-buf-only-p)
   "Make all CC Mode style variables buffer local.
-If you edit primarily one style of C (or C++, Objective-C, Java) code,
-you probably want style variables to be global.  This is the default.
+If you edit primarily one style of C (or C++, Objective-C, Java, etc)
+code, you probably want style variables to be global.  This is the
+default.
 
-If you edit many different styles of C (or C++, Objective-C, Java) at
-the same time, you probably want the CC Mode style variables to be
-buffer local.  If you do, it's advicable to set any CC Mode style
-variables in a hook function (e.g. off of `c-mode-common-hook'),
+If you edit many different styles of C (or C++, Objective-C, Java,
+etc) at the same time, you probably want the CC Mode style variables
+to be buffer local.  If you do, it's advicable to set any CC Mode
+style variables in a hook function (e.g. off of `c-mode-common-hook'),
 instead of at the top level of your ~/.emacs file.
 
 This function makes all the CC Mode style variables buffer local.
