@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.23 $
+@comment manual version: $Revision: 2.24 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-06-13 23:38:33 $
+@comment Last modification: $Date: 1995-06-14 15:00:33 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.23 $)
+@center (manual revision: $Revision: 2.24 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1155,8 +1155,8 @@ when you do re-indent.  For example, the @code{c-hanging-} variables and
 changing @code{c-hanging-braces-alist} and re-indenting the buffer will
 not adjust placement of braces already in the file.
 
-@code c-progress-interval
-@code progress-interval (c-)
+@vindex c-progress-interval
+@vindex progress-interval (c-)
 Third, re-indenting large portions of code is currently rather
 inefficient.  Improvements have been made since previous releases of
 @code{cc-mode}, and much more radical improvements will be made for the
@@ -1973,7 +1973,7 @@ not change @code{point} or @code{mark} inside your
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-@node  Syntactic Symbols, Frequently Asked Questions, Customizing Indentation, Top
+@node  Syntactic Symbols, Performance Issues, Customizing Indentation, Top
 @comment  node-name,              next,                    previous,up
 
 @chapter  Syntactic Symbols
@@ -2339,7 +2339,7 @@ include: @code{knr-argdecl-intro}, @code{knr-argdecl}, and the
 @cindex   Performance Issues
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@string{<TBD>}
+@strong{<TBD>}
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node  Frequently Asked Questions, Getting the latest cc-mode release, Performance Issues, Top
