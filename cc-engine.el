@@ -723,6 +723,7 @@
 	    (save-excursion
 	      (c-beginning-of-macro)
 	      (point)))
+	   state-tail-intact
 	   (state-head (list nil))	; First part of the state.
 	   (state-ptr state-head)	; Last cons in state-head.
 	   (state-foot			; Last part of the state.
@@ -748,7 +749,7 @@
 			  (setq state-tail-intact t))
 		     newstate))))
 	   (pos here)
-	   placeholder last-pos sexp-pos state-tail-intact)
+	   placeholder last-pos sexp-pos)
       (narrow-to-region
        ;; Narrow out the first part of the buffer that should be
        ;; outside the search.  If we got a cached state, we continue
@@ -835,7 +836,6 @@
 		      ;; building on a cached state that can't happen,
 		      ;; assuming the cache is correct.
 		      (narrow-to-region 1 (point-max))
-		      (setq is-limited nil)
 		      (setq pos (c-up-list-backward last-pos)))
 		    (unless pos
 		      (save-excursion
