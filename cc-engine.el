@@ -58,6 +58,34 @@
 ;; the byte compiler.
 (defvar c-maybe-labelp nil)
 
+;; Macros used internally in c-beginning-of-statement-1 for the
+;; automaton actions.
+(defmacro c-push-state ()
+  '(setq stack (cons (cons state saved-pos)
+		     stack)))
+(defmacro c-pop-state (&optional do-if-done)
+  `(if (setq state (car (car stack))
+	     saved-pos (cdr (car stack))
+	     stack (cdr stack))
+       t
+     ,do-if-done
+     (throw 'loop nil)))
+(defmacro c-pop-state-and-retry ()
+  '(throw 'loop (setq state (car (car stack))
+		      saved-pos (cdr (car stack))
+		      ;; Throw nil if stack is empty, else throw non-nil.
+		      stack (cdr stack))))
+(defmacro c-save-pos ()
+  '(setq saved-pos (vector pos tok ptok pptok)))
+(defmacro c-restore-pos ()
+  '(unless (eq (elt saved-pos 0) start)
+     (setq pos (elt saved-pos 0)
+	   tok (elt saved-pos 1)
+	   ptok (elt saved-pos 2)
+	   pptok (elt saved-pos 3))
+     (goto-char pos)
+     (setq sym nil)))
+
 (defun c-beginning-of-statement-1 (&optional lim ignore-labels)
   "Move to the start of the current statement or declaration, or to
 the previous one if already at the beginning of one.  Only
@@ -135,7 +163,6 @@ position if that is less ('same is returned in this case)."
 	(start (point))
 	pos				; Current position.
 	boundary-pos			; Position of last boundary.
-	bound-check-from		; Start pos for last ccsbp call.
 	after-labels-pos		; Value of tok after first found colon.
 	last-label-pos			; Value of tok after last found colon.
 	sym				; Current symbol in the alphabet.
@@ -147,33 +174,6 @@ position if that is less ('same is returned in this case)."
 	(ret 'same)
 	tok ptok pptok			; Pos of last three sexps or bounds.
 	c-in-literal-cache c-maybe-labelp saved)
-
-    ;; Macros for the automaton actions.
-    (defmacro c-push-state ()
-      '(setq stack (cons (cons state saved-pos)
-			 stack)))
-    (defmacro c-pop-state (&optional do-if-done)
-      `(if (setq state (car (car stack))
-		 saved-pos (cdr (car stack))
-		 stack (cdr stack))
-	   t
-	 ,do-if-done
-	 (throw 'loop nil)))
-    (defmacro c-pop-state-and-retry ()
-      '(throw 'loop (setq state (car (car stack))
-			  saved-pos (cdr (car stack))
-			  ;; Throw nil if stack is empty, else throw non-nil.
-			  stack (cdr stack))))
-    (defmacro c-save-pos ()
-      '(setq saved-pos (vector pos tok ptok pptok)))
-    (defmacro c-restore-pos ()
-      '(unless (eq (elt saved-pos 0) start)
-	 (setq pos (elt saved-pos 0)
-	       tok (elt saved-pos 1)
-	       ptok (elt saved-pos 2)
-	       pptok (elt saved-pos 3))
-	 (goto-char pos)
-	 (setq sym nil)))
 
     (c-with-syntax-table c-no-escape-syntax-table
       ;; Switch syntax table to avoid stopping at line continuations.
@@ -356,8 +356,7 @@ position if that is less ('same is returned in this case)."
 	      ;; Step to next sexp, but not if we crossed a boundary, since
 	      ;; that doesn't consume an sexp.
 	      (if (eq sym 'boundary)
-		  (setq ret 'previous
-			bound-check-from nil)
+		  (setq ret 'previous)
 		;; Skip over any macros before we move by sexp.
 		(c-backward-syntactic-ws)
 		(or (c-safe (goto-char (scan-sexps (point) -1)) t)
@@ -1980,7 +1979,7 @@ isn't moved."
 	     (fullstate (c-parse-state))
  	     (state fullstate)
 	     literal containing-sexp char-before-ip char-after-ip lim
-	     syntax placeholder c-in-literal-cache inswitch-p step-type
+	     syntax placeholder c-in-literal-cache step-type
 	     tmpsymbol keyword injava-inher special-brace-list
 	     ;; narrow out any enclosing class or extern "C" block
 	     (inclass-p (c-narrow-out-enclosing-class state indent-point))
@@ -2937,12 +2936,11 @@ isn't moved."
 		(setq step-type
 		      (c-beginning-of-statement-1 containing-sexp)))
 	      (eq step-type 'previous))
-	    (let (relpos (prev (point)))
-	      ;; The only effect of the boi here is to take us out
-	      ;; of a containing sexp, which is just bogus afaics.
-	      (c-add-syntax 'statement (c-point 'boi))
-	      (if (eq char-after-ip ?{)
-		  (c-add-syntax 'block-open))))
+	    ;; The only effect of the boi here is to take us out
+	    ;; of a containing sexp, which is just bogus afaics.
+	    (c-add-syntax 'statement (c-point 'boi))
+	    (if (eq char-after-ip ?{)
+		(c-add-syntax 'block-open)))
 	   ;; CASE 17E: first statement in an in-expression block
 	   ((progn
 	      ;; The following tests are all based on containing-sexp.
