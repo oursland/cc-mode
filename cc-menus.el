@@ -387,6 +387,10 @@ Example:
     toplist
     ))
 
+;(defvar cc-imenu-pike-generic-expression
+;  ())
+; FIXME: Please contribute one!
+
 
 (provide 'cc-menus)
 ;;; cc-menus.el ends here
