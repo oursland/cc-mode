@@ -142,11 +142,33 @@ A sample value might look like: `\\(_P\\|_PROTO\\)'.")
 
 (defvar cc-imenu-objc-generic-expression 
   (concat 
+   ;;
    ;; For C 
-   ;; Pick a token by (match-string 6)
-   (car (cdr (car cc-imenu-c++-generic-expression))) 
+   ;;                     *Warning for developers* 
+   ;; This expression elements depend on `cc-imenu-c++-generic-expression'.
+   ;;
+   ;; > Special case to match a line like `main() {}'
+   ;; > e.g. no return type, not even on the previous line.
+   ;; Pick a token by (match-string 1)
+   (car (cdr (nth 1 cc-imenu-c++-generic-expression))) ; 
+   "\\|"
+   (if cc-imenu-c-prototype-macro-regexp
+       (concat 
+	;; > Special case for definitions using phony prototype macros like:
+	;; > `int main _PROTO( (int argc,char *argv[]) )'.
+	;; Pick a token by  (match-string 2)
+	(car (cdr (nth 2 cc-imenu-c++-generic-expression)))
+	"\\|"
+	;; > General function name regexp
+	;; Pick a token by  (match-string 3)
+	(car (cdr (nth 3 cc-imenu-c++-generic-expression)))) 
+     ;; > General function name regexp
+     ;; Pick a token by  (match-string 2)
+     (car (cdr (nth 2 cc-imenu-c++-generic-expression)))) 
+   ;;
    ;; For Objective-C
-   ;; Pick a token by (match-string 8)
+   ;; Pick a token by (match-string 3 or 4)
+   ;;
    "\\|\\("					     
    "^[-+][:a-zA-Z0-9()*_<>\n\t ]*[;{]"        ; Methods
    "\\|" 
@@ -228,9 +250,22 @@ Example:
   "imenu supports for objc-mode."
   (let (methodlist
 	clist
-	(C 6)
-	(OBJC 8)
+	;;
+	;; OBJC, C1, C2, C3 are constants.
+	;;
+	;;                  *Warning for developers* 
+	;; These constants depend on `cc-imenu-c++-generic-expression'.
+	;;
+	(OBJC 
+	 (if cc-imenu-c-prototype-macro-regexp 4 3))
+	(C1 ; > Special case to match a line like `main() {}'
+	 1) 
+	(C2 ; > Special case for definitions using phony prototype macros like:
+	 2) 
+	(C3 ; > General function name regexp
+	 (if cc-imenu-c-prototype-macro-regexp 3 2))
 	langnum
+	;;
 	(classcount 0)
 	toplist
 	stupid
@@ -251,14 +286,19 @@ Example:
     ;;
     (while (re-search-backward cc-imenu-objc-generic-expression nil t)
       (imenu-progress-message stupid)
-      (setq langnum (if (match-beginning C) C OBJC))
+      (setq langnum (if (match-beginning OBJC) 
+			OBJC
+		      (cond
+		       ((match-beginning C3) C3)
+		       ((match-beginning C2) C2)
+		       ((match-beginning C1) C1))))
       (setq str (bufsubst-fun (match-beginning langnum) (match-end langnum)))
       ;;
       (cond 
        ;;
        ;; C
        ;;
-       ((eq langnum C)
+       ((not (eq langnum OBJC))
 	(setq clist (cons (cons str (match-beginning langnum)) clist)))
        ;;
        ;; ObjC
