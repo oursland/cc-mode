@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.193 $
-;; Last Modified:   $Date: 1994-01-13 23:25:57 $
+;; Version:         $Revision: 3.194 $
+;; Last Modified:   $Date: 1994-01-14 18:57:57 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -85,7 +85,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-13 23:25:57 $|$Revision: 3.193 $|
+;; |$Date: 1994-01-14 18:57:57 $|$Revision: 3.194 $|
 
 ;;; Code:
 
@@ -685,7 +685,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.193 $
+cc-mode Revision: $Revision: 3.194 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -716,7 +716,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.193 $
+cc-mode Revision: $Revision: 3.194 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2979,7 +2979,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.193 $"
+(defconst c-version "$Revision: 3.194 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
@@ -3046,12 +3046,58 @@ region."
 ;; lemacs 19.9 + font-lock + cc-mode - c++-mode lossage
 (fset 'c++-beginning-of-defun 'beginning-of-defun)
 
-;; set up bc warnings for obsolete variables
+;; set up bc warnings for obsolete variables, but for now lets not
+;; worry about obsolete functions.  maybe later some will be important
+;; to flag
 (and (memq 'v19 c-emacs-features)
-     (make-obsolete-variable
-      'c-auto-hungry-initial-state
-      "Use `c-auto-newline' and `c-hungry-delete-key' instead.")
-     )
+     (let* ((na "Nothing appropriate.")
+	    (vars
+	     (list
+	      (cons 'c++-c-mode-syntax-table 'c-mode-syntaxt-table)
+	      (cons 'c++-tab-always-indent 'c-tab-always-indent)
+	      (cons 'c++-always-arglist-indent-p na)
+	      (cons 'c++-block-close-brace-offset 'c-offsets-alist)
+	      (cons 'c++-paren-as-block-close-p na)
+	      (cons 'c++-continued-member-init-offset 'c-offsets-alist)
+	      (cons 'c++-member-init-indent 'c-offsets-alist)
+	      (cons 'c++-friend-offset na)
+	      (cons 'c++-access-specifier-offset 'c-offsets-alist)
+	      (cons 'c++-empty-arglist-indent 'c-offsets-alist)
+	      (cons 'c++-comment-only-line-offset 'c-comment-only-line-offset)
+	      (cons 'c++-C-block-comments-indent-p 'c-block-comments-indent-p)
+	      (cons 'c++-cleanup-list 'c-cleanup-list)
+	      (cons 'c++-hanging-braces 'c-hanging-braces-alist)
+	      (cons 'c++-hanging-member-init-colon 'c-hanging-colons-alist)
+	      (cons 'c++-auto-hungry-initial-state
+		    "Use `c-auto-newline' and `c-hungry-delete-key' instead.")
+	      (cons 'c++-auto-hungry-toggle na)
+	      (cons 'c++-relative-offset-p na)
+	      (cons 'c++-untame-characters 'c-untame-characters)
+	      (cons 'c++-default-macroize-column 'c-default-macroize-column)
+	      (cons 'c++-special-indent-hook 'c-special-indent-hook)
+	      (cons 'c++-delete-function 'c-delete-function)
+	      (cons 'c++-electric-pound-behavior 'c-electric-pound-behavior)
+	      (cons 'c++-backscan-limit 'c-backscan-limit)
+	      (cons 'c++-hungry-delete-key 'c-hungry-delete-key)
+	      (cons 'c++-auto-newline 'c-auto-newline)
+	      (cons 'c++-match-header-strongly na)
+	      (cons 'c++-defun-header-strong-struct-equivs na)
+	      (cons 'c++-version 'c-version)
+	      (cons 'c++-mode-help-address 'c-mode-help-address)
+	      (cons 'c-backslash-column 'c-default-macroize-column)
+	      (cons 'c-indent-level 'c-basic-offset)
+	      (cons 'c-brace-imaginary-offset na)
+	      (cons 'c-brace-offset 'c-offsets-alist)
+	      (cons 'c-argdecl-indent 'c-offsets-alist)
+	      (cons 'c-label-offset 'c-offsets-alist)
+	      (cons 'c-continued-statement-offset 'c-offsets-alist)
+	      (cons 'c-continued-brace-offset 'c-offsets-alist)
+	      )))
+       (mapcar
+	(function
+	 (lambda (elt)
+	   (make-variable-obsolete (car elt) (cdr elt))))
+	vars)))
 
 (provide 'cc-mode)
 ;;; cc-mode.el ends here
