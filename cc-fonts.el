@@ -2769,21 +2769,22 @@ need for `pike-font-lock-extra-types'.")
      ;; Keywords.
      (concat "\\<"
 	     (c-regexp-opt
-	      '("BEGIN" "END" "break" "close" "continue" "delete" "do" "exit" "else"
-		"fflush" "for" "getline" "if" "in" "next" "nextfile" "return" "system"
-		"while") t) "\\>")
+	      '("BEGIN" "END" "break" "continue" "delete" "do" "exit" "else"
+		"for" "getline" "if" "in" "next" "nextfile" "return" "while")
+              t) "\\>")
 
      ;; Builtins.
      `(eval . (list
 	       ,(concat
 		 "\\<"
 		 (c-regexp-opt
-		  '("and" "asort" "atan2" "bindtextdomain" "compl" "cos"
-		    "ctime" "dcgettext" "exp" "extension" "gensub" "gsub"
-		    "index" "int" "length" "log" "lshift" "match" "mktime"
-		    "or" "print" "printf" "rand" "rshift" "sin" "split"
-		    "sprintf" "sqrt" "srand" "strftime" "strtonum" "sub"
-		    "substr" "systime" "time" "tolower" "toupper" "xor") t)
+		  '("and" "asort" "atan2" "bindtextdomain" "close" "compl"
+		    "cos" "ctime" "dcgettext" "exp" "extension" "fflush"
+                    "gensub" "gsub" "index" "int" "length" "log" "lshift"
+                    "match" "mktime" "or" "print" "printf" "rand" "rshift"
+                    "sin" "split" "sprintf" "sqrt" "srand" "strftime"
+                    "strtonum" "sub" "substr"  "system" "systime" "time"
+                    "tolower" "toupper" "xor") t)
 		 "\\>")
 	       0 c-preprocessor-face-name))
 
