@@ -191,6 +191,7 @@
     "arglist-7.java"
     "arglist-8.java"
     "arglist-9.pike"
+    "arglist-10.pike"
     "bod-1.cc"
     "bos-1.cc"
     "bos-2.cc"
