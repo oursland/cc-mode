@@ -1743,7 +1743,7 @@ This function does not do any hidden buffer changes."
       )))
 
 
-;; A system for handling noteworthy parens before the point.
+;; A system for finding noteworthy parens before the point.
 
 (defvar c-state-cache nil)
 (make-variable-buffer-local 'c-state-cache)
@@ -1763,17 +1763,19 @@ This function does not do any hidden buffer changes."
 ;; change of narrowing is likely to affect the parens that are visible
 ;; before the point.
 
-(defvar c-state-cache-end 1)
-(make-variable-buffer-local 'c-state-cache-end)
+(defvar c-state-cache-good-pos 1)
+(make-variable-buffer-local 'c-state-cache-good-pos)
 ;; This is a position where `c-state-cache' is known to be correct.
-;; It's somewhere between the last recorded position on it and the
-;; point for which it was calculated.  The exact position is chosen to
-;; try to be close to yet earlier than the position where
-;; `c-state-cache' will be called next.  Right now the heurstic is to
-;; set it to the position after the last found closing paren (of any
-;; type) before the line on which `c-parse-state' was called.  That is
-;; chosen primarily to work well with refontification of the current
-;; line.
+;; It's a position inside one of the recorded unclosed parens or the
+;; top level, but not further nested inside any literal or subparen
+;; that is closed before the last recorded position.
+;;
+;; The exact position is chosen to try to be close to yet earlier than
+;; the position where `c-state-cache' will be called next.  Right now
+;; the heurstic is to set it to the position after the last found
+;; closing paren (of any type) before the line on which
+;; `c-parse-state' was called.  That is chosen primarily to work well
+;; with refontification of the current line.
 
 (defsubst c-invalidate-state-cache (pos)
   ;; Invalidate all info on `c-state-cache' that applies to the buffer
@@ -1784,18 +1786,18 @@ This function does not do any hidden buffer changes."
   ;;
   ;; This function does not do any hidden buffer changes.
   (while (and (or c-state-cache
-		  (when (< pos c-state-cache-end)
-		    (setq c-state-cache-end 1)
+		  (when (< pos c-state-cache-good-pos)
+		    (setq c-state-cache-good-pos 1)
 		    nil))
 	      (let ((elem (car c-state-cache)))
 		(if (consp elem)
 		    (or (< pos (cdr elem))
-			(when (< pos c-state-cache-end)
-			  (setq c-state-cache-end (cdr elem))
+			(when (< pos c-state-cache-good-pos)
+			  (setq c-state-cache-good-pos (cdr elem))
 			  nil))
 		  (or (<= pos elem)
-		      (when (< pos c-state-cache-end)
-			(setq c-state-cache-end (1+ elem))
+		      (when (< pos c-state-cache-good-pos)
+			(setq c-state-cache-good-pos (1+ elem))
 			nil)))))
     (setq c-state-cache (cdr c-state-cache))))
 
@@ -1866,13 +1868,13 @@ This function does not do any hidden buffer changes."
 	      (when (consp ptr)
 		(if (eq (cdr ptr) c-state-cache)
 		    (setq c-state-cache nil
-			  c-state-cache-end 1)
+			  c-state-cache-good-pos 1)
 		  (setcdr ptr nil))))
 	  ;; If point-min has moved backward then we drop the state
 	  ;; completely.  It's possible to do a better job here and
 	  ;; recalculate the top only.
 	  (setq c-state-cache nil
-		c-state-cache-end 1))
+		c-state-cache-good-pos 1))
 	(setq c-state-cache-start (point-min)))
 
       ;; Get the latest position we know are directly inside the
@@ -1881,30 +1883,35 @@ This function does not do any hidden buffer changes."
 			  (if (consp (car c-state-cache))
 			      (cdr (car c-state-cache))
 			    (1+ (car c-state-cache)))))
-      (if (and last-pos (< last-pos c-state-cache-end))
-	  (setq last-pos c-state-cache-end))
+      (if (or (not last-pos)
+	      (< last-pos c-state-cache-good-pos))
+	  (setq last-pos c-state-cache-good-pos)
+	;; Take the opportunity to move the cached good position
+	;; further down.
+	(if (< last-pos here-bol)
+	    (setq c-state-cache-good-pos last-pos)))
 
-      ;; Check if last-pos is in a macro.  If it is, and we're not in
-      ;; the same macro, we must discard everything on c-state-cache
-      ;; that is inside the macro before using it.
-      (when last-pos
-	(save-excursion
-	  (goto-char last-pos)
-	  (when (and (c-beginning-of-macro)
-		     (/= (point) in-macro-start))
-	    (c-invalidate-state-cache (point))
-	    ;; Set last-pos again, just like above.
-	    (setq last-pos (and c-state-cache
-				(if (consp (car c-state-cache))
-				    (cdr (car c-state-cache))
-				  (1+ (car c-state-cache))))))))
+      ;; Check if `last-pos' is in a macro.  If it is, and we're not
+      ;; in the same macro, we must discard everything on
+      ;; `c-state-cache' that is inside the macro before using it.
+      (save-excursion
+	(goto-char last-pos)
+	(when (and (c-beginning-of-macro)
+		   (/= (point) in-macro-start))
+	  (c-invalidate-state-cache (point))
+	  ;; Set `last-pos' again just like above except that there's
+	  ;; no use looking at `c-state-cache-good-pos' here.
+	  (setq last-pos (if c-state-cache
+			     (if (consp (car c-state-cache))
+				 (cdr (car c-state-cache))
+			       (1+ (car c-state-cache)))
+			   1))))
 
       ;; If we've moved very far from the last cached position then
       ;; it's probably better to redo it from scratch, otherwise we
-      ;; might spend a lot of time searching from last-pos down to
+      ;; might spend a lot of time searching from `last-pos' down to
       ;; here.
-      (when (and last-pos
-		 (< last-pos (- here 20000)))
+      (when (< last-pos (- here 20000))
 	;; First get the fallback start position.  If it turns out
 	;; that it's so far back that the cached state is closer then
 	;; we'll keep it afterall.
@@ -1913,13 +1920,13 @@ This function does not do any hidden buffer changes."
 	    (setq pos nil)
 	  (setq last-pos nil
 		c-state-cache nil
-		c-state-cache-end 1)))
+		c-state-cache-good-pos 1)))
 
       ;; Find the start position for the forward search.  (Can't
       ;; search in the backward direction since the point might be in
       ;; some kind of literal.)
 
-      (when (and (not pos) last-pos)
+      (unless pos
 	(setq old-state c-state-cache)
 
 	;; There's a cached state with a containing paren.  Pop off
@@ -1960,9 +1967,9 @@ This function does not do any hidden buffer changes."
 		    c-state-cache (cdr c-state-cache)))))
 
 	(unless (eq c-state-cache old-state)
-	  ;; Have to adjust `c-state-cache-end' if state has been
+	  ;; Have to adjust the cached good position if state has been
 	  ;; popped off.
-	  (setq c-state-cache-end
+	  (setq c-state-cache-good-pos
 		(if c-state-cache
 		    (if (consp (car c-state-cache))
 			(cdr (car c-state-cache))
@@ -1974,10 +1981,10 @@ This function does not do any hidden buffer changes."
 	  (setq pos last-pos)))
 
       ;; Get the fallback start position.
-      (when (not pos)
+      (unless pos
 	(setq pos (c-get-fallback-start-pos here)
 	      c-state-cache nil
-	      c-state-cache-end 1))
+	      c-state-cache-good-pos 1))
 
       (narrow-to-region (point-min) here)
 
@@ -1986,23 +1993,28 @@ This function does not do any hidden buffer changes."
 	      brace-pair-open nil)
 
 	;; Find the balanced brace pairs.  This loop is hot, so it
-	;; does all kinds of odd tricks to go fast.  Improvements
-	;; welcome! ;)
+	;; does ugly tricks to go faster.
 	(c-safe
-	  (let (set-end set-brace-pair)
+	  (let (set-good-pos set-brace-pair)
 	    (while t
 	      (setq last-pos nil
 		    last-pos (scan-lists pos 1 -1)) ; Might signal.
 	      (setq pos (scan-lists last-pos 1 1) ; Might signal.
-		    set-end (< pos here-bol)
+		    set-good-pos (< pos here-bol)
 		    set-brace-pair (eq (char-before last-pos) ?{))
-	      (when (and (or set-end set-brace-pair)
+
+	      ;; Update the cached good position and record the brace
+	      ;; pair, whichever is applicable for the paren we've
+	      ;; just jumped over.  But first check that it isn't
+	      ;; inside a macro and the point isn't inside the same
+	      ;; one.
+	      (when (and (or set-good-pos set-brace-pair)
 			 (or (>= pos in-macro-start)
 			     (save-excursion
 			       (goto-char pos)
 			       (not (c-beginning-of-macro)))))
-		(if set-end
-		    (setq c-state-cache-end pos))
+		(if set-good-pos
+		    (setq c-state-cache-good-pos pos))
 		(if set-brace-pair
 		    (setq brace-pair-open last-pos
 			  brace-pair-close pos))))))
@@ -2031,7 +2043,7 @@ This function does not do any hidden buffer changes."
 			       (not (c-beginning-of-macro))))
 			 (= (char-syntax (char-before last-pos)) ?\())
 		(if (< last-pos here-bol)
-		    (setq c-state-cache-end last-pos))
+		    (setq c-state-cache-good-pos last-pos))
 		(setq c-state-cache (cons (1- last-pos) c-state-cache))))
 
 	  (if (setq last-pos (c-up-list-forward pos))
@@ -2041,7 +2053,7 @@ This function does not do any hidden buffer changes."
 	      (progn
 		(setq pos (c-up-list-backward pos)
 		      c-state-cache nil
-		      c-state-cache-end c-state-cache-start)
+		      c-state-cache-good-pos c-state-cache-start)
 		(when (or (not pos)
 			  ;; Emacs (up to at least 21.2) can get confused by
 			  ;; open parens in column zero inside comments: The
@@ -2056,7 +2068,7 @@ This function does not do any hidden buffer changes."
 						 (c-point 'bol last-pos)))))))
 	    (setq pos nil))))
 
-      ;;(message "c-parse-state: %S end: %S" c-state-cache c-state-cache-end)
+      ;;(message "c-parse-state: %S end: %S" c-state-cache c-state-cache-good-pos)
       c-state-cache)))
 
 ;; Debug tool to catch cache inconsistencies.
@@ -2068,7 +2080,7 @@ This function does not do any hidden buffer changes."
   (let ((res1 (c-real-parse-state)) res2)
     (let ((c-state-cache nil)
 	  (c-state-cache-start 1)
-	  (c-state-cache-end 1))
+	  (c-state-cache-good-pos 1))
       (setq res2 (c-real-parse-state)))
     (unless (equal res1 res2)
       (error "c-parse-state inconsistency: using cache: %s, from scratch: %s"
@@ -5655,7 +5667,7 @@ This function does not do any hidden buffer changes."
 			      (c-whack-state-before (point-min) paren-state)
 			    paren-state))
 	   (c-state-cache-start (point-min))
-	   (c-state-cache-end c-state-cache-end)
+	   (c-state-cache-good-pos c-state-cache-good-pos)
 	   inenclosing-p macro-start in-macro-expr
 	   ;; There's always at most one syntactic element which got
 	   ;; a relpos.  It's stored in syntactic-relpos.
