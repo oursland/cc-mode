@@ -1344,13 +1344,15 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 			  (setq sexpbeg (point))))
 		    (if (and sexpbeg (< sexpbeg fence))
 			(setq sexpbeg fence)))
-		  ;; check to see if the next line starts a
-		  ;; comment-only line
+		  ;; Since we move by sexps we might have missed
+		  ;; comment-only lines.
 		  (save-excursion
-		    (forward-line 1)
-		    (skip-chars-forward " \t")
-		    (if (looking-at c-comment-start-regexp)
-			(setq sexpbeg (c-point 'bol))))
+		    (while (progn
+			     (forward-line 1)
+			     (skip-chars-forward " \t")
+			     (< (point) sexpbeg))
+		      (if (looking-at c-comment-start-regexp)
+			  (setq sexpbeg (c-point 'bol)))))
 		  ;; If that sexp ends within the region, indent it all at
 		  ;; once, fast.
 		  (condition-case nil
