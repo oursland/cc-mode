@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-23 18:29:47 $
-;; Version:         $Revision: 2.120 $
+;; Last Modified:   $Date: 1992-06-23 19:35:27 $
+;; Version:         $Revision: 2.121 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-23 18:29:47 $|$Revision: 2.120 $|
+;; |$Date: 1992-06-23 19:35:27 $|$Revision: 2.121 $|
 
 
 ;; ======================================================================
@@ -231,7 +231,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.120 $
+  "Major mode for editing C++ code.  $Revision: 2.121 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1262,7 +1262,7 @@ BOD is the beginning of the C++ definition."
     (let ((indent-point (point))
 	  (case-fold-search nil)
 	  state do-indentation
-	  containing-sexp
+	  containing-sexp streamop-pos
 	  (inclass-shift 0)
 	  (bod (or bod (c++-point-bod))))
       (if parse-start
@@ -1455,11 +1455,17 @@ BOD is the beginning of the C++ definition."
 		 (progn
 		   (c-backward-to-start-of-continued-exp containing-sexp)
 		   ;; take care of << and >> while in streams
-		   (if (save-excursion
-			 (goto-char indent-point)
-			 (looking-at "[ \t]*\\(<<\\|>>\\)"))
-		       (progn (skip-chars-forward "^><")
-			      (current-column))
+		   (if (let ((here (point)))
+			 (save-excursion
+			   (and (progn
+				  (goto-char indent-point)
+				  (looking-at "[ \t]*\\(<<\\|>>\\)"))
+				(progn
+				  (goto-char here)
+				  (skip-chars-forward "^><\n")
+				  (setq streamop-pos (current-column))
+				  (looking-at "\\(<<\\|>>\\)")))))
+		       streamop-pos
 		     (+ (current-column)
 			;; j.peck hack to prevent repeated continued
 			;; indentation:
@@ -1646,6 +1652,12 @@ string according to mode's syntax."
   "Returns the value of the point at beginning of the current line."
   (save-excursion
     (beginning-of-line)
+    (point)))
+
+(defun c++-point-eol ()
+  "Returns the value of the point at end of the current line."
+  (save-excursion
+    (end-of-line)
     (point)))
 
 (defun c++-point-bod ()
@@ -1895,7 +1907,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.120 $"
+(defconst c++-version "$Revision: 2.121 $"
   "c++-mode version number.")
 
 (defun c++-version ()
