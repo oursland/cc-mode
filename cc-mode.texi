@@ -1636,7 +1636,7 @@ the same time, you might want to make the @ccmode{} style variables
 have buffer local values.  If you do this, then you will need to set any
 @ccmode{} style variables in a hook function (e.g. off of
 @code{c-mode-common-hook} instead of at the top level of your
-@file{.emacs} file.  The recommended way to do this is to set the
+@file{.emacs} file).  The recommended way to do this is to set the
 variable @code{c-style-variables-are-local-p} to @code{t}
 @strong{before} @ccmode{} is loaded into your Emacs session.
 
