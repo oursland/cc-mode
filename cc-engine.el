@@ -759,8 +759,9 @@ preprocessor directive, the point will be left there."
       (cond
        ;; Skip preprocessor directives.
        ((and (looking-at "#[ \t]*[a-zA-Z0-9!]")
-	     (progn (skip-chars-backward " \t")
-		    (bolp)))
+	     (save-excursion
+	       (skip-chars-backward " \t")
+	       (bolp)))
 	(end-of-line)
 	(while (and (<= (point) limit)
 		    (eq (char-before) ?\\)
@@ -1429,6 +1430,11 @@ you need both the type of a literal and its limits."
 	      (setq c-state-cache (cdr c-state-cache)))
 	  (setq pairs (car pairs))
 	  (setcar pairs (1- (car pairs)))
+	  (when (consp (car-safe c-state-cache))
+	    ;; There could already be a cons first in `c-state-cache'
+	    ;; if we've jumped over an unbalanced open paren in a
+	    ;; macro below.
+	    (setq c-state-cache (cdr c-state-cache)))
 	  (setq c-state-cache (cons pairs c-state-cache)))
 
 	(if last-pos
