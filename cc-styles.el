@@ -128,6 +128,8 @@
     ("java"
      (c-basic-offset . 2)
      (c-comment-only-line-offset . (0 . 0))
+     ;; the following preserves Javadoc starter lines
+     (c-hanging-comment-starter-p . nil)
      (c-offsets-alist . ((topmost-intro-cont    . +)
 			 (statement-block-intro . +)
  			 (knr-argdecl-intro     . 5)
