@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.269 $
-;; Last Modified:   $Date: 1996-01-19 04:25:14 $
+;; Version:         $Revision: 4.270 $
+;; Last Modified:   $Date: 1996-01-19 18:48:16 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -125,7 +125,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1996-01-19 04:25:14 $|$Revision: 4.269 $|
+;; |$Date: 1996-01-19 18:48:16 $|$Revision: 4.270 $|
 
 ;;; Code:
 
@@ -583,7 +583,8 @@ as designated in the variable `c-file-style'.")
 To change the default style at your site, you can set this variable to
 any style defined in `c-style-alist'.  However, if cc-mode is usually
 loaded into your Emacs at compile time, you will need to set this
-variable in the `site-init.el' file and re-dump Emacs.")
+variable in the `site-init.el' file before cc-mode is loaded, then
+re-dump Emacs.")
 
 (defvar c-mode-hook nil
   "*Hook called by `c-mode'.")
@@ -4808,7 +4809,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.269 $"
+(defconst c-version "$Revision: 4.270 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "bug-gnu-emacs@prep.ai.mit.edu"
   "Address for cc-mode bug reports.")
