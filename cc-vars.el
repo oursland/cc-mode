@@ -250,12 +250,12 @@ nil."
 
 (defcustom c-tab-always-indent t
   "*Controls the operation of the TAB key.
-If t, hitting TAB always just indents the current line.  If nil,
-hitting TAB indents the current line if point is at the left margin or
-in the line's indentation, otherwise it insert a `real' tab character
-\(see note\).  If the symbol `other', then tab is inserted only within
-literals -- defined as comments and strings -- and inside preprocessor
-directives, but the line is always reindented.
+If t, hitting TAB always just indents the current line.  If nil, hitting
+TAB indents the current line if point is at the left margin or in the
+line's indentation, otherwise it inserts a `real' tab character \(see
+note\).  If some other value (not nil or t), then tab is inserted only
+within literals \(comments and strings), but the line is always
+reindented.
 
 Note: The value of `indent-tabs-mode' will determine whether a real
 tab character will be inserted, or the equivalent number of spaces.
