@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-06 18:35:18 $
-;; Version:         $Revision: 2.130 $
+;; Last Modified:   $Date: 1992-07-06 21:17:02 $
+;; Version:         $Revision: 2.131 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-06 18:35:18 $|$Revision: 2.130 $|
+;; |$Date: 1992-07-06 21:17:02 $|$Revision: 2.131 $|
 
 
 ;; ======================================================================
@@ -246,7 +246,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.130 $
+  "Major mode for editing C++ code.  $Revision: 2.131 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1304,6 +1304,17 @@ BOD is the beginning of the C++ definition."
       (setq state (c++-parse-state indent-point)
 	    containing-sexp (nth 1 state)
 	    parse-start (point))
+      ;; it is possible that c++-defun-header-weak could not find the
+      ;; beginning of the C++ definition. The following code attempts
+      ;; to work around this.  It is probably better to just use
+      ;; c++-match-header-strongly, but there are performance questions
+      (if (null state)
+	  (let* ((c++-match-header-strongly t)
+		 (bod (c++-point-bod)))
+	    (goto-char bod)
+	    (setq state (c++-parse-state indent-point)
+		  containing-sexp (nth 1 state)
+		  parse-start (point))))
       (cond ((c++-in-open-string-p bod)
 	     ;; in a string.
 	     nil)
@@ -1940,7 +1951,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.130 $"
+(defconst c++-version "$Revision: 2.131 $"
   "c++-mode version number.")
 
 (defun c++-version ()
