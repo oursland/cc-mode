@@ -1,15 +1,16 @@
-MANIFEST for tar distribution of cc-mode.el 4.241
+MANIFEST for tar distribution of cc-mode.el 4.282
 Barry A. Warsaw <cc-mode-help@merlin.cnri.reston.va.us>
-$Date: 1995-08-29 15:29:18 $
+$Date: 1996-02-21 23:07:55 $
 
 You should have received the following files in the distribution tar
-file for cc-mode 4.241:
+file for cc-mode 4.282:
 
-    ANNOUNCEMENT: Release announcement as it appeared on various newsgroups.
+    ANNOUNCEMENT: Release announcement as it appeared on various
+    forums.
 
     MANIFEST: This file.
 
-    cc-mode.el: Version 4.241 of the mode.
+    cc-mode.el: Version 4.282 of the mode.
 
     cc-mode.texi: The CC-MODE Texinfo manual.
 
@@ -30,7 +31,8 @@ file for cc-mode 4.241:
 
     README: Quick intro into how to get cc-mode up and running.
 
-    DUMPING: An guide to ditching c-mode.el and c++-mode.el in favor
-    of cc-mode.el.  Unnecessary for XEmacs 19.11 and 19.12.
-
     ChangeLog: Extremely verbose history of changes.
+
+Note that the DUMPING file from previous distributions is obsoleted by
+the fact that the latest XEmacs and Emacs 19 both come pre-configured
+to use cc-mode.
