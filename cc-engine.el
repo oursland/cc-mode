@@ -988,7 +988,9 @@
 	   (setq okp t)
 	   (while (and (setq okp (= (c-backward-token-1 1 t) 0))
 		       (not (looking-at tokenlist))))
-	   (if (not (and okp (eq (char-after) ?=)))
+	   (if (not (and okp
+			 (eq (char-after) ?=)
+			 (eq (char-after containing-sexp) ?{)))
 	       (if (and okp (not (looking-at "[{;]")))
 		   ;; We're in a lambda or statement argument.  Do not
 		   ;; check nesting.
@@ -1049,7 +1051,11 @@
   ;; the construct.  LIM limits the backward search.
   (save-excursion
     (let ((lim (or lim (c-point 'bod))))
-      (or (and (c-safe (progn (forward-sexp -1) t))
+      (or (and (progn (c-backward-syntactic-ws) t)
+	       (> (point) lim)
+	       (= (char-before) ?\()
+	       (cons 'statarg (point)))
+	  (and (c-safe (progn (forward-sexp -1) t))
 	       (>= (point) lim)
 	       c-statarg-key
 	       (looking-at c-statarg-key)
@@ -1612,20 +1618,20 @@
 		 ;; CASE 6A: Immediately after the lambda keyword
 		 ((and c-lambda-key
 		       (looking-at c-lambda-key))
-		  (c-add-syntax 'lambda-intro-cont)
-		  (c-add-syntax 'inlambda (c-point 'boi))) ; returns non-nil
+		  (c-add-syntax 'lambda-intro-cont (c-point 'boi))
+		  (c-add-syntax 'inlambda)) ; returns non-nil
 		 ;; CASE 6B: At the beginning of the arg to a
 		 ;; function taking a statement argument
 		 ((and c-statarg-key
 		       (looking-at c-statarg-key))
-		  (c-add-syntax 'inexpr-block-open)
-		  (c-add-syntax 'inexpr-statement (c-point 'boi)))
+		  (c-add-syntax 'block-open (c-point 'boi))
+		  (c-add-syntax 'inexpr-statement))
 		 ;; CASE 6C: At the beginning of the lambda statement
 		 ((and (c-safe (progn (forward-sexp -1) t))
 		       c-lambda-key
 		       (looking-at c-lambda-key))
-		  (c-add-syntax 'inexpr-block-open)
-		  (c-add-syntax 'inlambda (c-point 'boi)))))))
+		  (c-add-syntax 'block-open (c-point 'boi))
+		  (c-add-syntax 'inlambda))))))
 	 ;; CASE 7: line is an expression, not a statement.  Most
 	 ;; likely we are either in a function prototype or a function
 	 ;; call argument list
@@ -1641,13 +1647,19 @@
 		 (memq char-after-ip '(?\) ?\])))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-close (c-point 'boi)))
-	   ;; CASE 7B: we are looking at the first argument in an empty
+	   ;; CASE 7B: Looking at the opening brace of an
+	   ;; in-expression block.
+	   ((eq char-after-ip ?{)
+	    (goto-char containing-sexp)
+	    (c-add-syntax 'block-open (c-point 'boi))
+	    (c-add-syntax 'inexpr-statement))
+	   ;; CASE 7C: we are looking at the first argument in an empty
 	   ;; argument list. Use arglist-close if we're actually
 	   ;; looking at a close paren or bracket.
 	   ((memq char-before-ip '(?\( ?\[))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-intro (c-point 'boi)))
-	   ;; CASE 7C: we are inside a conditional test clause. treat
+	   ;; CASE 7D: we are inside a conditional test clause. treat
 	   ;; these things as statements
 	   ((save-excursion
 	      (goto-char containing-sexp)
@@ -1660,7 +1672,7 @@
 		(c-add-syntax 'statement (point))
 	      (c-add-syntax 'statement-cont (point))
 	      ))
-	   ;; CASE 7D: maybe a continued method call. This is the case
+	   ;; CASE 7E: maybe a continued method call. This is the case
 	   ;; when we are inside a [] bracketed exp, and what precede
 	   ;; the opening bracket is not an identifier.
 	   ((and c-method-key
@@ -1671,7 +1683,7 @@
 		   (if (not (looking-at c-symbol-key))
 		       (c-add-syntax 'objc-method-call-cont containing-sexp))
 		   )))
-	   ;; CASE 7E: we are looking at an arglist continuation line,
+	   ;; CASE 7F: we are looking at an arglist continuation line,
 	   ;; but the preceding argument is on the same line as the
 	   ;; opening paren.  This case includes multi-line
 	   ;; mathematical paren groupings, but we could be on a
@@ -1686,7 +1698,7 @@
 		   (<= (point) containing-sexp)))
 	    (goto-char containing-sexp)
 	    (c-add-syntax 'arglist-cont-nonempty (c-point 'boi)))
-	   ;; CASE 7F: we are looking at just a normal arglist
+	   ;; CASE 7G: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (c-beginning-of-statement-1 containing-sexp)
 	      (forward-char 1)
@@ -1777,6 +1789,7 @@
 	       (> (point)
 		  (save-excursion
 		    (c-beginning-of-statement-1 containing-sexp)
+		    (c-forward-syntactic-ws)
 		    (setq placeholder (point))))
 	       (/= placeholder containing-sexp))
 	  (goto-char indent-point)
@@ -1905,11 +1918,10 @@
 		(goto-char containing-sexp)
 		(setq placeholder (c-looking-at-inexpr-stat)))
 	      (goto-char containing-sexp)
-	      (c-add-syntax 'inexpr-block-close)
+	      (c-add-syntax 'block-close (c-point 'boi))
 	      (c-add-syntax (if (eq (car placeholder) 'lambda)
 				'inlambda
-			      'inexpr-statement)
-			    (c-point 'boi)))
+			      'inexpr-statement)))
 	     ;; CASE 15B: does this close an inline or a function in
 	     ;; an extern block or namespace?
 	     ((progn
@@ -2022,17 +2034,10 @@
 		    (goto-char containing-sexp)
 		    (c-looking-at-inexpr-stat)))
 	    (goto-char (cdr placeholder))
-	    (cond
-	     ;; CASE 16E.1: The block is the statement argument to a
-	     ;; function taking such a thing
-	     ((eq (car placeholder) 'statarg)
-	      (c-add-syntax 'inexpr-block-intro)
-	      (c-add-syntax 'inexpr-statement (c-point 'boi)))
-	     ;; CASE 16E.2: The block is the body of a lambda
-	     ;; expression
-	     ((eq (car placeholder) 'lambda)
-	      (c-add-syntax 'inexpr-block-intro)
-	      (c-add-syntax 'inlambda (c-point 'boi))))
+	    (c-add-syntax 'statement-block-intro (c-point 'boi))
+	    (c-add-syntax (if (eq (car placeholder) 'lambda)
+			      'inlambda
+			    'inexpr-statement))
 	    (if (eq char-after-ip ?{)
 		(c-add-syntax 'block-open)))
 	   ;; CASE 16F: first statement in an inline, or first
