@@ -112,15 +112,16 @@ perhaps a `cc-bytecomp-restore-environment' is forgotten somewhere"))
 	(while p
 	  (let ((fun (car (car p)))
 		(temp-macro (car (cdr (car p)))))
-	    (if temp-macro
-		(progn
-		  (eval `(defmacro ,fun ,@temp-macro))
+	    (if (not (fboundp fun))
+		(if temp-macro
+		    (progn
+		      (eval `(defmacro ,fun ,@temp-macro))
+		      (cc-bytecomp-debug-msg
+		       "cc-bytecomp-setup-environment: Bound macro %s" fun))
+		  (fset fun (intern (concat "cc-bytecomp-ignore-fun:"
+					    (symbol-name fun))))
 		  (cc-bytecomp-debug-msg
-		   "cc-bytecomp-setup-environment: Bound macro %s" fun))
-	      (fset fun (intern (concat "cc-bytecomp-ignore-fun:"
-					(symbol-name fun))))
-	      (cc-bytecomp-debug-msg
-	       "cc-bytecomp-setup-environment: Covered function %s" fun)))
+		   "cc-bytecomp-setup-environment: Covered function %s" fun))))
 	  (setq p (cdr p)))
 	(setq p cc-bytecomp-original-properties)
 	(while p
@@ -274,6 +275,15 @@ use within `eval-when-compile'."
 	     (cc-bytecomp-load (symbol-name ,cc-part)))
        (require ,cc-part))))
 
+(defmacro cc-external-require (feature)
+  "Do a `require' of an external package.
+This restores and sets up the compilation environment before and
+afterwards.  Don't use within `eval-when-compile'."
+  `(progn
+     (eval-when-compile (cc-bytecomp-restore-environment))
+     (require ,feature)
+     (eval-when-compile (cc-bytecomp-setup-environment))))
+
 (defun cc-bytecomp-is-compiling ()
   "Return non-nil if eval'ed during compilation.  Don't use outside
 `eval-when-compile'."
@@ -286,7 +296,7 @@ to silence the byte compiler.  Don't use within `eval-when-compile'."
   `(eval-when-compile
      (if (boundp ',var)
 	 (cc-bytecomp-debug-msg
-	  "cc-bytecomp-defvar: %s bound already" ',var)
+	  "cc-bytecomp-defvar: %s bound already as variable" ',var)
        (if (not (memq ',var cc-bytecomp-unbound-variables))
 	   (progn
 	     (cc-bytecomp-debug-msg
@@ -314,7 +324,7 @@ at compile time, e.g. for macros and inline functions."
   `(eval-when-compile
      (if (fboundp ',fun)
 	 (cc-bytecomp-debug-msg
-	  "cc-bytecomp-defun: %s bound already" ',fun)
+	  "cc-bytecomp-defun: %s bound already as function" ',fun)
        (if (not (assq ',fun cc-bytecomp-original-functions))
 	   (progn
 	     (cc-bytecomp-debug-msg
