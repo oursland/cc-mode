@@ -6584,7 +6584,7 @@ comment at the start of cc-engine.el for more info."
 			      (c-looking-at-special-brace-list))))))))
 
 (defun c-looking-at-inexpr-block (lim containing-sexp)
-  ;; Returns non-nil if we're looking at the beginning of a block
+  ;; Return non-nil if we're looking at the beginning of a block
   ;; inside an expression.  The value returned is actually a cons of
   ;; either 'inlambda, 'inexpr-statement or 'inexpr-class and the
   ;; position of the beginning of the construct.  LIM limits the
@@ -6597,7 +6597,7 @@ comment at the start of cc-engine.el for more info."
   ;; This function might do hidden buffer changes.
 
   (save-excursion
-    (let ((res 'maybe) passed-bracket
+    (let ((res 'maybe) passed-paren
 	  (closest-lim (or containing-sexp lim (point-min)))
 	  ;; Look at the character after point only as a last resort
 	  ;; when we can't disambiguate.
@@ -6618,7 +6618,7 @@ comment at the start of cc-engine.el for more info."
 		    (cond
 		     ((and block-follows
 			   (c-keyword-member kw-sym 'c-inexpr-class-kwds))
-		      (and (not passed-bracket)
+		      (and (not (eq passed-paren ?\[))
 			   (or (not (looking-at c-class-key))
 			       ;; If the class definition is at the start of
 			       ;; a statement, we don't consider it an
@@ -6640,17 +6640,27 @@ comment at the start of cc-engine.el for more info."
 				      (eq (char-after) ?\())))
 			   (cons 'inexpr-class (point))))
 		     ((c-keyword-member kw-sym 'c-inexpr-block-kwds)
-		      (cons 'inexpr-statement (point)))
+		      (when (not passed-paren)
+			(cons 'inexpr-statement (point))))
 		     ((c-keyword-member kw-sym 'c-lambda-kwds)
-		      (cons 'inlambda (point)))
+		      (when (or (not passed-paren)
+				(eq passed-paren ?\())
+			(cons 'inlambda (point))))
 		     ((c-keyword-member kw-sym 'c-block-stmt-kwds)
 		      nil)
 		     (t
 		      'maybe)))
 
-		(when (eq (char-after) ?\[)
-		  (setq passed-bracket t))
-		'maybe)))
+		(if (looking-at "\\s(")
+		    (if passed-paren
+			(if (and (eq passed-paren ?\[)
+				 (eq (char-after) ?\[))
+			    ;; Accept several square bracket sexps for
+			    ;; Java array initializations.
+			    'maybe)
+		      (setq passed-paren (char-after))
+		      'maybe)
+		  'maybe))))
 
       (if (eq res 'maybe)
 	  (when (and c-recognize-paren-inexpr-blocks
