@@ -121,6 +121,8 @@
 ;; definitions, though, since the generated functions aren't called
 ;; during compilation.
 (cc-bytecomp-defvar c-preprocessor-face)
+(cc-bytecomp-defun c-fontify-recorded-types-and-refs)
+(cc-bytecomp-defun c-font-lock-identifier-list)
 (cc-bytecomp-defun c-font-lock-declarators)
 
 
@@ -217,39 +219,34 @@ tools (e.g. Javadoc).")
 	 ;; face and hope it wasn't inversed already.
 	 (invert-face newface))))
 
-(defun c-font-lock-syntactic-face-function (state)
-  ;; This function can make hidden buffer changes, but the font-lock
-  ;; context covers that.
-  (save-excursion
-    (if (nth 3 state)
-        ;; Check whether the string is properly terminated.
-	(let ((nstate (parse-partial-sexp (point) (c-point 'eol)
-                                          nil nil state 'syntax-table)))
-	  (if (and (eolp)
-		   (elt nstate 3)
-		   ;; We're at eol inside a string.
-		   (if (c-major-mode-is '(c-mode c++-mode objc-mode pike-mode))
-		       ;; There's no \ before the newline.
-		       (not (elt nstate 5))
-		     ;; Quoted newlines aren't supported.
-		     t)
-		   (if (c-major-mode-is 'pike-mode)
-		       ;; There's no # before the string, so newlines
-		       ;; aren't allowed.
-		       (not (eq (char-before (elt state 8)) ?#))
-		     t))
-              ;; We're inside a string, at EOL and there was no \.
-	      c-invalid-face
-            font-lock-string-face))
-      (goto-char (elt state 8))
-      (if (looking-at c-doc-comment-start-regexp)
-	  c-doc-face
-	font-lock-comment-face))))
-
 (eval-and-compile
   ;; We need the following functions during compilation since they're
   ;; called when the `c-lang-defconst' initializers are evaluated.
   ;; Define them at runtime too for the sake of derived modes.
+
+  (defmacro c-put-font-lock-face (from to face)
+    ;; Put a face on a region (overriding any existing face) in the way
+    ;; font-lock would do it.  In XEmacs that means putting an
+    ;; additional font-lock property, or else the font-lock package
+    ;; won't recognize it as fontified and might override it
+    ;; incorrectly.
+    (if (fboundp 'font-lock-set-face)
+	;; Note: This function has no docstring in XEmacs so it might be
+	;; considered internal.
+	`(font-lock-set-face ,from ,to ,face)
+      `(put-text-property ,from ,to 'face ,face)))
+
+  (defmacro c-fontify-types-and-refs (varlist &rest body)
+    ;; Like `let', but additionally activates `c-record-type-identifiers'
+    ;; and `c-record-ref-identifiers', and fontifies the recorded ranges
+    ;; accordingly on exit.
+    `(let ((c-record-type-identifiers t)
+	   c-record-ref-identifiers
+	   ,@varlist)
+       (prog1 (progn ,@body)
+	 (c-fontify-recorded-types-and-refs))))
+  (put 'c-fontify-types-and-refs 'lisp-indent-function 1)
+  (eval-after-load "edebug" '(def-edebug-spec c-fontify-types-and-refs let*))
 
   (defsubst c-skip-comments-and-strings (limit)
     ;; If the point is within a region fontified as a comment or
@@ -324,6 +321,52 @@ tools (e.g. Javadoc).")
 			,(nth 2 highlight))))
 		 highlights))))
 	nil))))
+
+(defun c-fontify-recorded-types-and-refs ()
+  ;; Used by `c-fontify-types-and-refs'.
+  (let ((list c-record-type-identifiers) elem)
+    (while (consp list)
+      (setq elem (car list)
+	    list (cdr list))
+      (c-put-font-lock-face (car elem) (cdr elem)
+			    'font-lock-type-face))
+    (setq list c-record-ref-identifiers)
+    (while list
+      (setq elem (car list)
+	    list (cdr list))
+      ;; Note that the reference face is a variable that is
+      ;; dereferenced, since it's an alias in Emacs.
+      (c-put-font-lock-face (car elem) (cdr elem)
+			    font-lock-reference-face))))
+
+(defun c-font-lock-syntactic-face-function (state)
+  ;; This function can make hidden buffer changes, but the font-lock
+  ;; context covers that.
+  (save-excursion
+    (if (nth 3 state)
+        ;; Check whether the string is properly terminated.
+	(let ((nstate (parse-partial-sexp (point) (c-point 'eol)
+                                          nil nil state 'syntax-table)))
+	  (if (and (eolp)
+		   (elt nstate 3)
+		   ;; We're at eol inside a string.
+		   (if (c-major-mode-is '(c-mode c++-mode objc-mode pike-mode))
+		       ;; There's no \ before the newline.
+		       (not (elt nstate 5))
+		     ;; Quoted newlines aren't supported.
+		     t)
+		   (if (c-major-mode-is 'pike-mode)
+		       ;; There's no # before the string, so newlines
+		       ;; aren't allowed.
+		       (not (eq (char-before (elt state 8)) ?#))
+		     t))
+              ;; We're inside a string, at EOL and there was no \.
+	      c-invalid-face
+            font-lock-string-face))
+      (goto-char (elt state 8))
+      (if (looking-at c-doc-comment-start-regexp)
+	  c-doc-face
+	font-lock-comment-face))))
 
 (c-lang-defconst c-cpp-matchers
   "Font lock matchers for preprocessor directives and purely lexical
@@ -470,14 +513,13 @@ stuff.  Used on level 1 and higher."
   (save-restriction
     (narrow-to-region (point-min) limit)
 
-    (let (id-end
-	  ;; Turn on fontification in `c-forward-name' and `c-forward-type'.
-	  (c-fontify-types-and-refs t)
-	  ;; If FACE is `font-lock-type-face' then all things we encounter
-	  ;; in the list are types.
-	  (c-promote-possible-types t)
-	  ;; The font-lock package in Emacs is known to clobber this.
-	  (parse-sexp-lookup-properties t))
+    (c-fontify-types-and-refs
+	(id-end
+	 ;; If FACE is `font-lock-type-face' then all things we encounter
+	 ;; in the list are types.
+	 (c-promote-possible-types t)
+	 ;; The font-lock package in Emacs is known to clobber this.
+	 (parse-sexp-lookup-properties t))
 
       (while (and
 	      (progn
@@ -717,9 +759,9 @@ other easily recognizable things.  Used on level 2 and higher."
 		"\\)\\>")
 	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
 
-      ;; Fontify class inherit lists in C++.
       ,@(when (c-major-mode-is 'c++-mode)
-	  `((,(c-make-font-lock-search-function
+	  `(;; Fontify class inherit lists in C++.
+	    (,(c-make-font-lock-search-function
 	       (concat
 		"\\<\\("
 		(c-make-keywords-re nil (c-lang-const c-class-kwds))
@@ -729,6 +771,13 @@ other easily recognizable things.  Used on level 2 and higher."
 		;; searching too far.
 		"[^\]\[{}();,/#=:]*"
 		":")
+	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))
+
+	    ;; Fontify throw specifications.
+	    (,(c-make-font-lock-search-function
+	       (concat "\\<throw\\>"
+		       (c-lang-const c-syntactic-ws)
+		       "(")
 	       '((c-font-lock-identifier-list limit 'font-lock-type-face))))))
       ))
 
@@ -742,11 +791,10 @@ other easily recognizable things.  Used on level 2 and higher."
 
   ;;(message "c-font-lock-declarators from %s to %s" (point) limit)
   (c-forward-syntactic-ws limit)
-  (let ((pos (point)) next-pos id-start id-end
+  (c-fontify-types-and-refs
+      ((pos (point)) next-pos id-start id-end
 	paren-depth
 	id-face got-init
-	;; Turn on fontification in `c-forward-name' and `c-forward-type'.
-	(c-fontify-types-and-refs t)
 	;; The font-lock package in Emacs is known to clobber this.
 	(parse-sexp-lookup-properties t))
 
@@ -940,7 +988,8 @@ other easily recognizable things.  Used on level 2 and higher."
     (c-clear-found-types))
 
   (save-restriction
-    (let ((start-pos (point))
+    (c-fontify-types-and-refs
+	((start-pos (point))
 	  ;; The result of the last search for `c-decl-prefix-re'.
 	  match
 	  ;; The position of the last token matched by the last
@@ -987,8 +1036,6 @@ other easily recognizable things.  Used on level 2 and higher."
 	  (max-type-decl-end-before-token 0)
 	  ;; The end position of the last entered macro.
 	  (macro-end -1)
-	  ;; Turn on fontification in `c-forward-name' and `c-forward-type'.
-	  (c-fontify-types-and-refs t)
 	  ;; The font-lock package in Emacs is known to clobber this.
 	  (parse-sexp-lookup-properties t))
 
@@ -1196,7 +1243,7 @@ other easily recognizable things.  Used on level 2 and higher."
 
 			    (when (eq at-type 'found)
 			      ;; If the previous identifier is a found type we
-			      ;; font lock it as one; it might be some sort of
+			      ;; record it as one; it might be some sort of
 			      ;; alias for a prefix like "unsigned".
 			      (save-excursion
 				(goto-char type-start)
@@ -1699,8 +1746,7 @@ on level 2 only and so aren't combined with `c-complex-decl-matchers'."
       ,@(when (c-lang-const c-type-prefix-kwds)
 	  `((,(byte-compile
 	       `(lambda (limit)
-		  (let ((c-promote-possible-types t)
-			(c-fontify-types-and-refs t))
+		  (c-fontify-types-and-refs ((c-promote-possible-types t))
 		    (save-restriction
 		      ;; Narrow to avoid going past the limit in
 		      ;; `c-forward-type'.
