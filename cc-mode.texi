@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.39 $
+@comment manual version: $Revision: 2.40 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-05-24 15:58:43 $
+@comment Last modification: $Date: 1996-05-30 19:50:13 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.39 $)
+@center (manual revision: $Revision: 2.40 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -2511,18 +2511,19 @@ for you.
 You will probably notice pathological behavior from @code{cc-mode} when
 working in files containing large amounts of cpp macros.  This is
 because @code{cc-mode} cannot quickly skip backwards over these lines,
-which do not contribute to the syntactic calculations.  You'll probably
-also have problems if you are editing ``K&R'' C code, i.e. C code that
-does not use function prototypes.  This is because there are ambiguities
-in the C syntax when K&R style argument lists are used, and
-@code{cc-mode} has to use a slower scan to determine what it's looking
-at.
+which do not contribute to the syntactic calculations.
 
 @vindex c-recognize-knr-p
 @vindex recognize-knr-p (c-)
-For the latter problem, I would suggest converting to ANSI style
-protocols, and turning the variable @code{c-recognize-knr-p} to
-@code{nil} (this is it's default value for all modes).
+Previous versions of @code{cc-mode} had potential performance problems
+when recognizing ``K&R'' style function argument declarations.  This was
+because there are ambiguities in the C syntax when K&R style argument
+lists are used (it is hard to distinguish them from top-level
+declarations).  @code{cc-mode} has adopted BOCM's convention for
+limiting the search: it assumes that argdecls are indented at least one
+space, and that the function headers are not indented at all.  Now
+@code{c-recognize-knr-p} is deprecated, and is in fact, always
+non-@code{nil} for C and Objective-C, and @code{nil} for C++ and Java.
 
 @vindex cc-lobotomy-pith-list
 For the former problem, you might want to investigate some of the
