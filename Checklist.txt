@@ -34,19 +34,23 @@ Checklist for doing a release:
           cc-mode.html.tar.gz
 
       The first is the tarball to be sent to RMS + SLB for Emacs and
-      XEmacs respectively.  They contain some files that aren't
-      necessary for those releases.
+      XEmacs respectively.  They contain only the files that are
+      necessary for those releases.  However, I typically don't send
+      them stuff until they see the Net announcements and ask for the
+      files.  This lets them sync our releases up to their own release 
+      cycle.
 
       RMS: Richard Stallman <rms@gnu.org>
       SLB: Steve Baur <steve@xemacs.org>
 
     - Send cc-mode-5.20.rmslb.tar.gz and the ChangeLog entries for
-      XX-1 to XX to RMS.  Sent just the tarball to SLB.
+      XX-1 to XX to RMS.  Sent just the tarball to SLB.  (see note
+      above).
 
-    - Copy the Distrib files (except *.rmslb.*) to the FTP site.
+    - Copy the Distrib files (except *.rmslb.*) to the Web site.
 
     - Unpack copies of cc-mode-5.XX.tar.gz, cc-mode.info.tar.gz,
-      cc-mode.html.tar.gz, for direct FTP access.
+      cc-mode.html.tar.gz, for Web access.
 
     - Create symbolic links 
 
@@ -67,3 +71,14 @@ Checklist for doing a release:
 	comp.lang.objective-c
 	comp.lang.java.programmer
 	comp.object.corba
+
+    - Tag the release using "./Release.py --tag XX" where XX is the
+      number used above.  If you find a problem in the released
+      tarball, retag using -T option.  Very important!  Make sure the
+      tag is set before doing the bump (next step).
+
+    - Bump the current release by running "./Release.py --bump XX+1"
+      Do not do this until the previous release has been tagged, and
+      only do this as a last step!
+
+    - You're now ready to start hacking the next version.
