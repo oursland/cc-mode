@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.48 $
-;; Last Modified:   $Date: 1994-08-10 14:24:25 $
+;; Version:         $Revision: 4.49 $
+;; Last Modified:   $Date: 1994-08-11 20:40:06 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -99,7 +99,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-08-10 14:24:25 $|$Revision: 4.48 $|
+;; |$Date: 1994-08-11 20:40:06 $|$Revision: 4.49 $|
 
 ;;; Code:
 
@@ -129,7 +129,7 @@ reported and the syntactic symbol is ignored.")
     (class-close           . 0)
     (inline-open           . +)
     (inline-close          . 0)
-    (c++-funcdecl-cont     . -)
+    (ansi-funcdecl-cont    . -)
     (knr-argdecl-intro     . +)
     (knr-argdecl           . 0)
     (topmost-intro         . 0)
@@ -223,7 +223,7 @@ Here is the current list of valid syntactic element symbols:
  class-close            -- brace that closes a class definition
  inline-open            -- brace that opens an in-class inline method
  inline-close           -- brace that closes an in-class inline method
- c++-funcdecl-cont      -- the nether region between a C++ function
+ ansi-funcdecl-cont     -- the nether region between an ANSI function
                            declaration and the defun opening brace
  knr-argdecl-intro      -- first line of a K&R C argument declaration
  knr-argdecl            -- subsequent lines in a K&R C argument declaration
@@ -382,6 +382,17 @@ This hook gets called after a line is indented by the mode.")
 (defvar c-electric-pound-behavior nil
   "*List of behaviors for electric pound insertion.
 Only currently supported behavior is `alignleft'.")
+
+(defvar c-recognize-knr-p t
+  "*If non-nil, `c-mode' and `objc-mode' will recognize K&R constructs.
+This variable is needed because of ambiguities in C syntax that make
+fast recognition of K&R constructs problematic, and slow.  If you are
+coding with ANSI prototypes, set this variable to nil to speed up
+recognition of certain constructs.  Make sure you do this in your
+language-mode specific hook, not in `c-mode-common-hook'.
+
+This variable is nil by default in `c++-mode', and t by default in
+`c-mode' and `objc-mode'.  This variable is buffer-local.")
 
 (defvar c-style-alist
   '(("GNU"
@@ -910,7 +921,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.48 $
+cc-mode Revision: $Revision: 4.49 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -939,13 +950,14 @@ Key bindings:
   (setq comment-start "// "
 	comment-end ""
 	c-conditional-key c-C++-conditional-key
-	c-comment-start-regexp "//\\|/\\*")
+	c-comment-start-regexp "//\\|/\\*"
+	c-recognize-knr-p nil)
   (run-hooks 'c++-mode-hook))
 
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.48 $
+cc-mode Revision: $Revision: 4.49 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -973,13 +985,14 @@ Key bindings:
   (setq comment-start "/* "
 	comment-end   " */"
 	c-conditional-key c-C-conditional-key
-	c-comment-start-regexp "/\\*")
+	c-comment-start-regexp "/\\*"
+	c-recognize-knr-p t)
   (run-hooks 'c-mode-hook))
 
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.48 $
+cc-mode Revision: $Revision: 4.49 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -1008,7 +1021,8 @@ Key bindings:
   (setq comment-start "// "
 	comment-end   ""
 	c-conditional-key c-C-conditional-key
-	c-comment-start-regexp "//\\|/\\*")
+	c-comment-start-regexp "//\\|/\\*"
+	c-recognize-knr-p t)
   (run-hooks 'objc-mode-hook))
 
 (defun c-common-init ()
@@ -1025,6 +1039,7 @@ Key bindings:
   (make-local-variable 'comment-end)
   (make-local-variable 'comment-column)
   (make-local-variable 'comment-start-skip)
+  (make-local-variable 'c-recognize-knr-p)
   ;; now set their values
   (setq paragraph-start (concat "^$\\|" page-delimiter)
 	paragraph-separate paragraph-start
@@ -2992,13 +3007,13 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      ;; we don't need to add any class offset since this
 	      ;; should be relative to the ctor's indentation
 	      )
-	     ;; CASE 5B.2: nether region after a C++ func decl
-	     ((eq major-mode 'c++-mode)
-	      (c-add-syntax 'c++-funcdecl-cont (c-point 'boi))
-	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
-	     ;; CASE 5B.3: K&R arg decl intro
-	     (t
+	     ;; CASE 5B.2: K&R arg decl intro
+	     (c-recognize-knr-p
 	      (c-add-syntax 'knr-argdecl-intro (c-point 'boi))
+	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
+	     ;; CASE 5B.3: nether region after a C++ func decl
+	     (t
+	      (c-add-syntax 'ansi-funcdecl-cont (c-point 'boi))
 	      (and inclass-p (c-add-syntax 'inclass (aref inclass-p 0))))
 	     ))
 	   ;; CASE 5C: inheritance line. could be first inheritance
@@ -3093,7 +3108,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (goto-char (aref inclass-p 0))
 	      (c-add-syntax 'class-close (c-point 'boi))))
 	   ;; CASE 5G: we could be looking at subsequent knr-argdecls
-	   ((and (memq major-mode '(c-mode objc-mode))
+	   ((and c-recognize-knr-p
 		 (save-excursion
 		   (c-backward-syntactic-ws lim)
 		   (while (memq (preceding-char) '(?\; ?,))
@@ -3871,7 +3886,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.48 $"
+(defconst c-version "$Revision: 4.49 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
