@@ -2930,6 +2930,121 @@ comment at the start of cc-engine.el for more info."
     ;; the future.
     (/= (point) start)))
 
+;; The following is an alternative implementation of
+;; `c-syntactic-skip-backward' that uses backward movement to keep
+;; track of the syntactic context.  It turned out to be generally
+;; slower than the one above which uses forward checks from earlier
+;; safe positions.
+;;
+;;(defconst c-ssb-stop-re
+;;  ;; The regexp matching chars `c-syntactic-skip-backward' needs to
+;;  ;; stop at to avoid going into comments and literals.
+;;  (concat
+;;   ;; Match comment end syntax and string literal syntax.  Also match
+;;   ;; '/' for block comment endings (not covered by comment end
+;;   ;; syntax).
+;;   "\\s>\\|/\\|\\s\""
+;;   (if (memq 'gen-string-delim c-emacs-features)
+;;	 "\\|\\s|"
+;;     "")
+;;   (if (memq 'gen-comment-delim c-emacs-features)
+;;	 "\\|\\s!"
+;;     "")))
+;;
+;;(defconst c-ssb-stop-paren-re
+;;  ;; Like `c-ssb-stop-re' but also stops at paren chars.
+;;  (concat c-ssb-stop-re "\\|\\s(\\|\\s)"))
+;;
+;;(defconst c-ssb-sexp-end-re
+;;  ;; Regexp matching the ending syntax of a complex sexp.
+;;  (concat c-string-limit-regexp "\\|\\s)"))
+;;
+;;(defun c-syntactic-skip-backward (skip-chars &optional limit paren-level)
+;;  "Like `skip-chars-backward' but only look at syntactically relevant chars,
+;;i.e. don't stop at positions inside syntactic whitespace or string
+;;literals.  Preprocessor directives are also ignored.  However, if the
+;;point is within a comment, string literal or preprocessor directory to
+;;begin with, its contents is treated as syntactically relevant chars.
+;;If LIMIT is given, it limits the backward search and the point will be
+;;left there if no earlier position is found.
+;;
+;;If PAREN-LEVEL is non-nil, the function won't stop in nested paren
+;;sexps, and the search will also not go outside the current paren sexp.
+;;However, if LIMIT or the buffer limit is reached inside a nested paren
+;;then the point will be left at the limit.
+;;
+;;Non-nil is returned if the point moved, nil otherwise.
+;;
+;;Note that this function might do hidden buffer changes.  See the
+;;comment at the start of cc-engine.el for more info."
+;;
+;;  (save-restriction
+;;    (when limit
+;;	(narrow-to-region limit (point-max)))
+;;
+;;    (let ((start (point)))
+;;	(catch 'done
+;;	  (while (let ((last-pos (point))
+;;		       (stop-pos (progn
+;;				   (skip-chars-backward skip-chars)
+;;				   (point))))
+;;
+;;		   ;; Skip back over the same region as
+;;		   ;; `skip-chars-backward' above, but keep to
+;;		   ;; syntactically relevant positions.
+;;		   (goto-char last-pos)
+;;		   (while (and
+;;			   ;; `re-search-backward' with a single char regexp
+;;			   ;; should be fast.
+;;			   (re-search-backward
+;;			    (if paren-level c-ssb-stop-paren-re c-ssb-stop-re)
+;;			    stop-pos 'move)
+;;
+;;			   (progn
+;;			     (cond
+;;			      ((looking-at "\\s(")
+;;			       ;; `paren-level' is set and we've found the
+;;			       ;; start of the containing paren.
+;;			       (forward-char)
+;;			       (throw 'done t))
+;;
+;;			      ((looking-at c-ssb-sexp-end-re)
+;;			       ;; We're at the end of a string literal or paren
+;;			       ;; sexp (if `paren-level' is set).
+;;			       (forward-char)
+;;			       (condition-case nil
+;;				   (c-backward-sexp)
+;;				 (error
+;;				  (goto-char limit)
+;;				  (throw 'done t))))
+;;
+;;			      (t
+;;			       (forward-char)
+;;			       ;; At the end of some syntactic ws or possibly
+;;			       ;; after a plain '/' operator.
+;;			       (let ((pos (point)))
+;;				 (c-backward-syntactic-ws)
+;;				 (if (= pos (point))
+;;				     ;; Was a plain '/' operator.  Go past it.
+;;				     (backward-char)))))
+;;
+;;			     (> (point) stop-pos))))
+;;
+;;		   ;; Now the point is either at `stop-pos' or at some
+;;		   ;; position further back if `stop-pos' was at a
+;;		   ;; syntactically irrelevant place.
+;;
+;;		   ;; Skip additional syntactic ws so that we don't stop
+;;		   ;; at the end of a comment if `skip-chars' is
+;;		   ;; something like "^/".
+;;		   (c-backward-syntactic-ws)
+;;
+;;		   (< (point) stop-pos))))
+;;
+;;	;; We might want to extend this with more useful return values
+;;	;; in the future.
+;;	(/= (point) start))))
+
 
 ;; Tools for handling comments and string literals.
 
