@@ -1,6 +1,8 @@
 Title: CC Mode Patches
 Author: bwarsaw@python.org
 
+<h1>CC Mode Patches</h1>
+
 The <a href="index.html">main distribution</a> is CC Mode version
 4.379, but there have been a number of patches developed since then.
 These are being distributed in Unix diff(1) patch form instead of
