@@ -2171,8 +2171,18 @@ comment at the start of cc-engine.el for more info."
 	  (c-state-cache-good-pos 1))
       (setq res2 (c-real-parse-state)))
     (unless (equal res1 res2)
-      (error "c-parse-state inconsistency: using cache: %s, from scratch: %s"
-	     res1 res2))
+      ;; The cache can actually go further back due to the ad-hoc way
+      ;; the first paren is found, so try to whack off a bit of its
+      ;; start before complaining.
+      (save-excursion
+	(goto-char (or (c-least-enclosing-brace res2) (point)))
+	(c-beginning-of-defun-1)
+	(while (not (or (bobp) (eq (char-after) ?{)))
+	  (c-beginning-of-defun-1))
+	(unless (equal (c-whack-state-before (point) res1) res2)
+	  (message (concat "c-parse-state inconsistency: "
+			   "using cache: %s, from scratch: %s")
+		   res1 res2))))
     res1))
 (defun c-toggle-parse-state-debug (&optional arg)
   (interactive "P")
