@@ -349,10 +349,6 @@ Key bindings:
   (message "Using CC Mode version %s" c-version)
   (c-keep-region-active))
 
-;; Get reporter-submit-bug-report when byte-compiling
-;; (eval-when-compile
-;;   (require 'reporter))
-
 (defun c-submit-bug-report ()
   "Submit via mail a bug report on CC Mode."
   (interactive)
