@@ -310,7 +310,8 @@
 		 (unless error-found-p
 		   (setq error-found-p t)
 		   (cc-test-log "%s:%d: c-indent-line error: %s"
-				filename linenum
+				filename
+				(1+ (count-lines (point-min) (c-point 'bol)))
 				(error-message-string err)))))))
 	  (unless error-found-p
 	    ;; Compare and report.
