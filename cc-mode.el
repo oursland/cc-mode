@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.117 $
-;; Last Modified:   $Date: 1993-12-13 15:29:26 $
+;; Version:         $Revision: 3.118 $
+;; Last Modified:   $Date: 1993-12-16 17:05:44 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-13 15:29:26 $|$Revision: 3.117 $|
+;; |$Date: 1993-12-16 17:05:44 $|$Revision: 3.118 $|
 
 ;;; Code:
 
@@ -87,7 +87,7 @@
 ;; user definable variables
 ;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 
-(defvar c-strict-semantics-p t
+(defvar c-strict-semantics-p nil
   "*If non-nil, all semantic symbols must be found in `c-offsets-alist'.
 If the semantic symbol for a particular line does not match a symbol
 in the offsets alist, an error is generated, otherwise no error is
@@ -114,7 +114,7 @@ reported and the semantic symbol is ignored.")
     (member-init-cont      . 0)
     (inher-intro           . +)
     (inher-cont            . c-lineup-multi-inher)
-    (block-open            . +)
+    (block-open            . 0)
     (block-close           . 0)
     (statement             . 0)
     (statement-cont        . +)
@@ -623,7 +623,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.117 $
+CC-MODE REVISION: $Revision: 3.118 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -656,7 +656,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.117 $
+CC-MODE REVISION: $Revision: 3.118 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2388,7 +2388,7 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  ))
 	      (c-add-semantics 'class-open placeholder))
 	     ;; CASE 7A.2: just an ordinary block opening brace
-	     (t (c-add-semantics 'block-open placeholder))
+	     (t (c-add-semantics 'statement-cont placeholder))
 	     ))
 	   ;; CASE 7B: iostream insertion or extraction operator
 	   ((looking-at "<<\\|>>")
@@ -2470,13 +2470,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		     (setq placeholder (point))
 		     (looking-at c-case-statement-key)))
 	      (c-add-semantics 'statement-case-intro placeholder))
-	     ;; CASE 13.B: an embedded block open
-	     ((= char-after-ip ?{)
-	      (c-add-semantics 'block-open (c-point 'boi)))
-	     ;; CASE 13.C: continued statement
+	     ;; CASE 13.B: continued statement
 	     ((= char-before-ip ?,)
 	      (c-add-semantics 'statement-cont (c-point 'boi)))
-	     ;; CASE 13.D: a question/colon construct?  But make sure
+	     ;; CASE 13.C: a question/colon construct?  But make sure
 	     ;; what came before was not a label, and what comes after
 	     ;; is not a globally scoped function call!
 	     ((or (and (memq char-before-ip '(?: ??))
@@ -2488,10 +2485,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 		  (and (memq char-after-ip '(?: ??))
 		       (not (looking-at "[ \t]*::"))))
 	      (c-add-semantics 'statement-cont (c-point 'boi)))
-	     ;; CASE 13.E: any old statement
+	     ;; CASE 13.D: any old statement
 	     ((< (point) indent-point)
 	      (c-add-semantics 'statement (c-point 'boi)))
-	     ;; CASE 13.F: first statement in a block
+	     ;; CASE 13.E: first statement in a block
 	     (t
 	      (goto-char containing-sexp)
 	      (if (/= (point) (c-point 'boi))
@@ -2499,11 +2496,17 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-add-semantics 'statement-block-intro (c-point 'boi)))
 	     )))
 	 ))				; end save-restriction
-      ;; now we need to look at any special additional indentations
+      ;; now we need to look at any langelem modifiers
       (goto-char indent-point)
-      ;; look for a comment only line
-      (if (looking-at "[ \t]*\\(//\\|/\\*\\)")
-	  (c-add-semantics 'comment-intro))
+      (skip-chars-forward " \t")
+      (cond
+       ;; CASE M1: look for a comment only line
+       ((looking-at "\\(//\\|/\\*\\)")
+	(c-add-semantics 'comment-intro))
+       ;; CASE M2: looking at a block-open brace
+       ((= (following-char) ?{)
+	(c-add-semantics 'block-open))
+       )
       ;; return the semantics
       semantics)))
 
@@ -2740,7 +2743,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.117 $"
+(defconst c-version "$Revision: 3.118 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
