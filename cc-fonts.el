@@ -46,14 +46,14 @@
 ;;				"const" in them somewhere.
 ;; font-lock-type-face		Types (both pre- and user defined) and classes
 ;;				in type contexts.
-;; font-lock-reference-face	Name qualifiers and identifiers for
-;;				scope constructs like namespaces and modules
-;;				that are not types at the same time.
 ;; font-lock-builtin-face	Not used directly.
 ;;
 ;; Face aliases, mapped to different faces depending on (X)Emacs flavor:
 ;;
 ;; c-label-face-name		Label identifiers.
+;; c-reference-face-name	Name qualifiers and identifiers for
+;;				scope constructs like namespaces and modules
+;;				that are not types at the same time.
 ;; c-preprocessor-face-name	Preprocessor directives.
 ;; c-doc-face-name		Documentation comments (like Javadoc).
 ;; c-doc-markup-face-name	Markup inside documentation comments.  The face
@@ -68,6 +68,8 @@
 ;;
 ;; o  `c-label-face-name' is either `font-lock-constant-face' (in Emacs
 ;;    20 and later), or `font-lock-reference-face' otherwise.
+;;
+;; o  `c-reference-face-name' is set up like `c-label-face-name'.
 ;;
 ;; o  `c-preprocessor-face-name' is `font-lock-preprocessor-face' in
 ;;    XEmacs and - in lack of a closer equivalent -
@@ -166,7 +168,7 @@
 
 (defconst c-label-face-name
   (cond ((c-face-name-p 'font-lock-label-face)
-	 ;; If it happen to occur in the future.  (Well, the more
+	 ;; If it happens to occur in the future.  (Well, the more
 	 ;; pragmatic reason is to get unique faces for the test
 	 ;; suite.)
 	 'font-lock-label-face)
@@ -178,6 +180,15 @@
 	 'font-lock-constant-face)
 	(t
 	 'font-lock-reference-face)))
+
+(defconst c-reference-face-name
+  (if (and (c-face-name-p 'font-lock-reference-face)
+	   (eq font-lock-reference-face 'font-lock-reference-face))
+      ;; This is considered obsolete in Emacs 20 and later, but it
+      ;; still maps well to this use.  (Another reason to do this is
+      ;; to get unique faces for the test suite.)
+      'font-lock-reference-face
+    c-label-face-name))
 
 ;; This should not mapped to a face that also is used to fontify things
 ;; that aren't comments or string literals.
@@ -191,7 +202,13 @@
 	(t
 	 'font-lock-comment-face)))
 
-(defconst c-doc-markup-face-name c-label-face-name)
+(defconst c-doc-markup-face-name
+  (if (c-face-name-p 'font-lock-doc-markup-face)
+	 ;; If it happens to occur in the future.  (Well, the more
+	 ;; pragmatic reason is to get unique faces for the test
+	 ;; suite.)
+	 'font-lock-doc-markup-face
+    c-label-face-name))
 
 (defconst c-invalid-face-name
   (if (c-face-name-p 'font-lock-warning-face)
@@ -367,7 +384,7 @@
       ;; Note that the reference face is a variable that is
       ;; dereferenced, since it's an alias in Emacs.
       (c-put-font-lock-face (car elem) (cdr elem)
-			    font-lock-reference-face))))
+			    c-reference-face-name))))
 
 (c-lang-defconst c-cpp-matchers
   "Font lock matchers for preprocessor directives and purely lexical
@@ -599,7 +616,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		      (or (get-text-property (match-beginning 2) 'face)
 			  (c-put-font-lock-face (match-beginning 2)
 						(match-end 2)
-						font-lock-reference-face))
+						c-reference-face-name))
 		      (goto-char (match-end 1)))))))))
 
       ;; Fontify the special declarations in Objective-C.
@@ -699,7 +716,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 		    (c-forward-syntactic-ws)
 		    (if (looking-at c-opt-identifier-concat-key)
 			(c-put-font-lock-face id-start id-end
-					      font-lock-reference-face)
+					      c-reference-face-name)
 		      (c-put-font-lock-face id-start id-end
 					    'font-lock-type-face))))
 
@@ -828,12 +845,10 @@ casts and declarations are fontified.  Used on level 2 and higher."
 (defconst c-font-lock-maybe-decl-faces
   ;; List of faces that might be put at the start of a type when
   ;; `c-font-lock-declarations' runs.  This needs to be evaluated to
-  ;; ensure that face name aliases in Emacs are resolved
-  ;; (`font-lock-reference-face' might be an alias for
-  ;; `font-lock-constant-face').
+  ;; ensure that face name aliases in Emacs are resolved.
   (list nil
 	font-lock-type-face
-	font-lock-reference-face
+	c-reference-face-name
 	font-lock-keyword-face))
 
 ;; Macro used inside `c-font-lock-declarations'.  It ought to be a
