@@ -2782,7 +2782,7 @@ This function does not do any hidden buffer changes."
 	   (if (looking-at c-keywords-regexp)
 	       (when (and (c-major-mode-is 'c++-mode)
 			  (looking-at
-			   (eval-when-compile
+			   (cc-eval-when-compile
 			     (concat "\\(operator\\|\\(template\\)\\)"
 				     "\\(" (c-lang-var c-nonsymbol-key c++)
 				     "\\|$\\)")))

@@ -219,7 +219,7 @@ appended."
    pike "[_a-zA-Z`]")
 (c-lang-defvar c-symbol-start (c-lang-var c-symbol-start))
 
-(eval-when-compile
+(cc-eval-when-compile
   ;; The operator identifiers in Pike.
   (defconst c-pike-operator-symbols
     '("`+" "`-" "`&" "`|" "`^" "`<<" "`>>" "`*" "`/" "`%" "`~"

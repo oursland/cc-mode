@@ -63,6 +63,8 @@
 (cc-bytecomp-defvar zmacs-region-stays)	; XEmacs
 (cc-bytecomp-defvar zmacs-regions)	; XEmacs
 (cc-bytecomp-defvar mark-active)	; Emacs
+(cc-bytecomp-defvar deactivate-mark)	; Emacs
+(cc-bytecomp-defvar inhibit-point-motion-hooks) ; Emacs
 (cc-bytecomp-defun scan-lists)		; 5 args in XEmacs, 3 in Emacs
 (cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs 20+
 (cc-bytecomp-defvar text-property-default-nonsticky) ; Emacs 21
@@ -411,9 +413,9 @@ This function does not do any hidden buffer changes."
   ;; nil in (X)Emacsen without support for that.
   ;;
   ;; This function does not do any hidden buffer changes.
-  (cond ((boundp 'parse-sexp-lookup-properties)
+  (cond ((cc-bytecomp-boundp 'parse-sexp-lookup-properties)
 	 `parse-sexp-lookup-properties)
-	((boundp 'lookup-syntax-properties)
+	((cc-bytecomp-boundp 'lookup-syntax-properties)
 	 `lookup-syntax-properties)
 	(t nil)))
 
@@ -429,7 +431,7 @@ This function does not do any hidden buffer changes."
 	 (if ext (delete-extent ext)))
     ;; Emacs.
     `(let ((pos ,pos))
-       ,(if (boundp 'text-property-default-nonsticky)
+       ,(if (cc-bytecomp-boundp 'text-property-default-nonsticky)
 	    ;; In Emacs 21 we got the rear-nonsticky property covered
 	    ;; by `text-property-default-nonsticky'.
 	    `(remove-text-properties pos (1+ pos) '(syntax-table nil))
@@ -456,7 +458,7 @@ This function does not do any hidden buffer changes."
 				   (list 'syntax-table ,syntax
 					 'start-open t
 					 'end-open t))))
-	((boundp 'text-property-default-nonsticky)
+	((cc-bytecomp-boundp 'text-property-default-nonsticky)
 	 ;; In Emacs 21 we got the rear-nonsticky property covered
 	 ;; by `text-property-default-nonsticky'.
 	 `(let ((pos ,pos))
@@ -473,7 +475,7 @@ This function does not do any hidden buffer changes."
 				   'rear-nonsticky
 				   (cons 'syntax-table prop)))))))
 
-(eval-when-compile
+(cc-eval-when-compile
   ;; Used at compile time to get the right definition in
   ;; `c-put-font-lock-face'.  Not required anywhere except in
   ;; cc-fonts.el at runtime.
