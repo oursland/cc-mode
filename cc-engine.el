@@ -271,6 +271,53 @@
     (if lim (goto-char (max (point) lim)))))
 
 
+;; Moving by tokens, where a token is defined as all symbols and
+;; identifiers which aren't syntactic whitespace.  COUNT specifies the
+;; number of tokens to move forward; a negative COUNT moves backward.
+;; If BALANCED is true, move over balanced parens, otherwise move into
+;; them.  Also, if BALANCED is true, never move out of an enclosing
+;; paren.  LIM sets the limit for the movement.  Point is always left
+;; at the beginning of a token or at LIM.  Returns the number of
+;; tokens left to move (positive or negative).  If BALANCED is true, a
+;; move over a balanced paren counts as one.
+
+(defun c-forw-token (&optional count balanced lim)
+  (let* ((jump-syntax (if balanced
+			  '(?w ?_ ?\" ?\\ ?/ ?$ ?' ?\( ?\))
+			'(?w ?_ ?\" ?\\ ?/ ?$ ?'))))
+    (or count (setq count 1))
+    (condition-case nil
+	(while (progn
+		 (c-forward-syntactic-ws lim)
+		 (> count 0))
+	  (if (memq (char-syntax (char-after)) jump-syntax)
+	      (goto-char (scan-sexps (point) 1))
+	    (forward-char))
+	  (setq count (1- count)))
+      (error
+       (and lim (> (point) lim) (goto-char lim))))
+    count))
+
+(defun c-back-token (&optional count balanced lim)
+  (let* ((jump-syntax (if balanced
+			  '(?w ?_ ?\" ?\\ ?/ ?$ ?' ?\( ?\))
+			'(?w ?_ ?\" ?\\ ?/ ?$ ?')))
+	 last)
+    (or count (setq count 1))
+    (condition-case nil
+	(while (> count 0)
+	  (setq last (point))
+	  (c-backward-syntactic-ws lim)
+	  (if (memq (char-syntax (char-before)) jump-syntax)
+	      (goto-char (scan-sexps (point) -1))
+	    (backward-char))
+	  (setq count (1- count)))
+      (error
+       (goto-char last)
+       (and lim (< (point) lim) (goto-char lim))))
+    count))
+
+
 ;; Return `c' if in a C-style comment, `c++' if in a C++ style
 ;; comment, `string' if in a string literal, `pound' if on a
 ;; preprocessor line, or nil if not in a comment at all.  Optional LIM
@@ -863,22 +910,18 @@
      (error nil))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
-     (let (bufpos failedp)
+     (let (bufpos okp)
        (while (and (not bufpos)
 		   containing-sexp)
 	 (if (consp containing-sexp)
 	     (setq containing-sexp (car brace-state)
 		   brace-state (cdr brace-state))
-	   ;; see if significant character just before brace is an equal
+	   ;; see if the open brace is preceded by a = in this statement
 	   (goto-char containing-sexp)
-	   (setq failedp nil)
-	   (condition-case ()
-	       (progn
-		 (forward-sexp -1)
-		 (forward-sexp 1)
-		 (c-forward-syntactic-ws containing-sexp))
-	     (error (setq failedp t)))
-	   (if (or failedp (not (eq (char-after) ?=)))
+	   (setq okp t)
+	   (while (and (setq okp (= (c-back-token 1 t) 0))
+		       (not (memq (char-after) '(?= ?{ ?\;)))))
+	   (if (not (and okp (eq (char-after) ?=)))
 	       ;; lets see if we're nested. find the most nested
 	       ;; containing brace
 	       (setq containing-sexp (car brace-state)
@@ -1109,7 +1152,12 @@
 			   (c-forward-syntactic-ws indent-point)))
 		(setq placeholder (c-point 'boi))
 		(and (or (looking-at "enum[ \t\n]+")
-			 (eq char-before-ip ?=))
+			 (save-excursion
+			   (goto-char indent-point)
+			   (while (and (> (point) placeholder)
+				       (= (c-back-token 1 t) 0)
+				       (/= (char-after) ?=)))
+			   (eq (char-after) ?=)))
 		     (save-excursion
 		       (skip-chars-forward "^;(" indent-point)
 		       (not (memq (char-after) '(?\; ?\()))
@@ -1566,7 +1614,12 @@
 	       ((or (save-excursion
 		      (goto-char placeholder)
 		      (looking-at "\\<enum\\>"))
-		    (eq char-before-ip ?=))
+		    (save-excursion
+		      (goto-char indent-point)
+		      (while (and (> (point) placeholder)
+				  (= (c-back-token 1 t) 0)
+				  (/= (char-after) ?=)))
+		      (eq (char-after) ?=)))
 		(c-add-syntax 'brace-list-open placeholder))
 	       ;; CASE 9B.3: catch-all for unknown construct.
 	       (t
