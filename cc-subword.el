@@ -48,7 +48,7 @@
 ;; Key     Word oriented command      Subword oriented command
 ;; ============================================================
 ;; M-f     `forward-word'             `c-forward-subword'
-;; M-f     `backward-word'            `c-backward-subword'
+;; M-b     `backward-word'            `c-backward-subword'
 ;; M-@     `mark-word'                `c-mark-subword'
 ;; M-d     `kill-word'                `c-kill-subword'
 ;; M-DEL   `backward-kill-word'       `c-backward-kill-subword'
