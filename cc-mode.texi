@@ -704,6 +704,7 @@ on, then that line is also reindented.
 @cindex brace-entry-open syntactic symbol
 @cindex block-open syntactic symbol
 @cindex block-close syntactic symbol
+@cindex statement-cont syntactic symbol
 @cindex substatement-open syntactic symbol
 @cindex statement-case-open syntactic symbol
 @cindex extern-lang-open syntactic symbol
@@ -722,7 +723,7 @@ this list are: @code{class-open}, @code{class-close}, @code{defun-open},
 @code{defun-close}, @code{inline-open}, @code{inline-close},
 @code{brace-list-open}, @code{brace-list-close},
 @code{brace-list-intro}, @code{brace-entry-open}, @code{block-open},
-@code{block-close}, @code{substatement-open},
+@code{block-close}, @code{statement-cont}, @code{substatement-open},
 @code{statement-case-open}, @code{extern-lang-open},
 @code{extern-lang-close}, @code{namespace-open}, @code{namespace-close},
 @code{inexpr-class-open}, and @code{inexpr-class-close}@footnote{Note
@@ -782,6 +783,7 @@ For example, the default value of @code{c-hanging-braces-alist} is:
 
   ((brace-list-open)
    (brace-entry-open)
+   (statement-cont)
    (substatement-open after)
    (block-close . c-snug-do-while)
    (extern-lang-open after)
@@ -791,16 +793,20 @@ For example, the default value of @code{c-hanging-braces-alist} is:
 @end group
 @end example
 
-@noindent which says that @code{brace-list-open} and
-@code{brace-entry-open} braces should both hang on the right side, and
-allow subsequent text to follow on the same line as the brace.  Also,
-@code{substatement-open}, @code{extern-lang-open}, and
-@code{inexpr-class-open} braces should hang on the right side, but
-subsequent text should follow on the next line.  The opposite holds for
-@code{inexpr-class-close} braces; they won't hang, but the following
-text continues on the same line.  Here, in the @code{block-close} entry,
-you also see an example of using a function as an @var{ACTION}.  In all
-other cases, braces are put on a line by themselves.
+@noindent which says that @code{brace-list-open},
+@code{brace-entry-open} and @code{statement-cont}@footnote{Brace lists
+inside statements, such as initializers for static array variables
+inside functions in C, are recognized as @code{statement-cont}.  All
+normal substatement blocks are recognized with other symbols.} braces
+should both hang on the right side and allow subsequent text to follow
+on the same line as the brace.  Also, @code{substatement-open},
+@code{extern-lang-open}, and @code{inexpr-class-open} braces should hang
+on the right side, but subsequent text should follow on the next line.
+The opposite holds for @code{inexpr-class-close} braces; they won't
+hang, but the following text continues on the same line.  Here, in the
+@code{block-close} entry, you also see an example of using a function as
+an @var{ACTION}.  In all other cases, braces are put on a line by
+themselves.
 
 A word of caution: it is not a good idea to hang top-level construct
 introducing braces, such as @code{class-open} or @code{defun-open}.
