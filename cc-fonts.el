@@ -2016,17 +2016,30 @@ higher."
 	      (cdr-safe (or (assq c-buffer-is-cc-mode c-doc-comment-style)
 			    (assq 'other c-doc-comment-style)))
 	    c-doc-comment-style))
-	 (list (apply 'nconc
-		      (mapcar
-		       (lambda (doc-style)
-			 (let ((sym (intern (concat (symbol-name doc-style)
+	 (list (nconc (apply 'nconc
+			     (mapcar
+			      (lambda (doc-style)
+				(let ((sym (intern
+					    (concat (symbol-name doc-style)
 						    "-font-lock-keywords"))))
-			   (if (boundp sym)
-			       (append (symbol-value sym) nil))))
-		       (if (listp doc-keywords)
-			   doc-keywords
-			 (list doc-keywords))))))
-    (nconc list base-list)))
+				  (cond ((fboundp sym)
+					 (funcall sym))
+					((boundp sym)
+					 (append (eval sym) nil)))))
+			      (if (listp doc-keywords)
+				  doc-keywords
+				(list doc-keywords))))
+		      base-list)))
+
+    ;; Kludge: If `c-font-lock-complex-decl-prepare' is on the list we
+    ;; move it first since the doc comment font lockers might add
+    ;; `c-type' text properties so they have to be cleared before that.
+    (when (memq 'c-font-lock-complex-decl-prepare list)
+      (setq list (cons 'c-font-lock-complex-decl-prepare
+		       (delq 'c-font-lock-complex-decl-prepare
+			     (append list nil)))))
+
+    list))
 
 (defun c-override-default-keywords (def-var)
   ;; This is used to override the value on a `*-font-lock-keywords'
@@ -2575,23 +2588,27 @@ need for `pike-font-lock-extra-types'.")
       (let ((region-end (point))
 	    (keylist keywords) keyword matcher highlights)
 	(c-put-font-lock-face region-beg region-end c-doc-face-name)
+	(save-restriction
+	  ;; Narrow to the doc comment.  Among other things, this
+	  ;; helps by making "^" match at the start of the comment.
+	  (narrow-to-region region-beg region-end)
 
-	(while keylist
-	  (setq keyword (car keylist)
-		keylist (cdr keylist)
-		matcher (car keyword))
-	  (goto-char region-beg)
-	  (while (if (stringp matcher)
-		     (re-search-forward matcher region-end t)
-		   (funcall matcher region-end))
-	    (setq highlights (cdr keyword))
-	    (if (consp (car highlights))
-		(while highlights
-		  (font-lock-apply-highlight (car highlights))
-		  (setq highlights (cdr highlights)))
-	      (font-lock-apply-highlight highlights))))
+	  (while keylist
+	    (setq keyword (car keylist)
+		  keylist (cdr keylist)
+		  matcher (car keyword))
+	    (goto-char region-beg)
+	    (while (if (stringp matcher)
+		       (re-search-forward matcher region-end t)
+		     (funcall matcher region-end))
+	      (setq highlights (cdr keyword))
+	      (if (consp (car highlights))
+		  (while highlights
+		    (font-lock-apply-highlight (car highlights))
+		    (setq highlights (cdr highlights)))
+		(font-lock-apply-highlight highlights))))
 
-	(goto-char region-end))))
+	  (goto-char region-end)))))
   nil)
 (put 'c-font-lock-doc-comments 'lisp-indent-function 2)
 
@@ -2612,37 +2629,140 @@ need for `pike-font-lock-extra-types'.")
 			      (copy-marker (1+ start))))
       t)))
 
-(defconst javadoc-font-lock-keywords
-  `((,(byte-compile
-       `(lambda (limit)
-	  (c-font-lock-doc-comments "/\\*\\*" limit
-	    '(("{@[a-z]+[^}\n\r]*}"	; "{@foo ...}" markup.
-	       0 ,c-doc-markup-face-name prepend nil)
-	      ("^[ \t*]*\\(@[a-z]+\\)"	; "@foo ..." markup.
-	       1 ,c-doc-markup-face-name prepend nil)
-	      (,(concat "</?\\sw"	; HTML tags.
-			"\\("
-			(concat "\\sw\\|\\s \\|[=\n\r*.:]\\|"
-				"\"[^\"]*\"\\|'[^']*'")
-			"\\)*>")
-	       0 ,c-doc-markup-face-name prepend nil)
-	      ("&\\(\\sw\\|[.:]\\)+;"	; HTML entities.
-	       0 ,c-doc-markup-face-name prepend nil)
-	      ;; Fontify remaining markup characters as invalid.  Note
-	      ;; that the Javadoc spec is hazy about when "@" is
-	      ;; allowed in non-markup use.
-	      (,(byte-compile
-		 `(lambda (limit)
-		    (c-find-invalid-doc-markup "[<>&]\\|{@" limit)))
-	       0 ,c-invalid-face-name prepend nil)
-	      )))))))
+(defun javadoc-font-lock-keywords ()
+  (list
+   (byte-compile
+    `(lambda (limit)
+       (c-font-lock-doc-comments "/\\*\\*" limit
+	 '(("{@[a-z]+[^}\n\r]*}"	; "{@foo ...}" markup.
+	    0 ,c-doc-markup-face-name prepend nil)
+	   ("^\\(/\\*\\)?[ \t*]*\\(@[a-z]+\\)" ; "@foo ..." markup.
+	    2 ,c-doc-markup-face-name prepend nil)
+	   (,(concat "</?\\sw"		; HTML tags.
+		     "\\("
+		     (concat "\\sw\\|\\s \\|[=\n\r*.:]\\|"
+			     "\"[^\"]*\"\\|'[^']*'")
+		     "\\)*>")
+	    0 ,c-doc-markup-face-name prepend nil)
+	   ("&\\(\\sw\\|[.:]\\)+;"	; HTML entities.
+	    0 ,c-doc-markup-face-name prepend nil)
+	   ;; Fontify remaining markup characters as invalid.  Note
+	   ;; that the Javadoc spec is hazy about when "@" is allowed
+	   ;; in non-markup use.
+	   (,(lambda (limit)
+	       (c-find-invalid-doc-markup "[<>&]\\|{@" limit))
+	    0 ,c-invalid-face-name prepend nil)
+	   ))))))
 
-(defconst autodoc-font-lock-keywords
-  `(,(byte-compile
-      `(lambda (limit)
-	 (c-font-lock-doc-comments "/[*/]!" limit
-	   '(
-	     ))))))
+(defconst autodoc-decl-keywords
+  ;; Adorned regexp matching the keywords that introduce declarations
+  ;; in Pike Autodoc.
+  (cc-eval-when-compile
+    (c-make-keywords-re t '("@decl" "@elem" "@index" "@member") 'pike-mode)))
+
+(defconst autodoc-decl-type-keywords
+  ;; Adorned regexp matching the keywords that are followed by a type.
+  (cc-eval-when-compile
+    (c-make-keywords-re t '("@elem" "@member") 'pike-mode)))
+
+(defun autodoc-font-lock-line-markup (limit)
+  ;; Fontify all line oriented keywords between the point and LIMIT.
+  ;; Nil is always returned.
+
+  (let ((line-re (concat "^\\(\\(/\\*!\\|\\s *\\("
+			 c-current-comment-prefix
+			 "\\)\\)\\s *\\)@[A-Za-z_-]+\\(\\s \\|$\\)"))
+	(markup-faces (list c-doc-markup-face-name c-doc-face-name)))
+
+    (while (re-search-forward line-re limit t)
+      (goto-char (match-end 1))
+
+      (if (looking-at autodoc-decl-keywords)
+	  (let* ((kwd-pos (point))
+		 (start (match-end 1))
+		 (pos start)
+		 end)
+
+	    (c-put-font-lock-face (point) pos markup-faces)
+
+	    ;; Put a declaration end mark at the markup keyword and
+	    ;; remove the faces from the rest of the line so that it
+	    ;; gets refontified as a declaration later on by
+	    ;; `c-font-lock-declarations'.
+	    (c-put-char-property (1- pos) 'c-type 'c-decl-end)
+	    (goto-char pos)
+	    (while (progn
+		     (end-of-line)
+		     (setq end (point))
+		     (and (eq (char-before) ?@)
+			  (not (eobp))
+			  (progn (forward-char)
+				 (skip-chars-forward " \t")
+				 (looking-at c-current-comment-prefix))))
+	      (goto-char (match-end 0))
+	      (c-put-font-lock-face pos (1- end) nil)
+	      (c-put-font-lock-face (1- end) end markup-faces)
+	      (setq pos (point)))
+	    (c-put-font-lock-face pos (point) nil)
+
+	    ;; Must handle string literals explicitly inside the declaration.
+	    (goto-char start)
+	    (while (re-search-forward
+		    "\"\\([^\\\"]\\|\\\\.\\)*\"\\|'\\([^\\']\\|\\\\.\\)*'"
+		    end 'move)
+	      (c-put-font-lock-face (match-beginning 0)
+				    (point)
+				    'font-lock-string-face))
+
+	    ;; Fontify types after keywords that always are followed
+	    ;; by them.
+	    (goto-char kwd-pos)
+	    (when (looking-at autodoc-decl-type-keywords)
+	      (c-fontify-types-and-refs ((c-promote-possible-types t))
+		(goto-char start)
+		(c-forward-syntactic-ws)
+		(c-forward-type))))
+
+	;; Mark each whole line as markup, as long as the logical line
+	;; continues.
+	(while (progn
+		 (c-put-font-lock-face (point)
+				       (progn (end-of-line) (point))
+				       markup-faces)
+		 (and (eq (char-before) ?@)
+		      (not (eobp))
+		      (progn (forward-char)
+			     (skip-chars-forward " \t")
+			     (looking-at c-current-comment-prefix))))
+	  (goto-char (match-end 0))))))
+
+  nil)
+
+(defun autodoc-font-lock-keywords ()
+  ;; Note that we depend on that `c-current-comment-prefix' has got
+  ;; its proper value here.
+
+  (setq c-extra-line-cont-regexp (concat "@[\n\r]\\s *\\("
+					 c-current-comment-prefix
+					 "\\)")
+	c-syntactic-ws-start (concat c-syntactic-ws-start
+				     "\\|"
+				     c-extra-line-cont-regexp)
+	c-syntactic-ws-end (concat c-syntactic-ws-end "\\|!"))
+
+  (list
+   (byte-compile
+    `(lambda (limit)
+       (c-font-lock-doc-comments "/[*/]!" limit
+	 '(("@\\(\\w+{\\|\\[\\([^\]@\n\r]\\|@@\\)*\\]\\|[@}]\\|$\\)"
+	    ;; In-text markup.
+	    0 ,c-doc-markup-face-name prepend nil)
+	   (autodoc-font-lock-line-markup)
+	   ;; Fontify remaining markup characters as invalid.
+	   (,(lambda (limit)
+	       (c-find-invalid-doc-markup "@" limit))
+	    0 ,c-invalid-face-name prepend nil)
+	   ))))))
 
 
 (cc-provide 'cc-fonts)
