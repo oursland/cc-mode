@@ -621,8 +621,13 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 	(error "%s is not a valid syntactic symbol." symbol))))
   (c-keep-region-active))
 
-
 
+(defun c-copy-tree (tree)
+  (if (consp tree)
+      (cons (c-copy-tree (car tree))
+            (c-copy-tree (cdr tree)))
+    tree))
+
 (defun c-initialize-builtin-style ()
   ;; Dynamically append the default value of most variables. This is
   ;; crucial because future c-set-style calls will always reset the
@@ -633,26 +638,13 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
     (c-initialize-cc-mode)
     (or (assoc "cc-mode" c-style-alist)
 	(assoc "user" c-style-alist)
-	(let (copyfunc)
-	  ;; use built-in copy-tree if its there.
-	  (if (and (fboundp 'copy-tree)
-		   (functionp (symbol-function 'copy-tree)))
-	      (setq copyfunc (symbol-function 'copy-tree))
-	    (setq copyfunc (lambda (tree)
-			     (if (consp tree)
-				 (cons (funcall copyfunc (car tree))
-				       (funcall copyfunc (cdr tree)))
-			       tree))))
+	(progn
 	  (c-add-style "user"
 		       (mapcar
 			(function
 			 (lambda (var)
 			   (let ((val (symbol-value var)))
-			     (cons var (if (atom val)
-					   val
-					 (funcall copyfunc val)
-					 ))
-			     )))
+			     (cons var (c-copy-tree val)))))
 			'(c-backslash-column
 			  c-basic-offset
 			  c-cleanup-list
