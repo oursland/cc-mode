@@ -526,14 +526,14 @@ Note that the style variables are always made local to the buffer."
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.[ch]\\'" . c-mode))
+(add-to-list 'auto-mode-alist '("\\.[ch]\\'" . c-mode) t)
 ;; NB: The following two associate yacc and lex files to C Mode, which
 ;; is not really suitable for those formats.  Anyway, afaik there's
 ;; currently no better mode for them, and besides this is legacy.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.y\\'" . c-mode))
+(add-to-list 'auto-mode-alist '("\\.y\\'" . c-mode) t)
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.lex\\'" . c-mode))
+(add-to-list 'auto-mode-alist '("\\.lex\\'" . c-mode) t)
 
 ;;;###autoload
 (defun c-mode ()
@@ -600,11 +600,12 @@ Key bindings:
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.\\(cc\\|hh\\)\\'" . c++-mode) t)
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode))
+(add-to-list 'auto-mode-alist
+	     '("\\.[ch]\\(pp\\|xx\\|\\+\\+\\)\\'" . c++-mode) t)
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . c++-mode))
+(add-to-list 'auto-mode-alist '("\\.\\(CC?\\|HH?\\)\\'" . c++-mode) t)
 
 ;;;###autoload
 (defun c++-mode ()
@@ -668,7 +669,7 @@ Key bindings:
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode))
+(add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode) t)
 
 ;;;###autoload
 (defun objc-mode ()
@@ -741,7 +742,7 @@ Key bindings:
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.java\\'" . java-mode))
+(add-to-list 'auto-mode-alist '("\\.java\\'" . java-mode) t)
 
 ;;;###autoload
 (defun java-mode ()
@@ -803,7 +804,7 @@ Key bindings:
 
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
-(add-to-list 'auto-mode-alist '("\\.idl\\'" . idl-mode))
+(add-to-list 'auto-mode-alist '("\\.idl\\'" . idl-mode) t)
 
 ;;;###autoload
 (defun idl-mode ()
@@ -867,7 +868,7 @@ Key bindings:
 ;; In XEmacs >= 21.5 modes should add their own entries to `auto-mode-alist'.
 ;;;###autoload
 (add-to-list 'auto-mode-alist
-	     '("\\.\\(pike\\|pmod\\(.in\\)?\\)\\'" . pike-mode))
+	     '("\\.\\(pike\\|pmod\\(.in\\)?\\)\\'" . pike-mode) t)
 
 ;;;###autoload
 (defun pike-mode ()
