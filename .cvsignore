@@ -1,4 +1,3 @@
-.cvsignore
 auto-autoloads.el
 testload.el
 cc-mode.info*
