@@ -58,8 +58,7 @@ VERSIONED_FILES = [
     ('MANIFEST', 'Manifest for CC Mode '),
     ('README', 'README for CC Mode '),
     ('cc-mode.el', r'\(defconst c-version "'),
-    ('cc-mode.texi', r'@center @titlefont\{CC Mode '),
-    ('cc-mode.texi', r'version '),
+    ('cc-mode.texi', r'(@center @titlefont\{CC Mode|version) '),
     ]
 
 # list of files to go to X/Emacs maintainers
@@ -198,46 +197,46 @@ def make_docs():
 def bump_release(revnum):
     compiled = {}
     for f, prefix in VERSIONED_FILES:
+        print '%s:' % f,
 	cre = re.compile('^(?P<prefix>' +
 			 prefix +
 			 ')5.(?P<rev>[0-9]{2})(?P<suffix>.*)$')
-	compiled[f] = cre
-	print 'checking:', f
+	print 'checking...',
 	fp = open(f, 'r')
 	while 1:
 	    line = fp.readline()
 	    if not line:
-		print 'file has no matching version line:', f
-		sys.exit(1)
+                if not compiled.has_key(f):
+                    print 'no matching version line.'
+                break
 	    mo = cre.match(line)
 	    if mo:
 		if int(mo.group('rev')) <> int(revnum) - 1:
-		    print 'file revision mismatch:', f
-		    sys.exit(1)
+		    continue
 		else:
-		    break
+                    compiled[f] = cre
 	fp.close()
     # now bump them
-    for f, prefix in VERSIONED_FILES:
+    for f, cre in compiled.items():
 	cre = compiled[f]
-	print 'bumping:', f
+	print 'bumping.',
 	fp_in = open(f, 'r')
 	fp_out = open(f + '.new', 'w')
-	matched = 0
+        matched = 0
 	while 1:
 	    line = fp_in.readline()
 	    if not line:
 		break
-	    if not matched:
-		mo = cre.match(line)
-		if mo:
-		    prefix, suffix = mo.group('prefix', 'suffix')
-		    line = '%s5.%s%s\n' % (prefix, revnum, suffix)
-		    matched = 1
+            mo = cre.match(line)
+            if mo:
+                prefix, suffix = mo.group('prefix', 'suffix')
+                line = '%s5.%s%s\n' % (prefix, revnum, suffix)
+                matched = matched + 1
 	    fp_out.write(line)
 	fp_in.close()
 	fp_out.close()
 	os.rename(f + '.new', f)
+        print matched, 'lines changed.'
 
 
 def main():
