@@ -372,6 +372,42 @@
 	    (+ curcol (- prev-col-column (current-column)))
 	  c-basic-offset)))))
 
+(defun c-lineup-inexpr-stat (langelem)
+  ;; This function lines up the arguments to lambdas and functions
+  ;; that take a statement as argument. Adds indentation to the column
+  ;; of the beginning of the lambda or function name.
+  (save-excursion
+    (beginning-of-line)
+    (if (or (c-safe
+	     ;; Test one and two sexps back.
+	     (forward-sexp -1)
+	     (or (and c-statarg-key (looking-at c-statarg-key))
+		 (and c-lambda-key
+		      (or (looking-at c-lambda-key)
+			  (and (memq (char-after) '(?\( ?\[))
+			       (progn
+				 (forward-sexp -1)
+				 (looking-at c-lambda-key)))))))
+	    (c-safe
+	     ;; Test one and two sexps back from the surrounding sexp.
+	     (backward-up-list 1)
+	     (cond
+	      ((save-excursion
+		 (beginning-of-line)
+		 (looking-at "[ \t]*{"))
+	       (beginning-of-line)
+	       (skip-chars-forward " \t"))
+	      ((eq (char-after) ?{)
+	       (forward-sexp -1)
+	       (or (and c-statarg-key (looking-at c-statarg-key))
+		   (and c-lambda-key
+			(memq (char-after) '(?\( ?\[))
+			(progn
+			  (forward-sexp -1)
+			  (looking-at c-lambda-key))))))))
+	(- (current-column) (c-langelem-col langelem))
+      0)))
+
 (defun c-lineup-dont-change (langelem)
   ;; Do not change the indentation of the current line
   (save-excursion
