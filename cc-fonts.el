@@ -931,10 +931,12 @@ casts and declarations are fontified.  Used on level 2 and higher."
 			   ;; `at-decl-or-cast' here to avoid flashing types
 			   ;; prematurely in declarations as they're being
 			   ;; written.
-			   (save-match-data
-			     (when (looking-at c-typedef-decl-key)
+			   (let ((kwd-sym (c-keyword-sym (match-string 1))))
+			     (when (c-keyword-member
+				    kwd-sym 'c-typedef-decl-kwds)
 			       (setq at-typedef t))
-			     (when (looking-at c-typeless-decl-key)
+			     (when (c-keyword-member
+				    kwd-sym 'c-typeless-decl-kwds)
 			       (setq maybe-typeless t)))
 			   (c-forward-keyword-clause)
 			   (setq start-pos (point))))))
@@ -1069,7 +1071,7 @@ casts and declarations are fontified.  Used on level 2 and higher."
 				(not got-prefix)
 				at-type
 				(not (eq at-type t)))
-		       ;; Have found no identifier but `c-typeless-decl-key'
+		       ;; Have found no identifier but `c-typeless-decl-kwds'
 		       ;; has matched so we know we're inside a declaration.
 		       ;; The preceding type must be the identifier instead.
 		       (c-fl-shift-type-backward))
