@@ -23,7 +23,7 @@
 ((defun-block-intro 391) (statement 391))
 ((inexpr-statement) (block-open 409))
 ((statement 340))
-((arglist-intro 450))
+((arglist-intro 450 473))
 ((arglist-cont 476))
 ((defun-block-intro 500))
 ((inline-close 500))

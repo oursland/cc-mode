@@ -1,7 +1,7 @@
 ((topmost-intro 1))
 ((inclass 1) (topmost-intro 1))
 ((defun-block-intro 24))
-((arglist-intro 53))
+((arglist-intro 53 61))
 ((brace-list-intro 66))
 ((brace-list-entry 88))
 ((brace-list-close 66))

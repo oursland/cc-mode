@@ -3,6 +3,6 @@
 ((inclass 19) (topmost-intro 19))
 ((inclass 19) (inline-open))
 ((defun-block-intro 44))
-((arglist-intro 47))
+((arglist-intro 47 51))
 ((inline-close 44))
 ((class-close 1))

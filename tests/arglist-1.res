@@ -1,6 +1,6 @@
 ((topmost-intro 1))
 ((topmost-intro-cont 1))
-((arglist-intro 6))
+((arglist-intro 6 40))
 ((arglist-cont 46))
 ((arglist-cont 46))
 ((defun-open 1))

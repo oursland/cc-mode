@@ -21,7 +21,7 @@
 ((inexpr-class) (class-close 220))
 ((arglist-close 220 220))
 ((inclass 11) (topmost-intro 349))
-((arglist-intro 359))
+((arglist-intro 359 383))
 ((class-open 393))
 ((inclass 436) (topmost-intro 428))
 ((inclass 436) (inline-open))
