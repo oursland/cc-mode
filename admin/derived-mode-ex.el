@@ -70,9 +70,9 @@
 
 ;; Function declarations begin with "function" in this language.
 ;; There's currently no special keyword list for that in CC Mode, but
-;; treating it as a specifier works fairly well.
-(c-lang-defconst c-specifier-kwds
-  c: (cons "function" (c-lang-const c-specifier-kwds)))
+;; treating it as a modifier works fairly well.
+(c-lang-defconst c-modifier-kwds
+  c: (cons "function" (c-lang-const c-modifier-kwds)))
 
 ;; No cpp in this language, but there's still a "#pragma" directive to
 ;; fontify.  (The definitions for the extra keywords above are enough
