@@ -76,6 +76,7 @@ Copyright @copyright{} 1995,96,97,98 Free Software Foundation, Inc.
 CC Mode
 @end macro
 
+@ifinfo
 @top @ccmode{}
 
 @ccmode{} is a GNU Emacs mode for editing files containing C, C++,
@@ -83,6 +84,7 @@ Objective-C, Java, CORBA IDL, and Pike code.  It provides syntax-based
 indentation and has several handy commands and some minor modes to make
 the editing easier.  Note that @ccmode{} does @emph{not} provide
 font-locking; there are other Emacs packages for that.
+@end ifinfo
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
