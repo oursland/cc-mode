@@ -1363,6 +1363,10 @@ mode1 " mode.
 Each list item should be a regexp matching a single identifier.
 " example "
 
+Note that items on this list that don't include any regexp special
+characters are automatically optimized using `regexp-opt', so you
+should not use `regexp-opt' explicitly to build regexps here.
+
 On decoration level 3 (and higher, where applicable), a method is used
 that finds most types and declarations by syntax alone.  This variable
 is still used as a first step, but other types are recognized
@@ -1383,8 +1387,11 @@ also elsewhere in CC Mode to tell types from other identifiers."))
 ;; values work fairly well anyway.
 
 (defcustom c-font-lock-extra-types
-  '("FILE" "\\sw+_t"
-    "bool" "complex" "imaginary"	; Defined in C99.
+  '("\\sw+_t"
+    ;; Defined in C99:
+    "bool" "complex" "imaginary"
+    ;; Standard library types (except those matched by the _t pattern):
+    "FILE" "lconv" "tm" "va_list" "jmp_buf"
     ;; I do not appreciate the following very Emacs-specific luggage
     ;; in the default value, but otoh it can hardly get in the way for
     ;; other users, and removing it would cause unnecessary grief for
@@ -1398,13 +1405,25 @@ and words ending in \"_t\" are treated as type names.")
 
 (defcustom c++-font-lock-extra-types
   '("\\sw+_t"
-    "\\([iof]\\|str\\)+stream\\(buf\\)?" "ios"
+    ;; C library types (except those matched by the _t pattern):
+    "FILE" "lconv" "tm" "va_list" "jmp_buf"
+    ;; Some standard C++ types that came from font-lock.el.
+    ;; Experienced C++ users says there's no clear benefit in
+    ;; extending this to all the types in the standard library, at
+    ;; least not when they'll be recognized without "std::" too.
+    "istream" "istreambuf"
+    "ostream" "ostreambuf"
+    "ifstream" "ofstream" "fstream"
+    "strstream" "strstreambuf" "istrstream" "ostrstream"
+    "ios"
     "string" "rope"
     "list" "slist"
     "deque" "vector" "bit_vector"
     "set" "multiset"
     "map" "multimap"
-    "hash\\(_\\(m\\(ap\\|ulti\\(map\\|set\\)\\)\\|set\\)\\)?"
+    "hash"
+    "hash_set" "hash_multiset"
+    "hash_map" "hash_multimap"
     "stack" "queue" "priority_queue"
     "type_info"
     "iterator" "const_iterator" "reverse_iterator" "const_reverse_iterator"
