@@ -9,7 +9,7 @@ if
 	    (
 		x,
 		y
-	    );
+		);
 else
     z;
 while
@@ -19,7 +19,7 @@ while
 	p
 	    (x,
 	     y
-	    );
+		);
     else
 	a =
 	    b;

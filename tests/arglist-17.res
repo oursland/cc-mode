@@ -5,7 +5,7 @@
 ((arglist-cont-nonempty 35 39))
 ((arglist-cont-nonempty 18 21))
 ((arglist-cont-nonempty 72 75))
-((arglist-cont-nonempty 18 21) (arglist-close 18 75))
+((arglist-close 72 75))
 ((arglist-close 18 21))
 ((defun-close 1))
 ((topmost-intro 116))
