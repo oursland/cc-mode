@@ -350,7 +350,8 @@ Assumed to be a string if `c-opt-identifier-concat-key' is."
 
 (c-lang-defconst c-identifier-start
   "Regexp that matches the start of an \(optionally qualified)
-identifier.  It's unspecified how far it matches."
+identifier.  It should also match all keywords.  It's unspecified how
+far it matches."
   t    (concat (c-lang-const c-symbol-start)
 	       (if (c-lang-const c-opt-identifier-concat-key)
 		   (concat "\\|" (c-lang-const c-opt-identifier-concat-key))
@@ -932,8 +933,8 @@ keywords listed here are fontified with the type face instead of the
 keyword face.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
-then the associated clauses will be handled.
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled.
 
 Do not try to modify this list for end user customizations; the
 `*-font-lock-extra-types' variable, where `*' is the mode prefix, is
@@ -1026,8 +1027,8 @@ not the type face."
 contains another declaration level that should be considered a class.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
-then the associated clauses will be handled.
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled.
 
 Note that presence on this list does not automatically treat the
 following identifier as a type; the keyword must also be present on
@@ -1056,8 +1057,8 @@ following identifier as a type; the keyword must also be present on
 any) is a brace list.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
-then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled."
   t    '("enum")
   java nil)
 
@@ -1072,8 +1073,8 @@ then the associated clauses will be handled."
 declaration level that should not be considered a class.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
-then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled."
   t   nil
   c   '("extern")
   c++ '("namespace" "extern")
@@ -1092,8 +1093,8 @@ then the associated clauses will be handled."
 to be types.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
-then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled."
   t    '("typedef")
   java nil)
 
@@ -1102,8 +1103,8 @@ then the associated clauses will be handled."
 list follows directly after the keyword, without any type.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
-then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled."
   t    nil
   ;; Unlike most other languages, exception names are not handled as
   ;; types in IDL since they only can occur in "raises" specs.
@@ -1124,8 +1125,8 @@ argument declarations inside function headers are also considered
 declarations in this sense.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', or `c-<>-arglist-kwds'
-then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
+`c-<>-arglist-kwds' then the associated clauses will be handled."
   t    nil
   (c c++) '("auto" "extern" "inline" "register" "static")
   c++  (append '("explicit" "friend" "mutable" "template" "using" "virtual")
@@ -1287,11 +1288,17 @@ type identifiers separated by arbitrary tokens."
   idl  '("switch")
   pike '("array" "function" "int" "mapping" "multiset" "object" "program"))
 
-(c-lang-defconst c-brace-id-list-kwds
-  "Keywords that may be followed by a brace block containing a comma
-separated list of identifier definitions, i.e. like the list of
-identifiers that follows the type in a normal declaration."
-  t (c-lang-const c-brace-list-decl-kwds))
+(c-lang-defconst c-<>-type-kwds
+  "Keywords that may be followed by an angle bracket expression
+containing type identifiers separated by \",\".  The difference from
+`c-<>-arglist-kwds' is that unknown names are taken to be types and
+not other identifiers.  `c-recognize-<>-arglists' is assumed to be set
+if this isn't nil."
+  t    nil
+  objc '("id")
+  idl  '("sequence"
+	 ;; In CORBA PSDL:
+	 "ref"))
 
 (c-lang-defconst c-<>-arglist-kwds
   "Keywords that can be followed by a C++ style template arglist; see
@@ -1299,15 +1306,26 @@ identifiers that follows the type in a normal declaration."
 assumed to be set if this isn't nil."
   t    nil
   c++  '("template")
-  objc '("id")
-  idl  '("fixed" "sequence" "string" "wstring"
-	 ;; In CORBA PSDL:
-	 "ref"))
+  idl  '("fixed" "string" "wstring"))
 
-(c-lang-defconst c-<>-arglist-key
-  ;; `c-<>-arglist-kwds' as an adorned regexp.
-  t (c-make-keywords-re t (c-lang-const c-<>-arglist-kwds)))
-(c-lang-defvar c-<>-arglist-key (c-lang-const c-<>-arglist-key))
+(c-lang-defconst c-brace-id-list-kwds
+  "Keywords that may be followed by a brace block containing a comma
+separated list of identifier definitions, i.e. like the list of
+identifiers that follows the type in a normal declaration."
+  t (c-lang-const c-brace-list-decl-kwds))
+
+(c-lang-defconst c-<>-sexp-kwds
+  ;; All keywords that can be followed by an angle bracket sexp.
+  t (delete-duplicates (append (c-lang-const c-<>-type-kwds)
+			       (c-lang-const c-<>-arglist-kwds))
+		       :test 'string-equal))
+
+(c-lang-defconst c-opt-<>-sexp-key
+  ;; Adorned regexp matching keywords that can be followed by an angle
+  ;; bracket sexp.
+  t (if (c-lang-const c-recognize-<>-arglists)
+	(c-make-keywords-re t (c-lang-const c-<>-sexp-kwds))))
+(c-lang-defvar c-opt-<>-sexp-key (c-lang-const c-opt-<>-sexp-key))
 
 (c-lang-defconst c-block-stmt-1-kwds
   "Statement keywords followed directly by a substatement."
@@ -1816,10 +1834,11 @@ list."
   "Non-nil means C++ style template arglists should be handled.  More
 specifically, this means a comma separated list of types or
 expressions surrounded by \"<\" and \">\".  It's always preceded by an
-identifier or one of the keywords on `c-<>-arglist-kwds'.  If there's
-an identifier before then the whole expression is considered to be a
-type."
-  t (consp (c-lang-const c-<>-arglist-kwds)))
+identifier or one of the keywords on `c-<>-type-kwds' or
+`c-<>-arglist-kwds'.  If there's an identifier before then the whole
+expression is considered to be a type."
+  t (or (consp (c-lang-const c-<>-type-kwds))
+	(consp (c-lang-const c-<>-arglist-kwds))))
 (c-lang-defvar c-recognize-<>-arglists (c-lang-const c-recognize-<>-arglists))
 
 (c-lang-defconst c-opt-<>-arglist-start
