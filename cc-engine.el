@@ -82,12 +82,6 @@
        (not (c-in-literal))
        (not (newline))))
 
-(defmacro c-safe (&rest body)
-  ;; safely execute BODY, return nil if an error occurred
-  (` (condition-case nil
-	 (progn (,@ body))
-       (error nil))))
-
 (defsubst c-intersect-lists (list alist)
   ;; return the element of ALIST that matches the first element found
   ;; in LIST.  Uses assq.
@@ -1756,7 +1750,7 @@
      ((eq offset '--)        (setq offset (* 2 (- c-basic-offset))))
      ((eq offset '*)         (setq offset (/ c-basic-offset 2)))
      ((eq offset '/)         (setq offset (/ (- c-basic-offset) 2)))
-     ((c-functionp offset)   (setq offset (funcall offset langelem)))
+     ((functionp offset)     (setq offset (funcall offset langelem)))
      ((not (numberp offset)) (setq offset (symbol-value offset)))
      )
     (+ (if (and relpos
