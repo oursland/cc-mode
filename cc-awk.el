@@ -4,7 +4,7 @@
 
 ;; Author: Alan Mackenzie (originally based on awk-mode.el)
 ;; Maintainer: FSF
-;; Keywords: awk, cc-mode, unix, languages
+;; Keywords: AWK, cc-mode, unix, languages
 
 ;; This file is part of GNU Emacs.
 
@@ -26,15 +26,15 @@
 ;;; Commentary:
 
 ;; This file contains (most of) the adaptations to cc-mode required for the
-;; integration of awk-mode.
+;; integration of AWK Mode.
 ;; It is organised thusly:
-;;   1. The awk-mode-syntax table.
+;;   1. The AWK Mode syntax table.
 ;;   2. Indentation calculation stuff ("c-awk-NL-prop text-property").
 ;;   3. Syntax-table property/font-locking stuff, but not including the
 ;;      font-lock-keywords setting.
-;;   4. The awk-mode before/after-change-functions.
-;;   5. awk-mode specific versions of commands like beginning-of-defun.
-;; The awk-mode keymap, abbreviation table, and the mode function itself are
+;;   4. The AWK Mode before/after-change-functions.
+;;   5. AWK Mode specific versions of commands like beginning-of-defun.
+;; The AWK Mode keymap, abbreviation table, and the mode function itself are
 ;; in cc-mode.el.
 
 ;;; Code:
@@ -82,15 +82,15 @@
     (modify-syntax-entry ?_ "_" st)
     (modify-syntax-entry ?\' "." st)
     st)
-  "Syntax table in use in `awk-mode' buffers.")
+  "Syntax table in use in AWK Mode buffers.")
 
 ;; ACM, 2002/5/29:
 ;; 
-;; The next section of code is about determining whether or not an awk
+;; The next section of code is about determining whether or not an AWK
 ;; statement is complete or not.  We use this to indent the following line.
 ;; The determination is pretty straightforward in C, where a statement ends
 ;; with either a ; or a }.  Only "while" really gives any trouble there, since
-;; it might be the end of a do-while.  In awk, on the other hand, semicolons
+;; it might be the end of a do-while.  In AWK, on the other hand, semicolons
 ;; are rarely used, and EOLs _usually_ act as "virtual semicolons".  In
 ;; addition, we have the complexity of escaped EOLs.  The core of this
 ;; analysis is in the middle of the function
@@ -401,14 +401,14 @@
 ;; purpose of the function c-awk-set-syntax-table-properties and the myriad
 ;; elisp regular expressions it uses.
 ;;
-;; Because awk is a line oriented language, I felt the normal cc-mode strategy
+;; Because AWK is a line oriented language, I felt the normal cc-mode strategy
 ;; for font-locking unterminated strings (i.e. font-locking the buffer up to
 ;; the next string delimiter as a string) was inappropriate.  Instead,
 ;; unbalanced string/regexp delimiters are given the warning font, being
 ;; refonted with the string font as soon as the matching delimiter is entered.
 ;;
 ;; This requires the region processed by the current font-lock after-change
-;; function to have access to the start of the string/regexp which may be
+;; function to have access to the start of the string/regexp, which may be
 ;; several lines back.  The elisp "advice" feature is used on these functions
 ;; to allow this.
 
@@ -449,7 +449,7 @@
 (defconst c-awk-esc-pair-re "\\\\\\(.\\|\n\\|\r\\|\\'\\)")
 ;;   Matches any escaped (with \) character-pair, including an escaped newline.
 (defconst c-awk-comment-without-nl "#.*")
-;; Matches an awk comment, not including the terminating NL (if any).  Note
+;; Matches an AWK comment, not including the terminating NL (if any).  Note
 ;; that the "enclosing" (elisp) regexp must ensure the # is real.
 (defconst c-awk-nl-or-eob "\\(\n\\|\r\\|\\'\\)")
 ;; Matches a newline, or the end of buffer.
@@ -486,7 +486,7 @@
 (defconst c-awk-harmless-line-re
   (concat c-awk-harmless-string*-re
           "\\(" c-awk-comment-without-nl "\\)?" c-awk-nl-or-eob))
-;;   Matches (the tail of) an awk \"logical\" line not containing an unescaped
+;;   Matches (the tail of) an AWK \"logical\" line not containing an unescaped
 ;; " or /.  "logical" means "possibly containing escaped newlines".  A comment
 ;; is matched as part of the line even if it contains a " or a /.  The End of
 ;; buffer is also an end of line.
@@ -500,15 +500,15 @@
 ;; Matches any character which can appear unescaped in a string.
 (defconst c-awk-string-innards-re
   (concat "\\(" c-awk-string-ch-re "\\|" c-awk-esc-pair-re "\\)*"))
-;;   Matches the inside of an awk string (i.e. without the enclosing quotes).
+;;   Matches the inside of an AWK string (i.e. without the enclosing quotes).
 (defconst c-awk-string-without-end-here-re
   (concat "\\=_?\"" c-awk-string-innards-re))
-;;   Matches an awk string at point up to, but not including, any terminator.
+;;   Matches an AWK string at point up to, but not including, any terminator.
 ;; A gawk 3.1+ string may look like _"localisable string".
 
 ;; REGEXPS FOR AWK REGEXPS.
 (defconst c-awk-regexp-normal-re "[^[/\\\n\r]")
-;;   Matches any awk regexp character which doesn't require special analysis.
+;;   Matches any AWK regexp character which doesn't require special analysis.
 (defconst c-awk-escaped-newlines*-re "\\(\\\\[\n\r]\\)*")
 ;;   Matches a (possibly empty) sequence of escaped newlines.
 (defconst c-awk-regexp-char-class-re
@@ -519,17 +519,18 @@
 (defconst c-awk-regexp-innards-re
   (concat "\\(" c-awk-esc-pair-re "\\|" c-awk-regexp-char-class-re
           "\\|" c-awk-regexp-normal-re "\\)*"))
-;;   Matches the inside of an awk regexp (i.e. without the enclosing /s)
+;;   Matches the inside of an AWK regexp (i.e. without the enclosing /s)
 (defconst c-awk-regexp-without-end-re
   (concat "/" c-awk-regexp-innards-re))
-;; Matches an awk regexp up to, but not including, any terminating /. 
+;; Matches an AWK regexp up to, but not including, any terminating /. 
 
-;; REGEXPS used for scanning an awk buffer in order to decide IF A '/' IS A
+;; REGEXPS used for scanning an AWK buffer in order to decide IF A '/' IS A
 ;; REGEXP OPENER OR A DIVISION SIGN.  By "state" in the following is meant
 ;; whether a '/' at the current position would by a regexp opener or a
 ;; division sign.
 (defconst c-awk-neutral-re
-  "\\([{}@` \t]\\|\\+\\+\\|--\\|\\\\.\\)+")
+;  "\\([{}@` \t]\\|\\+\\+\\|--\\|\\\\.\\)+") ; changed, 2003/6/7
+  "\\([{}@` \t]\\|\\+\\+\\|--\\|\\\\.\\)")
 ;;   A "neutral" char(pair).  Doesn't change the "state" of a subsequent /.
 ;; This is space/tab, braces, an auto-increment/decrement operator or an
 ;; escaped character.  Or one of the (illegal) characters @ or `.  But NOT an
@@ -539,24 +540,24 @@
 ;;   A (possibly empty) string of neutral characters (or character pairs).
 (defconst c-awk-var-num-ket-re "[]\)0-9a-zA-Z_$.\x80-\xff]+")
 ;;   Matches a char which is a constituent of a variable or number, or a ket
-;; (i.e. closing braKET), round or square.  Assume that all characters \x80 to
+;; (i.e. closing bracKET), round or square.  Assume that all characters \x80 to
 ;; \xff are "letters".
 (defconst c-awk-div-sign-re
   (concat c-awk-var-num-ket-re c-awk-neutrals*-re "/"))
-;;   Will match a piece of awk buffer ending in / which is a division sign, in
+;;   Will match a piece of AWK buffer ending in / which is a division sign, in
 ;; a context where an immediate / would be a regexp bracket.  It follows a
 ;; variable or number (with optional intervening "neutral" characters).  This
 ;; will only work when there won't be a preceding " or / before the sought /
 ;; to foul things up.
 (defconst c-awk-non-arith-op-bra-re
   "[[\(&=:!><,?;'~|]")
-;;   Matches an openeing BRAket ,round or square, or any operator character
+;;   Matches an openeing BRAcket ,round or square, or any operator character
 ;; apart from +,-,/,*,%.  For the purpose at hand (detecting a / which is a
 ;; regexp bracket) these arith ops are unnecessary and a pain, because of "++"
 ;; and "--".
 (defconst c-awk-regexp-sign-re
   (concat c-awk-non-arith-op-bra-re c-awk-neutrals*-re "/"))
-;;   Will match a piece of awk buffer ending in / which is an opening regexp
+;;   Will match a piece of AWK buffer ending in / which is an opening regexp
 ;; bracket, in a context where an immediate / would be a division sign.  This
 ;; will only work when there won't be a preceding " or / before the sought /
 ;; to foul things up.
@@ -609,7 +610,7 @@
    (match-beginning 0) (match-end 0))
   (cond ((looking-at "\"")
          (forward-char)
-         t)                             ; In awk, ("15" / 5) gives 3 ;-)
+         t)                             ; In AWK, ("15" / 5) gives 3 ;-)
         ((looking-at "[\n\r]")          ; Unterminated string with EOL.
          (forward-char)
          nil)                           ; / on next line would start a regexp
@@ -695,7 +696,7 @@
     nil))
 
 
-;; ACM, 2002/07/21: Thoughts: We need an awk-mode after-change function to set
+;; ACM, 2002/07/21: Thoughts: We need an AWK Mode after-change function to set
 ;; the syntax-table properties even when font-lock isn't enabled, for the
 ;; subsequent use of movement functions, etc.  However, it seems that if font
 ;; lock _is_ enabled, we can always leave it to do the job.
@@ -724,7 +725,7 @@
 
 (defun c-awk-after-change (beg end old-len)
 ;; This function is called exclusively as an after-change function in
-;; awk-mode.  It ensures that the syntax-table properties get set in the
+;; AWK Mode.  It ensures that the syntax-table properties get set in the
 ;; changed region.  However, if font-lock is enabled, this function does
 ;; nothing, since an enabled font-lock after-change function will always do
 ;; this.
@@ -745,7 +746,7 @@
 ;; of a previously escaped newline.
 (defmacro c-awk-advise-fl-for-awk-region (function)
   `(defadvice ,function (before get-awk-region activate)
-;; When font-locking an awk-mode buffer, make sure that any string/regexp is
+;; When font-locking an AWK Mode buffer, make sure that any string/regexp is
 ;; completely font-locked.
   (when (eq major-mode 'awk-mode)
     (save-excursion
@@ -773,7 +774,7 @@
 ;; Matches any "harmless" character in a pattern or an escaped character pair.
 
 (defun c-awk-beginning-of-defun (&optional arg)
-  "Move backward to the beginning of an awk \"defun\".  With ARG, do it that
+  "Move backward to the beginning of an AWK \"defun\".  With ARG, do it that
 many times.  Negative arg -N means move forward to Nth following beginning of
 defun.  Returns t unless search stops due to beginning or end of buffer.
 
@@ -807,9 +808,9 @@ nor helpful."
        (eq arg 0)))))
 
 (defun c-awk-forward-awk-pattern ()
-  ;; Point is at the start of an awk pattern (which may be null) or function
+  ;; Point is at the start of an AWK pattern (which may be null) or function
   ;; declaration.  Move to the pattern's end, and past any trailing space or
-  ;; comment.  Typically, we stop at the { which denotes the corresponding awk
+  ;; comment.  Typically, we stop at the { which denotes the corresponding AWK
   ;; action/function body.  Otherwise we stop at the EOL (or ;) marking the
   ;; absence of an explicit action.
   (while
@@ -848,7 +849,7 @@ nor helpful."
 Negative argument -N means move back to Nth preceding end of defun.
 
 An end of a defun occurs right after the closing brace that matches the
-opening brace at its start, or immediately after the awk pattern when there is
+opening brace at its start, or immediately after the AWK pattern when there is
 no explicit action; see function `c-awk-beginning-of-defun'."
   (interactive "p")
   (or arg (setq arg 1))
