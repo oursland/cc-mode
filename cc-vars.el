@@ -327,7 +327,7 @@ The list of variables to buffer localize are:
 ;; TBD: I only see "Mode Hook" in widget button
 (defcustom c-mode-hook nil
   "*Hook called by `c-mode'."
-  :type 'hook
+  :type '(hook :format "%{C Mode Hook%}:\n%v")
   :group 'c)
 
 (defcustom c++-mode-hook nil
@@ -348,7 +348,7 @@ The list of variables to buffer localize are:
 ;; TBD: I only see "Mode Common Hook" in widget button
 (defcustom c-mode-common-hook nil
   "*Hook called by all CC Mode modes for common initializations."
-  :type '(hook :format "CC Mode Common Hook: %v")
+  :type '(hook :format "%{CC Mode Common Hook%}:\n%v")
   :group 'c)
 
 
