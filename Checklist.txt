@@ -5,12 +5,13 @@ Checklist for doing a release:
 
     - Proofread manual.
 
-    - Add `Release 5.xx' tag to ChangeLog.  Release script looks for
-      this.
-
     - Update ChangeLog.  Since C-x v a no longer works, use the new
-      Python Update.py script, which sadly still needs to be manually
-      hacked.
+      Python Update.py script to generate the raw text to stdout.
+      Manually paste this into ChangeLog, then proofread.  Update.py
+      could definitely be improved.
+
+    - Add `Release 5.xx' tag to ChangeLog using C-x a.  Release.py
+      script looks for this.
 
     - Distill changes for ANNOUNCEMENT file.
 
@@ -35,6 +36,9 @@ Checklist for doing a release:
       The first is the tarball to be sent to RMS + SLB for Emacs and
       XEmacs respectively.  They contain some files that aren't
       necessary for those releases.
+
+      RMS: Richard Stallman <rms@gnu.org>
+      SLB: Steve Baur <steve@xemacs.org>
 
     - Send cc-mode-5.20.rmslb.tar.gz and the ChangeLog entries for
       XX-1 to XX to RMS.  Sent just the tarball to SLB.
