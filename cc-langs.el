@@ -325,7 +325,7 @@ It's assumed to not contain any submatchers."
 
 (c-lang-defconst c-opt-identifier-concat-key
   "Regexp matching the operators that join symbols to fully qualified
-identifiers, or nil in languages that doesn't have such things.  Does
+identifiers, or nil in languages that don't have such things.  Does
 not contain a \\| operator at the top level."
   t    nil
   c++  "::"
@@ -871,7 +871,7 @@ operators."
   ;; significant text here.
   (concat (concat
 	   ;; Match horizontal whitespace and block comments that
-	   ;; doesn't contain newlines.
+	   ;; don't contain newlines.
 	   "\\(\\s \\|"
 	   (concat "/\\*"
 		   "\\([^*\n\r]\\|\\*[^/\n\r]\\)*"
@@ -1171,7 +1171,7 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 
 (c-lang-defconst c-opt-access-key
   ;; Regexp matching an access protection label in a class, or nil in
-  ;; languages that doesn't have such things.
+  ;; languages that don't have such things.
   t    (if (c-lang-const c-protection-kwds)
 	   (c-make-keywords-re t (c-lang-const c-protection-kwds)))
   c++  (concat "\\("
@@ -1357,7 +1357,7 @@ identifiers that follows the type in a normal declaration."
 (c-lang-defconst c-opt-block-stmt-key
   ;; Regexp matching the start of any statement that has a
   ;; substatement (except a bare block).  Nil in languages that
-  ;; doesn't have such constructs.
+  ;; don't have such constructs.
   t (if (or (c-lang-const c-block-stmt-1-kwds)
 	    (c-lang-const c-block-stmt-2-kwds))
 	(c-make-keywords-re t
@@ -1391,7 +1391,7 @@ nevertheless contains a list separated with ';' and not ','."
 
 (c-lang-defconst c-opt-asm-stmt-key
   ;; Regexp matching the start of an assembler statement.  Nil in
-  ;; languages that doesn't support that.
+  ;; languages that don't support that.
   t (if (c-lang-const c-asm-stmt-kwds)
 	(c-make-keywords-re t (c-lang-const c-asm-stmt-kwds))))
 (c-lang-defvar c-opt-asm-stmt-key (c-lang-const c-opt-asm-stmt-key))
@@ -1448,7 +1448,7 @@ expressions."
 
 (c-lang-defconst c-opt-lambda-key
   ;; Adorned regexp matching the start of lambda constructs, or nil in
-  ;; languages that doesn't have such things.
+  ;; languages that don't have such things.
   t (and (c-lang-const c-lambda-kwds)
 	 (c-make-keywords-re t (c-lang-const c-lambda-kwds))))
 (c-lang-defvar c-opt-lambda-key (c-lang-const c-opt-lambda-key))
@@ -1462,7 +1462,7 @@ handled separately)."
 
 (c-lang-defconst c-opt-inexpr-block-key
   ;; Regexp matching the start of in-expression statements, or nil in
-  ;; languages that doesn't have such things.
+  ;; languages that don't have such things.
   t    nil
   pike (c-make-keywords-re t (c-lang-const c-inexpr-block-kwds)))
 (c-lang-defvar c-opt-inexpr-block-key (c-lang-const c-opt-inexpr-block-key))
@@ -1475,7 +1475,7 @@ handled separately)."
 
 (c-lang-defconst c-opt-inexpr-class-key
   ;; Regexp matching the start of a class in an expression, or nil in
-  ;; languages that doesn't have such things.
+  ;; languages that don't have such things.
   t (and (c-lang-const c-inexpr-class-kwds)
 	 (c-make-keywords-re t (c-lang-const c-inexpr-class-kwds))))
 (c-lang-defvar c-opt-inexpr-class-key (c-lang-const c-opt-inexpr-class-key))
@@ -1489,7 +1489,7 @@ Note that Java specific rules are currently applied to tell this from
 
 (c-lang-defconst c-opt-inexpr-brace-list-key
   ;; Regexp matching the start of a brace list in an expression, or
-  ;; nil in languages that doesn't have such things.  This should not
+  ;; nil in languages that don't have such things.  This should not
   ;; match brace lists recognized through `c-special-brace-lists'.
   t (and (c-lang-const c-inexpr-brace-list-kwds)
 	 (c-make-keywords-re t (c-lang-const c-inexpr-brace-list-kwds))))
@@ -1798,7 +1798,7 @@ end of the operator.  nil in languages without such operators."
 
 (c-lang-defconst c-opt-type-suffix-key
   "Regexp matching operators that might follow after a type, or nil in
-languages that doesn't have such operators.  The end of the first
+languages that don't have such operators.  The end of the first
 submatch is taken as the end of the operator.  This should not match
 things like C++ template arglists if `c-recognize-<>-arglists' is
 set."
@@ -1884,7 +1884,7 @@ statement."
 
 (c-lang-defconst c-opt-friend-key
   ;; Regexp describing friend declarations classes, or nil in
-  ;; languages that doesn't have such things.
+  ;; languages that don't have such things.
   ;;
   ;; TODO: Ought to use `c-specifier-key' or similar, and the template
   ;; skipping isn't done properly.  This will disappear soon.
