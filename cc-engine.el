@@ -293,7 +293,6 @@
       (aref c-in-literal-cache 1)
     (let ((rtn (save-excursion
 		 (let* ((lim (or lim (c-point 'bod)))
-			(here (point))
 			(state (parse-partial-sexp lim (point))))
 		   (cond
 		    ((nth 3 state) 'string)
@@ -964,12 +963,12 @@
 	  (c-add-syntax literal (c-point 'boi)))
 	 ;; CASE 3: in a cpp preprocessor macro
 	 ((eq literal 'pound)
-	  (let* ((boi (c-point 'boi))
-		 (macrostart (progn (c-beginning-of-macro lim) (point)))
-		 (symbol (if (= boi macrostart)
-			     'cpp-macro
-			   'cpp-macro-cont)))
-	    (c-add-syntax symbol macrostart)))
+	  (let ((boi (c-point 'boi))
+		(macrostart (progn (c-beginning-of-macro lim) (point))))
+	    (setq tmpsymbol (if (= boi macrostart)
+				'cpp-macro
+			      'cpp-macro-cont))
+	    (c-add-syntax tmpsymbol macrostart)))
 	 ;; CASE 4: in an objective-c method intro
 	 (in-method-intro-p
 	  (c-add-syntax 'objc-method-intro (c-point 'boi)))
@@ -989,16 +988,16 @@
 		     (setq keyword (match-string 1)
 			   placeholder (point))
 		     (or (and (string-equal keyword "namespace")
-			      (setq symbol 'namespace-open))
+			      (setq tmpsymbol 'namespace-open))
 			 (and (string-equal keyword "extern")
 			      (progn
 				(forward-sexp 1)
 				(c-forward-syntactic-ws)
 				(eq (char-after) ?\"))
-			      (setq symbol 'extern-lang-open)))
+			      (setq tmpsymbol 'extern-lang-open)))
 		     ))
 	      (goto-char placeholder)
-	      (c-add-syntax symbol (c-point 'boi)))
+	      (c-add-syntax tmpsymbol (c-point 'boi)))
 	     ;; CASE 5A.2: we are looking at a class opening brace
 	     ((save-excursion
 		(goto-char indent-point)
@@ -1227,10 +1226,10 @@
 	   ;; CASE 5F: extern-lang-close?
 	   ((and inenclosing-p
 		 (eq char-after-ip ?}))
-	    (let ((symbol (if (eq inenclosing-p 'extern)
-			      'extern-lang-close
-			    'namespace-close)))
-	      (c-add-syntax symbol (aref inclass-p 0))))
+	    (setq tmpsymbol (if (eq inenclosing-p 'extern)
+				'extern-lang-close
+			      'namespace-close))
+	    (c-add-syntax tmpsymbol (aref inclass-p 0)))
 	   ;; CASE 5G: we are looking at the brace which closes the
 	   ;; enclosing nested class decl
 	   ((and inclass-p
