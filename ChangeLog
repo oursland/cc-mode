@@ -1,3 +1,130 @@
+2004-08-09  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* Patch release 5.30.9.
+
+2004-05-25  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el, cc-vars.el (c-emacs-features): Moved from cc-vars to
+	cc-defs for dependency reasons.  Fixed the POSIX char class test
+	to check that it works in `skip-chars-(forward|backward)' too.
+
+	* cc-align.el (c-lineup-arglist): Fixed bug when the first
+	argument starts with a special brace list.
+
+2004-05-23  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-forward-type): Fixed promotion bug when
+	`c-opt-type-concat-key' is used (i.e. in Pike).
+
+	* cc-engine.el (c-looking-at-special-brace-list): Fixed bug when
+	the inner char pair doesn't have paren syntax, i.e. "(< >)".
+
+2004-04-28  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el, cc-vars.el: Amend doc(-strings) to say that <TAB>
+	doesn't insert WS into a CPP line.
+	(c-indent-command, c-tab-always-indent): Amend doc strings.
+
+2004-04-20  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el (c-lineup-multi-inher): Made it syntactic whitespace
+	safe.
+
+2004-04-17  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed similar situations
+	for `arglist-cont-nonempty' and `arglist-close'.
+
+2004-04-16  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-guess-basic-syntax): Fixed anchor position for
+	`arglist-intro' when there are two arglist open parens on the same
+	line and there's nothing in front of the first.
+
+	* cc-fonts.el (c-basic-matchers-before): Fixed font locking of
+	qualified names in Java, which previously could fontify common
+	indexing expressions in many cases.  The standard Java naming
+	conventions are used to tell them apart.
+
+2004-04-09  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-align.el (c-lineup-whitesmith-in-block): Fixed inconsistency
+	wrt opening parens on the first line inside a paren block.
+
+	* cc-defs.el (c-langs-are-parametric): Must be known at compile
+	time for the sake of `c-major-mode-is'.
+
+	(c-mode-is-new-awk-p): Made it a macro to delay expansion of
+	`c-major-mode-is' in the event that this is used inside a
+	`c-lang-defconst'.
+
+2004-03-27  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-styles.el, cc-engine.el: Add in two checks for user errors,
+	thus eliminating cryptic and unhelpful Emacs error messages.  (1)
+	Check the arg to `c-set-style' is a string.  (2) Check that
+	settings to `c-offsets-alist' are not spuriously quoted.
+
+2004-03-25  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-defs.el (c-major-mode-is): Fixed expansion inside
+	`c-lang-defconst' so that it works better with fallback languages.
+
+	* cc-defs.el (c-add-language): Fixed a typo that caused it to fail
+	to record the base mode.
+
+2004-03-18  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-syntactic-re-search-forward): Fixed bug so that
+	it doesn't go past the closing paren when PAREN-LEVEL is used.
+	Reordered the syntax checks to get more efficient skipping in some
+	situations.
+
+2004-03-02  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el (c-electric-brace): Don't trip up on a line
+	continuation which might precede the newly inserted '{'.
+
+2004-03-01  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-syntactic-re-search-forward): Fixed cases where
+	it could loop indefinitely.
+
+2004-02-06  Alan Mackenzie  <bug-cc-mode@gnu.org>
+
+	* cc-cmds.el: (c-electric-brace): don't delete a comment which
+	precedes the newly inserted `{'.
+
+2003-12-08  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-fonts.el (c-font-lock-declarators): Handle array size specs
+	correctly.  Only fontify identifiers in front of '(' with as
+	functions - don't accept any paren char.  Tightened up initializer
+	skipping to stop before function and class blocks.
+
+2003-12-07  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-beginning-of-decl-1): Fixed bug where the point
+	could be left directly after an open paren when finding the
+	beginning of the first decl in the block.
+
+	* cc-engine.el (c-parse-state): Don't use the syntax table when
+	filtering out legitimate open parens to be recorded.  This could
+	cause cache inconsistencies when e.g. `c++-template-syntax-table'
+	was temporarily in use.
+
+2003-12-05  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-on-identifier, c-simple-skip-symbol-backward):
+	Small fix for handling "-" correctly in `skip-chars-backward'.
+	Affected the operator lfun syntax in Pike.
+
+2003-11-30  Martin Stjernholm  <bug-cc-mode@gnu.org>
+
+	* cc-engine.el (c-invalidate-sws-region-after): Fixed bug that
+	could cause an error from `after-change-functions' when the
+	changed region is at bob.
+
 2003-11-16  Martin Stjernholm  <bug-cc-mode@gnu.org>
 
 	* Patch release 5.30.8.
