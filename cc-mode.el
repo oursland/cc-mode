@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.223 $
-;; Last Modified:   $Date: 1992-12-01 05:35:27 $
+;; Version:         $Revision: 2.224 $
+;; Last Modified:   $Date: 1992-12-01 18:01:45 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -129,7 +129,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-01 05:35:27 $|$Revision: 2.223 $|
+;; |$Date: 1992-12-01 18:01:45 $|$Revision: 2.224 $|
 
 ;;; Code:
 
@@ -407,7 +407,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.223 $
+  "Major mode for editing C++ code.  $Revision: 2.224 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -615,7 +615,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.223 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.224 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1567,7 +1567,7 @@ BOD is the beginning of the C++ definition."
       ;; cache char before indent point
       (save-excursion
 	(goto-char indent-point)
-	(c++-backward-over-syntactic-ws)
+	(c++-backward-over-syntactic-ws bod)
 	(setq char-before-ip (preceding-char)))
       (cond ((memq literal '(string))
 	     ;; in a string.
@@ -1650,7 +1650,7 @@ BOD is the beginning of the C++ definition."
 			(beginning-of-line)
 			;; we might be inside a K&R C arg decl
 			(if (save-excursion
-			      (c++-backward-over-syntactic-ws)
+			      (c++-backward-over-syntactic-ws bod)
 			      (and (eq major-mode 'c++-c-mode)
 				   (= (preceding-char) ?\))))
 			    c-argdecl-indent
@@ -2274,7 +2274,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.223 $"
+(defconst c++-version "$Revision: 2.224 $"
   "c++-mode version number.")
 
 (defun c++-version ()
