@@ -9,12 +9,6 @@
 also the list of <a href="changes-516.php">user visible changes for
 version 5.16</a>.
 
-<p><a
-href="http://download.sourceforge.net/cc-mode/cc-mode-5.27.tar.gz">Download</a>
-this CC Mode version (<a
-href="ftp://download.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.27.tar.gz">via
-FTP</a>).</p>
-
 <ul>
 
   <p><li>Recognition of enum declarations in K&R argdecls.

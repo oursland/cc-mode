@@ -8,6 +8,12 @@
 <p>See also the <a href="changes-527.php">user visible changes for
 5.27</a>.
 
+<p><a
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.28.tar.gz">Download</a>
+this CC Mode version (<a
+href="ftp://download.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.28.tar.gz">via
+FTP</a>).</p>
+
 <ul>
 
   <p><li>The hardcoded switch to <code>"java"</code> style in Java

@@ -8,6 +8,12 @@
 <p>See also the <a href="changes-526.php">user visible changes for
 5.26</a>.
 
+<p><a
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.27.tar.gz">Download</a>
+this CC Mode version (<a
+href="ftp://download.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.27.tar.gz">via
+FTP</a>).</p>
+
 <p>Note: This is mostly a bugfix release.  The features labeled
 experimental in 5.26 remain and are now considered permanent.
 

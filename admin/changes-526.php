@@ -8,6 +8,12 @@
 <p>See also the <a href="changes-525.php">user visible changes for
 5.25</a>.
 
+<p><a
+href="http://download.sourceforge.net/cc-mode/cc-mode-5.26.tar.gz">Download</a>
+this CC Mode version (<a
+href="ftp://download.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.26.tar.gz">via
+FTP</a>).</p>
+
 <p>Note: This release contains changes that might not be compatible
 with current user setups (although it's believed that these
 incompatibilities will only show up in very uncommon circumstances).

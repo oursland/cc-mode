@@ -9,12 +9,6 @@
 the list of <a href="changes-517.php">user visible changes for version
 5.17</a>.
 
-<p><a
-href="http://download.sourceforge.net/cc-mode/cc-mode-5.28.tar.gz">Download</a>
-this CC Mode version (<a
-href="ftp://download.sourceforge.net/pub/sourceforge/cc-mode/cc-mode-5.28.tar.gz">via
-FTP</a>).</p>
-
 <ul>
 
   <p><li><code>M-a</code> and <code>M-e</code> should now properly
