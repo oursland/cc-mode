@@ -155,7 +155,12 @@
 	   ;; CASE 4: are we looking at a label?  (But we handle
 	   ;; switch labels later.)
 	   ((and (looking-at c-label-key)
-		 (not (looking-at "default\\>"))))
+		 (not (looking-at "default\\>"))
+		 (not (and (c-major-mode-is 'pike-mode)
+			   (save-excursion
+			     ;; Not inside a Pike type declaration?
+			     (and (c-safe (backward-up-list 1) t)
+				  (eq (char-after) ?\()))))))
 	   ;; CASE 5: is this the first time we're checking?
 	   (firstp (setq firstp nil
 			 substmt-p (not (c-crosses-statement-barrier-p
@@ -184,8 +189,7 @@
 		       (if (looking-at c-switch-label-key)
 			   t
 			 (goto-char here)
-			 nil))
-		     (looking-at c-label-key))))
+			 nil)))))
 	   ;; CASE 8: ObjC or Java method def
 	   ((and c-method-key
 		 (setq last-begin (c-in-method-def-p)))
