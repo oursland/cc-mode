@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.12 $
-;; Last Modified:   $Date: 1994-06-17 20:27:27 $
+;; Version:         $Revision: 4.13 $
+;; Last Modified:   $Date: 1994-06-17 20:57:09 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-06-17 20:27:27 $|$Revision: 4.12 $|
+;; |$Date: 1994-06-17 20:57:09 $|$Revision: 4.13 $|
 
 ;;; Code:
 
@@ -895,7 +895,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 4.12 $
+cc-mode Revision: $Revision: 4.13 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -928,7 +928,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 4.12 $
+cc-mode Revision: $Revision: 4.13 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -961,7 +961,7 @@ Key bindings:
 ;;;###autoload
 (defun objc-mode ()
   "Major mode for editing Objective C code.
-cc-mode Revision: $Revision: 4.12 $
+cc-mode Revision: $Revision: 4.13 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from an
 objc-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -2742,24 +2742,23 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	 (point)))
    ;; this will pick up array/aggregate init lists, even if they are nested.
    (save-excursion
-     (let ((firstp t)
-	   bufpos)
+     (let (bufpos)
        (while (and (not bufpos)
-		   (or firstp brace-state))
-	 (setq firstp nil)
-	 (goto-char containing-sexp)
-	 (c-backward-syntactic-ws)
-	 (if (/= (preceding-char) ?=)
-	     ;; lets see if we're nested. find the most nested
-	     ;; containing brace
-	     (while (and brace-state
-			 (progn
-			   (setq containing-sexp (car brace-state)
-				 brace-state (cdr brace-state))
-			   (consp containing-sexp))))
-	   ;; we've hit the beginning of the aggregate list
-	   (c-beginning-of-statement)
-	   (setq bufpos (point))))
+		   containing-sexp)
+	 (if (consp containing-sexp)
+	     (setq containing-sexp (car brace-state)
+		   brace-state (cdr brace-state))
+	   (goto-char containing-sexp)
+	   (c-backward-syntactic-ws)
+	   (if (/= (preceding-char) ?=)
+	       ;; lets see if we're nested. find the most nested
+	       ;; containing brace
+	       (setq containing-sexp (car brace-state)
+		     brace-state (cdr brace-state))
+	     ;; we've hit the beginning of the aggregate list
+	     (c-beginning-of-statement)
+	     (setq bufpos (point)))
+	   ))
        bufpos))
    ))
 
@@ -3181,16 +3180,19 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	      (c-backward-syntactic-ws containing-sexp)
 	      (= (point) (1+ containing-sexp)))
 	    (goto-char containing-sexp)
+	    ;;(if (= char-after-ip ?{)
+		;;(c-add-syntax 'brace-list-open (c-point 'boi))
 	    (c-add-syntax 'brace-list-intro (c-point 'boi))
-	    (if (= char-after-ip ?{)
-		(c-add-syntax 'block-open)))
+	    )
+	    ;;))			; end CASE 8B
 	   ;; CASE 8C: this is just a later brace-list-entry
 	   (t (goto-char (1+ containing-sexp))
 	      (c-forward-syntactic-ws indent-point)
-	      (c-add-syntax 'brace-list-entry (point))
 	      (if (= char-after-ip ?{)
-		  (c-add-syntax 'block-open)))
-	   ))
+		  (c-add-syntax 'brace-list-open (point))
+		(c-add-syntax 'brace-list-entry (point))
+		))			; end CASE 8C
+	   ))				; end CASE 8
 	 ;; CASE 9: A continued statement
 	 ((and (not (memq char-before-ip '(?\; ?} ?:)))
 	       (> (point)
@@ -3797,7 +3799,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.12 $"
+(defconst c-version "$Revision: 4.13 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
