@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.322 $
-;; Last Modified:   $Date: 1996-10-04 20:28:14 $
+;; Version:         $Revision: 4.323 $
+;; Last Modified:   $Date: 1996-10-08 22:19:00 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -142,7 +142,7 @@ reported and the syntactic symbol is ignored.")
 (defvar c-basic-offset 4
   "*Amount of basic offset used by + and - symbols in `c-offsets-alist'.")
 
-(defvar c-offsets-alist
+(defconst c-offsets-alist
   '((string                . -1000)
     (c                     . c-lineup-C-comments)
     (defun-open            . 0)
@@ -5009,7 +5009,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.322 $"
+(defconst c-version "$Revision: 4.323 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
