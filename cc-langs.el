@@ -1056,11 +1056,6 @@ then the associated clauses will be handled."
   t nil
   (c c++ objc pike) '("typedef"))
 
-(c-lang-defconst c-typedef-decl-key
-  ;; `c-typedef-decl-kwds' as an adorned regexp.
-  t (c-make-keywords-re t (c-lang-const c-typedef-decl-kwds)))
-(c-lang-defvar c-typedef-decl-key (c-lang-const c-typedef-decl-key))
-
 (c-lang-defconst c-typeless-decl-kwds
   "Keywords introducing declarations where the identifier (declarator)
 list follows directly after the keyword, without any type.
@@ -1070,11 +1065,6 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 then the associated clauses will be handled."
   t    nil
   pike '("constant"))
-
-(c-lang-defconst c-typeless-decl-key
-  ;; `c-typeless-decl-kwds' as an adorned regexp.
-  t (c-make-keywords-re t (c-lang-const c-typeless-decl-kwds)))
-(c-lang-defvar c-typeless-decl-key (c-lang-const c-typeless-decl-key))
 
 (c-lang-defconst c-other-decl-kwds
   "Keywords that can start or prefix declarations, besides those on
