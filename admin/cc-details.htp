@@ -3,14 +3,31 @@ Author: cc-mode-help@python.org
 
 <h1>CC Mode Version 5</h1>
 
-The <a href="index.html">current release</a> is version 5.17.  The
+The <a href="index.html">current release</a> is version 5.18.  The
 important recent changes are outlined below.  Be sure to see the list of 
 <a href="#compat">compatibility notes</a> for special notes about
 X/Emacs versions and package interactions.
 
 <p>See <a href="index.html">for other CC Mode files</a>.
 
-<h2> Changes since CC Mode 5.16</h2>
+<h2>Changes since CC Mode 5.17</h2>
+
+<ul><li><code>M-a</code> and <code>M-e</code> should now properly move 
+	into comments when point is before or after a comment, and
+	move by sentences when inside a comment.
+
+    <p><li><code>c-electric-slash</code> should be bound in all modes
+	now.  Also, <code>c-expand-macro</code> is not bound in Java
+	or IDL modes.
+
+    <p><li>Imenu enhancements: Objective-C support donated by Masatake 
+	(jet) YAMATO; a fix to Java support given by Ake Stenhoff; and 
+	improvements to C++ support given by Jan Dubois.
+
+    <p><li>Bug fixes.
+</ul>
+
+<h2>Changes since CC Mode 5.16</h2>
 
 This is primarily a bug fix release, which include fixes to M-a and
 M-e commands when moving into comments, and recognition of enum
