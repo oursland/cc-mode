@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.256 $
-;; Last Modified:   $Date: 1994-02-18 15:55:45 $
+;; Version:         $Revision: 3.257 $
+;; Last Modified:   $Date: 1994-02-18 16:13:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -93,7 +93,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-02-18 15:55:45 $|$Revision: 3.256 $|
+;; |$Date: 1994-02-18 16:13:27 $|$Revision: 3.257 $|
 
 ;;; Code:
 
@@ -723,7 +723,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.256 $
+cc-mode Revision: $Revision: 3.257 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -754,7 +754,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.256 $
+cc-mode Revision: $Revision: 3.257 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2903,18 +2903,19 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; lineup the current arglist line with the arglist appearing just
   ;; after the containing paren which starts the arglist.
   (save-excursion
-    (let* ((containing-sexp (save-excursion
-			      ;; arglist-cont-nonempty gives relpos ==
-			      ;; to boi of containing-sexp paren. This
-			      ;; is good when offset is +, but bad
-			      ;; when it is c-lineup-arglist, so we
-			      ;; have to special case a kludge here.
-			      (if (eq (car langelem) 'arglist-cont-nonempty)
-				  (progn
-				    (backward-up-list 1)
-				    (skip-chars-forward " \t" (c-point 'eol)))
-				(goto-char (cdr langelem)))
-			      (point)))
+    (let* ((containing-sexp
+	    (save-excursion
+	      ;; arglist-cont-nonempty gives relpos ==
+	      ;; to boi of containing-sexp paren. This
+	      ;; is good when offset is +, but bad
+	      ;; when it is c-lineup-arglist, so we
+	      ;; have to special case a kludge here.
+	      (if (memq (car langelem) '(arglist-intro arglist-cont-nonempty))
+		  (progn
+		    (backward-up-list 1)
+		    (skip-chars-forward " \t" (c-point 'eol)))
+		(goto-char (cdr langelem)))
+	      (point)))
 	   (cs-curcol (save-excursion
 			(goto-char (cdr langelem))
 			(current-column))))
@@ -2932,9 +2933,10 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	    (progn (forward-char 1)
 		   (c-forward-syntactic-ws (c-point 'eol))
 		   ))
-	(if (eolp) 2
-	  (- (current-column) cs-curcol)
-	  )))))
+	;;(if (eolp) 2
+	(- (current-column) cs-curcol)
+	;;  )))))
+	))))
 
 (defun c-lineup-streamop (langelem)
   ;; lineup stream operators
@@ -3167,7 +3169,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.256 $"
+(defconst c-version "$Revision: 3.257 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
