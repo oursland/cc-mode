@@ -6,6 +6,7 @@
 ;;
 ;; Mar, 1992 (Barry Warsaw, bwarsaw@cen.com)
 ;;   added feature to indent comment lines different from code lines
+;;   also fixed c-auto-newline for double colons and }; syntax
 ;;
 ;; Jun, 1990 (Dave Detlefs, dld@cs.cmu.edu)
 ;;   Incorporated stylistic changes from David Lawrence at FSF;
@@ -102,6 +103,7 @@
   (define-key c++-mode-map "\e\C-x" 'c++-indent-defun)
   (define-key c++-mode-map "/" 'electric-c++-slash)
   (define-key c++-mode-map "*" 'electric-c++-star)
+  (define-key c++-mode-map ":" 'electric-c++-colon)
   )
 
 (defvar c++-mode-syntax-table nil
@@ -217,7 +219,7 @@ no args,if that value is non-nil."
   (set (make-local-variable 'parse-sexp-ignore-comments) nil)
   (run-hooks 'c++-mode-hook)
   (if c++-electric-colon
-      (define-key c++-mode-map ":" 'electric-c++-terminator)))
+      (define-key c++-mode-map ":" 'electric-c++-colon)))
 
 ;; This is used by indent-for-comment
 ;; to decide how much to indent a comment in C++ code
@@ -288,9 +290,25 @@ you want to add a comment to the end of a line."
 (defun electric-c++-semi (arg)
   "Insert character and correct line's indentation."
   (interactive "P")
-  (if c-auto-newline
-      (electric-c++-terminator arg)
-    (self-insert-command (prefix-numeric-value arg))))
+  (let ((insertion-point (point)))
+    (save-excursion
+      (c++-backward-to-noncomment (point-min))
+      (if (= (preceding-char) ?})
+	  (delete-region insertion-point (point)))))
+  (electric-c++-terminator arg))
+
+(defun electric-c++-colon (arg)
+  "Electrify colon.  De-auto-newline double colons."
+  (interactive "P")
+  (let ((c-auto-newline c-auto-newline)
+	(insertion-point (point)))
+    (save-excursion
+      (c++-backward-to-noncomment (point-min))
+      (if (= (preceding-char) ?:)
+	  (progn
+	    (delete-region insertion-point (point))
+	    (setq c-auto-newline nil))))
+    (electric-c++-terminator arg)))
 
 (defun electric-c++-terminator (arg)
   "Insert character and correct line's indentation."
