@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.112 $
-;; Last Modified:   $Date: 1994-12-09 23:39:31 $
+;; Version:         $Revision: 4.113 $
+;; Last Modified:   $Date: 1994-12-12 17:45:13 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -102,7 +102,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-12-09 23:39:31 $|$Revision: 4.112 $|
+;; |$Date: 1994-12-12 17:45:13 $|$Revision: 4.113 $|
 
 ;;; Code:
 
@@ -3102,46 +3102,41 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
   ;; paren. BRACE-STATE is the remainder of the state of enclosing braces
   (or
    ;; this will pick up enum lists
-   (save-excursion
-     (let ((safepos (c-most-enclosing-brace brace-state))
-	   (here (point)))
-       (goto-char containing-sexp)
-       (if safepos
-	   (c-beginning-of-statement nil safepos)
-	 ;; if safepos is nil, then we know that the beginning of
-	 ;; statement is beginning of buffer, so use a faster way to
-	 ;; get us where we're going
-	 (beginning-of-buffer))
-       ;; c-b-o-s could have left us at point-min
-       (and (bobp) (c-forward-syntactic-ws here))
-       (if (and (< (point) containing-sexp)
-		(looking-at "\\(typedef[ \t]+\\)?enum[ \t\n]+")
-		(save-excursion
-		  (skip-chars-forward "^;(" containing-sexp)
-		  (= (point) containing-sexp)))
-	   (point))))
+   (condition-case ()
+       (save-excursion
+	 (goto-char containing-sexp)
+	 (forward-sexp -1)
+	 (if (or (looking-at "enum[\t\n ]+")
+		 (progn (forward-sexp -1)
+			(looking-at "enum[\t\n ]+")))
+	     (point)))
+     (error nil))
    ;; this will pick up array/aggregate init lists, even if they are nested.
-   (save-excursion
-     (let (safepos bufpos)
-       (while (and (not bufpos)
-		   containing-sexp)
-	 (if (consp containing-sexp)
-	     (setq containing-sexp (car brace-state)
-		   brace-state (cdr brace-state))
-	   (goto-char containing-sexp)
-	   ;; calculate scanning limit
-	   (setq safepos (c-most-enclosing-brace brace-state))
-	   (c-backward-syntactic-ws safepos)
-	   (if (/= (preceding-char) ?=)
-	       ;; lets see if we're nested. find the most nested
-	       ;; containing brace
-	       (setq containing-sexp (car brace-state)
-		     brace-state (cdr brace-state))
-	     ;; we've hit the beginning of the aggregate list
-	     (c-beginning-of-statement nil safepos)
-	     (setq bufpos (point)))
-	   ))
-       bufpos))
+   (condition-case ()
+       (save-excursion
+	 (let (safepos bufpos)
+	   (while (and (not bufpos)
+		       containing-sexp)
+	     (if (consp containing-sexp)
+		 (setq containing-sexp (car brace-state)
+		       brace-state (cdr brace-state))
+	       ;; see if significant character just before brace is an equal
+	       (goto-char containing-sexp)
+	       (forward-sexp -1)
+	       (forward-sexp 1)
+	       (c-forward-syntactic-ws containing-sexp)
+	       (if (/= (following-char) ?=)
+		   ;; lets see if we're nested. find the most nested
+		   ;; containing brace
+		   (setq containing-sexp (car brace-state)
+			 brace-state (cdr brace-state))
+		 ;; we've hit the beginning of the aggregate list
+		 (c-beginning-of-statement
+		  nil (c-most-enclosing-brace brace-state))
+		 (setq bufpos (point)))
+	       ))
+	   bufpos))
+     (error nil))
    ))
 
 
@@ -4271,7 +4266,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.112 $"
+(defconst c-version "$Revision: 4.113 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
