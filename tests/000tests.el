@@ -669,24 +669,24 @@ to be set as a file local variable.")
 	    (unless cc-test-benchmark-mode
 	      (goto-char (point-min))
 	      (while (not (eobp))
-		(let ((syntax
-		       (condition-case err
-			   (c-guess-basic-syntax)
-			 (error
-			  (if no-error
-			      (unless error-found-p
-				(setq error-found-p t)
-				(cc-test-log
-				 "%s:%d: c-guess-basic-syntax error: %s"
-				 filename
-				 (1+ (count-lines (point-min) (point)))
-				 (error-message-string err))
-				(when cc-test-last-backtrace
-				  (cc-test-log "%s" cc-test-last-backtrace)
-				  (setq cc-test-last-backtrace nil)))
-			    (signal (car err) (cdr err)))
-			  ""))
-		       ))
+		(let* ((buffer-read-only nil)
+		       (syntax
+			(if no-error
+			    (condition-case err
+				(c-guess-basic-syntax)
+			      (error
+			       (unless error-found-p
+				 (setq error-found-p t)
+				 (cc-test-log
+				  "%s:%d: c-guess-basic-syntax error: %s"
+				  filename
+				  (1+ (count-lines (point-min) (point)))
+				  (error-message-string err))
+				 (when cc-test-last-backtrace
+				   (cc-test-log "%s" cc-test-last-backtrace)
+				   (setq cc-test-last-backtrace nil)))
+			       ""))
+			  (c-guess-basic-syntax))))
 		  (set-buffer res-syntax-buf)
 		  (insert (format "%s" syntax) "\n")
 		  (set-buffer testbuf))
@@ -701,11 +701,11 @@ to be set as a file local variable.")
 		;; Do not reindent empty lines; the test cases might have
 		;; whitespace at eol trimmed away, so that could produce
 		;; false alarms.
-		(condition-case err
-		    (let ((buffer-read-only nil))
-		      (c-indent-line))
-		  (error
-		   (if no-error
+		(let ((buffer-read-only nil))
+		  (if no-error
+		    (condition-case err
+			(c-indent-line)
+		      (error
 		       (unless error-found-p
 			 (setq error-found-p t)
 			 (cc-test-log
@@ -715,8 +715,8 @@ to be set as a file local variable.")
 			  (error-message-string err))
 			 (when cc-test-last-backtrace
 			   (cc-test-log "%s" cc-test-last-backtrace)
-			   (setq cc-test-last-backtrace nil)))
-		     (signal (car err) (cdr err))))))))
+			   (setq cc-test-last-backtrace nil)))))
+		    (c-indent-line))))))
 
 	  ;; Collect the face changes.  Do this after the indentation
 	  ;; test so that we check that it doesn't depend on the
