@@ -447,7 +447,7 @@ comment at the start of cc-engine.el for more info."
 ;; c-crosses-statement-barrier-p and c-beginning-of-statement-1.  A
 ;; better way should be implemented, but this will at least shut up
 ;; the byte compiler.
-(defvar c-maybe-labelp nil)
+(defvar c-maybe-labelp)
 
 ;; New awk-compatible version of c-beginning-of-statement-1, ACM 2002/6/22
 
