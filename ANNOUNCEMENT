@@ -1,17 +1,16 @@
 Release announcement for cc-mode 4.322
 Barry A. Warsaw <cc-mode-help@python.org>
-$Date: 1996-10-04 23:08:29 $
+$Date: 1996-10-08 19:30:51 $
 
 This message announces the availability of cc-mode version 4.322.
 cc-mode is a GNU Emacs mode for editing C (ANSI and K&R), C++,
 Objective-C, and Java code.  A list of user visible changes is
-outlined below.  See the MANIFEST file for a description of other
-files included in this release.
+available from <http://www.python.org/ftp/emacs/cc-details.html>.
 
 Since the distribution is fairly large and since it is readily
-available both via anonymous ftp and email, the source code is not
-being posted here.  Downloading instructions are provided further down
-in this message.
+available via the Web, anonymous ftp, and email, the source code is
+not being posted here.  Downloading instructions are provided further
+down in this message.
 
 NOTE: XEmacs 19.14 and Emacs 19.34 both contain an older version of
 cc-mode, so users of these Emacsen should upgrade their cc-mode.
@@ -22,71 +21,23 @@ new versions, send subscribe requests to
 cc-mode-announce-request@python.org.  These mailing lists are
 maintained by the Majordomo automated mailing list software.
 
-NOTE: Since I discovered Python, I have severely curtailed my (ab)use
-of C (and derivative) languages, and since I use Grail, I haven't
-started hacking Java yet! :-) So my motivation for maintaining this
-mode is waning, and I'm looking for volunteers to either take over or
-help out with bits and pieces.  If you're interested and have a solid
-Emacs Lisp programming background, send me email at the cc-mode-help
-address above.  Trust me, fame and forture are to be yours! :-)
-
-Oh and a few shameless plugs.  For more information on Python see
-<http://www.python.org/>, and for more information on Grail, see
-<http://monty.cnri.reston.va.us/>.
-
-User visible changes since 4.282
-================================
-
-* New style "linux" added.
-
-* New syntactic symbols: extern-lang-open, extern-lang-close,
-  inextern-lang for customizing extern language blocks.
-
-* New syntactic analysis for inline-open braces.  These no longer have
-  relative buffer positions, but such lines are now recognized as
-  ((inclass . XXX) (inline-open))
-
-* c-mark-function moved to C-c C-m
-
-* New variable: c-insert-tab-function
-
-* New variable: c-label-minimum-indentation for enforcing GNU
-  standards (in "gnu" style only).
-
-* New function: c-lineup-arglist-close-under-parent
-
-* c-show-syntactic-information (C-c C-s) now takes a universal argument.
-
-* Better performance for K&R C.  Note c-recognize-knr-p is deprecated.
-
-* The following variables have been removed from the default "cc-mode"
-  style:
-
-    c-echo-syntactic-information-p
-    c-string-syntax-p
-    c-tab-always-indent
-    c-inhibit-startup-warnings-p
-
-* The usual bug fixes!
-
-
 Getting cc-mode.el
 ===================
 
 The canonical ftp site for the full cc-mode tar distribution is:
 
-	ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz
+	<ftp://ftp.python.org/pub/emacs/cc-mode.tar.gz>
 
 This is a gzip'd tar file containing the .el source code and
 documentation, along with sundry other useful files.  See the MANIFEST
 a complete list of the contained files.  You can get individual files
 from the directory:
 
-	ftp://ftp.python.org/pub/emacs/cc-mode/
+	<ftp://ftp.python.org/pub/emacs/cc-mode/>
 
 Find out more about cc-mode on the Web:
 
-	http://www.python.org/ftp/emacs/
+	<http://www.python.org/ftp/emacs/>
 
 For those of you without anon-ftp access, you can use the DEC
 ftpmail'er at the address ftpmail@decwrl.dec.com.  Send the following
@@ -101,3 +52,5 @@ get cc-mode.tar.gz
 
 or just send the message "help" for more information on ftpmail.
 Response times will vary with the number of requests in the queue.
+Note that I am in no way connected with the DEC ftpmail'er so you are
+own your own with this route.
