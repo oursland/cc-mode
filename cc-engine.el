@@ -146,10 +146,11 @@
 			 last-begin (point)))
 	   ;; CASE 6: have we crossed a statement barrier?
 	   ((save-excursion
-	      ;; Move over the block of an in-expression statement
-	      ;; before checking the barrier
-	      (if (and (eq (char-after) ?{)
-		       (c-looking-at-inexpr-block lim))
+	      ;; Move over in-expression blocks before checking the
+	      ;; barrier
+	      (if (or (memq (char-after) '(?\( ?\[))
+		      (and (eq (char-after) ?{)
+			   (c-looking-at-inexpr-block lim)))
 		  (forward-sexp 1))
 	      (c-crosses-statement-barrier-p (point) last-begin))
 	    (setq donep t))
