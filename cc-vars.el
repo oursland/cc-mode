@@ -409,6 +409,14 @@ as designated in the variable `c-file-style'.")
 (defvar c-indentation-style c-site-default-style
   "Name of style installed in the current buffer.")
 
+(defvar c-buffer-is-cc-mode nil
+  "Non-nil for all buffers with a `major-mode' derived from CC Mode.
+Otherwise, this variable is nil.  I.e. this variable is non-nil for
+`c-mode', `c++-mode', `objc-mode', `java-mode', `idl-mode', and any
+other non-CC Mode mode that calls `c-initialize-cc-mode'
+\(e.g. `awk-mode').")
+(make-variable-buffer-local 'c-buffer-is-cc-mode)
+
 
 (provide 'cc-vars)
 ;;; cc-vars.el ends here
