@@ -413,9 +413,9 @@ stuff.  Used on level 1 and higher."
 		     (concat noncontinued-line-end
 			     (c-lang-const c-opt-cpp-prefix)
 			     "\\(if\\|elif\\)\\>" ; 1 + ncle-depth
-			     ;; Make a submatch for the whole logical
-			     ;; line to look for the functions in.
-			     "\\(\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*\\)")
+			     ;; Match the whole logical line to look
+			     ;; for the functions in.
+			     "\\(\\\\\\(.\\|[\n\r]\\)\\|[^\n\r]\\)*")
 		     `((let ((limit (match-end 0)))
 			 (while (re-search-forward
 				 ,(concat "\\<\\("
@@ -428,7 +428,7 @@ stuff.  Used on level 1 and higher."
 			   (c-put-font-lock-face (match-beginning 1)
 						 (match-end 1)
 						 c-preprocessor-face)))
-		       (goto-char ,(1+ ncle-depth))))))
+		       (goto-char (match-end ,(1+ ncle-depth)))))))
 
 	      ;; Fontify the directive names.
 	      (,(c-make-font-lock-search-function
