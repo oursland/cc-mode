@@ -1,4 +1,4 @@
-;;; cc-fonts.el --- custom indentation functions for CC Mode
+;;; cc-fonts.el --- font lock support for CC Mode
 
 ;; Copyright (C) 2002 Free Software Foundation, Inc.
 
@@ -306,89 +306,97 @@ tools (e.g. Javadoc).")
   ;; stuff.  Used on level 1 and higher.
   all
   `(,@(when (c-lang-var c-opt-cpp-prefix)
-	`(;; The stuff after #error and #warning is a message, so fontify it
-	  ;; as a string.
-	  (,(concat (c-lang-var c-opt-cpp-prefix)
-		    "\\(error\\|warning\\)\\>\\s *\\(.*\\)$")
-	   2 font-lock-string-face)
+	(let* ((noncontinued-line-end "\\(\\=\\|\\(\\=\\|[^\\]\\)[\n\r]\\)")
+	       (ncle-depth (c-regexp-opt-depth noncontinued-line-end)))
+	  `(;; The stuff after #error and #warning is a message, so fontify it
+	    ;; as a string.
+	    (,(concat noncontinued-line-end
+		      (c-lang-var c-opt-cpp-prefix)
+		      "\\(error\\|warning\\)\\>\\s *\\(.*\\)$")
+	     ,(+ ncle-depth 2) font-lock-string-face)
 
-	  ;; Fontify filenames in #include <...> as strings.
-	  (,(concat (c-lang-var c-opt-cpp-prefix)
-		    "\\(import\\|include\\)\\>\\s *\\(<[^>\n\r]*>?\\)")
-	   2 font-lock-string-face)
+	    ;; Fontify filenames in #include <...> as strings.
+	    (,(concat noncontinued-line-end
+		      (c-lang-var c-opt-cpp-prefix)
+		      "\\(import\\|include\\)\\>\\s *\\(<[^>\n\r]*>?\\)")
+	     ,(+ ncle-depth 2) font-lock-string-face)
 
-	  ;; #define.
-	  (,(concat
-	     (c-lang-var c-opt-cpp-prefix)
-	     "define\\s +"
-	     (concat "\\("		; 1
-		     ;; Macro with arguments - a "function".
-		     "\\(" (c-lang-var c-symbol-key) "\\)\(" ; 2
-		     "\\|"
-		     ;; Macro without arguments - a "variable".
-		     "\\(" (c-lang-var c-symbol-key) ; 3 + c-symbol-key-depth
-		     "\\)\\(\\s \\|$\\)"
-		     "\\)"))
-	   (2 font-lock-function-name-face nil t)
-	   (,(+ 3 (c-lang-var c-symbol-key-depth))
-	    font-lock-variable-name-face nil t))
+	    ;; #define.
+	    (,(concat
+	       noncontinued-line-end
+	       (c-lang-var c-opt-cpp-prefix)
+	       "define\\s +"
+	       (concat "\\("		; 1
+		       ;; Macro with arguments - a "function".
+		       "\\(" (c-lang-var c-symbol-key) "\\)\(" ; 2
+		       "\\|"
+		       ;; Macro without arguments - a "variable".
+		       "\\(" (c-lang-var c-symbol-key) ; 3 + c-symbol-key-depth
+		       "\\)\\(\\s \\|$\\)"
+		       "\\)"))
+	     (,(+ 2 ncle-depth)
+	      font-lock-function-name-face nil t)
+	     (,(+ 3 ncle-depth (c-lang-var c-symbol-key-depth))
+	      font-lock-variable-name-face nil t))
 
-	  ;; Fontify symbol names in #elif or #if ... defined preprocessor
-	  ;; directives.
-	  (eval . (list
-		   ,(concat (c-lang-var c-opt-cpp-prefix) "\\(if\\|elif\\)\\>")
-		   (list
-		    ,(concat "\\<\\("	; 1
-			     ;; Don't use regexp-opt here to avoid the
-			     ;; depth hazzle.  As it happens, it currently
-			     ;; wouldn't have any effect anyway.
-			     (mapconcat 'regexp-quote
-					(c-lang-var c-cpp-defined-fns) "\\|")
-			     "\\)\\>"
-			     "\\s *\(?"
-			     "\\(" (c-lang-var c-symbol-key) "\\)?") ; 2
-		    nil nil
-		    (list 1 c-preprocessor-face)
-		    '(2 font-lock-variable-name-face nil t))))
+	    ;; Fontify symbol names in #elif or #if ... defined preprocessor
+	    ;; directives.
+	    (eval . (list
+		     ,(concat noncontinued-line-end
+			      (c-lang-var c-opt-cpp-prefix)
+			      "\\(if\\|elif\\)\\>")
+		     (list
+		      ,(concat "\\<\\("	; 1
+			       ;; Don't use regexp-opt here to avoid the
+			       ;; depth hazzle.  As it happens, it currently
+			       ;; wouldn't have any effect anyway.
+			       (mapconcat 'regexp-quote
+					  (c-lang-var c-cpp-defined-fns) "\\|")
+			       "\\)\\>"
+			       "\\s *\(?"
+			       "\\(" (c-lang-var c-symbol-key) "\\)?") ; 2
+		      nil nil
+		      (list 1 c-preprocessor-face)
+		      '(,(+ 2 ncle-depth)
+			font-lock-variable-name-face nil t))))
 
-	  ;; Fontify symbols after #ifdef and #ifndef.
-	  (,(concat (c-lang-var c-opt-cpp-prefix)
-		    "ifn?def\\s +\\(" (c-lang-var c-symbol-key) "\\)")
-	   1 font-lock-variable-name-face)
+	    ;; Fontify symbols after #ifdef and #ifndef.
+	    (,(concat noncontinued-line-end
+		      (c-lang-var c-opt-cpp-prefix)
+		      "ifn?def\\s +\\(" (c-lang-var c-symbol-key) "\\)")
+	     ,(1+ ncle-depth) font-lock-variable-name-face)
 
-	  ;; Fontify the directive names.
-	  (,(byte-compile
-	     `(lambda (limit)
-		(while (re-search-forward
-			,(concat (c-lang-var c-opt-cpp-prefix) "[a-z]+")
-			limit t)
-		  (or (c-skip-comments-and-strings limit)
-		      (save-match-data
-			(when (> (match-beginning 0)
-				 (save-excursion
-				   (c-beginning-of-macro)
-				   (point)))
-			  (c-end-of-macro)
-			  (if (> (point) limit) (goto-char limit))
-			  t))
-		      (c-put-font-lock-face (match-beginning 0) (match-end 0)
-					    c-preprocessor-face)))
-		nil)))
-	  ))
+	    ;; Fontify the directive names.
+	    (,(byte-compile
+	       `(lambda (limit)
+		  (while (re-search-forward
+			  ,(concat noncontinued-line-end
+				   "\\("
+				   (c-lang-var c-opt-cpp-prefix)
+				   "[a-z]+"
+				   "\\)")
+			  limit t)
+		    (or (c-skip-comments-and-strings limit)
+			(c-put-font-lock-face
+			 (match-beginning ,(1+ ncle-depth))
+			 (match-end ,(1+ ncle-depth))
+			 c-preprocessor-face)))
+		  nil)))
+	    )))
 
-      ,@(when (c-major-mode-is 'pike-mode)
-	  `((eval . (list "\\`#![^\n\r]*"
-			  0 c-preprocessor-face))))
+    ,@(when (c-major-mode-is 'pike-mode)
+	`((eval . (list "\\`#![^\n\r]*"
+			0 c-preprocessor-face))))
 
-      ;; Make hard spaces visible through an inverted `c-invalid-face'.
-      (eval . (list
-	       "\240"
-	       0 (progn
-		   (unless (c-face-name-p 'c-nonbreakable-space-face)
-		     (c-make-inverse-face c-invalid-face
-					  'c-nonbreakable-space-face))
-		   'c-nonbreakable-space-face)))
-      ))
+    ;; Make hard spaces visible through an inverted `c-invalid-face'.
+    (eval . (list
+	     "\240"
+	     0 (progn
+		 (unless (c-face-name-p 'c-nonbreakable-space-face)
+		   (c-make-inverse-face c-invalid-face
+					'c-nonbreakable-space-face))
+		 'c-nonbreakable-space-face)))
+    ))
 
 (defun c-font-lock-labels (limit)
   ;; Fontify all the declarations from the point to LIMIT.  Assumes
