@@ -32,7 +32,7 @@ int main() {
 
     v4 ();
     t5 (*);			// Not valid in a block.
-    t6 ()[n];			// Not valid in a block.
+    v20 ()[n];
     v5 (id);
     v6 (id)[n];
     v7 [n];
