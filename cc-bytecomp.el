@@ -38,6 +38,45 @@
 (defvar cc-bytecomp-loaded-files nil)
 (defvar cc-bytecomp-environment-set nil)
 
+(put 'cc-eval-when-compile 'lisp-indent-hook 0)
+(defmacro cc-eval-when-compile (body)
+  "Like `progn', but evaluates the body at compile time.
+The result of the body appears to the compiler as a quoted constant.
+
+This variant works around what looks like a bug in
+`eval-when-compile': During byte compilation it byte compiles its
+contents before evaluating it.  That can cause forms to be compiled in
+situations they aren't intended to be compiled.  See cc-bytecomp.el
+for further discussion."
+  ;;
+  ;; Example: It's not possible to defsubst a primitive, e.g. the
+  ;; following will produce an error (in any emacs flavor), since
+  ;; `nthcdr' is a primitive function that's handled specially by the
+  ;; byte compiler and thus can't be redefined:
+  ;;
+  ;;     (defsubst nthcdr (val) val)
+  ;;
+  ;; `defsubst', like `defmacro', needs to be evaluated at compile
+  ;; time, so this will produce an error during byte compilation.
+  ;;
+  ;; CC Mode occasionally needs to do things like this for cross-emacs
+  ;; compatibility (although we try to avoid it since it results in
+  ;; byte code that isn't compatible between emacsen).  It therefore
+  ;; uses the following to conditionally do a `defsubst':
+  ;;
+  ;;     (eval-when-compile
+  ;;       (if (not (fboundp 'foo))
+  ;;           (defsubst foo ...)))
+  ;;
+  ;; But `eval-when-compile' byte compiles its contents and _then_
+  ;; evaluates it (in all current emacs versions, up to and including
+  ;; Emacs 20.6 and XEmacs 21.1 as of this writing).  So this will
+  ;; still produce an error, since the byte compiler will get to the
+  ;; defsubst anyway.  That's arguably a bug because the point with
+  ;; `eval-when-compile' is that it should evaluate rather than
+  ;; compile its contents.
+  `(eval-when-compile (eval '(progn ,@body))))
+
 (defun cc-bytecomp-setup-environment ()
   ;; Eval'ed during compilation to setup variables, functions etc
   ;; declared with `cc-bytecomp-defvar' et al.
@@ -131,7 +170,7 @@ within `eval-when-compile'.
 Having cyclic cc-require's will result in infinite recursion.  That's
 somewhat intentional."
   `(progn
-     (eval-when-compile (cc-bytecomp-load (symbol-name ,cc-part)))
+     (cc-eval-when-compile (cc-bytecomp-load (symbol-name ,cc-part)))
      (require ,cc-part)))
 
 (defmacro cc-provide (feature)
@@ -211,7 +250,7 @@ file.  Don't use outside `eval-when-compile'."
 (defmacro cc-bytecomp-put (symbol propname value)
   "Set a property on a symbol during compilation (and evaluation) of
 the file.  Don't use outside `eval-when-compile'."
-  `(eval-when-compile
+  `(cc-eval-when-compile
      (if (not (assoc (cons ,symbol ,propname) cc-bytecomp-original-properties))
 	 (setq cc-bytecomp-original-properties
 	       (cons (cons (cons ,symbol ,propname)
