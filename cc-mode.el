@@ -413,7 +413,7 @@ same format as `c-default-style'."
 	     . c-mark-function)))))
 
 (defun c-postprocess-file-styles ()
-  "Function that post processes relevant file local variables.
+  "Function that post processes relevant file local variables in CC Mode.
 Currently, this function simply applies any style and offset settings
 found in the file's Local Variable list.  It first applies any style
 setting found in `c-file-style', then it applies any offset settings
@@ -421,17 +421,18 @@ it finds in `c-file-offsets'.
 
 Note that the style variables are always made local to the buffer."
   ;; apply file styles and offsets
-  (if (or c-file-style c-file-offsets)
-      (c-make-styles-buffer-local t))
-  (and c-file-style
-       (c-set-style c-file-style))
-  (and c-file-offsets
-       (mapcar
-	(lambda (langentry)
-	  (let ((langelem (car langentry))
-		(offset (cdr langentry)))
-	    (c-set-offset langelem offset)))
-	c-file-offsets)))
+  (when c-buffer-is-cc-mode
+    (if (or c-file-style c-file-offsets)
+	(c-make-styles-buffer-local t))
+    (and c-file-style
+	 (c-set-style c-file-style))
+    (and c-file-offsets
+	 (mapcar
+	  (lambda (langentry)
+	    (let ((langelem (car langentry))
+		  (offset (cdr langentry)))
+	      (c-set-offset langelem offset)))
+	  c-file-offsets))))
 
 (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles)
 
