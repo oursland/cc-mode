@@ -1026,10 +1026,13 @@ as designated in the variable `c-file-style'.")
 (make-variable-buffer-local 'c-file-offsets)
 
 (defvar c-syntactic-context nil
-  "Variable containing syntactic analysis list during indentation.")
+  "Variable containing syntactic analysis list during indentation.
+This is always bound dynamically.  It should never be set statically
+(e.g. with `setq').")
 
 (defvar c-indentation-style nil
-  "Name of the currently installed style.")
+  "Name of the currently installed style.
+Don't change this directly; call `c-set-style' instead.")
 
 
 ;; Figure out what features this Emacs has
