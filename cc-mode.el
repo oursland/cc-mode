@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.338 $
-;; Last Modified:   $Date: 1996-12-24 15:49:34 $
+;; Version:         $Revision: 4.339 $
+;; Last Modified:   $Date: 1996-12-24 18:55:10 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -332,25 +332,6 @@ Just an integer as value is equivalent to (<val> . -1000).")
 When this variable is non-nil, comment-only lines are indented
 according to syntactic analysis via `c-offsets-alist', even when
 \\[indent-for-comment] is used.")
-
-(defvar c-block-comments-indent-p nil
-  "*Specifies how to re-indent C style block comments.
-
-Examples of the supported styles of C block comment indentation are
-shown below.  When this variable is nil, block comments are indented
-as shown in styles 1 through 4.  If this variable is non-nil, block
-comments are indented as shown in style 5.
-
-Note that cc-mode does not automatically insert any stars or block
-comment delimiters.  You must type these in manually.  This variable
-only controls how the lines within the block comment are indented when
-you hit ``\\[c-indent-command]''.
-
- style 1:    style 2 (GNU):    style 3:     style 4:     style 5:
- /*          /* Blah           /*           /*           /*
-    blah        blah.  */       * blah      ** blah      blah
-    blah                        * blah      ** blah      blah
-    */                          */          */           */")
 
 (defvar c-cleanup-list '(scope-operator)
   "*List of various C/C++/ObjC constructs to \"clean up\".
@@ -4779,23 +4760,19 @@ With universal argument, inserts the analysis as a comment on that line."
 (defun c-lineup-C-comments (langelem)
   ;; line up C block comment continuation lines
   (save-excursion
-    (let ((stars (progn
-		   (beginning-of-line)
-		   (skip-chars-forward " \t")
-		   (if (looking-at "\\*\\*?")
-		       (- (match-end 0) (match-beginning 0))
-		     0)))
-	  (cs-curcol (progn (goto-char (cdr langelem))
-			    (current-column))))
-      (back-to-indentation)
-      (if (re-search-forward "/\\*[ \t]*" (c-point 'eol) t)
-	  (goto-char (+ (match-beginning 0)
-			(cond
-			 (c-block-comments-indent-p 0)
-			 ((= stars 1) 1)
-			 ((= stars 2) 0)
-			 (t (- (match-end 0) (match-beginning 0)))))))
-      (- (current-column) cs-curcol))))
+    (let ((stars-on-line (progn (back-to-indentation)
+				(skip-chars-forward "*")))
+	  (line-col (current-column))
+	  (relpos-col (progn (goto-char (cdr langelem))
+			     (current-column)))
+	  (relpos-indent (back-to-indentation)))
+      (if (re-search-forward "/\\([*]+\\)" (c-point 'eol) t)
+	  (+ relpos-indent (if (= stars-on-line
+				  (- (match-end 1) (match-beginning 1)))
+			       1 0)
+	     (- (current-column) line-col relpos-col))
+	(- (current-column) relpos-col))
+      )))
 
 (defun c-lineup-comment (langelem)
   ;; support old behavior for comment indentation. we look at
@@ -5055,7 +5032,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.338 $"
+(defconst c-version "$Revision: 4.339 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
@@ -5094,7 +5071,6 @@ command to conveniently insert and align the necessary backslashes."
 		   ;; report only the vars that affect indentation
 		   'c-basic-offset
 		   'c-offsets-alist
-		   'c-block-comments-indent-p
 		   'c-cleanup-list
 		   'c-comment-only-line-offset
 		   'c-backslash-column
@@ -5188,7 +5164,6 @@ command to conveniently insert and align the necessary backslashes."
 		   (mapcar 'c-mapcar-defun
 			   '(c-backslash-column
 			     c-basic-offset
-			     c-block-comments-indent-p
 			     c-cleanup-list
 			     c-comment-only-line-offset
 			     c-electric-pound-behavior
@@ -5207,7 +5182,6 @@ command to conveniently insert and align the necessary backslashes."
 (make-variable-buffer-local 'c-file-style)
 (make-variable-buffer-local 'c-file-offsets)
 (make-variable-buffer-local 'c-comment-only-line-offset)
-(make-variable-buffer-local 'c-block-comments-indent-p)
 (make-variable-buffer-local 'c-cleanup-list)
 (make-variable-buffer-local 'c-hanging-braces-alist)
 (make-variable-buffer-local 'c-hanging-colons-alist)
@@ -5247,7 +5221,8 @@ command to conveniently insert and align the necessary backslashes."
 	      (cons 'c++-access-specifier-offset 'c-offsets-alist)
 	      (cons 'c++-empty-arglist-indent 'c-offsets-alist)
 	      (cons 'c++-comment-only-line-offset 'c-comment-only-line-offset)
-	      (cons 'c++-C-block-comments-indent-p 'c-block-comments-indent-p)
+	      (cons 'c++-C-block-comments-indent-p)
+	      (cons 'c-block-comments-indent-p)
 	      (cons 'c++-cleanup-list 'c-cleanup-list)
 	      (cons 'c++-hanging-braces 'c-hanging-braces-alist)
 	      (cons 'c++-hanging-member-init-colon 'c-hanging-colons-alist)
