@@ -62,10 +62,8 @@
      (if (not pos)
 	 (setq pos (point))))
    (eval-when-compile
-     (message "foo")
      (if (cc-bytecomp-is-compiling)
 	 (progn
-	   (message "bar")
 	   ;; Since char-after is handled specially by the byte
 	   ;; compiler, we need some black magic to make the compiler
 	   ;; warnings go away.
