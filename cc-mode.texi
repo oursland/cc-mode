@@ -3629,6 +3629,21 @@ old behavior back?}
 blocks.  Use @kbd{M-a} and @kbd{M-e} to move by statements, which will
 also move into blocks.
 
+@sp 1
+@strong{Q.} @emph{Whenever I try to indent a line or type an
+``electric'' key such as @kbd{;}, @kbd{@{}, or @kbd{@}}, I get an error
+that look like this: @code{Invalid function: (macro . #[...}. What
+gives?}
+
+@strong{A.} This is a common error when @ccmode{} hasn't been compiled
+correctly, especially under Emacs 19.34@footnote{Technically, it's
+because some macros wasn't defined during the compilation, so the byte
+compiler put in function calls instead of the macro expansions. Later,
+when the interpreter tries to call the macros as functions, it shows
+this (somewhat cryptic) error message.}. If you are using the standalone
+@ccmode{} distribution, try recompiling it according to the instructions
+in the @file{README} file.
+
 @end quotation
 
 
