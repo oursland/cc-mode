@@ -350,12 +350,13 @@ Key bindings:
   (c-keep-region-active))
 
 ;; Get reporter-submit-bug-report when byte-compiling
-(eval-when-compile
-  (require 'reporter))
+;; (eval-when-compile
+;;   (require 'reporter))
 
 (defun c-submit-bug-report ()
   "Submit via mail a bug report on CC Mode."
   (interactive)
+  (require 'reporter)
   (require 'cc-vars)
   ;; load in reporter
   (let ((reporter-prompt-for-summary-p t)
