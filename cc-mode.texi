@@ -48,7 +48,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 
 @center @titlefont{CC Mode 5.01}
 @sp 2
-@center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
+@center @subtitlefont{A GNU Emacs mode for editing C, C++, Objective-C, and Java code}
 @sp 2
 @center Barry A. Warsaw
 
@@ -151,16 +151,6 @@ prefixed with @code{c-@var{<thing>}}, and @code{c-mode},
 provided.  This file is intended to be a replacement for
 @file{c-mode.el} and @file{c++-mode.el}.
 
-@findex c-version
-The major version number was incremented to 4 with the addition of
-@code{objc-mode}. To find the minor revision number of this release, use
-@kbd{M-x c-version RET}.
-
-As of this writing (27-Feb-1997), Emacs 19.34, XEmacs 19.14, and XEmacs
-20.0 are all distributed with @ccmode{}, but they may not have the
-latest releases.  You may therefore, want to upgrade your copy of
-@ccmode{}.  See @ref{Getting the latest CC Mode release}.
-
 @cindex @file{cc-compat.el} file
 This distribution also contains a file called @file{cc-compat.el} which
 should ease your transition from BOCM to @ccmode{}.  It currently
@@ -183,166 +173,78 @@ converting the original @file{README} file to texinfo format.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@file{cc-mode.el} works well with the three main branches of Emacs:
-XEmacs 19 and XEmacs 20, both maintained by @code{xemacs.org}, and Emacs
-19 maintained by the Free Software Foundation.  Emacs users will want to
-use version 19.21 or better, XEmacs users will want 19.6 or better.
-Earlier versions of these Emacsen have deficiencies and/or bugs which
-will adversely affect the performance and usability of @ccmode{}.  You
-are better off just getting the latest version of Emacs or XEmacs.
+If you got this version of @ccmode{} with Emacs, it should work just
+fine right out of the box, and you can safely skip to the next chapter.
+Note however that you may not have the latest @ccmode{} release and may
+want to upgrade your copy.  See the @file{README} file, or the @ccmode{}
+Web pages latest information on Emacs version compatibility,
+@ref{Getting the latest CC Mode release}.
 
 @cindex @file{cc-mode-18.el} file
-@file{cc-mode.el} will work with Emacs 18 if you use the
-@file{cc-mode-18.el} compatibility file, but only moderately well.  A
-word of warning though, @emph{Emacs 18 lacks some fundamental
-functionality and ultimately, using Emacs 18 is a losing
-battle}.  Hence @ccmode{} under Emacs 18 is no longer supported and
-it is highly recommended that you upgrade to Emacs 19.  If you use
-@ccmode{} under Emacs 18, you're on your own.  With @ccmode{}
-version 5, Emacs 18 support will be dropped altogether.
-
-Note that as of XEmacs 19.13 and Emacs 19.30, your Emacs already comes
-with @ccmode{} version 4 preconfigured for your use.  You should be
-able to safely skip the rest of the setup information in this chapter,
-unless you want to install the latest version of @ccmode{} into one
-of these Emacsen.
+@emph{@ccmode{} no longer works with Emacs 18!}  The
+@file{cc-mode-18.el} file is no longer distributed with @ccmode{}.  If
+you haven't upgraded from Emacs 18 by now, you are out of luck.  The
+rest of these installation instructions assume you are using one of the
+new Emacs or XEmacs releases, that already come with @ccmode{}.  These
+instructions explain how to upgrade to use the latest @ccmode{}
+release.
 
 @cindex .emacs file
-The first thing you will want to do is put @file{cc-mode.el} somewhere
-on your @code{load-path} so Emacs can find it.  Do a @kbd{C-h v
-load-path RET} to see all the directories Emacs looks at when loading a
-file.  If none of these directories are appropriate, create a new
-directory and add it to your @code{load-path}:
 
-@noindent
-@emph{[in the shell]}
-@example
-@group
+The first thing you will want to do is put the @ccmode{} source files in
+a subdirectory somewhere on your @code{load-path} so Emacs can find it.
+The distribution tarball unpacks into its own subdirectory tagged with
+the version number of the release.  E.g. @ccmode{} release 5.02 will
+unpack into the @file{cc-mode-5.02} directory.  Assuming you unpacked
+the distribution in your home directory, you should add the following to
+your @file{.emacs} file in order to pick up the latest version of
+@ccmode{} over the one distributed with your Emacs:
 
-% cd
-% mkdir mylisp
-% mv cc-mode.el mylisp
-% cd mylisp
-
-@end group
-@end example
-
-@noindent
-@emph{[in your .emacs file add]}
 @example
 
-(setq load-path (cons "~/mylisp" load-path))
+(setq load-path (cons "~/cc-mode-5.02" load-path))
 
 @end example
 
 @cindex byte compile
-Next you want to @dfn{byte compile} @file{cc-mode.el}.  The mode uses a
-lot of macros so if you don't byte compile it, things will be unbearably
-slow.  @emph{You can ignore all byte-compiler warnings!}  They are the
-result of the supporting different versions of Emacs, and none of the
-warnings have any effect on operation. Let me say this again:
-@strong{You really can ignore all byte-compiler warnings!}
 
-Here's what to do to byte-compile the file [in emacs]:
+Next you want to @dfn{byte compile} all the @ccmode{} source files.
+@ccmode{} uses a lot of macros so if you don't byte compile it,
+things will be unbearably slow.  @emph{You can ignore all byte-compiler
+warnings!}  They are the result of the supporting different versions of
+Emacs, and none of the warnings have any effect on operation. Let me say
+this again: @strong{You really can ignore all byte-compiler warnings!}
+
+To byte-compile the source files, be sure you have access to the
+@code{make(1)} program.  In a shell, execute the following commands
+(again, assuming you unpacked @ccmode{} version 5.02 in your home
+directory@footnote{Of course, the version numbers will probably be
+different.}):
+
 @example
 
-M-x byte-compile-file RET ~/mylisp/cc-mode.el RET
+% cd ~/cc-mode-5.02
+% make
 
 @end example
 
-If you are running a version of Emacs or XEmacs that comes with
-@ccmode{} by default, you can simply add the following to your
-@file{.emacs} file in order to upgrade to the latest version of
-@ccmode{}:
+By default, the @file{Makefile} assumes you are using XEmacs.  If you
+are using Emacs, execute this instead:
+
 @example
 
-(load "cc-mode")
+% make EMACS=emacs
 
 @end example
 
-Users of even older versions of Emacs 19, Emacs 18, or of the older
-Lucid Emacs will probably be running an Emacs that has BOCM
-@file{c-mode.el} and possible @file{c++-mode.el} pre-dumped.  If your
-Emacs is dumped with either of these files you first need to make Emacs
-``forget'' about those older modes.
-
-If you can do a @kbd{C-h v c-mode-map RET} without getting an error, you
-need to add these lines at the top of your @file{.emacs} file:
-@example
-@group
-
-(fmakunbound 'c-mode)
-(makunbound  'c-mode-map)
-(fmakunbound 'c++-mode)
-(makunbound  'c++-mode-map)
-(makunbound  'c-style-alist)
-
-@end group
-@end example
-
-After those lines you will want to add the following autoloads to your
-@file{.emacs} file so that @ccmode{} gets loaded at the right time:
-@example
-@group
-
-(autoload 'c++-mode  "cc-mode" "C++ Editing Mode" t)
-(autoload 'c-mode    "cc-mode" "C Editing Mode" t)
-(autoload 'objc-mode "cc-mode" "Objective-C Editing Mode" t)
-(autoload 'java-mode "cc-mode" "Java Editing Mode" t)
-
-@end group
-@end example
-
-Alternatively, if you want to make sure @ccmode{} is loaded when
-Emacs starts up, you could use this line instead of the autoloads
-above:
+Next time you start up Emacs you should be using the latest @ccmode{}.
+You can test this by visiting a C file and hitting @kbd{M-x c-version
+RET}; you should see this message in the echo area:
 @example
 
-(require 'cc-mode)
+Using CC Mode version 5.02
 
 @end example
-
-Next, you will want to set up Emacs so that it edits C files in
-@code{c-mode}, C++ files in @code{c++-mode}, Objective-C files in
-@code{objc-mode}, and Java files in @code{java-mode}. You should
-add the following to your @file{.emacs} file, which assumes
-you'll be editing @code{.h} and @code{.c} files as C, @code{.hh},
-@code{.cc}, @code{.H}, and @code{.C} files as C++, @code{.m} files as
-Objective-C, and @code{.java} files as Java code. YMMV:
-@example
-@group
-
-(setq auto-mode-alist
-  (append
-    '(("\\.C$"    . c++-mode)
-      ("\\.H$"    . c++-mode)
-      ("\\.cc$"   . c++-mode)
-      ("\\.hh$"   . c++-mode)
-      ("\\.c$"    . c-mode)
-      ("\\.h$"    . c-mode)
-      ("\\.m$"    . objc-mode)
-      ("\\.java$" . java-mode)
-     ) auto-mode-alist))
-
-@end group
-@end example
-
-You may already have some or all of these settings on your
-@code{auto-mode-alist}, but it won't hurt to put them on there again.
-
-That's all you need --- I know, I know, it sounds like a lot @code{:-)},
-but after you've done all this, you should only need to quit and restart
-Emacs.  The next time you visit a C, C++, Objective-C, or Java file you
-should be using @ccmode{}.  You can check this easily by hitting
-@kbd{M-x c-version RET}; you should see this message in the echo area:
-@example
-
-Using CC Mode version 4.@var{xxx}
-
-@end example
-
-@noindent
-where @var{xxx} is the latest minor release number.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1689,9 +1591,6 @@ file to make the changes described in the previous section
 (@ref{Interactive Customization}) more permanent.  See the Emacs manuals
 for more information on customizing Emacs via hooks.  @xref{Sample
 .emacs File} for a more complete sample @file{.emacs} file.
-@footnote{The use of @code{add-hook} in this example only works for
-Emacs 19 and beyond.  Workarounds are available if you are using Emacs
-18.}
 @example
 @group
 
@@ -2676,7 +2575,7 @@ Bass::Bass()
 Returning to the previous example, line 16 is given @code{inline-close}
 syntax, while line 12 is given @code{defun-block-open} syntax, and lines
 13 through 15 are all given @code{statement} syntax.  Line 17 is
-interesting in that it's syntactic analysis list contains three
+interesting in that its syntactic analysis list contains three
 elements:
 
 @example
@@ -3017,7 +2916,7 @@ syntax.
 @cindex   Performance Issues
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-C and it's derivative languages are highly complex creatures.  Often,
+C and its derivative languages are highly complex creatures.  Often,
 ambiguous code situations arise that require @ccmode{} to scan
 large portions of the buffer to determine syntactic context.  Such
 pathological code@footnote{such as the output of @code{lex(1)}!}
@@ -3081,7 +2980,8 @@ column zero!
 @cindex @file{cc-lobotomy.el} file
 @vindex cc-lobotomy-pith-list
 You might want to investigate the speed-ups contained in the
-file @file{cc-lobotomy.el}, which is part of the @ccmode{} distribution.
+file @file{cc-lobotomy.el}, which comes as part of the @ccmode{}
+distribution, but is completely unsupported.
 As mentioned previous, @ccmode{} always trades accuracy for speed,
 however it is recognized that sometimes you need speed and can sacrifice
 some accuracy in indentation.  The file @file{cc-lobotomy.el} contains
@@ -3304,8 +3204,6 @@ about its availability!
   (define-key c-mode-map "\C-m" 'newline-and-indent)
   )
 
-;; the following only works in Emacs 19
-;; Emacs 18ers can use (setq c-mode-common-hook 'my-c-mode-common-hook)
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
 @end example
 
@@ -3323,10 +3221,6 @@ Multi-line macros are not handled properly.
 
 @item
 Re-indenting large regions or expressions can be slow.
-
-@item
-Use with Emacs 18 can be slow and annoying.  You should seriously
-consider upgrading to Emacs 19.
 
 @item
 Add-on fill packages may not work as well as @ccmode{}'s built-in
@@ -3372,6 +3266,18 @@ suggestions, and kudos to @code{cc-mode-help@@python.org}, or
 @code{help-gnu-emacs@@prep.ai.mit.edu} which is mirrored on newsgroup
 @code{gnu.emacs.help}.
 
+There are two mailing lists for @ccmode{}.  One is a general discussion
+list and the other is an announce-only list.  You do not need to
+subscribe to either list, but if you want to, only subscribe to one of
+these.  Announcements of new releases get sent to both lists.  To join
+the general discussion list, send a message with the word
+@emph{subscribe} in the body of the message to
+@code{cc-mode-victims-request@@python.org}.  To join just the
+announce-only list, send a message with the word @emph{subscribe} in the
+body of the message to @code{cc-mode-announce-request@@python.org}.
+Both mailing lists are managed by Majordomo, and if you are successfully
+subscribed, you will receive an email message with more information on
+using the list.
 
 @c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Concept Index, Command Index,  Mailing Lists and Submitting Bug Reports, Top
