@@ -9,8 +9,8 @@
 @c are significant.
 
 @c Conventions for formatting examples:
-@c o  If the example contains empty lines then put empty lines inside
-@c    the @example directives.  Put them outside otherwise.
+@c o  If the example contains empty lines then put the surrounding empty
+@c    lines inside the @example directives.  Put them outside otherwise.
 @c o  Use @group inside the example only if it shows indentation where
 @c    the relation between lines inside is relevant.
 @c o  Format line number columns like this:
@@ -21,10 +21,12 @@
 @c o  Check line lengths in TeX output; they can typically be no longer
 @c    than 70 chars, 60 if the paragraph is indented.
 
-@comment FIXME: Tune docs for the statement anchor fixes, if necessary.
+@comment FIXME: Document the generalization of extern-lang and namespace.
 @comment FIXME: Document c-report-syntactic-errors.
 @comment FIXME: Look over the performance issues chapter.
 @comment FIXME: Document c-require-final-newline.
+
+@comment TBD: Document the finer details of statement anchoring?
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment %**start of header (This is for running Texinfo on a region)
@@ -400,7 +402,7 @@ universal argument (i.e. @kbd{C-u C-c C-s}) the analysis is inserted
 into the buffer as a comment on the current line.}:
 
 @example
-((statement . 35))
+((statement 35))
 @end example
 
 This tells us that the line is a statement and it is indented relative
@@ -409,7 +411,7 @@ line 3.  If you were to move point to line 3 and hit @kbd{C-c C-s}, you
 would see:
 
 @example
-((defun-block-intro . 29))
+((defun-block-intro 29))
 @end example
 
 This indicates that the @samp{int} line is the first statement in a top
@@ -433,7 +435,7 @@ Here's another example:
 Hitting @kbd{C-c C-s} on line 4 gives us:
 
 @example
-((substatement-open . 46))
+((substatement-open 46))
 @end example
 
 @cindex substatement
@@ -466,7 +468,7 @@ only line}.
 Hitting @kbd{C-c C-s} on line 3 of this example gives:
 
 @example
-((comment-intro) (defun-block-intro . 46))
+((comment-intro) (defun-block-intro 46))
 @end example
 
 @noindent
@@ -514,7 +516,7 @@ the line.  Remember that the syntactic component list for that
 line is:
 
 @example
-((defun-block-intro . 29))
+((defun-block-intro 29))
 @end example
 
 @noindent
@@ -548,7 +550,7 @@ basic process is performed, despite the differences in the syntactic
 component list.  Remember that the list for this line is:
 
 @example
-((substatement-open . 46))
+((substatement-open 46))
 @end example
 
 Here, @ccmode{} first looks up the @code{substatement-open} symbol
@@ -1010,7 +1012,7 @@ whitespace appearing between the individual components of the construct.
 These are the clean-ups that are only active in the auto-newline minor
 mode:
 
-@c FIXME: Would like to use some sort of @deffoo here; @table indents a
+@c TBD: Would like to use some sort of @deffoo here; @table indents a
 @c bit too much in dvi output.
 @table @code
 @item brace-else-brace
@@ -1441,13 +1443,13 @@ break into
 @end group
 @end example
 
-Note that trying to adjust the indentation by putting leading
-spaces in the @code{c-block-comment-prefix} string won't work, since @ccmode{}
-still uses the normal indentation engine to indent the line.  Thus,
-the right way to fix the indentation is by setting the @code{c}
-syntactic symbol.  It defaults to @code{c-lineup-C-comments}, which
-handles the indentation of most common comment styles, see
-@ref{Indentation Functions}.
+Note that trying to adjust the indentation by putting leading spaces in
+the @code{c-block-comment-prefix} string won't work, since @ccmode{}
+still uses the normal indentation engine to indent the line.  Thus, the
+right way to fix the indentation is by setting the @code{c} syntactic
+symbol.  It defaults to @code{c-lineup-C-comments}, which handles the
+indentation of most common comment styles, see @ref{Indentation
+Functions}.
 @end defopt
 
 @defopt c-ignore-auto-fill
@@ -1758,9 +1760,10 @@ recognize types.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 @ccmode{} attempts to use the standard faces for programming languages
-in accordance with their intended purposes as far as possible.  No extra faces are currently
-provided, with the exception of a replacement face @code{c-invalid-face}
-for emacsen that don't provide @code{font-lock-warning-face}.
+in accordance with their intended purposes as far as possible.  No extra
+faces are currently provided, with the exception of a replacement face
+@code{c-invalid-face} for emacsen that don't provide
+@code{font-lock-warning-face}.
 
 @itemize @bullet
 @item
@@ -1816,8 +1819,8 @@ Label identifiers get @code{font-lock-constant-face} in Emacs 20 and
 later, @code{font-lock-reference-face} otherwise.
 
 @item
-Name qualifiers and identifiers for scope constructs are fontified in
-the same way.
+Name qualifiers and identifiers for scope constructs are fontified like
+labels.
 
 @item
 Special markup inside documentation comments are also fontified like
@@ -1905,12 +1908,12 @@ The above is by no means complete.  If you'd like to see support for
 other doc comment styles, please let us know (@pxref{Mailing Lists and
 Submitting Bug Reports}).
 
-You can also write your own doc comment fontification support and use on
-@code{c-doc-comment-style}: Supply a variable or function
+You can also write your own doc comment fontification support to use
+with @code{c-doc-comment-style}: Supply a variable or function
 @samp{*-font-lock-keywords} where @samp{*} is the name you want to use
-on @code{c-doc-comment-style}.  If it's a variable, it's prepended to
-@code{font-lock-keywords} at mode initialization.  If it's a function,
-it's called and the result is prepended.  For an example, see
+in @code{c-doc-comment-style}.  If it's a variable, it's prepended to
+@code{font-lock-keywords}.  If it's a function, it's called at mode
+initialization and the result is prepended.  For an example, see
 @code{javadoc-font-lock-keywords} in @file{cc-fonts.el}.
 
 If you add support for another doc comment style, please consider
@@ -2456,7 +2459,7 @@ we need to see which syntactic components affect the offset calculations
 for that line.  Hitting @kbd{C-c C-s} on line 4 yields:
 
 @example
-((substatement-open . 44))
+((substatement-open 44))
 @end example
 
 @noindent
@@ -3366,9 +3369,9 @@ All lines inside multiline preprocessor macros if
 @item friend
 A C++ friend declaration.
 @item objc-method-intro
-The first line of an Objective-C method.  definition.
+The first line of an Objective-C method definition.
 @item objc-method-args-cont
-Lines continuing an Objective-C method.  definition
+Lines continuing an Objective-C method definition.
 @item objc-method-call-cont
 Lines continuing an Objective-C method call.
 @item extern-lang-open
@@ -3506,7 +3509,7 @@ inheritance list is given @code{inher-cont} syntax.
 Hitting @kbd{C-c C-s} on line 5 shows the following analysis:
 
 @example
-((inclass . 58) (access-label . 58))
+((inclass 58) (access-label 58))
 @end example
 
 @noindent
@@ -3519,7 +3522,7 @@ Similarly, line 6 is given both @code{inclass} and @code{topmost-intro}
 syntax:
 
 @example
-((inclass . 58) (topmost-intro . 60))
+((inclass 58) (topmost-intro 60))
 @end example
 
 @ssindex member-init-intro
@@ -3537,7 +3540,7 @@ list started on line 7.
 Line 11's analysis is a bit more complicated:
 
 @example
-((inclass . 58) (inline-open))
+((inclass 58) (inline-open))
 @end example
 
 This line is assigned a syntax of both @code{inline-open} and
@@ -3581,7 +3584,7 @@ interesting in that its syntactic analysis list contains three
 elements:
 
 @example
-((friend) (inclass . 58) (topmost-intro . 380))
+((inclass 58) (topmost-intro 380) (friend))
 @end example
 
 The @code{friend} syntactic symbol is a modifier that typically does not
@@ -3761,8 +3764,14 @@ symbols.  In this example:
 @noindent
 line 2 is given the @code{extern-lang-open} syntax, while line 5 is given
 the @code{extern-lang-close} syntax.  The analysis for line 3 yields:
-@code{((inextern-lang) (topmost-intro . 14))}, where
-@code{inextern-lang} is a modifier similar in purpose to @code{inclass}.
+
+@example
+((inextern-lang) (topmost-intro 14))
+@end example
+
+@noindent
+where @code{inextern-lang} is a modifier similar in purpose to
+@code{inclass}.
 
 Similarly, C++ namespace constructs have their own associated syntactic
 symbols.  In this example:
@@ -3780,8 +3789,14 @@ symbols.  In this example:
 @noindent
 line 2 is given the @code{namespace-open} syntax, while line 4 is given
 the @code{namespace-close} syntax.  The analysis for line 3 yields:
-@code{((innamespace) (topmost-intro . 17))}, where @code{innamespace} is 
-a modifier similar in purpose to @code{inextern-lang} and @code{inclass}.
+
+@example
+((innamespace) (topmost-intro . 17))
+@end example
+
+@noindent
+where @code{innamespace} is a modifier similar in purpose to
+@code{inextern-lang} and @code{inclass}.
 
 A number of syntactic symbols are associated with parenthesis lists,
 a.k.a argument lists, as found in function declarations and function
@@ -4733,7 +4748,7 @@ Foo::Foo (int a, int b)
 
 @defun c-lineup-ObjC-method-call
 @findex lineup-ObjC-method-call (c-)
-For Objective-C code, line up selector args as @code{elisp-mode} does
+For Objective-C code, line up selector args as Emacs Lisp mode does
 with function args: go to the position right after the message receiver,
 and if you are at the end of the line, indent the current line
 c-basic-offset columns from the opening bracket; otherwise you are
