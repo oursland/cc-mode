@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 2.227 $
-;; Last Modified:   $Date: 1992-12-04 22:11:27 $
+;; Version:         $Revision: 2.228 $
+;; Last Modified:   $Date: 1992-12-05 02:06:49 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992 Free Software Foundation, Inc.
@@ -120,7 +120,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-12-04 22:11:27 $|$Revision: 2.227 $|
+;; |$Date: 1992-12-05 02:06:49 $|$Revision: 2.228 $|
 
 ;;; Code:
 
@@ -401,7 +401,7 @@ value is, though, the slower parts of c++-mode can become.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.227 $
+  "Major mode for editing C++ code.  $Revision: 2.228 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -609,7 +609,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.227 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.228 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1496,13 +1496,20 @@ point of the beginning of the C++ definition."
 		 ((and (= (following-char) ?\))
 		       c++-paren-as-block-close-p)
 		  (setq indent (+ (- indent c-indent-level)
-				  (save-excursion
-				    (forward-char 1)
-				    (cond ((c++-at-top-level-p nil bod)
-					   (- c++-block-close-brace-offset))
-					  ((c++-at-top-level-p t bod)
-					   c-indent-level)
-					  (t c++-block-close-brace-offset))))))
+				  (if (save-excursion
+					(forward-char 1)
+					(c++-at-top-level-p nil bod))
+				      (- c++-block-close-brace-offset)
+				    c++-block-close-brace-offset))))
+		 ;; I think the following code is broken, but does the
+		 ;; above solution break anything else?
+;;				  (save-excursion
+;;				    (forward-char 1)
+;;				    (cond ((c++-at-top-level-p nil bod)
+;;					   (- c++-block-close-brace-offset))
+;;					  ((c++-at-top-level-p t bod)
+;;					   c-indent-level)
+;;					  (t c++-block-close-brace-offset))))))
 		 ((= (following-char) ?})
 		  (setq indent (+ (- indent c-indent-level)
 				  (if (save-excursion
@@ -2272,7 +2279,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.227 $"
+(defconst c++-version "$Revision: 2.228 $"
   "c++-mode version number.")
 
 (defun c++-version ()
