@@ -1012,8 +1012,9 @@ keywords listed here are fontified with the type face instead of the
 keyword face.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
-`c-<>-arglist-kwds' then the associated clauses will be handled.
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled.
 
 Do not try to modify this list for end user customizations; the
 `*-font-lock-extra-types' variable, where `*' is the mode prefix, is
@@ -1109,8 +1110,9 @@ not the type face."
 contains another declaration level that should be considered a class.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
-`c-<>-arglist-kwds' then the associated clauses will be handled.
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled.
 
 Note that presence on this list does not automatically treat the
 following identifier as a type; the keyword must also be present on
@@ -1139,8 +1141,9 @@ following identifier as a type; the keyword must also be present on
 any) is a brace list.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
-`c-<>-arglist-kwds' then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled."
   t    '("enum")
   (java awk) nil)
 
@@ -1155,8 +1158,9 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 declaration level that should not be considered a class.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
-`c-<>-arglist-kwds' then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled."
   t   nil
   c   '("extern")
   c++ '("namespace" "extern")
@@ -1175,8 +1179,9 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 to be types.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
-`c-<>-arglist-kwds' then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled."
   t    '("typedef")
   (java awk) nil)
 
@@ -1185,8 +1190,9 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 list follows directly after the keyword, without any type.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
-`c-<>-arglist-kwds' then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled."
   t    nil
   ;; Unlike most other languages, exception names are not handled as
   ;; types in IDL since they only can occur in "raises" specs.
@@ -1206,8 +1212,9 @@ inside function headers are also considered declarations in this
 sense.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
-`c-<>-arglist-kwds' then the associated clauses will be handled."
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled."
   t    nil
   (c c++) '("auto" "extern" "inline" "register" "static")
   c++  (append '("explicit" "friend" "mutable" "template" "using" "virtual")
@@ -1228,18 +1235,22 @@ If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
 	 "public" "static" "variant"))
 
 (c-lang-defconst c-other-decl-kwds
-  "Keywords that can start or prefix any declaration level constructs,
+  "Keywords that can start or prefix any declaration level construct,
 besides those on `c-class-decl-kwds', `c-brace-list-decl-kwds',
 `c-other-block-decl-kwds', `c-typedef-decl-kwds',
-`c-typeless-decl-kwds' and `c-modifier-kwds'.
+`c-typeless-decl-kwds' and `c-modifier-kwds'.  In a declaration, these
+keywords are also recognized inside or after the identifiers that
+makes up the type.
 
 If any of these also are on `c-type-list-kwds', `c-ref-list-kwds',
-`c-colon-type-list-kwds', `c-paren-type-kwds', `c-<>-type-kwds', or
-`c-<>-arglist-kwds' then the associated clauses will be handled."
-  t    nil
-  objc '("@class" "@end" "@defs")
-  java '("import" "package")
-  pike '("import" "inherit"))
+`c-colon-type-list-kwds', `c-paren-nontype-kwds', `c-paren-type-kwds',
+`c-<>-type-kwds', or `c-<>-arglist-kwds' then the associated clauses
+will be handled."
+  t       nil
+  (c c++) '("__declspec")		; MSVC extension.
+  objc    '("@class" "@end" "@defs")
+  java    '("import" "package")
+  pike    '("import" "inherit"))
 
 (c-lang-defconst c-specifier-key
   ;; Adorned regexp matching keywords that can start a declaration but
@@ -1294,11 +1305,12 @@ The keywords on list are assumed to also be present on one of the
 (c-lang-defvar c-opt-block-decls-with-vars-key
   (c-lang-const c-opt-block-decls-with-vars-key))
 
-(c-lang-defconst c-decl-spec-kwds
+(c-lang-defconst c-postfix-decl-spec-kwds
   "Keywords introducing extra declaration specifiers in the region
 between the header and the body \(i.e. the \"K&R-region\") in
 declarations."
   t    nil
+  (c c++) '("__attribute__")		; GCC extension.
   java '("extends" "implements" "throws")
   idl  '("context" "getraises" "manages" "primarykey" "raises" "setraises"
 	 "supports"
@@ -1380,6 +1392,12 @@ nil."
 	"[^\]\[{}();,/#=:]*:"))
 (c-lang-defvar c-colon-type-list-re (c-lang-const c-colon-type-list-re))
 
+(c-lang-defconst c-paren-nontype-kwds
+  "Keywords that may be followed by a parenthesis expression that doesn't
+contain type identifiers."
+  t       nil
+  (c c++) '("__declspec"))		; MSVC extension.
+
 (c-lang-defconst c-paren-type-kwds
   "Keywords that may be followed by a parenthesis expression containing
 type identifiers separated by arbitrary tokens."
@@ -1388,6 +1406,11 @@ type identifiers separated by arbitrary tokens."
   objc '("@defs")
   idl  '("switch")
   pike '("array" "function" "int" "mapping" "multiset" "object" "program"))
+
+(c-lang-defconst c-paren-any-kwds
+  t (delete-duplicates (append (c-lang-const c-paren-nontype-kwds)
+			       (c-lang-const c-paren-type-kwds))
+		       :test 'string-equal))
 
 (c-lang-defconst c-<>-type-kwds
   "Keywords that may be followed by an angle bracket expression
@@ -1996,11 +2019,11 @@ not \",\" or \";\"."
   ;; could however produce false matches on code like "FOO(bar) x"
   ;; where FOO is a cpp macro, so it's better to leave it out and rely
   ;; on the other heuristics in that case.
-  t (if (c-lang-const c-decl-spec-kwds)
-	;; Add on the keywords in `c-decl-spec-kwds'.
+  t (if (c-lang-const c-postfix-decl-spec-kwds)
+	;; Add on the keywords in `c-postfix-decl-spec-kwds'.
 	(concat (c-lang-const c-after-suffixed-type-decl-key)
 		"\\|"
-		(c-make-keywords-re t (c-lang-const c-decl-spec-kwds)))
+		(c-make-keywords-re t (c-lang-const c-postfix-decl-spec-kwds)))
       (c-lang-const c-after-suffixed-type-decl-key))
   ;; Also match the colon that starts a base class initializer list in
   ;; C++.  That can be confused with a function call before the colon
@@ -2142,7 +2165,7 @@ statement."
 (c-lang-defvar c-label-key (c-lang-const c-label-key)
   'dont-doc)
 
-(c-lang-defconst c-opt-decl-spec-key
+(c-lang-defconst c-opt-postfix-decl-spec-key
   ;; Regexp matching the beginning of a declaration specifier in the
   ;; region between the header and the body of a declaration.
   ;;
@@ -2153,8 +2176,9 @@ statement."
 	      (c-make-keywords-re nil (c-lang-const c-protection-kwds))
 	      "\\)[ \t\n\r\f\v]+"
 	      "\\(" (c-lang-const c-symbol-key) "\\)")
-  java (c-make-keywords-re t (c-lang-const c-decl-spec-kwds)))
-(c-lang-defvar c-opt-decl-spec-key (c-lang-const c-opt-decl-spec-key))
+  java (c-make-keywords-re t (c-lang-const c-postfix-decl-spec-kwds)))
+(c-lang-defvar c-opt-postfix-decl-spec-key
+  (c-lang-const c-opt-postfix-decl-spec-key))
 
 (c-lang-defconst c-opt-friend-key
   ;; Regexp describing friend declarations classes, or nil in
