@@ -536,6 +536,7 @@
       ;; package might not have fontified the comment or string all
       ;; the way to the start.
       (goto-char (next-single-property-change (point) 'face nil limit)))
+    (c-beginning-of-macro)		; Must start outside any macro too.
     (c-backward-syntactic-ws)
     (c-safe (backward-char))
 
