@@ -104,10 +104,10 @@ appended."
 ;; Building of constants that are parameterized on a per-language
 ;; basis.
 
-(cc-eval-when-compile
+(eval-and-compile
   (defvar c-macroexpand-mode nil
-    ;; Dynamically bound to the mode symbol during c-lang-defconst so
-    ;; that c-lang-var can do the right expansion.
+    ;; Dynamically bound to the mode symbol during `c-lang-defconst'
+    ;; so that `c-lang-var' can do the right expansion.
     )
 
   (defmacro c-lang-defconst (var &rest args)
@@ -116,8 +116,9 @@ appended."
     ;; the mode name without the "-mode" suffix, or a list of such
     ;; mode names, or `all' as a shortcut for a list of all modes.
     ;; VAL is evaluated (during compilation) for each mode with
-    ;; c-buffer-is-cc-mode temporarily bound, so c-lang-var without an
-    ;; explicit mode may be used within it.
+    ;; `c-macroexpand-mode' temporarily bound, so `c-lang-var' without
+    ;; an explicit mode may be used within it.  The assignments in
+    ;; ARGS are processed in sequence, similar to `setq'.
     (let* ((res (list 'progn))
 	   (res-tail res))
       (while args
@@ -142,9 +143,10 @@ appended."
 
   (defmacro c-lang-var (var &optional mode)
     ;; Get the mode specific value of the variable VAR in mode MODE.
-    ;; MODE is the mode name without the "-mode" suffix.  It may also be
-    ;; nil to use the current value of c-buffer-is-cc-mode, which is
-    ;; useful inside c-lang-for-each.
+    ;; MODE is the mode name without the "-mode" suffix.  It may also
+    ;; be nil to use the current value of `c-macroexpand-mode' (which
+    ;; is useful inside `c-lang-defconst') or `c-buffer-is-cc-mode'
+    ;; (which is useful inside `c-lang-defvar').
     `(get ',var ,(if (eq mode 'nil)
 		     (if c-macroexpand-mode
 			 ;; In the macro expansion of c-lang-defconst.
@@ -153,14 +155,16 @@ appended."
 		   `(quote ,(intern (concat (symbol-name mode) "-mode"))))))
 
   ;; These are used to collect the init forms from the subsequent
-  ;; c-lang-defvar.  It's all made into a big setq by
-  ;; c-lang-init-defvars.
+  ;; `c-lang-defvar'.  They become a big setq in the
+  ;; `c-init-lang-defvars' lambda below.
   (defconst c-lang-defvar-init-form (list 'setq))
   (defconst c-lang-defvar-init-form-tail c-lang-defvar-init-form)
 
   (defmacro c-lang-defvar (var val)
     ;; Declares the buffer local variable VAR to get the value VAL at
-    ;; mode initialization, which is the point when VAL is evaluated.
+    ;; mode initialization, at which point VAL is evaluated.
+    ;; `c-lang-var' is typically used in VAL to get the right value
+    ;; according to `c-buffer-is-cc-mode'.
     (setcdr c-lang-defvar-init-form-tail (list var val))
     (setq c-lang-defvar-init-form-tail
 	  (cdr (cdr c-lang-defvar-init-form-tail)))
@@ -174,7 +178,7 @@ appended."
 ;; Regexp describing a `symbol' in all languages, not excluding
 ;; keywords.  We cannot use just `word' syntax class since `_' cannot
 ;; be in word class.  Putting underscore in word class breaks forward
-;; word movement behavior that users are familiar with.  Besides, this
+;; word movement behavior that users are familiar with.  Besides, it
 ;; runs counter to Emacs convention.
 ;;
 ;; This definition isn't correct for the first character in the
@@ -540,15 +544,15 @@ appended."
 	      c-current-comment-prefix)))
 
 (defconst c-init-lang-defvars
-  ;; Make a lambda of the collected c-lang-defvar initializations.
+  ;; Make a lambda of the collected `c-lang-defvar' initializations.
   (cc-eval-when-compile
     (if (cc-bytecomp-is-compiling)
 	(byte-compile-lambda `(lambda () ,c-lang-defvar-init-form))
       `(lambda () ,c-lang-defvar-init-form))))
 
 (defun c-init-language-vars ()
-  ;; Initialize all c-lang-defvar variables according to
-  ;; c-buffer-is-cc-mode.
+  ;; Initialize all `c-lang-defvar' variables according to
+  ;; `c-buffer-is-cc-mode'.
   (if (not (memq c-buffer-is-cc-mode
 		 '(c-mode c++-mode objc-mode java-mode idl-mode pike-mode)))
       (error "Cannot initialize language variables for unknown mode %s"
