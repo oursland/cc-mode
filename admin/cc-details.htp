@@ -3,12 +3,22 @@ Author: cc-mode-help@python.org
 
 <h1>CC Mode Version 5</h1>
 
-The <a href="index.html">current release</a> is version 5.16.  The
+The <a href="index.html">current release</a> is version 5.17.  The
 important recent changes are outlined below.  Be sure to see the list of 
 <a href="#compat">compatibility notes</a> for special notes about
 X/Emacs versions and package interactions.
 
 <p>See <a href="index.html">for other CC Mode files</a>.
+
+<h2> Changes since CC Mode 5.16</h2>
+
+This is primarily a bug fix release, which include fixes to M-a and
+M-e commands when moving into comments, and recognition of enum
+declarations in K&R argdecls.  This version also includes changes to
+"python" style to more closely match Python C API coding standards.
+Finally, <code>/</code> is bound to <code>c-electric-slash</code> in
+all modes, and <code>C-c C-e</code> is bound to
+<code>c-expand-macro</code> in all languages except Java and IDL.
 
 <h2> Changes since CC Mode 5.15</h2>
 
