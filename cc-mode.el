@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-14 21:33:04 $
-;; Version:         $Revision: 2.155 $
+;; Last Modified:   $Date: 1992-07-15 14:17:38 $
+;; Version:         $Revision: 2.156 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -74,7 +74,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-14 21:33:04 $|$Revision: 2.155 $|
+;; |$Date: 1992-07-15 14:17:38 $|$Revision: 2.156 $|
 
 
 ;; ======================================================================
@@ -282,7 +282,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.155 $
+  "Major mode for editing C++ code.  $Revision: 2.156 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1480,7 +1480,7 @@ BOD is the beginning of the C++ definition."
 					   "[ \t]+"
 					   "\\(\\w+[ \t]*:[ \t]*\\)?"))
 				  (if (progn (goto-char indent-point)
-					     (skip-chars-backward " \t\n")
+					     (c++-backward-over-syntactic-ws)
 					     (= (preceding-char) ?,))
 				      (progn (goto-char (match-end 0))
 					     (current-column))
@@ -1991,7 +1991,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.155 $"
+(defconst c++-version "$Revision: 2.156 $"
   "c++-mode version number.")
 
 (defun c++-version ()
