@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.373 $
-;; Last Modified:   $Date: 1997-02-20 19:32:20 $
+;; Version:         $Revision: 4.374 $
+;; Last Modified:   $Date: 1997-02-20 21:23:01 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -5082,7 +5082,7 @@ ACTION associated with `block-close' syntax."
 	'(before after)))))
 
 (defun c-gnu-impose-minimum ()
-  "Imposes a minimum indentation for labels and case tags.
+  "Imposes a minimum indentation for lines inside a top-level construct.
 The variable `c-label-minimum-indentation' specifies the minimum
 indentation amount."
   (let ((non-top-levels '(defun-block-intro statement statement-cont
@@ -5181,7 +5181,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.373 $"
+(defconst c-version "$Revision: 4.374 $"
   "cc-mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
