@@ -1868,12 +1868,12 @@ This function does not do any hidden buffer changes."
 	(while paren-state
 	  (setq elem (car paren-state))
 	  (if (consp elem)
-	      (cond ((<= (cdr elem) bufpos)
+	      (cond ((< (cdr elem) bufpos)
 		     (throw 'done (cdr elem)))
-		    ((<= (car elem) bufpos)
+		    ((< (car elem) bufpos)
 		     ;; See below.
 		     (throw 'done (min (1+ (car elem)) bufpos))))
-	    (if (<= elem bufpos)
+	    (if (< elem bufpos)
 		;; elem is the position at and not after the opening paren, so
 		;; we can go forward one more step unless it's equal to
 		;; bufpos.  This is useful in some cases avoid an extra paren
@@ -1885,9 +1885,23 @@ This function does not do any hidden buffer changes."
   ;; This is used for `font-lock-beginning-of-syntax-function'.  It
   ;; goes to the closest previous point that is known to be outside
   ;; any string literal or comment, using `c-state-cache'.
-  (goto-char (or (c-safe-position (point)
-				  (or c-state-cache (c-parse-state)))
-		 (point-min))))
+  (goto-char
+   (let ((paren-state (or c-state-cache (c-parse-state))) elem)
+     (catch 'done
+       ;; Note: Similar code in `c-safe-position'.  The difference is
+       ;; that we accept a safe position at the point and don't bother
+       ;; to go forward past open parens.
+       (while paren-state
+	 (setq elem (car paren-state))
+	 (if (consp elem)
+	     (cond ((<= (cdr elem) (point))
+		    (throw 'done (cdr elem)))
+		   ((<= (car elem) (point))
+		    (throw 'done (car elem))))
+	   (if (<= elem (point))
+	       (throw 'done elem)))
+	 (setq paren-state (cdr paren-state)))
+       (point-min)))))
 
 
 ;; Tools for scanning identifiers and other tokens.
