@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.201 $
-;; Last Modified:   $Date: 1994-01-24 22:52:53 $
+;; Version:         $Revision: 3.202 $
+;; Last Modified:   $Date: 1994-01-25 14:05:43 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -92,7 +92,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-24 22:52:53 $|$Revision: 3.201 $|
+;; |$Date: 1994-01-25 14:05:43 $|$Revision: 3.202 $|
 
 ;;; Code:
 
@@ -532,11 +532,8 @@ supported list, along with the values for this variable:
   (define-key c-mode-map "\e\C-q"    'c-indent-exp)
   (define-key c-mode-map "\ea"       'c-beginning-of-statement)
   (define-key c-mode-map "\ee"       'c-end-of-statement)
-  ;; use filladapt instead of this cruft.
-  ;; TBD: Lucid and FSF versions of c-mode.el have different
-  ;; c-fill-paragraph's.  Its highly possible neither will work for
-  ;; C++ anyway.
-  ;; (define-key c-mode-map "\eq"        'c-fill-paragraph)
+  ;; I'd rather use an adaptive fill program instead of this.
+  (define-key c-mode-map "\eq"       'c-fill-paragraph)
   (define-key c-mode-map "\C-c\C-n"  'c-forward-conditional)
   (define-key c-mode-map "\C-c\C-p"  'c-backward-conditional)
   (define-key c-mode-map "\C-c\C-u"  'c-up-conditional)
@@ -739,7 +736,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.201 $
+cc-mode Revision: $Revision: 3.202 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -770,7 +767,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.201 $
+cc-mode Revision: $Revision: 3.202 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -1266,12 +1263,6 @@ non-whitespace characters on the line following the semicolon."
 	     (c-indent-via-language-element bod))
 	))))
 
-(defun c-scope-operator ()
-  "Insert a double colon scope operator at point.
-No indentation or other \"electric\" behavior is performed."
-  (interactive)
-  (insert "::"))
-
 (defun c-electric-colon (arg)
   "Insert a colon.
 
@@ -1423,6 +1414,183 @@ the `c-style-alist' variable."
 	  )))
      vars)))
 
+(defun c-fill-paragraph (&optional arg)
+  "Like \\[fill-paragraph] but handles C and C++ style comments.
+If any of the current line is a comment or within a comment,
+fill the comment or the paragraph of it that point is in,
+preserving the comment indentation or line-starting decorations."
+  (interactive "P")
+  (let* (comment-start-place
+	 (first-line
+	  ;; Check for obvious entry to comment.
+	  (save-excursion
+	    (beginning-of-line)
+	    (skip-chars-forward " \t\n")
+	    (and (looking-at comment-start-skip)
+		 (setq comment-start-place (point))))))
+    (if (and (eq major-mode 'c++-mode)
+	     (save-excursion
+	       (beginning-of-line)
+	       (looking-at ".*//")))
+	(let (fill-prefix
+	      (paragraph-start
+	       ;; Lines containing just a comment start or just an end
+	       ;; should not be filled into paragraphs they are next to.
+	       (concat 
+		paragraph-start
+		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+	      (paragraph-separate
+	       (concat
+		paragraph-separate
+		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$")))
+	  (save-excursion
+	    (beginning-of-line)
+	    ;; Move up to first line of this comment.
+	    (while (and (not (bobp)) (looking-at "[ \t]*//"))
+	      (forward-line -1))
+	    (if (not (looking-at ".*//"))
+		(forward-line 1))
+	    ;; Find the comment start in this line.
+	    (re-search-forward "[ \t]*//[ \t]*")
+	    ;; Set the fill-prefix to be what all lines except the first
+	    ;; should start with.
+	    (let ((endcol (current-column)))
+	      (skip-chars-backward " \t")
+	      (setq fill-prefix
+		    (concat (make-string (- (current-column) 2) ?\ )
+			    "//"
+			    (make-string (- endcol (current-column)) ?\ ))))
+	    (save-restriction
+	      ;; Narrow down to just the lines of this comment.
+	      (narrow-to-region (point)
+				(save-excursion
+				  (forward-line 1)
+				  (while (looking-at "[ \t]*//"))
+				  (forward-line 1))
+				(point)))
+	    (insert fill-prefix)
+	    (fill-paragraph arg)
+	    (delete-region (point-min)
+			   (+ (point-min) (length fill-prefix))))))
+    (if (or first-line
+	    ;; t if we enter a comment between start of function and this line.
+	    (eq (calculate-c-indent) t)
+	    ;; t if this line contains a comment starter.
+	    (setq first-line
+		  (save-excursion
+		    (beginning-of-line)
+		    (prog1
+			(re-search-forward comment-start-skip
+					   (save-excursion (end-of-line)
+							   (point))
+					   t)
+		      (setq comment-start-place (point))))))
+	;; Inside a comment: fill one comment paragraph.
+	(let ((fill-prefix
+	       ;; The prefix for each line of this paragraph
+	       ;; is the appropriate part of the start of this line,
+	       ;; up to the column at which text should be indented.
+	       (save-excursion
+		 (beginning-of-line)
+		 (if (looking-at "[ \t]*/\\*.*\\*/")
+		     (progn (re-search-forward comment-start-skip)
+			    (make-string (current-column) ?\ ))
+		   (if first-line (forward-line 1))
+
+		   (let ((line-width (progn (end-of-line) (current-column))))
+		     (beginning-of-line)
+		     (prog1
+			 (buffer-substring
+			  (point)
+
+			  ;; How shall we decide where the end of the
+			  ;; fill-prefix is?
+			  ;; calculate-c-indent-within-comment bases its value
+			  ;; on the indentation of previous lines; if they're
+			  ;; indented specially, it could return a column
+			  ;; that's well into the current line's text.  So
+			  ;; we'll take at most that many space, tab, or *
+			  ;; characters, and use that as our fill prefix.
+			  (let ((max-prefix-end
+				 (progn
+				   (move-to-column
+				    (calculate-c-indent-within-comment t)
+				    t)
+				   (point))))
+			    (beginning-of-line)
+			    (skip-chars-forward " \t*" max-prefix-end)
+			    (point)))
+
+		       ;; If the comment is only one line followed by a blank
+		       ;; line, calling move-to-column above may have added
+		       ;; some spaces and tabs to the end of the line; the
+		       ;; fill-paragraph function will then delete it and the
+		       ;; newline following it, so we'll lose a blank line
+		       ;; when we shouldn't.  So delete anything
+		       ;; move-to-column added to the end of the line.  We
+		       ;; record the line width instead of the position of the
+		       ;; old line end because move-to-column might break a
+		       ;; tab into spaces, and the new characters introduced
+		       ;; there shouldn't be deleted.
+
+		       ;; If you can see a better way to do this, please make
+		       ;; the change.  This seems very messy to me.
+		       (delete-region (progn (move-to-column line-width)
+					     (point))
+				      (progn (end-of-line) (point))))))))
+
+	      (paragraph-start
+	       ;; Lines containing just a comment start or just an end
+	       ;; should not be filled into paragraphs they are next to.
+	       (concat 
+		paragraph-start
+		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+	      (paragraph-separate
+	       (concat
+		paragraph-separate
+		"\\|^[ \t]*/\\*[ \t]*$\\|^[ \t]*\\*/[ \t]*$\\|^[ \t/*]*$"))
+	      (chars-to-delete 0))
+	  (save-restriction
+	    ;; Don't fill the comment together with the code following it.
+	    ;; So temporarily exclude everything before the comment start,
+	    ;; and everything after the line where the comment ends.
+	    ;; If comment-start-place is non-nil, the comment starter is there.
+	    ;; Otherwise, point is inside the comment.
+	    (narrow-to-region (save-excursion
+				(if comment-start-place
+				    (goto-char comment-start-place)
+				  (search-backward "/*"))
+				;; Protect text before the comment start 
+				;; by excluding it.  Add spaces to bring back 
+				;; proper indentation of that point.
+				(let ((column (current-column)))
+				  (prog1 (point)
+				    (setq chars-to-delete column)
+				    (insert-char ?\  column))))
+			      (save-excursion
+				(if comment-start-place
+				    (goto-char (+ comment-start-place 2)))
+				(search-forward "*/" nil 'move)
+				(forward-line 1)
+				(point)))
+	    (fill-paragraph arg)
+	    (save-excursion
+	      ;; Delete the chars we inserted to avoid clobbering
+	      ;; the stuff before the comment start.
+	      (goto-char (point-min))
+	      (if (> chars-to-delete 0)
+		  (delete-region (point) (+ (point) chars-to-delete)))
+	      ;; Find the comment ender (should be on last line of buffer,
+	      ;; given the narrowing) and don't leave it on its own line.
+	      (goto-char (point-max))
+	      (forward-line -1)
+	      (search-forward "*/" nil 'move)
+	      (beginning-of-line)
+	      (if (looking-at "[ \t]*\\*/")
+		  (delete-indentation)))))
+      ;; Outside of comments: do ordinary filling.
+      (fill-paragraph arg))))
+
 ;; better movement routines for ThisStyleOfVariablesCommonInCPlusPlus
 ;; originally contributed by Terry_Glanfield.Southern@rxuk.xerox.com
 (defun c-forward-into-nomenclature (&optional arg)
@@ -1447,6 +1615,12 @@ forward."
   (interactive "p")
   (c-forward-into-nomenclature (- (or arg 1)))
   (c-keep-region-active))
+
+(defun c-scope-operator ()
+  "Insert a double colon scope operator at point.
+No indentation or other \"electric\" behavior is performed."
+  (interactive)
+  (insert "::"))
 
 ;; TBD: These are from Lucid Emacs 19.9's version of c-mode.el
 ;;(defun c-insert-brackets ()
@@ -3035,7 +3209,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.201 $"
+(defconst c-version "$Revision: 3.202 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
