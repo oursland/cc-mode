@@ -74,7 +74,9 @@ should be inserted.  Value must be a function taking no arguments."
   :type 'function
   :group 'c)
 
-;; TBD: this one doesn't handle the cons choice well
+;; TBD: this one doesn't handle the cons choice well.  Also, when
+;; showing first choice, button-2 on tag switches to cons-cell choice,
+;; which shows invalid.  Next button-2 brings up menu.
 (defcustom c-comment-only-line-offset 0
   "*Extra offset for line which contains only the start of a comment.
 Can contain an integer or a cons cell of the form:
@@ -86,8 +88,9 @@ non-column-zero anchored comment-only lines, and ANCHORED-OFFSET is
 the amount of offset to give column-zero anchored comment-only lines.
 Just an integer as value is equivalent to (<val> . -1000)."
   :type '(choice (integer :tag "Non-anchored offset")
-		 (cons (integer :tag "Non-anchored offset")
-		       (integer :tag "Anchored offset")))
+		 (cons :tag "Non-anchored & anchored offset"
+		       (integer :tag "Non-anchored offset" :value 0)
+		       (integer :tag "Anchored offset" :value 0)))
   :group 'c)
 
 (defcustom c-indent-comments-syntactically-p nil
