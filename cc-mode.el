@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-23 17:11:02 $
-;; Version:         $Revision: 2.170 $
+;; Last Modified:   $Date: 1992-07-23 19:59:45 $
+;; Version:         $Revision: 2.171 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-23 17:11:02 $|$Revision: 2.170 $|
+;; |$Date: 1992-07-23 19:59:45 $|$Revision: 2.171 $|
 
 
 ;; ======================================================================
@@ -326,7 +326,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.170 $
+  "Major mode for editing C++ code.  $Revision: 2.171 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -527,7 +527,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.170 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.171 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -680,11 +680,14 @@ backward-delete-char-untabify."
   (if (memq (c++-in-literal) '(c c++ string))
       (self-insert-command arg)
     (let ((here (point-marker))
+	  (bobp (bobp))
 	  (bolp (bolp)))
       (if (memq 'alignleft c++-electric-pound-behavior)
 	  (progn (beginning-of-line)
 		 (delete-horizontal-space)))
-      (insert-before-markers (make-string arg last-command-char))
+      (if bobp
+	  (insert (make-string arg last-command-char))
+	(insert-before-markers (make-string arg last-command-char)))
       (if (not bolp)
 	  (goto-char here))
       (set-marker here nil))))
@@ -2100,7 +2103,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.170 $"
+(defconst c++-version "$Revision: 2.171 $"
   "c++-mode version number.")
 
 (defun c++-version ()
