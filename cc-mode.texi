@@ -2077,6 +2077,7 @@ The simplest way of customizing @ccmode{} permanently is to set the
 variables in your @file{.emacs} with @code{setq} and similar commands.
 So to make the setting of @code{substatement-open} permanent, add this
 to the @file{.emacs} file:
+@comment FIXME: Replace this with (setq c-offsets-alist ...)?
 @example
 @group
 
@@ -2978,7 +2979,7 @@ The line is nested inside a class definition.
 @item cpp-macro
 The start of a C preprocessor macro definition.
 @item cpp-macro-cont
-@comment FIXME: Update for c-syntactic-analysis-in-macro.
+@comment FIXME: Update for c-syntactic-indentation-in-macros and cpp-define-intro.
 Subsequent lines of a multi-line C preprocessor macro definition.
 @item friend
 A C++ friend declaration.
@@ -3581,7 +3582,7 @@ Line 17 is assigned @code{stream-op} syntax.
 
 @end itemize
 
-@comment FIXME: Update for c-syntactic-analysis-in-macro.
+@comment FIXME: Update for c-syntactic-indentation-in-macros and cpp-define-intro.
 
 @cindex multi-line macros
 @cindex syntactic whitespace
@@ -4025,7 +4026,7 @@ This lineup function makes the line stay at whatever indentation it
 already has; think of it as an identity function for lineups.  It is
 used for @code{cpp-macro-cont} lines.
 
-@comment FIXME: Update for c-syntactic-analysis-in-macro.
+@comment FIXME: Update for c-syntactic-indentation-in-macros.
 
 @workswith Any syntactic symbol.
 
@@ -4176,7 +4177,7 @@ expressions.
 
 @comment ------------------------------------------------------------
 
-@comment FIXME: Add c-lineup-macro-cont
+@comment FIXME: Add c-lineup-cpp-define
 
 @comment ------------------------------------------------------------
 
