@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.149 $
-;; Last Modified:   $Date: 1995-02-06 17:07:45 $
+;; Version:         $Revision: 4.150 $
+;; Last Modified:   $Date: 1995-02-07 17:38:42 $
 ;; Keywords: C++ C Objective-C
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-02-06 17:07:45 $|$Revision: 4.149 $|
+;; |$Date: 1995-02-07 17:38:42 $|$Revision: 4.150 $|
 
 ;;; Code:
 
@@ -1562,9 +1562,19 @@ the brace is inserted inside a literal."
 	       (save-excursion (delete-indentation)))
 	  ;; since we're hanging the brace, we need to recalculate
 	  ;; syntax.  Update the state to accurately reflect the
-	  ;; beginning of the line.
-	  (setq c-state-cache (c-whack-state (c-point 'bol) c-state-cache)
-		syntax (c-guess-basic-syntax)))
+	  ;; beginning of the line.  We punt if we cross any open or
+	  ;; closed parens because its just too hard to modify the
+	  ;; known state.  This limitation will be fixed in v5.
+	  (save-excursion
+	    (let ((bol (c-point 'bol)))
+	      (if (zerop (car (parse-partial-sexp bol (1- (point)))))
+		  (setq c-state-cache (c-whack-state bol c-state-cache)
+			syntax (c-guess-basic-syntax))
+		;; gotta punt. this includes some horrible kludgery
+		(beginning-of-line)
+		(makunbound 'c-state-cache)
+		(setq c-state-cache (c-parse-state)))))
+	  )
 	;; now adjust the line's indentation. don't update the state
 	;; cache since c-guess-basic-syntax isn't called when the
 	;; syntax is passed to c-indent-line
@@ -4448,7 +4458,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.149 $"
+(defconst c-version "$Revision: 4.150 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
