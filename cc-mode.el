@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.209 $
-;; Last Modified:   $Date: 1995-05-17 15:01:56 $
+;; Version:         $Revision: 4.210 $
+;; Last Modified:   $Date: 1995-05-17 15:44:21 $
 ;; Keywords: c languages oop
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-05-17 15:01:56 $|$Revision: 4.209 $|
+;; |$Date: 1995-05-17 15:44:21 $|$Revision: 4.210 $|
 
 ;;; Code:
 
@@ -834,6 +834,25 @@ supported list, along with the values for this variable:
   (modify-syntax-entry ?|  "."     table)
   (modify-syntax-entry ?\' "\""    table))
 
+(defun c-setup-dual-comments (table)
+  ;; Set up TABLE to handle block and line style comments
+  (cond
+   ((memq '8-bit c-emacs-features)
+    ;; XEmacs (formerly Lucid) has the best implementation
+    (modify-syntax-entry ?/  ". 1456" table)
+    (modify-syntax-entry ?*  ". 23"   table)
+    (modify-syntax-entry ?\n "> b"    table)
+    ;; Give CR the same syntax as newline, for selective-display
+    (modify-syntax-entry ?\^m "> b"    table))
+   ((memq '1-bit c-emacs-features)
+    ;; FSF Emacs 19 does things differently, but we can work with it
+    (modify-syntax-entry ?/  ". 124b" table)
+    (modify-syntax-entry ?*  ". 23"   table)
+    (modify-syntax-entry ?\n "> b"    table)
+    ;; Give CR the same syntax as newline, for selective-display
+    (modify-syntax-entry ?\^m "> b"   table))
+   ))
+
 (defvar c-mode-syntax-table nil
   "Syntax table used in c-mode buffers.")
 (if c-mode-syntax-table
@@ -851,22 +870,7 @@ supported list, along with the values for this variable:
   (setq c++-mode-syntax-table (make-syntax-table))
   (c-populate-syntax-table c++-mode-syntax-table)
   ;; add extra comment syntax
-  (cond
-   ((memq '8-bit c-emacs-features)
-    ;; XEmacs (formerly Lucid) has the best implementation
-    (modify-syntax-entry ?/  ". 1456" c++-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
-    ;; Give CR the same syntax as newline, for selective-display
-    (modify-syntax-entry ?\^m "> b"    c++-mode-syntax-table))
-   ((memq '1-bit c-emacs-features)
-    ;; FSF Emacs 19 does things differently, but we can work with it
-    (modify-syntax-entry ?/  ". 124b" c++-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"   c++-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    c++-mode-syntax-table)
-    ;; Give CR the same syntax as newline, for selective-display
-    (modify-syntax-entry ?\^m "> b"    c++-mode-syntax-table))
-   )
+  (c-setup-dual-comments c++-mode-syntax-table)
   ;; TBD: does it make sense for colon to be symbol class in C++?
   ;; I'm not so sure, since c-label-key is busted on lines like:
   ;; Foo::bar( i );
@@ -883,22 +887,7 @@ supported list, along with the values for this variable:
   (setq objc-mode-syntax-table (make-syntax-table))
   (c-populate-syntax-table objc-mode-syntax-table)
   ;; add extra comment syntax
-  (cond
-   ((memq '8-bit c-emacs-features)
-    ;; XEmacs (formerly Lucid) has the best implementation
-    (modify-syntax-entry ?/  ". 1456" objc-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"   objc-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table)
-    ;; Give CR the same syntax as newline, for selective-display
-    (modify-syntax-entry ?\^m "> b"   objc-mode-syntax-table))
-   ((memq '1-bit c-emacs-features)
-    ;; FSF Emacs 19 does things differently, but we can work with it
-    (modify-syntax-entry ?/  ". 124b" objc-mode-syntax-table)
-    (modify-syntax-entry ?*  ". 23"   objc-mode-syntax-table)
-    (modify-syntax-entry ?\n "> b"    objc-mode-syntax-table)
-    ;; Give CR the same syntax as newline, for selective-display
-    (modify-syntax-entry ?\^m "> b"   objc-mode-syntax-table))
-   )
+  (c-setup-dual-comments objc-mode-syntax-table)
   ;; everyone gets these
   (modify-syntax-entry ?@ "_" objc-mode-syntax-table)
   )
@@ -983,6 +972,10 @@ The expansion is entirely correct because it uses the C preprocessor."
 (defconst c-C++-friend-key
   "friend[ \t]+\\|template[ \t]*<.+>[ \t]*friend[ \t]+"
   "Regexp describing friend declarations in C++ classes.")
+(defconst c-C++-comment-start-regexp "//\\|/\\*"
+  "Dual comment value for `c-comment-start-regexp'.")
+(defconst c-C-comment-start-regexp "/\\*"
+  "Single comment style value for `c-comment-start-regexp'.")
 
 (defconst c-ObjC-method-key
   (concat
@@ -1010,7 +1003,7 @@ The expansion is entirely correct because it uses the C preprocessor."
 ;; to be a better way.
 (setq-default c-conditional-key c-C-conditional-key
 	      c-class-key c-C-class-key
-	      c-comment-start-regexp "/\\*")
+	      c-comment-start-regexp c-C-comment-start-regexp)
 
 
 ;; main entry points for the modes
@@ -1049,7 +1042,7 @@ Key bindings:
   (setq comment-start "// "
 	comment-end ""
 	c-conditional-key c-C++-conditional-key
-	c-comment-start-regexp "//\\|/\\*"
+	c-comment-start-regexp c-C++-comment-start-regexp
 	c-class-key c-C++-class-key
 	c-access-key c-C++-access-key)
   (run-hooks 'c-mode-common-hook)
@@ -1091,7 +1084,7 @@ Key bindings:
 	c-conditional-key c-C-conditional-key
 	c-class-key c-C-class-key
 	c-baseclass-key nil
-	c-comment-start-regexp "/\\*")
+	c-comment-start-regexp c-C-comment-start-regexp)
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook))
 (setq c-list-of-mode-names (cons "C" c-list-of-mode-names))
@@ -1129,7 +1122,7 @@ Key bindings:
   (setq comment-start "// "
 	comment-end   ""
 	c-conditional-key c-C-conditional-key
-	c-comment-start-regexp "//\\|/\\*"
+	c-comment-start-regexp c-C++-comment-start-regexp
  	c-class-key c-ObjC-class-key
 	c-baseclass-key nil
 	c-access-key c-ObjC-access-key)
@@ -1223,6 +1216,15 @@ it finds in `c-file-offsets'."
 ;; 19.12 and Emacs 19.29 will when they are released.
 (and (fboundp 'add-hook)
      (add-hook 'hack-local-variables-hook 'c-postprocess-file-styles))
+
+(defun c-enable-//-in-c-mode ()
+  "Enables // as a comment delimiter in `c-mode'.
+ANSI C currently does *not* allow this, although many C compilers
+support optional C++ style comments.  To use, call this function from
+your `.emacs' file before you visit any C files.  The changes are
+global and affect all future `c-mode' buffers."
+  (c-setup-dual-comments c-mode-syntax-table)
+  (setq-default c-C-comment-start-regexp c-C++-comment-start-regexp))
 
 
 ;; macros must be defined before first use
@@ -4584,7 +4586,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.209 $"
+(defconst c-version "$Revision: 4.210 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
