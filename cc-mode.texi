@@ -2100,11 +2100,11 @@ Depending on the coding style being used, you might prefer
 consider binding @kbd{C-M-a} to the former instead.  For backwards
 compatibility reasons, the default binding remains in effect.
 
-In AWK, top level braces are almost invariably hung at the end of the
-line rather than being placed in column zero.  (Placing them in column
-zero would mean having to terminate the previous lines by unsightly
-@samp{@\}s.)  AWK mode thus has its own version of this function which
-is bound by default to @kbd{C-M-a}.  @xref{AWK Mode Defuns}.
+In AWK mode, a defun doesn't necessarily have braces at all.  AWK Mode
+therefore has its own version of this function which is bound by
+default to @kbd{C-M-a}.  You can thus chose freely which function to
+bind to @kbd{C-M-a} for the other modes without worrying about AWK
+buffers.  @xref{AWK Mode Defuns}.
 
 @item @kbd{M-x c-end-of-defun}
 @findex c-end-of-defun
@@ -2121,8 +2121,11 @@ Depending on the coding style being used, you might prefer
 consider binding @kbd{C-M-e} to the former instead.  For backwards
 compatibility reasons, the default binding remains in effect.
 
-AWK mode thus has its own version of this function which is bound by
-default to @kbd{C-M-e}.  @ref{AWK Mode Defuns}.
+In AWK Mode, a defun doesn't necessarily have braces at all.  AWK Mode
+therefore has its own version of this function which is bound by
+default to @kbd{C-M-e}.  You can thus chose freely which function to
+bind to @kbd{C-M-e} for the other modes without worrying about AWK
+buffers.  @ref{AWK Mode Defuns}.
 
 @item @kbd{C-c C-u} (@code{c-up-conditional})
 @kindex C-c C-u
@@ -4973,7 +4976,7 @@ mode's doc string contains @code{To submit a problem report, enter
 Since this newer AWK mode makes essential use of a relatively new
 Emacs Lisp feature@footnote{Specifically, the @code{syntax-table} text
 property.}, you need either GNU Emacs 20.1 (or later) or XEmacs 21.4
-(or later) to use it.  If your emacs version is earlier than one of
+(or later) to use it.  If your Emacs version is earlier than one of
 these, the older @file{awk-mode.el} will get loaded and run in place
 of the AWK mode described here, even when you have put the above
 @code{autoload} form into your @file{.emacs} or @file{init}.
