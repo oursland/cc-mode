@@ -194,8 +194,10 @@
 	   ((and c-method-key
 		 (setq last-begin (c-in-method-def-p)))
 	    (setq donep t))
-	   ;; CASE 9: nothing special
-	   (t (setq last-begin (point)))
+	   ;; CASE 9: Normal token.  At bob, we can end up at ws or a
+	   ;; comment, and last-begin shouldn't be updated then.
+	   ((not (looking-at "\\s \\|/[/*]"))
+	    (setq last-begin (point)))
 	   ))))
     (goto-char last-begin)
     ;; We always want to skip over the non-whitespace modifier
