@@ -276,15 +276,17 @@ the existing style.")
     (let ((vars (cdr (or (assoc (downcase style) c-style-alist)
 			 (assoc (upcase style) c-style-alist)
 			 (assoc style c-style-alist)
-			 (error "Undefined style: %s" style)))))
-      (let ((base (and (stringp (car vars))
+			 (progn
+			   (c-benign-error "Undefined style: %s" style)
+			   nil)))))
+      (let ((base (and (stringp (car-safe vars))
 		       (prog1
 			   (downcase (car vars))
 			 (setq vars (cdr vars))))))
 	(if (memq base basestyles)
-	    (error "Style loop detected: %s in %s" base basestyles))
-	(nconc (c-get-style-variables base (cons base basestyles))
-	       (copy-alist vars))))))
+	    (c-benign-error "Style loop detected: %s in %s" base basestyles)
+	  (nconc (c-get-style-variables base (cons base basestyles))
+		 (copy-alist vars)))))))
 
 (defvar c-set-style-history nil)
 
@@ -432,15 +434,16 @@ and exists only for compatibility reasons."
 	  (offset (c-read-offset langelem)))
      (list langelem offset current-prefix-arg)))
   ;; sanity check offset
-  (unless (c-valid-offset offset)
-    (error "Invalid indentation setting for symbol %s: %s"
-	   symbol offset))
-  (let ((entry (assq symbol c-offsets-alist)))
-    (if entry
-	(setcdr entry offset)
-      (if (assq symbol (get 'c-offsets-alist 'c-stylevar-fallback))
-	  (setq c-offsets-alist (cons (cons symbol offset) c-offsets-alist))
-	(error "%s is not a valid syntactic symbol" symbol))))
+  (if (c-valid-offset offset)
+      (let ((entry (assq symbol c-offsets-alist)))
+	(if entry
+	    (setcdr entry offset)
+	  (if (assq symbol (get 'c-offsets-alist 'c-stylevar-fallback))
+	      (setq c-offsets-alist (cons (cons symbol offset)
+					  c-offsets-alist))
+	    (c-benign-error "%s is not a valid syntactic symbol" symbol))))
+    (c-benign-error "Invalid indentation setting for symbol %s: %s"
+		    symbol offset))
   (c-keep-region-active))
 
 
