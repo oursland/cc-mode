@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.109 $
-;; Last Modified:   $Date: 1993-12-06 15:32:26 $
+;; Version:         $Revision: 3.110 $
+;; Last Modified:   $Date: 1993-12-06 15:46:30 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -78,7 +78,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-06 15:32:26 $|$Revision: 3.109 $|
+;; |$Date: 1993-12-06 15:46:30 $|$Revision: 3.110 $|
 
 ;;; Code:
 
@@ -546,7 +546,7 @@ that users are familiar with.")
 
 ;; main entry points for the modes
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.109 $
+  "Major mode for editing C++ code.  $Revision: 3.110 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -578,7 +578,7 @@ Key bindings:
    (memq c-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.109 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.110 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2072,9 +2072,12 @@ Optional SHUTUP-P if non-nil, inhibits message printing and error checking."
 	   ;; that the arglist we're in is really a forloop expression
 	   ;; and we are looking at one of the clauses broken up
 	   ;; across multiple lines.  ==> statement-cont
-	   ((not (memq char-before-ip '(?\; ?,)))
-	    (c-beginning-of-statement containing-sexp)
-	    (c-add-semantics 'statement-cont (point)))
+	   ((and (not (memq char-before-ip '(?\; ?,)))
+		 (save-excursion
+		   (c-beginning-of-statement containing-sexp)
+		   (setq placeholder (point))
+		   (/= (point) containing-sexp)))
+	    (c-add-semantics 'statement-cont placeholder))
 	   ;; CASE 5E: we are looking at just a normal arglist
 	   ;; continuation line
 	   (t (c-add-semantics 'arglist-cont (c-point 'boi)))
@@ -2472,7 +2475,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.109 $"
+(defconst c-version "$Revision: 3.110 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
