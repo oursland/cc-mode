@@ -86,7 +86,7 @@
 				      empty-defun-braces
 				      defun-close-semi))
     (c-offsets-alist
-     . ((string                . -1000)
+     . ((string                . c-lineup-dont-change)
 	(c                     . c-lineup-C-comments)
 	(defun-open            . 0)
 	(defun-close           . 0)
@@ -134,10 +134,10 @@
 	(arglist-close         . +)
 	(stream-op             . c-lineup-streamop)
 	(inclass               . +)
-	(cpp-macro             . -1000)
-	(cpp-macro-cont        . c-lineup-dont-change)
+	(cpp-macro             . [0])
+	(cpp-macro-cont        . (c-lineup-macro-cont +))
 	(friend                . 0)
-	(objc-method-intro     . -1000)
+	(objc-method-intro     . [0])
 	(objc-method-args-cont . c-lineup-ObjC-method-args)
 	(objc-method-call-cont . c-lineup-ObjC-method-call)
 	(extern-lang-open      . 0)
@@ -212,18 +212,17 @@
     (erase-buffer)
     (insert-file-contents filename)
     (goto-char (point-min))
-    (let ((style "TESTSTYLE")
+    (let ((c-default-style "TESTSTYLE")
 	  c-mode-hook c++-mode-hook objc-mode-hook c-mode-common-hook)
       (cond
        ((string-match "\\.cc$" filename) (c++-mode))
        ((string-match "\\.m$" filename) (objc-mode))
        ((string-match "\\.java$" filename)
-	(java-mode)
-	(setq style "JAVATESTSTYLE"))
+	(setq c-default-style "JAVATESTSTYLE")
+	(java-mode))
        ((string-match "\\.pike$" filename) (pike-mode))
        ((string-match "\\.idl$" filename) (idl-mode))
-       (t (c-mode)))
-      (c-set-style style))
+       (t (c-mode))))
     (hack-local-variables)
     ;; Setup the expected analysis buffer.
     (set-buffer expectedbuf)
@@ -247,11 +246,12 @@
     (if (setq buf (get-buffer "*cc-expected*"))
 	(kill-buffer buf))))
 
-(defun do-one-test (filename &optional no-error)
+(defun do-one-test (filename &optional no-error collect-tests)
   (interactive "fFile to test: ")
   (let ((default-directory cc-test-dir))
     (save-excursion
-      (if (or (when (member filename cc-test-finished-tests)
+      (if (or (when (and collect-tests
+			 (member filename cc-test-finished-tests))
 		(cc-test-message "Skipping %s - already tested" filename)
 		t)
 	      (when (not (file-exists-p
@@ -340,8 +340,10 @@
 				     expected results)))
 		    (cc-test-log "%s:%d: %s" filename linenum msg)
 		    (indent-for-comment)
-		    (unless (eolp) (end-of-line) (insert "  "))
-		    (insert "!!! " msg ".")
+		    (if (re-search-forward "\\*/" (c-point 'eol) 'move)
+			(goto-char (match-beginning 0)))
+		    (delete-horizontal-space)
+		    (insert " !!! " msg ".")
 		    (setq error-found-p t
 			  regression-comment t)))
 		(unless (= (car expectedindent) currentindent)
@@ -351,14 +353,16 @@
 		    (if regression-comment
 			(insert "  ")
 		      (indent-for-comment)
-		      (unless (eolp) (end-of-line) (insert "  "))
-		      (insert "!!! "))
+		      (if (re-search-forward "\\*/" (c-point 'eol) 'move)
+			  (goto-char (match-beginning 0)))
+		      (delete-horizontal-space)
+		      (insert " !!! "))
 		    (insert msg ".")
 		    (setq error-found-p t))))
 	      (forward-line 1)
 	      (setq expectedindent (cdr expectedindent)
 		    linenum (1+ linenum))))
-	  (unless error-found-p
+	  (unless (or error-found-p (not collect-tests))
 	    (setq cc-test-finished-tests
 		  (cons filename cc-test-finished-tests)))
 	  (when (and error-found-p (not no-error))
@@ -402,7 +406,7 @@
 	  (fset 'c-echo-parsing-error (lambda (&optional quiet)))
 	  (mapcar (lambda (test)
 		    (condition-case err
-			(unless (do-one-test test t)
+			(unless (do-one-test test t t)
 			  (setq broken-files (cons test broken-files)))
 		      (error
 		       (cc-test-log "%s: Eval error: %s"
