@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-06-17 22:29:12 $
-;; Version:         $Revision: 2.113 $
+;; Last Modified:   $Date: 1992-06-18 14:25:52 $
+;; Version:         $Revision: 2.114 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,12 +43,13 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-06-17 22:29:12 $|$Revision: 2.113 $|
+;; |$Date: 1992-06-18 14:25:52 $|$Revision: 2.114 $|
 
 
 ;; ======================================================================
 ;; user definable variables
-;; ======================================================================
+;; vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
 (define-abbrev-table 'c++-mode-abbrev-table ())
@@ -172,14 +173,6 @@ Legal values are:
      'auto-hungry  -- both auto-newline and hungry-delete-key can be toggled.
 Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 
-(defvar c++-hungry-delete-key nil
-  "Internal state of hungry delete key.")
-(defvar c++-auto-newline nil
-  "Internal state of auto newline feature.")
-
-(make-variable-buffer-local 'c++-auto-newline)
-(make-variable-buffer-local 'c++-hungry-delete-key)
-
 (defvar c++-mailer 'mail
   "*Mail package to use to generate bug report mail buffer.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
@@ -208,20 +201,33 @@ automatically escaped when typed in, but entering
 
 (defvar c++-default-macroize-column 78
   "*Column to insert backslashes.")
-
 (defvar c++-special-indent-hook nil
   "*Hook for user defined special indentation adjustments.
 This hook gets called after each line to allow the user to do whatever
 special indentation adjustments are desired.  If you have non-standard
 indentation, you will likely need to have c++-relative-offset-p set to
 nil.")
+(defvar c++-delete-function 'backward-delete-char-untabify
+  "*Function called by c++-electric-delete when deleting a single char.")
+
+;; ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+;; NO USER DEFINABLE VARIABLES BEYOND THIS POINT
+;; 
+(defvar c++-hungry-delete-key nil
+  "Internal state of hungry delete key.")
+(defvar c++-auto-newline nil
+  "Internal state of auto newline feature.")
+
+(make-variable-buffer-local 'c++-auto-newline)
+(make-variable-buffer-local 'c++-hungry-delete-key)
+
 
 
 ;; ======================================================================
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.113 $
+  "Major mode for editing C++ code.  $Revision: 2.114 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -542,18 +548,17 @@ backward-delete-char-untabify passing along ARG.
 If c++-hungry-delete-key is nil, just call
 backward-delete-char-untabify."
   (interactive "P")
-  (cond
-   ((or (not c++-hungry-delete-key) arg)
-    (backward-delete-char-untabify (prefix-numeric-value arg)))
-   ((let ((bod (c++-point-bod)))
-      (not (or (c++-in-comment-p bod)
-	       (c++-in-open-string-p bod))))
-    (let ((here (point)))
-      (skip-chars-backward " \t\n")
-      (if (/= (point) here)
-	  (delete-region (point) here)
-	(backward-delete-char-untabify 1))))
-   (t (backward-delete-char-untabify 1))))
+  (cond ((or (not c++-hungry-delete-key) arg)
+	 (funcall c++-delete-function (prefix-numeric-value arg)))
+	((let ((bod (c++-point-bod)))
+	   (not (or (c++-in-comment-p bod)
+		    (c++-in-open-string-p bod))))
+	 (let ((here (point)))
+	   (skip-chars-backward " \t\n")
+	   (if (/= (point) here)
+	       (delete-region (point) here)
+	     (funcall c++-delete-function 1))))
+	(t (funcall c++-delete-function 1))))
 
 (defun c++-electric-brace (arg)
   "Insert character and correct line's indentation."
@@ -1859,7 +1864,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.113 $"
+(defconst c++-version "$Revision: 2.114 $"
   "c++-mode version number.")
 
 (defun c++-version ()
