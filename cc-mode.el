@@ -79,6 +79,7 @@
 
 ;;; Code:
 
+
 ;; sigh.  give in to the pressure, but make really sure all the
 ;; definitions we need are here
 (if (or (not (fboundp 'functionp))
@@ -90,7 +91,6 @@
 
 (eval-when-compile
   (require 'cc-menus))
-(require 'cc-defs)
 
 (defvar c-buffer-is-cc-mode nil
   "Non-nil for all buffers with a `major-mode' derived from CC Mode.
@@ -119,6 +119,7 @@ other non-CC Mode mode that calls `c-initialize-cc-mode'
   ;; make sure all necessary components of CC Mode are loaded in.
   (let ((initprop 'cc-mode-is-initialized))
     (require 'cc-vars)
+    (require 'cc-defs)
     (require 'cc-engine)
     (require 'cc-langs)
     (require 'cc-menus)
