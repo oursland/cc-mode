@@ -310,6 +310,19 @@
 	(- (current-column) equalp langelem-col))
       )))
 
+(defun c-lineup-template-args (langelem)
+  ;; Line up template arguments, like c-lineup-arglist does for
+  ;; function arguments.  Intended to be used on template-args-cont.
+  ;; To allow this function to be used in a list expression, nil is
+  ;; returned if there's no template argument on the first line.
+  (save-excursion
+    (goto-char (cdr langelem))
+    (while (and (not (eq (char-after) ?<))
+		(= (c-forward-token-1 1 0 (c-point 'eol)) 0)))
+    (if (and (eq (char-after) ?<)
+	     (= (c-forward-token-1 1 0 (c-point 'eol)) 0))
+	(- (current-column) (c-langelem-col langelem)))))
+
 (defun c-lineup-ObjC-method-call (langelem)
   ;; Line up methods args as elisp-mode does with function args: go to
   ;; the position right after the message receiver, and if you are at
