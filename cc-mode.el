@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.139 $
-;; Last Modified:   $Date: 1995-01-12 01:33:21 $
+;; Version:         $Revision: 4.140 $
+;; Last Modified:   $Date: 1995-01-16 23:40:00 $
 ;; Keywords: C++ C Objective-C editing major-mode
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
 
@@ -104,7 +104,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-01-12 01:33:21 $|$Revision: 4.139 $|
+;; |$Date: 1995-01-16 23:40:00 $|$Revision: 4.140 $|
 
 ;;; Code:
 
@@ -2315,13 +2315,14 @@ search."
 		      (< (point) to))
 	    (skip-chars-forward "^;{}:" to)
 	    (if (not (c-in-literal lim))
-		(if (memq (following-char) '(?\; ?{ ?}))
-		    (setq crossedp t)
-		  (if (= (following-char) ?:)
-		      (setq maybe-labelp t))
-		  (forward-char 1))
-	      (forward-char 1))
-	    (setq lim (point))))
+		(progn
+		  (if (memq (following-char) '(?\; ?{ ?}))
+		      (setq crossedp t)
+		    (if (= (following-char) ?:)
+			(setq maybe-labelp t))
+		    (forward-char 1))
+		  (setq lim (point)))
+	      (forward-char 1))))
       (error (setq crossedp nil)))
     (goto-char here)
     crossedp))
@@ -4370,7 +4371,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.139 $"
+(defconst c-version "$Revision: 4.140 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
