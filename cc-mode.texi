@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.55 $
+@comment manual version: $Revision: 2.56 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1996-08-21 19:29:16 $
+@comment Last modification: $Date: 1996-12-10 20:40:01 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995, 1996 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, Objective-C, and Java code.
-@center (manual revision: $Revision: 2.55 $)
+@center (manual revision: $Revision: 2.56 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1747,11 +1747,15 @@ inherit from it; in other words, whenever you set a style,
 your style need only define the differences between it and
 @samp{cc-mode} style.
 
+@vindex c-buffer-style
+@vindex buffer-style (c-)
 Note that for BOCM compatibility, @samp{gnu} is the default
 style, and any non-style based customizations you make (i.e. in
 @code{c-mode-common-hook} in your
 @file{.emacs} file) will be based on @samp{gnu} style unless you do
-a @code{c-set-style} as the first thing in your hook.
+a @code{c-set-style} as the first thing in your hook.  The variable
+@code{c-buffer-style} always contains the buffer's current style name,
+as a string.
 
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
