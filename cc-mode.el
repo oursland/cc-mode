@@ -6,8 +6,8 @@
 ;;          1987 Dave Detlefs and Stewart Clamen
 ;;          1985 Richard M. Stallman
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.389 $
-;; Last Modified:   $Date: 1997-03-28 16:48:31 $
+;; Version:         $Revision: 4.390 $
+;; Last Modified:   $Date: 1997-04-02 15:46:35 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -2448,6 +2448,7 @@ style name."
 	(c-set-style-1 vars)))
   (c-keep-region-active))
 
+;;;###autoload
 (defun c-add-style (style descrip &optional set-p)
   "Adds a style to `c-style-alist', or updates an existing one.
 STYLE is a string identifying the style to add or update.  DESCRIP is
@@ -5205,7 +5206,7 @@ command to conveniently insert and align the necessary backslashes."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.389 $"
+(defconst c-version "$Revision: 4.390 $"
   "CC Mode version number.")
 (defconst c-mode-help-address
   "bug-gnu-emacs@prep.ai.mit.edu, cc-mode-help@python.org"
