@@ -21,7 +21,7 @@ class Foo
 	    }
 	  );
     button.setActionListener(
-			     new ActionAdaptor()
+			     new java.awt.event.ActionAdaptor()
 				 {
 				     public void actionPerformed(ActionEvent e)
 				     {
@@ -35,7 +35,7 @@ class Foo
     { // method body
 	final int count = 10;
 	final Object[] array = new Object[count];
-	some_call(new Enumeration() {
+	some_call(new java.util.Enumeration() {
 		int index = 0;
 		public boolean hasMoreElements() { return i < index; }
 		public Object nextElement() { return array[index++]; }
