@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.32 $
+@comment manual version: $Revision: 2.33 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-09-14 18:58:42 $
+@comment Last modification: $Date: 1996-01-12 01:43:49 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -51,7 +51,7 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @center @titlefont{CC-MODE Version 4}
 @sp 2
 @center A GNU Emacs mode for editing C, C++, and Objective-C code.
-@center (manual revision: $Revision: 2.32 $)
+@center (manual revision: $Revision: 2.33 $)
 @sp 2
 @center Barry A. Warsaw
 
@@ -1514,30 +1514,30 @@ already built-in.  These include:
 @itemize @bullet
 @item
 @cindex GNU style
-@code{GNU} -- coding style blessed by the Free Software Foundation
+@code{gnu} -- coding style blessed by the Free Software Foundation
 for C code in GNU programs.
 
 @item
 @cindex K&R style
-@code{K&R} -- The classic Kernighan and Ritchie style for C code.
+@code{k&r} -- The classic Kernighan and Ritchie style for C code.
 
 @item
 @cindex BSD style
-@code{BSD} -- @strong{<TBD> Anybody know anything about the history of
+@code{bsd} -- @strong{<TBD> Anybody know anything about the history of
 this style?}
 
 @item
 @cindex Stroustrup style
-@code{Stroustrup} -- The classic Stroustrup style for C++ code.
+@code{stroustrup} -- The classic Stroustrup style for C++ code.
 
 @item
 @cindex Whitesmith style
-@code{Whitesmith} -- @strong{<TBD> Anybody know anything about the history of
+@code{whitesmith} -- @strong{<TBD> Anybody know anything about the history of
 this style?}
 
 @item
 @cindex Ellemtel style
-@code{Ellemtel} -- Popular C++ coding standards as defined by
+@code{ellemtel} -- Popular C++ coding standards as defined by
 ``Programming in C++, Rules and Recommendations'', Erik Nyquist and Mats
 Henricson, Ellemtel @footnote{This document is ftp'able from
 @code{euagate.eua.ericsson.se}}.
@@ -1561,20 +1561,22 @@ type the following in a @code{cc-mode} buffer:
 @end group
 @end example
 @noindent
-Note however that setting a style in this way does @emph{not}
-automatically re-indent your file.  For commands that you can use to
-view the effect of your changes, see @ref{Indentation Commands}.
+Note that all style names are case insensitive, even the ones you define.
+
+Setting a style in this way does @emph{not} automatically re-indent your
+file.  For commands that you can use to view the effect of your changes,
+see @ref{Indentation Commands}.
 
 Once you find a built-in style you like, you can make the change
 permanent by adding a call to your @file{.emacs} file.  Let's say for
-example that you want to use the @code{Ellemtel} style in all your
+example that you want to use the @code{ellemtel} style in all your
 files.  You would add this:
 @example
 @group
 
 (defun my-c-mode-common-hook ()
   ;; use Ellemtel style for all C, C++, and Objective-C code
-  (c-set-style "Ellemtel")
+  (c-set-style "ellemtel")
   ;; other customizations can go here
   )
 (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
@@ -1589,10 +1591,10 @@ implicitly inherit from it; in other words, whenever you set a style,
 @code{cc-mode} first re-instates the @code{CC-MODE} style, then applies
 your new style configurations.
 
-The @code{CC-MODE} style exists because once @code{cc-mode} initializes, it
-institutes the @code{GNU} style for compatibility with BOCM's defaults.
-Any customizations you make in mode hooks will be based on the
-@code{GNU} style, unless you first do a @code{c-set-style} to
+The @code{CC-MODE} style exists because once @code{cc-mode} initializes,
+it institutes the @code{gnu} style for compatibility with BOCM's
+defaults.  Any customizations you make in mode hooks will be based on
+the @code{gnu} style, unless you first do a @code{c-set-style} to
 @code{CC-MODE} or some other built-in style.
 
 
@@ -1623,9 +1625,6 @@ institutes the new style in the current buffer.
 
 The sample @file{.emacs} file provides a concrete example of how a new
 style can be added and automatically set.  @xref{Sample .emacs File}.
-
-@strong{<TBD: give some examples of the built-in styles>}
-
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node     File Styles, ,  Adding Styles, Styles
