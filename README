@@ -1,0 +1,355 @@
+README for cc-mode.el 3.229
+Barry A. Warsaw
+bwarsaw@cen.com
+warsaw@nlm.nih.gov
+03-Feb-1994
+
+
+Introduction
+
+    Welcome to cc-mode, version 3.  This is a C and C++ editing mode
+    for GNU Emacs.  This mode has its heritage from standard c-mode.el
+    (also called "Boring Old C Mode" or bocm :-), and c++-mode.el,
+    version 2, which I have been maintaining since 1992.  cc-mode
+    represents a significant milestone in the mode's life.  It has
+    been fully merged back with Emacs 19's c-mode.el. Also a new, more
+    intuitive and flexible mechanism for controlling indentation has
+    been developed.  More on this below.
+
+    You can now use cc-mode to edit K&R and ANSI C, and most ARM C++
+    programs.  See below for limitations.
+
+    In lieu of a texinfo manual (which is in the works), this file
+    will describe the following: how to use cc-mode to edit your code,
+    the differences between cc-mode.el and c-mode.el, and the
+    differences between cc-mode.el and c++-mode.el.
+
+    Note that the name of the file is cc-mode.el, and I'll often refer
+    to the mode as cc-mode, but there really is no top level cc-mode
+    entry point.  I call it cc-mode simply to differentiate it from
+    c-mode.el.  All of the variables, commands, and function in
+    cc-mode are prefixed with c-<thing>, and both c-mode and c++-mode
+    top level entry points are provided.  This file is intended to be
+    a drop-in replacement for c-mode.el -- you should be able to
+    remove c-mode.el and dump Emacs with cc-mode.el instead.
+
+
+New indentation engine
+
+    cc-mode has a new indentation engine, providing a flexible and
+    general mechanism for customizing indentation. It breaks
+    indentation calculation into two steps. First it tries to figure
+    out what kind of C/C++ construct its looking at, then it applies a
+    user defined offset to the current line based on the type of
+    construct it finds.
+
+  Step 1: Syntactic Analysis
+
+    In the first step, cc-mode looks at the current line that your are
+    indenting and creates a list of "syntactic elements" representing
+    the construct on the line.  Each element on this list is a cons
+    cell where the car is a "syntactic element symbol" (or langelem)
+    such as 'statement, and the cdr is a relative buffer position (or
+    relpos).  This relpos is the position higher up in the buffer
+    which the current line will be indented relative to.  More on this
+    below.
+
+    Here's an example. Suppose we had the following code in a c++-mode
+    buffer (the line numbers are only for example):
+
+  Example 1:
+
+    1: void swap( int& a, int& b ) 
+    2: {
+    3:     int tmp = a;
+    4:     a = b;
+    5:     b = tmp;
+    6: }
+
+    We can use the command C-c C-s (c-show-semantic-information) to
+    simply report what syntactic list is for a line.  If we hit this
+    on line 4, we'd see:
+
+    ((statement . 36))
+
+    This tells us that the line is a statement and it is indented
+    relative to buffer position 36, which happens to be the `i' in
+    "int" on line 3. You can see the entire list of supported
+    syntactic symbols by hitting C-h v c-offsets-alist.
+
+    Here's another example:
+
+  Example 2:
+
+    1: int add( int val, int incr, int doit )
+    2: {
+    3:     if( doit )
+    4:         {
+    5:             return( val + incr );
+    6:         }
+    7:     return( val );
+    8: }
+
+    Hitting C-c C-s on line 4 gives us:
+
+    ((block-open) (substatement . 46))
+
+    which tells us 2 important things.  First, that there can be more
+    than one langelem on this list, and second, that a langelem need
+    not have a relpos (e.g. block-open).
+
+  Step 2: Indentation Calculation
+
+    Indentation for the current line is calculated from the list of
+    syntactic elements derived in step 1 using the following
+    algorithm.  For each cons cell in the list, the variable
+    c-offsets-alist is consulted to find a match of the syntactic
+    symbol. c-offset-alist is an association list of all possible
+    syntactic symbols and the offsets to apply for that symbol.
+
+    So, in example 1 above, cc-mode looks at the first cons cell in
+    the syntactic list, goes to buffer position 36, and records the
+    current column, which in this case is 4.  Next, cc-mode looks up
+    the symbol `statement' in c-offsets-alist.  Lets suppose it finds
+    this entry in the alist:
+
+    (statement . 5)
+
+    This says to add 5 to the running total offset (calculated as 4
+    above), yielding a total offset of 9.  Thus line 4 would be
+    indented 9 spaces from the left edge.  [In reality, you'd most
+    likely see this entry in the alist: (statement . 0) -- BAW].
+
+    In the second example above, the same process is performed, but
+    here we have 2 differences.  First there are two syntactic cons
+    cells in the list, and the first one does not have a relpos.  In
+    this case, when cc-mode finds the (block-open) cons cell, it
+    simply adds the offset found in c-offsets-alist without also
+    adding a relpos column.  Then it visits the next cons cell in the
+    list.  So lets say the c-offsets-alist variable had the following
+    two entries:
+
+    (block-open . 0)
+    (substatement . 4)
+
+    cc-mode would first add 0 to the running offset total (yielding
+    0), then it would move to buffer position 46 (the `i' in "if" on
+    line 3), at this column to the running total (now yielding 4),
+    then look up `substatement' in c-offsets-alist.  This gives an
+    additional offset of 4, yielding a total offset of 8 spaces.
+
+
+Customizing Indentation
+
+    The c-offsets-alist variable is where you customize all your
+    indentations.  You simply need to decide what addition offset you
+    want to apply to every syntactic language element.  You can use
+    the command C-c C-o (c-set-offset) as the way to set offsets, both
+    interactively and from your mode hook.
+
+    In fact, the offset value in c-offsets-alist can be an integer, or
+    it can be one of the symbols `+' or `-' indicating positive or
+    negative multiples of the variable c-basic-offset.  The value can
+    also be a function, which can really give you a lot of power in
+    customizing indentation.  Try "C-h v c-offsets-alist RET" for more
+    information.
+    
+
+Getting Started
+
+    cc-mode.el works with the 3 major releases of Emacs in use: GNU
+    Emacs 18, FSF Emacs 19, and Lucid Emacs 19.  FSF 19 users will
+    want version 19.21 or better, Lucid users will want 19.6 or
+    better.
+
+    First thing you want to do is to byte-compile cc-mode.el.  The
+    mode uses a lot of macros so if you don't byte-compile it, things
+    will be unbearably slow.  YOU CAN IGNORE ALL BYTE-COMPILER
+    WARNINGS!  They are the result of the multi-Emacs support and none
+    of the warnings have any effect on operation.
+
+    Most users will probably be running an Emacs that already has
+    c-mode.el dumped, and you will not want to use c-mode.el, or older
+    releases of c++-mode.el if you use cc-mode.el.  If your Emacs is
+    dumped with either of these files you first need to make Emacs
+    "forget" about those older modes by adding this to your .emacs
+    file:
+
+    (fmakunbound 'c-mode)
+    (makunbound 'c-mode-map)
+    (fmakunbound 'c++-mode)
+    (makunbound 'c++-mode-map)
+
+    Then you will want to add autoloads to your .emacs file so that
+    cc-mode gets loaded at the right time:
+
+    (autoload 'c++-mode "cc-mode" "C++ Editing Mode" t)
+    (autoload 'c-mode   "cc-mode" "C Editing Mode" t)
+
+    Next, you will want to set up Emacs so that it edits C files in
+    c-mode and C++ files in c++-mode (as defined from cc-mode.el). Add
+    the following to your .emacs file.  Note that this assumes you'll
+    be editing .h and .c files as C, and .hh, .C, and .cc files as
+    C++. Your mileage may vary:
+
+    (setq auto-mode-alist
+      (append '(("\\.C$"  . c++-mode)
+                ("\\.cc$" . c++-mode)
+                ("\\.hh$" . c++-mode)
+                ("\\.c$"  . c-mode)   ; to edit C code
+                ("\\.h$"  . c-mode)   ; to edit C code
+               ) auto-mode-alist))
+
+    I will mention also that if you maintain Emacs, you can trash
+    c-mode.el altogether and dump Emacs with cc-mode.el.  If you know
+    what this means, you probably already know how to do this.  If not
+    you can contact the help address for more information (see below).
+
+
+User level differences between cc-mode.el and c-mode.el (as
+distributed with FSF Emacs 19.22).
+
+    New Indentation Engine (described above).
+
+    Support for C++ editing via new defun `c++-mode', and new
+    variables `c++-mode-hook', `c++-mode-abbrev-table', and
+    `c++-mode-map'.
+
+    New variables:
+    	c-mode-common-hook
+    	c-strict-semantics-p
+        c-echo-semantic-information-p
+    	c-basic-offset
+    	c-offsets-alist
+    	c-comment-only-line-offset
+    	c-block-comments-indent-p
+    	c-cleanup-list
+    	c-hanging-braces-alist
+    	c-hanging-colons-alist
+    	c-untame-characters (GNU Emacs 18 users only)
+    	c-special-indent-hook
+    	c-delete-function
+    	c-electric-pound-behavior
+    	c-backscan-limit (GNU Emacs 18 users only)
+
+    Expanded semantics for variables:
+    	c-tab-always-indent
+	c-style-alist
+
+    New minor-mode features: auto-newline and hungry-delete-key (do
+    "C-h f c-toggle-auto-hungry-state RET" for more info).
+
+    Menubar support (Emacs 19 only).
+
+    New commands:
+    	c-toggle-auto-state         (C-c C-a)
+	c-toggle-hungry-state       (C-c C-d)
+	c-toggle-auto-hungry-state  (C-c C-t)
+	c-electric-delete           (DEL)
+    	c-electric-slash            (/)
+	c-electric-star             (*)
+	c-set-offset                (C-c C-o)
+	c-forward-into-nomenclature
+	c-backward-into-nomenclature
+	c-scope-operator
+	c-tame-insert               (Emacs 18 only)
+	c-tame-comments             (Emacs 18 only)
+	c-indent-defun              (M-C-x)
+	c-show-semantic-information (C-c C-s)
+	c-version                   (C-c C-v)
+	c-submit-bug-report         (C-c C-b)
+
+    Renamed commands:
+    	electric-c-brace      => c-electric-brace
+	electric-c-semi       => c-electric-semi&comma
+	electric-c-sharp-sign => c-electric-pound
+	mark-c-function       => c-mark-function
+    	electric-c-terminator => c-electric-colon
+	indent-c-exp          => c-indent-exp
+	set-c-style           => c-set-style
+
+    Obsolete variables:
+    	c-indent-level
+	c-brace-imaginary-offset
+	c-brace-offset
+	c-argdecl-indent
+	c-label-offset
+	c-continued-statement-offset
+	c-continued-brace-offset
+
+
+User level differences between cc-mode.el and c++-mode.el 2.353 (a.k.a
+cplus-md1.el in FSF 19):
+
+    New Indentation Engine (described above).
+
+    General rename of all variables and defuns from c++-<thing> to
+    c-<thing>.  I don't list them all individually here.
+
+    New variables:
+
+    New commands:
+
+    Other renamed commands/variables:
+    	c++-c-mode                    => c-mode
+	c++-C-block-comments-indent-p => c-block-comments-indent-p
+    	c++-hanging-braces            => c-hanging-braces-alist
+	c++-hanging-member-init-colon => c-hanging-colons-alist
+    	c++-default-macroize-column   => c-backslash-column
+	c++-macroize-region           => c-backslash-region
+
+    Obsolete variables/commands:
+    	c++-always-arglist-indent-p
+	c++-block-close-brace-offset
+	c++-paren-as-block-close-p
+	c++-continued-member-init-offset
+	c++-member-init-indent
+	c++-friend-offset
+	c++-access-specifier-offset
+	c++-empty-arglist-indent
+	c++-auto-hungry-initial-state
+	c++-auto-hungry-toggle
+	c++-relative-offset-p
+	c++-match-header-strongly
+	c++-beginning-of-defun
+	c++-end-of-defun
+	c++-insert-header
+	c++-match-paren
+	c++-forward-sexp
+	c++-backward-sexp
+    	c++-comment-region
+	c++-uncomment-region
+
+
+For more information
+
+    The best thing to do at this point is poke around the source code.
+    Eventually there will be an extensive texinfo manual describing
+    the mode in greater detail.
+
+
+Limitations and Known Bugs
+
+    c++-mode does not recognize exception constructs.
+
+    c++-mode does not recognize friends.
+
+
+Electronic Mail
+
+    To report bugs, use the C-c C-b (c-submit-bug-report) command.
+    This provides vital information I need to reproduce your problem.
+    Make sure you include a stripped down code example.
+
+    For other help, send a message to cc-mode-help@anthem.nlm.nih.gov.
+
+    To get on the beta testers list, send an add message to
+    cc-mode-victims-request@anthem.nlm.nih.gov.  Note that this is a
+    fairly technical discussion list so you should be moderately emacs
+    lisp fluent and have anonymous ftp access.
+
+    There is also an announce only list where you will get beta
+    version update diffs, but will not join in the technical
+    discussions.  Still, you should have anon-ftp.  Send an add
+    message to cc-mode-announce-request@anthem.nlm.nih.gov to be added
+    to this list.
