@@ -7,8 +7,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@merlin.cnri.reston.va.us
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.249 $
-;; Last Modified:   $Date: 1995-11-22 19:52:05 $
+;; Version:         $Revision: 4.250 $
+;; Last Modified:   $Date: 1995-11-27 15:50:58 $
 ;; Keywords: c languages oop
 
 ;; NOTE: Read the commentary below for the right way to submit bug reports!
@@ -106,7 +106,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@merlin.cnri.reston.va.us
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1995-11-22 19:52:05 $|$Revision: 4.249 $|
+;; |$Date: 1995-11-27 15:50:58 $|$Revision: 4.250 $|
 
 ;;; Code:
 
@@ -1022,11 +1022,6 @@ message.
 
 To see what version of cc-mode you are running, enter `\\[c-version]'.
 
-Note that the details of configuring c++-mode have been moved to the
-accompanying texinfo manual (which is not yet completed -- volunteers
-are welcome).  Until then, please read the README file that came with
-the cc-mode distribution.
-
 The hook variable `c++-mode-hook' is run with no args, if that
 variable is bound and has a non-nil value.  Also the common hook
 c-mode-common-hook is run first, by this defun, `c-mode', and `objc-mode'.
@@ -1061,11 +1056,6 @@ information already added.  You just need to add a description of the
 problem, including a reproducable test case and send the message.
 
 To see what version of cc-mode you are running, enter `\\[c-version]'.
-
-Note that the details of configuring c-mode have been moved to the
-accompanying texinfo manual (which is not yet completed -- volunteers
-are welcome).  Until then, please read the README file that came with
-the cc-mode distribution.
 
 The hook variable `c-mode-hook' is run with no args, if that value is
 bound and has a non-nil value.  Also the common hook
@@ -1102,11 +1092,6 @@ of the problem, including a reproducable test case and send the
 message.
 
 To see what version of cc-mode you are running, enter `\\[c-version]'.
-
-Note that the details of configuring objc-mode have been moved to the
-accompanying texinfo manual (which is not yet completed -- volunteers
-are welcome).  Until then, please read the README file that came with
-the cc-mode distribution.
 
 The hook variable `objc-mode-hook' is run with no args, if that value
 is bound and has a non-nil value.  Also the common hook
@@ -4562,7 +4547,7 @@ definition and conveniently use this command."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.249 $"
+(defconst c-version "$Revision: 4.250 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@merlin.cnri.reston.va.us"
   "Address accepting submission of bug reports.")
