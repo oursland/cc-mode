@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-01 21:09:09 $
-;; Version:         $Revision: 2.24 $
+;; Last Modified:   $Date: 1992-05-02 18:12:21 $
+;; Version:         $Revision: 2.25 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-01 21:09:09 $|$Revision: 2.24 $|
+;; |$Date: 1992-05-02 18:12:21 $|$Revision: 2.25 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -92,7 +92,7 @@ with previous initializations rather than with the colon on the first line.")
 list.  Nil indicates to just after the paren.")
 (defvar c++-comment-only-line-offset 4
   "*Indentation offset for line which contains only C or C++ style comments.")
-(defvar c++-cleanup-}-else-{ t
+(defvar c++-cleanup-}-else-{-p t
   "*Controls whether } else { style should remain on a single line.
 When t, cleans up this style (when only whitespace intervenes).")
 (defvar c++-hanging-braces t
@@ -143,7 +143,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.24 $
+  "Major mode for editing C++ code.  $Revision: 2.25 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -203,7 +203,7 @@ c++-<thing> are unique for this mode.
     left paren. If nil, it lines up with the left paren.
  c++-comment-only-line-offset
     Extra indentation for a line containing only a C or C++ style comment.
- c++-cleanup-}-else-{
+ c++-cleanup-}-else-{-p
     Controls whether } else { style (with only whitespace intervening)
     should be cleaned up so that it sits on only a single line.
  c++-hanging-braces
@@ -429,7 +429,7 @@ backward-delete-char-untabify."
 		   t)))
 	(progn
 	  (insert last-command-char)
-	  (if (and c++-cleanup-}-else-{
+	  (if (and c++-cleanup-}-else-{-p
 		   (= (preceding-char) ?\{)
 		   (save-excursion
 		     (forward-char -1)
@@ -1406,7 +1406,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.24 $"
+(defconst c++-version "$Revision: 2.25 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
@@ -1430,7 +1430,7 @@ Send bug reports to c++-mode-help@anthem.nlm.nih.gov"
 		       'c++-friend-offset
 		       'c++-empty-arglist-indent
 		       'c++-comment-only-line-offset
-		       'c++-cleanup-}-else-{
+		       'c++-cleanup-}-else-{-p
 		       'c++-hanging-braces
 		       'c++-hanging-member-init-colon
 		       'c++-mode-line-format
