@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.121 $
-;; Last Modified:   $Date: 1993-12-17 19:22:09 $
+;; Version:         $Revision: 3.122 $
+;; Last Modified:   $Date: 1993-12-17 21:42:27 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -79,7 +79,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1993-12-17 19:22:09 $|$Revision: 3.121 $|
+;; |$Date: 1993-12-17 21:42:27 $|$Revision: 3.122 $|
 
 ;;; Code:
 
@@ -627,7 +627,7 @@ that users are familiar with.")
 ;; main entry points for the modes
 (defun c++-mode ()
   "Major mode for editing C++ code.
-CC-MODE REVISION: $Revision: 3.121 $
+CC-MODE REVISION: $Revision: 3.122 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -660,7 +660,7 @@ Key bindings:
 
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-CC-MODE REVISION: $Revision: 3.121 $
+CC-MODE REVISION: $Revision: 3.122 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -2726,14 +2726,19 @@ Useful for defining cpp macros.  If called with a prefix argument,
 it will remove trailing backslashes."
   (interactive "r\nP")
   (save-excursion
-    (save-restriction
-      (narrow-to-region
-       (progn (goto-char beg) (c-point 'bol))
-       (progn (goto-char end) (c-point 'bonl)))
-      (goto-char (point-min))
-      (while (not (eobp))
-	(c-backslashify-current-line (null arg))
-	(forward-line 1))))
+    (let ((do-lastline-p (progn (goto-char end) (not (bolp)))))
+      (save-restriction
+	(narrow-to-region beg end)
+	(goto-char (point-min))
+	(while (not (save-excursion
+		      (forward-line 1)
+		      (eobp)))
+	  (c-backslashify-current-line (null arg))
+	  (forward-line 1)))
+      (and do-lastline-p
+	   (progn (goto-char end)
+		  (c-backslashify-current-line (null arg))))
+      ))
   (c-keep-region-active))
 
 (defun c-comment-region (beg end arg)
@@ -2744,9 +2749,7 @@ region."
   (interactive "*r\nP")
   (save-excursion
     (save-restriction
-      (narrow-to-region
-       (progn (goto-char beg) (c-point 'bol))
-       (progn (goto-char end) (c-point 'bonl)))
+      (narrow-to-region beg end)
       (goto-char (point-min))
       (if (not arg)
 	  (progn
@@ -2771,7 +2774,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.121 $"
+(defconst c-version "$Revision: 3.122 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
