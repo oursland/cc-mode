@@ -1,3 +1,46 @@
+Mon Oct  6 19:12:51 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* Release 5.19
+
+Mon Oct  6 19:09:17 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-guess-basic-syntax):
+	CASE 5F: extern-lang-close relpos should be
+	element 0 of inclass-p, not element 1.
+
+	* cc-cmds.el (c-progress-init, c-progress-fini):
+	Be slient if c-progress-interval
+	is nil.
+
+	* cc-vars.el (c-progress-interval): Document new semantics
+
+Fri Oct  3 23:10:04 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-engine.el (c-beginning-of-statement-1):
+	Watch out for keywords which have a
+	preceding underscore.
+
+Fri Sep 26 23:30:58 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-menus.el: Patches to Imenu support given by 
+	"Masatake (jet) YAMATO" <masata-y@is.aist-nara.ac.jp>.
+	(Jan Dubois) jan.dubois@ibm.net
+
+	* cc-cmds.el (c-comment-line-break-function):
+	Fix for when comment starts at
+	comment-column and there is non-whitespace preceding this on the
+	current line.
+
+	* cc-mode.el (c-submit-bug-report): Remove c-recognize-knr-p.  Add
+	c-comment-continuation-stars.
+
+Mon Sep 22 15:47:02 1997  Barry A. Warsaw  <cc-mode-help@python.org>
+
+	* cc-styles.el (c-initialize-builtin-style):
+	Only use copy-tree if it is
+	funcall-able.  This is the right patch, and was given by Erik Naggum
+	<erik@naggum.no>
+
 Tue Sep 16 19:23:24 1997  Barry A. Warsaw  <cc-mode-help@python.org>
 
 	* Release 5.18
