@@ -32,13 +32,13 @@
 
     <li><code>space-before-funcall</code> causes a space to be
     inserted before the opening parenthesis of a function call, which
-    gives the style "<code>foo (bar)</code>".
+    gives the style "<code>foo&nbsp;(bar)</code>".
 
     <li><code>compact-empty-funcall</code> causes any space before a
     function call opening parenthesis to be removed if there are no
     arguments to the function.  It's typically useful together with
-    space-before-funcall to get the style "<code>foo (bar)</code>" and
-    "<code>foo()</code>".
+    space-before-funcall to get the style
+    "<code>foo&nbsp;(bar)</code>" and "<code>foo()</code>".
 
   </ul>
 
