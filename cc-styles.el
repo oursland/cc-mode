@@ -223,7 +223,7 @@ the existing style.")
 		       (assoc (upcase style) c-style-alist)
 		       (assoc style c-style-alist)
 		       (error "Undefined style: %s" style)))))
-    (if (not (member style '("user" "cc-mode")))
+    (if (not (string-equal style "user"))
 	(let ((base (if (stringp (car vars))
 			(prog1
 			    (downcase (car vars))
@@ -602,7 +602,7 @@ offset for that syntactic element.  Optional ADD says to add SYMBOL to
 			c-hanging-comment-ender-p
 			c-offsets-alist
 			)))
-	(c-add-style "cc-mode" "user")
+	(c-add-style "cc-mode" '("user"))
 	;; the default style is now GNU.  This can be overridden in
 	;; c-mode-common-hook or {c,c++,objc,java}-mode-hook.
 	(c-set-style c-default-style)))
