@@ -2903,10 +2903,11 @@ This function does not do any hidden buffer changes."
 (defun c-forward-type ()
   ;; If the point is at the beginning of a type spec, move to the end
   ;; of it.  Return t if it is a known type, nil if it isn't (the
-  ;; point isn't moved), 'prefix if it is a known prefix of a type,
-  ;; 'found if it's a type that matches one in `c-found-types', or
-  ;; 'maybe if it's an identfier that might be a type.  The point is
-  ;; assumed to be at the beginning of a token.
+  ;; point isn't moved), 'prefix if it is a known prefix of a type
+  ;; (according to `c-type-prefix-kwds'), 'found if it's a type that
+  ;; matches one in `c-found-types', or 'maybe if it's an identfier
+  ;; that might be a type.  The point is assumed to be at the
+  ;; beginning of a token.
   ;;
   ;; Note that this function doesn't skip past the brace definition
   ;; that might be considered part of the type, e.g.
@@ -2923,23 +2924,21 @@ This function does not do any hidden buffer changes."
 
     (cond
      ((and c-opt-complex-type-key
-	   (looking-at c-opt-complex-type-key))
-      ;; It's a type, but it might also be a complex one if it's
-      ;; followed by a parenthesis.  This only applies to Pike.
-      (setq pos (point))
-      (goto-char (match-end 1))
-      (let ((end (point)))
-	(c-forward-syntactic-ws)
-	(if (and (eq (char-after) ?\()
-		 (c-safe (c-forward-sexp 1) t))
-	    (setq end (point))
-	  (goto-char end))
-	(when c-fontify-types-and-refs
+	   (looking-at c-opt-complex-type-key)
+	   (save-excursion
+	     (goto-char (match-end 1))
+	     (c-forward-syntactic-ws)
+	     (and (eq (char-after) ?\()
+		  (c-safe (c-forward-sexp 1) t)
+		  (setq pos (point)))))
+      ;; It's a complex type where the type name is followed by a
+      ;; parenthesis expression containing a type spec.
+      (if c-fontify-types-and-refs
 	  ;; Fontify all the symbols within the complex type.
-	  (goto-char pos)
-	  (while (c-syntactic-re-search-forward c-symbol-key end 'move)
+	  (while (c-syntactic-re-search-forward c-symbol-key pos 'move)
 	    (c-put-type-face (match-beginning 0) (match-end 0))
-	    (goto-char (match-end 0)))))
+	    (goto-char (match-end 0)))
+	(goto-char pos))
       (setq res t))
 
      ((looking-at c-type-prefix-key)
