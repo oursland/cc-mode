@@ -824,12 +824,11 @@ comment."
 		     (end (save-excursion
 			    (goto-char (- (cdr range)
 					  (if (eq lit-type 'c) 2 1)))
-			    (point)))
-		     in-comment-prefix)
+			    (point))))
 		;; move by sentence, but not past the limit of the literal
 		(save-restriction
 		  (narrow-to-region beg end)
-		  (c-safe (forward-sentence (- (signum count))))
+		  (c-safe (forward-sentence (if (< count 0) 1 -1)))
 		  (if (and (memq lit-type '(c c++))
 			   ;; Check if we stopped due to a comment
 			   ;; prefix and not a sentence end.
@@ -860,7 +859,7 @@ comment."
 						 t))
 					   (< (match-end 0)
 					      (c-point 'eol)))))))))
-		      (setq count (+ (signum count) count))
+		      (setq count (+ count (if (< count 0) -1 1)))
 		    (if (< count 0)
 			(progn
 			  ;; In block comments, if there's only
@@ -2149,14 +2148,14 @@ Warning: `c-comment-prefix-regexp' doesn't match the comment prefix %S"
 		  (forward-char 2)
 		  (skip-chars-forward " \t"))
 		(while (< (current-column) (cdr fill)) (forward-char 1))
-		(setq col (current-column))
-		(setq beg (1+ (point))
-		      tmp-pre (list (point)))
-		(unwind-protect
-		    (progn
-		      (insert ?\n (car fill))
-		      (insert (make-string (- col (current-column)) ?x)))
-		  (setcdr tmp-pre (point)))))
+		(let ((col (current-column)))
+		  (setq beg (1+ (point))
+			tmp-pre (list (point)))
+		  (unwind-protect
+		      (progn
+			(insert ?\n (car fill))
+			(insert (make-string (- col (current-column)) ?x)))
+		    (setcdr tmp-pre (point))))))
 	    (when beg
 	      (let ((fill-paragraph-function
 		     ;; Avoid infinite recursion.
@@ -2231,8 +2230,7 @@ If a fill prefix is specified, it overrides all the above."
 	;; Already know the literal type and limits when called from
 	;; c-context-line-break.
 	(c-lit-limits (if (boundp 'c-lit-limits) c-lit-limits))
-	(c-lit-type (if (boundp 'c-lit-type) c-lit-type))
-	col)
+	(c-lit-type (if (boundp 'c-lit-type) c-lit-type)))
     (when (boundp 'c-auto-fill-prefix)
       ;; Called from do-auto-fill.
       (unless c-lit-limits
@@ -2302,7 +2300,8 @@ If a fill prefix is specified, it overrides all the above."
 		   (insert-and-inherit (car fill))))
 	     ;; Inside a comment that should be broken.
 	     (let ((comment-start comment-start)
-		   (comment-end comment-end))
+		   (comment-end comment-end)
+		   col)
 	       (if (eq c-lit-type 'c)
 		   (unless (string-match "[ \t]*/\\*" comment-start)
 		     (setq comment-start "/* " comment-end " */"))
@@ -2324,13 +2323,13 @@ If a fill prefix is specified, it overrides all the above."
 	       (indent-for-comment))))
 	  (t
 	   ;; Somewhere else in the code.
-	   (setq col (save-excursion
-		       (while (progn (back-to-indentation)
-				     (and (looking-at "^\\s *$")
-					  (= (forward-line -1) 0))))
-		       (current-column)))
-	   (funcall do-line-break)
-	   (indent-to col)))))
+	   (let ((col (save-excursion
+			(while (progn (back-to-indentation)
+				      (and (looking-at "^\\s *$")
+					   (= (forward-line -1) 0))))
+			(current-column))))
+	     (funcall do-line-break)
+	     (indent-to col))))))
 
 (defalias 'c-comment-line-break-function 'c-indent-new-comment-line)
 (make-obsolete 'c-comment-line-break-function 'c-indent-new-comment-line)

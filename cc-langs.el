@@ -284,7 +284,6 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
   (make-local-variable 'paragraph-ignore-fill-prefix)
   (make-local-variable 'adaptive-fill-mode)
   (make-local-variable 'adaptive-fill-regexp)
-  (make-local-variable 'adaptive-fill-first-line-regexp)
   (make-local-variable 'imenu-generic-expression) ;set in the mode functions
   ;; X/Emacs 20 only
   (and (boundp 'comment-line-break-function)
@@ -332,13 +331,16 @@ Otherwise, this variable is nil. I.e. this variable is non-nil for
 	  (concat comment-line-prefix
 		  (if adaptive-fill-regexp
 		      (concat "\\(" adaptive-fill-regexp "\\)")
-		    ""))
-	  adaptive-fill-first-line-regexp
-	  (concat "\\`" comment-line-prefix
-		  ;; Maybe we should incorporate the old value here,
-		  ;; but then we have to do all sorts of kludges to
-		  ;; deal with the \` and \' it probably contains.
-		  "\\'")))
+		    "")))
+    (when (boundp 'adaptive-fill-first-line-regexp)
+      ;; XEmacs (20.x) adaptive fill mode doesn't have this.
+      (make-local-variable 'adaptive-fill-first-line-regexp)
+      (setq adaptive-fill-first-line-regexp
+	    (concat "\\`" comment-line-prefix
+		    ;; Maybe we should incorporate the old value here,
+		    ;; but then we have to do all sorts of kludges to
+		    ;; deal with the \` and \' it probably contains.
+		    "\\'"))))
   ;; we have to do something special for c-offsets-alist so that the
   ;; buffer local value has its own alist structure.
   (setq c-offsets-alist (copy-alist c-offsets-alist))
