@@ -915,11 +915,11 @@ can always override the use of `c-default-style' by making calls to
        (arglist-cont          . (c-lineup-gcc-asm-reg 0))
        ;; Relpos: At the first token after the open paren.
        (arglist-cont-nonempty . (c-lineup-gcc-asm-reg c-lineup-arglist))
-       ;; Relpos: Boi at the open paren, or at the first non-ws after
-       ;; the open paren of the surrounding sexp, whichever is later.
+       ;; Relpos: At the containing statement(*).
+       ;; 2nd pos: At the open paren.
        (arglist-close         . +)
-       ;; Relpos: Boi at the open paren, or at the first non-ws after
-       ;; the open paren of the surrounding sexp, whichever is later.
+       ;; Relpos: At the containing statement(*).
+       ;; 2nd pos: At the open paren.
        (stream-op             . c-lineup-streamop)
        ;; Relpos: Boi at the first stream op in the statement.
        (inclass               . +)
