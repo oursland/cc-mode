@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-09 21:54:08 $
-;; Version:         $Revision: 2.143 $
+;; Last Modified:   $Date: 1992-07-10 16:35:14 $
+;; Version:         $Revision: 2.144 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-09 21:54:08 $|$Revision: 2.143 $|
+;; |$Date: 1992-07-10 16:35:14 $|$Revision: 2.144 $|
 
 
 ;; ======================================================================
@@ -251,7 +251,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.143 $
+  "Major mode for editing C++ code.  $Revision: 2.144 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1422,7 +1422,7 @@ BOD is the beginning of the C++ definition."
 				    (forward-char 1)
 				    (skip-chars-forward " \t")
 				    (- (current-column)
-				       c++-class-member-indent)))
+				       inclass-shift)))
 			      ;; else first check to see if its a
 			      ;; multiple inheritance continuation line
 			      (if (looking-at
@@ -1942,7 +1942,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.143 $"
+(defconst c++-version "$Revision: 2.144 $"
   "c++-mode version number.")
 
 (defun c++-version ()
