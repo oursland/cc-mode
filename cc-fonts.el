@@ -544,7 +544,11 @@
 		     ;; declaration in the file, but we have to step past
 		     ;; initial comments to avoid that the
 		     ;; match-inside-comment-or-string-literal code kicks in.
-		     (progn (c-forward-comments) t)
+		     (progn (c-forward-comments)
+			    ;; Setup the match data since we'll do a
+			    ;; (match-beginning 0) below.
+			    (looking-at "")
+			    t)
 		   (re-search-forward c-decl-prefix-re limit 'move)))
 	  match-pos
 	  ;; The position to continue searching at.
@@ -659,7 +663,8 @@
 	    (goto-char match-pos)
 	    (when (>= match-pos macro-end)
 	      (setq macro-end
-		    (if (save-excursion (c-beginning-of-macro))
+		    (if (save-excursion (and (c-beginning-of-macro)
+					     (< (point) match-pos)))
 			(progn (c-end-of-macro)
 			       (point))
 		      -1))))
