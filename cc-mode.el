@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.11 $
-;; Last Modified:   $Date: 1993-09-27 15:36:22 $
+;; Version:         $Revision: 3.12 $
+;; Last Modified:   $Date: 1993-09-27 15:52:25 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -124,7 +124,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-09-27 15:36:22 $|$Revision: 3.11 $|
+;; |$Date: 1993-09-27 15:52:25 $|$Revision: 3.12 $|
 
 ;;; Code:
 
@@ -479,7 +479,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.11 $
+  "Major mode for editing C++ code.  $Revision: 3.12 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -713,7 +713,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.11 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.12 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1844,21 +1844,16 @@ point of the beginning of the C++ definition."
   (let* ((bod (or bod (c++-point 'bod)))
 	 (indent (c++-calculate-indent nil bod))
 	 beg shift-amt
-	 close-paren top-close-paren
-	 open-paren top-open-paren
+	 (close-paren (or (car-safe c++-block-close-brace-offset)
+			  c++-block-close-brace-offset))
+	 (top-close-paren (or (cdr-safe c++-block-close-brace-offset)
+			      c++-block-close-brace-offset))
+	 (open-paren (or (car-safe c-brace-offset)
+			 c-brace-offset))
+	 (top-open-paren (or (cdr-safe c-brace-offset)
+			     c-brace-offset))
 	 (case-fold-search nil)
 	 (pos (- (point-max) (point))))
-    ;; calculate block open and close paren offsets
-    (if (listp c++-block-close-brace-offset)
-	(setq close-paren (car c++-block-close-brace-offset)
-	      top-close-paren (cdr c++-block-close-brace-offset))
-      (setq close-paren c++-block-close-brace-offset
-	    top-close-paren c++-block-close-brace-offset))
-    (if (listp c-brace-offset)
-	(setq open-paren (car c-brace-offset)
-	      top-open-paren (cdr c-brace-offset))
-      (setq open-paren c-brace-offset
-	    top-open-paren c-brace-offset))
     ;; now start cleanup
     (beginning-of-line)
     (setq beg (point))
@@ -1922,11 +1917,10 @@ point of the beginning of the C++ definition."
        ((= (following-char) ?{)
 	(setq indent
 	      (+ indent
-		 ;; c-brace-offset can now take a list or an integer
-		 (if (listp c-brace-offset)
-		     (if (c++-at-top-level-p nil bod)
-			 top-open-paren
-		       open-paren)))))
+		 (if (c++-at-top-level-p t bod)
+		     top-open-paren
+		   open-paren)
+		 )))
        )))				; end-cond
     (skip-chars-forward " \t")
     (setq shift-amt (- indent (current-column)))
@@ -2015,12 +2009,10 @@ BOD is the beginning of the C++ definition."
 	  containing-sexp streamop-pos char-before-ip
 	  (inclass-shift 0) inclass-depth inclass-unshift
 	  (bod (or bod (c++-point 'bod)))
-	  (open-paren (if (listp c-brace-offset)
-			  (car c-brace-offset)
-			c-brace-offset))
-	  (top-open-paren (if (listp c-brace-offset)
-			      (cdr c-brace-offset)
-			    c-brace-offset))
+	  (open-paren (or (car-safe c-brace-offset)
+			  c-brace-offset))
+	  (top-open-paren (or (cdr-safe c-brace-offset)
+			      c-brace-offset))
 	  )				;end-let
       (if parse-start
 	  (goto-char parse-start)
@@ -2645,7 +2637,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.11 $"
+(defconst c++-version "$Revision: 3.12 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
