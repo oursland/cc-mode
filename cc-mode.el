@@ -950,13 +950,11 @@ Key bindings:
 		   '(c-tab-always-indent
 		     c-syntactic-indentation
 		     c-syntactic-indentation-in-macros
-		     c-comment-only-line-offset
 		     c-ignore-auto-fill
 		     c-auto-align-backslashes
 		     c-backspace-function
 		     c-delete-function
 		     c-electric-pound-behavior
-		     c-special-indent-hook
 		     c-default-style
 		     c-enable-xemacs-performance-kludge-p
 		     c-old-style-variable-behavior
@@ -979,7 +977,6 @@ Key bindings:
 		     adaptive-fill-mode
 		     adaptive-fill-regexp)
 		   nil)))
-	(delq 'c-special-indent-hook vars)
 	(mapcar (lambda (var) (unless (boundp var) (delq var vars)))
 		'(signal-error-on-buffer-boundary
 		  filladapt-mode
