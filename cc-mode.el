@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.186 $
-;; Last Modified:   $Date: 1994-01-12 00:04:20 $
+;; Version:         $Revision: 3.187 $
+;; Last Modified:   $Date: 1994-01-12 00:09:53 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Free Software Foundation, Inc.
@@ -82,7 +82,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, and ANSI/K&R C code
-;; |$Date: 1994-01-12 00:04:20 $|$Revision: 3.186 $|
+;; |$Date: 1994-01-12 00:09:53 $|$Revision: 3.187 $|
 
 ;;; Code:
 
@@ -235,6 +235,7 @@ in the line's indentation, otherwise it insert a real tab character.
 If other than nil or t, then tab is inserted only within literals
 -- defined as comments and strings -- and inside preprocessor
 directives, but line is always reindented.")
+
 (defvar c-comment-only-line-offset 0
   "*Extra offset for line which contains only the start of a comment.
 Can contain an integer or a cons cell of the form:
@@ -245,6 +246,7 @@ Where NON-ANCHORED-OFFSET is the amount of offset given to
 non-column-zero anchored comment-only lines, and ANCHORED-OFFSET is
 the amount of offset to give column-zero anchored comment-only lines.
 Just an integer as value is equivalent to (<val> . 0)")
+
 (defvar c-block-comments-indent-p nil
   "*Specifies how to re-indent C style block comments.
 
@@ -259,8 +261,8 @@ manually.
  /*             /*             /*             /*
     blah         * blah        ** blah        blah
     blah         * blah        ** blah        blah
-    */           */            */             */
-")
+    */           */            */             */")
+
 (defvar c-cleanup-list '(scope-operator)
   "*List of various C/C++ constructs to \"clean up\".
 These clean ups only take place when the auto-newline feature is turned
@@ -625,12 +627,9 @@ supported list, along with the values for this variable:
   "Internal state of auto newline feature.")
 (defvar c-semantics nil
   "Variable containing semantics list during indentation.")
-(defvar c-style-name nil
-  "The style name for a cc-mode indentation style.")
 
 (make-variable-buffer-local 'c-auto-newline)
 (make-variable-buffer-local 'c-hungry-delete-key)
-(make-variable-buffer-local 'c-style-name)
 
 ;; cmacexp is lame because it uses no preprocessor symbols.
 ;; It isn't very extensible either -- hardcodes /lib/cpp.
@@ -683,7 +682,7 @@ behavior that users are familiar with.")
 ;;;###autoload
 (defun c++-mode ()
   "Major mode for editing C++ code.
-cc-mode Revision: $Revision: 3.186 $
+cc-mode Revision: $Revision: 3.187 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -714,7 +713,7 @@ Key bindings:
 ;;;###autoload
 (defun c-mode ()
   "Major mode for editing K&R and ANSI C code.
-cc-mode Revision: $Revision: 3.186 $
+cc-mode Revision: $Revision: 3.187 $
 To submit a problem report, enter `\\[c-submit-bug-report]' from a
 c-mode buffer.  This automatically sets up a mail buffer with version
 information already added.  You just need to add a description of the
@@ -785,11 +784,6 @@ Key bindings:
 	 (setcdr name (append hack (cdr name)))
 	 (put 'mode-line-format 'c-hacked-mode-line t)
 	 ))
-  (and (listp minor-mode-alist)
-       (not (assq 'c-style-name minor-mode-alist))
-       (setq minor-mode-alist
-	     (append minor-mode-alist '((c-style-name c-style-name)))
-	     ))
   (run-hooks 'c-mode-common-hook))
 
 
@@ -1366,8 +1360,6 @@ the `c-style-alist' variable."
   (let ((vars (cdr (assoc style c-style-alist))))
     (or vars
 	(error "Invalid C indentation style `%s'" style))
-    ;; set the c-style-name variable
-    (setq c-style-name (concat " " style))
     ;; set all the variables
     (mapcar
      (function
@@ -2978,7 +2970,7 @@ region."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 3.186 $"
+(defconst c-version "$Revision: 3.187 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
