@@ -3198,15 +3198,15 @@ brace."
   ;; This function does not do any hidden buffer changes.
   (setq c-found-types (make-vector 53 0)))
 
-(defsubst c-add-type (from to)
-  ;; Add the given region as a type in `c-found-types'.  If there's
-  ;; already a type which is equal to the given one except that the
-  ;; last character is missing, it's removed.  That's done to avoid
-  ;; adding all prefixes of a type as it's being entered and font
-  ;; locked.  This doesn't cover cases like when characters are
-  ;; removed from a type or added in the middle.  We'd need the
-  ;; position of point when the font locking is invoked to solve this
-  ;; well.
+(defun c-add-type (from to)
+  ;; Add the given region as a type in `c-found-types'.  If the region
+  ;; doesn't match an existing type but there is a type which is equal
+  ;; to the given one except that the last character is missing, then
+  ;; the shorter type is removed.  That's done to avoid adding all
+  ;; prefixes of a type as it's being entered and font locked.  This
+  ;; doesn't cover cases like when characters are removed from a type
+  ;; or added in the middle.  We'd need the position of point when the
+  ;; font locking is invoked to solve this well.
   (unless (and c-recognize-<>-arglists
 	       (save-excursion
 		 (goto-char from)
@@ -3216,8 +3216,9 @@ brace."
     ;; the type then probably contains a C++ template spec and those
     ;; can be fairly sized programs in themselves.
     (let ((type (c-syntactic-content from to)))
-      (unintern (substring type 0 -1) c-found-types)
-      (intern type c-found-types))))
+      (unless (intern-soft type c-found-types)
+	(unintern (substring type 0 -1) c-found-types)
+	(intern type c-found-types)))))
 
 (defsubst c-check-type (from to)
   ;; Return non-nil if the given region contains a type in
