@@ -16,7 +16,7 @@ Mode to get better handling of e.g. bulleted lists in comments.
 
   <p><li>Make sure you have Filladapt installed.  It's available from
   <a href="http://wonderworks.com/">the canonical web site</a>.  You
-  can also download <a href="filladapt.el.orig">version 2.12</a> from
+  can also download <a href="filladapt-orig.el">version 2.12</a> from
   the CC Mode site.
 
   <p>You might instead want to download a <a
@@ -64,7 +64,7 @@ three ways:
   awkward behavior when editing comments.
 
   <p><li>Download this <a href="filladapt.el.diff">patch</a> and apply
-  it to the original <a href="filladapt.el.orig">2.12 version</a>.
+  it to the original <a href="filladapt-orig.el">2.12 version</a>.
   There's also an already <a href="filladapt.el">patched</a> version
   available.
 
