@@ -5,8 +5,8 @@
 ;; Author: 1995 Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
 ;; Maintainer:    cc-mode-help@anthem.nlm.nih.gov
 ;; Created:       March 1995
-;; Version:       $Revision: 1.2 $
-;; Last Modified: $Date: 1995-03-29 23:11:57 $
+;; Version:       $Revision: 1.3 $
+;; Last Modified: $Date: 1995-05-03 13:37:40 $
 ;; Keywords: C++ C Objective-C cc-mode
 
 ;; This file is not part of GNU Emacs.
@@ -27,24 +27,36 @@
 
 ;;; Commentary:
 ;;
-;; Even though every effort is made to make cc-mode the fastest it can
-;; be, by the nature of the C, C++, and Objective-C language
-;; definitions, some performance enhancements simply require less than
-;; accurate recognition of language constructs.  I believe it is
-;; always best to be correct, and that the mode is currently fast
-;; enough for most normal usage.  Others disagree.  I have no
-;; intention of including these hacks in the main distribution.  When
-;; cc-mode version 5 comes out, it will include a rewritten
-;; indentation engine so it should be much faster automatically.
+;; Every effort has been made to improve the performance of
+;; cc-mode. However, due to the nature of the C, C++, and Objective-C
+;; language definitions, a trade-off is often required between
+;; accuracy of construct recognition and speed. I believe it is always
+;; best to be correct, and that the mode is currently fast enough for
+;; most normal usage.  Others disagree.  I have no intention of
+;; including these hacks in the main distribution.  When cc-mode
+;; version 5 comes out, it will include a rewritten indentation engine
+;; so that performance will be greatly improved automatically, at the
+;; expense of breaking Emacs 18 support.
 ;;
-;; Note that if you use the hacks in this file, don't complain to me
-;; about incorrect indentation.  That's the price you pay for speed in
-;; some circumstances so you'll have to live with it.
+;; You can expect possibly incorrect indentation within class and
+;; struct declarations and within brace lists.  There may be other
+;; places where indentation breaks, so if you use the hacks in this
+;; file, don't complain to me about incorrect indentation.  That's the
+;; price you pay for speed in some circumstances so you'll have to
+;; live with it!  Most incorrect indentation can probably be corrected
+;; by hand though.
+;;
+;; To use this file, just `require' it by adding the following to your
+;; .emacs file:
+;;
+;;   (require 'cc-lobotomy)
+;;
+;; This will redefine certain cc-mode functions.
 
 ;; LCD Archive Entry:
 ;; cc-lobotomy|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |excise portions of cc-mode in the name of speed
-;; |$Date: 1995-03-29 23:11:57 $|$Revision: 1.2 $|
+;; |$Date: 1995-05-03 13:37:40 $|$Revision: 1.3 $|
 
 
 ;;; Code:
