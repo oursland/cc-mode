@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-08-20 17:24:06 $
-;; Version:         $Revision: 2.186 $
+;; Last Modified:   $Date: 1992-08-20 19:29:00 $
+;; Version:         $Revision: 2.187 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -85,7 +85,7 @@
 ;; =================
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-08-20 17:24:06 $|$Revision: 2.186 $|
+;; |$Date: 1992-08-20 19:29:00 $|$Revision: 2.187 $|
 
 
 ;; ======================================================================
@@ -331,7 +331,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.186 $
+  "Major mode for editing C++ code.  $Revision: 2.187 $
 To submit a bug report, enter \"\\[c++-submit-bug-report]\"
 from a c++-mode buffer.
 
@@ -532,7 +532,7 @@ message."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing C code based on c++-mode. $Revision: 2.186 $
+  "Major mode for editing C code based on c++-mode. $Revision: 2.187 $
 Documentation for this mode is available by doing a
 \"\\[describe-function] c++-mode\"."
   (interactive)
@@ -1248,8 +1248,9 @@ the \"real\" top level.  Optional BOD is the beginning of defun."
 		      (or (c++-in-literal bod)
 			  (c++-in-parens-p bod)
 			  ;; see if class key is inside a template spec
-			  (skip-chars-backward " \t")
-			  (memq (preceding-char) '(?, ?<))))))
+			  (and (looking-at c++-class-key)
+			       (progn (skip-chars-backward " \t\n")
+				      (memq (preceding-char) '(?, ?<))))))))
 	(if (memq (following-char) '(?} ?\;))
 	    nil
 	  (setq state (c++-parse-state containing-sexp))
@@ -2121,7 +2122,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.186 $"
+(defconst c++-version "$Revision: 2.187 $"
   "c++-mode version number.")
 
 (defun c++-version ()
