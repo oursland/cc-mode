@@ -770,7 +770,8 @@ defun.  Returns t unless search stops due to beginning or end of buffer.
 By a \"defun\" is meant either a pattern-action pair or a function.  The start
 of a defun is recognised as code starting at column zero which is neither a
 closing brace nor a comment nor a continuation of the previous line.  Unlike
-in some other modes, having an opening brace at column 0 isn't necessary."
+in some other modes, having an opening brace at column 0 is neither necessary
+nor helpful."
   (interactive "p")
   (save-match-data
     (c-save-buffer-state                ; ensures the buffer is writable.
