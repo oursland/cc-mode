@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-05-07 19:56:40 $
-;; Version:         $Revision: 2.34 $
+;; Last Modified:   $Date: 1992-05-07 20:03:32 $
+;; Version:         $Revision: 2.35 $
 
 ;; If you have problems or questions, you can contact me at the
 ;; following address: c++-mode-help@anthem.nlm.nih.gov
@@ -32,7 +32,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-05-07 19:56:40 $|$Revision: 2.34 $|
+;; |$Date: 1992-05-07 20:03:32 $|$Revision: 2.35 $|
 
 (defvar c++-mode-abbrev-table nil
   "Abbrev table in use in C++-mode buffers.")
@@ -152,7 +152,7 @@ Nil is synonymous for 'none and t is synonymous for 'auto-hungry.")
 (make-variable-buffer-local 'c++-hungry-delete-key)
 
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.34 $
+  "Major mode for editing C++ code.  $Revision: 2.35 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -1066,8 +1066,20 @@ Returns nil if line starts inside a string, t if in a comment."
 	(while (and (not inner-loop-done)
 		    (not (and (eobp) (setq outer-loop-done t))))
 	  (setq ostate state)
-	  (setq state (parse-partial-sexp (point) (progn (end-of-line) (point))
-					  nil nil state))
+	  ;; fix by reed@adapt.net.com
+	  ;; must pass in the return past the end of line, so that
+	  ;; parse-partial-sexp finds it, and recognizes that a "//"
+	  ;; comment is over. otherwise, state is set that we're in a
+	  ;; comment, and never gets unset, causing outer-loop to only
+	  ;; terminate in (eobp). old:
+	  ;;(setq state (parse-partial-sexp (point)
+	  ;;(progn (end-of-line) (point))
+	  ;;nil nil state))
+	  (let ((start (point))
+		(line-end (progn (end-of-line) (point)))
+		(end (progn (forward-char) (point))))
+	    (setq state (parse-partial-sexp start end nil nil state))
+	    (goto-char line-end))
 	  (setq next-depth (car state))
 	  (if (and (car (cdr (cdr state)))
 		   (>= (car (cdr (cdr state))) 0))
@@ -1438,7 +1450,7 @@ function definition.")
 ;; this page is provided for bug reports. it dumps the entire known
 ;; state of c++-mode so that I know exactly how you've got it set up.
 
-(defconst c++-version "$Revision: 2.34 $"
+(defconst c++-version "$Revision: 2.35 $"
   "c++-mode version number.")
 
 (defconst c++-mode-state-buffer "*c++-mode-buffer*"
