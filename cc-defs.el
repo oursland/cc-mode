@@ -204,6 +204,12 @@
 		  (/= (cdr inexpr) (c-point 'boi (cdr inexpr))))
 	     (c-add-syntax 'inexpr-class))))))
 
+(defmacro c-benign-error (format &rest args)
+  ;; Formats an error message for the echo area and dings, i.e. like
+  ;; `error' but doesn't abort.
+  (message ,format ,@args)
+  (ding))
+
 (defmacro c-update-modeline ()
   ;; set the c-auto-hungry-string for the correct designation on the modeline
   `(progn
@@ -273,8 +279,13 @@ continuations."
      (def-edebug-spec c-safe t)
      (def-edebug-spec c-forward-sexp (&optional [&or numberp form]))
      (def-edebug-spec c-backward-sexp (&optional [&or numberp form]))
+     (def-edebug-spec c-up-list-forward t)
+     (def-edebug-spec c-up-list-backward t)
+     (def-edebug-spec c-down-list-forward t)
+     (def-edebug-spec c-down-list-backward t)
      (def-edebug-spec c-add-syntax t)
      (def-edebug-spec c-add-class-syntax t)
+     (def-edebug-spec c-benign-error t)
      (def-edebug-spec c-with-syntax-table t)
      (def-edebug-spec c-skip-ws-forward t)
      (def-edebug-spec c-skip-ws-backward t)))
