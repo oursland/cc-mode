@@ -17,12 +17,12 @@
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment 
 @comment texinfo manual for @file{cc-mode.el} version 4
-@comment manual version: $Revision: 2.7 $
+@comment manual version: $Revision: 2.8 $
 @comment generated from the original README file by Krishna Padmasola
 @comment <krishna@earth-gw.njit.edu>
 @comment 
 @comment Barry A. Warsaw <bwarsaw@cnri.reston.va.us>
-@comment Last modification: $Date: 1995-03-10 00:40:38 $
+@comment Last modification: $Date: 1995-03-10 22:39:17 $
 @comment 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -105,8 +105,8 @@ Copyright @copyright{} 1995 Free Software Foundation, Inc.
 @chapter  Introduction
 @cindex   Introduction
 
-Welcome to @code{cc-mode}, version 4.  This is an Emacs Lisp mode for
-editing files containing C, C++, and Objective-C code in GNU Emacs.
+Welcome to @code{cc-mode}, version 4.  This is a GNU Emacs mode for
+editing files containing C, C++, and Objective-C files.
 This incarnation of the mode is descendant from @file{c-mode.el} (also
 called "Boring Old C Mode" or BOCM @code{:-)}, and @file{c++-mode.el}
 version 2, which I have been maintaining since 1992.  @code{cc-mode}
@@ -128,13 +128,11 @@ This manual will describe the following:
 How to get started using @code{cc-mode}.
 
 @item
+How the new indentation engine works.
+
+@item
 How to customize the new indentation engine.
 
-@item
-The differences between @file{cc-mode.el} and BOCM @file{c-mode.el}.
-
-@item
-The differences between @file{cc-mode.el} and @file{c++-mode.el}.
 @end itemize
 
 Note that the name of this file is @file{cc-mode.el}, and I'll often
@@ -257,7 +255,7 @@ You will not want to use this, or any older releases of
 dumped with either of these files you first need to make Emacs
 ``forget'' about those older modes.
 
-If you can do a @kbd{C-h v c-mode-map} you probably need to add these
+If you can do a @kbd{C-h v c-mode-map RET} you probably need to add these
 lines at the top of your @file{.emacs} file:
 
 @example
@@ -281,8 +279,9 @@ After those lines you will want to add the following autoloads to your
 @end group
 @end example
 
-Alternatively, if you want to make sure cc-mode is loaded when Emacs
-starts up, you could use this line instead of the three autoloads above:
+Alternatively, if you want to make sure @code{cc-mode} is loaded when
+Emacs starts up, you could use this line instead of the three autoloads
+above:
 
 @example
 (require 'cc-mode)
@@ -293,8 +292,7 @@ Next, you will want to set up Emacs so that it edits C files in
 @code{objc-mode}. All users should add the following to their
 @file{.emacs} file.  Note that this assumes you'll be editing @code{.h}
 and @code{.c} files as C, @code{.hh}, @code{.cc}, @code{.H}, and
-@code{.C} files as C++, and @code{.m} files as Objective-C. Your mileage
-may vary:
+@code{.C} files as C++, and @code{.m} files as Objective-C. YMMV:
 
 @example
 @group
@@ -395,7 +393,7 @@ by the relative buffer position in the syntactic component.
 
 It might help to see an example. Suppose we had the following code as
 the only thing in a @code{c++-mode} buffer @footnote{The line numbers
-don't actually appear in the buffer}:
+don't actually appear in the buffer.}:
 
 @example
 @group
@@ -431,9 +429,9 @@ would see:
 ((defun-block-intro . 29))
 @end example
 
-This indicates that the @samp{int} line is the first statement in a
-block, and is indented relative to buffer position 29, which is the
-brace just after the function header.
+This indicates that the @samp{int} line is the first statement in a top
+level function block, and is indented relative to buffer position 29,
+which is the brace just after the function header.
 
 Here's another example:
 @example 
@@ -479,7 +477,7 @@ only line}.
 1: void draw_list( List<Drawables>& drawables )
 2: @{
 3:         // call the virtual draw() method on each element in list
-4:     for( int i=0; i < drawables.count(), i++ )
+4:     for( int i=0; i < drawables.count(), ++i )
 5:     @{
 6:         drawables[i].draw();
 7:     @}
@@ -515,8 +513,8 @@ of the line in two ways.
 
 First, the syntactic symbols are looked up in the @code{c-offsets-alist}
 variable, which is an association list of syntactic symbols and the
-offsets to apply for those symbols.  This offset is added to the running
-total.
+offsets to apply for those symbols.  These offsets are added to the
+running total.
 
 Second, if the component has a relative buffer position, @code{cc-mode}
 adds the column number of that position to the running total.  By adding
@@ -583,9 +581,9 @@ list.  Remember that the list for this line is:
 @end example
 
 Here, @code{cc-mode} first looks up the @code{substatement-open} symbol
-in @code{c-offsets-alist}, for which it might find @samp{4}, yielding a
-running total of 4 (0 + 4 = 4).  @code{cc-mode} then goes to buffer
-position 46, which is the @samp{i} in @code{if} on line 3.  This
+in @code{c-offsets-alist}. Let's say it finds the value @samp{4}.  This
+yields a running total of 4 (0 + 4 = 4).  @code{cc-mode} then goes to
+buffer position 46, which is the @samp{i} in @code{if} on line 3.  This
 character is in the fourth column on that line so adding this to the
 running total yields an indentation for the line of 8 spaces.
 
@@ -593,7 +591,7 @@ Simple, huh?
 
 Actually, the mode usually just does The Right Thing without you having
 to think about it in this much detail.  But when customizing
-indentation, it's essential to understand the general indentation model
+indentation, it's helpful to understand the general indentation model
 being used.
 
 @vindex c-echo-syntactic-information-p
@@ -627,7 +625,7 @@ indentations.  You simply need to decide what additional offset you want
 to add for every syntactic symbol.  You can use the command @kbd{C-c
 C-o} (@code{c-set-offset}) as the way to set offsets, both interactively
 and from your mode hook.  Also, you can set up @emph{styles} of
-indentation just like in BOCM @file{c-mode.el}.  Most likely, you'll
+indentation just like in BOCM.  Most likely, you'll
 find one of the pre-defined styles will suit your needs, but if not,
 this section will describe how to set up basic editing configurations.
 
@@ -640,8 +638,8 @@ function or variable name, or one of the following symbols: @code{+},
 @code{-}, @code{++}, or @code{--}, indicating positive or negative
 multiples of the variable @code{c-basic-offset}.  Thus, because most
 offsets are defined in terms of @code{+}, @code{-}, and @code{0}, if you
-like the general indentation levels, but you use 2 spaces instead of 4
-spaces per level, you can probably achieve your style by just changing
+like the general indentation style, but you use 2 spaces instead of 4
+spaces per level, you can probably achieve your style just by changing
 @code{c-basic-offset} like so (in your @file{.emacs} file):
 
 @example
@@ -681,7 +679,7 @@ int add( int val, int incr, int doit )
 
 
 To change indentation styles more radically, you will want to change the
-value associated with various syntactic symbols in the
+value associated with the syntactic symbols in the
 @code{c-offsets-alist} variable.  First, I'll show you how to do that
 interactively, then I'll describe how to make changes to your
 @file{.emacs} file so that your changes are more permanent.
@@ -897,9 +895,9 @@ Customizations}.
     @strong{Q.} @emph{Why doesn't the @key{RET} key indent the line to
     where the new text should go after inserting the newline?}
 
-    @strong{A.} Emacs' convention is that @key{RET} just adds a new
-    line, and that @key{LFD} adds a newline and indents it.  You can
-    make @key{RET} do this too by adding this to your
+    @strong{A.} Emacs' convention is that @key{RET} just adds a newline,
+    and that @key{LFD} adds a newline and indents it.  You can make
+    @key{RET} do this too by adding this to your
     @code{c-mode-common-hook} (see the sample @file{.emacs} file
     @ref{Sample .emacs File}):
 
@@ -915,12 +913,12 @@ Customizations}.
     in my @file{.emacs} file but I get an error saying that
     @code{c-set-offset}'s function definition is void.}
 
-    @strong{A.} Since @code{cc-mode} is autoloaded, it is typically not
-    loaded into your Emacs session by the time of the
-    @code{c-set-offset} call. Instead of putting this in your top-level
-    @file{.emacs} file, put the call to @code{c-set-offset} in your
-    @code{c-mode-common-hook}, or simply add the following to the top of
-    your @file{.emacs} file:
+    @strong{A.} This means that @code{cc-mode} wasn't loaded into your
+    Emacs session by the time the @code{c-set-offset} call was reached,
+    mostly likely because @code{cc-mode} is being autoloaded.  Instead
+    of putting the @code{c-set-offset} line in your top-level
+    @file{.emacs} file, put it in your @code{c-mode-common-hook}, or
+    simply add the following to the top of your @file{.emacs} file:
 
 @example
 (require 'cc-mode)
