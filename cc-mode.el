@@ -5,8 +5,8 @@
 ;;          1985 Richard M. Stallman
 ;; Maintainer: cc-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 4.101 $
-;; Last Modified:   $Date: 1994-11-14 16:19:10 $
+;; Version:         $Revision: 4.102 $
+;; Last Modified:   $Date: 1994-11-14 16:59:50 $
 ;; Keywords: C++ C Objective-C editing major-mode
 
 ;; Copyright (C) 1992, 1993, 1994 Barry A. Warsaw
@@ -101,7 +101,7 @@
 ;; LCD Archive Entry:
 ;; cc-mode.el|Barry A. Warsaw|cc-mode-help@anthem.nlm.nih.gov
 ;; |Major mode for editing C++, Objective-C, and ANSI/K&R C code
-;; |$Date: 1994-11-14 16:19:10 $|$Revision: 4.101 $|
+;; |$Date: 1994-11-14 16:59:50 $|$Revision: 4.102 $|
 
 ;;; Code:
 
@@ -918,6 +918,8 @@ class.  Putting underscore in word class breaks forward word movement
 behavior that users are familiar with.")
 (defconst c-C++-class-key "\\(class\\|struct\\|union\\)"
   "Regexp describing a C++ class declaration, including templates.")
+(defconst c-C-class-key "\\(struct\\|union\\)"
+  "Regexp describing a C struct declaration.")
 (defconst c-inher-key
   (concat "\\(\\<static\\>\\s +\\)?"
 	  c-C++-class-key "[ \t]+" c-symbol-key
@@ -1047,7 +1049,7 @@ Key bindings:
   (setq comment-start "/* "
 	comment-end   " */"
 	c-conditional-key c-C-conditional-key
-	c-class-key c-C++-class-key
+	c-class-key c-C-class-key
 	c-comment-start-regexp "/\\*")
   (run-hooks 'c-mode-common-hook)
   (run-hooks 'c-mode-hook))
@@ -4171,7 +4173,7 @@ it trailing backslashes are removed."
 
 ;; defuns for submitting bug reports
 
-(defconst c-version "$Revision: 4.101 $"
+(defconst c-version "$Revision: 4.102 $"
   "cc-mode version number.")
 (defconst c-mode-help-address "cc-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
