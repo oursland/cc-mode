@@ -33,21 +33,22 @@
 @settitle     CC Mode Manual
 @footnotestyle end
 
-@c @ifset XEMACS
-@c @set EMACS xemacs
-@c @set LISPREF Lispref
-@c @end ifset
-@c @ifclear XEMACS
-@c @set EMACS emacs
-@c @set LISPREF elisp
-@c @end ifclear
-@c The above was replaced by the following, 2004/10/5
+@c The following four macros generate the filenames and titles of the
+@c main (X)Emacs manual and the Elisp/Lispref manual.  Set the
+@c Texinfo variable `X' to generate an XEmacs version, leave it unset
+@c to generate a GNU Emacs version.
 @ifset X
 @macro emacsman
 xemacs
 @end macro
+@macro emacsmantitle
+"XEmacs User's Manual"
+@end macro
 @macro lispref
 lispref
+@end macro
+@macro lispreftitle
+"XEmacs Lisp Reference Manual"
 @end macro
 @end ifset
 
@@ -55,11 +56,16 @@ lispref
 @macro emacsman
 emacs
 @end macro
+@macro emacsmantitle
+"GNU Emacs Manual"
+@end macro
 @macro lispref
 elisp
 @end macro
+@macro lispreftitle
+"GNU Emacs Lisp Reference Manual"
+@end macro
 @end ifclear
-
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @comment @setchapternewpage odd !! we don't want blank pages !!
@@ -349,13 +355,6 @@ where @samp{XX} is the minor release number.
 * Minor Modes::                 
 * Other Commands::              
 @end menu
-
-@c This bit taken out, ACM, 2004/8/19
-@ignore
-See also @ref{Text Filling and Line Breaking} and @ref{Macro Handling},
-for commands concerning those bits.
-@end ignore
-
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Indentation Commands, Movement Commands, Commands, Commands
@@ -690,11 +689,12 @@ comment line decorations, and so on, for you.
 @cindex Auto Fill mode
 @cindex paragraph filling
 Line breaks are by default handled (almost) the same regardless of
-whether they are made by auto fill mode (@pxref{Auto Fill,,, emacs,
-The Emacs Editor}), paragraph filling (e.g. with @kbd{M-q}), or
-explicitly with @kbd{M-j} or similar methods.  In string literals, the
-new line gets the same indentation as the previous nonempty line (may
-be changed with the @code{string} syntactic symbol).
+whether they are made by auto fill mode (@pxref{Auto Fill,,,
+@emacsman{}, @emacsmantitle{}}), paragraph filling (e.g. with
+@kbd{M-q}), or explicitly with @kbd{M-j} or similar methods.  In
+string literals, the new line gets the same indentation as the
+previous nonempty line (may be changed with the @code{string}
+syntactic symbol).
 
 @table @asis
 @item @kbd{M-q} (@code{c-fill-paragraph})
@@ -808,14 +808,6 @@ character.
 @findex electric-star (c-)
 @findex c-electric-slash
 @findex electric-slash (c-)
-@ignore OLD STUFF 2004/9/27
-Stars and slashes (bound to @code{c-electric-star} and
-@code{c-electric-slash} respectively) are also electric under certain
-circumstances.  If a @samp{*} is inserted as the second character of a C
-style block comment on a comment-only line, then the comment delimiter
-is indented as defined by @code{c-offsets-alist}.  A comment-only line
-is defined as a line which contains only a comment, as in:
-@end ignore
 A star or a slash causes reindentation when you type it as the second
 component of a C style block comment opener (@samp{/*}) or a C++ line
 comment opener (@samp{//}) respectively, but only if the comment
@@ -912,7 +904,7 @@ continuation of the preceding @code{if}.
 @vindex abbrev-mode
 @findex abbrev-mode
 @cindex Abbrev mode
-@ccmode{} uses Abbrev mode (@pxref{Abbrevs,,, emacs, The Emacs Editor})
+@ccmode{} uses Abbrev mode (@pxref{Abbrevs,,, @emacsman{}, @emacsmantitle{}})
 to accomplish this. It's therefore turned on by default in all language
 modes except IDL mode, since CORBA IDL doesn't have any statements.
 @end deffn
@@ -1008,7 +1000,7 @@ after it, and possibly a @samp{\} escaping the newline.
 
 @item
 The character is not on its own line already.  (This applies only to
-insertiion of a newline @emph{before} the character.)
+insertion of a newline @emph{before} the character.)
 
 @item
 @cindex literal
@@ -1174,16 +1166,10 @@ or @key{Delete}.  In Emacs prior to 21 that means that it's up to you to
 fix them.  Emacs 21 automatically binds them as appropriate to @kbd{DEL}
 and @kbd{C-d}.
 
-EMACS is set to @value{EMACS}
-LISPREF is set to @value{LISPREF}
-
-Getting your @key{Backspace} and @key{Delete} keys properly set up can
-sometimes be tricky.  The information in @ref{DEL Does Not
-Delete,,,@emacsman{}}, might be helpful if you're having trouble with this.
-
 Getting your @key{Backspace} and @key{Delete} keys properly set up can
 sometimes be tricky.  The information in @ref{DEL Does Not
 Delete,,,emacs}, might be helpful if you're having trouble with this.
+@c FIXME!!! 2004/11/4:  Put in a note to say ``GNU Emacs'' in the above.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Other Commands,  , Minor Modes, Commands
@@ -1216,12 +1202,13 @@ with the rest of @ccmode{}, so this section does not apply there.
 
 @cindex Font Lock mode
 
-@ccmode{} provides font locking for its supported languages by supplying
-patterns for use with Font Lock mode.  This means that you get distinct
-faces on the various syntactic parts such as comments, strings, keywords
-and types, which is very helpful in telling them apart at a glance and
-discovering syntactic errors.  @xref{Font Lock,,, @emacsman{}, The Emacs
-Editor}, for ways to enable font locking in @ccmode{} buffers.
+@ccmode{} provides font locking for its supported languages by
+supplying patterns for use with Font Lock mode.  This means that you
+get distinct faces on the various syntactic parts such as comments,
+strings, keywords and types, which is very helpful in telling them
+apart at a glance and discovering syntactic errors.  @xref{Font
+Lock,,, emacs, GNU Emacs Manual}, for ways to enable font locking in
+@ccmode{} buffers.
 
 @menu
 * Font Locking Preliminaries::  
@@ -1515,7 +1502,8 @@ makes many important variables buffer local.  If you set them later,
 the changes will affect only the buffer which is the current buffer at
 the time of the changes.} - In particular, they must be placed before
 any call to @code{desktop-read} (@pxref{Saving Emacs Sessions,,,
-Emacs}).  For example, you might set c-basic-offset thus:
+emacs, GNU Emacs Manual}).  For example, you might set c-basic-offset
+thus:
 
 @example
 (setq c-basic-offset 4)
@@ -1533,14 +1521,14 @@ facilities, hooks and styles.
 @item Hooks
 An Emacs @dfn{hook} is a place to put Lisp functions that you want
 Emacs to execute later in specific circumstances.
-@xref{Hooks,,,@lispref{}}.  @ccmode{} supplies an @dfn{initialization hook}
-for each language it supports - any functions you supply to this hook
-are executed as the last part of a buffer's initialization.  Typically
-you use this flexibility to vary the customization settings between
-language modes.  (There is also a ``common'' hook for initializations
-to be shared by all these modes.)  For example, if you wanted
-different values of @code{c-basic-offset} in C Mode and Java Mode
-buffers, you could do it like this:
+@xref{Hooks,,,@lispref{}, @lispreftitle{}}.  @ccmode{} supplies an
+@dfn{initialization hook} for each language it supports - any
+functions you supply to this hook are executed as the last part of a
+buffer's initialization.  Typically you use this flexibility to vary
+the customization settings between language modes.  (There is also a
+``common'' hook for initializations to be shared by all these modes.)
+For example, if you wanted different values of @code{c-basic-offset}
+in C Mode and Java Mode buffers, you could do it like this:
 
 @example
 @group
@@ -1957,7 +1945,7 @@ Two variables are treated specially in the dotted pair list:
 
 @table @code
 @item c-offsets-alist
-The value is in turn a dotted list on the form
+The value is in turn a dotted list of the form
 
 @example
 (@r{@var{syntactic-symbol}} . @r{@var{offset}})
@@ -2044,8 +2032,9 @@ This section describes in full detail how CC Mode gets initialised,
 and how ######.  This is advanced material and you don't need to
 understand it to be able to use CC Mode.  It might be useful if you
 need to debug your configuration settings, and will probably be useful
-if you want to write a ``derived mode'' (@pxref{asdf,,,elisp}.) based
-on one of CC Mode's component modes.
+if you want to write a ``derived mode'' (@pxref{Derived
+Modes,,,@lispref{}, @lispreftitle{}}.) based on one of CC Mode's
+component modes.
 
 Etc.
 
@@ -2053,24 +2042,8 @@ Etc.
 @node    Custom Filling and Breaking, Custom Auto-newlines, Config Strategies, Top
 @comment node-name, next, previous, up
 @chapter Customizing Filling and Line Breaking
-@ignore
-@cindex text filling
-@cindex line breaking
-@cindex comment handling
-@end ignore
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-@c This bit's been taken above.
-@ignore
-Since there's a lot of normal text in comments and string literals,
-@ccmode{} provides features to edit these like in text mode.  The goal
-is to do it as seamlessly as possible, i.e. you can use auto fill mode,
-sentence and paragraph movement, paragraph filling, adaptive filling etc
-wherever there's a piece of normal text without having to think much
-about it.  @ccmode{} should keep the indentation, fix the comment line
-decorations, and so on, for you.
-@end ignore
-@c End bit
 @c FIXME!!!  ACM 2004/8/20.  The following is perhaps redundant.
 Since there's a lot of normal text in comments and string literals,
 @ccmode{} provides features to edit these like in text mode.  It does
@@ -2141,30 +2114,17 @@ the new value.  That's also the case if you modify this variable in a
 mode hook, since @ccmode{} sets up all variables before calling them.
 @end defopt
 
-@c Move this bit up
-@ignore
-@findex auto-fill-mode
-@cindex Auto Fill mode
-@cindex paragraph filling
-Line breaks are by default handled (almost) the same regardless whether
-they are made by auto fill mode (@pxref{Auto Fill,,, emacs, The Emacs
-Editor}), paragraph filling (e.g. with @kbd{M-q}), or explicitly with
-@kbd{M-j} or similar methods.  In string literals, the new line gets the
-same indentation as the previous nonempty line (may be changed with the
-@code{string} syntactic symbol).
-@end ignore
-@c End of bit
 In comments, @ccmode{} uses @code{c-comment-prefix-regexp} to adapt
 the line prefix from the other lines in the comment.
 
 @vindex adaptive-fill-mode
 @cindex Adaptive Fill mode
-@ccmode{} uses adaptive fill mode (@pxref{Adaptive Fill,,, emacs, The
-Emacs Editor}) to make Emacs correctly keep the line prefix when filling
-paragraphs.  That also makes Emacs preserve the text indentation
-@emph{inside} the comment line prefix.  E.g. in the following comment,
-both paragraphs will be filled with the left margins of the texts kept
-intact:
+@ccmode{} uses adaptive fill mode (@pxref{Adaptive Fill,,, emacs, GNU
+Emacs Manual}) to make Emacs correctly keep the line prefix when
+filling paragraphs.  That also makes Emacs preserve the text
+indentation @emph{inside} the comment line prefix.  E.g. in the
+following comment, both paragraphs will be filled with the left
+margins of the texts kept intact:
 
 @example
 @group
@@ -2275,40 +2235,6 @@ whitespace character, so automatic line breaks there will produce poor
 results in the current implementation.
 @end defopt
 
-@c Move this whole chunk up (down to the bottom of the node).
-@ignore
-The commands that do the actual work follow.
-
-@table @asis
-@item @kbd{M-q} (@code{c-fill-paragraph})
-@kindex M-q
-@findex c-fill-paragraph
-@findex fill-paragraph (c-)
-@cindex Javadoc markup
-@cindex Pike autodoc markup
-This is the replacement for @code{fill-paragraph} in @ccmode{}
-buffers. It's used to fill multiline string literals and both block and
-line style comments.  In Java buffers, the Javadoc markup words are
-recognized as paragraph starters.  The line oriented Pike autodoc markup
-words are recognized in the same way in Pike mode.
-
-The function keeps the comment starters and enders of block comments as
-they were before the filling.  This means that a comment ender on the
-same line as the paragraph being filled will be filled with the
-paragraph, and one on a line by itself will stay as it is.  The comment
-starter is handled similarly@footnote{This means that the variables
-@code{c-hanging-comment-starter-p} and @code{c-hanging-comment-ender-p},
-which controlled this behavior in earlier versions of @ccmode{}, are now
-obsolete.}.
-
-@item @kbd{M-j} (@code{c-indent-new-comment-line})
-@kindex M-j
-@findex c-indent-new-comment-line
-@findex indent-new-comment-line (c-)
-This is the replacement for @code{indent-new-comment-line}.  It breaks
-the line at point and indents the new line like the current one.
-@end ignore
-
 @vindex comment-multi-line
 If inside a comment and @code{comment-multi-line} is non-@code{nil}, the
 indentation and line prefix are preserved.  If inside a comment and
@@ -2321,37 +2247,6 @@ of single line block comments for texts that should logically be treated
 as one comment, and the rest of the paragraph handling code
 (e.g. @kbd{M-q} and @kbd{M-a}) can't cope with that, which would lead to
 inconsistent behavior.
-
-@ignore
-@item @kbd{M-x c-context-line-break}
-@findex c-context-line-break
-@findex context-line-break (c-)
-This is a function that works like @code{indent-new-comment-line} in
-comments and @code{newline-and-indent} elsewhere, thus combining those
-two in a way that uses each one in the context it's best suited for.
-I.e. in comments the comment line prefix and indentation is kept for
-the new line, and in normal code it's indented according to context by
-the indentation engine.
-
-In macros it acts like @code{newline-and-indent} but additionally
-inserts and optionally aligns the line ending backslash so that the
-macro remains unbroken.  @xref{Macro Handling}, for details about the
-backslash alignment.
-
-It's not bound to a key by default, but it's intended to be used on the
-@kbd{RET} key.  If you like the behavior of @code{newline-and-indent} on
-@kbd{RET}, you should consider switching to this function.
-
-@item @kbd{M-x c-context-open-line}
-@findex c-context-open-line
-@findex context-open-line (c-)
-This is to @kbd{C-o} (@kbd{M-x open-line}) as
-@code{c-context-line-break} is to @kbd{RET}.  I.e. it works just like
-@code{c-context-line-break} but leaves the point before the inserted
-line break.
-@end table
-@end ignore
-@c End of whole chunk.
 
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 @node    Custom Auto-newlines, Indentation Engine, Custom Filling and Breaking, Top
@@ -2366,12 +2261,11 @@ different ways, depending on the character just typed:
 @item Braces and Colons
 @ccmode{} first determines the syntactic context of the brace or colon
 (@pxref{Syntactic Symbols}), then looks for a corresponding element in
-either the alist @code{c-hanging-braces-alist} or the alist
-@code{c-hanging-colons-alist}.  This alist element specifies where to
-put newlines - this is any combination of before and after the brace
-or colon.  If no alist element is found, newlines are inserted both
-before and after a brace, but none are inserted around a colon.  See
-@ref{Hanging Braces} and @ref{Hanging Colons}.
+an alist.  This element specifies where to put newlines - this is any
+combination of before and after the brace or colon.  If no alist
+element is found, newlines are inserted both before and after a brace,
+but none are inserted around a colon.  See @ref{Hanging Braces} and
+@ref{Hanging Colons}.
 
 @item Semicolons and Commas
 The variable @code{c-hanging-semi&comma-criteria} contains a list of
@@ -2430,13 +2324,8 @@ auto-newlines:
 
 @enumerate
 @item
-It determines the @dfn{syntactic context} of the brace - i.e. what the
-context of a line would be, were the brace to stand alone on the line.
-@xref{Syntactic Analysis}.  This might be
-@samp{((substatement-open@tie{}6180))}, for example.
-
 It determines the @dfn{syntactic context} of the brace - i.e. if the
-brace were to stand alone on a line, what the context of this line
+brace were to stand alone on a line, what the context of the line
 would be.  @xref{Syntactic Analysis}.  This might be
 @samp{((substatement-open@tie{}6180))}, for example.
 
@@ -2702,8 +2591,8 @@ one of the following values:
 
 @table @code
 @item t
-A newline is inserted after the @samp{;} or @samp{,}, and no more
-functions from the list are called.
+A newline is to be inserted after the @samp{;} or @samp{,}, and no
+more functions from the list are called.
 @item stop
 No more functions from the list are called, and no newline is
 inserted.
@@ -2714,10 +2603,14 @@ No determination is made, and the next function in the list is called.
 Note that auto-newlines are never inserted @emph{before} a semicolon
 or comma.  If every function in the list is called without a
 determination being made, then no newline is added. The default value
-for this variable is a list containing a single function which inserts
-newlines only after semicolons which do not appear inside parenthesis
-lists (i.e. those that separate @code{for}-clause statements).
+for this variable is a list containing a single function,
+@code{c-semi&comma-inside-parenlist}, which inserts newlines only after
+semicolons which do not appear inside parenthesis lists (i.e. those
+that separate @code{for}-clause statements).
 @end defopt
+
+FIXME!!!  Add a sentence along the lines ``the following functions can
+all be put into @code{c-hanging-semi&comma-criteria}''.
 
 @defun c-semi&comma-no-newlines-before-nonblanks
 @findex semi&comma-no-newlines-before-nonblanks (c-)
@@ -5767,7 +5660,8 @@ function.  @xref{Hooks}.
 @comment !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 The general appearance of font-locking in AWK mode is much like in any
-other programming mode.  @xref{Faces For Font Lock,,,@lispref{}}.
+other programming mode.  @xref{Faces For Font Lock,,,elisp, GNU Emacs
+Lisp Reference Manual}.
 
 The following faces are, however, used in a non-standard fashion in
 AWK mode:
@@ -5857,7 +5751,13 @@ there.
 Move point back to the beginning or forward to the end of the current
 AWK defun.  These functions can take prefix-arguments, their
 functionality being entirely equivalent to @code{beginning-of-defun}
-and @code{end-of-defun}.  @xref{Moving by Defuns,,,@emacsman{}}.
+and @code{end-of-defun}.
+@ifset X
+@xref{Defuns,,,xemacs, XEmacs User's Manual}.
+@end ifset
+@ifclear X
+@xref{Moving by Defuns,,,emacs, GNU Emacs Manual}.
+@end ifclear
 
 @item @kbd{C-M-h} @code{c-mark-function}
 This works fine with AWK defuns.  @xref{Indentation Commands}.
@@ -6120,8 +6020,13 @@ indentation to go haywire.  What gives?}
 It's due to the ad-hoc rule in (X)Emacs that such open parens always
 start defuns (which translates to functions, classes, namespaces or any
 other top-level block constructs in the @ccmode{} languages).
-@xref{Left Margin Paren,,, @emacsman{}, The Emacs Editor}, for details
-(@xref{Defuns,,, @emacsman{}, The Emacs Editor}, in the Emacs 20 manual).
+@ifset X
+@xref{Defuns,,, xemacs, XEmacs User's Manual}, for details.
+@end ifset
+@ifclear X
+@xref{Left Margin Paren,,, emacs, GNU Emacs Manual}, for details
+(@xref{Defuns,,, emacs, GNU Emacs Manual}, in the Emacs 20 manual).
+@end ifclear
 
 This heuristic is built into the core syntax analysis routines in
 (X)Emacs, so it's not really a @ccmode{} issue.  However, in Emacs 21.4
