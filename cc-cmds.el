@@ -1003,8 +1003,10 @@ comment."
 		     (cons c-comment-only-line-offset
 			   c-comment-only-line-offset))))
 	      (apply '+ (mapcar 'c-get-offset syntax)))))
-	 ;; CASE 4: use comment-column if previous line is a
-	 ;; comment-only line indented to the left of comment-column
+	 ;; CASE 4: If previous line is a comment-only line, use its
+	 ;; indentation if it's greater than comment-column.  Leave at
+	 ;; least one space between the comment and the last nonblank
+	 ;; character in any case.
 	 ((save-excursion
 	    (beginning-of-line)
 	    (and (not (bobp))
@@ -1012,11 +1014,12 @@ comment."
 	    (skip-chars-forward " \t")
 	    (prog1
 		(looking-at c-comment-start-regexp)
-	      (setq placeholder (point))))
-	  (goto-char placeholder)
-	  (if (< (current-column) comment-column)
-	      comment-column
-	    (current-column)))
+	      (setq placeholder (current-column))))
+	  (goto-char opoint)
+	  (skip-chars-backward " \t")
+	  (max (if (bolp) 0 (1+ (current-column)))
+	       placeholder
+	       comment-column))
 	 ;; CASE 5: If comment-column is 0, and nothing but space
 	 ;; before the comment, align it at 0 rather than 1.
 	 ((progn
