@@ -145,7 +145,7 @@
 	(namespace-open        . 0)
 	(namespace-close       . 0)
 	(innamespace           . +)
-	(template-args-cont    . +)
+	(template-args-cont    . (c-lineup-template-args +))
 	(inlambda              . c-lineup-inexpr-block)
 	(lambda-intro-cont     . +)
 	(inexpr-statement      . +)
