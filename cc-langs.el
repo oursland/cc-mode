@@ -125,8 +125,6 @@
 (cc-require 'cc-defs)
 (cc-require 'cc-vars)
 
-(require 'cl)
-
 
 ;;; Setup for the `c-lang-defvar' system.
 
@@ -1931,6 +1929,17 @@ expression is considered to be a type."
 		(c-lang-const c-syntactic-ws)
 		"<")))
 (c-lang-defvar c-opt-<>-arglist-start (c-lang-const c-opt-<>-arglist-start))
+
+(c-lang-defconst c-opt-<>-arglist-start-in-paren
+  ;; Regexp that in addition to `c-opt-<>-arglist-start' matches close
+  ;; parens.  The first submatch is assumed to surround
+  ;; `c-opt-<>-arglist-start'.
+  t (if (c-lang-const c-opt-<>-arglist-start)
+	(concat "\\("
+		(c-lang-const c-opt-<>-arglist-start)
+		"\\)\\|\\s\)")))
+(c-lang-defvar c-opt-<>-arglist-start-in-paren
+  (c-lang-const c-opt-<>-arglist-start-in-paren))
 
 (c-lang-defconst c-label-key
   "Regexp matching a normal label, i.e. a label that doesn't begin with
