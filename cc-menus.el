@@ -410,6 +410,7 @@ Example:
 ; FIXME: Please contribute one!
 
 (defun cc-imenu-init (mode-generic-expression)
+  (make-local-variable 'imenu-generic-expression)
   (setq imenu-generic-expression mode-generic-expression
 	imenu-case-fold-search nil))
 

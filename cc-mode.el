@@ -388,7 +388,6 @@ same format as `c-default-style'."
   (make-local-variable 'require-final-newline)
   (make-local-variable 'outline-regexp)
   (make-local-variable 'outline-level)
-  (make-local-variable 'imenu-generic-expression) ;set in the mode functions
 
   (setq require-final-newline t
 	outline-regexp "[^#\n\^M]"
