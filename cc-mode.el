@@ -5,8 +5,8 @@
 ;;         1985 Richard M. Stallman
 ;; Maintainer: c++-mode-help@anthem.nlm.nih.gov
 ;; Created: a long, long, time ago. adapted from the original c-mode.el
-;; Version:         $Revision: 3.1 $
-;; Last Modified:   $Date: 1993-07-02 22:35:43 $
+;; Version:         $Revision: 3.2 $
+;; Last Modified:   $Date: 1993-07-02 22:42:03 $
 ;; Keywords: C++ C editing major-mode
 
 ;; Copyright (C) 1992, 1993 Free Software Foundation, Inc.
@@ -132,7 +132,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++, and ANSI/K&R C code (was Detlefs' c++-mode.el)
-;; |$Date: 1993-07-02 22:35:43 $|$Revision: 3.1 $|
+;; |$Date: 1993-07-02 22:42:03 $|$Revision: 3.2 $|
 
 ;;; Code:
 
@@ -206,8 +206,6 @@ FSF 19 (patched):        (8-bit v19)")
   (define-key c++-mode-map "\C-c\C-c"  'c++-comment-region)
   (define-key c++-mode-map "\C-c\C-u"  'c++-uncomment-region)
   (define-key c++-mode-map "\C-c\C-x"  'c++-match-paren)
-  (define-key c++-mode-map "\e\C-a"    'c++-beginning-of-defun)
-  (define-key c++-mode-map "\e\C-e"    'c++-end-of-defun)
   (define-key c++-mode-map "\e\C-x"    'c++-indent-defun)
   (define-key c++-mode-map "/"         'c++-electric-slash)
   (define-key c++-mode-map "*"         'c++-electric-star)
@@ -481,7 +479,7 @@ this variable to nil defeats backscan limits.")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 3.1 $
+  "Major mode for editing C++ code.  $Revision: 3.2 $
 To submit a problem report, enter `\\[c++-submit-bug-report]' from a
 c++-mode buffer.  This automatically sets up a mail buffer with
 version information already added.  You just need to add a description
@@ -713,7 +711,7 @@ no args, if that value is non-nil."
    (memq c++-auto-hungry-initial-state '(hungry-only auto-hungry t))))
 
 (defun c++-c-mode ()
-  "Major mode for editing K&R and ANSI C code.  $Revision: 3.1 $
+  "Major mode for editing K&R and ANSI C code.  $Revision: 3.2 $
 This mode is based on c++-mode.  Documentation for this mode is
 available by doing a `\\[describe-function] c++-mode'."
   (interactive)
@@ -1132,7 +1130,7 @@ initialization list."
 			       (end-of-line 1)
 			       (looking-at ":")))
 			(progn
-			  (c++-beginning-of-defun)
+			  (beginning-of-defun)
 			  (let* ((parse-sexp-ignore-comments t)
 				 (pps (parse-partial-sexp (point) end)))
 			    (or (nth 3 pps) (nth 4 pps) (nth 5 pps))))))))
@@ -1640,7 +1638,7 @@ optional LIM.  If LIM is omitted, `beginning-of-defun' is used."
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
 nil if not in a comment at all.  Optional LIM is used as the backward
-limit of the search.  If omitted, or nil, `c++-beginning-of-defun' is
+limit of the search.  If omitted, or nil, `beginning-of-defun' is
 used."
   (save-excursion
     (let* ((here (point))
@@ -1698,7 +1696,7 @@ used."
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
 nil if not in a comment at all.  Optional LIM is used as the backward
-limit of the search.  If omitted, or nil, `c++-beginning-of-defun' is
+limit of the search.  If omitted, or nil, `beginning-of-defun' is
 used."
   (save-excursion
     (let* ((backlim (or lim (c++-point 'bod)))
@@ -1721,7 +1719,7 @@ used."
 Return `c' if in a C-style comment, `c++' if in a C++ style comment,
 `string' if in a string literal, `pound' if on a preprocessor line, or
 nil if not in a comment at all.  Optional LIM is used as the backward
-limit of the search.  If omitted, or nil, `c++-beginning-of-defun' is
+limit of the search.  If omitted, or nil, `beginning-of-defun' is
 used."
   (save-excursion
     (let* ((backlim (or lim (c++-point 'bod)))
@@ -2533,7 +2531,7 @@ This function does not modify point or mark."
     (cond
      ((eq position 'bol) (beginning-of-line))
      ((eq position 'eol) (end-of-line))
-     ((eq position 'bod) (c++-beginning-of-defun))
+     ((eq position 'bod) (beginning-of-defun))
      ((eq position 'boi) (back-to-indentation))
      )
     (setq bufpos (point))
@@ -2626,10 +2624,10 @@ the leading `// ' from each line, if any."
   "Indents the current function def, struct or class declaration."
   (interactive)
   (let ((restore (point)))
-    (c++-end-of-defun 1)
+    (end-of-defun 1)
     (beginning-of-line 1)
     (let ((end (point-marker)))
-      (c++-beginning-of-defun)
+      (beginning-of-defun)
       (while (and (< (point) end))
 	(c++-indent-line)
 	(forward-line 1)
@@ -2641,7 +2639,7 @@ the leading `// ' from each line, if any."
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 3.1 $"
+(defconst c++-version "$Revision: 3.2 $"
   "c++-mode version number.")
 (defconst c++-mode-help-address "c++-mode-help@anthem.nlm.nih.gov"
   "Address accepting submission of bug reports.")
