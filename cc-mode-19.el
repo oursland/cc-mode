@@ -46,7 +46,7 @@
 (cc-bytecomp-obsolete-fun byte-code-function-p)
 (cc-bytecomp-defun regexp-opt-depth)
 
-(require 'advice)
+(cc-external-require 'advice)
 
 
 ;; Emacs 19.34 requires the POS argument to char-after.  Emacs 20

@@ -88,7 +88,7 @@
 ;; cc-mode.el.
 (provide 'cc-fonts)
 
-(require 'font-lock)
+(cc-external-require 'font-lock)
 
 (cc-bytecomp-defvar parse-sexp-lookup-properties) ; Emacs only.
 

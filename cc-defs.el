@@ -93,7 +93,7 @@
        ;; such as the developers.. ;)
        (load "cc-fixes")))
 
-(require 'cl)
+(cc-external-require 'cl)
 
 
 ;;; Variables also used at compile time.

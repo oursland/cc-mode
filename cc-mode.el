@@ -103,7 +103,7 @@
 
 ;; Menu support for both XEmacs and Emacs.  If you don't have easymenu
 ;; with your version of Emacs, you are incompatible!
-(require 'easymenu)
+(cc-external-require 'easymenu)
 
 ;; Load cc-fonts first after font-lock is loaded, since it isn't
 ;; necessary until font locking is requested.
@@ -1086,7 +1086,6 @@ Key bindings:
     (and
      (if (y-or-n-p "Do you want to submit a report on CC Mode? ")
 	 t (message "") nil)
-     (require 'reporter)
      (reporter-submit-bug-report
       c-mode-help-address
       (concat "CC Mode " c-version " (" mode-name ")")
