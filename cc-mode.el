@@ -6,8 +6,8 @@
 ;;                   and Stewart Clamen (clamen@cs.cmu.edu)
 ;;                  Done by fairly faithful modification of:
 ;;                  c-mode.el, Copyright (C) 1985 Richard M. Stallman.
-;; Last Modified:   $Date: 1992-07-09 18:20:07 $
-;; Version:         $Revision: 2.139 $
+;; Last Modified:   $Date: 1992-07-09 18:36:20 $
+;; Version:         $Revision: 2.140 $
 
 ;; Do a "C-h m" in a c++-mode buffer for more information on customizing
 ;; c++-mode.
@@ -43,7 +43,7 @@
 ;; LCD Archive Entry:
 ;; c++-mode|Barry A. Warsaw|c++-mode-help@anthem.nlm.nih.gov
 ;; |Mode for editing C++ code (was Detlefs' c++-mode.el)
-;; |$Date: 1992-07-09 18:20:07 $|$Revision: 2.139 $|
+;; |$Date: 1992-07-09 18:36:20 $|$Revision: 2.140 $|
 
 
 ;; ======================================================================
@@ -246,7 +246,7 @@ Only currently supported behavior is '(alignleft).")
 ;; c++-mode main entry point
 ;; ======================================================================
 (defun c++-mode ()
-  "Major mode for editing C++ code.  $Revision: 2.139 $
+  "Major mode for editing C++ code.  $Revision: 2.140 $
 Do a \"\\[describe-function] c++-dump-state\" for information on
 submitting bug reports.
 
@@ -554,7 +554,7 @@ parse-sexp-ignore-comments to non-nil does not fix the problem.
 See also the variable c++-untame-characters."
   (interactive "p")
   (if (and (memq last-command-char c++-untame-characters)
-	   (c++-in-comment-p))
+	   (memq (c++-in-literal) '(c c++)))
       (insert "\\"))
   (self-insert-command arg))
 
@@ -570,8 +570,7 @@ backward-delete-char-untabify."
   (cond ((or (not c++-hungry-delete-key) arg)
 	 (funcall c++-delete-function (prefix-numeric-value arg)))
 	((let ((bod (c++-point 'bod)))
-	   (not (or (c++-in-comment-p bod)
-		    (c++-in-open-string-p bod)
+	   (not (or (memq (c++-in-literal bod) '(c c++ string))
 		    (save-excursion
 		      (skip-chars-backward " \t")
 		      (= (preceding-char) ?#)))))
@@ -584,8 +583,7 @@ backward-delete-char-untabify."
 
 (defun c++-electric-pound (arg)
   (interactive "p")
-  (if (or (c++-in-open-string-p)
-	  (c++-in-comment-p))
+  (if (memq (c++-in-literal) '(c c++ string))
       (self-insert-command arg)
     (let ((here (point-marker))
 	  (bolp (bolp)))
@@ -629,7 +627,7 @@ backward-delete-char-untabify."
 		   t)))
 	(progn
 	  (if (and (memq last-command-char c++-untame-characters)
-		   (c++-in-comment-p bod))
+		   (memq (c++-in-literal bod) '(c c++)))
 	      (insert "\\"))
 	  (insert last-command-char)
 	  ;; try to clean up empty defun braces if conditions apply
@@ -641,8 +639,7 @@ backward-delete-char-untabify."
 		 (progn (forward-char -1)
 			(skip-chars-backward " \t\n")
 			(= (preceding-char) ?\{))
-		 (not (c++-in-comment-p))
-		 (not (c++-in-open-string-p))
+		 (not (memq (c++-in-literal) '(c c++ string)))
 		 (delete-region (point) (1- here)))
 	    (goto-char here)
 	    (set-marker here nil))
@@ -657,8 +654,7 @@ backward-delete-char-untabify."
 			     mend (match-end 0))
 		       status)
 		     (= mend here)
-		     (not (c++-in-open-string-p bod))
-		     (not (c++-in-comment-p bod)))
+		     (not (memq (c++-in-literal bod) '(c c++ string))))
 		(progn
 		  ;; we should clean up brace-else-brace syntax
 		  (delete-region mbeg mend)
@@ -707,7 +703,7 @@ you want to add a comment to the end of a line."
   (cond ((= (preceding-char) ?/)
 	 (let ((c++-auto-newline nil))
 	   (c++-electric-terminator arg)))
-	((and (eq 'c (c++-in-literal))
+	((and (memq (c++-in-literal) '(c))
 	      (= (point) (c++-point-boi)))
 	 (self-insert-command (prefix-numeric-value arg))
 	 (c++-indent-line))
@@ -745,8 +741,7 @@ for member initialization list."
 	 ;; comment or literal region
 	 ((progn (skip-chars-backward " \t\n")
 		 (and (= (preceding-char) ?:)
-		      (not (c++-in-comment-p bod))
-		      (not (c++-in-open-string-p bod))))
+		      (not (memq (c++-in-literal bod) '(c c++ string)))))
 	  (progn (delete-region insertion-point (point))
 		 (setq c++-auto-newline nil
 		       insertion-point (point))))
@@ -878,8 +873,7 @@ of the expression are preserved."
 	  (insert-tab)))
        ((eq c++-tab-always-indent t)
 	(c++-indent-line bod))
-       ((or (c++-in-open-string-p bod)
-	    (c++-in-comment-p bod)
+       ((or (memq (c++-in-literal bod) '(c c++ string))
 	    (save-excursion
 	      (skip-chars-backward " \t")
 	      (= (preceding-char) ?#)))
@@ -1081,7 +1075,7 @@ characters to escape are defined in the variable c++-untame-characters."
       (while (not (eobp))
 	(skip-chars-forward charset)
 	(if (and (not (zerop (following-char)))
-		 (c++-in-comment-p)
+		 (memq (c++-in-literal) '(c c++))
 		 (/= (preceding-char) ?\\ ))
 	    (insert "\\"))
 	(if (not (eobp))
@@ -1195,16 +1189,6 @@ used."
 	) ; end-while
       state)))
 
-(defun c++-in-open-string-p (&optional lim)
-  "Return non-nil if in an open string as defined by mode's syntax.
-Optional LIM is passed to c++-in-literal."
-  (eq (c++-in-literal lim) 'string))
-
-(defun c++-in-comment-p (&optional lim)
-  "Return t if in a C or C++ style comment as defined by mode's syntax.
-Optional LIM is passed to c++-in-literal."
-  (and (memq (c++-in-literal lim) '(c c++)) t))
-
 (defun c++-in-parens-p (&optional lim)
   "Return t if inside a paren expression.
 Optional LIM is used as the backward limit of the search."
@@ -1316,7 +1300,7 @@ BOD is the beginning of the C++ definition."
     (beginning-of-line)
     (let ((indent-point (point))
 	  (case-fold-search nil)
-	  state do-indentation
+	  state do-indentation literal
 	  containing-sexp streamop-pos
 	  (inclass-shift 0)
 	  (bod (or bod (c++-point 'bod))))
@@ -1337,10 +1321,11 @@ BOD is the beginning of the C++ definition."
 	    (setq state (c++-parse-state indent-point)
 		  containing-sexp (nth 1 state)
 		  parse-start (point))))
-      (cond ((c++-in-open-string-p bod)
+      (setq literal (c++-in-literal bod))
+      (cond ((memq literal '(string))
 	     ;; in a string.
 	     nil)
-	    ((c++-in-comment-p bod)
+	    ((memq literal '(c c++))
 	     ;; in a C comment.
 	     t)
 	    ;; is this a comment-only line in the first column or
@@ -1427,7 +1412,7 @@ BOD is the beginning of the C++ definition."
 			    0
 			  (beginning-of-line) ; cont arg decls or member inits
 			  (skip-chars-forward " \t")
-			  (if (or (c++-in-comment-p bod)
+			  (if (or (memq (c++-in-literal bod) '(c c++))
 				  (looking-at "/[/*]"))
 			      0
 			    (if (= (following-char) ?:)
@@ -1682,7 +1667,7 @@ optional LIM.  If LIM is ommitted, point-min is used."
       (condition-case err
 	  (progn
 	    (backward-sexp 1)
-	    (cond ((c++-in-comment-p))
+	    (cond ((memq (c++-in-literal limit) '(c c++)))
 		  ((looking-at "while\\b")
 		   (setq do-level (1+ do-level)))
 		  ((looking-at "do\\b")
@@ -1700,8 +1685,7 @@ Literals are defined as being inside a C or C++ style comment or open
 string according to mode's syntax."
   (let ((bod (c++-point 'bod)))
     (and c++-auto-newline
-	 (not (c++-in-comment-p bod))
-	 (not (c++-in-open-string-p bod))
+	 (not (c++-in-literal bod))
 	 (not (newline)))))
 
 (defun c++-point (position)
@@ -1957,7 +1941,7 @@ function definition.")
 ;; ======================================================================
 ;; defuns for submitting bug reports
 ;; ======================================================================
-(defconst c++-version "$Revision: 2.139 $"
+(defconst c++-version "$Revision: 2.140 $"
   "c++-mode version number.")
 
 (defun c++-version ()
